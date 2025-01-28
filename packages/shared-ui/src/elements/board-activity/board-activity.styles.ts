@@ -48,6 +48,8 @@ export const styles = css`
   .activity-entry {
     position: relative;
     padding-top: var(--bb-grid-size-2);
+
+    --output-padding: var(--bb-grid-size-5);
   }
 
   .activity-entry:first-of-type {
@@ -424,7 +426,7 @@ export const styles = css`
     margin: var(--bb-grid-size) 0;
   }
 
-  .output-port .value {
+  .output-port .value.markdown {
     overflow-x: scroll;
     scrollbar-width: none;
   }

@@ -232,39 +232,6 @@ export class BoardActivity extends LitElement {
     >`;
   }
 
-  async #createExportFromCurrentRun() {
-    if (!this.run || !this.run.serialize) {
-      this.downloadStatus = "initial";
-      return;
-    }
-
-    this.downloadStatus = "generating";
-
-    if (this.#serializedRunUrl) {
-      URL.revokeObjectURL(this.#serializedRunUrl);
-    }
-
-    this.#serializedRun = await this.run.serialize();
-    const data = JSON.stringify(this.#serializedRun, null, 2);
-    this.#serializedRunUrl = URL.createObjectURL(
-      new Blob([data], { type: "application/json" })
-    );
-
-    this.downloadStatus = "ready";
-  }
-
-  #deleteCurrentExport() {
-    if (this.#serializedRun) {
-      this.#serializedRun = null;
-    }
-
-    if (this.#serializedRunUrl) {
-      URL.revokeObjectURL(this.#serializedRunUrl);
-    }
-
-    this.downloadStatus = "initial";
-  }
-
   async #renderSecretInput(event: InspectableRunSecretEvent) {
     const userInputs: UserInputConfiguration[] = event.keys.reduce(
       (prev, key) => {
@@ -529,6 +496,8 @@ export class BoardActivity extends LitElement {
           if (typeof nodeValue === "object") {
             if (isLLMContentArray(nodeValue)) {
               value = html`<bb-llm-output-array
+                .showModeToggle=${false}
+                .showEntrySelector=${false}
                 .showExportControls=${true}
                 .lite=${true}
                 .clamped=${false}
@@ -612,44 +581,9 @@ export class BoardActivity extends LitElement {
         ? nothing
         : html`<div id="click-run">${this.waitingMessage}</div>`;
 
-    let exportMessage: HTMLTemplateResult | symbol = nothing;
-    switch (this.downloadStatus) {
-      case "generating": {
-        exportMessage = html`${Strings.from("STATUS_GENERATING_EXPORT")}`;
-        break;
-      }
-
-      case "ready": {
-        exportMessage = html`<button
-            id="clear-export"
-            @click=${() => this.#deleteCurrentExport()}
-          >
-            ${Strings.from("COMMAND_CLEAR")}
-          </button>
-          <a
-            id="download-export"
-            .download=${`run-${new Date().toISOString()}.json`}
-            .href=${this.#serializedRunUrl}
-            >${Strings.from("COMMAND_DOWNLOAD")}</a
-          >`;
-        break;
-      }
-
-      default: {
-        exportMessage = html`<button
-          id="export"
-          @click=${() => this.#createExportFromCurrentRun()}
-        >
-          ${Strings.from("COMMAND_CREATE_EXPORT")}
-        </button>`;
-        break;
-      }
-    }
-
     const events =
       this.events && this.events.length
         ? html`
-            <div class="export-container">${exportMessage}</div>
             ${repeat(
               this.events,
               (event) => event.id,
