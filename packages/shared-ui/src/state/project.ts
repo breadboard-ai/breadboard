@@ -4,7 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Asset, AssetPath } from "@breadboard-ai/types";
+import {
+  Asset,
+  AssetPath,
+  GraphIdentifier,
+  NodeIdentifier,
+  NodeMetadata,
+} from "@breadboard-ai/types";
 import {
   EditableGraph,
   EditSpec,
@@ -17,7 +23,7 @@ import { SignalMap } from "signal-utils/map";
 import { ReactiveOrganizer } from "./organizer";
 import { AtMenu, Organizer, Project, ProjectInternal, Tool } from "./types";
 
-export { ReactiveProject, createProjectState };
+export { createProjectState, ReactiveProject };
 
 /**
  * Controls the filter for tools. Use it to tweak what shows up in the "Tools"
@@ -35,6 +41,8 @@ function createProjectState(
   return new ReactiveProject(mainGraphId, store, editable);
 }
 
+type ReactiveComponents = SignalMap<NodeIdentifier, NodeMetadata>;
+
 class ReactiveProject implements ProjectInternal {
   #mainGraphId: MainGraphIdentifier;
   #store: MutableGraphStore;
@@ -43,6 +51,7 @@ class ReactiveProject implements ProjectInternal {
   readonly tools: SignalMap<string, Tool>;
   readonly organizer: Organizer;
   readonly atMenu: AtMenu;
+  readonly components: SignalMap<GraphIdentifier, ReactiveComponents>;
 
   constructor(
     mainGraphId: MainGraphIdentifier,
@@ -54,20 +63,25 @@ class ReactiveProject implements ProjectInternal {
     this.#editable = editable;
     store.addEventListener("update", (event) => {
       if (event.mainGraphId === mainGraphId) {
+        this.#updateComponents();
         this.#updateGraphAssets();
       }
       this.#updateTools();
     });
     this.graphAssets = new SignalMap();
     this.tools = new SignalMap();
+    this.components = new SignalMap();
+
     this.organizer = new ReactiveOrganizer(this);
     this.atMenu = {
       graphAssets: this.graphAssets,
       generatedAssets: [],
       tools: this.tools,
-      components: [],
+      components: this.components,
     };
     this.#updateGraphAssets();
+    this.#updateComponents();
+    this.#updateTools();
   }
 
   async edit(spec: EditSpec[], label: string): Promise<Outcome<void>> {
@@ -86,15 +100,42 @@ class ReactiveProject implements ProjectInternal {
 
   #updateTools() {
     const graphs = this.#store.graphs();
-    const tools = graphs.filter(isTool).map((entry) => [
+    const tools = graphs.filter(isTool).map<[string, Tool]>((entry) => [
       entry.url!,
       {
         url: entry.url!,
         title: entry.title,
         description: entry.description,
       },
-    ]) as [string, Tool][];
+    ]);
     updateMap(this.tools, tools);
+  }
+
+  #updateComponents() {
+    const mutable = this.#store.get(this.#mainGraphId);
+    if (!mutable) return;
+
+    const map = this.components;
+    const toDelete = new Set(map.keys());
+    const updated = Object.entries(mutable.graphs.graphs());
+    updated.push(["", this.#store.inspect(this.#mainGraphId, "")!]);
+    updated.forEach(([key, value]) => {
+      let currentValue = map.get(key);
+      if (!currentValue) {
+        currentValue = new SignalMap<NodeIdentifier, NodeMetadata>();
+        map.set(key, currentValue);
+      } else {
+        toDelete.delete(key);
+      }
+      updateMap(
+        currentValue,
+        value.nodes().map((node) => [node.descriptor.id, node.metadata()])
+      );
+    });
+
+    [...toDelete.values()].forEach((key) => {
+      map.delete(key);
+    });
   }
 
   #updateGraphAssets() {

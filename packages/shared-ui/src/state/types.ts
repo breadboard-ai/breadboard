@@ -8,7 +8,10 @@ import {
   Asset,
   AssetMetadata,
   AssetPath,
+  GraphIdentifier,
   LLMContent,
+  NodeIdentifier,
+  NodeMetadata,
   NodeValue,
 } from "@breadboard-ai/types";
 import { EditSpec, Outcome } from "@google-labs/breadboard";
@@ -102,8 +105,7 @@ export type Tool = {
   description?: string;
 };
 
-// TODO: Make this a real object with props.
-export type Component = string;
+export type Components = Map<NodeIdentifier, NodeMetadata>;
 
 /**
  * Represents the Model+Controller for the "@" Menu.
@@ -112,7 +114,7 @@ export type AtMenu = {
   graphAssets: Map<AssetPath, Asset>;
   generatedAssets: GeneratedAsset[];
   tools: Map<string, Tool>;
-  components: Component[];
+  components: Map<GraphIdentifier, Components>;
 };
 
 /**
