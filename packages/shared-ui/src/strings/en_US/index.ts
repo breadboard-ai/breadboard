@@ -7,6 +7,7 @@
 import { LanguagePack } from "../../types/types";
 import ActivityLog from "./activity-log.js";
 import AppPreview from "./app-preview.js";
+import AssetOrganizer from "./asset-organizer.js";
 import CommandPalette from "./command-palette.js";
 import ComponentSelector from "./component-selector.js";
 import Editor from "./editor.js";
@@ -19,6 +20,7 @@ import WorkspaceOutline from "./workspace-outline.js";
 const lang: LanguagePack = {
   ActivityLog,
   AppPreview,
+  AssetOrganizer,
   CommandPalette,
   ComponentSelector,
   Editor,

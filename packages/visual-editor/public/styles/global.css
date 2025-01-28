@@ -99,6 +99,9 @@ body.hide-cursor {
   --bb-icon-add-video: url(/third_party/icons/add-video.svg);
   --bb-icon-add-video-inverted: url(/third_party/icons/add-video-inverted.svg);
 
+  --bb-icon-alternate-email: url(/third_party/icons/alternate-email.svg);
+  --bb-icon-alternate-email-inverted: url(/third_party/icons/alternate-email-inverted.svg);
+
   --bb-icon-anchor-active: url(/third_party/icons/anchor-active.svg);
   --bb-icon-anchor: url(/third_party/icons/anchor.svg);
   --bb-icon-anchor-inverted: url(/third_party/icons/anchor-inverted.svg);
@@ -126,6 +129,9 @@ body.hide-cursor {
 
   --bb-icon-capabilities: url(/third_party/icons/capabilities.svg);
   --bb-icon-capabilities-inverted: url(/third_party/icons/capabilities-inverted.svg);
+
+  --bb-icon-collapse-content: url(/third_party/icons/collapse-content.svg);
+  --bb-icon-collapse-content-inverted: url(/third_party/icons/collapse-content-inverted.svg);
 
   --bb-icon-close: url(/third_party/icons/close.svg);
   --bb-icon-close-inverted: url(/third_party/icons/close-inverted.svg);
@@ -171,6 +177,9 @@ body.hide-cursor {
   --bb-icon-directions-active: url(/third_party/icons/directions-active.svg);
   --bb-icon-directions-inverted: url(/third_party/icons/directions-inverted.svg);
 
+  --bb-icon-dock-to-right: url(/third_party/icons/dock-to-right.svg);
+  --bb-icon-dock-to-right-inverted: url(/third_party/icons/dock-to-right-inverted.svg);
+
   --bb-icon-download: url(/third_party/icons/download.svg);
   --bb-icon-download-inverted: url(/third_party/icons/download-inverted.svg);
 
@@ -200,6 +209,9 @@ body.hide-cursor {
 
   --bb-icon-expand: url(/third_party/icons/expand.svg);
   --bb-icon-expand-inverted: url(/third_party/icons/expand-inverted.svg);
+
+  --bb-icon-expand-content: url(/third_party/icons/expand-content.svg);
+  --bb-icon-expand-content-inverted: url(/third_party/icons/expand-content-inverted.svg);
 
   --bb-icon-experiment: url(/third_party/icons/experiment.svg);
   --bb-icon-experiment-inverted: url(/third_party/icons/experiment-inverted.svg);
@@ -758,6 +770,9 @@ body.hide-cursor {
   --bb-icon-add-video: url(/third_party/icons/add-video-inverted.svg);
   --bb-icon-add-video-inverted: url(/third_party/icons/add-video.svg);
 
+  --bb-icon-alternate-email: url(/third_party/icons/alternate-email-inverted.svg);
+  --bb-icon-alternate-email-inverted: url(/third_party/icons/alternate-email.svg);
+
   --bb-icon-anchor-active: url(/third_party/icons/anchor-active.svg);
   --bb-icon-anchor: url(/third_party/icons/anchor-inverted.svg);
   --bb-icon-anchor-inverted: url(/third_party/icons/anchor.svg);
@@ -808,6 +823,9 @@ body.hide-cursor {
   --bb-icon-code-blocks: url(/third_party/icons/code-blocks-inverted.svg);
   --bb-icon-code-blocks-inverted: url(/third_party/icons/code-blocks.svg);
 
+  --bb-icon-collapse-content: url(/third_party/icons/collapse-content-inverted.svg);
+  --bb-icon-collapse-content-inverted: url(/third_party/icons/collapse-content.svg);
+
   --bb-icon-continue: url(/third_party/icons/continue-inverted.svg);
   --bb-icon-continue-inverted: url(/third_party/icons/continue.svg);
 
@@ -829,6 +847,9 @@ body.hide-cursor {
   --bb-icon-directions: url(/third_party/icons/directions-inverted.svg);
   --bb-icon-directions-active: url(/third_party/icons/directions-active.svg);
   --bb-icon-directions-inverted: url(/third_party/icons/directions.svg);
+
+  --bb-icon-dock-to-right: url(/third_party/icons/dock-to-right-inverted.svg);
+  --bb-icon-dock-to-right-inverted: url(/third_party/icons/dock-to-right.svg);
 
   --bb-icon-download: url(/third_party/icons/download-inverted.svg);
   --bb-icon-download-inverted: url(/third_party/icons/download.svg);
@@ -859,6 +880,9 @@ body.hide-cursor {
 
   --bb-icon-expand: url(/third_party/icons/expand-inverted.svg);
   --bb-icon-expand-inverted: url(/third_party/icons/expand.svg);
+
+  --bb-icon-expand-content: url(/third_party/icons/expand-content-inverted.svg);
+  --bb-icon-expand-content-inverted: url(/third_party/icons/expand-content.svg);
 
   --bb-icon-experiment: url(/third_party/icons/experiment-inverted.svg);
   --bb-icon-experiment-inverted: url(/third_party/icons/experiment.svg);

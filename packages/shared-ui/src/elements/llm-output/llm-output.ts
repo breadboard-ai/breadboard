@@ -94,6 +94,7 @@ export class LLMOutput extends LitElement {
       user-select: text;
 
       &:has(> img),
+      &:has(> .copy-image-to-clipboard),
       &:has(> video),
       &:has(> audio) {
         justify-content: center;
@@ -243,7 +244,7 @@ export class LLMOutput extends LitElement {
     bb-export-toolbar {
       position: absolute;
       top: -16px;
-      right: 16px;
+      right: var(--export-x, 16px);
     }
   `;
 

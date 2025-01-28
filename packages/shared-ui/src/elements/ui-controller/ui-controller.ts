@@ -795,11 +795,7 @@ export class UI extends LitElement {
     return graph
       ? this.mainView === "create"
         ? html`<section id="create-view">
-            <!--
-            <div id="organizer-popout">
-              <bb-organizer .state="${this.organizer}"> </bb-organizer>
-            </div>
-  -->
+            <bb-asset-organizer .state=${this.organizer}></bb-asset-organizer>
             <div
               id="create-view-popout"
               class=${classMap({ expanded: this.popoutExpanded })}
