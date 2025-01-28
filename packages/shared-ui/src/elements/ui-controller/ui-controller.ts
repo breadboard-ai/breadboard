@@ -69,6 +69,7 @@ import {
 import { cache, CacheDirective } from "lit/directives/cache.js";
 import { DirectiveResult } from "lit/directive.js";
 import { ChatController } from "../../state/chat-controller.js";
+import { Organizer } from "../../state/organizer.js";
 
 const SIDE_NAV_ITEM_KEY = "bb-ui-side-nav-item";
 const POPOUT_STATE = "bb-ui-popout-state";
@@ -173,6 +174,9 @@ export class UI extends LitElement {
 
   @state()
   accessor popoutExpanded = false;
+
+  @state()
+  accessor organizer: Organizer | null = null;
 
   #lastEventPosition = 0;
   #graphEditorRef: Ref<Editor> = createRef();
@@ -791,6 +795,11 @@ export class UI extends LitElement {
     return graph
       ? this.mainView === "create"
         ? html`<section id="create-view">
+            <!--
+            <div id="organizer-popout">
+              <bb-organizer .state="${this.organizer}"> </bb-organizer>
+            </div>
+  -->
             <div
               id="create-view-popout"
               class=${classMap({ expanded: this.popoutExpanded })}

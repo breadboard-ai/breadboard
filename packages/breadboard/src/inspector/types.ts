@@ -743,6 +743,8 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> &
     readonly sandbox: Sandbox;
     readonly loader: GraphLoader;
 
+    get(mainGraphId: MainGraphIdentifier): MutableGraph | undefined;
+
     graphs(): GraphStoreEntry[];
     /**
      * This is a hacky API. Ideally, there's a list of graph entries

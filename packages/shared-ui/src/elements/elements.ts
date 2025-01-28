@@ -57,6 +57,7 @@ export { NodeRunner } from "./node-runner/node-runner.js";
 export { OpenBoardOverlay } from "./overlay/open-board.js";
 export { OverflowMenu } from "./overflow-menu/overflow-menu.js";
 export { Overlay } from "./overlay/overlay.js";
+export { OrganizerView } from "./organizer/organizer.js";
 export { PortTooltip } from "./editor/port-tooltip.js";
 export { ProjectListing } from "./welcome-panel/project-listing.js";
 export { SaveAsOverlay } from "./overlay/save-as.js";
