@@ -38,6 +38,7 @@
     "build:tsc": {
       "command": "tsc",
       "dependencies": [
+        "../board-server:build",
         "../connection-server:build"
       ]
     },
