@@ -7,6 +7,7 @@
 import { State } from "@breadboard-ai/shared-ui";
 
 import {
+  EditableGraph,
   MainGraphIdentifier,
   MutableGraphStore,
 } from "@google-labs/breadboard";
@@ -25,7 +26,10 @@ class StateManager {
     this.#store = store;
   }
 
-  getOrCreate(mainGraphId?: MainGraphIdentifier): BoardState | null {
+  getOrCreate(
+    mainGraphId?: MainGraphIdentifier,
+    editable?: EditableGraph | null
+  ): BoardState | null {
     if (!mainGraphId) return null;
 
     let state = this.#map.get(mainGraphId);
@@ -34,7 +38,11 @@ class StateManager {
     const mutable = this.#store.get(mainGraphId);
     if (!mutable) return null;
 
-    state = State.createProjectState(mainGraphId, this.#store);
+    state = State.createProjectState(
+      mainGraphId,
+      this.#store,
+      editable || undefined
+    );
     this.#map.set(mainGraphId, state);
     return state;
   }

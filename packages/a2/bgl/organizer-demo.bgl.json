@@ -14,7 +14,9 @@
               "title": "Context",
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
             }
@@ -43,7 +45,9 @@
               "title": "Context",
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "null"
             }
@@ -75,15 +79,48 @@
   },
   "assets": {
     "content-1": {
-      "data": [{ "parts": [{ "text": "HELLO WORLD" }], "role": "user" }],
+      "data": [
+        {
+          "parts": [
+            {
+              "text": "HELLO WORLD"
+            }
+          ],
+          "role": "user"
+        }
+      ],
       "metadata": {
         "title": "Hello World"
       }
     },
     "content-2": {
-      "data": [{ "parts": [{ "text": "MAXIMUM TURBO" }], "role": "user" }],
+      "data": [
+        {
+          "parts": [
+            {
+              "text": "MAXIMUM TURBO"
+            }
+          ],
+          "role": "user"
+        }
+      ],
       "metadata": {
         "title": "Maximum Turbo"
+      }
+    },
+    "foo": {
+      "data": [
+        {
+          "parts": [
+            {
+              "text": "Asset named foo"
+            }
+          ],
+          "role": "user"
+        }
+      ],
+      "metadata": {
+        "title": "Foo"
       }
     }
   }

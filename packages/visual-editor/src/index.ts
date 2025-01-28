@@ -3115,7 +3115,7 @@ export class Main extends LitElement {
               .graphStoreUpdateId=${this.graphStoreUpdateId}
               .showBoardReferenceMarkers=${this.showBoardReferenceMarkers}
               .chatController=${observers?.chatController}
-              .organizer=${this.#runtime.state.getOrCreate(this.tab?.mainGraphId)?.organizer}
+              .organizer=${this.#runtime.state.getOrCreate(this.tab?.mainGraphId, this.#runtime.edit.getEditor(this.tab))?.organizer}
               @bbrun=${async () => {
                 await this.#attemptBoardStart();
               }}

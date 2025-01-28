@@ -6,6 +6,7 @@
 
 import { Asset, AssetPath } from "@breadboard-ai/types";
 import {
+  EditableGraph,
   EditSpec,
   MainGraphIdentifier,
   MutableGraphStore,
@@ -19,21 +20,28 @@ export { ReactiveProject, createProjectState };
 
 function createProjectState(
   mainGraphId: MainGraphIdentifier,
-  store: MutableGraphStore
+  store: MutableGraphStore,
+  editable?: EditableGraph
 ): Project {
-  return new ReactiveProject(mainGraphId, store);
+  return new ReactiveProject(mainGraphId, store, editable);
 }
 
 class ReactiveProject implements ProjectInternal {
   #mainGraphId: MainGraphIdentifier;
   #store: MutableGraphStore;
+  #editable?: EditableGraph;
   readonly graphAssets: SignalMap<AssetPath, Asset>;
   readonly organizer: Organizer;
   readonly atMenu: AtMenu;
 
-  constructor(mainGraphId: MainGraphIdentifier, store: MutableGraphStore) {
+  constructor(
+    mainGraphId: MainGraphIdentifier,
+    store: MutableGraphStore,
+    editable?: EditableGraph
+  ) {
     this.#mainGraphId = mainGraphId;
     this.#store = store;
+    this.#editable = editable;
     store.addEventListener("update", (event) => {
       if (event.mainGraphId === mainGraphId) {
         this.#updateGraphAssets();
@@ -51,7 +59,7 @@ class ReactiveProject implements ProjectInternal {
   }
 
   async edit(spec: EditSpec[], label: string): Promise<Outcome<void>> {
-    const editable = this.#store.edit(this.#mainGraphId);
+    const editable = this.#editable;
     if (!editable) {
       return err(
         `Unable to get an editable graph with id "${this.#mainGraphId}"`
