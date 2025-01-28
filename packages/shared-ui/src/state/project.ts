@@ -21,7 +21,15 @@ import {
 } from "@google-labs/breadboard";
 import { SignalMap } from "signal-utils/map";
 import { ReactiveOrganizer } from "./organizer";
-import { AtMenu, Organizer, Project, ProjectInternal, Tool } from "./types";
+import {
+  FastAccessMenu,
+  GeneratedAsset,
+  GeneratedAssetIdentifier,
+  Organizer,
+  Project,
+  ProjectInternal,
+  Tool,
+} from "./types";
 
 export { createProjectState, ReactiveProject };
 
@@ -48,9 +56,10 @@ class ReactiveProject implements ProjectInternal {
   #store: MutableGraphStore;
   #editable?: EditableGraph;
   readonly graphAssets: SignalMap<AssetPath, Asset>;
+  readonly generatedAssets: SignalMap<GeneratedAssetIdentifier, GeneratedAsset>;
   readonly tools: SignalMap<string, Tool>;
   readonly organizer: Organizer;
-  readonly atMenu: AtMenu;
+  readonly fastAccess: FastAccessMenu;
   readonly components: SignalMap<GraphIdentifier, ReactiveComponents>;
 
   constructor(
@@ -71,11 +80,11 @@ class ReactiveProject implements ProjectInternal {
     this.graphAssets = new SignalMap();
     this.tools = new SignalMap();
     this.components = new SignalMap();
-
+    this.generatedAssets = new SignalMap();
     this.organizer = new ReactiveOrganizer(this);
-    this.atMenu = {
+    this.fastAccess = {
       graphAssets: this.graphAssets,
-      generatedAssets: [],
+      generatedAssets: this.generatedAssets,
       tools: this.tools,
       components: this.components,
     };

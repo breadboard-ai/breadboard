@@ -96,8 +96,12 @@ export type Organizer = {
   ): Promise<Outcome<void>>;
 };
 
-// TODO: Make this a real object with props.
-export type GeneratedAsset = string;
+export type GeneratedAssetIdentifier = string;
+
+export type GeneratedAsset = {
+  data: LLMContent[];
+  metadata?: AssetMetadata;
+};
 
 export type Tool = {
   url: string;
@@ -110,9 +114,9 @@ export type Components = Map<NodeIdentifier, NodeMetadata>;
 /**
  * Represents the Model+Controller for the "@" Menu.
  */
-export type AtMenu = {
+export type FastAccessMenu = {
   graphAssets: Map<AssetPath, Asset>;
-  generatedAssets: GeneratedAsset[];
+  generatedAssets: Map<GeneratedAssetIdentifier, GeneratedAsset>;
   tools: Map<string, Tool>;
   components: Map<GraphIdentifier, Components>;
 };
@@ -124,7 +128,7 @@ export type AtMenu = {
 export type Project = {
   graphAssets: Map<AssetPath, Asset>;
   organizer: Organizer;
-  atMenu: AtMenu;
+  fastAccess: FastAccessMenu;
 };
 
 export type ProjectInternal = Project & {
