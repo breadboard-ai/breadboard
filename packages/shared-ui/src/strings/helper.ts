@@ -40,6 +40,7 @@ export function forSection<T extends keyof LanguagePack>(section: T) {
   if (!currentLanguage) {
     currentLanguage = {
       ActivityLog: {},
+      AssetOrganizer: {},
       AppPreview: {},
       CommandPalette: {},
       ComponentSelector: {},

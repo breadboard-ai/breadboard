@@ -33,23 +33,17 @@ export const styles = css`
       grid-template-columns: none;
     }
 
-    & #organizer-popout {
+    & bb-asset-organizer {
       position: absolute;
-      bottom: 32px;
-      left: 32px;
-      width: 50vw;
-      height: 96px;
-      max-height: 70vh;
-      max-width: 200px;
+      bottom: var(--bb-grid-size-4);
+      left: var(--bb-grid-size-4);
       z-index: 4;
-      overflow: scroll;
-      background: var(--bb-neutral-0);
     }
 
     & #create-view-popout {
       position: absolute;
-      bottom: 32px;
-      right: 32px;
+      bottom: var(--bb-grid-size-4);
+      right: var(--bb-grid-size-4);
       width: 50vw;
       height: 96px;
       max-height: 70vh;
