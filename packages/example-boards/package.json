@@ -63,7 +63,8 @@
         "FORCE_COLOR": "1"
       },
       "dependencies": [
-        "typescript-files-and-deps"
+        "typescript-files-and-deps",
+        "generate:graphs"
       ],
       "files": [],
       "output": [
