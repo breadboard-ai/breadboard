@@ -4,7 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LLMContent, NodeValue } from "@breadboard-ai/types";
+import {
+  Asset,
+  AssetMetadata,
+  AssetPath,
+  LLMContent,
+  NodeValue,
+} from "@breadboard-ai/types";
+import { EditSpec, Outcome } from "@google-labs/breadboard";
 
 export type ChatStatus = "running" | "paused" | "stopped";
 
@@ -67,4 +74,27 @@ export type ChatConversationState = ChatUserTurnState | ChatSystemTurnState;
 export type ChatState = {
   conversation: ChatConversationState[];
   status: ChatStatus;
+};
+
+export type Organizer = {
+  /**
+   * Current graph's assets.
+   */
+  assets: Map<AssetPath, Asset>;
+
+  addAsset(path: AssetPath, asset: Asset): Promise<Outcome<void>>;
+  removeAsset(path: AssetPath): Promise<Outcome<void>>;
+  changeAssetMetadata(
+    path: AssetPath,
+    metadata: AssetMetadata
+  ): Promise<Outcome<void>>;
+};
+
+export type Project = {
+  assets: Map<AssetPath, Asset>;
+  organizer: Organizer;
+};
+
+export type ProjectInternal = Project & {
+  edit(spec: EditSpec[], label: string): Promise<Outcome<void>>;
 };

@@ -6,5 +6,5 @@
 
 export { ChatController } from "./chat-controller.js";
 export * from "./types.js";
-export { createOrganizer } from "./organizer.js";
+export { createProjectState } from "./project.js";
 export type * from "./organizer.js";

@@ -34,9 +34,7 @@ class StateManager {
     const mutable = this.#store.get(mainGraphId);
     if (!mutable) return null;
 
-    state = {
-      organizer: State.createOrganizer(mainGraphId, this.#store),
-    };
+    state = State.createProjectState(mainGraphId, this.#store);
     this.#map.set(mainGraphId, state);
     return state;
   }
