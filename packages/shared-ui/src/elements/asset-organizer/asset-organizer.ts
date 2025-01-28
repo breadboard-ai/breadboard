@@ -279,7 +279,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
 
   render() {
     const outputs = this.asset ? { data: this.asset.data } : null;
-    const assets = this.state?.assets;
+    const assets = this.state?.graphAssets;
 
     return html`<div id="container">
       <header>

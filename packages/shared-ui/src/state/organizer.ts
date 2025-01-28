@@ -12,14 +12,14 @@ export { ReactiveOrganizer };
 
 class ReactiveOrganizer implements Organizer {
   #project: ProjectInternal;
-  readonly assets: Map<AssetPath, Asset>;
+  readonly graphAssets: Map<AssetPath, Asset>;
 
   constructor(project: ProjectInternal) {
     this.#project = project;
-    this.assets = project.assets;
+    this.graphAssets = project.graphAssets;
   }
 
-  addAsset(path: AssetPath, asset: Asset): Promise<Outcome<void>> {
+  addGraphAsset(path: AssetPath, asset: Asset): Promise<Outcome<void>> {
     const { data, metadata } = asset;
     return this.#project.edit(
       [{ type: "addasset", path, data, metadata }],
@@ -27,14 +27,14 @@ class ReactiveOrganizer implements Organizer {
     );
   }
 
-  removeAsset(path: AssetPath): Promise<Outcome<void>> {
+  removeGraphAsset(path: AssetPath): Promise<Outcome<void>> {
     return this.#project.edit(
       [{ type: "removeasset", path }],
       `Removing asset at path "${path}"`
     );
   }
 
-  changeAssetMetadata(
+  changeGraphAssetMetadata(
     path: AssetPath,
     metadata: AssetMetadata
   ): Promise<Outcome<void>> {

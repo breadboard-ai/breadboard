@@ -13,7 +13,7 @@ import {
 } from "@google-labs/breadboard";
 import { SignalMap } from "signal-utils/map";
 import { ReactiveOrganizer } from "./organizer";
-import { Organizer, Project, ProjectInternal } from "./types";
+import { AtMenu, Organizer, Project, ProjectInternal } from "./types";
 
 export { ReactiveProject, createProjectState };
 
@@ -27,21 +27,27 @@ function createProjectState(
 class ReactiveProject implements ProjectInternal {
   #mainGraphId: MainGraphIdentifier;
   #store: MutableGraphStore;
-  readonly assets: SignalMap<AssetPath, Asset>;
-
+  readonly graphAssets: SignalMap<AssetPath, Asset>;
   readonly organizer: Organizer;
+  readonly atMenu: AtMenu;
 
   constructor(mainGraphId: MainGraphIdentifier, store: MutableGraphStore) {
     this.#mainGraphId = mainGraphId;
     this.#store = store;
     store.addEventListener("update", (event) => {
       if (event.mainGraphId === mainGraphId) {
-        this.#updateAssets();
+        this.#updateGraphAssets();
       }
     });
-    this.assets = new SignalMap();
+    this.graphAssets = new SignalMap();
     this.organizer = new ReactiveOrganizer(this);
-    this.#updateAssets();
+    this.atMenu = {
+      graphAssets: this.graphAssets,
+      generatedAssets: [],
+      tools: [],
+      components: [],
+    };
+    this.#updateGraphAssets();
   }
 
   async edit(spec: EditSpec[], label: string): Promise<Outcome<void>> {
@@ -58,21 +64,21 @@ class ReactiveProject implements ProjectInternal {
     }
   }
 
-  #updateAssets() {
+  #updateGraphAssets() {
     const mutable = this.#store.get(this.#mainGraphId);
     if (!mutable) return;
 
     const { assets = {} } = mutable.graph;
 
-    const toDelete = new Set(this.assets.keys());
+    const toDelete = new Set(this.graphAssets.keys());
 
     Object.entries(assets).forEach(([path, asset]) => {
-      this.assets.set(path, asset);
+      this.graphAssets.set(path, asset);
       toDelete.delete(path);
     });
 
     [...toDelete.values()].forEach((path) => {
-      this.assets.delete(path);
+      this.graphAssets.delete(path);
     });
   }
 }

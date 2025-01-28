@@ -76,23 +76,50 @@ export type ChatState = {
   status: ChatStatus;
 };
 
+/**
+ * Represents the Model+Controller for the Asset Organizer.
+ */
 export type Organizer = {
   /**
    * Current graph's assets.
    */
-  assets: Map<AssetPath, Asset>;
+  graphAssets: Map<AssetPath, Asset>;
 
-  addAsset(path: AssetPath, asset: Asset): Promise<Outcome<void>>;
-  removeAsset(path: AssetPath): Promise<Outcome<void>>;
-  changeAssetMetadata(
+  addGraphAsset(path: AssetPath, asset: Asset): Promise<Outcome<void>>;
+  removeGraphAsset(path: AssetPath): Promise<Outcome<void>>;
+  changeGraphAssetMetadata(
     path: AssetPath,
     metadata: AssetMetadata
   ): Promise<Outcome<void>>;
 };
 
+// TODO: Make this a real object with props.
+export type GeneratedAsset = string;
+
+// TODO: Make this a real object with props.
+export type Tool = string;
+
+// TODO: Make this a real object with props.
+export type Component = string;
+
+/**
+ * Represents the Model+Controller for the "@" Menu.
+ */
+export type AtMenu = {
+  graphAssets: Map<AssetPath, Asset>;
+  generatedAssets: GeneratedAsset[];
+  tools: Tool[];
+  components: Component[];
+};
+
+/**
+ * Represents the Model+Controller for the entire Project.
+ * Contains all the state for the project.
+ */
 export type Project = {
-  assets: Map<AssetPath, Asset>;
+  graphAssets: Map<AssetPath, Asset>;
   organizer: Organizer;
+  atMenu: AtMenu;
 };
 
 export type ProjectInternal = Project & {
