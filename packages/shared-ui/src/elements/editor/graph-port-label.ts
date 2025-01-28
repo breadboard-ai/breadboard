@@ -24,13 +24,14 @@ import {
   isLLMContentBehavior,
   isModuleBehavior,
 } from "../../utils";
+import { GraphAssets } from "./graph-assets";
 
 const hoverColor = getGlobalColor("--bb-ui-50");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
-const previewTextColor = getGlobalColor("--bb-neutral-700");
 
-const PREVIEW_WIDTH = 220;
+const PREVIEW_WIDTH = 236;
 const OFFSET_WHEN_EXPANDED = 0;
+const ICON_SCALE = 0.33;
 
 export class GraphPortLabel extends PIXI.Container {
   #isDirty = false;
@@ -47,12 +48,10 @@ export class GraphPortLabel extends PIXI.Container {
   #paddingRight = 4;
   #expansionState: ComponentExpansionState = "expanded";
 
-  #previewTextSize = 10;
-  #previewTextColor = previewTextColor;
-
   #port: InspectablePort | null = null;
   #label: PIXI.Text;
   #valuePreview: PIXI.HTMLText;
+  #icon: PIXI.Sprite | null = null;
   #hoverZone = new PIXI.Graphics();
 
   #showNodePreviewValues = false;
@@ -80,18 +79,26 @@ export class GraphPortLabel extends PIXI.Container {
       },
     });
 
+    if (port.schema.type === "boolean") {
+      const texture = GraphAssets.instance().get("check");
+      if (texture) {
+        this.#icon = new PIXI.Sprite(texture);
+        this.#icon.scale.x = ICON_SCALE;
+        this.#icon.scale.y = ICON_SCALE;
+      }
+    }
+
     this.#valuePreview = new PIXI.HTMLText({
       text: `<p>${this.#createTruncatedValue(port)}</p>`,
       style: {
         fontFamily: "Arial",
-        fontSize: this.#previewTextSize,
-        cssOverrides: ["background-color: red"],
+        fontSize: this.#textSize,
         tagStyles: {
           div: {
-            lineHeight: this.#previewTextSize * 1.4,
+            lineHeight: this.#textSize * 1.4,
           },
         },
-        fill: this.#previewTextColor,
+        fill: this.#portTextColor,
         align: "left",
         wordWrap: true,
         wordWrapWidth: PREVIEW_WIDTH,
@@ -99,10 +106,7 @@ export class GraphPortLabel extends PIXI.Container {
       },
     });
 
-    this.#valuePreview.style.addOverride("white-space: nowrap");
-    this.#valuePreview.style.addOverride("width: 224px");
-    this.#valuePreview.style.addOverride("overflow: hidden");
-    this.#valuePreview.style.addOverride("text-overflow: ellipsis");
+    this.#valuePreview.style.addOverride("width: 244px");
 
     this.#label.eventMode = "none";
     this.#valuePreview.eventMode = "none";
@@ -110,6 +114,10 @@ export class GraphPortLabel extends PIXI.Container {
     this.addChild(this.#hoverZone);
     this.addChild(this.#label);
     this.addChild(this.#valuePreview);
+
+    if (this.#icon) {
+      this.addChild(this.#icon);
+    }
 
     this.#hoverZone.visible = false;
     this.#valuePreview.visible = false;
@@ -309,13 +317,25 @@ export class GraphPortLabel extends PIXI.Container {
     this.#height = this.#label.height;
 
     if (this.#valuePreview.text !== "" && this.#showNodePreviewValues) {
+      this.#label.visible = false;
+      this.#valuePreview.y = 0;
       this.#valuePreview.visible = true;
       this.#width = PREVIEW_WIDTH;
-      this.#height += this.#spacing + this.#valuePreview.height;
+      this.#height = this.#spacing + this.#valuePreview.height;
+    } else {
+      if (this.#icon) {
+        this.#icon.visible = true;
+        this.#icon.x = 0;
+        this.#icon.y = 0;
+        this.#label.x = 20;
+        this.#label.y = 1;
+      }
     }
   }
 
   #createTruncatedValue(port: InspectablePort | null) {
+    const MAX_SIZE = 220;
+
     if (!port) {
       return "";
     }
@@ -358,8 +378,8 @@ export class GraphPortLabel extends PIXI.Container {
                 ? JSON.stringify(port.schema.default)
                 : `${port.schema.default}`;
 
-            if (defaultValue.length > 30) {
-              defaultValue = `${defaultValue.slice(0, 27)}...`;
+            if (defaultValue.length > MAX_SIZE - 3) {
+              defaultValue = `${defaultValue.slice(0, MAX_SIZE)}...`;
             }
 
             return defaultValue;
@@ -429,8 +449,8 @@ export class GraphPortLabel extends PIXI.Container {
       valStr = "";
     }
 
-    if (valStr.length > 60) {
-      valStr = `${valStr.substring(0, 60)}...`;
+    if (valStr.length > MAX_SIZE - 3) {
+      valStr = `${valStr.substring(0, MAX_SIZE)}...`;
     }
 
     return valStr;
