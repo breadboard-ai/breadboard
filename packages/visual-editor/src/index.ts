@@ -1994,6 +1994,10 @@ export class Main extends LitElement {
         const topGraphResult =
           observers?.topGraphObserver?.current() ??
           BreadboardUI.Utils.TopGraphObserver.entryResult(this.tab?.graph);
+        const projectState = this.#runtime.state.getOrCreate(
+          this.tab?.mainGraphId,
+          this.#runtime.edit.getEditor(this.tab)
+        );
         const inputsFromLastRun = runs[1]?.inputs() ?? null;
         const tabURLs = this.#runtime.board.getTabURLs();
         const offerConfigurationEnhancements =
@@ -3115,7 +3119,7 @@ export class Main extends LitElement {
               .graphStoreUpdateId=${this.graphStoreUpdateId}
               .showBoardReferenceMarkers=${this.showBoardReferenceMarkers}
               .chatController=${observers?.chatController}
-              .organizer=${this.#runtime.state.getOrCreate(this.tab?.mainGraphId, this.#runtime.edit.getEditor(this.tab))?.organizer}
+              .organizer=${projectState?.organizer}
               @bbrun=${async () => {
                 await this.#attemptBoardStart();
               }}
@@ -3590,6 +3594,10 @@ export class Main extends LitElement {
                 );
               }}
             ></bb-ui-controller>
+            <bb-fast-access-menu
+              .state=${projectState?.fastAccess}>
+        </bb-fast-access-menu>
+
         ${
           this.showWelcomePanel
             ? html`<bb-project-listing

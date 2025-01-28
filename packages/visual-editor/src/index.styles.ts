@@ -425,4 +425,15 @@ export const styles = css`
     left: 0;
     top: 0;
   }
+
+  bb-fast-access-menu {
+    position: absolute;
+    top: 100px;
+    left: 10px;
+    height: 300px;
+    width: 200px;
+    display: block;
+    background: white;
+    overflow: scroll;
+  }
 `;

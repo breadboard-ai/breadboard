@@ -11,7 +11,6 @@ import {
   MainGraphIdentifier,
   MutableGraphStore,
 } from "@google-labs/breadboard";
-import { BoardState } from "./types";
 
 export { StateManager };
 
@@ -19,7 +18,7 @@ export { StateManager };
  * Holds various important bits of UI state
  */
 class StateManager {
-  #map: Map<MainGraphIdentifier, BoardState> = new Map();
+  #map: Map<MainGraphIdentifier, State.Project> = new Map();
   #store: MutableGraphStore;
 
   constructor(store: MutableGraphStore) {
@@ -29,7 +28,7 @@ class StateManager {
   getOrCreate(
     mainGraphId?: MainGraphIdentifier,
     editable?: EditableGraph | null
-  ): BoardState | null {
+  ): State.Project | null {
     if (!mainGraphId) return null;
 
     let state = this.#map.get(mainGraphId);

@@ -22,7 +22,7 @@ import {
 import { SignalMap } from "signal-utils/map";
 import { ReactiveOrganizer } from "./organizer";
 import {
-  FastAccessMenu,
+  FastAccess,
   GeneratedAsset,
   GeneratedAssetIdentifier,
   Organizer,
@@ -59,7 +59,7 @@ class ReactiveProject implements ProjectInternal {
   readonly generatedAssets: SignalMap<GeneratedAssetIdentifier, GeneratedAsset>;
   readonly tools: SignalMap<string, Tool>;
   readonly organizer: Organizer;
-  readonly fastAccess: FastAccessMenu;
+  readonly fastAccess: FastAccess;
   readonly components: SignalMap<GraphIdentifier, ReactiveComponents>;
 
   constructor(

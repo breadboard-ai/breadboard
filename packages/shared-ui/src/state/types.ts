@@ -114,7 +114,7 @@ export type Components = Map<NodeIdentifier, NodeMetadata>;
 /**
  * Represents the Model+Controller for the "@" Menu.
  */
-export type FastAccessMenu = {
+export type FastAccess = {
   graphAssets: Map<AssetPath, Asset>;
   generatedAssets: Map<GeneratedAssetIdentifier, GeneratedAsset>;
   tools: Map<string, Tool>;
@@ -128,7 +128,7 @@ export type FastAccessMenu = {
 export type Project = {
   graphAssets: Map<AssetPath, Asset>;
   organizer: Organizer;
-  fastAccess: FastAccessMenu;
+  fastAccess: FastAccess;
 };
 
 export type ProjectInternal = Project & {
