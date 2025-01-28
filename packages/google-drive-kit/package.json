@@ -70,6 +70,7 @@
         "../build:build:tsc",
         "../core-kit:build:tsc",
         "../template-kit:build:tsc",
+        "../connection-client:build:tsc",
         "generate:js-components"
       ],
       "files": [
