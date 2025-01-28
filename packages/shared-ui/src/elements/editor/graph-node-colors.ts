@@ -14,7 +14,7 @@ const purple: GraphNodeColorScheme = {
 };
 
 const green: GraphNodeColorScheme = {
-  background: getGlobalColor("--bb-input-100"),
+  background: getGlobalColor("--bb-input-50"),
   mainBorder: getGlobalColor("--bb-input-600"),
   headerBorder: getGlobalColor("--bb-input-300"),
 };

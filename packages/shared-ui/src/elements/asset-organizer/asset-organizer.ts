@@ -89,6 +89,14 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
           border: none;
           font-size: 0;
           cursor: pointer;
+
+          opacity: 0.5;
+          transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+
+          &:hover,
+          &:focus {
+            opacity: 1;
+          }
         }
       }
 

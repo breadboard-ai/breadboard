@@ -6,6 +6,7 @@
 
 import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("UIController");
+const GlobalStrings = StringsHelper.forSection("Global");
 
 import {
   BoardServer,
@@ -52,6 +53,8 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import {
   CommandsSetSwitchEvent,
   InputEnterEvent,
+  RunEvent,
+  StopEvent,
 } from "../../events/events.js";
 import {
   COMMAND_SET_GRAPH_EDITOR,
@@ -59,7 +62,6 @@ import {
 } from "../../constants/constants.js";
 import { Editor, UserInput } from "../elements.js";
 import { classMap } from "lit/directives/class-map.js";
-import { map } from "lit/directives/map.js";
 import { Sandbox } from "@breadboard-ai/jsandbox";
 import { until } from "lit/directives/until.js";
 import {
@@ -70,6 +72,7 @@ import { cache, CacheDirective } from "lit/directives/cache.js";
 import { DirectiveResult } from "lit/directive.js";
 import { ChatController } from "../../state/chat-controller.js";
 import { Organizer } from "../../state/organizer.js";
+import { map } from "lit/directives/map.js";
 
 const SIDE_NAV_ITEM_KEY = "bb-ui-side-nav-item";
 const POPOUT_STATE = "bb-ui-popout-state";
@@ -189,7 +192,7 @@ export class UI extends LitElement {
     super.connectedCallback();
 
     const sideNavItem = globalThis.localStorage.getItem(SIDE_NAV_ITEM_KEY);
-    if (sideNavItem && sideNavItem !== "components") {
+    if (sideNavItem && sideNavItem !== "components" && sideNavItem !== "chat") {
       this.sideNavItem = sideNavItem;
     }
 
@@ -214,7 +217,7 @@ export class UI extends LitElement {
         this.status === "running"
       ) {
         this.#setPopoutState(true);
-        this.sideNavItem = "chat";
+        this.sideNavItem = "console";
       }
     }
 
@@ -501,7 +504,7 @@ export class UI extends LitElement {
       ],
       () => {
         // This needs to be kept in sync with the width of #create-view-popout.
-        const offsetZoom = Math.min(window.innerWidth * 0.5, 450) - 65;
+        const offsetZoom = Math.min(window.innerWidth * 0.5, 450) - 85;
 
         return html`<bb-editor
           ${ref(this.#graphEditorRef)}
@@ -536,7 +539,7 @@ export class UI extends LitElement {
           .showBoardReferenceMarkers=${this.showBoardReferenceMarkers}
           @bbrun=${() => {
             this.#setPopoutState(true);
-            this.sideNavItem = "chat";
+            this.sideNavItem = "console";
           }}
         ></bb-editor>`;
       }
@@ -565,7 +568,7 @@ export class UI extends LitElement {
         .graphStore=${this.graphStore}
         @bbrun=${() => {
           this.#setPopoutState(true);
-          this.sideNavItem = "chat";
+          this.sideNavItem = "console";
         }}
       ></bb-module-editor>`;
     }
@@ -583,10 +586,13 @@ export class UI extends LitElement {
       chosenSideNavItem = null;
     }
 
-    const sectionNavItems = [
-      { item: "chat", label: "LABEL_SECTION_NAV_CHAT" },
-      { item: "console", label: "LABEL_SECTION_NAV_CONSOLE" },
-    ];
+    const sectionNavItems = [];
+    if (showBoardHierarchy) {
+      sectionNavItems.unshift({
+        item: "console",
+        label: "LABEL_SECTION_NAV_CONSOLE",
+      });
+    }
 
     if (modules.length > 0) {
       sectionNavItems.unshift({
@@ -652,51 +658,6 @@ export class UI extends LitElement {
               .graphStore=${this.graphStore}
               .mainGraphId=${this.mainGraphId}
             ></bb-component-selector>`
-        )}`;
-        break;
-      }
-
-      case "chat": {
-        let showDebugControls = false;
-        if (newestEvent && newestEvent.type === "node") {
-          showDebugControls =
-            this.status === "stopped" && newestEvent.end === null;
-        }
-
-        const hideLast = this.status === STATUS.STOPPED;
-        const inputsFromLastRun = lastRun?.inputs() ?? null;
-        const nextNodeId =
-          this.topGraphResult?.currentNode?.descriptor.id ?? null;
-
-        sideNavItem = html`${guard(
-          [
-            run,
-            events,
-            eventPosition,
-            this.debugEvent,
-            this.chatController?.state(),
-          ],
-          () => {
-            return html` <div id="board-chat-container">
-              <bb-chat
-                class=${classMap({ collapsed: this.debugEvent !== null })}
-                .run=${run}
-                .events=${events}
-                .state=${this.chatController?.state()}
-                .eventPosition=${eventPosition}
-                .inputsFromLastRun=${inputsFromLastRun}
-                .showExtendedInfo=${true}
-                .settings=${this.settings}
-                .showLogTitle=${false}
-                .logTitle=${"Run"}
-                .hideLast=${hideLast}
-                .boardServers=${this.boardServers}
-                .showDebugControls=${showDebugControls}
-                .nextNodeId=${nextNodeId}
-                name=${Strings.from("LABEL_PROJECT")}
-              ></bb-chat>
-            </div>`;
-          }
         )}`;
         break;
       }
@@ -792,6 +753,11 @@ export class UI extends LitElement {
       }
     });
 
+    const isRunning = this.topGraphResult
+      ? this.topGraphResult.status === "running" ||
+        this.topGraphResult.status === "paused"
+      : false;
+
     return graph
       ? this.mainView === "create"
         ? html`<section id="create-view">
@@ -807,6 +773,24 @@ export class UI extends LitElement {
                     this.#setPopoutState(!this.popoutExpanded);
                   }}
                 >
+                  <button
+                    id="run"
+                    title=${GlobalStrings.from("LABEL_RUN_PROJECT")}
+                    class=${classMap({ running: isRunning })}
+                    ?disabled=${this.readOnly}
+                    @click=${() => {
+                      if (isRunning) {
+                        this.dispatchEvent(new StopEvent());
+                      } else {
+                        this.dispatchEvent(new RunEvent());
+                      }
+                    }}
+                  >
+                    ${isRunning
+                      ? GlobalStrings.from("LABEL_STOP")
+                      : GlobalStrings.from("LABEL_RUN")}
+                  </button>
+
                   ${map(sectionNavItems, ({ item, label }) => {
                     const newEventCount =
                       events.length - this.#lastEventPosition;

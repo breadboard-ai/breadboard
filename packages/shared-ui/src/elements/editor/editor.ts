@@ -6,7 +6,6 @@
 
 import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("Editor");
-const GlobalStrings = StringsHelper.forSection("Global");
 
 import {
   BoardServer,
@@ -15,6 +14,7 @@ import {
   GraphProviderCapabilities,
   GraphProviderExtendedCapabilities,
   GraphStoreEntry,
+  GraphStoreUpdateEvent,
   InspectableGraph,
   InspectableNodePorts,
   InspectableRun,
@@ -67,9 +67,7 @@ import {
   NodeDeleteEvent,
   NodeRunRequestEvent,
   NodeTypeRetrievalErrorEvent,
-  RunEvent,
   ShowTooltipEvent,
-  StopEvent,
   WorkspaceSelectionStateEvent,
   WorkspaceVisualUpdateEvent,
 } from "../../events/events.js";
@@ -590,13 +588,6 @@ export class Editor extends LitElement implements DragConnectorReceiver {
             }
 
             &#preset-built-in {
-              background:
-                var(--bb-icon-extension) 8px center / 20px 20px no-repeat,
-                var(--bb-icon-keyboard-arrow-down) 28px center / 12px 12px
-                  no-repeat;
-            }
-
-            &#preset-utility {
               background:
                 var(--bb-icon-route) 8px center / 20px 20px no-repeat,
                 var(--bb-icon-keyboard-arrow-down) 28px center / 12px 12px
@@ -1444,11 +1435,6 @@ export class Editor extends LitElement implements DragConnectorReceiver {
   }
 
   render() {
-    const isRunning = this.topGraphResult
-      ? this.topGraphResult.status === "running" ||
-        this.topGraphResult.status === "paused"
-      : false;
-
     const readOnlyFlag =
       this.graph !== null && this.readOnly && this.showReadOnlyLabel
         ? html`<aside id="readonly-overlay">Read-only View</aside>`
@@ -1467,6 +1453,45 @@ export class Editor extends LitElement implements DragConnectorReceiver {
         }}
       >
       </bb-component-selector-overlay>`;
+    }
+
+    let storeReady = Promise.resolve();
+    if (this.graphStore) {
+      storeReady = new Promise((resolve) => {
+        if (!this.graphStore) {
+          resolve();
+          return;
+        }
+
+        const awaitingUpdate = new Set<string>();
+        const onGraphUpdate = (evt: GraphStoreUpdateEvent) => {
+          if (awaitingUpdate.has(evt.mainGraphId)) {
+            awaitingUpdate.delete(evt.mainGraphId);
+          }
+
+          if (awaitingUpdate.size === 0) {
+            this.graphStore?.removeEventListener(
+              "update",
+              onGraphUpdate as EventListener
+            );
+            resolve();
+          }
+        };
+
+        this.graphStore.addEventListener("update", onGraphUpdate);
+
+        for (const graph of this.graphStore.graphs()) {
+          if (!graph.updating) {
+            continue;
+          }
+
+          awaitingUpdate.add(graph.mainGraph.id);
+        }
+
+        if (awaitingUpdate.size === 0) {
+          resolve();
+        }
+      });
     }
 
     let componentPicker: HTMLTemplateResult | symbol = nothing;
@@ -1535,31 +1560,13 @@ export class Editor extends LitElement implements DragConnectorReceiver {
     const content = html`<div id="content">
       ${this.graph && !this.readOnly
         ? html`<div id="floating-buttons">
-            <div id="start">
-              <button
-                id="run"
-                title=${GlobalStrings.from("LABEL_RUN_PROJECT")}
-                class=${classMap({ running: isRunning })}
-                ?disabled=${this.readOnly}
-                @click=${() => {
-                  if (isRunning) {
-                    this.dispatchEvent(new StopEvent());
-                  } else {
-                    this.dispatchEvent(new RunEvent());
-                  }
-                }}
-              >
-                ${isRunning
-                  ? GlobalStrings.from("LABEL_STOP")
-                  : GlobalStrings.from("LABEL_RUN")}
-              </button>
-            </div>
             <div id="shelf">
               <button
                 id="preset-all"
                 class="expandable"
                 ?disabled=${this.readOnly}
-                @click=${() => {
+                @click=${async () => {
+                  await storeReady;
                   this.showComponentLibrary = !this.showComponentLibrary;
                 }}
               >
@@ -1569,11 +1576,12 @@ export class Editor extends LitElement implements DragConnectorReceiver {
                 id="preset-a2"
                 class="expandable"
                 ?disabled=${this.readOnly}
-                @click=${(evt: PointerEvent) => {
+                @click=${async (evt: PointerEvent) => {
                   if (!(evt.target instanceof HTMLButtonElement)) {
                     return;
                   }
 
+                  await storeReady;
                   this.#showComponentPicker(evt.target, "A2");
                 }}
               >
@@ -1583,26 +1591,13 @@ export class Editor extends LitElement implements DragConnectorReceiver {
                 id="preset-built-in"
                 class="expandable"
                 ?disabled=${this.readOnly}
-                @click=${(evt: PointerEvent) => {
+                @click=${async (evt: PointerEvent) => {
                   if (!(evt.target instanceof HTMLButtonElement)) {
                     return;
                   }
 
+                  await storeReady;
                   this.#showComponentPicker(evt.target, "Built-in Kit");
-                }}
-              >
-                ${Strings.from("LABEL_SHOW_LIST")}
-              </button>
-              <button
-                id="preset-utility"
-                class="expandable"
-                ?disabled=${this.readOnly}
-                @click=${(evt: PointerEvent) => {
-                  if (!(evt.target instanceof HTMLButtonElement)) {
-                    return;
-                  }
-
-                  this.#showComponentPicker(evt.target, "Utility Kit");
                 }}
               >
                 ${Strings.from("LABEL_SHOW_LIST")}
@@ -1611,28 +1606,13 @@ export class Editor extends LitElement implements DragConnectorReceiver {
                 id="preset-tools"
                 class="expandable"
                 ?disabled=${this.readOnly}
-                @click=${(evt: PointerEvent) => {
+                @click=${async (evt: PointerEvent) => {
                   if (!(evt.target instanceof HTMLButtonElement)) {
                     return;
                   }
 
+                  await storeReady;
                   this.#showComponentPicker(evt.target, "Tool Kit");
-                }}
-              >
-                ${Strings.from("LABEL_SHOW_LIST")}
-              </button>
-              <button
-                id="preset-comment"
-                draggable="true"
-                ?disabled=${this.readOnly}
-                @dblclick=${() => {
-                  this.dispatchEvent(new KitNodeChosenEvent("comment"));
-                }}
-                @dragstart=${(evt: DragEvent) => {
-                  if (!evt.dataTransfer) {
-                    return;
-                  }
-                  evt.dataTransfer.setData(DATA_TYPE, "comment");
                 }}
               >
                 ${Strings.from("LABEL_SHOW_LIST")}
