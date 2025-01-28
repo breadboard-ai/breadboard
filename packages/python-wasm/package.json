@@ -123,6 +123,6 @@
   "devDependencies": {
     "eslint": "^8.57.1",
     "typescript": "^5.6.3",
-    "wireit": "^0.14.9"
+    "wireit": "^0.14.10"
   }
 }
