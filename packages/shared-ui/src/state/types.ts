@@ -96,8 +96,11 @@ export type Organizer = {
 // TODO: Make this a real object with props.
 export type GeneratedAsset = string;
 
-// TODO: Make this a real object with props.
-export type Tool = string;
+export type Tool = {
+  url: string;
+  title?: string;
+  description?: string;
+};
 
 // TODO: Make this a real object with props.
 export type Component = string;
@@ -108,7 +111,7 @@ export type Component = string;
 export type AtMenu = {
   graphAssets: Map<AssetPath, Asset>;
   generatedAssets: GeneratedAsset[];
-  tools: Tool[];
+  tools: Map<string, Tool>;
   components: Component[];
 };
 

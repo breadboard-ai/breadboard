@@ -8,15 +8,24 @@ import { Asset, AssetPath } from "@breadboard-ai/types";
 import {
   EditableGraph,
   EditSpec,
+  GraphStoreEntry,
   MainGraphIdentifier,
   MutableGraphStore,
   Outcome,
 } from "@google-labs/breadboard";
 import { SignalMap } from "signal-utils/map";
 import { ReactiveOrganizer } from "./organizer";
-import { AtMenu, Organizer, Project, ProjectInternal } from "./types";
+import { AtMenu, Organizer, Project, ProjectInternal, Tool } from "./types";
 
 export { ReactiveProject, createProjectState };
+
+/**
+ * Controls the filter for tools. Use it to tweak what shows up in the "Tools"
+ * section of the "@" menu.
+ */
+function isTool(entry: GraphStoreEntry) {
+  return entry.tags?.includes("tool") && !!entry.url;
+}
 
 function createProjectState(
   mainGraphId: MainGraphIdentifier,
@@ -31,6 +40,7 @@ class ReactiveProject implements ProjectInternal {
   #store: MutableGraphStore;
   #editable?: EditableGraph;
   readonly graphAssets: SignalMap<AssetPath, Asset>;
+  readonly tools: SignalMap<string, Tool>;
   readonly organizer: Organizer;
   readonly atMenu: AtMenu;
 
@@ -46,13 +56,15 @@ class ReactiveProject implements ProjectInternal {
       if (event.mainGraphId === mainGraphId) {
         this.#updateGraphAssets();
       }
+      this.#updateTools();
     });
     this.graphAssets = new SignalMap();
+    this.tools = new SignalMap();
     this.organizer = new ReactiveOrganizer(this);
     this.atMenu = {
       graphAssets: this.graphAssets,
       generatedAssets: [],
-      tools: [],
+      tools: this.tools,
       components: [],
     };
     this.#updateGraphAssets();
@@ -72,25 +84,49 @@ class ReactiveProject implements ProjectInternal {
     }
   }
 
+  #updateTools() {
+    const graphs = this.#store.graphs();
+    const tools = graphs.filter(isTool).map((entry) => [
+      entry.url!,
+      {
+        url: entry.url!,
+        title: entry.title,
+        description: entry.description,
+      },
+    ]) as [string, Tool][];
+    updateMap(this.tools, tools);
+  }
+
   #updateGraphAssets() {
     const mutable = this.#store.get(this.#mainGraphId);
     if (!mutable) return;
 
     const { assets = {} } = mutable.graph;
 
-    const toDelete = new Set(this.graphAssets.keys());
-
-    Object.entries(assets).forEach(([path, asset]) => {
-      this.graphAssets.set(path, asset);
-      toDelete.delete(path);
-    });
-
-    [...toDelete.values()].forEach((path) => {
-      this.graphAssets.delete(path);
-    });
+    updateMap(this.graphAssets, Object.entries(assets));
   }
 }
 
 function err($error: string) {
   return { $error };
+}
+
+/**
+ * Incrementally updates a map, given updated values.
+ * Updates the values in `updated`, deletes the ones that aren't in it.
+ */
+function updateMap<T extends SignalMap>(
+  map: T,
+  updated: [string, unknown][]
+): void {
+  const toDelete = new Set(map.keys());
+
+  updated.forEach(([key, value]) => {
+    map.set(key, value);
+    toDelete.delete(key);
+  });
+
+  [...toDelete.values()].forEach((key) => {
+    map.delete(key);
+  });
 }
