@@ -8,16 +8,23 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { FastAccess } from "../../state";
+import { GraphIdentifier } from "@breadboard-ai/types";
 
 @customElement("bb-fast-access-menu")
 export class FastAccessMenu extends SignalWatcher(LitElement) {
   @property()
   accessor state: FastAccess | null = null;
 
+  @property()
+  accessor graphId: GraphIdentifier | null = null;
+
   render() {
+    const graphId = this.graphId || "";
     const assets = [...(this.state?.graphAssets.values() || [])];
     const tools = [...(this.state?.tools.values() || [])];
-    const components = [...(this.state?.components.get("")?.values() || [])];
+    const components = [
+      ...(this.state?.components.get(graphId)?.values() || []),
+    ];
     return html`<h3>Assets</h3>
       <ul>
         ${assets.map((asset) => {

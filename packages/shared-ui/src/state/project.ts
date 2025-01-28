@@ -9,7 +9,6 @@ import {
   AssetPath,
   GraphIdentifier,
   NodeIdentifier,
-  NodeMetadata,
 } from "@breadboard-ai/types";
 import {
   EditableGraph,
@@ -22,6 +21,7 @@ import {
 import { SignalMap } from "signal-utils/map";
 import { ReactiveOrganizer } from "./organizer";
 import {
+  Component,
   FastAccess,
   GeneratedAsset,
   GeneratedAssetIdentifier,
@@ -49,7 +49,7 @@ function createProjectState(
   return new ReactiveProject(mainGraphId, store, editable);
 }
 
-type ReactiveComponents = SignalMap<NodeIdentifier, NodeMetadata>;
+type ReactiveComponents = SignalMap<NodeIdentifier, Component>;
 
 class ReactiveProject implements ProjectInternal {
   #mainGraphId: MainGraphIdentifier;
@@ -131,14 +131,21 @@ class ReactiveProject implements ProjectInternal {
     updated.forEach(([key, value]) => {
       let currentValue = map.get(key);
       if (!currentValue) {
-        currentValue = new SignalMap<NodeIdentifier, NodeMetadata>();
+        currentValue = new SignalMap<NodeIdentifier, Component>();
         map.set(key, currentValue);
       } else {
         toDelete.delete(key);
       }
       updateMap(
         currentValue,
-        value.nodes().map((node) => [node.descriptor.id, node.metadata()])
+        value.nodes().map((node) => [
+          node.descriptor.id,
+          {
+            id: node.descriptor.id,
+            title: node.title(),
+            description: node.description(),
+          },
+        ])
       );
     });
 

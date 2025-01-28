@@ -3595,8 +3595,8 @@ export class Main extends LitElement {
               }}
             ></bb-ui-controller>
             <bb-fast-access-menu
-              .state=${projectState?.fastAccess}>
-        </bb-fast-access-menu>
+              .graphId=${this.subGraphId}
+              .state=${projectState?.fastAccess}></bb-fast-access-menu>
 
         ${
           this.showWelcomePanel

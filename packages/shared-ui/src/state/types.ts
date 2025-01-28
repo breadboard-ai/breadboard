@@ -11,7 +11,6 @@ import {
   GraphIdentifier,
   LLMContent,
   NodeIdentifier,
-  NodeMetadata,
   NodeValue,
 } from "@breadboard-ai/types";
 import { EditSpec, Outcome } from "@google-labs/breadboard";
@@ -109,7 +108,13 @@ export type Tool = {
   description?: string;
 };
 
-export type Components = Map<NodeIdentifier, NodeMetadata>;
+export type Component = {
+  id: NodeIdentifier;
+  title: string;
+  description?: string;
+};
+
+export type Components = Map<NodeIdentifier, Component>;
 
 /**
  * Represents the Model+Controller for the "@" Menu.
