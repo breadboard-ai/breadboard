@@ -80,7 +80,8 @@
         "package.json"
       ],
       "output": [
-        "dist/server/index.js"
+        "dist/server",
+        "dist/scripts"
       ],
       "dependencies": [
         "../breadboard:build",
