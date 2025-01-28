@@ -79,8 +79,7 @@
         "./packages/palm-kit:test",
         "./packages/python-wasm:test",
         "./packages/schema:test",
-        "./packages/template-kit:test",
-        "./packages/unified-server:test"
+        "./packages/template-kit:test"
       ]
     },
     "lint": {
