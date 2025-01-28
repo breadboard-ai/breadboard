@@ -37,6 +37,7 @@ export * as Types from "./types.js";
 
 import { sandbox } from "../sandbox";
 import { Select } from "./select.js";
+import { StateManager } from "./state.js";
 
 function withRunModule(kits: Kit[]): Kit[] {
   return addSandboxedRunModule(sandbox, kits);
@@ -48,6 +49,7 @@ export async function create(config: RuntimeConfig): Promise<{
   edit: Edit;
   kits: Kit[];
   select: Select;
+  state: StateManager;
   util: typeof Util;
 }> {
   const kits = withRunModule(
@@ -110,6 +112,7 @@ export async function create(config: RuntimeConfig): Promise<{
     board: new Board([], loader, kits, boardServers, config.tokenVendor),
     edit: new Edit([], loader, kits, config.sandbox, graphStore),
     run: new Run(graphStore, config.dataStore, config.runStore),
+    state: new StateManager(graphStore),
     select: new Select(),
     util: Util,
     kits,
