@@ -120,7 +120,7 @@
       ]
     },
     "build:tests": {
-      "command": "tsc -b --pretty",
+      "command": "tsc -b tsconfig.test.json --pretty",
       "env": {
         "FORCE_COLOR": "1"
       },
@@ -144,7 +144,7 @@
         "../../core/tsconfig/base.json"
       ],
       "output": [
-        "dist/"
+        "dist_test/"
       ],
       "clean": "if-file-deleted"
     },
@@ -152,7 +152,7 @@
       "command": "rm -f test.db"
     },
     "test": {
-      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/*.js",
+      "command": "node --test --enable-source-maps --test-reporter spec dist_test/tests/*.js",
       "dependencies": [
         "build:tests"
       ],

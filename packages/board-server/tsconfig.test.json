@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "outDir": "dist_test",
+    "tsBuildInfoFile": "dist_test/.tsbuildinfo",
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "types": ["node"],
+    "lib": ["ES2022", "DOM"],
+    "incremental": true,
+    "declaration": true,
+    "sourceMap": true,
+    "inlineSources": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "verbatimModuleSyntax": true,
+    "useUnknownInCatchVariables": true,
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+    "resolveJsonModule": true,
+    "esModuleInterop": true
+  },
+  "include": ["src/**/*.ts", "tests/**/*.ts", "tests/**/*.json"],
+  "exclude": []
+}
