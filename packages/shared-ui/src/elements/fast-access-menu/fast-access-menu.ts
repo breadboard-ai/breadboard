@@ -9,11 +9,6 @@ import { html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { FastAccess } from "../../state";
 import { GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
-import {
-  FastAccessErrorEvent,
-  FastAccessSelectEvent,
-} from "../../events/events";
-import { ok } from "@google-labs/breadboard";
 
 @customElement("bb-fast-access-menu")
 export class FastAccessMenu extends SignalWatcher(LitElement) {
@@ -40,12 +35,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
             @click=${() => {
               if (!this.state) return;
 
-              const result = this.state.selectGraphAsset(asset.path);
-              if (ok(result)) {
-                this.dispatchEvent(new FastAccessSelectEvent(result));
-              } else {
-                this.dispatchEvent(new FastAccessErrorEvent(result.$error));
-              }
+              const result = this.state.components.get(asset.path);
+              console.log("ASSET SELECTED", result);
             }}
           >
             ${asset.metadata?.title}
@@ -63,14 +54,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
         ${components.map((component) => {
           return html`<li
             @click=${async () => {
-              if (!this.state || !this.nodeId) return;
-
-              const result = await this.state.selectComponent(
-                graphId,
-                component.id,
-                this.nodeId
-              );
-              console.log("COMPONENT", result);
+              console.log("COMPONENT", component);
             }}
           >
             ${component.title}

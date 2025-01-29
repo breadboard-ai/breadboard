@@ -120,10 +120,6 @@ export type GraphAsset = Asset & {
   path: AssetPath;
 };
 
-export type FastAccessContext = {
-  nodeId: NodeIdentifier;
-};
-
 /**
  * Represents the Model+Controller for the "@" Menu.
  */
@@ -132,15 +128,6 @@ export type FastAccess = {
   generatedAssets: Map<GeneratedAssetIdentifier, GeneratedAsset>;
   tools: Map<string, Tool>;
   components: Map<GraphIdentifier, Components>;
-
-  setContext(context: FastAccessContext): void;
-  selectGraphAsset(path: AssetPath): Outcome<string>;
-  selectTool(url: string): Outcome<string>;
-  selectComponent(
-    graphId: GraphIdentifier,
-    from: NodeIdentifier,
-    to: NodeIdentifier
-  ): Promise<Outcome<string>>;
 };
 
 /**

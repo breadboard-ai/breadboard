@@ -721,14 +721,14 @@ export class NodeConfigurationOverlay extends LitElement {
       inline
     >
       <div id="wrapper">
-        <bb-fast-access-menu
+        <!-- <bb-fast-access-menu
           @bbfastaccessselect=${(evt: FastAccessSelectEvent) => {
-            console.log("HELLO", evt.snippet);
-          }}
+          console.log("HELLO", evt.snippet);
+        }}
           .graphId=${this.configuration.subGraphId}
           .nodeId=${this.configuration.id}
           .state=${this.projectState?.fastAccess}
-        ></bb-fast-access-menu>
+        ></bb-fast-access-menu> -->
 
         <form
           ${ref(this.#formRef)}
