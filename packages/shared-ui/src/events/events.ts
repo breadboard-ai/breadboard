@@ -1283,6 +1283,14 @@ export class FastAccessSelectEvent extends Event {
   }
 }
 
+export class FastAccessDismissedEvent extends Event {
+  static eventName = "bbfastaccessdismissed";
+
+  constructor() {
+    super(FastAccessDismissedEvent.eventName, { ...eventInit });
+  }
+}
+
 export class FastAccessErrorEvent extends Event {
   static eventName = "bbfastaccesserror";
 

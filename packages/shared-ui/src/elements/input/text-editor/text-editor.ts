@@ -3,22 +3,23 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
+import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { Project } from "../../../state";
 import { FastAccessSelectEvent } from "../../../events/events";
 import { FastAccessMenu } from "../../elements";
-import { classMap } from "lit/directives/class-map.js";
 
 @customElement("bb-text-editor")
 export class TextEditor extends LitElement {
   @property()
   set value(value: string) {
+    value = value.trim();
+
     this.#value = value;
-    this.#renderableValue = html`${value}`;
+    this.#renderableValue = value;
     if (value === "") {
-      this.#renderableValue = html`&nbsp;`;
+      this.#renderableValue = "&nbsp;";
     }
 
     const finder = /\[(.*?)\|(.*?)\|(.*?)\]/gim;
@@ -31,29 +32,29 @@ export class TextEditor extends LitElement {
       }
     } while (res);
 
-    this.#renderableValue = [];
+    if (matches.length === 0) {
+      return;
+    }
+
+    this.#renderableValue = "";
     let current = 0;
     for (const match of matches) {
       const [str, path, type, title] = match;
       if (current < match.index) {
-        this.#renderableValue.push(html`${value.slice(current, match.index)}`);
+        this.#renderableValue += value.slice(current, match.index);
       }
 
-      this.#renderableValue.push(
-        html`<label class=${classMap({ chiclet: true, [type]: true })}
-          ><span>[${path}|${type}|</span><span class="visible">${title}</span
-          ><span>]</span></label
-        >`
-      );
-
+      // To keep things a bit simpler in the regexp and so forth we send this
+      // out as a single line string.
+      this.#renderableValue += `<label class="chiclet ${type}" contenteditable="false"><span>[${path}|${type}|</span><span class="visible">${title}</span><span>]</span></label>`;
       current = match.index + str.length;
     }
 
     if (current < value.length) {
-      this.#renderableValue.push(html`${value.slice(current)}`);
+      this.#renderableValue += value.slice(current);
     } else {
       // Ensure that if the final item is a chiclet we add a space on.
-      this.#renderableValue.push(html`&nbsp;`);
+      this.#renderableValue += "&nbsp;";
     }
   }
 
@@ -173,13 +174,12 @@ export class TextEditor extends LitElement {
       left: 0;
       width: 100%;
       height: 0;
-      background: var(--bb-neutral-0);
+      background: red;
     }
   `;
 
   #value = "";
-  #renderableValue: HTMLTemplateResult | HTMLTemplateResult[] | symbol =
-    nothing;
+  #renderableValue = "";
   #isUsingFastAccess = false;
   #editorRef: Ref<HTMLDivElement> = createRef();
   #proxyRef: Ref<HTMLDivElement> = createRef();
@@ -263,7 +263,6 @@ export class TextEditor extends LitElement {
       return null;
     }
 
-    const spaceBefore = document.createTextNode(String.fromCharCode(160));
     const spaceAfter = document.createTextNode(String.fromCharCode(160));
     const label = document.createElement("label");
     const preamableText = document.createElement("span");
@@ -285,7 +284,6 @@ export class TextEditor extends LitElement {
 
     const range = this.#getCurrentRange();
     if (!range) {
-      this.#editorRef.value.appendChild(spaceBefore);
       this.#editorRef.value.appendChild(label);
       this.#editorRef.value.appendChild(spaceAfter);
     } else {
@@ -293,7 +291,6 @@ export class TextEditor extends LitElement {
         range.commonAncestorContainer !== this.#editorRef.value &&
         range.commonAncestorContainer.parentNode !== this.#editorRef.value
       ) {
-        this.#editorRef.value.appendChild(spaceBefore);
         this.#editorRef.value.appendChild(label);
         this.#editorRef.value.appendChild(spaceAfter);
         return label;
@@ -304,7 +301,6 @@ export class TextEditor extends LitElement {
       // The range doesn't move, so insert the nodes in reverse order.
       range.insertNode(spaceAfter);
       range.insertNode(label);
-      range.insertNode(spaceBefore);
 
       range.setStartAfter(spaceAfter);
       range.collapse(true);
@@ -320,8 +316,6 @@ export class TextEditor extends LitElement {
         this.#captureEditorValue();
       });
     }
-
-    return label;
   }
 
   #getCurrentRange(): Range | null {
@@ -359,15 +353,16 @@ export class TextEditor extends LitElement {
   }
 
   #selectChicletIfPossible(evt: Event) {
-    const [topItem] = evt.composedPath();
-    if (!(topItem instanceof HTMLElement)) {
+    const [, possibleChiclet] = evt.composedPath();
+    if (!(possibleChiclet instanceof HTMLElement)) {
       return;
     }
-    if (!topItem.classList.contains("chiclet")) {
+    if (!possibleChiclet.classList.contains("chiclet")) {
       return;
     }
+
     evt.preventDefault();
-    topItem.classList.toggle("selected");
+    possibleChiclet.classList.toggle("selected");
 
     const selection = this.#getCurrentSelection();
     if (!selection) {
@@ -375,16 +370,51 @@ export class TextEditor extends LitElement {
     }
 
     const range = new Range();
-    range.selectNode(topItem);
+    range.selectNode(possibleChiclet);
     selection.removeAllRanges();
     selection.addRange(range);
+  }
+
+  #ensureTrailingSpace() {
+    if (!this.#editorRef.value) {
+      return;
+    }
+
+    const lastChild = this.#editorRef.value.lastChild;
+    const isTextNode = lastChild?.nodeType === Node.TEXT_NODE;
+    if (
+      !lastChild ||
+      !isTextNode ||
+      (isTextNode && lastChild.textContent === "")
+    ) {
+      const spaceAfter = document.createTextNode(String.fromCharCode(160));
+      this.#editorRef.value.append(spaceAfter);
+
+      const selection = this.#getCurrentSelection();
+      if (!selection) {
+        return;
+      }
+
+      const range = new Range();
+      range.setStartBefore(spaceAfter);
+      range.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
   }
 
   #captureEditorValue() {
     if (!this.#editorRef.value) {
       return;
     }
-    this.#value = this.#editorRef.value.textContent ?? "";
+
+    // Replace all non-breaking spaces in the emitted string.
+    const value = (this.#editorRef.value.textContent ?? "").replace(
+      /\u00A0/g,
+      String.fromCharCode(32)
+    );
+
+    this.#value = value;
     this.dispatchEvent(new InputEvent("input"));
   }
 
@@ -468,10 +498,15 @@ export class TextEditor extends LitElement {
     }
 
     const proxyBounds = this.#proxyRef.value.getBoundingClientRect();
-    const top = Math.round(bounds.top - proxyBounds.top);
+    let top = Math.round(bounds.top - proxyBounds.top);
     let left = Math.round(bounds.left - proxyBounds.left);
     if (left + 240 > proxyBounds.width) {
       left = proxyBounds.width - 240;
+    }
+
+    if (bounds.top === 0 || bounds.left === 0) {
+      top = 0;
+      left = 0;
     }
 
     this.style.setProperty("--fast-access-x", `${left}px`);
@@ -487,6 +522,14 @@ export class TextEditor extends LitElement {
     }
 
     this.#fastAccessRef.value.classList.remove("active");
+  }
+
+  protected firstUpdated(): void {
+    if (!this.#editorRef.value) {
+      return;
+    }
+
+    this.#editorRef.value.innerHTML = this.#renderableValue;
   }
 
   render() {
@@ -509,15 +552,20 @@ export class TextEditor extends LitElement {
           }
         }}
         @input=${() => {
+          this.#ensureTrailingSpace();
           this.#captureEditorValue();
         }}
         id="editor"
         contenteditable="true"
-        >${this.#renderableValue}</span
+      ></span
       ><bb-fast-access-menu
         ${ref(this.#fastAccessRef)}
         @pointerdown=${(evt: PointerEvent) => {
           evt.preventDefault();
+        }}
+        @bbfastaccessdismissed=${() => {
+          this.#hideFastAccess();
+          this.#captureEditorValue();
         }}
         @bbfastaccessselect=${(evt: FastAccessSelectEvent) => {
           this.#hideFastAccess();
