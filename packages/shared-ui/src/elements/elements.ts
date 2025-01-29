@@ -70,6 +70,7 @@ export { SaveAsOverlay } from "./overlay/save-as.js";
 export { SettingsEditOverlay } from "./overlay/settings-edit.js";
 export { Splitter } from "./splitter/splitter.js";
 export { Switcher } from "./switcher/switcher.js";
+export { TextEditor } from "./input/text-editor/text-editor.js";
 export { Toast } from "./toast/toast.js";
 export { Tooltip } from "./tooltip/tooltip.js";
 export { UI } from "./ui-controller/ui-controller.js";

@@ -11,6 +11,7 @@ import { map } from "lit/directives/map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { AllowedLLMContentTypes } from "../../../types/types.js";
 import { LLMInput } from "./llm-input.js";
+import { Project } from "../../../state/types.js";
 
 @customElement("bb-llm-input-array")
 export class LLMInputArray extends LitElement {
@@ -53,6 +54,15 @@ export class LLMInputArray extends LitElement {
 
   @property()
   accessor autofocus = false;
+
+  @property()
+  accessor projectState: Project | null = null;
+
+  @property()
+  accessor nodeId: string | null = null;
+
+  @property()
+  accessor subGraphId: string | null = null;
 
   #resizeObserver: ResizeObserver | null = null;
   #activeLLMContentRef: Ref<LLMInput> = createRef();
@@ -260,6 +270,9 @@ export class LLMInputArray extends LitElement {
                   .inlineControls=${this.inlineControls}
                   .allow=${this.allow}
                   .autofocus=${this.autofocus && idx === 0}
+                  .nodeId=${this.nodeId}
+                  .subGraphId=${this.subGraphId}
+                  .projectState=${this.projectState}
                 ></bb-llm-input-chat>`;
               }
               return html`<bb-llm-input
@@ -288,6 +301,9 @@ export class LLMInputArray extends LitElement {
                 .inlineControls=${this.inlineControls}
                 .allow=${this.allow}
                 .autofocus=${this.autofocus && idx === 0}
+                .nodeId=${this.nodeId}
+                .subGraphId=${this.subGraphId}
+                .projectState=${this.projectState}
               ></bb-llm-input>`;
             })
           : html`No items specified`}

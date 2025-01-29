@@ -563,6 +563,28 @@ body.hide-cursor {
   --bb-generative-800: #3d16a8;
   --bb-generative-900: #28078c;
 
+  --bb-tool-50: #ecf5ff;
+  --bb-tool-100: #c0dfff;
+  --bb-tool-200: #a1d0ff;
+  --bb-tool-300: #77bbff;
+  --bb-tool-400: #5cadff;
+  --bb-tool-500: #3399ff;
+  --bb-tool-600: #2e8be8;
+  --bb-tool-700: #246db5;
+  --bb-tool-800: #1b548c;
+  --bb-tool-900: #1b548c;
+
+  --bb-asset-50: #fff4eb;
+  --bb-asset-100: #ffdfc0;
+  --bb-asset-200: #ffcea1;
+  --bb-asset-300: #feb876;
+  --bb-asset-400: #feab5c;
+  --bb-asset-500: #fe9533;
+  --bb-asset-600: #e7882e;
+  --bb-asset-700: #b46b24;
+  --bb-asset-800: #8c521b;
+  --bb-asset-900: #6b3f15;
+
   --bb-human-50: #ede7f6;
   --bb-human-100: #d1c4e9;
   --bb-human-200: #b39ddb;

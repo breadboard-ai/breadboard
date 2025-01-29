@@ -36,6 +36,7 @@ import type {
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
 import { repeat } from "lit/directives/repeat.js";
+import { Project } from "../../../state/types.js";
 
 const inlineDataTemplate = { inlineData: { data: "", mimeType: "" } };
 
@@ -75,6 +76,15 @@ export class LLMInputChat extends LitElement {
 
   @property()
   accessor autofocus = false;
+
+  @property()
+  accessor nodeId: string | null = null;
+
+  @property()
+  accessor subGraphId: string | null = null;
+
+  @property()
+  accessor projectState: Project | null = null;
 
   #forceRenderCount = 0;
   #focusLastPart = false;

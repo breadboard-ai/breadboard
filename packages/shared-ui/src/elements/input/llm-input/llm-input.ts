@@ -36,6 +36,8 @@ import type {
   LLMContent,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
+import { TextEditor } from "../text-editor/text-editor.js";
+import { Project } from "../../../state/types.js";
 
 const inlineDataTemplate = { inlineData: { data: "", mimeType: "" } };
 
@@ -79,6 +81,15 @@ export class LLMInput extends LitElement {
 
   @property()
   accessor autofocus = false;
+
+  @property()
+  accessor nodeId: string | null = null;
+
+  @property()
+  accessor subGraphId: string | null = null;
+
+  @property()
+  accessor projectState: Project | null = null;
 
   #forceRenderCount = 0;
   #focusLastPart = false;
@@ -403,7 +414,8 @@ export class LLMInput extends LitElement {
       background: var(--bb-ui-50);
     }
 
-    .value textarea {
+    .value textarea,
+    .value bb-text-editor {
       background: transparent;
       font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
         var(--bb-font-family);
@@ -1141,20 +1153,21 @@ export class LLMInput extends LitElement {
               let value: HTMLTemplateResult | symbol = nothing;
               if (isTextCapabilityPart(part)) {
                 partClass = "text";
-                value = html` <textarea
+                value = html` <bb-text-editor
+                  .nodeId=${this.nodeId}
+                  .subGraphId=${this.subGraphId}
+                  .projectState=${this.projectState}
                   @input=${(evt: Event) => {
-                    if (
-                      !isTextCapabilityPart(part) ||
-                      !(evt.target instanceof HTMLTextAreaElement)
-                    ) {
+                    if (!isTextCapabilityPart(part)) {
                       return;
                     }
 
-                    part.text = evt.target.value;
+                    const target = evt.target as TextEditor;
+                    part.text = target.value;
                   }}
                   .value=${part.text.trim()}
                   ${isLastPart ? ref(this.#lastPartRef) : nothing}
-                ></textarea>`;
+                ></bb-text-editor>`;
               } else if (isFunctionCallCapabilityPart(part)) {
                 partClass = "function-call";
                 value = html`${part.functionCall.name}`;
