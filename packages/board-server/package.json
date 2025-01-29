@@ -140,7 +140,7 @@
         "tests/**/*.ts",
         "tests/*.json",
         "tests/boards/*.bgl.json",
-        "tsconfig.json",
+        "tsconfig.test.json",
         "../../core/tsconfig/base.json"
       ],
       "output": [
