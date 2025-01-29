@@ -25,6 +25,7 @@ import {
   isModuleBehavior,
 } from "../../utils";
 import { GraphAssets } from "./graph-assets";
+import { Template } from "../../utils/template";
 
 const hoverColor = getGlobalColor("--bb-ui-50");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
@@ -449,9 +450,7 @@ export class GraphPortLabel extends PIXI.Container {
       valStr = "";
     }
 
-    valStr = valStr
-      .replaceAll(/{{\s?(.*?)\s?\|\s?"(.*?)"\s?\|\s?"(.*?)"\s?}}/gim, "$3")
-      .trim();
+    valStr = new Template(valStr).preview;
 
     if (valStr.length > MAX_SIZE - 3) {
       valStr = `${valStr.substring(0, MAX_SIZE)}...`;

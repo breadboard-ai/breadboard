@@ -53,7 +53,7 @@
           "role": "user",
           "parts": [
             {
-              "text": "HELLO {{ tool | \"https://breadboard.live/boards/@dimitri/a2-manager.bgl.json\" | \"Manager\" }}   "
+              "text": "HELLO {{ tool | \"https://breadboard.live/boards/@dimitri/a2-manager.bgl.json\" | \"Manager\" }} {{ asset | \"foo\" | \"Foo\" }} "
             }
           ]
         }
