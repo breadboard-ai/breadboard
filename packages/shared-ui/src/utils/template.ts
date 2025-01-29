@@ -14,11 +14,71 @@ export type TemplatePart = {
 
 export type TemplatePartCallback = (part: TemplatePart) => string;
 
+export type ParsedTemplate = (string | TemplatePart)[];
+
+const PARSING_REGEX = /{(?<json>{(?:.*?)})}/gim;
+
+function isTemplatePart(o: unknown): o is TemplatePart {
+  if (!o || typeof o !== "object") return false;
+  return "type" in o && "path" in o && "title" in o;
+}
+
+function splitToParts(value: string): ParsedTemplate {
+  const parts: ParsedTemplate = [];
+  const matches = value.matchAll(PARSING_REGEX);
+  let start = 0;
+
+  for (const match of matches) {
+    const json = match.groups?.json;
+    const end = match.index;
+    if (end > start) {
+      parts.push(value.slice(start, end));
+    }
+    if (json) {
+      let maybeTemplatePart;
+      try {
+        maybeTemplatePart = JSON.parse(json);
+        if (isTemplatePart(maybeTemplatePart)) {
+          parts.push(maybeTemplatePart);
+        } else {
+          maybeTemplatePart = null;
+        }
+      } catch (e) {
+        // do nothing
+      } finally {
+        if (!maybeTemplatePart) {
+          parts.push(value.slice(end, end + match[0].length));
+        }
+      }
+    }
+    start = end + match[0].length;
+  }
+  if (start < value.length) {
+    parts.push(value.slice(start));
+  }
+  // merge string parts
+  const merged: ParsedTemplate = [];
+  for (const part of parts) {
+    if (typeof part === "string") {
+      const last = merged.at(-1);
+      if (last && typeof last === "string") {
+        merged[merged.length - 1] = last + part;
+        continue;
+      }
+    }
+    merged.push(part);
+  }
+  return merged;
+}
+
 class Template {
+  #parsed: ParsedTemplate;
   #renderableValue = "";
 
   constructor(public readonly raw: string) {
     raw = raw.trim();
+
+    this.#parsed = splitToParts(raw);
 
     this.#renderableValue = raw;
     if (raw === "") {
@@ -27,8 +87,9 @@ class Template {
   }
 
   get preview() {
-    return this.raw
-      .replaceAll(/{{\s?(.*?)\s?\|\s?"(.*?)"\s?\|\s?"(.*?)"\s?}}/gim, "$3")
+    return this.#parsed
+      .map((part) => (typeof part === "string" ? part : part.title))
+      .join("")
       .trim();
   }
 
@@ -37,48 +98,28 @@ class Template {
   }
 
   substitute(callback: TemplatePartCallback) {
-    const value = this.raw;
-    const finder = /{{\s?(.*?)\s?\|\s?"(.*?)"\s?\|\s?"(.*?)"\s?}}/gim;
-    const matches = [];
-    let res;
-    do {
-      res = finder.exec(value);
-      if (res) {
-        matches.push(res);
-      }
-    } while (res);
-
-    if (matches.length === 0) {
-      return;
-    }
-
     this.#renderableValue = "";
-    let current = 0;
-    for (const match of matches) {
-      const [str, type, path, title] = match;
-      if (current < match.index) {
-        this.#renderableValue += value.slice(current, match.index);
+
+    let last;
+    for (const part of this.#parsed) {
+      if (typeof part === "string") {
+        this.#renderableValue += part;
+      } else {
+        this.#renderableValue += callback(part);
       }
-
-      // To keep things a bit simpler in the regexp and so forth we send this
-      // out as a single line string.
-      this.#renderableValue += callback({ type, path, title });
-      current = match.index + str.length;
+      last = part;
     }
-
-    if (current < value.length) {
-      this.#renderableValue += value.slice(current);
-    } else {
-      // Ensure that if the final item is a chiclet we add a space on.
+    // Ensure that if the final item is a chiclet we add a space on.
+    if (typeof last !== "string") {
       this.#renderableValue += "&nbsp;";
     }
   }
 
   static preamble({ type, path }: TemplatePart) {
-    return `{{ ${type} | "${path}" | "`;
+    return `{{"type": ${JSON.stringify(type)}, "path": ${JSON.stringify(path)}, "title": "`;
   }
 
   static postamble() {
-    return `" }}`;
+    return `"}}`;
   }
 }

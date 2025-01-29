@@ -16,8 +16,9 @@ export class TextEditor extends LitElement {
   @property()
   set value(value: string) {
     const template = new Template(value);
-    template.substitute(({ type, path, title }) => {
-      return `<label class="chiclet ${type}" contenteditable="false"><span>{{ ${type} | "${path}" | "</span><span class="visible">${title}</span><span>" }}</span></label>`;
+    template.substitute((part) => {
+      const { type, title } = part;
+      return `<label class="chiclet ${type}" contenteditable="false"><span>${Template.preamble(part)}</span><span class="visible">${title}</span><span>${Template.postamble()}</span></label>`;
     });
     this.#value = template.raw;
     this.#renderableValue = template.renderable;
@@ -231,19 +232,19 @@ export class TextEditor extends LitElement {
 
     const spaceAfter = document.createTextNode(String.fromCharCode(160));
     const label = document.createElement("label");
-    const preamableText = document.createElement("span");
+    const preambleText = document.createElement("span");
     const titleText = document.createElement("span");
     const postamableText = document.createElement("span");
     label.classList.add("chiclet");
     label.classList.add(type);
     label.dataset.path = path;
 
-    preamableText.textContent = Template.preamble({ title, path, type });
+    preambleText.textContent = Template.preamble({ title, path, type });
     postamableText.textContent = Template.postamble();
     titleText.textContent = title;
     titleText.classList.add("visible");
 
-    label.appendChild(preamableText);
+    label.appendChild(preambleText);
     label.appendChild(titleText);
     label.appendChild(postamableText);
     label.contentEditable = "false";

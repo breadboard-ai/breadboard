@@ -28,7 +28,7 @@
       "metadata": {
         "visual": {
           "x": 439.99999999999994,
-          "y": -300,
+          "y": -300.0000000000001,
           "collapsed": "expanded",
           "outputHeight": 44
         }
@@ -40,7 +40,7 @@
       "metadata": {
         "visual": {
           "x": 120,
-          "y": -300,
+          "y": -300.0000000000001,
           "collapsed": "expanded",
           "outputHeight": 44
         },
@@ -53,7 +53,7 @@
           "role": "user",
           "parts": [
             {
-              "text": "HELLO {{ tool | \"https://breadboard.live/boards/@dimitri/a2-manager.bgl.json\" | \"Manager\" }} {{ asset | \"foo\" | \"Foo\" }} "
+              "text": "HELLO {{\"type\": \"asset\", \"path\": \"content-1\", \"title\": \"Hello World\"}} {{\"type\": \"asset\", \"path\": \"content-2\", \"title\": \"Maximum Turbo\"}} {{\"type\": \"tool\", \"path\": \"https://breadboard.live/boards/@dimitri/ideogram-api-generate-image.bgl.json\", \"title\": \"Ideogram API Generate Image\"}} {{\"type\": \"tool\", \"path\": \"https://breadboard.live/boards/@billb/screenshottertool.bgl.json\", \"title\": \"ScreenshotterTool\"}} {{\"type\": \"asset\", \"path\": \"foo\", \"title\": \"Foo\"}} "
             }
           ]
         }
@@ -65,7 +65,7 @@
       "metadata": {
         "visual": {
           "x": -200,
-          "y": -260,
+          "y": -260.0000000000001,
           "collapsed": "expanded",
           "outputHeight": 44
         },
