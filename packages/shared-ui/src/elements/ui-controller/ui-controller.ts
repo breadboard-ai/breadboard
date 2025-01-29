@@ -71,7 +71,7 @@ import {
 import { cache, CacheDirective } from "lit/directives/cache.js";
 import { DirectiveResult } from "lit/directive.js";
 import { ChatController } from "../../state/chat-controller.js";
-import { Organizer } from "../../state/organizer.js";
+import { Organizer } from "../../state/types.js";
 import { map } from "lit/directives/map.js";
 
 const SIDE_NAV_ITEM_KEY = "bb-ui-side-nav-item";

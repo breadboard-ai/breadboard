@@ -7,10 +7,10 @@
 import { State } from "@breadboard-ai/shared-ui";
 
 import {
+  EditableGraph,
   MainGraphIdentifier,
   MutableGraphStore,
 } from "@google-labs/breadboard";
-import { BoardState } from "./types";
 
 export { StateManager };
 
@@ -18,14 +18,17 @@ export { StateManager };
  * Holds various important bits of UI state
  */
 class StateManager {
-  #map: Map<MainGraphIdentifier, BoardState> = new Map();
+  #map: Map<MainGraphIdentifier, State.Project> = new Map();
   #store: MutableGraphStore;
 
   constructor(store: MutableGraphStore) {
     this.#store = store;
   }
 
-  getOrCreate(mainGraphId?: MainGraphIdentifier): BoardState | null {
+  getOrCreate(
+    mainGraphId?: MainGraphIdentifier,
+    editable?: EditableGraph | null
+  ): State.Project | null {
     if (!mainGraphId) return null;
 
     let state = this.#map.get(mainGraphId);
@@ -34,9 +37,11 @@ class StateManager {
     const mutable = this.#store.get(mainGraphId);
     if (!mutable) return null;
 
-    state = {
-      organizer: State.createOrganizer(mainGraphId, this.#store),
-    };
+    state = State.createProjectState(
+      mainGraphId,
+      this.#store,
+      editable || undefined
+    );
     this.#map.set(mainGraphId, state);
     return state;
   }

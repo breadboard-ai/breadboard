@@ -1268,3 +1268,21 @@ export class KitToggleEvent extends Event {
     super(KitToggleEvent.eventName, { ...eventInit });
   }
 }
+
+/** Fast Access Menu events */
+
+export class FastAccessSelectEvent extends Event {
+  static eventName = "bbfastaccessselect";
+
+  constructor(public readonly snippet: string) {
+    super(FastAccessSelectEvent.eventName, { ...eventInit });
+  }
+}
+
+export class FastAccessErrorEvent extends Event {
+  static eventName = "bbfastaccesserror";
+
+  constructor(public readonly error: string) {
+    super(FastAccessErrorEvent.eventName, { ...eventInit });
+  }
+}

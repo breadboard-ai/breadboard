@@ -4,35 +4,6 @@
   "version": "0.0.1",
   "nodes": [
     {
-      "type": "input",
-      "id": "input",
-      "configuration": {
-        "schema": {
-          "properties": {
-            "context": {
-              "type": "array",
-              "title": "Context",
-              "items": {
-                "type": "object",
-                "behavior": ["llm-content"]
-              },
-              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
-            }
-          },
-          "type": "object",
-          "required": []
-        }
-      },
-      "metadata": {
-        "visual": {
-          "x": -80,
-          "y": -260,
-          "collapsed": "expanded",
-          "outputHeight": 44
-        }
-      }
-    },
-    {
       "type": "output",
       "id": "output",
       "configuration": {
@@ -43,7 +14,9 @@
               "title": "Context",
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "null"
             }
@@ -54,19 +27,69 @@
       },
       "metadata": {
         "visual": {
-          "x": 260,
+          "x": 439.99999999999994,
+          "y": -300.0000000000001,
+          "collapsed": "expanded",
+          "outputHeight": 44
+        }
+      }
+    },
+    {
+      "id": "a2-09645fb2",
+      "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
+      "metadata": {
+        "visual": {
+          "x": 120.00000000000006,
+          "y": -300.0000000000001,
+          "collapsed": "expanded",
+          "outputHeight": 44
+        },
+        "title": "Goes Here",
+        "description": "A block of text as input or output",
+        "logLevel": "info"
+      },
+      "configuration": {
+        "text": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "HELLO"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a2-f08c915e",
+      "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
+      "metadata": {
+        "visual": {
+          "x": -200,
           "y": -260,
           "collapsed": "expanded",
           "outputHeight": 44
+        },
+        "title": "From Here",
+        "description": "A block of text as input or output",
+        "logLevel": "info"
+      },
+      "configuration": {
+        "text": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "FOO"
+            }
+          ]
         }
       }
     }
   ],
   "edges": [
     {
-      "from": "input",
-      "out": "context",
+      "from": "a2-09645fb2",
       "to": "output",
+      "out": "context",
       "in": "context"
     }
   ],
@@ -75,15 +98,48 @@
   },
   "assets": {
     "content-1": {
-      "data": [{ "parts": [{ "text": "HELLO WORLD" }], "role": "user" }],
+      "data": [
+        {
+          "parts": [
+            {
+              "text": "HELLO WORLD"
+            }
+          ],
+          "role": "user"
+        }
+      ],
       "metadata": {
         "title": "Hello World"
       }
     },
     "content-2": {
-      "data": [{ "parts": [{ "text": "MAXIMUM TURBO" }], "role": "user" }],
+      "data": [
+        {
+          "parts": [
+            {
+              "text": "MAXIMUM TURBO"
+            }
+          ],
+          "role": "user"
+        }
+      ],
       "metadata": {
         "title": "Maximum Turbo"
+      }
+    },
+    "foo": {
+      "data": [
+        {
+          "parts": [
+            {
+              "text": "Asset named foo"
+            }
+          ],
+          "role": "user"
+        }
+      ],
+      "metadata": {
+        "title": "Foo"
       }
     }
   }

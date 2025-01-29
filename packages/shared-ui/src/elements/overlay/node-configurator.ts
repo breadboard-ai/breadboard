@@ -30,6 +30,7 @@ import {
 } from "@google-labs/breadboard";
 import {
   EnhanceNodeResetEvent,
+  FastAccessSelectEvent,
   NodePartialUpdateEvent,
   OverlayDismissedEvent,
 } from "../../events/events.js";
@@ -38,6 +39,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { NodeMetadata } from "@breadboard-ai/types";
 import { map } from "lit/directives/map.js";
 import { markdown } from "../../directives/markdown.js";
+import { Project } from "../../state/types.js";
 
 const MAXIMIZE_KEY = "bb-node-configuration-overlay-maximized";
 const OVERLAY_CLEARANCE = 60;
@@ -70,6 +72,9 @@ export class NodeConfigurationOverlay extends LitElement {
 
   @property()
   accessor readOnly = false;
+
+  @property()
+  accessor projectState: Project | null = null;
 
   #overlayRef: Ref<Overlay> = createRef();
   #userInputRef: Ref<UserInput> = createRef();
@@ -351,6 +356,13 @@ export class NodeConfigurationOverlay extends LitElement {
       bb-llm-output-array {
         padding-top: var(--bb-grid-size-8);
       }
+    }
+
+    bb-fast-access-menu {
+      height: 300px;
+      display: block;
+      background: white;
+      overflow: scroll;
     }
 
     :host([maximized="true"]) #wrapper {
@@ -709,6 +721,15 @@ export class NodeConfigurationOverlay extends LitElement {
       inline
     >
       <div id="wrapper">
+        <!-- <bb-fast-access-menu
+          @bbfastaccessselect=${(evt: FastAccessSelectEvent) => {
+          console.log("HELLO", evt.snippet);
+        }}
+          .graphId=${this.configuration.subGraphId}
+          .nodeId=${this.configuration.id}
+          .state=${this.projectState?.fastAccess}
+        ></bb-fast-access-menu> -->
+
         <form
           ${ref(this.#formRef)}
           @submit=${(evt: Event) => {

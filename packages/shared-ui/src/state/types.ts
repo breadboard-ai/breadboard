@@ -4,7 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LLMContent, NodeValue } from "@breadboard-ai/types";
+import {
+  Asset,
+  AssetMetadata,
+  AssetPath,
+  GraphIdentifier,
+  LLMContent,
+  NodeIdentifier,
+  NodeValue,
+} from "@breadboard-ai/types";
+import { EditSpec, Outcome, PortIdentifier } from "@google-labs/breadboard";
 
 export type ChatStatus = "running" | "paused" | "stopped";
 
@@ -67,4 +76,74 @@ export type ChatConversationState = ChatUserTurnState | ChatSystemTurnState;
 export type ChatState = {
   conversation: ChatConversationState[];
   status: ChatStatus;
+};
+
+/**
+ * Represents the Model+Controller for the Asset Organizer.
+ */
+export type Organizer = {
+  /**
+   * Current graph's assets.
+   */
+  graphAssets: Map<AssetPath, Asset>;
+
+  addGraphAsset(path: AssetPath, asset: Asset): Promise<Outcome<void>>;
+  removeGraphAsset(path: AssetPath): Promise<Outcome<void>>;
+  changeGraphAssetMetadata(
+    path: AssetPath,
+    metadata: AssetMetadata
+  ): Promise<Outcome<void>>;
+};
+
+export type GeneratedAssetIdentifier = string;
+
+export type GeneratedAsset = {
+  data: LLMContent[];
+  metadata?: AssetMetadata;
+};
+
+export type Tool = {
+  url: string;
+  title?: string;
+  description?: string;
+};
+
+export type Component = {
+  id: NodeIdentifier;
+  title: string;
+  description?: string;
+};
+
+export type Components = Map<NodeIdentifier, Component>;
+
+export type GraphAsset = Asset & {
+  path: AssetPath;
+};
+
+/**
+ * Represents the Model+Controller for the "@" Menu.
+ */
+export type FastAccess = {
+  graphAssets: Map<AssetPath, GraphAsset>;
+  generatedAssets: Map<GeneratedAssetIdentifier, GeneratedAsset>;
+  tools: Map<string, Tool>;
+  components: Map<GraphIdentifier, Components>;
+};
+
+/**
+ * Represents the Model+Controller for the entire Project.
+ * Contains all the state for the project.
+ */
+export type Project = {
+  graphAssets: Map<AssetPath, Asset>;
+  organizer: Organizer;
+  fastAccess: FastAccess;
+};
+
+export type ProjectInternal = Project & {
+  edit(spec: EditSpec[], label: string): Promise<Outcome<void>>;
+  findOutputPortId(
+    graphId: GraphIdentifier,
+    id: NodeIdentifier
+  ): Outcome<{ id: PortIdentifier; title: string }>;
 };
