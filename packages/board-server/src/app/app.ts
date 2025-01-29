@@ -132,7 +132,7 @@ export class AppView extends LitElement {
   secretsNeeded: string[] | null = null;
 
   @provide({ context: BreadboardUI.Contexts.environmentContext })
-  environment = ENVIRONMENT;
+  environment: BreadboardUI.Contexts.Environment;
 
   @provide({ context: BreadboardUI.Elements.tokenVendorContext })
   tokenVendor!: TokenVendor;
@@ -141,7 +141,7 @@ export class AppView extends LitElement {
   settingsHelper!: AppSettingsHelper;
 
   @provide({ context: visitorStateManagerContext })
-  visitorStateManager = new VisitorStateManager();
+  visitorStateManager: VisitorStateManager;
 
   #toasts = new Map<
     string,
@@ -453,6 +453,11 @@ export class AppView extends LitElement {
 
   constructor() {
     super();
+    // Due to https://github.com/lit/lit/issues/4675, context provider values
+    // must be done in the constructor.
+    this.environment = ENVIRONMENT;
+    this.visitorStateManager = new VisitorStateManager();
+
     this.settingsHelper = new AppSettingsHelper();
     this.tokenVendor = createTokenVendor(
       {

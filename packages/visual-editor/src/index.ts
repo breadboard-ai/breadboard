@@ -213,7 +213,7 @@ export class Main extends LitElement {
   >();
 
   @provide({ context: BreadboardUI.Contexts.environmentContext })
-  accessor environment = ENVIRONMENT;
+  accessor environment: BreadboardUI.Contexts.Environment;
 
   @provide({ context: BreadboardUI.Elements.tokenVendorContext })
   accessor tokenVendor!: TokenVendor;
@@ -379,6 +379,10 @@ export class Main extends LitElement {
   #initialize: Promise<void>;
   constructor(config: MainArguments) {
     super();
+
+    // Due to https://github.com/lit/lit/issues/4675, context provider values
+    // must be done in the constructor.
+    this.environment = ENVIRONMENT;
 
     const boardServerLocation = globalThis.sessionStorage.getItem(
       `${STORAGE_PREFIX}-board-server`
