@@ -116,6 +116,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
   #itemContainerRef: Ref<HTMLDivElement> = createRef();
   #onKeyDownBound = this.#onKeyDown.bind(this);
+  #onEscapeBound = this.#onEscape.bind(this);
+
   #items: {
     assets: GraphAsset[];
     tools: Tool[];
@@ -125,12 +127,14 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
   connectedCallback(): void {
     super.connectedCallback();
 
+    window.addEventListener("keydown", this.#onEscapeBound, { capture: true });
     window.addEventListener("keydown", this.#onKeyDownBound);
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
 
+    window.addEventListener("keydown", this.#onEscapeBound, { capture: true });
     window.removeEventListener("keydown", this.#onKeyDownBound);
   }
 
@@ -162,6 +166,19 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     button.scrollIntoView({ block: "nearest" });
   }
 
+  #onEscape(evt: KeyboardEvent): void {
+    if (!this.classList.contains("active")) {
+      return;
+    }
+
+    if (evt.key !== "Escape") {
+      return;
+    }
+
+    this.dispatchEvent(new FastAccessDismissedEvent());
+    evt.stopImmediatePropagation();
+  }
+
   #onKeyDown(evt: KeyboardEvent): void {
     if (!this.classList.contains("active")) {
       return;
@@ -173,12 +190,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       this.#items.components.length;
 
     switch (evt.key) {
-      case "Escape": {
-        this.dispatchEvent(new FastAccessDismissedEvent());
-        break;
-      }
-
       case "Enter": {
+        evt.stopImmediatePropagation();
         this.#emitCurrentItem();
         break;
       }
