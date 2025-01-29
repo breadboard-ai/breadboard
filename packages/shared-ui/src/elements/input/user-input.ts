@@ -64,6 +64,7 @@ import {
 import "./delegating-input.js";
 import { getModuleId } from "../../utils/module-id";
 import * as Utils from "../../utils/utils.js";
+import { Project } from "../../state";
 
 const NO_MODULE = " -- No module";
 
@@ -71,6 +72,9 @@ const NO_MODULE = " -- No module";
 export class UserInput extends LitElement {
   @property()
   accessor nodeId: string | null = null;
+
+  @property()
+  accessor subGraphId: string | null = null;
 
   @property()
   accessor inputs: UserInputConfiguration[] = [];
@@ -100,9 +104,6 @@ export class UserInput extends LitElement {
   accessor graph: GraphDescriptor | null = null;
 
   @property()
-  accessor subGraphId: string | null = null;
-
-  @property()
   accessor boardServers: BoardServer[] = [];
 
   @property({ reflect: true })
@@ -110,6 +111,9 @@ export class UserInput extends LitElement {
 
   @property()
   accessor enhancingInput = new Set<string>();
+
+  @property()
+  accessor projectState: Project | null = null;
 
   #formRef: Ref<HTMLFormElement> = createRef();
 
@@ -870,6 +874,9 @@ export class UserInput extends LitElement {
                     .clamped=${this.llmInputClamped}
                     .inlineControls=${this.inlineControls}
                     .showEntrySelector=${this.llmInputShowEntrySelector}
+                    .nodeId=${this.nodeId}
+                    .subGraphId=${this.subGraphId}
+                    .projectState=${this.projectState}
                   ></bb-llm-input-array>`;
                 } else {
                   let renderableValue: unknown = input.value;
@@ -934,6 +941,9 @@ export class UserInput extends LitElement {
                       .value=${input.value ?? defaultValue ?? null}
                       .description=${input.schema.description || null}
                       .clamped=${this.llmInputClamped}
+                      .nodeId=${this.nodeId}
+                      .subGraphId=${this.subGraphId}
+                      .projectState=${this.projectState}
                     ></bb-llm-input-chat>`;
                     break;
                   }
@@ -945,6 +955,9 @@ export class UserInput extends LitElement {
                     .description=${input.schema.description || null}
                     .clamped=${this.llmInputClamped}
                     .inlineControls=${this.inlineControls}
+                    .nodeId=${this.nodeId}
+                    .subGraphId=${this.subGraphId}
+                    .projectState=${this.projectState}
                   ></bb-llm-input>`;
                   break;
                 } else if (isBoardBehavior(input.schema)) {

@@ -1274,7 +1274,11 @@ export class KitToggleEvent extends Event {
 export class FastAccessSelectEvent extends Event {
   static eventName = "bbfastaccessselect";
 
-  constructor(public readonly snippet: string) {
+  constructor(
+    public readonly path: string,
+    public readonly title: string,
+    public readonly accessType: "asset" | "tool" | "output"
+  ) {
     super(FastAccessSelectEvent.eventName, { ...eventInit });
   }
 }

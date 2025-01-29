@@ -449,6 +449,8 @@ export class GraphPortLabel extends PIXI.Container {
       valStr = "";
     }
 
+    valStr = valStr.replaceAll(/\[(.*?)\|(.*?)\|(.*?)\]/gim, "$3").trim();
+
     if (valStr.length > MAX_SIZE - 3) {
       valStr = `${valStr.substring(0, MAX_SIZE)}...`;
     }
