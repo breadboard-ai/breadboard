@@ -726,6 +726,7 @@ export class NodeConfigurationOverlay extends LitElement {
             console.log("HELLO", evt.snippet);
           }}
           .graphId=${this.configuration.subGraphId}
+          .nodeId=${this.configuration.id}
           .state=${this.projectState?.fastAccess}
         ></bb-fast-access-menu>
 

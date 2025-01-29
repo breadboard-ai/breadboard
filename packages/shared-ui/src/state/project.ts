@@ -16,6 +16,7 @@ import {
   MainGraphIdentifier,
   MutableGraphStore,
   Outcome,
+  PortIdentifier,
 } from "@google-labs/breadboard";
 import { SignalMap } from "signal-utils/map";
 import { ReactiveOrganizer } from "./organizer";
@@ -107,6 +108,35 @@ class ReactiveProject implements ProjectInternal {
     if (!editing.success) {
       return err(editing.error);
     }
+  }
+
+  findOutputPortId(
+    graphId: GraphIdentifier,
+    nodeId: NodeIdentifier
+  ): Outcome<{ id: PortIdentifier; title: string }> {
+    const inspectable = this.#store.inspect(this.#mainGraphId, graphId);
+    if (!inspectable) {
+      return err(`Unable to inspect graph with "${this.#mainGraphId}"`);
+    }
+    const node = inspectable.nodeById(nodeId);
+    if (!node) {
+      return err(`Unable to find node with id "${nodeId}`);
+    }
+    const { ports } = node.currentPorts().outputs;
+    const mainPort = ports.find((port) =>
+      port.schema.behavior?.includes("main-port")
+    );
+    const result = { id: "", title: node.descriptor.id };
+    if (mainPort) {
+      result.id = mainPort.name;
+      return result;
+    }
+    const firstPort = ports.at(0);
+    if (!firstPort) {
+      return err(`Unable to find a port on node with id "${nodeId}`);
+    }
+    result.id = firstPort.name;
+    return result;
   }
 
   #updateTools() {

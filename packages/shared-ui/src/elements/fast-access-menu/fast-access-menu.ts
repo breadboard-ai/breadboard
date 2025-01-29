@@ -8,7 +8,7 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { FastAccess } from "../../state";
-import { GraphIdentifier } from "@breadboard-ai/types";
+import { GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
 import {
   FastAccessErrorEvent,
   FastAccessSelectEvent,
@@ -22,6 +22,9 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
   @property()
   accessor graphId: GraphIdentifier | null = null;
+
+  @property()
+  accessor nodeId: NodeIdentifier | null = null;
 
   render() {
     const graphId = this.graphId || "";
@@ -58,7 +61,20 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       <h3>Outputs</h3>
       <ul>
         ${components.map((component) => {
-          return html`<li>${component.title}</li>`;
+          return html`<li
+            @click=${async () => {
+              if (!this.state || !this.nodeId) return;
+
+              const result = await this.state.selectComponent(
+                graphId,
+                component.id,
+                this.nodeId
+              );
+              console.log("COMPONENT", result);
+            }}
+          >
+            ${component.title}
+          </li>`;
         })}
       </ul> `;
   }

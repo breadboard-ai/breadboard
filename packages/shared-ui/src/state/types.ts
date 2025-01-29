@@ -13,7 +13,7 @@ import {
   NodeIdentifier,
   NodeValue,
 } from "@breadboard-ai/types";
-import { EditSpec, Outcome } from "@google-labs/breadboard";
+import { EditSpec, Outcome, PortIdentifier } from "@google-labs/breadboard";
 
 export type ChatStatus = "running" | "paused" | "stopped";
 
@@ -120,6 +120,10 @@ export type GraphAsset = Asset & {
   path: AssetPath;
 };
 
+export type FastAccessContext = {
+  nodeId: NodeIdentifier;
+};
+
 /**
  * Represents the Model+Controller for the "@" Menu.
  */
@@ -129,9 +133,14 @@ export type FastAccess = {
   tools: Map<string, Tool>;
   components: Map<GraphIdentifier, Components>;
 
+  setContext(context: FastAccessContext): void;
   selectGraphAsset(path: AssetPath): Outcome<string>;
   selectTool(url: string): Outcome<string>;
-  selectComponent(graphId: GraphIdentifier, id: NodeIdentifier): void;
+  selectComponent(
+    graphId: GraphIdentifier,
+    from: NodeIdentifier,
+    to: NodeIdentifier
+  ): Promise<Outcome<string>>;
 };
 
 /**
@@ -146,4 +155,8 @@ export type Project = {
 
 export type ProjectInternal = Project & {
   edit(spec: EditSpec[], label: string): Promise<Outcome<void>>;
+  findOutputPortId(
+    graphId: GraphIdentifier,
+    id: NodeIdentifier
+  ): Outcome<{ id: PortIdentifier; title: string }>;
 };
