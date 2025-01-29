@@ -10,18 +10,32 @@ import { Project } from "../../../state";
 import { FastAccessSelectEvent } from "../../../events/events";
 import { FastAccessMenu } from "../../elements";
 
-@customElement("bb-text-editor")
-export class TextEditor extends LitElement {
-  @property()
-  set value(value: string) {
-    value = value.trim();
+type TemplatePart = {
+  type: string;
+  path: string;
+  title: string;
+};
 
-    this.#value = value;
-    this.#renderableValue = value;
-    if (value === "") {
+type TemplatePartCallback = (part: TemplatePart) => string;
+
+class Template {
+  #renderableValue = "";
+
+  constructor(public readonly raw: string) {
+    raw = raw.trim();
+
+    this.#renderableValue = raw;
+    if (raw === "") {
       this.#renderableValue = "&nbsp;";
     }
+  }
 
+  get renderable() {
+    return this.#renderableValue;
+  }
+
+  substitute(callback: TemplatePartCallback) {
+    const value = this.raw;
     const finder = /{{\s?(.*?)\s?\|\s?"(.*?)"\s?\|\s?"(.*?)"\s?}}/gim;
     const matches = [];
     let res;
@@ -46,7 +60,7 @@ export class TextEditor extends LitElement {
 
       // To keep things a bit simpler in the regexp and so forth we send this
       // out as a single line string.
-      this.#renderableValue += `<label class="chiclet ${type}" contenteditable="false"><span>{{ ${type} | "${path}" | "</span><span class="visible">${title}</span><span>" }}</span></label>`;
+      this.#renderableValue += callback({ type, path, title });
       current = match.index + str.length;
     }
 
@@ -56,6 +70,19 @@ export class TextEditor extends LitElement {
       // Ensure that if the final item is a chiclet we add a space on.
       this.#renderableValue += "&nbsp;";
     }
+  }
+}
+
+@customElement("bb-text-editor")
+export class TextEditor extends LitElement {
+  @property()
+  set value(value: string) {
+    const template = new Template(value);
+    template.substitute(({ type, path, title }) => {
+      return `<label class="chiclet ${type}" contenteditable="false"><span>{{ ${type} | "${path}" | "</span><span class="visible">${title}</span><span>" }}</span></label>`;
+    });
+    this.#value = template.raw;
+    this.#renderableValue = template.renderable;
   }
 
   get value(): string {
