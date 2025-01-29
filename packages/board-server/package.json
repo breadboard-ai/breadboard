@@ -80,7 +80,8 @@
         "package.json"
       ],
       "output": [
-        "dist/server/index.js"
+        "dist/server",
+        "dist/scripts"
       ],
       "dependencies": [
         "../breadboard:build",
@@ -119,7 +120,7 @@
       ]
     },
     "build:tests": {
-      "command": "tsc -b --pretty",
+      "command": "tsc -b tsconfig.test.json --pretty",
       "env": {
         "FORCE_COLOR": "1"
       },
@@ -139,11 +140,11 @@
         "tests/**/*.ts",
         "tests/*.json",
         "tests/boards/*.bgl.json",
-        "tsconfig.json",
+        "tsconfig.test.json",
         "../../core/tsconfig/base.json"
       ],
       "output": [
-        "dist/"
+        "dist_test/"
       ],
       "clean": "if-file-deleted"
     },
@@ -151,7 +152,7 @@
       "command": "rm -f test.db"
     },
     "test": {
-      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/*.js",
+      "command": "node --test --enable-source-maps --test-reporter spec dist_test/tests/*.js",
       "dependencies": [
         "build:tests"
       ],
