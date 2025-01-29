@@ -2292,6 +2292,7 @@ export class Main extends LitElement {
             .boardServers=${this.#boardServers}
             .showTypes=${false}
             .offerConfigurationEnhancements=${offerConfigurationEnhancements}
+            .projectState=${projectState}
             .readOnly=${this.tab?.readOnly}
             @bbworkspaceselectionstate=${(
               evt: BreadboardUI.Events.WorkspaceSelectionStateEvent
@@ -3594,10 +3595,6 @@ export class Main extends LitElement {
                 );
               }}
             ></bb-ui-controller>
-            <bb-fast-access-menu
-              .graphId=${this.subGraphId}
-              .state=${projectState?.fastAccess}></bb-fast-access-menu>
-
         ${
           this.showWelcomePanel
             ? html`<bb-project-listing

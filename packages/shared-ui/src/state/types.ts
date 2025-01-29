@@ -116,14 +116,22 @@ export type Component = {
 
 export type Components = Map<NodeIdentifier, Component>;
 
+export type GraphAsset = Asset & {
+  path: AssetPath;
+};
+
 /**
  * Represents the Model+Controller for the "@" Menu.
  */
 export type FastAccess = {
-  graphAssets: Map<AssetPath, Asset>;
+  graphAssets: Map<AssetPath, GraphAsset>;
   generatedAssets: Map<GeneratedAssetIdentifier, GeneratedAsset>;
   tools: Map<string, Tool>;
   components: Map<GraphIdentifier, Components>;
+
+  selectGraphAsset(path: AssetPath): Outcome<string>;
+  selectTool(url: string): Outcome<string>;
+  selectComponent(graphId: GraphIdentifier, id: NodeIdentifier): void;
 };
 
 /**

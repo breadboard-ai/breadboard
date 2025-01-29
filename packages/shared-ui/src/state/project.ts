@@ -5,7 +5,6 @@
  */
 
 import {
-  Asset,
   AssetPath,
   GraphIdentifier,
   NodeIdentifier,
@@ -25,11 +24,13 @@ import {
   FastAccess,
   GeneratedAsset,
   GeneratedAssetIdentifier,
+  GraphAsset,
   Organizer,
   Project,
   ProjectInternal,
   Tool,
 } from "./types";
+import { ReactiveFastAccess } from "./fast-access";
 
 export { createProjectState, ReactiveProject };
 
@@ -55,7 +56,7 @@ class ReactiveProject implements ProjectInternal {
   #mainGraphId: MainGraphIdentifier;
   #store: MutableGraphStore;
   #editable?: EditableGraph;
-  readonly graphAssets: SignalMap<AssetPath, Asset>;
+  readonly graphAssets: SignalMap<AssetPath, GraphAsset>;
   readonly generatedAssets: SignalMap<GeneratedAssetIdentifier, GeneratedAsset>;
   readonly tools: SignalMap<string, Tool>;
   readonly organizer: Organizer;
@@ -82,12 +83,13 @@ class ReactiveProject implements ProjectInternal {
     this.components = new SignalMap();
     this.generatedAssets = new SignalMap();
     this.organizer = new ReactiveOrganizer(this);
-    this.fastAccess = {
-      graphAssets: this.graphAssets,
-      generatedAssets: this.generatedAssets,
-      tools: this.tools,
-      components: this.components,
-    };
+    this.fastAccess = new ReactiveFastAccess(
+      this,
+      this.graphAssets,
+      this.generatedAssets,
+      this.tools,
+      this.components
+    );
     this.#updateGraphAssets();
     this.#updateComponents();
     this.#updateTools();
@@ -160,7 +162,10 @@ class ReactiveProject implements ProjectInternal {
 
     const { assets = {} } = mutable.graph;
 
-    updateMap(this.graphAssets, Object.entries(assets));
+    updateMap(
+      this.graphAssets,
+      Object.entries(assets).map(([path, asset]) => [path, { ...asset, path }])
+    );
   }
 }
 

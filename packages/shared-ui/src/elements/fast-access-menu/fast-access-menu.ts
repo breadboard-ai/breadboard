@@ -9,6 +9,11 @@ import { html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { FastAccess } from "../../state";
 import { GraphIdentifier } from "@breadboard-ai/types";
+import {
+  FastAccessErrorEvent,
+  FastAccessSelectEvent,
+} from "../../events/events";
+import { ok } from "@google-labs/breadboard";
 
 @customElement("bb-fast-access-menu")
 export class FastAccessMenu extends SignalWatcher(LitElement) {
@@ -28,7 +33,20 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     return html`<h3>Assets</h3>
       <ul>
         ${assets.map((asset) => {
-          return html`<li>${asset.metadata?.title}</li>`;
+          return html`<li
+            @click=${() => {
+              if (!this.state) return;
+
+              const result = this.state.selectGraphAsset(asset.path);
+              if (ok(result)) {
+                this.dispatchEvent(new FastAccessSelectEvent(result));
+              } else {
+                this.dispatchEvent(new FastAccessErrorEvent(result.$error));
+              }
+            }}
+          >
+            ${asset.metadata?.title}
+          </li>`;
         })}
       </ul>
       <h3>Tools</h3>

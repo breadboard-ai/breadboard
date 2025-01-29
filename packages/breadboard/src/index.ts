@@ -127,6 +127,8 @@ export {
   assetsFromGraphDescriptor,
 } from "./data/index.js";
 
+export { ok, err } from "./data/file-system/utils.js";
+
 /**
  * Managed Run State API
  */
