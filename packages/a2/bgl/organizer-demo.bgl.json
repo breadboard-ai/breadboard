@@ -42,7 +42,7 @@
           "x": 120,
           "y": -300.0000000000001,
           "collapsed": "expanded",
-          "outputHeight": 44
+          "outputHeight": 124
         },
         "title": "Text",
         "description": "A block of text as input or output",
@@ -54,31 +54,6 @@
           "parts": [
             {
               "text": "HELLO {{\"type\": \"asset\", \"path\": \"content-1\", \"title\": \"Hello World\"}} {{\"type\": \"asset\", \"path\": \"content-2\", \"title\": \"Maximum Turbo\"}} {{\"type\": \"tool\", \"path\": \"https://breadboard.live/boards/@dimitri/ideogram-api-generate-image.bgl.json\", \"title\": \"Ideogram API Generate Image\"}} {{\"type\": \"tool\", \"path\": \"https://breadboard.live/boards/@billb/screenshottertool.bgl.json\", \"title\": \"ScreenshotterTool\"}} {{\"type\": \"asset\", \"path\": \"foo\", \"title\": \"Foo\"}} "
-            }
-          ]
-        }
-      }
-    },
-    {
-      "id": "a2-f08c915e",
-      "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
-      "metadata": {
-        "visual": {
-          "x": -200,
-          "y": -260.0000000000001,
-          "collapsed": "expanded",
-          "outputHeight": 44
-        },
-        "title": "From Here",
-        "description": "A block of text as input or output",
-        "logLevel": "info"
-      },
-      "configuration": {
-        "text": {
-          "role": "user",
-          "parts": [
-            {
-              "text": "FOO"
             }
           ]
         }
