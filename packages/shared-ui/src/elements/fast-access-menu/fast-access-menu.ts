@@ -262,7 +262,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     if (idx < this.#items.tools.length) {
       const component = this.#items.components[idx];
       this.dispatchEvent(
-        new FastAccessSelectEvent(component.id, component.title, "output")
+        new FastAccessSelectEvent(component.id, component.title, "in")
       );
       return;
     }

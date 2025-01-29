@@ -1277,7 +1277,7 @@ export class FastAccessSelectEvent extends Event {
   constructor(
     public readonly path: string,
     public readonly title: string,
-    public readonly accessType: "asset" | "tool" | "output"
+    public readonly accessType: "asset" | "tool" | "in"
   ) {
     super(FastAccessSelectEvent.eventName, { ...eventInit });
   }
