@@ -22,7 +22,7 @@ export class TextEditor extends LitElement {
       this.#renderableValue = "&nbsp;";
     }
 
-    const finder = /\[(.*?)\|(.*?)\|(.*?)\]/gim;
+    const finder = /{{\s?(.*?)\s?\|\s?"(.*?)"\s?\|\s?"(.*?)"\s?}}/gim;
     const matches = [];
     let res;
     do {
@@ -39,14 +39,14 @@ export class TextEditor extends LitElement {
     this.#renderableValue = "";
     let current = 0;
     for (const match of matches) {
-      const [str, path, type, title] = match;
+      const [str, type, path, title] = match;
       if (current < match.index) {
         this.#renderableValue += value.slice(current, match.index);
       }
 
       // To keep things a bit simpler in the regexp and so forth we send this
       // out as a single line string.
-      this.#renderableValue += `<label class="chiclet ${type}" contenteditable="false"><span>[${path}|${type}|</span><span class="visible">${title}</span><span>]</span></label>`;
+      this.#renderableValue += `<label class="chiclet ${type}" contenteditable="false"><span>{{ ${type} | "${path}" | "</span><span class="visible">${title}</span><span>" }}</span></label>`;
       current = match.index + str.length;
     }
 
@@ -125,14 +125,15 @@ export class TextEditor extends LitElement {
 
         &.visible {
           display: inline;
+          pointer-events: none;
         }
       }
 
-      &.output {
-        background: var(--bb-generative-50) var(--bb-add-icon-generative) 8px
-          center / 16px 16px no-repeat;
-        outline: 1px solid var(--bb-generative-100);
-        color: var(--bb-generative-700);
+      &.in {
+        background: var(--bb-input-50) var(--bb-icon-output) 8px center / 16px
+          16px no-repeat;
+        outline: 1px solid var(--bb-input-100);
+        color: var(--bb-input-700);
       }
 
       &.asset {
@@ -272,8 +273,8 @@ export class TextEditor extends LitElement {
     label.classList.add(type);
     label.dataset.path = path;
 
-    preamableText.textContent = `[${path}|${type}|`;
-    postamableText.textContent = `]`;
+    preamableText.textContent = `{{ ${type} | "${path}" | "`;
+    postamableText.textContent = `" }}`;
     titleText.textContent = title;
     titleText.classList.add("visible");
 
@@ -353,10 +354,11 @@ export class TextEditor extends LitElement {
   }
 
   #selectChicletIfPossible(evt: Event) {
-    const [, possibleChiclet] = evt.composedPath();
+    const [possibleChiclet] = evt.composedPath();
     if (!(possibleChiclet instanceof HTMLElement)) {
       return;
     }
+
     if (!possibleChiclet.classList.contains("chiclet")) {
       return;
     }
