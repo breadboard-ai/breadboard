@@ -3486,11 +3486,29 @@ export class Main extends LitElement {
                   evt.subGraphId
                 );
               }}
-              @bbmultiedit=${(evt: BreadboardUI.Events.MultiEditEvent) => {
-                this.#runtime.edit.multiEdit(
+              @bbmultiedit=${async (
+                evt: BreadboardUI.Events.MultiEditEvent
+              ) => {
+                await this.#runtime.edit.multiEdit(
                   this.tab,
                   evt.edits,
                   evt.description
+                );
+
+                if (!this.tab) {
+                  return;
+                }
+
+                const additions: string[] = evt.edits
+                  .map((edit) =>
+                    edit.type === "addnode" ? edit.node.id : null
+                  )
+                  .filter((item) => item !== null);
+                this.#runtime.select.selectNodes(
+                  this.tab.id,
+                  this.#runtime.select.generateId(),
+                  evt.subGraphId ?? BreadboardUI.Constants.MAIN_BOARD_ID,
+                  additions
                 );
               }}
               @bbnodecreate=${async (

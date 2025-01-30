@@ -701,6 +701,22 @@ export class Graph extends PIXI.Container {
         } else if (originalEdgeDescriptor) {
           action = GRAPH_OPERATIONS.GRAPH_EDGE_CHANGE;
         }
+      } else {
+        // Attempt to create a new node.
+        if (
+          fromNode === toNode &&
+          targetNodePort &&
+          targetNodePort.type === GraphNodePortType.OUT
+        ) {
+          this.emit(
+            GRAPH_OPERATIONS.GRAPH_NODE_QUICK_ADD,
+            fromNode.label,
+            targetNodePort.label,
+            evt.x,
+            evt.y,
+            true
+          );
+        }
       }
 
       // Update the edge if either of the nodes is collapsed.
@@ -2015,6 +2031,13 @@ export class Graph extends PIXI.Container {
           this.emit(GRAPH_OPERATIONS.GRAPH_NODE_EDIT, ...args);
         });
 
+        graphNode.on(
+          GRAPH_OPERATIONS.GRAPH_NODE_QUICK_ADD,
+          (...args: unknown[]) => {
+            this.emit(GRAPH_OPERATIONS.GRAPH_NODE_QUICK_ADD, ...args);
+          }
+        );
+
         this.#graphNodeById.set(id, graphNode);
       }
 
@@ -2082,6 +2105,7 @@ export class Graph extends PIXI.Container {
       const selectedReferences = new Map<PortIdentifier, number[]>();
       if (this.#selectionState) {
         graphNode.selected = this.#selectionState.nodes.has(id) ?? false;
+        graphNode.canShowQuickAdd = this.#selectionState.nodes.size === 1;
         for (const reference of this.#selectionState.references) {
           if (reference.startsWith(id)) {
             const portAndIndex = reference.replace(id, "");

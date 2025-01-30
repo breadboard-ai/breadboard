@@ -1023,6 +1023,21 @@ export class GraphNodeEditEvent extends Event {
   }
 }
 
+export class GraphNodeQuickAddEvent extends Event {
+  static eventName = "bbgraphnodequickadd";
+
+  constructor(
+    public readonly id: string,
+    public readonly portId: string,
+    public readonly x: number,
+    public readonly y: number,
+    public readonly subGraphId: string | null = null,
+    public readonly freeDrop = false
+  ) {
+    super(GraphNodeQuickAddEvent.eventName, { ...eventInit });
+  }
+}
+
 export class GraphNodeSelectedEvent extends Event {
   static eventName = "bbgraphnodeselected";
 

@@ -29,6 +29,10 @@ const themeAssets: [string, string][] = [
   ["input", `/third_party/icons/graph/input${themeSuffix}-48px.svg`],
   ["jsonata", `/third_party/icons/graph/jsonata${themeSuffix}-48px.svg`],
   ["laps", `/third_party/icons/graph/laps${themeSuffix}-48px.svg`],
+  [
+    "library-add",
+    `/third_party/icons/graph/library-add${themeSuffix}-48px.svg`,
+  ],
   ["joiner", `/third_party/icons/graph/merge-type${themeSuffix}-48px.svg`],
   ["nano", `/third_party/icons/graph/nano${themeSuffix}-48px.svg`],
   ["output", `/third_party/icons/graph/output${themeSuffix}-48px.svg`],

@@ -10,6 +10,7 @@ const Strings = StringsHelper.forSection("Editor");
 import {
   BoardServer,
   BreadboardCapability,
+  EditSpec,
   GraphIdentifier,
   GraphProviderCapabilities,
   GraphProviderExtendedCapabilities,
@@ -55,11 +56,13 @@ import {
   GraphNodeDeleteEvent,
   GraphNodeEdgeChangeEvent,
   GraphNodeEditEvent,
+  GraphNodeQuickAddEvent,
   GraphNodeRunRequestEvent,
   GraphShowTooltipEvent,
   HideTooltipEvent,
   InteractionEvent,
   KitNodeChosenEvent,
+  MultiEditEvent,
   NodeActivitySelectedEvent,
   NodeConfigurationUpdateRequestEvent,
   NodeCreateEvent,
@@ -72,7 +75,7 @@ import {
   WorkspaceVisualUpdateEvent,
 } from "../../events/events.js";
 import { GraphRenderer } from "./graph-renderer.js";
-import { createRandomID } from "./utils.js";
+import { createRandomID, GRID_SIZE } from "./utils.js";
 import {
   Command,
   DragConnectorReceiver,
@@ -92,10 +95,17 @@ import { getSubItemColor } from "../../utils/subgraph-color.js";
 import "./graph-renderer.js";
 import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
+import { NodeMetadata } from "@breadboard-ai/types";
 
 const ZOOM_KEY = "bb-editor-zoom-to-highlighted-node-during-runs";
 const DATA_TYPE = "text/plain";
 const EDITOR_PADDING = 100;
+const GRAPH_NODE_WIDTH = 260;
+const GRAPH_NODE_QUICK_ADD_GAP = 60;
+const QUICK_ADD_ADJUSTMENT = 40;
+const HEADER_PORT_ADJSUTMENT = 20;
+const QUICK_ADD_HEIGHT = 400;
+const HEADER_HEIGHT = 44;
 
 function getDefaultConfiguration(type: string): NodeConfiguration | undefined {
   if (type !== "input" && type !== "output") {
@@ -255,6 +265,14 @@ export class Editor extends LitElement implements DragConnectorReceiver {
 
   @state()
   accessor showComponentLibrary = false;
+  #componentLibraryConfiguration: {
+    x: number;
+    y: number;
+    id: NodeIdentifier;
+    portId: PortIdentifier;
+    freeDrop: boolean;
+    subGraphId: GraphIdentifier | null;
+  } | null = null;
 
   @state()
   accessor showComponentPicker = false;
@@ -293,6 +311,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
   #onGraphHideTooltipBound = this.#onGraphHideTooltip.bind(this);
   #onGraphCommentEditRequestBound = this.#onGraphCommentEditRequest.bind(this);
   #onGraphNodeRunRequestBound = this.#onGraphNodeRunRequest.bind(this);
+  #onGraphNodeQuickAddBound = this.#onGraphNodeQuickAdd.bind(this);
 
   #lastVisualChangeId: WorkspaceVisualChangeId | null = null;
   #lastSelectionChangeId: WorkspaceSelectionChangeId | null = null;
@@ -644,6 +663,13 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       transform: translateX(-50%) translateX(40px);
       z-index: 2;
       animation: slideIn 0.2s cubic-bezier(0, 0, 0.3, 1) forwards;
+
+      &[detached="true"] {
+        position: fixed;
+        left: var(--component-library-x, 100px);
+        top: var(--component-library-y, 100px);
+        transform: none;
+      }
     }
   `;
 
@@ -887,6 +913,11 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       this.#onGraphNodeRunRequestBound
     );
 
+    this.addEventListener(
+      GraphNodeQuickAddEvent.eventName,
+      this.#onGraphNodeQuickAddBound
+    );
+
     window.addEventListener("pointerdown", this.#onPointerDownBound);
 
     this.addEventListener("pointermove", this.#onPointerMoveBound);
@@ -972,6 +1003,11 @@ export class Editor extends LitElement implements DragConnectorReceiver {
     this.removeEventListener(
       GraphNodeRunRequestEvent.eventName,
       this.#onGraphNodeRunRequestBound
+    );
+
+    this.removeEventListener(
+      GraphNodeQuickAddEvent.eventName,
+      this.#onGraphNodeQuickAddBound
     );
 
     window.removeEventListener("pointerdown", this.#onPointerDownBound);
@@ -1125,7 +1161,26 @@ export class Editor extends LitElement implements DragConnectorReceiver {
     );
   }
 
+  #onGraphNodeQuickAdd(evt: Event) {
+    const quickAddEvt = evt as GraphNodeQuickAddEvent;
+    this.#componentLibraryConfiguration = {
+      x: quickAddEvt.x,
+      y: quickAddEvt.y,
+      subGraphId: quickAddEvt.subGraphId,
+      id: quickAddEvt.id,
+      portId: quickAddEvt.portId,
+      freeDrop: quickAddEvt.freeDrop,
+    };
+
+    this.showComponentLibrary = true;
+  }
+
   #onPointerDown() {
+    this.#hidePickers();
+  }
+
+  #hidePickers() {
+    this.#componentLibraryConfiguration = null;
     this.showComponentLibrary = false;
     this.showComponentPicker = false;
   }
@@ -1434,6 +1489,123 @@ export class Editor extends LitElement implements DragConnectorReceiver {
     this.showComponentPicker = !this.showComponentPicker;
   }
 
+  #getGraphTitleByType(nodeType: string) {
+    let title = "Untitled item";
+    for (const graph of this.graphStore?.graphs() ?? []) {
+      if (graph.url === nodeType && graph.title) {
+        title = graph.title;
+        break;
+      }
+    }
+
+    return title;
+  }
+
+  #handleChosenKitItem(nodeType: string) {
+    if (!this.#graphRendererRef.value) {
+      return;
+    }
+
+    const edits: EditSpec[] = [];
+    const id = createRandomID(nodeType);
+    const visual: NodeMetadata["visual"] = {};
+    const graphId =
+      this.#componentLibraryConfiguration?.subGraphId ?? this.subGraphId ?? "";
+    if (this.#componentLibraryConfiguration) {
+      if (this.#componentLibraryConfiguration.freeDrop) {
+        const { x, y } = this.#graphRendererRef.value.toContainerCoordinates({
+          x: this.#componentLibraryConfiguration.x,
+          // We adjust the y position here to account for the header height but
+          // also the fact that the header port is slightly below the top of the
+          // node.
+          y:
+            this.#componentLibraryConfiguration.y -
+            HEADER_HEIGHT -
+            HEADER_PORT_ADJSUTMENT,
+        });
+
+        visual.x = Math.round(x / GRID_SIZE) * GRID_SIZE;
+        visual.y = Math.round(y / GRID_SIZE) * GRID_SIZE;
+      } else {
+        const sourceVisual = this.graph
+          ?.nodeById(this.#componentLibraryConfiguration.id)
+          ?.metadata().visual as Record<string, number> | undefined;
+        if (sourceVisual) {
+          visual.y = sourceVisual.y;
+          visual.x =
+            sourceVisual.x + GRAPH_NODE_WIDTH + GRAPH_NODE_QUICK_ADD_GAP;
+        }
+      }
+    } else {
+      // Middle of the canvas.
+      const bounds = this.getBoundingClientRect();
+      const location = this.#graphRendererRef.value.toContainerCoordinates({
+        x: bounds.x + bounds.width * 0.5,
+        y: bounds.y + bounds.height * 0.5,
+      });
+
+      visual.x = location.x - GRAPH_NODE_WIDTH / 2;
+      visual.y = location.y - QUICK_ADD_ADJUSTMENT;
+    }
+
+    const title = this.#getGraphTitleByType(nodeType);
+
+    edits.push({
+      type: "addnode",
+      graphId,
+      node: {
+        id,
+        type: nodeType,
+        metadata: {
+          title,
+          visual,
+        },
+      },
+    });
+
+    if (this.#componentLibraryConfiguration) {
+      const { id: sourceId, portId } = this.#componentLibraryConfiguration;
+      // Add an edge.
+      edits.push({
+        type: "addedge",
+        graphId,
+        edge: {
+          from: sourceId,
+          to: id,
+          out: portId,
+          in: portId,
+        },
+      });
+    }
+
+    this.dispatchEvent(
+      new MultiEditEvent(
+        edits,
+        `Quick Add`,
+        this.#componentLibraryConfiguration?.subGraphId ?? null
+      )
+    );
+
+    if (this.#componentLibraryConfiguration) {
+      // By default we will zoom to the currently-selected node. We therefore
+      // wait a frame so that the newly-added node is selected.
+      requestAnimationFrame(() => {
+        if (!this.#graphRendererRef.value) {
+          return;
+        }
+
+        let animate = true;
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          animate = false;
+        }
+
+        this.#graphRendererRef.value.zoomToSelectionIfPossible(animate);
+      });
+    }
+
+    this.#hidePickers();
+  }
+
   render() {
     const readOnlyFlag =
       this.graph !== null && this.readOnly && this.showReadOnlyLabel
@@ -1442,12 +1614,31 @@ export class Editor extends LitElement implements DragConnectorReceiver {
 
     let componentLibrary: HTMLTemplateResult | symbol = nothing;
     if (this.showComponentLibrary) {
+      const isDetached = this.#componentLibraryConfiguration !== null;
+      if (this.#componentLibraryConfiguration) {
+        let { x, y } = this.#componentLibraryConfiguration;
+        x -= QUICK_ADD_ADJUSTMENT;
+        y -= QUICK_ADD_HEIGHT * 0.5;
+        if (y + QUICK_ADD_HEIGHT > window.innerHeight) {
+          y = window.innerHeight - QUICK_ADD_HEIGHT - QUICK_ADD_ADJUSTMENT;
+        }
+
+        this.style.setProperty("--component-library-x", `${x}px`);
+        this.style.setProperty("--component-library-y", `${y}px`);
+      } else {
+        this.style.removeProperty("--component-library-x");
+        this.style.removeProperty("--component-library-y");
+      }
+
       componentLibrary = html`<bb-component-selector-overlay
+        .detached=${isDetached}
         .graphStoreUpdateId=${this.graphStoreUpdateId}
         .showExperimentalComponents=${this.showExperimentalComponents}
         .boardServerKits=${this.boardServerKits}
         .graphStore=${this.graphStore}
         .mainGraphId=${this.mainGraphId}
+        @bbkitnodechosen=${(evt: KitNodeChosenEvent) =>
+          this.#handleChosenKitItem(evt.nodeType)}
         @pointerdown=${(evt: PointerEvent) => {
           evt.stopImmediatePropagation();
         }}
@@ -1528,9 +1719,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
                       ["kit-item"]: true,
                     })}
                     draggable="true"
-                    @dblclick=${() => {
-                      this.dispatchEvent(new KitNodeChosenEvent(id));
-                    }}
+                    @click=${() => this.#handleChosenKitItem(id)}
                     @dragstart=${(evt: DragEvent) => {
                       if (!evt.dataTransfer) {
                         return;
