@@ -204,7 +204,6 @@ export class AppView extends LitElement {
       display: grid;
       grid-template-columns: none;
       grid-template-rows: 48px auto;
-      height: calc(100% - var(--bb-grid-size-13));
     }
 
     #loading {
@@ -356,12 +355,23 @@ export class AppView extends LitElement {
       background: var(--bb-ui-500);
     }
 
+    main {
+      height: calc(100% - var(--bb-grid-size-13) - var(--bb-grid-size-12));
+    }
+    #activity {
+      height: 100%;
+    }
+    bb-app-preview {
+      height: 100%;
+    }
+
     @media (min-width: 700px) {
       main {
         display: grid;
         grid-template-columns: max(300px, 20vw) 1fr;
         grid-template-rows: none;
         column-gap: var(--bb-grid-size-5);
+        height: calc(100% - var(--bb-grid-size-13));
       }
 
       bb-app-nav[popout] {
@@ -412,10 +422,6 @@ export class AppView extends LitElement {
 
       #activity {
         position: relative;
-        height: 100%;
-      }
-      bb-app-preview {
-        height: 100%;
       }
 
       #board-info {
