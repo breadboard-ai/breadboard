@@ -23,7 +23,7 @@ export function isPortSpecBehavior(schema: Schema): boolean {
 }
 
 export function isCodeBehavior(schema: Schema): boolean {
-  return schema.behavior?.includes("code") ?? false;
+  return schema.behavior?.includes("hint-code") ?? false;
 }
 
 export function isLLMContentBehavior(schema: Schema): boolean {

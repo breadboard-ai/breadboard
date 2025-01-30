@@ -3697,13 +3697,17 @@
                     "enum": [
                       "board",
                       "bubble",
-                      "code",
                       "config",
                       "deprecated",
                       "error",
                       "google-drive-file-id",
                       "google-drive-query",
-                      "image",
+                      "hint-audio",
+                      "hint-code",
+                      "hint-image",
+                      "hint-multimodal",
+                      "hint-preview",
+                      "hint-text",
                       "json-schema",
                       "llm-content",
                       "main-port",
@@ -3715,6 +3719,10 @@
                     ],
                     "type": "string"
                   }
+                },
+                "icon": {
+                  "description": "If present, allows specifying an icon for the property. This icon will\nbe used when rendering the property in an editor.",
+                  "type": "string"
                 },
                 "transient": {
                   "type": "boolean"

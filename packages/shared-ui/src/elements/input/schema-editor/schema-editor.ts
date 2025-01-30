@@ -403,7 +403,10 @@ export class SchemaEditor extends LitElement {
               >
                 Port Spec
               </option>
-              <option value="code" ?selected=${behaviorList.includes("code")}>
+              <option
+                value="code"
+                ?selected=${behaviorList.includes("hint-code")}
+              >
                 Code
               </option>
             </select>`;
