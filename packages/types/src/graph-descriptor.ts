@@ -481,13 +481,31 @@ export type Modules = Record<ModuleIdentifier, Module>;
 
 export type AssetPath = string;
 
+/**
+ * Provides information on the structure of the data stored in the asset.
+ * All data is stored as LLMContent[], but this field allows us to better
+ * identify what is stored.
+ *
+ * - "content" -- the typical LLMContent[], should be editable in asset
+ *   viewer as if the configuration port of a component.
+ * - "file" -- user-uploaded file. In this case, the data must be:
+ *   - a single inlineData part with the right mimeType
+ *   - of a single LLMContent item
+ */
+export type AssetType = "content" | "file";
+
 export type AssetMetadata = {
   title: string;
   description?: string;
+  type: AssetType;
 };
 
 export type Asset = {
   metadata?: AssetMetadata;
+  /**
+   * Must be LLMContent[], but is typed as NodeValue because for some reason,
+   * GraphDescriptor doesn't like LLMContent[] here.
+   */
   data: NodeValue;
 };
 

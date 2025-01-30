@@ -35,7 +35,8 @@
 							},
 							"type": "object"
 						}
-					]
+					],
+					"description": "Must be LLMContent[], but is typed as NodeValue because for some reason, GraphDescriptor doesn't like LLMContent[] here."
 				},
 				"metadata": {
 					"$ref": "#/definitions/AssetMetadata"
@@ -51,12 +52,24 @@
 				},
 				"title": {
 					"type": "string"
+				},
+				"type": {
+					"$ref": "#/definitions/AssetType"
 				}
 			},
 			"required": [
-				"title"
+				"title",
+				"type"
 			],
 			"type": "object"
+		},
+		"AssetType": {
+			"description": "Provides information on the structure of the data stored in the asset. All data is stored as LLMContent[], but this field allows us to better identify what is stored.\n\n- \"content\" -- the typical LLMContent[], should be editable in asset   viewer as if the configuration port of a component.\n- \"file\" -- user-uploaded file. In this case, the data must be:   - a single inlineData part with the right mimeType   - of a single LLMContent item",
+			"enum": [
+				"content",
+				"file"
+			],
+			"type": "string"
 		},
 		"Board": {
 			"$ref": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.11.0/packages/schema/breadboard.schema.json#/definitions/GraphDescriptor",
