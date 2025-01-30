@@ -399,6 +399,17 @@ export class TextEditor extends LitElement {
 
     this.#editorRef.value.textContent = evt.clipboardData.getData("text");
     this.#captureEditorValue();
+
+    const selection = this.#getCurrentSelection();
+    if (!selection || !this.#editorRef.value.lastChild) {
+      return;
+    }
+
+    const range = new Range();
+    range.setStartAfter(this.#editorRef.value.lastChild);
+    range.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(range);
   }
 
   #clearChicletSelections() {
