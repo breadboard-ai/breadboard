@@ -119,6 +119,7 @@ export type BehaviorSchema =
   | "hint-audio"
   /**
    * Hints that the port represents a multimodal value (could be text, image,
+   * etc.)
    */
   | "hint-multimodal"
   /**
