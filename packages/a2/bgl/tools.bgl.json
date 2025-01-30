@@ -1,0 +1,93 @@
+{
+  "title": "Tools",
+  "description": "A blank board. Use it as a starting point for your creations.",
+  "version": "0.0.1",
+  "nodes": [],
+  "edges": [],
+  "metadata": {
+    "comments": [
+      {
+        "id": "comment-6fc8b597",
+        "text": "Intentionally Left Blank",
+        "metadata": {
+          "visual": {
+            "x": 7,
+            "y": -575,
+            "collapsed": "expanded",
+            "outputHeight": 0
+          }
+        }
+      }
+    ],
+    "visual": {}
+  },
+  "modules": {
+    "search-web": {
+      "code": "/**\n * @fileoverview Add a description for your module here.\n */\nexport { invoke as default, describe };\nasync function invoke({ context }) {\n    return { context };\n}\nasync function describe() {\n    return {\n        inputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context in\",\n                },\n            },\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context out\",\n                },\n            },\n        },\n        metadata: {\n            icon: \"search\",\n            tags: [\"quick-access\", \"tool\"],\n            order: 1,\n        },\n    };\n}\n",
+      "metadata": {
+        "title": "Search Web",
+        "source": {
+          "code": "/**\n * @fileoverview Add a description for your module here.\n */\n\nexport { invoke as default, describe };\n\nasync function invoke({ context }: { context: LLMContent[] }) {\n  return { context };\n}\n\nasync function describe() {\n  return {\n    inputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context in\",\n        },\n      },\n    } satisfies Schema,\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context out\",\n        },\n      },\n    } satisfies Schema,\n    metadata: {\n      icon: \"search\",\n      tags: [\"quick-access\", \"tool\"],\n      order: 1,\n    },\n  };\n}\n",
+          "language": "typescript"
+        },
+        "description": "Add a description for your module here.",
+        "runnable": false
+      }
+    },
+    "search-maps": {
+      "code": "/**\n * @fileoverview Add a description for your module here.\n */\nexport { invoke as default, describe };\nasync function invoke({ context }) {\n    return { context };\n}\nasync function describe() {\n    return {\n        inputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context in\",\n                },\n            },\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context out\",\n                },\n            },\n        },\n        metadata: {\n            icon: \"search\",\n            tags: [\"quick-access\", \"tool\"],\n            order: 2,\n        },\n    };\n}\n",
+      "metadata": {
+        "title": "Search Maps",
+        "source": {
+          "code": "/**\n * @fileoverview Add a description for your module here.\n */\n\nexport { invoke as default, describe };\n\nasync function invoke({ context }: { context: LLMContent[] }) {\n  return { context };\n}\n\nasync function describe() {\n  return {\n    inputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context in\",\n        },\n      },\n    } satisfies Schema,\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context out\",\n        },\n      },\n    } satisfies Schema,\n    metadata: {\n      icon: \"search\",\n      tags: [\"quick-access\", \"tool\"],\n      order: 2,\n    },\n  };\n}\n",
+          "language": "typescript"
+        },
+        "description": "Add a description for your module here.",
+        "runnable": false
+      }
+    },
+    "get-webpage": {
+      "code": "/**\n * @fileoverview Given a URL of a webpage, returns its content as Markdown with a list of links and other metadata.\n */\nexport { invoke as default, describe };\nasync function invoke({ context }) {\n    return { context };\n}\nasync function describe() {\n    return {\n        inputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context in\",\n                },\n            },\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context out\",\n                },\n            },\n        },\n        metadata: {\n            icon: \"public\",\n            tags: [\"quick-access\", \"tool\"],\n            order: 4,\n        },\n    };\n}\n",
+      "metadata": {
+        "title": "Get Webpage",
+        "source": {
+          "code": "/**\n * @fileoverview Given a URL of a webpage, returns its content as Markdown with a list of links and other metadata.\n */\n\nexport { invoke as default, describe };\n\nasync function invoke({ context }: { context: LLMContent[] }) {\n  return { context };\n}\n\nasync function describe() {\n  return {\n    inputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context in\",\n        },\n      },\n    } satisfies Schema,\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context out\",\n        },\n      },\n    } satisfies Schema,\n    metadata: {\n      icon: \"public\",\n      tags: [\"quick-access\", \"tool\"],\n      order: 4,\n    },\n  };\n}\n",
+          "language": "typescript"
+        },
+        "description": "Given a URL of a webpage, returns its content as Markdown with a list of links and other metadata.",
+        "runnable": false
+      }
+    },
+    "search-wikipedia": {
+      "code": "/**\n * @fileoverview Add a description for your module here.\n */\nexport { invoke as default, describe };\nasync function invoke({ context }) {\n    return { context };\n}\nasync function describe() {\n    return {\n        inputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context in\",\n                },\n            },\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context out\",\n                },\n            },\n        },\n        metadata: {\n            icon: \"public\",\n            tags: [\"quick-access\", \"tool\"],\n            order: 3,\n        },\n    };\n}\n",
+      "metadata": {
+        "title": "Search Wikipedia",
+        "source": {
+          "code": "/**\n * @fileoverview Add a description for your module here.\n */\n\nexport { invoke as default, describe };\n\nasync function invoke({ context }: { context: LLMContent[] }) {\n  return { context };\n}\n\nasync function describe() {\n  return {\n    inputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context in\",\n        },\n      },\n    } satisfies Schema,\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context out\",\n        },\n      },\n    } satisfies Schema,\n    metadata: {\n      icon: \"public\",\n      tags: [\"quick-access\", \"tool\"],\n      order: 3,\n    },\n  };\n}\n",
+          "language": "typescript"
+        },
+        "description": "Add a description for your module here.",
+        "runnable": false
+      }
+    },
+    "get-weather": {
+      "code": "/**\n * @fileoverview Add a description for your module here.\n */\nexport { invoke as default, describe };\nasync function invoke({ context }) {\n    return { context };\n}\nasync function describe() {\n    return {\n        inputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context in\",\n                },\n            },\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context out\",\n                },\n            },\n        },\n        metadata: {\n            icon: \"public\",\n            tags: [\"quick-access\", \"tool\"],\n            order: 4,\n        },\n    };\n}\n",
+      "metadata": {
+        "title": "Get Weather",
+        "source": {
+          "code": "/**\n * @fileoverview Add a description for your module here.\n */\n\nexport { invoke as default, describe };\n\nasync function invoke({ context }: { context: LLMContent[] }) {\n  return { context };\n}\n\nasync function describe() {\n  return {\n    inputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context in\",\n        },\n      },\n    } satisfies Schema,\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context out\",\n        },\n      },\n    } satisfies Schema,\n    metadata: {\n      icon: \"public\",\n      tags: [\"quick-access\", \"tool\"],\n      order: 4,\n    },\n  };\n}\n",
+          "language": "typescript"
+        },
+        "description": "Add a description for your module here.",
+        "runnable": false
+      }
+    }
+  },
+  "exports": [
+    "#module:get-weather",
+    "#module:search-web",
+    "#module:search-wikipedia",
+    "#module:get-webpage",
+    "#module:search-maps"
+  ]
+}
