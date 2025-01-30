@@ -1733,10 +1733,6 @@ export class GraphNode extends PIXI.Container {
     return this.#outPorts.some((port) => port.edges.length > 0);
   }
 
-  #canConnectOut() {
-    return this.type !== "output";
-  }
-
   #drawQuickAddIfNeeded() {
     if (
       !this.selected ||
