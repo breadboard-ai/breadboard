@@ -254,13 +254,21 @@ export type GraphInlineMetadata = {
  * - `tool`: The graph is intended to be a tool.
  * - `experimental`: The graph is experimental and may not be stable.
  * - `component`: The graph is intended to be a component.
+ * - `core`: The graph represents a component that provides "core"
+ *    functionality, like control flow, input/output, etc.
+ * - `generative`: The graph represents a component that uses an LLM
+ * - `quick-access`: The graph represents a component that is featured in quick
+ *    access menu.
  */
 export type GraphTag =
   | "published"
   | "tool"
   | "experimental"
   | "component"
-  | "deprecated";
+  | "deprecated"
+  | "core"
+  | "generative"
+  | "quick-access";
 
 /**
  * Represents graph metadata.
@@ -273,7 +281,7 @@ export type GraphMetadata = {
   [name: string]: NodeValue;
   comments?: CommentNode[];
   /**
-   * Tags associated with the graph. At this moment, free-form strings.
+   * Tags associated with the graph.
    */
   tags?: GraphTag[];
   /**
@@ -312,6 +320,13 @@ export type GraphMetadata = {
      */
     minimized?: boolean;
   };
+
+  /**
+   * Allows specifying relative order of this graph when it is represented
+   * as a component in any menu. Currently used when populating the
+   * quick access menu.
+   */
+  order?: number;
 };
 
 /**

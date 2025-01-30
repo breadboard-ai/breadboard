@@ -490,7 +490,7 @@ function entryFromExport(
   const {
     title,
     description,
-    metadata: { icon, help } = {},
+    metadata: { icon, help, tags = [], order } = {},
   } = updating ? {} : current || {};
   if (id.startsWith(MODULE_EXPORT_PREFIX)) {
     const moduleId = id.slice(MODULE_EXPORT_PREFIX.length);
@@ -501,8 +501,9 @@ function entryFromExport(
       description: description ?? module.metadata?.description,
       icon: icon ?? module.metadata?.icon,
       url,
-      tags: ["component"],
+      tags: ["component", ...tags],
       help: help ?? module.metadata?.help,
+      order,
       id: mainGraphId,
       updating,
     });
@@ -515,8 +516,9 @@ function entryFromExport(
       description: description ?? descriptor.description,
       icon: icon ?? descriptor.metadata?.icon,
       url,
-      tags: ["component"],
+      tags: ["component", ...tags],
       help: help ?? descriptor.metadata?.help,
+      order,
       id: mainGraphId,
       updating,
     });

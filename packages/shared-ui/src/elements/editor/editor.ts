@@ -463,6 +463,14 @@ export class Editor extends LitElement implements DragConnectorReceiver {
                 no-repeat;
             }
 
+            &.comment {
+              background: var(--bb-icon-comment) top left / 20px 20px no-repeat;
+            }
+
+            &.input {
+              background: var(--bb-icon-input) top left / 20px 20px no-repeat;
+            }
+
             &.smart-toy {
               background: var(--bb-icon-smart-toy) top left / 20px 20px
                 no-repeat;
@@ -506,6 +514,10 @@ export class Editor extends LitElement implements DragConnectorReceiver {
                 20px no-repeat;
             }
           }
+        }
+
+        & li.separator {
+          border-top: 1px solid var(--bb-neutral-200);
         }
       }
     }
@@ -1422,11 +1434,20 @@ export class Editor extends LitElement implements DragConnectorReceiver {
     this.#graphRendererRef.value.removeBoardPortHighlights();
   }
 
-  #createComponentList(graphStore: MutableGraphStore, kitName: string) {
+  #createComponentList(graphStore: MutableGraphStore, typeTag: string) {
     const kitList: Array<{ id: string; metadata: GraphStoreEntry }> = [];
     const graphs = graphStore.graphs();
 
     for (const graph of graphs) {
+      // Don't show items that are still updating.
+      if (graph.updating) continue;
+
+      // Skip items that don't belong in Quick Access component picker.
+      if (!graph.tags?.includes("quick-access")) continue;
+
+      // Skip items that don't aren't of specified type
+      if (!graph.tags?.includes(typeTag)) continue;
+
       if (!graph.title) {
         continue;
       }
@@ -1434,7 +1455,6 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       const { mainGraph } = graph;
       if (
         !mainGraph.title ||
-        mainGraph.title !== kitName ||
         mainGraph.tags?.includes("deprecated") ||
         !graph.tags?.includes("component") ||
         graph.tags?.includes("deprecated")
@@ -1460,28 +1480,23 @@ export class Editor extends LitElement implements DragConnectorReceiver {
     }
 
     kitList.sort((kit1, kit2) => {
-      const title1 = kit1.metadata.mainGraph.title || "";
-      const title2 = kit2.metadata.mainGraph.title || "";
-      if (title1 > title2) {
-        return 1;
-      }
-      if (title1 < title2) {
-        return -1;
-      }
+      const order1 = kit1.metadata.order || Number.MAX_SAFE_INTEGER;
+      const order2 = kit2.metadata.order || Number.MAX_SAFE_INTEGER;
+      if (order1 != order2) return order1 - order2;
       return (kit1.metadata.title || "") > (kit2.metadata.title || "") ? 1 : -1;
     });
 
     return kitList;
   }
 
-  #showComponentPicker(target: HTMLElement, kitName: string) {
+  #showComponentPicker(target: HTMLElement, typeTag: string) {
     if (!this.graphStore) {
       return;
     }
 
     const bounds = target.getBoundingClientRect();
     this.#componentPickerConfiguration = {
-      components: this.#createComponentList(this.graphStore, kitName),
+      components: this.#createComponentList(this.graphStore, typeTag),
       x: bounds.left - 5,
       y: bounds.bottom + 4,
     };
@@ -1695,6 +1710,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
         "--component-picker-y",
         `${this.#componentPickerConfiguration.y}px`
       );
+      let lastOrderIndex = 0;
       componentPicker = html`<div
         id="component-picker"
         @pointerdown=${(evt: PointerEvent) => {
@@ -1712,11 +1728,16 @@ export class Editor extends LitElement implements DragConnectorReceiver {
                   const id = kitContents.id;
                   const title = kitContents.metadata.title || id;
                   const icon = kitContents.metadata.icon ?? "generic";
+                  const orderIndex =
+                    kitContents.metadata.order || Number.MAX_SAFE_INTEGER;
+                  const displaySeparator = orderIndex - lastOrderIndex > 1;
+                  lastOrderIndex = orderIndex;
 
                   return html`<li
                     class=${classMap({
                       [className]: true,
                       ["kit-item"]: true,
+                      ["separator"]: displaySeparator,
                     })}
                     draggable="true"
                     @click=${() => this.#handleChosenKitItem(id)}
@@ -1771,7 +1792,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
                   }
 
                   await storeReady;
-                  this.#showComponentPicker(evt.target, "A2");
+                  this.#showComponentPicker(evt.target, "generative");
                 }}
               >
                 ${Strings.from("LABEL_SHOW_LIST")}
@@ -1786,7 +1807,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
                   }
 
                   await storeReady;
-                  this.#showComponentPicker(evt.target, "Built-in Kit");
+                  this.#showComponentPicker(evt.target, "core");
                 }}
               >
                 ${Strings.from("LABEL_SHOW_LIST")}
@@ -1801,7 +1822,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
                   }
 
                   await storeReady;
-                  this.#showComponentPicker(evt.target, "Tool Kit");
+                  this.#showComponentPicker(evt.target, "tool");
                 }}
               >
                 ${Strings.from("LABEL_SHOW_LIST")}

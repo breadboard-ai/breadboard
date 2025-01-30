@@ -407,8 +407,12 @@
 					"description": "The icon that identifies the graph. Can be a URL or a Material Design id.",
 					"type": "string"
 				},
+				"order": {
+					"description": "Allows specifying relative order of this graph when it is represented as a component in any menu. Currently used when populating the quick access menu.",
+					"type": "number"
+				},
 				"tags": {
-					"description": "Tags associated with the graph. At this moment, free-form strings.",
+					"description": "Tags associated with the graph.",
 					"items": {
 						"$ref": "#/definitions/GraphTag"
 					},
@@ -454,12 +458,15 @@
 			"type": "object"
 		},
 		"GraphTag": {
-			"description": "A tag that can be associated with a graph.\n- `published`: The graph is published (as opposed to a draft). It may be    used in production and shared with others.\n- `tool`: The graph is intended to be a tool.\n- `experimental`: The graph is experimental and may not be stable.\n- `component`: The graph is intended to be a component.",
+			"description": "A tag that can be associated with a graph.\n- `published`: The graph is published (as opposed to a draft). It may be    used in production and shared with others.\n- `tool`: The graph is intended to be a tool.\n- `experimental`: The graph is experimental and may not be stable.\n- `component`: The graph is intended to be a component.\n- `core`: The graph represents a component that provides \"core\"    functionality, like control flow, input/output, etc.\n- `generative`: The graph represents a component that uses an LLM\n- `quick-access`: The graph represents a component that is featured in quick    access menu.",
 			"enum": [
 				"component",
+				"core",
 				"deprecated",
 				"experimental",
+				"generative",
 				"published",
+				"quick-access",
 				"tool"
 			],
 			"type": "string"

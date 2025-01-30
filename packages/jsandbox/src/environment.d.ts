@@ -138,6 +138,7 @@ declare module "@describe" {
         description?: string;
         url: string;
       };
+      order?: number;
     };
     inputSchema: Schema;
     outputSchema: Schema;

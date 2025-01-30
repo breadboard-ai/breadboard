@@ -72,7 +72,9 @@ function createBuiltInKit(): Kit {
           description:
             "A comment node. Use this to put additional information on your board",
           title: "Comment",
-          icon: "edit",
+          icon: "comment",
+          tags: ["quick-access", "core"],
+          order: 2,
         },
         invoke: unreachableCode(),
       },
