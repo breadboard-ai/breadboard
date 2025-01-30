@@ -15,6 +15,7 @@ import {
 } from "./events/events.js";
 import {
   createDefaultDataStore,
+  createGraphStore,
   createLoader,
   type GraphDescriptor,
   type InputValues,
@@ -48,8 +49,16 @@ import {
   type TokenVendor,
   createTokenVendor,
 } from "@breadboard-ai/connection-client";
-import { SETTINGS_TYPE } from "../../../shared-ui/dist/types/types.js";
+import {
+  SETTINGS_TYPE,
+  type TopGraphRunResult,
+} from "../../../shared-ui/dist/types/types.js";
 import type { TopGraphObserver } from "../../../shared-ui/dist/utils/top-graph-observer/top-graph-observer.js";
+import { ChatController } from "../../../shared-ui/dist/state/chat-controller.js";
+
+import { WebSandbox } from "@breadboard-ai/jsandbox/web";
+import wasm from "/sandbox.wasm?url";
+const sandbox = new WebSandbox(new URL(wasm, window.location.href));
 
 const RUN_ON_BOARD_SERVER = "run-on-board-server";
 
@@ -173,6 +182,8 @@ export class AppView extends LitElement {
     minute: "2-digit",
     hour12: true,
   });
+
+  #chatController: ChatController | null = null;
 
   static styles = css`
     * {
@@ -655,6 +666,13 @@ export class AppView extends LitElement {
       this.#runner,
       this.#abortController.signal
     );
+
+    const graphStore = createGraphStore({
+      kits,
+      loader: this.#loader,
+      sandbox,
+    });
+    this.#chatController = new ChatController(this.#runner, graphStore);
 
     this.#dataStore.releaseAll();
     this.#dataStore.createGroup("run");
