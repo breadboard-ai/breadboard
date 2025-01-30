@@ -9,7 +9,7 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { Project } from "../../../state";
 import { FastAccessSelectEvent } from "../../../events/events";
 import { FastAccessMenu } from "../../elements";
-import { Template } from "../../../utils/template";
+import { Template, TemplatePartType } from "../../../utils/template";
 
 @customElement("bb-text-editor")
 export class TextEditor extends LitElement {
@@ -225,7 +225,7 @@ export class TextEditor extends LitElement {
     this.#checkSelectionsBound(evt);
   }
 
-  #add(path: string, title: string, type: string) {
+  #add(path: string, title: string, type: TemplatePartType) {
     if (!this.#editorRef.value) {
       return null;
     }
@@ -239,7 +239,7 @@ export class TextEditor extends LitElement {
     label.classList.add(type);
     label.dataset.path = path;
 
-    preambleText.textContent = Template.preamble({ title, path, type });
+    preambleText.textContent = Template.preamble({ title, path, type }, true);
     postamableText.textContent = Template.postamble();
     titleText.textContent = title;
     titleText.classList.add("visible");

@@ -1344,7 +1344,8 @@ export class Edit extends EventTarget {
     id: string,
     configurationPart: NodeConfiguration,
     subGraphId: string | null = null,
-    metadata: NodeMetadata | null = null
+    metadata: NodeMetadata | null = null,
+    ins: { from?: string; name: string }[] | null = null
   ) {
     if (tab?.readOnly) {
       return;
@@ -1394,6 +1395,11 @@ export class Edit extends EventTarget {
         graphId,
       }),
         `Change metadata for "${id}"`;
+    }
+
+    if (ins && ins.length > 0) {
+      console.log("UPDATE AUTOWIRES");
+      console.table(ins);
     }
 
     return editableGraph.edit(

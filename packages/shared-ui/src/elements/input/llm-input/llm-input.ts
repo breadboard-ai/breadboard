@@ -35,9 +35,14 @@ import type {
   InlineDataCapabilityPart,
   LLMContent,
   StoredDataCapabilityPart,
+  TextCapabilityPart,
 } from "@breadboard-ai/types";
 import { TextEditor } from "../text-editor/text-editor.js";
 import { Project } from "../../../state/types.js";
+import {
+  Template,
+  TemplatePartTransformCallback,
+} from "../../../utils/template.js";
 
 const inlineDataTemplate = { inlineData: { data: "", mimeType: "" } };
 
@@ -708,12 +713,16 @@ export class LLMInput extends LitElement {
     }
   }
 
-  processAllOpenParts() {
+  processAllOpenParts(componentParamCallback: TemplatePartTransformCallback) {
     if (!this.value) {
       return;
     }
 
     this.value.parts.map((part, idx) => {
+      if (isTextCapabilityPart(part)) {
+        return this.#updateComponentParamsInText(part, componentParamCallback);
+      }
+
       if (!isInlineData(part)) {
         return;
       }
@@ -726,6 +735,18 @@ export class LLMInput extends LitElement {
         }
       }
     });
+  }
+
+  /**
+   * If necessary, updates the text parts that contain parameterized references
+   * to components.
+   * @param part
+   */
+  #updateComponentParamsInText(
+    part: TextCapabilityPart,
+    callback: TemplatePartTransformCallback
+  ) {
+    part.text = new Template(part.text).transform(callback);
   }
 
   async #processFilePart(evt: InputEvent, partIdx: number) {

@@ -12,6 +12,7 @@ import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { AllowedLLMContentTypes } from "../../../types/types.js";
 import { LLMInput } from "./llm-input.js";
 import { Project } from "../../../state/types.js";
+import { TemplatePartTransformCallback } from "../../../utils/template.js";
 
 @customElement("bb-llm-input-array")
 export class LLMInputArray extends LitElement {
@@ -138,14 +139,16 @@ export class LLMInputArray extends LitElement {
 
   #containerRef: Ref<HTMLDivElement> = createRef();
 
-  processAllOpenParts() {
+  processAllOpenParts(componentParamCallback: TemplatePartTransformCallback) {
     if (!this.#containerRef.value) {
       return;
     }
 
     const inputs =
       this.#containerRef.value.querySelectorAll<LLMInput>("bb-llm-input");
-    return [...inputs].map((input) => input.processAllOpenParts());
+    return [...inputs].map((input) =>
+      input.processAllOpenParts(componentParamCallback)
+    );
   }
 
   hasMinItems(): boolean {

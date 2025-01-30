@@ -812,7 +812,8 @@ export class NodePartialUpdateEvent extends Event {
     public readonly subGraphId: string | null = null,
     public readonly configuration: NodeConfiguration,
     public readonly metadata: NodeMetadata | null = null,
-    public readonly debugging = false
+    public readonly debugging = false,
+    public readonly ins: { from?: string; name: string }[] | null = null
   ) {
     super(NodePartialUpdateEvent.eventName, { ...eventInit });
   }

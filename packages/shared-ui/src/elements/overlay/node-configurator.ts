@@ -509,7 +509,14 @@ export class NodeConfigurationOverlay extends LitElement {
       return;
     }
 
-    const outputs = this.#userInputRef.value.processData(true);
+    const ins: { from?: string; name: string }[] = [];
+    const outputs = this.#userInputRef.value.processData(true, (part) => {
+      if (part.type !== "in") return part;
+      ins.push({ from: part.from, name: part.title });
+      delete part.from;
+      return part;
+    });
+
     if (!outputs) {
       return;
     }
@@ -545,7 +552,14 @@ export class NodeConfigurationOverlay extends LitElement {
     }
 
     this.dispatchEvent(
-      new NodePartialUpdateEvent(id, subGraphId, outputs, metadata, debugging)
+      new NodePartialUpdateEvent(
+        id,
+        subGraphId,
+        outputs,
+        metadata,
+        debugging,
+        ins
+      )
     );
   }
 
