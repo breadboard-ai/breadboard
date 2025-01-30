@@ -154,36 +154,8 @@ export class UserInput extends LitElement {
         margin-bottom: var(--bb-grid-size);
       }
 
-      &.status {
-        & .title::before {
-          content: "";
-          width: var(--bb-grid-size-2);
-          height: var(--bb-grid-size-2);
-          border: 1px solid var(--bb-neutral-500);
-          background: var(--bb-neutral-0);
-          margin-right: var(--bb-grid-size-2);
-          border-radius: 50%;
-          box-sizing: border-box;
-        }
-
-        &.connected .title::before {
-          background: var(--bb-input-200);
-          border: 1px solid var(--bb-input-600);
-        }
-
-        &.connected.configured .title::before {
-          background: var(--bb-input-300);
-          border: 1px solid var(--bb-input-600);
-        }
-
-        &.missing .title::before {
-          background: var(--bb-warning-300);
-          border: 1px solid var(--bb-warning-700);
-        }
-      }
-
       & .input {
-        padding-left: var(--user-input-padding-left, var(--bb-grid-size-4));
+        padding-left: var(--user-input-padding-left, 0);
       }
 
       & label {
