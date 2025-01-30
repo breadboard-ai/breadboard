@@ -49,6 +49,7 @@ import {
   createTokenVendor,
 } from "@breadboard-ai/connection-client";
 import { SETTINGS_TYPE } from "../../../shared-ui/dist/types/types.js";
+import type { TopGraphObserver } from "../../../shared-ui/dist/utils/top-graph-observer/top-graph-observer.js";
 
 const RUN_ON_BOARD_SERVER = "run-on-board-server";
 
@@ -161,7 +162,7 @@ export class AppView extends LitElement {
 
   #isSharing = false;
   #abortController: AbortController | null = null;
-  #runObserver: BreadboardUI.Utils.TopGraphObserver | null = null;
+  #runObserver: TopGraphObserver | null = null;
   #runner: HarnessRunner | null = null;
   #runStartTime = 0;
   #message = randomMessage[Math.floor(Math.random() * randomMessage.length)]!;
