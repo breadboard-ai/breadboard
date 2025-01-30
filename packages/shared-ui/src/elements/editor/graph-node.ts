@@ -1734,7 +1734,12 @@ export class GraphNode extends PIXI.Container {
   }
 
   #drawQuickAddIfNeeded() {
-    if (!this.selected || this.#isConnectedOut() || !this.#canShowQuickAdd) {
+    if (
+      !this.selected ||
+      this.#isConnectedOut() ||
+      !this.#canShowQuickAdd ||
+      !this.#isContextOnly()
+    ) {
       this.#quickAdd.removeFromParent();
       return;
     }
