@@ -509,11 +509,10 @@ export class NodeConfigurationOverlay extends LitElement {
       return;
     }
 
-    const ins: { from?: string; name: string }[] = [];
+    const ins: { from: string; name: string }[] = [];
     const outputs = this.#userInputRef.value.processData(true, (part) => {
       if (part.type !== "in") return part;
-      ins.push({ from: part.from, name: part.title });
-      delete part.from;
+      ins.push({ from: part.path, name: part.title });
       return part;
     });
 

@@ -239,7 +239,7 @@ export class TextEditor extends LitElement {
     label.classList.add(type);
     label.dataset.path = path;
 
-    preambleText.textContent = Template.preamble({ title, path, type }, true);
+    preambleText.textContent = Template.preamble({ title, path, type });
     postamableText.textContent = Template.postamble();
     titleText.textContent = title;
     titleText.classList.add("visible");

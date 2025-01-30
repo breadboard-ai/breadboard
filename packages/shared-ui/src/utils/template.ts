@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeIdentifier } from "@breadboard-ai/types";
-
 export { Template };
 
 export type TemplatePartType = "in" | "asset" | "tool";
@@ -14,7 +12,6 @@ export type TemplatePart = {
   type: TemplatePartType;
   path: string;
   title: string;
-  from?: NodeIdentifier;
 };
 
 export type TemplatePartTransformCallback = (
@@ -142,13 +139,8 @@ class Template {
     }
   }
 
-  static preamble({ type, path, title }: TemplatePart, inserting = false) {
-    let id = "";
-    if (type === "in" && inserting) {
-      id = `, "from": ${JSON.stringify(path)}`;
-      path = title;
-    }
-    return `{{"type": ${JSON.stringify(type)}${id}, "path": ${JSON.stringify(path)}, "title": "`;
+  static preamble({ type, path }: TemplatePart) {
+    return `{{"type": ${JSON.stringify(type)}, "path": ${JSON.stringify(path)}, "title": "`;
   }
 
   static postamble() {
