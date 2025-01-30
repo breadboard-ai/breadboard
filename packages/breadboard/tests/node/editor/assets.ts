@@ -38,7 +38,7 @@ describe("Asset editing", () => {
       const asset = graph.assets?.["foo"];
       ok(asset);
       deepStrictEqual(asset.data, "HELLO");
-      deepStrictEqual(asset?.metadata, { title: "Foo" });
+      deepStrictEqual(asset?.metadata, { title: "Foo", type: "content" });
     }
     {
       const result = await editor.edit(
