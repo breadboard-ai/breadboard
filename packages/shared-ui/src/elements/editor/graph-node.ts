@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as StringsHelper from "../../strings/helper.js";
+const Strings = StringsHelper.forSection("Editor");
+
 import {
   InspectableModules,
   InspectablePort,
@@ -45,14 +48,16 @@ import { defaultColorScheme, GraphNodeColors } from "./graph-node-colors.js";
 
 const borderColor = getGlobalColor("--bb-neutral-500");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
-const segmentDividerColor = getGlobalColor("--bb-neutral-300");
 const portsDividerColor = getGlobalColor("--bb-neutral-100");
 
 const grabHandleColor = getGlobalColor("--bb-neutral-300");
 const nodeBackgroundColor = getGlobalColor("--bb-neutral-0");
-const selectedNodeColor = getGlobalColor("--bb-ui-600");
 const highlightForAdHocNodeColor = getGlobalColor("--bb-boards-500");
 const highlightForBoardPortNodeColor = getGlobalColor("--bb-joiner-500");
+
+const edgeTextColor = getGlobalColor("--bb-neutral-600");
+const edgeColor = getGlobalColor("--bb-neutral-200");
+const edgeTextSize = 11;
 
 const ICON_SCALE = 0.42;
 const ICON_ALPHA_OVER = 1;
@@ -60,6 +65,7 @@ const ICON_ALPHA_OUT = 0.7;
 const MAX_NODE_TITLE_LENGTH = 30;
 const GRAPH_NODE_WIDTH = 260;
 const MIN_OUTPUT_HEIGHT = 44;
+const ARROW_HEAD_PADDING = 3;
 
 const INITIAL_HEADER_PORT_LABEL = "_header-port";
 
@@ -81,9 +87,7 @@ export class GraphNode extends PIXI.Container {
 
   #portTextColor = nodeTextColor;
   #borderColor = borderColor;
-  #segmentDividerColor = segmentDividerColor;
   #portsDividerColor = portsDividerColor;
-  #selectedColor = selectedNodeColor;
   #highlightForAdHocColor = highlightForAdHocNodeColor;
   #highlightForBoardPortColor = highlightForBoardPortNodeColor;
   #textSize = 12;
@@ -97,6 +101,19 @@ export class GraphNode extends PIXI.Container {
   #portRadius = 4;
   #background = new PIXI.Graphics();
   #grabHandle = new PIXI.Graphics();
+  #quickAdd = new PIXI.Container();
+  #quickAddIcon: PIXI.Sprite | null = null;
+  #quickAddBackground = new PIXI.Graphics();
+  #quickAddTitle = new PIXI.Text({
+    text: Strings.from("LABEL_ADD_ITEM"),
+    style: {
+      fontFamily: "Arial",
+      fontSize: edgeTextSize,
+      fill: edgeTextColor,
+      align: "left",
+      lineHeight: 24,
+    },
+  });
   #collapsedPortList = new GraphNodePortList();
   #referenceContainer = new GraphNodeReferenceContainer();
   #references: GraphNodeReferences | null = null;
@@ -152,6 +169,7 @@ export class GraphNode extends PIXI.Container {
 
   #runnerButton: PIXI.Sprite | null = null;
 
+  #canShowQuickAdd = false;
   readOnly = false;
   hitZone: PIXI.Rectangle | null = null;
 
@@ -179,6 +197,35 @@ export class GraphNode extends PIXI.Container {
     this.addChild(this.#headerOutPort);
     this.addChild(this.#collapsedPortList);
     this.addChild(this.#referenceContainer);
+
+    this.#quickAdd.eventMode = "static";
+    this.#quickAddTitle.eventMode = "none";
+    this.#quickAddBackground.cursor = "pointer";
+    const quickAddIcon = GraphAssets.instance().get("library-add");
+    if (quickAddIcon) {
+      this.#quickAddIcon = new PIXI.Sprite(quickAddIcon);
+      this.#quickAddIcon.scale.x = ICON_SCALE;
+      this.#quickAddIcon.scale.y = ICON_SCALE;
+      this.#quickAdd.addChild(this.#quickAddIcon);
+    }
+
+    this.#quickAdd.addChild(this.#quickAddBackground);
+    this.#quickAdd.addChild(this.#quickAddTitle);
+    this.#quickAdd.addEventListener(
+      "click",
+      (evt: PIXI.FederatedPointerEvent) => {
+        evt.stopImmediatePropagation();
+
+        this.emit(
+          GRAPH_OPERATIONS.GRAPH_NODE_QUICK_ADD,
+          this.label,
+          this.#headerOutPort.label,
+          evt.x,
+          evt.y,
+          false
+        );
+      }
+    );
 
     if (this.#hasVisibleOutputs()) {
       this.#grabHandle.beginPath();
@@ -577,6 +624,15 @@ export class GraphNode extends PIXI.Container {
 
   set selected(selected: boolean) {
     this.#selected = selected;
+    this.#isDirty = true;
+  }
+
+  get canShowQuickAdd() {
+    return this.#canShowQuickAdd;
+  }
+
+  set canShowQuickAdd(canShowQuickAdd: boolean) {
+    this.#canShowQuickAdd = canShowQuickAdd;
     this.#isDirty = true;
   }
 
@@ -1182,6 +1238,7 @@ export class GraphNode extends PIXI.Container {
     this.#drawRunnerButtonIfNeeded();
     this.#drawReferences();
     this.#drawNodeOutput();
+    this.#drawQuickAddIfNeeded();
   }
 
   #updateHitZone() {
@@ -1666,6 +1723,86 @@ export class GraphNode extends PIXI.Container {
     this.#nodeOutput.setMask({ mask: this.#nodeOutputMask });
     this.#grabHandle.x = this.#width - 18;
     this.#grabHandle.y = this.#height - 18;
+  }
+
+  #isConnectedOut() {
+    if (!this.#outPorts) {
+      return false;
+    }
+
+    return this.#outPorts.some((port) => port.edges.length > 0);
+  }
+
+  #drawQuickAddIfNeeded() {
+    if (!this.selected || this.#isConnectedOut() || !this.#canShowQuickAdd) {
+      this.#quickAdd.removeFromParent();
+      return;
+    }
+
+    const x = this.#width;
+    const lineLength = 56;
+    const lineWidth = 2;
+    const padding = 4;
+    const iconWidth = 20;
+
+    const y = 7;
+    const quickAddHeight = 24;
+    const lineY = y + (quickAddHeight + lineWidth) * 0.5;
+
+    this.addChildAt(this.#quickAdd, 0);
+
+    // Title.
+    this.#quickAddTitle.x = x + lineLength + iconWidth + 4 * padding;
+    this.#quickAddTitle.y = y + 1;
+
+    // Icon.
+    if (this.#quickAddIcon) {
+      this.#quickAddIcon.x = x + lineLength + 3 * padding;
+      this.#quickAddIcon.y = y + 3;
+      this.#quickAddIcon.alpha = 0.6;
+    }
+
+    // Arrow and rounded rect.
+    this.#quickAddBackground.clear();
+    this.#quickAddBackground.beginPath();
+    this.#quickAddBackground.roundRect(
+      x + lineLength + padding,
+      y + 1,
+      this.#quickAddTitle.width + 6 * padding + iconWidth,
+      24
+    );
+    this.#quickAddBackground.closePath();
+    this.#quickAddBackground.stroke({ color: edgeColor });
+    this.#quickAddBackground.fill({ color: 0xffffff, alpha: 0.0001 });
+
+    this.#quickAddBackground.beginPath();
+    this.#quickAddBackground.moveTo(x, lineY);
+    this.#quickAddBackground.lineTo(x + lineLength, lineY);
+    this.#quickAddBackground.closePath();
+    this.#quickAddBackground.stroke({ color: edgeColor, width: lineWidth });
+
+    this.#quickAddBackground.beginPath();
+    this.#quickAddBackground.moveTo(x + lineLength, lineY);
+    this.#quickAddBackground.lineTo(
+      x + lineLength - ARROW_HEAD_PADDING - 4,
+      lineY - 6
+    );
+    this.#quickAddBackground.stroke({
+      cap: "round",
+      width: lineWidth,
+      color: edgeColor,
+    });
+    this.#quickAddBackground.moveTo(x + lineLength, lineY);
+    this.#quickAddBackground.lineTo(
+      x + lineLength - ARROW_HEAD_PADDING - 4,
+      lineY + 6
+    );
+    this.#quickAddBackground.stroke({
+      cap: "round",
+      width: lineWidth,
+      color: edgeColor,
+    });
+    this.#quickAddBackground.closePath();
   }
 
   referenceRects(): Array<{ id: string; rect: PIXI.Rectangle }> {

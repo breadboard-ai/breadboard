@@ -21,6 +21,9 @@ export default {
   LABEL_NO_COMPONENTS: {
     str: "No Components available",
   },
+  LABEL_ADD_ITEM: {
+    str: "Add Item",
+  },
 
   // Queries.
 

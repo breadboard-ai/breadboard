@@ -1211,7 +1211,7 @@ export class Edit extends EventTarget {
     );
   }
 
-  multiEdit(tab: Tab | null, edits: EditSpec[], description: string) {
+  async multiEdit(tab: Tab | null, edits: EditSpec[], description: string) {
     if (tab?.readOnly) {
       return;
     }
@@ -1223,7 +1223,7 @@ export class Edit extends EventTarget {
       return;
     }
 
-    editableGraph.edit(edits, description);
+    return editableGraph.edit(edits, description);
   }
 
   changeComment(

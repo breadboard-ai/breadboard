@@ -545,7 +545,7 @@ export class ComponentSelectorOverlay extends LitElement {
                               ["kit-item"]: true,
                             })}
                             draggable="true"
-                            @dblclick=${() => {
+                            @click=${() => {
                               this.dispatchEvent(new KitNodeChosenEvent(id));
                             }}
                             @dragstart=${(evt: DragEvent) => {

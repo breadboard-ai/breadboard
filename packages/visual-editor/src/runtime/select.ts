@@ -260,6 +260,19 @@ export class Select extends EventTarget {
     this.#emit(tab, selectionChangeId);
   }
 
+  selectNodes(
+    tab: TabId,
+    selectionChangeId: WorkspaceSelectionChangeId,
+    graphId: GraphIdentifier,
+    nodeIds: NodeIdentifier[]
+  ) {
+    this.#clear(tab);
+    for (const nodeId of nodeIds) {
+      this.#addToGraphsCollection(tab, graphId, "nodes", nodeId);
+    }
+    this.#emit(tab, selectionChangeId);
+  }
+
   selectAll(
     tab: TabId,
     selectionChangeId: WorkspaceSelectionChangeId,

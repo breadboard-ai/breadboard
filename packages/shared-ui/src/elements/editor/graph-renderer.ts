@@ -29,6 +29,7 @@ import {
   ToastEvent,
   ToastType,
   WorkspaceSelectionMoveEvent,
+  GraphNodeQuickAddEvent,
 } from "../../events/events.js";
 import {
   GRAPH_OPERATIONS,
@@ -1376,6 +1377,18 @@ export class GraphRenderer extends LitElement {
     this.#updateContainerFromTargetMatrix(matrix, animate);
   }
 
+  zoomToSelectionIfPossible(animate = false) {
+    this.#setTargetContainerMatrix(animate);
+  }
+
+  translateBy(animate = false, x = 0, y = 0) {
+    const matrix = this.#container.worldTransform.clone();
+    matrix.tx += x * matrix.a;
+    matrix.ty += y * matrix.a;
+
+    this.#updateContainerFromTargetMatrix(matrix, animate);
+  }
+
   #setTargetContainerMatrix(animate = false) {
     let matrix = this.#calculateTargetContainerMatrixFromBounds(
       this.#createBoundsFromSelection()
@@ -2606,6 +2619,22 @@ export class GraphRenderer extends LitElement {
       (id: string, x: number, y: number) => {
         this.dispatchEvent(
           new GraphNodeEditEvent(id, null, null, x, y, graph.subGraphId, false)
+        );
+      }
+    );
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_NODE_QUICK_ADD,
+      (id: string, portId: string, x: number, y: number, freeDrop = false) => {
+        this.dispatchEvent(
+          new GraphNodeQuickAddEvent(
+            id,
+            portId,
+            Math.round(x),
+            Math.round(y),
+            graph.subGraphId,
+            freeDrop
+          )
         );
       }
     );
