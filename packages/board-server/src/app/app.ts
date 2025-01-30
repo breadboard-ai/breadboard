@@ -920,18 +920,18 @@ export class AppView extends LitElement {
     const active =
       this.status === STATUS.RUNNING || this.status === STATUS.PAUSED;
 
+    const topGraphLog =
+      (this.#runObserver?.current() as TopGraphRunResult | null)?.log ?? [];
+
     const activity = Promise.all([
       this.#descriptorLoad,
       this.#kitLoad,
       this.#visitorStateInit,
-    ]).then(() => {
-      return html`<bb-activity-log-lite-app
-        .start=${this.#runStartTime}
-        .message=${this.#message}
-        .log=${log}
-        @bbinputrequested=${() => {
-          this.requestUpdate();
-        }}
+    ]).then(([graph]) => {
+      return html`<bb-app-preview
+        .graph=${graph}
+        .state=${this.#chatController?.state()}
+        .events=${topGraphLog}
         @bbinputenter=${(event: InputEnterEvent) => {
           let data = event.data as InputValues;
           const runner = this.#runner;
@@ -943,7 +943,7 @@ export class AppView extends LitElement {
           }
           runner.run(data);
         }}
-      ></bb-activity-log-lite-app>`;
+      ></bb-app-preview>`;
     });
 
     const nav = (popout: boolean) => {
