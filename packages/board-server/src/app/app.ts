@@ -15,6 +15,7 @@ import {
 } from "./events/events.js";
 import {
   createDefaultDataStore,
+  createGraphStore,
   createLoader,
   type GraphDescriptor,
   type InputValues,
@@ -48,7 +49,16 @@ import {
   type TokenVendor,
   createTokenVendor,
 } from "@breadboard-ai/connection-client";
-import { SETTINGS_TYPE } from "../../../shared-ui/dist/types/types.js";
+import {
+  SETTINGS_TYPE,
+  type TopGraphRunResult,
+} from "../../../shared-ui/dist/types/types.js";
+import type { TopGraphObserver } from "../../../shared-ui/dist/utils/top-graph-observer/top-graph-observer.js";
+import { ChatController } from "../../../shared-ui/dist/state/chat-controller.js";
+
+import { WebSandbox } from "@breadboard-ai/jsandbox/web";
+import wasm from "/sandbox.wasm?url";
+const sandbox = new WebSandbox(new URL(wasm, window.location.href));
 
 const RUN_ON_BOARD_SERVER = "run-on-board-server";
 
@@ -161,7 +171,7 @@ export class AppView extends LitElement {
 
   #isSharing = false;
   #abortController: AbortController | null = null;
-  #runObserver: BreadboardUI.Utils.TopGraphObserver | null = null;
+  #runObserver: TopGraphObserver | null = null;
   #runner: HarnessRunner | null = null;
   #runStartTime = 0;
   #message = randomMessage[Math.floor(Math.random() * randomMessage.length)]!;
@@ -172,6 +182,8 @@ export class AppView extends LitElement {
     minute: "2-digit",
     hour12: true,
   });
+
+  #chatController: ChatController | null = null;
 
   static styles = css`
     * {
@@ -192,6 +204,7 @@ export class AppView extends LitElement {
       display: grid;
       grid-template-columns: none;
       grid-template-rows: 48px auto;
+      height: calc(100% - var(--bb-grid-size-13));
     }
 
     #loading {
@@ -399,6 +412,10 @@ export class AppView extends LitElement {
 
       #activity {
         position: relative;
+        height: 100%;
+      }
+      bb-app-preview {
+        height: 100%;
       }
 
       #board-info {
@@ -650,6 +667,13 @@ export class AppView extends LitElement {
       this.#abortController.signal
     );
 
+    const graphStore = createGraphStore({
+      kits,
+      loader: this.#loader,
+      sandbox,
+    });
+    this.#chatController = new ChatController(this.#runner, graphStore);
+
     this.#dataStore.releaseAll();
     this.#dataStore.createGroup("run");
 
@@ -896,18 +920,18 @@ export class AppView extends LitElement {
     const active =
       this.status === STATUS.RUNNING || this.status === STATUS.PAUSED;
 
+    const topGraphLog =
+      (this.#runObserver?.current() as TopGraphRunResult | null)?.log ?? [];
+
     const activity = Promise.all([
       this.#descriptorLoad,
       this.#kitLoad,
       this.#visitorStateInit,
-    ]).then(() => {
-      return html`<bb-activity-log-lite-app
-        .start=${this.#runStartTime}
-        .message=${this.#message}
-        .log=${log}
-        @bbinputrequested=${() => {
-          this.requestUpdate();
-        }}
+    ]).then(([graph]) => {
+      return html`<bb-app-preview
+        .graph=${graph}
+        .state=${this.#chatController?.state()}
+        .events=${topGraphLog}
         @bbinputenter=${(event: InputEnterEvent) => {
           let data = event.data as InputValues;
           const runner = this.#runner;
@@ -919,7 +943,7 @@ export class AppView extends LitElement {
           }
           runner.run(data);
         }}
-      ></bb-activity-log-lite-app>`;
+      ></bb-app-preview>`;
     });
 
     const nav = (popout: boolean) => {
