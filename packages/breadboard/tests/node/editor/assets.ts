@@ -28,7 +28,7 @@ describe("Asset editing", () => {
           {
             type: "changeassetmetadata",
             path: "foo",
-            metadata: { title: "Foo" },
+            metadata: { title: "Foo", type: "content" },
           },
         ],
         ""

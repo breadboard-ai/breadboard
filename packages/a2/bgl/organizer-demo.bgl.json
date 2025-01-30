@@ -14,9 +14,7 @@
               "title": "Context",
               "items": {
                 "type": "object",
-                "behavior": [
-                  "llm-content"
-                ]
+                "behavior": ["llm-content"]
               },
               "default": "null"
             }
@@ -146,7 +144,8 @@
         }
       ],
       "metadata": {
-        "title": "Hello World"
+        "title": "Hello World",
+        "type": "content"
       }
     },
     "content-2": {
@@ -161,7 +160,8 @@
         }
       ],
       "metadata": {
-        "title": "Maximum Turbo"
+        "title": "Maximum Turbo",
+        "type": "content"
       }
     },
     "foo": {
@@ -176,7 +176,8 @@
         }
       ],
       "metadata": {
-        "title": "Foo"
+        "title": "Foo",
+        "type": "content"
       }
     }
   }
