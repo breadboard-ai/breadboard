@@ -9,7 +9,7 @@
       "metadata": {
         "visual": {
           "x": 0,
-          "y": -220.00000000000017,
+          "y": -220.00000000000023,
           "collapsed": "expanded",
           "outputHeight": 44
         },
@@ -34,7 +34,7 @@
       "metadata": {
         "visual": {
           "x": -320,
-          "y": -219.99999999999983,
+          "y": -219.99999999999966,
           "collapsed": "expanded",
           "outputHeight": 44
         },
@@ -90,7 +90,7 @@
       "metadata": {
         "visual": {
           "x": 320,
-          "y": -360,
+          "y": -359.99999999999994,
           "collapsed": "expanded",
           "outputHeight": 124
         },
@@ -114,7 +114,7 @@
       "metadata": {
         "visual": {
           "x": -639.9999999999999,
-          "y": -219.99999999999983,
+          "y": -219.99999999999966,
           "collapsed": "expanded",
           "outputHeight": 44
         },
@@ -137,20 +137,21 @@
       "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
       "metadata": {
         "visual": {
-          "x": 660.0000000000001,
-          "y": -359.99999999999983,
+          "x": 660,
+          "y": -360,
           "collapsed": "expanded",
           "outputHeight": 304
         },
         "title": "Text",
-        "logLevel": "info"
+        "logLevel": "info",
+        "description": "A block of text as input or output"
       },
       "configuration": {
         "text": {
           "role": "user",
           "parts": [
             {
-              "text": "{{ in | id: \"image\" }}\n{{ in | id: \"post\" }}"
+              "text": "{{\"type\":\"in\",\"path\":\"a2-f41834f9\",\"title\":\"Banner Image Generator\"}} \n\n{{\"type\":\"in\",\"path\":\"a2-25320551\",\"title\":\"Post Writer\"}}"
             }
           ]
         }
@@ -185,14 +186,14 @@
     {
       "from": "a2-f41834f9",
       "to": "a2-3e1f52e1",
-      "out": "context",
-      "in": "p-z-image"
+      "out": "$error",
+      "in": "p-z-Banner Image Generator"
     },
     {
       "from": "a2-25320551",
       "to": "a2-3e1f52e1",
-      "out": "context",
-      "in": "p-z-post"
+      "out": "$error",
+      "in": "p-z-Post Writer"
     }
   ],
   "metadata": {

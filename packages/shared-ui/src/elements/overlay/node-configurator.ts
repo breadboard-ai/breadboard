@@ -39,6 +39,7 @@ import { NodeMetadata } from "@breadboard-ai/types";
 import { map } from "lit/directives/map.js";
 import { markdown } from "../../directives/markdown.js";
 import { Project } from "../../state/types.js";
+import { TemplatePart } from "../../utils/template.js";
 
 const MAXIMIZE_KEY = "bb-node-configuration-overlay-maximized";
 const OVERLAY_CLEARANCE = 60;
@@ -509,7 +510,14 @@ export class NodeConfigurationOverlay extends LitElement {
       return;
     }
 
-    const outputs = this.#userInputRef.value.processData(true);
+    const ins: TemplatePart[] = [];
+    const outputs = this.#userInputRef.value.processData(true, (part) => {
+      if (part.type === "in") {
+        ins.push(part);
+      }
+      return part;
+    });
+
     if (!outputs) {
       return;
     }
@@ -545,7 +553,14 @@ export class NodeConfigurationOverlay extends LitElement {
     }
 
     this.dispatchEvent(
-      new NodePartialUpdateEvent(id, subGraphId, outputs, metadata, debugging)
+      new NodePartialUpdateEvent(
+        id,
+        subGraphId,
+        outputs,
+        metadata,
+        debugging,
+        ins
+      )
     );
   }
 

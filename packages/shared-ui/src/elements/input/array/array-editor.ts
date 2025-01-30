@@ -225,7 +225,7 @@ export class ArrayEditor extends LitElement {
 
         case TYPE.OBJECT: {
           if (this.behavior === "llm-content") {
-            (entry as unknown as LLMInput).processAllOpenParts();
+            (entry as unknown as LLMInput).processAllOpenParts((part) => part);
             items.push(entry.value);
             break;
           }

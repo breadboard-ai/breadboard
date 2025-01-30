@@ -36,6 +36,7 @@ import type {
   NodeValue,
 } from "@breadboard-ai/types";
 import { ComponentExpansionState } from "../elements/editor/types.js";
+import { TemplatePart } from "../utils/template.js";
 
 const eventInit = {
   bubbles: true,
@@ -812,7 +813,8 @@ export class NodePartialUpdateEvent extends Event {
     public readonly subGraphId: string | null = null,
     public readonly configuration: NodeConfiguration,
     public readonly metadata: NodeMetadata | null = null,
-    public readonly debugging = false
+    public readonly debugging = false,
+    public readonly ins: TemplatePart[] | null = null
   ) {
     super(NodePartialUpdateEvent.eventName, { ...eventInit });
   }

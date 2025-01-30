@@ -65,6 +65,7 @@ import "./delegating-input.js";
 import { getModuleId } from "../../utils/module-id";
 import * as Utils from "../../utils/utils.js";
 import { Project } from "../../state";
+import { TemplatePartTransformCallback } from "../../utils/template";
 
 const NO_MODULE = " -- No module";
 
@@ -470,7 +471,10 @@ export class UserInput extends LitElement {
     evt.preventDefault();
   }
 
-  processData(showValidationErrors = false) {
+  processData(
+    showValidationErrors: boolean,
+    componentParamCallback: TemplatePartTransformCallback = (part) => part
+  ) {
     if (!this.#formRef.value) {
       return null;
     }
@@ -535,9 +539,13 @@ export class UserInput extends LitElement {
                 isBoardBehavior(input.schema)
               ) {
                 if (isLLMContentArrayBehavior(input.schema)) {
-                  (el as unknown as LLMInputArray).processAllOpenParts();
+                  (el as unknown as LLMInputArray).processAllOpenParts(
+                    componentParamCallback
+                  );
                 } else if (isLLMContentBehavior(input.schema)) {
-                  (el as unknown as LLMInput).processAllOpenParts();
+                  (el as unknown as LLMInput).processAllOpenParts(
+                    componentParamCallback
+                  );
                 }
                 break;
               }
@@ -579,7 +587,7 @@ export class UserInput extends LitElement {
   }
 
   #emitProcessedData() {
-    const outputs = this.processData();
+    const outputs = this.processData(false);
     if (!outputs) {
       return;
     }

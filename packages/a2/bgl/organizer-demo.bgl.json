@@ -27,8 +27,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 439.99999999999994,
-          "y": -300.0000000000001,
+          "x": 619.9999999999999,
+          "y": -399.99999999999943,
           "collapsed": "expanded",
           "outputHeight": 44
         }
@@ -39,12 +39,12 @@
       "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
       "metadata": {
         "visual": {
-          "x": 120.00000000000006,
-          "y": -300.0000000000001,
+          "x": 279.99999999999983,
+          "y": -479.99999999999955,
           "collapsed": "expanded",
-          "outputHeight": 44
+          "outputHeight": 124
         },
-        "title": "Goes Here",
+        "title": "Text",
         "description": "A block of text as input or output",
         "logLevel": "info"
       },
@@ -53,23 +53,23 @@
           "role": "user",
           "parts": [
             {
-              "text": "HELLO"
+              "text": "hello {{\"type\":\"in\",\"path\":\"a2-41223acb\",\"title\":\"Something Very Cool\"}} {{\"type\":\"in\",\"path\":\"a2-49b6f9a2\",\"title\":\"Text 2\"}}"
             }
           ]
         }
       }
     },
     {
-      "id": "a2-f08c915e",
+      "id": "a2-41223acb",
       "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
       "metadata": {
         "visual": {
-          "x": -200,
-          "y": -260,
+          "x": -60,
+          "y": -499.99999999999955,
           "collapsed": "expanded",
           "outputHeight": 44
         },
-        "title": "From Here",
+        "title": "Something Very Cool",
         "description": "A block of text as input or output",
         "logLevel": "info"
       },
@@ -78,7 +78,32 @@
           "role": "user",
           "parts": [
             {
-              "text": "FOO"
+              "text": "SOMETHING GOES HERE"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a2-49b6f9a2",
+      "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
+      "metadata": {
+        "visual": {
+          "x": -80,
+          "y": -300,
+          "collapsed": "expanded",
+          "outputHeight": 44
+        },
+        "title": "Text",
+        "description": "A block of text as input or output",
+        "logLevel": "info"
+      },
+      "configuration": {
+        "text": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "TEXT 2"
             }
           ]
         }
@@ -91,6 +116,18 @@
       "to": "output",
       "out": "context",
       "in": "context"
+    },
+    {
+      "from": "a2-41223acb",
+      "to": "a2-09645fb2",
+      "out": "context",
+      "in": "p-z-Something Very Cool"
+    },
+    {
+      "from": "a2-49b6f9a2",
+      "to": "a2-09645fb2",
+      "out": "context",
+      "in": "p-z-Text 2"
     }
   ],
   "metadata": {

@@ -1101,7 +1101,10 @@ export class WorkspaceOutline
                       new NodePartialUpdateEvent(
                         node.descriptor.id,
                         subGraphId,
-                        { [port.name]: `#${evt.id}` }
+                        { [port.name]: `#${evt.id}` },
+                        null,
+                        undefined,
+                        null
                       )
                     );
                   }}

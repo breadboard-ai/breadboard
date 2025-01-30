@@ -9,53 +9,19 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { Project } from "../../../state";
 import { FastAccessSelectEvent } from "../../../events/events";
 import { FastAccessMenu } from "../../elements";
+import { Template, TemplatePartType } from "../../../utils/template";
 
 @customElement("bb-text-editor")
 export class TextEditor extends LitElement {
   @property()
   set value(value: string) {
-    value = value.trim();
-
-    this.#value = value;
-    this.#renderableValue = value;
-    if (value === "") {
-      this.#renderableValue = "&nbsp;";
-    }
-
-    const finder = /{{\s?(.*?)\s?\|\s?"(.*?)"\s?\|\s?"(.*?)"\s?}}/gim;
-    const matches = [];
-    let res;
-    do {
-      res = finder.exec(value);
-      if (res) {
-        matches.push(res);
-      }
-    } while (res);
-
-    if (matches.length === 0) {
-      return;
-    }
-
-    this.#renderableValue = "";
-    let current = 0;
-    for (const match of matches) {
-      const [str, type, path, title] = match;
-      if (current < match.index) {
-        this.#renderableValue += value.slice(current, match.index);
-      }
-
-      // To keep things a bit simpler in the regexp and so forth we send this
-      // out as a single line string.
-      this.#renderableValue += `<label class="chiclet ${type}" contenteditable="false"><span>{{ ${type} | "${path}" | "</span><span class="visible">${title}</span><span>" }}</span></label>`;
-      current = match.index + str.length;
-    }
-
-    if (current < value.length) {
-      this.#renderableValue += value.slice(current);
-    } else {
-      // Ensure that if the final item is a chiclet we add a space on.
-      this.#renderableValue += "&nbsp;";
-    }
+    const template = new Template(value);
+    template.substitute((part) => {
+      const { type, title } = part;
+      return `<label class="chiclet ${type}" contenteditable="false"><span>${Template.preamble(part)}</span><span class="visible">${title}</span><span>${Template.postamble()}</span></label>`;
+    });
+    this.#value = template.raw;
+    this.#renderableValue = template.renderable;
   }
 
   get value(): string {
@@ -259,26 +225,26 @@ export class TextEditor extends LitElement {
     this.#checkSelectionsBound(evt);
   }
 
-  #add(path: string, title: string, type: string) {
+  #add(path: string, title: string, type: TemplatePartType) {
     if (!this.#editorRef.value) {
       return null;
     }
 
     const spaceAfter = document.createTextNode(String.fromCharCode(160));
     const label = document.createElement("label");
-    const preamableText = document.createElement("span");
+    const preambleText = document.createElement("span");
     const titleText = document.createElement("span");
     const postamableText = document.createElement("span");
     label.classList.add("chiclet");
     label.classList.add(type);
     label.dataset.path = path;
 
-    preamableText.textContent = `{{ ${type} | "${path}" | "`;
-    postamableText.textContent = `" }}`;
+    preambleText.textContent = Template.preamble({ title, path, type });
+    postamableText.textContent = Template.postamble();
     titleText.textContent = title;
     titleText.classList.add("visible");
 
-    label.appendChild(preamableText);
+    label.appendChild(preambleText);
     label.appendChild(titleText);
     label.appendChild(postamableText);
     label.contentEditable = "false";

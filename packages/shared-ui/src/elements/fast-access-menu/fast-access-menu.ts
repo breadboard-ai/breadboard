@@ -331,7 +331,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       </section>
 
       <section id="outputs">
-        <h3>Outputs</h3>
+        <h3>Flow output from</h3>
         ${components.length
           ? html` <menu>
               ${components.map((component) => {
