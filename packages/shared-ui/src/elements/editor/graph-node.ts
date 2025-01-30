@@ -1733,8 +1733,17 @@ export class GraphNode extends PIXI.Container {
     return this.#outPorts.some((port) => port.edges.length > 0);
   }
 
+  #canConnectOut() {
+    return this.type !== "output";
+  }
+
   #drawQuickAddIfNeeded() {
-    if (!this.selected || this.#isConnectedOut() || !this.#canShowQuickAdd) {
+    if (
+      !this.selected ||
+      this.#isConnectedOut() ||
+      !this.#canShowQuickAdd ||
+      !this.#isContextOnly()
+    ) {
       this.#quickAdd.removeFromParent();
       return;
     }
