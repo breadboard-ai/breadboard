@@ -320,6 +320,13 @@ export type NodeHandlerMetadata = {
     url: string;
   };
 
+  /**
+   * Allows specifying relative order of this graph when it is represented
+   * as a component in any menu. Currently used when populating the
+   * quick access menu.
+   */
+  order?: number;
+
   updating?: boolean;
 };
 

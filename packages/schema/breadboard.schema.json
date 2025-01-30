@@ -253,7 +253,7 @@
 					"items": {
 						"$ref": "#/definitions/GraphTag"
 					},
-					"description": "Tags associated with the graph. At this moment, free-form strings."
+					"description": "Tags associated with the graph."
 				},
 				"help": {
 					"type": "object",
@@ -310,6 +310,10 @@
 					},
 					"additionalProperties": false,
 					"description": "The metadata associated with the visual representation of the graph."
+				},
+				"order": {
+					"type": "number",
+					"description": "Allows specifying relative order of this graph when it is represented as a component in any menu. Currently used when populating the quick access menu."
 				}
 			},
 			"additionalProperties": {

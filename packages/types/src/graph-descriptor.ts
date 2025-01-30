@@ -281,7 +281,7 @@ export type GraphMetadata = {
   [name: string]: NodeValue;
   comments?: CommentNode[];
   /**
-   * Tags associated with the graph. At this moment, free-form strings.
+   * Tags associated with the graph.
    */
   tags?: GraphTag[];
   /**
@@ -320,6 +320,13 @@ export type GraphMetadata = {
      */
     minimized?: boolean;
   };
+
+  /**
+   * Allows specifying relative order of this graph when it is represented
+   * as a component in any menu. Currently used when populating the
+   * quick access menu.
+   */
+  order?: number;
 };
 
 /**

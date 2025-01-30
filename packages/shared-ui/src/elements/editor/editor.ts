@@ -515,6 +515,10 @@ export class Editor extends LitElement implements DragConnectorReceiver {
             }
           }
         }
+
+        & li.separator {
+          border-top: 1px solid var(--bb-neutral-200);
+        }
       }
     }
 
@@ -1476,14 +1480,9 @@ export class Editor extends LitElement implements DragConnectorReceiver {
     }
 
     kitList.sort((kit1, kit2) => {
-      const title1 = kit1.metadata.mainGraph.title || "";
-      const title2 = kit2.metadata.mainGraph.title || "";
-      if (title1 > title2) {
-        return 1;
-      }
-      if (title1 < title2) {
-        return -1;
-      }
+      const order1 = kit1.metadata.order || Number.MAX_SAFE_INTEGER;
+      const order2 = kit2.metadata.order || Number.MAX_SAFE_INTEGER;
+      if (order1 != order2) return order1 - order2;
       return (kit1.metadata.title || "") > (kit2.metadata.title || "") ? 1 : -1;
     });
 
@@ -1711,6 +1710,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
         "--component-picker-y",
         `${this.#componentPickerConfiguration.y}px`
       );
+      let lastOrderIndex = 0;
       componentPicker = html`<div
         id="component-picker"
         @pointerdown=${(evt: PointerEvent) => {
@@ -1728,11 +1728,16 @@ export class Editor extends LitElement implements DragConnectorReceiver {
                   const id = kitContents.id;
                   const title = kitContents.metadata.title || id;
                   const icon = kitContents.metadata.icon ?? "generic";
+                  const orderIndex =
+                    kitContents.metadata.order || Number.MAX_SAFE_INTEGER;
+                  const displaySeparator = orderIndex - lastOrderIndex > 1;
+                  lastOrderIndex = orderIndex;
 
                   return html`<li
                     class=${classMap({
                       [className]: true,
                       ["kit-item"]: true,
+                      ["separator"]: displaySeparator,
                     })}
                     draggable="true"
                     @click=${() => this.#handleChosenKitItem(id)}

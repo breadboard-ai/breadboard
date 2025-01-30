@@ -407,8 +407,12 @@
 					"description": "The icon that identifies the graph. Can be a URL or a Material Design id.",
 					"type": "string"
 				},
+				"order": {
+					"description": "Allows specifying relative order of this graph when it is represented as a component in any menu. Currently used when populating the quick access menu.",
+					"type": "number"
+				},
 				"tags": {
-					"description": "Tags associated with the graph. At this moment, free-form strings.",
+					"description": "Tags associated with the graph.",
 					"items": {
 						"$ref": "#/definitions/GraphTag"
 					},

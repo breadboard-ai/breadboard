@@ -74,6 +74,7 @@ function createBuiltInKit(): Kit {
           title: "Comment",
           icon: "comment",
           tags: ["quick-access", "core"],
+          order: 2,
         },
         invoke: unreachableCode(),
       },
