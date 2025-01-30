@@ -463,6 +463,14 @@ export class Editor extends LitElement implements DragConnectorReceiver {
                 no-repeat;
             }
 
+            &.comment {
+              background: var(--bb-icon-comment) top left / 20px 20px no-repeat;
+            }
+
+            &.input {
+              background: var(--bb-icon-input) top left / 20px 20px no-repeat;
+            }
+
             &.smart-toy {
               background: var(--bb-icon-smart-toy) top left / 20px 20px
                 no-repeat;
