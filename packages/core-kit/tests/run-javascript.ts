@@ -101,7 +101,7 @@ test("raw=true with provided schemas", async (t) => {
           title: "Code",
           description: "The JavaScript code to run",
           format: "javascript",
-          behavior: ["config", "code"],
+          behavior: ["config", "hint-code"],
         },
         foo: {
           type: "string",
@@ -177,7 +177,7 @@ test("raw=true without provided schemas", async (t) => {
           title: "Code",
           description: "The JavaScript code to run",
           format: "javascript",
-          behavior: ["config", "code"],
+          behavior: ["config", "hint-code"],
         },
         inputSchema: {
           type: "object",
@@ -258,7 +258,7 @@ test("raw=false with provided schemas", async (t) => {
           title: "Code",
           description: "The JavaScript code to run",
           format: "javascript",
-          behavior: ["config", "code"],
+          behavior: ["config", "hint-code"],
         },
         foo: {
           type: "string",
@@ -337,7 +337,7 @@ test("raw=false without provided schemas", async (t) => {
           title: "Code",
           description: "The JavaScript code to run",
           format: "javascript",
-          behavior: ["config", "code"],
+          behavior: ["config", "hint-code"],
         },
         inputSchema: {
           type: "object",

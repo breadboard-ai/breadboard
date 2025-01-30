@@ -18,7 +18,7 @@ suite("standardizeBreadboardSchema", () => {
       properties: {
         foo: {
           type: "string",
-          behavior: ["code", "deprecated"],
+          behavior: ["hint-code", "deprecated"],
         },
         bar: {
           type: "array",

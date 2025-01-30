@@ -268,7 +268,7 @@ export default defineNodeType({
     code: {
       description: "The JavaScript code to run",
       title: "Code",
-      behavior: ["config", "code"],
+      behavior: ["config", "hint-code"],
       format: "javascript",
       type: "string",
     },

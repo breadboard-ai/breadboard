@@ -1099,7 +1099,7 @@ test("behavior", async () => {
     outputs: {
       so1: {
         type: "string",
-        behavior: ["image", "code"],
+        behavior: ["hint-image", "hint-code"],
       },
     },
     invoke: () => {
@@ -1126,7 +1126,7 @@ test("behavior", async () => {
         so1: {
           title: "so1",
           type: "string",
-          behavior: ["image", "code"],
+          behavior: ["hint-image", "hint-code"],
         },
       },
       required: [],
