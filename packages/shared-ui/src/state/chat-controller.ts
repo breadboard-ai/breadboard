@@ -37,13 +37,21 @@ type PendingTurnState = {
   graphId: GraphIdentifier;
 };
 
+/**
+ * When running remotely, we don't get a GraphDescriptor.
+ */
+type GraphStartProbeDataWithOptionalGraph = Omit<
+  GraphStartProbeData,
+  "graph"
+> & { graph?: GraphStartProbeData["graph"] };
+
 class ChatController {
   #status: ChatStatus = "stopped";
   #conversation: ChatConversationState[] = [];
   #state: ChatState = this.#initialChatState();
   #stale: boolean = false;
   #currentInput: RunInputEvent | null = null;
-  #graphStack: GraphStartProbeData[] = [];
+  #graphStack: GraphStartProbeDataWithOptionalGraph[] = [];
   #pending: Set<PendingTurnState> = new Set();
 
   constructor(
@@ -204,18 +212,20 @@ class ChatController {
     // 1) Find the current graph that might have an icon in the graph stack.
     const data = this.#graphStack.find(
       (graphData) =>
-        !graphData.graph.virtual && !graphData.graph.url?.startsWith("module:")
+        !graphData.graph?.virtual &&
+        !graphData.graph?.url?.startsWith("module:")
     );
     if (!data) return turn;
 
-    const url = data.graph.url;
+    const url = data.graph?.url;
     if (!url) return turn;
 
     const { graph, graphId } = data;
 
     // 2) Find GraphStoreEntry by descriptor. This is the same entry as the
     // one we see in GraphStore.graphs()
-    const entry = this.graphStore?.getEntryByDescriptor(graph, graphId);
+    const entry =
+      graph && this.graphStore?.getEntryByDescriptor(graph, graphId);
     if (!entry) return turn;
 
     // 3) If the entry is not yet fully baked, we place it into the pending set.
