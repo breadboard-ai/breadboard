@@ -29,7 +29,7 @@ export function isPortSpecBehavior(schema: Schema) {
 }
 
 export function isCodeBehavior(schema: Schema) {
-  return schema.behavior?.includes("code");
+  return schema.behavior?.includes("hint-code");
 }
 
 export function isLLMContentBehavior(schema: Schema) {
