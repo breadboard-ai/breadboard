@@ -141,7 +141,9 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
   protected willUpdate(): void {
     const graphId = this.graphId || "";
     const assets = [...(this.state?.graphAssets.values() || [])];
-    const tools = [...(this.state?.tools.values() || [])];
+    const tools = [...(this.state?.tools.values() || [])].sort(
+      (tool1, tool2) => tool1.order! - tool2.order!
+    );
     const components = [
       ...(this.state?.components.get(graphId)?.values() || []),
     ];
@@ -272,7 +274,9 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
   render() {
     const graphId = this.graphId || "";
     const assets = [...(this.state?.graphAssets.values() || [])];
-    const tools = [...(this.state?.tools.values() || [])];
+    const tools = [...(this.state?.tools.values() || [])].sort(
+      (tool1, tool2) => tool1.order! - tool2.order!
+    );
     const components = [
       ...(this.state?.components.get(graphId)?.values() || []),
     ];

@@ -106,6 +106,7 @@ export type Tool = {
   url: string;
   title?: string;
   description?: string;
+  order: number;
 };
 
 export type Component = {

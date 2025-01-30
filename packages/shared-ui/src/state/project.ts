@@ -40,7 +40,12 @@ export { createProjectState, ReactiveProject };
  * section of the "@" menu.
  */
 function isTool(entry: GraphStoreEntry) {
-  return entry.tags?.includes("tool") && !!entry.url;
+  return (
+    !entry.updating &&
+    entry.tags?.includes("tool") &&
+    !!entry.url &&
+    entry?.tags.includes("quick-access")
+  );
 }
 
 function createProjectState(
@@ -147,6 +152,7 @@ class ReactiveProject implements ProjectInternal {
         url: entry.url!,
         title: entry.title,
         description: entry.description,
+        order: entry.order || Number.MAX_SAFE_INTEGER,
       },
     ]);
     updateMap(this.tools, tools);
