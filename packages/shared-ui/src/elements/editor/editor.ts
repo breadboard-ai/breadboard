@@ -1422,11 +1422,20 @@ export class Editor extends LitElement implements DragConnectorReceiver {
     this.#graphRendererRef.value.removeBoardPortHighlights();
   }
 
-  #createComponentList(graphStore: MutableGraphStore, kitName: string) {
+  #createComponentList(graphStore: MutableGraphStore, typeTag: string) {
     const kitList: Array<{ id: string; metadata: GraphStoreEntry }> = [];
     const graphs = graphStore.graphs();
 
     for (const graph of graphs) {
+      // Don't show items that are still updating.
+      if (graph.updating) continue;
+
+      // Skip items that don't belong in Quick Access component picker.
+      if (!graph.tags?.includes("quick-access")) continue;
+
+      // Skip items that don't aren't of specified type
+      if (!graph.tags?.includes(typeTag)) continue;
+
       if (!graph.title) {
         continue;
       }
@@ -1434,7 +1443,6 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       const { mainGraph } = graph;
       if (
         !mainGraph.title ||
-        mainGraph.title !== kitName ||
         mainGraph.tags?.includes("deprecated") ||
         !graph.tags?.includes("component") ||
         graph.tags?.includes("deprecated")
@@ -1474,14 +1482,14 @@ export class Editor extends LitElement implements DragConnectorReceiver {
     return kitList;
   }
 
-  #showComponentPicker(target: HTMLElement, kitName: string) {
+  #showComponentPicker(target: HTMLElement, typeTag: string) {
     if (!this.graphStore) {
       return;
     }
 
     const bounds = target.getBoundingClientRect();
     this.#componentPickerConfiguration = {
-      components: this.#createComponentList(this.graphStore, kitName),
+      components: this.#createComponentList(this.graphStore, typeTag),
       x: bounds.left - 5,
       y: bounds.bottom + 4,
     };
@@ -1771,7 +1779,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
                   }
 
                   await storeReady;
-                  this.#showComponentPicker(evt.target, "A2");
+                  this.#showComponentPicker(evt.target, "generative");
                 }}
               >
                 ${Strings.from("LABEL_SHOW_LIST")}
@@ -1786,7 +1794,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
                   }
 
                   await storeReady;
-                  this.#showComponentPicker(evt.target, "Built-in Kit");
+                  this.#showComponentPicker(evt.target, "core");
                 }}
               >
                 ${Strings.from("LABEL_SHOW_LIST")}
@@ -1801,7 +1809,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
                   }
 
                   await storeReady;
-                  this.#showComponentPicker(evt.target, "Tool Kit");
+                  this.#showComponentPicker(evt.target, "tool");
                 }}
               >
                 ${Strings.from("LABEL_SHOW_LIST")}
