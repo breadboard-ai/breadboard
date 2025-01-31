@@ -1514,7 +1514,8 @@ export class Edit extends EventTarget {
         port.schema.behavior?.includes("main-port")
       );
       if (mainPort) return mainPort.name;
-      return ports.find((port) => !port.star)?.name;
+      return ports.find((port) => !port.star && !port.name.startsWith("$"))
+        ?.name;
     }
   }
 
