@@ -625,7 +625,6 @@ export class GraphNode extends PIXI.Container {
 
     this.#icon = icon;
     if (icon) {
-      console.log(icon);
       if (!this.#iconSprite) {
         const texture = GraphAssets.instance().get(icon);
         this.#iconSprite = texture ? new PIXI.Sprite(texture) : null;
@@ -1055,6 +1054,17 @@ export class GraphNode extends PIXI.Container {
     if (!ports) {
       return;
     }
+
+    const presentationHints: string[] = ports
+      .map((port) => {
+        const behavior = port.schema.behavior || [];
+        return behavior.filter((behavior) =>
+          behavior.startsWith("hint-")
+        ) as string[];
+      })
+      .flat();
+
+    this.#nodeOutput.presentationHints = presentationHints;
 
     for (const port of ports) {
       let portItem = this.#outPortsData.get(port.name);
@@ -1855,21 +1865,21 @@ export class GraphNode extends PIXI.Container {
     this.#nodeOutput.visible = true;
     this.#grabHandle.visible = true;
 
-    this.#nodeOutput.x = 16;
+    this.#nodeOutput.x = 8;
     this.#nodeOutput.y = this.#height - this.#outputHeight + 16;
 
     this.addChild(this.#nodeOutputMask);
     this.#nodeOutputMask.clear();
     this.#nodeOutputMask.beginPath();
     this.#nodeOutputMask.rect(
-      16,
+      8,
       this.#height - this.#outputHeight + 16,
-      this.#width,
+      this.#width - 16,
       this.#outputHeight - 20
     );
 
     this.#nodeOutputMask.closePath();
-    this.#nodeOutputMask.fill();
+    this.#nodeOutputMask.fill({ color: 0xff00ff });
 
     this.#nodeOutput.setMask({ mask: this.#nodeOutputMask });
     this.#grabHandle.x = this.#width - 18;

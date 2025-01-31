@@ -13,9 +13,13 @@ import {
   isLLMContentArray,
   isTextCapabilityPart,
 } from "@google-labs/breadboard";
+import { GraphAssets } from "./graph-assets";
 
 const markdown = MarkdownIt();
 const outputTextColor = getGlobalColor("--bb-neutral-700");
+const placeholderColor = getGlobalColor("--bb-neutral-100");
+
+const ICON_SCALE = 0.42;
 
 function create(text: string, tag: string) {
   const opts: PIXI.HTMLTextStyleOptions = {
@@ -90,6 +94,7 @@ export class GraphNodeOutput extends PIXI.Container {
     },
   });
   #values: OutputValues[] | null = null;
+  #presentationHints: string[] = [];
 
   constructor() {
     super();
@@ -118,12 +123,29 @@ export class GraphNodeOutput extends PIXI.Container {
   }
 
   set values(values: OutputValues[] | null) {
+    if (values === this.#values) {
+      return;
+    }
+
     this.#values = values;
     this.#isDirty = true;
   }
 
   get values() {
     return this.#values;
+  }
+
+  set presentationHints(hints: string[]) {
+    if (hints === this.#presentationHints) {
+      return;
+    }
+
+    this.#presentationHints = hints;
+    this.#isDirty = true;
+  }
+
+  get presentationHints() {
+    return this.#presentationHints;
   }
 
   #clear() {
@@ -133,20 +155,99 @@ export class GraphNodeOutput extends PIXI.Container {
     }
   }
 
+  #createDefaultPlaceholder(placeholder: PIXI.Container) {
+    const text = new PIXI.Text({
+      text: "...",
+      style: {
+        fontFamily: "Arial",
+        fontSize: 12,
+        fill: outputTextColor,
+      },
+    });
+
+    text.y = placeholder.height + 12;
+    placeholder.addChild(text);
+  }
+
+  #createImagePlaceholder(placeholder: PIXI.Container) {
+    // Background.
+    const image = new PIXI.Graphics();
+    image.beginPath();
+    image.roundRect(28, 0, 186, 140, 4);
+    image.closePath();
+    image.fill({ color: placeholderColor });
+
+    if (placeholder.height > 0) {
+      image.y = placeholder.height + 24;
+    }
+    placeholder.addChild(image);
+
+    // Icon.
+    if (GraphAssets.instance().has("image")) {
+      const texture = GraphAssets.instance().get("image");
+      if (texture) {
+        const icon = new PIXI.Sprite(texture);
+        icon.scale.x = ICON_SCALE;
+        icon.scale.y = ICON_SCALE;
+        icon.alpha = 0.5;
+        icon.x = 109;
+        icon.y = image.y + 60;
+
+        placeholder.addChild(icon);
+      }
+    }
+  }
+
+  #createTextPlaceholder(placeholder: PIXI.Container) {
+    const lines = new PIXI.Graphics();
+    const lengths = [200, 220, 210, 200, 100];
+    lines.beginPath();
+
+    for (let l = 0; l < lengths.length; l++) {
+      const line = lengths[l];
+      lines.moveTo(6, l * 18);
+      lines.lineTo(line + 6, l * 18);
+      lines.stroke({ width: 12, cap: "round", color: placeholderColor });
+    }
+    lines.closePath();
+
+    if (placeholder.height > 0) {
+      lines.y = placeholder.height + 24;
+    } else {
+      lines.y = 12;
+    }
+    placeholder.addChild(lines);
+  }
+
   #draw() {
     if (!this.values) {
       this.#clear();
 
-      const text = new PIXI.Text({
-        text: "...",
-        style: {
-          fontFamily: "Arial",
-          fontSize: 12,
-          fill: outputTextColor,
-        },
-      });
-      text.label = "placeholder";
-      this.addChild(text);
+      const placeholder = new PIXI.Container();
+      placeholder.label = "placeholder";
+
+      for (const hint of this.#presentationHints) {
+        switch (hint) {
+          case "hint-code":
+          case "hint-text":
+            this.#createTextPlaceholder(placeholder);
+            break;
+
+          case "hint-image":
+            this.#createImagePlaceholder(placeholder);
+            break;
+
+          case "hint-multimodal":
+            this.#createTextPlaceholder(placeholder);
+            this.#createImagePlaceholder(placeholder);
+            break;
+
+          default:
+            this.#createDefaultPlaceholder(placeholder);
+            break;
+        }
+      }
+      this.addChild(placeholder);
       return;
     } else {
       const placeholder = this.getChildByLabel("placeholder");

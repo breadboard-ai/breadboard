@@ -8,10 +8,10 @@
       "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
         "visual": {
-          "x": 0,
-          "y": -220.00000000000023,
+          "x": -4.547473508864641e-13,
+          "y": -220.00000000000028,
           "collapsed": "expanded",
-          "outputHeight": 44
+          "outputHeight": 124
         },
         "title": "Outline Writer",
         "logLevel": "debug"
@@ -33,10 +33,10 @@
       "type": "file://bgl/a2.bgl.json#module:researcher",
       "metadata": {
         "visual": {
-          "x": -320,
-          "y": -219.99999999999966,
+          "x": -320.00000000000006,
+          "y": -220.00000000000006,
           "collapsed": "expanded",
-          "outputHeight": 44
+          "outputHeight": 124
         },
         "title": "Researcher",
         "logLevel": "debug"
@@ -64,10 +64,10 @@
       "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
         "visual": {
-          "x": 320.00000000000034,
-          "y": -100.00000000000011,
+          "x": 319.9999999999998,
+          "y": -80,
           "collapsed": "expanded",
-          "outputHeight": 44
+          "outputHeight": 124
         },
         "title": "Post Writer",
         "logLevel": "debug"
@@ -89,10 +89,10 @@
       "type": "file://bgl/a2.bgl.json#module:image-generator",
       "metadata": {
         "visual": {
-          "x": 320,
-          "y": -359.99999999999994,
+          "x": 319.9999999999998,
+          "y": -399.99999999999994,
           "collapsed": "expanded",
-          "outputHeight": 124
+          "outputHeight": 184
         },
         "title": "Banner Image Generator",
         "logLevel": "debug"
@@ -113,10 +113,10 @@
       "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
       "metadata": {
         "visual": {
-          "x": -639.9999999999999,
-          "y": -219.99999999999966,
+          "x": -640.0000000000001,
+          "y": -220.00000000000006,
           "collapsed": "expanded",
-          "outputHeight": 44
+          "outputHeight": 64
         },
         "title": "Text",
         "logLevel": "info"
@@ -137,8 +137,8 @@
       "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
       "metadata": {
         "visual": {
-          "x": 660,
-          "y": -360,
+          "x": 659.9999999999991,
+          "y": -359.9999999999999,
           "collapsed": "expanded",
           "outputHeight": 304
         },
