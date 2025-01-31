@@ -426,6 +426,7 @@ export const styles = css`
           var(--bb-font-family);
         text-align: right;
         margin: 0 0 var(--bb-grid-size) 0;
+        justify-content: flex-end;
       }
 
       & .value {

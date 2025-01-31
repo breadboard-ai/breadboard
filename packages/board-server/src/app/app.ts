@@ -55,6 +55,7 @@ import {
 } from "../../../shared-ui/dist/types/types.js";
 import type { TopGraphObserver } from "../../../shared-ui/dist/utils/top-graph-observer/top-graph-observer.js";
 import { ChatController } from "../../../shared-ui/dist/state/chat-controller.js";
+import { iconButtonStyles } from "@breadboard-ai/shared-ui/styles/icon-button.js";
 
 import { WebSandbox } from "@breadboard-ai/jsandbox/web";
 import wasm from "/sandbox.wasm?url";
@@ -185,335 +186,353 @@ export class AppView extends LitElement {
 
   #chatController: ChatController | null = null;
 
-  static styles = css`
-    * {
-      box-sizing: border-box;
-    }
+  static styles = [
+    iconButtonStyles,
+    css`
+      * {
+        box-sizing: border-box;
+      }
 
-    :host {
-      display: block;
-      font: var(--bb-font-body-medium);
-      height: 100%;
-    }
+      :host {
+        display: block;
+        font: var(--bb-font-body-medium);
+        height: 100%;
+      }
 
-    bb-toast {
-      z-index: 200;
-    }
+      bb-toast {
+        z-index: 200;
+      }
 
-    main {
-      display: grid;
-      grid-template-columns: none;
-      grid-template-rows: 48px auto;
-    }
-
-    #loading {
-      padding: var(--bb-grid-size-4);
-      display: flex;
-      align-items: center;
-    }
-
-    #loading::before {
-      content: "";
-      width: 16px;
-      height: 16px;
-      background: transparent url(/images/progress-ui.svg) 0 center / 16px 16px
-        no-repeat;
-      margin-right: var(--bb-grid-size);
-    }
-
-    #board-description,
-    #help {
-      display: none;
-      color: var(--bb-neutral-600);
-    }
-
-    header {
-      display: flex;
-      align-items: center;
-    }
-
-    #menu-toggle {
-      width: 20px;
-      height: 20px;
-      background: transparent var(--bb-icon-menu-inverted) center center / 20px
-        20px no-repeat;
-      border: none;
-      font-size: 0;
-      margin-right: var(--bb-grid-size-2);
-    }
-
-    h1 {
-      font: var(--bb-font-title-small);
-      margin: 0;
-    }
-
-    p {
-      margin: 0 0 var(--bb-grid-size-2) 0;
-    }
-
-    footer {
-      position: fixed;
-      bottom: 0;
-      height: calc(var(--bb-grid-size-13) + var(--bb-grid-size-12));
-      display: grid;
-      grid-template-columns: none;
-      grid-template-rows: var(--bb-grid-size-13) var(--bb-grid-size-8);
-      background: var(--bb-neutral-0);
-      border-top: 1px solid var(--bb-neutral-300);
-      width: 100%;
-      font: var(--bb-font-body-small);
-      align-items: center;
-    }
-
-    #links {
-      color: var(--bb-neutral-400);
-      grid-row: 2/3;
-      padding: 0 var(--bb-grid-size-2);
-    }
-
-    #links a {
-      color: var(--bb-neutral-500);
-      font-weight: bold;
-      text-decoration: none;
-    }
-
-    #controls {
-      position: relative;
-      display: flex;
-      align-items: center;
-      width: 100%;
-      justify-content: space-between;
-      background: var(--bb-neutral-0);
-      z-index: 1;
-    }
-
-    #status {
-      max-width: calc(100vw - 160px);
-      flex: 1 1 auto;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      padding: 0 var(--bb-grid-size-2);
-      font: var(--bb-font-title-small);
-      color: var(--bb-neutral-700);
-    }
-
-    #status.pending {
-      padding: 0 var(--bb-grid-size-2) 0 var(--bb-grid-size-8);
-      background: transparent url(/images/progress-ui.svg) var(--bb-grid-size-2)
-        center / 16px 16px no-repeat;
-    }
-
-    #status .messages-received {
-      color: var(--bb-neutral-500);
-      margin-left: var(--bb-grid-size-4);
-    }
-
-    #main-control {
-      height: 32px;
-      background: var(--bb-ui-500);
-      border-radius: 30px;
-      padding: var(--bb-grid-size) var(--bb-grid-size-5);
-      border: 1px solid var(--bb-ui-500);
-      color: var(--bb-neutral-0);
-      flex: 0 0 auto;
-      margin: 0 var(--bb-grid-size-2) 0 var(--bb-grid-size-3);
-      cursor: pointer;
-      transition: background-color 0.3s cubic-bezier(0, 0, 0.3, 1);
-    }
-
-    #main-control:hover,
-    #main-control:focus {
-      background: var(--bb-ui-600);
-      transition-duration: 0.15s;
-    }
-
-    #main-control.active {
-      background: var(--bb-neutral-0);
-      border: 1px solid var(--bb-ui-200);
-      color: var(--bb-ui-600);
-    }
-
-    #main-control.active:hover,
-    #main-control.active:focus {
-      background: var(--bb-ui-50);
-      transition-duration: 0.15s;
-    }
-
-    #board-info h1 {
-      color: var(--bb-neutral-0);
-    }
-
-    #board-info bb-app-nav {
-      display: none;
-    }
-
-    #board-info-container {
-      display: flex;
-      align-items: center;
-      padding: var(--bb-grid-size) var(--bb-grid-size-2);
-      background: var(--bb-ui-500);
-    }
-
-    main {
-      height: calc(100% - var(--bb-grid-size-13) - var(--bb-grid-size-12));
-    }
-    #activity {
-      height: 100%;
-    }
-    bb-app-preview {
-      height: 100%;
-    }
-
-    @media (min-width: 700px) {
       main {
         display: grid;
-        grid-template-columns: max(300px, 20vw) 1fr;
-        grid-template-rows: none;
-        column-gap: var(--bb-grid-size-5);
-        height: calc(100% - var(--bb-grid-size-13));
+        grid-template-columns: none;
+        grid-template-rows: 48px auto;
       }
 
-      bb-app-nav[popout] {
-        display: none;
+      #loading {
+        padding: var(--bb-grid-size-4);
+        display: flex;
+        align-items: center;
       }
 
-      #board-info {
-        width: 100%;
-      }
-
-      #board-info-container {
-        background: var(--bb-neutral-0);
-        border-bottom: 1px solid var(--bb-neutral-300);
-      }
-
-      #board-info h1 {
-        color: var(--bb-ui-500);
-      }
-
-      #menu-toggle {
-        background-image: var(--bb-icon-menu);
-      }
-
-      footer {
-        height: var(--bb-grid-size-13);
-        grid-template-columns: max(300px, 20vw) 1fr;
-        grid-template-rows: none;
-        column-gap: var(--bb-grid-size-5);
-      }
-
-      #links {
-        grid-row: auto;
-        padding-left: var(--bb-grid-size-4);
-      }
-
-      #status {
-        max-width: calc(100vw - 180px - max(300px, 20vw));
-      }
-
-      h1 {
-        font: var(--bb-font-title-large);
-        margin: 0;
-      }
-
-      section {
-        display: block;
-      }
-
-      #activity {
-        position: relative;
-      }
-
-      #board-info {
-        position: sticky;
-        top: 0;
-        padding: 0;
-        background: var(--bb-neutral-0);
-      }
-
-      #board-info bb-app-nav {
-        display: block;
-      }
-
-      #board-info #menu-toggle {
-        display: none;
-      }
-
-      #board-info-container {
-        align-items: flex-start;
-        border-bottom: none;
-        padding: 0;
+      #loading::before {
+        content: "";
+        width: 16px;
+        height: 16px;
+        background: transparent url(/images/progress-ui.svg) 0 center / 16px
+          16px no-repeat;
+        margin-right: var(--bb-grid-size);
       }
 
       #board-description,
       #help {
-        display: block;
-        margin-top: var(--bb-grid-size-2);
-        padding: 0 var(--bb-grid-size-4);
+        display: none;
+        color: var(--bb-neutral-600);
       }
 
-      #help {
+      header {
+        display: flex;
+        align-items: center;
+      }
+
+      #menu-toggle {
+        width: 20px;
+        height: 20px;
+        background: transparent var(--bb-icon-menu-inverted) center center /
+          20px 20px no-repeat;
+        border: none;
+        font-size: 0;
+        margin-right: var(--bb-grid-size-2);
+      }
+
+      h1 {
+        font: var(--bb-font-title-small);
+        margin: 0;
+      }
+
+      p {
+        margin: 0 0 var(--bb-grid-size-2) 0;
+      }
+
+      footer {
+        position: fixed;
+        bottom: 0;
+        height: calc(var(--bb-grid-size-13) + var(--bb-grid-size-12));
+        display: grid;
+        grid-template-columns: none;
+        grid-template-rows: var(--bb-grid-size-13) var(--bb-grid-size-8);
+        background: var(--bb-neutral-0);
         border-top: 1px solid var(--bb-neutral-300);
-        margin-top: var(--bb-grid-size-8);
-        padding-top: var(--bb-grid-size-8);
+        width: 100%;
+        font: var(--bb-font-body-small);
+        align-items: center;
+      }
+
+      #links {
+        color: var(--bb-neutral-400);
+        grid-row: 2/3;
+        padding: 0 var(--bb-grid-size-2);
+      }
+
+      #links a {
         color: var(--bb-neutral-500);
+        font-weight: bold;
+        text-decoration: none;
+      }
+
+      #controls {
+        position: relative;
+        display: flex;
+        align-items: center;
+        width: 100%;
+        justify-content: space-between;
+        background: var(--bb-neutral-0);
+        z-index: 1;
+      }
+
+      #status {
+        max-width: calc(100vw - 160px);
+        flex: 1 1 auto;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        padding: 0 var(--bb-grid-size-2);
+        font: var(--bb-font-title-small);
+        color: var(--bb-neutral-700);
+      }
+
+      #status.pending {
+        padding: 0 var(--bb-grid-size-2) 0 var(--bb-grid-size-8);
+        background: transparent url(/images/progress-ui.svg)
+          var(--bb-grid-size-2) center / 16px 16px no-repeat;
+      }
+
+      #status .messages-received {
+        color: var(--bb-neutral-500);
+        margin-left: var(--bb-grid-size-4);
+      }
+
+      #main-control {
+        height: 32px;
+        background: var(--bb-ui-500);
+        border-radius: 30px;
+        padding: var(--bb-grid-size) var(--bb-grid-size-5);
+        border: 1px solid var(--bb-ui-500);
+        color: var(--bb-neutral-0);
+        flex: 0 0 auto;
+        margin: 0 var(--bb-grid-size-2) 0 var(--bb-grid-size-3);
+        cursor: pointer;
+        transition: background-color 0.3s cubic-bezier(0, 0, 0.3, 1);
+      }
+
+      #main-control:hover,
+      #main-control:focus {
+        background: var(--bb-ui-600);
+        transition-duration: 0.15s;
+      }
+
+      #main-control.active {
+        background: var(--bb-neutral-0);
+        border: 1px solid var(--bb-ui-200);
+        color: var(--bb-ui-600);
+      }
+
+      #main-control.active:hover,
+      #main-control.active:focus {
+        background: var(--bb-ui-50);
+        transition-duration: 0.15s;
       }
 
       #board-info h1 {
-        padding: var(--bb-grid-size-5) var(--bb-grid-size-4) 0
-          var(--bb-grid-size-4);
+        color: var(--bb-neutral-0);
       }
-    }
 
-    @media (min-width: 1120px) {
-      #activity,
-      #controls {
-        width: 750px;
-        left: calc(50% - 250px - (max(300px, 20vw) / 2));
-      }
-    }
-
-    @media (max-width: 699px) {
-      main {
-        height: 100%;
-      }
-      footer {
+      #board-info bb-app-nav {
         display: none;
+      }
+
+      #board-info-container {
+        display: flex;
+        align-items: center;
+        padding: var(--bb-grid-size) var(--bb-grid-size-2);
+        background: var(--bb-ui-500);
+        display: flex;
+        justify-content: space-between;
+      }
+
+      main {
+        height: calc(100% - var(--bb-grid-size-13) - var(--bb-grid-size-12));
       }
       #activity {
         height: 100%;
       }
-      #board-info-container {
-        background: var(--bb-neutral-300);
-      }
-      #board-info h1 {
-        color: var(--bb-font-color);
-      }
-      #menu-toggle {
-        background-image: var(--bb-icon-menu);
-      }
       bb-app-preview {
-        padding: 0;
         height: 100%;
       }
-      bb-app-preview::part(header) {
-        display: none;
+
+      @media (min-width: 700px) {
+        main {
+          display: grid;
+          grid-template-columns: max(300px, 20vw) 1fr;
+          grid-template-rows: none;
+          column-gap: var(--bb-grid-size-5);
+          height: calc(100% - var(--bb-grid-size-13));
+        }
+
+        bb-app-nav[popout] {
+          display: none;
+        }
+
+        #board-info {
+          width: 100%;
+        }
+
+        #board-info-container {
+          background: var(--bb-neutral-0);
+          border-bottom: 1px solid var(--bb-neutral-300);
+        }
+
+        #board-info h1 {
+          color: var(--bb-ui-500);
+        }
+
+        #menu-toggle {
+          background-image: var(--bb-icon-menu);
+        }
+
+        footer {
+          height: var(--bb-grid-size-13);
+          grid-template-columns: max(300px, 20vw) 1fr;
+          grid-template-rows: none;
+          column-gap: var(--bb-grid-size-5);
+        }
+
+        #links {
+          grid-row: auto;
+          padding-left: var(--bb-grid-size-4);
+        }
+
+        #status {
+          max-width: calc(100vw - 180px - max(300px, 20vw));
+        }
+
+        h1 {
+          font: var(--bb-font-title-large);
+          margin: 0;
+        }
+
+        section {
+          display: block;
+        }
+
+        #activity {
+          position: relative;
+        }
+
+        #board-info {
+          position: sticky;
+          top: 0;
+          padding: 0;
+          background: var(--bb-neutral-0);
+        }
+
+        #board-info bb-app-nav {
+          display: block;
+        }
+
+        #board-info #menu-toggle {
+          display: none;
+        }
+
+        #board-info-container {
+          align-items: flex-start;
+          border-bottom: none;
+          padding: 0;
+        }
+
+        #board-description,
+        #help {
+          display: block;
+          margin-top: var(--bb-grid-size-2);
+          padding: 0 var(--bb-grid-size-4);
+        }
+
+        #help {
+          border-top: 1px solid var(--bb-neutral-300);
+          margin-top: var(--bb-grid-size-8);
+          padding-top: var(--bb-grid-size-8);
+          color: var(--bb-neutral-500);
+        }
+
+        #board-info h1 {
+          padding: var(--bb-grid-size-5) var(--bb-grid-size-4) 0
+            var(--bb-grid-size-4);
+        }
       }
-      bb-app-preview::part(footer) {
-        border: none;
-        border-radius: 0;
-        background-color: var(--bb-neutral-200);
+
+      @media (min-width: 1120px) {
+        #activity,
+        #controls {
+          width: 750px;
+          left: calc(50% - 250px - (max(300px, 20vw) / 2));
+        }
       }
-      bb-app-preview::part(log) {
-        border: none;
-        flex-basis: 0;
+
+      @media (max-width: 699px) {
+        main {
+          height: 100%;
+        }
+        footer {
+          display: none;
+        }
+        #activity {
+          height: 100%;
+        }
+        #board-info-container {
+          background: var(--bb-neutral-100);
+          border-bottom: 1px solid var(--bb-neutral-300);
+        }
+        #board-info h1 {
+          color: var(--bb-font-color);
+        }
+        #menu-toggle {
+          background-image: var(--bb-icon-menu);
+        }
+        bb-app-preview {
+          padding: 0;
+          height: 100%;
+        }
+        bb-app-preview::part(header) {
+          display: none;
+        }
+        bb-app-preview::part(footer) {
+          border: none;
+          border-radius: 0;
+          background-color: var(--bb-neutral-100);
+          border-top: 1px solid var(--bb-neutral-300);
+          display: none;
+        }
+        bb-app-preview::part(log) {
+          border: none;
+          flex-basis: 0;
+        }
+        bb-app-preview::part(input) {
+          border-left: none;
+          border-right: none;
+        }
       }
-      bb-app-preview::part(input) {
-        border-left: none;
-        border-right: none;
+
+      bb-app-preview {
+        --bb-llm-output-content-max-height: 50vh;
       }
-    }
-  `;
+      #reload-button {
+        --bb-icon: var(--bb-icon-refresh);
+      }
+      #share-button {
+        --bb-icon: var(--bb-icon-share);
+      }
+    `,
+  ];
 
   constructor() {
     super();
@@ -1039,6 +1058,18 @@ export class AppView extends LitElement {
             ${nav(false)}
             <div id="help">${this.#helpText()}</div>
           </div>
+          <div>
+            <button
+              id="reload-button"
+              class="bb-icon-button"
+              @click=${this.#onClickReloadButton}
+            ></button>
+            <button
+              id="share-button"
+              class="bb-icon-button"
+              @click=${this.#onClickShareButton}
+            ></button>
+          </div>
         </section>
         <section id="activity-container" ?inert=${inert}>
           <div id="activity">${until(activity)}</div>
@@ -1122,5 +1153,13 @@ export class AppView extends LitElement {
         </div>
       </footer>
       ${toasts}`;
+  }
+
+  #onClickReloadButton() {
+    window.location.reload();
+  }
+
+  #onClickShareButton() {
+    console.log("not yet implemented");
   }
 }

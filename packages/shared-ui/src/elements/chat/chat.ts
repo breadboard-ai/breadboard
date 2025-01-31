@@ -171,7 +171,7 @@ export class Chat extends LitElement {
                 ${isLastPart ? ref(this.#newestEntry) : nothing}
               >
                 <div>
-                  <h2 class="title">User Input</h2>
+                  <h2 class="title">User</h2>
                   <div class="value">
                     ${this.#renderSystemConversationItem(conversationItem)}
                   </div>
