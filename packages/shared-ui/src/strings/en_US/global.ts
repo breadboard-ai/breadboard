@@ -63,7 +63,7 @@ export default {
 
   // Labels.
   LABEL_RUN: {
-    str: "Test Project",
+    str: "Start",
   },
   LABEL_STOP: {
     str: "Stop",

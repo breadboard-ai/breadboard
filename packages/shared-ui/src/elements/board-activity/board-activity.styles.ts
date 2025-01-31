@@ -29,20 +29,51 @@ export const styles = css`
   .run-component {
     width: 20px;
     height: 20px;
-    font-size: 0;
     border: none;
-    background: transparent var(--bb-icon-play-filled) center center / 20px 20px
-      no-repeat;
-    margin-top: 2px;
-    opacity: 0.7;
-    margin-right: var(--bb-grid-size);
+    background: none;
+    margin-right: var(--bb-grid-size-4);
     cursor: pointer;
+    overflow: hidden;
   }
 
-  .run-component:focus,
-  .run-component:hover {
-    transition: opacity 0.1s cubic-bezier(0, 0, 0.3, 1);
-    opacity: 1;
+  .activity-entry {
+    &.input {
+      & .run-component {
+        color: var(--bb-input-700);
+      }
+    }
+
+    &.generative,
+    &.generative-image,
+    &.generative-text,
+    &.generative-audio {
+      & .run-component {
+        color: var(--bb-generative-700);
+      }
+    }
+  }
+
+  .user-output {
+    position: relative;
+    padding-top: var(--bb-grid-size-2);
+    display: flex;
+    justify-content: flex-end;
+
+    --output-border-width: 0;
+    --output-border-color: var(--bb-neutral-300);
+    --output-border-radius: var(--bb-grid-size-2);
+    --output-padding: 0;
+    --output-lite-border-color: transparent;
+    --output-lite-background-color: transparent;
+
+    & .output-container {
+      border-radius: var(--bb-grid-size-4) var(--bb-grid-size)
+        var(--bb-grid-size-4) var(--bb-grid-size-4);
+      padding: var(--bb-grid-size-3) var(--bb-grid-size-2) var(--bb-grid-size-2)
+        var(--bb-grid-size-2);
+      background: var(--bb-ui-100);
+      color: var(--bb-neutral-900);
+    }
   }
 
   .activity-entry {
@@ -71,34 +102,47 @@ export const styles = css`
     line-height: var(--bb-grid-size-5);
   }
 
-  .activity-entry h1,
-  .activity-entry .node-info {
-    min-height: var(--bb-grid-size-8);
-    font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
-      var(--bb-font-family);
-    display: flex;
-    align-items: center;
-    margin: 0;
-    border-radius: var(--bb-grid-size);
-    color: var(--bb-neutral-700);
-    position: relative;
-    border: 1px solid var(--bb-neutral-100);
-
-    & summary {
+  .activity-entry {
+    & h1,
+    & .node-info {
+      min-height: var(--bb-grid-size-8);
+      font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+        var(--bb-font-family);
+      display: flex;
+      align-items: center;
+      margin: 0;
+      border-radius: var(--bb-grid-size);
+      color: var(--bb-neutral-700);
       position: relative;
-      z-index: 1;
+      border: 1px solid var(--bb-neutral-100);
+
+      & summary {
+        position: relative;
+        z-index: 1;
+      }
+
+      &::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: var(--bb-grid-size-8);
+        border-radius: var(--bb-grid-size);
+        background: var(--bb-neutral-100);
+        z-index: 0;
+      }
     }
 
-    &::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: var(--bb-grid-size-8);
-      border-radius: var(--bb-grid-size);
-      background: var(--bb-neutral-100);
-      z-index: 0;
+    &.input .node-info::before {
+      background: var(--bb-input-50);
+    }
+
+    &.generative .node-info::before,
+    &.generative-audio .node-info::before,
+    &.generative-text .node-info::before,
+    &.generative-image .node-info::before {
+      background: var(--bb-generative-50);
     }
   }
 
@@ -129,22 +173,28 @@ export const styles = css`
     flex: 1;
   }
 
-  .activity-entry .node-info summary .details {
-    width: 20px;
-    height: 20px;
-    font-size: 0;
-    cursor: pointer;
-    border: none;
-    background: transparent var(--bb-icon-info-filled) center center / 20px 20px
-      no-repeat;
-    opacity: 0.2;
-    transition: opacity 0.1s cubic-bezier(0, 0, 0.3, 1);
-    margin-top: 2px;
-  }
+  .activity-entry {
+    & .node-info summary .details {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.1s cubic-bezier(0, 0, 0.3, 1);
+      padding: 0;
+      overflow: hidden;
+      background: none;
+    }
 
-  .activity-entry .node-info summary .details:hover,
-  .activity-entry .node-info summary .details:focus {
-    opacity: 0.4;
+    &.input .node-info summary .details {
+      color: var(--bb-input-700);
+    }
+
+    &.generative .node-info summary .details,
+    &.generative-audio .node-info summary .details,
+    &.generative-text .node-info summary .details,
+    &.generative-image .node-info summary .details {
+      color: var(--bb-generative-700);
+    }
   }
 
   .node summary::before,
@@ -166,6 +216,34 @@ export const styles = css`
   .activity-entry.node.input h1::before {
     background: transparent var(--bb-icon-input) center center / 20px 20px
       no-repeat;
+  }
+
+  .node.generative summary::before,
+  .activity-entry .activity-entry.node.generative summary::before,
+  .activity-entry.node.generative h1::before {
+    background: transparent var(--bb-add-icon-generative) center center / 20px
+      20px no-repeat;
+  }
+
+  .node.generative-audio summary::before,
+  .activity-entry .activity-entry.node.generative-audio summary::before,
+  .activity-entry.node.generative-audio h1::before {
+    background: transparent var(--bb-add-icon-generative-audio) center center /
+      20px 20px no-repeat;
+  }
+
+  .node.generative-text summary::before,
+  .activity-entry .activity-entry.node.generative-text summary::before,
+  .activity-entry.node.generative-text h1::before {
+    background: transparent var(--bb-add-icon-generative-text) center center /
+      20px 20px no-repeat;
+  }
+
+  .node.generative-image summary::before,
+  .activity-entry .activity-entry.node.generative-image summary::before,
+  .activity-entry.node.generative-image h1::before {
+    background: transparent var(--bb-add-icon-generative-image) center center /
+      20px 20px no-repeat;
   }
 
   .node.runJavascript summary::before,

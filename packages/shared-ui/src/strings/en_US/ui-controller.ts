@@ -51,7 +51,9 @@ export default {
   LABEL_TEMPLATE_3: {
     str: "Light",
   },
-
+  LABEL_TEST: {
+    str: "Test Project",
+  },
   LABEL_PUBLIC: {
     str: "Public",
   },

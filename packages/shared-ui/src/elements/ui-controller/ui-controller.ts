@@ -764,7 +764,10 @@ export class UI extends LitElement {
             <bb-asset-organizer .state=${this.organizer}></bb-asset-organizer>
             <div
               id="create-view-popout"
-              class=${classMap({ expanded: this.popoutExpanded })}
+              class=${classMap({
+                expanded: this.popoutExpanded,
+                wide: showBoardHierarchy === true,
+              })}
             >
               <div id="create-view-popout-nav">
                 <div
@@ -812,6 +815,7 @@ export class UI extends LitElement {
                       ${Strings.from(label)}
                     </button>`;
                   })}
+                  <span class="label">${Strings.from("LABEL_TEST")}</span>
                 </div>
 
                 <button

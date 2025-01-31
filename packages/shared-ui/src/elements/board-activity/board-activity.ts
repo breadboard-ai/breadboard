@@ -45,6 +45,7 @@ import {
 } from "../../utils/index.js";
 import { formatError } from "../../utils/format-error.js";
 import { guard } from "lit/directives/guard.js";
+import { icons } from "../../styles/icons.js";
 
 @customElement("bb-board-activity")
 export class BoardActivity extends LitElement {
@@ -128,7 +129,7 @@ export class BoardActivity extends LitElement {
     }
   });
 
-  static styles = activityLogStyles;
+  static styles = [icons, activityLogStyles];
 
   #isImageURL(nodeValue: unknown): nodeValue is { image_url: string } {
     if (typeof nodeValue !== "object" || !nodeValue) {
@@ -183,13 +184,17 @@ export class BoardActivity extends LitElement {
         }
 
         const { type } = event.node.descriptor;
-
         const classes: Record<string, boolean> = {
           "activity-entry": true,
           node: true,
           pending: idx === run.events.length - 1 && run.end === null,
           [type]: true,
         };
+
+        const icon = event.node.type().currentMetadata().icon;
+        if (icon) {
+          classes[icon] = true;
+        }
 
         const hasComponentActivity =
           event.runs.length && event.runs[0].events.length;
@@ -202,8 +207,11 @@ export class BoardActivity extends LitElement {
                   >${event.node.description()}</span
                 >
                 ${this.showExtendedInfo
-                  ? html`<button class="details" data-message-id=${event.id}>
-                      ${Strings.from("LABEL_DETAILS")}
+                  ? html`<button
+                      class="details m-icon"
+                      data-message-id=${event.id}
+                    >
+                      data_info_alert
                     </button>`
                   : nothing}
               </summary>
@@ -471,6 +479,80 @@ export class BoardActivity extends LitElement {
       return true;
     });
 
+    const contents = html`${portList.map((port) => {
+      const nodeValue = port.value;
+      let value: HTMLTemplateResult | symbol = nothing;
+      if (typeof nodeValue === "object") {
+        if (isLLMContentArray(nodeValue)) {
+          value = html`<bb-llm-output-array
+            .showModeToggle=${false}
+            .showEntrySelector=${false}
+            .showExportControls=${type !== "input"}
+            .lite=${true}
+            .clamped=${false}
+            .values=${nodeValue}
+          ></bb-llm-output-array>`;
+        } else if (isLLMContent(nodeValue)) {
+          if (!nodeValue.parts) {
+            // Special case for "$metadata" item.
+            // See https://github.com/breadboard-ai/breadboard/issues/1673
+            // TODO: Make this not ugly.
+            const data = (nodeValue as unknown as { data: unknown }).data;
+            value = html`<bb-json-tree .json=${data}></bb-json-tree>`;
+          }
+
+          if (!nodeValue.parts.length) {
+            value = html`No data provided`;
+          }
+
+          value = nodeValue.parts.length
+            ? html`<bb-llm-output
+                .showExportControls=${true}
+                .lite=${true}
+                .clamped=${false}
+                .value=${nodeValue}
+              ></bb-llm-output>`
+            : html`No data provided`;
+        } else if (this.#isImageURL(nodeValue)) {
+          value = html`<img src=${nodeValue.image_url} />`;
+        } else {
+          value = html`<bb-json-tree .json=${nodeValue}></bb-json-tree>`;
+        }
+      } else {
+        let renderableValue: HTMLTemplateResult | symbol = nothing;
+        if (
+          port.schema.format === "markdown" &&
+          typeof nodeValue === "string"
+        ) {
+          renderableValue = html`${markdown(nodeValue)}`;
+        } else {
+          renderableValue = html`${nodeValue !== undefined
+            ? nodeValue
+            : html`<span class="no-value">[No value provided]</span>`}`;
+        }
+
+        // prettier-ignore
+        value = html`<div
+        class=${classMap({
+          markdown: port.schema.format === 'markdown',
+          value: true,
+          [type]: true,
+        })}
+      >${renderableValue}</div>`;
+      }
+
+      return html` <div class="output-port">
+        ${type === "input" ? nothing : html`<label>${port.title}</label>`}
+        <div class="value">${value}</div>
+      </div>`;
+    })}`;
+
+    // Special-case inputs.
+    if (type === "input") {
+      return html`${contents}`;
+    }
+
+    // Everything else.
     return html`<div
       class=${classMap({
         "node-output-container": true,
@@ -486,77 +568,8 @@ export class BoardActivity extends LitElement {
           class=${classMap({ "with-description": description !== null })}
         >
           ${description ? html`<h2>${description}</h2>` : nothing}
-          <span class="title">
-            ${portList.length} output${portList.length === 1 ? "" : "s"}
-          </span>
         </summary>
-        ${portList.map((port) => {
-          const nodeValue = port.value;
-          let value: HTMLTemplateResult | symbol = nothing;
-          if (typeof nodeValue === "object") {
-            if (isLLMContentArray(nodeValue)) {
-              value = html`<bb-llm-output-array
-                .showModeToggle=${false}
-                .showEntrySelector=${false}
-                .showExportControls=${true}
-                .lite=${true}
-                .clamped=${false}
-                .values=${nodeValue}
-              ></bb-llm-output-array>`;
-            } else if (isLLMContent(nodeValue)) {
-              if (!nodeValue.parts) {
-                // Special case for "$metadata" item.
-                // See https://github.com/breadboard-ai/breadboard/issues/1673
-                // TODO: Make this not ugly.
-                const data = (nodeValue as unknown as { data: unknown }).data;
-                value = html`<bb-json-tree .json=${data}></bb-json-tree>`;
-              }
-
-              if (!nodeValue.parts.length) {
-                value = html`No data provided`;
-              }
-
-              value = nodeValue.parts.length
-                ? html`<bb-llm-output
-                    .showExportControls=${true}
-                    .lite=${true}
-                    .clamped=${false}
-                    .value=${nodeValue}
-                  ></bb-llm-output>`
-                : html`No data provided`;
-            } else if (this.#isImageURL(nodeValue)) {
-              value = html`<img src=${nodeValue.image_url} />`;
-            } else {
-              value = html`<bb-json-tree .json=${nodeValue}></bb-json-tree>`;
-            }
-          } else {
-            let renderableValue: HTMLTemplateResult | symbol = nothing;
-            if (
-              port.schema.format === "markdown" &&
-              typeof nodeValue === "string"
-            ) {
-              renderableValue = html`${markdown(nodeValue)}`;
-            } else {
-              renderableValue = html`${nodeValue !== undefined
-                ? nodeValue
-                : html`<span class="no-value">[No value provided]</span>`}`;
-            }
-
-            // prettier-ignore
-            value = html`<div
-            class=${classMap({
-              markdown: port.schema.format === 'markdown',
-              value: true,
-              [type]: true,
-            })}
-          >${renderableValue}</div>`;
-          }
-
-          return html` <div class="output-port">
-            <label>${port.title}</label>
-            <div class="value">${value}</div>
-          </div>`;
-        })}
+        ${contents}
       </details>
     </div>`;
   }
@@ -619,7 +632,11 @@ export class BoardActivity extends LitElement {
                           event.runs.length && event.runs[0].events.length;
                         content = html`
                           <div>
-                            <details class="node-info">
+                            <details
+                              class=${classMap({
+                                "node-info": true,
+                              })}
+                            >
                               <summary>
                                 <span
                                   class=${classMap({
@@ -649,39 +666,41 @@ export class BoardActivity extends LitElement {
                       const hasComponentActivity =
                         event.runs.length && event.runs[0].events.length;
                       content = html`
-                        <div>
-                          <details class="node-info">
-                            <summary>
-                              <span
-                                class=${classMap({
-                                  expandable: hasComponentActivity,
-                                })}
-                                >${node.title()}</span
-                              >
-                              <button
-                                class="run-component"
-                                @click=${() => {
-                                  this.dispatchEvent(
-                                    new RunIsolatedNodeEvent(
-                                      event.node.descriptor.id,
-                                      true
-                                    )
-                                  );
-                                }}
-                              >
-                                Re-run
-                              </button>
-                              ${this.showExtendedInfo
-                                ? html`<button
-                                    class="details"
-                                    data-message-id=${event.id}
+                        <div class="output-container">
+                          ${event.node.type().type() === "input"
+                            ? nothing
+                            : html`<details class="node-info">
+                                <summary>
+                                  <span
+                                    class=${classMap({
+                                      expandable: hasComponentActivity,
+                                    })}
+                                    >${node.title()}</span
                                   >
-                                    ${Strings.from("LABEL_DETAILS")}
-                                  </button>`
-                                : nothing}
-                            </summary>
-                            ${this.#renderComponentActivity(event.runs)}
-                          </details>
+                                  <button
+                                    class="run-component m-icon filled"
+                                    @click=${() => {
+                                      this.dispatchEvent(
+                                        new RunIsolatedNodeEvent(
+                                          event.node.descriptor.id,
+                                          true
+                                        )
+                                      );
+                                    }}
+                                  >
+                                    play_arrow
+                                  </button>
+                                  ${this.showExtendedInfo
+                                    ? html`<button
+                                        class="details m-icon"
+                                        data-message-id=${event.id}
+                                      >
+                                        data_info_alert
+                                      </button>`
+                                    : nothing}
+                                </summary>
+                                ${this.#renderComponentActivity(event.runs)}
+                              </details>`}
                           ${until(
                             outputs,
                             html`<div
@@ -736,58 +755,77 @@ export class BoardActivity extends LitElement {
                   }
                 }
 
-                const classes: Record<string, boolean> = {
-                  "activity-entry": true,
-                  running: event.type === "node" && event.end === null,
-                  new: isNew,
-                  [event.type]: true,
-                };
-
-                if (event.type === "node") {
-                  classes[event.node.descriptor.type] = true;
-                }
-
-                const styles: Record<string, string> = {};
                 if (
                   event.type === "node" &&
-                  event.node.descriptor.metadata &&
-                  event.node.descriptor.metadata.visual &&
-                  typeof event.node.descriptor.metadata.visual === "object"
+                  event.end !== null &&
+                  event.node.type().type() === "input"
                 ) {
-                  const visual = event.node.descriptor.metadata
-                    .visual as Record<string, string>;
-                  if (visual.icon) {
-                    classes.icon = true;
-                    styles["--node-icon"] = `url(${visual.icon})`;
+                  return html`<section
+                    ${ref(this.#newestEntry)}
+                    class="user-output"
+                  >
+                    ${until(content)}
+                  </section>`;
+                } else {
+                  const classes: Record<string, boolean> = {
+                    "activity-entry": true,
+                    running: event.type === "node" && event.end === null,
+                    new: isNew,
+                    [event.type]: true,
+                  };
+
+                  if (event.type === "node") {
+                    classes[event.node.descriptor.type] = true;
+
+                    const icon = event.node.type().currentMetadata().icon;
+                    if (icon) {
+                      classes[icon] = true;
+                    }
                   }
-                }
 
-                if (event.type === "node") {
-                  return guard(
-                    [
-                      event.end,
-                      event === newestEvent,
-                      event.runs.length,
-                      event.runs[0]?.events.length ?? 0,
-                    ],
-                    () =>
-                      html`<section
-                        ${ref(this.#newestEntry)}
-                        style="${styleMap(styles)}"
-                        class="${classMap(classes)}"
-                      >
-                        ${until(content)}
-                      </section>`
-                  );
-                }
+                  const styles: Record<string, string> = {};
+                  if (
+                    event.type === "node" &&
+                    event.node.descriptor.metadata &&
+                    event.node.descriptor.metadata.visual &&
+                    typeof event.node.descriptor.metadata.visual === "object"
+                  ) {
+                    const visual = event.node.descriptor.metadata
+                      .visual as Record<string, string>;
+                    if (visual.icon) {
+                      classes.icon = true;
+                      styles["--node-icon"] = `url(${visual.icon})`;
+                    }
+                  }
 
-                return html`<section
-                  ${ref(this.#newestEntry)}
-                  style="${styleMap(styles)}"
-                  class="${classMap(classes)}"
-                >
-                  ${until(content)}
-                </section>`;
+                  if (event.type === "node") {
+                    return guard(
+                      [
+                        event.end,
+                        event === newestEvent,
+                        event.runs.length,
+                        event.runs[0]?.events.length ?? 0,
+                      ],
+                      () => {
+                        return html`<section
+                          ${ref(this.#newestEntry)}
+                          style="${styleMap(styles)}"
+                          class="${classMap(classes)}"
+                        >
+                          ${until(content)}
+                        </section>`;
+                      }
+                    );
+                  }
+
+                  return html`<section
+                    ${ref(this.#newestEntry)}
+                    style="${styleMap(styles)}"
+                    class="${classMap(classes)}"
+                  >
+                    ${until(content)}
+                  </section>`;
+                }
               }
             )}
           `
