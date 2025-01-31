@@ -423,6 +423,9 @@ body.hide-cursor {
   --bb-icon-sweep: url(/third_party/icons/sweep.svg);
   --bb-icon-sweep-inverted: url(/third_party/icons/sweep-inverted.svg);
 
+  --bb-icon-table-rows: url(/third_party/icons/table-rows.svg);
+  --bb-icon-table-rows-inverted: url(/third_party/icons/table-rows-inverted.svg);
+
   --bb-icon-text: url(/third_party/icons/text.svg);
   --bb-icon-text-inverted: url(/third_party/icons/text-inverted.svg);
 
@@ -1112,6 +1115,9 @@ body.hide-cursor {
 
   --bb-icon-sweep: url(/third_party/icons/sweep-inverted.svg);
   --bb-icon-sweep-inverted: url(/third_party/icons/sweep.svg);
+
+  --bb-icon-table-rows: url(/third_party/icons/table-rows-inverted.svg);
+  --bb-icon-table-rows-inverted: url(/third_party/icons/table-rows.svg);
 
   --bb-icon-text: url(/third_party/icons/text-inverted.svg);
   --bb-icon-text-inverted: url(/third_party/icons/text.svg);

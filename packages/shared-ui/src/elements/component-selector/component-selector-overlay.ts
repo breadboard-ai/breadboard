@@ -210,6 +210,15 @@ export class ComponentSelectorOverlay extends LitElement {
                 no-repeat;
             }
 
+            &.input {
+              background: var(--bb-icon-input) top left / 20px 20px no-repeat;
+            }
+
+            &.combine-outputs {
+              background: var(--bb-icon-table-rows) top left / 20px 20px
+                no-repeat;
+            }
+
             &.generative {
               background: var(--bb-add-icon-generative) top left / 20px 20px
                 no-repeat;

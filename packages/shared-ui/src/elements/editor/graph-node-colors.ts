@@ -41,6 +41,7 @@ export const GraphNodeColors: Readonly<
   ["generative-image", purple],
   ["generative-text", purple],
   ["generative-audio", purple],
+  ["combine-outputs", green],
   ["input", green],
   ["output", green],
 ]);

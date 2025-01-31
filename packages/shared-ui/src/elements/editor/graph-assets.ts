@@ -20,6 +20,10 @@ const themeAssets: [string, string][] = [
     "drag-click-inverted",
     `/third_party/icons/graph/drag-click-inverted-48px.svg`,
   ],
+  [
+    "combine-outputs",
+    `/third_party/icons/graph/table-rows${themeSuffix}-48px.svg`,
+  ],
   ["edit", `/third_party/icons/graph/edit${themeSuffix}-48px.svg`],
   ["fetch", `/third_party/icons/graph/fetch${themeSuffix}-48px.svg`],
   [
@@ -61,8 +65,8 @@ const themeAssets: [string, string][] = [
     "generative-text",
     `/third_party/icons/graph/generative/generative-text${themeSuffix}-48px.svg`,
   ],
-  ["urlTemplate", `/third_party/icons/graph/http${themeSuffix}-48px.svg`],
   ["text", `/third_party/icons/graph/text${themeSuffix}-48px.svg`],
+  ["urlTemplate", `/third_party/icons/graph/http${themeSuffix}-48px.svg`],
   ["value", `/third_party/icons/graph/value${themeSuffix}-48px.svg`],
 ];
 
