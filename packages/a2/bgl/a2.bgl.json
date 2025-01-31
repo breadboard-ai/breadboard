@@ -244,6 +244,18 @@
         "description": "Add a description for your module here.",
         "runnable": true
       }
+    },
+    "combine-outputs": {
+      "code": "/**\n * @fileoverview Combines multiple outputs into one.\n */\nimport { Template } from \"./template\";\nimport { ok } from \"./utils\";\nexport { invoke as default, describe };\nasync function invoke({ text, ...params }) {\n    const template = new Template(text);\n    const substituting = await template.substitute(params, async () => \"\");\n    if (!ok(substituting)) {\n        return substituting;\n    }\n    return { context: substituting };\n}\nasync function describe({ inputs: { text } }) {\n    const template = new Template(text);\n    return {\n        inputSchema: {\n            type: \"object\",\n            properties: {\n                text: {\n                    type: \"object\",\n                    behavior: [\"llm-content\", \"hint-preview\", \"config\"],\n                    title: \"Text\",\n                    description: \"Type the @ character to select the outputs to combine\",\n                },\n                ...template.schemas(),\n            },\n            ...template.requireds(),\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: {\n                        type: \"object\",\n                        behavior: [\"llm-content\", \"hint-multimodal\"],\n                    },\n                    title: \"Context out\",\n                    behavior: [\"main-port\"],\n                },\n            },\n        },\n        title: \"Combine Outputs\",\n        metadata: {\n            icon: \"public\",\n            tags: [\"quick-access\", \"core\"],\n            order: 100,\n        },\n    };\n}\n",
+      "metadata": {
+        "title": "Combine Outputs",
+        "source": {
+          "code": "/**\n * @fileoverview Combines multiple outputs into one.\n */\n\nimport { Template } from \"./template\";\nimport { ok } from \"./utils\";\n\nexport { invoke as default, describe };\n\ntype InvokeInputs = {\n  text?: LLMContent;\n};\n\ntype DescribeInputs = {\n  inputs: {\n    text?: LLMContent;\n  };\n};\n\nasync function invoke({ text, ...params }: InvokeInputs) {\n  const template = new Template(text);\n  const substituting = await template.substitute(params, async () => \"\");\n  if (!ok(substituting)) {\n    return substituting;\n  }\n  return { context: substituting };\n}\n\nasync function describe({ inputs: { text } }: DescribeInputs) {\n  const template = new Template(text);\n  return {\n    inputSchema: {\n      type: \"object\",\n      properties: {\n        text: {\n          type: \"object\",\n          behavior: [\"llm-content\", \"hint-preview\", \"config\"],\n          title: \"Text\",\n          description: \"Type the @ character to select the outputs to combine\",\n        },\n        ...template.schemas(),\n      },\n      ...template.requireds(),\n    } satisfies Schema,\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: {\n            type: \"object\",\n            behavior: [\"llm-content\", \"hint-multimodal\"],\n          },\n          title: \"Context out\",\n          behavior: [\"main-port\"],\n        },\n      },\n    } satisfies Schema,\n    title: \"Combine Outputs\",\n    metadata: {\n      icon: \"public\",\n      tags: [\"quick-access\", \"core\"],\n      order: 100,\n    },\n  };\n}\n",
+          "language": "typescript"
+        },
+        "description": "Combines multiple outputs into one.",
+        "runnable": false
+      }
     }
   },
   "exports": [
@@ -251,7 +263,8 @@
     "#module:researcher",
     "#module:image-generator",
     "#module:audio-generator",
-    "#21ee02e7-83fa-49d0-964c-0cab10eafc2c"
+    "#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
+    "#module:combine-outputs"
   ],
   "graphs": {
     "daf082ca-c1aa-4aff-b2c8-abeb984ab66c": {
