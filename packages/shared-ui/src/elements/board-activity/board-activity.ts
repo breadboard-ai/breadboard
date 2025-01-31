@@ -507,7 +507,7 @@ export class BoardActivity extends LitElement {
 
           value = nodeValue.parts.length
             ? html`<bb-llm-output
-                .showExportControls=${true}
+                .showExportControls=${type !== "input"}
                 .lite=${true}
                 .clamped=${false}
                 .value=${nodeValue}
