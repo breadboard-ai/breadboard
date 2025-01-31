@@ -625,6 +625,7 @@ export class GraphNode extends PIXI.Container {
 
     this.#icon = icon;
     if (icon) {
+      console.log(icon);
       if (!this.#iconSprite) {
         const texture = GraphAssets.instance().get(icon);
         this.#iconSprite = texture ? new PIXI.Sprite(texture) : null;
