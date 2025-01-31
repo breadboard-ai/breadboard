@@ -8,8 +8,8 @@
       "type": "file://bgl/a2.bgl.json#module:combine-outputs",
       "metadata": {
         "visual": {
-          "x": 60,
-          "y": -1160,
+          "x": 40,
+          "y": -1220,
           "collapsed": "expanded",
           "outputHeight": 44
         },
@@ -32,8 +32,8 @@
       "type": "file://bgl/a2.bgl.json#module:combine-outputs",
       "metadata": {
         "visual": {
-          "x": 60,
-          "y": -1380,
+          "x": 40,
+          "y": -1400,
           "collapsed": "expanded",
           "outputHeight": 64
         },
@@ -52,14 +52,14 @@
       }
     },
     {
-      "id": "a2-22e66024",
+      "id": "a2-4e7aa0b4",
       "type": "file://bgl/a2.bgl.json#module:combine-outputs",
       "metadata": {
         "visual": {
-          "x": 460,
-          "y": -1260,
+          "x": 380,
+          "y": -1320,
           "collapsed": "expanded",
-          "outputHeight": 44
+          "outputHeight": 88
         },
         "title": "Combine Outputs",
         "logLevel": "info"
@@ -79,13 +79,13 @@
   "edges": [
     {
       "from": "a2-4fee0499",
-      "to": "a2-22e66024",
+      "to": "a2-4e7aa0b4",
       "out": "context",
       "in": "p-z-Time of Day"
     },
     {
       "from": "8469df91-7949-4f85-b5d8-74e4b643c7e5",
-      "to": "a2-22e66024",
+      "to": "a2-4e7aa0b4",
       "out": "context",
       "in": "p-z-Name"
     }

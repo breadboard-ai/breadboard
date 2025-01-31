@@ -8,8 +8,8 @@
       "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
         "visual": {
-          "x": -6.821210263296962e-13,
-          "y": -220.00000000000094,
+          "x": -5.684341886080801e-13,
+          "y": -220.00000000000165,
           "collapsed": "expanded",
           "outputHeight": 124
         },
@@ -33,8 +33,8 @@
       "type": "file://bgl/a2.bgl.json#module:researcher",
       "metadata": {
         "visual": {
-          "x": -320.00000000000017,
-          "y": -220.00000000000045,
+          "x": -319.99999999999966,
+          "y": -220.00000000000114,
           "collapsed": "expanded",
           "outputHeight": 124
         },
@@ -89,7 +89,7 @@
       "type": "file://bgl/a2.bgl.json#module:image-generator",
       "metadata": {
         "visual": {
-          "x": 319.9999999999998,
+          "x": 320,
           "y": -400.0000000000008,
           "collapsed": "expanded",
           "outputHeight": 184
@@ -109,30 +109,6 @@
       }
     },
     {
-      "id": "a2-5ff966c0",
-      "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
-      "metadata": {
-        "visual": {
-          "x": -640.0000000000002,
-          "y": -220.00000000000045,
-          "collapsed": "expanded",
-          "outputHeight": 64
-        },
-        "title": "Text",
-        "logLevel": "info"
-      },
-      "configuration": {
-        "text": {
-          "role": "user",
-          "parts": [
-            {
-              "text": "The pros and cons of using AIs to generate blog posts"
-            }
-          ]
-        }
-      }
-    },
-    {
       "id": "a2-d6502d4f",
       "type": "file://bgl/a2.bgl.json#module:combine-outputs",
       "metadata": {
@@ -140,7 +116,7 @@
           "x": 640,
           "y": -200,
           "collapsed": "expanded",
-          "outputHeight": 88
+          "outputHeight": 288
         },
         "title": "Combine Outputs",
         "logLevel": "info"
@@ -150,7 +126,31 @@
           "role": "user",
           "parts": [
             {
-              "text": "{{\"type\":\"in\",\"path\":\"a2-f41834f9\",\"title\":\"Banner Image Generator\"}}\n--- \n{{\"type\":\"in\",\"path\":\"a2-25320551\",\"title\":\"Post Writer\"}}"
+              "text": "{{\"type\":\"in\",\"path\":\"a2-f41834f9\",\"title\":\"Banner Image Generator\"}}\n{{\"type\":\"in\",\"path\":\"a2-25320551\",\"title\":\"Post Writer\"}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a2-51bb8125",
+      "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
+      "metadata": {
+        "visual": {
+          "x": -639.9999999999998,
+          "y": -219.99999999999966,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        },
+        "title": "Ask User",
+        "logLevel": "info"
+      },
+      "configuration": {
+        "description": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Please give me a topic. I will research it and generate a blog about it."
             }
           ]
         }
@@ -177,12 +177,6 @@
       "in": "context"
     },
     {
-      "from": "a2-5ff966c0",
-      "to": "a2-cb7ec1eb",
-      "out": "context",
-      "in": "context"
-    },
-    {
       "from": "a2-f41834f9",
       "to": "a2-d6502d4f",
       "out": "context",
@@ -193,6 +187,12 @@
       "to": "a2-d6502d4f",
       "out": "context",
       "in": "p-z-Post Writer"
+    },
+    {
+      "from": "a2-51bb8125",
+      "to": "a2-cb7ec1eb",
+      "out": "context",
+      "in": "context"
     }
   ],
   "metadata": {
