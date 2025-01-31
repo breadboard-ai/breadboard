@@ -115,6 +115,9 @@ body.hide-cursor {
   --bb-icon-arrow-drop-down: url(/third_party/icons/arrow-drop-down.svg);
   --bb-icon-arrow-drop-down-inverted: url(/third_party/icons/arrow-drop-down-inverted.svg);
 
+  --bb-icon-attach: url(/third_party/icons/attach.svg);
+  --bb-icon-attach-inverted: url(/third_party/icons/attach-inverted.svg);
+
   --bb-icon-before: url(/third_party/icons/before.svg);
   --bb-icon-before-inverted: url(/third_party/icons/before-inverted.svg);
 
@@ -810,6 +813,9 @@ body.hide-cursor {
 
   --bb-icon-arrow-drop-down: url(/third_party/icons/arrow-drop-down-inverted.svg);
   --bb-icon-arrow-drop-down-inverted: url(/third_party/icons/arrow-drop-down.svg);
+
+  --bb-icon-attach: url(/third_party/icons/attach-inverted.svg);
+  --bb-icon-attach-inverted: url(/third_party/icons/attach.svg);
 
   --bb-icon-before: url(/third_party/icons/before-inverted.svg);
   --bb-icon-before-inverted: url(/third_party/icons/before.svg);
