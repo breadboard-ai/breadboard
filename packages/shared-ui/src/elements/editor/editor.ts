@@ -1484,6 +1484,13 @@ export class Editor extends LitElement implements DragConnectorReceiver {
         continue;
       }
 
+      // This should not be necessary, but currently is, because the
+      // GraphStore gets polluted with graphs that are silently converted
+      // from imperative to declarative (hence "module:" URL).
+      // TODO(dglazkov): Refactor graphstore machinery to make this not
+      //                 necessary.
+      if (mainGraph.url?.startsWith("module:")) continue;
+
       kitList.push({ id: graph.url!, metadata: graph });
     }
 
