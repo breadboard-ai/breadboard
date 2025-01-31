@@ -1,0 +1,36 @@
+{
+  "title": "Ask User Workbench",
+  "description": "A blank board. Use it as a starting point for your creations.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "a2-9c32f6a1",
+      "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
+      "metadata": {
+        "visual": {
+          "x": -320,
+          "y": -300,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        },
+        "title": "Ask User",
+        "logLevel": "info"
+      },
+      "configuration": {
+        "description": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Tell me about your day."
+            }
+          ]
+        },
+        "p-modality": "Audio"
+      }
+    }
+  ],
+  "edges": [],
+  "metadata": {
+    "visual": {}
+  }
+}

@@ -53,6 +53,7 @@ export class GraphPortLabel extends PIXI.Container {
   #label: PIXI.Text;
   #valuePreview: PIXI.HTMLText;
   #icon: PIXI.Sprite | null = null;
+  #iconValue: string | null = null;
   #hoverZone = new PIXI.Graphics();
 
   #showNodePreviewValues = false;
@@ -85,14 +86,7 @@ export class GraphPortLabel extends PIXI.Container {
       (port.schema.type === "boolean" ? "check" : null) ??
       null;
 
-    if (icon) {
-      const texture = GraphAssets.instance().get(icon);
-      if (texture) {
-        this.#icon = new PIXI.Sprite(texture);
-        this.#icon.scale.x = ICON_SCALE;
-        this.#icon.scale.y = ICON_SCALE;
-      }
-    }
+    this.#updateIcon(icon);
 
     this.#valuePreview = new PIXI.HTMLText({
       text: `<p>${this.#createTruncatedValue(port)}</p>`,
@@ -209,7 +203,16 @@ export class GraphPortLabel extends PIXI.Container {
     this.#port = port;
     this.#isDirty = true;
 
-    const portTitle = port?.title || "";
+    let portTitle = port?.title || "";
+    // Gross hack to display enum values.
+    // TODO(dglazkov): Make this not gross.
+    if (
+      port?.value &&
+      typeof port.value === "string" &&
+      port.value.length < 30
+    ) {
+      portTitle = `${portTitle}: ${port.value}`;
+    }
     if (portTitle !== this.#label.text) {
       this.#label.text = portTitle;
     }
@@ -217,6 +220,11 @@ export class GraphPortLabel extends PIXI.Container {
     const valuePreview = this.#createTruncatedValue(port);
     if (valuePreview !== this.#valuePreview.text) {
       this.#valuePreview.text = valuePreview;
+    }
+
+    const portIcon = port?.schema.icon || null;
+    if (portIcon !== this.#iconValue) {
+      this.#updateIcon(port?.schema.icon || null);
     }
 
     if (!port) {
@@ -462,5 +470,21 @@ export class GraphPortLabel extends PIXI.Container {
     }
 
     return valStr;
+  }
+
+  #updateIcon(icon: string | null) {
+    if (!icon) return;
+
+    this.#iconValue = icon;
+    const texture = GraphAssets.instance().get(icon);
+    if (!texture) return;
+
+    if (this.#icon) {
+      this.#icon.texture = texture;
+    } else {
+      this.#icon = new PIXI.Sprite(texture);
+      this.#icon.scale.x = ICON_SCALE;
+      this.#icon.scale.y = ICON_SCALE;
+    }
   }
 }
