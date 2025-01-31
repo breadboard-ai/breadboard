@@ -84,6 +84,7 @@ export class GraphPortLabel extends PIXI.Container {
       port.schema.icon ??
       (port.schema.type === "boolean" ? "check" : null) ??
       null;
+
     if (icon) {
       const texture = GraphAssets.instance().get(icon);
       if (texture) {
