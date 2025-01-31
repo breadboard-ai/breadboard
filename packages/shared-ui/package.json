@@ -27,6 +27,10 @@
     "./strings": {
       "types": "./dist/strings/helper.d.ts",
       "default": "./dist/strings/helper.js"
+    },
+    "./*.js": {
+      "types": "./dist/*.d.ts",
+      "default": "./dist/*.js"
     }
   },
   "types": "dist/index.d.ts",
