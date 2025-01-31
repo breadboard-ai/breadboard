@@ -19,6 +19,7 @@ async function processAssetPack(src: string) {
   const srcPath = path.join(__dirname, src);
   const files = await fs.readdir(srcPath, { withFileTypes: true });
 
+  const assets: [string, string][] = [];
   const styles: string[] = [];
   let mainIcon = "";
   for (const file of files) {
@@ -28,7 +29,9 @@ async function processAssetPack(src: string) {
     }
 
     const filePath = path.join(file.parentPath, file.name);
-    const fileNameAsStyleProp = file.name.replaceAll(/\./gim, "-");
+    const fileNameAsStyleProp = path
+      .basename(file.name, path.extname(file.name))
+      .replaceAll(/\./gim, "-");
 
     let mimeType;
     const data = await fs.readFile(filePath, { encoding: "binary" });
@@ -52,9 +55,9 @@ async function processAssetPack(src: string) {
         continue;
     }
 
-    styles.push(
-      `--${fileNameAsStyleProp}: url("data:${mimeType};base64,${btoa(data)}")`
-    );
+    const base64Str = `data:${mimeType};base64,${btoa(data)}`;
+    assets.push([fileNameAsStyleProp, base64Str]);
+    styles.push(`--bb-${fileNameAsStyleProp}: url("${base64Str}")`);
 
     // Special-case the logo.
     if (file.name === "logo.svg") {
@@ -72,6 +75,7 @@ async function processAssetPack(src: string) {
     :root {
       ${styles.join(";\n")};
     }`,
+    assets,
   };
 }
 
@@ -128,6 +132,7 @@ export default defineConfig(async ({ mode }) => {
     define: {
       LANGUAGE_PACK: JSON.stringify(languagePack),
       ASSET_PACK: JSON.stringify(assetPack.styles),
+      ASSET_PACK_ICONS: JSON.stringify(assetPack.assets),
       MAIN_ICON: JSON.stringify(assetPack.mainIcon),
     },
     server: {
