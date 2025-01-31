@@ -252,7 +252,7 @@ export class GraphNodeOutput extends PIXI.Container {
     } else {
       const placeholder = this.getChildByLabel("placeholder");
       placeholder?.removeFromParent();
-      placeholder?.destroy();
+      placeholder?.destroy({ children: true });
     }
 
     const newestItem = this.values.at(-1);
