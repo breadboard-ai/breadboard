@@ -1513,7 +1513,7 @@ export class Edit extends EventTarget {
       const mainPort = ports.find((port) =>
         port.schema.behavior?.includes("main-port")
       );
-      if (mainPort) return mainPort;
+      if (mainPort) return mainPort.name;
       return ports.find((port) => !port.star)?.name;
     }
   }
