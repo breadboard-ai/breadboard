@@ -136,6 +136,7 @@ export class GraphNode extends PIXI.Container {
     },
   });
 
+  #collapsedPortListMask = new PIXI.Graphics();
   #collapsedPortList = new GraphNodePortList();
   #referenceContainer = new GraphNodeReferenceContainer();
   #references: GraphNodeReferences | null = null;
@@ -218,6 +219,7 @@ export class GraphNode extends PIXI.Container {
     this.addChild(this.#headerInPort);
     this.addChild(this.#headerOutPort);
     this.addChild(this.#collapsedPortList);
+    this.addChild(this.#collapsedPortListMask);
     this.addChild(this.#referenceContainer);
 
     this.#missingDetails.addChild(this.#missingDetailsLabel);
@@ -1430,6 +1432,15 @@ export class GraphNode extends PIXI.Container {
     this.#collapsedPortList.visible = this.collapsed;
     this.#collapsedPortList.y =
       this.#height - this.#collapsedPortList.dimensions.height;
+
+    this.#collapsedPortListMask.clear();
+    this.#collapsedPortListMask.beginPath();
+    this.#collapsedPortListMask.rect(0, this.#height - 32, this.#width - 4, 32);
+
+    this.#collapsedPortListMask.closePath();
+    this.#collapsedPortListMask.fill({ color: 0xff00ff });
+
+    this.#collapsedPortList.setMask({ mask: this.#collapsedPortListMask });
   }
 
   #initializeHeaderPorts(): boolean {
