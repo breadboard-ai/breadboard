@@ -47,14 +47,18 @@ export const styles = css`
       width: 50vw;
       height: var(--bb-grid-size-11);
       max-height: 70vh;
-      max-width: 450px;
+      max-width: 258px;
       z-index: 3;
       display: grid;
-      grid-template-rows: 44px;
+      grid-template-rows: 42px;
       border-radius: var(--bb-grid-size-2);
-      box-shadow: var(--bb-elevation-6);
+      border: 1px solid var(--bb-neutral-300);
       overflow: hidden;
       background: var(--bb-neutral-0);
+
+      &.wide {
+        max-width: 400px;
+      }
 
       & #create-view-popout-content {
         overflow: hidden;
@@ -72,6 +76,14 @@ export const styles = css`
           justify-content: flex-start;
           height: 100%;
           padding: 0 var(--bb-grid-size-3);
+
+          & .label {
+            font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
+              var(--bb-font-family);
+            flex: 1;
+            text-align: right;
+            padding-right: var(--bb-grid-size-8);
+          }
 
           & button {
             height: 100%;
@@ -232,6 +244,7 @@ export const styles = css`
       }
 
       &.expanded {
+        max-width: 450px;
         grid-template-rows: 44px 1fr min-content;
         height: 100%;
 

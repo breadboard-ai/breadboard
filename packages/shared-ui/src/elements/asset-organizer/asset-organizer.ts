@@ -42,9 +42,8 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
     }
 
     #container {
-      box-shadow: var(--bb-elevation-6);
-      background: var(--bb-neutral-0);
       border: 1px solid var(--bb-neutral-300);
+      background: var(--bb-neutral-0);
       border-radius: var(--bb-grid-size-2);
       display: flex;
       flex-direction: column;
@@ -58,7 +57,6 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
         align-items: center;
         height: var(--bb-grid-size-11);
         padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-4);
-        border-bottom: 1px solid var(--bb-neutral-300);
         user-select: none;
 
         & h1 {
@@ -198,6 +196,8 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
         height: 464px;
 
         & header {
+          border-bottom: 1px solid var(--bb-neutral-300);
+
           & #toggle-expanded {
             background: var(--bb-icon-collapse-content) center center / 20px
               20px no-repeat;
