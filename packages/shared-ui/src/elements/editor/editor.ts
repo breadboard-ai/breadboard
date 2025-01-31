@@ -1575,7 +1575,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       });
 
       visual.x = location.x - GRAPH_NODE_WIDTH / 2;
-      visual.y = location.y - QUICK_ADD_ADJUSTMENT;
+      visual.y = location.y - QUICK_ADD_ADJUSTMENT * 3;
     }
 
     const title = this.#getGraphTitleByType(nodeType);

@@ -88,7 +88,7 @@ export class GraphNode extends PIXI.Container {
 
   #titleTextColor = nodeTextColor;
   #titleTextSize = 14;
-  #outputHeight = 44;
+  #outputHeight = MIN_OUTPUT_HEIGHT * 3;
 
   #portTextColor = nodeTextColor;
   #borderColor = borderColor;

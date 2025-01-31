@@ -80,8 +80,12 @@ export class GraphPortLabel extends PIXI.Container {
       },
     });
 
-    if (port.schema.type === "boolean") {
-      const texture = GraphAssets.instance().get("check");
+    const icon =
+      port.schema.icon ??
+      (port.schema.type === "boolean" ? "check" : null) ??
+      null;
+    if (icon) {
+      const texture = GraphAssets.instance().get(icon);
       if (texture) {
         this.#icon = new PIXI.Sprite(texture);
         this.#icon.scale.x = ICON_SCALE;

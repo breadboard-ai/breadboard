@@ -2074,7 +2074,7 @@ export class Graph extends PIXI.Container {
           justAdded = existingLayout.justAdded ?? false;
         }
 
-        let outputHeight = 0;
+        let outputHeight = 88;
         if (metadataOutputHeight) {
           outputHeight = metadataOutputHeight;
         }
