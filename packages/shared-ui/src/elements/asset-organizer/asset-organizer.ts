@@ -80,6 +80,30 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
           }
         }
 
+        & #toggle-viewer {
+          cursor: pointer;
+          display: none;
+          border-radius: var(--bb-grid-size-16);
+          align-items: center;
+          font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
+            var(--bb-font-family);
+          height: var(--bb-grid-size-7);
+          padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-8);
+          background: var(--bb-icon-dock-to-right) 8px center / 20px 20px
+            no-repeat;
+          border: 1px solid transparent;
+          margin-right: var(--bb-grid-size);
+          transition:
+            background-color 0.1s cubic-bezier(0, 0, 0.3, 1),
+            border 0.1s cubic-bezier(0, 0, 0.3, 1);
+
+          &:hover,
+          &.active {
+            background-color: var(--bb-ui-100);
+            border: 1px solid var(--bb-ui-300);
+          }
+        }
+
         & #toggle-expanded {
           width: 20px;
           height: 20px;
@@ -96,36 +120,6 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
           &:hover,
           &:focus {
             opacity: 1;
-          }
-        }
-      }
-
-      & #controls {
-        display: none;
-        padding: 0;
-        margin: 0;
-        list-style: none;
-
-        & #toggle-viewer {
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
-            var(--bb-font-family);
-          height: var(--bb-grid-size-7);
-          border-radius: var(--bb-grid-size-16);
-          padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-8);
-          background: var(--bb-icon-dock-to-right) 8px center / 20px 20px
-            no-repeat;
-          border: 1px solid var(--bb-neutral-300);
-          transition:
-            background-color 0.1s cubic-bezier(0, 0, 0.3, 1),
-            border 0.1s cubic-bezier(0, 0, 0.3, 1);
-
-          &:hover,
-          &.active {
-            background-color: var(--bb-ui-100);
-            border: 1px solid var(--bb-ui-300);
           }
         }
       }
@@ -165,6 +159,16 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
             color: var(--bb-neutral-900);
             margin-bottom: var(--bb-grid-size);
 
+            &.content {
+              background: var(--bb-ui-100) var(--bb-icon-text) 4px center / 20px
+                20px no-repeat;
+            }
+
+            &.file {
+              background: var(--bb-ui-100) var(--bb-icon-attach) 4px center /
+                20px 20px no-repeat;
+            }
+
             &:not([disabled]) {
               cursor: pointer;
               background-color: var(--bb-neutral-0);
@@ -197,6 +201,10 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
           & #toggle-expanded {
             background: var(--bb-icon-collapse-content) center center / 20px
               20px no-repeat;
+          }
+
+          & #toggle-viewer {
+            display: flex;
           }
         }
 
@@ -287,32 +295,29 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
           ${Strings.from("LABEL_TITLE")}
         </h1>
         <button
+          id="toggle-viewer"
+          class=${classMap({ active: this.showViewer })}
+          @click=${() => this.#toggleViewer()}
+        >
+          ${Strings.from("COMMAND_TOGGLE_VIEWER")}
+        </button>
+        <button
           id="toggle-expanded"
           @click=${() => this.#toggleExpandedState()}
         >
           ${Strings.from("COMMAND_TOGGLE_EXPAND")}
         </button>
       </header>
-      <menu id="controls">
-        <li>
-          <button
-            id="toggle-viewer"
-            class=${classMap({ active: this.showViewer })}
-            @click=${() => this.#toggleViewer()}
-          >
-            ${Strings.from("COMMAND_TOGGLE_VIEWER")}
-          </button>
-        </li>
-      </menu>
       <section id="assets">
         ${assets && assets.size > 0
           ? html`<menu>
               ${repeat(assets, ([path, asset]) => {
-                // TODO: Get asset type from the metadata.
-                const type = "generic";
                 return html`<li>
                   <button
-                    class=${classMap({ asset: true, [type]: true })}
+                    class=${classMap({
+                      asset: true,
+                      [asset.metadata?.type ?? "generic"]: true,
+                    })}
                     ?disabled=${asset === this.asset}
                     @click=${() => {
                       this.#showAsset(asset);
