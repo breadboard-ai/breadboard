@@ -136,6 +136,15 @@
   --bb-icon-expand-all-48px: url(/third_party/icons/expand-all-48px.svg);
   --bb-icon-arrow-down-48px: url(/third_party/icons/arrow-down-48px.svg);
 
+  --bb-add-icon-generative: url(/images/additional-icons/a2/generative.svg);
+  --bb-add-icon-generative-inverted: url(/images/additional-icons/a2/generative-inverted.svg);
+  --bb-add-icon-generative-audio: url(/images/additional-icons/a2/generative-audio.svg);
+  --bb-add-icon-generative-audio-inverted: url(/images/additional-icons/a2/generative-audio-inverted.svg);
+  --bb-add-icon-generative-image: url(/images/additional-icons/a2/generative-image.svg);
+  --bb-add-icon-generative-image-inverted: url(/images/additional-icons/a2/generative-image-inverted.svg);
+  --bb-add-icon-generative-text: url(/images/additional-icons/a2/generative-text.svg);
+  --bb-add-icon-generative-text-inverted: url(/images/additional-icons/a2/generative-text-inverted.svg);
+
   --bb-warning-50: #ffeeee;
   --bb-warning-100: #ffcccc;
   --bb-warning-200: #ff9999;

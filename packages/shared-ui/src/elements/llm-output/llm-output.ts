@@ -51,8 +51,8 @@ export class LLMOutput extends LitElement {
       border: var(--output-border-width, 2px) solid
         var(--output-border-color, var(--bb-neutral-300));
       border-radius: var(--output-border-radius, var(--bb-grid-size));
-      padding: var(--output-padding, var(--bb-grid-size-3)) 0;
       margin-bottom: var(--bb-grid-size-2);
+      word-break: break-all;
     }
 
     :host([clamped="true"]) {
@@ -71,6 +71,9 @@ export class LLMOutput extends LitElement {
       display: block;
       position: relative;
       margin-bottom: var(--bb-grid-size-2);
+      padding: var(--output-padding, var(--bb-grid-size-3)) 0;
+      overflow-y: auto;
+      max-height: var(--bb-llm-output-content-max-height, unset);
     }
 
     .content:last-of-type {
@@ -245,6 +248,7 @@ export class LLMOutput extends LitElement {
       position: absolute;
       top: -16px;
       right: var(--export-x, 16px);
+      z-index: 1;
     }
   `;
 
