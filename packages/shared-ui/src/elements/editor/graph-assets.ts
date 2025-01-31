@@ -6,6 +6,10 @@
 
 import * as PIXI from "pixi.js";
 
+declare global {
+  const ASSET_PACK_ICONS: [string, string][];
+}
+
 const root = document.querySelector(":root");
 const darkTheme = root?.classList.contains("dark-theme") ?? false;
 const themeSuffix = darkTheme ? "-inverted" : "";
@@ -52,28 +56,17 @@ const themeAssets: [string, string][] = [
   ["secrets", `/third_party/icons/graph/secrets${themeSuffix}-48px.svg`],
   ["smart-toy", `/third_party/icons/graph/smart-toy${themeSuffix}-48px.svg`],
   ["summarize", `/third_party/icons/graph/summarize${themeSuffix}-48px.svg`],
-  [
-    "generative",
-    `/third_party/icons/graph/generative/generative${themeSuffix}-48px.svg`,
-  ],
-  [
-    "generative-audio",
-    `/third_party/icons/graph/generative/generative-audio${themeSuffix}-48px.svg`,
-  ],
-  [
-    "generative-image",
-    `/third_party/icons/graph/generative/generative-image${themeSuffix}-48px.svg`,
-  ],
-  [
-    "generative-text",
-    `/third_party/icons/graph/generative/generative-text${themeSuffix}-48px.svg`,
-  ],
   ["text", `/third_party/icons/graph/text${themeSuffix}-48px.svg`],
   ["urlTemplate", `/third_party/icons/graph/http${themeSuffix}-48px.svg`],
   ["value", `/third_party/icons/graph/value${themeSuffix}-48px.svg`],
 ];
 
-const ASSET_LIST: Map<string, string> = new Map(themeAssets);
+const additionalAssets: [string, string][] = ASSET_PACK_ICONS;
+
+const ASSET_LIST: Map<string, string> = new Map([
+  ...themeAssets,
+  ...additionalAssets,
+]);
 
 type AssetMap = Map<string, PIXI.Texture>;
 

@@ -207,7 +207,7 @@ export const styles = css`
         width: 24px;
         height: 24px;
         margin: 0 var(--bb-grid-size-4);
-        background: var(--logo-svg) center center / 24px 24px no-repeat;
+        background: var(--bb-logo) center center / 24px 24px no-repeat;
         padding: 0;
         display: flex;
         align-items: center;
