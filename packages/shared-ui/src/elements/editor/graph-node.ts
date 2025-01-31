@@ -45,6 +45,7 @@ import {
 import { GraphNodeOutput } from "./graph-node-output.js";
 import { isMainPortBehavior } from "../../utils/behaviors.js";
 import { defaultColorScheme, GraphNodeColors } from "./graph-node-colors.js";
+import { GraphButton } from "./graph-button.js";
 
 const borderColor = getGlobalColor("--bb-neutral-500");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
@@ -54,6 +55,9 @@ const grabHandleColor = getGlobalColor("--bb-neutral-300");
 const nodeBackgroundColor = getGlobalColor("--bb-neutral-0");
 const highlightForAdHocNodeColor = getGlobalColor("--bb-boards-500");
 const highlightForBoardPortNodeColor = getGlobalColor("--bb-joiner-500");
+
+const missingDetailsTextSize = 12;
+const missingDetailsTextColor = getGlobalColor("--bb-warning-700");
 
 const edgeTextColor = getGlobalColor("--bb-neutral-600");
 const edgeColor = getGlobalColor("--bb-neutral-200");
@@ -66,6 +70,7 @@ const MAX_NODE_TITLE_LENGTH = 30;
 const GRAPH_NODE_WIDTH = 260;
 const MIN_OUTPUT_HEIGHT = 44;
 const ARROW_HEAD_PADDING = 3;
+const MISSING_DETAILS_HEIGHT = 76;
 
 const INITIAL_HEADER_PORT_LABEL = "_header-port";
 
@@ -101,6 +106,8 @@ export class GraphNode extends PIXI.Container {
   #portRadius = 4;
   #background = new PIXI.Graphics();
   #grabHandle = new PIXI.Graphics();
+
+  // Quick Add.
   #quickAdd = new PIXI.Container();
   #quickAddIcon: PIXI.Sprite | null = null;
   #quickAddBackground = new PIXI.Graphics();
@@ -114,6 +121,21 @@ export class GraphNode extends PIXI.Container {
       lineHeight: 24,
     },
   });
+
+  // Missing Details.
+  #missingDetails = new PIXI.Container();
+  #missingDetailsButton = new GraphButton();
+  #missingDetailsLabel = new PIXI.Text({
+    text: Strings.from("LABEL_MISSING_ITEM"),
+    style: {
+      fontFamily: "Arial",
+      fontSize: missingDetailsTextSize,
+      fill: missingDetailsTextColor,
+      align: "left",
+      lineHeight: 24,
+    },
+  });
+
   #collapsedPortList = new GraphNodePortList();
   #referenceContainer = new GraphNodeReferenceContainer();
   #references: GraphNodeReferences | null = null;
@@ -197,6 +219,22 @@ export class GraphNode extends PIXI.Container {
     this.addChild(this.#headerOutPort);
     this.addChild(this.#collapsedPortList);
     this.addChild(this.#referenceContainer);
+
+    this.#missingDetails.addChild(this.#missingDetailsLabel);
+    this.#missingDetails.addChild(this.#missingDetailsButton);
+    this.#missingDetailsButton.eventMode = "static";
+    this.#missingDetailsButton.cursor = "pointer";
+    this.#missingDetailsButton.addEventListener(
+      "click",
+      (evt: PIXI.FederatedPointerEvent) => {
+        this.emit(
+          GRAPH_OPERATIONS.GRAPH_NODE_EDIT,
+          this.label,
+          evt.clientX,
+          evt.clientY
+        );
+      }
+    );
 
     this.#quickAdd.eventMode = "static";
     this.#quickAddTitle.eventMode = "none";
@@ -538,6 +576,10 @@ export class GraphNode extends PIXI.Container {
   }
 
   set title(title: string) {
+    if (title === this.#title) {
+      return;
+    }
+
     this.#title = title;
     this.#isDirty = true;
   }
@@ -564,6 +606,10 @@ export class GraphNode extends PIXI.Container {
   }
 
   set borderColor(borderColor: number) {
+    if (borderColor === this.#borderColor) {
+      return;
+    }
+
     this.#borderColor = borderColor;
     this.#isDirty = true;
   }
@@ -573,6 +619,10 @@ export class GraphNode extends PIXI.Container {
   }
 
   set icon(icon: string | null) {
+    if (icon === this.#icon) {
+      return;
+    }
+
     this.#icon = icon;
     if (icon) {
       if (!this.#iconSprite) {
@@ -623,6 +673,10 @@ export class GraphNode extends PIXI.Container {
   }
 
   set selected(selected: boolean) {
+    if (selected === this.#selected) {
+      return;
+    }
+
     this.#selected = selected;
     this.#isDirty = true;
   }
@@ -632,11 +686,19 @@ export class GraphNode extends PIXI.Container {
   }
 
   set canShowQuickAdd(canShowQuickAdd: boolean) {
+    if (canShowQuickAdd === this.#canShowQuickAdd) {
+      return;
+    }
+
     this.#canShowQuickAdd = canShowQuickAdd;
     this.#isDirty = true;
   }
 
   set showBoardReferenceMarkers(showBoardReferenceMarkers: boolean) {
+    if (showBoardReferenceMarkers === this.#showBoardReferenceMarkers) {
+      return;
+    }
+
     this.#showBoardReferenceMarkers = showBoardReferenceMarkers;
     this.#isDirty = true;
   }
@@ -650,6 +712,10 @@ export class GraphNode extends PIXI.Container {
   }
 
   set references(references: GraphNodeReferences | null) {
+    if (references === this.#references) {
+      return;
+    }
+
     this.#references = references;
     this.#isDirty = true;
   }
@@ -657,6 +723,10 @@ export class GraphNode extends PIXI.Container {
   set selectedReferences(
     selectedReferences: Map<PortIdentifier, number[]> | null
   ) {
+    if (selectedReferences === this.#selectedReferences) {
+      return;
+    }
+
     this.#selectedReferences = selectedReferences;
     this.#isDirty = true;
   }
@@ -700,6 +770,10 @@ export class GraphNode extends PIXI.Container {
   }
 
   set expansionState(state: ComponentExpansionState) {
+    if (state === this.#expansionState) {
+      return;
+    }
+
     this.#expansionState = state;
     this.#emitCollapseToggleEventOnNextDraw = true;
     this.#isDirty = true;
@@ -719,11 +793,19 @@ export class GraphNode extends PIXI.Container {
   }
 
   set type(type: string) {
+    if (type === this.#type) {
+      return;
+    }
+
     this.#type = type;
     this.#isDirty = true;
   }
 
   set borderRadius(borderRadius: number) {
+    if (borderRadius === this.#borderRadius) {
+      return;
+    }
+
     this.#borderRadius = borderRadius;
     this.#isDirty = true;
   }
@@ -733,6 +815,10 @@ export class GraphNode extends PIXI.Container {
   }
 
   set color(color: number) {
+    if (color === this.#color) {
+      return;
+    }
+
     this.#color = color;
     this.#isDirty = true;
   }
@@ -742,6 +828,10 @@ export class GraphNode extends PIXI.Container {
   }
 
   set titleTextColor(titleTextColor: number) {
+    if (titleTextColor === this.#titleTextColor) {
+      return;
+    }
+
     this.#titleTextColor = titleTextColor;
     this.#isDirty = true;
   }
@@ -751,6 +841,10 @@ export class GraphNode extends PIXI.Container {
   }
 
   set portTextColor(portTextColor: number) {
+    if (portTextColor === this.#portTextColor) {
+      return;
+    }
+
     this.#portTextColor = portTextColor;
     this.#isDirty = true;
   }
@@ -760,6 +854,10 @@ export class GraphNode extends PIXI.Container {
   }
 
   set textSize(textSize: number) {
+    if (textSize === this.#textSize) {
+      return;
+    }
+
     this.#textSize = textSize;
     this.#isDirty = true;
   }
@@ -769,6 +867,10 @@ export class GraphNode extends PIXI.Container {
   }
 
   set padding(padding: number) {
+    if (padding === this.#padding) {
+      return;
+    }
+
     this.#padding = padding;
     this.#isDirty = true;
   }
@@ -778,6 +880,10 @@ export class GraphNode extends PIXI.Container {
   }
 
   set portLabelVerticalPadding(portLabelVerticalPadding: number) {
+    if (portLabelVerticalPadding === this.#portLabelVerticalPadding) {
+      return;
+    }
+
     this.#portLabelVerticalPadding = portLabelVerticalPadding;
     this.#isDirty = true;
   }
@@ -804,6 +910,10 @@ export class GraphNode extends PIXI.Container {
   }
 
   set modules(modules: InspectableModules | null) {
+    if (modules === this.#modules) {
+      return;
+    }
+
     this.#modules = modules;
     this.#isDirty = true;
   }
@@ -813,6 +923,10 @@ export class GraphNode extends PIXI.Container {
   }
 
   set inPorts(ports: InspectablePort[] | null) {
+    if (ports === this.#inPorts) {
+      return;
+    }
+
     this.#collapsedPortList.readOnly = this.readOnly;
     this.#collapsedPortList.inPorts = ports;
     this.#inPorts = ports;
@@ -931,6 +1045,10 @@ export class GraphNode extends PIXI.Container {
   }
 
   set outPorts(ports: InspectablePort[] | null) {
+    if (ports === this.#outPorts) {
+      return;
+    }
+
     this.#outPorts = ports;
     this.#isDirty = true;
     if (!ports) {
@@ -1030,6 +1148,9 @@ export class GraphNode extends PIXI.Container {
   }
 
   set updating(value: boolean) {
+    if (value === this.#updating) {
+      return;
+    }
     this.#updating = value;
   }
 
@@ -1149,6 +1270,10 @@ export class GraphNode extends PIXI.Container {
       }
     }
 
+    if (this.#isContextOnly() && outPortHeight === 0 && inPortHeight === 0) {
+      height += MISSING_DETAILS_HEIGHT;
+    }
+
     if (this.#hasVisibleOutputs() && !this.collapsed) {
       height += this.#outputHeight;
     }
@@ -1212,6 +1337,21 @@ export class GraphNode extends PIXI.Container {
     return true;
   }
 
+  #removeMissingDetailsWarning() {
+    this.#missingDetails.removeFromParent();
+  }
+
+  #drawMissingDetailsWarning() {
+    this.addChild(this.#missingDetails);
+
+    this.#missingDetails.x = 12;
+    this.#missingDetails.y = 48;
+
+    this.#missingDetailsButton.y = 28;
+    this.#missingDetailsButton.icon = "add";
+    this.#missingDetailsButton.label = Strings.from("COMMAND_ADD_MISSING_ITEM");
+  }
+
   #draw() {
     this.forceUpdateDimensions();
     const portStartY = this.#drawTitle();
@@ -1228,6 +1368,16 @@ export class GraphNode extends PIXI.Container {
       }
 
       portsOutStartY = this.#drawInPorts(portStartY + this.#padding);
+      if (portsOutStartY > portStartY + this.#padding) {
+        this.#removeMissingDetailsWarning();
+        portsOutStartY += this.#padding;
+      } else {
+        // Here we have no preview value.
+        if (this.#isContextOnly()) {
+          this.#drawMissingDetailsWarning();
+        }
+      }
+
       const portsOutEndY = this.#drawOutPorts(portsOutStartY);
       if (portsOutStartY === portsOutEndY) {
         portsOutStartY = null;
@@ -1629,7 +1779,7 @@ export class GraphNode extends PIXI.Container {
           : 0);
     }
 
-    return portY + this.#padding;
+    return portY;
   }
 
   #drawOutPorts(portStartY = 0) {

@@ -10,6 +10,7 @@ const root = document.querySelector(":root");
 const darkTheme = root?.classList.contains("dark-theme") ?? false;
 const themeSuffix = darkTheme ? "-inverted" : "";
 const themeAssets: [string, string][] = [
+  ["add", `/third_party/icons/graph/add${themeSuffix}-48px.svg`],
   [
     "code-blocks",
     `/third_party/icons/graph/code-blocks${themeSuffix}-48px.svg`,
