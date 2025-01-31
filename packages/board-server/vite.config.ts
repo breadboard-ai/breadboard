@@ -41,6 +41,7 @@ export default defineConfig(async ({ mode }): Promise<UserConfig> => {
     define: {
       LANGUAGE_PACK: JSON.stringify(languagePack),
       ASSET_PACK: "{}",
+      ASSET_PACK_ICONS: "[]",
     },
     resolve: {
       dedupe: ["lit"],
