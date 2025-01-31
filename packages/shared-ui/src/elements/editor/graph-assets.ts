@@ -32,6 +32,7 @@ const themeAssets: [string, string][] = [
   ],
   ["human", `/third_party/icons/graph/human${themeSuffix}-48px.svg`],
   ["input", `/third_party/icons/graph/input${themeSuffix}-48px.svg`],
+  ["image", `/third_party/icons/graph/image${themeSuffix}-48px.svg`],
   ["jsonata", `/third_party/icons/graph/jsonata${themeSuffix}-48px.svg`],
   ["laps", `/third_party/icons/graph/laps${themeSuffix}-48px.svg`],
   [
