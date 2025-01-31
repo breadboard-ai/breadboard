@@ -8,6 +8,9 @@ import { LanguagePackEntry } from "../../types/types";
 
 export default {
   // Commands.
+  COMMAND_ADD_MISSING_ITEM: {
+    str: "Add",
+  },
 
   // Statuses.
 
@@ -23,6 +26,9 @@ export default {
   },
   LABEL_ADD_ITEM: {
     str: "Add Item",
+  },
+  LABEL_MISSING_ITEM: {
+    str: "Missing details for this component",
   },
 
   // Queries.

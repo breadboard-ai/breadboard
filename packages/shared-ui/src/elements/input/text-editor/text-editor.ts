@@ -459,8 +459,10 @@ export class TextEditor extends LitElement {
     }
   }
 
+  #focusOnFirstRender = false;
   focus() {
     if (!this.#editorRef.value) {
+      this.#focusOnFirstRender = true;
       return;
     }
 
@@ -509,6 +511,10 @@ export class TextEditor extends LitElement {
     }
 
     this.#editorRef.value.innerHTML = this.#renderableValue;
+
+    if (this.#focusOnFirstRender) {
+      this.focus();
+    }
   }
 
   render() {
