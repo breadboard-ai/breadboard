@@ -203,7 +203,16 @@ export class GraphPortLabel extends PIXI.Container {
     this.#port = port;
     this.#isDirty = true;
 
-    const portTitle = port?.title || "";
+    let portTitle = port?.title || "";
+    // Gross hack to display enum values.
+    // TODO(dglazkov): Make this not gross.
+    if (
+      port?.value &&
+      typeof port.value === "string" &&
+      port.value.length < 30
+    ) {
+      portTitle = `${portTitle}: ${port.value}`;
+    }
     if (portTitle !== this.#label.text) {
       this.#label.text = portTitle;
     }
@@ -464,18 +473,18 @@ export class GraphPortLabel extends PIXI.Container {
   }
 
   #updateIcon(icon: string | null) {
-    if (icon) {
-      this.#iconValue = icon;
-      const texture = GraphAssets.instance().get(icon);
-      if (!texture) return;
+    if (!icon) return;
 
-      if (this.#icon) {
-        this.#icon.texture = texture;
-      } else {
-        this.#icon = new PIXI.Sprite(texture);
-        this.#icon.scale.x = ICON_SCALE;
-        this.#icon.scale.y = ICON_SCALE;
-      }
+    this.#iconValue = icon;
+    const texture = GraphAssets.instance().get(icon);
+    if (!texture) return;
+
+    if (this.#icon) {
+      this.#icon.texture = texture;
+    } else {
+      this.#icon = new PIXI.Sprite(texture);
+      this.#icon.scale.x = ICON_SCALE;
+      this.#icon.scale.y = ICON_SCALE;
     }
   }
 }

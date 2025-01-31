@@ -8,8 +8,8 @@
       "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
       "metadata": {
         "visual": {
-          "x": -200,
-          "y": -320,
+          "x": -320,
+          "y": -300,
           "collapsed": "expanded",
           "outputHeight": 88
         },
