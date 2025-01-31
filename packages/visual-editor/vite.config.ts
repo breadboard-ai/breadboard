@@ -70,7 +70,7 @@ async function processAssetPack(src: string) {
     * SPDX-License-Identifier: Apache-2.0
     */
     :root {
-      ${styles.join("\n")}
+      ${styles.join(";\n")};
     }`,
   };
 }
