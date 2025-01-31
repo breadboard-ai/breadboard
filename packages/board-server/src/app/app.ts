@@ -472,6 +472,47 @@ export class AppView extends LitElement {
         left: calc(50% - 250px - (max(300px, 20vw) / 2));
       }
     }
+
+    @media (max-width: 699px) {
+      main {
+        height: 100%;
+      }
+      footer {
+        display: none;
+      }
+      #activity {
+        height: 100%;
+      }
+      #board-info-container {
+        background: var(--bb-neutral-300);
+      }
+      #board-info h1 {
+        color: var(--bb-font-color);
+      }
+      #menu-toggle {
+        background-image: var(--bb-icon-menu);
+      }
+      bb-app-preview {
+        padding: 0;
+        height: 100%;
+      }
+      bb-app-preview::part(header) {
+        display: none;
+      }
+      bb-app-preview::part(footer) {
+        border: none;
+        border-radius: 0;
+        background-color: var(--bb-neutral-200);
+      }
+      bb-app-preview::part(log) {
+        border: none;
+        flex-basis: 0;
+      }
+      bb-app-preview::part(input) {
+        border-left: none;
+        border-right: none;
+      }
+    }
   `;
 
   constructor() {

@@ -257,7 +257,7 @@ export class AppPreview extends LitElement {
         this.showHistory = false;
       }}
     >
-      <header>
+      <header part="header">
         <button
           id="menu"
           @click=${() => {
@@ -301,7 +301,7 @@ export class AppPreview extends LitElement {
           </ul>
         </div>
       </div>
-      <div id="log">
+      <div id="log" part="log">
         <bb-chat
           .run=${this.run}
           .events=${this.events}
@@ -317,8 +317,10 @@ export class AppPreview extends LitElement {
         ></bb-chat>
       </div>
 
-      <div id="input">${until(this.#renderPendingInput(pendingInput))}</div>
-      <footer>
+      <div id="input" part="input">
+        ${until(this.#renderPendingInput(pendingInput))}
+      </div>
+      <footer part="footer">
         ${Strings.from("LABEL_FOOTER")} ${GlobalStrings.from("APP_NAME")}
       </footer>
     </section>`;
