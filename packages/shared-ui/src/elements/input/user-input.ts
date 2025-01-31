@@ -172,7 +172,7 @@ export class UserInput extends LitElement {
       &:has(input[type="checkbox"]) {
         & label {
           display: flex;
-          margin-left: var(--bb-grid-size-4);
+          padding-left: 0;
 
           &::before {
             content: "";

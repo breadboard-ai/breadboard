@@ -15,6 +15,7 @@ const themeAssets: [string, string][] = [
     "code-blocks",
     `/third_party/icons/graph/code-blocks${themeSuffix}-48px.svg`,
   ],
+  ["chat", `/third_party/icons/graph/chat${themeSuffix}-48px.svg`],
   ["check", `/third_party/icons/graph/check${themeSuffix}-48px.svg`],
   [
     "drag-click-inverted",
