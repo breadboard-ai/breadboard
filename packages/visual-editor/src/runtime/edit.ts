@@ -223,9 +223,7 @@ export class Edit extends EventTarget {
       return null;
     }
 
-    return (
-      editableGraph.inspect(subGraphId).nodeById(id)?.type().metadata() ?? null
-    );
+    return editableGraph.inspect(subGraphId).nodeById(id)?.metadata() ?? null;
   }
 
   getNodeConfiguration(
