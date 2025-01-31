@@ -53,6 +53,7 @@ export class GraphPortLabel extends PIXI.Container {
   #label: PIXI.Text;
   #valuePreview: PIXI.HTMLText;
   #icon: PIXI.Sprite | null = null;
+  #iconValue: string | null = null;
   #hoverZone = new PIXI.Graphics();
 
   #showNodePreviewValues = false;
@@ -85,14 +86,7 @@ export class GraphPortLabel extends PIXI.Container {
       (port.schema.type === "boolean" ? "check" : null) ??
       null;
 
-    if (icon) {
-      const texture = GraphAssets.instance().get(icon);
-      if (texture) {
-        this.#icon = new PIXI.Sprite(texture);
-        this.#icon.scale.x = ICON_SCALE;
-        this.#icon.scale.y = ICON_SCALE;
-      }
-    }
+    this.#updateIcon(icon);
 
     this.#valuePreview = new PIXI.HTMLText({
       text: `<p>${this.#createTruncatedValue(port)}</p>`,
@@ -217,6 +211,11 @@ export class GraphPortLabel extends PIXI.Container {
     const valuePreview = this.#createTruncatedValue(port);
     if (valuePreview !== this.#valuePreview.text) {
       this.#valuePreview.text = valuePreview;
+    }
+
+    const portIcon = port?.schema.icon || null;
+    if (portIcon !== this.#iconValue) {
+      this.#updateIcon(port?.schema.icon || null);
     }
 
     if (!port) {
@@ -462,5 +461,21 @@ export class GraphPortLabel extends PIXI.Container {
     }
 
     return valStr;
+  }
+
+  #updateIcon(icon: string | null) {
+    if (icon) {
+      this.#iconValue = icon;
+      const texture = GraphAssets.instance().get(icon);
+      if (!texture) return;
+
+      if (this.#icon) {
+        this.#icon.texture = texture;
+      } else {
+        this.#icon = new PIXI.Sprite(texture);
+        this.#icon.scale.x = ICON_SCALE;
+        this.#icon.scale.y = ICON_SCALE;
+      }
+    }
   }
 }

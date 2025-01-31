@@ -59,6 +59,14 @@ const themeAssets: [string, string][] = [
   ["text", `/third_party/icons/graph/text${themeSuffix}-48px.svg`],
   ["urlTemplate", `/third_party/icons/graph/http${themeSuffix}-48px.svg`],
   ["value", `/third_party/icons/graph/value${themeSuffix}-48px.svg`],
+  ["audio", `/third_party/icons/graph/add-audio${themeSuffix}-48px.svg`],
+  ["video", `/third_party/icons/graph/add-video${themeSuffix}-48px.svg`],
+  ["image", `/third_party/icons/graph/add-image${themeSuffix}-48px.svg`],
+  ["file", `/third_party/icons/graph/add-file${themeSuffix}-48px.svg`],
+  [
+    "multimodal",
+    `/third_party/icons/graph/add-multimodal${themeSuffix}-48px.svg`,
+  ],
 ];
 
 const additionalAssets: [string, string][] = ASSET_PACK_ICONS;
