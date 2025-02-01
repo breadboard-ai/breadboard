@@ -4,76 +4,12 @@
   "version": "0.0.1",
   "nodes": [
     {
-      "type": "input",
-      "id": "input",
-      "configuration": {
-        "schema": {
-          "properties": {
-            "context": {
-              "type": "array",
-              "title": "Context",
-              "items": {
-                "type": "object",
-                "behavior": [
-                  "llm-content"
-                ]
-              },
-              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"Birmingham, AL\"}]}]",
-              "description": ""
-            }
-          },
-          "type": "object",
-          "required": []
-        }
-      },
-      "metadata": {
-        "visual": {
-          "x": -200.00000000000003,
-          "y": -40,
-          "collapsed": "expanded",
-          "outputHeight": 44
-        },
-        "logLevel": "debug"
-      }
-    },
-    {
-      "type": "output",
-      "id": "output",
-      "configuration": {
-        "schema": {
-          "properties": {
-            "context": {
-              "type": "array",
-              "title": "Context",
-              "items": {
-                "type": "object",
-                "behavior": [
-                  "llm-content"
-                ]
-              },
-              "default": "null"
-            }
-          },
-          "type": "object",
-          "required": []
-        }
-      },
-      "metadata": {
-        "visual": {
-          "x": 400.00000000000017,
-          "y": -40,
-          "collapsed": "expanded",
-          "outputHeight": 44
-        }
-      }
-    },
-    {
       "id": "a2-ba0b0b0b",
       "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
         "visual": {
-          "x": 100,
-          "y": -40,
+          "x": 60,
+          "y": -20,
           "collapsed": "expanded",
           "outputHeight": 44
         },
@@ -84,7 +20,7 @@
         "description": {
           "parts": [
             {
-              "text": "Create travel plan based on the destination provided"
+              "text": "Create travel plan for a 3-day trip to London"
             }
           ],
           "role": "user"
@@ -93,20 +29,7 @@
       }
     }
   ],
-  "edges": [
-    {
-      "from": "input",
-      "to": "a2-ba0b0b0b",
-      "out": "context",
-      "in": "context"
-    },
-    {
-      "from": "a2-ba0b0b0b",
-      "to": "output",
-      "out": "context",
-      "in": "context"
-    }
-  ],
+  "edges": [],
   "metadata": {
     "visual": {}
   }
