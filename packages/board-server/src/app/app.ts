@@ -1017,6 +1017,9 @@ export class AppView extends LitElement {
           }
           runner.run(data);
         }}
+        @bbtoast=${(evt: ToastEvent) => {
+          this.#toast(evt.message, evt.toastType);
+        }}
       ></bb-app-preview>`;
     });
 
