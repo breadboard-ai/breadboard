@@ -76,6 +76,7 @@ export type ChatConversationState = ChatUserTurnState | ChatSystemTurnState;
 export type ChatState = {
   conversation: ChatConversationState[];
   status: ChatStatus;
+  statusDetail: string;
 };
 
 /**

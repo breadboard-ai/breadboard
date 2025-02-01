@@ -184,7 +184,8 @@ export class Chat extends LitElement {
         })}
         ${this.state.status === "running"
           ? html` <h1 class="status">
-              ${GlobalStrings.from("STATUS_GENERIC_WORKING")}
+              ${this.state.statusDetail ||
+              GlobalStrings.from("STATUS_GENERIC_WORKING")}
             </h1>`
           : nothing}
       </div>
