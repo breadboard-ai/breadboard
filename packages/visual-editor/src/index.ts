@@ -3010,7 +3010,7 @@ export class Main extends LitElement {
             </div>
             <div id="tab-toggle">
               ${
-                this.tab && this.#runtime.board.canPreview(this.tab.id)
+                this.tab
                   ? html`<button
                       class=${classMap({ [this.view]: true })}
                       @click=${() => {
