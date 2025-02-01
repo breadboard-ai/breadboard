@@ -468,6 +468,14 @@ export class AppView extends LitElement {
           padding: var(--bb-grid-size-5) var(--bb-grid-size-4) 0
             var(--bb-grid-size-4);
         }
+        #buttons {
+          display: none;
+        }
+        #activity-container {
+          overflow-y: auto;
+          background-color: #edf5ff;
+          border-left: 1px solid var(--bb-neutral-300);
+        }
       }
 
       @media (min-width: 1120px) {
@@ -1058,7 +1066,7 @@ export class AppView extends LitElement {
             ${nav(false)}
             <div id="help">${this.#helpText()}</div>
           </div>
-          <div>
+          <div id="buttons">
             <button
               id="reload-button"
               class="bb-icon-button"
