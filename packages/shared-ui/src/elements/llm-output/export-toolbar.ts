@@ -133,7 +133,14 @@ export class ExportToolbar extends LitElement {
         )
       );
     } catch (error) {
-      this.dispatchEvent(new ToastEvent(String(error), ToastType.ERROR));
+      this.dispatchEvent(
+        new ToastEvent(
+          typeof error === "object" && "message" in (error as Error)
+            ? (error as Error).message
+            : JSON.stringify(error),
+          ToastType.ERROR
+        )
+      );
     }
     this._savingToDrive = false;
   }
