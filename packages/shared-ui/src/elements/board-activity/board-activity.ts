@@ -542,7 +542,9 @@ export class BoardActivity extends LitElement {
       }
 
       return html` <div class="output-port">
-        ${type === "input" ? nothing : html`<label>${port.title}</label>`}
+        ${type === "input" || !port.schema.title
+          ? nothing
+          : html`<label>${port.title}</label>`}
         <div class="value">${value}</div>
       </div>`;
     })}`;

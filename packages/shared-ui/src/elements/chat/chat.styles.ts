@@ -161,6 +161,7 @@ export const styles = css`
           margin-bottom: var(--bb-grid-size-16);
         }
 
+        &.input .title::before,
         &.generative-audio .title::before,
         &.generative-image .title::before,
         &.generative-text .title::before,
@@ -169,6 +170,10 @@ export const styles = css`
           height: 20px;
           width: 20px;
           margin-right: var(--bb-grid-size-2);
+        }
+
+        &.input .title::before {
+          background: var(--bb-icon-input) center center / 20px 20px no-repeat;
         }
 
         &.generative-audio .title::before {

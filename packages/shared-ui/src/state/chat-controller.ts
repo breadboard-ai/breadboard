@@ -261,7 +261,7 @@ function toChatContent(
 ): ChatContent[] {
   return Object.entries(properties || inferProps(inputs)).map(
     ([name, schema]): ChatContent => {
-      const title = schema.title || name;
+      const title = schema.title || "";
       const value = inputs[name];
       if (schema.behavior?.includes("llm-content")) {
         return { title, context: [value as LLMContent] };

@@ -36,6 +36,7 @@ const CONTENT_TYPE = new Map([
   [".pdf", "application/pdf"],
   [".md", "text/markdown"],
   [".txt", "text/plain"],
+  [".wasm", "application/wasm"],
 ]);
 const DEFAULT_CONTENT_TYPE = "text/plain";
 
