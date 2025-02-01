@@ -221,12 +221,12 @@
       }
     },
     "text-entry": {
-      "code": "/**\n * @fileoverview Allows asking user for input that could be then used in next steps.\n */\nimport { ok, defaultLLMContent, toText } from \"./utils\";\nimport {} from \"./common\";\nimport { Template } from \"./template\";\nexport { invoke as default, describe };\nfunction toInput(title = \"Please enter text\") {\n    const toInput = {\n        type: \"object\",\n        properties: {\n            request: {\n                type: \"object\",\n                title,\n                behavior: [\"transient\", \"llm-content\"],\n                examples: [defaultLLMContent()],\n            },\n        },\n    };\n    return toInput;\n}\nconst MODALITY = [\n    \"Any\",\n    \"Audio\",\n    \"Image\",\n    \"Video\",\n    \"Upload File\",\n];\nconst ICONS = {\n    Any: \"multimodal\",\n    Audio: \"audio\",\n    Video: \"video\",\n    Image: \"image\",\n    \"Upload File\": \"file\",\n};\nconst HINTS = {\n    Any: \"hint-multimodal\",\n    Audio: \"hint-audio\",\n    Video: \"hint-image\",\n    Image: \"hint-image\",\n    \"Upload File\": \"hint-text\",\n};\nfunction computeIcon(modality) {\n    return (modality && ICONS[modality]) || \"multimodal\";\n}\nfunction computeHint(modality) {\n    return (modality && HINTS[modality]) || \"hint-multimodal\";\n}\nasync function invoke({ description, }) {\n    const title = description ? toText(description) : undefined;\n    return { context: \"nothing\", toInput: toInput(title) };\n}\nasync function describe({ inputs: { [\"p-modality\"]: modality }, }) {\n    const icon = computeIcon(modality);\n    return {\n        inputSchema: {\n            type: \"object\",\n            properties: {\n                description: {\n                    type: \"object\",\n                    behavior: [\"llm-content\", \"config\", \"hint-preview\"],\n                    title: \"What to ask of user\",\n                    description: \"Provide a request prompt that will be shown to the user.\",\n                },\n                \"p-modality\": {\n                    type: \"string\",\n                    enum: MODALITY,\n                    behavior: [\"config\", \"hint-preview\"],\n                    icon,\n                    title: \"Input type\",\n                    description: \"Set the type of input the user can provide\",\n                },\n            },\n            additionalProperties: true,\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context out\",\n                    behavior: [\"main-port\", computeHint(modality)],\n                },\n            },\n            additionalProperties: false,\n        },\n        title: \"Ask User\",\n        metadata: {\n            icon: \"input\",\n            tags: [\"quick-access\", \"core\"],\n            order: 1,\n        },\n    };\n}\n",
+      "code": "/**\n * @fileoverview Allows asking user for input that could be then used in next steps.\n */\nimport { ok, defaultLLMContent, toText } from \"./utils\";\nimport {} from \"./common\";\nimport { Template } from \"./template\";\nimport { report } from \"./output\";\nexport { invoke as default, describe };\nfunction toInput(title) {\n    const toInput = {\n        type: \"object\",\n        properties: {\n            request: {\n                type: \"object\",\n                title,\n                behavior: [\"transient\", \"llm-content\"],\n                examples: [defaultLLMContent()],\n            },\n        },\n    };\n    return toInput;\n}\nconst MODALITY = [\n    \"Any\",\n    \"Audio\",\n    \"Image\",\n    \"Video\",\n    \"Upload File\",\n];\nconst ICONS = {\n    Any: \"multimodal\",\n    Audio: \"audio\",\n    Video: \"video\",\n    Image: \"image\",\n    \"Upload File\": \"file\",\n};\nconst HINTS = {\n    Any: \"hint-multimodal\",\n    Audio: \"hint-audio\",\n    Video: \"hint-image\",\n    Image: \"hint-image\",\n    \"Upload File\": \"hint-text\",\n};\nfunction computeIcon(modality) {\n    return (modality && ICONS[modality]) || \"multimodal\";\n}\nfunction computeHint(modality) {\n    return (modality && HINTS[modality]) || \"hint-multimodal\";\n}\nasync function invoke({ description, }) {\n    const title = description ? toText(description) : \"Please provide input\";\n    await report({\n        actor: \"Ask User\",\n        category: \"Requesting Input\",\n        name: \"\",\n        details: description || title,\n        icon: \"input\",\n    });\n    return { context: \"nothing\", toInput: toInput(title) };\n}\nasync function describe({ inputs: { [\"p-modality\"]: modality }, }) {\n    const icon = computeIcon(modality);\n    return {\n        inputSchema: {\n            type: \"object\",\n            properties: {\n                description: {\n                    type: \"object\",\n                    behavior: [\"llm-content\", \"config\", \"hint-preview\"],\n                    title: \"What to ask of user\",\n                    description: \"Provide a request prompt that will be shown to the user.\",\n                },\n                \"p-modality\": {\n                    type: \"string\",\n                    enum: MODALITY,\n                    behavior: [\"config\", \"hint-preview\"],\n                    icon,\n                    title: \"Input type\",\n                    description: \"Set the type of input the user can provide\",\n                },\n            },\n            additionalProperties: true,\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context out\",\n                    behavior: [\"main-port\", computeHint(modality)],\n                },\n            },\n            additionalProperties: false,\n        },\n        title: \"Ask User\",\n        metadata: {\n            icon: \"input\",\n            tags: [\"quick-access\", \"core\"],\n            order: 1,\n        },\n    };\n}\n",
       "metadata": {
         "title": "Ask User",
         "icon": "text",
         "source": {
-          "code": "/**\n * @fileoverview Allows asking user for input that could be then used in next steps.\n */\nimport { ok, defaultLLMContent, toText } from \"./utils\";\nimport { type Params } from \"./common\";\nimport { Template } from \"./template\";\n\nexport { invoke as default, describe };\n\ntype TextInputs = {\n  description?: LLMContent;\n};\n\ntype TextOutputs =\n  | {\n      toInput: Schema;\n      context: \"nothing\";\n    }\n  | {\n      toMain: string;\n      context: LLMContent;\n    };\n\nfunction toInput(title: string = \"Please enter text\") {\n  const toInput: Schema = {\n    type: \"object\",\n    properties: {\n      request: {\n        type: \"object\",\n        title,\n        behavior: [\"transient\", \"llm-content\"],\n        examples: [defaultLLMContent()],\n      },\n    },\n  };\n  return toInput;\n}\n\nconst MODALITY: readonly string[] = [\n  \"Any\",\n  \"Audio\",\n  \"Image\",\n  \"Video\",\n  \"Upload File\",\n] as const;\n\nconst ICONS: Record<Modality, string> = {\n  Any: \"multimodal\",\n  Audio: \"audio\",\n  Video: \"video\",\n  Image: \"image\",\n  \"Upload File\": \"file\",\n};\n\nconst HINTS: Record<Modality, BehaviorSchema> = {\n  Any: \"hint-multimodal\",\n  Audio: \"hint-audio\",\n  Video: \"hint-image\",\n  Image: \"hint-image\",\n  \"Upload File\": \"hint-text\",\n};\n\ntype Modality = (typeof MODALITY)[number];\n\nfunction computeIcon(modality: Modality): string {\n  return (modality && ICONS[modality]) || \"multimodal\";\n}\n\nfunction computeHint(modality: Modality): BehaviorSchema {\n  return (modality && HINTS[modality]) || \"hint-multimodal\";\n}\n\nasync function invoke({\n  description,\n}: TextInputs): Promise<Outcome<TextOutputs>> {\n  const title = description ? toText(description) : undefined;\n  return { context: \"nothing\", toInput: toInput(title) };\n}\n\ntype DescribeInputs = {\n  inputs: {\n    \"p-modality\": Modality;\n  };\n};\n\nasync function describe({\n  inputs: { [\"p-modality\"]: modality },\n}: DescribeInputs) {\n  const icon = computeIcon(modality);\n  return {\n    inputSchema: {\n      type: \"object\",\n      properties: {\n        description: {\n          type: \"object\",\n          behavior: [\"llm-content\", \"config\", \"hint-preview\"],\n          title: \"What to ask of user\",\n          description:\n            \"Provide a request prompt that will be shown to the user.\",\n        },\n        \"p-modality\": {\n          type: \"string\",\n          enum: MODALITY as string[],\n          behavior: [\"config\", \"hint-preview\"],\n          icon,\n          title: \"Input type\",\n          description: \"Set the type of input the user can provide\",\n        },\n      },\n      additionalProperties: true,\n    } satisfies Schema,\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context out\",\n          behavior: [\"main-port\", computeHint(modality)],\n        },\n      },\n      additionalProperties: false,\n    } satisfies Schema,\n    title: \"Ask User\",\n    metadata: {\n      icon: \"input\",\n      tags: [\"quick-access\", \"core\"],\n      order: 1,\n    },\n  };\n}\n",
+          "code": "/**\n * @fileoverview Allows asking user for input that could be then used in next steps.\n */\nimport { ok, defaultLLMContent, toText } from \"./utils\";\nimport { type Params } from \"./common\";\nimport { Template } from \"./template\";\nimport { report } from \"./output\";\n\nexport { invoke as default, describe };\n\ntype TextInputs = {\n  description?: LLMContent;\n};\n\ntype TextOutputs =\n  | {\n      toInput: Schema;\n      context: \"nothing\";\n    }\n  | {\n      toMain: string;\n      context: LLMContent;\n    };\n\nfunction toInput(title: string) {\n  const toInput: Schema = {\n    type: \"object\",\n    properties: {\n      request: {\n        type: \"object\",\n        title,\n        behavior: [\"transient\", \"llm-content\"],\n        examples: [defaultLLMContent()],\n      },\n    },\n  };\n  return toInput;\n}\n\nconst MODALITY: readonly string[] = [\n  \"Any\",\n  \"Audio\",\n  \"Image\",\n  \"Video\",\n  \"Upload File\",\n] as const;\n\nconst ICONS: Record<Modality, string> = {\n  Any: \"multimodal\",\n  Audio: \"audio\",\n  Video: \"video\",\n  Image: \"image\",\n  \"Upload File\": \"file\",\n};\n\nconst HINTS: Record<Modality, BehaviorSchema> = {\n  Any: \"hint-multimodal\",\n  Audio: \"hint-audio\",\n  Video: \"hint-image\",\n  Image: \"hint-image\",\n  \"Upload File\": \"hint-text\",\n};\n\ntype Modality = (typeof MODALITY)[number];\n\nfunction computeIcon(modality: Modality): string {\n  return (modality && ICONS[modality]) || \"multimodal\";\n}\n\nfunction computeHint(modality: Modality): BehaviorSchema {\n  return (modality && HINTS[modality]) || \"hint-multimodal\";\n}\n\nasync function invoke({\n  description,\n}: TextInputs): Promise<Outcome<TextOutputs>> {\n  const title = description ? toText(description) : \"Please provide input\";\n  await report({\n    actor: \"Ask User\",\n    category: \"Requesting Input\",\n    name: \"\",\n    details: description || title,\n    icon: \"input\",\n  });\n  return { context: \"nothing\", toInput: toInput(title) };\n}\n\ntype DescribeInputs = {\n  inputs: {\n    \"p-modality\": Modality;\n  };\n};\n\nasync function describe({\n  inputs: { [\"p-modality\"]: modality },\n}: DescribeInputs) {\n  const icon = computeIcon(modality);\n  return {\n    inputSchema: {\n      type: \"object\",\n      properties: {\n        description: {\n          type: \"object\",\n          behavior: [\"llm-content\", \"config\", \"hint-preview\"],\n          title: \"What to ask of user\",\n          description:\n            \"Provide a request prompt that will be shown to the user.\",\n        },\n        \"p-modality\": {\n          type: \"string\",\n          enum: MODALITY as string[],\n          behavior: [\"config\", \"hint-preview\"],\n          icon,\n          title: \"Input type\",\n          description: \"Set the type of input the user can provide\",\n        },\n      },\n      additionalProperties: true,\n    } satisfies Schema,\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context out\",\n          behavior: [\"main-port\", computeHint(modality)],\n        },\n      },\n      additionalProperties: false,\n    } satisfies Schema,\n    title: \"Ask User\",\n    metadata: {\n      icon: \"input\",\n      tags: [\"quick-access\", \"core\"],\n      order: 1,\n    },\n  };\n}\n",
           "language": "typescript"
         },
         "description": "Allows asking user for input that could be then used in next steps.",
@@ -297,7 +297,7 @@
           },
           "metadata": {
             "visual": {
-              "x": 707.9999999999986,
+              "x": 707.9999999999987,
               "y": 44,
               "collapsed": "expanded",
               "outputHeight": 44
@@ -310,7 +310,7 @@
           "metadata": {
             "visual": {
               "x": -46.99999999999969,
-              "y": -72.00000000000045,
+              "y": -72.00000000000068,
               "collapsed": "expanded",
               "outputHeight": 44
             },
@@ -323,7 +323,7 @@
           "metadata": {
             "visual": {
               "x": 331.9999999999998,
-              "y": -6.000000000000796,
+              "y": -6.000000000000682,
               "collapsed": "expanded",
               "outputHeight": 44
             },
@@ -348,7 +348,7 @@
           "id": "input",
           "metadata": {
             "visual": {
-              "x": 712.9999999999998,
+              "x": 712.9999999999999,
               "y": 169.99999999999864,
               "collapsed": "advanced",
               "outputHeight": 44
@@ -413,12 +413,15 @@
           "id": "input",
           "metadata": {
             "visual": {
-              "x": 574.0969239608205,
-              "y": -533.1431851509614,
+              "x": 580,
+              "y": -540,
               "collapsed": "expanded",
               "outputHeight": 44
-            }
-          }
+            },
+            "title": "Waiting for user input",
+            "logLevel": "info"
+          },
+          "configuration": {}
         },
         {
           "type": "output",
@@ -444,8 +447,8 @@
           },
           "metadata": {
             "visual": {
-              "x": 1234.0969239608205,
-              "y": -393.14318515096136,
+              "x": 1240.0000000000002,
+              "y": -400,
               "collapsed": "expanded",
               "outputHeight": 44
             }
@@ -456,8 +459,8 @@
           "type": "#module:text-entry",
           "metadata": {
             "visual": {
-              "x": 220,
-              "y": -640,
+              "x": 225.9030760391795,
+              "y": -646.8568148490385,
               "collapsed": "expanded",
               "outputHeight": 44
             },
@@ -469,8 +472,8 @@
           "type": "#module:text-main",
           "metadata": {
             "visual": {
-              "x": 894.0969239608205,
-              "y": -453.1431851509615,
+              "x": 900.0000000000001,
+              "y": -459.9999999999999,
               "collapsed": "expanded",
               "outputHeight": 44
             },
