@@ -102,7 +102,7 @@ function toDeclarativeGraph(graph: ImperativeGraph): GraphDescriptor {
         $module: main,
       },
       metadata: {
-        title: `Run "${graph.title || '"main"'}" module`,
+        title: graph.description || graph.title,
       },
     },
     {

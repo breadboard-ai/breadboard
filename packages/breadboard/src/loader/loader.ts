@@ -47,10 +47,12 @@ function resolveGraph(graphToRun: GraphToRun): GraphDescriptor {
   const { graph, subGraphId, moduleId } = graphToRun;
   if (moduleId) {
     const title = graph.modules?.[moduleId]?.metadata?.title || moduleId;
+    const description =
+      graph.modules?.[moduleId]?.metadata?.description || undefined;
     const url = graph.url?.startsWith(MODULE_PREFIX)
       ? graph.url
       : `${MODULE_PREFIX}${moduleId}:${graph.url}`;
-    return { ...graph, main: moduleId, url, title };
+    return { ...graph, main: moduleId, url, title, description };
   }
   return subGraphId ? graph.graphs![subGraphId] : graph;
 }

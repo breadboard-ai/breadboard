@@ -4,75 +4,14 @@
   "version": "0.0.1",
   "nodes": [
     {
-      "type": "input",
-      "id": "input",
-      "configuration": {
-        "schema": {
-          "properties": {
-            "context": {
-              "type": "array",
-              "title": "Context",
-              "items": {
-                "type": "object",
-                "behavior": [
-                  "llm-content"
-                ]
-              },
-              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"The merits of using AI-generated content for making blog posts.\"}]}]",
-              "description": ""
-            }
-          },
-          "type": "object",
-          "required": []
-        }
-      },
-      "metadata": {
-        "visual": {
-          "x": -280,
-          "y": -80,
-          "collapsed": "expanded"
-        },
-        "logLevel": "debug"
-      }
-    },
-    {
-      "type": "output",
-      "id": "output",
-      "configuration": {
-        "schema": {
-          "properties": {
-            "context": {
-              "type": "array",
-              "title": "Context",
-              "items": {
-                "type": "object",
-                "behavior": [
-                  "llm-content"
-                ]
-              },
-              "default": "null"
-            }
-          },
-          "type": "object",
-          "required": []
-        }
-      },
-      "metadata": {
-        "visual": {
-          "x": 360.00000000000034,
-          "y": -19.999999999999716,
-          "collapsed": "expanded"
-        }
-      }
-    },
-    {
       "id": "a2-dd0814ae",
       "type": "file://bgl/a2.bgl.json#module:researcher",
       "metadata": {
         "visual": {
-          "x": 40,
+          "x": 40.00000000000008,
           "y": -39.999999999999886,
-          "collapsed": "expanded"
+          "collapsed": "expanded",
+          "outputHeight": 88
         },
         "title": "Researcher",
         "logLevel": "debug"
@@ -82,7 +21,7 @@
           "role": "user",
           "parts": [
             {
-              "text": "Research the topic for a blog post. A well-done research should include:\n\n{{outline}}\n"
+              "text": "Research the necessary criteria to create a comprehensive rubric for evaluating taste of store-bought corn chips."
             }
           ]
         },
@@ -94,62 +33,9 @@
         ],
         "summarize": true
       }
-    },
-    {
-      "id": "input-bb90f487",
-      "type": "input",
-      "metadata": {
-        "visual": {
-          "x": -280,
-          "y": 280,
-          "collapsed": "expanded"
-        },
-        "title": "Input",
-        "logLevel": "info"
-      },
-      "configuration": {
-        "schema": {
-          "properties": {
-            "context": {
-              "type": "array",
-              "title": "Context",
-              "items": {
-                "type": "object",
-                "examples": [],
-                "behavior": [
-                  "llm-content"
-                ]
-              },
-              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"- The basic overview of the topic\\n- Historical perspective, if applicable\\n- Current opinions on the topic, if applicable\\n- Any controversies that might be surrounding the topic\\n- Any future developments around the topic\"}]}]",
-              "description": ""
-            }
-          },
-          "type": "object",
-          "required": []
-        }
-      }
     }
   ],
-  "edges": [
-    {
-      "from": "input",
-      "to": "a2-dd0814ae",
-      "out": "context",
-      "in": "context"
-    },
-    {
-      "from": "a2-dd0814ae",
-      "to": "output",
-      "out": "context",
-      "in": "context"
-    },
-    {
-      "from": "input-bb90f487",
-      "to": "a2-dd0814ae",
-      "out": "context",
-      "in": "p-z-outline"
-    }
-  ],
+  "edges": [],
   "metadata": {
     "tags": [],
     "visual": {}
