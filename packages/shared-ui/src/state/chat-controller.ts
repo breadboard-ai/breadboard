@@ -47,6 +47,7 @@ type GraphStartProbeDataWithOptionalGraph = Omit<
 
 class ChatController {
   #status: ChatStatus = "stopped";
+  #statusDetail = "";
   #conversation: ChatConversationState[] = [];
   #state: ChatState = this.#initialChatState();
   #stale: boolean = false;
@@ -63,23 +64,29 @@ class ChatController {
     runner.addEventListener("abort", () => {
       this.#currentInput = null;
       this.#status = "stopped";
+      this.#statusDetail = "";
       this.#stale = true;
     });
     runner.addEventListener("start", () => {
       this.#status = "running";
+      // TODO(dglazkov) Plumb through detailed status info here.
+      this.#statusDetail = "";
       this.#stale = true;
     });
     runner.addEventListener("pause", () => {
       this.#status = "paused";
+      this.#statusDetail = "";
       this.#stale = true;
     });
     runner.addEventListener("resume", (event) => {
       this.#finalizeInput(event.data.inputs || {});
       this.#status = "running";
+      this.#statusDetail = "";
       this.#stale = true;
     });
     runner.addEventListener("end", () => {
       this.#status = "stopped";
+      this.#statusDetail = "";
       this.#stale = true;
     });
     runner.addEventListener("graphstart", this.#onGraphstart.bind(this));
@@ -118,6 +125,7 @@ class ChatController {
     return {
       conversation: [],
       status: "stopped",
+      statusDetail: "",
     };
   }
 
@@ -127,6 +135,7 @@ class ChatController {
     this.#state = {
       conversation: this.#conversation,
       status: this.#status,
+      statusDetail: this.#statusDetail,
     };
     this.#stale = false;
   }
@@ -183,6 +192,7 @@ class ChatController {
   #onError(event: RunErrorEvent) {
     this.#currentInput = null;
     this.#status = "stopped";
+    this.#statusDetail = "";
     this.#appendTurn(
       this.#createSystemTurn([
         {

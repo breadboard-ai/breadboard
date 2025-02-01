@@ -471,6 +471,11 @@ export class AppView extends LitElement {
         #buttons {
           display: none;
         }
+        #activity-container {
+          overflow-y: auto;
+          background-color: #edf5ff;
+          border-left: 1px solid var(--bb-neutral-300);
+        }
       }
 
       @media (min-width: 1120px) {
@@ -525,11 +530,6 @@ export class AppView extends LitElement {
         }
       }
 
-      #activity-container {
-        overflow-y: auto;
-        background-color: #edf5ff;
-        border-left: 1px solid var(--bb-neutral-300);
-      }
       bb-app-preview {
         --bb-llm-output-content-max-height: 50vh;
       }
@@ -1016,6 +1016,9 @@ export class AppView extends LitElement {
             throw new Error("The runner is already running, cannot send input");
           }
           runner.run(data);
+        }}
+        @bbtoast=${(evt: ToastEvent) => {
+          this.#toast(evt.message, evt.toastType);
         }}
       ></bb-app-preview>`;
     });
