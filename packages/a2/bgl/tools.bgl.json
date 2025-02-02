@@ -1,6 +1,6 @@
 {
   "title": "Tools",
-  "description": "A blank board. Use it as a starting point for your creations.",
+  "description": "A collection of useful tools.",
   "version": "0.0.1",
   "nodes": [],
   "edges": [],
@@ -19,7 +19,12 @@
         }
       }
     ],
-    "visual": {}
+    "visual": {},
+    "tags": [
+      "published",
+      "tool",
+      "component"
+    ]
   },
   "modules": {
     "search-web": {
