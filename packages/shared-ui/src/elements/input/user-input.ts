@@ -856,6 +856,7 @@ export class UserInput extends LitElement {
                     .showEntrySelector=${this.llmInputShowEntrySelector}
                     .nodeId=${this.nodeId}
                     .subGraphId=${this.subGraphId}
+                    .autofocus=${true}
                     .projectState=${this.projectState}
                   ></bb-llm-input-array>`;
                 } else {

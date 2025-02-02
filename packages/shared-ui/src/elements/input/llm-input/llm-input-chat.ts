@@ -669,7 +669,11 @@ export class LLMInputChat extends LitElement {
     this.#triggerSelectionFlow = false;
 
     if (focusLastPart && this.#lastPartRef.value) {
-      this.#lastPartRef.value.focus();
+      const textarea = this.#lastPartRef.value.querySelector("textarea");
+      if (textarea) {
+        textarea.select();
+        textarea.focus();
+      }
 
       const lastPart = this.#lastPartRef.value;
       requestAnimationFrame(() => {
