@@ -44,6 +44,9 @@ async function main() {
       metadata: { tags },
       description,
     } = descriptor;
+    if (!tags) {
+      continue;
+    }
     console.log(`Pushing ${bgl}: ${title}, ${tags}, ${description}`);
     await database.doc(`/workspaces/${USER_ID}/boards/${bgl}`).set({
       graph,
