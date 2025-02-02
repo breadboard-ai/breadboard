@@ -18,6 +18,7 @@ import {
   RunErrorEvent,
   RunGraphStartEvent,
   RunInputEvent,
+  RunNodeStartEvent,
   RunOutputEvent,
 } from "@google-labs/breadboard/harness";
 import {
@@ -48,6 +49,7 @@ type GraphStartProbeDataWithOptionalGraph = Omit<
 class ChatController {
   #status: ChatStatus = "stopped";
   #statusDetail = "";
+  #currentTitle = "";
   #conversation: ChatConversationState[] = [];
   #state: ChatState = this.#initialChatState();
   #stale: boolean = false;
@@ -69,7 +71,6 @@ class ChatController {
     });
     runner.addEventListener("start", () => {
       this.#status = "running";
-      // TODO(dglazkov) Plumb through detailed status info here.
       this.#statusDetail = "";
       this.#stale = true;
     });
@@ -94,6 +95,7 @@ class ChatController {
     runner.addEventListener("input", this.#onInput.bind(this));
     runner.addEventListener("output", this.#onOutput.bind(this));
     runner.addEventListener("error", this.#onError.bind(this));
+    runner.addEventListener("nodestart", this.#onNodestart.bind(this));
 
     graphStore?.addEventListener("update", () => {
       // Technically, the event has `mainGraphId` and we should only update
@@ -159,6 +161,15 @@ class ChatController {
     this.#graphStack.unshift(event.data);
   }
 
+  #onNodestart(event: RunNodeStartEvent) {
+    if (event.data.path.length > 1) return;
+    const title = event.data.node.metadata?.title;
+    if (!title) return;
+    this.#currentTitle = title;
+    this.#statusDetail = `Working to ${title}`;
+    this.#stale = true;
+  }
+
   #onGraphend() {
     this.#graphStack.shift();
   }
@@ -211,7 +222,7 @@ class ChatController {
     const turn: ChatSystemTurnState = {
       role: "system",
       icon: metadata?.icon,
-      name: metadata?.title,
+      name: this.#currentTitle || metadata?.title,
       content,
     };
     // 0) If icon and name already present, exit early.
@@ -271,7 +282,9 @@ function toChatContent(
       ) {
         return { title, context: value as LLMContent[] };
       } else if (schema.type === "string") {
-        return { title, text: value as string };
+        const format: "markdown" | undefined =
+          schema.format === "markdown" ? "markdown" : undefined;
+        return { title, text: value as string, format };
       } else {
         return { title, object: value };
       }

@@ -1491,6 +1491,11 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       //                 necessary.
       if (mainGraph.url?.startsWith("module:")) continue;
 
+      // This is a temporary hack to ensure that if only the graphs that
+      // are coming from "@shared" user are visible in quick access.
+      // TODO(dglazkov): Make this more robust and not user-specific.
+      if (!isKnownGood(mainGraph)) continue;
+
       kitList.push({ id: graph.url!, metadata: graph });
     }
 
@@ -1502,6 +1507,13 @@ export class Editor extends LitElement implements DragConnectorReceiver {
     });
 
     return kitList;
+
+    function isKnownGood(mainGraph: NodeHandlerMetadata) {
+      return (
+        mainGraph.url?.includes("/@shared/") ||
+        mainGraph.url?.startsWith("file:")
+      );
+    }
   }
 
   #showComponentPicker(target: HTMLElement, typeTag: string) {

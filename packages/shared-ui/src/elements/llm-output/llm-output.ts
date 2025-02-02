@@ -315,7 +315,7 @@ export class LLMOutput extends LitElement {
           let value: TemplateResult | symbol = nothing;
           if (isTextCapabilityPart(part)) {
             if (part.text === "") {
-              value = html`${markdown("No value provided")}`;
+              value = html`${markdown("[Continue]")}`;
             } else {
               value = html`${markdown(part.text)}`;
             }

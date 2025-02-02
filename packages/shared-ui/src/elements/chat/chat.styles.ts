@@ -155,6 +155,7 @@ export const styles = css`
             var(--bb-font-family);
           color: var(--bb-neutral-900);
           margin: 0 0 var(--bb-grid-size) 0;
+          font-size: var(--bb-text-medium);
         }
 
         &:last-of-type {

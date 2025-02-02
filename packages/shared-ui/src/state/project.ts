@@ -44,7 +44,8 @@ function isTool(entry: GraphStoreEntry) {
     !entry.updating &&
     entry.tags?.includes("tool") &&
     !!entry.url &&
-    entry?.tags.includes("quick-access")
+    entry?.tags.includes("quick-access") &&
+    (entry.url?.includes("/@shared/") || entry.url?.startsWith("file:"))
   );
 }
 
