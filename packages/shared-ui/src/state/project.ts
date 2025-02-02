@@ -154,6 +154,7 @@ class ReactiveProject implements ProjectInternal {
         title: entry.title,
         description: entry.description,
         order: entry.order || Number.MAX_SAFE_INTEGER,
+        icon: entry.icon,
       },
     ]);
     updateMap(this.tools, tools);

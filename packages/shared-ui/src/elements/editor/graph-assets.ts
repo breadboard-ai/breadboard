@@ -67,6 +67,11 @@ const themeAssets: [string, string][] = [
     "multimodal",
     `/third_party/icons/graph/add-multimodal${themeSuffix}-48px.svg`,
   ],
+  ["search", `/third_party/icons/graph/search${themeSuffix}-48px.svg`],
+  ["globe-book", `/third_party/icons/graph/globe-book${themeSuffix}-48px.svg`],
+  ["language", `/third_party/icons/graph/language${themeSuffix}-48px.svg`],
+  ["map-search", `/third_party/icons/graph/map-search${themeSuffix}-48px.svg`],
+  ["sunny", `/third_party/icons/graph/sunny${themeSuffix}-48px.svg`],
 ];
 
 const additionalAssets: [string, string][] = ASSET_PACK_ICONS;

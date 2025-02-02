@@ -107,6 +107,30 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
     #tools menu button {
       background: var(--bb-icon-tool) 4px center / 20px 20px no-repeat;
+
+      &.search {
+        background-image: var(--bb-icon-search);
+      }
+
+      &.public {
+        background-image: var(--bb-icon-public);
+      }
+
+      &.globe-book {
+        background-image: var(--bb-icon-globe-book);
+      }
+
+      &.language {
+        background-image: var(--bb-icon-language);
+      }
+
+      &.map-search {
+        background-image: var(--bb-icon-map-search);
+      }
+
+      &.sunny {
+        background-image: var(--bb-icon-sunny);
+      }
     }
 
     #outputs menu button {
@@ -314,11 +338,12 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
           ? html` <menu>
               ${tools.map((tool) => {
                 const active = idx === this.selectedIndex;
+                const icon = tool.icon ? { [tool.icon]: true } : {};
                 const globalIndex = idx;
                 idx++;
                 return html`<li>
                   <button
-                    class=${classMap({ active })}
+                    class=${classMap({ active, ...icon })}
                     @pointerover=${() => {
                       this.selectedIndex = globalIndex;
                     }}

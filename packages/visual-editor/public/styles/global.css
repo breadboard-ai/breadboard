@@ -459,6 +459,11 @@ body.hide-cursor {
   --bb-icon-wrench: url(/third_party/icons/wrench.svg);
   --bb-icon-wrench-inverted: url(/third_party/icons/wrench-inverted.svg);
 
+  --bb-icon-globe-book: url(/third_party/icons/globe-book.svg);
+  --bb-icon-language: url(/third_party/icons/language.svg);
+  --bb-icon-map-search: url(/third_party/icons/map-search.svg);
+  --bb-icon-sunny: url(/third_party/icons/sunny.svg);
+
   /** UI Colors */
 
   --bb-notify-50: #fce4ec;
