@@ -50,7 +50,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
       overflow: auto;
       width: 260px;
       height: var(--bb-grid-size-11);
-      view-transition-name: container;
+      box-shadow: var(--bb-elevation-5);
 
       & header {
         display: flex;

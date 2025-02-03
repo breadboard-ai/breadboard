@@ -97,6 +97,7 @@ export class NodeConfigurationOverlay extends LitElement {
       position: fixed;
       z-index: 20;
 
+      --background: var(--bb-ui-50);
       --outer-border: var(--bb-ui-500);
       --inner-border: var(--bb-ui-300);
     }
@@ -105,13 +106,16 @@ export class NodeConfigurationOverlay extends LitElement {
     :host :has(header.generative-image),
     :host :has(header.generative-audio),
     :host :has(header.generative-text) {
+      --background: var(--bb-generative-50);
       --outer-border: var(--bb-generative-600);
       --inner-border: var(--bb-generative-300);
     }
 
     :host :has(header.text),
     :host :has(header.input),
-    :host :has(header.output) {
+    :host :has(header.output),
+    :host :has(header.combine-outputs) {
+      --background: var(--bb-inputs-50);
       --outer-border: var(--bb-inputs-600);
       --inner-border: var(--bb-inputs-300);
     }
@@ -176,7 +180,7 @@ export class NodeConfigurationOverlay extends LitElement {
             margin-right: var(--bb-grid-size);
           }
 
-          background: var(--bb-ui-100);
+          background: var(--background);
           height: 40px;
           border-radius: var(--bb-grid-size-2) var(--bb-grid-size-2) 0 0;
           border-bottom: 1px solid var(--inner-border);
@@ -186,14 +190,6 @@ export class NodeConfigurationOverlay extends LitElement {
           display: flex;
           justify-content: flex-end;
           align-items: center;
-
-          &.generative,
-          &.generative-image,
-          &.generative-text,
-          &.generative-audio {
-            background: var(--bb-generative-100);
-            border-bottom: 1px solid var(--bb-generative-300);
-          }
 
           &.generative::before {
             background-image: var(--bb-add-icon-generative);
@@ -213,8 +209,8 @@ export class NodeConfigurationOverlay extends LitElement {
 
           &.input,
           &.output,
+          &.combine-outputs,
           &.text {
-            background: var(--bb-input-100);
             border-bottom: 1px solid var(--bb-input-300);
           }
 
@@ -224,6 +220,10 @@ export class NodeConfigurationOverlay extends LitElement {
 
           &.output::before {
             background-image: var(--bb-icon-output);
+          }
+
+          &.combine-outputs::before {
+            background-image: var(--bb-icon-table-rows);
           }
 
           &.text::before {
@@ -342,7 +342,23 @@ export class NodeConfigurationOverlay extends LitElement {
       }
 
       & .outputs {
-        border-top: 1px solid var(--bb-neutral-300);
+        border-top: 1px solid var(--inner-border, var(--bb-neutral-300));
+        position: relative;
+
+        &::before {
+          content: "";
+          position: absolute;
+          top: 0;
+          left: 0;
+          height: 4px;
+          width: 100%;
+          background: var(--background);
+        }
+
+        & .no-outputs {
+          font: 400 var(--bb-label-small) / var(--bb-label-line-height-small)
+            var(--bb-font-family);
+        }
 
         --output-border-width: 0;
         --output-border-radius: 0;
@@ -715,7 +731,7 @@ export class NodeConfigurationOverlay extends LitElement {
                 </div>`;
               })}`;
             })}`
-          : html`...`}
+          : html`<div class="no-outputs">No outputs created</div>`}
       </div>`;
     }
 
