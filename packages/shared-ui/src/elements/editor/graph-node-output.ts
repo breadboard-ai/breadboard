@@ -20,6 +20,8 @@ const outputTextColor = getGlobalColor("--bb-neutral-700");
 const placeholderColor = getGlobalColor("--bb-neutral-100");
 
 const ICON_SCALE = 0.42;
+const MAX_IMAGE_WIDTH = 200;
+const MAX_CONTENT_WIDTH = 244;
 
 function create(text: string, tag: string) {
   const opts: PIXI.HTMLTextStyleOptions = {
@@ -324,10 +326,12 @@ export class GraphNodeOutput extends PIXI.Container {
 
                   const texture = PIXI.Texture.from(canvas);
                   const item = new PIXI.Sprite(texture);
-                  const ratio = 228 / texture.width;
+                  const ratio = MAX_IMAGE_WIDTH / texture.width;
                   item.scale.x = ratio;
                   item.scale.y = ratio;
                   item.label = `${id}-${idx}`;
+
+                  item.x = (MAX_CONTENT_WIDTH - item.width) / 2;
 
                   resolve(item);
                 };

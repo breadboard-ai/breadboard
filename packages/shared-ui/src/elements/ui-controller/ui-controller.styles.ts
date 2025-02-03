@@ -55,6 +55,7 @@ export const styles = css`
       border: 1px solid var(--bb-neutral-300);
       overflow: hidden;
       background: var(--bb-neutral-0);
+      box-shadow: var(--bb-elevation-5);
 
       &.wide {
         max-width: 400px;

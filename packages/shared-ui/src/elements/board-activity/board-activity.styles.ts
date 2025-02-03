@@ -150,10 +150,6 @@ export const styles = css`
     }
   }
 
-  .activity-entry .node-info {
-    display: block;
-  }
-
   .activity-entry.node h1::before,
   .activity-entry .node-info summary::before {
     content: "";
@@ -171,6 +167,7 @@ export const styles = css`
     display: flex;
     align-items: center;
     padding: var(--bb-grid-size) var(--bb-grid-size-2);
+    flex: 1 1 auto;
   }
 
   .activity-entry .node-info summary span {
