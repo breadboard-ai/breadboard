@@ -11,6 +11,21 @@ export default {
   COMMAND_ADD_MISSING_ITEM: {
     str: "Add",
   },
+  COMMAND_SHOW_LIBRARY: {
+    str: "Show Component Library",
+  },
+  COMMAND_LIBRARY_GROUP_1: {
+    str: "Show Components",
+  },
+  COMMAND_LIBRARY_GROUP_2: {
+    str: "Show Controls",
+  },
+  COMMAND_LIBRARY_GROUP_3: {
+    str: "Show Tools",
+  },
+  COMMAND_ZOOM_TO_FIT: {
+    str: "Fit to Screen",
+  },
 
   // Statuses.
 

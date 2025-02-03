@@ -421,7 +421,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       position: fixed;
       left: var(--component-picker-x, 100px);
       top: var(--component-picker-y, 100px);
-      z-index: 3;
+      z-index: 5;
       background: var(--bb-neutral-0);
       border: 1px solid var(--bb-neutral-300);
       width: 172px;
@@ -1892,6 +1892,18 @@ export class Editor extends LitElement implements DragConnectorReceiver {
                 id="preset-all"
                 class="expandable"
                 ?disabled=${this.readOnly}
+                @pointerover=${(evt: PointerEvent) => {
+                  this.dispatchEvent(
+                    new ShowTooltipEvent(
+                      Strings.from("COMMAND_SHOW_LIBRARY"),
+                      evt.clientX,
+                      evt.clientY
+                    )
+                  );
+                }}
+                @pointerout=${() => {
+                  this.dispatchEvent(new HideTooltipEvent());
+                }}
                 @click=${async () => {
                   await storeReady;
                   this.showComponentLibrary = !this.showComponentLibrary;
@@ -1903,6 +1915,18 @@ export class Editor extends LitElement implements DragConnectorReceiver {
                 id="preset-a2"
                 class="expandable"
                 ?disabled=${this.readOnly}
+                @pointerover=${(evt: PointerEvent) => {
+                  this.dispatchEvent(
+                    new ShowTooltipEvent(
+                      Strings.from("COMMAND_LIBRARY_GROUP_1"),
+                      evt.clientX,
+                      evt.clientY
+                    )
+                  );
+                }}
+                @pointerout=${() => {
+                  this.dispatchEvent(new HideTooltipEvent());
+                }}
                 @click=${async (evt: PointerEvent) => {
                   if (!(evt.target instanceof HTMLButtonElement)) {
                     return;
@@ -1918,6 +1942,18 @@ export class Editor extends LitElement implements DragConnectorReceiver {
                 id="preset-built-in"
                 class="expandable"
                 ?disabled=${this.readOnly}
+                @pointerover=${(evt: PointerEvent) => {
+                  this.dispatchEvent(
+                    new ShowTooltipEvent(
+                      Strings.from("COMMAND_LIBRARY_GROUP_2"),
+                      evt.clientX,
+                      evt.clientY
+                    )
+                  );
+                }}
+                @pointerout=${() => {
+                  this.dispatchEvent(new HideTooltipEvent());
+                }}
                 @click=${async (evt: PointerEvent) => {
                   if (!(evt.target instanceof HTMLButtonElement)) {
                     return;
@@ -1933,6 +1969,18 @@ export class Editor extends LitElement implements DragConnectorReceiver {
                 id="preset-tools"
                 class="expandable"
                 ?disabled=${this.readOnly}
+                @pointerover=${(evt: PointerEvent) => {
+                  this.dispatchEvent(
+                    new ShowTooltipEvent(
+                      Strings.from("COMMAND_LIBRARY_GROUP_3"),
+                      evt.clientX,
+                      evt.clientY
+                    )
+                  );
+                }}
+                @pointerout=${() => {
+                  this.dispatchEvent(new HideTooltipEvent());
+                }}
                 @click=${async (evt: PointerEvent) => {
                   if (!(evt.target instanceof HTMLButtonElement)) {
                     return;
@@ -1948,6 +1996,18 @@ export class Editor extends LitElement implements DragConnectorReceiver {
             <div id="controls">
               <button
                 id="zoom-to-fit"
+                @pointerover=${(evt: PointerEvent) => {
+                  this.dispatchEvent(
+                    new ShowTooltipEvent(
+                      Strings.from("COMMAND_ZOOM_TO_FIT"),
+                      evt.clientX,
+                      evt.clientY
+                    )
+                  );
+                }}
+                @pointerout=${() => {
+                  this.dispatchEvent(new HideTooltipEvent());
+                }}
                 @click=${() => {
                   if (!this.#graphRendererRef.value) {
                     return;
