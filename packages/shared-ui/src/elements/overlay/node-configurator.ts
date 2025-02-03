@@ -816,6 +816,9 @@ export class NodeConfigurationOverlay extends LitElement {
                 @pointerdown=${(evt: PointerEvent) => {
                   evt.stopImmediatePropagation();
                 }}
+                @dblclick=${(evt: Event) => {
+                  evt.stopImmediatePropagation();
+                }}
               />
               <label for="log-level">Show in app</label>
               <input
