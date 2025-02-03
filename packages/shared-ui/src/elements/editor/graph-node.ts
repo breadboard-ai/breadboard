@@ -58,6 +58,8 @@ const highlightForBoardPortNodeColor = getGlobalColor("--bb-joiner-500");
 
 const missingDetailsTextSize = 12;
 const missingDetailsTextColor = getGlobalColor("--bb-warning-700");
+const noMissingDetailsTextSize = 12;
+const noMissingDetailsTextColor = getGlobalColor("--bb-neutral-500");
 
 const edgeTextColor = getGlobalColor("--bb-neutral-600");
 const edgeColor = getGlobalColor("--bb-neutral-200");
@@ -133,6 +135,20 @@ export class GraphNode extends PIXI.Container {
       fill: missingDetailsTextColor,
       align: "left",
       lineHeight: 24,
+    },
+  });
+
+  #noMissingDetailsInfoLabel = new PIXI.HTMLText({
+    text: Strings.from("LABEL_NO_MISSING_ITEM_INFO"),
+    style: {
+      fontFamily: "Arial",
+      fontSize: noMissingDetailsTextSize,
+      fill: noMissingDetailsTextColor,
+      align: "left",
+      lineHeight: 16,
+      wordWrap: true,
+      wordWrapWidth: 224,
+      breakWords: false,
     },
   });
 
@@ -1350,8 +1366,9 @@ export class GraphNode extends PIXI.Container {
     return true;
   }
 
-  #removeMissingDetailsWarning() {
+  #removeDetailsWarningAndInfo() {
     this.#missingDetails.removeFromParent();
+    this.#noMissingDetailsInfoLabel.removeFromParent();
   }
 
   #drawMissingDetailsWarning() {
@@ -1363,6 +1380,14 @@ export class GraphNode extends PIXI.Container {
     this.#missingDetailsButton.y = 28;
     this.#missingDetailsButton.icon = "add";
     this.#missingDetailsButton.title = Strings.from("COMMAND_ADD_MISSING_ITEM");
+  }
+
+  #drawNoMissingDetailsInfo() {
+    this.addChild(this.#noMissingDetailsInfoLabel);
+
+    this.#noMissingDetailsInfoLabel.x = 12;
+    this.#noMissingDetailsInfoLabel.y = 48;
+    this.#noMissingDetailsInfoLabel.eventMode = "none";
   }
 
   #draw() {
@@ -1382,12 +1407,26 @@ export class GraphNode extends PIXI.Container {
 
       portsOutStartY = this.#drawInPorts(portStartY + this.#padding);
       if (portsOutStartY > portStartY + this.#padding) {
-        this.#removeMissingDetailsWarning();
+        this.#removeDetailsWarningAndInfo();
         portsOutStartY += this.#padding;
       } else {
         // Here we have no preview value.
         if (this.#isContextOnly()) {
-          this.#drawMissingDetailsWarning();
+          const presentationHints: string[] = (this.inPorts ?? [])
+            .map((port) => {
+              const behavior = port.schema.behavior || [];
+              return behavior.filter((behavior) =>
+                behavior.startsWith("hint-")
+              ) as string[];
+            })
+            .flat();
+
+          this.#removeDetailsWarningAndInfo();
+          if (presentationHints.includes("hint-preview")) {
+            this.#drawMissingDetailsWarning();
+          } else if (presentationHints.length === 0) {
+            this.#drawNoMissingDetailsInfo();
+          }
         }
       }
 
