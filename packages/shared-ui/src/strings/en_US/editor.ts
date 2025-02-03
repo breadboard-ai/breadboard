@@ -45,6 +45,9 @@ export default {
   LABEL_MISSING_ITEM: {
     str: "Missing details for this component",
   },
+  LABEL_NO_MISSING_ITEM_INFO: {
+    str: "There is no additional information needed for this component.",
+  },
 
   // Queries.
 
