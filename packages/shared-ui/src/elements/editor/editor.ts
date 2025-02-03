@@ -106,6 +106,7 @@ const QUICK_ADD_ADJUSTMENT = 40;
 const HEADER_PORT_ADJSUTMENT = 20;
 const QUICK_ADD_HEIGHT = 400;
 const HEADER_HEIGHT = 44;
+const MIN_QUICK_ADD_Y = 20;
 
 function getDefaultConfiguration(type: string): NodeConfiguration | undefined {
   if (type !== "input" && type !== "output") {
@@ -268,9 +269,9 @@ export class Editor extends LitElement implements DragConnectorReceiver {
   #componentLibraryConfiguration: {
     x: number;
     y: number;
-    id: NodeIdentifier;
-    portId: PortIdentifier;
     freeDrop: boolean;
+    id: NodeIdentifier | null;
+    portId: PortIdentifier | null;
     subGraphId: GraphIdentifier | null;
   } | null = null;
 
@@ -323,6 +324,8 @@ export class Editor extends LitElement implements DragConnectorReceiver {
     this.#top = bounds.top;
     this.#left = bounds.left;
   });
+
+  #showDefaultAdd = false;
 
   static styles = css`
     @keyframes slideIn {
@@ -380,6 +383,29 @@ export class Editor extends LitElement implements DragConnectorReceiver {
 
     :host([hideRibbonMenu="true"]) bb-graph-ribbon-menu {
       display: none;
+    }
+
+    #default-add {
+      position: absolute;
+      top: 100px;
+      left: 50%;
+      translate: -50% 0;
+      z-index: 4;
+      border: 1px solid var(--bb-neutral-300);
+      color: var(--bb-neutral-600);
+      font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
+        var(--bb-font-family);
+      border-radius: var(--bb-grid-size-16);
+      background: transparent var(--bb-icon-library-add) 8px center / 20px 20px
+        no-repeat;
+      padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-8);
+      transition: border 0.2s cubic-bezier(0, 0, 0.3, 1);
+      height: var(--bb-grid-size-7);
+      cursor: pointer;
+
+      &:hover {
+        border: 1px solid var(--bb-neutral-500);
+      }
     }
 
     #content {
@@ -704,7 +730,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       top: 57px;
       left: 50%;
       transform: translateX(-50%) translateX(40px);
-      z-index: 2;
+      z-index: 8;
       animation: slideIn 0.2s cubic-bezier(0, 0, 0.3, 1) forwards;
 
       &[detached="true"] {
@@ -1090,6 +1116,11 @@ export class Editor extends LitElement implements DragConnectorReceiver {
   #configs = new Map<GraphIdentifier, GraphOpts>();
   protected willUpdate(): void {
     this.#configs = this.#convertGraphsToConfigs(this.graph);
+
+    const mainBoardConfig = this.#configs.get(MAIN_BOARD_ID);
+    if (mainBoardConfig) {
+      this.#showDefaultAdd = mainBoardConfig.nodes.length === 0;
+    }
   }
 
   #convertGraphsToConfigs(
@@ -1576,7 +1607,10 @@ export class Editor extends LitElement implements DragConnectorReceiver {
     const visual: NodeMetadata["visual"] = {};
     const graphId =
       this.#componentLibraryConfiguration?.subGraphId ?? this.subGraphId ?? "";
-    if (this.#componentLibraryConfiguration) {
+    if (
+      this.#componentLibraryConfiguration &&
+      this.#componentLibraryConfiguration.id
+    ) {
       if (this.#componentLibraryConfiguration.freeDrop) {
         const { x, y } = this.#graphRendererRef.value.toContainerCoordinates({
           x: this.#componentLibraryConfiguration.x,
@@ -1591,9 +1625,10 @@ export class Editor extends LitElement implements DragConnectorReceiver {
 
         visual.x = Math.round(x / GRID_SIZE) * GRID_SIZE;
         visual.y = Math.round(y / GRID_SIZE) * GRID_SIZE;
-      } else {
+      } else if (this.#componentLibraryConfiguration.id) {
         const sourceVisual = this.graph
           ?.nodeById(this.#componentLibraryConfiguration.id)
+
           ?.metadata().visual as Record<string, number> | undefined;
         if (sourceVisual) {
           visual.y = sourceVisual.y;
@@ -1630,17 +1665,20 @@ export class Editor extends LitElement implements DragConnectorReceiver {
 
     if (this.#componentLibraryConfiguration) {
       const { id: sourceId, portId } = this.#componentLibraryConfiguration;
+
       // Add an edge.
-      edits.push({
-        type: "addedge",
-        graphId,
-        edge: {
-          from: sourceId,
-          to: id,
-          out: portId,
-          in: portId,
-        },
-      });
+      if (portId && sourceId) {
+        edits.push({
+          type: "addedge",
+          graphId,
+          edge: {
+            from: sourceId,
+            to: id,
+            out: portId,
+            in: portId,
+          },
+        });
+      }
     }
 
     this.dispatchEvent(
@@ -1652,6 +1690,8 @@ export class Editor extends LitElement implements DragConnectorReceiver {
     );
 
     if (this.#componentLibraryConfiguration) {
+      let animate = this.#componentLibraryConfiguration.id !== null;
+
       // By default we will zoom to the currently-selected node. We therefore
       // wait a frame so that the newly-added node is selected.
       requestAnimationFrame(() => {
@@ -1659,8 +1699,10 @@ export class Editor extends LitElement implements DragConnectorReceiver {
           return;
         }
 
-        let animate = true;
-        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        if (
+          window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+          this.#componentLibraryConfiguration?.freeDrop === false
+        ) {
           animate = false;
         }
 
@@ -1686,6 +1728,10 @@ export class Editor extends LitElement implements DragConnectorReceiver {
         y -= QUICK_ADD_HEIGHT * 0.5;
         if (y + QUICK_ADD_HEIGHT > window.innerHeight) {
           y = window.innerHeight - QUICK_ADD_HEIGHT - QUICK_ADD_ADJUSTMENT;
+        }
+
+        if (y < MIN_QUICK_ADD_Y) {
+          y = MIN_QUICK_ADD_Y;
         }
 
         this.style.setProperty("--component-library-x", `${x}px`);
@@ -1748,6 +1794,27 @@ export class Editor extends LitElement implements DragConnectorReceiver {
           resolve();
         }
       });
+    }
+
+    let defaultAdd: HTMLTemplateResult | symbol = nothing;
+    if (this.#showDefaultAdd) {
+      defaultAdd = html`<button
+        id="default-add"
+        @click=${async (evt: PointerEvent) => {
+          await storeReady;
+          this.#componentLibraryConfiguration = {
+            x: evt.pageX,
+            y: evt.pageY,
+            freeDrop: false,
+            id: null,
+            subGraphId: null,
+            portId: null,
+          };
+          this.showComponentLibrary = true;
+        }}
+      >
+        ${Strings.from("LABEL_ADD_ITEM")}
+      </button>`;
     }
 
     let componentPicker: HTMLTemplateResult | symbol = nothing;
@@ -1901,7 +1968,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
             </div>
           </div>`
         : nothing}
-      ${componentLibrary} ${componentPicker}
+      ${defaultAdd} ${componentLibrary} ${componentPicker}
       <bb-graph-renderer
         ${ref(this.#graphRendererRef)}
         .offsetZoom=${this.offsetZoom}

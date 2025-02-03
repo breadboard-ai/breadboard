@@ -22,7 +22,7 @@ export class GraphButton extends PIXI.Container {
   #background = new PIXI.Graphics();
   #icon = "";
   #iconSprite: PIXI.Sprite | null = null;
-  #label = new PIXI.Text({
+  #title = new PIXI.Text({
     text: "",
     style: {
       fontFamily: "Arial",
@@ -37,10 +37,10 @@ export class GraphButton extends PIXI.Container {
     super();
 
     this.#background.cursor = "pointer";
-    this.#label.eventMode = "none";
+    this.#title.eventMode = "none";
 
     this.addChild(this.#background);
-    this.addChild(this.#label);
+    this.addChild(this.#title);
 
     this.#background.addEventListener("pointerover", () => {
       this.hovering = true;
@@ -60,16 +60,16 @@ export class GraphButton extends PIXI.Container {
     };
   }
 
-  set label(label: string) {
-    if (label === this.#label.text) {
+  set title(title: string) {
+    if (title === this.#title.text) {
       return;
     }
 
-    this.#label.text = label;
+    this.#title.text = title;
   }
 
-  get label() {
-    return this.#label.text;
+  get title() {
+    return this.#title.text;
   }
 
   set icon(icon: string) {
@@ -87,7 +87,7 @@ export class GraphButton extends PIXI.Container {
       this.#iconSprite = new PIXI.Sprite(texture);
       this.#iconSprite.scale.x = ICON_SCALE;
       this.#iconSprite.scale.y = ICON_SCALE;
-      this.#iconSprite.x = 4;
+      this.#iconSprite.x = 8;
       this.#iconSprite.y = 2;
       this.#iconSprite.alpha = 0.6;
 
@@ -112,15 +112,15 @@ export class GraphButton extends PIXI.Container {
   #draw() {
     let padding = 16;
     if (this.#iconSprite) {
-      this.#label.x = 24;
-      padding = 36;
+      this.#title.x = 32;
+      padding = 44;
     } else {
-      this.#label.x = 8;
+      this.#title.x = 8;
     }
 
     this.#background.clear();
     this.#background.beginPath();
-    this.#background.roundRect(0, 0, this.#label.width + padding, 24);
+    this.#background.roundRect(0, 0, this.#title.width + padding, 24);
     this.#background.closePath();
     this.#background.fill({
       color: this.#hovering ? hoverBackgroundColor : backgroundColor,

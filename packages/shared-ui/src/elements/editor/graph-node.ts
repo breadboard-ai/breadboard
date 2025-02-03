@@ -1362,7 +1362,7 @@ export class GraphNode extends PIXI.Container {
 
     this.#missingDetailsButton.y = 28;
     this.#missingDetailsButton.icon = "add";
-    this.#missingDetailsButton.label = Strings.from("COMMAND_ADD_MISSING_ITEM");
+    this.#missingDetailsButton.title = Strings.from("COMMAND_ADD_MISSING_ITEM");
   }
 
   #draw() {

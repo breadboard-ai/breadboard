@@ -797,6 +797,9 @@ export class NodeConfigurationOverlay extends LitElement {
                 placeholder="Enter the title for this component"
                 .value=${this.configuration.metadata?.title || ""}
                 ?disabled=${this.readOnly}
+                @pointerdown=${(evt: PointerEvent) => {
+                  evt.stopImmediatePropagation();
+                }}
               />
               <label for="log-level">Show in app</label>
               <input

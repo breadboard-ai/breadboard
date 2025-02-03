@@ -159,7 +159,7 @@ export class UserInput extends LitElement {
       }
 
       & label {
-        padding: 0 0 var(--bb-grid-size) var(--bb-grid-size-4);
+        padding: 0 0 var(--bb-grid-size) 0;
         font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
           var(--bb-font-family);
         display: block;
@@ -217,7 +217,7 @@ export class UserInput extends LitElement {
       border: 1px solid var(--bb-neutral-300);
 
       font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
-        var(--bb-font-family-mono);
+        var(--bb-font-family);
     }
 
     .item textarea {
