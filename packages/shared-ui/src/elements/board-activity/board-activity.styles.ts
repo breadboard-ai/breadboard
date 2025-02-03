@@ -37,7 +37,9 @@ export const styles = css`
   }
 
   .activity-entry {
-    &.input {
+    &.input,
+    &.output,
+    &.combine-outputs {
       & .run-component {
         color: var(--bb-input-700);
       }
@@ -134,7 +136,9 @@ export const styles = css`
       }
     }
 
-    &.input .node-info::before {
+    &.input .node-info::before,
+    &.output .node-info::before,
+    &.combine-outputs .node-info::before {
       background: var(--bb-input-50);
     }
 
@@ -185,7 +189,9 @@ export const styles = css`
       background: none;
     }
 
-    &.input .node-info summary .details {
+    &.input .node-info summary .details,
+    &.output .node-info summary .details,
+    &.combine-outputs .node-info summary .details {
       color: var(--bb-input-700);
     }
 

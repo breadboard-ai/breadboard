@@ -602,8 +602,9 @@ export class BoardActivity extends LitElement {
             ${repeat(
               this.events,
               (event) => event.id,
-              (event, _idx) => {
+              (event, idx) => {
                 const isNew = !this.#seenItems.has(event.id);
+                const isNewestEntry = idx === (this.events?.length ?? 0) - 1;
                 this.#seenItems.add(event.id);
 
                 let content:
@@ -763,7 +764,7 @@ export class BoardActivity extends LitElement {
                   event.node.type().type() === "input"
                 ) {
                   return html`<section
-                    ${ref(this.#newestEntry)}
+                    ${isNewestEntry ? ref(this.#newestEntry) : nothing}
                     class="user-output"
                   >
                     ${until(content)}
@@ -810,7 +811,7 @@ export class BoardActivity extends LitElement {
                       ],
                       () => {
                         return html`<section
-                          ${ref(this.#newestEntry)}
+                          ${isNewestEntry ? ref(this.#newestEntry) : nothing}
                           style="${styleMap(styles)}"
                           class="${classMap(classes)}"
                         >
@@ -821,7 +822,7 @@ export class BoardActivity extends LitElement {
                   }
 
                   return html`<section
-                    ${ref(this.#newestEntry)}
+                    ${isNewestEntry ? ref(this.#newestEntry) : nothing}
                     style="${styleMap(styles)}"
                     class="${classMap(classes)}"
                   >

@@ -52,7 +52,6 @@ export class LLMOutput extends LitElement {
         var(--output-border-color, var(--bb-neutral-300));
       border-radius: var(--output-border-radius, var(--bb-grid-size));
       margin-bottom: var(--bb-grid-size-2);
-      word-break: break-all;
     }
 
     :host([clamped="true"]) {
