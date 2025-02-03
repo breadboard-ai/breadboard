@@ -73,7 +73,7 @@
   },
   "main": "lib/bundle.js",
   "dependencies": {
-    "firebase-admin": "^13.0.0",
+    "firebase-admin": "^13.0.2",
     "firebase-functions": "^6.1.2"
   },
   "devDependencies": {
