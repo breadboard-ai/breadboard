@@ -692,6 +692,7 @@ export const styles = css`
     height: 100%;
     overflow: auto;
     position: relative;
+    scroll-padding-bottom: 60px;
   }
 
   #board-console-container {
