@@ -84,15 +84,9 @@ function create(text: string, tag: string) {
 
 export class GraphNodeOutput extends PIXI.Container {
   #isDirty = true;
-  #label = new PIXI.Text({
-    text: "",
-    style: {
-      fontFamily: "Arial",
-      fontSize: 12,
-      fill: outputTextColor,
-      align: "left",
-    },
-  });
+  #isDrawing = false;
+  #scheduleDraw = false;
+
   #values: OutputValues[] | null = null;
   #presentationHints: string[] = [];
 
@@ -100,8 +94,6 @@ export class GraphNodeOutput extends PIXI.Container {
     super();
 
     this.eventMode = "none";
-
-    this.addChild(this.#label);
 
     this.onRender = () => {
       if (!this.#isDirty) {
@@ -127,6 +119,17 @@ export class GraphNodeOutput extends PIXI.Container {
       return;
     }
 
+    const isGoingToPlaceholder = values === null;
+    const isGoingToValues = this.#values === null && values !== null;
+    const hasFewerValues =
+      values !== null &&
+      this.#values !== null &&
+      values.length < this.#values.length;
+
+    if (isGoingToPlaceholder || isGoingToValues || hasFewerValues) {
+      this.#clear();
+    }
+
     this.#values = values;
     this.#isDirty = true;
   }
@@ -149,7 +152,9 @@ export class GraphNodeOutput extends PIXI.Container {
   }
 
   #clear() {
-    for (const child of this.children) {
+    for (let c = this.children.length - 1; c >= 0; c--) {
+      const child = this.children[c];
+
       child.removeFromParent();
       child.destroy({ children: true });
     }
@@ -219,44 +224,67 @@ export class GraphNodeOutput extends PIXI.Container {
     placeholder.addChild(lines);
   }
 
-  #draw() {
-    if (!this.values) {
-      this.#clear();
-
-      const placeholder = new PIXI.Container();
-      placeholder.label = "placeholder";
-
-      for (const hint of this.#presentationHints) {
-        switch (hint) {
-          case "hint-code":
-          case "hint-text":
-            this.#createTextPlaceholder(placeholder);
-            break;
-
-          case "hint-image":
-            this.#createImagePlaceholder(placeholder);
-            break;
-
-          case "hint-multimodal":
-            this.#createTextPlaceholder(placeholder);
-            this.#createImagePlaceholder(placeholder);
-            break;
-
-          default:
-            this.#createDefaultPlaceholder(placeholder);
-            break;
-        }
-      }
-      this.addChild(placeholder);
+  async #draw() {
+    // Because this part of the drawing is async we could receive a draw call
+    // while we are awaiting the previous one to finish. As such we simply mark
+    // this output as needing a redraw and early exit. At the end of the current
+    // draw we reset the flag.
+    if (this.#isDrawing) {
+      this.#scheduleDraw = true;
       return;
-    } else {
-      const placeholder = this.getChildByLabel("placeholder");
-      placeholder?.removeFromParent();
-      placeholder?.destroy({ children: true });
     }
 
-    const newestItem = this.values.at(-1);
+    const endDraw = async () => {
+      this.#isDrawing = false;
+      if (!this.#scheduleDraw || this.#isDirty) {
+        return;
+      }
+
+      this.#scheduleDraw = false;
+      this.#isDirty = true;
+    };
+
+    this.#isDrawing = true;
+
+    // Take a copy of values in case they change while we are rendering.
+    const values = this.values;
+
+    if (!values) {
+      if (!this.getChildByLabel("placeholder")) {
+        const placeholder = new PIXI.Container();
+        placeholder.label = "placeholder";
+
+        for (const hint of this.#presentationHints) {
+          switch (hint) {
+            case "hint-code":
+            case "hint-text":
+              this.#createTextPlaceholder(placeholder);
+              break;
+
+            case "hint-image":
+              this.#createImagePlaceholder(placeholder);
+              break;
+
+            case "hint-multimodal":
+              this.#createTextPlaceholder(placeholder);
+              this.#createImagePlaceholder(placeholder);
+              break;
+
+            default:
+              this.#createDefaultPlaceholder(placeholder);
+              break;
+          }
+        }
+
+        this.addChild(placeholder);
+      }
+      endDraw();
+      return;
+    }
+
+    const newestItem = values.at(-1);
     if (!newestItem) {
+      endDraw();
       return;
     }
 
@@ -273,10 +301,10 @@ export class GraphNodeOutput extends PIXI.Container {
       }
 
       if (!newestAddition.parts) {
-        return Promise.resolve([]);
+        continue;
       }
 
-      Promise.all(
+      const renderables: Array<PIXI.ContainerChild | null> = await Promise.all(
         newestAddition.parts.map((part, idx) => {
           const item = this.getChildByLabel(`${id}-${idx}`);
           if (item) {
@@ -351,18 +379,20 @@ export class GraphNodeOutput extends PIXI.Container {
             }
           });
         })
-      ).then((renderables: Array<PIXI.ContainerChild | null>) => {
-        for (const renderable of renderables) {
-          if (!renderable) {
-            continue;
-          }
+      );
 
-          this.addChild(renderable);
-          renderable.y = y;
-
-          y += renderable.height + 16;
+      for (const renderable of renderables) {
+        if (!renderable) {
+          continue;
         }
-      });
+
+        this.addChild(renderable);
+        renderable.y = y;
+
+        y += renderable.height + 16;
+      }
     }
+
+    endDraw();
   }
 }

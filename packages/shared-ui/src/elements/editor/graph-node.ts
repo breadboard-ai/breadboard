@@ -1876,6 +1876,7 @@ export class GraphNode extends PIXI.Container {
     this.#nodeOutput.visible = true;
     this.#grabHandle.visible = true;
 
+    this.#nodeOutput.label = `${this.label}-outputs`;
     this.#nodeOutput.x = 8;
     this.#nodeOutput.y = this.#height - this.#outputHeight + 16;
 
