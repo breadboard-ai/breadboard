@@ -14,6 +14,9 @@ export default {
   COMMAND_CONTINUE: {
     str: "Continue",
   },
+  COMMAND_START: {
+    str: "Test Project",
+  },
 
   // Statuses.
 
