@@ -73,6 +73,14 @@ function create(text: string, tag: string) {
       opts.fontWeight = "500";
       break;
     }
+
+    case "code": {
+      opts.fontFamily = "monospace";
+      opts.whiteSpace = "pre";
+      opts.breakWords = false;
+      opts.wordWrap = false;
+      break;
+    }
   }
 
   return {
@@ -359,17 +367,25 @@ export class GraphNodeOutput extends PIXI.Container {
                   continue;
                 }
 
+                let content = "";
+                if (part.tag === "code") {
+                  content = part.content;
+                  currentTag = "code";
+                }
+
                 if (
-                  part.type !== "inline" ||
-                  (part.content === "" && part.children?.length === 0)
+                  part.type === "inline" &&
+                  (part.content !== "" ||
+                    (part.children && part.children.length > 0))
                 ) {
+                  content = markdown.renderInline(part.content);
+                }
+
+                if (!content) {
                   continue;
                 }
 
-                const { textPart, metrics } = create(
-                  markdown.renderInline(part.content),
-                  currentTag
-                );
+                const { textPart, metrics } = create(content, currentTag);
                 textPart.y = y;
 
                 item.addChild(textPart);
