@@ -33,6 +33,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
     define: {
       LANGUAGE_PACK: JSON.stringify(languagePack),
       ASSET_PACK: "{}",
+      ASSET_PACK_ICONS: "[]",
       MAIN_ICON: JSON.stringify("main.svg"),
     },
     resolve: {
