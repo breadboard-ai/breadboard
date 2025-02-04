@@ -397,19 +397,26 @@ export class TextEditor extends LitElement {
       return;
     }
 
-    this.#editorRef.value.textContent = evt.clipboardData.getData("text");
-    this.#captureEditorValue();
-
-    const selection = this.#getCurrentSelection();
-    if (!selection || !this.#editorRef.value.lastChild) {
+    if (!this.#editorRef.value.lastChild) {
       return;
     }
 
-    const range = new Range();
-    range.setStartAfter(this.#editorRef.value.lastChild);
-    range.collapse(true);
+    const selection = this.#getCurrentSelection();
+    if (!selection || selection.rangeCount === 0) {
+      return;
+    }
+
+    const range = selection.getRangeAt(0);
+    range.deleteContents();
+    range.insertNode(
+      document.createTextNode(evt.clipboardData.getData("text"))
+    );
+    range.collapse(false);
+
     selection.removeAllRanges();
     selection.addRange(range);
+
+    this.#captureEditorValue();
   }
 
   #clearChicletSelections() {
