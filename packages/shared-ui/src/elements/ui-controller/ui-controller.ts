@@ -647,21 +647,6 @@ export class UI extends LitElement {
         break;
       }
 
-      case "components": {
-        sideNavItem = html`${guard(
-          [this.boardServerKits, this.graphStoreUpdateId, this.mainGraphId],
-          () =>
-            html` <bb-component-selector
-              .graphStoreUpdateId=${this.graphStoreUpdateId}
-              .showExperimentalComponents=${showExperimentalComponents}
-              .boardServerKits=${this.boardServerKits}
-              .graphStore=${this.graphStore}
-              .mainGraphId=${this.mainGraphId}
-            ></bb-component-selector>`
-        )}`;
-        break;
-      }
-
       case "console": {
         let showDebugControls = false;
         if (newestEvent && newestEvent.type === "node") {

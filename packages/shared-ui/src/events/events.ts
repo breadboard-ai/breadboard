@@ -312,6 +312,7 @@ export class DelayEvent extends Event {
   }
 }
 
+/** @deprecated */
 export class DragConnectorStartEvent extends Event {
   static eventName = "bbdragconnectorstart";
 
@@ -323,6 +324,7 @@ export class DragConnectorStartEvent extends Event {
   }
 }
 
+/** @deprecated */
 export class DragConnectorCancelledEvent extends Event {
   static eventName = "bbdragconnectorcancelled";
 
@@ -925,6 +927,7 @@ export class MultiEditEvent extends Event {
   }
 }
 
+/** @deprecated */
 export class EdgeValueSelectedEvent extends Event {
   static eventName = "bbedgevalueselected";
 

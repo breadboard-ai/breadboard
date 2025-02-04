@@ -23,7 +23,6 @@ import {
   createRunObserver,
   GraphDescriptor,
   BoardServer,
-  InspectableEdge,
   InspectableRun,
   InspectableRunSequenceEntry,
   NodeConfiguration,
@@ -181,10 +180,6 @@ export class Main extends LitElement {
   #commentValueData: BreadboardUI.Types.CommentConfiguration | null = null;
 
   @state()
-  accessor showEdgeValue = false;
-  #edgeValueData: BreadboardUI.Types.EdgeValueConfiguration | null = null;
-
-  @state()
   accessor boardEditOverlayInfo: {
     tabId: TabId;
     title: string;
@@ -238,7 +233,6 @@ export class Main extends LitElement {
 
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
   #tooltipRef: Ref<BreadboardUI.Elements.Tooltip> = createRef();
-  #dragConnectorRef: Ref<BreadboardUI.Elements.DragConnector> = createRef();
   #boardId = 0;
   #boardPendingSave = false;
   #tabSaveId = new Map<
@@ -834,7 +828,6 @@ export class Main extends LitElement {
     this.showBoardServerAddOverlay = false;
     this.showSaveAsDialog = false;
     this.showNodeConfigurator = false;
-    this.showEdgeValue = false;
     this.showCommentEditor = false;
   }
 
@@ -916,7 +909,6 @@ export class Main extends LitElement {
       target instanceof HTMLSelectElement ||
       target instanceof HTMLCanvasElement ||
       target instanceof BreadboardUI.Elements.ModuleEditor ||
-      target instanceof BreadboardUI.Elements.ActivityLog ||
       (target instanceof HTMLElement &&
         (target.contentEditable === "true" ||
           target.contentEditable === "plaintext-only"))
@@ -1979,7 +1971,6 @@ export class Main extends LitElement {
       this.showBoardServerAddOverlay ||
       this.showSaveAsDialog ||
       this.showNodeConfigurator ||
-      this.showEdgeValue ||
       this.showCommentEditor ||
       this.showOpenBoardOverlay ||
       this.showCommandPalette ||
@@ -2414,48 +2405,6 @@ export class Main extends LitElement {
           ></bb-node-configuration-overlay>`;
         }
 
-        let edgeValueOverlay: HTMLTemplateResult | symbol = nothing;
-        if (this.showEdgeValue) {
-          // Ensure that the edge has the latest values.
-          const edge = this.#edgeValueData?.edge ?? null;
-          const nodeValue = edge?.from.descriptor.id ?? null;
-          const nodeType = edge?.from.descriptor.type ?? "unknown";
-          const canRunNode = nodeValue
-            ? topGraphResult.nodeInformation.canRunNode(nodeValue)
-            : false;
-          if (this.#edgeValueData && edge) {
-            const info =
-              topGraphResult.edgeValues.get(edge as InspectableEdge) ?? null;
-
-            this.#edgeValueData = { ...this.#edgeValueData, info };
-          }
-
-          edgeValueOverlay = html`<bb-edge-value-overlay
-            .canRunNode=${canRunNode}
-            .showRegenerateEdgeValueButton=${nodeType !== "input"}
-            .readOnly=${topGraphResult.status !== "stopped"}
-            .edgeValue=${this.#edgeValueData}
-            .graph=${this.tab?.graph}
-            .subGraphId=${this.tab?.subGraphId}
-            .boardServers=${this.#boardServers}
-            @bbrunisolatednode=${async (
-              evt: BreadboardUI.Events.RunIsolatedNodeEvent
-            ) => {
-              await this.#attemptNodeRun(evt.id);
-            }}
-            @bbedgevalueupdate=${(
-              evt: BreadboardUI.Events.EdgeValueUpdateEvent
-            ) => {
-              // TODO: Process this for the EditableRun.
-              console.log(evt);
-              this.showEdgeValue = false;
-            }}
-            @bboverlaydismissed=${() => {
-              this.showEdgeValue = false;
-            }}
-          ></bb-edge-value-overlay>`;
-        }
-
         let commentOverlay: HTMLTemplateResult | symbol = nothing;
         if (this.showCommentEditor) {
           commentOverlay = html`<bb-comment-overlay
@@ -2478,13 +2427,6 @@ export class Main extends LitElement {
               this.showCommentEditor = false;
             }}
           ></bb-comment-overlay>`;
-        }
-
-        let previewOverlay: HTMLTemplateResult | symbol = nothing;
-        if (this.previewOverlayURL) {
-          previewOverlay = html`<bb-overlay @bboverlaydismissed=${() => {
-            this.previewOverlayURL = null;
-          }}><iframe src=${this.previewOverlayURL.href}></bb-overlay>`;
         }
 
         let openDialogOverlay: HTMLTemplateResult | symbol = nothing;
@@ -3183,17 +3125,6 @@ export class Main extends LitElement {
                   new BreadboardUI.Events.StartEvent(evt.url)
                 );
               }}
-              @bbdragconnectorstart=${(
-                evt: BreadboardUI.Events.DragConnectorStartEvent
-              ) => {
-                if (!this.#dragConnectorRef.value) {
-                  return;
-                }
-
-                this.#dragConnectorRef.value.start = evt.location;
-                this.#dragConnectorRef.value.source = evt.graphId;
-                this.showBoardReferenceMarkers = true;
-              }}
               @bbworkspaceselectionmove=${async (
                 evt: BreadboardUI.Events.WorkspaceSelectionMoveEvent
               ) => {
@@ -3568,13 +3499,6 @@ export class Main extends LitElement {
                   subGraphId: evt.subGraphId,
                 };
               }}
-              @bbedgevalueselected=${(
-                evt: BreadboardUI.Events.EdgeValueSelectedEvent
-              ) => {
-                this.showEdgeValue = true;
-                // TODO: Figure out what ID to apply here so that the edge update event is meaningful.
-                this.#edgeValueData = { id: "unknown-edge", ...evt };
-              }}
               @bbnodeactivityselected=${(
                 evt: BreadboardUI.Events.NodeActivitySelectedEvent
               ) => {
@@ -3819,30 +3743,6 @@ export class Main extends LitElement {
             ></bb-command-palette>`
           : nothing;
 
-        const dragConnector = html`<bb-drag-connector
-          ${ref(this.#dragConnectorRef)}
-          @bbnodecreatereference=${async (
-            evt: BreadboardUI.Events.NodeCreateReferenceEvent
-          ) => {
-            if (!this.tab) {
-              return;
-            }
-
-            await this.#runtime.edit.createReference(
-              this.tab,
-              evt.graphId,
-              evt.nodeId,
-              evt.portId,
-              evt.value
-            );
-
-            this.showBoardReferenceMarkers = false;
-          }}
-          @bbdragconnectorcancelled=${() => {
-            this.showBoardReferenceMarkers = false;
-          }}
-        ></bb-drag-connector>`;
-
         return [
           ui,
           boardOverlay,
@@ -3850,15 +3750,12 @@ export class Main extends LitElement {
           firstRunOverlay,
           showNewWorkspaceItemOverlay,
           boardServerAddOverlay,
-          previewOverlay,
           nodeConfiguratorOverlay,
-          edgeValueOverlay,
           commentOverlay,
           saveAsDialogOverlay,
           openDialogOverlay,
           commandPalette,
           modulePalette,
-          dragConnector,
           boardOverflowMenu,
         ];
       });

@@ -10,11 +10,11 @@ import { isInlineData, isTextCapabilityPart } from "@google-labs/breadboard";
 import { consume } from "@lit/context";
 import { LitElement, css, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { renderMarkdownToHtmlString } from "../../directives/markdown.js";
-import { ToastEvent, ToastType } from "../../events/events.js";
-import { toolbarStyles } from "../../styles/toolbar-styles.js";
-import { tokenVendorContext } from "../elements.js";
-import { appendToDocUsingDriveKit } from "../google-drive/append-to-doc-using-drive-kit.js";
+import { renderMarkdownToHtmlString } from "../../../directives/markdown.js";
+import { ToastEvent, ToastType } from "../../../events/events.js";
+import { toolbarStyles } from "../../../styles/toolbar-styles.js";
+import { tokenVendorContext } from "../../elements.js";
+import { appendToDocUsingDriveKit } from "../../google-drive/append-to-doc-using-drive-kit.js";
 import { classMap } from "lit/directives/class-map.js";
 
 const CAN_COPY = "ClipboardItem" in window;

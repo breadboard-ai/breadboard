@@ -6,6 +6,7 @@
 import {
   InspectablePort,
   InspectableRunEvent,
+  isImageURL,
   isLLMContent,
   isLLMContentArray,
   OutputValues,
@@ -42,14 +43,6 @@ export class EventDetails extends LitElement {
       color: var(--bb-inputs-700);
     }
   `;
-
-  #isImageURL(nodeValue: unknown): nodeValue is { image_url: string } {
-    if (typeof nodeValue !== "object" || !nodeValue) {
-      return false;
-    }
-
-    return "image_url" in nodeValue;
-  }
 
   render() {
     if (!this.event || this.event.type !== "node") {
@@ -100,7 +93,7 @@ export class EventDetails extends LitElement {
                         ></bb-llm-output>`;
                       }
                     }
-                  } else if (this.#isImageURL(nodeValue)) {
+                  } else if (isImageURL(nodeValue)) {
                     value = html`<img src=${nodeValue.image_url} />`;
                   } else {
                     value = html`<bb-json-tree
