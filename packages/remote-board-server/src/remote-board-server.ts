@@ -225,7 +225,7 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
     }
 
     if (project.url.href === url.href) {
-      const request = createRequest(url, null, "GET");
+      const request = createRequest(url, this.user.apiKey, "GET");
       const response = await fetch(request);
       const graph = await response.json();
       return graph;
