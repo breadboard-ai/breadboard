@@ -11,7 +11,7 @@ import {
 } from "@google-labs/breadboard";
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { markdown } from "../../directives/markdown";
+import { markdown } from "../../../directives/markdown";
 import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
 

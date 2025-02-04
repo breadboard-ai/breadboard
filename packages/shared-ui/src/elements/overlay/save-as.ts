@@ -134,7 +134,7 @@ export class SaveAsOverlay extends LitElement {
       background-size: 16px 16px;
       background-position: 8px 4px;
       background-repeat: no-repeat;
-      color: #246db5;
+      color: var(--bb-neutral-0);
       border-radius: 20px;
       border: none;
       height: 24px;
