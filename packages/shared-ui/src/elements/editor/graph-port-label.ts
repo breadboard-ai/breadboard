@@ -336,14 +336,12 @@ export class GraphPortLabel extends PIXI.Container {
       this.#valuePreview.visible = true;
       this.#width = PREVIEW_WIDTH;
       this.#height = this.#spacing + this.#valuePreview.height;
-    } else {
-      if (this.#icon) {
-        this.#icon.visible = true;
-        this.#icon.x = 0;
-        this.#icon.y = 0;
-        this.#label.x = 20;
-        this.#label.y = 1;
-      }
+    } else if (this.#icon) {
+      this.#icon.visible = true;
+      this.#icon.x = 0;
+      this.#icon.y = 0;
+      this.#label.x = 20;
+      this.#label.y = 1;
     }
   }
 
@@ -473,7 +471,10 @@ export class GraphPortLabel extends PIXI.Container {
   }
 
   #updateIcon(icon: string | null) {
-    if (!icon) return;
+    if (!icon) {
+      this.#icon?.removeFromParent();
+      return;
+    }
 
     this.#iconValue = icon;
     const texture = GraphAssets.instance().get(icon);
@@ -486,5 +487,7 @@ export class GraphPortLabel extends PIXI.Container {
       this.#icon.scale.x = ICON_SCALE;
       this.#icon.scale.y = ICON_SCALE;
     }
+
+    this.addChild(this.#icon);
   }
 }

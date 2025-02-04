@@ -51,6 +51,9 @@ const borderColor = getGlobalColor("--bb-neutral-500");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
 const portsDividerColor = getGlobalColor("--bb-neutral-100");
 
+const updatingBorderColor = getGlobalColor("--bb-neutral-500");
+const updatingHeaderColor = getGlobalColor("--bb-neutral-100");
+
 const grabHandleColor = getGlobalColor("--bb-neutral-300");
 const nodeBackgroundColor = getGlobalColor("--bb-neutral-0");
 const highlightForAdHocNodeColor = getGlobalColor("--bb-boards-500");
@@ -140,6 +143,20 @@ export class GraphNode extends PIXI.Container {
 
   #noMissingDetailsInfoLabel = new PIXI.HTMLText({
     text: Strings.from("LABEL_NO_MISSING_ITEM_INFO"),
+    style: {
+      fontFamily: "Arial",
+      fontSize: noMissingDetailsTextSize,
+      fill: noMissingDetailsTextColor,
+      align: "left",
+      lineHeight: 16,
+      wordWrap: true,
+      wordWrapWidth: 224,
+      breakWords: false,
+    },
+  });
+
+  #updatingDetailsInfoLabel = new PIXI.HTMLText({
+    text: Strings.from("LABEL_UPDATING"),
     style: {
       fontFamily: "Arial",
       fontSize: noMissingDetailsTextSize,
@@ -1181,6 +1198,7 @@ export class GraphNode extends PIXI.Container {
       return;
     }
     this.#updating = value;
+    this.#isDirty = true;
   }
 
   #hasVisibleOutputs() {
@@ -1390,6 +1408,18 @@ export class GraphNode extends PIXI.Container {
     this.#noMissingDetailsInfoLabel.eventMode = "none";
   }
 
+  #drawUpdatingDetailsInfo() {
+    this.addChild(this.#updatingDetailsInfoLabel);
+
+    this.#updatingDetailsInfoLabel.x = 12;
+    this.#updatingDetailsInfoLabel.y = 52;
+    this.#updatingDetailsInfoLabel.eventMode = "none";
+  }
+
+  #removeUpdatingDetailsInfo() {
+    this.#updatingDetailsInfoLabel.removeFromParent();
+  }
+
   #draw() {
     this.forceUpdateDimensions();
     const portStartY = this.#drawTitle();
@@ -1424,7 +1454,7 @@ export class GraphNode extends PIXI.Container {
           this.#removeDetailsWarningAndInfo();
           if (presentationHints.includes("hint-preview")) {
             this.#drawMissingDetailsWarning();
-          } else if (presentationHints.length === 0) {
+          } else if (presentationHints.length === 0 && !this.#updating) {
             this.#drawNoMissingDetailsInfo();
           }
         }
@@ -1435,6 +1465,14 @@ export class GraphNode extends PIXI.Container {
         portsOutStartY = null;
       }
     }
+
+    if (this.#updating) {
+      this.#hideAllPorts();
+      this.#drawUpdatingDetailsInfo();
+    } else {
+      this.#removeUpdatingDetailsInfo();
+    }
+
     this.#drawBackground(portsOutStartY);
     this.#drawCollapsedPortListIfNeeded();
     this.#drawRunnerButtonIfNeeded();
@@ -1674,11 +1712,13 @@ export class GraphNode extends PIXI.Container {
     );
     this.#background.closePath();
     this.#background.fill({
-      color: this.#highlightForAdHoc
-        ? this.#highlightForAdHocColor
-        : this.#highlightForBoardPort
-          ? this.#highlightForBoardPortColor
-          : this.#colorScheme.mainBorder,
+      color: this.#updating
+        ? updatingBorderColor
+        : this.#highlightForAdHoc
+          ? this.#highlightForAdHocColor
+          : this.#highlightForBoardPort
+            ? this.#highlightForBoardPortColor
+            : this.#colorScheme.mainBorder,
     });
 
     this.#background.beginPath();
@@ -1690,7 +1730,9 @@ export class GraphNode extends PIXI.Container {
       this.#borderRadius
     );
     this.#background.closePath();
-    this.#background.fill({ color: this.#backgroundColor });
+    this.#background.fill({
+      color: this.#backgroundColor,
+    });
 
     if (this.#titleText) {
       const titleHeight =
@@ -1712,14 +1754,22 @@ export class GraphNode extends PIXI.Container {
         this.#borderRadius
       );
       this.#background.closePath();
-      this.#background.fill({ color: this.#colorScheme.background });
+      this.#background.fill({
+        color: this.#updating
+          ? updatingHeaderColor
+          : this.#colorScheme.background,
+      });
 
       if (!this.collapsed) {
         this.#background.beginPath();
         this.#background.moveTo(0, titleHeight);
         this.#background.lineTo(this.#width, titleHeight);
         this.#background.closePath();
-        this.#background.stroke({ color: this.#colorScheme.headerBorder });
+        this.#background.stroke({
+          color: this.#updating
+            ? updatingHeaderColor
+            : this.#colorScheme.headerBorder,
+        });
       }
     }
 
@@ -1731,7 +1781,11 @@ export class GraphNode extends PIXI.Container {
       this.#background.moveTo(0, y);
       this.#background.lineTo(this.#width, y);
       this.#background.closePath();
-      this.#background.stroke({ color: this.#colorScheme.headerBorder });
+      this.#background.stroke({
+        color: this.#updating
+          ? updatingHeaderColor
+          : this.#colorScheme.headerBorder,
+      });
     }
 
     if (portsDivider !== null) {
@@ -1751,13 +1805,21 @@ export class GraphNode extends PIXI.Container {
       this.#background.moveTo(0, y);
       this.#background.lineTo(this.#width, y);
       this.#background.closePath();
-      this.#background.stroke({ color: this.#colorScheme.headerBorder });
+      this.#background.stroke({
+        color: this.#updating
+          ? updatingBorderColor
+          : this.#colorScheme.headerBorder,
+      });
 
       this.#background.beginPath();
       this.#background.moveTo(0, y + 0.5);
       this.#background.rect(0, y + 0.5, this.#width, 4);
       this.#background.closePath();
-      this.#background.fill({ color: this.#colorScheme.background });
+      this.#background.fill({
+        color: this.#updating
+          ? updatingHeaderColor
+          : this.#colorScheme.background,
+      });
     }
   }
 

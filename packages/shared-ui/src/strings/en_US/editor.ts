@@ -48,6 +48,9 @@ export default {
   LABEL_NO_MISSING_ITEM_INFO: {
     str: "There is no additional information needed for this component.",
   },
+  LABEL_UPDATING: {
+    str: "Updating component definition.",
+  },
 
   // Queries.
 
