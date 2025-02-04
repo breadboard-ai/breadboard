@@ -321,7 +321,7 @@
     "vite": "^6.0.11",
     "vite-plugin-full-reload": "^1.2.0",
     "vite-plugin-watch-and-run": "^1.7.3",
-    "vitest": "^3.0.4"
+    "vitest": "^3.0.5"
   },
   "dependencies": {
     "@breadboard-ai/bbrt": "0.1.0",
