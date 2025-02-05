@@ -512,6 +512,24 @@ export type Asset = {
   data: NodeValue;
 };
 
+/**
+ * An identifier to use for imports.
+ */
+export type ImportIdentifier = string;
+
+/**
+ * A declaration of an import.
+ */
+export type Import = {
+  /**
+   * The URL of the import. Must point to a valid `GraphDescriptor`.
+   * Can be relative or absolute.
+   * When relative, the URL will be evaluated relative to the value of the
+   * `url` property of this `GraphDescriptor`.
+   */
+  url: string;
+};
+
 export type GraphCommonProperties = GraphInlineMetadata & {
   /**
    * Metadata associated with the graph.
@@ -552,6 +570,15 @@ export type GraphCommonProperties = GraphInlineMetadata & {
    * is an array of LLM Content items.
    */
   assets?: Record<AssetPath, Asset>;
+
+  /**
+   * An optional collection of imports, or known GraphDescriptors that
+   * this GraphDescriptor uses. Imports are spiritually similar to
+   * `dependencies` in npm or import maps in Web Platform. In addition to
+   * specifying the depenency, they provide a short identifier that can be
+   * used to refer to the import.
+   */
+  imports?: Record<ImportIdentifier, Import>;
 };
 
 /**
