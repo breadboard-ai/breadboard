@@ -79,7 +79,7 @@ class GraphBasedNodeHandler implements NodeHandlerObject {
       }
       const result = await invokeDescriber(
         moduleId,
-        sandbox,
+        graphStore.get(adding.result)!,
         graph,
         inputs || {},
         inputSchema,
