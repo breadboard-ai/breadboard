@@ -103,6 +103,11 @@ export class LLMOutput extends LitElement {
         align-items: center;
         padding: var(--bb-grid-size-2) 0;
       }
+
+      & pre {
+        font: normal var(--bb-body-small) / var(--bb-body-line-height-small)
+          var(--bb-font-family);
+      }
     }
 
     .value img,

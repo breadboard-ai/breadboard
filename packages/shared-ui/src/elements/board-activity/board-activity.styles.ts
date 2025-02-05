@@ -48,7 +48,8 @@ export const styles = css`
     &.generative,
     &.generative-image,
     &.generative-text,
-    &.generative-audio {
+    &.generative-audio,
+    &.generative-code {
       & .run-component {
         color: var(--bb-generative-700);
       }
@@ -75,6 +76,7 @@ export const styles = css`
         var(--bb-grid-size-2);
       background: var(--bb-ui-100);
       color: var(--bb-neutral-900);
+      overflow: scroll;
     }
   }
 
@@ -144,6 +146,7 @@ export const styles = css`
 
     &.generative .node-info::before,
     &.generative-audio .node-info::before,
+    &.generative-code .node-info::before,
     &.generative-text .node-info::before,
     &.generative-image .node-info::before {
       background: var(--bb-generative-50);
@@ -194,6 +197,7 @@ export const styles = css`
 
     &.generative .node-info summary .details,
     &.generative-audio .node-info summary .details,
+    &.generative-code .node-info summary .details,
     &.generative-text .node-info summary .details,
     &.generative-image .node-info summary .details {
       color: var(--bb-generative-700);
@@ -232,6 +236,13 @@ export const styles = css`
   .activity-entry .activity-entry.node.generative-audio summary::before,
   .activity-entry.node.generative-audio h1::before {
     background: transparent var(--bb-add-icon-generative-audio) center center /
+      20px 20px no-repeat;
+  }
+
+  .node.generative-code summary::before,
+  .activity-entry .activity-entry.node.generative-code summary::before,
+  .activity-entry.node.generative-code h1::before {
+    background: transparent var(--bb-add-icon-generative-code) center center /
       20px 20px no-repeat;
   }
 

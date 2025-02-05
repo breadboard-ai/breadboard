@@ -512,12 +512,24 @@ export class TextEditor extends LitElement {
     this.#fastAccessRef.value.classList.remove("active");
   }
 
+  #escape = (str: string) => {
+    const htmlEntities: Record<string, string> = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    };
+
+    return str.replace(/[&<>"']/g, (char) => htmlEntities[char]);
+  };
+
   protected firstUpdated(): void {
     if (!this.#editorRef.value) {
       return;
     }
 
-    this.#editorRef.value.innerHTML = this.#renderableValue;
+    this.#editorRef.value.innerHTML = this.#escape(this.#renderableValue);
 
     if (this.#focusOnFirstRender) {
       this.focus();

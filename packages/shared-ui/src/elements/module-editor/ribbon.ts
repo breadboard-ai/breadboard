@@ -406,6 +406,7 @@ export class ModuleRibbonMenu extends LitElement {
         var(--bb-font-family);
       padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-7);
       cursor: pointer;
+      margin-right: var(--bb-grid-size-2);
     }
 
     #run.running {

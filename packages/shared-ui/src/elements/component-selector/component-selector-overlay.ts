@@ -229,6 +229,11 @@ export class ComponentSelectorOverlay extends LitElement {
                 20px no-repeat;
             }
 
+            &.generative-code {
+              background: var(--bb-add-icon-generative-code) top left / 20px
+                20px no-repeat;
+            }
+
             &.generative-text {
               background: var(--bb-add-icon-generative-text) top left / 20px
                 20px no-repeat;

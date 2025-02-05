@@ -105,6 +105,7 @@ export class NodeConfigurationOverlay extends LitElement {
     :host :has(header.generative),
     :host :has(header.generative-image),
     :host :has(header.generative-audio),
+    :host :has(header.generative-code),
     :host :has(header.generative-text) {
       --background: var(--bb-generative-50);
       --outer-border: var(--bb-generative-600);
@@ -197,6 +198,10 @@ export class NodeConfigurationOverlay extends LitElement {
 
           &.generative-audio::before {
             background-image: var(--bb-add-icon-generative-audio);
+          }
+
+          &.generative-code::before {
+            background-image: var(--bb-add-icon-generative-code);
           }
 
           &.generative-text::before {

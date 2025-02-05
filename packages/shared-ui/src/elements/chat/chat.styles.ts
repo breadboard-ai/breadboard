@@ -164,6 +164,7 @@ export const styles = css`
 
         &.input .title::before,
         &.generative-audio .title::before,
+        &.generative-code .title::before,
         &.generative-image .title::before,
         &.generative-text .title::before,
         &.generative .title::before {
@@ -179,6 +180,11 @@ export const styles = css`
 
         &.generative-audio .title::before {
           background: var(--bb-add-icon-generative-audio) center center / 20px
+            20px no-repeat;
+        }
+
+        &.generative-code .title::before {
+          background: var(--bb-add-icon-generative-code) center center / 20px
             20px no-repeat;
         }
 
