@@ -44,6 +44,8 @@ const createRequest = (
 ) => {
   if (typeof url === "string") {
     url = new URL(url, window.location.href);
+  } else {
+    url = new URL(url);
   }
   if (USE_SIMPLE_REQUESTS) {
     if (apiKey) {

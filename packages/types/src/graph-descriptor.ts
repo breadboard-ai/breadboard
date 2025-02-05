@@ -259,6 +259,8 @@ export type GraphInlineMetadata = {
  * - `generative`: The graph represents a component that uses an LLM
  * - `quick-access`: The graph represents a component that is featured in quick
  *    access menu.
+ * - `private`: Accessing the graph requires authentication (like a server
+ *    API key)
  */
 export type GraphTag =
   | "published"
@@ -268,7 +270,8 @@ export type GraphTag =
   | "deprecated"
   | "core"
   | "generative"
-  | "quick-access";
+  | "quick-access"
+  | "private";
 
 /**
  * Represents graph metadata.

@@ -41,6 +41,9 @@ export class BoardDetailsOverlay extends LitElement {
   accessor boardIsComponent: boolean | null = null;
 
   @property()
+  accessor boardPrivate: boolean | null = null;
+
+  @property()
   accessor subGraphId: string | null = null;
 
   @property()
@@ -445,7 +448,7 @@ export class BoardDetailsOverlay extends LitElement {
         data.get("title") as string,
         data.get("version") as string,
         data.get("description") as string,
-        data.get("status") as "published" | "draft" | null,
+        data.get("status") as "published" | "draft" | "private" | null,
         data.get("tool") === "on",
         data.get("component") === "on",
         this.subGraphId,
@@ -608,6 +611,16 @@ export class BoardDetailsOverlay extends LitElement {
                       >
                         Published
                       </option>
+                      ${this.subGraphId
+                        ? nothing
+                        : html`
+                            <option
+                              value="private"
+                              ?selected=${this.boardPrivate}
+                            >
+                              Private
+                            </option>
+                          `}
                     </select>
 
                     <label class="component" for="is-component"
