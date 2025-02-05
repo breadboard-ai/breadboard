@@ -382,7 +382,7 @@ export class TextEditor extends LitElement {
       String.fromCharCode(32)
     );
 
-    this.#value = value;
+    this.#value = this.#escape(value);
     this.dispatchEvent(new InputEvent("input"));
   }
 
@@ -511,6 +511,16 @@ export class TextEditor extends LitElement {
 
     this.#fastAccessRef.value.classList.remove("active");
   }
+
+  #escape = (str: string) => {
+    const htmlEntities: Record<string, string> = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+    };
+
+    return str.replace(/[&<>]/g, (char) => htmlEntities[char]);
+  };
 
   protected firstUpdated(): void {
     if (!this.#editorRef.value) {

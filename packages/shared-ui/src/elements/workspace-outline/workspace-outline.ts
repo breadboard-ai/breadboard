@@ -1169,6 +1169,16 @@ export class WorkspaceOutline
           return -1;
         if (subItemA.type === "imperative" && subItemB.type === "declarative")
           return 1;
+
+        if (subItemA.title && subItemB.title) {
+          const subItemATitle = subItemA.title.toLocaleLowerCase();
+          const subItemBTitle = subItemB.title.toLocaleLowerCase();
+          return subItemATitle > subItemBTitle
+            ? 1
+            : subItemATitle < subItemBTitle
+              ? -1
+              : 0;
+        }
         return a > b ? 1 : a < b ? -1 : 0;
       }
     );
@@ -1247,8 +1257,7 @@ export class WorkspaceOutline
         return nothing;
       }
 
-      const preventRefencing =
-        subItem.type === "imperative" && !subItem.runnable;
+      const preventRefencing = subItem.type === "imperative";
       return html`<details
         style=${styleMap({
           "--subgraph-border-color": getSubItemColor(id, "border"),

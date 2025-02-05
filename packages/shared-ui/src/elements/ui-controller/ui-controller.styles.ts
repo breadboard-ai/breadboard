@@ -48,7 +48,7 @@ export const styles = css`
       height: var(--bb-grid-size-11);
       max-height: 70vh;
       max-width: 258px;
-      z-index: 3;
+      z-index: 7;
       display: grid;
       grid-template-rows: 42px;
       border-radius: var(--bb-grid-size-2);
@@ -545,7 +545,7 @@ export const styles = css`
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 2;
+    z-index: 6;
     background: var(--bb-ui-50);
   }
 

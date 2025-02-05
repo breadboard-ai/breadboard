@@ -88,7 +88,7 @@ class Template {
 
     this.#renderableValue = raw;
     if (raw === "") {
-      this.#renderableValue = "&nbsp;";
+      this.#renderableValue = String.fromCharCode(160);
     }
   }
 
@@ -135,7 +135,7 @@ class Template {
     }
     // Ensure that if the final item is a chiclet we add a space on.
     if (typeof last !== "string") {
-      this.#renderableValue += "&nbsp;";
+      this.#renderableValue += String.fromCharCode(160);
     }
   }
 

@@ -44,7 +44,7 @@ async function main() {
       metadata: { tags },
       description,
     } = descriptor;
-    if (!tags) {
+    if (!tags || tags.includes("experimental")) {
       continue;
     }
     console.log(`Pushing ${bgl}: ${title}, ${tags}, ${description}`);

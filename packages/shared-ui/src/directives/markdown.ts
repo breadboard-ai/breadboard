@@ -17,10 +17,14 @@ import MarkdownIt from "markdown-it";
 class MarkdownDirective extends Directive {
   #markdownIt = MarkdownIt({
     highlight: (str, lang) => {
-      if (lang !== "html") {
-        return str;
+      switch (lang) {
+        case "html": {
+          return `<iframe class="html-view" srcdoc="${this.#escapeSrcdoc(str)}" sandbox></iframe>`;
+        }
+
+        default:
+          return this.#escapeSrcdoc(str);
       }
-      return `<iframe class="html-view" srcdoc="${this.#escapeSrcdoc(str)}" sandbox></iframe>`;
     },
   });
   #lastValue: string | null = null;
