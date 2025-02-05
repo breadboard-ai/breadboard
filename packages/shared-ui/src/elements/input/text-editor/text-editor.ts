@@ -382,7 +382,7 @@ export class TextEditor extends LitElement {
       String.fromCharCode(32)
     );
 
-    this.#value = value;
+    this.#value = this.#escape(value);
     this.dispatchEvent(new InputEvent("input"));
   }
 
@@ -517,11 +517,9 @@ export class TextEditor extends LitElement {
       "&": "&amp;",
       "<": "&lt;",
       ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;",
     };
 
-    return str.replace(/[&<>"']/g, (char) => htmlEntities[char]);
+    return str.replace(/[&<>]/g, (char) => htmlEntities[char]);
   };
 
   protected firstUpdated(): void {
@@ -529,7 +527,7 @@ export class TextEditor extends LitElement {
       return;
     }
 
-    this.#editorRef.value.innerHTML = this.#escape(this.#renderableValue);
+    this.#editorRef.value.innerHTML = this.#renderableValue;
 
     if (this.#focusOnFirstRender) {
       this.focus();
