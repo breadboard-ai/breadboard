@@ -446,6 +446,21 @@ export class ModuleEditor extends LitElement {
       return nothing;
     }
 
+    const imports = await this.graph?.imports();
+    definitions = new Map(definitions);
+    imports?.forEach((inspectable, name) => {
+      // TODO: Handle import loading errors.
+      if ("$error" in inspectable) return;
+
+      addModules(
+        this.moduleId!,
+        language,
+        inspectable.modules(),
+        definitions,
+        `${name}/`
+      );
+    });
+
     return html`${guard(
       [this.moduleId, this.graph?.raw().url, language, this.#editorId],
       () => {
@@ -913,5 +928,30 @@ export class ModuleEditor extends LitElement {
           `
         : nothing}
     </section>`;
+  }
+}
+
+function addModules(
+  currentModuleId: string,
+  language: ModuleLanguage,
+  modules: InspectableModules,
+  definitions: Map<string, string>,
+  subdir: string = ""
+) {
+  if (language === "typescript" && modules) {
+    // Add each of the other modules.
+    for (const [name, contents] of Object.entries(modules)) {
+      if (name === currentModuleId) {
+        continue;
+      }
+
+      const source = contents.metadata().source;
+      if (source && source.language === "typescript") {
+        definitions.set(`/${subdir}${name}.ts`, source.code);
+        continue;
+      } else {
+        definitions.set(`/${subdir}${name}.js`, contents.code());
+      }
+    }
   }
 }
