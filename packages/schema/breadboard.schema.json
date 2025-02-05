@@ -128,6 +128,16 @@
 					},
 					"description": "An optional collection of assets associated with the graph. Each asset is an array of LLM Content items."
 				},
+				"imports": {
+					"type": "object",
+					"additionalProperties": {
+						"$ref": "#/definitions/Import"
+					},
+					"propertyNames": {
+						"description": "An identifier to use for imports."
+					},
+					"description": "An optional collection of imports, or known GraphDescriptors that this GraphDescriptor uses. Imports are spiritually similar to `dependencies` in npm or import maps in Web Platform. In addition to specifying the depenency, they provide a short identifier that can be used to refer to the import."
+				},
 				"main": {
 					"$ref": "#/definitions/ModuleIdentifier",
 					"description": "The id of the Module that is used as an entry point for this graph. If this value is set, the graph is a \"module graph\": it is backed by code rather than by nodes and edges."
@@ -606,6 +616,20 @@
 				"file"
 			],
 			"description": "Provides information on the structure of the data stored in the asset. All data is stored as LLMContent[], but this field allows us to better identify what is stored.\n\n- \"content\" -- the typical LLMContent[], should be editable in asset   viewer as if the configuration port of a component.\n- \"file\" -- user-uploaded file. In this case, the data must be:   - a single inlineData part with the right mimeType   - of a single LLMContent item"
+		},
+		"Import": {
+			"type": "object",
+			"properties": {
+				"url": {
+					"type": "string",
+					"description": "The URL of the import. Must point to a valid `GraphDescriptor`. Can be relative or absolute. When relative, the URL will be evaluated relative to the value of the `url` property of this `GraphDescriptor`."
+				}
+			},
+			"required": [
+				"url"
+			],
+			"additionalProperties": false,
+			"description": "A declaration of an import."
 		},
 		"Edge": {
 			"type": "object",

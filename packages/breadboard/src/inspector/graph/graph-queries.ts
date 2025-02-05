@@ -7,12 +7,14 @@
 import {
   GraphDescriptor,
   GraphIdentifier,
+  ImportIdentifier,
   ModuleIdentifier,
   NodeIdentifier,
   NodeTypeIdentifier,
 } from "@breadboard-ai/types";
 import {
   InspectableEdge,
+  InspectableGraph,
   InspectableNode,
   InspectableNodeType,
   MutableGraph,
@@ -20,6 +22,8 @@ import {
 import { graphUrlLike } from "../../utils/graph-url-like.js";
 import { createGraphNodeType } from "./kits.js";
 import { VirtualNode } from "./virtual-node.js";
+import { Outcome } from "../../data/types.js";
+import { err } from "../../data/file-system/utils.js";
 
 export { GraphQueries };
 
@@ -112,5 +116,38 @@ class GraphQueries {
         .filter((e) => !e.startsWith(MODULE_EXPORT_PREFIX))
         .map((e) => e.slice(1))
     );
+  }
+
+  async imports(): Promise<Map<ImportIdentifier, Outcome<InspectableGraph>>> {
+    if (this.#graphId || !this.#cache.graph.imports) return new Map();
+
+    const results: Map<ImportIdentifier, Outcome<InspectableGraph>> = new Map();
+    const entries = Object.entries(this.#cache.graph.imports);
+    for (const [name, value] of entries) {
+      let outcome: Outcome<InspectableGraph> = err(
+        `Unknown error resolving import "${name}`
+      );
+      if (!value || !("url" in value)) {
+        outcome = err(`Invalid import value "${JSON.stringify(value)}`);
+      } else {
+        try {
+          const url = new URL(value.url, this.#cache.graph.url).href;
+          const store = this.#cache.store;
+          const adding = store.addByURL(url, [this.#cache.id], {});
+          const mutable = await store.getLatest(adding.mutable);
+          const inspectable = store.inspect(mutable.id, "");
+          if (!inspectable) {
+            outcome = err(`Unable to inspect graph at URL "${url}`);
+          } else {
+            outcome = inspectable;
+          }
+        } catch (e) {
+          outcome = err((e as Error).message);
+        } finally {
+          results.set(name, outcome);
+        }
+      }
+    }
+    return results;
   }
 }

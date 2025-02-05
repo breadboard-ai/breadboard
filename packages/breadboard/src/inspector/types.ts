@@ -7,6 +7,7 @@
 import type {
   GraphIdentifier,
   GraphMetadata,
+  ImportIdentifier,
   Module,
   ModuleCode,
   ModuleIdentifier,
@@ -37,6 +38,7 @@ import {
 } from "../types.js";
 import {
   DataStore,
+  Outcome,
   RunStore,
   SerializedDataStoreGroup,
 } from "../data/types.js";
@@ -350,6 +352,11 @@ export type InspectableGraph = {
    * Returns all graph exports
    */
   graphExports(): Set<GraphIdentifier>;
+  /**
+   * Returns all imports, loading and creating appropriate `InspectableGraph`
+   * instances.
+   */
+  imports(): Promise<Map<ImportIdentifier, Outcome<InspectableGraph>>>;
 };
 
 /**

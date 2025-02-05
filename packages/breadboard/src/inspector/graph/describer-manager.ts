@@ -166,7 +166,7 @@ class NodeTypeDescriberManager implements DescribeResultCacheArgs {
           );
         }
         const result = await invokeMainDescriber(
-          this.mutable.store.sandbox,
+          this.mutable,
           handle.graph(),
           options.inputs!,
           {},
@@ -192,7 +192,7 @@ class NodeTypeDescriberManager implements DescribeResultCacheArgs {
           );
         }
         const result = await invokeMainDescriber(
-          this.mutable.store.sandbox,
+          this.mutable,
           handle.graph(),
           options.inputs!,
           {},
@@ -366,7 +366,7 @@ class GraphDescriberManager {
         let result;
         if (this.handle.main() === moduleId) {
           result = await invokeMainDescriber(
-            sandbox,
+            this.mutable,
             this.mutable.graph,
             inputs,
             inputSchema,
@@ -375,7 +375,7 @@ class GraphDescriberManager {
         } else {
           result = await invokeDescriber(
             moduleId,
-            sandbox,
+            this.mutable,
             this.mutable.graph,
             inputs,
             inputSchema,

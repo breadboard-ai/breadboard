@@ -36,6 +36,7 @@ import {
   FileSystemWriteArguments,
 } from "./data/types.js";
 import { err, ok } from "./data/file-system/utils.js";
+import { MutableGraph } from "./inspector/types.js";
 
 export { addSandboxedRunModule, invokeDescriber, invokeMainDescriber };
 
@@ -143,7 +144,7 @@ function createDescribeHandler(context: NodeHandlerContext) {
     if (addResult.moduleId) {
       const result = await invokeDescriber(
         addResult.moduleId,
-        graphStore.sandbox,
+        mutable,
         mutable.graph,
         inputs.inputs || {},
         inputs.inputSchema,
@@ -194,6 +195,19 @@ function addSandboxedRunModule(sandbox: Sandbox, kits: Kit[]): Kit[] {
                 spec.code,
               ])
             );
+            if (context.graphStore) {
+              const { graphStore } = context;
+              const mainGraphId = graphStore.getByDescriptor(
+                context.outerGraph
+              );
+              if (mainGraphId.success) {
+                const mutable = await graphStore.getLatest(
+                  graphStore.get(mainGraphId.result)!
+                );
+                await addImportedModules(modules, mutable);
+              }
+            }
+
             const module = new SandboxedModule(
               sandbox,
               {
@@ -279,7 +293,7 @@ function addSandboxedRunModule(sandbox: Sandbox, kits: Kit[]): Kit[] {
 
 async function invokeDescriber(
   moduleId: ModuleIdentifier,
-  sandbox: Sandbox,
+  mutable: MutableGraph,
   graph: GraphDescriptor,
   inputs: InputValues,
   inputSchema?: Schema,
@@ -292,7 +306,8 @@ async function invokeDescriber(
   const modules = Object.fromEntries(
     Object.entries(declarations).map(([name, spec]) => [name, spec.code])
   );
-  const module = new SandboxedModule(sandbox, {}, modules);
+  await addImportedModules(modules, mutable);
+  const module = new SandboxedModule(mutable.store.sandbox, {}, modules);
   try {
     const result = (await module.describe(moduleId, {
       inputs,
@@ -321,7 +336,7 @@ async function invokeDescriber(
 }
 
 async function invokeMainDescriber(
-  sandbox: Sandbox,
+  mutable: MutableGraph,
   graph: GraphDescriptor,
   inputs: InputValues,
   inputSchema?: Schema,
@@ -334,7 +349,8 @@ async function invokeMainDescriber(
   const modules = Object.fromEntries(
     Object.entries(declarations).map(([name, spec]) => [name, spec.code])
   );
-  const module = new SandboxedModule(sandbox, {}, modules);
+  await addImportedModules(modules, mutable);
+  const module = new SandboxedModule(mutable.store.sandbox, {}, modules);
   try {
     const result = (await module.describe(main, {
       inputs,
@@ -429,4 +445,22 @@ function maybeUnwrapError(o: void | OutputValues): void | OutputValues {
   }
 
   return { ...o, $error };
+}
+
+async function addImportedModules(
+  modules: Record<string, string>,
+  mutable: MutableGraph
+): Promise<void> {
+  const inspectable = mutable.graphs.get("");
+  if (!inspectable) return;
+
+  const imports = await inspectable.imports();
+  imports.forEach((imported, importName) => {
+    if ("$error" in imported) return;
+
+    for (const [moduleName, spec] of Object.entries(imported.modules())) {
+      const modulePath = `${importName}/${moduleName}`;
+      modules[modulePath] = spec.code();
+    }
+  });
 }

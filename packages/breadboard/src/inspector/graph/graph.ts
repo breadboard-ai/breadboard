@@ -7,6 +7,7 @@
 import {
   GraphIdentifier,
   GraphMetadata,
+  ImportIdentifier,
   InputValues,
   ModuleIdentifier,
 } from "@breadboard-ai/types";
@@ -28,6 +29,7 @@ import {
 } from "../types.js";
 import { GraphDescriberManager } from "./describer-manager.js";
 import { GraphQueries } from "./graph-queries.js";
+import { Outcome } from "../../data/types.js";
 
 export { Graph };
 
@@ -136,5 +138,9 @@ class Graph implements InspectableGraph {
 
   graphExports(): Set<GraphIdentifier> {
     return new GraphQueries(this.#mutable, this.#graphId).graphExports();
+  }
+
+  imports(): Promise<Map<ImportIdentifier, Outcome<InspectableGraph>>> {
+    return new GraphQueries(this.#mutable, this.#graphId).imports();
   }
 }

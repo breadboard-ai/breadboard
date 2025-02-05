@@ -291,6 +291,10 @@
 					"$ref": "#/definitions/SubGraphs",
 					"description": "Sub-graphs that are also described by this graph representation."
 				},
+				"imports": {
+					"$ref": "#/definitions/Record%3CImportIdentifier%2CImport%3E",
+					"description": "An optional collection of imports, or known GraphDescriptors that this GraphDescriptor uses. Imports are spiritually similar to `dependencies` in npm or import maps in Web Platform. In addition to specifying the depenency, they provide a short identifier that can be used to refer to the import."
+				},
 				"inputs": {
 					"$ref": "#/definitions/InputValues",
 					"deprecated": "For internal testing only. Do not use.",
@@ -484,6 +488,20 @@
 				"tool"
 			],
 			"type": "string"
+		},
+		"Import": {
+			"additionalProperties": false,
+			"description": "A declaration of an import.",
+			"properties": {
+				"url": {
+					"description": "The URL of the import. Must point to a valid `GraphDescriptor`. Can be relative or absolute. When relative, the URL will be evaluated relative to the value of the `url` property of this `GraphDescriptor`.",
+					"type": "string"
+				}
+			},
+			"required": [
+				"url"
+			],
+			"type": "object"
 		},
 		"InputIdentifier": {
 			"description": "Unique identifier of a node's input.",
@@ -814,6 +832,15 @@
 			},
 			"propertyNames": {
 				"description": "Unique identifier of a graph."
+			},
+			"type": "object"
+		},
+		"Record<ImportIdentifier,Import>": {
+			"additionalProperties": {
+				"$ref": "#/definitions/Import"
+			},
+			"propertyNames": {
+				"description": "An identifier to use for imports."
 			},
 			"type": "object"
 		},
