@@ -44,6 +44,8 @@ const createRequest = (
 ) => {
   if (typeof url === "string") {
     url = new URL(url, window.location.href);
+  } else {
+    url = new URL(url);
   }
   if (USE_SIMPLE_REQUESTS) {
     if (apiKey) {
@@ -225,7 +227,7 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
     }
 
     if (project.url.href === url.href) {
-      const request = createRequest(url, null, "GET");
+      const request = createRequest(url, this.user.apiKey, "GET");
       const response = await fetch(request);
       const graph = await response.json();
       return graph;

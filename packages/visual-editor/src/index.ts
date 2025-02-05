@@ -186,6 +186,7 @@ export class Main extends LitElement {
     version: string;
     description: string;
     published: boolean | null;
+    private: boolean;
     isTool: boolean | null;
     isComponent: boolean | null;
     subGraphId: string | null;
@@ -1633,7 +1634,7 @@ export class Main extends LitElement {
         evt.title,
         evt.version,
         evt.description,
-        evt.status,
+        evt.status as "published" | "draft",
         evt.isTool,
         evt.isComponent
       );
@@ -1869,6 +1870,7 @@ export class Main extends LitElement {
         tabId: tab.id,
         description: metadata?.description ?? "",
         isTool: false,
+        private: false,
         isComponent: false,
         published: false,
         subGraphId,
@@ -1895,6 +1897,7 @@ export class Main extends LitElement {
       isTool: metadata?.tags?.includes("tool") ?? false,
       isComponent: metadata?.tags?.includes("component") ?? false,
       published: metadata?.tags?.includes("published") ?? false,
+      private: metadata?.tags?.includes("private") ?? false,
       subGraphId,
       moduleId,
       title: title ?? "",
@@ -2032,6 +2035,7 @@ export class Main extends LitElement {
             .boardVersion=${this.boardEditOverlayInfo.version}
             .boardDescription=${this.boardEditOverlayInfo.description}
             .boardPublished=${this.boardEditOverlayInfo.published}
+            .boardPrivate=${this.boardEditOverlayInfo.private}
             .boardIsTool=${this.boardEditOverlayInfo.isTool}
             .boardIsComponent=${this.boardEditOverlayInfo.isComponent}
             .subGraphId=${this.boardEditOverlayInfo.subGraphId}

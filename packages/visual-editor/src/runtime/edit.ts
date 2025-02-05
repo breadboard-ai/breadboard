@@ -764,7 +764,7 @@ export class Edit extends EventTarget {
     title: string,
     version: string,
     description: string,
-    status: "published" | "draft" | null,
+    status: "published" | "draft" | "private" | null,
     isTool: boolean | null,
     isComponent: boolean | null
   ) {
@@ -789,7 +789,7 @@ export class Edit extends EventTarget {
     title: string,
     version: string,
     description: string,
-    status: "published" | "draft" | null,
+    status: "published" | "draft" | "private" | null,
     isTool: boolean | null,
     isComponent: boolean | null
   ) {
@@ -806,14 +806,24 @@ export class Edit extends EventTarget {
           if (!graph.metadata.tags.includes("published")) {
             graph.metadata.tags.push("published");
           }
+          graph.metadata.tags = graph.metadata.tags.filter(
+            (tag) => tag !== "private"
+          );
           break;
         }
 
         case "draft": {
           graph.metadata.tags = graph.metadata.tags.filter(
-            (tag) => tag !== "published"
+            (tag) => tag !== "published" && tag !== "private"
           );
           break;
+        }
+
+        case "private": {
+          graph.metadata.tags = graph.metadata.tags.filter(
+            (tag) => tag !== "published" && tag !== "private"
+          );
+          graph.metadata.tags.push("private");
         }
       }
     }
