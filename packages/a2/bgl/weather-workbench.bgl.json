@@ -4,15 +4,30 @@
   "version": "0.0.1",
   "nodes": [
     {
-      "id": "a2-60d5c83f",
+      "id": "tools-179d6e70",
+      "type": "file://bgl/tools.bgl.json#module:get-weather",
+      "metadata": {
+        "visual": {
+          "x": 20,
+          "y": -200,
+          "collapsed": "expanded",
+          "outputHeight": 308
+        },
+        "title": "Get Weather",
+        "logLevel": "info"
+      },
+      "configuration": {}
+    },
+    {
+      "id": "a2-136ee999",
       "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
         "title": "Make Text",
         "visual": {
-          "x": 240,
-          "y": -180,
+          "x": 340.0000000000002,
+          "y": -199.99999999999818,
           "collapsed": "expanded",
-          "outputHeight": 108
+          "outputHeight": 88
         },
         "logLevel": "info"
       },
@@ -20,7 +35,7 @@
         "description": {
           "parts": [
             {
-              "text": "Describe the weather in Los Altos in a short poem. Use {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:get-weather\",\"title\":\"Get Weather\"}}  tool to get information."
+              "text": "Write a short poem describing the weather and the location provided"
             }
           ],
           "role": "user"
@@ -28,7 +43,14 @@
       }
     }
   ],
-  "edges": [],
+  "edges": [
+    {
+      "from": "tools-179d6e70",
+      "to": "a2-136ee999",
+      "out": "context",
+      "in": "context"
+    }
+  ],
   "metadata": {
     "visual": {}
   }
