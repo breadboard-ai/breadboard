@@ -26,10 +26,10 @@
       "metadata": {
         "title": "Make Text",
         "visual": {
-          "x": 340.0000000000002,
-          "y": -199.99999999999818,
+          "x": 340,
+          "y": -200,
           "collapsed": "expanded",
-          "outputHeight": 88
+          "outputHeight": 148
         },
         "logLevel": "info"
       },

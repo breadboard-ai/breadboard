@@ -1,0 +1,35 @@
+{
+  "title": "Wikipedia Workbench",
+  "description": "A blank board. Use it as a starting point for your creations.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "a2-c4698f7d",
+      "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+      "metadata": {
+        "visual": {
+          "x": 260,
+          "y": -80,
+          "collapsed": "expanded",
+          "outputHeight": 348
+        },
+        "title": "Make Text",
+        "logLevel": "info"
+      },
+      "configuration": {
+        "description": {
+          "parts": [
+            {
+              "text": "Write a brief essay on Omon Ra. Use {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-wikipedia\",\"title\":\"Search Wikipedia\"}} tool to research the essay."
+            }
+          ],
+          "role": "user"
+        }
+      }
+    }
+  ],
+  "edges": [],
+  "metadata": {
+    "visual": {}
+  }
+}
