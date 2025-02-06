@@ -186,6 +186,14 @@ export class SettingsStore implements BreadboardUI_Types.SettingsStore {
             value: false,
           },
         ],
+        [
+          "Show additional sources",
+          {
+            name: "Show additional sources",
+            description: "Toggles showing other locations to load from",
+            value: false,
+          },
+        ],
       ]),
     },
     [BreadboardUI_Types.SETTINGS_TYPE.SECRETS]: {
