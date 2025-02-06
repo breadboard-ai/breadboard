@@ -1,0 +1,57 @@
+{
+  "title": "Weather Workbench",
+  "description": "A blank board. Use it as a starting point for your creations.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "tools-179d6e70",
+      "type": "file://bgl/tools.bgl.json#module:get-weather",
+      "metadata": {
+        "visual": {
+          "x": 20,
+          "y": -200,
+          "collapsed": "expanded",
+          "outputHeight": 308
+        },
+        "title": "Get Weather",
+        "logLevel": "info"
+      },
+      "configuration": {}
+    },
+    {
+      "id": "a2-136ee999",
+      "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+      "metadata": {
+        "title": "Make Text",
+        "visual": {
+          "x": 340.0000000000002,
+          "y": -199.99999999999818,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        },
+        "logLevel": "info"
+      },
+      "configuration": {
+        "description": {
+          "parts": [
+            {
+              "text": "Write a short poem describing the weather and the location provided"
+            }
+          ],
+          "role": "user"
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "tools-179d6e70",
+      "to": "a2-136ee999",
+      "out": "context",
+      "in": "context"
+    }
+  ],
+  "metadata": {
+    "visual": {}
+  }
+}
