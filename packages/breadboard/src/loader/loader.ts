@@ -76,7 +76,7 @@ export const baseURLFromString = (urlString: string | undefined) => {
     }
     return new URL(urlString);
   }
-  return SENTINEL_BASE_URL;
+  return null;
 };
 
 export const baseURLFromContext = (context: GraphLoaderContext) => {
@@ -86,7 +86,10 @@ export const baseURLFromContext = (context: GraphLoaderContext) => {
   } else if (context.board?.url) {
     urlString = context.board?.url;
   }
-  return baseURLFromString(urlString);
+  const baseURL = baseURLFromString(urlString);
+  if (baseURL) return baseURL;
+  if (context.base) return context.base;
+  return SENTINEL_BASE_URL;
 };
 
 export class Loader implements GraphLoader {

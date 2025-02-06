@@ -24,7 +24,7 @@ import { createGraphNodeType } from "./kits.js";
 import { VirtualNode } from "./virtual-node.js";
 import { Outcome } from "../../data/types.js";
 import { err } from "../../data/file-system/utils.js";
-import { baseURLFromString } from "../../loader/loader.js";
+import { baseURLFromString, SENTINEL_BASE_URL } from "../../loader/loader.js";
 
 export { GraphQueries };
 
@@ -134,7 +134,7 @@ class GraphQueries {
         try {
           const url = new URL(
             value.url,
-            baseURLFromString(this.#cache.graph.url)
+            baseURLFromString(this.#cache.graph.url) || SENTINEL_BASE_URL
           ).href;
           const store = this.#cache.store;
           const adding = store.addByURL(url, [this.#cache.id], {});
