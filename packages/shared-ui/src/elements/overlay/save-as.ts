@@ -14,8 +14,8 @@ import { Ref, createRef, ref } from "lit/directives/ref.js";
 import {
   GraphDescriptor,
   BoardServer,
-  blankLLMContent,
   blankImperative,
+  blank,
 } from "@google-labs/breadboard";
 import { map } from "lit/directives/map.js";
 
@@ -265,9 +265,7 @@ export class SaveAsOverlay extends LitElement {
           const fileName = data.get("filename") as string | null;
           const boardServer = data.get("board-server") as string | null;
           const imperative = !!data.get("imperative");
-          const graph = imperative
-            ? blankImperative()
-            : this.graph || blankLLMContent();
+          const graph = imperative ? blankImperative() : this.graph || blank();
 
           if (!(title && boardServer && fileName && graph)) {
             return;

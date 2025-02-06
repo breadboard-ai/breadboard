@@ -5,7 +5,7 @@
  */
 
 import {
-  blankLLMContent,
+  blank,
   NodeIdentifier,
   type BoardServer,
   type BoardServerCapabilities,
@@ -254,7 +254,7 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
   }
 
   createBlank(url: URL): Promise<{ result: boolean; error?: string }> {
-    return this.save(url, blankLLMContent());
+    return this.save(url, blank());
   }
 
   async create(

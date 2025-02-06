@@ -5,7 +5,7 @@
  */
 
 import {
-  blankLLMContent,
+  blank,
   GraphProviderPreloadHandler,
   type BoardServer,
   type BoardServerCapabilities,
@@ -355,7 +355,7 @@ export class FileSystemBoardServer extends EventTarget implements BoardServer {
   async createBlank(
     url: URL
   ): Promise<{ result: boolean; error?: string | undefined }> {
-    return this.create(url, blankLLMContent());
+    return this.create(url, blank());
   }
 
   async create(
