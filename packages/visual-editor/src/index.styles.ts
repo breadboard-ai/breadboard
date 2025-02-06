@@ -421,7 +421,7 @@ export const styles = css`
   bb-project-listing {
     position: absolute;
     height: 100%;
-    width: 100%;
+    width: 100svw;
     left: 0;
     top: 0;
   }

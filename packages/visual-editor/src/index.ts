@@ -2867,6 +2867,12 @@ export class Main extends LitElement {
           }
         }
 
+        const showAdditionalSources =
+          this.#settings?.getItem(
+            BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
+            "Show additional sources"
+          )?.value ?? false;
+
         const ui = html`<header>
           <div id="header-bar" data-active=${this.tab ? "true" : nothing} ?inert=${showingOverlay}>
             <div id="tab-info">
@@ -3525,6 +3531,7 @@ export class Main extends LitElement {
                 .selectedLocation=${this.selectedLocation}
                 .boardServers=${this.#boardServers}
                 .boardServerNavState=${this.boardServerNavState}
+                .showAdditionalSources=${showAdditionalSources}
                 @bbgraphboardserverblankboard=${() => {
                   this.#attemptBoardCreate(blankLLMContent());
                 }}

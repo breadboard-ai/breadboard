@@ -23,6 +23,9 @@ export default {
   COMMAND_RENEW_ACCESS: {
     str: "Renew Access",
   },
+  COMMAND_GET_STARTED: {
+    str: "Add a new Project to get started",
+  },
 
   // Statuses.
   STATUS_LOADING: {
@@ -30,8 +33,11 @@ export default {
   },
 
   // Labels.
+  LABEL_WELCOME_MESSAGE: {
+    str: "Welcome to Breadboard",
+  },
   LABEL_FEATURED_GUIDES: {
-    str: "Featured Guides",
+    str: "Guides and Tutorials",
   },
   LABEL_PROJECT_SERVER_SETTINGS: {
     str: "Project Server Settings",
@@ -70,7 +76,7 @@ export default {
     str: "Other people's Projects",
   },
   LABEL_NO_PROJECTS_FOUND: {
-    str: "No Projects found",
+    str: "You don't have any Projects",
   },
   LABEL_ACCESS_EXPIRED_PROJECT_SERVER: {
     str: "Access has expired for this Project Server",
