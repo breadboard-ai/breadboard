@@ -7,18 +7,22 @@
 import { cp } from "fs/promises";
 import { join } from "path";
 
-const visualEditorAssetsDir = join(
-  import.meta.dirname,
-  "../../visual-editor/public"
-);
+const unifiedServerRoot = join(import.meta.dirname, "..");
+const unifiedServerAssetsDir = join(unifiedServerRoot, "public");
+const unifiedServerIndexHtml = join(unifiedServerRoot, "index.html");
 
-const unifiedServerAssetsDir = join(import.meta.dirname, "../public");
+const visualEditorRoot = join(unifiedServerRoot, "../visual-editor");
+const visualEditorAssetsDir = join(visualEditorRoot, "public");
+const visualEditorIndexHtml = join(visualEditorRoot, "index.html");
 
 async function main() {
-  return cp(visualEditorAssetsDir, unifiedServerAssetsDir, {
-    force: true,
-    recursive: true,
-  });
+  return Promise.all([
+    cp(visualEditorAssetsDir, unifiedServerAssetsDir, {
+      force: true,
+      recursive: true,
+    }),
+    cp(visualEditorIndexHtml, unifiedServerIndexHtml),
+  ]);
 }
 
 await main();
