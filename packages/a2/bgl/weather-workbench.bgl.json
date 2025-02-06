@@ -1,0 +1,35 @@
+{
+  "title": "Weather Workbench",
+  "description": "A blank board. Use it as a starting point for your creations.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "a2-60d5c83f",
+      "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+      "metadata": {
+        "title": "Make Text",
+        "visual": {
+          "x": 240,
+          "y": -180,
+          "collapsed": "expanded",
+          "outputHeight": 108
+        },
+        "logLevel": "info"
+      },
+      "configuration": {
+        "description": {
+          "parts": [
+            {
+              "text": "Describe the weather in Los Altos in a short poem. Use {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:get-weather\",\"title\":\"Get Weather\"}}  tool to get information."
+            }
+          ],
+          "role": "user"
+        }
+      }
+    }
+  ],
+  "edges": [],
+  "metadata": {
+    "visual": {}
+  }
+}
