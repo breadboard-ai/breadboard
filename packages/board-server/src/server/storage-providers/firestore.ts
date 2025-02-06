@@ -2,7 +2,7 @@ import { Firestore } from "@google-cloud/firestore";
 import {
   type ReanimationState,
   type GraphDescriptor,
-  blankLLMContent,
+  blank,
 } from "@google-labs/breadboard";
 import {
   EXPIRATION_TIME_MS,
@@ -221,7 +221,7 @@ export class FirestoreStorageProvider
       // Create a blank board with the proposed name.
       await this.#database
         .doc(`workspaces/${userStore.store}/boards/${proposal}.bgl.json`)
-        .set({ graph: JSON.stringify(blankLLMContent()) });
+        .set({ graph: JSON.stringify(blank()) });
     }
     const path = asPath(userStore.store, `${proposal}.bgl.json`);
     return { success: true, path, error: undefined };

@@ -19,7 +19,6 @@ import { map } from "lit/directives/map.js";
 import { customElement, property, state } from "lit/decorators.js";
 import { LitElement, html, HTMLTemplateResult, nothing } from "lit";
 import {
-  blankLLMContent,
   createRunObserver,
   GraphDescriptor,
   BoardServer,
@@ -32,6 +31,7 @@ import {
   createFileSystem,
   createEphemeralBlobStore,
   assetsFromGraphDescriptor,
+  blank,
 } from "@google-labs/breadboard";
 import {
   createFileSystemBackend,
@@ -2413,7 +2413,7 @@ export class Main extends LitElement {
             }}
             @bbgraphboardserverblankboard=${() => {
               this.showOpenBoardOverlay = false;
-              this.#attemptBoardCreate(blankLLMContent());
+              this.#attemptBoardCreate(blank());
             }}
             @bbgraphboardserveradd=${() => {
               this.showBoardServerAddOverlay = true;
@@ -3288,7 +3288,7 @@ export class Main extends LitElement {
                 this.requestUpdate();
               }}
               @bbgraphboardserverblankboard=${() => {
-                this.#attemptBoardCreate(blankLLMContent());
+                this.#attemptBoardCreate(blank());
               }}
               @bbsubgraphcreate=${async (
                 evt: BreadboardUI.Events.SubGraphCreateEvent
@@ -3526,7 +3526,7 @@ export class Main extends LitElement {
                 .boardServers=${this.#boardServers}
                 .boardServerNavState=${this.boardServerNavState}
                 @bbgraphboardserverblankboard=${() => {
-                  this.#attemptBoardCreate(blankLLMContent());
+                  this.#attemptBoardCreate(blank());
                 }}
                 @bbgraphboardserveradd=${() => {
                   this.showBoardServerAddOverlay = true;
