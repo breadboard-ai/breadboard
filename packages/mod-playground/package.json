@@ -147,6 +147,6 @@
     "ajv": "^8.17.1",
     "codemirror": "^6.0.1",
     "lit": "^3.2.1",
-    "@typescript/vfs": "^1.6.0"
+    "@typescript/vfs": "^1.6.1"
   }
 }
