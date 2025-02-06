@@ -7,18 +7,6 @@
 import { GraphTag } from "@breadboard-ai/types";
 import { GraphDescriptor, Schema } from "../types.js";
 
-const CONFIGURATION = {
-  schema: {
-    type: "object",
-    properties: {
-      text: {
-        type: "string",
-        title: "text",
-      },
-    },
-  },
-};
-
 const llmContentConfig = (type: string) => ({
   schema: {
     properties: {
@@ -42,11 +30,8 @@ const BLANK_GRAPH: GraphDescriptor = {
   title: "Blank board",
   description: "A blank board. Use it as a starting point for your creations.",
   version: "0.0.1",
-  nodes: [
-    { type: "input", id: "input", configuration: CONFIGURATION },
-    { type: "output", id: "output", configuration: CONFIGURATION },
-  ],
-  edges: [{ from: "input", out: "text", to: "output", in: "text" }],
+  nodes: [],
+  edges: [],
 };
 
 const BLANK_LLM_CONTENT_GRAPH: GraphDescriptor = {

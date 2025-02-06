@@ -23,15 +23,9 @@ test("importBlank creates a nice blank board", async (t) => {
 
   const inspectable = inspect(b);
 
-  const input = inspectable.nodeById("input");
-  t.truthy(input);
+  const nodes = inspectable.nodes();
+  t.truthy(nodes.length === 0);
 
-  const outgoing = input?.outgoing();
-  t.is(outgoing?.length, 1);
-
-  const wire = outgoing?.[0];
-  const output = wire?.to;
-  t.truthy(output);
-
-  t.is(output?.title(), "output");
+  const edges = inspectable.edges();
+  t.truthy(edges.length === 0);
 });
