@@ -67,13 +67,7 @@ export const sameWithoutHash = (a: URL, b: URL): boolean => {
   return removeHash(a).href === removeHash(b).href;
 };
 
-export const baseURLFromContext = (context: GraphLoaderContext) => {
-  let urlString;
-  if (context.outerGraph?.url) {
-    urlString = context.outerGraph.url;
-  } else if (context.board?.url) {
-    urlString = context.board?.url;
-  }
+export const baseURLFromString = (urlString: string | undefined) => {
   if (urlString) {
     // Account for generated module URL, created in `resolveGraph`.
     if (urlString.startsWith(MODULE_PREFIX)) {
@@ -82,8 +76,17 @@ export const baseURLFromContext = (context: GraphLoaderContext) => {
     }
     return new URL(urlString);
   }
-  if (context.base) return context.base;
   return SENTINEL_BASE_URL;
+};
+
+export const baseURLFromContext = (context: GraphLoaderContext) => {
+  let urlString;
+  if (context.outerGraph?.url) {
+    urlString = context.outerGraph.url;
+  } else if (context.board?.url) {
+    urlString = context.board?.url;
+  }
+  return baseURLFromString(urlString);
 };
 
 export class Loader implements GraphLoader {
