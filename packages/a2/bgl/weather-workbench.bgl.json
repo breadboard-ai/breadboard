@@ -16,7 +16,9 @@
         "title": "Get Weather",
         "logLevel": "info"
       },
-      "configuration": {}
+      "configuration": {
+        "p-location": "Boulder"
+      }
     },
     {
       "id": "a2-136ee999",
