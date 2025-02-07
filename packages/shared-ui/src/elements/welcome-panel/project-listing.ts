@@ -26,6 +26,9 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 
 const SHOW_OTHER_PEOPLES_BOARDS_KEY =
   "bb-project-listing-show-other-peoples-boards";
+const MODE_KEY = "bb-project-listing-mode";
+const PAGE_SIZE_DETAILED = 8;
+const PAGE_SIZE_CONDENSED = 24;
 
 interface Guides {
   title: string;
@@ -52,10 +55,10 @@ export class ProjectListing extends LitElement {
   accessor version = "dev";
 
   @property()
-  accessor selectedBoardServer = "Example Boards";
+  accessor selectedBoardServer = "Browser Storage";
 
   @property()
-  accessor selectedLocation = "example://example-boards";
+  accessor selectedLocation = "Browser Storage";
 
   @state()
   accessor filter: string | null = null;
@@ -70,7 +73,10 @@ export class ProjectListing extends LitElement {
   accessor showAdditionalSources = true;
 
   @state()
-  accessor breakPoint = 0;
+  accessor mode: "detailed" | "condensed" = "detailed";
+
+  @state()
+  accessor page = 0;
 
   @state()
   accessor guides: Guides[] = [
@@ -94,16 +100,6 @@ export class ProjectListing extends LitElement {
 
   #selectedIndex = 0;
 
-  #resizeObserver = new ResizeObserver((entries) => {
-    const entry = entries[0];
-    let items = 1;
-    if (entry.contentRect.width >= 480) items = 2;
-    if (entry.contentRect.width >= 800) items = 3;
-    if (entry.contentRect.width >= 1080) items = 4;
-
-    this.breakPoint = items;
-  });
-
   static styles = css`
     * {
       box-sizing: border-box;
@@ -120,6 +116,7 @@ export class ProjectListing extends LitElement {
       width: 100%;
       max-width: 1200px;
 
+      & #loading-message,
       & #no-projects {
         color: var(--bb-neutral-700);
         font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
@@ -129,6 +126,90 @@ export class ProjectListing extends LitElement {
         & p {
           margin: 0 0 var(--bb-grid-size) 0;
           text-align: center;
+        }
+      }
+
+      & #pagination {
+        order: 2;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: flex;
+        justify-content: flex-end;
+        height: var(--bb-grid-size-8);
+        margin-bottom: var(--bb-grid-size-10);
+        width: 100%;
+        overflow: hidden;
+
+        & button {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
+            var(--bb-font-family);
+          width: var(--bb-grid-size-8);
+          height: var(--bb-grid-size-8);
+          background: none;
+          border: none;
+          margin-left: var(--bb-grid-size-2);
+          border-radius: var(--bb-grid-size-2);
+          color: var(--bb-neutral-900);
+          transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
+          padding: 0;
+
+          &:not([disabled]) {
+            cursor: pointer;
+
+            &:hover,
+            &:focus {
+              background: var(--bb-neutral-50);
+            }
+          }
+
+          &[disabled] {
+            background: var(--bb-neutral-100);
+          }
+
+          &#prev,
+          &#next {
+            width: auto;
+
+            &[disabled] {
+              background: transparent;
+              color: var(--bb-neutral-400);
+
+              &::before,
+              &::after {
+                opacity: 0.4;
+              }
+            }
+          }
+
+          &#prev {
+            padding: 0 var(--bb-grid-size-2) 0 var(--bb-grid-size);
+
+            &::before {
+              content: "";
+              width: 20px;
+              height: 20px;
+              background: var(--bb-icon-before) center center / 20px 20px
+                no-repeat;
+              margin-right: var(--bb-grid-size-2);
+            }
+          }
+
+          &#next {
+            padding: 0 var(--bb-grid-size) 0 var(--bb-grid-size-2);
+
+            &::after {
+              content: "";
+              width: 20px;
+              height: 20px;
+              background: var(--bb-icon-next) center center / 20px 20px
+                no-repeat;
+              margin-left: var(--bb-grid-size-2);
+            }
+          }
         }
       }
 
@@ -211,11 +292,73 @@ export class ProjectListing extends LitElement {
 
       & #buttons {
         order: 0;
+        height: 80px;
+        display: flex;
+        justify-content: center;
+
+        & #mode-container {
+          display: flex;
+          flex: 1;
+          height: var(--bb-grid-size-10);
+          padding-top: var(--bb-grid-size);
+
+          & input {
+            display: none;
+          }
+
+          & label {
+            display: flex;
+            align-items: center;
+            font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+              var(--bb-font-family);
+            cursor: pointer;
+
+            & .detailed {
+              display: block;
+              width: 52px;
+              height: var(--bb-grid-size-9);
+              border: 1px solid var(--bb-neutral-300);
+              border-radius: var(--bb-grid-size-16) 0 0 var(--bb-grid-size-16);
+              background: var(--bb-ui-50) var(--bb-icon-grid-view) 16px center /
+                20px 20px no-repeat;
+            }
+
+            & .condensed {
+              display: block;
+              width: 52px;
+              height: var(--bb-grid-size-9);
+              border: 1px solid var(--bb-neutral-300);
+              border-left: none;
+              border-radius: 0 var(--bb-grid-size-16) var(--bb-grid-size-16) 0;
+              margin-right: var(--bb-grid-size-4);
+              background: var(--bb-neutral-0) var(--bb-icon-dehaze) 14px
+                center / 20px 20px no-repeat;
+            }
+
+            & .sort-by-icon {
+              width: 20px;
+              height: 20px;
+              background: var(--bb-icon-sort-by) center center / 20px 20px
+                no-repeat;
+              margin-right: var(--bb-grid-size);
+            }
+          }
+
+          /* Checked means condensed */
+          & input:checked + label {
+            & .detailed {
+              background-color: var(--bb-neutral-0);
+            }
+
+            & .condensed {
+              background-color: var(--bb-ui-50);
+            }
+          }
+        }
       }
 
       & #new-project-container {
         display: flex;
-        height: 80px;
         justify-content: center;
 
         & #new-project {
@@ -227,7 +370,7 @@ export class ProjectListing extends LitElement {
           color: var(--bb-neutral-0);
           font: 400 var(--bb-title-medium) / var(--bb-title-line-height-medium)
             var(--bb-font-family);
-          padding: 0 var(--bb-grid-size-8) 0 var(--bb-grid-size-10);
+          padding: 0 var(--bb-grid-size-6) 0 var(--bb-grid-size-10);
           height: var(--bb-grid-size-10);
           transition: background 0.2s cubic-bezier(0, 0, 0.3, 1);
           cursor: pointer;
@@ -259,6 +402,7 @@ export class ProjectListing extends LitElement {
         height: 60px;
         font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
           var(--bb-font-family);
+        margin-left: var(--bb-grid-size-8);
       }
 
       & #content {
@@ -268,132 +412,98 @@ export class ProjectListing extends LitElement {
         & .boards {
           order: 1;
 
-          &.recent {
-            display: grid;
-            grid-template-columns: 1fr;
-            grid-auto-rows: auto;
-            gap: var(--bb-grid-size-10);
-            margin-bottom: var(--bb-grid-size-16);
+          display: grid;
+          grid-template-columns: 1fr;
+          grid-auto-rows: auto;
+          column-gap: var(--bb-grid-size-12);
+          row-gap: var(--bb-grid-size-5);
+          margin-bottom: var(--bb-grid-size-8);
 
-            & button {
+          & button {
+            width: 100%;
+            height: 240px;
+            border: 1px solid var(--bb-neutral-300);
+            background: var(--bb-neutral-0);
+            outline: 1px solid transparent;
+            border-radius: var(--bb-grid-size-2);
+            cursor: pointer;
+            transition:
+              border 0.2s cubic-bezier(0, 0, 0.3, 1),
+              outline 0.2s cubic-bezier(0, 0, 0.3, 1);
+
+            display: flex;
+            flex-direction: column;
+            overflow: auto;
+            padding: 0;
+            position: relative;
+
+            & .img {
+              flex: 1 1 auto;
+              background: url(/images/placeholder.svg) var(--bb-ui-50) center
+                center / contain no-repeat;
               width: 100%;
-              height: 240px;
-              border: 1px solid var(--bb-neutral-300);
-              background: var(--bb-neutral-0);
-              outline: 1px solid transparent;
-              border-radius: var(--bb-grid-size-2);
-              cursor: pointer;
-              transition:
-                border 0.2s cubic-bezier(0, 0, 0.3, 1),
-                outline 0.2s cubic-bezier(0, 0, 0.3, 1);
+              border-bottom: 1px solid var(--bb-neutral-300);
+            }
 
+            &:has(> .username) .title {
+              width: calc(100% - 60px);
+            }
+
+            & .title {
+              display: block;
+              color: var(--bb-neutral-900);
+              font: 500 var(--bb-title-small) /
+                var(--bb-title-line-height-small) var(--bb-font-family);
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+              width: 100%;
+              text-align: left;
+              padding: var(--bb-grid-size-3) var(--bb-grid-size-2)
+                var(--bb-grid-size) var(--bb-grid-size-3);
+            }
+
+            & .description {
+              display: block;
+              color: var(--bb-neutral-900);
+              font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+                var(--bb-font-family);
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+              width: 100%;
+              text-align: left;
+              padding: 0 var(--bb-grid-size-3) var(--bb-grid-size-3)
+                var(--bb-grid-size-3);
+            }
+
+            & .username {
+              position: absolute;
+              top: 4px;
+              right: 4px;
+              height: 16px;
               display: flex;
-              flex-direction: column;
-              overflow: auto;
-              padding: 0;
+              align-items: center;
+              background: var(--bb-ui-100);
+              border-radius: var(--bb-grid-size-16);
+              font: 400 var(--bb-body-x-small) /
+                var(--bb-body-line-height-x-small) var(--bb-font-family);
+              padding: 0 var(--bb-grid-size-2);
+            }
 
-              & .img {
-                flex: 1 1 auto;
-                background: url(/images/placeholder.svg) var(--bb-ui-50) center
-                  center / contain no-repeat;
-                width: 100%;
-                border-bottom: 1px solid var(--bb-neutral-300);
-              }
-
-              & .title {
-                display: block;
-                color: var(--bb-neutral-900);
-                font: 500 var(--bb-title-small) /
-                  var(--bb-title-line-height-small) var(--bb-font-family);
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-                width: 100%;
-                text-align: left;
-                padding: var(--bb-grid-size-3) var(--bb-grid-size-2)
-                  var(--bb-grid-size) var(--bb-grid-size-3);
-              }
-
-              & .description {
-                display: block;
-                color: var(--bb-neutral-900);
-                font: 400 var(--bb-body-small) /
-                  var(--bb-body-line-height-small) var(--bb-font-family);
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-                width: 100%;
-                text-align: left;
-                padding: 0 var(--bb-grid-size-3) var(--bb-grid-size-3)
-                  var(--bb-grid-size-3);
-              }
-
-              &:hover,
-              &:focus {
-                border: 1px solid var(--bb-neutral-400);
-                outline: 1px solid var(--bb-neutral-400);
-              }
+            &:hover,
+            &:focus {
+              border: 1px solid var(--bb-neutral-400);
+              outline: 1px solid var(--bb-neutral-400);
             }
           }
 
-          &:not(.recent) {
-            display: grid;
-            grid-template-columns: 1fr;
-            column-gap: var(--bb-grid-size-4);
-            row-gap: var(--bb-grid-size);
-            button {
-              display: grid;
-              height: var(--bb-grid-size-7);
-              grid-template-columns: 1fr;
-              gap: var(--bb-grid-size-3);
-              font: 400 var(--bb-title-small) /
-                var(--bb-title-line-height-small) var(--bb-font-family);
-              color: var(--bb-neutral-900);
-              background: transparent;
-              border: 1px solid transparent;
-              outline: 1px solid transparent;
-              border-radius: var(--bb-grid-size-2);
-              cursor: pointer;
-              transition:
-                background 0.2s cubic-bezier(0, 0, 0.3, 1),
-                border 0.2s cubic-bezier(0, 0, 0.3, 1),
-                outline 0.2s cubic-bezier(0, 0, 0.3, 1);
-              padding: 0 var(--bb-grid-size-2);
-              align-items: center;
+          &.condensed {
+            & button {
+              height: auto;
 
               & .img {
                 display: none;
-              }
-
-              & .title,
-              & .description {
-                display: block;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-                width: 100%;
-                text-align: left;
-              }
-
-              & .title {
-                font-weight: 500;
-                display: inline-block;
-                align-items: center;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-                padding-left: var(--bb-grid-size-7);
-                background: var(--bb-add-icon-project) 0 center / 20px 20px
-                  no-repeat;
-              }
-
-              & .description {
-                display: none;
-              }
-
-              &:hover,
-              &:focus {
-                background: var(--bb-ui-50);
               }
             }
           }
@@ -502,20 +612,9 @@ export class ProjectListing extends LitElement {
       text-align: right;
     }
 
-    @media (min-width: 480px) and (max-width: 799px) {
+    @media (min-width: 480px) and (max-width: 800px) {
       #wrapper {
-        & #content .boards.recent {
-          grid-template-columns: repeat(2, 1fr);
-
-          & button:nth-child(n + 3) {
-            height: auto;
-            & .img {
-              display: none;
-            }
-          }
-        }
-
-        & #content .boards:not(.recent) {
+        & #content .boards {
           grid-template-columns: repeat(2, 1fr);
         }
 
@@ -529,20 +628,9 @@ export class ProjectListing extends LitElement {
       }
     }
 
-    @media (min-width: 800px) and (max-width: 1079px) {
+    @media (min-width: 800px) and (max-width: 1080px) {
       #wrapper {
-        & #content .boards.recent {
-          grid-template-columns: repeat(3, 1fr);
-
-          & button:nth-child(n + 4) {
-            height: auto;
-            & .img {
-              display: none;
-            }
-          }
-        }
-
-        & #content .boards:not(.recent) {
+        & #content .boards {
           grid-template-columns: repeat(3, 1fr);
         }
 
@@ -558,31 +646,8 @@ export class ProjectListing extends LitElement {
 
     @media (min-width: 1080px) {
       #wrapper {
-        & #content .boards.recent {
+        & #content .boards {
           grid-template-columns: repeat(4, 1fr);
-
-          & button:nth-child(n + 5) {
-            height: auto;
-            & .img {
-              display: none;
-            }
-          }
-        }
-
-        & #content .boards:not(.recent) {
-          grid-template-columns: repeat(3, 1fr);
-          row-gap: var(--bb-grid-size-6);
-
-          & button {
-            padding: var(--bb-grid-size-2);
-            height: auto;
-            gap: var(--bb-grid-size);
-
-            & .description {
-              display: block;
-              padding-left: var(--bb-grid-size-7);
-            }
-          }
         }
 
         & #guides {
@@ -598,17 +663,14 @@ export class ProjectListing extends LitElement {
 
   #wrapperRef: Ref<HTMLDivElement> = createRef();
   #searchRef: Ref<HTMLInputElement> = createRef();
-  #onKeyDownBound = this.#onKeyDown.bind(this);
   #hideBoardServerOverflowMenuBound =
     this.#hideBoardServerOverflowMenu.bind(this);
   #attemptFocus = false;
   #attemptScrollUpdate = false;
-  #maxIndex = 0;
 
   connectedCallback(): void {
     super.connectedCallback();
 
-    this.addEventListener("keydown", this.#onKeyDownBound);
     this.addEventListener("click", this.#hideBoardServerOverflowMenuBound);
 
     this.showOtherPeoplesBoards =
@@ -616,16 +678,16 @@ export class ProjectListing extends LitElement {
       globalThis.localStorage.getItem(SHOW_OTHER_PEOPLES_BOARDS_KEY) === "true";
     this.#attemptFocus = true;
 
-    this.#resizeObserver.observe(this);
+    this.mode =
+      globalThis.localStorage.getItem(MODE_KEY) === "condensed"
+        ? "condensed"
+        : "detailed";
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
 
-    this.removeEventListener("keydown", this.#onKeyDownBound);
     this.removeEventListener("click", this.#hideBoardServerOverflowMenuBound);
-
-    this.#resizeObserver.disconnect();
   }
 
   protected willUpdate(
@@ -636,6 +698,7 @@ export class ProjectListing extends LitElement {
           selectedBoardServer: string;
           selectedLocation: string;
           showOtherPeoplesBoards: boolean;
+          mode: boolean;
           filter: string | null;
         }>
       | Map<PropertyKey, unknown>
@@ -646,11 +709,12 @@ export class ProjectListing extends LitElement {
       changedProperties.has("selectedLocation") ||
       changedProperties.has("selectedBoardServer") ||
       changedProperties.has("showOtherPeoplesBoards") ||
-      changedProperties.has("filter")
+      changedProperties.has("filter") ||
+      changedProperties.has("mode")
     ) {
       this.#selectedIndex = 0;
-      this.#maxIndex = 0;
       this.#boardServerContents = this.#loadBoardServerContents();
+      this.page = 0;
     }
   }
 
@@ -823,55 +887,9 @@ export class ProjectListing extends LitElement {
     );
   }
 
-  #onKeyDown(evt: KeyboardEvent) {
-    if (
-      !this.shadowRoot ||
-      !this.shadowRoot.activeElement ||
-      !(this.shadowRoot.activeElement instanceof HTMLElement)
-    ) {
-      return;
-    }
-
-    switch (evt.key) {
-      case "Escape": {
-        if (this.showBoardServerOverflowMenu) {
-          this.#hideBoardServerOverflowMenu(evt);
-        }
-        break;
-      }
-
-      case "Enter": {
-        this.#emitSelectedBoard();
-        break;
-      }
-
-      case "ArrowUp": {
-        this.#selectedIndex = this.#clamp(
-          this.#selectedIndex - 1,
-          0,
-          this.#maxIndex
-        );
-
-        this.#attemptScrollUpdate = true;
-        this.#highlightSelectedBoard();
-        break;
-      }
-
-      case "Tab":
-      case "ArrowDown": {
-        evt.preventDefault();
-
-        this.#selectedIndex = this.#clamp(
-          this.#selectedIndex + 1,
-          0,
-          this.#maxIndex
-        );
-
-        this.#attemptScrollUpdate = true;
-        this.#highlightSelectedBoard();
-        break;
-      }
-    }
+  #toggleMode() {
+    this.mode = this.mode === "condensed" ? "detailed" : "condensed";
+    globalThis.localStorage.setItem(MODE_KEY, this.mode);
   }
 
   #clamp(value: number, min: number, max: number) {
@@ -949,28 +967,6 @@ export class ProjectListing extends LitElement {
               />
             </div>
 
-            ${this.showAdditionalSources
-              ? html` <div id="list-other-peoples-boards-container">
-                  <input
-                    id="list-other-peoples-boards"
-                    type="checkbox"
-                    ?checked=${this.showOtherPeoplesBoards}
-                    @click=${(evt: Event) => {
-                      if (!(evt.target instanceof HTMLInputElement)) {
-                        return;
-                      }
-
-                      this.showOtherPeoplesBoards = evt.target.checked;
-                      globalThis.localStorage.setItem(
-                        SHOW_OTHER_PEOPLES_BOARDS_KEY,
-                        `${this.showOtherPeoplesBoards}`
-                      );
-                    }}
-                  /><label for="list-other-peoples-boards"
-                    >${Strings.from("LABEL_LIST_OTHERS_PROJECTS")}</label
-                  >
-                </div>`
-              : nothing}
             <div id="location-selector-container">
               ${this.showAdditionalSources
                 ? html`<select
@@ -1018,7 +1014,28 @@ export class ProjectListing extends LitElement {
                       }}
                     >
                       ${Strings.from("LABEL_PROJECT_SERVER_SETTINGS")}
-                    </button>`
+                    </button>
+
+                    <div id="list-other-peoples-boards-container">
+                      <input
+                        id="list-other-peoples-boards"
+                        type="checkbox"
+                        ?checked=${this.showOtherPeoplesBoards}
+                        @click=${(evt: Event) => {
+                          if (!(evt.target instanceof HTMLInputElement)) {
+                            return;
+                          }
+
+                          this.showOtherPeoplesBoards = evt.target.checked;
+                          globalThis.localStorage.setItem(
+                            SHOW_OTHER_PEOPLES_BOARDS_KEY,
+                            `${this.showOtherPeoplesBoards}`
+                          );
+                        }}
+                      /><label for="list-other-peoples-boards"
+                        >${Strings.from("LABEL_LIST_OTHERS_PROJECTS")}</label
+                      >
+                    </div>`
                 : html`<h2 id="location-selector">
                     ${this.#getCurrentStoreName(selected)}
                   </h2>`}
@@ -1035,48 +1052,38 @@ export class ProjectListing extends LitElement {
 
                 // Divide the items into two buckets: those that belong to the user and
                 // other published boards.
-                const items = [...store.items].filter(([name, item]) => {
-                  const canShow =
-                    this.showOtherPeoplesBoards ||
-                    item.mine ||
-                    store.title === "Example Boards" ||
-                    store.title === "Playground Boards";
+                const items = [...store.items]
+                  .filter(([name, item]) => {
+                    const canShow =
+                      this.showOtherPeoplesBoards ||
+                      item.mine ||
+                      store.title === "Example Boards" ||
+                      store.title === "Playground Boards";
 
-                  if (!this.filter) {
-                    return canShow;
-                  }
-                  const filter = new RegExp(this.filter, "gim");
-                  return filter.test(name) && canShow;
-                });
-                const myItems: typeof items = [];
-                const otherItems: typeof items = [];
-                for (const item of items) {
-                  const [, data] = item;
-                  if (data.mine) {
-                    myItems.push(item);
-                    continue;
-                  }
+                    if (!this.filter) {
+                      return canShow;
+                    }
+                    const filter = new RegExp(this.filter, "gim");
+                    return filter.test(name) && canShow;
+                  })
+                  .sort(([, dataA], [, dataB]) => {
+                    if (dataA.mine && !dataB.mine) {
+                      return -1;
+                    }
 
-                  otherItems.push(item);
-                }
+                    if (!dataA.mine && dataB.mine) {
+                      return 1;
+                    }
 
-                this.#maxIndex = Math.max(
-                  0,
-                  myItems.length + otherItems.length - 1
-                );
+                    return 0;
+                  });
 
-                let idx = 0;
                 type BoardInfo = (typeof items)[0];
                 const renderBoards = ([
                   name,
-                  { url, mine, title, description },
+                  { url, mine, username, title, description },
                 ]: BoardInfo) => {
-                  const itemIdx = idx++;
                   return html`<button
-                    @pointerover=${() => {
-                      this.#selectedIndex = itemIdx;
-                      this.#highlightSelectedBoard();
-                    }}
                     @click=${(evt: PointerEvent) => {
                       const isMac = navigator.platform.indexOf("Mac") === 0;
                       const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
@@ -1102,48 +1109,67 @@ export class ProjectListing extends LitElement {
                     <span class="description">
                       ${description ?? "No description"}
                     </span>
+                    ${mine
+                      ? nothing
+                      : html`<span class="username">@${username}</span>`}
                   </button> `;
                 };
 
-                const myRecentBoards = this.filter
-                  ? nothing
-                  : html`${map(myItems.slice(0, this.breakPoint), renderBoards)}`;
-                const myOtherBoards = this.filter
-                  ? html`${map(myItems, renderBoards)}`
-                  : html`${map(myItems.slice(this.breakPoint), renderBoards)}`;
-                const otherBoards = html`${map(otherItems, renderBoards)}`;
+                const pageSize =
+                  this.mode === "condensed"
+                    ? PAGE_SIZE_CONDENSED
+                    : PAGE_SIZE_DETAILED;
+                const myRecentBoards = html`${map(
+                  items.slice(this.page * pageSize, (this.page + 1) * pageSize),
+                  renderBoards
+                )}`;
+
+                const pages = Math.floor(items.length / pageSize) + 1;
+                const pagination = html`<menu id="pagination">
+                  <li>
+                    <button
+                      id="prev"
+                      ?disabled=${this.page === 0}
+                      @click=${() => {
+                        this.page--;
+                      }}
+                    >
+                      ${Strings.from("COMMAND_PREVIOUS")}
+                    </button>
+                  </li>
+                  ${new Array(pages).fill(undefined).map((_, idx) => {
+                    return html`<li>
+                      <button
+                        ?disabled=${idx === this.page}
+                        @click=${() => {
+                          this.page = idx;
+                        }}
+                      >
+                        ${idx + 1}
+                      </button>
+                    </li>`;
+                  })}
+                  <li>
+                    <button
+                      id="next"
+                      ?disabled=${this.page === pages - 1}
+                      @click=${() => {
+                        this.page++;
+                      }}
+                    >
+                      ${Strings.from("COMMAND_NEXT")}
+                    </button>
+                  </li>
+                </menu>`;
 
                 let boardListing;
-                if (myItems.length > 0 && otherItems.length > 0) {
-                  boardListing = html`<div class="boards">
-                    <details open>
-                      <summary>
-                        ${Strings.from("LABEL_TABLE_DESCRIPTION_YOUR_PROJECTS")}
-                      </summary>
-                      ${myRecentBoards}
-                    </details>
-                    <details open>
-                      <summary>
-                        ${Strings.from("LABEL_TABLE_DESCRIPTION_YOUR_PROJECTS")}
-                      </summary>
-                      ${myOtherBoards}
-                    </details>
-                    <details open>
-                      <summary>
-                        ${Strings.from(
-                          "LABEL_TABLE_DESCRIPTION_OTHER_PEOPLES_PROJECTS"
-                        )}
-                      </summary>
-                      ${otherBoards}
-                    </details>
-                  </div>`;
-                } else if (myItems.length > 0 && otherItems.length === 0) {
-                  boardListing = html`<div class="boards recent">
+                if (items.length) {
+                  boardListing = html`<div
+                      class=${classMap({ boards: true, [this.mode]: true })}
+                    >
                       ${myRecentBoards}
                     </div>
-                    <div class="boards">${myOtherBoards}</div>`;
-                } else if (myItems.length === 0 && otherItems.length > 0) {
-                  boardListing = html`<div class="boards">${otherBoards}</div>`;
+                    ${pagination}`;
                 } else {
                   boardListing = html`<div id="no-projects">
                     <p>${Strings.from("LABEL_NO_PROJECTS_FOUND")}</p>
@@ -1180,6 +1206,23 @@ export class ProjectListing extends LitElement {
             )}
 
             <div id="buttons">
+              <div id="mode-container">
+                <input
+                  ?checked=${this.mode === "condensed"}
+                  type="checkbox"
+                  id="mode"
+                  @input=${() => {
+                    this.#toggleMode();
+                  }}
+                />
+                <label for="mode"
+                  ><span class="detailed"></span
+                  ><span class="condensed"></span>
+                  <span class="sort-by-icon"></span>${Strings.from(
+                    "LABEL_SORT_BY"
+                  )}</label
+                >
+              </div>
               <div id="new-project-container">
                 <button
                   id="new-project"

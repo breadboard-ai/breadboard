@@ -724,7 +724,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
 
     bb-graph-renderer {
       display: block;
-      width: 100%;
+      width: 100svw;
       height: 100%;
       outline: none;
       overflow: hidden;

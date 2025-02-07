@@ -156,6 +156,9 @@ body.hide-cursor {
   --bb-icon-data-info-alert: url(/third_party/icons/data-info-alert.svg);
   --bb-icon-data-info-alert-inverted: url(/third_party/icons/data-info-alert-inverted.svg);
 
+  --bb-icon-dehaze: url(/third_party/icons/dehaze.svg);
+  --bb-icon-dehaze-inverted: url(/third_party/icons/dehaze-inverted.svg);
+
   --bb-icon-delete: url(/third_party/icons/delete.svg);
   --bb-icon-delete-inverted: url(/third_party/icons/delete-inverted.svg);
 
@@ -230,6 +233,9 @@ body.hide-cursor {
 
   --bb-icon-fork-down-right: url(/third_party/icons/fork-down-right.svg);
   --bb-icon-fork-down-right-inverted: url(/third_party/icons/fork-down-right-inverted.svg);
+
+  --bb-icon-grid-view: url(/third_party/icons/grid-view.svg);
+  --bb-icon-grid-view-inverted: url(/third_party/icons/grid-view-inverted.svg);
 
   --bb-icon-help: url(/third_party/icons/help.svg);
   --bb-icon-help-inverted: url(/third_party/icons/help-inverted.svg);
@@ -399,6 +405,9 @@ body.hide-cursor {
 
   --bb-icon-smart-toy: url(/third_party/icons/smart-toy.svg);
   --bb-icon-smart-toy-inverted: url(/third_party/icons/smart-toy-inverted.svg);
+
+  --bb-icon-sort-by: url(/third_party/icons/sort-by.svg);
+  --bb-icon-sort-by-inverted: url(/third_party/icons/sort-by-inverted.svg);
 
   --bb-icon-sound: url(/third_party/icons/sound.svg);
   --bb-icon-sound-inverted: url(/third_party/icons/sound-inverted.svg);
@@ -849,6 +858,9 @@ body.hide-cursor {
   --bb-icon-delete: url(/third_party/icons/delete-inverted.svg);
   --bb-icon-delete-inverted: url(/third_party/icons/delete.svg);
 
+  --bb-icon-dehaze: url(/third_party/icons/dehaze-inverted.svg);
+  --bb-icon-dehaze-inverted: url(/third_party/icons/dehaze.svg);
+
   --bb-icon-debug: url(/third_party/icons/debug-inverted.svg);
   --bb-icon-debug-inverted: url(/third_party/icons/debug.svg);
 
@@ -920,6 +932,9 @@ body.hide-cursor {
 
   --bb-icon-fork-down-right: url(/third_party/icons/fork-down-right-inverted.svg);
   --bb-icon-fork-down-right-inverted: url(/third_party/icons/fork-down-right.svg);
+
+  --bb-icon-grid-view: url(/third_party/icons/grid-view-inverted.svg);
+  --bb-icon-grid-view-inverted: url(/third_party/icons/grid-view.svg);
 
   --bb-icon-help: url(/third_party/icons/help-inverted.svg);
   --bb-icon-help-inverted: url(/third_party/icons/help.svg);
@@ -1087,6 +1102,9 @@ body.hide-cursor {
   --bb-icon-smart-toy: url(/third_party/icons/smart-toy-inverted.svg);
   --bb-icon-smart-toy-inverted: url(/third_party/icons/smart-toy.svg);
 
+  --bb-icon-sort-by: url(/third_party/icons/sort-by-inverted.svg);
+  --bb-icon-sort-by-inverted: url(/third_party/icons/sort-by.svg);
+
   --bb-icon-sound: url(/third_party/icons/sound-inverted.svg);
   --bb-icon-sound-inverted: url(/third_party/icons/sound.svg);
 
@@ -1156,7 +1174,7 @@ body {
   margin: 0;
   font-family: var(--bb-font-family);
   color: var(--bb-font-color);
-  width: 100vw;
+  width: 100svw;
   height: 100svh;
   display: flex;
   flex-direction: column;
