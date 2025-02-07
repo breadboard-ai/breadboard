@@ -17,7 +17,7 @@
         "logLevel": "info"
       },
       "configuration": {
-        "p-query": "What is latest FLUX Review newsletter on Substack about?"
+        "p-query": "Gemini 2.0 models"
       }
     }
   ],
