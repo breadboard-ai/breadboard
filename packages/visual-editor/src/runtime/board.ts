@@ -348,6 +348,7 @@ export class Board extends EventTarget {
 
     const updateDimensions = (node: NodeDescriptor) => {
       if (!node.metadata?.visual) {
+        console.log("No visual");
         return;
       }
 
@@ -361,7 +362,7 @@ export class Board extends EventTarget {
       maxX = Math.max(maxX, visual.x + NODE_WIDTH);
       maxY = Math.max(
         maxY,
-        visual.y + NODE_ASSUMED_HEIGHT + visual.outputHeight
+        visual.y + NODE_ASSUMED_HEIGHT + (visual.outputHeight ?? 0)
       );
     };
 
@@ -408,7 +409,7 @@ export class Board extends EventTarget {
       const x = PADDING + paddingX + (visual.x - minX) * ratio;
       const y = PADDING + paddingY + (visual.y - minY) * ratio;
       const w = NODE_WIDTH * ratio;
-      const h = (NODE_ASSUMED_HEIGHT + visual.outputHeight) * ratio;
+      const h = (NODE_ASSUMED_HEIGHT + (visual.outputHeight ?? 0)) * ratio;
 
       return `<rect x="${x.toFixed(2)}"
                     y="${y.toFixed(2)}"
@@ -435,8 +436,6 @@ export class Board extends EventTarget {
         })
         .join("\n")}
     </svg>`;
-
-    console.log(boardSvg);
 
     return `data:image/svg+xml;base64,${btoa(boardSvg)}`;
   }
