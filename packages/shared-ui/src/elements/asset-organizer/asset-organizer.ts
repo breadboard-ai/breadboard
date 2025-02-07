@@ -287,7 +287,11 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
 
   render() {
     const outputs = this.asset ? { data: this.asset.data } : null;
+
     const assets = this.state?.graphAssets;
+
+    // Special-case the thumnail so it doesn't show up.
+    assets?.delete("@@thumbnail");
 
     return html`<div id="container">
       <header>

@@ -23,6 +23,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { until } from "lit/directives/until.js";
 import { BoardServer, GraphProviderStore } from "@google-labs/breadboard";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
+import { styleMap } from "lit/directives/style-map.js";
 
 const SHOW_OTHER_PEOPLES_BOARDS_KEY =
   "bb-project-listing-show-other-peoples-boards";
@@ -77,6 +78,12 @@ export class ProjectListing extends LitElement {
 
   @state()
   accessor page = 0;
+
+  @property()
+  accessor recentItemsKey: string | null = null;
+
+  @property()
+  accessor recencyType: "local" | "session" = "session";
 
   @state()
   accessor guides: Guides[] = [
@@ -439,10 +446,16 @@ export class ProjectListing extends LitElement {
 
             & .img {
               flex: 1 1 auto;
-              background: url(/images/placeholder.svg) var(--bb-ui-50) center
-                center / contain no-repeat;
               width: 100%;
               border-bottom: 1px solid var(--bb-neutral-300);
+              background-color: var(--bb-ui-50);
+              background-size: contain;
+              background-repeat: no-repeat;
+              background-position: center center;
+            }
+
+            & .img:not(.custom) {
+              background-image: url(/images/placeholder.svg);
             }
 
             &:has(> .username) .title {
@@ -667,6 +680,7 @@ export class ProjectListing extends LitElement {
     this.#hideBoardServerOverflowMenu.bind(this);
   #attemptFocus = false;
   #attemptScrollUpdate = false;
+  #recentItems: string[] = [];
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -703,6 +717,17 @@ export class ProjectListing extends LitElement {
         }>
       | Map<PropertyKey, unknown>
   ): void {
+    if (
+      changedProperties.has("selectedLocation") ||
+      changedProperties.has("selectedBoardServer")
+    ) {
+      this.recentItemsKey = this.#createUrl(
+        this.selectedBoardServer,
+        this.selectedLocation
+      );
+      this.#restoreRecentItemsForKey(this.recentItemsKey);
+    }
+
     if (
       changedProperties.has("boardServerNavState") ||
       changedProperties.has("boardServers") ||
@@ -855,6 +880,48 @@ export class ProjectListing extends LitElement {
     });
   }
 
+  #restoreRecentItemsForKey(key: string | null) {
+    if (!key) {
+      return;
+    }
+
+    const store =
+      this.recencyType === "local"
+        ? globalThis.localStorage
+        : globalThis.sessionStorage;
+    try {
+      const data = store.getItem(`bb-project-listing-${key}`);
+      if (!data) {
+        return;
+      }
+      const items = JSON.parse(data);
+      if (
+        !Array.isArray(items) ||
+        !items.every((item) => typeof item === "string")
+      ) {
+        return;
+      }
+
+      this.#recentItems = items;
+    } catch (err) {
+      console.warn(err);
+      return;
+    }
+  }
+
+  #saveRecentItemsForKey(key: string | null) {
+    if (!key) {
+      return;
+    }
+
+    const items = JSON.stringify(this.#recentItems);
+    const store =
+      this.recencyType === "local"
+        ? globalThis.localStorage
+        : globalThis.sessionStorage;
+    store.setItem(`bb-project-listing-${key}`, items);
+  }
+
   #focusSearchField() {
     if (!this.#searchRef.value) {
       return;
@@ -863,45 +930,9 @@ export class ProjectListing extends LitElement {
     this.#searchRef.value.select();
   }
 
-  #emitSelectedBoard() {
-    if (!this.#wrapperRef.value) {
-      return;
-    }
-
-    const selected =
-      this.#wrapperRef.value.querySelector<HTMLButtonElement>(
-        "button.selected"
-      );
-    if (!selected) {
-      console.log("lol");
-      return;
-    }
-
-    const { url, boardServer } = selected.dataset;
-    if (!url) {
-      return;
-    }
-
-    this.dispatchEvent(
-      new GraphBoardServerLoadRequestEvent(boardServer ?? "", url)
-    );
-  }
-
   #toggleMode() {
     this.mode = this.mode === "condensed" ? "detailed" : "condensed";
     globalThis.localStorage.setItem(MODE_KEY, this.mode);
-  }
-
-  #clamp(value: number, min: number, max: number) {
-    if (value < min) {
-      value = min;
-    }
-
-    if (value > max) {
-      value = max;
-    }
-
-    return value;
   }
 
   #createUrl(boardServer: string, location: string) {
@@ -1050,8 +1081,6 @@ export class ProjectListing extends LitElement {
 
                 const { permission } = store;
 
-                // Divide the items into two buckets: those that belong to the user and
-                // other published boards.
                 const items = [...store.items]
                   .filter(([name, item]) => {
                     const canShow =
@@ -1067,12 +1096,28 @@ export class ProjectListing extends LitElement {
                     return filter.test(name) && canShow;
                   })
                   .sort(([, dataA], [, dataB]) => {
-                    if (dataA.mine && !dataB.mine) {
+                    // Sort by recency.
+                    const indexA = this.#recentItems.indexOf(dataA.url);
+                    const indexB = this.#recentItems.indexOf(dataB.url);
+                    if (indexA !== -1 && indexB === -1) {
                       return -1;
                     }
-
-                    if (!dataA.mine && dataB.mine) {
+                    if (indexA === -1 && indexB !== -1) {
                       return 1;
+                    }
+
+                    // If both are unknown for recency, choose those that are
+                    // mine.
+                    if (indexA === -1 && indexB === -1) {
+                      if (dataA.mine && !dataB.mine) {
+                        return -1;
+                      }
+
+                      if (!dataA.mine && dataB.mine) {
+                        return 1;
+                      }
+
+                      return 0;
                     }
 
                     return 0;
@@ -1081,12 +1126,34 @@ export class ProjectListing extends LitElement {
                 type BoardInfo = (typeof items)[0];
                 const renderBoards = ([
                   name,
-                  { url, mine, username, title, description },
+                  { url, mine, username, title, description, thumbnail },
                 ]: BoardInfo) => {
+                  const styles: Record<string, string> = {};
+
+                  if (thumbnail !== null && thumbnail !== undefined) {
+                    styles["backgroundImage"] = `url(${thumbnail})`;
+                  }
+
                   return html`<button
                     @click=${(evt: PointerEvent) => {
                       const isMac = navigator.platform.indexOf("Mac") === 0;
                       const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+                      // Track for future invocations.
+                      const currentIndex = this.#recentItems.findIndex(
+                        (item) => item === url
+                      );
+                      if (currentIndex === -1) {
+                        this.#recentItems.unshift(url);
+                      } else {
+                        const [item] = this.#recentItems.splice(
+                          currentIndex,
+                          1
+                        );
+                        this.#recentItems.unshift(item);
+                      }
+
+                      this.#saveRecentItemsForKey(this.recentItemsKey);
 
                       this.dispatchEvent(
                         new GraphBoardServerLoadRequestEvent(
@@ -1104,14 +1171,22 @@ export class ProjectListing extends LitElement {
                     })}
                     title=${url}
                   >
-                    <span class="img"></span>
+                    <span
+                      class=${classMap({
+                        img: true,
+                        custom: thumbnail !== null && thumbnail !== undefined,
+                      })}
+                      style=${styleMap(styles)}
+                    ></span>
                     <span class="title"> ${title ?? name} </span>
                     <span class="description">
                       ${description ?? "No description"}
                     </span>
                     ${mine
                       ? nothing
-                      : html`<span class="username">@${username}</span>`}
+                      : username
+                        ? html`<span class="username">@${username}</span>`
+                        : nothing}
                   </button> `;
                 };
 

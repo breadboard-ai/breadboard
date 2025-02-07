@@ -19,6 +19,7 @@ export type GraphProviderItem = {
   tags?: GraphTag[];
   version?: string;
   description?: string;
+  thumbnail?: string | null;
   mine: boolean;
   readonly: boolean;
   handle: unknown;
@@ -322,6 +323,7 @@ export interface EntityMetadata {
   title?: string;
   description?: string;
   icon?: string;
+  thumbnail?: string;
   tags?: GraphTag[];
 }
 

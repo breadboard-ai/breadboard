@@ -33,7 +33,11 @@ import {
   getBoardServers,
 } from "@breadboard-ai/board-server-management";
 import { TokenVendor } from "@breadboard-ai/connection-client";
-import { GraphIdentifier, ModuleIdentifier } from "@breadboard-ai/types";
+import {
+  GraphIdentifier,
+  ModuleIdentifier,
+  NodeDescriptor,
+} from "@breadboard-ai/types";
 
 export class Board extends EventTarget {
   #tabs = new Map<TabId, Tab>();
@@ -328,6 +332,113 @@ export class Board extends EventTarget {
     return [...new Uint8Array(digest)]
       .map((v) => v.toString(16).padStart(2, "0"))
       .join("");
+  }
+
+  #toSVGPreview(descriptor: GraphDescriptor): string | null {
+    const PADDING = 10;
+    const PREVIEW_WIDTH = 250 - 2 * PADDING;
+    const PREVIEW_HEIGHT = 200 - 2 * PADDING;
+    const NODE_WIDTH = 260;
+    const NODE_ASSUMED_HEIGHT = 100;
+
+    let minX = Number.POSITIVE_INFINITY;
+    let minY = Number.POSITIVE_INFINITY;
+    let maxX = Number.NEGATIVE_INFINITY;
+    let maxY = Number.NEGATIVE_INFINITY;
+
+    const updateDimensions = (node: NodeDescriptor) => {
+      if (!node.metadata?.visual) {
+        return;
+      }
+
+      const visual = node.metadata?.visual as {
+        x: number;
+        y: number;
+        outputHeight: number;
+      };
+      minX = Math.min(minX, visual.x);
+      minY = Math.min(minY, visual.y);
+      maxX = Math.max(maxX, visual.x + NODE_WIDTH);
+      maxY = Math.max(
+        maxY,
+        visual.y + NODE_ASSUMED_HEIGHT + visual.outputHeight
+      );
+    };
+
+    // Main Graph.
+    for (const node of descriptor.nodes) {
+      updateDimensions(node);
+    }
+
+    // Sub Graphs.
+    for (const graph of Object.values(descriptor.graphs ?? {})) {
+      for (const node of graph.nodes) {
+        updateDimensions(node);
+      }
+    }
+
+    if (
+      !Number.isFinite(minX) ||
+      !Number.isFinite(minY) ||
+      !Number.isFinite(maxX) ||
+      !Number.isFinite(maxY)
+    ) {
+      return null;
+    }
+
+    const width = maxX - minX;
+    const height = maxY - minY;
+
+    const ratio = Math.min(PREVIEW_WIDTH / width, PREVIEW_HEIGHT / height);
+
+    const paddingX = (PREVIEW_WIDTH - width * ratio) * 0.5;
+    const paddingY = (PREVIEW_HEIGHT - height * ratio) * 0.5;
+
+    const renderNode = (node: NodeDescriptor) => {
+      if (!node.metadata?.visual) {
+        return "";
+      }
+
+      const visual = node.metadata?.visual as {
+        x: number;
+        y: number;
+        outputHeight: number;
+      };
+
+      const x = PADDING + paddingX + (visual.x - minX) * ratio;
+      const y = PADDING + paddingY + (visual.y - minY) * ratio;
+      const w = NODE_WIDTH * ratio;
+      const h = (NODE_ASSUMED_HEIGHT + visual.outputHeight) * ratio;
+
+      return `<rect x="${x.toFixed(2)}"
+                    y="${y.toFixed(2)}"
+                    width="${w.toFixed(2)}"
+                    height="${h.toFixed(2)}"
+                    rx="3.5"
+                    fill="white"
+                    stroke="#9C9C9C" />`;
+    };
+
+    const boardSvg = `<svg width="250" height="200" viewBox="0 0 250 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    ${descriptor.nodes
+      .map((node) => {
+        return renderNode(node);
+      })
+      .join("\n")}
+      ${Object.values(descriptor.graphs ?? {})
+        .map((graph) => {
+          return graph.nodes
+            .map((node) => {
+              return renderNode(node);
+            })
+            .join("\n");
+        })
+        .join("\n")}
+    </svg>`;
+
+    console.log(boardSvg);
+
+    return `data:image/svg+xml;base64,${btoa(boardSvg)}`;
   }
 
   async createTabFromRun(
@@ -691,6 +802,18 @@ export class Board extends EventTarget {
     const capabilities = boardServer.canProvide(boardUrl);
     if (!capabilities || !capabilities.save) {
       return { result: false, error: "Unable to save" };
+    }
+
+    const preview = this.#toSVGPreview(tab.graph);
+    if (preview) {
+      tab.graph.assets ??= {};
+      tab.graph.assets["@@thumbnail"] = {
+        metadata: {
+          title: "Thumbnail",
+          type: "file",
+        },
+        data: preview,
+      };
     }
 
     return boardServer.save(boardUrl, tab.graph);
