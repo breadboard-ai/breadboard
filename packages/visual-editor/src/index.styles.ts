@@ -424,5 +424,7 @@ export const styles = css`
     width: 100svw;
     left: 0;
     top: 0;
+    overflow-x: hidden;
+    overflow-y: scroll;
   }
 `;

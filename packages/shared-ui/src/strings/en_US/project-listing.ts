@@ -26,6 +26,12 @@ export default {
   COMMAND_GET_STARTED: {
     str: "Add a new Project to get started",
   },
+  COMMAND_PREVIOUS: {
+    str: "Previous",
+  },
+  COMMAND_NEXT: {
+    str: "Next",
+  },
 
   // Statuses.
   STATUS_LOADING: {
@@ -33,6 +39,9 @@ export default {
   },
 
   // Labels.
+  LABEL_SORT_BY: {
+    str: "Sort by",
+  },
   LABEL_WELCOME_MESSAGE: {
     str: "Welcome to Breadboard",
   },
