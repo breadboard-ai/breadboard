@@ -290,9 +290,6 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
 
     const assets = this.state?.graphAssets;
 
-    // Special-case the thumnail so it doesn't show up.
-    assets?.delete("@@thumbnail");
-
     return html`<div id="container">
       <header>
         <h1 @dblclick=${() => this.#toggleExpandedState()}>

@@ -35,6 +35,8 @@ import { ReactiveFastAccess } from "./fast-access";
 
 export { createProjectState, ReactiveProject };
 
+const THUMBNAIL_KEY = "@@thumbnail";
+
 /**
  * Controls the filter for tools. Use it to tweak what shows up in the "Tools"
  * section of the "@" menu.
@@ -199,6 +201,8 @@ class ReactiveProject implements ProjectInternal {
     if (!mutable) return;
 
     const { assets = {} } = mutable.graph;
+    // Special-case the thumnail so it doesn't show up.
+    delete assets[THUMBNAIL_KEY];
 
     updateMap(
       this.graphAssets,
