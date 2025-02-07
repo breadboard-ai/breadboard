@@ -12,6 +12,7 @@ import {
   GraphDescriptor,
   GraphLoader,
   GraphProvider,
+  InspectableGraph,
   InspectableRunObserver,
   Kit,
   MutableGraphStore,
@@ -38,6 +39,24 @@ import {
   ModuleIdentifier,
   NodeDescriptor,
 } from "@breadboard-ai/types";
+
+const documentStyles = getComputedStyle(document.documentElement);
+
+type ValidColorStrings =
+  | `#${number | "a" | "b" | "c" | "d" | "e" | "f" | "A" | "B" | "C" | "D" | "E" | "F"}`
+  | `--${string}`;
+
+export function getGlobalColor(
+  name: ValidColorStrings,
+  defaultValue: ValidColorStrings = "#333333"
+) {
+  const value = documentStyles.getPropertyValue(name)?.replace(/^#/, "");
+  const valueAsNumber = parseInt(value || defaultValue, 16);
+  if (Number.isNaN(valueAsNumber)) {
+    return 0xff00ff;
+  }
+  return valueAsNumber;
+}
 
 export class Board extends EventTarget {
   #tabs = new Map<TabId, Tab>();
@@ -334,12 +353,14 @@ export class Board extends EventTarget {
       .join("");
   }
 
-  #toSVGPreview(descriptor: GraphDescriptor): string | null {
+  async #toSVGPreview(descriptor: GraphDescriptor): Promise<string | null> {
     const PADDING = 10;
     const PREVIEW_WIDTH = 250 - 2 * PADDING;
     const PREVIEW_HEIGHT = 200 - 2 * PADDING;
     const NODE_WIDTH = 260;
     const NODE_ASSUMED_HEIGHT = 100;
+
+    const graphStore = this.getGraphStore();
 
     let minX = Number.POSITIVE_INFINITY;
     let minY = Number.POSITIVE_INFINITY;
@@ -348,7 +369,6 @@ export class Board extends EventTarget {
 
     const updateDimensions = (node: NodeDescriptor) => {
       if (!node.metadata?.visual) {
-        console.log("No visual");
         return;
       }
 
@@ -395,7 +415,10 @@ export class Board extends EventTarget {
     const paddingX = (PREVIEW_WIDTH - width * ratio) * 0.5;
     const paddingY = (PREVIEW_HEIGHT - height * ratio) * 0.5;
 
-    const renderNode = (node: NodeDescriptor) => {
+    const renderNode = (
+      node: NodeDescriptor,
+      inspectableGraph: InspectableGraph | null = null
+    ) => {
       if (!node.metadata?.visual) {
         return "";
       }
@@ -411,26 +434,72 @@ export class Board extends EventTarget {
       const w = NODE_WIDTH * ratio;
       const h = (NODE_ASSUMED_HEIGHT + (visual.outputHeight ?? 0)) * ratio;
 
+      let c = 0;
+      if (inspectableGraph) {
+        const inspectableNode = inspectableGraph.nodeById(node.id);
+        const icon =
+          inspectableNode?.type().currentMetadata().icon ??
+          inspectableNode?.type().type() ??
+          null;
+
+        switch (icon) {
+          case "text":
+          case "combine-outputs":
+          case "input":
+          case "output": {
+            c = getGlobalColor("--bb-input-600");
+            break;
+          }
+
+          case "generative":
+          case "generative-image":
+          case "generative-text":
+          case "generative-audio":
+          case "generative-code": {
+            c = getGlobalColor("--bb-generative-600");
+            break;
+          }
+
+          default: {
+            c = getGlobalColor("--bb-ui-600");
+            break;
+          }
+        }
+      }
+
       return `<rect x="${x.toFixed(2)}"
                     y="${y.toFixed(2)}"
                     width="${w.toFixed(2)}"
                     height="${h.toFixed(2)}"
                     rx="3.5"
                     fill="white"
-                    stroke="#9C9C9C" />`;
+                    stroke="#${c.toString(16).padStart(6, "0")}" />`;
     };
 
+    let inspectableGraph: InspectableGraph | null = null;
+    const mainGraphIdResult = graphStore.getByDescriptor(descriptor);
     const boardSvg = `<svg width="250" height="200" viewBox="0 0 250 200" fill="none" xmlns="http://www.w3.org/2000/svg">
     ${descriptor.nodes
       .map((node) => {
-        return renderNode(node);
+        if (mainGraphIdResult.success) {
+          inspectableGraph =
+            graphStore.inspect(mainGraphIdResult.result, "") ?? null;
+        }
+
+        return renderNode(node, inspectableGraph);
       })
       .join("\n")}
-      ${Object.values(descriptor.graphs ?? {})
-        .map((graph) => {
+      ${Object.entries(descriptor.graphs ?? {})
+        .map(([id, graph]) => {
+          inspectableGraph = null;
+          if (mainGraphIdResult.success) {
+            inspectableGraph =
+              graphStore.inspect(mainGraphIdResult.result, id) ?? null;
+          }
+
           return graph.nodes
             .map((node) => {
-              return renderNode(node);
+              return renderNode(node, inspectableGraph);
             })
             .join("\n");
         })
@@ -778,7 +847,7 @@ export class Board extends EventTarget {
     return boardServer.capabilities.preview;
   }
 
-  save(id: TabId | null) {
+  async save(id: TabId | null) {
     if (!id) {
       return { result: false, error: "Unable to save" };
     }
@@ -803,7 +872,7 @@ export class Board extends EventTarget {
       return { result: false, error: "Unable to save" };
     }
 
-    const preview = this.#toSVGPreview(tab.graph);
+    const preview = await this.#toSVGPreview(tab.graph);
     if (preview) {
       tab.graph.assets ??= {};
       tab.graph.assets["@@thumbnail"] = {

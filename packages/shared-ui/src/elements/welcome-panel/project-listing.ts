@@ -1106,18 +1106,18 @@ export class ProjectListing extends LitElement {
                       return 1;
                     }
 
+                    if (indexA !== -1 && indexB !== -1) {
+                      return indexA - indexB;
+                    }
+
                     // If both are unknown for recency, choose those that are
                     // mine.
-                    if (indexA === -1 && indexB === -1) {
-                      if (dataA.mine && !dataB.mine) {
-                        return -1;
-                      }
+                    if (dataA.mine && !dataB.mine) {
+                      return -1;
+                    }
 
-                      if (!dataA.mine && dataB.mine) {
-                        return 1;
-                      }
-
-                      return 0;
+                    if (!dataA.mine && dataB.mine) {
+                      return 1;
                     }
 
                     return 0;
