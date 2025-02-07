@@ -126,6 +126,11 @@ export default defineNodeType({
       type: "boolean",
       default: false,
     },
+    redirect: {
+      title: "Redirect",
+      type: enumeration("follow", "error", "manual"),
+      default: "follow",
+    },
   },
   outputs: {
     response: {
@@ -156,12 +161,17 @@ export default defineNodeType({
     },
   },
   invoke: async (
-    { url, method, body, headers, raw, stream },
+    { url, method, body, headers, raw, stream, redirect },
     _, // No dynamic inputs.
     { signal, store }: NodeHandlerContext
   ) => {
     if (!url) throw new Error("Fetch requires `url` input");
-    const init: RequestInit = { method, headers, signal };
+    const init: RequestInit = {
+      method,
+      headers,
+      signal,
+      redirect,
+    };
     // GET can not have a body.
     if (method !== "GET") {
       init.body = await createBody(body, headers, store);

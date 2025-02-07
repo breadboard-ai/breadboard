@@ -55,6 +55,11 @@ declare module "@fetch" {
      * The body of the request
      */
     body?: unknown;
+    /**
+     * Determines the browser's behavior in case the server replies
+     * with a redirect status.
+     */
+    redirect?: "follow" | "error" | "manual";
   };
 
   export type FetchOutputs = {
