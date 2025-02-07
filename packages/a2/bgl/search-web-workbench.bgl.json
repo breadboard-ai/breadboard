@@ -1,0 +1,28 @@
+{
+  "title": "Search Web Workbench",
+  "description": "A blank board. Use it as a starting point for your creations.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "tools-dad5f212",
+      "type": "file://bgl/tools.bgl.json#module:search-web",
+      "metadata": {
+        "visual": {
+          "x": 280,
+          "y": 480,
+          "collapsed": "expanded",
+          "outputHeight": 268
+        },
+        "title": "Search Web",
+        "logLevel": "info"
+      },
+      "configuration": {
+        "p-query": "Gemini 2.0 models"
+      }
+    }
+  ],
+  "edges": [],
+  "metadata": {
+    "visual": {}
+  }
+}
