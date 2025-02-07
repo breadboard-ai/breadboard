@@ -466,6 +466,15 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
         title = `${project.board.descriptor.title ?? "Untitled Board"} [${suffix}]`;
       }
 
+      let thumbnail: string | null = null;
+      if (
+        project.board.descriptor.assets &&
+        project.board.descriptor.assets["@@thumbnail"]
+      ) {
+        thumbnail = project.board.descriptor.assets["@@thumbnail"]
+          .data as string;
+      }
+
       projectNames.add(title);
       projects.push([
         title,
@@ -477,6 +486,7 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
           readonly: false,
           handle: null,
           tags: project.board.descriptor.metadata?.tags,
+          thumbnail,
         },
       ]);
     }

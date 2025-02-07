@@ -12,6 +12,7 @@ import {
   GraphDescriptor,
   GraphLoader,
   GraphProvider,
+  InspectableGraph,
   InspectableRunObserver,
   Kit,
   MutableGraphStore,
@@ -33,7 +34,29 @@ import {
   getBoardServers,
 } from "@breadboard-ai/board-server-management";
 import { TokenVendor } from "@breadboard-ai/connection-client";
-import { GraphIdentifier, ModuleIdentifier } from "@breadboard-ai/types";
+import {
+  GraphIdentifier,
+  ModuleIdentifier,
+  NodeDescriptor,
+} from "@breadboard-ai/types";
+
+const documentStyles = getComputedStyle(document.documentElement);
+
+type ValidColorStrings =
+  | `#${number | "a" | "b" | "c" | "d" | "e" | "f" | "A" | "B" | "C" | "D" | "E" | "F"}`
+  | `--${string}`;
+
+export function getGlobalColor(
+  name: ValidColorStrings,
+  defaultValue: ValidColorStrings = "#333333"
+) {
+  const value = documentStyles.getPropertyValue(name)?.replace(/^#/, "");
+  const valueAsNumber = parseInt(value || defaultValue, 16);
+  if (Number.isNaN(valueAsNumber)) {
+    return 0xff00ff;
+  }
+  return valueAsNumber;
+}
 
 export class Board extends EventTarget {
   #tabs = new Map<TabId, Tab>();
@@ -328,6 +351,162 @@ export class Board extends EventTarget {
     return [...new Uint8Array(digest)]
       .map((v) => v.toString(16).padStart(2, "0"))
       .join("");
+  }
+
+  async #toSVGPreview(descriptor: GraphDescriptor): Promise<string | null> {
+    const PADDING = 10;
+    const PREVIEW_WIDTH = 250 - 2 * PADDING;
+    const PREVIEW_HEIGHT = 200 - 2 * PADDING;
+    const NODE_WIDTH = 260;
+    const NODE_ASSUMED_HEIGHT = 100;
+
+    const graphStore = this.getGraphStore();
+
+    let minX = Number.POSITIVE_INFINITY;
+    let minY = Number.POSITIVE_INFINITY;
+    let maxX = Number.NEGATIVE_INFINITY;
+    let maxY = Number.NEGATIVE_INFINITY;
+
+    const updateDimensions = (node: NodeDescriptor) => {
+      if (!node.metadata?.visual) {
+        return;
+      }
+
+      const visual = node.metadata?.visual as {
+        x: number;
+        y: number;
+        outputHeight: number;
+      };
+      minX = Math.min(minX, visual.x);
+      minY = Math.min(minY, visual.y);
+      maxX = Math.max(maxX, visual.x + NODE_WIDTH);
+      maxY = Math.max(
+        maxY,
+        visual.y + NODE_ASSUMED_HEIGHT + (visual.outputHeight ?? 0)
+      );
+    };
+
+    // Main Graph.
+    for (const node of descriptor.nodes) {
+      updateDimensions(node);
+    }
+
+    // Sub Graphs.
+    for (const graph of Object.values(descriptor.graphs ?? {})) {
+      for (const node of graph.nodes) {
+        updateDimensions(node);
+      }
+    }
+
+    if (
+      !Number.isFinite(minX) ||
+      !Number.isFinite(minY) ||
+      !Number.isFinite(maxX) ||
+      !Number.isFinite(maxY)
+    ) {
+      return null;
+    }
+
+    const width = maxX - minX;
+    const height = maxY - minY;
+
+    const ratio = Math.min(PREVIEW_WIDTH / width, PREVIEW_HEIGHT / height);
+
+    const paddingX = (PREVIEW_WIDTH - width * ratio) * 0.5;
+    const paddingY = (PREVIEW_HEIGHT - height * ratio) * 0.5;
+
+    const renderNode = (
+      node: NodeDescriptor,
+      inspectableGraph: InspectableGraph | null = null
+    ) => {
+      if (!node.metadata?.visual) {
+        return "";
+      }
+
+      const visual = node.metadata?.visual as {
+        x: number;
+        y: number;
+        outputHeight: number;
+      };
+
+      const x = PADDING + paddingX + (visual.x - minX) * ratio;
+      const y = PADDING + paddingY + (visual.y - minY) * ratio;
+      const w = NODE_WIDTH * ratio;
+      const h = (NODE_ASSUMED_HEIGHT + (visual.outputHeight ?? 0)) * ratio;
+
+      let c = 0;
+      if (inspectableGraph) {
+        const inspectableNode = inspectableGraph.nodeById(node.id);
+        const icon =
+          inspectableNode?.type().currentMetadata().icon ??
+          inspectableNode?.type().type() ??
+          null;
+
+        switch (icon) {
+          case "text":
+          case "combine-outputs":
+          case "input":
+          case "output": {
+            c = getGlobalColor("--bb-input-600");
+            break;
+          }
+
+          case "generative":
+          case "generative-image":
+          case "generative-text":
+          case "generative-audio":
+          case "generative-code": {
+            c = getGlobalColor("--bb-generative-600");
+            break;
+          }
+
+          default: {
+            c = getGlobalColor("--bb-ui-600");
+            break;
+          }
+        }
+      }
+
+      return `<rect x="${x.toFixed(2)}"
+                    y="${y.toFixed(2)}"
+                    width="${w.toFixed(2)}"
+                    height="${h.toFixed(2)}"
+                    rx="3.5"
+                    fill="white"
+                    stroke="#${c.toString(16).padStart(6, "0")}" />`;
+    };
+
+    let inspectableGraph: InspectableGraph | null = null;
+    const mainGraphIdResult = graphStore.getByDescriptor(descriptor);
+    const boardSvg = `<svg width="250" height="200" viewBox="0 0 250 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    ${descriptor.nodes
+      .map((node) => {
+        if (mainGraphIdResult.success) {
+          inspectableGraph =
+            graphStore.inspect(mainGraphIdResult.result, "") ?? null;
+        }
+
+        return renderNode(node, inspectableGraph);
+      })
+      .join("\n")}
+      ${Object.entries(descriptor.graphs ?? {})
+        .map(([id, graph]) => {
+          inspectableGraph = null;
+          if (mainGraphIdResult.success) {
+            inspectableGraph =
+              graphStore.inspect(mainGraphIdResult.result, id) ?? null;
+          }
+
+          return graph.nodes
+            .map((node) => {
+              return renderNode(node, inspectableGraph);
+            })
+            .join("\n");
+        })
+        .join("\n")}
+    </svg>`;
+
+    return `data:image/svg+xml;base64,${btoa(boardSvg)}`;
   }
 
   async createTabFromRun(
@@ -668,7 +847,7 @@ export class Board extends EventTarget {
     return boardServer.capabilities.preview;
   }
 
-  save(id: TabId | null) {
+  async save(id: TabId | null) {
     if (!id) {
       return { result: false, error: "Unable to save" };
     }
@@ -691,6 +870,18 @@ export class Board extends EventTarget {
     const capabilities = boardServer.canProvide(boardUrl);
     if (!capabilities || !capabilities.save) {
       return { result: false, error: "Unable to save" };
+    }
+
+    const preview = await this.#toSVGPreview(tab.graph);
+    if (preview) {
+      tab.graph.assets ??= {};
+      tab.graph.assets["@@thumbnail"] = {
+        metadata: {
+          title: "Thumbnail",
+          type: "file",
+        },
+        data: preview,
+      };
     }
 
     return boardServer.save(boardUrl, tab.graph);
