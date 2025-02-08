@@ -17,9 +17,9 @@ app.use(
 app.use(
   "/board",
   makeRouter({
-    allowedOrigins: new Set(),
-    hostname: "",
-    serverUrl: "",
+    allowedOrigins: new Set(["http://localhost:5173"]),
+    hostname: "http://localhost:3000",
+    serverUrl: "http://localhost:3000",
     viteDevServer: null,
     rootPath: "",
     storageBucket: "",
