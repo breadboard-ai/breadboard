@@ -5,7 +5,6 @@
  */
 
 import type { IncomingMessage, ServerResponse } from "http";
-import type { ViteDevServer } from "vite";
 
 import { methodNotAllowed } from "../errors.js";
 import { getBody, serveFile, serveIndex } from "../common.js";
