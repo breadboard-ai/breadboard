@@ -399,7 +399,7 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
     const projects: BoardServerProject[] = [];
     try {
       const request = createRequest(
-        `${this.url.origin}/boards`,
+        `${this.url}/boards`,
         this.user.apiKey,
         "GET"
       );
@@ -429,7 +429,7 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
         ]);
 
         const project: BoardServerProject = {
-          url: new URL(`${this.url.origin}/boards/${item.path}`),
+          url: new URL(`${this.url}/boards/${item.path}`),
           metadata: {
             owner: item.username ?? "Unknown",
             tags: item.tags,
@@ -485,7 +485,7 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
 
     for (const [owner, nodes] of kits.entries()) {
       const title = `@${owner}'s Components`;
-      const url = `${this.url.origin}/kits/@${owner}/all`;
+      const url = `${this.url}/kits/@${owner}/all`;
       this.kits = this.kits.filter((kit) => kit.title !== title);
       this.kits.push({
         title,
