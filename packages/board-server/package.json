@@ -8,14 +8,15 @@
   "description": "Board Server",
   "main": "./dist/server/index.js",
   "exports": {
-    ".": "./dist/server/index.js",
-    "./router": "./dist/server/router.js"
+    ".": "./dist/lib/src/index.js",
+    "./router": "./dist/lib/src/router.js"
   },
   "type": "module",
   "scripts": {
     "start": "node .",
     "prepack": "npm run build",
     "build": "wireit",
+    "build:lib": "wireit",
     "build:vite": "wireit",
     "build:esbuild": "wireit",
     "build:tests": "wireit",
@@ -34,7 +35,80 @@
     "build": {
       "dependencies": [
         "build:vite",
-        "build:esbuild"
+        "build:esbuild",
+        "build:lib"
+      ]
+    },
+    "build:lib": {
+      "dependencies": [
+        "build:vite:lib",
+        "build:tsc"
+      ]
+    },
+    "build:vite:lib": {
+      "command": "vite build",
+      "files": [
+        "*.html",
+        "vite.config.ts",
+        "package.json",
+        "src/app/**/*.ts",
+        ".env.development",
+        ".env.production"
+      ],
+      "output": [
+        "dist/client"
+      ],
+      "dependencies": [
+        "update-sandbox-runtime",
+        "../breadboard:build:tsc",
+        "../data-store:build:tsc",
+        "../agent-kit:build:tsc",
+        "../palm-kit:build:tsc",
+        "../core-kit:build:tsc",
+        "../google-drive-kit:build:tsc",
+        "../jsandbox:build:tsc",
+        "../json-kit:build:tsc",
+        "../template-kit:build:tsc",
+        "../node-nursery-web:build:tsc",
+        "../shared-ui:build:tsc",
+        "../visual-editor:build"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "build:tsc": {
+      "command": "tsc -b tsconfig.lib.json --pretty",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "files": [],
+      "output": [
+        "dist/lib"
+      ],
+      "dependencies": [
+        "typescript-server-files-and-deps"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "typescript-server-files-and-deps": {
+      "files": [
+        "src/index.ts",
+        "src/router.ts",
+        "src/server.ts",
+        "src/server/**/*.ts",
+        "tsconfig.json",
+        "package.json"
+      ],
+      "dependencies": [
+        "../breadboard:build",
+        "../data-store:build",
+        "../agent-kit:build",
+        "../palm-kit:build",
+        "../core-kit:build",
+        "../json-kit:build",
+        "../template-kit:build",
+        "../node-nursery-web:build",
+        "../google-drive-kit:build",
+        "../jsandbox:build"
       ]
     },
     "build:vite": {
@@ -71,29 +145,14 @@
     "build:esbuild": {
       "command": "tsx scripts/build.ts",
       "files": [
-        "scripts/build.ts",
-        "src/index.ts",
-        "src/router.ts",
-        "src/server.ts",
-        "src/server/**/*.ts",
-        "tsconfig.json",
-        "package.json"
+        "scripts/build.ts"
       ],
       "output": [
         "dist/server",
         "dist/scripts"
       ],
       "dependencies": [
-        "../breadboard:build",
-        "../data-store:build",
-        "../agent-kit:build",
-        "../palm-kit:build",
-        "../core-kit:build",
-        "../json-kit:build",
-        "../template-kit:build",
-        "../node-nursery-web:build",
-        "../google-drive-kit:build",
-        "../jsandbox:build"
+        "typescript-server-files-and-deps"
       ],
       "clean": "if-file-deleted"
     },
