@@ -119,11 +119,11 @@ test("all nodes have an $error output even if they don't return $error", () => {
 test("can't declare node with $error output because it's automatic", () => {
   assert.throws(
     () =>
+      // @ts-expect-error
       defineNodeType({
         name: "test",
         inputs: {},
         outputs: {
-          // @ts-expect-error
           $error: {
             type: "string",
           },

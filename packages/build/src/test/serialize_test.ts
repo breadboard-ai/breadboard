@@ -1319,7 +1319,6 @@ test("can't declare an input port called $metadata because it's reserved", () =>
     const def = defineNodeType({
       name: "d1",
       inputs: {
-        // @ts-expect-error
         $metadata: {
           type: "string",
         },
