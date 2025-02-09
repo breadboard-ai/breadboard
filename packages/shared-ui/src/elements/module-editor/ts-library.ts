@@ -74,7 +74,6 @@ export const fullModList = [
   "/lib.es2022.intl.d.ts",
   "/lib.es2022.object.d.ts",
   "/lib.es2022.regexp.d.ts",
-  "/lib.es2022.sharedmemory.d.ts",
   "/lib.es2022.string.d.ts",
   "/lib.es2023.array.d.ts",
   "/lib.es2023.collection.d.ts",
@@ -152,7 +151,6 @@ export const quickJSModList = [
   "/lib.es2022.intl.d.ts",
   "/lib.es2022.object.d.ts",
   "/lib.es2022.regexp.d.ts",
-  "/lib.es2022.sharedmemory.d.ts",
   "/lib.es2022.string.d.ts",
   "/lib.es2023.array.d.ts",
   "/lib.es2023.collection.d.ts",
@@ -367,9 +365,6 @@ function getTypeScriptMod(mod: string) {
 
     case "/lib.es2022.regexp.d.ts":
       return import("typescript/lib/lib.es2022.regexp.d.ts?raw");
-
-    case "/lib.es2022.sharedmemory.d.ts":
-      return import("typescript/lib/lib.es2022.sharedmemory.d.ts?raw");
 
     case "/lib.es2022.string.d.ts":
       return import("typescript/lib/lib.es2022.string.d.ts?raw");

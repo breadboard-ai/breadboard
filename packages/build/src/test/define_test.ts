@@ -1999,6 +1999,7 @@ test("error: default does not match type", () => {
     name: "foo",
     inputs: {
       si1: {
+        // @ts-expect-error
         type: "string",
         // @ts-expect-error
         default: 123,
@@ -2030,7 +2031,6 @@ test("error: input port can't be called $id", () => {
     const def = defineNodeType({
       name: "foo",
       inputs: {
-        // @ts-expect-error
         $id: { type: "string" },
       },
       outputs: {},

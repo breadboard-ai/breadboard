@@ -14,9 +14,9 @@ import { writeFile } from "fs/promises";
 
 import { default as kitConstructor, components } from "./index.js";
 
-import appendToDoc from "./bgl/append-to-doc.bgl.json";
-import readFromDoc from "./bgl/read-from-doc.bgl.json";
-import contextToSlides from "./bgl/context-to-slides.bgl.json";
+import appendToDoc from "./bgl/append-to-doc.bgl.json" with { type: "json" };
+import readFromDoc from "./bgl/read-from-doc.bgl.json" with { type: "json" };
+import contextToSlides from "./bgl/context-to-slides.bgl.json" with { type: "json" };
 
 const MANIFEST_NAME = "google-drive.kit.json";
 
