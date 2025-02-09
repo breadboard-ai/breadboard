@@ -18,6 +18,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts"],
+  "include": ["src/**/*.ts", "tests/**/*.ts", "scripts/*.ts", "vite.config.ts"],
   "extends": "@google-labs/tsconfig/base.json"
 }

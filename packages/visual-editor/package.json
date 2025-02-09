@@ -26,7 +26,8 @@
     "./providers": {
       "types": "./build/providers/types.d.ts",
       "default": "./build/providers/types.js"
-    }
+    },
+    "./vite": "./build/src/configure-assets.js"
   },
   "types": "build/index.d.ts",
   "type": "module",
@@ -167,6 +168,7 @@
       ],
       "files": [
         "vite.config.ts",
+        "scripts/*.ts",
         ".env"
       ]
     },

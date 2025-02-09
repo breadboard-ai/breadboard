@@ -4,19 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { defineConfig, UserConfig } from "vite";
+import { config } from "dotenv";
+import { loadEnv, defineConfig, UserConfig } from "vite";
+import { configureAssets } from "@breadboard-ai/visual-editor/vite";
 
-export default defineConfig(async (): Promise<UserConfig> => {
-  const languagePackUrl = import.meta.resolve(
-    "@breadboard-ai/shared-ui/strings/en_US"
-  );
+export default defineConfig(async ({ mode }): Promise<UserConfig> => {
+  config();
 
-  let languagePack;
-  try {
-    languagePack = (await import(languagePackUrl)).default;
-  } catch (err) {
-    throw new Error("Unable to import language pack");
-  }
+  const envConfig = { ...loadEnv(mode!, process.cwd()) };
+
+  const define = await configureAssets(__dirname, envConfig);
 
   return {
     optimizeDeps: { esbuildOptions: { target: "esnext" } },
@@ -30,12 +27,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
         formats: ["es"],
       },
     },
-    define: {
-      LANGUAGE_PACK: JSON.stringify(languagePack),
-      ASSET_PACK: "{}",
-      ASSET_PACK_ICONS: "[]",
-      MAIN_ICON: JSON.stringify("main.svg"),
-    },
+    define,
     resolve: {
       dedupe: ["lit"],
     },
