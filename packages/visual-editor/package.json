@@ -13,8 +13,8 @@
       "default": "./build/preview.js"
     },
     "./config.js": {
-      "types": "./build/config.d.ts",
-      "default": "./build/config.js"
+      "types": "./build/src/config.d.ts",
+      "default": "./build/src/config.js"
     },
     "./public": "./public",
     "./index.html": "./index.html",
