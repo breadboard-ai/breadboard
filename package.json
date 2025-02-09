@@ -45,8 +45,6 @@
         "./packages/import:build",
         "./packages/json-kit:build",
         "./packages/manifest:build",
-        "./packages/node-nursery-web:build",
-        "./packages/palm-kit:build",
         "./packages/python-wasm:build",
         "./packages/schema:build",
         "./packages/shared-ui:build",
@@ -75,8 +73,6 @@
         "./packages/jsandbox:test",
         "./packages/json-kit:test",
         "./packages/manifest:test",
-        "./packages/node-nursery-web:test",
-        "./packages/palm-kit:test",
         "./packages/python-wasm:test",
         "./packages/schema:test",
         "./packages/template-kit:test",
@@ -99,8 +95,6 @@
         "./packages/google-drive-kit:lint",
         "./packages/import:lint",
         "./packages/json-kit:lint",
-        "./packages/node-nursery-web:lint",
-        "./packages/palm-kit:lint",
         "./packages/python-wasm:lint",
         "./packages/template-kit:lint"
       ]

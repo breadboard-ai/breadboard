@@ -108,12 +108,6 @@ export default defineConfig(async ({ mode }) => {
     sample: "./index.html",
     oauth: "./oauth/index.html",
     bbrt: "./experimental/bbrt/index.html",
-    "palm-kit": "src/palm-kit.ts",
-    "core-kit": "src/core-kit.ts",
-    "json-kit": "src/json-kit.ts",
-    "template-kit": "src/template-kit.ts",
-    "python-wasm-kit": "src/python-wasm-kit.ts",
-    "node-nursery-web-kit": "src/node-nursery-web-kit.ts",
   };
 
   if (mode === "development") {

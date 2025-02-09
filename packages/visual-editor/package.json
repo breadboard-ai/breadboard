@@ -20,7 +20,6 @@
     "./index.html": "./index.html",
     "./preview.html": "./preview.html",
     "./embed.js": "./build/embed.js",
-    "./palm-kit.js": "./build/palm-kit.js",
     "./core-kit.js": "./build/core-kit.js",
     "./json-kit.js": "./build/json-kit.js",
     "./template-kit.js": "./build/template-kit.js",
@@ -60,8 +59,6 @@
         "../google-drive-kit:build",
         "../json-kit:build",
         "../template-kit:build",
-        "../node-nursery-web:build",
-        "../palm-kit:build",
         "../python-wasm:build",
         "../manifest:build",
         "build:vite",
@@ -85,8 +82,6 @@
         "../jsandbox:build:tsc",
         "../json-kit:build:tsc",
         "../template-kit:build:tsc",
-        "../node-nursery-web:build:tsc",
-        "../palm-kit:build:tsc",
         "../python-wasm:build:tsc",
         "../types:build:tsc"
       ],
@@ -127,10 +122,6 @@
         "copy-pyoide-assets",
         "update-sandbox-runtime",
         {
-          "script": "copy-light-kits",
-          "cascade": false
-        },
-        {
           "script": "copy-bbrt-assets",
           "cascade": false
         }
@@ -155,10 +146,6 @@
         "../example-boards:build",
         {
           "script": "typescript-files-and-deps",
-          "cascade": false
-        },
-        {
-          "script": "copy-light-kits",
           "cascade": false
         },
         {
@@ -193,10 +180,6 @@
           "cascade": false
         },
         {
-          "script": "copy-light-kits",
-          "cascade": false
-        },
-        {
           "script": "copy-bbrt-assets",
           "cascade": false
         },
@@ -228,19 +211,6 @@
       ],
       "output": [
         "public/example-boards/*.json"
-      ]
-    },
-    "copy-light-kits": {
-      "command": "tsx src/copy-light-kits.ts",
-      "dependencies": [
-        "../agent-kit:build",
-        "../google-drive-kit:build"
-      ],
-      "files": [
-        "src/copy-light-kits.ts"
-      ],
-      "output": [
-        "public/*.kit.json"
       ]
     },
     "copy-bbrt-assets": {
@@ -346,8 +316,6 @@
     "@google-labs/core-kit": "^0.17.1",
     "@google-labs/gemini-kit": "^0.11.0",
     "@google-labs/json-kit": "^0.3.14",
-    "@google-labs/node-nursery-web": "^1.4.1",
-    "@google-labs/palm-kit": "^0.1.8",
     "@google-labs/template-kit": "^0.3.16",
     "@lit/context": "^1.1.3",
     "@lit/task": "^1.0.2",

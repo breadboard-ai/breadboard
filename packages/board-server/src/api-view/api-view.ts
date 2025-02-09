@@ -10,8 +10,6 @@ import { LitElement, css, html, nothing, type PropertyValueMap } from "lit";
 import Core from "@google-labs/core-kit";
 import JSONKit from "@google-labs/json-kit";
 import TemplateKit from "@google-labs/template-kit";
-import NodeNurseryWeb from "@google-labs/node-nursery-web";
-import PaLMKit from "@google-labs/palm-kit";
 import GeminiKit from "@google-labs/gemini-kit";
 import AgentKit from "@google-labs/agent-kit";
 
@@ -89,15 +87,7 @@ export class ApiExplorer extends LitElement {
   );
   #handlers: Map<string, inputCallback[]> = new Map();
   #providers: BoardServer[] = [];
-  #kitLoad = loadKits([
-    TemplateKit,
-    Core,
-    PaLMKit,
-    GeminiKit,
-    NodeNurseryWeb,
-    JSONKit,
-    AgentKit,
-  ]);
+  #kitLoad = loadKits([TemplateKit, Core, GeminiKit, JSONKit, AgentKit]);
 
   #loader = createLoader(this.#providers);
   #load: Promise<{

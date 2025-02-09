@@ -22,11 +22,9 @@ export const SERVER_PORT = parseInt(process.env.PORT || "") || 3000;
 export const SERVER_URL = `http://localhost:${SERVER_PORT}`;
 
 export const defaultKits = [
-  "@google-labs/palm-kit",
   "@google-labs/core-kit",
   "@google-labs/json-kit",
   "@google-labs/template-kit",
-  "@google-labs/node-nursery-web",
   `/agent.kit.json`,
 ];
 

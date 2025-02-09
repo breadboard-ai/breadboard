@@ -63,13 +63,11 @@
         "../breadboard:build:tsc",
         "../data-store:build:tsc",
         "../agent-kit:build:tsc",
-        "../palm-kit:build:tsc",
         "../core-kit:build:tsc",
         "../google-drive-kit:build:tsc",
         "../jsandbox:build:tsc",
         "../json-kit:build:tsc",
         "../template-kit:build:tsc",
-        "../node-nursery-web:build:tsc",
         "../shared-ui:build:tsc",
         "../visual-editor:build"
       ],
@@ -102,11 +100,9 @@
         "../breadboard:build",
         "../data-store:build",
         "../agent-kit:build",
-        "../palm-kit:build",
         "../core-kit:build",
         "../json-kit:build",
         "../template-kit:build",
-        "../node-nursery-web:build",
         "../google-drive-kit:build",
         "../jsandbox:build"
       ]
@@ -156,11 +152,9 @@
         "../breadboard:build:tsc",
         "../data-store:build:tsc",
         "../agent-kit:generate-kit-manifest",
-        "../palm-kit:build:tsc",
         "../core-kit:build:tsc",
         "../json-kit:build:tsc",
         "../template-kit:build:tsc",
-        "../node-nursery-web:build:tsc",
         "../shared-ui:build:tsc"
       ],
       "files": [

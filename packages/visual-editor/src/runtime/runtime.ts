@@ -6,7 +6,6 @@
 
 import {
   addSandboxedRunModule,
-  asRuntimeKit,
   createGraphStore,
   createLoader,
   Kit,
@@ -27,10 +26,7 @@ import {
   legacyGraphProviderExists,
 } from "@breadboard-ai/board-server-management";
 
-import { loadKits } from "../utils/kit-loader";
-import GeminiKit from "@google-labs/gemini-kit";
-import BuildExampleKit from "../build-example-kit";
-import PythonWasmKit from "@breadboard-ai/python-wasm";
+import { loadKits, registerLegacyKits } from "../utils/kit-loader";
 
 export * as Events from "./events.js";
 export * as Types from "./types.js";
@@ -52,13 +48,7 @@ export async function create(config: RuntimeConfig): Promise<{
   state: StateManager;
   util: typeof Util;
 }> {
-  const kits = withRunModule(
-    await loadKits([
-      asRuntimeKit(GeminiKit),
-      asRuntimeKit(BuildExampleKit),
-      asRuntimeKit(PythonWasmKit),
-    ])
-  );
+  const kits = withRunModule(loadKits());
 
   const skipPlaygroundExamples = import.meta.env.MODE !== "development";
   let servers = await getBoardServers(
@@ -88,6 +78,7 @@ export async function create(config: RuntimeConfig): Promise<{
     loader,
     sandbox: config.sandbox,
   });
+  registerLegacyKits(graphStore);
 
   servers.forEach((server) => {
     server.ready().then(() => {
