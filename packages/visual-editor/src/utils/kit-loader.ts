@@ -4,23 +4,53 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Kit } from "@google-labs/breadboard";
-import { load } from "@google-labs/breadboard/kits";
+import {
+  asRuntimeKit,
+  GraphDescriptor,
+  MutableGraphStore,
+} from "@google-labs/breadboard";
+import {
+  kitFromGraphDescriptor,
+  registerKitGraphs,
+} from "@google-labs/breadboard/kits";
 
-export const loadKits = async (loadedKits: Kit[]) => {
-  const base = new URL(`${self.location.origin}/kits.json`);
-  const response = await fetch(base);
-  const kitList = await response.json();
+import GoogleDriveKit from "@breadboard-ai/google-drive-kit/google-drive.kit.json" with { type: "json" };
+import PythonWasmKit from "@breadboard-ai/python-wasm";
+import AgentKit from "@google-labs/agent-kit/agent.kit.json" with { type: "json" };
+import Core from "@google-labs/core-kit";
+import GeminiKit from "@google-labs/gemini-kit";
+import JSONKit from "@google-labs/json-kit";
+import TemplateKit from "@google-labs/template-kit";
 
-  const kits = await Promise.all(
-    kitList.map(async (kitURL: string) => {
-      // workaround for vite prod/dev mode difference
-      if (kitURL.endsWith(".js") && import.meta.env.DEV) {
-        kitURL = `/src/${kitURL.replace(/\.js$/, ".ts")}`;
-      }
-      return await load(new URL(kitURL, base));
-    })
+export { registerLegacyKits };
+
+function registerLegacyKits(graphStore: MutableGraphStore) {
+  registerKitGraphs(
+    [AgentKit, GoogleDriveKit] as GraphDescriptor[],
+    graphStore
   );
+}
 
-  return [...loadedKits, ...kits];
+export const loadKits = () => {
+  const kits = [
+    asRuntimeKit(Core),
+    asRuntimeKit(JSONKit),
+    asRuntimeKit(TemplateKit),
+    asRuntimeKit(GeminiKit),
+    asRuntimeKit(PythonWasmKit),
+  ];
+
+  const agentKit = kitFromGraphDescriptor(AgentKit as GraphDescriptor);
+  if (agentKit) {
+    kits.push(agentKit);
+  }
+
+  const googleDriveKit = kitFromGraphDescriptor(
+    GoogleDriveKit as GraphDescriptor
+  );
+  if (googleDriveKit) {
+    kits.push(googleDriveKit);
+  }
+
+  return kits;
 };

@@ -122,10 +122,6 @@
         "copy-pyoide-assets",
         "update-sandbox-runtime",
         {
-          "script": "copy-light-kits",
-          "cascade": false
-        },
-        {
           "script": "copy-bbrt-assets",
           "cascade": false
         }
@@ -150,10 +146,6 @@
         "../example-boards:build",
         {
           "script": "typescript-files-and-deps",
-          "cascade": false
-        },
-        {
-          "script": "copy-light-kits",
           "cascade": false
         },
         {
@@ -188,10 +180,6 @@
           "cascade": false
         },
         {
-          "script": "copy-light-kits",
-          "cascade": false
-        },
-        {
           "script": "copy-bbrt-assets",
           "cascade": false
         },
@@ -223,19 +211,6 @@
       ],
       "output": [
         "public/example-boards/*.json"
-      ]
-    },
-    "copy-light-kits": {
-      "command": "tsx src/copy-light-kits.ts",
-      "dependencies": [
-        "../agent-kit:build",
-        "../google-drive-kit:build"
-      ],
-      "files": [
-        "src/copy-light-kits.ts"
-      ],
-      "output": [
-        "public/*.kit.json"
       ]
     },
     "copy-bbrt-assets": {
