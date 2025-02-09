@@ -44,7 +44,11 @@
     },
     "dev": {
       "command": "tsx src/server/main.ts",
-      "service": true
+      "service": true,
+      "dependencies": [
+        "build:tsc",
+        "build:vite"
+      ]
     },
     "test": {
       "command": "ava",

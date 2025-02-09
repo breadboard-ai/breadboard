@@ -5,8 +5,8 @@
   "main": "./build/index.js",
   "exports": {
     ".": {
-      "types": "./build.index.d.ts",
-      "default": "./build/index.js"
+      "types": "./build/src/index.d.ts",
+      "default": "./build/src/index.js"
     },
     "./preview.js": {
       "types": "./build/preview.d.ts",

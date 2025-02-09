@@ -76,21 +76,17 @@ import {
   PasteCommand,
   SelectAllCommand,
 } from "./commands/commands";
-import {
-  HideTooltipEvent,
-  ShowTooltipEvent,
-} from "../../shared-ui/dist/events/events";
 
 const STORAGE_PREFIX = "bb-main";
 const LOADING_TIMEOUT = 250;
 
-type MainArguments = {
-  boards: BreadboardUI.Types.Board[];
+export type MainArguments = {
+  boards?: BreadboardUI.Types.Board[];
   providers?: BoardServer[]; // Deprecated.
   settings?: SettingsStore;
   proxy?: HarnessProxyConfig[];
   version?: string;
-  languagePack: string;
+  languagePack?: string;
 };
 
 type SaveAsConfiguration = {
@@ -2795,7 +2791,7 @@ export class Main extends LitElement {
               }}
               @pointerover=${(evt: PointerEvent) => {
                 this.dispatchEvent(
-                  new ShowTooltipEvent(
+                  new BreadboardUI.Events.ShowTooltipEvent(
                     Strings.from("LABEL_UNDO"),
                     evt.clientX,
                     evt.clientY
@@ -2803,7 +2799,7 @@ export class Main extends LitElement {
                 );
               }}
               @pointerout=${() => {
-                this.dispatchEvent(new HideTooltipEvent());
+                this.dispatchEvent(new BreadboardUI.Events.HideTooltipEvent());
               }}
             >
               Undo
@@ -2816,7 +2812,7 @@ export class Main extends LitElement {
               }}
               @pointerover=${(evt: PointerEvent) => {
                 this.dispatchEvent(
-                  new ShowTooltipEvent(
+                  new BreadboardUI.Events.ShowTooltipEvent(
                     Strings.from("LABEL_REDO"),
                     evt.clientX,
                     evt.clientY
@@ -2824,7 +2820,7 @@ export class Main extends LitElement {
                 );
               }}
               @pointerout=${() => {
-                this.dispatchEvent(new HideTooltipEvent());
+                this.dispatchEvent(new BreadboardUI.Events.HideTooltipEvent());
               }}
             >
               Redo
