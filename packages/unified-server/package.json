@@ -1,8 +1,5 @@
 {
   "name": "@breadboard-ai/unified-server",
-  "publishConfig": {
-    "registry": "https://wombat-dressing-room.appspot.com"
-  },
   "private": true,
   "version": "0.0.1",
   "description": "serves visual editor, board server, and connection server from a single origin",
@@ -38,13 +35,18 @@
     "build:tsc": {
       "command": "tsc",
       "dependencies": [
-        "../board-server:build",
-        "../connection-server:build"
+        "../board-server:build:tsc",
+        "../connection-server:build:tsc",
+        "../visual-editor:build:tsc"
       ]
     },
     "dev": {
-      "command": "tsx src/server/main.ts",
-      "service": true
+      "command": "export GOOGLE_CLOUD_PROJECT=$(gcloud config get-value project) && node .",
+      "service": true,
+      "dependencies": [
+        "build:tsc",
+        "copy-assets"
+      ]
     },
     "test": {
       "command": "ava",
@@ -101,6 +103,7 @@
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
     "ava": "^5.2.0",
+    "dotenv": "^16.4.7",
     "typescript": "^5.7.3",
     "wireit": "^0.14.10"
   },

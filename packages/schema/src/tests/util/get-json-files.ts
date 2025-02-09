@@ -8,7 +8,13 @@ import * as fs from "fs";
 
 export function getJsonFiles(
   directory: string,
-  ignorePatterns: string[] = ["node_modules", ".wireit", "dist"]
+  ignorePatterns: string[] = [
+    "node_modules",
+    ".wireit",
+    "dist",
+    "build",
+    "dist_test",
+  ]
 ): string[] {
   const files = fs.readdirSync(directory);
   const jsonFiles = files

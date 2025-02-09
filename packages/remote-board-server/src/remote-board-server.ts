@@ -102,6 +102,10 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
   }
 
   static async from(url: string, title: string, user: User) {
+    // Add a slash at the end of the URL string, because all URL future
+    // construction will depend on it.
+    const endsWithSlash = url.endsWith("/");
+    if (!endsWithSlash) url = `${url}/`;
     try {
       const configuration = {
         url: new URL(url),
@@ -398,11 +402,7 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
 
     const projects: BoardServerProject[] = [];
     try {
-      const request = createRequest(
-        `${this.url}/boards`,
-        this.user.apiKey,
-        "GET"
-      );
+      const request = this.#requestWithKey("boards", "GET");
 
       const response = await fetch(request);
       const files: BoardServerListingItem[] = await response.json();
@@ -429,7 +429,7 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
         ]);
 
         const project: BoardServerProject = {
-          url: new URL(`${this.url}/boards/${item.path}`),
+          url: new URL(`boards/${item.path}`, this.url),
           metadata: {
             owner: item.username ?? "Unknown",
             tags: item.tags,
@@ -443,7 +443,7 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
       }
     } catch (err) {
       console.warn(
-        `[Remote Board Server]: Unable to connect to ${this.url}`,
+        `[Remote Board Server]: Unable to connect to "${this.url}"`,
         err
       );
     }
@@ -485,7 +485,7 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
 
     for (const [owner, nodes] of kits.entries()) {
       const title = `@${owner}'s Components`;
-      const url = `${this.url}/kits/@${owner}/all`;
+      const url = new URL(`kits/@${owner}/all`, this.url).href;
       this.kits = this.kits.filter((kit) => kit.title !== title);
       this.kits.push({
         title,
@@ -509,6 +509,24 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
       return false;
     }
 
-    return `${this.url.href}proxy?API_KEY=${this.user.apiKey}`;
+    return this.#withKey("proxy").href;
+  }
+
+  #withKey(path: string): URL {
+    const result = new URL(path, this.url);
+    result.searchParams.set("API_KEY", this.user.apiKey);
+    return result;
+  }
+
+  #requestWithKey(path: string, method: string, body?: unknown): Request {
+    const url = this.#withKey(path);
+    const init: RequestInit = {
+      method,
+      credentials: "include",
+    };
+    if (body) {
+      init.body = JSON.stringify(body);
+    }
+    return new Request(url.href, init);
   }
 }

@@ -5,16 +5,16 @@
   "main": "./build/index.js",
   "exports": {
     ".": {
-      "types": "./build.index.d.ts",
-      "default": "./build/index.js"
+      "types": "./build/src/index.d.ts",
+      "default": "./build/src/index.js"
     },
     "./preview.js": {
       "types": "./build/preview.d.ts",
       "default": "./build/preview.js"
     },
     "./config.js": {
-      "types": "./build/config.d.ts",
-      "default": "./build/config.js"
+      "types": "./build/src/config.d.ts",
+      "default": "./build/src/config.js"
     },
     "./public": "./public",
     "./index.html": "./index.html",
@@ -26,7 +26,8 @@
     "./providers": {
       "types": "./build/providers/types.d.ts",
       "default": "./build/providers/types.js"
-    }
+    },
+    "./vite": "./build/src/configure-assets.js"
   },
   "types": "build/index.d.ts",
   "type": "module",
@@ -167,6 +168,7 @@
       ],
       "files": [
         "vite.config.ts",
+        "scripts/*.ts",
         ".env"
       ]
     },
