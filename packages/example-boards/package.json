@@ -27,8 +27,6 @@
         "../google-drive-kit:build",
         "../json-kit:build",
         "../template-kit:build",
-        "../node-nursery-web:build",
-        "../palm-kit:build",
         "../python-wasm:build",
         "../manifest:build",
         "build:tsc",
@@ -45,8 +43,6 @@
         "../google-drive-kit:build:tsc",
         "../json-kit:build:tsc",
         "../template-kit:build:tsc",
-        "../node-nursery-web:build:tsc",
-        "../palm-kit:build:tsc",
         "../python-wasm:build:tsc",
         "../manifest:build"
       ],
@@ -84,8 +80,6 @@
         "../google-drive-kit:build",
         "../json-kit:build",
         "../manifest:build:ts",
-        "../node-nursery-web:build",
-        "../palm-kit:build",
         "../template-kit:build"
       ],
       "files": [
@@ -145,8 +139,6 @@
     "@google-labs/core-kit": "^0.17.1",
     "@google-labs/gemini-kit": "^0.11.0",
     "@google-labs/json-kit": "^0.3.14",
-    "@google-labs/node-nursery-web": "^1.4.1",
-    "@google-labs/palm-kit": "^0.1.8",
     "@google-labs/template-kit": "^0.3.16"
   }
 }
