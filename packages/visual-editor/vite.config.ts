@@ -108,10 +108,6 @@ export default defineConfig(async ({ mode }) => {
     sample: "./index.html",
     oauth: "./oauth/index.html",
     bbrt: "./experimental/bbrt/index.html",
-    "core-kit": "src/core-kit.ts",
-    "json-kit": "src/json-kit.ts",
-    "template-kit": "src/template-kit.ts",
-    "python-wasm-kit": "src/python-wasm-kit.ts",
   };
 
   if (mode === "development") {

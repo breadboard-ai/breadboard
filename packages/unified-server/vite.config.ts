@@ -26,10 +26,6 @@ export default defineConfig(async (): Promise<UserConfig> => {
       lib: {
         entry: {
           index: "./index.html",
-          "core-kit": "../visual-editor/src/core-kit.ts",
-          "json-kit": "../visual-editor/src/json-kit.ts",
-          "template-kit": "../visual-editor/src/template-kit.ts",
-          "python-wasm-kit": "../visual-editor/src/python-wasm-kit.ts",
         },
         formats: ["es"],
       },
