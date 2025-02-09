@@ -41,11 +41,11 @@
     },
     "build:lib": {
       "dependencies": [
-        "build:vite:lib",
+        "build:vite",
         "build:tsc"
       ]
     },
-    "build:vite:lib": {
+    "build:vite": {
       "command": "vite build",
       "files": [
         "*.html",
@@ -110,37 +110,6 @@
         "../google-drive-kit:build",
         "../jsandbox:build"
       ]
-    },
-    "build:vite": {
-      "command": "vite build",
-      "files": [
-        "*.html",
-        "vite.config.ts",
-        "package.json",
-        "src/app/**/*.ts",
-        ".env.development",
-        ".env.production"
-      ],
-      "output": [
-        "dist/client"
-      ],
-      "dependencies": [
-        "build:esbuild",
-        "update-sandbox-runtime",
-        "../breadboard:build:tsc",
-        "../data-store:build:tsc",
-        "../agent-kit:build:tsc",
-        "../palm-kit:build:tsc",
-        "../core-kit:build:tsc",
-        "../google-drive-kit:build:tsc",
-        "../jsandbox:build:tsc",
-        "../json-kit:build:tsc",
-        "../template-kit:build:tsc",
-        "../node-nursery-web:build:tsc",
-        "../shared-ui:build:tsc",
-        "../visual-editor:build"
-      ],
-      "clean": "if-file-deleted"
     },
     "build:esbuild": {
       "command": "tsx scripts/build.ts",
