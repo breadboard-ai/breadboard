@@ -140,16 +140,18 @@
         "dist/"
       ]
     },
-    "preview": {
-      "command": "vite preview",
-      "service": true,
+    "prepare-assets": {
       "dependencies": [
-        "build",
-        "../example-boards:build",
-        {
-          "script": "typescript-files-and-deps",
-          "cascade": false
-        },
+        "prepare-assets:internal"
+      ],
+      "files": [
+        "public/",
+        "index.html",
+        "icons/"
+      ]
+    },
+    "prepare-assets:internal": {
+      "dependencies": [
         {
           "script": "copy-bbrt-assets",
           "cascade": false
@@ -160,6 +162,22 @@
         },
         {
           "script": "copy-example-boards",
+          "cascade": false
+        },
+        {
+          "script": "copy-pyoide-assets",
+          "cascade": false
+        }
+      ]
+    },
+    "preview": {
+      "command": "vite preview",
+      "service": true,
+      "dependencies": [
+        "build",
+        "prepare-assets:internal",
+        {
+          "script": "typescript-files-and-deps",
           "cascade": false
         },
         {
@@ -177,21 +195,9 @@
       "command": "vite",
       "service": true,
       "dependencies": [
-        "../example-boards:build",
+        "prepare-assets:internal",
         {
           "script": "typescript-files-and-deps",
-          "cascade": false
-        },
-        {
-          "script": "copy-bbrt-assets",
-          "cascade": false
-        },
-        {
-          "script": "update-sandbox-runtime",
-          "cascade": false
-        },
-        {
-          "script": "copy-example-boards",
           "cascade": false
         },
         {

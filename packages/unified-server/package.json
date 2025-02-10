@@ -12,7 +12,8 @@
     "build:tsc": "wireit",
     "build:vite": "wireit",
     "copy-assets": "wireit",
-    "dev": "wireit",
+    "dev": "npm run serve --watch",
+    "serve": "wireit",
     "docker-build": "wireit",
     "docker-clean": "wireit",
     "docker-logs": "wireit",
@@ -42,10 +43,10 @@
       "dependencies": [
         "../board-server:build:tsc",
         "../connection-server:build:tsc",
-        "../visual-editor:build:tsc"
+        "../visual-editor:typescript-files-and-deps"
       ]
     },
-    "dev": {
+    "serve": {
       "command": "export GOOGLE_CLOUD_PROJECT=$(gcloud config get-value project) && node .",
       "service": true,
       "dependencies": [
@@ -83,8 +84,7 @@
     "copy-assets": {
       "command": "tsx scripts/copy-assets.ts",
       "dependencies": [
-        "../jsandbox:build",
-        "../visual-editor:build"
+        "../visual-editor:prepare-assets"
       ],
       "files": [
         "scripts/copy-assets.ts"
