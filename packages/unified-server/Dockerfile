@@ -1,10 +1,11 @@
 FROM node:lts
 WORKDIR /breadboard
 
-# This file uses a named context that points to the root of the monorepo. It
-# must be supplied using the --build-context flag:
+# This file uses a named context that points to the root of the monorepo.
+# https://docs.docker.com/build/concepts/context/#named-contexts
 #
-# docker build build-context=breadboard=../.. .
+# It must be supplied using the --build-context flag when building the image:
+# build-context=breadboard=../.. .
 COPY --from=breadboard / .
 
 RUN npm install --save-dev
