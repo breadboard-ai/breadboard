@@ -7,6 +7,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { ServerConfig } from "../config.js";
 import { badRequestJson, internalServerError, okJson } from "../responses.js";
+import { jwtDecode, type JwtPayload } from "jwt-decode";
 
 interface GrantRequest {
   connection_id: string;
@@ -23,6 +24,9 @@ type GrantResponse =
       access_token: string;
       expires_in: number;
       refresh_token: string;
+      picture?: string;
+      name?: string;
+      id?: string;
     };
 
 /**
@@ -87,10 +91,14 @@ export async function grant(
     tokenResponse.refresh_token &&
     tokenResponse.expires_in >= 0
   ) {
+    const { picture, name, id } = decodeIdToken(tokenResponse.id_token);
     return okJson(res, {
       access_token: tokenResponse.access_token,
       expires_in: tokenResponse.expires_in,
       refresh_token: tokenResponse.refresh_token,
+      picture,
+      name,
+      id,
     } satisfies GrantResponse);
   }
 
@@ -124,6 +132,7 @@ type TokenEndpointGrantResponse =
       refresh_token?: string;
       expires_in: number;
       error?: undefined;
+      id_token?: string;
     }
   | {
       error: string;
@@ -139,4 +148,27 @@ type TokenEndpointGrantResponse =
 function inferOriginFromHostname(host?: string) {
   if (!host) throw new Error("Unable to infer origin: no host");
   return host.startsWith("localhost") ? `http://${host}` : `https://${host}`;
+}
+
+type DecodeIdTokenResponse = {
+  picture?: string;
+  name?: string;
+  id?: string;
+};
+
+function decodeIdToken(id_token?: string): DecodeIdTokenResponse {
+  if (!id_token) return {};
+  try {
+    const decoded = jwtDecode(id_token) as JwtPayload & {
+      name?: string;
+      picture?: string;
+    };
+    return {
+      id: decoded.sub,
+      name: decoded.name,
+      picture: decoded.picture,
+    };
+  } catch (e) {
+    return {};
+  }
 }

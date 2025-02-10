@@ -260,6 +260,9 @@ export class ConnectionSignin extends LitElement {
       expires_in: grantResponse.expires_in,
       refresh_token: grantResponse.refresh_token,
       issue_time: now,
+      name: grantResponse.name,
+      picture: grantResponse.picture,
+      id: grantResponse.id,
     };
     await this.settingsHelper.set(
       SETTINGS_TYPE.CONNECTIONS,

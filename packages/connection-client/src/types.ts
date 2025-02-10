@@ -68,6 +68,9 @@ export type GrantResponse =
       access_token: string;
       expires_in: number;
       refresh_token: string;
+      picture?: string;
+      name?: string;
+      id?: string;
     };
 
 export interface TokenGrant {
