@@ -25,6 +25,8 @@ import { consume } from "@lit/context";
 import type { TokenVendor } from "@breadboard-ai/connection-client";
 import "./export-toolbar.js";
 
+const PCM_AUDIO = "audio/L16;codec=pcm;rate=24000";
+
 @customElement("bb-llm-output")
 export class LLMOutput extends LitElement {
   @property()
@@ -373,29 +375,21 @@ export class LLMOutput extends LitElement {
                 `);
               }
               if (part.inlineData.mimeType.startsWith("audio")) {
-                if (
-                  part.inlineData.mimeType === "audio/L16;codec=pcm;rate=24000"
-                ) {
-                  return this.#convertToAudioBuffer(url).then((buffer) => {
-                    return cache(
-                      html`<div class="play-audio-container">
-                        <button
-                          class="play-audio"
-                          @click=${() => {
-                            const audioCtx = new AudioContext({
-                              sampleRate: 24000,
-                            });
-                            const source = audioCtx.createBufferSource();
-                            source.buffer = buffer;
-                            source.connect(audioCtx.destination);
-                            source.start();
-                          }}
-                        >
-                          Play audio
-                        </button>
-                      </div>`
-                    );
-                  });
+                if (part.inlineData.mimeType === PCM_AUDIO) {
+                  const audioHandler = fetch(url)
+                    .then((r) => r.blob())
+                    .then((data) => new Blob([data], { type: PCM_AUDIO }))
+                    .then((audioFile) => {
+                      return cache(
+                        html`<div class="play-audio-container">
+                          <bb-audio-handler
+                            .audioFile=${audioFile}
+                          ></bb-audio-handler>
+                        </div>`
+                      );
+                    });
+
+                  return html`${until(audioHandler)}`;
                 }
                 return cache(html`<audio src="${url}" controls />`);
               }
