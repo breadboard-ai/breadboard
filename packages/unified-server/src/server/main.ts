@@ -1,7 +1,10 @@
 import express from "express";
 import ViteExpress from "vite-express";
 
-import { createServer } from "@breadboard-ai/connection-server/server.js";
+import {
+  createServer,
+  loadConnections,
+} from "@breadboard-ai/connection-server/server.js";
 import {
   makeRouter,
   createServerConfig,
@@ -14,13 +17,10 @@ const ROOT_PATH = resolve(MODULE_PATH, "../../");
 
 const app = express();
 
-app.use(
-  "/connection",
-  createServer({
-    connections: new Map(),
-    allowedOrigins: [],
-  })
-);
+const configPath = process.env.CONNECTIONS_FILE;
+const connections = configPath ? await loadConnections(configPath) : new Map();
+
+app.use("/connection", createServer({ connections, allowedOrigins: [] }));
 
 const config = createServerConfig(ROOT_PATH, null);
 

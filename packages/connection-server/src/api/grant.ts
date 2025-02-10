@@ -51,12 +51,12 @@ export async function grant(
   }
 
   const tokenUrl = new URL(connectionConfig.oauth.token_uri);
+  const origin =
+    req.headers.origin || inferOriginFromHostname(req.headers.host);
+  const redirectUrl = new URL(params.redirect_path, origin).href;
   tokenUrl.searchParams.set("grant_type", "authorization_code");
   tokenUrl.searchParams.set("code", params.code);
-  tokenUrl.searchParams.set(
-    "redirect_uri",
-    new URL(params.redirect_path, req.headers.origin).href
-  );
+  tokenUrl.searchParams.set("redirect_uri", redirectUrl);
   tokenUrl.searchParams.set("client_id", connectionConfig.oauth.client_id);
   tokenUrl.searchParams.set(
     "client_secret",
@@ -128,3 +128,15 @@ type TokenEndpointGrantResponse =
   | {
       error: string;
     };
+
+/**
+ * This is a gnarly workaround. When used within Express, the origin
+ * request header is occasionally undefined, so we have to do something
+ * to get the origin again.
+ *
+ * This code naively uses hostname to infer the origin.
+ */
+function inferOriginFromHostname(host?: string) {
+  if (!host) throw new Error("Unable to infer origin: no host");
+  return host.startsWith("localhost") ? `http://${host}` : `https://${host}`;
+}
