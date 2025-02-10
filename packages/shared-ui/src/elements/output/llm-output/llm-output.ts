@@ -25,7 +25,7 @@ import { consume } from "@lit/context";
 import type { TokenVendor } from "@breadboard-ai/connection-client";
 import "./export-toolbar.js";
 
-const PCM_AUDIO = "audio/L16;codec=pcm;rate=24000";
+const PCM_AUDIO = "audio/l16;codec=pcm;rate=24000";
 
 @customElement("bb-llm-output")
 export class LLMOutput extends LitElement {
@@ -375,23 +375,28 @@ export class LLMOutput extends LitElement {
                 `);
               }
               if (part.inlineData.mimeType.startsWith("audio")) {
-                if (part.inlineData.mimeType === PCM_AUDIO) {
-                  const audioHandler = fetch(url)
-                    .then((r) => r.blob())
-                    .then((data) => new Blob([data], { type: PCM_AUDIO }))
-                    .then((audioFile) => {
-                      return cache(
-                        html`<div class="play-audio-container">
-                          <bb-audio-handler
-                            .audioFile=${audioFile}
-                          ></bb-audio-handler>
-                        </div>`
-                      );
-                    });
+                const audioHandler = fetch(url)
+                  .then((r) => r.blob())
+                  .then((data) => {
+                    if (
+                      part.inlineData.mimeType.toLocaleLowerCase() === PCM_AUDIO
+                    ) {
+                      return new Blob([data], { type: PCM_AUDIO });
+                    }
 
-                  return html`${until(audioHandler)}`;
-                }
-                return cache(html`<audio src="${url}" controls />`);
+                    return data;
+                  })
+                  .then((audioFile) => {
+                    return cache(
+                      html`<div class="play-audio-container">
+                        <bb-audio-handler
+                          .audioFile=${audioFile}
+                        ></bb-audio-handler>
+                      </div>`
+                    );
+                  });
+
+                return cache(html`${until(audioHandler)}`);
               }
               if (part.inlineData.mimeType.startsWith("video")) {
                 return cache(html`<video src="${url}" controls />`);

@@ -18,7 +18,6 @@ import { classMap } from "lit/directives/class-map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
 import { cache } from "lit/directives/cache.js";
-import type { AudioInput } from "../audio/audio.js";
 import type { DrawableInput } from "../drawable/drawable.js";
 import type { WebcamInput } from "../webcam/webcam.js";
 import {
@@ -43,13 +42,14 @@ import {
   Template,
   TemplatePartTransformCallback,
 } from "../../../utils/template.js";
+import type { AudioHandler } from "../audio/audio-handler.js";
 
 const inlineDataTemplate = { inlineData: { data: "", mimeType: "" } };
 
 const OVERFLOW_MENU_WIDTH = 180;
 const OVERFLOW_MENU_BUTTON_HEIGHT = 45;
 
-type MultiModalInput = AudioInput | DrawableInput | WebcamInput;
+type MultiModalInput = AudioHandler | DrawableInput | WebcamInput;
 
 @customElement("bb-llm-input")
 export class LLMInput extends LitElement {
@@ -915,7 +915,7 @@ export class LLMInput extends LitElement {
   ) {
     let mimeType;
     let getData: () => Promise<string>;
-    let url;
+    let url: string | undefined;
     if (isInlineData(part)) {
       url = this.#partDataURLs.get(idx);
       mimeType = part.inlineData.mimeType;
@@ -954,7 +954,15 @@ export class LLMInput extends LitElement {
       case "audio/webm":
       case "audio/mp3":
       case "audio/mpeg": {
-        return cache(html`<audio src="${url}" controls />`);
+        if (!url) {
+          return html`Malform URL`;
+        }
+
+        const r = await fetch(url);
+        const b = await r.blob();
+        return cache(
+          html`<bb-audio-handler .audioFile=${b} src="${url}" controls />`
+        );
       }
 
       case "video/mp4":
@@ -987,7 +995,10 @@ export class LLMInput extends LitElement {
 
       case "audio-microphone": {
         return cache(
-          html`<bb-audio-input id="part-${idx}"></bb-audio-input>
+          html`<bb-audio-handler
+              id="part-${idx}"
+              .canRecord=${true}
+            ></bb-audio-handler>
             <div>
               <button
                 class="confirm"
