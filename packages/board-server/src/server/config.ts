@@ -9,6 +9,7 @@ import type { ViteDevServer } from "vite";
 export interface ServerConfig {
   allowedOrigins: Set<string>;
   hostname: string;
+  port: number;
   /**
    * The public-facing URL of the server, which
    * will be different from the `hostname` when the
