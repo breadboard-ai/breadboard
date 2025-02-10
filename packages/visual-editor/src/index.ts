@@ -92,6 +92,11 @@ export type MainArguments = {
    * is associated.
    */
   boardServerUrl?: URL;
+  /**
+   * The URL of the connection server with which this editor instance
+   * is associated.
+   */
+  connectionServerUrl?: URL;
 };
 
 type SaveAsConfiguration = {
@@ -109,7 +114,7 @@ type BoardOverlowMenuConfiguration = {
 const generatedUrls = new Set<string>();
 
 const ENVIRONMENT: BreadboardUI.Contexts.Environment = {
-  connectionServerUrl: import.meta.env.VITE_CONNECTION_SERVER_URL,
+  connectionServerUrl: undefined,
   connectionRedirectUrl: "/oauth/",
   plugins: {
     input: [
@@ -375,6 +380,13 @@ export class Main extends LitElement {
   #initialize: Promise<void>;
   constructor(config: MainArguments) {
     super();
+
+    // This is a big hacky, since we're assigning a value to a constant object,
+    // but okay here, because this constant is never re-assigned and is only
+    // used by this instance.
+    ENVIRONMENT.connectionServerUrl =
+      config.connectionServerUrl?.href ||
+      import.meta.env.VITE_CONNECTION_SERVER_URL;
 
     // Due to https://github.com/lit/lit/issues/4675, context provider values
     // must be done in the constructor.

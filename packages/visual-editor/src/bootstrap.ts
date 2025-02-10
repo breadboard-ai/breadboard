@@ -13,6 +13,7 @@ export { bootstrap };
 
 export type BootstrapArguments = {
   boardServerUrl?: URL;
+  connectionServerUrl?: URL;
 };
 
 function bootstrap(args: BootstrapArguments = {}) {
@@ -49,6 +50,7 @@ function bootstrap(args: BootstrapArguments = {}) {
       settings: SettingsStore.instance(),
       version: pkg.version,
       boardServerUrl: args?.boardServerUrl,
+      connectionServerUrl: args?.connectionServerUrl,
     };
 
     window.oncontextmenu = (evt) => evt.preventDefault();

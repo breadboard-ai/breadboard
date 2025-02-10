@@ -43,7 +43,7 @@
       "dependencies": [
         "../board-server:build:tsc",
         "../connection-server:build:tsc",
-        "../visual-editor:typescript-files-and-deps"
+        "../visual-editor:build:tsc"
       ]
     },
     "serve": {
