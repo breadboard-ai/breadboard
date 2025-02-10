@@ -28,6 +28,7 @@ export { GoogleDriveQuery } from "./google-drive/google-drive-query.js";
 export { GoogleDriveServerPicker } from "./google-drive/google-drive-server-picker.js";
 export { ArrayEditor } from "./input/array/array-editor.js";
 export { AudioInput } from "./input/audio/audio.js";
+export { AudioHandler } from "./input/audio/audio-handler.js";
 export { BoardSelector } from "./input/board-selector/board-selector.js";
 export { SlideBoardSelector } from "./input/board-selector/slide-board-selector.js";
 export { CodeEditor } from "./input/code-editor/code-editor.js";
