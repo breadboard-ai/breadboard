@@ -85,27 +85,29 @@ export class AudioHandler extends LitElement {
 
         &:hover,
         &:focus {
-          background-color: var(--bb-ui-600);
+          background-color: var(--color-dark, var(--bb-ui-600));
         }
       }
 
       & #play {
-        background: var(--bb-ui-500) var(--bb-icon-play-filled-inverted) center
-          center / 20px 20px no-repeat;
+        background: var(--color-mid, var(--bb-ui-500))
+          var(--bb-icon-play-filled-inverted) center center / 20px 20px
+          no-repeat;
 
         &.playing {
-          background: var(--bb-ui-500) var(--bb-icon-pause-filled-inverted)
-            center center / 20px 20px no-repeat;
+          background: var(--color-mid, var(--bb-ui-500))
+            var(--bb-icon-pause-filled-inverted) center center / 20px 20px
+            no-repeat;
         }
       }
 
       & #capture {
-        background: var(--bb-ui-500) var(--bb-icon-mic-inverted) center center /
-          20px 20px no-repeat;
+        background: var(--color-mid, var(--bb-ui-500))
+          var(--bb-icon-mic-inverted) center center / 20px 20px no-repeat;
 
         &.playing {
-          background: var(--bb-ui-500) var(--bb-icon-mic-inverted) center
-            center / 20px 20px no-repeat;
+          background: var(--color-mid, var(--bb-ui-500))
+            var(--bb-icon-mic-inverted) center center / 20px 20px no-repeat;
         }
       }
 
