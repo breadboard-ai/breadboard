@@ -147,7 +147,8 @@
       "files": [
         "public/",
         "index.html",
-        "icons/"
+        "icons/",
+        "oauth"
       ]
     },
     "prepare-assets:internal": {

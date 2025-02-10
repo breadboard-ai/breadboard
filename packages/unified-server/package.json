@@ -39,7 +39,14 @@
       ]
     },
     "build:tsc": {
-      "command": "tsc",
+      "command": "tsc --pretty",
+      "clean": "if-file-deleted",
+      "files": [
+        "src/"
+      ],
+      "output": [
+        "dist/"
+      ],
       "dependencies": [
         "../board-server:build:tsc",
         "../connection-server:build:tsc",
@@ -47,7 +54,7 @@
       ]
     },
     "serve": {
-      "command": "export GOOGLE_CLOUD_PROJECT=$(gcloud config get-value project) && node .",
+      "command": "[ -f ./secrets/local.json ] && export CONNECTIONS_FILE=./secrets/local.json && export GOOGLE_CLOUD_PROJECT=$(gcloud config get-value project) && node --enable-source-maps .",
       "service": true,
       "dependencies": [
         "build:tsc",
@@ -90,7 +97,10 @@
         "scripts/copy-assets.ts"
       ],
       "output": [
-        "public"
+        "public/",
+        "icons/",
+        "index.html",
+        "oauth/"
       ]
     }
   },
