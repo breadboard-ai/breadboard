@@ -4,11 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { createServer } from "http";
+import { createServer, Server } from "http";
 import { createServer as createViteServer } from "vite";
 import { env } from "process";
-import { makeRouter } from "./router.js";
-import type { ServerConfig } from "./server/config.js";
+import { createServerConfig, makeRouter } from "./router.js";
 import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 
@@ -16,39 +15,24 @@ const MODULE_PATH = dirname(fileURLToPath(import.meta.url));
 const ROOT_PATH = resolve(MODULE_PATH, "../../");
 
 export const startServer = async (rootPath: string = ROOT_PATH) => {
-  const PORT = env.PORT || 3000;
-  const HOST = env.HOST || "localhost";
-  const HOSTNAME = `http://${HOST}:${PORT}`;
-  const IS_PROD = env.NODE_ENV === "production";
+  const isProd = env.NODE_ENV === "production";
+  const viteDevServer = isProd
+    ? null
+    : await createViteServer({
+        server: { middlewareMode: true },
+        appType: "custom",
+        optimizeDeps: { esbuildOptions: { target: "esnext" } },
+      });
 
-  const storageBucket = env["STORAGE_BUCKET"] || undefined;
-
-  const serverConfig: ServerConfig = {
-    allowedOrigins: new Set(
-      (process.env["ALLOWED_ORIGINS"] ?? "")
-        .split(/\s+/)
-        .filter((origin) => origin !== "")
-    ),
-    hostname: HOSTNAME,
-    serverUrl: env["SERVER_URL"],
-    viteDevServer: IS_PROD
-      ? null
-      : await createViteServer({
-          server: { middlewareMode: true },
-          appType: "custom",
-          optimizeDeps: { esbuildOptions: { target: "esnext" } },
-        }),
-    rootPath,
-    storageBucket,
-  };
+  const serverConfig = createServerConfig(rootPath, viteDevServer);
 
   const server = createServer(makeRouter(serverConfig));
 
-  return new Promise<{ server: any; port: string | number }>(
+  return new Promise<{ server: Server; port: string | number }>(
     (resolve, reject) => {
-      server.listen(PORT, () => {
-        console.info(`Running on "${HOSTNAME}"...`);
-        resolve({ server, port: PORT });
+      server.listen(serverConfig.port, () => {
+        console.info(`Running on "${serverConfig.hostname}"...`);
+        resolve({ server, port: serverConfig.port });
       });
 
       server.on("error", (error) => {
@@ -58,9 +42,9 @@ export const startServer = async (rootPath: string = ROOT_PATH) => {
   );
 };
 
-export const stopServer = (server: any) => {
+export const stopServer = (server: Server) => {
   return new Promise<void>((resolve, reject) => {
-    server.close((err: Error | null) => {
+    server.close((err: Error | undefined) => {
       if (err) {
         reject(err);
       } else {

@@ -87,6 +87,11 @@ export type MainArguments = {
   proxy?: HarnessProxyConfig[];
   version?: string;
   languagePack?: string;
+  /**
+   * The URL of the board server with which this editor instance
+   * is associated.
+   */
+  boardServerUrl?: URL;
 };
 
 type SaveAsConfiguration = {

@@ -27,7 +27,8 @@
       "types": "./build/providers/types.d.ts",
       "default": "./build/providers/types.js"
     },
-    "./vite": "./build/src/configure-assets.js"
+    "./vite": "./build/src/configure-assets.js",
+    "./bootstrap": "./build/src/bootstrap.js"
   },
   "types": "build/index.d.ts",
   "type": "module",

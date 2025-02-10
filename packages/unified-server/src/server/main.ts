@@ -2,7 +2,15 @@ import express from "express";
 import ViteExpress from "vite-express";
 
 import { createServer } from "@breadboard-ai/connection-server/server.js";
-import { makeRouter } from "@breadboard-ai/board-server/router";
+import {
+  makeRouter,
+  createServerConfig,
+} from "@breadboard-ai/board-server/router";
+import { dirname, resolve } from "path";
+import { fileURLToPath } from "url";
+
+const MODULE_PATH = dirname(fileURLToPath(import.meta.url));
+const ROOT_PATH = resolve(MODULE_PATH, "../../");
 
 const app = express();
 
@@ -14,18 +22,10 @@ app.use(
   })
 );
 
-app.use(
-  "/board",
-  makeRouter({
-    allowedOrigins: new Set(["http://localhost:5173"]),
-    hostname: "http://localhost:3000",
-    serverUrl: "http://localhost:3000",
-    viteDevServer: null,
-    rootPath: "",
-    storageBucket: "",
-  })
-);
+const config = createServerConfig(ROOT_PATH, null);
 
-ViteExpress.listen(app, 3000, () => {
-  console.log("Server is listening on port 3000");
+app.use("/board", makeRouter(config));
+
+ViteExpress.listen(app, config.port, () => {
+  console.log(`Server is listening on port ${config.port}`);
 });
