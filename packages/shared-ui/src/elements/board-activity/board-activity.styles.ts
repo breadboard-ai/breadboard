@@ -77,6 +77,7 @@ export const styles = css`
       background: var(--bb-ui-100);
       color: var(--bb-neutral-900);
       overflow: scroll;
+      scrollbar-width: none;
     }
   }
 

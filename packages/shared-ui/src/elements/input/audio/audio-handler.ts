@@ -3,6 +3,8 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
+import { LLMContent } from "@breadboard-ai/types";
+import { asBase64 } from "@google-labs/breadboard";
 import { Task } from "@lit/task";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
@@ -98,12 +100,12 @@ export class AudioHandler extends LitElement {
       }
 
       & #capture {
-        background: var(--bb-ui-500) var(--bb-icon-mic-filled-inverted) center
-          center / 20px 20px no-repeat;
+        background: var(--bb-ui-500) var(--bb-icon-mic-inverted) center center /
+          20px 20px no-repeat;
 
         &.playing {
-          background: var(--bb-ui-500) var(--bb-icon-pause-filled-inverted)
-            center center / 20px 20px no-repeat;
+          background: var(--bb-ui-500) var(--bb-icon-mic-inverted) center
+            center / 20px 20px no-repeat;
         }
       }
 
@@ -169,6 +171,7 @@ export class AudioHandler extends LitElement {
   #recorder: MediaRecorder | null = null;
   #parts: Blob[] = [];
   #audioFileUrl: string | null = null;
+  #value: string | null = null;
 
   #audioCtx: AudioContext | null = null;
   #analyser: AnalyserNode | null = null;
@@ -200,6 +203,17 @@ export class AudioHandler extends LitElement {
     },
     args: () => [],
   });
+
+  get value(): LLMContent {
+    return {
+      role: "user",
+      parts: [
+        {
+          inlineData: { data: this.#value ?? "", mimeType: this.#mimeType },
+        },
+      ],
+    };
+  }
 
   #formatSeconds(totalSeconds: number) {
     const minutes = Math.floor(totalSeconds / 60);
@@ -265,7 +279,7 @@ export class AudioHandler extends LitElement {
         if (this.#audioCtx.state === "running") {
           this.#analyser.getByteTimeDomainData(data);
 
-          if (this.state !== "idle") {
+          if (this.state === "playing") {
             if (lastFrame > 0) {
               this.playheadTime +=
                 (window.performance.now() - lastFrame) / 1000.0;
@@ -286,6 +300,7 @@ export class AudioHandler extends LitElement {
         }
       } else {
         data = new Uint8Array(this.steps).fill(128.0);
+        lastFrame = 0;
       }
 
       const totalWidth = (this.steps - 1) * this.lineGap;
@@ -356,6 +371,8 @@ export class AudioHandler extends LitElement {
       this.audioFile = new Blob(this.#parts, {
         type: this.#mimeType,
       });
+
+      this.#value = await asBase64(this.audioFile);
     });
 
     this.#recorder.start();
@@ -396,6 +413,7 @@ export class AudioHandler extends LitElement {
     }
 
     this.audioFile = null;
+    this.playheadTime = 0;
   }
 
   async #stopRecording() {
