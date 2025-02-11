@@ -14,7 +14,7 @@ export type CreateRequest = {
 };
 
 const create: ApiHandler = async (_path, req, res) => {
-  const userKey = authenticate(req, res);
+  const userKey = await authenticate(req, res);
   if (!userKey) {
     return true;
   }

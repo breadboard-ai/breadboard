@@ -12,7 +12,7 @@ import type { ApiHandler, BoardParseResult } from "../types.js";
 const del: ApiHandler = async (parsed, req, res, body) => {
   const { board: path } = parsed as BoardParseResult;
 
-  const userKey = authenticate(req, res);
+  const userKey = await authenticate(req, res);
   if (!userKey) {
     return true;
   }

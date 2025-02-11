@@ -31,7 +31,7 @@ async function serveBlobsAPI(
 
   if (!blob) {
     if (req.method === "POST") {
-      if (!authenticate(req, res)) {
+      if (!(await authenticate(req, res))) {
         return true;
       }
       if (!corsAll(req, res)) {

@@ -6,6 +6,8 @@
 
 import type { IncomingMessage, ServerResponse } from "http";
 
+export { authenticate };
+
 /**
  * For now, make a flag that controls whether to use simple requests or not.
  * Simple requests use "API_KEY" query parameter for authentication. *
@@ -30,10 +32,10 @@ export const getUserKey = (req: IncomingMessage) => {
   return token || null;
 };
 
-export const authenticate = (
+async function authenticate(
   req: IncomingMessage,
   res: ServerResponse
-): string | null => {
+): Promise<string | null> {
   const userKey = getUserKey(req);
   if (!userKey) {
     res.writeHead(401, { "Content-Type": "application/json" });
@@ -41,4 +43,4 @@ export const authenticate = (
     return null;
   }
   return userKey;
-};
+}

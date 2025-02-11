@@ -20,7 +20,7 @@ const get: ApiHandler = async (parsed, req, res) => {
   try {
     const graphDescriptor = JSON.parse(board) as GraphDescriptor;
     if (graphDescriptor.metadata?.tags?.includes("private")) {
-      if (!authenticate(req, res)) {
+      if (!(await authenticate(req, res))) {
         return true;
       }
     }
