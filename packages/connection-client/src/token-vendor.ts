@@ -98,6 +98,9 @@ export class TokenVendorImpl {
       expires_in: jsonRes.expires_in,
       issue_time: now,
       refresh_token: expiredGrant.refresh_token,
+      id: expiredGrant.id,
+      picture: expiredGrant.picture,
+      name: expiredGrant.name,
     };
     await this.#store.set(connectionId, JSON.stringify(updatedGrant));
     return { state: "valid", grant: updatedGrant };
