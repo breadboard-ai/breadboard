@@ -196,10 +196,8 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
       return null;
     }
 
-    const args: ConnectionArgs = { key: this.user.apiKey };
-
     if (project.url.href === url.href) {
-      const request = createRequest(url, args, "GET");
+      const request = createRequest(url, await this.#connectionArgs(), "GET");
       const response = await fetch(request);
       const graph = await response.json();
       return graph;
@@ -241,10 +239,8 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
       return { result: false };
     }
 
-    const args: ConnectionArgs = { key: this.user.apiKey };
-
     try {
-      const request = createRequest(url, args, "POST", {
+      const request = createRequest(url, await this.#connectionArgs(), "POST", {
         delete: true,
       });
       const response = await fetch(request);
@@ -278,11 +274,14 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
     // we create below work out.
     location = location.replace(/\/$/, "");
 
-    const args: ConnectionArgs = { key: this.user.apiKey };
-
-    const request = createRequest(`${location}/boards`, args, "POST", {
-      name: fileName,
-    });
+    const request = createRequest(
+      `${location}/boards`,
+      await this.#connectionArgs(),
+      "POST",
+      {
+        name: fileName,
+      }
+    );
     const response = await fetch(request);
     if (!response.ok) {
       return null;
@@ -350,8 +349,8 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
   }
 
   async #sendToRemote(url: URL, descriptor: GraphDescriptor) {
-    if (!this.user.apiKey) {
-      return { error: "No API Key" };
+    if (!this.user.apiKey && !this.tokenVendor) {
+      return { error: "Can't connect to the server without credentials" };
     }
     const request = createRequest(
       url,
