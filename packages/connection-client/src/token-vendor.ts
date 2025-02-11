@@ -49,6 +49,7 @@ export class TokenVendorImpl {
     if (grantIsExpired(grant) || needsClientIdRepair) {
       return {
         state: "expired",
+        grant,
         refresh: (opts?: { signal?: AbortSignal }) =>
           this.#refresh(connectionId, grant, opts?.signal),
       };
