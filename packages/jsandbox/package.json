@@ -123,7 +123,7 @@
     "eslint": "^8.57.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3",
-    "wireit": "^0.14.10"
+    "wireit": "^0.14.11"
   },
   "dependencies": {
     "@bjorn3/browser_wasi_shim": "^0.3.0"
