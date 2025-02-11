@@ -5,3 +5,5 @@
  */
 
 export { RemoteBoardServer } from "./remote-board-server.js";
+export { getSigninToken } from "./utils.js";
+export type * from "./types.js";

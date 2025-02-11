@@ -143,6 +143,7 @@ export class Board extends EventTarget {
           boardServerInfo.url
         )
       );
+      return { success: true };
     }
 
     return { success: false };

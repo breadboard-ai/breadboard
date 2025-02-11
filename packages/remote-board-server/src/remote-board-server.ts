@@ -23,7 +23,8 @@ import {
   type User,
 } from "@google-labs/breadboard";
 import { ConnectionArgs } from "./types";
-import { createRequest } from "./utils";
+import { createRequest, getSigninToken } from "./utils";
+import { TokenVendor } from "@breadboard-ai/connection-client";
 
 export class RemoteBoardServer extends EventTarget implements BoardServer {
   public readonly url: URL;
@@ -60,7 +61,12 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
     }
   }
 
-  static async from(url: string, title: string, user: User) {
+  static async from(
+    url: string,
+    title: string,
+    user: User,
+    tokenVendor?: TokenVendor
+  ) {
     // Add a slash at the end of the URL string, because all URL future
     // construction will depend on it.
     const endsWithSlash = url.endsWith("/");
@@ -82,7 +88,7 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
         },
       };
 
-      return new RemoteBoardServer(title, configuration, user);
+      return new RemoteBoardServer(title, configuration, user, tokenVendor);
     } catch (err) {
       console.warn(err);
       return null;
@@ -92,7 +98,8 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
   constructor(
     public readonly name: string,
     public readonly configuration: BoardServerConfiguration,
-    public readonly user: User
+    public readonly user: User,
+    public readonly tokenVendor?: TokenVendor
   ) {
     super();
 
@@ -346,9 +353,12 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
     if (!this.user.apiKey) {
       return { error: "No API Key" };
     }
-    const args: ConnectionArgs = { key: this.user.apiKey };
-
-    const request = createRequest(url, args, "POST", descriptor);
+    const request = createRequest(
+      url,
+      await this.#connectionArgs(),
+      "POST",
+      descriptor
+    );
     try {
       const response = await fetch(request);
       return await response.json();
@@ -364,7 +374,7 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
 
     const projects: BoardServerProject[] = [];
     try {
-      const request = this.#requestWithKey("boards", "GET");
+      const request = await this.#createRequest("boards", "GET");
 
       const response = await fetch(request);
       const files: BoardServerListingItem[] = await response.json();
@@ -474,21 +484,34 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
     return this.#withKey("proxy").href;
   }
 
+  async #connectionArgs(): Promise<ConnectionArgs> {
+    const key = this.user.apiKey;
+    if (key) {
+      return { key };
+    }
+    const token = await getSigninToken(this.tokenVendor);
+    return { token };
+  }
+
   #withKey(path: string): URL {
     const result = new URL(path, this.url);
-    result.searchParams.set("API_KEY", this.user.apiKey);
+    const key = this.user.apiKey;
+    if (key) {
+      result.searchParams.set("API_KEY", key);
+    }
     return result;
   }
 
-  #requestWithKey(path: string, method: string, body?: unknown): Request {
-    const url = this.#withKey(path);
-    const init: RequestInit = {
+  async #createRequest(
+    path: string,
+    method: string,
+    body?: unknown
+  ): Promise<Request> {
+    return createRequest(
+      new URL(path, this.url),
+      await this.#connectionArgs(),
       method,
-      credentials: "include",
-    };
-    if (body) {
-      init.body = JSON.stringify(body);
-    }
-    return new Request(url.href, init);
+      body
+    );
   }
 }

@@ -5,8 +5,11 @@
  */
 
 import { ConnectionArgs } from "./types";
+import { TokenVendor } from "@breadboard-ai/connection-client";
 
-export { createRequest };
+const SIGN_IN_CONNECTION_ID = "$sign-in";
+
+export { getSigninToken, createRequest };
 
 const CONTENT_TYPE = { "Content-Type": "application/json" };
 
@@ -55,4 +58,21 @@ function createRequest(
     credentials: "include",
     body: JSON.stringify(body),
   });
+}
+
+async function getSigninToken(
+  tokenVendor?: TokenVendor
+): Promise<string | undefined> {
+  if (!tokenVendor) return;
+
+  let token = tokenVendor.getToken(SIGN_IN_CONNECTION_ID);
+  if (!token || token.state === "signedout") {
+    return;
+  }
+
+  if (token.state === "expired") {
+    token = await token.refresh();
+  }
+
+  return token.grant.access_token;
 }
