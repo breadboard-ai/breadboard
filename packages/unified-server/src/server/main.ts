@@ -27,5 +27,5 @@ const config = createServerConfig(ROOT_PATH, null);
 app.use("/board", makeRouter(config));
 
 ViteExpress.listen(app, config.port, () => {
-  console.log(`Server is listening on port ${config.port}`);
+  console.log(`Unified server at: http://localhost:${config.port}`);
 });
