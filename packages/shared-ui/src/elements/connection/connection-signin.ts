@@ -280,7 +280,6 @@ export class ConnectionSignin extends LitElement {
     if (!this.settingsHelper || !this.connection) {
       return;
     }
-    console.log(this.connection.id);
     await this.settingsHelper.delete(
       SETTINGS_TYPE.CONNECTIONS,
       this.connection.id
