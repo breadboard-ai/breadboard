@@ -34,6 +34,7 @@ export * as Types from "./types.js";
 import { sandbox } from "../sandbox";
 import { Select } from "./select.js";
 import { StateManager } from "./state.js";
+import { SigninManager } from "./auth.js";
 
 function withRunModule(kits: Kit[]): Kit[] {
   return addSandboxedRunModule(sandbox, kits);
@@ -47,6 +48,7 @@ export async function create(config: RuntimeConfig): Promise<{
   select: Select;
   state: StateManager;
   util: typeof Util;
+  signin: SigninManager;
 }> {
   const kits = withRunModule(loadKits());
 
@@ -107,6 +109,7 @@ export async function create(config: RuntimeConfig): Promise<{
     select: new Select(),
     util: Util,
     kits,
+    signin: await SigninManager.create(config.tokenVendor),
   } as const;
 
   return runtime;

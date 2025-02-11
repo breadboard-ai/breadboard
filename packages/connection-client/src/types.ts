@@ -79,6 +79,9 @@ export interface TokenGrant {
   expires_in: number;
   refresh_token: string;
   issue_time: number;
+  picture?: string;
+  name?: string;
+  id?: string;
 }
 
 export type RefreshResponse =
