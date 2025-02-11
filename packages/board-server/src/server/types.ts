@@ -79,6 +79,7 @@ export type InvokeBoardArguments = {
   url: string;
   path: string;
   loader: BoardServerLoadFunction;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   inputs: Record<string, any>;
   kitOverrides?: Kit[];
 };
@@ -139,6 +140,14 @@ export type BoardServerStore = {
     name: string,
     dryRun: boolean
   ): Promise<CreateBoardResult>;
+  delete(userStore: string, path: string): Promise<OperationResult>;
+  listInvites(userStore: string, path: string): Promise<ListInviteResult>;
+  deleteInvite(
+    userStore: string,
+    path: string,
+    invite: string
+  ): Promise<OperationResult>;
+  createInvite(userStore: string, path: string): Promise<CreateInviteResult>;
 };
 
 export type BlobStore = {
@@ -211,4 +220,20 @@ export type Result<T> =
   | {
       success: true;
       result: T;
+    };
+
+export type AuthArgs =
+  | {
+      key: string;
+    }
+  | {
+      token: string;
+    };
+
+export type AuthResult =
+  | {
+      key: string;
+    }
+  | {
+      id: string;
     };

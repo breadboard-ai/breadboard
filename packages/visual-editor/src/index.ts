@@ -825,21 +825,20 @@ export class Main extends LitElement {
         for (const server of this.#boardServers) {
           if (server.url.href === config.boardServerUrl.href) {
             hasMountedBoardServer = true;
+            this.selectedBoardServer = server.name;
+            this.selectedLocation = server.url.href;
             break;
           }
         }
 
         if (!hasMountedBoardServer) {
-          console.log(
-            "%cTODO: Mount board server with API Key (unknown): %s",
-            "background:rgb(252, 196, 106); padding: 8px; border-radius: 4px",
-            config.boardServerUrl.href
-          );
-
-          // return this.#runtime.board.connect(
-          //   config.boardServerUrl.href,
-          //   config.boardServerApiKey
-          // );
+          console.log(`Mounting server "${config.boardServerUrl.href}" ...`);
+          return this.#runtime.board.connect(config.boardServerUrl.href);
+        }
+      })
+      .then((connecting) => {
+        if (connecting?.success) {
+          console.log(`Connected to server`);
         }
       });
   }
@@ -3805,6 +3804,7 @@ export class Main extends LitElement {
           return html`<bb-connection-entry-signin
             .adapter=${signInAdapter}
             @bbsignin=${() => {
+              this.#boardServers = this.#runtime.board.getBoardServers();
               requestAnimationFrame(() => {
                 this.requestUpdate();
               });

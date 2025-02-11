@@ -7,7 +7,11 @@
 import * as idb from "idb";
 import { IDBBoardServer } from "@breadboard-ai/idb-board-server";
 import { BoardServer, GraphDescriptor, User } from "@google-labs/breadboard";
-import { RemoteBoardServer } from "@breadboard-ai/remote-board-server";
+import {
+  ConnectionArgs,
+  getSigninToken,
+  RemoteBoardServer,
+} from "@breadboard-ai/remote-board-server";
 import { ExampleBoardServer } from "@breadboard-ai/example-board-server";
 import {
   FileSystemBoardServer,
@@ -66,7 +70,7 @@ export async function getBoardServers(
         url.startsWith(RemoteBoardServer.PROTOCOL) ||
         url.startsWith(RemoteBoardServer.LOCALHOST)
       ) {
-        return RemoteBoardServer.from(url, title, user);
+        return RemoteBoardServer.from(url, title, user, tokenVendor);
       }
 
       if (url.startsWith(ExampleBoardServer.PROTOCOL)) {
@@ -113,7 +117,14 @@ export async function connectToBoardServer(
         return null;
       }
 
-      const response = await RemoteBoardServer.connect(location, apiKey);
+      const args: ConnectionArgs = apiKey
+        ? {
+            key: apiKey,
+          }
+        : {
+            token: await getSigninToken(tokenVendor),
+          };
+      const response = await RemoteBoardServer.connect(location, args);
       if (response) {
         const url = new URL(location);
         await storeBoardServer(url, response.title, {

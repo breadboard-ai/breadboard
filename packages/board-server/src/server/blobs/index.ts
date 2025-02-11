@@ -12,6 +12,7 @@ import { createBlob } from "./create.js";
 import { serveBlob } from "./serve.js";
 import { corsAll } from "../cors.js";
 import { isUUID } from "../blob-store.js";
+import { ok } from "@google-labs/breadboard";
 
 export { serveBlobsAPI };
 
@@ -31,7 +32,8 @@ async function serveBlobsAPI(
 
   if (!blob) {
     if (req.method === "POST") {
-      if (!authenticate(req, res)) {
+      const authenticating = await authenticate(req, res);
+      if (!ok(authenticating)) {
         return true;
       }
       if (!corsAll(req, res)) {
