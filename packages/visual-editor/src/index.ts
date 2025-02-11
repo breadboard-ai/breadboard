@@ -115,6 +115,11 @@ type BoardOverlowMenuConfiguration = {
   y: number;
 };
 
+type UserOverflowMenuConfiguration = {
+  x: number;
+  y: number;
+};
+
 const generatedUrls = new Set<string>();
 
 const ENVIRONMENT: BreadboardUI.Contexts.Environment = {
@@ -176,6 +181,10 @@ export class Main extends LitElement {
   #boardOverflowMenuConfiguration: BoardOverlowMenuConfiguration | null = null;
 
   @state()
+  accessor showUserOverflowMenu = false;
+  #userOverflowMenuConfiguration: UserOverflowMenuConfiguration | null = null;
+
+  @state()
   accessor showSaveAsDialog = false;
   #saveAsState: SaveAsConfiguration | null = null;
 
@@ -228,10 +237,10 @@ export class Main extends LitElement {
   accessor settingsHelper!: SettingsHelperImpl;
 
   @state()
-  accessor selectedBoardServer = "Example Boards";
+  accessor selectedBoardServer = "Browser Storage";
 
   @state()
-  accessor selectedLocation = "example://example-boards";
+  accessor selectedLocation = "Browser Storage";
 
   @state()
   accessor previewOverlayURL: URL | null = null;
@@ -806,6 +815,32 @@ export class Main extends LitElement {
         );
 
         return this.#runtime.board.createTabsFromURL(currentUrl);
+      })
+      .then(() => {
+        if (!config.boardServerUrl) {
+          return;
+        }
+
+        let hasMountedBoardServer = false;
+        for (const server of this.#boardServers) {
+          if (server.url.href === config.boardServerUrl.href) {
+            hasMountedBoardServer = true;
+            break;
+          }
+        }
+
+        if (!hasMountedBoardServer) {
+          console.log(
+            "%cTODO: Mount board server with API Key (unknown): %s",
+            "background:rgb(252, 196, 106); padding: 8px; border-radius: 4px",
+            config.boardServerUrl.href
+          );
+
+          // return this.#runtime.board.connect(
+          //   config.boardServerUrl.href,
+          //   config.boardServerApiKey
+          // );
+        }
       });
   }
 
@@ -1194,6 +1229,18 @@ export class Main extends LitElement {
     }
   }
 
+  async #attemptLogOut() {
+    console.log(
+      "%cTODO: Log the user out",
+      "background:rgb(252, 196, 106); padding: 8px; border-radius: 4px"
+    );
+
+    this.toast(
+      Strings.from("STATUS_LOGGED_OUT"),
+      BreadboardUI.Events.ToastType.INFORMATION
+    );
+  }
+
   async #attemptBoardStart() {
     const url = this.tab?.graph?.url;
     if (!url) {
@@ -1248,22 +1295,6 @@ export class Main extends LitElement {
 
     const tabToSave = this.tab;
     this.#tabSaveId.delete(tabToSave.id);
-  }
-
-  #attemptUndo() {
-    if (!this.#runtime.edit.canUndo(this.tab)) {
-      return;
-    }
-
-    this.#runtime.edit.undo(this.tab);
-  }
-
-  #attemptRedo() {
-    if (!this.#runtime.edit.canRedo(this.tab)) {
-      return;
-    }
-
-    this.#runtime.edit.redo(this.tab);
   }
 
   async #attemptBoardSave(
@@ -1968,6 +1999,12 @@ export class Main extends LitElement {
   }
 
   render() {
+    const signInAdapter = new BreadboardUI.Utils.SigninAdapter(
+      this.tokenVendor,
+      this.environment,
+      this.settingsHelper
+    );
+
     const toasts = html`${map(
       this.toasts,
       ([toastId, { message, type, persistent }], idx) => {
@@ -1997,7 +2034,8 @@ export class Main extends LitElement {
       this.showCommandPalette ||
       this.showModulePalette ||
       this.showNewWorkspaceItemOverlay ||
-      this.showBoardOverflowMenu;
+      this.showBoardOverflowMenu ||
+      this.showUserOverflowMenu;
 
     const uiController = this.#initialize
       .then(() => {
@@ -2513,6 +2551,42 @@ export class Main extends LitElement {
           >`;
         }
 
+        let userOverflowMenu: HTMLTemplateResult | symbol = nothing;
+        if (this.showUserOverflowMenu && this.#userOverflowMenuConfiguration) {
+          const actions: BreadboardUI.Types.OverflowAction[] = [
+            {
+              title: Strings.from("COMMAND_LOG_OUT"),
+              name: "logout",
+              icon: "logout",
+            },
+          ];
+
+          userOverflowMenu = html`<bb-overflow-menu
+            id="user-overflow"
+            style=${styleMap({
+              left: `${this.#userOverflowMenuConfiguration.x}px`,
+              top: `${this.#userOverflowMenuConfiguration.y}px`,
+            })}
+            .actions=${actions}
+            .disabled=${false}
+            @bboverflowmenudismissed=${() => {
+              this.showUserOverflowMenu = false;
+            }}
+            @bboverflowmenuaction=${async (
+              actionEvt: BreadboardUI.Events.OverflowMenuActionEvent
+            ) => {
+              this.showUserOverflowMenu = false;
+
+              switch (actionEvt.action) {
+                case "logout": {
+                  this.#attemptLogOut();
+                  break;
+                }
+              }
+            }}
+          ></bb-overflow-menu>`;
+        }
+
         let boardOverflowMenu: HTMLTemplateResult | symbol = nothing;
         if (
           this.showBoardOverflowMenu &&
@@ -2802,53 +2876,6 @@ export class Main extends LitElement {
           ></bb-overflow-menu>`;
         }
 
-        let tabControls: HTMLTemplateResult | symbol = nothing;
-        const tabHistory = this.#runtime.edit.getHistory(this.tab);
-        if (this.tab && tabHistory) {
-          tabControls = html` <button
-              id="undo"
-              ?disabled=${!tabHistory.canUndo()}
-              @click=${() => {
-                this.#attemptUndo();
-              }}
-              @pointerover=${(evt: PointerEvent) => {
-                this.dispatchEvent(
-                  new BreadboardUI.Events.ShowTooltipEvent(
-                    Strings.from("LABEL_UNDO"),
-                    evt.clientX,
-                    evt.clientY
-                  )
-                );
-              }}
-              @pointerout=${() => {
-                this.dispatchEvent(new BreadboardUI.Events.HideTooltipEvent());
-              }}
-            >
-              Undo
-            </button>
-            <button
-              id="redo"
-              ?disabled=${!tabHistory.canRedo()}
-              @click=${() => {
-                this.#attemptRedo();
-              }}
-              @pointerover=${(evt: PointerEvent) => {
-                this.dispatchEvent(
-                  new BreadboardUI.Events.ShowTooltipEvent(
-                    Strings.from("LABEL_REDO"),
-                    evt.clientX,
-                    evt.clientY
-                  )
-                );
-              }}
-              @pointerout=${() => {
-                this.dispatchEvent(new BreadboardUI.Events.HideTooltipEvent());
-              }}
-            >
-              Redo
-            </button>`;
-        }
-
         const canSave = this.tab
           ? this.#runtime.board.canSave(this.tab.id) && !this.tab.readOnly
           : false;
@@ -2961,47 +2988,49 @@ export class Main extends LitElement {
               }
             </div>
             <div id="tab-controls">
+              ${
+                this.tab
+                  ? html`<button
+                      id="toggle-overflow-menu"
+                      @pointerover=${(evt: PointerEvent) => {
+                        this.dispatchEvent(
+                          new BreadboardUI.Events.ShowTooltipEvent(
+                            Strings.from("COMMAND_ADDITIONAL_ITEMS"),
+                            evt.clientX,
+                            evt.clientY
+                          )
+                        );
+                      }}
+                      @pointerout=${() => {
+                        this.dispatchEvent(
+                          new BreadboardUI.Events.HideTooltipEvent()
+                        );
+                      }}
+                      @click=${(evt: PointerEvent) => {
+                        if (!(evt.target instanceof HTMLButtonElement)) {
+                          return;
+                        }
 
-              ${tabControls}
-              <button
-                id="toggle-overflow-menu"
-                @pointerover=${(evt: PointerEvent) => {
-                  this.dispatchEvent(
-                    new BreadboardUI.Events.ShowTooltipEvent(
-                      Strings.from("COMMAND_ADDITIONAL_ITEMS"),
-                      evt.clientX,
-                      evt.clientY
-                    )
-                  );
-                }}
-                @pointerout=${() => {
-                  this.dispatchEvent(
-                    new BreadboardUI.Events.HideTooltipEvent()
-                  );
-                }}
-                @click=${(evt: PointerEvent) => {
-                  if (!(evt.target instanceof HTMLButtonElement)) {
-                    return;
-                  }
+                        if (!this.tab) {
+                          return;
+                        }
 
-                  if (!this.tab) {
-                    return;
-                  }
+                        const btnBounds = evt.target.getBoundingClientRect();
+                        const x = btnBounds.x + btnBounds.width - 205;
+                        const y = btnBounds.y + btnBounds.height;
 
-                  const btnBounds = evt.target.getBoundingClientRect();
-                  const x = btnBounds.x + btnBounds.width - 205;
-                  const y = btnBounds.y + btnBounds.height;
-
-                  this.#boardOverflowMenuConfiguration = {
-                    tabId: this.tab.id,
-                    x,
-                    y,
-                  };
-                  this.showBoardOverflowMenu = true;
-                }}
-              >
-                Overflow
-              </button>
+                        this.#boardOverflowMenuConfiguration = {
+                          tabId: this.tab.id,
+                          x,
+                          y,
+                        };
+                        this.showBoardOverflowMenu = true;
+                      }}
+                    >
+                      Overflow
+                    </button>`
+                  : nothing
+              }
               <button
                 class=${classMap({ active: this.showSettingsOverlay })}
                 id="toggle-settings"
@@ -3025,6 +3054,36 @@ export class Main extends LitElement {
               >
                 Settings
               </button>
+              ${
+                signInAdapter.state === "valid" && signInAdapter.picture
+                  ? html`<button
+                      id="toggle-user-menu"
+                      @click=${(evt: PointerEvent) => {
+                        if (!(evt.target instanceof HTMLButtonElement)) {
+                          return;
+                        }
+
+                        const btnBounds = evt.target.getBoundingClientRect();
+                        const x = btnBounds.x + btnBounds.width - 145;
+                        const y = btnBounds.y + btnBounds.height;
+
+                        this.#userOverflowMenuConfiguration = {
+                          x,
+                          y,
+                        };
+                        this.showUserOverflowMenu = true;
+                      }}
+                    >
+                      <img
+                        id="user-pic"
+                        crossorigin
+                        .src=${signInAdapter.picture}
+                        alt=${signInAdapter.name ?? "No name"}
+                      />
+                    </button>`
+                  : nothing
+              }
+
             </div>
           </div>
         </div>
@@ -3542,97 +3601,94 @@ export class Main extends LitElement {
             ></bb-ui-controller>
         ${
           this.showWelcomePanel
-            ? html`<bb-connection-entry-signin></bb-connection-entry-signin
-                ><bb-project-listing
-                  .version=${this.#version}
-                  .recentBoards=${this.#recentBoards}
-                  .selectedBoardServer=${this.selectedBoardServer}
-                  .selectedLocation=${this.selectedLocation}
-                  .boardServers=${this.#boardServers}
-                  .boardServerNavState=${this.boardServerNavState}
-                  .showAdditionalSources=${showAdditionalSources}
-                  @bbgraphboardserverblankboard=${() => {
-                    this.#attemptBoardCreate(blank());
-                  }}
-                  @bbgraphboardserveradd=${() => {
-                    this.showBoardServerAddOverlay = true;
-                  }}
-                  @bbgraphboardserverrefresh=${async (
-                    evt: BreadboardUI.Events.GraphBoardServerRefreshEvent
-                  ) => {
-                    const boardServer =
-                      this.#runtime.board.getBoardServerByName(
-                        evt.boardServerName
-                      );
-                    if (!boardServer) {
-                      return;
-                    }
+            ? html`<bb-project-listing
+                .version=${this.#version}
+                .recentBoards=${this.#recentBoards}
+                .selectedBoardServer=${this.selectedBoardServer}
+                .selectedLocation=${this.selectedLocation}
+                .boardServers=${this.#boardServers}
+                .boardServerNavState=${this.boardServerNavState}
+                .showAdditionalSources=${showAdditionalSources}
+                @bbgraphboardserverblankboard=${() => {
+                  this.#attemptBoardCreate(blank());
+                }}
+                @bbgraphboardserveradd=${() => {
+                  this.showBoardServerAddOverlay = true;
+                }}
+                @bbgraphboardserverrefresh=${async (
+                  evt: BreadboardUI.Events.GraphBoardServerRefreshEvent
+                ) => {
+                  const boardServer = this.#runtime.board.getBoardServerByName(
+                    evt.boardServerName
+                  );
+                  if (!boardServer) {
+                    return;
+                  }
 
-                    const refreshed = await boardServer.refresh(evt.location);
-                    if (refreshed) {
-                      this.toast(
-                        Strings.from("STATUS_PROJECTS_REFRESHED"),
-                        BreadboardUI.Events.ToastType.INFORMATION
-                      );
-                    } else {
-                      this.toast(
-                        Strings.from("ERROR_UNABLE_TO_REFRESH_PROJECTS"),
-                        BreadboardUI.Events.ToastType.WARNING
-                      );
-                    }
-
-                    this.boardServerNavState = globalThis.crypto.randomUUID();
-                  }}
-                  @bbgraphboardserverdisconnect=${async (
-                    evt: BreadboardUI.Events.GraphBoardServerDisconnectEvent
-                  ) => {
-                    await this.#runtime.board.disconnect(evt.location);
-                    this.boardServerNavState = globalThis.crypto.randomUUID();
-                  }}
-                  @bbgraphboardserverrenewaccesssrequest=${async (
-                    evt: BreadboardUI.Events.GraphBoardServerRenewAccessRequestEvent
-                  ) => {
-                    const boardServer =
-                      this.#runtime.board.getBoardServerByName(
-                        evt.boardServerName
-                      );
-
-                    if (!boardServer) {
-                      return;
-                    }
-
-                    if (boardServer.renewAccess) {
-                      await boardServer.renewAccess();
-                    }
-
-                    this.boardServerNavState = globalThis.crypto.randomUUID();
-                  }}
-                  @bbgraphboardserverloadrequest=${async (
-                    evt: BreadboardUI.Events.GraphBoardServerLoadRequestEvent
-                  ) => {
-                    this.showWelcomePanel = false;
-                    this.#attemptBoardLoad(
-                      new BreadboardUI.Events.StartEvent(evt.url)
+                  const refreshed = await boardServer.refresh(evt.location);
+                  if (refreshed) {
+                    this.toast(
+                      Strings.from("STATUS_PROJECTS_REFRESHED"),
+                      BreadboardUI.Events.ToastType.INFORMATION
                     );
-                  }}
-                  @bbgraphboardserverdeleterequest=${async (
-                    evt: BreadboardUI.Events.GraphBoardServerDeleteRequestEvent
-                  ) => {
-                    await this.#attemptBoardDelete(
-                      evt.boardServerName,
-                      evt.url,
-                      evt.isActive
+                  } else {
+                    this.toast(
+                      Strings.from("ERROR_UNABLE_TO_REFRESH_PROJECTS"),
+                      BreadboardUI.Events.ToastType.WARNING
                     );
-                  }}
-                  @bbgraphboardserverselectionchange=${(
-                    evt: BreadboardUI.Events.GraphBoardServerSelectionChangeEvent
-                  ) => {
-                    this.#persistBoardServerAndLocation(
-                      evt.selectedBoardServer,
-                      evt.selectedLocation
-                    );
-                  }}
-                ></bb-project-listing>`
+                  }
+
+                  this.boardServerNavState = globalThis.crypto.randomUUID();
+                }}
+                @bbgraphboardserverdisconnect=${async (
+                  evt: BreadboardUI.Events.GraphBoardServerDisconnectEvent
+                ) => {
+                  await this.#runtime.board.disconnect(evt.location);
+                  this.boardServerNavState = globalThis.crypto.randomUUID();
+                }}
+                @bbgraphboardserverrenewaccesssrequest=${async (
+                  evt: BreadboardUI.Events.GraphBoardServerRenewAccessRequestEvent
+                ) => {
+                  const boardServer = this.#runtime.board.getBoardServerByName(
+                    evt.boardServerName
+                  );
+
+                  if (!boardServer) {
+                    return;
+                  }
+
+                  if (boardServer.renewAccess) {
+                    await boardServer.renewAccess();
+                  }
+
+                  this.boardServerNavState = globalThis.crypto.randomUUID();
+                }}
+                @bbgraphboardserverloadrequest=${async (
+                  evt: BreadboardUI.Events.GraphBoardServerLoadRequestEvent
+                ) => {
+                  this.showWelcomePanel = false;
+                  this.#attemptBoardLoad(
+                    new BreadboardUI.Events.StartEvent(evt.url)
+                  );
+                }}
+                @bbgraphboardserverdeleterequest=${async (
+                  evt: BreadboardUI.Events.GraphBoardServerDeleteRequestEvent
+                ) => {
+                  await this.#attemptBoardDelete(
+                    evt.boardServerName,
+                    evt.url,
+                    evt.isActive
+                  );
+                }}
+                @bbgraphboardserverselectionchange=${(
+                  evt: BreadboardUI.Events.GraphBoardServerSelectionChangeEvent
+                ) => {
+                  this.#persistBoardServerAndLocation(
+                    evt.selectedBoardServer,
+                    evt.selectedLocation
+                  );
+                }}
+              ></bb-project-listing>`
             : nothing
         }
           </div>
@@ -3742,6 +3798,20 @@ export class Main extends LitElement {
             ></bb-command-palette>`
           : nothing;
 
+        if (
+          signInAdapter.state !== "anonymous" &&
+          signInAdapter.state !== "valid"
+        ) {
+          return html`<bb-connection-entry-signin
+            .adapter=${signInAdapter}
+            @bbsignin=${() => {
+              requestAnimationFrame(() => {
+                this.requestUpdate();
+              });
+            }}
+          ></bb-connection-entry-signin>`;
+        }
+
         return [
           ui,
           boardOverlay,
@@ -3756,6 +3826,7 @@ export class Main extends LitElement {
           commandPalette,
           modulePalette,
           boardOverflowMenu,
+          userOverflowMenu,
         ];
       });
 

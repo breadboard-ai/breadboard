@@ -72,11 +72,11 @@ export const styles = css`
     color: var(--bb-neutral-700);
     padding: 0 16px 0 42px;
     font-size: var(--bb-text-medium);
-    margin: 0 calc(var(--bb-grid-size) * 3) 0 0;
+    margin: 0 var(--bb-grid-size-4) 0 0;
     cursor: pointer;
     background: 12px center var(--bb-icon-download);
     background-repeat: no-repeat;
-    height: calc(100% - var(--bb-grid-size) * 4);
+    height: var(--bb-grid-size-7);
     display: flex;
     align-items: center;
     text-decoration: none;
@@ -278,6 +278,23 @@ export const styles = css`
       display: flex;
       align-items: center;
       justify-content: flex-end;
+
+      & #toggle-user-menu {
+        height: var(--bb-grid-size-7);
+        padding: 0;
+        margin: 0 var(--bb-grid-size-2) 0 var(--bb-grid-size-2);
+        background: none;
+        border: none;
+        cursor: pointer;
+
+        & #user-pic {
+          display: block;
+          width: var(--bb-grid-size-7);
+          height: var(--bb-grid-size-7);
+          border-radius: 50%;
+          pointer-events: none;
+        }
+      }
     }
   }
 
@@ -411,6 +428,7 @@ export const styles = css`
     z-index: 6;
   }
 
+  #user-overflow,
   #board-overflow {
     position: fixed;
     right: auto;

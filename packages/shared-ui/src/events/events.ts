@@ -1318,3 +1318,23 @@ export class FastAccessErrorEvent extends Event {
     super(FastAccessErrorEvent.eventName, { ...eventInit });
   }
 }
+
+/**
+ * Sign In and Out
+ */
+
+export class SignInEvent extends Event {
+  static eventName = "bbsignin";
+
+  constructor() {
+    super(SignInEvent.eventName, { ...eventInit });
+  }
+}
+
+export class SignOutEvent extends Event {
+  static eventName = "bbsignout";
+
+  constructor() {
+    super(SignOutEvent.eventName, { ...eventInit });
+  }
+}

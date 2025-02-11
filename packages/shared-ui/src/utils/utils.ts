@@ -10,3 +10,4 @@ export { TopGraphObserver } from "./top-graph-observer/index";
 export { getModuleId } from "./module-id.js";
 // export { getSubItemColor as getSubItemColor } from "./subgraph-color.js";
 export * as Workspace from "./workspace.js";
+export { SigninAdapter } from "./signin-adapter.js";
