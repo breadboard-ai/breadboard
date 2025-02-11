@@ -113,10 +113,7 @@ export class FirestoreStorageProvider
     return { success: true, store: doc.id };
   }
 
-  async list(userKey: string | null): Promise<BoardListEntry[]> {
-    const userStoreResult = await this.getUserStore(userKey);
-    const userStore = userStoreResult.success ? userStoreResult.store : null;
-
+  async list(userStore: string): Promise<BoardListEntry[]> {
     const allStores = await this.#database
       .collection("workspaces")
       .listDocuments();
@@ -178,7 +175,7 @@ export class FirestoreStorageProvider
   }
 
   async create(
-    userKey: string,
+    userStore: string,
     name: string,
     dryRun = false
   ): Promise<{
@@ -186,10 +183,6 @@ export class FirestoreStorageProvider
     path: string | undefined;
     error: string | undefined;
   }> {
-    const userStore = await this.getUserStore(userKey);
-    if (!userStore.success) {
-      return { success: false, path: undefined, error: userStore.error };
-    }
     // The format for finding the unique name is {name}-copy[-number].
     // We'll first start with the sanitized name, then move on to {name}-copy.
     // If that's taken, we'll try {name}-copy-2, {name}-copy-3, etc.
@@ -199,7 +192,7 @@ export class FirestoreStorageProvider
     for (;;) {
       // Check if the proposed name is already taken.
       const doc = await this.#database
-        .doc(`workspaces/${userStore.store}/boards/${proposal}.bgl.json`)
+        .doc(`workspaces/${userStore}/boards/${proposal}.bgl.json`)
         .get();
       if (!doc.exists) {
         break;
@@ -220,10 +213,10 @@ export class FirestoreStorageProvider
     if (!dryRun) {
       // Create a blank board with the proposed name.
       await this.#database
-        .doc(`workspaces/${userStore.store}/boards/${proposal}.bgl.json`)
+        .doc(`workspaces/${userStore}/boards/${proposal}.bgl.json`)
         .set({ graph: JSON.stringify(blank()) });
     }
-    const path = asPath(userStore.store, `${proposal}.bgl.json`);
+    const path = asPath(userStore, `${proposal}.bgl.json`);
     return { success: true, path, error: undefined };
   }
 

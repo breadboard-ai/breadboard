@@ -4,21 +4,32 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { authenticate } from "../auth.js";
+import { ok } from "@google-labs/breadboard";
+import { authenticateAndGetUserStore } from "../auth.js";
 import { unauthorized } from "../errors.js";
 import { getStore } from "../store.js";
-import type { ApiHandler, BoardParseResult } from "../types.js";
+import type {
+  ApiHandler,
+  BoardParseResult,
+  BoardServerStore,
+} from "../types.js";
 
 const inviteList: ApiHandler = async (parsed, req, res) => {
   const { board: path } = parsed as BoardParseResult;
 
-  const userKey = await authenticate(req, res);
-  if (!userKey) {
-    unauthorized(res, "Unauthorized");
+  let store: BoardServerStore | undefined = undefined;
+
+  const userKey = await authenticateAndGetUserStore(req, res, () => {
+    store = getStore();
+    return store;
+  });
+  if (!ok(userKey)) {
     return true;
   }
 
-  const store = getStore();
+  if (!store) {
+    store = getStore();
+  }
 
   const userStore = await store.getUserStore(userKey);
   if (!userStore.success) {

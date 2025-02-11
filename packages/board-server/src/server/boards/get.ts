@@ -9,6 +9,7 @@ import { getStore } from "../store.js";
 import type { ApiHandler, BoardParseResult } from "../types.js";
 import { serverError } from "../errors.js";
 import { authenticate } from "../auth.js";
+import { ok } from "@google-labs/breadboard";
 
 const get: ApiHandler = async (parsed, req, res) => {
   const { user, name } = parsed as BoardParseResult;
@@ -20,7 +21,8 @@ const get: ApiHandler = async (parsed, req, res) => {
   try {
     const graphDescriptor = JSON.parse(board) as GraphDescriptor;
     if (graphDescriptor.metadata?.tags?.includes("private")) {
-      if (!(await authenticate(req, res))) {
+      const authenticating = await authenticate(req, res);
+      if (!ok(authenticating)) {
         return true;
       }
     }
