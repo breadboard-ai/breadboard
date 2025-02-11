@@ -114,37 +114,31 @@ export class FirestoreStorageProvider
   }
 
   async list(userStore: string): Promise<BoardListEntry[]> {
-    const allStores = await this.#database
-      .collection("workspaces")
-      .listDocuments();
-    const boards = [];
-    for (const store of allStores) {
-      const docs = await store.collection("boards").get();
-      const storeBoards: BoardListEntry[] = [];
-      docs.forEach((doc) => {
-        const path = asPath(store.id, doc.id);
-        const title = doc.get("title") || path;
-        const description = doc.get("description") || undefined;
-        const tags = (doc.get("tags") as string[]) || ["published"];
-        const published = tags.includes("published");
-        const readonly = userStore !== store.id;
-        const mine = userStore === store.id;
-        const username = store.id;
-        if (!published && !mine) {
-          return;
-        }
-        storeBoards.push({
-          title,
-          description,
-          path,
-          username,
-          readonly,
-          mine,
-          tags,
-        });
+    const docs = await this.#database.collectionGroup("boards").get();
+    const boards: BoardListEntry[] = [];
+    docs.forEach((doc) => {
+      const storeId = doc.ref.parent.parent!.id;
+      const path = asPath(storeId, doc.id);
+      const title = doc.get("title") || path;
+      const description = doc.get("description") || undefined;
+      const tags = (doc.get("tags") as string[]) || ["published"];
+      const published = tags.includes("published");
+      const readonly = userStore !== storeId;
+      const mine = userStore === storeId;
+      const username = storeId;
+      if (!published && !mine) {
+        return;
+      }
+      boards.push({
+        title,
+        description,
+        path,
+        username,
+        readonly,
+        mine,
+        tags,
       });
-      boards.push(...storeBoards);
-    }
+    });
     return boards;
   }
 
