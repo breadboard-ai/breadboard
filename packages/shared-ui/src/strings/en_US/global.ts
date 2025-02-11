@@ -60,6 +60,9 @@ export default {
   COMMAND_ADDITIONAL_ITEMS: {
     str: "See additional items",
   },
+  COMMAND_LOG_OUT: {
+    str: "Sign out",
+  },
 
   // Labels.
   LABEL_RUN: {
@@ -141,6 +144,9 @@ export default {
   },
   STATUS_APP_PREVIEW_URL_COPIED: {
     str: "App Preview URL copied to clipboard",
+  },
+  STATUS_LOGGED_OUT: {
+    str: "Successfully signed out",
   },
 
   // Errors.
