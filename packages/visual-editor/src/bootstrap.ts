@@ -13,6 +13,8 @@ export { bootstrap };
 
 export type BootstrapArguments = {
   boardServerUrl?: URL;
+  connectionServerUrl?: URL;
+  requiresSignin?: boolean;
 };
 
 function bootstrap(args: BootstrapArguments = {}) {
@@ -49,6 +51,8 @@ function bootstrap(args: BootstrapArguments = {}) {
       settings: SettingsStore.instance(),
       version: pkg.version,
       boardServerUrl: args?.boardServerUrl,
+      connectionServerUrl: args?.connectionServerUrl,
+      requiresSignin: args?.requiresSignin,
     };
 
     window.oncontextmenu = (evt) => evt.preventDefault();

@@ -27,7 +27,7 @@ function createServerConfig(
   viteDevServer: ViteDevServer | null = null
 ): ServerConfig {
   const {
-    PORT = DEFAULT_HOST,
+    PORT = DEFAULT_PORT,
     HOST = DEFAULT_HOST,
     ALLOWED_ORIGINS = "",
     STORAGE_BUCKET,

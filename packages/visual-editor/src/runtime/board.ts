@@ -42,9 +42,7 @@ import {
 
 const documentStyles = getComputedStyle(document.documentElement);
 
-type ValidColorStrings =
-  | `#${number | "a" | "b" | "c" | "d" | "e" | "f" | "A" | "B" | "C" | "D" | "E" | "F"}`
-  | `--${string}`;
+type ValidColorStrings = `#${string}` | `--${string}`;
 
 export function getGlobalColor(
   name: ValidColorStrings,

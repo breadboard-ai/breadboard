@@ -23,6 +23,7 @@ export default defineConfig(async ({ mode }): Promise<UserConfig> => {
       lib: {
         entry: {
           index: "./index.html",
+          oauth: "./oauth/index.html",
         },
         formats: ["es"],
       },

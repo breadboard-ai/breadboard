@@ -10,6 +10,7 @@ import { InputPlugin } from "../plugins/input-plugin.js";
 export interface Environment {
   connectionServerUrl: string | undefined;
   connectionRedirectUrl: string;
+  requiresSignin?: boolean;
   plugins: {
     input: InputPlugin[];
   };

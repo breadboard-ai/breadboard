@@ -42,7 +42,7 @@ export interface ValidTokenResult {
  */
 export interface ExpiredTokenResult {
   state: "expired";
-  grant?: never;
+  grant?: TokenGrant;
   expired?: never;
   refresh: (opts?: { signal?: AbortSignal }) => Promise<ValidTokenResult>;
 }
@@ -68,6 +68,9 @@ export type GrantResponse =
       access_token: string;
       expires_in: number;
       refresh_token: string;
+      picture?: string;
+      name?: string;
+      id?: string;
     };
 
 export interface TokenGrant {
@@ -76,6 +79,9 @@ export interface TokenGrant {
   expires_in: number;
   refresh_token: string;
   issue_time: number;
+  picture?: string;
+  name?: string;
+  id?: string;
 }
 
 export type RefreshResponse =

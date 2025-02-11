@@ -128,11 +128,11 @@ export class ProjectListing extends LitElement {
         color: var(--bb-neutral-700);
         font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
           var(--bb-font-family);
-        margin-bottom: var(--bb-grid-size-4);
+        margin: var(--bb-grid-size-10) 0;
+        text-align: center;
 
         & p {
           margin: 0 0 var(--bb-grid-size) 0;
-          text-align: center;
         }
       }
 
@@ -1080,7 +1080,6 @@ export class ProjectListing extends LitElement {
                 }
 
                 const { permission } = store;
-
                 const items = [...store.items]
                   .filter(([name, item]) => {
                     const canShow =
@@ -1253,7 +1252,41 @@ export class ProjectListing extends LitElement {
                 }
 
                 return permission === "granted"
-                  ? boardListing
+                  ? [
+                      boardListing,
+                      html` <div id="buttons">
+                        ${items.length
+                          ? html`<div id="mode-container">
+                              <input
+                                ?checked=${this.mode === "condensed"}
+                                type="checkbox"
+                                id="mode"
+                                @input=${() => {
+                                  this.#toggleMode();
+                                }}
+                              />
+                              <label for="mode"
+                                ><span class="detailed"></span
+                                ><span class="condensed"></span>
+                                <span class="sort-by-icon"></span
+                                >${Strings.from("LABEL_SORT_BY")}</label
+                              >
+                            </div>`
+                          : nothing}
+                        <div id="new-project-container">
+                          <button
+                            id="new-project"
+                            @click=${() => {
+                              this.dispatchEvent(
+                                new GraphBoardServerBlankBoardEvent()
+                              );
+                            }}
+                          >
+                            ${Strings.from("COMMAND_NEW_PROJECT")}
+                          </button>
+                        </div>
+                      </div>`,
+                    ]
                   : html`<div id="renew-access">
                       <span
                         >${Strings.from(
@@ -1279,51 +1312,8 @@ export class ProjectListing extends LitElement {
                 ${Strings.from("STATUS_LOADING")}
               </div>`
             )}
-
-            <div id="buttons">
-              <div id="mode-container">
-                <input
-                  ?checked=${this.mode === "condensed"}
-                  type="checkbox"
-                  id="mode"
-                  @input=${() => {
-                    this.#toggleMode();
-                  }}
-                />
-                <label for="mode"
-                  ><span class="detailed"></span
-                  ><span class="condensed"></span>
-                  <span class="sort-by-icon"></span>${Strings.from(
-                    "LABEL_SORT_BY"
-                  )}</label
-                >
-              </div>
-              <div id="new-project-container">
-                <button
-                  id="new-project"
-                  @click=${() => {
-                    this.dispatchEvent(new GraphBoardServerBlankBoardEvent());
-                  }}
-                >
-                  ${Strings.from("COMMAND_NEW_PROJECT")}
-                </button>
-              </div>
-            </div>
           </div>
         </div>
-        <section id="guides">
-          <h2>${Strings.from("LABEL_FEATURED_GUIDES")}</h2>
-          ${map(this.guides, (guide) => {
-            return html` <a href="${guide.url}" class="guide">
-              <span class="title">${guide.title}</span>
-              <span class="description">${guide.description}</span>
-            </a>`;
-          })}
-        </section>
-      </div>
-
-      <div id="app-version">
-        ${Strings.from("LABEL_APP_VERSION")} ${this.version}
       </div>
 
       ${this.showBoardServerOverflowMenu

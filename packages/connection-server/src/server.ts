@@ -11,7 +11,9 @@ import type { Request, Response } from "express";
 import { grant } from "./api/grant.js";
 import { list } from "./api/list.js";
 import { refresh } from "./api/refresh.js";
-import type { ServerConfig } from "./config.js";
+import { loadConnections, type ServerConfig } from "./config.js";
+
+export { loadConnections };
 
 export function createServer(config: ServerConfig): Express {
   const app = express();

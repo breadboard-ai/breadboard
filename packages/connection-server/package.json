@@ -83,10 +83,11 @@
     "@types/node": "^22.0.0",
     "eslint": "^8.57.1",
     "typescript": "^5.7.3",
-    "wireit": "^0.14.10"
+    "wireit": "^0.14.11"
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "jwt-decode": "^4.0.0"
   }
 }

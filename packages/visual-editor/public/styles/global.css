@@ -295,6 +295,12 @@ body.hide-cursor {
   --bb-icon-lan: url(/third_party/icons/lan.svg);
   --bb-icon-lan-inverted: url(/third_party/icons/lan-inverted.svg);
 
+  --bb-icon-login: url(/third_party/icons/login.svg);
+  --bb-icon-login-inverted: url(/third_party/icons/login-inverted.svg);
+
+  --bb-icon-logout: url(/third_party/icons/logout.svg);
+  --bb-icon-logout-inverted: url(/third_party/icons/logout-inverted.svg);
+
   --bb-icon-maximize: url(/third_party/icons/maximize.svg);
   --bb-icon-maximize-inverted: url(/third_party/icons/maximize-inverted.svg);
 
@@ -998,6 +1004,12 @@ body.hide-cursor {
 
   --bb-icon-lan: url(/third_party/icons/lan-inverted.svg);
   --bb-icon-lan-inverted: url(/third_party/icons/lan.svg);
+
+  --bb-icon-login: url(/third_party/icons/login-inverted.svg);
+  --bb-icon-login-inverted: url(/third_party/icons/login.svg);
+
+  --bb-icon-logout: url(/third_party/icons/logout-inverted.svg);
+  --bb-icon-logout-inverted: url(/third_party/icons/logout.svg);
 
   --bb-icon-maximize: url(/third_party/icons/maximize-inverted.svg);
   --bb-icon-maximize-inverted: url(/third_party/icons/maximize.svg);

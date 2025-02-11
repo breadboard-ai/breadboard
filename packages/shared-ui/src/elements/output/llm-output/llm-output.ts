@@ -24,8 +24,25 @@ import { tokenVendorContext } from "../../elements.js";
 import { consume } from "@lit/context";
 import type { TokenVendor } from "@breadboard-ai/connection-client";
 import "./export-toolbar.js";
+import { styleMap } from "lit/directives/style-map.js";
 
-const PCM_AUDIO = "audio/L16;codec=pcm;rate=24000";
+const PCM_AUDIO = "audio/l16;codec=pcm;rate=24000";
+
+const documentStyles = getComputedStyle(document.documentElement);
+
+type ValidColorStrings = `#${string}` | `--${string}`;
+
+export function getGlobalColor(
+  name: ValidColorStrings,
+  defaultValue: ValidColorStrings = "#333333"
+) {
+  const value = documentStyles.getPropertyValue(name)?.replace(/^#/, "");
+  const valueAsNumber = parseInt(value || defaultValue, 16);
+  if (Number.isNaN(valueAsNumber)) {
+    return `#${(0xff00ff).toString(16)}`;
+  }
+  return `#${valueAsNumber.toString(16).padStart(6, "0")}`;
+}
 
 @customElement("bb-llm-output")
 export class LLMOutput extends LitElement {
@@ -375,23 +392,49 @@ export class LLMOutput extends LitElement {
                 `);
               }
               if (part.inlineData.mimeType.startsWith("audio")) {
-                if (part.inlineData.mimeType === PCM_AUDIO) {
-                  const audioHandler = fetch(url)
-                    .then((r) => r.blob())
-                    .then((data) => new Blob([data], { type: PCM_AUDIO }))
-                    .then((audioFile) => {
-                      return cache(
-                        html`<div class="play-audio-container">
-                          <bb-audio-handler
-                            .audioFile=${audioFile}
-                          ></bb-audio-handler>
-                        </div>`
-                      );
-                    });
+                const audioHandler = fetch(url)
+                  .then((r) => r.blob())
+                  .then((data) => {
+                    if (
+                      part.inlineData.mimeType.toLocaleLowerCase() === PCM_AUDIO
+                    ) {
+                      return new Blob([data], { type: PCM_AUDIO });
+                    }
 
-                  return html`${until(audioHandler)}`;
-                }
-                return cache(html`<audio src="${url}" controls />`);
+                    return data;
+                  })
+                  .then((audioFile) => {
+                    const colorLight =
+                      this.value?.role === "model"
+                        ? getGlobalColor("--bb-generative-400")
+                        : getGlobalColor("--bb-ui-400");
+                    const colorMid =
+                      this.value?.role === "model"
+                        ? getGlobalColor("--bb-generative-500")
+                        : getGlobalColor("--bb-ui-500");
+                    const colorDark =
+                      this.value?.role === "model"
+                        ? getGlobalColor("--bb-generative-600")
+                        : getGlobalColor("--bb-ui-600");
+
+                    console.log(colorLight, colorMid, colorDark);
+
+                    return cache(
+                      html`<div class="play-audio-container">
+                        <bb-audio-handler
+                          .audioFile=${audioFile}
+                          .color=${colorLight}
+                          style=${styleMap({
+                            "--color-light": colorLight,
+                            "--color-mid": colorMid,
+                            "--color-dark": colorDark,
+                          })}
+                        ></bb-audio-handler>
+                      </div>`
+                    );
+                  });
+
+                return cache(html`${until(audioHandler)}`);
               }
               if (part.inlineData.mimeType.startsWith("video")) {
                 return cache(html`<video src="${url}" controls />`);

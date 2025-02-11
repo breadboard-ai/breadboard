@@ -50,6 +50,6 @@
     "@types/node": "^22.0.0",
     "typescript": "^5.7.3",
     "@google-labs/tsconfig": "^0.0.1",
-    "wireit": "^0.14.10"
+    "wireit": "^0.14.11"
   }
 }
