@@ -42,7 +42,7 @@ export interface ValidTokenResult {
  */
 export interface ExpiredTokenResult {
   state: "expired";
-  grant?: never;
+  grant?: TokenGrant;
   expired?: never;
   refresh: (opts?: { signal?: AbortSignal }) => Promise<ValidTokenResult>;
 }

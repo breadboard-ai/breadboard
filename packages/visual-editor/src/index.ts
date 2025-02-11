@@ -97,6 +97,10 @@ export type MainArguments = {
    * is associated.
    */
   connectionServerUrl?: URL;
+  /**
+   * Whether or not this instance of requires sign in.
+   */
+  requiresSignin?: boolean;
 };
 
 type SaveAsConfiguration = {
@@ -387,6 +391,7 @@ export class Main extends LitElement {
     ENVIRONMENT.connectionServerUrl =
       config.connectionServerUrl?.href ||
       import.meta.env.VITE_CONNECTION_SERVER_URL;
+    ENVIRONMENT.requiresSignin = config.requiresSignin;
 
     // Due to https://github.com/lit/lit/issues/4675, context provider values
     // must be done in the constructor.
@@ -3537,94 +3542,97 @@ export class Main extends LitElement {
             ></bb-ui-controller>
         ${
           this.showWelcomePanel
-            ? html`<bb-project-listing
-                .version=${this.#version}
-                .recentBoards=${this.#recentBoards}
-                .selectedBoardServer=${this.selectedBoardServer}
-                .selectedLocation=${this.selectedLocation}
-                .boardServers=${this.#boardServers}
-                .boardServerNavState=${this.boardServerNavState}
-                .showAdditionalSources=${showAdditionalSources}
-                @bbgraphboardserverblankboard=${() => {
-                  this.#attemptBoardCreate(blank());
-                }}
-                @bbgraphboardserveradd=${() => {
-                  this.showBoardServerAddOverlay = true;
-                }}
-                @bbgraphboardserverrefresh=${async (
-                  evt: BreadboardUI.Events.GraphBoardServerRefreshEvent
-                ) => {
-                  const boardServer = this.#runtime.board.getBoardServerByName(
-                    evt.boardServerName
-                  );
-                  if (!boardServer) {
-                    return;
-                  }
+            ? html`<bb-connection-entry-signin></bb-connection-entry-signin
+                ><bb-project-listing
+                  .version=${this.#version}
+                  .recentBoards=${this.#recentBoards}
+                  .selectedBoardServer=${this.selectedBoardServer}
+                  .selectedLocation=${this.selectedLocation}
+                  .boardServers=${this.#boardServers}
+                  .boardServerNavState=${this.boardServerNavState}
+                  .showAdditionalSources=${showAdditionalSources}
+                  @bbgraphboardserverblankboard=${() => {
+                    this.#attemptBoardCreate(blank());
+                  }}
+                  @bbgraphboardserveradd=${() => {
+                    this.showBoardServerAddOverlay = true;
+                  }}
+                  @bbgraphboardserverrefresh=${async (
+                    evt: BreadboardUI.Events.GraphBoardServerRefreshEvent
+                  ) => {
+                    const boardServer =
+                      this.#runtime.board.getBoardServerByName(
+                        evt.boardServerName
+                      );
+                    if (!boardServer) {
+                      return;
+                    }
 
-                  const refreshed = await boardServer.refresh(evt.location);
-                  if (refreshed) {
-                    this.toast(
-                      Strings.from("STATUS_PROJECTS_REFRESHED"),
-                      BreadboardUI.Events.ToastType.INFORMATION
+                    const refreshed = await boardServer.refresh(evt.location);
+                    if (refreshed) {
+                      this.toast(
+                        Strings.from("STATUS_PROJECTS_REFRESHED"),
+                        BreadboardUI.Events.ToastType.INFORMATION
+                      );
+                    } else {
+                      this.toast(
+                        Strings.from("ERROR_UNABLE_TO_REFRESH_PROJECTS"),
+                        BreadboardUI.Events.ToastType.WARNING
+                      );
+                    }
+
+                    this.boardServerNavState = globalThis.crypto.randomUUID();
+                  }}
+                  @bbgraphboardserverdisconnect=${async (
+                    evt: BreadboardUI.Events.GraphBoardServerDisconnectEvent
+                  ) => {
+                    await this.#runtime.board.disconnect(evt.location);
+                    this.boardServerNavState = globalThis.crypto.randomUUID();
+                  }}
+                  @bbgraphboardserverrenewaccesssrequest=${async (
+                    evt: BreadboardUI.Events.GraphBoardServerRenewAccessRequestEvent
+                  ) => {
+                    const boardServer =
+                      this.#runtime.board.getBoardServerByName(
+                        evt.boardServerName
+                      );
+
+                    if (!boardServer) {
+                      return;
+                    }
+
+                    if (boardServer.renewAccess) {
+                      await boardServer.renewAccess();
+                    }
+
+                    this.boardServerNavState = globalThis.crypto.randomUUID();
+                  }}
+                  @bbgraphboardserverloadrequest=${async (
+                    evt: BreadboardUI.Events.GraphBoardServerLoadRequestEvent
+                  ) => {
+                    this.showWelcomePanel = false;
+                    this.#attemptBoardLoad(
+                      new BreadboardUI.Events.StartEvent(evt.url)
                     );
-                  } else {
-                    this.toast(
-                      Strings.from("ERROR_UNABLE_TO_REFRESH_PROJECTS"),
-                      BreadboardUI.Events.ToastType.WARNING
+                  }}
+                  @bbgraphboardserverdeleterequest=${async (
+                    evt: BreadboardUI.Events.GraphBoardServerDeleteRequestEvent
+                  ) => {
+                    await this.#attemptBoardDelete(
+                      evt.boardServerName,
+                      evt.url,
+                      evt.isActive
                     );
-                  }
-
-                  this.boardServerNavState = globalThis.crypto.randomUUID();
-                }}
-                @bbgraphboardserverdisconnect=${async (
-                  evt: BreadboardUI.Events.GraphBoardServerDisconnectEvent
-                ) => {
-                  await this.#runtime.board.disconnect(evt.location);
-                  this.boardServerNavState = globalThis.crypto.randomUUID();
-                }}
-                @bbgraphboardserverrenewaccesssrequest=${async (
-                  evt: BreadboardUI.Events.GraphBoardServerRenewAccessRequestEvent
-                ) => {
-                  const boardServer = this.#runtime.board.getBoardServerByName(
-                    evt.boardServerName
-                  );
-
-                  if (!boardServer) {
-                    return;
-                  }
-
-                  if (boardServer.renewAccess) {
-                    await boardServer.renewAccess();
-                  }
-
-                  this.boardServerNavState = globalThis.crypto.randomUUID();
-                }}
-                @bbgraphboardserverloadrequest=${async (
-                  evt: BreadboardUI.Events.GraphBoardServerLoadRequestEvent
-                ) => {
-                  this.showWelcomePanel = false;
-                  this.#attemptBoardLoad(
-                    new BreadboardUI.Events.StartEvent(evt.url)
-                  );
-                }}
-                @bbgraphboardserverdeleterequest=${async (
-                  evt: BreadboardUI.Events.GraphBoardServerDeleteRequestEvent
-                ) => {
-                  await this.#attemptBoardDelete(
-                    evt.boardServerName,
-                    evt.url,
-                    evt.isActive
-                  );
-                }}
-                @bbgraphboardserverselectionchange=${(
-                  evt: BreadboardUI.Events.GraphBoardServerSelectionChangeEvent
-                ) => {
-                  this.#persistBoardServerAndLocation(
-                    evt.selectedBoardServer,
-                    evt.selectedLocation
-                  );
-                }}
-              ></bb-project-listing>`
+                  }}
+                  @bbgraphboardserverselectionchange=${(
+                    evt: BreadboardUI.Events.GraphBoardServerSelectionChangeEvent
+                  ) => {
+                    this.#persistBoardServerAndLocation(
+                      evt.selectedBoardServer,
+                      evt.selectedLocation
+                    );
+                  }}
+                ></bb-project-listing>`
             : nothing
         }
           </div>
