@@ -9,6 +9,7 @@
   "type": "module",
   "scripts": {
     "build": "wireit",
+    "build:esbuild": "wireit",
     "build:tsc": "wireit",
     "build:vite": "wireit",
     "copy-assets": "wireit",
@@ -30,6 +31,9 @@
         "build:vite",
         "build:tsc"
       ]
+    },
+    "build:esbuild": {
+      "command": "tsx scripts/build.ts"
     },
     "build:vite": {
       "command": "vite build",
