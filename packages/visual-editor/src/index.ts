@@ -832,6 +832,7 @@ export class Main extends LitElement {
         }
 
         if (!hasMountedBoardServer) {
+          console.log(`Mounting server "${config.boardServerUrl.href}" ...`);
           return this.#runtime.board.connect(config.boardServerUrl.href);
         }
       })
@@ -3803,6 +3804,7 @@ export class Main extends LitElement {
           return html`<bb-connection-entry-signin
             .adapter=${signInAdapter}
             @bbsignin=${() => {
+              this.#boardServers = this.#runtime.board.getBoardServers();
               requestAnimationFrame(() => {
                 this.requestUpdate();
               });

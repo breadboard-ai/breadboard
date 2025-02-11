@@ -376,6 +376,9 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
       const request = await this.#createRequest("boards", "GET");
 
       const response = await fetch(request);
+      if (!response.ok) {
+        return projects;
+      }
       const files: BoardServerListingItem[] = await response.json();
 
       for (const item of files) {
