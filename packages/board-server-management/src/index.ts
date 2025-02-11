@@ -16,6 +16,8 @@ import {
 
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 import { TokenVendor } from "@breadboard-ai/connection-client";
+import { ConnectionArgs } from "../../remote-board-server/dist/types";
+import { getSigninToken } from "./utils";
 
 const PLAYGROUND_BOARDS = "example://playground-boards";
 const EXAMPLE_BOARDS = "example://example-boards";
@@ -113,7 +115,14 @@ export async function connectToBoardServer(
         return null;
       }
 
-      const response = await RemoteBoardServer.connect(location, apiKey);
+      const args: ConnectionArgs = apiKey
+        ? {
+            key: apiKey,
+          }
+        : {
+            token: await getSigninToken(tokenVendor),
+          };
+      const response = await RemoteBoardServer.connect(location, args);
       if (response) {
         const url = new URL(location);
         await storeBoardServer(url, response.title, {

@@ -836,11 +836,11 @@ export class Main extends LitElement {
             config.boardServerUrl.href
           );
 
-          // return this.#runtime.board.connect(
-          //   config.boardServerUrl.href,
-          //   config.boardServerApiKey
-          // );
+          return this.#runtime.board.connect(config.boardServerUrl.href);
         }
+      })
+      .then((connecting) => {
+        console.log("CONNECTING", connecting);
       });
   }
 

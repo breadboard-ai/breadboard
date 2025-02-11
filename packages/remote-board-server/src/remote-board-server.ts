@@ -22,49 +22,8 @@ import {
   type Permission,
   type User,
 } from "@google-labs/breadboard";
-
-/**
- * For now, make a flag that controls whether to use simple requests or not.
- * Simple requests use "API_KEY" query parameter for authentication.
- */
-const USE_SIMPLE_REQUESTS = true;
-const CONTENT_TYPE = { "Content-Type": "application/json" };
-
-const authHeader = (apiKey: string, headers?: HeadersInit) => {
-  const h = new Headers(headers);
-  h.set("Authorization", `Bearer ${apiKey}`);
-  return h;
-};
-
-const createRequest = (
-  url: URL | string,
-  apiKey: string | null,
-  method: string,
-  body?: unknown
-) => {
-  if (typeof url === "string") {
-    url = new URL(url, window.location.href);
-  } else {
-    url = new URL(url);
-  }
-  if (USE_SIMPLE_REQUESTS) {
-    if (apiKey) {
-      url.searchParams.set("API_KEY", apiKey);
-    }
-    return new Request(url.href, {
-      method,
-      credentials: "include",
-      body: JSON.stringify(body),
-    });
-  }
-
-  return new Request(url, {
-    method,
-    credentials: "include",
-    headers: apiKey ? authHeader(apiKey, CONTENT_TYPE) : CONTENT_TYPE,
-    body: JSON.stringify(body),
-  });
-};
+import { ConnectionArgs } from "./types";
+import { createRequest } from "./utils";
 
 export class RemoteBoardServer extends EventTarget implements BoardServer {
   public readonly url: URL;
@@ -79,12 +38,12 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
   static readonly PROTOCOL = "https://";
   static readonly LOCALHOST = "http://localhost";
 
-  static async connect(url: string, apiKey?: string) {
+  static async connect(url: string, args: ConnectionArgs) {
     if (url.endsWith("/")) {
       url = url.replace(/\/$/, "");
     }
 
-    const userRequest = createRequest(`${url}/me`, apiKey ?? null, "GET");
+    const userRequest = createRequest(`${url}/me`, args, "GET");
     const infoRequest = createRequest(`${url}/info`, null, "GET");
 
     try {
@@ -230,8 +189,10 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
       return null;
     }
 
+    const args: ConnectionArgs = { key: this.user.apiKey };
+
     if (project.url.href === url.href) {
-      const request = createRequest(url, this.user.apiKey, "GET");
+      const request = createRequest(url, args, "GET");
       const response = await fetch(request);
       const graph = await response.json();
       return graph;
@@ -273,8 +234,10 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
       return { result: false };
     }
 
+    const args: ConnectionArgs = { key: this.user.apiKey };
+
     try {
-      const request = createRequest(url, this.user.apiKey, "POST", {
+      const request = createRequest(url, args, "POST", {
         delete: true,
       });
       const response = await fetch(request);
@@ -308,14 +271,11 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
     // we create below work out.
     location = location.replace(/\/$/, "");
 
-    const request = createRequest(
-      `${location}/boards`,
-      this.user.apiKey,
-      "POST",
-      {
-        name: fileName,
-      }
-    );
+    const args: ConnectionArgs = { key: this.user.apiKey };
+
+    const request = createRequest(`${location}/boards`, args, "POST", {
+      name: fileName,
+    });
     const response = await fetch(request);
     if (!response.ok) {
       return null;
@@ -386,7 +346,9 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
     if (!this.user.apiKey) {
       return { error: "No API Key" };
     }
-    const request = createRequest(url, this.user.apiKey, "POST", descriptor);
+    const args: ConnectionArgs = { key: this.user.apiKey };
+
+    const request = createRequest(url, args, "POST", descriptor);
     try {
       const response = await fetch(request);
       return await response.json();
