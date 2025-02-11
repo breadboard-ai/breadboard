@@ -4,7 +4,7 @@ await esbuild.build({
   entryPoints: ["src/server/main.ts"],
   bundle: true,
   platform: "node",
-  external: [],
+  external: ["@google-cloud", "import.meta", "vite", "better-sqlite3"],
   format: "esm",
   outfile: "dist/server/main.ts",
   sourcemap: true,
