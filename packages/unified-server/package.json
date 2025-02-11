@@ -141,7 +141,7 @@
     "ava": "^5.2.0",
     "dotenv": "^16.4.7",
     "typescript": "^5.7.3",
-    "wireit": "^0.14.10"
+    "wireit": "^0.14.11"
   },
   "dependencies": {
     "@breadboard-ai/board-server": "^0.11.0",
