@@ -76,6 +76,7 @@ import {
   PasteCommand,
   SelectAllCommand,
 } from "./commands/commands";
+import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
 
 const STORAGE_PREFIX = "bb-main";
 const LOADING_TIMEOUT = 250;
@@ -1229,15 +1230,18 @@ export class Main extends LitElement {
   }
 
   async #attemptLogOut() {
-    console.log(
-      "%cTODO: Log the user out",
-      "background:rgb(252, 196, 106); padding: 8px; border-radius: 4px"
+    const signInAdapter = new SigninAdapter(
+      this.tokenVendor,
+      this.environment,
+      this.settingsHelper
     );
 
-    this.toast(
-      Strings.from("STATUS_LOGGED_OUT"),
-      BreadboardUI.Events.ToastType.INFORMATION
-    );
+    await signInAdapter.signout(() => {
+      this.toast(
+        Strings.from("STATUS_LOGGED_OUT"),
+        BreadboardUI.Events.ToastType.INFORMATION
+      );
+    });
   }
 
   async #attemptBoardStart() {
