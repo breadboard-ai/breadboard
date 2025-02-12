@@ -6,6 +6,6 @@ await esbuild.build({
   platform: "node",
   external: ["@google-cloud", "import.meta", "vite", "better-sqlite3"],
   format: "esm",
-  outfile: "dist/server/main.ts",
+  outfile: "dist/src/server/main.js",
   sourcemap: true,
 });
