@@ -15,6 +15,7 @@ RUN npm run build
 
 ENV CONNECTIONS_FILE="/breadboard/packages/unified-server/secrets/secrets.json"
 ENV NODE_ENV="production"
+ENV FIRESTORE_DB_NAME="unified-server"
 
 EXPOSE 3000
 
