@@ -710,7 +710,7 @@ export class LLMInputChat extends LitElement {
         case "audio-microphone":
         case "image-webcam":
         case "image-drawable": {
-          return this.#processInputPart(idx);
+          return this.#processInputPart(idx, false);
         }
       }
     });
@@ -747,7 +747,7 @@ export class LLMInputChat extends LitElement {
     this.requestUpdate();
   }
 
-  #processInputPart(partIdx: number) {
+  #processInputPart(partIdx: number, emit = true) {
     if (!this.value) {
       this.value = { role: "user", parts: [] };
     }
@@ -783,6 +783,10 @@ export class LLMInputChat extends LitElement {
         this.#partDataURLs.delete(partIdx);
         break;
       }
+    }
+
+    if (!emit) {
+      return;
     }
 
     this.#emitUpdate();
