@@ -8,6 +8,6 @@ import { LanguagePackEntry } from "../../types/types";
 
 export default {
   LABEL_TITLE: {
-    str: "Kits",
+    str: "Library",
   },
 } as LanguagePackEntry;

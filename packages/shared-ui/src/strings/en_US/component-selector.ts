@@ -16,16 +16,16 @@ export default {
 
   // Labels.
   LABEL_TITLE: {
-    str: "Components",
+    str: "Steps",
   },
   LABEL_BUTTON_COMPONENTS: {
-    str: "Components",
+    str: "Steps",
   },
   LABEL_BUTTON_KITS: {
-    str: "Kits",
+    str: "Library",
   },
   LABEL_SEARCH: {
-    str: "Search Components",
+    str: "Search Steps",
   },
 
   // Queries.

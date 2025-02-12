@@ -15,7 +15,7 @@ export default {
     str: "Continue",
   },
   COMMAND_START: {
-    str: "Test Project",
+    str: "Test Flow",
   },
 
   // Statuses.
@@ -37,7 +37,7 @@ export default {
     str: "Components",
   },
   LABEL_PROJECT: {
-    str: "Project",
+    str: "Flow",
   },
   LABEL_APP_LAYOUT: {
     str: "App Layout",
@@ -55,7 +55,7 @@ export default {
     str: "Light",
   },
   LABEL_TEST: {
-    str: "Test Project",
+    str: "Test Flow",
   },
   LABEL_PUBLIC: {
     str: "Public",
