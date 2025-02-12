@@ -43,7 +43,7 @@
       ]
     },
     "build:tsc": {
-      "command": "tsc --pretty",
+      "command": "tsc -b tsconfig.lib.json --pretty",
       "clean": "if-file-deleted",
       "files": [
         "src/"
