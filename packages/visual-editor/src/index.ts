@@ -76,6 +76,7 @@ import {
   PasteCommand,
   SelectAllCommand,
 } from "./commands/commands";
+import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
 
 const STORAGE_PREFIX = "bb-main";
 const LOADING_TIMEOUT = 250;
@@ -825,21 +826,20 @@ export class Main extends LitElement {
         for (const server of this.#boardServers) {
           if (server.url.href === config.boardServerUrl.href) {
             hasMountedBoardServer = true;
+            this.selectedBoardServer = server.name;
+            this.selectedLocation = server.url.href;
             break;
           }
         }
 
         if (!hasMountedBoardServer) {
-          console.log(
-            "%cTODO: Mount board server with API Key (unknown): %s",
-            "background:rgb(252, 196, 106); padding: 8px; border-radius: 4px",
-            config.boardServerUrl.href
-          );
-
-          // return this.#runtime.board.connect(
-          //   config.boardServerUrl.href,
-          //   config.boardServerApiKey
-          // );
+          console.log(`Mounting server "${config.boardServerUrl.href}" ...`);
+          return this.#runtime.board.connect(config.boardServerUrl.href);
+        }
+      })
+      .then((connecting) => {
+        if (connecting?.success) {
+          console.log(`Connected to server`);
         }
       });
   }
@@ -1230,15 +1230,18 @@ export class Main extends LitElement {
   }
 
   async #attemptLogOut() {
-    console.log(
-      "%cTODO: Log the user out",
-      "background:rgb(252, 196, 106); padding: 8px; border-radius: 4px"
+    const signInAdapter = new SigninAdapter(
+      this.tokenVendor,
+      this.environment,
+      this.settingsHelper
     );
 
-    this.toast(
-      Strings.from("STATUS_LOGGED_OUT"),
-      BreadboardUI.Events.ToastType.INFORMATION
-    );
+    await signInAdapter.signout(() => {
+      this.toast(
+        Strings.from("STATUS_LOGGED_OUT"),
+        BreadboardUI.Events.ToastType.INFORMATION
+      );
+    });
   }
 
   async #attemptBoardStart() {
@@ -3805,6 +3808,7 @@ export class Main extends LitElement {
           return html`<bb-connection-entry-signin
             .adapter=${signInAdapter}
             @bbsignin=${() => {
+              this.#boardServers = this.#runtime.board.getBoardServers();
               requestAnimationFrame(() => {
                 this.requestUpdate();
               });

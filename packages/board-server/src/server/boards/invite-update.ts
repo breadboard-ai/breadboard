@@ -4,29 +4,34 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { authenticate } from "../auth.js";
-import { unauthorized } from "../errors.js";
+import { ok } from "@google-labs/breadboard";
+import { authenticateAndGetUserStore } from "../auth.js";
 import { getStore } from "../store.js";
-import type { ApiHandler, BoardParseResult } from "../types.js";
+import type {
+  ApiHandler,
+  BoardParseResult,
+  BoardServerStore,
+} from "../types.js";
 
 const updateInvite: ApiHandler = async (parsed, req, res, body) => {
   const { board: path } = parsed as BoardParseResult;
 
-  const userKey = authenticate(req, res);
-  if (!userKey) {
-    unauthorized(res, "Unauthorized");
+  let store: BoardServerStore | undefined = undefined;
+
+  const userStore = await authenticateAndGetUserStore(req, res, () => {
+    store = getStore();
+    return store;
+  });
+  if (!ok(userStore)) {
     return true;
   }
-  const store = getStore();
-  const userStore = await store.getUserStore(userKey);
-  if (!userStore.success) {
-    unauthorized(res, "Unauthorized");
-    return true;
+  if (!store) {
+    store = getStore();
   }
 
   if (!body) {
     // create new invite
-    const result = await store.createInvite(userStore.store, path);
+    const result = await store.createInvite(userStore, path);
     let responseBody;
     if (!result.success) {
       responseBody = { error: result.error };
@@ -42,7 +47,7 @@ const updateInvite: ApiHandler = async (parsed, req, res, body) => {
     if (!del.delete) {
       return false;
     }
-    const result = await store.deleteInvite(userStore.store, path, del.delete);
+    const result = await store.deleteInvite(userStore, path, del.delete);
     let responseBody;
     if (!result.success) {
       // TODO: Be nice and return a proper error code

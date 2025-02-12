@@ -5,12 +5,13 @@
  */
 
 import type { IncomingMessage, ServerResponse } from "http";
-import { getStore, type ServerInfo } from "../store.js";
-import { methodNotAllowed, unauthorized } from "../errors.js";
+import { getStore } from "../store.js";
+import { methodNotAllowed } from "../errors.js";
 import { cors } from "../cors.js";
-import packageInfo from "../../../package.json" with { type: "json" };
 import type { ServerConfig } from "../config.js";
-import { getUserKey } from "../auth.js";
+import { authenticateAndGetUserStore } from "../auth.js";
+import type { BoardServerStore } from "../types.js";
+import { ok } from "@google-labs/breadboard";
 
 export { serveMeAPI };
 
@@ -34,22 +35,18 @@ async function serveMeAPI(
     return true;
   }
 
-  const key = getUserKey(req);
-  if (!key) {
-    unauthorized(res, "No API key provided");
-    return true;
-  }
+  let store: BoardServerStore | undefined = undefined;
 
-  const store = getStore();
-  const result = await store.getUserStore(key);
-
-  if (!result.success) {
-    unauthorized(res, result.error);
+  const userStore = await authenticateAndGetUserStore(req, res, () => {
+    store = getStore();
+    return store;
+  });
+  if (!ok(userStore)) {
     return true;
   }
 
   res.setHeader("Content-Type", "application/json");
-  res.end(JSON.stringify({ username: result.store }));
+  res.end(JSON.stringify({ username: userStore }));
 
   return true;
 }

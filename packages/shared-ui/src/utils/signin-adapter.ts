@@ -42,6 +42,7 @@ export type SigninState = "signedout" | "valid" | "anonymous" | "invalid";
  * settingsHelper are present.
  */
 class SigninAdapter {
+  static #cachedPicture: string | null | undefined;
   #tokenVendor?: TokenVendor;
   #environment?: Environment;
   #settingsHelper?: SettingsHelper;
@@ -88,12 +89,38 @@ class SigninAdapter {
     this.name = grant?.name;
   }
 
+  async cachedPicture(): Promise<string | undefined> {
+    if (SigninAdapter.#cachedPicture === undefined && this.picture) {
+      try {
+        const token = await this.refresh();
+        if (!token?.grant) {
+          SigninAdapter.#cachedPicture = null;
+          return;
+        }
+        const picture = await fetch(this.picture, {
+          headers: {
+            Authorization: `Bearer ${token.grant.access_token}`,
+          },
+        });
+        if (!picture.ok) {
+          SigninAdapter.#cachedPicture = null;
+          return;
+        }
+        const blobURL = URL.createObjectURL(await picture.blob());
+        return blobURL;
+      } catch (e) {
+        SigninAdapter.#cachedPicture = null;
+      }
+    }
+    return SigninAdapter.#cachedPicture || undefined;
+  }
+
   async refresh() {
     const token = this.#tokenVendor?.getToken(SIGN_IN_CONNECTION_ID);
     if (token?.state === "expired") {
-      await token.refresh();
-      return;
+      return token.refresh();
     }
+    return token;
   }
 
   async #getConnection(): Promise<Connection | undefined> {
@@ -209,5 +236,17 @@ class SigninAdapter {
         this.#settingsHelper
       )
     );
+  }
+
+  async signout(signoutCallback: () => void) {
+    if (!this.#settingsHelper) {
+      return;
+    }
+    const connection = await this.#getConnection();
+    if (!connection) {
+      return;
+    }
+    await this.#settingsHelper.delete(SETTINGS_TYPE.CONNECTIONS, connection.id);
+    signoutCallback();
   }
 }

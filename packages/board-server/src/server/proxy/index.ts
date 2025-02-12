@@ -14,18 +14,14 @@ import {
   HTTPServerTransport,
   type ProxyServerConfig,
 } from "@google-labs/breadboard/remote";
-import {
-  asRuntimeKit,
-  createDefaultDataStore,
-  type DataStore,
-} from "@google-labs/breadboard";
+import { asRuntimeKit, ok, type DataStore } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
 import { getDataStore } from "@breadboard-ai/data-store";
 import type { ServerConfig } from "../config.js";
 import { cors } from "../cors.js";
-import { getUserKey } from "../auth.js";
 import { timestamp } from "../boards/utils/run-board.js";
 import { BlobDataStore, GoogleStorageBlobStore } from "../blob-store.js";
+import { authenticate } from "../auth.js";
 
 class ResponseAdapter implements ProxyServerResponse {
   #response: ServerResponse;
@@ -77,7 +73,8 @@ export const serveProxyAPI = async (
     return true;
   }
 
-  if (!getUserKey(req)) {
+  const authenticating = authenticate(req, null);
+  if (!ok(authenticating)) {
     // Output the error in node proxy response format.
     res.setHeader("Content-Type", "application/json");
     res.statusCode = 401;
