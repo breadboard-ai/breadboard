@@ -237,4 +237,16 @@ class SigninAdapter {
       )
     );
   }
+
+  async signout(signoutCallback: () => void) {
+    if (!this.#settingsHelper) {
+      return;
+    }
+    const connection = await this.#getConnection();
+    if (!connection) {
+      return;
+    }
+    await this.#settingsHelper.delete(SETTINGS_TYPE.CONNECTIONS, connection.id);
+    signoutCallback();
+  }
 }
