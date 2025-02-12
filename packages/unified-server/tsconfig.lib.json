@@ -18,7 +18,7 @@
     "sourceMap": true,
     "strict": true,
     "target": "ES2022",
-    "tsBuildInfo": "dist/lib/.tsbuildinfo",
+    "tsBuildInfoFile": "dist/lib/.tsbuildinfo",
     "resolveJsonModule": true
   },
   "include": ["src/**/*"]
