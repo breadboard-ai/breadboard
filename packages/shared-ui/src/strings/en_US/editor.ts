@@ -12,13 +12,13 @@ export default {
     str: "Add",
   },
   COMMAND_SHOW_LIBRARY: {
-    str: "Show Component Library",
+    str: "Show Library",
   },
   COMMAND_LIBRARY_GROUP_1: {
-    str: "Show Components",
+    str: "Show AI Steps",
   },
   COMMAND_LIBRARY_GROUP_2: {
-    str: "Show Controls",
+    str: "Show Control Steps",
   },
   COMMAND_LIBRARY_GROUP_3: {
     str: "Show Tools",
@@ -31,25 +31,25 @@ export default {
 
   // Labels.
   LABEL_COMPONENT_LIBRARY: {
-    str: "Component Library",
+    str: "Library",
   },
   LABEL_SHOW_LIST: {
     str: "Show List",
   },
   LABEL_NO_COMPONENTS: {
-    str: "No Components available",
+    str: "No Steps available",
   },
   LABEL_ADD_ITEM: {
-    str: "Add Item",
+    str: "Add Step",
   },
   LABEL_MISSING_ITEM: {
-    str: "Missing details for this component",
+    str: "Missing details for this step",
   },
   LABEL_NO_MISSING_ITEM_INFO: {
-    str: "There is no additional information needed for this component.",
+    str: "There is no additional information needed for this step.",
   },
   LABEL_UPDATING: {
-    str: "Updating component definition.",
+    str: "Updating step definition.",
   },
 
   // Queries.
