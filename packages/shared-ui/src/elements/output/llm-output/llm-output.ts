@@ -417,8 +417,6 @@ export class LLMOutput extends LitElement {
                         ? getGlobalColor("--bb-generative-600")
                         : getGlobalColor("--bb-ui-600");
 
-                    console.log(colorLight, colorMid, colorDark);
-
                     return cache(
                       html`<div class="play-audio-container">
                         <bb-audio-handler
