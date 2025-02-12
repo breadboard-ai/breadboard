@@ -13,7 +13,9 @@ RUN npm install --save-dev
 WORKDIR packages/unified-server
 RUN npm run build
 
+ENV CONNECTIONS_FILE="/breadboard/packages/unified-server/secrets/secrets.json"
 ENV NODE_ENV="production"
+
 EXPOSE 3000
 
 CMD ["node", "dist/src/server/main.js"]
