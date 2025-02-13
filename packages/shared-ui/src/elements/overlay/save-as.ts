@@ -37,6 +37,9 @@ export class SaveAsOverlay extends LitElement {
   accessor selectedBoardServer = "Browser Storage";
 
   @property()
+  accessor showAdditionalSources = true;
+
+  @property()
   accessor selectedLocation = "idb://board-server-local";
 
   @property()
@@ -341,28 +344,34 @@ export class SaveAsOverlay extends LitElement {
           </button>
         </header>
 
-        <label>Board Server</label>
-        <select name="board-server" .value=${this.selectedBoardServer}>
-          ${map(this.boardServers, (boardServer) => {
-            if (!boardServer.extendedCapabilities().modify) {
-              return nothing;
-            }
-            const stores = [...boardServer.items()].filter(
-              ([, store]) => store.permission === "granted"
-            );
-            return html`${map(stores, ([location, store]) => {
-              const value = `${boardServer.name}::${store.url ?? location}`;
-              const isSelectedOption = value === selected;
-              return html`<option
-                ?disabled=${store.permission !== "granted"}
-                ?selected=${isSelectedOption}
-                .value=${value}
-              >
-                ${store.title}
-              </option>`;
-            })}`;
-          })}
-        </select>
+        ${this.showAdditionalSources
+          ? html` <label>Board Server</label>
+              <select name="board-server" .value=${this.selectedBoardServer}>
+                ${map(this.boardServers, (boardServer) => {
+                  if (!boardServer.extendedCapabilities().modify) {
+                    return nothing;
+                  }
+                  const stores = [...boardServer.items()].filter(
+                    ([, store]) => store.permission === "granted"
+                  );
+                  return html`${map(stores, ([location, store]) => {
+                    const value = `${boardServer.name}::${store.url ?? location}`;
+                    const isSelectedOption = value === selected;
+                    return html`<option
+                      ?disabled=${store.permission !== "granted"}
+                      ?selected=${isSelectedOption}
+                      .value=${value}
+                    >
+                      ${store.title}
+                    </option>`;
+                  })}`;
+                })}
+              </select>`
+          : html`<input
+              type="hidden"
+              name="board-server"
+              .value="${this.selectedBoardServer}::${this.selectedLocation}"
+            />`}
 
         <label>Title</label>
         <input
