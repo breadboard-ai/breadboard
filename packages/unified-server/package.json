@@ -65,10 +65,7 @@
       ]
     },
     "docker-build": {
-      "command": "docker build --build-context=breadboard=../.. --tag=unified-server .",
-      "dependencies": [
-        "build"
-      ]
+      "command": "docker build --build-context=breadboard=../.. --tag=unified-server ."
     },
     "docker-clean": {
       "command": "docker image rm unified-server"
@@ -77,10 +74,7 @@
       "command": "docker logs unified-server"
     },
     "docker-run": {
-      "command": "docker run --name=unified-server --publish=3000:3000 --detach --rm unified-server",
-      "dependencies": [
-        "docker-build"
-      ]
+      "command": "docker run --name=unified-server --publish=3000:3000 --detach --rm unified-server"
     },
     "docker-stop": {
       "command": "docker stop unified-server"
