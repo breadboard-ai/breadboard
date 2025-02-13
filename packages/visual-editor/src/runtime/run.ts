@@ -76,6 +76,16 @@ export class Run extends EventTarget {
     });
   }
 
+  async clearLastRun(tabId: TabId | null, urlToClear: string | undefined) {
+    if (!tabId || !urlToClear) {
+      return;
+    }
+
+    this.#runs.delete(tabId);
+
+    return this.runStore.truncate(urlToClear, 1);
+  }
+
   getRunner(tabId: TabId | null) {
     if (!tabId) {
       return null;

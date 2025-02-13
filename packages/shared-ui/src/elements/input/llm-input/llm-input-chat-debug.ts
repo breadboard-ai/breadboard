@@ -13,11 +13,11 @@ import {
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { AllowedLLMContentTypes } from "../../../types/types.js";
-import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
 import { cache } from "lit/directives/cache.js";
+import type { AudioHandler } from "../audio/audio-handler.js";
 import type { DrawableInput } from "../drawable/drawable.js";
 import type { WebcamInput } from "../webcam/webcam.js";
 import {
@@ -34,25 +34,21 @@ import type {
   InlineDataCapabilityPart,
   LLMContent,
   StoredDataCapabilityPart,
-  TextCapabilityPart,
 } from "@breadboard-ai/types";
-import { TextEditor } from "../text-editor/text-editor.js";
+import { repeat } from "lit/directives/repeat.js";
 import { Project } from "../../../state/types.js";
-import {
-  Template,
-  TemplatePartTransformCallback,
-} from "../../../utils/template.js";
-import type { AudioHandler } from "../audio/audio-handler.js";
 
 const inlineDataTemplate = { inlineData: { data: "", mimeType: "" } };
 
-const OVERFLOW_MENU_WIDTH = 180;
 const OVERFLOW_MENU_BUTTON_HEIGHT = 45;
 
 type MultiModalInput = AudioHandler | DrawableInput | WebcamInput;
 
-@customElement("bb-llm-input")
-export class LLMInput extends LitElement {
+/**
+ * A chat interface for the the Visual Editor's "create" view.
+ */
+@customElement("bb-llm-input-chat-debug")
+export class LLMInputChatDebug extends LitElement {
   @property()
   accessor value: LLMContent | null = null;
 
@@ -61,9 +57,6 @@ export class LLMInput extends LitElement {
 
   @property({ reflect: true })
   accessor clamped = true;
-
-  @property({ reflect: true })
-  accessor inlineControls = false;
 
   @property()
   accessor minItems = 0;
@@ -144,65 +137,55 @@ export class LLMInput extends LitElement {
       border-radius: var(--bb-grid-size-2) var(--bb-grid-size-2) 0 0;
       width: fit-content;
       height: var(--bb-grid-size-7);
+
+      & > #insert {
+        margin: 0 var(--bb-grid-size-2);
+      }
+
+      & button {
+        width: 20px;
+        height: 20px;
+        opacity: 0.5;
+        margin: 0 var(--bb-grid-size);
+        border: none;
+        border-radius: 0;
+        font-size: 0;
+        cursor: pointer;
+        background: transparent var(--bb-icon-add-text) center center / 20px
+          20px no-repeat;
+
+        &#add-text {
+          background-image: var(--bb-icon-add-text);
+        }
+
+        &#add-image-webcam {
+          background-image: var(--bb-icon-add-image-webcam);
+        }
+
+        &#add-image-drawable {
+          background-image: var(--bb-icon-add-drawable);
+        }
+
+        &#add-video-webcam {
+          background-image: var(--bb-icon-add-video);
+        }
+
+        &#add-audio-microphone {
+          background-image: var(--bb-icon-add-audio);
+        }
+
+        &#add-file {
+          background-image: var(--bb-icon-add-file);
+        }
+      }
+
+      &:hover,
+      &:focus {
+        opacity: 1;
+      }
     }
 
-    #controls > #insert {
-      margin: 0 var(--bb-grid-size-2);
-    }
-
-    #controls button {
-      width: 20px;
-      height: 20px;
-      opacity: 0.5;
-      margin: 0 var(--bb-grid-size);
-      border: none;
-      border-radius: 0;
-      font-size: 0;
-      cursor: pointer;
-      background: transparent var(--bb-icon-add-text) center center / 20px 20px
-        no-repeat;
-    }
-
-    #controls #add-text {
-      background-image: var(--bb-icon-add-text);
-    }
-
-    #controls #add-image-webcam {
-      background-image: var(--bb-icon-add-image-webcam);
-    }
-
-    #controls #add-image-drawable {
-      background-image: var(--bb-icon-add-drawable);
-    }
-
-    #controls #add-video-webcam {
-      background-image: var(--bb-icon-add-video);
-    }
-
-    #controls #add-audio-microphone {
-      background-image: var(--bb-icon-add-audio);
-    }
-
-    #controls #add-file {
-      background-image: var(--bb-icon-add-file);
-    }
-
-    #controls #add-text:hover,
-    #controls #add-image-webcam:hover,
-    #controls #add-image-drawable:hover,
-    #controls #add-video-webcam:hover,
-    #controls #add-audio-microphone:hover,
-    #controls #add-file:hover,
-    #controls #add-text:focus,
-    #controls #add-image-webcam:focus,
-    #controls #add-image-drawable:focus,
-    #controls #add-video-webcam:focus,
-    #controls #add-audio-microphone:focus,
-    #controls #add-file:focus {
-      opacity: 1;
-    }
-
-    :host([inlinecontrols="true"]) #controls-container {
+    #controls-container {
       position: fixed;
       background: var(--bb-neutral-0);
       border: 1px solid var(--bb-neutral-300);
@@ -211,87 +194,136 @@ export class LLMInput extends LitElement {
         0px 4px 8px 3px rgba(0, 0, 0, 0.05),
         0px 1px 3px rgba(0, 0, 0, 0.1);
       z-index: 1;
+
+      & #controls {
+        display: grid;
+        grid-auto-rows: var(--bb-grid-size-11);
+        row-gap: 1px;
+        background: none;
+        width: 180px;
+        height: var(--controls-height, 224px);
+        padding: 0;
+
+        & button {
+          display: flex;
+          align-items: center;
+          background: none;
+          margin: 0;
+          padding: var(--bb-grid-size-3) var(--bb-grid-size-3)
+            var(--bb-grid-size-3) var(--bb-grid-size-8);
+          border: none;
+          border-bottom: 1px solid var(--bb-neutral-300);
+          text-align: left;
+          cursor: pointer;
+          font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
+            var(--bb-font-family);
+          width: auto;
+          height: auto;
+          background-position: var(--bb-grid-size-2) center;
+          background-repeat: no-repeat;
+          opacity: 0.5;
+
+          &#add-text {
+            background-image: var(--bb-icon-add-text);
+          }
+
+          &#add-image-webcam {
+            background-image: var(--bb-icon-add-image-webcam);
+          }
+
+          &#add-image-drawable {
+            background-image: var(--bb-icon-add-drawable);
+          }
+
+          &#add-video-webcam {
+            background-image: var(--bb-icon-add-video);
+          }
+
+          &#add-audio-microphone {
+            background-image: var(--bb-icon-add-audio);
+          }
+
+          &#add-file {
+            background-image: var(--bb-icon-add-file);
+          }
+
+          &:hover,
+          &:focus {
+            opacity: 1;
+          }
+        }
+      }
     }
 
-    :host([inlinecontrols="true"]) #controls {
-      display: grid;
-      grid-auto-rows: var(--bb-grid-size-11);
-      row-gap: 1px;
-      background: none;
-      width: 180px;
-      height: var(--controls-height, 224px);
-      padding: 0;
-    }
-
-    :host([inlinecontrols="true"]) #insert {
+    #insert {
       display: none;
     }
 
-    :host([inlinecontrols="true"]) #controls button {
-      display: flex;
-      align-items: center;
-      background: none;
-      margin: 0;
-      padding: var(--bb-grid-size-3) var(--bb-grid-size-3) var(--bb-grid-size-3)
-        var(--bb-grid-size-8);
-      border: none;
-      border-bottom: 1px solid var(--bb-neutral-300);
-      text-align: left;
-      cursor: pointer;
-      font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
-        var(--bb-font-family);
-      width: auto;
-      height: auto;
-      background-position: var(--bb-grid-size-2) center;
-      background-repeat: no-repeat;
-      opacity: 1;
-    }
-
-    :host([inlinecontrols="true"]) #controls button:hover,
-    :host([inlinecontrols="true"]) #controls button:focus {
+    #controls button:hover,
+    #controls button:focus {
       background-color: var(--bb-neutral-50);
     }
 
-    :host([inlinecontrols="true"]) #controls button:first-of-type {
+    #controls button:first-of-type {
       border-radius: var(--bb-grid-size-2) var(--bb-grid-size-2) 0 0;
     }
 
-    :host([inlinecontrols="true"]) #controls button:last-of-type {
+    #controls button:last-of-type {
       border-bottom: none;
       border-radius: 0 0 var(--bb-grid-size-2) var(--bb-grid-size-2);
     }
 
-    #toggle-controls {
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      background: var(--bb-ui-500) var(--bb-icon-add-inverted) center center /
-        20px 20px no-repeat;
-      border-radius: 50%;
-      font-size: 0;
-      border: none;
-      bottom: calc(var(--bb-grid-size-9) * -1);
-      right: var(--bb-grid-size-3);
-      cursor: pointer;
-      opacity: 0.75;
-      transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
-    }
-
-    header.with-description #toggle-controls {
-      bottom: calc(var(--bb-grid-size-11) * -1);
-    }
-
-    #toggle-controls:hover,
-    #toggle-controls:focus {
-      opacity: 1;
-      transition-duration: 0.1s;
-    }
-
     #container {
+      display: grid;
+      grid-template-columns: 24px 1fr;
+      column-gap: var(--bb-grid-size-2);
+      position: relative;
+
+      & header {
+        grid-column: 1 / 3;
+      }
+
+      & #toggle-controls {
+        padding: 0;
+        width: 24px;
+        height: 24px;
+        border: 1px solid var(--bb-neutral-600);
+        background: var(--bb-neutral-0) var(--bb-icon-add) center center / 20px
+          20px no-repeat;
+        border-radius: 50%;
+        font-size: 0;
+        cursor: pointer;
+        opacity: 0.4;
+        transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+        align-self: end;
+        margin-bottom: 6px;
+
+        &:hover,
+        &:focus {
+          opacity: 1;
+          transition-duration: 0.1s;
+        }
+      }
+    }
+
+    #value-container {
+      min-height: var(--bb-grid-size-9);
+      max-height: max(20svh, 340px);
+      overflow: auto;
+      scrollbar-width: none;
+      scroll-padding-bottom: 30px;
       border: 1px solid var(--bb-neutral-300);
-      border-radius: 0 0 var(--bb-grid-size) var(--bb-grid-size);
-      padding: var(--bb-grid-size-3) 0 var(--bb-grid-size) 0;
+      border-radius: var(--bb-grid-size-5);
       background: var(--bb-neutral-0);
+
+      &:has(.part:focus-within) {
+        background: var(--bb-ui-50);
+      }
+
+      &:has(#no-parts) {
+        display: flex;
+        align-items: center;
+      }
     }
 
     :host([clamped="true"]) #container {
@@ -308,119 +340,60 @@ export class LLMInput extends LitElement {
 
     .content {
       display: block;
-      margin-bottom: var(--bb-grid-size-2);
     }
 
     .part {
       position: relative;
-      margin: 0 var(--bb-grid-size-3);
-    }
+      padding-right: var(--bb-grid-size-7);
 
-    .part-controls {
-      display: none;
-      position: absolute;
-      top: calc(var(--bb-grid-size-4) * -1 - 2px);
-      right: calc(var(--bb-grid-size-2) * -1);
-      height: var(--bb-grid-size-7);
-      padding: var(--bb-grid-size) var(--bb-grid-size-2);
-      border-radius: var(--bb-grid-size-8);
-      border: 1px solid var(--bb-neutral-300);
-      background: var(--bb-neutral-0);
-    }
+      & .part-controls {
+        display: none;
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        height: var(--bb-grid-size-7);
+        width: var(--bb-grid-size-7);
+        border-radius: var(--bb-grid-size-8);
+        border: 1px solid var(--bb-neutral-300);
+        background: var(--bb-neutral-0);
+      }
 
-    .part:hover .part-controls {
-      display: flex;
-    }
+      &:hover .part-controls {
+        display: flex;
 
-    .part-controls .add-part-after,
-    .part-controls .move-part-up,
-    .part-controls .move-part-down,
-    .part-controls .delete-part {
-      width: 20px;
-      height: 20px;
-      opacity: 0.5;
-      margin-right: var(--bb-grid-size);
-      border: none;
-      border-radius: 0;
-      font-size: 0;
-      cursor: pointer;
-    }
+        & .delete-part {
+          width: 28px;
+          height: 28px;
+          opacity: 0.5;
+          margin: 0;
+          border: none;
+          border-radius: 0;
+          font-size: 0;
+          cursor: pointer;
+          background: var(--bb-icon-delete) center center / 20px 20px no-repeat;
 
-    .part-controls .add-part-after {
-      background: var(--bb-neutral-0) var(--bb-icon-add) center center / 16px
-        16px no-repeat;
-    }
-
-    .part-controls .move-part-up {
-      background: var(--bb-neutral-0) var(--bb-icon-move-up) center center /
-        16px 16px no-repeat;
-    }
-
-    .part-controls .move-part-down {
-      background: var(--bb-neutral-0) var(--bb-icon-move-down) center center /
-        16px 16px no-repeat;
-    }
-
-    .part-controls .delete-part {
-      background: var(--bb-neutral-0) var(--bb-icon-delete) center center / 16px
-        16px no-repeat;
-      margin-right: 0;
-    }
-
-    .part-controls .add-part-after:hover,
-    .part-controls .move-part-up:hover,
-    .part-controls .move-part-down:hover,
-    .part-controls .delete-part:hover,
-    .part-controls .add-part-after:focus,
-    .part-controls .move-part-up:focus,
-    .part-controls .move-part-down:focus,
-    .part-controls .delete-part:focus {
-      opacity: 1;
-    }
-
-    .part-controls .move-part-up[disabled],
-    .part-controls .move-part-down[disabled] {
-      opacity: 0.3;
-      cursor: auto;
+          &:hover,
+          &:focus {
+            opacity: 1;
+          }
+        }
+      }
     }
 
     .value {
       display: flex;
       flex-direction: column;
       position: relative;
-      padding: var(--bb-grid-size) var(--bb-grid-size) var(--bb-grid-size)
-        var(--bb-grid-size-3);
+      min-height: var(--bb-grid-size-9);
+      padding: var(--bb-grid-size) var(--bb-grid-size-3);
       font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
         var(--bb-font-family);
       color: var(--bb-neutral-900);
       margin-left: 0;
+      justify-content: center;
     }
 
-    .value::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      height: 100%;
-      border-radius: var(--bb-grid-size-3);
-      background: var(--bb-ui-100);
-      width: 3px;
-    }
-
-    .part:hover {
-      background: var(--bb-neutral-50);
-    }
-
-    .part:hover .value::before {
-      background: var(--bb-ui-300);
-    }
-
-    .part:focus-within {
-      background: var(--bb-ui-50);
-    }
-
-    .value textarea,
-    .value bb-text-editor {
+    .value textarea {
       background: transparent;
       font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
         var(--bb-font-family);
@@ -591,9 +564,6 @@ export class LLMInput extends LitElement {
     super.connectedCallback();
 
     this.#clearPartDataURLs();
-    if (!this.inlineControls) {
-      return;
-    }
 
     window.addEventListener("click", this.#onWindowPointerDownBound);
     window.addEventListener("keyup", this.#onWindowKeyUpBound);
@@ -606,16 +576,19 @@ export class LLMInput extends LitElement {
     window.removeEventListener("keyup", this.#onWindowKeyUpBound);
   }
 
+  #controlsHeight = 0;
   protected willUpdate(changedProperties: PropertyValues): void {
     if (changedProperties.has("allow")) {
       const allowable = Object.values(this.allow).filter(
         (value) => value
       ).length;
+      this.#controlsHeight =
+        Math.min(5, allowable) * OVERFLOW_MENU_BUTTON_HEIGHT;
       this.style.setProperty(
         "--controls-height",
         // Clamped to 5 because we don't currently support all allowable items
         // in the UI as yet.
-        `${Math.min(5, allowable) * OVERFLOW_MENU_BUTTON_HEIGHT}px`
+        `${this.#controlsHeight}px`
       );
     }
 
@@ -699,7 +672,20 @@ export class LLMInput extends LitElement {
     this.#triggerSelectionFlow = false;
 
     if (focusLastPart && this.#lastPartRef.value) {
-      this.#lastPartRef.value.focus();
+      const textarea = this.#lastPartRef.value.querySelector("textarea");
+      if (textarea) {
+        textarea.select();
+        textarea.focus();
+      }
+
+      const lastPart = this.#lastPartRef.value;
+      requestAnimationFrame(() => {
+        lastPart.scrollIntoView({
+          behavior: "smooth",
+          block: "end",
+          inline: "end",
+        });
+      });
     }
 
     if (triggerSelectionFlow) {
@@ -713,16 +699,12 @@ export class LLMInput extends LitElement {
     }
   }
 
-  processAllOpenParts(componentParamCallback: TemplatePartTransformCallback) {
+  processAllOpenParts() {
     if (!this.value) {
       return;
     }
 
     this.value.parts.map((part, idx) => {
-      if (isTextCapabilityPart(part)) {
-        return this.#updateComponentParamsInText(part, componentParamCallback);
-      }
-
       if (!isInlineData(part)) {
         return;
       }
@@ -731,22 +713,10 @@ export class LLMInput extends LitElement {
         case "audio-microphone":
         case "image-webcam":
         case "image-drawable": {
-          return this.#processInputPart(idx);
+          return this.#processInputPart(idx, false);
         }
       }
     });
-  }
-
-  /**
-   * If necessary, updates the text parts that contain parameterized references
-   * to components.
-   * @param part
-   */
-  #updateComponentParamsInText(
-    part: TextCapabilityPart,
-    callback: TemplatePartTransformCallback
-  ) {
-    part.text = new Template(part.text).transform(callback);
   }
 
   async #processFilePart(evt: InputEvent, partIdx: number) {
@@ -780,7 +750,7 @@ export class LLMInput extends LitElement {
     this.requestUpdate();
   }
 
-  #processInputPart(partIdx: number) {
+  #processInputPart(partIdx: number, emit = true) {
     if (!this.value) {
       this.value = { role: "user", parts: [] };
     }
@@ -816,6 +786,10 @@ export class LLMInput extends LitElement {
         this.#partDataURLs.delete(partIdx);
         break;
       }
+    }
+
+    if (!emit) {
+      return;
     }
 
     this.#emitUpdate();
@@ -910,8 +884,7 @@ export class LLMInput extends LitElement {
 
   async #getPartDataAsHTML(
     idx: number,
-    part: InlineDataCapabilityPart | StoredDataCapabilityPart,
-    isLastPart = false
+    part: InlineDataCapabilityPart | StoredDataCapabilityPart
   ) {
     let mimeType;
     let getData: () => Promise<string>;
@@ -948,6 +921,7 @@ export class LLMInput extends LitElement {
         return cache(html`<img src="${url}" alt="LLM Image" />`);
       }
 
+      case "audio/ogg":
       case "audio/wav":
       case "audio/x-m4a":
       case "audio/m4a":
@@ -980,7 +954,6 @@ export class LLMInput extends LitElement {
         const accept = this.#createAcceptList();
         return html`<label for="part-${idx}"
           ><input
-            ${isLastPart ? ref(this.#lastInputRef) : nothing}
             @input=${(evt: InputEvent) => {
               evt.preventDefault();
               evt.stopImmediatePropagation();
@@ -996,8 +969,8 @@ export class LLMInput extends LitElement {
       case "audio-microphone": {
         return cache(
           html`<bb-audio-handler
-              id="part-${idx}"
               .canRecord=${true}
+              id="part-${idx}"
             ></bb-audio-handler>
             <div>
               <button
@@ -1074,47 +1047,47 @@ export class LLMInput extends LitElement {
 
     const styles: Record<string, string> = {};
     if (this.showInlineControls) {
-      styles.left = `${this.showInlineControls.x - OVERFLOW_MENU_WIDTH}px`;
-      styles.top = `${this.showInlineControls.y}px`;
+      styles.left = `${this.showInlineControls.x}px`;
+      styles.top = `${this.showInlineControls.y - this.#controlsHeight}px`;
     }
 
-    return html` <header
-        class=${classMap({ ["with-description"]: this.description !== null })}
-      >
-        ${this.description
-          ? html`<div id="description">${this.description}</div>`
-          : nothing}
-        ${this.inlineControls
-          ? html`<button
-              id="toggle-controls"
-              @click=${(evt: PointerEvent) => {
-                evt.stopImmediatePropagation();
+    return html` <div id="container">
+        <header
+          class=${classMap({ ["with-description"]: this.description !== null })}
+        >
+          ${this.description
+            ? html`<div id="description">${this.description}</div>`
+            : nothing}
+        </header>
+        <button
+          id="toggle-controls"
+          @click=${(evt: PointerEvent) => {
+            evt.stopImmediatePropagation();
 
-                if (this.showInlineControls) {
-                  this.showInlineControls = null;
-                  return;
-                }
+            if (this.showInlineControls) {
+              this.showInlineControls = null;
+              return;
+            }
 
-                if (!this.#locationProxyRef.value) {
-                  return;
-                }
+            if (!this.#locationProxyRef.value) {
+              return;
+            }
 
-                const containerBounds =
-                  this.#locationProxyRef.value.getBoundingClientRect();
-                const buttonBounds = (
-                  evt.target as HTMLElement
-                ).getBoundingClientRect();
+            const containerBounds =
+              this.#locationProxyRef.value.getBoundingClientRect();
+            const buttonBounds = (
+              evt.target as HTMLElement
+            ).getBoundingClientRect();
 
-                this.showInlineControls = {
-                  x: buttonBounds.left - containerBounds.left,
-                  y: buttonBounds.top - containerBounds.top,
-                };
-              }}
-            >
-              Toggle
-            </button>`
-          : nothing}
-        ${!this.inlineControls || this.showInlineControls
+            this.showInlineControls = {
+              x: buttonBounds.left - containerBounds.left,
+              y: buttonBounds.top - containerBounds.top,
+            };
+          }}
+        >
+          Toggle
+        </button>
+        ${this.showInlineControls
           ? html` <div
               id="controls-container"
               class=${classMap({ inline: this.showInlineControls !== null })}
@@ -1173,106 +1146,84 @@ export class LLMInput extends LitElement {
               </div>
             </div>`
           : nothing}
-      </header>
-      <div id="container" ${ref(this.#containerRef)}>
-        ${this.value &&
-        Array.isArray(this.value.parts) &&
-        this.value.parts.length
-          ? map(this.value.parts, (part, idx) => {
-              const isLastPart = idx === (this.value?.parts.length || 0) - 1;
+        <div id="value-container" ${ref(this.#containerRef)}>
+          ${this.value &&
+          Array.isArray(this.value.parts) &&
+          this.value.parts.length
+            ? repeat(this.value.parts, (part, idx) => {
+                const isLastPart = idx === (this.value?.parts.length || 0) - 1;
 
-              let partClass = "";
-              let value: HTMLTemplateResult | symbol = nothing;
-              if (isTextCapabilityPart(part)) {
-                partClass = "text";
-                value = html` <bb-text-editor
-                  .nodeId=${this.nodeId}
-                  .subGraphId=${this.subGraphId}
-                  .projectState=${this.projectState}
-                  @input=${(evt: Event) => {
-                    if (!isTextCapabilityPart(part)) {
-                      return;
-                    }
+                let partClass = "";
+                let value: HTMLTemplateResult | symbol = nothing;
+                if (isTextCapabilityPart(part)) {
+                  partClass = "text";
+                  value = html` <textarea
+                    @input=${(evt: Event) => {
+                      if (
+                        !isTextCapabilityPart(part) ||
+                        !(evt.target instanceof HTMLTextAreaElement)
+                      ) {
+                        return;
+                      }
 
-                    const target = evt.target as TextEditor;
-                    part.text = target.value;
-                  }}
-                  .value=${part.text.trim()}
-                  ${isLastPart ? ref(this.#lastPartRef) : nothing}
-                ></bb-text-editor>`;
-              } else if (isFunctionCallCapabilityPart(part)) {
-                partClass = "function-call";
-                value = html`${part.functionCall.name}`;
-              } else if (isFunctionResponseCapabilityPart(part)) {
-                partClass = "function-response";
-                value = html`${part.functionResponse.name}
-                ${JSON.stringify(part.functionResponse.response, null, 2)}`;
-              } else if (isStoredData(part)) {
-                // Steal the inline data class for now
-                partClass = "inline-data";
+                      part.text = evt.target.value;
+                    }}
+                    .value=${part.text.trim()}
+                  ></textarea>`;
+                } else if (isFunctionCallCapabilityPart(part)) {
+                  partClass = "function-call";
+                  value = html`${part.functionCall.name}`;
+                } else if (isFunctionResponseCapabilityPart(part)) {
+                  partClass = "function-response";
+                  value = html`${part.functionResponse.name}
+                  ${JSON.stringify(part.functionResponse.response, null, 2)}`;
+                } else if (isStoredData(part)) {
+                  // Steal the inline data class for now
+                  partClass = "inline-data";
 
-                value = html`${until(
-                  this.#getPartDataAsHTML(idx, part, isLastPart),
-                  "Loading..."
-                )}`;
-              } else if (isInlineData(part)) {
-                partClass = "inline-data";
+                  value = html`${until(
+                    this.#getPartDataAsHTML(idx, part),
+                    "Loading..."
+                  )}`;
+                } else if (isInlineData(part)) {
+                  partClass = "inline-data";
 
-                value = html`${until(
-                  this.#getPartDataAsHTML(idx, part, isLastPart),
-                  "Loading..."
-                )}`;
-              }
+                  value = html`${until(
+                    this.#getPartDataAsHTML(idx, part),
+                    "Loading..."
+                  )}`;
+                }
 
-              return html`<div
-                class=${classMap({ part: true, [partClass]: true })}
-              >
-                <div class="content">
-                  <span class="value">${value}</span>
-                </div>
-                <div class="part-controls">
-                  <button
-                    class="add-part-after"
-                    @click=${() => this.#addPartAfter(idx)}
-                    title="Add text after"
+                return html`<div
+                  class=${classMap({ part: true, [partClass]: true })}
+                >
+                  <div
+                    class="content"
+                    ${isLastPart ? ref(this.#lastPartRef) : nothing}
                   >
-                    Add text after
-                  </button>
-                  <button
-                    class="move-part-up"
-                    @click=${() => this.#movePartUp(idx)}
-                    ?disabled=${idx === 0}
-                    title="Move up"
-                  >
-                    Move up
-                  </button>
-                  <button
-                    class="move-part-down"
-                    @click=${() => this.#movePartDown(idx)}
-                    ?disabled=${isLastPart}
-                    title="Move down"
-                  >
-                    Move down
-                  </button>
-                  <button
-                    class="delete-part"
-                    @click=${() => this.#deletePart(idx)}
-                    title="Delete"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>`;
-            })
-          : html`<div id="no-parts">
-              <button
-                title="Add text"
-                class="add-text"
-                @click=${this.#addTextPart}
-              >
-                Add text
-              </button>
-            </div>`}
+                    <span class="value">${value}</span>
+                  </div>
+                  <div class="part-controls">
+                    <button
+                      class="delete-part"
+                      @click=${() => this.#deletePart(idx)}
+                      title="Delete"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>`;
+              })
+            : html`<div id="no-parts">
+                <button
+                  title="Add text"
+                  class="add-text"
+                  @click=${this.#addTextPart}
+                >
+                  Add text
+                </button>
+              </div>`}
+        </div>
       </div>
 
       <div id="location-proxy" ${ref(this.#locationProxyRef)}></div>`;

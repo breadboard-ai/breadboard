@@ -25,24 +25,9 @@ import { consume } from "@lit/context";
 import type { TokenVendor } from "@breadboard-ai/connection-client";
 import "./export-toolbar.js";
 import { styleMap } from "lit/directives/style-map.js";
+import { getGlobalColor } from "../../../utils/color.js";
 
 const PCM_AUDIO = "audio/l16;codec=pcm;rate=24000";
-
-const documentStyles = getComputedStyle(document.documentElement);
-
-type ValidColorStrings = `#${string}` | `--${string}`;
-
-export function getGlobalColor(
-  name: ValidColorStrings,
-  defaultValue: ValidColorStrings = "#333333"
-) {
-  const value = documentStyles.getPropertyValue(name)?.replace(/^#/, "");
-  const valueAsNumber = parseInt(value || defaultValue, 16);
-  if (Number.isNaN(valueAsNumber)) {
-    return `#${(0xff00ff).toString(16)}`;
-  }
-  return `#${valueAsNumber.toString(16).padStart(6, "0")}`;
-}
 
 @customElement("bb-llm-output")
 export class LLMOutput extends LitElement {
@@ -423,9 +408,8 @@ export class LLMOutput extends LitElement {
                           .audioFile=${audioFile}
                           .color=${colorLight}
                           style=${styleMap({
-                            "--color-light": colorLight,
-                            "--color-mid": colorMid,
-                            "--color-dark": colorDark,
+                            "--color-button": colorMid,
+                            "--color-button-active": colorDark,
                           })}
                         ></bb-audio-handler>
                       </div>`

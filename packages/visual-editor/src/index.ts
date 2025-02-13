@@ -79,6 +79,7 @@ import {
 import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
 
 const STORAGE_PREFIX = "bb-main";
+const VIEW_KEY = "bb-main-view";
 const LOADING_TIMEOUT = 250;
 
 export type MainArguments = {
@@ -852,6 +853,11 @@ export class Main extends LitElement {
     window.addEventListener("pointerdown", this.#hidePalettesAndTooltipBound);
     window.addEventListener("keydown", this.#onKeyDownBound);
     window.addEventListener("bbrundownload", this.#downloadRunBound);
+
+    const view = globalThis.localStorage.getItem(VIEW_KEY);
+    if (view) {
+      this.view = view === "deploy" ? "deploy" : "create";
+    }
   }
 
   disconnectedCallback(): void {
@@ -1278,7 +1284,7 @@ export class Main extends LitElement {
     );
   }
 
-  #attemptBoardStop() {
+  async #attemptBoardStop(clearLastRun = false) {
     const tabId = this.tab?.id ?? null;
     const abortController = this.#runtime.run.getAbortSignal(tabId);
     if (!abortController) {
@@ -1287,8 +1293,15 @@ export class Main extends LitElement {
 
     abortController.abort(Strings.from("STATUS_GENERIC_RUN_STOPPED"));
     const runner = this.#runtime.run.getRunner(tabId);
-    runner?.run();
-    this.requestUpdate();
+    await runner?.run();
+
+    if (clearLastRun) {
+      await this.#runtime.run.clearLastRun(tabId, this.tab?.graph.url);
+    }
+
+    requestAnimationFrame(() => {
+      this.requestUpdate();
+    });
   }
 
   async #clearBoardSave() {
@@ -2983,6 +2996,8 @@ export class Main extends LitElement {
                       @click=${() => {
                         this.view =
                           this.view === "create" ? "deploy" : "create";
+
+                        globalThis.localStorage.setItem(VIEW_KEY, this.view);
                       }}
                     >
                       Toggle View
@@ -3131,8 +3146,8 @@ export class Main extends LitElement {
               @bbrun=${async () => {
                 await this.#attemptBoardStart();
               }}
-              @bbstop=${() => {
-                this.#attemptBoardStop();
+              @bbstop=${(evt: BreadboardUI.Events.StopEvent) => {
+                this.#attemptBoardStop(evt.clearLastRun);
               }}
               @bbinputenter=${async (
                 event: BreadboardUI.Events.InputEnterEvent

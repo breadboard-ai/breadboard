@@ -42,6 +42,7 @@ export function forSection<T extends keyof LanguagePack>(section: T) {
       ActivityLog: {},
       AssetOrganizer: {},
       AppPreview: {},
+      AudioHandler: {},
       CommandPalette: {},
       ComponentSelector: {},
       Editor: {},

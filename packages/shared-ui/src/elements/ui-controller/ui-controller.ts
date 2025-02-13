@@ -342,7 +342,7 @@ export class UI extends LitElement {
         .inputs=${userInputs}
         .inlineControls=${true}
         .llmInputShowEntrySelector=${false}
-        .useChatInput=${true}
+        .useDebugChatInput=${true}
         ${ref(this.#userInputRef)}
         @keydown=${(evt: KeyboardEvent) => {
           const isMac = navigator.platform.indexOf("Mac") === 0;
@@ -850,9 +850,15 @@ export class UI extends LitElement {
                     <label>${Strings.from("LABEL_APP_LAYOUT")}</label>
                     <p>${Strings.from("LABEL_APP_LAYOUT_DESCRIPTION")}</p>
                     <select>
-                      <option>${Strings.from("LABEL_TEMPLATE_1")}</option>
-                      <option>${Strings.from("LABEL_TEMPLATE_2")}</option>
-                      <option>${Strings.from("LABEL_TEMPLATE_3")}</option>
+                      <option>${Strings.from("LABEL_APP_LAYOUT_1")}</option>
+                    </select>
+                  </div>
+
+                  <div class="deploy-option theme">
+                    <label>${Strings.from("LABEL_APP_THEME")}</label>
+                    <p>${Strings.from("LABEL_APP_THEME_DESCRIPTION")}</p>
+                    <select>
+                      <option>${Strings.from("LABEL_APP_THEME_1")}</option>
                     </select>
                   </div>
 

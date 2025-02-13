@@ -28,6 +28,9 @@ export class LLMInputArray extends LitElement {
   @property()
   accessor useChatInput = false;
 
+  @property()
+  accessor useDebugChatInput = false;
+
   @property({ reflect: true })
   accessor clamped = true;
 
@@ -278,6 +281,40 @@ export class LLMInputArray extends LitElement {
                   .projectState=${this.projectState}
                 ></bb-llm-input-chat>`;
               }
+
+              if (this.useDebugChatInput) {
+                return html`<bb-llm-input-chat-debug
+                  class=${classMap({ visible: idx === this.selected })}
+                  @input=${(evt: Event) => {
+                    if (!this.values) {
+                      return;
+                    }
+
+                    if (!(evt.target instanceof LLMInput)) {
+                      return;
+                    }
+
+                    if (!evt.target.value) {
+                      return;
+                    }
+
+                    this.values[idx] = evt.target.value;
+                  }}
+                  ${idx === this.selected
+                    ? ref(this.#activeLLMContentRef)
+                    : nothing}
+                  .value=${value}
+                  .minItems=${this.minItems}
+                  .clamped=${this.clamped}
+                  .inlineControls=${this.inlineControls}
+                  .allow=${this.allow}
+                  .autofocus=${this.autofocus && idx === 0}
+                  .nodeId=${this.nodeId}
+                  .subGraphId=${this.subGraphId}
+                  .projectState=${this.projectState}
+                ></bb-llm-input-chat-debug>`;
+              }
+
               return html`<bb-llm-input
                 class=${classMap({ visible: idx === this.selected })}
                 @input=${(evt: Event) => {
