@@ -460,6 +460,11 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                         if (this.#deleting) {
                           return;
                         }
+
+                        if (this.asset && this.asset === asset) {
+                          this.asset = null;
+                        }
+
                         await this.#deleteAsset(path);
                       }}
                     >
