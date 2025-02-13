@@ -26,6 +26,10 @@ const config = createServerConfig(ROOT_PATH, null);
 
 app.use("/board", makeRouter(config));
 
+ViteExpress.static({
+  enableBrotli: true,
+});
+
 ViteExpress.listen(app, config.port, () => {
   console.log(`Unified server at: http://localhost:${config.port}`);
 });
