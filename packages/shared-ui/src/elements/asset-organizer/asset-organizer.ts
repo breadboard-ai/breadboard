@@ -392,7 +392,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
               type="file"
               id="add-asset"
               multiple
-              @input=${(evt: InputEvent) => {
+              @change=${(evt: InputEvent) => {
                 if (
                   !(evt.target instanceof HTMLInputElement) ||
                   !evt.target.files
@@ -400,6 +400,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                   return;
                 }
 
+                const target = evt.target;
                 const assetLoad = [...evt.target.files].map((file) => {
                   return new Promise<{
                     name: string;
@@ -419,6 +420,10 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                 });
 
                 Promise.all(assetLoad).then((assets) => {
+                  // Reset the input otherwise we aren't guaranteed to get the
+                  // input event if the same files are uploaded.
+                  target.value = "";
+
                   if (!this.state) {
                     return;
                   }
