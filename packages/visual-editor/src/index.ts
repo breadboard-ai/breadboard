@@ -1748,6 +1748,57 @@ export class Main extends LitElement {
       return "timeline" in data;
     };
 
+    const filesDropped = evt.dataTransfer.files;
+    if ([...filesDropped].some((file) => !file.type.includes("json"))) {
+      const wasDroppedOnAssetOrganizer = evt
+        .composedPath()
+        .some((el) => el instanceof BreadboardUI.Elements.AssetOrganizer);
+
+      if (!wasDroppedOnAssetOrganizer) {
+        return;
+      }
+
+      const assetLoad = [...filesDropped].map((file) => {
+        return new Promise<{
+          name: string;
+          type: string;
+          content: string | null;
+        }>((resolve) => {
+          const reader = new FileReader();
+          reader.addEventListener("loadend", () => {
+            resolve({
+              name: file.name,
+              type: file.type,
+              content: reader.result as string | null,
+            });
+          });
+          reader.readAsDataURL(file);
+        });
+      });
+
+      Promise.all(assetLoad).then((assets) => {
+        const projectState = this.#runtime.state.getOrCreate(
+          this.tab?.mainGraphId,
+          this.#runtime.edit.getEditor(this.tab)
+        );
+
+        if (!projectState) {
+          return;
+        }
+
+        for (const asset of assets) {
+          projectState.organizer.addGraphAsset(asset.name, {
+            metadata: {
+              title: asset.name,
+              type: "file",
+            },
+            data: asset.content ?? "",
+          });
+        }
+      });
+      return;
+    }
+
     const fileDropped = evt.dataTransfer.files[0];
     fileDropped.text().then((data) => {
       try {
