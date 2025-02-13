@@ -2324,6 +2324,12 @@ export class Main extends LitElement {
           ></bb-board-server-overlay>`;
         }
 
+        const showAdditionalSources =
+          this.#settings?.getItem(
+            BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
+            "Show additional sources"
+          )?.value ?? false;
+
         let saveAsDialogOverlay: HTMLTemplateResult | symbol = nothing;
         if (this.showSaveAsDialog) {
           saveAsDialogOverlay = html`<bb-save-as-overlay
@@ -2332,6 +2338,7 @@ export class Main extends LitElement {
             .boardServers=${this.#boardServers}
             .selectedBoardServer=${this.selectedBoardServer}
             .selectedLocation=${this.selectedLocation}
+            .showAdditionalSources=${showAdditionalSources}
             .graph=${structuredClone(
               this.#saveAsState?.graph ?? this.tab?.graph
             )}
@@ -2978,12 +2985,6 @@ export class Main extends LitElement {
             break;
           }
         }
-
-        const showAdditionalSources =
-          this.#settings?.getItem(
-            BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
-            "Show additional sources"
-          )?.value ?? false;
 
         const ui = html`<header>
           <div id="header-bar" data-active=${this.tab ? "true" : nothing} ?inert=${showingOverlay}>
