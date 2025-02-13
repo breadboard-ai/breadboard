@@ -14,6 +14,7 @@ import { customElement, property } from "lit/decorators.js";
 import { markdown } from "../../../directives/markdown";
 import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
+import { until } from "lit/directives/until.js";
 
 @customElement("bb-multi-output")
 export class MultiOutput extends LitElement {
@@ -164,6 +165,51 @@ export class MultiOutput extends LitElement {
     }
   `;
 
+  #renderDataURL(data: string) {
+    const matches = /data:(.*?)[;,]/.exec(data);
+    const dataStart = data.indexOf(",") + 1;
+    if (!matches || dataStart === 0) {
+      return html`Unsupported type`;
+    }
+
+    const [, mime] = matches;
+
+    switch (mime) {
+      case "image/png":
+      case "image/jpg":
+      case "image/gif": {
+        return html`<img src=${data} />`;
+      }
+
+      case "text/plain": {
+        return html`${markdown(btoa(data))}`;
+      }
+
+      case "audio/ogg":
+      case "audio/wav":
+      case "audio/x-m4a":
+      case "audio/m4a":
+      case "audio/webm":
+      case "audio/mp3":
+      case "audio/mpeg": {
+        console.log(mime);
+        const readAudio = fetch(data)
+          .then((res) => res.blob())
+          .then((blob: Blob) => {
+            return html`<bb-audio-handler
+              .audioFile=${blob}
+            ></bb-audio-handler>`;
+          });
+
+        return html`${until(readAudio, "Loading...")}`;
+      }
+
+      default: {
+        return html`Unsupported type`;
+      }
+    }
+  }
+
   render() {
     if (!this.outputs) {
       return html`${this.message}`;
@@ -209,7 +255,11 @@ export class MultiOutput extends LitElement {
       } else {
         let renderableValue: HTMLTemplateResult | symbol = nothing;
         if (typeof outputValue === "string") {
-          renderableValue = html`${markdown(outputValue)}`;
+          if (outputValue.startsWith("data")) {
+            renderableValue = this.#renderDataURL(outputValue);
+          } else {
+            renderableValue = html`${markdown(outputValue)}`;
+          }
         } else {
           renderableValue = html`${outputValue !== undefined
             ? outputValue

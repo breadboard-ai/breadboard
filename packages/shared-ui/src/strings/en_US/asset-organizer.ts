@@ -14,6 +14,9 @@ export default {
   COMMAND_TOGGLE_VIEWER: {
     str: "Viewer",
   },
+  COMMAND_ADD_ASSET: {
+    str: "Add Asset",
+  },
 
   // Labels.
   LABEL_WAITING_MESSAGE: {
