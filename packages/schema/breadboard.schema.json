@@ -316,6 +316,33 @@
 						"minimized": {
 							"type": "boolean",
 							"description": "Whether or not the graph is minimized. Generally only applies to subgraphs as they carry that control in the Visual Editor."
+						},
+						"presentation": {
+							"type": "object",
+							"properties": {
+								"title": {
+									"type": "string"
+								},
+								"author": {
+									"type": "string"
+								},
+								"theme": {
+									"type": "string"
+								},
+								"layout": {
+									"type": "string"
+								},
+								"icon": {
+									"type": "string"
+								},
+								"description": {
+									"type": "string"
+								},
+								"linkToSource": {
+									"type": "string"
+								}
+							},
+							"additionalProperties": false
 						}
 					},
 					"additionalProperties": false,

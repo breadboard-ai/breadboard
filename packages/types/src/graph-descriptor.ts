@@ -322,6 +322,15 @@ export type GraphMetadata = {
      * subgraphs as they carry that control in the Visual Editor.
      */
     minimized?: boolean;
+    presentation?: {
+      title?: string;
+      author?: string;
+      theme?: string;
+      layout?: string;
+      icon?: string;
+      description?: string;
+      linkToSource?: string;
+    };
   };
 
   /**

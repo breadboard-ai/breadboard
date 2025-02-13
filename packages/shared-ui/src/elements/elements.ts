@@ -35,6 +35,7 @@ export { CodeEditor } from "./input/code-editor/code-editor.js";
 export { DrawableInput } from "./input/drawable/drawable.js";
 export { LLMInputArray } from "./input/llm-input/llm-input-array.js";
 export { LLMInputChat } from "./input/llm-input/llm-input-chat.js";
+export { LLMInputChatDebug } from "./input/llm-input/llm-input-chat-debug.js";
 export { LLMInput } from "./input/llm-input/llm-input.js";
 export { SchemaEditor } from "./input/schema-editor/schema-editor.js";
 export { StreamlinedSchemaEditor } from "./input/schema-editor/streamlined-schema-editor.js";

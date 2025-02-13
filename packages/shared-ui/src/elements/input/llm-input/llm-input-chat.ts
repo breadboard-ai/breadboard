@@ -7,15 +7,14 @@ import {
   LitElement,
   html,
   css,
-  HTMLTemplateResult,
   nothing,
   PropertyValues,
+  HTMLTemplateResult,
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { AllowedLLMContentTypes } from "../../../types/types.js";
 import { classMap } from "lit/directives/class-map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
-import { until } from "lit/directives/until.js";
 import { cache } from "lit/directives/cache.js";
 import type { AudioHandler } from "../audio/audio-handler.js";
 import type { DrawableInput } from "../drawable/drawable.js";
@@ -35,10 +34,14 @@ import type {
   LLMContent,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
-import { repeat } from "lit/directives/repeat.js";
 import { Project } from "../../../state/types.js";
+import { ContinueEvent } from "../../../events/events.js";
+import { getGlobalColor } from "../../../utils/color.js";
+import { repeat } from "lit/directives/repeat.js";
+import { until } from "lit/directives/until.js";
 
 const inlineDataTemplate = { inlineData: { data: "", mimeType: "" } };
+const audioWaveColor = getGlobalColor("--bb-ui-700");
 
 const OVERFLOW_MENU_BUTTON_HEIGHT = 45;
 
@@ -46,6 +49,9 @@ type MultiModalInput = AudioHandler | DrawableInput | WebcamInput;
 
 @customElement("bb-llm-input-chat")
 export class LLMInputChat extends LitElement {
+  @property()
+  accessor pending = false;
+
   @property()
   accessor value: LLMContent | null = null;
 
@@ -60,14 +66,14 @@ export class LLMInputChat extends LitElement {
 
   @property()
   accessor allow: AllowedLLMContentTypes = {
-    audioFile: true,
+    audioFile: false,
     audioMicrophone: true,
-    videoFile: true,
-    videoWebcam: true,
+    videoFile: false,
+    videoWebcam: false,
     imageFile: true,
-    imageWebcam: true,
-    imageDrawable: true,
-    textFile: true,
+    imageWebcam: false,
+    imageDrawable: false,
+    textFile: false,
     textInline: true,
   };
 
@@ -86,9 +92,14 @@ export class LLMInputChat extends LitElement {
   @property()
   accessor projectState: Project | null = null;
 
+  @property({ reflect: true })
+  accessor showChatContinueButton = false;
+
   #forceRenderCount = 0;
   #focusLastPart = false;
   #triggerSelectionFlow = false;
+  #textAreaRef: Ref<HTMLTextAreaElement> = createRef();
+  #audioHandlerRef: Ref<AudioHandler> = createRef();
   #lastPartRef: Ref<HTMLSpanElement> = createRef();
   #lastInputRef: Ref<HTMLInputElement> = createRef();
   #containerRef: Ref<HTMLDivElement> = createRef();
@@ -117,7 +128,6 @@ export class LLMInputChat extends LitElement {
     }
 
     header::empty {
-      background: red;
       height: 20px;
     }
 
@@ -244,8 +254,22 @@ export class LLMInputChat extends LitElement {
             background-image: var(--bb-icon-add-file);
           }
 
+          &:first-of-type {
+            border-radius: var(--bb-grid-size-2) var(--bb-grid-size-2) 0 0;
+          }
+
+          &:last-of-type {
+            border-bottom: none;
+            border-radius: 0 0 var(--bb-grid-size-2) var(--bb-grid-size-2);
+          }
+
+          &:first-of-type:last-of-type {
+            border-radius: var(--bb-grid-size-2);
+          }
+
           &:hover,
           &:focus {
+            background-color: var(--bb-neutral-50);
             opacity: 1;
           }
         }
@@ -256,25 +280,12 @@ export class LLMInputChat extends LitElement {
       display: none;
     }
 
-    #controls button:hover,
-    #controls button:focus {
-      background-color: var(--bb-neutral-50);
-    }
-
-    #controls button:first-of-type {
-      border-radius: var(--bb-grid-size-2) var(--bb-grid-size-2) 0 0;
-    }
-
-    #controls button:last-of-type {
-      border-bottom: none;
-      border-radius: 0 0 var(--bb-grid-size-2) var(--bb-grid-size-2);
-    }
-
     #container {
       display: grid;
-      grid-template-columns: 24px 1fr;
+      grid-template-columns: 40px 1fr;
       column-gap: var(--bb-grid-size-2);
       position: relative;
+      align-items: end;
 
       & header {
         grid-column: 1 / 3;
@@ -282,41 +293,89 @@ export class LLMInputChat extends LitElement {
 
       & #toggle-controls {
         padding: 0;
-        width: 24px;
-        height: 24px;
-        border: 1px solid var(--bb-neutral-600);
-        background: var(--bb-neutral-0) var(--bb-icon-add) center center / 20px
+        width: 40px;
+        height: 40px;
+        border: none;
+        background: var(--bb-neutral-50) var(--bb-icon-add) center center / 20px
           20px no-repeat;
         border-radius: 50%;
         font-size: 0;
         cursor: pointer;
-        opacity: 0.4;
-        transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+        transition: background-color 0.3s cubic-bezier(0, 0, 0.3, 1);
         align-self: end;
-        margin-bottom: 6px;
 
-        &:hover,
-        &:focus {
-          opacity: 1;
-          transition-duration: 0.1s;
+        &:not([disabled]) {
+          background-color: var(--bb-ui-50);
+
+          &:hover,
+          &:focus {
+            background-color: var(--bb-ui-100);
+            transition-duration: 0.1s;
+          }
+        }
+      }
+
+      & #continue-control {
+        padding: 0;
+        display: block;
+        background: var(--bb-ui-50) var(--bb-icon-send-ui) center center / 20px
+          20px no-repeat;
+        width: var(--bb-grid-size-10);
+        height: var(--bb-grid-size-10);
+        border-radius: 50%;
+        font-size: 0;
+        border: none;
+        transition: background-color 0.3s cubic-bezier(0, 0, 0.3, 1);
+
+        &:not([disabled]) {
+          cursor: pointer;
+
+          &:focus,
+          &:hover {
+            background-color: var(--bb-ui-100);
+          }
         }
       }
     }
 
-    #value-container {
-      min-height: var(--bb-grid-size-9);
-      max-height: max(20svh, 340px);
-      overflow: auto;
-      scrollbar-width: none;
-      scroll-padding-bottom: 30px;
-      border: 1px solid var(--bb-neutral-300);
-      border-radius: var(--bb-grid-size-5);
-      background: var(--bb-neutral-0);
+    #audio-handler-placeholder {
+      padding: 0;
+      display: block;
+      background: var(--bb-neutral-50) var(--bb-icon-mic) center center / 20px
+        20px no-repeat;
+      width: var(--bb-grid-size-10);
+      height: var(--bb-grid-size-10);
+      border-radius: 50%;
+      font-size: 0;
+    }
 
-      &:has(.part:focus-within) {
-        background: var(--bb-ui-50);
+    input[type="file"] {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      position: absolute;
+      display: block;
+    }
+
+    :host([showchatcontinuebutton="true"]) #container {
+      grid-template-columns: 40px 1fr 40px;
+
+      & header {
+        grid-column: 1 / 4;
       }
+    }
 
+    #no-input-needed {
+      height: var(--bb-grid-size-10);
+      display: flex;
+      align-items: center;
+      color: var(--bb-neutral-700);
+      font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
+        var(--bb-font-family);
+      padding: 0;
+    }
+
+    #value-container {
       &:has(#no-parts) {
         display: flex;
         align-items: center;
@@ -339,50 +398,11 @@ export class LLMInputChat extends LitElement {
       display: block;
     }
 
-    .part {
-      position: relative;
-      padding-right: var(--bb-grid-size-7);
-
-      & .part-controls {
-        display: none;
-        position: absolute;
-        top: 4px;
-        right: 4px;
-        height: var(--bb-grid-size-7);
-        width: var(--bb-grid-size-7);
-        border-radius: var(--bb-grid-size-8);
-        border: 1px solid var(--bb-neutral-300);
-        background: var(--bb-neutral-0);
-      }
-
-      &:hover .part-controls {
-        display: flex;
-
-        & .delete-part {
-          width: 28px;
-          height: 28px;
-          opacity: 0.5;
-          margin: 0;
-          border: none;
-          border-radius: 0;
-          font-size: 0;
-          cursor: pointer;
-          background: var(--bb-icon-delete) center center / 20px 20px no-repeat;
-
-          &:hover,
-          &:focus {
-            opacity: 1;
-          }
-        }
-      }
-    }
-
     .value {
       display: flex;
       flex-direction: column;
       position: relative;
       min-height: var(--bb-grid-size-9);
-      padding: var(--bb-grid-size) var(--bb-grid-size-3);
       font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
         var(--bb-font-family);
       color: var(--bb-neutral-900);
@@ -390,19 +410,103 @@ export class LLMInputChat extends LitElement {
       justify-content: center;
     }
 
-    .value textarea {
-      background: transparent;
-      font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
-        var(--bb-font-family);
-      color: var(--bb-neutral-900);
-      white-space: pre-line;
-      resize: none;
-      field-sizing: content;
-      margin: 0;
-      padding: 0;
-      border: none;
-      width: 100%;
-      outline: none;
+    #primary-part {
+      display: flex;
+      padding-top: var(--bb-grid-size);
+      align-items: flex-end;
+
+      & textarea {
+        background: var(--bb-neutral-0);
+        font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
+          var(--bb-font-family);
+        color: var(--bb-neutral-900);
+        white-space: pre-line;
+        resize: none;
+        field-sizing: content;
+        margin: 0;
+        padding: 0 0 var(--bb-grid-size-2) 0;
+        border: none;
+        width: 100%;
+        outline: none;
+        flex: 1 1 auto;
+        line-height: 24px;
+
+        max-height: max(20svh, 340px);
+        overflow: auto;
+        scrollbar-width: none;
+        scroll-padding-bottom: 30px;
+        background: var(--bb-neutral-0);
+      }
+
+      & bb-audio-handler {
+        --color-play-button: transparent;
+        --color-play-button-active: transparent;
+        --color-capture-button: var(--bb-ui-50);
+        --color-capture-button-active: var(--bb-ui-100);
+        --reset-text-color: var(--bb-ui-700);
+        --icon-play: var(--bb-icon-play-arrow-filled-ui);
+        --icon-mic: var(--bb-icon-mic-ui);
+        --icon-reset: var(--bb-icon-delete-ui);
+        flex: 0 0 auto;
+        width: var(--bb-grid-size-10);
+      }
+    }
+
+    #primary-part:has(bb-audio-handler) {
+      & textarea {
+        margin-right: var(--bb-grid-size-2);
+      }
+    }
+
+    #primary-part:has(bb-audio-handler[audioFile]),
+    #primary-part:has(bb-audio-handler[state="recording"]) {
+      & textarea {
+        width: 0;
+        flex: 0 1 auto;
+        field-sizing: initial;
+        line-height: 0;
+        overflow: hidden;
+        padding: 0;
+      }
+
+      & bb-audio-handler {
+        flex: 1 0 auto;
+      }
+    }
+
+    #other-parts {
+      display: flex;
+      overflow-x: scroll;
+      scrollbar-width: none;
+
+      & .part {
+        position: relative;
+        padding-top: 8px;
+        margin-right: calc(var(--bb-grid-size-5) - 2px);
+        margin-left: 2px;
+
+        & .delete-part {
+          position: absolute;
+          top: 0;
+          right: -8px;
+          width: 28px;
+          height: 28px;
+          margin: 0;
+          border: none;
+          border-radius: 0;
+          font-size: 0;
+          cursor: pointer;
+          border-radius: 50%;
+          transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
+          background: var(--bb-ui-50) var(--bb-icon-close-ui) center center /
+            20px 20px no-repeat;
+
+          &:hover,
+          &:focus {
+            background-color: var(--bb-ui-100);
+          }
+        }
+      }
     }
 
     .value * {
@@ -447,8 +551,9 @@ export class LLMInputChat extends LitElement {
     .value img,
     .value video,
     .value audio {
-      width: 100%;
-      max-width: 320px;
+      width: 120px;
+      height: 80px;
+      object-fit: cover;
     }
 
     .value img,
@@ -576,9 +681,28 @@ export class LLMInputChat extends LitElement {
   #controlsHeight = 0;
   protected willUpdate(changedProperties: PropertyValues): void {
     if (changedProperties.has("allow")) {
-      const allowable = Object.values(this.allow).filter(
-        (value) => value
-      ).length;
+      let allowable = Object.entries(this.allow).filter(([name, value]) => {
+        // We exclude any files, inline text or mic audio because these will be
+        // presented in the main area and don't need to be supported in the
+        // overflow menu.
+        return (
+          value &&
+          !name.endsWith("File") &&
+          name !== "textInline" &&
+          name !== "audioMicrophone"
+        );
+      }).length;
+
+      const allowFile =
+        this.allow.audioFile ||
+        this.allow.imageFile ||
+        this.allow.videoFile ||
+        this.allow.textFile;
+      if (allowFile) {
+        allowable++;
+      }
+
+      // const allowsFile =
       this.#controlsHeight =
         Math.min(5, allowable) * OVERFLOW_MENU_BUTTON_HEIGHT;
       this.style.setProperty(
@@ -652,7 +776,7 @@ export class LLMInputChat extends LitElement {
 
   #addPart(mimeType: string, triggerSelectionFlow = true) {
     if (!this.value) {
-      this.value = { role: "user", parts: [] };
+      this.value = { role: "user", parts: [{ text: "" }] };
     }
 
     this.showInlineControls = null;
@@ -690,6 +814,13 @@ export class LLMInputChat extends LitElement {
         if (!this.#lastInputRef.value) {
           return;
         }
+
+        this.#lastInputRef.value.addEventListener("cancel", () => {
+          if (this.value && isInlineData(this.value.parts.at(-1))) {
+            this.value.parts.pop();
+            this.requestUpdate();
+          }
+        });
 
         this.#lastInputRef.value.click();
       });
@@ -816,23 +947,6 @@ export class LLMInputChat extends LitElement {
     this.#forceReRender();
   }
 
-  #addPartAfter(idx: number) {
-    if (!this.value) {
-      return;
-    }
-
-    this.value.parts.splice(idx + 1, 0, { text: "" });
-    this.#forceReRender();
-  }
-
-  #movePartUp(idx: number) {
-    this.#move(idx, -1);
-  }
-
-  #movePartDown(idx: number) {
-    this.#move(idx, 1);
-  }
-
   #deletePart(idx: number) {
     if (!this.value) {
       return;
@@ -926,7 +1040,7 @@ export class LLMInputChat extends LitElement {
       case "audio/mp3":
       case "audio/mpeg": {
         if (!url) {
-          return html`Malform URL`;
+          return html`[No audio provided]`;
         }
 
         const r = await fetch(url);
@@ -960,6 +1074,7 @@ export class LLMInputChat extends LitElement {
             type="file"
             accept="${accept}"
             id="part-${idx}"
+            ${ref(this.#lastInputRef)}
         /></label>`;
       }
 
@@ -1029,7 +1144,7 @@ export class LLMInputChat extends LitElement {
 
       default: {
         return html`<label for="part-${idx}"
-          ><input type="file" id="part-${idx}"
+          ><input type="file" id="part-${idx}" ${ref(this.#lastInputRef)}
         /></label>`;
       }
     }
@@ -1048,6 +1163,106 @@ export class LLMInputChat extends LitElement {
       styles.top = `${this.showInlineControls.y - this.#controlsHeight}px`;
     }
 
+    const renderedValues = html`<div id="primary-part">
+        <textarea
+          .placeholder=${"Type something"}
+          ${ref(this.#textAreaRef)}
+          @input=${(evt: Event) => {
+            if (!(evt.target instanceof HTMLTextAreaElement)) {
+              return;
+            }
+
+            if (!this.value) {
+              this.value = { role: "user", parts: [{ text: "" }] };
+            }
+
+            if (!isTextCapabilityPart(this.value.parts[0])) {
+              this.value.parts[0] = { text: "" };
+            }
+
+            this.value.parts[0].text = evt.target.value;
+          }}
+        ></textarea>
+        ${this.allow.audioMicrophone
+          ? html`<bb-audio-handler
+              .canRecord=${true}
+              .lite=${true}
+              .color=${audioWaveColor}
+              ${ref(this.#audioHandlerRef)}
+            ></bb-audio-handler>`
+          : nothing}
+      </div>
+
+      <div id="other-parts">
+        ${this.value &&
+        Array.isArray(this.value.parts) &&
+        this.value.parts.length
+          ? repeat(this.value.parts, (part, idx) => {
+              // The first part is always handled in the primary input
+              // area so we skip it here.
+              if (idx === 0) {
+                return nothing;
+              }
+              const isLastPart = idx === (this.value?.parts.length || 0) - 1;
+
+              let partClass = "";
+              let value: HTMLTemplateResult | symbol = nothing;
+              if (isTextCapabilityPart(part)) {
+                partClass = "text";
+                value = html` <textarea
+                  @input=${(evt: Event) => {
+                    if (
+                      !isTextCapabilityPart(part) ||
+                      !(evt.target instanceof HTMLTextAreaElement)
+                    ) {
+                      return;
+                    }
+
+                    part.text = evt.target.value;
+                  }}
+                  .value=${part.text.trim()}
+                ></textarea>`;
+              } else if (isFunctionCallCapabilityPart(part)) {
+                partClass = "function-call";
+                value = html`${part.functionCall.name}`;
+              } else if (isFunctionResponseCapabilityPart(part)) {
+                partClass = "function-response";
+                value = html`${part.functionResponse.name}
+                ${JSON.stringify(part.functionResponse.response, null, 2)}`;
+              } else if (isStoredData(part)) {
+                // Steal the inline data class for now
+                partClass = "inline-data";
+
+                value = html`${until(
+                  this.#getPartDataAsHTML(idx, part),
+                  "Loading..."
+                )}`;
+              } else if (isInlineData(part)) {
+                partClass = "inline-data";
+
+                value = html`${until(
+                  this.#getPartDataAsHTML(idx, part),
+                  "Loading..."
+                )}`;
+              }
+
+              return html`<div
+                class=${classMap({ part: true, [partClass]: true })}
+                ${isLastPart ? ref(this.#lastPartRef) : nothing}
+              >
+                <span class="value">${value}</span>
+                <button
+                  class="delete-part"
+                  @click=${() => this.#deletePart(idx)}
+                  title="Delete"
+                >
+                  Delete
+                </button>
+              </div>`;
+            })
+          : nothing}
+      </div>`;
+
     return html` <div id="container">
         <header
           class=${classMap({ ["with-description"]: this.description !== null })}
@@ -1058,6 +1273,7 @@ export class LLMInputChat extends LitElement {
         </header>
         <button
           id="toggle-controls"
+          ?disabled=${this.pending}
           @click=${(evt: PointerEvent) => {
             evt.stopImmediatePropagation();
 
@@ -1095,15 +1311,6 @@ export class LLMInputChat extends LitElement {
             >
               <div id="controls" ${ref(this.#controlsRef)}>
                 <span id="insert">Insert:</span>
-                ${this.allow.textInline
-                  ? html`<button
-                      title="Add text"
-                      id="add-text"
-                      @click=${this.#addTextPart}
-                    >
-                      Add text
-                    </button>`
-                  : nothing}
                 ${this.allow.imageWebcam
                   ? html`<button
                       title="Add webcam image"
@@ -1122,15 +1329,6 @@ export class LLMInputChat extends LitElement {
                       Add drawing
                     </button>`
                   : nothing}
-                ${this.allow.audioMicrophone
-                  ? html`<button
-                      title="Add audio from microphone"
-                      id="add-audio-microphone"
-                      @click=${() => this.#addPart("audio-microphone")}
-                    >
-                      Add audio
-                    </button>`
-                  : nothing}
                 ${allowFile
                   ? html`<button
                       title="Add file"
@@ -1144,83 +1342,52 @@ export class LLMInputChat extends LitElement {
             </div>`
           : nothing}
         <div id="value-container" ${ref(this.#containerRef)}>
-          ${this.value &&
-          Array.isArray(this.value.parts) &&
-          this.value.parts.length
-            ? repeat(this.value.parts, (part, idx) => {
-                const isLastPart = idx === (this.value?.parts.length || 0) - 1;
+          ${this.pending
+            ? html`<div id="no-input-needed">No input needed</div>`
+            : renderedValues}
+        </div>
+        ${!this.pending && this.showChatContinueButton
+          ? html`<button
+              id="continue-control"
+              ?disabled=${this.pending}
+              @click=${() => {
+                if (this.#audioHandlerRef.value) {
+                  if (this.#audioHandlerRef.value.audioFile) {
+                    if (!this.value) {
+                      this.value = { role: "user", parts: [] };
+                    }
 
-                let partClass = "";
-                let value: HTMLTemplateResult | symbol = nothing;
-                if (isTextCapabilityPart(part)) {
-                  partClass = "text";
-                  value = html` <textarea
-                    @input=${(evt: Event) => {
-                      if (
-                        !isTextCapabilityPart(part) ||
-                        !(evt.target instanceof HTMLTextAreaElement)
-                      ) {
-                        return;
-                      }
+                    if (!isInlineData(this.value.parts[0])) {
+                      this.value.parts[0] = { ...inlineDataTemplate };
+                    }
 
-                      part.text = evt.target.value;
-                    }}
-                    .value=${part.text.trim()}
-                  ></textarea>`;
-                } else if (isFunctionCallCapabilityPart(part)) {
-                  partClass = "function-call";
-                  value = html`${part.functionCall.name}`;
-                } else if (isFunctionResponseCapabilityPart(part)) {
-                  partClass = "function-response";
-                  value = html`${part.functionResponse.name}
-                  ${JSON.stringify(part.functionResponse.response, null, 2)}`;
-                } else if (isStoredData(part)) {
-                  // Steal the inline data class for now
-                  partClass = "inline-data";
+                    const audioData =
+                      this.#audioHandlerRef.value.value.parts[0];
+                    if (
+                      isInlineData(audioData) &&
+                      audioData.inlineData.data.length > 0
+                    ) {
+                      this.value.parts[0].inlineData = audioData.inlineData;
+                    }
+                  } else if (this.#textAreaRef.value) {
+                    if (!this.value) {
+                      this.value = { role: "user", parts: [] };
+                    }
 
-                  value = html`${until(
-                    this.#getPartDataAsHTML(idx, part),
-                    "Loading..."
-                  )}`;
-                } else if (isInlineData(part)) {
-                  partClass = "inline-data";
-
-                  value = html`${until(
-                    this.#getPartDataAsHTML(idx, part),
-                    "Loading..."
-                  )}`;
+                    this.value.parts[0] = {
+                      text: this.#textAreaRef.value.value ?? "",
+                    };
+                  }
                 }
 
-                return html`<div
-                  class=${classMap({ part: true, [partClass]: true })}
-                >
-                  <div
-                    class="content"
-                    ${isLastPart ? ref(this.#lastPartRef) : nothing}
-                  >
-                    <span class="value">${value}</span>
-                  </div>
-                  <div class="part-controls">
-                    <button
-                      class="delete-part"
-                      @click=${() => this.#deletePart(idx)}
-                      title="Delete"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>`;
-              })
-            : html`<div id="no-parts">
-                <button
-                  title="Add text"
-                  class="add-text"
-                  @click=${this.#addTextPart}
-                >
-                  Add text
-                </button>
-              </div>`}
-        </div>
+                this.dispatchEvent(new ContinueEvent());
+              }}
+            >
+              ->
+            </button>`
+          : this.allow.audioMicrophone
+            ? html`<div id="audio-handler-placeholder"></div>`
+            : nothing}
       </div>
 
       <div id="location-proxy" ${ref(this.#locationProxyRef)}></div>`;

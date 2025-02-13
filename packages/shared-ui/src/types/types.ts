@@ -489,6 +489,7 @@ export interface LanguagePack {
   ActivityLog: LanguagePackEntry;
   AppPreview: LanguagePackEntry;
   AssetOrganizer: LanguagePackEntry;
+  AudioHandler: LanguagePackEntry;
   CommandPalette: LanguagePackEntry;
   ComponentSelector: LanguagePackEntry;
   Editor: LanguagePackEntry;

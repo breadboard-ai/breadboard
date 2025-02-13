@@ -45,13 +45,16 @@ export default {
   LABEL_APP_LAYOUT_DESCRIPTION: {
     str: "Choose a layout to style your app",
   },
-  LABEL_TEMPLATE_1: {
+  LABEL_APP_LAYOUT_1: {
     str: "Default",
   },
-  LABEL_TEMPLATE_2: {
-    str: "Dark",
+  LABEL_APP_THEME: {
+    str: "Theme",
   },
-  LABEL_TEMPLATE_3: {
+  LABEL_APP_THEME_DESCRIPTION: {
+    str: "Choose a theme for your app",
+  },
+  LABEL_APP_THEME_1: {
     str: "Light",
   },
   LABEL_TEST: {

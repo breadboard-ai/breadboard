@@ -443,6 +443,33 @@
 							"description": "Whether or not the graph is minimized. Generally only applies to subgraphs as they carry that control in the Visual Editor.",
 							"type": "boolean"
 						},
+						"presentation": {
+							"additionalProperties": false,
+							"properties": {
+								"author": {
+									"type": "string"
+								},
+								"description": {
+									"type": "string"
+								},
+								"icon": {
+									"type": "string"
+								},
+								"layout": {
+									"type": "string"
+								},
+								"linkToSource": {
+									"type": "string"
+								},
+								"theme": {
+									"type": "string"
+								},
+								"title": {
+									"type": "string"
+								}
+							},
+							"type": "object"
+						},
 						"window": {
 							"additionalProperties": false,
 							"description": "Last known position of the graph in the editor.",

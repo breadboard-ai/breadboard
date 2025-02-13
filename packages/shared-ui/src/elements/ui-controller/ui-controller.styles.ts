@@ -315,6 +315,10 @@ export const styles = css`
         }
 
         &.layout {
+          background: var(--bb-icon-style) 0 0 / 20px 20px no-repeat;
+        }
+
+        &.theme {
           background: var(--bb-icon-palette) 0 0 / 20px 20px no-repeat;
         }
 

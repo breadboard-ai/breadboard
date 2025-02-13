@@ -49,19 +49,19 @@ export const styles = css`
     position: relative;
 
     & header {
-      padding: var(--bb-grid-size-2) var(--bb-grid-size-6);
-      border-radius: var(--bb-grid-size-4) var(--bb-grid-size-4) 0 0;
-      border: 1px solid var(--bb-neutral-300);
-      background: var(--bb-neutral-0);
-      height: var(--bb-grid-size-11);
       display: flex;
       flex-direction: row;
       align-items: center;
+      padding: 0 var(--bb-grid-size-4);
+      border-radius: var(--bb-grid-size-2) var(--bb-grid-size-2) 0 0;
+      border: 1px solid var(--bb-neutral-300);
+      background: var(--bb-neutral-0);
+      height: var(--bb-grid-size-14);
 
       & h1 {
         font: 400 var(--bb-title-medium) / var(--bb-title-line-height-medium)
           var(--bb-font-family);
-        color: var(--bb-neutral-900);
+        color: var(--bb-neutral-700);
         margin: 0;
         flex: 1;
         white-space: nowrap;
@@ -70,10 +70,10 @@ export const styles = css`
       }
 
       & #menu {
-        width: 24px;
-        height: 24px;
-        margin-right: var(--bb-grid-size-4);
-        background: transparent var(--bb-icon-menu) center center / 24px 24px
+        width: 20px;
+        height: 20px;
+        margin-right: var(--bb-grid-size-6);
+        background: transparent var(--bb-icon-menu) center center / 20px 20px
           no-repeat;
         font-size: 0;
         padding: 0;
@@ -116,38 +116,14 @@ export const styles = css`
         }
 
         & #share {
-          margin: 0 var(--bb-grid-size-4);
           background: transparent var(--bb-icon-share) center center / 20px 20px
             no-repeat;
         }
 
         & #clear {
-          background: transparent var(--bb-icon-sweep) center center / 20px 20px
-            no-repeat;
-        }
-
-        & #run {
-          min-width: 76px;
-          height: var(--bb-grid-size-7);
-          background: var(--bb-ui-500) var(--bb-icon-play-filled-inverted) 8px
-            center / 20px 20px no-repeat;
-          color: #fff;
-          border-radius: 20px;
-          border: none;
-          font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
-            var(--bb-font-family);
-          padding: 0 var(--bb-grid-size-5) 0 var(--bb-grid-size-9);
-          opacity: 0.3;
-
-          &.running {
-            background: var(--bb-ui-500) url(/images/progress-ui-inverted.svg)
-              8px center / 16px 16px no-repeat;
-          }
-
-          &:not([disabled]) {
-            cursor: pointer;
-            opacity: 1;
-          }
+          margin: 0 var(--bb-grid-size-4);
+          background: transparent var(--bb-icon-replay) center center / 20px
+            20px no-repeat;
         }
       }
     }
@@ -177,16 +153,20 @@ export const styles = css`
     & #input {
       --user-input-padding-left: 0;
 
+      display: flex;
+      justify-content: center;
+
       background: var(--bb-neutral-0);
       border-top: 1px solid var(--bb-neutral-300);
       border-left: 1px solid var(--bb-neutral-300);
       border-right: 1px solid var(--bb-neutral-300);
       padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
-      display: grid;
-      grid-template-columns: 1fr 32px;
-      column-gap: var(--bb-grid-size-2);
       max-height: 385px;
       overflow: auto;
+
+      & bb-user-input {
+        flex: 1 1 auto;
+      }
 
       & .preamble {
         grid-column: 1 / 3;
@@ -258,6 +238,30 @@ export const styles = css`
           }
         }
       }
+
+      & #run {
+        min-width: 76px;
+        height: var(--bb-grid-size-10);
+        background: var(--bb-ui-50) var(--bb-add-icon-generative) 12px center /
+          16px 16px no-repeat;
+        color: var(--bb-ui-700);
+        border-radius: 20px;
+        border: 1px solid var(--bb-ui-100);
+        font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
+          var(--bb-font-family);
+        padding: 0 var(--bb-grid-size-5) 0 var(--bb-grid-size-9);
+        opacity: 0.3;
+
+        &.running {
+          background: var(--bb-ui-500) url(/images/progress-ui.svg) 8px center /
+            16px 16px no-repeat;
+        }
+
+        &:not([disabled]) {
+          cursor: pointer;
+          opacity: 1;
+        }
+      }
     }
 
     & #history {
@@ -312,7 +316,7 @@ export const styles = css`
       justify-content: center;
       padding: var(--bb-grid-size-2) var(--bb-grid-size-6);
       background: var(--bb-neutral-0);
-      border-radius: 0 0 var(--bb-grid-size-4) var(--bb-grid-size-4);
+      border-radius: 0 0 var(--bb-grid-size-2) var(--bb-grid-size-2);
       border: 1px solid var(--bb-neutral-300);
     }
 

@@ -9,7 +9,7 @@ import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("AppPreview");
 const GlobalStrings = StringsHelper.forSection("Global");
 
-import { HTMLTemplateResult, LitElement, html } from "lit";
+import { LitElement, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import {
   BoardServer,
@@ -28,8 +28,6 @@ import { SettingsStore } from "../../data/settings-store.js";
 import { classMap } from "lit/directives/class-map.js";
 import { InputEnterEvent, RunEvent, StopEvent } from "../../events/events.js";
 import { until } from "lit/directives/until.js";
-import { DirectiveResult } from "lit/directive.js";
-import { cache, CacheDirective } from "lit/directives/cache.js";
 import {
   EdgeLogEntry,
   LogEntry,
@@ -94,9 +92,8 @@ export class AppPreview extends LitElement {
   async #renderPendingInput(
     event: InspectableRunNodeEvent | EdgeLogEntry | null
   ) {
-    let userInput: HTMLTemplateResult | DirectiveResult<typeof CacheDirective> =
-      cache(html`<div class="no-input-needed"></div>`);
     let continueRun: (() => void) | null = null;
+    let userInputs: UserInputConfiguration[] = [];
 
     if (event !== null) {
       let descriptor, schema;
@@ -129,46 +126,47 @@ export class AppPreview extends LitElement {
         // same input over a run. Currently, we will only grab the
         // first value.
         const values = this.inputsFromLastRun?.get(descriptor.id)?.[0];
-        const userInputs: UserInputConfiguration[] = Object.entries(
-          schema.properties ?? {}
-        ).reduce((prev, [name, schema]) => {
-          let value = values ? values[name] : undefined;
-          if (schema.type === "object") {
-            if (isLLMContentBehavior(schema)) {
-              if (!isLLMContent(value)) {
-                value = undefined;
+        userInputs = Object.entries(schema.properties ?? {}).reduce(
+          (prev, [name, schema]) => {
+            let value = values ? values[name] : undefined;
+            if (schema.type === "object") {
+              if (isLLMContentBehavior(schema)) {
+                if (!isLLMContent(value)) {
+                  value = undefined;
+                }
+              } else {
+                value = JSON.stringify(value, null, 2);
               }
-            } else {
-              value = JSON.stringify(value, null, 2);
             }
-          }
 
-          if (schema.type === "array") {
-            if (isLLMContentArrayBehavior(schema)) {
-              if (!isLLMContentArray(value)) {
-                value = undefined;
+            if (schema.type === "array") {
+              if (isLLMContentArrayBehavior(schema)) {
+                if (!isLLMContentArray(value)) {
+                  value = undefined;
+                }
+              } else {
+                value = JSON.stringify(value, null, 2);
               }
-            } else {
-              value = JSON.stringify(value, null, 2);
             }
-          }
 
-          if (schema.type === "string" && typeof value === "object") {
-            value = undefined;
-          }
+            if (schema.type === "string" && typeof value === "object") {
+              value = undefined;
+            }
 
-          prev.push({
-            name,
-            title: schema.title ?? name,
-            secret: false,
-            schema,
-            configured: false,
-            required: requiredFields.includes(name),
-            value,
-          });
+            prev.push({
+              name,
+              title: schema.title ?? name,
+              secret: false,
+              schema,
+              configured: false,
+              required: requiredFields.includes(name),
+              value,
+            });
 
-          return prev;
-        }, [] as UserInputConfiguration[]);
+            return prev;
+          },
+          [] as UserInputConfiguration[]
+        );
 
         continueRun = () => {
           if (!this.#userInputRef.value) {
@@ -180,6 +178,7 @@ export class AppPreview extends LitElement {
             return;
           }
 
+          console.log("OUTPUTS", outputs);
           this.dispatchEvent(
             new InputEnterEvent(
               descriptor.id,
@@ -188,50 +187,47 @@ export class AppPreview extends LitElement {
             )
           );
         };
-
-        userInput = html`<bb-user-input
-          .boardServers=${this.boardServers}
-          .showTypes=${false}
-          .showTitleInfo=${false}
-          .inputs=${userInputs}
-          .inlineControls=${true}
-          .llmInputShowEntrySelector=${false}
-          .useChatInput=${true}
-          ${ref(this.#userInputRef)}
-          @keydown=${(evt: KeyboardEvent) => {
-            const isMac = navigator.platform.indexOf("Mac") === 0;
-            const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
-
-            if (!(evt.key === "Enter" && isCtrlCommand)) {
-              return;
-            }
-
-            if (!continueRun) {
-              return;
-            }
-
-            continueRun();
-          }}
-        ></bb-user-input>`;
       }
     }
 
-    return html`${userInput}
-      <button
-        class="continue-button"
-        ?disabled=${continueRun === null}
-        @click=${() => {
-          if (!continueRun) {
-            return;
-          }
-          continueRun();
-        }}
-      >
-        ${Strings.from("COMMAND_CONTINUE")}
-      </button>`;
+    const userInput = html`<bb-user-input
+      .boardServers=${this.boardServers}
+      .showTypes=${false}
+      .showTitleInfo=${false}
+      .inputs=${userInputs}
+      .inlineControls=${true}
+      .llmInputShowEntrySelector=${false}
+      .useChatInput=${true}
+      .showChatContinueButton=${true}
+      ${ref(this.#userInputRef)}
+      @bbcontinue=${() => {
+        if (!continueRun) {
+          return;
+        }
+
+        continueRun();
+      }}
+      @keydown=${(evt: KeyboardEvent) => {
+        const isMac = navigator.platform.indexOf("Mac") === 0;
+        const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+        if (!(evt.key === "Enter" && isCtrlCommand)) {
+          return;
+        }
+
+        if (!continueRun) {
+          return;
+        }
+
+        continueRun();
+      }}
+    ></bb-user-input>`;
+
+    return html`${userInput}`;
   }
 
   render() {
+    const isPaused = this.state?.status === "paused";
     const isRunning = this.state?.status === "running";
     const newestEvent = this.events?.at(-1);
 
@@ -270,24 +266,17 @@ export class AppPreview extends LitElement {
           ${this.graph?.title ?? Strings.from("LABEL_UNTITLED_APP")}
         </h1>
         <div id="controls">
-          <button
-            id="run"
-            title=${GlobalStrings.from("LABEL_RUN_PROJECT")}
-            class=${classMap({ running: isRunning })}
-            @click=${() => {
-              if (isRunning) {
-                this.dispatchEvent(new StopEvent());
-              } else {
-                this.dispatchEvent(new RunEvent());
-              }
-            }}
-          >
-            ${isRunning
-              ? GlobalStrings.from("LABEL_STOP")
-              : GlobalStrings.from("LABEL_RUN")}
-          </button>
+          ${isRunning || isPaused
+            ? html`<button
+                id="clear"
+                @click=${() => {
+                  this.dispatchEvent(new StopEvent(true));
+                }}
+              >
+                Clear
+              </button>`
+            : nothing}
           <button id="share">Share</button>
-          <button id="clear">Clear</button>
         </div>
       </header>
       <div id="history">
@@ -318,7 +307,24 @@ export class AppPreview extends LitElement {
       </div>
 
       <div id="input" part="input">
-        ${until(this.#renderPendingInput(pendingInput))}
+        ${isRunning || isPaused
+          ? until(this.#renderPendingInput(pendingInput))
+          : html`<button
+              id="run"
+              title=${GlobalStrings.from("LABEL_RUN_PROJECT")}
+              class=${classMap({ running: isRunning })}
+              @click=${() => {
+                if (isRunning) {
+                  this.dispatchEvent(new StopEvent());
+                } else {
+                  this.dispatchEvent(new RunEvent());
+                }
+              }}
+            >
+              ${isRunning
+                ? GlobalStrings.from("LABEL_STOP")
+                : GlobalStrings.from("LABEL_RUN")}
+            </button>`}
       </div>
       <footer part="footer">
         ${Strings.from("LABEL_FOOTER")} ${GlobalStrings.from("APP_NAME")}

@@ -131,7 +131,7 @@ export const styles = css`
 
         & .title {
           margin: 0 0 var(--bb-grid-size-2) 0;
-          font: 500 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+          font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
             var(--bb-font-family);
           color: var(--bb-neutral-900);
           height: var(--bb-grid-size-5);
@@ -211,6 +211,21 @@ export const styles = css`
         --output-padding: 0;
         --output-lite-border-color: transparent;
         --output-lite-background-color: transparent;
+      }
+
+      & .system-output {
+        --output-value-margin-x: 0;
+
+        & .value p {
+          border-radius: var(--bb-grid-size) var(--bb-grid-size-4)
+            var(--bb-grid-size-4) var(--bb-grid-size-4);
+          padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
+          background: var(--bb-neutral-100);
+          color: var(--bb-neutral-900);
+          font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
+            var(--bb-font-family);
+          max-width: 80%;
+        }
       }
 
       & .activity-entry {
@@ -333,7 +348,7 @@ export const styles = css`
         flex: 1;
 
         & .title {
-          font: 500 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+          font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
             var(--bb-font-family);
           margin: 2px 0 var(--bb-grid-size) 0;
         }
@@ -416,7 +431,7 @@ export const styles = css`
         height: 20px;
         color: var(--bb-neutral-900);
         margin: 2px 0 var(--bb-grid-size) 0;
-        font: 500 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+        font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
           var(--bb-font-family);
       }
 
@@ -453,20 +468,21 @@ export const styles = css`
 
     .status {
       position: absolute;
-      left: var(--bb-grid-size-4);
+      left: 50%;
       bottom: 0;
+      translate: -50% 0;
 
-      font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
+      font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
         var(--bb-font-family);
-      background: oklch(from var(--bb-neutral-900) l c h / 0.8)
-        url(/images/progress-ui-inverted.svg) 12px center / 20px 20px no-repeat;
-      padding: var(--bb-grid-size-2) var(--bb-grid-size-2) var(--bb-grid-size-2)
+      background: var(--bb-ui-700) url(/images/progress-ui-inverted.svg) 12px
+        center / 20px 20px no-repeat;
+      padding: var(--bb-grid-size-3) var(--bb-grid-size-4) var(--bb-grid-size-3)
         var(--bb-grid-size-11);
-      width: calc(100% - var(--bb-grid-size-8));
+      width: 80%;
       color: var(--bb-neutral-0);
       display: flex;
       align-items: center;
-      border-radius: var(--bb-grid-size);
+      border-radius: var(--bb-grid-size-3);
     }
   }
 

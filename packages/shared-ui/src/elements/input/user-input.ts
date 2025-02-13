@@ -87,6 +87,12 @@ export class UserInput extends LitElement {
   accessor useChatInput = false;
 
   @property()
+  accessor useDebugChatInput = false;
+
+  @property()
+  accessor showChatContinueButton = false;
+
+  @property()
   accessor jumpTo: string | null = null;
 
   @property()
@@ -646,6 +652,34 @@ export class UserInput extends LitElement {
       @bbcodechange=${this.#emitProcessedData}
       @submit=${this.#onFormSubmit}
     >
+      ${this.inputs.length === 0 &&
+      (this.useChatInput || this.useDebugChatInput)
+        ? this.useChatInput
+          ? html`<bb-llm-input-chat
+              .pending=${true}
+              .schema=${null}
+              .value=${null}
+              .description=${null}
+              .clamped=${this.llmInputClamped}
+              .nodeId=${this.nodeId}
+              .subGraphId=${this.subGraphId}
+              .projectState=${this.projectState}
+              .showChatContinueButton=${this.showChatContinueButton}
+            ></bb-llm-input-chat>`
+          : this.useDebugChatInput
+            ? html`<bb-llm-input-chat-debug
+                .pending=${true}
+                .schema=${null}
+                .value=${null}
+                .description=${null}
+                .clamped=${this.llmInputClamped}
+                .nodeId=${this.nodeId}
+                .subGraphId=${this.subGraphId}
+                .projectState=${this.projectState}
+                .showChatContinueButton=${this.showChatContinueButton}
+              ></bb-llm-input-chat-debug>`
+            : nothing
+        : nothing}
       ${map(this.inputs, (input) => {
         let inputField: HTMLTemplateResult | symbol = nothing;
         let description: HTMLTemplateResult | symbol = nothing;
@@ -848,6 +882,7 @@ export class UserInput extends LitElement {
                     name="${id}"
                     .description=${input.schema.description || null}
                     .useChatInput=${this.useChatInput}
+                    .useDebugChatInput=${this.useDebugChatInput}
                     .values=${value}
                     .allow=${allow}
                     .minItems=${minItems}
@@ -925,9 +960,27 @@ export class UserInput extends LitElement {
                       .nodeId=${this.nodeId}
                       .subGraphId=${this.subGraphId}
                       .projectState=${this.projectState}
+                      .showChatContinueButton=${this.showChatContinueButton}
                     ></bb-llm-input-chat>`;
                     break;
                   }
+
+                  if (this.useDebugChatInput) {
+                    inputField = html`<bb-llm-input-chat-debug
+                      id="${id}"
+                      name="${id}"
+                      .schema=${input.schema}
+                      .value=${input.value ?? defaultValue ?? null}
+                      .description=${input.schema.description || null}
+                      .clamped=${this.llmInputClamped}
+                      .nodeId=${this.nodeId}
+                      .subGraphId=${this.subGraphId}
+                      .projectState=${this.projectState}
+                      .showChatContinueButton=${this.showChatContinueButton}
+                    ></bb-llm-input-chat-debug>`;
+                    break;
+                  }
+
                   inputField = html`<bb-llm-input
                     id="${id}"
                     name="${id}"

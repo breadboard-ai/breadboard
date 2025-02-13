@@ -85,8 +85,16 @@ export class RunEvent extends Event {
 export class StopEvent extends Event {
   static eventName = "bbstop";
 
-  constructor() {
+  constructor(public readonly clearLastRun = false) {
     super(StopEvent.eventName, { ...eventInit });
+  }
+}
+
+export class ContinueEvent extends Event {
+  static eventName = "bbcontinue";
+
+  constructor() {
+    super(ContinueEvent.eventName, { ...eventInit });
   }
 }
 

@@ -82,10 +82,6 @@ export class Chat extends LitElement {
   ): HTMLTemplateResult[] {
     const items: HTMLTemplateResult[] = [];
     for (const entry of item.content) {
-      if (item.role === "system" && entry.title) {
-        items.push(html`<h3 class="entry-title">${entry.title}</h3>`);
-      }
-
       if ("context" in entry) {
         items.push(
           html` <bb-llm-output-array

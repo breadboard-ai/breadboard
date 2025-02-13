@@ -11,3 +11,4 @@ export { getModuleId } from "./module-id.js";
 // export { getSubItemColor as getSubItemColor } from "./subgraph-color.js";
 export * as Workspace from "./workspace.js";
 export { SigninAdapter } from "./signin-adapter.js";
+export * as Color from "./color.js";

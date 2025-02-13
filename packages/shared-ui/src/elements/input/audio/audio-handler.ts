@@ -3,6 +3,9 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
+import * as StringsHelper from "../../../strings/helper.js";
+const Strings = StringsHelper.forSection("AudioHandler");
+
 import { LLMContent } from "@breadboard-ai/types";
 import { asBase64 } from "@google-labs/breadboard";
 import { Task } from "@lit/task";
@@ -11,12 +14,13 @@ import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { guard } from "lit/directives/guard.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
+import { HideTooltipEvent, ShowTooltipEvent } from "../../../events/events";
 
 const PCM_AUDIO = "audio/l16;codec=pcm;rate=24000";
 
 @customElement("bb-audio-handler")
 export class AudioHandler extends LitElement {
-  @property()
+  @property({ reflect: true, type: Boolean })
   accessor audioFile: Blob | null = null;
 
   @property({ reflect: true })
@@ -27,6 +31,9 @@ export class AudioHandler extends LitElement {
 
   @property({ reflect: true })
   accessor canRecord = false;
+
+  @property({ reflect: true })
+  accessor lite = false;
 
   @property()
   accessor steps = 7;
@@ -46,6 +53,9 @@ export class AudioHandler extends LitElement {
   @property()
   accessor playheadTime = 0;
 
+  @property()
+  accessor showPermissionStatus = false;
+
   static styles = css`
     * {
       box-sizing: border-box;
@@ -53,6 +63,22 @@ export class AudioHandler extends LitElement {
 
     :host {
       display: block;
+    }
+
+    #request-permission {
+      height: var(--bb-grid-size-10);
+      color: var(--bb-neutral-700);
+      border-radius: var(--bb-grid-size-16);
+      background: var(--bb-neutral-0);
+      border: 1px solid var(--bb-neutral-300);
+      transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
+      grid-column: 1 / 4;
+      cursor: pointer;
+
+      &:hover,
+      &:focus {
+        background-color: var(--bb-neutral-50);
+      }
     }
 
     #container {
@@ -63,7 +89,7 @@ export class AudioHandler extends LitElement {
       background: var(--bb-neutral-0);
       width: var(--bb-grid-size-11);
       height: var(--bb-grid-size-14);
-      padding: 0 var(--bb-grid-size-3);
+      padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-2);
       display: grid;
       grid-template-columns: var(--bb-grid-size-8);
       align-items: center;
@@ -74,62 +100,82 @@ export class AudioHandler extends LitElement {
 
       & #play,
       & #capture {
-        width: 32px;
-        height: 32px;
+        width: var(--bb-grid-size-10);
+        height: var(--bb-grid-size-10);
         border-radius: 50%;
         background: transparent;
         border: none;
         font-size: 0;
         cursor: pointer;
         transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
-
-        &:hover,
-        &:focus {
-          background-color: var(--color-dark, var(--bb-ui-600));
-        }
+        opacity: 0.4;
+        overflow: hidden;
+        padding: 0;
       }
 
       & #play {
-        background: var(--color-mid, var(--bb-ui-500))
-          var(--bb-icon-play-filled-inverted) center center / 20px 20px
-          no-repeat;
+        background: var(--color-play-button, var(--bb-ui-500))
+          var(--icon-play, var(--bb-icon-play-filled-inverted)) center center /
+          20px 20px no-repeat;
 
         &.playing {
-          background: var(--color-mid, var(--bb-ui-500))
-            var(--bb-icon-pause-filled-inverted) center center / 20px 20px
-            no-repeat;
+          background: var(--color-play-button, var(--bb-ui-500))
+            var(--icon-play, var(--bb-icon-pause-filled-inverted)) center
+            center / 20px 20px no-repeat;
+        }
+
+        &:not([disabled]) {
+          opacity: 1;
+
+          &:hover,
+          &:focus {
+            background-color: var(--color-play-button-active, var(--bb-ui-600));
+          }
         }
       }
 
       & #capture {
-        background: var(--color-mid, var(--bb-ui-500))
-          var(--bb-icon-mic-inverted) center center / 20px 20px no-repeat;
+        background: var(--color-capture-button, var(--bb-ui-500))
+          var(--icon-mic, var(--bb-icon-mic-inverted)) center center / 20px 20px
+          no-repeat;
 
         &.playing {
-          background: var(--color-mid, var(--bb-ui-500))
-            var(--bb-icon-mic-inverted) center center / 20px 20px no-repeat;
+          background: var(--color-capture-button, var(--bb-ui-500))
+            var(--icon-mic, var(--bb-icon-mic-inverted)) center center / 20px
+            20px no-repeat;
+        }
+
+        &:not([disabled]) {
+          opacity: 1;
+
+          &:hover,
+          &:focus {
+            background-color: var(
+              --color-capture-button-active,
+              var(--bb-ui-600)
+            );
+          }
         }
       }
 
       & #reset-container {
-        height: 32px;
+        height: var(--bb-grid-size-10);
         display: flex;
         align-items: center;
         justify-content: center;
-        background: var(--bb-neutral-0);
         padding: 0 0 0 var(--bb-grid-size-2);
         white-space: nowrap;
-        font: 400 var(--bb-label-small) / var(--bb-label-line-height-small)
+        font: 500 var(--bb-label-small) / var(--bb-label-line-height-small)
           var(--bb-font-family);
-        color: var(--bb-neutral-700);
+        color: var(--reset-text-color, var(--bb-neutral-700));
 
         & #stop,
         & #reset {
           display: flex;
           align-items: center;
           justify-content: center;
-          background: transparent var(--bb-icon-restart-alt) center center /
-            20px 20px no-repeat;
+          background: transparent var(--icon-reset, var(--bb-icon-restart-alt))
+            center center / 20px 20px no-repeat;
           border: none;
           cursor: pointer;
           height: 20px;
@@ -150,7 +196,7 @@ export class AudioHandler extends LitElement {
 
     :host([showaudiodata="true"]) {
       #container {
-        grid-template-columns: 32px minmax(0, 1fr) min-content;
+        grid-template-columns: var(--bb-grid-size-10) minmax(0, 1fr) min-content;
         column-gap: 8px;
         width: 100%;
         height: 56px;
@@ -163,6 +209,46 @@ export class AudioHandler extends LitElement {
           display: block;
           width: 100%;
           height: 56px;
+        }
+      }
+    }
+
+    :host([showaudiodata="true"][lite="true"]) {
+      #container {
+        border: none;
+        padding: 0;
+        border-radius: 0;
+        overflow: hidden;
+        grid-template-columns: 0 0 1fr;
+        column-gap: 0;
+        height: var(--bb-grid-size-10);
+
+        & #play {
+          width: 0;
+        }
+
+        & #reset-container {
+          padding-left: 0;
+        }
+
+        & canvas {
+          height: var(--bb-grid-size-10);
+        }
+      }
+    }
+
+    :host([showaudiodata="true"][lite="true"][audiofile]),
+    :host([showaudiodata="true"][lite="true"][state="recording"]) {
+      #container {
+        & #play {
+          width: var(--bb-grid-size-10);
+        }
+
+        grid-template-columns: var(--bb-grid-size-10) minmax(0, 1fr) min-content;
+        column-gap: var(--bb-grid-size-2);
+
+        & #reset-container {
+          padding-left: var(--bb-grid-size-2);
         }
       }
     }
@@ -666,7 +752,9 @@ export class AudioHandler extends LitElement {
     return this.#permissionTask.render({
       pending: () =>
         html`<div id="container">
-          <p>Checking permission...</p>
+          ${this.showPermissionStatus
+            ? html`<p>Checking permission...</p>`
+            : nothing}
         </div>`,
       complete: () => {
         let label = "Play";
@@ -683,50 +771,32 @@ export class AudioHandler extends LitElement {
         }
 
         return html` <div id="container">
-          ${this.audioFile
-            ? html`<button
-                id="play"
-                class=${classMap({ [this.state]: true })}
-                @click=${() => {
-                  switch (this.state) {
-                    case "idle":
-                    case "recording": {
-                      this.#startPlayback();
-                      break;
-                    }
+          <button
+            id="play"
+            class=${classMap({ [this.state]: true })}
+            ?disabled=${!this.audioFile}
+            @click=${() => {
+              switch (this.state) {
+                case "idle":
+                case "recording": {
+                  this.#startPlayback();
+                  break;
+                }
 
-                    case "paused": {
-                      this.#resumePlayback();
-                      break;
-                    }
+                case "paused": {
+                  this.#resumePlayback();
+                  break;
+                }
 
-                    case "playing": {
-                      this.#pausePlayback();
-                      break;
-                    }
-                  }
-                }}
-              >
-                ${label}
-              </button>`
-            : this.canRecord
-              ? html`<button
-                  id="capture"
-                  @pointerdown=${(evt: PointerEvent) => {
-                    if (!(evt.target instanceof HTMLElement)) {
-                      return;
-                    }
-
-                    evt.target.setPointerCapture(evt.pointerId);
-                    this.#startRecording();
-                  }}
-                  @pointerup=${() => {
-                    this.#stopRecording();
-                  }}
-                >
-                  Hold to record
-                </button>`
-              : nothing}
+                case "playing": {
+                  this.#pausePlayback();
+                  break;
+                }
+              }
+            }}
+          >
+            ${label}
+          </button>
           <div
             id="canvas-container"
             ${ref(this.#visualizationCanvasContainerRef)}
@@ -739,22 +809,53 @@ export class AudioHandler extends LitElement {
               ? html`${this.#formatSeconds(this.playheadTime)} /
                 ${this.#formatSeconds(this.#playbackDuration)}`
               : nothing}
-            ${this.audioFile && this.canRecord
-              ? html`<button
-                  id="reset"
-                  @click=${() => {
-                    this.#resetAudio();
-                  }}
-                >
-                  Reset
-                </button>`
+            ${this.canRecord
+              ? this.audioFile
+                ? html`<button
+                    id="reset"
+                    @click=${() => {
+                      this.#resetAudio();
+                    }}
+                  >
+                    Reset
+                  </button>`
+                : html`<button
+                    id="capture"
+                    @pointerover=${(evt: PointerEvent) => {
+                      this.dispatchEvent(
+                        new ShowTooltipEvent(
+                          Strings.from("COMMAND_HOLD_TO_RECORD"),
+                          evt.clientX,
+                          evt.clientY
+                        )
+                      );
+                    }}
+                    @pointerout=${() => {
+                      this.dispatchEvent(new HideTooltipEvent());
+                    }}
+                    @pointerdown=${(evt: PointerEvent) => {
+                      if (!(evt.target instanceof HTMLElement)) {
+                        return;
+                      }
+
+                      evt.target.setPointerCapture(evt.pointerId);
+                      this.#startRecording();
+                    }}
+                    @pointerup=${() => {
+                      this.#stopRecording();
+                    }}
+                  >
+                    Hold to record
+                  </button>`
               : nothing}
           </div>
         </div>`;
       },
       error: () =>
         html`<div id="container">
-          <button @click=${this.#requestPermission}>Request Permission</button>
+          <button id="request-permission" @click=${this.#requestPermission}>
+            Request Permission
+          </button>
         </div>`,
     });
   }
