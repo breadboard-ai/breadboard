@@ -8,10 +8,10 @@
       "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
         "visual": {
-          "x": 60,
-          "y": -20,
+          "x": -40,
+          "y": -280,
           "collapsed": "expanded",
-          "outputHeight": 44
+          "outputHeight": 204
         },
         "title": "Make a Plan",
         "logLevel": "debug"
@@ -32,5 +32,14 @@
   "edges": [],
   "metadata": {
     "visual": {}
+  },
+  "assets": {
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSI0OC4wMyIKICAgICAgICAgICAgICAgICAgICB5PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTUzLjk1IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTgwLjAwIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+    }
   }
 }
