@@ -50,7 +50,7 @@
         "./packages/shared-ui:build",
         "./packages/template-kit:build",
         "./packages/types:build",
-        "./packages/unified-server:build",
+        "./packages/unified-server:build:tsc",
         "./packages/visual-editor:build",
         "./packages/website:build"
       ]

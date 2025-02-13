@@ -4,9 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { config } from "dotenv";
-import { loadEnv, defineConfig, UserConfig } from "vite";
 import { configureAssets } from "@breadboard-ai/visual-editor/vite";
+import { config } from "dotenv";
+import { defineConfig, loadEnv, UserConfig } from "vite";
+import compression from "vite-plugin-compression2";
 
 export default defineConfig(async ({ mode }): Promise<UserConfig> => {
   config();
@@ -32,5 +33,13 @@ export default defineConfig(async ({ mode }): Promise<UserConfig> => {
     resolve: {
       dedupe: ["lit"],
     },
+    plugins: [
+      compression({
+        include: /\.(js|json|css|html|wasm|svg|woff2)$/,
+        algorithm: "brotliCompress",
+        threshold: 1024,
+        deleteOriginalAssets: false,
+      }),
+    ],
   };
 });
