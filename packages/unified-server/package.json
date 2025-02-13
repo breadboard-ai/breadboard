@@ -13,13 +13,13 @@
     "build:vite": "wireit",
     "copy-assets": "wireit",
     "dev": "npm run serve --watch",
-    "serve": "wireit",
-    "docker-build": "wireit",
-    "docker-clean": "wireit",
-    "docker-logs": "wireit",
-    "docker-run": "wireit",
-    "docker-stop": "wireit",
+    "docker-build": "docker build --build-context=breadboard=../.. --tag=unified-server .",
+    "docker-clean": "docker image rm unified-server",
+    "docker-logs": "docker logs unified-server",
+    "docker-run": "docker run --name=unified-server --publish=3000:3000 --detach --rm unified-server",
+    "docker-stop": "docker stop unified-server",
     "lint": "FORCE_COLOR=1 eslint . --ext .ts",
+    "serve": "wireit",
     "start": "NODE_ENV=production node .",
     "test": "wireit",
     "watch": "FORCE_COLOR=1 tsc --b --watch"
@@ -63,21 +63,6 @@
         "build:tsc",
         "copy-assets"
       ]
-    },
-    "docker-build": {
-      "command": "docker build --build-context=breadboard=../.. --tag=unified-server ."
-    },
-    "docker-clean": {
-      "command": "docker image rm unified-server"
-    },
-    "docker-logs": {
-      "command": "docker logs unified-server"
-    },
-    "docker-run": {
-      "command": "docker run --name=unified-server --publish=3000:3000 --detach --rm unified-server"
-    },
-    "docker-stop": {
-      "command": "docker stop unified-server"
     },
     "test": {
       "command": "ava",
