@@ -12,7 +12,6 @@ import { customElement, property, state } from "lit/decorators.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import {
   GraphStoreEntry,
-  Kit,
   MainGraphIdentifier,
   MutableGraphStore,
   NodeHandlerMetadata,
@@ -27,9 +26,6 @@ const DATA_TYPE = "text/plain";
 
 @customElement("bb-component-selector-overlay")
 export class ComponentSelectorOverlay extends LitElement {
-  @property()
-  accessor boardServerKits: Kit[] | null = null;
-
   @property()
   accessor mainGraphId: MainGraphIdentifier | null = null;
 
@@ -55,7 +51,7 @@ export class ComponentSelectorOverlay extends LitElement {
   accessor filter: string | null = null;
 
   @state()
-  accessor activeKits: string[] = ["Agent Kit", "Built-in Kit"];
+  accessor activeKits: string[] = ["A2"];
 
   @state()
   accessor view: "components" | "kits" = "components";
