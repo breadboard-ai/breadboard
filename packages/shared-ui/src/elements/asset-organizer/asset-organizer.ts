@@ -391,6 +391,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
             <input
               type="file"
               id="add-asset"
+              multiple
               @input=${(evt: InputEvent) => {
                 if (
                   !(evt.target instanceof HTMLInputElement) ||
