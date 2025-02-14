@@ -17,6 +17,7 @@
     "docker-clean": "docker image rm unified-server",
     "docker-logs": "docker logs unified-server",
     "docker-run": "docker run --name=unified-server --publish=3000:3000 --detach --rm unified-server",
+    "docker-run:no-rm": "docker run --name=unified-server --publish=3000:3000 --detach unified-server",
     "docker-stop": "docker stop unified-server",
     "lint": "FORCE_COLOR=1 eslint . --ext .ts",
     "serve": "wireit",
