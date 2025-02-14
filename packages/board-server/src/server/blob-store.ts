@@ -5,24 +5,24 @@
  */
 
 import type {
+  DataPart,
   InlineDataCapabilityPart,
+  LLMContent,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
 
 import { Storage } from "@google-cloud/storage";
-import type {
-  BlobStore,
-  BlobStoreGetResult,
-  BlobStoreSaveResult,
-  Result,
-} from "./types.js";
-import type {
-  DataStore,
-  DataStoreScope,
-  RetrieveDataResult,
-  Schema,
-  SerializedDataStoreGroup,
-  StoreDataResult,
+import type { BlobStore, BlobStoreGetResult, Result } from "./types.js";
+import {
+  err,
+  ok,
+  type DataStore,
+  type DataStoreScope,
+  type Outcome,
+  type RetrieveDataResult,
+  type Schema,
+  type SerializedDataStoreGroup,
+  type StoreDataResult,
 } from "@google-labs/breadboard";
 import type { HarnessRunResult } from "@google-labs/breadboard/harness";
 
@@ -39,31 +39,44 @@ class GoogleStorageBlobStore implements BlobStore {
     this.#serverUrl = serverUrl;
   }
 
-  async saveData(data: InlineDataCapabilityPart): Promise<BlobStoreSaveResult> {
+  async deflateContent(content: LLMContent): Promise<Outcome<LLMContent>> {
+    const { parts, role } = content as LLMContent;
+    const replacedParts: DataPart[] = [];
+    for (const part of parts) {
+      if ("inlineData" in part) {
+        const result = await this.saveData(part);
+        if (!ok(result)) {
+          return result;
+        }
+        replacedParts.push(result);
+      } else {
+        replacedParts.push(part);
+      }
+    }
+    return { parts: replacedParts, role };
+  }
+
+  async saveData(
+    data: InlineDataCapabilityPart
+  ): Promise<Outcome<StoredDataCapabilityPart>> {
     if (!this.#serverUrl) {
-      return {
-        success: false,
-        error: "Server URL is not set",
-      };
+      return err("Server URL is not set");
     }
 
     const buffer = Buffer.from(data.inlineData.data, "base64");
     const contentType = data.inlineData.mimeType;
     const saveResult = await this.saveBuffer(buffer, contentType);
-    if (!saveResult.success) {
-      return { success: false, error: saveResult.error };
+    if (!ok(saveResult)) {
+      return saveResult;
     }
-    const uuid = saveResult.result;
-    return {
-      success: true,
-      data: toStoredData(uuid, this.#serverUrl, contentType),
-    };
+    const uuid = saveResult;
+    return toStoredData(uuid, this.#serverUrl, contentType);
   }
 
   async saveBuffer(
     buffer: Buffer,
     contentType: string
-  ): Promise<Result<string>> {
+  ): Promise<Outcome<string>> {
     try {
       const uuid = crypto.randomUUID();
 
@@ -71,16 +84,13 @@ class GoogleStorageBlobStore implements BlobStore {
       const file = bucket.file(uuid);
       await file.save(buffer, { contentType });
 
-      return { success: true, result: uuid };
+      return uuid;
     } catch (e) {
-      return {
-        success: false,
-        error: (e as Error).message,
-      };
+      return err((e as Error).message);
     }
   }
 
-  async getBlob(handle: string): Promise<BlobStoreGetResult> {
+  async getBlob(handle: string): Promise<Outcome<BlobStoreGetResult>> {
     try {
       const bucket = this.#storage.bucket(this.#bucketId);
       const file = bucket.file(handle);
@@ -88,15 +98,11 @@ class GoogleStorageBlobStore implements BlobStore {
       const [data] = await file.download();
 
       return {
-        success: true,
         data,
         mimeType: metadata.contentType,
       };
     } catch (e) {
-      return {
-        success: false,
-        error: (e as Error).message,
-      };
+      return err((e as Error).message);
     }
   }
 }
@@ -110,7 +116,7 @@ class BlobDataStore implements DataStore {
     this.#serverOrigin = serverOrigin;
   }
 
-  createGroup(groupId: string): void {
+  createGroup(_groupId: string): void {
     // no op.
   }
 
@@ -118,7 +124,7 @@ class BlobDataStore implements DataStore {
     throw new Error("Method not implemented.");
   }
 
-  has(groupId: string): boolean {
+  has(_groupId: string): boolean {
     throw new Error("Method not implemented.");
   }
 
@@ -126,10 +132,10 @@ class BlobDataStore implements DataStore {
     // no op.
   }
 
-  releaseGroup(group: string): void {
+  releaseGroup(_group: string): void {
     // no op.
   }
-  replaceDataParts(key: string, result: HarnessRunResult): Promise<void> {
+  replaceDataParts(_key: string, _result: HarnessRunResult): Promise<void> {
     throw new Error("Method not implemented.");
   }
 
@@ -140,16 +146,16 @@ class BlobDataStore implements DataStore {
       throw new Error(getHandleResult.error);
     }
     const getBlobResult = await this.#blobStore.getBlob(getHandleResult.result);
-    if (!getBlobResult.success) {
-      throw new Error(getBlobResult.error);
+    if (!ok(getBlobResult)) {
+      throw new Error(getBlobResult.$error);
     }
     const { data, mimeType: type } = getBlobResult;
     return new Blob([data], { type });
   }
 
   serializeGroup(
-    group: string,
-    storeId?: string
+    _group: string,
+    _storeId?: string
   ): Promise<SerializedDataStoreGroup | null> {
     throw new Error("Method not implemented.");
   }
@@ -158,22 +164,22 @@ class BlobDataStore implements DataStore {
     const buffer = Buffer.from(await blob.arrayBuffer());
     const contentType = blob.type;
     const result = await this.#blobStore.saveBuffer(buffer, contentType);
-    if (!result.success) {
-      throw new Error(result.error);
+    if (!ok(result)) {
+      throw new Error(result.$error);
     }
-    return toStoredData(result.result, this.#serverOrigin, contentType);
+    return toStoredData(result, this.#serverOrigin, contentType);
   }
 
   storeData(
-    key: string,
-    value: object | null,
-    schema: Schema,
-    scope: DataStoreScope
+    _key: string,
+    _value: object | null,
+    _schema: Schema,
+    _scope: DataStoreScope
   ): Promise<StoreDataResult> {
     throw new Error("Method not implemented.");
   }
 
-  retrieveData(key: string): Promise<RetrieveDataResult> {
+  retrieveData(_key: string): Promise<RetrieveDataResult> {
     throw new Error("Method not implemented.");
   }
 }
