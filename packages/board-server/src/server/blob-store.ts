@@ -5,7 +5,9 @@
  */
 
 import type {
+  DataPart,
   InlineDataCapabilityPart,
+  LLMContent,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
 
@@ -35,6 +37,23 @@ class GoogleStorageBlobStore implements BlobStore {
     this.#storage = new Storage();
     this.#bucketId = bucketId;
     this.#serverUrl = serverUrl;
+  }
+
+  async deflateContent(content: LLMContent): Promise<Outcome<LLMContent>> {
+    const { parts, role } = content as LLMContent;
+    const replacedParts: DataPart[] = [];
+    for (const part of parts) {
+      if ("inlineData" in part) {
+        const result = await this.saveData(part);
+        if (!ok(result)) {
+          return result;
+        }
+        replacedParts.push(result);
+      } else {
+        replacedParts.push(part);
+      }
+    }
+    return { parts: replacedParts, role };
   }
 
   async saveData(

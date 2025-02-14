@@ -22,6 +22,7 @@ import type {
 } from "./store.js";
 import type {
   InlineDataCapabilityPart,
+  LLMContent,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
 
@@ -155,6 +156,7 @@ export type BlobStore = {
   saveData(
     data: InlineDataCapabilityPart
   ): Promise<Outcome<StoredDataCapabilityPart>>;
+  deflateContent(content: LLMContent): Promise<Outcome<LLMContent>>;
   saveBuffer(buffer: Buffer, contentType: string): Promise<Outcome<string>>;
   getBlob(blobId: string): Promise<Outcome<BlobStoreGetResult>>;
 };

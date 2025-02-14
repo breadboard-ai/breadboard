@@ -8,7 +8,7 @@ import type { IncomingMessage, ServerResponse } from "http";
 import { getBody } from "../common.js";
 import { badRequest, serverError } from "../errors.js";
 import { isLLMContent, ok } from "@google-labs/breadboard";
-import type { DataPart } from "@breadboard-ai/types";
+import type { LLMContent } from "@breadboard-ai/types";
 import { GoogleStorageBlobStore } from "../blob-store.js";
 import { getStore } from "../store.js";
 import type { ServerConfig } from "../config.js";
@@ -47,26 +47,16 @@ async function createBlob(
   if (!url) {
     const serverInfo = await store.getServerInfo();
     if (!serverInfo || !serverInfo.url) {
-      serverError(res, "Unable to get server info or server URL.");
-      return;
+      return serverError(res, "Unable to get server info or server URL.");
     }
     url = serverInfo.url;
   }
   const blobStore = new GoogleStorageBlobStore(storageBucket!, url);
 
-  const replacedParts: DataPart[] = [];
-  for (const part of parts) {
-    if ("inlineData" in part) {
-      const result = await blobStore.saveData(part);
-      if (!ok(result)) {
-        serverError(res, result.$error);
-        return;
-      }
-      replacedParts.push(result);
-    } else {
-      replacedParts.push(part);
-    }
+  const result = await blobStore.deflateContent(body as LLMContent);
+  if (!ok(result)) {
+    return serverError(res, result.$error);
   }
   res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(JSON.stringify({ parts: replacedParts, role: body.role }));
+  res.end(JSON.stringify(result));
 }
