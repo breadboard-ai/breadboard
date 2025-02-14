@@ -6,6 +6,7 @@
 
 import type { IncomingMessage, ServerResponse } from "http";
 import { GoogleStorageBlobStore } from "../blob-store.js";
+import { ok } from "@google-labs/breadboard";
 
 export { serveBlob };
 
@@ -17,7 +18,7 @@ async function serveBlob(
 ) {
   const store = new GoogleStorageBlobStore(bucketId);
   const result = await store.getBlob(blobId);
-  if (result.success) {
+  if (ok(result)) {
     res.writeHead(200, {
       "Content-Type": result.mimeType || "application/octet-stream",
       "content-disposition": "inline",

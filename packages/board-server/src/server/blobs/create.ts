@@ -7,7 +7,7 @@
 import type { IncomingMessage, ServerResponse } from "http";
 import { getBody } from "../common.js";
 import { badRequest, serverError } from "../errors.js";
-import { isLLMContent } from "@google-labs/breadboard";
+import { isLLMContent, ok } from "@google-labs/breadboard";
 import type { DataPart } from "@breadboard-ai/types";
 import { GoogleStorageBlobStore } from "../blob-store.js";
 import { getStore } from "../store.js";
@@ -58,11 +58,11 @@ async function createBlob(
   for (const part of parts) {
     if ("inlineData" in part) {
       const result = await blobStore.saveData(part);
-      if (!result.success) {
-        serverError(res, result.error);
+      if (!ok(result)) {
+        serverError(res, result.$error);
         return;
       }
-      replacedParts.push(result.data);
+      replacedParts.push(result);
     } else {
       replacedParts.push(part);
     }

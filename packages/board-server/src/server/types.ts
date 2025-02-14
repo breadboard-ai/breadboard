@@ -8,6 +8,7 @@ import type {
   GraphDescriptor,
   InputValues,
   Kit,
+  Outcome,
   ReanimationState,
 } from "@google-labs/breadboard";
 import type { RunDiagnosticsLevel } from "@google-labs/breadboard/harness";
@@ -151,31 +152,17 @@ export type BoardServerStore = {
 };
 
 export type BlobStore = {
-  saveData(data: InlineDataCapabilityPart): Promise<BlobStoreSaveResult>;
-  saveBuffer(buffer: Buffer, contentType: string): Promise<Result<string>>;
-  getBlob(blobId: string): Promise<BlobStoreGetResult>;
+  saveData(
+    data: InlineDataCapabilityPart
+  ): Promise<Outcome<StoredDataCapabilityPart>>;
+  saveBuffer(buffer: Buffer, contentType: string): Promise<Outcome<string>>;
+  getBlob(blobId: string): Promise<Outcome<BlobStoreGetResult>>;
 };
 
-export type BlobStoreSaveResult =
-  | {
-      success: true;
-      data: StoredDataCapabilityPart;
-    }
-  | {
-      success: false;
-      error: string;
-    };
-
-export type BlobStoreGetResult =
-  | {
-      success: true;
-      data: Buffer;
-      mimeType?: string;
-    }
-  | {
-      success: false;
-      error: string;
-    };
+export type BlobStoreGetResult = {
+  data: Buffer;
+  mimeType?: string;
+};
 
 export type CreateBoardResult = {
   success: boolean;
