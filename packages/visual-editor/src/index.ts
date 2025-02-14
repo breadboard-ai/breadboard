@@ -3874,11 +3874,8 @@ export class Main extends LitElement {
         ) {
           return html`<bb-connection-entry-signin
             .adapter=${signInAdapter}
-            @bbsignin=${() => {
-              this.#boardServers = this.#runtime.board.getBoardServers();
-              requestAnimationFrame(() => {
-                this.requestUpdate();
-              });
+            @bbsignin=${async () => {
+              window.location.reload();
             }}
           ></bb-connection-entry-signin>`;
         }
