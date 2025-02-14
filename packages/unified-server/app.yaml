@@ -1,8 +1,0 @@
-runtime: nodejs22
-
-handlers:
-  - url: .*
-    script: auto
-
-build_env_variables:
-  GOOGLE_NODE_RUN_SCRIPTS: ""
