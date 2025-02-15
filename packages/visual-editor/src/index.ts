@@ -1787,12 +1787,24 @@ export class Main extends LitElement {
         }
 
         for (const asset of assets) {
-          projectState.organizer.addGraphAsset(asset.name, {
+          if (!asset.content) continue;
+          const [, mimeType, , data] = asset.content.split(/[:;,]/);
+          projectState.organizer.addGraphAsset({
+            path: asset.name,
             metadata: {
               title: asset.name,
               type: "file",
             },
-            data: asset.content ?? "",
+            data: [
+              {
+                parts: [
+                  {
+                    inlineData: { mimeType, data },
+                  },
+                ],
+                role: "user",
+              },
+            ],
           });
         }
       });
