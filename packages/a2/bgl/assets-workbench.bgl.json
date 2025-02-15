@@ -4,58 +4,58 @@
   "version": "0.0.1",
   "nodes": [
     {
-      "id": "a2-6f3b3179",
-      "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+      "id": "a2-70d3be62",
+      "type": "file://bgl/a2.bgl.json#module:image-generator",
       "metadata": {
         "visual": {
-          "x": 560,
-          "y": 80,
+          "x": 480,
+          "y": -320,
+          "collapsed": "expanded",
+          "outputHeight": 228
+        },
+        "title": "Make Image",
+        "logLevel": "info"
+      },
+      "configuration": {
+        "instruction": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "create a perfect replica of the subject in this picture, except in a fantasy forest.\n\n{{\"type\":\"asset\",\"path\":\"breadboard-emoji.png\",\"title\":\"breadboard-emoji.png\"}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a2-c95f36a0",
+      "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+      "metadata": {
+        "title": "Make Text",
+        "visual": {
+          "x": 800,
+          "y": -320,
           "collapsed": "expanded",
           "outputHeight": 88
         },
-        "title": "Make Text",
         "logLevel": "info"
       },
       "configuration": {
         "description": {
           "parts": [
             {
-              "text": "Describe this picture in great detail:"
+              "text": "Identify the key differences between the picture provided and the picture below and write them down as a detailed list of differences.\n\n {{\"type\":\"asset\",\"path\":\"breadboard-emoji.png\",\"title\":\"breadboard-emoji.png\"}}"
             }
           ],
           "role": "user"
-        }
-      }
-    },
-    {
-      "id": "a2-2e94068b",
-      "type": "file://bgl/a2.bgl.json#module:combine-outputs",
-      "metadata": {
-        "visual": {
-          "x": 240,
-          "y": 80,
-          "collapsed": "expanded",
-          "outputHeight": 228
-        },
-        "title": "Combine Outputs",
-        "logLevel": "info"
-      },
-      "configuration": {
-        "text": {
-          "role": "user",
-          "parts": [
-            {
-              "text": "{{\"type\":\"asset\",\"path\":\"breadboard-emoji.png\",\"title\":\"breadboard-emoji.png\"}}"
-            }
-          ]
         }
       }
     }
   ],
   "edges": [
     {
-      "from": "a2-2e94068b",
-      "to": "a2-6f3b3179",
+      "from": "a2-70d3be62",
+      "to": "a2-c95f36a0",
       "out": "context",
       "in": "context"
     }
@@ -85,7 +85,7 @@
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMzYuOTAiCiAgICAgICAgICAgICAgICAgICAgeT0iMzQuOTciCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjEwMy4xMCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9Ijc0LjU1IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgo8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSIzNC45NyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTAzLjEwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTMwLjA3IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMjBhMjAyIiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSIzNC45NyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTAzLjEwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTMwLjA3IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgo8cmVjdCB4PSIxMzYuOTAiCiAgICAgICAgICAgICAgICAgICAgeT0iMzQuOTciCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjEwMy4xMCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9Ijc0LjU1IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
     }
   },
   "metadata": {
