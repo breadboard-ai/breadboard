@@ -7,12 +7,12 @@
 import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("AssetOrganizer");
 
-import { css, html, LitElement } from "lit";
+import { css, html, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { SignalWatcher } from "@lit-labs/signals";
-import { Organizer } from "../../state";
+import { GraphAsset, Organizer } from "../../state";
 import { repeat } from "lit/directives/repeat.js";
-import { Asset, AssetPath } from "@breadboard-ai/types";
+import { AssetPath } from "@breadboard-ai/types";
 import { classMap } from "lit/directives/class-map.js";
 
 const EXPANDED_KEY = "bb-asset-organizer-expanded";
@@ -30,7 +30,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
   accessor showViewer = false;
 
   @state()
-  accessor asset: Asset | null = null;
+  accessor asset: GraphAsset | null = null;
 
   static styles = css`
     * {
@@ -343,7 +343,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
     globalThis.localStorage.setItem(VIEWER_KEY, `${this.showViewer}`);
   }
 
-  #showAsset(asset: Asset) {
+  #showAsset(asset: GraphAsset) {
     this.#toggleExpandedState(true);
     this.#toggleViewer(true);
 
@@ -362,7 +362,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
   }
 
   render() {
-    const outputs = this.asset ? { data: this.asset.data } : null;
+    const output = this.asset?.data?.at(-1) || null;
 
     const assets = this.state?.graphAssets;
 
@@ -429,12 +429,24 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                   }
 
                   for (const asset of assets) {
-                    this.state.addGraphAsset(asset.name, {
+                    if (!asset.content) continue;
+                    const [, mimeType, , data] = asset.content.split(/[:;,]/);
+                    this.state.addGraphAsset({
+                      path: asset.name,
                       metadata: {
                         title: asset.name,
                         type: "file",
                       },
-                      data: asset.content ?? "",
+                      data: [
+                        {
+                          parts: [
+                            {
+                              inlineData: { mimeType, data },
+                            },
+                          ],
+                          role: "user",
+                        },
+                      ],
                     });
                   }
                 });
@@ -484,12 +496,15 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
               </div>`}
         </section>
 
-        <section id="details">
-          <bb-multi-output
-            .outputs=${outputs}
-            .message=${Strings.from("LABEL_WAITING_MESSAGE")}
-          ></bb-multi-output>
-        </section>
+        ${this.showViewer
+          ? html` <section id="details">
+              <bb-llm-output
+                .value=${output}
+                .clamped=${false}
+                .showExportControls=${true}
+              ></bb-llm-output>
+            </section>`
+          : nothing}
       </section>
     </div>`;
   }

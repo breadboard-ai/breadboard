@@ -5,7 +5,6 @@
  */
 
 import {
-  Asset,
   AssetMetadata,
   AssetPath,
   GraphIdentifier,
@@ -86,14 +85,20 @@ export type Organizer = {
   /**
    * Current graph's assets.
    */
-  graphAssets: Map<AssetPath, Asset>;
+  graphAssets: Map<AssetPath, GraphAsset>;
 
-  addGraphAsset(path: AssetPath, asset: Asset): Promise<Outcome<void>>;
+  addGraphAsset(asset: GraphAsset): Promise<Outcome<void>>;
   removeGraphAsset(path: AssetPath): Promise<Outcome<void>>;
   changeGraphAssetMetadata(
     path: AssetPath,
     metadata: AssetMetadata
   ): Promise<Outcome<void>>;
+};
+
+export type GraphAsset = {
+  metadata?: AssetMetadata;
+  data: LLMContent[];
+  path: AssetPath;
 };
 
 export type GeneratedAssetIdentifier = string;
@@ -119,10 +124,6 @@ export type Component = {
 
 export type Components = Map<NodeIdentifier, Component>;
 
-export type GraphAsset = Asset & {
-  path: AssetPath;
-};
-
 /**
  * Represents the Model+Controller for the "@" Menu.
  */
@@ -138,7 +139,7 @@ export type FastAccess = {
  * Contains all the state for the project.
  */
 export type Project = {
-  graphAssets: Map<AssetPath, Asset>;
+  graphAssets: Map<AssetPath, GraphAsset>;
   organizer: Organizer;
   fastAccess: FastAccess;
 };

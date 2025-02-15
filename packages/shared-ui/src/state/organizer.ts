@@ -4,25 +4,25 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Asset, AssetMetadata, AssetPath } from "@breadboard-ai/types";
+import { AssetMetadata, AssetPath, NodeValue } from "@breadboard-ai/types";
 import { Outcome } from "@google-labs/breadboard";
-import { Organizer, ProjectInternal } from "./types";
+import { GraphAsset, Organizer, ProjectInternal } from "./types";
 
 export { ReactiveOrganizer };
 
 class ReactiveOrganizer implements Organizer {
   #project: ProjectInternal;
-  readonly graphAssets: Map<AssetPath, Asset>;
+  readonly graphAssets: Map<AssetPath, GraphAsset>;
 
   constructor(project: ProjectInternal) {
     this.#project = project;
     this.graphAssets = project.graphAssets;
   }
 
-  addGraphAsset(path: AssetPath, asset: Asset): Promise<Outcome<void>> {
-    const { data, metadata } = asset;
+  addGraphAsset(asset: GraphAsset): Promise<Outcome<void>> {
+    const { data, metadata, path } = asset;
     return this.#project.edit(
-      [{ type: "addasset", path, data, metadata }],
+      [{ type: "addasset", path, data: data as NodeValue, metadata }],
       `Adding asset at path "${path}"`
     );
   }
