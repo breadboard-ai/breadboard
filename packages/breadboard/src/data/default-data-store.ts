@@ -106,8 +106,11 @@ export class DefaultDataStore implements DataStore {
     return part;
   }
 
-  async retrieveAsBlob(part: StoredDataCapabilityPart): Promise<Blob> {
-    return genericRetrieveAsBlob(part);
+  async retrieveAsBlob(
+    part: StoredDataCapabilityPart,
+    graphUrl?: URL
+  ): Promise<Blob> {
+    return genericRetrieveAsBlob(part, graphUrl);
   }
 
   async replaceDataParts(

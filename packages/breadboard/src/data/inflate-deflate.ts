@@ -16,13 +16,17 @@ import { DataStore, SerializedDataStoreGroup } from "./types.js";
  * @returns -- a new object with all `StoredDataCapabilityPart`
  * replaced with `InlineDataCapabilityPart`
  */
-export const inflateData = async (store: DataStore, data: unknown) => {
+export const inflateData = async (
+  store: DataStore,
+  data: unknown,
+  graphUrl?: URL
+) => {
   const descender = async (value: unknown): Promise<unknown> => {
     if (isStoredData(value)) {
       if (value.storedData.handle.startsWith("https://")) {
         return value;
       }
-      const blob = await store.retrieveAsBlob(value);
+      const blob = await store.retrieveAsBlob(value, graphUrl);
       const data = await asBase64(blob);
       const mimeType = blob.type;
       return { inlineData: { data, mimeType } };

@@ -7,16 +7,21 @@
 import {
   AssetPath,
   GraphIdentifier,
+  LLMContent,
   NodeIdentifier,
 } from "@breadboard-ai/types";
 import {
+  BoardServer,
   EditableGraph,
   EditSpec,
+  err,
   GraphStoreEntry,
   MainGraphIdentifier,
   MutableGraphStore,
+  ok,
   Outcome,
   PortIdentifier,
+  transformDataParts,
 } from "@google-labs/breadboard";
 import { SignalMap } from "signal-utils/map";
 import { ReactiveOrganizer } from "./organizer";
@@ -54,17 +59,22 @@ function isTool(entry: GraphStoreEntry) {
 function createProjectState(
   mainGraphId: MainGraphIdentifier,
   store: MutableGraphStore,
+  boardServerFinder: (url: URL) => BoardServer | null,
   editable?: EditableGraph
 ): Project {
-  return new ReactiveProject(mainGraphId, store, editable);
+  return new ReactiveProject(mainGraphId, store, boardServerFinder, editable);
 }
 
 type ReactiveComponents = SignalMap<NodeIdentifier, Component>;
 
+type BoardServerFinder = (url: URL) => BoardServer | null;
+
 class ReactiveProject implements ProjectInternal {
   #mainGraphId: MainGraphIdentifier;
   #store: MutableGraphStore;
+  #boardServerFinder: BoardServerFinder;
   #editable?: EditableGraph;
+  readonly graphUrl: URL | null;
   readonly graphAssets: SignalMap<AssetPath, GraphAsset>;
   readonly generatedAssets: SignalMap<GeneratedAssetIdentifier, GeneratedAsset>;
   readonly tools: SignalMap<string, Tool>;
@@ -75,10 +85,12 @@ class ReactiveProject implements ProjectInternal {
   constructor(
     mainGraphId: MainGraphIdentifier,
     store: MutableGraphStore,
+    boardServerFinder: BoardServerFinder,
     editable?: EditableGraph
   ) {
     this.#mainGraphId = mainGraphId;
     this.#store = store;
+    this.#boardServerFinder = boardServerFinder;
     this.#editable = editable;
     store.addEventListener("update", (event) => {
       if (event.mainGraphId === mainGraphId) {
@@ -87,6 +99,8 @@ class ReactiveProject implements ProjectInternal {
       }
       this.#updateTools();
     });
+    const graphUrlString = this.#store.get(mainGraphId)?.graph.url;
+    this.graphUrl = graphUrlString ? new URL(graphUrlString) : null;
     this.graphAssets = new SignalMap();
     this.tools = new SignalMap();
     this.components = new SignalMap();
@@ -116,6 +130,26 @@ class ReactiveProject implements ProjectInternal {
     if (!editing.success) {
       return err(editing.error);
     }
+  }
+
+  async persistBlobs(contents: LLMContent[]): Promise<LLMContent[]> {
+    const url = this.#store.get(this.#mainGraphId)?.graph.url;
+    if (!url) return contents;
+
+    const server = this.#boardServerFinder(new URL(url));
+    if (!server || !server.dataPartTransformer) return contents;
+
+    const transformed = await transformDataParts(
+      new URL(url),
+      contents,
+      "persistent",
+      server.dataPartTransformer()
+    );
+    if (!ok(transformed)) {
+      return contents;
+    }
+
+    return transformed;
   }
 
   findOutputPortId(
@@ -209,10 +243,6 @@ class ReactiveProject implements ProjectInternal {
       Object.entries(assets).map(([path, asset]) => [path, { ...asset, path }])
     );
   }
-}
-
-function err($error: string) {
-  return { $error };
 }
 
 /**

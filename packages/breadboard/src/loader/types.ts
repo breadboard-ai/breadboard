@@ -11,6 +11,7 @@ import {
   NodeIdentifier,
 } from "@breadboard-ai/types";
 import { GraphToRun, Kit } from "../types.js";
+import { DataPartTransformer } from "../data/types.js";
 
 export type GraphProviderItem = {
   url: string;
@@ -230,6 +231,11 @@ export type GraphProvider = {
    * only the provider knows which ones.
    */
   preload?: (preloader: GraphProviderPreloadHandler) => Promise<void>;
+
+  /**
+   * Provides a way to transfom DataParts (InlineDataPart and StoredDataPart).
+   */
+  dataPartTransformer?: () => DataPartTransformer;
 };
 
 /**

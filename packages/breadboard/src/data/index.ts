@@ -33,6 +33,7 @@ export {
   asBase64,
   toInlineDataPart,
   toStoredDataPart,
+  transformDataParts,
 } from "./common.js";
 
 export { transformBlobs } from "./file-system/blob-transform.js";

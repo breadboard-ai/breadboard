@@ -13,3 +13,11 @@ export type ConnectionArgs =
   | {
       token: string | undefined;
     };
+
+export type RemoteConnector = {
+  createRequest(
+    path: string,
+    method: "GET" | "POST",
+    body?: unknown
+  ): Promise<Request>;
+};

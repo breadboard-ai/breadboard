@@ -13,16 +13,19 @@ export { ReactiveOrganizer };
 class ReactiveOrganizer implements Organizer {
   #project: ProjectInternal;
   readonly graphAssets: Map<AssetPath, GraphAsset>;
+  readonly graphUrl: URL | null;
 
   constructor(project: ProjectInternal) {
     this.#project = project;
     this.graphAssets = project.graphAssets;
+    this.graphUrl = project.graphUrl;
   }
 
-  addGraphAsset(asset: GraphAsset): Promise<Outcome<void>> {
-    const { data, metadata, path } = asset;
+  async addGraphAsset(asset: GraphAsset): Promise<Outcome<void>> {
+    const { data: assetData, metadata, path } = asset;
+    const data = (await this.#project.persistBlobs(assetData)) as NodeValue;
     return this.#project.edit(
-      [{ type: "addasset", path, data: data as NodeValue, metadata }],
+      [{ type: "addasset", path, data, metadata }],
       `Adding asset at path "${path}"`
     );
   }

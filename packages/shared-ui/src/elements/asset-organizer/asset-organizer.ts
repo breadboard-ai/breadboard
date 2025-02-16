@@ -501,6 +501,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
               <bb-llm-output
                 .value=${output}
                 .clamped=${false}
+                .graphUrl=${this.state?.graphUrl || null}
                 .showExportControls=${true}
               ></bb-llm-output>
             </section>`

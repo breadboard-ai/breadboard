@@ -57,6 +57,7 @@ export type {
   AbstractValue as V,
 } from "./new/grammar/types.js";
 export { hash } from "./utils/hash.js";
+export { relativePath } from "./utils/relative-path.js";
 export { asyncGen } from "./utils/async-gen.js";
 export { Throttler } from "./utils/throttler.js";
 export { type SemVer, SemanticVersioning } from "./utils/semver.js";
@@ -125,6 +126,7 @@ export {
   createEphemeralBlobStore,
   createFileSystem,
   assetsFromGraphDescriptor,
+  transformDataParts,
 } from "./data/index.js";
 
 export { ok, err } from "./data/file-system/utils.js";

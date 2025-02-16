@@ -5,6 +5,7 @@
  */
 
 import type {
+  DataPart,
   FunctionCallCapabilityPart,
   FunctionResponseCapabilityPart,
   InlineDataCapabilityPart,
@@ -13,6 +14,12 @@ import type {
   TextCapabilityPart,
 } from "@breadboard-ai/types";
 import { DataCapability } from "../types.js";
+import {
+  DataPartTransformer,
+  DataPartTransformType,
+  Outcome,
+} from "./types.js";
+import { ok } from "./file-system/utils.js";
 
 // Helpers for handling DataCapability objects.
 
@@ -154,13 +161,17 @@ export async function asBase64(file: File | Blob): Promise<string> {
 }
 
 export async function retrieveAsBlob(
-  part: StoredDataCapabilityPart
+  part: StoredDataCapabilityPart,
+  graphUrl?: URL
 ): Promise<Blob> {
   if (!isStoredData(part)) {
     throw new Error("Invalid stored data");
   }
 
-  const { handle } = part.storedData;
+  let { handle } = part.storedData;
+  if (handle.startsWith(".")) {
+    handle = new URL(handle, graphUrl).href;
+  }
   const response = await fetch(handle);
   return await response.blob();
 }
@@ -178,7 +189,10 @@ export async function toStoredDataPart(
   part: InlineDataCapabilityPart | StoredDataCapabilityPart | Blob
 ): Promise<StoredDataCapabilityPart> {
   if (isStoredData(part)) {
-    if (part.storedData.handle.startsWith("https://")) {
+    if (
+      part.storedData.handle.startsWith("https://") ||
+      part.storedData.handle.startsWith(".")
+    ) {
       return part;
     }
   }
@@ -191,4 +205,56 @@ export async function toStoredDataPart(
       mimeType: blob.type,
     },
   };
+}
+
+export async function transformDataParts(
+  graphUrl: URL,
+  contents: LLMContent[],
+  to: DataPartTransformType,
+  transformer: DataPartTransformer
+): Promise<Outcome<LLMContent[]>> {
+  const transformed: LLMContent[] = [];
+  for (const content of contents) {
+    const role = content.role || "user";
+    const parts: DataPart[] = [];
+    for (const part of content.parts) {
+      let transformedPart = part;
+      if ("inlineData" in part) {
+        if (to === "ephemeral") {
+          // convert inline to ephemeral
+          const blob = await asBlob(part);
+          transformedPart = transformer.addEphemeralBlob(blob);
+        } else if (to === "persistent") {
+          // convert inline to persistent
+          const persisted = await transformer.persistPart(graphUrl, part);
+          if (!ok(persisted)) return persisted;
+          transformedPart = persisted;
+        }
+      } else if ("storedData" in part) {
+        const isEphemeral = part.storedData.handle.startsWith("blob:");
+        if (to === "ephemeral") {
+          if (!isEphemeral) {
+            // convert persistent to ephemeral
+            const ephemeral = await transformer.persistentToEphemeral(part);
+            if (!ok(ephemeral)) return ephemeral;
+            transformedPart = ephemeral;
+          }
+        } else if (to === "inline") {
+          // convert persisent or ephemeral to inline
+          transformedPart = await toInlineDataPart(part);
+        } else if (to == "persistent") {
+          if (isEphemeral) {
+            // convert ephemeral to persistent
+            const inline = await toInlineDataPart(part);
+            const persisted = await transformer.persistPart(graphUrl, inline);
+            if (!ok(persisted)) return persisted;
+            transformedPart = persisted;
+          }
+        }
+      }
+      parts.push(transformedPart);
+    }
+    transformed.push({ parts, role });
+  }
+  return transformed;
 }
