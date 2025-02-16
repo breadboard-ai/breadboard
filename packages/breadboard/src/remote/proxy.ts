@@ -165,7 +165,7 @@ export class ProxyClient {
 
     const store = context.store;
     inputs = store
-      ? ((await inflateData(store, inputs)) as InputValues)
+      ? ((await inflateData(store, inputs, context.base)) as InputValues)
       : inputs;
 
     writer.write(["proxy", { node, inputs }]);

@@ -45,7 +45,7 @@ export type DataStore = {
   releaseAll(): void;
   releaseGroup(group: string): void;
   replaceDataParts(key: string, result: HarnessRunResult): Promise<void>;
-  retrieveAsBlob(part: StoredDataCapabilityPart): Promise<Blob>;
+  retrieveAsBlob(part: StoredDataCapabilityPart, graphUrl?: URL): Promise<Blob>;
   serializeGroup(
     group: string,
     storeId?: string
@@ -107,6 +107,7 @@ export type DataPartTransformType = "persistent" | "ephemeral" | "inline";
 
 export type DataPartTransformer = {
   persistPart: (
+    graphUrl: URL,
     part: InlineDataCapabilityPart
   ) => Promise<Outcome<StoredDataCapabilityPart>>;
   addEphemeralBlob: (blob: Blob) => StoredDataCapabilityPart;

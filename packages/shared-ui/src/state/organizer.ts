@@ -13,10 +13,12 @@ export { ReactiveOrganizer };
 class ReactiveOrganizer implements Organizer {
   #project: ProjectInternal;
   readonly graphAssets: Map<AssetPath, GraphAsset>;
+  readonly graphUrl: URL | null;
 
   constructor(project: ProjectInternal) {
     this.#project = project;
     this.graphAssets = project.graphAssets;
+    this.graphUrl = project.graphUrl;
   }
 
   async addGraphAsset(asset: GraphAsset): Promise<Outcome<void>> {

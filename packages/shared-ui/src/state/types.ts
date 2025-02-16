@@ -87,6 +87,8 @@ export type Organizer = {
    */
   graphAssets: Map<AssetPath, GraphAsset>;
 
+  graphUrl: URL | null;
+
   addGraphAsset(asset: GraphAsset): Promise<Outcome<void>>;
   removeGraphAsset(path: AssetPath): Promise<Outcome<void>>;
   changeGraphAssetMetadata(
@@ -145,6 +147,7 @@ export type Project = {
 };
 
 export type ProjectInternal = Project & {
+  graphUrl: URL | null;
   edit(spec: EditSpec[], label: string): Promise<Outcome<void>>;
   persistBlobs(contents: LLMContent[]): Promise<LLMContent[]>;
   findOutputPortId(

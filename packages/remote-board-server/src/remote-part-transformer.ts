@@ -4,7 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DataPartTransformer, err, Outcome } from "@google-labs/breadboard";
+import {
+  DataPartTransformer,
+  err,
+  Outcome,
+  relativePath,
+} from "@google-labs/breadboard";
 import {
   InlineDataCapabilityPart,
   LLMContent,
@@ -18,6 +23,7 @@ class RemotePartTransformer implements DataPartTransformer {
   constructor(public readonly connector: RemoteConnector) {}
 
   async persistPart(
+    graphUrl: URL,
     part: InlineDataCapabilityPart
   ): Promise<Outcome<StoredDataCapabilityPart>> {
     try {
@@ -28,7 +34,12 @@ class RemotePartTransformer implements DataPartTransformer {
         return err(await response.text());
       }
       const content = (await response.json()) as LLMContent;
-      return content.parts.at(0)! as StoredDataCapabilityPart;
+      const transformedPart = content.parts.at(0)! as StoredDataCapabilityPart;
+      transformedPart.storedData.handle = relativePath(
+        graphUrl,
+        new URL(transformedPart.storedData.handle)
+      );
+      return transformedPart;
     } catch (e) {
       return err(`Failed to store blob: ${(e as Error).message}`);
     }

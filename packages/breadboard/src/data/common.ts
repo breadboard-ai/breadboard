@@ -161,13 +161,17 @@ export async function asBase64(file: File | Blob): Promise<string> {
 }
 
 export async function retrieveAsBlob(
-  part: StoredDataCapabilityPart
+  part: StoredDataCapabilityPart,
+  graphUrl?: URL
 ): Promise<Blob> {
   if (!isStoredData(part)) {
     throw new Error("Invalid stored data");
   }
 
-  const { handle } = part.storedData;
+  let { handle } = part.storedData;
+  if (handle.startsWith(".")) {
+    handle = new URL(handle, graphUrl).href;
+  }
   const response = await fetch(handle);
   return await response.blob();
 }
@@ -185,7 +189,10 @@ export async function toStoredDataPart(
   part: InlineDataCapabilityPart | StoredDataCapabilityPart | Blob
 ): Promise<StoredDataCapabilityPart> {
   if (isStoredData(part)) {
-    if (part.storedData.handle.startsWith("https://")) {
+    if (
+      part.storedData.handle.startsWith("https://") ||
+      part.storedData.handle.startsWith(".")
+    ) {
       return part;
     }
   }
@@ -201,6 +208,7 @@ export async function toStoredDataPart(
 }
 
 export async function transformDataParts(
+  graphUrl: URL,
   contents: LLMContent[],
   to: DataPartTransformType,
   transformer: DataPartTransformer
@@ -218,7 +226,7 @@ export async function transformDataParts(
           transformedPart = transformer.addEphemeralBlob(blob);
         } else if (to === "persistent") {
           // convert inline to persistent
-          const persisted = await transformer.persistPart(part);
+          const persisted = await transformer.persistPart(graphUrl, part);
           if (!ok(persisted)) return persisted;
           transformedPart = persisted;
         }
@@ -238,7 +246,7 @@ export async function transformDataParts(
           if (isEphemeral) {
             // convert ephemeral to persistent
             const inline = await toInlineDataPart(part);
-            const persisted = await transformer.persistPart(inline);
+            const persisted = await transformer.persistPart(graphUrl, inline);
             if (!ok(persisted)) return persisted;
             transformedPart = persisted;
           }

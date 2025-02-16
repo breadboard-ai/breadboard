@@ -74,6 +74,7 @@ class ReactiveProject implements ProjectInternal {
   #store: MutableGraphStore;
   #boardServerFinder: BoardServerFinder;
   #editable?: EditableGraph;
+  readonly graphUrl: URL | null;
   readonly graphAssets: SignalMap<AssetPath, GraphAsset>;
   readonly generatedAssets: SignalMap<GeneratedAssetIdentifier, GeneratedAsset>;
   readonly tools: SignalMap<string, Tool>;
@@ -98,6 +99,8 @@ class ReactiveProject implements ProjectInternal {
       }
       this.#updateTools();
     });
+    const graphUrlString = this.#store.get(mainGraphId)?.graph.url;
+    this.graphUrl = graphUrlString ? new URL(graphUrlString) : null;
     this.graphAssets = new SignalMap();
     this.tools = new SignalMap();
     this.components = new SignalMap();
@@ -137,6 +140,7 @@ class ReactiveProject implements ProjectInternal {
     if (!server || !server.dataPartTransformer) return contents;
 
     const transformed = await transformDataParts(
+      new URL(url),
       contents,
       "persistent",
       server.dataPartTransformer()

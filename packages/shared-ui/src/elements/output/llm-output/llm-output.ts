@@ -43,6 +43,9 @@ export class LLMOutput extends LitElement {
   @property({ reflect: true })
   accessor showExportControls = false;
 
+  @property()
+  accessor graphUrl: URL | null = null;
+
   @consume({ context: tokenVendorContext })
   accessor tokenVendor!: TokenVendor;
 
@@ -435,11 +438,14 @@ export class LLMOutput extends LitElement {
           ) {
             value = html` <bb-json-tree .json=${part}></bb-json-tree>`;
           } else if (isStoredData(part)) {
-            const url = part.storedData.handle;
+            let url = part.storedData.handle;
             if (!url) {
               value = html`<div>Failed to retrieve stored data</div>`;
             } else {
               const { mimeType } = part.storedData;
+              if (url.startsWith(".") && this.graphUrl) {
+                url = new URL(url, this.graphUrl).href;
+              }
               const getData = async () => {
                 const response = await fetch(url);
                 return response.text();
