@@ -91,6 +91,7 @@
     "@breadboard-ai/build": "0.11.1",
     "@breadboard-ai/connection-client": "0.1.0",
     "@breadboard-ai/data-store": "0.3.0",
+    "@breadboard-ai/types": "0.4.0",
     "@google-labs/breadboard": "^0.31.0",
     "@google-labs/breadboard-schema": "^1.11.0"
   }

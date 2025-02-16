@@ -125,6 +125,7 @@ export {
   createEphemeralBlobStore,
   createFileSystem,
   assetsFromGraphDescriptor,
+  transformDataParts,
 } from "./data/index.js";
 
 export { ok, err } from "./data/file-system/utils.js";

@@ -6,6 +6,7 @@
 
 import {
   blank,
+  DataPartTransformer,
   NodeIdentifier,
   type BoardServer,
   type BoardServerCapabilities,
@@ -22,11 +23,12 @@ import {
   type Permission,
   type User,
 } from "@google-labs/breadboard";
-import { ConnectionArgs } from "./types";
+import { ConnectionArgs, RemoteConnector } from "./types";
 import { createRequest, getSigninToken } from "./utils";
 import { TokenVendor } from "@breadboard-ai/connection-client";
+import { RemotePartTransformer } from "./remote-part-transformer";
 
-export class RemoteBoardServer extends EventTarget implements BoardServer {
+export class RemoteBoardServer implements BoardServer, RemoteConnector {
   public readonly url: URL;
   public readonly users: User[];
   public readonly secrets = new Map<string, string>();
@@ -101,8 +103,6 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
     public readonly user: User,
     public readonly tokenVendor?: TokenVendor
   ) {
-    super();
-
     this.url = configuration.url;
     this.projects = this.#refreshProjects();
     this.kits = configuration.kits;
@@ -197,7 +197,7 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
     }
 
     if (project.url.href === url.href) {
-      const request = createRequest(url, await this.#connectionArgs(), "GET");
+      const request = createRequest(url, await this.connectionArgs(), "GET");
       const response = await fetch(request);
       const graph = await response.json();
       return graph;
@@ -240,7 +240,7 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
     }
 
     try {
-      const request = createRequest(url, await this.#connectionArgs(), "POST", {
+      const request = createRequest(url, await this.connectionArgs(), "POST", {
         delete: true,
       });
       const response = await fetch(request);
@@ -276,7 +276,7 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
 
     const request = createRequest(
       `${location}/boards`,
-      await this.#connectionArgs(),
+      await this.connectionArgs(),
       "POST",
       {
         name: fileName,
@@ -354,7 +354,7 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
     }
     const request = createRequest(
       url,
-      await this.#connectionArgs(),
+      await this.connectionArgs(),
       "POST",
       descriptor
     );
@@ -373,7 +373,7 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
 
     const projects: BoardServerProject[] = [];
     try {
-      const request = await this.#createRequest("boards", "GET");
+      const request = await this.createRequest("boards", "GET");
 
       const response = await fetch(request);
       if (!response.ok) {
@@ -486,7 +486,7 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
     return this.#withKey("proxy").href;
   }
 
-  async #connectionArgs(): Promise<ConnectionArgs> {
+  async connectionArgs(): Promise<ConnectionArgs> {
     const key = this.user.apiKey;
     if (key) {
       return { key };
@@ -504,16 +504,20 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
     return result;
   }
 
-  async #createRequest(
+  async createRequest(
     path: string,
     method: string,
     body?: unknown
   ): Promise<Request> {
     return createRequest(
       new URL(path, this.url),
-      await this.#connectionArgs(),
+      await this.connectionArgs(),
       method,
       body
     );
+  }
+
+  dataPartTransformer(): DataPartTransformer {
+    return new RemotePartTransformer(this);
   }
 }

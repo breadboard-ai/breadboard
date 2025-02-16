@@ -15,29 +15,14 @@ import { HarnessRunResult } from "../harness/types.js";
 import { ReanimationState } from "../run/types.js";
 import { Schema } from "../types.js";
 
-export type StoredData = {
-  asInline(): Promise<InlineDataCapabilityPart>;
-};
-
 export type SerializedStoredData = {
   handle: DataStoreHandle;
 } & InlineDataCapabilityPart;
 
 export type SerializedDataStoreGroup = SerializedStoredData[];
 
-/**
- * A provider that handles storing and retrieving data.
- */
-
 export type RunURL = string;
 export type RunTimestamp = number;
-
-export type DataStoreProvider = {
-  store(data: InlineDataCapabilityPart): Promise<StoredData>;
-  retrieve(handle: DataStoreHandle): Promise<StoredData>;
-  release(handle: DataStoreHandle): Promise<void>;
-  releaseAll(): Promise<void>;
-};
 
 export type RunStore = {
   start(url: RunURL): Promise<RunTimestamp>;
@@ -109,6 +94,26 @@ export type RetrieveDataResult =
     };
 
 export type DataStoreScope = "run" | "session" | "client";
+
+/**
+ * Specifies the type of the transformation:
+ * - `persistent` -- converts every data part into a `StoredDataPart` pointing
+ *   to the persistent handle (url that starts with https://)
+ * - `ephemeral` -- converts every data part into a `StoredDataPart` pointing
+ *   to the ephemeral handle (a blob URL)
+ * - `inline` -- converts every data part into an `InlineDataPart`.
+ */
+export type DataPartTransformType = "persistent" | "ephemeral" | "inline";
+
+export type DataPartTransformer = {
+  persistPart: (
+    part: InlineDataCapabilityPart
+  ) => Promise<Outcome<StoredDataCapabilityPart>>;
+  addEphemeralBlob: (blob: Blob) => StoredDataCapabilityPart;
+  persistentToEphemeral: (
+    part: StoredDataCapabilityPart
+  ) => Promise<Outcome<StoredDataCapabilityPart>>;
+};
 
 export type Outcome<T> = T | { $error: string };
 
