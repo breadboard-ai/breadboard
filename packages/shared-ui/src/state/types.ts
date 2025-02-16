@@ -146,6 +146,7 @@ export type Project = {
 
 export type ProjectInternal = Project & {
   edit(spec: EditSpec[], label: string): Promise<Outcome<void>>;
+  persistBlobs(contents: LLMContent[]): Promise<LLMContent[]>;
   findOutputPortId(
     graphId: GraphIdentifier,
     id: NodeIdentifier

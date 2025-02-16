@@ -103,7 +103,7 @@ export async function create(config: RuntimeConfig): Promise<{
     board: new Board([], loader, kits, boardServers, config.tokenVendor),
     edit: new Edit([], loader, kits, config.sandbox, graphStore),
     run: new Run(graphStore, config.dataStore, config.runStore),
-    state: new StateManager(graphStore),
+    state: new StateManager(graphStore, servers),
     select: new Select(),
     util: Util,
     kits,

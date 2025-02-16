@@ -7,6 +7,7 @@
 import { DataPartTransformer, err, Outcome } from "@google-labs/breadboard";
 import {
   InlineDataCapabilityPart,
+  LLMContent,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
 import { RemoteConnector } from "./types";
@@ -21,12 +22,13 @@ class RemotePartTransformer implements DataPartTransformer {
   ): Promise<Outcome<StoredDataCapabilityPart>> {
     try {
       const response = await fetch(
-        await this.connector.createRequest("blobs", "POST", part)
+        await this.connector.createRequest("blobs", "POST", { parts: [part] })
       );
       if (!response.ok) {
         return err(await response.text());
       }
-      return (await response.json()) as StoredDataCapabilityPart;
+      const content = (await response.json()) as LLMContent;
+      return content.parts.at(0)! as StoredDataCapabilityPart;
     } catch (e) {
       return err(`Failed to store blob: ${(e as Error).message}`);
     }

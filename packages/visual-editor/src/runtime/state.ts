@@ -7,6 +7,7 @@
 import { State } from "@breadboard-ai/shared-ui";
 
 import {
+  BoardServer,
   EditableGraph,
   MainGraphIdentifier,
   MutableGraphStore,
@@ -20,9 +21,20 @@ export { StateManager };
 class StateManager {
   #map: Map<MainGraphIdentifier, State.Project> = new Map();
   #store: MutableGraphStore;
+  #servers: BoardServer[];
 
-  constructor(store: MutableGraphStore) {
+  constructor(store: MutableGraphStore, boardServers: BoardServer[]) {
     this.#store = store;
+    this.#servers = boardServers;
+  }
+
+  #findServer(url: URL): BoardServer | null {
+    for (const server of this.#servers) {
+      if (server.canProvide(url)) {
+        return server;
+      }
+    }
+    return null;
   }
 
   getOrCreate(
@@ -40,6 +52,7 @@ class StateManager {
     state = State.createProjectState(
       mainGraphId,
       this.#store,
+      this.#findServer.bind(this),
       editable || undefined
     );
     this.#map.set(mainGraphId, state);
