@@ -184,9 +184,47 @@ declare type StoredDataCapabilityPart = {
   };
 };
 
+declare type FileDataPart = {
+  fileData: {
+    /**
+     * Can be either a URL pointing to a YT video or a URL pointing at a
+     * resource saved with File API.
+     */
+    fileUri: string;
+    mimeType: string;
+  };
+};
+
+declare type ExecutableCodePart = {
+  executableCode: {
+    language: "LANGUAGE_UNSPECIDIED" | "PYTHON";
+    code: string;
+  };
+};
+
+declare type CodeExecutionResultOutcome =
+  // 	Unspecified status. This value should not be used.
+  | "OUTCOME_UNSPECIFIED"
+  // Code execution completed successfully.
+  | "OUTCOME_OK"
+  // Code execution finished but with a failure. stderr should contain the reason.
+  | "OUTCOME_FAILED"
+  // Code execution ran for too long, and was cancelled. There may or may not be a partial output present.
+  | "OUTCOME_DEADLINE_EXCEEDED";
+
+declare type CodeExecutionResultPart = {
+  codeExecutionResult: {
+    outcome: CodeExecutionResultOutcome;
+    output: string;
+  };
+};
+
 declare type DataPart =
   | InlineDataCapabilityPart
   | StoredDataCapabilityPart
+  | FileDataPart
+  | ExecutableCodePart
+  | CodeExecutionResultPart
   | FunctionCallCapabilityPart
   | FunctionResponseCapabilityPart
   | TextCapabilityPart;
