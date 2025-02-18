@@ -8,7 +8,7 @@
       "type": "file://bgl/a2.bgl.json#module:combine-outputs",
       "metadata": {
         "visual": {
-          "x": 40,
+          "x": 40.00000000000001,
           "y": -1220,
           "collapsed": "expanded",
           "outputHeight": 44
@@ -32,8 +32,8 @@
       "type": "file://bgl/a2.bgl.json#module:combine-outputs",
       "metadata": {
         "visual": {
-          "x": 40,
-          "y": -1400,
+          "x": 40.00000000000001,
+          "y": -1400.0000000000002,
           "collapsed": "expanded",
           "outputHeight": 64
         },
@@ -69,14 +69,27 @@
           "role": "user",
           "parts": [
             {
-              "text": "Good"
+              "text": "Good {{\"type\":\"in\",\"path\":\"a2-4fee0499\",\"title\":\"Time of Day\"}} , {{\"type\":\"in\",\"path\":\"8469df91-7949-4f85-b5d8-74e4b643c7e5\",\"title\":\"Name\"}}"
             }
           ]
         }
       }
     }
   ],
-  "edges": [],
+  "edges": [
+    {
+      "from": "a2-4fee0499",
+      "to": "a2-4e7aa0b4",
+      "out": "context",
+      "in": "p-z-Time of Day"
+    },
+    {
+      "from": "8469df91-7949-4f85-b5d8-74e4b643c7e5",
+      "to": "a2-4e7aa0b4",
+      "out": "context",
+      "in": "p-z-Name"
+    }
+  ],
   "metadata": {
     "visual": {}
   },
