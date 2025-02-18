@@ -34,6 +34,7 @@ export class DefaultRunStore implements RunStore {
   }
 
   async write(url: RunURL, timestamp: RunTimestamp, result: HarnessRunResult) {
+    const graphUrl = getGraphUrl(url);
     const store = this.#runs.get(url);
     if (!store) {
       throw new Error("Unable to find the store");
@@ -59,7 +60,7 @@ export class DefaultRunStore implements RunStore {
               continue;
             }
 
-            output.parts[i] = await toInlineDataPart(part);
+            output.parts[i] = await toInlineDataPart(part, graphUrl);
           }
         }
       }
@@ -114,5 +115,13 @@ export class DefaultRunStore implements RunStore {
     }
 
     return this.#runs.get(url)!;
+  }
+}
+
+function getGraphUrl(url: RunURL): URL | undefined {
+  try {
+    return new URL(url);
+  } catch (e) {
+    return;
   }
 }

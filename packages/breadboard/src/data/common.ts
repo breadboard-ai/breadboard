@@ -169,7 +169,7 @@ export async function retrieveAsBlob(
   }
 
   let { handle } = part.storedData;
-  if (handle.startsWith(".")) {
+  if (handle.startsWith(".") && graphUrl) {
     handle = new URL(handle, graphUrl).href;
   }
   const response = await fetch(handle);
@@ -177,9 +177,10 @@ export async function retrieveAsBlob(
 }
 
 export async function toInlineDataPart(
-  part: StoredDataCapabilityPart
+  part: StoredDataCapabilityPart,
+  graphUrl?: URL
 ): Promise<InlineDataCapabilityPart> {
-  const raw = await retrieveAsBlob(part);
+  const raw = await retrieveAsBlob(part, graphUrl);
   const mimeType = part.storedData.mimeType;
   const data = await asBase64(raw);
   return { inlineData: { mimeType, data } };
