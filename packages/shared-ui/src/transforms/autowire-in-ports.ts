@@ -43,7 +43,6 @@ class AutoWireInPorts implements EditTransform {
     if (!inspectableNode) {
       return { success: false, error: `Unable to find node with id "${id}"` };
     }
-    if (ins.length == 0) return { success: true };
 
     // TODO: Don't forget about proper title->id conversion.
     const incoming = dedupeEdges(

@@ -76,20 +76,7 @@
       }
     }
   ],
-  "edges": [
-    {
-      "from": "a2-4fee0499",
-      "to": "a2-4e7aa0b4",
-      "out": "context",
-      "in": "p-z-Time of Day"
-    },
-    {
-      "from": "8469df91-7949-4f85-b5d8-74e4b643c7e5",
-      "to": "a2-4e7aa0b4",
-      "out": "context",
-      "in": "p-z-Name"
-    }
-  ],
+  "edges": [],
   "metadata": {
     "visual": {}
   },
