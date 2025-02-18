@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/build",
-  "version": "0.11.1",
+  "version": "0.12.0",
   "description": "JavaScript library for building boards and defining new node types for the Breadboard AI prototyping library",
   "license": "Apache-2.0",
   "author": "Google LLC",
@@ -120,8 +120,8 @@
     }
   },
   "dependencies": {
-    "@breadboard-ai/types": "0.4.0",
-    "@google-labs/breadboard": "^0.31.0",
+    "@breadboard-ai/types": "0.5.0",
+    "@google-labs/breadboard": "^0.32.0",
     "@types/json-schema": "^7.0.15"
   },
   "devDependencies": {

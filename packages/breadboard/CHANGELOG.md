@@ -1,11 +1,59 @@
 # Changelog
 
+## 0.32.0
+
+### Minor Changes
+
+- 2144bc3: Teach Edit API about editing assets.
+- 59d6fe7: Store assets as references to blobs.
+- 925e4bf: Introduce "main-port" behavior and start using it.
+- c6f9889: Start all new graphs with a really blank template.
+- a2e7a36: Add support for {{asset}} and {{in}} params in A2.
+- 6b6052c: Support icons in custom component metadata.
+- 65f89e0: Introduce Organizer to visual editor.
+- 10fee14: Plumb `updating` flag to both `currentPorts` and `currentMetadata`.
+- 0b1dc88: Introduce `GraphDescriptor.imports` and start using it in modules.
+- 74124b8: Use "generative" icon in A2 components.
+- 63a1930: Introduce presentation hints and icon on Schema.
+- b93a70f: Introduce a more flexible way to tag and curate components.
+- 8e2fc1f: Implement API that allows rendering Fast Access menu (fka "@" menu).
+
+### Patch Changes
+
+- 3af8f62: Introduce ChatController, an abstraction to manage chat state.
+- 220f27a: A2-related UI polish
+- 0ad7660: Improve home screen again
+- 83bdea5: Show outputs in configurator
+- e39ea7e: Add "Text" component.
+- c9fc7b0: Add "Audio Generator" and {{param}} support to all components.
+- 26b1194: Implement Get Weather tool.
+- b17362c: Bug fixes in ChatController.
+- 881f8ab: Teach replay about subgraphs.
+- Updated dependencies [2144bc3]
+- Updated dependencies [69d315b]
+- Updated dependencies [925e4bf]
+- Updated dependencies [a2e7a36]
+- Updated dependencies [782b7e4]
+- Updated dependencies [eaef053]
+- Updated dependencies [0b1dc88]
+- Updated dependencies [bdf469e]
+- Updated dependencies [9fe7195]
+- Updated dependencies [63a1930]
+- Updated dependencies [b93a70f]
+- Updated dependencies [9ade1ed]
+- Updated dependencies [12aea89]
+- Updated dependencies [83a5186]
+  - @google-labs/breadboard-schema@1.12.0
+  - @breadboard-ai/types@0.5.0
+  - @breadboard-ai/jsandbox@0.4.0
+
 ## 0.31.0
 
 ### Minor Changes
 
 - 25dd1c2: Introduce chiclets for board capabilities
-- 45c7e5f: Make `MutableGraph` the actual store of nodes, kits, graphs, modules, edges.
+- 45c7e5f: Make `MutableGraph` the actual store of nodes, kits, graphs, modules,
+  edges.
 - 37e3fbd: Connect file system to Visual Editor.
 - 8722c8f: Make retrieving type metadata sync.
 - 64bbe1b: Drive the usage of `inspect` down to four callsites.
@@ -32,14 +80,17 @@
 - 862c53c: Yuletide bug bash.
 - f9dc26b: Properly track deletions of edges and nodes.
 - df6926d: A cornucopia of fixes and polish
-- f6c31d3: Undo the change to use GraphStore for custom graph describers, as it breaks Agent Kit.
+- f6c31d3: Undo the change to use GraphStore for custom graph describers, as it
+  breaks Agent Kit.
 - 183c9eb: Start moving A2 to multi-export setup.
 - b685d49: Remove `InspectableGraph.kits`.
 - a717ddc: Fix various bugs with describer capability
-- 46c9327: Allow pasting fragment URLs into VE and add a nicer module title when running modules.
+- 46c9327: Allow pasting fragment URLs into VE and add a nicer module title when
+  running modules.
 - 4eb6d6d: Ensure that Graph-based Kits are registered before run starts.
 - 032d962: Fix the replay and runModule telemetry bugs.
-- 78da2ab: Revert rollup bump 4.25.0 to 4.27.1, because it causes build to be super-slow.
+- 78da2ab: Revert rollup bump 4.25.0 to 4.27.1, because it causes build to be
+  super-slow.
 - 404a08f: Teach Graph Outline various tricks
 - 91e0930: Teach VE and Breadboard to invoke sub-boards properly.
 - 2130bc6: Teach FSAPI Board Server to show published boards.
@@ -78,7 +129,8 @@
 - c75e26f: Introduce Imperative Graphs.
 - cc19e8c: Teach Visual Editor how to edit modules
 - 9d5f11b: Convert existing declarative kits to BGL.
-- 66041a7: Migrate to use `InspectableGraph.edit` for subgraph add/remove/replace.
+- 66041a7: Migrate to use `InspectableGraph.edit` for subgraph
+  add/remove/replace.
 - 2c7587a: Rename "Specialist" to "Model".
 - 9e5390d: Introduce Edit Transforms and start using them.
 - 1fb9857: Teach RunObserver about resuming runs.
@@ -176,19 +228,22 @@
 
 ### Patch Changes
 
-- 5c015f2: Add an options object to createLoader. Allows suppressing the default loading behavior.
+- 5c015f2: Add an options object to createLoader. Allows suppressing the default
+  loading behavior.
 
 ## 0.27.0
 
 ### Minor Changes
 
 - cb8c99a: Feed static describer results to dynamic describer.
-- 4dadf16: Introduce experimental storeData and retrieveData components in Core Kit.
+- 4dadf16: Introduce experimental storeData and retrieveData components in Core
+  Kit.
 - 8f9fddf: Move LightObserver to shared-ui as TopGraphObserver.
 - f61ccf3: Introduce URL-based component types.
 - 8540b93: Convert Content to Build API and merge Specialist 2 to Specialist.
 - 81eafad: Implement selecting runs and viewing them.
-- 4c03455: Introduce Specialist 2 and make Content component support LLM Content.
+- 4c03455: Introduce Specialist 2 and make Content component support LLM
+  Content.
 - 157c31e: Implement remote board server
 - d7606d3: Implement plumbing for visualizing runs as graphs.
 - d9fd0ab: [project-store] -> [idb-board-server]
@@ -200,7 +255,8 @@
 - 6136d87: Bug fixes for dynamic describers.
 - e61fa66: Dispatch "edge" event for all edges.
 - a104fa7: Teach InspectableRunObserver.load to add the loaded run to its runs.
-- 8a1b8c4: Teach Throttler to not wait on new data if it already has cached data.
+- 8a1b8c4: Teach Throttler to not wait on new data if it already has cached
+  data.
 - 9797718: Auto-migrate IDB `GraphProvider` boards
 - 3137076: Include credentials in proxy client fetch.
 - 4cc71ee: Allow pasting star edges.
@@ -237,7 +293,8 @@
 ### Patch Changes
 
 - 49b3612: Restore preview functionality
-- b201e07: Implement edge-based UI in board-server (and fix a bunch of bugs elsewhere)
+- b201e07: Implement edge-based UI in board-server (and fix a bunch of bugs
+  elsewhere)
 - 15b5659: Teach app view to use RemoteRunner.
 - 0296c89: Teach LLMContentArray check to ignore $metadata
 - 534d67e: Teach Run Store & Data Store about LLM Content Array
@@ -253,17 +310,21 @@
 - 8c694ed: Support sequences of nested graphs (like what `reduce` does).
 - bbf2c30: Plumb interruptible run to board server.
 - 14df6a8: Retry with credentials when board fetch fails.
-- 2aabb7a: Introduce the concept of `partialOutputs` to `TraversalState`, to convey outputs produced while processing bubbled inputs.
+- 2aabb7a: Introduce the concept of `partialOutputs` to `TraversalState`, to
+  convey outputs produced while processing bubbled inputs.
 - fb72771: Introduce run reanimation and `interruptibleRunGraph`.
-- 9b22cab: Make sure that reanimator correctly adjusts invocationId when resuming.
-- 00cc2c5: Remove `lambda`, introduce standalone `invokeGraph` and `runGraph` functions, and other plumbing refactoring.
+- 9b22cab: Make sure that reanimator correctly adjusts invocationId when
+  resuming.
+- 00cc2c5: Remove `lambda`, introduce standalone `invokeGraph` and `runGraph`
+  functions, and other plumbing refactoring.
 - c04cff0: Bring back synchronous `TraversalResult.outputs`.
 - 3f8cdd1: Introduce run store
 - 3a5ced1: Refactor `map` to run serially when `RunStateManager` is present.
 
 ### Patch Changes
 
-- 1dc645a: Remove `validator` and `slot` bits from BoardRunner and allow bubbled inputs to abort gracefully.
+- 1dc645a: Remove `validator` and `slot` bits from BoardRunner and allow bubbled
+  inputs to abort gracefully.
 - 62f8d5b: Fix replay of saved runs
 
 ## 0.23.0
@@ -288,15 +349,20 @@
 
 ### Minor Changes
 
-- ffbf163: canConnect now checks JSON schema compatibility in a much more complete way, including understanding of nested types.
+- ffbf163: canConnect now checks JSON schema compatibility in a much more
+  complete way, including understanding of nested types.
 
 ### Patch Changes
 
 - a925cf0: Add inPort and outPort functions to InspectableEdge
-- 5cf08f1: Add "wires" property to NodeDescriberContext which exposes a describe() function for getting the actual schema of a connected port if needed.
+- 5cf08f1: Add "wires" property to NodeDescriberContext which exposes a
+  describe() function for getting the actual schema of a connected port if
+  needed.
 - 8928fb7: Add section for Visual Editor documentation
-- d6706f2: Add analyzeCanConnect method to InspectablePort which is like canConnect but with detailed error messages.
-- 5447426: Add kind port to InspectablePort to tell you whether it's an input or output port
+- d6706f2: Add analyzeCanConnect method to InspectablePort which is like
+  canConnect but with detailed error messages.
+- 5447426: Add kind port to InspectablePort to tell you whether it's an input or
+  output port
 - 7e1f01c: Start rolling up .d.ts type information for the package.
 - Updated dependencies [dd783e0]
 - Updated dependencies [3aba1a4]
@@ -318,11 +384,14 @@
 - 8798514: Combine several Editor API methods to one `edit`.
 - eb64b9a: Export enum values
 - 91cb723: Teach Editor API to properly roll back multiple graph changes.
-- 3e10f0f: Introduce `DataCapability` and add support for multipart form data in `fetch`.
+- 3e10f0f: Introduce `DataCapability` and add support for multipart form data in
+  `fetch`.
 - c53ca01: Plumb `DataStore` throuh to `NodeHandlerContext`.
 - 9491266: Implement `DataStore` and a simple implementation.
-- 2ace620: Teach `InspectableGraph.describe` to correctly propagate fixed/flexible bit.
-- 37418d9: Introduce the `iframe.html` entry point for running Breadboard in an iframe.
+- 2ace620: Teach `InspectableGraph.describe` to correctly propagate
+  fixed/flexible bit.
+- 37418d9: Introduce the `iframe.html` entry point for running Breadboard in an
+  iframe.
 - 083f69c: Add validate() method to InspectableEdge
 - 5b03d96: Start using multi-edit capability when pasting nodes.
 - f0d8d67: Remove the old "star port as ad-hoc port drop zone" machinery.
@@ -358,14 +427,17 @@
 
 ### Minor Changes
 
-- 8097177: Allow output ports to be required in their schema without it turning output ports red when they are unwired
+- 8097177: Allow output ports to be required in their schema without it turning
+  output ports red when they are unwired
 - cec6d54: Introduce `InspectablePortType`.
 - 3397974: Add `InspectableNode.type()` and start using it.
 
 ### Patch Changes
 
-- ab9a4ce: Remove `runRemote` method. It is old code that doesn't work and isn't used.
-- a35406c: Add formatGraphDescriptor function which formats BGL in a deterministic way
+- ab9a4ce: Remove `runRemote` method. It is old code that doesn't work and isn't
+  used.
+- a35406c: Add formatGraphDescriptor function which formats BGL in a
+  deterministic way
 - 477e6e6: Sort more schema fields for easier comparison across serializers
 
 ## 0.19.0
@@ -393,7 +465,8 @@
 
 - fbf7a83: Apply `format` to array items.
 - 49c3aa1: Make `inputs` and `descriptor` optional for ErrorObject.
-- 416aed2: Introduce `metadata` for `NodeHandler` entries, teaching node types in Kits to describe themselves.
+- 416aed2: Introduce `metadata` for `NodeHandler` entries, teaching node types
+  in Kits to describe themselves.
 - f2eda0b: Fix lots of bugs around Tool Worker.
 - 3f9507d: Better compatibility with @breadboard-ai/build
 - Updated dependencies [416aed2]
@@ -412,7 +485,8 @@
 ### Patch Changes
 
 - c3cb25f: Make star edge fix up work in reverse, too.
-- dd810dd: Introduce `GraphChangeEvent.visualOnly` to indicate that only visual metadata was updated.
+- dd810dd: Introduce `GraphChangeEvent.visualOnly` to indicate that only visual
+  metadata was updated.
 - 7bafa40: Introduce `graphchangereject` event in Editor API.
 - 2932f4b: Remove `schema` from `output` ports.
 
@@ -480,7 +554,8 @@
 - 04d5420: Adds describer to GraphToKitAdapter
 - 1b48826: Introduce `GraphProvider` and make it pluggable.
 - 3e8cfcf: Teach `InspectableRunNodeEvent` about `InspectableNode`.
-- 986af39: Update GraphProvider to support additional methods; land IDBGraphProvider
+- 986af39: Update GraphProvider to support additional methods; land
+  IDBGraphProvider
 - eabd97b: Introduce the concept of log levels in Run Inspector API.
 - 2008f69: Teach breadboard to load custom URL types.
 - a8fc3f3: Teach `GraphProvider` to watch for file change notifications.
@@ -489,7 +564,8 @@
 ### Patch Changes
 
 - 99446b8: Various quality improvements to schemas and Graph Inspector API.
-- a8bab08: Add support for inputs (including bubbled) to `InspectableRun.events`.
+- a8bab08: Add support for inputs (including bubbled) to
+  `InspectableRun.events`.
 - decfa29: Introduce `DebuggerGraphProvider`.
 - dcfdc37: Implement handling subgraphs in Run Inspector API.
 - d971aad: Add documentation for Run Inspector API.
@@ -501,7 +577,8 @@
 - ad5c1be: Introduce Tool Worker node in Agent Kit.
 - 4a4a1f6: Place unfinished sidecar events at the bottom of the event list.
 - bac9bb1: Bring loader machinery closer to cacheable load state.
-- 3c497b0: Use esbuild.build to compile the boards. This enables importing modules.
+- 3c497b0: Use esbuild.build to compile the boards. This enables importing
+  modules.
 - c0f785a: Shift more URL-resolution logic into the Loader.
 - 32cfbaf: Optimistically create edge instances during cache miss.
 - 8dc4e00: Fix a race condition in Worker transport.
@@ -509,7 +586,8 @@
 - dd2cce6: Make graph editor work with stable `InspectableEdge`.
 - cac4f4f: Add `InspectableRunEvent.id`.
 - b1fc53b: Teach `breadboard debug` to load PaLM Kit dynamically.
-- ef05634: Allow node describe() and invoke() to work as long as an object provides those properties
+- ef05634: Allow node describe() and invoke() to work as long as an object
+  provides those properties
 - Updated dependencies [f005b3b]
 - Updated dependencies [9b8e732]
 - Updated dependencies [4a4a1f6]
@@ -544,15 +622,18 @@
 - ee00249: Introduce `NodeMetadata`.
 - c13513f: Introduce Inspector API (a little baby one)
 - c804ccc: Introduce the `InspectablePort.edges` property.
-- 53406ad: Zod Schema is no longer supported. JSON Schema should be used instead.
+- 53406ad: Zod Schema is no longer supported. JSON Schema should be used
+  instead.
 - 4c5b853: Implement output bubbling.
 - 3f3f090: Teach `jsonata` and `invoke` nodes to better describe themselves.
-- d7a7903: Added support for describing inputs, outputs, and subgraphs in Inspector API.
+- d7a7903: Added support for describing inputs, outputs, and subgraphs in
+  Inspector API.
 - f6e9b2c: Teach the Breadboard CLI how to use proxies
 
 ### Patch Changes
 
-- 9a76a87: Various fixes to Editor API found while playing with the visual editor.
+- 9a76a87: Various fixes to Editor API found while playing with the visual
+  editor.
 - 56954c1: Introduce `InspectableNode.ports`, which enumerates ports of a node.
 - 0ef9ec5: Added documentation for Inspector API.
 - 56ccae5: Introduce a way to inspect kits.
@@ -593,14 +674,16 @@
 
 ### Minor Changes
 
-- 8eccdad: [breadboard-cli] Improvements to OpenAPI import to handle parameters as dynamic inputs and input config files
+- 8eccdad: [breadboard-cli] Improvements to OpenAPI import to handle parameters
+  as dynamic inputs and input config files
 - 6e8c08d: remove breadboard json schema
 
 ### Patch Changes
 
 - 780909c: Stop displaying subgraphs in Breadboard Debugger.
 - bba68fd: Write the introduction in the "Happy Path" doc.
-- b557794: The "recipe" function is now called "board". A "recipe" alias is still exported to ease migration.
+- b557794: The "recipe" function is now called "board". A "recipe" alias is
+  still exported to ease migration.
 - a9206fc: Firm up the error return type.
 - 931a95b: Introduce richer error reporting to the harness.
 
@@ -629,14 +712,19 @@
 - The `/ui` submodule changes:
   - supports multiple simultaneous inputs
   - does not ask for keys more than once per session
-  - if you specify `type: "object"` for an input, it will try to parse it as JSON data and pass as an object.
+  - if you specify `type: "object"` for an input, it will try to parse it as
+    JSON data and pass as an object.
   - draw Mermaid diagrams of the boards
   - there's now a link to the running board in the UI.
 - The `/worker` submodule changes:
-  - bug fixes (will actually queue received messages and not drop them on the floor)
-- The following nodes moved out into the Core Kit: `passthrough`, `reflect`, `slot`, `include`, `import`, and `invoke`.
-- The `run` method now takes a `NodeHandlerContext` object as its argument, rather than a list of arguments.
-- Kits are no longer implicitly imported by Breadboard. Instead, supply loaded Kits as part `NodeHandlerContext` to `run`.
+  - bug fixes (will actually queue received messages and not drop them on the
+    floor)
+- The following nodes moved out into the Core Kit: `passthrough`, `reflect`,
+  `slot`, `include`, `import`, and `invoke`.
+- The `run` method now takes a `NodeHandlerContext` object as its argument,
+  rather than a list of arguments.
+- Kits are no longer implicitly imported by Breadboard. Instead, supply loaded
+  Kits as part `NodeHandlerContext` to `run`.
 
 ## [0.4.1] - 2023-10-20
 
@@ -650,18 +738,24 @@
 
 - **M2 Release**
 - Added minified build artifacts.
-- Three new nodes: `invoke`, `import`, and `lambda` (see [documentation](https://github.com/breadboard-ai/breadboard/blob/13601657112736ccccb083ed3e167f7e2ae05928/packages/breadboard/docs/nodes.md))
+- Three new nodes: `invoke`, `import`, and `lambda` (see
+  [documentation](https://github.com/breadboard-ai/breadboard/blob/13601657112736ccccb083ed3e167f7e2ae05928/packages/breadboard/docs/nodes.md))
 - Deprecated `include` node (the `invoke` node replaces it)
 - Rolled `graph-runner` package in. This package now has zero prod dependencies.
 - Added a way for nodes to describe themselves in `NodeHandler`.
 - All nodes now describe themselves using the mechanism above.
 - Added `SchemaBuilder` for easy building of node descriptions.
 - Added `/kits` submodule as a future place for easily creating kits
-- Added `GenericKit` abstraction for automatically generating kits from handlers.
-- Added `/ui` submodule as the future place for simple Web-based UI for Breadboard.
-- Added `/worker` submodule as the future place way to build Breadboard-based Web Workers.
-- Added the notion of subgraphs (graphs that are embedded into a larger `GraphDescriptor`).
-- Edge inputs are now queued (fixes the issue of new outputs overwriting old ones)
+- Added `GenericKit` abstraction for automatically generating kits from
+  handlers.
+- Added `/ui` submodule as the future place for simple Web-based UI for
+  Breadboard.
+- Added `/worker` submodule as the future place way to build Breadboard-based
+  Web Workers.
+- Added the notion of subgraphs (graphs that are embedded into a larger
+  `GraphDescriptor`).
+- Edge inputs are now queued (fixes the issue of new outputs overwriting old
+  ones)
 - Node outputs are now asynchronous
 - Lots of fixes and love and care.
 
@@ -671,18 +765,30 @@
 
 ## [0.3.0] - 2023-09-15
 
-- There is no more `seeksInput` property on `RunResult`. Instead, the `type` property will tell us why the board paused. Currently, three valid results are `input`, `output`, and `beforehandler`. The first two existed before. The third one now interrupts before running every node.
-- The boards now can store metadata about them. See https://github.com/breadboard-ai/breadboard/blob/main/packages/graph-playground/graphs/call-react-with-slot.json for an example. Yes, you can put Markdown in description.
-- The boards now have URLs associated with them. When a board is loaded from a URL, the `url` property will reflect that value. All subsequent URLs are resolved relative to the URL of the board.
-- If the URL is not supplied, the board is assumed to have a URL of the current working directory of whatever loaded the board.
-- There's a `ResultRun.isAtExitNode` method that reports true if the currently visited node is an exit node for the graph.
-- There's a `Board.runRemote` method that allows running a board remotely (powered by `packages/breadboard-server`). This functionality is nascent and may not work exactly as expected.
+- There is no more `seeksInput` property on `RunResult`. Instead, the `type`
+  property will tell us why the board paused. Currently, three valid results are
+  `input`, `output`, and `beforehandler`. The first two existed before. The
+  third one now interrupts before running every node.
+- The boards now can store metadata about them. See
+  https://github.com/breadboard-ai/breadboard/blob/main/packages/graph-playground/graphs/call-react-with-slot.json
+  for an example. Yes, you can put Markdown in description.
+- The boards now have URLs associated with them. When a board is loaded from a
+  URL, the `url` property will reflect that value. All subsequent URLs are
+  resolved relative to the URL of the board.
+- If the URL is not supplied, the board is assumed to have a URL of the current
+  working directory of whatever loaded the board.
+- There's a `ResultRun.isAtExitNode` method that reports true if the currently
+  visited node is an exit node for the graph.
+- There's a `Board.runRemote` method that allows running a board remotely
+  (powered by `packages/breadboard-server`). This functionality is nascent and
+  may not work exactly as expected.
 
 ## [0.2.0] - 2023-09-02
 
 - New `beforehandler` event
 - New `DebugProbe` that is useful for debugging boards
-- New `RunResult` class with `load` and `save` methods to support multi-turn and continuous runs.
+- New `RunResult` class with `load` and `save` methods to support multi-turn and
+  continuous runs.
 
 ## [0.1.1] - 2023-08-23
 

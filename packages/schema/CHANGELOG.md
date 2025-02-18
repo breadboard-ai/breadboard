@@ -1,5 +1,22 @@
 # @google-labs/breadboard-schema
 
+## 1.12.0
+
+### Minor Changes
+
+- a2e7a36: Add support for {{asset}} and {{in}} params in A2.
+- eaef053: Add support for private boards.
+- 0b1dc88: Introduce `GraphDescriptor.imports` and start using it in modules.
+- b93a70f: Introduce a more flexible way to tag and curate components.
+- 9ade1ed: Add asset type to distinguish between different kinds of graph
+  assets.
+
+### Patch Changes
+
+- 2144bc3: Teach Edit API about editing assets.
+- 782b7e4: Improve the app chat UI
+- bdf469e: Make unified server run in dev mode.
+
 ## 1.11.0
 
 ### Minor Changes
@@ -86,7 +103,8 @@
 
 ### Patch Changes
 
-- 416aed2: Introduce `metadata` for `NodeHandler` entries, teaching node types in Kits to describe themselves.
+- 416aed2: Introduce `metadata` for `NodeHandler` entries, teaching node types
+  in Kits to describe themselves.
 
 ## 1.4.0
 

@@ -1,5 +1,130 @@
 # @breadboard-ai/bbrt
 
+## 0.2.0
+
+### Minor Changes
+
+- 63a1930: Introduce presentation hints and icon on Schema.
+
+### Patch Changes
+
+- 9bb5021: Tool calls are now one concise line, with an expander to see all the
+  details.
+- 69f3646: Automatically display file when model writes to it
+- Updated dependencies [6c223a9]
+- Updated dependencies [a1109c1]
+- Updated dependencies [56b58cf]
+- Updated dependencies [b3a39ad]
+- Updated dependencies [976928d]
+- Updated dependencies [efd3a58]
+- Updated dependencies [2144bc3]
+- Updated dependencies [91b0af7]
+- Updated dependencies [3af8f62]
+- Updated dependencies [c737f6b]
+- Updated dependencies [032cf64]
+- Updated dependencies [62af787]
+- Updated dependencies [b8f540d]
+- Updated dependencies [59d6fe7]
+- Updated dependencies [77c6a67]
+- Updated dependencies [9937f23]
+- Updated dependencies [925e4bf]
+- Updated dependencies [e178790]
+- Updated dependencies [220f27a]
+- Updated dependencies [9ffe9ee]
+- Updated dependencies [9dffc14]
+- Updated dependencies [43f5402]
+- Updated dependencies [f11be69]
+- Updated dependencies [228eafd]
+- Updated dependencies [dbb0eeb]
+- Updated dependencies [67561d6]
+- Updated dependencies [4fc44ab]
+- Updated dependencies [f1f9d2f]
+- Updated dependencies [99e2899]
+- Updated dependencies [724069f]
+- Updated dependencies [389c631]
+- Updated dependencies [c6f9889]
+- Updated dependencies [6a66a0e]
+- Updated dependencies [a2b9fca]
+- Updated dependencies [a2e7a36]
+- Updated dependencies [06bf630]
+- Updated dependencies [95a8265]
+- Updated dependencies [263bc1c]
+- Updated dependencies [782b7e4]
+- Updated dependencies [a128d88]
+- Updated dependencies [0b07d7d]
+- Updated dependencies [7edd2fc]
+- Updated dependencies [6b6052c]
+- Updated dependencies [65f89e0]
+- Updated dependencies [750499a]
+- Updated dependencies [a10abfd]
+- Updated dependencies [0ad7660]
+- Updated dependencies [9ba6ea3]
+- Updated dependencies [10fee14]
+- Updated dependencies [73007eb]
+- Updated dependencies [0cfe873]
+- Updated dependencies [d1790e9]
+- Updated dependencies [9843e23]
+- Updated dependencies [eaef053]
+- Updated dependencies [0b1dc88]
+- Updated dependencies [83bdea5]
+- Updated dependencies [a44e8bc]
+- Updated dependencies [2e76cc4]
+- Updated dependencies [e39ea7e]
+- Updated dependencies [81de97c]
+- Updated dependencies [570a652]
+- Updated dependencies [75a2030]
+- Updated dependencies [1fd4aaa]
+- Updated dependencies [580ec08]
+- Updated dependencies [a8cca57]
+- Updated dependencies [c5adbdf]
+- Updated dependencies [c9fc7b0]
+- Updated dependencies [5e1e24c]
+- Updated dependencies [0ece0b1]
+- Updated dependencies [74124b8]
+- Updated dependencies [4904e2a]
+- Updated dependencies [664db61]
+- Updated dependencies [69d315b]
+- Updated dependencies [0ac4ee9]
+- Updated dependencies [be771bf]
+- Updated dependencies [63a1930]
+- Updated dependencies [4a7ab2b]
+- Updated dependencies [13dfac3]
+- Updated dependencies [7895c03]
+- Updated dependencies [b93a70f]
+- Updated dependencies [26b1194]
+- Updated dependencies [3806187]
+- Updated dependencies [c6fbe92]
+- Updated dependencies [b17362c]
+- Updated dependencies [f2d0061]
+- Updated dependencies [235f33d]
+- Updated dependencies [aec9a8f]
+- Updated dependencies [7c64db3]
+- Updated dependencies [c434112]
+- Updated dependencies [fc11aeb]
+- Updated dependencies [e81078e]
+- Updated dependencies [30b8f91]
+- Updated dependencies [fc2dda1]
+- Updated dependencies [881f8ab]
+- Updated dependencies [627a1fc]
+- Updated dependencies [dd0015e]
+- Updated dependencies [b7b39a4]
+- Updated dependencies [39ad0f0]
+- Updated dependencies [3d6e573]
+- Updated dependencies [3460bf4]
+- Updated dependencies [2962093]
+- Updated dependencies [40a8568]
+- Updated dependencies [2429df0]
+- Updated dependencies [8e2fc1f]
+  - @breadboard-ai/connection-client@0.2.0
+  - @breadboard-ai/shared-ui@1.23.0
+  - @google-labs/breadboard@0.32.0
+  - @google-labs/agent-kit@0.16.0
+  - @breadboard-ai/google-drive-kit@0.5.0
+  - @google-labs/core-kit@0.18.0
+  - @google-labs/gemini-kit@0.11.1
+  - @google-labs/json-kit@0.3.15
+  - @google-labs/template-kit@0.3.17
+
 ## 0.1.0
 
 ### Minor Changes

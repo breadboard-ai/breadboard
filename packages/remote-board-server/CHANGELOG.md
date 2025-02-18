@@ -1,5 +1,55 @@
 # @breadboard-ai/remote-board-server
 
+## 1.20.0
+
+### Minor Changes
+
+- 59d6fe7: Store assets as references to blobs.
+- c6f9889: Start all new graphs with a really blank template.
+- eaef053: Add support for private boards.
+- 9116578: Teach visual editor about non-root board servers.
+- 2429df0: Teach board server to use access tokens.
+
+### Patch Changes
+
+- bdf469e: Make unified server run in dev mode.
+- Updated dependencies [6c223a9]
+- Updated dependencies [2144bc3]
+- Updated dependencies [3af8f62]
+- Updated dependencies [59d6fe7]
+- Updated dependencies [925e4bf]
+- Updated dependencies [220f27a]
+- Updated dependencies [c6f9889]
+- Updated dependencies [a2e7a36]
+- Updated dependencies [782b7e4]
+- Updated dependencies [6b6052c]
+- Updated dependencies [65f89e0]
+- Updated dependencies [0ad7660]
+- Updated dependencies [10fee14]
+- Updated dependencies [eaef053]
+- Updated dependencies [0b1dc88]
+- Updated dependencies [83bdea5]
+- Updated dependencies [e39ea7e]
+- Updated dependencies [bdf469e]
+- Updated dependencies [c9fc7b0]
+- Updated dependencies [74124b8]
+- Updated dependencies [63a1930]
+- Updated dependencies [b93a70f]
+- Updated dependencies [26b1194]
+- Updated dependencies [b17362c]
+- Updated dependencies [9ade1ed]
+- Updated dependencies [12aea89]
+- Updated dependencies [881f8ab]
+- Updated dependencies [83a5186]
+- Updated dependencies [40a8568]
+- Updated dependencies [8e2fc1f]
+  - @breadboard-ai/connection-client@0.2.0
+  - @google-labs/breadboard@0.32.0
+  - @google-labs/breadboard-schema@1.12.0
+  - @breadboard-ai/types@0.5.0
+  - @breadboard-ai/build@0.12.0
+  - @breadboard-ai/data-store@0.3.1
+
 ## 1.19.2
 
 ### Patch Changes

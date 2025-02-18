@@ -1,10 +1,103 @@
 # @google-labs/breadboard-cli
 
+## 0.13.0
+
+### Minor Changes
+
+- db124b2: Switch Visual Editor and Unified Server to use statically-linked
+  kits.
+
+### Patch Changes
+
+- Updated dependencies [6c223a9]
+- Updated dependencies [b3a39ad]
+- Updated dependencies [70a0896]
+- Updated dependencies [efd3a58]
+- Updated dependencies [2144bc3]
+- Updated dependencies [91b0af7]
+- Updated dependencies [db124b2]
+- Updated dependencies [3af8f62]
+- Updated dependencies [c737f6b]
+- Updated dependencies [59d6fe7]
+- Updated dependencies [925e4bf]
+- Updated dependencies [e178790]
+- Updated dependencies [220f27a]
+- Updated dependencies [9ffe9ee]
+- Updated dependencies [9dffc14]
+- Updated dependencies [43f5402]
+- Updated dependencies [f11be69]
+- Updated dependencies [67561d6]
+- Updated dependencies [99e2899]
+- Updated dependencies [724069f]
+- Updated dependencies [389c631]
+- Updated dependencies [c6f9889]
+- Updated dependencies [a2b9fca]
+- Updated dependencies [a2e7a36]
+- Updated dependencies [95a8265]
+- Updated dependencies [263bc1c]
+- Updated dependencies [782b7e4]
+- Updated dependencies [a128d88]
+- Updated dependencies [0b07d7d]
+- Updated dependencies [7edd2fc]
+- Updated dependencies [6b6052c]
+- Updated dependencies [65f89e0]
+- Updated dependencies [750499a]
+- Updated dependencies [0ad7660]
+- Updated dependencies [948b50c]
+- Updated dependencies [10fee14]
+- Updated dependencies [0cfe873]
+- Updated dependencies [9843e23]
+- Updated dependencies [491b152]
+- Updated dependencies [eaef053]
+- Updated dependencies [0b1dc88]
+- Updated dependencies [83bdea5]
+- Updated dependencies [a44e8bc]
+- Updated dependencies [e39ea7e]
+- Updated dependencies [bdf469e]
+- Updated dependencies [75a2030]
+- Updated dependencies [44d6e2e]
+- Updated dependencies [c7c9a9c]
+- Updated dependencies [a8cca57]
+- Updated dependencies [c5adbdf]
+- Updated dependencies [c9fc7b0]
+- Updated dependencies [5e1e24c]
+- Updated dependencies [74124b8]
+- Updated dependencies [664db61]
+- Updated dependencies [f6223cd]
+- Updated dependencies [69d315b]
+- Updated dependencies [be771bf]
+- Updated dependencies [63a1930]
+- Updated dependencies [4a7ab2b]
+- Updated dependencies [79ba6e1]
+- Updated dependencies [7895c03]
+- Updated dependencies [b93a70f]
+- Updated dependencies [26b1194]
+- Updated dependencies [b17362c]
+- Updated dependencies [235f33d]
+- Updated dependencies [b4b09a2]
+- Updated dependencies [c434112]
+- Updated dependencies [30b8f91]
+- Updated dependencies [fc2dda1]
+- Updated dependencies [881f8ab]
+- Updated dependencies [dd0015e]
+- Updated dependencies [3d6e573]
+- Updated dependencies [3460bf4]
+- Updated dependencies [40a8568]
+- Updated dependencies [2429df0]
+- Updated dependencies [8e2fc1f]
+  - @breadboard-ai/visual-editor@1.26.0
+  - @google-labs/breadboard@0.32.0
+  - @google-labs/core-kit@0.18.0
+  - @breadboard-ai/build@0.12.0
+  - @breadboard-ai/import@0.1.15
+  - @google-labs/template-kit@0.3.17
+
 ## 0.12.1
 
 ### Patch Changes
 
-- 78da2ab: Revert rollup bump 4.25.0 to 4.27.1, because it causes build to be super-slow.
+- 78da2ab: Revert rollup bump 4.25.0 to 4.27.1, because it causes build to be
+  super-slow.
 - Updated dependencies [25dd1c2]
 - Updated dependencies [45c7e5f]
 - Updated dependencies [f880be7]
@@ -165,7 +258,8 @@
 
 ### Patch Changes
 
-- 526f310: Teach JSandbox to handle errors and load "breadboard:capabilities" import
+- 526f310: Teach JSandbox to handle errors and load "breadboard:capabilities"
+  import
 - Updated dependencies [4fb645c]
 - Updated dependencies [b0fae7a]
 - Updated dependencies [9d5d6d9]
@@ -752,7 +846,8 @@
 
 ### Patch Changes
 
-- a35406c: Add --format flag to make command which formats BGL in a deterministic way
+- a35406c: Add --format flag to make command which formats BGL in a
+  deterministic way
 - Updated dependencies [8097177]
 - Updated dependencies [8774855]
 - Updated dependencies [1b596d4]
@@ -1035,7 +1130,8 @@
 
 - c3303a6: Adds --kit to `breadboard debug`
 - b3beb36: Support loading kits via URL (both heavy and light kits)
-- 3c497b0: Use esbuild.build to compile the boards. This enables importing modules.
+- 3c497b0: Use esbuild.build to compile the boards. This enables importing
+  modules.
 - a8fc3f3: Teach `GraphProvider` to watch for file change notifications.
 
 ### Patch Changes
@@ -1044,7 +1140,8 @@
 - 6e631c4: Load agent-kit via manifest dynamically.
 - c4f887b: Use simpler URLs in debugger.
 - 2e3f0dc: Mark Node-specific packages as external
-- 7ad0e2d: Updating `breadboard import` to use TypeScript and not board syntax. It changes the way boards work and can be called (no longer uses args)
+- 7ad0e2d: Updating `breadboard import` to use TypeScript and not board syntax.
+  It changes the way boards work and can be called (no longer uses args)
 - 1bbd16a: Start loading all heavy kits dynamically.
 - b1fc53b: Teach `breadboard debug` to load PaLM Kit dynamically.
 - Updated dependencies [f73c637]
@@ -1238,11 +1335,13 @@
 
 ### Minor Changes
 
-- 8eccdad: [breadboard-cli] Improvements to OpenAPI import to handle parameters as dynamic inputs and input config files
+- 8eccdad: [breadboard-cli] Improvements to OpenAPI import to handle parameters
+  as dynamic inputs and input config files
 
 ### Patch Changes
 
-- 42a2b38: Updating the import board to dynamically resolve inputs for an API defined via OpenAPI
+- 42a2b38: Updating the import board to dynamically resolve inputs for an API
+  defined via OpenAPI
 - Updated dependencies [67073c8]
 - Updated dependencies [8eccdad]
 - Updated dependencies [6e8c08d]

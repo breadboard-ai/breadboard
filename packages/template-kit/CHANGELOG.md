@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.3.17
+
+### Patch Changes
+
+- Updated dependencies [2144bc3]
+- Updated dependencies [3af8f62]
+- Updated dependencies [59d6fe7]
+- Updated dependencies [925e4bf]
+- Updated dependencies [220f27a]
+- Updated dependencies [c6f9889]
+- Updated dependencies [a2e7a36]
+- Updated dependencies [6b6052c]
+- Updated dependencies [65f89e0]
+- Updated dependencies [0ad7660]
+- Updated dependencies [10fee14]
+- Updated dependencies [0b1dc88]
+- Updated dependencies [83bdea5]
+- Updated dependencies [e39ea7e]
+- Updated dependencies [c9fc7b0]
+- Updated dependencies [74124b8]
+- Updated dependencies [63a1930]
+- Updated dependencies [b93a70f]
+- Updated dependencies [26b1194]
+- Updated dependencies [b17362c]
+- Updated dependencies [881f8ab]
+- Updated dependencies [8e2fc1f]
+  - @google-labs/breadboard@0.32.0
+  - @breadboard-ai/build@0.12.0
+
 ## 0.3.16
 
 ### Patch Changes
@@ -245,7 +274,8 @@
 
 ### Patch Changes
 
-- 15b6171: The wildcard input for urlTemplate now accepts "number" as well as "string"
+- 15b6171: The wildcard input for urlTemplate now accepts "number" as well as
+  "string"
 - 8edcbc0: Update Template and Core Kit to jive with docs.
 - 9a2ffab: Unpin @breadboard-ai/build dependency from being overly constrained
 - Updated dependencies [ad8aa22]
@@ -382,14 +412,19 @@
 
 ### Minor Changes
 
-- 18b9f34: Convert template-kit to new @breadboard-ai/build package. Should be a no-op.
-- 34d9c6d: prompt-template is now slightly more correct in its description (object vs any JSON value)
-- 4d6ce42: Expand the exports of template-kit to allow internal types to be referenced (but still prevent JS from actually being imported at runtime)
+- 18b9f34: Convert template-kit to new @breadboard-ai/build package. Should be a
+  no-op.
+- 34d9c6d: prompt-template is now slightly more correct in its description
+  (object vs any JSON value)
+- 4d6ce42: Expand the exports of template-kit to allow internal types to be
+  referenced (but still prevent JS from actually being imported at runtime)
 
 ### Patch Changes
 
-- d7829a1: Add a prompt`...` tagged template literal function to more safely/concisely instantiate promptTemplate nodes.
-- 416aed2: Introduce `metadata` for `NodeHandler` entries, teaching node types in Kits to describe themselves.
+- d7829a1: Add a prompt`...` tagged template literal function to more
+  safely/concisely instantiate promptTemplate nodes.
+- 416aed2: Introduce `metadata` for `NodeHandler` entries, teaching node types
+  in Kits to describe themselves.
 - 1aa96c6: Allow undefined template in describer.
 - Updated dependencies [3f9507d]
 - Updated dependencies [cef20ca]

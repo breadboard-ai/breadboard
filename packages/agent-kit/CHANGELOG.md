@@ -1,5 +1,27 @@
 # @google-labs/agent-kit
 
+## 0.16.0
+
+### Minor Changes
+
+- 925e4bf: Introduce "main-port" behavior and start using it.
+- 63a1930: Introduce presentation hints and icon on Schema.
+
+### Patch Changes
+
+- Updated dependencies [2144bc3]
+- Updated dependencies [a2e7a36]
+- Updated dependencies [782b7e4]
+- Updated dependencies [eaef053]
+- Updated dependencies [0b1dc88]
+- Updated dependencies [63a1930]
+- Updated dependencies [b93a70f]
+- Updated dependencies [9ade1ed]
+- Updated dependencies [12aea89]
+- Updated dependencies [83a5186]
+  - @breadboard-ai/types@0.5.0
+  - @breadboard-ai/build@0.12.0
+
 ## 0.15.0
 
 ### Minor Changes
@@ -79,7 +101,8 @@
 ### Patch Changes
 
 - 1e7fafd: Various bug fixes
-- e3a469e: Use new build-code package to implement agent-kit substitute component
+- e3a469e: Use new build-code package to implement agent-kit substitute
+  component
 - Updated dependencies [690ebe6]
   - @breadboard-ai/build@0.10.1
 
@@ -90,7 +113,8 @@
 - f61ccf3: Introduce URL-based component types.
 - f0b5ccc: Delete tool-worker
 - 8540b93: Convert Content to Build API and merge Specialist 2 to Specialist.
-- 4c03455: Introduce Specialist 2 and make Content component support LLM Content.
+- 4c03455: Introduce Specialist 2 and make Content component support LLM
+  Content.
 - 84ca649: Introduce the "Content" component.
 - 94759f7: Teach Specialist about routing.
 
@@ -98,13 +122,15 @@
 
 - f94f498: Convert structured worker to build API
 - 4e0a4f6: Convert looper to build API
-- 58d2e8c: The joiner board has been converted to the new Build API. Should have no functional effect.
+- 58d2e8c: The joiner board has been converted to the new Build API. Should have
+  no functional effect.
 - 679719b: Convert specialist to build api
 - 9b62fc2: Use new build API kit function
 - e63b5dd: Polish Specialist and Content.
 - 74d50d4: Convert repeater to Build API (should be a no-op).
 - 9ce8ad3: Fix schemas of persona and task
-- 7fdf9c2: Add "gemini-1.5-pro-exp-0827" to the choices in Gemini-calling components.
+- 7fdf9c2: Add "gemini-1.5-pro-exp-0827" to the choices in Gemini-calling
+  components.
 - e38bf19: Set titles for done and loop outputs of looper
 - 100fc95: Various fixes and polish.
 - e026112: Remind Specialist that it doesn't accept dynamic wires.
@@ -158,7 +184,8 @@
 
 ### Patch Changes
 
-- b201e07: Implement edge-based UI in board-server (and fix a bunch of bugs elsewhere)
+- b201e07: Implement edge-based UI in board-server (and fix a bunch of bugs
+  elsewhere)
 - e0dccfe: Add empty text default to Human input.
 - Updated dependencies [cc5f4b6]
 - Updated dependencies [a940b87]
@@ -205,7 +232,8 @@
 
 ### Minor Changes
 
-- bac5642: Teach Specialist a bit more about joining multiple tool contexts (the "single" mode).
+- bac5642: Teach Specialist a bit more about joining multiple tool contexts (the
+  "single" mode).
 - 16e50fb: Teach Joiner to merge contexts.
 - f0b68d0: Teach Human about multimodal inputs.
 - b44de19: Teach Specialist to receive LLM Content as tool output.
@@ -215,7 +243,8 @@
 - b7dab90: Teach Specialist about parallel function calls.
 - c52e81d: Skip over metadata when merging contexts.
 - 4db3ab7: Teach Specialist to pass context to tools.
-- 2ace620: Teach `InspectableGraph.describe` to correctly propagate fixed/flexible bit.
+- 2ace620: Teach `InspectableGraph.describe` to correctly propagate
+  fixed/flexible bit.
 
 ### Patch Changes
 
@@ -250,7 +279,8 @@
 - 40ce086: Start passing tasks via metadata.
 - 8838ba7: Clean up metadata after a looper run.
 - d10f568: Various bug fixes to help looper and specialist work better.
-- 74434ea: Teach Looper that step-by-step jobs and until-done jobs are mutually exclusive.
+- 74434ea: Teach Looper that step-by-step jobs and until-done jobs are mutually
+  exclusive.
 
 ## 0.6.0
 

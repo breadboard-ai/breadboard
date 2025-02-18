@@ -1,5 +1,43 @@
 # Changelog
 
+## 0.12.0
+
+### Minor Changes
+
+- 63a1930: Introduce presentation hints and icon on Schema.
+
+### Patch Changes
+
+- Updated dependencies [2144bc3]
+- Updated dependencies [3af8f62]
+- Updated dependencies [59d6fe7]
+- Updated dependencies [925e4bf]
+- Updated dependencies [220f27a]
+- Updated dependencies [c6f9889]
+- Updated dependencies [a2e7a36]
+- Updated dependencies [782b7e4]
+- Updated dependencies [6b6052c]
+- Updated dependencies [65f89e0]
+- Updated dependencies [0ad7660]
+- Updated dependencies [10fee14]
+- Updated dependencies [eaef053]
+- Updated dependencies [0b1dc88]
+- Updated dependencies [83bdea5]
+- Updated dependencies [e39ea7e]
+- Updated dependencies [c9fc7b0]
+- Updated dependencies [74124b8]
+- Updated dependencies [63a1930]
+- Updated dependencies [b93a70f]
+- Updated dependencies [26b1194]
+- Updated dependencies [b17362c]
+- Updated dependencies [9ade1ed]
+- Updated dependencies [12aea89]
+- Updated dependencies [881f8ab]
+- Updated dependencies [83a5186]
+- Updated dependencies [8e2fc1f]
+  - @google-labs/breadboard@0.32.0
+  - @breadboard-ai/types@0.5.0
+
 ## 0.11.1
 
 ### Patch Changes
@@ -159,27 +197,30 @@
 ### Patch Changes
 
 - 49e2740: Allow passing a raw GraphDescriptor to Build API kit function
-- 2f1b85c: When wiring star output to a node, the input port needs to be empty string instead of star.
+- 2f1b85c: When wiring star output to a node, the input port needs to be empty
+  string instead of star.
 - c145fdd: Add bubble parameter to outputNode function
 - 226be62: Support logLevel metadata
 - 2fa05f0: Export some additional types
 - f71bcfb: Add a Breadboard Type Expression to represent JSON schema itself.
 
-  For now this is using our Schema type, and a generic object schema
-  with the json-schema behavior. In the future we can switch this to
-  the official JSON Schema types, and a {$ref} schema for the official
-  JSON Schema schema.
+  For now this is using our Schema type, and a generic object schema with the
+  json-schema behavior. In the future we can switch this to the official JSON
+  Schema types, and a {$ref} schema for the official JSON Schema schema.
 
 - 3188607: Get titles/descriptions from either metadata or toplevel
 - 8330f0c: Add rawInput function
 - 1423647: Fix incorrect JSON Schema for jsonSchema
-- 6cdf20c: The anyOf function now hoists out any common "type" it finds, to help with code in breadboard that assumes there is always a top-level type (e.g. when visual editor looks for llm-content).
+- 6cdf20c: The anyOf function now hoists out any common "type" it finds, to help
+  with code in breadboard that assumes there is always a top-level type (e.g.
+  when visual editor looks for llm-content).
 - f63a497: Fix incorrect position of deprecated behavior
 - 91fe8bb: Allow annotating output ports as deprecated
 - 100fc95: Various fixes and polish.
 - cab83ce: Allow wiring up a board's $error
 - e19f046: Allow setting $id and $metadata when initializing a board instance
-- 5834c81: Components imported through kit objects are now serialized directly with "type" instead of via an invoke node.
+- 5834c81: Components imported through kit objects are now serialized directly
+  with "type" instead of via an invoke node.
 - 0ef793f: Export ConvertBreadboardType utility
 - Updated dependencies [703f17d]
 - Updated dependencies [6136d87]
@@ -212,10 +253,15 @@
 ### Patch Changes
 
 - bbcdd2d: Ensure descriptions survive kitification
-- 9ed58cf: Add starInputs function to get a handle on the "\*" input port of a board
+- 9ed58cf: Add starInputs function to get a handle on the "\*" input port of a
+  board
 - 7f2ef33: Improve generated typings of legacy api bridge function
-- bac2e35: Adds a legacy() function to the result of calling kit(). It's a function that asynchronously returns a kit that is automatically built with and type for the old API, allowing new API kits to be used directly in old boards.
-- ec2fedd: Improvements to the describe() behavior of boards built with the Build API that are polymorphic.
+- bac2e35: Adds a legacy() function to the result of calling kit(). It's a
+  function that asynchronously returns a kit that is automatically built with
+  and type for the old API, allowing new API kits to be used directly in old
+  boards.
+- ec2fedd: Improvements to the describe() behavior of boards built with the
+  Build API that are polymorphic.
 - Updated dependencies [7d46a63]
   - @google-labs/breadboard@0.26.0
 
@@ -223,15 +269,19 @@
 
 ### Minor Changes
 
-- cc5f4b6: Changes to the signature of the board function. Introduces new inputNode and outputNode functions which are used for polymorphic boards.
-- a940b87: The kit function now takes components as an object instead of an array.
+- cc5f4b6: Changes to the signature of the board function. Introduces new
+  inputNode and outputNode functions which are used for polymorphic boards.
+- a940b87: The kit function now takes components as an object instead of an
+  array.
 - 7de241c: Remove `BoardRunner`.
 
 ### Patch Changes
 
 - 374ea85: Internal refactoring (branding)
-- f93ec06: Reflect when an input is optional by making its type parameter possibly undefined.
-- 398bf4f: Behaviors added with the annotate function are now additive instead of clobbery.
+- f93ec06: Reflect when an input is optional by making its type parameter
+  possibly undefined.
+- 398bf4f: Behaviors added with the annotate function are now additive instead
+  of clobbery.
 - Updated dependencies [49b3612]
 - Updated dependencies [e0dccfe]
 - Updated dependencies [6404cb3]
@@ -255,7 +305,9 @@
 
 ### Patch Changes
 
-- d88c37b: Add support for JSON Schema string formatting options with a new `string` function that takes an options object with format, pattern, minLength, and maxLength.
+- d88c37b: Add support for JSON Schema string formatting options with a new
+  `string` function that takes an options object with format, pattern,
+  minLength, and maxLength.
 - Updated dependencies [8c694ed]
 - Updated dependencies [bbf2c30]
 - Updated dependencies [14df6a8]
@@ -279,7 +331,8 @@
 ### Patch Changes
 
 - ad8aa22: Add kit function to build for making kits
-- f78ec0a: Add intersect function to breadboard type expressions system for intersecting two objects
+- f78ec0a: Add intersect function to breadboard type expressions system for
+  intersecting two objects
 - b76f9a1: Add id, metadata, and breadboardType to component definition classes
 - 15ae381: Fix optional output serialization
 - Updated dependencies [1e1be2a]
@@ -297,8 +350,11 @@
 ### Patch Changes
 
 - da43bb5: Allow wiring inputs directly to outputs
-- 5cf08f1: Add "wires" property to NodeDescriberContext which exposes a describe() function for getting the actual schema of a connected port if needed.
-- 9d93cf8: Fix bug relating to directly returning JSON Schema from describe function instead of wrapping with unsafeSchema.
+- 5cf08f1: Add "wires" property to NodeDescriberContext which exposes a
+  describe() function for getting the actual schema of a connected port if
+  needed.
+- 9d93cf8: Fix bug relating to directly returning JSON Schema from describe
+  function instead of wrapping with unsafeSchema.
 - 26e1099: Add describe function to Board component class
 - Updated dependencies [a925cf0]
 - Updated dependencies [5cf08f1]
@@ -314,8 +370,10 @@
 ### Minor Changes
 
 - 14853d5: Add Gemini Nano node.
-- 6ada218: Input ports with the "board" behavior can now receive board objects declared using the build API. This will be serialized as an embedded graph.
-- 2ace620: Teach `InspectableGraph.describe` to correctly propagate fixed/flexible bit.
+- 6ada218: Input ports with the "board" behavior can now receive board objects
+  declared using the build API. This will be serialized as an embedded graph.
+- 2ace620: Teach `InspectableGraph.describe` to correctly propagate
+  fixed/flexible bit.
 
 ### Patch Changes
 
@@ -374,18 +432,28 @@
 - 87eb8fe: Stringify all defaults and examples
 - 60a18c5: Don't make input ports required if there is a default
 - b0ed6f3: Allow converge function to take raw values
-- 4957dc5: Improve handling of defaults in describe functions. Defaults are now always passed into the describe function, and types will be optional or not based on whether there is a default (default means it can never be undefined).
+- 4957dc5: Improve handling of defaults in describe functions. Defaults are now
+  always passed into the describe function, and types will be optional or not
+  based on whether there is a default (default means it can never be undefined).
 - a209c51: Use actual schema when auto-computing input schema
 - 7368fdd: Allow inputs to be constant
 - c9c0e06: Allow declaring objects with optional properties
-- c1acf24: Add converge function which allows wiring multiple edges to the same input port
+- c1acf24: Add converge function which allows wiring multiple edges to the same
+  input port
 - 3920805: Allow inputs to be optional
-- 3b2bb4a: Fix type system bug relating to primary input/output ports (it wasn't working quite right when there were more than one input or output ports).
-- 31cf016: Fix a bug in the @breadboard-ai/build type system that allowed node instances to be passed as board outputs even if they did not have a primary port.
+- 3b2bb4a: Fix type system bug relating to primary input/output ports (it wasn't
+  working quite right when there were more than one input or output ports).
+- 31cf016: Fix a bug in the @breadboard-ai/build type system that allowed node
+  instances to be passed as board outputs even if they did not have a primary
+  port.
 - ab43276: Fix bug where constant wouldn't always preserve type information
 - 477e6e6: Sort more schema fields for easier comparison across serializers
-- cdcbcdb: Node invoke functions can now return $error. All node instances now automatically have an outputs.$error. Throwing from an invoke function will now convert the exception to an $error result; the stack trace is logged to the server, but not shown to the end-user.
-- 791ec2a: Add `constant` function which can be used to annotate edges that should get the `constant` bit (also known as memoize).
+- cdcbcdb: Node invoke functions can now return
+  $error. All node instances now automatically have an outputs.$error. Throwing
+  from an invoke function will now convert the exception to an $error result;
+  the stack trace is logged to the server, but not shown to the end-user.
+- 791ec2a: Add `constant` function which can be used to annotate edges that
+  should get the `constant` bit (also known as memoize).
 - c0293c9: New syntax for declaring multiple inputs along with metadata
 - b6f5644: Surface a stack trace when an exception is thrown
 - 43edef6: Add support for setting $metadata when instantiating a node
@@ -409,41 +477,50 @@
 ### Minor Changes
 
 - 55a9647: Rename assertOutput to unsafeOutput
-- 1adb24c: Replace multiline field with format, which can be multiline or javascript
-- d9ac358: Convert secrets node to use @breadboard-ai/build. No functional difference, but the JSON schema should be slightly stricter.
-- 1e86a87: Allow object types to have additional properties. Additional properties are now disabled by default.
+- 1adb24c: Replace multiline field with format, which can be multiline or
+  javascript
+- d9ac358: Convert secrets node to use @breadboard-ai/build. No functional
+  difference, but the JSON schema should be slightly stricter.
+- 1e86a87: Allow object types to have additional properties. Additional
+  properties are now disabled by default.
 
 ### Patch Changes
 
-- 3f9507d: The breadboard type expression object({}) is now more strictly constrained to plain objects (rather than anything).
+- 3f9507d: The breadboard type expression object({}) is now more strictly
+  constrained to plain objects (rather than anything).
 - 1e86a87: Add enumeration type
 - 3f9507d: Simpler JSON schema serialization for array
 - 1adb24c: additionalProperties is now set on generated port JSON schemas
 - 1e86a87: Add support for default values on static inputs
 - fefd109: JSON schema for outputs no longer sets any required properties
 - c1dcb0a: Make serialization order more similar to existing one
-- 416aed2: Introduce `metadata` for `NodeHandler` entries, teaching node types in Kits to describe themselves.
+- 416aed2: Introduce `metadata` for `NodeHandler` entries, teaching node types
+  in Kits to describe themselves.
 - f1883d1: Add an output function for customizing a board's output node layout
-- 1adb24c: Inbound edges, even if they don't have a value, now inform the auto generated input schema
-- d8cb0c9: Add unsafeCast function as an escape hatch for when an output doesn't match a type but you're really really sure it's ok
+- 1adb24c: Inbound edges, even if they don't have a value, now inform the auto
+  generated input schema
+- d8cb0c9: Add unsafeCast function as an escape hatch for when an output doesn't
+  match a type but you're really really sure it's ok
 - 34d9c6d: Generated JSON schemas are now more explicit and verbose
 - e6e0168: Allow describe functions to be async
 - 1adb24c: Fix some incorrect type errors from certain describe functions.
 - 3f9507d: The describe function can now return objects with new descriptions
-- 1adb24c: Automatically detected input ports are no longer required. Only static ones.
+- 1adb24c: Automatically detected input ports are no longer required. Only
+  static ones.
 - 3f9507d: Add multiline option to port config
 - c4ca6dc: Allow setting node IDs
 - 1adb24c: Allow specifying behaviors
 - cfbcdf2: Pass NodeHandlerContext to invoke functions
 - 1d9cb16: Inputs can now have examples
-- 49da151: Allow setting id on inputs, which can be used to customize the input node id,
-  or to create multiple input nodes. If two input objects reference the same
-  id, then they will both be placed into a BGL input node with that ID. If no
-  id is specified, the usual "input-0" is used.
+- 49da151: Allow setting id on inputs, which can be used to customize the input
+  node id, or to create multiple input nodes. If two input objects reference the
+  same id, then they will both be placed into a BGL input node with that ID. If
+  no id is specified, the usual "input-0" is used.
 - 3f9507d: Simpler JSON schema serialization for anyOf
 - dfd5ce2: Input ports can now be marked as optional.
 - cfc0f15: Add support for input titles
-- 00ccb9d: Add unsafeSchema function which allows returning raw arbitrary JSON schema from a describe function
+- 00ccb9d: Add unsafeSchema function which allows returning raw arbitrary JSON
+  schema from a describe function
 - 08eabf4: Title, description, and version are now included in BGL
 - 99fcffe: describe function now receives a NodeDescriberContext
 - d9ac358: Add ability to override default port title
@@ -468,13 +545,18 @@
 
 ### Minor Changes
 
-- de524a4: Change the describe function to return only the names of ports instead of full JSON schema, and be stricter about when it is required/optional/forbidden based on the port configurations.
+- de524a4: Change the describe function to return only the names of ports
+  instead of full JSON schema, and be stricter about when it is
+  required/optional/forbidden based on the port configurations.
 
 ### Patch Changes
 
-- de524a4: Improved type-safety and type descriptions relating to node definitions.
-- de524a4: Add support for reflective nodes, where the inputs provided at instantiation automatically reflect to outputs.
-- de524a4: Add `assertOutput` method, for getting an output port in cases where it is not possible at compile-time to know what output ports will exist.
+- de524a4: Improved type-safety and type descriptions relating to node
+  definitions.
+- de524a4: Add support for reflective nodes, where the inputs provided at
+  instantiation automatically reflect to outputs.
+- de524a4: Add `assertOutput` method, for getting an output port in cases where
+  it is not possible at compile-time to know what output ports will exist.
 - de524a4: Add support for polymorphic nodes with dynamic output ports.
 - Updated dependencies [c3cb25f]
 - Updated dependencies [ae79e4a]
@@ -519,12 +601,15 @@
 
 ### Minor Changes
 
-- 7949ec9: Make "name" required when defining nodes, so that they can always be serialized
-- da2e263: Add new board function for creating boards, and serialize for making BGL from them
+- 7949ec9: Make "name" required when defining nodes, so that they can always be
+  serialized
+- da2e263: Add new board function for creating boards, and serialize for making
+  BGL from them
 
 ### Patch Changes
 
-- 949bce7: Add a Value type which can represent a value or a stand-in for a value (output port, input object, etc.)
+- 949bce7: Add a Value type which can represent a value or a stand-in for a
+  value (output port, input object, etc.)
 - Updated dependencies [e8d0737]
   - @google-labs/breadboard@0.14.0
 

@@ -1,5 +1,14 @@
 # @breadboard-ai/build-code
 
+## 0.2.2
+
+### Patch Changes
+
+- Updated dependencies [69d315b]
+- Updated dependencies [63a1930]
+  - @google-labs/core-kit@0.18.0
+  - @breadboard-ai/build@0.12.0
+
 ## 0.2.1
 
 ### Patch Changes
@@ -84,7 +93,8 @@
 ### Patch Changes
 
 - 0985a47: Fix some issues with the build-code binary
-- 0ef793f: Switch to typescript-json-schema because it can resolve more complex types
+- 0ef793f: Switch to typescript-json-schema because it can resolve more complex
+  types
 - Updated dependencies [49e2740]
 - Updated dependencies [54c8197]
 - Updated dependencies [2f1b85c]

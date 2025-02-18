@@ -1,7 +1,7 @@
 {
   "name": "@breadboard-ai/unified-server",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "serves visual editor, board server, and connection server from a single origin",
   "main": "./dist/src/server/main.js",
   "exports": "./dist/src/server/main.js",
@@ -128,9 +128,9 @@
     "wireit": "^0.14.11"
   },
   "dependencies": {
-    "@breadboard-ai/board-server": "^0.11.0",
-    "@breadboard-ai/connection-server": "^0.4.0",
-    "@breadboard-ai/visual-editor": "1.25.0",
+    "@breadboard-ai/board-server": "^0.12.0",
+    "@breadboard-ai/connection-server": "^0.5.0",
+    "@breadboard-ai/visual-editor": "1.26.0",
     "express": "^4.21.2",
     "vite": "^6.1.0",
     "vite-express": "^0.20.0"
