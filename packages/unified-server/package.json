@@ -53,8 +53,7 @@
       ],
       "dependencies": [
         "../board-server:build:tsc",
-        "../connection-server:build:tsc",
-        "../visual-editor:build:tsc"
+        "../connection-server:build:tsc"
       ]
     },
     "serve": {
