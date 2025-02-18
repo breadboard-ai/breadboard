@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.18.0
+
+### Minor Changes
+
+- 69d315b: Add support for `redirect` config property in `fetch`.
+- 63a1930: Introduce presentation hints and icon on Schema.
+
+### Patch Changes
+
+- Updated dependencies [2144bc3]
+- Updated dependencies [3af8f62]
+- Updated dependencies [59d6fe7]
+- Updated dependencies [925e4bf]
+- Updated dependencies [220f27a]
+- Updated dependencies [c6f9889]
+- Updated dependencies [a2e7a36]
+- Updated dependencies [6b6052c]
+- Updated dependencies [65f89e0]
+- Updated dependencies [0ad7660]
+- Updated dependencies [10fee14]
+- Updated dependencies [0b1dc88]
+- Updated dependencies [83bdea5]
+- Updated dependencies [e39ea7e]
+- Updated dependencies [c9fc7b0]
+- Updated dependencies [74124b8]
+- Updated dependencies [63a1930]
+- Updated dependencies [b93a70f]
+- Updated dependencies [26b1194]
+- Updated dependencies [b17362c]
+- Updated dependencies [881f8ab]
+- Updated dependencies [8e2fc1f]
+  - @google-labs/breadboard@0.32.0
+  - @breadboard-ai/build@0.12.0
+
 ## 0.17.1
 
 ### Patch Changes
@@ -154,7 +188,8 @@
 
 ### Minor Changes
 
-- 4dadf16: Introduce experimental storeData and retrieveData components in Core Kit.
+- 4dadf16: Introduce experimental storeData and retrieveData components in Core
+  Kit.
 - f61ccf3: Introduce URL-based component types.
 - b673bfa: Migrate curry to build api
 - 4423c35: Switch runJavascript worker to be a module worker.
@@ -162,8 +197,11 @@
 ### Patch Changes
 
 - 54c8197: Make build API kit function async
-- 88298d5: The result of calling code() now includes a test() method which can be used to directly invoke the function. Useful for testing so that you don't need to factor out a separate function.
-- feeed7a: Allow map to take string boards, and export a coreKit object for build api
+- 88298d5: The result of calling code() now includes a test() method which can
+  be used to directly invoke the function. Useful for testing so that you don't
+  need to factor out a separate function.
+- feeed7a: Allow map to take string boards, and export a coreKit object for
+  build api
 - 9783ba8: Fix worker memory leak and throttle describers.
 - 9c04caa: Convert reduce to build api
 - Updated dependencies [49e2740]
@@ -265,7 +303,8 @@
 
 ### Minor Changes
 
-- 00cc2c5: Remove `lambda`, introduce standalone `invokeGraph` and `runGraph` functions, and other plumbing refactoring.
+- 00cc2c5: Remove `lambda`, introduce standalone `invokeGraph` and `runGraph`
+  functions, and other plumbing refactoring.
 - 3a5ced1: Refactor `map` to run serially when `RunStateManager` is present.
 
 ### Patch Changes
@@ -325,9 +364,14 @@
 
 ### Patch Changes
 
-- f4d2416: Add cast node and helper to core-kit, for asserting some JSON schema as the type of some value.
-- bc94299: The unnest node now uses the actual describe function of the connected node to discover the incoming schema, and sets the outgoing schema to match.
-- 9d93cf8: Added inputSchema and outputSchema properties. The old "schema" property is now deprecated in favor of "outputSchema" (though will fall back to "schema").
+- f4d2416: Add cast node and helper to core-kit, for asserting some JSON schema
+  as the type of some value.
+- bc94299: The unnest node now uses the actual describe function of the
+  connected node to discover the incoming schema, and sets the outgoing schema
+  to match.
+- 9d93cf8: Added inputSchema and outputSchema properties. The old "schema"
+  property is now deprecated in favor of "outputSchema" (though will fall back
+  to "schema").
 - 9d93cf8: Add extractTypeFromValue function.
 - a9def5c: Fix bug in automatic output schema when using code helper.
 - Updated dependencies [a925cf0]
@@ -359,10 +403,12 @@
 - 4db3ab7: Teach `runJavascript` to be kind fo esbuild.
 - d9b76bd: Teach fetch to handle blob responses.
 - 14853d5: Add Gemini Nano node.
-- 3e10f0f: Introduce `DataCapability` and add support for multipart form data in `fetch`.
+- 3e10f0f: Introduce `DataCapability` and add support for multipart form data in
+  `fetch`.
 - c53ca01: Plumb `DataStore` throuh to `NodeHandlerContext`.
 - 0e76614: Fetch will now treat any text/\* MIME type as text
-- 2ace620: Teach `InspectableGraph.describe` to correctly propagate fixed/flexible bit.
+- 2ace620: Teach `InspectableGraph.describe` to correctly propagate
+  fixed/flexible bit.
 - 26556b6: Teachs runJavaScript to accept a schema
 - 5f09b1d: Teach runJavascript to report errors.
 - 510e198: Convert map to new build API
@@ -372,7 +418,8 @@
 
 - 85bbc00: Teach runJavascript to run in Service Workers.
 - 5a0afe4: Add inflate node
-- 6fdd89e: Add unnest node, for expanding an object value with N properties into a node with N output ports
+- 6fdd89e: Add unnest node, for expanding an object value with N properties into
+  a node with N output ports
 - c82138d: Allow code nodes to return promises
 - 0e54e55: Mark `$board` port as `config` on `invoke` node.
 - b75a43e: Change `invoke.$board` input to `object` type.
@@ -426,16 +473,19 @@
 
 ### Minor Changes
 
-- af54870: Convert passthrough to new API. The output schema of passthrough is now taken from the connected inputSchema instead of just using the values. This preserves more information about the ports that are being passed-through.
+- af54870: Convert passthrough to new API. The output schema of passthrough is
+  now taken from the connected inputSchema instead of just using the values.
+  This preserves more information about the ports that are being passed-through.
 
 ### Patch Changes
 
 - 8774855: Allow code outputs to be optional
-- 1b596d4: Add a `code` function which creates a `runJavascript` node in a type-safe way.
+- 1b596d4: Add a `code` function which creates a `runJavascript` node in a
+  type-safe way.
 - 4957dc5: Handle the case in secrets describe where there are no input keys yet
-- ee85b67: Add a `secret` function which creates and configures a `secrets` node for just
-  one secret, and returns the corresponding output port. A simpler way to get
-  secrets in the API.
+- ee85b67: Add a `secret` function which creates and configures a `secrets` node
+  for just one secret, and returns the corresponding output port. A simpler way
+  to get secrets in the API.
 - 1d29493: Export passthrough node definition
 - f870bdd: Allow returning errors from code helper function
 - Updated dependencies [8097177]
@@ -479,14 +529,17 @@
 
 ### Minor Changes
 
-- fefd109: The fetch node is now implemented with @breadboard-ai/build. This should not affect any board behavior.
-- 34d9c6d: fetch, secrets, and run-javascript are slightly more correct in their descriptions (object vs any JSON value)
+- fefd109: The fetch node is now implemented with @breadboard-ai/build. This
+  should not affect any board behavior.
+- 34d9c6d: fetch, secrets, and run-javascript are slightly more correct in their
+  descriptions (object vs any JSON value)
 - c117d4f: Port runJavascript node to @breadboard-ai/build
 
 ### Patch Changes
 
 - 54baba8: Implement `AbortSignal` support.
-- 416aed2: Introduce `metadata` for `NodeHandler` entries, teaching node types in Kits to describe themselves.
+- 416aed2: Introduce `metadata` for `NodeHandler` entries, teaching node types
+  in Kits to describe themselves.
 - f2eda0b: Fix lots of bugs around Tool Worker.
 - 776f043: Export fetch, invoke, runJavascript, and secrets node definitions
 - Updated dependencies [3f9507d]
@@ -661,7 +714,8 @@
 
 ### Minor Changes
 
-- 26367fe: Fixing typo in describe that would mean passthrough and reflect would not tell the system of their inputs
+- 26367fe: Fixing typo in describe that would mean passthrough and reflect would
+  not tell the system of their inputs
 
 ### Patch Changes
 
@@ -672,7 +726,8 @@
 
 ### Patch Changes
 
-- 3ed66b9: Add a resolve node to core-kit which resolves relative URLs to absolute URLs.
+- 3ed66b9: Add a resolve node to core-kit which resolves relative URLs to
+  absolute URLs.
 - Updated dependencies [05136f8]
 - Updated dependencies [ef305d1]
 - Updated dependencies [aea9178]
@@ -770,5 +825,6 @@
 ## [0.0.1] - 2023-11-08
 
 - First release. Contains the following nodes:
-  - Moved from Breadboard: `passthrough`, `reflect`, `slot`, `include`, `import`, and `invoke`
+  - Moved from Breadboard: `passthrough`, `reflect`, `slot`, `include`,
+    `import`, and `invoke`
   - Graduated from Node Nursery: `batch`, `map`

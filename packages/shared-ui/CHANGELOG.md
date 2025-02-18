@@ -1,5 +1,150 @@
 # @breadboard-ai/shared-ui
 
+## 1.23.0
+
+### Minor Changes
+
+- 6c223a9: Create an easy way for Visual Editor to handle sign in.
+- 56b58cf: Teach Assets to behave like LLMContent.
+- 3af8f62: Introduce ChatController, an abstraction to manage chat state.
+- 59d6fe7: Store assets as references to blobs.
+- 925e4bf: Introduce "main-port" behavior and start using it.
+- e178790: Implement sign out.
+- 9ffe9ee: Make autowire work with "Make Text" and "Make I mage"
+- c6f9889: Start all new graphs with a really blank template.
+- a2e7a36: Add support for {{asset}} and {{in}} params in A2.
+- 65f89e0: Introduce Organizer to visual editor.
+- eaef053: Add support for private boards.
+- 0b1dc88: Introduce `GraphDescriptor.imports` and start using it in modules.
+- a44e8bc: Don't show board server selector by default.
+- 75a2030: Remove unused components
+- 74124b8: Use "generative" icon in A2 components.
+- 63a1930: Introduce presentation hints and icon on Schema.
+- b93a70f: Introduce a more flexible way to tag and curate components.
+- 627a1fc: Update terminology
+- dd0015e: Teach Visual Editor about the full power of the "@" symbol.
+- 39ad0f0: Make A2 the default kit in step selector.
+- 40a8568: Introduce sign in plumbing to Visuale Editor runtime.
+- 2429df0: Teach board server to use access tokens.
+- 8e2fc1f: Implement API that allows rendering Fast Access menu (fka "@" menu).
+
+### Patch Changes
+
+- a1109c1: Allow users to add the same assets multiple times
+- b3a39ad: Implement and refine "Ask User" component.
+- 976928d: Teach `ChatController` about errors.
+- efd3a58: Add icon for summarize
+- 91b0af7: Create Asset Viewer
+- c737f6b: Convert to use standard ES decorators.
+- 032cf64: Re-enable embeds
+- 62af787: Prevent placeholders from sticking
+- b8f540d: Add "Save to Drive" button to App view content
+- 77c6a67: Fast Access Improvements
+- 9937f23: Fixes scroll behavior in board-activity
+- 220f27a: A2-related UI polish
+- 9dffc14: Update start view
+- 43f5402: Displays "Add item" when there are no components
+- f11be69: Add inline values, tidy graph rendering
+- 228eafd: Use AudioHandler for input
+- dbb0eeb: Improve the inline outputs in the graph render
+- 67561d6: Introduce basic Fast Access support
+- 4fc44ab: Only show quick add for context-only nodes
+- f1f9d2f: Add a few tooltips
+- 99e2899: Teach GraphNodes to retain their output heights
+- 724069f: One more round of polish for A2.
+- 389c631: Trim the UI a little
+- 6a66a0e: Update configurator styles
+- a2b9fca: Add ability to organize assets
+- 06bf630: Teach A2 to about {{tool}} params.
+- 95a8265: Add presentation hints for outputs
+- 263bc1c: Add presentation hint to port render
+- 782b7e4: Improve the app chat UI
+- a128d88: Add placeholder controls for app preview
+- 0b07d7d: Update asset organizer styles
+- 7edd2fc: Update home page
+- 750499a: Stub out A2 tools
+- a10abfd: Minor fixes to chat UI
+- 0ad7660: Improve home screen again
+- 9ba6ea3: Use ChatController for chat
+- 73007eb: Account for relative connection server URL in connection-broker
+- 0cfe873: Teach graph node to show a message when details are missing
+- d1790e9: Teach node output about code
+- 9843e23: Switch activity for console
+- 83bdea5: Show outputs in configurator
+- 81de97c: Minor fix for parts
+- 570a652: Show updating status on components
+- 1fd4aaa: Another round of polish for A2.
+- 580ec08: Re-render placeholder when presentation hint changes
+- a8cca57: Enable text pasting in text-editor
+- c5adbdf: Tidy the app preview a little
+- c9fc7b0: Add "Audio Generator" and {{param}} support to all components.
+- 5e1e24c: Colorize nodes
+- 0ece0b1: Restore missing elements and fix text pasting
+- 4904e2a: Prevent dblclick from expanding configurator
+- 664db61: Various small UI fixes
+- 0ac4ee9: Tidy Node Configurator
+- be771bf: Prototype "Make Code"
+- 4a7ab2b: Improve audio handling
+- 13dfac3: Mask collapsed port list
+- 7895c03: Add chat to popout
+- 3806187: Enforce showExportControls flag in LLM output
+- c6fbe92: Update Fast Access item encoding
+- b17362c: Bug fixes in ChatController.
+- f2d0061: Introduce Tools input for Researcher.
+- 235f33d: Theme Audio Handler based on `role`
+- aec9a8f: Small UI adjustments
+- 7c64db3: Hard-code the header input port as "context" for now.
+- c434112: Add a lightweight preview for boards
+- fc11aeb: Various UI fixes and tweaks
+- e81078e: Only show "missing details" on components where it is expected
+- 30b8f91: Add "Quick Add" to graph renderer
+- fc2dda1: Update test project pane
+- b7b39a4: Shift start into console area
+- 3d6e573: Improve sign-in flow
+- 3460bf4: Update some icons
+- 2962093: Make Fast Access menu work with no tools.
+- Updated dependencies [6c223a9]
+- Updated dependencies [2144bc3]
+- Updated dependencies [3af8f62]
+- Updated dependencies [69d315b]
+- Updated dependencies [59d6fe7]
+- Updated dependencies [925e4bf]
+- Updated dependencies [220f27a]
+- Updated dependencies [c6f9889]
+- Updated dependencies [a2e7a36]
+- Updated dependencies [782b7e4]
+- Updated dependencies [6b6052c]
+- Updated dependencies [65f89e0]
+- Updated dependencies [0ad7660]
+- Updated dependencies [10fee14]
+- Updated dependencies [eaef053]
+- Updated dependencies [0b1dc88]
+- Updated dependencies [83bdea5]
+- Updated dependencies [e39ea7e]
+- Updated dependencies [bdf469e]
+- Updated dependencies [c9fc7b0]
+- Updated dependencies [74124b8]
+- Updated dependencies [9fe7195]
+- Updated dependencies [69d315b]
+- Updated dependencies [63a1930]
+- Updated dependencies [b93a70f]
+- Updated dependencies [26b1194]
+- Updated dependencies [b17362c]
+- Updated dependencies [9ade1ed]
+- Updated dependencies [12aea89]
+- Updated dependencies [881f8ab]
+- Updated dependencies [83a5186]
+- Updated dependencies [40a8568]
+- Updated dependencies [8e2fc1f]
+  - @breadboard-ai/connection-client@0.2.0
+  - @google-labs/breadboard@0.32.0
+  - @google-labs/breadboard-schema@1.12.0
+  - @breadboard-ai/types@0.5.0
+  - @breadboard-ai/jsandbox@0.4.0
+  - @google-labs/core-kit@0.18.0
+  - @breadboard-ai/build@0.12.0
+  - @breadboard-ai/data-store@0.3.1
+
 ## 1.22.0
 
 ### Minor Changes
@@ -36,7 +181,8 @@
 - 1cd4301: Add capabilities view
 - 64bbe1b: Drive the usage of `inspect` down to four callsites.
 - 78ea16b: Add highlight for board port hovers
-- 8edcb12: Prevent accidental wiring of configurable ports outside of "advanced" mode
+- 8edcb12: Prevent accidental wiring of configurable ports outside of "advanced"
+  mode
 - 4a898eb: Introduce `GraphStore.graphs()`.
 - 087280f: Fix main graph zooming
 - 2d03abe: Add side nav
@@ -92,7 +238,8 @@
 - 1c83e7d: Improve preview values
 - 8619ff4: Teach transform matrix to account for comments
 - def94be: Calculate dimensions when assigning port in `GraphPortLabel`.
-- a4fee76: Make module preview work and teach backspace to behave when editing modules.
+- a4fee76: Make module preview work and teach backspace to behave when editing
+  modules.
 - 11e4c86: Fix a bunch of bugs I made last week.
 - 93a0a94: Make board server components show in component selector.
 - 573f1d5: Flatten paste structure and remove node types
@@ -186,7 +333,8 @@
 - 6fad5ba: Minor fixes for runJavascript rendering
 - 0601a48: Fix compilation
 - 0eb903c: Recreate env when module list changes
-- 66041a7: Migrate to use `InspectableGraph.edit` for subgraph add/remove/replace.
+- 66041a7: Migrate to use `InspectableGraph.edit` for subgraph
+  add/remove/replace.
 - 335983b: Teach Module Editor to format on save
 - 07c0720: Various improvements to the Module Editor
 - e0d59b6: Teach Visual Editor how to change module language
@@ -244,7 +392,8 @@
 - d7f04f2: Start removal of provider scaffolding
 - 8b8a0cf: Switch Board Servers on by default
 - ee2844b: Teach Visual Editor about different edge states.
-- 15d3b74: Make "Show Run Node" button appear only when it's possible to run a node.
+- 15d3b74: Make "Show Run Node" button appear only when it's possible to run a
+  node.
 - 3dcbf03: Teach Google Drive Board Server to save board metadata.
 - bdf80d8: Teach Google Drive board server to refresh credentials.
 - cf74d3d: (Re-)Introduce node runner
@@ -388,7 +537,8 @@
 
 - 6ab0acd: Introduce drag-dock-overlay
 - 7921983: Introduce `@breadboard-ai/types` package.
-- 6b3ba07: Provide a single empty LLM Content to `bb-llm-input-array` when no default.
+- 6b3ba07: Provide a single empty LLM Content to `bb-llm-input-array` when no
+  default.
 - f89b60e: Tweak corner radius
 - Updated dependencies [370b7ca]
 - Updated dependencies [7921983]
@@ -429,12 +579,14 @@
 - f61ccf3: Introduce URL-based component types.
 - 12cdec3: Improve tab handling
 - 9a9f5c2: Move activity to overlay
-- 65c0449: Teach TopGraphObserver about various activity types, especially errors.
+- 65c0449: Teach TopGraphObserver about various activity types, especially
+  errors.
 - 9c878e2: Start work on a runtime API
 - 2f68f71: Move node meta into configurator
 - 8540b93: Convert Content to Build API and merge Specialist 2 to Specialist.
 - 81eafad: Implement selecting runs and viewing them.
-- 4c03455: Introduce Specialist 2 and make Content component support LLM Content.
+- 4c03455: Introduce Specialist 2 and make Content component support LLM
+  Content.
 - d0f99b4: Restyle graph nodes
 - 392d7cd: Switch global configurator for per-port
 - 3e5f3dc: Add support for "Configured" in property schema editor.
@@ -449,7 +601,8 @@
 - ec55e54: Automatically pan/zoom to currently running node
 - d7606d3: Implement plumbing for visualizing runs as graphs.
 - a6128a3: Switch Visual Editor to use Run API.
-- 0088ede: Allow configuring all ports (except start/control) in advanced expansion state.
+- 0088ede: Allow configuring all ports (except start/control) in advanced
+  expansion state.
 - d0e894d: Add Edge Value overlay
 
 ### Patch Changes
@@ -480,7 +633,8 @@
 - b6eeb3e: Show Activity Marker on graph nodes
 - ee56556: Fix comment deletion behavior
 - e63b5dd: Polish Specialist and Content.
-- 0b78f92: Recognize that sometimes there are no prior runs when initializing RunDetails.
+- 0b78f92: Recognize that sometimes there are no prior runs when initializing
+  RunDetails.
 - cbc418b: Ensure that the final node is included in TGO
 - e723c09: Couple of minor tweaks
 - edefaf9: Add tooltip support

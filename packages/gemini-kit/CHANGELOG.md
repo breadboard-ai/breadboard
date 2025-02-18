@@ -1,5 +1,37 @@
 # @google-labs/gemini-kit
 
+## 0.11.1
+
+### Patch Changes
+
+- Updated dependencies [2144bc3]
+- Updated dependencies [3af8f62]
+- Updated dependencies [59d6fe7]
+- Updated dependencies [925e4bf]
+- Updated dependencies [220f27a]
+- Updated dependencies [c6f9889]
+- Updated dependencies [a2e7a36]
+- Updated dependencies [6b6052c]
+- Updated dependencies [65f89e0]
+- Updated dependencies [0ad7660]
+- Updated dependencies [10fee14]
+- Updated dependencies [0b1dc88]
+- Updated dependencies [83bdea5]
+- Updated dependencies [e39ea7e]
+- Updated dependencies [c9fc7b0]
+- Updated dependencies [74124b8]
+- Updated dependencies [69d315b]
+- Updated dependencies [63a1930]
+- Updated dependencies [b93a70f]
+- Updated dependencies [26b1194]
+- Updated dependencies [b17362c]
+- Updated dependencies [881f8ab]
+- Updated dependencies [8e2fc1f]
+  - @google-labs/breadboard@0.32.0
+  - @google-labs/core-kit@0.18.0
+  - @breadboard-ai/build@0.12.0
+  - @google-labs/template-kit@0.3.17
+
 ## 0.11.0
 
 ### Minor Changes
@@ -156,7 +188,8 @@
 
 ### Patch Changes
 
-- cae7e34: Strip function calls when response mime type is set to `application/json`.
+- cae7e34: Strip function calls when response mime type is set to
+  `application/json`.
 - Updated dependencies [370b7ca]
 - Updated dependencies [7921983]
   - @google-labs/breadboard@0.27.2
@@ -168,7 +201,8 @@
 
 ### Minor Changes
 
-- 4c03455: Introduce Specialist 2 and make Content component support LLM Content.
+- 4c03455: Introduce Specialist 2 and make Content component support LLM
+  Content.
 
 ### Patch Changes
 
@@ -176,7 +210,8 @@
 - 54c8197: Make build API kit function async
 - f5d3111: Add gemini-1.5-pro-exp-0801 to gemini model enum
 - e63b5dd: Polish Specialist and Content.
-- 7fdf9c2: Add "gemini-1.5-pro-exp-0827" to the choices in Gemini-calling components.
+- 7fdf9c2: Add "gemini-1.5-pro-exp-0827" to the choices in Gemini-calling
+  components.
 - Updated dependencies [49e2740]
 - Updated dependencies [54c8197]
 - Updated dependencies [703f17d]
@@ -391,7 +426,8 @@
 ### Minor Changes
 
 - 14853d5: Add Gemini Nano node.
-- 71f3366: Added `flash`, removed `ultra` and `1.0-pro` (they don't have all the latest stuff).
+- 71f3366: Added `flash`, removed `ultra` and `1.0-pro` (they don't have all the
+  latest stuff).
 
 ### Patch Changes
 
@@ -473,7 +509,8 @@
 
 ### Patch Changes
 
-- ffd2e8e: The core-kit code helper function now behaves exactly like the one in breadboard-ai in terms of the function name it selects for the code.
+- ffd2e8e: The core-kit code helper function now behaves exactly like the one in
+  breadboard-ai in terms of the function name it selects for the code.
 - bfdb36a: Add IDs to nodes for BGL clarity
 - Updated dependencies [8097177]
 - Updated dependencies [8774855]
@@ -532,7 +569,8 @@
 
 ### Minor Changes
 
-- 691f3d6: Give gemini-generator an overhaul, adding proper system instruction support and safety settings.
+- 691f3d6: Give gemini-generator an overhaul, adding proper system instruction
+  support and safety settings.
 - e736f37: Remove deprecated input-multipart
 - 24230c1: Introduce LLM Content Editor
 

@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/board-server-utils",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Board Server Utilities",
   "main": "./dist/index.js",
   "exports": {
@@ -74,10 +74,10 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
-    "@breadboard-ai/build": "0.11.1",
-    "@breadboard-ai/data-store": "0.3.0",
-    "@google-labs/agent-kit": "^0.15.0",
-    "@google-labs/breadboard": "^0.31.0",
-    "@google-labs/breadboard-schema": "^1.11.0"
+    "@breadboard-ai/build": "0.12.0",
+    "@breadboard-ai/data-store": "0.3.1",
+    "@google-labs/agent-kit": "^0.16.0",
+    "@google-labs/breadboard": "^0.32.0",
+    "@google-labs/breadboard-schema": "^1.12.0"
   }
 }

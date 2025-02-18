@@ -1,5 +1,23 @@
 # @breadboard-ai/types
 
+## 0.5.0
+
+### Minor Changes
+
+- a2e7a36: Add support for {{asset}} and {{in}} params in A2.
+- eaef053: Add support for private boards.
+- 0b1dc88: Introduce `GraphDescriptor.imports` and start using it in modules.
+- b93a70f: Introduce a more flexible way to tag and curate components.
+- 9ade1ed: Add asset type to distinguish between different kinds of graph
+  assets.
+- 12aea89: CAtch up to the latest Gemini LLMContent types.
+
+### Patch Changes
+
+- 2144bc3: Teach Edit API about editing assets.
+- 782b7e4: Improve the app chat UI
+- 83a5186: Fix a typo.
+
 ## 0.4.0
 
 ### Minor Changes
