@@ -153,6 +153,7 @@ export class GraphNodeOutput extends PIXI.Container {
       return;
     }
 
+    this.#clear();
     this.#presentationHints = hints;
     this.#isDirty = true;
   }
