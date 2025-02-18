@@ -207,7 +207,7 @@ declare type FileDataPart = {
 
 declare type ExecutableCodePart = {
   executableCode: {
-    language: "LANGUAGE_UNSPECIDIED" | "PYTHON";
+    language: "LANGUAGE_UNSPECIFIED" | "PYTHON";
     code: string;
   };
 };
