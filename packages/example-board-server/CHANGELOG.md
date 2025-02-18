@@ -1,5 +1,43 @@
 # @breadboard-ai/example-board-server
 
+## 1.18.4
+
+### Patch Changes
+
+- Updated dependencies [2144bc3]
+- Updated dependencies [db124b2]
+- Updated dependencies [3af8f62]
+- Updated dependencies [59d6fe7]
+- Updated dependencies [925e4bf]
+- Updated dependencies [220f27a]
+- Updated dependencies [c6f9889]
+- Updated dependencies [a2e7a36]
+- Updated dependencies [782b7e4]
+- Updated dependencies [6b6052c]
+- Updated dependencies [65f89e0]
+- Updated dependencies [0ad7660]
+- Updated dependencies [10fee14]
+- Updated dependencies [eaef053]
+- Updated dependencies [0b1dc88]
+- Updated dependencies [83bdea5]
+- Updated dependencies [e39ea7e]
+- Updated dependencies [bdf469e]
+- Updated dependencies [c9fc7b0]
+- Updated dependencies [74124b8]
+- Updated dependencies [63a1930]
+- Updated dependencies [b93a70f]
+- Updated dependencies [26b1194]
+- Updated dependencies [b17362c]
+- Updated dependencies [9ade1ed]
+- Updated dependencies [881f8ab]
+- Updated dependencies [8e2fc1f]
+  - @google-labs/breadboard@0.32.0
+  - @breadboard-ai/manifest@0.8.0
+  - @google-labs/breadboard-schema@1.12.0
+  - @breadboard-ai/example-boards@0.4.0
+  - @breadboard-ai/build@0.12.0
+  - @breadboard-ai/data-store@0.3.1
+
 ## 1.18.3
 
 ### Patch Changes

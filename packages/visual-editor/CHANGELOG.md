@@ -1,11 +1,217 @@
 # @google-labs/breadboard-web
 
+## 1.26.0
+
+### Minor Changes
+
+- 6c223a9: Create an easy way for Visual Editor to handle sign in.
+- db124b2: Switch Visual Editor and Unified Server to use statically-linked
+  kits.
+- 59d6fe7: Store assets as references to blobs.
+- 925e4bf: Introduce "main-port" behavior and start using it.
+- e178790: Implement sign out.
+- 9ffe9ee: Make autowire work with "Make Text" and "Make I mage"
+- c6f9889: Start all new graphs with a really blank template.
+- a2e7a36: Add support for {{asset}} and {{in}} params in A2.
+- 65f89e0: Introduce Organizer to visual editor.
+- 491b152: Make connections server and npm run dev work properly.
+- eaef053: Add support for private boards.
+- a44e8bc: Don't show board server selector by default.
+- 75a2030: Remove unused components
+- 74124b8: Use "generative" icon in A2 components.
+- 63a1930: Introduce presentation hints and icon on Schema.
+- dd0015e: Teach Visual Editor about the full power of the "@" symbol.
+- 40a8568: Introduce sign in plumbing to Visuale Editor runtime.
+- 2429df0: Teach board server to use access tokens.
+- 8e2fc1f: Implement API that allows rendering Fast Access menu (fka "@" menu).
+
+### Patch Changes
+
+- b3a39ad: Implement and refine "Ask User" component.
+- 70a0896: Change the default view
+- efd3a58: Add icon for summarize
+- 91b0af7: Create Asset Viewer
+- 3af8f62: Introduce ChatController, an abstraction to manage chat state.
+- c737f6b: Convert to use standard ES decorators.
+- 220f27a: A2-related UI polish
+- 9dffc14: Update start view
+- 43f5402: Displays "Add item" when there are no components
+- f11be69: Add inline values, tidy graph rendering
+- 67561d6: Introduce basic Fast Access support
+- 99e2899: Teach GraphNodes to retain their output heights
+- 724069f: One more round of polish for A2.
+- 389c631: Trim the UI a little
+- a2b9fca: Add ability to organize assets
+- 95a8265: Add presentation hints for outputs
+- 263bc1c: Add presentation hint to port render
+- 782b7e4: Improve the app chat UI
+- a128d88: Add placeholder controls for app preview
+- 0b07d7d: Update asset organizer styles
+- 7edd2fc: Update home page
+- 750499a: Stub out A2 tools
+- 0ad7660: Improve home screen again
+- 948b50c: Introduce Combine Outputs component.
+- 0cfe873: Teach graph node to show a message when details are missing
+- 9843e23: Switch activity for console
+- 83bdea5: Show outputs in configurator
+- bdf469e: Make unified server run in dev mode.
+- 44d6e2e: Polish "Combine Outputs".
+- c7c9a9c: Reload on sign-in
+- a8cca57: Enable text pasting in text-editor
+- c5adbdf: Tidy the app preview a little
+- 5e1e24c: Colorize nodes
+- 664db61: Various small UI fixes
+- f6223cd: Reduce config code duplication between various servers
+- be771bf: Prototype "Make Code"
+- 4a7ab2b: Improve audio handling
+- 79ba6e1: Move most board constructing code to runtime.
+- 7895c03: Add chat to popout
+- 235f33d: Theme Audio Handler based on `role`
+- b4b09a2: Make visual editor receive keyboard shortcuts again.
+- c434112: Add a lightweight preview for boards
+- 30b8f91: Add "Quick Add" to graph renderer
+- fc2dda1: Update test project pane
+- 3d6e573: Improve sign-in flow
+- 3460bf4: Update some icons
+- Updated dependencies [6c223a9]
+- Updated dependencies [a1109c1]
+- Updated dependencies [56b58cf]
+- Updated dependencies [b3a39ad]
+- Updated dependencies [976928d]
+- Updated dependencies [9bb5021]
+- Updated dependencies [efd3a58]
+- Updated dependencies [2144bc3]
+- Updated dependencies [91b0af7]
+- Updated dependencies [db124b2]
+- Updated dependencies [3af8f62]
+- Updated dependencies [c737f6b]
+- Updated dependencies [032cf64]
+- Updated dependencies [62af787]
+- Updated dependencies [b8f540d]
+- Updated dependencies [69d315b]
+- Updated dependencies [59d6fe7]
+- Updated dependencies [77c6a67]
+- Updated dependencies [9937f23]
+- Updated dependencies [925e4bf]
+- Updated dependencies [e178790]
+- Updated dependencies [220f27a]
+- Updated dependencies [9ffe9ee]
+- Updated dependencies [9dffc14]
+- Updated dependencies [43f5402]
+- Updated dependencies [f11be69]
+- Updated dependencies [228eafd]
+- Updated dependencies [dbb0eeb]
+- Updated dependencies [67561d6]
+- Updated dependencies [4fc44ab]
+- Updated dependencies [f1f9d2f]
+- Updated dependencies [99e2899]
+- Updated dependencies [724069f]
+- Updated dependencies [389c631]
+- Updated dependencies [c6f9889]
+- Updated dependencies [6a66a0e]
+- Updated dependencies [a2b9fca]
+- Updated dependencies [a2e7a36]
+- Updated dependencies [06bf630]
+- Updated dependencies [95a8265]
+- Updated dependencies [263bc1c]
+- Updated dependencies [782b7e4]
+- Updated dependencies [a128d88]
+- Updated dependencies [0b07d7d]
+- Updated dependencies [7edd2fc]
+- Updated dependencies [6b6052c]
+- Updated dependencies [65f89e0]
+- Updated dependencies [750499a]
+- Updated dependencies [a10abfd]
+- Updated dependencies [0ad7660]
+- Updated dependencies [9ba6ea3]
+- Updated dependencies [10fee14]
+- Updated dependencies [73007eb]
+- Updated dependencies [0cfe873]
+- Updated dependencies [d1790e9]
+- Updated dependencies [9843e23]
+- Updated dependencies [eaef053]
+- Updated dependencies [0b1dc88]
+- Updated dependencies [83bdea5]
+- Updated dependencies [a44e8bc]
+- Updated dependencies [2e76cc4]
+- Updated dependencies [e39ea7e]
+- Updated dependencies [81de97c]
+- Updated dependencies [570a652]
+- Updated dependencies [75a2030]
+- Updated dependencies [1fd4aaa]
+- Updated dependencies [580ec08]
+- Updated dependencies [a8cca57]
+- Updated dependencies [c5adbdf]
+- Updated dependencies [c9fc7b0]
+- Updated dependencies [5e1e24c]
+- Updated dependencies [0ece0b1]
+- Updated dependencies [74124b8]
+- Updated dependencies [4904e2a]
+- Updated dependencies [664db61]
+- Updated dependencies [69f3646]
+- Updated dependencies [9fe7195]
+- Updated dependencies [69d315b]
+- Updated dependencies [0ac4ee9]
+- Updated dependencies [be771bf]
+- Updated dependencies [63a1930]
+- Updated dependencies [4a7ab2b]
+- Updated dependencies [13dfac3]
+- Updated dependencies [7895c03]
+- Updated dependencies [b93a70f]
+- Updated dependencies [26b1194]
+- Updated dependencies [3806187]
+- Updated dependencies [c6fbe92]
+- Updated dependencies [b17362c]
+- Updated dependencies [9ade1ed]
+- Updated dependencies [f2d0061]
+- Updated dependencies [235f33d]
+- Updated dependencies [aec9a8f]
+- Updated dependencies [12aea89]
+- Updated dependencies [7c64db3]
+- Updated dependencies [c434112]
+- Updated dependencies [fc11aeb]
+- Updated dependencies [e81078e]
+- Updated dependencies [30b8f91]
+- Updated dependencies [fc2dda1]
+- Updated dependencies [881f8ab]
+- Updated dependencies [627a1fc]
+- Updated dependencies [83a5186]
+- Updated dependencies [dd0015e]
+- Updated dependencies [b7b39a4]
+- Updated dependencies [39ad0f0]
+- Updated dependencies [3d6e573]
+- Updated dependencies [3460bf4]
+- Updated dependencies [2962093]
+- Updated dependencies [40a8568]
+- Updated dependencies [2429df0]
+- Updated dependencies [8e2fc1f]
+  - @breadboard-ai/shared-ui@1.23.0
+  - @breadboard-ai/bbrt@0.2.0
+  - @google-labs/breadboard@0.32.0
+  - @breadboard-ai/manifest@0.8.0
+  - @breadboard-ai/types@0.5.0
+  - @breadboard-ai/example-boards@0.4.0
+  - @breadboard-ai/jsandbox@0.4.0
+  - @google-labs/agent-kit@0.16.0
+  - @breadboard-ai/idb-board-server@1.19.2
+  - @breadboard-ai/google-drive-kit@0.5.0
+  - @google-labs/core-kit@0.18.0
+  - @breadboard-ai/build@0.12.0
+  - @breadboard-ai/board-server-management@1.20.0
+  - @breadboard-ai/board-server-utils@0.1.8
+  - @breadboard-ai/data-store@0.3.1
+  - @google-labs/gemini-kit@0.11.1
+  - @google-labs/json-kit@0.3.15
+  - @google-labs/template-kit@0.3.17
+  - @breadboard-ai/python-wasm@0.1.13
+
 ## 1.25.0
 
 ### Minor Changes
 
 - 25dd1c2: Introduce chiclets for board capabilities
-- 45c7e5f: Make `MutableGraph` the actual store of nodes, kits, graphs, modules, edges.
+- 45c7e5f: Make `MutableGraph` the actual store of nodes, kits, graphs, modules,
+  edges.
 - 37e3fbd: Connect file system to Visual Editor.
 - 0afae9c: Improve side nav behaviors
 - 8722c8f: Make retrieving type metadata sync.
@@ -51,7 +257,8 @@
 - 9a966b4: Clean graph entities more readily
 - f6f9adf: Improve the styling of the new workspace item overlay
 - fa7e8f2: Fix tab rendering
-- 46c9327: Allow pasting fragment URLs into VE and add a nicer module title when running modules.
+- 46c9327: Allow pasting fragment URLs into VE and add a nicer module title when
+  running modules.
 - 07b5676: Add support for `@describe` capability.
 - 80de5a3: Support shift+drag to move items between boards
 - 6b957aa: Ensure comments are retained
@@ -70,7 +277,8 @@
 - 3025283: Teach Workspace Outline about selections
 - 1c83e7d: Improve preview values
 - e4521d9: Don't delete completed chunk.
-- a4fee76: Make module preview work and teach backspace to behave when editing modules.
+- a4fee76: Make module preview work and teach backspace to behave when editing
+  modules.
 - 3536a91: Add `gemini-2.0-flash-thinking-exp` to the list of available models
 - 93a0a94: Make board server components show in component selector.
 - 573f1d5: Flatten paste structure and remove node types
@@ -262,7 +470,8 @@
 - 6fe2ea2: Fix up schema in "Read From Doc".
 - db52fbc: Pass module spec at invoke/describe time.
 - d42ab17: Teach Board Server about sandboxed runModule.
-- 66041a7: Migrate to use `InspectableGraph.edit` for subgraph add/remove/replace.
+- 66041a7: Migrate to use `InspectableGraph.edit` for subgraph
+  add/remove/replace.
 - a934fe2: Make describer cache async.
 - 259ef66: Set module source based on default type
 - 07c0720: Various improvements to the Module Editor
@@ -362,7 +571,8 @@
 - 71d42aa: Teach Visual Editor to run step by step.
 - 1fc5812: React to component edits correctly.
 - e014e42: Introduce "component" tag and user custom kits.
-- 49c7cb7: Add support for peer imports and custom describers (latter not yet plumbed through)
+- 49c7cb7: Add support for peer imports and custom describers (latter not yet
+  plumbed through)
 - d7f04f2: Start removal of provider scaffolding
 - 8b8a0cf: Switch Board Servers on by default
 - 7c99283: Move Google Drive Board Server from behind the flag.
@@ -376,7 +586,8 @@
 - 4c71e39: Introduce (entirely stubbed out) Google Drive board server.
 - 8cbc686: Surface the actual error from Gemini.
 - 29762d6: Implement "Re-run from this node" feature.
-- 526f310: Teach JSandbox to handle errors and load "breadboard:capabilities" import
+- 526f310: Teach JSandbox to handle errors and load "breadboard:capabilities"
+  import
 - a133437: Implement "Role" configuration port for Content component.
 - 38defd8: Make `jsandbox` a real package.
 - bf69ac9: Teach Specialist to be more robust with routes.
@@ -633,7 +844,8 @@
 ### Patch Changes
 
 - 6ab0acd: Introduce drag-dock-overlay
-- cae7e34: Strip function calls when response mime type is set to `application/json`.
+- cae7e34: Strip function calls when response mime type is set to
+  `application/json`.
 - 7921983: Introduce `@breadboard-ai/types` package.
 - Updated dependencies [6ab0acd]
 - Updated dependencies [370b7ca]
@@ -698,12 +910,14 @@
 - 033d656: Teach VE to autosave boards
 - 12cdec3: Improve tab handling
 - 9a9f5c2: Move activity to overlay
-- 65c0449: Teach TopGraphObserver about various activity types, especially errors.
+- 65c0449: Teach TopGraphObserver about various activity types, especially
+  errors.
 - 9c878e2: Start work on a runtime API
 - 2f68f71: Move node meta into configurator
 - 8540b93: Convert Content to Build API and merge Specialist 2 to Specialist.
 - 81eafad: Implement selecting runs and viewing them.
-- 4c03455: Introduce Specialist 2 and make Content component support LLM Content.
+- 4c03455: Introduce Specialist 2 and make Content component support LLM
+  Content.
 - d0f99b4: Restyle graph nodes
 - 392d7cd: Switch global configurator for per-port
 - 9fe7d4f: Add multi-tab support
@@ -716,7 +930,8 @@
 - d7606d3: Implement plumbing for visualizing runs as graphs.
 - d9fd0ab: [project-store] -> [idb-board-server]
 - a6128a3: Switch Visual Editor to use Run API.
-- 0088ede: Allow configuring all ports (except start/control) in advanced expansion state.
+- 0088ede: Allow configuring all ports (except start/control) in advanced
+  expansion state.
 - 60349b8: Add board server management and remote board server packages
 - 94759f7: Teach Specialist about routing.
 - d0e894d: Add Edge Value overlay
@@ -749,7 +964,8 @@
 - 9783ba8: Fix worker memory leak and throttle describers.
 - edefaf9: Add tooltip support
 - eb83b66: Fix load run behavior
-- 7fdf9c2: Add "gemini-1.5-pro-exp-0827" to the choices in Gemini-calling components.
+- 7fdf9c2: Add "gemini-1.5-pro-exp-0827" to the choices in Gemini-calling
+  components.
 - cc72dcc: Set runs to be read-only
 - 320c4c0: Rename some runtime types & events
 - 1ad3001: Show configuration previews underneath ports
@@ -979,7 +1195,8 @@
 - 49b3612: Restore preview functionality
 - df6ba88: Add environment variables to files group for build
 - efdb201: Prevent multiple save calls happening in parallel
-- b201e07: Implement edge-based UI in board-server (and fix a bunch of bugs elsewhere)
+- b201e07: Implement edge-based UI in board-server (and fix a bunch of bugs
+  elsewhere)
 - 05e3ff2: Added two new tools
 - 0296c89: Teach LLMContentArray check to ignore $metadata
 - 5f7f44b: Clear part cache when item changes
@@ -1106,11 +1323,13 @@
 - 8b370d7: Increase the set of reasons to refresh the side nav
 - 98f0ff2: Improve board support in unified editor
 - 9a2ffab: Unpin @breadboard-ai/build dependency from being overly constrained
-- 0a846ff: Switch from google-drive connection id to google-drive-limited, which requests access only to shared files, not all files.
+- 0a846ff: Switch from google-drive connection id to google-drive-limited, which
+  requests access only to shared files, not all files.
 - 618e265: Add MVP of Node Runner
 - a527740: Add improved support for untyped arrays and objects
 - f1546f5: Make some tweaks to help newer users
-- 960922e: Store the OAuth client ID locally, in addition to the token details. Useful for APIs that require the client ID to be provided.
+- 960922e: Store the OAuth client ID locally, in addition to the token details.
+  Useful for APIs that require the client ID to be provided.
 - 1d98374: Teach unified input to honor multiline strings
 - 70ba2d3: Teach Activity Log & Unified User Input about secrets
 - Updated dependencies [cb0f513]
@@ -1184,7 +1403,8 @@
 - e414ba0: Add New Board button to Welcome Pane
 - b357fbc: Sort nodes by selection status
 - bc8dcdd: Remind generate-graphs that it depends on agent-kit
-- fa2d1ab: Add fancy-json component for rendering JSON with configurable highlighting
+- fa2d1ab: Add fancy-json component for rendering JSON with configurable
+  highlighting
 - 51034a0: Fix editor locking input focus (again)
 - 7bdb5a2: Default node x & y to 0 if not set
 - cb455ef: Account for schema mismatch in fetch component
@@ -1195,7 +1415,8 @@
 - cb0237d: Remove default when changing from array to anything else
 - 05f3acb: Null out the editor property sooner
 - 9d4ea07: Attempt to maintain property order in the schema editor
-- 164d104: Show red squigglies in port tooltips under mismatched schema constraints
+- 164d104: Show red squigglies in port tooltips under mismatched schema
+  constraints
 - 4c1a17c: Rename node to component; fix schema issue
 - a0587ec: Version Bump
 - 359424b: Add Activity Pane section to Visual Editor docs
@@ -1267,7 +1488,8 @@
 - 431fa3d: Add support for website embeds of boards & YouTube videos
 - 8c90376: Add support for help
 - c53ca01: Plumb `DataStore` throuh to `NodeHandlerContext`.
-- 37418d9: Introduce the `iframe.html` entry point for running Breadboard in an iframe.
+- 37418d9: Introduce the `iframe.html` entry point for running Breadboard in an
+  iframe.
 - d1a9d8a: Update icons to match designs
 - 5b03d96: Start using multi-edit capability when pasting nodes.
 - f0d8d67: Remove the old "star port as ad-hoc port drop zone" machinery.
@@ -1294,7 +1516,8 @@
 - 499eac0: Ensure Graph Renderer is only initialized once
 - 00746bb: Remove old multilayout event
 - 726d38e: Switch setting defaults
-- 83ed3b5: Fall back to fetch and teach `GraphAssets` to be more loose about asset-loading.
+- 83ed3b5: Fall back to fetch and teach `GraphAssets` to be more loose about
+  asset-loading.
 - 54b03b9: Update nav styling
 - 714a536: A working sketch of a server.
 - cf17933: Add history overlay element (plus a few other minor fixes)
@@ -1922,7 +2145,8 @@
 - 60bd63c: Get the Run Inspector API ready to ship
 - be240b8: Simplifies the UI
 - b80a188: Add support for editing board info
-- 986af39: Update GraphProvider to support additional methods; land IDBGraphProvider
+- 986af39: Update GraphProvider to support additional methods; land
+  IDBGraphProvider
 - 0bdff0b: Adds nesting to the Activity Log
 - 88372d9: Adds sidenav and loading from the File System
 - a8fc3f3: Teach `GraphProvider` to watch for file change notifications.
@@ -2092,7 +2316,8 @@
 - a9daeda: Introduce Repeater node in Agent Kit.
 - 5221586: Add "Structured Worker" node to Agent Kit.
 - 5cf1555: Make Chat Bot 2.0 work.
-- 9a76a87: Various fixes to Editor API found while playing with the visual editor.
+- 9a76a87: Various fixes to Editor API found while playing with the visual
+  editor.
 - b944657: Update existing boards to use Structured Worker.
 - f06f400: Introduce Agent Kit.
 - 56ccae5: Introduce a way to inspect kits.
@@ -2224,7 +2449,8 @@
 - 67073c8: Fix a bug of handling empty context in `gemini-generator`.
 - 3ab5892: Prepare a blank template with new syntax and debugger.
 - 780909c: Stop displaying subgraphs in Breadboard Debugger.
-- 58b623b: Introduce `ask-user` board and adapt `agent` board to be useful with it.
+- 58b623b: Introduce `ask-user` board and adapt `agent` board to be useful with
+  it.
 - c71339f: Stop generating mermaid files automatically.
 - 605cff3: Improve resilience of boards (error-handling, safer paths)
 - 3356d08: Add favicon

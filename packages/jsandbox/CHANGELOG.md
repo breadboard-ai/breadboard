@@ -1,5 +1,21 @@
 # @breadboard-ai/jsandbox
 
+## 0.4.0
+
+### Minor Changes
+
+- 69d315b: Implement "Search Web" tool
+- 925e4bf: Introduce "main-port" behavior and start using it.
+- a2e7a36: Add support for {{asset}} and {{in}} params in A2.
+- 63a1930: Introduce presentation hints and icon on Schema.
+- b93a70f: Introduce a more flexible way to tag and curate components.
+- 12aea89: CAtch up to the latest Gemini LLMContent types.
+
+### Patch Changes
+
+- 9fe7195: Plumb input format to schema from "Ask User".
+- 83a5186: Fix a typo.
+
 ## 0.3.0
 
 ### Minor Changes
@@ -40,10 +56,12 @@
 
 ### Minor Changes
 
-- 49c7cb7: Add support for peer imports and custom describers (latter not yet plumbed through)
+- 49c7cb7: Add support for peer imports and custom describers (latter not yet
+  plumbed through)
 - 2e7d66f: Add `secrets` to capabilities.
 - df7ad14: Implement support for custom describers in runModule.
-- 526f310: Teach JSandbox to handle errors and load "breadboard:capabilities" import
+- 526f310: Teach JSandbox to handle errors and load "breadboard:capabilities"
+  import
 - 387447c: Add support for async capabilities.
 - 38defd8: Make `jsandbox` a real package.
 - 37dd928: Add support for `invoke` capability.

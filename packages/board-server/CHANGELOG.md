@@ -1,5 +1,66 @@
 # @breadboard-ai/board-server
 
+## 0.12.0
+
+### Minor Changes
+
+- db124b2: Switch Visual Editor and Unified Server to use statically-linked
+  kits.
+- c6f9889: Start all new graphs with a really blank template.
+- 3e05238: Prepare blob store to be more widely used.
+- eaef053: Add support for private boards.
+- affff7c: Add tsc build to the board server, so that its dependents (like
+  `unified-server`) get the type information.
+- 2429df0: Teach board server to use access tokens.
+
+### Patch Changes
+
+- 220f27a: A2-related UI polish
+- 510f172: Remove now-redundant build steps in board server.
+- f62d17c: Teach BoardServerProvider to load from same server (again).
+- 9116578: Teach visual editor about non-root board servers.
+- f6223cd: Reduce config code duplication between various servers
+- c5b823e: Fix a typo and unbreak board server.
+- be771bf: Prototype "Make Code"
+- Updated dependencies [6c223a9]
+- Updated dependencies [2144bc3]
+- Updated dependencies [3af8f62]
+- Updated dependencies [69d315b]
+- Updated dependencies [59d6fe7]
+- Updated dependencies [925e4bf]
+- Updated dependencies [220f27a]
+- Updated dependencies [c6f9889]
+- Updated dependencies [a2e7a36]
+- Updated dependencies [782b7e4]
+- Updated dependencies [6b6052c]
+- Updated dependencies [65f89e0]
+- Updated dependencies [0ad7660]
+- Updated dependencies [10fee14]
+- Updated dependencies [eaef053]
+- Updated dependencies [0b1dc88]
+- Updated dependencies [83bdea5]
+- Updated dependencies [2e76cc4]
+- Updated dependencies [e39ea7e]
+- Updated dependencies [c9fc7b0]
+- Updated dependencies [74124b8]
+- Updated dependencies [9fe7195]
+- Updated dependencies [63a1930]
+- Updated dependencies [b93a70f]
+- Updated dependencies [26b1194]
+- Updated dependencies [b17362c]
+- Updated dependencies [9ade1ed]
+- Updated dependencies [12aea89]
+- Updated dependencies [881f8ab]
+- Updated dependencies [83a5186]
+- Updated dependencies [40a8568]
+- Updated dependencies [8e2fc1f]
+  - @breadboard-ai/connection-client@0.2.0
+  - @google-labs/breadboard@0.32.0
+  - @breadboard-ai/types@0.5.0
+  - @breadboard-ai/jsandbox@0.4.0
+  - @breadboard-ai/google-drive-kit@0.5.0
+  - @breadboard-ai/data-store@0.3.1
+
 ## 0.11.0
 
 ### Minor Changes
@@ -238,7 +299,8 @@
 - b11e1b8: Supply an image for the Open Graph card.
 - 109a0af: Adds SQLite storage backend and adds 500 responses for errors
 - 8be43c7: Configure allowed origins from environment var instead of Firestore
-- 2d71df5: Teach dockerfile about firestore build and slim down the build process.
+- 2d71df5: Teach dockerfile about firestore build and slim down the build
+  process.
 
 ### Patch Changes
 
@@ -258,7 +320,8 @@
 - 068e8cb: Introduce the invite links system for board server.
 - 836058f: Teach App view to handle multimodal content.
 - 001b250: Add support for unclamped outputs
-- b201e07: Implement edge-based UI in board-server (and fix a bunch of bugs elsewhere)
+- b201e07: Implement edge-based UI in board-server (and fix a bunch of bugs
+  elsewhere)
 - 15b5659: Teach app view to use RemoteRunner.
 - a34bb69: Introduce RemoteRunner (over HTTPS)
 - 34bcd9d: Auto-start board run in app view.
@@ -398,8 +461,10 @@
 - 891d022: Teach board server to send username and board tags.
 - c86e648: Teach board-server about vitejs.
 - 225c7cc: Implement simple ACL for board server.
-- 511bd9b: Add support for `published`, `title`, and `mine` metadata for board server.
-- d419142: Use esbuild for building the server bits to allow bundling Breadboard in.
+- 511bd9b: Add support for `published`, `title`, and `mine` metadata for board
+  server.
+- d419142: Use esbuild for building the server bits to allow bundling Breadboard
+  in.
 
 ### Patch Changes
 

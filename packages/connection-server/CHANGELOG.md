@@ -1,5 +1,16 @@
 # @breadboard-ai/connection-server
 
+## 0.5.0
+
+### Minor Changes
+
+- 491b152: Make connections server and npm run dev work properly.
+- 40a8568: Introduce sign in plumbing to Visuale Editor runtime.
+
+### Patch Changes
+
+- ef965ed: refactor connection server startup
+
 ## 0.4.0
 
 ### Minor Changes
@@ -30,13 +41,14 @@
 
 ### Minor Changes
 
-- 98491df: The format of the secrets config file has changed (see README), and only one
-  file will now be read at a time -- the one defined in the `CONNECTIONS_FILE`
-  environment variable.
+- 98491df: The format of the secrets config file has changed (see README), and
+  only one file will now be read at a time -- the one defined in the
+  `CONNECTIONS_FILE` environment variable.
 
 ### Patch Changes
 
-- 960922e: Store the OAuth client ID locally, in addition to the token details. Useful for APIs that require the client ID to be provided.
+- 960922e: Store the OAuth client ID locally, in addition to the token details.
+  Useful for APIs that require the client ID to be provided.
 
 ## 0.2.0
 

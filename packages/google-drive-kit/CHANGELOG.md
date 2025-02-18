@@ -1,5 +1,23 @@
 # @breadboard-ai/google-drive-kit
 
+## 0.5.0
+
+### Minor Changes
+
+- 63a1930: Introduce presentation hints and icon on Schema.
+
+### Patch Changes
+
+- 2e76cc4: Support adding images in append-to-doc
+- Updated dependencies [6c223a9]
+- Updated dependencies [69d315b]
+- Updated dependencies [63a1930]
+- Updated dependencies [40a8568]
+  - @breadboard-ai/connection-client@0.2.0
+  - @google-labs/core-kit@0.18.0
+  - @breadboard-ai/build@0.12.0
+  - @google-labs/template-kit@0.3.17
+
 ## 0.4.1
 
 ### Patch Changes
@@ -51,7 +69,8 @@
 - 3dcbf03: Teach Google Drive Board Server to save board metadata.
 - bdf80d8: Teach Google Drive board server to refresh credentials.
 - 4c71e39: Introduce (entirely stubbed out) Google Drive board server.
-- 25b3853: Introduce "Save Context to Drive" and "Load Context from Drive" components.
+- 25b3853: Introduce "Save Context to Drive" and "Load Context from Drive"
+  components.
 - ef99f4e: Add an experimental "Get Breadboard Folder" component.
 
 ### Patch Changes
@@ -166,9 +185,11 @@
 ### Patch Changes
 
 - cb0f513: Convert google-drive to use new kit function.
-- 38e3232: Annotate file ID/query inputs with new behaviors so that the dedicated input components will be used for them.
+- 38e3232: Annotate file ID/query inputs with new behaviors so that the
+  dedicated input components will be used for them.
 - 9a2ffab: Unpin @breadboard-ai/build dependency from being overly constrained
-- 0a846ff: Switch from google-drive connection id to google-drive-limited, which requests access only to shared files, not all files.
+- 0a846ff: Switch from google-drive connection id to google-drive-limited, which
+  requests access only to shared files, not all files.
 - Updated dependencies [ad8aa22]
 - Updated dependencies [6d2939e]
 - Updated dependencies [15b6171]
@@ -192,7 +213,8 @@
 
 ### Minor Changes
 
-- f2d9839: Move components into component folder. Fix some names & descriptions..
+- f2d9839: Move components into component folder. Fix some names &
+  descriptions..
 
 ### Patch Changes
 

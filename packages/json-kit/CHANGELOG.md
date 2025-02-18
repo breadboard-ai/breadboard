@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.3.15
+
+### Patch Changes
+
+- Updated dependencies [2144bc3]
+- Updated dependencies [3af8f62]
+- Updated dependencies [59d6fe7]
+- Updated dependencies [925e4bf]
+- Updated dependencies [220f27a]
+- Updated dependencies [c6f9889]
+- Updated dependencies [a2e7a36]
+- Updated dependencies [6b6052c]
+- Updated dependencies [65f89e0]
+- Updated dependencies [0ad7660]
+- Updated dependencies [10fee14]
+- Updated dependencies [0b1dc88]
+- Updated dependencies [83bdea5]
+- Updated dependencies [e39ea7e]
+- Updated dependencies [c9fc7b0]
+- Updated dependencies [74124b8]
+- Updated dependencies [63a1930]
+- Updated dependencies [b93a70f]
+- Updated dependencies [26b1194]
+- Updated dependencies [b17362c]
+- Updated dependencies [881f8ab]
+- Updated dependencies [8e2fc1f]
+  - @google-labs/breadboard@0.32.0
+  - @breadboard-ai/build@0.12.0
+
 ## 0.3.14
 
 ### Patch Changes
@@ -388,7 +417,8 @@
 
 ### Patch Changes
 
-- 416aed2: Introduce `metadata` for `NodeHandler` entries, teaching node types in Kits to describe themselves.
+- 416aed2: Introduce `metadata` for `NodeHandler` entries, teaching node types
+  in Kits to describe themselves.
 - Updated dependencies [cef20ca]
 - Updated dependencies [fbf7a83]
 - Updated dependencies [54baba8]
@@ -410,7 +440,8 @@
 
 ### Minor Changes
 
-- 914353c: validateJson node can now accept invalid schemas at the users discression
+- 914353c: validateJson node can now accept invalid schemas at the users
+  discression
 
 ### Patch Changes
 
