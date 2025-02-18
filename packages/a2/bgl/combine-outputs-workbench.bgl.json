@@ -8,7 +8,7 @@
       "type": "file://bgl/a2.bgl.json#module:combine-outputs",
       "metadata": {
         "visual": {
-          "x": 40,
+          "x": 40.00000000000001,
           "y": -1220,
           "collapsed": "expanded",
           "outputHeight": 44
@@ -32,8 +32,8 @@
       "type": "file://bgl/a2.bgl.json#module:combine-outputs",
       "metadata": {
         "visual": {
-          "x": 40,
-          "y": -1400,
+          "x": 40.00000000000001,
+          "y": -1400.0000000000002,
           "collapsed": "expanded",
           "outputHeight": 64
         },
@@ -69,7 +69,7 @@
           "role": "user",
           "parts": [
             {
-              "text": "Good {{\"type\":\"in\",\"path\":\"a2-4fee0499\",\"title\":\"Time of Day\"}}, {{\"type\":\"in\",\"path\":\"8469df91-7949-4f85-b5d8-74e4b643c7e5\",\"title\":\"Name\"}}"
+              "text": "Good {{\"type\":\"in\",\"path\":\"a2-4fee0499\",\"title\":\"Time of Day\"}} , {{\"type\":\"in\",\"path\":\"8469df91-7949-4f85-b5d8-74e4b643c7e5\",\"title\":\"Name\"}}"
             }
           ]
         }
@@ -92,5 +92,14 @@
   ],
   "metadata": {
     "visual": {}
+  },
+  "assets": {
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSIxMDYuOTAiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9Ijk5LjY3IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNTUuMjAiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyMGEyMDIiIC8+CjxyZWN0IHg9IjEwLjAwIgogICAgICAgICAgICAgICAgICAgIHk9IjM3LjkwIgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI5OS42NyIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjYyLjg3IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMjBhMjAyIiAvPgo8cmVjdCB4PSIxNDAuMzMiCiAgICAgICAgICAgICAgICAgICAgeT0iNjguNTciCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9Ijk5LjY3IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNzIuMDciCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyMGEyMDIiIC8+CiAgICAgIAogICAgPC9zdmc+"
+    }
   }
 }

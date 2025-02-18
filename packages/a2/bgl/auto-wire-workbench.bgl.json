@@ -1,0 +1,75 @@
+{
+  "title": "Auto Wire Workbench",
+  "description": "A blank board. Use it as a starting point for your creations.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "a2-0dc964fb",
+      "type": "file://bgl/a2.bgl.json#module:combine-outputs",
+      "metadata": {
+        "title": "Phrase",
+        "visual": {
+          "x": 100,
+          "y": 160,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        },
+        "logLevel": "info"
+      },
+      "configuration": {
+        "text": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "To be or ..."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a2-8fc94f45",
+      "type": "file://bgl/a2.bgl.json#module:image-generator",
+      "metadata": {
+        "visual": {
+          "x": 420,
+          "y": 160,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        },
+        "title": "Make Image",
+        "logLevel": "info"
+      },
+      "configuration": {
+        "instruction": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "{{\"type\":\"in\",\"path\":\"a2-0dc964fb\",\"title\":\"Phrase\"}}"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "a2-0dc964fb",
+      "to": "a2-8fc94f45",
+      "out": "context",
+      "in": "p-z-Phrase"
+    }
+  ],
+  "metadata": {
+    "visual": {}
+  },
+  "assets": {
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI2Mi43MiIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTAzLjEwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNzQuNTUiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyMGEyMDIiIC8+CjxyZWN0IHg9IjEzNi45MCIKICAgICAgICAgICAgICAgICAgICB5PSI2Mi43MiIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTAzLjEwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNzQuNTUiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CiAgICAgIAogICAgPC9zdmc+"
+    }
+  }
+}
