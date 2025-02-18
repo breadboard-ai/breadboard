@@ -34,6 +34,7 @@ export {
   toInlineDataPart,
   toStoredDataPart,
   transformDataParts,
+  convertStoredPartsToAbsoluteUrls,
 } from "./common.js";
 
 export { transformBlobs } from "./file-system/blob-transform.js";

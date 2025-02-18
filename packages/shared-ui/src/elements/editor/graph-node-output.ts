@@ -11,6 +11,7 @@ import MarkdownIt from "markdown-it";
 import {
   isInlineData,
   isLLMContentArray,
+  isStoredData,
   isTextCapabilityPart,
 } from "@google-labs/breadboard";
 import { GraphAssets } from "./graph-assets";
@@ -328,6 +329,30 @@ export class GraphNodeOutput extends PIXI.Container {
                 const canvas = document.createElement("canvas");
                 const img = new Image();
                 img.src = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+                img.onload = () => {
+                  canvas.width = img.naturalWidth;
+                  canvas.height = img.naturalHeight;
+                  canvas.getContext("2d")?.drawImage(img, 0, 0);
+
+                  const texture = PIXI.Texture.from(canvas);
+                  const item = new PIXI.Sprite(texture);
+                  const ratio = MAX_IMAGE_WIDTH / texture.width;
+                  item.scale.x = ratio;
+                  item.scale.y = ratio;
+                  item.label = `${id}-${idx}`;
+
+                  item.x = (MAX_CONTENT_WIDTH - item.width) / 2;
+
+                  resolve(item);
+                };
+              } else {
+                resolve(null);
+              }
+            } else if (isStoredData(part)) {
+              if (part.storedData.mimeType.startsWith("image")) {
+                const canvas = document.createElement("canvas");
+                const img = new Image();
+                img.src = part.storedData.handle;
                 img.onload = () => {
                   canvas.width = img.naturalWidth;
                   canvas.height = img.naturalHeight;
