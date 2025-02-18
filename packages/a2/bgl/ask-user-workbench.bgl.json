@@ -8,8 +8,8 @@
       "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
       "metadata": {
         "visual": {
-          "x": -675.0703125,
-          "y": -366.21094131469727,
+          "x": -720,
+          "y": -380,
           "collapsed": "expanded",
           "outputHeight": 308
         },
@@ -25,12 +25,21 @@
             }
           ]
         },
-        "p-modality": "Any"
+        "p-modality": "Image"
       }
     }
   ],
   "edges": [],
   "metadata": {
     "visual": {}
+  },
+  "assets": {
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSI2Ny42NSIKICAgICAgICAgICAgICAgICAgICB5PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTE0LjcxIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTgwLjAwIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMjBhMjAyIiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+    }
   }
 }
