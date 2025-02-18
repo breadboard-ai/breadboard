@@ -1,25 +1,16 @@
 {
   "compilerOptions": {
-    "allowJs": true,
-    "composite": false,
-    "declaration": true,
-    "declarationMap": true,
-    "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "incremental": true,
-    "inlineSources": false,
-    "isolatedModules": true,
     "lib": ["ES2022", "DOM"],
     "module": "NodeNext",
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
     "outDir": "./dist",
     "preserveWatchOutput": true,
+    "resolveJsonModule": true,
     "skipLibCheck": true,
     "sourceMap": true,
     "strict": true,
-    "target": "ES2022",
-    "resolveJsonModule": true
+    "target": "ES2022"
   },
   "include": ["src/**/*", "tests/**/*"]
 }
