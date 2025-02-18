@@ -23,6 +23,9 @@ const PERSIST_KEY = "bb-board-activity-overlay-persist";
 @customElement("bb-board-activity-overlay")
 export class BoardActivityOverlay extends LitElement {
   @property()
+  accessor graphUrl: URL | null = null;
+
+  @property()
   accessor run: InspectableRun | null = null;
 
   @property()
@@ -182,6 +185,7 @@ export class BoardActivityOverlay extends LitElement {
         <div id="container">
           <bb-board-activity
             class=${classMap({ collapsed: this.debugEvent !== null })}
+            .graphUrl=${this.graphUrl}
             .run=${this.run}
             .events=${events}
             .eventPosition=${eventPosition}

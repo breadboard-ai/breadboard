@@ -49,6 +49,9 @@ import { icons } from "../../styles/icons.js";
 
 @customElement("bb-board-activity")
 export class BoardActivity extends LitElement {
+  @property()
+  accessor graphUrl: URL | null = null;
+
   @property({ reflect: false })
   accessor run: InspectableRun | null = null;
 
@@ -485,6 +488,7 @@ export class BoardActivity extends LitElement {
       if (typeof nodeValue === "object") {
         if (isLLMContentArray(nodeValue)) {
           value = html`<bb-llm-output-array
+            .graphUrl=${this.graphUrl}
             .showModeToggle=${false}
             .showEntrySelector=${false}
             .showExportControls=${type !== "input"}
@@ -508,6 +512,7 @@ export class BoardActivity extends LitElement {
           value = nodeValue.parts.length
             ? html`<bb-llm-output
                 .showExportControls=${type !== "input"}
+                .graphUrl=${this.graphUrl}
                 .lite=${true}
                 .clamped=${false}
                 .value=${nodeValue}

@@ -659,12 +659,15 @@ export class UI extends LitElement {
         const nextNodeId =
           this.topGraphResult?.currentNode?.descriptor.id ?? null;
 
+        const graphUrl = this.graph?.url ? new URL(this.graph.url) : null;
+
         sideNavItem = html`${guard(
           [run, events, eventPosition, this.debugEvent],
           () =>
             html` <div id="board-console-container">
               <bb-board-activity
                 class=${classMap({ collapsed: this.debugEvent !== null })}
+                .graphUrl=${graphUrl}
                 .run=${run}
                 .events=${events}
                 .eventPosition=${eventPosition}
