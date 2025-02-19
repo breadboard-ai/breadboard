@@ -8,7 +8,7 @@ WORKDIR /breadboard
 # build-context=breadboard=../.. .
 COPY --from=breadboard / .
 
-RUN npm install --save-dev
+RUN npm clean-install
 
 WORKDIR packages/unified-server
 RUN npm run build
