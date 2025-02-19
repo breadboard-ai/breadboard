@@ -9,8 +9,23 @@ export { Template };
 export type TemplatePartType = "in" | "asset" | "tool";
 
 export type TemplatePart = {
+  /**
+   * The type of the part:
+   * - "in" - the incoming autowire
+   * - "asset" -- an asset that will be embedded into content
+   * - "tool" -- a tool that will be invoked
+   */
   type: TemplatePartType;
+  /**
+   * The "path" value varies depending on the type:
+   * - for "in" -- the id of the incoming node for the autowire
+   * - for "asset" -- the id of the asset
+   * - for "tool" -- the URL of the tool
+   */
   path: string;
+  /**
+   * A friendly title to use for preview or in the chiclet UI.
+   */
   title: string;
 };
 

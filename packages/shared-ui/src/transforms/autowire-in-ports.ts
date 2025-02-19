@@ -44,7 +44,6 @@ class AutoWireInPorts implements EditTransform {
       return { success: false, error: `Unable to find node with id "${id}"` };
     }
 
-    // TODO: Don't forget about proper title->id conversion.
     const incoming = dedupeEdges(
       ins
         .map((v) => {
@@ -54,7 +53,7 @@ class AutoWireInPorts implements EditTransform {
             from: v.path,
             to: inspectableNode.descriptor.id,
             out,
-            in: `p-z-${v.title}`,
+            in: `p-z-${v.path}`,
           };
         })
         .filter(Boolean) as Edge[]
