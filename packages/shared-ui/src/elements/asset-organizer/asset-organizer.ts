@@ -7,13 +7,23 @@
 import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("AssetOrganizer");
 
-import { css, html, LitElement, nothing } from "lit";
+import {
+  css,
+  html,
+  HTMLTemplateResult,
+  LitElement,
+  nothing,
+  PropertyValues,
+} from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { GraphAsset, Organizer } from "../../state";
 import { repeat } from "lit/directives/repeat.js";
-import { AssetPath } from "@breadboard-ai/types";
+import { AssetMetadata, AssetPath } from "@breadboard-ai/types";
 import { classMap } from "lit/directives/class-map.js";
+import { OverflowAction } from "../../types/types.js";
+import { OverflowMenuActionEvent } from "../../events/events.js";
+import { createRef, ref, Ref } from "lit/directives/ref.js";
 
 const EXPANDED_KEY = "bb-asset-organizer-expanded";
 const VIEWER_KEY = "bb-asset-organizer-viewer";
@@ -29,8 +39,14 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
   @property({ reflect: true })
   accessor showViewer = false;
 
+  @property()
+  accessor showAddOverflowMenu = false;
+
   @state()
   accessor asset: GraphAsset | null = null;
+
+  @state()
+  accessor editAsset: GraphAsset | null = null;
 
   static styles = css`
     * {
@@ -39,6 +55,14 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
 
     :host {
       display: block;
+      position: relative;
+    }
+
+    #add-asset-proxy {
+      display: block;
+      width: 0;
+      height: 0;
+      position: absolute;
     }
 
     #container {
@@ -52,13 +76,6 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
       height: var(--bb-grid-size-11);
       box-shadow: var(--bb-elevation-5);
 
-      & #add-asset {
-        opacity: 0;
-        display: block;
-        width: 0;
-        height: 0;
-      }
-
       & #add-asset-container {
         height: var(--bb-grid-size-11);
         display: flex;
@@ -66,7 +83,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
         padding: 0 var(--bb-grid-size-3);
       }
 
-      label[for="add-asset"] {
+      #add-asset {
         font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
           var(--bb-font-family);
         border-radius: var(--bb-grid-size-16);
@@ -159,7 +176,8 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
       & #assets {
         display: none;
 
-        & #no-assets {
+        & #no-assets,
+        & #no-asset-selected {
           color: var(--bb-neutral-900);
           font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
             var(--bb-font-family);
@@ -185,6 +203,32 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
             display: flex;
             align-items: center;
             margin-bottom: var(--bb-grid-size);
+
+            & > span {
+              display: block;
+              width: calc(var(--bb-grid-size-6) + 2px);
+              height: var(--bb-grid-size-7);
+
+              &.content {
+                background: var(--bb-neutral-0) var(--bb-icon-text) 4px center /
+                  20px 20px no-repeat;
+              }
+
+              &.file {
+                background: var(--bb-neutral-0) var(--bb-icon-attach) 4px
+                  center / 20px 20px no-repeat;
+              }
+            }
+
+            & input {
+              flex: 1;
+              height: var(--bb-grid-size-7);
+              line-height: var(--bb-grid-size-7);
+              font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+                var(--bb-font-family);
+              border-radius: var(--bb-grid-size);
+              padding: 0 var(--bb-grid-size);
+            }
 
             & .asset {
               flex: 1;
@@ -212,7 +256,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                   20px 20px no-repeat;
               }
 
-              &:not([disabled]) {
+              &:not(.active) {
                 cursor: pointer;
                 background-color: var(--bb-neutral-0);
 
@@ -245,7 +289,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
 
         & #details {
           width: 100%;
-          padding: var(--bb-grid-size-3);
+          padding: var(--bb-grid-size-4);
           overflow-y: scroll;
           overflow-x: hidden;
 
@@ -315,7 +359,17 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
         }
       }
     }
+
+    bb-overflow-menu {
+      position: absolute;
+      left: 12px;
+      width: 220px;
+      top: 84px;
+    }
   `;
+
+  #uploadInputRef: Ref<HTMLInputElement> = createRef();
+  #renameInputRef: Ref<HTMLInputElement> = createRef();
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -358,7 +412,38 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
 
     this.#deleting = true;
     await this.state.removeGraphAsset(asset);
+    if (this.asset && this.asset.path === asset) {
+      this.asset = null;
+    }
     this.#deleting = false;
+  }
+
+  #attemptUploadAsset() {
+    if (!this.#uploadInputRef.value) {
+      return;
+    }
+
+    this.#uploadInputRef.value.click();
+  }
+
+  #attemptUpdateAssetTitle(asset: GraphAsset, title: string) {
+    const metadata: AssetMetadata = asset.metadata ?? {
+      title: title,
+      type: "file",
+    };
+
+    metadata.title = title;
+
+    this.state?.changeGraphAssetMetadata(asset.path, metadata);
+    this.asset = asset;
+  }
+
+  protected updated(_changedProperties: PropertyValues): void {
+    if (this.editAsset) {
+      if (this.#renameInputRef.value) {
+        this.#renameInputRef.value.select();
+      }
+    }
   }
 
   render() {
@@ -366,147 +451,242 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
 
     const assets = this.state?.graphAssets;
 
+    let addOverflowMenu: HTMLTemplateResult | symbol = nothing;
+    if (this.showAddOverflowMenu) {
+      const actions: OverflowAction[] = [
+        { icon: "upload", title: "Upload from device", name: "upload" },
+      ];
+      addOverflowMenu = html`<bb-overflow-menu
+        .actions=${actions}
+        .disabled=${false}
+        @bboverflowmenuaction=${(evt: OverflowMenuActionEvent) => {
+          evt.stopImmediatePropagation();
+
+          switch (evt.action) {
+            case "upload": {
+              this.#attemptUploadAsset();
+              break;
+            }
+          }
+
+          this.showAddOverflowMenu = false;
+        }}
+        @bboverflowmenudismissed=${() => {
+          this.showAddOverflowMenu = false;
+        }}
+      ></bb-overflow-menu>`;
+    }
+
     return html`<div id="container">
-      <header>
-        <h1 @dblclick=${() => this.#toggleExpandedState()}>
-          ${Strings.from("LABEL_TITLE")}
-        </h1>
-        <button
-          id="toggle-viewer"
-          class=${classMap({ active: this.showViewer })}
-          @click=${() => this.#toggleViewer()}
-        >
-          ${Strings.from("COMMAND_TOGGLE_VIEWER")}
-        </button>
-        <button
-          id="toggle-expanded"
-          @click=${() => this.#toggleExpandedState()}
-        >
-          ${Strings.from("COMMAND_TOGGLE_EXPAND")}
-        </button>
-      </header>
-      <section id="assets">
-        <section>
-          <div id="add-asset-container">
-            <input
-              type="file"
-              id="add-asset"
-              multiple
-              @change=${(evt: InputEvent) => {
-                if (
-                  !(evt.target instanceof HTMLInputElement) ||
-                  !evt.target.files
-                ) {
-                  return;
-                }
+        <header>
+          <h1 @dblclick=${() => this.#toggleExpandedState()}>
+            ${Strings.from("LABEL_TITLE")}
+          </h1>
+          <button
+            id="toggle-viewer"
+            class=${classMap({ active: this.showViewer })}
+            @click=${() => this.#toggleViewer()}
+          >
+            ${Strings.from("COMMAND_TOGGLE_VIEWER")}
+          </button>
+          <button
+            id="toggle-expanded"
+            @click=${() => this.#toggleExpandedState()}
+          >
+            ${Strings.from("COMMAND_TOGGLE_EXPAND")}
+          </button>
+        </header>
+        <section id="assets">
+          <section>
+            <div id="add-asset-container">
+              <button
+                id="add-asset"
+                @click=${() => {
+                  this.showAddOverflowMenu = true;
+                }}
+              >
+                ${Strings.from("COMMAND_ADD_ASSET")}
+              </button>
+            </div>
+            ${assets && assets.size > 0
+              ? html`<menu>
+                  ${repeat(assets, ([path, asset]) => {
+                    return html`<li>
+                      ${asset === this.editAsset
+                        ? html`<span
+                              class=${classMap({
+                                [asset.metadata?.type ?? "generic"]: true,
+                              })}
+                            ></span>
 
-                const target = evt.target;
-                const assetLoad = [...evt.target.files].map((file) => {
-                  return new Promise<{
-                    name: string;
-                    type: string;
-                    content: string | null;
-                  }>((resolve) => {
-                    const reader = new FileReader();
-                    reader.addEventListener("loadend", () => {
-                      resolve({
-                        name: file.name,
-                        type: file.type,
-                        content: reader.result as string | null,
-                      });
-                    });
-                    reader.readAsDataURL(file);
-                  });
-                });
+                            <input
+                              type="text"
+                              required
+                              autofocus
+                              .value=${asset.metadata?.title || path}
+                              ${ref(this.#renameInputRef)}
+                              @blur=${(evt: Event) => {
+                                if (!(evt.target instanceof HTMLInputElement)) {
+                                  return;
+                                }
 
-                Promise.all(assetLoad).then((assets) => {
-                  // Reset the input otherwise we aren't guaranteed to get the
-                  // input event if the same files are uploaded.
-                  target.value = "";
+                                if (!this.editAsset) {
+                                  return;
+                                }
 
-                  if (!this.state) {
-                    return;
-                  }
+                                if (!evt.target.value) {
+                                  evt.target.reportValidity();
+                                  return;
+                                }
 
-                  for (const asset of assets) {
-                    if (!asset.content) continue;
-                    const [, mimeType, , data] = asset.content.split(/[:;,]/);
-                    this.state.addGraphAsset({
-                      path: asset.name,
-                      metadata: {
-                        title: asset.name,
-                        type: "file",
-                      },
-                      data: [
-                        {
-                          parts: [
-                            {
-                              inlineData: { mimeType, data },
-                            },
-                          ],
-                          role: "user",
-                        },
-                      ],
-                    });
-                  }
-                });
-              }}
-            />
-            <label for="add-asset">${Strings.from("COMMAND_ADD_ASSET")}</label>
-          </div>
-          ${assets && assets.size > 0
-            ? html`<menu>
-                ${repeat(assets, ([path, asset]) => {
-                  return html`<li>
-                    <button
-                      class=${classMap({
-                        asset: true,
-                        [asset.metadata?.type ?? "generic"]: true,
-                      })}
-                      ?disabled=${asset === this.asset}
-                      @click=${() => {
-                        this.#showAsset(asset);
-                      }}
-                    >
-                      ${asset.metadata?.title || path}
-                    </button>
-                    <button
-                      class=${classMap({
-                        delete: true,
-                      })}
-                      @click=${async () => {
-                        if (this.#deleting) {
-                          return;
-                        }
+                                this.#attemptUpdateAssetTitle(
+                                  this.editAsset,
+                                  evt.target.value
+                                );
+                                this.#showAsset(this.editAsset);
+                                this.editAsset = null;
+                              }}
+                              @keydown=${(evt: KeyboardEvent) => {
+                                if (!(evt.target instanceof HTMLInputElement)) {
+                                  return;
+                                }
 
-                        if (this.asset && this.asset === asset) {
-                          this.asset = null;
-                        }
+                                if (evt.key !== "Enter") {
+                                  return;
+                                }
 
-                        await this.#deleteAsset(path);
-                      }}
-                    >
-                      Delete
-                    </button>
-                  </li>`;
-                })}
-              </menu>`
-            : html`<div id="no-assets">
-                ${Strings.from("LABEL_NO_ASSETS")}
-              </div>`}
+                                if (!this.editAsset) {
+                                  return;
+                                }
+
+                                if (!evt.target.value) {
+                                  evt.target.reportValidity();
+                                  return;
+                                }
+
+                                this.#attemptUpdateAssetTitle(
+                                  this.editAsset,
+                                  evt.target.value
+                                );
+                                this.#showAsset(this.editAsset);
+                                this.editAsset = null;
+                              }}
+                            />`
+                        : html`<button
+                            class=${classMap({
+                              asset: true,
+                              [asset.metadata?.type ?? "generic"]: true,
+                              active: asset.path === this.asset?.path,
+                            })}
+                            @click=${() => {
+                              this.#showAsset(asset);
+                            }}
+                            @dblclick=${() => {
+                              this.editAsset = asset;
+                            }}
+                          >
+                            ${asset.metadata?.title || path}
+                          </button>`}
+
+                      <button
+                        class=${classMap({
+                          delete: true,
+                        })}
+                        @click=${async () => {
+                          if (this.#deleting) {
+                            return;
+                          }
+
+                          await this.#deleteAsset(path);
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </li>`;
+                  })}
+                </menu>`
+              : html`<div id="no-assets">
+                  ${Strings.from("LABEL_NO_ASSETS")}
+                </div>`}
+          </section>
+
+          ${this.showViewer
+            ? html` <section id="details">
+                ${output
+                  ? html`<bb-llm-output
+                      .value=${output}
+                      .clamped=${false}
+                      .graphUrl=${this.state?.graphUrl || null}
+                      .showExportControls=${true}
+                    ></bb-llm-output>`
+                  : html`<div id="no-asset-selected">No asset selected</div>`}
+              </section>`
+            : nothing}
         </section>
+      </div>
 
-        ${this.showViewer
-          ? html` <section id="details">
-              <bb-llm-output
-                .value=${output}
-                .clamped=${false}
-                .graphUrl=${this.state?.graphUrl || null}
-                .showExportControls=${true}
-              ></bb-llm-output>
-            </section>`
-          : nothing}
-      </section>
-    </div>`;
+      <input
+        type="file"
+        id="add-asset-proxy"
+        multiple
+        ${ref(this.#uploadInputRef)}
+        @change=${(evt: InputEvent) => {
+          if (!(evt.target instanceof HTMLInputElement) || !evt.target.files) {
+            return;
+          }
+
+          const target = evt.target;
+          const assetLoad = [...evt.target.files].map((file) => {
+            return new Promise<{
+              name: string;
+              type: string;
+              content: string | null;
+            }>((resolve) => {
+              const reader = new FileReader();
+              reader.addEventListener("loadend", () => {
+                resolve({
+                  name: file.name,
+                  type: file.type,
+                  content: reader.result as string | null,
+                });
+              });
+              reader.readAsDataURL(file);
+            });
+          });
+
+          Promise.all(assetLoad).then((assets) => {
+            // Reset the input otherwise we aren't guaranteed to get the
+            // input event if the same files are uploaded.
+            target.value = "";
+
+            if (!this.state) {
+              return;
+            }
+
+            for (const asset of assets) {
+              if (!asset.content) continue;
+              const [, mimeType, , data] = asset.content.split(/[:;,]/);
+              this.state.addGraphAsset({
+                path: asset.name,
+                metadata: {
+                  title: asset.name,
+                  type: "file",
+                },
+                data: [
+                  {
+                    parts: [
+                      {
+                        inlineData: { mimeType, data },
+                      },
+                    ],
+                    role: "user",
+                  },
+                ],
+              });
+            }
+          });
+        }}
+      />
+      ${addOverflowMenu}`;
   }
 }

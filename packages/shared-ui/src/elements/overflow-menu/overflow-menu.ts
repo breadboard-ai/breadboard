@@ -220,6 +220,10 @@ export class OverflowMenu extends LitElement {
       background-image: var(--bb-icon-logout);
     }
 
+    button.upload {
+      background-image: var(--bb-icon-upload);
+    }
+
     button.error {
       background-image: var(--bb-icon-error);
       color: var(--bb-warning-600);
