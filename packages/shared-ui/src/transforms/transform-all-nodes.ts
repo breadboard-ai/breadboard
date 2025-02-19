@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DataPart, LLMContent } from "@breadboard-ai/types";
+import { DataPart, LLMContent, NodeConfiguration } from "@breadboard-ai/types";
 import {
   EditOperationContext,
   EditTransform,
@@ -18,7 +18,7 @@ import {
 } from "@google-labs/breadboard";
 import { Template, TemplatePart } from "../utils/template";
 
-export { TransformAllNodes };
+export { TransformAllNodes, transformConfiguration };
 
 /**
  * Returns either a new replacement part or null if the part does not need to
@@ -29,6 +29,58 @@ export type TemplatePartTransformer = (
 ) => TemplatePart | null;
 
 export type EditTransformFactory = (id: NodeIdentifier) => EditTransform;
+
+function transformConfiguration(
+  config: NodeConfiguration,
+  templateTransformer: TemplatePartTransformer
+): NodeConfiguration | null {
+  const updates: [PortIdentifier, NodeValue][] = [];
+  for (const [portName, portValue] of Object.entries(config)) {
+    let contents: LLMContent[] | null = null;
+    let array = false;
+    if (isLLMContent(portValue)) {
+      contents = [portValue];
+    } else if (isLLMContentArray(portValue)) {
+      contents = portValue;
+      array = true;
+    }
+    if (!contents) continue;
+    let didTransform = false;
+    const updated: LLMContent[] = [];
+    for (const content of contents) {
+      const parts: DataPart[] = [];
+      for (const part of content.parts) {
+        if ("text" in part) {
+          const template = new Template(part.text);
+          if (template.hasPlaceholders) {
+            const text = template.transform((part) => {
+              const transformed = templateTransformer(part);
+              if (transformed === null) {
+                return part;
+              } else {
+                didTransform = true;
+                return transformed;
+              }
+            });
+            parts.push({ text });
+            continue;
+          }
+        }
+        parts.push(part);
+      }
+      updated.push({ parts, role: content.role });
+    }
+    if (didTransform) {
+      updates.push([portName, (array ? updated : updated.at(0)) as NodeValue]);
+    }
+  }
+  if (updates.length === 0) return null;
+  const newConfig = structuredClone(config);
+  for (const [portName, updated] of updates) {
+    newConfig[portName] = updated;
+  }
+  return newConfig;
+}
 
 class TransformAllNodes implements EditTransform {
   constructor(
@@ -55,55 +107,11 @@ class TransformAllNodes implements EditTransform {
     for (const node of inspectable.nodes()) {
       const id = node.descriptor.id;
       if (id === this.currentNode) continue;
-      const updates: [PortIdentifier, NodeValue][] = [];
-      const config = node.configuration();
-      for (const [portName, portValue] of Object.entries(config)) {
-        let contents: LLMContent[] | null = null;
-        let array = false;
-        if (isLLMContent(portValue)) {
-          contents = [portValue];
-        } else if (isLLMContentArray(portValue)) {
-          contents = portValue;
-          array = true;
-        }
-        if (!contents) continue;
-        let didTransform = false;
-        const updated: LLMContent[] = [];
-        for (const content of contents) {
-          const parts: DataPart[] = [];
-          for (const part of content.parts) {
-            if ("text" in part) {
-              const template = new Template(part.text);
-              if (template.hasPlaceholders) {
-                const text = template.transform((part) => {
-                  const transformed = this.templateTransformer(part);
-                  if (transformed === null) {
-                    return part;
-                  } else {
-                    didTransform = true;
-                    return transformed;
-                  }
-                });
-                parts.push({ text });
-                continue;
-              }
-            }
-            parts.push(part);
-          }
-          updated.push({ parts, role: content.role });
-        }
-        if (didTransform) {
-          updates.push([
-            portName,
-            (array ? updated : updated.at(0)) as NodeValue,
-          ]);
-        }
-      }
-      if (updates.length === 0) continue;
-      const newConfig = structuredClone(config);
-      for (const [portName, updated] of updates) {
-        newConfig[portName] = updated;
-      }
+      const newConfig = transformConfiguration(
+        node.configuration(),
+        this.templateTransformer
+      );
+      if (newConfig === null) continue;
       const changingConfig = await context.apply(
         [
           {

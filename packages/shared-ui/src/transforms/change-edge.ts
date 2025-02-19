@@ -11,6 +11,7 @@ import {
   EditTransformResult,
   GraphIdentifier,
 } from "@google-labs/breadboard";
+import { MarkInPortsInvalid } from "./mark-in-ports-invalid";
 
 export { ChangeEdge };
 
@@ -42,7 +43,10 @@ class ChangeEdge implements EditTransform {
           [{ type: "removeedge", edge: from, graphId }],
           `Remove edge between ${from.from} and ${from.to}`
         );
-        break;
+        if (!changing.success) return changing;
+        return new MarkInPortsInvalid(graphId, from.to, from.from).apply(
+          context
+        );
       }
 
       case "move": {
