@@ -223,7 +223,11 @@ function addSandboxedRunModule(sandbox: Sandbox, kits: Kit[]): Kit[] {
               modules
             );
             const inputs = context.store
-              ? ((await inflateData(context.store, rest)) as InputValues)
+              ? ((await inflateData(
+                  context.store,
+                  rest,
+                  context.base
+                )) as InputValues)
               : rest;
             const result = await module.invoke(
               $module as string,
