@@ -89,6 +89,6 @@
     "@breadboard-ai/idb-board-server": "1.19.2",
     "@breadboard-ai/remote-board-server": "1.20.0",
     "@google-labs/breadboard": "^0.32.0",
-    "idb": "^8.0.0"
+    "idb": "^8.0.2"
   }
 }
