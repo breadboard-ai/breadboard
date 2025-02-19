@@ -148,6 +148,7 @@ export class TextEditor extends LitElement {
   #value = "";
   #renderableValue = "";
   #isUsingFastAccess = false;
+  #lastRange: Range | null = null;
   #editorRef: Ref<HTMLDivElement> = createRef();
   #proxyRef: Ref<HTMLDivElement> = createRef();
   #fastAccessRef: Ref<FastAccessMenu> = createRef();
@@ -225,64 +226,90 @@ export class TextEditor extends LitElement {
     this.#checkSelectionsBound(evt);
   }
 
+  #restoreLastRange() {
+    if (!this.#lastRange) {
+      return;
+    }
+
+    this.focus();
+    const selection = this.#getCurrentSelection();
+    if (!selection) {
+      return;
+    }
+
+    selection.removeAllRanges();
+    selection.addRange(this.#lastRange);
+    selection.collapseToEnd();
+  }
+
   #add(path: string, title: string, type: TemplatePartType) {
     if (!this.#editorRef.value) {
       return null;
     }
 
-    const spaceAfter = document.createTextNode(String.fromCharCode(160));
-    const label = document.createElement("label");
-    const preambleText = document.createElement("span");
-    const titleText = document.createElement("span");
-    const postamableText = document.createElement("span");
-    label.classList.add("chiclet");
-    label.classList.add(type);
-    label.dataset.path = path;
+    if (!this.#getCurrentRange()) {
+      this.#restoreLastRange();
+    }
 
-    preambleText.textContent = Template.preamble({ title, path, type });
-    postamableText.textContent = Template.postamble();
-    titleText.textContent = title;
-    titleText.classList.add("visible");
-
-    label.appendChild(preambleText);
-    label.appendChild(titleText);
-    label.appendChild(postamableText);
-    label.contentEditable = "false";
-
-    const range = this.#getCurrentRange();
-    if (!range) {
-      this.#editorRef.value.appendChild(label);
-      this.#editorRef.value.appendChild(spaceAfter);
-    } else {
-      if (
-        range.commonAncestorContainer !== this.#editorRef.value &&
-        range.commonAncestorContainer.parentNode !== this.#editorRef.value
-      ) {
-        this.#editorRef.value.appendChild(label);
-        this.#editorRef.value.appendChild(spaceAfter);
-        return label;
+    requestAnimationFrame(() => {
+      if (!this.#editorRef.value) {
+        return;
       }
 
-      range.deleteContents();
+      const spaceAfter = document.createTextNode(String.fromCharCode(160));
+      const label = document.createElement("label");
+      const preambleText = document.createElement("span");
+      const titleText = document.createElement("span");
+      const postamableText = document.createElement("span");
+      label.classList.add("chiclet");
+      label.classList.add(type);
+      label.dataset.path = path;
 
-      // The range doesn't move, so insert the nodes in reverse order.
-      range.insertNode(spaceAfter);
-      range.insertNode(label);
+      preambleText.textContent = Template.preamble({ title, path, type });
+      postamableText.textContent = Template.postamble();
+      titleText.textContent = title;
+      titleText.classList.add("visible");
 
-      range.setStartAfter(spaceAfter);
-      range.collapse(true);
+      label.appendChild(preambleText);
+      label.appendChild(titleText);
+      label.appendChild(postamableText);
+      label.contentEditable = "false";
 
-      requestAnimationFrame(() => {
-        const selection = this.#getCurrentSelection();
-        if (!selection) {
-          return;
+      const range = this.#getCurrentRange();
+      if (!range) {
+        this.#editorRef.value.appendChild(label);
+        this.#editorRef.value.appendChild(spaceAfter);
+      } else {
+        if (
+          range.commonAncestorContainer !== this.#editorRef.value &&
+          range.commonAncestorContainer.parentNode !== this.#editorRef.value
+        ) {
+          this.#editorRef.value.appendChild(label);
+          this.#editorRef.value.appendChild(spaceAfter);
+          return label;
         }
 
-        selection.removeAllRanges();
-        selection.addRange(range);
-        this.#captureEditorValue();
-      });
-    }
+        range.deleteContents();
+
+        // The range doesn't move, so insert the nodes in reverse order.
+        range.insertNode(spaceAfter);
+        range.insertNode(label);
+
+        range.setStartAfter(spaceAfter);
+        range.collapse(true);
+
+        requestAnimationFrame(() => {
+          const selection = this.#getCurrentSelection();
+          if (!selection) {
+            return;
+          }
+
+          selection.removeAllRanges();
+          selection.addRange(range);
+          this.#captureEditorValue();
+        });
+      }
+    });
   }
 
   #getCurrentRange(): Range | null {
@@ -500,6 +527,13 @@ export class TextEditor extends LitElement {
     this.style.setProperty("--fast-access-x", `${left}px`);
     this.style.setProperty("--fast-access-y", `${top}px`);
     this.#fastAccessRef.value.classList.add("active");
+    requestAnimationFrame(() => {
+      if (!this.#fastAccessRef.value) {
+        return;
+      }
+
+      this.#fastAccessRef.value.focusFilter();
+    });
     this.#isUsingFastAccess = true;
   }
 
@@ -549,7 +583,8 @@ export class TextEditor extends LitElement {
           if (this.projectState && evt.key === "@") {
             evt.preventDefault();
 
-            const bounds = this.#getCurrentRange()?.getBoundingClientRect();
+            this.#lastRange = this.#getCurrentRange();
+            const bounds = this.#lastRange?.getBoundingClientRect();
             this.#showFastAccess(bounds);
           }
         }}
@@ -563,7 +598,7 @@ export class TextEditor extends LitElement {
       ><bb-fast-access-menu
         ${ref(this.#fastAccessRef)}
         @pointerdown=${(evt: PointerEvent) => {
-          evt.preventDefault();
+          evt.stopImmediatePropagation();
         }}
         @bbfastaccessdismissed=${() => {
           this.#hideFastAccess();

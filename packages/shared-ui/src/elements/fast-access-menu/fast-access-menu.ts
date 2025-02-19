@@ -10,7 +10,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { SignalWatcher } from "@lit-labs/signals";
-import { css, html, LitElement } from "lit";
+import { css, html, LitElement, PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { Component, FastAccess, GraphAsset, Tool } from "../../state";
 import { GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
@@ -35,7 +35,14 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
   @state()
   accessor selectedIndex = 0;
 
+  @property()
+  accessor filter: string | null = null;
+
   static styles = css`
+    * {
+      box-sizing: border-box;
+    }
+
     :host {
       display: block;
       width: 240px;
@@ -54,6 +61,26 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
         var(--bb-font-family);
       margin-bottom: var(--bb-grid-size-2);
+    }
+
+    header {
+      margin-bottom: var(--bb-grid-size-2);
+      position: sticky;
+      top: 0;
+      background: red;
+      box-shadow: 0 0 0 8px var(--bb-neutral-0);
+
+      & input {
+        width: 100%;
+        height: var(--bb-grid-size-7);
+        line-height: var(--bb-grid-size-7);
+        font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+          var(--bb-font-family);
+        border-radius: var(--bb-grid-size);
+        padding: 0 var(--bb-grid-size);
+        border: 1px solid var(--bb-ui-700);
+        outline: 1px solid var(--bb-ui-700);
+      }
     }
 
     #assets,
@@ -139,6 +166,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
   `;
 
   #itemContainerRef: Ref<HTMLDivElement> = createRef();
+  #filterInputRef: Ref<HTMLInputElement> = createRef();
   #onKeyDownBound = this.#onKeyDown.bind(this);
   #onEscapeBound = this.#onEscape.bind(this);
 
@@ -150,6 +178,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
   connectedCallback(): void {
     super.connectedCallback();
+
+    console.log("Connected");
 
     window.addEventListener("keydown", this.#onEscapeBound, { capture: true });
     window.addEventListener("keydown", this.#onKeyDownBound);
@@ -164,19 +194,51 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
   protected willUpdate(): void {
     const graphId = this.graphId || "";
-    const assets = [...(this.state?.graphAssets.values() || [])];
-    const tools = [...(this.state?.tools.values() || [])].sort(
+    let assets = [...(this.state?.graphAssets.values() || [])];
+    let tools = [...(this.state?.tools.values() || [])].sort(
       (tool1, tool2) => tool1.order! - tool2.order!
     );
-    const components = [
-      ...(this.state?.components.get(graphId)?.values() || []),
-    ];
+    let components = [...(this.state?.components.get(graphId)?.values() || [])];
+
+    if (this.filter) {
+      const filterStr = this.filter;
+
+      assets = assets.filter((asset) => {
+        const filter = new RegExp(filterStr, "gim");
+        return filter.test(asset.metadata?.title ?? asset.path);
+      });
+
+      tools = tools.filter((tool) => {
+        const filter = new RegExp(filterStr, "gim");
+        return filter.test(tool.title ?? "");
+      });
+
+      components = components.filter((component) => {
+        const filter = new RegExp(filterStr, "gim");
+        return filter.test(component.title);
+      });
+    }
 
     this.#items = {
       assets,
       tools,
       components,
     };
+
+    const totalSize =
+      this.#items.assets.length +
+      this.#items.tools.length +
+      this.#items.components.length;
+
+    this.selectedIndex = this.#clamp(this.selectedIndex, 0, totalSize - 1);
+  }
+
+  protected firstUpdated(_changedProperties: PropertyValues): void {
+    if (!this.#filterInputRef.value) {
+      return;
+    }
+
+    this.#filterInputRef.value.select();
   }
 
   updated() {
@@ -218,6 +280,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     switch (evt.key) {
       case "Enter": {
         evt.stopImmediatePropagation();
+        evt.preventDefault();
         this.#emitCurrentItem();
         break;
       }
@@ -295,22 +358,38 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     console.warn("Index out of bounds for fast access selection");
   }
 
+  focusFilter() {
+    if (!this.#filterInputRef.value) {
+      return;
+    }
+
+    this.#filterInputRef.value.select();
+  }
+
   render() {
-    const graphId = this.graphId || "";
-    const assets = [...(this.state?.graphAssets.values() || [])];
-    const tools = [...(this.state?.tools.values() || [])].sort(
-      (tool1, tool2) => tool1.order! - tool2.order!
-    );
-    const components = [
-      ...(this.state?.components.get(graphId)?.values() || []),
-    ];
     let idx = 0;
     return html` <div ${ref(this.#itemContainerRef)}>
+      <header>
+        <input
+          autofocus
+          type="text"
+          .placeholder=${"Search"}
+          ${ref(this.#filterInputRef)}
+          .value=${this.filter}
+          @input=${(evt: InputEvent) => {
+            if (!(evt.target instanceof HTMLInputElement)) {
+              return;
+            }
+
+            this.filter = evt.target.value;
+          }}
+        />
+      </header>
       <section id="assets">
         <h3>Assets</h3>
-        ${assets.length
+        ${this.#items.assets.length
           ? html` <menu>
-              ${assets.map((asset) => {
+              ${this.#items.assets.map((asset) => {
                 const active = idx === this.selectedIndex;
                 const globalIndex = idx;
                 idx++;
@@ -334,9 +413,9 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
       <section id="tools">
         <h3>Tools</h3>
-        ${tools.length
+        ${this.#items.tools.length
           ? html` <menu>
-              ${tools.map((tool) => {
+              ${this.#items.tools.map((tool) => {
                 const active = idx === this.selectedIndex;
                 const icon = tool.icon ? { [tool.icon]: true } : {};
                 const globalIndex = idx;
@@ -361,9 +440,9 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
       <section id="outputs">
         <h3>Flow output from</h3>
-        ${components.length
+        ${this.#items.components.length
           ? html` <menu>
-              ${components.map((component) => {
+              ${this.#items.components.map((component) => {
                 const active = idx === this.selectedIndex;
                 const globalIndex = idx;
                 idx++;
