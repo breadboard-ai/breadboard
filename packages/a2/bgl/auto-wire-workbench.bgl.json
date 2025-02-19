@@ -9,8 +9,8 @@
       "metadata": {
         "title": "Phrase",
         "visual": {
-          "x": 100,
-          "y": 160,
+          "x": -20,
+          "y": 120,
           "collapsed": "expanded",
           "outputHeight": 88
         },
@@ -21,7 +21,7 @@
           "role": "user",
           "parts": [
             {
-              "text": "To be or ..."
+              "text": "Beauty conquers despair"
             }
           ]
         }
@@ -32,10 +32,10 @@
       "type": "file://bgl/a2.bgl.json#module:image-generator",
       "metadata": {
         "visual": {
-          "x": 420,
-          "y": 160,
+          "x": 360,
+          "y": 120,
           "collapsed": "expanded",
-          "outputHeight": 88
+          "outputHeight": 288
         },
         "title": "Make Image",
         "logLevel": "info"
@@ -57,7 +57,7 @@
       "from": "a2-0dc964fb",
       "to": "a2-8fc94f45",
       "out": "context",
-      "in": "p-z-Phrase"
+      "in": "p-z-a2-0dc964fb"
     }
   ],
   "metadata": {
@@ -69,7 +69,7 @@
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI2Mi43MiIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTAzLjEwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNzQuNTUiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyMGEyMDIiIC8+CjxyZWN0IHg9IjEzNi45MCIKICAgICAgICAgICAgICAgICAgICB5PSI2Mi43MiIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTAzLjEwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNzQuNTUiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CiAgICAgIAogICAgPC9zdmc+"
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSIzMC4yOCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iOTMuNDQiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI2Ny41NiIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KPHJlY3QgeD0iMTQ2LjU2IgogICAgICAgICAgICAgICAgICAgIHk9IjMwLjI4IgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI5My40NCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjEzOS40NCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KICAgICAgCiAgICA8L3N2Zz4="
     }
   }
 }
