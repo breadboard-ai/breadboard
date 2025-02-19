@@ -92,6 +92,10 @@ class Template {
     }
   }
 
+  get hasPlaceholders() {
+    return this.#parsed.find((part) => typeof part !== "string");
+  }
+
   get preview() {
     return this.#parsed
       .map((part) => (typeof part === "string" ? part : part.title))

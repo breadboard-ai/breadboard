@@ -15,6 +15,7 @@ import {
   NodeIdentifier,
 } from "@google-labs/breadboard";
 import { AutoWireInPorts, InPort } from "./autowire-in-ports";
+import { UpdateNodeTitle } from "./update-node-title";
 
 export { UpdateNode };
 
@@ -64,8 +65,13 @@ class UpdateNode implements EditTransform {
       },
     ];
 
+    let titleChanged = false;
+
     if (metadata) {
       const existingMetadata = inspectableNode?.metadata() || {};
+      titleChanged = !!(
+        metadata.title && existingMetadata.title !== metadata.title
+      );
       const newMetadata = {
         ...existingMetadata,
         ...metadata,
@@ -89,7 +95,17 @@ class UpdateNode implements EditTransform {
     if (!portsToAutowire) {
       return { success: true };
     }
-    const autowire = new AutoWireInPorts(id, graphId, portsToAutowire);
-    return autowire.apply(context);
+    const autowiring = await new AutoWireInPorts(
+      id,
+      graphId,
+      portsToAutowire
+    ).apply(context);
+    if (!autowiring.success) return autowiring;
+
+    if (!titleChanged) return { success: true };
+
+    return new UpdateNodeTitle(this.graphId, id, metadata!.title!).apply(
+      context
+    );
   }
 }
