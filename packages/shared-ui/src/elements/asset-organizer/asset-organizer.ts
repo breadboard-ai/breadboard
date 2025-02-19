@@ -24,6 +24,8 @@ import { classMap } from "lit/directives/class-map.js";
 import { OverflowAction } from "../../types/types.js";
 import { OverflowMenuActionEvent } from "../../events/events.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
+import { LLMInput } from "../elements.js";
+import { isLLMContent } from "@google-labs/breadboard";
 
 const EXPANDED_KEY = "bb-asset-organizer-expanded";
 const VIEWER_KEY = "bb-asset-organizer-viewer";
@@ -46,7 +48,10 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
   accessor asset: GraphAsset | null = null;
 
   @state()
-  accessor editAsset: GraphAsset | null = null;
+  accessor editAssetTitle: GraphAsset | null = null;
+
+  @property()
+  accessor editAssetContent: GraphAsset | null = null;
 
   static styles = css`
     * {
@@ -83,13 +88,14 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
         padding: 0 var(--bb-grid-size-3);
       }
 
+      #edit-asset,
       #add-asset {
         font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
           var(--bb-font-family);
         border-radius: var(--bb-grid-size-16);
         height: var(--bb-grid-size-7);
         padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-7);
-        background: var(--bb-neutral-100) var(--bb-icon-add) 4px center / 20px
+        background: var(--bb-neutral-100) var(--bb-icon-add) 6px center / 20px
           20px no-repeat;
         border: 1px solid var(--bb-neutral-200);
         display: flex;
@@ -100,6 +106,15 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
         &:hover,
         &:focus {
           background-color: Var(--bb-neutral-300);
+        }
+      }
+
+      #edit-asset {
+        background-image: var(--bb-icon-edit);
+        margin-bottom: var(--bb-grid-size-4);
+
+        &.save {
+          background-image: var(--bb-icon-save);
         }
       }
 
@@ -289,9 +304,14 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
 
         & #details {
           width: 100%;
-          padding: var(--bb-grid-size-4);
+          padding: var(--bb-grid-size-2) var(--bb-grid-size-3)
+            var(--bb-grid-size-3) var(--bb-grid-size-3);
           overflow-y: scroll;
           overflow-x: hidden;
+
+          &.padded {
+            padding-top: var(--bb-grid-size-5);
+          }
 
           bb-multi-output {
             width: 100%;
@@ -370,6 +390,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
 
   #uploadInputRef: Ref<HTMLInputElement> = createRef();
   #renameInputRef: Ref<HTMLInputElement> = createRef();
+  #contentInputRef: Ref<LLMInput> = createRef();
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -438,8 +459,32 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
     this.asset = asset;
   }
 
+  #attemptCreateEmptyContentAsset() {
+    if (!this.state) {
+      return;
+    }
+
+    this.state.addGraphAsset({
+      path: globalThis.crypto.randomUUID(),
+      metadata: {
+        title: "Untitled Content",
+        type: "content",
+      },
+      data: [
+        {
+          parts: [
+            {
+              text: "Place your content here",
+            },
+          ],
+          role: "user",
+        },
+      ],
+    });
+  }
+
   protected updated(_changedProperties: PropertyValues): void {
-    if (this.editAsset) {
+    if (this.editAssetTitle) {
       if (this.#renameInputRef.value) {
         this.#renameInputRef.value.select();
       }
@@ -447,14 +492,18 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
   }
 
   render() {
-    const output = this.asset?.data?.at(-1) || null;
-
+    const assetData = this.asset?.data?.at(-1) || null;
     const assets = this.state?.graphAssets;
 
     let addOverflowMenu: HTMLTemplateResult | symbol = nothing;
     if (this.showAddOverflowMenu) {
       const actions: OverflowAction[] = [
         { icon: "upload", title: "Upload from device", name: "upload" },
+        {
+          icon: "content-add",
+          title: "Create empty content",
+          name: "content-add",
+        },
       ];
       addOverflowMenu = html`<bb-overflow-menu
         .actions=${actions}
@@ -465,6 +514,11 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
           switch (evt.action) {
             case "upload": {
               this.#attemptUploadAsset();
+              break;
+            }
+
+            case "content-add": {
+              this.#attemptCreateEmptyContentAsset();
               break;
             }
           }
@@ -512,7 +566,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
               ? html`<menu>
                   ${repeat(assets, ([path, asset]) => {
                     return html`<li>
-                      ${asset === this.editAsset
+                      ${asset === this.editAssetTitle
                         ? html`<span
                               class=${classMap({
                                 [asset.metadata?.type ?? "generic"]: true,
@@ -530,7 +584,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                                   return;
                                 }
 
-                                if (!this.editAsset) {
+                                if (!this.editAssetTitle) {
                                   return;
                                 }
 
@@ -540,11 +594,11 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                                 }
 
                                 this.#attemptUpdateAssetTitle(
-                                  this.editAsset,
+                                  this.editAssetTitle,
                                   evt.target.value
                                 );
-                                this.#showAsset(this.editAsset);
-                                this.editAsset = null;
+                                this.#showAsset(this.editAssetTitle);
+                                this.editAssetTitle = null;
                               }}
                               @keydown=${(evt: KeyboardEvent) => {
                                 if (!(evt.target instanceof HTMLInputElement)) {
@@ -555,7 +609,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                                   return;
                                 }
 
-                                if (!this.editAsset) {
+                                if (!this.editAssetTitle) {
                                   return;
                                 }
 
@@ -565,11 +619,11 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                                 }
 
                                 this.#attemptUpdateAssetTitle(
-                                  this.editAsset,
+                                  this.editAssetTitle,
                                   evt.target.value
                                 );
-                                this.#showAsset(this.editAsset);
-                                this.editAsset = null;
+                                this.#showAsset(this.editAssetTitle);
+                                this.editAssetTitle = null;
                               }}
                             />`
                         : html`<button
@@ -582,7 +636,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                               this.#showAsset(asset);
                             }}
                             @dblclick=${() => {
-                              this.editAsset = asset;
+                              this.editAssetTitle = asset;
                             }}
                           >
                             ${asset.metadata?.title || path}
@@ -611,14 +665,74 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
           </section>
 
           ${this.showViewer
-            ? html` <section id="details">
-                ${output
-                  ? html`<bb-llm-output
-                      .value=${output}
-                      .clamped=${false}
-                      .graphUrl=${this.state?.graphUrl || null}
-                      .showExportControls=${true}
-                    ></bb-llm-output>`
+            ? html` <section
+                id="details"
+                class=${classMap({
+                  padded: this.asset?.metadata?.type === "file",
+                })}
+              >
+                ${assetData
+                  ? html`
+                      ${this.asset?.metadata?.type === "content"
+                        ? html`<div>
+                            <button
+                              id="edit-asset"
+                              class=${classMap({
+                                save: this.editAssetContent !== null,
+                              })}
+                              @click=${() => {
+                                if (!this.asset) {
+                                  return;
+                                }
+
+                                if (!this.editAssetContent) {
+                                  this.editAssetContent = this.asset;
+                                  return;
+                                }
+
+                                if (!this.#contentInputRef.value) {
+                                  console.warn("No LLM Content editor");
+                                  return;
+                                }
+
+                                if (
+                                  isLLMContent(
+                                    this.#contentInputRef.value.value
+                                  )
+                                ) {
+                                  this.editAssetContent.data = [
+                                    this.#contentInputRef.value.value,
+                                  ];
+                                } else {
+                                  console.warn("No LLM Content found");
+                                }
+
+                                this.editAssetContent = null;
+                              }}
+                            >
+                              ${this.editAssetContent
+                                ? Strings.from("COMMAND_SAVE_ASSET")
+                                : Strings.from("COMMAND_EDIT_ASSET")}
+                            </button>
+                          </div>`
+                        : nothing}
+                      ${this.editAssetContent
+                        ? html`<bb-llm-input
+                            ${ref(this.#contentInputRef)}
+                            .value=${assetData}
+                            .clamped=${false}
+                            .description=${""}
+                            .inlineControls=${true}
+                            .showInlineControls=${true}
+                            .autofocus=${true}
+                          ></bb-llm-input>`
+                        : html`<bb-llm-output
+                            .value=${assetData}
+                            .clamped=${false}
+                            .graphUrl=${this.state?.graphUrl || null}
+                            .showExportControls=${true}
+                          ></bb-llm-output>`}
+                    `
                   : html`<div id="no-asset-selected">No asset selected</div>`}
               </section>`
             : nothing}

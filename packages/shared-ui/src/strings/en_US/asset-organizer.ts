@@ -17,6 +17,12 @@ export default {
   COMMAND_ADD_ASSET: {
     str: "Add Asset",
   },
+  COMMAND_EDIT_ASSET: {
+    str: "Edit Asset Content",
+  },
+  COMMAND_SAVE_ASSET: {
+    str: "Save Asset Content",
+  },
 
   // Labels.
   LABEL_WAITING_MESSAGE: {
