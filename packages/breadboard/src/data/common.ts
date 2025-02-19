@@ -10,6 +10,8 @@ import type {
   FunctionResponseCapabilityPart,
   InlineDataCapabilityPart,
   LLMContent,
+  NodeValue,
+  OutputValues,
   StoredDataCapabilityPart,
   TextCapabilityPart,
 } from "@breadboard-ai/types";
@@ -169,7 +171,7 @@ export async function retrieveAsBlob(
   }
 
   let { handle } = part.storedData;
-  if (handle.startsWith(".")) {
+  if (handle.startsWith(".") && graphUrl) {
     handle = new URL(handle, graphUrl).href;
   }
   const response = await fetch(handle);
@@ -177,9 +179,10 @@ export async function retrieveAsBlob(
 }
 
 export async function toInlineDataPart(
-  part: StoredDataCapabilityPart
+  part: StoredDataCapabilityPart,
+  graphUrl?: URL
 ): Promise<InlineDataCapabilityPart> {
-  const raw = await retrieveAsBlob(part);
+  const raw = await retrieveAsBlob(part, graphUrl);
   const mimeType = part.storedData.mimeType;
   const data = await asBase64(raw);
   return { inlineData: { mimeType, data } };
@@ -257,4 +260,54 @@ export async function transformDataParts(
     transformed.push({ parts, role });
   }
   return transformed;
+}
+
+export function convertStoredPartsToAbsoluteUrls(
+  values: OutputValues,
+  graphUrl?: string
+): OutputValues {
+  const result: OutputValues = {};
+
+  if (!graphUrl) return values;
+
+  const url = parseUrl(graphUrl);
+
+  for (const [key, value] of Object.entries(values)) {
+    result[key] = convertValue(value);
+  }
+  return result;
+
+  function convertValue(contents: NodeValue): NodeValue {
+    const converted: LLMContent[] = [];
+    if (!isLLMContentArray(contents)) return contents;
+
+    for (const content of contents) {
+      const role = content.role || "user";
+      const parts: DataPart[] = [];
+      for (const part of content.parts) {
+        let convertedPart = part;
+        if ("storedData" in part) {
+          if (part.storedData.handle.startsWith(".")) {
+            convertedPart = {
+              storedData: {
+                handle: new URL(part.storedData.handle, url).href,
+                mimeType: part.storedData.mimeType,
+              },
+            };
+          }
+        }
+        parts.push(convertedPart);
+      }
+      converted.push({ parts, role });
+    }
+    return converted as NodeValue;
+  }
+}
+
+function parseUrl(s: string): URL | undefined {
+  try {
+    return new URL(s);
+  } catch (e) {
+    return;
+  }
 }

@@ -40,6 +40,7 @@ import {
 } from "./types.js";
 import { Graph } from "./graph.js";
 import {
+  convertStoredPartsToAbsoluteUrls,
   GraphIdentifier,
   InspectableEdge,
   InspectableEdgeType,
@@ -104,9 +105,6 @@ enum MODE {
 
 @customElement("bb-graph-renderer")
 export class GraphRenderer extends LitElement {
-  @property()
-  accessor graph: InspectableGraph | null = null;
-
   @property()
   accessor run: InspectableRun | null = null;
 
@@ -1905,7 +1903,13 @@ export class GraphRenderer extends LitElement {
         valuesByNode.set(event.node.descriptor.id, values);
       }
 
-      values.push(event.outputs);
+      values.push(
+        event.outputs,
+        convertStoredPartsToAbsoluteUrls(
+          event.outputs,
+          this.topGraphUrl || undefined
+        ) as OutputValues
+      );
     }
 
     for (const graph of this.#container.children) {

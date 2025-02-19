@@ -676,6 +676,7 @@ export class NodeConfigurationOverlay extends LitElement {
                 if (typeof outputValue === "object") {
                   if (isLLMContentArray(outputValue)) {
                     value = html`<bb-llm-output-array
+                      .graphUrl=${this.graph?.url}
                       .clamped=${false}
                       .showModeToggle=${false}
                       .showEntrySelector=${false}
@@ -699,6 +700,7 @@ export class NodeConfigurationOverlay extends LitElement {
                     value = outputValue.parts.length
                       ? html`<bb-llm-output
                           .clamped=${false}
+                          .graphUrl=${this.graph?.url}
                           .lite=${true}
                           .showExportControls=${true}
                           .value=${outputValue}

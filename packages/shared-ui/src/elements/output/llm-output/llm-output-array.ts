@@ -14,6 +14,9 @@ import { LLMOutput } from "./llm-output.js";
 @customElement("bb-llm-output-array")
 export class LLMOutputArray extends LitElement {
   @property()
+  accessor graphUrl: URL | null = null;
+
+  @property()
   accessor values: LLMContent[] | null = null;
 
   @property()
@@ -229,6 +232,7 @@ export class LLMOutputArray extends LitElement {
                       ? ref(this.#activeLLMContentRef)
                       : nothing}
                     class=${classMap({ visible: idx === this.selected })}
+                    .graphUrl=${this.graphUrl}
                     .value=${item}
                     .clamped=${this.clamped}
                     .lite=${this.lite}

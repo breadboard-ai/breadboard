@@ -127,6 +127,7 @@ export {
   createFileSystem,
   assetsFromGraphDescriptor,
   transformDataParts,
+  convertStoredPartsToAbsoluteUrls,
 } from "./data/index.js";
 
 export { ok, err } from "./data/file-system/utils.js";
