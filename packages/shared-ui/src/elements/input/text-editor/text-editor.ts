@@ -237,9 +237,16 @@ export class TextEditor extends LitElement {
       return;
     }
 
+    // Expand the range to include the @ symbol.
+    if (this.#lastRange.startOffset > 0) {
+      this.#lastRange.setStart(
+        this.#lastRange.startContainer,
+        this.#lastRange.startOffset - 1
+      );
+    }
+
     selection.removeAllRanges();
     selection.addRange(this.#lastRange);
-    selection.collapseToEnd();
   }
 
   #add(path: string, title: string, type: TemplatePartType) {
@@ -256,6 +263,7 @@ export class TextEditor extends LitElement {
         return;
       }
 
+      const spaceBefore = document.createTextNode(String.fromCharCode(160));
       const spaceAfter = document.createTextNode(String.fromCharCode(160));
       const label = document.createElement("label");
       const preambleText = document.createElement("span");
@@ -277,6 +285,7 @@ export class TextEditor extends LitElement {
 
       const range = this.#getCurrentRange();
       if (!range) {
+        this.#editorRef.value.appendChild(spaceBefore);
         this.#editorRef.value.appendChild(label);
         this.#editorRef.value.appendChild(spaceAfter);
       } else {
@@ -284,6 +293,7 @@ export class TextEditor extends LitElement {
           range.commonAncestorContainer !== this.#editorRef.value &&
           range.commonAncestorContainer.parentNode !== this.#editorRef.value
         ) {
+          this.#editorRef.value.appendChild(spaceBefore);
           this.#editorRef.value.appendChild(label);
           this.#editorRef.value.appendChild(spaceAfter);
           return label;
@@ -574,15 +584,13 @@ export class TextEditor extends LitElement {
         @dblclick=${() => {}}
         @paste=${this.#sanitizePastedContent}
         @selectionchange=${this.#checkChicletSelections}
-        @keydown=${(evt: KeyboardEvent) => {
+        @keyup=${(evt: KeyboardEvent) => {
           if (this.#isUsingFastAccess) {
             evt.preventDefault();
             return;
           }
 
           if (this.projectState && evt.key === "@") {
-            evt.preventDefault();
-
             this.#lastRange = this.#getCurrentRange();
             const bounds = this.#lastRange?.getBoundingClientRect();
             this.#showFastAccess(bounds);
