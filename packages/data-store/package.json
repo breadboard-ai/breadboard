@@ -156,6 +156,6 @@
   "dependencies": {
     "@breadboard-ai/types": "0.5.0",
     "@google-labs/breadboard": "^0.32.0",
-    "idb": "^8.0.0"
+    "idb": "^8.0.2"
   }
 }
