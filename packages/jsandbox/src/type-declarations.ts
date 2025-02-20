@@ -361,7 +361,12 @@ declare type BehaviorSchema =
    * input or output port, so that UI can treat it differently, like hoist
    * it into a header.
    */
-  | "main-port";
+  | "main-port"
+  /**
+   * Indicates that this entire node supports "@"-wiring, where the wires
+   * are automatically created and allocated using a pre-defined scheme.
+   */
+  | "at-wireable";
 
 declare type Schema = {
   title?: string;
