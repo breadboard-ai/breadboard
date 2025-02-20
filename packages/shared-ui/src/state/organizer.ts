@@ -7,6 +7,7 @@
 import { AssetMetadata, AssetPath, NodeValue } from "@breadboard-ai/types";
 import { Outcome } from "@google-labs/breadboard";
 import { GraphAsset, Organizer, ProjectInternal } from "./types";
+import { RemoveAssetWithRefs } from "../transforms";
 
 export { ReactiveOrganizer };
 
@@ -31,10 +32,7 @@ class ReactiveOrganizer implements Organizer {
   }
 
   removeGraphAsset(path: AssetPath): Promise<Outcome<void>> {
-    return this.#project.edit(
-      [{ type: "removeasset", path }],
-      `Removing asset at path "${path}"`
-    );
+    return this.#project.apply(new RemoveAssetWithRefs(path));
   }
 
   changeGraphAssetMetadata(

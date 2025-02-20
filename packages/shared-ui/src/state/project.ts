@@ -14,6 +14,7 @@ import {
   BoardServer,
   EditableGraph,
   EditSpec,
+  EditTransform,
   err,
   GraphStoreEntry,
   MainGraphIdentifier,
@@ -116,6 +117,20 @@ class ReactiveProject implements ProjectInternal {
     this.#updateGraphAssets();
     this.#updateComponents();
     this.#updateTools();
+  }
+
+  async apply(transform: EditTransform): Promise<Outcome<void>> {
+    const editable = this.#editable;
+    if (!editable) {
+      return err(
+        `Unable to get an editable graph with id "${this.#mainGraphId}"`
+      );
+    }
+
+    const editing = await editable.apply(transform);
+    if (!editing.success) {
+      return err(editing.error);
+    }
   }
 
   async edit(spec: EditSpec[], label: string): Promise<Outcome<void>> {
