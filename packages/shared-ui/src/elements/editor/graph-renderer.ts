@@ -44,7 +44,6 @@ import {
   GraphIdentifier,
   InspectableEdge,
   InspectableEdgeType,
-  InspectableGraph,
   InspectableNode,
   InspectableNodePorts,
   InspectablePort,

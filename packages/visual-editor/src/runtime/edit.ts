@@ -1085,7 +1085,7 @@ export class Edit extends EventTarget {
     this.dispatchEvent(new RuntimeVisualChangeEvent(visualChangeId));
   }
 
-  changeEdge(
+  async changeEdge(
     tab: Tab | null,
     changeType: "add" | "remove" | "move",
     from: {
@@ -1112,45 +1112,12 @@ export class Edit extends EventTarget {
       return;
     }
 
-    switch (changeType) {
-      case "add": {
-        editableGraph.edit(
-          [{ type: "addedge", edge: from, graphId }],
-          `Add edge between ${from.from} and ${from.to}`
-        );
-        break;
-      }
+    const changing = await editableGraph.apply(
+      new BreadboardUI.Transforms.ChangeEdge(changeType, graphId, from, to)
+    );
+    if (changing.success) return;
 
-      case "remove": {
-        editableGraph.edit(
-          [{ type: "removeedge", edge: from, graphId }],
-          `Remove edge between ${from.from} and ${from.to}`
-        );
-        break;
-      }
-
-      case "move": {
-        if (!to) {
-          this.dispatchEvent(
-            new RuntimeErrorEvent("Unable to move edge - no `to` provided")
-          );
-          return;
-        }
-
-        editableGraph.edit(
-          [
-            {
-              type: "changeedge",
-              from: from,
-              to: to,
-              graphId,
-            },
-          ],
-          `Change edge from between ${from.from} and ${from.to} to ${to.from} and ${to.to}`
-        );
-        break;
-      }
-    }
+    this.dispatchEvent(new RuntimeErrorEvent(changing.error));
   }
 
   async createNode(

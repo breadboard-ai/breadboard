@@ -52,7 +52,10 @@ export const DeleteCommand: KeyboardCommand = {
       graph
     );
 
-    await editor.edit(spec, selectionState.selectionChangeId);
+    await editor.apply(
+      new BreadboardUI.Transforms.MarkInPortsInvalidSpec(spec)
+    );
+
     runtime.select.deselectAll(
       tab.id,
       runtime.util.createWorkspaceSelectionChangeId()
@@ -177,7 +180,9 @@ export const CutCommand: KeyboardCommand = {
 
     await Promise.all([
       navigator.clipboard.writeText(JSON.stringify(board, null, 2)),
-      editor.edit(spec, selectionState.selectionChangeId),
+      await editor.apply(
+        new BreadboardUI.Transforms.MarkInPortsInvalidSpec(spec)
+      ),
     ]);
   },
 };

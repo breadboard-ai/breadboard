@@ -27,6 +27,11 @@ export type TemplatePart = {
    * A friendly title to use for preview or in the chiclet UI.
    */
   title: string;
+  /**
+   * Marks the part as invalid. Useful when there is a
+   * dangling autowire or missing asset
+   */
+  invalid?: true;
 };
 
 export type TemplatePartTransformCallback = (

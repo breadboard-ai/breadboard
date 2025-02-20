@@ -17,8 +17,8 @@ export class TextEditor extends LitElement {
   set value(value: string) {
     const template = new Template(value);
     template.substitute((part) => {
-      const { type, title } = part;
-      return `<label class="chiclet ${type}" contenteditable="false"><span>${Template.preamble(part)}</span><span class="visible">${title}</span><span>${Template.postamble()}</span></label>`;
+      const { type, title, invalid } = part;
+      return `<label class="chiclet ${type} ${invalid ? "invalid" : ""}" contenteditable="false"><span>${Template.preamble(part)}</span><span class="visible">${title}</span><span>${Template.postamble()}</span></label>`;
     });
     this.#value = template.raw;
     this.#renderableValue = template.renderable;
@@ -119,6 +119,11 @@ export class TextEditor extends LitElement {
       &.selected {
         background-color: var(--bb-ui-500);
         outline: 1px solid var(--bb-ui-700);
+        color: var(--bb-neutral-0);
+      }
+
+      &.invalid {
+        background-color: var(--bb-error-color);
         color: var(--bb-neutral-0);
       }
     }
