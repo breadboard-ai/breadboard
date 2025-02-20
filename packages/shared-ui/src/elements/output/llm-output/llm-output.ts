@@ -261,6 +261,10 @@ export class LLMOutput extends LitElement {
       right: var(--export-x, 16px);
       z-index: 1;
     }
+
+    bb-pdf-viewer {
+      aspect-ratio: 1/1;
+    }
   `;
 
   connectedCallback(): void {
@@ -429,6 +433,20 @@ export class LLMOutput extends LitElement {
                   // prettier-ignore
                   html`<div class="plain-text">${atob(part.inlineData.data)}</div>`
                 );
+              }
+              if (part.inlineData.mimeType === "application/pdf") {
+                const pdfHandler = fetch(url)
+                  .then((r) => r.arrayBuffer())
+                  .then((pdfData) => {
+                    return cache(
+                      html`<bb-pdf-viewer
+                        .showControls=${true}
+                        .data=${pdfData}
+                      ></bb-pdf-viewer>`
+                    );
+                  });
+
+                return cache(html`${until(pdfHandler)}`);
               }
             });
             value = html`${until(tmpl)}`;

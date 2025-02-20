@@ -322,7 +322,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
 
     :host([expanded="true"]) {
       & #container {
-        height: 464px;
+        height: 564px;
 
         & header {
           border-bottom: 1px solid var(--bb-neutral-300);
@@ -362,7 +362,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
 
     :host([showviewer="true"][expanded="true"]) {
       & #container {
-        width: 600px;
+        width: 720px;
 
         & #assets {
           display: grid;
