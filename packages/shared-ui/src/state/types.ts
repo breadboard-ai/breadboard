@@ -12,7 +12,12 @@ import {
   NodeIdentifier,
   NodeValue,
 } from "@breadboard-ai/types";
-import { EditSpec, Outcome, PortIdentifier } from "@google-labs/breadboard";
+import {
+  EditSpec,
+  EditTransform,
+  Outcome,
+  PortIdentifier,
+} from "@google-labs/breadboard";
 
 export type ChatStatus = "running" | "paused" | "stopped";
 
@@ -148,6 +153,7 @@ export type Project = {
 
 export type ProjectInternal = Project & {
   graphUrl: URL | null;
+  apply(transform: EditTransform): Promise<Outcome<void>>;
   edit(spec: EditSpec[], label: string): Promise<Outcome<void>>;
   persistBlobs(contents: LLMContent[]): Promise<LLMContent[]>;
   findOutputPortId(
