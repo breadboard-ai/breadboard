@@ -9,43 +9,57 @@ import {
   EditSpec,
   EditTransform,
   EditTransformResult,
-  RemoveEdgeSpec,
+  GraphIdentifier,
+  NodeIdentifier,
 } from "@google-labs/breadboard";
-import { MarkInPortsInvalid } from "./mark-in-ports-invalid";
+import { TransformAllNodes } from "./transform-all-nodes";
 
 export { MarkInPortsInvalidSpec };
 
 class MarkInPortsInvalidSpec implements EditTransform {
   constructor(public readonly spec: EditSpec[]) {}
   async apply(context: EditOperationContext): Promise<EditTransformResult> {
-    const removedNodes = new Set<string>();
-    const removedEdges: RemoveEdgeSpec[] = [];
+    const removedNodes = new Map<GraphIdentifier, Set<NodeIdentifier>>();
 
     for (const edit of this.spec) {
       if (edit.type === "removeedge") {
-        removedEdges.push(edit);
-      }
-      if (edit.type === "removenode") {
-        removedNodes.add(`${edit.id}|${edit.graphId}`);
+        const {
+          graphId,
+          edge: { from, in: inPort },
+        } = edit;
+        if (!inPort?.startsWith("p-z-")) continue;
+        upsert(graphId, from);
+      } else if (edit.type === "removenode") {
+        const { graphId, id } = edit;
+        upsert(graphId, id);
       }
     }
 
-    const editing = await context.apply(this.spec, "Editing");
+    const editing = await context.apply(this.spec, "First pass: Edits");
     if (!editing) return editing;
 
-    for (const removeEdgeSpec of removedEdges) {
-      const nodeKey = `${removeEdgeSpec.edge.to}|${removeEdgeSpec.graphId}`;
-      if (removedNodes.has(nodeKey)) continue;
-
-      const marking = await new MarkInPortsInvalid(
-        removeEdgeSpec.graphId,
-        removeEdgeSpec.edge.from,
-        removeEdgeSpec.edge.to
+    for (const [graphId, ids] of removedNodes.entries()) {
+      const marking = await new TransformAllNodes(
+        graphId,
+        (part) => {
+          const { path } = part;
+          if (ids.has(path)) return { ...part, invalid: true };
+          return null;
+        },
+        `Marking "@" in port as invalid`
       ).apply(context);
-
       if (!marking.success) return marking;
     }
 
     return { success: true };
+
+    function upsert(graphId: GraphIdentifier, id: NodeIdentifier) {
+      let ids = removedNodes.get(graphId);
+      if (!ids) {
+        ids = new Set();
+        removedNodes.set(graphId, ids);
+      }
+      ids.add(id);
+    }
   }
 }
