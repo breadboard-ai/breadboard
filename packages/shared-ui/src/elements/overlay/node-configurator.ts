@@ -535,6 +535,8 @@ export class NodeConfigurationOverlay extends LitElement {
     const outputs = this.#userInputRef.value.processData(true, (part) => {
       if (part.type === "in") {
         ins.push(part);
+        // Always optimistically mark part as valid.
+        delete part.invalid;
       }
       return part;
     });

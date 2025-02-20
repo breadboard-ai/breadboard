@@ -7,3 +7,4 @@
 export { AutoWireInPorts } from "./autowire-in-ports";
 export { UpdateNode } from "./update-node";
 export { ChangeEdge } from "./change-edge";
+export { MarkInPortsInvalidSpec } from "./mark-in-ports-invalid-spec";
