@@ -129,7 +129,7 @@
     "@google-labs/palm-kit": "^0.1.9",
     "@google-labs/template-kit": "^0.3.17",
     "@breadboard-ai/shared-ui": "1.23.0",
-    "eleventy-plugin-youtube-embed": "^1.11.0",
+    "eleventy-plugin-youtube-embed": "^1.12.0",
     "esbuild": "^0.25.0",
     "typescript": "^5.7.3"
   },
