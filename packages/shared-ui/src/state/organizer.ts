@@ -8,6 +8,7 @@ import { AssetMetadata, AssetPath, NodeValue } from "@breadboard-ai/types";
 import { Outcome } from "@google-labs/breadboard";
 import { GraphAsset, Organizer, ProjectInternal } from "./types";
 import { RemoveAssetWithRefs } from "../transforms";
+import { UpdateAssetWithRefs } from "../transforms/update-asset-with-refs";
 
 export { ReactiveOrganizer };
 
@@ -39,9 +40,6 @@ class ReactiveOrganizer implements Organizer {
     path: AssetPath,
     metadata: AssetMetadata
   ): Promise<Outcome<void>> {
-    return this.#project.edit(
-      [{ type: "changeassetmetadata", path, metadata }],
-      `Changing asset metadata at path "${path}"`
-    );
+    return this.#project.apply(new UpdateAssetWithRefs(path, metadata));
   }
 }
