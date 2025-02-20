@@ -482,6 +482,9 @@ body.hide-cursor {
   --bb-icon-unknown-value: url(/third_party/icons/unknown-value.svg);
   --bb-icon-unknown-value-inverted: url(/third_party/icons/unknown-value-inverted.svg);
 
+  --bb-icon-view-real-size: url(/third_party/icons/view-real-size.svg);
+  --bb-icon-view-real-size-inverted: url(/third_party/icons/view-real-size-inverted.svg);
+
   --bb-icon-vital-signs: url(/third_party/icons/vital-signs.svg);
   --bb-icon-vital-signs-inverted: url(/third_party/icons/vital-signs-inverted.svg);
 
@@ -498,6 +501,12 @@ body.hide-cursor {
 
   --bb-icon-wrench: url(/third_party/icons/wrench.svg);
   --bb-icon-wrench-inverted: url(/third_party/icons/wrench-inverted.svg);
+
+  --bb-icon-zoom-in: url(/third_party/icons/zoom-in.svg);
+  --bb-icon-zoom-in-inverted: url(/third_party/icons/zoom-in-inverted.svg);
+
+  --bb-icon-zoom-out: url(/third_party/icons/zoom-out.svg);
+  --bb-icon-zoom-out-inverted: url(/third_party/icons/zoom-out-inverted.svg);
 
   --bb-icon-globe-book: url(/third_party/icons/globe-book.svg);
   --bb-icon-language: url(/third_party/icons/language.svg);
@@ -1209,6 +1218,9 @@ body.hide-cursor {
   --bb-icon-unknown-value: url(/third_party/icons/unknown-value-inverted.svg);
   --bb-icon-unknown-value-inverted: url(/third_party/icons/unknown-value.svg);
 
+  --bb-icon-view-real-size: url(/third_party/icons/view-real-size-inverted.svg);
+  --bb-icon-view-real-size-inverted: url(/third_party/icons/view-real-size.svg);
+
   --bb-icon-vital-signs: url(/third_party/icons/vital-signs-inverted.svg);
   --bb-icon-vital-signs-inverted: url(/third_party/icons/vital-signs.svg);
 
@@ -1225,6 +1237,12 @@ body.hide-cursor {
 
   --bb-icon-wrench: url(/third_party/icons/wrench-inverted.svg);
   --bb-icon-wrench-inverted: url(/third_party/icons/wrench.svg);
+
+  --bb-icon-zoom-in: url(/third_party/icons/zoom-in-inverted.svg);
+  --bb-icon-zoom-in-inverted: url(/third_party/icons/zoom-in.svg);
+
+  --bb-icon-zoom-out: url(/third_party/icons/zoom-out-inverted.svg);
+  --bb-icon-zoom-out-inverted: url(/third_party/icons/zoom-out.svg);
 
   color-scheme: dark;
 }
