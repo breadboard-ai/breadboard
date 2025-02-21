@@ -641,7 +641,6 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
             ${assets && assets.size > 0
               ? html`<menu>
                   ${repeat(assets, ([path, asset]) => {
-                    console.log(asset);
                     return html`<li>
                       ${asset === this.editAssetTitle
                         ? html`<span
