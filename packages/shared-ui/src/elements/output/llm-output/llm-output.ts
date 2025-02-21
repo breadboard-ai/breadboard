@@ -11,7 +11,14 @@ import {
   isStoredData,
   isTextCapabilityPart,
 } from "@google-labs/breadboard";
-import { LitElement, TemplateResult, css, html, nothing } from "lit";
+import {
+  LitElement,
+  PropertyValues,
+  TemplateResult,
+  css,
+  html,
+  nothing,
+} from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { cache } from "lit/directives/cache.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -285,38 +292,10 @@ export class LLMOutput extends LitElement {
     this.#partDataURLs.clear();
   }
 
-  // TODO: Store this value rather than converting it on the fly.
-  async #convertToAudioBuffer(url: string) {
-    const TO_FLOAT = 32768;
-    const sampleRate = 24000;
-    const audio = await fetch(url);
-    const arrayBuffer = await audio.arrayBuffer();
-    const audioDataIn = new Int16Array(arrayBuffer);
-    const audioDataOut = new Float32Array(audioDataIn.length);
-
-    const duration = audioDataOut.length / sampleRate;
-    const audioCtx = new OfflineAudioContext({
-      length: audioDataOut.length,
-      sampleRate,
-    });
-
-    const audioBuffer = audioCtx.createBuffer(
-      1,
-      sampleRate * duration,
-      sampleRate
-    );
-
-    for (let i = 0; i < audioDataIn.length; i++) {
-      audioDataOut[i] = audioDataIn[i] / TO_FLOAT;
+  protected willUpdate(changedProperties: PropertyValues): void {
+    if (changedProperties.has("value")) {
+      this.#clearPartDataURLs();
     }
-
-    audioBuffer.copyToChannel(audioDataOut, 0);
-    const source = audioCtx.createBufferSource();
-    source.buffer = audioBuffer;
-    source.connect(audioCtx.destination);
-    source.start();
-
-    return audioCtx.startRendering();
   }
 
   render() {
@@ -352,6 +331,7 @@ export class LLMOutput extends LitElement {
                   return url;
                 });
             }
+
             const tmpl = partDataURL.then((url: string) => {
               if (part.inlineData.mimeType.startsWith("image")) {
                 return cache(html`
