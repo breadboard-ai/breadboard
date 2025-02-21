@@ -123,8 +123,9 @@ export class TextEditor extends LitElement {
       }
 
       &.invalid {
-        background-color: var(--bb-error-color);
-        color: var(--bb-neutral-0);
+        background-color: var(--bb-warning-100);
+        outline: 1px solid var(--bb-warning-200);
+        color: var(--bb-warning-700);
       }
     }
 

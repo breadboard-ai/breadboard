@@ -328,7 +328,11 @@ export class GraphPortLabel extends PIXI.Container {
       let y = title.height + this.#paddingBottom;
       let x = 0;
       for (const chiclet of this.#chiclets) {
-        const graphChiclet = new GraphPortChiclet(chiclet.title, chiclet.type);
+        const graphChiclet = new GraphPortChiclet(
+          chiclet.title,
+          chiclet.type,
+          chiclet.invalid
+        );
 
         if (x + graphChiclet.width + 4 > PREVIEW_WIDTH) {
           x = 0;
