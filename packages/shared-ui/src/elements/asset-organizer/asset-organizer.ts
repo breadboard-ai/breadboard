@@ -246,12 +246,11 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
             }
 
             & .asset {
-              flex: 1;
               height: var(--bb-grid-size-7);
               background: var(--bb-ui-100) var(--bb-icon-text) 4px center / 20px
                 20px no-repeat;
               border-radius: var(--bb-grid-size);
-              display: flex;
+              display: block;
               align-items: center;
               font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
                 var(--bb-font-family);
@@ -260,6 +259,10 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
               transition: background-color 0.1s cubic-bezier(0, 0, 0.3, 1);
               width: 100%;
               color: var(--bb-neutral-900);
+              white-space: nowrap;
+              text-overflow: ellipsis;
+              overflow: hidden;
+              text-align: left;
 
               &.content {
                 background: var(--bb-ui-100) var(--bb-icon-text) 4px center /
