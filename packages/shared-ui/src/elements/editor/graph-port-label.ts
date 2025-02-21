@@ -241,7 +241,7 @@ export class GraphPortLabel extends PIXI.Container {
       return;
     }
 
-    this.#chiclets = this.#deriveChiclet();
+    this.#chiclets = this.#deriveChicletParts();
     this.#recreateChicletsIfNeeded();
 
     // Value preview may change the dimensions. Let's compute them now,
@@ -404,7 +404,7 @@ export class GraphPortLabel extends PIXI.Container {
     }
   }
 
-  #deriveChiclet(): TemplatePart[] {
+  #deriveChicletParts(): TemplatePart[] {
     if (!this.#port) {
       return [];
     }
