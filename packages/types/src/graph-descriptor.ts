@@ -510,6 +510,7 @@ export type AssetMetadata = {
   title: string;
   description?: string;
   type: AssetType;
+  subType?: string;
 };
 
 export type Asset = {

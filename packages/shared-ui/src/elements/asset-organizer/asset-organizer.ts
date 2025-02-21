@@ -25,7 +25,10 @@ import { OverflowAction } from "../../types/types.js";
 import { OverflowMenuActionEvent } from "../../events/events.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { LLMInput } from "../elements.js";
-import { isLLMContent } from "@google-labs/breadboard";
+import {
+  isFileDataCapabilityPart,
+  isLLMContent,
+} from "@google-labs/breadboard";
 
 const EXPANDED_KEY = "bb-asset-organizer-expanded";
 const VIEWER_KEY = "bb-asset-organizer-viewer";
@@ -227,6 +230,11 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
               &.content {
                 background: var(--bb-neutral-0) var(--bb-icon-text) 4px center /
                   20px 20px no-repeat;
+
+                &.youtube {
+                  background: var(--bb-neutral-0) var(--bb-icon-youtube) 4px
+                    center / 20px 20px no-repeat;
+                }
               }
 
               &.file {
@@ -266,6 +274,11 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
 
               &.content {
                 background: var(--bb-ui-100) var(--bb-icon-text) 4px center /
+                  20px 20px no-repeat;
+              }
+
+              &.youtube {
+                background: var(--bb-ui-100) var(--bb-icon-youtube) 4px center /
                   20px 20px no-repeat;
               }
 
@@ -462,12 +475,12 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
     this.asset = asset;
   }
 
-  #attemptCreateEmptyContentAsset() {
+  async #attemptCreateEmptyContentAsset() {
     if (!this.state) {
       return;
     }
 
-    this.state.addGraphAsset({
+    await this.state.addGraphAsset({
       path: globalThis.crypto.randomUUID(),
       metadata: {
         title: "Untitled Content",
@@ -478,6 +491,43 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
           parts: [
             {
               text: "Place your content here",
+            },
+          ],
+          role: "user",
+        },
+      ],
+    });
+  }
+
+  async #attemptCreateEmptyFileDataAsset(
+    mimeType = "",
+    title = "Untitled File Data",
+    subType?: string
+  ) {
+    if (!this.state) {
+      return;
+    }
+
+    const metadata: AssetMetadata = {
+      title,
+      type: "content",
+    };
+
+    if (subType) {
+      metadata.subType = subType;
+    }
+
+    await this.state.addGraphAsset({
+      path: globalThis.crypto.randomUUID(),
+      metadata,
+      data: [
+        {
+          parts: [
+            {
+              fileData: {
+                fileUri: "",
+                mimeType,
+              },
             },
           ],
           role: "user",
@@ -497,6 +547,10 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
   render() {
     const assetData = this.asset?.data?.at(-1) || null;
     const assets = this.state?.graphAssets;
+    const isFileData = this.asset?.data.some((content) =>
+      content.parts.some((part) => isFileDataCapabilityPart(part))
+    );
+    const hasEditableParts = !isFileData;
 
     let addOverflowMenu: HTMLTemplateResult | symbol = nothing;
     if (this.showAddOverflowMenu) {
@@ -507,11 +561,16 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
           title: "Create empty content",
           name: "content-add",
         },
+        {
+          icon: "youtube-add",
+          title: "YouTube",
+          name: "youtube",
+        },
       ];
       addOverflowMenu = html`<bb-overflow-menu
         .actions=${actions}
         .disabled=${false}
-        @bboverflowmenuaction=${(evt: OverflowMenuActionEvent) => {
+        @bboverflowmenuaction=${async (evt: OverflowMenuActionEvent) => {
           evt.stopImmediatePropagation();
 
           switch (evt.action) {
@@ -521,7 +580,16 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
             }
 
             case "content-add": {
-              this.#attemptCreateEmptyContentAsset();
+              await this.#attemptCreateEmptyContentAsset();
+              break;
+            }
+
+            case "youtube": {
+              await this.#attemptCreateEmptyFileDataAsset(
+                "youtube",
+                "YouTube Video",
+                "youtube"
+              );
               break;
             }
           }
@@ -633,6 +701,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                             class=${classMap({
                               asset: true,
                               [asset.metadata?.type ?? "generic"]: true,
+                              [asset.metadata?.subType ?? "sub-generic"]: true,
                               active: asset.path === this.asset?.path,
                             })}
                             @click=${() => {
@@ -728,9 +797,10 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                             ${ref(this.#contentInputRef)}
                             .value=${assetData}
                             .clamped=${false}
-                            .description=${""}
-                            .inlineControls=${true}
-                            .showInlineControls=${true}
+                            .description=${null}
+                            .showInlineControlsToggle=${hasEditableParts}
+                            .showInlineControls=${hasEditableParts}
+                            .showPartControls=${hasEditableParts}
                             .autofocus=${true}
                           ></bb-llm-input>`
                         : html`<bb-llm-output

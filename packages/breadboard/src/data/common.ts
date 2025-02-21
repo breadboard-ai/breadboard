@@ -6,6 +6,7 @@
 
 import type {
   DataPart,
+  FileDataPart,
   FunctionCallCapabilityPart,
   FunctionResponseCapabilityPart,
   InlineDataCapabilityPart,
@@ -40,6 +41,11 @@ export function isTextCapabilityPart(
 ): part is TextCapabilityPart {
   if (typeof part !== "object" || part === null) return false;
   return "text" in part;
+}
+
+export function isFileDataCapabilityPart(part: unknown): part is FileDataPart {
+  if (typeof part !== "object" || part === null) return false;
+  return "fileData" in part;
 }
 
 export function isFunctionCallCapabilityPart(

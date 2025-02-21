@@ -111,6 +111,7 @@ export {
   isInlineData,
   isStoredData,
   isSerializedData,
+  isFileDataCapabilityPart,
   isFunctionCallCapabilityPart,
   isFunctionResponseCapabilityPart,
   isImageURL,

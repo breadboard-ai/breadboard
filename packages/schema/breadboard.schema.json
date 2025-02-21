@@ -628,6 +628,9 @@
 				},
 				"type": {
 					"$ref": "#/definitions/AssetType"
+				},
+				"subType": {
+					"type": "string"
 				}
 			},
 			"required": [
