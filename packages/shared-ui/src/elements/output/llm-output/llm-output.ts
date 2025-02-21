@@ -480,10 +480,13 @@ export class LLMOutput extends LitElement {
                   let uri: string | null = part.fileData.fileUri;
                   if (isWatchUri(uri)) {
                     uri = convertWatchUriToEmbedUri(uri);
+                  } else if (!isEmbedUri(uri)) {
+                    uri = null;
                   }
 
                   if (!isEmbedUri(uri)) {
                     value = html`Invalid YouTube Video URL`;
+                    break;
                   }
 
                   value = html`<iframe

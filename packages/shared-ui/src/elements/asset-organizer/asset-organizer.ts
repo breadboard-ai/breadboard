@@ -7,14 +7,7 @@
 import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("AssetOrganizer");
 
-import {
-  css,
-  html,
-  HTMLTemplateResult,
-  LitElement,
-  nothing,
-  PropertyValues,
-} from "lit";
+import { css, html, HTMLTemplateResult, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { GraphAsset, Organizer } from "../../state";
@@ -517,6 +510,8 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
       metadata.subType = subType;
     }
 
+    console.log(metadata);
+
     await this.state.addGraphAsset({
       path: globalThis.crypto.randomUUID(),
       metadata,
@@ -536,7 +531,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
     });
   }
 
-  protected updated(_changedProperties: PropertyValues): void {
+  protected updated(): void {
     if (this.editAssetTitle) {
       if (this.#renameInputRef.value) {
         this.#renameInputRef.value.select();
@@ -562,7 +557,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
           name: "content-add",
         },
         {
-          icon: "youtube-add",
+          icon: "youtube",
           title: "YouTube",
           name: "youtube",
         },
@@ -636,11 +631,14 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
             ${assets && assets.size > 0
               ? html`<menu>
                   ${repeat(assets, ([path, asset]) => {
+                    console.log(asset);
                     return html`<li>
                       ${asset === this.editAssetTitle
                         ? html`<span
                               class=${classMap({
                                 [asset.metadata?.type ?? "generic"]: true,
+                                [asset.metadata?.subType ?? "sub-generic"]:
+                                  true,
                               })}
                             ></span>
 
