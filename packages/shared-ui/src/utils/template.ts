@@ -131,7 +131,7 @@ class Template {
     return this.#parsed
       .map((part) => {
         if (typeof part === "string") return part;
-        return `{${JSON.stringify(part)}}`;
+        return Template.part(part);
       })
       .join("");
   }
@@ -161,6 +161,10 @@ class Template {
     if (typeof last !== "string") {
       this.#renderableValue += String.fromCharCode(160);
     }
+  }
+
+  static part(part: TemplatePart) {
+    return `{${JSON.stringify(part)}}`;
   }
 
   static preamble({ type, path }: TemplatePart) {

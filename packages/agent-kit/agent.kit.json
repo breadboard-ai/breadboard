@@ -10626,6 +10626,7 @@
                       "type": "array",
                       "items": {
                         "enum": [
+                          "at-wireable",
                           "board",
                           "bubble",
                           "config",

@@ -24,7 +24,8 @@ class AutoWireInPorts implements EditTransform {
   constructor(
     public readonly id: NodeIdentifier,
     public readonly graphId: GraphIdentifier,
-    public readonly ports: InPort[]
+    public readonly ports: InPort[],
+    public readonly updateOnly: boolean = false
   ) {}
 
   async apply(context: EditOperationContext): Promise<EditTransformResult> {
@@ -67,7 +68,6 @@ class AutoWireInPorts implements EditTransform {
       .inputs.ports.filter(
         (port) =>
           !port.star &&
-          !port.configured &&
           port.status == PortStatus.Connected &&
           port.name.startsWith("p-z-")
       )
@@ -92,13 +92,15 @@ class AutoWireInPorts implements EditTransform {
       });
     });
 
-    diff.toDelete.forEach((edge) => {
-      edits.push({
-        type: "removeedge",
-        edge,
-        graphId,
+    if (!this.updateOnly) {
+      diff.toDelete.forEach((edge) => {
+        edits.push({
+          type: "removeedge",
+          edge,
+          graphId,
+        });
       });
-    });
+    }
 
     return context.apply(edits, "Autowiring incoming ports");
   }
