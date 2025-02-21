@@ -102,9 +102,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
         list-style: none;
 
         & button {
-          display: flex;
-          align-items: center;
-          justify-content: flex-start;
+          display: block;
           background-color: var(--bb-neutral-0);
           border: none;
           color: var(--bb-neutral-900);
@@ -115,6 +113,10 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
           font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
             var(--bb-font-family);
           transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
+          text-align: left;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
 
           &:not([disabled]) {
             cursor: pointer;

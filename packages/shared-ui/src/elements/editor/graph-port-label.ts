@@ -25,10 +25,12 @@ import {
   isModuleBehavior,
 } from "../../utils";
 import { GraphAssets } from "./graph-assets";
-import { Template } from "../../utils/template";
+import { Template, TemplatePart } from "../../utils/template";
+import { GraphPortChiclet } from "./graph-port-chiclet";
 
 const hoverColor = getGlobalColor("--bb-ui-50");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
+const sourcesTextColor = getGlobalColor("--bb-neutral-700");
 
 const PREVIEW_WIDTH = 236;
 const OFFSET_WHEN_EXPANDED = 0;
@@ -55,6 +57,8 @@ export class GraphPortLabel extends PIXI.Container {
   #icon: PIXI.Sprite | null = null;
   #iconValue: string | null = null;
   #hoverZone = new PIXI.Graphics();
+  #chicletContainer = new PIXI.Container();
+  #chiclets: TemplatePart[] = [];
 
   #showNodePreviewValues = false;
   #isConfigurable = false;
@@ -108,12 +112,14 @@ export class GraphPortLabel extends PIXI.Container {
 
     this.#valuePreview.style.addOverride("width: 244px");
 
+    this.#chicletContainer.eventMode = "none";
     this.#label.eventMode = "none";
     this.#valuePreview.eventMode = "none";
 
     this.addChild(this.#hoverZone);
     this.addChild(this.#label);
     this.addChild(this.#valuePreview);
+    this.addChild(this.#chicletContainer);
 
     if (this.#icon) {
       this.addChild(this.#icon);
@@ -124,6 +130,8 @@ export class GraphPortLabel extends PIXI.Container {
     this.showNodePreviewValues = showNodePreviewValues;
     this.port = port;
     this.#calculateDimensions();
+    this.#recreateChicletsIfNeeded();
+    this.#draw();
 
     this.onRender = () => {
       if (!this.#isDirty) {
@@ -131,6 +139,7 @@ export class GraphPortLabel extends PIXI.Container {
       }
       this.#isDirty = false;
       this.#calculateDimensions();
+      this.#recreateChicletsIfNeeded();
       this.#draw();
     };
 
@@ -232,6 +241,9 @@ export class GraphPortLabel extends PIXI.Container {
       return;
     }
 
+    this.#chiclets = this.#deriveChiclet();
+    this.#recreateChicletsIfNeeded();
+
     // Value preview may change the dimensions. Let's compute them now,
     // because we may be computing dimensions for the node, and it needs
     // the new values.
@@ -291,6 +303,47 @@ export class GraphPortLabel extends PIXI.Container {
     return this.#valuePreview.text ?? "";
   }
 
+  #recreateChicletsIfNeeded() {
+    this.#chicletContainer.removeFromParent();
+    this.#chicletContainer.destroy({ children: true });
+
+    this.#chicletContainer = new PIXI.Container();
+    this.#chicletContainer.eventMode = "none";
+
+    if (this.#chiclets.length) {
+      const title = new PIXI.Text({
+        text: "Sources",
+        style: {
+          fontFamily: "Arial",
+          fontSize: 12,
+          fill: sourcesTextColor,
+          align: "left",
+          lineHeight: 24,
+        },
+      });
+
+      this.#chicletContainer.addChild(title);
+      this.addChild(this.#chicletContainer);
+
+      let y = title.height + this.#paddingBottom;
+      let x = 0;
+      for (const chiclet of this.#chiclets) {
+        const graphChiclet = new GraphPortChiclet(chiclet.title, chiclet.type);
+
+        if (x + graphChiclet.width + 4 > PREVIEW_WIDTH) {
+          x = 0;
+          y += graphChiclet.height + 4;
+        }
+
+        graphChiclet.x = x;
+        graphChiclet.y = y;
+
+        x += graphChiclet.width + 4;
+        this.#chicletContainer.addChild(graphChiclet);
+      }
+    }
+  }
+
   #draw() {
     this.#hoverZone.clear();
     this.#hoverZone.x =
@@ -313,6 +366,10 @@ export class GraphPortLabel extends PIXI.Container {
 
     this.#hoverZone.alpha = 0;
     this.#hoverZone.visible = true;
+
+    this.#chicletContainer.visible = this.#chicletContainer.height > 0;
+    this.#chicletContainer.y =
+      this.#valuePreview.y + this.#valuePreview.height + this.#paddingTop;
   }
 
   #calculateDimensions() {
@@ -336,6 +393,8 @@ export class GraphPortLabel extends PIXI.Container {
       this.#valuePreview.visible = true;
       this.#width = PREVIEW_WIDTH;
       this.#height = this.#spacing + this.#valuePreview.height;
+
+      this.#height += this.#paddingTop + this.#chicletContainer.height;
     } else if (this.#icon) {
       this.#icon.visible = true;
       this.#icon.x = 0;
@@ -343,6 +402,49 @@ export class GraphPortLabel extends PIXI.Container {
       this.#label.x = 20;
       this.#label.y = 1;
     }
+  }
+
+  #deriveChiclet(): TemplatePart[] {
+    if (!this.#port) {
+      return [];
+    }
+
+    let { value } = this.#port;
+    let valStr = "";
+    if (typeof value === "object" && value !== null) {
+      if (isLLMContent(value)) {
+        value = [value];
+      }
+
+      if (isLLMContentArray(value)) {
+        const firstValue = value[0];
+        if (firstValue) {
+          const firstPart = firstValue.parts[0];
+          if (isTextCapabilityPart(firstPart)) {
+            valStr = firstPart.text;
+            if (valStr === "") {
+              valStr = "(empty text)";
+            }
+          } else if (isInlineData(firstPart)) {
+            valStr = firstPart.inlineData.mimeType;
+          } else if (isStoredData(firstPart)) {
+            valStr = firstPart.storedData.mimeType;
+          } else {
+            valStr = "LLM Content Part";
+          }
+        } else {
+          valStr = "0 items";
+        }
+      } else if (Array.isArray(value)) {
+        valStr = `${value.length} item${value.length === 1 ? "" : "s"}`;
+      } else if ("preview" in value) {
+        valStr = value.preview as string;
+      }
+    } else {
+      valStr = "";
+    }
+
+    return new Template(valStr).placeholders;
   }
 
   #createTruncatedValue(port: InspectablePort | null) {
