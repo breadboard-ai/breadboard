@@ -456,7 +456,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
     this.#uploadInputRef.value.click();
   }
 
-  #attemptUpdateAssetTitle(asset: GraphAsset, title: string) {
+  async #attemptUpdateAssetTitle(asset: GraphAsset, title: string) {
     const metadata: AssetMetadata = asset.metadata ?? {
       title: title,
       type: "file",
@@ -464,7 +464,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
 
     metadata.title = title;
 
-    this.state?.changeGraphAssetMetadata(asset.path, metadata);
+    await this.state?.changeGraphAssetMetadata(asset.path, metadata);
     this.asset = asset;
   }
 
@@ -473,8 +473,9 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
       return;
     }
 
+    const path = globalThis.crypto.randomUUID();
     await this.state.addGraphAsset({
-      path: globalThis.crypto.randomUUID(),
+      path,
       metadata: {
         title: "Untitled Content",
         type: "content",
@@ -490,6 +491,11 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
         },
       ],
     });
+
+    const asset = this.state.graphAssets.get(path);
+    if (asset) {
+      this.asset = asset;
+    }
   }
 
   async #attemptCreateEmptyFileDataAsset(
@@ -510,10 +516,9 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
       metadata.subType = subType;
     }
 
-    console.log(metadata);
-
+    const path = globalThis.crypto.randomUUID();
     await this.state.addGraphAsset({
-      path: globalThis.crypto.randomUUID(),
+      path,
       metadata,
       data: [
         {
@@ -529,6 +534,11 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
         },
       ],
     });
+
+    const asset = this.state.graphAssets.get(path);
+    if (asset) {
+      this.asset = asset;
+    }
   }
 
   protected updated(): void {
