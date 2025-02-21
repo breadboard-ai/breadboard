@@ -591,7 +591,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
 
             case "youtube": {
               await this.#attemptCreateEmptyFileDataAsset(
-                "youtube",
+                "video/mp4",
                 "YouTube Video",
                 "youtube"
               );
