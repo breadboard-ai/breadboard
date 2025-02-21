@@ -473,7 +473,7 @@ export class LLMOutput extends LitElement {
             }
           } else if (isFileDataCapabilityPart(part)) {
             switch (part.fileData.mimeType) {
-              case "youtube": {
+              case "video/mp4": {
                 if (part.fileData.fileUri === "") {
                   value = html`YouTube video URL not set`;
                 } else {
