@@ -20,6 +20,10 @@ const inBorderColor = getGlobalColor("--bb-input-100");
 const inBackgroundColor = getGlobalColor("--bb-input-50");
 const inTextColor = getGlobalColor("--bb-input-700");
 
+const invalidBorderColor = getGlobalColor("--bb-warning-300");
+const invalidBackgroundColor = getGlobalColor("--bb-warning-100");
+const invalidTextColor = getGlobalColor("--bb-warning-700");
+
 const ICON_SCALE = 0.32;
 
 export class GraphPortChiclet extends PIXI.Container {
@@ -32,7 +36,7 @@ export class GraphPortChiclet extends PIXI.Container {
   #iconSprite: PIXI.Sprite | null = null;
   #title: PIXI.Text;
 
-  constructor(title: string, type: string) {
+  constructor(title: string, type: string, invalid?: boolean) {
     super();
 
     this.#background.cursor = "pointer";
@@ -65,6 +69,12 @@ export class GraphPortChiclet extends PIXI.Container {
         icon = "output";
         break;
       }
+    }
+
+    if (invalid) {
+      this.#backgroundColor = invalidBackgroundColor;
+      this.#borderColor = invalidBorderColor;
+      this.#textColor = invalidTextColor;
     }
 
     this.#title = new PIXI.Text({
