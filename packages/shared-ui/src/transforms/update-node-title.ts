@@ -37,9 +37,12 @@ class UpdateNodeTitle implements EditTransform {
       },
       "Updating Node Titles in @-references.",
       (id) => {
-        return new AutoWireInPorts(id, graphId, [
-          { path: this.nodeId, title: this.title },
-        ]);
+        return new AutoWireInPorts(
+          id,
+          graphId,
+          [{ path: this.nodeId, title: this.title }],
+          true
+        );
       }
     ).apply(context);
   }
