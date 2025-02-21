@@ -221,7 +221,7 @@ export class PDFViewer extends LitElement {
         // Get the current page's size for fit-to-screen.
         if (!this.#baseViewport) {
           this.#baseViewport = pdfPage.getViewport({
-            scale: 1,
+            scale: dPR,
           });
 
           this.#zoomToFit();
@@ -275,8 +275,8 @@ export class PDFViewer extends LitElement {
     }
 
     this.zoom = Math.min(
-      this.#bounds.width / this.#baseViewport.width,
-      (this.#bounds.height - 8) / this.#baseViewport.height
+      (this.#bounds.width - this.#bounds.left) / this.#baseViewport.width,
+      (this.#bounds.height - this.#bounds.top) / this.#baseViewport.height
     );
   }
 
