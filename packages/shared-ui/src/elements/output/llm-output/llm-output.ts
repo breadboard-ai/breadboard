@@ -5,6 +5,7 @@
  */
 import type { LLMContent } from "@breadboard-ai/types";
 import {
+  isFileDataCapabilityPart,
   isFunctionCallCapabilityPart,
   isFunctionResponseCapabilityPart,
   isInlineData,
@@ -33,6 +34,11 @@ import type { TokenVendor } from "@breadboard-ai/connection-client";
 import "./export-toolbar.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { getGlobalColor } from "../../../utils/color.js";
+import {
+  convertWatchUriToEmbedUri,
+  isEmbedUri,
+  isWatchUri,
+} from "../../../utils/youtube.js";
 
 const PCM_AUDIO = "audio/l16;codec=pcm;rate=24000";
 
@@ -121,6 +127,10 @@ export class LLMOutput extends LitElement {
       & pre {
         font: normal var(--bb-body-small) / var(--bb-body-line-height-small)
           var(--bb-font-family);
+      }
+
+      & iframe {
+        aspect-ratio: 16/9;
       }
     }
 
@@ -459,6 +469,41 @@ export class LLMOutput extends LitElement {
               }
               if (mimeType.startsWith("text")) {
                 value = html`<div class="plain-text">${until(getData())}</div>`;
+              }
+            }
+          } else if (isFileDataCapabilityPart(part)) {
+            switch (part.fileData.mimeType) {
+              case "youtube": {
+                if (part.fileData.fileUri === "") {
+                  value = html`YouTube video URL not set`;
+                } else {
+                  let uri: string | null = part.fileData.fileUri;
+                  if (isWatchUri(uri)) {
+                    uri = convertWatchUriToEmbedUri(uri);
+                  } else if (!isEmbedUri(uri)) {
+                    uri = null;
+                  }
+
+                  if (!isEmbedUri(uri)) {
+                    value = html`Invalid YouTube Video URL`;
+                    break;
+                  }
+
+                  value = html`<iframe
+                    class="youtube-embed"
+                    src="${uri}"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    allowfullscreen
+                  ></iframe>`;
+                }
+                break;
+              }
+
+              default: {
+                value = html`Unrecognized item`;
+                break;
               }
             }
           } else {

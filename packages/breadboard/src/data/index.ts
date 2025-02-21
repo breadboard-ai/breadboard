@@ -18,6 +18,7 @@ export const createDefaultRunStore = (): RunStore => {
 export { inflateData, deflateData } from "./inflate-deflate.js";
 
 export {
+  isFileDataCapabilityPart,
   isFunctionCallCapabilityPart,
   isFunctionResponseCapabilityPart,
   isImageURL,

@@ -22,6 +22,7 @@ import type { DrawableInput } from "../drawable/drawable.js";
 import type { WebcamInput } from "../webcam/webcam.js";
 import {
   asBase64,
+  isFileDataCapabilityPart,
   isFunctionCallCapabilityPart,
   isFunctionResponseCapabilityPart,
   isInlineData,
@@ -62,8 +63,8 @@ export class LLMInput extends LitElement {
   @property({ reflect: true })
   accessor clamped = true;
 
-  @property({ reflect: true })
-  accessor inlineControls = false;
+  @property()
+  accessor showPartControls = true;
 
   @property()
   accessor minItems = 0;
@@ -83,6 +84,9 @@ export class LLMInput extends LitElement {
 
   @state()
   accessor showInlineControls: { x: number; y: number } | null = null;
+
+  @property()
+  accessor showInlineControlsToggle = true;
 
   @property()
   accessor autofocus = false;
@@ -202,7 +206,7 @@ export class LLMInput extends LitElement {
       opacity: 1;
     }
 
-    :host([inlinecontrols="true"]) #controls-container {
+    #controls-container {
       position: fixed;
       background: var(--bb-neutral-0);
       border: 1px solid var(--bb-neutral-300);
@@ -213,7 +217,7 @@ export class LLMInput extends LitElement {
       z-index: 1;
     }
 
-    :host([inlinecontrols="true"]) #controls {
+    #controls {
       display: grid;
       grid-auto-rows: var(--bb-grid-size-11);
       row-gap: 1px;
@@ -223,11 +227,11 @@ export class LLMInput extends LitElement {
       padding: 0;
     }
 
-    :host([inlinecontrols="true"]) #insert {
+    #insert {
       display: none;
     }
 
-    :host([inlinecontrols="true"]) #controls button {
+    #controls button {
       display: flex;
       align-items: center;
       background: none;
@@ -247,16 +251,16 @@ export class LLMInput extends LitElement {
       opacity: 1;
     }
 
-    :host([inlinecontrols="true"]) #controls button:hover,
-    :host([inlinecontrols="true"]) #controls button:focus {
+    #controls button:hover,
+    #controls button:focus {
       background-color: var(--bb-neutral-50);
     }
 
-    :host([inlinecontrols="true"]) #controls button:first-of-type {
+    #controls button:first-of-type {
       border-radius: var(--bb-grid-size-2) var(--bb-grid-size-2) 0 0;
     }
 
-    :host([inlinecontrols="true"]) #controls button:last-of-type {
+    #controls button:last-of-type {
       border-bottom: none;
       border-radius: 0 0 var(--bb-grid-size-2) var(--bb-grid-size-2);
     }
@@ -301,7 +305,7 @@ export class LLMInput extends LitElement {
       min-height: var(--bb-grid-size-6);
     }
 
-    :host([inlinecontrols="true"]) #container {
+    #container {
       padding-right: var(--bb-grid-size-7);
       border-radius: var(--bb-grid-size);
     }
@@ -420,6 +424,8 @@ export class LLMInput extends LitElement {
     }
 
     .value textarea,
+    .value input[type="text"],
+    .value input[type="url"],
     .value bb-text-editor {
       background: transparent;
       font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
@@ -530,7 +536,7 @@ export class LLMInput extends LitElement {
         var(--bb-font-family);
     }
 
-    :host([inlinecontrols="true"]) #no-parts {
+    #no-parts {
       margin-bottom: var(--bb-grid-size-2);
       min-height: var(--bb-grid-size-7);
     }
@@ -591,9 +597,6 @@ export class LLMInput extends LitElement {
     super.connectedCallback();
 
     this.#clearPartDataURLs();
-    if (!this.inlineControls) {
-      return;
-    }
 
     window.addEventListener("click", this.#onWindowPointerDownBound);
     window.addEventListener("keyup", this.#onWindowKeyUpBound);
@@ -1084,7 +1087,7 @@ export class LLMInput extends LitElement {
         ${this.description
           ? html`<div id="description">${this.description}</div>`
           : nothing}
-        ${this.inlineControls
+        ${this.showInlineControlsToggle
           ? html`<button
               id="toggle-controls"
               @click=${(evt: PointerEvent) => {
@@ -1114,7 +1117,7 @@ export class LLMInput extends LitElement {
               Toggle
             </button>`
           : nothing}
-        ${!this.inlineControls || this.showInlineControls
+        ${this.showInlineControls
           ? html` <div
               id="controls-container"
               class=${classMap({ inline: this.showInlineControls !== null })}
@@ -1222,6 +1225,21 @@ export class LLMInput extends LitElement {
                   this.#getPartDataAsHTML(idx, part, isLastPart),
                   "Loading..."
                 )}`;
+              } else if (isFileDataCapabilityPart(part)) {
+                partClass = "file-data";
+
+                value = html`<input
+                  type="url"
+                  .value=${part.fileData.fileUri}
+                  @input=${(evt: Event) => {
+                    if (!isFileDataCapabilityPart(part)) {
+                      return;
+                    }
+
+                    const target = evt.target as HTMLInputElement;
+                    part.fileData.fileUri = target.value;
+                  }}
+                />`;
               }
 
               return html`<div
@@ -1230,38 +1248,40 @@ export class LLMInput extends LitElement {
                 <div class="content">
                   <span class="value">${value}</span>
                 </div>
-                <div class="part-controls">
-                  <button
-                    class="add-part-after"
-                    @click=${() => this.#addPartAfter(idx)}
-                    title="Add text after"
-                  >
-                    Add text after
-                  </button>
-                  <button
-                    class="move-part-up"
-                    @click=${() => this.#movePartUp(idx)}
-                    ?disabled=${idx === 0}
-                    title="Move up"
-                  >
-                    Move up
-                  </button>
-                  <button
-                    class="move-part-down"
-                    @click=${() => this.#movePartDown(idx)}
-                    ?disabled=${isLastPart}
-                    title="Move down"
-                  >
-                    Move down
-                  </button>
-                  <button
-                    class="delete-part"
-                    @click=${() => this.#deletePart(idx)}
-                    title="Delete"
-                  >
-                    Delete
-                  </button>
-                </div>
+                ${this.showPartControls
+                  ? html`<div class="part-controls">
+                      <button
+                        class="add-part-after"
+                        @click=${() => this.#addPartAfter(idx)}
+                        title="Add text after"
+                      >
+                        Add text after
+                      </button>
+                      <button
+                        class="move-part-up"
+                        @click=${() => this.#movePartUp(idx)}
+                        ?disabled=${idx === 0}
+                        title="Move up"
+                      >
+                        Move up
+                      </button>
+                      <button
+                        class="move-part-down"
+                        @click=${() => this.#movePartDown(idx)}
+                        ?disabled=${isLastPart}
+                        title="Move down"
+                      >
+                        Move down
+                      </button>
+                      <button
+                        class="delete-part"
+                        @click=${() => this.#deletePart(idx)}
+                        title="Delete"
+                      >
+                        Delete
+                      </button>
+                    </div>`
+                  : nothing}
               </div>`;
             })
           : html`<div id="no-parts">

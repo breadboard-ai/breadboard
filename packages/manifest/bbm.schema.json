@@ -50,6 +50,9 @@
 				"description": {
 					"type": "string"
 				},
+				"subType": {
+					"type": "string"
+				},
 				"title": {
 					"type": "string"
 				},
