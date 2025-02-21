@@ -72,6 +72,7 @@ const themeAssets: [string, string][] = [
   ["language", `/third_party/icons/graph/language${themeSuffix}-48px.svg`],
   ["map-search", `/third_party/icons/graph/map-search${themeSuffix}-48px.svg`],
   ["sunny", `/third_party/icons/graph/sunny${themeSuffix}-48px.svg`],
+  ["tool", `/third_party/icons/graph/tool${themeSuffix}-48px.svg`],
 ];
 
 const additionalAssets: [string, string][] = ASSET_PACK_ICONS;
