@@ -636,7 +636,11 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                               active: asset.path === this.asset?.path,
                             })}
                             @click=${() => {
-                              this.#showAsset(asset);
+                              if (asset !== this.asset) {
+                                this.#showAsset(asset);
+                              } else {
+                                this.editAssetTitle = asset;
+                              }
                             }}
                             @dblclick=${() => {
                               this.editAssetTitle = asset;
