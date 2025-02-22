@@ -10,7 +10,6 @@ const GlobalStrings = StringsHelper.forSection("Global");
 
 import {
   BoardServer,
-  DataStore,
   EditHistory,
   EditableGraph,
   GraphDescriptor,
@@ -108,9 +107,6 @@ export class UI extends LitElement {
 
   @property()
   accessor topGraphResult: TopGraphRunResult | null = null;
-
-  @property()
-  accessor dataStore: DataStore | null = null;
 
   @property()
   accessor runStore: RunStore | null = null;

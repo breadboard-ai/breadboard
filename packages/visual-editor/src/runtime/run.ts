@@ -135,6 +135,7 @@ export class Run extends EventTarget {
     const tabId = tab.id;
     config = {
       ...config,
+      store: this.dataStore,
       kits: [...this.graphStore.kits, ...tab.boardServerKits],
       signal: abortController.signal,
       graphStore: this.graphStore,

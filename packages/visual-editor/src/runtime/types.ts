@@ -6,7 +6,6 @@
 
 import {
   BoardServer,
-  DataStore,
   GraphDescriptor,
   GraphLoader,
   Kit,
@@ -51,7 +50,6 @@ export interface Tab {
 
 export interface RuntimeConfig {
   graphStore: MutableGraphStore;
-  dataStore: DataStore;
   runStore: RunStore;
   sandbox: Sandbox;
   experiments: Record<string, boolean>;
