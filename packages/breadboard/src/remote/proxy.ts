@@ -163,9 +163,16 @@ export class ProxyClient {
     const writer = stream.writableRequests.getWriter();
     const reader = stream.readableResponses.getReader();
 
+    const inflateToFileData = isGeminiApiFetch(node, inputs);
+
     const store = context.store;
     inputs = store
-      ? ((await inflateData(store, inputs, context.base)) as InputValues)
+      ? ((await inflateData(
+          store,
+          inputs,
+          context.base,
+          inflateToFileData
+        )) as InputValues)
       : inputs;
 
     writer.write(["proxy", { node, inputs }]);
@@ -214,4 +221,14 @@ export class ProxyClient {
     );
     return asRuntimeKit(new KitBuilder({ url: "proxy" }).build(proxiedNodes));
   }
+}
+
+function isGeminiApiFetch(node: NodeDescriptor, inputs: InputValues): boolean {
+  if (node.type !== "fetch") return false;
+  return (
+    "url" in inputs &&
+    !!inputs.url &&
+    typeof inputs.url === "string" &&
+    inputs.url.startsWith("https://generativelanguage.googleapis.com")
+  );
 }

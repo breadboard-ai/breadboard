@@ -259,6 +259,10 @@ export async function transformDataParts(
             if (!ok(persisted)) return persisted;
             transformedPart = persisted;
           }
+        } else if (to === "file") {
+          const file = await transformer.toFileData(graphUrl, part);
+          if (!ok(file)) return file;
+          transformedPart = file;
         }
       }
       parts.push(transformedPart);

@@ -4,9 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InlineDataCapabilityPart } from "@breadboard-ai/types";
-import { asBase64, asBlob, isInlineData, isStoredData } from "./common.js";
-import { DataStore, SerializedDataStoreGroup } from "./types.js";
+import { InlineDataCapabilityPart, LLMContent } from "@breadboard-ai/types";
+import {
+  asBase64,
+  asBlob,
+  isInlineData,
+  isStoredData,
+  transformDataParts,
+} from "./common.js";
+import { DataInflator, DataStore, SerializedDataStoreGroup } from "./types.js";
+import { ok } from "./file-system/utils.js";
 
 /**
  * Recursively descends into the data object and inflates any
@@ -17,14 +24,31 @@ import { DataStore, SerializedDataStoreGroup } from "./types.js";
  * replaced with `InlineDataCapabilityPart`
  */
 export const inflateData = async (
-  store: DataStore,
+  store: DataInflator,
   data: unknown,
-  graphUrl?: URL
+  graphUrl?: URL,
+  inflateToFileData?: boolean
 ) => {
   const descender = async (value: unknown): Promise<unknown> => {
     if (isStoredData(value)) {
       if (value.storedData.handle.startsWith("https://")) {
         return value;
+      }
+      if (inflateToFileData && store.transformer && graphUrl) {
+        const contents: LLMContent[] = [{ parts: [value] }];
+        const transformer = store.transformer(graphUrl);
+        if (transformer) {
+          const transforming = await transformDataParts(
+            graphUrl,
+            contents,
+            "file",
+            transformer
+          );
+          if (ok(transforming)) {
+            const part = transforming.at(0)?.parts.at(0);
+            if (part) return part;
+          }
+        }
       }
       const blob = await store.retrieveAsBlob(value, graphUrl);
       const data = await asBase64(blob);

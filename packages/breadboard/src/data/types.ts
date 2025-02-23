@@ -6,6 +6,7 @@
 
 import type {
   DataStoreHandle,
+  FileDataPart,
   InlineDataCapabilityPart,
   LLMContent,
   StoredDataCapabilityPart,
@@ -38,14 +39,18 @@ export type RunStore = {
   getStoredRuns(url: RunURL): Promise<Map<RunTimestamp, HarnessRunResult[]>>;
 };
 
-export type DataStore = {
+export type DataInflator = {
+  retrieveAsBlob(part: StoredDataCapabilityPart, graphUrl?: URL): Promise<Blob>;
+  transformer?(graphUrl: URL): DataPartTransformer | undefined;
+};
+
+export type DataStore = DataInflator & {
   createGroup(groupId: string): void;
   drop(): Promise<void>;
   has(groupId: string): boolean;
   releaseAll(): void;
   releaseGroup(group: string): void;
   replaceDataParts(key: string, result: HarnessRunResult): Promise<void>;
-  retrieveAsBlob(part: StoredDataCapabilityPart, graphUrl?: URL): Promise<Blob>;
   serializeGroup(
     group: string,
     storeId?: string
@@ -102,8 +107,14 @@ export type DataStoreScope = "run" | "session" | "client";
  * - `ephemeral` -- converts every data part into a `StoredDataPart` pointing
  *   to the ephemeral handle (a blob URL)
  * - `inline` -- converts every data part into an `InlineDataPart`.
+ * - `file` -- converts every `StoreDataPart` pointing ot a persistent relative
+ *   handle (url that starts with a `.`) into a `FileDataPart`
  */
-export type DataPartTransformType = "persistent" | "ephemeral" | "inline";
+export type DataPartTransformType =
+  | "persistent"
+  | "ephemeral"
+  | "inline"
+  | "file";
 
 export type DataPartTransformer = {
   persistPart: (
@@ -114,6 +125,10 @@ export type DataPartTransformer = {
   persistentToEphemeral: (
     part: StoredDataCapabilityPart
   ) => Promise<Outcome<StoredDataCapabilityPart>>;
+  toFileData: (
+    graphUrl: URL,
+    part: StoredDataCapabilityPart
+  ) => Promise<Outcome<FileDataPart>>;
 };
 
 export type Outcome<T> = T | { $error: string };

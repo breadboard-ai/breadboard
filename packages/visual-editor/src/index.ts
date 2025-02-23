@@ -35,7 +35,6 @@ import {
 } from "@google-labs/breadboard";
 import {
   createFileSystemBackend,
-  getDataStore,
   getRunStore,
 } from "@breadboard-ai/data-store";
 import { classMap } from "lit/directives/class-map.js";
@@ -284,7 +283,6 @@ export class Main extends LitElement {
   #recentBoards: BreadboardUI.Types.RecentBoard[] = [];
   #isSaving = false;
   #graphStore!: MutableGraphStore;
-  #dataStore = getDataStore();
   #runStore = getRunStore();
   #fileSystem = createFileSystem({
     local: createFileSystemBackend(createEphemeralBlobStore()),
@@ -498,7 +496,6 @@ export class Main extends LitElement {
         return Runtime.create({
           graphStore: this.#graphStore,
           runStore: this.#runStore,
-          dataStore: this.#dataStore,
           experiments: {},
           environment: this.environment,
           tokenVendor: this.tokenVendor,
@@ -1267,7 +1264,6 @@ export class Main extends LitElement {
           diagnostics: true,
           kits: [], // The kits are added by the runtime.
           loader: this.#runtime.board.getLoader(),
-          store: this.#dataStore,
           graphStore: this.#graphStore,
           fileSystem: this.#fileSystem.createRunFileSystem({
             graphUrl: url,
@@ -1818,7 +1814,7 @@ export class Main extends LitElement {
         if (isSerializedRun(runData)) {
           const runObserver = createRunObserver(this.#graphStore, {
             logLevel: "debug",
-            dataStore: this.#dataStore,
+            dataStore: this.#runtime.run.dataStore,
             sandbox,
           });
 
@@ -1924,7 +1920,6 @@ export class Main extends LitElement {
           diagnostics: true,
           kits: [], // The kits are added by the runtime.
           loader: this.#runtime.board.getLoader(),
-          store: this.#dataStore,
           inputs: BreadboardUI.Data.inputsFromSettings(this.#settings),
           interactiveSecrets: true,
           graphStore: this.#graphStore,
@@ -3175,7 +3170,6 @@ export class Main extends LitElement {
               ${ref(this.#uiRef)}
               ?inert=${showingOverlay}
               .mainView=${this.view}
-              .dataStore=${this.#dataStore}
               .runStore=${this.#runStore}
               .sandbox=${sandbox}
               .fileSystem=${this.#fileSystem}
