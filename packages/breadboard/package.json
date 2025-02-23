@@ -34,9 +34,7 @@
     "build:tsc": {
       "command": "tsc -b --pretty",
       "dependencies": [
-        "../schema:build",
-        "../types:build",
-        "../jsandbox:build"
+        "<dependencies>#build"
       ],
       "env": {
         "FORCE_COLOR": "1"

@@ -53,14 +53,14 @@
   "wireit": {
     "build": {
       "dependencies": [
-        "build:tsc",
-        "../build:build"
+        "<dependencies>#<this>",
+        "build:tsc"
       ]
     },
     "build:tsc": {
       "command": "tsc --pretty",
       "dependencies": [
-        "../build:build:tsc"
+        "<dependencies>#<this>"
       ],
       "files": [
         "src/",

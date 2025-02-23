@@ -52,9 +52,7 @@
         "dist/"
       ],
       "dependencies": [
-        "../board-server:build:tsc",
-        "../connection-server:build:tsc",
-        "../visual-editor:build:tsc"
+        "<dependencies>#<this>"
       ]
     },
     "serve": {

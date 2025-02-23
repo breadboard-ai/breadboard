@@ -19,15 +19,13 @@
   "wireit": {
     "build": {
       "dependencies": [
-        "../breadboard:build",
-        "../build:build",
+        "<dependencies>#<this>",
         "build:tsc"
       ]
     },
     "typescript-files-and-deps": {
       "dependencies": [
-        "../breadboard:build:tsc",
-        "../build:build:tsc"
+        "<dependencies>#build:tsc"
       ],
       "files": [
         "src/**/*.ts",

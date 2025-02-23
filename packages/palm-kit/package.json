@@ -18,7 +18,7 @@
   "wireit": {
     "build": {
       "dependencies": [
-        "../breadboard:build",
+        "<dependencies>#<this>",
         "build:tsc"
       ]
     },
@@ -28,7 +28,7 @@
         "FORCE_COLOR": "1"
       },
       "dependencies": [
-        "../breadboard:build:tsc"
+        "<dependencies>#<this>"
       ],
       "files": [
         "src/**/*.ts",

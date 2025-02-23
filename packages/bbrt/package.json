@@ -56,28 +56,16 @@
   "wireit": {
     "build": {
       "dependencies": [
-        "build:tsc",
-        "../agent-kit:build",
-        "../breadboard:build",
-        "../core-kit:build",
-        "../gemini-kit:build",
-        "../google-drive-kit:build",
-        "../json-kit:build",
-        "../shared-ui:build",
-        "../template-kit:build"
+        "<dependencies>#<this>",
+        "build:tsc"
       ]
     },
     "build:tsc": {
       "command": "tsc --pretty",
       "dependencies": [
+        "<dependencies>#<this>",
         "../agent-kit:build",
-        "../google-drive-kit:build",
-        "../breadboard:build:tsc",
-        "../core-kit:build:tsc",
-        "../gemini-kit:build:tsc",
-        "../json-kit:build:tsc",
-        "../shared-ui:build:tsc",
-        "../template-kit:build:tsc"
+        "../google-drive-kit:build"
       ],
       "files": [
         "src/**/*.ts",

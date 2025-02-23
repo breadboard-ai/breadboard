@@ -59,17 +59,14 @@
         "dist/client"
       ],
       "dependencies": [
-        "update-sandbox-runtime",
-        "../breadboard:build:tsc",
-        "../data-store:build:tsc",
+        "<dependencies>#build:tsc",
         "../agent-kit:build:tsc",
         "../core-kit:build:tsc",
-        "../google-drive-kit:build:tsc",
-        "../jsandbox:build:tsc",
         "../json-kit:build:tsc",
-        "../template-kit:build:tsc",
         "../shared-ui:build:tsc",
-        "../visual-editor:build"
+        "../template-kit:build:tsc",
+        "../visual-editor:build",
+        "update-sandbox-runtime"
       ],
       "clean": "if-file-deleted"
     },
@@ -97,14 +94,11 @@
         "package.json"
       ],
       "dependencies": [
-        "../breadboard:build",
-        "../data-store:build",
+        "<dependencies>#build",
         "../agent-kit:build",
         "../core-kit:build",
         "../json-kit:build",
-        "../template-kit:build",
-        "../google-drive-kit:build",
-        "../jsandbox:build"
+        "../template-kit:build"
       ]
     },
     "build:esbuild": {
@@ -149,13 +143,11 @@
         "FORCE_COLOR": "1"
       },
       "dependencies": [
-        "../breadboard:build:tsc",
-        "../data-store:build:tsc",
+        "<dependencies>#build:tsc",
         "../agent-kit:generate-kit-manifest",
         "../core-kit:build:tsc",
-        "../json-kit:build:tsc",
-        "../template-kit:build:tsc",
-        "../shared-ui:build:tsc"
+        "../shared-ui:build:tsc",
+        "../template-kit:build:tsc"
       ],
       "files": [
         "src/**/*.ts",

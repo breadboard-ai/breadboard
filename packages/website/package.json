@@ -30,17 +30,8 @@
   "wireit": {
     "typescript-files-and-deps": {
       "dependencies": [
-        "../agent-kit:build",
-        "../breadboard:build:tsc",
-        "../visual-editor:build:tsc",
-        "../shared-ui:build:tsc",
-        "../build:build:tsc",
-        "../core-kit:build:tsc",
-        "../gemini-kit:build:tsc",
-        "../google-drive-kit:build:tsc",
-        "../json-kit:build:tsc",
-        "../template-kit:build:tsc",
-        "../palm-kit:build:tsc"
+        "<dependencies>#build:tsc",
+        "../agent-kit:build"
       ],
       "files": [
         "src/**/*.ts",

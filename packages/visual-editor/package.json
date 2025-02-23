@@ -47,45 +47,14 @@
   "wireit": {
     "build": {
       "dependencies": [
-        "../agent-kit:build",
-        "../bbrt:build",
-        "../breadboard:build",
-        "../board-server-management:build",
-        "../board-server-utils:build",
-        "../build:build",
-        "../shared-ui:build",
-        "../core-kit:build",
-        "../data-store:build",
-        "../example-boards:build",
-        "../gemini-kit:build",
-        "../google-drive-kit:build",
-        "../json-kit:build",
-        "../template-kit:build",
-        "../python-wasm:build",
-        "../manifest:build",
+        "<dependencies>#<this>",
         "build:vite",
         "build:tsc"
       ]
     },
     "typescript-files-and-deps": {
       "dependencies": [
-        "../agent-kit:build:tsc",
-        "../bbrt:build:tsc",
-        "../breadboard:build:tsc",
-        "../board-server-management:build:tsc",
-        "../board-server-utils:build:tsc",
-        "../shared-ui:build:tsc",
-        "../build:build:tsc",
-        "../core-kit:build:tsc",
-        "../data-store:build:tsc",
-        "../example-boards:build:tsc",
-        "../gemini-kit:build:tsc",
-        "../google-drive-kit:build:tsc",
-        "../jsandbox:build:tsc",
-        "../json-kit:build:tsc",
-        "../template-kit:build:tsc",
-        "../python-wasm:build:tsc",
-        "../types:build:tsc"
+        "<dependencies>#build:tsc"
       ],
       "files": [
         "src/**/*.ts",
