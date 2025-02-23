@@ -35,6 +35,7 @@ import { sandbox } from "../sandbox";
 import { Select } from "./select.js";
 import { StateManager } from "./state.js";
 import { getDataStore } from "@breadboard-ai/data-store";
+import { BoardServerAwareDataStore } from "./board-server-aware-data-store.js";
 
 function withRunModule(kits: Kit[]): Kit[] {
   return addSandboxedRunModule(sandbox, kits);
@@ -74,7 +75,6 @@ export async function create(config: RuntimeConfig): Promise<{
   }
 
   const loader = createLoader(servers);
-  const dataStore = getDataStore();
   const graphStore = createGraphStore({
     kits,
     loader,
@@ -100,6 +100,8 @@ export async function create(config: RuntimeConfig): Promise<{
     loader,
     graphStore,
   };
+
+  const dataStore = new BoardServerAwareDataStore(getDataStore(), servers);
 
   const runtime = {
     board: new Board([], loader, kits, boardServers, config.tokenVendor),

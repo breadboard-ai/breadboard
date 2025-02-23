@@ -25,8 +25,14 @@ import {
   type StoreDataResult,
 } from "@google-labs/breadboard";
 import type { HarnessRunResult } from "@google-labs/breadboard/harness";
+import { Readable } from "node:stream";
 
 export { GoogleStorageBlobStore, isUUID, BlobDataStore };
+
+export type FileAPIMetadata = {
+  fileUri?: string;
+  expirationTime?: string;
+};
 
 class GoogleStorageBlobStore implements BlobStore {
   #storage: Storage;
@@ -37,6 +43,34 @@ class GoogleStorageBlobStore implements BlobStore {
     this.#storage = new Storage();
     this.#bucketId = bucketId;
     this.#serverUrl = serverUrl;
+  }
+
+  async getMetadata(blobId: string): Promise<Outcome<FileAPIMetadata>> {
+    try {
+      const [metadata] = await this.#storage
+        .bucket(this.#bucketId)
+        .file(blobId)
+        .getMetadata();
+      return metadata?.metadata || {};
+    } catch (e) {
+      return err((e as Error).message);
+    }
+  }
+
+  async setMetadata(
+    blobId: string,
+    metadata: FileAPIMetadata
+  ): Promise<Outcome<void>> {
+    await this.#storage
+      .bucket(this.#bucketId)
+      .file(blobId)
+      .setMetadata({ metadata });
+  }
+
+  async getReadableStream(blobId: string): Promise<ReadableStream> {
+    return Readable.toWeb(
+      this.#storage.bucket(this.#bucketId).file(blobId).createReadStream()
+    ) as ReadableStream;
   }
 
   async deflateContent(content: LLMContent): Promise<Outcome<LLMContent>> {

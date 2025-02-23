@@ -11,6 +11,7 @@ import {
   relativePath,
 } from "@google-labs/breadboard";
 import {
+  FileDataPart,
   InlineDataCapabilityPart,
   LLMContent,
   StoredDataCapabilityPart,
@@ -18,6 +19,10 @@ import {
 import { RemoteConnector } from "./types";
 
 export { RemotePartTransformer };
+
+type FileInfo = {
+  fileUri: string;
+};
 
 class RemotePartTransformer implements DataPartTransformer {
   constructor(public readonly connector: RemoteConnector) {}
@@ -42,6 +47,27 @@ class RemotePartTransformer implements DataPartTransformer {
       return transformedPart;
     } catch (e) {
       return err(`Failed to store blob: ${(e as Error).message}`);
+    }
+  }
+
+  async toFileData(
+    graphUrl: URL,
+    part: StoredDataCapabilityPart
+  ): Promise<Outcome<FileDataPart>> {
+    const { handle: blobPath, mimeType } = part.storedData;
+    const persistedUrl = new URL(blobPath, graphUrl);
+    persistedUrl.pathname += "/file";
+    try {
+      const response = await fetch(
+        await this.connector.createRequest(persistedUrl.href, "POST")
+      );
+      if (!response.ok) {
+        return err(await response.text());
+      }
+      const { fileUri } = (await response.json()) as FileInfo;
+      return { fileData: { fileUri: fileUri, mimeType } };
+    } catch (e) {
+      return err(`Failed to get blob file info: ${(e as Error).message}`);
     }
   }
 
