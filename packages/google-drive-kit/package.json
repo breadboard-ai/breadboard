@@ -57,20 +57,15 @@
   "wireit": {
     "build": {
       "dependencies": [
+        "<dependencies>#<this>",
         "build:tsc",
-        "../build:build",
-        "../core-kit:build",
-        "../template-kit:build",
         "generate-kit-manifest"
       ]
     },
     "build:tsc": {
       "command": "tsc --pretty",
       "dependencies": [
-        "../build:build:tsc",
-        "../core-kit:build:tsc",
-        "../template-kit:build:tsc",
-        "../connection-client:build:tsc",
+        "<dependencies>#<this>",
         "generate:js-components"
       ],
       "files": [
@@ -130,7 +125,7 @@
       "command": "mkdir graphs && ls dist/components/*.js | xargs -n1 -r -I{} ../breadboard-cli/dist/src/index.js make \"$PWD/{}\" -o \"$PWD/graphs/\" --format",
       "dependencies": [
         "build:tsc",
-        "../breadboard-cli:build:tsc"
+        "../breadboard-cli#build:tsc"
       ],
       "files": [],
       "output": [
@@ -159,7 +154,7 @@
         "src/generated/"
       ],
       "dependencies": [
-        "../build-code:build"
+        "../build-code#build"
       ]
     }
   },
@@ -174,6 +169,6 @@
     "@types/node": "^22.0.0",
     "eslint": "^8.57.1",
     "typescript": "^5.7.3",
-    "wireit": "^0.14.11"
+    "wireit": "^0.15.0-pre.1"
   }
 }

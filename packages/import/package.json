@@ -61,7 +61,7 @@
         "FORCE_COLOR": "1"
       },
       "dependencies": [
-        "../breadboard:build:tsc"
+        "../breadboard#build:tsc"
       ],
       "files": [
         "src/**/*.js",

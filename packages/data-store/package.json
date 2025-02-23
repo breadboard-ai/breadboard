@@ -27,7 +27,7 @@
     "build:tsc": {
       "command": "tsc -b --pretty",
       "dependencies": [
-        "../breadboard:build"
+        "<dependencies>#<this>"
       ],
       "env": {
         "FORCE_COLOR": "1"

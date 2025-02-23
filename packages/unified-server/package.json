@@ -36,7 +36,7 @@
       "command": "vite build",
       "dependencies": [
         "copy-assets",
-        "../visual-editor:build"
+        "../visual-editor#build"
       ],
       "output": [
         "dist/client"
@@ -52,9 +52,7 @@
         "dist/"
       ],
       "dependencies": [
-        "../board-server:build:tsc",
-        "../connection-server:build:tsc",
-        "../visual-editor:build:tsc"
+        "<dependencies>#<this>"
       ]
     },
     "serve": {
@@ -74,7 +72,7 @@
     "copy-assets": {
       "command": "tsx scripts/copy-assets.ts",
       "dependencies": [
-        "../visual-editor:prepare-assets"
+        "../visual-editor#prepare-assets"
       ],
       "files": [
         "scripts/copy-assets.ts"
@@ -125,7 +123,7 @@
     "dotenv": "^16.4.7",
     "typescript": "^5.7.3",
     "vite-plugin-compression2": "^1.3.3",
-    "wireit": "^0.14.11"
+    "wireit": "^0.15.0-pre.1"
   },
   "dependencies": {
     "@breadboard-ai/board-server": "0.12.0",

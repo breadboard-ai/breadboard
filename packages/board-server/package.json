@@ -59,17 +59,14 @@
         "dist/client"
       ],
       "dependencies": [
-        "update-sandbox-runtime",
-        "../breadboard:build:tsc",
-        "../data-store:build:tsc",
-        "../agent-kit:build:tsc",
-        "../core-kit:build:tsc",
-        "../google-drive-kit:build:tsc",
-        "../jsandbox:build:tsc",
-        "../json-kit:build:tsc",
-        "../template-kit:build:tsc",
-        "../shared-ui:build:tsc",
-        "../visual-editor:build"
+        "<dependencies>#build:tsc",
+        "../agent-kit#build:tsc",
+        "../core-kit#build:tsc",
+        "../json-kit#build:tsc",
+        "../shared-ui#build:tsc",
+        "../template-kit#build:tsc",
+        "../visual-editor#build",
+        "update-sandbox-runtime"
       ],
       "clean": "if-file-deleted"
     },
@@ -97,14 +94,11 @@
         "package.json"
       ],
       "dependencies": [
-        "../breadboard:build",
-        "../data-store:build",
-        "../agent-kit:build",
-        "../core-kit:build",
-        "../json-kit:build",
-        "../template-kit:build",
-        "../google-drive-kit:build",
-        "../jsandbox:build"
+        "<dependencies>#build",
+        "../agent-kit#build",
+        "../core-kit#build",
+        "../json-kit#build",
+        "../template-kit#build"
       ]
     },
     "build:esbuild": {
@@ -138,7 +132,7 @@
       "dependencies": [
         "build",
         {
-          "script": "../visual-editor:serve",
+          "script": "../visual-editor#serve",
           "cascade": false
         }
       ]
@@ -149,13 +143,11 @@
         "FORCE_COLOR": "1"
       },
       "dependencies": [
-        "../breadboard:build:tsc",
-        "../data-store:build:tsc",
-        "../agent-kit:generate-kit-manifest",
-        "../core-kit:build:tsc",
-        "../json-kit:build:tsc",
-        "../template-kit:build:tsc",
-        "../shared-ui:build:tsc"
+        "<dependencies>#build:tsc",
+        "../agent-kit#generate-kit-manifest",
+        "../core-kit#build:tsc",
+        "../shared-ui#build:tsc",
+        "../template-kit#build:tsc"
       ],
       "files": [
         "src/**/*.ts",
@@ -194,7 +186,7 @@
     "update-sandbox-runtime": {
       "command": "tsx src/update-sandbox-runtime.ts",
       "dependencies": [
-        "../jsandbox:build"
+        "../jsandbox#build"
       ],
       "files": [
         "src/update-sandbox-runtime.ts"
@@ -227,7 +219,7 @@
     "esbuild": "^0.25.0",
     "eslint": "^8.57.1",
     "typescript": "^5.7.3",
-    "wireit": "^0.14.11"
+    "wireit": "^0.15.0-pre.1"
   },
   "dependencies": {
     "@breadboard-ai/connection-client": "0.2.0",

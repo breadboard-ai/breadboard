@@ -43,25 +43,15 @@
   "wireit": {
     "build": {
       "dependencies": [
-        "../breadboard:build",
-        "../build:build",
-        "../connection-client:build",
-        "../core-kit:build",
-        "../data-store:build",
-        "../schema:build",
-        "../jsandbox:build",
+        "<dependencies>#build",
         "build:tsc"
       ]
     },
     "typescript-files-and-deps": {
       "dependencies": [
-        "../breadboard:build:tsc",
-        "../build:build:tsc",
-        "../connection-client:build",
-        "../core-kit:build",
-        "../data-store:build:tsc",
-        "../schema:build:tsc",
-        "../types:build:tsc"
+        "<dependencies>#build:tsc",
+        "../connection-client#build",
+        "../core-kit#build"
       ],
       "files": [
         "src/**/*.ts",

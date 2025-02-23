@@ -21,15 +21,14 @@
     "dev": {
       "command": "breadboard debug src/boards --watch -n",
       "dependencies": [
-        "build",
-        "../breadboard-cli:build"
+        "../breadboard-cli#build",
+        "build"
       ]
     },
     "build": {
       "dependencies": [
-        "../breadboard:build",
-        "../core-kit:build",
-        "../template-kit:build",
+        "<dependencies>#<this>",
+        "!../breadboard-cli#build",
         "build:tsc"
       ]
     },
@@ -39,9 +38,8 @@
         "FORCE_COLOR": "1"
       },
       "dependencies": [
-        "../breadboard:build:tsc",
-        "../core-kit:build:tsc",
-        "../template-kit:build:tsc"
+        "<dependencies>#<this>",
+        "!../breadboard-cli#<this>"
       ],
       "files": [
         "src/**/*.ts",
@@ -76,7 +74,7 @@
       "command": "mkdir graphs && ls dist/src/boards/*.js | xargs -n1 -r -I{} ../breadboard-cli/dist/src/index.js make \"$PWD/{}\" -o \"$PWD/graphs/\" --format",
       "dependencies": [
         "build:tsc",
-        "../breadboard-cli:build"
+        "../breadboard-cli#build"
       ],
       "files": [],
       "output": [

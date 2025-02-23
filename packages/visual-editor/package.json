@@ -47,45 +47,14 @@
   "wireit": {
     "build": {
       "dependencies": [
-        "../agent-kit:build",
-        "../bbrt:build",
-        "../breadboard:build",
-        "../board-server-management:build",
-        "../board-server-utils:build",
-        "../build:build",
-        "../shared-ui:build",
-        "../core-kit:build",
-        "../data-store:build",
-        "../example-boards:build",
-        "../gemini-kit:build",
-        "../google-drive-kit:build",
-        "../json-kit:build",
-        "../template-kit:build",
-        "../python-wasm:build",
-        "../manifest:build",
+        "<dependencies>#<this>",
         "build:vite",
         "build:tsc"
       ]
     },
     "typescript-files-and-deps": {
       "dependencies": [
-        "../agent-kit:build:tsc",
-        "../bbrt:build:tsc",
-        "../breadboard:build:tsc",
-        "../board-server-management:build:tsc",
-        "../board-server-utils:build:tsc",
-        "../shared-ui:build:tsc",
-        "../build:build:tsc",
-        "../core-kit:build:tsc",
-        "../data-store:build:tsc",
-        "../example-boards:build:tsc",
-        "../gemini-kit:build:tsc",
-        "../google-drive-kit:build:tsc",
-        "../jsandbox:build:tsc",
-        "../json-kit:build:tsc",
-        "../template-kit:build:tsc",
-        "../python-wasm:build:tsc",
-        "../types:build:tsc"
+        "<dependencies>#build:tsc"
       ],
       "files": [
         "src/**/*.ts",
@@ -120,7 +89,7 @@
       },
       "dependencies": [
         "typescript-files-and-deps",
-        "../example-boards:build",
+        "../example-boards#build",
         "copy-pyoide-assets",
         "update-sandbox-runtime",
         {
@@ -182,7 +151,7 @@
           "cascade": false
         },
         {
-          "script": "../connection-server:dev:nowatch",
+          "script": "../connection-server#dev:nowatch",
           "cascade": false
         }
       ],
@@ -202,7 +171,7 @@
           "cascade": false
         },
         {
-          "script": "../connection-server:dev:nowatch",
+          "script": "../connection-server#dev:nowatch",
           "cascade": false
         }
       ],
@@ -214,7 +183,7 @@
     "copy-example-boards": {
       "command": "tsx src/copy-example-boards.ts",
       "dependencies": [
-        "../example-boards:build"
+        "../example-boards#build"
       ],
       "files": [
         "src/copy-example-boards.ts"
@@ -245,7 +214,7 @@
     "update-sandbox-runtime": {
       "command": "tsx src/update-sandbox-runtime.ts",
       "dependencies": [
-        "../jsandbox:build"
+        "../jsandbox#build"
       ],
       "files": [
         "src/update-sandbox-runtime.ts"

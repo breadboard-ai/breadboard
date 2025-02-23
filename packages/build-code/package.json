@@ -54,16 +54,14 @@
   "wireit": {
     "build": {
       "dependencies": [
-        "build:tsc",
-        "../build:build",
-        "../core-kit:build"
+        "<dependencies>#<this>",
+        "build:tsc"
       ]
     },
     "build:tsc": {
       "command": "tsc --pretty",
       "dependencies": [
-        "../build:build:tsc",
-        "../core-kit:build:tsc"
+        "<dependencies>#<this>"
       ],
       "files": [
         "src/",
@@ -117,6 +115,6 @@
     "@google-labs/breadboard": "^0.32.0",
     "eslint": "^8.57.1",
     "typescript": "^5.7.3",
-    "wireit": "^0.14.11"
+    "wireit": "^0.15.0-pre.1"
   }
 }

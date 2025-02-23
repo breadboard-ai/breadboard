@@ -30,17 +30,8 @@
   "wireit": {
     "typescript-files-and-deps": {
       "dependencies": [
-        "../agent-kit:build",
-        "../breadboard:build:tsc",
-        "../visual-editor:build:tsc",
-        "../shared-ui:build:tsc",
-        "../build:build:tsc",
-        "../core-kit:build:tsc",
-        "../gemini-kit:build:tsc",
-        "../google-drive-kit:build:tsc",
-        "../json-kit:build:tsc",
-        "../template-kit:build:tsc",
-        "../palm-kit:build:tsc"
+        "<dependencies>#build:tsc",
+        "../agent-kit#build"
       ],
       "files": [
         "src/**/*.ts",
@@ -146,6 +137,6 @@
     "markdown-it-github-alerts": "^0.3.0",
     "markdown-it-github-headings": "^2.0.1",
     "rollup-plugin-import-assert": "^3.0.1",
-    "wireit": "^0.14.11"
+    "wireit": "^0.15.0-pre.1"
   }
 }

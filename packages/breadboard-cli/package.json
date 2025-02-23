@@ -25,7 +25,7 @@
   "wireit": {
     "build": {
       "dependencies": [
-        "../breadboard:build",
+        "<dependencies>#<this>",
         "build:tsc",
         "build:debugger"
       ]
@@ -36,7 +36,7 @@
         "FORCE_COLOR": "1"
       },
       "dependencies": [
-        "../visual-editor:build:vite"
+        "../visual-editor#build:vite"
       ],
       "files": [
         "vite.config.ts",
@@ -54,13 +54,9 @@
         "FORCE_COLOR": "1"
       },
       "dependencies": [
-        "../breadboard:build:tsc",
-        "../visual-editor:build:tsc",
-        "../example-boards:build:tsc",
-        "../core-kit:build:tsc",
-        "../import:build",
-        "../template-kit:build:tsc",
-        "../types:build:tsc"
+        "<dependencies>#<this>",
+        "../example-boards#build:tsc",
+        "../import#build"
       ],
       "files": [
         "src/**/*.js",
