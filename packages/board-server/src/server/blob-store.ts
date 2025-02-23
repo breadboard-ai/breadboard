@@ -11,7 +11,7 @@ import type {
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
 
-import { Storage } from "@google-cloud/storage";
+import { Storage, type FileMetadata } from "@google-cloud/storage";
 import type { BlobStore, BlobStoreGetResult, Result } from "./types.js";
 import {
   err,
@@ -45,13 +45,13 @@ class GoogleStorageBlobStore implements BlobStore {
     this.#serverUrl = serverUrl;
   }
 
-  async getMetadata(blobId: string): Promise<Outcome<FileAPIMetadata>> {
+  async getMetadata(blobId: string): Promise<Outcome<FileMetadata>> {
     try {
       const [metadata] = await this.#storage
         .bucket(this.#bucketId)
         .file(blobId)
         .getMetadata();
-      return metadata?.metadata || {};
+      return metadata || {};
     } catch (e) {
       return err((e as Error).message);
     }
@@ -67,10 +67,8 @@ class GoogleStorageBlobStore implements BlobStore {
       .setMetadata({ metadata });
   }
 
-  async getReadableStream(blobId: string): Promise<ReadableStream> {
-    return Readable.toWeb(
-      this.#storage.bucket(this.#bucketId).file(blobId).createReadStream()
-    ) as ReadableStream;
+  async getReadableStream(blobId: string): Promise<Readable> {
+    return this.#storage.bucket(this.#bucketId).file(blobId).createReadStream();
   }
 
   async deflateContent(content: LLMContent): Promise<Outcome<LLMContent>> {

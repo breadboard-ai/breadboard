@@ -6,11 +6,13 @@
 
 import type { IncomingMessage, ServerResponse } from "http";
 import { notFound, serverError } from "../errors.js";
-import { GoogleStorageBlobStore } from "../blob-store.js";
+import { GoogleStorageBlobStore, type FileAPIMetadata } from "../blob-store.js";
 import { ok } from "@google-labs/breadboard";
 import { GeminiFileApi } from "./utils/gemini-file-api.js";
 
 export { updateFileApiInfo };
+
+const EXPIRATION_BUFFER_MS = 1_000 * 60 * 60;
 
 async function updateFileApiInfo(
   bucketId: string,
@@ -25,19 +27,31 @@ async function updateFileApiInfo(
     return true;
   }
 
-  const { fileUri, expirationTime } = gettingMetadata;
+  const { contentType, size, metadata } = gettingMetadata;
+
+  if (!size || !contentType) {
+    serverError(res, `Metadata missing for blob "${blobId}`);
+    return true;
+  }
+
+  const { fileUri, expirationTime } = (metadata || {}) as FileAPIMetadata;
   const expired = hasExpired(expirationTime);
   if (fileUri && !expired) {
     res.writeHead(200, {
       "Content-Type": "application/json",
     });
-    res.end({ fileUri });
+    res.end(JSON.stringify({ fileUri }));
     return true;
   }
 
   const fileApi = new GeminiFileApi();
 
-  const uploading = await fileApi.upload(await store.getReadableStream(blobId));
+  const uploading = await fileApi.upload(
+    size,
+    contentType,
+    blobId,
+    await store.getReadableStream(blobId)
+  );
   if (!ok(uploading)) {
     serverError(res, `Unable to create File API entry from blob "${blobId}`);
     return true;
@@ -52,12 +66,12 @@ async function updateFileApiInfo(
   res.writeHead(200, {
     "Content-Type": "application/json",
   });
-  res.end(uploading);
+  res.end(JSON.stringify(uploading));
   return true;
 }
 
 function hasExpired(expirationTime?: string) {
   if (!expirationTime) return true;
-  const expiresOn = new Date(expirationTime).getTime();
-  return expiresOn > Date.now();
+  const expiresOn = new Date(expirationTime).getTime() - EXPIRATION_BUFFER_MS;
+  return expiresOn < Date.now();
 }

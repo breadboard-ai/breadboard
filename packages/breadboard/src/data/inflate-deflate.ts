@@ -44,7 +44,10 @@ export const inflateData = async (
             "file",
             transformer
           );
-          if (ok(transforming)) return transforming;
+          if (ok(transforming)) {
+            const part = transforming.at(0)?.parts.at(0);
+            if (part) return part;
+          }
         }
       }
       const blob = await store.retrieveAsBlob(value, graphUrl);
