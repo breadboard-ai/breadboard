@@ -74,7 +74,7 @@
       "command": "mkdir graphs && ls dist/src/boards/*.js | xargs -n1 -r -I{} ../breadboard-cli/dist/src/index.js make \"$PWD/{}\" -o \"$PWD/graphs/\" --format",
       "dependencies": [
         "build:tsc",
-        "../breadboard-cli:build"
+        "../breadboard-cli#build"
       ],
       "files": [],
       "output": [

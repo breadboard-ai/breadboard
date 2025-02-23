@@ -50,8 +50,8 @@
     "typescript-files-and-deps": {
       "dependencies": [
         "<dependencies>#build:tsc",
-        "../connection-client:build",
-        "../core-kit:build"
+        "../connection-client#build",
+        "../core-kit#build"
       ],
       "files": [
         "src/**/*.ts",

@@ -125,7 +125,7 @@
       "command": "mkdir graphs && ls dist/components/*.js | xargs -n1 -r -I{} ../breadboard-cli/dist/src/index.js make \"$PWD/{}\" -o \"$PWD/graphs/\" --format",
       "dependencies": [
         "build:tsc",
-        "../breadboard-cli:build:tsc"
+        "../breadboard-cli#build:tsc"
       ],
       "files": [],
       "output": [
@@ -154,7 +154,7 @@
         "src/generated/"
       ],
       "dependencies": [
-        "../build-code:build"
+        "../build-code#build"
       ]
     }
   },

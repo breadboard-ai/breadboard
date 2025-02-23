@@ -36,7 +36,7 @@
         "FORCE_COLOR": "1"
       },
       "dependencies": [
-        "../visual-editor:build:vite"
+        "../visual-editor#build:vite"
       ],
       "files": [
         "vite.config.ts",
@@ -55,8 +55,8 @@
       },
       "dependencies": [
         "<dependencies>#<this>",
-        "../example-boards:build:tsc",
-        "../import:build"
+        "../example-boards#build:tsc",
+        "../import#build"
       ],
       "files": [
         "src/**/*.js",

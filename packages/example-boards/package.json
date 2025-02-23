@@ -27,7 +27,7 @@
     "typescript-files-and-deps": {
       "dependencies": [
         "<dependencies>#build:tsc",
-        "../manifest:build"
+        "../manifest#build"
       ],
       "files": [
         "src/**/*.ts",

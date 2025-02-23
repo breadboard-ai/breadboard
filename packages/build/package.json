@@ -76,7 +76,7 @@
       "command": "find dist/test -name '*_test.js' | xargs node --test --enable-source-maps --test-reporter spec",
       "dependencies": [
         "build:tsc",
-        "../core-kit:build:tsc"
+        "../core-kit#build:tsc"
       ],
       "files": [],
       "output": []
@@ -85,7 +85,7 @@
       "command": "find dist/test -name '*_test.js' | xargs node --test --test-only --enable-source-maps --test-reporter spec",
       "dependencies": [
         "build:tsc",
-        "../core-kit:build:tsc"
+        "../core-kit#build:tsc"
       ],
       "files": [],
       "output": []

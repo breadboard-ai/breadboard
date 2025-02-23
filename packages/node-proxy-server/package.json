@@ -21,7 +21,7 @@
   "wireit": {
     "build": {
       "dependencies": [
-        "./functions:build"
+        "./functions#build"
       ]
     },
     "serve": {
@@ -33,7 +33,7 @@
     "deploy": {
       "command": "firebase deploy --only functions",
       "dependencies": [
-        "./functions:build"
+        "./functions#build"
       ]
     },
     "lint": {

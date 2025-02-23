@@ -31,7 +31,7 @@
     "typescript-files-and-deps": {
       "dependencies": [
         "<dependencies>#build:tsc",
-        "../agent-kit:build"
+        "../agent-kit#build"
       ],
       "files": [
         "src/**/*.ts",
