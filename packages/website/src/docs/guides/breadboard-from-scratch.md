@@ -154,7 +154,7 @@ cd breadboard
 Install dependencies and build.
 
 ```sh
-npm install --save-dev
+npm clean-install
 ```
 
 ```sh
