@@ -3207,6 +3207,7 @@ export class Main extends LitElement {
               .showBoardReferenceMarkers=${this.showBoardReferenceMarkers}
               .chatController=${observers?.chatController}
               .organizer=${projectState?.organizer}
+              .signedIn=${signInAdapter.state === "valid"}
               @bbrun=${async () => {
                 await this.#attemptBoardStart();
               }}

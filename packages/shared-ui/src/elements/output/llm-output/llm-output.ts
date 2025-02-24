@@ -39,6 +39,7 @@ import {
   isEmbedUri,
   isWatchUri,
 } from "../../../utils/youtube.js";
+import { SIGN_IN_CONNECTION_ID } from "../../../utils/signin-adapter.js";
 
 const PCM_AUDIO = "audio/l16;codec=pcm;rate=24000";
 
@@ -498,6 +499,15 @@ export class LLMOutput extends LitElement {
                     allowfullscreen
                   ></iframe>`;
                 }
+                break;
+              }
+
+              case "application/vnd.google-apps.document": {
+                value = html`<bb-google-drive-file-viewer
+                  .fileUri=${part.fileData.fileUri}
+                  .mimeType=${part.fileData.mimeType}
+                  .connectionName=${SIGN_IN_CONNECTION_ID}
+                ></bb-google-drive-file-viewer>`;
                 break;
               }
 

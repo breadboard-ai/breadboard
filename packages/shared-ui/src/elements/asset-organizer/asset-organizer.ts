@@ -15,13 +15,19 @@ import { repeat } from "lit/directives/repeat.js";
 import { AssetMetadata, AssetPath } from "@breadboard-ai/types";
 import { classMap } from "lit/directives/class-map.js";
 import { OverflowAction } from "../../types/types.js";
-import { OverflowMenuActionEvent } from "../../events/events.js";
+import {
+  OverflowMenuActionEvent,
+  ToastEvent,
+  ToastType,
+} from "../../events/events.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { LLMInput } from "../elements.js";
+import { GoogleDriveFileId, LLMInput } from "../elements.js";
 import {
   isFileDataCapabilityPart,
   isLLMContent,
 } from "@google-labs/breadboard";
+import { InputChangeEvent } from "../../plugins/input-plugin.js";
+import { SIGN_IN_CONNECTION_ID } from "../../utils/signin-adapter.js";
 
 const EXPANDED_KEY = "bb-asset-organizer-expanded";
 const VIEWER_KEY = "bb-asset-organizer-viewer";
@@ -39,6 +45,9 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
 
   @property()
   accessor showAddOverflowMenu = false;
+
+  @property()
+  accessor showGDrive = false;
 
   @state()
   accessor asset: GraphAsset | null = null;
@@ -59,11 +68,14 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
       position: relative;
     }
 
+    #add-drive-proxy,
     #add-asset-proxy {
       display: block;
       width: 0;
       height: 0;
       position: absolute;
+      pointer-events: none;
+      overflow: hidden;
     }
 
     #container {
@@ -228,6 +240,12 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                   background: var(--bb-neutral-0) var(--bb-icon-youtube) 4px
                     center / 20px 20px no-repeat;
                 }
+
+                &.gdrive {
+                  background: var(--bb-neutral-0)
+                    var(--bb-icon-google-drive-outline) 4px center / 20px 20px
+                    no-repeat;
+                }
               }
 
               &.file {
@@ -273,6 +291,11 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
               &.youtube {
                 background: var(--bb-ui-100) var(--bb-icon-youtube) 4px center /
                   20px 20px no-repeat;
+              }
+
+              &.gdrive {
+                background: var(--bb-ui-100) var(--bb-icon-google-drive-outline)
+                  4px center / 20px 20px no-repeat;
               }
 
               &.file {
@@ -397,6 +420,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
     }
   `;
 
+  #addDriveInputRef: Ref<GoogleDriveFileId> = createRef();
   #uploadInputRef: Ref<HTMLInputElement> = createRef();
   #renameInputRef: Ref<HTMLInputElement> = createRef();
   #contentInputRef: Ref<LLMInput> = createRef();
@@ -498,9 +522,24 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
     }
   }
 
-  async #attemptCreateEmptyFileDataAsset(
+  async #attemptGDrivePickerFlow() {
+    if (!this.#addDriveInputRef.value) {
+      return;
+    }
+
+    try {
+      this.#addDriveInputRef.value.triggerFlow();
+    } catch (err) {
+      this.dispatchEvent(
+        new ToastEvent("Unable to load Google Drive", ToastType.ERROR)
+      );
+    }
+  }
+
+  async #attemptCreateFileDataAsset(
     mimeType = "",
     title = "Untitled File Data",
+    fileUri = "",
     subType?: string
   ) {
     if (!this.state) {
@@ -525,7 +564,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
           parts: [
             {
               fileData: {
-                fileUri: "",
+                fileUri,
                 mimeType,
               },
             },
@@ -572,6 +611,15 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
           name: "youtube",
         },
       ];
+
+      if (this.showGDrive) {
+        actions.push({
+          icon: "gdrive",
+          title: "Google Drive",
+          name: "gdrive",
+        });
+      }
+
       addOverflowMenu = html`<bb-overflow-menu
         .actions=${actions}
         .disabled=${false}
@@ -589,10 +637,16 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
               break;
             }
 
+            case "gdrive": {
+              await this.#attemptGDrivePickerFlow();
+              break;
+            }
+
             case "youtube": {
-              await this.#attemptCreateEmptyFileDataAsset(
+              await this.#attemptCreateFileDataAsset(
                 "video/mp4",
                 "YouTube Video",
+                "",
                 "youtube"
               );
               break;
@@ -821,6 +875,28 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
               </section>`
             : nothing}
         </section>
+      </div>
+
+      <div>
+        <bb-google-drive-file-id
+          id="add-drive-proxy"
+          ${ref(this.#addDriveInputRef)}
+          .connectionName=${SIGN_IN_CONNECTION_ID}
+          @bb-input-change=${(evt: InputChangeEvent) => {
+            const driveFile = evt.value as {
+              preview: string;
+              id: string;
+              mimeType: string;
+            };
+
+            this.#attemptCreateFileDataAsset(
+              driveFile.mimeType,
+              driveFile.preview,
+              driveFile.id,
+              "gdrive"
+            );
+          }}
+        ></bb-google-drive-file-id>
       </div>
 
       <input

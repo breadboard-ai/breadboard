@@ -75,7 +75,7 @@ export class BBRTPrompt extends SignalWatcher(LitElement) {
     }
   `;
 
-  override updated(changes: PropertyValues<this>) {
+  updated(changes: PropertyValues<this>) {
     if (changes.has("value")) {
       this.updateComplete.then(() => this.#recomputeHeight());
     }

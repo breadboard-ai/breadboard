@@ -20,7 +20,7 @@ import { SETTINGS_TYPE, SettingsHelper } from "../types/types";
 
 export { SigninAdapter };
 
-const SIGN_IN_CONNECTION_ID = "$sign-in";
+export const SIGN_IN_CONNECTION_ID = "$sign-in";
 
 /**
  * The three states are:

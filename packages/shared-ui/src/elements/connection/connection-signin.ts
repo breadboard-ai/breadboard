@@ -119,7 +119,7 @@ export class ConnectionSignin extends LitElement {
     }
   `;
 
-  override updated(changes: PropertyValues<this>) {
+  updated(changes: PropertyValues<this>) {
     if (
       (changes.has("connection") || changes.has("settingsHelper")) &&
       this.connection &&
@@ -272,7 +272,12 @@ export class ConnectionSignin extends LitElement {
         value: JSON.stringify(settingsValue),
       }
     );
-    this.dispatchEvent(new TokenGrantedEvent(grantResponse.access_token));
+    this.dispatchEvent(
+      new TokenGrantedEvent(
+        grantResponse.access_token,
+        grantResponse.expires_in
+      )
+    );
     this._state = "signedin";
   }
 
@@ -292,9 +297,11 @@ export class ConnectionSignin extends LitElement {
 class TokenGrantedEvent extends Event {
   static eventName = "bbtokengranted" as const;
   readonly token: string;
-  constructor(token: string) {
+  readonly expiresIn?: number;
+  constructor(token: string, expiresIn?: number) {
     super(TokenGrantedEvent.eventName);
     this.token = token;
+    this.expiresIn = expiresIn;
   }
 }
 

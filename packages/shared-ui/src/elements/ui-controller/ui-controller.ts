@@ -177,6 +177,9 @@ export class UI extends LitElement {
   @state()
   accessor organizer: Organizer | null = null;
 
+  @state()
+  accessor signedIn = false;
+
   #lastEventPosition = 0;
   #graphEditorRef: Ref<Editor> = createRef();
   #moduleEditorRef: Ref<ModuleEditor> = createRef();
@@ -745,7 +748,10 @@ export class UI extends LitElement {
     return graph
       ? this.mainView === "create"
         ? html`<section id="create-view">
-            <bb-asset-organizer .state=${this.organizer}></bb-asset-organizer>
+            <bb-asset-organizer
+              .state=${this.organizer}
+              .showGDrive=${this.signedIn}
+            ></bb-asset-organizer>
             <div
               id="create-view-popout"
               class=${classMap({
