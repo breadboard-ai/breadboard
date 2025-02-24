@@ -102,7 +102,7 @@
   "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/example-boards#readme",
   "devDependencies": {
     "@google-labs/tsconfig": "^0.0.1",
-    "tsx": "^4.19.2",
+    "tsx": "^4.19.3",
     "typescript": "^5.7.3"
   },
   "dependencies": {
