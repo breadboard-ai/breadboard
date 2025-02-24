@@ -978,6 +978,9 @@ body.hide-cursor {
   --bb-icon-fork-down-right: url(/third_party/icons/fork-down-right-inverted.svg);
   --bb-icon-fork-down-right-inverted: url(/third_party/icons/fork-down-right.svg);
 
+  --bb-icon-google-drive: url(/third_party/icons/google-drive-inverted.svg);
+  --bb-icon-google-drive-inverted: url(/third_party/icons/google-drive.svg);
+
   --bb-icon-grid-view: url(/third_party/icons/grid-view-inverted.svg);
   --bb-icon-grid-view-inverted: url(/third_party/icons/grid-view.svg);
 

@@ -34,6 +34,7 @@ export { FancyJson } from "./editor/fancy-json.js";
 export { FastAccessMenu } from "./fast-access-menu/fast-access-menu.js";
 export { FirstRunOverlay } from "./overlay/first-run.js";
 export { GoogleDriveDirectoryPicker } from "./google-drive/google-drive-directory-picker.js";
+export { GoogleDriveFileViewer } from "./google-drive/google-drive-file-viewer.js";
 export { GoogleDriveFileId } from "./google-drive/google-drive-file-id.js";
 export { GoogleDriveQuery } from "./google-drive/google-drive-query.js";
 export { GoogleDriveServerPicker } from "./google-drive/google-drive-server-picker.js";

@@ -90,7 +90,11 @@ export class ConnectionInput extends LitElement {
     } else if (grant.state === "expired") {
       return this.#refreshAndRenderStatus(grant);
     }
-    this.#broadcastSecret(grant.grant.access_token, grant.grant.client_id);
+    this.#broadcastSecret(
+      grant.grant.access_token,
+      grant.grant.client_id,
+      grant.grant.expires_in
+    );
     return this.#renderSigninButton();
   }
 
@@ -119,8 +123,9 @@ export class ConnectionInput extends LitElement {
           .connection=${connection}
           @bbtokengranted=${({
             token,
+            expiresIn,
           }: HTMLElementEventMap["bbtokengranted"]) => {
-            this.#broadcastSecret(token, connection.clientId);
+            this.#broadcastSecret(token, connection.clientId, expiresIn);
           }}
         ></bb-connection-signin>`;
       },
@@ -138,11 +143,11 @@ export class ConnectionInput extends LitElement {
     });
   }
 
-  #broadcastSecret(secret: string, clientId: string) {
+  #broadcastSecret(secret: string, clientId: string, expiresIn?: number) {
     this.dispatchEvent(
       new InputEnterEvent(
         this.id,
-        { clientId, secret },
+        { clientId, secret, expiresIn },
         // Disable allowSavingIfSecret so that it does not get saved to the
         // regular secrets section, because we're managing this secret in a
         // special way using the connections system.

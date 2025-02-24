@@ -28,6 +28,7 @@
       "default": "./build/providers/types.js"
     },
     "./vite": "./build/src/configure-assets.js",
+    "./build-info": "./build/src/build-info.js",
     "./bootstrap": "./build/src/bootstrap.js"
   },
   "types": "build/index.d.ts",

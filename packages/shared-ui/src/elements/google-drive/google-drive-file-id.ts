@@ -16,6 +16,9 @@ type PickedValue = {
   // object, will be used as the preview value.
   preview: string;
   id: string;
+  mimeType: string;
+  /** The connection name under which the file was requested */
+  connectionName: string;
 };
 
 export const googleDriveFileIdInputPlugin: InputPlugin = {
@@ -74,6 +77,9 @@ export class GoogleDriveFileId extends LitElement {
   @property()
   accessor value: PickedValue | null = null;
 
+  @property()
+  accessor connectionName = "google-drive-limited";
+
   #picker?: google.picker.Picker;
 
   override async connectedCallback(): Promise<void> {
@@ -81,11 +87,23 @@ export class GoogleDriveFileId extends LitElement {
     this._pickerLib ??= await loadDrivePicker();
   }
 
+  triggerFlow() {
+    if (this._authorization === undefined) {
+      throw new Error("No authorization");
+    }
+
+    if (this._pickerLib === undefined) {
+      throw new Error("Google Drive API unavailable");
+    }
+
+    this.#onClickPickFiles();
+  }
+
   override render() {
     if (this._authorization === undefined) {
       return html`<bb-connection-input
         @bbinputenter=${this.#onToken}
-        connectionId="google-drive-limited"
+        connectionId=${this.connectionName}
       ></bb-connection-input>`;
     }
     if (this._pickerLib === undefined) {
@@ -118,14 +136,20 @@ export class GoogleDriveFileId extends LitElement {
       return;
     }
     this.#destroyPicker();
+
+    const view = new this._pickerLib.DocsView(google.picker.ViewId.DOCS);
+    view.setMimeTypes(
+      "application/vnd.google-apps.document,application/vnd.google-apps.file,application/vnd.google-apps.presentation,application/vnd.google-apps.spreadsheet"
+    );
+    view.setMode(google.picker.DocsViewMode.LIST);
+    view.setOwnedByMe(true);
+
     // See https://developers.google.com/drive/picker/reference
     this.#picker = new this._pickerLib.PickerBuilder()
+      .addView(view)
       .setAppId(this._authorization.clientId)
       .setOAuthToken(this._authorization.secret)
       .setCallback(this.#pickerCallback.bind(this))
-      .addView(
-        new this._pickerLib.DocsView().setMode(google.picker.DocsViewMode.LIST)
-      )
       .enableFeature(google.picker.Feature.NAV_HIDDEN)
       .build();
     this.#picker.setVisible(true);
@@ -142,8 +166,13 @@ export class GoogleDriveFileId extends LitElement {
         // TODO(aomarks) Show this as a snackbar
         console.log(`Shared 1 Google Drive file with Breadboard`);
         if (result.docs.length > 0) {
-          const { id, name } = result.docs[0];
-          this.value = { id, preview: name };
+          const { id, name, mimeType } = result.docs[0];
+          this.value = {
+            id,
+            preview: name,
+            mimeType,
+            connectionName: this.connectionName,
+          };
           this.docName = name;
           this.dispatchEvent(new InputChangeEvent(this.value));
         }
