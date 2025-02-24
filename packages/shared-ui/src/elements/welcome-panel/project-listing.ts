@@ -56,6 +56,9 @@ export class ProjectListing extends LitElement {
   accessor version = "dev";
 
   @property()
+  accessor gitCommitHash = "unknown";
+
+  @property()
   accessor selectedBoardServer = "Browser Storage";
 
   @property()
@@ -119,9 +122,11 @@ export class ProjectListing extends LitElement {
 
     #wrapper {
       margin: 0 auto;
-      padding: var(--bb-grid-size-8);
+      padding: var(--bb-grid-size-8) var(--bb-grid-size-8)
+        var(--bb-grid-size-12) var(--bb-grid-size-8);
       width: 100%;
       max-width: 1200px;
+      min-height: 100%;
 
       & #loading-message,
       & #no-projects {
@@ -620,9 +625,11 @@ export class ProjectListing extends LitElement {
     #app-version {
       font: 400 var(--bb-body-x-small) / var(--bb-body-line-height-x-small)
         var(--bb-font-family);
+      color: var(--bb-neutral-500);
       position: relative;
-      padding: var(--bb-grid-size-2);
       text-align: right;
+      margin-top: -32px;
+      padding: 0 var(--bb-grid-size-3);
     }
 
     @media (min-width: 480px) and (max-width: 800px) {
@@ -1364,6 +1371,8 @@ export class ProjectListing extends LitElement {
                 </button>`
               : nothing}
           </div>`
-        : nothing}`;
+        : nothing}
+
+      <div id="app-version">${this.version} (${this.gitCommitHash})</div>`;
   }
 }
