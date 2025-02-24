@@ -7,6 +7,7 @@
 import { config } from "dotenv";
 import { loadEnv, UserConfig } from "vite";
 import { configureAssets } from "./src/configure-assets";
+import { tryGetGitHash } from "./src/build-info";
 
 export const buildCustomAllowList = (value?: string) => {
   if (!value) return {};
@@ -18,7 +19,12 @@ export default async ({ mode }: UserConfig) => {
 
   const envConfig = { ...loadEnv(mode!, process.cwd()) };
 
-  const define = await configureAssets(__dirname, envConfig);
+  const [definedAssets, buildInfo] = await Promise.all([
+    configureAssets(__dirname, envConfig),
+    tryGetGitHash(),
+  ]);
+
+  const define = { ...buildInfo, ...definedAssets };
 
   const entry: Record<string, string> = {
     worker: "src/worker.ts",

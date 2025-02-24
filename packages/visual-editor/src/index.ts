@@ -87,6 +87,10 @@ export type MainArguments = {
   settings?: SettingsStore;
   proxy?: HarnessProxyConfig[];
   version?: string;
+  /**
+   * The Git hash of the current commit.
+   */
+  gitCommitHash?: string;
   languagePack?: string;
   /**
    * The URL of the board server with which this editor instance
@@ -279,6 +283,7 @@ export class Main extends LitElement {
   #confirmUnloadWithUserFirstIfNeededBound =
     this.#confirmUnloadWithUserFirstIfNeeded.bind(this);
   #version = "dev";
+  #gitCommitHash = "dev";
   #recentBoardStore = RecentBoardStore.instance();
   #recentBoards: BreadboardUI.Types.RecentBoard[] = [];
   #isSaving = false;
@@ -419,6 +424,7 @@ export class Main extends LitElement {
     }
 
     this.#version = config.version || "dev";
+    this.#gitCommitHash = config.gitCommitHash || "unknown";
     this.#boardServers = [];
     this.#settings = config.settings || null;
     this.#proxy = config.proxy || [];
@@ -3679,6 +3685,7 @@ export class Main extends LitElement {
           this.showWelcomePanel
             ? html`<bb-project-listing
                 .version=${this.#version}
+                .gitCommitHash=${this.#gitCommitHash}
                 .recentBoards=${this.#recentBoards}
                 .selectedBoardServer=${this.selectedBoardServer}
                 .selectedLocation=${this.selectedLocation}

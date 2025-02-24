@@ -50,6 +50,7 @@ function bootstrap(args: BootstrapArguments = {}) {
     const config: MainArguments = {
       settings: SettingsStore.instance(),
       version: pkg.version,
+      gitCommitHash: GIT_HASH,
       boardServerUrl: args?.boardServerUrl,
       connectionServerUrl: args?.connectionServerUrl,
       requiresSignin: args?.requiresSignin,
@@ -62,7 +63,7 @@ function bootstrap(args: BootstrapArguments = {}) {
 
     const Strings = StringsHelper.forSection("Global");
     console.log(
-      `[${Strings.from("APP_NAME")} Visual Editor: Version ${pkg.version}]`
+      `[${Strings.from("APP_NAME")} Visual Editor: Version ${pkg.version}; Commit ${GIT_HASH}]`
     );
   }
 
