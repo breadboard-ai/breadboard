@@ -79,7 +79,7 @@
     "@google-labs/template-kit": "^0.3.17",
     "@rollup/plugin-commonjs": "^28.0.2",
     "@rollup/plugin-json": "^6.1.0",
-    "@rollup/plugin-node-resolve": "^15.3.0",
+    "@rollup/plugin-node-resolve": "^16.0.0",
     "@rollup/plugin-terser": "^0.4.4",
     "firebase-functions-test": "^3.4.0",
     "rollup": "^4.34.8",
