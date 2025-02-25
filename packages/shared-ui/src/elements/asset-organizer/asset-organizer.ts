@@ -7,7 +7,14 @@
 import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("AssetOrganizer");
 
-import { css, html, HTMLTemplateResult, LitElement, nothing } from "lit";
+import {
+  css,
+  html,
+  HTMLTemplateResult,
+  LitElement,
+  nothing,
+  PropertyValues,
+} from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { GraphAsset, Organizer } from "../../state";
@@ -580,11 +587,15 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
     }
   }
 
+  protected willUpdate(changedProperties: PropertyValues): void {
+    if (changedProperties.has("asset")) {
+      this.editAssetContent = null;
+    }
+  }
+
   protected updated(): void {
-    if (this.editAssetTitle) {
-      if (this.#renameInputRef.value) {
-        this.#renameInputRef.value.select();
-      }
+    if (this.editAssetTitle && this.#renameInputRef.value) {
+      this.#renameInputRef.value.select();
     }
   }
 
