@@ -516,6 +516,8 @@ body.hide-cursor {
   --bb-icon-map-search: url(/third_party/icons/map-search.svg);
   --bb-icon-sunny: url(/third_party/icons/sunny.svg);
 
+  --bb-icon-pen-spark: url(/third_party/icons/pen-spark.svg);
+
   /** UI Colors */
 
   --bb-notify-50: #fce4ec;
