@@ -6,7 +6,12 @@
 
 import type { TokenVendor } from "@breadboard-ai/connection-client";
 import type { LLMContent } from "@breadboard-ai/types";
-import { isInlineData, isTextCapabilityPart } from "@google-labs/breadboard";
+import {
+  isFileDataCapabilityPart,
+  isInlineData,
+  isStoredData,
+  isTextCapabilityPart,
+} from "@google-labs/breadboard";
 import { consume } from "@lit/context";
 import { LitElement, css, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
@@ -21,11 +26,20 @@ const CAN_COPY = "ClipboardItem" in window;
 
 @customElement("bb-export-toolbar")
 export class ExportToolbar extends LitElement {
+  @property()
+  accessor graphUrl: URL | null = null;
+
   @property({ type: Object })
   accessor value: LLMContent | null = null;
 
   @consume({ context: tokenVendorContext })
   accessor tokenVendor!: TokenVendor;
+
+  @property({ type: Object })
+  accessor supported = {
+    drive: false,
+    clipboard: false,
+  };
 
   @state()
   private accessor _savingToDrive = false;
@@ -47,16 +61,22 @@ export class ExportToolbar extends LitElement {
   ];
 
   override render() {
+    if (Object.values(this.supported).every((v) => !v)) {
+      return nothing;
+    }
+
     return html`
       <div class="bb-toolbar">
-        <button
-          id="drive"
-          class=${classMap({ running: this._savingToDrive })}
-          @click=${this.#clickDrive}
-        >
-          Save to Drive
-        </button>
-        ${CAN_COPY
+        ${this.supported.drive
+          ? html`<button
+              id="drive"
+              class=${classMap({ running: this._savingToDrive })}
+              @click=${this.#clickDrive}
+            >
+              Save to Drive
+            </button>`
+          : nothing}
+        ${CAN_COPY && this.supported.clipboard
           ? html`<button id="copy" @click=${this.#clickCopy}>Copy all</button>`
           : nothing}
       </div>
@@ -69,13 +89,33 @@ export class ExportToolbar extends LitElement {
       return;
     }
 
+    let plainText = "";
     let htmlText = "";
     for (const part of this.value.parts) {
       if (isTextCapabilityPart(part)) {
+        plainText += part.text + "\n\n";
         htmlText += renderMarkdownToHtmlString(part.text);
       } else if (isInlineData(part)) {
         const dataURL = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
         htmlText += `<img src="${dataURL}" />`;
+        if (part.inlineData.mimeType.startsWith("text")) {
+          plainText += part.inlineData.data + "\n\n";
+        }
+      } else if (isStoredData(part)) {
+        if (part.storedData.mimeType.startsWith("text")) {
+          let url = part.storedData.handle;
+          if (url.startsWith(".") && this.graphUrl) {
+            url = new URL(url, this.graphUrl).href;
+          }
+
+          const response = await fetch(url);
+          const text = await response.text();
+          plainText += text + "\n\n";
+          htmlText += `<pre>${text}</pre>`;
+        }
+      } else if (isFileDataCapabilityPart(part)) {
+        htmlText += `<a href="${part.fileData.fileUri}">${part.fileData.fileUri}</a>`;
+        plainText += part.fileData.fileUri + "\n\n";
       }
     }
 
@@ -83,6 +123,9 @@ export class ExportToolbar extends LitElement {
       new ClipboardItem({
         "text/html": new Blob([htmlText], {
           type: "text/html",
+        }),
+        "text/plain": new Blob([plainText.trim()], {
+          type: "text/plain",
         }),
       }),
     ]);
