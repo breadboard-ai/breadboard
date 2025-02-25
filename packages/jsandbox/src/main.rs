@@ -148,6 +148,7 @@ pub async fn run_module(
     let ctx = rquickjs::AsyncContext::full(&rt).await?;
 
     ctx.with(|ctx| plugins::console::init(&ctx)).await?;
+    ctx.with(|ctx| plugins::atob::init(&ctx)).await?;
 
     rt.set_loader(resolver, loader).await;
 

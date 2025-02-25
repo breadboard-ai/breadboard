@@ -22,6 +22,9 @@ declare function encodeURIComponent(
   uriComponent: string | number | boolean
 ): string;
 
+declare function btoa(s: string): string;
+declare function atob(s: string): string;
+
 interface Console {
   log(...data: any[]);
   error(...data: any[]);
