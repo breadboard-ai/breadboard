@@ -37,7 +37,7 @@ export const styles = css`
       position: absolute;
       bottom: var(--bb-grid-size-4);
       left: var(--bb-grid-size-4);
-      z-index: 4;
+      z-index: 5;
     }
 
     & #create-view-popout {
