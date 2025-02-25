@@ -502,16 +502,20 @@ export class LLMOutput extends LitElement {
                 break;
               }
 
-              case "application/vnd.google-apps.document": {
-                value = html`<bb-google-drive-file-viewer
-                  .fileUri=${part.fileData.fileUri}
-                  .mimeType=${part.fileData.mimeType}
-                  .connectionName=${SIGN_IN_CONNECTION_ID}
-                ></bb-google-drive-file-viewer>`;
-                break;
-              }
-
               default: {
+                if (
+                  part.fileData.mimeType.startsWith(
+                    "application/vnd.google-apps"
+                  )
+                ) {
+                  value = html`<bb-google-drive-file-viewer
+                    .fileUri=${part.fileData.fileUri}
+                    .mimeType=${part.fileData.mimeType}
+                    .connectionName=${SIGN_IN_CONNECTION_ID}
+                  ></bb-google-drive-file-viewer>`;
+                  break;
+                }
+
                 value = html`Unrecognized item`;
                 break;
               }

@@ -98,8 +98,6 @@ export class GoogleDriveFileViewer extends LitElement {
           return html`Unable to find Google Drive document`;
         }
 
-        console.log(item);
-
         if (item.result.hasThumbnail) {
           return html`<a href="${item.result.webViewLink}" target="_blank"
             ><img
