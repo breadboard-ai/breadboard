@@ -5,6 +5,7 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
     "useDefineForClassFields": false,
+    "rootDir": "src",
     "outDir": "dist",
 
     /* Bundler mode */

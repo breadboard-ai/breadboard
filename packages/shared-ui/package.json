@@ -28,6 +28,9 @@
       "types": "./dist/strings/helper.d.ts",
       "default": "./dist/strings/helper.js"
     },
+    "./bgl/*.json": {
+      "default": "./src/bgl/*.json"
+    },
     "./*.js": {
       "types": "./dist/*.d.ts",
       "default": "./dist/*.js"
