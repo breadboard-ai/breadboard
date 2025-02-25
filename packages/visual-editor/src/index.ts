@@ -1420,17 +1420,27 @@ export class Main extends LitElement {
     boardServerName: string,
     location: string,
     fileName: string,
-    graph: GraphDescriptor
+    graph: GraphDescriptor,
+    ackUser = true,
+    ackUserMessage = {
+      start: Strings.from("STATUS_SAVING_PROJECT"),
+      end: Strings.from("STATUS_PROJECT_SAVED"),
+      error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
+    }
   ) {
     if (this.#isSaving) {
       return;
     }
 
-    const id = this.toast(
-      Strings.from("STATUS_SAVING_PROJECT"),
-      BreadboardUI.Events.ToastType.PENDING,
-      true
-    );
+    let id: ReturnType<typeof this.toast> | undefined;
+
+    if (ackUser) {
+      id = this.toast(
+        ackUserMessage.start,
+        BreadboardUI.Events.ToastType.PENDING,
+        true
+      );
+    }
 
     this.#isSaving = true;
     const { result, error, url } = await this.#runtime.board.saveAs(
@@ -1442,12 +1452,15 @@ export class Main extends LitElement {
     this.#isSaving = false;
 
     if (!result || !url) {
-      this.toast(
-        error || Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
-        BreadboardUI.Events.ToastType.ERROR,
-        false,
-        id
-      );
+      if (ackUser && id) {
+        this.toast(
+          error || ackUserMessage.error,
+          BreadboardUI.Events.ToastType.ERROR,
+          false,
+          id
+        );
+      }
+
       return;
     }
 
@@ -1455,12 +1468,15 @@ export class Main extends LitElement {
     this.#persistBoardServerAndLocation(boardServerName, location);
 
     this.#attemptBoardLoad(new BreadboardUI.Events.StartEvent(url.href));
-    this.toast(
-      Strings.from("STATUS_PROJECT_SAVED"),
-      BreadboardUI.Events.ToastType.INFORMATION,
-      false,
-      id
-    );
+
+    if (ackUser && id) {
+      this.toast(
+        ackUserMessage.end,
+        BreadboardUI.Events.ToastType.INFORMATION,
+        false,
+        id
+      );
+    }
   }
 
   async #attemptBoardDelete(
@@ -1510,14 +1526,23 @@ export class Main extends LitElement {
     this.boardServerNavState = globalThis.crypto.randomUUID();
   }
 
-  #attemptBoardCreate(graph: GraphDescriptor) {
-    this.#saveAsState = {
-      title: Strings.from("TITLE_CREATE_PROJECT"),
-      graph,
-      isNewBoard: true,
-    };
+  async #attemptBoardCreate(graph: GraphDescriptor) {
+    const boardServerName = this.selectedBoardServer;
+    const location = this.selectedLocation;
+    const fileName = `${globalThis.crypto.randomUUID()}.bgl.json`;
 
-    this.showSaveAsDialog = true;
+    await this.#attemptBoardSaveAs(
+      boardServerName,
+      location,
+      fileName,
+      graph,
+      true,
+      {
+        start: Strings.from("STATUS_CREATING_PROJECT"),
+        end: Strings.from("STATUS_PROJECT_CREATED"),
+        error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
+      }
+    );
   }
 
   #setPageTitle(title: string | null) {

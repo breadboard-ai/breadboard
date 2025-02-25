@@ -100,6 +100,9 @@ export default {
   },
 
   // Statuses.
+  STATUS_CREATING_PROJECT: {
+    str: "Creating Flow",
+  },
   STATUS_SAVING_PROJECT: {
     str: "Saving Flow",
   },
@@ -117,6 +120,9 @@ export default {
   },
   STATUS_GENERIC_RUN_STOPPED: {
     str: "Run stopped",
+  },
+  STATUS_PROJECT_CREATED: {
+    str: "Flow created",
   },
   STATUS_PROJECT_SAVED: {
     str: "Flow saved",
