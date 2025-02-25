@@ -27,16 +27,16 @@ const llmContentConfig = (type: string) => ({
 });
 
 const BLANK_GRAPH: GraphDescriptor = {
-  title: "Blank board",
-  description: "A blank board. Use it as a starting point for your creations.",
+  title: "Untitled Flow",
+  description: "",
   version: "0.0.1",
   nodes: [],
   edges: [],
 };
 
 const BLANK_LLM_CONTENT_GRAPH: GraphDescriptor = {
-  title: "Blank board",
-  description: "A blank board. Use it as a starting point for your creations.",
+  title: "Untitled Flow",
+  description: "",
   version: "0.0.1",
   nodes: [
     { type: "input", id: "input", configuration: llmContentConfig("input") },

@@ -1175,7 +1175,6 @@ export class ProjectListing extends LitElement {
                       mine,
                       board: true,
                     })}
-                    title=${url}
                   >
                     <span
                       class=${classMap({
@@ -1283,7 +1282,13 @@ export class ProjectListing extends LitElement {
                         <div id="new-project-container">
                           <button
                             id="new-project"
-                            @click=${() => {
+                            @click=${(evt: Event) => {
+                              if (!(evt.target instanceof HTMLButtonElement)) {
+                                return;
+                              }
+
+                              evt.target.disabled = true;
+
                               this.dispatchEvent(
                                 new GraphBoardServerBlankBoardEvent()
                               );

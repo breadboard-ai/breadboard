@@ -304,15 +304,10 @@ export class RemoteBoardServer implements BoardServer, RemoteConnector {
 
     const projectNames = new Set<string>();
     for (const project of this.#projects) {
-      let title = project.metadata.title ?? "Untitled Board";
-      if (projectNames.has(title) && project.url) {
-        const suffix = new URL(project.url).pathname.split("/").at(-1);
-        title = `${project.metadata.title ?? "Untitled Board"} [${suffix}]`;
-      }
-
+      const title = project.metadata.title ?? "Untitled Flow";
       projectNames.add(title);
       projects.push([
-        title,
+        project.url.href,
         {
           url: project.url.href,
           mine: project.metadata.owner === this.user.username,
@@ -322,6 +317,7 @@ export class RemoteBoardServer implements BoardServer, RemoteConnector {
           handle: null,
           tags: project.metadata?.tags,
           username: project.metadata.owner,
+          title,
         },
       ]);
     }
