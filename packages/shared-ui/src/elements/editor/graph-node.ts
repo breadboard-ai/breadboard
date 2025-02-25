@@ -50,6 +50,7 @@ import { GraphButton } from "./graph-button.js";
 const borderColor = getGlobalColor("--bb-neutral-500");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
 const portsDividerColor = getGlobalColor("--bb-neutral-100");
+const quickAddBackgroundColor = getGlobalColor("--bb-ui-50");
 
 const updatingBorderColor = getGlobalColor("--bb-neutral-500");
 const updatingHeaderColor = getGlobalColor("--bb-neutral-100");
@@ -274,6 +275,9 @@ export class GraphNode extends PIXI.Container {
     this.#quickAdd.eventMode = "static";
     this.#quickAddTitle.eventMode = "none";
     this.#quickAddBackground.cursor = "pointer";
+    this.#quickAdd.addChild(this.#quickAddBackground);
+    this.#quickAdd.addChild(this.#quickAddTitle);
+
     const quickAddIcon = GraphAssets.instance().get("library-add");
     if (quickAddIcon) {
       this.#quickAddIcon = new PIXI.Sprite(quickAddIcon);
@@ -282,8 +286,6 @@ export class GraphNode extends PIXI.Container {
       this.#quickAdd.addChild(this.#quickAddIcon);
     }
 
-    this.#quickAdd.addChild(this.#quickAddBackground);
-    this.#quickAdd.addChild(this.#quickAddTitle);
     this.#quickAdd.addEventListener(
       "click",
       (evt: PIXI.FederatedPointerEvent) => {
@@ -2052,7 +2054,7 @@ export class GraphNode extends PIXI.Container {
     );
     this.#quickAddBackground.closePath();
     this.#quickAddBackground.stroke({ color: edgeColor });
-    this.#quickAddBackground.fill({ color: 0xffffff, alpha: 0.0001 });
+    this.#quickAddBackground.fill({ color: quickAddBackgroundColor });
 
     this.#quickAddBackground.beginPath();
     this.#quickAddBackground.moveTo(x, lineY);
