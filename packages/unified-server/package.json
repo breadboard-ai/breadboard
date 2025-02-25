@@ -130,7 +130,7 @@
     "@breadboard-ai/connection-server": "0.5.0",
     "@breadboard-ai/visual-editor": "1.26.0",
     "express": "^4.21.2",
-    "vite": "^6.1.1",
+    "vite": "^6.2.0",
     "vite-express": "^0.20.0"
   }
 }
