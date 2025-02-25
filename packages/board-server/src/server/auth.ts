@@ -9,7 +9,7 @@ import type { AuthArgs, AuthResult, BoardServerStore } from "./types.js";
 import { err, ok, type Outcome } from "@google-labs/breadboard";
 import { unauthorized } from "./errors.js";
 
-export { authenticate, authenticateAndGetUserStore };
+export { authenticate, authenticateAndGetUserStore, getConnectionArgs };
 
 type UserInfoPayload = {
   id: string;

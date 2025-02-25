@@ -24,6 +24,7 @@ import inviteList from "./invite-list.js";
 import inviteUpdate from "./invite-update.js";
 import { parse } from "./utils/board-api-parser.js";
 import run from "./run.js";
+import handleAssetsDriveRequest from "./assets-drive.js";
 
 const getMetadata = (parsed: BoardParseResult) => {
   const { user, name } = parsed;
@@ -119,6 +120,12 @@ export const serveBoardsAPI = async (
       if (!cors(req, res, serverConfig.allowedOrigins)) return true;
       const body = await getBody(req);
       if (await inviteUpdate(parsed, req, res, body)) return true;
+      break;
+    }
+    case "drive": {
+      if (!cors(req, res, serverConfig.allowedOrigins)) return true;
+      const body = await getBody(req);
+      if (await handleAssetsDriveRequest(parsed, req, res, body)) return true;
       break;
     }
     default: {

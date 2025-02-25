@@ -9,9 +9,7 @@ import type { ParseResult } from "../../types.js";
 
 const API_ENTRY = "/boards";
 
-export const parseBoardURL = (url: URL, req: IncomingMessage): string => {
-  const { pathname } = url;
-
+export const parseBoardURL = (url: URL, _req: IncomingMessage): string => {
   return url.pathname;
 };
 
@@ -38,6 +36,7 @@ export const parse = (url: URL, method: string = "GET"): ParseResult => {
  * POST /boards/ -> create a new board
  * GET /boards/@:user/:name.json -> get a board
  * POST /boards/@:user/:name.json -> update/delete a board
+ * POST /boards/@:user/:name.json/assets/drive/:id -> update Google Drive asset
  * GET /boards/@:user/:name.app -> serve frontend app for the board
  * GET /boards/@:user/:name.api -> serve API description for the board
  * POST /boards/@:user/:name.api/invoke -> BSE invoke entry point
@@ -87,7 +86,7 @@ export class BoardAPIParser {
       return invalidMethod();
     } else if (parts.length === 1) {
       return notFound();
-    } else if (parts.length === 2 || parts.length === 3) {
+    } else if (parts.length === 2 || parts.length === 3 || parts.length === 5) {
       const [maybeUser, maybeName] = parts;
       const user = maybeUser?.startsWith("@") ? maybeUser.slice(1) : undefined;
       if (!user || !maybeName) {
@@ -141,17 +140,24 @@ export class BoardAPIParser {
         const board = `@${user}/${name}`;
         const url = this.#getAdjustedBoardURL(board);
         return { success: true, type: "app", board, url, user, name };
-      } else if (isJson && parts.length === 2) {
+      } else if (isJson) {
         const name = maybeName;
         const board = `@${user}/${name}`;
         const url = this.#getAdjustedBoardURL(board);
         if (isOPTIONS) {
           return { success: true, type: "options" };
         }
-        if (this.#method === "GET") {
-          return { success: true, type: "get", board, url, user, name };
-        } else if (this.#method === "POST") {
-          return { success: true, type: "update", board, url, user, name };
+        if (parts.length === 2) {
+          if (this.#method === "GET") {
+            return { success: true, type: "get", board, url, user, name };
+          } else if (this.#method === "POST") {
+            return { success: true, type: "update", board, url, user, name };
+          }
+        } else if (parts.length === 5) {
+          const [, , assets, type, id] = parts;
+          if (assets === "assets" && type === "drive") {
+            return { success: true, type: "drive", board, url, user, name, id };
+          }
         }
       } else if (isInvite && parts.length === 2) {
         const name = `${maybeName.slice(0, -".invite".length)}.json`;
