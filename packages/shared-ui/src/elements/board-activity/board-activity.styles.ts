@@ -624,57 +624,6 @@ export const styles = css`
     margin-bottom: 0;
   }
 
-  #debug-rerun,
-  #debug-stepnext,
-  #debug-continue {
-    color: var(--bb-input-700);
-    border-radius: var(--bb-grid-size-5);
-    border: none;
-    height: var(--bb-grid-size-7);
-    padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-7);
-    margin: var(--bb-grid-size) var(--bb-grid-size) 0 0;
-    cursor: pointer;
-    transition: background-color 0.1s cubic-bezier(0, 0, 0.3, 1);
-  }
-
-  #debug-rerun {
-    background: var(--bb-input-100) var(--bb-icon-rerun) 8px center / 16px 16px
-      no-repeat;
-  }
-
-  #debug-stepnext {
-    background: var(--bb-input-100) var(--bb-icon-step-next) 8px center / 16px
-      16px no-repeat;
-  }
-
-  #debug-continue {
-    color: var(--bb-ui-700);
-    background: var(--bb-ui-100) var(--bb-icon-resume-ui) 8px center / 16px 16px
-      no-repeat;
-  }
-
-  #debug-rerun:focus,
-  #debug-rerun:hover,
-  #debug-stepnext:focus,
-  #debug-stepnext:hover {
-    background-color: var(--bb-input-200);
-  }
-
-  #debug-continue:focus,
-  #debug-continue:hover {
-    background-color: var(--bb-ui-200);
-  }
-
-  #debug-controls {
-    background: var(--bb-neutral-0);
-    position: sticky;
-    bottom: 0;
-    padding: var(--bb-grid-size-2) var(--bb-grid-size-2) var(--bb-grid-size-10)
-      28px;
-    margin-left: 0;
-    z-index: 1;
-  }
-
   #download-export,
   #export {
     color: var(--bb-neutral-700);
