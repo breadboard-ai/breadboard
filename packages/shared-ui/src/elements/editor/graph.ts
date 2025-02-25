@@ -254,7 +254,6 @@ export class Graph extends PIXI.Container {
       this.#drawEdges();
       this.#drawNodes();
       this.#drawNodeHighlight();
-      this.#sortChildrenBySelectedStatus();
 
       if (this.#minimized && this.#subGraphId) {
         this.#hideGraphContents();
@@ -274,6 +273,8 @@ export class Graph extends PIXI.Container {
           this.emit(GRAPH_OPERATIONS.GRAPH_INITIAL_DRAW);
         });
       }
+
+      this.#sortChildrenBySelectedStatus();
     };
 
     this.once("removed", () => {
@@ -1044,8 +1045,10 @@ export class Graph extends PIXI.Container {
         continue;
       }
 
-      edge.zIndex = edge.selected ? this.children.length - 1 : 0;
+      edge.zIndex = edge.selected ? this.#edgeContainer.children.length - 1 : 0;
     }
+
+    this.sortDirty = true;
   }
 
   getEdgeContainer() {
