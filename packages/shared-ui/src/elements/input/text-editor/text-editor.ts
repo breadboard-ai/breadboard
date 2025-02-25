@@ -269,8 +269,6 @@ export class TextEditor extends LitElement {
         return;
       }
 
-      const spaceBefore = document.createTextNode(String.fromCharCode(160));
-      const spaceAfter = document.createTextNode(String.fromCharCode(160));
       const label = document.createElement("label");
       const preambleText = document.createElement("span");
       const titleText = document.createElement("span");
@@ -291,27 +289,20 @@ export class TextEditor extends LitElement {
 
       const range = this.#getCurrentRange();
       if (!range) {
-        this.#editorRef.value.appendChild(spaceBefore);
         this.#editorRef.value.appendChild(label);
-        this.#editorRef.value.appendChild(spaceAfter);
       } else {
         if (
           range.commonAncestorContainer !== this.#editorRef.value &&
           range.commonAncestorContainer.parentNode !== this.#editorRef.value
         ) {
-          this.#editorRef.value.appendChild(spaceBefore);
           this.#editorRef.value.appendChild(label);
-          this.#editorRef.value.appendChild(spaceAfter);
           return label;
         }
 
         range.deleteContents();
 
         // The range doesn't move, so insert the nodes in reverse order.
-        range.insertNode(spaceAfter);
         range.insertNode(label);
-
-        range.setStartAfter(spaceAfter);
         range.collapse(true);
 
         requestAnimationFrame(() => {
@@ -322,6 +313,7 @@ export class TextEditor extends LitElement {
 
           selection.removeAllRanges();
           selection.addRange(range);
+          this.#ensureAllChicletsHaveSpace();
           this.#captureEditorValue();
         });
       }
@@ -386,31 +378,74 @@ export class TextEditor extends LitElement {
     selection.addRange(range);
   }
 
-  #ensureTrailingSpace() {
+  #ensureSafeRangePosition(evt: KeyboardEvent) {
+    if (evt.key !== "Enter") {
+      return;
+    }
+
+    const selection = this.#getCurrentSelection();
+    const range = this.#getCurrentRange();
+    const focusedNode = range?.endContainer;
+    const focusedOffset = range?.endOffset;
+
+    if (
+      focusedOffset === undefined ||
+      focusedNode === undefined ||
+      !selection ||
+      !range
+    ) {
+      return;
+    }
+
+    // End of a text node adjacent to a chiclet.
+    if (
+      focusedNode.nodeType === Node.TEXT_NODE &&
+      focusedOffset === focusedNode.textContent?.length &&
+      focusedNode.nextSibling?.nodeType !== null &&
+      focusedNode.nextSibling?.nodeType !== Node.TEXT_NODE
+    ) {
+      // Move the range back one character since there should already be
+      // a space around the chiclet.
+      range.setEnd(focusedNode, focusedOffset - 1);
+
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+  }
+
+  // Because we have a contenteditable span at the source we need to make sure
+  // each chiclet has at least one space before and after it otherwise things
+  // get exceptionally gnarly.
+  #ensureAllChicletsHaveSpace() {
     if (!this.#editorRef.value) {
       return;
     }
 
-    const lastChild = this.#editorRef.value.lastChild;
-    const isTextNode = lastChild?.nodeType === Node.TEXT_NODE;
-    if (
-      !lastChild ||
-      !isTextNode ||
-      (isTextNode && lastChild.textContent === "")
-    ) {
-      const spaceAfter = document.createTextNode(String.fromCharCode(160));
-      this.#editorRef.value.append(spaceAfter);
+    const spaceFactory = () => {
+      const el = document.createTextNode(String.fromCharCode(160));
+      return el;
+    };
 
-      const selection = this.#getCurrentSelection();
-      if (!selection) {
-        return;
+    for (const chiclet of this.#editorRef.value.querySelectorAll<HTMLElement>(
+      ".chiclet"
+    )) {
+      const { previousSibling, nextSibling } = chiclet;
+      console.log(previousSibling, nextSibling);
+      if (
+        !previousSibling ||
+        !previousSibling.textContent?.endsWith(String.fromCharCode(160))
+      ) {
+        const el = spaceFactory();
+        this.#editorRef.value.insertBefore(el, chiclet);
       }
 
-      const range = new Range();
-      range.setStartBefore(spaceAfter);
-      range.collapse(true);
-      selection.removeAllRanges();
-      selection.addRange(range);
+      if (
+        !nextSibling ||
+        !nextSibling.textContent?.startsWith(String.fromCharCode(160))
+      ) {
+        const el = spaceFactory();
+        this.#editorRef.value.insertBefore(el, chiclet.nextSibling);
+      }
     }
   }
 
@@ -590,6 +625,9 @@ export class TextEditor extends LitElement {
         @dblclick=${() => {}}
         @paste=${this.#sanitizePastedContent}
         @selectionchange=${this.#checkChicletSelections}
+        @keydown=${(evt: KeyboardEvent) => {
+          this.#ensureSafeRangePosition(evt);
+        }}
         @keyup=${(evt: KeyboardEvent) => {
           if (this.#isUsingFastAccess) {
             evt.preventDefault();
@@ -603,7 +641,7 @@ export class TextEditor extends LitElement {
           }
         }}
         @input=${() => {
-          this.#ensureTrailingSpace();
+          this.#ensureAllChicletsHaveSpace();
           this.#captureEditorValue();
         }}
         id="editor"
