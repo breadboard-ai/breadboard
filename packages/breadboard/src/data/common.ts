@@ -264,6 +264,12 @@ export async function transformDataParts(
           if (!ok(file)) return file;
           transformedPart = file;
         }
+      } else if ("fileData" in part) {
+        if (to === "file") {
+          const file = await transformer.toFileData(graphUrl, part);
+          if (!ok(file)) return file;
+          transformedPart = file;
+        }
       }
       parts.push(transformedPart);
     }

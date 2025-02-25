@@ -127,7 +127,7 @@ export type DataPartTransformer = {
   ) => Promise<Outcome<StoredDataCapabilityPart>>;
   toFileData: (
     graphUrl: URL,
-    part: StoredDataCapabilityPart
+    part: StoredDataCapabilityPart | FileDataPart
   ) => Promise<Outcome<FileDataPart>>;
 };
 

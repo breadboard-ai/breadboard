@@ -10,7 +10,7 @@ import { GoogleStorageBlobStore, type FileAPIMetadata } from "../blob-store.js";
 import { ok } from "@google-labs/breadboard";
 import { GeminiFileApi } from "./utils/gemini-file-api.js";
 
-export { updateFileApiInfo };
+export { updateFileApiInfo, hasExpired };
 
 const EXPIRATION_BUFFER_MS = 1_000 * 60 * 60;
 

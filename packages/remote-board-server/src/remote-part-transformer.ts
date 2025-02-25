@@ -17,6 +17,7 @@ import {
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
 import { RemoteConnector } from "./types";
+import { GoogleDriveToGemini } from "./google-drive-to-gemini";
 
 export { RemotePartTransformer };
 
@@ -52,22 +53,30 @@ class RemotePartTransformer implements DataPartTransformer {
 
   async toFileData(
     graphUrl: URL,
-    part: StoredDataCapabilityPart
+    part: StoredDataCapabilityPart | FileDataPart
   ): Promise<Outcome<FileDataPart>> {
-    const { handle: blobPath, mimeType } = part.storedData;
-    const persistedUrl = new URL(blobPath, graphUrl);
-    persistedUrl.pathname += "/file";
-    try {
-      const response = await fetch(
-        await this.connector.createRequest(persistedUrl.href, "POST")
-      );
-      if (!response.ok) {
-        return err(await response.text());
+    if ("fileData" in part) {
+      if (GoogleDriveToGemini.isGoogleDriveDocument(part)) {
+        const toGemini = new GoogleDriveToGemini(graphUrl, this.connector);
+        return toGemini.update(part);
       }
-      const { fileUri } = (await response.json()) as FileInfo;
-      return { fileData: { fileUri: fileUri, mimeType } };
-    } catch (e) {
-      return err(`Failed to get blob file info: ${(e as Error).message}`);
+      return part;
+    } else {
+      const { handle: blobPath, mimeType } = part.storedData;
+      const persistedUrl = new URL(blobPath, graphUrl);
+      persistedUrl.pathname += "/file";
+      try {
+        const response = await fetch(
+          await this.connector.createRequest(persistedUrl.href, "POST")
+        );
+        if (!response.ok) {
+          return err(await response.text());
+        }
+        const { fileUri } = (await response.json()) as FileInfo;
+        return { fileData: { fileUri: fileUri, mimeType } };
+      } catch (e) {
+        return err(`Failed to get blob file info: ${(e as Error).message}`);
+      }
     }
   }
 

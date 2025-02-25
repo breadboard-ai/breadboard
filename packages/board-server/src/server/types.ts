@@ -39,7 +39,8 @@ export type UserRequestType =
   | "describe"
   | "run"
   | "invite-list"
-  | "invite-update";
+  | "invite-update"
+  | "drive";
 
 export type RequestType = GeneralRequestType | UserRequestType;
 
@@ -55,6 +56,7 @@ export type BoardParseResult = {
   url: string;
   user: string;
   name: string;
+  id?: string;
 };
 
 export type ParseResult =

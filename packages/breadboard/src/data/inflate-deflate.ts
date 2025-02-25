@@ -8,6 +8,7 @@ import { InlineDataCapabilityPart, LLMContent } from "@breadboard-ai/types";
 import {
   asBase64,
   asBlob,
+  isFileDataCapabilityPart,
   isInlineData,
   isStoredData,
   transformDataParts,
@@ -30,7 +31,26 @@ export const inflateData = async (
   inflateToFileData?: boolean
 ) => {
   const descender = async (value: unknown): Promise<unknown> => {
-    if (isStoredData(value)) {
+    if (isFileDataCapabilityPart(value)) {
+      if (inflateToFileData && store.transformer && graphUrl) {
+        if (inflateToFileData && store.transformer && graphUrl) {
+          const contents: LLMContent[] = [{ parts: [value] }];
+          const transformer = store.transformer(graphUrl);
+          if (transformer) {
+            const transforming = await transformDataParts(
+              graphUrl,
+              contents,
+              "file",
+              transformer
+            );
+            if (ok(transforming)) {
+              const part = transforming.at(0)?.parts.at(0);
+              if (part) return part;
+            }
+          }
+        }
+      }
+    } else if (isStoredData(value)) {
       if (value.storedData.handle.startsWith("https://")) {
         return value;
       }
