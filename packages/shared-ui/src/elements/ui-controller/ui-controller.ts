@@ -73,7 +73,6 @@ import { ChatController } from "../../state/chat-controller.js";
 import { Organizer } from "../../state/types.js";
 import { map } from "lit/directives/map.js";
 
-const SIDE_NAV_ITEM_KEY = "bb-ui-side-nav-item";
 const POPOUT_STATE = "bb-ui-popout-state";
 
 @customElement("bb-ui-controller")
@@ -190,11 +189,6 @@ export class UI extends LitElement {
   connectedCallback(): void {
     super.connectedCallback();
 
-    const sideNavItem = globalThis.localStorage.getItem(SIDE_NAV_ITEM_KEY);
-    if (sideNavItem && sideNavItem !== "components" && sideNavItem !== "chat") {
-      this.sideNavItem = sideNavItem;
-    }
-
     const popoutState = globalThis.localStorage.getItem(POPOUT_STATE);
     this.popoutExpanded = popoutState === "true";
   }
@@ -248,7 +242,6 @@ export class UI extends LitElement {
 
   #handleSideNav(label: string) {
     this.sideNavItem = label;
-    globalThis.localStorage.setItem(SIDE_NAV_ITEM_KEY, label);
     this.#setPopoutState(true);
   }
 
