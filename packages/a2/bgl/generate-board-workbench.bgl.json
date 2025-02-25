@@ -1,0 +1,66 @@
+{
+  "title": "Generate Board Workbench",
+  "description": "",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "a2-c53bc270",
+      "type": "file://bgl/a2.bgl.json#module:generate-board",
+      "metadata": {
+        "title": "Generate Board",
+        "visual": {
+          "x": 780,
+          "y": 0,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        }
+      }
+    },
+    {
+      "id": "a2-b322892e",
+      "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
+      "metadata": {
+        "title": "Ask User",
+        "visual": {
+          "x": 420,
+          "y": -20,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        },
+        "logLevel": "info"
+      },
+      "configuration": {
+        "description": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Description of the board to generate"
+            }
+          ]
+        },
+        "p-modality": "Any"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "a2-b322892e",
+      "to": "a2-c53bc270",
+      "out": "context",
+      "in": "context"
+    }
+  ],
+  "metadata": {
+    "tags": [],
+    "visual": {}
+  },
+  "assets": {
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxNDMuNTUiCiAgICAgICAgICAgICAgICAgICAgeT0iNjguODQiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9Ijk2LjQ1IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNjkuNzQiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyZThiZTgiIC8+CjxyZWN0IHg9IjEwLjAwIgogICAgICAgICAgICAgICAgICAgIHk9IjYxLjQyIgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI5Ni40NSIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjY5Ljc0IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMjBhMjAyIiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+    }
+  }
+}
