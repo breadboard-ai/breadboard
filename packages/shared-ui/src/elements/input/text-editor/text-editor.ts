@@ -430,7 +430,6 @@ export class TextEditor extends LitElement {
       ".chiclet"
     )) {
       const { previousSibling, nextSibling } = chiclet;
-      console.log(previousSibling, nextSibling);
       if (
         !previousSibling ||
         !previousSibling.textContent?.endsWith(String.fromCharCode(160))

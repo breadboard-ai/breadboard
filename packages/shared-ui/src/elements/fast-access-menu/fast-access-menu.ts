@@ -55,6 +55,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       box-shadow: var(--bb-elevation-6);
       padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
       white-space: normal;
+      scroll-padding-top: var(--bb-grid-size-11);
+      scroll-padding-bottom: var(--bb-grid-size-11);
     }
 
     .no-items {
