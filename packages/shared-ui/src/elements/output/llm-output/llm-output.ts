@@ -54,8 +54,11 @@ export class LLMOutput extends LitElement {
   @property({ reflect: true })
   accessor lite = false;
 
-  @property({ reflect: true })
+  @property()
   accessor showExportControls = false;
+
+  @property({ reflect: true })
+  accessor supportedExportControls = { drive: false, clipboard: false };
 
   @property()
   accessor graphUrl: URL | null = null;
@@ -66,6 +69,20 @@ export class LLMOutput extends LitElement {
   #partDataURLs = new Map<number, string>();
 
   static styles = css`
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     :host {
       display: block;
       position: relative;
@@ -157,9 +174,9 @@ export class LLMOutput extends LitElement {
 
     .value .plain-text {
       white-space: pre;
-      font: normal var(--bb-body-small) / var(--bb-body-line-height-small)
+      font: 500 var(--bb-body-small) / var(--bb-body-line-height-small)
         var(--bb-font-family-mono);
-      color: var(--bb-neutral-600);
+      color: var(--bb-neutral-900);
     }
 
     .value.markdown {
@@ -274,14 +291,22 @@ export class LLMOutput extends LitElement {
     }
 
     bb-export-toolbar {
+      display: none;
       position: absolute;
       top: -16px;
       right: var(--export-x, 16px);
       z-index: 1;
+      animation: fadeIn 0.15s cubic-bezier(0, 0, 0.3, 1);
     }
 
     bb-pdf-viewer {
       aspect-ratio: 1/1;
+    }
+
+    :host(:hover) {
+      bb-export-toolbar {
+        display: block;
+      }
     }
   `;
 
@@ -314,7 +339,11 @@ export class LLMOutput extends LitElement {
 
     return this.value && this.value.parts.length
       ? html` ${this.showExportControls
-          ? html`<bb-export-toolbar .value=${this.value}></bb-export-toolbar>`
+          ? html`<bb-export-toolbar
+              .supported=${this.supportedExportControls}
+              .value=${this.value}
+              .graphUrl=${this.graphUrl}
+            ></bb-export-toolbar>`
           : nothing}
         ${map(this.value.parts, (part, idx) => {
           let value: TemplateResult | symbol = nothing;

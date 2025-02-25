@@ -606,6 +606,15 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
       content.parts.some((part) => isFileDataCapabilityPart(part))
     );
     const hasEditableParts = !isFileData;
+    const supportedExportControls = { drive: false, clipboard: false };
+
+    if (this.asset) {
+      const type = this.asset.metadata?.type;
+      const subType = this.asset.metadata?.subType;
+      supportedExportControls.clipboard = subType !== "gdrive";
+      supportedExportControls.drive =
+        type === "content" && subType !== "gdrive" && subType !== "youtube";
+    }
 
     let addOverflowMenu: HTMLTemplateResult | symbol = nothing;
     if (this.showAddOverflowMenu) {
@@ -880,6 +889,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                             .clamped=${false}
                             .graphUrl=${this.state?.graphUrl || null}
                             .showExportControls=${true}
+                            .supportedExportControls=${supportedExportControls}
                           ></bb-llm-output>`}
                     `
                   : html`<div id="no-asset-selected">No asset selected</div>`}
