@@ -24,6 +24,7 @@ import { until } from "lit/directives/until.js";
 import { BoardServer, GraphProviderStore } from "@google-labs/breadboard";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
+import "./describe-flow-panel.js";
 
 const SHOW_OTHER_PEOPLES_BOARDS_KEY =
   "bb-project-listing-show-other-peoples-boards";
@@ -306,11 +307,11 @@ export class ProjectListing extends LitElement {
         order: 0;
         height: 80px;
         display: flex;
-        justify-content: center;
+        align-items: center;
+        justify-content: space-between;
 
         & #mode-container {
           display: flex;
-          flex: 1;
           height: var(--bb-grid-size-10);
           padding-top: var(--bb-grid-size);
 
@@ -678,6 +679,13 @@ export class ProjectListing extends LitElement {
           grid-template-columns: repeat(4, 1fr);
         }
       }
+    }
+
+    bb-describe-flow-panel {
+      flex: 1;
+      padding: 0 24px 0 24px;
+      /* TODO(aomarks) Remove once the backend is hooked up. */
+      display: none;
     }
   `;
 
@@ -1279,6 +1287,7 @@ export class ProjectListing extends LitElement {
                               >
                             </div>`
                           : nothing}
+                        <bb-describe-flow-panel></bb-describe-flow-panel>
                         <div id="new-project-container">
                           <button
                             id="new-project"
