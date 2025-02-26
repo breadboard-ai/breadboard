@@ -2,8 +2,40 @@
   "title": "Generate Board",
   "description": "Generates a board",
   "version": "0.0.1",
-  "nodes": [],
-  "edges": [],
+  "nodes": [
+    {
+      "id": "generate-board",
+      "type": "#module:generate-board"
+    },
+    {
+      "id": "input",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "title": "Context",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "behavior": ["llm-content"]
+              }
+            }
+          },
+          "required": ["context"]
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "input",
+      "to": "generate-board",
+      "out": "context",
+      "in": "context"
+    }
+  ],
   "modules": {
     "generate-board": {
       "code": "/**\n * @fileoverview Generates a Breadboard from a natural language description.\n */\nimport fetch from \"@fetch\";\nimport secrets from \"@secrets\";\nexport { invoke as default, describe };\nasync function invoke({ context }) {\n    // Validate the input.\n    if (!context) {\n        throw new Error(`context is required.`);\n    }\n    if (context.length !== 1) {\n        throw new Error(`Expected 1 context array item, got ${context.length}.`);\n    }\n    const content = context[0];\n    if (content?.parts?.length !== 1) {\n        throw new Error(`Expected 1 context part, got ${content?.parts?.length}.`);\n    }\n    const part = content.parts[0];\n    if (!(\"text\" in part)) {\n        throw new Error(`Expected text part, got ${JSON.stringify(part)}.`);\n    }\n    const text = part.text;\n    if (!text) {\n        throw new Error(`Expected non-empty text part, got ${JSON.stringify(part)}.`);\n    }\n    // Get the API key.\n    const apiKeys = await secrets({ keys: [\"APP_CATALYST_GEMINI_KEY\"] });\n    const apiKey = apiKeys[\"APP_CATALYST_GEMINI_KEY\"];\n    // Call the API.\n    const fetchResult = await fetch({\n        url: `https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/generateBoard?key=${apiKey}`,\n        method: \"POST\",\n        headers: { \"Content-Type\": \"application/json\" },\n        body: {\n            intent: text,\n        },\n    });\n    const response = fetchResult.response;\n    const board = JSON.parse(response.boardJson);\n    return { board };\n}\nasync function describe() {\n    return {\n        inputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    title: \"Description of the board to generate\",\n                    type: \"array\",\n                    items: {\n                        type: \"object\",\n                        behavior: [\"llm-content\"],\n                    },\n                    behavior: [\"main-port\"],\n                },\n            },\n            required: [\"context\"],\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                board: {\n                    type: \"object\",\n                    title: \"board\",\n                    behavior: [\"board\"],\n                    additionalProperties: true,\n                },\n            },\n            required: [\"board\"],\n        },\n    };\n}\n",
