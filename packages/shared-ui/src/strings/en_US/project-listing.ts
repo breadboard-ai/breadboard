@@ -11,6 +11,9 @@ export default {
   COMMAND_NEW_PROJECT: {
     str: "New Flow",
   },
+  COMMAND_DESCRIBE_FLOW: {
+    str: "Describe your flow",
+  },
   COMMAND_ADD_NEW_PROJECT_SERVER: {
     str: "Add new Flow Server",
   },
@@ -95,6 +98,12 @@ export default {
   },
   LABEL_SEARCH_BOARDS: {
     str: "Search Flows",
+  },
+  LABEL_GENERATING_FLOW: {
+    str: "Generating your flow",
+  },
+  LABEL_GENERATING_FLOW_DETAIL: {
+    str: "Your flow will open automatically when ready",
   },
 
   // Queries.
