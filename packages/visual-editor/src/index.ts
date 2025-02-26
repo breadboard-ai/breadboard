@@ -8,7 +8,9 @@ import * as BreadboardUI from "@breadboard-ai/shared-ui";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
 import {
+  createRunner,
   HarnessProxyConfig,
+  type HarnessRunner,
   RunConfig,
   RunErrorEvent,
   RunSecretEvent,
@@ -76,6 +78,10 @@ import {
   SelectAllCommand,
 } from "./commands/commands";
 import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
+import {
+  SideBoardRuntime,
+  sideBoardRuntime,
+} from "@breadboard-ai/shared-ui/utils/side-board-runtime.js";
 
 const STORAGE_PREFIX = "bb-main";
 const VIEW_KEY = "bb-main-view";
@@ -240,6 +246,9 @@ export class Main extends LitElement {
 
   @provide({ context: BreadboardUI.Contexts.settingsHelperContext })
   accessor settingsHelper!: SettingsHelperImpl;
+
+  @provide({ context: sideBoardRuntime })
+  accessor sideBoardRuntime!: SideBoardRuntime;
 
   @state()
   accessor selectedBoardServer = "Browser Storage";
@@ -512,6 +521,46 @@ export class Main extends LitElement {
         this.#runtime = runtime;
         this.#graphStore = runtime.board.getGraphStore();
         this.#boardServers = runtime.board.getBoardServers() || [];
+
+        this.sideBoardRuntime = {
+          createRunner: async (
+            graph: GraphDescriptor & { url: string }
+          ): Promise<HarnessRunner> => {
+            const config = addNodeProxyServerConfig(
+              this.#proxy,
+              {
+                url: graph.url,
+                runner: graph,
+                diagnostics: true,
+                kits: [...this.#graphStore.kits],
+                loader: this.#runtime.board.getLoader(),
+                store: runtime.run.dataStore,
+                graphStore: this.#graphStore,
+                fileSystem: this.#fileSystem.createRunFileSystem({
+                  graphUrl: graph.url,
+                  env: [],
+                  assets: assetsFromGraphDescriptor(graph),
+                }),
+                inputs: BreadboardUI.Data.inputsFromSettings(this.#settings),
+                interactiveSecrets: true,
+              },
+              this.#settings,
+              this.proxyFromUrl,
+              await this.#getProxyURL(graph.url)
+            );
+            const runner = createRunner(config);
+            runner.addEventListener("secret", (event) =>
+              // TODO(aomarks) What about when we can't don't have syncronously
+              // known secrets? We have no place to ask the user for inputs on
+              // side boards, so we'll probably just hang. Also, I'm not sure if
+              // it's correct or safe to share secret-handling logic with the
+              // main active board that might be running, since secret helpers
+              // are stateful.
+              this.#handleSecretEvent(event, runner)
+            );
+            return runner;
+          },
+        };
 
         this.#graphStore.addEventListener("update", (evt) => {
           const { mainGraphId } = evt;
