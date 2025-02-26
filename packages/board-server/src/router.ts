@@ -15,46 +15,6 @@ import { serveProxyAPI } from "./server/proxy/index.js";
 import { serverError } from "./server/errors.js";
 import { serveMeAPI } from "./server/info/me.js";
 import { serveBlobsAPI } from "./server/blobs/index.js";
-import type { ViteDevServer } from "vite";
-
-export { createServerConfig };
-
-const DEFAULT_PORT = 3000;
-const DEFAULT_HOST = "localhost";
-
-function createServerConfig(
-  rootPath: string,
-  viteDevServer: ViteDevServer | null = null
-): ServerConfig {
-  const {
-    PORT = DEFAULT_PORT,
-    HOST = DEFAULT_HOST,
-    ALLOWED_ORIGINS = "",
-    STORAGE_BUCKET,
-    SERVER_URL,
-  } = process.env;
-
-  const storageBucket = STORAGE_BUCKET;
-
-  return {
-    allowedOrigins: new Set(
-      ALLOWED_ORIGINS.split(/\s+/).filter((origin) => origin !== "")
-    ),
-    hostname: `http://${HOST}:${PORT}`,
-    serverUrl: SERVER_URL,
-    port: toNumericPort(PORT),
-    viteDevServer,
-    rootPath,
-    storageBucket,
-  };
-}
-
-function toNumericPort(port: string | number): number {
-  if (typeof port === "number") return port;
-
-  const numericPort = parseInt(port);
-  return isNaN(numericPort) ? DEFAULT_PORT : numericPort;
-}
 
 const handleError = (err: Error, res: ServerResponse) => {
   console.error("Server Error:", err);

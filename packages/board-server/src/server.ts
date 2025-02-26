@@ -4,52 +4,44 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { createServer, Server } from "http";
-import { createServer as createViteServer } from "vite";
-import { env } from "process";
-import { createServerConfig, makeRouter } from "./router.js";
-import { dirname, resolve } from "path";
-import { fileURLToPath } from "url";
+import express, { type Express } from "express";
+import type { ViteDevServer } from "vite";
 
-const MODULE_PATH = dirname(fileURLToPath(import.meta.url));
-const ROOT_PATH = resolve(MODULE_PATH, "../../");
+import { makeRouter } from "./router.js";
+import type { ServerConfig } from "./server/config.js";
 
-export const startServer = async (rootPath: string = ROOT_PATH) => {
-  const isProd = env.NODE_ENV === "production";
-  const viteDevServer = isProd
-    ? null
-    : await createViteServer({
-        server: { middlewareMode: true },
-        appType: "custom",
-        optimizeDeps: { esbuildOptions: { target: "esnext" } },
-      });
+export type { ServerConfig };
 
-  const serverConfig = createServerConfig(rootPath, viteDevServer);
+const DEFAULT_PORT = 3000;
+const DEFAULT_HOST = "localhost";
 
-  const server = createServer(makeRouter(serverConfig));
+export function createServer(config: ServerConfig): Express {
+  const server = express();
+  server.use(makeRouter(config));
+  return server;
+}
 
-  return new Promise<{ server: Server; port: string | number }>(
-    (resolve, reject) => {
-      server.listen(serverConfig.port, () => {
-        console.info(`Running on "${serverConfig.hostname}"...`);
-        resolve({ server, port: serverConfig.port });
-      });
+export function createServerConfig(
+  rootPath: string,
+  viteDevServer?: ViteDevServer
+): ServerConfig {
+  const {
+    PORT = DEFAULT_PORT,
+    HOST = DEFAULT_HOST,
+    ALLOWED_ORIGINS = "",
+    STORAGE_BUCKET,
+    SERVER_URL,
+  } = process.env;
 
-      server.on("error", (error) => {
-        reject(error);
-      });
-    }
-  );
-};
-
-export const stopServer = (server: Server) => {
-  return new Promise<void>((resolve, reject) => {
-    server.close((err: Error | undefined) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve();
-      }
-    });
-  });
-};
+  return {
+    allowedOrigins: new Set(
+      ALLOWED_ORIGINS.split(/\s+/).filter((origin) => origin !== "")
+    ),
+    hostname: `http://${HOST}:${PORT}`,
+    port: +PORT || DEFAULT_PORT,
+    rootPath,
+    serverUrl: SERVER_URL,
+    storageBucket: STORAGE_BUCKET,
+    viteDevServer: viteDevServer ?? null,
+  };
+}
