@@ -8,27 +8,12 @@ import express, { type Express } from "express";
 import type { ViteDevServer } from "vite";
 
 import { makeRouter } from "./router.js";
+import type { ServerConfig } from "./server/config.js";
+
+export type { ServerConfig };
 
 const DEFAULT_PORT = 3000;
 const DEFAULT_HOST = "localhost";
-
-export interface ServerConfig {
-  allowedOrigins: Set<string>;
-  hostname: string;
-  port: number;
-  /**
-   * The public-facing URL of the server, which
-   * will be different from the `hostname` when the
-   * server is hosted behind a reverse proxy
-   * (e.g. Cloud Run or Google App Engine).
-   * Overrides the value of the `url` field in the
-   * server info API response.
-   */
-  serverUrl?: string;
-  viteDevServer: ViteDevServer | null;
-  rootPath: string;
-  storageBucket?: string;
-}
 
 export function createServer(config: ServerConfig): Express {
   const server = express();
