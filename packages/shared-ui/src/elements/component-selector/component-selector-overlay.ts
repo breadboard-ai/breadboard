@@ -396,7 +396,7 @@ export class ComponentSelectorOverlay extends LitElement {
         continue;
       }
 
-      if (!this.activeKits.includes(mainGraph.title)) {
+      if (!this.activeKits.find((s) => mainGraph.title?.startsWith(s))) {
         continue;
       }
 
