@@ -13,12 +13,32 @@ import { list } from "./api/list.js";
 import { refresh } from "./api/refresh.js";
 import { loadConnections, type ServerConfig } from "./config.js";
 
-export { loadConnections };
+export type { ServerConfig };
+
+/**
+ * Create a ServerConfig from environment variables.
+ *
+ * Parses the file at CONNECTIONS_FILE for connections, and reads
+ * ALLOWED_ORIGINS for CORS. Both values are empty by default if absent.
+ *
+ * Fails if CONNECTIONS_FILE is set but no file is found.
+ */
+export async function createServerConfig(): Promise<ServerConfig> {
+  var connections = new Map();
+  if (process.env.CONNECTIONS_FILE) {
+    connections = await loadConnections(process.env.CONNECTIONS_FILE);
+  }
+  const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? "")
+    .split(/\s+/)
+    .filter((origin) => origin !== "");
+
+  return { allowedOrigins, connections };
+}
 
 export function createServer(config: ServerConfig): Express {
-  const app = express();
+  const server = express();
 
-  app.use(
+  server.use(
     cors({
       credentials: true,
       // Different browsers allow different max values for max age. The highest
@@ -31,17 +51,17 @@ export function createServer(config: ServerConfig): Express {
 
   // TODO: #3172 - Common error handling
 
-  app.get("/list", async (req: Request, res: Response) =>
+  server.get("/list", async (req: Request, res: Response) =>
     list(req, res, config)
   );
 
-  app.get("/grant", async (req: Request, res: Response) =>
+  server.get("/grant", async (req: Request, res: Response) =>
     grant(req, res, config)
   );
 
-  app.get("/refresh", async (req: Request, res: Response) =>
+  server.get("/refresh", async (req: Request, res: Response) =>
     refresh(req, res, config)
   );
 
-  return app;
+  return server;
 }
