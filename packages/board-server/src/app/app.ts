@@ -607,23 +607,23 @@ export class AppView extends LitElement {
       | Map<PropertyKey, unknown>
   ): void {
     if (changedProperties.has("url")) {
+      // eslint-disable-next-line no-async-promise-executor
       this.#descriptorLoad = new Promise(async (resolve) => {
         if (!this.url) {
           resolve(null);
           return;
         }
 
-        try {
-          const response = await fetch(this.url);
-          const graph = (await response.json()) as GraphDescriptor;
+        this.visitorStateManager.getBoardInfo(this.url).then((graph) => {
+          if (!graph) {
+            resolve(null);
+            return;
+          }
           const title = !!graph.title;
           document.title = `${title ? `${graph.title} - ` : ""}Breadboard App View`;
           resolve(graph);
           this.startRun();
-        } catch (err) {
-          console.warn(err);
-          resolve(null);
-        }
+        });
       });
     }
 
@@ -1007,7 +1007,7 @@ export class AppView extends LitElement {
         .state=${this.#chatController?.state()}
         .events=${topGraphLog}
         @bbinputenter=${(event: InputEnterEvent) => {
-          let data = event.data as InputValues;
+          const data = event.data as InputValues;
           const runner = this.#runner;
           if (!runner) {
             throw new Error("Can't send input, no runner");

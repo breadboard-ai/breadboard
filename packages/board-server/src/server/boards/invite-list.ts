@@ -6,7 +6,6 @@
 
 import { ok } from "@google-labs/breadboard";
 import { authenticateAndGetUserStore } from "../auth.js";
-import { unauthorized } from "../errors.js";
 import { getStore } from "../store.js";
 import type {
   ApiHandler,

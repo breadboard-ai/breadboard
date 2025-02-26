@@ -13,6 +13,7 @@ import {
   type VisitorStateChangeEvent,
   type VisitorStateEventTarget,
 } from "./types.js";
+import type { GraphDescriptor } from "@breadboard-ai/types";
 
 const GUEST_KEY_PREFIX = "bb-guest-key-";
 const BOARD_SERVER_KEY = "board-server-key";
@@ -98,6 +99,19 @@ export class VisitorStateManager extends (EventTarget as VisitorStateEventTarget
     const inviteURL = new URL(url.href.replace(/app$/, "invite"));
     inviteURL.searchParams.set("API_KEY", this.#boardServerApiKey!);
     return inviteURL.href;
+  }
+
+  async getBoardInfo(boardURl: string) {
+    const url = new URL(boardURl, window.location.href);
+    url.searchParams.set("API_KEY", this.#boardServerApiKey!);
+    try {
+      const response = await fetch(url);
+      const graph = (await response.json()) as GraphDescriptor;
+      return graph;
+    } catch (err) {
+      console.warn(err);
+    }
+    return null;
   }
 
   boardServerKey(): string | null {
