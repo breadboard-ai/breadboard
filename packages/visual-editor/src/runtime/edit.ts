@@ -1126,7 +1126,8 @@ export class Edit extends EventTarget {
     nodeType: string,
     configuration: NodeConfiguration | null = null,
     metadata: NodeMetadata | null = null,
-    subGraphId: string | null = null
+    subGraphId: string | null = null,
+    options: { sourceId: NodeIdentifier; portId: PortIdentifier } | null = null
   ) {
     if (tab?.readOnly) {
       return;
@@ -1177,10 +1178,23 @@ export class Edit extends EventTarget {
       return;
     }
 
-    editableGraph.edit(
-      [{ type: "addnode", node: newNode, graphId }],
-      `Add node ${id}`
-    );
+    const edits: EditSpec[] = [{ type: "addnode", node: newNode, graphId }];
+
+    if (options) {
+      const { sourceId, portId } = options;
+      edits.push({
+        type: "addedge",
+        graphId,
+        edge: {
+          from: sourceId,
+          to: id,
+          out: portId,
+          in: portId,
+        },
+      });
+    }
+
+    editableGraph.edit(edits, `Add node ${id}`);
   }
 
   updateNodeMetadata(

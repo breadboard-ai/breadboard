@@ -786,7 +786,11 @@ export class NodeCreateEvent extends Event {
     public readonly nodeType: string,
     public readonly subGraphId: string | null = null,
     public readonly configuration: NodeConfiguration | null = null,
-    public readonly metadata: NodeMetadata | null = null
+    public readonly metadata: NodeMetadata | null = null,
+    public readonly options: {
+      sourceId: NodeIdentifier;
+      portId: PortIdentifier;
+    } | null = null
   ) {
     super(NodeCreateEvent.eventName, { ...eventInit });
   }

@@ -3681,7 +3681,8 @@ export class Main extends LitElement {
                   evt.nodeType,
                   evt.configuration,
                   evt.metadata,
-                  evt.subGraphId
+                  evt.subGraphId,
+                  evt.options
                 );
 
                 if (!this.tab) {
