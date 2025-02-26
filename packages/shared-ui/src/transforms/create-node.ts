@@ -34,8 +34,8 @@ class CreateNode implements EditTransform {
   ) {}
 
   async apply(context: EditOperationContext): Promise<EditTransformResult> {
-    const { id, graphId, nodeType, configuration, options } = this;
-    let { metadata } = this;
+    const { id, graphId, nodeType, options } = this;
+    let { metadata, configuration } = this;
 
     const inspectableGraph = context.mutable.graphs.get(graphId);
     if (!inspectableGraph)
@@ -44,12 +44,22 @@ class CreateNode implements EditTransform {
         error: `Unable to inspect graph with id "${graphId}"`,
       };
 
-    const title = (await inspectableGraph.typeById(nodeType)?.metadata())
-      ?.title;
+    const typeMetadata = await inspectableGraph.typeById(nodeType)?.metadata();
+    if (!typeMetadata) {
+      return {
+        success: false,
+        error: `Unknown type: ${nodeType}`,
+      };
+    }
 
+    const title = typeMetadata.title;
     if (title) {
       metadata ??= {};
       metadata.title = title;
+    }
+
+    if (!configuration && typeMetadata.example) {
+      configuration = typeMetadata.example;
     }
 
     const newNode = {

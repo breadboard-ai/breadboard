@@ -9,7 +9,9 @@ import { getGraphHandlerFromMutableGraph } from "../../handler.js";
 import {
   GraphDescriptor,
   Kit,
+  NodeConfiguration,
   NodeDescriberResult,
+  NodeDescriberWires,
   NodeDescriptor,
   NodeHandler,
   NodeHandlerMetadata,
@@ -301,11 +303,33 @@ class CustomNodeType implements InspectableNodeType {
     this.#handlerPromise = getGraphHandlerFromMutableGraph(type, mutable);
   }
 
+  #extractExamples(
+    describeResult: NodeDescriberResult
+  ): NodeConfiguration | undefined {
+    const example = describeResult.inputSchema.examples?.at(0);
+    if (!example) return;
+    try {
+      return JSON.parse(example) as NodeConfiguration;
+    } catch (e) {
+      // eat the error.
+    }
+  }
+
   async #readMetadata() {
     const handler = await this.#handlerPromise;
-    const describeResult = await handler?.describe?.();
+    const describeResult = await handler?.describe?.(
+      undefined,
+      undefined,
+      undefined,
+      {
+        graphStore: this.#mutable.store,
+        outerGraph: this.#mutable.graph,
+        wires: {} as NodeDescriberWires,
+      }
+    );
     if (describeResult && describeResult.metadata) {
-      return describeResult.metadata;
+      const example = this.#extractExamples(describeResult);
+      return { ...describeResult.metadata, example };
     }
     if (handler && "metadata" in handler && handler.metadata) {
       return handler.metadata;
