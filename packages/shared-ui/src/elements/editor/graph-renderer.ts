@@ -2556,10 +2556,34 @@ export class GraphRenderer extends LitElement {
         port: InspectablePort | null,
         selectedPort: string | null,
         x: number,
-        y: number
+        y: number,
+        graphNodeDimensions: { width: number; height: number } | null
       ) => {
+        let graphNodeLocation: DOMRect | null = null;
+        if (graphNodeDimensions) {
+          const layout = graph.getNodeLayoutPosition(id);
+          const point = { x: layout?.x ?? 0, y: layout?.y ?? 0 };
+          const location = this.#container.toGlobal(point);
+
+          graphNodeLocation = new DOMRect(
+            location.x,
+            location.y,
+            graphNodeDimensions.width,
+            graphNodeDimensions.height
+          );
+        }
+
         this.dispatchEvent(
-          new GraphNodeEditEvent(id, port, selectedPort, x, y, graph.subGraphId)
+          new GraphNodeEditEvent(
+            id,
+            port,
+            selectedPort,
+            x,
+            y,
+            graph.subGraphId,
+            true,
+            graphNodeLocation
+          )
         );
       }
     );
@@ -2619,9 +2643,37 @@ export class GraphRenderer extends LitElement {
 
     graph.on(
       GRAPH_OPERATIONS.GRAPH_NODE_EDIT,
-      (id: string, x: number, y: number) => {
+      (
+        id: string,
+        x: number,
+        y: number,
+        graphNodeDimensions: { width: number; height: number } | null
+      ) => {
+        let graphNodeLocation: DOMRect | null = null;
+        if (graphNodeDimensions) {
+          const layout = graph.getNodeLayoutPosition(id);
+          const point = { x: layout?.x ?? 0, y: layout?.y ?? 0 };
+          const location = this.#container.toGlobal(point);
+
+          graphNodeLocation = new DOMRect(
+            location.x,
+            location.y,
+            graphNodeDimensions.width,
+            graphNodeDimensions.height
+          );
+        }
+
         this.dispatchEvent(
-          new GraphNodeEditEvent(id, null, null, x, y, graph.subGraphId, false)
+          new GraphNodeEditEvent(
+            id,
+            null,
+            null,
+            x,
+            y,
+            graph.subGraphId,
+            false,
+            graphNodeLocation
+          )
         );
       }
     );

@@ -401,6 +401,7 @@ export class TextEditor extends LitElement {
     if (
       focusedNode.nodeType === Node.TEXT_NODE &&
       focusedOffset === focusedNode.textContent?.length &&
+      focusedNode.nextSibling &&
       focusedNode.nextSibling?.nodeType !== null &&
       focusedNode.nextSibling?.nodeType !== Node.TEXT_NODE
     ) {

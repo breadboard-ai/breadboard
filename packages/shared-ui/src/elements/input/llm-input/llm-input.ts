@@ -63,6 +63,9 @@ export class LLMInput extends LitElement {
   @property({ reflect: true })
   accessor clamped = true;
 
+  @property({ reflect: true, type: Boolean })
+  accessor streamlined = false;
+
   @property()
   accessor showPartControls = true;
 
@@ -558,6 +561,29 @@ export class LLMInput extends LitElement {
       left: 0;
       width: 0;
       height: 0;
+    }
+
+    :host([streamlined]) {
+      #container {
+        border: 1px solid var(--bb-neutral-100);
+        padding: var(--bb-grid-size-2);
+
+        & .part {
+          margin: 0;
+
+          &:focus-within {
+            background: var(--bb-neutral-0);
+          }
+
+          & .value {
+            padding: 0;
+
+            &::before {
+              display: none;
+            }
+          }
+        }
+      }
     }
   `;
 

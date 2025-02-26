@@ -33,6 +33,7 @@ export { ExportToolbar } from "./output/llm-output/export-toolbar.js";
 export { FancyJson } from "./editor/fancy-json.js";
 export { FastAccessMenu } from "./fast-access-menu/fast-access-menu.js";
 export { FirstRunOverlay } from "./overlay/first-run.js";
+export { FocusEditor } from "./overlay/focus-editor.js";
 export { GoogleDriveDirectoryPicker } from "./google-drive/google-drive-directory-picker.js";
 export { GoogleDriveFileViewer } from "./google-drive/google-drive-file-viewer.js";
 export { GoogleDriveFileId } from "./google-drive/google-drive-file-id.js";
