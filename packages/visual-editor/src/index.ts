@@ -3787,6 +3787,11 @@ export class Main extends LitElement {
                 @bbgraphboardserverblankboard=${() => {
                   this.#attemptBoardCreate(blank());
                 }}
+                @bbgraphboardservergeneratedboard=${(
+                  evt: BreadboardUI.Events.GraphBoardServerGeneratedBoardEvent
+                ) => {
+                  this.#attemptBoardCreate(evt.graph);
+                }}
                 @bbgraphboardserveradd=${() => {
                   this.showBoardServerAddOverlay = true;
                 }}

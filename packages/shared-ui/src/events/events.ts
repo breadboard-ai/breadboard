@@ -651,6 +651,14 @@ export class GraphBoardServerBlankBoardEvent extends Event {
   }
 }
 
+export class GraphBoardServerGeneratedBoardEvent extends Event {
+  static eventName = "bbgraphboardservergeneratedboard";
+
+  constructor(public readonly graph: GraphDescriptor) {
+    super(GraphBoardServerGeneratedBoardEvent.eventName, { ...eventInit });
+  }
+}
+
 export class GraphBoardServerSaveBoardEvent extends Event {
   static eventName = "bbgraphboardserversaveboard";
 
