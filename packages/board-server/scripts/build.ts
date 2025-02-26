@@ -11,7 +11,13 @@ await Promise.all([
     entryPoints: ["src/index.ts"],
     bundle: true,
     platform: "node",
-    external: ["@google-cloud", "import.meta", "vite", "better-sqlite3"],
+    external: [
+      "@google-cloud",
+      "better-sqlite3",
+      "express",
+      "import.meta",
+      "vite",
+    ],
     format: "esm",
     outfile: "dist/server/index.js",
     sourcemap: true,
@@ -23,6 +29,12 @@ await Promise.all([
     format: "esm",
     outfile: "dist/scripts/create-account.js",
     sourcemap: true,
-    external: ["@google-cloud", "import.meta", "vite", "better-sqlite3"],
+    external: [
+      "@google-cloud",
+      "better-sqlite3",
+      "express",
+      "import.meta",
+      "vite",
+    ],
   }),
 ]);

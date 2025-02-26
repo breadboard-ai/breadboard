@@ -8,8 +8,7 @@
   "description": "Board Server",
   "main": "./dist/server/index.js",
   "exports": {
-    ".": "./dist/lib/src/index.js",
-    "./router": "./dist/lib/src/router.js"
+    ".": "./dist/lib/src/server.js"
   },
   "type": "module",
   "scripts": {

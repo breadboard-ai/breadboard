@@ -6,9 +6,9 @@ import {
   loadConnections,
 } from "@breadboard-ai/connection-server/server.js";
 import {
-  makeRouter,
-  createServerConfig,
-} from "@breadboard-ai/board-server/router";
+  createServer as createBoardServer,
+  createServerConfig as createBoardServerConfig,
+} from "@breadboard-ai/board-server";
 import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 
@@ -22,14 +22,14 @@ const connections = configPath ? await loadConnections(configPath) : new Map();
 
 app.use("/connection", createServer({ connections, allowedOrigins: [] }));
 
-const config = createServerConfig(ROOT_PATH, null);
+const boardServerConfig = createBoardServerConfig(ROOT_PATH);
 
-app.use("/board", makeRouter(config));
+app.use("/board", createBoardServer(boardServerConfig));
 
 ViteExpress.static({
   enableBrotli: true,
 });
 
-ViteExpress.listen(app, config.port, () => {
-  console.log(`Unified server at: http://localhost:${config.port}`);
+ViteExpress.listen(app, boardServerConfig.port, () => {
+  console.log(`Unified server at: http://localhost:${boardServerConfig.port}`);
 });
