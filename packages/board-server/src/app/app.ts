@@ -1021,6 +1021,12 @@ export class AppView extends LitElement {
           }
           runner.run(data);
         }}
+        @bbstop=${() => {
+          this.stopRun();
+        }}
+        @bbrun=${() => {
+          this.startRun();
+        }}
         @bbtoast=${(evt: ToastEvent) => {
           this.#toast(evt.message, evt.toastType);
         }}
