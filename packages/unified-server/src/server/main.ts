@@ -1,35 +1,33 @@
 import express from "express";
-import ViteExpress from "vite-express";
-
-import {
-  createServer,
-  loadConnections,
-} from "@breadboard-ai/connection-server/server.js";
-import {
-  createServer as createBoardServer,
-  createServerConfig as createBoardServerConfig,
-} from "@breadboard-ai/board-server";
 import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
+import ViteExpress from "vite-express";
+
+import * as connectionServer from "@breadboard-ai/connection-server/server.js";
+import * as boardServer from "@breadboard-ai/board-server";
 
 const MODULE_PATH = dirname(fileURLToPath(import.meta.url));
 const ROOT_PATH = resolve(MODULE_PATH, "../../");
 
-const app = express();
+const server = express();
 
 const configPath = process.env.CONNECTIONS_FILE;
-const connections = configPath ? await loadConnections(configPath) : new Map();
+const connections = configPath
+  ? await connectionServer.loadConnections(configPath)
+  : new Map();
 
-app.use("/connection", createServer({ connections, allowedOrigins: [] }));
+const boardServerConfig = boardServer.createServerConfig(ROOT_PATH);
 
-const boardServerConfig = createBoardServerConfig(ROOT_PATH);
-
-app.use("/board", createBoardServer(boardServerConfig));
+server.use("/board", boardServer.createServer(boardServerConfig));
+server.use(
+  "/connection",
+  connectionServer.createServer({ connections, allowedOrigins: [] })
+);
 
 ViteExpress.static({
   enableBrotli: true,
 });
 
-ViteExpress.listen(app, boardServerConfig.port, () => {
+ViteExpress.listen(server, boardServerConfig.port, () => {
   console.log(`Unified server at: http://localhost:${boardServerConfig.port}`);
 });
