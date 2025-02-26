@@ -23,6 +23,9 @@ export class AppNav extends LitElement {
   visitorState: VisitorState = VisitorState.LOADING;
 
   @property({ reflect: false })
+  showLinkToGraph = false;
+
+  @property({ reflect: false })
   shareTitle: string | null = null;
 
   @property({ reflect: false })
@@ -269,11 +272,13 @@ export class AppNav extends LitElement {
       >
         ${this.popout ? html`<h1>Menu</h1>` : nothing}
         <ul>
-          <li>
-            <a id="visual-editor" .href=${visualEditorUrl}
-              ><span class="text">Open in Visual Editor</span></a
-            >
-          </li>
+          ${this.showLinkToGraph
+            ? html` <li>
+                <a id="visual-editor" .href=${visualEditorUrl}
+                  ><span class="text">Open in Visual Editor</span></a
+                >
+              </li>`
+            : nothing}
           ${this.visitorState === VisitorState.LOADING
             ? nothing
             : html` ${runOnBoardServer}
