@@ -870,7 +870,8 @@ export class NodeConfigurationUpdateRequestEvent extends Event {
     public readonly selectedPort: string | null,
     public readonly x: number = 0,
     public readonly y: number = 0,
-    public readonly addHorizontalClickClearance = true
+    public readonly addHorizontalClickClearance = true,
+    public readonly graphNodeLocation: DOMRect | null = null
   ) {
     super(NodeConfigurationUpdateRequestEvent.eventName, { ...eventInit });
   }
@@ -1028,7 +1029,8 @@ export class GraphNodeEditEvent extends Event {
     public readonly x: number,
     public readonly y: number,
     public readonly subGraphId: string | null = null,
-    public readonly addHorizontalClickClearance = true
+    public readonly addHorizontalClickClearance = true,
+    public readonly graphNodeLocation: DOMRect | null = null
   ) {
     super(GraphNodeEditEvent.eventName, { ...eventInit });
   }

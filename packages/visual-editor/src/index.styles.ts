@@ -445,4 +445,8 @@ export const styles = css`
     overflow-x: hidden;
     overflow-y: scroll;
   }
+
+  bb-focus-editor {
+    z-index: 10;
+  }
 `;

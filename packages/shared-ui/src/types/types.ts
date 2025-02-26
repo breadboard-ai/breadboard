@@ -367,6 +367,7 @@ export type NodePortConfiguration = {
   y: number;
   addHorizontalClickClearance: boolean;
   currentMetadata: NodeHandlerMetadata | null;
+  graphNodeLocation: DOMRect | null;
 };
 
 export type EdgeValueConfiguration = {

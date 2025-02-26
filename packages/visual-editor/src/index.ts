@@ -2100,6 +2100,7 @@ export class Main extends LitElement {
       currentMetadata,
       addHorizontalClickClearance:
         configuration.addHorizontalClickClearance ?? false,
+      graphNodeLocation: configuration.graphNodeLocation ?? null,
     };
   }
 
@@ -2166,6 +2167,12 @@ export class Main extends LitElement {
           this.#settings?.getItem(
             BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
             "Offer Configuration Enhancements"
+          )?.value ?? false;
+
+        const showExperimentalStepEditor =
+          this.#settings?.getItem(
+            BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
+            "Show experimental step editor"
           )?.value ?? false;
 
         let tabStatus = BreadboardUI.Types.STATUS.STOPPED;
@@ -2402,8 +2409,66 @@ export class Main extends LitElement {
           this.#saveAsState = null;
         }
 
+        const canRunNode = this.#nodeConfiguratorData
+          ? topGraphResult.nodeInformation.canRunNode(
+              this.#nodeConfiguratorData.id
+            )
+          : false;
+
+        const run = runs?.[0] ?? null;
+        const events = run?.events ?? [];
+        const runEventsForNode = events.filter((evt) => {
+          return (
+            evt.type === "node" &&
+            evt.node.descriptor.id === this.#nodeConfiguratorData?.id &&
+            evt.end !== null
+          );
+        });
+
         let nodeConfiguratorOverlay: HTMLTemplateResult | symbol = nothing;
-        if (this.showNodeConfigurator) {
+        if (showExperimentalStepEditor) {
+          nodeConfiguratorOverlay = html`<bb-focus-editor
+            ${ref(this.#nodeConfiguratorRef)}
+            .canRunNode=${canRunNode}
+            .configuration=${this.#nodeConfiguratorData}
+            .graph=${this.tab?.graph}
+            .runEventsForNode=${runEventsForNode}
+            .boardServers=${this.#boardServers}
+            .showTypes=${false}
+            .offerConfigurationEnhancements=${offerConfigurationEnhancements}
+            .projectState=${projectState}
+            .readOnly=${this.tab?.readOnly}
+            .active=${this.showNodeConfigurator}
+            @bboverlaydismissed=${() => {
+              this.#nodeConfiguratorData = null;
+              this.showNodeConfigurator = false;
+            }}
+            @bbnodepartialupdate=${async (
+              evt: BreadboardUI.Events.NodePartialUpdateEvent
+            ) => {
+              if (!this.tab) {
+                this.toast(
+                  Strings.from("ERROR_NO_PROJECT"),
+                  BreadboardUI.Events.ToastType.ERROR
+                );
+                return;
+              }
+
+              this.#runtime.edit.changeNodeConfigurationPart(
+                this.tab,
+                evt.id,
+                evt.configuration,
+                evt.subGraphId,
+                evt.metadata,
+                evt.ins
+              );
+            }}
+            @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
+              this.toast(toastEvent.message, toastEvent.toastType);
+            }}
+          >
+          </bb-focus-editor>`;
+        } else if (this.showNodeConfigurator) {
           const canRunNode = this.#nodeConfiguratorData
             ? topGraphResult.nodeInformation.canRunNode(
                 this.#nodeConfiguratorData.id
@@ -3641,6 +3706,7 @@ export class Main extends LitElement {
                   x: evt.x,
                   y: evt.y,
                   addHorizontalClickClearance: evt.addHorizontalClickClearance,
+                  graphNodeLocation: evt.graphNodeLocation,
                 };
 
                 await this.#setNodeDataForConfiguration(configuration, null);

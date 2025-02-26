@@ -1997,6 +1997,16 @@ export class Graph extends PIXI.Container {
         graphNode.on(
           GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT,
           (...args: unknown[]) => {
+            if (graphNode instanceof GraphNode) {
+              const scale = graphNode.worldTransform.a;
+              const dimensions = {
+                width: graphNode.dimensions.width * scale,
+                height: graphNode.dimensions.height * scale,
+              };
+
+              args.push(dimensions);
+            }
+
             this.emit(GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT, ...args);
           }
         );
@@ -2030,6 +2040,16 @@ export class Graph extends PIXI.Container {
         );
 
         graphNode.on(GRAPH_OPERATIONS.GRAPH_NODE_EDIT, (...args: unknown[]) => {
+          if (graphNode instanceof GraphNode) {
+            const scale = graphNode.worldTransform.a;
+            const dimensions = {
+              width: graphNode.dimensions.width * scale,
+              height: graphNode.dimensions.height * scale,
+            };
+
+            args.push(dimensions);
+          }
+
           this.emit(GRAPH_OPERATIONS.GRAPH_NODE_EDIT, ...args);
         });
 

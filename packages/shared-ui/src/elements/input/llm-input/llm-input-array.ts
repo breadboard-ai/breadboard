@@ -38,6 +38,15 @@ export class LLMInputArray extends LitElement {
   accessor inlineControls = false;
 
   @property()
+  accessor streamlined = false;
+
+  @property()
+  accessor showPartControls = true;
+
+  @property()
+  accessor showInlineControlsToggle = true;
+
+  @property()
   accessor minItems = 0;
 
   @property()
@@ -344,6 +353,9 @@ export class LLMInputArray extends LitElement {
                 .nodeId=${this.nodeId}
                 .subGraphId=${this.subGraphId}
                 .projectState=${this.projectState}
+                .streamlined=${this.streamlined}
+                .showPartControls=${this.showPartControls}
+                .showInlineControlsToggle=${this.showInlineControlsToggle}
               ></bb-llm-input>`;
             })
           : html`No items specified`}
