@@ -19,11 +19,11 @@ const inviteList: ApiHandler = async (parsed, req, res) => {
 
   let store: BoardServerStore | undefined = undefined;
 
-  const userKey = await authenticateAndGetUserStore(req, res, () => {
+  const userStore = await authenticateAndGetUserStore(req, res, () => {
     store = getStore();
     return store;
   });
-  if (!ok(userKey)) {
+  if (!ok(userStore)) {
     return true;
   }
 
@@ -31,13 +31,7 @@ const inviteList: ApiHandler = async (parsed, req, res) => {
     store = getStore();
   }
 
-  const userStore = await store.getUserStore(userKey);
-  if (!userStore.success) {
-    unauthorized(res, "Unauthorized");
-    return true;
-  }
-
-  const result = await store.listInvites(userStore.store, path);
+  const result = await store.listInvites(userStore, path);
   let responseBody;
   if (!result.success) {
     // TODO: Be nice and return a proper error code
