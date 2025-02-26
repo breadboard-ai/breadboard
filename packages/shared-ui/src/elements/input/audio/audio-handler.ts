@@ -213,6 +213,15 @@ export class AudioHandler extends LitElement {
       }
     }
 
+    :host([lite="true"]) {
+      #request-permission {
+        font-size: 0;
+        background: var(--color-capture-button, var(--bb-ui-500))
+          var(--icon-mic, var(--bb-icon-mic-inverted)) center center / 20px 20px
+          no-repeat;
+      }
+    }
+
     :host([showaudiodata="true"][lite="true"]) {
       #container {
         border: none;
