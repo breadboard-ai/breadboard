@@ -122,7 +122,7 @@
     "@codemirror/lang-json": "^6.0.1",
     "@codemirror/language": "^6.10.8",
     "@codemirror/lint": "^6.8.2",
-    "@codemirror/search": "^6.5.9",
+    "@codemirror/search": "^6.5.10",
     "@codemirror/theme-one-dark": "^6.1.2",
     "@codemirror/view": "^6.36.3",
     "@dagrejs/dagre": "^1.1.4",
