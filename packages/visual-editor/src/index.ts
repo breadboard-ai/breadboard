@@ -787,33 +787,10 @@ export class Main extends LitElement {
               }
 
               case "secret": {
-                const runEvt = evt.runEvt as RunSecretEvent;
-                const { keys } = runEvt.data;
-                if (this.#secretsHelper) {
-                  this.#secretsHelper.setKeys(keys);
-                  if (this.#secretsHelper.hasAllSecrets()) {
-                    evt.harnessRunner?.run(this.#secretsHelper.getSecrets());
-                  } else {
-                    const result = SecretsHelper.allKeysAreKnown(
-                      this.#settings!,
-                      keys
-                    );
-                    if (result) {
-                      evt.harnessRunner?.run(result);
-                    }
-                  }
-                } else {
-                  const result = SecretsHelper.allKeysAreKnown(
-                    this.#settings!,
-                    keys
-                  );
-                  if (result) {
-                    evt.harnessRunner?.run(result);
-                  } else {
-                    this.#secretsHelper = new SecretsHelper(this.#settings!);
-                    this.#secretsHelper.setKeys(keys);
-                  }
-                }
+                this.#handleSecretEvent(
+                  evt.runEvt as RunSecretEvent,
+                  evt.harnessRunner
+                );
               }
             }
           }
@@ -874,6 +851,29 @@ export class Main extends LitElement {
     );
     window.removeEventListener("keydown", this.#onKeyDownBound);
     window.removeEventListener("bbrundownload", this.#downloadRunBound);
+  }
+
+  #handleSecretEvent(event: RunSecretEvent, runner?: HarnessRunner) {
+    const { keys } = event.data;
+    if (this.#secretsHelper) {
+      this.#secretsHelper.setKeys(keys);
+      if (this.#secretsHelper.hasAllSecrets()) {
+        runner?.run(this.#secretsHelper.getSecrets());
+      } else {
+        const result = SecretsHelper.allKeysAreKnown(this.#settings!, keys);
+        if (result) {
+          runner?.run(result);
+        }
+      }
+    } else {
+      const result = SecretsHelper.allKeysAreKnown(this.#settings!, keys);
+      if (result) {
+        runner?.run(result);
+      } else {
+        this.#secretsHelper = new SecretsHelper(this.#settings!);
+        this.#secretsHelper.setKeys(keys);
+      }
+    }
   }
 
   #maybeShowWelcomePanel() {
