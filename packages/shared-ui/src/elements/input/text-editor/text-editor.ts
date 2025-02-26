@@ -15,7 +15,8 @@ import { Template, TemplatePartType } from "../../../utils/template";
 export class TextEditor extends LitElement {
   @property()
   set value(value: string) {
-    const template = new Template(value);
+    const escapedValue = this.#escape(value);
+    const template = new Template(escapedValue);
     template.substitute((part) => {
       const { type, title, invalid } = part;
       return `<label class="chiclet ${type} ${invalid ? "invalid" : ""}" contenteditable="false"><span>${Template.preamble(part)}</span><span class="visible">${title}</span><span>${Template.postamble()}</span></label>`;

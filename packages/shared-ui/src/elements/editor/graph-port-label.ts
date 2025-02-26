@@ -567,6 +567,7 @@ export class GraphPortLabel extends PIXI.Container {
       valStr = "";
     }
 
+    valStr = this.#escape(valStr);
     valStr = new Template(valStr).preview;
 
     if (valStr.length > MAX_SIZE - 3) {
@@ -574,6 +575,16 @@ export class GraphPortLabel extends PIXI.Container {
     }
 
     return valStr;
+  }
+
+  #escape(str: string) {
+    const htmlEntities: Record<string, string> = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+    };
+
+    return str.replace(/[&<>]/g, (char) => htmlEntities[char]);
   }
 
   #updateIcon(icon: string | null) {
