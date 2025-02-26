@@ -183,8 +183,6 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
   connectedCallback(): void {
     super.connectedCallback();
 
-    console.log("Connected");
-
     window.addEventListener("keydown", this.#onEscapeBound, { capture: true });
     window.addEventListener("keydown", this.#onKeyDownBound);
   }

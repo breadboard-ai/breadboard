@@ -34,6 +34,9 @@ export class LLMOutputArray extends LitElement {
   @property()
   accessor showExportControls = false;
 
+  @property()
+  accessor supportedExportControls = { drive: false, clipboard: false };
+
   @property({ reflect: true })
   accessor selected = 0;
 
@@ -237,6 +240,7 @@ export class LLMOutputArray extends LitElement {
                     .clamped=${this.clamped}
                     .lite=${this.lite}
                     .showExportControls=${this.showExportControls}
+                    .supportedExportControls=${this.supportedExportControls}
                   ></bb-llm-output>`;
                 })
               : html`<bb-json-tree .json=${values}></bb-json-tree>`}

@@ -1354,6 +1354,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       y,
       subGraphId,
       addHorizontalClickClearance,
+      graphNodeLocation,
     } = evt as GraphNodeEditEvent;
 
     this.dispatchEvent(
@@ -1364,7 +1365,8 @@ export class Editor extends LitElement implements DragConnectorReceiver {
         selectedPort,
         x,
         y,
-        addHorizontalClickClearance
+        addHorizontalClickClearance,
+        graphNodeLocation
       )
     );
   }

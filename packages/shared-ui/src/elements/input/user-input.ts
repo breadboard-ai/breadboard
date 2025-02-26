@@ -105,6 +105,15 @@ export class UserInput extends LitElement {
   accessor llmInputClamped = false;
 
   @property()
+  accessor llmInputStreamlined = false;
+
+  @property()
+  accessor llmInputShowPartControls = true;
+
+  @property()
+  accessor llmShowInlineControlsToggle = true;
+
+  @property()
   accessor llmInputShowEntrySelector = true;
 
   @property()
@@ -893,6 +902,10 @@ export class UserInput extends LitElement {
                     .subGraphId=${this.subGraphId}
                     .autofocus=${true}
                     .projectState=${this.projectState}
+                    .streamlined=${this.llmInputStreamlined}
+                    .showPartControls=${this.llmInputShowPartControls}
+                    .showInlineControlsToggle=${this
+                      .llmShowInlineControlsToggle}
                   ></bb-llm-input-array>`;
                 } else {
                   let renderableValue: unknown = input.value;
@@ -992,6 +1005,10 @@ export class UserInput extends LitElement {
                     .nodeId=${this.nodeId}
                     .subGraphId=${this.subGraphId}
                     .projectState=${this.projectState}
+                    .streamlined=${this.llmInputStreamlined}
+                    .showPartControls=${this.llmInputShowPartControls}
+                    .showInlineControlsToggle=${this
+                      .llmShowInlineControlsToggle}
                   ></bb-llm-input>`;
                   break;
                 } else if (isBoardBehavior(input.schema)) {

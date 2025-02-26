@@ -194,6 +194,14 @@ export class SettingsStore implements BreadboardUI_Types.SettingsStore {
             value: false,
           },
         ],
+        [
+          "Show experimental step editor",
+          {
+            name: "Show experimental step editor",
+            description: "Toggles showing a more streamlined step editor",
+            value: false,
+          },
+        ],
       ]),
     },
     [BreadboardUI_Types.SETTINGS_TYPE.SECRETS]: {
