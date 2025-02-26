@@ -10,7 +10,6 @@ export const outlineButtonWithIcon = css`
   .bb-outline-button-with-icon {
     background: var(--bb-icon, var(--bb-icon-help)) 16px center / 20px 20px
       no-repeat;
-    color: #3271ea;
     border: 1px solid currentColor;
     border-radius: 100px;
     padding: 10px 24px 10px 42px;
