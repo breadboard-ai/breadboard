@@ -122,6 +122,9 @@ export class AppView extends LitElement {
   showServerKeyPopover = false;
 
   @state()
+  showLinkToGraph = false;
+
+  @state()
   showInvitesPopover = false;
 
   @state()
@@ -621,6 +624,7 @@ export class AppView extends LitElement {
           }
           const title = !!graph.title;
           document.title = `${title ? `${graph.title} - ` : ""}Breadboard App View`;
+          this.showLinkToGraph = !graph.metadata?.tags?.includes("private");
           resolve(graph);
           this.startRun();
         });
@@ -1027,6 +1031,7 @@ export class AppView extends LitElement {
       return html`<bb-app-nav
         .popout=${popout}
         .visitorState=${this.visitorState}
+        .showLinkToGraph=${this.showLinkToGraph}
         .runOnBoardServer=${this.runOnBoardServer}
         .boardKeyNeeded=${this.boardKeyNeeded}
         @bbdismissmenu=${() => {
