@@ -183,7 +183,6 @@ export class FocusEditor extends LitElement {
 
         & header {
           flex: 0 0 auto;
-
           display: flex;
           align-items: center;
           background: var(--background);
@@ -192,6 +191,8 @@ export class FocusEditor extends LitElement {
           border-bottom: 1px solid var(--inner-border);
           width: 100%;
           padding: var(--bb-grid-size-3);
+          opacity: 1;
+          transition: opacity 0.15s 0.2s cubic-bezier(0, 0, 0.3, 1);
 
           & h1 {
             flex: 1;
@@ -397,6 +398,8 @@ export class FocusEditor extends LitElement {
           justify-content: space-between;
           padding: 0 var(--bb-grid-size-2);
           border-top: 1px solid var(--inner-border);
+          opacity: 1;
+          transition: opacity 0.15s 0.2s cubic-bezier(0, 0, 0.3, 1);
 
           & > div {
             display: flex;
@@ -474,9 +477,11 @@ export class FocusEditor extends LitElement {
         }
 
         &.hidden {
-          & #content {
+          & header,
+          & #content,
+          & footer {
             opacity: 0;
-            transition: opacity 0.15s cubic-bezier(0, 0, 0.3, 1);
+            transition: opacity 0.1s cubic-bezier(0, 0, 0.3, 1);
           }
         }
 

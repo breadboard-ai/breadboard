@@ -172,7 +172,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
   #itemContainerRef: Ref<HTMLDivElement> = createRef();
   #filterInputRef: Ref<HTMLInputElement> = createRef();
   #onKeyDownBound = this.#onKeyDown.bind(this);
-  #onEscapeBound = this.#onEscape.bind(this);
+  #onEscapeOrBackspaceBound = this.#onEscapeOrBackspace.bind(this);
 
   #items: {
     assets: GraphAsset[];
@@ -183,14 +183,18 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
   connectedCallback(): void {
     super.connectedCallback();
 
-    window.addEventListener("keydown", this.#onEscapeBound, { capture: true });
+    window.addEventListener("keydown", this.#onEscapeOrBackspaceBound, {
+      capture: true,
+    });
     window.addEventListener("keydown", this.#onKeyDownBound);
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
 
-    window.addEventListener("keydown", this.#onEscapeBound, { capture: true });
+    window.addEventListener("keydown", this.#onEscapeOrBackspaceBound, {
+      capture: true,
+    });
     window.removeEventListener("keydown", this.#onKeyDownBound);
   }
 
@@ -256,13 +260,23 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     button.scrollIntoView({ block: "nearest" });
   }
 
-  #onEscape(evt: KeyboardEvent): void {
+  #onEscapeOrBackspace(evt: KeyboardEvent): void {
     if (!this.classList.contains("active")) {
       return;
     }
 
-    if (evt.key !== "Escape") {
+    const maybeClose =
+      evt.key === "Escape" || evt.key === "Backspace" || evt.key === "Delete";
+    if (!maybeClose) {
       return;
+    }
+
+    // In the case of Backspace/Delete we need to make sure the filter is empty
+    // before we close the Fast Access Menu.
+    if (evt.key !== "Escape") {
+      if (this.filter !== null && this.filter !== "") {
+        return;
+      }
     }
 
     this.dispatchEvent(new FastAccessDismissedEvent());
