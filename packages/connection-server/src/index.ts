@@ -5,16 +5,10 @@
  */
 
 import { env } from "node:process";
-import { loadConnections, type ServerConfig } from "./config.js";
-import { createServer } from "./server.js";
+import { createServer, createServerConfig } from "./server.js";
 
-const configPath = process.env["CONNECTIONS_FILE"];
-const config: ServerConfig = {
-  connections: configPath ? await loadConnections(configPath) : new Map(),
-  allowedOrigins: (process.env["ALLOWED_ORIGINS"] ?? "")
-    .split(/\s+/)
-    .filter((origin) => origin !== ""),
-};
+const config = await createServerConfig();
+
 if (config.connections.size === 0) {
   console.log(
     `
