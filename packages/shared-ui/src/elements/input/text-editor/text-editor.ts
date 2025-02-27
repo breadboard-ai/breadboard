@@ -564,7 +564,7 @@ export class TextEditor extends LitElement {
       return;
     }
 
-    const containerBounds = this.getBoundingClientRect();
+    // const containerBounds = this.getBoundingClientRect();
     const proxyBounds = this.#proxyRef.value.getBoundingClientRect();
     let top = Math.round(bounds.top - proxyBounds.top);
     let left = Math.round(bounds.left - proxyBounds.left);
@@ -574,10 +574,10 @@ export class TextEditor extends LitElement {
       left = proxyBounds.width - 240;
     }
 
-    // Similarly, if it's going to go off the bottom bring it back.
-    if (top + 300 > containerBounds.height) {
-      top = containerBounds.height - 300;
-    }
+    // // Similarly, if it's going to go off the bottom bring it back.
+    // if (top + 300 > containerBounds.height) {
+    //   top = containerBounds.height - 300;
+    // }
 
     if (bounds.top === 0 || bounds.left === 0) {
       top = 0;
