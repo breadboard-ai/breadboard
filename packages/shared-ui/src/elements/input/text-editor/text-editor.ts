@@ -564,11 +564,19 @@ export class TextEditor extends LitElement {
       return;
     }
 
+    const containerBounds = this.getBoundingClientRect();
     const proxyBounds = this.#proxyRef.value.getBoundingClientRect();
     let top = Math.round(bounds.top - proxyBounds.top);
     let left = Math.round(bounds.left - proxyBounds.left);
+
+    // If the fast access menu is about to go off the right, bring it back.
     if (left + 240 > proxyBounds.width) {
       left = proxyBounds.width - 240;
+    }
+
+    // Similarly, if it's going to go off the bottom bring it back.
+    if (top + 300 > containerBounds.height) {
+      top = containerBounds.height - 300;
     }
 
     if (bounds.top === 0 || bounds.left === 0) {
@@ -614,6 +622,7 @@ export class TextEditor extends LitElement {
     }
 
     this.#editorRef.value.innerHTML = this.#renderableValue;
+    this.#ensureAllChicletsHaveSpace();
 
     if (this.#focusOnFirstRender) {
       this.focus();
@@ -656,6 +665,7 @@ export class TextEditor extends LitElement {
         @bbfastaccessdismissed=${() => {
           this.#hideFastAccess();
           this.#captureEditorValue();
+          this.#restoreLastRange();
         }}
         @bbfastaccessselect=${(evt: FastAccessSelectEvent) => {
           this.#hideFastAccess();
