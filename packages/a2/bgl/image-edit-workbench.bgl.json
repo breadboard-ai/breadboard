@@ -1,0 +1,64 @@
+{
+  "title": "Image Generator Workbench",
+  "description": "A blank board. Use it as a starting point for your creations.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "a2-e1b460ea",
+      "type": "file://bgl/a2.bgl.json#module:image-editor",
+      "metadata": {
+        "visual": {
+          "x": 80,
+          "y": -260,
+          "collapsed": "expanded",
+          "outputHeight": 228
+        },
+        "title": "Edit Image",
+        "logLevel": "info"
+      },
+      "configuration": {
+        "instruction": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Add a hat to the image"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a2-efb03857",
+      "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
+      "metadata": {
+        "title": "Ask User",
+        "visual": {
+          "x": -340,
+          "y": -280,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "a2-efb03857",
+      "to": "a2-e1b460ea",
+      "out": "context",
+      "in": "context"
+    }
+  ],
+  "metadata": {
+    "visual": {}
+  },
+  "assets": {
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxNTIuMDYiCiAgICAgICAgICAgICAgICAgICAgeT0iNDcuOTEiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9Ijg3Ljk0IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTEwLjk0IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMmU4YmU4IiAvPgo8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI0MS4xNSIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iODcuOTQiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI2My41OSIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KICAgICAgCiAgICA8L3N2Zz4="
+    }
+  }
+}
