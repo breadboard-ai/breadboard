@@ -150,6 +150,14 @@ export class LLMOutput extends LitElement {
       & iframe {
         aspect-ratio: 16/9;
       }
+
+      & .empty-text-part {
+        margin: 0;
+        padding: 0;
+        border-radius: var(--bb-grid-size-16);
+        font: normal italic var(--bb-body-small) /
+          var(--bb-body-line-height-small) var(--bb-font-family);
+      }
     }
 
     .value img,
@@ -349,7 +357,9 @@ export class LLMOutput extends LitElement {
           let value: TemplateResult | symbol = nothing;
           if (isTextCapabilityPart(part)) {
             if (part.text === "") {
-              value = html`${markdown("[Continue]")}`;
+              value = html`<span class="empty-text-part">
+                No value provided
+              </span>`;
             } else {
               value = html`${markdown(part.text)}`;
             }
@@ -505,7 +515,9 @@ export class LLMOutput extends LitElement {
             switch (part.fileData.mimeType) {
               case "video/mp4": {
                 if (part.fileData.fileUri === "") {
-                  value = html`YouTube video URL not set`;
+                  value = html`<span class="empty-text-part">
+                    YouTube video URL not set
+                  </span>`;
                 } else {
                   let uri: string | null = part.fileData.fileUri;
                   if (isWatchUri(uri)) {
@@ -515,7 +527,9 @@ export class LLMOutput extends LitElement {
                   }
 
                   if (!isEmbedUri(uri)) {
-                    value = html`Invalid YouTube Video URL`;
+                    value = html`<span class="empty-text-part">
+                      Invalid YouTube Video URL
+                    </span>`;
                     break;
                   }
 
