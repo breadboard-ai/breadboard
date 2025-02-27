@@ -111,6 +111,7 @@ const createBuiltInInspectableKit = (): InspectableKit => {
   };
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const createCustomTypesKit = (
   nodes: NodeDescriptor[],
   mutable: MutableGraph
@@ -137,12 +138,14 @@ const createCustomTypesKit = (
 
 export const collectKits = (
   mutable: MutableGraph,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   graph: GraphDescriptor
 ): InspectableKit[] => {
   const kits = mutable.store.kits;
   return [
     createBuiltInInspectableKit(),
-    ...createCustomTypesKit(graph.nodes, mutable),
+    // TODO(dglazkov) Clean this up.
+    // ...createCustomTypesKit(graph.nodes, mutable),
     ...kits.map((kit) => {
       const descriptor = {
         title: kit.title,
