@@ -494,6 +494,7 @@ export interface LanguagePack {
   CommandPalette: LanguagePackEntry;
   ComponentSelector: LanguagePackEntry;
   Editor: LanguagePackEntry;
+  FocusEditor: LanguagePackEntry;
   Global: LanguagePackEntry;
   KitSelector: LanguagePackEntry;
   ProjectListing: LanguagePackEntry;

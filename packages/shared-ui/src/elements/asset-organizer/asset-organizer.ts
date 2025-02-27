@@ -587,6 +587,20 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
     }
   }
 
+  #attemptUpdateAsset() {
+    if (!this.#contentInputRef.value || !this.editAssetContent) {
+      return;
+    }
+
+    if (isLLMContent(this.#contentInputRef.value.value)) {
+      this.editAssetContent.data = [this.#contentInputRef.value.value];
+    } else {
+      console.warn("No LLM Content found");
+    }
+
+    this.editAssetContent = null;
+  }
+
   protected willUpdate(changedProperties: PropertyValues): void {
     if (changedProperties.has("asset")) {
       this.editAssetContent = null;
@@ -852,19 +866,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                                   return;
                                 }
 
-                                if (
-                                  isLLMContent(
-                                    this.#contentInputRef.value.value
-                                  )
-                                ) {
-                                  this.editAssetContent.data = [
-                                    this.#contentInputRef.value.value,
-                                  ];
-                                } else {
-                                  console.warn("No LLM Content found");
-                                }
-
-                                this.editAssetContent = null;
+                                this.#attemptUpdateAsset();
                               }}
                             >
                               ${this.editAssetContent
@@ -876,6 +878,17 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                       ${this.editAssetContent
                         ? html`<bb-llm-input
                             ${ref(this.#contentInputRef)}
+                            @keydown=${(evt: KeyboardEvent) => {
+                              const isMac =
+                                navigator.platform.indexOf("Mac") === 0;
+                              const isCtrlCommand = isMac
+                                ? evt.metaKey
+                                : evt.ctrlKey;
+
+                              if (evt.key === "Enter" && isCtrlCommand) {
+                                this.#attemptUpdateAsset();
+                              }
+                            }}
                             .value=${assetData}
                             .clamped=${false}
                             .description=${null}

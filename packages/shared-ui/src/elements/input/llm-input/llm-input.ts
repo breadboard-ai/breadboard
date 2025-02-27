@@ -66,7 +66,7 @@ export class LLMInput extends LitElement {
   @property({ reflect: true, type: Boolean })
   accessor streamlined = false;
 
-  @property()
+  @property({ reflect: true, type: Boolean })
   accessor showPartControls = true;
 
   @property()
@@ -313,6 +313,12 @@ export class LLMInput extends LitElement {
       border-radius: var(--bb-grid-size);
     }
 
+    :host(:not([showpartcontrols])) {
+      #container {
+        padding-right: var(--bb-grid-size);
+      }
+    }
+
     .content {
       display: block;
       margin-bottom: var(--bb-grid-size-2);
@@ -321,6 +327,12 @@ export class LLMInput extends LitElement {
     .part {
       position: relative;
       margin: 0 var(--bb-grid-size-3);
+
+      &:last-of-type {
+        & .content {
+          margin-bottom: 0;
+        }
+      }
     }
 
     .part-controls {
@@ -565,12 +577,18 @@ export class LLMInput extends LitElement {
 
     :host([streamlined]) {
       #container {
-        border: 1px solid var(--bb-neutral-100);
-        padding: var(--bb-grid-size-2);
+        border: 1px solid var(--bb-neutral-300);
+        padding: var(--bb-grid-size-3);
+
+        &:focus-within {
+          border: 1px solid var(--bb-ui-700);
+          outline: 1px solid var(--bb-ui-700);
+        }
 
         & .part {
           margin: 0;
 
+          &:hover,
           &:focus-within {
             background: var(--bb-neutral-0);
           }

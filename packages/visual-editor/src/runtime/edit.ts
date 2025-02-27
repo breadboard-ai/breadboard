@@ -1126,7 +1126,8 @@ export class Edit extends EventTarget {
     nodeType: string,
     configuration: NodeConfiguration | null = null,
     metadata: NodeMetadata | null = null,
-    subGraphId: string | null = null
+    subGraphId: string | null = null,
+    options: { sourceId: NodeIdentifier; portId: PortIdentifier } | null = null
   ) {
     if (tab?.readOnly) {
       return;
@@ -1140,46 +1141,15 @@ export class Edit extends EventTarget {
       return;
     }
 
-    const inspectableGraph = editableGraph.inspect(subGraphId);
-    const title = (await inspectableGraph.typeById(nodeType)?.metadata())
-      ?.title;
-
-    if (title) {
-      metadata ??= {};
-      metadata.title = title;
-    }
-
-    const newNode = {
-      id,
-      type: nodeType,
-      metadata: metadata || undefined,
-      configuration: configuration || undefined,
-    };
-
-    // Comment nodes are stored in the metadata for the graph
-    if (nodeType === "comment") {
-      if (!metadata) {
-        return;
-      }
-
-      const graphMetadata = inspectableGraph.metadata() || {};
-      graphMetadata.comments = graphMetadata.comments || [];
-      graphMetadata.comments.push({
+    editableGraph.apply(
+      new BreadboardUI.Transforms.CreateNode(
         id,
-        text: "",
+        graphId,
+        nodeType,
+        configuration,
         metadata,
-      });
-
-      editableGraph.edit(
-        [{ type: "changegraphmetadata", metadata: graphMetadata, graphId }],
-        `Change metadata for graph - add comment "${id}"`
-      );
-      return;
-    }
-
-    editableGraph.edit(
-      [{ type: "addnode", node: newNode, graphId }],
-      `Add node ${id}`
+        options
+      )
     );
   }
 

@@ -23,6 +23,7 @@ import type {
   ModuleIdentifier,
   GraphInlineMetadata,
   GraphMetadata,
+  NodeConfiguration,
 } from "@breadboard-ai/types";
 import { GraphLoader } from "./loader/types.js";
 import { DataStore, FileSystem } from "./data/types.js";
@@ -360,6 +361,8 @@ export type NodeHandlerMetadata = {
   order?: number;
 
   updating?: boolean;
+
+  example?: NodeConfiguration;
 };
 
 export type NodeHandlerObject = {

@@ -400,7 +400,7 @@ export class GraphNode extends PIXI.Container {
         "pointerover",
         (evt: PIXI.FederatedPointerEvent) => {
           evt.target.alpha = ICON_ALPHA_OVER;
-          const message = "Run this component";
+          const message = Strings.from("COMMAND_RUN_ISOLATED");
           const x = evt.clientX;
           const y = evt.clientY;
 

@@ -179,6 +179,11 @@ export class UserInput extends LitElement {
           var(--bb-font-family);
         display: block;
 
+        & .description {
+          display: flex;
+          align-items: center;
+        }
+
         &:empty {
           display: none;
         }
@@ -202,6 +207,15 @@ export class UserInput extends LitElement {
 
           &:has(+ .input > input:checked)::before {
             background: var(--bb-icon-check) center center / 20px 20px no-repeat;
+          }
+
+          &:focus {
+            outline: none;
+
+            &::before {
+              border: 1px solid var(--bb-ui-700);
+              outline: 1px solid var(--bb-ui-700);
+            }
           }
         }
 
@@ -1278,13 +1292,28 @@ export class UserInput extends LitElement {
                 policy and terms apply
               </p>`
             : nothing}
-          ${this.showTitleInfo
+          ${this.showTitleInfo && input.title !== ""
             ? html`<span class="title">
                 <span class="title-value">${input.title} ${typeInfo}</span>
                 ${reset} ${enhance}
               </span>`
             : html`${reset} ${enhance}`}
-          <label for="${this.#createId(input.name)}">${description}</label>
+          <label
+            @keydown=${(evt: KeyboardEvent) => {
+              if (!(evt.target instanceof HTMLElement)) {
+                return;
+              }
+
+              if (evt.key !== "Space" && evt.key !== "Enter") {
+                return;
+              }
+
+              evt.target.click();
+            }}
+            tabindex=${input.schema?.type === "boolean" ? "0" : nothing}
+            for="${this.#createId(input.name)}"
+            >${description}</label
+          >
           <div class="input">${inputField}</div>
         </div>`;
       })}

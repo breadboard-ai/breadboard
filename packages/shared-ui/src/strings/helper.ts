@@ -46,6 +46,7 @@ export function forSection<T extends keyof LanguagePack>(section: T) {
       CommandPalette: {},
       ComponentSelector: {},
       Editor: {},
+      FocusEditor: {},
       Global: {},
       KitSelector: {},
       ProjectListing: {},

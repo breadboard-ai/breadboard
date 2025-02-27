@@ -10,7 +10,6 @@ const Strings = StringsHelper.forSection("Editor");
 import {
   BoardServer,
   BreadboardCapability,
-  EditSpec,
   GraphIdentifier,
   GraphProviderCapabilities,
   GraphProviderExtendedCapabilities,
@@ -62,7 +61,6 @@ import {
   HideTooltipEvent,
   InteractionEvent,
   KitNodeChosenEvent,
-  MultiEditEvent,
   NodeActivitySelectedEvent,
   NodeConfigurationUpdateRequestEvent,
   NodeCreateEvent,
@@ -1609,7 +1607,6 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       return;
     }
 
-    const edits: EditSpec[] = [];
     const id = createRandomID(nodeType);
     const visual: NodeMetadata["visual"] = {};
     const graphId =
@@ -1657,42 +1654,24 @@ export class Editor extends LitElement implements DragConnectorReceiver {
 
     const title = this.#getGraphTitleByType(nodeType);
 
-    edits.push({
-      type: "addnode",
-      graphId,
-      node: {
-        id,
-        type: nodeType,
-        metadata: {
-          title,
-          visual,
-        },
-      },
-    });
+    let options: { sourceId: NodeIdentifier; portId: PortIdentifier } | null =
+      null;
 
     if (this.#componentLibraryConfiguration) {
       const { id: sourceId, portId } = this.#componentLibraryConfiguration;
-
-      // Add an edge.
-      if (portId && sourceId) {
-        edits.push({
-          type: "addedge",
-          graphId,
-          edge: {
-            from: sourceId,
-            to: id,
-            out: portId,
-            in: portId,
-          },
-        });
+      if (sourceId && portId) {
+        options = { sourceId, portId };
       }
     }
 
     this.dispatchEvent(
-      new MultiEditEvent(
-        edits,
-        `Quick Add`,
-        this.#componentLibraryConfiguration?.subGraphId ?? null
+      new NodeCreateEvent(
+        id,
+        nodeType,
+        graphId,
+        null,
+        { title, visual },
+        options
       )
     );
 
