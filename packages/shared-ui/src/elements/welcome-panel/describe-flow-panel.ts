@@ -10,13 +10,27 @@ import * as StringsHelper from "../../strings/helper.js";
 import { outlineButtonWithIcon } from "../../styles/outline-button-with-icon.js";
 import { textInputWithIcon } from "../../styles/text-input-with-icon.js";
 import { createRef, ref } from "lit/directives/ref.js";
+import GenerateBoard from "@breadboard-ai/shared-ui/bgl/generate-board.bgl.json" with { type: "json" };
+import type {
+  GraphDescriptor,
+  InputValues,
+  LLMContent,
+  OutputValues,
+} from "@breadboard-ai/types";
+import { consume } from "@lit/context";
+import {
+  type SideBoardRuntime,
+  sideBoardRuntime,
+} from "../../utils/side-board-runtime.js";
+import { GraphBoardServerGeneratedBoardEvent } from "../../events/events.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
 type State =
   | { status: "initial" }
   | { status: "clicked" }
-  | { status: "generating"; description: string };
+  | { status: "generating" }
+  | { status: "error"; error: unknown };
 
 @customElement("bb-describe-flow-panel")
 export class DescribeFlowPanel extends LitElement {
@@ -53,13 +67,19 @@ export class DescribeFlowPanel extends LitElement {
         margin-top: 8px;
         color: var(--bb-neutral-700);
       }
+      #error {
+        color: var(--bb-error-color);
+      }
     `,
   ];
+
+  @consume({ context: sideBoardRuntime })
+  accessor sideBoardRuntime!: SideBoardRuntime | undefined;
 
   @state()
   accessor #state: State = { status: "initial" };
 
-  #descriptionInput = createRef<HTMLInputElement>();
+  readonly #descriptionInput = createRef<HTMLInputElement>();
 
   render() {
     switch (this.#state.status) {
@@ -86,10 +106,8 @@ export class DescribeFlowPanel extends LitElement {
         `;
       }
       case "generating": {
-        return html`<img
-            id="generating-spinner"
-            src="/images/progress-ui.svg"
-          />
+        return html`
+          <img id="generating-spinner" src="/images/progress-ui.svg" />
           <div>
             <div id="generating-status">
               ${Strings.from("LABEL_GENERATING_FLOW")}
@@ -97,7 +115,21 @@ export class DescribeFlowPanel extends LitElement {
             <div id="generating-status-detail">
               ${Strings.from("LABEL_GENERATING_FLOW_DETAIL")}
             </div>
-          </div>`;
+          </div>
+        `;
+      }
+      case "error": {
+        let error = this.#state.error as
+          | { message?: string }
+          | { error: { message?: string } };
+        if ("error" in error) {
+          // Errors from Breadboard are often wrapped in an {error: <Error>}
+          // structure. Unwrap if needed.
+          error = error.error;
+        }
+        const message =
+          "message" in error ? `Error: ${error.message}` : String(error);
+        return html`<div id="error">${message}</div>`;
       }
       default: {
         this.#state satisfies never;
@@ -115,9 +147,63 @@ export class DescribeFlowPanel extends LitElement {
     if (event.key === "Enter") {
       const description = this.#descriptionInput.value?.value;
       if (description) {
-        this.#state = { status: "generating", description };
+        this.#state = { status: "generating" };
+        void this.#generateBoard(description)
+          .then((graph) => this.#onGenerateComplete(graph))
+          .catch((error) => this.#onGenerateError(error));
       }
     }
+  }
+
+  async #generateBoard(description: string): Promise<GraphDescriptor> {
+    if (!this.sideBoardRuntime) {
+      throw new Error("Internal error: No side board runtime was available.");
+    }
+    const runner = await this.sideBoardRuntime.createRunner({
+      ...(GenerateBoard as GraphDescriptor),
+      // TODO(aomarks) I'm unsure about what url should be. import.meta.url is
+      // another option, but it errors with a "not valid JSON" error.
+      url: "file://bgl/generate-board.bgl.json",
+    });
+    const inputs: InputValues & { context: LLMContent[] } = {
+      context: [{ parts: [{ text: description }] }],
+    };
+    const outputs = await new Promise<OutputValues[]>((resolve, reject) => {
+      const outputs: OutputValues[] = [];
+      runner.addEventListener("input", () => void runner.run(inputs));
+      runner.addEventListener("output", (event) =>
+        outputs.push(event.data.outputs)
+      );
+      runner.addEventListener("end", () => resolve(outputs));
+      runner.addEventListener("error", (event) => reject(event.data.error));
+      void runner.run();
+    });
+    if (outputs.length !== 1) {
+      throw new Error(`Expected 1 output, got ${JSON.stringify(outputs)}`);
+    }
+    const board = (outputs[0] as { board?: GraphDescriptor }).board;
+    if (!board) {
+      throw new Error(
+        `Expected {"board": <GraphDescriptor>}, got ` +
+          JSON.stringify(outputs[0])
+      );
+    }
+    return board;
+  }
+
+  #onGenerateComplete(graph: GraphDescriptor) {
+    if (this.#state.status !== "generating") {
+      return;
+    }
+    this.dispatchEvent(new GraphBoardServerGeneratedBoardEvent(graph));
+  }
+
+  #onGenerateError(error: unknown) {
+    if (this.#state.status !== "generating") {
+      return;
+    }
+    console.error("Error generating board", error);
+    this.#state = { status: "error", error };
   }
 }
 
