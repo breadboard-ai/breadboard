@@ -120,15 +120,20 @@ export class DescribeFlowPanel extends LitElement {
       }
       case "error": {
         let error = this.#state.error as
+          | string
           | { message?: string }
-          | { error: { message?: string } };
-        if ("error" in error) {
+          | { error: { message?: string } | string };
+        if (typeof error === "object" && error !== null && "error" in error) {
           // Errors from Breadboard are often wrapped in an {error: <Error>}
           // structure. Unwrap if needed.
           error = error.error;
         }
-        const message =
-          "message" in error ? `Error: ${error.message}` : String(error);
+        let message;
+        if (typeof error === "object" && error !== null && "message" in error) {
+          message = error.message;
+        } else {
+          message = String(error);
+        }
         return html`<div id="error">${message}</div>`;
       }
       default: {
