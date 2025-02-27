@@ -2512,28 +2512,17 @@ export class Main extends LitElement {
                 evt.ins
               );
             }}
+            @bbrunisolatednode=${async (
+              evt: BreadboardUI.Events.RunIsolatedNodeEvent
+            ) => {
+              await this.#attemptNodeRun(evt.id);
+            }}
             @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
               this.toast(toastEvent.message, toastEvent.toastType);
             }}
           >
           </bb-focus-editor>`;
         } else if (this.showNodeConfigurator) {
-          const canRunNode = this.#nodeConfiguratorData
-            ? topGraphResult.nodeInformation.canRunNode(
-                this.#nodeConfiguratorData.id
-              )
-            : false;
-
-          const run = runs?.[0] ?? null;
-          const events = run?.events ?? [];
-          const runEventsForNode = events.filter((evt) => {
-            return (
-              evt.type === "node" &&
-              evt.node.descriptor.id === this.#nodeConfiguratorData?.id &&
-              evt.end !== null
-            );
-          });
-
           nodeConfiguratorOverlay = html`<bb-node-configuration-overlay
             ${ref(this.#nodeConfiguratorRef)}
             .canRunNode=${canRunNode}

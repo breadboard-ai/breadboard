@@ -26,6 +26,9 @@ export default {
   COMMAND_ZOOM_TO_FIT: {
     str: "Fit to Screen",
   },
+  COMMAND_RUN_ISOLATED: {
+    str: "Run this Step",
+  },
 
   // Statuses.
 

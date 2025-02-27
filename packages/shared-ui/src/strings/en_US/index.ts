@@ -12,6 +12,7 @@ import AudioHandler from "./audio-handler.js";
 import CommandPalette from "./command-palette.js";
 import ComponentSelector from "./component-selector.js";
 import Editor from "./editor.js";
+import FocusEditor from "./focus-editor.js";
 import Global from "./global.js";
 import KitSelector from "./kit-selector.js";
 import ProjectListing from "./project-listing.js";
@@ -26,6 +27,7 @@ const lang: LanguagePack = {
   CommandPalette,
   ComponentSelector,
   Editor,
+  FocusEditor,
   Global,
   KitSelector,
   ProjectListing,

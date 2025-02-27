@@ -3,6 +3,10 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
+
+import * as StringsHelper from "../../strings/helper.js";
+const Strings = StringsHelper.forSection("FocusEditor");
+
 import {
   LitElement,
   html,
@@ -14,8 +18,11 @@ import {
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import {
+  HideTooltipEvent,
   NodePartialUpdateEvent,
   OverlayDismissedEvent,
+  RunIsolatedNodeEvent,
+  ShowTooltipEvent,
 } from "../../events/events";
 import {
   NodePortConfiguration,
@@ -37,6 +44,7 @@ import { TemplatePart } from "../../utils/template";
 import { NodeMetadata } from "@breadboard-ai/types";
 import { map } from "lit/directives/map.js";
 import { markdown } from "../../directives/markdown";
+import { isLLMContentBehavior } from "../../utils";
 
 @customElement("bb-focus-editor")
 export class FocusEditor extends LitElement {
@@ -71,7 +79,7 @@ export class FocusEditor extends LitElement {
   accessor readOnly = false;
 
   @property({ reflect: true, type: Boolean })
-  accessor hasOutputs = false;
+  accessor showOutputPane = false;
 
   @property()
   accessor projectState: Project | null = null;
@@ -114,10 +122,10 @@ export class FocusEditor extends LitElement {
       --inner-border: var(--bb-inputs-300);
     }
 
-    :host([hasoutputs]) {
+    :host([showoutputpane]) {
       & #container {
         & #content-container {
-          max-width: 1440px;
+          max-width: 1240px;
 
           & #content {
             grid-template-columns: 3fr minmax(0, 2fr);
@@ -161,23 +169,138 @@ export class FocusEditor extends LitElement {
       }
 
       & #content-container {
-        display: block;
+        display: flex;
+        flex-direction: column;
         background: var(--bb-neutral-0);
         border-radius: var(--bb-grid-size-2);
         border: 1px solid var(--outer-border);
         width: 85svw;
         max-width: 840px;
-        height: 85svh;
-        max-height: 980px;
+        min-height: 40svh;
+        height: min-content;
+        max-height: 85svh;
         transform-origin: 0 0;
+
+        & header {
+          flex: 0 0 auto;
+
+          display: flex;
+          align-items: center;
+          background: var(--background);
+          height: var(--bb-grid-size-10);
+          border-radius: var(--bb-grid-size-2) var(--bb-grid-size-2) 0 0;
+          border-bottom: 1px solid var(--inner-border);
+          width: 100%;
+          padding: var(--bb-grid-size-3);
+
+          & h1 {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            margin: 0;
+            max-width: 80%;
+
+            & input {
+              font: 400 var(--bb-label-large) /
+                var(--bb-label-line-height-large) var(--bb-font-family);
+              background: transparent;
+              padding: var(--bb-grid-size) var(--bb-grid-size);
+              border: 1px solid transparent;
+              border-radius: var(--bb-grid-size);
+              field-sizing: content;
+              max-width: 100%;
+              min-width: 20%;
+
+              &:hover,
+              &:focus {
+                border: 1px solid var(--outer-border);
+              }
+            }
+          }
+
+          #run-node {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            flex: 1;
+
+            & #run-isolated-node {
+              width: 20px;
+              height: 20px;
+              border: none;
+              opacity: 0.3;
+              font-size: 0;
+              background: transparent var(--bb-icon-play-arrow-filled) center
+                center / 20px 20px no-repeat;
+
+              &:not([disabled]) {
+                cursor: pointer;
+                opacity: 0.7;
+              }
+            }
+          }
+
+          &::before {
+            content: "";
+            width: 20px;
+            height: 20px;
+            background: var(--bb-icon-wrench) center center / 20px 20px
+              no-repeat;
+            margin-right: var(--bb-grid-size);
+          }
+
+          &.generative::before {
+            background-image: var(--bb-add-icon-generative);
+          }
+
+          &.generative-audio::before {
+            background-image: var(--bb-add-icon-generative-audio);
+          }
+
+          &.generative-code::before {
+            background-image: var(--bb-add-icon-generative-code);
+          }
+
+          &.generative-text::before {
+            background-image: var(--bb-add-icon-generative-text);
+          }
+
+          &.generative-image::before {
+            background-image: var(--bb-add-icon-generative-image);
+          }
+
+          &.input,
+          &.output,
+          &.combine-outputs,
+          &.text {
+            border-bottom: 1px solid var(--bb-input-300);
+          }
+
+          &.input::before {
+            background-image: var(--bb-icon-input);
+          }
+
+          &.output::before {
+            background-image: var(--bb-icon-output);
+          }
+
+          &.combine-outputs::before {
+            background-image: var(--bb-icon-table-rows);
+          }
+
+          &.text::before {
+            background-image: var(--bb-icon-text);
+          }
+        }
 
         & #content {
           display: grid;
           grid-template-columns: 1fr;
           width: 100%;
-          height: 100%;
+          flex: 1 1 auto;
           opacity: 1;
           transition: opacity 0.15s 0.2s cubic-bezier(0, 0, 0.3, 1);
+          overflow: auto;
 
           & #text-editor {
             display: flex;
@@ -185,129 +308,13 @@ export class FocusEditor extends LitElement {
             height: 100%;
             overflow: auto;
             scrollbar-width: none;
-
-            & header {
-              &::before {
-                content: "";
-                width: 20px;
-                height: 20px;
-                background: var(--bb-icon-wrench) center center / 20px 20px
-                  no-repeat;
-                margin-right: var(--bb-grid-size);
-              }
-
-              background: var(--background);
-              height: var(--bb-grid-size-10);
-              border-radius: var(--bb-grid-size-2) var(--bb-grid-size-2) 0 0;
-              border-bottom: 1px solid var(--inner-border);
-              width: 100%;
-              padding: var(--bb-grid-size-3);
-
-              & h1 {
-                font: 400 var(--bb-label-large) /
-                  var(--bb-label-line-height-large) var(--bb-font-family);
-                margin: 0;
-              }
-
-              display: flex;
-              align-items: center;
-
-              &.generative::before {
-                background-image: var(--bb-add-icon-generative);
-              }
-
-              &.generative-audio::before {
-                background-image: var(--bb-add-icon-generative-audio);
-              }
-
-              &.generative-code::before {
-                background-image: var(--bb-add-icon-generative-code);
-              }
-
-              &.generative-text::before {
-                background-image: var(--bb-add-icon-generative-text);
-              }
-
-              &.generative-image::before {
-                background-image: var(--bb-add-icon-generative-image);
-              }
-
-              &.input,
-              &.output,
-              &.combine-outputs,
-              &.text {
-                border-bottom: 1px solid var(--bb-input-300);
-              }
-
-              &.input::before {
-                background-image: var(--bb-icon-input);
-              }
-
-              &.output::before {
-                background-image: var(--bb-icon-output);
-              }
-
-              &.combine-outputs::before {
-                background-image: var(--bb-icon-table-rows);
-              }
-
-              &.text::before {
-                background-image: var(--bb-icon-text);
-              }
-            }
+            padding-bottom: var(--bb-grid-size-12);
 
             & #user-input {
               flex: 1;
               overflow-x: hidden;
               overflow-y: scroll;
               padding: var(--bb-grid-size-3);
-            }
-
-            & footer {
-              flex: 0 0 auto;
-              height: var(--bb-grid-size-10);
-              display: flex;
-              align-items: center;
-              justify-content: flex-end;
-              padding: 0 var(--bb-grid-size-2);
-
-              & #cancel {
-                background: transparent;
-                border: none;
-                font: 400 var(--bb-label-medium) /
-                  var(--bb-label-line-height-medium) var(--bb-font-family);
-                color: var(--bb-neutral-500);
-                margin-right: var(--bb-grid-size-2);
-              }
-
-              & #update {
-                background: var(--bb-ui-500);
-                border: none;
-                border-radius: var(--bb-grid-size-16);
-                color: var(--bb-neutral-0);
-
-                display: flex;
-                justify-content: flex-end;
-                align-items: center;
-                height: var(--bb-grid-size-6);
-
-                font: 400 var(--bb-label-medium) /
-                  var(--bb-label-line-height-medium) var(--bb-font-family);
-                padding: 0 var(--bb-grid-size-4);
-                transition: background-color 0.3s cubic-bezier(0, 0, 0.3, 1);
-                opacity: 0.5;
-
-                &:not([disabled]) {
-                  opacity: 1;
-                  cursor: pointer;
-
-                  &:hover,
-                  &:focus {
-                    background: var(--bb-ui-600);
-                    transition-duration: 0.1s;
-                  }
-                }
-              }
             }
           }
 
@@ -317,27 +324,152 @@ export class FocusEditor extends LitElement {
             border-left: 1px solid var(--inner-border);
             position: relative;
             color: var(--bb-neutral-700);
-            font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
+            font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
               var(--bb-font-family);
             overflow: auto;
+
+            & .placeholder {
+              margin-bottom: var(--bb-grid-size-4);
+
+              &.audio {
+                height: var(--bb-grid-size-8);
+                border-radius: var(--bb-grid-size-16);
+                background: var(--bb-neutral-100) var(--bb-icon-add-audio)
+                  center center / 20px 20px no-repeat;
+              }
+
+              &.image {
+                aspect-ratio: 4/3;
+                background: var(--bb-neutral-100) var(--bb-icon-add-image)
+                  center center / 20px 20px no-repeat;
+                border-radius: var(--bb-grid-size);
+                width: 80%;
+                margin: 0 auto;
+              }
+
+              &.text {
+                & .line {
+                  background: var(--bb-neutral-100);
+                  border-radius: var(--bb-grid-size-16);
+                  width: 100%;
+                  height: var(--bb-grid-size-3);
+                  margin-bottom: 6px;
+
+                  &.l1,
+                  &.l4 {
+                    width: 82%;
+                  }
+
+                  &.l2 {
+                    width: 92%;
+                  }
+
+                  &.l3 {
+                    width: 86%;
+                  }
+
+                  &.l5 {
+                    width: 41%;
+                  }
+                }
+              }
+            }
 
             & #output-content {
               height: 100%;
               overflow: scroll;
-              padding: var(--bb-grid-size-8) var(--bb-grid-size-3);
-            }
+              padding: var(--bb-grid-size-9) var(--bb-grid-size-4);
 
-            &::before {
-              content: "";
-              position: absolute;
-              top: 0;
-              left: 0;
-              width: 4px;
-              height: 100%;
-              background: var(--background);
+              & .no-outputs {
+                margin-top: calc(var(--bb-grid-size-5) * -1);
+              }
             }
 
             --output-border-width: 0;
+          }
+        }
+
+        & footer {
+          flex: 0 0 auto;
+          height: var(--bb-grid-size-11);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0 var(--bb-grid-size-2);
+          border-top: 1px solid var(--inner-border);
+
+          & > div {
+            display: flex;
+            align-items: center;
+          }
+
+          & #cancel {
+            background: transparent;
+            border: none;
+            font: 400 var(--bb-label-medium) /
+              var(--bb-label-line-height-medium) var(--bb-font-family);
+            color: var(--bb-neutral-500);
+            margin-left: var(--bb-grid-size-2);
+          }
+
+          & #update {
+            background: var(--bb-ui-500);
+            border: none;
+            border-radius: var(--bb-grid-size-16);
+            color: var(--bb-neutral-0);
+
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            height: var(--bb-grid-size-7);
+
+            font: 400 var(--bb-label-medium) /
+              var(--bb-label-line-height-medium) var(--bb-font-family);
+            padding: 0 var(--bb-grid-size-4);
+            transition: background-color 0.3s cubic-bezier(0, 0, 0.3, 1);
+            opacity: 0.5;
+
+            &:not([disabled]) {
+              opacity: 1;
+              cursor: pointer;
+
+              &:hover,
+              &:focus {
+                background: var(--bb-ui-600);
+                transition-duration: 0.1s;
+              }
+            }
+          }
+
+          & #toggle-output {
+            background: var(--bb-neutral-0) var(--bb-icon-dock-to-right) 8px
+              center / 20px 20px no-repeat;
+            border: none;
+            border-radius: var(--bb-grid-size-16);
+            color: var(--bb-neutral-700);
+
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            height: var(--bb-grid-size-7);
+
+            font: 400 var(--bb-label-medium) /
+              var(--bb-label-line-height-medium) var(--bb-font-family);
+            padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-8);
+            transition: background-color 0.3s cubic-bezier(0, 0, 0.3, 1);
+            opacity: 0.5;
+
+            &:not([disabled]) {
+              opacity: 1;
+              cursor: pointer;
+
+              &.active,
+              &:hover,
+              &:focus {
+                background-color: var(--bb-neutral-100);
+                transition-duration: 0.1s;
+              }
+            }
           }
         }
 
@@ -355,6 +487,7 @@ export class FocusEditor extends LitElement {
     }
   `;
 
+  #onEscapeKeyPressBound = this.onEscapeKeyPress.bind(this);
   #userInputRef: Ref<UserInput> = createRef();
   #contentRef: Ref<HTMLElement> = createRef();
   #containerRef: Ref<HTMLElement> = createRef();
@@ -362,6 +495,18 @@ export class FocusEditor extends LitElement {
     "_initializing";
   #targetState: "_initializing" | "collapsed" | "expanded" | "inactive" =
     "_initializing";
+
+  connectedCallback(): void {
+    super.connectedCallback();
+
+    window.addEventListener("keydown", this.#onEscapeKeyPressBound);
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+
+    window.removeEventListener("keydown", this.#onEscapeKeyPressBound);
+  }
 
   protected firstUpdated(): void {
     // Wait a frame to set this value after the initial update cycle.
@@ -379,20 +524,32 @@ export class FocusEditor extends LitElement {
 
       this.#targetState = this.active ? "expanded" : "collapsed";
 
-      if (this.#targetState === "expanded") {
-        this.#beginExpandAnimationIfNeeded();
-      }
+      // We wait a frame here so that the content has time to render and then
+      // we can measure its sizing for the expand animation.
+      requestAnimationFrame(() => {
+        if (this.#targetState === "expanded") {
+          this.#beginExpandAnimationIfNeeded();
+        }
 
-      if (this.#targetState === "collapsed") {
-        this.#done();
-      }
+        if (this.#targetState === "collapsed") {
+          this.#done();
+        }
+      });
     }
 
     if (changedProperties.has("runEventsForNode")) {
       if (this.runEventsForNode && this.runEventsForNode.length > 0) {
-        this.hasOutputs = true;
+        this.showOutputPane = true;
       }
     }
+  }
+
+  onEscapeKeyPress(evt: KeyboardEvent) {
+    if (evt.key !== "Escape") {
+      return;
+    }
+
+    this.#done();
   }
 
   #done(processData = false) {
@@ -510,6 +667,7 @@ export class FocusEditor extends LitElement {
 
   processData(debugging = false) {
     if (
+      !this.#contentRef.value ||
       !this.#userInputRef.value ||
       !this.configuration ||
       !this.configuration.ports
@@ -544,7 +702,11 @@ export class FocusEditor extends LitElement {
     }
 
     const { id, subGraphId } = this.configuration;
+    const titleEl =
+      this.#contentRef.value.querySelector<HTMLInputElement>("#title");
+
     const metadata: NodeMetadata = {};
+    if (titleEl?.value) metadata.title = titleEl.value;
 
     if (!debugging) {
       this.#destroyCodeEditors();
@@ -584,6 +746,64 @@ export class FocusEditor extends LitElement {
     return EditorMode.MINIMAL;
   }
 
+  #createPlaceholdersFromConfiguration() {
+    if (!this.configuration || !this.configuration.ports) {
+      return html`<p class="no-outputs">
+        ${Strings.from("LABEL_NO_OUTPUTS")}
+      </p>`;
+    }
+
+    const factory = (type: string) =>
+      html`<div class=${classMap({ placeholder: true, [type]: true })}>
+        ${type === "text"
+          ? html`
+              <div class="line l1"></div>
+              <div class="line l2"></div>
+              <div class="line l3"></div>
+              <div class="line l4"></div>
+              <div class="line l5"></div>
+            `
+          : nothing}
+      </div>`;
+
+    const placeholders: HTMLTemplateResult[] = [];
+    for (const port of this.configuration.ports.outputs.ports) {
+      const preview =
+        port.schema.behavior?.filter((b) => b.startsWith("hint-")) ?? [];
+      for (const item of preview) {
+        switch (item) {
+          case "hint-audio": {
+            placeholders.push(factory("audio"));
+            break;
+          }
+
+          case "hint-code":
+          case "hint-text": {
+            placeholders.push(factory("text"));
+            break;
+          }
+
+          case "hint-multimodal": {
+            placeholders.push(factory("text"));
+            placeholders.push(factory("image"));
+            break;
+          }
+
+          case "hint-image": {
+            placeholders.push(factory("image"));
+            break;
+          }
+
+          default: {
+            return html`...`;
+          }
+        }
+      }
+    }
+
+    return placeholders;
+  }
+
   render() {
     const icon = (
       this.configuration?.currentMetadata?.icon ??
@@ -621,9 +841,14 @@ export class FocusEditor extends LitElement {
         hasValueOverride = true;
       }
 
+      let title = port.title;
+      if (port.title === "Instruction" && isLLMContentBehavior(port.schema)) {
+        title = "";
+      }
+
       return {
         name: port.name,
-        title: port.title,
+        title,
         secret: false,
         configured: port.configured,
         value: structuredClone(value),
@@ -640,7 +865,7 @@ export class FocusEditor extends LitElement {
     let outputs: HTMLTemplateResult | symbol = nothing;
     const shouldShowOutputs =
       this.configuration?.type?.toLocaleLowerCase() !== "input";
-    if (shouldShowOutputs && this.hasOutputs) {
+    if (shouldShowOutputs && this.showOutputPane) {
       outputs = html`<div id="outputs">
         <div id="output-content">
           ${this.runEventsForNode && this.runEventsForNode.length > 0
@@ -728,7 +953,9 @@ export class FocusEditor extends LitElement {
                   </div>`;
                 })}`;
               })}`
-            : html`<div class="outputs">No outputs available yet</div>`}
+            : html`<div class="outputs">
+                ${this.#createPlaceholdersFromConfiguration()}
+              </div>`}
         </div>
       </div>`;
     }
@@ -751,34 +978,69 @@ export class FocusEditor extends LitElement {
         @pointerdown=${(evt: PointerEvent) => {
           evt.stopImmediatePropagation();
         }}
+        @keydown=${(evt: KeyboardEvent) => {
+          const isMac = navigator.platform.indexOf("Mac") === 0;
+          const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+          if (evt.key === "Enter" && isCtrlCommand) {
+            this.#done(true);
+          }
+        }}
       >
-        <div id="content">
+        <header class=${classMap({ [icon]: true })}>
+          <h1>
+            <input
+              id="title"
+              name="title"
+              .value=${this.configuration?.title}
+            />
+          </h1>
+          <div id="run-node">
+            <button
+              id="run-isolated-node"
+              ?disabled=${!this.canRunNode}
+              @pointerover=${(evt: PointerEvent) => {
+                this.dispatchEvent(
+                  new ShowTooltipEvent(
+                    Strings.from("COMMAND_RUN_ISOLATED"),
+                    evt.clientX,
+                    evt.clientY
+                  )
+                );
+              }}
+              @pointerout=${() => {
+                this.dispatchEvent(new HideTooltipEvent());
+              }}
+              @click=${() => {
+                if (!this.configuration) {
+                  return;
+                }
+
+                this.#done(true);
+                this.dispatchEvent(
+                  new RunIsolatedNodeEvent(this.configuration.id, true)
+                );
+              }}
+            >
+              Run node
+            </button>
+          </div>
+        </header>
+        <section id="content">
           <div id="text-editor">
-            <header class=${classMap({ [icon]: true })}>
-              <h1>${this.configuration?.title}</h1>
-            </header>
             <div id="user-input">
               ${this.configuration
                 ? html`
                     <bb-user-input
                       ${ref(this.#userInputRef)}
-                      @keydown=${(evt: KeyboardEvent) => {
-                        const isMac = navigator.platform.indexOf("Mac") === 0;
-                        const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
-
-                        if (evt.key === "Enter" && isCtrlCommand) {
-                          this.#done(true);
-                        }
-                      }}
                       .nodeId=${this.configuration.id}
                       .inputs=${userInputs}
                       .graph=${this.graph}
                       .subGraphId=${this.configuration.subGraphId}
                       .boardServers=${this.boardServers}
-                      .showTypes=${this.showTypes}
+                      .showTypes=${false}
                       .showTitleInfo=${true}
                       .inlineControls=${true}
-                      .jumpTo=${this.configuration.selectedPort}
                       .enhancingValue=${false}
                       .projectState=${this.projectState}
                       .readOnly=${this.readOnly}
@@ -789,28 +1051,41 @@ export class FocusEditor extends LitElement {
                   `
                 : nothing}
             </div>
-            <footer>
-              <button
-                id="cancel"
-                @click=${() => {
-                  this.#done();
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                ?disabled=${this.readOnly}
-                id="update"
-                @click=${() => {
-                  this.#done(true);
-                }}
-              >
-                Update
-              </button>
-            </footer>
           </div>
           ${outputs}
-        </div>
+        </section>
+        <footer>
+          <div>
+            <button
+              ?disabled=${this.readOnly}
+              id="update"
+              @click=${() => {
+                this.#done(true);
+              }}
+            >
+              Update
+            </button>
+            <button
+              id="cancel"
+              @click=${() => {
+                this.#done();
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+          <div>
+            <button
+              class=${classMap({ active: this.showOutputPane })}
+              id="toggle-output"
+              @click=${() => {
+                this.showOutputPane = !this.showOutputPane;
+              }}
+            >
+              Output
+            </button>
+          </div>
+        </footer>
       </div>
     </section>`;
   }

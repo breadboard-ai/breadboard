@@ -565,12 +565,18 @@ export class LLMInput extends LitElement {
 
     :host([streamlined]) {
       #container {
-        border: 1px solid var(--bb-neutral-100);
-        padding: var(--bb-grid-size-2);
+        border: 1px solid var(--bb-neutral-300);
+        padding: var(--bb-grid-size-3);
+
+        &:focus-within {
+          border: 1px solid var(--bb-ui-700);
+          outline: 1px solid var(--bb-ui-700);
+        }
 
         & .part {
           margin: 0;
 
+          &:hover,
           &:focus-within {
             background: var(--bb-neutral-0);
           }
