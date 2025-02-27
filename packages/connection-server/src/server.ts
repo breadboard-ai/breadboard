@@ -24,10 +24,11 @@ export type { ServerConfig };
  * Fails if CONNECTIONS_FILE is set but no file is found.
  */
 export async function createServerConfig(): Promise<ServerConfig> {
-  var connections = new Map();
-  if (process.env.CONNECTIONS_FILE) {
-    connections = await loadConnections(process.env.CONNECTIONS_FILE);
-  }
+  const connectionsFile = process.env.CONNECTIONS_FILE;
+  const connections = connectionsFile
+    ? await loadConnections(connectionsFile)
+    : new Map();
+
   const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? "")
     .split(/\s+/)
     .filter((origin) => origin !== "");
