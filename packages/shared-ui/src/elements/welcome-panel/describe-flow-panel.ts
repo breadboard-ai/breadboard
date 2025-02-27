@@ -161,9 +161,6 @@ export class DescribeFlowPanel extends LitElement {
     }
     const runner = await this.sideBoardRuntime.createRunner({
       ...(GenerateBoard as GraphDescriptor),
-      // TODO(aomarks) I'm unsure about what url should be. import.meta.url is
-      // another option, but it errors with a "not valid JSON" error.
-      url: "file://bgl/generate-board.bgl.json",
     });
     const inputs: InputValues & { context: LLMContent[] } = {
       context: [{ parts: [{ text: description }] }],

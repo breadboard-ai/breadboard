@@ -524,8 +524,19 @@ export class Main extends LitElement {
 
         this.sideBoardRuntime = {
           createRunner: async (
-            graph: GraphDescriptor & { url: string }
+            graph: GraphDescriptor
           ): Promise<HarnessRunner> => {
+            if (!graph.url) {
+              // Side-boards often won't have the required `url` property,
+              // because they might have been imported e.g. via the JS import
+              // graph, instead of via a board loader (note that board loaders
+              // inject `url` into the graphs they load). In this case, an
+              // arbitrary one will be fine, as long as the board doesn't need
+              // to load any other boards via non-self relative URLs.
+              graph = { ...graph };
+              graph.url = `file://sideboard/${crypto.randomUUID()}`;
+            }
+            this.#graphStore.addByDescriptor(graph);
             const config = addNodeProxyServerConfig(
               this.#proxy,
               {
