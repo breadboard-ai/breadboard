@@ -10,17 +10,24 @@ export type GitHashOutputs = {
 
 export async function tryGetGitHash() {
   const cp = await import("node:child_process");
-  return new Promise<GitHashOutputs>((resolve, reject) => {
+  return new Promise<GitHashOutputs>((resolve) => {
     cp.exec(
       'git log -1 --pretty=format:"%h"',
       { timeout: 5000 },
       (err, stdout) => {
+        // Use en-CA to get yyyy-mm-dd formatted dates.
+        const date = new Date().toLocaleDateString("en-CA", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        });
+
         if (err) {
-          reject(err);
+          resolve({ GIT_HASH: JSON.stringify(date) });
           return;
         }
 
-        resolve({ GIT_HASH: JSON.stringify(stdout) });
+        resolve({ GIT_HASH: JSON.stringify(`${date}; ${stdout}`) });
       }
     );
   });
