@@ -1,0 +1,48 @@
+{
+  "title": "A2 Go Over a List",
+  "description": "",
+  "version": "0.0.1",
+  "nodes": [],
+  "edges": [],
+  "metadata": {
+    "comments": [
+      {
+        "id": "comment-cc94afe8",
+        "text": "Intentionally Left Blank",
+        "metadata": {
+          "title": "Comment",
+          "visual": {
+            "x": 531,
+            "y": 374,
+            "collapsed": "expanded",
+            "outputHeight": 0
+          }
+        }
+      }
+    ],
+    "visual": {},
+    "tags": []
+  },
+  "modules": {
+    "main": {
+      "code": "/**\n * @fileoverview Turn anything into a list, make a plan for that list, and go over it\n */\nimport { Template } from \"./a2/template\";\nimport { ToolManager } from \"./a2/tool-manager\";\nimport {} from \"./a2/common\";\nimport { ok } from \"./a2/utils\";\nexport { invoke as default, describe };\nasync function invoke({ context, plan, ...params }) {\n    const toolManager = new ToolManager();\n    const template = new Template(plan);\n    const substituting = await template.substitute(params, async ({ path: url }) => toolManager.addTool(url));\n    if (!ok(substituting)) {\n        return substituting;\n    }\n    return { context };\n}\nasync function describe({ inputs: { plan } }) {\n    const template = new Template(plan);\n    return {\n        inputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context in\",\n                    behavior: [\"main-port\"],\n                },\n                plan: {\n                    type: \"object\",\n                    behavior: [\"llm-content\", \"config\", \"hint-preview\"],\n                    title: \"Instruction\",\n                    description: \"Describe what will be turned into a list and then gone over\",\n                },\n                ...template.schemas(),\n            },\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context out\",\n                },\n            },\n            behavior: [\"at-wireable\"],\n            ...template.requireds(),\n            additionalProperties: false,\n        },\n        title: \"Go over a list\",\n        description: \"Turn anything into a list, make a plan for that list, and go over it\",\n        metadata: {\n            icon: \"generative\",\n            tags: [\"quick-access\", \"generative\"],\n            order: 102,\n        },\n    };\n}\n",
+      "metadata": {
+        "title": "main",
+        "source": {
+          "code": "/**\n * @fileoverview Turn anything into a list, make a plan for that list, and go over it\n */\nimport { Template } from \"./a2/template\";\nimport { ToolManager } from \"./a2/tool-manager\";\nimport { type Params } from \"./a2/common\";\nimport { ok } from \"./a2/utils\";\n\nexport { invoke as default, describe };\n\ntype Inputs = {\n  context: LLMContent[];\n  plan: LLMContent;\n} & Params;\n\ntype Outputs = {\n  context: LLMContent[];\n};\n\nasync function invoke({\n  context,\n  plan,\n  ...params\n}: Inputs): Promise<Outcome<Outputs>> {\n  const toolManager = new ToolManager();\n  const template = new Template(plan);\n  const substituting = await template.substitute(\n    params,\n    async ({ path: url }) => toolManager.addTool(url)\n  );\n  if (!ok(substituting)) {\n    return substituting;\n  }\n\n  return { context };\n}\n\ntype DescribeInputs = {\n  inputs: {\n    plan: LLMContent;\n  };\n};\n\nasync function describe({ inputs: { plan } }: DescribeInputs) {\n  const template = new Template(plan);\n  return {\n    inputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context in\",\n          behavior: [\"main-port\"],\n        },\n        plan: {\n          type: \"object\",\n          behavior: [\"llm-content\", \"config\", \"hint-preview\"],\n          title: \"Instruction\",\n          description:\n            \"Describe what will be turned into a list and then gone over\",\n        },\n        ...template.schemas(),\n      },\n    } satisfies Schema,\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context out\",\n        },\n      },\n      behavior: [\"at-wireable\"],\n      ...template.requireds(),\n      additionalProperties: false,\n    } satisfies Schema,\n    title: \"Go over a list\",\n    description:\n      \"Turn anything into a list, make a plan for that list, and go over it\",\n    metadata: {\n      icon: \"generative\",\n      tags: [\"quick-access\", \"generative\"],\n      order: 102,\n    },\n  };\n}\n",
+          "language": "typescript"
+        },
+        "description": "Turn anything into a list, make a plan for that list, and go over it",
+        "runnable": true
+      }
+    }
+  },
+  "imports": {
+    "a2": {
+      "url": "./a2.bgl.json"
+    }
+  },
+  "exports": [
+    "#module:main"
+  ]
+}

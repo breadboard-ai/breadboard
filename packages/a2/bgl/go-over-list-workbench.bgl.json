@@ -1,0 +1,44 @@
+{
+  "title": "Go Over List Workbench",
+  "description": "",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "go-over-list-9ef50206",
+      "type": "file://bgl/go-over-list.bgl.json#module:main",
+      "metadata": {
+        "title": "Go over a list",
+        "visual": {
+          "x": 300,
+          "y": 260,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        }
+      },
+      "configuration": {
+        "plan": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "for each day of the week, generate a bittersweet poem."
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "edges": [],
+  "metadata": {
+    "tags": [],
+    "visual": {}
+  },
+  "assets": {
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSIxNi44NSIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMjMwLjAwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTY2LjMxIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+    }
+  }
+}
