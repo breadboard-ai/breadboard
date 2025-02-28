@@ -464,8 +464,11 @@
 								"linkToSource": {
 									"type": "string"
 								},
-								"theme": {
-									"type": "string"
+								"splashScreen": {
+									"$ref": "#/definitions/InlineDataCapabilityPart"
+								},
+								"themeColors": {
+									"$ref": "#/definitions/Record%3Cstring%2Cstring%3E"
 								},
 								"title": {
 									"type": "string"
@@ -530,6 +533,32 @@
 			},
 			"required": [
 				"url"
+			],
+			"type": "object"
+		},
+		"InlineDataCapabilityPart": {
+			"additionalProperties": false,
+			"description": "Represents inline data, encoded as a base64 string.",
+			"properties": {
+				"inlineData": {
+					"additionalProperties": false,
+					"properties": {
+						"data": {
+							"type": "string"
+						},
+						"mimeType": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"data",
+						"mimeType"
+					],
+					"type": "object"
+				}
+			},
+			"required": [
+				"inlineData"
 			],
 			"type": "object"
 		},
@@ -904,6 +933,12 @@
 		"Record<string,NodeValue>": {
 			"additionalProperties": {
 				"$ref": "#/definitions/NodeValue"
+			},
+			"type": "object"
+		},
+		"Record<string,string>": {
+			"additionalProperties": {
+				"type": "string"
 			},
 			"type": "object"
 		},

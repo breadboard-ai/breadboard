@@ -86,6 +86,9 @@ export class UserInput extends LitElement {
   @property()
   accessor useChatInput = false;
 
+  @property({ reflect: true })
+  accessor chatAudioWaveColor: string | null = "#ff00ff";
+
   @property()
   accessor useDebugChatInput = false;
 
@@ -688,6 +691,7 @@ export class UserInput extends LitElement {
               .subGraphId=${this.subGraphId}
               .projectState=${this.projectState}
               .showChatContinueButton=${this.showChatContinueButton}
+              .audioWaveColor=${this.chatAudioWaveColor}
             ></bb-llm-input-chat>`
           : this.useDebugChatInput
             ? html`<bb-llm-input-chat-debug
@@ -920,6 +924,7 @@ export class UserInput extends LitElement {
                     .showPartControls=${this.llmInputShowPartControls}
                     .showInlineControlsToggle=${this
                       .llmShowInlineControlsToggle}
+                    .chatAudioWaveColor=${this.chatAudioWaveColor}
                   ></bb-llm-input-array>`;
                 } else {
                   let renderableValue: unknown = input.value;
@@ -988,6 +993,7 @@ export class UserInput extends LitElement {
                       .subGraphId=${this.subGraphId}
                       .projectState=${this.projectState}
                       .showChatContinueButton=${this.showChatContinueButton}
+                      .audioWaveColor=${this.chatAudioWaveColor}
                     ></bb-llm-input-chat>`;
                     break;
                   }

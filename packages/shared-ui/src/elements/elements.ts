@@ -5,6 +5,7 @@
  */
 
 export { AppPreview } from "./app-preview/app-preview.js";
+export { AppThemeCreator } from "./app-preview/app-theme-creator.js";
 export { ArrayEditor } from "./input/array/array-editor.js";
 export { AssetOrganizer } from "./asset-organizer/asset-organizer.js";
 export { AudioHandler } from "./input/audio/audio-handler.js";

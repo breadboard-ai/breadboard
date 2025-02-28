@@ -26,6 +26,23 @@ export class SecretsHelper {
     this.#keys = keys;
   }
 
+  restoreStoredSecretsForKeys(keys: string[]) {
+    this.setKeys(keys);
+
+    if (!this.#keys) {
+      return;
+    }
+
+    for (const key of this.#keys) {
+      const secret =
+        this.#settings
+          ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.SECRETS)
+          .items.get(key) ?? null;
+
+      this.#receivedSecrets[key] = secret?.value;
+    }
+  }
+
   static allKeysAreKnown(settings: SettingsStore, keys: string[]) {
     const result: InputValues = {};
     const allKeysAreKnown = keys.every((key) => {

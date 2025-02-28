@@ -23,6 +23,7 @@ import type {
   WorkspaceSelectionChangeId,
   WorkspaceVisualChangeId,
   WorkspaceVisualState,
+  AppTheme,
 } from "../types/types.js";
 import type {
   GraphIdentifier,
@@ -1358,5 +1359,41 @@ export class SignOutEvent extends Event {
 
   constructor() {
     super(SignOutEvent.eventName, { ...eventInit });
+  }
+}
+
+/**
+ * Themes
+ */
+
+export class ThemeChangeEvent extends Event {
+  static eventName = "bbthemechange";
+
+  constructor(
+    public readonly theme: AppTheme,
+    public readonly appTitle: string | null,
+    public readonly appDescription: string | null
+  ) {
+    super(ThemeChangeEvent.eventName, { ...eventInit });
+  }
+}
+
+export class ThemeApplyEvent extends Event {
+  static eventName = "bbthemeapply";
+
+  constructor(
+    public readonly theme: AppTheme,
+    public readonly appTitle: string | null,
+    public readonly appDescription: string | null
+  ) {
+    super(ThemeApplyEvent.eventName, { ...eventInit });
+  }
+}
+
+export class ThemeClearEvent extends Event {
+  static eventName = "bbthemeclear";
+
+  constructor() {
+    super(ThemeClearEvent.eventName, { ...eventInit });
   }
 }

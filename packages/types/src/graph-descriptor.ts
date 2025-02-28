@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { InlineDataCapabilityPart } from "./llm-content.js";
+
 export interface Capability {
   readonly kind: string;
 }
@@ -325,9 +327,10 @@ export type GraphMetadata = {
     presentation?: {
       title?: string;
       author?: string;
-      theme?: string;
+      themeColors?: Record<string, string>;
       layout?: string;
       icon?: string;
+      splashScreen?: InlineDataCapabilityPart;
       description?: string;
       linkToSource?: string;
     };

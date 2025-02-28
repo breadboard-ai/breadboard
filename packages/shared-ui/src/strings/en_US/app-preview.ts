@@ -19,6 +19,9 @@ export default {
   STATUS_RETRIEVING_VALUES: {
     str: "Retrieving values...",
   },
+  STATUS_LOADING_APP_PREVIEW: {
+    str: "Loading App Preview...",
+  },
 
   // Labels.
   LABEL_WAITING_MESSAGE: {

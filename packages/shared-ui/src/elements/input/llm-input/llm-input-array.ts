@@ -28,6 +28,9 @@ export class LLMInputArray extends LitElement {
   @property()
   accessor useChatInput = false;
 
+  @property({ reflect: true })
+  accessor chatAudioWaveColor: string | null = "#ff00ff";
+
   @property()
   accessor useDebugChatInput = false;
 
@@ -288,6 +291,7 @@ export class LLMInputArray extends LitElement {
                   .nodeId=${this.nodeId}
                   .subGraphId=${this.subGraphId}
                   .projectState=${this.projectState}
+                  .audioWaveColor=${this.chatAudioWaveColor}
                 ></bb-llm-input-chat>`;
               }
 

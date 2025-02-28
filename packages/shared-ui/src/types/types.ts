@@ -24,8 +24,10 @@ import {
   CommentNode,
   GraphIdentifier,
   GraphMetadata,
+  InlineDataCapabilityPart,
   ModuleIdentifier,
   NodeMetadata,
+  StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
 import type { VirtualTypeScriptEnvironment } from "@typescript/vfs";
 import type {
@@ -501,3 +503,15 @@ export interface LanguagePack {
   UIController: LanguagePackEntry;
   WorkspaceOutline: LanguagePackEntry;
 }
+
+export interface AppThemeColors {
+  primaryColor: string;
+  secondaryColor: string;
+  backgroundColor: string;
+  textColor: string;
+  primaryTextColor: string;
+}
+
+export type AppTheme = AppThemeColors & {
+  splashScreen?: InlineDataCapabilityPart | StoredDataCapabilityPart | null;
+};

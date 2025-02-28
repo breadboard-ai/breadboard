@@ -704,35 +704,6 @@ export class UI extends LitElement {
       }
     }
 
-    const previewUrl: Promise<URL | null> = new Promise<BoardServer | null>(
-      (resolve) => {
-        if (!this.graph) {
-          resolve(null);
-          return;
-        }
-
-        const boardServer = this.boardServers.find((boardServer) => {
-          if (!this.graph || !this.graph.url) {
-            return null;
-          }
-
-          return boardServer.canProvide(new URL(this.graph.url));
-        });
-
-        resolve(boardServer ?? null);
-      }
-    ).then((boardServer: BoardServer | null) => {
-      if (!boardServer || !this.graph || !this.graph.url) {
-        return null;
-      }
-
-      if (boardServer.capabilities.preview) {
-        return boardServer.preview(new URL(this.graph.url));
-      } else {
-        return null;
-      }
-    });
-
     const isRunning = this.topGraphResult
       ? this.topGraphResult.status === "running" ||
         this.topGraphResult.status === "paused"
@@ -834,55 +805,7 @@ export class UI extends LitElement {
             </div>
             ${contentContainer}
           </section>`
-        : html`
-            <section id="deploy-view">
-              <bb-splitter
-                id="splitter"
-                split="[0.2, 0.8]"
-                .settings=${this.settings}
-                .name=${"deploy-view"}
-                .minSegmentSizeHorizontal=${265}
-              >
-                <div id="deploy-view-sidenav" slot="slot-0">
-                  <div class="deploy-option layout">
-                    <label>${Strings.from("LABEL_APP_LAYOUT")}</label>
-                    <p>${Strings.from("LABEL_APP_LAYOUT_DESCRIPTION")}</p>
-                    <select>
-                      <option>${Strings.from("LABEL_APP_LAYOUT_1")}</option>
-                    </select>
-                  </div>
-
-                  <div class="deploy-option theme">
-                    <label>${Strings.from("LABEL_APP_THEME")}</label>
-                    <p>${Strings.from("LABEL_APP_THEME_DESCRIPTION")}</p>
-                    <select>
-                      <option>${Strings.from("LABEL_APP_THEME_1")}</option>
-                    </select>
-                  </div>
-
-                  <div class="deploy-option public">
-                    <label>${Strings.from("LABEL_PUBLIC")}</label>
-                    <input id="visibility" type="checkbox" checked />
-                    <label for="visibility" id="visibility-status"
-                      >Status</label
-                    >
-                  </div>
-
-                  <div class="deploy-option share">
-                    <label>${Strings.from("LABEL_SHARE")}</label>
-                    <p>${Strings.from("LABEL_SHARE_DESCRIPTION")}</p>
-                    <div class="deploy-share-url">
-                      <span class="url"
-                        >${until(previewUrl, html`Loading URL...`)}</span
-                      >
-                      <button>Copy to Clipboard</button>
-                    </div>
-                  </div>
-                </div>
-                <div id="deploy" slot="slot-1">${appPreview}</div>
-              </bb-splitter>
-            </section>
-          `
+        : html` <section id="deploy-view">${appPreview}</section> `
       : html`<section id="content" class="welcome">${graphEditor}</section>`;
   }
 
