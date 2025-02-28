@@ -40,6 +40,7 @@ import {
   isWatchUri,
 } from "../../../utils/youtube.js";
 import { SIGN_IN_CONNECTION_ID } from "../../../utils/signin-adapter.js";
+import { isJSONPart } from "../../../../../breadboard/dist/src/data/common.js";
 
 const PCM_AUDIO = "audio/l16;codec=pcm;rate=24000";
 
@@ -563,6 +564,8 @@ export class LLMOutput extends LitElement {
                 break;
               }
             }
+          } else if (isJSONPart(part)) {
+            value = html`<bb-json-tree .json=${part.json}></bb-json-tree>`;
           } else {
             value = html`Unrecognized part`;
           }

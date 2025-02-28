@@ -1,0 +1,74 @@
+{
+  "title": "Go Over List Workbench",
+  "description": "",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "go-over-list-9ef50206",
+      "type": "file://bgl/go-over-list.bgl.json#module:main",
+      "metadata": {
+        "title": "Go over a list",
+        "visual": {
+          "x": 580,
+          "y": 260,
+          "collapsed": "expanded",
+          "outputHeight": 288
+        }
+      },
+      "configuration": {
+        "plan": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "1. London\n2. Los Altos\n3. Seattle\n4. New York\n\n {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:get-weather\",\"title\":\"Get Weather\"}} for each"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a2-a395ed98",
+      "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+      "metadata": {
+        "title": "Make Text",
+        "visual": {
+          "x": 900,
+          "y": 260,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        }
+      },
+      "configuration": {
+        "description": {
+          "parts": [
+            {
+              "text": "Summarize the weather information into a cheerful report."
+            }
+          ],
+          "role": "user"
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "go-over-list-9ef50206",
+      "to": "a2-a395ed98",
+      "out": "context",
+      "in": "context"
+    }
+  ],
+  "metadata": {
+    "tags": [],
+    "visual": {}
+  },
+  "assets": {
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSIyMy4wNyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTAzLjEwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTUzLjg2IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgo8cmVjdCB4PSIxMzYuOTAiCiAgICAgICAgICAgICAgICAgICAgeT0iMjMuMDciCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjEwMy4xMCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9Ijc0LjU1IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+    }
+  }
+}

@@ -44,6 +44,26 @@ class CreateNode implements EditTransform {
         error: `Unable to inspect graph with id "${graphId}"`,
       };
 
+    // Comment nodes are stored in the metadata for the graph
+    if (nodeType === "comment") {
+      if (!metadata) {
+        return { success: false, error: `No metadata supplied for comment` };
+      }
+
+      const graphMetadata = inspectableGraph.metadata() || {};
+      graphMetadata.comments = graphMetadata.comments || [];
+      graphMetadata.comments.push({
+        id,
+        text: "",
+        metadata,
+      });
+
+      return context.apply(
+        [{ type: "changegraphmetadata", metadata: graphMetadata, graphId }],
+        `Change metadata for graph - add comment "${id}"`
+      );
+    }
+
     const typeMetadata = await inspectableGraph.typeById(nodeType)?.metadata();
     if (!typeMetadata) {
       return {
@@ -68,26 +88,6 @@ class CreateNode implements EditTransform {
       metadata: metadata || undefined,
       configuration: configuration || undefined,
     };
-
-    // Comment nodes are stored in the metadata for the graph
-    if (nodeType === "comment") {
-      if (!metadata) {
-        return { success: false, error: `No metadata supplied for comment` };
-      }
-
-      const graphMetadata = inspectableGraph.metadata() || {};
-      graphMetadata.comments = graphMetadata.comments || [];
-      graphMetadata.comments.push({
-        id,
-        text: "",
-        metadata,
-      });
-
-      return context.apply(
-        [{ type: "changegraphmetadata", metadata: graphMetadata, graphId }],
-        `Change metadata for graph - add comment "${id}"`
-      );
-    }
 
     const edits: EditSpec[] = [{ type: "addnode", node: newNode, graphId }];
 
