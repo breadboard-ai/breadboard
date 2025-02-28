@@ -106,6 +106,6 @@
   },
   "dependencies": {
     "dotenv": "^16.4.7",
-    "prettier": "^3.5.1"
+    "prettier": "^3.5.2"
   }
 }
