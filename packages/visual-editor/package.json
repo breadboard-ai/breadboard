@@ -312,6 +312,6 @@
     "markdown-it": "^14.1.0",
     "pdfjs-dist": "^4.10.38",
     "pixi.js": "^8.8.0",
-    "prettier": "^3.5.1"
+    "prettier": "^3.5.2"
   }
 }
