@@ -18,12 +18,5 @@ export const sideBoardRuntime = createContext<SideBoardRuntime | undefined>(
  * configuration (secrets, board server, etc.).
  */
 export interface SideBoardRuntime {
-  createRunner(
-    graph: GraphDescriptor & {
-      // GraphDescriptors usually only have a url if they are loaded by a
-      // loader, but in this context we are often directly importing some BGL
-      // from the source tree. Require that callers are sure there is a URL.
-      url: string;
-    }
-  ): Promise<HarnessRunner>;
+  createRunner(graph: GraphDescriptor): Promise<HarnessRunner>;
 }

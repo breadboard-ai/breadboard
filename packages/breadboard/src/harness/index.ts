@@ -7,6 +7,7 @@
 import { LocalRunner } from "./local-runner.js";
 import { RemoteRunner } from "./remote-runner.js";
 import { HarnessRunner, RunConfig } from "./types.js";
+export { RunnerErrorEvent } from "./events.js";
 
 export type * from "./types.js";
 

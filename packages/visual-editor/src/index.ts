@@ -14,6 +14,7 @@ import {
   RunConfig,
   RunErrorEvent,
   RunSecretEvent,
+  RunnerErrorEvent,
 } from "@google-labs/breadboard/harness";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
@@ -524,8 +525,19 @@ export class Main extends LitElement {
 
         this.sideBoardRuntime = {
           createRunner: async (
-            graph: GraphDescriptor & { url: string }
+            graph: GraphDescriptor
           ): Promise<HarnessRunner> => {
+            if (!graph.url) {
+              // Side-boards often won't have the required `url` property,
+              // because they might have been imported e.g. via the JS import
+              // graph, instead of via a board loader (note that board loaders
+              // inject `url` into the graphs they load). In this case, an
+              // arbitrary one will be fine, as long as the board doesn't need
+              // to load any other boards via non-self relative URLs.
+              graph = { ...graph };
+              graph.url = `file://sideboard/${crypto.randomUUID()}`;
+            }
+            this.#graphStore.addByDescriptor(graph);
             const config = addNodeProxyServerConfig(
               this.#proxy,
               {
@@ -549,15 +561,57 @@ export class Main extends LitElement {
               await this.#getProxyURL(graph.url)
             );
             const runner = createRunner(config);
-            runner.addEventListener("secret", (event) =>
-              // TODO(aomarks) What about when we can't don't have syncronously
-              // known secrets? We have no place to ask the user for inputs on
-              // side boards, so we'll probably just hang. Also, I'm not sure if
-              // it's correct or safe to share secret-handling logic with the
-              // main active board that might be running, since secret helpers
-              // are stateful.
-              this.#handleSecretEvent(event, runner)
-            );
+            runner.addEventListener("secret", async (event) => {
+              // TODO(aomarks) The logic in this.#handleSecretEvent does not
+              // seem to support connections, which we definitely need. There
+              // must be some other way that secrets are fulfilled when using
+              // the main editor view. For now, let's just talk to token vendor
+              // directly, ourselves.
+              const secrets: Record<string, string> = {};
+              for (const key of event.data.keys) {
+                if (!key.startsWith("connection:")) {
+                  // It's a bit hacky to dispatch this error on the runner from
+                  // the outside like this, but it simplifies error management
+                  // on the receiving end, since otherwise we would need a
+                  // secondary error channel.
+                  runner.dispatchEvent(
+                    new RunnerErrorEvent({
+                      error:
+                        `Side boards can currently only access "connection:" ` +
+                        `secrets, but "${key}" was requested.`,
+                      timestamp: Date.now(),
+                    })
+                  );
+                }
+                const connectionId = key.slice("connection:".length);
+                const result = this.tokenVendor.getToken(connectionId);
+                if (result.state === "valid") {
+                  secrets[key] = result.grant.access_token;
+                } else if (result.state === "expired") {
+                  try {
+                    secrets[key] = (await result.refresh()).grant.access_token;
+                  } catch (error) {
+                    runner.dispatchEvent(
+                      new RunnerErrorEvent({
+                        error:
+                          `Error refreshing access token for ` +
+                          `${connectionId}: ${error}`,
+                        timestamp: Date.now(),
+                      })
+                    );
+                  }
+                } else {
+                  result.state satisfies "signedout";
+                  runner.dispatchEvent(
+                    new RunnerErrorEvent({
+                      error: `User is signed out of ${connectionId}.`,
+                      timestamp: Date.now(),
+                    })
+                  );
+                }
+              }
+              runner.run(secrets);
+            });
             return runner;
           },
         };
