@@ -182,7 +182,6 @@ export class Run extends EventTarget {
     });
 
     harnessRunner.addEventListener("secret", (evt: RunSecretEvent) => {
-      console.log("Secret", evt);
       this.dispatchEvent(
         new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
       );
