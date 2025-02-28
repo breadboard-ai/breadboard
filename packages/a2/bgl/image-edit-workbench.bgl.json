@@ -1,5 +1,5 @@
 {
-  "title": "Image Generator Workbench",
+  "title": "Image Editor Workbench",
   "description": "A blank board. Use it as a starting point for your creations.",
   "version": "0.0.1",
   "nodes": [
@@ -31,13 +31,25 @@
       "id": "a2-efb03857",
       "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
       "metadata": {
-        "title": "Ask User",
+        "title": "Image Input",
         "visual": {
           "x": -340,
           "y": -280,
           "collapsed": "expanded",
           "outputHeight": 88
-        }
+        },
+        "logLevel": "info"
+      },
+      "configuration": {
+        "description": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Upload image"
+            }
+          ]
+        },
+        "p-modality": "Image"
       }
     }
   ],
@@ -50,7 +62,8 @@
     }
   ],
   "metadata": {
-    "visual": {}
+    "visual": {},
+    "tags": []
   },
   "assets": {
     "@@thumbnail": {
@@ -58,7 +71,7 @@
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxNTIuMDYiCiAgICAgICAgICAgICAgICAgICAgeT0iNDcuOTEiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9Ijg3Ljk0IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTEwLjk0IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMmU4YmU4IiAvPgo8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI0MS4xNSIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iODcuOTQiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI2My41OSIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KICAgICAgCiAgICA8L3N2Zz4="
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxNTIuMDYiCiAgICAgICAgICAgICAgICAgICAgeT0iNDcuOTEiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9Ijg3Ljk0IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTEwLjk0IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgo8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI0MS4xNSIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iODcuOTQiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI2My41OSIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KICAgICAgCiAgICA8L3N2Zz4="
     }
   }
 }
