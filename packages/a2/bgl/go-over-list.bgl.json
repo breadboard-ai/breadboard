@@ -21,7 +21,7 @@
       }
     ],
     "visual": {},
-    "tags": []
+    "tags": ["published", "tool", "component"]
   },
   "modules": {
     "main": {
@@ -42,7 +42,5 @@
       "url": "./a2.bgl.json"
     }
   },
-  "exports": [
-    "#module:main"
-  ]
+  "exports": ["#module:main"]
 }
