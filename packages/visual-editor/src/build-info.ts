@@ -16,10 +16,13 @@ export async function tryGetGitHash() {
       { timeout: 5000 },
       (err, stdout) => {
         // Use en-CA to get yyyy-mm-dd formatted dates.
-        const date = new Date().toLocaleDateString("en-CA", {
+        const date = new Date().toLocaleString("en-CA", {
           day: "2-digit",
           month: "2-digit",
           year: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
         });
 
         if (err) {
