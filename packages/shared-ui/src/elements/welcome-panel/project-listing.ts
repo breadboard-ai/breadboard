@@ -684,8 +684,6 @@ export class ProjectListing extends LitElement {
     bb-describe-flow-panel {
       flex: 1;
       padding: 0 24px 0 24px;
-      /* TODO(aomarks) Remove once the backend is hooked up. */
-      display: none;
     }
   `;
 
