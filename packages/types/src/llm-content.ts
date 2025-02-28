@@ -69,6 +69,24 @@ export type CodeExecutionResultPart = {
   };
 };
 
+/**
+ * Breadboard-specific addition to the LLM Content object, representing JSON
+ * output.
+ */
+export type JSONPart = {
+  json: JsonSerializable;
+};
+
+export type JsonSerializable =
+  | string
+  | number
+  | boolean
+  | null
+  | Array<JsonSerializable>
+  | {
+      [K: string]: JsonSerializable;
+    };
+
 export type DataPart =
   | InlineDataCapabilityPart
   | StoredDataCapabilityPart
@@ -77,6 +95,7 @@ export type DataPart =
   | CodeExecutionResultPart
   | FunctionCallCapabilityPart
   | FunctionResponseCapabilityPart
+  | JSONPart
   | TextCapabilityPart;
 
 export type LLMContent = {

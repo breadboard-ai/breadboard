@@ -10,6 +10,7 @@ import type {
   FunctionCallCapabilityPart,
   FunctionResponseCapabilityPart,
   InlineDataCapabilityPart,
+  JSONPart,
   LLMContent,
   NodeValue,
   OutputValues,
@@ -60,6 +61,11 @@ export function isFunctionResponseCapabilityPart(
 ): part is FunctionResponseCapabilityPart {
   if (typeof part !== "object" || part === null) return false;
   return "functionResponse" in part;
+}
+
+export function isJSONPart(part: unknown): part is JSONPart {
+  if (typeof part !== "object" || part === null) return false;
+  return "json" in part;
 }
 
 export function isLLMContent(nodeValue: unknown): nodeValue is LLMContent {

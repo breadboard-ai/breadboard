@@ -222,6 +222,24 @@ declare type CodeExecutionResultPart = {
   };
 };
 
+/**
+ * Breadboard-specific addition to the LLM Content object, representing JSON
+ * output.
+ */
+declare type JSONPart = {
+  json: JsonSerializable;
+};
+
+declare type JsonSerializable =
+  | string
+  | number
+  | boolean
+  | null
+  | Array<JsonSerializable>
+  | {
+      [K: string]: JsonSerializable;
+    };
+
 declare type DataPart =
   | InlineDataCapabilityPart
   | StoredDataCapabilityPart
@@ -230,6 +248,7 @@ declare type DataPart =
   | CodeExecutionResultPart
   | FunctionCallCapabilityPart
   | FunctionResponseCapabilityPart
+  | JSONPart
   | TextCapabilityPart;
 
 declare type LLMContent = {
