@@ -86,7 +86,7 @@ export class AudioHandler extends LitElement {
       position: relative;
       border: 1px solid var(--bb-neutral-300);
       border-radius: var(--bb-grid-size-16);
-      background: var(--bb-neutral-0);
+      background: transparent;
       width: var(--bb-grid-size-11);
       height: var(--bb-grid-size-14);
       padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-2);

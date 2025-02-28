@@ -41,7 +41,6 @@ import { repeat } from "lit/directives/repeat.js";
 import { until } from "lit/directives/until.js";
 
 const inlineDataTemplate = { inlineData: { data: "", mimeType: "" } };
-const audioWaveColor = getGlobalColor("--bb-ui-700");
 
 const OVERFLOW_MENU_BUTTON_HEIGHT = 45;
 
@@ -63,6 +62,9 @@ export class LLMInputChat extends LitElement {
 
   @property()
   accessor minItems = 0;
+
+  @property({ reflect: true })
+  accessor audioWaveColor = getGlobalColor("--bb-ui-700");
 
   @property()
   accessor allow: AllowedLLMContentTypes = {
@@ -132,6 +134,7 @@ export class LLMInputChat extends LitElement {
     }
 
     #description {
+      color: var(--text-color, var(--bb-neutral-700));
       margin-bottom: var(--bb-grid-size-2);
     }
 
@@ -296,21 +299,25 @@ export class LLMInputChat extends LitElement {
         width: 40px;
         height: 40px;
         border: none;
-        background: var(--bb-neutral-50) var(--bb-icon-add) center center / 20px
-          20px no-repeat;
+        background: var(--primary-color, var(--bb-neutral-50))
+          var(--bb-icon-add) center center / 20px 20px no-repeat;
         border-radius: 50%;
         font-size: 0;
         cursor: pointer;
-        transition: background-color 0.3s cubic-bezier(0, 0, 0.3, 1);
+        transition:
+          background-color 0.3s cubic-bezier(0, 0, 0.3, 1),
+          opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
         align-self: end;
+        opacity: 0.5;
 
         &:not([disabled]) {
-          background-color: var(--bb-ui-50);
+          background-color: var(--primary-color, var(--bb-ui-50));
 
           &:hover,
           &:focus {
-            background-color: var(--bb-ui-100);
+            background-color: var(--primary-color, var(--bb-ui-100));
             transition-duration: 0.1s;
+            opacity: 1;
           }
         }
       }
@@ -318,8 +325,8 @@ export class LLMInputChat extends LitElement {
       & #continue-control {
         padding: 0;
         display: block;
-        background: var(--bb-ui-50) var(--bb-icon-send-ui) center center / 20px
-          20px no-repeat;
+        background: var(--primary-color, var(--bb-ui-50)) var(--bb-icon-send-ui)
+          center center / 20px 20px no-repeat;
         width: var(--bb-grid-size-10);
         height: var(--bb-grid-size-10);
         border-radius: 50%;
@@ -341,12 +348,13 @@ export class LLMInputChat extends LitElement {
     #audio-handler-placeholder {
       padding: 0;
       display: block;
-      background: var(--bb-neutral-50) var(--bb-icon-mic) center center / 20px
-        20px no-repeat;
+      background: var(--primary-color, var(--bb-neutral-50)) var(--bb-icon-mic)
+        center center / 20px 20px no-repeat;
       width: var(--bb-grid-size-10);
       height: var(--bb-grid-size-10);
       border-radius: 50%;
       font-size: 0;
+      opactiy: 0.5;
     }
 
     input[type="file"] {
@@ -369,7 +377,7 @@ export class LLMInputChat extends LitElement {
       height: var(--bb-grid-size-10);
       display: flex;
       align-items: center;
-      color: var(--bb-neutral-700);
+      color: var(--text-color, var(--bb-neutral-700));
       font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
         var(--bb-font-family);
       padding: 0;
@@ -416,10 +424,10 @@ export class LLMInputChat extends LitElement {
       align-items: flex-end;
 
       & textarea {
-        background: var(--bb-neutral-0);
+        background: transparent;
         font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
           var(--bb-font-family);
-        color: var(--bb-neutral-900);
+        color: var(--text-color, var(--bb-neutral-900));
         white-space: pre-line;
         resize: none;
         field-sizing: content;
@@ -435,15 +443,18 @@ export class LLMInputChat extends LitElement {
         overflow: auto;
         scrollbar-width: none;
         scroll-padding-bottom: 30px;
-        background: var(--bb-neutral-0);
+
+        &::placeholder {
+          color: var(--text-color, var(--bb-neutral-900));
+        }
       }
 
       & bb-audio-handler {
         --color-play-button: transparent;
         --color-play-button-active: transparent;
-        --color-capture-button: var(--bb-ui-50);
-        --color-capture-button-active: var(--bb-ui-100);
-        --reset-text-color: var(--bb-ui-700);
+        --color-capture-button: var(--primary-color, var(--bb-ui-50));
+        --color-capture-button-active: var(--primary-color, var(--bb-ui-100));
+        --reset-text-color: var(--text-color, var(--bb-ui-700));
         --icon-play: var(--bb-icon-play-arrow-filled-ui);
         --icon-mic: var(--bb-icon-mic-ui);
         --icon-reset: var(--bb-icon-delete-ui);
@@ -1046,7 +1057,12 @@ export class LLMInputChat extends LitElement {
         const r = await fetch(url);
         const b = await r.blob();
         return cache(
-          html`<bb-audio-handler .audioFile=${b} src="${url}" controls />`
+          html`<bb-audio-handler
+            .audioFile=${b}
+            .color=${this.audioWaveColor}
+            src="${url}"
+            controls
+          />`
         );
       }
 
@@ -1082,6 +1098,7 @@ export class LLMInputChat extends LitElement {
         return cache(
           html`<bb-audio-handler
               .canRecord=${true}
+              .color=${this.audioWaveColor}
               id="part-${idx}"
             ></bb-audio-handler>
             <div>
@@ -1187,7 +1204,7 @@ export class LLMInputChat extends LitElement {
           ? html`<bb-audio-handler
               .canRecord=${true}
               .lite=${true}
-              .color=${audioWaveColor}
+              .color=${this.audioWaveColor}
               ${ref(this.#audioHandlerRef)}
             ></bb-audio-handler>`
           : nothing}
@@ -1385,7 +1402,9 @@ export class LLMInputChat extends LitElement {
             >
               ->
             </button>`
-          : this.allow.audioMicrophone
+          : this.pending &&
+              this.showChatContinueButton &&
+              this.allow.audioMicrophone
             ? html`<div id="audio-handler-placeholder"></div>`
             : nothing}
       </div>

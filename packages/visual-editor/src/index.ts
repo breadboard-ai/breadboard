@@ -35,6 +35,7 @@ import {
   createEphemeralBlobStore,
   assetsFromGraphDescriptor,
   blank,
+  isInlineData,
 } from "@google-labs/breadboard";
 import {
   createFileSystemBackend,
@@ -67,6 +68,7 @@ import { sandbox } from "./sandbox";
 import {
   GraphIdentifier,
   InputValues,
+  LLMContent,
   Module,
   ModuleIdentifier,
 } from "@breadboard-ai/types";
@@ -562,6 +564,20 @@ export class Main extends LitElement {
             );
             const runner = createRunner(config);
             runner.addEventListener("secret", async (event) => {
+              const { keys } = event.data;
+              if (!this.#secretsHelper) {
+                this.#secretsHelper = new SecretsHelper(this.#settings!);
+                this.#secretsHelper.restoreStoredSecretsForKeys(keys);
+              }
+
+              if (this.#secretsHelper) {
+                this.#secretsHelper.setKeys(keys);
+                if (this.#secretsHelper.hasAllSecrets()) {
+                  this.#handleSecretEvent(event, runner);
+                  return;
+                }
+              }
+
               // TODO(aomarks) The logic in this.#handleSecretEvent does not
               // seem to support connections, which we definitely need. There
               // must be some other way that secrets are fulfilled when using
@@ -569,7 +585,7 @@ export class Main extends LitElement {
               // directly, ourselves.
               const secrets: Record<string, string> = {};
               for (const key of event.data.keys) {
-                if (!key.startsWith("connection:")) {
+                if (key.startsWith("connection:")) {
                   // It's a bit hacky to dispatch this error on the runner from
                   // the outside like this, but it simplifies error management
                   // on the receiving end, since otherwise we would need a
@@ -582,34 +598,37 @@ export class Main extends LitElement {
                       timestamp: Date.now(),
                     })
                   );
-                }
-                const connectionId = key.slice("connection:".length);
-                const result = this.tokenVendor.getToken(connectionId);
-                if (result.state === "valid") {
-                  secrets[key] = result.grant.access_token;
-                } else if (result.state === "expired") {
-                  try {
-                    secrets[key] = (await result.refresh()).grant.access_token;
-                  } catch (error) {
+                  const connectionId = key.slice("connection:".length);
+                  const result = this.tokenVendor.getToken(connectionId);
+                  if (result.state === "valid") {
+                    secrets[key] = result.grant.access_token;
+                  } else if (result.state === "expired") {
+                    try {
+                      secrets[key] = (
+                        await result.refresh()
+                      ).grant.access_token;
+                    } catch (error) {
+                      runner.dispatchEvent(
+                        new RunnerErrorEvent({
+                          error:
+                            `Error refreshing access token for ` +
+                            `${connectionId}: ${error}`,
+                          timestamp: Date.now(),
+                        })
+                      );
+                    }
+                  } else {
+                    result.state satisfies "signedout";
                     runner.dispatchEvent(
                       new RunnerErrorEvent({
-                        error:
-                          `Error refreshing access token for ` +
-                          `${connectionId}: ${error}`,
+                        error: `User is signed out of ${connectionId}.`,
                         timestamp: Date.now(),
                       })
                     );
                   }
-                } else {
-                  result.state satisfies "signedout";
-                  runner.dispatchEvent(
-                    new RunnerErrorEvent({
-                      error: `User is signed out of ${connectionId}.`,
-                      timestamp: Date.now(),
-                    })
-                  );
                 }
               }
+
               runner.run(secrets);
             });
             return runner;
@@ -3714,6 +3733,45 @@ export class Main extends LitElement {
                 evt: BreadboardUI.Events.ToggleExportEvent
               ) => {
                 this.#attemptToggleExport(evt.exportId, evt.exportType);
+              }}
+              @bbthemeapply=${async (
+                evt: BreadboardUI.Events.ThemeApplyEvent
+              ) => {
+                const projectState = this.#runtime.state.getOrCreate(
+                  this.tab?.mainGraphId,
+                  this.#runtime.edit.getEditor(this.tab)
+                );
+
+                // TODO: Show some status.
+                if (evt.theme.splashScreen) {
+                  // Convert inline data to stored asset.
+                  if (isInlineData(evt.theme.splashScreen)) {
+                    const data: LLMContent[] = [
+                      {
+                        role: "user",
+                        parts: [evt.theme.splashScreen],
+                      },
+                    ];
+
+                    await projectState?.organizer.addGraphAsset({
+                      path: "@@splash",
+                      metadata: { title: "Splash", type: "file" },
+                      data,
+                    });
+                  }
+                } else {
+                  // Removing the asset.
+                  console.log("Removing splash asset...");
+                  await projectState?.organizer.removeGraphAsset("@@splash");
+                }
+
+                console.log("Applying theme...");
+                await this.#runtime.edit.applyTheme(
+                  this.tab,
+                  evt.theme,
+                  evt.appTitle,
+                  evt.appDescription
+                );
               }}
               @bbnoderunrequest=${async (
                 evt: BreadboardUI.Events.NodeRunRequestEvent

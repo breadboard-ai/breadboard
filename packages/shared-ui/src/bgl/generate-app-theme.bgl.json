@@ -1,0 +1,165 @@
+{
+  "title": "Web App Theme",
+  "description": "Generates a theme for a web app",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "a2-632a79e8",
+      "type": "https://breadboard.live/boards/@shared/a2.bgl.json#module:image-generator",
+      "metadata": {
+        "title": "Icon",
+        "visual": {
+          "x": 1380,
+          "y": 0,
+          "collapsed": "expanded",
+          "outputHeight": 248
+        },
+        "logLevel": "info"
+      },
+      "configuration": {
+        "instruction": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "## Context\nYou are creating an app splash screen for a mobile web app. You should use the context to understand what the web is called as well as any other requirements for the splash screen.\n\n## Style\nYou should create something unique and interesting, avoiding cliches and obvious motifs. You should use relatively few colors. The background must be a solid color without any adornments. You should also use the context to understand if there are additional instructions on what the style and contents should be. Under no circumstances should you ever deviate from the colors provided or use text in the splash screen.\n\n## Format\nThe image absolutely must be a portrait image in a 9/16 ratio, suitable for use on a mobile device's application launch screen. The contents of the image should be centered, leaving plenty of room around it for any background color. The image must be very high resolution and clear."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a2-fce4f8de",
+      "type": "https://breadboard.live/boards/@shared/a2.bgl.json#module:combine-outputs",
+      "metadata": {
+        "title": "Combine Outputs",
+        "visual": {
+          "x": 2080,
+          "y": 2.2737367544323206e-13,
+          "collapsed": "expanded",
+          "outputHeight": 388
+        },
+        "logLevel": "info"
+      },
+      "configuration": {
+        "text": {
+          "parts": [
+            {
+              "text": "{{\"type\":\"in\",\"path\":\"a2-632a79e8\",\"title\":\"Icon\"}} \n {{\"type\":\"in\",\"path\":\"a2-5f1e8d70\",\"title\":\"CSS Colors\"}}"
+            }
+          ],
+          "role": "user"
+        }
+      }
+    },
+    {
+      "id": "a2-5f1e8d70",
+      "type": "https://breadboard.live/boards/@shared/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+      "metadata": {
+        "title": "CSS Colors",
+        "visual": {
+          "x": 1719.9999999999995,
+          "y": 60,
+          "collapsed": "expanded",
+          "outputHeight": 184
+        },
+        "logLevel": "info"
+      },
+      "configuration": {
+        "description": {
+          "parts": [
+            {
+              "text": "Take the image and create a CSS color scheme for it that would work for a web app. You must create four complementary colors:\n\n1. primaryColor: used for headings and calls to action. It should be complementary to the colors used in the image provided.\n2. secondaryColor: used for any incidental details. It should be different to the primary color, but still complementary to the image provided.\n3. backgroundColor: used for the background color of the app. This is the same color as the background of the image you received.\n4. textColor: used for any body text. This must be high contrast compared to backgroundColor.\n5. primaryTextColor: used for any text sitting in a call to action. This must be complementary and high contrast compared to the primaryColor.\n\nRespond in JSON in the following format:\n\n```json\n{\n  primaryColor: string,\n  secondaryColor: string,\n  backgroundColor: string,\n  textColor: string,\n  primaryTextColor: string\n}\n```"
+            }
+          ],
+          "role": "user"
+        }
+      }
+    },
+    {
+      "id": "input-361e03be",
+      "type": "input",
+      "metadata": {
+        "visual": {
+          "x": 1040,
+          "y": 0,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        },
+        "title": "Input"
+      },
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "App Description",
+              "items": {
+                "type": "object",
+                "examples": [],
+                "behavior": ["llm-content"]
+              },
+              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]",
+              "description": ""
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "a2-632a79e8",
+      "to": "a2-5f1e8d70",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "a2-632a79e8",
+      "to": "a2-fce4f8de",
+      "out": "context",
+      "in": "p-z-a2-632a79e8"
+    },
+    {
+      "from": "a2-5f1e8d70",
+      "to": "a2-fce4f8de",
+      "out": "context",
+      "in": "p-z-a2-5f1e8d70"
+    },
+    {
+      "from": "input-361e03be",
+      "to": "a2-632a79e8",
+      "out": "context",
+      "in": "context"
+    }
+  ],
+  "url": "idb://board-server-local/generate-app-theme.bgl.json",
+  "modules": {
+    "My-Item": {
+      "code": "/**\n * @fileoverview Add a description for your module here.\n */\nexport { invoke as default, describe };\nasync function invoke({ context }) {\n    return { context };\n}\nasync function describe() {\n    return {\n        inputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context in\",\n                },\n            },\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context out\",\n                },\n            },\n        },\n    };\n}\n",
+      "metadata": {
+        "title": "My Item",
+        "source": {
+          "code": "/**\n * @fileoverview Add a description for your module here.\n */\n\nexport { invoke as default, describe };\n\nasync function invoke({ context }: { context: LLMContent[] }) {\n  return { context };\n}\n\nasync function describe() {\n  return {\n    inputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context in\",\n        },\n      },\n    } satisfies Schema,\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context out\",\n        },\n      },\n    } satisfies Schema,\n  };\n}\n",
+          "language": "typescript"
+        },
+        "description": "Add a description for your module here.",
+        "runnable": false
+      }
+    }
+  },
+  "metadata": {
+    "visual": {},
+    "tags": []
+  },
+  "assets": {
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSI3MC4xNSIKICAgICAgICAgICAgICAgICAgICB5PSI1Ni44MyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iNDYuMDAiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI2MS41NyIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KPHJlY3QgeD0iMTk0LjAwIgogICAgICAgICAgICAgICAgICAgIHk9IjU2LjgzIgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI0Ni4wMCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9Ijg2LjM0IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMjBhMjAyIiAvPgo8cmVjdCB4PSIxMzAuMzEiCiAgICAgICAgICAgICAgICAgICAgeT0iNjcuNDUiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjQ2LjAwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNTAuMjUiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CjxyZWN0IHg9IjEwLjAwIgogICAgICAgICAgICAgICAgICAgIHk9IjU2LjgzIgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI0Ni4wMCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjMzLjI2IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMjBhMjAyIiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+    }
+  }
+}

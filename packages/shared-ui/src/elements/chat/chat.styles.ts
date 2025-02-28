@@ -108,15 +108,17 @@ export const styles = css`
       display: flex;
       flex-direction: column;
       overflow-y: scroll;
+      scrollbar-color: var(--primary-color, auto) var(--background-color, auto);
       height: 100%;
-      background: var(--bb-neutral-0);
+      background: var(--background-color, var(--bb-neutral-0));
       scroll-padding: 0 0 120px 0;
+      padding-top: 80px;
 
       &::before {
         content: "";
         display: block;
         flex: 1 1 auto;
-        background: var(--bb-neutral-0);
+        background: var(--background-color, var(--bb-neutral-0));
         width: 100%;
       }
 
@@ -133,7 +135,7 @@ export const styles = css`
           margin: 0 0 var(--bb-grid-size-2) 0;
           font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
             var(--bb-font-family);
-          color: var(--bb-neutral-900);
+          color: var(--text-color, var(--bb-neutral-900));
           height: var(--bb-grid-size-5);
           display: flex;
           align-items: center;
@@ -216,15 +218,22 @@ export const styles = css`
       & .system-output {
         --output-value-margin-x: 0;
 
-        & .value p {
-          border-radius: var(--bb-grid-size) var(--bb-grid-size-4)
-            var(--bb-grid-size-4) var(--bb-grid-size-4);
-          padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
-          background: var(--bb-neutral-100);
-          color: var(--bb-neutral-900);
-          font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
-            var(--bb-font-family);
-          max-width: 80%;
+        & bb-llm-output-array {
+          background: var(--bb-neutral-0);
+          border-radius: 8px;
+        }
+
+        & .value {
+          & p {
+            border-radius: var(--bb-grid-size) var(--bb-grid-size-4)
+              var(--bb-grid-size-4) var(--bb-grid-size-4);
+            padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
+            background: var(--secondary-color, var(--bb-neutral-100));
+            color: var(--primary-text-color, var(--bb-neutral-900));
+            font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
+              var(--bb-font-family);
+            max-width: 80%;
+          }
         }
       }
 
@@ -429,7 +438,7 @@ export const styles = css`
         display: flex;
         align-items: center;
         height: 20px;
-        color: var(--bb-neutral-900);
+        color: var(--text-color, var(--bb-neutral-900));
         margin: 2px 0 var(--bb-grid-size) 0;
         font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
           var(--bb-font-family);
@@ -461,8 +470,8 @@ export const styles = css`
           var(--bb-grid-size-4) var(--bb-grid-size-4);
         padding: var(--bb-grid-size-3) var(--bb-grid-size-2)
           var(--bb-grid-size-2) var(--bb-grid-size-2);
-        background: var(--bb-ui-100);
-        color: var(--bb-neutral-900);
+        background: var(--primary-color, var(--bb-ui-100));
+        color: var(--primary-text-color, var(--bb-neutral-900));
       }
     }
 
@@ -474,12 +483,12 @@ export const styles = css`
 
       font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
         var(--bb-font-family);
-      background: var(--bb-ui-700) url(/images/progress-ui-inverted.svg) 12px
-        center / 20px 20px no-repeat;
+      background: var(--primary-color, var(--bb-ui-700))
+        url(/images/progress-ui-inverted.svg) 12px center / 20px 20px no-repeat;
       padding: var(--bb-grid-size-3) var(--bb-grid-size-4) var(--bb-grid-size-3)
         var(--bb-grid-size-11);
       width: 80%;
-      color: var(--bb-neutral-0);
+      color: var(--primary-text-color, var(--bb-neutral-0));
       display: flex;
       align-items: center;
       border-radius: var(--bb-grid-size-3);

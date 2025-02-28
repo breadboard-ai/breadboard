@@ -6,7 +6,6 @@
 
 import { GraphDescriptor } from "@breadboard-ai/types";
 import * as StringsHelper from "../../strings/helper.js";
-const Strings = StringsHelper.forSection("AppPreview");
 const GlobalStrings = StringsHelper.forSection("Global");
 
 import { LitElement, html, nothing, HTMLTemplateResult } from "lit";
@@ -27,6 +26,8 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { markdown } from "../../directives/markdown.js";
 import { SettingsStore } from "../../data/settings-store.js";
 import { ChatConversationState, ChatState } from "../../state/types.js";
+import { guard } from "lit/directives/guard.js";
+import { icons } from "../../styles/icons.js";
 
 @customElement("bb-chat")
 export class Chat extends LitElement {
@@ -39,6 +40,9 @@ export class Chat extends LitElement {
    */
   @property()
   accessor state: ChatState | null = null;
+
+  @property()
+  accessor audioWaveColor: string | null = null;
 
   @property({ reflect: false })
   accessor run: InspectableRun | null = null;
@@ -61,7 +65,7 @@ export class Chat extends LitElement {
   @property({ reflect: true })
   accessor showHistory = false;
 
-  static styles = appPreviewStyles;
+  static styles = [icons, appPreviewStyles];
 
   #newestEntry: Ref<HTMLElement> = createRef();
 
@@ -128,9 +132,7 @@ export class Chat extends LitElement {
 
   render() {
     if (!this.state) {
-      return html`<div id="click-run">
-        ${Strings.from("LABEL_INITIAL_MESSAGE")}
-      </div>`;
+      return nothing;
     }
 
     return html`<section id="content">
@@ -176,7 +178,9 @@ export class Chat extends LitElement {
             }
           }
 
-          return html`${until(content)}`;
+          return html`${guard([], () => {
+            return html`${until(content)}`;
+          })}`;
         })}
         ${this.state.status === "running"
           ? html` <h1 class="status">

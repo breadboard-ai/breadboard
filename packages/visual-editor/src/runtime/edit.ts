@@ -50,6 +50,7 @@ import {
 import { Sandbox } from "@breadboard-ai/jsandbox";
 import { createGraphId, MAIN_BOARD_ID } from "./util";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import { AppTheme } from "@breadboard-ai/shared-ui/types/types.js";
 
 // function isGraphDescriptor(source: unknown): source is GraphDescriptor {
 //   return (
@@ -316,6 +317,44 @@ export class Edit extends EventTarget {
 
     const history = editableGraph.history();
     return history.redo();
+  }
+
+  async applyTheme(
+    tab: Tab | null,
+    theme: AppTheme,
+    appTitle: string | null,
+    appDescription: string | null
+  ) {
+    const editableGraph = this.getEditor(tab);
+    if (!editableGraph) {
+      this.dispatchEvent(
+        new RuntimeErrorEvent("Unable to edit subboard; no active board")
+      );
+      return;
+    }
+
+    const metadata: GraphMetadata = editableGraph.raw().metadata ?? {};
+    metadata.visual ??= {};
+    metadata.visual.presentation ??= {};
+    if (appTitle) {
+      metadata.visual.presentation.title = appTitle;
+    }
+
+    if (appDescription) {
+      metadata.visual.presentation.description = appDescription;
+    }
+
+    metadata.visual.presentation.themeColors = {
+      primaryColor: theme.primaryColor,
+      secondaryColor: theme.secondaryColor,
+      backgroundColor: theme.backgroundColor,
+      textColor: theme.textColor,
+    };
+
+    return editableGraph.edit(
+      [{ type: "changegraphmetadata", metadata, graphId: "" }],
+      "Updating theme"
+    );
   }
 
   async updateSubBoardInfo(
