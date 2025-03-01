@@ -9,8 +9,8 @@
       "metadata": {
         "title": "Go over a list",
         "visual": {
-          "x": 580,
-          "y": 300,
+          "x": 560,
+          "y": 260,
           "collapsed": "expanded",
           "outputHeight": 288
         }
@@ -19,7 +19,30 @@
         "plan": {
           "parts": [
             {
-              "text": "Use         {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-web\",\"title\":\"Search Web\"}}       ,        {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-maps\",\"title\":\"Search Maps\"}}       , and        {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-wikipedia\",\"title\":\"Search Wikipedia\"}}       to find more details about each topic:\n {{\"type\":\"asset\",\"path\":\"82234663-68ae-4554-add3-4c0ec97c4ba8\",\"title\":\"Topics\"}}"
+              "text": "You are writing a space opera novel given the outline. For each chapter in part 1, write a list of scenes and characters in them"
+            }
+          ],
+          "role": "user"
+        }
+      }
+    },
+    {
+      "id": "a2-a84b8d24",
+      "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+      "metadata": {
+        "title": "Make Text",
+        "visual": {
+          "x": 240,
+          "y": 260,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        }
+      },
+      "configuration": {
+        "description": {
+          "parts": [
+            {
+              "text": "Write a chapter outline for a 5-part space opera titled \"The Forgotten Fleet\""
             }
           ],
           "role": "user"
@@ -27,7 +50,14 @@
       }
     }
   ],
-  "edges": [],
+  "edges": [
+    {
+      "from": "a2-a84b8d24",
+      "to": "go-over-list-9ef50206",
+      "out": "context",
+      "in": "context"
+    }
+  ],
   "metadata": {
     "tags": [],
     "visual": {}
@@ -54,7 +84,7 @@
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSI2NC42OSIKICAgICAgICAgICAgICAgICAgICB5PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTIwLjYyIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTgwLjAwIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMmU4YmU4IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMzYuOTAiCiAgICAgICAgICAgICAgICAgICAgeT0iMjMuMDciCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjEwMy4xMCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjE1My44NiIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzJlOGJlOCIgLz4KPHJlY3QgeD0iMTAuMDAiCiAgICAgICAgICAgICAgICAgICAgeT0iMjMuMDciCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjEwMy4xMCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9Ijc0LjU1IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
     }
   }
 }
