@@ -4,63 +4,32 @@
   "version": "0.0.1",
   "nodes": [
     {
-      "id": "go-over-list-9ef50206",
+      "id": "go-over-list-d4b38245",
       "type": "file://bgl/go-over-list.bgl.json#module:main",
       "metadata": {
         "title": "Go over a list",
         "visual": {
-          "x": 720,
-          "y": 240,
+          "x": 580,
+          "y": 280,
           "collapsed": "expanded",
-          "outputHeight": 288
+          "outputHeight": 88
         },
         "logLevel": "info"
       },
       "configuration": {
         "plan": {
+          "role": "user",
           "parts": [
             {
-              "text": "You are writing a space opera novel, given the outline. For the first two chapters, write a list of scenes and a list of characters in each scene."
+              "text": "For each day of the week, research how the day of the week was named using   {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-web\",\"title\":\"Search Web\"}}"
             }
-          ],
-          "role": "user"
+          ]
         },
-        "strategy": "As a sequence"
-      }
-    },
-    {
-      "id": "a2-8532a1e5",
-      "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
-      "metadata": {
-        "visual": {
-          "x": 380,
-          "y": 240,
-          "collapsed": "expanded",
-          "outputHeight": 88
-        },
-        "title": "Make Text",
-        "logLevel": "info"
-      },
-      "configuration": {
-        "description": {
-          "parts": [
-            {
-              "text": "Generate an outline for a space opera novel titled \"The Blue Nova Armada\""
-            }
-          ],
-          "role": "user"
-        }
+        "strategy": "All at once"
       }
     }
   ],
-  "edges": [
-    {
-      "from": "a2-8532a1e5",
-      "to": "go-over-list-9ef50206",
-      "out": "context",
-      "in": "context"
-    }
-  ],
+  "edges": [],
   "metadata": {
     "tags": [],
     "visual": {}
@@ -87,7 +56,7 @@
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxNDAuMzMiCiAgICAgICAgICAgICAgICAgICAgeT0iMjUuNjMiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9Ijk5LjY3IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTQ4LjczIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMmU4YmU4IiAvPgo8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSIyNS42MyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iOTkuNjciCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI3Mi4wNyIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KICAgICAgCiAgICA8L3N2Zz4="
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSIxNi44NSIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMjMwLjAwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTY2LjMxIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMmU4YmU4IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
     }
   }
 }
