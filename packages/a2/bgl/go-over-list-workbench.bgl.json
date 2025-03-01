@@ -19,45 +19,15 @@
         "plan": {
           "parts": [
             {
-              "text": "Use        {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-web\",\"title\":\"Search Web\"}}      ,       {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-maps\",\"title\":\"Search Maps\"}}      , and       {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-wikipedia\",\"title\":\"Search Wikipedia\"}}      to find more details."
+              "text": "Use         {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-web\",\"title\":\"Search Web\"}}       ,        {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-maps\",\"title\":\"Search Maps\"}}       , and        {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-wikipedia\",\"title\":\"Search Wikipedia\"}}       to find more details about each topic:\n {{\"type\":\"asset\",\"path\":\"82234663-68ae-4554-add3-4c0ec97c4ba8\",\"title\":\"Topics\"}}"
             }
           ],
           "role": "user"
         }
       }
-    },
-    {
-      "id": "a2-65a9f0bf",
-      "type": "file://bgl/a2.bgl.json#module:combine-outputs",
-      "metadata": {
-        "visual": {
-          "x": 220,
-          "y": 320,
-          "collapsed": "expanded",
-          "outputHeight": 88
-        },
-        "title": "a2-65a9f0bf"
-      },
-      "configuration": {
-        "text": {
-          "role": "user",
-          "parts": [
-            {
-              "text": "{{\"type\":\"asset\",\"path\":\"82234663-68ae-4554-add3-4c0ec97c4ba8\",\"title\":\"Topics\"}}"
-            }
-          ]
-        }
-      }
     }
   ],
-  "edges": [
-    {
-      "from": "a2-65a9f0bf",
-      "to": "go-over-list-9ef50206",
-      "out": "context",
-      "in": "context"
-    }
-  ],
+  "edges": [],
   "metadata": {
     "tags": [],
     "visual": {}
@@ -68,7 +38,7 @@
         {
           "parts": [
             {
-              "text": "1. London\n2. John Wayne\n3. Little Rock, AR\n4. Nick The Greek Restaurant"
+              "text": "1. London\n4. Nick The Greek Restaurant"
             }
           ],
           "role": "user"
@@ -84,7 +54,7 @@
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxNDMuNTUiCiAgICAgICAgICAgICAgICAgICAgeT0iMjguMDMiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9Ijk2LjQ1IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTQzLjk0IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMmU4YmU4IiAvPgo8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSIzNS40NSIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iOTYuNDUiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI2OS43NCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KICAgICAgCiAgICA8L3N2Zz4="
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSI2NC42OSIKICAgICAgICAgICAgICAgICAgICB5PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTIwLjYyIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTgwLjAwIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMmU4YmU4IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
     }
   }
 }
