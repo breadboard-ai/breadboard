@@ -9,11 +9,12 @@
       "metadata": {
         "title": "Go over a list",
         "visual": {
-          "x": 560,
-          "y": 260,
+          "x": 720,
+          "y": 240,
           "collapsed": "expanded",
           "outputHeight": 288
-        }
+        },
+        "logLevel": "info"
       },
       "configuration": {
         "plan": {
@@ -23,26 +24,28 @@
             }
           ],
           "role": "user"
-        }
+        },
+        "strategy": "In Parallel"
       }
     },
     {
-      "id": "a2-a84b8d24",
+      "id": "a2-8532a1e5",
       "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
-        "title": "Make Text",
         "visual": {
-          "x": 240,
-          "y": 260,
+          "x": 379.9999999999999,
+          "y": 239.99999999999997,
           "collapsed": "expanded",
           "outputHeight": 88
-        }
+        },
+        "title": "Make Text",
+        "logLevel": "info"
       },
       "configuration": {
         "description": {
           "parts": [
             {
-              "text": "Write a chapter outline for a 5-part space opera titled \"The Forgotten Fleet\""
+              "text": "Generate an outline for a 5-part space opera novel titled \"The Blue Nova Armada\""
             }
           ],
           "role": "user"
@@ -52,7 +55,7 @@
   ],
   "edges": [
     {
-      "from": "a2-a84b8d24",
+      "from": "a2-8532a1e5",
       "to": "go-over-list-9ef50206",
       "out": "context",
       "in": "context"
@@ -84,7 +87,7 @@
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMzYuOTAiCiAgICAgICAgICAgICAgICAgICAgeT0iMjMuMDciCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjEwMy4xMCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjE1My44NiIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzJlOGJlOCIgLz4KPHJlY3QgeD0iMTAuMDAiCiAgICAgICAgICAgICAgICAgICAgeT0iMjMuMDciCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjEwMy4xMCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9Ijc0LjU1IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxNDAuMzMiCiAgICAgICAgICAgICAgICAgICAgeT0iMjUuNjMiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9Ijk5LjY3IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTQ4LjczIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMmU4YmU4IiAvPgo8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSIyNS42MyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iOTkuNjciCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI3Mi4wNyIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KICAgICAgCiAgICA8L3N2Zz4="
     }
   }
 }
