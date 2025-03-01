@@ -20,12 +20,12 @@
         "plan": {
           "parts": [
             {
-              "text": "You are writing a space opera novel given the outline. For each chapter in part 1, write a list of scenes and characters in them"
+              "text": "You are writing a space opera novel, given the outline. For the first two chapters, write a list of scenes and a list of characters in each scene."
             }
           ],
           "role": "user"
         },
-        "strategy": "In Parallel"
+        "strategy": "As a sequence"
       }
     },
     {
@@ -33,8 +33,8 @@
       "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
         "visual": {
-          "x": 379.9999999999999,
-          "y": 239.99999999999997,
+          "x": 380,
+          "y": 240,
           "collapsed": "expanded",
           "outputHeight": 88
         },
@@ -45,7 +45,7 @@
         "description": {
           "parts": [
             {
-              "text": "Generate an outline for a 5-part space opera novel titled \"The Blue Nova Armada\""
+              "text": "Generate an outline for a space opera novel titled \"The Blue Nova Armada\""
             }
           ],
           "role": "user"
