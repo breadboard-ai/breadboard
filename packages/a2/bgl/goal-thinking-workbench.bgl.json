@@ -1,5 +1,5 @@
 {
-  "title": "Go Over List Workbench",
+  "title": "GOAL Thinking",
   "description": "",
   "version": "0.0.1",
   "nodes": [
@@ -10,7 +10,7 @@
         "title": "Go over a list",
         "visual": {
           "x": 280,
-          "y": 260,
+          "y": 180,
           "collapsed": "expanded",
           "outputHeight": 88
         },
@@ -21,7 +21,7 @@
           "role": "user",
           "parts": [
             {
-              "text": "Create a well-researched report in markdown about the Sudam restaurant in Los Altos, which will include\n- origin story\n- information about owners\n- information about locations\n- the menu\n- financial information\n\nUse    {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:get-webpage\",\"title\":\"Get Webpage\"}}       {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-web\",\"title\":\"Search Web\"}}      {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-maps\",\"title\":\"Search Maps\"}}   tools for research"
+              "text": "Get the complete menu of Sudam Restaurant using  {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-web\",\"title\":\"Search Web\"}} and  {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:get-webpage\",\"title\":\"Get Webpage\"}} tools."
             }
           ]
         },
