@@ -9,8 +9,8 @@
       "metadata": {
         "title": "Go over a list",
         "visual": {
-          "x": 580,
-          "y": 280,
+          "x": 280,
+          "y": 260,
           "collapsed": "expanded",
           "outputHeight": 88
         },
@@ -21,11 +21,11 @@
           "role": "user",
           "parts": [
             {
-              "text": "For each day of the week, research how the day of the week was named using   {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-web\",\"title\":\"Search Web\"}}"
+              "text": "Create a well-researched report in markdown about Nick the Greek Restaurant, which will include\n- origin story\n- information about owners\n- information about locations\n- the menu\n- financial information\n\nUse   {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:get-webpage\",\"title\":\"Get Webpage\"}}     {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-web\",\"title\":\"Search Web\"}}    {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-maps\",\"title\":\"Search Maps\"}}  tools for research"
             }
           ]
         },
-        "strategy": "All at once"
+        "strategy": "Think as I go"
       }
     }
   ],
