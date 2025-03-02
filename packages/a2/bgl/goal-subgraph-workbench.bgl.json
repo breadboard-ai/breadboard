@@ -1,5 +1,5 @@
 {
-  "title": "GOAL Parallel Workbench",
+  "title": "GOAL Subgraph Workbench",
   "description": "",
   "version": "0.0.1",
   "nodes": [
@@ -9,7 +9,7 @@
       "metadata": {
         "title": "Go over a list",
         "visual": {
-          "x": 80.00000000000001,
+          "x": 80.00000000000004,
           "y": 320,
           "collapsed": "expanded",
           "outputHeight": 168
@@ -75,7 +75,7 @@
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI1NC43OCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iODcuNzMiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI5MC40MyIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzJlOGJlOCIgLz4KICAgICAgPHJlY3QgeD0iMTUyLjI3IgogICAgICAgICAgICAgICAgICAgIHk9IjU4LjY3IgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI4Ny43MyIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjYzLjQ0IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgogICAgPC9zdmc+"
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI0OS40NiIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iOTguMDUiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIxMDEuMDciCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyZThiZTgiIC8+CiAgICAgIDxyZWN0IHg9IjE0MS45NSIKICAgICAgICAgICAgICAgICAgICB5PSI1MS4yMiIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iOTguMDUiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI3MC45MCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KICAgIDwvc3ZnPg=="
     }
   },
   "graphs": {
@@ -89,18 +89,19 @@
           "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
           "metadata": {
             "visual": {
-              "x": 501.63082526942816,
-              "y": 331.510387842775,
+              "x": 429.868301361995,
+              "y": 324.6542516047762,
               "collapsed": "expanded",
               "outputHeight": 88
             },
-            "logLevel": "info"
+            "logLevel": "info",
+            "title": "Write a Poem"
           },
           "configuration": {
             "description": {
               "parts": [
                 {
-                  "text": "Write a poem based on the topic, using  {{\"type\":\"asset\",\"path\":\"ts-eliot-poems.pdf\",\"title\":\"ts-eliot-poems.pdf\"}}  as inspiration for style.\n\nEach poem must have a title as a markdown heading."
+                  "text": "Write a poem based on the topic. Use  {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-web\",\"title\":\"Search Web\"}}  to gather interesting facts about the topic and incorporate them into the poem.\n\nEach poem must have a title as a markdown heading."
                 }
               ],
               "role": "user"
