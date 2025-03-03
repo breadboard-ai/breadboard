@@ -25,5 +25,4 @@ async function serveBlob(
     });
     res.end(result.data);
   }
-  return true;
 }

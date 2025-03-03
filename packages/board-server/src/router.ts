@@ -10,7 +10,6 @@ import { serveBoardsAPI } from "./server/boards/index.js";
 import { serveContent } from "./server/common.js";
 import type { ServerConfig } from "./server/config.js";
 import { serverError } from "./server/errors.js";
-import { serveBlobsAPI } from "./server/blobs/index.js";
 
 const handleError = (err: Error, res: ServerResponse) => {
   console.error("Server Error:", err);
@@ -26,10 +25,6 @@ export function makeRouter(serverConfig: ServerConfig) {
   ): Promise<void> {
     try {
       if (await serveBoardsAPI(serverConfig, req, res)) {
-        return;
-      }
-
-      if (await serveBlobsAPI(serverConfig, req, res)) {
         return;
       }
 

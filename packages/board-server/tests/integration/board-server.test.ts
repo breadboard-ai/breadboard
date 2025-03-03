@@ -15,6 +15,7 @@ suite("Board Server integration test", () => {
 
   before(async () => {
     const allowedOrigins = "";
+    process.env.STORAGE_BUCKET = "test-bucket";
     const config = createServerConfig(allowedOrigins);
     server = createServer(config);
     user = await createAccount("test-user", "test-api-key");
@@ -187,7 +188,20 @@ suite("Board Server integration test", () => {
     test.todo("POST /boards/@:user/:name.json/assets/drive:id");
   });
 
-  // TODO Figure out how to test these endpoint
+  suite.todo("Blobs API", () => {
+    test("GET /blobs/:blobId", async () => {
+      const response = await request(server).get("/blobs/abc");
+
+      // error: not valid UUID
+      assert.equal(response.status, 400);
+    });
+
+    // TODO Figure out how to test these. They make request against blobstore.
+    test("GET /blobs/:blobId");
+    test.todo("POST /blobs");
+    test.todo("POST /blobs/:blobId/file", async () => {});
+  });
+
+  // TODO Figure out how to test this endpoint
   suite.todo("Proxy API", () => {});
-  suite.todo("Blobs API", () => {});
 });
