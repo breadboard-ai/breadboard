@@ -124,7 +124,7 @@
     "@codemirror/lint": "^6.8.2",
     "@codemirror/search": "^6.5.10",
     "@codemirror/theme-one-dark": "^6.1.2",
-    "@codemirror/view": "^6.36.3",
+    "@codemirror/view": "^6.36.4",
     "@dagrejs/dagre": "^1.1.4",
     "@google-labs/breadboard": "^0.32.0",
     "@google-labs/breadboard-schema": "^1.12.0",
