@@ -47,7 +47,8 @@ async function createBlob(
   if (!url) {
     const serverInfo = await store.getServerInfo();
     if (!serverInfo || !serverInfo.url) {
-      return serverError(res, "Unable to get server info or server URL.");
+      serverError(res, "Unable to get server info or server URL.");
+      return;
     }
     url = serverInfo.url;
   }
@@ -55,7 +56,8 @@ async function createBlob(
 
   const result = await blobStore.deflateContent(body as LLMContent);
   if (!ok(result)) {
-    return serverError(res, result.$error);
+    serverError(res, result.$error);
+    return;
   }
   res.writeHead(200, { "Content-Type": "application/json" });
   res.end(JSON.stringify(result));

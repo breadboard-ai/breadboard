@@ -24,14 +24,14 @@ async function updateFileApiInfo(
   const gettingMetadata = await store.getMetadata(blobId);
   if (!ok(gettingMetadata)) {
     notFound(res, `Blob "${blobId} not found`);
-    return true;
+    return;
   }
 
   const { contentType, size, metadata } = gettingMetadata;
 
   if (!size || !contentType) {
     serverError(res, `Metadata missing for blob "${blobId}`);
-    return true;
+    return;
   }
 
   const { fileUri, expirationTime } = (metadata || {}) as FileAPIMetadata;
@@ -41,7 +41,7 @@ async function updateFileApiInfo(
       "Content-Type": "application/json",
     });
     res.end(JSON.stringify({ fileUri }));
-    return true;
+    return;
   }
 
   const fileApi = new GeminiFileApi();
@@ -54,20 +54,19 @@ async function updateFileApiInfo(
   );
   if (!ok(uploading)) {
     serverError(res, `Unable to create File API entry from blob "${blobId}`);
-    return true;
+    return;
   }
 
   const updating = await store.setMetadata(blobId, uploading);
   if (!ok(updating)) {
     serverError(res, `Unable to set File API metadata for blob "${blobId}`);
-    return true;
+    return;
   }
 
   res.writeHead(200, {
     "Content-Type": "application/json",
   });
   res.end(JSON.stringify(uploading));
-  return true;
 }
 
 function hasExpired(expirationTime?: string) {

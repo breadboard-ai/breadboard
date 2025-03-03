@@ -4,60 +4,59 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { IncomingMessage, ServerResponse } from "http";
-import { authenticate } from "../auth.js";
-import type { ServerConfig } from "../config.js";
-import { badRequest } from "../errors.js";
+import type { Request, Response } from "express";
+
+import { ok } from "@google-labs/breadboard";
+
+import { updateFileApiInfo } from "./file-info.js";
 import { createBlob } from "./create.js";
 import { serveBlob } from "./serve.js";
-import { corsAll } from "../cors.js";
+
+import { authenticate } from "../auth.js";
 import { isUUID } from "../blob-store.js";
-import { ok } from "@google-labs/breadboard";
-import { updateFileApiInfo } from "./file-info.js";
+import type { ServerConfig } from "../config.js";
+import { corsAll } from "../cors.js";
+import { badRequest } from "../errors.js";
 
-export { serveBlobsAPI };
-
-async function serveBlobsAPI(
+export async function get(
   config: ServerConfig,
-  req: IncomingMessage,
-  res: ServerResponse
+  request: Request,
+  response: Response
 ) {
-  if (!config.storageBucket) {
-    return false;
-  }
-  const url = new URL(req.url!, `http://localhost/`);
-  const [api, blob, modifier] = url.pathname.split("/").slice(1);
-  if (api !== "blobs") {
-    return false;
+  const blobId = request.params["blobId"] ?? "";
+  if (!isUUID(blobId)) {
+    badRequest(response, "Invalid blob ID");
+    return;
   }
 
-  if (!blob) {
-    if (req.method === "POST") {
-      const authenticating = await authenticate(req, res);
-      if (!ok(authenticating)) {
-        return true;
-      }
-      if (!corsAll(req, res)) {
-        return true;
-      }
+  await serveBlob(config.storageBucket!, blobId, request, response);
+}
 
-      await createBlob(config, req, res);
-      return true;
-    }
-    badRequest(res, "Invalid blob request");
-    return true;
+export async function create(
+  config: ServerConfig,
+  request: Request,
+  response: Response
+) {
+  const authenticating = await authenticate(request, response);
+  if (!ok(authenticating)) {
+    return;
+  }
+  if (!corsAll(request, response)) {
+    return;
   }
 
-  if (!isUUID(blob)) {
-    badRequest(res, "Invalid blob ID");
-  }
+  await createBlob(config, request, response);
+}
 
-  if (modifier === "file" && req.method === "POST") {
-    return updateFileApiInfo(config.storageBucket, blob, req, res);
+export async function update(
+  config: ServerConfig,
+  request: Request,
+  response: Response
+) {
+  const blobId = request.params["blobId"] ?? "";
+  if (!isUUID(blobId)) {
+    badRequest(response, "Invalid blob ID");
+    return;
   }
-
-  if (req.method === "GET") {
-    return serveBlob(config.storageBucket, blob, req, res);
-  }
-  return false;
+  await updateFileApiInfo(config.storageBucket!, blobId, request, response);
 }
