@@ -80,6 +80,7 @@ class ReactiveProject implements ProjectInternal {
   readonly graphAssets: SignalMap<AssetPath, GraphAsset>;
   readonly generatedAssets: SignalMap<GeneratedAssetIdentifier, GeneratedAsset>;
   readonly tools: SignalMap<string, Tool>;
+  readonly myTools: SignalMap<string, Tool>;
   readonly organizer: Organizer;
   readonly fastAccess: FastAccess;
   readonly components: SignalMap<GraphIdentifier, ReactiveComponents>;
@@ -100,6 +101,7 @@ class ReactiveProject implements ProjectInternal {
         this.#updateGraphAssets();
       }
       this.#updateTools();
+      this.#updateMyTools();
     });
     const graphUrlString = this.#store.get(mainGraphId)?.graph.url;
     this.graphUrl = graphUrlString ? new URL(graphUrlString) : null;
@@ -107,17 +109,20 @@ class ReactiveProject implements ProjectInternal {
     this.tools = new SignalMap();
     this.components = new SignalMap();
     this.generatedAssets = new SignalMap();
+    this.myTools = new SignalMap();
     this.organizer = new ReactiveOrganizer(this);
     this.fastAccess = new ReactiveFastAccess(
       this,
       this.graphAssets,
       this.generatedAssets,
       this.tools,
+      this.myTools,
       this.components
     );
     this.#updateGraphAssets();
     this.#updateComponents();
     this.#updateTools();
+    this.#updateMyTools();
   }
 
   async apply(transform: EditTransform): Promise<Outcome<void>> {
@@ -195,6 +200,28 @@ class ReactiveProject implements ProjectInternal {
     }
     result.id = firstPort.name;
     return result;
+  }
+
+  #updateMyTools() {
+    const mutable = this.#store.get(this.#mainGraphId);
+    if (!mutable) return;
+
+    const tools = Object.entries(mutable.graph.graphs || {}).map<
+      [string, Tool]
+    >(([graphId, descriptor]) => {
+      const url = `#${graphId}`;
+      return [
+        url,
+        {
+          url,
+          title: descriptor.title || "Untitled Tool",
+          description: descriptor.description,
+          order: Number.MAX_SAFE_INTEGER,
+          icon: "tool",
+        },
+      ];
+    });
+    updateMap(this.myTools, tools);
   }
 
   #updateTools() {

@@ -521,6 +521,11 @@ export class Editor extends LitElement implements DragConnectorReceiver {
               background: var(--bb-icon-sunny) top left / 20px 20px no-repeat;
             }
 
+            &.tool {
+              background: var(--bb-icon-home-repair-service) top left / 20px
+                20px no-repeat;
+            }
+
             &.combine-outputs {
               background: var(--bb-icon-table-rows) top left / 20px 20px
                 no-repeat;

@@ -28,6 +28,7 @@ class ReactiveFastAccess implements FastAccess {
       GeneratedAsset
     >,
     public readonly tools: Map<string, Tool>,
+    public readonly myTools: Map<string, Tool>,
     public readonly components: Map<GraphIdentifier, Components>
   ) {
     this.#project = project;
