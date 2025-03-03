@@ -173,7 +173,7 @@
       "output": []
     },
     "test:integration": {
-      "command": "export GOOGLE_APPLICATION_CREDENTIALS=foo && export GOOGLE_CLOUD_PROJECT=foo && export STORAGE_BACKEND=sqlite && export SQLITE_DB_PATH=test.db && node --test --enable-source-maps --test-reporter tap dist/tests/integration/board-api.test.js",
+      "command": "firebase emulators:exec 'node --test --test-reporter=spec dist_test/tests/integration/board-server.test.js'",
       "dependencies": [
         "build:tests",
         "build:vite",
@@ -214,9 +214,11 @@
     "@types/better-sqlite3": "^7.6.12",
     "@types/cors": "^2.8.17",
     "@types/node": "^22.0.0",
+    "@types/supertest": "^6.0.2",
     "@types/uuid": "^10.0.0",
     "esbuild": "^0.25.0",
     "eslint": "^8.57.1",
+    "supertest": "^7.0.0",
     "typescript": "^5.7.3",
     "wireit": "^0.15.0-pre.1"
   },
