@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { IncomingMessage, ServerResponse } from "http";
-import { badRequest, methodNotAllowed } from "../errors.js";
+import type { Request, Response } from "express";
+import { badRequest } from "../errors.js";
 import { buildSecretsTunnel, secretsKit } from "./secrets.js";
 import {
   ProxyServer,
@@ -24,9 +24,9 @@ import { BlobDataStore, GoogleStorageBlobStore } from "../blob-store.js";
 import { authenticate } from "../auth.js";
 
 class ResponseAdapter implements ProxyServerResponse {
-  #response: ServerResponse;
+  #response: Response;
 
-  constructor(response: ServerResponse) {
+  constructor(response: Response) {
     this.#response = response;
   }
 
@@ -45,7 +45,7 @@ class ResponseAdapter implements ProxyServerResponse {
   }
 }
 
-const extractRequestBody = async (request: IncomingMessage) => {
+const extractRequestBody = async (request: Request) => {
   return new Promise<AnyProxyRequestMessage>((resolve, reject) => {
     let body = "";
     request.on("data", (chunk) => {
@@ -58,19 +58,13 @@ const extractRequestBody = async (request: IncomingMessage) => {
   });
 };
 
-export const serveProxyAPI = async (
+export async function serveProxyAPI(
   serverConfig: ServerConfig,
-  req: IncomingMessage,
-  res: ServerResponse
-) => {
-  const url = new URL(req.url || "", serverConfig.hostname);
-  const isProxy = url.pathname === "/proxy" || url.pathname === "/proxy/";
-  if (!isProxy) {
-    return false;
-  }
-
+  req: Request,
+  res: Response
+) {
   if (!cors(req, res, serverConfig.allowedOrigins)) {
-    return true;
+    return;
   }
 
   const authenticating = authenticate(req, null);
@@ -87,12 +81,7 @@ export const serveProxyAPI = async (
         },
       ])
     );
-    return true;
-  }
-
-  if (req.method !== "POST") {
-    methodNotAllowed(res, "Use POST method");
-    return true;
+    return;
   }
 
   const body = await extractRequestBody(req);
@@ -116,9 +105,7 @@ export const serveProxyAPI = async (
   }
 
   store.releaseAll();
-
-  return true;
-};
+}
 
 function createDataStore(config: ServerConfig): DataStore {
   const { storageBucket, serverUrl } = config;

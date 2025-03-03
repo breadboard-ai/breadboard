@@ -22,23 +22,9 @@ const DEFAULT_SERVER_INFO: ServerInfo = {
   },
 };
 
-export const serveInfoAPI = async (
-  req: IncomingMessage,
-  res: ServerResponse
-): Promise<boolean> => {
-  const path = req.url;
-  const isInfo = path === "/info";
-  if (!isInfo) {
-    return false;
-  }
-
+export async function serveInfoAPI(req: IncomingMessage, res: ServerResponse) {
   if (!corsAll(req, res)) {
-    return true;
-  }
-
-  if (req.method !== "GET") {
-    methodNotAllowed(res, "Only GET is allowed for /info");
-    return true;
+    return;
   }
 
   const store = getStore();
@@ -47,6 +33,4 @@ export const serveInfoAPI = async (
 
   res.setHeader("Content-Type", "application/json");
   res.end(JSON.stringify({ ...info, version }));
-
-  return true;
-};
+}

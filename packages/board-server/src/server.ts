@@ -8,7 +8,12 @@ import express, { type Express } from "express";
 import type { ViteDevServer } from "vite";
 
 import { makeRouter } from "./router.js";
+
 import type { ServerConfig } from "./server/config.js";
+import { serveHome } from "./server/home/index.js";
+import { serveInfoAPI } from "./server/info/index.js";
+import { serveMeAPI } from "./server/info/me.js";
+import { serveProxyAPI } from "./server/proxy/index.js";
 
 export type { ServerConfig };
 
@@ -17,7 +22,17 @@ const DEFAULT_HOST = "localhost";
 
 export function createServer(config: ServerConfig): Express {
   const server = express();
+
+  server.get("/", async (req, res) => serveHome(config, req, res));
+
+  server.post("/proxy", async (req, res) => serveProxyAPI(config, req, res));
+
+  server.get("/info", serveInfoAPI);
+
+  server.get("/me", async (req, res) => serveMeAPI(config, req, res));
+
   server.use(makeRouter(config));
+
   return server;
 }
 

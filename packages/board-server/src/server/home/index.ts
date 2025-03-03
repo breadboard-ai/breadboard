@@ -4,23 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { IncomingMessage, ServerResponse } from "http";
-import packageInfo from "../../../package.json" with { type: "json" };
+import type { Request, Response } from "express";
 
+import packageInfo from "../../../package.json" with { type: "json" };
 import { getStore } from "../store.js";
 import type { ServerConfig } from "../config.js";
 
 export const serveHome = async (
   config: ServerConfig,
-  req: IncomingMessage,
-  res: ServerResponse
-): Promise<boolean> => {
-  // The "localhost" here isn't used for anything, it's just a placeholder to
-  // help us parse the rest of the URL.
-  const url = new URL(req.url ?? "", "http://localhost");
-  if (url.pathname !== "/") {
-    return false;
-  }
+  _req: Request,
+  res: Response
+) => {
   const store = getStore();
   const info = await store.getServerInfo();
 
@@ -51,5 +45,4 @@ export const serveHome = async (
         <p>Version: ${packageInfo.version}</p>
       </body>
     </html>`);
-  return true;
 };
