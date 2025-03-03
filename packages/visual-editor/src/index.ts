@@ -586,18 +586,6 @@ export class Main extends LitElement {
               const secrets: Record<string, string> = {};
               for (const key of event.data.keys) {
                 if (key.startsWith("connection:")) {
-                  // It's a bit hacky to dispatch this error on the runner from
-                  // the outside like this, but it simplifies error management
-                  // on the receiving end, since otherwise we would need a
-                  // secondary error channel.
-                  runner.dispatchEvent(
-                    new RunnerErrorEvent({
-                      error:
-                        `Side boards can currently only access "connection:" ` +
-                        `secrets, but "${key}" was requested.`,
-                      timestamp: Date.now(),
-                    })
-                  );
                   const connectionId = key.slice("connection:".length);
                   const result = this.tokenVendor.getToken(connectionId);
                   if (result.state === "valid") {
