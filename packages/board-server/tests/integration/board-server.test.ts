@@ -2,7 +2,6 @@ import type { Express } from "express";
 import assert from "node:assert";
 import { before, suite, test } from "node:test";
 import request from "supertest";
-import { createServer as createViteServer } from "vite";
 
 import { createServer, createServerConfig } from "../../src/server.js";
 import { createAccount, getStore } from "../../src/server/store.js";
@@ -16,12 +15,7 @@ suite("Board Server integration test", () => {
 
   before(async () => {
     const allowedOrigins = "";
-    const viteDevServer = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "custom",
-      optimizeDeps: { esbuildOptions: { target: "esnext" } },
-    });
-    const config = createServerConfig(allowedOrigins, viteDevServer);
+    const config = createServerConfig(allowedOrigins);
     server = createServer(config);
     user = await createAccount("test-user", "test-api-key");
   });
