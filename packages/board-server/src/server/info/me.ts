@@ -6,7 +6,6 @@
 
 import type { IncomingMessage, ServerResponse } from "http";
 import { getStore } from "../store.js";
-import { methodNotAllowed } from "../errors.js";
 import { cors } from "../cors.js";
 import type { ServerConfig } from "../config.js";
 import { authenticateAndGetUserStore } from "../auth.js";
@@ -19,20 +18,9 @@ async function serveMeAPI(
   config: ServerConfig,
   req: IncomingMessage,
   res: ServerResponse
-): Promise<boolean> {
-  const path = new URL(req.url!, "http://localhost").pathname;
-  const isMe = path === "/me";
-  if (!isMe) {
-    return false;
-  }
-
+): Promise<void> {
   if (!cors(req, res, config.allowedOrigins)) {
-    return true;
-  }
-
-  if (req.method !== "GET") {
-    methodNotAllowed(res, "Only GET is allowed for /me");
-    return true;
+    return;
   }
 
   let store: BoardServerStore | undefined = undefined;
@@ -42,11 +30,9 @@ async function serveMeAPI(
     return store;
   });
   if (!ok(userStore)) {
-    return true;
+    return;
   }
 
   res.setHeader("Content-Type", "application/json");
   res.end(JSON.stringify({ username: userStore }));
-
-  return true;
 }

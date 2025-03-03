@@ -9,11 +9,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { serveBoardsAPI } from "./server/boards/index.js";
 import { serveContent } from "./server/common.js";
 import type { ServerConfig } from "./server/config.js";
-import { serveHome } from "./server/home/index.js";
-import { serveInfoAPI } from "./server/info/index.js";
-import { serveProxyAPI } from "./server/proxy/index.js";
 import { serverError } from "./server/errors.js";
-import { serveMeAPI } from "./server/info/me.js";
 import { serveBlobsAPI } from "./server/blobs/index.js";
 
 const handleError = (err: Error, res: ServerResponse) => {
@@ -29,22 +25,6 @@ export function makeRouter(serverConfig: ServerConfig) {
     res: ServerResponse
   ): Promise<void> {
     try {
-      if (await serveHome(serverConfig, req, res)) {
-        return;
-      }
-
-      if (await serveProxyAPI(serverConfig, req, res)) {
-        return;
-      }
-
-      if (await serveInfoAPI(req, res)) {
-        return;
-      }
-
-      if (await serveMeAPI(serverConfig, req, res)) {
-        return;
-      }
-
       if (await serveBoardsAPI(serverConfig, req, res)) {
         return;
       }
