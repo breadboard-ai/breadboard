@@ -25,7 +25,7 @@ import {
   isModuleBehavior,
 } from "../../utils";
 import { GraphAssets } from "./graph-assets";
-import { Template, TemplatePart } from "../../utils/template";
+import { Template, TemplatePart } from "@google-labs/breadboard";
 import { GraphPortChiclet } from "./graph-port-chiclet";
 
 const hoverColor = getGlobalColor("--bb-ui-50");

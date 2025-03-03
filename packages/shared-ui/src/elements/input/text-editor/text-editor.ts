@@ -3,13 +3,13 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css } from "lit";
+import { Template, TemplatePartType } from "@google-labs/breadboard";
+import { css, html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { Project } from "../../../state";
 import { FastAccessSelectEvent } from "../../../events/events";
+import { Project } from "../../../state";
 import { FastAccessMenu } from "../../elements";
-import { Template, TemplatePartType } from "../../../utils/template";
 
 @customElement("bb-text-editor")
 export class TextEditor extends LitElement {

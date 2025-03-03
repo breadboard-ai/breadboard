@@ -10,6 +10,7 @@ import {
   isLLMContent,
   isLLMContentArray,
   NodeValue,
+  TemplatePartTransformCallback,
   UnresolvedPathBoardCapability,
 } from "@google-labs/breadboard";
 import {
@@ -33,6 +34,7 @@ import {
   UserOutputEvent,
   WorkspaceSelectionStateEvent,
 } from "../../events/events";
+import { Project } from "../../state";
 import { UserInputConfiguration, UserOutputValues } from "../../types/types";
 import {
   isBoardBehavior,
@@ -49,12 +51,14 @@ import {
   createAllowListFromProperty,
   getMinItemsFromProperty,
 } from "../../utils/llm-content";
+import { getModuleId } from "../../utils/module-id";
 import {
   assertIsLLMContent,
   assertIsLLMContentArray,
   resolveArrayType,
   resolveBehaviorType,
 } from "../../utils/schema";
+import * as Utils from "../../utils/utils.js";
 import {
   CodeEditor,
   LLMInput,
@@ -62,10 +66,6 @@ import {
   StreamlinedSchemaEditor,
 } from "../elements";
 import "./delegating-input.js";
-import { getModuleId } from "../../utils/module-id";
-import * as Utils from "../../utils/utils.js";
-import { Project } from "../../state";
-import { TemplatePartTransformCallback } from "../../utils/template";
 
 const NO_MODULE = " -- No module";
 

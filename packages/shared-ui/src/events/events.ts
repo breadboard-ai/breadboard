@@ -5,27 +5,6 @@
  */
 
 import type {
-  EditSpec,
-  GraphDescriptor,
-  InspectablePort,
-  NodeConfiguration,
-  NodeDescriptor,
-  PortIdentifier,
-  Schema,
-} from "@google-labs/breadboard";
-import type {
-  Command,
-  EdgeData,
-  Settings,
-  TopGraphEdgeInfo,
-  UserOutputValues,
-  WorkspaceSelectionState,
-  WorkspaceSelectionChangeId,
-  WorkspaceVisualChangeId,
-  WorkspaceVisualState,
-  AppTheme,
-} from "../types/types.js";
-import type {
   GraphIdentifier,
   GraphMetadata,
   ModuleCode,
@@ -36,8 +15,29 @@ import type {
   NodeMetadata,
   NodeValue,
 } from "@breadboard-ai/types";
+import type {
+  EditSpec,
+  GraphDescriptor,
+  InspectablePort,
+  NodeConfiguration,
+  NodeDescriptor,
+  PortIdentifier,
+  Schema,
+  TemplatePart,
+} from "@google-labs/breadboard";
 import { ComponentExpansionState } from "../elements/editor/types.js";
-import { TemplatePart } from "../utils/template.js";
+import type {
+  AppTheme,
+  Command,
+  EdgeData,
+  Settings,
+  TopGraphEdgeInfo,
+  UserOutputValues,
+  WorkspaceSelectionChangeId,
+  WorkspaceSelectionState,
+  WorkspaceVisualChangeId,
+  WorkspaceVisualState,
+} from "../types/types.js";
 
 const eventInit = {
   bubbles: true,

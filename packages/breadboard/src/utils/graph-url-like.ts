@@ -11,6 +11,7 @@
  *  followed by a colon, e.g. "https://example.com", "file:///path/to/file",
  * "data:text/plain,Hello%2C%20World", etc.
  * - it may start with a fragment identifier, e.g. "#foo", "#bar", etc.
+ * - it may start with a "./"
  *
  * Otherwise, the string is not URL-like.
  */
@@ -22,9 +23,9 @@ export function graphUrlLike(s: string): boolean {
       return false;
     }
     return true;
-  } else if (s.includes(":")) {
+  } else if (s.includes(":") || s.startsWith("./")) {
     try {
-      new URL(s);
+      new URL(s, "http://example.com");
     } catch (e) {
       return false;
     }

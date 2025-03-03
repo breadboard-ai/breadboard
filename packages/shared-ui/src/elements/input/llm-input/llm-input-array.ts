@@ -12,7 +12,7 @@ import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { AllowedLLMContentTypes } from "../../../types/types.js";
 import { LLMInput } from "./llm-input.js";
 import { Project } from "../../../state/types.js";
-import { TemplatePartTransformCallback } from "../../../utils/template.js";
+import { type TemplatePartTransformCallback } from "@google-labs/breadboard";
 
 @customElement("bb-llm-input-array")
 export class LLMInputArray extends LitElement {

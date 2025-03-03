@@ -7,27 +7,7 @@
 import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("FocusEditor");
 
-import {
-  LitElement,
-  html,
-  css,
-  PropertyValues,
-  nothing,
-  HTMLTemplateResult,
-} from "lit";
-import { customElement, property } from "lit/decorators.js";
-import { createRef, ref, Ref } from "lit/directives/ref.js";
-import {
-  HideTooltipEvent,
-  NodePartialUpdateEvent,
-  OverlayDismissedEvent,
-  RunIsolatedNodeEvent,
-  ShowTooltipEvent,
-} from "../../events/events";
-import {
-  NodePortConfiguration,
-  UserInputConfiguration,
-} from "../../types/types";
+import { NodeMetadata } from "@breadboard-ai/types";
 import {
   BoardServer,
   GraphDescriptor,
@@ -35,16 +15,36 @@ import {
   isImageURL,
   isLLMContent,
   isLLMContentArray,
+  TemplatePart,
 } from "@google-labs/breadboard";
+import {
+  css,
+  html,
+  HTMLTemplateResult,
+  LitElement,
+  nothing,
+  PropertyValues,
+} from "lit";
+import { customElement, property } from "lit/decorators.js";
+import { classMap } from "lit/directives/class-map.js";
+import { map } from "lit/directives/map.js";
+import { createRef, ref, Ref } from "lit/directives/ref.js";
+import { markdown } from "../../directives/markdown";
+import {
+  HideTooltipEvent,
+  NodePartialUpdateEvent,
+  OverlayDismissedEvent,
+  RunIsolatedNodeEvent,
+  ShowTooltipEvent,
+} from "../../events/events";
 import { Project } from "../../state";
+import {
+  NodePortConfiguration,
+  UserInputConfiguration,
+} from "../../types/types";
+import { isLLMContentBehavior } from "../../utils";
 import { EditorMode, filterConfigByMode } from "../../utils/mode";
 import { UserInput } from "../elements";
-import { classMap } from "lit/directives/class-map.js";
-import { TemplatePart } from "../../utils/template";
-import { NodeMetadata } from "@breadboard-ai/types";
-import { map } from "lit/directives/map.js";
-import { markdown } from "../../directives/markdown";
-import { isLLMContentBehavior } from "../../utils";
 
 @customElement("bb-focus-editor")
 export class FocusEditor extends LitElement {

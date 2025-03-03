@@ -3,23 +3,12 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import {
-  LitElement,
-  html,
-  css,
-  HTMLTemplateResult,
-  nothing,
-  PropertyValues,
-} from "lit";
-import { customElement, property, state } from "lit/decorators.js";
-import { AllowedLLMContentTypes } from "../../../types/types.js";
-import { map } from "lit/directives/map.js";
-import { classMap } from "lit/directives/class-map.js";
-import { Ref, createRef, ref } from "lit/directives/ref.js";
-import { until } from "lit/directives/until.js";
-import { cache } from "lit/directives/cache.js";
-import type { DrawableInput } from "../drawable/drawable.js";
-import type { WebcamInput } from "../webcam/webcam.js";
+import type {
+  InlineDataCapabilityPart,
+  LLMContent,
+  StoredDataCapabilityPart,
+  TextCapabilityPart,
+} from "@breadboard-ai/types";
 import {
   asBase64,
   isFileDataCapabilityPart,
@@ -28,22 +17,31 @@ import {
   isInlineData,
   isStoredData,
   isTextCapabilityPart,
-  toInlineDataPart,
-} from "@google-labs/breadboard";
-import { styleMap } from "lit/directives/style-map.js";
-import type {
-  InlineDataCapabilityPart,
-  LLMContent,
-  StoredDataCapabilityPart,
-  TextCapabilityPart,
-} from "@breadboard-ai/types";
-import { TextEditor } from "../text-editor/text-editor.js";
-import { Project } from "../../../state/types.js";
-import {
   Template,
   TemplatePartTransformCallback,
-} from "../../../utils/template.js";
+  toInlineDataPart,
+} from "@google-labs/breadboard";
+import {
+  css,
+  html,
+  HTMLTemplateResult,
+  LitElement,
+  nothing,
+  PropertyValues,
+} from "lit";
+import { customElement, property, state } from "lit/decorators.js";
+import { cache } from "lit/directives/cache.js";
+import { classMap } from "lit/directives/class-map.js";
+import { map } from "lit/directives/map.js";
+import { createRef, Ref, ref } from "lit/directives/ref.js";
+import { styleMap } from "lit/directives/style-map.js";
+import { until } from "lit/directives/until.js";
+import { Project } from "../../../state/types.js";
+import { AllowedLLMContentTypes } from "../../../types/types.js";
 import type { AudioHandler } from "../audio/audio-handler.js";
+import type { DrawableInput } from "../drawable/drawable.js";
+import { TextEditor } from "../text-editor/text-editor.js";
+import type { WebcamInput } from "../webcam/webcam.js";
 
 const inlineDataTemplate = { inlineData: { data: "", mimeType: "" } };
 

@@ -4,22 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  LitElement,
-  html,
-  css,
-  nothing,
-  PropertyValues,
-  HTMLTemplateResult,
-} from "lit";
-import { customElement, property } from "lit/decorators.js";
-import {
-  NodePortConfiguration,
-  UserInputConfiguration,
-} from "../../types/types.js";
-import { Overlay } from "./overlay.js";
-import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { UserInput } from "../elements.js";
+import { NodeMetadata } from "@breadboard-ai/types";
 import {
   BoardServer,
   GraphDescriptor,
@@ -27,19 +12,34 @@ import {
   isImageURL,
   isLLMContent,
   isLLMContentArray,
+  TemplatePart,
 } from "@google-labs/breadboard";
+import {
+  css,
+  html,
+  HTMLTemplateResult,
+  LitElement,
+  nothing,
+  PropertyValues,
+} from "lit";
+import { customElement, property } from "lit/decorators.js";
+import { classMap } from "lit/directives/class-map.js";
+import { map } from "lit/directives/map.js";
+import { createRef, ref, Ref } from "lit/directives/ref.js";
+import { markdown } from "../../directives/markdown.js";
 import {
   EnhanceNodeResetEvent,
   NodePartialUpdateEvent,
   OverlayDismissedEvent,
 } from "../../events/events.js";
-import { EditorMode, filterConfigByMode } from "../../utils/mode.js";
-import { classMap } from "lit/directives/class-map.js";
-import { NodeMetadata } from "@breadboard-ai/types";
-import { map } from "lit/directives/map.js";
-import { markdown } from "../../directives/markdown.js";
 import { Project } from "../../state/types.js";
-import { TemplatePart } from "../../utils/template.js";
+import {
+  NodePortConfiguration,
+  UserInputConfiguration,
+} from "../../types/types.js";
+import { EditorMode, filterConfigByMode } from "../../utils/mode.js";
+import { UserInput } from "../elements.js";
+import { Overlay } from "./overlay.js";
 
 const MAXIMIZE_KEY = "bb-node-configuration-overlay-maximized";
 const OVERLAY_CLEARANCE = 60;

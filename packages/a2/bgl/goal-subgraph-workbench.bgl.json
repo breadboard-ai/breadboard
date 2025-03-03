@@ -5,7 +5,7 @@
   "nodes": [
     {
       "id": "go-over-list-da0bac13",
-      "type": "file://bgl/go-over-list.bgl.json#module:main",
+      "type": "./go-over-list.bgl.json#module:main",
       "metadata": {
         "title": "Go over a list",
         "visual": {
@@ -21,7 +21,7 @@
           "role": "user",
           "parts": [
             {
-              "text": "For each day of the week, write a poem using     {{\"type\":\"tool\",\"path\":\"file://bgl/goal-subgraph-workbench.bgl.json#01b21b56-9299-49fe-9602-f32359fc8926\",\"title\":\"Poem Writer\"}} {{\"type\":\"tool\",\"path\":\"#01b21b56-9299-49fe-9602-f32359fc8926\",\"title\":\"Poem Writer\"}}"
+              "text": "For each day of the week, write a poem using   {{\"type\":\"tool\",\"path\":\"#01b21b56-9299-49fe-9602-f32359fc8926\",\"title\":\"Poem Writer\"}}"
             }
           ]
         },
