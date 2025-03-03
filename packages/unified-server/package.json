@@ -52,7 +52,8 @@
         "dist/"
       ],
       "dependencies": [
-        "<dependencies>#<this>"
+        "../board-server#build:tsc",
+        "../connection-server#build:tsc"
       ]
     },
     "serve": {
@@ -60,7 +61,14 @@
       "service": true,
       "dependencies": [
         "build:tsc",
-        "copy-assets"
+        {
+          "script": "copy-assets",
+          "cascade": false
+        },
+        {
+          "script": "../visual-editor:build:tsc",
+          "cascade": false
+        }
       ]
     },
     "test": {
