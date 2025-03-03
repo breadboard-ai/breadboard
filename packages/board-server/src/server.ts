@@ -10,7 +10,6 @@ import type { ViteDevServer } from "vite";
 import { makeRouter } from "./router.js";
 
 import type { ServerConfig } from "./server/config.js";
-import { serveBlobsAPI } from "./server/blobs/index.js";
 import { serveHome } from "./server/home/index.js";
 import { serveInfoAPI } from "./server/info/index.js";
 import { serveMeAPI } from "./server/info/me.js";
@@ -31,10 +30,6 @@ export function createServer(config: ServerConfig): Express {
   server.get("/info", serveInfoAPI);
 
   server.get("/me", async (req, res) => serveMeAPI(config, req, res));
-
-  server.get("blobs/:blobId?/:modifier?", async (req, res) => {
-    serveBlobsAPI(config, req, res);
-  });
 
   server.use(makeRouter(config));
 
