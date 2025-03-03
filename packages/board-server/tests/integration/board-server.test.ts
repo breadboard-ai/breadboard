@@ -192,8 +192,15 @@ suite("Board Server integration test", () => {
     test("GET /blobs/:blobId", async () => {
       const response = await request(server).get("/blobs/abc");
 
-      // error: not valid UUID
       assert.equal(response.status, 400);
+      assert.equal(response.text, "Invalid blob ID");
+    });
+
+    test("POST /blobs/:blobId/file", async () => {
+      const response = await request(server).post("/blobs/abc/file");
+
+      assert.equal(response.status, 400);
+      assert.equal(response.text, "Invalid blob ID");
     });
 
     // TODO Figure out how to test these. They make request against blobstore.
