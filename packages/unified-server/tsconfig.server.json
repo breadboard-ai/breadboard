@@ -2,9 +2,11 @@
   "compilerOptions": {
     "forceConsistentCasingInFileNames": true,
     "incremental": true,
-    "lib": ["ES2022", "DOM"],
+    "lib": ["ES2022"],
     "module": "NodeNext",
+    "rootDir": ".",
     "outDir": "./dist",
+    "tsBuildInfoFile": "./dist/server.tsbuildinfo",
     "preserveWatchOutput": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
@@ -12,5 +14,5 @@
     "strict": true,
     "target": "ES2022"
   },
-  "include": ["src/**/*", "tests/**/*"]
+  "include": ["src/server/**/*", "tests/**/*"]
 }

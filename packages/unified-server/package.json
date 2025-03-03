@@ -10,6 +10,8 @@
   "scripts": {
     "build": "wireit",
     "build:tsc": "wireit",
+    "build:tsc:client": "wireit",
+    "build:tsc:server": "wireit",
     "build:vite": "wireit",
     "copy-assets": "wireit",
     "dev": "npm run serve --watch",
@@ -43,13 +45,41 @@
       ]
     },
     "build:tsc": {
-      "command": "tsc --pretty",
+      "dependencies": [
+        "build:tsc:client",
+        "build:tsc:server"
+      ]
+    },
+    "build:tsc:client": {
+      "command": "tsc --pretty --project tsconfig.client.json",
       "clean": "if-file-deleted",
       "files": [
-        "src/"
+        "tsconfig.client.json",
+        "src/",
+        "!src/server/"
       ],
       "output": [
-        "dist/"
+        "dist/",
+        "!dist/src/server/",
+        "!dist/tests/",
+        "!dist/server.tsbuildinfo"
+      ],
+      "dependencies": [
+        "../visual-editor#build:tsc"
+      ]
+    },
+    "build:tsc:server": {
+      "command": "tsc --pretty --project tsconfig.server.json",
+      "clean": "if-file-deleted",
+      "files": [
+        "tsconfig.server.json",
+        "src/server/",
+        "tests/"
+      ],
+      "output": [
+        "dist/src/server/",
+        "dist/tests/",
+        "dist/server.tsbuildinfo"
       ],
       "dependencies": [
         "../board-server#build:tsc",
@@ -59,14 +89,17 @@
     "serve": {
       "command": "[ -f ./secrets/local.json ] && export CONNECTIONS_FILE=./secrets/local.json && export GOOGLE_CLOUD_PROJECT=$(gcloud config get-value project) && export FIRESTORE_DB_NAME=unified-server && export STORAGE_BUCKET=bb-blob-store SERVER_URL=http://localhost:3000/board && node --enable-source-maps .",
       "service": true,
+      "files": [
+        "vite.config.ts"
+      ],
       "dependencies": [
-        "build:tsc",
+        "build:tsc:server",
         {
-          "script": "copy-assets",
+          "script": "build:tsc:client",
           "cascade": false
         },
         {
-          "script": "../visual-editor:build:tsc",
+          "script": "copy-assets",
           "cascade": false
         }
       ]
