@@ -27,7 +27,7 @@
     "dev": "npm run dev:nowatch --watch",
     "dev:nowatch": "wireit",
     "test": "wireit",
-    "test:integration": "wireit",
+    "test:integration": "firebase emulators:exec 'tsx --test --test-reporter=spec tests/integration/board-server.test.ts'",
     "express": "tsx src/express/server.ts"
   },
   "wireit": {
@@ -161,23 +161,10 @@
       ],
       "clean": "if-file-deleted"
     },
-    "clear:testdb": {
-      "command": "rm -f test.db"
-    },
     "test": {
       "command": "node --test --enable-source-maps --test-reporter spec dist_test/tests/*.js",
       "dependencies": [
         "build:tests"
-      ],
-      "files": [],
-      "output": []
-    },
-    "test:integration": {
-      "command": "firebase emulators:exec 'node --test --test-reporter=spec dist_test/tests/integration/board-server.test.js'",
-      "dependencies": [
-        "build:tests",
-        "build:vite",
-        "clear:testdb"
       ],
       "files": [],
       "output": []
