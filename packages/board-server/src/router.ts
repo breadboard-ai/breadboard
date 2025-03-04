@@ -6,7 +6,6 @@
 
 import type { IncomingMessage, ServerResponse } from "node:http";
 
-import { serveBoardsAPI } from "./server/boards/index.js";
 import { serveContent } from "./server/common.js";
 import type { ServerConfig } from "./server/config.js";
 import { serverError } from "./server/errors.js";
@@ -24,10 +23,6 @@ export function makeRouter(serverConfig: ServerConfig) {
     res: ServerResponse
   ): Promise<void> {
     try {
-      if (await serveBoardsAPI(serverConfig, req, res)) {
-        return;
-      }
-
       serveContent(serverConfig, req, res);
     } catch (err) {
       handleError(err as Error, res);

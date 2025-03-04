@@ -8,7 +8,6 @@ import type { Request, Response } from "express";
 
 import { ok } from "@google-labs/breadboard";
 import { getConnectionArgs } from "../auth.js";
-import type { ApiHandler, BoardParseResult } from "../types.js";
 import { serverError } from "../errors.js";
 import { Readable } from "node:stream";
 import { GeminiFileApi } from "../blobs/utils/gemini-file-api.js";

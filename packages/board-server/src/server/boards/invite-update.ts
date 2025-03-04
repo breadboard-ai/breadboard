@@ -9,11 +9,7 @@ import type { Request, Response } from "express";
 import { ok } from "@google-labs/breadboard";
 import { authenticateAndGetUserStore } from "../auth.js";
 import { getStore } from "../store.js";
-import type {
-  ApiHandler,
-  BoardParseResult,
-  BoardServerStore,
-} from "../types.js";
+import type { BoardServerStore } from "../types.js";
 
 async function updateInvite(
   boardPath: string,

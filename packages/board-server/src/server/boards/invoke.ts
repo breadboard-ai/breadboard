@@ -4,9 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Request, Response } from "express";
+import type { Response } from "express";
 
-import type { ApiHandler, BoardParseResult } from "../types.js";
 import { loadFromStore } from "./utils/board-server-provider.js";
 import { verifyKey } from "./utils/verify-key.js";
 import { secretsKit } from "../proxy/secrets.js";

@@ -4,15 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { IncomingMessage, ServerResponse } from "http";
-import type { Request, Response } from "express";
+import { type Request, Router } from "express";
 
-import { methodNotAllowed } from "../errors.js";
 import { getBody, serveFile, serveIndex } from "../common.js";
 import type { ServerConfig } from "../config.js";
 import { cors, corsAll } from "../cors.js";
 import { getStore } from "../store.js";
-import type { BoardId, BoardParseResult, PageMetadata } from "../types.js";
+import type { BoardId, PageMetadata } from "../types.js";
 
 import listBoards from "./list.js";
 import createBoard from "./create.js";
@@ -23,7 +21,6 @@ import invokeBoard from "./invoke.js";
 import describeBoard from "./describe.js";
 import inviteList from "./invite-list.js";
 import inviteUpdate from "./invite-update.js";
-import { parse } from "./utils/board-api-parser.js";
 import runBoard from "./run.js";
 import handleAssetsDriveRequest from "./assets-drive.js";
 
@@ -39,183 +36,120 @@ function getMetadata(user: string, name: string) {
   };
 }
 
-export const serveBoardsAPI = async (
-  serverConfig: ServerConfig,
-  req: IncomingMessage,
-  res: ServerResponse
-): Promise<boolean> => {
-  const url = new URL(req.url || "", serverConfig.hostname);
-  const parsed = parse(url, req.method);
+export function serveBoardsAPI(serverConfig: ServerConfig): Router {
+  const router = Router();
 
-  if (!parsed.success) {
-    if (parsed.code === 404) {
-      return false;
+  router.options("*", (req, res) => {
+    corsAll(req, res);
+  });
+
+  router.get("/", async (req, res) => {
+    if (!cors(req, res, serverConfig.allowedOrigins)) {
+      return;
     }
-    if (parsed.code === 405) {
-      methodNotAllowed(res, parsed.error);
-      return true;
+    await listBoards(req, res);
+  });
+
+  router.post("/", async (req, res) => {
+    if (!cors(req, res, serverConfig.allowedOrigins)) {
+      return;
     }
-    return false;
-  }
+    await createBoard(req, res);
+  });
 
-  switch (parsed.type) {
-    case "options": {
-      corsAll(req, res);
-      return true;
+  router.get("/@:user/:name.json", async (req, res) => {
+    if (!corsAll(req, res)) {
+      return;
     }
-    default: {
-      return false;
+    const { user, name } = getBoardId(req);
+    await getBoard(user, name, req, res);
+  });
+
+  router.post("/@:user/:name.json", async (req, res) => {
+    if (!cors(req, res, serverConfig.allowedOrigins)) {
+      return;
     }
-  }
-};
+    const { fullPath } = getBoardId(req);
+    const body = await getBody(req);
 
-export function options(req: Request, res: Response) {
-  corsAll(req, res);
-}
+    const maybeDelete = body as { delete: boolean };
+    if (maybeDelete.delete === true) {
+      await del(fullPath, req, res);
+    } else {
+      await post(fullPath, req, res, body);
+    }
+  });
 
-export async function list(
-  serverConfig: ServerConfig,
-  req: Request,
-  res: Response
-): Promise<void> {
-  if (!cors(req, res, serverConfig.allowedOrigins)) {
-    return;
-  }
-  await listBoards(req, res);
-}
+  router.get("/@:user/:name.app", async (req, res) => {
+    const { user, name } = getBoardId(req);
+    // Serve the index.html file for the app.
+    await serveIndex(serverConfig, res, getMetadata(user, name));
+  });
 
-export async function create(
-  serverConfig: ServerConfig,
-  req: Request,
-  res: Response
-): Promise<void> {
-  if (!cors(req, res, serverConfig.allowedOrigins)) {
-    return;
-  }
-  await createBoard(req, res);
-}
+  router.get("/@:user/:name.api", async (_req, res) => {
+    await serveFile(serverConfig, res, "/api.html");
+  });
 
-export async function get(req: Request, res: Response): Promise<void> {
-  if (!corsAll(req, res)) {
-    return;
-  }
-  const { user, name } = getBoardId(req);
-  await getBoard(user, name, req, res);
-}
+  router.post("/@:user/:name.api/invoke", async (req, res) => {
+    if (!corsAll(req, res)) {
+      return;
+    }
+    const { fullPath, name, user } = getBoardId(req);
+    const url = new URL(req.url, serverConfig.hostname);
+    url.pathname = `boards/${fullPath}`;
+    url.search = "";
 
-export async function update(
-  serverConfig: ServerConfig,
-  req: Request,
-  res: Response
-): Promise<void> {
-  if (!cors(req, res, serverConfig.allowedOrigins)) {
-    return;
-  }
-  const { fullPath } = getBoardId(req);
-  const body = await getBody(req);
+    const body = await getBody(req);
+    await invokeBoard(fullPath, user, name, url, res, body);
+  });
 
-  const maybeDelete = body as { delete: boolean };
-  if (maybeDelete.delete === true) {
-    await del(fullPath, req, res);
-  } else {
-    await post(fullPath, req, res, body);
-  }
-}
+  router.post("/@:user/:name.api/run", async (req, res) => {
+    if (!corsAll(req, res)) {
+      return;
+    }
+    const { fullPath, name, user } = getBoardId(req);
+    const url = new URL(req.url, serverConfig.hostname);
+    url.pathname = `boards/${fullPath}`;
+    url.search = "";
 
-export async function getApp(
-  serverConfig: ServerConfig,
-  req: Request,
-  res: Response
-): Promise<void> {
-  const { user, name } = getBoardId(req);
-  // Serve the index.html file for the app.
-  await serveIndex(serverConfig, res, getMetadata(user, name));
-}
+    const body = await getBody(req);
+    await runBoard(fullPath, user, name, url, res, body);
+  });
 
-export async function getApi(
-  serverConfig: ServerConfig,
-  res: Response
-): Promise<void> {
-  await serveFile(serverConfig, res, "/api.html");
-}
+  router.post("/@:user/:name.api/describe", async (req, res) => {
+    if (!corsAll(req, res)) {
+      return;
+    }
+    const { name, user } = getBoardId(req);
+    await describeBoard(user, name, res);
+  });
 
-export async function invoke(
-  serverConfig: ServerConfig,
-  req: Request,
-  res: Response
-): Promise<void> {
-  if (!corsAll(req, res)) {
-    return;
-  }
-  const { fullPath, name, user } = getBoardId(req);
-  const url = new URL(req.url, serverConfig.hostname);
-  url.pathname = `boards/${fullPath}`;
-  url.search = "";
+  router.get("/@:user/:name.invite", async (req, res) => {
+    if (!cors(req, res, serverConfig.allowedOrigins)) {
+      return;
+    }
+    const { fullPath } = getBoardId(req);
+    await inviteList(fullPath, req, res);
+  });
 
-  const body = await getBody(req);
-  await invokeBoard(fullPath, user, name, url, res, body);
-}
+  router.post("/@:user/:name.invite", async (req, res) => {
+    if (!cors(req, res, serverConfig.allowedOrigins)) {
+      return;
+    }
+    const body = await getBody(req);
+    const { fullPath } = getBoardId(req);
+    await inviteUpdate(fullPath, req, res, body);
+  });
 
-export async function run(
-  serverConfig: ServerConfig,
-  req: Request,
-  res: Response
-): Promise<void> {
-  if (!corsAll(req, res)) {
-    return;
-  }
-  const { fullPath, name, user } = getBoardId(req);
-  const url = new URL(req.url, serverConfig.hostname);
-  url.pathname = `boards/${fullPath}`;
-  url.search = "";
+  router.post("/@:user/:name/assets/drive/:driveId", async (req, res) => {
+    if (!cors(req, res, serverConfig.allowedOrigins)) {
+      return;
+    }
+    const driveId = req.params["driveId"] ?? "";
+    await handleAssetsDriveRequest(driveId, req, res);
+  });
 
-  const body = await getBody(req);
-  await runBoard(fullPath, user, name, url, res, body);
-}
-
-export async function describe(req: Request, res: Response): Promise<void> {
-  if (!corsAll(req, res)) {
-    return;
-  }
-  const { name, user } = getBoardId(req);
-  await describeBoard(user, name, res);
-}
-
-export async function listInvites(
-  serverConfig: ServerConfig,
-  req: Request,
-  res: Response
-): Promise<void> {
-  if (!cors(req, res, serverConfig.allowedOrigins)) {
-    return;
-  }
-  const { fullPath } = getBoardId(req);
-  await inviteList(fullPath, req, res);
-}
-
-export async function updateInvite(
-  serverConfig: ServerConfig,
-  req: Request,
-  res: Response
-): Promise<void> {
-  if (!cors(req, res, serverConfig.allowedOrigins)) {
-    return;
-  }
-  const body = await getBody(req);
-  const { fullPath } = getBoardId(req);
-  await inviteUpdate(fullPath, req, res, body);
-}
-
-export async function updateDriveAsset(
-  serverConfig: ServerConfig,
-  req: Request,
-  res: Response
-): Promise<void> {
-  if (!cors(req, res, serverConfig.allowedOrigins)) {
-    return;
-  }
-  const driveId = req.params["driveId"] ?? "";
-  await handleAssetsDriveRequest(driveId, req, res);
+  return router;
 }
 
 function getBoardId(request: Request): BoardId {

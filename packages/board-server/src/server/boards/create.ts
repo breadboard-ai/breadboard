@@ -9,7 +9,7 @@ import type { Request, Response } from "express";
 import { ok } from "@google-labs/breadboard";
 import { authenticateAndGetUserStore } from "../auth.js";
 import { getStore } from "../store.js";
-import type { ApiHandler, BoardServerStore } from "../types.js";
+import type { BoardServerStore } from "../types.js";
 
 export type CreateRequest = {
   name: string;

@@ -16,7 +16,6 @@ import { serveHome } from "./server/home/index.js";
 import { serveInfoAPI } from "./server/info/index.js";
 import { serveMeAPI } from "./server/info/me.js";
 import { serveProxyAPI } from "./server/proxy/index.js";
-import { corsAll } from "./server/cors.js";
 
 export type { ServerConfig };
 
@@ -34,39 +33,7 @@ export function createServer(config: ServerConfig): Express {
 
   server.get("/me", async (req, res) => serveMeAPI(config, req, res));
 
-  server.options("/boards", async (req, res) => {
-    corsAll(req, res);
-  });
-  server.get("/boards", async (req, res) => boards.list(config, req, res));
-  server.post("/boards", async (req, res) => boards.create(config, req, res));
-  server.get("/boards/@:user/:name.json", boards.get);
-  server.post("/boards/@:user/:name.json", async (req, res) =>
-    boards.update(config, req, res)
-  );
-  server.get("/boards/@:user/:name.app", async (req, res) =>
-    boards.getApp(config, req, res)
-  );
-  server.get("/boards/@:user/:name.api", async (_req, res) =>
-    boards.getApi(config, res)
-  );
-  server.post("/boards/@:user/:name.api/invoke", async (req, res) =>
-    boards.invoke(config, req, res)
-  );
-  server.post("/boards/@:user/:name.api/run", async (req, res) =>
-    boards.run(config, req, res)
-  );
-  server.post("/boards/@:user/:name.api/describe", async (req, res) =>
-    boards.describe(req, res)
-  );
-  server.get("/boards/@:user/:name.invite", async (req, res) =>
-    boards.listInvites(config, req, res)
-  );
-  server.post("/boards/@:user/:name.invite", async (req, res) =>
-    boards.updateInvite(config, req, res)
-  );
-  server.post("/boards/@:user/:name/assets/drive/:driveId", async (req, res) =>
-    boards.updateDriveAsset(config, req, res)
-  );
+  server.use("/boards", boards.serveBoardsAPI(config));
 
   // The old router for blobs skipped handling if storage bucket was undefined.
   // Not sure if that was intentional, but this preserves the behavior until we
