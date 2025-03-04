@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { LLMContent, NodeConfiguration } from "@breadboard-ai/types";
 import {
   Edge,
   EditOperationContext,
@@ -12,10 +13,9 @@ import {
   EditTransformResult,
   GraphIdentifier,
   InspectableNode,
+  Template,
 } from "@google-labs/breadboard";
 import { MarkInPortsInvalid } from "./mark-in-ports-invalid";
-import { LLMContent, NodeConfiguration } from "@breadboard-ai/types";
-import { Template } from "../utils/template";
 
 export { ChangeEdge };
 

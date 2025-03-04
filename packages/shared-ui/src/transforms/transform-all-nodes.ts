@@ -15,8 +15,9 @@ import {
   NodeIdentifier,
   NodeValue,
   PortIdentifier,
+  Template,
+  TemplatePart,
 } from "@google-labs/breadboard";
-import { Template, TemplatePart } from "../utils/template";
 
 export { TransformAllNodes, transformConfiguration };
 

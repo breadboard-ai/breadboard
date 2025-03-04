@@ -23,6 +23,7 @@ import {
   toDeclarativeGraph,
 } from "./run-imperative-graph.js";
 import { resolveGraph } from "../loader/loader.js";
+import { resolveGraphUrls } from "../loader/resolve-graph-urls.js";
 
 /**
  * Runs a graph in "run" mode. See
@@ -37,6 +38,8 @@ export async function* runGraph(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { inputs: initialInputs, start, stopAfter, ...context } = args;
   const { probe, state, invocationPath = [] } = context;
+
+  graphToRun = resolveGraphUrls(graphToRun);
 
   let graph = resolveGraph(graphToRun);
 

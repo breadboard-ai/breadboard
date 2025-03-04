@@ -340,7 +340,45 @@ class GraphDescriberManager {
       "schema"
     );
 
-    return { inputSchema, outputSchema };
+    return this.#presumeContextInOut({ inputSchema, outputSchema });
+  }
+
+  /**
+   * This is a bit hacky, but it gets the job done.
+   * This function tweaks the result to look like a context in / context out
+   * in cases when the graph being described is a subgraph and the
+   * static analysis yielded nothing.
+   *
+   * We use this logic to allow subgraphs that are "custom tools" to
+   * participate as normal steps in the graph.
+   */
+  #presumeContextInOut(result: NodeDescriberResult): NodeDescriberResult {
+    const { inputSchema, outputSchema } = result;
+    if (
+      !inputSchema.properties &&
+      !outputSchema.properties &&
+      this.handle.graphId
+    ) {
+      return {
+        inputSchema: {
+          properties: {
+            context: {
+              type: "array",
+              items: { type: "object", behavior: ["llm-content"] },
+            },
+          },
+        },
+        outputSchema: {
+          properties: {
+            context: {
+              type: "array",
+              items: { type: "object", behavior: ["llm-content"] },
+            },
+          },
+        },
+      };
+    }
+    return result;
   }
 
   async #tryDescribingWithCustomDescriber(

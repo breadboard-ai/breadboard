@@ -521,6 +521,11 @@ export class Editor extends LitElement implements DragConnectorReceiver {
               background: var(--bb-icon-sunny) top left / 20px 20px no-repeat;
             }
 
+            &.tool {
+              background: var(--bb-icon-home-repair-service) top left / 20px
+                20px no-repeat;
+            }
+
             &.combine-outputs {
               background: var(--bb-icon-table-rows) top left / 20px 20px
                 no-repeat;
@@ -1564,6 +1569,29 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       if (order1 != order2) return order1 - order2;
       return (kit1.metadata.title || "") > (kit2.metadata.title || "") ? 1 : -1;
     });
+
+    if (typeTag === "tool") {
+      const subGraphs =
+        (this.mainGraphId
+          ? this.graphStore?.get(this.mainGraphId)?.graph.graphs
+          : {}) || {};
+      kitList.push(
+        ...Object.entries(subGraphs).map(([graphId, descriptor]) => {
+          const id = `#${graphId}`;
+          return {
+            id,
+            metadata: {
+              mainGraph: {
+                id: this.mainGraphId!,
+              },
+              updating: false,
+              title: descriptor.title,
+              ...descriptor.metadata,
+            },
+          };
+        })
+      );
+    }
 
     return kitList;
 

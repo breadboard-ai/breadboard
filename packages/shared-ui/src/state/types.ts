@@ -138,6 +138,7 @@ export type FastAccess = {
   graphAssets: Map<AssetPath, GraphAsset>;
   generatedAssets: Map<GeneratedAssetIdentifier, GeneratedAsset>;
   tools: Map<string, Tool>;
+  myTools: Map<string, Tool>;
   components: Map<GraphIdentifier, Components>;
 };
 

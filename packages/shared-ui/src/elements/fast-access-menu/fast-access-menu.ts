@@ -201,9 +201,10 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
   protected willUpdate(): void {
     const graphId = this.graphId || "";
     let assets = [...(this.state?.graphAssets.values() || [])];
-    let tools = [...(this.state?.tools.values() || [])].sort(
-      (tool1, tool2) => tool1.order! - tool2.order!
-    );
+    let tools = [
+      ...(this.state?.tools.values() || []),
+      ...(this.state?.myTools.values() || []),
+    ].sort((tool1, tool2) => tool1.order! - tool2.order!);
     let components = [...(this.state?.components.get(graphId)?.values() || [])];
 
     if (this.filter) {
