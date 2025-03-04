@@ -330,9 +330,18 @@ class CustomNodeType implements InspectableNodeType {
         wires: {} as NodeDescriberWires,
       }
     );
-    if (describeResult && describeResult.metadata) {
+    if (
+      describeResult &&
+      describeResult.metadata &&
+      Object.keys(describeResult.metadata).length > 0
+    ) {
       const example = this.#extractExamples(describeResult);
-      return { ...describeResult.metadata, example };
+      return {
+        ...describeResult.metadata,
+        example,
+        title: describeResult.title,
+        description: describeResult.description,
+      };
     }
     if (handler && "metadata" in handler && handler.metadata) {
       return handler.metadata;
