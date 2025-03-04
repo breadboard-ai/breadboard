@@ -4,52 +4,31 @@
   "version": "0.0.1",
   "nodes": [
     {
-      "id": "a2-f9c6b221",
-      "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
+      "id": "go-over-list-bed6bec0",
+      "type": "file://bgl/go-over-list.bgl.json#module:main",
       "metadata": {
-        "title": "Ask User",
         "visual": {
-          "x": 14.18359375,
-          "y": -100.53125000000003,
+          "x": 320,
+          "y": -100,
           "collapsed": "expanded",
           "outputHeight": 88
         },
         "logLevel": "info"
       },
       "configuration": {
-        "description": {
+        "plan": {
           "role": "user",
           "parts": [
             {
-              "text": "What's the topic of the poem?"
+              "text": "For each day of the week, use {{\"type\":\"tool\",\"path\":\"#01b21b56-9299-49fe-9602-f32359fc8926\",\"title\":\"Poem Writer\"}} to write a bittersweet poem"
             }
           ]
         },
-        "p-modality": "Any"
-      }
-    },
-    {
-      "id": "board-245dd70d",
-      "type": "#01b21b56-9299-49fe-9602-f32359fc8926",
-      "metadata": {
-        "visual": {
-          "x": 340,
-          "y": -100,
-          "collapsed": "expanded",
-          "outputHeight": 88
-        },
-        "title": "Poem Writer"
+        "strategy": "Go in order"
       }
     }
   ],
-  "edges": [
-    {
-      "from": "a2-f9c6b221",
-      "to": "board-245dd70d",
-      "out": "context",
-      "in": "context"
-    }
-  ],
+  "edges": [],
   "metadata": {
     "tags": [],
     "visual": {}
@@ -60,7 +39,7 @@
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIyMC43NSIKICAgICAgICAgICAgICAgICAgICB5PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iOTIuNTQiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI2Ni45MSIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KPHJlY3QgeD0iMTM2LjcxIgogICAgICAgICAgICAgICAgICAgIHk9IjEwLjE5IgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI5Mi41NCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjY2LjkxIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMmU4YmU4IiAvPgogICAgICA8cmVjdCB4PSI1Ny4xOCIKICAgICAgICAgICAgICAgICAgICB5PSIxMjMuMDkiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjkyLjU0IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNjYuOTEiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CiAgICA8L3N2Zz4="
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSI4My44MSIKICAgICAgICAgICAgICAgICAgICB5PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iNzguOTYiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI1Ny4wOSIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzJlOGJlOCIgLz4KICAgICAgPHJlY3QgeD0iODcuMjMiCiAgICAgICAgICAgICAgICAgICAgeT0iMTMyLjkxIgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI3OC45NiIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjU3LjA5IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgogICAgPC9zdmc+"
     }
   },
   "graphs": {
@@ -74,8 +53,8 @@
           "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
           "metadata": {
             "visual": {
-              "x": 116.5377806333058,
-              "y": 217.21798728000513,
+              "x": 331.27996813330583,
+              "y": 304.7297060300052,
               "collapsed": "expanded",
               "outputHeight": 88
             },
