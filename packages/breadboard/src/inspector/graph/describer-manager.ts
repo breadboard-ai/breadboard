@@ -359,7 +359,8 @@ class GraphDescriberManager {
       !outputSchema.properties &&
       this.handle.graphId
     ) {
-      return {
+      return filterEmptyValues({
+        ...result,
         inputSchema: {
           properties: {
             context: {
@@ -376,7 +377,7 @@ class GraphDescriberManager {
             },
           },
         },
-      };
+      });
     }
     return result;
   }
