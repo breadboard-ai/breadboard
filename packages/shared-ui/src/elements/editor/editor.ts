@@ -1570,6 +1570,29 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       return (kit1.metadata.title || "") > (kit2.metadata.title || "") ? 1 : -1;
     });
 
+    if (typeTag === "tool") {
+      const subGraphs =
+        (this.mainGraphId
+          ? this.graphStore?.get(this.mainGraphId)?.graph.graphs
+          : {}) || {};
+      kitList.push(
+        ...Object.entries(subGraphs).map(([graphId, descriptor]) => {
+          const id = `#${graphId}`;
+          return {
+            id,
+            metadata: {
+              mainGraph: {
+                id: this.mainGraphId!,
+              },
+              updating: false,
+              title: descriptor.title,
+              ...descriptor.metadata,
+            },
+          };
+        })
+      );
+    }
+
     return kitList;
 
     function isKnownGood(mainGraph: NodeHandlerMetadata) {
