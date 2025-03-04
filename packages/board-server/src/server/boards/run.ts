@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { ApiHandler, BoardParseResult } from "../types.js";
+import type { Response } from "express";
+
 import { loadFromStore } from "./utils/board-server-provider.js";
 import { verifyKey } from "./utils/verify-key.js";
 import { secretsKit } from "../proxy/secrets.js";
@@ -12,8 +13,14 @@ import { runBoard, timestamp } from "./utils/run-board.js";
 import { getStore } from "../store.js";
 import type { RemoteMessage } from "@google-labs/breadboard/remote";
 
-const runHandler: ApiHandler = async (parsed, req, res, body) => {
-  const { board, url, name, user } = parsed as BoardParseResult;
+async function runHandler(
+  boardPath: string,
+  user: string,
+  name: string,
+  url: URL,
+  res: Response,
+  body: unknown
+): Promise<void> {
   const {
     $next: next,
     $diagnostics: diagnostics,
@@ -51,14 +58,14 @@ const runHandler: ApiHandler = async (parsed, req, res, body) => {
     ]);
     await writer.close();
     res.end();
-    return true;
+    return;
   }
 
   const runStateStore = getStore();
 
   await runBoard({
-    url,
-    path: board,
+    url: url.href,
+    path: boardPath,
     user: keyVerificationResult.user!,
     inputs,
     loader: loadFromStore,
@@ -70,7 +77,6 @@ const runHandler: ApiHandler = async (parsed, req, res, body) => {
   });
   // await writer.close();
   res.end();
-  return true;
-};
+}
 
 export default runHandler;

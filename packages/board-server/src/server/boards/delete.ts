@@ -4,19 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { Request, Response } from "express";
+
 import { ok } from "@google-labs/breadboard";
 import { authenticateAndGetUserStore } from "../auth.js";
 import { badRequest } from "../errors.js";
 import { getStore } from "../store.js";
-import type {
-  ApiHandler,
-  BoardParseResult,
-  BoardServerStore,
-} from "../types.js";
+import type { BoardServerStore } from "../types.js";
 
-const del: ApiHandler = async (parsed, req, res, body) => {
-  const { board: path } = parsed as BoardParseResult;
-
+async function del(
+  boardPath: string,
+  req: Request,
+  res: Response
+): Promise<void> {
   let store: BoardServerStore | undefined = undefined;
 
   const userStore = await authenticateAndGetUserStore(req, res, () => {
@@ -24,33 +24,21 @@ const del: ApiHandler = async (parsed, req, res, body) => {
     return store;
   });
   if (!ok(userStore)) {
-    return true;
+    return;
   }
 
   if (!store) {
     store = getStore();
   }
 
-  if (!body) {
-    badRequest(res, "No body provided");
-    return true;
-  }
-
-  const maybeDelete = body as { delete: boolean };
-
-  if (maybeDelete.delete !== true) {
-    return false;
-  }
-
-  const result = await store.delete(userStore, path);
+  const result = await store.delete(userStore, boardPath);
   if (!result.success) {
     badRequest(res, result.error!);
-    return true;
+    return;
   }
 
   res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(JSON.stringify({ deleted: path }));
-  return true;
-};
+  res.end(JSON.stringify({ deleted: boardPath }));
+}
 
 export default del;

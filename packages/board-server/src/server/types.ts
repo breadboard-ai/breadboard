@@ -13,7 +13,6 @@ import type {
 } from "@google-labs/breadboard";
 import type { RunDiagnosticsLevel } from "@google-labs/breadboard/harness";
 import type { RemoteMessageWriter } from "@google-labs/breadboard/remote";
-import type { IncomingMessage, ServerResponse } from "http";
 import type {
   BoardListEntry,
   GetUserStoreResult,
@@ -26,50 +25,11 @@ import type {
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
 
-export type GeneralRequestType = "list" | "create" | "options";
-
-export type UserRequestType =
-  | "list"
-  | "create"
-  | "get"
-  | "update"
-  | "app"
-  | "api"
-  | "invoke"
-  | "describe"
-  | "run"
-  | "invite-list"
-  | "invite-update"
-  | "drive";
-
-export type RequestType = GeneralRequestType | UserRequestType;
-
-export type GeneralParseResult = {
-  success: true;
-  type: GeneralRequestType;
-};
-
-export type BoardParseResult = {
-  success: true;
-  type: UserRequestType;
-  board: string;
-  url: string;
+export type BoardId = {
   user: string;
   name: string;
-  id?: string;
+  fullPath: string;
 };
-
-export type ParseResult =
-  | GeneralParseResult
-  | BoardParseResult
-  | { success: false; error: string; code: number };
-
-export type ApiHandler = <T extends ParseResult>(
-  parsed: T,
-  req: IncomingMessage,
-  res: ServerResponse,
-  body?: unknown
-) => Promise<boolean>;
 
 export type SecretInputs = {
   keys: string[];

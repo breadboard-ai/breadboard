@@ -4,9 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { Request, Response } from "express";
+
 import { ok } from "@google-labs/breadboard";
 import { getConnectionArgs } from "../auth.js";
-import type { ApiHandler, BoardParseResult } from "../types.js";
 import { serverError } from "../errors.js";
 import { Readable } from "node:stream";
 import { GeminiFileApi } from "../blobs/utils/gemini-file-api.js";
@@ -58,22 +59,26 @@ function success(res: ServerResponse, fileUri: string) {
   return true;
 }
 
-const handleAssetsDriveRequest: ApiHandler = async (parsed, req, res, _) => {
+async function handleAssetsDriveRequest(
+  driveId: string,
+  req: Request,
+  res: Response
+): Promise<void> {
   const args = getConnectionArgs(req);
   if (!ok(args) || !("token" in args)) {
     res.writeHead(401, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "Unauthorized" }));
-    return true;
+    return;
   }
-  const { id } = parsed as BoardParseResult;
 
-  const part = CavemanCache.instance().get(id!);
+  const part = CavemanCache.instance().get(driveId);
   if (part) {
-    return success(res, part.fileUri);
+    success(res, part.fileUri);
+    return;
   }
 
   const { token } = args;
-  const url = `https://www.googleapis.com/drive/v3/files/${id}/export?mimeType=${encodeURIComponent("application/pdf")}`;
+  const url = `https://www.googleapis.com/drive/v3/files/${driveId}/export?mimeType=${encodeURIComponent("application/pdf")}`;
 
   try {
     const exporting = await fetch(url, {
@@ -86,7 +91,7 @@ const handleAssetsDriveRequest: ApiHandler = async (parsed, req, res, _) => {
         res,
         `Unable to handle asset drive request ${await exporting.text()}`
       );
-      return true;
+      return;
     }
 
     // TODO: Handle this more memory-efficiently.
@@ -97,7 +102,7 @@ const handleAssetsDriveRequest: ApiHandler = async (parsed, req, res, _) => {
     const uploading = await fileApi.upload(
       buffer.length,
       "application/pdf",
-      id!,
+      driveId,
       readable
     );
     if (!ok(uploading)) {
@@ -105,20 +110,19 @@ const handleAssetsDriveRequest: ApiHandler = async (parsed, req, res, _) => {
         res,
         `Unable to handle asset drive request: ${uploading.$error}`
       );
-      return true;
+      return;
     }
-    CavemanCache.instance().set(id!, {
+    CavemanCache.instance().set(driveId, {
       fileUri: uploading.fileUri!,
       expirationTime: uploading.expirationTime!,
     });
-    return success(res, uploading.fileUri!);
+    success(res, uploading.fileUri!);
   } catch (e) {
     serverError(
       res,
       `Unable to handle asset drive request: ${(e as Error).message}`
     );
-    return true;
   }
-};
+}
 
 export default handleAssetsDriveRequest;

@@ -4,18 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { Request, Response } from "express";
+
 import { ok } from "@google-labs/breadboard";
 import { authenticateAndGetUserStore } from "../auth.js";
 import { getStore } from "../store.js";
-import type {
-  ApiHandler,
-  BoardParseResult,
-  BoardServerStore,
-} from "../types.js";
+import type { BoardServerStore } from "../types.js";
 
-const updateInvite: ApiHandler = async (parsed, req, res, body) => {
-  const { board: path } = parsed as BoardParseResult;
-
+async function updateInvite(
+  boardPath: string,
+  req: Request,
+  res: Response,
+  body: unknown
+): Promise<void> {
   let store: BoardServerStore | undefined = undefined;
 
   const userStore = await authenticateAndGetUserStore(req, res, () => {
@@ -23,7 +24,7 @@ const updateInvite: ApiHandler = async (parsed, req, res, body) => {
     return store;
   });
   if (!ok(userStore)) {
-    return true;
+    return;
   }
   if (!store) {
     store = getStore();
@@ -31,7 +32,7 @@ const updateInvite: ApiHandler = async (parsed, req, res, body) => {
 
   if (!body) {
     // create new invite
-    const result = await store.createInvite(userStore, path);
+    const result = await store.createInvite(userStore, boardPath);
     let responseBody;
     if (!result.success) {
       responseBody = { error: result.error };
@@ -40,14 +41,14 @@ const updateInvite: ApiHandler = async (parsed, req, res, body) => {
     }
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify(responseBody));
-    return true;
+    return;
   } else {
     // delete invite
     const del = body as { delete: string };
     if (!del.delete) {
-      return false;
+      return;
     }
-    const result = await store.deleteInvite(userStore, path, del.delete);
+    const result = await store.deleteInvite(userStore, boardPath, del.delete);
     let responseBody;
     if (!result.success) {
       // TODO: Be nice and return a proper error code
@@ -57,8 +58,7 @@ const updateInvite: ApiHandler = async (parsed, req, res, body) => {
     }
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify(responseBody));
-    return true;
   }
-};
+}
 
 export default updateInvite;

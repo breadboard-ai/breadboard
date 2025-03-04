@@ -11,6 +11,7 @@ import { makeRouter } from "./router.js";
 
 import type { ServerConfig } from "./server/config.js";
 import * as blobs from "./server/blobs/index.js";
+import { serveBoardsAPI } from "./server/boards/index.js";
 import { serveHome } from "./server/home/index.js";
 import { serveInfoAPI } from "./server/info/index.js";
 import { serveMeAPI } from "./server/info/me.js";
@@ -25,12 +26,10 @@ export function createServer(config: ServerConfig): Express {
   const server = express();
 
   server.get("/", async (req, res) => serveHome(config, req, res));
-
-  server.post("/proxy", async (req, res) => serveProxyAPI(config, req, res));
-
+  server.use("/boards", serveBoardsAPI(config));
   server.get("/info", serveInfoAPI);
-
   server.get("/me", async (req, res) => serveMeAPI(config, req, res));
+  server.post("/proxy", async (req, res) => serveProxyAPI(config, req, res));
 
   // The old router for blobs skipped handling if storage bucket was undefined.
   // Not sure if that was intentional, but this preserves the behavior until we

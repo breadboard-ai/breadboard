@@ -4,15 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { Request, Response } from "express";
+
 import { ok, type GraphDescriptor } from "@google-labs/breadboard";
 import { authenticateAndGetUserStore } from "../auth.js";
 import { badRequest } from "../errors.js";
-import type { ApiHandler, BoardParseResult } from "../types.js";
 import { getStore } from "../store.js";
 
-const post: ApiHandler = async (parsed, req, res, body) => {
-  const { board: path } = parsed as BoardParseResult;
-
+async function post(
+  boardPath: string,
+  req: Request,
+  res: Response,
+  body: unknown
+): Promise<void> {
   let store;
 
   const userPath = await authenticateAndGetUserStore(req, res, () => {
@@ -20,12 +24,12 @@ const post: ApiHandler = async (parsed, req, res, body) => {
     return store;
   });
   if (!ok(userPath)) {
-    return true;
+    return;
   }
 
   if (!body) {
     badRequest(res, "No body provided");
-    return true;
+    return;
   }
 
   const maybeGraph = body as GraphDescriptor;
@@ -33,22 +37,22 @@ const post: ApiHandler = async (parsed, req, res, body) => {
   if (
     !(("nodes" in maybeGraph && "edges" in maybeGraph) || "main" in maybeGraph)
   ) {
-    return false;
+    badRequest(res, "Malformed body");
+    return;
   }
 
   if (!store) {
     store = getStore();
   }
 
-  const result = await store.update(userPath!, path, maybeGraph);
+  const result = await store.update(userPath!, boardPath, maybeGraph);
   if (!result.success) {
     badRequest(res, result.error);
-    return true;
+    return;
   }
 
   res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(JSON.stringify({ created: path }));
-  return true;
-};
+  res.end(JSON.stringify({ created: boardPath }));
+}
 
 export default post;
