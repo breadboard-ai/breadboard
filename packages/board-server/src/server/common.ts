@@ -45,12 +45,12 @@ const IS_PROD = process.env.NODE_ENV === "production";
 /**
  * Serve a static file
  */
-export const serveFile = async (
+export async function serveFile(
   serverConfig: ServerConfig,
   res: ServerResponse,
   path: string,
   transformer?: (contents: string) => Promise<string>
-) => {
+): Promise<void> {
   if (path == "/") {
     path = "/index.html";
   }
@@ -80,7 +80,7 @@ export const serveFile = async (
   } catch {
     notFound(res, "Static file not found");
   }
-};
+}
 export const serveContent = async (
   serverConfig: ServerConfig,
   req: IncomingMessage,
@@ -116,11 +116,11 @@ function replaceMetadata(contents: string, metadata: PageMetadata) {
     .replaceAll("{{description}}", escapeHTML(metadata.description || ""));
 }
 
-export const serveIndex = async (
+export async function serveIndex(
   serverConfig: ServerConfig,
   res: ServerResponse,
   metadataGetter: () => Promise<PageMetadata | null>
-) => {
+): Promise<void> {
   const metadata = await metadataGetter();
   if (metadata === null) {
     return notFound(res, "Board not found");
@@ -142,7 +142,7 @@ export const serveIndex = async (
       replaceMetadata(contents, metadata)
     );
   });
-};
+}
 
 function expandImplicitIndex(urlString: string | undefined) {
   if (!urlString) {

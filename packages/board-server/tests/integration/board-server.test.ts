@@ -82,7 +82,7 @@ suite("Board Server integration test", () => {
       assert.equal(response.status, 200);
     });
 
-    test("POST /boards/@:user/:name.json", async () => {
+    test("POST /boards/@:user/:name.json -> updates", async () => {
       const store = getStore();
       const board = await store.create(user.account, "test-board", false);
 
@@ -91,6 +91,19 @@ suite("Board Server integration test", () => {
         .send({ nodes: [], edges: [] });
 
       assert.equal(response.status, 200);
+      assert.deepEqual(response.body, { created: board.path });
+    });
+
+    test("POST /boards/@:user/:name.json -> deletes", async () => {
+      const store = getStore();
+      const board = await store.create(user.account, "test-board", false);
+
+      const response = await request(server)
+        .post(`/boards/${board.path}?API_KEY=${user.api_key}`)
+        .send({ delete: true });
+
+      assert.equal(response.status, 200);
+      assert.deepEqual(response.body, { deleted: board.path });
     });
 
     // TODO Make this work. It tries to serve /index.html on the host machine, which fails
@@ -185,7 +198,7 @@ suite("Board Server integration test", () => {
     });
 
     // This test makes an HTTP call to the Drive API. Can't run this in a test.
-    test.todo("POST /boards/@:user/:name.json/assets/drive:id");
+    test.todo("POST /boards/@:user/:name.json/assets/drive/:id");
   });
 
   suite.todo("Blobs API", () => {

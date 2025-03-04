@@ -144,5 +144,18 @@
       "user": "user",
       "url": "https://example.com/boards/@user/name.json"
     }
+  },
+  {
+    "url": "https://example.com/boards/@user/name.json/assets/drive/123456",
+    "method": "POST",
+    "result": {
+      "success": true,
+      "type": "drive",
+      "board": "@user/name.json",
+      "id": "123456",
+      "name": "name.json",
+      "user": "user",
+      "url": "https://example.com/boards/@user/name.json"
+    }
   }
 ]

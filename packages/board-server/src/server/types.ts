@@ -59,6 +59,12 @@ export type BoardParseResult = {
   id?: string;
 };
 
+export type BoardId = {
+  user: string;
+  name: string;
+  fullPath: string;
+};
+
 export type ParseResult =
   | GeneralParseResult
   | BoardParseResult

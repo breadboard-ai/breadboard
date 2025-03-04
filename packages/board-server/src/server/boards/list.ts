@@ -4,12 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { Request, Response } from "express";
+
 import { ok } from "@google-labs/breadboard";
+
 import { authenticateAndGetUserStore } from "../auth.js";
 import { getStore } from "../store.js";
-import type { ApiHandler, BoardServerStore } from "../types.js";
+import type { BoardServerStore } from "../types.js";
 
-const list: ApiHandler = async (_path, req, res) => {
+async function list(req: Request, res: Response) {
   let store: BoardServerStore | undefined = undefined;
 
   const userStore = await authenticateAndGetUserStore(req, res, () => {
@@ -17,7 +20,7 @@ const list: ApiHandler = async (_path, req, res) => {
     return store;
   });
   if (!ok(userStore)) {
-    return true;
+    return;
   }
   if (!store) {
     store = getStore();
@@ -27,7 +30,6 @@ const list: ApiHandler = async (_path, req, res) => {
 
   res.writeHead(200, { "Content-Type": "application/json" });
   res.end(JSON.stringify(boards));
-  return true;
-};
+}
 
 export default list;

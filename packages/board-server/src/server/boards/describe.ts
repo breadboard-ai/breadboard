@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { Response } from "express";
+
 import {
   createGraphStore,
   createLoader,
@@ -12,7 +14,6 @@ import {
 } from "@google-labs/breadboard";
 import { notFound } from "../errors.js";
 import { getStore } from "../store.js";
-import type { ApiHandler, BoardParseResult } from "../types.js";
 import { NodeSandbox } from "@breadboard-ai/jsandbox/node";
 
 export const addKeyInput = (describeResult: NodeDescriberResult) => {
@@ -36,16 +37,18 @@ function emptyDescriberResult(): NodeDescriberResult {
   };
 }
 
-const describe: ApiHandler = async (parsed, _req, res) => {
+async function describe(
+  user: string,
+  name: string,
+  res: Response
+): Promise<void> {
   const store = getStore();
-  const { user, name } = parsed as BoardParseResult;
-
   const board = JSON.parse(await store.get(user!, name!)) as
     | GraphDescriptor
     | undefined;
   if (!board) {
     notFound(res, "Board not found");
-    return true;
+    return;
   }
 
   const loader = createLoader();
@@ -80,8 +83,6 @@ const describe: ApiHandler = async (parsed, _req, res) => {
     "Content-Type": "application/json",
   });
   res.end(JSON.stringify(result));
-
-  return true;
-};
+}
 
 export default describe;

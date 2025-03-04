@@ -4,18 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { Request, Response } from "express";
+
 import { ok } from "@google-labs/breadboard";
 import { authenticateAndGetUserStore } from "../auth.js";
 import { getStore } from "../store.js";
-import type {
-  ApiHandler,
-  BoardParseResult,
-  BoardServerStore,
-} from "../types.js";
+import type { BoardServerStore } from "../types.js";
 
-const inviteList: ApiHandler = async (parsed, req, res) => {
-  const { board: path } = parsed as BoardParseResult;
-
+async function inviteList(
+  boardPath: string,
+  req: Request,
+  res: Response
+): Promise<void> {
   let store: BoardServerStore | undefined = undefined;
 
   const userStore = await authenticateAndGetUserStore(req, res, () => {
@@ -23,14 +23,14 @@ const inviteList: ApiHandler = async (parsed, req, res) => {
     return store;
   });
   if (!ok(userStore)) {
-    return true;
+    return;
   }
 
   if (!store) {
     store = getStore();
   }
 
-  const result = await store.listInvites(userStore, path);
+  const result = await store.listInvites(userStore, boardPath);
   let responseBody;
   if (!result.success) {
     // TODO: Be nice and return a proper error code
@@ -41,7 +41,6 @@ const inviteList: ApiHandler = async (parsed, req, res) => {
 
   res.writeHead(200, { "Content-Type": "application/json" });
   res.end(JSON.stringify(responseBody));
-  return true;
-};
+}
 
 export default inviteList;
