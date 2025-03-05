@@ -62,9 +62,7 @@
         "../core-kit#build:tsc",
         "../json-kit#build:tsc",
         "../shared-ui#build:tsc",
-        "../template-kit#build:tsc",
-        "../visual-editor#build",
-        "update-sandbox-runtime"
+        "../template-kit#build:tsc"
       ],
       "clean": "if-file-deleted"
     },
@@ -167,18 +165,6 @@
       ],
       "files": [],
       "output": []
-    },
-    "update-sandbox-runtime": {
-      "command": "tsx src/update-sandbox-runtime.ts",
-      "dependencies": [
-        "../jsandbox#build"
-      ],
-      "files": [
-        "src/update-sandbox-runtime.ts"
-      ],
-      "output": [
-        "public/sandbox.wasm"
-      ]
     }
   },
   "repository": {

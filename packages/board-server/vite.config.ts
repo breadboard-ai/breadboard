@@ -33,7 +33,6 @@ export default defineConfig(async ({ mode }): Promise<UserConfig> => {
           index: "./index.html",
           api: "./api.html",
           oauth: "./oauth/index.html",
-          editor: "./experimental/editor.html",
         },
         formats: ["es"],
       },
