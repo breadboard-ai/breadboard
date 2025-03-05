@@ -18,7 +18,7 @@ export const serveHome = async (
   const store = getStore();
   const info = await store.getServerInfo();
 
-  if (info?.url && config.allowedOrigins.size > 0) {
+  if (info?.url && config.allowedOrigins.length > 0) {
     const firstOrigin = config.allowedOrigins.values().next().value;
     if (firstOrigin) {
       // Redirect to the first origin with the first run experience url

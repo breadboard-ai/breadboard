@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { IncomingMessage, ServerResponse } from "http";
+import { type Request, type Response, Router } from "express";
+
 import { getStore, type ServerInfo } from "../store.js";
-import { methodNotAllowed } from "../errors.js";
 import { corsAll } from "../cors.js";
 import packageInfo from "../../../package.json" with { type: "json" };
 
@@ -22,11 +22,16 @@ const DEFAULT_SERVER_INFO: ServerInfo = {
   },
 };
 
-export async function serveInfoAPI(req: IncomingMessage, res: ServerResponse) {
-  if (!corsAll(req, res)) {
-    return;
-  }
+export function serveInfoAPI(): Router {
+  const router = Router();
 
+  router.use(corsAll);
+  router.get("/", get);
+
+  return router;
+}
+
+async function get(_req: Request, res: Response): Promise<void> {
   const store = getStore();
   const info = (await store.getServerInfo()) || DEFAULT_SERVER_INFO;
   const version = packageInfo.version;

@@ -7,7 +7,7 @@
 import type { ViteDevServer } from "vite";
 
 export interface ServerConfig {
-  allowedOrigins: Set<string>;
+  allowedOrigins: string[];
   hostname: string;
   port: number;
   /**

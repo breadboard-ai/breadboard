@@ -39,36 +39,32 @@ function getMetadata(user: string, name: string) {
 export function serveBoardsAPI(serverConfig: ServerConfig): Router {
   const router = Router();
 
-  router.options("*", (req, res) => {
-    corsAll(req, res);
-  });
+  router.use("/", cors(serverConfig.allowedOrigins));
+  router.use("/@:user/:name.json", corsAll);
+  router.use("/@:user/:name.json", cors(serverConfig.allowedOrigins));
+  router.use("/@:user/:name.api/invoke", corsAll);
+  router.use("/@:user/:name.api/run", corsAll);
+  router.use("/@:user/:name.api/describe", corsAll);
+  router.use("/@:user/:name.invite", cors(serverConfig.allowedOrigins));
+  router.use(
+    "/@:user/:name/assets/drive/:driveId",
+    cors(serverConfig.allowedOrigins)
+  );
 
   router.get("/", async (req, res) => {
-    if (!cors(req, res, serverConfig.allowedOrigins)) {
-      return;
-    }
     await listBoards(req, res);
   });
 
   router.post("/", async (req, res) => {
-    if (!cors(req, res, serverConfig.allowedOrigins)) {
-      return;
-    }
     await createBoard(req, res);
   });
 
   router.get("/@:user/:name.json", async (req, res) => {
-    if (!corsAll(req, res)) {
-      return;
-    }
     const { user, name } = getBoardId(req);
     await getBoard(user, name, req, res);
   });
 
   router.post("/@:user/:name.json", async (req, res) => {
-    if (!cors(req, res, serverConfig.allowedOrigins)) {
-      return;
-    }
     const { fullPath } = getBoardId(req);
     const body = await getBody(req);
 
@@ -91,9 +87,6 @@ export function serveBoardsAPI(serverConfig: ServerConfig): Router {
   });
 
   router.post("/@:user/:name.api/invoke", async (req, res) => {
-    if (!corsAll(req, res)) {
-      return;
-    }
     const { fullPath, name, user } = getBoardId(req);
     const url = new URL(req.url, serverConfig.hostname);
     url.pathname = `boards/${fullPath}`;
@@ -104,9 +97,6 @@ export function serveBoardsAPI(serverConfig: ServerConfig): Router {
   });
 
   router.post("/@:user/:name.api/run", async (req, res) => {
-    if (!corsAll(req, res)) {
-      return;
-    }
     const { fullPath, name, user } = getBoardId(req);
     const url = new URL(req.url, serverConfig.hostname);
     url.pathname = `boards/${fullPath}`;
@@ -117,34 +107,22 @@ export function serveBoardsAPI(serverConfig: ServerConfig): Router {
   });
 
   router.post("/@:user/:name.api/describe", async (req, res) => {
-    if (!corsAll(req, res)) {
-      return;
-    }
     const { name, user } = getBoardId(req);
     await describeBoard(user, name, res);
   });
 
   router.get("/@:user/:name.invite", async (req, res) => {
-    if (!cors(req, res, serverConfig.allowedOrigins)) {
-      return;
-    }
     const { fullPath } = getBoardId(req);
     await inviteList(fullPath, req, res);
   });
 
   router.post("/@:user/:name.invite", async (req, res) => {
-    if (!cors(req, res, serverConfig.allowedOrigins)) {
-      return;
-    }
     const body = await getBody(req);
     const { fullPath } = getBoardId(req);
     await inviteUpdate(fullPath, req, res, body);
   });
 
   router.post("/@:user/:name/assets/drive/:driveId", async (req, res) => {
-    if (!cors(req, res, serverConfig.allowedOrigins)) {
-      return;
-    }
     const driveId = req.params["driveId"] ?? "";
     await handleAssetsDriveRequest(driveId, req, res);
   });
