@@ -27,8 +27,7 @@
     "dev": "npm run dev:nowatch --watch",
     "dev:nowatch": "wireit",
     "test": "wireit",
-    "test:integration": "firebase emulators:exec 'tsx --test --test-reporter=spec tests/integration/board-server.test.ts'",
-    "express": "tsx src/express/server.ts"
+    "test:integration": "firebase emulators:exec 'tsx --test --test-reporter=spec tests/integration/board-server.test.ts'"
   },
   "wireit": {
     "build": {

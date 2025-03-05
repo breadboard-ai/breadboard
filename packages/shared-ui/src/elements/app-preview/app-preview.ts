@@ -107,6 +107,12 @@ export class AppPreview extends LitElement {
       backgroundColor: backgroundColor,
       textColor: textColor,
       primaryTextColor: primaryTextColor,
+      splashScreen: {
+        storedData: {
+          handle: "/images/app/generic-flow.jpg",
+          mimeType: "image/jpeg",
+        },
+      },
     };
   }
 
@@ -273,9 +279,14 @@ export class AppPreview extends LitElement {
           }
         } else {
           this.theme = this.#createDefaultTheme();
+          this.appTitle =
+            this.graph.title ?? Strings.from("LABEL_UNTITLED_APP");
+          this.appDescription = this.graph?.description ?? "";
         }
       } else {
         this.theme = this.#createDefaultTheme();
+        this.appTitle = this.graph?.title ?? Strings.from("LABEL_UNTITLED_APP");
+        this.appDescription = this.graph?.description ?? "";
       }
 
       this.#applyThemeToTemplate();
@@ -297,6 +308,7 @@ export class AppPreview extends LitElement {
       return;
     }
 
+    this.templateAdditionalOptionsChosen = {};
     this.theme = this._originalTheme;
     this._originalTheme = null;
   }
@@ -353,6 +365,8 @@ export class AppPreview extends LitElement {
             if (!this._originalTheme) {
               this._originalTheme = this.theme;
             }
+
+            this.templateAdditionalOptionsChosen = {};
             this.theme = this.#createDefaultTheme();
           }}
         ></bb-app-theme-creator>
