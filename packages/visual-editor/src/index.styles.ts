@@ -345,6 +345,9 @@ export const styles = css`
   }
 
   .save-status {
+    display: flex;
+    align-items: center;
+    height: var(--bb-grid-size-10);
     background: transparent;
     padding-left: var(--bb-grid-size-5);
     font: 400 var(--bb-body-x-small) / var(--bb-body-line-height-x-small)
