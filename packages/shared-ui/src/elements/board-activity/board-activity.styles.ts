@@ -16,6 +16,8 @@ export const styles = css`
     position: relative;
 
     --user-input-padding-left: var(--bb-grid-size-3);
+    --output-value-padding-x: var(--bb-grid-size-2);
+    --output-value-padding-y: var(--bb-grid-size-2);
   }
 
   #click-run {
