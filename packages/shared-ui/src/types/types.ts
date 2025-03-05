@@ -546,3 +546,9 @@ export interface AppTemplate {
   eventPosition: number;
   additionalOptions: AppTemplateAdditionalOptionsAvailable;
 }
+
+export interface Utterance {
+  isFinal: boolean;
+  confidence: number;
+  transcript: string;
+}

@@ -63,6 +63,7 @@ export { SaveAsOverlay } from "./overlay/save-as.js";
 export { SchemaEditor } from "./input/schema-editor/schema-editor.js";
 export { SettingsEditOverlay } from "./overlay/settings-edit.js";
 export { SlideBoardSelector } from "./input/board-selector/slide-board-selector.js";
+export { SpeechToText } from "./input/speech-to-text/speech-to-text.js";
 export { Splitter } from "./splitter/splitter.js";
 export { StreamlinedSchemaEditor } from "./input/schema-editor/streamlined-schema-editor.js";
 export { Switcher } from "./switcher/switcher.js";
