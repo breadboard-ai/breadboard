@@ -19,6 +19,7 @@ import {
   InspectableNodePorts,
   PortIdentifier,
   NodeHandlerMetadata,
+  InspectableRun,
 } from "@google-labs/breadboard";
 import {
   CommentNode,
@@ -515,3 +516,33 @@ export interface AppThemeColors {
 export type AppTheme = AppThemeColors & {
   splashScreen?: InlineDataCapabilityPart | StoredDataCapabilityPart | null;
 };
+
+export interface AppTemplateAdditionalOption {
+  values: Array<{ value: string; title: string }>;
+  title: string;
+}
+
+export type AppTemplateAdditionalOptionsAvailable = Record<
+  string,
+  AppTemplateAdditionalOption
+>;
+
+export type AppTemplateAdditionalOptionsChosen = Record<string, string>;
+
+export interface AppTemplateOptions {
+  title?: string | null;
+  description?: string | null;
+  mode: "light" | "dark";
+  theme?: AppThemeColors;
+  splashImage: string | boolean;
+  additionalOptions?: AppTemplateAdditionalOptionsChosen;
+}
+
+export interface AppTemplate {
+  options: AppTemplateOptions;
+  run: InspectableRun | null;
+  graph: GraphDescriptor | null;
+  topGraphResult: TopGraphRunResult | null;
+  eventPosition: number;
+  additionalOptions: AppTemplateAdditionalOptionsAvailable;
+}

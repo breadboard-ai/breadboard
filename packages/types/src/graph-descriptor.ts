@@ -328,7 +328,8 @@ export type GraphMetadata = {
       title?: string;
       author?: string;
       themeColors?: Record<string, string>;
-      layout?: string;
+      template?: string;
+      templateAdditionalOptions?: Record<string, string>;
       icon?: string;
       splashScreen?: InlineDataCapabilityPart;
       description?: string;

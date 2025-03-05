@@ -33,13 +33,7 @@ export class MultiOutput extends LitElement {
     }
 
     .output {
-      --output-border-width: 0;
-      --output-border-radius: 0;
-      --output-padding: var(--bb-grid-size-6);
-      --output-value-margin-x: 0;
-      --output-value-margin-y: 0;
-      --output-value-padding-x: 0;
-      --output-value-padding-y: 0;
+      margin-bottom: var(--output-margin-bottom, 0);
 
       .value {
         display: flex;
@@ -51,7 +45,7 @@ export class MultiOutput extends LitElement {
           var(--bb-font-family);
         color: var(--bb-neutral-900);
 
-        padding: 0 var(--output-value-padding-x, var(--bb-grid-size-3));
+        padding: 0 var(--multi-output-value-padding-x, var(--bb-grid-size-3));
 
         white-space: normal;
         border-radius: initial;
@@ -129,11 +123,17 @@ export class MultiOutput extends LitElement {
         }
 
         & p {
-          font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
-            var(--bb-font-family);
+          font: var(
+            --output-font,
+            400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
+              var(--bb-font-family)
+          );
 
-          margin: 0 0 var(--bb-grid-size-2) 0;
+          color: var(--text-color, var(--bb-neutral-900));
+          margin: 0 auto
+            var(--output-string-margin-bottom-y, var(--bb-grid-size-2)) auto;
           white-space: pre-line;
+          width: var(--output-string-width, 100%);
 
           & strong:only-child {
             margin: var(--bb-grid-size-2) 0 0 0;
