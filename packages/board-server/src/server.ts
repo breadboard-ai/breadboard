@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import cors from "cors";
 import express, { type Express } from "express";
 import type { ViteDevServer } from "vite";
 
