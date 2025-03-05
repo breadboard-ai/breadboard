@@ -1,3 +1,4 @@
+set -e
 set -x
 
 project="$(gcloud config get project)"
