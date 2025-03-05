@@ -457,14 +457,13 @@ export class UI extends LitElement {
     }
 
     const appPreview = guard(
-      [run, events, eventPosition, this.graph, this.chatController?.state()],
+      [run, eventPosition, this.graph, this.topGraphResult],
       () => {
         return html`<bb-app-preview
           .graph=${this.graph}
           .run=${run}
-          .events=${events}
-          .boardServers=${this.boardServers}
-          .state=${this.chatController?.state()}
+          .eventPosition=${eventPosition}
+          .topGraphResult=${this.topGraphResult}
         ></bb-app-preview>`;
       }
     );

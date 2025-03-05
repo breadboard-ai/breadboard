@@ -458,14 +458,17 @@
 								"icon": {
 									"type": "string"
 								},
-								"layout": {
-									"type": "string"
-								},
 								"linkToSource": {
 									"type": "string"
 								},
 								"splashScreen": {
 									"$ref": "#/definitions/InlineDataCapabilityPart"
+								},
+								"template": {
+									"type": "string"
+								},
+								"templateAdditionalOptions": {
+									"$ref": "#/definitions/Record%3Cstring%2Cstring%3E"
 								},
 								"themeColors": {
 									"$ref": "#/definitions/Record%3Cstring%2Cstring%3E"

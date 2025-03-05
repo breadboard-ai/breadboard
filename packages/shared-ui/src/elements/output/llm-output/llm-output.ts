@@ -58,7 +58,7 @@ export class LLMOutput extends LitElement {
   @property()
   accessor showExportControls = false;
 
-  @property({ reflect: true })
+  @property()
   accessor supportedExportControls = { drive: false, clipboard: false };
 
   @property()
@@ -91,6 +91,7 @@ export class LLMOutput extends LitElement {
         var(--output-border-color, var(--bb-neutral-300));
       border-radius: var(--output-border-radius, var(--bb-grid-size));
       margin-bottom: var(--bb-grid-size-2);
+      background: var(--output-background-color, transparent);
     }
 
     :host([clamped="true"]) {
@@ -109,7 +110,7 @@ export class LLMOutput extends LitElement {
       display: block;
       position: relative;
       margin-bottom: var(--bb-grid-size-2);
-      padding: var(--output-padding, var(--bb-grid-size-3)) 0;
+      padding: var(--output-padding-y, 0) var(--output-padding-x, 0);
       overflow-y: auto;
       max-height: var(--bb-llm-output-content-max-height, unset);
     }
@@ -123,12 +124,12 @@ export class LLMOutput extends LitElement {
       flex-direction: column;
       position: relative;
 
-      margin: 0 var(--output-value-margin-x, var(--bb-grid-size-3));
+      margin: var(--output-value-margin-y, 0) var(--output-value-margin-x, 0);
       font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
         var(--bb-font-family);
       color: var(--bb-neutral-900);
 
-      padding: 0 var(--output-value-padding-x, var(--bb-grid-size-3));
+      padding: var(--output-value-padding-y, 0) var(--output-value-padding-x, 0);
 
       white-space: normal;
       border-radius: initial;
@@ -191,9 +192,10 @@ export class LLMOutput extends LitElement {
     .value.markdown {
       line-height: 1.5;
       overflow-x: auto;
+      color: var(--bb-neutral-900);
 
       & a {
-        color: var(--bb-ui-700);
+        color: var(--primary-color, var(--bb-ui-700));
       }
     }
 
@@ -280,8 +282,8 @@ export class LLMOutput extends LitElement {
       & button {
         width: 32px;
         height: 32px;
-        background: var(--bb-neutral-0) var(--bb-icon-copy-to-clipboard) center
-          center / 20px 20px no-repeat;
+        background: var(--background-color, var(--bb-neutral-0))
+          var(--bb-icon-copy-to-clipboard) center center / 20px 20px no-repeat;
         position: absolute;
         top: 50%;
         left: 50%;

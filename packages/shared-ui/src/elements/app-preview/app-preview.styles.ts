@@ -55,22 +55,14 @@ export const styles = css`
     --output-border-radius: var(--bb-grid-size-4);
     --output-padding: var(--bb-grid-size-5);
 
-    & .loading {
-      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
-        var(--bb-font-family);
-      padding-left: var(--bb-grid-size-8);
-      height: var(--bb-grid-size-5);
-      background: url(/images/progress-ui.svg) 0 center / 20px 20px no-repeat;
-    }
-
     & #content {
-      flex: 1;
-
       display: flex;
       flex-direction: column;
+      align-items: center;
+      justify-content: center;
       margin: 0 auto;
       max-width: 450px;
-      max-height: 800px;
+      max-height: 100%;
       aspect-ratio: 9/16;
 
       overflow: auto;
@@ -78,8 +70,26 @@ export const styles = css`
         var(--bb-font-family);
       position: relative;
       background: var(--background-color, var(--bb-neutral-0));
-      border-radius: var(--bb-grid-size-2);
+      border-radius: var(--bb-grid-size-4);
       border: 1px solid var(--bb-neutral-300);
+
+      & .loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100svw;
+
+        & .loading-message {
+          display: flex;
+          align-items: center;
+          font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+            var(--bb-font-family);
+          padding-left: var(--bb-grid-size-8);
+          height: var(--bb-grid-size-5);
+          background: url(/images/progress-ui.svg) 0 center / 20px 20px
+            no-repeat;
+        }
+      }
 
       & #controls {
         display: flex;
@@ -475,6 +485,43 @@ export const styles = css`
         padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
         text-align: center;
         color: var(--bb-neutral-700);
+      }
+    }
+
+    #controls {
+      padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
+      display: flex;
+      border-top: 1px solid var(--bb-neutral-300);
+
+      button {
+        display: block;
+        font: 500 var(--bb-label-small) / var(--bb-label-line-height-small)
+          var(--bb-font-family);
+
+        border-radius: var(--bb-grid-size-16);
+        color: var(--bb-neutral-900);
+        background-color: var(--bb-neutral-50);
+        border: none;
+        height: var(--bb-grid-size-7);
+        padding: 0 var(--bb-grid-size-3);
+        transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
+        margin-right: var(--bb-grid-size-2);
+
+        &:not([disabled]) {
+          cursor: pointer;
+
+          &:hover,
+          &:focus {
+            background-color: var(--bb-neutral-100);
+          }
+        }
+
+        &#revert {
+          background: none;
+          font: 400 var(--bb-label-small) / var(--bb-label-line-height-small)
+            var(--bb-font-family);
+          color: var(--bb-neutral-600);
+        }
       }
     }
   }

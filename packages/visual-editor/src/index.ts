@@ -3749,16 +3749,16 @@ export class Main extends LitElement {
                   }
                 } else {
                   // Removing the asset.
-                  console.log("Removing splash asset...");
                   await projectState?.organizer.removeGraphAsset("@@splash");
                 }
 
-                console.log("Applying theme...");
                 await this.#runtime.edit.applyTheme(
                   this.tab,
                   evt.theme,
                   evt.appTitle,
-                  evt.appDescription
+                  evt.appDescription,
+                  evt.template,
+                  evt.templateOptionsChosen
                 );
               }}
               @bbnoderunrequest=${async (

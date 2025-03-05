@@ -332,8 +332,14 @@
 										"type": "string"
 									}
 								},
-								"layout": {
+								"template": {
 									"type": "string"
+								},
+								"templateAdditionalOptions": {
+									"type": "object",
+									"additionalProperties": {
+										"type": "string"
+									}
 								},
 								"icon": {
 									"type": "string"

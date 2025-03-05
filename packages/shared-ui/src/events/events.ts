@@ -1372,7 +1372,9 @@ export class ThemeChangeEvent extends Event {
   constructor(
     public readonly theme: AppTheme,
     public readonly appTitle: string | null,
-    public readonly appDescription: string | null
+    public readonly appDescription: string | null,
+    public readonly template: string | null,
+    public readonly templateOptionsChosen: Record<string, string>
   ) {
     super(ThemeChangeEvent.eventName, { ...eventInit });
   }
@@ -1384,7 +1386,9 @@ export class ThemeApplyEvent extends Event {
   constructor(
     public readonly theme: AppTheme,
     public readonly appTitle: string | null,
-    public readonly appDescription: string | null
+    public readonly appDescription: string | null,
+    public readonly template: string | null,
+    public readonly templateOptionsChosen: Record<string, string>
   ) {
     super(ThemeApplyEvent.eventName, { ...eventInit });
   }

@@ -323,7 +323,9 @@ export class Edit extends EventTarget {
     tab: Tab | null,
     theme: AppTheme,
     appTitle: string | null,
-    appDescription: string | null
+    appDescription: string | null,
+    template: string | null,
+    templateAdditionalOptionsChosen: Record<string, string> | null
   ) {
     const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
@@ -342,6 +344,15 @@ export class Edit extends EventTarget {
 
     if (appDescription) {
       metadata.visual.presentation.description = appDescription;
+    }
+
+    if (template) {
+      metadata.visual.presentation.template = template;
+    }
+
+    if (templateAdditionalOptionsChosen) {
+      metadata.visual.presentation.templateAdditionalOptions =
+        templateAdditionalOptionsChosen;
     }
 
     metadata.visual.presentation.themeColors = {
