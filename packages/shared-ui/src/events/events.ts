@@ -33,6 +33,7 @@ import type {
   Settings,
   TopGraphEdgeInfo,
   UserOutputValues,
+  Utterance,
   WorkspaceSelectionChangeId,
   WorkspaceSelectionState,
   WorkspaceVisualChangeId,
@@ -1399,5 +1400,15 @@ export class ThemeClearEvent extends Event {
 
   constructor() {
     super(ThemeClearEvent.eventName, { ...eventInit });
+  }
+}
+
+/** Speech to Text */
+
+export class UtteranceEvent extends Event {
+  static eventName = "bbutterance";
+
+  constructor(public readonly parts: Utterance[]) {
+    super(UtteranceEvent.eventName, { ...eventInit });
   }
 }

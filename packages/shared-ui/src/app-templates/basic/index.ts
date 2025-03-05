@@ -23,7 +23,12 @@ import Animations from "../shared/styles/animations.js";
 import { classMap } from "lit/directives/class-map.js";
 import { GraphDescriptor, InspectableRun } from "@google-labs/breadboard";
 import { styleMap } from "lit/directives/style-map.js";
-import { InputEnterEvent, RunEvent, StopEvent } from "../../events/events";
+import {
+  InputEnterEvent,
+  RunEvent,
+  StopEvent,
+  UtteranceEvent,
+} from "../../events/events";
 import { repeat } from "lit/directives/repeat.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { NodeValue, OutputValues } from "@breadboard-ai/types";
@@ -451,8 +456,8 @@ export class Template extends LitElement implements AppTemplate {
                     resize: none;
                     background: transparent;
                     color: var(--primary-text-color);
-                    font: 400 var(--bb-title-large) /
-                      var(--bb-title-line-height-large) var(--bb-font-family);
+                    font: 400 var(--bb-title-medium) /
+                      var(--bb-title-line-height-medium) var(--bb-font-family);
                     border: none;
                     border-radius: var(--bb-grid-size-2);
                     outline: none;
@@ -473,6 +478,7 @@ export class Template extends LitElement implements AppTemplate {
                   align-items: flex-end;
 
                   & #continue {
+                    margin-left: var(--bb-grid-size-2);
                     background: oklch(
                         from var(--primary-text-color) l c h /
                           calc(alpha - 0.75)
@@ -692,6 +698,25 @@ export class Template extends LitElement implements AppTemplate {
           })}
 
           <div class="controls">
+            <bb-speech-to-text
+              @bbutterance=${(evt: UtteranceEvent) => {
+                if (!this.#inputRef.value) {
+                  return;
+                }
+
+                const inputField =
+                  this.#inputRef.value.querySelector<HTMLTextAreaElement>(
+                    "textarea"
+                  );
+                if (!inputField) {
+                  return;
+                }
+
+                inputField.value = evt.parts
+                  .map((part) => part.transcript)
+                  .join("");
+              }}
+            ></bb-speech-to-text>
             <button
               id="continue"
               @click=${() => {
