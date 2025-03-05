@@ -21,6 +21,8 @@ location="$(gcloud config get artifacts/location)"
 domain="${location}-docker.pkg.dev"
 image_url="${domain}/${project}/breadboard/unified-server"
 
+gcloud auth configure-docker
+
 docker build --build-context=breadboard=../.. --tag=unified-server .
 docker tag unified-server ${image_url}
 docker push ${image_url}
