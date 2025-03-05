@@ -345,7 +345,7 @@ export const styles = css`
   }
 
   .save-status {
-    display: flex;
+    display: none;
     align-items: center;
     height: var(--bb-grid-size-10);
     background: transparent;
@@ -357,7 +357,7 @@ export const styles = css`
 
   .save-status.can-save,
   .save-status.readonly {
-    display: block;
+    display: flex;
   }
 
   .save-status.saving {
