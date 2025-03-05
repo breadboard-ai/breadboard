@@ -125,10 +125,13 @@ export class AppThemeCreator extends LitElement {
         padding: var(--bb-grid-size-2);
         border: 1px solid var(--bb-neutral-300);
         resize: none;
-        field-sizing: content;
 
         font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
           var(--bb-font-family);
+      }
+
+      textarea {
+        field-sizing: content;
       }
 
       &#appearance {
@@ -407,6 +410,7 @@ export class AppThemeCreator extends LitElement {
             id="app-title"
             type="text"
             placeholder="Your application's title"
+            autocomplete="off"
             required
             .value=${this.appTitle}
             ?disabled=${this._generating}
@@ -422,6 +426,7 @@ export class AppThemeCreator extends LitElement {
         <div>
           <label for="app-description">Description</label>
           <textarea
+            autocomplete="off"
             placeholder="Describe your app"
             id="app-description"
             .value=${this.appDescription}
@@ -457,6 +462,7 @@ export class AppThemeCreator extends LitElement {
 
         <div class="vertical-stack">
           <textarea
+            autocomplete="off"
             placeholder="Describe your theme"
             ${ref(this.#generateDescriptionRef)}
             @keydown=${async (evt: KeyboardEvent) => {
