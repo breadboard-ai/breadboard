@@ -639,7 +639,7 @@ export class Template extends LitElement implements AppTemplate {
       </div>
 
       <div class="controls">
-        <button id="continue" ?disabled>Continue</button>
+        <button id="continue" disabled>Continue</button>
       </div>`;
 
     const continueRun = (id: string) => {
@@ -843,6 +843,7 @@ export class Template extends LitElement implements AppTemplate {
         <div>
           <button
             id="run"
+            ?disabled=${this.#totalNodeCount === 0}
             @click=${() => {
               this.dispatchEvent(new RunEvent());
             }}
@@ -855,9 +856,10 @@ export class Template extends LitElement implements AppTemplate {
 
     return html`<section class=${classMap(classes)} style=${styleMap(styles)}>
       <div id="content">
-        ${styles["--splash-image"] &&
-        this.topGraphResult.status === "stopped" &&
-        this.topGraphResult.log.length === 0
+        ${(styles["--splash-image"] &&
+          this.topGraphResult.status === "stopped" &&
+          this.topGraphResult.log.length === 0) ||
+        this.#totalNodeCount === 0
           ? splashScreen
           : [
               this.#renderControls(this.topGraphResult),
