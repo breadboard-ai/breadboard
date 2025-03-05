@@ -283,6 +283,11 @@ export class Template extends LitElement implements AppTemplate {
             padding: var(--bb-grid-size-3);
             color: var(--text-color);
 
+            &::before {
+              flex: 1;
+              content: "";
+            }
+
             & bb-multi-output {
               --output-value-padding-x: var(--bb-grid-size-4);
               --output-value-padding-y: var(--bb-grid-size-4);
