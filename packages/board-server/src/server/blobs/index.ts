@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Request, Response } from "express";
+import { type Request, type Response, Router } from "express";
 
 import { ok } from "@google-labs/breadboard";
 
@@ -18,11 +18,30 @@ import type { ServerConfig } from "../config.js";
 import { corsAll } from "../cors.js";
 import { badRequest } from "../errors.js";
 
-export async function get(
+export function serveBlobsAPI(config: ServerConfig): Router {
+  const router = Router();
+
+  router.use(() => checkStorageBucket(config));
+  router.use("/", corsAll);
+
+  router.get("/:blobId", (req, res) => get(config, req, res));
+  router.post("/", (req, res) => create(config, req, res));
+  router.post("/:blobId/file", (req, res) => update(config, req, res));
+
+  return router;
+}
+
+function checkStorageBucket(config: ServerConfig) {
+  if (!config.storageBucket) {
+    throw Error("No storage bucket configured");
+  }
+}
+
+async function get(
   config: ServerConfig,
   request: Request,
   response: Response
-) {
+): Promise<void> {
   const blobId = request.params["blobId"] ?? "";
   if (!isUUID(blobId)) {
     badRequest(response, "Invalid blob ID");
@@ -32,27 +51,24 @@ export async function get(
   await serveBlob(config.storageBucket!, blobId, request, response);
 }
 
-export async function create(
+async function create(
   config: ServerConfig,
   request: Request,
   response: Response
-) {
+): Promise<void> {
   const authenticating = await authenticate(request, response);
   if (!ok(authenticating)) {
-    return;
-  }
-  if (!corsAll(request, response)) {
     return;
   }
 
   await createBlob(config, request, response);
 }
 
-export async function update(
+async function update(
   config: ServerConfig,
   request: Request,
   response: Response
-) {
+): Promise<void> {
   const blobId = request.params["blobId"] ?? "";
   if (!isUUID(blobId)) {
     badRequest(response, "Invalid blob ID");

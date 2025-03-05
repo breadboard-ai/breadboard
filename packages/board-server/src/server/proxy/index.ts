@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Request, Response } from "express";
+import { type Request, type Response, Router } from "express";
 import { badRequest } from "../errors.js";
 import { buildSecretsTunnel, secretsKit } from "./secrets.js";
 import {
@@ -58,15 +58,20 @@ const extractRequestBody = async (request: Request) => {
   });
 };
 
-export async function serveProxyAPI(
+export function serveProxyAPI(serverConfig: ServerConfig): Router {
+  const router = Router();
+
+  router.use(cors(serverConfig.allowedOrigins));
+  router.post("/", (req, res) => post(serverConfig, req, res));
+
+  return router;
+}
+
+async function post(
   serverConfig: ServerConfig,
   req: Request,
   res: Response
-) {
-  if (!cors(req, res, serverConfig.allowedOrigins)) {
-    return;
-  }
-
+): Promise<void> {
   const authenticating = authenticate(req, null);
   if (!ok(authenticating)) {
     // Output the error in node proxy response format.
