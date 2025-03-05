@@ -28,6 +28,7 @@ import { repeat } from "lit/directives/repeat.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { NodeValue, OutputValues } from "@breadboard-ai/types";
 import { isLLMContentArrayBehavior, isLLMContentBehavior } from "../../utils";
+import { extractError } from "../shared/utils/utils";
 
 @customElement("app-basic")
 export class Template extends LitElement implements AppTemplate {
@@ -114,16 +115,23 @@ export class Template extends LitElement implements AppTemplate {
           display: flex;
           width: 100%;
           height: 100%;
+          margin: 0;
         }
 
         & #content {
           display: flex;
           flex-direction: column;
           width: 100%;
+          overflow-x: hidden;
           overflow-y: scroll;
           flex: 1;
           scrollbar-width: none;
           position: relative;
+
+          &::before {
+            content: "";
+            width: 100svw;
+          }
 
           &:has(.loading) {
             align-items: center;
@@ -270,12 +278,6 @@ export class Template extends LitElement implements AppTemplate {
             padding: var(--bb-grid-size-3);
             color: var(--text-color);
 
-            &::before {
-              flex: 1 1 auto;
-              content: "";
-              width: 100svw;
-            }
-
             & bb-multi-output {
               --output-value-padding-x: var(--bb-grid-size-4);
               --output-value-padding-y: var(--bb-grid-size-4);
@@ -289,6 +291,46 @@ export class Template extends LitElement implements AppTemplate {
               flex: 1 0 auto;
 
               animation: fadeIn 0.6s cubic-bezier(0, 0, 0.3, 1) forwards;
+            }
+
+            & .error {
+              flex: 1 0 auto;
+              display: flex;
+              flex-direction: column;
+              width: 80%;
+              margin: 0 auto;
+
+              & summary {
+                list-style: none;
+                cursor: pointer;
+
+                & h1 {
+                  margin: 0 0 var(--bb-grid-size-2) 0;
+                  font: 400 var(--bb-title-large) /
+                    var(--bb-title-line-height-large) var(--bb-font-family);
+                  color: var(--primary-color);
+                }
+
+                & p {
+                  font: 400 var(--bb-label-medium) /
+                    var(--bb-label-line-height-medium) var(--bb-font-family);
+                  margin: 0;
+                  color: oklch(
+                    from var(--text-color) l c h / calc(alpha - 0.6)
+                  );
+                }
+              }
+
+              & p {
+                margin: var(--bb-grid-size-4) 0 var(--bb-grid-size-2) 0;
+                font: 400 var(--bb-title-medium) /
+                  var(--bb-title-line-height-medium) var(--bb-font-family);
+                color: var(--secondary-color);
+              }
+
+              &::-webkit-details-marker {
+                display: none;
+              }
             }
 
             & #status {
@@ -313,6 +355,7 @@ export class Template extends LitElement implements AppTemplate {
 
               &::after {
                 content: "Working";
+                flex: 0 0 auto;
                 margin-left: var(--bb-grid-size-3);
                 color: oklch(
                   from var(--primary-text-color) l c h / calc(alpha - 0.4)
@@ -521,6 +564,20 @@ export class Template extends LitElement implements AppTemplate {
       nothing;
 
     const currentItem = topGraphResult.log.at(-1);
+    if (currentItem?.type === "error") {
+      activityContents = html`
+        <details class="error">
+          <summary>
+            <h1>We are sorry, but there was a problem with this flow.</h1>
+            <p>Tap for more details</p>
+          </summary>
+          <div>
+            <p>${extractError(currentItem.error)}</p>
+          </div>
+        </details>
+      `;
+    }
+
     if (currentItem?.type === "edge" && topGraphResult.status === "paused") {
       // Attempt to find the most recent output. If there is one, show it
       // otherwise show any message that's coming from the edge.

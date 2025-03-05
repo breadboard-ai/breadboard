@@ -141,7 +141,8 @@ export class LLMOutput extends LitElement {
       &:has(> audio) {
         justify-content: center;
         align-items: center;
-        padding: var(--bb-grid-size-2) 0;
+        padding: var(--output-value-padding-y, 0)
+          var(--output-value-padding-x, 0);
       }
 
       & pre {
