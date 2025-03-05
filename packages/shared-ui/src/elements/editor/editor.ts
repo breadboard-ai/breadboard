@@ -94,6 +94,7 @@ import "./graph-renderer.js";
 import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
 import { NodeMetadata } from "@breadboard-ai/types";
+import "./describe-edit-button.js";
 
 const ZOOM_KEY = "bb-editor-zoom-to-highlighted-node-during-runs";
 const DATA_TYPE = "text/plain";
@@ -2040,6 +2041,9 @@ export class Editor extends LitElement implements DragConnectorReceiver {
                 Zoom to fit
               </button>
             </div>
+            <bb-describe-edit-button
+              .currentGraph=${this.graph.raw()}
+            ></bb-describe-edit-button>
           </div>`
         : nothing}
       ${defaultAdd} ${componentLibrary} ${componentPicker}
