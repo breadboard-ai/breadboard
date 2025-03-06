@@ -11,7 +11,7 @@ import {
   nothing,
   HTMLTemplateResult,
 } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { customElement, property, state } from "lit/decorators.js";
 import {
   AppTemplate,
   AppTemplateOptions,
@@ -21,9 +21,15 @@ import Mode from "../shared/styles/icons.js";
 import Animations from "../shared/styles/animations.js";
 
 import { classMap } from "lit/directives/class-map.js";
-import { GraphDescriptor, InspectableRun } from "@google-labs/breadboard";
+import {
+  GraphDescriptor,
+  InspectableRun,
+  isLLMContent,
+} from "@google-labs/breadboard";
 import { styleMap } from "lit/directives/style-map.js";
 import {
+  AddAssetEvent,
+  AddAssetRequestEvent,
   InputEnterEvent,
   RunEvent,
   StopEvent,
@@ -34,6 +40,7 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { NodeValue, OutputValues } from "@breadboard-ai/types";
 import { isLLMContentArrayBehavior, isLLMContentBehavior } from "../../utils";
 import { extractError } from "../shared/utils/utils";
+import { AssetShelf } from "../../elements/elements";
 
 @customElement("app-basic")
 export class Template extends LitElement implements AppTemplate {
@@ -58,6 +65,10 @@ export class Template extends LitElement implements AppTemplate {
 
   @property()
   accessor pendingSplashScreen = false;
+
+  @state()
+  accessor showAddAssetModal = false;
+  #addAssetType: string | null = null;
 
   get additionalOptions() {
     return {
@@ -96,6 +107,12 @@ export class Template extends LitElement implements AppTemplate {
         :scope {
           --font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
           --font-style: normal;
+
+          /**
+           * Added so that any fixed position overlays are relative to this
+           * scope rather than any containing document.
+           */
+          transform: translateX(0);
         }
       }
 
@@ -426,7 +443,6 @@ export class Template extends LitElement implements AppTemplate {
             &.paused,
             &.running {
               width: 100%;
-              overflow: hidden;
 
               & #input-container {
                 padding: var(--bb-grid-size-2) var(--bb-grid-size-3)
@@ -440,12 +456,16 @@ export class Template extends LitElement implements AppTemplate {
 
                 min-height: 100px;
                 max-height: 385px;
-                overflow: auto;
+
+                bb-add-asset-button {
+                  margin-right: var(--bb-grid-size-2);
+                }
 
                 & .user-input {
                   display: flex;
                   flex-direction: column;
                   flex: 1;
+                  overflow: auto;
 
                   & p {
                     display: flex;
@@ -530,6 +550,8 @@ export class Template extends LitElement implements AppTemplate {
   ];
 
   #inputRef: Ref<HTMLDivElement> = createRef();
+  #assetShelfRef: Ref<AssetShelf> = createRef();
+
   #renderControls(topGraphResult: TopGraphRunResult) {
     if (topGraphResult.currentNode?.descriptor.id) {
       this.#nodesLeftToVisit.delete(topGraphResult.currentNode?.descriptor.id);
@@ -655,16 +677,34 @@ export class Template extends LitElement implements AppTemplate {
       const inputs = this.#inputRef.value.querySelectorAll<
         HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
       >("input,select,textarea");
+      const assetShelf =
+        this.#inputRef.value.querySelector<AssetShelf>("bb-asset-shelf");
       const inputValues: OutputValues = {};
       for (const input of inputs) {
-        if (input.dataset.type === "llm-content") {
-          inputValues[input.name] = this.#toLLMContentWithTextPart(input.value);
-        } else if (input.dataset.type === "llm-content-array") {
-          inputValues[input.name] = [
-            this.#toLLMContentWithTextPart(input.value),
-          ];
+        if (typeof input.value === "string") {
+          if (input.dataset.type === "llm-content") {
+            inputValues[input.name] = this.#toLLMContentWithTextPart(
+              input.value
+            );
+          } else if (input.dataset.type === "llm-content-array") {
+            inputValues[input.name] = [
+              this.#toLLMContentWithTextPart(input.value),
+            ];
+          } else {
+            inputValues[input.name] = input.value;
+          }
         } else {
-          inputValues[input.name] = input.value;
+          inputValues[input.name] = input.value as NodeValue;
+        }
+
+        if (assetShelf && assetShelf.value) {
+          const inputValue = inputValues[input.name];
+          if (isLLMContent(inputValue)) {
+            const parts = inputValue.parts;
+            for (const asset of assetShelf.value) {
+              parts.push(...asset.parts);
+            }
+          }
         }
       }
 
@@ -682,6 +722,11 @@ export class Template extends LitElement implements AppTemplate {
         active = true;
 
         inputContents = html`
+          <bb-add-asset-button
+            .anchor=${"above"}
+            .useGlobalPosition=${false}
+          ></bb-add-asset-button>
+
           ${repeat(props, ([name, schema]) => {
             const dataType = isLLMContentArrayBehavior(schema)
               ? "llm-content-array"
@@ -699,6 +744,7 @@ export class Template extends LitElement implements AppTemplate {
                 type="text"
                 data-type=${dataType}
               ></textarea>
+              <bb-asset-shelf ${ref(this.#assetShelfRef)}></bb-asset-shelf>
             </div>`;
           })}
 
@@ -859,7 +905,32 @@ export class Template extends LitElement implements AppTemplate {
       </div>
     `;
 
-    return html`<section class=${classMap(classes)} style=${styleMap(styles)}>
+    let addAssetModal: HTMLTemplateResult | symbol = nothing;
+    if (this.showAddAssetModal) {
+      addAssetModal = html`<bb-add-asset-modal
+        .assetType=${this.#addAssetType}
+        @bboverlaydismissed=${() => {
+          this.showAddAssetModal = false;
+        }}
+        @bbaddasset=${(evt: AddAssetEvent) => {
+          if (!this.#assetShelfRef.value) {
+            return;
+          }
+
+          this.showAddAssetModal = false;
+          this.#assetShelfRef.value.addAsset(evt.asset);
+        }}
+      ></bb-add-asset-modal>`;
+    }
+
+    return html`<section
+      class=${classMap(classes)}
+      style=${styleMap(styles)}
+      @bbaddassetrequest=${(evt: AddAssetRequestEvent) => {
+        this.showAddAssetModal = true;
+        this.#addAssetType = evt.assetType;
+      }}
+    >
       <div id="content">
         ${(styles["--splash-image"] &&
           this.topGraphResult.status === "stopped" &&
@@ -870,6 +941,7 @@ export class Template extends LitElement implements AppTemplate {
               this.#renderControls(this.topGraphResult),
               this.#renderActivity(this.topGraphResult),
               this.#renderInput(this.topGraphResult),
+              addAssetModal,
             ]}
       </div>
     </section>`;

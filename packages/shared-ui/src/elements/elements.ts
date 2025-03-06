@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+export { AddAssetButton } from "./input/add-asset/add-asset-button.js";
+export { AddAssetModal } from "./input/add-asset/add-asset-modal.js";
+export { AssetShelf } from "./input/add-asset/asset-shelf.js";
 export { AppPreview } from "./app-preview/app-preview.js";
 export { AppThemeCreator } from "./app-preview/app-theme-creator.js";
 export { ArrayEditor } from "./input/array/array-editor.js";

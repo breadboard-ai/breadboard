@@ -27,3 +27,14 @@ export function convertWatchUriToEmbedUri(uri: string) {
   const embedId = matches[1];
   return `https://www.youtube.com/embed/${embedId}`;
 }
+
+export function videoIdFromWatchOrEmbedUri(uri: string) {
+  const regex =
+    /^https:\/\/www\.youtube\.com\/(?:embed\/|watch\?v=)(.*?)(?:[&\\?]|$)/;
+  const matches = regex.exec(uri);
+  if (!matches) {
+    return null;
+  }
+
+  return matches[1];
+}
