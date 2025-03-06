@@ -56,18 +56,6 @@ export function serveBoardsAPI(serverConfig: ServerConfig): Router {
     cors(serverConfig.allowedOrigins)
   );
 
-  router.use("/@:user/:name.*", (req, res, next) => {
-    const user = req.params["user"] ?? "";
-    const name = (req.params["name"] ?? "") + ".json";
-    let boardId: BoardId = {
-      user,
-      name,
-      fullPath: `@${user}/${name}`,
-    };
-    res.locals.boardId = boardId;
-    next();
-  });
-
   router.get("/", listBoards);
   router.post("/", createBoard);
 
