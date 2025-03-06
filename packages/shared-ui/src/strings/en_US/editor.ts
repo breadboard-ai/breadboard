@@ -29,6 +29,9 @@ export default {
   COMMAND_RUN_ISOLATED: {
     str: "Run this Step",
   },
+  COMMAND_DESCRIBE_EDIT: {
+    str: "Describe an edit",
+  },
 
   // Statuses.
 

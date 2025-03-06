@@ -1562,4 +1562,19 @@ export class Edit extends EventTarget {
       `Remove node ${id}`
     );
   }
+
+  replaceGraph(tab: Tab | null, replacement: GraphDescriptor) {
+    if (tab?.readOnly) {
+      return;
+    }
+    const editableGraph = this.getEditor(tab);
+    if (!editableGraph) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to find board to edit"));
+      return;
+    }
+    editableGraph.edit(
+      [{ type: "replacegraph", replacement }],
+      `Replace graph`
+    );
+  }
 }

@@ -17,7 +17,7 @@ export const outlineButtonWithIcon = css`
 
     &:not([disabled]) {
       cursor: pointer;
-      transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+      transition: filter 0.2s cubic-bezier(0, 0, 0.3, 1);
 
       &:focus,
       &:hover {

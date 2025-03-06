@@ -517,7 +517,9 @@ body.hide-cursor {
   --bb-icon-sunny: url(/third_party/icons/sunny.svg);
 
   --bb-icon-spark: url(/third_party/icons/spark.svg);
+  --bb-icon-spark-white: url(/third_party/icons/spark-white.svg);
   --bb-icon-pen-spark: url(/third_party/icons/pen-spark.svg);
+  --bb-icon-pen-spark-filled-white: url(/third_party/icons/pen-spark-filled-white.svg);
 
   /** UI Colors */
 
