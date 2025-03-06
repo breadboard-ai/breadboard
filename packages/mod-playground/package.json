@@ -135,7 +135,7 @@
     "typescript": "^5.7.3",
     "vite": "^6.2.0",
     "vite-plugin-full-reload": "^1.2.0",
-    "vite-plugin-watch-and-run": "^1.7.3",
+    "vite-plugin-watch-and-run": "^1.7.4",
     "vitest": "^3.0.7"
   },
   "dependencies": {
