@@ -1233,6 +1233,14 @@ export class GraphNodeRunRequestEvent extends Event {
   }
 }
 
+export class GraphReplaceEvent extends Event {
+  static eventName = "bbgraphreplace";
+
+  constructor(public readonly replacement: GraphDescriptor) {
+    super(GraphReplaceEvent.eventName, { ...eventInit });
+  }
+}
+
 export class EditorPointerPositionChangeEvent extends Event {
   static eventName = "bbeditorpositionchange";
 

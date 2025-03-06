@@ -179,6 +179,11 @@ export type RemoveAssetSpec = {
   path: AssetPath;
 };
 
+export type ReplaceGraphSpec = {
+  type: "replacegraph";
+  replacement: GraphDescriptor;
+};
+
 export type EditOperationConductor = (
   edits: EditSpec[],
   editLabel: string
@@ -211,7 +216,8 @@ export type EditSpec =
   | ToggleExportSpec
   | AddAssetSpec
   | RemoveAssetSpec
-  | ChangeAssetMetadataSpec;
+  | ChangeAssetMetadataSpec
+  | ReplaceGraphSpec;
 
 export type EditableGraph = {
   addEventListener<Key extends keyof EditableGraphEventMap>(

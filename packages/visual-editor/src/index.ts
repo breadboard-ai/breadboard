@@ -3737,6 +3737,11 @@ export class Main extends LitElement {
                   evt.id
                 );
               }}
+              @bbgraphreplace=${async (
+                evt: BreadboardUI.Events.GraphReplaceEvent
+              ) => {
+                this.#runtime.edit.replaceGraph(this.tab, evt.replacement);
+              }}
               @bbnodeconfigurationupdaterequest=${async (
                 evt: BreadboardUI.Events.NodeConfigurationUpdateRequestEvent
               ) => {

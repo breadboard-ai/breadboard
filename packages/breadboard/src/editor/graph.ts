@@ -48,6 +48,7 @@ import { ToggleExport } from "./operations/toggle-export.js";
 import { AddAsset } from "./operations/add-asset.js";
 import { RemoveAsset } from "./operations/remove-asset.js";
 import { ChangeAssetMetadata } from "./operations/change-asset-metadata.js";
+import { ReplaceGraph } from "./operations/replace-graph.js";
 
 const validImperativeEdits: EditSpec["type"][] = [
   "addmodule",
@@ -75,6 +76,7 @@ const operations = new Map<EditSpec["type"], EditOperation>([
   ["addasset", new AddAsset()],
   ["removeasset", new RemoveAsset()],
   ["changeassetmetadata", new ChangeAssetMetadata()],
+  ["replacegraph", new ReplaceGraph()],
 ]);
 
 export class Graph implements EditableGraph {
