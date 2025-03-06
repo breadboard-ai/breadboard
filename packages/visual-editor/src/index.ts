@@ -8,13 +8,11 @@ import * as BreadboardUI from "@breadboard-ai/shared-ui";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
 import {
-  createRunner,
   HarnessProxyConfig,
   type HarnessRunner,
   RunConfig,
   RunErrorEvent,
   RunSecretEvent,
-  RunnerErrorEvent,
 } from "@google-labs/breadboard/harness";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
@@ -518,6 +516,7 @@ export class Main extends LitElement {
           environment: this.environment,
           tokenVendor: this.tokenVendor,
           sandbox,
+          settings: this.#settings!,
         });
       })
       .then((runtime) => {
@@ -525,103 +524,7 @@ export class Main extends LitElement {
         this.#graphStore = runtime.board.getGraphStore();
         this.#boardServers = runtime.board.getBoardServers() || [];
 
-        this.sideBoardRuntime = {
-          createRunner: async (
-            graph: GraphDescriptor
-          ): Promise<HarnessRunner> => {
-            if (!graph.url) {
-              // Side-boards often won't have the required `url` property,
-              // because they might have been imported e.g. via the JS import
-              // graph, instead of via a board loader (note that board loaders
-              // inject `url` into the graphs they load). In this case, an
-              // arbitrary one will be fine, as long as the board doesn't need
-              // to load any other boards via non-self relative URLs.
-              graph = { ...graph };
-              graph.url = `file://sideboard/${crypto.randomUUID()}`;
-            }
-            this.#graphStore.addByDescriptor(graph);
-            const config = addNodeProxyServerConfig(
-              this.#proxy,
-              {
-                url: graph.url,
-                runner: graph,
-                diagnostics: true,
-                kits: [...this.#graphStore.kits],
-                loader: this.#runtime.board.getLoader(),
-                store: runtime.run.dataStore,
-                graphStore: this.#graphStore,
-                fileSystem: this.#fileSystem.createRunFileSystem({
-                  graphUrl: graph.url,
-                  env: [],
-                  assets: assetsFromGraphDescriptor(graph),
-                }),
-                inputs: BreadboardUI.Data.inputsFromSettings(this.#settings),
-                interactiveSecrets: true,
-              },
-              this.#settings,
-              this.proxyFromUrl,
-              await this.#getProxyURL(graph.url)
-            );
-            const runner = createRunner(config);
-            runner.addEventListener("secret", async (event) => {
-              const { keys } = event.data;
-              if (!this.#secretsHelper) {
-                this.#secretsHelper = new SecretsHelper(this.#settings!);
-                this.#secretsHelper.restoreStoredSecretsForKeys(keys);
-              }
-
-              if (this.#secretsHelper) {
-                this.#secretsHelper.setKeys(keys);
-                if (this.#secretsHelper.hasAllSecrets()) {
-                  this.#handleSecretEvent(event, runner);
-                  return;
-                }
-              }
-
-              // TODO(aomarks) The logic in this.#handleSecretEvent does not
-              // seem to support connections, which we definitely need. There
-              // must be some other way that secrets are fulfilled when using
-              // the main editor view. For now, let's just talk to token vendor
-              // directly, ourselves.
-              const secrets: Record<string, string> = {};
-              for (const key of event.data.keys) {
-                if (key.startsWith("connection:")) {
-                  const connectionId = key.slice("connection:".length);
-                  const result = this.tokenVendor.getToken(connectionId);
-                  if (result.state === "valid") {
-                    secrets[key] = result.grant.access_token;
-                  } else if (result.state === "expired") {
-                    try {
-                      secrets[key] = (
-                        await result.refresh()
-                      ).grant.access_token;
-                    } catch (error) {
-                      runner.dispatchEvent(
-                        new RunnerErrorEvent({
-                          error:
-                            `Error refreshing access token for ` +
-                            `${connectionId}: ${error}`,
-                          timestamp: Date.now(),
-                        })
-                      );
-                    }
-                  } else {
-                    result.state satisfies "signedout";
-                    runner.dispatchEvent(
-                      new RunnerErrorEvent({
-                        error: `User is signed out of ${connectionId}.`,
-                        timestamp: Date.now(),
-                      })
-                    );
-                  }
-                }
-              }
-
-              runner.run(secrets);
-            });
-            return runner;
-          },
-        };
+        this.sideBoardRuntime = runtime.sideboards.createSideboardRuntime();
 
         this.#graphStore.addEventListener("update", (evt) => {
           const { mainGraphId } = evt;

@@ -14,7 +14,7 @@ import { Board } from "./board.js";
 import { Run } from "./run.js";
 import { Edit } from "./edit.js";
 import { Util } from "./util.js";
-import { RuntimeConfig } from "./types.js";
+import { RuntimeConfig, SideboardRuntimeProvider } from "./types.js";
 
 import {
   createDefaultLocalBoardServer,
@@ -36,6 +36,7 @@ import { Select } from "./select.js";
 import { StateManager } from "./state.js";
 import { getDataStore } from "@breadboard-ai/data-store";
 import { BoardServerAwareDataStore } from "./board-server-aware-data-store.js";
+import { createSideboardRuntimeProvider } from "./sideboard-runtime.js";
 
 function withRunModule(kits: Kit[]): Kit[] {
   return addSandboxedRunModule(sandbox, kits);
@@ -47,6 +48,7 @@ export async function create(config: RuntimeConfig): Promise<{
   edit: Edit;
   kits: Kit[];
   select: Select;
+  sideboards: SideboardRuntimeProvider;
   state: StateManager;
   util: typeof Util;
 }> {
@@ -75,11 +77,12 @@ export async function create(config: RuntimeConfig): Promise<{
   }
 
   const loader = createLoader(servers);
-  const graphStore = createGraphStore({
+  const graphStoreArgs = {
     kits,
     loader,
     sandbox: config.sandbox,
-  });
+  };
+  const graphStore = createGraphStore(graphStoreArgs);
   registerLegacyKits(graphStore);
 
   servers.forEach((server) => {
@@ -108,6 +111,12 @@ export async function create(config: RuntimeConfig): Promise<{
     edit: new Edit([], loader, kits, config.sandbox, graphStore),
     run: new Run(graphStore, dataStore, config.runStore),
     state: new StateManager(graphStore, servers),
+    sideboards: createSideboardRuntimeProvider(
+      graphStoreArgs,
+      servers,
+      config.tokenVendor,
+      config.settings
+    ),
     select: new Select(),
     util: Util,
     kits,

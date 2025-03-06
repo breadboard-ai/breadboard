@@ -25,6 +25,8 @@ import {
   NodeIdentifier,
 } from "@breadboard-ai/types";
 import { Sandbox } from "@breadboard-ai/jsandbox";
+import { SideBoardRuntime } from "@breadboard-ai/shared-ui/utils/side-board-runtime.js";
+import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 
 export enum TabType {
   URL,
@@ -54,7 +56,8 @@ export interface RuntimeConfig {
   sandbox: Sandbox;
   experiments: Record<string, boolean>;
   environment?: BreadboardUI.Contexts.Environment;
-  tokenVendor?: TokenVendor;
+  tokenVendor: TokenVendor;
+  settings: SettingsStore;
 }
 
 export interface RuntimeConfigBoardServers {
@@ -121,3 +124,7 @@ export interface WorkspaceSelectionStateWithChangeId {
 export type TabSelectionState = Map<TabId, WorkspaceSelectionState>;
 export type EditChangeId = ReturnType<typeof crypto.randomUUID>;
 export type MoveToSelection = "immediate" | "animated" | false;
+
+export type SideboardRuntimeProvider = {
+  createSideboardRuntime(): SideBoardRuntime;
+};
