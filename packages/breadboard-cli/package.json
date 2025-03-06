@@ -167,7 +167,7 @@
     "@rollup/plugin-virtual": "^3.0.2",
     "commander": "^13.1.0",
     "esbuild": "^0.25.0",
-    "rollup": "^4.34.8",
+    "rollup": "^4.34.9",
     "serve": "^14.2.4",
     "urlpattern-polyfill": "^10.0.0",
     "vite": "^6.2.0",
