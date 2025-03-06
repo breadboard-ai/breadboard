@@ -729,6 +729,10 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
             ${assets && assets.size > 0
               ? html`<menu>
                   ${repeat(assets, ([path, asset]) => {
+                    if (path === "@@splash") {
+                      return nothing;
+                    }
+
                     return html`<li>
                       ${asset === this.editAssetTitle
                         ? html`<span

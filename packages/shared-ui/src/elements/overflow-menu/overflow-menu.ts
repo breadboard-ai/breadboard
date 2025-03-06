@@ -35,7 +35,7 @@ export class OverflowMenu extends LitElement {
       position: fixed;
       top: 20px;
       right: 20px;
-      background: var(--bb-neutral-0);
+      background: var(--background-color, var(--bb-neutral-0));
       border: 1px solid var(--bb-neutral-300);
       border-radius: var(--bb-grid-size-2);
       z-index: 2;
@@ -52,7 +52,7 @@ export class OverflowMenu extends LitElement {
         var(--bb-font-family);
       padding: var(--bb-grid-size-3) var(--bb-grid-size-4) var(--bb-grid-size-3)
         var(--bb-grid-size-11);
-      color: var(--bb-neutral-900);
+      color: var(--text-color, var(--bb-neutral-900));
       background: transparent var(--bb-icon-public) 12px center / 20px 20px
         no-repeat;
       border: none;
@@ -64,6 +64,142 @@ export class OverflowMenu extends LitElement {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      opacity: 0.5;
+      cursor: auto;
+
+      &:not([disabled]) {
+        opacity: 1;
+        cursor: pointer;
+
+        &:hover,
+        &:focus {
+          background-color: oklch(
+            from var(--text-color, var(--bb-neutral-900)) l c h /
+              calc(alpha - 0.8)
+          );
+        }
+      }
+
+      &.copy {
+        background-image: var(--bb-icon-copy-to-clipboard);
+      }
+
+      &.download {
+        background-image: var(--bb-icon-download);
+      }
+
+      &.save {
+        background-image: var(--bb-icon-save);
+      }
+
+      &.save-as {
+        background-image: var(--bb-icon-save-as);
+      }
+
+      &.settings {
+        background-image: var(--bb-icon-settings);
+      }
+
+      &.delete {
+        background-image: var(--bb-icon-delete);
+      }
+
+      &.preview {
+        background-image: var(--bb-icon-preview);
+      }
+
+      &.edit {
+        background-image: var(--bb-icon-edit);
+      }
+
+      &.fit {
+        background-image: var(--bb-icon-fit);
+      }
+
+      &.undo {
+        background-image: var(--bb-icon-undo);
+      }
+
+      &.redo {
+        background-image: var(--bb-icon-redo);
+      }
+
+      &.zoom-to-fit {
+        background-image: var(--bb-icon-fit);
+      }
+
+      &.reset-nodes {
+        background-image: var(--bb-icon-reset-nodes);
+      }
+
+      &.edit-board-details {
+        background-image: var(--bb-icon-data-info-alert);
+      }
+
+      &.board {
+        background-image: var(--bb-icon-board);
+      }
+
+      &.add-circle {
+        background-image: var(--bb-icon-add-circle);
+      }
+
+      &.module {
+        background-image: var(--bb-icon-extension);
+      }
+
+      &.module-ts {
+        background-image: var(--bb-icon-extension-ts);
+      }
+
+      &.duplicate {
+        background-image: var(--bb-icon-duplicate);
+      }
+
+      &.quick-jump {
+        background-image: var(--bb-icon-quick-jump);
+      }
+
+      &.maximize {
+        background-image: var(--bb-icon-maximize);
+      }
+
+      &.minimize {
+        background-image: var(--bb-icon-minimize);
+      }
+
+      &.checked {
+        background-image: var(--bb-icon-check);
+      }
+
+      &.unchecked {
+        background-image: var(--bb-icon-check);
+      }
+
+      &.logout {
+        background-image: var(--bb-icon-logout);
+      }
+
+      &.upload {
+        background-image: var(--bb-icon-upload);
+      }
+
+      &.content-add {
+        background-image: var(--bb-icon-text);
+      }
+
+      &.youtube {
+        background-image: var(--bb-icon-youtube);
+      }
+
+      &.gdrive {
+        background-image: var(--bb-icon-google-drive-outline);
+      }
+
+      &.error {
+        background-image: var(--bb-icon-error);
+        color: var(--bb-warning-600);
+      }
     }
 
     div {
@@ -108,137 +244,6 @@ export class OverflowMenu extends LitElement {
 
     div:only-child button {
       border-radius: var(--bb-grid-size-2);
-    }
-
-    button[disabled] {
-      opacity: 0.5;
-      cursor: auto;
-    }
-
-    button:not([disabled]):hover,
-    button:not([disabled]):focus {
-      background-color: var(--bb-neutral-50);
-    }
-
-    button.copy {
-      background-image: var(--bb-icon-copy-to-clipboard);
-    }
-
-    button.download {
-      background-image: var(--bb-icon-download);
-    }
-
-    button.save {
-      background-image: var(--bb-icon-save);
-    }
-
-    button.save-as {
-      background-image: var(--bb-icon-save-as);
-    }
-
-    button.settings {
-      background-image: var(--bb-icon-settings);
-    }
-
-    button.delete {
-      background-image: var(--bb-icon-delete);
-    }
-
-    button.preview {
-      background-image: var(--bb-icon-preview);
-    }
-
-    button.edit {
-      background-image: var(--bb-icon-edit);
-    }
-
-    button.fit {
-      background-image: var(--bb-icon-fit);
-    }
-
-    button.undo {
-      background-image: var(--bb-icon-undo);
-    }
-
-    button.redo {
-      background-image: var(--bb-icon-redo);
-    }
-
-    button.zoom-to-fit {
-      background-image: var(--bb-icon-fit);
-    }
-
-    button.reset-nodes {
-      background-image: var(--bb-icon-reset-nodes);
-    }
-
-    button.edit-board-details {
-      background-image: var(--bb-icon-data-info-alert);
-    }
-
-    button.board {
-      background-image: var(--bb-icon-board);
-    }
-
-    button.add-circle {
-      background-image: var(--bb-icon-add-circle);
-    }
-
-    button.module {
-      background-image: var(--bb-icon-extension);
-    }
-
-    button.module-ts {
-      background-image: var(--bb-icon-extension-ts);
-    }
-
-    button.duplicate {
-      background-image: var(--bb-icon-duplicate);
-    }
-
-    button.quick-jump {
-      background-image: var(--bb-icon-quick-jump);
-    }
-
-    button.maximize {
-      background-image: var(--bb-icon-maximize);
-    }
-
-    button.minimize {
-      background-image: var(--bb-icon-minimize);
-    }
-
-    button.checked {
-      background-image: var(--bb-icon-check);
-    }
-
-    button.unchecked {
-      background-image: var(--bb-icon-check);
-    }
-
-    button.logout {
-      background-image: var(--bb-icon-logout);
-    }
-
-    button.upload {
-      background-image: var(--bb-icon-upload);
-    }
-
-    button.content-add {
-      background-image: var(--bb-icon-text);
-    }
-
-    button.youtube {
-      background-image: var(--bb-icon-youtube);
-    }
-
-    button.gdrive {
-      background-image: var(--bb-icon-google-drive-outline);
-    }
-
-    button.error {
-      background-image: var(--bb-icon-error);
-      color: var(--bb-warning-600);
     }
   `;
 

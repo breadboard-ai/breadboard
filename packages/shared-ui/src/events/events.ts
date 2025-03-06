@@ -7,6 +7,7 @@
 import type {
   GraphIdentifier,
   GraphMetadata,
+  LLMContent,
   ModuleCode,
   ModuleIdentifier,
   ModuleLanguage,
@@ -1410,5 +1411,23 @@ export class UtteranceEvent extends Event {
 
   constructor(public readonly parts: Utterance[]) {
     super(UtteranceEvent.eventName, { ...eventInit });
+  }
+}
+
+/** Assets */
+
+export class AddAssetRequestEvent extends Event {
+  static eventName = "bbaddassetrequest";
+
+  constructor(public readonly assetType: string) {
+    super(AddAssetRequestEvent.eventName, { ...eventInit });
+  }
+}
+
+export class AddAssetEvent extends Event {
+  static eventName = "bbaddasset";
+
+  constructor(public readonly asset: LLMContent) {
+    super(AddAssetEvent.eventName, { ...eventInit });
   }
 }
