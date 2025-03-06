@@ -4,8 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { SideBoardRuntime } from "@breadboard-ai/shared-ui/utils/side-board-runtime.js";
-import { GraphDescriptor } from "@breadboard-ai/types";
+import {
+  SideBoardRuntime,
+  SideBoardRuntimeEventTarget,
+  SideBoardRuntimeTaskSpec,
+} from "@breadboard-ai/shared-ui/utils/side-board-runtime.js";
+import {
+  GraphDescriptor,
+  InputValues,
+  LLMContent,
+  OutputValues,
+} from "@breadboard-ai/types";
 import {
   createRunner,
   HarnessRunner,
@@ -22,6 +31,8 @@ import {
   GraphStoreArgs,
   MutableGraphStore,
   FileSystem,
+  Outcome,
+  err,
 } from "@google-labs/breadboard";
 import { BoardServerAwareDataStore } from "./board-server-aware-data-store";
 import {
@@ -33,6 +44,12 @@ import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import { TokenVendor } from "@breadboard-ai/connection-client";
 
 export { createSideboardRuntimeProvider };
+
+const EVENT_DICT = {
+  bubbles: true,
+  cancelable: true,
+  composed: true,
+};
 
 function createSideboardRuntimeProvider(
   args: GraphStoreArgs,
@@ -47,11 +64,15 @@ function createSideboardRuntimeProvider(
   };
 }
 
-class SideboardRuntimeImpl implements SideBoardRuntime {
+class SideboardRuntimeImpl
+  extends (EventTarget as SideBoardRuntimeEventTarget)
+  implements SideBoardRuntime
+{
   #graphStore: MutableGraphStore;
   #dataStore: DataStore;
   #secretsHelper: SecretsHelper | undefined;
   #fileSystem: FileSystem;
+  #runningTaskCount = 0;
 
   constructor(
     args: GraphStoreArgs,
@@ -59,11 +80,52 @@ class SideboardRuntimeImpl implements SideBoardRuntime {
     public readonly tokenVendor: TokenVendor,
     public readonly settings: SettingsStore
   ) {
+    super();
     this.#graphStore = createGraphStore(args);
     this.#dataStore = new BoardServerAwareDataStore(getDataStore(), servers);
     this.#fileSystem = createFileSystem({
       local: createFileSystemBackend(createEphemeralBlobStore()),
     });
+  }
+
+  async runTask(
+    task: SideBoardRuntimeTaskSpec
+  ): Promise<Outcome<LLMContent[]>> {
+    if (this.#runningTaskCount === 0) {
+      this.dispatchEvent(new Event("running", { ...EVENT_DICT }));
+    }
+    this.#runningTaskCount++;
+    const runner = await this.createRunner(task.graph);
+    const inputs = {
+      context: task.context,
+    } as InputValues;
+    try {
+      const outputs = await new Promise<OutputValues[]>((resolve, reject) => {
+        const outputs: OutputValues[] = [];
+        runner.addEventListener("input", () => void runner.run(inputs));
+        runner.addEventListener("output", (event) =>
+          outputs.push(event.data.outputs)
+        );
+        runner.addEventListener("end", () => resolve(outputs));
+        runner.addEventListener("error", (event) => reject(event.data.error));
+        void runner.run();
+      });
+      if (outputs.length !== 1) {
+        return err(`Expected 1 output, got ${JSON.stringify(outputs)}`);
+      }
+
+      const result = outputs[0].context as LLMContent[];
+      if (!result) return err(`Task returned invalid output`);
+
+      return result;
+    } catch (e) {
+      return err(`Task returned with error: ${(e as Error).message}`);
+    } finally {
+      this.#runningTaskCount--;
+      if (this.#runningTaskCount === 0) {
+        this.dispatchEvent(new Event("empty", { ...EVENT_DICT }));
+      }
+    }
   }
 
   async createRunner(graph: GraphDescriptor): Promise<HarnessRunner> {
