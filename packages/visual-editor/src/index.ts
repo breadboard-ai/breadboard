@@ -263,6 +263,15 @@ export class Main extends LitElement {
   @state()
   accessor boardServerNavState: string | null = null;
 
+  /**
+   * Indicates whether or not the UI can currently run a flow or not.
+   * This is useful in situations where we're doing some work on the
+   * board and want to prevent the user from triggering the start
+   * of the flow.
+   */
+  @state()
+  accessor canRun = true;
+
   @property()
   accessor tab: Runtime.Types.Tab | null = null;
 
@@ -525,6 +534,13 @@ export class Main extends LitElement {
         this.#boardServers = runtime.board.getBoardServers() || [];
 
         this.sideBoardRuntime = runtime.sideboards.createSideboardRuntime();
+
+        this.sideBoardRuntime.addEventListener("empty", () => {
+          this.canRun = true;
+        });
+        this.sideBoardRuntime.addEventListener("running", () => {
+          this.canRun = false;
+        });
 
         this.#graphStore.addEventListener("update", (evt) => {
           const { mainGraphId } = evt;
@@ -3300,7 +3316,9 @@ export class Main extends LitElement {
               .chatController=${observers?.chatController}
               .organizer=${projectState?.organizer}
               .signedIn=${signInAdapter.state === "valid"}
+              .canRun=${this.canRun}
               @bbrun=${async () => {
+                if (!this.canRun) return;
                 await this.#attemptBoardStart();
               }}
               @bbstop=${(evt: BreadboardUI.Events.StopEvent) => {
