@@ -4,14 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { Response } from "express";
+import { createReadStream } from "fs";
 import { readFile } from "fs/promises";
 import type { IncomingMessage, ServerResponse } from "http";
 import { extname } from "path";
 
 import type { ServerConfig } from "./config.js";
 import { notFound } from "./errors.js";
+import { getStore } from "./store.js";
 import type { PageMetadata } from "./types.js";
-import { createReadStream } from "fs";
 
 const PROD_PATH = "/dist/client";
 
@@ -118,10 +120,10 @@ function replaceMetadata(contents: string, metadata: PageMetadata) {
 
 export async function serveIndex(
   serverConfig: ServerConfig,
-  res: ServerResponse,
-  metadataGetter: () => Promise<PageMetadata | null>
+  res: Response
 ): Promise<void> {
-  const metadata = await metadataGetter();
+  const { user, name } = res.locals.boardId;
+  const metadata = await getMetadata(user, name);
   if (metadata === null) {
     return notFound(res, "Board not found");
   }
@@ -142,6 +144,16 @@ export async function serveIndex(
       replaceMetadata(contents, metadata)
     );
   });
+}
+
+async function getMetadata(user: string, name: string) {
+  const store = getStore();
+  const board = await store.get(user!, name!);
+  try {
+    return JSON.parse(board) as PageMetadata;
+  } catch {
+    return null;
+  }
 }
 
 function expandImplicitIndex(urlString: string | undefined) {

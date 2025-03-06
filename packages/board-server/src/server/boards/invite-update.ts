@@ -7,15 +7,13 @@
 import type { Request, Response } from "express";
 
 import { ok } from "@google-labs/breadboard";
+
 import { authenticateAndGetUserStore } from "../auth.js";
+import { getBody } from "../common.js";
 import { getStore } from "../store.js";
 import type { BoardServerStore } from "../types.js";
 
-async function updateInvite(
-  req: Request,
-  res: Response,
-  body: unknown
-): Promise<void> {
+async function updateInvite(req: Request, res: Response): Promise<void> {
   let { fullPath } = res.locals.boardId;
   let store: BoardServerStore | undefined = undefined;
 
@@ -30,6 +28,7 @@ async function updateInvite(
     store = getStore();
   }
 
+  const body = await getBody(req);
   if (!body) {
     // create new invite
     const result = await store.createInvite(userStore, fullPath);

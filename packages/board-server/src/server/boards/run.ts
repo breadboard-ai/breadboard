@@ -4,21 +4,31 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Response } from "express";
+import type { Request, Response } from "express";
 
-import { loadFromStore } from "./utils/board-server-provider.js";
-import { verifyKey } from "./utils/verify-key.js";
-import { secretsKit } from "../proxy/secrets.js";
-import { runBoard, timestamp } from "./utils/run-board.js";
-import { getStore } from "../store.js";
 import type { RemoteMessage } from "@google-labs/breadboard/remote";
 
+import { getBody } from "../common.js";
+import type { ServerConfig } from "../config.js";
+import { secretsKit } from "../proxy/secrets.js";
+import { getStore } from "../store.js";
+
+import { loadFromStore } from "./utils/board-server-provider.js";
+import { runBoard, timestamp } from "./utils/run-board.js";
+import { verifyKey } from "./utils/verify-key.js";
+
 async function runHandler(
-  url: URL,
-  res: Response,
-  body: unknown
+  config: ServerConfig,
+  req: Request,
+  res: Response
 ): Promise<void> {
   const { user, name, fullPath } = res.locals.boardId;
+
+  const url = new URL(req.url, config.hostname);
+  url.pathname = `boards/${fullPath}`;
+  url.search = "";
+
+  const body = await getBody(req);
   const {
     $next: next,
     $diagnostics: diagnostics,
