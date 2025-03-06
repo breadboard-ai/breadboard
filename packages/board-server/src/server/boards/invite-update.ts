@@ -12,11 +12,11 @@ import { getStore } from "../store.js";
 import type { BoardServerStore } from "../types.js";
 
 async function updateInvite(
-  boardPath: string,
   req: Request,
   res: Response,
   body: unknown
 ): Promise<void> {
+  let { fullPath } = res.locals.boardId;
   let store: BoardServerStore | undefined = undefined;
 
   const userStore = await authenticateAndGetUserStore(req, res, () => {
@@ -32,7 +32,7 @@ async function updateInvite(
 
   if (!body) {
     // create new invite
-    const result = await store.createInvite(userStore, boardPath);
+    const result = await store.createInvite(userStore, fullPath);
     let responseBody;
     if (!result.success) {
       responseBody = { error: result.error };
@@ -48,7 +48,7 @@ async function updateInvite(
     if (!del.delete) {
       return;
     }
-    const result = await store.deleteInvite(userStore, boardPath, del.delete);
+    const result = await store.deleteInvite(userStore, fullPath, del.delete);
     let responseBody;
     if (!result.success) {
       // TODO: Be nice and return a proper error code

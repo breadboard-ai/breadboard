@@ -14,13 +14,11 @@ import { getStore } from "../store.js";
 import type { RemoteMessage } from "@google-labs/breadboard/remote";
 
 async function runHandler(
-  boardPath: string,
-  user: string,
-  name: string,
   url: URL,
   res: Response,
   body: unknown
 ): Promise<void> {
+  const { user, name, fullPath } = res.locals.boardId;
   const {
     $next: next,
     $diagnostics: diagnostics,
@@ -65,7 +63,7 @@ async function runHandler(
 
   await runBoard({
     url: url.href,
-    path: boardPath,
+    path: fullPath,
     user: keyVerificationResult.user!,
     inputs,
     loader: loadFromStore,

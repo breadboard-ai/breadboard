@@ -11,11 +11,8 @@ import { authenticateAndGetUserStore } from "../auth.js";
 import { getStore } from "../store.js";
 import type { BoardServerStore } from "../types.js";
 
-async function inviteList(
-  boardPath: string,
-  req: Request,
-  res: Response
-): Promise<void> {
+async function inviteList(req: Request, res: Response): Promise<void> {
+  const { fullPath } = res.locals.boardId;
   let store: BoardServerStore | undefined = undefined;
 
   const userStore = await authenticateAndGetUserStore(req, res, () => {
@@ -30,7 +27,7 @@ async function inviteList(
     store = getStore();
   }
 
-  const result = await store.listInvites(userStore, boardPath);
+  const result = await store.listInvites(userStore, fullPath);
   let responseBody;
   if (!result.success) {
     // TODO: Be nice and return a proper error code
