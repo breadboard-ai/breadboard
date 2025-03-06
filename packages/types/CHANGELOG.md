@@ -1,5 +1,17 @@
 # @breadboard-ai/types
 
+## 0.6.0
+
+### Minor Changes
+
+- b852b6c: Update app view
+- a09a9c3: Introduce "Go over a list" step in A2.
+
+### Patch Changes
+
+- 4ed89ea: Teach asset organizer et al about YouTube videos
+- 44fb75c: Prototype generating preview assets
+
 ## 0.5.0
 
 ### Minor Changes

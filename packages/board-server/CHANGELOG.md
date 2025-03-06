@@ -1,5 +1,40 @@
 # @breadboard-ai/board-server
 
+## 0.13.0
+
+### Minor Changes
+
+- 3547630: Implement support for consuming Google Drive documents
+- dd6b9c1: Teach board server about Gemini File API.
+
+### Patch Changes
+
+- 90cf916: Add missing icons
+- f160fc8: Miscellaneous bug fixes to board server
+- 6078b8e: update board server cors checks
+- 1250fd7: deleted experimental visual editor in board server
+- f6b99f0: Update blobs API
+- 648b54a: Board server is an Express server
+- 57e8a9a: Preliminary expressJS migration
+- Updated dependencies [f466c2d]
+- Updated dependencies [4ed89ea]
+- Updated dependencies [b852b6c]
+- Updated dependencies [98f6609]
+- Updated dependencies [3547630]
+- Updated dependencies [dd6b9c1]
+- Updated dependencies [44fb75c]
+- Updated dependencies [b872936]
+- Updated dependencies [e018c92]
+- Updated dependencies [a09a9c3]
+- Updated dependencies [e8abf9f]
+- Updated dependencies [a638ffa]
+- Updated dependencies [1abb0e3]
+  - @google-labs/breadboard@0.33.0
+  - @breadboard-ai/types@0.6.0
+  - @breadboard-ai/jsandbox@0.5.0
+  - @breadboard-ai/data-store@0.3.2
+  - @breadboard-ai/google-drive-kit@0.5.1
+
 ## 0.12.0
 
 ### Minor Changes

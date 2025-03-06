@@ -1,5 +1,11 @@
 # @breadboard-ai/connection-server
 
+## 0.5.1
+
+### Patch Changes
+
+- 2655317: Update connection server package exports
+
 ## 0.5.0
 
 ### Minor Changes

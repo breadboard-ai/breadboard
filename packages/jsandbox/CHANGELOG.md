@@ -1,5 +1,13 @@
 # @breadboard-ai/jsandbox
 
+## 0.5.0
+
+### Minor Changes
+
+- e018c92: Plumb atob/btoa to sandbox.
+- a09a9c3: Introduce "Go over a list" step in A2.
+- 1abb0e3: Allow connecting {{ in }} parms with wires.
+
 ## 0.4.0
 
 ### Minor Changes

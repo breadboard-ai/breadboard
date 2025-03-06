@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/a2",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Breadboard Components for building AI systems",
   "exports": {
     "gemini": "./bgl/a2-gemini.bgl.json"

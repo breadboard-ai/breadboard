@@ -1,5 +1,84 @@
 # @breadboard-ai/shared-ui
 
+## 1.24.0
+
+### Minor Changes
+
+- f466c2d: Add "custom tool" infrastructure (based on subgraphs)
+- b852b6c: Update app view
+- 0728238: Mark "@" references as invalid when a connecting edge is removed.
+- 51801a6: Make "@" references more or less reactive to changes to their
+  sources.
+- dd6b9c1: Teach board server about Gemini File API.
+- a09a9c3: Introduce "Go over a list" step in A2.
+- e8abf9f: Teach breadboard about default configuration.
+- e2978ce: Propagate node title changes to "@" references.
+- 1abb0e3: Allow connecting {{ in }} parms with wires.
+
+### Patch Changes
+
+- 0693856: Prototype viewing files
+- 24050c5: Allow asset renaming for second single click
+- 90cf916: Add missing icons
+- 9520306: Various styling improvements
+- f01e80f: Add speech-to-text to app view
+- 698ee78: Ensure long asset names get truncated
+- 4ed89ea: Teach asset organizer et al about YouTube videos
+- c97b5a2: Use node id for autowire ports instead of title to make them unique.
+- db2e586: Reset data parts when output value changes
+- 2b98499: Teach LLM Output about all GDrive mime types
+- 7c30e7d: Improve keyboard handling in Asset Organizer
+- bf71366: Escape HTML entities
+- d74bf35: Small UI fixes
+- 98f6609: Streamline new flow creation
+- 4869ce6: Teach LLM Output about PDFs
+- 2d27918: Improve graph rendering
+- 211f62b: Show export controls when there is higher confidence
+- 19c9a72: Small fixes for the Focus Editor and Text Editor
+- 43d1f2b: Try to ensure that contenteditable behaves correctly
+- 6a48bb9: Improvements to focus editor
+- 1de370a: Enable asset renaming
+- 500d312: Restore app version to bottom of home page
+- 44fb75c: Prototype generating preview assets
+- 038cfc3: Add scroll padding and remove log
+- 9625ca9: Improve app view when there are no steps
+- e6745a7: Prototype "focus editor"
+- e16bdc1: Show any A2 BGLs whose title starts with "A2" to show up in step
+  selector
+- 3d600e8: Switch mime type for YouTube videos
+- 7a65e63: Teach Fast Access about filters
+- 3ec8d52: Hack-fix the peekaboo "@" menu bug.
+- 6ec879e: Allow plain `@` symbols
+- fc1e080: Reset edit status on asset change
+- 6aaa09b: Teach graph node about invalid refs
+- b7724a0: Handle errors in app view
+- 838ebed: Add `Template.placeholders` to easily get all placeholders in a
+  template.
+- 0ded306: Allow users to create blank content assets
+- 7f01ea7: Remove debug controls
+- a638ffa: Additional plumbing to make assets work in all places.
+- ab026cc: Teach GraphNode to render chiclets
+- Updated dependencies [f466c2d]
+- Updated dependencies [4ed89ea]
+- Updated dependencies [b852b6c]
+- Updated dependencies [98f6609]
+- Updated dependencies [3547630]
+- Updated dependencies [dd6b9c1]
+- Updated dependencies [44fb75c]
+- Updated dependencies [b872936]
+- Updated dependencies [e018c92]
+- Updated dependencies [a09a9c3]
+- Updated dependencies [e8abf9f]
+- Updated dependencies [a638ffa]
+- Updated dependencies [1abb0e3]
+  - @google-labs/breadboard@0.33.0
+  - @google-labs/breadboard-schema@1.13.0
+  - @breadboard-ai/types@0.6.0
+  - @breadboard-ai/jsandbox@0.5.0
+  - @breadboard-ai/build@0.12.1
+  - @google-labs/core-kit@0.18.1
+  - @breadboard-ai/data-store@0.3.2
+
 ## 1.23.0
 
 ### Minor Changes

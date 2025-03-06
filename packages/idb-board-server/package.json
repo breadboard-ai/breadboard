@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/idb-board-server",
-  "version": "1.19.2",
+  "version": "1.19.3",
   "description": "IDB Board Server for Breadboard",
   "main": "./dist/index.js",
   "exports": {
@@ -82,10 +82,10 @@
     "vitest": "^3.0.7"
   },
   "dependencies": {
-    "@breadboard-ai/build": "0.12.0",
-    "@breadboard-ai/data-store": "0.3.1",
-    "@google-labs/breadboard": "^0.32.0",
-    "@google-labs/breadboard-schema": "^1.12.0",
+    "@breadboard-ai/build": "0.12.1",
+    "@breadboard-ai/data-store": "0.3.2",
+    "@google-labs/breadboard": "^0.33.0",
+    "@google-labs/breadboard-schema": "^1.13.0",
     "idb": "^8.0.2",
     "idb-keyval": "^6.2.1"
   }

@@ -1,5 +1,31 @@
 # @breadboard-ai/a2
 
+## 0.3.0
+
+### Minor Changes
+
+- f466c2d: Add "custom tool" infrastructure (based on subgraphs)
+- 0728238: Mark "@" references as invalid when a connecting edge is removed.
+- 51801a6: Make "@" references more or less reactive to changes to their
+  sources.
+- 9e55e20: Add "Thinking" strategy to A2 GOAL.
+- 3c91797: Teach "Do Deep Research" about assets.
+- b872936: Bug fixes plus teach "Make Image" and "Make Audio" to introduce
+  themselves.
+- e8abf9f: Switch "Do deep research" to use A2 tools and to use default
+  configuraiton.
+- 4d86a09: Teach GOAL about multiple tools, structured response, and sequential
+  strategy.
+- a09a9c3: Introduce "Go over a list" step in A2.
+- 1abb0e3: Allow connecting {{ in }} parms with wires.
+- f047b77: Teach A2 about introductions and custom tools.
+
+### Patch Changes
+
+- c97b5a2: Use node id for autowire ports instead of title to make them unique.
+- e16bdc1: Show any A2 BGLs whose title starts with "A2" to show up in step
+  selector
+
 ## 0.2.0
 
 ### Minor Changes

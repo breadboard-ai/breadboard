@@ -1,5 +1,30 @@
 # @google-labs/breadboard-manifest
 
+## 0.9.0
+
+### Minor Changes
+
+- b852b6c: Update app view
+
+### Patch Changes
+
+- 4ed89ea: Teach asset organizer et al about YouTube videos
+- 44fb75c: Prototype generating preview assets
+- Updated dependencies [f466c2d]
+- Updated dependencies [4ed89ea]
+- Updated dependencies [b852b6c]
+- Updated dependencies [98f6609]
+- Updated dependencies [3547630]
+- Updated dependencies [dd6b9c1]
+- Updated dependencies [44fb75c]
+- Updated dependencies [b872936]
+- Updated dependencies [a09a9c3]
+- Updated dependencies [e8abf9f]
+- Updated dependencies [a638ffa]
+- Updated dependencies [1abb0e3]
+  - @google-labs/breadboard@0.33.0
+  - @google-labs/breadboard-schema@1.13.0
+
 ## 0.8.0
 
 ### Minor Changes

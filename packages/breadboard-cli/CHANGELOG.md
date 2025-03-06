@@ -1,5 +1,38 @@
 # @google-labs/breadboard-cli
 
+## 0.13.1
+
+### Patch Changes
+
+- Updated dependencies [0693856]
+- Updated dependencies [f466c2d]
+- Updated dependencies [4ed89ea]
+- Updated dependencies [b852b6c]
+- Updated dependencies [0728238]
+- Updated dependencies [98f6609]
+- Updated dependencies [3547630]
+- Updated dependencies [4869ce6]
+- Updated dependencies [6a48bb9]
+- Updated dependencies [1de370a]
+- Updated dependencies [dd6b9c1]
+- Updated dependencies [500d312]
+- Updated dependencies [4fada5e]
+- Updated dependencies [44fb75c]
+- Updated dependencies [b872936]
+- Updated dependencies [4d86a09]
+- Updated dependencies [e6745a7]
+- Updated dependencies [a09a9c3]
+- Updated dependencies [e8abf9f]
+- Updated dependencies [a638ffa]
+- Updated dependencies [ab026cc]
+- Updated dependencies [1abb0e3]
+  - @breadboard-ai/visual-editor@1.27.0
+  - @google-labs/breadboard@0.33.0
+  - @breadboard-ai/build@0.12.1
+  - @google-labs/core-kit@0.18.1
+  - @breadboard-ai/import@0.1.16
+  - @google-labs/template-kit@0.3.18
+
 ## 0.13.0
 
 ### Minor Changes
