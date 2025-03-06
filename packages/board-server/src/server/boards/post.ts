@@ -11,12 +11,8 @@ import { authenticateAndGetUserStore } from "../auth.js";
 import { badRequest } from "../errors.js";
 import { getStore } from "../store.js";
 
-async function post(
-  boardPath: string,
-  req: Request,
-  res: Response,
-  body: unknown
-): Promise<void> {
+async function post(req: Request, res: Response, body: unknown): Promise<void> {
+  const boardPath = res.locals.boardId.fullPath;
   let store;
 
   const userPath = await authenticateAndGetUserStore(req, res, () => {

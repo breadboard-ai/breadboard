@@ -16,7 +16,7 @@ export type CreateRequest = {
   dryRun?: boolean;
 };
 
-async function create(req: Request, res: Response) {
+async function create(req: Request, res: Response): Promise<void> {
   let store: BoardServerStore | undefined = undefined;
 
   const userStore = await authenticateAndGetUserStore(req, res, () => {
@@ -32,27 +32,22 @@ async function create(req: Request, res: Response) {
 
   const chunks: string[] = [];
 
-  return new Promise<boolean>((resolve) => {
-    req.on("data", (chunk) => {
-      chunks.push(chunk.toString());
-    });
+  req.on("data", (chunk) => {
+    chunks.push(chunk.toString());
+  });
 
-    req.on("end", async () => {
-      const request = JSON.parse(chunks.join("")) as CreateRequest;
-      const name = request.name;
-      const result = await store!.create(userStore, name, !!request.dryRun);
+  req.on("end", async () => {
+    const request = JSON.parse(chunks.join("")) as CreateRequest;
+    const name = request.name;
+    const result = await store!.create(userStore, name, !!request.dryRun);
 
-      if (!result.success) {
-        res.writeHead(400, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: result.error }));
-        resolve(false);
-        return;
-      }
-
+    if (result.success) {
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ path: result.path }));
-      resolve(true);
-    });
+    } else {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: result.error }));
+    }
   });
 }
 

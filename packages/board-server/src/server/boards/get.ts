@@ -11,7 +11,9 @@ import { serverError } from "../errors.js";
 import { authenticate } from "../auth.js";
 import { ok } from "@google-labs/breadboard";
 
-async function get(user: string, name: string, req: Request, res: Response) {
+async function get(req: Request, res: Response) {
+  const { user, name } = res.locals.boardId;
+
   const store = getStore();
 
   const board = await store.get(user, name);

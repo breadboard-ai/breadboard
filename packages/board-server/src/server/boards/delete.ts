@@ -12,11 +12,8 @@ import { badRequest } from "../errors.js";
 import { getStore } from "../store.js";
 import type { BoardServerStore } from "../types.js";
 
-async function del(
-  boardPath: string,
-  req: Request,
-  res: Response
-): Promise<void> {
+async function del(req: Request, res: Response): Promise<void> {
+  const boardPath = res.locals.boardId.fullPath;
   let store: BoardServerStore | undefined = undefined;
 
   const userStore = await authenticateAndGetUserStore(req, res, () => {

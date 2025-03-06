@@ -60,10 +60,10 @@ function success(res: ServerResponse, fileUri: string) {
 }
 
 async function handleAssetsDriveRequest(
-  driveId: string,
   req: Request,
   res: Response
 ): Promise<void> {
+  const driveId = req.params["driveId"] ?? "";
   const args = getConnectionArgs(req);
   if (!ok(args) || !("token" in args)) {
     res.writeHead(401, { "Content-Type": "application/json" });

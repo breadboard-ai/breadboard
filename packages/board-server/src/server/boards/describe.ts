@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Response } from "express";
+import type { Request, Response } from "express";
 
 import {
   createGraphStore,
@@ -37,11 +37,8 @@ function emptyDescriberResult(): NodeDescriberResult {
   };
 }
 
-async function describe(
-  user: string,
-  name: string,
-  res: Response
-): Promise<void> {
+async function describe(_req: Request, res: Response): Promise<void> {
+  const { user, name } = res.locals.boardId;
   const store = getStore();
   const board = JSON.parse(await store.get(user!, name!)) as
     | GraphDescriptor

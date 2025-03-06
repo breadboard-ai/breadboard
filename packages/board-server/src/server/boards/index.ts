@@ -4,7 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { type Request, Router } from "express";
+import {
+  type Request,
+  type Response,
+  type NextFunction,
+  Router,
+} from "express";
 
 import { getBody, serveFile, serveIndex } from "../common.js";
 import type { ServerConfig } from "../config.js";
@@ -51,33 +56,38 @@ export function serveBoardsAPI(serverConfig: ServerConfig): Router {
     cors(serverConfig.allowedOrigins)
   );
 
-  router.get("/", async (req, res) => {
-    await listBoards(req, res);
+  router.use("/@:user/:name.*", (req, res, next) => {
+    const user = req.params["user"] ?? "";
+    const name = (req.params["name"] ?? "") + ".json";
+    let boardId: BoardId = {
+      user,
+      name,
+      fullPath: `@${user}/${name}`,
+    };
+    res.locals.boardId = boardId;
+    next();
   });
 
-  router.post("/", async (req, res) => {
-    await createBoard(req, res);
-  });
+  router.get("/", listBoards);
+  router.post("/", createBoard);
 
-  router.get("/@:user/:name.json", async (req, res) => {
-    const { user, name } = getBoardId(req);
-    await getBoard(user, name, req, res);
-  });
+  router.use("/@:user/:name.(json|api|app)", getBoardId);
+
+  router.get("/@:user/:name.json", getBoard);
 
   router.post("/@:user/:name.json", async (req, res) => {
-    const { fullPath } = getBoardId(req);
     const body = await getBody(req);
 
     const maybeDelete = body as { delete: boolean };
     if (maybeDelete.delete === true) {
-      await del(fullPath, req, res);
+      await del(req, res);
     } else {
-      await post(fullPath, req, res, body);
+      await post(req, res, body);
     }
   });
 
-  router.get("/@:user/:name.app", async (req, res) => {
-    const { user, name } = getBoardId(req);
+  router.get("/@:user/:name.app", async (_req, res) => {
+    const { user, name } = res.locals.boardId;
     // Serve the index.html file for the app.
     await serveIndex(serverConfig, res, getMetadata(user, name));
   });
@@ -87,52 +97,46 @@ export function serveBoardsAPI(serverConfig: ServerConfig): Router {
   });
 
   router.post("/@:user/:name.api/invoke", async (req, res) => {
-    const { fullPath, name, user } = getBoardId(req);
+    const { fullPath } = res.locals.boardId;
     const url = new URL(req.url, serverConfig.hostname);
     url.pathname = `boards/${fullPath}`;
     url.search = "";
 
     const body = await getBody(req);
-    await invokeBoard(fullPath, user, name, url, res, body);
+    await invokeBoard(url, res, body);
   });
 
   router.post("/@:user/:name.api/run", async (req, res) => {
-    const { fullPath, name, user } = getBoardId(req);
+    const { fullPath } = res.locals.boardId;
     const url = new URL(req.url, serverConfig.hostname);
     url.pathname = `boards/${fullPath}`;
     url.search = "";
 
     const body = await getBody(req);
-    await runBoard(fullPath, user, name, url, res, body);
+    await runBoard(url, res, body);
   });
 
-  router.post("/@:user/:name.api/describe", async (req, res) => {
-    const { name, user } = getBoardId(req);
-    await describeBoard(user, name, res);
-  });
+  router.post("/@:user/:name.api/describe", describeBoard);
 
-  router.get("/@:user/:name.invite", async (req, res) => {
-    const { fullPath } = getBoardId(req);
-    await inviteList(fullPath, req, res);
-  });
+  router.get("/@:user/:name.invite", inviteList);
 
   router.post("/@:user/:name.invite", async (req, res) => {
     const body = await getBody(req);
-    const { fullPath } = getBoardId(req);
-    await inviteUpdate(fullPath, req, res, body);
+    await inviteUpdate(req, res, body);
   });
 
-  router.post("/@:user/:name/assets/drive/:driveId", async (req, res) => {
-    const driveId = req.params["driveId"] ?? "";
-    await handleAssetsDriveRequest(driveId, req, res);
-  });
+  router.post("/@:user/:name/assets/drive/:driveId", handleAssetsDriveRequest);
 
   return router;
 }
 
-function getBoardId(request: Request): BoardId {
-  const user = request.params["user"] ?? "";
-  const name = (request.params["name"] ?? "") + ".json";
-  const fullPath = `@${user}/${name}`;
-  return { user, name, fullPath };
+function getBoardId(req: Request, res: Response, next: NextFunction) {
+  const { user = "", name = "" } = req.params;
+  let boardId: BoardId = {
+    user,
+    name: name + ".json",
+    fullPath: `@${user}/${name}.json`,
+  };
+  res.locals.boardId = boardId;
+  next();
 }

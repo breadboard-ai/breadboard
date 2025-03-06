@@ -12,13 +12,11 @@ import { secretsKit } from "../proxy/secrets.js";
 import { invokeBoard } from "./utils/invoke-board.js";
 
 async function invokeHandler(
-  boardPath: string,
-  user: string,
-  name: string,
   url: URL,
   res: Response,
   body: unknown
 ): Promise<void> {
+  const { user, name, fullPath } = res.locals.boardId;
   const inputs = body as Record<string, any>;
   const keyVerificationResult = await verifyKey(user, name, inputs);
   if (!keyVerificationResult.success) {
@@ -28,7 +26,7 @@ async function invokeHandler(
   }
   const result = await invokeBoard({
     url: url.href,
-    path: boardPath,
+    path: fullPath,
     inputs,
     loader: loadFromStore,
     kitOverrides: [secretsKit],
