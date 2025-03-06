@@ -59,7 +59,7 @@ export function serveBoardsAPI(serverConfig: ServerConfig): Router {
   router.get("/", listBoards);
   router.post("/", createBoard);
 
-  router.use("/@:user/:name.(json|api|app)", getBoardId);
+  router.use("/@:user/:name.(json|api|app|invite)", getBoardId);
 
   router.get("/@:user/:name.json", getBoard);
 
