@@ -167,6 +167,15 @@ export class UI extends LitElement {
   @property()
   accessor chatController: ChatController | null = null;
 
+  /**
+   * Indicates whether or not the UI can currently run a flow or not.
+   * This is useful in situations where we're doing some work on the
+   * board and want to prevent the user from triggering the start
+   * of the flow.
+   */
+  @state()
+  accessor canRun = true;
+
   @state()
   accessor debugEvent: InspectableRunEvent | null = null;
 
@@ -733,7 +742,7 @@ export class UI extends LitElement {
                     id="run"
                     title=${GlobalStrings.from("LABEL_RUN_PROJECT")}
                     class=${classMap({ running: isRunning })}
-                    ?disabled=${this.readOnly}
+                    ?disabled=${this.readOnly || !this.canRun}
                     @click=${() => {
                       if (isRunning) {
                         this.dispatchEvent(new StopEvent());
