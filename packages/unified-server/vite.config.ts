@@ -47,5 +47,10 @@ export default defineConfig(async ({ mode }): Promise<UserConfig> => {
         deleteOriginalAssets: false,
       }),
     ],
+    server: {
+      watch: {
+        ignored: ["**/shared-ui/src/bgl/**"],
+      },
+    },
   };
 });
