@@ -1,5 +1,100 @@
 # @google-labs/breadboard-web
 
+## 1.27.0
+
+### Minor Changes
+
+- b852b6c: Update app view
+- 0728238: Mark "@" references as invalid when a connecting edge is removed.
+- dd6b9c1: Teach board server about Gemini File API.
+- 4d86a09: Teach GOAL about multiple tools, structured response, and sequential
+  strategy.
+- e8abf9f: Teach breadboard about default configuration.
+
+### Patch Changes
+
+- 0693856: Prototype viewing files
+- 4ed89ea: Teach asset organizer et al about YouTube videos
+- 98f6609: Streamline new flow creation
+- 4869ce6: Teach LLM Output about PDFs
+- 6a48bb9: Improvements to focus editor
+- 1de370a: Enable asset renaming
+- 500d312: Restore app version to bottom of home page
+- 4fada5e: Update build info
+- 44fb75c: Prototype generating preview assets
+- e6745a7: Prototype "focus editor"
+- ab026cc: Teach GraphNode to render chiclets
+- Updated dependencies [0693856]
+- Updated dependencies [f466c2d]
+- Updated dependencies [24050c5]
+- Updated dependencies [90cf916]
+- Updated dependencies [9520306]
+- Updated dependencies [f01e80f]
+- Updated dependencies [698ee78]
+- Updated dependencies [4ed89ea]
+- Updated dependencies [c97b5a2]
+- Updated dependencies [b852b6c]
+- Updated dependencies [db2e586]
+- Updated dependencies [0728238]
+- Updated dependencies [2b98499]
+- Updated dependencies [51801a6]
+- Updated dependencies [7c30e7d]
+- Updated dependencies [bf71366]
+- Updated dependencies [d74bf35]
+- Updated dependencies [98f6609]
+- Updated dependencies [3547630]
+- Updated dependencies [4869ce6]
+- Updated dependencies [2d27918]
+- Updated dependencies [211f62b]
+- Updated dependencies [19c9a72]
+- Updated dependencies [43d1f2b]
+- Updated dependencies [6a48bb9]
+- Updated dependencies [1de370a]
+- Updated dependencies [dd6b9c1]
+- Updated dependencies [500d312]
+- Updated dependencies [44fb75c]
+- Updated dependencies [038cfc3]
+- Updated dependencies [b872936]
+- Updated dependencies [9625ca9]
+- Updated dependencies [e6745a7]
+- Updated dependencies [e018c92]
+- Updated dependencies [e16bdc1]
+- Updated dependencies [3d600e8]
+- Updated dependencies [7a65e63]
+- Updated dependencies [3ec8d52]
+- Updated dependencies [6ec879e]
+- Updated dependencies [fc1e080]
+- Updated dependencies [6aaa09b]
+- Updated dependencies [a09a9c3]
+- Updated dependencies [b7724a0]
+- Updated dependencies [e8abf9f]
+- Updated dependencies [838ebed]
+- Updated dependencies [0ded306]
+- Updated dependencies [7f01ea7]
+- Updated dependencies [a638ffa]
+- Updated dependencies [ab026cc]
+- Updated dependencies [e2978ce]
+- Updated dependencies [1abb0e3]
+  - @breadboard-ai/shared-ui@1.24.0
+  - @breadboard-ai/bbrt@0.2.1
+  - @google-labs/breadboard@0.33.0
+  - @breadboard-ai/manifest@0.9.0
+  - @breadboard-ai/types@0.6.0
+  - @breadboard-ai/jsandbox@0.5.0
+  - @google-labs/agent-kit@0.17.0
+  - @breadboard-ai/board-server-management@1.20.1
+  - @breadboard-ai/board-server-utils@0.1.9
+  - @breadboard-ai/build@0.12.1
+  - @google-labs/core-kit@0.18.1
+  - @breadboard-ai/data-store@0.3.2
+  - @breadboard-ai/example-boards@0.4.1
+  - @google-labs/gemini-kit@0.11.2
+  - @breadboard-ai/idb-board-server@1.19.3
+  - @google-labs/json-kit@0.3.16
+  - @google-labs/template-kit@0.3.18
+  - @breadboard-ai/google-drive-kit@0.5.1
+  - @breadboard-ai/python-wasm@0.1.14
+
 ## 1.26.0
 
 ### Minor Changes

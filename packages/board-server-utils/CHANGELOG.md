@@ -1,5 +1,27 @@
 # @breadboard-ai/board-server-utils
 
+## 0.1.9
+
+### Patch Changes
+
+- Updated dependencies [f466c2d]
+- Updated dependencies [4ed89ea]
+- Updated dependencies [b852b6c]
+- Updated dependencies [98f6609]
+- Updated dependencies [3547630]
+- Updated dependencies [dd6b9c1]
+- Updated dependencies [44fb75c]
+- Updated dependencies [b872936]
+- Updated dependencies [a09a9c3]
+- Updated dependencies [e8abf9f]
+- Updated dependencies [a638ffa]
+- Updated dependencies [1abb0e3]
+  - @google-labs/breadboard@0.33.0
+  - @google-labs/breadboard-schema@1.13.0
+  - @google-labs/agent-kit@0.17.0
+  - @breadboard-ai/build@0.12.1
+  - @breadboard-ai/data-store@0.3.2
+
 ## 0.1.8
 
 ### Patch Changes

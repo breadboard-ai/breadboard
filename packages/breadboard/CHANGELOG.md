@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.33.0
+
+### Minor Changes
+
+- f466c2d: Add "custom tool" infrastructure (based on subgraphs)
+- 3547630: Implement support for consuming Google Drive documents
+- dd6b9c1: Teach board server about Gemini File API.
+- b872936: Bug fixes plus teach "Make Image" and "Make Audio" to introduce
+  themselves.
+- a09a9c3: Introduce "Go over a list" step in A2.
+- e8abf9f: Teach breadboard about default configuration.
+- 1abb0e3: Allow connecting {{ in }} parms with wires.
+
+### Patch Changes
+
+- 4ed89ea: Teach asset organizer et al about YouTube videos
+- 98f6609: Streamline new flow creation
+- a638ffa: Additional plumbing to make assets work in all places.
+- Updated dependencies [4ed89ea]
+- Updated dependencies [b852b6c]
+- Updated dependencies [44fb75c]
+- Updated dependencies [e018c92]
+- Updated dependencies [a09a9c3]
+- Updated dependencies [1abb0e3]
+  - @google-labs/breadboard-schema@1.13.0
+  - @breadboard-ai/types@0.6.0
+  - @breadboard-ai/jsandbox@0.5.0
+
 ## 0.32.0
 
 ### Minor Changes

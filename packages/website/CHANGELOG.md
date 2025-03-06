@@ -1,5 +1,68 @@
 # @google-labs/breadboard-website
 
+## 2.7.3
+
+### Patch Changes
+
+- Updated dependencies [0693856]
+- Updated dependencies [f466c2d]
+- Updated dependencies [24050c5]
+- Updated dependencies [90cf916]
+- Updated dependencies [9520306]
+- Updated dependencies [f01e80f]
+- Updated dependencies [698ee78]
+- Updated dependencies [4ed89ea]
+- Updated dependencies [c97b5a2]
+- Updated dependencies [b852b6c]
+- Updated dependencies [db2e586]
+- Updated dependencies [0728238]
+- Updated dependencies [2b98499]
+- Updated dependencies [51801a6]
+- Updated dependencies [7c30e7d]
+- Updated dependencies [bf71366]
+- Updated dependencies [d74bf35]
+- Updated dependencies [98f6609]
+- Updated dependencies [3547630]
+- Updated dependencies [4869ce6]
+- Updated dependencies [2d27918]
+- Updated dependencies [211f62b]
+- Updated dependencies [19c9a72]
+- Updated dependencies [43d1f2b]
+- Updated dependencies [6a48bb9]
+- Updated dependencies [1de370a]
+- Updated dependencies [dd6b9c1]
+- Updated dependencies [500d312]
+- Updated dependencies [44fb75c]
+- Updated dependencies [038cfc3]
+- Updated dependencies [b872936]
+- Updated dependencies [9625ca9]
+- Updated dependencies [e6745a7]
+- Updated dependencies [e16bdc1]
+- Updated dependencies [3d600e8]
+- Updated dependencies [7a65e63]
+- Updated dependencies [3ec8d52]
+- Updated dependencies [6ec879e]
+- Updated dependencies [fc1e080]
+- Updated dependencies [6aaa09b]
+- Updated dependencies [a09a9c3]
+- Updated dependencies [b7724a0]
+- Updated dependencies [e8abf9f]
+- Updated dependencies [838ebed]
+- Updated dependencies [0ded306]
+- Updated dependencies [7f01ea7]
+- Updated dependencies [a638ffa]
+- Updated dependencies [ab026cc]
+- Updated dependencies [e2978ce]
+- Updated dependencies [1abb0e3]
+  - @breadboard-ai/shared-ui@1.24.0
+  - @google-labs/breadboard@0.33.0
+  - @google-labs/agent-kit@0.17.0
+  - @google-labs/core-kit@0.18.1
+  - @google-labs/gemini-kit@0.11.2
+  - @google-labs/json-kit@0.3.16
+  - @google-labs/palm-kit@0.1.10
+  - @google-labs/template-kit@0.3.18
+
 ## 2.7.2
 
 ### Patch Changes

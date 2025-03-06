@@ -1,5 +1,16 @@
 # @google-labs/breadboard-schema
 
+## 1.13.0
+
+### Minor Changes
+
+- b852b6c: Update app view
+
+### Patch Changes
+
+- 4ed89ea: Teach asset organizer et al about YouTube videos
+- 44fb75c: Prototype generating preview assets
+
 ## 1.12.0
 
 ### Minor Changes

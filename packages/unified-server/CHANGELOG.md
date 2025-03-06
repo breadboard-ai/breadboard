@@ -1,5 +1,41 @@
 # @breadboard-ai/unified-server
 
+## 0.1.1
+
+### Patch Changes
+
+- 0693856: Prototype viewing files
+- 2655317: Update connection server package exports
+- 648b54a: Board server is an Express server
+- Updated dependencies [0693856]
+- Updated dependencies [90cf916]
+- Updated dependencies [f160fc8]
+- Updated dependencies [6078b8e]
+- Updated dependencies [4ed89ea]
+- Updated dependencies [b852b6c]
+- Updated dependencies [0728238]
+- Updated dependencies [98f6609]
+- Updated dependencies [2655317]
+- Updated dependencies [3547630]
+- Updated dependencies [4869ce6]
+- Updated dependencies [1250fd7]
+- Updated dependencies [6a48bb9]
+- Updated dependencies [1de370a]
+- Updated dependencies [dd6b9c1]
+- Updated dependencies [500d312]
+- Updated dependencies [4fada5e]
+- Updated dependencies [44fb75c]
+- Updated dependencies [f6b99f0]
+- Updated dependencies [4d86a09]
+- Updated dependencies [e6745a7]
+- Updated dependencies [e8abf9f]
+- Updated dependencies [648b54a]
+- Updated dependencies [57e8a9a]
+- Updated dependencies [ab026cc]
+  - @breadboard-ai/visual-editor@1.27.0
+  - @breadboard-ai/board-server@0.13.0
+  - @breadboard-ai/connection-server@0.5.1
+
 ## 0.1.0
 
 ### Minor Changes

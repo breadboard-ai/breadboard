@@ -1,5 +1,20 @@
 # @google-labs/agent-kit
 
+## 0.17.0
+
+### Minor Changes
+
+- 1abb0e3: Allow connecting {{ in }} parms with wires.
+
+### Patch Changes
+
+- Updated dependencies [4ed89ea]
+- Updated dependencies [b852b6c]
+- Updated dependencies [44fb75c]
+- Updated dependencies [a09a9c3]
+  - @breadboard-ai/types@0.6.0
+  - @breadboard-ai/build@0.12.1
+
 ## 0.16.0
 
 ### Minor Changes

@@ -1,5 +1,22 @@
 # @google-labs/node-nursery-web
 
+## 1.4.3
+
+### Patch Changes
+
+- c97b5a2: Use node id for autowire ports instead of title to make them unique.
+- Updated dependencies [f466c2d]
+- Updated dependencies [4ed89ea]
+- Updated dependencies [98f6609]
+- Updated dependencies [3547630]
+- Updated dependencies [dd6b9c1]
+- Updated dependencies [b872936]
+- Updated dependencies [a09a9c3]
+- Updated dependencies [e8abf9f]
+- Updated dependencies [a638ffa]
+- Updated dependencies [1abb0e3]
+  - @google-labs/breadboard@0.33.0
+
 ## 1.4.2
 
 ### Patch Changes
