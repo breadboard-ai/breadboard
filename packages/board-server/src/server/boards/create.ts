@@ -30,17 +30,25 @@ async function create(req: Request, res: Response): Promise<void> {
     store = getStore();
   }
 
-  const createRequest = req.body as CreateRequest;
-  const name = createRequest.name;
-  const result = await store!.create(userStore, name, !!createRequest.dryRun);
+  const chunks: string[] = [];
 
-  if (result.success) {
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ path: result.path }));
-  } else {
-    res.writeHead(400, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: result.error }));
-  }
+  req.on("data", (chunk) => {
+    chunks.push(chunk.toString());
+  });
+
+  req.on("end", async () => {
+    const request = JSON.parse(chunks.join("")) as CreateRequest;
+    const name = request.name;
+    const result = await store!.create(userStore, name, !!request.dryRun);
+
+    if (result.success) {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ path: result.path }));
+    } else {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: result.error }));
+    }
+  });
 }
 
 export default create;

@@ -167,3 +167,25 @@ function expandImplicitIndex(urlString: string | undefined) {
   }
   return path;
 }
+
+export async function getBody(req: IncomingMessage): Promise<unknown> {
+  const chunks: string[] = [];
+
+  return new Promise<unknown>((resolve) => {
+    req.on("data", (chunk) => {
+      chunks.push(chunk.toString());
+    });
+
+    req.on("end", () => {
+      const body = chunks.join("");
+      if (!body) {
+        resolve(undefined);
+      }
+      try {
+        resolve(JSON.parse(body));
+      } catch (e) {
+        resolve(undefined);
+      }
+    });
+  });
+}
