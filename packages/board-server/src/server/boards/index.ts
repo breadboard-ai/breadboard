@@ -11,6 +11,7 @@ import {
   Router,
 } from "express";
 
+import { requireAccessToken, requireAuth } from "../auth.js";
 import { serveFile, serveIndex } from "../common.js";
 import type { ServerConfig } from "../config.js";
 import { cors, corsAll } from "../cors.js";
@@ -42,13 +43,13 @@ export function serveBoardsAPI(serverConfig: ServerConfig): Router {
     cors(serverConfig.allowedOrigins)
   );
 
-  router.get("/", listBoards);
-  router.post("/", createBoard);
+  router.get("/", requireAuth(), listBoards);
+  router.post("/", requireAuth(), createBoard);
 
   router.use("/@:user/:name.(json|api|app|invite)", getBoardId);
 
   router.get("/@:user/:name.json", getBoard);
-  router.post("/@:user/:name.json", post);
+  router.post("/@:user/:name.json", requireAuth(), post);
 
   router.get("/@:user/:name.app", async (_req, res) =>
     serveIndex(serverConfig, res)
@@ -68,12 +69,14 @@ export function serveBoardsAPI(serverConfig: ServerConfig): Router {
 
   router.post("/@:user/:name.api/describe", describeBoard);
 
-  router.get("/@:user/:name.invite", inviteList);
-  router.post("/@:user/:name.invite", async (req, res) =>
-    inviteUpdate(req, res)
-  );
+  router.get("/@:user/:name.invite", requireAuth(), inviteList);
+  router.post("/@:user/:name.invite", requireAuth(), inviteUpdate);
 
-  router.post("/@:user/:name/assets/drive/:driveId", handleAssetsDriveRequest);
+  router.post(
+    "/@:user/:name/assets/drive/:driveId",
+    requireAccessToken(),
+    handleAssetsDriveRequest
+  );
 
   return router;
 }

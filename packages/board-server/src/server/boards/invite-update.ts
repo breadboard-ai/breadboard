@@ -6,27 +6,15 @@
 
 import type { Request, Response } from "express";
 
-import { ok } from "@google-labs/breadboard";
-
-import { authenticateAndGetUserStore } from "../auth.js";
-import { getStore } from "../store.js";
-import type { BoardServerStore } from "../types.js";
+import type { BoardId, BoardServerStore } from "../types.js";
 
 async function updateInvite(req: Request, res: Response): Promise<void> {
-  let { fullPath } = res.locals.boardId;
-  let store: BoardServerStore | undefined = undefined;
+  const store: BoardServerStore = req.app.locals.store;
 
-  const userStore = await authenticateAndGetUserStore(req, res, () => {
-    store = getStore();
-    return store;
-  });
-  if (!ok(userStore)) {
-    return;
-  }
-  if (!store) {
-    store = getStore();
-  }
+  const boardId: BoardId = res.locals.boardId;
+  const userId: string = res.locals.userId;
 
+  // TODO Use HTTP methods instead of request payload to determine when to delete
   const body = req.body;
   if (body.delete) {
     // delete invite
@@ -34,7 +22,11 @@ async function updateInvite(req: Request, res: Response): Promise<void> {
     if (!del.delete) {
       return;
     }
-    const result = await store.deleteInvite(userStore, fullPath, del.delete);
+    const result = await store.deleteInvite(
+      userId,
+      boardId.fullPath,
+      del.delete
+    );
     let responseBody;
     if (!result.success) {
       // TODO: Be nice and return a proper error code
@@ -42,20 +34,19 @@ async function updateInvite(req: Request, res: Response): Promise<void> {
     } else {
       responseBody = { deleted: del.delete };
     }
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(responseBody));
+
+    res.json(responseBody);
   } else {
     // create new invite
-    const result = await store.createInvite(userStore, fullPath);
+    const result = await store.createInvite(userId, boardId.fullPath);
     let responseBody;
     if (!result.success) {
       responseBody = { error: result.error };
     } else {
       responseBody = { invite: result.invite };
     }
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(responseBody));
-    return;
+
+    res.json(responseBody);
   }
 }
 

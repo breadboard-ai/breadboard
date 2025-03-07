@@ -5,8 +5,8 @@
  */
 
 import { type Request, type Response, Router } from "express";
-import { badRequest } from "../errors.js";
-import { buildSecretsTunnel, secretsKit } from "./secrets.js";
+import { URL } from "node:url";
+
 import {
   ProxyServer,
   type ServerResponse as ProxyServerResponse,
@@ -14,14 +14,16 @@ import {
   HTTPServerTransport,
   type ProxyServerConfig,
 } from "@google-labs/breadboard/remote";
-import { asRuntimeKit, ok, type DataStore } from "@google-labs/breadboard";
+import { asRuntimeKit, type DataStore } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
 import { getDataStore } from "@breadboard-ai/data-store";
+
+import { badRequest } from "../errors.js";
+import { buildSecretsTunnel, secretsKit } from "./secrets.js";
 import type { ServerConfig } from "../config.js";
 import { cors } from "../cors.js";
-import { timestamp } from "../boards/utils/run-board.js";
 import { BlobDataStore, GoogleStorageBlobStore } from "../blob-store.js";
-import { authenticate } from "../auth.js";
+import { requireAuth } from "../auth.js";
 
 class ResponseAdapter implements ProxyServerResponse {
   #response: Response;
@@ -45,10 +47,25 @@ class ResponseAdapter implements ProxyServerResponse {
   }
 }
 
+const extractRequestBody = async (request: Request) => {
+  return new Promise<AnyProxyRequestMessage>((resolve, reject) => {
+    let body = "";
+    request.on("data", (chunk) => {
+      body += chunk.toString();
+    });
+    request.on("end", () => {
+      resolve(JSON.parse(body) as AnyProxyRequestMessage);
+    });
+    request.on("error", reject);
+  });
+};
+
 export function serveProxyAPI(serverConfig: ServerConfig): Router {
   const router = Router();
 
   router.use(cors(serverConfig.allowedOrigins));
+  router.use(requireAuth());
+
   router.post("/", (req, res) => post(serverConfig, req, res));
 
   return router;
@@ -59,25 +76,9 @@ async function post(
   req: Request,
   res: Response
 ): Promise<void> {
-  const authenticating = authenticate(req, null);
-  if (!ok(authenticating)) {
-    // Output the error in node proxy response format.
-    res.setHeader("Content-Type", "application/json");
-    res.statusCode = 401;
-    res.end(
-      JSON.stringify([
-        "error",
-        {
-          error: "Need a valid server key to access the node proxy.",
-          timestamp: timestamp(),
-        },
-      ])
-    );
-    return;
-  }
-
+  const body = await extractRequestBody(req);
   const server = new ProxyServer(
-    new HTTPServerTransport({ body: req.body }, new ResponseAdapter(res))
+    new HTTPServerTransport({ body }, new ResponseAdapter(res))
   );
   const store = createDataStore(serverConfig);
   store.createGroup("run-board");
@@ -105,6 +106,6 @@ function createDataStore(config: ServerConfig): DataStore {
   }
   return new BlobDataStore(
     new GoogleStorageBlobStore(storageBucket, serverUrl),
-    serverUrl
+    new URL(serverUrl).origin
   );
 }

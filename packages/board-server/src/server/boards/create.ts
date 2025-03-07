@@ -6,9 +6,6 @@
 
 import type { Request, Response } from "express";
 
-import { ok } from "@google-labs/breadboard";
-import { authenticateAndGetUserStore } from "../auth.js";
-import { getStore } from "../store.js";
 import type { BoardServerStore } from "../types.js";
 
 export type CreateRequest = {
@@ -17,22 +14,12 @@ export type CreateRequest = {
 };
 
 async function create(req: Request, res: Response): Promise<void> {
-  let store: BoardServerStore | undefined = undefined;
-
-  const userStore = await authenticateAndGetUserStore(req, res, () => {
-    store = getStore();
-    return store;
-  });
-  if (!ok(userStore)) {
-    return;
-  }
-  if (!store) {
-    store = getStore();
-  }
+  let store: BoardServerStore = req.app.locals.store;
+  let userId: string = res.locals.userId;
 
   const createRequest = req.body as CreateRequest;
   const name = createRequest.name;
-  const result = await store!.create(userStore, name, !!createRequest.dryRun);
+  const result = await store!.create(userId, name, !!createRequest.dryRun);
 
   if (result.success) {
     res.writeHead(200, { "Content-Type": "application/json" });
