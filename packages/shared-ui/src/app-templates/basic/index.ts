@@ -540,7 +540,7 @@ export class Template extends LitElement implements AppTemplate {
                 }
               }
 
-              &.active #input-container {
+              &.active.paused #input-container {
                 transform: translateY(0);
               }
             }
@@ -708,6 +708,9 @@ export class Template extends LitElement implements AppTemplate {
               parts.push(...asset.parts);
             }
           }
+
+          // Once we have the values, remove the items from the shelf.
+          assetShelf.clear();
         }
       }
 

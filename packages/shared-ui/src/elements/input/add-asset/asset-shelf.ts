@@ -115,6 +115,13 @@ export class AssetShelf extends LitElement {
     });
   }
 
+  clear() {
+    this.#assets = [];
+    requestAnimationFrame(() => {
+      this.requestUpdate();
+    });
+  }
+
   render() {
     return html`${repeat(this.#assets, (asset) => {
       return asset.parts.map((part) => {
