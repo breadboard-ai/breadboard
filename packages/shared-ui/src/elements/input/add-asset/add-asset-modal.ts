@@ -9,6 +9,8 @@ import { AddAssetEvent, OverlayDismissedEvent } from "../../../events/events";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { InlineDataCapabilityPart, LLMContent } from "@breadboard-ai/types";
 import { DrawableInput } from "../drawable/drawable";
+import { SIGN_IN_CONNECTION_ID } from "../../../utils/signin-adapter";
+import { GoogleDriveFileId } from "../../google-drive/google-drive-file-id";
 
 @customElement("bb-add-asset-modal")
 export class AddAssetModal extends LitElement {
@@ -103,7 +105,7 @@ export class AddAssetModal extends LitElement {
         border: none;
         opacity: 0.75;
         transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
-        font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
+        font: 500 var(--bb-label-small) / var(--bb-label-line-height-small)
           var(--bb-font-family);
         height: var(--bb-grid-size-7);
         margin-top: var(--bb-grid-size-2);
@@ -122,6 +124,7 @@ export class AddAssetModal extends LitElement {
   `;
 
   #containerRef: Ref<HTMLDivElement> = createRef();
+  #addDriveInputRef: Ref<GoogleDriveFileId> = createRef();
 
   async #processAndEmit() {
     if (!this.#containerRef.value) {
@@ -129,13 +132,19 @@ export class AddAssetModal extends LitElement {
     }
 
     const inputs = this.#containerRef.value.querySelectorAll<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | DrawableInput
-    >("input,select,textarea,bb-drawable-input");
+      | HTMLInputElement
+      | HTMLSelectElement
+      | HTMLTextAreaElement
+      | DrawableInput
+      | GoogleDriveFileId
+    >("input,select,textarea,bb-drawable-input,bb-google-drive-file-id");
 
     let canSubmit = true;
     let item: LLMContent | null = null;
     for (const input of inputs) {
-      const isPlatformInputField = !(input instanceof DrawableInput);
+      const isPlatformInputField = !(
+        input instanceof DrawableInput || input instanceof GoogleDriveFileId
+      );
       if (isPlatformInputField && !input.checkValidity()) {
         input.reportValidity();
         canSubmit = false;
@@ -159,6 +168,25 @@ export class AddAssetModal extends LitElement {
 
         case "drawable": {
           item = input.value as LLMContent;
+          break;
+        }
+
+        case "gdrive": {
+          if (!(input instanceof GoogleDriveFileId) || !input.value) {
+            break;
+          }
+
+          item = {
+            role: "user",
+            parts: [
+              {
+                fileData: {
+                  fileUri: input.value.id,
+                  mimeType: input.value.mimeType,
+                },
+              },
+            ],
+          };
           break;
         }
 
@@ -239,6 +267,17 @@ export class AddAssetModal extends LitElement {
       case "drawable":
         title = html`Add a drawing`;
         assetCollector = html`<bb-drawable-input></bb-drawable-input>`;
+        break;
+
+      case "gdrive":
+        title = html`Add from Google Drive`;
+        assetCollector = html`
+          <bb-google-drive-file-id
+            id="add-drive-proxy"
+            ${ref(this.#addDriveInputRef)}
+            .connectionName=${SIGN_IN_CONNECTION_ID}
+          ></bb-google-drive-file-id>
+        `;
         break;
 
       default:

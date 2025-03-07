@@ -221,6 +221,7 @@ export default css`
 
       --bb-icon-google-drive: url(/third_party/icons/graph/google-drive-48px.svg);
       --bb-icon-google-drive-outline: url(/third_party/icons/graph/google-drive-outline.svg);
+      --bb-icon-google-drive-outline-inverted: url(/third_party/icons/graph/google-drive-outline-inverted.svg);
 
       --bb-icon-home-repair-service: url(/third_party/icons/home-repair-service.svg);
       --bb-icon-home-repair-service-inverted: url(/third_party/icons/home-repair-service-inverted.svg);
@@ -666,7 +667,8 @@ export default css`
       --bb-icon-fork-down-right-inverted: url(/third_party/icons/fork-down-right.svg);
 
       --bb-icon-google-drive: url(/third_party/icons/google-drive-inverted.svg);
-      --bb-icon-google-drive-inverted: url(/third_party/icons/google-drive.svg);
+      --bb-icon-google-drive-outline: url(/third_party/icons/graph/google-drive-outline-inverted.svg);
+      --bb-icon-google-drive-outline-inverted: url(/third_party/icons/graph/google-drive-outline.svg);
 
       --bb-icon-grid-view: url(/third_party/icons/grid-view-inverted.svg);
       --bb-icon-grid-view-inverted: url(/third_party/icons/grid-view.svg);

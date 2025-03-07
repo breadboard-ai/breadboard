@@ -18,6 +18,9 @@ export class AddAssetButton extends LitElement {
   accessor useGlobalPosition = true;
 
   @property()
+  accessor showGDrive = false;
+
+  @property()
   accessor anchor: "above" | "below" = "below";
 
   @state()
@@ -85,6 +88,14 @@ export class AddAssetButton extends LitElement {
           title: "Add a Drawing",
         },
       ];
+
+      if (this.showGDrive) {
+        actions.push({
+          icon: "gdrive",
+          title: "Google Drive",
+          name: "gdrive",
+        });
+      }
 
       if (this.anchor === "above") {
         this.#overflowMenu.y -= 40; // Button height.
