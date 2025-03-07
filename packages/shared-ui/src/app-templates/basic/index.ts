@@ -711,11 +711,9 @@ export class Template extends LitElement implements AppTemplate {
         }
       }
 
-      console.log(inputValues);
-
-      // this.dispatchEvent(
-      //   new InputEnterEvent(id, inputValues, /* allowSavingIfSecret */ true)
-      // );
+      this.dispatchEvent(
+        new InputEnterEvent(id, inputValues, /* allowSavingIfSecret */ true)
+      );
     };
 
     let inputContents: HTMLTemplateResult | symbol = nothing;
