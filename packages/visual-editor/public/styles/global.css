@@ -1270,4 +1270,5 @@ body {
   display: flex;
   flex-direction: column;
   background: var(--bb-neutral-0);
+  overflow: hidden;
 }

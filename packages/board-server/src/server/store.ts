@@ -64,6 +64,7 @@ export type BoardListEntry = {
   readonly: boolean;
   mine: boolean;
   tags: string[];
+  thumbnail?: string;
 };
 
 export type ServerCapabilityAccess = "open" | "key";

@@ -301,6 +301,17 @@ export class RemoteBoardServer implements BoardServer, RemoteConnector {
   items(): Map<string, GraphProviderStore> {
     const items = new Map<string, GraphProviderStore>();
     const projects: [string, GraphProviderItem][] = [];
+    const toFullURL = (thumbnail: string | null, base: string) => {
+      if (!thumbnail) {
+        return null;
+      }
+
+      if (thumbnail.startsWith(".")) {
+        return new URL(thumbnail, base).href;
+      }
+
+      return thumbnail;
+    };
 
     const projectNames = new Set<string>();
     for (const project of this.#projects) {
@@ -317,6 +328,10 @@ export class RemoteBoardServer implements BoardServer, RemoteConnector {
           handle: null,
           tags: project.metadata?.tags,
           username: project.metadata.owner,
+          thumbnail: toFullURL(
+            project.metadata.thumbnail ?? null,
+            project.url.href
+          ),
           title,
         },
       ]);
@@ -405,6 +420,7 @@ export class RemoteBoardServer implements BoardServer, RemoteConnector {
             tags: item.tags,
             title: item.title,
             description: item.description,
+            thumbnail: item.thumbnail ?? undefined,
             access,
           },
         };
