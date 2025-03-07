@@ -357,6 +357,7 @@ export class Edit extends EventTarget {
 
     metadata.visual.presentation.themeColors = {
       primaryColor: theme.primaryColor,
+      primaryTextColor: theme.primaryTextColor,
       secondaryColor: theme.secondaryColor,
       backgroundColor: theme.backgroundColor,
       textColor: theme.textColor,

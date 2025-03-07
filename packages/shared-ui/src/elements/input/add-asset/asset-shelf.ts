@@ -46,6 +46,23 @@ export class AssetShelf extends LitElement {
         border-radius: var(--bb-grid-size-2);
       }
 
+      & .text,
+      & .audio {
+        border: 1px solid var(--primary-color, var(--bb-neutral-300));
+      }
+
+      & .audio {
+        background: var(--bb-icon-mic)
+          var(--background-color, var(--bb-neutral-0)) center center / 20px 20px
+          no-repeat;
+      }
+
+      & .text {
+        background: var(--bb-icon-text)
+          var(--background-color, var(--bb-neutral-0)) center center / 20px 20px
+          no-repeat;
+      }
+
       & .delete {
         position: absolute;
         top: calc(-1 * var(--bb-grid-size-2));
@@ -101,6 +118,12 @@ export class AssetShelf extends LitElement {
               src="data:${part.inlineData.mimeType};base64,${part.inlineData
                 .data}"
             />`;
+          }
+          if (part.inlineData.mimeType.startsWith("audio")) {
+            value = html`<div class="audio"></div>`;
+          }
+          if (part.inlineData.mimeType.startsWith("text")) {
+            value = html`<div class="text"></div>`;
           }
         } else if (isFileDataCapabilityPart(part)) {
           switch (part.fileData.mimeType) {

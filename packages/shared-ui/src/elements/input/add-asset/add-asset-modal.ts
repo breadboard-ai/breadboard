@@ -64,7 +64,7 @@ export class AddAssetModal extends LitElement {
       & input[type="text"],
       & input[type="url"],
       & input[type="number"],
-      & textarea,
+      & input[type="file"] & textarea,
       & select {
         display: block;
         width: 100%;
@@ -77,6 +77,14 @@ export class AddAssetModal extends LitElement {
         resize: none;
         font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
           var(--bb-font-family);
+      }
+
+      input::file-selector-button {
+        height: var(--bb-grid-size-7);
+        border-radius: var(--bb-grid-size-16);
+        background: var(--secondary-color, var(--bb-neutral-100));
+        color: var(--primary-text-color, var(--bb-neutral-900));
+        border: none;
       }
 
       textarea {
@@ -221,7 +229,11 @@ export class AddAssetModal extends LitElement {
 
       case "upload":
         title = html`Upload from Device`;
-        assetCollector = html`<input type="file" required />`;
+        assetCollector = html`<input
+          type="file"
+          required
+          accept="image/*,audio/*,text/plain"
+        />`;
         break;
 
       case "drawable":
