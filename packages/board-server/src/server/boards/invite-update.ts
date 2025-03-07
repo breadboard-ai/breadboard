@@ -9,7 +9,6 @@ import type { Request, Response } from "express";
 import { ok } from "@google-labs/breadboard";
 
 import { authenticateAndGetUserStore } from "../auth.js";
-import { getBody } from "../common.js";
 import { getStore } from "../store.js";
 import type { BoardServerStore } from "../types.js";
 
@@ -28,20 +27,8 @@ async function updateInvite(req: Request, res: Response): Promise<void> {
     store = getStore();
   }
 
-  const body = await getBody(req);
-  if (!body) {
-    // create new invite
-    const result = await store.createInvite(userStore, fullPath);
-    let responseBody;
-    if (!result.success) {
-      responseBody = { error: result.error };
-    } else {
-      responseBody = { invite: result.invite };
-    }
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(responseBody));
-    return;
-  } else {
+  const body = req.body;
+  if (body.delete) {
     // delete invite
     const del = body as { delete: string };
     if (!del.delete) {
@@ -57,6 +44,18 @@ async function updateInvite(req: Request, res: Response): Promise<void> {
     }
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify(responseBody));
+  } else {
+    // create new invite
+    const result = await store.createInvite(userStore, fullPath);
+    let responseBody;
+    if (!result.success) {
+      responseBody = { error: result.error };
+    } else {
+      responseBody = { invite: result.invite };
+    }
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(responseBody));
+    return;
   }
 }
 

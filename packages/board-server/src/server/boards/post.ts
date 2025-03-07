@@ -11,12 +11,11 @@ import { ok, type GraphDescriptor } from "@google-labs/breadboard";
 import { authenticateAndGetUserStore } from "../auth.js";
 import { badRequest } from "../errors.js";
 import { getStore } from "../store.js";
-import { getBody } from "../common.js";
 
 import del from "./delete.js";
 
 async function post(req: Request, res: Response): Promise<void> {
-  const body = await getBody(req);
+  const body = req.body;
 
   // We handle deletion by accepting a POST request with { delete: true } in the body
   // TODO Don't do this. Use HTTP DELETE instead.
