@@ -8,6 +8,7 @@ import { customElement, property } from "lit/decorators.js";
 import { AddAssetEvent, OverlayDismissedEvent } from "../../../events/events";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { InlineDataCapabilityPart, LLMContent } from "@breadboard-ai/types";
+import { DrawableInput } from "../drawable/drawable";
 
 @customElement("bb-add-asset-modal")
 export class AddAssetModal extends LitElement {
@@ -50,10 +51,8 @@ export class AddAssetModal extends LitElement {
       border-radius: var(--bb-grid-size-3);
       display: flex;
       flex-direction: column;
-      width: min-content;
-      height: min-content;
+      width: 90%;
       max-width: 640px;
-      max-height: 640px;
 
       & h1 {
         font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
@@ -82,6 +81,10 @@ export class AddAssetModal extends LitElement {
 
       textarea {
         field-sizing: content;
+      }
+
+      bb-drawable-input {
+        width: 100%;
       }
 
       & button {
@@ -118,13 +121,14 @@ export class AddAssetModal extends LitElement {
     }
 
     const inputs = this.#containerRef.value.querySelectorAll<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >("input,select,textarea");
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | DrawableInput
+    >("input,select,textarea,bb-drawable-input");
 
     let canSubmit = true;
     let item: LLMContent | null = null;
     for (const input of inputs) {
-      if (!input.checkValidity()) {
+      const isPlatformInputField = !(input instanceof DrawableInput);
+      if (isPlatformInputField && !input.checkValidity()) {
         input.reportValidity();
         canSubmit = false;
         continue;
@@ -132,12 +136,21 @@ export class AddAssetModal extends LitElement {
 
       switch (this.assetType) {
         case "youtube": {
+          if (!isPlatformInputField) {
+            break;
+          }
+
           item = {
             role: "user",
             parts: [
               { fileData: { fileUri: input.value, mimeType: "video/mp4" } },
             ],
           };
+          break;
+        }
+
+        case "drawable": {
+          item = input.value as LLMContent;
           break;
         }
 
@@ -209,6 +222,11 @@ export class AddAssetModal extends LitElement {
       case "upload":
         title = html`Upload from Device`;
         assetCollector = html`<input type="file" required />`;
+        break;
+
+      case "drawable":
+        title = html`Add a drawing`;
+        assetCollector = html`<bb-drawable-input></bb-drawable-input>`;
         break;
 
       default:

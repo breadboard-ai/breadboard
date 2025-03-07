@@ -27,12 +27,13 @@ export class AssetShelf extends LitElement {
     :host {
       display: flex;
       overflow-x: scroll;
+      overflow-y: hidden;
       scrollbar-width: none;
     }
 
     .value {
       display: block;
-      width: 120px;
+      height: 72px;
       aspect-ratio: 16/9;
       margin: var(--bb-grid-size-2) var(--bb-grid-size-2) 0 0;
       position: relative;
@@ -41,6 +42,7 @@ export class AssetShelf extends LitElement {
       & :not(button) {
         object-fit: cover;
         width: 100%;
+        height: 100%;
         border-radius: var(--bb-grid-size-2);
       }
 
