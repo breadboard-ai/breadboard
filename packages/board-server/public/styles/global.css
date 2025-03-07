@@ -522,6 +522,7 @@
   --bb-add-icon-generative-image: var(--bb-icon-add-image);
   --bb-add-icon-generative-text: var(--bb-icon-add-text);
   --bb-add-icon-generative: var(--bb-icon-play-filled);
+  --bb-add-icon-generative-image-edit: var(--bb-icon-edit-ui);
 
   --bb-icon-confirm-blue: url(/third_party/icons/confirm-blue.svg);
 
