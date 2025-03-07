@@ -474,9 +474,6 @@ export default css`
       --bb-icon-language: url(/third_party/icons/language.svg);
       --bb-icon-map-search: url(/third_party/icons/map-search.svg);
       --bb-icon-sunny: url(/third_party/icons/sunny.svg);
-
-      --bb-icon-spark: url(/third_party/icons/spark.svg);
-      --bb-icon-pen-spark: url(/third_party/icons/pen-spark.svg);
     }
   }
 

@@ -48,48 +48,58 @@ export class DescribeEditButton extends LitElement {
         position: relative;
         margin: 16px;
       }
+
       #edit-button {
         background-color: var(--bb-ui-500);
-        --bb-icon: var(--bb-icon-pen-spark-filled-white);
+        --bb-icon: var(--bb-add-icon-generative-text-inverted);
       }
+
       #panel {
         position: absolute;
         top: calc(36px + 8px);
         right: 0;
         width: 340px;
       }
+
       #panel-top {
         display: flex;
         align-items: center;
       }
+
       #description-input {
         flex: 1;
         min-height: 48px;
       }
+
       #submit-button {
         width: 24px;
-        --bb-icon: var(--bb-icon-spark-white);
+        --bb-icon: var(--bb-add-icon-generative-text-inverted);
         box-shadow: none;
         background-color: var(--bb-ui-500);
         margin-left: 8px;
       }
+
       .generating #submit-button {
         background-color: transparent;
         --bb-icon: url(/images/progress-ui.svg);
       }
+
       #generating-spinner {
         width: 30px;
         aspect-ratio: 1;
         margin-right: 20px;
       }
+
       #generating-status {
         font-size: 18px;
       }
+
       #generating-status-detail {
         font-size: 14px;
         margin-top: 8px;
         color: var(--bb-neutral-700);
       }
+
       #error {
         color: var(--bb-error-color);
         margin-top: 12px;

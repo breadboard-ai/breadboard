@@ -79,6 +79,11 @@ export class AddAssetButton extends LitElement {
           name: "youtube",
           title: "Add YouTube Video",
         },
+        {
+          icon: "drawable",
+          name: "drawable",
+          title: "Add a Drawing",
+        },
       ];
 
       if (this.anchor === "above") {

@@ -94,7 +94,6 @@ import "./graph-renderer.js";
 import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
 import { NodeMetadata } from "@breadboard-ai/types";
-import "./describe-edit-button.js";
 
 const ZOOM_KEY = "bb-editor-zoom-to-highlighted-node-during-runs";
 const DATA_TYPE = "text/plain";
@@ -632,7 +631,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
         display: flex;
         align-items: center;
         padding: 0 var(--bb-grid-size-2);
-        border: 1px solid var(--bb-neutral-300);
+        box-shadow: var(--bb-elevation-1);
         background: var(--bb-neutral-0);
         margin: 0 var(--bb-grid-size-4);
 

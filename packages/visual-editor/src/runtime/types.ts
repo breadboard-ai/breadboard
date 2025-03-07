@@ -27,6 +27,7 @@ import {
 import { Sandbox } from "@breadboard-ai/jsandbox";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/utils/side-board-runtime.js";
 import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
+import { HarnessProxyConfig } from "@google-labs/breadboard/harness";
 
 export enum TabType {
   URL,
@@ -58,6 +59,7 @@ export interface RuntimeConfig {
   environment?: BreadboardUI.Contexts.Environment;
   tokenVendor: TokenVendor;
   settings: SettingsStore;
+  proxy?: HarnessProxyConfig[];
 }
 
 export interface RuntimeConfigBoardServers {

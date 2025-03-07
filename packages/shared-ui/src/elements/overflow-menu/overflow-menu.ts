@@ -196,6 +196,10 @@ export class OverflowMenu extends LitElement {
         background-image: var(--bb-icon-google-drive-outline);
       }
 
+      &.drawable {
+        background-image: var(--bb-icon-add-drawable);
+      }
+
       &.error {
         background-image: var(--bb-icon-error);
         color: var(--bb-warning-600);

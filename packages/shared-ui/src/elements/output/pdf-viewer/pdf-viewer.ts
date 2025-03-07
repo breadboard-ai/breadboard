@@ -59,6 +59,10 @@ export class PDFViewer extends LitElement {
       & > div {
         display: flex;
         align-items: center;
+
+        &#zoom {
+          padding-left: var(--bb-grid-size-2);
+        }
       }
 
       & button {
@@ -119,6 +123,7 @@ export class PDFViewer extends LitElement {
       border: 1px solid var(--bb-neutral-100);
       background: var(--bb-neutral-50);
       overflow: scroll;
+      scrollbar-width: none;
 
       & #inner-container {
         & canvas {

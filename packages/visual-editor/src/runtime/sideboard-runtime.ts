@@ -17,7 +17,9 @@ import {
 } from "@breadboard-ai/types";
 import {
   createRunner,
+  HarnessProxyConfig,
   HarnessRunner,
+  RunConfig,
   RunnerErrorEvent,
 } from "@google-labs/breadboard/harness";
 import { SideboardRuntimeProvider } from "./types";
@@ -42,6 +44,7 @@ import {
 import { SecretsHelper } from "../utils/secrets-helper";
 import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import { TokenVendor } from "@breadboard-ai/connection-client";
+import { addNodeProxyServerConfig } from "../data/node-proxy-servers";
 
 export { createSideboardRuntimeProvider };
 
@@ -55,11 +58,18 @@ function createSideboardRuntimeProvider(
   args: GraphStoreArgs,
   servers: BoardServer[],
   tokenVendor: TokenVendor,
-  settings: SettingsStore
+  settings: SettingsStore,
+  proxy?: HarnessProxyConfig[]
 ): SideboardRuntimeProvider {
   return {
     createSideboardRuntime() {
-      return new SideboardRuntimeImpl(args, servers, tokenVendor!, settings);
+      return new SideboardRuntimeImpl(
+        args,
+        servers,
+        tokenVendor!,
+        settings,
+        proxy
+      );
     },
   };
 }
@@ -76,9 +86,10 @@ class SideboardRuntimeImpl
 
   constructor(
     args: GraphStoreArgs,
-    servers: BoardServer[],
+    private readonly servers: BoardServer[],
     public readonly tokenVendor: TokenVendor,
-    public readonly settings: SettingsStore
+    public readonly settings: SettingsStore,
+    private readonly proxy?: HarnessProxyConfig[]
   ) {
     super();
     this.#graphStore = createGraphStore(args);
@@ -128,7 +139,21 @@ class SideboardRuntimeImpl
     }
   }
 
-  async createRunner(graph: GraphDescriptor): Promise<HarnessRunner> {
+  async #getProxyURL(urlString: string): Promise<string | null> {
+    const url = new URL(urlString, window.location.href);
+    for (const boardServer of this.servers) {
+      const proxyURL = await boardServer.canProxy?.(url);
+      if (proxyURL) {
+        return proxyURL;
+      }
+    }
+    return null;
+  }
+
+  async createRunner(
+    graph: GraphDescriptor,
+    graphURLForProxy?: string
+  ): Promise<HarnessRunner> {
     if (!graph.url) {
       // Side-boards often won't have the required `url` property,
       // because they might have been imported e.g. via the JS import
@@ -140,7 +165,8 @@ class SideboardRuntimeImpl
       graph.url = `file://sideboard/${crypto.randomUUID()}`;
     }
     this.#graphStore.addByDescriptor(graph);
-    const config = {
+
+    let config: RunConfig = {
       url: graph.url,
       runner: graph,
       diagnostics: true,
@@ -155,6 +181,17 @@ class SideboardRuntimeImpl
       }),
       interactiveSecrets: true,
     };
+
+    if (this.proxy) {
+      config = addNodeProxyServerConfig(
+        this.proxy,
+        config,
+        this.settings,
+        undefined,
+        await this.#getProxyURL(graphURLForProxy ?? graph.url)
+      );
+    }
+
     const runner = createRunner(config);
     runner.addEventListener("secret", async (event) => {
       const { keys } = event.data;

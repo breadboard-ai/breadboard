@@ -29,6 +29,7 @@ export { ConnectionEntrySignin } from "./connection/connection-entry-signin.js";
 export { ConnectionInput } from "./connection/connection-input.js";
 export { ConnectionSettings } from "./connection/connection-settings.js";
 export { ConnectionSignin } from "./connection/connection-signin.js";
+export { DescribeEditButton } from "./editor/describe-edit-button.js";
 export { DragDockOverlay } from "./overlay/drag-dock-overlay.js";
 export { DrawableInput } from "./input/drawable/drawable.js";
 export { Editor } from "./editor/editor.js";
