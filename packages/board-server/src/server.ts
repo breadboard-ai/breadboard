@@ -25,8 +25,6 @@ const DEFAULT_HOST = "localhost";
 export function createServer(config: ServerConfig): Express {
   const server = express();
 
-  server.use(express.json());
-
   server.get("/", async (req, res) => serveHome(config, req, res));
 
   server.use("/blobs", serveBlobsAPI(config));
