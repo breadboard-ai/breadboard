@@ -312,8 +312,9 @@ export class Template extends LitElement implements AppTemplate {
               --output-value-padding-x: var(--bb-grid-size-4);
               --output-value-padding-y: var(--bb-grid-size-4);
               --output-border-radius: var(--bb-grid-size-4);
-              --output-font: 400 var(--bb-title-large) /
-                var(--bb-title-line-height-large) var(--bb-font-family);
+              --output-font: 400 var(--font-style, normal)
+                var(--bb-title-large) / var(--bb-title-line-height-large)
+                var(--font-family, var(--bb-font-family));
               --output-string-width: 95%;
               --output-string-margin-bottom-y: var(--bb-grid-size-3);
               --output-margin-bottom: var(--bb-grid-size-4);
@@ -696,6 +697,8 @@ export class Template extends LitElement implements AppTemplate {
           } else {
             inputValues[input.name] = input.value;
           }
+
+          input.value = "";
         } else {
           inputValues[input.name] = input.value as NodeValue;
         }
@@ -750,6 +753,7 @@ export class Template extends LitElement implements AppTemplate {
                 name=${name}
                 type="text"
                 data-type=${dataType}
+                .value=${""}
               ></textarea>
               <bb-asset-shelf ${ref(this.#assetShelfRef)}></bb-asset-shelf>
             </div>`;

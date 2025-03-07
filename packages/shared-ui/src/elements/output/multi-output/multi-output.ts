@@ -28,8 +28,9 @@ export class MultiOutput extends LitElement {
     :host {
       display: block;
       color: var(--bb-neutral-900);
-      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
-        var(--bb-font-family);
+      font: 400 var(--font-style, normal) var(--bb-body-small) /
+        var(--bb-body-line-height-small)
+        var(--font-family, var(--bb-font-family));
     }
 
     .output {
@@ -41,8 +42,9 @@ export class MultiOutput extends LitElement {
         position: relative;
 
         margin: 0 var(--output-value-margin-x, var(--bb-grid-size-3));
-        font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
-          var(--bb-font-family);
+        font: var(--font-style, normal) var(--bb-body-medium) /
+          var(--bb-body-line-height-medium)
+          var(--font-family, var(--bb-font-family));
         color: var(--bb-neutral-900);
 
         padding: 0 var(--multi-output-value-padding-x, var(--bb-grid-size-3));
@@ -100,15 +102,17 @@ export class MultiOutput extends LitElement {
         }
 
         & h1 {
-          font: 500 var(--bb-title-large) / var(--bb-title-line-height-large)
-            var(--bb-font-family);
+          font: 500 var(--font-style, normal) var(--bb-title-large) /
+            var(--bb-title-line-height-large)
+            var(--font-family, var(--bb-font-family));
 
           margin: var(--bb-grid-size-6) 0 var(--bb-grid-size-2) 0;
         }
 
         & h2 {
-          font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
-            var(--bb-font-family);
+          font: 500 var(--font-style, normal) var(--bb-title-medium) /
+            var(--bb-title-line-height-medium)
+            var(--font-family, var(--bb-font-family));
 
           margin: var(--bb-grid-size-4) 0 var(--bb-grid-size-2) 0;
         }
@@ -116,8 +120,9 @@ export class MultiOutput extends LitElement {
         & h3,
         & h4,
         & h5 {
-          font: 500 var(--bb-title-small) / var(--bb-title-line-height-small)
-            var(--bb-font-family);
+          font: 500 var(--font-style, normal) var(--bb-title-small) /
+            var(--bb-title-line-height-small)
+            var(--font-family, var(--bb-font-family));
 
           margin: var(--bb-grid-size-3) 0 var(--bb-grid-size-2) 0;
         }
@@ -126,7 +131,7 @@ export class MultiOutput extends LitElement {
           font: var(
             --output-font,
             400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
-              var(--bb-font-family)
+              var(--font-family, var(--bb-font-family))
           );
 
           color: var(--text-color, var(--bb-neutral-900));
@@ -153,8 +158,8 @@ export class MultiOutput extends LitElement {
         }
 
         &.no-data {
-          font: normal var(--bb-body-small) / var(--bb-body-line-height-small)
-            var(--bb-font-family-mono);
+          font: var(--font-style, normal) var(--bb-body-small) /
+            var(--bb-body-line-height-small) var(--bb-font-family-mono);
         }
       }
     }
