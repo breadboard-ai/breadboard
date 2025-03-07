@@ -21,7 +21,10 @@ import { badRequest } from "../errors.js";
 export function serveBlobsAPI(config: ServerConfig): Router {
   const router = Router();
 
-  router.use(() => checkStorageBucket(config));
+  router.use((req, res, next) => {
+    checkStorageBucket(config);
+    next();
+  });
   router.use("/", corsAll);
 
   router.get("/:blobId", (req, res) => get(config, req, res));
