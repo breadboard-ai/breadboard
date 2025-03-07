@@ -545,6 +545,7 @@ export interface AppTemplate {
   topGraphResult: TopGraphRunResult | null;
   eventPosition: number;
   additionalOptions: AppTemplateAdditionalOptionsAvailable;
+  showGDrive: boolean;
 }
 
 export interface Utterance {

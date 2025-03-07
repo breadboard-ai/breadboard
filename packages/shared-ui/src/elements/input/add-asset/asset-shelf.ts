@@ -47,7 +47,8 @@ export class AssetShelf extends LitElement {
       }
 
       & .text,
-      & .audio {
+      & .audio,
+      & .gdrive {
         border: 1px solid var(--primary-color, var(--bb-neutral-300));
       }
 
@@ -59,6 +60,12 @@ export class AssetShelf extends LitElement {
 
       & .text {
         background: var(--bb-icon-text)
+          var(--background-color, var(--bb-neutral-0)) center center / 20px 20px
+          no-repeat;
+      }
+
+      & .gdrive {
+        background: var(--bb-icon-google-drive-outline)
           var(--background-color, var(--bb-neutral-0)) center center / 20px 20px
           no-repeat;
       }
@@ -147,6 +154,15 @@ export class AssetShelf extends LitElement {
                 />
               </a>`;
               break;
+            }
+
+            default: {
+              if (
+                part.fileData.mimeType.startsWith("application/vnd.google-apps")
+              ) {
+                value = html`<div class="gdrive"></div>`;
+                break;
+              }
             }
           }
         }

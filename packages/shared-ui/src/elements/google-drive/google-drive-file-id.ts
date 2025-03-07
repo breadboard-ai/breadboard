@@ -48,28 +48,46 @@ export class GoogleDriveFileId extends LitElement {
   static styles = css`
     :host {
       display: flex;
+      align-items: center;
       max-width: 400px;
     }
 
     button {
-      background: var(--bb-inputs-500);
-      border-radius: 20px;
+      background: var(--secondary-color, var(--bb-neutral-100));
+      border-radius: var(--bb-grid-size-16);
       border: none;
-      color: white;
-      cursor: pointer;
-      font-size: var(--bb-label-large);
-      padding: 4px 18px;
+      color: var(--primary-text-color, var(--bb-neutral-700));
+      font: 500 var(--bb-label-small) / var(--bb-label-line-height-small)
+        var(--bb-font-family);
+      height: var(--bb-grid-size-7);
+      padding: 0 var(--bb-grid-size-3);
       white-space: nowrap;
-    }
-    button:hover {
-      background-color: var(--bb-inputs-400);
+      opacity: 0.7;
+      transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+      margin-right: var(--bb-grid-size-2);
+
+      &:not([disabled]) {
+        cursor: pointer;
+
+        &:hover,
+        &:focus {
+          opacity: 1;
+        }
+      }
     }
 
     input {
       flex-grow: 1;
-      font-size: 11px;
-      margin-left: 14px;
-      padding: 6px 8px;
+      display: block;
+      width: 100%;
+      border-radius: var(--bb-grid-size);
+      background: var(--background-color, var(--bb-neutral-0));
+      color: var(--text-color, var(--bb-neutral-900));
+      padding: var(--bb-grid-size-2);
+      border: 1px solid var(--bb-neutral-300);
+      resize: none;
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
     }
   `;
 
@@ -121,7 +139,7 @@ export class GoogleDriveFileId extends LitElement {
     }
     return html`
       <button @click=${this.#onClickPickFiles}>Pick File</button>
-      <input type="text" disabled="true" .value=${this.value?.preview || ""} />
+      <input type="text" disabled .value=${this.value?.preview || ""} />
     `;
   }
 

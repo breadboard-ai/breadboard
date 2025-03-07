@@ -66,6 +66,9 @@ export class Template extends LitElement implements AppTemplate {
   @property()
   accessor pendingSplashScreen = false;
 
+  @property()
+  accessor showGDrive = false;
+
   @state()
   accessor showAddAssetModal = false;
   #addAssetType: string | null = null;
@@ -708,9 +711,11 @@ export class Template extends LitElement implements AppTemplate {
         }
       }
 
-      this.dispatchEvent(
-        new InputEnterEvent(id, inputValues, /* allowSavingIfSecret */ true)
-      );
+      console.log(inputValues);
+
+      // this.dispatchEvent(
+      //   new InputEnterEvent(id, inputValues, /* allowSavingIfSecret */ true)
+      // );
     };
 
     let inputContents: HTMLTemplateResult | symbol = nothing;
@@ -725,6 +730,7 @@ export class Template extends LitElement implements AppTemplate {
           <bb-add-asset-button
             .anchor=${"above"}
             .useGlobalPosition=${false}
+            .showGDrive=${this.showGDrive}
           ></bb-add-asset-button>
 
           ${repeat(props, ([name, schema]) => {
@@ -918,7 +924,7 @@ export class Template extends LitElement implements AppTemplate {
           }
 
           this.showAddAssetModal = false;
-          this.#assetShelfRef.value.addAsset(evt.asset);
+          this.#assetShelfRef.value.addAsset(evt.asset, evt.previewImage);
         }}
       ></bb-add-asset-modal>`;
     }

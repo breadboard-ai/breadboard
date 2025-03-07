@@ -63,6 +63,9 @@ export class AppPreview extends LitElement {
   accessor graph: GraphDescriptor | null = null;
 
   @property()
+  accessor showGDrive = false;
+
+  @property()
   accessor template = "basic";
 
   @property()
@@ -336,6 +339,7 @@ export class AppPreview extends LitElement {
       this.#appTemplate.run = this.run;
       this.#appTemplate.topGraphResult = this.topGraphResult;
       this.#appTemplate.eventPosition = this.eventPosition;
+      this.#appTemplate.showGDrive = this.showGDrive;
     }
 
     return html`<div id="container">
