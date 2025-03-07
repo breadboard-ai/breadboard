@@ -514,6 +514,20 @@ export class LLMOutput extends LitElement {
               if (mimeType.startsWith("text")) {
                 value = html`<div class="plain-text">${until(getData())}</div>`;
               }
+              if (part.storedData.mimeType === "application/pdf") {
+                const pdfHandler = fetch(url)
+                  .then((r) => r.arrayBuffer())
+                  .then((pdfData) => {
+                    return cache(
+                      html`<bb-pdf-viewer
+                        .showControls=${true}
+                        .data=${pdfData}
+                      ></bb-pdf-viewer>`
+                    );
+                  });
+
+                value = html`${until(pdfHandler)}`;
+              }
             }
           } else if (isFileDataCapabilityPart(part)) {
             switch (part.fileData.mimeType) {

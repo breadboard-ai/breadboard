@@ -29,23 +29,13 @@ export class DrawableInput extends LitElement {
 
   static styles = css`
     :host {
-      --default-bb-box-shadow: 0 6px 9px 0 rgba(0, 0, 0, 0.12),
-        0 2px 3px 0 rgba(0, 0, 0, 0.23);
-      --default-bb-border-radius: 8px;
-      --default-bb-input-background-color: #fff;
-      --default-bb-outline: transparent;
-
       position: relative;
       display: block;
       width: 100%;
-      background-color: var(
-        --bb-input-background-color,
-        var(--default-bb-input-background-color)
-      );
-      box-shadow: var(--bb-box-shadow, var(--default-bb-box-shadow));
-      border-radius: var(--bb-border-radius, var(--default-bb-border-radius));
+      background-color: var(--bb-neutral-0);
+      border-radius: var(--bb-grid-size-3);
       aspect-ratio: 4/3;
-      outline: 1px solid var(--bb-outline, var(--default-bb-outline));
+      outline: 1px solid var(--primary-color, var(--bb-neutral-300));
     }
 
     canvas {
@@ -53,7 +43,7 @@ export class DrawableInput extends LitElement {
       width: 100%;
       height: 100%;
       opacity: 0;
-      border-radius: var(--bb-border-radius, var(--default-bb-border-radius));
+      border-radius: var(--bb-grid-size-3);
       animation: fadeIn 0.3s cubic-bezier(0, 0, 0.3, 1) both;
       animation-delay: 0.3s;
     }
@@ -64,50 +54,80 @@ export class DrawableInput extends LitElement {
     }
 
     #controls {
-      width: calc(var(--bb-grid-size) * 8);
+      display: flex;
+      flex-direction: column;
       position: absolute;
-      top: calc(var(--bb-grid-size) * 4);
-      left: calc(var(--bb-grid-size) * 4);
-      padding: calc(var(--bb-grid-size) * 0.5);
-      background: var(--bb-neutral-0);
-      border: 1px solid var(--bb-neutral-300);
+      top: var(--bb-grid-size-4);
+      right: var(--bb-grid-size-4);
+      padding: var(--bb-grid-size);
+      background: var(--background-color, var(--bb-neutral-0));
+      border: 1px solid var(--primary-color, var(--bb-neutral-300));
       border-radius: var(--bb-grid-size-2);
       cursor: auto;
       z-index: 1;
-    }
 
-    #controls > button#reset-image {
-      background-image: var(--bb-icon-reset-image);
-    }
+      & #color-input,
+      & #reset-image {
+        width: 20px;
+        height: 20px;
+        margin-bottom: var(--bb-grid-size);
+        font-size: 0;
+        border: none;
+      }
 
-    #controls > button:first-child {
-      margin-top: 0px;
-    }
+      #color-input {
+        border-radius: 50%;
+        border: none;
+        padding: 0;
+      }
 
-    #color-input,
-    #controls > button {
-      width: 32px;
-      height: 32px;
-      font-size: 0;
-      border-radius: calc(var(--bb-grid-size) * 1.5);
-      border: none;
-      background: none;
-      display: block;
-      margin-top: 4px;
-      cursor: pointer;
-    }
+      #color-input::-webkit-color-swatch-wrapper {
+        padding: 0;
+        border: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+      }
 
-    #controls > button {
-      background-color: rgb(255, 255, 255);
-      background-position: center center;
-      background-repeat: no-repeat;
-      opacity: 0.5;
-    }
+      #color-input::-webkit-color-swatch {
+        padding: 0;
+        border: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+      }
 
-    #controls > button:hover,
-    #controls > button.active {
-      background-color: rgb(230, 241, 242);
-      opacity: 1;
+      #color-input::-moz-color-swatch-wrapper {
+        padding: 0;
+        border: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+      }
+
+      #color-input::-moz-color-swatch {
+        padding: 0;
+        border: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+      }
+
+      & #reset-image {
+        opacity: 0.6;
+        transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+        background: transparent var(--bb-icon-reset-image) center center / 20px
+          20px no-repeat;
+
+        &:not([disabled]) {
+          cursor: pointer;
+
+          &:focus,
+          &:hover {
+            opacity: 1;
+          }
+        }
+      }
     }
 
     @keyframes fadeIn {

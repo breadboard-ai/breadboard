@@ -1148,7 +1148,7 @@ export class Main extends LitElement {
       }
 
       let saveMessage = Strings.from("STATUS_PROJECT_SAVED");
-      if (this.#nodeConfiguratorRef.value) {
+      if (this.#nodeConfiguratorRef.value && this.#nodeConfiguratorData) {
         this.#nodeConfiguratorRef.value.processData();
         saveMessage = Strings.from("STATUS_PROJECT_CONFIGURATION_SAVED");
       }
