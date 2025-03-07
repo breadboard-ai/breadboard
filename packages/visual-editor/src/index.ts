@@ -526,6 +526,7 @@ export class Main extends LitElement {
           tokenVendor: this.tokenVendor,
           sandbox,
           settings: this.#settings!,
+          proxy: this.#proxy,
         });
       })
       .then((runtime) => {

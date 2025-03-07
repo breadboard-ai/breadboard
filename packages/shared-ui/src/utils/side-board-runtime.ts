@@ -24,7 +24,10 @@ export const sideBoardRuntime = createContext<SideBoardRuntime | undefined>(
  */
 export type SideBoardRuntime =
   TypedEventTargetType<SideBoardRuntimeEventMap> & {
-    createRunner(graph: GraphDescriptor): Promise<HarnessRunner>;
+    createRunner(
+      graph: GraphDescriptor,
+      graphURLForProxy?: string
+    ): Promise<HarnessRunner>;
     runTask(task: SideBoardRuntimeTaskSpec): Promise<Outcome<LLMContent[]>>;
   };
 
