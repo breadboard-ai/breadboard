@@ -34,6 +34,9 @@ import { styleMap } from "lit/directives/style-map.js";
 @customElement("bb-app-theme-creator")
 export class AppThemeCreator extends LitElement {
   @property()
+  accessor graph: GraphDescriptor | null = null;
+
+  @property()
   accessor appTitle: string | null = null;
 
   @property()
@@ -310,9 +313,12 @@ export class AppThemeCreator extends LitElement {
     if (!this.sideBoardRuntime) {
       throw new Error("Internal error: No side board runtime was available.");
     }
-    const runner = await this.sideBoardRuntime.createRunner({
-      ...(GenerateAppTheme as GraphDescriptor),
-    });
+    const runner = await this.sideBoardRuntime.createRunner(
+      {
+        ...(GenerateAppTheme as GraphDescriptor),
+      },
+      this.graph?.url
+    );
     const inputs: InputValues & { context: LLMContent[] } = {
       context: [
         {

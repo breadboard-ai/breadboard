@@ -115,7 +115,8 @@ export async function create(config: RuntimeConfig): Promise<{
       graphStoreArgs,
       servers,
       config.tokenVendor,
-      config.settings
+      config.settings,
+      config.proxy
     ),
     select: new Select(),
     util: Util,

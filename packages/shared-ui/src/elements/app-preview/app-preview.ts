@@ -341,6 +341,7 @@ export class AppPreview extends LitElement {
     return html`<div id="container">
       <div id="theme-management">
         <bb-app-theme-creator
+          .graph=${this.graph}
           .appTitle=${this.appTitle}
           .appDescription=${this.appDescription}
           .theme=${this.theme}
