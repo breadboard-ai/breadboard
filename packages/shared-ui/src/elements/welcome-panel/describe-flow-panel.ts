@@ -42,31 +42,37 @@ export class DescribeFlowPanel extends LitElement {
         display: flex;
         justify-content: center;
         align-items: center;
-        color: #3271ea;
+        color: var(--bb-ui-500);
       }
+
       #describe-button {
-        --bb-icon: var(--bb-icon-pen-spark);
+        --bb-icon: var(--bb-add-icon-generative-text);
         color: inherit;
       }
+
       #description-input {
-        --bb-icon: var(--bb-icon-spark);
+        --bb-icon: var(--bb-add-icon-generative);
         flex: 1;
         max-width: 300px;
         color: inherit;
       }
+
       #generating-spinner {
         width: 30px;
         aspect-ratio: 1;
         margin-right: 20px;
       }
+
       #generating-status {
         font-size: 18px;
       }
+
       #generating-status-detail {
         font-size: 14px;
         margin-top: 8px;
         color: var(--bb-neutral-700);
       }
+
       #error {
         color: var(--bb-error-color);
       }
