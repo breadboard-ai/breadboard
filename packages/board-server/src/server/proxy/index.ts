@@ -22,6 +22,7 @@ import { cors } from "../cors.js";
 import { timestamp } from "../boards/utils/run-board.js";
 import { BlobDataStore, GoogleStorageBlobStore } from "../blob-store.js";
 import { authenticate } from "../auth.js";
+import { URL } from "node:url";
 
 class ResponseAdapter implements ProxyServerResponse {
   #response: Response;
@@ -119,6 +120,6 @@ function createDataStore(config: ServerConfig): DataStore {
   }
   return new BlobDataStore(
     new GoogleStorageBlobStore(storageBucket, serverUrl),
-    serverUrl
+    new URL(serverUrl).origin
   );
 }
