@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { IncomingMessage, ServerResponse } from "http";
-import { getBody } from "../common.js";
+import type { Request, Response } from "express";
+
 import { badRequest, serverError } from "../errors.js";
 import { isLLMContent, ok } from "@google-labs/breadboard";
 import type { LLMContent } from "@breadboard-ai/types";
@@ -15,12 +15,8 @@ import type { ServerConfig } from "../config.js";
 
 export { createBlob };
 
-async function createBlob(
-  config: ServerConfig,
-  req: IncomingMessage,
-  res: ServerResponse
-) {
-  const body = await getBody(req);
+async function createBlob(config: ServerConfig, req: Request, res: Response) {
+  const body = req.body;
   const { serverUrl, storageBucket } = config;
   if (!body) {
     badRequest(res, "No body provided");
