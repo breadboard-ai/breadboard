@@ -1,0 +1,74 @@
+{
+  "name": "@breadboard-ai/embedded-board-server",
+  "version": "0.0.1",
+  "description": "Embedded Board Server for Breadboard",
+  "main": "./dist/index.js",
+  "exports": {
+    ".": {
+      "default": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "prepack": "npm run build",
+    "build": "wireit",
+    "build:tsc": "wireit"
+  },
+  "wireit": {
+    "build": {
+      "dependencies": [
+        "<dependencies>#<this>",
+        "build:tsc"
+      ]
+    },
+    "typescript-files-and-deps": {
+      "dependencies": [
+        "<dependencies>#build:tsc"
+      ],
+      "files": [
+        "src/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ]
+    },
+    "build:tsc": {
+      "command": "tsc -b --pretty",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "typescript-files-and-deps"
+      ],
+      "files": [],
+      "output": [
+        "dist/",
+        "!dist/**/*.min.js{,.map}"
+      ],
+      "clean": "if-file-deleted"
+    }
+  },
+  "repository": {
+    "directory": "packages/embedded-board-server",
+    "type": "git",
+    "url": "git+https://github.com/breadboard-ai/breadboard.git"
+  },
+  "files": [
+    "dist/"
+  ],
+  "keywords": [],
+  "author": "Google Labs Team",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/breadboard-ai/breadboard/issues"
+  },
+  "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/embedded-board-server#readme",
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "@google-labs/breadboard": "^0.33.0"
+  }
+}
