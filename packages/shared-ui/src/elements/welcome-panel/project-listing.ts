@@ -451,17 +451,40 @@ export class ProjectListing extends LitElement {
             position: relative;
 
             & .img {
+              position: relative;
               flex: 1 1 auto;
               width: 100%;
               border-bottom: 1px solid var(--bb-neutral-300);
-              background-color: var(--bb-ui-50);
-              background-size: contain;
-              background-repeat: no-repeat;
-              background-position: center center;
+
+              &::before {
+                content: "";
+                top: 0;
+                left: 0;
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                background: url(/images/progress-ui.svg) center center / 20px
+                  20px no-repeat;
+              }
+
+              &::after {
+                content: "";
+                top: 0;
+                left: 0;
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                background-image: var(--background-image);
+                background-size: cover;
+                background-repeat: no-repeat;
+                background-position: center center;
+              }
             }
 
-            & .img:not(.custom) {
+            & .img:not(.custom)::after {
+              background-color: var(--bb-ui-50);
               background-image: url(/images/placeholder.svg);
+              background-size: contain;
             }
 
             &:has(> .username) .title {
@@ -1143,7 +1166,7 @@ export class ProjectListing extends LitElement {
                   const styles: Record<string, string> = {};
 
                   if (thumbnail !== null && thumbnail !== undefined) {
-                    styles["backgroundImage"] = `url(${thumbnail})`;
+                    styles["--background-image"] = `url(${thumbnail})`;
                   }
 
                   return html`<button

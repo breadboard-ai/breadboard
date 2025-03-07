@@ -3,6 +3,8 @@ import {
   type ReanimationState,
   type GraphDescriptor,
   blank,
+  isStoredData,
+  isLLMContentArray,
 } from "@google-labs/breadboard";
 import {
   EXPIRATION_TIME_MS,
@@ -123,13 +125,36 @@ export class FirestoreStorageProvider
       const description = doc.get("description") || undefined;
       const tags = (doc.get("tags") as string[]) || ["published"];
       const published = tags.includes("published");
+
       const readonly = userStore !== storeId;
       const mine = userStore === storeId;
       const username = storeId;
       if (!published && !mine) {
         return;
       }
-      boards.push({
+
+      let thumbnail: string | undefined = undefined;
+      const graph = doc.get("graph");
+      if (graph) {
+        try {
+          const graphData = JSON.parse(graph);
+          if (graphData.assets && graphData.assets["@@splash"]) {
+            if (
+              isLLMContentArray(graphData.assets["@@splash"].data) &&
+              graphData.assets["@@splash"].data.length > 0
+            ) {
+              const splashEntry = graphData.assets["@@splash"].data[0];
+              if (splashEntry && isStoredData(splashEntry.parts[0])) {
+                thumbnail = splashEntry.parts[0].storedData.handle;
+              }
+            }
+          }
+        } catch (err) {
+          // For errors just skip the thumbnail.
+        }
+      }
+
+      const board: BoardListEntry = {
         title,
         description,
         path,
@@ -137,7 +162,13 @@ export class FirestoreStorageProvider
         readonly,
         mine,
         tags,
-      });
+      };
+
+      if (thumbnail) {
+        board.thumbnail = thumbnail;
+      }
+
+      boards.push(board);
     });
     return boards;
   }
