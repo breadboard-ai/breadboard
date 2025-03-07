@@ -6,6 +6,7 @@
 
 import type { Request, Response } from "express";
 
+import { getBody } from "../common.js";
 import type { ServerConfig } from "../config.js";
 import { secretsKit } from "../proxy/secrets.js";
 
@@ -23,7 +24,8 @@ async function invokeHandler(
   url.pathname = `boards/${fullPath}`;
   url.search = "";
 
-  const inputs = req.body as Record<string, any>;
+  const body = await getBody(req);
+  const inputs = body as Record<string, any>;
   const keyVerificationResult = await verifyKey(user, name, inputs);
   if (!keyVerificationResult.success) {
     res.writeHead(200, { "Content-Type": "application/json" });
