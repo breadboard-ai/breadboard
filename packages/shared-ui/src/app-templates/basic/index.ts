@@ -922,7 +922,7 @@ export class Template extends LitElement implements AppTemplate {
           }
 
           this.showAddAssetModal = false;
-          this.#assetShelfRef.value.addAsset(evt.asset, evt.previewImage);
+          this.#assetShelfRef.value.addAsset(evt.asset);
         }}
       ></bb-add-asset-modal>`;
     }
