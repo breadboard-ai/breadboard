@@ -170,7 +170,7 @@
     "@breadboard-ai/board-server": "0.13.0",
     "@breadboard-ai/connection-server": "0.5.1",
     "@breadboard-ai/visual-editor": "1.27.0",
-    "express": "^4.21.2",
+    "express": "^5.0.1",
     "vite": "^6.2.0",
     "vite-express": "^0.20.0"
   }
