@@ -8,6 +8,7 @@ import type { Request, Response } from "express";
 
 import type { RemoteMessage } from "@google-labs/breadboard/remote";
 
+import { getBody } from "../common.js";
 import type { ServerConfig } from "../config.js";
 import { secretsKit } from "../proxy/secrets.js";
 import { getStore } from "../store.js";
@@ -27,11 +28,12 @@ async function runHandler(
   url.pathname = `boards/${fullPath}`;
   url.search = "";
 
+  const body = await getBody(req);
   const {
     $next: next,
     $diagnostics: diagnostics,
     ...inputs
-  } = req.body as Record<string, any>;
+  } = body as Record<string, any>;
   const writer = new WritableStream<RemoteMessage>({
     write(chunk) {
       res.write(`data: ${JSON.stringify(chunk)}\n\n`);
