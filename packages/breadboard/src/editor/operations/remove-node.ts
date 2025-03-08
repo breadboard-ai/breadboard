@@ -76,7 +76,7 @@ export class RemoveNode implements EditOperation {
       success: true,
       affectedNodes: [{ id, graphId }],
       affectedModules: [],
-      affectedGraphs: [],
+      affectedGraphs: [graphId],
     };
   }
 }

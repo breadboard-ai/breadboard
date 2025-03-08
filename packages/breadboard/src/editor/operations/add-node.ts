@@ -77,7 +77,7 @@ export class AddNode implements EditOperation {
       success: true,
       affectedNodes: [{ id: node.id, graphId }],
       affectedModules: [],
-      affectedGraphs: [],
+      affectedGraphs: [graphId],
     };
   }
 }
