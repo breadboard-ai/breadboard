@@ -75,7 +75,7 @@ export class ChangeConfiguration implements EditOperation {
       success: true,
       affectedNodes: [{ id, graphId }],
       affectedModules: [],
-      affectedGraphs: [],
+      affectedGraphs: [graphId],
     };
   }
 }

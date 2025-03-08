@@ -84,7 +84,7 @@ export class ChangeMetadata implements EditOperation {
       visualOnly,
       affectedNodes,
       affectedModules: [],
-      affectedGraphs: [],
+      affectedGraphs: [graphId],
     };
   }
 }

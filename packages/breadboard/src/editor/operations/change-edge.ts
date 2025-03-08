@@ -32,7 +32,7 @@ export class ChangeEdge implements EditOperation {
         success: true,
         affectedNodes: [],
         affectedModules: [],
-        affectedGraphs: [],
+        affectedGraphs: [graphId],
       };
     }
     const canRemoveOp = new RemoveEdge();
@@ -45,7 +45,7 @@ export class ChangeEdge implements EditOperation {
       success: true,
       affectedNodes: [],
       affectedModules: [],
-      affectedGraphs: [],
+      affectedGraphs: [graphId],
     };
   }
 
@@ -102,7 +102,7 @@ export class ChangeEdge implements EditOperation {
         { id: edge.to, graphId },
       ],
       affectedModules: [],
-      affectedGraphs: [],
+      affectedGraphs: [graphId],
     };
   }
 }

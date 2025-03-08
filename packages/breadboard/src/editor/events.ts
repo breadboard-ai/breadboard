@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor, NodeIdentifier } from "../types.js";
+import { GraphDescriptor, GraphIdentifier, NodeIdentifier } from "../types.js";
 import {
   AffectedNode,
   ChangeEventType,
@@ -21,12 +21,14 @@ export class ChangeEvent extends Event implements GraphChangeEvent {
   static eventName = "graphchange";
 
   constructor(
-    public graph: GraphDescriptor,
-    public version: number,
-    public visualOnly: boolean,
-    public changeType: ChangeEventType,
-    public affectedNodes: AffectedNode[],
-    public affectedModules: NodeIdentifier[]
+    public readonly graph: GraphDescriptor,
+    public readonly version: number,
+    public readonly visualOnly: boolean,
+    public readonly changeType: ChangeEventType,
+    public readonly affectedNodes: AffectedNode[],
+    public readonly affectedModules: NodeIdentifier[],
+    public readonly affectedGraphs: GraphIdentifier[],
+    public readonly label: string | null
   ) {
     super(ChangeEvent.eventName, {
       bubbles: false,
