@@ -534,7 +534,7 @@ export class Main extends LitElement {
         this.#graphStore = runtime.board.getGraphStore();
         this.#boardServers = runtime.board.getBoardServers() || [];
 
-        this.sideBoardRuntime = runtime.sideboards.createSideboardRuntime();
+        this.sideBoardRuntime = runtime.sideboards;
 
         this.sideBoardRuntime.addEventListener("empty", () => {
           this.canRun = true;
