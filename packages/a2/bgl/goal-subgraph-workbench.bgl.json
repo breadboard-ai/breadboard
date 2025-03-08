@@ -44,8 +44,8 @@
   },
   "graphs": {
     "01b21b56-9299-49fe-9602-f32359fc8926": {
-      "title": "Poem Writer",
-      "description": "Writes a poem based on any word, topic, or description.",
+      "title": "",
+      "description": "",
       "version": "0.0.1",
       "nodes": [
         {
