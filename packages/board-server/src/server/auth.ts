@@ -4,12 +4,99 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { IncomingMessage, ServerResponse } from "http";
-import type { AuthArgs, AuthResult, BoardServerStore } from "./types.js";
-import { err, ok, type Outcome } from "@google-labs/breadboard";
-import { unauthorized } from "./errors.js";
+import type { NextFunction, Request, RequestHandler, Response } from "express";
 
-export { authenticate, authenticateAndGetUserStore, getConnectionArgs };
+import type { BoardServerStore } from "./types.js";
+import { ok, type Outcome } from "@google-labs/breadboard";
+import * as errors from "./errors.js";
+
+/**
+ * Extracts user credentials from the request.
+ *
+ * The server accepts both an API_KEY query parameter and an access token in an
+ * authorization header. These values are added to Response.locals.apiKey or
+ * Response.locals.accessToken if present.
+ *
+ * If either value is present, attempts to resolve the given credential to a known
+ * user. If a user is found, sets Response.locals.userId.
+ *
+ * If accessToken or apiKey is set, but userId is not, that indicates that the token
+ * or API key was not validated.
+ *
+ * Because not all endpoints require authentication, this middleware never errors.
+ * Endpoints that require authentication should use the requireAuth to accept
+ * either mechanism, or requireAccessToken to require a validated access token.
+ */
+export function getUserCredentials() {
+  async function authMiddleware(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    const key = req.query.API_KEY as string;
+    if (key) {
+      res.locals.apiKey = key;
+
+      const store: BoardServerStore = req.app.locals.store;
+      const result = await store.getUserStore(key);
+      if (result.success) {
+        res.locals.userId = result.store;
+      }
+    }
+
+    const token = getAccessToken(req);
+    if (token) {
+      res.locals.accessToken = token;
+      const id = await AccessTokenCache.instance.get(token);
+      if (ok(id)) {
+        res.locals.userId = id;
+      }
+    }
+
+    next();
+  }
+
+  return authMiddleware;
+}
+
+function getAccessToken(req: Request): string {
+  const authorization = req.headers.authorization;
+  if (!authorization) {
+    return "";
+  }
+
+  const [type, token] = authorization.split(" ");
+  if (type !== "Bearer" || !token) {
+    return "";
+  }
+
+  return token;
+}
+
+// Middleware for a handler that requires an authorized user. Returns 401 a
+// validated user was not found.
+export function requireAuth(): RequestHandler {
+  return (_req: Request, res: Response, next: NextFunction) => {
+    if (!res.locals.userId) {
+      errors.unauthorized(res);
+      return;
+    }
+    next();
+  };
+}
+
+// Middleware for a handler that requires a valid access token. This is a
+// stronger check than requireAuth, because it does not allow API key
+// authentication.
+export function requireAccessToken(): RequestHandler {
+  return (_req: Request, res: Response, next: NextFunction) => {
+    if (!res.locals.userId || !res.locals.accessToken) {
+      errors.unauthorized(res);
+      return;
+    }
+    next();
+  };
+}
 
 type UserInfoPayload = {
   id: string;
@@ -75,69 +162,4 @@ class AccessTokenCache {
   }
 
   static instance = new AccessTokenCache();
-}
-
-function getConnectionArgs(req: IncomingMessage): Outcome<AuthArgs> {
-  const url = new URL(req.url || "", "http://localhost");
-  const key = url.searchParams.get("API_KEY");
-  if (key) return { key };
-  const auth = req.headers.authorization;
-  if (!auth) {
-    return err("Authorization header not found");
-  }
-  const [type, token] = auth.split(" ");
-  if (type !== "Bearer" || !token) {
-    return err("Invalid authorization header format");
-  }
-  return { token };
-}
-
-async function authenticate(
-  req: IncomingMessage,
-  res: ServerResponse | null
-): Promise<Outcome<AuthResult>> {
-  const args = getConnectionArgs(req);
-  if (!ok(args)) {
-    if (res) {
-      res.writeHead(401, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: "Unauthorized" }));
-    }
-    return args;
-  } else if ("key" in args) {
-    return args;
-  } else if ("token" in args) {
-    const id = await AccessTokenCache.instance.get(args.token);
-    if (!ok(id)) {
-      return id;
-    }
-    return { id };
-  }
-  return err("Unknown authentication format");
-}
-
-async function authenticateAndGetUserStore(
-  req: IncomingMessage,
-  res: ServerResponse | null,
-  getStore: () => BoardServerStore
-): Promise<Outcome<string>> {
-  const userKey = await authenticate(req, res);
-  if (!ok(userKey)) {
-    return userKey;
-  }
-  let userPath;
-  if ("key" in userKey) {
-    const store = getStore();
-    const userStore = await store.getUserStore(userKey.key);
-
-    if (!userStore.success) {
-      if (res) {
-        unauthorized(res, userStore.error);
-      }
-      return err("Unauthorized");
-    }
-    userPath = userStore.store!;
-  } else if ("id" in userKey) {
-    userPath = userKey.id;
-  }
-  return userPath!;
 }

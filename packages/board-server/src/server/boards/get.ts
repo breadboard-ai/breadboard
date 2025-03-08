@@ -6,33 +6,27 @@
 
 import type { Request, Response } from "express";
 import type { GraphDescriptor } from "@breadboard-ai/types";
-import { getStore } from "../store.js";
-import { serverError } from "../errors.js";
-import { authenticate } from "../auth.js";
-import { ok } from "@google-labs/breadboard";
+import * as errors from "../errors.js";
+import type { BoardServerStore } from "../types.js";
 
-async function get(req: Request, res: Response) {
-  const { user, name } = res.locals.boardId;
-
-  const store = getStore();
-
-  const board = await store.get(user, name);
-
+async function get(_req: Request, res: Response) {
   try {
+    const { user, name } = res.locals.boardId;
+    const store: BoardServerStore = res.app.locals.store;
+
+    const board = await store.get(user, name);
     const graphDescriptor = JSON.parse(board) as GraphDescriptor;
     if (graphDescriptor.metadata?.tags?.includes("private")) {
-      const authenticating = await authenticate(req, res);
-      if (!ok(authenticating)) {
+      if (res.locals.userId != user) {
+        errors.unauthorized(res);
         return;
       }
     }
+    res.json(graphDescriptor);
   } catch (e) {
-    serverError(res, (e as Error).message);
+    errors.serverError(res, (e as Error).message);
     return;
   }
-
-  res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(board);
 }
 
 export default get;
