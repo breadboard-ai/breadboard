@@ -5,11 +5,6 @@
  */
 
 import {
-  SideBoardRuntime,
-  SideBoardRuntimeEventTarget,
-  SideBoardRuntimeTaskSpec,
-} from "@breadboard-ai/shared-ui/utils/side-board-runtime.js";
-import {
   GraphDescriptor,
   InputValues,
   LLMContent,
@@ -45,6 +40,11 @@ import { SecretsHelper } from "../utils/secrets-helper";
 import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import { TokenVendor } from "@breadboard-ai/connection-client";
 import { addNodeProxyServerConfig } from "../data/node-proxy-servers";
+import type {
+  SideBoardRuntime,
+  SideBoardRuntimeEventTarget,
+  SideBoardRuntimeTaskSpec,
+} from "@breadboard-ai/shared-ui/sideboards/types.js";
 
 export { createSideboardRuntimeProvider };
 

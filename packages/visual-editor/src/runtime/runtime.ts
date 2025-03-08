@@ -37,7 +37,7 @@ import { StateManager } from "./state.js";
 import { getDataStore } from "@breadboard-ai/data-store";
 import { BoardServerAwareDataStore } from "./board-server-aware-data-store.js";
 import { createSideboardRuntimeProvider } from "./sideboard-runtime.js";
-import { SideBoardRuntime } from "@breadboard-ai/shared-ui/utils/side-board-runtime.js";
+import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 
 function withRunModule(kits: Kit[]): Kit[] {
   return addSandboxedRunModule(sandbox, kits);

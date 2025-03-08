@@ -51,9 +51,7 @@ import { Sandbox } from "@breadboard-ai/jsandbox";
 import { createGraphId, MAIN_BOARD_ID } from "./util";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { AppTheme } from "@breadboard-ai/shared-ui/types/types.js";
-import { SideBoardRuntime } from "@breadboard-ai/shared-ui/utils/side-board-runtime.js";
-
-const AUTONAMING_LABEL = "@@autoname";
+import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 
 function isModule(source: unknown): source is Module {
   return typeof source === "object" && source !== null && "code" in source;
@@ -86,18 +84,6 @@ export class Edit extends EventTarget {
     }
     editor.addEventListener("graphchange", (evt) => {
       tab.graph = evt.graph;
-      const { affectedGraphs, label } = evt;
-
-      if (label !== AUTONAMING_LABEL) {
-        if (affectedGraphs.length > 0) {
-          affectedGraphs.map(async (graphId) => {
-            this.sideboards.runTask({
-              graph: { nodes: [], edges: [] },
-              context: [],
-            });
-          });
-        }
-      }
 
       this.dispatchEvent(
         new RuntimeBoardEditEvent(
