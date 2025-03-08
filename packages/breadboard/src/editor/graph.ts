@@ -324,11 +324,21 @@ export class Graph implements EditableGraph {
     !dryRun &&
       this.#updateGraph(
         visualOnly,
-        [...new Set(affectedNodes.flat())],
+        unique(affectedNodes.flat()),
         [...new Set(affectedModules.flat())],
         [...new Set(affectedGraphs.flat())],
         label
       );
     return { success: true, log };
   }
+}
+
+function unique(affectedNodes: AffectedNode[]): AffectedNode[] {
+  const keys = new Set<string>();
+  return affectedNodes.filter((affectedNode) => {
+    const key = `${affectedNode.id}|${affectedNode.id}`;
+    if (keys.has(key)) return false;
+    keys.add(key);
+    return true;
+  });
 }
