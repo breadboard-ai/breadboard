@@ -122,9 +122,9 @@ class Autoname {
       graph: AutonameSideboard,
       context: asLLMContent({ graph, graphId, nodes }),
     });
-    console.log("RESULT", outputs);
     if (!ok(outputs)) {
       // TODO: handle error somehow..
+      console.error("AUTONAMING ERROR", outputs.$error);
       return;
     }
     const part = outputs.at(0)?.parts.at(0);
@@ -133,6 +133,7 @@ class Autoname {
       return;
     }
     const result = part.json as AutonamingResult;
+    console.log("AUTONAMING RESULT", result);
     const nodeSuggestions = result.suggestions?.nodes;
     if (nodeSuggestions) {
       const edits = nodeSuggestions
@@ -179,16 +180,22 @@ class Autoname {
 
     if (this.#running) return;
 
+    console.group("PENDING", this.#pending.size);
+
     const entry = this.#pending.entries().next().value;
     if (!entry) return;
-    // TODO: Debounce
+    // TODO: Debounce.
     // TODO: Non-blocking autonaming
     // TODO: Figure out how to not to impact runs for non
     // TODO: Use a transform -- because titles of nodes may be in chiclets
 
     try {
       this.#running = true;
-      this.runTask(editor, entry);
+      const runningTask = this.runTask(editor, entry);
+      if (!ok(runningTask)) {
+        return runningTask;
+      }
+      this.#pending.delete(entry[0]);
     } finally {
       this.#running = false;
     }
