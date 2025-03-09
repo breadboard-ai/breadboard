@@ -62,7 +62,7 @@ function isModule(source: unknown): source is Module {
 export class Edit extends EventTarget {
   #editors = new Map<TabId, EditableGraph>();
   // Since the tabs are gone, we can have a single instance now.
-  #autoname: Autoname;
+  #autoname: Autoname | null;
 
   constructor(
     public readonly providers: GraphProvider[],
@@ -70,10 +70,15 @@ export class Edit extends EventTarget {
     public readonly kits: Kit[],
     public readonly sandbox: Sandbox,
     public readonly graphStore: MutableGraphStore,
-    public readonly sideboards: SideBoardRuntime
+    public readonly sideboards: SideBoardRuntime,
+    public readonly settings: BreadboardUI.Types.SettingsStore | null
   ) {
     super();
-    this.#autoname = new Autoname(sideboards);
+    const shouldAutoname = !!this.settings
+      ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
+      ?.items.get("Enable autonaming")?.value;
+
+    this.#autoname = shouldAutoname ? new Autoname(sideboards) : null;
   }
 
   getEditor(tab: Tab | null): EditableGraph | null {
@@ -90,7 +95,7 @@ export class Edit extends EventTarget {
     editor.addEventListener("graphchange", (evt) => {
       tab.graph = evt.graph;
 
-      this.#autoname.addTask(editor, evt).then((result) => {
+      this.#autoname?.addTask(editor, evt).then((result) => {
         if (!ok(result)) {
           console.log("AUTONAMING ERROR", result.$error);
         }

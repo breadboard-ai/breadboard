@@ -202,6 +202,15 @@ export class SettingsStore implements BreadboardUI_Types.SettingsStore {
             value: false,
           },
         ],
+        [
+          "Enable autonaming",
+          {
+            name: "Enable autonaming",
+            description:
+              "Toggles the WIP feature where the flows and steps are automatically named according to their purpose (reload for setting to take effect)",
+            value: false,
+          },
+        ],
       ]),
     },
     [BreadboardUI_Types.SETTINGS_TYPE.SECRETS]: {

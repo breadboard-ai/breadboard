@@ -164,9 +164,6 @@ class Autoname {
   ): Promise<Outcome<void>> {
     const { graph, affectedNodes } = evt;
 
-    // TODO: Put main graph autonaming and node autonaming behind flag
-    // Maybe even not do anything but naming subgraphs for now.
-
     // Early return for all the cases where we don't want to kick off the
     // autonaming task.
     if (
