@@ -129,14 +129,17 @@ class Autoname {
     }
     const part = outputs.at(0)?.parts.at(0);
     if (!(part && "json" in part)) {
-      // TODO: handle error
+      // TODO: handle error.
       return;
     }
     const result = part.json as AutonamingResult;
     console.log("AUTONAMING RESULT", result);
     const nodeSuggestions = result.suggestions?.nodes;
+    const edits: EditSpec[] = [];
+
+    // Process node suggestions.
     if (nodeSuggestions) {
-      const edits = nodeSuggestions
+      const nodeEdits = nodeSuggestions
         .map((node) => {
           const title = node.suggestedTitle;
           const description = node.suggestedDescription;
@@ -147,15 +150,31 @@ class Autoname {
             type: "changemetadata",
             metadata,
             id,
-            graphId: "",
+            graphId,
           };
         })
         .filter(Boolean) as EditSpec[];
-      const result = await editor.edit(edits, AUTONAMING_LABEL);
-      if (!result.success) {
-        // TODO: Handle the error properly
-        console.error("FAILED", result.error);
+      edits.push(...nodeEdits);
+    }
+
+    const graphSuggestions = result.suggestions?.graph;
+    if (graphSuggestions) {
+      const { suggestedTitle: title, suggestedDescription: description } =
+        graphSuggestions;
+      if (title || description) {
+        edits.push({
+          graphId,
+          type: "changegraphmetadata",
+          title,
+          description,
+        });
       }
+    }
+
+    const editing = await editor.edit(edits, AUTONAMING_LABEL);
+    if (!editing.success) {
+      // TODO: Handle the error properly
+      console.error("FAILED", editing.error);
     }
   }
 
@@ -180,10 +199,8 @@ class Autoname {
 
     if (this.#running) return;
 
-    console.group("PENDING", this.#pending.size);
+    console.log("PENDING SIZE", this.#pending.size);
 
-    const entry = this.#pending.entries().next().value;
-    if (!entry) return;
     // TODO: Debounce.
     // TODO: Non-blocking autonaming
     // TODO: Figure out how to not to impact runs for non
@@ -191,11 +208,16 @@ class Autoname {
 
     try {
       this.#running = true;
-      const runningTask = await this.runTask(editor, entry);
-      if (!ok(runningTask)) {
-        return runningTask;
+      for (;;) {
+        const entry = this.#pending.entries().next().value;
+        if (!entry) return;
+        const runningTask = await this.runTask(editor, entry);
+        if (!ok(runningTask)) {
+          // Report error, but keep going.
+          console.error(`Autonaming task failed: ${runningTask.$error}`);
+        }
+        this.#pending.delete(entry[0]);
       }
-      this.#pending.delete(entry[0]);
     } finally {
       this.#running = false;
     }

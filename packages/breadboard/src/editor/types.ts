@@ -142,7 +142,9 @@ export type ChangeModuleSpec = {
 
 export type ChangeGraphMetadataSpec = {
   type: "changegraphmetadata";
-  metadata: GraphMetadata;
+  metadata?: GraphMetadata;
+  title?: string;
+  description?: string;
   graphId: GraphIdentifier;
 };
 

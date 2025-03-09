@@ -11,7 +11,6 @@ import {
   EditSpec,
   SingleEditResult,
 } from "../types.js";
-import { errorNoInspect } from "./error.js";
 
 export class ChangeGraphMetadata implements EditOperation {
   async do(
@@ -23,12 +22,7 @@ export class ChangeGraphMetadata implements EditOperation {
         `Editor API integrity error: expected type "changegraphmetadata", received "${spec.type}" instead.`
       );
     }
-    const { metadata, graphId } = spec;
-    const { mutable } = context;
-    const inspector = mutable.graphs.get(graphId);
-    if (!inspector) {
-      return errorNoInspect(graphId);
-    }
+    const { metadata, graphId, title, description } = spec;
 
     const handle = GraphDescriptorHandle.create(context.graph, graphId);
     if (!handle.success) {
@@ -36,8 +30,16 @@ export class ChangeGraphMetadata implements EditOperation {
     }
     const graph = handle.result.graph();
 
-    const visualOnly = graph.metadata === metadata;
-    graph.metadata = metadata;
+    const visualOnly = graph.metadata === metadata && !(title || description);
+    if (metadata) {
+      graph.metadata = metadata;
+    }
+    if (title) {
+      graph.title = title;
+    }
+    if (description) {
+      graph.description = description;
+    }
     return {
       success: true,
       visualOnly,
