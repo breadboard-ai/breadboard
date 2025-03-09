@@ -191,7 +191,7 @@ class Autoname {
 
     try {
       this.#running = true;
-      const runningTask = this.runTask(editor, entry);
+      const runningTask = await this.runTask(editor, entry);
       if (!ok(runningTask)) {
         return runningTask;
       }
