@@ -53,7 +53,7 @@ import { createGraphId, MAIN_BOARD_ID } from "./util";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { AppTheme } from "@breadboard-ai/shared-ui/types/types.js";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
-import { graphAutonamingTask } from "@breadboard-ai/shared-ui/sideboards/autonaming-task.js";
+import { Autoname } from "@breadboard-ai/shared-ui/sideboards/autoname.js";
 
 function isModule(source: unknown): source is Module {
   return typeof source === "object" && source !== null && "code" in source;
@@ -61,6 +61,8 @@ function isModule(source: unknown): source is Module {
 
 export class Edit extends EventTarget {
   #editors = new Map<TabId, EditableGraph>();
+  // Since the tabs are gone, we can have a single instance now.
+  #autoname: Autoname;
 
   constructor(
     public readonly providers: GraphProvider[],
@@ -71,6 +73,7 @@ export class Edit extends EventTarget {
     public readonly sideboards: SideBoardRuntime
   ) {
     super();
+    this.#autoname = new Autoname(sideboards);
   }
 
   getEditor(tab: Tab | null): EditableGraph | null {
@@ -87,7 +90,7 @@ export class Edit extends EventTarget {
     editor.addEventListener("graphchange", (evt) => {
       tab.graph = evt.graph;
 
-      graphAutonamingTask(this.sideboards, editor, evt).then((result) => {
+      this.#autoname.addTask(editor, evt).then((result) => {
         if (!ok(result)) {
           console.log("AUTONAMING ERROR", result.$error);
         }

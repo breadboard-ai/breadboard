@@ -4,4 +4,4 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { graphAutonamingTask } from "./autonaming-task";
+export { Autoname } from "./autoname";
