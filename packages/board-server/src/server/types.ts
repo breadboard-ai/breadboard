@@ -172,19 +172,3 @@ export type Result<T> =
       success: true;
       result: T;
     };
-
-export type AuthArgs =
-  | {
-      key: string;
-    }
-  | {
-      token: string;
-    };
-
-export type AuthResult =
-  | {
-      key: string;
-    }
-  | {
-      id: string;
-    };

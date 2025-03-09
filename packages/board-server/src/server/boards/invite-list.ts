@@ -6,28 +6,15 @@
 
 import type { Request, Response } from "express";
 
-import { ok } from "@google-labs/breadboard";
-import { authenticateAndGetUserStore } from "../auth.js";
-import { getStore } from "../store.js";
-import type { BoardServerStore } from "../types.js";
+import type { BoardId, BoardServerStore } from "../types.js";
 
 async function inviteList(req: Request, res: Response): Promise<void> {
-  const { fullPath } = res.locals.boardId;
-  let store: BoardServerStore | undefined = undefined;
+  const store: BoardServerStore = req.app.locals.store;
 
-  const userStore = await authenticateAndGetUserStore(req, res, () => {
-    store = getStore();
-    return store;
-  });
-  if (!ok(userStore)) {
-    return;
-  }
+  const boardId: BoardId = res.locals.boardId;
+  const userId: string = res.locals.userId;
 
-  if (!store) {
-    store = getStore();
-  }
-
-  const result = await store.listInvites(userStore, fullPath);
+  const result = await store.listInvites(userId, boardId.fullPath);
   let responseBody;
   if (!result.success) {
     // TODO: Be nice and return a proper error code
@@ -36,8 +23,7 @@ async function inviteList(req: Request, res: Response): Promise<void> {
     responseBody = { invites: result.invites };
   }
 
-  res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(JSON.stringify(responseBody));
+  res.json(responseBody);
 }
 
 export default inviteList;
