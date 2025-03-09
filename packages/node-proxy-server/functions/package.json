@@ -83,7 +83,7 @@
     "@rollup/plugin-terser": "^0.4.4",
     "firebase-functions-test": "^3.4.0",
     "rollup": "^4.34.9",
-    "typescript": "^5.7.3"
+    "typescript": "^5.8.2"
   },
   "private": true,
   "version": ""
