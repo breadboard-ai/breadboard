@@ -18,6 +18,7 @@ import {
   NodeConfiguration,
   NodeDescriptor,
   NodeIdentifier,
+  ok,
   PortIdentifier,
 } from "@google-labs/breadboard";
 import {
@@ -52,6 +53,7 @@ import { createGraphId, MAIN_BOARD_ID } from "./util";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { AppTheme } from "@breadboard-ai/shared-ui/types/types.js";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
+import { graphAutonamingTask } from "@breadboard-ai/shared-ui/sideboards/autonaming-task.js";
 
 function isModule(source: unknown): source is Module {
   return typeof source === "object" && source !== null && "code" in source;
@@ -84,6 +86,12 @@ export class Edit extends EventTarget {
     }
     editor.addEventListener("graphchange", (evt) => {
       tab.graph = evt.graph;
+
+      graphAutonamingTask(this.sideboards, editor, evt).then((result) => {
+        if (!ok(result)) {
+          console.log("AUTONAMING ERROR", result.$error);
+        }
+      });
 
       this.dispatchEvent(
         new RuntimeBoardEditEvent(
