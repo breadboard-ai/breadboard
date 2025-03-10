@@ -169,6 +169,8 @@
   "dependencies": {
     "@breadboard-ai/board-server": "0.13.0",
     "@breadboard-ai/connection-server": "0.5.1",
+    "@breadboard-ai/jsandbox": "^0.5.0",
+    "@breadboard-ai/shared-ui": "^1.24.0",
     "@breadboard-ai/visual-editor": "1.27.0",
     "express": "^4.21.2",
     "vite": "^6.2.1",

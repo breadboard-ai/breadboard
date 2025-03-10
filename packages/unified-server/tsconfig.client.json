@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
     "forceConsistentCasingInFileNames": true,
+    "experimentalDecorators": true,
+    "useDefineForClassFields": true,
     "incremental": true,
     "lib": ["ES2022", "DOM"],
     "module": "NodeNext",
