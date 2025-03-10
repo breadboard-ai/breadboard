@@ -714,6 +714,13 @@ export class Editor extends LitElement implements DragConnectorReceiver {
                 var(--bb-icon-keyboard-arrow-down) 28px center / 12px 12px
                   no-repeat;
             }
+
+            &#preset-modules {
+              background:
+                var(--bb-icon-step) 8px center / 20px 20px no-repeat,
+                var(--bb-icon-keyboard-arrow-down) 28px center / 12px 12px
+                  no-repeat;
+            }
           }
         }
       }
@@ -1587,6 +1594,29 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       );
     }
 
+    if (typeTag === "modules") {
+      const modules =
+        (this.mainGraphId
+          ? this.graphStore?.get(this.mainGraphId)?.graph.modules
+          : {}) || {};
+
+      for (const [moduleId, module] of Object.entries(modules)) {
+        if (module.metadata?.runnable) {
+          const id = `#module:${moduleId}`;
+          kitList.push({
+            id,
+            metadata: {
+              mainGraph: {
+                id: this.mainGraphId!,
+              },
+              updating: false,
+              title: module.metadata.title,
+            },
+          });
+        }
+      }
+    }
+
     return kitList;
 
     function isKnownGood(mainGraph: NodeHandlerMetadata) {
@@ -2000,6 +2030,35 @@ export class Editor extends LitElement implements DragConnectorReceiver {
               >
                 ${Strings.from("LABEL_SHOW_LIST")}
               </button>
+              ${Object.keys(this.graph.modules()).length > 0
+                ? html`<button
+                    id="preset-modules"
+                    class="expandable"
+                    ?disabled=${this.readOnly}
+                    @pointerover=${(evt: PointerEvent) => {
+                      this.dispatchEvent(
+                        new ShowTooltipEvent(
+                          Strings.from("COMMAND_LIBRARY_MODULES"),
+                          evt.clientX,
+                          evt.clientY
+                        )
+                      );
+                    }}
+                    @pointerout=${() => {
+                      this.dispatchEvent(new HideTooltipEvent());
+                    }}
+                    @click=${async (evt: PointerEvent) => {
+                      if (!(evt.target instanceof HTMLButtonElement)) {
+                        return;
+                      }
+
+                      await storeReady;
+                      this.#showComponentPicker(evt.target, "modules");
+                    }}
+                  >
+                    ${Strings.from("LABEL_SHOW_LIST")}
+                  </button>`
+                : nothing}
               <button
                 id="show-asset-organizer"
                 @pointerover=${(evt: PointerEvent) => {

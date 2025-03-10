@@ -2150,7 +2150,7 @@ export class Main extends LitElement {
     ).map(([name, module]) => {
       return {
         name,
-        icon: "step",
+        icon: module.metadata?.runnable ? "step" : "code",
         title: module.metadata?.title ?? name,
         secondaryAction: "delete",
         disabled: this.#selectionState?.selectionState.modules.has(name),
@@ -3242,15 +3242,15 @@ export class Main extends LitElement {
             ][0];
             selectedItem =
               this.tab?.graph.modules?.[module].metadata?.title ?? module;
+            selectedItemClass = this.tab?.graph.modules?.[module].metadata
+              ?.runnable
+              ? "step"
+              : "code";
           }
 
           if (!selectedItem || selectedItem === MAIN_BOARD_ID) {
             selectedItem = "Flow";
             selectedItemClass = "flow";
-          }
-
-          if (this.#selectionState.selectionState.modules.size > 0) {
-            selectedItemClass = "step";
           }
         }
 
