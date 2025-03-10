@@ -202,7 +202,7 @@
     "@types/node": "^22.0.0",
     "@types/supertest": "^6.0.2",
     "@types/uuid": "^10.0.0",
-    "esbuild": "^0.25.0",
+    "esbuild": "^0.25.1",
     "eslint": "^8.57.1",
     "firebase-tools": "^13.33.0",
     "supertest": "^7.0.0",
