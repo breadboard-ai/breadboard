@@ -1303,6 +1303,8 @@ export class Main extends LitElement {
 
     const graph = this.tab?.graph;
 
+    this.#runtime.edit.sideboards.discardTasks();
+
     this.#runBoard(
       addNodeProxyServerConfig(
         this.#proxy,
@@ -2131,6 +2133,8 @@ export class Main extends LitElement {
     if (!ports) {
       return;
     }
+
+    this.#runtime.edit.sideboards.discardTasks();
 
     this.showNodeConfigurator = true;
     this.#nodeConfiguratorData = {

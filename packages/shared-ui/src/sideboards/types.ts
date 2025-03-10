@@ -25,6 +25,7 @@ export type SideBoardRuntime =
       graphURLForProxy?: string
     ): Promise<HarnessRunner>;
     runTask(task: SideBoardRuntimeTaskSpec): Promise<Outcome<LLMContent[]>>;
+    discardTasks(): void;
   };
 
 export type SideBoardRuntimeEmptyEvent = Event;
