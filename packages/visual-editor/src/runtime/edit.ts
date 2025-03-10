@@ -18,6 +18,7 @@ import {
   NodeConfiguration,
   NodeDescriptor,
   NodeIdentifier,
+  ok,
   PortIdentifier,
 } from "@google-labs/breadboard";
 import {
@@ -51,15 +52,8 @@ import { Sandbox } from "@breadboard-ai/jsandbox";
 import { createGraphId, MAIN_BOARD_ID } from "./util";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { AppTheme } from "@breadboard-ai/shared-ui/types/types.js";
-
-// function isGraphDescriptor(source: unknown): source is GraphDescriptor {
-//   return (
-//     typeof source === "object" &&
-//     source !== null &&
-//     "edges" in source &&
-//     "nodes" in source
-//   );
-// }
+import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
+import { Autoname } from "@breadboard-ai/shared-ui/sideboards/autoname.js";
 
 function isModule(source: unknown): source is Module {
   return typeof source === "object" && source !== null && "code" in source;
@@ -67,15 +61,24 @@ function isModule(source: unknown): source is Module {
 
 export class Edit extends EventTarget {
   #editors = new Map<TabId, EditableGraph>();
+  // Since the tabs are gone, we can have a single instance now.
+  #autoname: Autoname | null;
 
   constructor(
     public readonly providers: GraphProvider[],
     public readonly loader: GraphLoader,
     public readonly kits: Kit[],
     public readonly sandbox: Sandbox,
-    public readonly graphStore: MutableGraphStore
+    public readonly graphStore: MutableGraphStore,
+    public readonly sideboards: SideBoardRuntime,
+    public readonly settings: BreadboardUI.Types.SettingsStore | null
   ) {
     super();
+    const shouldAutoname = !!this.settings
+      ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
+      ?.items.get("Enable autonaming")?.value;
+
+    this.#autoname = shouldAutoname ? new Autoname(sideboards) : null;
   }
 
   getEditor(tab: Tab | null): EditableGraph | null {
@@ -91,6 +94,13 @@ export class Edit extends EventTarget {
     }
     editor.addEventListener("graphchange", (evt) => {
       tab.graph = evt.graph;
+
+      this.#autoname?.addTask(editor, evt).then((result) => {
+        if (!ok(result)) {
+          console.log("AUTONAMING ERROR", result.$error);
+        }
+      });
+
       this.dispatchEvent(
         new RuntimeBoardEditEvent(
           tab.id,

@@ -7,10 +7,6 @@ import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { consume } from "@lit/context";
 import {
-  type SideBoardRuntime,
-  sideBoardRuntime,
-} from "../../utils/side-board-runtime.js";
-import {
   GraphDescriptor,
   InlineDataCapabilityPart,
   InputValues,
@@ -30,6 +26,8 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { repeat } from "lit/directives/repeat.js";
 import { map } from "lit/directives/map.js";
 import { styleMap } from "lit/directives/style-map.js";
+import { sideBoardRuntime } from "../../contexts/side-board-runtime.js";
+import { SideBoardRuntime } from "../../sideboards/types.js";
 
 @customElement("bb-app-theme-creator")
 export class AppThemeCreator extends LitElement {

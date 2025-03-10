@@ -80,7 +80,7 @@ export class RemoveEdge implements EditOperation {
         { id: edge.to, graphId },
       ],
       affectedModules: [],
-      affectedGraphs: [],
+      affectedGraphs: [graphId],
     };
   }
 }

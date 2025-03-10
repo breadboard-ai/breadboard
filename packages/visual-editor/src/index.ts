@@ -79,10 +79,8 @@ import {
   SelectAllCommand,
 } from "./commands/commands";
 import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
-import {
-  SideBoardRuntime,
-  sideBoardRuntime,
-} from "@breadboard-ai/shared-ui/utils/side-board-runtime.js";
+import { sideBoardRuntime } from "@breadboard-ai/shared-ui/contexts/side-board-runtime.js";
+import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 
 const STORAGE_PREFIX = "bb-main";
 const VIEW_KEY = "bb-main-view";
@@ -534,7 +532,7 @@ export class Main extends LitElement {
         this.#graphStore = runtime.board.getGraphStore();
         this.#boardServers = runtime.board.getBoardServers() || [];
 
-        this.sideBoardRuntime = runtime.sideboards.createSideboardRuntime();
+        this.sideBoardRuntime = runtime.sideboards;
 
         this.sideBoardRuntime.addEventListener("empty", () => {
           this.canRun = true;

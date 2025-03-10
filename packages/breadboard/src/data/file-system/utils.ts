@@ -14,7 +14,9 @@ import {
 
 export { ok, err, readFromStart, noStreams };
 
-function ok<T>(o: Outcome<T>): o is T {
+export type NonPromise<T> = T extends Promise<unknown> ? never : T;
+
+function ok<T>(o: Outcome<NonPromise<T>>): o is NonPromise<T> {
   return !(o && typeof o === "object" && "$error" in o);
 }
 

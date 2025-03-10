@@ -35,6 +35,8 @@ export type GraphChangeEvent = Event & {
   visualOnly: boolean;
   changeType: ChangeEventType;
   affectedNodes: AffectedNode[];
+  affectedGraphs: GraphIdentifier[];
+  label: string | null;
 };
 
 export type ErrorRejection = {
@@ -140,7 +142,9 @@ export type ChangeModuleSpec = {
 
 export type ChangeGraphMetadataSpec = {
   type: "changegraphmetadata";
-  metadata: GraphMetadata;
+  metadata?: GraphMetadata;
+  title?: string;
+  description?: string;
   graphId: GraphIdentifier;
 };
 
