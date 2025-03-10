@@ -28,7 +28,6 @@ import {
 export { Autoname };
 
 const AUTONAMING_LABEL = "@@autonaming@@";
-const DEBOUNCE_DELAY_MS = 3_000;
 
 /**
  * The results from Autonaming sideboard.
@@ -66,7 +65,6 @@ type PendingGraphNodes = {
 class Autoname {
   #pending: Map<GraphIdentifier, PendingGraphNodes> = new Map();
   #running = false;
-  #debounceTimerId: ReturnType<typeof setTimeout> | null = null;
 
   constructor(public readonly runtime: SideBoardRuntime) {}
 
@@ -199,39 +197,32 @@ class Autoname {
 
     this.#addNewAffectedNodes(graph, affectedNodes);
 
-    if (this.#debounceTimerId !== null) {
-      clearTimeout(this.#debounceTimerId);
-    }
+    if (this.#running) return;
 
-    this.#debounceTimerId = setTimeout(async () => {
-      if (this.#running) return;
+    console.log("PENDING SIZE", this.#pending.size);
 
-      console.log("PENDING SIZE", this.#pending.size);
+    // TODO: Non-blocking autonaming
+    // TODO: Figure out how to not to impact runs with edits
+    // TODO: Use a transform -- because titles of nodes may be in chiclets.
 
-      // TODO: Non-blocking autonaming
-      // TODO: Figure out how to not to impact runs with edits
-      // TODO: Use a transform -- because titles of nodes may be in chiclets.
-
-      try {
-        this.#running = true;
-        for (;;) {
-          const entry = this.#pending.entries().next().value;
-          if (!entry) return;
-          // Clear out the pending store for the graphId, so that
-          // if new affectedNodes come in for this graphId, they would
-          // be added as a new entry.
-          this.#pending.delete(entry[0]);
-          const runningTask = await this.runTask(editor, entry);
-          if (!ok(runningTask)) {
-            // Report error, but keep going.
-            console.error(`Autonaming task failed: ${runningTask.$error}`);
-          }
+    try {
+      this.#running = true;
+      for (;;) {
+        const entry = this.#pending.entries().next().value;
+        if (!entry) return;
+        // Clear out the pending store for the graphId, so that
+        // if new affectedNodes come in for this graphId, they would
+        // be added as a new entry.
+        this.#pending.delete(entry[0]);
+        const runningTask = await this.runTask(editor, entry);
+        if (!ok(runningTask)) {
+          // Report error, but keep going.
+          console.error(`Autonaming task failed: ${runningTask.$error}`);
         }
-      } finally {
-        this.#running = false;
-        this.#debounceTimerId = null;
       }
-    }, DEBOUNCE_DELAY_MS);
+    } finally {
+      this.#running = false;
+    }
   }
 }
 
