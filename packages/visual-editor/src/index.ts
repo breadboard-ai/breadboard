@@ -50,7 +50,6 @@ import { SettingsHelperImpl } from "./utils/settings-helper";
 import { styles as mainStyles } from "./index.styles.js";
 import * as Runtime from "./runtime/runtime.js";
 import {
-  EnhanceSideboard,
   TabId,
   WorkspaceSelectionStateWithChangeId,
   WorkspaceVisualChangeId,
@@ -2247,12 +2246,6 @@ export class Main extends LitElement {
             "Offer Configuration Enhancements"
           )?.value ?? false;
 
-        const showExperimentalStepEditor =
-          this.#settings?.getItem(
-            BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
-            "Show experimental step editor"
-          )?.value ?? false;
-
         const showCustomStepEditing =
           this.#settings?.getItem(
             BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
@@ -2509,178 +2502,52 @@ export class Main extends LitElement {
           );
         });
 
-        let nodeConfiguratorOverlay: HTMLTemplateResult | symbol = nothing;
-        if (showExperimentalStepEditor) {
-          nodeConfiguratorOverlay = html`<bb-focus-editor
-            ${ref(this.#nodeConfiguratorRef)}
-            .canRunNode=${canRunNode}
-            .configuration=${this.#nodeConfiguratorData}
-            .graph=${this.tab?.graph}
-            .runEventsForNode=${runEventsForNode}
-            .boardServers=${this.#boardServers}
-            .showTypes=${false}
-            .offerConfigurationEnhancements=${offerConfigurationEnhancements}
-            .projectState=${projectState}
-            .readOnly=${this.tab?.readOnly}
-            .active=${this.showNodeConfigurator}
-            @bboverlaydismissed=${() => {
-              this.#nodeConfiguratorData = null;
-              this.showNodeConfigurator = false;
-            }}
-            @bbnodepartialupdate=${async (
-              evt: BreadboardUI.Events.NodePartialUpdateEvent
-            ) => {
-              if (!this.tab) {
-                this.toast(
-                  Strings.from("ERROR_NO_PROJECT"),
-                  BreadboardUI.Events.ToastType.ERROR
-                );
-                return;
-              }
-
-              this.#runtime.edit.changeNodeConfigurationPart(
-                this.tab,
-                evt.id,
-                evt.configuration,
-                evt.subGraphId,
-                evt.metadata,
-                evt.ins
+        const nodeConfiguratorOverlay = html`<bb-focus-editor
+          ${ref(this.#nodeConfiguratorRef)}
+          .canRunNode=${canRunNode}
+          .configuration=${this.#nodeConfiguratorData}
+          .graph=${this.tab?.graph}
+          .runEventsForNode=${runEventsForNode}
+          .boardServers=${this.#boardServers}
+          .showTypes=${false}
+          .offerConfigurationEnhancements=${offerConfigurationEnhancements}
+          .projectState=${projectState}
+          .readOnly=${this.tab?.readOnly}
+          .active=${this.showNodeConfigurator}
+          @bboverlaydismissed=${() => {
+            this.#nodeConfiguratorData = null;
+            this.showNodeConfigurator = false;
+          }}
+          @bbnodepartialupdate=${async (
+            evt: BreadboardUI.Events.NodePartialUpdateEvent
+          ) => {
+            if (!this.tab) {
+              this.toast(
+                Strings.from("ERROR_NO_PROJECT"),
+                BreadboardUI.Events.ToastType.ERROR
               );
-            }}
-            @bbrunisolatednode=${async (
-              evt: BreadboardUI.Events.RunIsolatedNodeEvent
-            ) => {
-              await this.#attemptNodeRun(evt.id);
-            }}
-            @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
-              this.toast(toastEvent.message, toastEvent.toastType);
-            }}
-          >
-          </bb-focus-editor>`;
-        } else if (this.showNodeConfigurator) {
-          nodeConfiguratorOverlay = html`<bb-node-configuration-overlay
-            ${ref(this.#nodeConfiguratorRef)}
-            .canRunNode=${canRunNode}
-            .configuration=${this.#nodeConfiguratorData}
-            .graph=${this.tab?.graph}
-            .runEventsForNode=${runEventsForNode}
-            .boardServers=${this.#boardServers}
-            .showTypes=${false}
-            .offerConfigurationEnhancements=${offerConfigurationEnhancements}
-            .projectState=${projectState}
-            .readOnly=${this.tab?.readOnly}
-            @bbworkspaceselectionstate=${(
-              evt: BreadboardUI.Events.WorkspaceSelectionStateEvent
-            ) => {
-              if (!this.tab) {
-                return;
-              }
+              return;
+            }
 
-              this.#nodeConfiguratorData = null;
-              this.showNodeConfigurator = false;
-              if (evt.replaceExistingSelections) {
-                this.#runtime.select.processSelections(
-                  this.tab.id,
-                  evt.selectionChangeId,
-                  evt.selections,
-                  evt.replaceExistingSelections,
-                  evt.moveToSelection
-                );
-              }
-            }}
-            @bbmodulecreate=${(evt: BreadboardUI.Events.ModuleCreateEvent) => {
-              this.#attemptModuleCreate(evt.moduleId);
-              this.#nodeConfiguratorData = null;
-              this.showNodeConfigurator = false;
-            }}
-            @bbrunisolatednode=${async (
-              evt: BreadboardUI.Events.RunIsolatedNodeEvent
-            ) => {
-              await this.#attemptNodeRun(evt.id);
-            }}
-            @bbenhancenodeconfiguration=${(
-              evt: BreadboardUI.Events.EnhanceNodeConfigurationEvent
-            ) => {
-              if (!this.tab) {
-                return;
-              }
-
-              const enhancer: EnhanceSideboard = {
-                enhance: async (config) => {
-                  // Currently, the API of the board is fixed.
-                  // Inputs: { config }
-                  // Outputs: { config }
-                  // We should probably have some way to codify the shape.
-                  const invocationResult =
-                    await this.#runtime.run.invokeSideboard(
-                      this.tab!.boardServerKits,
-                      "/side-boards/enhance-configuration.bgl.json",
-                      this.#runtime.board.getLoader(),
-                      { config },
-                      this.#settings
-                    );
-                  if (!invocationResult.success) {
-                    return invocationResult;
-                  }
-                  const result = invocationResult.result;
-                  if ("$error" in result) {
-                    return {
-                      success: false,
-                      error: BreadboardUI.Utils.formatError(
-                        result.$error as string
-                      ),
-                    };
-                  }
-                  return {
-                    success: true,
-                    result,
-                  };
-                },
-              };
-
-              this.#runtime.edit.enhanceNodeConfiguration(
-                this.tab,
-                this.tab.subGraphId,
-                evt.id,
-                enhancer,
-                evt.property,
-                evt.value
-              );
-            }}
-            @bboverlaydismissed=${() => {
-              this.#nodeConfiguratorData = null;
-              this.showNodeConfigurator = false;
-            }}
-            @bbnodepartialupdate=${async (
-              evt: BreadboardUI.Events.NodePartialUpdateEvent
-            ) => {
-              if (!this.tab) {
-                this.toast(
-                  Strings.from("ERROR_NO_PROJECT"),
-                  BreadboardUI.Events.ToastType.ERROR
-                );
-                return;
-              }
-
-              if (!evt.debugging) {
-                this.#nodeConfiguratorData = null;
-                this.showNodeConfigurator = false;
-              }
-
-              this.#runtime.edit.changeNodeConfigurationPart(
-                this.tab,
-                evt.id,
-                evt.configuration,
-                evt.subGraphId,
-                evt.metadata,
-                evt.ins
-              );
-            }}
-            @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
-              this.toast(toastEvent.message, toastEvent.toastType);
-            }}
-          ></bb-node-configuration-overlay>`;
-        }
+            this.#runtime.edit.changeNodeConfigurationPart(
+              this.tab,
+              evt.id,
+              evt.configuration,
+              evt.subGraphId,
+              evt.metadata,
+              evt.ins
+            );
+          }}
+          @bbrunisolatednode=${async (
+            evt: BreadboardUI.Events.RunIsolatedNodeEvent
+          ) => {
+            await this.#attemptNodeRun(evt.id);
+          }}
+          @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
+            this.toast(toastEvent.message, toastEvent.toastType);
+          }}
+        >
+        </bb-focus-editor>`;
 
         let commentOverlay: HTMLTemplateResult | symbol = nothing;
         if (this.showCommentEditor) {
