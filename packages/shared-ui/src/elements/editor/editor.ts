@@ -1597,23 +1597,27 @@ export class Editor extends LitElement implements DragConnectorReceiver {
     if (typeTag === "modules") {
       const modules =
         (this.mainGraphId
-          ? this.graphStore?.get(this.mainGraphId)?.graph.modules
+          ? this.graphStore?.inspect(this.mainGraphId, "")?.modules()
           : {}) || {};
 
       for (const [moduleId, module] of Object.entries(modules)) {
-        if (module.metadata?.runnable) {
-          const id = `#module:${moduleId}`;
-          kitList.push({
-            id,
-            metadata: {
-              mainGraph: {
-                id: this.mainGraphId!,
-              },
-              updating: false,
-              title: module.metadata.title,
-            },
-          });
+        if (!module.metadata().runnable) {
+          continue;
         }
+
+        const id = `#module:${moduleId}`;
+        kitList.push({
+          id,
+          metadata: {
+            mainGraph: {
+              id: this.mainGraphId!,
+            },
+            updating: false,
+            title: module.metadata().title,
+            icon: module.metadata().icon,
+            description: module.metadata().description,
+          },
+        });
       }
     }
 
