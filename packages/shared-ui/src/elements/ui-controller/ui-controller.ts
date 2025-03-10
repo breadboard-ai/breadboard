@@ -71,7 +71,6 @@ import { cache, CacheDirective } from "lit/directives/cache.js";
 import { DirectiveResult } from "lit/directive.js";
 import { ChatController } from "../../state/chat-controller.js";
 import { Organizer } from "../../state/types.js";
-import { map } from "lit/directives/map.js";
 
 const POPOUT_STATE = "bb-ui-popout-state";
 
@@ -435,10 +434,10 @@ export class UI extends LitElement {
           .items.get("Show subgraphs inline")?.value
       : false;
 
-    const showBoardHierarchy = this.settings
+    const showCustomStepEditing = this.settings
       ? this.settings
           .getSection(SETTINGS_TYPE.GENERAL)
-          .items.get("Show board hierarchy")?.value
+          .items.get("Enable Custom Step Creation")?.value
       : false;
 
     const graph = this.editor?.inspect("") || null;
@@ -504,7 +503,7 @@ export class UI extends LitElement {
         highlightInvalidWires,
         showExperimentalComponents,
         showSubgraphsInline,
-        showBoardHierarchy,
+        showCustomStepEditing,
       ],
       () => {
         // This needs to be kept in sync with the width of #create-view-popout.
@@ -578,41 +577,6 @@ export class UI extends LitElement {
           this.sideNavItem = "console";
         }}
       ></bb-module-editor>`;
-    }
-
-    let chosenSideNavItem = this.sideNavItem;
-    // Ensure components & capabilities only apply when the view is of the
-    // correct type.
-    const selectedModuleCount =
-      this.selectionState?.selectionState.modules.size ?? 0;
-    if (this.sideNavItem === "components" && selectedModuleCount > 0) {
-      chosenSideNavItem = null;
-    }
-
-    if (this.sideNavItem === "capabilities" && selectedModuleCount === 0) {
-      chosenSideNavItem = null;
-    }
-
-    const sectionNavItems = [];
-    if (showBoardHierarchy) {
-      sectionNavItems.unshift({
-        item: "console",
-        label: "LABEL_SECTION_NAV_CONSOLE",
-      });
-    }
-
-    if (modules.length > 0) {
-      sectionNavItems.unshift({
-        item: "capabilities",
-        label: "LABEL_SECTION_NAV_CAPABILITIES",
-      });
-    }
-
-    if (showBoardHierarchy) {
-      sectionNavItems.push({
-        item: "workspace-overview",
-        label: "LABEL_SECTION_NAV_PROJECT",
-      });
     }
 
     const contentContainer = html`<div id="graph-container" slot="slot-1">
@@ -743,7 +707,6 @@ export class UI extends LitElement {
               id="create-view-popout"
               class=${classMap({
                 expanded: this.popoutExpanded,
-                wide: showBoardHierarchy === true,
               })}
             >
               <div id="create-view-popout-nav">
@@ -771,27 +734,6 @@ export class UI extends LitElement {
                       : GlobalStrings.from("LABEL_RUN")}
                   </button>
 
-                  ${map(sectionNavItems, ({ item, label }) => {
-                    const newEventCount =
-                      events.length - this.#lastEventPosition;
-                    return html`<button
-                      id="toggle-${item}"
-                      ?disabled=${chosenSideNavItem === item &&
-                      this.popoutExpanded}
-                      data-count=${item === "console" &&
-                      (chosenSideNavItem !== "console" ||
-                        !this.popoutExpanded) &&
-                      newEventCount > 0
-                        ? newEventCount
-                        : nothing}
-                      class=${classMap({ active: chosenSideNavItem === item })}
-                      @click=${() => {
-                        this.#handleSideNav(item);
-                      }}
-                    >
-                      ${Strings.from(label)}
-                    </button>`;
-                  })}
                   <span class="label">${Strings.from("LABEL_TEST")}</span>
                 </div>
 

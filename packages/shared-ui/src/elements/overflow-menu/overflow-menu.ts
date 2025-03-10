@@ -75,7 +75,7 @@ export class OverflowMenu extends LitElement {
         &:focus {
           background-color: oklch(
             from var(--text-color, var(--bb-neutral-900)) l c h /
-              calc(alpha - 0.8)
+              calc(alpha - 0.9)
           );
         }
       }
@@ -198,6 +198,14 @@ export class OverflowMenu extends LitElement {
 
       &.drawable {
         background-image: var(--bb-icon-add-drawable);
+      }
+
+      &.flow {
+        background-image: var(--bb-icon-flowchart);
+      }
+
+      &.step {
+        background-image: var(--bb-icon-step);
       }
 
       &.error {

@@ -81,6 +81,8 @@ import {
 import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
 import { sideBoardRuntime } from "@breadboard-ai/shared-ui/contexts/side-board-runtime.js";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
+import { OverflowAction } from "@breadboard-ai/shared-ui/types/types.js";
+import { MAIN_BOARD_ID } from "@breadboard-ai/shared-ui/constants/constants.js";
 
 const STORAGE_PREFIX = "bb-main";
 const VIEW_KEY = "bb-main-view";
@@ -126,6 +128,11 @@ type BoardOverlowMenuConfiguration = {
 };
 
 type UserOverflowMenuConfiguration = {
+  x: number;
+  y: number;
+};
+
+type BoardItemsOverflowMenuConfiguration = {
   x: number;
   y: number;
 };
@@ -207,6 +214,11 @@ export class Main extends LitElement {
   @state()
   accessor showCommentEditor = false;
   #commentValueData: BreadboardUI.Types.CommentConfiguration | null = null;
+
+  @state()
+  accessor showBoardItemsOverflowMenu = false;
+  #boardItemsOverflowMenuConfiguration: BoardItemsOverflowMenuConfiguration | null =
+    null;
 
   @state()
   accessor boardEditOverlayInfo: {
@@ -2132,6 +2144,43 @@ export class Main extends LitElement {
     };
   }
 
+  #createItemList(): OverflowAction[] {
+    const list: OverflowAction[] = Object.entries(
+      this.tab?.graph.modules ?? {}
+    ).map(([name, module]) => {
+      return {
+        name,
+        icon: "step",
+        title: module.metadata?.title ?? name,
+        secondaryAction: "delete",
+        disabled: this.#selectionState?.selectionState.modules.has(name),
+      };
+    });
+
+    const hasNoGraphsSelected =
+      this.#selectionState?.selectionState.graphs.size === 0;
+    const hasNoModulesSelected =
+      this.#selectionState?.selectionState.modules.size === 0;
+    const hasMainGraphSelected =
+      this.#selectionState?.selectionState.graphs.has(MAIN_BOARD_ID);
+
+    list.push({
+      name: "new-item",
+      icon: "add-circle",
+      title: Strings.from("COMMAND_NEW_ITEM"),
+      disabled: false,
+    });
+
+    list.unshift({
+      name: "flow",
+      icon: "flow",
+      title: "Flow",
+      disabled:
+        (hasNoGraphsSelected || hasMainGraphSelected) && hasNoModulesSelected,
+    });
+    return list;
+  }
+
   render() {
     const signInAdapter = new BreadboardUI.Utils.SigninAdapter(
       this.tokenVendor,
@@ -2169,7 +2218,8 @@ export class Main extends LitElement {
       this.showModulePalette ||
       this.showNewWorkspaceItemOverlay ||
       this.showBoardOverflowMenu ||
-      this.showUserOverflowMenu;
+      this.showUserOverflowMenu ||
+      this.showBoardItemsOverflowMenu;
 
     const uiController = this.#initialize
       .then(() => {
@@ -2201,6 +2251,12 @@ export class Main extends LitElement {
           this.#settings?.getItem(
             BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
             "Show experimental step editor"
+          )?.value ?? false;
+
+        const showCustomStepEditing =
+          this.#settings?.getItem(
+            BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
+            "Enable Custom Step Creation"
           )?.value ?? false;
 
         let tabStatus = BreadboardUI.Types.STATUS.STOPPED;
@@ -2856,7 +2912,7 @@ export class Main extends LitElement {
           boardOverflowMenu = html`<bb-overflow-menu
             id="board-overflow"
             style=${styleMap({
-              left: `${this.#boardOverflowMenuConfiguration.x}px`,
+              right: `${this.#boardOverflowMenuConfiguration.x}px`,
               top: `${this.#boardOverflowMenuConfiguration.y}px`,
             })}
             .actions=${actions}
@@ -3106,6 +3162,98 @@ export class Main extends LitElement {
           }
         }
 
+        let boardItemsOverflowMenu: HTMLTemplateResult | symbol = nothing;
+        if (
+          this.showBoardItemsOverflowMenu &&
+          this.#boardItemsOverflowMenuConfiguration
+        ) {
+          const itemList: OverflowAction[] = this.#createItemList();
+          boardItemsOverflowMenu = html`<bb-overflow-menu
+            id="board-items-overflow"
+            style=${styleMap({
+              right: `${this.#boardItemsOverflowMenuConfiguration.x}px`,
+              top: `${this.#boardItemsOverflowMenuConfiguration.y}px`,
+            })}
+            .disabled=${false}
+            .actions=${itemList}
+            @bboverflowmenuaction=${(
+              evt: BreadboardUI.Events.OverflowMenuActionEvent
+            ) => {
+              evt.stopImmediatePropagation();
+
+              if (evt.action === "new-item") {
+                this.showNewWorkspaceItemOverlay = true;
+                return;
+              }
+
+              const selections = BreadboardUI.Utils.Workspace.createSelection(
+                this.#selectionState?.selectionState ?? null,
+                null,
+                null,
+                evt.action === "flow" ? null : evt.action,
+                null,
+                true
+              );
+              if (!this.tab) {
+                return;
+              }
+              const selectionChangeId = this.#runtime.select.generateId();
+              this.#runtime.select.processSelections(
+                this.tab.id,
+                selectionChangeId,
+                selections,
+                true,
+                false
+              );
+
+              this.showBoardItemsOverflowMenu = false;
+            }}
+            @bboverflowmenusecondaryaction=${(
+              evt: BreadboardUI.Events.OverflowMenuSecondaryActionEvent
+            ) => {
+              evt.stopImmediatePropagation();
+              if (!this.tab) {
+                return;
+              }
+
+              if (typeof evt.value !== "string") {
+                return;
+              }
+
+              this.#runtime.edit.deleteModule(this.tab, evt.value);
+              this.showBoardItemsOverflowMenu = false;
+            }}
+            @bboverflowmenudismissed=${() => {
+              this.showBoardItemsOverflowMenu = false;
+            }}
+          ></bb-overflow-menu>`;
+        }
+
+        let selectedItem = "Flow";
+        let selectedItemClass = "flow";
+        if (this.#selectionState) {
+          if (this.#selectionState.selectionState.graphs.size > 0) {
+            selectedItem = [
+              ...this.#selectionState.selectionState.graphs.keys(),
+            ][0];
+          } else if (this.#selectionState.selectionState.modules.size > 0) {
+            const module = [
+              ...this.#selectionState.selectionState.modules.keys(),
+            ][0];
+            selectedItem =
+              this.tab?.graph.modules?.[module].metadata?.title ?? module;
+          }
+
+          if (!selectedItem || selectedItem === MAIN_BOARD_ID) {
+            selectedItem = "Flow";
+            selectedItemClass = "flow";
+          }
+
+          if (this.#selectionState.selectionState.modules.size > 0) {
+            selectedItemClass = "step";
+          }
+        }
+
         const ui = html`<header>
           <div id="header-bar" data-active=${this.tab ? "true" : nothing} ?inert=${showingOverlay}>
             <div id="tab-info">
@@ -3180,45 +3328,65 @@ export class Main extends LitElement {
             <div id="tab-controls">
               ${
                 this.tab
-                  ? html`<button
-                      id="toggle-overflow-menu"
-                      @pointerover=${(evt: PointerEvent) => {
-                        this.dispatchEvent(
-                          new BreadboardUI.Events.ShowTooltipEvent(
-                            Strings.from("COMMAND_ADDITIONAL_ITEMS"),
-                            evt.clientX,
-                            evt.clientY
-                          )
-                        );
-                      }}
-                      @pointerout=${() => {
-                        this.dispatchEvent(
-                          new BreadboardUI.Events.HideTooltipEvent()
-                        );
-                      }}
-                      @click=${(evt: PointerEvent) => {
-                        if (!(evt.target instanceof HTMLButtonElement)) {
-                          return;
-                        }
+                  ? html` ${showCustomStepEditing
+                        ? html`<button
+                            id="toggle-board-item"
+                            class=${classMap({ [selectedItemClass]: true })}
+                            @click=${(evt: PointerEvent) => {
+                              if (!(evt.target instanceof HTMLButtonElement)) {
+                                return;
+                              }
 
-                        if (!this.tab) {
-                          return;
-                        }
+                              const bounds = evt.target.getBoundingClientRect();
+                              this.#boardItemsOverflowMenuConfiguration = {
+                                x: window.innerWidth - bounds.right,
+                                y: bounds.bottom + 8,
+                              };
+                              this.showBoardItemsOverflowMenu = true;
+                            }}
+                          >
+                            ${selectedItem}
+                          </button>`
+                        : nothing}
+                      <button
+                        id="toggle-overflow-menu"
+                        @pointerover=${(evt: PointerEvent) => {
+                          this.dispatchEvent(
+                            new BreadboardUI.Events.ShowTooltipEvent(
+                              Strings.from("COMMAND_ADDITIONAL_ITEMS"),
+                              evt.clientX,
+                              evt.clientY
+                            )
+                          );
+                        }}
+                        @pointerout=${() => {
+                          this.dispatchEvent(
+                            new BreadboardUI.Events.HideTooltipEvent()
+                          );
+                        }}
+                        @click=${(evt: PointerEvent) => {
+                          if (!(evt.target instanceof HTMLButtonElement)) {
+                            return;
+                          }
 
-                        const btnBounds = evt.target.getBoundingClientRect();
-                        const x = btnBounds.x + btnBounds.width - 205;
-                        const y = btnBounds.y + btnBounds.height;
+                          if (!this.tab) {
+                            return;
+                          }
 
-                        this.#boardOverflowMenuConfiguration = {
-                          tabId: this.tab.id,
-                          x,
-                          y,
-                        };
-                        this.showBoardOverflowMenu = true;
-                      }}
-                    >
-                      Overflow
-                    </button>`
+                          const bounds = evt.target.getBoundingClientRect();
+                          const x = window.innerWidth - bounds.right;
+                          const y = bounds.bottom + 8;
+
+                          this.#boardOverflowMenuConfiguration = {
+                            tabId: this.tab.id,
+                            x,
+                            y,
+                          };
+                          this.showBoardOverflowMenu = true;
+                        }}
+                      >
+                        Overflow
+                      </button>`
                   : nothing
               }
               <button
@@ -4069,6 +4237,7 @@ export class Main extends LitElement {
           modulePalette,
           boardOverflowMenu,
           userOverflowMenu,
+          boardItemsOverflowMenu,
         ];
       });
 
