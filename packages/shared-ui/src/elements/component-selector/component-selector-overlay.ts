@@ -436,6 +436,10 @@ export class ComponentSelectorOverlay extends LitElement {
     for (const [moduleId, module] of Object.entries(
       graphStore.get(mainGraphId)?.modules.modules() || {}
     )) {
+      if (!module.metadata().runnable) {
+        continue;
+      }
+
       kitList.push({
         id: `#module:${moduleId}`,
         metadata: {
