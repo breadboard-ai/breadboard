@@ -28,6 +28,7 @@ import {
 export { Autoname };
 
 const AUTONAMING_LABEL = "@@autonaming@@";
+const DEBOUNCE_DELAY_MS = 3_000;
 
 /**
  * The results from Autonaming sideboard.
@@ -65,6 +66,7 @@ type PendingGraphNodes = {
 class Autoname {
   #pending: Map<GraphIdentifier, PendingGraphNodes> = new Map();
   #running = false;
+  #debounceTimerId: ReturnType<typeof setTimeout> | null = null;
 
   constructor(public readonly runtime: SideBoardRuntime) {}
 
@@ -197,30 +199,36 @@ class Autoname {
 
     this.#addNewAffectedNodes(graph, affectedNodes);
 
-    if (this.#running) return;
-
-    console.log("PENDING SIZE", this.#pending.size);
-
-    // TODO: Debounce.
-    // TODO: Non-blocking autonaming
-    // TODO: Figure out how to not to impact runs for non
-    // TODO: Use a transform -- because titles of nodes may be in chiclets
-
-    try {
-      this.#running = true;
-      for (;;) {
-        const entry = this.#pending.entries().next().value;
-        if (!entry) return;
-        const runningTask = await this.runTask(editor, entry);
-        if (!ok(runningTask)) {
-          // Report error, but keep going.
-          console.error(`Autonaming task failed: ${runningTask.$error}`);
-        }
-        this.#pending.delete(entry[0]);
-      }
-    } finally {
-      this.#running = false;
+    if (this.#debounceTimerId !== null) {
+      clearTimeout(this.#debounceTimerId);
     }
+
+    this.#debounceTimerId = setTimeout(async () => {
+      if (this.#running) return;
+
+      console.log("PENDING SIZE", this.#pending.size);
+
+      // TODO: Non-blocking autonaming
+      // TODO: Figure out how to not to impact runs with edits
+      // TODO: Use a transform -- because titles of nodes may be in chiclets.
+
+      try {
+        this.#running = true;
+        for (;;) {
+          const entry = this.#pending.entries().next().value;
+          if (!entry) return;
+          const runningTask = await this.runTask(editor, entry);
+          if (!ok(runningTask)) {
+            // Report error, but keep going.
+            console.error(`Autonaming task failed: ${runningTask.$error}`);
+          }
+          this.#pending.delete(entry[0]);
+        }
+      } finally {
+        this.#running = false;
+        this.#debounceTimerId = null;
+      }
+    }, DEBOUNCE_DELAY_MS);
   }
 }
 
