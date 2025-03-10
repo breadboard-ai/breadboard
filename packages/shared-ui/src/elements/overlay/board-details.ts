@@ -44,6 +44,9 @@ export class BoardDetailsOverlay extends LitElement {
   accessor boardPrivate: boolean | null = null;
 
   @property()
+  accessor boardExported: boolean | null = null;
+
+  @property()
   accessor subGraphId: string | null = null;
 
   @property()
@@ -116,7 +119,7 @@ export class BoardDetailsOverlay extends LitElement {
       min-width: 410px;
       width: max(350px, 450px);
       min-height: 250px;
-      height: 346px;
+      height: 360px;
       display: flex;
       flex-direction: column;
       resize: both;
@@ -258,7 +261,8 @@ export class BoardDetailsOverlay extends LitElement {
     }
 
     .additional-items label[for="is-tool"],
-    .additional-items label[for="is-component"] {
+    .additional-items label[for="is-component"],
+    .additional-items label[for="is-exported"] {
       font: 400 var(--bb-body-x-small) / var(--bb-body-line-height-x-small)
         var(--bb-font-family);
       color: var(--bb-neutral-600);
@@ -452,7 +456,8 @@ export class BoardDetailsOverlay extends LitElement {
         data.get("tool") === "on",
         data.get("component") === "on",
         this.subGraphId,
-        this.moduleId
+        this.moduleId,
+        data.get("exported") === "on"
       )
     );
   }
@@ -525,7 +530,7 @@ export class BoardDetailsOverlay extends LitElement {
             this.#toggleMaximize();
           }}
         >
-          <span>Edit Board Information</span>
+          <span>Edit Details</span>
           <button
             id="minmax"
             title=${this.maximized ? "Minimize overlay" : "Maximize overlay"}
@@ -650,6 +655,21 @@ export class BoardDetailsOverlay extends LitElement {
                       />
                       <label for="is-tool"
                         >Show this as a tool for Specialists?</label
+                      >
+                    </div>`
+                : nothing}
+              ${this.subGraphId || this.moduleId
+                ? html`<label for="is-exported">Exported</label>
+                    <div class="additional-items">
+                      <input
+                        id="is-exported"
+                        name="exported"
+                        type="checkbox"
+                        .value="on"
+                        .checked=${this.boardExported}
+                      />
+                      <label for="is-exported"
+                        >Export this for use in other flows</label
                       >
                     </div>`
                 : nothing}

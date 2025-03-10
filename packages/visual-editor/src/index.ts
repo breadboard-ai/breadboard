@@ -228,6 +228,7 @@ export class Main extends LitElement {
     description: string;
     published: boolean | null;
     private: boolean;
+    exported: boolean;
     isTool: boolean | null;
     isComponent: boolean | null;
     subGraphId: string | null;
@@ -2030,7 +2031,7 @@ export class Main extends LitElement {
     this.#runtime.edit.createModule(this.tab, moduleId, newModule);
   }
 
-  #attemptToggleExport(
+  async #attemptToggleExport(
     id: ModuleIdentifier | GraphIdentifier,
     type: "imperative" | "declarative"
   ) {
@@ -2038,7 +2039,7 @@ export class Main extends LitElement {
       return;
     }
 
-    this.#runtime.edit.toggleExport(this.tab, id, type);
+    return this.#runtime.edit.toggleExport(this.tab, id, type);
   }
 
   #showBoardEditOverlay(
@@ -2051,6 +2052,7 @@ export class Main extends LitElement {
     if (!tab) {
       return;
     }
+    const exports = tab.graph.exports;
 
     if (moduleId) {
       const module = tab.graph.modules?.[moduleId];
@@ -2071,6 +2073,7 @@ export class Main extends LitElement {
         moduleId,
         title: metadata?.title ?? "",
         version: "",
+        exported: exports?.includes(`#module:${moduleId}`) ?? false,
         x,
         y,
       };
@@ -2096,6 +2099,9 @@ export class Main extends LitElement {
       moduleId,
       title: title ?? "",
       version: version ?? "",
+      exported: subGraphId
+        ? (exports?.includes(`#${subGraphId}`) ?? false)
+        : false,
       x,
       y,
     };
@@ -2284,6 +2290,7 @@ export class Main extends LitElement {
             .boardPrivate=${this.boardEditOverlayInfo.private}
             .boardIsTool=${this.boardEditOverlayInfo.isTool}
             .boardIsComponent=${this.boardEditOverlayInfo.isComponent}
+            .boardExported=${this.boardEditOverlayInfo.exported}
             .subGraphId=${this.boardEditOverlayInfo.subGraphId}
             .moduleId=${this.boardEditOverlayInfo.moduleId}
             .location=${location}
@@ -2294,6 +2301,17 @@ export class Main extends LitElement {
               evt: BreadboardUI.Events.BoardInfoUpdateEvent
             ) => {
               await this.#handleBoardInfoUpdate(evt);
+              if (evt.exported !== null) {
+                if (evt.subGraphId) {
+                  await this.#attemptToggleExport(
+                    evt.subGraphId,
+                    "declarative"
+                  );
+                } else if (evt.moduleId) {
+                  await this.#attemptToggleExport(evt.moduleId, "imperative");
+                }
+              }
+
               this.boardEditOverlayInfo = null;
               this.requestUpdate();
             }}
@@ -3100,11 +3118,7 @@ export class Main extends LitElement {
         let selectedItem = "Flow";
         let selectedItemClass = "flow";
         if (this.#selectionState) {
-          if (this.#selectionState.selectionState.graphs.size > 0) {
-            selectedItem = [
-              ...this.#selectionState.selectionState.graphs.keys(),
-            ][0];
-          } else if (this.#selectionState.selectionState.modules.size > 0) {
+          if (this.#selectionState.selectionState.modules.size > 0) {
             const module = [
               ...this.#selectionState.selectionState.modules.keys(),
             ][0];
@@ -3596,6 +3610,16 @@ export class Main extends LitElement {
                 evt: BreadboardUI.Events.BoardInfoUpdateEvent
               ) => {
                 await this.#handleBoardInfoUpdate(evt);
+                if (evt.exported !== null) {
+                  if (evt.subGraphId) {
+                    await this.#attemptToggleExport(
+                      evt.subGraphId,
+                      "declarative"
+                    );
+                  } else if (evt.moduleId) {
+                    await this.#attemptToggleExport(evt.moduleId, "imperative");
+                  }
+                }
                 this.requestUpdate();
               }}
               @bbgraphboardserverblankboard=${() => {
@@ -3673,10 +3697,10 @@ export class Main extends LitElement {
                   evt.metadata
                 );
               }}
-              @bbtoggleexport=${(
+              @bbtoggleexport=${async (
                 evt: BreadboardUI.Events.ToggleExportEvent
               ) => {
-                this.#attemptToggleExport(evt.exportId, evt.exportType);
+                await this.#attemptToggleExport(evt.exportId, evt.exportType);
               }}
               @bbthemeapply=${async (
                 evt: BreadboardUI.Events.ThemeApplyEvent

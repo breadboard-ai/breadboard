@@ -800,7 +800,7 @@ export class Edit extends EventTarget {
     );
   }
 
-  toggleExport(
+  async toggleExport(
     tab: Tab,
     id: ModuleIdentifier | GraphIdentifier,
     exportType: "imperative" | "declarative"
@@ -811,7 +811,7 @@ export class Edit extends EventTarget {
       return null;
     }
 
-    editableGraph.edit(
+    return editableGraph.edit(
       [{ type: "toggleexport", exportType, id }],
       `Toggle export for ${exportType} graph "${id}"`
     );

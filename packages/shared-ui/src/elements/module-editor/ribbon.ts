@@ -9,6 +9,7 @@ import {
   FormatModuleCodeEvent,
   HideTooltipEvent,
   ModuleChangeLanguageEvent,
+  OverflowMenuActionEvent,
   ShowTooltipEvent,
 } from "../../events/events";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
@@ -135,6 +136,11 @@ export class ModuleRibbonMenu extends LitElement {
       flex: 1 1 auto;
       overflow-x: hidden;
       min-width: 140px;
+
+      & > div {
+        display: flex;
+        align-items: center;
+      }
     }
 
     #right {
@@ -142,6 +148,11 @@ export class ModuleRibbonMenu extends LitElement {
       height: 100%;
       align-items: center;
       flex: 0 0 auto;
+
+      & > div {
+        display: flex;
+        align-items: center;
+      }
     }
 
     #left > *,
@@ -481,6 +492,26 @@ export class ModuleRibbonMenu extends LitElement {
       background: var(--bb-ui-50) var(--bb-icon-vital-signs) 6px center / 20px
         20px no-repeat;
     }
+
+    #edit-details {
+      font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+        var(--bb-font-family);
+      border-radius: var(--bb-grid-size-16);
+      height: var(--bb-grid-size-7);
+      padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-7);
+      background: var(--bb-neutral-50) var(--bb-icon-edit) 6px center / 20px
+        20px no-repeat;
+      border: none;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
+
+      &:hover,
+      &:focus {
+        background-color: var(--bb-neutral-100);
+      }
+    }
   `;
 
   #runnableModuleInputRef: Ref<HTMLInputElement> = createRef();
@@ -638,7 +669,25 @@ export class ModuleRibbonMenu extends LitElement {
     const right = [errors, moduleControls];
 
     return [
-      html`<div id="left"></div>`,
+      html`<div id="left">
+        <div>
+          <button
+            id="edit-details"
+            @click=${(evt: PointerEvent) => {
+              this.dispatchEvent(
+                new OverflowMenuActionEvent(
+                  "edit-module-details",
+                  this.moduleId,
+                  evt.clientX,
+                  evt.clientY
+                )
+              );
+            }}
+          >
+            Edit details
+          </button>
+        </div>
+      </div>`,
       html`<div id="right">${right}</div>`,
       errorMenu,
     ];
