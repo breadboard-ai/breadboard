@@ -208,6 +208,10 @@ export class OverflowMenu extends LitElement {
         background-image: var(--bb-icon-step);
       }
 
+      &.code {
+        background-image: var(--bb-icon-code);
+      }
+
       &.error {
         background-image: var(--bb-icon-error);
         color: var(--bb-warning-600);

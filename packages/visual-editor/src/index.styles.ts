@@ -103,6 +103,10 @@ export const styles = css`
     &.step {
       background: var(--bb-icon-step) 8px center / 20px 20px no-repeat;
     }
+
+    &.code {
+      background: var(--bb-icon-code) 8px center / 20px 20px no-repeat;
+    }
   }
 
   #undo:not([disabled]):hover,

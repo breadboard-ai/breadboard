@@ -163,7 +163,7 @@ export class NewWorkspaceItemOverlay extends LitElement {
     }
 
     #type-container label[for="imperative"] {
-      background: var(--bb-icon-step) center calc(50% - 12px) / 48px 48px
+      background: var(--bb-icon-code) center calc(50% - 12px) / 48px 48px
         no-repeat;
     }
 
@@ -275,7 +275,7 @@ export class NewWorkspaceItemOverlay extends LitElement {
               name="item-type"
               value="imperative"
             />
-            <label for="imperative">Step</label>
+            <label for="imperative">Code</label>
           </div>
 
           <input
