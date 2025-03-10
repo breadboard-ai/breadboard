@@ -187,14 +187,6 @@ export class SettingsStore implements BreadboardUI_Types.SettingsStore {
           },
         ],
         [
-          "Show experimental step editor",
-          {
-            name: "Show experimental step editor",
-            description: "Toggles showing a more streamlined step editor",
-            value: false,
-          },
-        ],
-        [
           "Enable autonaming",
           {
             name: "Enable autonaming",
