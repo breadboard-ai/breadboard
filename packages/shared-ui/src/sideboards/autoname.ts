@@ -66,7 +66,16 @@ class Autoname {
   #pending: Map<GraphIdentifier, PendingGraphNodes> = new Map();
   #running = false;
 
-  constructor(public readonly runtime: SideBoardRuntime) {}
+  /**
+   *
+   * @param runtime
+   * @param allGraphs - if true, all graphs will be autonamed. Otherwise, only
+   * subgraphs will be autonamed.
+   */
+  constructor(
+    public readonly runtime: SideBoardRuntime,
+    public readonly allGraphs: boolean
+  ) {}
 
   #addNewAffectedNodes(graph: GraphDescriptor, nodes: AffectedNode[]) {
     for (const node of nodes) {
@@ -214,6 +223,10 @@ class Autoname {
         // if new affectedNodes come in for this graphId, they would
         // be added as a new entry.
         this.#pending.delete(entry[0]);
+        const graphId = entry[0];
+        // Don't autoname main graph when asked.
+        if (!this.allGraphs && !graphId) continue;
+
         const runningTask = await this.runTask(editor, entry);
         if (!ok(runningTask)) {
           // Report error, but keep going.
