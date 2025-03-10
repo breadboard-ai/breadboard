@@ -8,9 +8,10 @@ import { css } from "lit";
 
 export const floatingPanelStyles = css`
   .bb-floating-panel {
-    background: #fff;
-    box-shadow: 0px 1px 2px 1px rgb(0 0 0 / 22%);
-    border-radius: 8px;
-    padding: 12px;
+    --background-size: 16px;
+    background: var(--bb-neutral-0);
+    box-shadow: var(--bb-elevation-1);
+    border-radius: var(--bb-grid-size-2);
+    padding: var(--bb-grid-size-3);
   }
 `;

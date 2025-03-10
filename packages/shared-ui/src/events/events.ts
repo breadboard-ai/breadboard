@@ -1424,6 +1424,14 @@ export class UtteranceEvent extends Event {
 
 /** Assets */
 
+export class ShowAssetOrganizerEvent extends Event {
+  static eventName = "bbshowassetorganizer";
+
+  constructor() {
+    super(ShowAssetOrganizerEvent.eventName, { ...eventInit });
+  }
+}
+
 export class AddAssetRequestEvent extends Event {
   static eventName = "bbaddassetrequest";
 

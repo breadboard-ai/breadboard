@@ -188,6 +188,9 @@ export class UI extends LitElement {
   @state()
   accessor signedIn = false;
 
+  @state()
+  accessor showAssetOrganizer = false;
+
   #lastEventPosition = 0;
   #graphEditorRef: Ref<Editor> = createRef();
   #moduleEditorRef: Ref<ModuleEditor> = createRef();
@@ -542,6 +545,9 @@ export class UI extends LitElement {
             this.#setPopoutState(true);
             this.sideNavItem = "console";
           }}
+          @bbshowassetorganizer=${() => {
+            this.showAssetOrganizer = true;
+          }}
         ></bb-editor>`;
       }
     );
@@ -718,13 +724,21 @@ export class UI extends LitElement {
         this.topGraphResult.status === "paused"
       : false;
 
+    let assetOrganizer: HTMLTemplateResult | symbol = nothing;
+    if (this.showAssetOrganizer) {
+      assetOrganizer = html`<bb-asset-organizer
+        .state=${this.organizer}
+        .showGDrive=${this.signedIn}
+        @bboverlaydismissed=${() => {
+          this.showAssetOrganizer = false;
+        }}
+      ></bb-asset-organizer>`;
+    }
+
     return graph
       ? this.mainView === "create"
         ? html`<section id="create-view">
-            <bb-asset-organizer
-              .state=${this.organizer}
-              .showGDrive=${this.signedIn}
-            ></bb-asset-organizer>
+            ${assetOrganizer}
             <div
               id="create-view-popout"
               class=${classMap({
