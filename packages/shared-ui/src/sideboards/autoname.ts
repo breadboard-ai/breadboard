@@ -217,12 +217,15 @@ class Autoname {
         for (;;) {
           const entry = this.#pending.entries().next().value;
           if (!entry) return;
+          // Clear out the pending store for the graphId, so that
+          // if new affectedNodes come in for this graphId, they would
+          // be added as a new entry.
+          this.#pending.delete(entry[0]);
           const runningTask = await this.runTask(editor, entry);
           if (!ok(runningTask)) {
             // Report error, but keep going.
             console.error(`Autonaming task failed: ${runningTask.$error}`);
           }
-          this.#pending.delete(entry[0]);
         }
       } finally {
         this.#running = false;
