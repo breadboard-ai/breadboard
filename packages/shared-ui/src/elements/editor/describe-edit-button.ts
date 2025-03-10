@@ -44,11 +44,9 @@ export class DescribeEditButton extends LitElement {
     css`
       :host {
         position: relative;
-        margin: 16px;
       }
 
       #edit-button {
-        background-color: var(--bb-ui-500);
         --bb-icon: var(--bb-add-icon-generative-text-inverted);
       }
 
@@ -71,7 +69,7 @@ export class DescribeEditButton extends LitElement {
 
       #submit-button {
         width: 24px;
-        --bb-icon: var(--bb-add-icon-generative-text-inverted);
+        --bb-icon: var(--bb-add-icon-generative-inverted);
         box-shadow: none;
         background-color: var(--bb-ui-500);
         margin-left: 8px;

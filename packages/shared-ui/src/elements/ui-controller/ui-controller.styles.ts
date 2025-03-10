@@ -34,10 +34,7 @@ export const styles = css`
     }
 
     & bb-asset-organizer {
-      position: absolute;
-      bottom: var(--bb-grid-size-4);
-      left: var(--bb-grid-size-4);
-      z-index: 5;
+      z-index: 10;
     }
 
     & #create-view-popout {

@@ -32,6 +32,9 @@ export default {
   COMMAND_DESCRIBE_EDIT: {
     str: "Describe an edit",
   },
+  COMMAND_ASSET_ORGANIZER: {
+    str: "Show Assets",
+  },
 
   // Statuses.
 
