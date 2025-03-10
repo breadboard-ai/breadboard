@@ -101,7 +101,7 @@ class Autoname {
     if (!maybeGraph) {
       return err(`Unable to get graph with graphId "${graphId}"`);
     }
-    // Make a shallow copy
+    // Make a shallow copy.
     const graph = { ...maybeGraph };
     // Remove subgraphs (only matters for mainGraph), so that the autonaming
     // sideboard doesn't have to reason about them.
@@ -175,7 +175,7 @@ class Autoname {
 
     const editing = await editor.edit(edits, AUTONAMING_LABEL);
     if (!editing.success) {
-      // TODO: Handle the error properly
+      // TODO: Handle the error properly.
       console.error("FAILED", editing.error);
     }
   }
