@@ -34,6 +34,7 @@ import {
   assetsFromGraphDescriptor,
   blank,
   isInlineData,
+  isStoredData,
 } from "@google-labs/breadboard";
 import {
   createFileSystemBackend,
@@ -3687,20 +3688,31 @@ export class Main extends LitElement {
 
                 // TODO: Show some status.
                 if (evt.theme.splashScreen) {
+                  const data: LLMContent[] = [
+                    {
+                      role: "user",
+                      parts: [evt.theme.splashScreen],
+                    },
+                  ];
+
                   // Convert inline data to stored asset.
                   if (isInlineData(evt.theme.splashScreen)) {
-                    const data: LLMContent[] = [
-                      {
-                        role: "user",
-                        parts: [evt.theme.splashScreen],
-                      },
-                    ];
-
                     await projectState?.organizer.addGraphAsset({
                       path: "@@splash",
                       metadata: { title: "Splash", type: "file" },
                       data,
                     });
+                  } else if (isStoredData(evt.theme.splashScreen)) {
+                    if (
+                      evt.theme.splashScreen.storedData.handle !==
+                      projectState?.graphAssets.get("@@splash")?.path
+                    ) {
+                      await projectState?.organizer.addGraphAsset({
+                        path: "@@splash",
+                        metadata: { title: "Splash", type: "file" },
+                        data,
+                      });
+                    }
                   }
                 } else {
                   // Removing the asset.
