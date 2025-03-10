@@ -129,7 +129,8 @@ export class BoardInfoUpdateEvent extends Event {
     public readonly isTool: boolean | null = null,
     public readonly isComponent: boolean | null = null,
     public readonly subGraphId: string | null = null,
-    public readonly moduleId: string | null = null
+    public readonly moduleId: string | null = null,
+    public readonly exported: boolean | null = null
   ) {
     super(BoardInfoUpdateEvent.eventName, { ...eventInit });
   }
