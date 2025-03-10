@@ -591,7 +591,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
     #floating-buttons {
       position: absolute;
       display: flex;
-      top: var(--bb-grid-size-4);
+      top: var(--bb-grid-size-3);
       left: 0;
       width: 100%;
       height: var(--bb-grid-size-9);

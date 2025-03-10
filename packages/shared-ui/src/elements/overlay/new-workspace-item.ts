@@ -158,12 +158,12 @@ export class NewWorkspaceItemOverlay extends LitElement {
     }
 
     #type-container label[for="declarative"] {
-      background: var(--bb-icon-board) center calc(50% - 12px) / 48px 48px
+      background: var(--bb-icon-flowchart) center calc(50% - 12px) / 48px 48px
         no-repeat;
     }
 
     #type-container label[for="imperative"] {
-      background: var(--bb-icon-code) center calc(50% - 12px) / 48px 48px
+      background: var(--bb-icon-step) center calc(50% - 12px) / 48px 48px
         no-repeat;
     }
 
@@ -267,7 +267,7 @@ export class NewWorkspaceItemOverlay extends LitElement {
               value="declarative"
               checked
             />
-            <label for="declarative">Visual Board</label>
+            <label for="declarative">Flow</label>
 
             <input
               id="imperative"
@@ -275,7 +275,7 @@ export class NewWorkspaceItemOverlay extends LitElement {
               name="item-type"
               value="imperative"
             />
-            <label for="imperative">Code Board</label>
+            <label for="imperative">Step</label>
           </div>
 
           <input

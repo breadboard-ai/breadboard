@@ -3,19 +3,13 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import * as StringsHelper from "../../strings/helper.js";
-const GlobalStrings = StringsHelper.forSection("Global");
-
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
   FormatModuleCodeEvent,
   HideTooltipEvent,
   ModuleChangeLanguageEvent,
-  RunEvent,
   ShowTooltipEvent,
-  StopEvent,
-  ToggleModulePreviewEvent,
 } from "../../events/events";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { InspectableGraph, InspectableModules } from "@google-labs/breadboard";
@@ -283,7 +277,8 @@ export class ModuleRibbonMenu extends LitElement {
       width: auto;
       padding: 0 20px 0 28px;
       background: var(--bb-neutral-0);
-      background-image: var(--bb-icon-extension), var(--bb-icon-arrow-drop-down);
+      background-image:
+        var(--bb-icon-extension), var(--bb-icon-arrow-drop-down);
       background-position:
         -2px center,
         right center;
@@ -299,8 +294,8 @@ export class ModuleRibbonMenu extends LitElement {
     }
 
     #shortcut-board-modules.ts {
-      background-image: var(--bb-icon-extension-ts),
-        var(--bb-icon-arrow-drop-down);
+      background-image:
+        var(--bb-icon-extension-ts), var(--bb-icon-arrow-drop-down);
     }
 
     #shortcut-overflow.visible {
@@ -338,8 +333,8 @@ export class ModuleRibbonMenu extends LitElement {
     #shortcut-copy {
       width: var(--bb-grid-size-9);
       background: var(--bb-neutral-0);
-      background-image: var(--bb-icon-copy-to-clipboard),
-        var(--bb-icon-arrow-drop-down);
+      background-image:
+        var(--bb-icon-copy-to-clipboard), var(--bb-icon-arrow-drop-down);
       background-position:
         0 center,
         16px center;
@@ -505,25 +500,6 @@ export class ModuleRibbonMenu extends LitElement {
 
     const moduleIsRunnable = !!(module && module.metadata().runnable);
     const moduleControls = html`<div id="module-controls">
-      <div id="start">
-        <button
-          id="run"
-          title=${GlobalStrings.from("LABEL_RUN_PROJECT")}
-          class=${classMap({ running: this.isRunning })}
-          ?disabled=${this.readOnly}
-          @click=${() => {
-            if (this.isRunning) {
-              this.dispatchEvent(new StopEvent());
-            } else {
-              this.dispatchEvent(new RunEvent());
-            }
-          }}
-        >
-          ${this.isRunning
-            ? GlobalStrings.from("LABEL_STOP")
-            : GlobalStrings.from("LABEL_RUN")}
-        </button>
-      </div>
       <div id="language-selector-container">
         <label for="language-selector">Language</label>
         <select
@@ -572,27 +548,6 @@ export class ModuleRibbonMenu extends LitElement {
       >
         Format Module Code
       </button>
-      <button
-        id="toggle-preview"
-        ?disabled=${!this.canShowModulePreview || isMainModule}
-        @click=${() => {
-          this.dispatchEvent(new ToggleModulePreviewEvent());
-        }}
-        @pointerover=${(evt: PointerEvent) => {
-          this.dispatchEvent(
-            new ShowTooltipEvent(
-              `Toggle Module Preview ${moduleIsRunnable ? "" : "(disabled)"}`,
-              evt.clientX,
-              evt.clientY
-            )
-          );
-        }}
-        @pointerout=${() => {
-          this.dispatchEvent(new HideTooltipEvent());
-        }}
-      >
-        Toggle Module Preview
-      </button>
 
       <div id="runnable">
         <input
@@ -609,7 +564,7 @@ export class ModuleRibbonMenu extends LitElement {
           @pointerover=${(evt: PointerEvent) => {
             this.dispatchEvent(
               new ShowTooltipEvent(
-                "Make available as a component",
+                "Make available as a Step",
                 evt.clientX,
                 evt.clientY
               )
@@ -618,7 +573,7 @@ export class ModuleRibbonMenu extends LitElement {
           @pointerout=${() => {
             this.dispatchEvent(new HideTooltipEvent());
           }}
-          >Component</label
+          >Show as Step</label
         >
       </div>
     </div>`;

@@ -179,14 +179,6 @@ export class SettingsStore implements BreadboardUI_Types.SettingsStore {
           },
         ],
         [
-          "Show board hierarchy",
-          {
-            name: "Show board hierarchy",
-            description: "Shows a hierarchical overview of the current board",
-            value: false,
-          },
-        ],
-        [
           "Show additional sources",
           {
             name: "Show additional sources",
@@ -208,6 +200,14 @@ export class SettingsStore implements BreadboardUI_Types.SettingsStore {
             name: "Enable autonaming",
             description:
               "Toggles the WIP feature where the flows and steps are automatically named according to their purpose (reload for setting to take effect)",
+            value: false,
+          },
+        ],
+        [
+          "Enable Custom Step Creation",
+          {
+            name: "Enable Custom Step Creation",
+            description: "Enables the creation of custom steps",
             value: false,
           },
         ],
