@@ -576,7 +576,7 @@ export class LLMInput extends LitElement {
     :host([streamlined]) {
       #container {
         border: 1px solid var(--bb-neutral-300);
-        padding: var(--bb-grid-size-3);
+        padding: 0;
 
         &:focus-within {
           border: 1px solid var(--bb-ui-700);

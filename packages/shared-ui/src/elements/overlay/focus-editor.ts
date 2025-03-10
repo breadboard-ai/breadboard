@@ -128,7 +128,7 @@ export class FocusEditor extends LitElement {
           max-width: 1240px;
 
           & #content {
-            grid-template-columns: 3fr minmax(0, 2fr);
+            grid-template-columns: 3fr minmax(0, 3fr);
 
             & #text-editor {
               & header {
@@ -175,10 +175,10 @@ export class FocusEditor extends LitElement {
         border-radius: var(--bb-grid-size-2);
         border: 1px solid var(--outer-border);
         width: 85svw;
-        max-width: 840px;
-        min-height: 40svh;
-        height: min-content;
-        max-height: 85svh;
+        max-width: 800px;
+        height: 85svh;
+        min-height: 320px;
+        max-height: 620px;
         transform-origin: 0 0;
 
         & header {
@@ -301,20 +301,17 @@ export class FocusEditor extends LitElement {
           flex: 1 1 auto;
           opacity: 1;
           transition: opacity 0.15s 0.2s cubic-bezier(0, 0, 0.3, 1);
-          overflow: auto;
+          overflow: hidden;
 
           & #text-editor {
             display: flex;
             flex-direction: column;
             height: 100%;
-            overflow: auto;
-            scrollbar-width: none;
-            padding-bottom: var(--bb-grid-size-12);
+            overflow-x: hidden;
+            overflow-y: scroll;
 
             & #user-input {
               flex: 1;
-              overflow-x: hidden;
-              overflow-y: scroll;
               padding: var(--bb-grid-size-3);
             }
           }
@@ -378,7 +375,8 @@ export class FocusEditor extends LitElement {
 
             & #output-content {
               height: 100%;
-              overflow: scroll;
+              overflow-y: scroll;
+              overflow-x: hidden;
               padding: var(--bb-grid-size-9) var(--bb-grid-size-4);
 
               & .no-outputs {
