@@ -38,7 +38,8 @@
       "command": "vite build",
       "dependencies": [
         "copy-assets",
-        "../visual-editor#build"
+        "../shared-ui#build:tsc",
+        "../visual-editor#build:tsc"
       ],
       "output": [
         "dist/client"
