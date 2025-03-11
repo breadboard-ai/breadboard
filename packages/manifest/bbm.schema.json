@@ -344,6 +344,10 @@
 					"deprecated": "For internal testing only. Do not use.",
 					"description": "For internal testing only. Do not use."
 				},
+				"parameters": {
+					"$ref": "#/definitions/Record%3CParameterIdentifier%2CParameter%3E",
+					"description": "An optional collection of parameters. Parameters like assets, except they are specified at runtime. Parameters are like inputs, except they are all known without examining the topology of a graph."
+				},
 				"safe": {
 					"deprecated": "For internal testing only. Do not use.",
 					"description": "For internal testing only. Do not use.",
@@ -890,6 +894,61 @@
 			"$ref": "#/definitions/Record%3COutputIdentifier%2CNodeValue%3E",
 			"description": "Values that the `NodeHandler` outputs."
 		},
+		"Parameter": {
+			"additionalProperties": false,
+			"description": "Represents a Parameter.",
+			"properties": {
+				"default": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "number"
+						},
+						{
+							"type": "boolean"
+						},
+						{
+							"type": "null"
+						},
+						{
+							"items": {
+								"$ref": "#/definitions/NodeValue"
+							},
+							"type": "array"
+						},
+						{
+							"$ref": "#/definitions/Capability"
+						},
+						{
+							"additionalProperties": {
+								"$ref": "#/definitions/NodeValue"
+							},
+							"type": "object"
+						}
+					],
+					"description": "Must be LLMContent[], but is typed as NodeValue because for some reason, GraphDescriptor doesn't like LLMContent[] here."
+				},
+				"metadata": {
+					"$ref": "#/definitions/ParameterMetadata"
+				}
+			},
+			"type": "object"
+		},
+		"ParameterMetadata": {
+			"additionalProperties": false,
+			"description": "Parameter metadata/",
+			"properties": {
+				"description": {
+					"type": "string"
+				},
+				"title": {
+					"type": "string"
+				}
+			},
+			"type": "object"
+		},
 		"Record<AssetPath,Asset>": {
 			"additionalProperties": {
 				"$ref": "#/definitions/Asset"
@@ -938,6 +997,15 @@
 			},
 			"propertyNames": {
 				"description": "Unique identifier of a node's output."
+			},
+			"type": "object"
+		},
+		"Record<ParameterIdentifier,Parameter>": {
+			"additionalProperties": {
+				"$ref": "#/definitions/Parameter"
+			},
+			"propertyNames": {
+				"description": "An identifier to use for parameters."
 			},
 			"type": "object"
 		},

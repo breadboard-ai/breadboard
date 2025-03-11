@@ -553,6 +553,31 @@ export type Import = {
   url: string;
 };
 
+/**
+ * An identifier to use for parameters.
+ */
+export type ParameterIdentifier = string;
+
+/**
+ * Parameter metadata/
+ */
+export type ParameterMetadata = {
+  title?: string;
+  description?: string;
+};
+
+/**
+ * Represents a Parameter.
+ */
+export type Parameter = {
+  metadata?: ParameterMetadata;
+  /**
+   * Must be LLMContent[], but is typed as NodeValue because for some reason,
+   * GraphDescriptor doesn't like LLMContent[] here.
+   */
+  default?: NodeValue;
+};
+
 export type GraphCommonProperties = GraphInlineMetadata & {
   /**
    * Metadata associated with the graph.
@@ -602,6 +627,13 @@ export type GraphCommonProperties = GraphInlineMetadata & {
    * used to refer to the import.
    */
   imports?: Record<ImportIdentifier, Import>;
+
+  /**
+   * An optional collection of parameters. Parameters like assets, except they
+   * are specified at runtime. Parameters are like inputs, except they are
+   * all known without examining the topology of a graph.
+   */
+  parameters?: Record<ParameterIdentifier, Parameter>;
 };
 
 /**
