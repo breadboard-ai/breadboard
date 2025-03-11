@@ -6,47 +6,18 @@
 
 import type { Request, Response } from "express";
 
-import { ok } from "@google-labs/breadboard";
-
-import { authenticateAndGetUserStore } from "../auth.js";
-import { getStore } from "../store.js";
-import type { BoardServerStore } from "../types.js";
+import { getBody } from "../common.js";
+import type { BoardId, BoardServerStore } from "../types.js";
 
 async function updateInvite(req: Request, res: Response): Promise<void> {
-  let { fullPath } = res.locals.boardId;
-  let store: BoardServerStore | undefined = undefined;
+  const store: BoardServerStore = req.app.locals.store;
+  const boardId: BoardId = res.locals.boardId;
+  const userId: string = res.locals.userId;
 
-  const userStore = await authenticateAndGetUserStore(req, res, () => {
-    store = getStore();
-    return store;
-  });
-  if (!ok(userStore)) {
-    return;
-  }
-  if (!store) {
-    store = getStore();
-  }
-
-  const body = req.body;
-  if (body.delete) {
-    // delete invite
-    const del = body as { delete: string };
-    if (!del.delete) {
-      return;
-    }
-    const result = await store.deleteInvite(userStore, fullPath, del.delete);
-    let responseBody;
-    if (!result.success) {
-      // TODO: Be nice and return a proper error code
-      responseBody = { error: result.error };
-    } else {
-      responseBody = { deleted: del.delete };
-    }
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(responseBody));
-  } else {
+  const body = await getBody(req);
+  if (!body) {
     // create new invite
-    const result = await store.createInvite(userStore, fullPath);
+    const result = await store.createInvite(userId, boardId.fullPath);
     let responseBody;
     if (!result.success) {
       responseBody = { error: result.error };
@@ -56,6 +27,26 @@ async function updateInvite(req: Request, res: Response): Promise<void> {
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify(responseBody));
     return;
+  } else {
+    // delete invite
+    const del = body as { delete: string };
+    if (!del.delete) {
+      return;
+    }
+    const result = await store.deleteInvite(
+      userId,
+      boardId.fullPath,
+      del.delete
+    );
+    let responseBody;
+    if (!result.success) {
+      // TODO: Be nice and return a proper error code
+      responseBody = { error: result.error };
+    } else {
+      responseBody = { deleted: del.delete };
+    }
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(responseBody));
   }
 }
 

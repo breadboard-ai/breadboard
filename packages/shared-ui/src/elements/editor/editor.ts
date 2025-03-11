@@ -68,6 +68,7 @@ import {
   NodeDeleteEvent,
   NodeRunRequestEvent,
   NodeTypeRetrievalErrorEvent,
+  ShowAssetOrganizerEvent,
   ShowTooltipEvent,
   WorkspaceSelectionStateEvent,
   WorkspaceVisualUpdateEvent,
@@ -590,7 +591,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
     #floating-buttons {
       position: absolute;
       display: flex;
-      top: var(--bb-grid-size-4);
+      top: var(--bb-grid-size-3);
       left: 0;
       width: 100%;
       height: var(--bb-grid-size-9);
@@ -630,7 +631,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
         height: 100%;
         display: flex;
         align-items: center;
-        padding: 0 var(--bb-grid-size-2);
+        padding: 0 var(--bb-grid-size) 0 var(--bb-grid-size-2);
         box-shadow: var(--bb-elevation-1);
         background: var(--bb-neutral-0);
         margin: 0 var(--bb-grid-size-4);
@@ -661,6 +662,22 @@ export class Editor extends LitElement implements DragConnectorReceiver {
               no-repeat;
           }
 
+          &#show-asset-organizer {
+            background: var(--bb-icon-alternate-email) 8px center / 20px 20px
+              no-repeat;
+            font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
+              var(--bb-font-family);
+            padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-8);
+            width: auto;
+            border-left: 1px solid var(--bb-neutral-300);
+          }
+
+          &#zoom-to-fit {
+            border-left: 1px solid var(--bb-neutral-300);
+            width: var(--bb-grid-size-10);
+            background: var(--bb-icon-fit) center center / 20px 20px no-repeat;
+          }
+
           &.expandable {
             width: var(--bb-grid-size-12);
             background:
@@ -671,7 +688,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
             &#preset-all {
               border-right: 1px solid var(--bb-neutral-100);
               background:
-                var(--bb-icon-add-box) 8px center / 20px 20px no-repeat,
+                var(--bb-icon-library-add) 8px center / 20px 20px no-repeat,
                 var(--bb-icon-keyboard-arrow-down) 28px center / 12px 12px
                   no-repeat;
             }
@@ -697,30 +714,14 @@ export class Editor extends LitElement implements DragConnectorReceiver {
                 var(--bb-icon-keyboard-arrow-down) 28px center / 12px 12px
                   no-repeat;
             }
+
+            &#preset-modules {
+              background:
+                var(--bb-icon-step) 8px center / 20px 20px no-repeat,
+                var(--bb-icon-keyboard-arrow-down) 28px center / 12px 12px
+                  no-repeat;
+            }
           }
-        }
-      }
-
-      & #controls {
-        border-radius: var(--bb-grid-size-16);
-        height: 100%;
-        display: flex;
-        align-items: center;
-        padding: 0 var(--bb-grid-size-2);
-        border: 1px solid var(--bb-neutral-300);
-        background: var(--bb-neutral-0);
-
-        & #zoom-to-fit {
-          width: 20px;
-          height: 20px;
-          font-size: 0;
-          background: transparent var(--bb-icon-fit) center center / 20px 20px
-            no-repeat;
-          border: none;
-          padding: 0;
-          cursor: pointer;
-          transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
-          opacity: 0.6;
         }
       }
     }
@@ -737,7 +738,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       position: absolute;
       top: 57px;
       left: 50%;
-      transform: translateX(-50%) translateX(40px);
+      transform: translateX(-50%) translateX(-32px);
       z-index: 8;
       animation: slideIn 0.2s cubic-bezier(0, 0, 0.3, 1) forwards;
 
@@ -1593,6 +1594,33 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       );
     }
 
+    if (typeTag === "modules") {
+      const modules =
+        (this.mainGraphId
+          ? this.graphStore?.inspect(this.mainGraphId, "")?.modules()
+          : {}) || {};
+
+      for (const [moduleId, module] of Object.entries(modules)) {
+        if (!module.metadata().runnable) {
+          continue;
+        }
+
+        const id = `#module:${moduleId}`;
+        kitList.push({
+          id,
+          metadata: {
+            mainGraph: {
+              id: this.mainGraphId!,
+            },
+            updating: false,
+            title: module.metadata().title,
+            icon: module.metadata().icon,
+            description: module.metadata().description,
+          },
+        });
+      }
+    }
+
     return kitList;
 
     function isKnownGood(mainGraph: NodeHandlerMetadata) {
@@ -2006,8 +2034,55 @@ export class Editor extends LitElement implements DragConnectorReceiver {
               >
                 ${Strings.from("LABEL_SHOW_LIST")}
               </button>
-            </div>
-            <div id="controls">
+              ${Object.keys(this.graph.modules()).length > 0
+                ? html`<button
+                    id="preset-modules"
+                    class="expandable"
+                    ?disabled=${this.readOnly}
+                    @pointerover=${(evt: PointerEvent) => {
+                      this.dispatchEvent(
+                        new ShowTooltipEvent(
+                          Strings.from("COMMAND_LIBRARY_MODULES"),
+                          evt.clientX,
+                          evt.clientY
+                        )
+                      );
+                    }}
+                    @pointerout=${() => {
+                      this.dispatchEvent(new HideTooltipEvent());
+                    }}
+                    @click=${async (evt: PointerEvent) => {
+                      if (!(evt.target instanceof HTMLButtonElement)) {
+                        return;
+                      }
+
+                      await storeReady;
+                      this.#showComponentPicker(evt.target, "modules");
+                    }}
+                  >
+                    ${Strings.from("LABEL_SHOW_LIST")}
+                  </button>`
+                : nothing}
+              <button
+                id="show-asset-organizer"
+                @pointerover=${(evt: PointerEvent) => {
+                  this.dispatchEvent(
+                    new ShowTooltipEvent(
+                      Strings.from("COMMAND_ASSET_ORGANIZER"),
+                      evt.clientX,
+                      evt.clientY
+                    )
+                  );
+                }}
+                @pointerout=${() => {
+                  this.dispatchEvent(new HideTooltipEvent());
+                }}
+                @click=${() => {
+                  this.dispatchEvent(new ShowAssetOrganizerEvent());
+                }}
+              >
+                Assets
+              </button>
               <button
                 id="zoom-to-fit"
                 @pointerover=${(evt: PointerEvent) => {

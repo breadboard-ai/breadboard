@@ -1,21 +1,17 @@
 /**
  * @license
- * Copyright 2025 Google LLC
+ * Copyright 2023 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphDescriptor, LLMContent } from "@breadboard-ai/types";
+import { LLMContent } from "@breadboard-ai/types";
 import {
+  GraphDescriptor,
   Outcome,
   TypedEventTarget,
   TypedEventTargetType,
 } from "@google-labs/breadboard";
-import type { HarnessRunner } from "@google-labs/breadboard/harness";
-import { createContext } from "@lit/context";
-
-export const sideBoardRuntime = createContext<SideBoardRuntime | undefined>(
-  "bb-side-board-runtime"
-);
+import { HarnessRunner } from "@google-labs/breadboard/harness";
 
 /**
  * A way to run a board from anywhere in the UI at any time, without assuming
@@ -29,6 +25,7 @@ export type SideBoardRuntime =
       graphURLForProxy?: string
     ): Promise<HarnessRunner>;
     runTask(task: SideBoardRuntimeTaskSpec): Promise<Outcome<LLMContent[]>>;
+    discardTasks(): void;
   };
 
 export type SideBoardRuntimeEmptyEvent = Event;
@@ -43,6 +40,10 @@ export type SideBoardRuntimeEventTarget =
   TypedEventTarget<SideBoardRuntimeEventMap>;
 
 export type SideBoardRuntimeTaskSpec = {
+  /**
+   * URL of the graph on behalf of which we run the task.
+   */
+  url?: string;
   graph: GraphDescriptor;
   context: LLMContent[];
 };

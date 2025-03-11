@@ -109,7 +109,16 @@ export class Graph implements EditableGraph {
         this.#version++;
         this.#mutable.rebuild(graph);
         this.#eventTarget.dispatchEvent(
-          new ChangeEvent(this.raw(), this.#version, false, "history", [], [])
+          new ChangeEvent(
+            this.raw(),
+            this.#version,
+            false,
+            "history",
+            [],
+            [],
+            [],
+            null
+          )
         );
       },
     });
@@ -119,7 +128,9 @@ export class Graph implements EditableGraph {
   #updateGraph(
     visualOnly: boolean,
     affectedNodes: AffectedNode[],
-    affectedModules: ModuleIdentifier[]
+    affectedModules: ModuleIdentifier[],
+    affectedGraphs: GraphIdentifier[],
+    label: string
   ) {
     this.#version++;
     this.#mutable.update(
@@ -135,7 +146,9 @@ export class Graph implements EditableGraph {
         visualOnly,
         "edit",
         affectedNodes,
-        affectedModules
+        affectedModules,
+        affectedGraphs,
+        label
       )
     );
   }
@@ -245,6 +258,8 @@ export class Graph implements EditableGraph {
     const affectedNodes: AffectedNode[][] = [];
     // Collect affected modules
     const affectedModules: NodeIdentifier[][] = [];
+    // Collect affected graphs
+    const affectedGraphs: GraphIdentifier[][] = [];
     let context: EditOperationContext;
     const apply: EditOperationConductor = async (
       edits: EditSpec[],
@@ -264,6 +279,7 @@ export class Graph implements EditableGraph {
         }
         affectedNodes.push(result.affectedNodes);
         affectedModules.push(result.affectedModules);
+        affectedGraphs.push(result.affectedGraphs);
         if (!result.noChange) {
           noChange = false;
         }
@@ -308,9 +324,21 @@ export class Graph implements EditableGraph {
     !dryRun &&
       this.#updateGraph(
         visualOnly,
-        [...new Set(affectedNodes.flat())],
-        [...new Set(affectedModules.flat())]
+        unique(affectedNodes.flat()),
+        [...new Set(affectedModules.flat())],
+        [...new Set(affectedGraphs.flat())],
+        label
       );
     return { success: true, log };
   }
+}
+
+function unique(affectedNodes: AffectedNode[]): AffectedNode[] {
+  const keys = new Set<string>();
+  return affectedNodes.filter((affectedNode) => {
+    const key = `${affectedNode.id}|${affectedNode.id}`;
+    if (keys.has(key)) return false;
+    keys.add(key);
+    return true;
+  });
 }

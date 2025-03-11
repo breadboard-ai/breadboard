@@ -437,6 +437,9 @@ body.hide-cursor {
   --bb-icon-sound: url(/third_party/icons/sound.svg);
   --bb-icon-sound-inverted: url(/third_party/icons/sound-inverted.svg);
 
+  --bb-icon-step: url(/third_party/icons/step.svg);
+  --bb-icon-step-inverted: url(/third_party/icons/step-inverted.svg);
+
   --bb-icon-step-next: url(/third_party/icons/step-next.svg);
   --bb-icon-step-next-inverted: url(/third_party/icons/step-next-inverted.svg);
 
@@ -1180,6 +1183,9 @@ body.hide-cursor {
 
   --bb-icon-sound: url(/third_party/icons/sound-inverted.svg);
   --bb-icon-sound-inverted: url(/third_party/icons/sound.svg);
+
+  --bb-icon-step: url(/third_party/icons/step-inverted.svg);
+  --bb-icon-step-inverted: url(/third_party/icons/step.svg);
 
   --bb-icon-step-next: url(/third_party/icons/step-next-inverted.svg);
   --bb-icon-step-next-inverted: url(/third_party/icons/step-next.svg);

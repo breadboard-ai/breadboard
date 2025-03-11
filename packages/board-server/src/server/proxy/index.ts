@@ -5,8 +5,8 @@
  */
 
 import { type Request, type Response, Router } from "express";
-import { badRequest } from "../errors.js";
-import { buildSecretsTunnel, secretsKit } from "./secrets.js";
+import { URL } from "node:url";
+
 import {
   ProxyServer,
   type ServerResponse as ProxyServerResponse,
@@ -14,15 +14,15 @@ import {
   HTTPServerTransport,
   type ProxyServerConfig,
 } from "@google-labs/breadboard/remote";
-import { asRuntimeKit, ok, type DataStore } from "@google-labs/breadboard";
+import { asRuntimeKit, type DataStore } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
 import { getDataStore } from "@breadboard-ai/data-store";
+
+import { badRequest } from "../errors.js";
+import { buildSecretsTunnel, secretsKit } from "./secrets.js";
 import type { ServerConfig } from "../config.js";
 import { cors } from "../cors.js";
-import { timestamp } from "../boards/utils/run-board.js";
 import { BlobDataStore, GoogleStorageBlobStore } from "../blob-store.js";
-import { authenticate } from "../auth.js";
-import { URL } from "node:url";
 
 class ResponseAdapter implements ProxyServerResponse {
   #response: Response;
@@ -63,6 +63,10 @@ export function serveProxyAPI(serverConfig: ServerConfig): Router {
   const router = Router();
 
   router.use(cors(serverConfig.allowedOrigins));
+  // TODO: Re-enable once we teach the client side to send auth requests
+  // https://github.com/breadboard-ai/breadboard/issues/4721
+  // router.use(requireAuth());
+
   router.post("/", (req, res) => post(serverConfig, req, res));
 
   return router;
@@ -73,23 +77,6 @@ async function post(
   req: Request,
   res: Response
 ): Promise<void> {
-  const authenticating = authenticate(req, null);
-  if (!ok(authenticating)) {
-    // Output the error in node proxy response format.
-    res.setHeader("Content-Type", "application/json");
-    res.statusCode = 401;
-    res.end(
-      JSON.stringify([
-        "error",
-        {
-          error: "Need a valid server key to access the node proxy.",
-          timestamp: timestamp(),
-        },
-      ])
-    );
-    return;
-  }
-
   const body = await extractRequestBody(req);
   const server = new ProxyServer(
     new HTTPServerTransport({ body }, new ResponseAdapter(res))

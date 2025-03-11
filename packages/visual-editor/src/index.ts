@@ -34,6 +34,7 @@ import {
   assetsFromGraphDescriptor,
   blank,
   isInlineData,
+  isStoredData,
 } from "@google-labs/breadboard";
 import {
   createFileSystemBackend,
@@ -50,7 +51,6 @@ import { SettingsHelperImpl } from "./utils/settings-helper";
 import { styles as mainStyles } from "./index.styles.js";
 import * as Runtime from "./runtime/runtime.js";
 import {
-  EnhanceSideboard,
   TabId,
   WorkspaceSelectionStateWithChangeId,
   WorkspaceVisualChangeId,
@@ -79,10 +79,10 @@ import {
   SelectAllCommand,
 } from "./commands/commands";
 import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
-import {
-  SideBoardRuntime,
-  sideBoardRuntime,
-} from "@breadboard-ai/shared-ui/utils/side-board-runtime.js";
+import { sideBoardRuntime } from "@breadboard-ai/shared-ui/contexts/side-board-runtime.js";
+import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
+import { OverflowAction } from "@breadboard-ai/shared-ui/types/types.js";
+import { MAIN_BOARD_ID } from "@breadboard-ai/shared-ui/constants/constants.js";
 
 const STORAGE_PREFIX = "bb-main";
 const VIEW_KEY = "bb-main-view";
@@ -128,6 +128,11 @@ type BoardOverlowMenuConfiguration = {
 };
 
 type UserOverflowMenuConfiguration = {
+  x: number;
+  y: number;
+};
+
+type BoardItemsOverflowMenuConfiguration = {
   x: number;
   y: number;
 };
@@ -211,6 +216,11 @@ export class Main extends LitElement {
   #commentValueData: BreadboardUI.Types.CommentConfiguration | null = null;
 
   @state()
+  accessor showBoardItemsOverflowMenu = false;
+  #boardItemsOverflowMenuConfiguration: BoardItemsOverflowMenuConfiguration | null =
+    null;
+
+  @state()
   accessor boardEditOverlayInfo: {
     tabId: TabId;
     title: string;
@@ -218,6 +228,7 @@ export class Main extends LitElement {
     description: string;
     published: boolean | null;
     private: boolean;
+    exported: boolean;
     isTool: boolean | null;
     isComponent: boolean | null;
     subGraphId: string | null;
@@ -534,7 +545,7 @@ export class Main extends LitElement {
         this.#graphStore = runtime.board.getGraphStore();
         this.#boardServers = runtime.board.getBoardServers() || [];
 
-        this.sideBoardRuntime = runtime.sideboards.createSideboardRuntime();
+        this.sideBoardRuntime = runtime.sideboards;
 
         this.sideBoardRuntime.addEventListener("empty", () => {
           this.canRun = true;
@@ -595,16 +606,17 @@ export class Main extends LitElement {
 
         this.#runtime.edit.addEventListener(
           Runtime.Events.RuntimeBoardEditEvent.eventName,
-          (evt: Runtime.Events.RuntimeBoardEditEvent) => {
+          (_evt: Runtime.Events.RuntimeBoardEditEvent) => {
             this.requestUpdate();
 
-            const observers = this.#runtime.run.getObservers(evt.tabId);
-            if (observers) {
-              if (!evt.visualOnly) {
-                observers.topGraphObserver?.updateAffected(evt.affectedNodes);
-                observers.runObserver?.replay(evt.affectedNodes);
-              }
-            }
+            // TODO: Bring this back once we have stable runs.
+            // const observers = this.#runtime.run.getObservers(evt.tabId);
+            // if (observers) {
+            //   if (!evt.visualOnly) {
+            //     observers.topGraphObserver?.updateAffected(evt.affectedNodes);
+            //     observers.runObserver?.replay(evt.affectedNodes);
+            //   }
+            // }
 
             const shouldAutoSave = this.#settings?.getItem(
               BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
@@ -1290,6 +1302,8 @@ export class Main extends LitElement {
     }
 
     const graph = this.tab?.graph;
+
+    this.#runtime.edit.sideboards.discardTasks();
 
     this.#runBoard(
       addNodeProxyServerConfig(
@@ -2020,7 +2034,7 @@ export class Main extends LitElement {
     this.#runtime.edit.createModule(this.tab, moduleId, newModule);
   }
 
-  #attemptToggleExport(
+  async #attemptToggleExport(
     id: ModuleIdentifier | GraphIdentifier,
     type: "imperative" | "declarative"
   ) {
@@ -2028,7 +2042,7 @@ export class Main extends LitElement {
       return;
     }
 
-    this.#runtime.edit.toggleExport(this.tab, id, type);
+    return this.#runtime.edit.toggleExport(this.tab, id, type);
   }
 
   #showBoardEditOverlay(
@@ -2041,6 +2055,7 @@ export class Main extends LitElement {
     if (!tab) {
       return;
     }
+    const exports = tab.graph.exports;
 
     if (moduleId) {
       const module = tab.graph.modules?.[moduleId];
@@ -2061,6 +2076,7 @@ export class Main extends LitElement {
         moduleId,
         title: metadata?.title ?? "",
         version: "",
+        exported: exports?.includes(`#module:${moduleId}`) ?? false,
         x,
         y,
       };
@@ -2086,6 +2102,9 @@ export class Main extends LitElement {
       moduleId,
       title: title ?? "",
       version: version ?? "",
+      exported: subGraphId
+        ? (exports?.includes(`#${subGraphId}`) ?? false)
+        : false,
       x,
       y,
     };
@@ -2115,6 +2134,8 @@ export class Main extends LitElement {
       return;
     }
 
+    this.#runtime.edit.sideboards.discardTasks();
+
     this.showNodeConfigurator = true;
     this.#nodeConfiguratorData = {
       id,
@@ -2132,6 +2153,43 @@ export class Main extends LitElement {
         configuration.addHorizontalClickClearance ?? false,
       graphNodeLocation: configuration.graphNodeLocation ?? null,
     };
+  }
+
+  #createItemList(): OverflowAction[] {
+    const list: OverflowAction[] = Object.entries(
+      this.tab?.graph.modules ?? {}
+    ).map(([name, module]) => {
+      return {
+        name,
+        icon: module.metadata?.runnable ? "step" : "code",
+        title: module.metadata?.title ?? name,
+        secondaryAction: "delete",
+        disabled: this.#selectionState?.selectionState.modules.has(name),
+      };
+    });
+
+    const hasNoGraphsSelected =
+      this.#selectionState?.selectionState.graphs.size === 0;
+    const hasNoModulesSelected =
+      this.#selectionState?.selectionState.modules.size === 0;
+    const hasMainGraphSelected =
+      this.#selectionState?.selectionState.graphs.has(MAIN_BOARD_ID);
+
+    list.push({
+      name: "new-item",
+      icon: "add-circle",
+      title: Strings.from("COMMAND_NEW_ITEM"),
+      disabled: false,
+    });
+
+    list.unshift({
+      name: "flow",
+      icon: "flow",
+      title: "Flow",
+      disabled:
+        (hasNoGraphsSelected || hasMainGraphSelected) && hasNoModulesSelected,
+    });
+    return list;
   }
 
   render() {
@@ -2171,7 +2229,8 @@ export class Main extends LitElement {
       this.showModulePalette ||
       this.showNewWorkspaceItemOverlay ||
       this.showBoardOverflowMenu ||
-      this.showUserOverflowMenu;
+      this.showUserOverflowMenu ||
+      this.showBoardItemsOverflowMenu;
 
     const uiController = this.#initialize
       .then(() => {
@@ -2199,10 +2258,10 @@ export class Main extends LitElement {
             "Offer Configuration Enhancements"
           )?.value ?? false;
 
-        const showExperimentalStepEditor =
+        const showCustomStepEditing =
           this.#settings?.getItem(
             BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
-            "Show experimental step editor"
+            "Enable Custom Step Creation"
           )?.value ?? false;
 
         let tabStatus = BreadboardUI.Types.STATUS.STOPPED;
@@ -2236,6 +2295,7 @@ export class Main extends LitElement {
             .boardPrivate=${this.boardEditOverlayInfo.private}
             .boardIsTool=${this.boardEditOverlayInfo.isTool}
             .boardIsComponent=${this.boardEditOverlayInfo.isComponent}
+            .boardExported=${this.boardEditOverlayInfo.exported}
             .subGraphId=${this.boardEditOverlayInfo.subGraphId}
             .moduleId=${this.boardEditOverlayInfo.moduleId}
             .location=${location}
@@ -2246,6 +2306,17 @@ export class Main extends LitElement {
               evt: BreadboardUI.Events.BoardInfoUpdateEvent
             ) => {
               await this.#handleBoardInfoUpdate(evt);
+              if (evt.exported !== null) {
+                if (evt.subGraphId) {
+                  await this.#attemptToggleExport(
+                    evt.subGraphId,
+                    "declarative"
+                  );
+                } else if (evt.moduleId) {
+                  await this.#attemptToggleExport(evt.moduleId, "imperative");
+                }
+              }
+
               this.boardEditOverlayInfo = null;
               this.requestUpdate();
             }}
@@ -2455,178 +2526,52 @@ export class Main extends LitElement {
           );
         });
 
-        let nodeConfiguratorOverlay: HTMLTemplateResult | symbol = nothing;
-        if (showExperimentalStepEditor) {
-          nodeConfiguratorOverlay = html`<bb-focus-editor
-            ${ref(this.#nodeConfiguratorRef)}
-            .canRunNode=${canRunNode}
-            .configuration=${this.#nodeConfiguratorData}
-            .graph=${this.tab?.graph}
-            .runEventsForNode=${runEventsForNode}
-            .boardServers=${this.#boardServers}
-            .showTypes=${false}
-            .offerConfigurationEnhancements=${offerConfigurationEnhancements}
-            .projectState=${projectState}
-            .readOnly=${this.tab?.readOnly}
-            .active=${this.showNodeConfigurator}
-            @bboverlaydismissed=${() => {
-              this.#nodeConfiguratorData = null;
-              this.showNodeConfigurator = false;
-            }}
-            @bbnodepartialupdate=${async (
-              evt: BreadboardUI.Events.NodePartialUpdateEvent
-            ) => {
-              if (!this.tab) {
-                this.toast(
-                  Strings.from("ERROR_NO_PROJECT"),
-                  BreadboardUI.Events.ToastType.ERROR
-                );
-                return;
-              }
-
-              this.#runtime.edit.changeNodeConfigurationPart(
-                this.tab,
-                evt.id,
-                evt.configuration,
-                evt.subGraphId,
-                evt.metadata,
-                evt.ins
+        const nodeConfiguratorOverlay = html`<bb-focus-editor
+          ${ref(this.#nodeConfiguratorRef)}
+          .canRunNode=${canRunNode}
+          .configuration=${this.#nodeConfiguratorData}
+          .graph=${this.tab?.graph}
+          .runEventsForNode=${runEventsForNode}
+          .boardServers=${this.#boardServers}
+          .showTypes=${false}
+          .offerConfigurationEnhancements=${offerConfigurationEnhancements}
+          .projectState=${projectState}
+          .readOnly=${this.tab?.readOnly}
+          .active=${this.showNodeConfigurator}
+          @bboverlaydismissed=${() => {
+            this.#nodeConfiguratorData = null;
+            this.showNodeConfigurator = false;
+          }}
+          @bbnodepartialupdate=${async (
+            evt: BreadboardUI.Events.NodePartialUpdateEvent
+          ) => {
+            if (!this.tab) {
+              this.toast(
+                Strings.from("ERROR_NO_PROJECT"),
+                BreadboardUI.Events.ToastType.ERROR
               );
-            }}
-            @bbrunisolatednode=${async (
-              evt: BreadboardUI.Events.RunIsolatedNodeEvent
-            ) => {
-              await this.#attemptNodeRun(evt.id);
-            }}
-            @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
-              this.toast(toastEvent.message, toastEvent.toastType);
-            }}
-          >
-          </bb-focus-editor>`;
-        } else if (this.showNodeConfigurator) {
-          nodeConfiguratorOverlay = html`<bb-node-configuration-overlay
-            ${ref(this.#nodeConfiguratorRef)}
-            .canRunNode=${canRunNode}
-            .configuration=${this.#nodeConfiguratorData}
-            .graph=${this.tab?.graph}
-            .runEventsForNode=${runEventsForNode}
-            .boardServers=${this.#boardServers}
-            .showTypes=${false}
-            .offerConfigurationEnhancements=${offerConfigurationEnhancements}
-            .projectState=${projectState}
-            .readOnly=${this.tab?.readOnly}
-            @bbworkspaceselectionstate=${(
-              evt: BreadboardUI.Events.WorkspaceSelectionStateEvent
-            ) => {
-              if (!this.tab) {
-                return;
-              }
+              return;
+            }
 
-              this.#nodeConfiguratorData = null;
-              this.showNodeConfigurator = false;
-              if (evt.replaceExistingSelections) {
-                this.#runtime.select.processSelections(
-                  this.tab.id,
-                  evt.selectionChangeId,
-                  evt.selections,
-                  evt.replaceExistingSelections,
-                  evt.moveToSelection
-                );
-              }
-            }}
-            @bbmodulecreate=${(evt: BreadboardUI.Events.ModuleCreateEvent) => {
-              this.#attemptModuleCreate(evt.moduleId);
-              this.#nodeConfiguratorData = null;
-              this.showNodeConfigurator = false;
-            }}
-            @bbrunisolatednode=${async (
-              evt: BreadboardUI.Events.RunIsolatedNodeEvent
-            ) => {
-              await this.#attemptNodeRun(evt.id);
-            }}
-            @bbenhancenodeconfiguration=${(
-              evt: BreadboardUI.Events.EnhanceNodeConfigurationEvent
-            ) => {
-              if (!this.tab) {
-                return;
-              }
-
-              const enhancer: EnhanceSideboard = {
-                enhance: async (config) => {
-                  // Currently, the API of the board is fixed.
-                  // Inputs: { config }
-                  // Outputs: { config }
-                  // We should probably have some way to codify the shape.
-                  const invocationResult =
-                    await this.#runtime.run.invokeSideboard(
-                      this.tab!.boardServerKits,
-                      "/side-boards/enhance-configuration.bgl.json",
-                      this.#runtime.board.getLoader(),
-                      { config },
-                      this.#settings
-                    );
-                  if (!invocationResult.success) {
-                    return invocationResult;
-                  }
-                  const result = invocationResult.result;
-                  if ("$error" in result) {
-                    return {
-                      success: false,
-                      error: BreadboardUI.Utils.formatError(
-                        result.$error as string
-                      ),
-                    };
-                  }
-                  return {
-                    success: true,
-                    result,
-                  };
-                },
-              };
-
-              this.#runtime.edit.enhanceNodeConfiguration(
-                this.tab,
-                this.tab.subGraphId,
-                evt.id,
-                enhancer,
-                evt.property,
-                evt.value
-              );
-            }}
-            @bboverlaydismissed=${() => {
-              this.#nodeConfiguratorData = null;
-              this.showNodeConfigurator = false;
-            }}
-            @bbnodepartialupdate=${async (
-              evt: BreadboardUI.Events.NodePartialUpdateEvent
-            ) => {
-              if (!this.tab) {
-                this.toast(
-                  Strings.from("ERROR_NO_PROJECT"),
-                  BreadboardUI.Events.ToastType.ERROR
-                );
-                return;
-              }
-
-              if (!evt.debugging) {
-                this.#nodeConfiguratorData = null;
-                this.showNodeConfigurator = false;
-              }
-
-              this.#runtime.edit.changeNodeConfigurationPart(
-                this.tab,
-                evt.id,
-                evt.configuration,
-                evt.subGraphId,
-                evt.metadata,
-                evt.ins
-              );
-            }}
-            @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
-              this.toast(toastEvent.message, toastEvent.toastType);
-            }}
-          ></bb-node-configuration-overlay>`;
-        }
+            this.#runtime.edit.changeNodeConfigurationPart(
+              this.tab,
+              evt.id,
+              evt.configuration,
+              evt.subGraphId,
+              evt.metadata,
+              evt.ins
+            );
+          }}
+          @bbrunisolatednode=${async (
+            evt: BreadboardUI.Events.RunIsolatedNodeEvent
+          ) => {
+            await this.#attemptNodeRun(evt.id);
+          }}
+          @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
+            this.toast(toastEvent.message, toastEvent.toastType);
+          }}
+        >
+        </bb-focus-editor>`;
 
         let commentOverlay: HTMLTemplateResult | symbol = nothing;
         if (this.showCommentEditor) {
@@ -2858,7 +2803,7 @@ export class Main extends LitElement {
           boardOverflowMenu = html`<bb-overflow-menu
             id="board-overflow"
             style=${styleMap({
-              left: `${this.#boardOverflowMenuConfiguration.x}px`,
+              right: `${this.#boardOverflowMenuConfiguration.x}px`,
               top: `${this.#boardOverflowMenuConfiguration.y}px`,
             })}
             .actions=${actions}
@@ -3108,6 +3053,94 @@ export class Main extends LitElement {
           }
         }
 
+        let boardItemsOverflowMenu: HTMLTemplateResult | symbol = nothing;
+        if (
+          this.showBoardItemsOverflowMenu &&
+          this.#boardItemsOverflowMenuConfiguration
+        ) {
+          const itemList: OverflowAction[] = this.#createItemList();
+          boardItemsOverflowMenu = html`<bb-overflow-menu
+            id="board-items-overflow"
+            style=${styleMap({
+              right: `${this.#boardItemsOverflowMenuConfiguration.x}px`,
+              top: `${this.#boardItemsOverflowMenuConfiguration.y}px`,
+            })}
+            .disabled=${false}
+            .actions=${itemList}
+            @bboverflowmenuaction=${(
+              evt: BreadboardUI.Events.OverflowMenuActionEvent
+            ) => {
+              evt.stopImmediatePropagation();
+
+              if (evt.action === "new-item") {
+                this.showNewWorkspaceItemOverlay = true;
+                return;
+              }
+
+              const selections = BreadboardUI.Utils.Workspace.createSelection(
+                this.#selectionState?.selectionState ?? null,
+                null,
+                null,
+                evt.action === "flow" ? null : evt.action,
+                null,
+                true
+              );
+              if (!this.tab) {
+                return;
+              }
+              const selectionChangeId = this.#runtime.select.generateId();
+              this.#runtime.select.processSelections(
+                this.tab.id,
+                selectionChangeId,
+                selections,
+                true,
+                false
+              );
+
+              this.showBoardItemsOverflowMenu = false;
+            }}
+            @bboverflowmenusecondaryaction=${(
+              evt: BreadboardUI.Events.OverflowMenuSecondaryActionEvent
+            ) => {
+              evt.stopImmediatePropagation();
+              if (!this.tab) {
+                return;
+              }
+
+              if (typeof evt.value !== "string") {
+                return;
+              }
+
+              this.#runtime.edit.deleteModule(this.tab, evt.value);
+              this.showBoardItemsOverflowMenu = false;
+            }}
+            @bboverflowmenudismissed=${() => {
+              this.showBoardItemsOverflowMenu = false;
+            }}
+          ></bb-overflow-menu>`;
+        }
+
+        let selectedItem = "Flow";
+        let selectedItemClass = "flow";
+        if (this.#selectionState) {
+          if (this.#selectionState.selectionState.modules.size > 0) {
+            const module = [
+              ...this.#selectionState.selectionState.modules.keys(),
+            ][0];
+            selectedItem =
+              this.tab?.graph.modules?.[module].metadata?.title ?? module;
+            selectedItemClass = this.tab?.graph.modules?.[module].metadata
+              ?.runnable
+              ? "step"
+              : "code";
+          }
+
+          if (!selectedItem || selectedItem === MAIN_BOARD_ID) {
+            selectedItem = "Flow";
+            selectedItemClass = "flow";
+          }
+        }
+
         const ui = html`<header>
           <div id="header-bar" data-active=${this.tab ? "true" : nothing} ?inert=${showingOverlay}>
             <div id="tab-info">
@@ -3182,45 +3215,65 @@ export class Main extends LitElement {
             <div id="tab-controls">
               ${
                 this.tab
-                  ? html`<button
-                      id="toggle-overflow-menu"
-                      @pointerover=${(evt: PointerEvent) => {
-                        this.dispatchEvent(
-                          new BreadboardUI.Events.ShowTooltipEvent(
-                            Strings.from("COMMAND_ADDITIONAL_ITEMS"),
-                            evt.clientX,
-                            evt.clientY
-                          )
-                        );
-                      }}
-                      @pointerout=${() => {
-                        this.dispatchEvent(
-                          new BreadboardUI.Events.HideTooltipEvent()
-                        );
-                      }}
-                      @click=${(evt: PointerEvent) => {
-                        if (!(evt.target instanceof HTMLButtonElement)) {
-                          return;
-                        }
+                  ? html` ${showCustomStepEditing
+                        ? html`<button
+                            id="toggle-board-item"
+                            class=${classMap({ [selectedItemClass]: true })}
+                            @click=${(evt: PointerEvent) => {
+                              if (!(evt.target instanceof HTMLButtonElement)) {
+                                return;
+                              }
 
-                        if (!this.tab) {
-                          return;
-                        }
+                              const bounds = evt.target.getBoundingClientRect();
+                              this.#boardItemsOverflowMenuConfiguration = {
+                                x: window.innerWidth - bounds.right,
+                                y: bounds.bottom + 8,
+                              };
+                              this.showBoardItemsOverflowMenu = true;
+                            }}
+                          >
+                            ${selectedItem}
+                          </button>`
+                        : nothing}
+                      <button
+                        id="toggle-overflow-menu"
+                        @pointerover=${(evt: PointerEvent) => {
+                          this.dispatchEvent(
+                            new BreadboardUI.Events.ShowTooltipEvent(
+                              Strings.from("COMMAND_ADDITIONAL_ITEMS"),
+                              evt.clientX,
+                              evt.clientY
+                            )
+                          );
+                        }}
+                        @pointerout=${() => {
+                          this.dispatchEvent(
+                            new BreadboardUI.Events.HideTooltipEvent()
+                          );
+                        }}
+                        @click=${(evt: PointerEvent) => {
+                          if (!(evt.target instanceof HTMLButtonElement)) {
+                            return;
+                          }
 
-                        const btnBounds = evt.target.getBoundingClientRect();
-                        const x = btnBounds.x + btnBounds.width - 205;
-                        const y = btnBounds.y + btnBounds.height;
+                          if (!this.tab) {
+                            return;
+                          }
 
-                        this.#boardOverflowMenuConfiguration = {
-                          tabId: this.tab.id,
-                          x,
-                          y,
-                        };
-                        this.showBoardOverflowMenu = true;
-                      }}
-                    >
-                      Overflow
-                    </button>`
+                          const bounds = evt.target.getBoundingClientRect();
+                          const x = window.innerWidth - bounds.right;
+                          const y = bounds.bottom + 8;
+
+                          this.#boardOverflowMenuConfiguration = {
+                            tabId: this.tab.id,
+                            x,
+                            y,
+                          };
+                          this.showBoardOverflowMenu = true;
+                        }}
+                      >
+                        Overflow
+                      </button>`
                   : nothing
               }
               <button
@@ -3562,6 +3615,16 @@ export class Main extends LitElement {
                 evt: BreadboardUI.Events.BoardInfoUpdateEvent
               ) => {
                 await this.#handleBoardInfoUpdate(evt);
+                if (evt.exported !== null) {
+                  if (evt.subGraphId) {
+                    await this.#attemptToggleExport(
+                      evt.subGraphId,
+                      "declarative"
+                    );
+                  } else if (evt.moduleId) {
+                    await this.#attemptToggleExport(evt.moduleId, "imperative");
+                  }
+                }
                 this.requestUpdate();
               }}
               @bbgraphboardserverblankboard=${() => {
@@ -3639,10 +3702,10 @@ export class Main extends LitElement {
                   evt.metadata
                 );
               }}
-              @bbtoggleexport=${(
+              @bbtoggleexport=${async (
                 evt: BreadboardUI.Events.ToggleExportEvent
               ) => {
-                this.#attemptToggleExport(evt.exportId, evt.exportType);
+                await this.#attemptToggleExport(evt.exportId, evt.exportType);
               }}
               @bbthemeapply=${async (
                 evt: BreadboardUI.Events.ThemeApplyEvent
@@ -3654,20 +3717,31 @@ export class Main extends LitElement {
 
                 // TODO: Show some status.
                 if (evt.theme.splashScreen) {
+                  const data: LLMContent[] = [
+                    {
+                      role: "user",
+                      parts: [evt.theme.splashScreen],
+                    },
+                  ];
+
                   // Convert inline data to stored asset.
                   if (isInlineData(evt.theme.splashScreen)) {
-                    const data: LLMContent[] = [
-                      {
-                        role: "user",
-                        parts: [evt.theme.splashScreen],
-                      },
-                    ];
-
                     await projectState?.organizer.addGraphAsset({
                       path: "@@splash",
                       metadata: { title: "Splash", type: "file" },
                       data,
                     });
+                  } else if (isStoredData(evt.theme.splashScreen)) {
+                    if (
+                      evt.theme.splashScreen.storedData.handle !==
+                      projectState?.graphAssets.get("@@splash")?.path
+                    ) {
+                      await projectState?.organizer.addGraphAsset({
+                        path: "@@splash",
+                        metadata: { title: "Splash", type: "file" },
+                        data,
+                      });
+                    }
                   }
                 } else {
                   // Removing the asset.
@@ -4071,6 +4145,7 @@ export class Main extends LitElement {
           modulePalette,
           boardOverflowMenu,
           userOverflowMenu,
+          boardItemsOverflowMenu,
         ];
       });
 

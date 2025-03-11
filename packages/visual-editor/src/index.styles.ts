@@ -85,6 +85,30 @@ export const styles = css`
     flex: 0 0 auto;
   }
 
+  #toggle-board-item {
+    height: var(--bb-grid-size-7);
+    border: 1px solid var(--bb-neutral-300);
+    padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-8);
+    font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+      var(--bb-font-family);
+    border-radius: var(--bb-grid-size-16);
+    margin: 0 var(--bb-grid-size-2) 0 0;
+    background: var(--bb-neutral-0);
+    cursor: pointer;
+
+    &.flow {
+      background: var(--bb-icon-flowchart) 8px center / 20px 20px no-repeat;
+    }
+
+    &.step {
+      background: var(--bb-icon-step) 8px center / 20px 20px no-repeat;
+    }
+
+    &.code {
+      background: var(--bb-icon-code) 8px center / 20px 20px no-repeat;
+    }
+  }
+
   #undo:not([disabled]):hover,
   #redo:not([disabled]):hover,
   #undo:not([disabled]):focus,
@@ -432,11 +456,12 @@ export const styles = css`
   }
 
   #user-overflow,
-  #board-overflow {
+  #board-overflow,
+  #board-items-overflow {
     position: fixed;
     right: auto;
     bottom: auto;
-    z-index: 5;
+    z-index: 10;
   }
 
   bb-project-listing {

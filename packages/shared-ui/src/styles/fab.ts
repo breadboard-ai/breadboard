@@ -8,7 +8,8 @@ import { css } from "lit";
 
 export const fabStyles = css`
   .bb-fab {
-    background: var(--bb-icon, var(--bb-icon-help)) center center / 20px 20px
+    background: var(--bb-ui-500) var(--bb-icon, var(--bb-icon-help)) center
+      center / var(--background-size, 20px) var(--background-size, 20px)
       no-repeat;
     width: var(--bb-grid-size-9);
     aspect-ratio: 1;
@@ -19,11 +20,11 @@ export const fabStyles = css`
 
     &:not([disabled]) {
       cursor: pointer;
-      transition: filter 0.2s cubic-bezier(0, 0, 0.3, 1);
+      transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
 
       &:focus,
       &:hover {
-        filter: brightness(1.2);
+        background-color: var(--bb-ui-700);
       }
     }
   }

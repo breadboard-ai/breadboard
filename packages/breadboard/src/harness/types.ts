@@ -122,6 +122,7 @@ export type HarnessProxyConfig =
       location: ProxyLocation;
       url?: string;
       nodes: NodeProxyConfig;
+      integratedAuth?: boolean;
     }
   | CustomProxyConfig;
 

@@ -14,7 +14,7 @@ import { Board } from "./board.js";
 import { Run } from "./run.js";
 import { Edit } from "./edit.js";
 import { Util } from "./util.js";
-import { RuntimeConfig, SideboardRuntimeProvider } from "./types.js";
+import { RuntimeConfig } from "./types.js";
 
 import {
   createDefaultLocalBoardServer,
@@ -37,6 +37,7 @@ import { StateManager } from "./state.js";
 import { getDataStore } from "@breadboard-ai/data-store";
 import { BoardServerAwareDataStore } from "./board-server-aware-data-store.js";
 import { createSideboardRuntimeProvider } from "./sideboard-runtime.js";
+import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 
 function withRunModule(kits: Kit[]): Kit[] {
   return addSandboxedRunModule(sandbox, kits);
@@ -48,7 +49,7 @@ export async function create(config: RuntimeConfig): Promise<{
   edit: Edit;
   kits: Kit[];
   select: Select;
-  sideboards: SideboardRuntimeProvider;
+  sideboards: SideBoardRuntime;
   state: StateManager;
   util: typeof Util;
 }> {
@@ -106,18 +107,28 @@ export async function create(config: RuntimeConfig): Promise<{
 
   const dataStore = new BoardServerAwareDataStore(getDataStore(), servers);
 
+  const sideboards = createSideboardRuntimeProvider(
+    graphStoreArgs,
+    servers,
+    config.tokenVendor,
+    config.settings,
+    config.proxy
+  ).createSideboardRuntime();
+
   const runtime = {
     board: new Board([], loader, kits, boardServers, config.tokenVendor),
-    edit: new Edit([], loader, kits, config.sandbox, graphStore),
+    edit: new Edit(
+      [],
+      loader,
+      kits,
+      config.sandbox,
+      graphStore,
+      sideboards,
+      config.settings
+    ),
     run: new Run(graphStore, dataStore, config.runStore),
     state: new StateManager(graphStore, servers),
-    sideboards: createSideboardRuntimeProvider(
-      graphStoreArgs,
-      servers,
-      config.tokenVendor,
-      config.settings,
-      config.proxy
-    ),
+    sideboards,
     select: new Select(),
     util: Util,
     kits,

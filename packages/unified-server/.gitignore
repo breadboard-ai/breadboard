@@ -1,5 +1,6 @@
 public
-index.html
+/index.html
+oauth/
 icons
 secrets
 langs

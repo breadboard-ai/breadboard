@@ -51,6 +51,7 @@ export enum GRAPH_OPERATIONS {
   GRAPH_HIDE_TOOLTIP = "graphhidetooltip",
   GRAPH_TOGGLE_MINIMIZED = "graphtoggleminimized",
   MODULE_SELECTED = "moduleselected",
+  SUBGRAPH_EDIT = "subgraphedit",
   SUBGRAPH_SELECTED = "subgraphselected",
   SUBGRAPH_CONNECTION_START = "subgraphconnectionstart",
   GRAPH_REFERENCE_TOGGLE_SELECTED = "graphreferenceselected",

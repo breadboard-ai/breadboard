@@ -6,16 +6,16 @@
 
 import type { Request, Response } from "express";
 
-import { ok, type GraphDescriptor } from "@google-labs/breadboard";
+import { type GraphDescriptor } from "@google-labs/breadboard";
 
-import { authenticateAndGetUserStore } from "../auth.js";
 import { badRequest } from "../errors.js";
-import { getStore } from "../store.js";
+import { getBody } from "../common.js";
 
 import del from "./delete.js";
+import type { BoardId, BoardServerStore } from "../types.js";
 
 async function post(req: Request, res: Response): Promise<void> {
-  const body = req.body;
+  const body = await getBody(req);
 
   // We handle deletion by accepting a POST request with { delete: true } in the body
   // TODO Don't do this. Use HTTP DELETE instead.
@@ -32,16 +32,10 @@ async function update(
   res: Response,
   body: unknown
 ): Promise<void> {
-  const boardPath = res.locals.boardId.fullPath;
-  let store;
+  const store: BoardServerStore = req.app.locals.store;
 
-  const userPath = await authenticateAndGetUserStore(req, res, () => {
-    store = getStore();
-    return store;
-  });
-  if (!ok(userPath)) {
-    return;
-  }
+  const boardId: BoardId = res.locals.boardId;
+  const userId: string = res.locals.userId;
 
   if (!body) {
     badRequest(res, "No body provided");
@@ -57,18 +51,13 @@ async function update(
     return;
   }
 
-  if (!store) {
-    store = getStore();
-  }
-
-  const result = await store.update(userPath!, boardPath, maybeGraph);
+  const result = await store.update(userId, boardId.fullPath, maybeGraph);
   if (!result.success) {
     badRequest(res, result.error);
     return;
   }
 
-  res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(JSON.stringify({ created: boardPath }));
+  res.json({ created: boardId.fullPath });
 }
 
 export default post;

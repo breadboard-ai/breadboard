@@ -433,6 +433,27 @@ export class ComponentSelectorOverlay extends LitElement {
       kitList.push({ id: graph.url!, metadata: graph });
     }
 
+    for (const [moduleId, module] of Object.entries(
+      graphStore.get(mainGraphId)?.modules.modules() || {}
+    )) {
+      if (!module.metadata().runnable) {
+        continue;
+      }
+
+      kitList.push({
+        id: `#module:${moduleId}`,
+        metadata: {
+          mainGraph: {
+            id: mainGraphId,
+          },
+          updating: false,
+          title: module.metadata().title,
+          icon: module.metadata().icon,
+          description: module.metadata().description,
+        },
+      });
+    }
+
     kitList.sort((kit1, kit2) => {
       const title1 = kit1.metadata.mainGraph.title || "";
       const title2 = kit2.metadata.mainGraph.title || "";

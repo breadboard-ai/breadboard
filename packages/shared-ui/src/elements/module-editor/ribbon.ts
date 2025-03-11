@@ -3,19 +3,14 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import * as StringsHelper from "../../strings/helper.js";
-const GlobalStrings = StringsHelper.forSection("Global");
-
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
   FormatModuleCodeEvent,
   HideTooltipEvent,
   ModuleChangeLanguageEvent,
-  RunEvent,
+  OverflowMenuActionEvent,
   ShowTooltipEvent,
-  StopEvent,
-  ToggleModulePreviewEvent,
 } from "../../events/events";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { InspectableGraph, InspectableModules } from "@google-labs/breadboard";
@@ -141,6 +136,11 @@ export class ModuleRibbonMenu extends LitElement {
       flex: 1 1 auto;
       overflow-x: hidden;
       min-width: 140px;
+
+      & > div {
+        display: flex;
+        align-items: center;
+      }
     }
 
     #right {
@@ -148,6 +148,11 @@ export class ModuleRibbonMenu extends LitElement {
       height: 100%;
       align-items: center;
       flex: 0 0 auto;
+
+      & > div {
+        display: flex;
+        align-items: center;
+      }
     }
 
     #left > *,
@@ -283,7 +288,8 @@ export class ModuleRibbonMenu extends LitElement {
       width: auto;
       padding: 0 20px 0 28px;
       background: var(--bb-neutral-0);
-      background-image: var(--bb-icon-extension), var(--bb-icon-arrow-drop-down);
+      background-image:
+        var(--bb-icon-extension), var(--bb-icon-arrow-drop-down);
       background-position:
         -2px center,
         right center;
@@ -299,8 +305,8 @@ export class ModuleRibbonMenu extends LitElement {
     }
 
     #shortcut-board-modules.ts {
-      background-image: var(--bb-icon-extension-ts),
-        var(--bb-icon-arrow-drop-down);
+      background-image:
+        var(--bb-icon-extension-ts), var(--bb-icon-arrow-drop-down);
     }
 
     #shortcut-overflow.visible {
@@ -338,8 +344,8 @@ export class ModuleRibbonMenu extends LitElement {
     #shortcut-copy {
       width: var(--bb-grid-size-9);
       background: var(--bb-neutral-0);
-      background-image: var(--bb-icon-copy-to-clipboard),
-        var(--bb-icon-arrow-drop-down);
+      background-image:
+        var(--bb-icon-copy-to-clipboard), var(--bb-icon-arrow-drop-down);
       background-position:
         0 center,
         16px center;
@@ -486,6 +492,26 @@ export class ModuleRibbonMenu extends LitElement {
       background: var(--bb-ui-50) var(--bb-icon-vital-signs) 6px center / 20px
         20px no-repeat;
     }
+
+    #edit-details {
+      font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+        var(--bb-font-family);
+      border-radius: var(--bb-grid-size-16);
+      height: var(--bb-grid-size-7);
+      padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-7);
+      background: var(--bb-neutral-50) var(--bb-icon-edit) 6px center / 20px
+        20px no-repeat;
+      border: none;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
+
+      &:hover,
+      &:focus {
+        background-color: var(--bb-neutral-100);
+      }
+    }
   `;
 
   #runnableModuleInputRef: Ref<HTMLInputElement> = createRef();
@@ -505,25 +531,6 @@ export class ModuleRibbonMenu extends LitElement {
 
     const moduleIsRunnable = !!(module && module.metadata().runnable);
     const moduleControls = html`<div id="module-controls">
-      <div id="start">
-        <button
-          id="run"
-          title=${GlobalStrings.from("LABEL_RUN_PROJECT")}
-          class=${classMap({ running: this.isRunning })}
-          ?disabled=${this.readOnly}
-          @click=${() => {
-            if (this.isRunning) {
-              this.dispatchEvent(new StopEvent());
-            } else {
-              this.dispatchEvent(new RunEvent());
-            }
-          }}
-        >
-          ${this.isRunning
-            ? GlobalStrings.from("LABEL_STOP")
-            : GlobalStrings.from("LABEL_RUN")}
-        </button>
-      </div>
       <div id="language-selector-container">
         <label for="language-selector">Language</label>
         <select
@@ -572,27 +579,6 @@ export class ModuleRibbonMenu extends LitElement {
       >
         Format Module Code
       </button>
-      <button
-        id="toggle-preview"
-        ?disabled=${!this.canShowModulePreview || isMainModule}
-        @click=${() => {
-          this.dispatchEvent(new ToggleModulePreviewEvent());
-        }}
-        @pointerover=${(evt: PointerEvent) => {
-          this.dispatchEvent(
-            new ShowTooltipEvent(
-              `Toggle Module Preview ${moduleIsRunnable ? "" : "(disabled)"}`,
-              evt.clientX,
-              evt.clientY
-            )
-          );
-        }}
-        @pointerout=${() => {
-          this.dispatchEvent(new HideTooltipEvent());
-        }}
-      >
-        Toggle Module Preview
-      </button>
 
       <div id="runnable">
         <input
@@ -609,7 +595,7 @@ export class ModuleRibbonMenu extends LitElement {
           @pointerover=${(evt: PointerEvent) => {
             this.dispatchEvent(
               new ShowTooltipEvent(
-                "Make available as a component",
+                "Make available as a Step",
                 evt.clientX,
                 evt.clientY
               )
@@ -618,7 +604,7 @@ export class ModuleRibbonMenu extends LitElement {
           @pointerout=${() => {
             this.dispatchEvent(new HideTooltipEvent());
           }}
-          >Component</label
+          >Show as Step</label
         >
       </div>
     </div>`;
@@ -683,7 +669,25 @@ export class ModuleRibbonMenu extends LitElement {
     const right = [errors, moduleControls];
 
     return [
-      html`<div id="left"></div>`,
+      html`<div id="left">
+        <div>
+          <button
+            id="edit-details"
+            @click=${(evt: PointerEvent) => {
+              this.dispatchEvent(
+                new OverflowMenuActionEvent(
+                  "edit-module-details",
+                  this.moduleId,
+                  evt.clientX,
+                  evt.clientY
+                )
+              );
+            }}
+          >
+            Edit details
+          </button>
+        </div>
+      </div>`,
       html`<div id="right">${right}</div>`,
       errorMenu,
     ];

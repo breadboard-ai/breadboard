@@ -25,13 +25,15 @@ class NodeInformation implements TopGraphNodeInfo {
     return this.#activity.get(node);
   }
 
-  canRunNode(node: NodeIdentifier): boolean {
+  canRunNode(_node: NodeIdentifier): boolean {
+    return false;
+    // TODO: Bring this back once we have stable runs.
     // There are three reasons why a given node can be runnable:
     // 1. When the node has already been visited during the current run, so a
     //    new run can be resumed from this node
     // 2. When the node has all the inputs properly satisfied, but hasn't been
     //    visited yet. In this case, we should be able to construct a new run,
     //    even though that node does not exist in it yet.
-    return !!this.#canRunState.get(node);
+    // return !!this.#canRunState.get(node);
   }
 }

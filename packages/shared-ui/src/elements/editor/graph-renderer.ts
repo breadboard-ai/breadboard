@@ -30,6 +30,7 @@ import {
   ToastType,
   WorkspaceSelectionMoveEvent,
   GraphNodeQuickAddEvent,
+  OverflowMenuActionEvent,
 } from "../../events/events.js";
 import {
   GRAPH_OPERATIONS,
@@ -2198,6 +2199,17 @@ export class GraphRenderer extends LitElement {
 
     graph.on(GRAPH_OPERATIONS.WARN_USER, (message: string) => {
       this.dispatchEvent(new ToastEvent(message, ToastType.WARNING));
+    });
+
+    graph.on(GRAPH_OPERATIONS.SUBGRAPH_EDIT, (x: number, y: number) => {
+      this.dispatchEvent(
+        new OverflowMenuActionEvent(
+          "edit-board-details",
+          graph.subGraphId,
+          x,
+          y
+        )
+      );
     });
 
     graph.on(

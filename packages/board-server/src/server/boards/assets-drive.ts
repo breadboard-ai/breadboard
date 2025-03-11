@@ -7,7 +7,6 @@
 import type { Request, Response } from "express";
 
 import { ok } from "@google-labs/breadboard";
-import { getConnectionArgs } from "../auth.js";
 import { serverError } from "../errors.js";
 import { Readable } from "node:stream";
 import { GeminiFileApi } from "../blobs/utils/gemini-file-api.js";
@@ -63,13 +62,8 @@ async function handleAssetsDriveRequest(
   req: Request,
   res: Response
 ): Promise<void> {
+  const accessToken: string = res.locals.accessToken;
   const driveId = req.params["driveId"] ?? "";
-  const args = getConnectionArgs(req);
-  if (!ok(args) || !("token" in args)) {
-    res.writeHead(401, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "Unauthorized" }));
-    return;
-  }
 
   const part = CavemanCache.instance().get(driveId);
   if (part) {
@@ -77,13 +71,12 @@ async function handleAssetsDriveRequest(
     return;
   }
 
-  const { token } = args;
   const url = `https://www.googleapis.com/drive/v3/files/${driveId}/export?mimeType=${encodeURIComponent("application/pdf")}`;
 
   try {
     const exporting = await fetch(url, {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     });
     if (!exporting.ok) {
