@@ -4,7 +4,6 @@ import type {
   CreateUserResult,
   ListInviteResult,
   RunBoardStateStore,
-  BoardServerStore,
 } from "../types.js";
 import type {
   BoardListEntry,
@@ -25,9 +24,7 @@ import type {
 } from "@google-labs/breadboard";
 import { v4 as uuidv4 } from "uuid";
 
-export class SQLiteStorageProvider
-  implements RunBoardStateStore, BoardServerStore
-{
+export class SQLiteStorageProvider implements RunBoardStateStore {
   private db: Database.Database;
 
   constructor(dbPath: string) {

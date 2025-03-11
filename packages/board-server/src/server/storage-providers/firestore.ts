@@ -18,7 +18,6 @@ import {
   INVITE_EXPIRATION_TIME_MS,
 } from "../store.js";
 import type {
-  BoardServerStore,
   CreateInviteResult,
   CreateUserResult,
   ListInviteResult,
@@ -27,9 +26,7 @@ import type {
 
 const REANIMATION_COLLECTION_ID = "resume";
 
-export class FirestoreStorageProvider
-  implements RunBoardStateStore, BoardServerStore
-{
+export class FirestoreStorageProvider implements RunBoardStateStore {
   #database;
 
   constructor(storeName: string) {
@@ -99,6 +96,8 @@ export class FirestoreStorageProvider
     return data.data() as ServerInfo | undefined;
   }
 
+  // TODO Rename this
+  // It's confusing that we're referring to a string user ID as "user store"
   async getUserStore(userKey: string | null): Promise<GetUserStoreResult> {
     if (!userKey) {
       return { success: false, error: "No user key supplied" };
