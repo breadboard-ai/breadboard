@@ -7,14 +7,21 @@
 import { sandbox } from "../sandbox";
 import { createRunner, RunConfig } from "@google-labs/breadboard/harness";
 import {
+  addSandboxedRunModule,
   createDefaultDataStore,
   createGraphStore,
   createRunObserver,
+  Kit,
 } from "@google-labs/breadboard";
 
 import { getRunStore } from "@breadboard-ai/data-store";
 import { TopGraphObserver } from "@breadboard-ai/shared-ui/utils/top-graph-observer";
 import { Runner } from "../types/types";
+import { loadKits, registerLegacyKits } from "./kit-loader.js";
+
+function withRunModule(kits: Kit[]): Kit[] {
+  return addSandboxedRunModule(sandbox, kits);
+}
 
 export async function createFlowRunner(
   config: RunConfig | null
@@ -23,11 +30,14 @@ export async function createFlowRunner(
     return null;
   }
 
+  const kits = withRunModule(loadKits());
   const graphStore = createGraphStore({
-    kits: config.kits,
+    kits,
     loader: config.loader!,
     sandbox,
   });
+  registerLegacyKits(graphStore);
+
   const runStore = getRunStore();
   const dataStore = createDefaultDataStore();
   const abortController = new AbortController();

@@ -8,12 +8,17 @@ import pkg from "../../../package.json" with { type: "json" };
 import * as StringsHelper from "@breadboard-ai/shared-ui/strings";
 import {
   AppTemplate,
+  AppTheme,
   LanguagePack,
 } from "@breadboard-ai/shared-ui/types/types.js";
 import { AppViewConfig, BootstrapArguments } from "./types/types.js";
 
 import * as Elements from "./elements/elements.js";
-import { GraphDescriptor } from "@google-labs/breadboard";
+import {
+  GraphDescriptor,
+  isInlineData,
+  isStoredData,
+} from "@google-labs/breadboard";
 import * as BreadboardUIContext from "@breadboard-ai/shared-ui/contexts";
 import { GrantStore } from "./utils/grant.js";
 import * as ConnectionClient from "@breadboard-ai/connection-client";
@@ -21,6 +26,14 @@ import { SettingsHelper } from "./utils/settings.js";
 import { createRunConfigWithProxy } from "./utils/run-config.js";
 import { RunConfig } from "@google-labs/breadboard/harness";
 import { createFlowRunner } from "./utils/runner.js";
+import { getGlobalColor } from "./utils/color.js";
+import { LLMContent } from "@breadboard-ai/types";
+
+const primaryColor = getGlobalColor("--bb-ui-700");
+const secondaryColor = getGlobalColor("--bb-ui-400");
+const backgroundColor = getGlobalColor("--bb-neutral-0");
+const textColor = getGlobalColor("--bb-neutral-900");
+const primaryTextColor = getGlobalColor("--bb-neutral-0");
 
 async function fetchFlow() {
   try {
@@ -99,6 +112,80 @@ async function createRunner(runConfig: RunConfig | null) {
   return createFlowRunner(runConfig);
 }
 
+function createDefaultTheme(): AppTheme {
+  return {
+    primaryColor: primaryColor,
+    secondaryColor: secondaryColor,
+    backgroundColor: backgroundColor,
+    textColor: textColor,
+    primaryTextColor: primaryTextColor,
+    splashScreen: {
+      storedData: {
+        handle: "/images/app/generic-flow.jpg",
+        mimeType: "image/jpeg",
+      },
+    },
+  };
+}
+
+function extractThemeFromFlow(
+  flow: GraphDescriptor | null
+): {
+  theme: AppTheme;
+  templateAdditionalOptionsChosen: Record<string, string>;
+  title: string;
+  description: string | null;
+} | null {
+  let title = "Untitled App";
+  let description: string | null = null;
+  let templateAdditionalOptionsChosen: Record<string, string> = {};
+
+  const theme: AppTheme = createDefaultTheme();
+
+  if (flow?.metadata?.visual?.presentation) {
+    title =
+      flow.metadata.visual.presentation.title ?? flow.title ?? "Untitled App";
+
+    description =
+      flow.metadata.visual.presentation.description ?? flow.description ?? null;
+
+    const themeColors = flow.metadata.visual.presentation.themeColors;
+    const splashScreen = flow.assets?.["@@splash"];
+
+    if (themeColors) {
+      theme.primaryColor = themeColors["primaryColor"] ?? primaryColor;
+      theme.secondaryColor = themeColors["secondaryColor"] ?? secondaryColor;
+      theme.backgroundColor = themeColors["backgroundColor"] ?? backgroundColor;
+      theme.textColor = themeColors["textColor"] ?? textColor;
+      theme.primaryTextColor =
+        themeColors["primaryTextColor"] ?? primaryTextColor;
+
+      if (splashScreen) {
+        const splashScreenData = splashScreen.data as LLMContent[];
+        if (splashScreenData.length && splashScreenData[0].parts.length) {
+          const splash = splashScreenData[0].parts[0];
+          if (isInlineData(splash) || isStoredData(splash)) {
+            theme.splashScreen = splash;
+          }
+        }
+      }
+    }
+
+    if (flow.metadata.visual.presentation.templateAdditionalOptions) {
+      templateAdditionalOptionsChosen = {
+        ...flow.metadata.visual.presentation.templateAdditionalOptions,
+      };
+    }
+  }
+
+  return {
+    theme,
+    title,
+    description,
+    templateAdditionalOptionsChosen,
+  };
+}
+
 async function bootstrap(args: BootstrapArguments = {}) {
   const icon = document.createElement("link");
   icon.rel = "icon";
@@ -121,12 +208,18 @@ async function bootstrap(args: BootstrapArguments = {}) {
   const runConfig = await createRunConfigWithProxy(flow, args, tokenVendor);
   const runner = await createRunner(runConfig);
 
+  const extractedTheme = extractThemeFromFlow(flow);
   const config: AppViewConfig = {
     template,
     environment,
     tokenVendor,
     settingsHelper,
     runner,
+    theme: extractedTheme?.theme ?? null,
+    title: extractedTheme?.title ?? null,
+    description: extractedTheme?.description ?? null,
+    templateAdditionalOptions:
+      extractedTheme?.templateAdditionalOptionsChosen ?? null,
   };
 
   console.log(`[App View: Version ${pkg.version}; Commit ${GIT_HASH}]`);

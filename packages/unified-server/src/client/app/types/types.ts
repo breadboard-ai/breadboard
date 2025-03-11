@@ -4,7 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { type AppTemplate } from "@breadboard-ai/shared-ui/types/types.js";
+import {
+  AppTheme,
+  type AppTemplate,
+} from "@breadboard-ai/shared-ui/types/types.js";
 import type * as BreadboardUIContext from "@breadboard-ai/shared-ui/contexts";
 import type * as ConnectionClient from "@breadboard-ai/connection-client";
 import { HarnessRunner } from "@google-labs/breadboard/harness";
@@ -26,6 +29,10 @@ export interface AppViewConfig {
   tokenVendor: ConnectionClient.TokenVendor;
   settingsHelper: SettingsHelper;
   runner: Runner | null;
+  theme: AppTheme | null;
+  title: string | null;
+  description: string | null;
+  templateAdditionalOptions: Record<string, string> | null;
 }
 
 export type BootstrapArguments = {
