@@ -81,7 +81,7 @@
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.0",
     "@rollup/plugin-terser": "^0.4.4",
-    "firebase-functions-test": "^3.4.0",
+    "firebase-functions-test": "^3.4.1",
     "rollup": "^4.34.9",
     "typescript": "^5.7.3"
   },
