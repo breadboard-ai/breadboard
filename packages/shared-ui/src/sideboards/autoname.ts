@@ -130,6 +130,7 @@ class Autoname {
     const outputs = await this.runtime.runTask({
       graph: AutonameSideboard,
       context: asLLMContent({ graph, graphId, nodes }),
+      url: graph.url,
     });
     if (!ok(outputs)) {
       // TODO: handle error somehow..

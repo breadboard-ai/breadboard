@@ -40,6 +40,10 @@ export type SideBoardRuntimeEventTarget =
   TypedEventTarget<SideBoardRuntimeEventMap>;
 
 export type SideBoardRuntimeTaskSpec = {
+  /**
+   * URL of the graph on behalf of which we run the task.
+   */
+  url?: string;
   graph: GraphDescriptor;
   context: LLMContent[];
 };

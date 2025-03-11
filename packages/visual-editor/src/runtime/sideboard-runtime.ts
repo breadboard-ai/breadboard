@@ -108,7 +108,7 @@ class SideboardRuntimeImpl
       this.dispatchEvent(new Event("running", { ...EVENT_DICT }));
     }
     this.#runningTaskCount++;
-    const runner = await this.createRunner(task.graph);
+    const runner = await this.createRunner(task.graph, task.url);
     const inputs = {
       context: task.context,
     } as InputValues;
