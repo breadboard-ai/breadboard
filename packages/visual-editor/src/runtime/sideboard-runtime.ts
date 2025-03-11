@@ -83,6 +83,7 @@ class SideboardRuntimeImpl
   #secretsHelper: SecretsHelper | undefined;
   #fileSystem: FileSystem;
   #runningTaskCount = 0;
+  #discardTasks = false;
 
   constructor(
     args: GraphStoreArgs,
@@ -102,11 +103,12 @@ class SideboardRuntimeImpl
   async runTask(
     task: SideBoardRuntimeTaskSpec
   ): Promise<Outcome<LLMContent[]>> {
+    this.#discardTasks = false;
     if (this.#runningTaskCount === 0) {
       this.dispatchEvent(new Event("running", { ...EVENT_DICT }));
     }
     this.#runningTaskCount++;
-    const runner = await this.createRunner(task.graph);
+    const runner = await this.createRunner(task.graph, task.url);
     const inputs = {
       context: task.context,
     } as InputValues;
@@ -125,6 +127,8 @@ class SideboardRuntimeImpl
         return err(`Expected 1 output, got ${JSON.stringify(outputs)}`);
       }
 
+      if (this.#discardTasks) return err(`Tasks were discarded`);
+
       const result = outputs[0].context as LLMContent[];
       if (!result) return err(`Task returned invalid output`);
 
@@ -137,6 +141,10 @@ class SideboardRuntimeImpl
         this.dispatchEvent(new Event("empty", { ...EVENT_DICT }));
       }
     }
+  }
+
+  discardTasks(): void {
+    this.#discardTasks = true;
   }
 
   async #getProxyURL(urlString: string): Promise<string | null> {

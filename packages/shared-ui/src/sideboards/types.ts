@@ -25,6 +25,7 @@ export type SideBoardRuntime =
       graphURLForProxy?: string
     ): Promise<HarnessRunner>;
     runTask(task: SideBoardRuntimeTaskSpec): Promise<Outcome<LLMContent[]>>;
+    discardTasks(): void;
   };
 
 export type SideBoardRuntimeEmptyEvent = Event;
@@ -39,6 +40,10 @@ export type SideBoardRuntimeEventTarget =
   TypedEventTarget<SideBoardRuntimeEventMap>;
 
 export type SideBoardRuntimeTaskSpec = {
+  /**
+   * URL of the graph on behalf of which we run the task.
+   */
+  url?: string;
   graph: GraphDescriptor;
   context: LLMContent[];
 };

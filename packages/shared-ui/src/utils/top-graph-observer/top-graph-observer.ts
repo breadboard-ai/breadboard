@@ -114,7 +114,7 @@ export class TopGraphObserver {
   }
 
   static entryResult(graph: GraphDescriptor | undefined): TopGraphRunResult {
-    const entryId = computeEntryId(graph);
+    // const entryId = computeEntryId(graph);
     return {
       log: [],
       currentNode: null,
@@ -128,8 +128,10 @@ export class TopGraphObserver {
         getActivity() {
           return undefined;
         },
-        canRunNode(id: NodeIdentifier) {
-          return id === entryId;
+        canRunNode(_id: NodeIdentifier) {
+          return false;
+          // TODO: Bring this back once we have stable runs
+          // return id === entryId;
         },
       },
       graph: graph || null,
@@ -138,12 +140,12 @@ export class TopGraphObserver {
 
     // Ideally, this function should live somewhere in packages/breadboard,
     // but for now, this is good enough.
-    function computeEntryId(graph?: GraphDescriptor) {
-      if (!graph || !graph.edges) return;
-      const incoming = new Set(graph.edges.map((edge) => edge.to));
-      const entries = graph.nodes.filter((node) => !incoming.has(node.id));
-      return entries.at(0)?.id;
-    }
+    // function computeEntryId(graph?: GraphDescriptor) {
+    //   if (!graph || !graph.edges) return;
+    //   const incoming = new Set(graph.edges.map((edge) => edge.to));
+    //   const entries = graph.nodes.filter((node) => !incoming.has(node.id));
+    //   return entries.at(0)?.id;
+    // }
   }
 
   constructor(

@@ -62,7 +62,7 @@ function isModule(source: unknown): source is Module {
 export class Edit extends EventTarget {
   #editors = new Map<TabId, EditableGraph>();
   // Since the tabs are gone, we can have a single instance now.
-  #autoname: Autoname | null;
+  #autoname: Autoname;
 
   constructor(
     public readonly providers: GraphProvider[],
@@ -74,11 +74,11 @@ export class Edit extends EventTarget {
     public readonly settings: BreadboardUI.Types.SettingsStore | null
   ) {
     super();
-    const shouldAutoname = !!this.settings
+    const allGraphs = !!this.settings
       ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
       ?.items.get("Enable autonaming")?.value;
 
-    this.#autoname = shouldAutoname ? new Autoname(sideboards) : null;
+    this.#autoname = new Autoname(sideboards, allGraphs);
   }
 
   getEditor(tab: Tab | null): EditableGraph | null {
