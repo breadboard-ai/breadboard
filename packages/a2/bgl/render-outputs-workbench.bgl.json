@@ -1,0 +1,136 @@
+{
+  "title": "Render Outputs Workbench",
+  "description": "A board that show show to render multiple outputs together.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "a2-4fee0499",
+      "type": "file://bgl/a2.bgl.json#module:combine-outputs",
+      "metadata": {
+        "visual": {
+          "x": -260,
+          "y": -1260.0000000000023,
+          "collapsed": "expanded",
+          "outputHeight": 44
+        },
+        "title": "Time of Day",
+        "logLevel": "info"
+      },
+      "configuration": {
+        "text": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Morning"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "8469df91-7949-4f85-b5d8-74e4b643c7e5",
+      "type": "file://bgl/a2.bgl.json#module:combine-outputs",
+      "metadata": {
+        "visual": {
+          "x": -260,
+          "y": -1440.000000000003,
+          "collapsed": "expanded",
+          "outputHeight": 64
+        },
+        "title": "Name",
+        "logLevel": "info"
+      },
+      "configuration": {
+        "text": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Bob"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a2-1d4e4eeb",
+      "type": "file://bgl/a2.bgl.json#module:render-outputs",
+      "metadata": {
+        "title": "Render Outputs",
+        "visual": {
+          "x": 180.00000000000006,
+          "y": -1280.000000000001,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        }
+      },
+      "configuration": {
+        "p-auto-render": true,
+        "text": {
+          "parts": [
+            {
+              "text": "Good  {{\"type\":\"in\",\"path\":\"a2-4fee0499\",\"title\":\"Time of Day\"}}     {{\"type\":\"in\",\"path\":\"8469df91-7949-4f85-b5d8-74e4b643c7e5\",\"title\":\"Name\"}}  ,\n\n {{\"type\":\"in\",\"path\":\"3fff96f5-cfdc-4119-8c8c-134609caffa8\",\"title\":\"Info\"}}"
+            }
+          ],
+          "role": "user"
+        }
+      }
+    },
+    {
+      "id": "3fff96f5-cfdc-4119-8c8c-134609caffa8",
+      "type": "file://bgl/a2.bgl.json#module:combine-outputs",
+      "metadata": {
+        "visual": {
+          "x": -260,
+          "y": -1060,
+          "collapsed": "expanded",
+          "outputHeight": 64
+        },
+        "title": "Info",
+        "logLevel": "info"
+      },
+      "configuration": {
+        "text": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "A bunch of information. Blah blah blah"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "a2-4fee0499",
+      "to": "a2-1d4e4eeb",
+      "out": "context",
+      "in": "p-z-a2-4fee0499"
+    },
+    {
+      "from": "8469df91-7949-4f85-b5d8-74e4b643c7e5",
+      "to": "a2-1d4e4eeb",
+      "out": "context",
+      "in": "p-z-8469df91-7949-4f85-b5d8-74e4b643c7e5"
+    },
+    {
+      "from": "3fff96f5-cfdc-4119-8c8c-134609caffa8",
+      "to": "a2-1d4e4eeb",
+      "out": "context",
+      "in": "p-z-3fff96f5-cfdc-4119-8c8c-134609caffa8"
+    }
+  ],
+  "metadata": {
+    "visual": {},
+    "tags": []
+  },
+  "assets": {
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI2OS43NyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iODUuNDMiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI0Ny4zMSIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KPHJlY3QgeD0iMTAuMDAiCiAgICAgICAgICAgICAgICAgICAgeT0iMTAuNjMiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9Ijg1LjQzIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNTMuODkiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyMGEyMDIiIC8+CjxyZWN0IHg9IjE1NC41NyIKICAgICAgICAgICAgICAgICAgICB5PSI2My4yMCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iODUuNDMiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI2MS43NyIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KPHJlY3QgeD0iMTAuMDAiCiAgICAgICAgICAgICAgICAgICAgeT0iMTM1LjQ5IgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI4NS40MyIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjUzLjg5IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMjBhMjAyIiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+    }
+  }
+}
