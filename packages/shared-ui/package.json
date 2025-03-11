@@ -132,7 +132,7 @@
     "@lit-labs/signals": "^0.1.2",
     "@lit/context": "^1.1.4",
     "@lit/task": "^1.0.2",
-    "@pixi/math-extras": "^7.4.2",
+    "@pixi/math-extras": "^7.4.3",
     "@types/gapi": "^0.0.47",
     "@types/gapi.drive": "^0.0.9",
     "@types/google.picker": "^0.0.43",
