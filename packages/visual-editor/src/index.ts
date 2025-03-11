@@ -606,16 +606,17 @@ export class Main extends LitElement {
 
         this.#runtime.edit.addEventListener(
           Runtime.Events.RuntimeBoardEditEvent.eventName,
-          (evt: Runtime.Events.RuntimeBoardEditEvent) => {
+          (_evt: Runtime.Events.RuntimeBoardEditEvent) => {
             this.requestUpdate();
 
-            const observers = this.#runtime.run.getObservers(evt.tabId);
-            if (observers) {
-              if (!evt.visualOnly) {
-                observers.topGraphObserver?.updateAffected(evt.affectedNodes);
-                observers.runObserver?.replay(evt.affectedNodes);
-              }
-            }
+            // TODO: Bring this back once we have stable runs.
+            // const observers = this.#runtime.run.getObservers(evt.tabId);
+            // if (observers) {
+            //   if (!evt.visualOnly) {
+            //     observers.topGraphObserver?.updateAffected(evt.affectedNodes);
+            //     observers.runObserver?.replay(evt.affectedNodes);
+            //   }
+            // }
 
             const shouldAutoSave = this.#settings?.getItem(
               BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
@@ -1301,6 +1302,8 @@ export class Main extends LitElement {
     }
 
     const graph = this.tab?.graph;
+
+    this.#runtime.edit.sideboards.discardTasks();
 
     this.#runBoard(
       addNodeProxyServerConfig(
@@ -2130,6 +2133,8 @@ export class Main extends LitElement {
     if (!ports) {
       return;
     }
+
+    this.#runtime.edit.sideboards.discardTasks();
 
     this.showNodeConfigurator = true;
     this.#nodeConfiguratorData = {
