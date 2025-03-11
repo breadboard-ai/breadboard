@@ -164,6 +164,7 @@ export class Template extends LitElement implements AppTemplate {
           display: flex;
           flex-direction: column;
           width: 100%;
+          max-height: 100svh;
           overflow-x: hidden;
           overflow-y: scroll;
           flex: 1;

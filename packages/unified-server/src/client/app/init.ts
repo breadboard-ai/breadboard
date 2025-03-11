@@ -213,32 +213,45 @@ async function bootstrap(args: BootstrapArguments = {}) {
   window.oncontextmenu = (evt) => evt.preventDefault();
 
   await StringsHelper.initFrom(LANGUAGE_PACK as LanguagePack);
-  const flow = await fetchFlow();
-  const template = await fetchTemplate(flow);
-  const environment = await createEnvironment(args);
-  const settingsHelper = new SettingsHelperImpl();
-  const tokenVendor = await createTokenVendor(settingsHelper, environment);
-  const runConfig = await createRunConfigWithProxy(flow, args, tokenVendor);
-  const runner = await createRunner(runConfig);
 
-  const extractedTheme = extractThemeFromFlow(flow);
-  const config: AppViewConfig = {
-    template,
-    environment,
-    tokenVendor,
-    settingsHelper,
-    runner,
-    theme: extractedTheme?.theme ?? null,
-    title: extractedTheme?.title ?? null,
-    description: extractedTheme?.description ?? null,
-    templateAdditionalOptions:
-      extractedTheme?.templateAdditionalOptionsChosen ?? null,
-  };
+  async function initAppView() {
+    const flow = await fetchFlow();
+    const template = await fetchTemplate(flow);
+    const environment = await createEnvironment(args);
+    const settingsHelper = new SettingsHelperImpl();
+    const tokenVendor = await createTokenVendor(settingsHelper, environment);
+    const runConfig = await createRunConfigWithProxy(flow, args, tokenVendor);
+    const runner = await createRunner(runConfig);
+
+    const extractedTheme = extractThemeFromFlow(flow);
+    const config: AppViewConfig = {
+      template,
+      environment,
+      tokenVendor,
+      settingsHelper,
+      runner,
+      theme: extractedTheme?.theme ?? null,
+      title: extractedTheme?.title ?? null,
+      description: extractedTheme?.description ?? null,
+      templateAdditionalOptions:
+        extractedTheme?.templateAdditionalOptionsChosen ?? null,
+    };
+
+    const appView = new Elements.AppView(config, flow);
+    document.body.appendChild(appView);
+
+    appView.addEventListener("reset", async (evt: Event) => {
+      if (!(evt.target instanceof HTMLElement)) {
+        return;
+      }
+
+      evt.target.remove();
+      await initAppView();
+    });
+  }
 
   console.log(`[App View: Version ${pkg.version}; Commit ${GIT_HASH}]`);
-
-  const appView = new Elements.AppView(config, flow);
-  document.body.appendChild(appView);
+  await initAppView();
 }
 
 bootstrap({
