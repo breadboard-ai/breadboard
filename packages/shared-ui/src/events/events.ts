@@ -1365,6 +1365,14 @@ export class SignInEvent extends Event {
   }
 }
 
+export class SignInRequestedEvent extends Event {
+  static eventName = "bbsigninrequested";
+
+  constructor() {
+    super(SignInRequestedEvent.eventName, { ...eventInit });
+  }
+}
+
 export class SignOutEvent extends Event {
   static eventName = "bbsignout";
 

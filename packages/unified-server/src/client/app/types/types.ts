@@ -11,9 +11,9 @@ import {
 import type * as BreadboardUIContext from "@breadboard-ai/shared-ui/contexts";
 import type * as ConnectionClient from "@breadboard-ai/connection-client";
 import { HarnessRunner } from "@google-labs/breadboard/harness";
-import { type SettingsHelper } from "../utils/settings.js";
+import { type SettingsHelperImpl } from "../utils/settings.js";
 import { TopGraphObserver } from "@breadboard-ai/shared-ui/utils/top-graph-observer";
-import { InspectableRunObserver, Kit } from "@google-labs/breadboard";
+import { InspectableRunObserver, Kit, RunStore } from "@google-labs/breadboard";
 
 export type Runner = {
   harnessRunner: HarnessRunner;
@@ -21,13 +21,14 @@ export type Runner = {
   runObserver: InspectableRunObserver;
   abortController: AbortController;
   kits: Kit[];
+  runStore: RunStore;
 };
 
 export interface AppViewConfig {
   template: AppTemplate;
   environment: BreadboardUIContext.Environment;
   tokenVendor: ConnectionClient.TokenVendor;
-  settingsHelper: SettingsHelper;
+  settingsHelper: SettingsHelperImpl;
   runner: Runner | null;
   theme: AppTheme | null;
   title: string | null;

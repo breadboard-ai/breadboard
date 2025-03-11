@@ -11,12 +11,31 @@ import { provide } from "@lit/context";
 import * as ConnectionClient from "@breadboard-ai/connection-client";
 import * as BreadboardUIContext from "@breadboard-ai/shared-ui/contexts";
 import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
-import { SettingsHelper } from "../../utils/settings.js";
-import { GraphDescriptor, isStoredData } from "@google-labs/breadboard";
+import { SettingsHelperImpl } from "../../utils/settings.js";
+import {
+  GraphDescriptor,
+  InputValues,
+  isStoredData,
+} from "@google-labs/breadboard";
 import { AppTemplateOptions } from "@breadboard-ai/shared-ui/types/types.js";
 import { getThemeModeFromBackground } from "../../utils/color.js";
 import { until } from "lit/directives/until.js";
 import { TopGraphObserver } from "@breadboard-ai/shared-ui/utils/top-graph-observer";
+import { InputEnterEvent } from "../../events/events.js";
+import {
+  RunEndEvent,
+  RunErrorEvent,
+  RunGraphEndEvent,
+  RunGraphStartEvent,
+  RunInputEvent,
+  RunLifecycleEvent,
+  RunNextEvent,
+  RunNodeEndEvent,
+  RunNodeStartEvent,
+  RunOutputEvent,
+  RunSecretEvent,
+  RunSkipEvent,
+} from "@google-labs/breadboard/harness";
 
 @customElement("app-view")
 export class AppView extends LitElement {
@@ -37,7 +56,7 @@ export class AppView extends LitElement {
   accessor tokenVendor: ConnectionClient.TokenVendor;
 
   @provide({ context: BreadboardUIContext.settingsHelperContext })
-  accessor settingsHelper: SettingsHelper;
+  accessor settingsHelper: SettingsHelperImpl;
 
   #runner: Runner | null;
   #signInAdapter: SigninAdapter;
@@ -60,6 +79,7 @@ export class AppView extends LitElement {
 
     this.#setDocumentTitle();
     this.#applyThemeToTemplate();
+    this.#initializeListeners();
   }
 
   #setDocumentTitle() {
@@ -146,6 +166,70 @@ export class AppView extends LitElement {
     }
   }
 
+  #initializeListeners() {
+    if (!this.#runner) {
+      return;
+    }
+
+    const harnessRunner = this.#runner?.harnessRunner;
+
+    harnessRunner.addEventListener("start", (_evt: RunLifecycleEvent) => {
+      this.requestUpdate();
+    });
+
+    harnessRunner.addEventListener("pause", (_evt: RunLifecycleEvent) => {
+      this.requestUpdate();
+    });
+
+    harnessRunner.addEventListener("resume", (_evt: RunLifecycleEvent) => {
+      this.requestUpdate();
+    });
+
+    harnessRunner.addEventListener("next", (_evt: RunNextEvent) => {
+      this.requestUpdate();
+    });
+
+    harnessRunner.addEventListener("input", (_evt: RunInputEvent) => {
+      this.requestUpdate();
+    });
+
+    harnessRunner.addEventListener("output", (_evt: RunOutputEvent) => {
+      this.requestUpdate();
+    });
+
+    harnessRunner.addEventListener("secret", (_evt: RunSecretEvent) => {
+      this.requestUpdate();
+    });
+
+    harnessRunner.addEventListener("error", (_evt: RunErrorEvent) => {
+      this.requestUpdate();
+    });
+
+    harnessRunner.addEventListener("skip", (_evt: RunSkipEvent) => {
+      this.requestUpdate();
+    });
+
+    harnessRunner.addEventListener("graphstart", (_evt: RunGraphStartEvent) => {
+      this.requestUpdate();
+    });
+
+    harnessRunner.addEventListener("graphend", (_evt: RunGraphEndEvent) => {
+      this.requestUpdate();
+    });
+
+    harnessRunner.addEventListener("nodestart", (_evt: RunNodeStartEvent) => {
+      this.requestUpdate();
+    });
+
+    harnessRunner.addEventListener("nodeend", (_evt: RunNodeEndEvent) => {
+      this.requestUpdate();
+    });
+
+    harnessRunner.addEventListener("end", (_evt: RunEndEvent) => {
+      this.requestUpdate();
+    });
+  }
+
   render() {
     if (!this.flow || !this.#runner) {
       return html`404 not found`;
@@ -157,23 +241,88 @@ export class AppView extends LitElement {
       }
 
       const appTemplate = this.config.template;
+      const run = runs[0] ?? null;
 
+      appTemplate.state = this.#signInAdapter.state;
       appTemplate.graph = this.flow;
-      appTemplate.run = runs[0] ?? null;
+      appTemplate.run = run;
       appTemplate.topGraphResult =
         this.#runner.topGraphObserver.current() ??
         TopGraphObserver.entryResult(this.flow);
-      appTemplate.eventPosition = 0;
+      appTemplate.eventPosition = run?.events.length ?? 0;
       appTemplate.showGDrive = this.#signInAdapter.state === "valid";
+      appTemplate.addEventListener("bbsigninrequested", async () => {
+        const url = await this.#signInAdapter.getSigninUrl();
+
+        this.#signInAdapter.whenSignedIn(async (adapter) => {
+          // The adapter is immutable, this callback will always return a new
+          // copy with a new state, including picture and name.
+          if (adapter.state === "valid") {
+            this.#signInAdapter = adapter;
+            requestAnimationFrame(() => {
+              this.requestUpdate();
+            });
+          }
+        });
+
+        window.open(url, "_blank");
+      });
+
+      appTemplate.addEventListener("bbrun", async (evt: Event) => {
+        evt.stopImmediatePropagation();
+
+        if (!this.#runner) {
+          return;
+        }
+
+        await this.#runner.harnessRunner.run();
+      });
+
+      appTemplate.addEventListener("bbstop", async (evt: Event) => {
+        evt.stopImmediatePropagation();
+
+        if (!this.#runner?.abortController) {
+          return;
+        }
+
+        this.#runner.abortController.abort("User request");
+        try {
+          await this.#runner.harnessRunner.run();
+
+          this.#runner.topGraphObserver = new TopGraphObserver(
+            this.#runner.harnessRunner,
+            this.#runner.abortController.signal,
+            this.#runner.runObserver
+          );
+        } catch (err) {
+          // Noop.
+        }
+      });
+
+      appTemplate.addEventListener("bbinputenter", (evt: Event) => {
+        evt.stopImmediatePropagation();
+
+        if (!this.#runner) {
+          return;
+        }
+
+        const inputEvent = evt as InputEnterEvent;
+        const data = inputEvent.data as InputValues;
+        const runner = this.#runner.harnessRunner;
+
+        if (!runner) {
+          throw new Error("Can't send input, no runner");
+        }
+
+        if (runner.running()) {
+          throw new Error("The runner is already running, cannot send input");
+        }
+
+        runner.run(data);
+      });
 
       return html`${appTemplate}`;
     });
-
-    // if (this.#signInAdapter.state === "signedout") {
-    //   return html`<app-connection-entry-signin
-    //     .adapter=${this.#signInAdapter}
-    //   ></app-connection-entry-signin>`;
-    // }
 
     return html`${until(run)}`;
   }

@@ -4,21 +4,38 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export class SettingsHelper {
-  #values = new Map<string, string>();
-  get(_section: string, name: string) {
-    return { name, value: this.#values.get(name) ?? "" };
+import {
+  SettingEntry,
+  SETTINGS_TYPE,
+  SettingsHelper,
+} from "@breadboard-ai/shared-ui/types/types.js";
+
+export class SettingsHelperImpl implements SettingsHelper {
+  get(
+    _section: SETTINGS_TYPE,
+    name: string
+  ): SettingEntry["value"] | undefined {
+    try {
+      const item = globalThis.sessionStorage.getItem(name);
+      if (!item) {
+        return undefined;
+      }
+
+      return JSON.parse(item);
+    } catch (err) {
+      return undefined;
+    }
   }
 
   async set(
-    _section: string,
+    _section: SETTINGS_TYPE,
     name: string,
-    value: { name: string; value: string }
-  ) {
-    this.#values.set(value.value, name);
+    value: SettingEntry["value"]
+  ): Promise<void> {
+    globalThis.sessionStorage.setItem(name, JSON.stringify(value));
   }
 
-  async delete(_section: string, name: string) {
-    this.#values.delete(name);
+  async delete(_section: SETTINGS_TYPE, name: string) {
+    globalThis.sessionStorage.removeItem(name);
   }
 }

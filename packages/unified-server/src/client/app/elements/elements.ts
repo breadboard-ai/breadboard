@@ -5,4 +5,3 @@
  */
 
 export { AppView } from "./app-view/app-view.js";
-export { ConnectionEntrySignin } from "./sign-in/connection-entry-sign-in.js";

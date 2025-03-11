@@ -45,7 +45,7 @@ export async function createFlowRunner(
   config = {
     ...config,
     store: dataStore,
-    kits: [...graphStore.kits], ///...tab.boardServerKits],
+    kits: [...graphStore.kits],
     signal: abortController.signal,
     graphStore: graphStore,
   };
@@ -73,5 +73,6 @@ export async function createFlowRunner(
     runObserver,
     abortController,
     kits: config.kits,
+    runStore,
   };
 }

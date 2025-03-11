@@ -10,6 +10,8 @@ import {
   AppTemplate,
   AppTheme,
   LanguagePack,
+  SETTINGS_TYPE,
+  SettingsHelper,
 } from "@breadboard-ai/shared-ui/types/types.js";
 import { AppViewConfig, BootstrapArguments } from "./types/types.js";
 
@@ -20,9 +22,8 @@ import {
   isStoredData,
 } from "@google-labs/breadboard";
 import * as BreadboardUIContext from "@breadboard-ai/shared-ui/contexts";
-import { GrantStore } from "./utils/grant.js";
 import * as ConnectionClient from "@breadboard-ai/connection-client";
-import { SettingsHelper } from "./utils/settings.js";
+import { SettingsHelperImpl } from "./utils/settings.js";
 import { createRunConfigWithProxy } from "./utils/run-config.js";
 import { RunConfig } from "@google-labs/breadboard/harness";
 import { createFlowRunner } from "./utils/runner.js";
@@ -102,10 +103,24 @@ async function createEnvironment(
 }
 
 async function createTokenVendor(
+  settingsHelper: SettingsHelper,
   environment: BreadboardUIContext.Environment
 ): Promise<ConnectionClient.TokenVendor> {
-  const grantStore = new GrantStore();
-  return ConnectionClient.createTokenVendor(grantStore, environment);
+  return ConnectionClient.createTokenVendor(
+    {
+      get: (connectionId: string) => {
+        return settingsHelper.get(SETTINGS_TYPE.CONNECTIONS, connectionId)
+          ?.value as string;
+      },
+      set: async (connectionId: string, grant: string) => {
+        await settingsHelper.set(SETTINGS_TYPE.CONNECTIONS, connectionId, {
+          name: connectionId,
+          value: grant,
+        });
+      },
+    },
+    environment
+  );
 }
 
 async function createRunner(runConfig: RunConfig | null) {
@@ -128,9 +143,7 @@ function createDefaultTheme(): AppTheme {
   };
 }
 
-function extractThemeFromFlow(
-  flow: GraphDescriptor | null
-): {
+function extractThemeFromFlow(flow: GraphDescriptor | null): {
   theme: AppTheme;
   templateAdditionalOptionsChosen: Record<string, string>;
   title: string;
@@ -203,8 +216,8 @@ async function bootstrap(args: BootstrapArguments = {}) {
   const flow = await fetchFlow();
   const template = await fetchTemplate(flow);
   const environment = await createEnvironment(args);
-  const tokenVendor = await createTokenVendor(environment);
-  const settingsHelper = new SettingsHelper();
+  const settingsHelper = new SettingsHelperImpl();
+  const tokenVendor = await createTokenVendor(settingsHelper, environment);
   const runConfig = await createRunConfigWithProxy(flow, args, tokenVendor);
   const runner = await createRunner(runConfig);
 
@@ -229,7 +242,7 @@ async function bootstrap(args: BootstrapArguments = {}) {
 }
 
 bootstrap({
-  proxyServerUrl: new URL("/proxy/", window.location.href),
+  proxyServerUrl: new URL("/board/proxy/", window.location.href),
   boardServerUrl: new URL("/board/", window.location.href),
   connectionServerUrl: new URL("/connection/", window.location.href),
   requiresSignin: true,

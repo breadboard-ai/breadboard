@@ -10,6 +10,18 @@ const eventInit = {
   composed: true,
 };
 
+export class InputEnterEvent extends Event {
+  static eventName = "bbinputenter";
+
+  constructor(
+    public readonly id: string,
+    public readonly data: Record<string, unknown>,
+    public readonly allowSavingIfSecret: boolean
+  ) {
+    super(InputEnterEvent.eventName, { ...eventInit });
+  }
+}
+
 /**
  * Sign In and Out
  */
@@ -19,6 +31,14 @@ export class SignInEvent extends Event {
 
   constructor() {
     super(SignInEvent.eventName, { ...eventInit });
+  }
+}
+
+export class SignInRequestedEvent extends Event {
+  static eventName = "bbsigninrequested";
+
+  constructor() {
+    super(SignInRequestedEvent.eventName, { ...eventInit });
   }
 }
 

@@ -32,6 +32,7 @@ import {
   AddAssetRequestEvent,
   InputEnterEvent,
   RunEvent,
+  SignInRequestedEvent,
   StopEvent,
   UtteranceEvent,
 } from "../../events/events";
@@ -41,6 +42,19 @@ import { NodeValue, OutputValues } from "@breadboard-ai/types";
 import { isLLMContentArrayBehavior, isLLMContentBehavior } from "../../utils";
 import { extractError } from "../shared/utils/utils";
 import { AssetShelf } from "../../elements/elements";
+import { SigninState } from "../../utils/signin-adapter";
+
+/** Included so the app can be standalone */
+import "../../elements/input/add-asset/add-asset-button.js";
+import "../../elements/input/add-asset/add-asset-modal.js";
+import "../../elements/input/add-asset/asset-shelf.js";
+import "../../elements/input/speech-to-text/speech-to-text.js";
+import "../../elements/input/drawable/drawable.js";
+
+import "../../elements/output/llm-output/llm-output-array.js";
+import "../../elements/output/llm-output/export-toolbar.js";
+import "../../elements/output/llm-output/llm-output.js";
+import "../../elements/output/multi-output/multi-output.js";
 
 @customElement("app-basic")
 export class Template extends LitElement implements AppTemplate {
@@ -68,6 +82,9 @@ export class Template extends LitElement implements AppTemplate {
 
   @property()
   accessor showGDrive = false;
+
+  @property()
+  accessor state: SigninState = "anonymous";
 
   @state()
   accessor showAddAssetModal = false;
@@ -404,6 +421,7 @@ export class Template extends LitElement implements AppTemplate {
 
             background: var(--background-color, var(--bb-neutral-0));
 
+            & #sign-in,
             & #run {
               min-width: 76px;
               height: var(--bb-grid-size-10);
@@ -433,6 +451,10 @@ export class Template extends LitElement implements AppTemplate {
                   opacity: 1;
                 }
               }
+            }
+
+            & #sign-in {
+              background-image: var(--bb-icon-login-inverted);
             }
 
             &.stopped {
@@ -903,15 +925,26 @@ export class Template extends LitElement implements AppTemplate {
       </div>
       <div id="input" class="stopped">
         <div>
-          <button
-            id="run"
-            ?disabled=${this.#totalNodeCount === 0}
-            @click=${() => {
-              this.dispatchEvent(new RunEvent());
-            }}
-          >
-            Start
-          </button>
+          ${this.state === "anonymous" || this.state === "valid"
+            ? html`<button
+                id="run"
+                ?disabled=${this.#totalNodeCount === 0}
+                @click=${() => {
+                  this.dispatchEvent(new RunEvent());
+                }}
+              >
+                Start
+              </button>`
+            : html`<button
+                id="sign-in"
+                ?disabled=${this.#totalNodeCount === 0}
+                @click=${() => {
+                  console.log("Sign in");
+                  this.dispatchEvent(new SignInRequestedEvent());
+                }}
+              >
+                Sign In
+              </button>`}
         </div>
       </div>
     `;
