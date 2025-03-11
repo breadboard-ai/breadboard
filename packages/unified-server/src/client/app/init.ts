@@ -19,6 +19,8 @@ import { GrantStore } from "./utils/grant.js";
 import * as ConnectionClient from "@breadboard-ai/connection-client";
 import { SettingsHelper } from "./utils/settings.js";
 import { createRunConfigWithProxy } from "./utils/run-config.js";
+import { RunConfig } from "@google-labs/breadboard/harness";
+import { createFlowRunner } from "./utils/runner.js";
 
 async function fetchFlow() {
   try {
@@ -93,6 +95,10 @@ async function createTokenVendor(
   return ConnectionClient.createTokenVendor(grantStore, environment);
 }
 
+async function createRunner(runConfig: RunConfig | null) {
+  return createFlowRunner(runConfig);
+}
+
 async function bootstrap(args: BootstrapArguments = {}) {
   const icon = document.createElement("link");
   icon.rel = "icon";
@@ -113,13 +119,14 @@ async function bootstrap(args: BootstrapArguments = {}) {
   const tokenVendor = await createTokenVendor(environment);
   const settingsHelper = new SettingsHelper();
   const runConfig = await createRunConfigWithProxy(flow, args, tokenVendor);
+  const runner = await createRunner(runConfig);
 
   const config: AppViewConfig = {
     template,
     environment,
     tokenVendor,
     settingsHelper,
-    runConfig,
+    runner,
   };
 
   console.log(`[App View: Version ${pkg.version}; Commit ${GIT_HASH}]`);

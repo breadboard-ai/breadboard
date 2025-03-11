@@ -5,7 +5,7 @@
  */
 import { LitElement, html, css } from "lit";
 import { customElement } from "lit/decorators.js";
-import { AppViewConfig } from "../../types/types";
+import { AppViewConfig, Runner } from "../../types/types";
 import { provide } from "@lit/context";
 
 import * as ConnectionClient from "@breadboard-ai/connection-client";
@@ -13,7 +13,6 @@ import * as BreadboardUIContext from "@breadboard-ai/shared-ui/contexts";
 import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
 import { SettingsHelper } from "../../utils/settings.js";
 import { GraphDescriptor } from "@google-labs/breadboard";
-import { RunConfig } from "@google-labs/breadboard/harness";
 
 @customElement("app-view")
 export class AppView extends LitElement {
@@ -32,7 +31,7 @@ export class AppView extends LitElement {
   @provide({ context: BreadboardUIContext.settingsHelperContext })
   accessor settingsHelper: SettingsHelper;
 
-  #runConfig: RunConfig | null;
+  #runner: Runner | null;
   #signInAdapter: SigninAdapter;
 
   constructor(
@@ -44,7 +43,7 @@ export class AppView extends LitElement {
     this.environment = config.environment;
     this.tokenVendor = config.tokenVendor;
     this.settingsHelper = config.settingsHelper;
-    this.#runConfig = config.runConfig;
+    this.#runner = config.runner;
     this.#signInAdapter = new SigninAdapter(
       this.tokenVendor,
       this.environment,
@@ -64,7 +63,7 @@ export class AppView extends LitElement {
     }
 
     const appTemplate = this.config.template;
-    console.log(this.#runConfig);
+    console.log(this.#runner);
 
     appTemplate.graph = this.flow;
     // appTemplate.run = this.run;

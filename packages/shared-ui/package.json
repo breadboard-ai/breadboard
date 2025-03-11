@@ -20,6 +20,10 @@
       "default": "./dist/utils/signin-adapter.js",
       "types": "./dist/utils/signin-adapter.d.ts"
     },
+    "./utils/top-graph-observer": {
+      "default": "./dist/utils/top-graph-observer/index.js",
+      "types": "./dist/utils/top-graph-observer/index.d.ts"
+    },
     "./elements/connection/connection-broker.ts": {
       "default": "./dist/elements/connection/connection-broker.js",
       "types": "./dist/elements/connection/connection-broker.d.ts"
