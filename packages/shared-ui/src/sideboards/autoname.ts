@@ -133,14 +133,12 @@ class Autoname {
       url: graph.url,
     });
     if (!ok(outputs)) {
-      // TODO: handle error somehow.
-      console.error("AUTONAMING ERROR", outputs.$error);
-      return;
+      console.error("Autonaming error", outputs.$error);
+      return outputs;
     }
     const part = outputs.at(0)?.parts.at(0);
     if (!(part && "json" in part)) {
-      // TODO: handle error.
-      return;
+      return err(`Invalid sideboard output`);
     }
     const result = part.json as AutonamingResult;
     console.log("AUTONAMING RESULT", result);
@@ -185,8 +183,8 @@ class Autoname {
 
     const editing = await editor.edit(edits, AUTONAMING_LABEL);
     if (!editing.success) {
-      // TODO: Handle the error properly.
-      console.error("FAILED", editing.error);
+      console.error("Editing failed", editing.error);
+      return err(editing.error);
     }
   }
 
@@ -213,20 +211,16 @@ class Autoname {
 
     console.log("PENDING SIZE", this.#pending.size);
 
-    // TODO: Non-blocking autonaming
-    // TODO: Figure out how to not to impact runs with edits
-    // TODO: Use a transform -- because titles of nodes may be in chiclets.
-
     try {
       this.#running = true;
       for (;;) {
         const entry = this.#pending.entries().next().value;
         if (!entry) return;
+        const [graphId] = entry;
         // Clear out the pending store for the graphId, so that
         // if new affectedNodes come in for this graphId, they would
         // be added as a new entry.
-        this.#pending.delete(entry[0]);
-        const graphId = entry[0];
+        this.#pending.delete(graphId);
         // Don't autoname main graph when asked.
         if (!this.allGraphs && !graphId) continue;
 
