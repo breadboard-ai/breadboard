@@ -286,17 +286,8 @@ export class AppView extends LitElement {
         }
 
         this.#runner.abortController.abort("User request");
-        try {
-          await this.#runner.harnessRunner.run();
-
-          this.#runner.topGraphObserver = new TopGraphObserver(
-            this.#runner.harnessRunner,
-            this.#runner.abortController.signal,
-            this.#runner.runObserver
-          );
-        } catch (err) {
-          // Noop.
-        }
+        await this.#runner.harnessRunner.run();
+        this.dispatchEvent(new Event("reset"));
       });
 
       appTemplate.addEventListener("bbinputenter", (evt: Event) => {
