@@ -1,19 +1,24 @@
 {
   "compilerOptions": {
-    "forceConsistentCasingInFileNames": true,
-    "incremental": true,
-    "lib": ["ES2022", "DOM"],
-    "module": "NodeNext",
-    "rootDir": ".",
-    "outDir": "./dist",
-    "tsBuildInfoFile": "./dist/client.tsbuildinfo",
-    "preserveWatchOutput": true,
-    "resolveJsonModule": true,
+    "target": "ES2022",
+    "module": "ESNext",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
-    "sourceMap": true,
+    "useDefineForClassFields": false,
+    "outDir": "dist",
+
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+
     "strict": true,
-    "target": "ES2022"
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+
+    "forceConsistentCasingInFileNames": true
   },
   "include": ["src/**/*"],
-  "exclude": ["src/server/**/*"]
+  "exclude": ["src/server/**/*"],
+  "extends": "@google-labs/tsconfig/base.json"
 }

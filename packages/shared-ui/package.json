@@ -8,6 +8,22 @@
       "default": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
+    "./contexts": {
+      "default": "./dist/contexts/contexts.js",
+      "types": "./dist/contexts/contexts.d.ts"
+    },
+    "./app-templates/basic": {
+      "default": "./dist/app-templates/basic/index.js",
+      "types": "./dist/app-templates/basic/index.d.ts"
+    },
+    "./utils/signin-adapter": {
+      "default": "./dist/utils/signin-adapter.js",
+      "types": "./dist/utils/signin-adapter.d.ts"
+    },
+    "./utils/top-graph-observer": {
+      "default": "./dist/utils/top-graph-observer/index.js",
+      "types": "./dist/utils/top-graph-observer/index.d.ts"
+    },
     "./elements/connection/connection-broker.ts": {
       "default": "./dist/elements/connection/connection-broker.js",
       "types": "./dist/elements/connection/connection-broker.d.ts"

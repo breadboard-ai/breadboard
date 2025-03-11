@@ -38,6 +38,8 @@ import type {
   tsLinter,
   tsSync,
 } from "@valtown/codemirror-ts";
+import { SigninState } from "../utils/signin-adapter";
+import { LitElement } from "lit";
 
 export const enum HistoryEventType {
   DONE = "done",
@@ -538,7 +540,8 @@ export interface AppTemplateOptions {
   additionalOptions?: AppTemplateAdditionalOptionsChosen;
 }
 
-export interface AppTemplate {
+export interface AppTemplate extends LitElement {
+  state: SigninState | null;
   options: AppTemplateOptions;
   run: InspectableRun | null;
   graph: GraphDescriptor | null;

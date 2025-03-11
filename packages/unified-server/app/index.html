@@ -1,8 +1,33 @@
 <!doctype html>
-<head>
-  <title>Breadboard - App View</title>
-</head>
-<body>
-  <script type="module" src="/src/client/app/init.ts"></script>
-  Breadboard App View
-</body>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Loading...</title>
+    <link rel="stylesheet" href="/styles/global.css" />
+    <style>
+      app-view {
+        flex: 1;
+      }
+
+      @media screen and (min-width: 440px) {
+        body {
+          align-items: center;
+          justify-content: center;
+          background-color: var(--bb-ui-50);
+        }
+
+        app-view {
+          flex: 0 0 auto;
+          width: 100%;
+          border-radius: var(--bb-grid-size-4);
+          aspect-ratio: 9/16;
+          overflow: hidden;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <script type="module" src="/src/client/app/init.ts"></script>
+  </body>
+</html>

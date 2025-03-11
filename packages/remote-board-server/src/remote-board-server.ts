@@ -67,7 +67,8 @@ export class RemoteBoardServer implements BoardServer, RemoteConnector {
     url: string,
     title: string,
     user: User,
-    tokenVendor?: TokenVendor
+    tokenVendor?: TokenVendor,
+    autoLoadProjects = true
   ) {
     // Add a slash at the end of the URL string, because all URL future
     // construction will depend on it.
@@ -90,7 +91,13 @@ export class RemoteBoardServer implements BoardServer, RemoteConnector {
         },
       };
 
-      return new RemoteBoardServer(title, configuration, user, tokenVendor);
+      return new RemoteBoardServer(
+        title,
+        configuration,
+        user,
+        tokenVendor,
+        autoLoadProjects
+      );
     } catch (err) {
       console.warn(err);
       return null;
@@ -101,10 +108,13 @@ export class RemoteBoardServer implements BoardServer, RemoteConnector {
     public readonly name: string,
     public readonly configuration: BoardServerConfiguration,
     public readonly user: User,
-    public readonly tokenVendor?: TokenVendor
+    public readonly tokenVendor?: TokenVendor,
+    autoLoadProjects = true
   ) {
     this.url = configuration.url;
-    this.projects = this.#refreshProjects();
+    this.projects = autoLoadProjects
+      ? this.#refreshProjects()
+      : Promise.resolve([]);
     this.kits = configuration.kits;
     this.users = configuration.users;
     this.secrets = configuration.secrets;
