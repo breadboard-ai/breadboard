@@ -643,6 +643,6 @@ export const splitContextsFunction = fun(({ context }) => {
   return result;
 
   function asContextArray(input: unknown): Context[] {
-    return Array.isArray(input) ? input : [input];
+    return Array.isArray(input) ? input : [input as Context];
   }
 });
