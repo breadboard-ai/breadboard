@@ -160,6 +160,10 @@ export type NodeMetadata = {
    * The icon for the node.
    */
   icon?: string;
+  /**
+   * If true, the title/description have been modified by the user.
+   */
+  userModified?: boolean;
 };
 
 /**
@@ -343,6 +347,11 @@ export type GraphMetadata = {
    * quick access menu.
    */
   order?: number;
+
+  /**
+   * If true, the title/description have been modified by the user.
+   */
+  userModified?: boolean;
 };
 
 /**

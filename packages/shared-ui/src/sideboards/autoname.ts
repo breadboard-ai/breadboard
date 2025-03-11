@@ -133,7 +133,7 @@ class Autoname {
       url: graph.url,
     });
     if (!ok(outputs)) {
-      // TODO: handle error somehow..
+      // TODO: handle error somehow.
       console.error("AUTONAMING ERROR", outputs.$error);
       return;
     }
@@ -167,17 +167,19 @@ class Autoname {
       edits.push(...nodeEdits);
     }
 
-    const graphSuggestions = result.suggestions?.graph;
-    if (graphSuggestions) {
-      const { suggestedTitle: title, suggestedDescription: description } =
-        graphSuggestions;
-      if (title || description) {
-        edits.push({
-          graphId,
-          type: "changegraphmetadata",
-          title,
-          description,
-        });
+    if (!graph.metadata?.userModified) {
+      const graphSuggestions = result.suggestions?.graph;
+      if (graphSuggestions) {
+        const { suggestedTitle: title, suggestedDescription: description } =
+          graphSuggestions;
+        if (title || description) {
+          edits.push({
+            graphId,
+            type: "changegraphmetadata",
+            title,
+            description,
+          });
+        }
       }
     }
 

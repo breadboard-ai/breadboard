@@ -72,7 +72,8 @@ class UpdateNode implements EditTransform {
       titleChanged = !!(
         metadata.title && existingMetadata.title !== metadata.title
       );
-      const newMetadata = {
+      const newMetadata: NodeMetadata = {
+        userModified: true,
         ...existingMetadata,
         ...metadata,
       };
