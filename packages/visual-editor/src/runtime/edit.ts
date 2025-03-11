@@ -95,7 +95,7 @@ export class Edit extends EventTarget {
     editor.addEventListener("graphchange", (evt) => {
       tab.graph = evt.graph;
 
-      this.#autoname?.addTask(editor, evt).then((result) => {
+      this.#autoname.addTask(editor, evt).then((result) => {
         if (!ok(result)) {
           console.log("AUTONAMING ERROR", result.$error);
         }
@@ -855,8 +855,10 @@ export class Edit extends EventTarget {
     graph.version = version;
     graph.description = description;
 
+    graph.metadata ??= {};
+    graph.metadata.userModified = true;
+
     if (status) {
-      graph.metadata ??= {};
       graph.metadata.tags ??= [];
 
       switch (status) {
