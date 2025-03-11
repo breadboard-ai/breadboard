@@ -18,6 +18,7 @@ export type BootstrapArguments = {
 };
 
 function bootstrap(args: BootstrapArguments = {}) {
+  console.log(args);
   const icon = document.createElement("link");
   icon.rel = "icon";
   icon.type = "image/svg+xml";
