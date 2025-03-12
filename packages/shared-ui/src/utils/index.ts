@@ -91,3 +91,14 @@ export function isGoogleDriveFileId(schema: Schema) {
 export function isGoogleDriveQuery(schema: Schema) {
   return schema.behavior?.includes("google-drive-query");
 }
+
+export function escapeHTMLEntities(str: string) {
+  const htmlEntities: Record<string, string> = {
+    "<": "&lt;",
+    ">": "&gt;",
+  };
+
+  return str
+    .replace(/&(?!lt|gt)/, "&amp;")
+    .replace(/[<>]/g, (char) => htmlEntities[char]);
+}
