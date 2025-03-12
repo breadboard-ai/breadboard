@@ -461,7 +461,7 @@ export class LLMOutput extends LitElement {
               }
               if (part.inlineData.mimeType.startsWith("text/html")) {
                 return cache(
-                  html`<iframe srcdoc="${part.inlineData.data}" frameBorder="0"></iframe>`);
+                  html`<iframe srcdoc="${part.inlineData.data}" frameBorder="0" class="html-view"></iframe>`);
               }              
               if (part.inlineData.mimeType.startsWith("video")) {
                 return cache(html`<video src="${url}" controls />`);
