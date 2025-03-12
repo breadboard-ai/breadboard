@@ -143,9 +143,8 @@ export class NodeInvoker {
   ): Promise<NodeHandlerContext> {
     const { configuration } = descriptor;
     if (!configuration) return context;
-    if (!this.#initialInputs) return context;
 
-    const knownInputs = new Set(Object.keys(this.#initialInputs));
+    const knownInputs = new Set(Object.keys(this.#initialInputs || {}));
     const params: TemplatePart[] = [];
 
     // Scan for all LLMContent/LLMContent[] properties
@@ -177,29 +176,9 @@ export class NodeInvoker {
     const parameterInputs: FileSystemEntry[] = [];
 
     if (params.length > 0) {
-      // Simulate a subgraph that consists of one node.
+      console.table(params);
 
-      const schema: Schema = {
-        type: "object",
-        properties: Object.fromEntries(
-          params.map((param) => {
-            return [
-              param.path,
-              {
-                type: "object",
-                title: param.title,
-                behavior: ["llm-content"],
-              } satisfies Schema,
-            ];
-          })
-        ),
-      };
-
-      const paramDescriptor: NodeDescriptor = {
-        id: crypto.randomUUID(),
-        type: "input",
-        configuration: { schema },
-      };
+      // Simulate a subgraph that consists of 1+ input nodes.
 
       await context.probe?.report?.({
         type: "graphstart",
@@ -211,50 +190,67 @@ export class NodeInvoker {
         },
       });
 
-      await context.probe?.report?.({
-        type: "nodestart",
-        data: {
-          node: paramDescriptor,
-          inputs: {
-            schema,
+      // TODO: Implement support for multiple inputs at once.
+      for (const [idx, param] of params.entries()) {
+        const schema: Schema = {
+          type: "object",
+          properties: {
+            [param.path]: {
+              type: "object",
+              title: param.title,
+              description: param.title,
+              behavior: ["llm-content"],
+            },
           },
-          path: [...path, -1, -1],
-          timestamp: timestamp(),
-        },
-      });
+        };
 
-      const paramsResult = { ...result, inputs: { schema } };
-      console.table(params);
+        const paramDescriptor: NodeDescriptor = {
+          id: crypto.randomUUID(),
+          type: "input",
+          configuration: { schema },
+        };
 
-      // Pretend to be the invoked node and ask for inputs.
-      await bubbleUpInputsIfNeeded(
-        this.#graph.graph,
-        context,
-        paramDescriptor,
-        paramsResult,
-        [...path, -1, -1]
-      );
+        await context.probe?.report?.({
+          type: "nodestart",
+          data: {
+            node: paramDescriptor,
+            inputs: { schema },
+            path: [...path, -1, idx],
+            timestamp: timestamp(),
+          },
+        });
 
-      if (paramsResult.outputs) {
-        parameterInputs.push(
-          ...Object.entries(paramsResult.outputs).map(([id, content]) => {
-            const path = `/env/parameters/${id}` as FileSystemPath;
-            return { path, data: [content] as LLMContent[] };
-          })
+        const paramsResult = { ...result, inputs: { schema } };
+
+        await bubbleUpInputsIfNeeded(
+          this.#graph.graph,
+          context,
+          paramDescriptor,
+          paramsResult,
+          [...path, -1, idx]
         );
-      }
 
-      await context.probe?.report?.({
-        type: "nodeend",
-        data: {
-          node: paramDescriptor,
-          inputs: { schema },
-          outputs: paramsResult.outputs || {},
-          path: [...path, -1, -1],
-          timestamp: timestamp(),
-          newOpportunities: [],
-        },
-      });
+        if (paramsResult.outputs) {
+          parameterInputs.push(
+            ...Object.entries(paramsResult.outputs).map(([id, content]) => {
+              const path = `/env/parameters/${id}` as FileSystemPath;
+              return { path, data: [content] as LLMContent[] };
+            })
+          );
+        }
+
+        await context.probe?.report?.({
+          type: "nodeend",
+          data: {
+            node: paramDescriptor,
+            inputs: { schema },
+            outputs: paramsResult.outputs || {},
+            path: [...path, -1, idx],
+            timestamp: timestamp(),
+            newOpportunities: [],
+          },
+        });
+      }
 
       await context.probe?.report?.({
         type: "graphend",
