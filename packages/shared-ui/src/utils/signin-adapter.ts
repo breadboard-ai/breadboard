@@ -137,7 +137,6 @@ class SigninAdapter {
     const connection = list.connections?.find(
       (connection) => connection.id == SIGN_IN_CONNECTION_ID
     );
-    console.log(connection);
     if (!connection) {
       return;
     }
@@ -227,10 +226,6 @@ class SigninAdapter {
       id: grantResponse.id,
     };
     await this.#settingsHelper?.set(SETTINGS_TYPE.CONNECTIONS, connection.id, {
-      name: connection.id,
-      value: JSON.stringify(settingsValue),
-    });
-    console.log(connection.id, {
       name: connection.id,
       value: JSON.stringify(settingsValue),
     });
