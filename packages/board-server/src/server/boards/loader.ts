@@ -1,7 +1,6 @@
 import type { NextFunction, Request, RequestHandler, Response } from "express";
 
 import type { BoardServerStore } from "../types.js";
-import { BoardNotFound } from "../store.js";
 
 export function loadBoard(): RequestHandler {
   return async (
@@ -17,14 +16,12 @@ export function loadBoard(): RequestHandler {
       }
 
       const store: BoardServerStore = res.app.locals.store;
-
-      res.locals.loadedBoard = await store.loadBoard(user, fixBoardName(name));
+      const board = await store.loadBoard(user, fixBoardName(name));
+      if (board) {
+        res.locals.loadedBoard = board;
+      }
       next();
     } catch (e) {
-      // TODO factor this into an error handler
-      if (e instanceof BoardNotFound) {
-        res.sendStatus(404);
-      }
       next(e);
     }
   };

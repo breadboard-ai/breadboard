@@ -5,15 +5,19 @@
  */
 
 import type { Request, Response } from "express";
-import type { GraphDescriptor } from "@breadboard-ai/types";
 import * as errors from "../errors.js";
-import type { BoardServerStore } from "../types.js";
 import type { StorageBoard } from "../store.js";
 
 async function get(req: Request, res: Response) {
   try {
-    const board: StorageBoard = res.locals.loadedBoard;
+    const board: StorageBoard | null = res.locals.loadedBoard;
+    if (!board) {
+      res.sendStatus(404);
+      return;
+    }
 
+    // TODO Fail closed, not open
+    // TODO Return 404 or 403, not 401
     if (board.graph?.metadata?.tags?.includes("private")) {
       if (res.locals.userId != req.params["user"]) {
         errors.unauthorized(res);
