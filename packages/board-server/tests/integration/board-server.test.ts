@@ -84,29 +84,33 @@ suite("Board Server integration test", () => {
 
     test("POST /boards/@:user/:name.json -> updates", async () => {
       const store = getStore();
-      await store.create(user.account, "test-board");
+      await store.create(user.account, "test-board.json");
 
       const response = await request(server)
-        .post(`/boards/@${user.account}/test-board?API_KEY=${user.api_key}`)
+        .post(
+          `/boards/@${user.account}/test-board.json?API_KEY=${user.api_key}`
+        )
         .send({ nodes: [], edges: [] });
 
       assert.equal(response.status, 200);
       assert.deepEqual(response.body, {
-        created: `@${user.account}/test-board`,
+        created: `@${user.account}/test-board.json`,
       });
     });
 
     test("POST /boards/@:user/:name.json -> deletes", async () => {
       const store = getStore();
-      await store.create(user.account, "test-board");
+      await store.create(user.account, "test-board.json");
 
       const response = await request(server)
-        .post(`/boards/@${user.account}/test-board?API_KEY=${user.api_key}`)
+        .post(
+          `/boards/@${user.account}/test-board.json?API_KEY=${user.api_key}`
+        )
         .send({ delete: true });
 
       assert.equal(response.status, 200);
       assert.deepEqual(response.body, {
-        deleted: `@${user.account}/test-board`,
+        deleted: `@${user.account}/test-board.json`,
       });
     });
 
@@ -138,15 +142,14 @@ suite("Board Server integration test", () => {
 
     test("POST /boards/@:user/:name.api/invoke", async () => {
       const store = getStore();
-      await store.create(user.account, "test-board");
-      await store.update(user.account, "test-board", {
+      await store.create(user.account, "test-board.json");
+      await store.update(user.account, "test-board.json", {
         nodes: [{ type: "input", id: "input" }],
         edges: [],
       });
-      const path = `@${user.account}/test-board.invoke`;
 
       const response = await request(server)
-        .post(`/boards/${path}/invoke`)
+        .post(`/boards/@${user.account}/test-board.api/invoke`)
         .send({ $key: user.api_key });
 
       assert.equal(response.status, 200);
@@ -167,11 +170,10 @@ suite("Board Server integration test", () => {
 
     test("POST /boards/@:user/:name.api/run", async () => {
       const store = getStore();
-      store.create(user.account, "test-board");
-      const path = `@{user.account}/test-board.api/run`;
+      store.create(user.account, "test-board.json");
 
       const response = await request(server)
-        .post(`/boards/${path}/run`)
+        .post(`/boards/@${user.account}/test-board.api/run`)
         .send({});
 
       assert.equal(response.status, 200);
