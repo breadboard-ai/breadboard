@@ -7,7 +7,6 @@
 import { type Request, type Response, Router } from "express";
 
 import { getStore, type ServerInfo } from "../store.js";
-import { corsAll } from "../cors.js";
 import packageInfo from "../../../package.json" with { type: "json" };
 
 const DEFAULT_SERVER_INFO: ServerInfo = {
@@ -25,7 +24,6 @@ const DEFAULT_SERVER_INFO: ServerInfo = {
 export function serveInfoAPI(): Router {
   const router = Router();
 
-  router.use(corsAll);
   router.get("/", get);
 
   return router;

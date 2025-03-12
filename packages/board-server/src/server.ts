@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import cors from "cors";
 import express, { type Express } from "express";
 
 import { getUserCredentials } from "./server/auth.js";
@@ -24,6 +25,16 @@ const DEFAULT_HOST = "localhost";
 export function createServer(config: ServerConfig): Express {
   const server = express();
 
+  server.use(
+    cors({
+      credentials: true,
+      // Different browsers allow different max values for max age. The highest
+      // seems to be 24 hours.
+      // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Max-Age
+      maxAge: 24 * 60 * 60,
+    })
+  );
+
   server.locals.store = getStore();
 
   server.use(getUserCredentials());
@@ -33,7 +44,7 @@ export function createServer(config: ServerConfig): Express {
   server.use("/blobs", serveBlobsAPI(config));
   server.use("/boards", serveBoardsAPI(config));
   server.use("/info", serveInfoAPI());
-  server.use("/me", serveMeAPI(config));
+  server.use("/me", serveMeAPI());
   server.use("/proxy", serveProxyAPI(config));
 
   return server;
