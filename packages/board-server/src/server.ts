@@ -39,7 +39,7 @@ export function createServer(config: ServerConfig): Express {
   return server;
 }
 
-export function createServerConfig(rootPath: string): ServerConfig {
+export function createServerConfig(): ServerConfig {
   const {
     PORT = DEFAULT_PORT,
     HOST = DEFAULT_HOST,
@@ -54,7 +54,6 @@ export function createServerConfig(rootPath: string): ServerConfig {
     ),
     hostname: `http://${HOST}:${PORT}`,
     port: +PORT || DEFAULT_PORT,
-    rootPath,
     serverUrl: SERVER_URL,
     storageBucket: STORAGE_BUCKET,
   };

@@ -17,6 +17,5 @@ export interface ServerConfig {
    * server info API response.
    */
   serverUrl?: string;
-  rootPath: string;
   storageBucket?: string;
 }
