@@ -11,13 +11,19 @@ const Strings = StringsHelper.forSection("AppPreview");
 import { LitElement, PropertyValues, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
+  BoardServer,
   InspectableRun,
   isInlineData,
   isStoredData,
 } from "@google-labs/breadboard";
 
 import { styles as appPreviewStyles } from "./app-preview.styles.js";
-import { ThemeApplyEvent, ThemeChangeEvent } from "../../events/events.js";
+import {
+  ThemeApplyEvent,
+  ThemeChangeEvent,
+  ToastEvent,
+  ToastType,
+} from "../../events/events.js";
 import {
   AppTemplate,
   AppTemplateOptions,
@@ -25,6 +31,7 @@ import {
   TopGraphRunResult,
 } from "../../types/types.js";
 import { getGlobalColor } from "../../utils/color.js";
+import { until } from "lit/directives/until.js";
 
 const primaryColor = getGlobalColor("--bb-ui-700");
 const secondaryColor = getGlobalColor("--bb-ui-400");
@@ -92,6 +99,9 @@ export class AppPreview extends LitElement {
   @property()
   accessor theme: AppTheme = this.#createDefaultTheme();
 
+  @property()
+  accessor boardServers: BoardServer[] = [];
+
   @state()
   accessor _originalTheme: AppTheme | null = null;
 
@@ -117,6 +127,26 @@ export class AppPreview extends LitElement {
         },
       },
     };
+  }
+
+  async #deriveAppURL() {
+    if (!this.graph?.url) {
+      return;
+    }
+
+    for (const server of this.boardServers) {
+      const graphUrl = new URL(this.graph.url);
+      const capabilities = server.canProvide(graphUrl);
+      if (!capabilities) {
+        return;
+      }
+
+      if (server.extendedCapabilities().preview) {
+        return server.preview(graphUrl);
+      }
+    }
+
+    return null;
   }
 
   #splashImage = new Map<string, string>();
@@ -344,6 +374,35 @@ export class AppPreview extends LitElement {
 
     return html`<div id="container">
       <div id="theme-management">
+        <div id="app-url">
+          <h1>App URL</h1>
+          <div id="url-container">
+            <input
+              disabled
+              type="url"
+              id="url"
+              .value=${until(this.#deriveAppURL())}
+            />
+            <button
+              @click=${async () => {
+                const url = await this.#deriveAppURL();
+                if (!url) {
+                  return;
+                }
+
+                await navigator.clipboard.writeText(url.href);
+                this.dispatchEvent(
+                  new ToastEvent(
+                    Strings.from("STATUS_COPIED_TO_CLIPBOARD"),
+                    ToastType.INFORMATION
+                  )
+                );
+              }}
+            >
+              Copy
+            </button>
+          </div>
+        </div>
         <bb-app-theme-creator
           .graph=${this.graph}
           .appTitle=${this.appTitle}

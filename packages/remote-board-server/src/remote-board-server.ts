@@ -366,7 +366,12 @@ export class RemoteBoardServer implements BoardServer, RemoteConnector {
   }
 
   async preview(url: URL): Promise<URL> {
-    return new URL(url.href.replace(/json$/, "app"));
+    return new URL(
+      url.href.replace(
+        `${this.url.origin}/board/boards`,
+        `${this.url.origin}/app`
+      )
+    );
   }
 
   async #sendToRemote(url: URL, descriptor: GraphDescriptor) {
