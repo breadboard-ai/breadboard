@@ -295,15 +295,11 @@ our Visual Editor.
 1. Open
    [`packages/board-server/app.yaml`](https://github.com/breadboard-ai/breadboard/blob/main/packages/board-server/app.yaml)
    in a text editor.
-2. Set an explicit service name, and add the allowed origins.
+2. Set an explicit service name
 
 ```yaml
 service: boards
-
-# <other config omitted>
-
-env_variables:
-  ALLOWED_ORIGINS: "{YOUR_VISUAL_EDITOR_ORIGIN}"
+# ... rest of config
 ```
 
 #### Deploy the server
