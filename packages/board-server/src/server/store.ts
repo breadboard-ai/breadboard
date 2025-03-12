@@ -105,5 +105,3 @@ export const asInfo = (path: string) => {
   }
   return { userStore: userStore.slice(1), boardName };
 };
-
-export class BoardNotFound extends Error {}
