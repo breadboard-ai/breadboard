@@ -39,7 +39,7 @@ export function createServer(config: ServerConfig): Express {
 
   server.use(getUserCredentials());
 
-  server.get("/", async (req, res) => serveHome(config, req, res));
+  server.get("/", serveHome);
 
   server.use("/blobs", serveBlobsAPI(config));
   server.use("/boards", serveBoardsAPI(config));
@@ -54,15 +54,11 @@ export function createServerConfig(): ServerConfig {
   const {
     PORT = DEFAULT_PORT,
     HOST = DEFAULT_HOST,
-    ALLOWED_ORIGINS = "",
     STORAGE_BUCKET,
     SERVER_URL,
   } = process.env;
 
   return {
-    allowedOrigins: ALLOWED_ORIGINS.split(/\s+/).filter(
-      (origin) => origin !== ""
-    ),
     hostname: `http://${HOST}:${PORT}`,
     port: +PORT || DEFAULT_PORT,
     serverUrl: SERVER_URL,

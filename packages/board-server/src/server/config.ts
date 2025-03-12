@@ -5,7 +5,6 @@
  */
 
 export interface ServerConfig {
-  allowedOrigins: string[];
   hostname: string;
   port: number;
   /**
