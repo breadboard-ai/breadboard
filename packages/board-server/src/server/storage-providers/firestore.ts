@@ -17,10 +17,8 @@ import {
   sanitize,
   INVITE_EXPIRATION_TIME_MS,
   type StorageBoard,
-  BoardNotFound,
 } from "../store.js";
 import type {
-  BoardId,
   CreateInviteResult,
   CreateUserResult,
   ListInviteResult,
@@ -175,11 +173,11 @@ export class FirestoreStorageProvider implements RunBoardStateStore {
     return boards;
   }
 
-  async loadBoard(user: string, name: string): Promise<StorageBoard> {
+  async loadBoard(user: string, name: string): Promise<StorageBoard | null> {
     const path = `workspaces/${user}/boards/${name}`;
     const doc = await this.#database.doc(path).get();
     if (!doc.exists) {
-      throw new BoardNotFound();
+      return null;
     }
 
     const displayName: string = doc.get("title") ?? "";
