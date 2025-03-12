@@ -39,13 +39,13 @@ const primaryTextColor = getGlobalColor("--bb-neutral-0");
 async function fetchFlow() {
   try {
     const url = new URL(window.location.href);
-    const matcher = /^\/app\/(.*?)\/(.*)\.app/;
+    const matcher = /^\/app\/(.*?)\/(.*)$/;
     const matches = matcher.exec(url.pathname);
     if (!matches) {
       return null;
     }
 
-    const fetchPath = `/board/boards/${matches[1]}/${matches[2]}.bgl.json`;
+    const fetchPath = `/board/boards/${matches[1]}/${matches[2]}`;
     const response = await fetch(fetchPath);
     if (!response.ok) {
       return null;
@@ -149,19 +149,14 @@ function extractThemeFromFlow(flow: GraphDescriptor | null): {
   title: string;
   description: string | null;
 } | null {
-  let title = "Untitled App";
-  let description: string | null = null;
+  const title = flow?.title ?? "Untitled App";
+  const description: string | null = flow?.description ?? null;
+
   let templateAdditionalOptionsChosen: Record<string, string> = {};
 
   const theme: AppTheme = createDefaultTheme();
 
   if (flow?.metadata?.visual?.presentation) {
-    title =
-      flow.metadata.visual.presentation.title ?? flow.title ?? "Untitled App";
-
-    description =
-      flow.metadata.visual.presentation.description ?? flow.description ?? null;
-
     const themeColors = flow.metadata.visual.presentation.themeColors;
     const splashScreen = flow.assets?.["@@splash"];
 

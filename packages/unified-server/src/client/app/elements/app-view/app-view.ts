@@ -97,14 +97,8 @@ export class AppView extends LitElement {
       splashImage: false,
     };
 
-    options.title =
-      this.flow?.metadata?.visual?.presentation?.title ??
-      this.flow?.title ??
-      "Untitled App";
-    options.description =
-      this.flow?.metadata?.visual?.presentation?.description ??
-      this.flow?.description ??
-      null;
+    options.title = this.config.title;
+    options.description = this.config.description;
     options.mode = getThemeModeFromBackground(
       this.config.theme.backgroundColor
     );
