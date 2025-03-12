@@ -16,8 +16,11 @@ import {
   asInfo,
   sanitize,
   INVITE_EXPIRATION_TIME_MS,
+  type StorageBoard,
+  BoardNotFound,
 } from "../store.js";
 import type {
+  BoardId,
   CreateInviteResult,
   CreateUserResult,
   ListInviteResult,
@@ -170,6 +173,32 @@ export class FirestoreStorageProvider implements RunBoardStateStore {
       boards.push(board);
     });
     return boards;
+  }
+
+  async loadBoard(user: string, name: string): Promise<StorageBoard> {
+    const path = `workspaces/${user}/boards/${name}`;
+    const doc = await this.#database.doc(path).get();
+    if (!doc.exists) {
+      throw new BoardNotFound();
+    }
+
+    const displayName: string = doc.get("title") ?? "";
+    const description = doc.get("description") || "";
+    const tags = doc.get("tags") ?? [];
+
+    const graphString = doc.get("graph") ?? "";
+    const graph: GraphDescriptor | undefined = graphString
+      ? JSON.parse(graphString)
+      : undefined;
+
+    return {
+      name,
+      owner: user,
+      displayName,
+      description,
+      tags,
+      graph,
+    };
   }
 
   async get(userStore: string, boardName: string): Promise<string> {

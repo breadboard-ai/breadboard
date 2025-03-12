@@ -27,6 +27,7 @@ import inviteList from "./invite-list.js";
 import inviteUpdate from "./invite-update.js";
 import runBoard from "./run.js";
 import handleAssetsDriveRequest from "./assets-drive.js";
+import { loadBoard } from "./loader.js";
 
 export function serveBoardsAPI(serverConfig: ServerConfig): Router {
   const router = Router();
@@ -48,7 +49,6 @@ export function serveBoardsAPI(serverConfig: ServerConfig): Router {
 
   router.use("/@:user/:name.(json|api|app|invite)", getBoardId);
 
-  router.get("/@:user/:name.json", getBoard);
   router.post("/@:user/:name.json", requireAuth(), post);
 
   router.get("/@:user/:name.app", async (_req, res) =>
@@ -71,6 +71,8 @@ export function serveBoardsAPI(serverConfig: ServerConfig): Router {
 
   router.get("/@:user/:name.invite", requireAuth(), inviteList);
   router.post("/@:user/:name.invite", requireAuth(), inviteUpdate);
+
+  router.get("/@:user/:name", loadBoard(), getBoard);
 
   router.post(
     "/@:user/:name/assets/drive/:driveId",
