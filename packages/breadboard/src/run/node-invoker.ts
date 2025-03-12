@@ -4,16 +4,26 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { createOutputProvider, RequestedInputsManager } from "../bubble.js";
+import {
+  bubbleUpInputsIfNeeded,
+  createOutputProvider,
+  RequestedInputsManager,
+} from "../bubble.js";
 import { resolveBoardCapabilitiesInInputs } from "../capability.js";
 import { callHandler, getHandler } from "../handler.js";
 import { resolveGraph, SENTINEL_BASE_URL } from "../loader/loader.js";
 import { RunResult } from "../run.js";
-import type { GraphToRun, NodeHandlerContext, RunArguments } from "../types.js";
 import type {
+  GraphToRun,
+  NodeHandlerContext,
+  RunArguments,
+  Schema,
+} from "../types.js";
+import type {
+  GraphDescriptor,
   InputValues,
   LLMContent,
-  NodeConfiguration,
+  NodeDescriptor,
   NodeIdentifier,
   OutputValues,
   TraversalResult,
@@ -24,7 +34,7 @@ import {
   isLLMContentArray,
   isTextCapabilityPart,
 } from "../data/common.js";
-import { FileSystem, FileSystemEntry } from "../data/types.js";
+import { FileSystem, FileSystemEntry, FileSystemPath } from "../data/types.js";
 
 type ResultSupplier = (result: RunResult) => Promise<void>;
 
@@ -107,7 +117,9 @@ export class NodeInvoker {
         invocationPath,
         state,
       },
-      descriptor.configuration
+      result,
+      descriptor,
+      invocationPath
     );
 
     outputs = (await callHandler(
@@ -125,8 +137,11 @@ export class NodeInvoker {
 
   async #getParameters(
     context: NodeHandlerContext,
-    configuration?: NodeConfiguration
+    result: TraversalResult,
+    descriptor: NodeDescriptor,
+    path: number[]
   ): Promise<NodeHandlerContext> {
+    const { configuration } = descriptor;
     if (!configuration) return context;
     if (!this.#initialInputs) return context;
 
@@ -159,25 +174,116 @@ export class NodeInvoker {
       });
     });
 
+    const parameterInputs: FileSystemEntry[] = [];
+
     if (params.length > 0) {
-      // ask for inputs
+      // Simulate a subgraph that consists of one node.
+
+      const schema: Schema = {
+        type: "object",
+        properties: Object.fromEntries(
+          params.map((param) => {
+            return [
+              param.path,
+              {
+                type: "object",
+                title: param.title,
+                behavior: ["llm-content"],
+              } satisfies Schema,
+            ];
+          })
+        ),
+      };
+
+      const paramDescriptor: NodeDescriptor = {
+        id: crypto.randomUUID(),
+        type: "input",
+        configuration: { schema },
+      };
+
+      await context.probe?.report?.({
+        type: "graphstart",
+        data: {
+          graph: virtualGraph(),
+          graphId: "",
+          path: [...path, -1],
+          timestamp: timestamp(),
+        },
+      });
+
+      await context.probe?.report?.({
+        type: "nodestart",
+        data: {
+          node: paramDescriptor,
+          inputs: {
+            schema,
+          },
+          path: [...path, -1, -1],
+          timestamp: timestamp(),
+        },
+      });
+
+      const paramsResult = { ...result, inputs: { schema } };
       console.table(params);
+
+      // Pretend to be the invoked node and ask for inputs.
+      await bubbleUpInputsIfNeeded(
+        this.#graph.graph,
+        context,
+        paramDescriptor,
+        paramsResult,
+        [...path, -1, -1]
+      );
+
+      if (paramsResult.outputs) {
+        parameterInputs.push(
+          ...Object.entries(paramsResult.outputs).map(([id, content]) => {
+            const path = `/env/parameters/${id}` as FileSystemPath;
+            return { path, data: [content] as LLMContent[] };
+          })
+        );
+      }
+
+      await context.probe?.report?.({
+        type: "nodeend",
+        data: {
+          node: paramDescriptor,
+          inputs: { schema },
+          outputs: paramsResult.outputs || {},
+          path: [...path, -1, -1],
+          timestamp: timestamp(),
+          newOpportunities: [],
+        },
+      });
+
+      await context.probe?.report?.({
+        type: "graphend",
+        data: {
+          path: [...path, -1],
+          timestamp: timestamp(),
+        },
+      });
     }
 
     return {
       ...context,
       fileSystem: context.fileSystem?.createModuleFileSystem({
         graphUrl: this.#graph.graph.url!,
-        env: await updateEnv(context.fileSystem, this.#initialInputs),
+        env: updateEnv(
+          parameterInputs,
+          context.fileSystem,
+          this.#initialInputs
+        ),
       }),
     };
   }
 }
 
-async function updateEnv(
+function updateEnv(
+  params: FileSystemEntry[],
   fileSystem?: FileSystem,
   inputs?: InputValues
-): Promise<FileSystemEntry[]> {
+): FileSystemEntry[] {
   const currentEnv = fileSystem?.env() || [];
 
   const newEnv = inputs
@@ -187,5 +293,17 @@ async function updateEnv(
       })
     : [];
 
-  return [...currentEnv, ...newEnv];
+  return [...currentEnv, ...newEnv, ...params];
+}
+
+function virtualGraph(): GraphDescriptor {
+  return {
+    nodes: [],
+    edges: [],
+    virtual: true,
+  };
+}
+
+function timestamp() {
+  return globalThis.performance.now();
 }
