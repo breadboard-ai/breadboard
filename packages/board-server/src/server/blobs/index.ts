@@ -19,14 +19,12 @@ import { serveBlob } from "./serve.js";
 import { requireAuth } from "../auth.js";
 import { isUUID } from "../blob-store.js";
 import type { ServerConfig } from "../config.js";
-import { corsAll } from "../cors.js";
 import { badRequest } from "../errors.js";
 
 export function serveBlobsAPI(config: ServerConfig): Router {
   const router = Router();
 
   router.use(requireStorageBucket(config));
-  router.use(corsAll);
 
   router.get("/:blobId", (req, res) => get(config, req, res));
   router.post("/", requireAuth(), (req, res) => create(config, req, res));

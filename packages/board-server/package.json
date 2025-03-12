@@ -96,7 +96,6 @@
       "command": "export GOOGLE_CLOUD_PROJECT=$(gcloud config get-value project) && node .",
       "service": true,
       "env": {
-        "ALLOWED_ORIGINS": "http://localhost:5173",
         "SERVER_URL": "http://localhost:3000"
       },
       "dependencies": [

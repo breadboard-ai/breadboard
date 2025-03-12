@@ -21,7 +21,6 @@ import { getDataStore } from "@breadboard-ai/data-store";
 import { badRequest } from "../errors.js";
 import { buildSecretsTunnel, secretsKit } from "./secrets.js";
 import type { ServerConfig } from "../config.js";
-import { cors } from "../cors.js";
 import { BlobDataStore, GoogleStorageBlobStore } from "../blob-store.js";
 
 class ResponseAdapter implements ProxyServerResponse {
@@ -62,7 +61,6 @@ const extractRequestBody = async (request: Request) => {
 export function serveProxyAPI(serverConfig: ServerConfig): Router {
   const router = Router();
 
-  router.use(cors(serverConfig.allowedOrigins));
   // TODO: Re-enable once we teach the client side to send auth requests
   // https://github.com/breadboard-ai/breadboard/issues/4721
   // router.use(requireAuth());

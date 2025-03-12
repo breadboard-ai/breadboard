@@ -13,7 +13,6 @@ import {
 
 import { requireAccessToken, requireAuth } from "../auth.js";
 import type { ServerConfig } from "../config.js";
-import { cors, corsAll } from "../cors.js";
 import type { BoardId } from "../types.js";
 
 import listBoards from "./list.js";
@@ -30,18 +29,6 @@ import { loadBoard } from "./loader.js";
 
 export function serveBoardsAPI(serverConfig: ServerConfig): Router {
   const router = Router();
-
-  router.use("/", cors(serverConfig.allowedOrigins));
-  router.use("/@:user/:name.json", corsAll);
-  router.use("/@:user/:name.json", cors(serverConfig.allowedOrigins));
-  router.use("/@:user/:name.api/invoke", corsAll);
-  router.use("/@:user/:name.api/run", corsAll);
-  router.use("/@:user/:name.api/describe", corsAll);
-  router.use("/@:user/:name.invite", cors(serverConfig.allowedOrigins));
-  router.use(
-    "/@:user/:name/assets/drive/:driveId",
-    cors(serverConfig.allowedOrigins)
-  );
 
   router.get("/", requireAuth(), listBoards);
   router.post("/", requireAuth(), createBoard);
