@@ -5,9 +5,6 @@
  */
 
 import express, { type Express } from "express";
-import type { ViteDevServer } from "vite";
-
-import { makeRouter } from "./router.js";
 
 import { getUserCredentials } from "./server/auth.js";
 import type { ServerConfig } from "./server/config.js";
@@ -32,21 +29,17 @@ export function createServer(config: ServerConfig): Express {
   server.use(getUserCredentials());
 
   server.get("/", async (req, res) => serveHome(config, req, res));
+
   server.use("/blobs", serveBlobsAPI(config));
   server.use("/boards", serveBoardsAPI(config));
   server.use("/info", serveInfoAPI());
   server.use("/me", serveMeAPI(config));
   server.use("/proxy", serveProxyAPI(config));
 
-  server.use(makeRouter(config));
-
   return server;
 }
 
-export function createServerConfig(
-  rootPath: string,
-  viteDevServer?: ViteDevServer
-): ServerConfig {
+export function createServerConfig(rootPath: string): ServerConfig {
   const {
     PORT = DEFAULT_PORT,
     HOST = DEFAULT_HOST,
@@ -64,6 +57,5 @@ export function createServerConfig(
     rootPath,
     serverUrl: SERVER_URL,
     storageBucket: STORAGE_BUCKET,
-    viteDevServer: viteDevServer ?? null,
   };
 }

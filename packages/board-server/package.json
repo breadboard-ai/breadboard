@@ -16,7 +16,6 @@
     "prepack": "npm run build",
     "build": "wireit",
     "build:lib": "wireit",
-    "build:vite": "wireit",
     "build:esbuild": "wireit",
     "build:tests": "wireit",
     "build:docker": "docker build --build-context breadboard=../../ -t board-server .",
@@ -32,41 +31,14 @@
   "wireit": {
     "build": {
       "dependencies": [
-        "build:vite",
         "build:esbuild",
         "build:lib"
       ]
     },
     "build:lib": {
       "dependencies": [
-        "build:vite",
         "build:tsc"
       ]
-    },
-    "build:vite": {
-      "command": "vite build",
-      "files": [
-        "*.html",
-        "vite.config.ts",
-        "package.json",
-        "src/app/**/*.ts",
-        ".env.development",
-        ".env.production"
-      ],
-      "output": [
-        "dist/client"
-      ],
-      "dependencies": [
-        "<dependencies>#build:tsc",
-        "../agent-kit#build:tsc",
-        "../core-kit#build:tsc",
-        "../json-kit#build:tsc",
-        "../shared-ui#build:tsc",
-        "../template-kit#build:tsc",
-        "../visual-editor#build",
-        "update-sandbox-runtime"
-      ],
-      "clean": "if-file-deleted"
     },
     "build:tsc": {
       "command": "tsc -b tsconfig.lib.json --pretty",
@@ -225,7 +197,6 @@
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "lit": "^3.2.1",
-    "uuid": "^11.1.0",
-    "vite": "^6.2.1"
+    "uuid": "^11.1.0"
   }
 }

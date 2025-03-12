@@ -12,7 +12,6 @@ import {
 } from "express";
 
 import { requireAccessToken, requireAuth } from "../auth.js";
-import { serveFile, serveIndex } from "../common.js";
 import type { ServerConfig } from "../config.js";
 import { cors, corsAll } from "../cors.js";
 import type { BoardId } from "../types.js";
@@ -50,14 +49,6 @@ export function serveBoardsAPI(serverConfig: ServerConfig): Router {
   router.use("/@:user/:name.(json|api|app|invite)", getBoardId);
 
   router.post("/@:user/:name.json", requireAuth(), post);
-
-  router.get("/@:user/:name.app", async (_req, res) =>
-    serveIndex(serverConfig, res)
-  );
-
-  router.get("/@:user/:name.api", async (_req, res) =>
-    serveFile(serverConfig, res, "/api.html")
-  );
 
   router.post("/@:user/:name.api/invoke", async (req, res) =>
     invokeBoard(serverConfig, req, res)
