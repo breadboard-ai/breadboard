@@ -475,6 +475,9 @@ export default css`
       --bb-icon-language: url(/third_party/icons/language.svg);
       --bb-icon-map-search: url(/third_party/icons/map-search.svg);
       --bb-icon-sunny: url(/third_party/icons/sunny.svg);
+
+      --bb-icon-generative: var(--bb-add-icon-generative);
+      --bb-icon-generative-inverted: var(--bb-add-icon-generative-inverted);
     }
   }
 
@@ -941,6 +944,9 @@ export default css`
 
       --bb-icon-zoom-out: url(/third_party/icons/zoom-out-inverted.svg);
       --bb-icon-zoom-out-inverted: url(/third_party/icons/zoom-out.svg);
+
+      --bb-icon-generative: var(--bb-add-icon-generative-inverted);
+      --bb-icon-generative-inverted: var(--bb-add-icon-generative);
 
       color-scheme: dark;
     }
