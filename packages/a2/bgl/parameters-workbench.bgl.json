@@ -1,0 +1,54 @@
+{
+  "title": "Parameters Workbench",
+  "description": "",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "board-ccb96f7b",
+      "type": "#module:main",
+      "metadata": {
+        "visual": {
+          "x": 380,
+          "y": 240,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        },
+        "title": "main"
+      }
+    }
+  ],
+  "parameters": {
+    "a83e30cf-1af8-482a-830a-bf1888f24099": {
+      "title": "City"
+    }
+  },
+  "edges": [],
+  "metadata": {
+    "userModified": true,
+    "tags": [],
+    "visual": {}
+  },
+  "modules": {
+    "main": {
+      "code": "/**\n * @fileoverview Add a description for your module here.\n */\nimport query from \"@query\";\nexport { invoke as default, describe };\nasync function invoke({ context }) {\n    const parameters = await query({ path: \"/env/parameters\" });\n    return { context: [{ parts: [] }] };\n}\nasync function describe() {\n    return {\n        inputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context in\",\n                },\n            },\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context out\",\n                },\n            },\n        },\n    };\n}\n",
+      "metadata": {
+        "title": "main",
+        "source": {
+          "code": "/**\n * @fileoverview Add a description for your module here.\n */\n\nimport query from \"@query\";\n\nexport { invoke as default, describe };\n\nasync function invoke({ context }: { context: LLMContent[] }) {\n  const parameters = await query({ path: \"/env/parameters\" })\n  return { context: [{ parts: []}] };\n}\n\nasync function describe() {\n  return {\n    inputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context in\",\n        },\n      },\n    } satisfies Schema,\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context out\",\n        },\n      },\n    } satisfies Schema,\n  };\n}\n",
+          "language": "typescript"
+        },
+        "description": "Add a description for your module here.",
+        "runnable": true
+      }
+    }
+  },
+  "assets": {
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSIxNi44NSIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMjMwLjAwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTY2LjMxIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMmU4YmU4IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+    }
+  }
+}
