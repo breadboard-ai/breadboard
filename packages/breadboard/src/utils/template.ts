@@ -32,6 +32,7 @@ export type TemplatePart = {
    * dangling autowire or missing asset
    */
   invalid?: true;
+  mimeType?: string;
 };
 
 export type TemplatePartTransformCallback = (
@@ -46,7 +47,7 @@ const PARSING_REGEX = /{(?<json>{(?:.*?)})}/gim;
 
 function isTemplatePart(o: unknown): o is TemplatePart {
   if (!o || typeof o !== "object") return false;
-  return "type" in o && "path" in o && "title" in o;
+  return "type" in o && "path" in o && "title" in o;``
 }
 
 function splitToParts(value: string): ParsedTemplate {
@@ -171,8 +172,9 @@ class Template {
     return `{${JSON.stringify(part)}}`;
   }
 
-  static preamble({ type, path }: TemplatePart) {
-    return `{{"type": ${JSON.stringify(type)}, "path": ${JSON.stringify(path)}, "title": "`;
+  static preamble({ type, path, mimeType }: TemplatePart) {
+    const maybeMimeType = mimeType ? `"mimeType": "${mimeType}"` : "";
+    return `{{"type": ${JSON.stringify(type)}, "path": ${JSON.stringify(path)}, ${maybeMimeType} "title": "`;
   }
 
   static postamble() {

@@ -260,7 +260,7 @@ export class TextEditor extends LitElement {
     selection.addRange(this.#lastRange);
   }
 
-  #add(path: string, title: string, type: TemplatePartType) {
+  #add(path: string, title: string, type: TemplatePartType, mimeType?: string) {
     if (!this.#editorRef.value) {
       return null;
     }
@@ -282,7 +282,12 @@ export class TextEditor extends LitElement {
       label.classList.add(type);
       label.dataset.path = path;
 
-      preambleText.textContent = Template.preamble({ title, path, type });
+      preambleText.textContent = Template.preamble({
+        title,
+        path,
+        type,
+        mimeType,
+      });
       postamableText.textContent = Template.postamble();
       titleText.textContent = title;
       titleText.classList.add("visible");
@@ -774,7 +779,7 @@ export class TextEditor extends LitElement {
         @bbfastaccessselect=${(evt: FastAccessSelectEvent) => {
           this.#hideFastAccess();
           this.#restoreLastRange();
-          this.#add(evt.path, evt.title, evt.accessType);
+          this.#add(evt.path, evt.title, evt.accessType, evt.mimeType);
 
           this.#captureEditorValue();
         }}

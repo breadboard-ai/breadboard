@@ -13,7 +13,11 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { css, html, LitElement, PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { Component, FastAccess, GraphAsset, Tool } from "../../state";
-import { GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
+import {
+  GraphIdentifier,
+  LLMContent,
+  NodeIdentifier,
+} from "@breadboard-ai/types";
 import {
   FastAccessDismissedEvent,
   FastAccessSelectEvent,
@@ -337,6 +341,21 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     return value;
   }
 
+  #getMimeType(data: LLMContent[]): string | undefined {
+    const mimeTypes = new Set<string>();
+    for (const element of data) {
+      for (const part of element.parts) {
+        if ("inlineData" in part && part.inlineData.mimeType)
+          mimeTypes.add(part.inlineData.mimeType);
+      }
+    }
+
+    if (mimeTypes.size > 0) {
+      // Note we are returning only one mimeType.
+      return mimeTypes.values().next().value;
+    }
+  }
+
   #emitCurrentItem() {
     let idx = this.selectedIndex;
     if (idx < this.#items.assets.length) {
@@ -345,7 +364,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
         new FastAccessSelectEvent(
           asset.path,
           asset.metadata?.title ?? "Untitled asset",
-          "asset"
+          "asset",
+          this.#getMimeType(asset.data)
         )
       );
       return;
