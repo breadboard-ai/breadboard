@@ -73,10 +73,10 @@ suite("Board Server integration test", () => {
 
     test("GET /boards/@:user/:name.json", async () => {
       const store = getStore();
-      const board = await store.create(user.account, "test-board", false);
+      await store.create(user.account, "test-board");
 
       const response = await request(server).get(
-        `/boards/${board.path}?API_KEY=${user.api_key}`
+        `/boards/@${user.account}/test-board?API_KEY=${user.api_key}`
       );
 
       assert.equal(response.status, 200);
@@ -84,33 +84,37 @@ suite("Board Server integration test", () => {
 
     test("POST /boards/@:user/:name.json -> updates", async () => {
       const store = getStore();
-      const board = await store.create(user.account, "test-board", false);
+      await store.create(user.account, "test-board");
 
       const response = await request(server)
-        .post(`/boards/${board.path}?API_KEY=${user.api_key}`)
+        .post(`/boards/@${user.account}/test-board?API_KEY=${user.api_key}`)
         .send({ nodes: [], edges: [] });
 
       assert.equal(response.status, 200);
-      assert.deepEqual(response.body, { created: board.path });
+      assert.deepEqual(response.body, {
+        created: `@${user.account}/test-board`,
+      });
     });
 
     test("POST /boards/@:user/:name.json -> deletes", async () => {
       const store = getStore();
-      const board = await store.create(user.account, "test-board", false);
+      await store.create(user.account, "test-board");
 
       const response = await request(server)
-        .post(`/boards/${board.path}?API_KEY=${user.api_key}`)
+        .post(`/boards/@${user.account}/test-board?API_KEY=${user.api_key}`)
         .send({ delete: true });
 
       assert.equal(response.status, 200);
-      assert.deepEqual(response.body, { deleted: board.path });
+      assert.deepEqual(response.body, {
+        deleted: `@${user.account}/test-board`,
+      });
     });
 
     // TODO Make this work. It tries to serve /index.html on the host machine, which fails
     test.skip("GET /boards/@:user/:name.app", async () => {
       const store = getStore();
-      const board = await store.create(user.account, "test-board", false);
-      const path = board.path!.replace(".json", ".app");
+      await store.create(user.account, "test-board");
+      const path = `@${user.account}/test-board.app`;
 
       const response = await request(server).get(
         `/boards/${path}?API_KEY=${user.api_key}`
@@ -122,8 +126,8 @@ suite("Board Server integration test", () => {
     // TODO Make this work. It tries to serve /api.html on the host machine, which fails
     test.skip("GET /boards/@:user/:name.api", async () => {
       const store = getStore();
-      const board = await store.create(user.account, "test-board", false);
-      const path = board.path!.replace(".json", ".api");
+      await store.create(user.account, "test-board");
+      const path = `@${user.account}/test-board.api`;
 
       const response = await request(server).get(
         `/boards/${path}?API_KEY=${user.api_key}`
@@ -134,12 +138,12 @@ suite("Board Server integration test", () => {
 
     test("POST /boards/@:user/:name.api/invoke", async () => {
       const store = getStore();
-      const board = await store.create(user.account, "test-board", false);
+      await store.create(user.account, "test-board");
       await store.update(user.account, "test-board", {
         nodes: [{ type: "input", id: "input" }],
         edges: [],
       });
-      const path = board.path!.replace(".json", ".api");
+      const path = `@${user.account}/test-board.invoke`;
 
       const response = await request(server)
         .post(`/boards/${path}/invoke`)
@@ -151,8 +155,8 @@ suite("Board Server integration test", () => {
     // This test succeeds, but also hangs the test runner with no apparent error
     test.skip("POST /boards/@:user/:name.api/describe", async () => {
       const store = getStore();
-      const board = await store.create(user.account, "test-board", false);
-      const path = board.path!.replace(".json", ".api");
+      await store.create(user.account, "test-board");
+      const path = `@${user.account}/test-board.invoke`;
 
       const response = await request(server)
         .post(`/boards/${path}/describe`)
@@ -163,8 +167,8 @@ suite("Board Server integration test", () => {
 
     test("POST /boards/@:user/:name.api/run", async () => {
       const store = getStore();
-      const board = await store.create(user.account, "test-board", false);
-      const path = board.path!.replace(".json", ".api");
+      store.create(user.account, "test-board");
+      const path = `@{user.account}/test-board.api/run`;
 
       const response = await request(server)
         .post(`/boards/${path}/run`)
@@ -175,8 +179,8 @@ suite("Board Server integration test", () => {
 
     test("GET /boards/@:user/:name.invite", async () => {
       const store = getStore();
-      const board = await store.create(user.account, "test-board", false);
-      const path = board.path!.replace(".json", ".invite");
+      store.create(user.account, "test-board");
+      const path = `@${user.account}/test-board.invite`;
 
       const response = await request(server).get(
         `/boards/${path}?API_KEY=${user.api_key}`
@@ -187,8 +191,8 @@ suite("Board Server integration test", () => {
 
     test("POST /boards/@:user/:name.invite", async () => {
       const store = getStore();
-      const board = await store.create(user.account, "test-board", false);
-      const path = board.path!.replace(".json", ".invite");
+      await store.create(user.account, "test-board");
+      const path = `@${user.account}/test-board.invite`;
 
       const response = await request(server).post(
         `/boards/${path}?API_KEY=${user.api_key}`
