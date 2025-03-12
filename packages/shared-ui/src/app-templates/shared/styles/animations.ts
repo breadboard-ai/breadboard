@@ -17,6 +17,16 @@ export default css`
     }
   }
 
+  @keyframes shimmer {
+    from {
+      opacity: 0.7;
+    }
+
+    to {
+      opacity: 0.8;
+    }
+  }
+
   @scope (.app-template) {
     :scope {
       --ease-out: cubic-bezier(0, 0, 0.3, 1);

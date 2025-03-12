@@ -15,6 +15,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import {
   AppTemplate,
   AppTemplateOptions,
+  EdgeLogEntry,
   TopGraphRunResult,
 } from "../../types/types";
 import Mode from "../shared/styles/icons.js";
@@ -57,6 +58,7 @@ import "../../elements/output/llm-output/export-toolbar.js";
 import "../../elements/output/llm-output/llm-output.js";
 import "../../elements/output/multi-output/multi-output.js";
 import { map } from "lit/directives/map.js";
+import { markdown } from "../../directives/markdown";
 
 @customElement("app-basic")
 export class Template extends LitElement implements AppTemplate {
@@ -384,6 +386,37 @@ export class Template extends LitElement implements AppTemplate {
               }
             }
 
+            & .thought {
+              font: 400 var(--font-style, normal) var(--bb-title-medium) /
+                var(--bb-title-line-height-medium)
+                var(--font-family, var(--bb-font-family));
+              color: var(--text-color, var(--bb-neutral-900));
+              margin: 0 var(--bb-grid-size-3)
+                var(--output-string-margin-bottom-y, var(--bb-grid-size-2))
+                var(--bb-grid-size-3);
+              padding: 0 var(--bb-grid-size-3);
+              opacity: 0;
+              animation: fadeIn 0.6s cubic-bezier(0, 0, 0.3, 1) 0.05s forwards;
+
+              & p {
+                margin: 0 0 var(--bb-grid-size-2) 0;
+              }
+
+              & h1 {
+                font: 500 var(--font-style, normal) var(--bb-title-small) /
+                  var(--bb-title-line-height-small)
+                  var(--font-family, var(--bb-font-family));
+                color: var(--primary-color, var(--bb-neutral-900));
+                margin: 0 0 var(--bb-grid-size-2) 0;
+              }
+
+              &.generative h1 {
+                padding-left: var(--bb-grid-size-7);
+                background: var(--bb-icon-generative) 0 center / 20px 20px
+                  no-repeat;
+              }
+            }
+
             & #status {
               position: absolute;
               display: flex;
@@ -429,7 +462,7 @@ export class Template extends LitElement implements AppTemplate {
               min-width: 76px;
               height: var(--bb-grid-size-10);
               background: var(--primary-color, var(--bb-ui-50))
-                var(--bb-add-icon-generative) 12px center / 16px 16px no-repeat;
+                var(--bb-icon-generative) 12px center / 16px 16px no-repeat;
               color: var(--primary-text-color, var(--bb-ui-700));
               border-radius: 20px;
               border: 1px solid var(--primary-color, var(--bb-ui-100));
@@ -628,8 +661,10 @@ export class Template extends LitElement implements AppTemplate {
   }
 
   #renderActivity(topGraphResult: TopGraphRunResult) {
-    let activityContents: HTMLTemplateResult | HTMLTemplateResult[] | symbol =
-      nothing;
+    let activityContents:
+      | HTMLTemplateResult
+      | Array<HTMLTemplateResult | symbol>
+      | symbol = nothing;
 
     const currentItem = topGraphResult.log.at(-1);
     if (currentItem?.type === "error") {
@@ -644,9 +679,10 @@ export class Template extends LitElement implements AppTemplate {
           </div>
         </details>
       `;
-    }
-
-    if (currentItem?.type === "edge" && topGraphResult.status === "paused") {
+    } else if (
+      currentItem?.type === "edge" &&
+      topGraphResult.status === "paused"
+    ) {
       // Attempt to find the most recent output. If there is one, show it
       // otherwise show any message that's coming from the edge.
       let lastOutput = null;
@@ -665,11 +701,65 @@ export class Template extends LitElement implements AppTemplate {
         ></bb-multi-output>`;
       }
     } else if (topGraphResult.status === "running") {
+      let status: HTMLTemplateResult | symbol = nothing;
+      let bubbledValue: HTMLTemplateResult | symbol = nothing;
+
       if (topGraphResult.currentNode?.descriptor.metadata?.title) {
-        activityContents = html`<div id="status">
+        status = html`<div id="status">
           ${topGraphResult.currentNode.descriptor.metadata.title}
         </div>`;
       }
+
+      let idx = 0;
+      let lastOutput: EdgeLogEntry | null = null;
+      for (let i = topGraphResult.log.length - 1; i >= 0; i--) {
+        const result = topGraphResult.log[i];
+        if (result.type === "edge" && result.value && result.schema) {
+          lastOutput = result;
+          idx = i;
+          break;
+        }
+      }
+
+      if (lastOutput !== null && lastOutput.schema && lastOutput.value) {
+        bubbledValue = html`${repeat(
+          Object.entries(lastOutput.schema.properties ?? {}),
+          () => idx,
+          ([name, property]) => {
+            if (!lastOutput.value) {
+              return nothing;
+            }
+
+            if (property.type !== "string" && property.format !== "markdown") {
+              return nothing;
+            }
+
+            const value = lastOutput.value[name];
+            if (typeof value !== "string") {
+              return nothing;
+            }
+
+            const classes: Record<string, boolean> = {};
+            if (property.title) {
+              classes[
+                property.title.toLocaleLowerCase().replace(/\W/gim, "-")
+              ] = true;
+            }
+
+            if (property.icon) {
+              classes[property.icon.toLocaleLowerCase().replace(/\W/gim, "-")] =
+                true;
+            }
+
+            return html`<div class=${classMap(classes)}>
+              <h1>${property.title}</h1>
+              ${markdown(value)}
+            </div> `;
+          }
+        )}`;
+      }
+
+      activityContents = [bubbledValue, status];
     } else {
       // Find the last item.
       let lastOutput = null;
@@ -990,7 +1080,6 @@ export class Template extends LitElement implements AppTemplate {
                 id="sign-in"
                 ?disabled=${this.#totalNodeCount === 0}
                 @click=${() => {
-                  console.log("Sign in");
                   this.dispatchEvent(new SignInRequestedEvent());
                 }}
               >

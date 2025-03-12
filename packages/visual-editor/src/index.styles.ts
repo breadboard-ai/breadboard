@@ -461,7 +461,7 @@ export const styles = css`
     position: fixed;
     right: auto;
     bottom: auto;
-    z-index: 10;
+    z-index: 20;
   }
 
   bb-project-listing {

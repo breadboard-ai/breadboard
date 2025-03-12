@@ -554,7 +554,7 @@ export const styles = css`
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 6;
+    z-index: 11;
     background: var(--bb-ui-50);
   }
 
