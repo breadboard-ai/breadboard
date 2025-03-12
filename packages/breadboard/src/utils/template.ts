@@ -47,7 +47,7 @@ const PARSING_REGEX = /{(?<json>{(?:.*?)})}/gim;
 
 function isTemplatePart(o: unknown): o is TemplatePart {
   if (!o || typeof o !== "object") return false;
-  return "type" in o && "path" in o && "title" in o;``
+  return "type" in o && "path" in o && "title" in o;
 }
 
 function splitToParts(value: string): ParsedTemplate {
