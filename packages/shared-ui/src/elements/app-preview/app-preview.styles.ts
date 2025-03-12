@@ -49,7 +49,7 @@ export const styles = css`
 
     & h1 {
       grid-column: 1 / 3;
-      background: var(--bb-icon-palette) 8px center / 20px 20px no-repeat;
+      background: var(--bb-icon-phone) 8px center / 20px 20px no-repeat;
       display: flex;
       align-items: center;
       justify-content: space-between;
