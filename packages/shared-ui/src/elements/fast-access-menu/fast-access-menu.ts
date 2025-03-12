@@ -346,13 +346,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     for (const element of data) {
       for (const part of element.parts) {
         if ("inlineData" in part && part.inlineData.mimeType)
-          mimeTypes.add(part.inlineData.mimeType);
+          return part.inlineData.mimeType;
       }
-    }
-
-    if (mimeTypes.size > 0) {
-      // Note we are returning only one mimeType.
-      return mimeTypes.values().next().value;
     }
   }
 
