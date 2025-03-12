@@ -468,7 +468,14 @@ export class UI extends LitElement {
     }
 
     const appPreview = guard(
-      [run, eventPosition, this.graph, this.topGraphResult, this.signedIn],
+      [
+        run,
+        eventPosition,
+        this.graph,
+        this.topGraphResult,
+        this.signedIn,
+        this.boardServers,
+      ],
       () => {
         return html`<bb-app-preview
           .graph=${this.graph}
@@ -476,6 +483,7 @@ export class UI extends LitElement {
           .eventPosition=${eventPosition}
           .topGraphResult=${this.topGraphResult}
           .showGDrive=${this.signedIn}
+          .boardServers=${this.boardServers}
         ></bb-app-preview>`;
       }
     );
