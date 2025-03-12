@@ -10,12 +10,13 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { FastAccessSelectEvent } from "../../../events/events";
 import { Project } from "../../../state";
 import { FastAccessMenu } from "../../elements";
+import { escapeHTMLEntities } from "../../../utils";
 
 @customElement("bb-text-editor")
 export class TextEditor extends LitElement {
   @property()
   set value(value: string) {
-    const escapedValue = this.#escape(value);
+    const escapedValue = escapeHTMLEntities(value);
     const template = new Template(escapedValue);
     template.substitute((part) => {
       const { type, title, invalid } = part;
@@ -307,7 +308,7 @@ export class TextEditor extends LitElement {
 
         // The range doesn't move, so insert the nodes in reverse order.
         range.insertNode(label);
-        range.collapse(true);
+        range.collapse(false);
 
         requestAnimationFrame(() => {
           const selection = this.#getCurrentSelection();
@@ -383,38 +384,114 @@ export class TextEditor extends LitElement {
   }
 
   #ensureSafeRangePosition(evt: KeyboardEvent) {
-    if (evt.key !== "Enter") {
+    const selection = this.#getCurrentSelection();
+    const range = this.#getCurrentRange();
+
+    if (
+      range?.startContainer !== range?.endContainer ||
+      range?.startOffset !== range?.endOffset
+    ) {
       return;
     }
 
-    const selection = this.#getCurrentSelection();
-    const range = this.#getCurrentRange();
-    const focusedNode = range?.endContainer;
-    const focusedOffset = range?.endOffset;
+    const focusedNode = range?.startContainer;
+    const focusedOffset = range?.startOffset;
 
     if (
       focusedOffset === undefined ||
       focusedNode === undefined ||
+      focusedNode.nodeType !== Node.TEXT_NODE ||
       !selection ||
       !range
     ) {
       return;
     }
 
-    // End of a text node adjacent to a chiclet.
-    if (
-      focusedNode.nodeType === Node.TEXT_NODE &&
-      focusedOffset === focusedNode.textContent?.length &&
-      focusedNode.nextSibling &&
-      focusedNode.nextSibling?.nodeType !== null &&
-      focusedNode.nextSibling?.nodeType !== Node.TEXT_NODE
-    ) {
-      // Move the range back one character since there should already be
-      // a space around the chiclet.
-      range.setEnd(focusedNode, focusedOffset - 1);
-
+    const updateRange = (
+      node: Node,
+      offset: number,
+      preventDefault = false
+    ) => {
+      range.setStart(node, offset);
+      range.setEnd(node, offset);
       selection.removeAllRanges();
       selection.addRange(range);
+
+      if (preventDefault) {
+        evt.preventDefault();
+      }
+    };
+
+    const nextSiblingIsChiclet =
+      focusedNode.nextSibling &&
+      focusedNode.nextSibling?.nodeType !== Node.TEXT_NODE;
+
+    const previousSiblingIsChiclet =
+      focusedNode.previousSibling &&
+      focusedNode.previousSibling?.nodeType !== Node.TEXT_NODE;
+
+    const textContent = focusedNode.textContent!;
+
+    switch (evt.key) {
+      // Skip to the other side of the ZWNBSP character;
+      case "ArrowLeft": {
+        if (focusedOffset <= 1 && previousSiblingIsChiclet) {
+          if (
+            focusedNode.previousSibling.previousSibling &&
+            focusedNode.previousSibling.previousSibling.nodeType ===
+              Node.TEXT_NODE
+          ) {
+            updateRange(
+              focusedNode.previousSibling.previousSibling,
+              focusedNode.previousSibling.previousSibling.textContent!.length -
+                1,
+              true
+            );
+          }
+        }
+        break;
+      }
+
+      // Skip to the other side of the chiclet plus its ZWNBSP character;
+      case "ArrowRight": {
+        if (focusedOffset === textContent.length - 1 && nextSiblingIsChiclet) {
+          if (
+            focusedNode.nextSibling.nextSibling &&
+            focusedNode.nextSibling.nextSibling.nodeType === Node.TEXT_NODE
+          ) {
+            updateRange(focusedNode.nextSibling.nextSibling, 0, true);
+          }
+        }
+        break;
+      }
+
+      case "Delete":
+      case "Backspace": {
+        if (focusedOffset <= 1 && previousSiblingIsChiclet) {
+          range.selectNode(focusedNode.previousSibling);
+          range.deleteContents();
+        }
+        break;
+      }
+
+      case "Enter": {
+        // End of a text node adjacent to a chiclet.
+        if (focusedOffset === textContent.length && nextSiblingIsChiclet) {
+          // Move the range back one character before accepting the Enter key
+          // since there should already be a space around the chiclet.
+          updateRange(focusedNode, focusedOffset - 1);
+        }
+        break;
+      }
+
+      default: {
+        if (textContent.length === focusedOffset && nextSiblingIsChiclet) {
+          updateRange(focusedNode, focusedOffset - 1);
+        } else if (focusedOffset === 0 && previousSiblingIsChiclet) {
+          updateRange(focusedNode, focusedOffset + 1);
+        }
+        break;
+      }
     }
   }
 
@@ -427,7 +504,7 @@ export class TextEditor extends LitElement {
     }
 
     const spaceFactory = () => {
-      const el = document.createTextNode(String.fromCharCode(160));
+      const el = document.createTextNode(String.fromCharCode(65279));
       return el;
     };
 
@@ -437,18 +514,27 @@ export class TextEditor extends LitElement {
       const { previousSibling, nextSibling } = chiclet;
       if (
         !previousSibling ||
-        !previousSibling.textContent?.endsWith(String.fromCharCode(160))
+        !previousSibling.textContent?.endsWith(String.fromCharCode(65279))
       ) {
-        const el = spaceFactory();
-        this.#editorRef.value.insertBefore(el, chiclet);
+        if (!previousSibling || previousSibling.nodeType !== Node.TEXT_NODE) {
+          const el = spaceFactory();
+          this.#editorRef.value.insertBefore(el, chiclet);
+        } else {
+          previousSibling.textContent += String.fromCharCode(65279);
+        }
       }
 
       if (
         !nextSibling ||
-        !nextSibling.textContent?.startsWith(String.fromCharCode(160))
+        !nextSibling.textContent?.startsWith(String.fromCharCode(65279))
       ) {
-        const el = spaceFactory();
-        this.#editorRef.value.insertBefore(el, chiclet.nextSibling);
+        if (!nextSibling || nextSibling.nodeType !== Node.TEXT_NODE) {
+          const el = spaceFactory();
+          this.#editorRef.value.insertBefore(el, chiclet.nextSibling);
+        } else {
+          nextSibling.textContent =
+            String.fromCharCode(65279) + nextSibling.textContent;
+        }
       }
     }
   }
@@ -458,13 +544,11 @@ export class TextEditor extends LitElement {
       return;
     }
 
-    // Replace all non-breaking spaces in the emitted string.
     const value = (this.#editorRef.value.textContent ?? "").replace(
-      /\u00A0/g,
-      String.fromCharCode(32)
+      /\uFEFF/gim,
+      ""
     );
-
-    this.#value = this.#escape(value);
+    this.#value = escapeHTMLEntities(value);
     this.dispatchEvent(new InputEvent("input"));
   }
 
@@ -488,11 +572,23 @@ export class TextEditor extends LitElement {
       return;
     }
 
+    const escapedValue = escapeHTMLEntities(evt.clipboardData.getData("text"));
+    const template = new Template(escapedValue);
+    template.substitute((part) => {
+      const { type, title, invalid } = part;
+      return `<label class="chiclet ${type} ${invalid ? "invalid" : ""}" contenteditable="false"><span>${Template.preamble(part)}</span><span class="visible">${title}</span><span>${Template.postamble()}</span></label>`;
+    });
+
+    const fragment = document.createDocumentFragment();
+    const tempEl = document.createElement("div");
+    tempEl.innerHTML = template.renderable;
+    while (tempEl.firstChild) {
+      fragment.append(tempEl.firstChild);
+    }
+
     const range = selection.getRangeAt(0);
     range.deleteContents();
-    range.insertNode(
-      document.createTextNode(evt.clipboardData.getData("text"))
-    );
+    range.insertNode(fragment);
     range.collapse(false);
 
     selection.removeAllRanges();
@@ -609,16 +705,6 @@ export class TextEditor extends LitElement {
     this.#fastAccessRef.value.classList.remove("active");
   }
 
-  #escape = (str: string) => {
-    const htmlEntities: Record<string, string> = {
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-    };
-
-    return str.replace(/[&<>]/g, (char) => htmlEntities[char]);
-  };
-
   protected firstUpdated(): void {
     if (!this.#editorRef.value) {
       return;
@@ -639,6 +725,21 @@ export class TextEditor extends LitElement {
         @paste=${this.#sanitizePastedContent}
         @selectionchange=${this.#checkChicletSelections}
         @keydown=${(evt: KeyboardEvent) => {
+          const isMac = navigator.platform.indexOf("Mac") === 0;
+          const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+          if (evt.key === "c" && isCtrlCommand) {
+            evt.preventDefault();
+
+            const range = this.#getCurrentRange();
+            if (range) {
+              navigator.clipboard.writeText(
+                range.toString().replace(/\uFEFF/gim, "")
+              );
+            }
+            return;
+          }
+
           this.#ensureSafeRangePosition(evt);
         }}
         @keyup=${(evt: KeyboardEvent) => {
@@ -672,6 +773,7 @@ export class TextEditor extends LitElement {
         }}
         @bbfastaccessselect=${(evt: FastAccessSelectEvent) => {
           this.#hideFastAccess();
+          this.#restoreLastRange();
           this.#add(evt.path, evt.title, evt.accessType);
 
           this.#captureEditorValue();

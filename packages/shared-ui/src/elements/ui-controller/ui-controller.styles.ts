@@ -44,7 +44,7 @@ export const styles = css`
       width: 50vw;
       height: var(--bb-grid-size-10);
       max-width: 258px;
-      z-index: 2;
+      z-index: 10;
       display: grid;
       grid-template-rows: var(--bb-grid-size-10);
       border-radius: var(--bb-grid-size-16);
