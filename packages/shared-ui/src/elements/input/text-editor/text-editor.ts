@@ -544,7 +544,10 @@ export class TextEditor extends LitElement {
       return;
     }
 
-    const value = this.#editorRef.value.textContent ?? "";
+    const value = (this.#editorRef.value.textContent ?? "").replace(
+      /\uFEFF/gim,
+      ""
+    );
     this.#value = escapeHTMLEntities(value);
     this.dispatchEvent(new InputEvent("input"));
   }
