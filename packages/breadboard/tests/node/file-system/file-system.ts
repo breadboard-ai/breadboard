@@ -128,7 +128,10 @@ describe("File System", () => {
         data: makeCx("baz contents"),
       })
     );
-    const moduleFs = fs.createModuleFileSystem("https://example.com/2");
+    const moduleFs = fs.createModuleFileSystem({
+      graphUrl: "https://example.com/2",
+      env: [],
+    });
     bad(await moduleFs.read({ path: "/tmp/foo" }));
     good(await moduleFs.read({ path: "/run/bar" }));
     good(await moduleFs.read({ path: "/session/baz" }));
