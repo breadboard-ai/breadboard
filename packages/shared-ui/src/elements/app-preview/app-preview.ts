@@ -244,18 +244,18 @@ export class AppPreview extends LitElement {
       }
     }
 
+    if (this.graph) {
+      if (this.graph.title !== this.appTitle) {
+        this.appTitle = this.graph.title ?? Strings.from("LABEL_UNTITLED_APP");
+      }
+
+      if (this.graph.description !== this.appDescription) {
+        this.appDescription = this.graph.description ?? "";
+      }
+    }
+
     if (changedProperties.has("graph")) {
       if (this.graph?.metadata?.visual?.presentation) {
-        this.appTitle =
-          this.graph.metadata.visual.presentation.title ??
-          this.graph.title ??
-          Strings.from("LABEL_UNTITLED_APP");
-
-        this.appDescription =
-          this.graph.metadata.visual.presentation.description ??
-          this.graph.description ??
-          "";
-
         this.template =
           this.graph.metadata.visual.presentation.template ?? "basic";
 

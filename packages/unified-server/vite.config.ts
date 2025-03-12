@@ -9,6 +9,7 @@ import { tryGetGitHash } from "@breadboard-ai/visual-editor/build-info";
 import { config } from "dotenv";
 import { defineConfig, loadEnv, UserConfig } from "vite";
 import compression from "vite-plugin-compression2";
+import tsconfigRaw from "./tsconfig.client.json" with { type: "json" };
 
 export default defineConfig(async ({ mode }): Promise<UserConfig> => {
   config();
@@ -23,6 +24,9 @@ export default defineConfig(async ({ mode }): Promise<UserConfig> => {
   const define = { ...buildInfo, ...definedAssets };
 
   return {
+    esbuild: {
+      tsconfigRaw,
+    },
     optimizeDeps: { esbuildOptions: { target: "esnext" } },
     build: {
       target: "esnext",
@@ -30,6 +34,7 @@ export default defineConfig(async ({ mode }): Promise<UserConfig> => {
       lib: {
         entry: {
           index: "./index.html",
+          app: "./app/index.html",
           oauth: "./oauth/index.html",
         },
         formats: ["es"],

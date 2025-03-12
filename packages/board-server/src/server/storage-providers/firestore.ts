@@ -16,9 +16,9 @@ import {
   asInfo,
   sanitize,
   INVITE_EXPIRATION_TIME_MS,
+  type StorageBoard,
 } from "../store.js";
 import type {
-  BoardServerStore,
   CreateInviteResult,
   CreateUserResult,
   ListInviteResult,
@@ -27,9 +27,7 @@ import type {
 
 const REANIMATION_COLLECTION_ID = "resume";
 
-export class FirestoreStorageProvider
-  implements RunBoardStateStore, BoardServerStore
-{
+export class FirestoreStorageProvider implements RunBoardStateStore {
   #database;
 
   constructor(storeName: string) {
@@ -99,6 +97,8 @@ export class FirestoreStorageProvider
     return data.data() as ServerInfo | undefined;
   }
 
+  // TODO Rename this
+  // It's confusing that we're referring to a string user ID as "user store"
   async getUserStore(userKey: string | null): Promise<GetUserStoreResult> {
     if (!userKey) {
       return { success: false, error: "No user key supplied" };
@@ -171,6 +171,32 @@ export class FirestoreStorageProvider
       boards.push(board);
     });
     return boards;
+  }
+
+  async loadBoard(user: string, name: string): Promise<StorageBoard | null> {
+    const path = `workspaces/${user}/boards/${name}`;
+    const doc = await this.#database.doc(path).get();
+    if (!doc.exists) {
+      return null;
+    }
+
+    const displayName: string = doc.get("title") ?? "";
+    const description = doc.get("description") || "";
+    const tags = doc.get("tags") ?? [];
+
+    const graphString = doc.get("graph") ?? "";
+    const graph: GraphDescriptor | undefined = graphString
+      ? JSON.parse(graphString)
+      : undefined;
+
+    return {
+      name,
+      owner: user,
+      displayName,
+      description,
+      tags,
+      graph,
+    };
   }
 
   async get(userStore: string, boardName: string): Promise<string> {

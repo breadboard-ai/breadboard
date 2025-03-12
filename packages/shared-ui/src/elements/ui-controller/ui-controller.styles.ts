@@ -34,28 +34,23 @@ export const styles = css`
     }
 
     & bb-asset-organizer {
-      position: absolute;
-      bottom: var(--bb-grid-size-4);
-      left: var(--bb-grid-size-4);
-      z-index: 5;
+      z-index: 10;
     }
 
     & #create-view-popout {
       position: absolute;
-      bottom: var(--bb-grid-size-4);
-      right: var(--bb-grid-size-4);
+      top: var(--bb-grid-size-3);
+      right: var(--bb-grid-size-3);
       width: 50vw;
-      height: var(--bb-grid-size-11);
-      max-height: 70vh;
+      height: var(--bb-grid-size-10);
       max-width: 258px;
-      z-index: 7;
+      z-index: 10;
       display: grid;
-      grid-template-rows: 42px;
-      border-radius: var(--bb-grid-size-2);
-      border: 1px solid var(--bb-neutral-300);
+      grid-template-rows: var(--bb-grid-size-10);
+      border-radius: var(--bb-grid-size-16);
       overflow: hidden;
       background: var(--bb-neutral-0);
-      box-shadow: var(--bb-elevation-5);
+      box-shadow: var(--bb-elevation-1);
 
       &.wide {
         max-width: 400px;
@@ -76,7 +71,7 @@ export const styles = css`
           align-items: center;
           justify-content: flex-start;
           height: 100%;
-          padding: 0 var(--bb-grid-size-3);
+          padding: 0 var(--bb-grid-size);
 
           & .label {
             font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
@@ -115,7 +110,7 @@ export const styles = css`
 
           & #run {
             min-width: 76px;
-            height: var(--bb-grid-size-7);
+            height: var(--bb-grid-size-8);
             background: var(--bb-ui-500) var(--bb-icon-play-filled-inverted) 8px
               center / 20px 20px no-repeat;
             color: #fff;
@@ -245,8 +240,13 @@ export const styles = css`
 
       &.expanded {
         max-width: 450px;
-        grid-template-rows: 44px 1fr min-content;
+        grid-template-rows: 56px 1fr min-content;
         height: 100%;
+        top: 0;
+        right: 0;
+        border-radius: 0;
+        border-left: 1px solid var(--bb-neutral-300);
+        box-shadow: var(--bb-elevation-5);
 
         & #create-view-popout-content {
           display: block;
@@ -256,6 +256,10 @@ export const styles = css`
 
         & #create-view-popout-nav {
           border-bottom: 1px solid var(--bb-neutral-300);
+
+          & #sections {
+            padding-left: var(--bb-grid-size-4);
+          }
 
           & #create-view-popout-toggle {
             background: var(--bb-icon-collapse-content) center center / 20px

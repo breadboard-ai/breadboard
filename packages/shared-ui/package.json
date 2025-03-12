@@ -8,6 +8,22 @@
       "default": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
+    "./contexts": {
+      "default": "./dist/contexts/contexts.js",
+      "types": "./dist/contexts/contexts.d.ts"
+    },
+    "./app-templates/basic": {
+      "default": "./dist/app-templates/basic/index.js",
+      "types": "./dist/app-templates/basic/index.d.ts"
+    },
+    "./utils/signin-adapter": {
+      "default": "./dist/utils/signin-adapter.js",
+      "types": "./dist/utils/signin-adapter.d.ts"
+    },
+    "./utils/top-graph-observer": {
+      "default": "./dist/utils/top-graph-observer/index.js",
+      "types": "./dist/utils/top-graph-observer/index.d.ts"
+    },
     "./elements/connection/connection-broker.ts": {
       "default": "./dist/elements/connection/connection-broker.js",
       "types": "./dist/elements/connection/connection-broker.d.ts"
@@ -104,8 +120,8 @@
     "ava": "^5.2.0",
     "dotenv": "^16.4.7",
     "tsx": "^4.19.3",
-    "typescript": "^5.7.3",
-    "vite": "^6.2.0",
+    "typescript": "^5.8.2",
+    "vite": "^6.2.1",
     "vite-plugin-full-reload": "^1.2.0",
     "vite-plugin-watch-and-run": "^1.7.4",
     "vitest": "^3.0.7"
@@ -132,7 +148,7 @@
     "@lit-labs/signals": "^0.1.2",
     "@lit/context": "^1.1.4",
     "@lit/task": "^1.0.2",
-    "@pixi/math-extras": "^7.4.2",
+    "@pixi/math-extras": "^7.4.3",
     "@types/gapi": "^0.0.47",
     "@types/gapi.drive": "^0.0.9",
     "@types/google.picker": "^0.0.43",

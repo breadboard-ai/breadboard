@@ -5,34 +5,30 @@
  */
 
 import type { Request, Response } from "express";
-import type { GraphDescriptor } from "@breadboard-ai/types";
-import { getStore } from "../store.js";
-import { serverError } from "../errors.js";
-import { authenticate } from "../auth.js";
-import { ok } from "@google-labs/breadboard";
+import * as errors from "../errors.js";
+import type { StorageBoard } from "../store.js";
 
 async function get(req: Request, res: Response) {
-  const { user, name } = res.locals.boardId;
-
-  const store = getStore();
-
-  const board = await store.get(user, name);
-
   try {
-    const graphDescriptor = JSON.parse(board) as GraphDescriptor;
-    if (graphDescriptor.metadata?.tags?.includes("private")) {
-      const authenticating = await authenticate(req, res);
-      if (!ok(authenticating)) {
+    const board: StorageBoard | null = res.locals.loadedBoard;
+    if (!board) {
+      res.sendStatus(404);
+      return;
+    }
+
+    // TODO Fail closed, not open
+    // TODO Return 404 or 403, not 401
+    if (board.graph?.metadata?.tags?.includes("private")) {
+      if (res.locals.userId != req.params["user"]) {
+        errors.unauthorized(res);
         return;
       }
     }
+    res.json(board.graph);
   } catch (e) {
-    serverError(res, (e as Error).message);
+    errors.serverError(res, (e as Error).message);
     return;
   }
-
-  res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(board);
 }
 
 export default get;

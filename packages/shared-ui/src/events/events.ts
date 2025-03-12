@@ -129,7 +129,8 @@ export class BoardInfoUpdateEvent extends Event {
     public readonly isTool: boolean | null = null,
     public readonly isComponent: boolean | null = null,
     public readonly subGraphId: string | null = null,
-    public readonly moduleId: string | null = null
+    public readonly moduleId: string | null = null,
+    public readonly exported: boolean | null = null
   ) {
     super(BoardInfoUpdateEvent.eventName, { ...eventInit });
   }
@@ -1364,6 +1365,14 @@ export class SignInEvent extends Event {
   }
 }
 
+export class SignInRequestedEvent extends Event {
+  static eventName = "bbsigninrequested";
+
+  constructor() {
+    super(SignInRequestedEvent.eventName, { ...eventInit });
+  }
+}
+
 export class SignOutEvent extends Event {
   static eventName = "bbsignout";
 
@@ -1423,6 +1432,14 @@ export class UtteranceEvent extends Event {
 }
 
 /** Assets */
+
+export class ShowAssetOrganizerEvent extends Event {
+  static eventName = "bbshowassetorganizer";
+
+  constructor() {
+    super(ShowAssetOrganizerEvent.eventName, { ...eventInit });
+  }
+}
 
 export class AddAssetRequestEvent extends Event {
   static eventName = "bbaddassetrequest";

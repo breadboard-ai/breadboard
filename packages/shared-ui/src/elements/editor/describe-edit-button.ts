@@ -16,10 +16,7 @@ import type {
   OutputValues,
 } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
-import {
-  type SideBoardRuntime,
-  sideBoardRuntime,
-} from "../../utils/side-board-runtime.js";
+import { sideBoardRuntime } from "../../contexts/side-board-runtime.js";
 import {
   GraphReplaceEvent,
   HideTooltipEvent,
@@ -28,6 +25,7 @@ import {
 import { fabStyles } from "../../styles/fab.js";
 import { floatingPanelStyles } from "../../styles/floating-panel.js";
 import { multiLineInputStyles } from "../../styles/multi-line-input.js";
+import { SideBoardRuntime } from "../../sideboards/types.js";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -46,11 +44,9 @@ export class DescribeEditButton extends LitElement {
     css`
       :host {
         position: relative;
-        margin: 16px;
       }
 
       #edit-button {
-        background-color: var(--bb-ui-500);
         --bb-icon: var(--bb-add-icon-generative-text-inverted);
       }
 
@@ -73,7 +69,7 @@ export class DescribeEditButton extends LitElement {
 
       #submit-button {
         width: 24px;
-        --bb-icon: var(--bb-add-icon-generative-text-inverted);
+        --bb-icon: var(--bb-add-icon-generative-inverted);
         box-shadow: none;
         background-color: var(--bb-ui-500);
         margin-left: 8px;

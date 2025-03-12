@@ -23,6 +23,9 @@ export default {
   COMMAND_LIBRARY_GROUP_3: {
     str: "Show Tools",
   },
+  COMMAND_LIBRARY_MODULES: {
+    str: "Show Custom Steps",
+  },
   COMMAND_ZOOM_TO_FIT: {
     str: "Fit to Screen",
   },
@@ -31,6 +34,9 @@ export default {
   },
   COMMAND_DESCRIBE_EDIT: {
     str: "Describe an edit",
+  },
+  COMMAND_ASSET_ORGANIZER: {
+    str: "Show Assets",
   },
 
   // Statuses.

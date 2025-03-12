@@ -363,6 +363,10 @@
 				"order": {
 					"type": "number",
 					"description": "Allows specifying relative order of this graph when it is represented as a component in any menu. Currently used when populating the quick access menu."
+				},
+				"userModified": {
+					"type": "boolean",
+					"description": "If true, the title/description have been modified by the user."
 				}
 			},
 			"additionalProperties": {
@@ -453,6 +457,10 @@
 				"icon": {
 					"type": "string",
 					"description": "The icon for the node."
+				},
+				"userModified": {
+					"type": "boolean",
+					"description": "If true, the title/description have been modified by the user."
 				}
 			},
 			"additionalProperties": false,

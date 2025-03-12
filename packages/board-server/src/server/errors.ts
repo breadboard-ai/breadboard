@@ -6,6 +6,7 @@
 
 // TODO expressify
 
+import type { Response } from "express";
 import { ServerResponse } from "http";
 
 export const serverError = (res: ServerResponse, error: string) => {
@@ -28,7 +29,6 @@ export const notFound = (res: ServerResponse, error: string) => {
   res.end(error);
 };
 
-export const unauthorized = (res: ServerResponse, error: string) => {
-  res.writeHead(401, "Unauthorized");
-  res.end(error);
-};
+export function unauthorized(res: Response): void {
+  res.sendStatus(401);
+}

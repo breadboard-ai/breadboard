@@ -7,7 +7,7 @@
 import { createTokenVendor } from "@breadboard-ai/connection-client";
 import GoogleDriveKit from "@breadboard-ai/google-drive-kit/google-drive.kit.json" with { type: "json" };
 import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
-import AgentKit from "@google-labs/agent-kit/agent.kit.json" assert { type: "json" };
+import AgentKit from "@google-labs/agent-kit/agent.kit.json" with { type: "json" };
 import {
   asRuntimeKit,
   type GraphDescriptor,

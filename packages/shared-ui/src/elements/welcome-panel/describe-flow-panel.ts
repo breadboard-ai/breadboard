@@ -18,11 +18,9 @@ import type {
   OutputValues,
 } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
-import {
-  type SideBoardRuntime,
-  sideBoardRuntime,
-} from "../../utils/side-board-runtime.js";
+import { sideBoardRuntime } from "../../contexts/side-board-runtime.js";
 import { GraphBoardServerGeneratedBoardEvent } from "../../events/events.js";
+import { SideBoardRuntime } from "../../sideboards/types.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 

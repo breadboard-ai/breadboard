@@ -18,6 +18,7 @@ import {
   NodeConfiguration,
   NodeDescriptor,
   NodeIdentifier,
+  ok,
   PortIdentifier,
 } from "@google-labs/breadboard";
 import {
@@ -51,15 +52,8 @@ import { Sandbox } from "@breadboard-ai/jsandbox";
 import { createGraphId, MAIN_BOARD_ID } from "./util";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { AppTheme } from "@breadboard-ai/shared-ui/types/types.js";
-
-// function isGraphDescriptor(source: unknown): source is GraphDescriptor {
-//   return (
-//     typeof source === "object" &&
-//     source !== null &&
-//     "edges" in source &&
-//     "nodes" in source
-//   );
-// }
+import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
+import { Autoname } from "@breadboard-ai/shared-ui/sideboards/autoname.js";
 
 function isModule(source: unknown): source is Module {
   return typeof source === "object" && source !== null && "code" in source;
@@ -67,15 +61,24 @@ function isModule(source: unknown): source is Module {
 
 export class Edit extends EventTarget {
   #editors = new Map<TabId, EditableGraph>();
+  // Since the tabs are gone, we can have a single instance now.
+  #autoname: Autoname;
 
   constructor(
     public readonly providers: GraphProvider[],
     public readonly loader: GraphLoader,
     public readonly kits: Kit[],
     public readonly sandbox: Sandbox,
-    public readonly graphStore: MutableGraphStore
+    public readonly graphStore: MutableGraphStore,
+    public readonly sideboards: SideBoardRuntime,
+    public readonly settings: BreadboardUI.Types.SettingsStore | null
   ) {
     super();
+    const allGraphs = !!this.settings
+      ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
+      ?.items.get("Enable autonaming")?.value;
+
+    this.#autoname = new Autoname(sideboards, allGraphs);
   }
 
   getEditor(tab: Tab | null): EditableGraph | null {
@@ -91,6 +94,13 @@ export class Edit extends EventTarget {
     }
     editor.addEventListener("graphchange", (evt) => {
       tab.graph = evt.graph;
+
+      this.#autoname.addTask(editor, evt).then((result) => {
+        if (!ok(result)) {
+          console.log("AUTONAMING ERROR", result.$error);
+        }
+      });
+
       this.dispatchEvent(
         new RuntimeBoardEditEvent(
           tab.id,
@@ -790,7 +800,7 @@ export class Edit extends EventTarget {
     );
   }
 
-  toggleExport(
+  async toggleExport(
     tab: Tab,
     id: ModuleIdentifier | GraphIdentifier,
     exportType: "imperative" | "declarative"
@@ -801,7 +811,7 @@ export class Edit extends EventTarget {
       return null;
     }
 
-    editableGraph.edit(
+    return editableGraph.edit(
       [{ type: "toggleexport", exportType, id }],
       `Toggle export for ${exportType} graph "${id}"`
     );
@@ -845,8 +855,10 @@ export class Edit extends EventTarget {
     graph.version = version;
     graph.description = description;
 
+    graph.metadata ??= {};
+    graph.metadata.userModified = true;
+
     if (status) {
-      graph.metadata ??= {};
       graph.metadata.tags ??= [];
 
       switch (status) {

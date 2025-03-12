@@ -171,7 +171,7 @@
     "jsonschema": "^1.5.0",
     "rollup": "^4.34.9",
     "rollup-plugin-dts": "^6.1.1",
-    "typescript": "^5.7.3"
+    "typescript": "^5.8.2"
   },
   "engines": {
     "node": ">=20.14.0"

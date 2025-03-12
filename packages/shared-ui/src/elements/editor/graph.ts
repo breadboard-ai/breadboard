@@ -60,6 +60,7 @@ const nodeBorderColor = getGlobalColor("--bb-neutral-500");
 const subGraphDefaultBackgroundColor = getGlobalColor("--bb-neutral-0");
 const subGraphDefaultBorderColor = getGlobalColor("--bb-neutral-400");
 const subGraphDefaultLabelColor = getGlobalColor("--bb-neutral-600");
+const subGraphDefaultButtonColor = getGlobalColor("--bb-neutral-100");
 
 const SUB_GRAPH_LABEL_TEXT_SIZE = 14;
 const ICON_SCALE = 0.3333;
@@ -99,7 +100,7 @@ export class Graph extends PIXI.Container {
 
   #graphTitle: string | null = null;
   #graphOutlineTitleLabel: PIXI.Text | null = null;
-  #graphOutlineConnectorIcon: PIXI.Sprite | null = null;
+  #graphOutlineEditIcon: PIXI.Sprite | null = null;
   #graphOutlineConnector = new PIXI.Graphics();
   #graphOutlineMarker = new PIXI.Graphics();
   #graphOutline = new PIXI.Graphics();
@@ -122,27 +123,23 @@ export class Graph extends PIXI.Container {
     this.eventMode = "static";
     this.sortableChildren = true;
 
-    const dragClickTexture = GraphAssets.instance().get("drag-click-inverted");
-    if (dragClickTexture) {
-      this.#graphOutlineConnectorIcon = new PIXI.Sprite(dragClickTexture);
-      this.#graphOutlineConnectorIcon.scale.x = ICON_SCALE;
-      this.#graphOutlineConnectorIcon.scale.y = ICON_SCALE;
-      this.#graphOutlineConnectorIcon.eventMode = "none";
+    const editTexture = GraphAssets.instance().get("edit");
+    if (editTexture) {
+      this.#graphOutlineEditIcon = new PIXI.Sprite(editTexture);
+      this.#graphOutlineEditIcon.scale.x = ICON_SCALE;
+      this.#graphOutlineEditIcon.scale.y = ICON_SCALE;
+      this.#graphOutlineEditIcon.eventMode = "none";
     }
 
     this.#graphOutline.eventMode = "none";
 
     let subGraphOutlineMarkerDragStart: PIXI.Point | null = null;
-    this.#graphOutlineConnector.cursor = "crosshair";
+    this.#graphOutlineConnector.cursor = "pointer";
     this.#graphOutlineConnector.eventMode = "static";
     this.#graphOutlineConnector.addEventListener(
       "pointerdown",
       (evt: PIXI.FederatedPointerEvent) => {
-        this.emit(
-          GRAPH_OPERATIONS.SUBGRAPH_CONNECTION_START,
-          evt.clientX,
-          evt.clientY
-        );
+        this.emit(GRAPH_OPERATIONS.SUBGRAPH_EDIT, evt.clientX, evt.clientY);
       }
     );
 
@@ -1708,8 +1705,8 @@ export class Graph extends PIXI.Container {
       this.#graphOutlineTitleLabel.visible = false;
     }
 
-    if (this.#graphOutlineConnectorIcon) {
-      this.#graphOutlineConnectorIcon.visible = false;
+    if (this.#graphOutlineEditIcon) {
+      this.#graphOutlineEditIcon.visible = false;
     }
 
     if (!this.#graphOutlineVisible) {
@@ -1806,9 +1803,9 @@ export class Graph extends PIXI.Container {
       this.#graphOutlineMarker.stroke({ color: this.#graphLabelColor });
 
       this.#graphOutlineConnector.beginPath();
-      this.#graphOutlineConnector.circle(0, 0, 10);
+      this.#graphOutlineConnector.circle(0, 0, 12);
       this.#graphOutlineConnector.closePath();
-      this.#graphOutlineConnector.fill({ color: this.#graphLabelColor });
+      this.#graphOutlineConnector.fill({ color: subGraphDefaultButtonColor });
 
       this.#graphOutlineConnector.x = x + w - 16;
       this.#graphOutlineConnector.y = y + h * 0.5;
@@ -1818,12 +1815,12 @@ export class Graph extends PIXI.Container {
       this.#graphOutlineTitleLabel.visible = true;
 
       if (this.subGraphId) {
-        if (this.#graphOutlineConnectorIcon) {
-          this.#graphOutlineConnectorIcon.x = x + w - 24;
-          this.#graphOutlineConnectorIcon.y = y + h * 0.5 - 8;
+        if (this.#graphOutlineEditIcon) {
+          this.#graphOutlineEditIcon.x = x + w - 24;
+          this.#graphOutlineEditIcon.y = y + h * 0.5 - 8;
 
-          this.#graphOutlineConnectorIcon.visible = true;
-          this.addChildAt(this.#graphOutlineConnectorIcon, 0);
+          this.#graphOutlineEditIcon.visible = true;
+          this.addChildAt(this.#graphOutlineEditIcon, 0);
         }
         this.addChildAt(this.#graphOutlineConnector, 0);
       }

@@ -438,6 +438,10 @@
 					},
 					"type": "array"
 				},
+				"userModified": {
+					"description": "If true, the title/description have been modified by the user.",
+					"type": "boolean"
+				},
 				"visual": {
 					"additionalProperties": false,
 					"description": "The metadata associated with the visual representation of the graph.",
@@ -795,6 +799,10 @@
 				"title": {
 					"description": "The title of the node.",
 					"type": "string"
+				},
+				"userModified": {
+					"description": "If true, the title/description have been modified by the user.",
+					"type": "boolean"
 				},
 				"visual": {
 					"anyOf": [

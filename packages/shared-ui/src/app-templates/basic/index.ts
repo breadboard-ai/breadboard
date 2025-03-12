@@ -24,6 +24,7 @@ import { classMap } from "lit/directives/class-map.js";
 import {
   GraphDescriptor,
   InspectableRun,
+  InspectableRunSecretEvent,
   isLLMContent,
 } from "@google-labs/breadboard";
 import { styleMap } from "lit/directives/style-map.js";
@@ -32,6 +33,7 @@ import {
   AddAssetRequestEvent,
   InputEnterEvent,
   RunEvent,
+  SignInRequestedEvent,
   StopEvent,
   UtteranceEvent,
 } from "../../events/events";
@@ -41,6 +43,20 @@ import { NodeValue, OutputValues } from "@breadboard-ai/types";
 import { isLLMContentArrayBehavior, isLLMContentBehavior } from "../../utils";
 import { extractError } from "../shared/utils/utils";
 import { AssetShelf } from "../../elements/elements";
+import { SigninState } from "../../utils/signin-adapter";
+
+/** Included so the app can be standalone */
+import "../../elements/input/add-asset/add-asset-button.js";
+import "../../elements/input/add-asset/add-asset-modal.js";
+import "../../elements/input/add-asset/asset-shelf.js";
+import "../../elements/input/speech-to-text/speech-to-text.js";
+import "../../elements/input/drawable/drawable.js";
+
+import "../../elements/output/llm-output/llm-output-array.js";
+import "../../elements/output/llm-output/export-toolbar.js";
+import "../../elements/output/llm-output/llm-output.js";
+import "../../elements/output/multi-output/multi-output.js";
+import { map } from "lit/directives/map.js";
 
 @customElement("app-basic")
 export class Template extends LitElement implements AppTemplate {
@@ -68,6 +84,9 @@ export class Template extends LitElement implements AppTemplate {
 
   @property()
   accessor showGDrive = false;
+
+  @property()
+  accessor state: SigninState = "anonymous";
 
   @state()
   accessor showAddAssetModal = false;
@@ -147,6 +166,7 @@ export class Template extends LitElement implements AppTemplate {
           display: flex;
           flex-direction: column;
           width: 100%;
+          max-height: 100svh;
           overflow-x: hidden;
           overflow-y: scroll;
           flex: 1;
@@ -404,6 +424,7 @@ export class Template extends LitElement implements AppTemplate {
 
             background: var(--background-color, var(--bb-neutral-0));
 
+            & #sign-in,
             & #run {
               min-width: 76px;
               height: var(--bb-grid-size-10);
@@ -433,6 +454,10 @@ export class Template extends LitElement implements AppTemplate {
                   opacity: 1;
                 }
               }
+            }
+
+            & #sign-in {
+              background-image: var(--bb-icon-login-inverted);
             }
 
             &.stopped {
@@ -478,9 +503,15 @@ export class Template extends LitElement implements AppTemplate {
                       var(--bb-title-line-height-medium) var(--bb-font-family);
                     margin: 0 0 var(--bb-grid-size-3) 0;
                     flex: 1;
+
+                    &.api-message {
+                      font: 400 var(--bb-body-x-small) /
+                        var(--bb-body-line-height-x-small) var(--bb-font-family);
+                    }
                   }
 
-                  & textarea {
+                  & textarea,
+                  & input[type="password"] {
                     field-sizing: content;
                     resize: none;
                     background: transparent;
@@ -684,7 +715,14 @@ export class Template extends LitElement implements AppTemplate {
       const assetShelf =
         this.#inputRef.value.querySelector<AssetShelf>("bb-asset-shelf");
       const inputValues: OutputValues = {};
+
+      let canProceed = true;
       for (const input of inputs) {
+        if (!input.checkValidity()) {
+          input.reportValidity();
+          canProceed = false;
+        }
+
         if (typeof input.value === "string") {
           if (input.dataset.type === "llm-content") {
             inputValues[input.name] = this.#toLLMContentWithTextPart(
@@ -715,6 +753,10 @@ export class Template extends LitElement implements AppTemplate {
           // Once we have the values, remove the items from the shelf.
           assetShelf.clear();
         }
+      }
+
+      if (!canProceed) {
+        return;
       }
 
       this.dispatchEvent(
@@ -779,6 +821,37 @@ export class Template extends LitElement implements AppTemplate {
                   .join("");
               }}
             ></bb-speech-to-text>
+            <button
+              id="continue"
+              @click=${() => {
+                continueRun(currentItem.id ?? "unknown");
+              }}
+            >
+              Continue
+            </button>
+          </div>
+        `;
+      } else if (this.run && this.run.events.at(-1)?.type === "secret") {
+        const secretEvent = this.run.events.at(-1) as InspectableRunSecretEvent;
+
+        active = true;
+        inputContents = html`
+          <div class="user-input">
+            <p class="api-message">
+              When calling an API, the API provider's applicable privacy policy
+              and terms apply
+            </p>
+            ${map(secretEvent.keys, (key) => {
+              return html`<input
+                name=${key}
+                type="password"
+                autocomplete="off"
+                required
+                .placeholder=${`Enter ${key}`}
+              />`;
+            })}
+          </div>
+          <div class="controls">
             <button
               id="continue"
               @click=${() => {
@@ -903,15 +976,26 @@ export class Template extends LitElement implements AppTemplate {
       </div>
       <div id="input" class="stopped">
         <div>
-          <button
-            id="run"
-            ?disabled=${this.#totalNodeCount === 0}
-            @click=${() => {
-              this.dispatchEvent(new RunEvent());
-            }}
-          >
-            Start
-          </button>
+          ${this.state === "anonymous" || this.state === "valid"
+            ? html`<button
+                id="run"
+                ?disabled=${this.#totalNodeCount === 0}
+                @click=${() => {
+                  this.dispatchEvent(new RunEvent());
+                }}
+              >
+                Start
+              </button>`
+            : html`<button
+                id="sign-in"
+                ?disabled=${this.#totalNodeCount === 0}
+                @click=${() => {
+                  console.log("Sign in");
+                  this.dispatchEvent(new SignInRequestedEvent());
+                }}
+              >
+                Sign In
+              </button>`}
         </div>
       </div>
     `;

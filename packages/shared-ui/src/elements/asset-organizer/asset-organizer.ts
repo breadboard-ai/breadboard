@@ -24,6 +24,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { OverflowAction } from "../../types/types.js";
 import {
   OverflowMenuActionEvent,
+  OverlayDismissedEvent,
   ToastEvent,
   ToastType,
 } from "../../events/events.js";
@@ -35,23 +36,21 @@ import {
 } from "@google-labs/breadboard";
 import { InputChangeEvent } from "../../plugins/input-plugin.js";
 import { SIGN_IN_CONNECTION_ID } from "../../utils/signin-adapter.js";
+import { styleMap } from "lit/directives/style-map.js";
 
-const EXPANDED_KEY = "bb-asset-organizer-expanded";
-const VIEWER_KEY = "bb-asset-organizer-viewer";
+const OVERFLOW_MENU_PADDING = 12;
 
 @customElement("bb-asset-organizer")
 export class AssetOrganizer extends SignalWatcher(LitElement) {
   @property()
   accessor state: Organizer | null = null;
 
-  @property({ reflect: true })
-  accessor expanded = false;
-
-  @property({ reflect: true })
-  accessor showViewer = false;
-
   @property()
   accessor showAddOverflowMenu = false;
+  #addOverflowLocation = {
+    x: 0,
+    y: 0,
+  };
 
   @property()
   accessor showGDrive = false;
@@ -72,7 +71,21 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
 
     :host {
       display: block;
-      position: relative;
+      position: fixed;
+      width: 100svw;
+      height: 100svh;
+      left: 0;
+      top: 0;
+    }
+
+    #background {
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.05);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     #add-drive-proxy,
@@ -92,8 +105,12 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
       display: flex;
       flex-direction: column;
       overflow: auto;
-      width: 260px;
-      height: var(--bb-grid-size-11);
+
+      width: 80svw;
+      height: 70svh;
+      max-width: 800px;
+      max-height: 600px;
+
       box-shadow: var(--bb-elevation-5);
 
       & #add-asset-container {
@@ -139,6 +156,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
         height: var(--bb-grid-size-11);
         padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-4);
         user-select: none;
+        border-bottom: 1px solid var(--bb-neutral-300);
 
         & h1 {
           flex: 1;
@@ -204,7 +222,15 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
       }
 
       & #assets {
-        display: none;
+        flex: 1;
+        overflow: auto;
+
+        display: grid;
+        grid-template-columns: 232px 1fr;
+
+        bb-multi-output {
+          display: block;
+        }
 
         & #no-assets,
         & #no-asset-selected {
@@ -342,6 +368,11 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
         }
 
         & #details {
+          --output-value-padding-y: var(--bb-grid-size-3);
+
+          display: flex;
+          border-left: 1px solid var(--bb-neutral-300);
+
           width: 100%;
           padding: var(--bb-grid-size-2) var(--bb-grid-size-3)
             var(--bb-grid-size-3) var(--bb-grid-size-3);
@@ -359,71 +390,11 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
       }
     }
 
-    :host([expanded="true"]) {
-      & #container {
-        height: 564px;
-
-        & header {
-          border-bottom: 1px solid var(--bb-neutral-300);
-
-          & #toggle-expanded {
-            background: var(--bb-icon-collapse-content) center center / 20px
-              20px no-repeat;
-          }
-
-          & #toggle-viewer {
-            display: flex;
-          }
-        }
-
-        & #controls {
-          display: block;
-          height: var(--bb-grid-size-13);
-          display: flex;
-          align-items: center;
-          justify-content: flex-end;
-          padding: 0 var(--bb-grid-size-3);
-          border-bottom: 1px solid var(--bb-neutral-300);
-          user-select: none;
-        }
-
-        & #assets {
-          display: block;
-          flex: 1;
-          overflow: auto;
-
-          bb-multi-output {
-            display: none;
-          }
-        }
-      }
-    }
-
-    :host([showviewer="true"][expanded="true"]) {
-      & #container {
-        width: 720px;
-
-        & #assets {
-          display: grid;
-          grid-template-columns: 232px 1fr;
-
-          bb-multi-output {
-            display: block;
-          }
-        }
-
-        & #details {
-          display: flex;
-          border-left: 1px solid var(--bb-neutral-300);
-        }
-      }
-    }
-
     bb-overflow-menu {
       position: absolute;
-      left: 12px;
+      left: 0;
+      top: 0;
       width: 220px;
-      top: 84px;
     }
   `;
 
@@ -432,36 +403,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
   #renameInputRef: Ref<HTMLInputElement> = createRef();
   #contentInputRef: Ref<LLMInput> = createRef();
 
-  connectedCallback(): void {
-    super.connectedCallback();
-
-    const isExpanded = globalThis.localStorage.getItem(EXPANDED_KEY);
-    const showingViewer = globalThis.localStorage.getItem(VIEWER_KEY);
-    if (isExpanded !== null) {
-      this.expanded = isExpanded === "true";
-    }
-
-    if (showingViewer !== null) {
-      this.showViewer = showingViewer === "true";
-    }
-  }
-
-  #toggleExpandedState(force = false) {
-    this.expanded = force ? true : !this.expanded;
-
-    globalThis.localStorage.setItem(EXPANDED_KEY, `${this.expanded}`);
-  }
-
-  #toggleViewer(force = false) {
-    this.showViewer = force ? true : !this.showViewer;
-
-    globalThis.localStorage.setItem(VIEWER_KEY, `${this.showViewer}`);
-  }
-
   #showAsset(asset: GraphAsset) {
-    this.#toggleExpandedState(true);
-    this.#toggleViewer(true);
-
     this.asset = asset;
   }
 
@@ -657,6 +599,13 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
       addOverflowMenu = html`<bb-overflow-menu
         .actions=${actions}
         .disabled=${false}
+        style=${styleMap({
+          left: `${this.#addOverflowLocation.x}px`,
+          top: `${this.#addOverflowLocation.y}px`,
+        })}
+        @pointerdown=${(evt: PointerEvent) => {
+          evt.stopImmediatePropagation();
+        }}
         @bboverflowmenuaction=${async (evt: OverflowMenuActionEvent) => {
           evt.stopImmediatePropagation();
 
@@ -695,246 +644,258 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
       ></bb-overflow-menu>`;
     }
 
-    return html`<div id="container">
-        <header>
-          <h1 @dblclick=${() => this.#toggleExpandedState()}>
-            ${Strings.from("LABEL_TITLE")}
-          </h1>
-          <button
-            id="toggle-viewer"
-            class=${classMap({ active: this.showViewer })}
-            @click=${() => this.#toggleViewer()}
-          >
-            ${Strings.from("COMMAND_TOGGLE_VIEWER")}
-          </button>
-          <button
-            id="toggle-expanded"
-            @click=${() => this.#toggleExpandedState()}
-          >
-            ${Strings.from("COMMAND_TOGGLE_EXPAND")}
-          </button>
-        </header>
-        <section id="assets">
-          <section>
-            <div id="add-asset-container">
-              <button
-                id="add-asset"
-                @click=${() => {
-                  this.showAddOverflowMenu = true;
-                }}
-              >
-                ${Strings.from("COMMAND_ADD_ASSET")}
-              </button>
-            </div>
-            ${assets && assets.size > 0
-              ? html`<menu>
-                  ${repeat(assets, ([path, asset]) => {
-                    if (path === "@@splash") {
-                      return nothing;
+    return html` <div
+        id="background"
+        @pointerdown=${() => {
+          this.dispatchEvent(new OverlayDismissedEvent());
+        }}
+      >
+        <div
+          id="container"
+          @pointerdown=${(evt: PointerEvent) => {
+            evt.stopImmediatePropagation();
+
+            this.showAddOverflowMenu = false;
+          }}
+        >
+          <header>
+            <h1>${Strings.from("LABEL_TITLE")}</h1>
+          </header>
+          <section id="assets">
+            <section>
+              <div id="add-asset-container">
+                <button
+                  id="add-asset"
+                  @click=${(evt: PointerEvent) => {
+                    this.showAddOverflowMenu = true;
+
+                    if (!(evt.target instanceof HTMLButtonElement)) {
+                      return;
                     }
 
-                    return html`<li>
-                      ${asset === this.editAssetTitle
-                        ? html`<span
+                    const bounds = evt.target.getBoundingClientRect();
+                    this.#addOverflowLocation = {
+                      x: bounds.left,
+                      y: bounds.bottom + OVERFLOW_MENU_PADDING,
+                    };
+                  }}
+                >
+                  ${Strings.from("COMMAND_ADD_ASSET")}
+                </button>
+              </div>
+              ${assets && assets.size > 0
+                ? html`<menu>
+                    ${repeat(assets, ([path, asset]) => {
+                      if (path === "@@splash") {
+                        return nothing;
+                      }
+
+                      return html`<li>
+                        ${asset === this.editAssetTitle
+                          ? html`<span
+                                class=${classMap({
+                                  [asset.metadata?.type ?? "generic"]: true,
+                                  [asset.metadata?.subType ?? "sub-generic"]:
+                                    true,
+                                })}
+                              ></span>
+
+                              <input
+                                type="text"
+                                required
+                                autofocus
+                                .value=${asset.metadata?.title || path}
+                                ${ref(this.#renameInputRef)}
+                                @blur=${(evt: Event) => {
+                                  if (
+                                    !(evt.target instanceof HTMLInputElement)
+                                  ) {
+                                    return;
+                                  }
+
+                                  if (!this.editAssetTitle) {
+                                    return;
+                                  }
+
+                                  if (!evt.target.value) {
+                                    evt.target.reportValidity();
+                                    return;
+                                  }
+
+                                  this.#attemptUpdateAssetTitle(
+                                    this.editAssetTitle,
+                                    evt.target.value
+                                  );
+                                  this.#showAsset(this.editAssetTitle);
+                                  this.editAssetTitle = null;
+                                }}
+                                @keydown=${(evt: KeyboardEvent) => {
+                                  if (
+                                    !(evt.target instanceof HTMLInputElement)
+                                  ) {
+                                    return;
+                                  }
+
+                                  if (evt.key !== "Enter") {
+                                    return;
+                                  }
+
+                                  if (!this.editAssetTitle) {
+                                    return;
+                                  }
+
+                                  if (!evt.target.value) {
+                                    evt.target.reportValidity();
+                                    return;
+                                  }
+
+                                  this.#attemptUpdateAssetTitle(
+                                    this.editAssetTitle,
+                                    evt.target.value
+                                  );
+                                  this.#showAsset(this.editAssetTitle);
+                                  this.editAssetTitle = null;
+                                }}
+                              />`
+                          : html`<button
                               class=${classMap({
+                                asset: true,
                                 [asset.metadata?.type ?? "generic"]: true,
                                 [asset.metadata?.subType ?? "sub-generic"]:
                                   true,
-                              })}
-                            ></span>
-
-                            <input
-                              type="text"
-                              required
-                              autofocus
-                              .value=${asset.metadata?.title || path}
-                              ${ref(this.#renameInputRef)}
-                              @blur=${(evt: Event) => {
-                                if (!(evt.target instanceof HTMLInputElement)) {
-                                  return;
-                                }
-
-                                if (!this.editAssetTitle) {
-                                  return;
-                                }
-
-                                if (!evt.target.value) {
-                                  evt.target.reportValidity();
-                                  return;
-                                }
-
-                                this.#attemptUpdateAssetTitle(
-                                  this.editAssetTitle,
-                                  evt.target.value
-                                );
-                                this.#showAsset(this.editAssetTitle);
-                                this.editAssetTitle = null;
-                              }}
-                              @keydown=${(evt: KeyboardEvent) => {
-                                if (!(evt.target instanceof HTMLInputElement)) {
-                                  return;
-                                }
-
-                                if (evt.key !== "Enter") {
-                                  return;
-                                }
-
-                                if (!this.editAssetTitle) {
-                                  return;
-                                }
-
-                                if (!evt.target.value) {
-                                  evt.target.reportValidity();
-                                  return;
-                                }
-
-                                this.#attemptUpdateAssetTitle(
-                                  this.editAssetTitle,
-                                  evt.target.value
-                                );
-                                this.#showAsset(this.editAssetTitle);
-                                this.editAssetTitle = null;
-                              }}
-                            />`
-                        : html`<button
-                            class=${classMap({
-                              asset: true,
-                              [asset.metadata?.type ?? "generic"]: true,
-                              [asset.metadata?.subType ?? "sub-generic"]: true,
-                              active: asset.path === this.asset?.path,
-                            })}
-                            @click=${() => {
-                              if (asset !== this.asset) {
-                                this.#showAsset(asset);
-                              } else {
-                                this.editAssetTitle = asset;
-                              }
-                            }}
-                            @dblclick=${() => {
-                              this.editAssetTitle = asset;
-                            }}
-                          >
-                            ${asset.metadata?.title || path}
-                          </button>`}
-
-                      <button
-                        class=${classMap({
-                          delete: true,
-                        })}
-                        @click=${async () => {
-                          if (this.#deleting) {
-                            return;
-                          }
-
-                          await this.#deleteAsset(path);
-                        }}
-                      >
-                        Delete
-                      </button>
-                    </li>`;
-                  })}
-                </menu>`
-              : html`<div id="no-assets">
-                  ${Strings.from("LABEL_NO_ASSETS")}
-                </div>`}
-          </section>
-
-          ${this.showViewer
-            ? html` <section
-                id="details"
-                class=${classMap({
-                  padded: this.asset?.metadata?.type === "file",
-                })}
-              >
-                ${assetData
-                  ? html`
-                      ${this.asset?.metadata?.type === "content"
-                        ? html`<div>
-                            <button
-                              id="edit-asset"
-                              class=${classMap({
-                                save: this.editAssetContent !== null,
+                                active: asset.path === this.asset?.path,
                               })}
                               @click=${() => {
-                                if (!this.asset) {
-                                  return;
+                                if (asset !== this.asset) {
+                                  this.#showAsset(asset);
+                                } else {
+                                  this.editAssetTitle = asset;
                                 }
-
-                                if (!this.editAssetContent) {
-                                  this.editAssetContent = this.asset;
-                                  return;
-                                }
-
-                                if (!this.#contentInputRef.value) {
-                                  console.warn("No LLM Content editor");
-                                  return;
-                                }
-
-                                this.#attemptUpdateAsset();
+                              }}
+                              @dblclick=${() => {
+                                this.editAssetTitle = asset;
                               }}
                             >
-                              ${this.editAssetContent
-                                ? Strings.from("COMMAND_SAVE_ASSET")
-                                : Strings.from("COMMAND_EDIT_ASSET")}
-                            </button>
-                          </div>`
-                        : nothing}
-                      ${this.editAssetContent
-                        ? html`<bb-llm-input
-                            ${ref(this.#contentInputRef)}
-                            @keydown=${(evt: KeyboardEvent) => {
-                              const isMac =
-                                navigator.platform.indexOf("Mac") === 0;
-                              const isCtrlCommand = isMac
-                                ? evt.metaKey
-                                : evt.ctrlKey;
+                              ${asset.metadata?.title || path}
+                            </button>`}
 
-                              if (evt.key === "Enter" && isCtrlCommand) {
-                                this.#attemptUpdateAsset();
+                        <button
+                          class=${classMap({
+                            delete: true,
+                          })}
+                          @click=${async () => {
+                            if (this.#deleting) {
+                              return;
+                            }
+
+                            await this.#deleteAsset(path);
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </li>`;
+                    })}
+                  </menu>`
+                : html`<div id="no-assets">
+                    ${Strings.from("LABEL_NO_ASSETS")}
+                  </div>`}
+            </section>
+
+            <section
+              id="details"
+              class=${classMap({
+                padded: this.asset?.metadata?.type === "file",
+              })}
+            >
+              ${assetData
+                ? html`
+                    ${this.asset?.metadata?.type === "content"
+                      ? html`<div>
+                          <button
+                            id="edit-asset"
+                            class=${classMap({
+                              save: this.editAssetContent !== null,
+                            })}
+                            @click=${() => {
+                              if (!this.asset) {
+                                return;
                               }
+
+                              if (!this.editAssetContent) {
+                                this.editAssetContent = this.asset;
+                                return;
+                              }
+
+                              if (!this.#contentInputRef.value) {
+                                console.warn("No LLM Content editor");
+                                return;
+                              }
+
+                              this.#attemptUpdateAsset();
                             }}
-                            .value=${assetData}
-                            .clamped=${false}
-                            .description=${null}
-                            .showInlineControlsToggle=${hasEditableParts}
-                            .showInlineControls=${hasEditableParts}
-                            .showPartControls=${hasEditableParts}
-                            .autofocus=${true}
-                          ></bb-llm-input>`
-                        : html`<bb-llm-output
-                            .value=${assetData}
-                            .clamped=${false}
-                            .graphUrl=${this.state?.graphUrl || null}
-                            .showExportControls=${true}
-                            .supportedExportControls=${supportedExportControls}
-                          ></bb-llm-output>`}
-                    `
-                  : html`<div id="no-asset-selected">No asset selected</div>`}
-              </section>`
-            : nothing}
-        </section>
-      </div>
+                          >
+                            ${this.editAssetContent
+                              ? Strings.from("COMMAND_SAVE_ASSET")
+                              : Strings.from("COMMAND_EDIT_ASSET")}
+                          </button>
+                        </div>`
+                      : nothing}
+                    ${this.editAssetContent
+                      ? html`<bb-llm-input
+                          ${ref(this.#contentInputRef)}
+                          @keydown=${(evt: KeyboardEvent) => {
+                            const isMac =
+                              navigator.platform.indexOf("Mac") === 0;
+                            const isCtrlCommand = isMac
+                              ? evt.metaKey
+                              : evt.ctrlKey;
 
-      <div>
-        <bb-google-drive-file-id
-          id="add-drive-proxy"
-          ${ref(this.#addDriveInputRef)}
-          .connectionName=${SIGN_IN_CONNECTION_ID}
-          @bb-input-change=${(evt: InputChangeEvent) => {
-            const driveFile = evt.value as {
-              preview: string;
-              id: string;
-              mimeType: string;
-            };
+                            if (evt.key === "Enter" && isCtrlCommand) {
+                              this.#attemptUpdateAsset();
+                            }
+                          }}
+                          .value=${assetData}
+                          .clamped=${false}
+                          .description=${null}
+                          .showInlineControlsToggle=${hasEditableParts}
+                          .showInlineControls=${hasEditableParts}
+                          .showPartControls=${hasEditableParts}
+                          .autofocus=${true}
+                        ></bb-llm-input>`
+                      : html`<bb-llm-output
+                          .value=${assetData}
+                          .clamped=${false}
+                          .graphUrl=${this.state?.graphUrl || null}
+                          .showExportControls=${true}
+                          .supportedExportControls=${supportedExportControls}
+                        ></bb-llm-output>`}
+                  `
+                : html`<div id="no-asset-selected">No asset selected</div>`}
+            </section>
+          </section>
+        </div>
 
-            this.#attemptCreateFileDataAsset(
-              driveFile.mimeType,
-              driveFile.preview,
-              driveFile.id,
-              "gdrive"
-            );
-          }}
-        ></bb-google-drive-file-id>
+        <div>
+          <bb-google-drive-file-id
+            id="add-drive-proxy"
+            ${ref(this.#addDriveInputRef)}
+            .connectionName=${SIGN_IN_CONNECTION_ID}
+            @bb-input-change=${(evt: InputChangeEvent) => {
+              const driveFile = evt.value as {
+                preview: string;
+                id: string;
+                mimeType: string;
+              };
+
+              this.#attemptCreateFileDataAsset(
+                driveFile.mimeType,
+                driveFile.preview,
+                driveFile.id,
+                "gdrive"
+              );
+            }}
+          ></bb-google-drive-file-id>
+        </div>
       </div>
 
       <input

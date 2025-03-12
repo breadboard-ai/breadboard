@@ -63,6 +63,9 @@ export default {
   COMMAND_LOG_OUT: {
     str: "Sign out",
   },
+  COMMAND_NEW_ITEM: {
+    str: "Add a new item...",
+  },
 
   // Labels.
   LABEL_RUN: {

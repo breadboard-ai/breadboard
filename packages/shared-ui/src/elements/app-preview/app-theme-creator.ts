@@ -7,10 +7,6 @@ import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { consume } from "@lit/context";
 import {
-  type SideBoardRuntime,
-  sideBoardRuntime,
-} from "../../utils/side-board-runtime.js";
-import {
   GraphDescriptor,
   InlineDataCapabilityPart,
   InputValues,
@@ -30,6 +26,8 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { repeat } from "lit/directives/repeat.js";
 import { map } from "lit/directives/map.js";
 import { styleMap } from "lit/directives/style-map.js";
+import { sideBoardRuntime } from "../../contexts/side-board-runtime.js";
+import { SideBoardRuntime } from "../../sideboards/types.js";
 
 @customElement("bb-app-theme-creator")
 export class AppThemeCreator extends LitElement {
@@ -332,7 +330,7 @@ export class AppThemeCreator extends LitElement {
       ],
     };
 
-    if (additionalInformation) {
+    if (appDescription) {
       inputs.context[0].parts.push({
         text: `The app does the following: "${appDescription}"`,
       });
@@ -408,45 +406,6 @@ export class AppThemeCreator extends LitElement {
 
   render() {
     return html`<section id="container" ${ref(this.#containerRef)}>
-      <details id="application-details">
-        <summary>Application Details</summary>
-        <div>
-          <label for="app-title">Title</label>
-          <input
-            id="app-title"
-            type="text"
-            placeholder="Your application's title"
-            autocomplete="off"
-            required
-            .value=${this.appTitle}
-            ?disabled=${this._generating}
-            @input=${(evt: InputEvent) => {
-              if (!(evt.target instanceof HTMLInputElement)) {
-                return;
-              }
-
-              this.appTitle = evt.target.value ?? "Untitled Application";
-            }}
-          />
-        </div>
-        <div>
-          <label for="app-description">Description</label>
-          <textarea
-            autocomplete="off"
-            placeholder="Describe your app"
-            id="app-description"
-            .value=${this.appDescription}
-            ?disabled=${this._generating}
-            @input=${(evt: InputEvent) => {
-              if (!(evt.target instanceof HTMLTextAreaElement)) {
-                return;
-              }
-
-              this.appDescription = evt.target.value ?? "";
-            }}
-          ></textarea>
-        </div>
-      </details>
       <details id="appearance" open>
         <summary>
           Appearance
