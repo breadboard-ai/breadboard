@@ -114,32 +114,6 @@ suite("Board Server integration test", () => {
       });
     });
 
-    // TODO Make this work. It tries to serve /index.html on the host machine, which fails
-    test.skip("GET /boards/@:user/:name.app", async () => {
-      const store = getStore();
-      await store.create(user.account, "test-board");
-      const path = `@${user.account}/test-board.app`;
-
-      const response = await request(server).get(
-        `/boards/${path}?API_KEY=${user.api_key}`
-      );
-
-      assert.equal(response.status, 200);
-    });
-
-    // TODO Make this work. It tries to serve /api.html on the host machine, which fails
-    test.skip("GET /boards/@:user/:name.api", async () => {
-      const store = getStore();
-      await store.create(user.account, "test-board");
-      const path = `@${user.account}/test-board.api`;
-
-      const response = await request(server).get(
-        `/boards/${path}?API_KEY=${user.api_key}`
-      );
-
-      assert.equal(response.status, 200);
-    });
-
     test("POST /boards/@:user/:name.api/invoke", async () => {
       const store = getStore();
       await store.create(user.account, "test-board.json");
