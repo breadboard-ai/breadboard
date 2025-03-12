@@ -27,6 +27,7 @@ export function createServer(config: ServerConfig): Express {
 
   server.use(
     cors({
+      origin: true,
       credentials: true,
       // Different browsers allow different max values for max age. The highest
       // seems to be 24 hours.
