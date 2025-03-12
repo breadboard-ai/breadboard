@@ -8,21 +8,19 @@ import type { Request, Response } from "express";
 import type { GraphDescriptor } from "@breadboard-ai/types";
 import * as errors from "../errors.js";
 import type { BoardServerStore } from "../types.js";
+import type { StorageBoard } from "../store.js";
 
-async function get(_req: Request, res: Response) {
+async function get(req: Request, res: Response) {
   try {
-    const { user, name } = res.locals.boardId;
-    const store: BoardServerStore = res.app.locals.store;
+    const board: StorageBoard = res.locals.loadedBoard;
 
-    const board = await store.get(user, name);
-    const graphDescriptor = JSON.parse(board) as GraphDescriptor;
-    if (graphDescriptor.metadata?.tags?.includes("private")) {
-      if (res.locals.userId != user) {
+    if (board.graph?.metadata?.tags?.includes("private")) {
+      if (res.locals.userId != req.params["user"]) {
         errors.unauthorized(res);
         return;
       }
     }
-    res.json(graphDescriptor);
+    res.json(board.graph);
   } catch (e) {
     errors.serverError(res, (e as Error).message);
     return;

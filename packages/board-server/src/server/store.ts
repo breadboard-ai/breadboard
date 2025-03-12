@@ -4,7 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { GraphDescriptor } from "@breadboard-ai/types";
 import { FirestoreStorageProvider } from "./storage-providers/firestore.js";
+import type { BoardId } from "./types.js";
 
 export const EXPIRATION_TIME_MS = 1000 * 60 * 60 * 24 * 2; // 2 days
 export const INVITE_EXPIRATION_TIME_MS = 1000 * 60 * 60 * 24 * 4; // 4 days
@@ -40,6 +42,16 @@ export async function createAccount(username: string, key?: string) {
 
   return { account: username, api_key: key };
 }
+
+/** A type representing a board as it is stored in a DB. */
+export type StorageBoard = {
+  name: string;
+  owner: string;
+  displayName: string;
+  description: string;
+  tags: string[];
+  graph?: GraphDescriptor;
+};
 
 export type BoardListEntry = {
   title: string;
@@ -93,3 +105,5 @@ export const asInfo = (path: string) => {
   }
   return { userStore: userStore.slice(1), boardName };
 };
+
+export class BoardNotFound extends Error {}
