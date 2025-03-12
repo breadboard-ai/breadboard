@@ -1361,6 +1361,8 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       graphNodeLocation,
     } = evt as GraphNodeEditEvent;
 
+    console.log("vvv onGraphNodeEdit", evt);
+
     this.dispatchEvent(
       new NodeConfigurationUpdateRequestEvent(
         id,
