@@ -452,6 +452,12 @@ export type CreateRunFileSystemArgs = Omit<
   "blobs" | "session" | "run" | "local"
 >;
 
+export type CreateModuleFileSystemArgs = {
+  graphUrl: string;
+  env?: FileSystemEntry[];
+  assets?: FileSystemEntry[];
+};
+
 export type FileSystem = {
   query(args: FileSystemQueryArguments): Promise<FileSystemQueryResult>;
   read(args: FileSystemReadArguments): Promise<FileSystemReadResult>;
@@ -474,5 +480,9 @@ export type FileSystem = {
    * Use it to get the right FileSystem instance whenever a module is
    * invoked.
    */
-  createModuleFileSystem(graphUrl: string): FileSystem;
+  createModuleFileSystem(args: CreateModuleFileSystemArgs): FileSystem;
+  /**
+   * Provides a quick way to access env entries.
+   */
+  env(): FileSystemEntry[];
 };

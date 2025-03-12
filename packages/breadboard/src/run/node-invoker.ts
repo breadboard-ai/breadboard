@@ -12,10 +12,19 @@ import { RunResult } from "../run.js";
 import type { GraphToRun, NodeHandlerContext, RunArguments } from "../types.js";
 import type {
   InputValues,
+  LLMContent,
+  NodeConfiguration,
   NodeIdentifier,
   OutputValues,
   TraversalResult,
 } from "@breadboard-ai/types";
+import { Template, TemplatePart } from "../utils/template.js";
+import {
+  isLLMContent,
+  isLLMContentArray,
+  isTextCapabilityPart,
+} from "../data/common.js";
+import { FileSystem, FileSystemEntry } from "../data/types.js";
 
 type ResultSupplier = (result: RunResult) => Promise<void>;
 
@@ -60,6 +69,12 @@ export class NodeInvoker {
   async invokeNode(result: TraversalResult, invocationPath: number[]) {
     const { descriptor } = result;
     const inputs = this.#adjustInputs(result);
+
+    const requestInput = this.#requestedInputs.createHandler(
+      this.#resultSupplier,
+      result
+    );
+
     const { kits = [], base = SENTINEL_BASE_URL, state } = this.#context;
     let outputs: OutputValues | undefined = undefined;
 
@@ -70,29 +85,30 @@ export class NodeInvoker {
       outerGraph,
     });
 
-    const newContext: NodeHandlerContext = {
-      ...this.#context,
-      descriptor,
-      board: resolveGraph(this.#graph),
-      // This is important: outerGraph is the value of the parent graph
-      // if this.#graph is a subgraph.
-      // Or it equals to "board" it this is not a subgraph
-      // TODO: Make this more elegant.
-      outerGraph,
-      base,
-      kits,
-      requestInput: this.#requestedInputs.createHandler(
-        this.#resultSupplier,
-        result
-      ),
-      provideOutput: createOutputProvider(
-        this.#resultSupplier,
-        result,
-        this.#context
-      ),
-      invocationPath,
-      state,
-    };
+    // Request parameters, if needed.
+    const newContext = await this.#getParameters(
+      {
+        ...this.#context,
+        descriptor,
+        board: resolveGraph(this.#graph),
+        // This is important: outerGraph is the value of the parent graph
+        // if this.#graph is a subgraph.
+        // Or it equals to "board" it this is not a subgraph
+        // TODO: Make this more elegant.
+        outerGraph,
+        base,
+        kits,
+        requestInput,
+        provideOutput: createOutputProvider(
+          this.#resultSupplier,
+          result,
+          this.#context
+        ),
+        invocationPath,
+        state,
+      },
+      descriptor.configuration
+    );
 
     outputs = (await callHandler(
       handler,
@@ -106,4 +122,70 @@ export class NodeInvoker {
 
     return outputs;
   }
+
+  async #getParameters(
+    context: NodeHandlerContext,
+    configuration?: NodeConfiguration
+  ): Promise<NodeHandlerContext> {
+    if (!configuration) return context;
+    if (!this.#initialInputs) return context;
+
+    const knownInputs = new Set(Object.keys(this.#initialInputs));
+    const params: TemplatePart[] = [];
+
+    // Scan for all LLMContent/LLMContent[] properties
+    Object.values(configuration).forEach((value) => {
+      let content: LLMContent[] | null = null;
+      if (isLLMContent(value)) {
+        content = [value];
+      } else if (isLLMContentArray(value)) {
+        content = value;
+      }
+      const last = content?.at(-1);
+      if (!last) return;
+
+      last.parts.forEach((part) => {
+        if (isTextCapabilityPart(part)) {
+          const template = new Template(part.text);
+          template.placeholders.forEach((placeholder) => {
+            if (
+              placeholder.type === "param" &&
+              !knownInputs.has(placeholder.path)
+            ) {
+              params.push(placeholder);
+            }
+          });
+        }
+      });
+    });
+
+    if (params.length > 0) {
+      // ask for inputs
+      console.table(params);
+    }
+
+    return {
+      ...context,
+      fileSystem: context.fileSystem?.createModuleFileSystem({
+        graphUrl: this.#graph.graph.url!,
+        env: await updateEnv(context.fileSystem, this.#initialInputs),
+      }),
+    };
+  }
+}
+
+async function updateEnv(
+  fileSystem?: FileSystem,
+  inputs?: InputValues
+): Promise<FileSystemEntry[]> {
+  const currentEnv = fileSystem?.env() || [];
+
+  const newEnv = inputs
+    ? Object.entries(inputs).map(([path, input]) => {
+        const data: LLMContent[] = [{ parts: [{ text: input as string }] }];
+        return { path: `/env/parameters/${path}`, data } as FileSystemEntry;
+      })
+    : [];
+
+  return [...currentEnv, ...newEnv];
 }
