@@ -595,7 +595,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       left: 0;
       width: 100%;
       height: var(--bb-grid-size-9);
-      z-index: 1;
+      z-index: 5;
       display: flex;
       align-items: center;
       justify-content: center;

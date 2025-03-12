@@ -14,16 +14,12 @@ import type {
 import type { RunDiagnosticsLevel } from "@google-labs/breadboard/harness";
 import type { RemoteMessageWriter } from "@google-labs/breadboard/remote";
 import type {
-  BoardListEntry,
-  GetUserStoreResult,
-  OperationResult,
-  ServerInfo,
-} from "./store.js";
-import type {
   InlineDataCapabilityPart,
   LLMContent,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
+
+import type { FirestoreStorageProvider } from "./storage-providers/firestore.js";
 
 export type BoardId = {
   user: string;
@@ -88,31 +84,7 @@ export type RunBoardStateStore = {
   saveReanimationState(user: string, state: ReanimationState): Promise<string>;
 };
 
-export type BoardServerStore = {
-  getServerInfo(): Promise<ServerInfo | undefined>;
-  createUser(username: string, apiKey: string): Promise<CreateUserResult>;
-  list(userKey: string | null): Promise<BoardListEntry[]>;
-  getUserStore(userKey: string | null): Promise<GetUserStoreResult>;
-  get(userStore: string, boardName: string): Promise<string>;
-  update(
-    userStore: string,
-    path: string,
-    graph: GraphDescriptor
-  ): Promise<OperationResult>;
-  create(
-    userKey: string,
-    name: string,
-    dryRun: boolean
-  ): Promise<CreateBoardResult>;
-  delete(userStore: string, path: string): Promise<OperationResult>;
-  listInvites(userStore: string, path: string): Promise<ListInviteResult>;
-  deleteInvite(
-    userStore: string,
-    path: string,
-    invite: string
-  ): Promise<OperationResult>;
-  createInvite(userStore: string, path: string): Promise<CreateInviteResult>;
-};
+export type BoardServerStore = FirestoreStorageProvider;
 
 export type BlobStore = {
   saveData(
