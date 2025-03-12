@@ -14,9 +14,8 @@ suite("Board Server integration test", () => {
   let user: User;
 
   before(async () => {
-    const allowedOrigins = "";
     process.env.STORAGE_BUCKET = "test-bucket";
-    const config = createServerConfig(allowedOrigins);
+    const config = createServerConfig();
     server = createServer(config);
     user = await createAccount("test-user", "test-api-key");
   });
