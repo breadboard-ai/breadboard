@@ -569,11 +569,23 @@ export class TextEditor extends LitElement {
       return;
     }
 
+    const escapedValue = escapeHTMLEntities(evt.clipboardData.getData("text"));
+    const template = new Template(escapedValue);
+    template.substitute((part) => {
+      const { type, title, invalid } = part;
+      return `<label class="chiclet ${type} ${invalid ? "invalid" : ""}" contenteditable="false"><span>${Template.preamble(part)}</span><span class="visible">${title}</span><span>${Template.postamble()}</span></label>`;
+    });
+
+    const fragment = document.createDocumentFragment();
+    const tempEl = document.createElement("div");
+    tempEl.innerHTML = template.renderable;
+    while (tempEl.firstChild) {
+      fragment.append(tempEl.firstChild);
+    }
+
     const range = selection.getRangeAt(0);
     range.deleteContents();
-    range.insertNode(
-      document.createTextNode(evt.clipboardData.getData("text"))
-    );
+    range.insertNode(fragment);
     range.collapse(false);
 
     selection.removeAllRanges();
@@ -710,6 +722,21 @@ export class TextEditor extends LitElement {
         @paste=${this.#sanitizePastedContent}
         @selectionchange=${this.#checkChicletSelections}
         @keydown=${(evt: KeyboardEvent) => {
+          const isMac = navigator.platform.indexOf("Mac") === 0;
+          const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+          if (evt.key === "c" && isCtrlCommand) {
+            evt.preventDefault();
+
+            const range = this.#getCurrentRange();
+            if (range) {
+              navigator.clipboard.writeText(
+                range.toString().replace(/\uFEFF/gim, "")
+              );
+            }
+            return;
+          }
+
           this.#ensureSafeRangePosition(evt);
         }}
         @keyup=${(evt: KeyboardEvent) => {
