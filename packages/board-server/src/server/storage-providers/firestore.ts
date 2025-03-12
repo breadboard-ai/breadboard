@@ -17,10 +17,8 @@ import {
   sanitize,
   INVITE_EXPIRATION_TIME_MS,
   type StorageBoard,
-  BoardNotFound,
 } from "../store.js";
 import type {
-  BoardId,
   CreateInviteResult,
   CreateUserResult,
   ListInviteResult,
@@ -175,11 +173,11 @@ export class FirestoreStorageProvider implements RunBoardStateStore {
     return boards;
   }
 
-  async loadBoard(user: string, name: string): Promise<StorageBoard> {
+  async loadBoard(user: string, name: string): Promise<StorageBoard | null> {
     const path = `workspaces/${user}/boards/${name}`;
     const doc = await this.#database.doc(path).get();
     if (!doc.exists) {
-      throw new BoardNotFound();
+      return null;
     }
 
     const displayName: string = doc.get("title") ?? "";
@@ -227,50 +225,10 @@ export class FirestoreStorageProvider implements RunBoardStateStore {
     return { success: true };
   }
 
-  async create(
-    userStore: string,
-    name: string,
-    dryRun = false
-  ): Promise<{
-    success: boolean;
-    path: string | undefined;
-    error: string | undefined;
-  }> {
-    // The format for finding the unique name is {name}-copy[-number].
-    // We'll first start with the sanitized name, then move on to {name}-copy.
-    // If that's taken, we'll try {name}-copy-2, {name}-copy-3, etc.
-    // Start with a board name proposal based on the sanitized name.
-    let proposal = sanitize(name);
-    let copyNumber = 0;
-    for (;;) {
-      // Check if the proposed name is already taken.
-      const doc = await this.#database
-        .doc(`workspaces/${userStore}/boards/${proposal}.bgl.json`)
-        .get();
-      if (!doc.exists) {
-        break;
-      }
-      if (copyNumber === 0) {
-        // If the name is taken, add  "-copy" to the end and try again.
-        proposal = `${proposal}-copy`;
-      } else if (copyNumber === 1) {
-        proposal = `${proposal}-${copyNumber + 1}`;
-      } else {
-        // Slice off the "number" part of the name.
-        proposal = proposal.slice(0, -2);
-        // Add the next number to the end of the name.
-        proposal = `${proposal}-${copyNumber + 1}`;
-      }
-      copyNumber++;
-    }
-    if (!dryRun) {
-      // Create a blank board with the proposed name.
-      await this.#database
-        .doc(`workspaces/${userStore}/boards/${proposal}.bgl.json`)
-        .set({ graph: JSON.stringify(blank()) });
-    }
-    const path = asPath(userStore, `${proposal}.bgl.json`);
-    return { success: true, path, error: undefined };
+  async create(userStore: string, name: string): Promise<void> {
+    await this.#database
+      .doc(`workspaces/${userStore}/boards/${name}`)
+      .set({ graph: JSON.stringify(blank()) });
   }
 
   async delete(userStore: string, path: string): Promise<OperationResult> {

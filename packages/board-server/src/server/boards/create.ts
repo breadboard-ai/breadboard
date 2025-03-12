@@ -7,35 +7,32 @@
 import type { Request, Response } from "express";
 
 import type { BoardServerStore } from "../types.js";
+import { getBody } from "../common.js";
+import { asPath } from "../store.js";
 
 export type CreateRequest = {
   name: string;
-  dryRun?: boolean;
 };
 
 async function create(req: Request, res: Response): Promise<void> {
   let store: BoardServerStore = req.app.locals.store;
   let userId: string = res.locals.userId;
 
-  const chunks: string[] = [];
+  const request = (await getBody(req)) as CreateRequest;
+  const name = request.name;
+  if (!name) {
+    res.sendStatus(400);
+    return;
+  }
 
-  req.on("data", (chunk) => {
-    chunks.push(chunk.toString());
-  });
+  // If a board by this name already exists, return 400
+  if (await store.loadBoard(userId, name)) {
+    res.sendStatus(400);
+    return;
+  }
 
-  req.on("end", async () => {
-    const request = JSON.parse(chunks.join("")) as CreateRequest;
-    const name = request.name;
-    const result = await store!.create(userId, name, !!request.dryRun);
-
-    if (result.success) {
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ path: result.path }));
-    } else {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: result.error }));
-    }
-  });
+  await store.create(userId, name);
+  res.json({ path: asPath(userId, name) });
 }
 
 export default create;
