@@ -4,14 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { AssetPath, GraphIdentifier } from "@breadboard-ai/types";
+import {
+  AssetPath,
+  GraphIdentifier,
+  ParameterMetadata,
+} from "@breadboard-ai/types";
 import {
   Components,
   FastAccess,
   GeneratedAsset,
   GeneratedAssetIdentifier,
   GraphAsset,
-  Parameter,
   ProjectInternal,
   Tool,
 } from "./types";
@@ -31,7 +34,7 @@ class ReactiveFastAccess implements FastAccess {
     public readonly tools: Map<string, Tool>,
     public readonly myTools: Map<string, Tool>,
     public readonly components: Map<GraphIdentifier, Components>,
-    public readonly parameters: Map<string, Parameter>
+    public readonly parameters: Map<string, ParameterMetadata>
   ) {
     this.#project = project;
   }
