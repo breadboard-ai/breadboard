@@ -8,7 +8,6 @@ import { LitElement, html, css } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { outlineButtonWithIcon } from "../../styles/outline-button-with-icon.js";
-import { textInputWithIcon } from "../../styles/text-input-with-icon.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import GenerateBoard from "@breadboard-ai/shared-ui/bgl/generate-board.bgl.json" with { type: "json" };
 import type {
@@ -21,6 +20,9 @@ import { consume } from "@lit/context";
 import { sideBoardRuntime } from "../../contexts/side-board-runtime.js";
 import { GraphBoardServerGeneratedBoardEvent } from "../../events/events.js";
 import { SideBoardRuntime } from "../../sideboards/types.js";
+import type { ExpandingTextarea } from "../input/expanding-textarea.js";
+import { icons } from "../../styles/icons.js";
+import "../input/expanding-textarea.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
@@ -34,7 +36,7 @@ type State =
 export class DescribeFlowPanel extends LitElement {
   static styles = [
     outlineButtonWithIcon,
-    textInputWithIcon,
+    icons,
     css`
       :host {
         display: flex;
@@ -49,10 +51,12 @@ export class DescribeFlowPanel extends LitElement {
       }
 
       #description-input {
-        --bb-icon: var(--bb-add-icon-generative);
+        background: #fff;
         flex: 1;
         max-width: 300px;
         color: inherit;
+        --min-lines: 1;
+        --max-lines: 1;
       }
 
       #generating-spinner {
@@ -83,7 +87,7 @@ export class DescribeFlowPanel extends LitElement {
   @state()
   accessor #state: State = { status: "initial" };
 
-  readonly #descriptionInput = createRef<HTMLInputElement>();
+  readonly #descriptionInput = createRef<ExpandingTextarea>();
 
   render() {
     switch (this.#state.status) {
@@ -100,13 +104,13 @@ export class DescribeFlowPanel extends LitElement {
       }
       case "clicked": {
         return html`
-          <input
+          <bb-expanding-textarea
             ${ref(this.#descriptionInput)}
             id="description-input"
-            class="bb-text-input-with-icon"
-            type="text"
-            @keydown=${this.#onInputKeydown}
-          />
+            @change=${this.#onInputChange}
+          >
+            <span class="g-icon" slot="icon">spark</span>
+          </bb-expanding-textarea>
         `;
       }
       case "generating": {
@@ -152,15 +156,15 @@ export class DescribeFlowPanel extends LitElement {
     this.#descriptionInput.value?.focus();
   }
 
-  #onInputKeydown(event: KeyboardEvent) {
-    if (event.key === "Enter") {
-      const description = this.#descriptionInput.value?.value;
-      if (description) {
-        this.#state = { status: "generating" };
-        void this.#generateBoard(description)
-          .then((graph) => this.#onGenerateComplete(graph))
-          .catch((error) => this.#onGenerateError(error));
-      }
+  #onInputChange() {
+    const input = this.#descriptionInput.value;
+    const description = input?.value;
+    if (description) {
+      input.value = "";
+      this.#state = { status: "generating" };
+      void this.#generateBoard(description)
+        .then((graph) => this.#onGenerateComplete(graph))
+        .catch((error) => this.#onGenerateError(error));
     }
   }
 
