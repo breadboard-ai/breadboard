@@ -489,6 +489,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
     }
   `;
 
+  #paramTitleInputRef: Ref<HTMLInputElement> = createRef();
   #paramDescriptionInputRef: Ref<HTMLTextAreaElement> = createRef();
   #paramSampleValueInputRef: Ref<HTMLTextAreaElement> = createRef();
   #addDriveInputRef: Ref<GoogleDriveFileId> = createRef();
@@ -638,6 +639,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
 
   #attemptUpdateParameter() {
     if (
+      !this.#paramTitleInputRef.value ||
       !this.#paramDescriptionInputRef.value ||
       !this.#paramSampleValueInputRef.value ||
       !this.editParameterContent
@@ -648,6 +650,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
 
     const param = this.state?.parameters.get(this.editParameterContent.path);
     if (param) {
+      param.title = this.#paramTitleInputRef.value.value;
       param.description = this.#paramDescriptionInputRef.value.value;
 
       this.state?.changeParameterMetadata(
@@ -1100,6 +1103,16 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                       >
                         ${this.editParameterContent
                           ? html`
+                              <label for="param-title">Title</label>
+                              <input
+                                type="text"
+                                ${ref(this.#paramTitleInputRef)}
+                                id="param-title"
+                                .value=${this.selectedItem?.metadata?.title ??
+                                ""}
+                                placeholder=${Strings.from("LABEL_ENTER_TITLE")}
+                              />
+
                               <label for="param-description">Description</label>
                               <textarea
                                 ${ref(this.#paramDescriptionInputRef)}

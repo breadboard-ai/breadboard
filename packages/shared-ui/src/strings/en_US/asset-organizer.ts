@@ -43,6 +43,9 @@ export default {
   LABEL_NO_PARAMETERS: {
     str: "There are no parameters yet",
   },
+  LABEL_ENTER_TITLE: {
+    str: "Enter a title for this parameter",
+  },
   LABEL_ENTER_DESCRIPTION: {
     str: "Enter a description for this parameter",
   },

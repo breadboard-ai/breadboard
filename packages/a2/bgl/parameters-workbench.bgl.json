@@ -18,12 +18,12 @@
       },
       "configuration": {
         "text": {
-          "role": "user",
           "parts": [
             {
-              "text": "This is the city: {{\"type\":\"param\",\"path\":\"city\",\"title\":\"City\"}}\n\nThis is the business: {{\"type\":\"param\",\"path\":\"business\",\"title\":\"Business Name\"}}"
+              "text": "This is the city: {{\"type\":\"param\",\"path\":\"city\",\"title\":\"City\"}}\nThis is the business: {{\"type\":\"param\",\"path\":\"business\",\"title\":\"Business Name\"}}"
             }
-          ]
+          ],
+          "role": "user"
         }
       }
     },
@@ -42,12 +42,12 @@
       },
       "configuration": {
         "text": {
-          "role": "user",
           "parts": [
             {
               "text": "{{\"type\":\"in\",\"path\":\"a2-b14f4e35\",\"title\":\"One\"}}\n\nFrom this city: {{\"type\":\"param\",\"path\":\"city\",\"title\":\"City\"}}"
             }
-          ]
+          ],
+          "role": "user"
         }
       }
     }
@@ -70,13 +70,19 @@
         "usedIn": [
           "a2-b14f4e35",
           "a2-afbf013b"
-        ]
+        ],
+        "description": "Enter the city where the business is located"
       },
       "business": {
         "title": "Business Name",
         "usedIn": [
           "a2-b14f4e35"
-        ]
+        ],
+        "description": "Enter the name of the business"
+      },
+      "place": {
+        "title": "Place",
+        "usedIn": []
       }
     }
   },
@@ -88,5 +94,6 @@
       },
       "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI2My45NyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iOTkuNjciCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI3Mi4wNyIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KPHJlY3QgeD0iMTQwLjMzIgogICAgICAgICAgICAgICAgICAgIHk9IjYzLjk3IgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI5OS42NyIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjcyLjA3IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMjBhMjAyIiAvPgogICAgICAKICAgIDwvc3ZnPg=="
     }
-  }
+  },
+  "modules": {}
 }

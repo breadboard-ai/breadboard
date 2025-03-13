@@ -422,12 +422,13 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       if (this.filter && uniqueAndNew) {
         // emit.
         const paramPath = this.filter.toLocaleLowerCase().replace(/\W/gim, "-");
+        const title = toUpperCase(this.filter)!;
         this.dispatchEvent(
-          new ParamCreateEvent(this.graphId ?? "", paramPath, this.filter, "")
+          new ParamCreateEvent(this.graphId ?? "", paramPath, title, "")
         );
 
         this.dispatchEvent(
-          new FastAccessSelectEvent(paramPath, this.filter, "param")
+          new FastAccessSelectEvent(paramPath, title, "param")
         );
       }
       return;
@@ -586,7 +587,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                       this.#emitCurrentItem();
                     }}
                   >
-                    Add "${this.filter}"
+                    Add "${toUpperCase(this.filter)}"
                   </button>`
                 : nothing}
             </div>`}
@@ -646,4 +647,11 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       </section>
     </div>`;
   }
+}
+
+function toUpperCase(s: string | null) {
+  if (!s) return s;
+  const trimmed = s.trim();
+  const cap = trimmed.charAt(0).toLocaleUpperCase("en-US");
+  return `${cap}${trimmed.slice(1)}`;
 }
