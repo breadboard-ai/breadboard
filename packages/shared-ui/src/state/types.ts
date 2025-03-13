@@ -106,6 +106,10 @@ export type Organizer = {
    * Current graph's parameters.
    */
   parameters: Map<string, ParameterMetadata>;
+  changeParameterMetadata(
+    id: string,
+    metadata: ParameterMetadata
+  ): Promise<Outcome<void>>;
 };
 
 export type GraphAsset = {

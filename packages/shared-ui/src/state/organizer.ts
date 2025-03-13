@@ -14,6 +14,7 @@ import { Outcome } from "@google-labs/breadboard";
 import { GraphAsset, Organizer, ProjectInternal } from "./types";
 import { RemoveAssetWithRefs } from "../transforms";
 import { UpdateAssetWithRefs } from "../transforms/update-asset-with-refs";
+import { ChangeParameterMetadata } from "../transforms/change-parameter-metadata";
 
 export { ReactiveOrganizer };
 
@@ -48,5 +49,13 @@ class ReactiveOrganizer implements Organizer {
     metadata: AssetMetadata
   ): Promise<Outcome<void>> {
     return this.#project.apply(new UpdateAssetWithRefs(path, metadata));
+  }
+
+  changeParameterMetadata(
+    id: string,
+    metadata: ParameterMetadata
+  ): Promise<Outcome<void>> {
+    // TODO: Make work for subgraphs.
+    return this.#project.apply(new ChangeParameterMetadata(id, metadata, ""));
   }
 }

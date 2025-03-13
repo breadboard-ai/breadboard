@@ -53,6 +53,10 @@ function scanConfiguration(
   }
 }
 
+/**
+ * This transform scans through the entire graph, finds all currently used
+ * parameters and updates the metadata accordingly.
+ */
 class UpdateParameterMetadata implements EditTransform {
   constructor(public readonly graphId: GraphIdentifier) {}
 
