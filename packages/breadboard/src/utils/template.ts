@@ -173,8 +173,8 @@ class Template {
   }
 
   static preamble({ type, path, mimeType }: TemplatePart) {
-    const maybeMimeType = mimeType ? `"mimeType": "${mimeType}"` : "";
-    return `{{"type": ${JSON.stringify(type)}, "path": ${JSON.stringify(path)}, ${maybeMimeType} "title": "`;
+    const maybeMimeType = mimeType ? `"mimeType": ${JSON.stringify(mimeType)}, ` : "";
+    return `{{"type": ${JSON.stringify(type)}, "path": ${JSON.stringify(path)}, ${maybeMimeType}"title": "`;
   }
 
   static postamble() {

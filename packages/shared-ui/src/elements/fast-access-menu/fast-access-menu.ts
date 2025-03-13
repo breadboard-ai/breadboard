@@ -398,8 +398,13 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
   #getMimeType(data: LLMContent[]): string | undefined {
     for (const element of data) {
       for (const part of element.parts) {
-        if ("inlineData" in part && part.inlineData.mimeType)
+        if ("inlineData" in part && part.inlineData.mimeType) {
           return part.inlineData.mimeType;
+        } else if ("storedData" in part && part.storedData.mimeType) {
+          return part.storedData.mimeType;
+        } else if ("fileData" in part && part.fileData.mimeType) {
+          return part.fileData.mimeType;
+        }
       }
     }
   }
