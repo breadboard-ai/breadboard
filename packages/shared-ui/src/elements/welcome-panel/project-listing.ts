@@ -123,11 +123,58 @@ export class ProjectListing extends LitElement {
 
     #wrapper {
       margin: 0 auto;
-      padding: var(--bb-grid-size-8) var(--bb-grid-size-8)
-        var(--bb-grid-size-12) var(--bb-grid-size-8);
+      padding: 0 var(--bb-grid-size-8) var(--bb-grid-size-12)
+        var(--bb-grid-size-8);
       width: 100%;
       max-width: 1200px;
       min-height: 100%;
+
+      & #hero {
+        padding: 0 16px 60px 16px;
+        background: linear-gradient(45deg, #f7f9fe, #fdf7f8);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        & h1 {
+          font:
+            400 32px "Google Sans",
+            sans-serif;
+          padding: 0;
+          margin: 76px 0 0 0;
+
+          & .gradient {
+            background: linear-gradient(
+              0deg,
+              #217bfe,
+              #078efb,
+              #a190ff,
+              #bd99fe
+            );
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+          }
+        }
+
+        & #cta {
+          font:
+            400 14px "Google Sans",
+            sans-serif;
+          color: var(--bb-neutral-700);
+          padding: 0;
+          margin: 8px 0 0 0;
+        }
+
+        & bb-describe-flow-panel {
+          margin-top: 32px;
+          width: 100%;
+          max-width: 976px;
+        }
+      }
+
+      & #board-listing {
+        margin-top: 24px;
+      }
 
       & #loading-message,
       & #no-projects {
@@ -224,16 +271,6 @@ export class ProjectListing extends LitElement {
             }
           }
         }
-      }
-
-      & h1 {
-        margin: var(--bb-grid-size-5) 0;
-        padding: 0;
-        font: 400 var(--bb-title-large) / var(--bb-title-line-height-large)
-          var(--bb-font-family);
-        text-align: center;
-        width: 100%;
-        color: var(--bb-neutral-900);
       }
 
       & #guides {
@@ -703,11 +740,6 @@ export class ProjectListing extends LitElement {
         }
       }
     }
-
-    bb-describe-flow-panel {
-      flex: 1;
-      padding: 0 24px 0 24px;
-    }
   `;
 
   #wrapperRef: Ref<HTMLDivElement> = createRef();
@@ -1014,7 +1046,17 @@ export class ProjectListing extends LitElement {
     );
 
     return html` <div id="wrapper" ${ref(this.#wrapperRef)}>
-        <h1>${Strings.from("LABEL_WELCOME_MESSAGE")}</h1>
+        <section id="hero">
+          <h1>
+            ${Strings.from("LABEL_WELCOME_MESSAGE_A")}
+            <span class="gradient"
+              >${Strings.from("LABEL_WELCOME_MESSAGE_B")}</span
+            >
+          </h1>
+          <p id="cta">${Strings.from("LABEL_WELCOME_CTA")}</p>
+          <bb-describe-flow-panel></bb-describe-flow-panel>
+        </section>
+
         <div id="board-listing">
           <div id="locations">
             <div id="search-container">
@@ -1308,7 +1350,6 @@ export class ProjectListing extends LitElement {
                               >
                             </div>`
                           : nothing}
-                        <bb-describe-flow-panel></bb-describe-flow-panel>
                         <div id="new-project-container">
                           <button
                             id="new-project"
