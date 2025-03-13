@@ -9,6 +9,7 @@ import {
   GraphIdentifier,
   LLMContent,
   NodeIdentifier,
+  ParameterMetadata,
 } from "@breadboard-ai/types";
 import {
   BoardServer,
@@ -83,6 +84,7 @@ class ReactiveProject implements ProjectInternal {
   readonly organizer: Organizer;
   readonly fastAccess: FastAccess;
   readonly components: SignalMap<GraphIdentifier, ReactiveComponents>;
+  readonly parameters: SignalMap<string, ParameterMetadata>;
 
   constructor(
     mainGraphId: MainGraphIdentifier,
@@ -109,6 +111,7 @@ class ReactiveProject implements ProjectInternal {
     this.components = new SignalMap();
     this.generatedAssets = new SignalMap();
     this.myTools = new SignalMap();
+    this.parameters = new SignalMap();
     this.organizer = new ReactiveOrganizer(this);
     this.fastAccess = new ReactiveFastAccess(
       this,
@@ -116,12 +119,14 @@ class ReactiveProject implements ProjectInternal {
       this.generatedAssets,
       this.tools,
       this.myTools,
-      this.components
+      this.components,
+      this.parameters
     );
     this.#updateGraphAssets();
     this.#updateComponents();
     this.#updateTools();
     this.#updateMyTools();
+    this.#updateParameters();
   }
 
   async apply(transform: EditTransform): Promise<Outcome<void>> {
@@ -283,6 +288,18 @@ class ReactiveProject implements ProjectInternal {
     updateMap(
       this.graphAssets,
       Object.entries(assets).map(([path, asset]) => [path, { ...asset, path }])
+    );
+  }
+
+  #updateParameters() {
+    const mutable = this.#store.get(this.#mainGraphId);
+    if (!mutable) return;
+
+    const { parameters = {} } = mutable.graph?.metadata || {};
+
+    updateMap(
+      this.parameters,
+      Object.entries(parameters).map(([id, parameter]) => [id, parameter])
     );
   }
 }

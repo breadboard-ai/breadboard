@@ -21,7 +21,7 @@
           "role": "user",
           "parts": [
             {
-              "text": "{{\"type\":\"param\",\"path\":\"city\",\"title\":\"City\"}}\n\n{{\"type\":\"param\",\"path\":\"business\",\"title\":\"Business Name\"}}"
+              "text": "This is the city: {{\"type\":\"param\",\"path\":\"city\",\"title\":\"City\"}}\n\nThis is the business: {{\"type\":\"param\",\"path\":\"business\",\"title\":\"Business Name\"}}"
             }
           ]
         }
@@ -45,7 +45,7 @@
           "role": "user",
           "parts": [
             {
-              "text": "{{\"type\":\"in\",\"path\":\"a2-b14f4e35\",\"title\":\"One\"}}\n\n{{\"type\":\"param\",\"path\":\"city\",\"title\":\"City\"}}"
+              "text": "{{\"type\":\"in\",\"path\":\"a2-b14f4e35\",\"title\":\"One\"}}\n\nFrom this city: {{\"type\":\"param\",\"path\":\"city\",\"title\":\"City\"}}"
             }
           ]
         }
@@ -63,7 +63,22 @@
   "metadata": {
     "visual": {},
     "userModified": true,
-    "tags": []
+    "tags": [],
+    "parameters": {
+      "city": {
+        "title": "City",
+        "usedIn": [
+          "a2-b14f4e35",
+          "a2-afbf013b"
+        ]
+      },
+      "business": {
+        "title": "Business Name",
+        "usedIn": [
+          "a2-b14f4e35"
+        ]
+      }
+    }
   },
   "assets": {
     "@@thumbnail": {

@@ -558,6 +558,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
   render() {
     const assetData = this.asset?.data?.at(-1) || null;
     const assets = this.state?.graphAssets;
+    const parameters = this.state?.parameters;
     const isFileData = this.asset?.data.some((content) =>
       content.parts.some((part) => isFileDataCapabilityPart(part))
     );
@@ -799,6 +800,13 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                 : html`<div id="no-assets">
                     ${Strings.from("LABEL_NO_ASSETS")}
                   </div>`}
+              <menu>
+                ${parameters
+                  ? repeat(parameters, ([, metadata]) => {
+                      return html`<li>${metadata.title}</li>`;
+                    }) // PAUL MAKE IT PRETTYYYYY
+                  : nothing}
+              </menu>
             </section>
 
             <section

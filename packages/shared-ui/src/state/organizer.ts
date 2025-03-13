@@ -4,11 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { AssetMetadata, AssetPath, NodeValue } from "@breadboard-ai/types";
+import {
+  AssetMetadata,
+  AssetPath,
+  NodeValue,
+  ParameterMetadata,
+} from "@breadboard-ai/types";
 import { Outcome } from "@google-labs/breadboard";
 import { GraphAsset, Organizer, ProjectInternal } from "./types";
 import { RemoveAssetWithRefs } from "../transforms";
 import { UpdateAssetWithRefs } from "../transforms/update-asset-with-refs";
+import { ChangeParameterMetadata } from "../transforms/change-parameter-metadata";
 
 export { ReactiveOrganizer };
 
@@ -16,11 +22,13 @@ class ReactiveOrganizer implements Organizer {
   #project: ProjectInternal;
   readonly graphAssets: Map<AssetPath, GraphAsset>;
   readonly graphUrl: URL | null;
+  readonly parameters: Map<string, ParameterMetadata>;
 
   constructor(project: ProjectInternal) {
     this.#project = project;
     this.graphAssets = project.graphAssets;
     this.graphUrl = project.graphUrl;
+    this.parameters = project.parameters;
   }
 
   async addGraphAsset(asset: GraphAsset): Promise<Outcome<void>> {
@@ -41,5 +49,13 @@ class ReactiveOrganizer implements Organizer {
     metadata: AssetMetadata
   ): Promise<Outcome<void>> {
     return this.#project.apply(new UpdateAssetWithRefs(path, metadata));
+  }
+
+  changeParameterMetadata(
+    id: string,
+    metadata: ParameterMetadata
+  ): Promise<Outcome<void>> {
+    // TODO: Make work for subgraphs.
+    return this.#project.apply(new ChangeParameterMetadata(id, metadata, ""));
   }
 }

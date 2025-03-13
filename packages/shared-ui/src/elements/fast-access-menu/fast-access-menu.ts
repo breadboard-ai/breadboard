@@ -17,6 +17,7 @@ import {
   GraphIdentifier,
   LLMContent,
   NodeIdentifier,
+  ParameterMetadata,
 } from "@breadboard-ai/types";
 import {
   FastAccessDismissedEvent,
@@ -91,7 +92,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
     #assets,
     #tools,
-    #outputs {
+    #outputs,
+    #parameters {
       & h3 {
         font: 400 var(--bb-body-x-small) / var(--bb-body-line-height-x-small)
           var(--bb-font-family);
@@ -182,7 +184,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     assets: GraphAsset[];
     tools: Tool[];
     components: Component[];
-  } = { assets: [], tools: [], components: [] };
+    parameters: (ParameterMetadata & { id: string })[];
+  } = { assets: [], tools: [], components: [], parameters: [] };
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -210,6 +213,9 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       ...(this.state?.myTools.values() || []),
     ].sort((tool1, tool2) => tool1.order! - tool2.order!);
     let components = [...(this.state?.components.get(graphId)?.values() || [])];
+    let parameters = [...(this.state?.parameters.entries() || [])].map(
+      ([id, value]) => ({ id, ...value })
+    );
 
     if (this.filter) {
       const filterStr = this.filter;
@@ -228,12 +234,18 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
         const filter = new RegExp(filterStr, "gim");
         return filter.test(component.title);
       });
+
+      parameters = parameters.filter((parameter) => {
+        const filter = new RegExp(filterStr, "gim");
+        return filter.test(parameter.title);
+      });
     }
 
     this.#items = {
       assets,
       tools,
       components,
+      parameters,
     };
 
     const totalSize =
@@ -366,6 +378,18 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     }
 
     idx -= this.#items.assets.length;
+    if (idx < this.#items.parameters.length) {
+      const parameter = this.#items.parameters[idx];
+      this.dispatchEvent(
+        new FastAccessSelectEvent(
+          parameter.id,
+          parameter.title ?? "Untitled tool",
+          "param"
+        )
+      );
+      return;
+    }
+
     if (idx < this.#items.tools.length) {
       const tool = this.#items.tools[idx];
       this.dispatchEvent(
@@ -440,6 +464,32 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
               })}
             </menu>`
           : html`<div class="no-items">No assets</div>`}
+      </section>
+
+      <section id="parameters">
+        <h3>Parameters</h3>
+        ${this.#items.parameters.length
+          ? html` <menu>
+              ${this.#items.parameters.map((parameter) => {
+                const active = idx === this.selectedIndex;
+                const globalIndex = idx;
+                idx++;
+                return html`<li>
+                  <button
+                    class=${classMap({ active })}
+                    @pointerover=${() => {
+                      this.selectedIndex = globalIndex;
+                    }}
+                    @click=${() => {
+                      this.#emitCurrentItem();
+                    }}
+                  >
+                    ${parameter.title}
+                  </button>
+                </li>`;
+              })}
+            </menu>`
+          : html`<div class="no-items">No parameters</div>`}
       </section>
 
       <section id="tools">
