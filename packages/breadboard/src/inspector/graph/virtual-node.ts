@@ -9,6 +9,7 @@ import type {
   NodeConfiguration,
   NodeDescriptor,
   NodeMetadata,
+  OutputValues,
 } from "@breadboard-ai/types";
 import type { NodeDescriberResult } from "../../types.js";
 import type {
@@ -18,7 +19,7 @@ import type {
   InspectableNodeType,
 } from "../types.js";
 import { describerResultToPorts } from "./ports.js";
-import { describeOutput } from "./schemas.js";
+import { describeInput, describeOutput } from "./schemas.js";
 
 export { VirtualNode };
 
@@ -82,7 +83,7 @@ class VirtualNode implements InspectableNode {
     return false;
   }
 
-  #ports(inputs: InputValues): InspectableNodePorts {
+  #ports(inputs?: InputValues, outputs?: InputValues): InspectableNodePorts {
     const { type, configuration } = this.descriptor;
     if (type === "output") {
       return describerResultToPorts(
@@ -93,22 +94,33 @@ class VirtualNode implements InspectableNode {
         false,
         inputs
       );
+    } else if (type === "input") {
+      return describerResultToPorts(
+        this,
+        describeInput({
+          inputs: { ...configuration, ...inputs },
+        }),
+        false,
+        inputs,
+        outputs
+      );
+    } else {
+      return {
+        inputs: {
+          ports: [],
+          fixed: true,
+        },
+        outputs: {
+          ports: [],
+          fixed: true,
+        },
+        side: {
+          ports: [],
+          fixed: true,
+        },
+        updating: false,
+      };
     }
-    return {
-      inputs: {
-        ports: [],
-        fixed: true,
-      },
-      outputs: {
-        ports: [],
-        fixed: true,
-      },
-      side: {
-        ports: [],
-        fixed: true,
-      },
-      updating: false,
-    };
   }
 
   type(): InspectableNodeType {
@@ -127,7 +139,7 @@ class VirtualNode implements InspectableNode {
         return this.#type;
       },
       ports: async () => {
-        return this.#ports({});
+        return this.#ports({}, {});
       },
     };
   }
@@ -147,12 +159,18 @@ class VirtualNode implements InspectableNode {
     return this.descriptor.metadata || {};
   }
 
-  async ports(inputs: InputValues): Promise<InspectableNodePorts> {
-    return this.#ports(inputs);
+  async ports(
+    inputs?: InputValues,
+    outputs?: OutputValues
+  ): Promise<InspectableNodePorts> {
+    return this.#ports(inputs, outputs);
   }
 
-  currentPorts(inputs: InputValues): InspectableNodePorts {
-    return this.#ports(inputs);
+  currentPorts(
+    inputs?: InputValues,
+    outputs?: OutputValues
+  ): InspectableNodePorts {
+    return this.#ports(inputs, outputs);
   }
 
   deleted(): boolean {

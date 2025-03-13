@@ -79,6 +79,10 @@
           "a2-b14f4e35"
         ],
         "description": "Enter the name of the business"
+      },
+      "place": {
+        "title": "Place",
+        "usedIn": []
       }
     }
   },
