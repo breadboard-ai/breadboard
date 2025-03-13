@@ -192,13 +192,15 @@ export class NodeInvoker {
 
       // TODO: Implement support for multiple inputs at once.
       for (const [idx, param] of params.entries()) {
+        const metadata = this.#graph.graph.metadata?.parameters?.[param.path];
+
         const schema: Schema = {
           type: "object",
           properties: {
             [param.path]: {
               type: "object",
-              title: param.title,
-              description: param.title,
+              title: metadata?.title || param.title,
+              description: metadata?.description || param.title,
               behavior: ["llm-content"],
             },
           },
