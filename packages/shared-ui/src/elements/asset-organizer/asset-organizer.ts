@@ -19,7 +19,11 @@ import { customElement, property, state } from "lit/decorators.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { GraphAsset, Organizer } from "../../state";
 import { repeat } from "lit/directives/repeat.js";
-import { AssetMetadata, AssetPath } from "@breadboard-ai/types";
+import {
+  AssetMetadata,
+  AssetPath,
+  ParameterMetadata,
+} from "@breadboard-ai/types";
 import { classMap } from "lit/directives/class-map.js";
 import { OverflowAction } from "../../types/types.js";
 import {
@@ -40,6 +44,11 @@ import { styleMap } from "lit/directives/style-map.js";
 
 const OVERFLOW_MENU_PADDING = 12;
 
+interface GraphParameter {
+  path: string;
+  metadata: ParameterMetadata;
+}
+
 @customElement("bb-asset-organizer")
 export class AssetOrganizer extends SignalWatcher(LitElement) {
   @property()
@@ -56,13 +65,16 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
   accessor showGDrive = false;
 
   @state()
-  accessor asset: GraphAsset | null = null;
+  accessor selectedItem: GraphAsset | GraphParameter | null = null;
 
   @state()
   accessor editAssetTitle: GraphAsset | null = null;
 
   @property()
   accessor editAssetContent: GraphAsset | null = null;
+
+  @property()
+  accessor editParameterContent: GraphParameter | null = null;
 
   static styles = css`
     * {
@@ -120,10 +132,12 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
         padding: 0 var(--bb-grid-size-3);
       }
 
+      #edit-parameter,
       #edit-asset,
       #add-asset {
         font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
           var(--bb-font-family);
+        border: none;
         border-radius: var(--bb-grid-size-16);
         height: var(--bb-grid-size-7);
         padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-7);
@@ -140,6 +154,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
         }
       }
 
+      #edit-parameter,
       #edit-asset {
         background-image: var(--bb-icon-edit);
         margin-bottom: var(--bb-grid-size-4);
@@ -220,7 +235,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
         }
       }
 
-      & #assets {
+      & #items {
         flex: 1;
         overflow: auto;
 
@@ -231,7 +246,17 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
           display: block;
         }
 
+        & h3 {
+          font: 400 var(--bb-body-x-small) / var(--bb-body-line-height-x-small)
+            var(--bb-font-family);
+          text-transform: uppercase;
+          color: var(--bb-neutral-500);
+          padding: 0 var(--bb-grid-size-3);
+          margin: 0;
+        }
+
         & #no-assets,
+        & #no-parameters,
         & #no-asset-selected {
           color: var(--bb-neutral-900);
           font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
@@ -244,130 +269,141 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
           flex-direction: column;
         }
 
-        & menu {
-          margin: 0;
-          padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
-          list-style: none;
+        & #menu-container {
           flex: 1 0 auto;
           overflow-y: scroll;
           overflow-x: hidden;
-          width: 100%;
-          display: block;
 
-          & li {
-            display: flex;
-            align-items: center;
-            margin-bottom: var(--bb-grid-size);
+          & menu {
+            margin: 0;
+            padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
+            list-style: none;
+            width: 100%;
+            display: block;
 
-            & > span {
-              display: block;
-              width: calc(var(--bb-grid-size-6) + 2px);
-              height: var(--bb-grid-size-7);
+            & li {
+              display: flex;
+              align-items: center;
+              margin-bottom: var(--bb-grid-size);
 
-              &.content {
-                background: var(--bb-neutral-0) var(--bb-icon-text) 4px center /
+              & > span {
+                display: block;
+                width: calc(var(--bb-grid-size-6) + 2px);
+                height: var(--bb-grid-size-7);
+
+                &.content {
+                  background: var(--bb-neutral-0) var(--bb-icon-text) 4px
+                    center / 20px 20px no-repeat;
+
+                  &.youtube {
+                    background: var(--bb-neutral-0) var(--bb-icon-youtube) 4px
+                      center / 20px 20px no-repeat;
+                  }
+
+                  &.gdrive {
+                    background: var(--bb-neutral-0)
+                      var(--bb-icon-google-drive-outline) 4px center / 20px 20px
+                      no-repeat;
+                  }
+                }
+
+                &.file {
+                  background: var(--bb-neutral-0) var(--bb-icon-attach) 4px
+                    center / 20px 20px no-repeat;
+                }
+              }
+
+              & input {
+                flex: 1;
+                height: var(--bb-grid-size-7);
+                line-height: var(--bb-grid-size-7);
+                font: 400 var(--bb-body-small) /
+                  var(--bb-body-line-height-small) var(--bb-font-family);
+                border-radius: var(--bb-grid-size);
+                padding: 0 var(--bb-grid-size);
+              }
+
+              & .parameter,
+              & .asset {
+                height: var(--bb-grid-size-7);
+                background: var(--bb-ui-100) var(--bb-icon-text) 4px center /
                   20px 20px no-repeat;
+                border-radius: var(--bb-grid-size);
+                display: block;
+                align-items: center;
+                font: 400 var(--bb-body-small) /
+                  var(--bb-body-line-height-small) var(--bb-font-family);
+                border: none;
+                padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-8);
+                transition: background-color 0.1s cubic-bezier(0, 0, 0.3, 1);
+                width: 100%;
+                color: var(--bb-neutral-900);
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                overflow: hidden;
+                text-align: left;
+
+                &.content {
+                  background: var(--bb-ui-100) var(--bb-icon-text) 4px center /
+                    20px 20px no-repeat;
+                }
 
                 &.youtube {
-                  background: var(--bb-neutral-0) var(--bb-icon-youtube) 4px
+                  background: var(--bb-ui-100) var(--bb-icon-youtube) 4px
                     center / 20px 20px no-repeat;
                 }
 
                 &.gdrive {
-                  background: var(--bb-neutral-0)
+                  background: var(--bb-ui-100)
                     var(--bb-icon-google-drive-outline) 4px center / 20px 20px
                     no-repeat;
                 }
+
+                &.file {
+                  background: var(--bb-ui-100) var(--bb-icon-attach) 4px
+                    center / 20px 20px no-repeat;
+                }
+
+                &:not(.active) {
+                  cursor: pointer;
+                  background-color: var(--bb-neutral-0);
+
+                  &:hover,
+                  &:focus {
+                    background-color: var(--bb-neutral-50);
+                  }
+                }
               }
 
-              &.file {
-                background: var(--bb-neutral-0) var(--bb-icon-attach) 4px
+              & .parameter {
+                background: var(--bb-ui-100) var(--bb-icon-contact-support) 4px
                   center / 20px 20px no-repeat;
               }
-            }
 
-            & input {
-              flex: 1;
-              height: var(--bb-grid-size-7);
-              line-height: var(--bb-grid-size-7);
-              font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
-                var(--bb-font-family);
-              border-radius: var(--bb-grid-size);
-              padding: 0 var(--bb-grid-size);
-            }
-
-            & .asset {
-              height: var(--bb-grid-size-7);
-              background: var(--bb-ui-100) var(--bb-icon-text) 4px center / 20px
-                20px no-repeat;
-              border-radius: var(--bb-grid-size);
-              display: block;
-              align-items: center;
-              font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
-                var(--bb-font-family);
-              border: none;
-              padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-8);
-              transition: background-color 0.1s cubic-bezier(0, 0, 0.3, 1);
-              width: 100%;
-              color: var(--bb-neutral-900);
-              white-space: nowrap;
-              text-overflow: ellipsis;
-              overflow: hidden;
-              text-align: left;
-
-              &.content {
-                background: var(--bb-ui-100) var(--bb-icon-text) 4px center /
+              & .delete {
+                margin-left: var(--bb-grid-size-2);
+                width: 20px;
+                height: 20px;
+                background: transparent var(--bb-icon-delete) center center /
                   20px 20px no-repeat;
-              }
-
-              &.youtube {
-                background: var(--bb-ui-100) var(--bb-icon-youtube) 4px center /
-                  20px 20px no-repeat;
-              }
-
-              &.gdrive {
-                background: var(--bb-ui-100) var(--bb-icon-google-drive-outline)
-                  4px center / 20px 20px no-repeat;
-              }
-
-              &.file {
-                background: var(--bb-ui-100) var(--bb-icon-attach) 4px center /
-                  20px 20px no-repeat;
-              }
-
-              &:not(.active) {
+                font-size: 0;
+                border: none;
+                opacity: 0.5;
+                transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
                 cursor: pointer;
-                background-color: var(--bb-neutral-0);
 
                 &:hover,
                 &:focus {
-                  background-color: var(--bb-neutral-50);
+                  opacity: 1;
                 }
-              }
-            }
-
-            & .delete {
-              margin-left: var(--bb-grid-size-2);
-              width: 20px;
-              height: 20px;
-              background: transparent var(--bb-icon-delete) center center / 20px
-                20px no-repeat;
-              font-size: 0;
-              border: none;
-              opacity: 0.5;
-              transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
-              cursor: pointer;
-
-              &:hover,
-              &:focus {
-                opacity: 1;
               }
             }
           }
         }
 
         & #details {
-          --output-value-padding-y: var(--bb-grid-size-3);
+          --output-padding-x: var(--bb-grid-size-3);
+          --output-padding-y: var(--bb-grid-size-3);
 
           display: flex;
           border-left: 1px solid var(--bb-neutral-300);
@@ -385,6 +421,62 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
           bb-multi-output {
             width: 100%;
           }
+
+          & #param-details {
+            display: grid;
+            padding: 0;
+
+            & label {
+              display: flex;
+              justify-content: space-between;
+              position: relative;
+              font: 500 var(--bb-label-small) /
+                var(--bb-label-line-height-small) var(--bb-font-family);
+              padding-top: var(--bb-grid-size-2);
+              margin-bottom: var(--bb-grid-size);
+            }
+
+            & textarea,
+            & select,
+            & input[type="text"],
+            & bb-text-editor,
+            & div#param-description,
+            & div#sample-value {
+              display: block;
+              width: 100%;
+              border-radius: var(--bb-grid-size);
+              background: var(--bb-neutral-0);
+              color: var(--bb-neutral-900);
+              padding: var(--bb-grid-size-2);
+              border: 1px solid var(--bb-neutral-300);
+              resize: none;
+              font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+                var(--bb-font-family);
+              margin-bottom: var(--bb-grid-size-2);
+
+              &:focus-within {
+                border: 1px solid var(--bb-ui-700);
+                outline: 1px solid var(--bb-ui-700);
+              }
+            }
+
+            & textarea {
+              field-sizing: content;
+            }
+
+            & div#sample-value {
+              line-height: 24px;
+            }
+
+            & div#param-description,
+            & div#sample-value {
+              border: 1px solid var(--bb-neutral-100);
+            }
+
+            & bb-text-editor {
+              padding: 0;
+            }
+          }
         }
       }
     }
@@ -397,13 +489,15 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
     }
   `;
 
+  #paramDescriptionInputRef: Ref<HTMLTextAreaElement> = createRef();
+  #paramSampleValueInputRef: Ref<HTMLTextAreaElement> = createRef();
   #addDriveInputRef: Ref<GoogleDriveFileId> = createRef();
   #uploadInputRef: Ref<HTMLInputElement> = createRef();
   #renameInputRef: Ref<HTMLInputElement> = createRef();
   #contentInputRef: Ref<LLMInput> = createRef();
 
-  #showAsset(asset: GraphAsset) {
-    this.asset = asset;
+  #showItem(item: GraphAsset | GraphParameter) {
+    this.selectedItem = item;
   }
 
   #deleting = false;
@@ -414,8 +508,8 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
 
     this.#deleting = true;
     await this.state.removeGraphAsset(asset);
-    if (this.asset && this.asset.path === asset) {
-      this.asset = null;
+    if (this.selectedItem && this.selectedItem.path === asset) {
+      this.selectedItem = null;
     }
     this.#deleting = false;
   }
@@ -437,7 +531,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
     metadata.title = title;
 
     await this.state?.changeGraphAssetMetadata(asset.path, metadata);
-    this.asset = asset;
+    this.selectedItem = asset;
   }
 
   async #attemptCreateEmptyContentAsset() {
@@ -466,7 +560,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
 
     const asset = this.state.graphAssets.get(path);
     if (asset) {
-      this.asset = asset;
+      this.selectedItem = asset;
     }
   }
 
@@ -524,7 +618,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
 
     const asset = this.state.graphAssets.get(path);
     if (asset) {
-      this.asset = asset;
+      this.selectedItem = asset;
     }
   }
 
@@ -542,6 +636,31 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
     this.editAssetContent = null;
   }
 
+  #attemptUpdateParameter() {
+    if (
+      !this.#paramDescriptionInputRef.value ||
+      !this.#paramSampleValueInputRef.value ||
+      !this.editParameterContent
+    ) {
+      this.editParameterContent = null;
+      return;
+    }
+
+    const param = this.state?.parameters.get(this.editParameterContent.path);
+    if (param) {
+      param.description = this.#paramDescriptionInputRef.value.value;
+
+      this.state?.changeParameterMetadata(
+        this.editParameterContent.path,
+        param
+      );
+
+      // TODO: Add support for sample values.
+    }
+
+    this.editParameterContent = null;
+  }
+
   protected willUpdate(changedProperties: PropertyValues): void {
     if (changedProperties.has("asset")) {
       this.editAssetContent = null;
@@ -552,21 +671,49 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
     if (this.editAssetTitle && this.#renameInputRef.value) {
       this.#renameInputRef.value.select();
     }
+
+    if (this.editParameterContent && this.#paramDescriptionInputRef.value) {
+      this.#paramDescriptionInputRef.value.select();
+    }
+  }
+
+  #isGraphAsset(item: unknown): item is GraphAsset {
+    return item !== null && "data" in (item as GraphAsset);
+  }
+
+  #isGraphParameter(item: unknown): item is GraphParameter {
+    return item !== null && !this.#isGraphAsset(item);
+  }
+
+  #isAssetMetadata(metadata: unknown): metadata is AssetMetadata {
+    return metadata !== null && "subType" in (metadata as AssetMetadata);
   }
 
   render() {
-    const assetData = this.asset?.data?.at(-1) || null;
     const assets = this.state?.graphAssets;
     const parameters = this.state?.parameters;
-    const isFileData = this.asset?.data.some((content) =>
-      content.parts.some((part) => isFileDataCapabilityPart(part))
-    );
+
+    const itemData = this.#isGraphAsset(this.selectedItem)
+      ? (this.selectedItem.data.at(-1) ?? null)
+      : null;
+
+    const isParameter = this.#isGraphParameter(this.selectedItem);
+
+    const isFileData = this.#isGraphAsset(this.selectedItem)
+      ? this.selectedItem.data.some((content) =>
+          content.parts.some((part) => isFileDataCapabilityPart(part))
+        )
+      : false;
     const hasEditableParts = !isFileData;
     const supportedExportControls = { drive: false, clipboard: false };
 
-    if (this.asset) {
-      const type = this.asset.metadata?.type;
-      const subType = this.asset.metadata?.subType;
+    if (this.selectedItem) {
+      const type = this.#isAssetMetadata(this.selectedItem.metadata)
+        ? this.selectedItem.metadata?.type
+        : undefined;
+      const subType = this.#isAssetMetadata(this.selectedItem.metadata)
+        ? this.selectedItem.metadata?.subType
+        : undefined;
       supportedExportControls.clipboard = subType !== "gdrive";
       supportedExportControls.drive =
         type === "content" && subType !== "gdrive" && subType !== "youtube";
@@ -661,7 +808,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
           <header>
             <h1>${Strings.from("LABEL_TITLE")}</h1>
           </header>
-          <section id="assets">
+          <section id="items">
             <section>
               <div id="add-asset-container">
                 <button
@@ -683,140 +830,169 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                   ${Strings.from("COMMAND_ADD_ASSET")}
                 </button>
               </div>
-              ${assets && assets.size > 0
-                ? html`<menu>
-                    ${repeat(assets, ([path, asset]) => {
-                      if (path === "@@splash") {
-                        return nothing;
-                      }
+              <div id="menu-container">
+                <h3>Assets</h3>
+                ${assets && assets.size > 0
+                  ? html`<menu>
+                      ${repeat(assets, ([path, asset]) => {
+                        if (path === "@@splash") {
+                          return nothing;
+                        }
 
-                      return html`<li>
-                        ${asset === this.editAssetTitle
-                          ? html`<span
+                        return html`<li>
+                          ${asset === this.editAssetTitle
+                            ? html`<span
+                                  class=${classMap({
+                                    [asset.metadata?.type ?? "generic"]: true,
+                                    [asset.metadata?.subType ?? "sub-generic"]:
+                                      true,
+                                  })}
+                                ></span>
+
+                                <input
+                                  type="text"
+                                  required
+                                  autofocus
+                                  .value=${asset.metadata?.title || path}
+                                  ${ref(this.#renameInputRef)}
+                                  @blur=${(evt: Event) => {
+                                    if (
+                                      !(evt.target instanceof HTMLInputElement)
+                                    ) {
+                                      return;
+                                    }
+
+                                    if (!this.editAssetTitle) {
+                                      return;
+                                    }
+
+                                    if (!evt.target.value) {
+                                      evt.target.reportValidity();
+                                      return;
+                                    }
+
+                                    this.#attemptUpdateAssetTitle(
+                                      this.editAssetTitle,
+                                      evt.target.value
+                                    );
+                                    this.#showItem(this.editAssetTitle);
+                                    this.editAssetTitle = null;
+                                  }}
+                                  @keydown=${(evt: KeyboardEvent) => {
+                                    if (
+                                      !(evt.target instanceof HTMLInputElement)
+                                    ) {
+                                      return;
+                                    }
+
+                                    if (evt.key !== "Enter") {
+                                      return;
+                                    }
+
+                                    if (!this.editAssetTitle) {
+                                      return;
+                                    }
+
+                                    if (!evt.target.value) {
+                                      evt.target.reportValidity();
+                                      return;
+                                    }
+
+                                    this.#attemptUpdateAssetTitle(
+                                      this.editAssetTitle,
+                                      evt.target.value
+                                    );
+                                    this.#showItem(this.editAssetTitle);
+                                    this.editAssetTitle = null;
+                                  }}
+                                />`
+                            : html`<button
                                 class=${classMap({
+                                  asset: true,
                                   [asset.metadata?.type ?? "generic"]: true,
                                   [asset.metadata?.subType ?? "sub-generic"]:
                                     true,
+                                  active:
+                                    asset.path === this.selectedItem?.path,
                                 })}
-                              ></span>
-
-                              <input
-                                type="text"
-                                required
-                                autofocus
-                                .value=${asset.metadata?.title || path}
-                                ${ref(this.#renameInputRef)}
-                                @blur=${(evt: Event) => {
-                                  if (
-                                    !(evt.target instanceof HTMLInputElement)
-                                  ) {
-                                    return;
+                                @click=${() => {
+                                  if (asset !== this.selectedItem) {
+                                    this.#showItem(asset);
+                                  } else {
+                                    this.editAssetTitle = asset;
                                   }
-
-                                  if (!this.editAssetTitle) {
-                                    return;
-                                  }
-
-                                  if (!evt.target.value) {
-                                    evt.target.reportValidity();
-                                    return;
-                                  }
-
-                                  this.#attemptUpdateAssetTitle(
-                                    this.editAssetTitle,
-                                    evt.target.value
-                                  );
-                                  this.#showAsset(this.editAssetTitle);
-                                  this.editAssetTitle = null;
                                 }}
-                                @keydown=${(evt: KeyboardEvent) => {
-                                  if (
-                                    !(evt.target instanceof HTMLInputElement)
-                                  ) {
-                                    return;
-                                  }
-
-                                  if (evt.key !== "Enter") {
-                                    return;
-                                  }
-
-                                  if (!this.editAssetTitle) {
-                                    return;
-                                  }
-
-                                  if (!evt.target.value) {
-                                    evt.target.reportValidity();
-                                    return;
-                                  }
-
-                                  this.#attemptUpdateAssetTitle(
-                                    this.editAssetTitle,
-                                    evt.target.value
-                                  );
-                                  this.#showAsset(this.editAssetTitle);
-                                  this.editAssetTitle = null;
-                                }}
-                              />`
-                          : html`<button
-                              class=${classMap({
-                                asset: true,
-                                [asset.metadata?.type ?? "generic"]: true,
-                                [asset.metadata?.subType ?? "sub-generic"]:
-                                  true,
-                                active: asset.path === this.asset?.path,
-                              })}
-                              @click=${() => {
-                                if (asset !== this.asset) {
-                                  this.#showAsset(asset);
-                                } else {
+                                @dblclick=${() => {
                                   this.editAssetTitle = asset;
-                                }
-                              }}
-                              @dblclick=${() => {
-                                this.editAssetTitle = asset;
-                              }}
-                            >
-                              ${asset.metadata?.title || path}
-                            </button>`}
+                                }}
+                              >
+                                ${asset.metadata?.title || path}
+                              </button>`}
 
-                        <button
-                          class=${classMap({
-                            delete: true,
-                          })}
-                          @click=${async () => {
-                            if (this.#deleting) {
-                              return;
-                            }
+                          <button
+                            class=${classMap({
+                              delete: true,
+                            })}
+                            @click=${async () => {
+                              if (this.#deleting) {
+                                return;
+                              }
 
-                            await this.#deleteAsset(path);
-                          }}
-                        >
-                          Delete
-                        </button>
-                      </li>`;
-                    })}
-                  </menu>`
-                : html`<div id="no-assets">
-                    ${Strings.from("LABEL_NO_ASSETS")}
-                  </div>`}
-              <menu>
-                ${parameters
-                  ? repeat(parameters, ([, metadata]) => {
-                      return html`<li>${metadata.title}</li>`;
-                    }) // PAUL MAKE IT PRETTYYYYY
-                  : nothing}
-              </menu>
+                              await this.#deleteAsset(path);
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </li>`;
+                      })}
+                    </menu>`
+                  : html`<div id="no-assets">
+                      ${Strings.from("LABEL_NO_ASSETS")}
+                    </div>`}
+
+                <h3>Parameters</h3>
+                ${parameters && parameters.size > 0
+                  ? html`<menu>
+                      ${repeat(parameters, ([path, parameter]) => {
+                        if (path === "@@splash") {
+                          return nothing;
+                        }
+
+                        return html`<li>
+                          <button
+                            class=${classMap({
+                              parameter: true,
+                              active: path === this.selectedItem?.path,
+                            })}
+                            @click=${() => {
+                              if (path !== this.selectedItem?.path) {
+                                this.#showItem({ path, metadata: parameter });
+                              }
+                            }}
+                          >
+                            ${parameter.title ?? path}
+                          </button>
+                        </li>`;
+                      })}
+                    </menu>`
+                  : html`<div id="no-parameters">
+                      ${Strings.from("LABEL_NO_PARAMETERS")}
+                    </div>`}
+              </div>
             </section>
 
             <section
               id="details"
               class=${classMap({
-                padded: this.asset?.metadata?.type === "file",
+                padded: this.#isGraphAsset(this.selectedItem)
+                  ? this.selectedItem.metadata?.type === "file"
+                  : false,
               })}
             >
-              ${assetData
+              ${itemData
                 ? html`
-                    ${this.asset?.metadata?.type === "content"
+                    ${this.#isGraphAsset(this.selectedItem) &&
+                    this.selectedItem.metadata?.type === "content"
                       ? html`<div>
                           <button
                             id="edit-asset"
@@ -824,12 +1000,15 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                               save: this.editAssetContent !== null,
                             })}
                             @click=${() => {
-                              if (!this.asset) {
+                              if (!this.selectedItem) {
                                 return;
                               }
 
                               if (!this.editAssetContent) {
-                                this.editAssetContent = this.asset;
+                                if (!this.#isGraphAsset(this.selectedItem)) {
+                                  return;
+                                }
+                                this.editAssetContent = this.selectedItem;
                                 return;
                               }
 
@@ -861,7 +1040,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                               this.#attemptUpdateAsset();
                             }
                           }}
-                          .value=${assetData}
+                          .value=${itemData}
                           .clamped=${false}
                           .description=${null}
                           .showInlineControlsToggle=${hasEditableParts}
@@ -870,14 +1049,89 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                           .autofocus=${true}
                         ></bb-llm-input>`
                       : html`<bb-llm-output
-                          .value=${assetData}
+                          .value=${itemData}
                           .clamped=${false}
                           .graphUrl=${this.state?.graphUrl || null}
                           .showExportControls=${true}
                           .supportedExportControls=${supportedExportControls}
                         ></bb-llm-output>`}
                   `
-                : html`<div id="no-asset-selected">No asset selected</div>`}
+                : isParameter
+                  ? html` <div>
+                        <button
+                          id="edit-parameter"
+                          class=${classMap({
+                            save: this.editParameterContent !== null,
+                          })}
+                          @click=${() => {
+                            if (!this.selectedItem) {
+                              return;
+                            }
+
+                            if (!this.editParameterContent) {
+                              if (!this.#isGraphParameter(this.selectedItem)) {
+                                return;
+                              }
+                              this.editParameterContent = this.selectedItem;
+                              return;
+                            }
+
+                            this.#attemptUpdateParameter();
+                          }}
+                        >
+                          ${this.editParameterContent
+                            ? Strings.from("COMMAND_SAVE_PARAMETER")
+                            : Strings.from("COMMAND_EDIT_PARAMETER")}
+                        </button>
+                      </div>
+
+                      <div
+                        id="param-details"
+                        @keydown=${(evt: KeyboardEvent) => {
+                          const isMac = navigator.platform.indexOf("Mac") === 0;
+                          const isCtrlCommand = isMac
+                            ? evt.metaKey
+                            : evt.ctrlKey;
+
+                          if (evt.key === "Enter" && isCtrlCommand) {
+                            this.#attemptUpdateParameter();
+                          }
+                        }}
+                      >
+                        ${this.editParameterContent
+                          ? html`
+                              <label for="param-description">Description</label>
+                              <textarea
+                                ${ref(this.#paramDescriptionInputRef)}
+                                id="param-description"
+                                .value=${this.selectedItem?.metadata
+                                  ?.description ?? ""}
+                                placeholder=${Strings.from(
+                                  "LABEL_ENTER_DESCRIPTION"
+                                )}
+                              ></textarea>
+
+                              <label for="sample-value">Sample Value</label>
+                              <textarea
+                                disabled
+                                id="sample-value"
+                                ${ref(this.#paramSampleValueInputRef)}
+                                .value=${""}
+                                placeholder="Sample values are not supported yet"
+                              ></textarea>
+                            `
+                          : html`
+                              <label for="param-description">Description</label>
+                              <div id="param-description">
+                                ${this.selectedItem?.metadata?.description ||
+                                "No description"}
+                              </div>
+
+                              <label for="sample-value">Sample Value</label>
+                              <div id="sample-value">${"No sample value"}</div>
+                            `}
+                      </div>`
+                  : html`<div id="no-asset-selected">No item selected</div>`}
             </section>
           </section>
         </div>

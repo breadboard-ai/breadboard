@@ -71,19 +71,19 @@ export class TextEditor extends LitElement {
 
     #editor {
       outline: none;
-      display: inline-block;
+      display: block;
       white-space: pre-line;
-      height: 316px;
+      height: var(--text-editor-height, auto);
       width: 100%;
       line-height: var(--bb-grid-size-6);
       overflow-y: scroll;
-      padding: var(--bb-grid-size-3);
+      padding: var(--bb-grid-size-2);
     }
 
     .chiclet {
       cursor: pointer;
       display: inline-flex;
-      padding: 0 var(--bb-grid-size-2) 0 var(--bb-grid-size-7);
+      padding: 0 var(--bb-grid-size-2) 0 var(--bb-grid-size-6);
       background: var(--bb-neutral-50);
       outline: 1px solid var(--bb-neutral-100);
       color: var(--bb-neutral-700);
@@ -116,14 +116,14 @@ export class TextEditor extends LitElement {
       }
 
       &.in {
-        background: var(--bb-input-50) var(--bb-icon-output) 8px center / 16px
+        background: var(--bb-input-50) var(--bb-icon-output) 5px center / 16px
           16px no-repeat;
         outline: 1px solid var(--bb-input-100);
         color: var(--bb-input-700);
       }
 
       &.asset {
-        background: var(--bb-asset-50) var(--bb-icon-text) 8px center / 16px
+        background: var(--bb-asset-50) var(--bb-icon-text) 5px center / 16px
           16px no-repeat;
         outline: 1px solid var(--bb-asset-100);
         color: var(--bb-asset-700);
@@ -146,14 +146,14 @@ export class TextEditor extends LitElement {
       }
 
       &.tool {
-        background: var(--bb-tool-50) var(--bb-icon-tool) 8px center / 16px 16px
-          no-repeat;
+        background: var(--bb-tool-50) var(--bb-icon-home-repair-service) 5px
+          center / 16px 16px no-repeat;
         outline: 1px solid var(--bb-tool-100);
         color: var(--bb-tool-700);
       }
 
       &.param {
-        background: var(--bb-param-50) var(--bb-icon-contact-support) 8px
+        background: var(--bb-param-50) var(--bb-icon-contact-support) 5px
           center / 16px 16px no-repeat;
         outline: 1px solid var(--bb-param-100);
         color: var(--bb-param-700);

@@ -271,7 +271,7 @@
     "vite": "^6.2.1",
     "vite-plugin-full-reload": "^1.2.0",
     "vite-plugin-watch-and-run": "^1.7.4",
-    "vitest": "^3.0.7"
+    "vitest": "^3.0.8"
   },
   "dependencies": {
     "@breadboard-ai/bbrt": "0.2.1",
@@ -312,6 +312,6 @@
     "markdown-it": "^14.1.0",
     "pdfjs-dist": "^4.10.38",
     "pixi.js": "^8.8.1",
-    "prettier": "^3.5.2"
+    "prettier": "^3.5.3"
   }
 }

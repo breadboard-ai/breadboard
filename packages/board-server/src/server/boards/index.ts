@@ -25,7 +25,7 @@ import inviteList from "./invite-list.js";
 import inviteUpdate from "./invite-update.js";
 import runBoard from "./run.js";
 import handleAssetsDriveRequest from "./assets-drive.js";
-import { loadBoard } from "./loader.js";
+import { loadBoard, parseBoardId } from "./loader.js";
 
 export function serveBoardsAPI(serverConfig: ServerConfig): Router {
   const router = Router();
@@ -33,41 +33,53 @@ export function serveBoardsAPI(serverConfig: ServerConfig): Router {
   router.get("/", requireAuth(), listBoards);
   router.post("/", requireAuth(), createBoard);
 
-  router.use("/@:user/:name.(json|api|app|invite)", getBoardId);
-
-  router.post("/@:user/:name.json", requireAuth(), post);
-
-  router.post("/@:user/:name.api/invoke", async (req, res) =>
-    invokeBoard(serverConfig, req, res)
+  // Suffixed routes. These routes rely on special suffixes attached to the
+  // board name.
+  //
+  // The actual board name is found by replacing the suffix with ".json". So
+  // these routes will only work if the board name ends in ".json"
+  //
+  // TODO: #4824 - Stop doing this. Turn down support for suffixed routes
+  router.post(
+    "/@:user/:name.api/invoke",
+    parseBoardId({ addJsonSuffix: true }),
+    async (req, res) => invokeBoard(serverConfig, req, res)
+  );
+  router.post(
+    "/@:user/:name.api/run",
+    parseBoardId({ addJsonSuffix: true }),
+    async (req, res) => runBoard(serverConfig, req, res)
+  );
+  router.post(
+    "/@:user/:name.api/describe",
+    parseBoardId({ addJsonSuffix: true }),
+    describeBoard
+  );
+  router.get(
+    "/@:user/:name.invite",
+    requireAuth(),
+    parseBoardId({ addJsonSuffix: true }),
+    inviteList
+  );
+  router.post(
+    "/@:user/:name.invite",
+    requireAuth(),
+    parseBoardId({ addJsonSuffix: true }),
+    inviteUpdate
   );
 
-  router.post("/@:user/:name.api/run", async (req, res) =>
-    runBoard(serverConfig, req, res)
-  );
-
-  router.post("/@:user/:name.api/describe", describeBoard);
-
-  router.get("/@:user/:name.invite", requireAuth(), inviteList);
-  router.post("/@:user/:name.invite", requireAuth(), inviteUpdate);
-
+  // Non suffixed routes. These routes treat the board name as an opaque
+  // identifier and do not try to deconstruct it. The board is loaded from
+  // storage exactly as named. This is the way.
   router.get("/@:user/:name", loadBoard(), getBoard);
+  router.post("/@:user/:name", requireAuth(), parseBoardId(), post);
 
   router.post(
     "/@:user/:name/assets/drive/:driveId",
     requireAccessToken(),
+    parseBoardId(),
     handleAssetsDriveRequest
   );
 
   return router;
-}
-
-function getBoardId(req: Request, res: Response, next: NextFunction) {
-  const { user = "", name = "" } = req.params;
-  let boardId: BoardId = {
-    user,
-    name: name + ".json",
-    fullPath: `@${user}/${name}.json`,
-  };
-  res.locals.boardId = boardId;
-  next();
 }
