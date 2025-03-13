@@ -6,12 +6,30 @@
 
 import { css } from "lit";
 
+/**
+ * CSS classes for Material Icons and Google Symbols.
+ *
+ * Usage:
+ *
+ * ```html
+ * <span class="m-icon">play_arrow</span>
+ * <span class="g-icon">pen_spark</span>
+ * ```
+ */
 export const icons = css`
   .m-icon {
     font-family: "Material Symbols Outlined";
+  }
+  .g-icon {
+    font-family: "Google Symbols";
+  }
+  .m-icon,
+  .g-icon {
     font-weight: normal;
     font-style: normal;
+    font-display: optional;
     font-size: 20px;
+    user-select: none;
     line-height: 1;
     letter-spacing: normal;
     text-transform: none;
@@ -21,9 +39,7 @@ export const icons = css`
     direction: ltr;
     -webkit-font-feature-settings: "liga";
     -webkit-font-smoothing: antialiased;
-  }
 
-  .m-icon {
     font-variation-settings:
       "FILL" 0,
       "wght" 300,

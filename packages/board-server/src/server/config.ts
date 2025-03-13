@@ -4,10 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { ViteDevServer } from "vite";
-
 export interface ServerConfig {
-  allowedOrigins: string[];
   hostname: string;
   port: number;
   /**
@@ -19,7 +16,5 @@ export interface ServerConfig {
    * server info API response.
    */
   serverUrl?: string;
-  viteDevServer: ViteDevServer | null;
-  rootPath: string;
   storageBucket?: string;
 }

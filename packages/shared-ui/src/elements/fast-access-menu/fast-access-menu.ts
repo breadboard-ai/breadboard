@@ -10,17 +10,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { SignalWatcher } from "@lit-labs/signals";
-import { css, html, LitElement, PropertyValues } from "lit";
+import { css, html, LitElement, nothing, PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { Component, FastAccess, GraphAsset, Tool } from "../../state";
 import {
   GraphIdentifier,
   LLMContent,
   NodeIdentifier,
+  ParameterMetadata,
 } from "@breadboard-ai/types";
 import {
   FastAccessDismissedEvent,
   FastAccessSelectEvent,
+  ParamCreateEvent,
 } from "../../events/events";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
@@ -91,7 +93,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
     #assets,
     #tools,
-    #outputs {
+    #outputs,
+    #parameters {
       & h3 {
         font: 400 var(--bb-body-x-small) / var(--bb-body-line-height-x-small)
           var(--bb-font-family);
@@ -111,6 +114,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
           display: block;
           background-color: var(--bb-neutral-0);
           border: none;
+          border-radius: var(--bb-grid-size);
           color: var(--bb-neutral-900);
           margin: var(--bb-grid-size-2) 0;
           height: var(--bb-grid-size-6);
@@ -138,6 +142,40 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
     #assets menu button {
       background: var(--bb-icon-text) 4px center / 20px 20px no-repeat;
+    }
+
+    #parameters {
+      & #create-new-param {
+        display: block;
+        white-space: nowrap;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        border-radius: var(--bb-grid-size-16);
+        height: var(--bb-grid-size-7);
+        border: none;
+        background: var(--bb-icon-add) var(--bb-neutral-100) 4px center / 20px
+          20px no-repeat;
+        padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-8);
+        font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+          var(--bb-font-family);
+        transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
+        margin-top: var(--bb-grid-size-2);
+
+        &:not([disabled]) {
+          cursor: pointer;
+
+          &:hover,
+          &:focus {
+            background-color: var(--bb-neutral-200);
+          }
+        }
+      }
+
+      & menu button {
+        background: var(--bb-icon-contact-support) 4px center / 20px 20px
+          no-repeat;
+      }
     }
 
     #tools menu button {
@@ -182,7 +220,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     assets: GraphAsset[];
     tools: Tool[];
     components: Component[];
-  } = { assets: [], tools: [], components: [] };
+    parameters: (ParameterMetadata & { id: string })[];
+  } = { assets: [], tools: [], components: [], parameters: [] };
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -210,6 +249,9 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       ...(this.state?.myTools.values() || []),
     ].sort((tool1, tool2) => tool1.order! - tool2.order!);
     let components = [...(this.state?.components.get(graphId)?.values() || [])];
+    let parameters = [...(this.state?.parameters.entries() || [])].map(
+      ([id, value]) => ({ id, ...value })
+    );
 
     if (this.filter) {
       const filterStr = this.filter;
@@ -228,17 +270,24 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
         const filter = new RegExp(filterStr, "gim");
         return filter.test(component.title);
       });
+
+      parameters = parameters.filter((parameter) => {
+        const filter = new RegExp(filterStr, "gim");
+        return filter.test(parameter.title);
+      });
     }
 
     this.#items = {
       assets,
       tools,
       components,
+      parameters,
     };
 
     const totalSize =
       this.#items.assets.length +
       this.#items.tools.length +
+      this.#items.parameters.length +
       this.#items.components.length;
 
     this.selectedIndex = this.#clamp(this.selectedIndex, 0, totalSize - 1);
@@ -352,6 +401,28 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
   #emitCurrentItem() {
     let idx = this.selectedIndex;
+    const uniqueAndNew =
+      this.#items.assets.length === 0 &&
+      this.#items.components.length === 0 &&
+      this.#items.parameters.length === 0 &&
+      this.#items.tools.length === 0 &&
+      this.filter !== "";
+
+    if (idx === -1) {
+      if (this.filter && uniqueAndNew) {
+        // emit.
+        const paramPath = this.filter.toLocaleLowerCase().replace(/\W/gim, "-");
+        this.dispatchEvent(
+          new ParamCreateEvent(this.graphId ?? "", paramPath, this.filter, "")
+        );
+
+        this.dispatchEvent(
+          new FastAccessSelectEvent(paramPath, this.filter, "param")
+        );
+      }
+      return;
+    }
+
     if (idx < this.#items.assets.length) {
       const asset = this.#items.assets[idx];
       this.dispatchEvent(
@@ -366,6 +437,18 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     }
 
     idx -= this.#items.assets.length;
+    if (idx < this.#items.parameters.length) {
+      const parameter = this.#items.parameters[idx];
+      this.dispatchEvent(
+        new FastAccessSelectEvent(
+          parameter.id,
+          parameter.title ?? "Untitled parameter",
+          "param"
+        )
+      );
+      return;
+    }
+
     if (idx < this.#items.tools.length) {
       const tool = this.#items.tools[idx];
       this.dispatchEvent(
@@ -399,6 +482,13 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
   render() {
     let idx = 0;
+    const uniqueAndNew =
+      this.#items.assets.length === 0 &&
+      this.#items.components.length === 0 &&
+      this.#items.parameters.length === 0 &&
+      this.#items.tools.length === 0 &&
+      this.filter !== "";
+
     return html` <div ${ref(this.#itemContainerRef)}>
       <header>
         <input
@@ -407,6 +497,17 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
           .placeholder=${"Search"}
           ${ref(this.#filterInputRef)}
           .value=${this.filter}
+          @keydown=${(evt: KeyboardEvent) => {
+            const isMac = navigator.platform.indexOf("Mac") === 0;
+            const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+            if (isCtrlCommand && evt.key === "Enter") {
+              evt.stopImmediatePropagation();
+
+              this.selectedIndex = -1;
+              this.#emitCurrentItem();
+            }
+          }}
           @input=${(evt: InputEvent) => {
             if (!(evt.target instanceof HTMLInputElement)) {
               return;
@@ -440,6 +541,44 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
               })}
             </menu>`
           : html`<div class="no-items">No assets</div>`}
+      </section>
+
+      <section id="parameters">
+        <h3>Parameters</h3>
+        ${this.#items.parameters.length
+          ? html` <menu>
+              ${this.#items.parameters.map((parameter) => {
+                const active = idx === this.selectedIndex;
+                const globalIndex = idx;
+                idx++;
+                return html`<li>
+                  <button
+                    class=${classMap({ active })}
+                    @pointerover=${() => {
+                      this.selectedIndex = globalIndex;
+                    }}
+                    @click=${() => {
+                      this.#emitCurrentItem();
+                    }}
+                  >
+                    ${parameter.title}
+                  </button>
+                </li>`;
+              })}
+            </menu>`
+          : html`<div class="no-items">
+              No parameters
+              ${uniqueAndNew
+                ? html`<button
+                    id="create-new-param"
+                    @click=${() => {
+                      this.#emitCurrentItem();
+                    }}
+                  >
+                    Add "${this.filter}"
+                  </button>`
+                : nothing}
+            </div>`}
       </section>
 
       <section id="tools">

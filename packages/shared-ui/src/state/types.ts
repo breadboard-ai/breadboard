@@ -11,6 +11,7 @@ import {
   LLMContent,
   NodeIdentifier,
   NodeValue,
+  ParameterMetadata,
 } from "@breadboard-ai/types";
 import {
   EditSpec,
@@ -100,6 +101,15 @@ export type Organizer = {
     path: AssetPath,
     metadata: AssetMetadata
   ): Promise<Outcome<void>>;
+
+  /**
+   * Current graph's parameters.
+   */
+  parameters: Map<string, ParameterMetadata>;
+  changeParameterMetadata(
+    id: string,
+    metadata: ParameterMetadata
+  ): Promise<Outcome<void>>;
 };
 
 export type GraphAsset = {
@@ -140,6 +150,7 @@ export type FastAccess = {
   tools: Map<string, Tool>;
   myTools: Map<string, Tool>;
   components: Map<GraphIdentifier, Components>;
+  parameters: Map<string, ParameterMetadata>;
 };
 
 /**
@@ -148,6 +159,7 @@ export type FastAccess = {
  */
 export type Project = {
   graphAssets: Map<AssetPath, GraphAsset>;
+  parameters: Map<string, ParameterMetadata>;
   organizer: Organizer;
   fastAccess: FastAccess;
 };

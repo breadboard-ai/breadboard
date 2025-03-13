@@ -6,7 +6,7 @@
 
 export { Template };
 
-export type TemplatePartType = "in" | "asset" | "tool";
+export type TemplatePartType = "in" | "asset" | "tool" | "param";
 
 export type TemplatePart = {
   /**

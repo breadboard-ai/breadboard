@@ -6,16 +6,13 @@
 
 import { type Request, type Response, Router } from "express";
 
-import { cors } from "../cors.js";
-import type { ServerConfig } from "../config.js";
 import { requireAuth } from "../auth.js";
 
 export { serveMeAPI };
 
-function serveMeAPI(config: ServerConfig): Router {
+function serveMeAPI(): Router {
   let router = Router();
 
-  router.use(cors(config.allowedOrigins));
   router.use(requireAuth());
 
   router.get("/", get);

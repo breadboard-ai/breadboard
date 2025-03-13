@@ -29,6 +29,10 @@ const themeAssets: [string, string][] = [
     "combine-outputs",
     `/third_party/icons/graph/table-rows${themeSuffix}-48px.svg`,
   ],
+  [
+    "contact-support",
+    `/third_party/icons/graph/contact-support${themeSuffix}-48px.svg`,
+  ],
   ["edit", `/third_party/icons/graph/edit${themeSuffix}-48px.svg`],
   ["fetch", `/third_party/icons/graph/fetch${themeSuffix}-48px.svg`],
   [

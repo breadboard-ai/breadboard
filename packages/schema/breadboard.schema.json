@@ -367,6 +367,13 @@
 				"userModified": {
 					"type": "boolean",
 					"description": "If true, the title/description have been modified by the user."
+				},
+				"parameters": {
+					"type": "object",
+					"additionalProperties": {
+						"$ref": "#/definitions/ParameterMetadata"
+					},
+					"description": "Provides a way to store metadata about parameters See https://github.com/breadboard-ai/breadboard/wiki/Parameters-Design"
 				}
 			},
 			"additionalProperties": {
@@ -510,6 +517,30 @@
 			],
 			"additionalProperties": false,
 			"description": "Represents inline data, encoded as a base64 string."
+		},
+		"ParameterMetadata": {
+			"type": "object",
+			"properties": {
+				"title": {
+					"type": "string"
+				},
+				"description": {
+					"type": "string"
+				},
+				"usedIn": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/NodeIdentifier"
+					},
+					"description": "The list of nodes where the parameter is currently used. Can be empty, which indicates that this metadata is not attached to any existing parameter."
+				}
+			},
+			"required": [
+				"title",
+				"usedIn"
+			],
+			"additionalProperties": false,
+			"description": "Metadata about a parameter"
 		},
 		"Modules": {
 			"type": "object",

@@ -12,9 +12,7 @@ import {
 } from "express";
 
 import { requireAccessToken, requireAuth } from "../auth.js";
-import { serveFile, serveIndex } from "../common.js";
 import type { ServerConfig } from "../config.js";
-import { cors, corsAll } from "../cors.js";
 import type { BoardId } from "../types.js";
 
 import listBoards from "./list.js";
@@ -32,32 +30,12 @@ import { loadBoard } from "./loader.js";
 export function serveBoardsAPI(serverConfig: ServerConfig): Router {
   const router = Router();
 
-  router.use("/", cors(serverConfig.allowedOrigins));
-  router.use("/@:user/:name.json", corsAll);
-  router.use("/@:user/:name.json", cors(serverConfig.allowedOrigins));
-  router.use("/@:user/:name.api/invoke", corsAll);
-  router.use("/@:user/:name.api/run", corsAll);
-  router.use("/@:user/:name.api/describe", corsAll);
-  router.use("/@:user/:name.invite", cors(serverConfig.allowedOrigins));
-  router.use(
-    "/@:user/:name/assets/drive/:driveId",
-    cors(serverConfig.allowedOrigins)
-  );
-
   router.get("/", requireAuth(), listBoards);
   router.post("/", requireAuth(), createBoard);
 
   router.use("/@:user/:name.(json|api|app|invite)", getBoardId);
 
   router.post("/@:user/:name.json", requireAuth(), post);
-
-  router.get("/@:user/:name.app", async (_req, res) =>
-    serveIndex(serverConfig, res)
-  );
-
-  router.get("/@:user/:name.api", async (_req, res) =>
-    serveFile(serverConfig, res, "/api.html")
-  );
 
   router.post("/@:user/:name.api/invoke", async (req, res) =>
     invokeBoard(serverConfig, req, res)

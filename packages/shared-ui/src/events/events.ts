@@ -1331,7 +1331,7 @@ export class FastAccessSelectEvent extends Event {
   constructor(
     public readonly path: string,
     public readonly title: string,
-    public readonly accessType: "asset" | "tool" | "in",
+    public readonly accessType: "asset" | "tool" | "in" | "param",
     public readonly mimeType?: string
   ) {
     super(FastAccessSelectEvent.eventName, { ...eventInit });
@@ -1455,5 +1455,20 @@ export class AddAssetEvent extends Event {
 
   constructor(public readonly asset: LLMContent) {
     super(AddAssetEvent.eventName, { ...eventInit });
+  }
+}
+
+/** Params */
+
+export class ParamCreateEvent extends Event {
+  static eventName = "bbparamcreate";
+
+  constructor(
+    public readonly graphId: GraphIdentifier,
+    public readonly path: string,
+    public readonly title: string,
+    public readonly description?: string
+  ) {
+    super(ParamCreateEvent.eventName, { ...eventInit });
   }
 }

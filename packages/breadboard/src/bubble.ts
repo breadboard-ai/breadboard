@@ -162,7 +162,12 @@ export class RequestedInputsManager {
     ) => {
       const cachedValue = this.#cache.get(name);
       if (cachedValue !== undefined) return cachedValue;
-      const descriptor = { id: node.id, type: node.type };
+      const configuration = node.configuration?.schema
+        ? {
+            configuration: { schema: node.configuration.schema },
+          }
+        : {};
+      const descriptor = { id: node.id, type: node.type, ...configuration };
       const requestInputResult = {
         ...result,
         descriptor,

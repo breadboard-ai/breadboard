@@ -24,6 +24,7 @@ import {
   MainGraphIdentifier,
   MutableGraphStore,
   RunStore,
+  Schema,
   isLLMContent,
   isLLMContentArray,
 } from "@google-labs/breadboard";
@@ -265,7 +266,12 @@ export class UI extends LitElement {
       const { inputs, node } = event;
       const nodeSchema = await node.describe(inputs);
       const descriptor = node.descriptor;
-      const schema = nodeSchema?.outputSchema || inputs.schema;
+      const hasOutputSchema =
+        nodeSchema?.outputSchema &&
+        Object.keys(nodeSchema.outputSchema).length > 0;
+      const schema = hasOutputSchema
+        ? nodeSchema.outputSchema
+        : (inputs.schema as Schema);
       const requiredFields = schema.required ?? [];
 
       if (!schema.properties || Object.keys(schema.properties).length === 0) {

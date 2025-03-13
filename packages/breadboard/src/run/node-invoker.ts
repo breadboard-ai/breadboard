@@ -4,18 +4,37 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { createOutputProvider, RequestedInputsManager } from "../bubble.js";
+import {
+  bubbleUpInputsIfNeeded,
+  createOutputProvider,
+  RequestedInputsManager,
+} from "../bubble.js";
 import { resolveBoardCapabilitiesInInputs } from "../capability.js";
 import { callHandler, getHandler } from "../handler.js";
 import { resolveGraph, SENTINEL_BASE_URL } from "../loader/loader.js";
 import { RunResult } from "../run.js";
-import type { GraphToRun, NodeHandlerContext, RunArguments } from "../types.js";
 import type {
+  GraphToRun,
+  NodeHandlerContext,
+  RunArguments,
+  Schema,
+} from "../types.js";
+import type {
+  GraphDescriptor,
   InputValues,
+  LLMContent,
+  NodeDescriptor,
   NodeIdentifier,
   OutputValues,
   TraversalResult,
 } from "@breadboard-ai/types";
+import { Template, TemplatePart } from "../utils/template.js";
+import {
+  isLLMContent,
+  isLLMContentArray,
+  isTextCapabilityPart,
+} from "../data/common.js";
+import { FileSystem, FileSystemEntry, FileSystemPath } from "../data/types.js";
 
 type ResultSupplier = (result: RunResult) => Promise<void>;
 
@@ -60,6 +79,12 @@ export class NodeInvoker {
   async invokeNode(result: TraversalResult, invocationPath: number[]) {
     const { descriptor } = result;
     const inputs = this.#adjustInputs(result);
+
+    const requestInput = this.#requestedInputs.createHandler(
+      this.#resultSupplier,
+      result
+    );
+
     const { kits = [], base = SENTINEL_BASE_URL, state } = this.#context;
     let outputs: OutputValues | undefined = undefined;
 
@@ -70,29 +95,32 @@ export class NodeInvoker {
       outerGraph,
     });
 
-    const newContext: NodeHandlerContext = {
-      ...this.#context,
+    // Request parameters, if needed.
+    const newContext = await this.#getParameters(
+      {
+        ...this.#context,
+        descriptor,
+        board: resolveGraph(this.#graph),
+        // This is important: outerGraph is the value of the parent graph
+        // if this.#graph is a subgraph.
+        // Or it equals to "board" it this is not a subgraph
+        // TODO: Make this more elegant.
+        outerGraph,
+        base,
+        kits,
+        requestInput,
+        provideOutput: createOutputProvider(
+          this.#resultSupplier,
+          result,
+          this.#context
+        ),
+        invocationPath,
+        state,
+      },
+      result,
       descriptor,
-      board: resolveGraph(this.#graph),
-      // This is important: outerGraph is the value of the parent graph
-      // if this.#graph is a subgraph.
-      // Or it equals to "board" it this is not a subgraph
-      // TODO: Make this more elegant.
-      outerGraph,
-      base,
-      kits,
-      requestInput: this.#requestedInputs.createHandler(
-        this.#resultSupplier,
-        result
-      ),
-      provideOutput: createOutputProvider(
-        this.#resultSupplier,
-        result,
-        this.#context
-      ),
-      invocationPath,
-      state,
-    };
+      invocationPath
+    );
 
     outputs = (await callHandler(
       handler,
@@ -106,4 +134,172 @@ export class NodeInvoker {
 
     return outputs;
   }
+
+  async #getParameters(
+    context: NodeHandlerContext,
+    result: TraversalResult,
+    descriptor: NodeDescriptor,
+    path: number[]
+  ): Promise<NodeHandlerContext> {
+    const { configuration } = descriptor;
+    if (!configuration) return context;
+
+    const knownInputs = new Set(Object.keys(this.#initialInputs || {}));
+    const params: TemplatePart[] = [];
+
+    // Scan for all LLMContent/LLMContent[] properties
+    Object.values(configuration).forEach((value) => {
+      let content: LLMContent[] | null = null;
+      if (isLLMContent(value)) {
+        content = [value];
+      } else if (isLLMContentArray(value)) {
+        content = value;
+      }
+      const last = content?.at(-1);
+      if (!last) return;
+
+      last.parts.forEach((part) => {
+        if (isTextCapabilityPart(part)) {
+          const template = new Template(part.text);
+          template.placeholders.forEach((placeholder) => {
+            if (
+              placeholder.type === "param" &&
+              !knownInputs.has(placeholder.path)
+            ) {
+              params.push(placeholder);
+            }
+          });
+        }
+      });
+    });
+
+    const parameterInputs: FileSystemEntry[] = [];
+
+    if (params.length > 0) {
+      console.table(params);
+
+      // Simulate a subgraph that consists of 1+ input nodes.
+
+      await context.probe?.report?.({
+        type: "graphstart",
+        data: {
+          graph: virtualGraph(),
+          graphId: "",
+          path: [...path, -1],
+          timestamp: timestamp(),
+        },
+      });
+
+      // TODO: Implement support for multiple inputs at once.
+      for (const [idx, param] of params.entries()) {
+        const schema: Schema = {
+          type: "object",
+          properties: {
+            [param.path]: {
+              type: "object",
+              title: param.title,
+              description: param.title,
+              behavior: ["llm-content"],
+            },
+          },
+        };
+
+        const paramDescriptor: NodeDescriptor = {
+          id: crypto.randomUUID(),
+          type: "input",
+          configuration: { schema },
+        };
+
+        await context.probe?.report?.({
+          type: "nodestart",
+          data: {
+            node: paramDescriptor,
+            inputs: { schema },
+            path: [...path, -1, idx],
+            timestamp: timestamp(),
+          },
+        });
+
+        const paramsResult = { ...result, inputs: { schema } };
+
+        await bubbleUpInputsIfNeeded(
+          this.#graph.graph,
+          context,
+          paramDescriptor,
+          paramsResult,
+          [...path, -1, idx]
+        );
+
+        if (paramsResult.outputs) {
+          parameterInputs.push(
+            ...Object.entries(paramsResult.outputs).map(([id, content]) => {
+              const path = `/env/parameters/${id}` as FileSystemPath;
+              return { path, data: [content] as LLMContent[] };
+            })
+          );
+        }
+
+        await context.probe?.report?.({
+          type: "nodeend",
+          data: {
+            node: paramDescriptor,
+            inputs: { schema },
+            outputs: paramsResult.outputs || {},
+            path: [...path, -1, idx],
+            timestamp: timestamp(),
+            newOpportunities: [],
+          },
+        });
+      }
+
+      await context.probe?.report?.({
+        type: "graphend",
+        data: {
+          path: [...path, -1],
+          timestamp: timestamp(),
+        },
+      });
+    }
+
+    return {
+      ...context,
+      fileSystem: context.fileSystem?.createModuleFileSystem({
+        graphUrl: this.#graph.graph.url!,
+        env: updateEnv(
+          parameterInputs,
+          context.fileSystem,
+          this.#initialInputs
+        ),
+      }),
+    };
+  }
+}
+
+function updateEnv(
+  params: FileSystemEntry[],
+  fileSystem?: FileSystem,
+  inputs?: InputValues
+): FileSystemEntry[] {
+  const currentEnv = fileSystem?.env() || [];
+
+  const newEnv = inputs
+    ? Object.entries(inputs).map(([path, input]) => {
+        const data: LLMContent[] = [{ parts: [{ text: input as string }] }];
+        return { path: `/env/parameters/${path}`, data } as FileSystemEntry;
+      })
+    : [];
+
+  return [...currentEnv, ...newEnv, ...params];
+}
+
+function virtualGraph(): GraphDescriptor {
+  return {
+    nodes: [],
+    edges: [],
+    virtual: true,
+  };
+}
+
+function timestamp() {
+  return globalThis.performance.now();
 }

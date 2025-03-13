@@ -20,6 +20,10 @@ const inBorderColor = getGlobalColor("--bb-input-100");
 const inBackgroundColor = getGlobalColor("--bb-input-50");
 const inTextColor = getGlobalColor("--bb-input-700");
 
+const paramBorderColor = getGlobalColor("--bb-param-100");
+const paramBackgroundColor = getGlobalColor("--bb-param-50");
+const paramTextColor = getGlobalColor("--bb-param-700");
+
 const invalidBorderColor = getGlobalColor("--bb-warning-300");
 const invalidBackgroundColor = getGlobalColor("--bb-warning-100");
 const invalidTextColor = getGlobalColor("--bb-warning-700");
@@ -67,6 +71,14 @@ export class GraphPortChiclet extends PIXI.Container {
         this.#borderColor = inBorderColor;
         this.#textColor = inTextColor;
         icon = "output";
+        break;
+      }
+
+      case "param": {
+        this.#backgroundColor = paramBackgroundColor;
+        this.#borderColor = paramBorderColor;
+        this.#textColor = paramTextColor;
+        icon = "contact-support";
         break;
       }
     }

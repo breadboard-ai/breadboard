@@ -23,6 +23,7 @@ import {
   PersistentBackend,
   FileSystemBlobStore,
   CreateRunFileSystemArgs,
+  CreateModuleFileSystemArgs,
 } from "../types.js";
 import { Path } from "./path.js";
 import { err, noStreams, ok } from "./utils.js";
@@ -578,11 +579,21 @@ class FileSystemImpl implements FileSystem {
     }
   }
 
-  createModuleFileSystem(graphUrl: string): FileSystem {
+  env(): FileSystemEntry[] {
+    return [...this.#env.entries()].map(([path, file]) => {
+      return {
+        path,
+        data: file.data,
+      };
+    });
+  }
+
+  createModuleFileSystem(args: CreateModuleFileSystemArgs): FileSystem {
+    const { graphUrl, env } = args;
     return new FileSystemImpl({
       graphUrl,
       local: this.#local,
-      env: mapToEntries(this.#env),
+      env: env || mapToEntries(this.#env),
       assets: mapToEntries(this.#assets),
       blobs: this.#blobs,
       session: this.#session,
