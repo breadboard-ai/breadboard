@@ -431,6 +431,10 @@
 					"description": "Allows specifying relative order of this graph when it is represented as a component in any menu. Currently used when populating the quick access menu.",
 					"type": "number"
 				},
+				"parameters": {
+					"$ref": "#/definitions/Record%3Cstring%2CParameterMetadata%3E",
+					"description": "Provides a way to store metadata about parameters See https://github.com/breadboard-ai/breadboard/wiki/Parameters-Design"
+				},
 				"tags": {
 					"description": "Tags associated with the graph.",
 					"items": {
@@ -890,6 +894,30 @@
 			"$ref": "#/definitions/Record%3COutputIdentifier%2CNodeValue%3E",
 			"description": "Values that the `NodeHandler` outputs."
 		},
+		"ParameterMetadata": {
+			"additionalProperties": false,
+			"description": "Metadata about a parameter",
+			"properties": {
+				"description": {
+					"type": "string"
+				},
+				"title": {
+					"type": "string"
+				},
+				"usedIn": {
+					"description": "The list of nodes where the parameter is currently used. Can be empty, which indicates that this metadata is not attached to any existing parameter.",
+					"items": {
+						"$ref": "#/definitions/NodeIdentifier"
+					},
+					"type": "array"
+				}
+			},
+			"required": [
+				"title",
+				"usedIn"
+			],
+			"type": "object"
+		},
 		"Record<AssetPath,Asset>": {
 			"additionalProperties": {
 				"$ref": "#/definitions/Asset"
@@ -944,6 +972,12 @@
 		"Record<string,NodeValue>": {
 			"additionalProperties": {
 				"$ref": "#/definitions/NodeValue"
+			},
+			"type": "object"
+		},
+		"Record<string,ParameterMetadata>": {
+			"additionalProperties": {
+				"$ref": "#/definitions/ParameterMetadata"
 			},
 			"type": "object"
 		},

@@ -63,7 +63,22 @@
   "metadata": {
     "visual": {},
     "userModified": true,
-    "tags": []
+    "tags": [],
+    "parameters": {
+      "city": {
+        "title": "City",
+        "usedIn": [
+          "a2-b14f4e35",
+          "a2-afbf013b"
+        ]
+      },
+      "business": {
+        "title": "Business Name",
+        "usedIn": [
+          "a2-b14f4e35"
+        ]
+      }
+    }
   },
   "assets": {
     "@@thumbnail": {

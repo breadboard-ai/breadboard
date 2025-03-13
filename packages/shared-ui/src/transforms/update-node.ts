@@ -16,6 +16,7 @@ import {
 } from "@google-labs/breadboard";
 import { AutoWireInPorts, InPort } from "./autowire-in-ports";
 import { UpdateNodeTitle } from "./update-node-title";
+import { UpdateParameterMetadata } from "./update-parameter-metadata";
 
 export { UpdateNode };
 
@@ -102,6 +103,11 @@ class UpdateNode implements EditTransform {
       portsToAutowire
     ).apply(context);
     if (!autowiring.success) return autowiring;
+
+    const updatingParameterMetadata = await new UpdateParameterMetadata(
+      graphId
+    ).apply(context);
+    if (!updatingParameterMetadata.success) return updatingParameterMetadata;
 
     if (!titleChanged) return { success: true };
 

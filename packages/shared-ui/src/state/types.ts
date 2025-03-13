@@ -155,6 +155,7 @@ export type FastAccess = {
  */
 export type Project = {
   graphAssets: Map<AssetPath, GraphAsset>;
+  parameters: Map<string, Parameter>;
   organizer: Organizer;
   fastAccess: FastAccess;
 };

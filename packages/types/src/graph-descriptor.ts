@@ -280,6 +280,20 @@ export type GraphTag =
   | "private";
 
 /**
+ * Metadata about a parameter
+ */
+export type ParameterMetadata = {
+  title: string;
+  description?: string;
+  /**
+   * The list of nodes where the parameter is currently used.
+   * Can be empty, which indicates that this metadata is not attached
+   * to any existing parameter.
+   */
+  usedIn: NodeIdentifier[];
+};
+
+/**
  * Represents graph metadata.
  */
 export type GraphMetadata = {
@@ -352,6 +366,12 @@ export type GraphMetadata = {
    * If true, the title/description have been modified by the user.
    */
   userModified?: boolean;
+
+  /**
+   * Provides a way to store metadata about parameters
+   * See https://github.com/breadboard-ai/breadboard/wiki/Parameters-Design
+   */
+  parameters?: Record<string, ParameterMetadata>;
 };
 
 /**
