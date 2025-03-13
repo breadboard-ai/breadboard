@@ -121,6 +121,13 @@ export class TextEditor extends LitElement {
         color: var(--bb-tool-700);
       }
 
+      &.param {
+        background: var(--bb-param-50) var(--bb-icon-contact-support) 8px
+          center / 16px 16px no-repeat;
+        outline: 1px solid var(--bb-param-100);
+        color: var(--bb-param-700);
+      }
+
       &.selected {
         background-color: var(--bb-ui-500);
         outline: 1px solid var(--bb-ui-700);

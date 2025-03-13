@@ -145,6 +145,9 @@ body.hide-cursor {
   --bb-icon-code-blocks: url(/third_party/icons/code-blocks.svg);
   --bb-icon-code-blocks-inverted: url(/third_party/icons/code-blocks-inverted.svg);
 
+  --bb-icon-contact-support: url(/third_party/icons/contact-support.svg);
+  --bb-icon-contact-support-inverted: url(/third_party/icons/contact-support-inverted.svg);
+
   --bb-icon-continue: url(/third_party/icons/continue.svg);
   --bb-icon-continue-inverted: url(/third_party/icons/continue-inverted.svg);
 
@@ -365,6 +368,9 @@ body.hide-cursor {
 
   --bb-icon-public: url(/third_party/icons/public.svg);
   --bb-icon-public-inverted: url(/third_party/icons/public-inverted.svg);
+
+  --bb-icon-question-mark: url(/third_party/icons/question-mark.svg);
+  --bb-icon-question-mark-inverted: url(/third_party/icons/question-mark-inverted.svg);
 
   --bb-icon-quick-jump: url(/third_party/icons/quick-jump.svg);
   --bb-icon-quick-jump-inverted: url(/third_party/icons/quick-jump-inverted.svg);
@@ -637,6 +643,17 @@ body.hide-cursor {
   --bb-asset-800: #8c521b;
   --bb-asset-900: #6b3f15;
 
+  --bb-param-50: #e0f2f1;
+  --bb-param-100: #b2dfdb;
+  --bb-param-200: #80cbc4;
+  --bb-param-300: #4db6ac;
+  --bb-param-400: #26a69a;
+  --bb-param-500: #009688;
+  --bb-param-600: #00897b;
+  --bb-param-700: #00796b;
+  --bb-param-800: #00695c;
+  --bb-param-900: #004d40;
+
   --bb-human-50: #ede7f6;
   --bb-human-100: #d1c4e9;
   --bb-human-200: #b39ddb;
@@ -889,6 +906,9 @@ body.hide-cursor {
   --bb-icon-code-blocks: url(/third_party/icons/code-blocks-inverted.svg);
   --bb-icon-code-blocks-inverted: url(/third_party/icons/code-blocks.svg);
 
+  --bb-icon-contact-support: url(/third_party/icons/contact-support-inverted.svg);
+  --bb-icon-contact-support-inverted: url(/third_party/icons/contact-support.svg);
+
   --bb-icon-collapse-content: url(/third_party/icons/collapse-content-inverted.svg);
   --bb-icon-collapse-content-inverted: url(/third_party/icons/collapse-content.svg);
 
@@ -1112,6 +1132,9 @@ body.hide-cursor {
 
   --bb-icon-public: url(/third_party/icons/public-inverted.svg);
   --bb-icon-public-inverted: url(/third_party/icons/public.svg);
+
+  --bb-icon-question-mark: url(/third_party/icons/question-mark-inverted.svg);
+  --bb-icon-question-mark-inverted: url(/third_party/icons/question-mark.svg);
 
   --bb-icon-quick-jump: url(/third_party/icons/quick-jump-inverted.svg);
   --bb-icon-quick-jump-inverted: url(/third_party/icons/quick-jump.svg);
