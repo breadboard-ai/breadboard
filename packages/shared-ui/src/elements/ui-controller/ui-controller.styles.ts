@@ -34,7 +34,7 @@ export const styles = css`
     }
 
     & bb-asset-organizer {
-      z-index: 10;
+      z-index: 12;
     }
 
     & #create-view-popout {

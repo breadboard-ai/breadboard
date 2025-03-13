@@ -257,6 +257,10 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       const filterStr = this.filter;
 
       assets = assets.filter((asset) => {
+        if (asset.path === "@@splash") {
+          return false;
+        }
+
         const filter = new RegExp(filterStr, "gim");
         return filter.test(asset.metadata?.title ?? asset.path);
       });
@@ -287,8 +291,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     const totalSize =
       this.#items.assets.length +
       this.#items.tools.length +
-      this.#items.parameters.length +
-      this.#items.components.length;
+      this.#items.components.length +
+      this.#items.parameters.length;
 
     this.selectedIndex = this.#clamp(this.selectedIndex, 0, totalSize - 1);
   }
@@ -345,6 +349,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     const totalSize =
       this.#items.assets.length +
       this.#items.tools.length +
+      this.#items.parameters.length +
       this.#items.components.length;
 
     switch (evt.key) {
@@ -449,6 +454,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       return;
     }
 
+    idx -= this.#items.parameters.length;
     if (idx < this.#items.tools.length) {
       const tool = this.#items.tools[idx];
       this.dispatchEvent(
