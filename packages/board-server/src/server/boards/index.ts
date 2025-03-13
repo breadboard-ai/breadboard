@@ -4,16 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  type Request,
-  type Response,
-  type NextFunction,
-  Router,
-} from "express";
+import { Router } from "express";
 
 import { requireAccessToken, requireAuth } from "../auth.js";
 import type { ServerConfig } from "../config.js";
-import type { BoardId } from "../types.js";
 
 import listBoards from "./list.js";
 import createBoard from "./create.js";
@@ -73,6 +67,26 @@ export function serveBoardsAPI(serverConfig: ServerConfig): Router {
   // storage exactly as named. This is the way.
   router.get("/@:user/:name", loadBoard(), getBoard);
   router.post("/@:user/:name", requireAuth(), parseBoardId(), post);
+
+  router.post("/@:user/:name/invoke", parseBoardId(), async (req, res) =>
+    invokeBoard(serverConfig, req, res)
+  );
+  router.post("/@:user/:name/run", parseBoardId(), async (req, res) =>
+    runBoard(serverConfig, req, res)
+  );
+  router.post("/@:user/:name/describe", parseBoardId(), describeBoard);
+  router.get(
+    "/@:user/:name/invites",
+    requireAuth(),
+    parseBoardId(),
+    inviteList
+  );
+  router.post(
+    "/@:user/:name/invites",
+    requireAuth(),
+    parseBoardId(),
+    inviteUpdate
+  );
 
   router.post(
     "/@:user/:name/assets/drive/:driveId",
