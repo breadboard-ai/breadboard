@@ -129,7 +129,6 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
         padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-7);
         background: var(--bb-neutral-100) var(--bb-icon-add) 6px center / 20px
           20px no-repeat;
-        border: 1px solid var(--bb-neutral-200);
         display: flex;
         align-items: center;
         cursor: pointer;

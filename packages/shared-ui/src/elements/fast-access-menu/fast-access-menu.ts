@@ -144,9 +144,38 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       background: var(--bb-icon-text) 4px center / 20px 20px no-repeat;
     }
 
-    #parameters menu button {
-      background: var(--bb-icon-contact-support) 4px center / 20px 20px
-        no-repeat;
+    #parameters {
+      & #create-new-param {
+        display: block;
+        white-space: nowrap;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        border-radius: var(--bb-grid-size-16);
+        height: var(--bb-grid-size-7);
+        border: none;
+        background: var(--bb-icon-add) var(--bb-neutral-100) 4px center / 20px
+          20px no-repeat;
+        padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-8);
+        font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+          var(--bb-font-family);
+        transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
+        margin-top: var(--bb-grid-size-2);
+
+        &:not([disabled]) {
+          cursor: pointer;
+
+          &:hover,
+          &:focus {
+            background-color: var(--bb-neutral-200);
+          }
+        }
+      }
+
+      & menu button {
+        background: var(--bb-icon-contact-support) 4px center / 20px 20px
+          no-repeat;
+      }
     }
 
     #tools menu button {
@@ -541,11 +570,12 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
               No parameters
               ${uniqueAndNew
                 ? html`<button
+                    id="create-new-param"
                     @click=${() => {
                       this.#emitCurrentItem();
                     }}
                   >
-                    Create ${this.filter}
+                    Add "${this.filter}"
                   </button>`
                 : nothing}
             </div>`}
