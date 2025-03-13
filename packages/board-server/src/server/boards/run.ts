@@ -11,21 +11,23 @@ import type { RemoteMessage } from "@google-labs/breadboard/remote";
 import { getBody } from "../common.js";
 import type { ServerConfig } from "../config.js";
 import { secretsKit } from "../proxy/secrets.js";
-import { getStore } from "../store.js";
+import { asPath, getStore } from "../store.js";
 
 import { loadFromStore } from "./utils/board-server-provider.js";
 import { runBoard, timestamp } from "./utils/run-board.js";
 import { verifyKey } from "./utils/verify-key.js";
+import type { BoardId } from "../types.js";
 
 async function runHandler(
   config: ServerConfig,
   req: Request,
   res: Response
 ): Promise<void> {
-  const { user, name, fullPath } = res.locals.boardId;
+  const boardId: BoardId = res.locals.boardId;
+  const path = asPath(boardId.user, boardId.name);
 
   const url = new URL(req.url, config.hostname);
-  url.pathname = `boards/${fullPath}`;
+  url.pathname = `boards/${path}`;
   url.search = "";
 
   const body = await getBody(req);
@@ -42,7 +44,11 @@ async function runHandler(
   res.setHeader("Content-Type", "text/event-stream");
   res.statusCode = 200;
 
-  const keyVerificationResult = await verifyKey(user, name, inputs);
+  const keyVerificationResult = await verifyKey(
+    boardId.user,
+    boardId.name,
+    inputs
+  );
   if (!keyVerificationResult.success) {
     await writer.write([
       "graphstart",
@@ -73,7 +79,7 @@ async function runHandler(
 
   await runBoard({
     url: url.href,
-    path: fullPath,
+    path,
     user: keyVerificationResult.user!,
     inputs,
     loader: loadFromStore,

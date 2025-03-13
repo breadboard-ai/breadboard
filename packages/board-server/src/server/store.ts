@@ -6,7 +6,6 @@
 
 import type { GraphDescriptor } from "@breadboard-ai/types";
 import { FirestoreStorageProvider } from "./storage-providers/firestore.js";
-import type { BoardId } from "./types.js";
 
 export const EXPIRATION_TIME_MS = 1000 * 60 * 60 * 24 * 2; // 2 days
 export const INVITE_EXPIRATION_TIME_MS = 1000 * 60 * 60 * 24 * 4; // 4 days
@@ -86,16 +85,6 @@ export type ServerInfo = {
 
 export const asPath = (userStore: string, boardName: string) => {
   return `@${userStore}/${boardName}`;
-};
-
-export const sanitize = (name: string) => {
-  if (name.endsWith(".bgl.json")) {
-    name = name.slice(0, -9);
-  } else if (name.endsWith(".json")) {
-    name = name.slice(0, -5);
-  }
-  name = name.replace(/[^a-zA-Z0-9]/g, "-");
-  return name;
 };
 
 export const asInfo = (path: string) => {
