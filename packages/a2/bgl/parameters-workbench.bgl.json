@@ -18,12 +18,12 @@
       },
       "configuration": {
         "text": {
-          "role": "user",
           "parts": [
             {
               "text": "This is the city: {{\"type\":\"param\",\"path\":\"city\",\"title\":\"City\"}}\n\nThis is the business: {{\"type\":\"param\",\"path\":\"business\",\"title\":\"Business Name\"}}"
             }
-          ]
+          ],
+          "role": "user"
         }
       }
     },
@@ -42,12 +42,12 @@
       },
       "configuration": {
         "text": {
-          "role": "user",
           "parts": [
             {
               "text": "{{\"type\":\"in\",\"path\":\"a2-b14f4e35\",\"title\":\"One\"}}\n\nFrom this city: {{\"type\":\"param\",\"path\":\"city\",\"title\":\"City\"}}"
             }
-          ]
+          ],
+          "role": "user"
         }
       }
     }
@@ -66,11 +66,12 @@
     "tags": [],
     "parameters": {
       "city": {
-        "title": "City",
+        "title": "City Name",
         "usedIn": [
           "a2-b14f4e35",
           "a2-afbf013b"
-        ]
+        ],
+        "description": ""
       },
       "business": {
         "title": "Business Name",

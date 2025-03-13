@@ -10,6 +10,7 @@ import {
   EditTransform,
   EditTransformResult,
 } from "@google-labs/breadboard";
+import { TransformAllNodes } from "./transform-all-nodes";
 
 export { ChangeParameterMetadata };
 
@@ -59,7 +60,18 @@ class ChangeParameterMetadata implements EditTransform {
       },
     };
 
-    // TODO: Update all titles too.
+    const updatingParamTitles = await new TransformAllNodes(
+      graphId,
+      (part) => {
+        const { type, path } = part;
+        if (type === "param" && path === this.id) {
+          return { ...part, title: this.metadata.title };
+        }
+        return null;
+      },
+      "Updating Param Titles in @-references"
+    ).apply(context);
+    if (!updatingParamTitles.success) return updatingParamTitles;
 
     return context.apply(
       [
