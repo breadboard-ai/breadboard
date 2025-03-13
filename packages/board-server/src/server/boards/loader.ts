@@ -1,6 +1,22 @@
 import type { NextFunction, Request, RequestHandler, Response } from "express";
 
-import type { BoardServerStore } from "../types.js";
+import type { BoardId, BoardServerStore } from "../types.js";
+
+export function parseBoardId(opts?: { addJsonSuffix?: boolean }) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    let { user = "", name = "" } = req.params;
+    if (!!opts?.addJsonSuffix) {
+      name += ".json";
+    }
+    let boardId: BoardId = {
+      user,
+      name,
+      fullPath: `@${user}/${name}`,
+    };
+    res.locals.boardId = boardId;
+    next();
+  };
+}
 
 export function loadBoard(): RequestHandler {
   return async (
@@ -16,7 +32,7 @@ export function loadBoard(): RequestHandler {
       }
 
       const store: BoardServerStore = res.app.locals.store;
-      const board = await store.loadBoard(user, fixBoardName(name));
+      const board = await store.loadBoard(user, name);
       if (board) {
         res.locals.loadedBoard = board;
       }
@@ -25,17 +41,4 @@ export function loadBoard(): RequestHandler {
       next(e);
     }
   };
-}
-
-/**
- * Some board URLs use explicit suffixes to indicate the type of URL.
- * Substitute these so that the board lookup can succeed.
- *
- * TODO: #4778 - Stop doing this. Use different routes.
- */
-function fixBoardName(boardName: string): string {
-  return boardName
-    .replace(/.api\//, ".json")
-    .replace(/.app$/, ".json")
-    .replace(/.invite$/, ".json");
 }
