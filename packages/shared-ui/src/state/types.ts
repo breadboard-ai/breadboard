@@ -101,6 +101,11 @@ export type Organizer = {
     path: AssetPath,
     metadata: AssetMetadata
   ): Promise<Outcome<void>>;
+
+  /**
+   * Current graph's parameters.
+   */
+  parameters: Map<string, ParameterMetadata>;
 };
 
 export type GraphAsset = {

@@ -111,8 +111,8 @@ class ReactiveProject implements ProjectInternal {
     this.components = new SignalMap();
     this.generatedAssets = new SignalMap();
     this.myTools = new SignalMap();
-    this.organizer = new ReactiveOrganizer(this);
     this.parameters = new SignalMap();
+    this.organizer = new ReactiveOrganizer(this);
     this.fastAccess = new ReactiveFastAccess(
       this,
       this.graphAssets,

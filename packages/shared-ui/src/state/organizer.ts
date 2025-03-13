@@ -4,7 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { AssetMetadata, AssetPath, NodeValue } from "@breadboard-ai/types";
+import {
+  AssetMetadata,
+  AssetPath,
+  NodeValue,
+  ParameterMetadata,
+} from "@breadboard-ai/types";
 import { Outcome } from "@google-labs/breadboard";
 import { GraphAsset, Organizer, ProjectInternal } from "./types";
 import { RemoveAssetWithRefs } from "../transforms";
@@ -16,11 +21,13 @@ class ReactiveOrganizer implements Organizer {
   #project: ProjectInternal;
   readonly graphAssets: Map<AssetPath, GraphAsset>;
   readonly graphUrl: URL | null;
+  readonly parameters: Map<string, ParameterMetadata>;
 
   constructor(project: ProjectInternal) {
     this.#project = project;
     this.graphAssets = project.graphAssets;
     this.graphUrl = project.graphUrl;
+    this.parameters = project.parameters;
   }
 
   async addGraphAsset(asset: GraphAsset): Promise<Outcome<void>> {
