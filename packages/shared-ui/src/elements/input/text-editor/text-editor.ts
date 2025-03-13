@@ -12,6 +12,20 @@ import { Project } from "../../../state";
 import { FastAccessMenu } from "../../elements";
 import { escapeHTMLEntities } from "../../../utils";
 
+/** Returns CSS class to be used for the given mimeType. */
+function getAssetTypeClass(mimeType?: string): string | undefined {
+  if (!mimeType) {
+    return;
+  }
+
+  const prefixes = ["image", "audio", "video", "text"];
+  for (const prefix of prefixes) {
+    if (mimeType.startsWith(prefix)) {
+      return prefix;
+    }
+  }
+}
+
 @customElement("bb-text-editor")
 export class TextEditor extends LitElement {
   @property()
@@ -19,8 +33,9 @@ export class TextEditor extends LitElement {
     const escapedValue = escapeHTMLEntities(value);
     const template = new Template(escapedValue);
     template.substitute((part) => {
-      const { type, title, invalid } = part;
-      return `<label class="chiclet ${type} ${invalid ? "invalid" : ""}" contenteditable="false"><span>${Template.preamble(part)}</span><span class="visible">${title}</span><span>${Template.postamble()}</span></label>`;
+      const { type, title, invalid, mimeType } = part;
+      const assetType = getAssetTypeClass(mimeType) ?? "";
+      return `<label class="chiclet ${type} ${assetType} ${invalid ? "invalid" : ""}" contenteditable="false"><span>${Template.preamble(part)}</span><span class="visible">${title}</span><span>${Template.postamble()}</span></label>`;
     });
     this.#value = template.raw;
     this.#renderableValue = template.renderable;
@@ -112,6 +127,22 @@ export class TextEditor extends LitElement {
           16px no-repeat;
         outline: 1px solid var(--bb-asset-100);
         color: var(--bb-asset-700);
+      }
+      
+      &.audio {
+        background-image: var(--bb-icon-sound);
+      }
+
+      &.video {
+        background-image: var(--bb-icon-add-video);
+      }
+
+      &.text {
+        background-image: var(--bb-icon-text);
+      }
+
+      &.image {
+        background-image: var(--bb-icon-add-image);
       }
 
       &.tool {
@@ -267,7 +298,7 @@ export class TextEditor extends LitElement {
     selection.addRange(this.#lastRange);
   }
 
-  #add(path: string, title: string, type: TemplatePartType, mimeType?: string) {
+  #add(path: string, title: string, templatePartType: TemplatePartType, mimeType?: string) {
     if (!this.#editorRef.value) {
       return null;
     }
@@ -286,13 +317,17 @@ export class TextEditor extends LitElement {
       const titleText = document.createElement("span");
       const postamableText = document.createElement("span");
       label.classList.add("chiclet");
-      label.classList.add(type);
+      label.classList.add(templatePartType);
+      const assetType = getAssetTypeClass(mimeType);
+      if (assetType) {
+        label.classList.add(assetType);
+      }
       label.dataset.path = path;
 
       preambleText.textContent = Template.preamble({
         title,
         path,
-        type,
+        type: templatePartType,
         mimeType,
       });
       postamableText.textContent = Template.postamble();
