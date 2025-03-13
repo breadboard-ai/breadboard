@@ -18,6 +18,9 @@ import { createRef, ref } from "lit/directives/ref.js";
  *
  * Use the `color` CSS property to set the text, border, and icon colors
  * together; or set them individually.
+ *
+ * Use the `textarea` part if you need to insert custom styles for the inner
+ * <textarea> element.
  */
 @customElement("bb-expanding-textarea")
 export class ExpandingTextarea extends LitElement {
@@ -37,14 +40,14 @@ export class ExpandingTextarea extends LitElement {
     :host {
       --min-lines: 3;
       --max-lines: 10;
-      padding: 8px 8px 8px 24px;
+      padding: 0.5lh;
       border: 1px solid currentColor;
-      border-radius: 1lh;
+      border-radius: 0.5lh;
       overflow-y: hidden;
     }
     #outer-container {
       display: flex;
-      align-items: center;
+      align-items: flex-end;
       --line-height: 1lh;
     }
     #inner-container {
@@ -107,6 +110,7 @@ export class ExpandingTextarea extends LitElement {
         <div id="inner-container">
           <textarea
             ${ref(this.#textarea)}
+            part="textarea"
             .value=${this.value}
             .placeholder=${this.placeholder}
             .disabled=${this.disabled}

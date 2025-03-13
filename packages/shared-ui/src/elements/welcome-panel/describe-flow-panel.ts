@@ -28,7 +28,6 @@ const Strings = StringsHelper.forSection("ProjectListing");
 
 type State =
   | { status: "initial" }
-  | { status: "clicked" }
   | { status: "generating" }
   | { status: "error"; error: unknown };
 
@@ -42,7 +41,6 @@ export class DescribeFlowPanel extends LitElement {
         display: flex;
         justify-content: center;
         align-items: center;
-        color: var(--bb-ui-500);
       }
 
       #describe-button {
@@ -50,13 +48,43 @@ export class DescribeFlowPanel extends LitElement {
         color: inherit;
       }
 
-      #description-input {
+      bb-expanding-textarea {
         background: #fff;
         flex: 1;
-        max-width: 300px;
-        color: inherit;
-        --min-lines: 1;
-        --max-lines: 1;
+        color: var(--bb-neutral-900);
+        border-color: var(--bb-neutral-200);
+        --icon-color: var(--bb-ui-500);
+        --min-lines: 3;
+        --max-lines: 8;
+        font:
+          400 14px "Google Sans",
+          sans-serif;
+        line-height: 20px;
+        caret-color: var(--bb-ui-500);
+
+        & .g-icon {
+          color: #3271ea;
+        }
+
+        &:focus {
+          border-color: #3271ea;
+          box-shadow: 0px 4px 10.1px 0px rgba(0, 0, 0, 0.1);
+        }
+
+        &::part(textarea)::placeholder {
+          color: var(--bb-neutral-500);
+        }
+      }
+
+      #generating-container {
+        background: #fff;
+        border-radius: 0.5lh;
+        padding: 1lh;
+        display: flex;
+        font:
+          400 "Google Sans",
+          sans-serif;
+        box-shadow: 0px 4px 10.1px 0px rgba(0, 0, 0, 0.1);
       }
 
       #generating-spinner {
@@ -70,9 +98,9 @@ export class DescribeFlowPanel extends LitElement {
       }
 
       #generating-status-detail {
-        font-size: 14px;
         margin-top: 8px;
-        color: var(--bb-neutral-700);
+        font-size: 14px;
+        color: var(--bb-neutral-500);
       }
 
       #error {
@@ -93,20 +121,9 @@ export class DescribeFlowPanel extends LitElement {
     switch (this.#state.status) {
       case "initial": {
         return html`
-          <button
-            id="describe-button"
-            class="bb-outline-button-with-icon"
-            @click=${this.#onClickDescribeButton}
-          >
-            ${Strings.from("COMMAND_DESCRIBE_FLOW")}
-          </button>
-        `;
-      }
-      case "clicked": {
-        return html`
           <bb-expanding-textarea
             ${ref(this.#descriptionInput)}
-            id="description-input"
+            .placeholder=${Strings.from("LABEL_PLACEHOLDER_DESCRIPTION")}
             @change=${this.#onInputChange}
           >
             <span class="g-icon" slot="icon">spark</span>
@@ -115,13 +132,15 @@ export class DescribeFlowPanel extends LitElement {
       }
       case "generating": {
         return html`
-          <img id="generating-spinner" src="/images/progress-ui.svg" />
-          <div>
-            <div id="generating-status">
-              ${Strings.from("LABEL_GENERATING_FLOW")}
-            </div>
-            <div id="generating-status-detail">
-              ${Strings.from("LABEL_GENERATING_FLOW_DETAIL")}
+          <div id="generating-container">
+            <img id="generating-spinner" src="/images/progress-ui.svg" />
+            <div>
+              <div id="generating-status">
+                ${Strings.from("LABEL_GENERATING_FLOW")}
+              </div>
+              <div id="generating-status-detail">
+                ${Strings.from("LABEL_GENERATING_FLOW_DETAIL")}
+              </div>
             </div>
           </div>
         `;
@@ -148,12 +167,6 @@ export class DescribeFlowPanel extends LitElement {
         this.#state satisfies never;
       }
     }
-  }
-
-  async #onClickDescribeButton() {
-    this.#state = { status: "clicked" };
-    await this.updateComplete;
-    this.#descriptionInput.value?.focus();
   }
 
   #onInputChange() {
