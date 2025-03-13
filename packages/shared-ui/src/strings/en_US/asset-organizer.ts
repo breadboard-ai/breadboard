@@ -23,6 +23,12 @@ export default {
   COMMAND_SAVE_ASSET: {
     str: "Save Asset Content",
   },
+  COMMAND_EDIT_PARAMETER: {
+    str: "Edit Parameter",
+  },
+  COMMAND_SAVE_PARAMETER: {
+    str: "Save Parameter",
+  },
 
   // Labels.
   LABEL_WAITING_MESSAGE: {
@@ -33,6 +39,12 @@ export default {
   },
   LABEL_NO_ASSETS: {
     str: "There are no assets yet",
+  },
+  LABEL_NO_PARAMETERS: {
+    str: "There are no parameters yet",
+  },
+  LABEL_ENTER_DESCRIPTION: {
+    str: "Enter a description for this parameter",
   },
 
   // Queries.

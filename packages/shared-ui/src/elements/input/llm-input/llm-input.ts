@@ -295,7 +295,7 @@ export class LLMInput extends LitElement {
     #container {
       border: 1px solid var(--bb-neutral-300);
       border-radius: 0 0 var(--bb-grid-size) var(--bb-grid-size);
-      padding: var(--bb-grid-size-3) 0 var(--bb-grid-size) 0;
+      padding: var(--bb-grid-size-2) 0;
       background: var(--bb-neutral-0);
     }
 
@@ -574,6 +574,8 @@ export class LLMInput extends LitElement {
     }
 
     :host([streamlined]) {
+      --text-editor-height: 316px;
+
       #container {
         border: 1px solid var(--bb-neutral-300);
         padding: 0;
