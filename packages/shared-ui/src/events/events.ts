@@ -1457,3 +1457,18 @@ export class AddAssetEvent extends Event {
     super(AddAssetEvent.eventName, { ...eventInit });
   }
 }
+
+/** Params */
+
+export class ParamCreateEvent extends Event {
+  static eventName = "bbparamcreate";
+
+  constructor(
+    public readonly graphId: GraphIdentifier,
+    public readonly path: string,
+    public readonly title: string,
+    public readonly description?: string
+  ) {
+    super(ParamCreateEvent.eventName, { ...eventInit });
+  }
+}

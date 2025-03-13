@@ -10,7 +10,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { SignalWatcher } from "@lit-labs/signals";
-import { css, html, LitElement, PropertyValues } from "lit";
+import { css, html, LitElement, nothing, PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { Component, FastAccess, GraphAsset, Tool } from "../../state";
 import {
@@ -22,6 +22,7 @@ import {
 import {
   FastAccessDismissedEvent,
   FastAccessSelectEvent,
+  ParamCreateEvent,
 } from "../../events/events";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
@@ -113,6 +114,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
           display: block;
           background-color: var(--bb-neutral-0);
           border: none;
+          border-radius: var(--bb-grid-size);
           color: var(--bb-neutral-900);
           margin: var(--bb-grid-size-2) 0;
           height: var(--bb-grid-size-6);
@@ -140,6 +142,11 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
     #assets menu button {
       background: var(--bb-icon-text) 4px center / 20px 20px no-repeat;
+    }
+
+    #parameters menu button {
+      background: var(--bb-icon-contact-support) 4px center / 20px 20px
+        no-repeat;
     }
 
     #tools menu button {
@@ -251,6 +258,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     const totalSize =
       this.#items.assets.length +
       this.#items.tools.length +
+      this.#items.parameters.length +
       this.#items.components.length;
 
     this.selectedIndex = this.#clamp(this.selectedIndex, 0, totalSize - 1);
@@ -364,6 +372,28 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
   #emitCurrentItem() {
     let idx = this.selectedIndex;
+    const uniqueAndNew =
+      this.#items.assets.length === 0 &&
+      this.#items.components.length === 0 &&
+      this.#items.parameters.length === 0 &&
+      this.#items.tools.length === 0 &&
+      this.filter !== "";
+
+    if (idx === -1) {
+      if (this.filter && uniqueAndNew) {
+        // emit.
+        const paramPath = this.filter.toLocaleLowerCase().replace(/\W/gim, "-");
+        this.dispatchEvent(
+          new ParamCreateEvent(this.graphId ?? "", paramPath, this.filter, "")
+        );
+
+        this.dispatchEvent(
+          new FastAccessSelectEvent(paramPath, this.filter, "param")
+        );
+      }
+      return;
+    }
+
     if (idx < this.#items.assets.length) {
       const asset = this.#items.assets[idx];
       this.dispatchEvent(
@@ -383,7 +413,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       this.dispatchEvent(
         new FastAccessSelectEvent(
           parameter.id,
-          parameter.title ?? "Untitled tool",
+          parameter.title ?? "Untitled parameter",
           "param"
         )
       );
@@ -423,6 +453,13 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
   render() {
     let idx = 0;
+    const uniqueAndNew =
+      this.#items.assets.length === 0 &&
+      this.#items.components.length === 0 &&
+      this.#items.parameters.length === 0 &&
+      this.#items.tools.length === 0 &&
+      this.filter !== "";
+
     return html` <div ${ref(this.#itemContainerRef)}>
       <header>
         <input
@@ -431,6 +468,17 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
           .placeholder=${"Search"}
           ${ref(this.#filterInputRef)}
           .value=${this.filter}
+          @keydown=${(evt: KeyboardEvent) => {
+            const isMac = navigator.platform.indexOf("Mac") === 0;
+            const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+            if (isCtrlCommand && evt.key === "Enter") {
+              evt.stopImmediatePropagation();
+
+              this.selectedIndex = -1;
+              this.#emitCurrentItem();
+            }
+          }}
           @input=${(evt: InputEvent) => {
             if (!(evt.target instanceof HTMLInputElement)) {
               return;
@@ -489,7 +537,18 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                 </li>`;
               })}
             </menu>`
-          : html`<div class="no-items">No parameters</div>`}
+          : html`<div class="no-items">
+              No parameters
+              ${uniqueAndNew
+                ? html`<button
+                    @click=${() => {
+                      this.#emitCurrentItem();
+                    }}
+                  >
+                    Create ${this.filter}
+                  </button>`
+                : nothing}
+            </div>`}
       </section>
 
       <section id="tools">

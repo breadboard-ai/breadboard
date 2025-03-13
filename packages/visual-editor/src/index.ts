@@ -2034,6 +2034,39 @@ export class Main extends LitElement {
     this.#runtime.edit.createModule(this.tab, moduleId, newModule);
   }
 
+  #attemptParamCreate(evt: BreadboardUI.Events.ParamCreateEvent) {
+    if (!this.tab) {
+      return;
+    }
+
+    const projectState = this.#runtime.state.getOrCreate(
+      this.tab?.mainGraphId,
+      this.#runtime.edit.getEditor(this.tab)
+    );
+
+    if (!projectState) {
+      this.toast(
+        "Unable to create parameter",
+        BreadboardUI.Events.ToastType.ERROR
+      );
+      return;
+    }
+
+    if (projectState.parameters.has(evt.path)) {
+      this.toast(
+        "Unable to create parameter - one already exists",
+        BreadboardUI.Events.ToastType.ERROR
+      );
+      return;
+    }
+
+    return projectState.parameters.set(evt.path, {
+      title: evt.title,
+      description: evt.description,
+      usedIn: [],
+    });
+  }
+
   async #attemptToggleExport(
     id: ModuleIdentifier | GraphIdentifier,
     type: "imperative" | "declarative"
@@ -2569,6 +2602,9 @@ export class Main extends LitElement {
           }}
           @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
             this.toast(toastEvent.message, toastEvent.toastType);
+          }}
+          @bbparamcreate=${(evt: BreadboardUI.Events.ParamCreateEvent) => {
+            return this.#attemptParamCreate(evt);
           }}
         >
         </bb-focus-editor>`;
