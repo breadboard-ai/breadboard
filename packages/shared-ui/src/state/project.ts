@@ -33,6 +33,7 @@ import {
   GeneratedAssetIdentifier,
   GraphAsset,
   Organizer,
+  Parameter,
   Project,
   ProjectInternal,
   Tool,
@@ -83,6 +84,7 @@ class ReactiveProject implements ProjectInternal {
   readonly organizer: Organizer;
   readonly fastAccess: FastAccess;
   readonly components: SignalMap<GraphIdentifier, ReactiveComponents>;
+  readonly parameters: SignalMap<string, Parameter>;
 
   constructor(
     mainGraphId: MainGraphIdentifier,
@@ -110,13 +112,15 @@ class ReactiveProject implements ProjectInternal {
     this.generatedAssets = new SignalMap();
     this.myTools = new SignalMap();
     this.organizer = new ReactiveOrganizer(this);
+    this.parameters = new SignalMap();
     this.fastAccess = new ReactiveFastAccess(
       this,
       this.graphAssets,
       this.generatedAssets,
       this.tools,
       this.myTools,
-      this.components
+      this.components,
+      this.parameters
     );
     this.#updateGraphAssets();
     this.#updateComponents();

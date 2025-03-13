@@ -131,6 +131,12 @@ export type Component = {
 
 export type Components = Map<NodeIdentifier, Component>;
 
+export type Parameter = {
+  id: string;
+  title: string;
+  description?: string;
+};
+
 /**
  * Represents the Model+Controller for the "@" Menu.
  */
@@ -140,6 +146,7 @@ export type FastAccess = {
   tools: Map<string, Tool>;
   myTools: Map<string, Tool>;
   components: Map<GraphIdentifier, Components>;
+  parameters: Map<string, Parameter>;
 };
 
 /**
