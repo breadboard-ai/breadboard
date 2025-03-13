@@ -23,6 +23,7 @@ import { SideBoardRuntime } from "../../sideboards/types.js";
 import type { ExpandingTextarea } from "../input/expanding-textarea.js";
 import { icons } from "../../styles/icons.js";
 import "../input/expanding-textarea.js";
+import { chipStyles } from "../../styles/chip.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
@@ -31,14 +32,49 @@ type State =
   | { status: "generating" }
   | { status: "error"; error: unknown };
 
+type TemplateFlow = {
+  icon: string;
+  label: string;
+  prompt: string;
+};
+
+const TEMPLATE_FLOWS: TemplateFlow[] = [
+  {
+    label: "Content writer",
+    icon: "smart_campaign",
+    prompt:
+      "Create a flow that takes a business name and description, and generates 1 social media post with an eye-catching picture",
+  },
+  {
+    label: "Research analyst",
+    icon: "search_spark",
+    prompt:
+      "Create a flow that takes a product area, performs research on the web, and produces a report",
+  },
+  {
+    label: "Movie maker",
+    icon: "movie",
+    prompt:
+      "Create a flow that takes a movie description, and generates 3 scene descriptions, along with a storyboard sketch for each.",
+  },
+  {
+    label: "Multi-agent manager",
+    icon: "group_auto",
+    prompt:
+      "Create a flow that takes a task description, divides the task into 3 sub-tasks, assigns them to 3 independent agents, and then combines the result into a report",
+  },
+];
+
 @customElement("bb-describe-flow-panel")
 export class DescribeFlowPanel extends LitElement {
   static styles = [
     outlineButtonWithIcon,
     icons,
+    chipStyles,
     css`
       :host {
         display: flex;
+        flex-direction: column;
         justify-content: center;
         align-items: center;
       }
@@ -51,6 +87,7 @@ export class DescribeFlowPanel extends LitElement {
       bb-expanding-textarea {
         background: #fff;
         flex: 1;
+        width: 100%;
         color: var(--bb-neutral-900);
         border-color: var(--bb-neutral-200);
         --icon-color: var(--bb-ui-500);
@@ -106,6 +143,16 @@ export class DescribeFlowPanel extends LitElement {
       #error {
         color: var(--bb-error-color);
       }
+
+      #chips {
+        margin-top: 20px;
+
+        & .bb-chip {
+          font-size: 12px;
+          color: #3399ff;
+          background: #ebf5ff;
+        }
+      }
     `,
   ];
 
@@ -128,6 +175,7 @@ export class DescribeFlowPanel extends LitElement {
           >
             <span class="g-icon" slot="icon">spark</span>
           </bb-expanding-textarea>
+          ${this.#renderTemplateChips()}
         `;
       }
       case "generating": {
@@ -166,6 +214,32 @@ export class DescribeFlowPanel extends LitElement {
       default: {
         this.#state satisfies never;
       }
+    }
+  }
+
+  #renderTemplateChips() {
+    return html`
+      <div id="chips">
+        ${TEMPLATE_FLOWS.map(
+          (chip) => html`
+            <button
+              class="bb-chip"
+              @click=${() => this.#onClickTemplateChip(chip)}
+            >
+              <span class="g-icon">${chip.icon}</span>
+              <span>${chip.label}</span>
+            </button>
+          `
+        )}
+      </div>
+    `;
+  }
+
+  #onClickTemplateChip(flow: TemplateFlow) {
+    const input = this.#descriptionInput?.value;
+    if (input) {
+      input.value = flow.prompt;
+      input.focus();
     }
   }
 
