@@ -130,7 +130,7 @@ export class ProjectListing extends LitElement {
       min-height: 100%;
 
       & #hero {
-        padding: 0 16px 60px 16px;
+        padding: 0 16px 28px 16px;
         background: linear-gradient(45deg, #f7f9fe, #fdf7f8);
         display: flex;
         flex-direction: column;
