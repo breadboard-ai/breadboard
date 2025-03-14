@@ -83,13 +83,13 @@
             "logLevel": "info",
             "title": "Write Poem",
             "userModified": false,
-            "description": "Writes a poem based on a given topic. This node uses web search to gather facts related to the topic and includes them in the poem. The poem includes a title as a markdown heading. Requires a 'topic' parameter to define the subject of the poem, such as: 'the color blue'. The topic should be provided as a string within the 'context' property of the parameters object."
+            "description": "Writes a poem based on the provided topic. Uses web search to gather facts and incorporates them into the poem. The poem includes a title as a markdown heading."
           },
           "configuration": {
             "description": {
               "parts": [
                 {
-                  "text": "Write a poem based on the {{\"type\":\"param\",\"path\":\"topic\",\"title\":\"Topic\"}}. Use  {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-web\",\"title\":\"Search Web\"}}  to gather interesting facts about the topic and incorporate them into the poem.\n\nEach poem must have a title as a markdown heading."
+                  "text": "Write a poem based on this topic:\n {{\"type\":\"param\",\"path\":\"topic\",\"title\":\"Topic\"}}\n\nUse  {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-web\",\"title\":\"Search Web\"}}  to gather interesting facts about the topic and incorporate them into the poem.\n\nEach poem must have a title as a markdown heading."
                 }
               ],
               "role": "user"
