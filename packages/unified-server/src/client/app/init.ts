@@ -157,32 +157,56 @@ function extractThemeFromFlow(flow: GraphDescriptor | null): {
   const theme: AppTheme = createDefaultTheme();
 
   if (flow?.metadata?.visual?.presentation) {
-    const themeColors = flow.metadata.visual.presentation.themeColors;
-    const splashScreen = flow.assets?.["@@splash"];
+    if (
+      flow.metadata.visual.presentation.themes &&
+      flow.metadata.visual.presentation.theme
+    ) {
+      const { theme: graphTheme, themes } = flow.metadata.visual.presentation;
+      const appTheme = themes[graphTheme];
+      const themeColors = appTheme.themeColors;
+      const splashScreen = appTheme.splashScreen;
 
-    if (themeColors) {
-      theme.primaryColor = themeColors["primaryColor"] ?? primaryColor;
-      theme.secondaryColor = themeColors["secondaryColor"] ?? secondaryColor;
-      theme.backgroundColor = themeColors["backgroundColor"] ?? backgroundColor;
-      theme.textColor = themeColors["textColor"] ?? textColor;
-      theme.primaryTextColor =
-        themeColors["primaryTextColor"] ?? primaryTextColor;
-
+      if (themeColors) {
+        theme.primaryColor = themeColors["primaryColor"] ?? primaryColor;
+        theme.secondaryColor = themeColors["secondaryColor"] ?? secondaryColor;
+        theme.backgroundColor =
+          themeColors["backgroundColor"] ?? backgroundColor;
+        theme.textColor = themeColors["textColor"] ?? textColor;
+        theme.primaryTextColor =
+          themeColors["primaryTextColor"] ?? primaryTextColor;
+      }
       if (splashScreen) {
-        const splashScreenData = splashScreen.data as LLMContent[];
-        if (splashScreenData.length && splashScreenData[0].parts.length) {
-          const splash = splashScreenData[0].parts[0];
-          if (isInlineData(splash) || isStoredData(splash)) {
-            theme.splashScreen = splash;
+        theme.splashScreen = splashScreen;
+      }
+    } else {
+      const themeColors = flow.metadata.visual.presentation.themeColors;
+      const splashScreen = flow.assets?.["@@splash"];
+
+      if (themeColors) {
+        theme.primaryColor = themeColors["primaryColor"] ?? primaryColor;
+        theme.secondaryColor = themeColors["secondaryColor"] ?? secondaryColor;
+        theme.backgroundColor =
+          themeColors["backgroundColor"] ?? backgroundColor;
+        theme.textColor = themeColors["textColor"] ?? textColor;
+        theme.primaryTextColor =
+          themeColors["primaryTextColor"] ?? primaryTextColor;
+
+        if (splashScreen) {
+          const splashScreenData = splashScreen.data as LLMContent[];
+          if (splashScreenData.length && splashScreenData[0].parts.length) {
+            const splash = splashScreenData[0].parts[0];
+            if (isInlineData(splash) || isStoredData(splash)) {
+              theme.splashScreen = splash;
+            }
           }
         }
       }
-    }
 
-    if (flow.metadata.visual.presentation.templateAdditionalOptions) {
-      templateAdditionalOptionsChosen = {
-        ...flow.metadata.visual.presentation.templateAdditionalOptions,
-      };
+      if (flow.metadata.visual.presentation.templateAdditionalOptions) {
+        templateAdditionalOptionsChosen = {
+          ...flow.metadata.visual.presentation.templateAdditionalOptions,
+        };
+      }
     }
   }
 

@@ -3779,7 +3779,10 @@ export class Main extends LitElement {
                     if (isStoredData(splashScreen)) {
                       graphTheme.splashScreen = splashScreen;
                     } else {
-                      console.warn("Unable to save splash screen");
+                      console.warn(
+                        "Unable to save splash screen",
+                        splashScreen
+                      );
                     }
 
                     await projectState?.organizer.removeGraphAsset("@@splash");
