@@ -23,25 +23,6 @@ export function getStore(): FirestoreStorageProvider {
   return new FirestoreStorageProvider(db);
 }
 
-const createAPIKey = async () => {
-  const uuid = crypto.randomUUID();
-  const data = new TextEncoder().encode(uuid);
-  const digest = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(digest));
-  const hashHex = hashArray.map((b) => b.toString(36)).join("");
-  return `bb-${hashHex.slice(0, 50)}`;
-};
-
-export async function createAccount(username: string, key?: string) {
-  const store = getStore();
-
-  key ??= await createAPIKey();
-
-  await store!.createUser(username, key);
-
-  return { account: username, api_key: key };
-}
-
 /** A type representing a board as it is stored in a DB. */
 export type StorageBoard = {
   name: string;

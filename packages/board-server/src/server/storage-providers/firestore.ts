@@ -15,7 +15,7 @@ import {
   type OperationResult,
   type StorageBoard,
 } from "../store.js";
-import type { CreateUserResult, Invite, RunBoardStateStore } from "../types.js";
+import type { Invite, RunBoardStateStore } from "../types.js";
 
 const REANIMATION_COLLECTION_ID = "resume";
 
@@ -28,20 +28,12 @@ export class FirestoreStorageProvider implements RunBoardStateStore {
     });
   }
 
-  async createUser(
-    username: string,
-    apiKey: string
-  ): Promise<CreateUserResult> {
-    const existing = await this.#database.doc(`users/${username}`).get();
-    if (existing.exists) {
-      console.error(
-        `Account ${username} already exists with API key:\n${existing.data()!.apiKey}`
-      );
+  async createUser(username: string, apiKey: string): Promise<void> {
+    const path = `users/${username}`;
+    if ((await this.#database.doc(path).get()).exists) {
+      throw Error(`Account ${username} already exists`);
     }
-
-    await this.#database.doc(`users/${username}`).set({ apiKey: apiKey });
-
-    return { success: true, apiKey };
+    await this.#database.doc(path).set({ apiKey: apiKey });
   }
 
   #getReanimationStateDoc(user: string, ticket?: string) {
