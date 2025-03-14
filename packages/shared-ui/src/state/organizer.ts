@@ -7,6 +7,7 @@
 import {
   AssetMetadata,
   AssetPath,
+  LLMContent,
   NodeValue,
   ParameterMetadata,
 } from "@breadboard-ai/types";
@@ -51,11 +52,18 @@ class ReactiveOrganizer implements Organizer {
     return this.#project.apply(new UpdateAssetWithRefs(path, metadata));
   }
 
-  changeParameterMetadata(
+  async changeParameterMetadata(
     id: string,
     metadata: ParameterMetadata
   ): Promise<Outcome<void>> {
     // TODO: Make work for subgraphs.
-    return this.#project.apply(new ChangeParameterMetadata(id, metadata, ""));
+    const { sample: ephemeralSample } = metadata;
+    const sample = (await this.#project.persistBlobs(
+      ephemeralSample as LLMContent[]
+    )) as NodeValue;
+    const persistedMetadata: ParameterMetadata = { ...metadata, sample };
+    return this.#project.apply(
+      new ChangeParameterMetadata(id, persistedMetadata, "")
+    );
   }
 }

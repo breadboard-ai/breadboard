@@ -75,13 +75,15 @@
         "modality": [
           "text"
         ],
-        "sample": {
-          "parts": [
-            {
-              "text": "Birmingham, AL"
-            }
-          ]
-        }
+        "sample": [
+          {
+            "parts": [
+              {
+                "text": "Birmingham, AL"
+              }
+            ]
+          }
+        ]
       },
       "business": {
         "title": "Business Name",

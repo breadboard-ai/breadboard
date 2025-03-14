@@ -194,8 +194,9 @@ export class NodeInvoker {
       for (const [idx, param] of params.entries()) {
         const metadata = this.#graph.graph.metadata?.parameters?.[param.path];
         const format = metadata?.modality?.join(",") || "text";
-        const sample = metadata?.sample
-          ? { examples: [JSON.stringify(metadata.sample)] }
+        const firstSample = (metadata?.sample as LLMContent[])?.at(0);
+        const sample = firstSample
+          ? { examples: [JSON.stringify(firstSample)] }
           : {};
 
         const schema: Schema = {

@@ -657,7 +657,9 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
       param.title = this.#paramTitleInputRef.value.value;
       param.description = this.#paramDescriptionInputRef.value.value;
       param.modality = [this.#paramModalityInputRef.value.value];
-      param.sample = toLLMContent(this.#paramSampleValueInputRef.value.value);
+      param.sample = toLLMContentArray(
+        this.#paramSampleValueInputRef.value.value
+      );
 
       this.state?.changeParameterMetadata(
         this.editParameterContent.path,
@@ -1257,9 +1259,11 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
   }
 }
 
-function toLLMContent(text: string): NodeValue {
-  const c: LLMContent = {
-    parts: [{ text }],
-  };
+function toLLMContentArray(text: string): NodeValue {
+  const c: LLMContent[] = [
+    {
+      parts: [{ text }],
+    },
+  ];
   return c as NodeValue;
 }
