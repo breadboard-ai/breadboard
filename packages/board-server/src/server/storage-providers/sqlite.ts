@@ -9,7 +9,7 @@
  */
 
 import Database from "better-sqlite3";
-import type { CreateUserResult, RunBoardStateStore } from "../types.js";
+import type { RunBoardStateStore } from "../types.js";
 import type {
   BoardListEntry,
   GetUserStoreResult,
@@ -27,6 +27,10 @@ import type {
   ReanimationState,
 } from "@google-labs/breadboard";
 import { v4 as uuidv4 } from "uuid";
+
+export type CreateUserResult =
+  | { success: true; apiKey: string }
+  | { success: false; message: string };
 
 export type CreateInviteResult =
   | {

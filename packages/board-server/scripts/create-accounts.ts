@@ -5,7 +5,7 @@
  */
 
 import { readFile } from "fs/promises";
-import { createAccount } from "../src/server/store.js";
+import { createAccount } from "./accounts";
 
 type Account = {
   username: string;

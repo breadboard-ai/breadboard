@@ -105,10 +105,6 @@ export type CreateBoardResult = {
   error: string | undefined;
 };
 
-export type CreateUserResult =
-  | { success: true; apiKey: string }
-  | { success: false; message: string };
-
 export type Invite = {
   name: string;
   expireAt: Date;
