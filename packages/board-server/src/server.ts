@@ -5,7 +5,7 @@
  */
 
 import cors from "cors";
-import express, { type Express } from "express";
+import express, { type Express, Router } from "express";
 
 import { getUserCredentials } from "./server/auth.js";
 import type { ServerConfig } from "./server/config.js";
@@ -16,16 +16,34 @@ import { serveInfoAPI } from "./server/info/index.js";
 import { serveMeAPI } from "./server/info/me.js";
 import { serveProxyAPI } from "./server/proxy/index.js";
 import { getStore } from "./server/store.js";
+import { loadBoard } from "./server/boards/loader.js";
 
 export type { ServerConfig };
 
 const DEFAULT_PORT = 3000;
 const DEFAULT_HOST = "localhost";
 
+export const middlewares = {
+  loadBoard,
+};
+
 export function createServer(config: ServerConfig): Express {
   const server = express();
+  addMiddleware(server);
+  server.use(createRouter(config));
 
-  server.use(
+  return server;
+}
+
+export function addMiddleware(server: Express) {
+  server.locals.store = getStore();
+  server.use(getUserCredentials());
+}
+
+export function createRouter(config: ServerConfig): Router {
+  const router = Router();
+
+  router.use(
     cors({
       origin: true,
       credentials: true,
@@ -36,19 +54,15 @@ export function createServer(config: ServerConfig): Express {
     })
   );
 
-  server.locals.store = getStore();
+  router.get("/", serveHome);
 
-  server.use(getUserCredentials());
+  router.use("/blobs", serveBlobsAPI(config));
+  router.use("/boards", serveBoardsAPI(config));
+  router.use("/info", serveInfoAPI());
+  router.use("/me", serveMeAPI());
+  router.use("/proxy", serveProxyAPI(config));
 
-  server.get("/", serveHome);
-
-  server.use("/blobs", serveBlobsAPI(config));
-  server.use("/boards", serveBoardsAPI(config));
-  server.use("/info", serveInfoAPI());
-  server.use("/me", serveMeAPI());
-  server.use("/proxy", serveProxyAPI(config));
-
-  return server;
+  return router;
 }
 
 export function createServerConfig(): ServerConfig {
