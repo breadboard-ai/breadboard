@@ -3731,6 +3731,11 @@ export class Main extends LitElement {
                   evt.theme
                 );
               }}
+              @bbthemedelete=${async (
+                evt: BreadboardUI.Events.ThemeUpdateEvent
+              ) => {
+                await this.#runtime.edit.deleteTheme(this.tab, evt.themeId);
+              }}
               @bbthemecreate=${async (
                 evt: BreadboardUI.Events.ThemeCreateEvent
               ) => {

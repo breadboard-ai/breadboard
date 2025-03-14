@@ -381,6 +381,35 @@ export class Edit extends EventTarget {
     );
   }
 
+  async deleteTheme(tab: Tab | null, theme: string) {
+    const editableGraph = this.getEditor(tab);
+    if (!editableGraph) {
+      this.dispatchEvent(
+        new RuntimeErrorEvent("Unable to edit subboard; no active board")
+      );
+      return;
+    }
+
+    const metadata: GraphMetadata = editableGraph.raw().metadata ?? {};
+    metadata.visual ??= {};
+    metadata.visual.presentation ??= {};
+    metadata.visual.presentation.themes ??= {};
+
+    if (!metadata.visual.presentation.themes[theme]) {
+      this.dispatchEvent(new RuntimeErrorEvent("Theme does not exist"));
+      return;
+    }
+
+    delete metadata.visual.presentation.themes[theme];
+    const themes = Object.keys(metadata.visual.presentation.themes);
+    metadata.visual.presentation.theme = themes.at(-1);
+
+    return editableGraph.edit(
+      [{ type: "changegraphmetadata", metadata, graphId: "" }],
+      "Updating theme"
+    );
+  }
+
   async updateTheme(tab: Tab | null, themeId: string, theme: GraphTheme) {
     const editableGraph = this.getEditor(tab);
     if (!editableGraph) {

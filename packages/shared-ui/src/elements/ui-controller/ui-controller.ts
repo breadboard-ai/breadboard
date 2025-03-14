@@ -423,7 +423,7 @@ export class UI extends LitElement {
               this.selectionState?.selectionState.graphs.get(MAIN_BOARD_ID);
             if (
               mainBoardSelection &&
-              mainBoardSelection.nodes.size &&
+              mainBoardSelection.nodes.size === 1 &&
               this.topGraphResult
             ) {
               isInSelectionState = true;

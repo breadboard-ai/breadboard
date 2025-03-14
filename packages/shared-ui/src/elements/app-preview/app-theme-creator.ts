@@ -22,6 +22,7 @@ import {
   OverlayDismissedEvent,
   ThemeChangeEvent,
   ThemeCreateEvent,
+  ThemeDeleteEvent,
   ThemeUpdateEvent,
 } from "../../events/events.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
@@ -156,8 +157,36 @@ export class AppThemeCreator extends LitElement {
 
       #theme-selector {
         & h2 {
+          display: flex;
+          align-items: center;
           padding: var(--bb-grid-size-3) var(--bb-grid-size-3) 0
             var(--bb-grid-size-3);
+
+          & span {
+            flex: 1;
+            background: var(--bb-icon-palette) 4px center / 20px 20px no-repeat;
+            padding: 0 var(--bb-grid-size-8);
+          }
+
+          & button {
+            width: 20px;
+            height: 20px;
+            background: var(--bb-icon-delete) center center / 20px 20px
+              no-repeat;
+            font-size: 0;
+            border: none;
+            opacity: 0.6;
+            transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+
+            &:not([disabled]) {
+              cursor: pointer;
+
+              &:hover,
+              &:focus {
+                opacity: 1;
+              }
+            }
+          }
         }
 
         & menu {
@@ -229,7 +258,7 @@ export class AppThemeCreator extends LitElement {
 
           & > div {
             display: grid;
-            grid-template-columns: minmax(min-content, 1fr) 4fr;
+            grid-template-columns: 80px 1fr;
             column-gap: var(--bb-grid-size-2);
             align-items: center;
             margin-bottom: var(--bb-grid-size-3);
@@ -367,10 +396,9 @@ export class AppThemeCreator extends LitElement {
         var(--bb-font-family);
       color: var(--bb-neutral-700);
       padding-left: var(--bb-grid-size-8);
-      margin: 0 var(--bb-grid-size-2);
+      margin: var(--bb-grid-size-2) 0;
       flex: 1;
       background: url(/images/progress-ui.svg) 8px center / 20px 20px no-repeat;
-      margin-bottom: var(--bb-grid-size-4);
     }
 
     #summary::-webkit-details-marker {
@@ -443,6 +471,8 @@ export class AppThemeCreator extends LitElement {
         };
       }
     }
+
+    this._changed = false;
   }
 
   protected updated(): void {
@@ -597,15 +627,29 @@ export class AppThemeCreator extends LitElement {
             }
             await this.#debounceGenerateTheme();
           }}
-          ?disabled=${this._generating}
+          ?disabled=${this._changed || this._generating}
         ></textarea>
-
         ${this._generating
-          ? html`<div id="generate-status">Generating theme...</div>`
+          ? html`<div id="generate-status">Generating new theme...</div>`
           : nothing}
       </section>
       <section id="theme-selector">
-        <h2>Theme</h2>
+        <h2>
+          <span>Theme</span>
+          <button
+            ?disabled=${Object.keys(this.themes).length === 1}
+            @click=${() => {
+              if (!this.theme) {
+                return;
+              }
+
+              this.dispatchEvent(new ThemeDeleteEvent(this.theme));
+            }}
+          >
+            Delete theme
+          </button>
+        </h2>
+
         <menu>
           ${repeat(
             Object.entries(this.themes),
@@ -618,10 +662,11 @@ export class AppThemeCreator extends LitElement {
 
               return html`<li>
                 <button
-                  ?disabled=${this._generating}
+                  ?disabled=${this._changed || this._generating}
                   class=${classMap({ selected: key === this.theme })}
                   ${this.theme === key ? ref(this.#selectedThemeRef) : nothing}
                   @click=${() => {
+                    this._changed = true;
                     this.dispatchEvent(new ThemeChangeEvent(key));
                   }}
                 >
@@ -678,7 +723,7 @@ export class AppThemeCreator extends LitElement {
                   <input
                     id="primary"
                     type="color"
-                    ?disabled=${this._generating}
+                    ?disabled=${this._changed || this._generating}
                     .value=${theme.themeColors.primaryColor}
                     @input=${(evt: InputEvent) => {
                       if (
@@ -708,7 +753,7 @@ export class AppThemeCreator extends LitElement {
                   <input
                     id="secondary"
                     type="color"
-                    ?disabled=${this._generating}
+                    ?disabled=${this._changed || this._generating}
                     .value=${theme.themeColors.secondaryColor}
                     @input=${(evt: InputEvent) => {
                       if (
@@ -738,7 +783,7 @@ export class AppThemeCreator extends LitElement {
                   <input
                     id="background"
                     type="color"
-                    ?disabled=${this._generating}
+                    ?disabled=${this._changed || this._generating}
                     .value=${theme.themeColors.backgroundColor}
                     @input=${(evt: InputEvent) => {
                       if (
@@ -768,7 +813,7 @@ export class AppThemeCreator extends LitElement {
                   <input
                     id="primary-text"
                     type="color"
-                    ?disabled=${this._generating}
+                    ?disabled=${this._changed || this._generating}
                     .value=${theme.themeColors.primaryTextColor}
                     @input=${(evt: InputEvent) => {
                       if (
@@ -798,7 +843,7 @@ export class AppThemeCreator extends LitElement {
                   <input
                     id="text"
                     type="color"
-                    ?disabled=${this._generating}
+                    ?disabled=${this._changed || this._generating}
                     .value=${theme.themeColors.textColor}
                     @input=${(evt: InputEvent) => {
                       if (

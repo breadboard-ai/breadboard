@@ -1403,6 +1403,14 @@ export class ThemeCreateEvent extends Event {
   }
 }
 
+export class ThemeDeleteEvent extends Event {
+  static eventName = "bbthemedelete";
+
+  constructor(public readonly themeId: string) {
+    super(ThemeDeleteEvent.eventName, { ...eventInit });
+  }
+}
+
 export class ThemeUpdateEvent extends Event {
   static eventName = "bbthemeupdate";
 

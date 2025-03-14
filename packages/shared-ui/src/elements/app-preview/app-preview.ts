@@ -154,9 +154,16 @@ export class AppPreview extends LitElement {
 
       const splashScreen = this.theme.splashScreen;
       if (isStoredData(splashScreen)) {
+        const themeHash = this.themeHash;
+
         // Stored Data splash screen.
         Promise.resolve()
           .then(async () => {
+            // A newer theme has arrived - bail.
+            if (themeHash !== this.themeHash) {
+              return;
+            }
+
             let url = splashScreen.storedData.handle;
             if (url.startsWith(".") && this.graph?.url) {
               url = new URL(url, this.graph?.url).href;
@@ -185,6 +192,12 @@ export class AppPreview extends LitElement {
             if (!this.#appTemplate) {
               return;
             }
+
+            // A newer theme has arrived - bail.
+            if (themeHash !== this.themeHash) {
+              return;
+            }
+
             options.splashImage = `url(${base64DataUrl})`;
             this.#appTemplate.options = { ...options };
           });
@@ -219,7 +232,13 @@ export class AppPreview extends LitElement {
 
         this.#loadingTemplate = true;
 
+        const themeHash = this.themeHash;
         this.#loadAppTemplate(this.template).then(({ Template }) => {
+          // A newer theme has arrived - bail.
+          if (themeHash !== this.themeHash) {
+            return;
+          }
+
           this.#appTemplate = new Template();
           this.#template = html`${this.#appTemplate}`;
 
