@@ -191,8 +191,10 @@ export class GoogleDriveFileId extends LitElement {
         this.#destroyPicker();
         // TODO(aomarks) Show this as a snackbar
         console.log(`Shared 1 Google Drive file with Breadboard`);
-        if (result.docs.length > 0) {
-          const { id, name, mimeType } = result.docs[0];
+        if (result.docs && result.docs.length > 0) {
+          const doc = result.docs[0];
+          if (!doc) return;
+          const { id, name = "", mimeType = "" } = doc;
           this.value = {
             id,
             preview: name,

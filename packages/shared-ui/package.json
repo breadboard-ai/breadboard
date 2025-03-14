@@ -151,7 +151,7 @@
     "@pixi/math-extras": "^7.4.3",
     "@types/gapi": "^0.0.47",
     "@types/gapi.drive": "^0.0.9",
-    "@types/google.picker": "^0.0.43",
+    "@types/google.picker": "^0.0.50",
     "@typescript/vfs": "^1.6.1",
     "@valtown/codemirror-continue": "^2.3.1",
     "@valtown/codemirror-ts": "^2.3.1",

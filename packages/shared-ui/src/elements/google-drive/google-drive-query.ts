@@ -173,7 +173,7 @@ export class GoogleDriveQuery extends LitElement {
         this.#destroyPicker();
         // TODO(aomarks) Show this as a snackbar
         console.log(
-          `Shared ${result.docs.length} Google Drive files with Breadboard`
+          `Shared ${result.docs?.length} Google Drive files with Breadboard`
         );
       }
     }
