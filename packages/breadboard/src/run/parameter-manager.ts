@@ -227,7 +227,14 @@ function updateEnv(
 
   const newEnv = inputs
     ? Object.entries(inputs).map(([path, input]) => {
-        const data: LLMContent[] = [{ parts: [{ text: input as string }] }];
+        let data: LLMContent[];
+        if (typeof input === "string") {
+          data = [{ parts: [{ text: input }] }];
+        } else if (isLLMContent(input)) {
+          data = [input];
+        } else {
+          data = input as LLMContent[];
+        }
         return { path: `/env/parameters/${path}`, data } as FileSystemEntry;
       })
     : [];
