@@ -1,4 +1,4 @@
-import express from "express";
+import express, { type Request } from "express";
 import ViteExpress from "vite-express";
 
 import * as connectionServer from "@breadboard-ai/connection-server";
@@ -9,11 +9,23 @@ const server = express();
 const boardServerConfig = boardServer.createServerConfig();
 const connectionServerConfig = await connectionServer.createServerConfig();
 
-server.use("/board", boardServer.createServer(boardServerConfig));
+boardServer.addMiddleware(server);
+server.use("/board", boardServer.createRouter(boardServerConfig));
+
 server.use(
   "/connection",
   connectionServer.createServer(connectionServerConfig)
 );
+
+server.use("/app/@:user/:name", boardServer.middlewares.loadBoard());
+
+ViteExpress.config({
+  transformer: (html: string, req: Request) => {
+    const board = req.res?.locals.loadedBoard;
+    const displayName = board?.displayName || "Not Found";
+    return html.replace("{{displayName}}", displayName);
+  },
+});
 
 ViteExpress.static({
   enableBrotli: true,
