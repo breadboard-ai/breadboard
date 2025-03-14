@@ -287,7 +287,8 @@ export class UI extends LitElement {
       const userInputs: UserInputConfiguration[] = Object.entries(
         schema.properties ?? {}
       ).reduce((prev, [name, schema]) => {
-        let value = values ? values[name] : undefined;
+        const exampleValue = jsonParseOrUndefined(schema.examples?.at(0));
+        let value = values ? values[name] : exampleValue;
         if (schema.type === "object") {
           if (isLLMContentBehavior(schema)) {
             if (!isLLMContent(value)) {
@@ -792,5 +793,14 @@ export class UI extends LitElement {
           : COMMAND_SET_GRAPH_EDITOR
       )
     );
+  }
+}
+
+function jsonParseOrUndefined(s: string | undefined) {
+  if (!s) return;
+  try {
+    return JSON.parse(s);
+  } catch (e) {
+    // Eat error silently and cry.
   }
 }

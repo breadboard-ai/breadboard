@@ -286,6 +286,17 @@ export type ParameterMetadata = {
   title: string;
   description?: string;
   /**
+   * A list of modality hints that define the kind of content the parameter
+   * may contain.
+   */
+  modality?: string[];
+  /**
+   * Sample value that will be provided as part of the user input
+   * Must be LLMContent[], but is typed as NodeValue because for some reason,
+   * GraphDescriptor doesn't like LLMContent[] here.
+   */
+  sample?: NodeValue;
+  /**
    * The list of nodes where the parameter is currently used.
    * Can be empty, which indicates that this metadata is not attached
    * to any existing parameter.

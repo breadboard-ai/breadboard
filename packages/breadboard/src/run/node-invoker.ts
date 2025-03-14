@@ -193,6 +193,11 @@ export class NodeInvoker {
       // TODO: Implement support for multiple inputs at once.
       for (const [idx, param] of params.entries()) {
         const metadata = this.#graph.graph.metadata?.parameters?.[param.path];
+        const format = metadata?.modality?.join(",") || "text";
+        const firstSample = (metadata?.sample as LLMContent[])?.at(0);
+        const sample = firstSample
+          ? { examples: [JSON.stringify(firstSample)] }
+          : {};
 
         const schema: Schema = {
           type: "object",
@@ -202,6 +207,8 @@ export class NodeInvoker {
               title: metadata?.title || param.title,
               description: metadata?.description || param.title,
               behavior: ["llm-content"],
+              ...sample,
+              format,
             },
           },
         };

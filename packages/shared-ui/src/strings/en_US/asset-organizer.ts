@@ -49,6 +49,12 @@ export default {
   LABEL_ENTER_DESCRIPTION: {
     str: "Enter a description for this parameter",
   },
+  LABEL_ENTER_SAMPLE: {
+    str: "Provide a sample value for this parameter",
+  },
+  LABEL_ENTER_MODALITY: {
+    str: "Specify parameter value type",
+  },
 
   // Queries.
   // Errors.
