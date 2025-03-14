@@ -4,7 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InlineDataCapabilityPart } from "./llm-content.js";
+import {
+  InlineDataCapabilityPart,
+  StoredDataCapabilityPart,
+} from "./llm-content.js";
 
 export interface Capability {
   readonly kind: string;
@@ -304,6 +307,13 @@ export type ParameterMetadata = {
   usedIn: NodeIdentifier[];
 };
 
+export type GraphTheme = {
+  themeColors?: Record<string, string>;
+  template?: string;
+  templateAdditionalOptions?: Record<string, string>;
+  splashScreen?: StoredDataCapabilityPart;
+};
+
 /**
  * Represents graph metadata.
  */
@@ -363,6 +373,12 @@ export type GraphMetadata = {
       splashScreen?: InlineDataCapabilityPart;
       description?: string;
       linkToSource?: string;
+
+      /**
+       * The collection of themes and the chosen theme for this graph.
+       */
+      theme?: string;
+      themes?: Record<string, GraphTheme>;
     };
   };
 

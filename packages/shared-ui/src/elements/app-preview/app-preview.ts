@@ -8,7 +8,7 @@ import { GraphDescriptor, LLMContent } from "@breadboard-ai/types";
 import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("AppPreview");
 
-import { LitElement, PropertyValues, html, nothing } from "lit";
+import { LitElement, PropertyValues, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
   InspectableRun,
@@ -17,7 +17,7 @@ import {
 } from "@google-labs/breadboard";
 
 import { styles as appPreviewStyles } from "./app-preview.styles.js";
-import { ThemeApplyEvent, ThemeChangeEvent } from "../../events/events.js";
+import { ThemeEditRequestEvent } from "../../events/events.js";
 import {
   AppTemplate,
   AppTemplateOptions,
@@ -25,6 +25,7 @@ import {
   TopGraphRunResult,
 } from "../../types/types.js";
 import { getGlobalColor } from "../../utils/color.js";
+import { classMap } from "lit/directives/class-map.js";
 
 const primaryColor = getGlobalColor("--bb-ui-700");
 const secondaryColor = getGlobalColor("--bb-ui-400");
@@ -81,6 +82,12 @@ export class AppPreview extends LitElement {
   accessor eventPosition = 0;
 
   @property()
+  accessor isInSelectionState = false;
+
+  @property()
+  accessor showingOlderResult = false;
+
+  @property()
   accessor topGraphResult: TopGraphRunResult | null = null;
 
   @property()
@@ -91,6 +98,9 @@ export class AppPreview extends LitElement {
 
   @property()
   accessor theme: AppTheme = this.#createDefaultTheme();
+
+  @property()
+  accessor themeHash: string | null = null;
 
   @state()
   accessor _originalTheme: AppTheme | null = null;
@@ -213,14 +223,28 @@ export class AppPreview extends LitElement {
           this.#appTemplate = new Template();
           this.#template = html`${this.#appTemplate}`;
 
+          const templateAdditionalOptionsChosen: Record<string, string> = {};
+
+          let templateAdditionalOptions: Record<string, string> | undefined =
+            undefined;
           if (
+            this.graph?.metadata?.visual?.presentation?.theme &&
+            this.graph?.metadata?.visual?.presentation?.themes
+          ) {
+            const { themes, theme } = this.graph.metadata.visual.presentation;
+            if (themes[theme]) {
+              templateAdditionalOptions =
+                themes[theme].templateAdditionalOptions;
+            }
+          } else if (
             this.graph?.metadata?.visual?.presentation
               ?.templateAdditionalOptions
           ) {
-            const templateAdditionalOptions =
+            templateAdditionalOptions =
               this.graph.metadata.visual.presentation.templateAdditionalOptions;
-            const templateAdditionalOptionsChosen: Record<string, string> = {};
+          }
 
+          if (templateAdditionalOptions) {
             for (const name of Object.keys(
               this.#appTemplate.additionalOptions
             )) {
@@ -254,42 +278,68 @@ export class AppPreview extends LitElement {
       }
     }
 
-    if (changedProperties.has("graph")) {
+    const setDefaultTheme = () => {
+      this.theme = this.#createDefaultTheme();
+      this.appTitle = this.graph?.title ?? Strings.from("LABEL_UNTITLED_APP");
+      this.appDescription = this.graph?.description ?? "";
+    };
+
+    if (changedProperties.has("graph") || changedProperties.has("themeHash")) {
       if (this.graph?.metadata?.visual?.presentation) {
-        this.template =
-          this.graph.metadata.visual.presentation.template ?? "basic";
+        if (
+          this.graph?.metadata?.visual?.presentation?.theme &&
+          this.graph?.metadata?.visual?.presentation?.themes
+        ) {
+          const { themes, theme } = this.graph.metadata.visual.presentation;
+          if (themes[theme]) {
+            const themeColors = themes[theme]?.themeColors ?? {};
 
-        const theme = this.graph.metadata.visual.presentation.themeColors;
-        const splashScreen = this.graph.assets?.["@@splash"];
+            this.template = themes[theme].template ?? "basic";
+            this.theme = {
+              primaryColor: themeColors?.["primaryColor"] ?? primaryColor,
+              secondaryColor: themeColors?.["secondaryColor"] ?? secondaryColor,
+              backgroundColor:
+                themeColors?.["backgroundColor"] ?? backgroundColor,
+              textColor: themeColors?.["textColor"] ?? textColor,
+              primaryTextColor:
+                themeColors?.["primaryTextColor"] ?? primaryTextColor,
+            };
 
-        if (theme) {
-          this.theme = {
-            primaryColor: theme["primaryColor"] ?? primaryColor,
-            secondaryColor: theme["secondaryColor"] ?? secondaryColor,
-            backgroundColor: theme["backgroundColor"] ?? backgroundColor,
-            textColor: theme["textColor"] ?? textColor,
-            primaryTextColor: theme["primaryTextColor"] ?? primaryTextColor,
-          };
+            this.theme.splashScreen = themes[theme].splashScreen;
+          } else {
+            setDefaultTheme();
+          }
+        } else if (this.graph.metadata.visual.presentation.template) {
+          this.template =
+            this.graph.metadata.visual.presentation.template ?? "basic";
 
-          if (splashScreen) {
-            const splashScreenData = splashScreen.data as LLMContent[];
-            if (splashScreenData.length && splashScreenData[0].parts.length) {
-              const splash = splashScreenData[0].parts[0];
-              if (isInlineData(splash) || isStoredData(splash)) {
-                this.theme.splashScreen = splash;
+          const theme = this.graph.metadata.visual.presentation.themeColors;
+          const splashScreen = this.graph.assets?.["@@splash"];
+
+          if (theme) {
+            this.theme = {
+              primaryColor: theme["primaryColor"] ?? primaryColor,
+              secondaryColor: theme["secondaryColor"] ?? secondaryColor,
+              backgroundColor: theme["backgroundColor"] ?? backgroundColor,
+              textColor: theme["textColor"] ?? textColor,
+              primaryTextColor: theme["primaryTextColor"] ?? primaryTextColor,
+            };
+
+            if (splashScreen) {
+              const splashScreenData = splashScreen.data as LLMContent[];
+              if (splashScreenData.length && splashScreenData[0].parts.length) {
+                const splash = splashScreenData[0].parts[0];
+                if (isInlineData(splash) || isStoredData(splash)) {
+                  this.theme.splashScreen = splash;
+                }
               }
             }
           }
         } else {
-          this.theme = this.#createDefaultTheme();
-          this.appTitle =
-            this.graph.title ?? Strings.from("LABEL_UNTITLED_APP");
-          this.appDescription = this.graph?.description ?? "";
+          setDefaultTheme();
         }
       } else {
-        this.theme = this.#createDefaultTheme();
-        this.appTitle = this.graph?.title ?? Strings.from("LABEL_UNTITLED_APP");
-        this.appDescription = this.graph?.description ?? "";
+        setDefaultTheme();
       }
 
       this.#applyThemeToTemplate();
@@ -306,33 +356,6 @@ export class AppPreview extends LitElement {
     }
   }
 
-  #resetTheme() {
-    if (!this._originalTheme) {
-      return;
-    }
-
-    this.templateAdditionalOptionsChosen = {};
-    this.theme = this._originalTheme;
-    this._originalTheme = null;
-  }
-
-  #applyTheme() {
-    if (!this.theme) {
-      return;
-    }
-
-    this.dispatchEvent(
-      new ThemeApplyEvent(
-        this.theme,
-        this.appTitle,
-        this.appDescription,
-        this.template,
-        this.templateAdditionalOptionsChosen
-      )
-    );
-    this._originalTheme = null;
-  }
-
   render() {
     if (this.#appTemplate) {
       this.#appTemplate.graph = this.graph;
@@ -340,63 +363,27 @@ export class AppPreview extends LitElement {
       this.#appTemplate.topGraphResult = this.topGraphResult;
       this.#appTemplate.eventPosition = this.eventPosition;
       this.#appTemplate.showGDrive = this.showGDrive;
+      this.#appTemplate.isInSelectionState = this.isInSelectionState;
+      this.#appTemplate.showingOlderResult = this.showingOlderResult;
     }
 
     return html`<div id="container">
-      <div id="theme-management">
-        <bb-app-theme-creator
-          .graph=${this.graph}
-          .appTitle=${this.appTitle}
-          .appDescription=${this.appDescription}
-          .theme=${this.theme}
-          .template=${this.template}
-          .templates=${this.templates}
-          .additionalOptions=${this.#appTemplate?.additionalOptions ?? null}
-          .templateAdditionalOptionsChosen=${this
-            .templateAdditionalOptionsChosen}
-          @bbthemechange=${(evt: ThemeChangeEvent) => {
-            if (!this._originalTheme) {
-              this._originalTheme = this.theme;
-            }
-            this.theme = evt.theme;
-            this.appTitle = evt.appTitle;
-            this.appDescription = evt.appDescription;
-            if (evt.template) {
-              this.template = evt.template;
-            }
-            this.templateAdditionalOptionsChosen = evt.templateOptionsChosen;
+      <div id="designer">
+        <button
+          @click=${() => {
+            this.dispatchEvent(new ThemeEditRequestEvent());
           }}
-          @bbthemeclear=${() => {
-            if (!this._originalTheme) {
-              this._originalTheme = this.theme;
-            }
-
-            this.templateAdditionalOptionsChosen = {};
-            this.theme = this.#createDefaultTheme();
-          }}
-        ></bb-app-theme-creator>
-
-        ${this._originalTheme
-          ? html`<div id="controls">
-              <button
-                @click=${() => {
-                  this.#applyTheme();
-                }}
-              >
-                Save theme
-              </button>
-              <button
-                id="revert"
-                @click=${() => {
-                  this.#resetTheme();
-                }}
-              >
-                Revert to saved
-              </button>
-            </div>`
-          : nothing}
+        >
+          Designer
+        </button>
       </div>
-      <div id="content">${this.#template}</div>
+
+      <div
+        id="content"
+        class=${classMap({ active: this.#appTemplate !== null })}
+      >
+        ${this.#template}
+      </div>
     </div>`;
   }
 }

@@ -4,38 +4,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as StringsHelper from "../../strings/helper.js";
-const Strings = StringsHelper.forSection("FocusEditor");
-
 import { NodeMetadata } from "@breadboard-ai/types";
 import {
   BoardServer,
   GraphDescriptor,
   InspectableRunNodeEvent,
-  isImageURL,
-  isLLMContent,
-  isLLMContentArray,
   TemplatePart,
 } from "@google-labs/breadboard";
-import {
-  css,
-  html,
-  HTMLTemplateResult,
-  LitElement,
-  nothing,
-  PropertyValues,
-} from "lit";
+import { css, html, LitElement, nothing, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
-import { map } from "lit/directives/map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { markdown } from "../../directives/markdown";
 import {
-  HideTooltipEvent,
   NodePartialUpdateEvent,
   OverlayDismissedEvent,
-  RunIsolatedNodeEvent,
-  ShowTooltipEvent,
 } from "../../events/events";
 import { Project } from "../../state";
 import {
@@ -77,9 +59,6 @@ export class FocusEditor extends LitElement {
 
   @property()
   accessor readOnly = false;
-
-  @property({ reflect: true, type: Boolean })
-  accessor showOutputPane = false;
 
   @property()
   accessor projectState: Project | null = null;
@@ -145,7 +124,6 @@ export class FocusEditor extends LitElement {
       align-items: center;
       justify-content: center;
       background: rgba(0, 0, 0, 0);
-      backdrop-filter: blur(0);
       pointer-events: none;
       position: fixed;
       top: 0;
@@ -156,12 +134,10 @@ export class FocusEditor extends LitElement {
 
       &.active {
         pointer-events: auto;
-        background: rgba(0, 0, 0, 0.05);
-        backdrop-filter: blur(4px);
+        background: oklch(from var(--bb-neutral-900) l c h / 33%);
         transition:
           opacity 0.35s cubic-bezier(0, 0, 0.3, 1),
-          background 0.35s cubic-bezier(0, 0, 0.3, 1),
-          backdrop-filter 0.35s cubic-bezier(0, 0, 0.3, 1);
+          background 0.35s cubic-bezier(0, 0, 0.3, 1);
 
         & #content-container {
           opacity: 1;
@@ -539,12 +515,6 @@ export class FocusEditor extends LitElement {
         }
       });
     }
-
-    if (changedProperties.has("runEventsForNode")) {
-      if (this.runEventsForNode && this.runEventsForNode.length > 0) {
-        this.showOutputPane = true;
-      }
-    }
   }
 
   onEscapeKeyPress(evt: KeyboardEvent) {
@@ -749,64 +719,6 @@ export class FocusEditor extends LitElement {
     return EditorMode.MINIMAL;
   }
 
-  #createPlaceholdersFromConfiguration() {
-    if (!this.configuration || !this.configuration.ports) {
-      return html`<p class="no-outputs">
-        ${Strings.from("LABEL_NO_OUTPUTS")}
-      </p>`;
-    }
-
-    const factory = (type: string) =>
-      html`<div class=${classMap({ placeholder: true, [type]: true })}>
-        ${type === "text"
-          ? html`
-              <div class="line l1"></div>
-              <div class="line l2"></div>
-              <div class="line l3"></div>
-              <div class="line l4"></div>
-              <div class="line l5"></div>
-            `
-          : nothing}
-      </div>`;
-
-    const placeholders: HTMLTemplateResult[] = [];
-    for (const port of this.configuration.ports.outputs.ports) {
-      const preview =
-        port.schema.behavior?.filter((b) => b.startsWith("hint-")) ?? [];
-      for (const item of preview) {
-        switch (item) {
-          case "hint-audio": {
-            placeholders.push(factory("audio"));
-            break;
-          }
-
-          case "hint-code":
-          case "hint-text": {
-            placeholders.push(factory("text"));
-            break;
-          }
-
-          case "hint-multimodal": {
-            placeholders.push(factory("text"));
-            placeholders.push(factory("image"));
-            break;
-          }
-
-          case "hint-image": {
-            placeholders.push(factory("image"));
-            break;
-          }
-
-          default: {
-            return html`...`;
-          }
-        }
-      }
-    }
-
-    return placeholders;
-  }
-
   render() {
     const icon = (
       this.configuration?.currentMetadata?.icon ??
@@ -865,104 +777,6 @@ export class FocusEditor extends LitElement {
       };
     });
 
-    let outputs: HTMLTemplateResult | symbol = nothing;
-    const shouldShowOutputs =
-      this.configuration?.type?.toLocaleLowerCase() !== "input";
-    if (shouldShowOutputs && this.showOutputPane) {
-      outputs = html`<div id="outputs">
-        <div id="output-content">
-          ${this.runEventsForNode && this.runEventsForNode.length > 0
-            ? html`${map(this.runEventsForNode, (evt) => {
-                const { outputs } = evt;
-                if (!outputs) {
-                  return html`No value`;
-                }
-
-                return html`${map(Object.values(outputs), (outputValue) => {
-                  let value: HTMLTemplateResult | symbol = nothing;
-                  if (typeof outputValue === "object") {
-                    if (isLLMContentArray(outputValue)) {
-                      value = html`<bb-llm-output-array
-                        .graphUrl=${this.graph?.url}
-                        .clamped=${false}
-                        .showModeToggle=${false}
-                        .showEntrySelector=${false}
-                        .showExportControls=${true}
-                        .supportedExportControls=${{
-                          drive: true,
-                          clipboard: true,
-                        }}
-                        .values=${outputValue}
-                      ></bb-llm-output-array>`;
-                    } else if (isLLMContent(outputValue)) {
-                      if (!outputValue.parts) {
-                        // Special case for "$metadata" item.
-                        // See https://github.com/breadboard-ai/breadboard/issues/1673
-                        // TODO: Make this not ugly.
-                        const data = (
-                          outputValue as unknown as { data: unknown }
-                        ).data;
-                        value = html`<bb-json-tree
-                          .json=${data}
-                        ></bb-json-tree>`;
-                      }
-
-                      if (!outputValue.parts.length) {
-                        value = html`No data provided`;
-                      }
-
-                      value = outputValue.parts.length
-                        ? html`<bb-llm-output
-                            .clamped=${false}
-                            .graphUrl=${this.graph?.url}
-                            .lite=${true}
-                            .showExportControls=${true}
-                            .supportedExportControls=${{
-                              drive: true,
-                              clipboard: true,
-                            }}
-                            .value=${outputValue}
-                          ></bb-llm-output>`
-                        : html`No data provided`;
-                    } else if (isImageURL(outputValue)) {
-                      value = html`<img src=${outputValue.image_url} />`;
-                    } else {
-                      value = html`<bb-json-tree
-                        .json=${outputValue}
-                      ></bb-json-tree>`;
-                    }
-                  } else {
-                    let renderableValue: HTMLTemplateResult | symbol = nothing;
-                    if (typeof outputValue === "string") {
-                      renderableValue = html`${markdown(outputValue)}`;
-                    } else {
-                      renderableValue = html`${outputValue !== undefined
-                        ? outputValue
-                        : html`<span class="no-value"
-                            >[No value provided]</span
-                          >`}`;
-                    }
-
-                    // prettier-ignore
-                    value = html`<div
-                      class=${classMap({
-                        value: true,
-                      })}
-                    >${renderableValue}</div>`;
-                  }
-
-                  return html` <div class="output-port">
-                    <div class="value">${value}</div>
-                  </div>`;
-                })}`;
-              })}`
-            : html`<div class="outputs">
-                ${this.#createPlaceholdersFromConfiguration()}
-              </div>`}
-        </div>
-      </div>`;
-    }
-
     return html`<section
       id="container"
       ${ref(this.#containerRef)}
@@ -998,36 +812,6 @@ export class FocusEditor extends LitElement {
               .value=${this.configuration?.title}
             />
           </h1>
-          <div id="run-node">
-            <button
-              id="run-isolated-node"
-              ?disabled=${!this.canRunNode}
-              @pointerover=${(evt: PointerEvent) => {
-                this.dispatchEvent(
-                  new ShowTooltipEvent(
-                    Strings.from("COMMAND_RUN_ISOLATED"),
-                    evt.clientX,
-                    evt.clientY
-                  )
-                );
-              }}
-              @pointerout=${() => {
-                this.dispatchEvent(new HideTooltipEvent());
-              }}
-              @click=${() => {
-                if (!this.configuration) {
-                  return;
-                }
-
-                this.#done(true);
-                this.dispatchEvent(
-                  new RunIsolatedNodeEvent(this.configuration.id, true)
-                );
-              }}
-            >
-              Run node
-            </button>
-          </div>
         </header>
         <section id="content">
           <div id="text-editor">
@@ -1055,7 +839,6 @@ export class FocusEditor extends LitElement {
                 : nothing}
             </div>
           </div>
-          ${outputs}
         </section>
         <footer>
           <div>
@@ -1075,17 +858,6 @@ export class FocusEditor extends LitElement {
               }}
             >
               Cancel
-            </button>
-          </div>
-          <div>
-            <button
-              class=${classMap({ active: this.showOutputPane })}
-              id="toggle-output"
-              @click=${() => {
-                this.showOutputPane = !this.showOutputPane;
-              }}
-            >
-              Output
             </button>
           </div>
         </footer>

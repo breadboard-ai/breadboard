@@ -14,6 +14,8 @@ import {
   GraphProvider,
   InspectableGraph,
   InspectableRunObserver,
+  isLLMContentArray,
+  isStoredData,
   Kit,
   MutableGraphStore,
 } from "@google-labs/breadboard";
@@ -36,6 +38,7 @@ import {
 import { TokenVendor } from "@breadboard-ai/connection-client";
 import {
   GraphIdentifier,
+  GraphTheme,
   ModuleIdentifier,
   NodeDescriptor,
 } from "@breadboard-ai/types";
@@ -606,6 +609,80 @@ export class Board extends EventTarget {
     this.dispatchEvent(new RuntimeTabChangeEvent());
   }
 
+  /**
+   * Here for now, but needs to be removed when all legacy theme information has
+   * been handled.
+   *
+   * @deprecated
+   */
+  #migrateThemeInformationIfPresent(graph: GraphDescriptor) {
+    // Already migrated.
+    if (
+      graph.metadata?.visual?.presentation?.themes &&
+      graph.metadata?.visual?.presentation?.theme
+    ) {
+      return;
+    }
+
+    // No legacy theme info available - fit out the default theme.
+    if (!graph.metadata?.visual?.presentation?.themeColors) {
+      graph.metadata ??= {};
+      graph.metadata.visual ??= {};
+      graph.metadata.visual.presentation ??= {};
+      graph.metadata.visual.presentation.themes ??= {};
+
+      const graphTheme: GraphTheme = {
+        themeColors: {
+          primaryColor: "#246db5",
+          secondaryColor: "#5cadff",
+          backgroundColor: "#ffffff",
+          textColor: "#1a1a1a",
+          primaryTextColor: "#ffffff",
+        },
+        template: "basic",
+        splashScreen: {
+          storedData: {
+            handle: "/images/app/generic-flow.jpg",
+            mimeType: "image/jpeg",
+          },
+        },
+      };
+
+      const themeId = globalThis.crypto.randomUUID();
+      graph.metadata.visual.presentation.themes[themeId] = graphTheme;
+      graph.metadata.visual.presentation.theme = themeId;
+      return;
+    }
+
+    const { themeColors, template, templateAdditionalOptions } =
+      graph.metadata.visual.presentation;
+    const graphTheme: GraphTheme = {
+      themeColors,
+      templateAdditionalOptions,
+      template,
+    };
+
+    const splashScreen = graph.assets?.["@@splash"];
+    if (
+      isLLMContentArray(splashScreen?.data) &&
+      isStoredData(splashScreen.data[0]?.parts[0])
+    ) {
+      graphTheme.splashScreen = splashScreen.data[0].parts[0];
+    }
+
+    graph.metadata.visual.presentation.themes ??= {};
+
+    // Set the theme.
+    const themeId = globalThis.crypto.randomUUID();
+    graph.metadata.visual.presentation.themes[themeId] = graphTheme;
+    graph.metadata.visual.presentation.theme = themeId;
+
+    // Remove the legacy values.
+    delete graph.metadata.visual.presentation.template;
+    delete graph.metadata.visual.presentation.templateAdditionalOptions;
+    delete graph.metadata.visual.presentation.themeColors;
+  }
+
   async createTabFromURL(
     boardUrl: string,
     currentUrl: string | null = null,
@@ -687,6 +764,8 @@ export class Board extends EventTarget {
       if (subGraphId && (!graph.graphs || !graph.graphs[subGraphId])) {
         subGraphId = null;
       }
+
+      this.#migrateThemeInformationIfPresent(graph);
 
       // This is not elegant, since we actually load the graph by URL,
       // and we should know this mainGraphId by now.

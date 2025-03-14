@@ -8,6 +8,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import { consume } from "@lit/context";
 import {
   GraphDescriptor,
+  GraphTheme,
   InlineDataCapabilityPart,
   InputValues,
   LLMContent,
@@ -16,18 +17,19 @@ import {
 } from "@breadboard-ai/types";
 import GenerateAppTheme from "@breadboard-ai/shared-ui/bgl/generate-app-theme.bgl.json" with { type: "json" };
 import MarkdownIt from "markdown-it";
+import { AppTheme, AppThemeColors } from "../../types/types.js";
 import {
-  AppTemplateAdditionalOptionsAvailable,
-  AppTheme,
-  AppThemeColors,
-} from "../../types/types.js";
-import { ThemeChangeEvent, ThemeClearEvent } from "../../events/events.js";
+  OverlayDismissedEvent,
+  ThemeChangeEvent,
+  ThemeCreateEvent,
+  ThemeUpdateEvent,
+} from "../../events/events.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { repeat } from "lit/directives/repeat.js";
-import { map } from "lit/directives/map.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { sideBoardRuntime } from "../../contexts/side-board-runtime.js";
 import { SideBoardRuntime } from "../../sideboards/types.js";
+import { classMap } from "lit/directives/class-map.js";
 
 @customElement("bb-app-theme-creator")
 export class AppThemeCreator extends LitElement {
@@ -35,26 +37,16 @@ export class AppThemeCreator extends LitElement {
   accessor graph: GraphDescriptor | null = null;
 
   @property()
-  accessor appTitle: string | null = null;
+  accessor themeHash: string | null = null;
 
   @property()
-  accessor appDescription: string | null = null;
+  accessor theme: string | null = null;
 
-  @property()
-  accessor additionalOptions: AppTemplateAdditionalOptionsAvailable | null =
-    null;
+  @state()
+  accessor themes: Record<string, GraphTheme> | null = null;
 
-  @property()
-  accessor theme: AppTheme | null = null;
-
-  @property()
-  accessor template: string | null = null;
-
-  @property()
+  @state()
   accessor templates: Array<{ title: string; value: string }> = [];
-
-  @property()
-  accessor templateAdditionalOptionsChosen: Record<string, string> = {};
 
   @consume({ context: sideBoardRuntime })
   accessor sideBoardRuntime!: SideBoardRuntime | undefined;
@@ -81,13 +73,218 @@ export class AppThemeCreator extends LitElement {
     #container {
       display: flex;
       flex-direction: column;
+      background: var(--bb-neutral-0);
+      border-radius: var(--bb-grid-size-2);
+      border: 1px solid var(--bb-neutral-300);
+
+      & h1 {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font: 400 var(--bb-title-large) / var(--bb-title-line-height-large)
+          var(--bb-font-family);
+        padding: 0 var(--bb-grid-size-3);
+        height: var(--bb-grid-size-12);
+        border-bottom: 1px solid var(--bb-neutral-300);
+        margin: 0;
+
+        & span {
+          flex: 1;
+          background: var(--bb-icon-palette) 4px center / 20px 20px no-repeat;
+          padding: 0 var(--bb-grid-size-8);
+        }
+
+        & #close {
+          width: 20px;
+          height: 20px;
+          background: var(--bb-icon-close) center center / 20px 20px no-repeat;
+          font-size: 0;
+          border: none;
+          opacity: 0.6;
+          transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+
+          &:not([disabled]) {
+            cursor: pointer;
+
+            &:hover,
+            &:focus {
+              opacity: 1;
+            }
+          }
+        }
+      }
+
+      #generate-theme,
+      #theme-selector {
+        & h2 {
+          font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
+            var(--bb-font-family);
+          margin: 0 0 var(--bb-grid-size-2) 0;
+        }
+
+        & input[type="text"],
+        & input[type="number"],
+        & textarea,
+        & select {
+          display: block;
+          width: 100%;
+          border-radius: var(--bb-grid-size);
+          background: var(--bb-neutral-0);
+          color: var(--bb-neutral-900);
+          padding: var(--bb-grid-size-2);
+          border: 1px solid var(--bb-neutral-300);
+          resize: none;
+          font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+            var(--bb-font-family);
+        }
+
+        textarea {
+          field-sizing: content;
+        }
+      }
+
+      #generate-theme {
+        padding: var(--bb-grid-size-3);
+
+        & textarea {
+          min-height: 44px;
+          padding-right: var(--bb-grid-size-12);
+          background: var(--bb-add-icon-generative) var(--bb-neutral-0)
+            calc(100% - 8px) center / 20px 20px no-repeat;
+        }
+      }
+
+      #theme-selector {
+        & h2 {
+          padding: var(--bb-grid-size-3) var(--bb-grid-size-3) 0
+            var(--bb-grid-size-3);
+        }
+
+        & menu {
+          padding: 3px var(--bb-grid-size-3);
+          margin: 0 0 var(--bb-grid-size-3) 0;
+          scroll-padding-right: var(--bb-grid-size-3);
+          scroll-padding-left: var(--bb-grid-size-3);
+
+          list-style: none;
+          display: flex;
+          overflow: scroll;
+          scrollbar-width: none;
+
+          & li {
+            margin-right: var(--bb-grid-size-3);
+
+            & button {
+              padding: 0;
+              display: grid;
+              grid-template-columns: repeat(5, 1fr);
+              width: 102px;
+              border: 1px solid var(--bb-neutral-0);
+              outline: 1px solid var(--bb-neutral-500);
+              background: var(--bb-neutral);
+              border-radius: var(--bb-grid-size-2);
+
+              &.selected {
+                outline: 3px solid var(--bb-ui-500);
+              }
+
+              &:not([disabled]) {
+                cursor: pointer;
+
+                &:hover,
+                &:focus {
+                  outline: 3px solid var(--bb-ui-500);
+                }
+              }
+
+              & img {
+                width: 100px;
+                grid-column: 1 / 6;
+                aspect-ratio: 1 / 1;
+                object-fit: cover;
+                background: url(/images/progress-ui.svg) center center / 20px
+                  20px no-repeat;
+                border-radius: var(--bb-grid-size-2) var(--bb-grid-size-2) 0 0;
+              }
+
+              & .color {
+                width: 20px;
+                height: 20px;
+                background-color: var(--background);
+
+                &:first-of-type {
+                  border-radius: 0 0 0 var(--bb-grid-size-2);
+                }
+
+                &:last-of-type {
+                  border-radius: 0 0 var(--bb-grid-size-2) 0;
+                }
+              }
+            }
+          }
+        }
+
+        & #theme-colors {
+          padding: 0 var(--bb-grid-size-3);
+
+          & > div {
+            display: grid;
+            grid-template-columns: minmax(min-content, 1fr) 4fr;
+            column-gap: var(--bb-grid-size-2);
+            align-items: center;
+            margin-bottom: var(--bb-grid-size-3);
+          }
+
+          & label {
+            font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+              var(--bb-font-family);
+            white-space: nowrap;
+          }
+
+          input[type="color"] {
+            width: 20px;
+            height: 20px;
+            padding: 0;
+            border: 1px solid var(--bb-neutral-200);
+            border-radius: 0;
+          }
+
+          input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+            border: none;
+            width: 20px;
+            height: 20px;
+          }
+
+          input[type="color"]::-webkit-color-swatch {
+            padding: 0;
+            border: none;
+            width: 20px;
+            height: 20px;
+          }
+
+          input[type="color"]::-moz-color-swatch-wrapper {
+            padding: 0;
+            border: none;
+            width: 20px;
+            height: 20px;
+          }
+
+          input[type="color"]::-moz-color-swatch {
+            padding: 0;
+            border: none;
+            width: 20px;
+            height: 20px;
+          }
+        }
+      }
     }
 
     details {
       border-bottom: 1px solid var(--bb-neutral-100);
       padding: var(--bb-grid-size-2) 0;
 
-      &:last-of-type {
+      & &:last-of-type {
         border-bottom: none;
       }
 
@@ -114,27 +311,6 @@ export class AppThemeCreator extends LitElement {
         }
       }
 
-      & input[type="text"],
-      & input[type="number"],
-      & textarea,
-      & select {
-        display: block;
-        width: 100%;
-        border-radius: var(--bb-grid-size);
-        background: var(--bb-neutral-0);
-        color: var(--bb-neutral-900);
-        padding: var(--bb-grid-size-2);
-        border: 1px solid var(--bb-neutral-300);
-        resize: none;
-
-        font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
-          var(--bb-font-family);
-      }
-
-      textarea {
-        field-sizing: content;
-      }
-
       &#appearance {
         & summary {
           padding-left: var(--bb-grid-size-8);
@@ -159,41 +335,6 @@ export class AppThemeCreator extends LitElement {
                 opacity: 1;
               }
             }
-          }
-        }
-
-        & input {
-          clip: rect(0, 0, 1px, 1px);
-          opacity: 0;
-          pointer-events: none;
-        }
-
-        & label {
-          display: flex;
-          justify-content: space-between;
-          position: relative;
-
-          &:has(+ input[type="color"])::after {
-            content: "";
-            display: block;
-            width: 20px;
-            height: 20px;
-            background: var(--color);
-            border-radius: 50%;
-            position: absolute;
-            right: -28px;
-            border: 1px solid var(--bb-neutral-300);
-            opacity: 0.5;
-          }
-
-          &:has(+ input[type="color"]:not([disabled]))::after {
-            opacity: 1;
-            cursor: pointer;
-          }
-
-          &:has(+ input:focus)::after {
-            border: 1px solid var(--bb-ui-700);
-            outline: 1px solid var(--bb-ui-700);
           }
         }
 
@@ -226,17 +367,17 @@ export class AppThemeCreator extends LitElement {
         var(--bb-font-family);
       color: var(--bb-neutral-700);
       padding-left: var(--bb-grid-size-8);
-      margin-left: var(--bb-grid-size-2);
+      margin: 0 var(--bb-grid-size-2);
       flex: 1;
       background: url(/images/progress-ui.svg) 8px center / 20px 20px no-repeat;
       margin-bottom: var(--bb-grid-size-4);
     }
 
-    summary::-webkit-details-marker {
+    #summary::-webkit-details-marker {
       display: none;
     }
 
-    summary {
+    #summary {
       list-style: none;
       font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
         var(--bb-font-family);
@@ -244,7 +385,7 @@ export class AppThemeCreator extends LitElement {
       cursor: pointer;
     }
 
-    button {
+    #button {
       display: block;
       font: 500 var(--bb-label-small) / var(--bb-label-line-height-small)
         var(--bb-font-family);
@@ -278,6 +419,7 @@ export class AppThemeCreator extends LitElement {
     }
   `;
 
+  #selectedThemeRef: Ref<HTMLButtonElement> = createRef();
   #generateDescriptionRef: Ref<HTMLTextAreaElement> = createRef();
   #containerRef: Ref<HTMLDivElement> = createRef();
 
@@ -293,13 +435,19 @@ export class AppThemeCreator extends LitElement {
   }
 
   protected willUpdate(changedProperties: PropertyValues): void {
-    if (
-      changedProperties.has("appTitle") ||
-      changedProperties.has("appDescription") ||
-      changedProperties.has("theme") ||
-      changedProperties.has("templateAdditionalOptionsChosen")
-    ) {
-      this._changed = true;
+    if (changedProperties.has("graph") || changedProperties.has("themeHash")) {
+      if (this.graph) {
+        this.theme = this.graph.metadata?.visual?.presentation?.theme ?? null;
+        this.themes = {
+          ...(this.graph.metadata?.visual?.presentation?.themes ?? null),
+        };
+      }
+    }
+  }
+
+  protected updated(): void {
+    if (this.#selectedThemeRef.value) {
+      this.#selectedThemeRef.value.scrollIntoView();
     }
   }
 
@@ -392,11 +540,12 @@ export class AppThemeCreator extends LitElement {
       }
 
       this._generating = true;
-      this.theme = await this.#generateTheme(
-        this.appTitle ?? "Untitled Application",
-        this.appDescription ?? undefined,
+      const newTheme = await this.#generateTheme(
+        this.graph?.title ?? "Untitled Application",
+        this.graph?.description ?? undefined,
         this.#generateDescriptionRef.value?.value
       );
+      this.dispatchEvent(new ThemeCreateEvent(newTheme));
     } catch (err) {
       console.warn(err);
     } finally {
@@ -404,266 +553,273 @@ export class AppThemeCreator extends LitElement {
     }
   }
 
+  #emitTheme() {
+    if (!this.themes || !this.theme) {
+      return;
+    }
+
+    if (!this.themes[this.theme]) {
+      return;
+    }
+
+    const theme = this.themes[this.theme];
+    this.dispatchEvent(new ThemeUpdateEvent(this.theme, theme));
+  }
+
   render() {
+    if (!this.themes || !this.theme) {
+      console.log("No themes found");
+      return nothing;
+    }
+
+    const theme = this.themes[this.theme];
     return html`<section id="container" ${ref(this.#containerRef)}>
-      <details id="appearance" open>
-        <summary>
-          Appearance
-          <button
-            ?disabled=${this._generating}
-            id="reset"
-            @click=${() => {
-              if (!this.theme) {
-                return;
+      <h1>
+        <span>Designer</span>
+        <button
+          id="close"
+          @click=${() => {
+            this.dispatchEvent(new OverlayDismissedEvent());
+          }}
+        >
+          Close
+        </button>
+      </h1>
+      <section id="generate-theme">
+        <h2>Generate a theme</h2>
+        <textarea
+          autocomplete="off"
+          placeholder="Describe your theme"
+          ${ref(this.#generateDescriptionRef)}
+          @keydown=${async (evt: KeyboardEvent) => {
+            if (!(evt.key === "Enter")) {
+              return;
+            }
+            await this.#debounceGenerateTheme();
+          }}
+          ?disabled=${this._generating}
+        ></textarea>
+
+        ${this._generating
+          ? html`<div id="generate-status">Generating theme...</div>`
+          : nothing}
+      </section>
+      <section id="theme-selector">
+        <h2>Theme</h2>
+        <menu>
+          ${repeat(
+            Object.entries(this.themes),
+            ([key]) => key,
+            ([key, theme]) => {
+              let url = theme.splashScreen?.storedData.handle;
+              if (url && url.startsWith(".") && this.graph?.url) {
+                url = new URL(url, this.graph?.url).href;
               }
 
-              this._changed = false;
-              this.dispatchEvent(new ThemeClearEvent());
-            }}
-          >
-            Reset all styles
-          </button>
-        </summary>
-
-        <div class="vertical-stack">
-          <textarea
-            autocomplete="off"
-            placeholder="Describe your theme"
-            ${ref(this.#generateDescriptionRef)}
-            @keydown=${async (evt: KeyboardEvent) => {
-              const isMac = navigator.platform.indexOf("Mac") === 0;
-              const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
-
-              if (!(evt.key === "Enter" && isCtrlCommand)) {
-                return;
-              }
-              await this.#debounceGenerateTheme();
-            }}
-            ?disabled=${this._generating}
-          ></textarea>
-          <div class="controls">
-            <button
-              ?disabled=${this._generating}
-              id="generate"
-              @click=${async () => {
-                await this.#debounceGenerateTheme();
-              }}
-            >
-              Generate
-            </button>
-            ${this._generating
-              ? html`<div id="generate-status">Generating theme...</div>`
-              : nothing}
-          </div>
-        </div>
-
-        <div>
-          <label for="template">Template</label>
-          <select id="template" ?disabled=${this._generating}>
-            ${map(
-              this.templates,
-              (template) =>
-                html`<option
-                  .value=${template.value}
-                  ?selected=${template.value === this.template}
+              return html`<li>
+                <button
+                  ?disabled=${this._generating}
+                  class=${classMap({ selected: key === this.theme })}
+                  ${this.theme === key ? ref(this.#selectedThemeRef) : nothing}
+                  @click=${() => {
+                    this.dispatchEvent(new ThemeChangeEvent(key));
+                  }}
                 >
-                  ${template.title}
-                </option>`
-            )}
-          </select>
-        </div>
-        ${this.additionalOptions
-          ? html`${repeat(
-              Object.entries(this.additionalOptions),
-              ([name, option]) => {
-                return html`<div>
-                  <label for="${name}">${option.title}</label>
-                  <select
-                    id="${name}"
+                  <img
+                    src=${url ?? "/images/app/generic-flow.jpg"}
+                    alt="Theme thumbnail"
+                  />
+                  <span
+                    class="color"
+                    style=${styleMap({
+                      "--background": theme.themeColors?.primaryColor,
+                    })}
+                  ></span>
+                  <span
+                    class="color"
+                    style=${styleMap({
+                      "--background": theme.themeColors?.secondaryColor,
+                    })}
+                  ></span>
+                  <span
+                    class="color"
+                    style=${styleMap({
+                      "--background": theme.themeColors?.backgroundColor,
+                    })}
+                  ></span>
+                  <span
+                    class="color"
+                    style=${styleMap({
+                      "--background": theme.themeColors?.primaryTextColor,
+                    })}
+                  ></span>
+                  <span
+                    class="color"
+                    style=${styleMap({
+                      "--background": theme.themeColors?.textColor,
+                    })}
+                  ></span>
+                </button>
+              </li>`;
+            }
+          )}
+        </menu>
+
+        <div id="theme-colors">
+          ${theme.themeColors
+            ? html` <div>
+                  <label
+                    for="primary"
+                    style=${styleMap({
+                      "--color": theme.themeColors?.primaryColor,
+                    })}
+                    >Primary</label
+                  >
+                  <input
+                    id="primary"
+                    type="color"
                     ?disabled=${this._generating}
+                    .value=${theme.themeColors.primaryColor}
                     @input=${(evt: InputEvent) => {
-                      if (!(evt.target instanceof HTMLSelectElement)) {
+                      if (
+                        !(evt.target instanceof HTMLInputElement) ||
+                        !theme.themeColors
+                      ) {
                         return;
                       }
 
-                      this.templateAdditionalOptionsChosen = {
-                        ...this.templateAdditionalOptionsChosen,
-                        [name]: evt.target.value,
+                      theme.themeColors = {
+                        ...theme.themeColors,
+                        primaryColor: evt.target.value,
                       };
+
+                      this.#emitTheme();
                     }}
-                  >
-                    ${map(option.values, ({ value, title }) => {
-                      const selected =
-                        this.templateAdditionalOptionsChosen[name] === value;
-
-                      return html`<option ?selected=${selected} .value=${value}>
-                        ${title}
-                      </option>`;
+                  />
+                </div>
+                <div>
+                  <label
+                    for="secondary"
+                    style=${styleMap({
+                      "--color": theme.themeColors.secondaryColor,
                     })}
-                  </select>
-                </div>`;
-              }
-            )}`
-          : nothing}
-        ${this.theme
-          ? html` <div>
-                <label
-                  for="primary"
-                  style=${styleMap({ "--color": this.theme.primaryColor })}
-                  >Primary</label
-                >
-                <input
-                  id="primary"
-                  type="color"
-                  ?disabled=${this._generating}
-                  .value=${this.theme.primaryColor}
-                  @input=${(evt: InputEvent) => {
-                    if (
-                      !(evt.target instanceof HTMLInputElement) ||
-                      !this.theme
-                    ) {
-                      return;
-                    }
+                    >Secondary</label
+                  >
+                  <input
+                    id="secondary"
+                    type="color"
+                    ?disabled=${this._generating}
+                    .value=${theme.themeColors.secondaryColor}
+                    @input=${(evt: InputEvent) => {
+                      if (
+                        !(evt.target instanceof HTMLInputElement) ||
+                        !theme.themeColors
+                      ) {
+                        return;
+                      }
 
-                    this.theme = {
-                      ...this.theme,
-                      primaryColor: evt.target.value,
-                    };
-                  }}
-                />
-              </div>
-              <div>
-                <label
-                  for="secondary"
-                  style=${styleMap({ "--color": this.theme.secondaryColor })}
-                  >Secondary</label
-                >
-                <input
-                  id="secondary"
-                  type="color"
-                  ?disabled=${this._generating}
-                  .value=${this.theme.secondaryColor}
-                  @input=${(evt: InputEvent) => {
-                    if (
-                      !(evt.target instanceof HTMLInputElement) ||
-                      !this.theme
-                    ) {
-                      return;
-                    }
+                      theme.themeColors = {
+                        ...theme.themeColors,
+                        secondaryColor: evt.target.value,
+                      };
 
-                    this.theme = {
-                      ...this.theme,
-                      secondaryColor: evt.target.value,
-                    };
-                  }}
-                />
-              </div>
-              <div>
-                <label
-                  for="background"
-                  style=${styleMap({ "--color": this.theme.backgroundColor })}
-                  >Background</label
-                >
-                <input
-                  id="background"
-                  type="color"
-                  ?disabled=${this._generating}
-                  .value=${this.theme.backgroundColor}
-                  @input=${(evt: InputEvent) => {
-                    if (
-                      !(evt.target instanceof HTMLInputElement) ||
-                      !this.theme
-                    ) {
-                      return;
-                    }
+                      this.#emitTheme();
+                    }}
+                  />
+                </div>
+                <div>
+                  <label
+                    for="background"
+                    style=${styleMap({
+                      "--color": theme.themeColors.backgroundColor,
+                    })}
+                    >Background</label
+                  >
+                  <input
+                    id="background"
+                    type="color"
+                    ?disabled=${this._generating}
+                    .value=${theme.themeColors.backgroundColor}
+                    @input=${(evt: InputEvent) => {
+                      if (
+                        !(evt.target instanceof HTMLInputElement) ||
+                        !theme.themeColors
+                      ) {
+                        return;
+                      }
 
-                    this.theme = {
-                      ...this.theme,
-                      backgroundColor: evt.target.value,
-                    };
-                  }}
-                />
-              </div>
-              <div>
-                <label
-                  for="primary-text"
-                  style=${styleMap({ "--color": this.theme.primaryTextColor })}
-                  >Primary Text</label
-                >
-                <input
-                  id="primary-text"
-                  type="color"
-                  ?disabled=${this._generating}
-                  .value=${this.theme.primaryTextColor}
-                  @input=${(evt: InputEvent) => {
-                    if (
-                      !(evt.target instanceof HTMLInputElement) ||
-                      !this.theme
-                    ) {
-                      return;
-                    }
+                      theme.themeColors = {
+                        ...theme.themeColors,
+                        backgroundColor: evt.target.value,
+                      };
 
-                    this.theme = {
-                      ...this.theme,
-                      primaryTextColor: evt.target.value,
-                    };
-                  }}
-                />
-              </div>
-              <div>
-                <label
-                  for="text"
-                  style=${styleMap({ "--color": this.theme.textColor })}
-                  >Text</label
-                >
-                <input
-                  id="text"
-                  type="color"
-                  ?disabled=${this._generating}
-                  .value=${this.theme.textColor}
-                  @input=${(evt: InputEvent) => {
-                    if (
-                      !(evt.target instanceof HTMLInputElement) ||
-                      !this.theme
-                    ) {
-                      return;
-                    }
+                      this.#emitTheme();
+                    }}
+                  />
+                </div>
+                <div>
+                  <label
+                    for="primary-text"
+                    style=${styleMap({
+                      "--color": theme.themeColors.primaryTextColor,
+                    })}
+                    >Primary Text</label
+                  >
+                  <input
+                    id="primary-text"
+                    type="color"
+                    ?disabled=${this._generating}
+                    .value=${theme.themeColors.primaryTextColor}
+                    @input=${(evt: InputEvent) => {
+                      if (
+                        !(evt.target instanceof HTMLInputElement) ||
+                        !theme.themeColors
+                      ) {
+                        return;
+                      }
 
-                    this.theme = {
-                      ...this.theme,
-                      textColor: evt.target.value,
-                    };
-                  }}
-                />
-              </div>`
-          : nothing}
-      </details>
+                      theme.themeColors = {
+                        ...theme.themeColors,
+                        primaryTextColor: evt.target.value,
+                      };
 
-      ${this._changed
-        ? html` <aside id="controls">
-            <button
-              ?disabled=${!this._changed || this._generating}
-              @click=${() => {
-                if (!this.theme) {
-                  return;
-                }
+                      this.#emitTheme();
+                    }}
+                  />
+                </div>
+                <div>
+                  <label
+                    for="text"
+                    style=${styleMap({
+                      "--color": theme.themeColors.textColor,
+                    })}
+                    >Text</label
+                  >
+                  <input
+                    id="text"
+                    type="color"
+                    ?disabled=${this._generating}
+                    .value=${theme.themeColors.textColor}
+                    @input=${(evt: InputEvent) => {
+                      if (
+                        !(evt.target instanceof HTMLInputElement) ||
+                        !theme.themeColors
+                      ) {
+                        return;
+                      }
 
-                this._changed = false;
-                this.dispatchEvent(
-                  new ThemeChangeEvent(
-                    this.theme,
-                    this.appTitle,
-                    this.appDescription,
-                    this.template,
-                    this.templateAdditionalOptionsChosen
-                  )
-                );
-              }}
-            >
-              Update theme
-            </button>
-          </aside>`
-        : nothing}
+                      theme.themeColors = {
+                        ...theme.themeColors,
+                        textColor: evt.target.value,
+                      };
+
+                      this.#emitTheme();
+                    }}
+                  />
+                </div>`
+            : nothing}
+        </div>
+      </section>
     </section>`;
   }
 }

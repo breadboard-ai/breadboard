@@ -744,6 +744,9 @@ body.hide-cursor {
 
   /** Text */
 
+  --bb-title-x-large: 22px;
+  --bb-title-line-height-x-large: 24px;
+
   --bb-title-large: 22px;
   --bb-title-line-height-large: 28px;
 

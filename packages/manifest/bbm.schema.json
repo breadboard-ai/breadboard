@@ -194,6 +194,9 @@
 			],
 			"type": "object"
 		},
+		"DataStoreHandle": {
+			"type": "string"
+		},
 		"Edge": {
 			"additionalProperties": false,
 			"description": "Represents an edge in a graph.",
@@ -478,8 +481,15 @@
 								"templateAdditionalOptions": {
 									"$ref": "#/definitions/Record%3Cstring%2Cstring%3E"
 								},
+								"theme": {
+									"description": "The collection of themes and the chosen theme for this graph.",
+									"type": "string"
+								},
 								"themeColors": {
 									"$ref": "#/definitions/Record%3Cstring%2Cstring%3E"
+								},
+								"themes": {
+									"$ref": "#/definitions/Record%3Cstring%2CGraphTheme%3E"
 								},
 								"title": {
 									"type": "string"
@@ -532,6 +542,24 @@
 				"tool"
 			],
 			"type": "string"
+		},
+		"GraphTheme": {
+			"additionalProperties": false,
+			"properties": {
+				"splashScreen": {
+					"$ref": "#/definitions/StoredDataCapabilityPart"
+				},
+				"template": {
+					"type": "string"
+				},
+				"templateAdditionalOptions": {
+					"$ref": "#/definitions/Record%3Cstring%2Cstring%3E"
+				},
+				"themeColors": {
+					"$ref": "#/definitions/Record%3Cstring%2Cstring%3E"
+				}
+			},
+			"type": "object"
 		},
 		"Import": {
 			"additionalProperties": false,
@@ -1008,6 +1036,12 @@
 			},
 			"type": "object"
 		},
+		"Record<string,GraphTheme>": {
+			"additionalProperties": {
+				"$ref": "#/definitions/GraphTheme"
+			},
+			"type": "object"
+		},
 		"Record<string,NodeValue>": {
 			"additionalProperties": {
 				"$ref": "#/definitions/NodeValue"
@@ -1066,6 +1100,32 @@
 			},
 			"required": [
 				"reference"
+			],
+			"type": "object"
+		},
+		"StoredDataCapabilityPart": {
+			"additionalProperties": false,
+			"description": "Represents data that is stored by a DataStoreProvider.",
+			"properties": {
+				"storedData": {
+					"additionalProperties": false,
+					"properties": {
+						"handle": {
+							"$ref": "#/definitions/DataStoreHandle"
+						},
+						"mimeType": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"handle",
+						"mimeType"
+					],
+					"type": "object"
+				}
+			},
+			"required": [
+				"storedData"
 			],
 			"type": "object"
 		},

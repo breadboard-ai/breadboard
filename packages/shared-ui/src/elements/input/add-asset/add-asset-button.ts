@@ -14,6 +14,9 @@ import {
 
 @customElement("bb-add-asset-button")
 export class AddAssetButton extends LitElement {
+  @property({ type: Boolean })
+  accessor disabled = false;
+
   @property()
   accessor useGlobalPosition = true;
 
@@ -123,6 +126,7 @@ export class AddAssetButton extends LitElement {
     }
 
     return html`<button
+        ?disabled=${this.disabled}
         @click=${(evt: Event) => {
           if (!(evt.target instanceof HTMLButtonElement)) {
             return;

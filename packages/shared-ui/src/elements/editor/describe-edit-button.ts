@@ -52,7 +52,7 @@ export class DescribeEditButton extends LitElement {
 
       #panel {
         position: absolute;
-        top: calc(36px + 8px);
+        bottom: calc(36px + 8px);
         right: 0;
         width: 340px;
       }

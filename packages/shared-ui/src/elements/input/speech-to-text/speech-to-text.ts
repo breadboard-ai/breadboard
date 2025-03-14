@@ -5,7 +5,7 @@
  */
 import { Task } from "@lit/task";
 import { LitElement, html, css, nothing } from "lit";
-import { customElement } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { Utterance } from "../../../types/types";
 import { UtteranceEvent } from "../../../events/events";
 
@@ -31,9 +31,20 @@ declare global {
 
 @customElement("bb-speech-to-text")
 export class SpeechToText extends LitElement {
+  @property({ type: Boolean })
+  accessor disabled = false;
+
   static styles = css`
     :host {
       display: block;
+    }
+
+    #checking-permission {
+      width: var(--button-size, 40px);
+      height: var(--button-size, 40px);
+      font-size: 0;
+
+      background: var(--bb-progress) center center / 20px 20px no-repeat;
     }
 
     button {
@@ -44,8 +55,6 @@ export class SpeechToText extends LitElement {
         )
         var(--bb-icon-mic) center center / 20px 20px no-repeat;
 
-      width: 40px;
-      height: 40px;
       font-size: 0;
       border: none;
       border-radius: 50%;
@@ -157,11 +166,12 @@ export class SpeechToText extends LitElement {
 
     return this.#permissionTask.render({
       pending: () => {
-        return html`Checking permission`;
+        return html`<div id="checking-permission">Checking permission</div>`;
       },
 
       complete: () => {
         return html`<button
+          ?disabled=${this.disabled}
           @pointerdown=${(evt: PointerEvent) => {
             if (!(evt.target instanceof HTMLElement)) {
               return;
@@ -171,7 +181,6 @@ export class SpeechToText extends LitElement {
             this.#startTranscription();
           }}
           @pointerup=${() => {
-            console.log("Stop!");
             this.#stopTranscription();
           }}
         >
@@ -181,6 +190,7 @@ export class SpeechToText extends LitElement {
 
       error: () => {
         return html`<button
+          ?disabled=${this.disabled}
           @pointerdown=${() => {
             this.#requestPermission();
           }}

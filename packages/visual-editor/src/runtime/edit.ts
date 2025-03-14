@@ -40,6 +40,7 @@ import {
   GraphIdentifier,
   GraphMetadata,
   GraphTag,
+  GraphTheme,
   Module,
   ModuleCode,
   ModuleIdentifier,
@@ -327,6 +328,84 @@ export class Edit extends EventTarget {
 
     const history = editableGraph.history();
     return history.redo();
+  }
+
+  async createTheme(tab: Tab | null, theme: GraphTheme) {
+    const editableGraph = this.getEditor(tab);
+    if (!editableGraph) {
+      this.dispatchEvent(
+        new RuntimeErrorEvent("Unable to edit subboard; no active board")
+      );
+      return;
+    }
+
+    const metadata: GraphMetadata = editableGraph.raw().metadata ?? {};
+    metadata.visual ??= {};
+    metadata.visual.presentation ??= {};
+    metadata.visual.presentation.themes ??= {};
+
+    const id = globalThis.crypto.randomUUID();
+    metadata.visual.presentation.themes[id] = theme;
+    metadata.visual.presentation.theme = id;
+
+    return editableGraph.edit(
+      [{ type: "changegraphmetadata", metadata, graphId: "" }],
+      "Updating theme"
+    );
+  }
+
+  async changeTheme(tab: Tab | null, theme: string) {
+    const editableGraph = this.getEditor(tab);
+    if (!editableGraph) {
+      this.dispatchEvent(
+        new RuntimeErrorEvent("Unable to edit subboard; no active board")
+      );
+      return;
+    }
+
+    const metadata: GraphMetadata = editableGraph.raw().metadata ?? {};
+    metadata.visual ??= {};
+    metadata.visual.presentation ??= {};
+    metadata.visual.presentation.themes ??= {};
+
+    if (!metadata.visual.presentation.themes[theme]) {
+      this.dispatchEvent(new RuntimeErrorEvent("Theme does not exist"));
+      return;
+    }
+
+    metadata.visual.presentation.theme = theme;
+
+    return editableGraph.edit(
+      [{ type: "changegraphmetadata", metadata, graphId: "" }],
+      "Updating theme"
+    );
+  }
+
+  async updateTheme(tab: Tab | null, themeId: string, theme: GraphTheme) {
+    const editableGraph = this.getEditor(tab);
+    if (!editableGraph) {
+      this.dispatchEvent(
+        new RuntimeErrorEvent("Unable to edit subboard; no active board")
+      );
+      return;
+    }
+
+    const metadata: GraphMetadata = editableGraph.raw().metadata ?? {};
+    metadata.visual ??= {};
+    metadata.visual.presentation ??= {};
+    metadata.visual.presentation.themes ??= {};
+
+    if (!metadata.visual.presentation.themes[themeId]) {
+      this.dispatchEvent(new RuntimeErrorEvent("Theme does not exist"));
+      return;
+    }
+
+    metadata.visual.presentation.themes[themeId] = theme;
+
+    return editableGraph.edit(
+      [{ type: "changegraphmetadata", metadata, graphId: "" }],
+      "Updating theme"
+    );
   }
 
   async applyTheme(
