@@ -22,6 +22,8 @@ import { repeat } from "lit/directives/repeat.js";
 import {
   AssetMetadata,
   AssetPath,
+  LLMContent,
+  NodeValue,
   ParameterMetadata,
 } from "@breadboard-ai/types";
 import { classMap } from "lit/directives/class-map.js";
@@ -491,6 +493,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
 
   #paramTitleInputRef: Ref<HTMLInputElement> = createRef();
   #paramDescriptionInputRef: Ref<HTMLTextAreaElement> = createRef();
+  #paramModalityInputRef: Ref<HTMLTextAreaElement> = createRef();
   #paramSampleValueInputRef: Ref<HTMLTextAreaElement> = createRef();
   #addDriveInputRef: Ref<GoogleDriveFileId> = createRef();
   #uploadInputRef: Ref<HTMLInputElement> = createRef();
@@ -642,6 +645,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
       !this.#paramTitleInputRef.value ||
       !this.#paramDescriptionInputRef.value ||
       !this.#paramSampleValueInputRef.value ||
+      !this.#paramModalityInputRef.value ||
       !this.editParameterContent
     ) {
       this.editParameterContent = null;
@@ -652,6 +656,8 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
     if (param) {
       param.title = this.#paramTitleInputRef.value.value;
       param.description = this.#paramDescriptionInputRef.value.value;
+      param.modality = [this.#paramModalityInputRef.value.value];
+      param.sample = toLLMContent(this.#paramSampleValueInputRef.value.value);
 
       this.state?.changeParameterMetadata(
         this.editParameterContent.path,
@@ -1124,13 +1130,26 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                                 )}
                               ></textarea>
 
+                              <label for="modality">Type</label>
+                              <input
+                                type="text"
+                                disabled
+                                id="modality"
+                                ${ref(this.#paramModalityInputRef)}
+                                .value=${"text"}
+                                placeholder=${Strings.from(
+                                  "LABEL_ENTER_MODALITY"
+                                )}
+                              />
+
                               <label for="sample-value">Sample Value</label>
                               <textarea
-                                disabled
                                 id="sample-value"
                                 ${ref(this.#paramSampleValueInputRef)}
                                 .value=${""}
-                                placeholder="Sample values are not supported yet"
+                                placeholder=${Strings.from(
+                                  "LABEL_ENTER_SAMPLE"
+                                )}
                               ></textarea>
                             `
                           : html`
@@ -1236,4 +1255,11 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
       />
       ${addOverflowMenu}`;
   }
+}
+
+function toLLMContent(text: string): NodeValue {
+  const c: LLMContent = {
+    parts: [{ text }],
+  };
+  return c as NodeValue;
 }

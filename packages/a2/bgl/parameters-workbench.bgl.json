@@ -71,7 +71,17 @@
           "a2-b14f4e35",
           "a2-afbf013b"
         ],
-        "description": "Enter the city where the business is located"
+        "description": "Enter the city where the business is located",
+        "modality": [
+          "text"
+        ],
+        "sample": {
+          "parts": [
+            {
+              "text": "Birmingham, AL"
+            }
+          ]
+        }
       },
       "business": {
         "title": "Business Name",

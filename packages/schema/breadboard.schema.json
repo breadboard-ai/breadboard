@@ -527,6 +527,45 @@
 				"description": {
 					"type": "string"
 				},
+				"modality": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					},
+					"description": "A list of modality hints that define the kind of content the parameter may contain."
+				},
+				"sample": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "number"
+						},
+						{
+							"type": "boolean"
+						},
+						{
+							"type": "null"
+						},
+						{
+							"type": "array",
+							"items": {
+								"$ref": "#/definitions/NodeValue"
+							}
+						},
+						{
+							"$ref": "#/definitions/Capability"
+						},
+						{
+							"type": "object",
+							"additionalProperties": {
+								"$ref": "#/definitions/NodeValue"
+							}
+						}
+					],
+					"description": "Sample value that will be provided as part of the user input Must be LLMContent[], but is typed as NodeValue because for some reason, GraphDescriptor doesn't like LLMContent[] here."
+				},
 				"usedIn": {
 					"type": "array",
 					"items": {
