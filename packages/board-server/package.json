@@ -140,7 +140,7 @@
       "output": []
     },
     "update-sandbox-runtime": {
-      "command": "tsx src/update-sandbox-runtime.ts",
+      "command": "tsx scripts/update-sandbox-runtime.ts",
       "dependencies": [
         "../jsandbox#build"
       ],
