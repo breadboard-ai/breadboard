@@ -61,7 +61,29 @@
     }
   ],
   "metadata": {
-    "visual": {},
+    "visual": {
+      "presentation": {
+        "themes": {
+          "6c30a931-5de7-43e3-b5b8-905219dd943c": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "6c30a931-5de7-43e3-b5b8-905219dd943c"
+      }
+    },
     "userModified": true,
     "tags": [],
     "parameters": {

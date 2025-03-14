@@ -20,6 +20,7 @@ import {
   invokeMainDescriber,
 } from "../../sandboxed-run-module.js";
 import { invokeGraph } from "../../run/invoke-graph.js";
+import { ParameterManager } from "../../run/parameter-manager.js";
 
 export { GraphDescriberManager };
 
@@ -28,10 +29,14 @@ export { GraphDescriberManager };
  * describing a node or a graph
  */
 class GraphDescriberManager {
+  private readonly params: ParameterManager;
+
   private constructor(
     public readonly handle: GraphDescriptorHandle,
     public readonly mutable: MutableGraph
-  ) {}
+  ) {
+    this.params = new ParameterManager(handle.graph());
+  }
 
   #nodesByType(type: NodeTypeIdentifier): InspectableNode[] {
     return this.mutable.nodes.byType(type, this.handle.graphId);
@@ -116,6 +121,7 @@ class GraphDescriberManager {
               type: "array",
               items: { type: "object", behavior: ["llm-content"] },
             },
+            ...this.params.propertiesSchema(),
           },
         },
         outputSchema: {

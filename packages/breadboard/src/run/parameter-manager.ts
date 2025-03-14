@@ -8,6 +8,7 @@ import {
   GraphDescriptor,
   InputValues,
   LLMContent,
+  NodeConfiguration,
   NodeDescriptor,
   TraversalResult,
 } from "@breadboard-ai/types";
@@ -32,17 +33,40 @@ class ParameterManager {
     this.inputs = inputs;
   }
 
-  async requestParameters(
-    context: NodeHandlerContext,
-    path: number[],
-    result: TraversalResult
-  ): Promise<NodeHandlerContext> {
-    const { inputs, graph } = this;
-    const { descriptor } = result;
-    const { configuration } = descriptor;
-    if (!configuration) return context;
+  propertiesSchema(): Record<string, Schema> {
+    const params = this.#scanGraph();
 
-    const knownInputs = new Set(Object.keys(inputs || {}));
+    return Object.fromEntries(
+      params.map((param) => {
+        const id = param.path;
+        return [
+          id,
+          {
+            type: "object",
+            behavior: ["llm-content"],
+            description: param.title,
+          },
+        ];
+      })
+    );
+  }
+
+  #scanGraph(): TemplatePart[] {
+    const knownParams = new Set(Object.keys(this.inputs || {}));
+    return this.graph.nodes
+      .map(({ configuration }) => {
+        if (!configuration) return null;
+
+        return this.#scanConfiguration(knownParams, configuration);
+      })
+      .filter((item) => item !== null)
+      .flat();
+  }
+
+  #scanConfiguration(
+    knownParams: Set<string>,
+    configuration: NodeConfiguration
+  ): TemplatePart[] {
     const params: TemplatePart[] = [];
 
     // Scan for all LLMContent/LLMContent[] properties
@@ -62,15 +86,31 @@ class ParameterManager {
           template.placeholders.forEach((placeholder) => {
             if (
               placeholder.type === "param" &&
-              !knownInputs.has(placeholder.path)
+              !knownParams.has(placeholder.path)
             ) {
               params.push(placeholder);
+              knownParams.add(placeholder.path);
             }
           });
         }
       });
     });
 
+    return params;
+  }
+
+  async requestParameters(
+    context: NodeHandlerContext,
+    path: number[],
+    result: TraversalResult
+  ): Promise<NodeHandlerContext> {
+    const { inputs, graph } = this;
+    const { descriptor } = result;
+    const { configuration } = descriptor;
+    if (!configuration) return context;
+
+    const knownInputs = new Set(Object.keys(this.inputs || {}));
+    const params = this.#scanConfiguration(knownInputs, configuration);
     const parameterInputs: FileSystemEntry[] = [];
 
     if (params.length > 0) {
