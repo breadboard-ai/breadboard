@@ -11,6 +11,7 @@ import {
   InputValues,
   ModuleIdentifier,
 } from "@breadboard-ai/types";
+import { Outcome } from "../../data/types.js";
 import {
   Edge,
   GraphDescriptor,
@@ -27,9 +28,8 @@ import {
   InspectableSubgraphs,
   MutableGraph,
 } from "../types.js";
-import { GraphDescriberManager } from "./describer-manager.js";
+import { GraphDescriberManager } from "./graph-describer-manager.js";
 import { GraphQueries } from "./graph-queries.js";
-import { Outcome } from "../../data/types.js";
 
 export { Graph };
 

@@ -11,7 +11,7 @@ import {
   NodeDescriptor,
   TraversalResult,
 } from "@breadboard-ai/types";
-import { GraphToRun, NodeHandlerContext, Schema } from "../types.js";
+import { NodeHandlerContext, Schema } from "../types.js";
 import { Template, TemplatePart } from "../utils/template.js";
 import {
   isLLMContent,
@@ -24,10 +24,10 @@ import { bubbleUpInputsIfNeeded } from "../bubble.js";
 export { ParameterManager };
 
 class ParameterManager {
-  private readonly graph: GraphToRun;
+  private readonly graph: GraphDescriptor;
   private readonly inputs?: InputValues;
 
-  constructor(graph: GraphToRun, inputs?: InputValues) {
+  constructor(graph: GraphDescriptor, inputs?: InputValues) {
     this.graph = graph;
     this.inputs = inputs;
   }
@@ -90,7 +90,7 @@ class ParameterManager {
 
       // TODO: Implement support for multiple inputs at once.
       for (const [idx, param] of params.entries()) {
-        const metadata = graph.graph.metadata?.parameters?.[param.path];
+        const metadata = graph.metadata?.parameters?.[param.path];
         const format = metadata?.modality?.join(",") || "text";
         const firstSample = (metadata?.sample as LLMContent[])?.at(0);
         const sample = firstSample
@@ -130,7 +130,7 @@ class ParameterManager {
         const paramsResult = { ...result, inputs: { schema } };
 
         await bubbleUpInputsIfNeeded(
-          graph.graph,
+          graph,
           context,
           paramDescriptor,
           paramsResult,
@@ -171,7 +171,7 @@ class ParameterManager {
     return {
       ...context,
       fileSystem: context.fileSystem?.createModuleFileSystem({
-        graphUrl: graph.graph.url!,
+        graphUrl: graph.url!,
         env: updateEnv(parameterInputs, context.fileSystem, inputs),
       }),
     };

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriberManager } from "../inspector/graph/describer-manager.js";
+import { GraphDescriberManager } from "../inspector/graph/graph-describer-manager.js";
 import { MutableGraphImpl } from "../inspector/graph/mutable-graph.js";
 import { MutableGraphStore } from "../inspector/types.js";
 import { loadWithFetch } from "../loader/default.js";

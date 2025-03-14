@@ -39,7 +39,7 @@ export class NodeInvoker {
     this.#graph = graph;
     this.#context = context;
     this.#initialInputs = inputs;
-    this.#params = new ParameterManager(graph, inputs);
+    this.#params = new ParameterManager(graph.graph, inputs);
   }
 
   #adjustInputs(result: TraversalResult) {
