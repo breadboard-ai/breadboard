@@ -27,6 +27,7 @@ import {
   InspectableRun,
   InspectableRunSecretEvent,
   isLLMContent,
+  isTextCapabilityPart,
 } from "@google-labs/breadboard";
 import { styleMap } from "lit/directives/style-map.js";
 import {
@@ -88,7 +89,16 @@ export class Template extends LitElement implements AppTemplate {
   accessor showGDrive = false;
 
   @property()
+  accessor isInSelectionState = false;
+
+  @property()
+  accessor showingOlderResult = false;
+
+  @property()
   accessor state: SigninState = "anonymous";
+
+  @property({ reflect: true, type: Boolean })
+  accessor hasRenderedSplash = false;
 
   @state()
   accessor showAddAssetModal = false;
@@ -154,6 +164,16 @@ export class Template extends LitElement implements AppTemplate {
 
       /** General styles */
 
+      :host([hasrenderedsplash]) {
+        @scope (.app-template) {
+          & #content {
+            & #splash {
+              animation: none;
+            }
+          }
+        }
+      }
+
       @scope (.app-template) {
         :scope {
           background: var(--background-color);
@@ -202,7 +222,34 @@ export class Template extends LitElement implements AppTemplate {
             }
           }
 
-          #splash {
+          #preview-step-not-run {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            flex: 1;
+            animation: fadeIn 1s cubic-bezier(0, 0, 0.3, 1);
+            padding: 0 var(--bb-grid-size-8);
+            font: 400 var(--font-style, normal) var(--bb-title-medium) /
+              var(--bb-title-line-height-medium)
+              var(--font-family, var(--bb-font-family));
+            color: var(--text-color, var(--bb-neutral-900));
+
+            & h1 {
+              font: 500 var(--font-style, normal) var(--bb-title-large) /
+                var(--bb-title-line-height-large)
+                var(--font-family, var(--bb-font-family));
+              color: var(--primary-color, var(--bb-neutral-900));
+              margin: 0 0 var(--bb-grid-size) 0;
+            }
+
+            & p {
+              color: var(--text-color, var(--bb-neutral-700));
+              margin: 0 0 var(--bb-grid-size-2) 0;
+            }
+          }
+
+          & #splash {
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -258,6 +305,30 @@ export class Template extends LitElement implements AppTemplate {
             height: 76px;
             border-bottom: 1px solid var(--secondary-color, var(--bb-neutral-0));
             padding: 0 var(--bb-grid-size-4);
+            position: relative;
+
+            #older-data {
+              position: absolute;
+              width: max-content;
+              max-width: 70%;
+              text-align: center;
+              left: 50%;
+              top: 50%;
+              user-select: none;
+              transform: translate(-50%, -50%);
+              padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
+              font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+                var(--bb-font-family);
+              background: var(--bb-ui-50);
+              color: var(--bb-ui-800);
+              border-radius: var(--bb-grid-size-2);
+              opacity: 0;
+              transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+
+              &.active {
+                opacity: 1;
+              }
+            }
 
             #progress {
               width: 100px;
@@ -618,6 +689,7 @@ export class Template extends LitElement implements AppTemplate {
   ];
 
   #inputRef: Ref<HTMLDivElement> = createRef();
+  #splashRef: Ref<HTMLDivElement> = createRef();
   #assetShelfRef: Ref<AssetShelf> = createRef();
 
   #renderControls(topGraphResult: TopGraphRunResult) {
@@ -657,6 +729,14 @@ export class Template extends LitElement implements AppTemplate {
             Share
           </button>`
         : html`<div id="share"></div>`}
+      <div
+        id="older-data"
+        class=${classMap({
+          active: this.isInSelectionState && this.showingOlderResult,
+        })}
+      >
+        Viewing data from an earlier step. Newer data is available.
+      </div>
     </div>`;
   }
 
@@ -790,9 +870,7 @@ export class Template extends LitElement implements AppTemplate {
         <p>&nbsp;</p>
       </div>
 
-      <div class="controls">
-        <button id="continue" disabled>Continue</button>
-      </div>`;
+      <div class="controls"></div>`;
 
     const continueRun = (id: string) => {
       if (!this.#inputRef.value) {
@@ -859,14 +937,16 @@ export class Template extends LitElement implements AppTemplate {
     const currentItem = topGraphResult.log.at(-1);
     if (currentItem?.type === "edge") {
       const props = Object.entries(currentItem.schema?.properties ?? {});
-      if (props.length > 0) {
+      if (props.length > 0 && currentItem.descriptor?.type === "input") {
         active = true;
+        const disabled = currentItem.value !== undefined;
 
         inputContents = html`
           <bb-add-asset-button
             .anchor=${"above"}
             .useGlobalPosition=${false}
             .showGDrive=${this.showGDrive}
+            ?disabled=${disabled}
           ></bb-add-asset-button>
 
           ${repeat(props, ([name, schema]) => {
@@ -875,6 +955,17 @@ export class Template extends LitElement implements AppTemplate {
               : isLLMContentBehavior(schema)
                 ? "llm-content"
                 : "string";
+
+            const propValue = currentItem.value?.[name];
+            let inputValue = "";
+            if (isLLMContent(propValue)) {
+              for (const part of propValue.parts) {
+                if (isTextCapabilityPart(part)) {
+                  inputValue = part.text;
+                }
+              }
+            }
+
             return html`<div class="user-input">
               <p>
                 ${schema.description ? html`${schema.description}` : nothing}
@@ -885,7 +976,8 @@ export class Template extends LitElement implements AppTemplate {
                 name=${name}
                 type="text"
                 data-type=${dataType}
-                .value=${""}
+                .value=${inputValue}
+                ?disabled=${disabled}
               ></textarea>
               <bb-asset-shelf ${ref(this.#assetShelfRef)}></bb-asset-shelf>
             </div>`;
@@ -893,6 +985,7 @@ export class Template extends LitElement implements AppTemplate {
 
           <div class="controls">
             <bb-speech-to-text
+              ?disabled=${disabled}
               @bbutterance=${(evt: UtteranceEvent) => {
                 if (!this.#inputRef.value) {
                   return;
@@ -913,6 +1006,7 @@ export class Template extends LitElement implements AppTemplate {
             ></bb-speech-to-text>
             <button
               id="continue"
+              ?disabled=${disabled}
               @click=${() => {
                 continueRun(currentItem.id ?? "unknown");
               }}
@@ -953,6 +1047,7 @@ export class Template extends LitElement implements AppTemplate {
           </div>
         `;
       } else {
+        active = true;
         inputContents = placeholder;
       }
     } else {
@@ -1010,6 +1105,16 @@ export class Template extends LitElement implements AppTemplate {
     }
   }
 
+  updated() {
+    if (this.#splashRef) {
+      // If we have rendered the splash switch of fade-in animations on it
+      // for all future updates.
+      requestAnimationFrame(() => {
+        this.hasRenderedSplash = true;
+      });
+    }
+  }
+
   render() {
     const classes: Record<string, boolean> = {
       "app-template": true,
@@ -1058,7 +1163,7 @@ export class Template extends LitElement implements AppTemplate {
     }
 
     const splashScreen = html`
-      <div id="splash">
+      <div id="splash" ${ref(this.#splashRef)}>
         <h1>${this.options.title}</h1>
         ${this.options.description
           ? html`<p>${this.options.description}</p>`
@@ -1107,6 +1212,27 @@ export class Template extends LitElement implements AppTemplate {
       ></bb-add-asset-modal>`;
     }
 
+    let content: HTMLTemplateResult | symbol = html`${(styles[
+      "--splash-image"
+    ] &&
+      this.topGraphResult.status === "stopped" &&
+      this.topGraphResult.log.length === 0) ||
+    this.#totalNodeCount === 0
+      ? splashScreen
+      : [
+          this.#renderControls(this.topGraphResult),
+          this.#renderActivity(this.topGraphResult),
+          this.#renderInput(this.topGraphResult),
+          addAssetModal,
+        ]}`;
+
+    if (this.isInSelectionState && this.topGraphResult.log.length === 0) {
+      content = html`<div id="preview-step-not-run">
+        <h1>No data available</h1>
+        <p>This step has yet to run</p>
+      </div>`;
+    }
+
     return html`<section
       class=${classMap(classes)}
       style=${styleMap(styles)}
@@ -1115,19 +1241,7 @@ export class Template extends LitElement implements AppTemplate {
         this.#addAssetType = evt.assetType;
       }}
     >
-      <div id="content">
-        ${(styles["--splash-image"] &&
-          this.topGraphResult.status === "stopped" &&
-          this.topGraphResult.log.length === 0) ||
-        this.#totalNodeCount === 0
-          ? splashScreen
-          : [
-              this.#renderControls(this.topGraphResult),
-              this.#renderActivity(this.topGraphResult),
-              this.#renderInput(this.topGraphResult),
-              addAssetModal,
-            ]}
-      </div>
+      <div id="content">${content}</div>
     </section>`;
   }
 }

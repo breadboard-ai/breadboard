@@ -30,36 +30,70 @@ export const styles = css`
     height: 100%;
   }
 
-  #theme-management {
-    position: absolute;
-    top: 32px;
-    left: 32px;
-    background: var(--bb-neutral-0);
-    border-radius: 4px;
-    border: 1px solid var(--bb-neutral-300);
-    z-index: 10;
-  }
-
   #container {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
+
     width: 100%;
     height: 100%;
-    background: var(--bb-ui-50);
+    background: var(--bb-neutral-0);
     position: relative;
-    padding: var(--bb-grid-size-12);
+    padding: var(--bb-grid-size-4);
+
+    & #status {
+      padding: var(--bb-grid-size-2);
+      border-radius: var(--bb-grid-size-2);
+      background: var(--bb-ui-50);
+      color: var(--bb-ui-700);
+      opacity: 0;
+      transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      margin-bottom: var(--bb-grid-size-3);
+
+      &.active {
+        opacity: 1;
+      }
+    }
 
     --output-border-width: 1px;
     --output-border-color: var(--bb-neutral-300);
     --output-border-radius: var(--bb-grid-size-4);
     --output-padding: var(--bb-grid-size-5);
 
+    & #designer {
+      padding-bottom: var(--bb-grid-size-3);
+
+      & button {
+        border: none;
+        border-radius: var(--bb-grid-size-16);
+        background: var(--bb-icon-palette) var(--bb-neutral-100) 8px center /
+          20px 20px no-repeat;
+        font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
+          var(--bb-font-family);
+        height: var(--bb-grid-size-8);
+        padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-8);
+        transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
+
+        &:not([disabled]) {
+          cursor: pointer;
+
+          &:focus,
+          &:hover {
+            background-color: var(--bb-neutral-300);
+          }
+        }
+      }
+    }
+
     & #content {
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
+      width: 100%;
+
       margin: 0 auto;
       max-width: 450px;
       max-height: 100%;
@@ -71,13 +105,16 @@ export const styles = css`
       position: relative;
       background: var(--background-color, var(--bb-neutral-0));
       border-radius: var(--bb-grid-size-4);
-      border: 1px solid var(--bb-neutral-300);
+
+      &.active {
+        border: 1px solid var(--bb-neutral-300);
+      }
 
       & .loading {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 100svw;
+        width: 100%;
 
         & .loading-message {
           display: flex;

@@ -18,6 +18,27 @@ export const styles = css`
     color: var(--bb-neutral-900);
   }
 
+  :host([showthemedesigner]) {
+    #graph-container::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      background: oklch(from var(--bb-neutral-900) l c h / 33%);
+      width: 100%;
+      height: 100%;
+      z-index: 5;
+    }
+
+    bb-app-theme-creator {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      right: var(--bb-grid-size-5);
+      z-index: 6;
+    }
+  }
+
   #controls-activity,
   #create-view {
     width: 100%;
@@ -558,12 +579,66 @@ export const styles = css`
     background: var(--bb-ui-50);
   }
 
-  #create-view-sidenav,
+  #side-nav,
   #graph-container {
     width: 100%;
     height: 100%;
     overflow: hidden;
     position: relative;
+  }
+
+  #side-nav {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    z-index: 2;
+    border-left: 1px solid var(--bb-neutral-300);
+
+    & #side-nav-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      padding-top: var(--bb-grid-size-3);
+      height: var(--bb-grid-size-11);
+      border-bottom: 1px solid var(--bb-neutral-300);
+
+      & button {
+        font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
+          var(--bb-font-family);
+        background: none;
+        color: var(--bb-neutral-900);
+        height: 32px;
+        border: none;
+        margin: var(--bb-grid-size-2);
+        padding: 0 var(--bb-grid-size-2);
+        position: relative;
+        display: flex;
+        align-items: flex-start;
+        cursor: pointer;
+
+        &[disabled] {
+          color: var(--bb-neutral-900);
+          cursor: auto;
+
+          &::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            border-radius: var(--bb-grid-size) var(--bb-grid-size) 0 0;
+            background: var(--bb-ui-500);
+            height: 3px;
+          }
+        }
+      }
+    }
+
+    & #side-nav-content {
+      height: calc(100% - var(--bb-grid-size-11));
+    }
   }
 
   bb-workspace-outline,
@@ -590,27 +665,6 @@ export const styles = css`
       var(--bb-font-family);
     border-bottom: 1px solid var(--bb-neutral-300);
     justify-content: space-between;
-  }
-
-  #side-nav {
-    background: var(--bb-neutral-600);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    position: relative;
-    z-index: 2;
-  }
-
-  #side-nav-top {
-    padding: var(--bb-grid-size-2);
-  }
-
-  #side-nav-top > * {
-    margin-top: var(--bb-grid-size);
-  }
-
-  #side-nav-top > *:first-of-type {
-    margin-top: 0;
   }
 
   #create-new {

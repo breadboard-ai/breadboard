@@ -352,6 +352,16 @@
 								},
 								"linkToSource": {
 									"type": "string"
+								},
+								"theme": {
+									"type": "string",
+									"description": "The collection of themes and the chosen theme for this graph."
+								},
+								"themes": {
+									"type": "object",
+									"additionalProperties": {
+										"$ref": "#/definitions/GraphTheme"
+									}
 								}
 							},
 							"additionalProperties": false
@@ -517,6 +527,59 @@
 			],
 			"additionalProperties": false,
 			"description": "Represents inline data, encoded as a base64 string."
+		},
+		"GraphTheme": {
+			"type": "object",
+			"properties": {
+				"themeColors": {
+					"type": "object",
+					"additionalProperties": {
+						"type": "string"
+					}
+				},
+				"template": {
+					"type": "string"
+				},
+				"templateAdditionalOptions": {
+					"type": "object",
+					"additionalProperties": {
+						"type": "string"
+					}
+				},
+				"splashScreen": {
+					"$ref": "#/definitions/StoredDataCapabilityPart"
+				}
+			},
+			"additionalProperties": false
+		},
+		"StoredDataCapabilityPart": {
+			"type": "object",
+			"properties": {
+				"storedData": {
+					"type": "object",
+					"properties": {
+						"handle": {
+							"$ref": "#/definitions/DataStoreHandle"
+						},
+						"mimeType": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"handle",
+						"mimeType"
+					],
+					"additionalProperties": false
+				}
+			},
+			"required": [
+				"storedData"
+			],
+			"additionalProperties": false,
+			"description": "Represents data that is stored by a DataStoreProvider."
+		},
+		"DataStoreHandle": {
+			"type": "string"
 		},
 		"ParameterMetadata": {
 			"type": "object",

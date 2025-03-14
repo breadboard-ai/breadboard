@@ -65,6 +65,7 @@ import {
 import { sandbox } from "./sandbox";
 import {
   GraphIdentifier,
+  GraphTheme,
   InputValues,
   LLMContent,
   Module,
@@ -85,7 +86,6 @@ import { OverflowAction } from "@breadboard-ai/shared-ui/types/types.js";
 import { MAIN_BOARD_ID } from "@breadboard-ai/shared-ui/constants/constants.js";
 
 const STORAGE_PREFIX = "bb-main";
-const VIEW_KEY = "bb-main-view";
 const LOADING_TIMEOUT = 250;
 
 export type MainArguments = {
@@ -189,9 +189,6 @@ export class Main extends LitElement {
 
   @state()
   accessor showNewWorkspaceItemOverlay = false;
-
-  @state()
-  accessor view: "deploy" | "create" = "create";
 
   @state()
   accessor showBoardOverflowMenu = false;
@@ -875,11 +872,6 @@ export class Main extends LitElement {
     window.addEventListener("pointerdown", this.#hidePalettesAndTooltipBound);
     window.addEventListener("keydown", this.#onKeyDownBound);
     window.addEventListener("bbrundownload", this.#downloadRunBound);
-
-    const view = globalThis.localStorage.getItem(VIEW_KEY);
-    if (view) {
-      this.view = view === "deploy" ? "deploy" : "create";
-    }
   }
 
   disconnectedCallback(): void {
@@ -3231,23 +3223,6 @@ export class Main extends LitElement {
               }
 
             </div>
-            <div id="tab-toggle">
-              ${
-                this.tab
-                  ? html`<button
-                      class=${classMap({ [this.view]: true })}
-                      @click=${() => {
-                        this.view =
-                          this.view === "create" ? "deploy" : "create";
-
-                        globalThis.localStorage.setItem(VIEW_KEY, this.view);
-                      }}
-                    >
-                      Toggle View
-                    </button>`
-                  : nothing
-              }
-            </div>
             <div id="tab-controls">
               ${
                 this.tab
@@ -3373,7 +3348,6 @@ export class Main extends LitElement {
         <bb-ui-controller
               ${ref(this.#uiRef)}
               ?inert=${showingOverlay}
-              .mainView=${this.view}
               .runStore=${this.#runStore}
               .sandbox=${sandbox}
               .fileSystem=${this.#fileSystem}
@@ -3743,13 +3717,44 @@ export class Main extends LitElement {
               ) => {
                 await this.#attemptToggleExport(evt.exportId, evt.exportType);
               }}
-              @bbthemeapply=${async (
-                evt: BreadboardUI.Events.ThemeApplyEvent
+              @bbthemechange=${async (
+                evt: BreadboardUI.Events.ThemeChangeEvent
+              ) => {
+                await this.#runtime.edit.changeTheme(this.tab, evt.theme);
+              }}
+              @bbthemeupdate=${async (
+                evt: BreadboardUI.Events.ThemeUpdateEvent
+              ) => {
+                await this.#runtime.edit.updateTheme(
+                  this.tab,
+                  evt.themeId,
+                  evt.theme
+                );
+              }}
+              @bbthemedelete=${async (
+                evt: BreadboardUI.Events.ThemeUpdateEvent
+              ) => {
+                await this.#runtime.edit.deleteTheme(this.tab, evt.themeId);
+              }}
+              @bbthemecreate=${async (
+                evt: BreadboardUI.Events.ThemeCreateEvent
               ) => {
                 const projectState = this.#runtime.state.getOrCreate(
                   this.tab?.mainGraphId,
                   this.#runtime.edit.getEditor(this.tab)
                 );
+
+                const graphTheme: GraphTheme = {
+                  template: "basic",
+                  templateAdditionalOptions: {},
+                  themeColors: {
+                    primaryColor: evt.theme.primaryColor,
+                    secondaryColor: evt.theme.secondaryColor,
+                    backgroundColor: evt.theme.backgroundColor,
+                    primaryTextColor: evt.theme.primaryTextColor,
+                    textColor: evt.theme.textColor,
+                  },
+                };
 
                 // TODO: Show some status.
                 if (evt.theme.splashScreen) {
@@ -3767,31 +3772,21 @@ export class Main extends LitElement {
                       metadata: { title: "Splash", type: "file" },
                       data,
                     });
-                  } else if (isStoredData(evt.theme.splashScreen)) {
-                    if (
-                      evt.theme.splashScreen.storedData.handle !==
-                      projectState?.graphAssets.get("@@splash")?.path
-                    ) {
-                      await projectState?.organizer.addGraphAsset({
-                        path: "@@splash",
-                        metadata: { title: "Splash", type: "file" },
-                        data,
-                      });
+
+                    const splashScreen =
+                      projectState?.graphAssets.get("@@splash")?.data[0]
+                        ?.parts[0];
+                    if (isStoredData(splashScreen)) {
+                      graphTheme.splashScreen = splashScreen;
+                    } else {
+                      console.warn("Unable to save splash screen");
                     }
+
+                    await projectState?.organizer.removeGraphAsset("@@splash");
                   }
-                } else {
-                  // Removing the asset.
-                  await projectState?.organizer.removeGraphAsset("@@splash");
                 }
 
-                await this.#runtime.edit.applyTheme(
-                  this.tab,
-                  evt.theme,
-                  evt.appTitle,
-                  evt.appDescription,
-                  evt.template,
-                  evt.templateOptionsChosen
-                );
+                await this.#runtime.edit.createTheme(this.tab, graphTheme);
               }}
               @bbnoderunrequest=${async (
                 evt: BreadboardUI.Events.NodeRunRequestEvent

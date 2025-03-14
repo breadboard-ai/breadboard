@@ -103,9 +103,7 @@ const GRAPH_NODE_WIDTH = 260;
 const GRAPH_NODE_QUICK_ADD_GAP = 60;
 const QUICK_ADD_ADJUSTMENT = 40;
 const HEADER_PORT_ADJSUTMENT = 20;
-const QUICK_ADD_HEIGHT = 400;
 const HEADER_HEIGHT = 44;
-const MIN_QUICK_ADD_Y = 20;
 
 function getDefaultConfiguration(type: string): NodeConfiguration | undefined {
   if (type !== "input" && type !== "output") {
@@ -162,9 +160,6 @@ export class Editor extends LitElement implements DragConnectorReceiver {
 
   @property()
   accessor run: InspectableRun | null = null;
-
-  @property()
-  accessor offsetZoom = 0;
 
   @property()
   accessor boardId: number = -1;
@@ -330,7 +325,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
     @keyframes slideIn {
       from {
         opacity: 0;
-        translate: 0 -10px;
+        translate: 0 10px;
       }
 
       to {
@@ -419,7 +414,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
     #component-picker {
       position: fixed;
       left: var(--component-picker-x, 100px);
-      top: var(--component-picker-y, 100px);
+      bottom: var(--component-picker-y, 100px);
       z-index: 5;
       background: var(--bb-neutral-0);
       border: 1px solid var(--bb-neutral-300);
@@ -591,7 +586,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
     #floating-buttons {
       position: absolute;
       display: flex;
-      top: var(--bb-grid-size-3);
+      bottom: var(--bb-grid-size-10);
       left: 0;
       width: 100%;
       height: var(--bb-grid-size-9);
@@ -728,7 +723,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
 
     bb-graph-renderer {
       display: block;
-      width: 100svw;
+      width: 100%;
       height: 100%;
       outline: none;
       overflow: hidden;
@@ -736,9 +731,9 @@ export class Editor extends LitElement implements DragConnectorReceiver {
 
     bb-component-selector-overlay {
       position: absolute;
-      top: 57px;
+      bottom: 76px;
       left: 50%;
-      transform: translateX(-50%) translateX(-32px);
+      transform: translateX(-50%) translateX(-29px);
       z-index: 8;
       animation: slideIn 0.2s cubic-bezier(0, 0, 0.3, 1) forwards;
 
@@ -1767,14 +1762,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       if (this.#componentLibraryConfiguration) {
         let { x, y } = this.#componentLibraryConfiguration;
         x -= QUICK_ADD_ADJUSTMENT;
-        y -= QUICK_ADD_HEIGHT * 0.5;
-        if (y + QUICK_ADD_HEIGHT > window.innerHeight) {
-          y = window.innerHeight - QUICK_ADD_HEIGHT - QUICK_ADD_ADJUSTMENT;
-        }
-
-        if (y < MIN_QUICK_ADD_Y) {
-          y = MIN_QUICK_ADD_Y;
-        }
+        y -= QUICK_ADD_ADJUSTMENT;
 
         this.style.setProperty("--component-library-x", `${x}px`);
         this.style.setProperty("--component-library-y", `${y}px`);
@@ -1867,7 +1855,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       );
       this.style.setProperty(
         "--component-picker-y",
-        `${this.#componentPickerConfiguration.y}px`
+        `${window.innerHeight - this.#componentPickerConfiguration.y + QUICK_ADD_ADJUSTMENT}px`
       );
       let lastOrderIndex = 0;
       componentPicker = html`<div
@@ -2123,7 +2111,6 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       ${defaultAdd} ${componentLibrary} ${componentPicker}
       <bb-graph-renderer
         ${ref(this.#graphRendererRef)}
-        .offsetZoom=${this.offsetZoom}
         .topGraphUrl=${this.graph?.raw().url ?? "no-url"}
         .topGraphResult=${this.topGraphResult}
         .run=${this.run}

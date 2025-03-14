@@ -1203,8 +1203,9 @@ export class GraphNode extends PIXI.Container {
     this.#isDirty = true;
   }
 
+  // TODO: Remove properly.
   #hasVisibleOutputs() {
-    return this.type !== "input";
+    return false;
   }
 
   forceUpdateDimensions() {

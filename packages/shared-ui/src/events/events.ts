@@ -7,6 +7,7 @@
 import type {
   GraphIdentifier,
   GraphMetadata,
+  GraphTheme,
   LLMContent,
   ModuleCode,
   ModuleIdentifier,
@@ -1389,36 +1390,43 @@ export class SignOutEvent extends Event {
 export class ThemeChangeEvent extends Event {
   static eventName = "bbthemechange";
 
-  constructor(
-    public readonly theme: AppTheme,
-    public readonly appTitle: string | null,
-    public readonly appDescription: string | null,
-    public readonly template: string | null,
-    public readonly templateOptionsChosen: Record<string, string>
-  ) {
+  constructor(public readonly theme: string) {
     super(ThemeChangeEvent.eventName, { ...eventInit });
   }
 }
 
-export class ThemeApplyEvent extends Event {
-  static eventName = "bbthemeapply";
+export class ThemeCreateEvent extends Event {
+  static eventName = "bbthemecreate";
 
-  constructor(
-    public readonly theme: AppTheme,
-    public readonly appTitle: string | null,
-    public readonly appDescription: string | null,
-    public readonly template: string | null,
-    public readonly templateOptionsChosen: Record<string, string>
-  ) {
-    super(ThemeApplyEvent.eventName, { ...eventInit });
+  constructor(public readonly theme: AppTheme) {
+    super(ThemeCreateEvent.eventName, { ...eventInit });
   }
 }
 
-export class ThemeClearEvent extends Event {
-  static eventName = "bbthemeclear";
+export class ThemeDeleteEvent extends Event {
+  static eventName = "bbthemedelete";
+
+  constructor(public readonly themeId: string) {
+    super(ThemeDeleteEvent.eventName, { ...eventInit });
+  }
+}
+
+export class ThemeUpdateEvent extends Event {
+  static eventName = "bbthemeupdate";
+
+  constructor(
+    public readonly themeId: string,
+    public readonly theme: GraphTheme
+  ) {
+    super(ThemeUpdateEvent.eventName, { ...eventInit });
+  }
+}
+
+export class ThemeEditRequestEvent extends Event {
+  static eventName = "bbthemeeditrequest";
 
   constructor() {
-    super(ThemeClearEvent.eventName, { ...eventInit });
+    super(ThemeEditRequestEvent.eventName, { ...eventInit });
   }
 }
 

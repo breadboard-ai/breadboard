@@ -132,6 +132,17 @@ export class FirestoreStorageProvider implements RunBoardStateStore {
                 thumbnail = splashEntry.parts[0].storedData.handle;
               }
             }
+          } else if (
+            graphData.metadata?.visual?.presentation?.theme &&
+            graphData.metadata?.visual?.presentation?.themes
+          ) {
+            const { theme, themes } = graphData.metadata.visual.presentation;
+            if (
+              themes[theme] &&
+              themes[theme].splashScreen?.storedData?.handle
+            ) {
+              thumbnail = themes[theme].splashScreen.storedData.handle;
+            }
           }
         } catch (err) {
           // For errors just skip the thumbnail.

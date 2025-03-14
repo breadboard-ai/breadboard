@@ -108,9 +108,6 @@ export class GraphRenderer extends LitElement {
   @property()
   accessor run: InspectableRun | null = null;
 
-  @property()
-  accessor offsetZoom = 0;
-
   @property({ reflect: true })
   accessor invertZoomScrollDirection = false;
 
@@ -1237,15 +1234,14 @@ export class GraphRenderer extends LitElement {
     }
 
     const rendererBounds = this.getBoundingClientRect();
-    const rendererWidth = Math.max(rendererBounds.width - this.offsetZoom, 100);
     targetContainerMatrix.translate(
-      -bounds.x + (rendererWidth - bounds.width) * 0.5,
+      -bounds.x + (rendererBounds.width - bounds.width) * 0.5,
       -bounds.y + (rendererBounds.height - bounds.height) * 0.5
     );
 
     // Scale.
     let delta = Math.min(
-      (rendererWidth - 2 * this.padding) / bounds.width,
+      (rendererBounds.width - 2 * this.padding) / bounds.width,
       (rendererBounds.height - 2 * this.padding) / bounds.height,
       1
     );
@@ -1255,7 +1251,7 @@ export class GraphRenderer extends LitElement {
     }
 
     const pivot = {
-      x: rendererBounds.width / 2 - this.offsetZoom,
+      x: rendererBounds.width / 2,
       y: rendererBounds.height / 2,
     };
 
