@@ -62,6 +62,11 @@ class UpdateParameterMetadata implements EditTransform {
 
   async apply(context: EditOperationContext): Promise<EditTransformResult> {
     const graphId = this.graphId;
+    if (graphId) {
+      // For now, don't add subgraph params to the parameter metadata list.
+      return { success: true };
+    }
+
     const inspectable = context.mutable.graphs.get(graphId);
     if (!inspectable) {
       return {
