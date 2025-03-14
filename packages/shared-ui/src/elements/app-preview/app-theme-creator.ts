@@ -203,6 +203,10 @@ export class AppThemeCreator extends LitElement {
           & li {
             margin-right: var(--bb-grid-size-3);
 
+            &:last-of-type {
+              margin-right: 0;
+            }
+
             & button {
               padding: 0;
               display: grid;
@@ -399,51 +403,6 @@ export class AppThemeCreator extends LitElement {
       margin: var(--bb-grid-size-2) 0;
       flex: 1;
       background: url(/images/progress-ui.svg) 8px center / 20px 20px no-repeat;
-    }
-
-    #summary::-webkit-details-marker {
-      display: none;
-    }
-
-    #summary {
-      list-style: none;
-      font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
-        var(--bb-font-family);
-      padding: var(--bb-grid-size) var(--bb-grid-size-3);
-      cursor: pointer;
-    }
-
-    #button {
-      display: block;
-      font: 500 var(--bb-label-small) / var(--bb-label-line-height-small)
-        var(--bb-font-family);
-
-      border-radius: var(--bb-grid-size-16);
-      color: var(--bb-neutral-900);
-      background-color: var(--bb-neutral-50);
-      border: none;
-      height: var(--bb-grid-size-7);
-      padding: 0 var(--bb-grid-size-3);
-      transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
-
-      &:not([disabled]) {
-        cursor: pointer;
-
-        &:hover,
-        &:focus {
-          background-color: var(--bb-neutral-100);
-        }
-      }
-    }
-
-    #controls {
-      border-top: 1px solid var(--bb-neutral-300);
-      padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
-      display: flex;
-
-      & button {
-        margin-right: var(--bb-grid-size-2);
-      }
     }
   `;
 
