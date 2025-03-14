@@ -24,7 +24,6 @@ import type { FirestoreStorageProvider } from "./storage-providers/firestore.js"
 export type BoardId = {
   user: string;
   name: string;
-  fullPath: string;
 };
 
 export type SecretInputs = {
@@ -110,25 +109,10 @@ export type CreateUserResult =
   | { success: true; apiKey: string }
   | { success: false; message: string };
 
-export type CreateInviteResult =
-  | {
-      success: true;
-      invite: string;
-    }
-  | {
-      success: false;
-      error: string;
-    };
-
-export type ListInviteResult =
-  | {
-      success: true;
-      invites: string[];
-    }
-  | {
-      success: false;
-      error: string;
-    };
+export type Invite = {
+  name: string;
+  expireAt: Date;
+};
 
 export type PageMetadata = {
   title: string;

@@ -11,7 +11,6 @@ export function parseBoardId(opts?: { addJsonSuffix?: boolean }) {
     let boardId: BoardId = {
       user,
       name,
-      fullPath: `@${user}/${name}`,
     };
     res.locals.boardId = boardId;
     next();

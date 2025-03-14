@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import assert from "node:assert";
-import { before, suite, test } from "node:test";
+import { afterEach, before, suite, test } from "node:test";
 import request from "supertest";
 
 import { createServer, createServerConfig } from "../../src/server.js";
@@ -40,6 +40,12 @@ suite("Board Server integration test", () => {
   });
 
   suite("Boards API", () => {
+    afterEach(async () => {
+      const store = getStore();
+      await store.delete(user.account, "test-board");
+      await store.delete(user.account, "test-board.json");
+    });
+
     test("OPTIONS /boards -> 204", async () => {
       const response = await request(server).options(`/boards`);
       assert.equal(response.status, 204);
@@ -154,7 +160,7 @@ suite("Board Server integration test", () => {
     test("POST /boards/@:user/:name/describe", async () => {
       const store = getStore();
       await store.create(user.account, "test-board");
-      const path = `@${user.account}/test-board.api`;
+      const path = `@${user.account}/test-board`;
 
       const response = await request(server)
         .post(`/boards/${path}/describe`)

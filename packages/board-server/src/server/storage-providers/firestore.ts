@@ -13,17 +13,9 @@ import {
   type BoardListEntry,
   asPath,
   type OperationResult,
-  asInfo,
-  sanitize,
-  INVITE_EXPIRATION_TIME_MS,
   type StorageBoard,
 } from "../store.js";
-import type {
-  CreateInviteResult,
-  CreateUserResult,
-  ListInviteResult,
-  RunBoardStateStore,
-} from "../types.js";
+import type { CreateUserResult, Invite, RunBoardStateStore } from "../types.js";
 
 const REANIMATION_COLLECTION_ID = "resume";
 
@@ -207,22 +199,17 @@ export class FirestoreStorageProvider implements RunBoardStateStore {
   }
 
   async update(
-    userStore: string,
-    path: string,
+    userId: string,
+    boardName: string,
     graph: GraphDescriptor
-  ): Promise<OperationResult> {
-    const { userStore: pathUserStore, boardName } = asInfo(path);
-    if (pathUserStore !== userStore) {
-      return { success: false, error: "Unauthorized" };
-    }
+  ): Promise<void> {
     const { title: maybeTitle, metadata, description = "" } = graph;
     const tags = metadata?.tags || [];
     const title = maybeTitle || boardName;
 
     await this.#database
-      .doc(`workspaces/${userStore}/boards/${boardName}`)
+      .doc(asBoardPath(userId, boardName))
       .set({ graph: JSON.stringify(graph), tags, title, description });
-    return { success: true };
   }
 
   async create(userStore: string, name: string): Promise<void> {
@@ -231,15 +218,8 @@ export class FirestoreStorageProvider implements RunBoardStateStore {
       .set({ graph: JSON.stringify(blank()) });
   }
 
-  async delete(userStore: string, path: string): Promise<OperationResult> {
-    const { userStore: pathUserStore, boardName } = asInfo(path);
-    if (pathUserStore !== userStore) {
-      return { success: false, error: "Unauthorized" };
-    }
-    await this.#database
-      .doc(`workspaces/${userStore}/boards/${boardName}`)
-      .delete();
-    return { success: true };
+  async delete(userId: string, boardName: string): Promise<void> {
+    await this.#database.doc(asBoardPath(userId, boardName)).delete();
   }
 
   async findInvite(
@@ -258,56 +238,33 @@ export class FirestoreStorageProvider implements RunBoardStateStore {
   }
 
   async createInvite(
-    userStore: string,
-    path: string
-  ): Promise<CreateInviteResult> {
-    const { userStore: pathUserStore, boardName } = asInfo(path);
-    if (pathUserStore !== userStore) {
-      return {
-        success: false,
-        error: "This user can't create invite for this board.",
-      };
-    }
-    const invite = Math.random().toString(36).slice(2, 10);
-    const expireAt = new Date(Date.now() + INVITE_EXPIRATION_TIME_MS);
+    userId: string,
+    boardName: string,
+    invite: Invite
+  ): Promise<void> {
     await this.#database
-      .doc(`workspaces/${userStore}/boards/${boardName}/invites/${invite}`)
-      .set({ invite, expireAt });
-    return { success: true, invite };
+      .doc(asBoardPath(userId, boardName) + `/invites/${invite}`)
+      .set(invite);
   }
 
   async deleteInvite(
-    userStore: string,
-    path: string,
-    invite: string
-  ): Promise<OperationResult> {
-    const { userStore: pathUserStore, boardName } = asInfo(path);
-    if (pathUserStore !== userStore) {
-      return {
-        success: false,
-        error: "This user can't delete invite for this board.",
-      };
-    }
+    userId: string,
+    boardName: string,
+    inviteName: string
+  ): Promise<void> {
     await this.#database
-      .doc(`workspaces/${userStore}/boards/${boardName}/invites/${invite}`)
+      .doc(asBoardPath(userId, boardName) + `/invites/${inviteName}`)
       .delete();
-    return { success: true };
   }
 
-  async listInvites(
-    userStore: string,
-    path: string
-  ): Promise<ListInviteResult> {
-    const { userStore: pathUserStore, boardName } = asInfo(path);
-    if (pathUserStore !== userStore) {
-      return {
-        success: false,
-        error: "This user can't list invites for this board.",
-      };
-    }
+  async listInvites(userId: string, boardName: string): Promise<string[]> {
     const invites = await this.#database
-      .collection(`workspaces/${userStore}/boards/${boardName}/invites`)
+      .collection(asBoardPath(userId, boardName) + "/invites")
       .get();
-    return { success: true, invites: invites.docs.map((doc) => doc.id) };
+    return invites.docs.map((doc) => doc.id);
   }
+}
+
+function asBoardPath(userId: string, boardName: string) {
+  return `workspaces/${userId}/boards/${boardName}`;
 }

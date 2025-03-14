@@ -1,10 +1,15 @@
+/**
+ * Storage provider backed by a SQLite database.
+ *
+ * This module is out of sync with the rest of the board server and does not
+ * work as expected. It is maintained for archival and future purposes.
+ *
+ * TODO: #4781 - Update this to match the current storage spec and make this
+ * work again
+ */
+
 import Database from "better-sqlite3";
-import type {
-  CreateInviteResult,
-  CreateUserResult,
-  ListInviteResult,
-  RunBoardStateStore,
-} from "../types.js";
+import type { CreateUserResult, RunBoardStateStore } from "../types.js";
 import type {
   BoardListEntry,
   GetUserStoreResult,
@@ -16,13 +21,32 @@ import {
   asPath,
   EXPIRATION_TIME_MS,
   INVITE_EXPIRATION_TIME_MS,
-  sanitize,
 } from "../store.js";
 import type {
   GraphDescriptor,
   ReanimationState,
 } from "@google-labs/breadboard";
 import { v4 as uuidv4 } from "uuid";
+
+export type CreateInviteResult =
+  | {
+      success: true;
+      invite: string;
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
+export type ListInviteResult =
+  | {
+      success: true;
+      invites: string[];
+    }
+  | {
+      success: false;
+      error: string;
+    };
 
 export class SQLiteStorageProvider implements RunBoardStateStore {
   private db: Database.Database;
@@ -455,3 +479,13 @@ export class SQLiteStorageProvider implements RunBoardStateStore {
     });
   }
 }
+
+const sanitize = (name: string) => {
+  if (name.endsWith(".bgl.json")) {
+    name = name.slice(0, -9);
+  } else if (name.endsWith(".json")) {
+    name = name.slice(0, -5);
+  }
+  name = name.replace(/[^a-zA-Z0-9]/g, "-");
+  return name;
+};
