@@ -9,11 +9,9 @@ import { consume } from "@lit/context";
 import {
   GraphDescriptor,
   GraphTheme,
-  InlineDataCapabilityPart,
   InputValues,
   LLMContent,
   OutputValues,
-  TextCapabilityPart,
 } from "@breadboard-ai/types";
 import GenerateAppTheme from "@breadboard-ai/shared-ui/bgl/generate-app-theme.bgl.json" with { type: "json" };
 import MarkdownIt from "markdown-it";
@@ -31,6 +29,7 @@ import { styleMap } from "lit/directives/style-map.js";
 import { sideBoardRuntime } from "../../contexts/side-board-runtime.js";
 import { SideBoardRuntime } from "../../sideboards/types.js";
 import { classMap } from "lit/directives/class-map.js";
+import { isInlineData, isTextCapabilityPart } from "@google-labs/breadboard";
 
 @customElement("bb-app-theme-creator")
 export class AppThemeCreator extends LitElement {
@@ -495,8 +494,11 @@ export class AppThemeCreator extends LitElement {
     const [response] = outputs[0].context as LLMContent[];
 
     // The splash image.
-    const splashScreen = response.parts[0] as InlineDataCapabilityPart;
-    const colorsRaw = response.parts[1] as TextCapabilityPart;
+    const [splashScreen, colorsRaw] = response.parts;
+    if (!isInlineData(splashScreen) || !isTextCapabilityPart(colorsRaw)) {
+      throw new Error("Invalid model response");
+    }
+
     const codeRaw = MarkdownIt()
       .renderInline(colorsRaw.text, {})
       .replace(/&quot;/gim, '"')
