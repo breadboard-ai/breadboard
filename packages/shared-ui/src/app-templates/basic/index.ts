@@ -1026,13 +1026,20 @@ export class Template extends LitElement implements AppTemplate {
               and terms apply
             </p>
             ${map(secretEvent.keys, (key) => {
-              return html`<input
-                name=${key}
-                type="password"
-                autocomplete="off"
-                required
-                .placeholder=${`Enter ${key}`}
-              />`;
+              if (key.startsWith("connection:")) {
+                return html`<bb-connection-input
+                  id=${key}
+                  .connectionId=${key.replace(/^connection:/, "")}
+                ></bb-connection-input>`;
+              } else {
+                return html`<input
+                  name=${key}
+                  type="password"
+                  autocomplete="off"
+                  required
+                  .placeholder=${`Enter ${key}`}
+                />`;
+              }
             })}
           </div>
           <div class="controls">
