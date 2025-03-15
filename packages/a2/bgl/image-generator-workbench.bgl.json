@@ -8,13 +8,14 @@
       "type": "file://bgl/a2.bgl.json#module:image-generator",
       "metadata": {
         "visual": {
-          "x": -91,
-          "y": -253,
+          "x": -280.00000000000006,
+          "y": -420,
           "collapsed": "expanded",
           "outputHeight": 228
         },
-        "title": "Make Image",
-        "logLevel": "info"
+        "title": "Make Image With Expansion",
+        "logLevel": "info",
+        "userModified": true
       },
       "configuration": {
         "instruction": {
@@ -26,10 +27,104 @@
           ]
         }
       }
+    },
+    {
+      "id": "a2-cb8951a1",
+      "type": "file://bgl/a2.bgl.json#module:image-generator",
+      "metadata": {
+        "title": "Make Image No Expansion",
+        "visual": {
+          "x": -280.00000000000006,
+          "y": -280,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "instruction": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "PROMPT ## Setting/background\n\nA serene yoga studio bathed in the soft, diffused light of early morning. Sunlight streams gently through sheer linen curtains, casting subtle shadows on the polished wooden floor. The background features a wall of lush, green foliage, creating a sense of being immersed in nature. Delicate ferns and orchids are interspersed among the leaves, adding a touch of exotic beauty. A minimalist water feature trickles softly in the corner.\n\n## Foreground/focus\n\nA woman with long, flowing auburn hair is gracefully posed in a warrior two position. She is wearing a Wolven Threads yoga outfit in a deep forest green, the fabric clinging elegantly to her form and accentuating her strength and flexibility. Close-up details include the intricate texture of the yoga apparel, the dewdrops on the leaves, and the subtle grain of the wooden floor.\n\n## Style\n\nEarthy tones – greens, browns, and creams – with subtle pops of color from the flowers. The composition is balanced and harmonious, with the woman's pose creating a dynamic focal point within the peaceful setting. The overall effect is one of refined luxury, natural beauty, and inner peace, perfectly capturing the essence of Wolven Threads. Photorealistic."
+            }
+          ]
+        },
+        "p-disable-prompt-rewrite": true
+      }
+    },
+    {
+      "id": "a2-2f9e3114",
+      "type": "file://bgl/a2.bgl.json#module:render-outputs",
+      "metadata": {
+        "title": "Render Outputs",
+        "visual": {
+          "x": 60,
+          "y": -320,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "text": {
+          "parts": [
+            {
+              "text": "{{\"type\":\"in\",\"path\":\"a2-e1b460ea\",\"title\":\"Make Image With Expansion\"}} {{\"type\":\"in\",\"path\":\"a2-cb8951a1\",\"title\":\"Make Image No Expansion\"}}"
+            }
+          ],
+          "role": "user"
+        }
+      }
     }
   ],
-  "edges": [],
+  "edges": [
+    {
+      "from": "a2-e1b460ea",
+      "to": "a2-2f9e3114",
+      "out": "context",
+      "in": "p-z-a2-e1b460ea"
+    },
+    {
+      "from": "a2-cb8951a1",
+      "to": "a2-2f9e3114",
+      "out": "context",
+      "in": "p-z-a2-cb8951a1"
+    }
+  ],
   "metadata": {
-    "visual": {}
+    "visual": {
+      "presentation": {
+        "themes": {
+          "11593c15-5d31-48ce-92a6-3ff11afa859d": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "11593c15-5d31-48ce-92a6-3ff11afa859d"
+      }
+    },
+    "parameters": {}
+  },
+  "assets": {
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSIzNy4xMyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iOTkuNjciCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIxMjUuNzMiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CjxyZWN0IHg9IjEwLjAwIgogICAgICAgICAgICAgICAgICAgIHk9IjkwLjgwIgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI5OS42NyIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjcyLjA3IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgo8cmVjdCB4PSIxNDAuMzMiCiAgICAgICAgICAgICAgICAgICAgeT0iNzUuNDciCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9Ijk5LjY3IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNzIuMDciCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyMGEyMDIiIC8+CiAgICAgIAogICAgPC9zdmc+"
+    }
   }
 }
