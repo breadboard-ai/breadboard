@@ -73,30 +73,17 @@ export class FirestoreStorageProvider implements RunBoardStateStore {
     return state;
   }
 
-  async getServerInfo(): Promise<ServerInfo | undefined> {
-    const data = await this.#database
-      .collection("configuration")
-      .doc("metadata")
-      .get();
-    return data.data() as ServerInfo | undefined;
+  async getServerInfo(): Promise<ServerInfo | null> {
+    const metadata = await this.#database.doc("configuration/metadata").get();
+    return metadata.data() ?? null;
   }
 
-  // TODO Rename this
-  // It's confusing that we're referring to a string user ID as "user store"
-  async getUserStore(userKey: string | null): Promise<GetUserStoreResult> {
-    if (!userKey) {
-      return { success: false, error: "No user key supplied" };
-    }
-    const users = this.#database.collection(`users`);
-    const key = await users.where("apiKey", "==", userKey).get();
-    if (key.empty) {
-      return { success: false, error: "User not found" };
-    }
-    const doc = key.docs[0];
-    if (!doc) {
-      return { success: false, error: "User not found" };
-    }
-    return { success: true, store: doc.id };
+  async findUserIdByApiKey(apiKey: string): Promise<string> {
+    const users = await this.#database
+      .collection("users")
+      .where("apiKey", "==", apiKey)
+      .get();
+    return users.docs[0]?.id ?? "";
   }
 
   async list(userStore: string): Promise<BoardListEntry[]> {
@@ -226,18 +213,15 @@ export class FirestoreStorageProvider implements RunBoardStateStore {
   }
 
   async findInvite(
-    userStore: string,
+    userId: string,
     boardName: string,
-    invite: string
-  ): Promise<OperationResult> {
-    const invites = this.#database.collection(
-      `workspaces/${userStore}/boards/${boardName}/invites`
-    );
-    const inviteDoc = await invites.where("invite", "==", invite).get();
-    if (inviteDoc.empty) {
-      return { success: false, error: "Board or invite not found" };
-    }
-    return { success: true };
+    inviteName: string
+  ): Promise<boolean> {
+    const invites = await this.#database
+      .collection(asInvitePath(userId, boardName))
+      .where("invite", "==", inviteName)
+      .get();
+    return !invites.empty;
   }
 
   async createInvite(
@@ -246,7 +230,7 @@ export class FirestoreStorageProvider implements RunBoardStateStore {
     invite: Invite
   ): Promise<void> {
     await this.#database
-      .doc(asBoardPath(userId, boardName) + `/invites/${invite}`)
+      .doc(asInvitePath(userId, boardName, invite.name))
       .set(invite);
   }
 
@@ -256,18 +240,30 @@ export class FirestoreStorageProvider implements RunBoardStateStore {
     inviteName: string
   ): Promise<void> {
     await this.#database
-      .doc(asBoardPath(userId, boardName) + `/invites/${inviteName}`)
+      .doc(asInvitePath(userId, boardName, inviteName))
       .delete();
   }
 
   async listInvites(userId: string, boardName: string): Promise<string[]> {
     const invites = await this.#database
-      .collection(asBoardPath(userId, boardName) + "/invites")
+      .collection(asInvitePath(userId, boardName))
       .get();
     return invites.docs.map((doc) => doc.id);
   }
 }
 
-function asBoardPath(userId: string, boardName: string) {
+function asBoardPath(userId: string, boardName: string): string {
   return `workspaces/${userId}/boards/${boardName}`;
+}
+
+function asInvitePath(
+  userId: string,
+  boardName: string,
+  inviteName?: string
+): string {
+  let path = asBoardPath(userId, boardName) + "/invites";
+  if (inviteName) {
+    path += `/${inviteName}`;
+  }
+  return path;
 }
