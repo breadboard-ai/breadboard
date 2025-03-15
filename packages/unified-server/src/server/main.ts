@@ -23,9 +23,10 @@ ViteExpress.config({
   transformer: (html: string, req: Request) => {
     const board = req.res?.locals.loadedBoard;
     const displayName = board?.displayName || "Not Found";
-    return html.replace("{{displayName}}", displayName);
+    return html.replace("{{displayName}}", escape(displayName));
   },
 });
+
 
 ViteExpress.static({
   enableBrotli: true,
@@ -34,3 +35,12 @@ ViteExpress.static({
 ViteExpress.listen(server, boardServerConfig.port, () => {
   console.log(`Unified server at: http://localhost:${boardServerConfig.port}`);
 });
+
+function escape(s: string) {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
