@@ -9,7 +9,7 @@
       "metadata": {
         "visual": {
           "x": -260,
-          "y": -1260.0000000000023,
+          "y": -1260.0000000000014,
           "collapsed": "expanded",
           "outputHeight": 44
         },
@@ -33,7 +33,7 @@
       "metadata": {
         "visual": {
           "x": -260,
-          "y": -1440.000000000003,
+          "y": -1440.0000000000018,
           "collapsed": "expanded",
           "outputHeight": 64
         },
@@ -57,14 +57,14 @@
       "metadata": {
         "title": "Render Outputs",
         "visual": {
-          "x": 180.00000000000006,
-          "y": -1280.000000000001,
+          "x": 180,
+          "y": -1280,
           "collapsed": "expanded",
           "outputHeight": 88
-        }
+        },
+        "userModified": false
       },
       "configuration": {
-        "p-auto-render": true,
         "text": {
           "parts": [
             {
@@ -72,7 +72,9 @@
             }
           ],
           "role": "user"
-        }
+        },
+        "p-auto-render": true,
+        "instruction": "Modern, dreamy"
       }
     },
     {
@@ -81,19 +83,20 @@
       "metadata": {
         "visual": {
           "x": -260,
-          "y": -1060,
+          "y": -1059.9999999999989,
           "collapsed": "expanded",
           "outputHeight": 64
         },
         "title": "Info",
-        "logLevel": "info"
+        "logLevel": "info",
+        "userModified": false
       },
       "configuration": {
         "text": {
           "role": "user",
           "parts": [
             {
-              "text": "A bunch of information. Blah blah blah"
+              "text": "City,Temperature (°C),Condition,Wind Speed (km/h),Humidity (%)\nLondon,12,Cloudy,15,75\nNew York,18,Partly Cloudy,10,60\nTokyo,22,Sunny,8,55\nSydney,15,Rain,25,80\nCairo,28,Sunny,5,40"
             }
           ]
         }
@@ -121,8 +124,31 @@
     }
   ],
   "metadata": {
-    "visual": {},
-    "tags": []
+    "visual": {
+      "presentation": {
+        "themes": {
+          "46f00754-d3da-4a1c-9f5a-d6f4d7cdbd47": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "46f00754-d3da-4a1c-9f5a-d6f4d7cdbd47"
+      }
+    },
+    "tags": [],
+    "parameters": {}
   },
   "assets": {
     "@@thumbnail": {
