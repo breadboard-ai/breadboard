@@ -44,12 +44,8 @@ async function runHandler(
   res.setHeader("Content-Type", "text/event-stream");
   res.statusCode = 200;
 
-  const keyVerificationResult = await verifyKey(
-    boardId.user,
-    boardId.name,
-    inputs
-  );
-  if (!keyVerificationResult.success) {
+  const userId = await verifyKey(boardId, inputs);
+  if (!userId) {
     await writer.write([
       "graphstart",
       {
@@ -80,7 +76,7 @@ async function runHandler(
   await runBoard({
     url: url.href,
     path,
-    user: keyVerificationResult.user!,
+    user: userId,
     inputs,
     loader: loadFromStore,
     kitOverrides: [secretsKit],

@@ -27,18 +27,16 @@ async function invokeHandler(
   url.pathname = `boards/${path}`;
   url.search = "";
 
-  const body = await getBody(req);
-  const inputs = body as Record<string, any>;
-  const keyVerificationResult = await verifyKey(
-    boardId.user,
-    boardId.name,
-    inputs
-  );
-  if (!keyVerificationResult.success) {
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ $error: keyVerificationResult.error }));
+  const body = (await getBody(req)) as Record<string, any> | undefined;
+  const inputs = body ?? {};
+
+  if (!(await verifyKey(boardId, inputs))) {
+    // TODO Consider sending 404 instead to prevent leaking the existence of
+    // the board
+    res.sendStatus(403);
     return;
   }
+
   const result = await invokeBoard({
     url: url.href,
     path,
@@ -46,8 +44,7 @@ async function invokeHandler(
     loader: loadFromStore,
     kitOverrides: [secretsKit],
   });
-  res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(JSON.stringify(result));
+  res.json(result);
 }
 
 export default invokeHandler;
