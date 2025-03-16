@@ -90,7 +90,7 @@
         "$module": "main"
       },
       "metadata": {
-        "title": "Run \"Test Template\" module"
+        "title": "A blank board. Use it as a starting point for your creations."
       }
     },
     {
@@ -114,5 +114,30 @@
       "out": "*",
       "in": ""
     }
-  ]
+  ],
+  "metadata": {
+    "visual": {
+      "presentation": {
+        "themes": {
+          "ddec7643-fce0-45ae-a820-917438793a8c": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "ddec7643-fce0-45ae-a820-917438793a8c"
+      }
+    }
+  }
 }
