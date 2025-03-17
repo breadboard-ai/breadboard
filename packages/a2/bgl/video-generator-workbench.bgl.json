@@ -1,0 +1,130 @@
+{
+  "title": "Video Generator Workbench",
+  "description": "A blank board. Use it as a starting point for your creations.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "type": "input",
+      "id": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"Something brighter\"}]}]",
+              "description": ""
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": -260,
+          "y": 99.99999999999989,
+          "collapsed": "expanded"
+        },
+        "logLevel": "info"
+      }
+    },
+    {
+      "type": "output",
+      "id": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "null"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 359.99999999999983,
+          "y": 99.99999999999989,
+          "collapsed": "expanded"
+        }
+      }
+    },
+    {
+      "id": "video-generator-35bbada9",
+      "type": "file://bgl/video-generator.bgl.json#module:main",
+      "metadata": {
+        "title": "Make Video [WIP]",
+        "visual": {
+          "x": 54.002325581395326,
+          "y": 84.32409985564473
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "input",
+      "to": "video-generator-35bbada9",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "video-generator-35bbada9",
+      "to": "output",
+      "out": "context",
+      "in": "context"
+    }
+  ],
+  "metadata": {
+    "visual": {
+      "presentation": {
+        "themes": {
+          "d1cec653-1e80-427a-ade7-f011bf58591f": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "d1cec653-1e80-427a-ade7-f011bf58591f"
+      }
+    },
+    "userModified": true,
+    "tags": []
+  },
+  "assets": {
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI4OC45OCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iNjcuOTUiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIyNi4xNCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KPHJlY3QgeD0iMTcyLjA1IgogICAgICAgICAgICAgICAgICAgIHk9Ijg4Ljk4IgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI2Ny45NSIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjI2LjE0IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMjBhMjAyIiAvPgo8cmVjdCB4PSI5Mi4wNyIKICAgICAgICAgICAgICAgICAgICB5PSI4NC44OCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iNjcuOTUiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIyNi4xNCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KICAgICAgCiAgICA8L3N2Zz4="
+    }
+  }
+}
