@@ -30,7 +30,7 @@ async function invokeHandler(
   const body = (await getBody(req)) as Record<string, any> | undefined;
   const inputs = body ?? {};
 
-  if (!(await verifyKey(boardId, inputs))) {
+  if (!(await verifyKey(inputs))) {
     // TODO Consider sending 404 instead to prevent leaking the existence of
     // the board
     res.sendStatus(403);

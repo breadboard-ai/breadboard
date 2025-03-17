@@ -99,22 +99,6 @@ export type BlobStoreGetResult = {
   mimeType?: string;
 };
 
-export type CreateBoardResult = {
-  success: boolean;
-  path: string | undefined;
-  error: string | undefined;
-};
-
-export type Invite = {
-  name: string;
-  expireAt: Date;
-};
-
-export type PageMetadata = {
-  title: string;
-  description: string;
-};
-
 export type Result<T> =
   | {
       success: false;

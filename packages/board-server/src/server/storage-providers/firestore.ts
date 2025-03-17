@@ -9,13 +9,11 @@ import {
 import {
   EXPIRATION_TIME_MS,
   type ServerInfo,
-  type GetUserStoreResult,
   type BoardListEntry,
   asPath,
-  type OperationResult,
   type StorageBoard,
 } from "../store.js";
-import type { Invite, RunBoardStateStore } from "../types.js";
+import type { RunBoardStateStore } from "../types.js";
 
 const REANIMATION_COLLECTION_ID = "resume";
 
@@ -211,59 +209,8 @@ export class FirestoreStorageProvider implements RunBoardStateStore {
   async delete(userId: string, boardName: string): Promise<void> {
     await this.#database.doc(asBoardPath(userId, boardName)).delete();
   }
-
-  async findInvite(
-    userId: string,
-    boardName: string,
-    inviteName: string
-  ): Promise<boolean> {
-    const invites = await this.#database
-      .collection(asInvitePath(userId, boardName))
-      .where("invite", "==", inviteName)
-      .get();
-    return !invites.empty;
-  }
-
-  async createInvite(
-    userId: string,
-    boardName: string,
-    invite: Invite
-  ): Promise<void> {
-    await this.#database
-      .doc(asInvitePath(userId, boardName, invite.name))
-      .set(invite);
-  }
-
-  async deleteInvite(
-    userId: string,
-    boardName: string,
-    inviteName: string
-  ): Promise<void> {
-    await this.#database
-      .doc(asInvitePath(userId, boardName, inviteName))
-      .delete();
-  }
-
-  async listInvites(userId: string, boardName: string): Promise<string[]> {
-    const invites = await this.#database
-      .collection(asInvitePath(userId, boardName))
-      .get();
-    return invites.docs.map((doc) => doc.id);
-  }
 }
 
 function asBoardPath(userId: string, boardName: string): string {
   return `workspaces/${userId}/boards/${boardName}`;
-}
-
-function asInvitePath(
-  userId: string,
-  boardName: string,
-  inviteName?: string
-): string {
-  let path = asBoardPath(userId, boardName) + "/invites";
-  if (inviteName) {
-    path += `/${inviteName}`;
-  }
-  return path;
 }

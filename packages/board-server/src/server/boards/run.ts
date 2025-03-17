@@ -44,7 +44,7 @@ async function runHandler(
   res.setHeader("Content-Type", "text/event-stream");
   res.statusCode = 200;
 
-  const userId = await verifyKey(boardId, inputs);
+  const userId = await verifyKey(inputs);
   if (!userId) {
     await writer.write([
       "graphstart",
