@@ -9,13 +9,7 @@ import { customElement, state } from "lit/decorators.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { outlineButtonWithIcon } from "../../styles/outline-button-with-icon.js";
 import { createRef, ref } from "lit/directives/ref.js";
-import GenerateBoard from "@breadboard-ai/shared-ui/bgl/generate-board.bgl.json" with { type: "json" };
-import type {
-  GraphDescriptor,
-  InputValues,
-  LLMContent,
-  OutputValues,
-} from "@breadboard-ai/types";
+import type { GraphDescriptor } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
 import { sideBoardRuntime } from "../../contexts/side-board-runtime.js";
 import { GraphBoardServerGeneratedBoardEvent } from "../../events/events.js";
@@ -24,6 +18,8 @@ import type { ExpandingTextarea } from "../input/expanding-textarea.js";
 import { icons } from "../../styles/icons.js";
 import "../input/expanding-textarea.js";
 import { chipStyles } from "../../styles/chip.js";
+import { FlowGenerator } from "../../flow-gen/flow-generator.js";
+import { AppCatalystApiClient } from "../../flow-gen/app-catalyst.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
@@ -250,37 +246,15 @@ export class DescribeFlowPanel extends LitElement {
     }
   }
 
-  async #generateBoard(description: string): Promise<GraphDescriptor> {
+  async #generateBoard(intent: string): Promise<GraphDescriptor> {
     if (!this.sideBoardRuntime) {
       throw new Error("Internal error: No side board runtime was available.");
     }
-    const runner = await this.sideBoardRuntime.createRunner({
-      ...(GenerateBoard as GraphDescriptor),
-    });
-    const inputs: InputValues & { context: LLMContent[] } = {
-      context: [{ parts: [{ text: description }] }],
-    };
-    const outputs = await new Promise<OutputValues[]>((resolve, reject) => {
-      const outputs: OutputValues[] = [];
-      runner.addEventListener("input", () => void runner.run(inputs));
-      runner.addEventListener("output", (event) =>
-        outputs.push(event.data.outputs)
-      );
-      runner.addEventListener("end", () => resolve(outputs));
-      runner.addEventListener("error", (event) => reject(event.data.error));
-      void runner.run();
-    });
-    if (outputs.length !== 1) {
-      throw new Error(`Expected 1 output, got ${JSON.stringify(outputs)}`);
-    }
-    const board = (outputs[0] as { board?: GraphDescriptor }).board;
-    if (!board) {
-      throw new Error(
-        `Expected {"board": <GraphDescriptor>}, got ` +
-          JSON.stringify(outputs[0])
-      );
-    }
-    return board;
+    const generator = new FlowGenerator(
+      new AppCatalystApiClient(this.sideBoardRuntime)
+    );
+    const { flow } = await generator.oneShot({ intent });
+    return flow;
   }
 
   #onGenerateComplete(graph: GraphDescriptor) {
