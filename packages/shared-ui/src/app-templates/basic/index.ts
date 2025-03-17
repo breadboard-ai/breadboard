@@ -80,6 +80,9 @@ export class Template extends LitElement implements AppTemplate {
   accessor topGraphResult: TopGraphRunResult | null = null;
 
   @property()
+  accessor appURL: string | null = null;
+
+  @property()
   accessor eventPosition = 0;
 
   @property()
@@ -721,7 +724,7 @@ export class Template extends LitElement implements AppTemplate {
             id="share"
             @click=${() => {
               navigator.share({
-                url: window.location.href,
+                url: this.appURL ?? window.location.href,
                 title: this.options.title ?? "Untitled App",
               });
             }}

@@ -300,6 +300,9 @@ body.hide-cursor {
   --bb-icon-lan: url(/third_party/icons/lan.svg);
   --bb-icon-lan-inverted: url(/third_party/icons/lan-inverted.svg);
 
+  --bb-icon-link: url(/third_party/icons/link.svg);
+  --bb-icon-link-inverted: url(/third_party/icons/link-inverted.svg);
+
   --bb-icon-login: url(/third_party/icons/login.svg);
   --bb-icon-login-inverted: url(/third_party/icons/login-inverted.svg);
 
@@ -1057,6 +1060,9 @@ body.hide-cursor {
   --bb-icon-library-add: url(/third_party/icons/library-add-inverted.svg);
   --bb-icon-library-add-inverted: url(/third_party/icons/library-add.svg);
   --bb-icon-library-add-ui: url(/third_party/icons/library-add-ui.svg);
+
+  --bb-icon-link: url(/third_party/icons/link-inverted.svg);
+  --bb-icon-link-inverted: url(/third_party/icons/link.svg);
 
   --bb-icon-list: url(/third_party/icons/list-inverted.svg);
   --bb-icon-list-inverted: url(/third_party/icons/list.svg);
