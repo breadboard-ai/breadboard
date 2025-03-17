@@ -11,13 +11,18 @@ const Strings = StringsHelper.forSection("AppPreview");
 import { LitElement, PropertyValues, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
+  BoardServer,
   InspectableRun,
   isInlineData,
   isStoredData,
 } from "@google-labs/breadboard";
 
 import { styles as appPreviewStyles } from "./app-preview.styles.js";
-import { ThemeEditRequestEvent } from "../../events/events.js";
+import {
+  ThemeEditRequestEvent,
+  ToastEvent,
+  ToastType,
+} from "../../events/events.js";
 import {
   AppTemplate,
   AppTemplateOptions,
@@ -98,6 +103,9 @@ export class AppPreview extends LitElement {
 
   @property()
   accessor theme: AppTheme = this.#createDefaultTheme();
+
+  @property()
+  accessor boardServers: BoardServer[] = [];
 
   @property()
   accessor themeHash: string | null = null;
@@ -223,6 +231,26 @@ export class AppPreview extends LitElement {
     }
   }
 
+  async #deriveAppURL() {
+    if (!this.graph?.url) {
+      return;
+    }
+
+    for (const server of this.boardServers) {
+      const graphUrl = new URL(this.graph.url);
+      const capabilities = server.canProvide(graphUrl);
+      if (!capabilities) {
+        return;
+      }
+
+      if (server.extendedCapabilities().preview) {
+        return server.preview(graphUrl);
+      }
+    }
+
+    return null;
+  }
+
   protected willUpdate(changedProperties: PropertyValues): void {
     if (changedProperties.has("template")) {
       if (changedProperties.get("template") !== this.template) {
@@ -233,13 +261,17 @@ export class AppPreview extends LitElement {
         this.#loadingTemplate = true;
 
         const themeHash = this.themeHash;
-        this.#loadAppTemplate(this.template).then(({ Template }) => {
+        Promise.all([
+          this.#loadAppTemplate(this.template),
+          this.#deriveAppURL(),
+        ]).then(([{ Template }, appURL]) => {
           // A newer theme has arrived - bail.
           if (themeHash !== this.themeHash) {
             return;
           }
 
           this.#appTemplate = new Template();
+          this.#appTemplate.appURL = appURL?.href ?? null;
           this.#template = html`${this.#appTemplate}`;
 
           const templateAdditionalOptionsChosen: Record<string, string> = {};
@@ -387,13 +419,36 @@ export class AppPreview extends LitElement {
     }
 
     return html`<div id="container">
-      <div id="designer">
+      <div id="controls">
         <button
+          id="designer"
+          ?disabled=${this.#loadingTemplate}
           @click=${() => {
             this.dispatchEvent(new ThemeEditRequestEvent());
           }}
         >
           Designer
+        </button>
+        <button
+          id="url"
+          ?disabled=${this.#loadingTemplate}
+          @click=${async () => {
+            const url = await this.#deriveAppURL();
+            if (!url) {
+              return;
+            }
+
+            await navigator.clipboard.writeText(url.href);
+
+            this.dispatchEvent(
+              new ToastEvent(
+                Strings.from("STATUS_COPIED_TO_CLIPBOARD"),
+                ToastType.INFORMATION
+              )
+            );
+          }}
+        >
+          URL
         </button>
       </div>
 
