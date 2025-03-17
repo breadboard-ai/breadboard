@@ -3,8 +3,8 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { DefaultRunStore } from "./default-run-store.js";
 import { DefaultDataStore } from "./default-data-store.js";
+import { DefaultRunStore } from "./default-run-store.js";
 import { DataStore, RunStore } from "./types.js";
 
 export const createDefaultDataStore = (): DataStore => {
@@ -15,27 +15,29 @@ export const createDefaultRunStore = (): RunStore => {
   return new DefaultRunStore();
 };
 
-export { inflateData, deflateData } from "./inflate-deflate.js";
+export { deflateData, inflateData } from "./inflate-deflate.js";
 
 export {
+  asBase64,
+  asBlob,
+  convertStoredPartsToAbsoluteUrls,
+  isDataCapability,
   isFileDataCapabilityPart,
   isFunctionCallCapabilityPart,
   isFunctionResponseCapabilityPart,
   isImageURL,
+  isInlineData,
+  isJSONPart,
+  isListPart,
   isLLMContent,
   isLLMContentArray,
-  isTextCapabilityPart,
-  isDataCapability,
-  isInlineData,
-  isStoredData,
-  isSerializedData,
   isMetadataEntry,
-  asBlob,
-  asBase64,
+  isSerializedData,
+  isStoredData,
+  isTextCapabilityPart,
   toInlineDataPart,
   toStoredDataPart,
   transformDataParts,
-  convertStoredPartsToAbsoluteUrls,
 } from "./common.js";
 
 export { transformBlobs } from "./file-system/blob-transform.js";
