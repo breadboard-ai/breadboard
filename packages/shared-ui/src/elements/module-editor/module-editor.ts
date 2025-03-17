@@ -30,6 +30,8 @@ import {
   CommandsAvailableEvent,
   ModuleEditEvent,
   OverflowMenuActionEvent,
+  RunEvent,
+  StopEvent,
   ToastEvent,
   ToastType,
 } from "../../events/events";
@@ -130,7 +132,6 @@ export class ModuleEditor extends LitElement {
     section {
       display: grid;
       grid-template-rows: 44px minmax(0, 1fr);
-      row-gap: var(--bb-grid-size-4);
       width: 100%;
       height: 100%;
       position: relative;
@@ -138,6 +139,53 @@ export class ModuleEditor extends LitElement {
 
     bb-module-ribbon-menu {
       z-index: 7;
+    }
+
+    #splitter-code,
+    #splitter-console {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #splitter-console {
+      display: grid;
+      grid-template-rows: 44px 1fr;
+      background: var(--bb-neutral-0);
+      border-left: 1px solid var(--bb-neutral-300);
+
+      & #splitter-console-content {
+        padding: var(--bb-grid-size-3);
+        overflow-y: scroll;
+      }
+
+      & #splitter-console-controls {
+        padding: 0 var(--bb-grid-size-3);
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid var(--bb-neutral-300);
+      }
+
+      & #run {
+        width: 76px;
+        height: var(--bb-grid-size-7);
+        background: var(--bb-inputs-600) var(--bb-icon-play-filled-inverted) 8px
+          center / 20px 20px no-repeat;
+        color: #fff;
+        border-radius: 20px;
+        border: none;
+        font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+          var(--bb-font-family);
+        padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-7);
+        cursor: pointer;
+        margin-right: var(--bb-grid-size-2);
+      }
+
+      & #run.running {
+        background: var(--bb-inputs-600) url(/images/progress-ui-inverted.svg)
+          8px center / 16px 16px no-repeat;
+      }
     }
 
     #module-graph {
@@ -164,9 +212,10 @@ export class ModuleEditor extends LitElement {
     }
 
     #code-container {
-      padding: 0 var(--bb-grid-size-4);
-      margin-bottom: var(--bb-grid-size-4);
+      padding: var(--bb-grid-size-2);
       width: 100%;
+      height: 100%;
+      overflow: hidden;
     }
 
     #code-container-outer {
@@ -842,6 +891,13 @@ export class ModuleEditor extends LitElement {
     }
 
     const isRunnable = !!module.metadata().runnable || isMainModule;
+    const codeEditor = html`<div id="code-container">
+      <div id="code-container-outer">
+        <div id="code-container-inner">
+          ${until(this.#createEditor(code, language, definitions))}
+        </div>
+      </div>
+    </div>`;
 
     return html` <section>
       <bb-module-ribbon-menu
@@ -901,13 +957,47 @@ export class ModuleEditor extends LitElement {
           this.formatting = false;
         }}
       ></bb-module-ribbon-menu>
-      <div id="code-container">
-        <div id="code-container-outer">
-          <div id="code-container-inner">
-            ${until(this.#createEditor(code, language, definitions))}
-          </div>
-        </div>
-      </div>
+      ${isMainModule
+        ? html`
+            <bb-splitter
+              direction=${"horizontal"}
+              name="layout-code-editor"
+              split="[0.75, 0.25]"
+            >
+              <div id="splitter-code" slot="slot-0">${codeEditor}</div>
+              <div id="splitter-console" slot="slot-1">
+                <div id="splitter-console-controls">
+                  <button
+                    id="run"
+                    @click=${() => {
+                      if (this.topGraphResult?.status === "stopped") {
+                        this.dispatchEvent(new RunEvent());
+                      } else {
+                        this.dispatchEvent(new StopEvent());
+                      }
+                    }}
+                  >
+                    ${this.topGraphResult?.status === "stopped"
+                      ? "Start"
+                      : "Stop"}
+                  </button>
+                </div>
+                <div id="splitter-console-content">
+                  <bb-board-activity
+                    .graphUrl=${this.graph?.raw().url}
+                    .run=${this.run}
+                    .events=${this.run?.events ?? null}
+                    .eventPosition=${this.run?.events.length}
+                    .showExtendedInfo=${true}
+                    .showLogTitle=${false}
+                    .logTitle=${"Run"}
+                    name=${"Activity"}
+                  ></bb-board-activity>
+                </div>
+              </div>
+            </bb-splitter>
+          `
+        : codeEditor}
       ${isRunnable && this.showModulePreview
         ? html`
             <div id="module-graph">

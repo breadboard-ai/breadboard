@@ -42,6 +42,10 @@ import { UserInput } from "../elements.js";
 import { formatError } from "../../utils/format-error.js";
 import { guard } from "lit/directives/guard.js";
 import { icons } from "../../styles/icons.js";
+import {
+  isLLMContentArrayBehavior,
+  isLLMContentBehavior,
+} from "../../utils/behaviors.js";
 
 @customElement("bb-board-activity")
 export class BoardActivity extends LitElement {
@@ -342,6 +346,120 @@ export class BoardActivity extends LitElement {
     </div>`;
   }
 
+  async #renderPendingInput(idx: number, event: InspectableRunNodeEvent) {
+    const { inputs, node } = event;
+    const nodeSchema = await node.describe(inputs);
+    const descriptor = node.descriptor;
+    const schema = nodeSchema?.outputSchema || inputs.schema;
+    const requiredFields = schema.required ?? [];
+
+    if (!schema.properties || Object.keys(schema.properties).length === 0) {
+      this.dispatchEvent(
+        new InputEnterEvent(descriptor.id, {}, /* allowSavingIfSecret */ true)
+      );
+    }
+
+    // TODO: Implement support for multiple iterations over the
+    // same input over a run. Currently, we will only grab the
+    // first value.
+    const values = this.inputsFromLastRun?.get(descriptor.id)?.[0];
+    const userInputs: UserInputConfiguration[] = Object.entries(
+      schema.properties ?? {}
+    ).reduce((prev, [name, schema]) => {
+      let value = values ? values[name] : undefined;
+      if (schema.type === "object") {
+        if (isLLMContentBehavior(schema)) {
+          if (!isLLMContent(value)) {
+            value = undefined;
+          }
+        } else {
+          value = JSON.stringify(value, null, 2);
+        }
+      }
+
+      if (schema.type === "array") {
+        if (isLLMContentArrayBehavior(schema)) {
+          if (!isLLMContentArray(value)) {
+            value = undefined;
+          }
+        } else {
+          value = JSON.stringify(value, null, 2);
+        }
+      }
+
+      if (schema.type === "string" && typeof value === "object") {
+        value = undefined;
+      }
+
+      prev.push({
+        name,
+        title: schema.title ?? name,
+        secret: false,
+        schema,
+        configured: false,
+        required: requiredFields.includes(name),
+        value,
+      });
+
+      return prev;
+    }, [] as UserInputConfiguration[]);
+
+    const continueRun = () => {
+      if (!this.#userInputRef.value) {
+        return;
+      }
+
+      const outputs = this.#userInputRef.value.processData(true);
+      if (!outputs) {
+        return;
+      }
+
+      this.dispatchEvent(
+        new InputEnterEvent(
+          descriptor.id,
+          outputs,
+          /* allowSavingIfSecret */ true
+        )
+      );
+    };
+
+    return html`<div
+      class=${classMap({ pending: true, "user-required": this.#isHidden })}
+    >
+      <h1 ?data-message-idx=${this.showExtendedInfo ? idx : nothing}>
+        ${node.title()}
+      </h1>
+      <div class="edge">
+        ${node.description() && node.title() !== node.description()
+          ? html`<h2>${node.description()}</h2>`
+          : nothing}
+        <bb-user-input
+          id="${descriptor.id}"
+          .boardServers=${this.boardServers}
+          .showTypes=${false}
+          .inputs=${userInputs}
+          .inlineControls=${true}
+          .llmInputShowEntrySelector=${false}
+          ${ref(this.#userInputRef)}
+          @keydown=${(evt: KeyboardEvent) => {
+            const isMac = navigator.platform.indexOf("Mac") === 0;
+            const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+            if (!(evt.key === "Enter" && isCtrlCommand)) {
+              return;
+            }
+
+            continueRun();
+          }}
+        ></bb-user-input>
+      </div>
+
+      <button class="continue-button" @click=${() => continueRun()}>
+        ${Strings.from("COMMAND_CONTINUE")}
+      </button>
+    </div>`;
+  }
+
   async #renderNodeOutputs(
     event: InspectableRunNodeEvent,
     description: string | null,
@@ -492,9 +610,7 @@ export class BoardActivity extends LitElement {
                     // been received.
                     if (end === null) {
                       if (type === "input") {
-                        // TODO: Potentially reenable this.
-                        // content = this.#renderPendingInput(idx, event);
-                        content = nothing;
+                        content = this.#renderPendingInput(idx, event);
                         break;
                       }
 

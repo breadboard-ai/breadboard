@@ -2207,13 +2207,15 @@ export class Main extends LitElement {
       disabled: false,
     });
 
-    list.unshift({
-      name: "flow",
-      icon: "flow",
-      title: "Flow",
-      disabled:
-        (hasNoGraphsSelected || hasMainGraphSelected) && hasNoModulesSelected,
-    });
+    if (!this.tab?.graph.main) {
+      list.unshift({
+        name: "flow",
+        icon: "flow",
+        title: "Flow",
+        disabled:
+          (hasNoGraphsSelected || hasMainGraphSelected) && hasNoModulesSelected,
+      });
+    }
     return list;
   }
 
