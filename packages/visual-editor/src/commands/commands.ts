@@ -187,6 +187,103 @@ export const CutCommand: KeyboardCommand = {
   },
 };
 
+export const GroupCommand: KeyboardCommand = {
+  keys: ["Cmd+g", "Ctrl+g"],
+
+  willHandle(evt: Event) {
+    return isFocusedOnGraphRenderer(evt);
+  },
+
+  async do({
+    runtime,
+    selectionState,
+    tab,
+    originalEvent,
+  }: KeyboardCommandDeps): Promise<void> {
+    if (!isFocusedOnGraphRenderer(originalEvent)) {
+      return;
+    }
+
+    const editor = runtime.edit.getEditor(tab);
+    if (!editor) {
+      throw new Error("Unable to edit");
+    }
+
+    if (
+      !tab ||
+      !selectionState ||
+      selectionState.selectionState.graphs.size === 0
+    ) {
+      throw new Error("Nothing to group");
+    }
+
+    const destinationGraphId = globalThis.crypto.randomUUID();
+    for (const [sourceGraphId, selection] of selectionState.selectionState
+      .graphs) {
+      if (selection.nodes.size === 0) {
+        continue;
+      }
+
+      runtime.edit.moveNodesToGraph(
+        tab,
+        [...selection.nodes],
+        sourceGraphId === MAIN_BOARD_ID ? "" : sourceGraphId,
+        destinationGraphId
+      );
+    }
+  },
+};
+
+export const UngroupCommand: KeyboardCommand = {
+  keys: ["Cmd+Shift+g", "Ctrl+Shift+g"],
+
+  willHandle(evt: Event) {
+    return isFocusedOnGraphRenderer(evt);
+  },
+
+  async do({
+    runtime,
+    selectionState,
+    tab,
+    originalEvent,
+  }: KeyboardCommandDeps): Promise<void> {
+    if (!isFocusedOnGraphRenderer(originalEvent)) {
+      return;
+    }
+
+    const editor = runtime.edit.getEditor(tab);
+    if (!editor) {
+      throw new Error("Unable to edit");
+    }
+
+    if (
+      !tab ||
+      !selectionState ||
+      selectionState.selectionState.graphs.size === 0
+    ) {
+      throw new Error("Nothing to ungroup");
+    }
+
+    for (const [sourceGraphId, selection] of selectionState.selectionState
+      .graphs) {
+      if (selection.nodes.size === 0) {
+        continue;
+      }
+
+      if (sourceGraphId === MAIN_BOARD_ID) {
+        continue;
+      }
+
+      runtime.edit.moveNodesToGraph(
+        tab,
+        [...selection.nodes],
+        sourceGraphId,
+        ""
+      );
+    }
+  },
+};
+
 // We do this unusual concatenation to bamboozle TypeScript. If we just check
 // for the presence of 'canParse' in URL then the else case assumes we're
 // dealing with the nodejs version of URL, which isn't necessarily the case; we
