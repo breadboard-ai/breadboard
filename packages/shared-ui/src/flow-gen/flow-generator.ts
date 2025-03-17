@@ -59,7 +59,7 @@ export class FlowGenerator {
     const responseFlows: GraphDescriptor[] = [];
     const responseMessages: string[] = [];
     for (
-      let i = /* Assume the first 2 messages are our own. */ 2;
+      let i = /* Skip our own messages */ request.messages.length;
       i < messages.length;
       i++
     ) {
