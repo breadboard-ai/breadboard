@@ -261,13 +261,17 @@ export class AppPreview extends LitElement {
         this.#loadingTemplate = true;
 
         const themeHash = this.themeHash;
-        this.#loadAppTemplate(this.template).then(({ Template }) => {
+        Promise.all([
+          this.#loadAppTemplate(this.template),
+          this.#deriveAppURL(),
+        ]).then(([{ Template }, appURL]) => {
           // A newer theme has arrived - bail.
           if (themeHash !== this.themeHash) {
             return;
           }
 
           this.#appTemplate = new Template();
+          this.#appTemplate.appURL = appURL?.href ?? null;
           this.#template = html`${this.#appTemplate}`;
 
           const templateAdditionalOptionsChosen: Record<string, string> = {};
