@@ -158,6 +158,7 @@ export class LLMOutput extends LitElement {
 
       & iframe {
         aspect-ratio: 16/9;
+        margin: 0;
       }
 
       & .empty-text-part {
