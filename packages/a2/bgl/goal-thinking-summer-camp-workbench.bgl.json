@@ -19,12 +19,12 @@
       },
       "configuration": {
         "plan": {
-          "role": "user",
           "parts": [
             {
-              "text": "Develop material for the science fiction book based on a plot idea:  {{\"type\":\"asset\",\"path\":\"82234663-68ae-4554-add3-4c0ec97c4ba8\",\"title\":\"Plot Idea\"}}  \n\nThe material will contain multiple drafts of the following:\n- three potential names of alien races\n- what makes the alien race powerful\n- what is the alien race weakness\n- what are the technologies employed by humans\n- what are the technologies employed by aliens\n- what are the technological differences? How is the relative stalemate achieved?\n\nOutput all materials, because they will be used for further development."
+              "text": "Research summer camps around Eureka, California for the upcoming summer.\nProvide a list of the top 5 summer camp recommendations that would be appropriate for:\n- 6-grader\n- really interested in computers\n- not very athletic\n- loves big trees\n\n\nUse {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-maps\",\"title\":\"Search Maps\"}}, {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-web\",\"title\":\"Search Web\"}} tools."
             }
-          ]
+          ],
+          "role": "user"
         },
         "strategy": "Think as I go"
       }
@@ -59,22 +59,6 @@
     "parameters": {}
   },
   "assets": {
-    "82234663-68ae-4554-add3-4c0ec97c4ba8": {
-      "data": [
-        {
-          "parts": [
-            {
-              "text": "A space opera set in far future, where humans settled on a distant planet, far from Earth. The planet is a paradise, but it is disputed territory with an alien race. The humans are caught in a constant struggle that dampens their ability to flourish.\n"
-            }
-          ],
-          "role": "user"
-        }
-      ],
-      "metadata": {
-        "title": "Plot Idea",
-        "type": "content"
-      }
-    },
     "@@thumbnail": {
       "metadata": {
         "title": "Thumbnail",
