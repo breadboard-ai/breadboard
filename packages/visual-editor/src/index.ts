@@ -76,8 +76,10 @@ import {
   CopyCommand,
   CutCommand,
   DeleteCommand,
+  GroupCommand,
   PasteCommand,
   SelectAllCommand,
+  UngroupCommand,
 } from "./commands/commands";
 import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
 import { sideBoardRuntime } from "@breadboard-ai/shared-ui/contexts/side-board-runtime.js";
@@ -1018,6 +1020,8 @@ export class Main extends LitElement {
     [CopyCommand.keys, CopyCommand],
     [CutCommand.keys, CutCommand],
     [PasteCommand.keys, PasteCommand],
+    [GroupCommand.keys, GroupCommand],
+    [UngroupCommand.keys, UngroupCommand],
   ]);
 
   #handlingKey = false;
@@ -1047,14 +1051,14 @@ export class Main extends LitElement {
       return;
     }
 
+    if (evt.shiftKey) {
+      key = `Shift+${key}`;
+    }
     if (evt.metaKey) {
       key = `Cmd+${key}`;
     }
     if (evt.ctrlKey) {
       key = `Ctrl+${key}`;
-    }
-    if (evt.shiftKey) {
-      key = `Shift+${key}`;
     }
 
     const deps: KeyboardCommandDeps = {

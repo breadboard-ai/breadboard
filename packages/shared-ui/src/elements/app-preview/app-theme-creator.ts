@@ -22,6 +22,8 @@ import {
   ThemeCreateEvent,
   ThemeDeleteEvent,
   ThemeUpdateEvent,
+  ToastEvent,
+  ToastType,
 } from "../../events/events.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { repeat } from "lit/directives/repeat.js";
@@ -495,6 +497,8 @@ export class AppThemeCreator extends LitElement {
 
     // The splash image.
     const [splashScreen, colorsRaw] = response.parts;
+    console.log(splashScreen, colorsRaw);
+
     if (!isInlineData(splashScreen) || !isTextCapabilityPart(colorsRaw)) {
       throw new Error("Invalid model response");
     }
@@ -539,6 +543,9 @@ export class AppThemeCreator extends LitElement {
       this.dispatchEvent(new ThemeCreateEvent(newTheme));
     } catch (err) {
       console.warn(err);
+      this.dispatchEvent(
+        new ToastEvent((err as Error).message, ToastType.ERROR)
+      );
     } finally {
       this._generating = false;
     }

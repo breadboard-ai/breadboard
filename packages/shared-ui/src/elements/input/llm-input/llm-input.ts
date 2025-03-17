@@ -531,7 +531,8 @@ export class LLMInput extends LitElement {
 
     #no-parts {
       position: relative;
-      margin: 0 var(--bb-grid-size-3);
+      margin: var(--bb-grid-size-3);
+      min-height: var(--bb-grid-size-7);
 
       font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
         var(--bb-font-family);
@@ -547,11 +548,6 @@ export class LLMInput extends LitElement {
       margin: 0;
       font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
         var(--bb-font-family);
-    }
-
-    #no-parts {
-      margin-bottom: var(--bb-grid-size-2);
-      min-height: var(--bb-grid-size-7);
     }
 
     .confirm {

@@ -886,8 +886,8 @@ export class Editor extends LitElement implements DragConnectorReceiver {
     return {
       url,
       title: subGraphId
-        ? (selectedGraph.raw().title ?? "Untitled Board")
-        : "Main",
+        ? (selectedGraph.raw().title ?? "Untitled flow")
+        : "Main flow",
       subGraphId,
       minimized: (selectedGraph.metadata() || {}).visual?.minimized ?? false,
       showNodePreviewValues: this.showNodePreviewValues,
