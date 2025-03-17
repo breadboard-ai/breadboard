@@ -8,13 +8,7 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { createRef, ref } from "lit/directives/ref.js";
-import EditBoard from "@breadboard-ai/shared-ui/bgl/edit-board.bgl.json" with { type: "json" };
-import type {
-  GraphDescriptor,
-  InputValues,
-  LLMContent,
-  OutputValues,
-} from "@breadboard-ai/types";
+import type { GraphDescriptor } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
 import { sideBoardRuntime } from "../../contexts/side-board-runtime.js";
 import {
@@ -26,6 +20,8 @@ import { fabStyles } from "../../styles/fab.js";
 import { floatingPanelStyles } from "../../styles/floating-panel.js";
 import { multiLineInputStyles } from "../../styles/multi-line-input.js";
 import { SideBoardRuntime } from "../../sideboards/types.js";
+import { AppCatalystApiClient } from "../../flow-gen/app-catalyst.js";
+import { FlowGenerator } from "../../flow-gen/flow-generator.js";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -282,51 +278,20 @@ export class DescribeEditButton extends LitElement {
   }
 
   async #editBoard(
-    description: string,
-    currentGraph: GraphDescriptor
+    intent: string,
+    currentFlow: GraphDescriptor
   ): Promise<GraphDescriptor> {
     if (!this.sideBoardRuntime) {
       throw new Error("Internal error: No side board runtime was available.");
     }
-    const runner = await this.sideBoardRuntime.createRunner({
-      ...(EditBoard as GraphDescriptor),
+    const generator = new FlowGenerator(
+      new AppCatalystApiClient(this.sideBoardRuntime)
+    );
+    const { flow } = await generator.oneShot({
+      intent,
+      context: { flow: currentFlow },
     });
-    const inputs: InputValues & { context: LLMContent[] } = {
-      context: [
-        {
-          parts: [
-            { text: description },
-            {
-              inlineData: {
-                mimeType: "application/json",
-                data: btoa(JSON.stringify(currentGraph)),
-              },
-            },
-          ],
-        },
-      ],
-    };
-    const outputs = await new Promise<OutputValues[]>((resolve, reject) => {
-      const outputs: OutputValues[] = [];
-      runner.addEventListener("input", () => void runner.run(inputs));
-      runner.addEventListener("output", (event) =>
-        outputs.push(event.data.outputs)
-      );
-      runner.addEventListener("end", () => resolve(outputs));
-      runner.addEventListener("error", (event) => reject(event.data.error));
-      void runner.run();
-    });
-    if (outputs.length !== 1) {
-      throw new Error(`Expected 1 output, got ${JSON.stringify(outputs)}`);
-    }
-    const board = (outputs[0] as { board?: GraphDescriptor }).board;
-    if (!board) {
-      throw new Error(
-        `Expected {"board": <GraphDescriptor>}, got ` +
-          JSON.stringify(outputs[0])
-      );
-    }
-    return board;
+    return flow;
   }
 
   #onEditComplete(graph: GraphDescriptor) {
