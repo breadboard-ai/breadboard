@@ -90,7 +90,7 @@ export class DescribeFlowPanel extends LitElement {
         width: 100%;
         color: var(--bb-neutral-900);
         border-color: var(--bb-neutral-200);
-        --icon-color: var(--bb-ui-500);
+        --submit-button-color: #3271ea;
         --min-lines: 3;
         --max-lines: 8;
         font:
@@ -98,10 +98,6 @@ export class DescribeFlowPanel extends LitElement {
           sans-serif;
         line-height: 20px;
         caret-color: var(--bb-ui-500);
-
-        & .g-icon {
-          color: #3271ea;
-        }
 
         &:focus {
           border-color: #3271ea;
@@ -173,7 +169,6 @@ export class DescribeFlowPanel extends LitElement {
             .placeholder=${Strings.from("LABEL_PLACEHOLDER_DESCRIPTION")}
             @change=${this.#onInputChange}
           >
-            <span class="g-icon" slot="icon">spark</span>
           </bb-expanding-textarea>
           ${this.#renderTemplateChips()}
         `;
