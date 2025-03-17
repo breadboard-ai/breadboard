@@ -422,6 +422,7 @@ export class AppPreview extends LitElement {
       <div id="controls">
         <button
           id="designer"
+          ?disabled=${this.#loadingTemplate}
           @click=${() => {
             this.dispatchEvent(new ThemeEditRequestEvent());
           }}
@@ -430,6 +431,7 @@ export class AppPreview extends LitElement {
         </button>
         <button
           id="url"
+          ?disabled=${this.#loadingTemplate}
           @click=${async () => {
             const url = await this.#deriveAppURL();
             if (!url) {
