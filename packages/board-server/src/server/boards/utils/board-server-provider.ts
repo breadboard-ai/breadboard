@@ -28,8 +28,8 @@ export const loadFromStore = async (
   if (!userStore || !boardName) {
     return null;
   }
-  const graph = JSON.parse(await store.get(userStore, boardName));
-  return graph as GraphDescriptor;
+  const board = await store.loadBoard(userStore, boardName);
+  return board?.graph ?? null;
 };
 
 export class BoardServerProvider implements BoardServer {

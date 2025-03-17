@@ -13,8 +13,9 @@ import {
   type NodeDescriberResult,
 } from "@google-labs/breadboard";
 import { notFound } from "../errors.js";
-import { getStore } from "../store.js";
 import { NodeSandbox } from "@breadboard-ai/jsandbox/node";
+import type { BoardId, BoardServerStore } from "../types.js";
+import type { StorageBoard } from "../store.js";
 
 export const addKeyInput = (describeResult: NodeDescriberResult) => {
   const inputSchema = describeResult.inputSchema;
@@ -38,13 +39,10 @@ function emptyDescriberResult(): NodeDescriberResult {
 }
 
 async function describe(_req: Request, res: Response): Promise<void> {
-  const { user, name } = res.locals.boardId;
-  const store = getStore();
-  const board = JSON.parse(await store.get(user!, name!)) as
-    | GraphDescriptor
-    | undefined;
-  if (!board) {
-    notFound(res, "Board not found");
+  const board: StorageBoard | undefined = res.locals.loadedBoard;
+  const graph = board?.graph;
+  if (!graph) {
+    res.sendStatus(404);
     return;
   }
 
@@ -55,7 +53,7 @@ async function describe(_req: Request, res: Response): Promise<void> {
     sandbox: new NodeSandbox(),
   });
 
-  const adding = graphStore.addByDescriptor(board);
+  const adding = graphStore.addByDescriptor(graph);
   let describeResult: NodeDescriberResult;
   if (!adding.success) {
     describeResult = emptyDescriberResult();
@@ -67,7 +65,7 @@ async function describe(_req: Request, res: Response): Promise<void> {
       describeResult = await inspector.describe();
     }
   }
-  const { title, description, metadata } = board;
+  const { title, description, metadata } = graph;
   addKeyInput(describeResult);
   const result = {
     ...describeResult,
@@ -76,10 +74,7 @@ async function describe(_req: Request, res: Response): Promise<void> {
     metadata,
   } as NodeDescriberResult;
 
-  res.writeHead(200, {
-    "Content-Type": "application/json",
-  });
-  res.end(JSON.stringify(result));
+  res.json(result);
 }
 
 export default describe;

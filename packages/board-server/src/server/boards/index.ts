@@ -44,7 +44,7 @@ export function serveBoardsAPI(serverConfig: ServerConfig): Router {
   );
   router.post(
     "/@:user/:name.api/describe",
-    parseBoardId({ addJsonSuffix: true }),
+    loadBoard({ addJsonSuffix: true }),
     describeBoard
   );
 
@@ -60,7 +60,7 @@ export function serveBoardsAPI(serverConfig: ServerConfig): Router {
   router.post("/@:user/:name/run", parseBoardId(), async (req, res) =>
     runBoard(serverConfig, req, res)
   );
-  router.post("/@:user/:name/describe", parseBoardId(), describeBoard);
+  router.post("/@:user/:name/describe", loadBoard(), describeBoard);
 
   router.post(
     "/@:user/:name/assets/drive/:driveId",

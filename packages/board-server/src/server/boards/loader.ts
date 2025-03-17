@@ -17,17 +17,20 @@ export function parseBoardId(opts?: { addJsonSuffix?: boolean }) {
   };
 }
 
-export function loadBoard(): RequestHandler {
+export function loadBoard(opts?: { addJsonSuffix?: boolean }): RequestHandler {
   return async (
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { user = "", name = "" } = req.params;
+      let { user = "", name = "" } = req.params;
       if (!user || !name) {
         res.sendStatus(400);
         return;
+      }
+      if (!!opts?.addJsonSuffix) {
+        name += ".json";
       }
 
       const store: BoardServerStore = res.app.locals.store;
