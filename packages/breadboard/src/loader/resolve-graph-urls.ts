@@ -21,8 +21,19 @@ export { resolveGraphUrls };
  * @returns a new instance of GraphToRun
  */
 function resolveGraphUrls(graphToRun: GraphToRun): GraphToRun {
-  const { graph } = graphToRun;
-  const base = urlFromString(graph.url);
+  const { graph: mainGraph, subGraphId, moduleId } = graphToRun;
+  if (moduleId) {
+    return graphToRun;
+  }
+  const graph = subGraphId ? mainGraph.graphs?.[subGraphId] : mainGraph;
+  if (!graph) {
+    console.warn(
+      `Subgraph "${subGraphId}" of "${mainGraph.title}" was not found,
+      this graph will not be runnable`
+    );
+    return graphToRun;
+  }
+  const base = urlFromString(mainGraph.url);
   if (!base) {
     console.warn(
       `Graph "${graph.title}" does not have a URL. Very likely, this graph will not be runnable.`
@@ -30,7 +41,7 @@ function resolveGraphUrls(graphToRun: GraphToRun): GraphToRun {
     return graphToRun;
   }
 
-  const result: GraphDescriptor = { ...graph };
+  const resolved: GraphDescriptor = { ...graph };
 
   // First, walk through all node types and for the URL-like ones, make
   // them absolute.
@@ -38,7 +49,7 @@ function resolveGraphUrls(graphToRun: GraphToRun): GraphToRun {
   // Second, walk through all node configurations and for the ones that
   // contains templates, make them absolute.
 
-  result.nodes = graph.nodes.map((node) => {
+  resolved.nodes = graph.nodes.map((node) => {
     let { type, configuration } = node;
     if (graphUrlLike(node.type)) {
       type = new URL(node.type, base).href;
@@ -57,6 +68,16 @@ function resolveGraphUrls(graphToRun: GraphToRun): GraphToRun {
     }
     return { ...node, type, configuration };
   });
+
+  const result = subGraphId
+    ? {
+        ...mainGraph,
+        graphs: {
+          ...mainGraph.graphs,
+          [subGraphId]: resolved,
+        },
+      }
+    : resolved;
 
   return { ...graphToRun, graph: result };
 }
