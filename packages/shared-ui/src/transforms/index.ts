@@ -11,3 +11,4 @@ export { MarkInPortsInvalidSpec } from "./mark-in-ports-invalid-spec";
 export { RemoveAssetWithRefs } from "./remove-asset-with-refs";
 export { CreateNode } from "./create-node";
 export { UpdateParameterMetadata } from "./update-parameter-metadata";
+export { MoveNodesToGraph } from "./move-nodes-to-graph";

@@ -1518,6 +1518,36 @@ export class Edit extends EventTarget {
     return editableGraph.apply(updateNodeTransform);
   }
 
+  async moveNodesToGraph(
+    tab: Tab | null,
+    ids: NodeIdentifier[],
+    sourceGraphId: GraphIdentifier,
+    destinationGraphId: GraphIdentifier | null = null
+  ) {
+    if (tab?.readOnly) {
+      return;
+    }
+
+    const editableGraph = this.getEditor(tab);
+
+    if (!editableGraph) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to find board to edit"));
+      return;
+    }
+
+    return editableGraph.apply(
+      new BreadboardUI.Transforms.MoveNodesToGraph(
+        ids,
+        sourceGraphId,
+        destinationGraphId
+      )
+    );
+  }
+
+  /**
+   *
+   * @deprecated
+   */
   async moveToNewGraph(
     tab: Tab | null,
     selectionState: WorkspaceSelectionState,
