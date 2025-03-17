@@ -180,50 +180,6 @@ suite("Board Server integration test", () => {
       assert.equal(response.status, 200);
     });
 
-    test("GET /boards/@:user/:name.invite", async () => {
-      store.create(user.username, "test-board.json");
-      const path = `@${user.username}/test-board.invite`;
-
-      const response = await request(server).get(
-        `/boards/${path}?API_KEY=${user.apiKey}`
-      );
-
-      assert.equal(response.status, 200);
-    });
-
-    test("GET /boards/@:user/:name/invites", async () => {
-      store.create(user.username, "test-board");
-      const path = `@${user.username}/test-board/invites`;
-
-      const response = await request(server).get(
-        `/boards/${path}?API_KEY=${user.apiKey}`
-      );
-
-      assert.equal(response.status, 200);
-    });
-
-    test("POST /boards/@:user/:name.invite", async () => {
-      await store.create(user.username, "test-board.json");
-      const path = `@${user.username}/test-board.invite`;
-
-      const response = await request(server).post(
-        `/boards/${path}?API_KEY=${user.apiKey}`
-      );
-
-      assert.equal(response.status, 200);
-    });
-
-    test("POST /boards/@:user/:name/invites", async () => {
-      await store.create(user.username, "test-board");
-      const path = `@${user.username}/test-board/invites`;
-
-      const response = await request(server).post(
-        `/boards/${path}?API_KEY=${user.apiKey}`
-      );
-
-      assert.equal(response.status, 200);
-    });
-
     // This test makes an HTTP call to the Drive API. Can't run this in a test.
     test.todo("POST /boards/@:user/:name.json/assets/drive/:id");
   });

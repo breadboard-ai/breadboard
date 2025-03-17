@@ -10,23 +10,15 @@
 
 import Database from "better-sqlite3";
 import type { RunBoardStateStore } from "../types.js";
-import type {
-  BoardListEntry,
-  GetUserStoreResult,
-  OperationResult,
-  ServerInfo,
-} from "../store.js";
-import {
-  asInfo,
-  asPath,
-  EXPIRATION_TIME_MS,
-  INVITE_EXPIRATION_TIME_MS,
-} from "../store.js";
+import type { BoardListEntry, ServerInfo } from "../store.js";
+import { asInfo, asPath, EXPIRATION_TIME_MS } from "../store.js";
 import type {
   GraphDescriptor,
   ReanimationState,
 } from "@google-labs/breadboard";
 import { v4 as uuidv4 } from "uuid";
+
+export const INVITE_EXPIRATION_TIME_MS = 1000 * 60 * 60 * 24 * 4; // 4 days
 
 export type CreateUserResult =
   | { success: true; apiKey: string }
@@ -51,6 +43,14 @@ export type ListInviteResult =
       success: false;
       error: string;
     };
+
+export type GetUserStoreResult =
+  | { success: true; store: string }
+  | { success: false; error: string };
+
+export type OperationResult =
+  | { success: true }
+  | { success: false; error: string };
 
 export class SQLiteStorageProvider implements RunBoardStateStore {
   private db: Database.Database;
