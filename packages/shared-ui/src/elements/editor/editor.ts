@@ -881,8 +881,6 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       subGraphId ? subGraphId : MAIN_BOARD_ID
     );
 
-    const hasSubGraphs = Object.keys(selectedGraph.graphs() ?? {}).length > 0;
-
     return {
       url,
       title: subGraphId
@@ -898,7 +896,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       nodes: selectedGraph.nodes(),
       modules: selectedGraph.modules(),
       metadata: selectedGraph.metadata() || {},
-      showGraphOutline: subGraphId ? true : hasSubGraphs,
+      showGraphOutline: subGraphId ? true : false,
       references,
       selectionState: graphSelectionState ?? null,
     };

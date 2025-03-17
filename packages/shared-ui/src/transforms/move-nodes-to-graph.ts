@@ -44,7 +44,7 @@ class MoveNodesToGraph implements EditTransform {
         type: "addgraph",
         id: destGraphId,
         graph: {
-          title: "New Flow",
+          title: "Custom Tool",
           nodes: [],
           edges: [],
         },
