@@ -179,13 +179,6 @@ export class FirestoreStorageProvider implements RunBoardStateStore {
     };
   }
 
-  async get(userStore: string, boardName: string): Promise<string> {
-    const doc = await this.#database
-      .doc(`workspaces/${userStore}/boards/${boardName}`)
-      .get();
-    return doc.get("graph");
-  }
-
   async update(
     userId: string,
     boardName: string,
