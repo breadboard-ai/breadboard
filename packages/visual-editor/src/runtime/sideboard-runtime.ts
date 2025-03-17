@@ -223,9 +223,11 @@ class SideboardRuntimeImpl
       // directly, ourselves.
       const secrets: Record<string, string> = {};
       for (const key of event.data.keys) {
+        console.log(key);
         if (key.startsWith("connection:")) {
           const connectionId = key.slice("connection:".length);
           const result = this.tokenVendor.getToken(connectionId);
+          console.log(result);
           if (result.state === "valid") {
             secrets[key] = result.grant.access_token;
           } else if (result.state === "expired") {
@@ -253,6 +255,7 @@ class SideboardRuntimeImpl
         }
       }
 
+      console.log(secrets);
       runner.run(secrets);
     });
     return runner;

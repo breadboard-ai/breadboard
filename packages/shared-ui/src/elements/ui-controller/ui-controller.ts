@@ -414,6 +414,7 @@ export class UI extends LitElement {
             this.signedIn,
             this.selectionState,
             themeHash,
+            this.boardServers,
           ],
           () => {
             let topGraphResult = this.topGraphResult;
@@ -513,6 +514,7 @@ export class UI extends LitElement {
               .showGDrive=${this.signedIn}
               .isInSelectionState=${isInSelectionState}
               .showingOlderResult=${showingOlderResult}
+              .boardServers=${this.boardServers}
               @bbthemeeditrequest=${() => {
                 this.showThemeDesigner = true;
               }}

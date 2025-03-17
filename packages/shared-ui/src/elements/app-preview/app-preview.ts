@@ -11,13 +11,18 @@ const Strings = StringsHelper.forSection("AppPreview");
 import { LitElement, PropertyValues, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
+  BoardServer,
   InspectableRun,
   isInlineData,
   isStoredData,
 } from "@google-labs/breadboard";
 
 import { styles as appPreviewStyles } from "./app-preview.styles.js";
-import { ThemeEditRequestEvent } from "../../events/events.js";
+import {
+  ThemeEditRequestEvent,
+  ToastEvent,
+  ToastType,
+} from "../../events/events.js";
 import {
   AppTemplate,
   AppTemplateOptions,
@@ -98,6 +103,9 @@ export class AppPreview extends LitElement {
 
   @property()
   accessor theme: AppTheme = this.#createDefaultTheme();
+
+  @property()
+  accessor boardServers: BoardServer[] = [];
 
   @property()
   accessor themeHash: string | null = null;
@@ -221,6 +229,26 @@ export class AppPreview extends LitElement {
       default:
         throw new Error(`Unknown theme: ${theme}`);
     }
+  }
+
+  async #deriveAppURL() {
+    if (!this.graph?.url) {
+      return;
+    }
+
+    for (const server of this.boardServers) {
+      const graphUrl = new URL(this.graph.url);
+      const capabilities = server.canProvide(graphUrl);
+      if (!capabilities) {
+        return;
+      }
+
+      if (server.extendedCapabilities().preview) {
+        return server.preview(graphUrl);
+      }
+    }
+
+    return null;
   }
 
   protected willUpdate(changedProperties: PropertyValues): void {
@@ -387,13 +415,34 @@ export class AppPreview extends LitElement {
     }
 
     return html`<div id="container">
-      <div id="designer">
+      <div id="controls">
         <button
+          id="designer"
           @click=${() => {
             this.dispatchEvent(new ThemeEditRequestEvent());
           }}
         >
           Designer
+        </button>
+        <button
+          id="url"
+          @click=${async () => {
+            const url = await this.#deriveAppURL();
+            if (!url) {
+              return;
+            }
+
+            await navigator.clipboard.writeText(url.href);
+
+            this.dispatchEvent(
+              new ToastEvent(
+                Strings.from("STATUS_COPIED_TO_CLIPBOARD"),
+                ToastType.INFORMATION
+              )
+            );
+          }}
+        >
+          URL
         </button>
       </div>
 
