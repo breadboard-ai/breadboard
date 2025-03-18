@@ -51,11 +51,6 @@ export class FlowGenerator {
     }
 
     const { messages } = await this.#appCatalystApiClient.chat(request);
-    if (messages.length < 3) {
-      throw new Error(
-        `Expected response to have at least 3 messages, got ${messages.length}.`
-      );
-    }
     const responseFlows: GraphDescriptor[] = [];
     const responseMessages: string[] = [];
     for (

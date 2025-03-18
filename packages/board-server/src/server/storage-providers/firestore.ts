@@ -18,10 +18,9 @@ const REANIMATION_COLLECTION_ID = "resume";
 export class FirestoreStorageProvider implements RunBoardStateStore {
   #database;
 
-  constructor(storeName: string) {
-    this.#database = new Firestore({
-      databaseId: storeName,
-    });
+  constructor() {
+    const databaseId = process.env["FIRESTORE_DB_NAME"] || "board-server";
+    this.#database = new Firestore({ databaseId });
   }
 
   async createUser(username: string, apiKey: string): Promise<void> {

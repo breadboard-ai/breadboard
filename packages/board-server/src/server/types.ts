@@ -41,9 +41,11 @@ export type InvokeBoardArguments = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   inputs: Record<string, any>;
   kitOverrides?: Kit[];
+  serverUrl: string;
 };
 
 export type RunBoardArguments = {
+  serverUrl: string;
   /**
    * The full URL or the requested board, like
    * `https://board.server/boards/@user/board.bgl.json`.
