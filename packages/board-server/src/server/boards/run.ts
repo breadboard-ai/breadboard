@@ -11,20 +11,24 @@ import type { RemoteMessage } from "@google-labs/breadboard/remote";
 import { getBody } from "../common.js";
 import type { ServerConfig } from "../config.js";
 import { secretsKit } from "../proxy/secrets.js";
-import { asPath, getStore } from "../store.js";
+import { asPath } from "../store.js";
 
-import { loadFromStore } from "./utils/board-server-provider.js";
+import { createBoardLoader } from "./utils/board-server-provider.js";
 import { runBoard, timestamp } from "./utils/run-board.js";
 import { verifyKey } from "./utils/verify-key.js";
-import type { BoardId } from "../types.js";
+import type { BoardId, BoardServerStore } from "../types.js";
 
 async function runHandler(
   config: ServerConfig,
   req: Request,
   res: Response
 ): Promise<void> {
+  const store: BoardServerStore = req.app.locals.store;
+
   const boardId: BoardId = res.locals.boardId;
   const path = asPath(boardId.user, boardId.name);
+
+  const serverUrl = (await store.getServerInfo())?.url ?? "";
 
   const url = new URL(req.url, config.hostname);
   url.pathname = `boards/${path}`;
@@ -44,7 +48,7 @@ async function runHandler(
   res.setHeader("Content-Type", "text/event-stream");
   res.statusCode = 200;
 
-  const userId = await verifyKey(inputs);
+  const userId = await verifyKey(inputs, store);
   if (!userId) {
     await writer.write([
       "graphstart",
@@ -71,18 +75,17 @@ async function runHandler(
     return;
   }
 
-  const runStateStore = getStore();
-
   await runBoard({
+    serverUrl,
     url: url.href,
     path,
     user: userId,
     inputs,
-    loader: loadFromStore,
+    loader: createBoardLoader(store),
     kitOverrides: [secretsKit],
     writer,
     next,
-    runStateStore,
+    runStateStore: store,
     diagnostics,
   });
   // await writer.close();

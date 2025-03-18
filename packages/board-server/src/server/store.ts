@@ -8,11 +8,9 @@ import type { GraphDescriptor } from "@breadboard-ai/types";
 import { FirestoreStorageProvider } from "./storage-providers/firestore.js";
 
 export const EXPIRATION_TIME_MS = 1000 * 60 * 60 * 24 * 2; // 2 days
-export const INVITE_EXPIRATION_TIME_MS = 1000 * 60 * 60 * 24 * 4; // 4 days
 
 export function getStore(): FirestoreStorageProvider {
-  const db = process.env["FIRESTORE_DB_NAME"] || "board-server";
-  return new FirestoreStorageProvider(db);
+  return new FirestoreStorageProvider();
 }
 
 /** A type representing a board as it is stored in a DB. */

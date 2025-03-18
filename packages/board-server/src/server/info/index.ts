@@ -6,8 +6,10 @@
 
 import { type Request, type Response, Router } from "express";
 
-import { getStore, type ServerInfo } from "../store.js";
 import packageInfo from "../../../package.json" with { type: "json" };
+
+import type { ServerInfo } from "../store.js";
+import type { BoardServerStore } from "../types.js";
 
 const DEFAULT_SERVER_INFO: ServerInfo = {
   title: "Board Server",
@@ -29,8 +31,8 @@ export function serveInfoAPI(): Router {
   return router;
 }
 
-async function get(_req: Request, res: Response): Promise<void> {
-  const store = getStore();
+async function get(req: Request, res: Response): Promise<void> {
+  const store: BoardServerStore = req.app.locals.store;
   const info = (await store.getServerInfo()) || DEFAULT_SERVER_INFO;
   const version = packageInfo.version;
 
