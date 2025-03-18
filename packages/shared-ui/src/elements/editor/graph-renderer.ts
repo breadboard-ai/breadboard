@@ -1489,7 +1489,11 @@ export class GraphRenderer extends LitElement {
           background: backgroundColor,
           antialias: true,
         },
-        preference: "webgl",
+        webgpu: {
+          background: backgroundColor,
+          antialias: true,
+        },
+        preference: "webgpu",
         resizeTo: this,
         autoDensity: true,
         resolution: Math.max(2, window.devicePixelRatio),

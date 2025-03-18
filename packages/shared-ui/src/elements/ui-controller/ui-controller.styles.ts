@@ -16,6 +16,7 @@ export const styles = css`
     overscroll-behavior: contain;
     overflow: auto;
     color: var(--bb-neutral-900);
+    contain: strict;
   }
 
   :host([showthemedesigner]) {
@@ -45,6 +46,7 @@ export const styles = css`
     height: 100%;
     overflow: auto;
     position: relative;
+    contain: strict;
   }
 
   #create-view {
