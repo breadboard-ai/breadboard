@@ -20,7 +20,7 @@
         "description": {
           "parts": [
             {
-              "text": "Come up with 3 instagram posts on the following topic:\n\nNew specialty of the season: chocolate bunny mocha"
+              "text": "Generate chapter outline for a science fiction novel. Subgenre: Space opera, galactic exploration. \nList chapter descriptions only.\n\nMake the main character's name start with the same letter as the current second of current time.\n\nAudience: Young Adult"
             }
           ],
           "role": "user"
