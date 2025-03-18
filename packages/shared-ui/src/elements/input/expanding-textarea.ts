@@ -109,6 +109,9 @@ export class ExpandingTextarea extends LitElement {
         display: flex;
         margin: -4px;
       }
+      #submit:hover {
+        filter: brightness(125%);
+      }
     `,
   ];
 
