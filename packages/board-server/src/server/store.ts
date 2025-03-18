@@ -22,18 +22,8 @@ export type StorageBoard = {
   displayName: string;
   description: string;
   tags: string[];
+  thumbnail: string;
   graph?: GraphDescriptor;
-};
-
-export type BoardListEntry = {
-  title: string;
-  description?: string;
-  path: string;
-  username: string;
-  readonly: boolean;
-  mine: boolean;
-  tags: string[];
-  thumbnail?: string;
 };
 
 export type ServerCapabilityAccess = "open" | "key";
