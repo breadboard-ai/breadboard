@@ -1,4 +1,4 @@
-import { Firestore } from "@google-cloud/firestore";
+import { Firestore, QueryDocumentSnapshot } from "@google-cloud/firestore";
 import {
   type ReanimationState,
   type GraphDescriptor,
@@ -9,8 +9,6 @@ import {
 import {
   EXPIRATION_TIME_MS,
   type ServerInfo,
-  type BoardListEntry,
-  asPath,
   type StorageBoard,
 } from "../store.js";
 import type { RunBoardStateStore } from "../types.js";
@@ -84,72 +82,33 @@ export class FirestoreStorageProvider implements RunBoardStateStore {
     return users.docs[0]?.id ?? "";
   }
 
-  async list(userStore: string): Promise<BoardListEntry[]> {
-    const docs = await this.#database.collectionGroup("boards").get();
-    const boards: BoardListEntry[] = [];
-    docs.forEach((doc) => {
-      const storeId = doc.ref.parent.parent!.id;
-      const path = asPath(storeId, doc.id);
-      const title = doc.get("title") || path;
-      const description = doc.get("description") || undefined;
-      const tags = (doc.get("tags") as string[]) || ["published"];
-      const published = tags.includes("published");
+  async listBoards(userId: string): Promise<StorageBoard[]> {
+    const boards: StorageBoard[] = [];
 
-      const readonly = userStore !== storeId;
-      const mine = userStore === storeId;
-      const username = storeId;
-      if (!published && !mine) {
+    const docs = await this.#database.collectionGroup("boards").get();
+    docs.forEach((doc: QueryDocumentSnapshot): void => {
+      const owner = doc.ref.parent.parent!.id;
+      const tags = (doc.get("tags") as string[]) || [];
+
+      // TODO Save on query and serving costs by filtering on the server
+      // instead of post-filtering
+      const mine = owner === userId;
+      const published = tags.includes("published");
+      if (!mine && !published) {
         return;
       }
 
-      let thumbnail: string | undefined = undefined;
-      const graph = doc.get("graph");
-      if (graph) {
-        try {
-          const graphData = JSON.parse(graph);
-          if (graphData.assets && graphData.assets["@@splash"]) {
-            if (
-              isLLMContentArray(graphData.assets["@@splash"].data) &&
-              graphData.assets["@@splash"].data.length > 0
-            ) {
-              const splashEntry = graphData.assets["@@splash"].data[0];
-              if (splashEntry && isStoredData(splashEntry.parts[0])) {
-                thumbnail = splashEntry.parts[0].storedData.handle;
-              }
-            }
-          } else if (
-            graphData.metadata?.visual?.presentation?.theme &&
-            graphData.metadata?.visual?.presentation?.themes
-          ) {
-            const { theme, themes } = graphData.metadata.visual.presentation;
-            if (
-              themes[theme] &&
-              themes[theme].splashScreen?.storedData?.handle
-            ) {
-              thumbnail = themes[theme].splashScreen.storedData.handle;
-            }
-          }
-        } catch (err) {
-          // For errors just skip the thumbnail.
-        }
-      }
-
-      const board: BoardListEntry = {
-        title,
-        description,
-        path,
-        username,
-        readonly,
-        mine,
+      const board: StorageBoard = {
+        name: doc.id,
+        owner,
+        displayName: doc.get("title") || doc.id,
+        description: doc.get("description") ?? "",
+        thumbnail: getThumbnail(doc.get("graph")),
         tags,
       };
-
-      if (thumbnail) {
-        board.thumbnail = thumbnail;
-      }
-
       boards.push(board);
     });
+
     return boards;
   }
 
@@ -175,6 +134,7 @@ export class FirestoreStorageProvider implements RunBoardStateStore {
       displayName,
       description,
       tags,
+      thumbnail: "",
       graph,
     };
   }
@@ -206,4 +166,33 @@ export class FirestoreStorageProvider implements RunBoardStateStore {
 
 function asBoardPath(userId: string, boardName: string): string {
   return `workspaces/${userId}/boards/${boardName}`;
+}
+
+function getThumbnail(graphJson?: string): string {
+  if (!graphJson) {
+    return "";
+  }
+  try {
+    const graph = JSON.parse(graphJson);
+    const splashData = graph.assets?.["@@splash"]?.data;
+    if (splashData && isLLMContentArray(splashData) && splashData.length > 0) {
+      const splashEntry = splashData[0];
+      if (splashEntry && isStoredData(splashEntry.parts[0])) {
+        return splashEntry.parts[0].storedData.handle;
+      }
+      return "";
+    }
+
+    const presentation = graph.metadata?.visual?.presentation;
+    const theme = presentation?.theme;
+    const themes = presentation?.themes;
+    const handle = themes?.[theme]?.splashScreen?.storedData?.handle;
+    if (handle) {
+      return handle;
+    }
+  } catch (e) {
+    // If an error is encountered, skip the thumbnail
+  }
+
+  return "";
 }
