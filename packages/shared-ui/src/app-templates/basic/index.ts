@@ -1115,16 +1115,6 @@ export class Template extends LitElement implements AppTemplate {
     }
   }
 
-  updated() {
-    if (this.#splashRef) {
-      // If we have rendered the splash switch of fade-in animations on it
-      // for all future updates.
-      requestAnimationFrame(() => {
-        this.hasRenderedSplash = true;
-      });
-    }
-  }
-
   render() {
     const classes: Record<string, boolean> = {
       "app-template": true,
@@ -1173,7 +1163,12 @@ export class Template extends LitElement implements AppTemplate {
     }
 
     const splashScreen = html`
-      <div id="splash" ${ref(this.#splashRef)}>
+      <div
+        id="splash"
+        @animationend=${() => {
+          this.hasRenderedSplash = true;
+        }}
+      >
         <h1>${this.options.title}</h1>
         ${this.options.description
           ? html`<p>${this.options.description}</p>`

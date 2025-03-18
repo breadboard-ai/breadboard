@@ -34,6 +34,7 @@ import {
 import { customElement, property, state } from "lit/decorators.js";
 import { guard } from "lit/directives/guard.js";
 import {
+  AppTemplateAdditionalOptionsAvailable,
   RecentBoard,
   SETTINGS_TYPE,
   STATUS,
@@ -45,7 +46,10 @@ import {
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 import { ModuleEditor } from "../module-editor/module-editor.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { CommandsSetSwitchEvent } from "../../events/events.js";
+import {
+  CommandsSetSwitchEvent,
+  ThemeEditRequestEvent,
+} from "../../events/events.js";
 import {
   COMMAND_SET_GRAPH_EDITOR,
   COMMAND_SET_MODULE_EDITOR,
@@ -149,6 +153,7 @@ export class UI extends LitElement {
 
   @property({ reflect: true, type: Boolean })
   accessor showThemeDesigner = false;
+  #themeOptions: AppTemplateAdditionalOptionsAvailable | null;
 
   /**
    * Indicates whether or not the UI can currently run a flow or not.
@@ -515,8 +520,9 @@ export class UI extends LitElement {
               .isInSelectionState=${isInSelectionState}
               .showingOlderResult=${showingOlderResult}
               .boardServers=${this.boardServers}
-              @bbthemeeditrequest=${() => {
+              @bbthemeeditrequest=${(evt: ThemeEditRequestEvent) => {
                 this.showThemeDesigner = true;
+                this.#themeOptions = evt.themeOptions;
               }}
             ></bb-app-preview>`;
           }
@@ -599,6 +605,7 @@ export class UI extends LitElement {
       themeEditor = html`<bb-app-theme-creator
         .graph=${this.graph}
         .themeHash=${themeHash}
+        .themeOptions=${this.#themeOptions}
         @pointerdown=${(evt: PointerEvent) => {
           evt.stopImmediatePropagation();
         }}

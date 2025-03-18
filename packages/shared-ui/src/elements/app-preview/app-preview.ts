@@ -77,9 +77,6 @@ export class AppPreview extends LitElement {
   @property()
   accessor templates = [{ title: "Basic", value: "basic" }];
 
-  @property()
-  accessor templateAdditionalOptionsChosen: Record<string, string> = {};
-
   @property({ reflect: false })
   accessor run: InspectableRun | null = null;
 
@@ -148,11 +145,39 @@ export class AppPreview extends LitElement {
       splashImage: false,
     };
 
+    const templateAdditionalOptionsChosen: Record<string, string> = {};
+
+    let templateAdditionalOptions: Record<string, string> | undefined =
+      undefined;
+    if (
+      this.graph?.metadata?.visual?.presentation?.theme &&
+      this.graph?.metadata?.visual?.presentation?.themes
+    ) {
+      const { themes, theme } = this.graph.metadata.visual.presentation;
+      if (themes[theme]) {
+        templateAdditionalOptions = themes[theme].templateAdditionalOptions;
+      }
+    } else if (
+      this.graph?.metadata?.visual?.presentation?.templateAdditionalOptions
+    ) {
+      templateAdditionalOptions =
+        this.graph.metadata.visual.presentation.templateAdditionalOptions;
+    }
+
+    if (templateAdditionalOptions) {
+      for (const name of Object.keys(this.#appTemplate.additionalOptions)) {
+        if (templateAdditionalOptions[name]) {
+          templateAdditionalOptionsChosen[name] =
+            templateAdditionalOptions[name];
+        }
+      }
+    }
+
     options.title = this.appTitle;
     options.description = this.appDescription;
     options.mode = getThemeModeFromBackground(this.theme.backgroundColor);
     options.theme = this.theme;
-    options.additionalOptions = this.templateAdditionalOptionsChosen;
+    options.additionalOptions = templateAdditionalOptionsChosen;
 
     if (this.theme?.splashScreen) {
       options.splashImage = true;
@@ -274,41 +299,6 @@ export class AppPreview extends LitElement {
           this.#appTemplate.appURL = appURL?.href ?? null;
           this.#template = html`${this.#appTemplate}`;
 
-          const templateAdditionalOptionsChosen: Record<string, string> = {};
-
-          let templateAdditionalOptions: Record<string, string> | undefined =
-            undefined;
-          if (
-            this.graph?.metadata?.visual?.presentation?.theme &&
-            this.graph?.metadata?.visual?.presentation?.themes
-          ) {
-            const { themes, theme } = this.graph.metadata.visual.presentation;
-            if (themes[theme]) {
-              templateAdditionalOptions =
-                themes[theme].templateAdditionalOptions;
-            }
-          } else if (
-            this.graph?.metadata?.visual?.presentation
-              ?.templateAdditionalOptions
-          ) {
-            templateAdditionalOptions =
-              this.graph.metadata.visual.presentation.templateAdditionalOptions;
-          }
-
-          if (templateAdditionalOptions) {
-            for (const name of Object.keys(
-              this.#appTemplate.additionalOptions
-            )) {
-              if (templateAdditionalOptions[name]) {
-                templateAdditionalOptionsChosen[name] =
-                  templateAdditionalOptions[name];
-              }
-            }
-
-            this.templateAdditionalOptionsChosen =
-              templateAdditionalOptionsChosen;
-          }
-
           this.#applyThemeToTemplate();
           this.#loadingTemplate = false;
 
@@ -424,7 +414,11 @@ export class AppPreview extends LitElement {
           id="designer"
           ?disabled=${this.#loadingTemplate}
           @click=${() => {
-            this.dispatchEvent(new ThemeEditRequestEvent());
+            this.dispatchEvent(
+              new ThemeEditRequestEvent(
+                this.#appTemplate?.additionalOptions ?? null
+              )
+            );
           }}
         >
           Designer
