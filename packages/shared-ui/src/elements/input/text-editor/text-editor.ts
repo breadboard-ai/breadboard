@@ -12,19 +12,7 @@ import { Project } from "../../../state";
 import { FastAccessMenu } from "../../elements";
 import { escapeHTMLEntities } from "../../../utils";
 
-/** Returns CSS class to be used for the given mimeType. */
-function getAssetTypeClass(mimeType?: string): string | undefined {
-  if (!mimeType) {
-    return;
-  }
-
-  const prefixes = ["image", "audio", "video", "text"];
-  for (const prefix of prefixes) {
-    if (mimeType.startsWith(prefix)) {
-      return prefix;
-    }
-  }
-}
+import {getAssetType} from "../../../utils/mime-type";
 
 @customElement("bb-text-editor")
 export class TextEditor extends LitElement {
@@ -34,7 +22,7 @@ export class TextEditor extends LitElement {
     const template = new Template(escapedValue);
     template.substitute((part) => {
       const { type, title, invalid, mimeType } = part;
-      const assetType = getAssetTypeClass(mimeType) ?? "";
+      const assetType = getAssetType(mimeType) ?? "";
       return `<label class="chiclet ${type} ${assetType} ${invalid ? "invalid" : ""}" contenteditable="false"><span>${Template.preamble(part)}</span><span class="visible">${title}</span><span>${Template.postamble()}</span></label>`;
     });
     this.#value = template.raw;
@@ -318,7 +306,7 @@ export class TextEditor extends LitElement {
       const postamableText = document.createElement("span");
       label.classList.add("chiclet");
       label.classList.add(templatePartType);
-      const assetType = getAssetTypeClass(mimeType);
+      const assetType = getAssetType(mimeType);
       if (assetType) {
         label.classList.add(assetType);
       }

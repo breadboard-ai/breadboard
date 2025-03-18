@@ -7,6 +7,7 @@
 import * as PIXI from "pixi.js";
 import { getGlobalColor } from "./utils.js";
 import { GraphAssets } from "./graph-assets.js";
+import { getAssetType } from "../../utils/mime-type.js";
 
 const assetBorderColor = getGlobalColor("--bb-asset-100");
 const assetBackgroundColor = getGlobalColor("--bb-asset-50");
@@ -40,7 +41,7 @@ export class GraphPortChiclet extends PIXI.Container {
   #iconSprite: PIXI.Sprite | null = null;
   #title: PIXI.Text;
 
-  constructor(title: string, type: string, invalid?: boolean) {
+  constructor(title: string, type: string, invalid?: boolean, mimeType?: string) {
     super();
 
     this.#background.cursor = "pointer";
@@ -54,7 +55,7 @@ export class GraphPortChiclet extends PIXI.Container {
         this.#backgroundColor = assetBackgroundColor;
         this.#borderColor = assetBorderColor;
         this.#textColor = assetTextColor;
-        icon = "text";
+        icon = getAssetType(mimeType) || "text";
         break;
       }
 
