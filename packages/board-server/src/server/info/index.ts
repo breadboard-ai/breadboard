@@ -8,8 +8,7 @@ import { type Request, type Response, Router } from "express";
 
 import packageInfo from "../../../package.json" with { type: "json" };
 
-import type { ServerInfo } from "../store.js";
-import type { BoardServerStore } from "../types.js";
+import type { ServerInfo, BoardServerStore } from "../store.js";
 
 const DEFAULT_SERVER_INFO: ServerInfo = {
   title: "Board Server",

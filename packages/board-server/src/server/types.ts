@@ -19,8 +19,6 @@ import type {
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
 
-import type { FirestoreStorageProvider } from "./storage-providers/firestore.js";
-
 export type BoardId = {
   user: string;
   name: string;
@@ -84,8 +82,6 @@ export type RunBoardStateStore = {
   ): Promise<ReanimationState | undefined>;
   saveReanimationState(user: string, state: ReanimationState): Promise<string>;
 };
-
-export type BoardServerStore = FirestoreStorageProvider;
 
 export type BlobStore = {
   saveData(

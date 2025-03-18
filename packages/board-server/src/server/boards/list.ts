@@ -6,8 +6,7 @@
 
 import type { NextFunction, Request, Response } from "express";
 
-import type { BoardServerStore } from "../types.js";
-import { asPath, type StorageBoard } from "../store.js";
+import { asPath, type BoardServerStore, type StorageBoard } from "../store.js";
 
 type BoardListEntry = {
   title: string;

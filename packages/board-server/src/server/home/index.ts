@@ -7,7 +7,7 @@
 import type { Request, Response } from "express";
 
 import packageInfo from "../../../package.json" with { type: "json" };
-import type { BoardServerStore } from "../types.js";
+import type { BoardServerStore } from "../store.js";
 
 export const serveHome = async (req: Request, res: Response) => {
   const store: BoardServerStore = req.app.locals.store;

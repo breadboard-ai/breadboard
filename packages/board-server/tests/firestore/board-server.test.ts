@@ -5,7 +5,7 @@ import request from "supertest";
 
 import { createServer, createServerConfig } from "../../src/server.js";
 import { getStore } from "../../src/server/store.js";
-import type { BoardServerStore } from "../../src/server/types.js";
+import type { BoardServerStore } from "../../src/server/store.js";
 
 suite("Board Server integration test", () => {
   const store: BoardServerStore = getStore();
@@ -40,8 +40,8 @@ suite("Board Server integration test", () => {
 
   suite("Boards API", () => {
     afterEach(async () => {
-      await store.delete(user.username, "test-board");
-      await store.delete(user.username, "test-board.json");
+      await store.deleteBoard(user.username, "test-board");
+      await store.deleteBoard(user.username, "test-board.json");
     });
 
     test("OPTIONS /boards -> 204", async () => {
@@ -75,7 +75,7 @@ suite("Board Server integration test", () => {
     });
 
     test("GET /boards/@:user/:name", async () => {
-      await store.create(user.username, "test-board");
+      await store.createBoard(user.username, "test-board");
 
       const response = await request(server).get(
         `/boards/@${user.username}/test-board?API_KEY=${user.apiKey}`
@@ -85,7 +85,7 @@ suite("Board Server integration test", () => {
     });
 
     test("POST /boards/@:user/:name -> updates", async () => {
-      await store.create(user.username, "test-board");
+      await store.createBoard(user.username, "test-board");
 
       const response = await request(server)
         .post(`/boards/@${user.username}/test-board?API_KEY=${user.apiKey}`)
@@ -98,7 +98,7 @@ suite("Board Server integration test", () => {
     });
 
     test("POST /boards/@:user/:name -> deletes", async () => {
-      await store.create(user.username, "test-board");
+      await store.createBoard(user.username, "test-board");
 
       const response = await request(server)
         .post(`/boards/@${user.username}/test-board?API_KEY=${user.apiKey}`)
@@ -111,7 +111,7 @@ suite("Board Server integration test", () => {
     });
 
     test("POST /boards/@:user/:name.api/invoke", async () => {
-      await store.create(user.username, "test-board.json");
+      await store.createBoard(user.username, "test-board.json");
       await store.updateBoard({
         name: "test-board.json",
         owner: user.username,
@@ -134,7 +134,7 @@ suite("Board Server integration test", () => {
     });
 
     test("POST /boards/@:user/:name/invoke", async () => {
-      await store.create(user.username, "test-board");
+      await store.createBoard(user.username, "test-board");
       await store.updateBoard({
         name: "test-board.json",
         owner: user.username,
@@ -157,7 +157,7 @@ suite("Board Server integration test", () => {
     });
 
     test("POST /boards/@:user/:name.api/describe", async () => {
-      await store.create(user.username, "test-board.json");
+      await store.createBoard(user.username, "test-board.json");
       const path = `@${user.username}/test-board.api`;
 
       const response = await request(server)
@@ -168,7 +168,7 @@ suite("Board Server integration test", () => {
     });
 
     test("POST /boards/@:user/:name/describe", async () => {
-      await store.create(user.username, "test-board");
+      await store.createBoard(user.username, "test-board");
       const path = `@${user.username}/test-board`;
 
       const response = await request(server)
@@ -179,7 +179,7 @@ suite("Board Server integration test", () => {
     });
 
     test("POST /boards/@:user/:name.api/run", async () => {
-      store.create(user.username, "test-board.json");
+      store.createBoard(user.username, "test-board.json");
 
       const response = await request(server)
         .post(`/boards/@${user.username}/test-board.api/run`)
@@ -189,7 +189,7 @@ suite("Board Server integration test", () => {
     });
 
     test("POST /boards/@:user/:name/run", async () => {
-      store.create(user.username, "test-board");
+      store.createBoard(user.username, "test-board");
 
       const response = await request(server)
         .post(`/boards/@${user.username}/test-board/run`)
