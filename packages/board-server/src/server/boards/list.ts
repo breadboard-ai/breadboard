@@ -42,6 +42,7 @@ function toListEntry(userId: string, board: StorageBoard): BoardListEntry {
     readonly: board.owner !== userId,
     mine: board.owner === userId,
     tags: board.tags,
+    thumbnail: board.thumbnail || undefined,
   };
 }
 
