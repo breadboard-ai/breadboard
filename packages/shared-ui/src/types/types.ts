@@ -551,6 +551,7 @@ export interface AppTemplate extends LitElement {
   showGDrive: boolean;
   isInSelectionState: boolean;
   showingOlderResult: boolean;
+  appURL: string | null;
 }
 
 export interface Utterance {

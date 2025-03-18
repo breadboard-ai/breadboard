@@ -29,6 +29,8 @@ export const icons = css`
     font-style: normal;
     font-display: optional;
     font-size: 20px;
+    width: 1em;
+    height: 1em;
     user-select: none;
     line-height: 1;
     letter-spacing: normal;

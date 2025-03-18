@@ -29,6 +29,7 @@ import type {
 } from "@google-labs/breadboard";
 import { ComponentExpansionState } from "../elements/editor/types.js";
 import type {
+  AppTemplateAdditionalOptionsAvailable,
   AppTheme,
   Command,
   EdgeData,
@@ -1425,7 +1426,9 @@ export class ThemeUpdateEvent extends Event {
 export class ThemeEditRequestEvent extends Event {
   static eventName = "bbthemeeditrequest";
 
-  constructor() {
+  constructor(
+    public readonly themeOptions: AppTemplateAdditionalOptionsAvailable | null
+  ) {
     super(ThemeEditRequestEvent.eventName, { ...eventInit });
   }
 }

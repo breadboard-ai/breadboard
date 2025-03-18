@@ -22,15 +22,19 @@ declare function encodeURIComponent(
   uriComponent: string | number | boolean
 ): string;
 
-declare function btoa(s: string|Uint8Array): string;
+declare function btoa(s: string | Uint8Array): string;
 declare function atob(s: string): string;
 
 interface Console {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   log(...data: any[]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   error(...data: any[]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   warn(...data: any[]);
 }
 
+// eslint-disable-next-line no-var
 declare var console: Console;
 
 declare type NodeMetadata = {
@@ -250,6 +254,15 @@ declare type JsonSerializable =
       [K: string]: JsonSerializable;
     };
 
+declare type ListPartItem = {
+  title?: string;
+  content: LLMContent[];
+};
+
+declare type ListPart = {
+  list: ListPartItem[];
+};
+
 declare type DataPart =
   | InlineDataCapabilityPart
   | StoredDataCapabilityPart
@@ -259,6 +272,7 @@ declare type DataPart =
   | FunctionCallCapabilityPart
   | FunctionResponseCapabilityPart
   | JSONPart
+  | ListPart
   | TextCapabilityPart;
 
 declare type LLMContent = {
@@ -628,4 +642,5 @@ declare class TextEncoder {
    * @param input A string to encode.
    */
   encode(input: string): Uint8Array;
-}`
+}
+`

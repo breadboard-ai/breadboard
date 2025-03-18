@@ -15,8 +15,6 @@ import getBoard from "./get.js";
 import post from "./post.js";
 import invokeBoard from "./invoke.js";
 import describeBoard from "./describe.js";
-import inviteList from "./invite-list.js";
-import inviteUpdate from "./invite-update.js";
 import runBoard from "./run.js";
 import handleAssetsDriveRequest from "./assets-drive.js";
 import { loadBoard, parseBoardId } from "./loader.js";
@@ -46,20 +44,8 @@ export function serveBoardsAPI(serverConfig: ServerConfig): Router {
   );
   router.post(
     "/@:user/:name.api/describe",
-    parseBoardId({ addJsonSuffix: true }),
+    loadBoard({ addJsonSuffix: true }),
     describeBoard
-  );
-  router.get(
-    "/@:user/:name.invite",
-    requireAuth(),
-    parseBoardId({ addJsonSuffix: true }),
-    inviteList
-  );
-  router.post(
-    "/@:user/:name.invite",
-    requireAuth(),
-    parseBoardId({ addJsonSuffix: true }),
-    inviteUpdate
   );
 
   // Non suffixed routes. These routes treat the board name as an opaque
@@ -74,19 +60,7 @@ export function serveBoardsAPI(serverConfig: ServerConfig): Router {
   router.post("/@:user/:name/run", parseBoardId(), async (req, res) =>
     runBoard(serverConfig, req, res)
   );
-  router.post("/@:user/:name/describe", parseBoardId(), describeBoard);
-  router.get(
-    "/@:user/:name/invites",
-    requireAuth(),
-    parseBoardId(),
-    inviteList
-  );
-  router.post(
-    "/@:user/:name/invites",
-    requireAuth(),
-    parseBoardId(),
-    inviteUpdate
-  );
+  router.post("/@:user/:name/describe", loadBoard(), describeBoard);
 
   router.post(
     "/@:user/:name/assets/drive/:driveId",

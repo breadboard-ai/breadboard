@@ -80,6 +80,9 @@ export class Template extends LitElement implements AppTemplate {
   accessor topGraphResult: TopGraphRunResult | null = null;
 
   @property()
+  accessor appURL: string | null = null;
+
+  @property()
   accessor eventPosition = 0;
 
   @property()
@@ -721,7 +724,7 @@ export class Template extends LitElement implements AppTemplate {
             id="share"
             @click=${() => {
               navigator.share({
-                url: window.location.href,
+                url: this.appURL ?? window.location.href,
                 title: this.options.title ?? "Untitled App",
               });
             }}
@@ -937,7 +940,45 @@ export class Template extends LitElement implements AppTemplate {
     const currentItem = topGraphResult.log.at(-1);
     if (currentItem?.type === "edge") {
       const props = Object.entries(currentItem.schema?.properties ?? {});
-      if (props.length > 0 && currentItem.descriptor?.type === "input") {
+      if (this.run && this.run.events.at(-1)?.type === "secret") {
+        const secretEvent = this.run.events.at(-1) as InspectableRunSecretEvent;
+
+        active = true;
+        inputContents = html`
+          <div class="user-input">
+            <p class="api-message">
+              When calling an API, the API provider's applicable privacy policy
+              and terms apply
+            </p>
+            ${map(secretEvent.keys, (key) => {
+              if (key.startsWith("connection:")) {
+                return html`<bb-connection-input
+                  id=${key}
+                  .connectionId=${key.replace(/^connection:/, "")}
+                ></bb-connection-input>`;
+              } else {
+                return html`<input
+                  name=${key}
+                  type="password"
+                  autocomplete="off"
+                  required
+                  .placeholder=${`Enter ${key}`}
+                />`;
+              }
+            })}
+          </div>
+          <div class="controls">
+            <button
+              id="continue"
+              @click=${() => {
+                continueRun(currentItem.id ?? "unknown");
+              }}
+            >
+              Continue
+            </button>
+          </div>
+        `;
+      } else if (props.length > 0 && currentItem.descriptor?.type === "input") {
         active = true;
         const disabled = currentItem.value !== undefined;
 
@@ -1015,44 +1056,6 @@ export class Template extends LitElement implements AppTemplate {
             </button>
           </div>
         `;
-      } else if (this.run && this.run.events.at(-1)?.type === "secret") {
-        const secretEvent = this.run.events.at(-1) as InspectableRunSecretEvent;
-
-        active = true;
-        inputContents = html`
-          <div class="user-input">
-            <p class="api-message">
-              When calling an API, the API provider's applicable privacy policy
-              and terms apply
-            </p>
-            ${map(secretEvent.keys, (key) => {
-              if (key.startsWith("connection:")) {
-                return html`<bb-connection-input
-                  id=${key}
-                  .connectionId=${key.replace(/^connection:/, "")}
-                ></bb-connection-input>`;
-              } else {
-                return html`<input
-                  name=${key}
-                  type="password"
-                  autocomplete="off"
-                  required
-                  .placeholder=${`Enter ${key}`}
-                />`;
-              }
-            })}
-          </div>
-          <div class="controls">
-            <button
-              id="continue"
-              @click=${() => {
-                continueRun(currentItem.id ?? "unknown");
-              }}
-            >
-              Continue
-            </button>
-          </div>
-        `;
       } else {
         active = true;
         inputContents = placeholder;
@@ -1112,16 +1115,6 @@ export class Template extends LitElement implements AppTemplate {
     }
   }
 
-  updated() {
-    if (this.#splashRef) {
-      // If we have rendered the splash switch of fade-in animations on it
-      // for all future updates.
-      requestAnimationFrame(() => {
-        this.hasRenderedSplash = true;
-      });
-    }
-  }
-
   render() {
     const classes: Record<string, boolean> = {
       "app-template": true,
@@ -1170,7 +1163,12 @@ export class Template extends LitElement implements AppTemplate {
     }
 
     const splashScreen = html`
-      <div id="splash" ${ref(this.#splashRef)}>
+      <div
+        id="splash"
+        @animationend=${() => {
+          this.hasRenderedSplash = true;
+        }}
+      >
         <h1>${this.options.title}</h1>
         ${this.options.description
           ? html`<p>${this.options.description}</p>`

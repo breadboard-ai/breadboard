@@ -1,0 +1,117 @@
+{
+  "title": "Video Generator Workbench",
+  "description": "A blank board. Use it as a starting point for your creations.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "video-generator-35bbada9",
+      "type": "file://bgl/video-generator.bgl.json#module:main",
+      "metadata": {
+        "title": "Make Video [WIP]",
+        "visual": {
+          "x": 20,
+          "y": -160,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "instruction": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Use 1960s cartoon style."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a2-71c73c7a",
+      "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
+      "metadata": {
+        "title": "Ask User",
+        "visual": {
+          "x": -360,
+          "y": -160,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "description": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Describe the video"
+            }
+          ]
+        },
+        "p-modality": "Any"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "a2-71c73c7a",
+      "to": "video-generator-35bbada9",
+      "out": "context",
+      "in": "context"
+    }
+  ],
+  "metadata": {
+    "visual": {
+      "presentation": {
+        "themes": {
+          "d1cec653-1e80-427a-ade7-f011bf58591f": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "d1cec653-1e80-427a-ade7-f011bf58591f"
+      }
+    },
+    "userModified": true,
+    "tags": [],
+    "parameters": {}
+  },
+  "assets": {
+    "3a63cfe2-8621-4f8c-8a7d-26d6c11e664a": {
+      "data": [
+        {
+          "parts": [
+            {
+              "text": "Place your content here"
+            }
+          ],
+          "role": "user"
+        }
+      ],
+      "metadata": {
+        "title": "Untitled Content",
+        "type": "content"
+      }
+    },
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxNDYuNTYiCiAgICAgICAgICAgICAgICAgICAgeT0iNjYuMjIiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjkzLjQ0IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNjcuNTYiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CjxyZWN0IHg9IjEwLjAwIgogICAgICAgICAgICAgICAgICAgIHk9IjY2LjIyIgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI5My40NCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjY3LjU2IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMjBhMjAyIiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+    }
+  }
+}

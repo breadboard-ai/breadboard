@@ -14,14 +14,14 @@ paths:
       operationId: boardserver.boards.list
       security: []
       responses:
-        '200':
+        "200":
           description: Successful response
           content:
-            application/json:    
+            application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/BoardListEntry'
+                  $ref: "#/components/schemas/BoardListEntry"
 
   /boards/@{account}/{boardName}.json:
     get:
@@ -29,32 +29,32 @@ paths:
       operationId: boardserver.boards.get
       security: []
       parameters:
-        - $ref: '#/components/parameters/AccountParam'
-        - $ref: '#/components/parameters/BoardNameParam'
+        - $ref: "#/components/parameters/AccountParam"
+        - $ref: "#/components/parameters/BoardNameParam"
       responses:
-        '200':
+        "200":
           description: Successful response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Board'
-    
+                $ref: "#/components/schemas/Board"
+
     post:
       summary: Create or update a board
       operationId: boardserver.boards.post
       security: []
       parameters:
-        - $ref: '#/components/parameters/AccountParam'
-        - $ref: '#/components/parameters/BoardNameParam'
-        - $ref: '#/components/parameters/ApiKeyQuery'
+        - $ref: "#/components/parameters/AccountParam"
+        - $ref: "#/components/parameters/BoardNameParam"
+        - $ref: "#/components/parameters/ApiKeyQuery"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Board'
+              $ref: "#/components/schemas/Board"
       responses:
-        '200':
+        "200":
           description: Successful response
           content:
             application/json:
@@ -70,10 +70,10 @@ paths:
       operationId: boardserver.boards.serve
       security: []
       parameters:
-        - $ref: '#/components/parameters/AccountParam'
-        - $ref: '#/components/parameters/BoardNameParam'
+        - $ref: "#/components/parameters/AccountParam"
+        - $ref: "#/components/parameters/BoardNameParam"
       responses:
-        '200':
+        "200":
           description: Successful response
           content:
             text/html:
@@ -86,10 +86,10 @@ paths:
       operationId: boardserver.boards.api.get
       security: []
       parameters:
-        - $ref: '#/components/parameters/AccountParam'
-        - $ref: '#/components/parameters/BoardNameParam'
+        - $ref: "#/components/parameters/AccountParam"
+        - $ref: "#/components/parameters/BoardNameParam"
       responses:
-        '200':
+        "200":
           description: Successful response
           content:
             text/html:
@@ -102,8 +102,8 @@ paths:
       operationId: boardserver.boards.api.invoke
       security: []
       parameters:
-        - $ref: '#/components/parameters/AccountParam'
-        - $ref: '#/components/parameters/BoardNameParam'
+        - $ref: "#/components/parameters/AccountParam"
+        - $ref: "#/components/parameters/BoardNameParam"
       requestBody:
         required: true
         content:
@@ -114,7 +114,7 @@ paths:
                 $key:
                   type: string
       responses:
-        '200':
+        "200":
           description: Successful response
           content:
             application/json:
@@ -127,15 +127,15 @@ paths:
       operationId: boardserver.boards.api.describe
       security: []
       parameters:
-        - $ref: '#/components/parameters/AccountParam'
-        - $ref: '#/components/parameters/BoardNameParam'
+        - $ref: "#/components/parameters/AccountParam"
+        - $ref: "#/components/parameters/BoardNameParam"
       responses:
-        '200':
+        "200":
           description: Successful response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiDescription'
+                $ref: "#/components/schemas/ApiDescription"
 
   /boards/@{account}/{boardName}.api/run:
     post:
@@ -143,8 +143,8 @@ paths:
       operationId: boardserver.boards.api.run
       security: []
       parameters:
-        - $ref: '#/components/parameters/AccountParam'
-        - $ref: '#/components/parameters/BoardNameParam'
+        - $ref: "#/components/parameters/AccountParam"
+        - $ref: "#/components/parameters/BoardNameParam"
       requestBody:
         required: true
         content:
@@ -155,70 +155,12 @@ paths:
                 $key:
                   type: string
       responses:
-        '200':
+        "200":
           description: Successful response
           content:
             text/event-stream:
               schema:
                 type: string
-
-  /boards/@{account}/{boardName}.invite:
-    get:
-      summary: List invites
-      operationId: boardserver.boards.invite
-      security: []
-      parameters:
-        - $ref: '#/components/parameters/AccountParam'
-        - $ref: '#/components/parameters/BoardNameParam'
-        - $ref: '#/components/parameters/ApiKeyQuery'
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  invites:
-                    type: array
-                    items:
-                      type: string
-
-    post:
-      summary: Create or delete an invite
-      operationId: boardserver.boards.invites.post
-      security: []
-      parameters:
-        - $ref: '#/components/parameters/AccountParam'
-        - $ref: '#/components/parameters/BoardNameParam'
-        - $ref: '#/components/parameters/ApiKeyQuery'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                delete:
-                  type: string
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - type: object
-                    properties:
-                      invite:
-                        type: string
-                  - type: object
-                    properties:
-                      deleted:
-                        type: string
-                  - type: object
-                    properties:
-                      error:
-                        type: string
 
 components:
   parameters:
@@ -274,27 +216,27 @@ components:
         edges:
           type: array
           items:
-            $ref: '#/components/schemas/Edge'
+            $ref: "#/components/schemas/Edge"
         nodes:
           type: array
           items:
-            $ref: '#/components/schemas/Node'
+            $ref: "#/components/schemas/Node"
         kits:
           type: array
           items:
             type: object
             properties:
-              url: 
+              url:
                 type: string
-              title: 
+              title:
                 type: string
-              description: 
+              description:
                 type: string
-              version: 
+              version:
                 type: string
-              tags: 
+              tags:
                 type: array
-                items: 
+                items:
                   type: string
                   enum:
                     - deprecated
@@ -304,7 +246,7 @@ components:
         graphs:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/Board'
+            $ref: "#/components/schemas/Board"
         args:
           type: object
           additionalProperties: true
@@ -334,8 +276,8 @@ components:
               - type: string
                 enum:
                   - start
-              - $ref: '#/components/schemas/StartTag'
-    
+              - $ref: "#/components/schemas/StartTag"
+
     Node:
       type: array
       items:
@@ -347,9 +289,9 @@ components:
             type: string
           configuration:
             type: object
-            additionalProperties: true 
+            additionalProperties: true
           metadata:
-            $ref: '#/components/schemas/NodeMetaData'
+            $ref: "#/components/schemas/NodeMetaData"
         required:
           - id
           - type
@@ -360,7 +302,7 @@ components:
         type:
           type: string
         label:
-          $ref: '#/components/schemas/StartLabel'
+          $ref: "#/components/schemas/StartLabel"
       required:
         - type
 
@@ -375,13 +317,13 @@ components:
       items:
         type: object
         properties:
-          from: 
+          from:
             type: string
-          to: 
+          to:
             type: string
-          in: 
+          in:
             type: string
-          out: 
+          out:
             type: string
           optional:
             type: boolean
@@ -390,7 +332,7 @@ components:
         required:
           - from
           - to
-    
+
     Schema:
       type: object
       properties:
@@ -407,7 +349,7 @@ components:
         properties:
           type: object
           additionalProperties:
-              $ref: '#/components/schemas/Schema'
+            $ref: "#/components/schemas/Schema"
         required:
           type: array
           items:
@@ -442,13 +384,13 @@ components:
         additionalProperties:
           oneOf:
             - type: boolean
-            - $ref: '#/components/schemas/Schema'
-        items: 
+            - $ref: "#/components/schemas/Schema"
+        items:
           oneOf:
-            - $ref: '#/components/schemas/Schema'
+            - $ref: "#/components/schemas/Schema"
             - type: array
               items:
-                $ref: '#/components/schemas/Schema'
+                $ref: "#/components/schemas/Schema"
         minItems:
           type: number
         examples:
@@ -480,5 +422,5 @@ components:
                 text:
                   type: string
                 metadata:
-                  $ref: '#/components/schemas/NodeMetaData'
+                  $ref: "#/components/schemas/NodeMetaData"
           additionalProperties: true

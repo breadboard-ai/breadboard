@@ -4,17 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, css, html, type PropertyValues } from "lit";
+import { LitElement, css, html, nothing, type PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
+import { icons } from "../../styles/icons.js";
 
 /**
  * A text input which grows to fit its content.
  *
  * Use the `--min-lines` and `--max-lines` CSS custom properties to configure
  * the height (relative to `line-height`).
- *
- * Use the `icon` slot to render an inlaid image on the right.
  *
  * Use the `color` CSS property to set the text, border, and icon colors
  * together; or set them individually.
@@ -33,70 +32,88 @@ export class ExpandingTextarea extends LitElement {
   @property({ type: Boolean })
   accessor disabled = false;
 
+  @property()
+  accessor submitButtonIcon = "spark";
+
   #measure = createRef<HTMLElement>();
   #textarea = createRef<HTMLTextAreaElement>();
 
-  static override styles = css`
-    :host {
-      --min-lines: 3;
-      --max-lines: 10;
-      padding: 0.5lh;
-      border: 1px solid currentColor;
-      border-radius: 0.5lh;
-      overflow-y: hidden;
-    }
-    #outer-container {
-      display: flex;
-      align-items: flex-end;
-      --line-height: 1lh;
-    }
-    #inner-container {
-      flex: 1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      position: relative;
-    }
-    textarea,
-    #measure {
-      line-height: var(--line-height);
-      font-size: inherit;
-      font-weight: inherit;
-      font-family: inherit;
-      word-break: break-all;
-      white-space: pre-wrap;
-    }
-    textarea {
-      flex: 1;
-      color: inherit;
-      background: transparent;
-      height: min(
-        var(--max-lines) * var(--line-height),
-        max(var(--num-lines, 1), var(--min-lines, 1)) * var(--line-height)
-      );
-      border: none;
-      resize: none;
-      overflow-y: auto;
-    }
-    textarea:focus-visible {
-      outline: none;
-    }
-    #measure {
-      visibility: hidden;
-      color: magenta;
-      pointer-events: none;
-      position: absolute;
-      user-select: none;
-      top: 0;
-      left: 0;
-    }
-    #measure::after {
-      /* Unlike our <textarea>, our measurement <div> won't claim height for
+  static override styles = [
+    icons,
+    css`
+      :host {
+        --min-lines: 3;
+        --max-lines: 10;
+        padding: 0.5lh;
+        border: 1px solid currentColor;
+        border-radius: 0.5lh;
+        overflow-y: hidden;
+      }
+      #outer-container {
+        display: flex;
+        align-items: flex-end;
+        --line-height: 1lh;
+      }
+      #inner-container {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+      }
+      textarea,
+      #measure {
+        line-height: var(--line-height);
+        font-size: inherit;
+        font-weight: inherit;
+        font-family: inherit;
+        word-break: break-all;
+        white-space: pre-wrap;
+      }
+      textarea {
+        flex: 1;
+        color: inherit;
+        background: transparent;
+        height: min(
+          var(--max-lines) * var(--line-height),
+          max(var(--num-lines, 1), var(--min-lines, 1)) * var(--line-height)
+        );
+        border: none;
+        resize: none;
+        overflow-y: auto;
+      }
+      textarea:focus-visible {
+        outline: none;
+      }
+      #measure {
+        visibility: hidden;
+        color: magenta;
+        pointer-events: none;
+        position: absolute;
+        user-select: none;
+        top: 0;
+        left: 0;
+      }
+      #measure::after {
+        /* Unlike our <textarea>, our measurement <div> won't claim height for
          trailing newlines. We can work around this by appending a zero-width
          space. */
-      content: "\u200B";
-    }
-  `;
+        content: "\u200B";
+      }
+      #submit {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--submit-button-color, inherit);
+        padding: 4px;
+        display: flex;
+        margin: -4px;
+      }
+      #submit:hover {
+        filter: brightness(125%);
+      }
+    `,
+  ];
 
   updated(changes: PropertyValues<this>) {
     if (changes.has("value")) {
@@ -119,7 +136,13 @@ export class ExpandingTextarea extends LitElement {
           ></textarea>
           <div id="measure" ${ref(this.#measure)}></div>
         </div>
-        <slot id="icon" name="icon"></slot>
+        ${this.submitButtonIcon
+          ? html`
+              <button id="submit" aria-label="Submit" @click=${this.#submit}>
+                <span class="g-icon">${this.submitButtonIcon}</span>
+              </button>
+            `
+          : nothing}
       </div>
     `;
   }
@@ -137,12 +160,16 @@ export class ExpandingTextarea extends LitElement {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      const value = this.#textarea?.value?.value;
-      if (value && !this.disabled) {
-        this.dispatchEvent(new InputEvent("change"));
-      } else {
-        this.#shake();
-      }
+      this.#submit();
+    }
+  }
+
+  #submit() {
+    const value = this.#textarea?.value?.value;
+    if (value && !this.disabled) {
+      this.dispatchEvent(new InputEvent("change"));
+    } else {
+      this.#shake();
     }
   }
 
