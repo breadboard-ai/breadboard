@@ -602,8 +602,8 @@ export class LLMOutput extends LitElement {
           } else if (isListPart(part)) {
             value = html`${part.list
               .map((item) => {
-                const content = item.content.at(0);
-                if (!content) return null;
+                const content = item.content.at(-1);
+                if (!content) return nothing;
                 return html`<bb-llm-output
                   .showExportControls=${true}
                   .graphUrl=${this.graphUrl}
