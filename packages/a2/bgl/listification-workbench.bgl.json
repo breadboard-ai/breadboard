@@ -1,0 +1,137 @@
+{
+  "title": "Listification Workspace",
+  "description": "",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "a2-ec8b61ad",
+      "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+      "metadata": {
+        "title": "Make Text",
+        "visual": {
+          "x": 320,
+          "y": 460,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "description": {
+          "parts": [
+            {
+              "text": "Write the text and the hashtags for three instagram posts on the topic.\n\nTopic: \n\nSeasonal Special: Chocolate Bunny Mocha"
+            }
+          ],
+          "role": "user"
+        },
+        "p-list": true
+      }
+    },
+    {
+      "id": "a2-8d2c99d6",
+      "type": "file://bgl/a2.bgl.json#module:image-generator",
+      "metadata": {
+        "title": "Make Image",
+        "visual": {
+          "x": 640,
+          "y": 520,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "instruction": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "using the post provided, generate an image that would be perfect for a instagram post"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a2-eefb6f99",
+      "type": "file://bgl/a2.bgl.json#module:combine-outputs",
+      "metadata": {
+        "title": "Combine Outputs",
+        "visual": {
+          "x": 960.0000000000002,
+          "y": 460,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "text": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "{{\"type\":\"in\",\"path\":\"a2-8d2c99d6\",\"title\":\"Make Image\"}}\n{{\"type\":\"in\",\"path\":\"a2-ec8b61ad\",\"title\":\"Make Text\"}}"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "a2-ec8b61ad",
+      "to": "a2-8d2c99d6",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "a2-8d2c99d6",
+      "to": "a2-eefb6f99",
+      "out": "context",
+      "in": "p-z-a2-8d2c99d6"
+    },
+    {
+      "from": "a2-ec8b61ad",
+      "to": "a2-eefb6f99",
+      "out": "context",
+      "in": "p-z-a2-ec8b61ad"
+    }
+  ],
+  "metadata": {
+    "visual": {
+      "presentation": {
+        "themes": {
+          "05a8046c-3027-4947-b708-808151f12d2c": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "05a8046c-3027-4947-b708-808151f12d2c"
+      }
+    },
+    "userModified": true,
+    "tags": [],
+    "parameters": {}
+  },
+  "assets": {
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI2OC4zMSIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iNjYuNDQiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI0OC4wNCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KPHJlY3QgeD0iOTEuNzgiCiAgICAgICAgICAgICAgICAgICAgeT0iODMuNjQiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjY2LjQ0IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNDguMDQiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CjxyZWN0IHg9IjE3My41NiIKICAgICAgICAgICAgICAgICAgICB5PSI2OC4zMSIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iNjYuNDQiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI0OC4wNCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KICAgICAgCiAgICA8L3N2Zz4="
+    }
+  }
+}
