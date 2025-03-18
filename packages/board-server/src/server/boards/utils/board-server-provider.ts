@@ -18,19 +18,20 @@ import {
 } from "@google-labs/breadboard";
 
 import { asInfo, getStore } from "../../store.js";
-import type { BoardServerLoadFunction } from "../../types.js";
+import type { BoardServerLoadFunction, BoardServerStore } from "../../types.js";
 
-export const loadFromStore = async (
-  path: string
-): Promise<GraphDescriptor | null> => {
-  const store = getStore();
-  const { userStore, boardName } = asInfo(path);
-  if (!userStore || !boardName) {
-    return null;
-  }
-  const board = await store.loadBoard(userStore, boardName);
-  return board?.graph ?? null;
-};
+export function createBoardLoader(
+  store: BoardServerStore
+): BoardServerLoadFunction {
+  return async (path: string): Promise<GraphDescriptor | null> => {
+    const { userStore, boardName } = asInfo(path);
+    if (!userStore || !boardName) {
+      return null;
+    }
+    const board = await store.loadBoard(userStore, boardName);
+    return board?.graph ?? null;
+  };
+}
 
 export class BoardServerProvider implements BoardServer {
   #initialized = false;
@@ -60,7 +61,12 @@ export class BoardServerProvider implements BoardServer {
   users = [this.user];
   name = "Board Server Provider";
 
-  constructor(path: string, loader: BoardServerLoadFunction) {
+  constructor(
+    serverUrl: string,
+    path: string,
+    loader: BoardServerLoadFunction
+  ) {
+    this.#serverUrl = serverUrl;
     this.#path = path;
     this.#loader = loader;
   }
