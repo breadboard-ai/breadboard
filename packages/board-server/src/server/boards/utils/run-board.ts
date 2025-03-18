@@ -19,6 +19,7 @@ import { NodeSandbox } from "@breadboard-ai/jsandbox/node";
 export const timestamp = () => globalThis.performance.now();
 
 export const runBoard = async ({
+  serverUrl,
   url,
   path,
   user,
@@ -41,7 +42,7 @@ export const runBoard = async ({
   // TODO: Figure out if this is the right thing to do here.
   store.createGroup("run-board");
 
-  const boardServerProvider = new BoardServerProvider(path, loader);
+  const boardServerProvider = new BoardServerProvider(serverUrl, path, loader);
   await boardServerProvider.ready();
 
   const runLoader = createLoader([boardServerProvider]);

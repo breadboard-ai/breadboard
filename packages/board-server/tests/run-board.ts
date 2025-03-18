@@ -158,6 +158,7 @@ const scriptedRun = async (
     }).getWriter();
 
     await runBoard({
+      serverUrl: "https://example.com",
       user: "test",
       path,
       url: `https://example.com${path}`,
@@ -183,6 +184,7 @@ describe("Board Server Runs Boards", () => {
       },
     }).getWriter();
     await runBoard({
+      serverUrl: "https://example.com",
       user: "test",
       path,
       url: `https://example.com${path}`,
@@ -213,6 +215,7 @@ describe("Board Server Runs Boards", () => {
       },
     }).getWriter();
     await runBoard({
+      serverUrl: "https://example.com",
       user: "test",
       path,
       url: `https://example.com${path}`,
@@ -241,6 +244,7 @@ describe("Board Server Runs Boards", () => {
       },
     }).getWriter();
     await runBoard({
+      serverUrl: "https://example.com",
       user: "test",
       path,
       url: `https://example.com${path}`,

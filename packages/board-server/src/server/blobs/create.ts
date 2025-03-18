@@ -4,22 +4,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { IncomingMessage, ServerResponse } from "http";
-import { getBody } from "../common.js";
-import { badRequest, serverError } from "../errors.js";
+import type { Request, Response } from "express";
+
 import { isLLMContent, ok } from "@google-labs/breadboard";
 import type { LLMContent } from "@breadboard-ai/types";
+
 import { GoogleStorageBlobStore } from "../blob-store.js";
-import { getStore } from "../store.js";
+import { getBody } from "../common.js";
 import type { ServerConfig } from "../config.js";
+import { badRequest, serverError } from "../errors.js";
+import type { BoardServerStore } from "../types.js";
 
 export { createBlob };
 
-async function createBlob(
-  config: ServerConfig,
-  req: IncomingMessage,
-  res: ServerResponse
-) {
+async function createBlob(config: ServerConfig, req: Request, res: Response) {
+  const store: BoardServerStore = req.app.locals.store;
+
   const body = await getBody(req);
   const { serverUrl, storageBucket } = config;
   if (!body) {
@@ -42,7 +42,6 @@ async function createBlob(
     return;
   }
 
-  const store = getStore();
   let url = serverUrl;
   if (!url) {
     const serverInfo = await store.getServerInfo();

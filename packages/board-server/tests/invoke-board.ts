@@ -25,6 +25,7 @@ describe("Board Server Invokes Boards", () => {
     const path = "/path/to/board";
     const inputs = { text: "bar" };
     const result = await invokeBoard({
+      serverUrl: "https://example.com",
       path,
       url: `https://example.com${path}`,
       inputs,

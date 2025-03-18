@@ -23,6 +23,7 @@ export const invokeBoard = async ({
   inputs,
   loader,
   kitOverrides,
+  serverUrl,
 }: InvokeBoardArguments) => {
   const store = getDataStore();
   if (!store) {
@@ -32,7 +33,7 @@ export const invokeBoard = async ({
   store.createGroup("run-board");
 
   const invokeKits = createKits(kitOverrides);
-  const boardServerProvider = new BoardServerProvider(path, loader);
+  const boardServerProvider = new BoardServerProvider(serverUrl, path, loader);
   await boardServerProvider.ready();
 
   const invokeLoader = createLoader([boardServerProvider]);
