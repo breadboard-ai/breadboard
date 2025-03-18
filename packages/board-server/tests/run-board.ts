@@ -176,7 +176,7 @@ const scriptedRun = async (
 
 describe("Board Server Runs Boards", () => {
   test("can start a simple board", async () => {
-    const path = "/board/user/name";
+    const path = "/boards/user/name";
     const results: RemoteMessage[] = [];
     const writer = new WritableStream<RemoteMessage>({
       async write(chunk) {
@@ -206,7 +206,7 @@ describe("Board Server Runs Boards", () => {
   });
 
   test("can start a simple board with inputs", async () => {
-    const path = "/board/user/name";
+    const path = "/boards/user/name";
     const inputs = { text: "bar" };
     const results: RemoteMessage[] = [];
     const writer = new WritableStream<RemoteMessage>({
@@ -235,7 +235,7 @@ describe("Board Server Runs Boards", () => {
   });
 
   test("can start a board with multiple inputs", async () => {
-    const path = "/board/user/name";
+    const path = "/boards/user/name";
     const inputs = { text: "bar", number: 42 };
     const results: RemoteMessage[] = [];
     const writer = new WritableStream<RemoteMessage>({
