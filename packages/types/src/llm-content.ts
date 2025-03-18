@@ -87,6 +87,15 @@ export type JsonSerializable =
       [K: string]: JsonSerializable;
     };
 
+export type ListPartItem = {
+  title?: string;
+  content: LLMContent[];
+};
+
+export type ListPart = {
+  list: ListPartItem[];
+};
+
 export type DataPart =
   | InlineDataCapabilityPart
   | StoredDataCapabilityPart
@@ -96,6 +105,7 @@ export type DataPart =
   | FunctionCallCapabilityPart
   | FunctionResponseCapabilityPart
   | JSONPart
+  | ListPart
   | TextCapabilityPart;
 
 export type LLMContent = {

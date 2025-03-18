@@ -9,6 +9,8 @@ import {
   isFunctionCallCapabilityPart,
   isFunctionResponseCapabilityPart,
   isInlineData,
+  isJSONPart,
+  isListPart,
   isStoredData,
   isTextCapabilityPart,
 } from "@google-labs/breadboard";
@@ -40,7 +42,6 @@ import {
   isWatchUri,
 } from "../../../utils/youtube.js";
 import { SIGN_IN_CONNECTION_ID } from "../../../utils/signin-adapter.js";
-import { isJSONPart } from "../../../../../breadboard/dist/src/data/common.js";
 
 const PCM_AUDIO = "audio/l16;codec=pcm;rate=24000";
 
@@ -149,7 +150,6 @@ export class LLMOutput extends LitElement {
         padding: 0;
         margin: 0;
       }
-
 
       & pre {
         font: normal var(--bb-body-small) / var(--bb-body-line-height-small)
@@ -358,12 +358,12 @@ export class LLMOutput extends LitElement {
 
     return this.value && this.value.parts.length
       ? html` ${this.showExportControls
-        ? html`<bb-export-toolbar
+          ? html`<bb-export-toolbar
               .supported=${this.supportedExportControls}
               .value=${this.value}
               .graphUrl=${this.graphUrl}
             ></bb-export-toolbar>`
-        : nothing}
+          : nothing}
         ${map(this.value.parts, (part, idx) => {
           let value: TemplateResult | symbol = nothing;
           if (isTextCapabilityPart(part)) {
@@ -401,22 +401,22 @@ export class LLMOutput extends LitElement {
                         <img src="${url}" alt="LLM Image" />
                         <button
                           @click=${async () => {
-                        const data = await fetch(url);
-                        const imageData = await data.blob();
+                            const data = await fetch(url);
+                            const imageData = await data.blob();
 
-                        await navigator.clipboard.write([
-                          new ClipboardItem({
-                            [part.inlineData.mimeType]: imageData,
-                          }),
-                        ]);
+                            await navigator.clipboard.write([
+                              new ClipboardItem({
+                                [part.inlineData.mimeType]: imageData,
+                              }),
+                            ]);
 
-                        this.dispatchEvent(
-                          new ToastEvent(
-                            "Copied image to Clipboard",
-                            ToastType.INFORMATION
-                          )
-                        );
-                      }}
+                            this.dispatchEvent(
+                              new ToastEvent(
+                                "Copied image to Clipboard",
+                                ToastType.INFORMATION
+                              )
+                            );
+                          }}
                         >
                           Copy image to clipboard
                         </button>
@@ -456,9 +456,9 @@ export class LLMOutput extends LitElement {
                           .audioFile=${audioFile}
                           .color=${colorLight}
                           style=${styleMap({
-                        "--color-button": colorMid,
-                        "--color-button-active": colorDark,
-                      })}
+                            "--color-button": colorMid,
+                            "--color-button-active": colorDark,
+                          })}
                         ></bb-audio-handler>
                       </div>`
                     );
@@ -468,7 +468,12 @@ export class LLMOutput extends LitElement {
               }
               if (part.inlineData.mimeType.startsWith("text/html")) {
                 return cache(
-                  html`<iframe srcdoc="${part.inlineData.data}" frameBorder="0" class="html-view"></iframe>`);
+                  html`<iframe
+                    srcdoc="${part.inlineData.data}"
+                    frameborder="0"
+                    class="html-view"
+                  ></iframe>`
+                );
               }
               if (part.inlineData.mimeType.startsWith("video")) {
                 return cache(html`<video src="${url}" controls />`);
@@ -594,15 +599,29 @@ export class LLMOutput extends LitElement {
             }
           } else if (isJSONPart(part)) {
             value = html`<bb-json-tree .json=${part.json}></bb-json-tree>`;
+          } else if (isListPart(part)) {
+            value = html`${part.list
+              .map((item) => {
+                const content = item.content.at(0);
+                if (!content) return null;
+                return html`<bb-llm-output
+                  .showExportControls=${true}
+                  .graphUrl=${this.graphUrl}
+                  .lite=${true}
+                  .clamped=${false}
+                  .value=${content}
+                ></bb-llm-output>`;
+              })
+              .filter((item) => item !== null)}`;
           } else {
             value = html`Unrecognized part`;
           }
           return html`<div class="content">
             <span
               class=${classMap({
-            value: true,
-            markdown: isTextCapabilityPart(part),
-          })}
+                value: true,
+                markdown: isTextCapabilityPart(part),
+              })}
               >${value}</span
             >
           </div>`;
