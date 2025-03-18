@@ -13,7 +13,7 @@ import { GoogleStorageBlobStore } from "../blob-store.js";
 import { getBody } from "../common.js";
 import type { ServerConfig } from "../config.js";
 import { badRequest, serverError } from "../errors.js";
-import type { BoardServerStore } from "../types.js";
+import type { BoardServerStore } from "../store.js";
 
 export { createBlob };
 

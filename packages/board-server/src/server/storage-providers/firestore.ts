@@ -8,6 +8,7 @@ import {
 } from "@google-labs/breadboard";
 import {
   EXPIRATION_TIME_MS,
+  type BoardServerStore,
   type ServerInfo,
   type StorageBoard,
 } from "../store.js";
@@ -15,12 +16,17 @@ import type { RunBoardStateStore } from "../types.js";
 
 const REANIMATION_COLLECTION_ID = "resume";
 
-export class FirestoreStorageProvider implements RunBoardStateStore {
-  #database;
+export class FirestoreStorageProvider
+  implements BoardServerStore, RunBoardStateStore
+{
+  #database: Firestore;
 
-  constructor() {
-    const databaseId = process.env["FIRESTORE_DB_NAME"] || "board-server";
-    this.#database = new Firestore({ databaseId });
+  constructor(opts?: { database?: Firestore }) {
+    this.#database =
+      opts?.database ||
+      new Firestore({
+        databaseId: process.env["FIRESTORE_DB_NAME"] || "board-server",
+      });
   }
 
   async createUser(username: string, apiKey: string): Promise<void> {
@@ -147,13 +153,13 @@ export class FirestoreStorageProvider implements RunBoardStateStore {
     });
   }
 
-  async create(userId: string, name: string): Promise<void> {
+  async createBoard(userId: string, name: string): Promise<void> {
     await this.#database
       .doc(asBoardPath(userId, name))
       .set({ graph: JSON.stringify(blank()) });
   }
 
-  async delete(userId: string, boardName: string): Promise<void> {
+  async deleteBoard(userId: string, boardName: string): Promise<void> {
     await this.#database.doc(asBoardPath(userId, boardName)).delete();
   }
 }

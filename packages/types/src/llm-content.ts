@@ -94,6 +94,7 @@ export type ListPartItem = {
 
 export type ListPart = {
   list: ListPartItem[];
+  id: string;
 };
 
 export type DataPart =

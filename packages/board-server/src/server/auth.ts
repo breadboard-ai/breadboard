@@ -6,7 +6,7 @@
 
 import type { NextFunction, Request, RequestHandler, Response } from "express";
 
-import type { BoardServerStore } from "./types.js";
+import type { BoardServerStore } from "./store.js";
 import { ok, type Outcome } from "@google-labs/breadboard";
 import * as errors from "./errors.js";
 
