@@ -153,7 +153,7 @@ export class UI extends LitElement {
 
   @property({ reflect: true, type: Boolean })
   accessor showThemeDesigner = false;
-  #themeOptions: AppTemplateAdditionalOptionsAvailable | null;
+  #themeOptions: AppTemplateAdditionalOptionsAvailable | null = null;
 
   /**
    * Indicates whether or not the UI can currently run a flow or not.
