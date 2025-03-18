@@ -12,7 +12,7 @@ import { getBody } from "../common.js";
 
 import del from "./delete.js";
 import type { BoardId, BoardServerStore } from "../types.js";
-import { asPath, type StorageBoard } from "../store.js";
+import { asPath } from "../store.js";
 
 async function post(
   req: Request,
@@ -55,21 +55,19 @@ async function update(
     return;
   }
 
-  const board: StorageBoard = {
-    name: boardId.name,
-    owner: userId,
-    displayName: graph.title || boardId.name,
-    description: graph.description ?? "",
-    tags: graph.metadata?.tags ?? [],
-    thumbnail: "",
-    graph: graph,
-  };
-
   try {
-    await store.updateBoard(board);
+    await store.updateBoard({
+      name: boardId.name,
+      owner: userId,
+      displayName: graph.title || boardId.name,
+      description: graph.description ?? "",
+      tags: graph.metadata?.tags ?? [],
+      thumbnail: "",
+      graph: graph,
+    });
     // TODO what does the client do with this response, and why is the property
     // called "created"?
-    res.json({ created: asPath(board.owner, board.name) });
+    res.json({ created: asPath(userId, boardId.name) });
   } catch (e) {
     next(e);
   }
