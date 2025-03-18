@@ -139,23 +139,18 @@ export class FirestoreStorageProvider implements RunBoardStateStore {
     };
   }
 
-  async update(
-    userId: string,
-    boardName: string,
-    graph: GraphDescriptor
-  ): Promise<void> {
-    const { title: maybeTitle, metadata, description = "" } = graph;
-    const tags = metadata?.tags || [];
-    const title = maybeTitle || boardName;
-
-    await this.#database
-      .doc(asBoardPath(userId, boardName))
-      .set({ graph: JSON.stringify(graph), tags, title, description });
+  async updateBoard(board: StorageBoard): Promise<void> {
+    await this.#database.doc(asBoardPath(board.owner, board.name)).set({
+      title: board.displayName,
+      description: board.description,
+      tags: board.tags,
+      graph: JSON.stringify(board.graph),
+    });
   }
 
-  async create(userStore: string, name: string): Promise<void> {
+  async create(userId: string, name: string): Promise<void> {
     await this.#database
-      .doc(`workspaces/${userStore}/boards/${name}`)
+      .doc(asBoardPath(userId, name))
       .set({ graph: JSON.stringify(blank()) });
   }
 
