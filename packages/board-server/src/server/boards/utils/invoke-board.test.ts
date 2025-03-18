@@ -8,8 +8,8 @@ import test, { describe } from "node:test";
 import { deepStrictEqual } from "assert";
 import type { Kit } from "@google-labs/breadboard";
 
-import simpleBoard from "./boards/simple.bgl.json" with { type: "json" };
-import { invokeBoard } from "../src/server/boards/utils/invoke-board.js";
+import simpleBoard from "../../../../test-data/boards/simple.bgl.json" with { type: "json" };
+import { invokeBoard } from "./invoke-board.js";
 
 const mockSecretsKit: Kit = {
   url: import.meta.url,

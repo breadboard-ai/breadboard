@@ -17,7 +17,6 @@
     "build": "wireit",
     "build:lib": "wireit",
     "build:esbuild": "wireit",
-    "build:tests": "wireit",
     "build:docker": "docker build --build-context breadboard=../../ -t board-server .",
     "deploy": "npm run build && gcloud app deploy",
     "deploy:gcr": "npm run build && gcloud run deploy --source .",
@@ -25,8 +24,8 @@
     "serve": "wireit",
     "dev": "npm run dev:nowatch --watch",
     "dev:nowatch": "wireit",
-    "test": "wireit",
-    "test:integration": "firebase emulators:exec 'tsx --test --test-reporter=spec tests/integration/board-server.test.ts'"
+    "test": "tsx --test --test-reporter=spec src/**/*.test.ts",
+    "test:firestore": "firebase emulators:exec 'tsx --test --test-reporter=spec tests/firestore/*.test.ts'"
   },
   "wireit": {
     "build": {
@@ -105,39 +104,6 @@
           "cascade": false
         }
       ]
-    },
-    "build:tests": {
-      "command": "tsc -b tsconfig.test.json --pretty",
-      "env": {
-        "FORCE_COLOR": "1"
-      },
-      "dependencies": [
-        "<dependencies>#build:tsc",
-        "../agent-kit#generate-kit-manifest",
-        "../core-kit#build:tsc",
-        "../shared-ui#build:tsc",
-        "../template-kit#build:tsc"
-      ],
-      "files": [
-        "src/**/*.ts",
-        "tests/**/*.ts",
-        "tests/*.json",
-        "tests/boards/*.bgl.json",
-        "tsconfig.test.json",
-        "../../core/tsconfig/base.json"
-      ],
-      "output": [
-        "dist_test/"
-      ],
-      "clean": "if-file-deleted"
-    },
-    "test": {
-      "command": "node --test --enable-source-maps --test-reporter spec dist_test/tests/*.js",
-      "dependencies": [
-        "build:tests"
-      ],
-      "files": [],
-      "output": []
     },
     "update-sandbox-runtime": {
       "command": "tsx scripts/update-sandbox-runtime.ts",
