@@ -15,7 +15,11 @@ import {
 } from "@breadboard-ai/types";
 import GenerateAppTheme from "@breadboard-ai/shared-ui/bgl/generate-app-theme.bgl.json" with { type: "json" };
 import MarkdownIt from "markdown-it";
-import { AppTheme, AppThemeColors } from "../../types/types.js";
+import {
+  AppTemplateAdditionalOptionsAvailable,
+  AppTheme,
+  AppThemeColors,
+} from "../../types/types.js";
 import {
   OverlayDismissedEvent,
   ThemeChangeEvent,
@@ -32,6 +36,7 @@ import { sideBoardRuntime } from "../../contexts/side-board-runtime.js";
 import { SideBoardRuntime } from "../../sideboards/types.js";
 import { classMap } from "lit/directives/class-map.js";
 import { isInlineData, isTextCapabilityPart } from "@google-labs/breadboard";
+import { map } from "lit/directives/map.js";
 
 @customElement("bb-app-theme-creator")
 export class AppThemeCreator extends LitElement {
@@ -43,6 +48,9 @@ export class AppThemeCreator extends LitElement {
 
   @property()
   accessor theme: string | null = null;
+
+  @property()
+  accessor themeOptions: AppTemplateAdditionalOptionsAvailable | null = null;
 
   @state()
   accessor themes: Record<string, GraphTheme> | null = null;
@@ -258,6 +266,7 @@ export class AppThemeCreator extends LitElement {
           }
         }
 
+        & #theme-options,
         & #theme-colors {
           padding: 0 var(--bb-grid-size-3);
 
@@ -832,6 +841,41 @@ export class AppThemeCreator extends LitElement {
                 </div>`
             : nothing}
         </div>
+        ${this.themeOptions
+          ? html`<div id="theme-options">
+              ${map(Object.entries(this.themeOptions), ([id, value]) => {
+                const selectedValue =
+                  this.themes?.[this.theme ?? ""].templateAdditionalOptions?.[
+                    id
+                  ];
+                return html`<div>
+                  <label for=${id}>${value.title}</label
+                  ><select
+                    name="${id}"
+                    @input=${(evt: InputEvent) => {
+                      if (!(evt.target instanceof HTMLSelectElement)) {
+                        return;
+                      }
+
+                      theme.templateAdditionalOptions ??= {};
+                      theme.templateAdditionalOptions[id] = evt.target.value;
+
+                      this.#emitTheme();
+                    }}
+                  >
+                    ${map(Object.values(value.values), (item) => {
+                      return html`<option
+                        ?selected=${selectedValue === item.value}
+                        .value=${item.value}
+                      >
+                        ${item.title}
+                      </option>`;
+                    })}
+                  </select>
+                </div>`;
+              })}
+            </div>`
+          : nothing}
       </section>
     </section>`;
   }
