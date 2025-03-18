@@ -31,6 +31,7 @@ const SHOW_OTHER_PEOPLES_BOARDS_KEY =
 const MODE_KEY = "bb-project-listing-mode";
 const PAGE_SIZE_DETAILED = 8;
 const PAGE_SIZE_CONDENSED = 24;
+const OVERFLOW_MENU_CLEARANCE = 4;
 
 interface Guides {
   title: string;
@@ -73,6 +74,10 @@ export class ProjectListing extends LitElement {
 
   @state()
   accessor showBoardServerOverflowMenu = false;
+  #overflowMenu = {
+    x: 0,
+    y: 0,
+  };
 
   @state()
   accessor showAdditionalSources = true;
@@ -625,9 +630,7 @@ export class ProjectListing extends LitElement {
       z-index: 1000;
       display: grid;
       grid-template-rows: var(--bb-grid-size-11);
-      top: 190px;
-      left: calc(50% - 30vw);
-      position: absolute;
+      position: fixed;
       box-shadow:
         0px 4px 8px 3px rgba(0, 0, 0, 0.05),
         0px 1px 3px rgba(0, 0, 0, 0.1);
@@ -1118,7 +1121,17 @@ export class ProjectListing extends LitElement {
 
                     <button
                       id="board-server-settings"
-                      @click=${() => {
+                      @click=${(evt: PointerEvent) => {
+                        if (!(evt.target instanceof HTMLButtonElement)) {
+                          return;
+                        }
+
+                        const bounds = evt.target.getBoundingClientRect();
+                        this.#overflowMenu.x = bounds.left;
+                        this.#overflowMenu.y =
+                          window.innerHeight -
+                          (bounds.top - OVERFLOW_MENU_CLEARANCE);
+
                         this.showBoardServerOverflowMenu = true;
                       }}
                     >
@@ -1403,7 +1416,13 @@ export class ProjectListing extends LitElement {
       </div>
 
       ${this.showBoardServerOverflowMenu
-        ? html` <div id="overflow-menu">
+        ? html` <div
+            id="overflow-menu"
+            style=${styleMap({
+              left: `${this.#overflowMenu.x}px`,
+              bottom: `${this.#overflowMenu.y}px`,
+            })}
+          >
             <button
               @click=${() => {
                 this.dispatchEvent(new GraphBoardServerAddEvent());
