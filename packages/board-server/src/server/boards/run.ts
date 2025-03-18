@@ -16,7 +16,8 @@ import { asPath } from "../store.js";
 import { createBoardLoader } from "./utils/board-server-provider.js";
 import { runBoard, timestamp } from "./utils/run-board.js";
 import { verifyKey } from "./utils/verify-key.js";
-import type { BoardId, BoardServerStore } from "../types.js";
+import type { BoardServerStore } from "../store.js";
+import type { BoardId } from "../types.js";
 
 async function runHandler(
   config: ServerConfig,

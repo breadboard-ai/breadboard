@@ -6,8 +6,8 @@
 
 import type { NextFunction, Request, Response } from "express";
 
-import { asPath } from "../store.js";
-import type { BoardId, BoardServerStore } from "../types.js";
+import { asPath, type BoardServerStore } from "../store.js";
+import type { BoardId } from "../types.js";
 
 async function del(
   req: Request,
@@ -26,7 +26,7 @@ async function del(
   }
 
   try {
-    await store.delete(userId, boardId.name);
+    await store.deleteBoard(userId, boardId.name);
   } catch (e) {
     next(e);
   }

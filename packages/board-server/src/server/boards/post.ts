@@ -9,10 +9,10 @@ import type { NextFunction, Request, Response } from "express";
 import { type GraphDescriptor } from "@google-labs/breadboard";
 
 import { getBody } from "../common.js";
+import { asPath, type BoardServerStore } from "../store.js";
+import type { BoardId } from "../types.js";
 
 import del from "./delete.js";
-import type { BoardId, BoardServerStore } from "../types.js";
-import { asPath } from "../store.js";
 
 async function post(
   req: Request,

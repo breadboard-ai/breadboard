@@ -1,4 +1,4 @@
-import type { BoardServerStore } from "../../types.js";
+import type { BoardServerStore } from "../../store.js";
 
 // TODO Allow invocation with an access token
 // TODO Convert to Express middleware

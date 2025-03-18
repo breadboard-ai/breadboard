@@ -13,7 +13,8 @@ import { secretsKit } from "../proxy/secrets.js";
 import { createBoardLoader } from "./utils/board-server-provider.js";
 import { invokeBoard } from "./utils/invoke-board.js";
 import { verifyKey } from "./utils/verify-key.js";
-import type { BoardId, BoardServerStore } from "../types.js";
+import type { BoardServerStore } from "../store.js";
+import type { BoardId } from "../types.js";
 import { asPath } from "../store.js";
 
 async function invokeHandler(

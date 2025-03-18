@@ -1,6 +1,7 @@
 import type { NextFunction, Request, RequestHandler, Response } from "express";
 
-import type { BoardId, BoardServerStore } from "../types.js";
+import type { BoardServerStore } from "../store.js";
+import type { BoardId } from "../types.js";
 
 export function parseBoardId(opts?: { addJsonSuffix?: boolean }) {
   return (req: Request, res: Response, next: NextFunction) => {

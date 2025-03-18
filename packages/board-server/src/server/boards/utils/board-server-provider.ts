@@ -18,7 +18,8 @@ import {
 } from "@google-labs/breadboard";
 
 import { asInfo, getStore } from "../../store.js";
-import type { BoardServerLoadFunction, BoardServerStore } from "../../types.js";
+import type { BoardServerStore } from "../../store.js";
+import type { BoardServerLoadFunction } from "../../types.js";
 
 export function createBoardLoader(
   store: BoardServerStore
