@@ -1275,7 +1275,10 @@ export class ProjectListing extends LitElement {
                   renderBoards
                 )}`;
 
-                const pages = Math.floor(items.length / pageSize) + 1;
+                const pages =
+                  items.length % pageSize === 0
+                    ? items.length / pageSize
+                    : Math.floor(items.length / pageSize) + 1;
                 const pagination = html`<menu id="pagination">
                   <li>
                     <button
