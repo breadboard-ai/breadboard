@@ -7,10 +7,10 @@
       "id": "a2-ec8b61ad",
       "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
-        "title": "Make Text",
+        "title": "Make Post",
         "visual": {
           "x": 320,
-          "y": 460,
+          "y": 459.9999999999998,
           "collapsed": "expanded",
           "outputHeight": 88
         },
@@ -58,8 +58,8 @@
       "metadata": {
         "title": "Combine Outputs",
         "visual": {
-          "x": 960.0000000000002,
-          "y": 460,
+          "x": 959.9999999999991,
+          "y": 459.99999999999943,
           "collapsed": "expanded",
           "outputHeight": 88
         },
@@ -67,12 +67,36 @@
       },
       "configuration": {
         "text": {
-          "role": "user",
           "parts": [
             {
-              "text": "{{\"type\":\"in\",\"path\":\"a2-8d2c99d6\",\"title\":\"Make Image\"}}\n{{\"type\":\"in\",\"path\":\"a2-ec8b61ad\",\"title\":\"Make Text\"}}"
+              "text": "{{\"type\":\"in\",\"path\":\"a2-8d2c99d6\",\"title\":\"Make Image\"}}\n{{\"type\":\"in\",\"path\":\"a2-ec8b61ad\",\"title\":\"Make Post\"}}\n{{\"type\":\"in\",\"path\":\"a2-791cd89b\",\"title\":\"Make Comments\"}}"
             }
-          ]
+          ],
+          "role": "user"
+        }
+      }
+    },
+    {
+      "id": "a2-791cd89b",
+      "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+      "metadata": {
+        "title": "Make Comments",
+        "visual": {
+          "x": 640,
+          "y": 700,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "description": {
+          "parts": [
+            {
+              "text": "Create a list of sample instagram comments for the post. Make them 30% positive, 30% negative, and the rest just spam junk. List them all together intermixed, as if in the real comment feed."
+            }
+          ],
+          "role": "user"
         }
       }
     }
@@ -95,6 +119,18 @@
       "to": "a2-eefb6f99",
       "out": "context",
       "in": "p-z-a2-ec8b61ad"
+    },
+    {
+      "from": "a2-ec8b61ad",
+      "to": "a2-791cd89b",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "a2-791cd89b",
+      "to": "a2-eefb6f99",
+      "out": "context",
+      "in": "p-z-a2-791cd89b"
     }
   ],
   "metadata": {
@@ -123,7 +159,12 @@
     },
     "userModified": true,
     "tags": [],
-    "parameters": {}
+    "parameters": {
+      "style": {
+        "title": "Style",
+        "usedIn": []
+      }
+    }
   },
   "assets": {
     "@@thumbnail": {
@@ -131,7 +172,7 @@
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI2OC4zMSIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iNjYuNDQiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI0OC4wNCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KPHJlY3QgeD0iOTEuNzgiCiAgICAgICAgICAgICAgICAgICAgeT0iODMuNjQiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjY2LjQ0IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNDguMDQiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CjxyZWN0IHg9IjE3My41NiIKICAgICAgICAgICAgICAgICAgICB5PSI2OC4zMSIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iNjYuNDQiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI0OC4wNCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KICAgICAgCiAgICA8L3N2Zz4="
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI0NS4zMSIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iNjYuNDQiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI0OC4wNCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KPHJlY3QgeD0iOTEuNzgiCiAgICAgICAgICAgICAgICAgICAgeT0iNjAuNjQiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjY2LjQ0IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNDguMDQiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CjxyZWN0IHg9IjE3My41NiIKICAgICAgICAgICAgICAgICAgICB5PSI0NS4zMSIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iNjYuNDQiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI0OC4wNCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KPHJlY3QgeD0iOTEuNzgiCiAgICAgICAgICAgICAgICAgICAgeT0iMTA2LjY0IgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI2Ni40NCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjQ4LjA0IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
     }
   }
 }
