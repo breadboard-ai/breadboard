@@ -24,7 +24,7 @@
     "serve": "wireit",
     "dev": "npm run dev:nowatch --watch",
     "dev:nowatch": "wireit",
-    "test": "tsx --test --test-reporter=spec src/**/*.test.ts",
+    "test": "find src -name '*.test.ts' | xargs tsx --test --test-reporter=spec",
     "test:firestore": "firebase emulators:exec 'tsx --test --test-reporter=spec tests/firestore/*.test.ts'"
   },
   "wireit": {
