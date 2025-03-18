@@ -112,9 +112,18 @@ suite("Board Server integration test", () => {
 
     test("POST /boards/@:user/:name.api/invoke", async () => {
       await store.create(user.username, "test-board.json");
-      await store.update(user.username, "test-board.json", {
-        nodes: [{ type: "input", id: "input" }],
-        edges: [],
+      await store.updateBoard({
+        name: "test-board.json",
+        owner: user.username,
+        displayName: "",
+        description: "",
+        tags: [],
+        thumbnail: "",
+        // TODO make this a real board that runs
+        graph: {
+          nodes: [{ type: "input", id: "input" }],
+          edges: [],
+        },
       });
 
       const response = await request(server)
@@ -126,9 +135,18 @@ suite("Board Server integration test", () => {
 
     test("POST /boards/@:user/:name/invoke", async () => {
       await store.create(user.username, "test-board");
-      await store.update(user.username, "test-board", {
-        nodes: [{ type: "input", id: "input" }],
-        edges: [],
+      await store.updateBoard({
+        name: "test-board.json",
+        owner: user.username,
+        displayName: "",
+        description: "",
+        tags: [],
+        thumbnail: "",
+        // TODO make this a real board that runs
+        graph: {
+          nodes: [{ type: "input", id: "input" }],
+          edges: [],
+        },
       });
 
       const response = await request(server)
