@@ -261,6 +261,7 @@ declare type ListPartItem = {
 
 declare type ListPart = {
   list: ListPartItem[];
+  id: string;
 };
 
 declare type DataPart =
