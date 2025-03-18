@@ -477,4 +477,8 @@ export const styles = css`
   bb-focus-editor {
     z-index: 10;
   }
+
+  bb-settings-edit-overlay {
+    position: fixed;
+  }
 `;

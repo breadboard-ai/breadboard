@@ -68,6 +68,8 @@ export class Splitter extends LitElement {
       overflow: auto;
       --handle-size: 16px;
       position: relative;
+      container-type: size;
+      contain: strict;
     }
 
     .drag-handle {
