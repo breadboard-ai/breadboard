@@ -4,16 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphDescriptor } from "@breadboard-ai/types";
-import { FirestoreStorageProvider } from "./storage-providers/firestore.js";
+import type {
+  GraphDescriptor,
+  ReanimationState,
+} from "@google-labs/breadboard";
 
 export const EXPIRATION_TIME_MS = 1000 * 60 * 60 * 24 * 2; // 2 days
-export const INVITE_EXPIRATION_TIME_MS = 1000 * 60 * 60 * 24 * 4; // 4 days
-
-export function getStore(): FirestoreStorageProvider {
-  const db = process.env["FIRESTORE_DB_NAME"] || "board-server";
-  return new FirestoreStorageProvider(db);
-}
 
 /** A type representing a board as it is stored in a DB. */
 export type StorageBoard = {
@@ -22,19 +18,54 @@ export type StorageBoard = {
   displayName: string;
   description: string;
   tags: string[];
+  thumbnail: string;
   graph?: GraphDescriptor;
 };
 
-export type BoardListEntry = {
-  title: string;
-  description?: string;
-  path: string;
-  username: string;
-  readonly: boolean;
-  mine: boolean;
-  tags: string[];
-  thumbnail?: string;
-};
+export interface BoardServerStore {
+  /** Get basic information about this server. */
+  getServerInfo(): Promise<ServerInfo | null>;
+
+  /**
+   * Create a new user with the given API key.
+   *
+   * @throws If user exists
+   */
+  createUser(userId: string, apiKey: string): Promise<void>;
+
+  /**
+   * Look up the user with the given API key.
+   *
+   * @returns The user ID, or empty string if not found
+   */
+  findUserIdByApiKey(apiKey: string): Promise<string>;
+
+  /** Load a board by name */
+  loadBoard(userId: string, name: string): Promise<StorageBoard | null>;
+
+  /** List all boards visible to the given user. */
+  listBoards(userId: string): Promise<StorageBoard[]>;
+
+  /**
+   * Create a blank board with no graph.
+   *
+   * TODO This shouldn't really be necessary, we can just use "update"
+   */
+  createBoard(userId: string, name: string): Promise<void>;
+
+  /** Updates the given board. Creates if it doesn't exist. */
+  updateBoard(board: StorageBoard): Promise<void>;
+
+  /** Deletes a board by name */
+  deleteBoard(userId: string, boardName: string): Promise<void>;
+
+  loadReanimationState(
+    user: string,
+    ticket: string
+  ): Promise<ReanimationState | undefined>;
+
+  saveReanimationState(user: string, state: ReanimationState): Promise<string>;
+}
 
 export type ServerCapabilityAccess = "open" | "key";
 

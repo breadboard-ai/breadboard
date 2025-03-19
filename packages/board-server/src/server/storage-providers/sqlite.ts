@@ -10,7 +10,7 @@
 
 import Database from "better-sqlite3";
 import type { RunBoardStateStore } from "../types.js";
-import type { BoardListEntry, ServerInfo } from "../store.js";
+import type { ServerInfo } from "../store.js";
 import { asInfo, asPath, EXPIRATION_TIME_MS } from "../store.js";
 import type {
   GraphDescriptor,
@@ -19,6 +19,17 @@ import type {
 import { v4 as uuidv4 } from "uuid";
 
 export const INVITE_EXPIRATION_TIME_MS = 1000 * 60 * 60 * 24 * 4; // 4 days
+
+export type BoardListEntry = {
+  title: string;
+  description?: string;
+  path: string;
+  username: string;
+  readonly: boolean;
+  mine: boolean;
+  tags: string[];
+  thumbnail?: string;
+};
 
 export type CreateUserResult =
   | { success: true; apiKey: string }

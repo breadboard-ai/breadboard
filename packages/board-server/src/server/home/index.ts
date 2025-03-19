@@ -7,10 +7,10 @@
 import type { Request, Response } from "express";
 
 import packageInfo from "../../../package.json" with { type: "json" };
-import { getStore } from "../store.js";
+import type { BoardServerStore } from "../store.js";
 
-export const serveHome = async (_req: Request, res: Response) => {
-  const store = getStore();
+export const serveHome = async (req: Request, res: Response) => {
+  const store: BoardServerStore = req.app.locals.store;
   const info = await store.getServerInfo();
 
   const title = info?.title ?? "Board Server";

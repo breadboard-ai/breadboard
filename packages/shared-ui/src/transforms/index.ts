@@ -5,10 +5,12 @@
  */
 
 export { AutoWireInPorts } from "./autowire-in-ports";
-export { UpdateNode } from "./update-node";
 export { ChangeEdge } from "./change-edge";
-export { MarkInPortsInvalidSpec } from "./mark-in-ports-invalid-spec";
-export { RemoveAssetWithRefs } from "./remove-asset-with-refs";
 export { CreateNode } from "./create-node";
-export { UpdateParameterMetadata } from "./update-parameter-metadata";
+export { CreateParam } from "./create-param";
+export { DeleteParam } from "./delete-param";
+export { MarkInPortsInvalidSpec } from "./mark-in-ports-invalid-spec";
 export { MoveNodesToGraph } from "./move-nodes-to-graph";
+export { RemoveAssetWithRefs } from "./remove-asset-with-refs";
+export { UpdateNode } from "./update-node";
+export { UpdateParameterMetadata } from "./update-parameter-metadata";

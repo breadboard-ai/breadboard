@@ -6,22 +6,22 @@
 
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import * as StringsHelper from "../../strings/helper.js";
+import * as StringsHelper from "../strings/helper.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import type { GraphDescriptor } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
-import { sideBoardRuntime } from "../../contexts/side-board-runtime.js";
+import { sideBoardRuntime } from "../contexts/side-board-runtime.js";
 import {
   GraphReplaceEvent,
   HideTooltipEvent,
   ShowTooltipEvent,
-} from "../../events/events.js";
-import { fabStyles } from "../../styles/fab.js";
-import { floatingPanelStyles } from "../../styles/floating-panel.js";
-import { multiLineInputStyles } from "../../styles/multi-line-input.js";
-import { SideBoardRuntime } from "../../sideboards/types.js";
-import { AppCatalystApiClient } from "../../flow-gen/app-catalyst.js";
-import { FlowGenerator } from "../../flow-gen/flow-generator.js";
+} from "../events/events.js";
+import { fabStyles } from "../styles/fab.js";
+import { floatingPanelStyles } from "../styles/floating-panel.js";
+import { multiLineInputStyles } from "../styles/multi-line-input.js";
+import { SideBoardRuntime } from "../sideboards/types.js";
+import { AppCatalystApiClient } from "./app-catalyst.js";
+import { FlowGenConstraint, FlowGenerator } from "./flow-generator.js";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -105,6 +105,9 @@ export class DescribeEditButton extends LitElement {
 
   @property({ type: Object })
   accessor currentGraph: GraphDescriptor | undefined;
+
+  @property({ type: Object })
+  accessor constraint: FlowGenConstraint | undefined;
 
   @state()
   accessor #state: State = { status: "closed" };
@@ -290,6 +293,7 @@ export class DescribeEditButton extends LitElement {
     const { flow } = await generator.oneShot({
       intent,
       context: { flow: currentFlow },
+      constraint: this.constraint,
     });
     return flow;
   }

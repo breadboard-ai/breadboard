@@ -3,19 +3,19 @@ import assert from "node:assert";
 import { afterEach, before, suite, test } from "node:test";
 import request from "supertest";
 
-import { createServer, createServerConfig } from "../../src/server.js";
-import { getStore } from "../../src/server/store.js";
-import type { BoardServerStore } from "../../src/server/types.js";
+import { createServer, createServerConfig } from "./server.js";
+import type { BoardServerStore } from "./server/store.js";
 
 suite("Board Server integration test", () => {
-  const store: BoardServerStore = getStore();
   const user = { username: "test-user", apiKey: "test-api-key" };
 
   let server: Express;
+  let store: BoardServerStore;
 
   before(async () => {
     process.env.STORAGE_BUCKET = "test-bucket";
-    server = createServer(createServerConfig());
+    server = createServer(createServerConfig({ storageProvider: "in-memory" }));
+    store = server.locals.store;
     await store.createUser(user.username, user.apiKey);
   });
 
@@ -40,8 +40,8 @@ suite("Board Server integration test", () => {
 
   suite("Boards API", () => {
     afterEach(async () => {
-      await store.delete(user.username, "test-board");
-      await store.delete(user.username, "test-board.json");
+      await store.deleteBoard(user.username, "test-board");
+      await store.deleteBoard(user.username, "test-board.json");
     });
 
     test("OPTIONS /boards -> 204", async () => {
@@ -75,7 +75,7 @@ suite("Board Server integration test", () => {
     });
 
     test("GET /boards/@:user/:name", async () => {
-      await store.create(user.username, "test-board");
+      await store.createBoard(user.username, "test-board");
 
       const response = await request(server).get(
         `/boards/@${user.username}/test-board?API_KEY=${user.apiKey}`
@@ -85,7 +85,7 @@ suite("Board Server integration test", () => {
     });
 
     test("POST /boards/@:user/:name -> updates", async () => {
-      await store.create(user.username, "test-board");
+      await store.createBoard(user.username, "test-board");
 
       const response = await request(server)
         .post(`/boards/@${user.username}/test-board?API_KEY=${user.apiKey}`)
@@ -98,7 +98,7 @@ suite("Board Server integration test", () => {
     });
 
     test("POST /boards/@:user/:name -> deletes", async () => {
-      await store.create(user.username, "test-board");
+      await store.createBoard(user.username, "test-board");
 
       const response = await request(server)
         .post(`/boards/@${user.username}/test-board?API_KEY=${user.apiKey}`)
@@ -111,10 +111,19 @@ suite("Board Server integration test", () => {
     });
 
     test("POST /boards/@:user/:name.api/invoke", async () => {
-      await store.create(user.username, "test-board.json");
-      await store.update(user.username, "test-board.json", {
-        nodes: [{ type: "input", id: "input" }],
-        edges: [],
+      await store.createBoard(user.username, "test-board.json");
+      await store.updateBoard({
+        name: "test-board.json",
+        owner: user.username,
+        displayName: "",
+        description: "",
+        tags: [],
+        thumbnail: "",
+        // TODO make this a real board that runs
+        graph: {
+          nodes: [{ type: "input", id: "input" }],
+          edges: [],
+        },
       });
 
       const response = await request(server)
@@ -125,10 +134,19 @@ suite("Board Server integration test", () => {
     });
 
     test("POST /boards/@:user/:name/invoke", async () => {
-      await store.create(user.username, "test-board");
-      await store.update(user.username, "test-board", {
-        nodes: [{ type: "input", id: "input" }],
-        edges: [],
+      await store.createBoard(user.username, "test-board");
+      await store.updateBoard({
+        name: "test-board",
+        owner: user.username,
+        displayName: "",
+        description: "",
+        tags: [],
+        thumbnail: "",
+        // TODO make this a real board that runs
+        graph: {
+          nodes: [{ type: "input", id: "input" }],
+          edges: [],
+        },
       });
 
       const response = await request(server)
@@ -139,7 +157,7 @@ suite("Board Server integration test", () => {
     });
 
     test("POST /boards/@:user/:name.api/describe", async () => {
-      await store.create(user.username, "test-board.json");
+      await store.createBoard(user.username, "test-board.json");
       const path = `@${user.username}/test-board.api`;
 
       const response = await request(server)
@@ -150,7 +168,7 @@ suite("Board Server integration test", () => {
     });
 
     test("POST /boards/@:user/:name/describe", async () => {
-      await store.create(user.username, "test-board");
+      await store.createBoard(user.username, "test-board");
       const path = `@${user.username}/test-board`;
 
       const response = await request(server)
@@ -161,7 +179,7 @@ suite("Board Server integration test", () => {
     });
 
     test("POST /boards/@:user/:name.api/run", async () => {
-      store.create(user.username, "test-board.json");
+      store.createBoard(user.username, "test-board.json");
 
       const response = await request(server)
         .post(`/boards/@${user.username}/test-board.api/run`)
@@ -171,7 +189,7 @@ suite("Board Server integration test", () => {
     });
 
     test("POST /boards/@:user/:name/run", async () => {
-      store.create(user.username, "test-board");
+      store.createBoard(user.username, "test-board");
 
       const response = await request(server)
         .post(`/boards/@${user.username}/test-board/run`)

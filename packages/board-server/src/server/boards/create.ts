@@ -6,9 +6,8 @@
 
 import type { Request, Response } from "express";
 
-import type { BoardServerStore } from "../types.js";
+import { asPath, type BoardServerStore } from "../store.js";
 import { getBody } from "../common.js";
-import { asPath } from "../store.js";
 
 export type CreateRequest = {
   name: string;
@@ -31,7 +30,7 @@ async function create(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  await store.create(userId, name);
+  await store.createBoard(userId, name);
   res.json({ path: asPath(userId, name) });
 }
 

@@ -18,7 +18,6 @@ import {
 import { customElement, property, state } from "lit/decorators.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { GraphAsset, Organizer } from "../../state";
-import { repeat } from "lit/directives/repeat.js";
 import {
   AssetMetadata,
   AssetPath,
@@ -29,8 +28,11 @@ import {
 import { classMap } from "lit/directives/class-map.js";
 import { OverflowAction } from "../../types/types.js";
 import {
+  HideTooltipEvent,
   OverflowMenuActionEvent,
   OverlayDismissedEvent,
+  ParamDeleteEvent,
+  ShowTooltipEvent,
   ToastEvent,
   ToastType,
 } from "../../events/events.js";
@@ -43,6 +45,7 @@ import {
 import { InputChangeEvent } from "../../plugins/input-plugin.js";
 import { SIGN_IN_CONNECTION_ID } from "../../utils/signin-adapter.js";
 import { styleMap } from "lit/directives/style-map.js";
+import { map } from "lit/directives/map.js";
 
 const OVERFLOW_MENU_PADDING = 12;
 
@@ -391,11 +394,14 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                 border: none;
                 opacity: 0.5;
                 transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
-                cursor: pointer;
 
-                &:hover,
-                &:focus {
-                  opacity: 1;
+                &:not([disabled]) {
+                  cursor: pointer;
+
+                  &:hover,
+                  &:focus {
+                    opacity: 1;
+                  }
                 }
               }
             }
@@ -844,7 +850,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                 <h3>Assets</h3>
                 ${assets && assets.size > 0
                   ? html`<menu>
-                      ${repeat(assets, ([path, asset]) => {
+                      ${map(assets, ([path, asset]) => {
                         if (path === "@@splash") {
                           return nothing;
                         }
@@ -943,11 +949,24 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                             class=${classMap({
                               delete: true,
                             })}
+                            @pointerover=${(evt: PointerEvent) => {
+                              this.dispatchEvent(
+                                new ShowTooltipEvent(
+                                  Strings.from("LABEL_DELETE_ASSET"),
+                                  evt.clientX,
+                                  evt.clientY
+                                )
+                              );
+                            }}
+                            @pointerout=${() => {
+                              this.dispatchEvent(new HideTooltipEvent());
+                            }}
                             @click=${async () => {
                               if (this.#deleting) {
                                 return;
                               }
 
+                              this.dispatchEvent(new HideTooltipEvent());
                               await this.#deleteAsset(path);
                             }}
                           >
@@ -963,7 +982,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                 <h3>Parameters</h3>
                 ${parameters && parameters.size > 0
                   ? html`<menu>
-                      ${repeat(parameters, ([path, parameter]) => {
+                      ${map(parameters, ([path, parameter]) => {
                         if (path === "@@splash") {
                           return nothing;
                         }
@@ -981,6 +1000,38 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                             }}
                           >
                             ${parameter.title ?? path}
+                          </button>
+
+                          <button
+                            ?disabled=${parameter.usedIn.length > 0}
+                            class=${classMap({
+                              delete: true,
+                            })}
+                            @pointerover=${(evt: PointerEvent) => {
+                              const message = parameter.usedIn.length
+                                ? "LABEL_DELETE_PARAM_UNAVAILABLE"
+                                : "LABEL_DELETE_PARAM";
+                              this.dispatchEvent(
+                                new ShowTooltipEvent(
+                                  Strings.from(message),
+                                  evt.clientX,
+                                  evt.clientY
+                                )
+                              );
+                            }}
+                            @pointerout=${() => {
+                              this.dispatchEvent(new HideTooltipEvent());
+                            }}
+                            @click=${async () => {
+                              this.dispatchEvent(new HideTooltipEvent());
+
+                              // TODO: Figure out how we handle params for subgraphs.
+                              this.dispatchEvent(
+                                new ParamDeleteEvent("", path)
+                              );
+                            }}
+                          >
+                            Delete
                           </button>
                         </li>`;
                       })}

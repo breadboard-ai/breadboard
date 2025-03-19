@@ -6,7 +6,7 @@
 
 import test, { describe } from "node:test";
 import { deepStrictEqual, fail } from "assert";
-import { runBoard } from "../src/server/boards/utils/run-board.js";
+import { runBoard } from "./run-board.js";
 import type {
   GraphDescriptor,
   Kit,
@@ -14,13 +14,13 @@ import type {
   ReanimationState,
 } from "@google-labs/breadboard";
 
-import simpleBoard from "./boards/simple.bgl.json" with { type: "json" };
-import multipleInputsBoard from "./boards/many-inputs.bgl.json" with { type: "json" };
-import manyOutputsBoard from "./boards/many-outputs.bgl.json" with { type: "json" };
-import invokeWithBubblingInput from "./boards/invoke-board-with-bubbling-input.bgl.json" with { type: "json" };
+import simpleBoard from "../../../../test-data/boards/simple.bgl.json" with { type: "json" };
+import multipleInputsBoard from "../../../../test-data/boards/many-inputs.bgl.json" with { type: "json" };
+import manyOutputsBoard from "../../../../test-data/boards/many-outputs.bgl.json" with { type: "json" };
+import invokeWithBubblingInput from "../../../../test-data/boards/invoke-board-with-bubbling-input.bgl.json" with { type: "json" };
 import type { RemoteMessage } from "@google-labs/breadboard/remote";
 import type { RunDiagnosticsLevel } from "@google-labs/breadboard/harness";
-import type { RunBoardStateStore } from "../src/server/types.js";
+import type { RunBoardStateStore } from "../../types.js";
 
 const mockSecretsKit: Kit = {
   url: import.meta.url,
@@ -148,7 +148,7 @@ const scriptedRun = async (
   diagnostics: RunDiagnosticsLevel = false
 ) => {
   let next;
-  const path = "/path/to/board";
+  const path = "/boards/user/name";
   for (const [index, { inputs, expected }] of script.entries()) {
     const results: RemoteMessage[] = [];
     const writer = new WritableStream<RemoteMessage>({
@@ -158,6 +158,7 @@ const scriptedRun = async (
     }).getWriter();
 
     await runBoard({
+      serverUrl: "https://example.com",
       user: "test",
       path,
       url: `https://example.com${path}`,
@@ -175,7 +176,7 @@ const scriptedRun = async (
 
 describe("Board Server Runs Boards", () => {
   test("can start a simple board", async () => {
-    const path = "/path/to/board";
+    const path = "/boards/user/name";
     const results: RemoteMessage[] = [];
     const writer = new WritableStream<RemoteMessage>({
       async write(chunk) {
@@ -183,6 +184,7 @@ describe("Board Server Runs Boards", () => {
       },
     }).getWriter();
     await runBoard({
+      serverUrl: "https://example.com",
       user: "test",
       path,
       url: `https://example.com${path}`,
@@ -204,7 +206,7 @@ describe("Board Server Runs Boards", () => {
   });
 
   test("can start a simple board with inputs", async () => {
-    const path = "/path/to/board";
+    const path = "/boards/user/name";
     const inputs = { text: "bar" };
     const results: RemoteMessage[] = [];
     const writer = new WritableStream<RemoteMessage>({
@@ -213,6 +215,7 @@ describe("Board Server Runs Boards", () => {
       },
     }).getWriter();
     await runBoard({
+      serverUrl: "https://example.com",
       user: "test",
       path,
       url: `https://example.com${path}`,
@@ -232,7 +235,7 @@ describe("Board Server Runs Boards", () => {
   });
 
   test("can start a board with multiple inputs", async () => {
-    const path = "/path/to/board";
+    const path = "/boards/user/name";
     const inputs = { text: "bar", number: 42 };
     const results: RemoteMessage[] = [];
     const writer = new WritableStream<RemoteMessage>({
@@ -241,6 +244,7 @@ describe("Board Server Runs Boards", () => {
       },
     }).getWriter();
     await runBoard({
+      serverUrl: "https://example.com",
       user: "test",
       path,
       url: `https://example.com${path}`,

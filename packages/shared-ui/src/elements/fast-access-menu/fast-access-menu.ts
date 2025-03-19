@@ -424,7 +424,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
         const paramPath = this.filter.toLocaleLowerCase().replace(/\W/gim, "-");
         const title = toUpperCase(this.filter)!;
         this.dispatchEvent(
-          new ParamCreateEvent(this.graphId ?? "", paramPath, title, "")
+          // TODO: Support params in subgraphs.
+          new ParamCreateEvent("", paramPath, title, "")
         );
 
         this.dispatchEvent(

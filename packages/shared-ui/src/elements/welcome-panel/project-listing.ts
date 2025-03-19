@@ -24,7 +24,7 @@ import { until } from "lit/directives/until.js";
 import { BoardServer, GraphProviderStore } from "@google-labs/breadboard";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
-import "./describe-flow-panel.js";
+import "../../flow-gen/describe-flow-panel.js";
 
 const SHOW_OTHER_PEOPLES_BOARDS_KEY =
   "bb-project-listing-show-other-peoples-boards";

@@ -1,4 +1,4 @@
-import { getStore } from "../src/server/store.js";
+import { FirestoreStorageProvider } from "../src/server/storage-providers/firestore.js";
 
 async function createApiKey(): Promise<string> {
   const uuid = crypto.randomUUID();
@@ -13,7 +13,8 @@ export async function createAccount(username: string, apiKey?: string) {
   if (!apiKey) {
     apiKey = await createApiKey();
   }
-  await getStore().createUser(username, apiKey);
+  const firestore = new FirestoreStorageProvider();
+  await firestore.createUser(username, apiKey);
 
   console.log(`Created account for ${username} with API key:\n${apiKey}`);
 }
