@@ -103,13 +103,19 @@ export class FirestoreStorageProvider
         return;
       }
 
+      const graphJson = doc.get("graph");
+      const graph = graphJson
+        ? (JSON.parse(graphJson) as GraphDescriptor)
+        : undefined;
+
       const board: StorageBoard = {
         name: doc.id,
         owner,
         displayName: doc.get("title") || doc.id,
         description: doc.get("description") ?? "",
-        thumbnail: getThumbnail(doc.get("graph")),
+        thumbnail: getThumbnail(graph),
         tags,
+        graph,
       };
       boards.push(board);
     });
@@ -168,12 +174,11 @@ function asBoardPath(userId: string, boardName: string): string {
   return `workspaces/${userId}/boards/${boardName}`;
 }
 
-function getThumbnail(graphJson?: string): string {
-  if (!graphJson) {
+function getThumbnail(graph?: GraphDescriptor): string {
+  if (!graph) {
     return "";
   }
   try {
-    const graph = JSON.parse(graphJson);
     const splashData = graph.assets?.["@@splash"]?.data;
     if (splashData && isLLMContentArray(splashData) && splashData.length > 0) {
       const splashEntry = splashData[0];
@@ -186,6 +191,10 @@ function getThumbnail(graphJson?: string): string {
     const presentation = graph.metadata?.visual?.presentation;
     const theme = presentation?.theme;
     const themes = presentation?.themes;
+    if (!theme || !themes) {
+      return "";
+    }
+
     const handle = themes?.[theme]?.splashScreen?.storedData?.handle;
     if (handle) {
       return handle;
