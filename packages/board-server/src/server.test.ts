@@ -84,6 +84,16 @@ suite("Board Server integration test", () => {
       assert.equal(response.status, 200);
     });
 
+    test("GET /:name", async () => {
+      await store.createBoard(user.username, "test-board");
+
+      const response = await request(server).get(
+        `/boards/test-board?API_KEY=${user.apiKey}`
+      );
+
+      assert.equal(response.status, 200);
+    });
+
     test("POST /boards/@:user/:name -> updates", async () => {
       await store.createBoard(user.username, "test-board");
 
@@ -97,11 +107,37 @@ suite("Board Server integration test", () => {
       });
     });
 
+    test("POST /boards/:name -> updates", async () => {
+      await store.createBoard(user.username, "test-board");
+
+      const response = await request(server)
+        .post(`/boards/test-board?API_KEY=${user.apiKey}`)
+        .send({ nodes: [], edges: [] });
+
+      assert.equal(response.status, 200);
+      assert.deepEqual(response.body, {
+        created: `@${user.username}/test-board`,
+      });
+    });
+
     test("POST /boards/@:user/:name -> deletes", async () => {
       await store.createBoard(user.username, "test-board");
 
       const response = await request(server)
         .post(`/boards/@${user.username}/test-board?API_KEY=${user.apiKey}`)
+        .send({ delete: true });
+
+      assert.equal(response.status, 200);
+      assert.deepEqual(response.body, {
+        deleted: `@${user.username}/test-board`,
+      });
+    });
+
+    test("POST /boards/:name -> deletes", async () => {
+      await store.createBoard(user.username, "test-board");
+
+      const response = await request(server)
+        .post(`/boards/test-board?API_KEY=${user.apiKey}`)
         .send({ delete: true });
 
       assert.equal(response.status, 200);
@@ -178,6 +214,16 @@ suite("Board Server integration test", () => {
       assert.equal(response.status, 200);
     });
 
+    test("POST /boards/:name/describe", async () => {
+      await store.createBoard(user.username, "test-board");
+
+      const response = await request(server)
+        .post(`/boards/test-board/describe?API_KEY=${user.apiKey}`)
+        .send({});
+
+      assert.equal(response.status, 200);
+    });
+
     test("POST /boards/@:user/:name.api/run", async () => {
       store.createBoard(user.username, "test-board.json");
 
@@ -200,6 +246,8 @@ suite("Board Server integration test", () => {
 
     // This test makes an HTTP call to the Drive API. Can't run this in a test.
     test.todo("POST /boards/@:user/:name.json/assets/drive/:id");
+    test.todo("POST /boards/@:user/:name/assets/drive/:id");
+    test.todo("POST /boards/:name/assets/drive/:id");
   });
 
   suite.todo("Blobs API", () => {

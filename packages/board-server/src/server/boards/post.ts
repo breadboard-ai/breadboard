@@ -42,8 +42,10 @@ async function update(
   const boardId: BoardId = res.locals.boardId;
   const userId: string = res.locals.userId;
 
-  if (userId != boardId.user) {
-    // TODO factor this check to middleware
+  // If an owner is given, it must match the current user
+  // TODO factor this check to middleware
+  const owner = boardId.user;
+  if (owner && owner !== userId) {
     res.sendStatus(403);
     return;
   }

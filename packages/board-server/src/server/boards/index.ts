@@ -63,9 +63,18 @@ export function serveBoardsAPI(serverConfig: ServerConfig): Router {
   router.post("/@:user/:name/describe", loadBoard(), describeBoard);
 
   router.post(
-    "/@:user/:name/assets/drive/:driveId",
+    "/@:_user/:_name/assets/drive/:driveId",
     requireAccessToken(),
-    parseBoardId(),
+    handleAssetsDriveRequest
+  );
+
+  // Name-only routes that do not require the user as a namespace
+  router.get("/:name", requireAuth(), loadBoard(), getBoard);
+  router.post("/:name", requireAuth(), parseBoardId(), post);
+  router.post("/:name/describe", requireAuth(), loadBoard(), describeBoard);
+  router.post(
+    "/:_name/assets/drive/:driveId",
+    requireAccessToken(),
     handleAssetsDriveRequest
   );
 
