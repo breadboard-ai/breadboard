@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeMetadata } from "@breadboard-ai/types";
+import { NodeConfiguration, NodeMetadata } from "@breadboard-ai/types";
 import {
   BoardServer,
   GraphDescriptor,
@@ -12,10 +12,11 @@ import {
   TemplatePart,
 } from "@google-labs/breadboard";
 import { css, html, LitElement, nothing, PropertyValues } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import {
+  GraphReplaceEvent,
   NodePartialUpdateEvent,
   OverlayDismissedEvent,
 } from "../../events/events";
@@ -27,6 +28,12 @@ import {
 import { isLLMContentBehavior } from "../../utils";
 import { EditorMode, filterConfigByMode } from "../../utils/mode";
 import { UserInput } from "../elements";
+import "../../flow-gen/describe-edit-button.js";
+import type { FlowGenConstraint } from "../../flow-gen/flow-generator.js";
+import * as StringsHelper from "../../strings/helper.js";
+import { findConfigurationChanges } from "../../flow-gen/flow-diff.js";
+
+const Strings = StringsHelper.forSection("Editor");
 
 @customElement("bb-focus-editor")
 export class FocusEditor extends LitElement {
@@ -62,6 +69,9 @@ export class FocusEditor extends LitElement {
 
   @property()
   accessor projectState: Project | null = null;
+
+  @state()
+  accessor #generatedConfig: NodeConfiguration | null = null;
 
   static styles = css`
     * {
@@ -193,6 +203,12 @@ export class FocusEditor extends LitElement {
                 border: 1px solid var(--outer-border);
               }
             }
+          }
+
+          bb-describe-edit-button {
+            z-index: 1;
+            width: 24px;
+            margin-left: auto;
           }
 
           #run-node {
@@ -529,6 +545,7 @@ export class FocusEditor extends LitElement {
     if (processData) {
       this.processData();
     }
+    this.#generatedConfig = null;
     this.#beginCollapseAnimationIfNeeded();
   }
 
@@ -748,7 +765,9 @@ export class FocusEditor extends LitElement {
       // Use the overrides if they're set.
       let value = port.value;
       let hasValueOverride = false;
-      if (
+      if (this.#generatedConfig?.[port.name]) {
+        value = this.#generatedConfig[port.name];
+      } else if (
         this.configuration?.nodeConfiguration &&
         this.configuration.nodeConfiguration[port.name]
       ) {
@@ -812,6 +831,18 @@ export class FocusEditor extends LitElement {
               .value=${this.configuration?.title}
             />
           </h1>
+          ${this.graph && this.configuration?.id
+            ? html`<bb-describe-edit-button
+                popoverPosition="below"
+                .label=${Strings.from("COMMAND_DESCRIBE_EDIT_STEP")}
+                .currentGraph=${this.graph satisfies GraphDescriptor}
+                .constraint=${{
+                  kind: "EDIT_STEP_CONFIG",
+                  stepId: this.configuration?.id,
+                } satisfies FlowGenConstraint}
+                @bbgraphreplace=${this.#onFlowgenEdit}
+              ></bb-describe-edit-button>`
+            : nothing}
         </header>
         <section id="content">
           <div id="text-editor">
@@ -863,5 +894,30 @@ export class FocusEditor extends LitElement {
         </footer>
       </div>
     </section>`;
+  }
+
+  async #onFlowgenEdit(event: GraphReplaceEvent) {
+    event.stopPropagation();
+    const oldFlow = this.graph;
+    const newFlow = event.replacement;
+    if (!oldFlow || !newFlow) {
+      return;
+    }
+    const allConfigChanges = findConfigurationChanges(oldFlow, newFlow);
+    const thisChange = allConfigChanges.find(
+      (change) => change.id && change.id === this.configuration?.id
+    );
+    if (!thisChange) {
+      return;
+    }
+    this.#generatedConfig = thisChange.configuration;
+    const oldConfig = this.configuration;
+    // TODO(aomarks) It seems that <bb-text-editor> does not re-render when its
+    // value changes from the outside for some reason. This trick forces a full
+    // re-render of that and any other input elements, which does seem to work.
+    // Figure out what's going on and replace with something less hacky.
+    this.configuration = null;
+    await this.updateComplete;
+    this.configuration = oldConfig;
   }
 }
