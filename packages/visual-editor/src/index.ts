@@ -2035,32 +2035,21 @@ export class Main extends LitElement {
       return;
     }
 
-    const projectState = this.#runtime.state.getOrCreate(
-      this.tab?.mainGraphId,
-      this.#runtime.edit.getEditor(this.tab)
+    return this.#runtime.edit.createParam(
+      this.tab,
+      evt.graphId,
+      evt.path,
+      evt.title,
+      evt.description
     );
+  }
 
-    if (!projectState) {
-      this.toast(
-        "Unable to create parameter",
-        BreadboardUI.Events.ToastType.ERROR
-      );
+  #attemptParamDelete(evt: BreadboardUI.Events.ParamDeleteEvent) {
+    if (!this.tab) {
       return;
     }
 
-    if (projectState.parameters.has(evt.path)) {
-      this.toast(
-        "Unable to create parameter - one already exists",
-        BreadboardUI.Events.ToastType.ERROR
-      );
-      return;
-    }
-
-    return projectState.parameters.set(evt.path, {
-      title: evt.title,
-      description: evt.description,
-      usedIn: [],
-    });
+    return this.#runtime.edit.deleteParam(this.tab, evt.graphId, evt.path);
   }
 
   async #attemptToggleExport(
@@ -2584,7 +2573,7 @@ export class Main extends LitElement {
               return;
             }
 
-            this.#runtime.edit.changeNodeConfigurationPart(
+            await this.#runtime.edit.changeNodeConfigurationPart(
               this.tab,
               evt.id,
               evt.configuration,
@@ -3434,6 +3423,11 @@ export class Main extends LitElement {
                     runner.run(data);
                   }
                 }
+              }}
+              @bbparamdelete=${async (
+                evt: BreadboardUI.Events.ParamDeleteEvent
+              ) => {
+                await this.#attemptParamDelete(evt);
               }}
               @bbgraphboardserverloadrequest=${async (
                 evt: BreadboardUI.Events.GraphBoardServerLoadRequestEvent

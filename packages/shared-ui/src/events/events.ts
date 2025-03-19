@@ -1483,3 +1483,14 @@ export class ParamCreateEvent extends Event {
     super(ParamCreateEvent.eventName, { ...eventInit });
   }
 }
+
+export class ParamDeleteEvent extends Event {
+  static eventName = "bbparamdelete";
+
+  constructor(
+    public readonly graphId: GraphIdentifier,
+    public readonly path: string
+  ) {
+    super(ParamDeleteEvent.eventName, { ...eventInit });
+  }
+}

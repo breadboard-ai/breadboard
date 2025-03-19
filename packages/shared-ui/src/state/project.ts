@@ -100,6 +100,7 @@ class ReactiveProject implements ProjectInternal {
       if (event.mainGraphId === mainGraphId) {
         this.#updateComponents();
         this.#updateGraphAssets();
+        this.#updateParameters();
       }
       this.#updateTools();
       this.#updateMyTools();

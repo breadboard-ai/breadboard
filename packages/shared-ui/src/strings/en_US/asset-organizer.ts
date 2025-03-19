@@ -55,6 +55,15 @@ export default {
   LABEL_ENTER_MODALITY: {
     str: "Specify parameter value type",
   },
+  LABEL_DELETE_ASSET: {
+    str: "Delete asset",
+  },
+  LABEL_DELETE_PARAM: {
+    str: "Delete parameter",
+  },
+  LABEL_DELETE_PARAM_UNAVAILABLE: {
+    str: "Delete parameter (Unavailable as parameter is in use)",
+  },
 
   // Queries.
   // Errors.

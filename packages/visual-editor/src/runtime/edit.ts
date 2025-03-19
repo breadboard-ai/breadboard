@@ -1544,6 +1544,44 @@ export class Edit extends EventTarget {
     );
   }
 
+  async createParam(
+    tab: Tab | null,
+    graphId: GraphIdentifier,
+    path: string,
+    title: string,
+    description?: string
+  ) {
+    if (tab?.readOnly) {
+      return;
+    }
+
+    const editableGraph = this.getEditor(tab);
+    if (!editableGraph) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to find board to edit"));
+      return;
+    }
+
+    return editableGraph.apply(
+      new BreadboardUI.Transforms.CreateParam(graphId, path, title, description)
+    );
+  }
+
+  async deleteParam(tab: Tab | null, graphId: GraphIdentifier, path: string) {
+    if (tab?.readOnly) {
+      return;
+    }
+
+    const editableGraph = this.getEditor(tab);
+    if (!editableGraph) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to find board to edit"));
+      return;
+    }
+
+    return editableGraph.apply(
+      new BreadboardUI.Transforms.DeleteParam(graphId, path)
+    );
+  }
+
   /**
    *
    * @deprecated
