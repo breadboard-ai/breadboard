@@ -218,7 +218,7 @@ suite("Board Server integration test", () => {
       await store.createBoard(user.username, "test-board");
 
       const response = await request(server)
-        .post("/boards/test-board/describe")
+        .post(`/boards/test-board/describe?API_KEY=${user.apiKey}`)
         .send({});
 
       assert.equal(response.status, 200);
