@@ -17,21 +17,29 @@ import {
   type User,
 } from "@google-labs/breadboard";
 
-import { asInfo } from "../../store.js";
 import type { BoardServerStore } from "../../store.js";
 import type { BoardServerLoadFunction } from "../../types.js";
 
 export function createBoardLoader(
-  store: BoardServerStore
+  store: BoardServerStore,
+  userId: string
 ): BoardServerLoadFunction {
   return async (path: string): Promise<GraphDescriptor | null> => {
-    const { userStore, boardName } = asInfo(path);
+    const { userStore, boardName } = parsePath(path);
     if (!userStore || !boardName) {
       return null;
     }
-    const board = await store.loadBoardByUser(userStore, boardName);
+    const board = await store.loadBoardByUser(userStore, boardName, userId);
     return board?.graph ?? null;
   };
+}
+
+function parsePath(path: string) {
+  const [userStore, boardName] = path.split("/");
+  if (!userStore || userStore[0] !== "@") {
+    return {};
+  }
+  return { userStore: userStore.slice(1), boardName };
 }
 
 export class BoardServerProvider implements BoardServer {

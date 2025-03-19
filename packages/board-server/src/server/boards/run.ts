@@ -82,7 +82,7 @@ async function runHandler(
     path,
     user: userId,
     inputs,
-    loader: createBoardLoader(store),
+    loader: createBoardLoader(store, userId),
     kitOverrides: [secretsKit],
     writer,
     next,

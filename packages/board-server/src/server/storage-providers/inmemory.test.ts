@@ -30,29 +30,38 @@ suite("In-memory storage provider", () => {
   });
 
   test("create board", async () => {
-    assert.equal(await provider.loadBoardByUser("user", "test-board"), null);
+    assert.equal(
+      await provider.loadBoardByUser("user", "test-board", "user"),
+      null
+    );
 
     provider.createBoard("user", "test-board");
 
-    assert.deepEqual(await provider.loadBoardByUser("user", "test-board"), {
-      name: "test-board",
-      owner: "user",
-      displayName: "test-board",
-      description: "",
-      tags: [],
-      thumbnail: "",
-      graph: {
+    assert.deepEqual(
+      await provider.loadBoardByUser("user", "test-board", "user"),
+      {
+        name: "test-board",
+        owner: "user",
+        displayName: "test-board",
         description: "",
-        edges: [],
-        nodes: [],
-        title: "Untitled Flow",
-        version: "0.0.1",
-      },
-    });
+        tags: [],
+        thumbnail: "",
+        graph: {
+          description: "",
+          edges: [],
+          nodes: [],
+          title: "Untitled Flow",
+          version: "0.0.1",
+        },
+      }
+    );
   });
 
   test("update board", async () => {
-    assert.equal(await provider.loadBoardByUser("user", "test-board"), null);
+    assert.equal(
+      await provider.loadBoardByUser("user", "test-board", "user"),
+      null
+    );
 
     const updatedBoard: StorageBoard = {
       name: "test-board",
@@ -68,7 +77,7 @@ suite("In-memory storage provider", () => {
     provider.updateBoard(updatedBoard);
 
     assert.deepEqual(
-      await provider.loadBoardByUser("user", "test-board"),
+      await provider.loadBoardByUser("user", "test-board", "user"),
       updatedBoard
     );
   });

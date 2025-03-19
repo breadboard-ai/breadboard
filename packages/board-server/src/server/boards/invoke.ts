@@ -36,7 +36,8 @@ async function invokeHandler(
   const body = (await getBody(req)) as Record<string, any> | undefined;
   const inputs = body ?? {};
 
-  if (!(await verifyKey(inputs, store))) {
+  const userId = await verifyKey(inputs, store);
+  if (!userId) {
     // TODO Consider sending 404 instead to prevent leaking the existence of
     // the board
     res.sendStatus(403);
@@ -48,7 +49,7 @@ async function invokeHandler(
     url: url.href,
     path,
     inputs,
-    loader: createBoardLoader(store),
+    loader: createBoardLoader(store, userId),
     kitOverrides: [secretsKit],
   });
   res.json(result);
