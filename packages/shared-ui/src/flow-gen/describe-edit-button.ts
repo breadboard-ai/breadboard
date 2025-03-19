@@ -40,9 +40,11 @@ export class DescribeEditButton extends LitElement {
     css`
       :host {
         position: relative;
+        width: 36px;
       }
 
       #edit-button {
+        width: 100%;
         --bb-icon: var(--bb-add-icon-generative-text-inverted);
       }
 
