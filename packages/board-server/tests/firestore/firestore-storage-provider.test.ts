@@ -87,7 +87,7 @@ suite("Firestore storage provider", () => {
   });
 
   test("list boards", async () => {
-    await provider.updateBoard({
+    const ownedBoard = {
       name: "owned-board",
       owner: "me",
       displayName: "Owned Board",
@@ -95,8 +95,8 @@ suite("Firestore storage provider", () => {
       tags: [],
       thumbnail: "",
       graph: GRAPH,
-    });
-    await provider.updateBoard({
+    };
+    const publishedBoard = {
       name: "published-board",
       owner: "you",
       displayName: "Published Board",
@@ -104,8 +104,8 @@ suite("Firestore storage provider", () => {
       tags: ["published"],
       thumbnail: "",
       graph: GRAPH,
-    });
-    await provider.updateBoard({
+    };
+    const privateBoard = {
       name: "private-board",
       owner: "you",
       displayName: "Private Board",
@@ -113,14 +113,28 @@ suite("Firestore storage provider", () => {
       tags: [],
       thumbnail: "",
       graph: GRAPH,
-    });
+    };
+
+    await provider.updateBoard(ownedBoard);
+    await provider.updateBoard(publishedBoard);
+    await provider.updateBoard(privateBoard);
 
     const boards = await provider.listBoards("me");
-    const boardNames = boards.map((board) => board.name);
+    assert.equal(boards.length, 2);
 
-    assert(boardNames.includes("owned-board"));
-    assert(boardNames.includes("published-board"));
-    assert(!boardNames.includes("private-board"));
+    const ownedBoardResult = boards.find(
+      (board) => board.name === "owned-board"
+    );
+    const publishedBoardResult = boards.find(
+      (board) => board.name === "published-board"
+    );
+    const privateBoardResult = boards.find(
+      (board) => board.name === "private-board"
+    );
+
+    assert.deepEqual(ownedBoardResult, ownedBoard);
+    assert.deepEqual(publishedBoardResult, publishedBoard);
+    assert.equal(privateBoardResult, undefined);
   });
 });
 
