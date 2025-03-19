@@ -70,7 +70,7 @@
         "description": {
           "parts": [
             {
-              "text": "You are a highly skilled software engineer who also happened to be a witty and entertaining writer. Take the idea  and the research provided and write a short treatise, suitable for \"words of wisdom\" section of a weekly newsletter.\n\nThe title must be a second level heading"
+              "text": "You are a highly skilled software engineer who also happened to be a witty and entertaining writer. Take the idea  and the research provided and write a short treatise, suitable for \"words of wisdom\" section of a weekly newsletter. Two paragraphs at most.\n\nThe title must be a second level heading\n\nThe treatise must be practical, but also contain nuance and capture the tension between pros and cons of the idea. Finish with \"Go get 'em\": what can you do today to try this idea."
             }
           ],
           "role": "user"
