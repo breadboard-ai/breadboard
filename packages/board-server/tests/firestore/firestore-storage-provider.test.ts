@@ -210,6 +210,7 @@ suite("Firestore storage provider", () => {
     const doc = await database.doc(path).get();
 
     assert(doc.exists);
+    assert.equal(doc.get("name"), expected.name);
     assert.equal(doc.get("title") ?? "", expected.displayName);
     assert.equal(doc.get("description") ?? "", expected.description);
     assert.deepEqual(doc.get("tags") ?? [], expected.tags);
