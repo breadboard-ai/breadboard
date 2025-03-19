@@ -21,11 +21,11 @@
           "role": "user",
           "parts": [
             {
-              "text": "For each day of the week, write a short poem."
+              "text": "For each day of the week, write a short poem. Make each poem build on each other, creating a whole story."
             }
           ]
         },
-        "strategy": "All at once",
+        "strategy": "Go in order",
         "z-list": true
       }
     },
@@ -46,7 +46,7 @@
         "description": {
           "parts": [
             {
-              "text": "As an acclaimed expert in poetry, offer a robust critique and suggest for improvements for the poem"
+              "text": "As an acclaimed expert in poetry, offer a robust critique and provide a bulleted action list for improvements for the poem that will be passed on to the poet."
             }
           ],
           "role": "user"
@@ -54,17 +54,18 @@
       }
     },
     {
-      "id": "a2-158ffd2d",
+      "id": "0873b95d-811e-4e6d-a2cf-0b78c7087b89",
       "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
-        "title": "Make Text",
+        "title": "Rewrite Poem with Critique",
         "visual": {
           "x": 1520,
           "y": 520,
           "collapsed": "expanded",
           "outputHeight": 88
         },
-        "userModified": false
+        "userModified": false,
+        "description": "Rewrites a poem by incorporating a critique. The poem should be rewritten based on the critique to improve the poem."
       },
       "configuration": {
         "description": {
@@ -87,7 +88,7 @@
     },
     {
       "from": "a2-525d60ab",
-      "to": "a2-158ffd2d",
+      "to": "0873b95d-811e-4e6d-a2cf-0b78c7087b89",
       "out": "context",
       "in": "context"
     }
