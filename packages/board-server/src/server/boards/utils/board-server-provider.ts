@@ -17,7 +17,7 @@ import {
   type User,
 } from "@google-labs/breadboard";
 
-import { asInfo, getStore } from "../../store.js";
+import { asInfo } from "../../store.js";
 import type { BoardServerStore } from "../../store.js";
 import type { BoardServerLoadFunction } from "../../types.js";
 
@@ -72,18 +72,10 @@ export class BoardServerProvider implements BoardServer {
     this.#loader = loader;
   }
 
+  // TODO this doesn't do anything now that we're passing in server URL
   async #initialize(): Promise<void> {
     if (this.#initialized) {
       return;
-    }
-    try {
-      const store = getStore();
-      const info = await store.getServerInfo();
-      if (info) {
-        this.#serverUrl = info.url;
-      }
-    } catch (e) {
-      // Ignore errors.
     }
     this.#initialized = true;
   }

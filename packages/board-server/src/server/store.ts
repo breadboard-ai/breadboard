@@ -8,13 +8,8 @@ import type {
   GraphDescriptor,
   ReanimationState,
 } from "@google-labs/breadboard";
-import { FirestoreStorageProvider } from "./storage-providers/firestore.js";
 
 export const EXPIRATION_TIME_MS = 1000 * 60 * 60 * 24 * 2; // 2 days
-
-export function getStore(): FirestoreStorageProvider {
-  return new FirestoreStorageProvider();
-}
 
 /** A type representing a board as it is stored in a DB. */
 export type StorageBoard = {

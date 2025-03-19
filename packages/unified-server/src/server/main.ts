@@ -6,10 +6,12 @@ import * as boardServer from "@breadboard-ai/board-server";
 
 const server = express();
 
-const boardServerConfig = boardServer.createServerConfig();
+const boardServerConfig = boardServer.createServerConfig({
+  storageProvider: "firestore",
+});
 const connectionServerConfig = await connectionServer.createServerConfig();
 
-boardServer.addMiddleware(server);
+boardServer.addMiddleware(server, boardServerConfig);
 server.use("/board", boardServer.createRouter(boardServerConfig));
 
 server.use(
@@ -26,7 +28,6 @@ ViteExpress.config({
     return html.replace("{{displayName}}", escape(displayName));
   },
 });
-
 
 ViteExpress.static({
   enableBrotli: true,

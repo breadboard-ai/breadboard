@@ -6,7 +6,7 @@
 
 import { createServer, createServerConfig } from "./server.js";
 
-const config = createServerConfig();
+const config = createServerConfig({ storageProvider: "firestore" });
 const server = createServer(config);
 
 server.listen(config.port);

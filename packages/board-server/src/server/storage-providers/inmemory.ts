@@ -1,4 +1,4 @@
-import type { ReanimationState } from "@google-labs/breadboard";
+import { blank, type ReanimationState } from "@google-labs/breadboard";
 import type { BoardServerStore, ServerInfo, StorageBoard } from "../store.js";
 
 export const IN_MEMORY_SERVER_INFO: ServerInfo = {
@@ -47,6 +47,7 @@ export class InMemoryStorageProvider implements BoardServerStore {
       description: "",
       tags: [],
       thumbnail: "",
+      graph: blank(),
     };
   }
 
