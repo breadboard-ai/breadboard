@@ -2102,6 +2102,8 @@ export class Editor extends LitElement implements DragConnectorReceiver {
               </button>
             </div>
             <bb-describe-edit-button
+              popoverPosition="above"
+              .label=${Strings.from("COMMAND_DESCRIBE_EDIT_FLOW")}
               .currentGraph=${this.graph.raw()}
             ></bb-describe-edit-button>
           </div>`
