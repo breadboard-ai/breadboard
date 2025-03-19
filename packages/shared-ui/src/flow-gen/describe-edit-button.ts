@@ -21,7 +21,7 @@ import { floatingPanelStyles } from "../styles/floating-panel.js";
 import { multiLineInputStyles } from "../styles/multi-line-input.js";
 import { SideBoardRuntime } from "../sideboards/types.js";
 import { AppCatalystApiClient } from "./app-catalyst.js";
-import { FlowGenerator } from "./flow-generator.js";
+import { FlowGenConstraint, FlowGenerator } from "./flow-generator.js";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -105,6 +105,9 @@ export class DescribeEditButton extends LitElement {
 
   @property({ type: Object })
   accessor currentGraph: GraphDescriptor | undefined;
+
+  @property({ type: Object })
+  accessor constraint: FlowGenConstraint | undefined;
 
   @state()
   accessor #state: State = { status: "closed" };
@@ -290,6 +293,7 @@ export class DescribeEditButton extends LitElement {
     const { flow } = await generator.oneShot({
       intent,
       context: { flow: currentFlow },
+      constraint: this.constraint,
     });
     return flow;
   }
