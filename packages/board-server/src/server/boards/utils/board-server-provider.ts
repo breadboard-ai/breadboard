@@ -29,7 +29,7 @@ export function createBoardLoader(
     if (!userStore || !boardName) {
       return null;
     }
-    const board = await store.loadBoard(userStore, boardName);
+    const board = await store.loadBoardByUser(userStore, boardName);
     return board?.graph ?? null;
   };
 }

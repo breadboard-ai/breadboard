@@ -25,7 +25,7 @@ async function create(req: Request, res: Response): Promise<void> {
   }
 
   // If a board by this name already exists, return 400
-  if (await store.loadBoard(userId, name)) {
+  if (await store.loadBoardByUser(userId, name)) {
     res.sendStatus(400);
     return;
   }

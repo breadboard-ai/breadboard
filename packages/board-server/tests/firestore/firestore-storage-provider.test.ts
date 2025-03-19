@@ -43,29 +43,38 @@ suite("Firestore storage provider", () => {
   });
 
   test("create board", async () => {
-    assert.equal(await provider.loadBoard("test-user", "test-board"), null);
+    assert.equal(
+      await provider.loadBoardByUser("test-user", "test-board"),
+      null
+    );
 
     await provider.createBoard("test-user", "test-board");
 
-    assert.deepEqual(await provider.loadBoard("test-user", "test-board"), {
-      description: "",
-      displayName: "",
-      graph: {
+    assert.deepEqual(
+      await provider.loadBoardByUser("test-user", "test-board"),
+      {
         description: "",
-        edges: [],
-        nodes: [],
-        title: "Untitled Flow",
-        version: "0.0.1",
-      },
-      name: "test-board",
-      owner: "test-user",
-      tags: [],
-      thumbnail: "",
-    });
+        displayName: "",
+        graph: {
+          description: "",
+          edges: [],
+          nodes: [],
+          title: "Untitled Flow",
+          version: "0.0.1",
+        },
+        name: "test-board",
+        owner: "test-user",
+        tags: [],
+        thumbnail: "",
+      }
+    );
   });
 
   test("update board", async () => {
-    assert.equal(await provider.loadBoard("test-user", "test-board"), null);
+    assert.equal(
+      await provider.loadBoardByUser("test-user", "test-board"),
+      null
+    );
 
     const updatedBoard: StorageBoard = {
       name: "test-board",
@@ -81,9 +90,56 @@ suite("Firestore storage provider", () => {
     await provider.updateBoard(updatedBoard);
 
     assert.deepEqual(
-      await provider.loadBoard("test-user", "test-board"),
+      await provider.loadBoardByUser("test-user", "test-board"),
       updatedBoard
     );
+  });
+
+  test("load board by name", async () => {
+    const ownedBoard = {
+      name: "owned-board",
+      owner: "me",
+      displayName: "Owned Board",
+      description: "",
+      tags: [],
+      thumbnail: "",
+      graph: GRAPH,
+    };
+    const publishedBoard = {
+      name: "published-board",
+      owner: "you",
+      displayName: "Published Board",
+      description: "",
+      tags: ["published"],
+      thumbnail: "",
+      graph: GRAPH,
+    };
+    const privateBoard = {
+      name: "private-board",
+      owner: "you",
+      displayName: "Private Board",
+      description: "",
+      tags: [],
+      thumbnail: "",
+      graph: GRAPH,
+    };
+
+    await provider.updateBoard(ownedBoard);
+    await provider.updateBoard(publishedBoard);
+    await provider.updateBoard(privateBoard);
+
+    const ownedBoardResult = await provider.loadBoard("owned-board", "me");
+    const publishedBoardResult = await provider.loadBoard(
+      "published-board",
+      "me"
+    );
+    const privateBoardResult = await provider.loadBoard("private-board", "me");
+    const nonExistentBoard = await provider.loadBoard("non-existent", "me");
+
+    assert.deepEqual(ownedBoardResult, ownedBoard);
+    assert.deepEqual(publishedBoardResult, publishedBoard);
+    assert.equal(privateBoardResult, null);
+    assert.equal(nonExistentBoard, null);
   });
 
   test("list boards", async () => {
