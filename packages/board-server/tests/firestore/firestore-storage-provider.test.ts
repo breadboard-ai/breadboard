@@ -110,13 +110,22 @@ suite("Firestore storage provider", () => {
     await provider.updateBoard(publishedBoard);
     await provider.updateBoard(privateBoard);
 
-    const ownedBoardResult = await provider.loadBoard("owned-board", "me");
-    const publishedBoardResult = await provider.loadBoard(
-      "published-board",
-      "me"
-    );
-    const privateBoardResult = await provider.loadBoard("private-board", "me");
-    const nonExistentBoard = await provider.loadBoard("non-existent", "me");
+    const ownedBoardResult = await provider.loadBoard({
+      name: "owned-board",
+      requestingUserId: "me",
+    });
+    const publishedBoardResult = await provider.loadBoard({
+      name: "published-board",
+      requestingUserId: "me",
+    });
+    const privateBoardResult = await provider.loadBoard({
+      name: "private-board",
+      requestingUserId: "me",
+    });
+    const nonExistentBoard = await provider.loadBoard({
+      name: "non-existent",
+      requestingUserId: "me",
+    });
 
     assert.deepEqual(ownedBoardResult, ownedBoard);
     assert.deepEqual(publishedBoardResult, publishedBoard);

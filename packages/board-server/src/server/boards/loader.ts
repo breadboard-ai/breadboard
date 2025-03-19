@@ -25,18 +25,21 @@ export function loadBoard(opts?: { addJsonSuffix?: boolean }): RequestHandler {
     next: NextFunction
   ): Promise<void> => {
     try {
-      let { user = "", name = "" } = req.params;
-      if (!user || !name) {
+      let name = req.params.name;
+      if (!name) {
         res.sendStatus(400);
         return;
       }
-      if (!!opts?.addJsonSuffix) {
+      if (opts?.addJsonSuffix) {
         name += ".json";
       }
 
       const store: BoardServerStore = res.app.locals.store;
-      const currentUser = res.locals.userId ?? "";
-      const board = await store.loadBoardByUser(user, name, currentUser);
+      const board = await store.loadBoard({
+        name,
+        owner: req.params.user,
+        requestingUserId: res.locals.userId,
+      });
       if (board) {
         res.locals.loadedBoard = board;
       }

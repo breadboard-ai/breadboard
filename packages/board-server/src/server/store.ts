@@ -40,22 +40,24 @@ export interface BoardServerStore {
    */
   findUserIdByApiKey(apiKey: string): Promise<string>;
 
-  /** Load a given user's board by name. */
-  loadBoardByUser(
-    userId: string,
-    name: string,
-    currentUser: string
-  ): Promise<StorageBoard | null>;
-
   /**
-   * Load a board by name, if viewable by the current user. This method assumes
-   * that names are unique across all boards. Behavior is undefined if they are
-   * not.
+   * Load the board with the given name.
    *
-   * NOTE: This differs from loadBoardByUser in that the user given is the
-   * logged in user, not necessarily the owner of the board.
+   * If an owner is given, only boards belonging to that owner will be searched.
+   *
+   * The store will not return private boards unless a requestingUserId is
+   * given, in which case a private board belonging to that user will be
+   * returned.
+   *
+   * Behavior is undefined if more than one matching board exists.
+   *
+   * @return The board, if visible to the user, or null if not found
    */
-  loadBoard(name: string, currentUser: string): Promise<StorageBoard | null>;
+  loadBoard(opts: {
+    name: string;
+    owner?: string;
+    requestingUserId?: string;
+  }): Promise<StorageBoard | null>;
 
   /** List all boards visible to the given user. */
   listBoards(userId: string): Promise<StorageBoard[]>;
