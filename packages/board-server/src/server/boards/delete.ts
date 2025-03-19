@@ -19,8 +19,10 @@ async function del(
   const boardId: BoardId = res.locals.boardId;
   const userId: string = res.locals.userId;
 
-  if (userId != boardId.user) {
-    // TODO factor this check to middleware
+  // If an owner is given, it must match the current user
+  // TODO factor this check to middleware
+  const owner = boardId.user;
+  if (owner && owner !== userId) {
     res.sendStatus(403);
     return;
   }
@@ -32,7 +34,7 @@ async function del(
   }
 
   // TODO don't return a response on delete. 200 OK is sufficient
-  res.json({ deleted: asPath(boardId.user, boardId.name) });
+  res.json({ deleted: asPath(userId, boardId.name) });
 }
 
 export default del;
