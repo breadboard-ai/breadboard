@@ -47,8 +47,7 @@
             }
           ],
           "role": "user"
-        },
-        "p-chat": true
+        }
       }
     }
   ],
