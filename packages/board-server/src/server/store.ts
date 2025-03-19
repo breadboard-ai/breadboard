@@ -40,8 +40,12 @@ export interface BoardServerStore {
    */
   findUserIdByApiKey(apiKey: string): Promise<string>;
 
-  /** Load a given user's board by name */
-  loadBoardByUser(userId: string, name: string): Promise<StorageBoard | null>;
+  /** Load a given user's board by name. */
+  loadBoardByUser(
+    userId: string,
+    name: string,
+    currentUser: string
+  ): Promise<StorageBoard | null>;
 
   /**
    * Load a board by name, if viewable by the current user. This method assumes
@@ -99,12 +103,4 @@ export type ServerInfo = {
 
 export const asPath = (userStore: string, boardName: string) => {
   return `@${userStore}/${boardName}`;
-};
-
-export const asInfo = (path: string) => {
-  const [userStore, boardName] = path.split("/");
-  if (!userStore || userStore[0] !== "@") {
-    return {};
-  }
-  return { userStore: userStore.slice(1), boardName };
 };

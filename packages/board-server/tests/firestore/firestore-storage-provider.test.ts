@@ -43,38 +43,22 @@ suite("Firestore storage provider", () => {
   });
 
   test("create board", async () => {
-    assert.equal(
-      await provider.loadBoardByUser("test-user", "test-board"),
-      null
-    );
+    assertNoBoard("test-user", "test-board");
 
     await provider.createBoard("test-user", "test-board");
 
-    assert.deepEqual(
-      await provider.loadBoardByUser("test-user", "test-board"),
-      {
-        description: "",
-        displayName: "",
-        graph: {
-          description: "",
-          edges: [],
-          nodes: [],
-          title: "Untitled Flow",
-          version: "0.0.1",
-        },
-        name: "test-board",
-        owner: "test-user",
-        tags: [],
-        thumbnail: "",
-      }
-    );
+    assertBoard({
+      name: "test-board",
+      owner: "test-user",
+      description: "",
+      displayName: "",
+      tags: [],
+      thumbnail: "",
+    });
   });
 
   test("update board", async () => {
-    assert.equal(
-      await provider.loadBoardByUser("test-user", "test-board"),
-      null
-    );
+    assertNoBoard("test-user", "test-board");
 
     const updatedBoard: StorageBoard = {
       name: "test-board",
@@ -89,10 +73,8 @@ suite("Firestore storage provider", () => {
     // Technically, it's not necessary to create the board first
     await provider.updateBoard(updatedBoard);
 
-    assert.deepEqual(
-      await provider.loadBoardByUser("test-user", "test-board"),
-      updatedBoard
-    );
+    assertBoard(updatedBoard);
+    assertGraph(updatedBoard);
   });
 
   test("load board by name", async () => {
@@ -192,6 +174,29 @@ suite("Firestore storage provider", () => {
     assert.deepEqual(publishedBoardResult, publishedBoard);
     assert.equal(privateBoardResult, undefined);
   });
+
+  async function assertNoBoard(owner: string, name: string) {
+    const path = `/workspaces/${owner}/boards/${name}`;
+    const doc = await database.doc(path).get();
+    assert(!doc.exists);
+  }
+
+  async function assertBoard(expected: StorageBoard) {
+    const path = `/workspaces/${expected.owner}/boards/${expected.name}`;
+    const doc = await database.doc(path).get();
+
+    assert(doc.exists);
+    assert.equal(doc.get("title") ?? "", expected.displayName);
+    assert.equal(doc.get("description") ?? "", expected.description);
+    assert.deepEqual(doc.get("tags") ?? [], expected.tags);
+  }
+
+  async function assertGraph(expected: StorageBoard) {
+    const path = `/workspaces/${expected.owner}/boards/${expected.name}`;
+    const doc = await database.doc(path).get();
+    assert(doc.exists);
+    assert.deepEqual(JSON.parse(doc.get("graph")), expected.graph);
+  }
 });
 
 const SERVER_INFO: ServerInfo = {

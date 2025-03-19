@@ -1,4 +1,9 @@
-import { Firestore, QueryDocumentSnapshot } from "@google-cloud/firestore";
+import {
+  DocumentReference,
+  DocumentSnapshot,
+  Firestore,
+  QueryDocumentSnapshot,
+} from "@google-cloud/firestore";
 import {
   type ReanimationState,
   type GraphDescriptor,
@@ -91,33 +96,11 @@ export class FirestoreStorageProvider
     const boards: StorageBoard[] = [];
 
     const docs = await this.#database.collectionGroup("boards").get();
-    docs.forEach((doc: QueryDocumentSnapshot): void => {
-      const owner = doc.ref.parent.parent!.id;
-      const tags = (doc.get("tags") as string[]) || [];
-
-      // TODO Save on query and serving costs by filtering on the server
-      // instead of post-filtering
-      const mine = owner === userId;
-      const published = tags.includes("published");
-      if (!mine && !published) {
-        return;
+    docs.forEach((doc: DocumentSnapshot): void => {
+      const board = asStorageBoard(doc, userId, { requirePublished: true });
+      if (board) {
+        boards.push(board);
       }
-
-      const graphJson = doc.get("graph");
-      const graph = graphJson
-        ? (JSON.parse(graphJson) as GraphDescriptor)
-        : undefined;
-
-      const board: StorageBoard = {
-        name: doc.id,
-        owner,
-        displayName: doc.get("title") || doc.id,
-        description: doc.get("description") ?? "",
-        thumbnail: getThumbnail(graph),
-        tags,
-        graph,
-      };
-      boards.push(board);
     });
 
     return boards;
@@ -125,32 +108,14 @@ export class FirestoreStorageProvider
 
   async loadBoardByUser(
     user: string,
-    name: string
+    name: string,
+    currentUser: string
   ): Promise<StorageBoard | null> {
-    const path = `workspaces/${user}/boards/${name}`;
-    const doc = await this.#database.doc(path).get();
+    const doc = await this.#database.doc(asBoardPath(user, name)).get();
     if (!doc.exists) {
       return null;
     }
-
-    const displayName: string = doc.get("title") ?? "";
-    const description = doc.get("description") || "";
-    const tags = doc.get("tags") ?? [];
-
-    const graphString = doc.get("graph") ?? "";
-    const graph: GraphDescriptor | undefined = graphString
-      ? JSON.parse(graphString)
-      : undefined;
-
-    return {
-      name,
-      owner: user,
-      displayName,
-      description,
-      tags,
-      thumbnail: "",
-      graph,
-    };
+    return asStorageBoard(doc, currentUser, { requirePublished: false });
   }
 
   async loadBoard(
@@ -183,6 +148,40 @@ export class FirestoreStorageProvider
 
 function asBoardPath(userId: string, boardName: string): string {
   return `workspaces/${userId}/boards/${boardName}`;
+}
+
+export function asStorageBoard(
+  doc: DocumentSnapshot,
+  currentUserId: string,
+  opts: { requirePublished: boolean }
+): StorageBoard | null {
+  const owner = doc.ref.parent.parent!.id;
+  const tags = (doc.get("tags") as string[]) || [];
+
+  // TODO Save on query and serving costs by filtering on the server instead of
+  // post-filtering
+  const mine = currentUserId === owner;
+  if (!mine && tags.includes("private")) {
+    return null;
+  }
+  if (!mine && opts.requirePublished && !tags.includes("published")) {
+    return null;
+  }
+
+  const graphJson = doc.get("graph");
+  const graph = graphJson
+    ? (JSON.parse(graphJson) as GraphDescriptor)
+    : undefined;
+
+  return {
+    name: doc.id,
+    owner,
+    displayName: doc.get("title") ?? "",
+    description: doc.get("description") ?? "",
+    thumbnail: getThumbnail(graph),
+    tags,
+    graph,
+  };
 }
 
 function getThumbnail(graph?: GraphDescriptor): string {
