@@ -1,5 +1,5 @@
 {
-  "title": "Listification Workspace",
+  "title": "Listification GOAL Workspace",
   "description": "",
   "version": "0.0.1",
   "nodes": [
@@ -9,8 +9,8 @@
       "metadata": {
         "title": "Make Post",
         "visual": {
-          "x": 320,
-          "y": 459.9999999999999,
+          "x": 339.9999999999999,
+          "y": 399.99999999999994,
           "collapsed": "expanded",
           "outputHeight": 88
         },
@@ -29,13 +29,38 @@
       }
     },
     {
+      "id": "go-over-list-ca76b37c",
+      "type": "file://bgl/go-over-list.bgl.json#module:main",
+      "metadata": {
+        "title": "Plan and Execute",
+        "visual": {
+          "x": 659.9999999999998,
+          "y": 399.99999999999994,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "plan": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Research the blog post idea using {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-web\",\"title\":\"Search Web\"}}, {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-wikipedia\",\"title\":\"Search Wikipedia\"}}, and {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:get-webpage\",\"title\":\"Get Webpage\"}} tools.\n\nSolid research includes:\n- the best practices associated with the idea\n- the caveats and pitfalls of the approach\n- the steps one could to try the idea"
+            }
+          ]
+        },
+        "strategy": "Think as I go"
+      }
+    },
+    {
       "id": "a2-a9e9d012",
       "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
         "title": "Make Text",
         "visual": {
-          "x": 640,
-          "y": 459.9999999999999,
+          "x": 980,
+          "y": 400,
           "collapsed": "expanded",
           "outputHeight": 88
         },
@@ -45,7 +70,7 @@
         "description": {
           "parts": [
             {
-              "text": "You are a highly skilled software engineer who also happened to be a witty and entertaining writer. Take the idea provided and write a short treatise, suitable for \"words of wisdom\" section of a weekly newsletter.\n\nThe title must be a second level heading"
+              "text": "You are a highly skilled software engineer who also happened to be a witty and entertaining writer. Take the idea  and the research provided and write a short treatise, suitable for \"words of wisdom\" section of a weekly newsletter. Two paragraphs at most.\n\nThe title must be a second level heading\n\nThe treatise must be practical, but also contain nuance and capture the tension between pros and cons of the idea. Finish with \"Go get 'em\": what can you do today to try this idea."
             }
           ],
           "role": "user"
@@ -59,8 +84,8 @@
       "metadata": {
         "title": "Make Image",
         "visual": {
-          "x": 960,
-          "y": 520,
+          "x": 1299.9999999999995,
+          "y": 460.0000000000001,
           "collapsed": "expanded",
           "outputHeight": 88
         },
@@ -82,8 +107,8 @@
       "type": "file://bgl/a2.bgl.json#module:combine-outputs",
       "metadata": {
         "visual": {
-          "x": 1280,
-          "y": 459.9999999999999,
+          "x": 1619.9999999999995,
+          "y": 400,
           "collapsed": "expanded",
           "outputHeight": 88
         },
@@ -105,7 +130,7 @@
   "edges": [
     {
       "from": "a2-ec8b61ad",
-      "to": "a2-a9e9d012",
+      "to": "go-over-list-ca76b37c",
       "out": "context",
       "in": "context"
     },
@@ -126,6 +151,12 @@
       "to": "a2-7d0791ce",
       "out": "context",
       "in": "p-z-a2-a9e9d012"
+    },
+    {
+      "from": "go-over-list-ca76b37c",
+      "to": "a2-a9e9d012",
+      "out": "context",
+      "in": "context"
     }
   ],
   "metadata": {
@@ -167,7 +198,7 @@
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI3Ni42MiIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iNDkuMDIiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIzNS40NCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KPHJlY3QgeD0iNzAuMzMiCiAgICAgICAgICAgICAgICAgICAgeT0iNzYuNjIiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjQ5LjAyIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMzUuNDQiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CjxyZWN0IHg9IjEzMC42NiIKICAgICAgICAgICAgICAgICAgICB5PSI4Ny45MyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iNDkuMDIiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIzNS40NCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KPHJlY3QgeD0iMTkwLjk4IgogICAgICAgICAgICAgICAgICAgIHk9Ijc2LjYyIgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI0OS4wMiIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjM1LjQ0IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMjBhMjAyIiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI4MS40OCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMzguODMiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIyOC4wOCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KPHJlY3QgeD0iNTcuNzkiCiAgICAgICAgICAgICAgICAgICAgeT0iODEuNDgiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjM4LjgzIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMjguMDgiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyZThiZTgiIC8+CjxyZWN0IHg9IjEwNS41OCIKICAgICAgICAgICAgICAgICAgICB5PSI4MS40OCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMzguODMiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIyOC4wOCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KPHJlY3QgeD0iMTUzLjM4IgogICAgICAgICAgICAgICAgICAgIHk9IjkwLjQ0IgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSIzOC44MyIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjI4LjA4IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgo8cmVjdCB4PSIyMDEuMTciCiAgICAgICAgICAgICAgICAgICAgeT0iODEuNDgiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjM4LjgzIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMjguMDgiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyMGEyMDIiIC8+CiAgICAgIAogICAgPC9zdmc+"
     }
   }
 }
