@@ -170,7 +170,7 @@
     "ava": "^5.2.0",
     "jsonschema": "^1.5.0",
     "rollup": "^4.36.0",
-    "rollup-plugin-dts": "^6.1.1",
+    "rollup-plugin-dts": "^6.2.0",
     "typescript": "^5.8.2"
   },
   "engines": {
