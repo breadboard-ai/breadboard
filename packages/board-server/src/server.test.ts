@@ -3,19 +3,19 @@ import assert from "node:assert";
 import { afterEach, before, suite, test } from "node:test";
 import request from "supertest";
 
-import { createServer, createServerConfig } from "../../src/server.js";
-import { getStore } from "../../src/server/store.js";
-import type { BoardServerStore } from "../../src/server/store.js";
+import { createServer, createServerConfig } from "./server.js";
+import type { BoardServerStore } from "./server/store.js";
 
 suite("Board Server integration test", () => {
-  const store: BoardServerStore = getStore();
   const user = { username: "test-user", apiKey: "test-api-key" };
 
   let server: Express;
+  let store: BoardServerStore;
 
   before(async () => {
     process.env.STORAGE_BUCKET = "test-bucket";
-    server = createServer(createServerConfig());
+    server = createServer(createServerConfig({ storageProvider: "in-memory" }));
+    store = server.locals.store;
     await store.createUser(user.username, user.apiKey);
   });
 
@@ -136,7 +136,7 @@ suite("Board Server integration test", () => {
     test("POST /boards/@:user/:name/invoke", async () => {
       await store.createBoard(user.username, "test-board");
       await store.updateBoard({
-        name: "test-board.json",
+        name: "test-board",
         owner: user.username,
         displayName: "",
         description: "",

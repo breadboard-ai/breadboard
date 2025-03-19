@@ -8,17 +8,19 @@ import cors from "cors";
 import express, { type Express, Router } from "express";
 
 import { getUserCredentials } from "./server/auth.js";
-import type { ServerConfig } from "./server/config.js";
+import type { ServerConfig, StorageProvider } from "./server/config.js";
 import { serveBlobsAPI } from "./server/blobs/index.js";
 import { serveBoardsAPI } from "./server/boards/index.js";
 import { serveHome } from "./server/home/index.js";
 import { serveInfoAPI } from "./server/info/index.js";
 import { serveMeAPI } from "./server/info/me.js";
 import { serveProxyAPI } from "./server/proxy/index.js";
-import { getStore } from "./server/store.js";
+import { type BoardServerStore } from "./server/store.js";
 import { loadBoard } from "./server/boards/loader.js";
+import { InMemoryStorageProvider } from "./server/storage-providers/inmemory.js";
+import { FirestoreStorageProvider } from "./server/storage-providers/firestore.js";
 
-export type { ServerConfig };
+export type { ServerConfig, StorageProvider };
 
 const DEFAULT_PORT = 3000;
 const DEFAULT_HOST = "localhost";
@@ -29,15 +31,24 @@ export const middlewares = {
 
 export function createServer(config: ServerConfig): Express {
   const server = express();
-  addMiddleware(server);
+  addMiddleware(server, config);
   server.use(createRouter(config));
 
   return server;
 }
 
-export function addMiddleware(server: Express) {
-  server.locals.store = getStore();
+export function addMiddleware(server: Express, config: ServerConfig) {
+  server.locals.store = createStore(config.storageProvider);
   server.use(getUserCredentials());
+}
+
+function createStore(storageProvider: StorageProvider): BoardServerStore {
+  switch (storageProvider) {
+    case "in-memory":
+      return new InMemoryStorageProvider();
+    case "firestore":
+      return new FirestoreStorageProvider();
+  }
 }
 
 export function createRouter(config: ServerConfig): Router {
@@ -65,7 +76,9 @@ export function createRouter(config: ServerConfig): Router {
   return router;
 }
 
-export function createServerConfig(): ServerConfig {
+export function createServerConfig(opts: {
+  storageProvider: StorageProvider;
+}): ServerConfig {
   const {
     PORT = DEFAULT_PORT,
     HOST = DEFAULT_HOST,
@@ -76,6 +89,7 @@ export function createServerConfig(): ServerConfig {
   return {
     hostname: `http://${HOST}:${PORT}`,
     port: +PORT || DEFAULT_PORT,
+    storageProvider: opts?.storageProvider ?? "firestore",
     serverUrl: SERVER_URL,
     storageBucket: STORAGE_BUCKET,
   };

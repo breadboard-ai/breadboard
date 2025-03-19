@@ -41,6 +41,13 @@ suite("In-memory storage provider", () => {
       description: "",
       tags: [],
       thumbnail: "",
+      graph: {
+        description: "",
+        edges: [],
+        nodes: [],
+        title: "Untitled Flow",
+        version: "0.0.1",
+      },
     });
   });
 
