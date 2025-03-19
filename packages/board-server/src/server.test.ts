@@ -107,7 +107,7 @@ suite("Board Server integration test", () => {
       });
     });
 
-    test("POST /boards/@:user/:name -> updates", async () => {
+    test("POST /boards/:name -> updates", async () => {
       await store.createBoard(user.username, "test-board");
 
       const response = await request(server)
@@ -133,7 +133,7 @@ suite("Board Server integration test", () => {
       });
     });
 
-    test("POST /boards/@:user/:name -> deletes", async () => {
+    test("POST /boards/:name -> deletes", async () => {
       await store.createBoard(user.username, "test-board");
 
       const response = await request(server)
