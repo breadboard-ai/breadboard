@@ -2,7 +2,6 @@ import {
   DocumentReference,
   DocumentSnapshot,
   Firestore,
-  QueryDocumentSnapshot,
 } from "@google-cloud/firestore";
 import {
   type ReanimationState,
@@ -106,28 +105,27 @@ export class FirestoreStorageProvider
     return boards;
   }
 
-  async loadBoardByUser(
-    user: string,
-    name: string,
-    currentUser: string
-  ): Promise<StorageBoard | null> {
-    const doc = await this.#database.doc(asBoardPath(user, name)).get();
-    if (!doc.exists) {
-      return null;
-    }
-    return asStorageBoard(doc, currentUser, { requirePublished: false });
-  }
+  async loadBoard(opts: {
+    name: string;
+    owner?: string;
+    requestingUserId?: string;
+  }): Promise<StorageBoard | null> {
+    const { name, owner, requestingUserId = "" } = opts;
 
-  async loadBoard(
-    name: string,
-    currentUser: string
-  ): Promise<StorageBoard | null> {
-    const allBoards = await this.listBoards(currentUser);
+    if (owner) {
+      const doc = await this.#getBoardDoc(owner, name).get();
+      if (!doc.exists) {
+        return null;
+      }
+      return asStorageBoard(doc, requestingUserId, { requirePublished: false });
+    }
+
+    const allBoards = await this.listBoards(requestingUserId);
     return allBoards.find((board) => board.name === name) ?? null;
   }
 
   async updateBoard(board: StorageBoard): Promise<void> {
-    await this.#database.doc(asBoardPath(board.owner, board.name)).set({
+    await this.#getBoardDoc(board.owner, board.name).set({
       title: board.displayName,
       description: board.description,
       tags: board.tags,
@@ -136,18 +134,19 @@ export class FirestoreStorageProvider
   }
 
   async createBoard(userId: string, name: string): Promise<void> {
-    await this.#database
-      .doc(asBoardPath(userId, name))
-      .set({ graph: JSON.stringify(blank()) });
+    await this.#getBoardDoc(userId, name).set({
+      graph: JSON.stringify(blank()),
+    });
   }
 
   async deleteBoard(userId: string, boardName: string): Promise<void> {
-    await this.#database.doc(asBoardPath(userId, boardName)).delete();
+    await this.#getBoardDoc(userId, boardName).delete();
   }
-}
 
-function asBoardPath(userId: string, boardName: string): string {
-  return `workspaces/${userId}/boards/${boardName}`;
+  #getBoardDoc(owner: string, name: string): DocumentReference {
+    const path = `workspaces/${owner}/boards/${name}`;
+    return this.#database.doc(path);
+  }
 }
 
 export function asStorageBoard(

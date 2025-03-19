@@ -30,38 +30,29 @@ suite("In-memory storage provider", () => {
   });
 
   test("create board", async () => {
-    assert.equal(
-      await provider.loadBoardByUser("user", "test-board", "user"),
-      null
-    );
+    assert.equal(await provider.loadBoard({ name: "test-board" }), null);
 
     provider.createBoard("user", "test-board");
 
-    assert.deepEqual(
-      await provider.loadBoardByUser("user", "test-board", "user"),
-      {
-        name: "test-board",
-        owner: "user",
-        displayName: "test-board",
+    assert.deepEqual(await provider.loadBoard({ name: "test-board" }), {
+      name: "test-board",
+      owner: "user",
+      displayName: "test-board",
+      description: "",
+      tags: [],
+      thumbnail: "",
+      graph: {
         description: "",
-        tags: [],
-        thumbnail: "",
-        graph: {
-          description: "",
-          edges: [],
-          nodes: [],
-          title: "Untitled Flow",
-          version: "0.0.1",
-        },
-      }
-    );
+        edges: [],
+        nodes: [],
+        title: "Untitled Flow",
+        version: "0.0.1",
+      },
+    });
   });
 
   test("update board", async () => {
-    assert.equal(
-      await provider.loadBoardByUser("user", "test-board", "user"),
-      null
-    );
+    assert.equal(await provider.loadBoard({ name: "test-board" }), null);
 
     const updatedBoard: StorageBoard = {
       name: "test-board",
@@ -77,7 +68,7 @@ suite("In-memory storage provider", () => {
     provider.updateBoard(updatedBoard);
 
     assert.deepEqual(
-      await provider.loadBoardByUser("user", "test-board", "user"),
+      await provider.loadBoard({ name: "test-board" }),
       updatedBoard
     );
   });
@@ -95,8 +86,8 @@ suite("In-memory storage provider", () => {
 
     await provider.updateBoard(board);
 
-    assert.deepEqual(await provider.loadBoard("test-board", "me"), board);
-    assert.equal(await provider.loadBoard("other-board", "me"), null);
+    assert.deepEqual(await provider.loadBoard({ name: "test-board" }), board);
+    assert.equal(await provider.loadBoard({ name: "other-board" }), null);
   });
 
   test("list boards", async () => {

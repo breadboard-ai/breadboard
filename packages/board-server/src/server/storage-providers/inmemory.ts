@@ -29,19 +29,8 @@ export class InMemoryStorageProvider implements BoardServerStore {
     return this.#users[apiKey] ?? "";
   }
 
-  async loadBoardByUser(
-    _userId: string,
-    name: string,
-    _currentUser: string
-  ): Promise<StorageBoard | null> {
-    return this.#boards[name] ?? null;
-  }
-
-  async loadBoard(
-    name: string,
-    _currentUser: string
-  ): Promise<StorageBoard | null> {
-    return this.#boards[name] ?? null;
+  async loadBoard(opts: { name: string }): Promise<StorageBoard | null> {
+    return this.#boards[opts.name] ?? null;
   }
 
   async listBoards(userId: string): Promise<StorageBoard[]> {
