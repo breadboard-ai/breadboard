@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphDescriptor } from "@breadboard-ai/types";
+import type { GraphDescriptor, NodeDescriptor } from "@breadboard-ai/types";
 import type {
   AppCatalystApiClient,
   AppCatalystChatRequest,
@@ -15,11 +15,19 @@ export interface OneShotFlowGenRequest {
   context?: {
     flow?: GraphDescriptor;
   };
+  constraint?: FlowGenConstraint;
 }
 
 export interface OneShotFlowGenResponse {
   flow: GraphDescriptor;
 }
+
+export type FlowGenConstraint = EditStepFlowGenConstraint;
+
+export type EditStepFlowGenConstraint = {
+  kind: "EDIT_STEP_CONFIG";
+  stepId: string;
+};
 
 export class FlowGenerator {
   #appCatalystApiClient: AppCatalystApiClient;
@@ -31,7 +39,14 @@ export class FlowGenerator {
   async oneShot({
     intent,
     context,
+    constraint,
   }: OneShotFlowGenRequest): Promise<OneShotFlowGenResponse> {
+    if (constraint && !context?.flow) {
+      throw new Error(
+        `Error editing flow with constraint ${constraint.kind}:` +
+          ` An original flow was not provided.`
+      );
+    }
     const request: AppCatalystChatRequest = {
       messages: [
         {
@@ -49,8 +64,18 @@ export class FlowGenerator {
         data: btoa(JSON.stringify(context.flow)),
       });
     }
+    if (constraint) {
+      request.messages.push({
+        mimetype: "text/plain",
+        data: btoa(this.#promptForConstraint(constraint, context!.flow!)),
+      });
+    }
 
     const { messages } = await this.#appCatalystApiClient.chat(request);
+    console.log(
+      `[flowgen] AppCatalyst responses:`,
+      ...messages.map((message) => ({ ...message, data: atob(message.data) }))
+    );
     const responseFlows: GraphDescriptor[] = [];
     const responseMessages: string[] = [];
     for (
@@ -78,6 +103,97 @@ export class FlowGenerator {
           ` got ${JSON.stringify(messages)}.`
       );
     }
+
+    if (constraint) {
+      return {
+        flow: this.#applyConstraint(constraint, context!.flow!, generatedFlow),
+      };
+    }
     return { flow: generatedFlow };
   }
+
+  #promptForConstraint(
+    constraint: FlowGenConstraint,
+    originalFlow: GraphDescriptor
+  ) {
+    switch (constraint.kind) {
+      case "EDIT_STEP_CONFIG": {
+        const originalStep = findStepById(originalFlow, constraint.stepId);
+        if (!originalStep) {
+          throw new Error(
+            `Error creating prompt for ${constraint.kind} constraint:` +
+              ` An original step was not found` +
+              ` with ID ${JSON.stringify(constraint.stepId)}.`
+          );
+        }
+        const title = originalStep?.metadata?.title;
+        if (!title) {
+          throw new Error(
+            `Error creating prompt for ${constraint.kind} constraint:` +
+              ` Original step did not have a title` +
+              ` with ID ${JSON.stringify(constraint.stepId)}.`
+          );
+        }
+        return (
+          `IMPORTANT: You MUST edit the configuration of "${title}", ` +
+          ` but you MUST NOT change its name in any way.`
+        );
+      }
+      default: {
+        constraint.kind satisfies never;
+        throw new Error(`Unexpected constraint: ${JSON.stringify(constraint)}`);
+      }
+    }
+  }
+
+  #applyConstraint(
+    constraint: FlowGenConstraint,
+    originalFlow: GraphDescriptor,
+    generatedFlow: GraphDescriptor
+  ): GraphDescriptor {
+    switch (constraint.kind) {
+      case "EDIT_STEP_CONFIG": {
+        const originalFlowClone = structuredClone(originalFlow);
+        const originalStepClone = findStepById(
+          originalFlowClone,
+          constraint.stepId
+        )!;
+        const title = originalStepClone.metadata!.title!;
+        const generatedStep = findStepByTitle(generatedFlow, title);
+        if (!generatedStep) {
+          throw new Error(
+            `Error applying ${constraint.kind} constraint to flow:` +
+              ` A generated step was not found` +
+              ` with title ${JSON.stringify(title)}.`
+          );
+        }
+        console.log(
+          "[flowgen] Configuration updated from",
+          originalStepClone.configuration,
+          "to",
+          generatedStep.configuration
+        );
+        originalStepClone.configuration = generatedStep.configuration;
+        return originalFlowClone;
+      }
+      default: {
+        constraint.kind satisfies never;
+        throw new Error(`Unexpected constraint: ${JSON.stringify(constraint)}`);
+      }
+    }
+  }
+}
+
+function findStepById(
+  flow: GraphDescriptor,
+  stepId: string
+): NodeDescriptor | undefined {
+  return (flow?.nodes ?? []).find((step) => step.id === stepId);
+}
+
+function findStepByTitle(
+  flow: GraphDescriptor,
+  stepTitle: string
+): NodeDescriptor | undefined {
+  return (flow?.nodes ?? []).find((step) => step.metadata?.title === stepTitle);
 }
