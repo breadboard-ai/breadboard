@@ -291,16 +291,16 @@ export async function transformDataParts(
 }
 
 export function convertStoredPartsToAbsoluteUrls(
-  values: OutputValues,
+  values: OutputValues | undefined,
   graphUrl?: string
 ): OutputValues {
   const result: OutputValues = {};
 
-  if (!graphUrl) return values;
+  if (!graphUrl) return result;
 
   const url = parseUrl(graphUrl);
 
-  for (const [key, value] of Object.entries(values)) {
+  for (const [key, value] of Object.entries(values || {})) {
     result[key] = convertValue(value);
   }
   return result;
