@@ -112,6 +112,7 @@ export class FirestoreStorageProvider
   }): Promise<StorageBoard | null> {
     const { name, owner, requestingUserId = "" } = opts;
 
+    // If an owner is given, an exact path can be used
     if (owner) {
       const doc = await this.#getBoardDoc(owner, name).get();
       if (!doc.exists) {
@@ -120,12 +121,31 @@ export class FirestoreStorageProvider
       return asStorageBoard(doc, requestingUserId, { requirePublished: false });
     }
 
-    const allBoards = await this.listBoards(requestingUserId);
-    return allBoards.find((board) => board.name === name) ?? null;
+    // If only a name is given, do a collection group query
+    const boards = await this.#database
+      .collectionGroup("boards")
+      .where("name", "==", name)
+      .limit(1)
+      .get();
+
+    if (boards.empty) {
+      // If no board was found by name, search all boards for a given document
+      // ID. This allows backward compatiblity with legacy databases created
+      // before the name was written to the document. However, this is an
+      // expensive and slow operation. We may want to consider turning this off
+      // once we don't care about backward compatibility.
+      const allBoards = await this.listBoards(requestingUserId);
+      return allBoards.find((board) => board.name === name) ?? null;
+    }
+
+    return asStorageBoard(boards.docs[0]!, requestingUserId, {
+      requirePublished: false,
+    });
   }
 
   async updateBoard(board: StorageBoard): Promise<void> {
     await this.#getBoardDoc(board.owner, board.name).set({
+      name: board.name,
       title: board.displayName,
       description: board.description,
       tags: board.tags,
@@ -135,6 +155,7 @@ export class FirestoreStorageProvider
 
   async createBoard(userId: string, name: string): Promise<void> {
     await this.#getBoardDoc(userId, name).set({
+      name,
       graph: JSON.stringify(blank()),
     });
   }

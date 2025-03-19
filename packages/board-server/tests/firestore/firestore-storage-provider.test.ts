@@ -96,18 +96,28 @@ suite("Firestore storage provider", () => {
       thumbnail: "",
       graph: GRAPH,
     };
+    const unlistedBoard = {
+      name: "unlisted-board",
+      owner: "you",
+      displayName: "Unlisted Board",
+      description: "",
+      tags: [],
+      thumbnail: "",
+      graph: GRAPH,
+    };
     const privateBoard = {
       name: "private-board",
       owner: "you",
       displayName: "Private Board",
       description: "",
-      tags: [],
+      tags: ["private"],
       thumbnail: "",
       graph: GRAPH,
     };
 
     await provider.updateBoard(ownedBoard);
     await provider.updateBoard(publishedBoard);
+    await provider.updateBoard(unlistedBoard);
     await provider.updateBoard(privateBoard);
 
     const ownedBoardResult = await provider.loadBoard({
@@ -116,6 +126,10 @@ suite("Firestore storage provider", () => {
     });
     const publishedBoardResult = await provider.loadBoard({
       name: "published-board",
+      requestingUserId: "me",
+    });
+    const unlistedBoardResult = await provider.loadBoard({
+      name: "unlisted-board",
       requestingUserId: "me",
     });
     const privateBoardResult = await provider.loadBoard({
@@ -129,6 +143,7 @@ suite("Firestore storage provider", () => {
 
     assert.deepEqual(ownedBoardResult, ownedBoard);
     assert.deepEqual(publishedBoardResult, publishedBoard);
+    assert.deepEqual(unlistedBoardResult, unlistedBoard);
     assert.equal(privateBoardResult, null);
     assert.equal(nonExistentBoard, null);
   });
@@ -195,6 +210,7 @@ suite("Firestore storage provider", () => {
     const doc = await database.doc(path).get();
 
     assert(doc.exists);
+    assert.equal(doc.get("name"), expected.name);
     assert.equal(doc.get("title") ?? "", expected.displayName);
     assert.equal(doc.get("description") ?? "", expected.description);
     assert.deepEqual(doc.get("tags") ?? [], expected.tags);
