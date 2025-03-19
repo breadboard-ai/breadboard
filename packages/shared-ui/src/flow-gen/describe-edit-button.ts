@@ -118,6 +118,9 @@ export class DescribeEditButton extends LitElement {
   @property({ reflect: true })
   accessor popoverPosition: "above" | "below" = "below";
 
+  @property({})
+  accessor label = Strings.from("COMMAND_DESCRIBE_EDIT");
+
   @state()
   accessor #state: State = { status: "closed" };
 
@@ -148,7 +151,7 @@ export class DescribeEditButton extends LitElement {
         @pointerover=${this.#onPointerOverEditButton}
         @pointerout=${this.#onPointerOutEditButton}
       >
-        ${Strings.from("COMMAND_DESCRIBE_EDIT")}
+        ${this.label}
       </button>
     `;
   }
@@ -161,7 +164,7 @@ export class DescribeEditButton extends LitElement {
             id="description-input"
             class="bb-multi-line-input"
             type="text"
-            placeholder="Describe an edit to this flow"
+            .placeholder=${this.label}
             @keydown=${this.#onInputKeydown}
             ${ref(this.#descriptionInput)}
             ?disabled=${this.#state.status === "generating"}
@@ -241,11 +244,7 @@ export class DescribeEditButton extends LitElement {
 
   #onPointerOverEditButton(event: MouseEvent) {
     this.dispatchEvent(
-      new ShowTooltipEvent(
-        Strings.from("COMMAND_DESCRIBE_EDIT"),
-        event.clientX,
-        event.clientY
-      )
+      new ShowTooltipEvent(this.label, event.clientX, event.clientY)
     );
   }
 
