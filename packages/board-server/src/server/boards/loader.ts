@@ -35,7 +35,7 @@ export function loadBoard(opts?: { addJsonSuffix?: boolean }): RequestHandler {
       }
 
       const store: BoardServerStore = res.app.locals.store;
-      const board = await store.loadBoard(user, name);
+      const board = await store.loadBoardByUser(user, name);
       if (board) {
         res.locals.loadedBoard = board;
       }

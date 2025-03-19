@@ -123,7 +123,10 @@ export class FirestoreStorageProvider
     return boards;
   }
 
-  async loadBoard(user: string, name: string): Promise<StorageBoard | null> {
+  async loadBoardByUser(
+    user: string,
+    name: string
+  ): Promise<StorageBoard | null> {
     const path = `workspaces/${user}/boards/${name}`;
     const doc = await this.#database.doc(path).get();
     if (!doc.exists) {
@@ -148,6 +151,14 @@ export class FirestoreStorageProvider
       thumbnail: "",
       graph,
     };
+  }
+
+  async loadBoard(
+    name: string,
+    currentUser: string
+  ): Promise<StorageBoard | null> {
+    const allBoards = await this.listBoards(currentUser);
+    return allBoards.find((board) => board.name === name) ?? null;
   }
 
   async updateBoard(board: StorageBoard): Promise<void> {
