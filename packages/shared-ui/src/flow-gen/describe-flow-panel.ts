@@ -6,20 +6,20 @@
 
 import { LitElement, html, css } from "lit";
 import { customElement, state } from "lit/decorators.js";
-import * as StringsHelper from "../../strings/helper.js";
-import { outlineButtonWithIcon } from "../../styles/outline-button-with-icon.js";
+import * as StringsHelper from "../strings/helper.js";
+import { outlineButtonWithIcon } from "../styles/outline-button-with-icon.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import type { GraphDescriptor } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
-import { sideBoardRuntime } from "../../contexts/side-board-runtime.js";
-import { GraphBoardServerGeneratedBoardEvent } from "../../events/events.js";
-import { SideBoardRuntime } from "../../sideboards/types.js";
-import type { ExpandingTextarea } from "../input/expanding-textarea.js";
-import { icons } from "../../styles/icons.js";
-import "../input/expanding-textarea.js";
-import { chipStyles } from "../../styles/chip.js";
-import { FlowGenerator } from "../../flow-gen/flow-generator.js";
-import { AppCatalystApiClient } from "../../flow-gen/app-catalyst.js";
+import { sideBoardRuntime } from "../contexts/side-board-runtime.js";
+import { GraphBoardServerGeneratedBoardEvent } from "../events/events.js";
+import { SideBoardRuntime } from "../sideboards/types.js";
+import type { ExpandingTextarea } from "../elements/input/expanding-textarea.js";
+import { icons } from "../styles/icons.js";
+import "../elements/input/expanding-textarea.js";
+import { chipStyles } from "../styles/chip.js";
+import { FlowGenerator } from "./flow-generator.js";
+import { AppCatalystApiClient } from "./app-catalyst.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
