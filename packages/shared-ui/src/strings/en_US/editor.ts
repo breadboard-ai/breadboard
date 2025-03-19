@@ -35,6 +35,12 @@ export default {
   COMMAND_DESCRIBE_EDIT: {
     str: "Describe an edit",
   },
+  COMMAND_DESCRIBE_EDIT_FLOW: {
+    str: "Describe an edit to this flow",
+  },
+  COMMAND_DESCRIBE_EDIT_STEP: {
+    str: "Describe an edit to this step",
+  },
   COMMAND_ASSET_ORGANIZER: {
     str: "Show Assets",
   },
