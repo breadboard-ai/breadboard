@@ -69,9 +69,9 @@ export function serveBoardsAPI(serverConfig: ServerConfig): Router {
   );
 
   // Name-only routes that do not require the user as a namespace
-  router.get("/:name", loadBoard(), getBoard);
+  router.get("/:name", requireAuth(), loadBoard(), getBoard);
   router.post("/:name", requireAuth(), parseBoardId(), post);
-  router.post("/:name/describe", loadBoard(), describeBoard);
+  router.post("/:name/describe", requireAuth(), loadBoard(), describeBoard);
   router.post(
     "/:_name/assets/drive/:driveId",
     requireAccessToken(),
