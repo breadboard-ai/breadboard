@@ -50,11 +50,15 @@ export class DescribeEditButton extends LitElement {
 
       #panel {
         position: absolute;
-        bottom: calc(36px + 8px);
         right: 0;
         width: 340px;
       }
-
+      :host([popoverPosition="above"]) #panel {
+        bottom: calc(36px + 8px);
+      }
+      :host([popoverPosition="below"]) #panel {
+        top: calc(36px + 8px);
+      }
       #panel-top {
         display: flex;
         align-items: center;
@@ -110,6 +114,9 @@ export class DescribeEditButton extends LitElement {
 
   @property({ type: Object })
   accessor constraint: FlowGenConstraint | undefined;
+
+  @property({ reflect: true })
+  accessor popoverPosition: "above" | "below" = "below";
 
   @state()
   accessor #state: State = { status: "closed" };
