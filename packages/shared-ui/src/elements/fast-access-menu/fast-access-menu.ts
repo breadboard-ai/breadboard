@@ -26,6 +26,7 @@ import {
 } from "../../events/events";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
+import { getAssetType, getMimeType } from "../../utils/mime-type";
 
 @customElement("bb-fast-access-menu")
 export class FastAccessMenu extends SignalWatcher(LitElement) {
@@ -143,6 +144,22 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     #assets menu button {
       background: var(--bb-icon-text) 4px center / 20px 20px no-repeat;
     }
+
+    #assets menu button.audio {
+      background-image: var(--bb-icon-sound);
+    }
+
+    #assets menu button.image {
+      background-image: var(--bb-icon-add-image);
+    }
+
+    #assets menu button.text {
+      background-image: var(--bb-icon-text);
+    } 
+
+    #assets menu button.video {
+      background-image: var(--bb-icon-add-video);
+    }     
 
     #parameters {
       & #create-new-param {
@@ -395,20 +412,6 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     return value;
   }
 
-  #getMimeType(data: LLMContent[]): string | undefined {
-    for (const element of data) {
-      for (const part of element.parts) {
-        if ("inlineData" in part && part.inlineData.mimeType) {
-          return part.inlineData.mimeType;
-        } else if ("storedData" in part && part.storedData.mimeType) {
-          return part.storedData.mimeType;
-        } else if ("fileData" in part && part.fileData.mimeType) {
-          return part.fileData.mimeType;
-        }
-      }
-    }
-  }
-
   #emitCurrentItem() {
     let idx = this.selectedIndex;
     const uniqueAndNew =
@@ -442,7 +445,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
           asset.path,
           asset.metadata?.title ?? "Untitled asset",
           "asset",
-          this.#getMimeType(asset.data)
+          getMimeType(asset.data)
         )
       );
       return;
@@ -535,12 +538,19 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
         ${this.#items.assets.length
           ? html` <menu>
               ${this.#items.assets.map((asset) => {
-                const active = idx === this.selectedIndex;
+                const classesDict: Record<string, boolean> = {
+                 active: idx === this.selectedIndex,
+                };
+
+                const assetType = getAssetType(getMimeType(asset.data));
+                if (assetType) {
+                  classesDict[assetType] = true;
+                }
                 const globalIndex = idx;
                 idx++;
                 return html`<li>
                   <button
-                    class=${classMap({ active })}
+                    class=${classMap(classesDict)}
                     @pointerover=${() => {
                       this.selectedIndex = globalIndex;
                     }}
