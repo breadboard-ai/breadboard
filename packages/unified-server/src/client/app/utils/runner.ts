@@ -16,6 +16,7 @@ import {
 
 import { getRunStore } from "@breadboard-ai/data-store";
 import { TopGraphObserver } from "@breadboard-ai/shared-ui/utils/top-graph-observer";
+import { RunState } from "@breadboard-ai/shared-ui/utils/run-state.ts";
 import { Runner } from "../types/types";
 import { loadKits, registerLegacyKits } from "./kit-loader.js";
 
@@ -51,6 +52,7 @@ export async function createFlowRunner(
   };
 
   const harnessRunner = createRunner(config);
+  const runState = RunState. 
   const runObserver = createRunObserver(graphStore, {
     logLevel: "debug",
     dataStore: dataStore,
@@ -58,6 +60,14 @@ export async function createFlowRunner(
     kits: config.kits,
     sandbox: sandbox,
   });
+
+  // const runState = new RunState(graphStore, {
+  //   kits: config.kits,
+  //   dataStore,
+  //   runStore,
+  //   sandbox,
+  // });
+  // console.log(runState); // DO NOT SUBMIT.
 
   const topGraphObserver = new TopGraphObserver(
     harnessRunner,

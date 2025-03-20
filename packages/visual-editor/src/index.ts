@@ -55,7 +55,6 @@ import {
   WorkspaceSelectionStateWithChangeId,
   WorkspaceVisualChangeId,
 } from "./runtime/types";
-import { createPastRunObserver } from "./utils/past-run-observer";
 import { getRunNodeConfig } from "./utils/run-node";
 import {
   createTokenVendor,
@@ -1257,8 +1256,8 @@ export class Main extends LitElement {
       return;
     }
 
-    const topGraphObserver =
-      await BreadboardUI.Utils.TopGraphObserver.fromRun(run);
+    const runState = await BreadboardUI.Utils.RunState.forPastRun(run);
+    const topGraphObserver = runState.maybeTopGraphObserver();
 
     if (!topGraphObserver) {
       return;
@@ -1270,7 +1269,7 @@ export class Main extends LitElement {
       this.#runtime.board.createTabFromRun(
         runGraph,
         topGraphObserver,
-        createPastRunObserver(run),
+        runState.maybeRunObserver(),
         true
       );
     }
