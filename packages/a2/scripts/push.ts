@@ -37,7 +37,10 @@ async function main() {
   const database = new Firestore({ databaseId });
 
   for (const bgl of bgls) {
-    const graph = await readFile(join(BGL_DIR, bgl), "utf-8");
+    const graph = (await readFile(join(BGL_DIR, bgl), "utf-8")).replaceAll(
+      "./tools.bgl",
+      "../@shared/tools.bgl"
+    );
     const descriptor = JSON.parse(graph);
     const {
       title,
