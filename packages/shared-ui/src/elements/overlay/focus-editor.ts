@@ -209,6 +209,7 @@ export class FocusEditor extends LitElement {
             z-index: 1;
             width: 24px;
             margin-left: auto;
+            --background-size: 16px;
           }
 
           #run-node {
