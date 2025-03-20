@@ -1,0 +1,87 @@
+{
+  "title": "GOAL Thinking Lists Workbench",
+  "description": "",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "go-over-list-d4b38245",
+      "type": "file://bgl/go-over-list.bgl.json#module:main",
+      "metadata": {
+        "title": "Go over a list",
+        "visual": {
+          "x": 280,
+          "y": 180,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        },
+        "logLevel": "info",
+        "userModified": false
+      },
+      "configuration": {
+        "plan": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Find top three Korean restaurants in the specified area that serve gimbap. Also provide their health ratings.\n\nUse {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-maps\",\"title\":\"Search Maps\"}} and {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-web\",\"title\":\"Search Web\"}} tools to do research.\n\nArea: Santa Clara, CA"
+            }
+          ]
+        },
+        "strategy": "Think as I go",
+        "z-list": true
+      }
+    }
+  ],
+  "edges": [],
+  "metadata": {
+    "tags": [],
+    "visual": {
+      "presentation": {
+        "themes": {
+          "e6bc8637-476b-4f1b-b679-dc1cf5e28783": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "e6bc8637-476b-4f1b-b679-dc1cf5e28783"
+      }
+    },
+    "parameters": {}
+  },
+  "assets": {
+    "82234663-68ae-4554-add3-4c0ec97c4ba8": {
+      "data": [
+        {
+          "parts": [
+            {
+              "text": "A space opera set in far future, where humans settled on a distant planet, far from Earth. The planet is a paradise, but it is disputed territory with an alien race. The humans are caught in a constant struggle that dampens their ability to flourish.\n"
+            }
+          ],
+          "role": "user"
+        }
+      ],
+      "metadata": {
+        "title": "Plot Idea",
+        "type": "content"
+      }
+    },
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSIxNi44NSIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMjMwLjAwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTY2LjMxIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMmU4YmU4IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+    }
+  }
+}
