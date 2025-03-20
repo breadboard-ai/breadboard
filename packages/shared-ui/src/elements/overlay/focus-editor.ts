@@ -209,6 +209,7 @@ export class FocusEditor extends LitElement {
             z-index: 1;
             width: 24px;
             margin-left: auto;
+            --background-size: 16px;
           }
 
           #run-node {
@@ -911,11 +912,11 @@ export class FocusEditor extends LitElement {
       return;
     }
     this.#generatedConfig = thisChange.configuration;
-    const oldConfig = this.configuration;
     // TODO(aomarks) It seems that <bb-text-editor> does not re-render when its
     // value changes from the outside for some reason. This trick forces a full
     // re-render of that and any other input elements, which does seem to work.
     // Figure out what's going on and replace with something less hacky.
+    const oldConfig = this.configuration;
     this.configuration = null;
     await this.updateComplete;
     this.configuration = oldConfig;

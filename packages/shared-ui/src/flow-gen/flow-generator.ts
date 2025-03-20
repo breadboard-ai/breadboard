@@ -4,11 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphDescriptor, NodeDescriptor } from "@breadboard-ai/types";
+import type {
+  GraphDescriptor,
+  LLMContent,
+  NodeConfiguration,
+  NodeDescriptor,
+} from "@breadboard-ai/types";
 import type {
   AppCatalystApiClient,
   AppCatalystChatRequest,
 } from "./app-catalyst.js";
+import {
+  isLLMContent,
+  isTextCapabilityPart,
+  Template,
+} from "@google-labs/breadboard";
 
 export interface OneShotFlowGenRequest {
   intent: string;
@@ -167,13 +177,18 @@ export class FlowGenerator {
               ` with title ${JSON.stringify(title)}.`
           );
         }
+        const originalConfig = originalStepClone.configuration;
+        const generatedConfig = generatedStep.configuration;
+        if (originalConfig && generatedConfig) {
+          reconcileInputReferences(originalConfig, generatedConfig);
+        }
         console.log(
           "[flowgen] Configuration updated from",
-          originalStepClone.configuration,
+          originalConfig,
           "to",
-          generatedStep.configuration
+          generatedConfig
         );
-        originalStepClone.configuration = generatedStep.configuration;
+        originalStepClone.configuration = generatedConfig;
         return originalFlowClone;
       }
       default: {
@@ -196,4 +211,44 @@ function findStepByTitle(
   stepTitle: string
 ): NodeDescriptor | undefined {
   return (flow?.nodes ?? []).find((step) => step.metadata?.title === stepTitle);
+}
+
+/**
+ * Wherever possible, align the "paths" (incoming node IDs) of all "@" input
+ * references in `newConfig` with those from `oldConfig`, using the title as
+ * key.
+ *
+ * Note this does an in-place update of `generatedConfig`.
+ */
+function reconcileInputReferences(
+  originalConfig: NodeConfiguration,
+  generatedConfig: NodeConfiguration
+): void {
+  const originalTitleToPath = new Map<string, string>();
+  for (const content of Object.values(originalConfig)) {
+    if (isLLMContent(content)) {
+      for (const part of content.parts) {
+        if (isTextCapabilityPart(part)) {
+          const template = new Template(part.text);
+          for (const { title, path } of template.placeholders) {
+            originalTitleToPath.set(title, path);
+          }
+        }
+      }
+    }
+  }
+  for (const content of Object.values(generatedConfig)) {
+    if (isLLMContent(content)) {
+      for (const part of content.parts) {
+        if (isTextCapabilityPart(part)) {
+          const template = new Template(part.text);
+          const withPathsSubstituted = template.transform((part) => ({
+            ...part,
+            path: originalTitleToPath.get(part.title) ?? part.path,
+          }));
+          part.text = withPathsSubstituted;
+        }
+      }
+    }
+  }
 }
