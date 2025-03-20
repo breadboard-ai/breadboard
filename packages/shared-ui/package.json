@@ -28,6 +28,10 @@
       "default": "./dist/elements/connection/connection-broker.js",
       "types": "./dist/elements/connection/connection-broker.d.ts"
     },
+    "./utils/run-state": {
+      "default": "./dist/utils/run-state.js",
+      "types": "./dist/utils/run-state.d.ts"
+    },
     "./data/settings-store.js": {
       "default": "./dist/data/settings-store.js",
       "types": "./dist/data/settings-store.d.ts"

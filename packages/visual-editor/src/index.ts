@@ -20,7 +20,6 @@ import { map } from "lit/directives/map.js";
 import { customElement, property, state } from "lit/decorators.js";
 import { LitElement, html, HTMLTemplateResult, nothing } from "lit";
 import {
-  createRunObserver,
   GraphDescriptor,
   BoardServer,
   InspectableRun,
@@ -35,6 +34,7 @@ import {
   blank,
   isInlineData,
   isStoredData,
+  RunObserverOptions,
 } from "@google-labs/breadboard";
 import {
   createFileSystemBackend,
@@ -55,7 +55,6 @@ import {
   WorkspaceSelectionStateWithChangeId,
   WorkspaceVisualChangeId,
 } from "./runtime/types";
-import { createPastRunObserver } from "./utils/past-run-observer";
 import { getRunNodeConfig } from "./utils/run-node";
 import {
   createTokenVendor,
@@ -86,6 +85,7 @@ import { sideBoardRuntime } from "@breadboard-ai/shared-ui/contexts/side-board-r
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { OverflowAction } from "@breadboard-ai/shared-ui/types/types.js";
 import { MAIN_BOARD_ID } from "@breadboard-ai/shared-ui/constants/constants.js";
+import { RunState } from "@breadboard-ai/shared-ui/utils/run-state";
 
 const STORAGE_PREFIX = "bb-main";
 const LOADING_TIMEOUT = 250;
@@ -612,7 +612,7 @@ export class Main extends LitElement {
             // const observers = this.#runtime.run.getObservers(evt.tabId);
             // if (observers) {
             //   if (!evt.visualOnly) {
-            //     observers.topGraphObserver?.updateAffected(evt.affectedNodes);
+            //     observers.graphObserver?.updateAffected(evt.affectedNodes);
             //     observers.runObserver?.replay(evt.affectedNodes);
             //   }
             // }
@@ -700,10 +700,10 @@ export class Main extends LitElement {
             if (this.tab) {
               // If there is a TGO in the tab change event, honor it and populate a
               // run with it before switching to the tab proper.
-              if (evt.topGraphObserver) {
+              if (evt.graphObserver) {
                 this.#runtime.run.create(
                   this.tab,
-                  evt.topGraphObserver,
+                  evt.graphObserver,
                   evt.chatController,
                   evt.runObserver
                 );
@@ -1244,7 +1244,7 @@ export class Main extends LitElement {
 
     if (event.type !== "node") {
       console.warn(
-        "The `bbrunselect` was received but the event is not a node."
+      "The `bbrunselect` was received but the event is not a node."
       );
       return;
     }
@@ -1257,20 +1257,20 @@ export class Main extends LitElement {
       return;
     }
 
-    const topGraphObserver =
-      await BreadboardUI.Utils.TopGraphObserver.fromRun(run);
+    const runState = await BreadboardUI.Utils.RunState.createForPastRun(run);
+    const graphObserver = await runState.maybeGraphObserver();
 
-    if (!topGraphObserver) {
+    if (!graphObserver) {
       return;
     }
 
-    const runGraph = topGraphObserver.current()?.graph ?? null;
+    const runGraph = graphObserver.current()?.graph ?? null;
     if (runGraph) {
       runGraph.title = evt.nodeTitle;
       this.#runtime.board.createTabFromRun(
         runGraph,
-        topGraphObserver,
-        createPastRunObserver(run),
+        graphObserver,
+        runState.maybeRunObserver(),
         true
       );
     }
@@ -1883,26 +1883,26 @@ export class Main extends LitElement {
       try {
         const runData = JSON.parse(data) as SerializedRun | GraphDescriptor;
         if (isSerializedRun(runData)) {
-          const runObserver = createRunObserver(this.#graphStore, {
+          const runOptions: RunObserverOptions = {
             logLevel: "debug",
             dataStore: this.#runtime.run.dataStore,
             sandbox,
-          });
+          };
+          const runState = RunState.create(this.#graphStore, runOptions);
 
           evt.preventDefault();
 
-          runObserver.load(runData).then(async (result) => {
+          runState.load(runData).then(async (result) => {
             if (result.success) {
               // TODO: Append the run to the runObserver so that it can be obtained later.
-              const topGraphObserver =
-                await BreadboardUI.Utils.TopGraphObserver.fromRun(result.run);
-              const descriptor = topGraphObserver?.current()?.graph ?? null;
+              const graphObserver = await runState.demandGraphObserver();
+              const descriptor = graphObserver?.current()?.graph ?? null;
 
               if (descriptor) {
                 this.#runtime.board.createTabFromRun(
                   descriptor,
-                  topGraphObserver,
-                  runObserver,
+                  graphObserver,
+                  runState,
                   true
                 );
               } else {
@@ -2264,8 +2264,8 @@ export class Main extends LitElement {
       .then((runs: InspectableRun[]) => {
         const observers = this.#runtime?.run.getObservers(this.tab?.id ?? null);
         const topGraphResult =
-          observers?.topGraphObserver?.current() ??
-          BreadboardUI.Utils.TopGraphObserver.entryResult(this.tab?.graph);
+          observers?.graphObserver?.current() ??
+          BreadboardUI.Utils.getTopGraphRunResult(this.tab?.graph);
         const projectState = this.#runtime.state.getOrCreate(
           this.tab?.mainGraphId,
           this.#runtime.edit.getEditor(this.tab)

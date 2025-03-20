@@ -80,7 +80,6 @@ export {
  */
 export {
   createGraphStore,
-  createRunObserver,
   inspect,
 } from "./inspector/index.js";
 export * from "./inspector/types.js";

@@ -14,7 +14,7 @@ import { LitElement, css, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { MAIN_BOARD_ID } from "../../../shared-ui/dist/constants/constants.js";
 import type { GraphOpts } from "../../../shared-ui/dist/elements/editor/types.js";
-import { TopGraphObserver } from "../../../shared-ui/dist/utils/utils.js";
+import { getTopGraphRunResult } from "../../../shared-ui/dist/utils/utils.js";
 import { loadSharedUi } from "../util/load-shared-ui.js";
 
 @customElement("bbrt-board-visualizer")
@@ -44,7 +44,7 @@ export class BBRTBoardVisualizer extends LitElement {
     return html`<bb-graph-renderer
       .configs=${new Map([[MAIN_BOARD_ID, this.#config(graph)]])}
       .topGraphUrl=${graph.url ?? "no-url"}
-      .topGraphResult=${TopGraphObserver.entryResult(graph)}
+      .topGraphResult=${getTopGraphRunResult(graph)}
       .assetPrefix=${""}
       .invertZoomScrollDirection=${false}
       .readOnly=${false}

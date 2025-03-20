@@ -12,7 +12,6 @@ import {
   InspectableRunEvent,
   InspectableRunObserver,
 } from "../../src/inspector/types.js";
-import { createRunObserver } from "../../src/index.js";
 import { HarnessRunResult } from "../../src/harness/types.js";
 import { replaceSecrets } from "../../src/inspector/run/serializer.js";
 import {
@@ -20,6 +19,7 @@ import {
   createDefaultRunStore,
 } from "../../src/data/index.js";
 import { makeTestGraphStore } from "../helpers/_graph-store.js";
+import { RunObserver } from "../../src/inspector/run/run.js";
 
 const BASE_PATH = new URL(
   "../../../tests/inspector/data/loader",
@@ -89,7 +89,7 @@ const GEMINI_SENTINEL = "103e9083-13fd-46b4-a9ee-683a09e31a26";
 
 test("run save/load: loadRawRun works as expected", async (t) => {
   const store = makeTestGraphStore();
-  const observer = createRunObserver(store, {
+  const observer = new RunObserver(store, {
     logLevel: "debug",
   });
   const run1 = await loadRawRun(observer, "ad-writer-2.1.raw.json");
@@ -99,7 +99,7 @@ test("run save/load: loadRawRun works as expected", async (t) => {
 
 test("run save/load: observer.save -> run.load roundtrip", async (t) => {
   const store = makeTestGraphStore();
-  const observer = createRunObserver(store, {
+  const observer = new RunObserver(store, {
     logLevel: "debug",
     dataStore: createDefaultDataStore(),
     runStore: createDefaultRunStore(),
@@ -120,7 +120,7 @@ test("run save/load: observer.save -> run.load roundtrip", async (t) => {
 
 test("run save/load: replaceSecrets correctly replaces secrets", async (t) => {
   const store = makeTestGraphStore();
-  const observer = createRunObserver(store, {
+  const observer = new RunObserver(store, {
     logLevel: "debug",
   });
   const run1 = await loadRawRun(observer, "ad-writer-2.1.raw.json");
@@ -170,7 +170,7 @@ test("run save/load: replaceSecrets correctly replaces secrets", async (t) => {
 
 test("run load/save: serialization produces consistent size", async (t) => {
   const store = makeTestGraphStore();
-  const observer = createRunObserver(store, {
+  const observer = new RunObserver(store, {
     logLevel: "debug",
     dataStore: createDefaultDataStore(),
     runStore: createDefaultRunStore(),

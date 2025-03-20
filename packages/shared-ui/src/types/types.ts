@@ -20,6 +20,7 @@ import {
   PortIdentifier,
   NodeHandlerMetadata,
   InspectableRun,
+  InspectableRunSequenceEntry,
 } from "@google-labs/breadboard";
 import {
   CommentNode,
@@ -268,10 +269,10 @@ export type ErrorLogEntry = {
 
 export type LogEntry = NodeLogEntry | EdgeLogEntry | ErrorLogEntry;
 
-export type TopGraphObserverRunStatus = "running" | "paused" | "stopped";
+export type GraphObserverRunStatus = "running" | "paused" | "stopped";
 
 /**
- * The result, returned by the TopGraphObserver.
+ * The result, returned by the GraphObserver.
  */
 export type TopGraphRunResult = {
   /**
@@ -307,7 +308,7 @@ export type TopGraphRunResult = {
    * - "paused": The run is paused.
    * - "stopped": The run is stopped.
    */
-  status: TopGraphObserverRunStatus;
+  status: GraphObserverRunStatus;
 };
 
 export type ComparableEdge = {
@@ -316,7 +317,7 @@ export type ComparableEdge = {
 
 /**
  * Reflects the current status of the edge:
- * - "initilal" -- the edge is in its initial state: no
+ * - "initial" -- the edge is in its initial state: no
  *   values have been stored on or consumed from this edge.
  * - "stored" -- a value was stored on the edge, but not yet consumed by the
  *   receiving node.
@@ -558,4 +559,10 @@ export interface Utterance {
   isFinal: boolean;
   confidence: number;
   transcript: string;
+}
+
+export interface GraphObserver {
+  current(): TopGraphRunResult | null;
+  startWith(entries: InspectableRunSequenceEntry[]): void;
+  updateAffected(affectedNodes: NodeIdentifier[]): void;
 }
