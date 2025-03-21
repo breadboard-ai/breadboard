@@ -1,74 +1,74 @@
 {
-    "title": "A2 Audio Generation",
-    "description": "",
-    "version": "0.0.1",
-    "nodes": [],
-    "edges": [],
-    "metadata": {
-        "comments": [
-            {
-                "id": "comment-cc94afe8",
-                "text": "Intentionally Left Blank",
-                "metadata": {
-                    "title": "Comment",
-                    "visual": {
-                        "x": 531,
-                        "y": 374,
-                        "collapsed": "expanded",
-                        "outputHeight": 0
-                    }
-                }
+  "title": "A2 Audio Generation",
+  "description": "",
+  "version": "0.0.1",
+  "nodes": [],
+  "edges": [],
+  "metadata": {
+    "comments": [
+      {
+        "id": "comment-cc94afe8",
+        "text": "Intentionally Left Blank",
+        "metadata": {
+          "title": "Comment",
+          "visual": {
+            "x": 531,
+            "y": 374,
+            "collapsed": "expanded",
+            "outputHeight": 0
+          }
+        }
+      }
+    ],
+    "visual": {
+      "presentation": {
+        "themes": {
+          "5f3ca599-8fee-46fb-951f-0d47b16a6d56": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
             }
-        ],
-        "visual": {
-            "presentation": {
-                "themes": {
-                    "5f3ca599-8fee-46fb-951f-0d47b16a6d56": {
-                        "themeColors": {
-                            "primaryColor": "#246db5",
-                            "secondaryColor": "#5cadff",
-                            "backgroundColor": "#ffffff",
-                            "textColor": "#1a1a1a",
-                            "primaryTextColor": "#ffffff"
-                        },
-                        "template": "basic",
-                        "splashScreen": {
-                            "storedData": {
-                                "handle": "/images/app/generic-flow.jpg",
-                                "mimeType": "image/jpeg"
-                            }
-                        }
-                    }
-                },
-                "theme": "5f3ca599-8fee-46fb-951f-0d47b16a6d56"
-            }
+          }
         },
-        "tags": [
-            "published",
-            "tool",
-            "component"
-        ]
+        "theme": "5f3ca599-8fee-46fb-951f-0d47b16a6d56"
+      }
     },
-    "modules": {
-        "main": {
-            "code": "/**\n * @fileoverview Generates audio output using supplied context.\n */\nimport gemini, { defaultSafetySettings, } from \"./a2/gemini\";\nimport { err, ok, llm, toLLMContent, toLLMContentInline, toText, } from \"./a2/utils\";\nimport {} from \"./a2/common\";\nimport { executeStep, } from \"./a2/step-executor\";\nexport { invoke as default, describe };\nasync function callAudioGen(prompt) {\n    const executionInputs = {};\n    const encodedPrompt = btoa(unescape(encodeURIComponent(prompt)));\n    executionInputs[\"text_to_speak\"] = {\n        chunks: [\n            {\n                mimetype: \"text/plain\",\n                data: encodedPrompt,\n            },\n        ],\n    };\n    const inputParameters = [\"text_to_speak\"];\n    const body = {\n        planStep: {\n            stepName: \"GenerateAudio\",\n            modelApi: \"tts\",\n            inputParameters: inputParameters,\n            systemPrompt: \"\",\n        },\n        execution_inputs: executionInputs,\n    };\n    const response = await executeStep(body);\n    if (!ok(response)) {\n        return toLLMContent(\"TTS generation failed: \" + response.$error);\n    }\n    let returnVal;\n    for (let value of Object.values(response.executionOutputs)) {\n        const mimetype = value.chunks[0].mimetype;\n        if (mimetype.startsWith(\"audio\")) {\n            returnVal = toLLMContentInline(mimetype, value.chunks[0].data);\n        }\n    }\n    if (!returnVal) {\n        return toLLMContent(\"Error: No audio returned from backend\");\n    }\n    return returnVal;\n}\nasync function invoke({ context, }) {\n    // 1) Get last LLMContent from input.\n    const prompt = context && Array.isArray(context) && context.length > 0\n        ? context.at(-1)\n        : undefined;\n    if (!prompt) {\n        return err(\"Must supply context as input\");\n    }\n    prompt.role = \"user\";\n    // 2) Call backend to generate audio.\n    const content = await callAudioGen(toText(prompt));\n    return { context: [content] };\n}\nasync function describe() {\n    return {\n        inputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context in\",\n                    behavior: [\"main-port\"],\n                },\n            },\n            additionalProperties: false,\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context out\",\n                    behavior: [\"hint-audio\"],\n                },\n            },\n            additionalProperties: false,\n        },\n        title: \"Make Audio V2 [WIP]\",\n        metadata: {\n            icon: \"generative-audio\",\n            tags: [\"quick-access\", \"generative\", \"experimental\"],\n            order: 3,\n        },\n    };\n}\n",
-            "metadata": {
-                "title": "main",
-                "source": {
-                    "code": "/**\n * @fileoverview Generates audio output using supplied context.\n */\n\nimport gemini, {\n  defaultSafetySettings,\n  type GeminiOutputs,\n  type GeminiInputs,\n} from \"./a2/gemini\";\nimport {\n  err,\n  ok,\n  llm,\n  toLLMContent,\n  toLLMContentInline,\n  toText,\n} from \"./a2/utils\";\nimport { type DescriberResult } from \"./a2/common\";\nimport {\n  type ContentMap,\n  type ExecuteStepRequest,\n  executeStep,\n} from \"./a2/step-executor\";\n\ntype AudioGeneratorInputs = {\n  context: LLMContent[];\n};\n\ntype AudioGeneratorOutputs = {\n  context: LLMContent[] | DescriberResult;\n};\n\nexport { invoke as default, describe };\n\nasync function callAudioGen(prompt: string): Promise<LLMContent> {\n  const executionInputs: ContentMap = {};\n  const encodedPrompt = btoa(unescape(encodeURIComponent(prompt)));\n  executionInputs[\"text_to_speak\"] = {\n    chunks: [\n      {\n        mimetype: \"text/plain\",\n        data: encodedPrompt,\n      },\n    ],\n  };\n  const inputParameters: string[] = [\"text_to_speak\"];\n  const body = {\n    planStep: {\n      stepName: \"GenerateAudio\",\n      modelApi: \"tts\",\n      inputParameters: inputParameters,\n      systemPrompt: \"\",\n    },\n    execution_inputs: executionInputs,\n  } satisfies ExecuteStepRequest;\n  const response = await executeStep(body);\n  if (!ok(response)) {\n    return toLLMContent(\"TTS generation failed: \" + response.$error);\n  }\n\n  let returnVal;\n  for (let value of Object.values(response.executionOutputs)) {\n    const mimetype = value.chunks[0].mimetype;\n    if (mimetype.startsWith(\"audio\")) {\n      returnVal = toLLMContentInline(mimetype, value.chunks[0].data);\n    }\n  }\n  if (!returnVal) {\n    return toLLMContent(\"Error: No audio returned from backend\");\n  }\n  return returnVal;\n}\n\nasync function invoke({\n  context,\n}: AudioGeneratorInputs): Promise<Outcome<AudioGeneratorOutputs>> {\n  // 1) Get last LLMContent from input.\n  const prompt =\n    context && Array.isArray(context) && context.length > 0\n      ? context.at(-1)!\n      : undefined;\n  if (!prompt) {\n    return err(\"Must supply context as input\");\n  }\n  prompt.role = \"user\";\n\n  // 2) Call backend to generate audio.\n  const content = await callAudioGen(toText(prompt));\n\n  return { context: [content] };\n}\n\nasync function describe() {\n  return {\n    inputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context in\",\n          behavior: [\"main-port\"],\n        },\n      },\n      additionalProperties: false,\n    } satisfies Schema,\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context out\",\n          behavior: [\"hint-audio\"],\n        },\n      },\n      additionalProperties: false,\n    } satisfies Schema,\n    title: \"Make Audio V2 [WIP]\",\n    metadata: {\n      icon: \"generative-audio\",\n      tags: [\"quick-access\", \"generative\", \"experimental\"],\n      order: 3,\n    },\n  };\n}\n",
-                    "language": "typescript"
-                },
-                "description": "Generates audio output using supplied context.",
-                "runnable": true
-            }
-        }
-    },
-    "imports": {
-        "a2": {
-            "url": "./a2.bgl.json"
-        }
-    },
-    "exports": [
-        "#module:main"
+    "tags": [
+      "published",
+      "tool",
+      "component"
     ]
+  },
+  "modules": {
+    "main": {
+      "code": "/**\n * @fileoverview Generates audio output using supplied context.\n */\nimport gemini, { defaultSafetySettings, } from \"./a2/gemini\";\nimport { err, ok, llm, toLLMContent, toLLMContentInline, toText, } from \"./a2/utils\";\nimport {} from \"./a2/common\";\nimport { executeStep, } from \"./a2/step-executor\";\nimport { ListExpander } from \"./a2/lists\";\nexport { invoke as default, describe };\nasync function callAudioGen(prompt) {\n    const executionInputs = {};\n    const encodedPrompt = btoa(unescape(encodeURIComponent(prompt)));\n    executionInputs[\"text_to_speak\"] = {\n        chunks: [\n            {\n                mimetype: \"text/plain\",\n                data: encodedPrompt,\n            },\n        ],\n    };\n    const inputParameters = [\"text_to_speak\"];\n    const body = {\n        planStep: {\n            stepName: \"GenerateAudio\",\n            modelApi: \"tts\",\n            inputParameters: inputParameters,\n            systemPrompt: \"\",\n        },\n        execution_inputs: executionInputs,\n    };\n    const response = await executeStep(body);\n    if (!ok(response)) {\n        return toLLMContent(\"TTS generation failed: \" + response.$error);\n    }\n    let returnVal;\n    for (let value of Object.values(response.executionOutputs)) {\n        const mimetype = value.chunks[0].mimetype;\n        if (mimetype.startsWith(\"audio\")) {\n            returnVal = toLLMContentInline(mimetype, value.chunks[0].data);\n        }\n    }\n    if (!returnVal) {\n        return toLLMContent(\"Error: No audio returned from backend\");\n    }\n    return returnVal;\n}\nasync function invoke({ context, }) {\n    const results = await new ListExpander(llm ``.asContent(), context).map(async (_i, itemContext) => {\n        // 1) Get last LLMContent from input.\n        const prompt = itemContext && Array.isArray(itemContext) && itemContext.length > 0\n            ? context.at(-1)\n            : undefined;\n        if (!prompt) {\n            return err(\"Must supply context as input\");\n        }\n        prompt.role = \"user\";\n        // 2) Call backend to generate audio.\n        return callAudioGen(toText(prompt));\n    });\n    if (!ok(results))\n        return results;\n    return { context: results };\n}\nasync function describe() {\n    return {\n        inputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context in\",\n                    behavior: [\"main-port\"],\n                },\n            },\n            additionalProperties: false,\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context out\",\n                    behavior: [\"hint-audio\"],\n                },\n            },\n            additionalProperties: false,\n        },\n        title: \"Make Audio V2 [WIP]\",\n        metadata: {\n            icon: \"generative-audio\",\n            tags: [\"quick-access\", \"generative\", \"experimental\"],\n            order: 3,\n        },\n    };\n}\n",
+      "metadata": {
+        "title": "main",
+        "source": {
+          "code": "/**\n * @fileoverview Generates audio output using supplied context.\n */\n\nimport gemini, {\n  defaultSafetySettings,\n  type GeminiOutputs,\n  type GeminiInputs,\n} from \"./a2/gemini\";\nimport {\n  err,\n  ok,\n  llm,\n  toLLMContent,\n  toLLMContentInline,\n  toText,\n} from \"./a2/utils\";\nimport { type DescriberResult } from \"./a2/common\";\nimport {\n  type ContentMap,\n  type ExecuteStepRequest,\n  executeStep,\n} from \"./a2/step-executor\";\nimport { ListExpander } from \"./a2/lists\";\n\ntype AudioGeneratorInputs = {\n  context: LLMContent[];\n};\n\ntype AudioGeneratorOutputs = {\n  context: LLMContent[] | DescriberResult;\n};\n\nexport { invoke as default, describe };\n\nasync function callAudioGen(prompt: string): Promise<LLMContent> {\n  const executionInputs: ContentMap = {};\n  const encodedPrompt = btoa(unescape(encodeURIComponent(prompt)));\n  executionInputs[\"text_to_speak\"] = {\n    chunks: [\n      {\n        mimetype: \"text/plain\",\n        data: encodedPrompt,\n      },\n    ],\n  };\n  const inputParameters: string[] = [\"text_to_speak\"];\n  const body = {\n    planStep: {\n      stepName: \"GenerateAudio\",\n      modelApi: \"tts\",\n      inputParameters: inputParameters,\n      systemPrompt: \"\",\n    },\n    execution_inputs: executionInputs,\n  } satisfies ExecuteStepRequest;\n  const response = await executeStep(body);\n  if (!ok(response)) {\n    return toLLMContent(\"TTS generation failed: \" + response.$error);\n  }\n\n  let returnVal;\n  for (let value of Object.values(response.executionOutputs)) {\n    const mimetype = value.chunks[0].mimetype;\n    if (mimetype.startsWith(\"audio\")) {\n      returnVal = toLLMContentInline(mimetype, value.chunks[0].data);\n    }\n  }\n  if (!returnVal) {\n    return toLLMContent(\"Error: No audio returned from backend\");\n  }\n  return returnVal;\n}\n\nasync function invoke({\n  context,\n}: AudioGeneratorInputs): Promise<Outcome<AudioGeneratorOutputs>> {\n  const results = await new ListExpander(llm``.asContent(), context).map(\n    async (_i, itemContext) => {\n      // 1) Get last LLMContent from input.\n      const prompt =\n        itemContext && Array.isArray(itemContext) && itemContext.length > 0\n          ? context.at(-1)!\n          : undefined;\n      if (!prompt) {\n        return err(\"Must supply context as input\");\n      }\n      prompt.role = \"user\";\n\n      // 2) Call backend to generate audio.\n      return callAudioGen(toText(prompt));\n    }\n  );\n  if (!ok(results)) return results;\n  return { context: results };\n}\n\nasync function describe() {\n  return {\n    inputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context in\",\n          behavior: [\"main-port\"],\n        },\n      },\n      additionalProperties: false,\n    } satisfies Schema,\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context out\",\n          behavior: [\"hint-audio\"],\n        },\n      },\n      additionalProperties: false,\n    } satisfies Schema,\n    title: \"Make Audio V2 [WIP]\",\n    metadata: {\n      icon: \"generative-audio\",\n      tags: [\"quick-access\", \"generative\", \"experimental\"],\n      order: 3,\n    },\n  };\n}\n",
+          "language": "typescript"
+        },
+        "description": "Generates audio output using supplied context.",
+        "runnable": true
+      }
+    }
+  },
+  "imports": {
+    "a2": {
+      "url": "./a2.bgl.json"
+    }
+  },
+  "exports": [
+    "#module:main"
+  ]
 }
