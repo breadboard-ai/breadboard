@@ -7,7 +7,6 @@
 import type { Request, Response } from "express";
 
 import { asPath, type BoardServerStore } from "../store.js";
-import { getBody } from "../common.js";
 
 export type CreateRequest = {
   name: string;
@@ -17,7 +16,7 @@ async function create(req: Request, res: Response): Promise<void> {
   let store: BoardServerStore = req.app.locals.store;
   let userId: string = res.locals.userId;
 
-  const request = (await getBody(req)) as CreateRequest;
+  const request = req.body as CreateRequest;
   const name = request.name;
   if (!name) {
     res.sendStatus(400);
