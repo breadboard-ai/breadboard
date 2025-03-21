@@ -1270,7 +1270,7 @@ export class Main extends LitElement {
       this.#runtime.board.createTabFromRun(
         runGraph,
         graphObserver,
-        runState.maybeRunObserver(),
+        runState,
         true
       );
     }
