@@ -6,7 +6,6 @@
 
 import type { Request, Response } from "express";
 
-import { getBody } from "../common.js";
 import type { ServerConfig } from "../config.js";
 import { secretsKit } from "../proxy/secrets.js";
 
@@ -33,9 +32,7 @@ async function invokeHandler(
   url.pathname = `boards/${path}`;
   url.search = "";
 
-  const body = (await getBody(req)) as Record<string, any> | undefined;
-  const inputs = body ?? {};
-
+  const inputs = req.body as Record<string, any>;
   const userId = await verifyKey(inputs, store);
   if (!userId) {
     // TODO Consider sending 404 instead to prevent leaking the existence of

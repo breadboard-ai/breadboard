@@ -39,6 +39,7 @@ export function createServer(config: ServerConfig): Express {
 
 export function addMiddleware(server: Express, config: ServerConfig) {
   server.locals.store = createStore(config.storageProvider);
+  server.use(express.json({ limit: "2GB", type: "*/*" }));
   server.use(getUserCredentials());
 }
 

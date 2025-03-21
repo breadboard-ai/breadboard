@@ -10,7 +10,6 @@ import { isLLMContent, ok } from "@google-labs/breadboard";
 import type { LLMContent } from "@breadboard-ai/types";
 
 import { GoogleStorageBlobStore } from "../blob-store.js";
-import { getBody } from "../common.js";
 import type { ServerConfig } from "../config.js";
 import { badRequest, serverError } from "../errors.js";
 import type { BoardServerStore } from "../store.js";
@@ -20,20 +19,15 @@ export { createBlob };
 async function createBlob(config: ServerConfig, req: Request, res: Response) {
   const store: BoardServerStore = req.app.locals.store;
 
-  const body = await getBody(req);
   const { serverUrl, storageBucket } = config;
-  if (!body) {
-    badRequest(res, "No body provided");
-    return;
-  }
-  if (!isLLMContent(body)) {
+  if (!isLLMContent(req.body)) {
     badRequest(
       res,
       JSON.stringify({ error: "Invalid body format. Must be LLM content" })
     );
     return;
   }
-  const { parts } = body;
+  const { parts } = req.body;
   if (!(parts && parts.length > 0)) {
     badRequest(
       res,
@@ -53,7 +47,7 @@ async function createBlob(config: ServerConfig, req: Request, res: Response) {
   }
   const blobStore = new GoogleStorageBlobStore(storageBucket!, url);
 
-  const result = await blobStore.deflateContent(body as LLMContent);
+  const result = await blobStore.deflateContent(req.body as LLMContent);
   if (!ok(result)) {
     serverError(res, result.$error);
     return;

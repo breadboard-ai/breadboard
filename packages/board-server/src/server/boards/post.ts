@@ -8,7 +8,6 @@ import type { NextFunction, Request, Response } from "express";
 
 import { type GraphDescriptor } from "@google-labs/breadboard";
 
-import { getBody } from "../common.js";
 import { asPath, type BoardServerStore } from "../store.js";
 import type { BoardId } from "../types.js";
 
@@ -19,23 +18,20 @@ async function post(
   res: Response,
   next: NextFunction
 ): Promise<void> {
-  const body = await getBody(req);
-
   // We handle deletion by accepting a POST request with { delete: true } in the body
   // TODO Don't do this. Use HTTP DELETE instead.
-  const maybeDelete = body as { delete: boolean };
+  const maybeDelete = req.body as { delete: boolean };
   if (maybeDelete.delete === true) {
     await del(req, res, next);
   } else {
-    await update(req, res, next, body);
+    await update(req, res, next);
   }
 }
 
 async function update(
   req: Request,
   res: Response,
-  next: NextFunction,
-  body: unknown
+  next: NextFunction
 ): Promise<void> {
   const store: BoardServerStore = req.app.locals.store;
 
@@ -50,7 +46,7 @@ async function update(
     return;
   }
 
-  const graph = asGraph(body);
+  const graph = asGraph(req.body);
   if (!graph) {
     // TODO Error body
     res.sendStatus(400);

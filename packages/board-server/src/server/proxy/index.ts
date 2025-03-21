@@ -45,19 +45,6 @@ class ResponseAdapter implements ProxyServerResponse {
   }
 }
 
-const extractRequestBody = async (request: Request) => {
-  return new Promise<AnyProxyRequestMessage>((resolve, reject) => {
-    let body = "";
-    request.on("data", (chunk) => {
-      body += chunk.toString();
-    });
-    request.on("end", () => {
-      resolve(JSON.parse(body) as AnyProxyRequestMessage);
-    });
-    request.on("error", reject);
-  });
-};
-
 export function serveProxyAPI(serverConfig: ServerConfig): Router {
   const router = Router();
 
@@ -75,9 +62,8 @@ async function post(
   req: Request,
   res: Response
 ): Promise<void> {
-  const body = await extractRequestBody(req);
   const server = new ProxyServer(
-    new HTTPServerTransport({ body }, new ResponseAdapter(res))
+    new HTTPServerTransport({ body: req.body }, new ResponseAdapter(res))
   );
   const store = createDataStore(serverConfig);
   store.createGroup("run-board");
