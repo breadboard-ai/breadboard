@@ -70,7 +70,7 @@
         "description": {
           "parts": [
             {
-              "text": "Write a single one-sentence tagline that accurately reflects the gist of the idea."
+              "text": "Use the idea to write two or three sentences (no headings, no bullets) as an inspiration for a writer to write a blog post, as if answering the question: \"What should I write about today?\" Help the writer break their block."
             }
           ],
           "role": "user"
