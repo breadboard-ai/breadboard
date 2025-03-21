@@ -163,22 +163,36 @@ export class FlowGenerator {
   ): GraphDescriptor {
     switch (constraint.kind) {
       case "EDIT_STEP_CONFIG": {
+        const originalStepId = constraint.stepId;
         const originalFlowClone = structuredClone(originalFlow);
         const originalStepClone = findStepById(
           originalFlowClone,
-          constraint.stepId
-        )!;
-        const title = originalStepClone.metadata!.title!;
-        const generatedStep = findStepByTitle(generatedFlow, title);
+          originalStepId
+        );
+        if (!originalStepClone) {
+          throw new Error(
+            `Error applying ${constraint.kind} constraint to flow:` +
+              ` An original step was not found` +
+              ` with id ${JSON.stringify(originalStepId)}.`
+          );
+        }
+        const originalTitle = originalStepClone.metadata?.title;
+        const generatedStep =
+          // Prefer to reconcile by ID, then title.
+          findStepById(generatedFlow, originalStepId) ??
+          (originalTitle
+            ? findStepByTitle(generatedFlow, originalTitle)
+            : undefined);
         if (!generatedStep) {
           throw new Error(
             `Error applying ${constraint.kind} constraint to flow:` +
               ` A generated step was not found` +
-              ` with title ${JSON.stringify(title)}.`
+              ` with id ${JSON.stringify(originalStepId)}` +
+              ` nor title ${JSON.stringify(originalTitle)}.`
           );
         }
         const originalConfig = originalStepClone.configuration;
-        const generatedConfig = generatedStep.configuration;
+        const generatedConfig = structuredClone(generatedStep.configuration);
         if (originalConfig && generatedConfig) {
           reconcileInputReferences(originalConfig, generatedConfig);
         }
@@ -214,9 +228,9 @@ function findStepByTitle(
 }
 
 /**
- * Wherever possible, align the "paths" (incoming node IDs) of all "@" input
- * references in `newConfig` with those from `oldConfig`, using the title as
- * key.
+ * Align the "paths" (incoming node IDs) of all "@" input references in
+ * `newConfig` with those from `oldConfig`. We prefer aligning by ID, then
+ * title. Failing either, the path is left unchanged.
  *
  * Note this does an in-place update of `generatedConfig`.
  */
@@ -224,6 +238,7 @@ function reconcileInputReferences(
   originalConfig: NodeConfiguration,
   generatedConfig: NodeConfiguration
 ): void {
+  const originalPaths = new Set<string>();
   const originalTitleToPath = new Map<string, string>();
   for (const content of Object.values(originalConfig)) {
     if (isLLMContent(content)) {
@@ -231,6 +246,7 @@ function reconcileInputReferences(
         if (isTextCapabilityPart(part)) {
           const template = new Template(part.text);
           for (const { title, path } of template.placeholders) {
+            originalPaths.add(path);
             originalTitleToPath.set(title, path);
           }
         }
@@ -244,7 +260,9 @@ function reconcileInputReferences(
           const template = new Template(part.text);
           const withPathsSubstituted = template.transform((part) => ({
             ...part,
-            path: originalTitleToPath.get(part.title) ?? part.path,
+            path: originalPaths.has(part.path)
+              ? part.path
+              : (originalTitleToPath.get(part.title) ?? part.path),
           }));
           part.text = withPathsSubstituted;
         }
