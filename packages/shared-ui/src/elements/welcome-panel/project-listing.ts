@@ -25,6 +25,8 @@ import { BoardServer, GraphProviderStore } from "@google-labs/breadboard";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
 import "../../flow-gen/describe-flow-panel.js";
+import "./homepage-search-button.js";
+import type { HomepageSearchButton } from "./homepage-search-button.js";
 
 const SHOW_OTHER_PEOPLES_BOARDS_KEY =
   "bb-project-listing-show-other-peoples-boards";
@@ -409,6 +411,10 @@ export class ProjectListing extends LitElement {
               background-color: var(--bb-ui-50);
             }
           }
+
+          & bb-homepage-search-button {
+            margin-left: 8px;
+          }
         }
       }
 
@@ -592,25 +598,6 @@ export class ProjectListing extends LitElement {
             }
           }
         }
-      }
-    }
-
-    #search-container {
-      display: flex;
-      justify-contents: center;
-
-      & input {
-        height: var(--bb-grid-size-14);
-        border-radius: var(--bb-grid-size-16);
-        font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
-          var(--bb-font-family);
-        padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-14);
-        border: none;
-        width: 100%;
-        max-width: 680px;
-        background: var(--bb-icon-search) var(--bb-ui-50) 16px center / 32px
-          32px no-repeat;
-        margin: 0 auto;
       }
     }
 
@@ -1062,23 +1049,21 @@ export class ProjectListing extends LitElement {
 
         <div id="board-listing">
           <div id="locations">
-            <div id="search-container">
-              <input
-                type="search"
-                id="search"
-                placeholder="${Strings.from("LABEL_SEARCH_BOARDS")}"
-                autocomplete="off"
-                ${ref(this.#searchRef)}
-                @input=${(evt: InputEvent) => {
-                  if (!(evt.target instanceof HTMLInputElement)) {
-                    return;
-                  }
-
-                  this.filter = evt.target.value;
-                }}
-              />
-            </div>
-
+            <!-- TODO(aomarks) According to mocks, the search button should be
+                 rendered lower down, next to "Sort by". But that whole section
+                 gets quite aggressively re-rendered on any filter change, which
+                 makes it difficult for the button to keep any state. We
+                 probably need a small refactor to get the desired layout. -->
+            <bb-homepage-search-button
+              .value=${this.filter ?? ""}
+              @input=${(
+                evt: InputEvent & {
+                  target: HomepageSearchButton;
+                }
+              ) => {
+                this.filter = evt.target.value;
+              }}
+            ></bb-homepage-search-button>
             <div id="location-selector-container">
               ${this.showAdditionalSources
                 ? html`<select
