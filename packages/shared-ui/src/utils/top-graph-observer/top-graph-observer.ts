@@ -31,7 +31,8 @@ import type {
   ComponentActivityItem,
   TopGraphRunResult,
   NodeLogEntry,
-  TopGraphObserverRunStatus,
+  GraphObserver,
+  GraphObserverRunStatus,
 } from "../../types/types";
 import { formatError } from "../format-error";
 import {
@@ -49,14 +50,14 @@ import { NodeInformation } from "./node-information";
  * A lightweight rewrite of the `InspectableRunObserver` that
  * only captures the events that are necessary to drive the app UI.
  */
-export class TopGraphObserver {
+export class TopGraphObserver implements GraphObserver {
   /**
    * True if this instance is created by replaying a run.
    * Only set to `true` from the static `fromRun` method.
    */
   #replay = false;
   #graph: GraphDescriptor | null = null;
-  #status: TopGraphObserverRunStatus = "stopped";
+  #status: GraphObserverRunStatus = "stopped";
   #log: LogEntry[] | null = null;
   #currentResult: TopGraphRunResult | null = null;
   #currentNode: NodeLogEntry | null = null;
@@ -75,7 +76,7 @@ export class TopGraphObserver {
   #errorPath: number[] | null = null;
   #runDetails: RunDetails | null;
 
-  static async fromRun(run: InspectableRun): Promise<TopGraphObserver> {
+  static async fromRun(run: InspectableRun): Promise<GraphObserver> {
     const observer = new TopGraphObserver(new EventTarget() as HarnessRunner);
     observer.#replay = true;
     for await (const result of run.replay()) {
@@ -111,41 +112,6 @@ export class TopGraphObserver {
         data: result.data,
       } as unknown as E;
     }
-  }
-
-  static entryResult(graph: GraphDescriptor | undefined): TopGraphRunResult {
-    // const entryId = computeEntryId(graph);
-    return {
-      log: [],
-      currentNode: null,
-      edgeValues: {
-        get() {
-          return undefined;
-        },
-        current: null,
-      },
-      nodeInformation: {
-        getActivity() {
-          return undefined;
-        },
-        canRunNode(_id: NodeIdentifier) {
-          return false;
-          // TODO: Bring this back once we have stable runs
-          // return id === entryId;
-        },
-      },
-      graph: graph || null,
-      status: "stopped",
-    };
-
-    // Ideally, this function should live somewhere in packages/breadboard,
-    // but for now, this is good enough.
-    // function computeEntryId(graph?: GraphDescriptor) {
-    //   if (!graph || !graph.edges) return;
-    //   const incoming = new Set(graph.edges.map((edge) => edge.to));
-    //   const entries = graph.nodes.filter((node) => !incoming.has(node.id));
-    //   return entries.at(0)?.id;
-    // }
   }
 
   constructor(
@@ -575,4 +541,39 @@ function getActivityType(type: string): ComponentActivityItem["type"] {
     default:
       return "node";
   }
+}
+
+export function getTopGraphRunResult(graph: GraphDescriptor | undefined): TopGraphRunResult {
+  // const entryId = computeEntryId(graph);
+  return {
+    log: [],
+    currentNode: null,
+    edgeValues: {
+      get() {
+        return undefined;
+      },
+      current: null,
+    },
+    nodeInformation: {
+      getActivity() {
+        return undefined;
+      },
+      canRunNode(_id: NodeIdentifier) {
+        return false;
+        // TODO: Bring this back once we have stable runs
+        // return id === entryId;
+      },
+    },
+    graph: graph || null,
+    status: "stopped",
+  };
+
+  // Ideally, this function should live somewhere in packages/breadboard,
+  // but for now, this is good enough.
+  // function computeEntryId(graph?: GraphDescriptor) {
+  //   if (!graph || !graph.edges) return;
+  //   const incoming = new Set(graph.edges.map((edge) => edge.to));
+  //   const entries = graph.nodes.filter((node) => !incoming.has(node.id));
+  //   return entries.at(0)?.id;
+  // }
 }

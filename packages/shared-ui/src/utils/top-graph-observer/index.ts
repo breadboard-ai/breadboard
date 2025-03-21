@@ -4,4 +4,4 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { TopGraphObserver } from "./top-graph-observer.js";
+export { TopGraphObserver, getTopGraphRunResult } from "./top-graph-observer.js";

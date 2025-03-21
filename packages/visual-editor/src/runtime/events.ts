@@ -82,7 +82,7 @@ export class RuntimeTabChangeEvent extends Event {
   static eventName = "runtimetabchange" as const;
 
   constructor(
-    public readonly topGraphObserver?: BreadboardUI.Utils.TopGraphObserver,
+    public readonly graphObserver?: BreadboardUI.Types.GraphObserver,
     public readonly runObserver?: InspectableRunObserver,
     public readonly chatController?: ChatController
   ) {

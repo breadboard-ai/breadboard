@@ -5,6 +5,7 @@
  */
 
 import {
+  type GraphObserver,
   AppTheme,
   type AppTemplate,
 } from "@breadboard-ai/shared-ui/types/types.js";
@@ -12,12 +13,11 @@ import type * as BreadboardUIContext from "@breadboard-ai/shared-ui/contexts";
 import type * as ConnectionClient from "@breadboard-ai/connection-client";
 import { HarnessRunner } from "@google-labs/breadboard/harness";
 import { type SettingsHelperImpl } from "../utils/settings.js";
-import { TopGraphObserver } from "@breadboard-ai/shared-ui/utils/top-graph-observer";
 import { InspectableRunObserver, Kit, RunStore } from "@google-labs/breadboard";
 
 export type Runner = {
   harnessRunner: HarnessRunner;
-  topGraphObserver: TopGraphObserver;
+  graphObserver: GraphObserver;
   runObserver: InspectableRunObserver;
   abortController: AbortController;
   kits: Kit[];

@@ -513,7 +513,7 @@ export class Board extends EventTarget {
 
   async createTabFromRun(
     descriptor: GraphDescriptor,
-    topGraphObserver?: BreadboardUI.Utils.TopGraphObserver,
+    graphObserver?: BreadboardUI.Types.GraphObserver,
     runObserver?: InspectableRunObserver,
     readOnly = true
   ) {
@@ -556,7 +556,7 @@ export class Board extends EventTarget {
 
     this.#currentTabId = id;
     this.dispatchEvent(
-      new RuntimeTabChangeEvent(topGraphObserver, runObserver, chatController)
+      new RuntimeTabChangeEvent(graphObserver, runObserver, chatController)
     );
   }
 

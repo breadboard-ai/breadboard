@@ -6,7 +6,7 @@ tags:
   - wip
 ---
 
-A close cousin of the [Graph Inspector API](../graph/), the Run Inspector allows us to examine and make sense of the outputs of running a board.
+A close cousin of the [Graph Inspector API](graph.md), the Run Inspector allows us to examine and make sense of the outputs of running a board.
 
 > [!NOTE]
 > The full list of types of Editor API can be found in [/packages/breadboard/src/inspector/types.ts](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/src/inspector/types.ts)
@@ -15,13 +15,13 @@ Conceptually, the Run Inspector API observes a board run: we have to let it look
 
 ## Observing the runs
 
-To start using the Run Inspector API, we need to import the `createRunObserver` and call it:
+To start using the Run Inspector API, we need to import the `RunState` and call it:
 
 ```ts
-import { createRunObserver } from "@google-labs/breadboard";
+import { RunState } from "@breadboard-ai/shared-ui/utils/run-state";
 
-// Returns an instance of `InspectableRunObserver`.
-const observer = createRunObserver();
+// Returns an instance of `RunState` that implements `InspectableRunObserver`.
+const runState = RunState.create(...); /// or RunState.fromPastRun()
 ```
 
 The resulting instance has two methods: `observe()` and `runs()`.
@@ -40,16 +40,16 @@ const config = {
 };
 
 // Returns [].
-console.log(observer.runs());
+console.log(runState.runs());
 
 for await (const result of run(config)) {
   // Observe the run
-  observer.observe(result);
+  runState.observe(result);
   // ... handle results
 }
 
 // Returns array of `InspectableRun` instances.
-console.log(observer.runs());
+console.log(runState.runs());
 ```
 
 For convenience, the `observe()` method also returns the same value as the `runs()`, which can be useful when using [Lit](https://lit.dev/) or any other reactive UI framework. The return value is live.
@@ -60,7 +60,7 @@ For convenience, the `observe()` method also returns the same value as the `runs
 ```ts
 for await (const result of run(config)) {
   // Observe the run, and also update the state of the UI element.
-  this.runs = observer.observe(result);
+  this.runs = runState.observe(result);
   // ... handle results
 }
 ```
@@ -69,27 +69,27 @@ The list of runs will update for every new `run(config)` loop. For example:
 
 ```ts
 // Returns [].
-console.log(observer.runs());
+console.log(runState.runs());
 
 for await (const result of run(config)) {
   // Observe the run
-  observer.observe(result);
+  runState.observe(result);
   // ... handle results
 }
 
 // Returns array consisting of one `InspectableRun` instance.
 // [ InspectableRun ]
-console.log(observer.runs());
+console.log(runState.runs());
 
 for await (const result of run(config)) {
   // Observe the run
-  observer.observe(result);
+  runState.observe(result);
   // ... handle results
 }
 
 // Returns array consisting of two `InspectableRun` instances.
 // [ InspectableRun, InspectableRun ]
-console.log(observer.runs());
+console.log(runState.runs());
 ```
 
 ## Inspecting a run
@@ -104,7 +104,7 @@ The `start` is the timestamp that marks the start of the run, while the `end` is
 > Checking `end` for null is a good way to see whether or not the board run is still ongoing.
 
 ```ts
-const run = observer.runs()[0];
+const run = runState.runs()[0];
 
 // Returns a number (timestamp).
 console.log("Run started at", run.start);
@@ -310,12 +310,12 @@ the `InspectableRunObserver` with the `load` method:
 
 ```ts
 // Returns an `InspectableRunLoadResult` instance.
-const result = observer.load(serializedRun);
+const result = runState.load(serializedRun);
 if (result.success) {
   console.log("Run loaded");
-  // The observer.runs().length will increment by one, with the newly
+  // The runState.runs().length will increment by one, with the newly
   // loaded run as first item.
-  console.log(`The observer now has ${observer.runs().length} runs.`);
+  console.log(`The runState now has ${runState.runs().length} runs.`);
 } else {
   console.log("Load error occurred", result.error);
 }
@@ -342,7 +342,7 @@ This function will be called once for every new secret encountered and give us a
 
 ```ts
 // Returns an `InspectableRunLoadResult` instance.
-const result = observer.load(serializedRun, {
+const result = runState.load(serializedRun, {
   secretReplacer: (name) => {
     if (name === "GEMINI_KEY") return GEMINI_KEY_VALUE;
   },

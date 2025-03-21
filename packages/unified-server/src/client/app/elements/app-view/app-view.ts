@@ -20,7 +20,7 @@ import {
 import { AppTemplateOptions } from "@breadboard-ai/shared-ui/types/types.js";
 import { getThemeModeFromBackground } from "../../utils/color.js";
 import { until } from "lit/directives/until.js";
-import { TopGraphObserver } from "@breadboard-ai/shared-ui/utils/top-graph-observer";
+import { getTopGraphRunResult } from "@breadboard-ai/shared-ui/utils/top-graph-observer";
 import { InputEnterEvent } from "../../events/events.js";
 import {
   RunEndEvent,
@@ -241,8 +241,8 @@ export class AppView extends LitElement {
       appTemplate.graph = this.flow;
       appTemplate.run = run;
       appTemplate.topGraphResult =
-        this.#runner.topGraphObserver.current() ??
-        TopGraphObserver.entryResult(this.flow);
+        this.#runner.graphObserver.current() ??
+        getTopGraphRunResult(this.flow);
       appTemplate.eventPosition = run?.events.length ?? 0;
       appTemplate.showGDrive = this.#signInAdapter.state === "valid";
       appTemplate.addEventListener("bbsigninrequested", async () => {

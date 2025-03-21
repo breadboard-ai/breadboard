@@ -20,6 +20,8 @@ export {
   isTextBehavior,
 } from "./behaviors.js";
 
+export {RunState} from './run-state.js';
+
 export function itemsMatch(schema1: Schema, schema2: Schema): boolean {
   if (!schema1.items) return false;
   if (!schema2.items) return false;

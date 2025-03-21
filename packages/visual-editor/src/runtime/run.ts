@@ -5,7 +5,6 @@
  */
 
 import {
-  createRunObserver,
   DataStore,
   GraphLoader,
   InputValues,
@@ -17,6 +16,7 @@ import {
   NodeConfiguration,
   OutputValues,
   RunArguments,
+  RunObserverOptions,
   RunStore,
 } from "@google-labs/breadboard";
 import { Result, Tab, TabId } from "./types";
@@ -40,13 +40,14 @@ import {
 } from "@google-labs/breadboard/harness";
 import { RuntimeBoardRunEvent } from "./events";
 import { sandbox } from "../sandbox";
+import { RunState } from "@breadboard-ai/shared-ui/utils/run-state";
 
 export class Run extends EventTarget {
   #runs = new Map<
     TabId,
     {
       harnessRunner?: HarnessRunner;
-      topGraphObserver?: BreadboardUI.Utils.TopGraphObserver;
+      graphObserver?: BreadboardUI.Types.GraphObserver;
       chatController?: BreadboardUI.State.ChatController;
       runObserver?: InspectableRunObserver;
       abortController?: AbortController;
@@ -64,12 +65,12 @@ export class Run extends EventTarget {
 
   create(
     tab: Tab,
-    topGraphObserver: BreadboardUI.Utils.TopGraphObserver,
+    graphObserver: BreadboardUI.Types.GraphObserver,
     chatController?: BreadboardUI.State.ChatController,
     runObserver?: InspectableRunObserver
   ) {
     this.#runs.set(tab.id, {
-      topGraphObserver,
+      graphObserver,
       runObserver,
       chatController,
       kits: [...this.graphStore.kits, ...tab.boardServerKits],
@@ -122,8 +123,8 @@ export class Run extends EventTarget {
       return null;
     }
 
-    const { topGraphObserver, runObserver, chatController } = run;
-    return { topGraphObserver, runObserver, chatController };
+    const { graphObserver, runObserver, chatController } = run;
+    return { graphObserver, runObserver, chatController };
   }
 
   async runBoard(
@@ -144,7 +145,7 @@ export class Run extends EventTarget {
     const runner = this.#createBoardRunner(config, abortController);
     this.#runs.set(tabId, runner);
 
-    const { harnessRunner, runObserver, topGraphObserver } = runner;
+    const { harnessRunner, runObserver, graphObserver } = runner;
     harnessRunner.addEventListener("start", (evt: RunLifecycleEvent) => {
       this.dispatchEvent(
         new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
@@ -231,28 +232,23 @@ export class Run extends EventTarget {
 
     if (history) {
       await runObserver.append(history);
-      topGraphObserver.startWith(history);
+      graphObserver.startWith(history);
     }
     harnessRunner.run();
   }
 
   #createBoardRunner(config: RunConfig, abortController: AbortController) {
     const harnessRunner = createRunner(config);
-    const runObserver = createRunObserver(this.graphStore, {
+    const runObserverOptions: RunObserverOptions = {
       logLevel: "debug",
       dataStore: this.dataStore,
       runStore: this.runStore,
       kits: config.kits,
       sandbox: sandbox,
-    });
+    };
+    const runState = RunState.create(this.graphStore, runObserverOptions, harnessRunner);
 
-    const topGraphObserver = new BreadboardUI.Utils.TopGraphObserver(
-      harnessRunner,
-      config.signal,
-      runObserver
-    );
-
-    harnessRunner.addObserver(runObserver);
+    harnessRunner.addObserver(runState);
 
     const chatController = new BreadboardUI.State.ChatController(
       harnessRunner,
@@ -261,8 +257,8 @@ export class Run extends EventTarget {
 
     return {
       harnessRunner,
-      topGraphObserver,
-      runObserver,
+      graphObserver: runState.demandGraphObserverFromHarness(),
+      runObserver: runState,
       abortController,
       chatController,
       kits: config.kits,

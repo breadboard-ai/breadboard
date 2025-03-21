@@ -34,13 +34,6 @@ export const inspect = (
   return new Graph("", new MutableGraphImpl(graph, store));
 };
 
-export const createRunObserver = (
-  store: MutableGraphStore,
-  options?: RunObserverOptions
-): InspectableRunObserver => {
-  return new RunObserver(store, options || {});
-};
-
 export { Run } from "./run/run.js";
 
 export function createGraphStore(args: GraphStoreArgs): MutableGraphStore {

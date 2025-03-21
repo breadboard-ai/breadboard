@@ -10,12 +10,11 @@ import {
   addSandboxedRunModule,
   createDefaultDataStore,
   createGraphStore,
-  createRunObserver,
   Kit,
 } from "@google-labs/breadboard";
 
 import { getRunStore } from "@breadboard-ai/data-store";
-import { TopGraphObserver } from "@breadboard-ai/shared-ui/utils/top-graph-observer";
+import { RunState } from "@breadboard-ai/shared-ui/utils/run-state";
 import { Runner } from "../types/types";
 import { loadKits, registerLegacyKits } from "./kit-loader.js";
 
@@ -51,26 +50,13 @@ export async function createFlowRunner(
   };
 
   const harnessRunner = createRunner(config);
-  const runObserver = createRunObserver(graphStore, {
-    logLevel: "debug",
-    dataStore: dataStore,
-    runStore: runStore,
-    kits: config.kits,
-    sandbox: sandbox,
-  });
-
-  const topGraphObserver = new TopGraphObserver(
-    harnessRunner,
-    config.signal,
-    runObserver
-  );
-
-  harnessRunner.addObserver(runObserver);
+  const runState = RunState.create(graphStore, config, harnessRunner);
+  harnessRunner.addObserver(runState);
 
   return {
     harnessRunner,
-    topGraphObserver,
-    runObserver,
+    graphObserver: runState.demandGraphObserverFromHarness(),
+    runObserver: runState,
     abortController,
     kits: config.kits,
     runStore,
