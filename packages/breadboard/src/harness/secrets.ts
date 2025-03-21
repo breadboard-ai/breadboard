@@ -70,9 +70,17 @@ const interactiveSecretsHandler = (
 
 const fallbackHandler = (
   nodeType: NodeTypeIdentifier,
-  handlers: NodeHandler[]
+  handlers: NodeHandler[],
+  interactive: NodeHandler
 ) => {
   const handler: NodeHandler = async (inputs, context) => {
+    const { keys } = inputs as { keys: string[] };
+    if (!keys) return {};
+
+    // OAuth keys can only be handled interactively.
+    const connectionKey =
+      keys.length === 1 && keys[0].startsWith("connection:");
+    handlers = connectionKey ? [interactive] : [...handlers, interactive];
     for (const handler of handlers) {
       const outputs = await callHandler(handler, inputs, context);
       if (outputs && !outputs["$error"]) {
@@ -90,7 +98,7 @@ export const createSecretAskingKit = (
 ) => {
   const interactive = interactiveSecretsHandler(next);
   const secrets = fallback
-    ? fallbackHandler("secrets", [...fallback, interactive])
+    ? fallbackHandler("secrets", fallback, interactive)
     : interactive;
   const secretAskingKit = new KitBuilder({
     url: "secret-asking-kit",
