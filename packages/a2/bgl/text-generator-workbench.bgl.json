@@ -4,116 +4,29 @@
   "version": "0.0.1",
   "nodes": [
     {
-      "id": "a2-9b2f9a3f",
+      "id": "a2-2e6a48fe",
       "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
+        "title": "Make Text",
         "visual": {
-          "x": 260,
-          "y": -140,
-          "collapsed": "expanded",
-          "outputHeight": 88
+          "x": 104.5,
+          "y": -180
         },
-        "title": "Text Generator",
-        "logLevel": "debug",
         "userModified": false
       },
       "configuration": {
         "description": {
           "parts": [
             {
-              "text": "you are a {{\"type\":\"in\",\"path\":\"content-7b7ce635\",\"title\":\"Role\"}} who has a comedy show"
+              "text": "Use {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-web\",\"title\":\"Search Web\"}} tool to find more information about Betacam"
             }
           ],
           "role": "user"
         }
       }
-    },
-    {
-      "id": "content-7b7ce635",
-      "type": "content",
-      "metadata": {
-        "visual": {
-          "x": -60,
-          "y": -60,
-          "collapsed": "expanded",
-          "outputHeight": 88
-        },
-        "title": "Role",
-        "logLevel": "debug",
-        "userModified": true
-      },
-      "configuration": {
-        "context": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": ""
-              }
-            ]
-          }
-        ],
-        "role": "user",
-        "template": {
-          "role": "user",
-          "parts": [
-            {
-              "text": "Banana"
-            }
-          ]
-        }
-      }
-    },
-    {
-      "id": "0d7669c0-9f0d-4aa3-a72b-1c1dd15055bc",
-      "type": "content",
-      "metadata": {
-        "visual": {
-          "x": -60,
-          "y": -259.99999999999994,
-          "collapsed": "expanded",
-          "outputHeight": 88
-        },
-        "title": "Content",
-        "logLevel": "debug"
-      },
-      "configuration": {
-        "context": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": ""
-              }
-            ]
-          }
-        ],
-        "role": "user",
-        "template": {
-          "role": "user",
-          "parts": [
-            {
-              "text": "Say something clever"
-            }
-          ]
-        }
-      }
     }
   ],
-  "edges": [
-    {
-      "from": "0d7669c0-9f0d-4aa3-a72b-1c1dd15055bc",
-      "to": "a2-9b2f9a3f",
-      "out": "context",
-      "in": "context"
-    },
-    {
-      "from": "content-7b7ce635",
-      "to": "a2-9b2f9a3f",
-      "out": "context",
-      "in": "p-z-content-7b7ce635"
-    }
-  ],
+  "edges": [],
   "metadata": {
     "visual": {
       "presentation": {
@@ -146,7 +59,7 @@
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMzYuOTAiCiAgICAgICAgICAgICAgICAgICAgeT0iNzAuNjYiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjEwMy4xMCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9Ijc0LjU1IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgo8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSIxMDIuMzgiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjEwMy4xMCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9Ijc0LjU1IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMmU4YmU4IiAvPgo8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSIyMy4wNyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTAzLjEwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNzQuNTUiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyZThiZTgiIC8+CiAgICAgIAogICAgPC9zdmc+"
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI1NS43NyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMjMwLjAwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iODguNDYiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CiAgICAgIAogICAgPC9zdmc+"
     }
   }
 }
