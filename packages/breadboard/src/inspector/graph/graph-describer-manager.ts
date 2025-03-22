@@ -14,13 +14,14 @@ import { GraphDescriptorHandle } from "./graph-descriptor-handle.js";
 import { NodeDescriberResult, Schema } from "../../types.js";
 import { describeInput, describeOutput } from "./schemas.js";
 import { combineSchemas, removeProperty } from "../../schema.js";
-import { Result } from "../../editor/types.js";
 import {
   invokeDescriber,
   invokeMainDescriber,
 } from "../../sandboxed-run-module.js";
 import { invokeGraph } from "../../run/invoke-graph.js";
 import { ParameterManager } from "../../run/parameter-manager.js";
+import { Outcome } from "../../data/types.js";
+import { err, ok } from "../../data/file-system/utils.js";
 
 export { GraphDescriberManager };
 
@@ -139,14 +140,14 @@ class GraphDescriberManager {
 
   async #tryDescribingWithCustomDescriber(
     inputs: InputValues
-  ): Promise<Result<NodeDescriberResult>> {
+  ): Promise<Outcome<NodeDescriberResult>> {
     const customDescriber =
       this.handle.graph().metadata?.describer ||
       (this.handle.graph().main
         ? `module:${this.handle.graph().main}`
         : undefined);
     if (!customDescriber) {
-      return { success: false, error: "Unable to find custom describer" };
+      return err("Unable to find custom describer");
     }
     // invoke graph
     try {
@@ -177,13 +178,10 @@ class GraphDescriberManager {
           );
         }
         if (result) {
-          return { success: true, result };
+          return result;
         }
         if (result === false) {
-          return {
-            success: false,
-            error: "Custom describer could not provide results.",
-          };
+          return err("Custom describer could not provide results.");
         }
       }
       const base = this.handle.url();
@@ -199,7 +197,7 @@ class GraphDescriberManager {
       if (!loadResult.success) {
         const error = `Could not load custom describer graph ${customDescriber}: ${loadResult.error}`;
         console.warn(error);
-        return { success: false, error };
+        return err(error);
       }
       const { inputSchema: $inputSchema, outputSchema: $outputSchema } =
         await this.#describeWithStaticAnalysis();
@@ -220,31 +218,25 @@ class GraphDescriberManager {
       if ("$error" in result) {
         const message = `Error while invoking graph's custom describer`;
         console.warn(message, result.$error);
-        return {
-          success: false,
-          error: `${message}: ${JSON.stringify(result.$error)}`,
-        };
+        return err(`${message}: ${JSON.stringify(result.$error)}`);
       }
       if (!result.inputSchema || !result.outputSchema) {
         const message = `Custom describer did not return input/output schemas`;
         console.warn(message, result);
-        return {
-          success: false,
-          error: `${message}: ${JSON.stringify(result)}`,
-        };
+        return err(`${message}: ${JSON.stringify(result)}`);
       }
-      return { success: true, result };
+      return result;
     } catch (e) {
       const message = `Error while invoking graph's custom describer`;
       console.warn(message, e);
-      return { success: false, error: `${message}: ${JSON.stringify(e)}` };
+      return err(`${message}: ${JSON.stringify(e)}`);
     }
   }
 
   async describe(inputs?: InputValues): Promise<NodeDescriberResult> {
     const result = await this.#tryDescribingWithCustomDescriber(inputs || {});
-    if (result.success) {
-      return result.result;
+    if (ok(result)) {
+      return result;
     }
     const staticResult = await this.#describeWithStaticAnalysis();
     const graph = this.handle.graph();
@@ -267,15 +259,12 @@ class GraphDescriberManager {
   static create(
     graphId: GraphIdentifier,
     cache: MutableGraph
-  ): Result<GraphDescriberManager> {
+  ): Outcome<GraphDescriberManager> {
     const handle = GraphDescriptorHandle.create(cache.graph, graphId);
     if (!handle.success) {
-      return handle;
+      return err(handle.error);
     }
-    return {
-      success: true,
-      result: new GraphDescriberManager(handle.result, cache),
-    };
+    return new GraphDescriberManager(handle.result, cache);
   }
 }
 

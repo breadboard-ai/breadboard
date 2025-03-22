@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { ok } from "../data/file-system/utils.js";
 import { GraphDescriberManager } from "../inspector/graph/graph-describer-manager.js";
 import { MutableGraphImpl } from "../inspector/graph/mutable-graph.js";
 import { MutableGraphStore } from "../inspector/types.js";
@@ -69,10 +70,10 @@ class GraphDescriptorNodeHandler implements NodeHandlerObject {
     // TODO: Avoid creating a free-standing mutable graph here.
     const mutable = new MutableGraphImpl(this.#graph, graphStore);
     const describer = GraphDescriberManager.create("", mutable);
-    if (!describer.success) {
+    if (!ok(describer)) {
       return emptyResult;
     }
-    return await describer.result.describe(inputs);
+    return await describer.describe(inputs);
   }
 
   async invoke(inputs: InputValues, context: NodeHandlerContext) {
