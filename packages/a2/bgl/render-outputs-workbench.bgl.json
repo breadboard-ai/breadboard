@@ -9,19 +9,20 @@
       "metadata": {
         "visual": {
           "x": -260,
-          "y": -1260.0000000000014,
+          "y": -1260,
           "collapsed": "expanded",
           "outputHeight": 44
         },
         "title": "Time of Day",
-        "logLevel": "info"
+        "logLevel": "info",
+        "userModified": false
       },
       "configuration": {
         "text": {
           "role": "user",
           "parts": [
             {
-              "text": "Morning"
+              "text": "你好，世界!"
             }
           ]
         }
