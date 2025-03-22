@@ -7,9 +7,10 @@
 import {
   GraphIdentifier,
   InputValues,
+  ModuleIdentifier,
   NodeTypeIdentifier,
 } from "@breadboard-ai/types";
-import { InspectableNode, MutableGraph } from "../types.js";
+import { GraphDescriber, InspectableNode, MutableGraph } from "../types.js";
 import { GraphDescriptorHandle } from "./graph-descriptor-handle.js";
 import { NodeDescriberResult, Schema } from "../../types.js";
 import { describeInput, describeOutput } from "./schemas.js";
@@ -22,6 +23,13 @@ import { invokeGraph } from "../../run/invoke-graph.js";
 import { ParameterManager } from "../../run/parameter-manager.js";
 import { Outcome } from "../../data/types.js";
 import { err, ok } from "../../data/file-system/utils.js";
+import { ExportsDescriber } from "./exports-describer.js";
+import {
+  emptyDescriberResult,
+  filterEmptyValues,
+  getModuleId,
+  isModule,
+} from "../utils.js";
 
 export { GraphDescriberManager };
 
@@ -29,14 +37,21 @@ export { GraphDescriberManager };
  * Contains all machinery that allows
  * describing a node or a graph
  */
-class GraphDescriberManager {
+class GraphDescriberManager implements GraphDescriber {
   private readonly params: ParameterManager;
+  private readonly exports: ExportsDescriber;
 
   private constructor(
     public readonly handle: GraphDescriptorHandle,
     public readonly mutable: MutableGraph
   ) {
     this.params = new ParameterManager(handle.graph());
+    this.exports = new ExportsDescriber(mutable, (graphId, mutable) => {
+      if (isModule(graphId)) {
+        return new ModuleDescriber(mutable, getModuleId(graphId));
+      }
+      return GraphDescriberManager.create(graphId, mutable);
+    });
   }
 
   #nodesByType(type: NodeTypeIdentifier): InspectableNode[] {
@@ -92,7 +107,14 @@ class GraphDescriberManager {
       "schema"
     );
 
-    return this.#presumeContextInOut({ inputSchema, outputSchema });
+    const adjustedResults = this.#presumeContextInOut({
+      inputSchema,
+      outputSchema,
+    });
+    // Do not add export describers when we are in a subgraph.
+    if (this.handle.graphId) return adjustedResults;
+
+    return this.exports.transform(adjustedResults);
   }
 
   /**
@@ -268,21 +290,27 @@ class GraphDescriberManager {
   }
 }
 
-/**
- * A utility function to filter out empty (null or undefined) values from
- * an object.
- *
- * @param obj -- The object to filter.
- * @returns -- The object with empty values removed.
- */
-function filterEmptyValues<T extends Record<string, unknown>>(obj: T): T {
-  return Object.fromEntries(
-    Object.entries(obj).filter(([, value]) => {
-      if (!value) return false;
-      if (typeof value === "object") {
-        return Object.keys(value).length > 0;
-      }
-      return true;
-    })
-  ) as T;
+class ModuleDescriber implements GraphDescriber {
+  constructor(
+    public readonly mutable: MutableGraph,
+    public readonly moduleId: ModuleIdentifier
+  ) {}
+
+  async describe(
+    inputs?: InputValues,
+    inputSchema?: Schema,
+    outputSchema?: Schema
+  ): Promise<NodeDescriberResult> {
+    const result = await invokeDescriber(
+      this.moduleId,
+      this.mutable,
+      this.mutable.graph,
+      inputs || {},
+      inputSchema,
+      outputSchema
+    );
+    if (!result) return emptyDescriberResult();
+
+    return result;
+  }
 }

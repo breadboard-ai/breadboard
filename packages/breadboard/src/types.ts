@@ -244,12 +244,29 @@ export type ReservedNodeNames = {
 };
 
 /**
+ * The individual export that is being exposed in NodeDescriberResult.
+ */
+export type NodeDescriberExport = {
+  title?: string;
+  description: string;
+  metadata?: GraphMetadata;
+  inputSchema: Schema;
+};
+
+/**
  * The result of running `NodeDescriptorFunction`
  */
 export type NodeDescriberResult = GraphInlineMetadata & {
   metadata?: GraphMetadata;
   inputSchema: Schema;
   outputSchema: Schema;
+  /**
+   * A way for a describer to specify multiple entry points.
+   * A common use case is a connector that offers multiple tools.
+   * For a graph that contains exports, these will match the describer
+   * results of the exports.
+   */
+  exports?: Record<GraphIdentifier, NodeDescriberExport>;
 };
 
 /**

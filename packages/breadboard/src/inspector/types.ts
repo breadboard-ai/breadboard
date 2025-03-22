@@ -1312,3 +1312,12 @@ export type SerializedRun = {
   timeline: TimelineEntry[];
   data?: SerializedDataStoreGroup;
 };
+
+export type GraphDescriber = {
+  describe(inputs?: InputValues): Promise<NodeDescriberResult>;
+};
+
+export type GraphDescriberFactory = (
+  graphId: GraphIdentifier,
+  mutable: MutableGraph
+) => Outcome<GraphDescriber>;

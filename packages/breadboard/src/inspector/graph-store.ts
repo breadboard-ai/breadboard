@@ -41,6 +41,7 @@ import {
   MutableGraph,
   MutableGraphStore,
 } from "./types.js";
+import { filterEmptyValues } from "./utils.js";
 
 export { contextFromMutableGraph, GraphStore, makeTerribleOptions };
 
@@ -523,17 +524,4 @@ function entryFromExport(
       updating,
     });
   }
-}
-
-/**
- * A utility function to filter out empty (null or undefined) values from
- * an object.
- *
- * @param obj -- The object to filter.
- * @returns -- The object with empty values removed.
- */
-function filterEmptyValues<T extends Record<string, unknown>>(obj: T): T {
-  return Object.fromEntries(
-    Object.entries(obj).filter(([, value]) => !!value)
-  ) as T;
 }

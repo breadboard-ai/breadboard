@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { emptyDescriberResult, filterEmptyValues } from "./inspector/utils.js";
 import { resolveGraph } from "./loader/loader.js";
 import { invokeGraph } from "./run/invoke-graph.js";
 import { invokeDescriber } from "./sandboxed-run-module.js";
@@ -158,24 +159,4 @@ function toNodeHandlerMetadata(
       updating,
     });
   }
-}
-
-/**
- * A utility function to filter out empty (null or undefined) values from
- * an object.
- *
- * @param obj -- The object to filter.
- * @returns -- The object with empty values removed.
- */
-function filterEmptyValues<T extends Record<string, unknown>>(obj: T): T {
-  return Object.fromEntries(
-    Object.entries(obj).filter(([, value]) => !!value)
-  ) as T;
-}
-
-function emptyDescriberResult(): NodeDescriberResult {
-  return {
-    inputSchema: { type: "object" },
-    outputSchema: { type: "object" },
-  };
 }
