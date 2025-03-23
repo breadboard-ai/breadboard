@@ -1,0 +1,79 @@
+{
+  "title": "Folio",
+  "description": "A connector that provides CRUD interface to a simple data store (a \"folio\")",
+  "version": "0.0.1",
+  "nodes": [],
+  "edges": [],
+  "metadata": {
+    "visual": {
+      "presentation": {
+        "themes": {
+          "f65ea9aa-b8c6-4c80-9667-a08c4f631013": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "f65ea9aa-b8c6-4c80-9667-a08c4f631013"
+      }
+    },
+    "userModified": true,
+    "tags": [],
+    "comments": [
+      {
+        "id": "comment-c74afa15",
+        "text": "Intentionally Left Blank",
+        "metadata": {
+          "title": "Comment",
+          "visual": {
+            "x": 281,
+            "y": 501,
+            "collapsed": "expanded",
+            "outputHeight": 0
+          }
+        }
+      }
+    ]
+  },
+  "modules": {
+    "save-state": {
+      "code": "/**\n * @fileoverview Saves the current state into a foilo.\n */\nexport { invoke as default, describe };\nimport write from \"@write\";\nasync function invoke({ context }) {\n    if (!context || context.length === 0)\n        return {};\n    const writeResult = await write({ path: \"/local/foo\", data: context });\n    console.log(\"Folio Write Result\", writeResult);\n    return {};\n}\nasync function describe() {\n    return {\n        description: \"Saves the current state into a folio\",\n        title: \"Save Current State\",\n        inputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context to be saved\",\n                },\n            },\n        },\n        outputSchema: {\n            // Returns nothing.\n            type: \"object\",\n        },\n    };\n}\n",
+      "metadata": {
+        "title": "save-state",
+        "source": {
+          "code": "/**\n * @fileoverview Saves the current state into a foilo.\n */\n\nexport { invoke as default, describe };\n\nimport write from \"@write\";\n\ntype Inputs = {\n  context?: LLMContent[];\n};\n\ntype Outputs = {};\n\nasync function invoke({ context }: Inputs): Promise<Outcome<Outputs>> {\n  if (!context || context.length === 0) return {};\n\n  const writeResult = await write({ path: \"/local/foo\", data: context });\n\n  console.log(\"Folio Write Result\", writeResult);\n  return {};\n}\n\nasync function describe() {\n  return {\n    description: \"Saves the current state into a folio\",\n    title: \"Save Current State\",\n    inputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context to be saved\",\n        },\n      },\n    } satisfies Schema,\n    outputSchema: {\n      // Returns nothing.\n      type: \"object\",\n    } satisfies Schema,\n  };\n}\n",
+          "language": "typescript"
+        },
+        "description": "Saves the current state into a foilo.",
+        "runnable": false
+      }
+    },
+    "load-all": {
+      "code": "/**\n * @fileoverview Loads all of the folio into current context.\n */\nimport read from \"@read\";\nexport { invoke as default, describe };\nasync function invoke() {\n    const readResult = await read({ path: \"/local/path\" });\n    console.log(\"Folio Read Result\", readResult);\n    return { context: [] };\n}\nasync function describe() {\n    return {\n        title: \"Load Entire Folio\",\n        description: \"Loads all of the folio into current context\",\n        inputSchema: {\n            type: \"object\",\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context out\",\n                },\n            },\n        },\n    };\n}\n",
+      "metadata": {
+        "title": "load-all",
+        "source": {
+          "code": "/**\n * @fileoverview Loads all of the folio into current context.\n */\nimport read from \"@read\";\n\nexport { invoke as default, describe };\n\ntype Inputs = {};\ntype Outputs = {\n  context: LLMContent[];\n};\n\nasync function invoke(): Promise<Outcome<Outputs>> {\n  const readResult = await read({ path: \"/local/path\" });\n  console.log(\"Folio Read Result\", readResult);\n\n  return { context: [] };\n}\n\nasync function describe() {\n  return {\n    title: \"Load Entire Folio\",\n    description: \"Loads all of the folio into current context\",\n    inputSchema: {\n      type: \"object\",\n    } satisfies Schema,\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context out\",\n        },\n      },\n    } satisfies Schema,\n  };\n}\n",
+          "language": "typescript"
+        },
+        "description": "Loads all of the folio into current context.",
+        "runnable": false
+      }
+    }
+  },
+  "exports": [
+    "#module:save-state",
+    "#module:load-all"
+  ]
+}

@@ -28,7 +28,8 @@ class ExportsDescriber {
             if (!ok(describer)) return null;
 
             const result = await describer.describe();
-            return [id, result];
+            const url = `${this.mutable.graph.url}${id}`;
+            return [url, result];
           })
         )
       ).filter((item) => item !== null) as [string, NodeDescriberExport][]
