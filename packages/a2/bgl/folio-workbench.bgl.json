@@ -4,13 +4,15 @@
   "version": "0.0.1",
   "nodes": [
     {
-      "id": "a2-83314612",
+      "id": "a06a1b9f-2339-43d6-98b3-d4849ee5445c",
       "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
         "title": "Make Text",
         "visual": {
-          "x": 125.99609375,
-          "y": 501
+          "x": 459.7403405533993,
+          "y": 619.9999999999998,
+          "collapsed": "expanded",
+          "outputHeight": 88
         },
         "userModified": false
       },
@@ -18,7 +20,7 @@
         "description": {
           "parts": [
             {
-              "text": "Load the current {{\"type\":\"tool\",\"path\":\"file://bgl/folio-wip.bgl.json\",\"title\":\"Folio\"}} and provide a summary of its contents. If no content is found, just say \"No content\"."
+              "text": "Look at what's in {{\"type\":\"tool\",\"path\":\"file://bgl/folio-wip.bgl.json\",\"title\":\"Folio\"}} and compare it with this list:\n\nBob\nAlice\nJill\nJack\nFriday\n\nHow are they different? How are they similar?"
             }
           ],
           "role": "user"
@@ -53,7 +55,14 @@
     },
     "userModified": true,
     "tags": [],
-    "parameters": {}
+    "parameters": {
+      "folio": {
+        "title": "Folio",
+        "usedIn": [
+          "a2-c650be39"
+        ]
+      }
+    }
   },
   "assets": {
     "@@thumbnail": {
@@ -61,7 +70,46 @@
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI1NS43NyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMjMwLjAwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iODguNDYiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CiAgICAgIAogICAgPC9zdmc+"
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxNDkuMzYiCiAgICAgICAgICAgICAgICAgICAgeT0iNzQuMjAiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjkwLjY0IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNjUuNTQiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CiAgICAgIDxyZWN0IHg9IjEwLjAwIgogICAgICAgICAgICAgICAgICAgIHk9IjYwLjI2IgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI5MC42NCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjY1LjU0IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgogICAgPC9zdmc+"
+    }
+  },
+  "graphs": {
+    "7d87a320-a33a-44d7-962a-812e52f33518": {
+      "title": "Write Names to File",
+      "nodes": [
+        {
+          "id": "5db6e453-0d77-4126-99d6-9ba7e8c5994d",
+          "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+          "metadata": {
+            "title": "Write Names to Folio",
+            "visual": {
+              "x": 60.00000000000006,
+              "y": 580.0000000000002,
+              "collapsed": "expanded",
+              "outputHeight": 88
+            },
+            "userModified": false,
+            "description": "Writes the list of names (Bob, Alice, Jack, Jill, Wednesday) into the file Folio."
+          },
+          "configuration": {
+            "description": {
+              "parts": [
+                {
+                  "text": "Write the following into {{\"type\":\"tool\",\"path\":\"file://bgl/folio-wip.bgl.json\",\"title\":\"Folio\"}}:\n\nBob\nAlice\nJack\nJill\nWednesday"
+                }
+              ],
+              "role": "user"
+            }
+          }
+        }
+      ],
+      "edges": [],
+      "metadata": {
+        "visual": {
+          "minimized": false
+        }
+      },
+      "description": "Write a list of names to a specified file. The 'context' parameter determines where the names are written to, e.g., a file path or document title. parameters: {\"context\": {\"type\": \"string\", \"description\": \"The name of the file to write the list of names\"}}."
     }
   }
 }
