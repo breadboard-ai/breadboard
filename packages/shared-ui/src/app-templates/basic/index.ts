@@ -989,13 +989,6 @@ export class Template extends LitElement implements AppTemplate {
         const disabled =
           valueIsDefined && (valueHasKeys || valueIsNonEmptyArray);
 
-        console.log(
-          valueIsDefined,
-          valueHasKeys,
-          Object.keys(currentItem.value ?? {}),
-          valueIsNonEmptyArray
-        );
-
         inputContents = html`
           <bb-add-asset-button
             .anchor=${"above"}
