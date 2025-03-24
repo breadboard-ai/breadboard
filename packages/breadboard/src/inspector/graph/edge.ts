@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { EdgeMetadata } from "@breadboard-ai/types";
 import { Edge as EdgeDescriptor, GraphIdentifier } from "../../types.js";
 import {
   InspectableEdge,
@@ -106,6 +107,10 @@ class Edge implements InspectableEdge {
     if (this.#edge.out === "") return InspectableEdgeType.Control;
     if (this.#edge.constant) return InspectableEdgeType.Constant;
     return InspectableEdgeType.Ordinary;
+  }
+
+  metadata(): EdgeMetadata | undefined {
+    return this.#edge.metadata;
   }
 
   async outPort(): Promise<InspectablePort> {

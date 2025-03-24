@@ -128,6 +128,26 @@ export type Edge = {
    * remains available even after the node has consumed it.
    */
   constant?: boolean;
+
+  /**
+   * The metadata of the edge.
+   * Use this provide additional information about the edge.
+   */
+  metadata?: EdgeMetadata;
+};
+
+/**
+ * Represents metadata of an edge.
+ * This is an optional part of the `Edge` that can be used to
+ * provide additional information about the node.
+ */
+export type EdgeMetadata = {
+  /**
+   * Metadata that conveys visual information about the edge. Can be used by
+   * visual editors to store information about the edge's appearance, current
+   * position, etc.
+   */
+  visual?: NodeValue;
 };
 
 /**
