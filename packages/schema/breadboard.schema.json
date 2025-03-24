@@ -866,6 +866,10 @@
 				"constant": {
 					"type": "boolean",
 					"description": "If true, this edge acts as a constant: the data that passes through it remains available even after the node has consumed it."
+				},
+				"metadata": {
+					"$ref": "#/definitions/EdgeMetadata",
+					"description": "The metadata of the edge. Use this provide additional information about the edge."
 				}
 			},
 			"required": [
@@ -882,6 +886,45 @@
 		"OutputIdentifier": {
 			"type": "string",
 			"description": "Unique identifier of a node's output."
+		},
+		"EdgeMetadata": {
+			"type": "object",
+			"properties": {
+				"visual": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "number"
+						},
+						{
+							"type": "boolean"
+						},
+						{
+							"type": "null"
+						},
+						{
+							"type": "array",
+							"items": {
+								"$ref": "#/definitions/NodeValue"
+							}
+						},
+						{
+							"$ref": "#/definitions/Capability"
+						},
+						{
+							"type": "object",
+							"additionalProperties": {
+								"$ref": "#/definitions/NodeValue"
+							}
+						}
+					],
+					"description": "Metadata that conveys visual information about the edge. Can be used by visual editors to store information about the edge's appearance, current position, etc."
+				}
+			},
+			"additionalProperties": false,
+			"description": "Represents metadata of an edge. This is an optional part of the `Edge` that can be used to provide additional information about the node."
 		},
 		"NodeDescriptor": {
 			"type": "object",

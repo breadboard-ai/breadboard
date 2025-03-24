@@ -49,6 +49,7 @@ import { AddAsset } from "./operations/add-asset.js";
 import { RemoveAsset } from "./operations/remove-asset.js";
 import { ChangeAssetMetadata } from "./operations/change-asset-metadata.js";
 import { ReplaceGraph } from "./operations/replace-graph.js";
+import { ChangeEdgeMetadata } from "./operations/change-edge-metadata.js";
 
 const validImperativeEdits: EditSpec["type"][] = [
   "addmodule",
@@ -64,6 +65,7 @@ const operations = new Map<EditSpec["type"], EditOperation>([
   ["addedge", new AddEdge()],
   ["removeedge", new RemoveEdge()],
   ["changeedge", new ChangeEdge()],
+  ["changeedgemetadata", new ChangeEdgeMetadata()],
   ["changeconfiguration", new ChangeConfiguration()],
   ["changemetadata", new ChangeMetadata()],
   ["changegraphmetadata", new ChangeGraphMetadata()],

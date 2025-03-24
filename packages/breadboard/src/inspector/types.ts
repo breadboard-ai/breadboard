@@ -12,6 +12,7 @@ import type {
   ModuleCode,
   ModuleIdentifier,
   ModuleMetadata,
+  EdgeMetadata,
   NodeMetadata,
   TraversalResult,
   UUID,
@@ -209,6 +210,11 @@ export type InspectableEdge = {
    * The type of the edge.
    */
   type: InspectableEdgeType;
+
+  /**
+   * Edge metadata
+   */
+  metadata(): EdgeMetadata | undefined;
 
   /**
    * Get an inspectable output port.

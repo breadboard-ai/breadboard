@@ -7,6 +7,7 @@
 import {
   AssetMetadata,
   AssetPath,
+  EdgeMetadata,
   GraphIdentifier,
   GraphMetadata,
   Module,
@@ -106,6 +107,19 @@ export type ChangeEdgeSpec = {
   from: EditableEdgeSpec;
   to: EditableEdgeSpec;
   graphId: GraphIdentifier;
+};
+
+export type ChangeEdgeMetadataSpec = {
+  type: "changeedgemetadata";
+  edge: EditableEdgeSpec;
+  metadata: EdgeMetadata;
+  graphId: GraphIdentifier;
+  /**
+   * If set to `true`, the metadata will be set to the value specified in
+   * `metadata`. If set to `false`, the value will be merged with the
+   * existing metadata. Defaults to `false`.
+   */
+  reset?: boolean;
 };
 
 export type ChangeConfigurationSpec = {
@@ -211,6 +225,7 @@ export type EditSpec =
   | RemoveEdgeSpec
   | RemoveModuleSpec
   | ChangeEdgeSpec
+  | ChangeEdgeMetadataSpec
   | ChangeConfigurationSpec
   | ChangeMetadataSpec
   | ChangeGraphMetadataSpec
