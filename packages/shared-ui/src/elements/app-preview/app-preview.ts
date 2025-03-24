@@ -265,7 +265,7 @@ export class AppPreview extends LitElement {
       const graphUrl = new URL(this.graph.url);
       const capabilities = server.canProvide(graphUrl);
       if (!capabilities) {
-        return;
+        continue;
       }
 
       if (server.extendedCapabilities().preview) {

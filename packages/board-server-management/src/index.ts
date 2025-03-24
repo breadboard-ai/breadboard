@@ -400,3 +400,5 @@ export async function migrateExampleGraphProviders() {
   await storeBoardServer(new URL(EXAMPLE_BOARDS), "Example Boards", user);
   await storeBoardServer(new URL(PLAYGROUND_BOARDS), "Playground Boards", user);
 }
+
+export { BoardServerAwareDataStore } from "./board-server-aware-data-store";

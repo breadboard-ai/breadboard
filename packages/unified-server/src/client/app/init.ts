@@ -29,6 +29,7 @@ import { RunConfig } from "@google-labs/breadboard/harness";
 import { createFlowRunner } from "./utils/runner.js";
 import { getGlobalColor } from "./utils/color.js";
 import { LLMContent } from "@breadboard-ai/types";
+import { TokenVendor } from "@breadboard-ai/connection-client";
 
 const primaryColor = getGlobalColor("--bb-ui-700");
 const secondaryColor = getGlobalColor("--bb-ui-400");
@@ -52,6 +53,7 @@ async function fetchFlow() {
     }
 
     const flow = (await response.json()) as GraphDescriptor;
+    flow.url = new URL(fetchPath, window.location.href).href;
     return flow;
   } catch (err) {
     return null;
@@ -134,8 +136,12 @@ async function createTokenVendor(
   );
 }
 
-async function createRunner(runConfig: RunConfig | null) {
-  return createFlowRunner(runConfig);
+async function createRunner(
+  runConfig: RunConfig | null,
+  boardServerUrl: URL,
+  tokenVendor: TokenVendor
+) {
+  return createFlowRunner(runConfig, boardServerUrl, tokenVendor);
 }
 
 function createDefaultTheme(): AppTheme {
@@ -251,7 +257,11 @@ async function bootstrap(args: BootstrapArguments = {}) {
     const settingsHelper = new SettingsHelperImpl();
     const tokenVendor = await createTokenVendor(settingsHelper, environment);
     const runConfig = await createRunConfigWithProxy(flow, args, tokenVendor);
-    const runner = await createRunner(runConfig);
+    const runner = await createRunner(
+      runConfig,
+      args.boardServerUrl!,
+      tokenVendor
+    );
 
     const extractedTheme = extractThemeFromFlow(flow);
     const config: AppViewConfig = {

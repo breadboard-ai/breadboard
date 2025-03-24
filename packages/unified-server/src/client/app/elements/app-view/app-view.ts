@@ -292,7 +292,14 @@ export class AppView extends LitElement {
         }
 
         const inputEvent = evt as InputEnterEvent;
-        const data = inputEvent.data as InputValues;
+        let data = inputEvent.data as InputValues;
+
+        if ("secret" in data) {
+          const name = inputEvent.id;
+          const value = data.secret;
+          data = { [name]: value };
+        }
+
         const runner = this.#runner.harnessRunner;
 
         if (!runner) {

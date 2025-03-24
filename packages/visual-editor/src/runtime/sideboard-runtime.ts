@@ -31,7 +31,6 @@ import {
   Outcome,
   err,
 } from "@google-labs/breadboard";
-import { BoardServerAwareDataStore } from "./board-server-aware-data-store";
 import {
   createFileSystemBackend,
   getDataStore,
@@ -45,6 +44,7 @@ import type {
   SideBoardRuntimeEventTarget,
   SideBoardRuntimeTaskSpec,
 } from "@breadboard-ai/shared-ui/sideboards/types.js";
+import { BoardServerAwareDataStore } from "@breadboard-ai/board-server-management";
 
 export { createSideboardRuntimeProvider };
 
