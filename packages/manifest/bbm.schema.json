@@ -213,6 +213,10 @@
 					"$ref": "#/definitions/InputIdentifier",
 					"description": "The input of the `to` node. If this value is undefined, then the then no data is passed as output of the `from` node."
 				},
+				"metadata": {
+					"$ref": "#/definitions/EdgeMetadata",
+					"description": "The metadata of the edge. Use this provide additional information about the edge."
+				},
 				"optional": {
 					"description": "If true, this edge is optional: the data that passes through it is not considered a required input to the node.",
 					"type": "boolean"
@@ -230,6 +234,45 @@
 				"from",
 				"to"
 			],
+			"type": "object"
+		},
+		"EdgeMetadata": {
+			"additionalProperties": false,
+			"description": "Represents metadata of an edge. This is an optional part of the `Edge` that can be used to provide additional information about the node.",
+			"properties": {
+				"visual": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "number"
+						},
+						{
+							"type": "boolean"
+						},
+						{
+							"type": "null"
+						},
+						{
+							"items": {
+								"$ref": "#/definitions/NodeValue"
+							},
+							"type": "array"
+						},
+						{
+							"$ref": "#/definitions/Capability"
+						},
+						{
+							"additionalProperties": {
+								"$ref": "#/definitions/NodeValue"
+							},
+							"type": "object"
+						}
+					],
+					"description": "Metadata that conveys visual information about the edge. Can be used by visual editors to store information about the edge's appearance, current position, etc."
+				}
+			},
 			"type": "object"
 		},
 		"GraphDescriptor": {
