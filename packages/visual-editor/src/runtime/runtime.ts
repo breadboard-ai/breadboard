@@ -24,6 +24,7 @@ import {
   migrateExampleGraphProviders,
   migrateFileSystemProviders,
   legacyGraphProviderExists,
+  BoardServerAwareDataStore,
 } from "@breadboard-ai/board-server-management";
 
 import { loadKits, registerLegacyKits } from "../utils/kit-loader";
@@ -35,7 +36,6 @@ import { sandbox } from "../sandbox";
 import { Select } from "./select.js";
 import { StateManager } from "./state.js";
 import { getDataStore } from "@breadboard-ai/data-store";
-import { BoardServerAwareDataStore } from "./board-server-aware-data-store.js";
 import { createSideboardRuntimeProvider } from "./sideboard-runtime.js";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 
