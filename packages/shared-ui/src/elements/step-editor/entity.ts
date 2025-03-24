@@ -1,0 +1,135 @@
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+import { LitElement, html, nothing, HTMLTemplateResult, svg } from "lit";
+import { property } from "lit/decorators.js";
+import { repeat } from "lit/directives/repeat.js";
+import { styleMap } from "lit/directives/style-map.js";
+import { toCSSMatrix } from "./utils/to-css-matrix";
+import { intersects } from "./utils/rect-intersection";
+
+export class Entity extends LitElement {
+  boundsLabel = "";
+  entities = new Map<string, Entity>();
+
+  @property()
+  accessor bounds = new DOMRect();
+
+  @property()
+  accessor worldBounds: DOMRect | null = null;
+
+  @property({ reflect: true, type: Boolean })
+  accessor showBounds = false;
+
+  @property()
+  accessor fixedSize = false;
+
+  @property()
+  accessor cullable = false;
+
+  @property()
+  accessor transform = new DOMMatrix();
+
+  @property()
+  accessor worldTransform = new DOMMatrix();
+
+  @property({ reflect: true, type: Boolean })
+  accessor hidden = false;
+
+  getLocalBounds() {
+    return new DOMRect();
+  }
+
+  updateEntity(matrix = new DOMMatrix()) {
+    // The order here is super important.
+    // 1. Send the most recent world transform down to the child entities
+    // 2. Calculate the local bounds (which may also adjust the local transform)
+    // 3. Apply the parent's matrix to the current entity *after* the bounds
+    //    have been checked and any local transforms adjusted.
+    for (const entity of this.entities.values()) {
+      entity.updateEntity(matrix.multiply(this.transform));
+    }
+
+    this.bounds = this.calculateLocalBounds();
+    this.worldTransform = matrix.multiply(this.transform);
+    this.worldBounds = this.calculateWorldBounds();
+  }
+
+  calculateLocalBounds() {
+    return new DOMRect();
+  }
+
+  calculateWorldBounds() {
+    const tl = new DOMPoint(this.bounds.left, this.bounds.top).matrixTransform(
+      this.worldTransform
+    );
+    const tr = new DOMPoint(this.bounds.right, this.bounds.top).matrixTransform(
+      this.worldTransform
+    );
+    const bl = new DOMPoint(
+      this.bounds.left,
+      this.bounds.bottom
+    ).matrixTransform(this.worldTransform);
+
+    return new DOMRect(tl.x, tl.y, tr.x - tl.x, bl.y - tl.y);
+  }
+
+  renderBounds() {
+    if (!this.bounds || !this.showBounds) {
+      return nothing;
+    }
+
+    const styles: Record<string, string> = {
+      transform: `${toCSSMatrix(this.worldTransform)}`,
+      width: `${this.bounds.width}px`,
+      height: `${this.bounds.height}px`,
+    };
+
+    return html`<div id="bounds" style=${styleMap(styles)}><label>${
+      this.boundsLabel === undefined
+        ? "Unlabeled entity"
+        : this.boundsLabel === ""
+          ? "Main graph"
+          : this.boundsLabel
+    }</div>`;
+  }
+
+  cullOutsideOf(clipBounds: DOMRect, padding = 0) {
+    this.hidden = false;
+
+    if (!this.worldBounds) {
+      return;
+    }
+
+    this.hidden =
+      this.cullable && !intersects(this.worldBounds, clipBounds, padding);
+
+    for (const entity of this.entities.values()) {
+      entity.cullOutsideOf(clipBounds, padding);
+    }
+  }
+
+  adjustTranslation(x: number, y: number) {
+    this.transform.translateSelf(x, y);
+  }
+
+  protected renderSelf(): HTMLTemplateResult | symbol {
+    return nothing;
+  }
+
+  render():
+    | Array<HTMLTemplateResult | symbol>
+    | ReturnType<typeof html>
+    | ReturnType<typeof svg>
+    | symbol {
+    return [
+      this.renderSelf(),
+      html`${repeat(this.entities.values(), (entity) => {
+        entity.showBounds = this.showBounds;
+        return html`${entity}`;
+      })}`,
+    ];
+  }
+}

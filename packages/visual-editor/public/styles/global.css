@@ -338,6 +338,9 @@ body.hide-cursor {
   --bb-icon-move-down: url(/third_party/icons/move-down.svg);
   --bb-icon-move-down-inverted: url(/third_party/icons/move-down-inverted.svg);
 
+  --bb-icon-multimodal: url(/third_party/icons/multimodal.svg);
+  --bb-icon-multimodal-inverted: url(/third_party/icons/multimodal-inverted.svg);
+
   --bb-icon-next: url(/third_party/icons/next.svg);
   --bb-icon-next-inverted: url(/third_party/icons/next-inverted.svg);
 
@@ -611,6 +614,19 @@ body.hide-cursor {
   --bb-neutral-900: #1a1a1a;
 
   /** Node Colors */
+
+  --bb-module-0: #ffffff;
+  --bb-module-10: #fafafa;
+  --bb-module-50: #f6f6f6;
+  --bb-module-100: #ededed;
+  --bb-module-200: #e3e3e3;
+  --bb-module-300: #d9d9d9;
+  --bb-module-400: #c2c2c2;
+  --bb-module-500: #9c9c9c;
+  --bb-module-600: #7a7a7a;
+  --bb-module-700: #595959;
+  --bb-module-800: #333333;
+  --bb-module-900: #1a1a1a;
 
   --bb-generative-10: #fbfaff;
   --bb-generative-50: #f7f5ff;
@@ -1107,6 +1123,9 @@ body.hide-cursor {
 
   --bb-icon-move-down: url(/third_party/icons/move-down-inverted.svg);
   --bb-icon-move-down-inverted: url(/third_party/icons/move-down.svg);
+
+  --bb-icon-multimodal: url(/third_party/icons/multimodal-inverted.svg);
+  --bb-icon-multimodal-inverted: url(/third_party/icons/multimodal.svg);
 
   --bb-icon-next: url(/third_party/icons/next-inverted.svg);
   --bb-icon-next-inverted: url(/third_party/icons/next.svg);

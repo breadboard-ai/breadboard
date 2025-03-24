@@ -279,6 +279,12 @@ export class UI extends LitElement {
           .items.get("Enable Custom Step Creation")?.value
       : false;
 
+    const useDOMRenderer = this.settings
+      ? this.settings
+          .getSection(SETTINGS_TYPE.GENERAL)
+          .items.get("Enable Experimental Graph Renderer")?.value
+      : false;
+
     const graph = this.editor?.inspect("") || null;
     let capabilities: false | GraphProviderCapabilities = false;
     let extendedCapabilities: false | GraphProviderExtendedCapabilities = false;
@@ -332,6 +338,10 @@ export class UI extends LitElement {
         showCustomStepEditing,
       ],
       () => {
+        if (useDOMRenderer) {
+          return html`<bb-renderer .graph=${graph}></bb-renderer>`;
+        }
+
         return html`<bb-editor
           ${ref(this.#graphEditorRef)}
           .graphStoreUpdateId=${this.graphStoreUpdateId}

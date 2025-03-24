@@ -203,6 +203,14 @@ export class SettingsStore implements BreadboardUI_Types.SettingsStore {
             value: false,
           },
         ],
+        [
+          "Enable Experimental Graph Renderer",
+          {
+            name: "Enable Experimental Graph Renderer",
+            description: "Toggles a WIP graph renderer",
+            value: false,
+          },
+        ],
       ]),
     },
     [BreadboardUI_Types.SETTINGS_TYPE.SECRETS]: {
