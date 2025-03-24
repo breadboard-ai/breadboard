@@ -62,8 +62,19 @@ async function fetchTemplate(
   flow: GraphDescriptor | null
 ): Promise<AppTemplate> {
   let template: AppTemplate | null = null;
-  if (flow && flow.metadata?.visual?.presentation?.template) {
-    const templateName = flow.metadata.visual.presentation.template;
+  if (flow) {
+    let templateName;
+    if (
+      flow.metadata?.visual?.presentation?.themes &&
+      flow.metadata?.visual?.presentation?.theme
+    ) {
+      const { theme, themes } = flow.metadata.visual.presentation;
+      const appTheme = themes[theme];
+      templateName = appTheme.template;
+    } else if (flow.metadata?.visual?.presentation?.template) {
+      templateName = flow.metadata.visual.presentation.template;
+    }
+
     switch (templateName) {
       case "basic": {
         const mod = await import(

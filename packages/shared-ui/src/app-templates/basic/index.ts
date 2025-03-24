@@ -980,7 +980,14 @@ export class Template extends LitElement implements AppTemplate {
         `;
       } else if (props.length > 0 && currentItem.descriptor?.type === "input") {
         active = true;
-        const disabled = currentItem.value !== undefined;
+        const valueIsDefined = currentItem.value !== undefined;
+        const valueHasKeys =
+          typeof currentItem.value === "object" &&
+          Object.keys(currentItem.value).length > 0;
+        const valueIsNonEmptyArray =
+          Array.isArray(currentItem.value) && currentItem.value.length > 0;
+        const disabled =
+          valueIsDefined && (valueHasKeys || valueIsNonEmptyArray);
 
         inputContents = html`
           <bb-add-asset-button
