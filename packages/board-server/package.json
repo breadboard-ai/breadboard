@@ -137,7 +137,7 @@
     "@types/better-sqlite3": "^7.6.12",
     "@types/cors": "^2.8.17",
     "@types/node": "^22.0.0",
-    "@types/supertest": "^6.0.2",
+    "@types/supertest": "^6.0.3",
     "@types/uuid": "^10.0.0",
     "esbuild": "^0.25.1",
     "eslint": "^8.57.1",
