@@ -55,17 +55,28 @@
       }
     },
     "userModified": true,
-    "tags": [],
-    "parameters": {
-      "folio": {
-        "title": "Folio",
-        "usedIn": [
-          "a2-c650be39"
-        ]
-      }
-    }
+    "tags": []
   },
   "assets": {
+    "connectors/c106abb1-ccf1-4444-ade9-7ca24583e226": {
+      "data": [
+        {
+          "parts": [
+            {
+              "json": {
+                "type": "file://bgl/folio-wip.bgl.json",
+                "configuration": {}
+              }
+            }
+          ],
+          "role": "user"
+        }
+      ],
+      "metadata": {
+        "title": "Untitled Connector",
+        "type": "connector"
+      }
+    },
     "@@thumbnail": {
       "metadata": {
         "title": "Thumbnail",

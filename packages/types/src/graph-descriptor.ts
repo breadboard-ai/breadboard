@@ -571,8 +571,9 @@ export type AssetPath = string;
  * - "file" -- user-uploaded file. In this case, the data must be:
  *   - a single inlineData part with the right mimeType
  *   - of a single LLMContent item
+ * - "connector" -- a [connector](https://github.com/breadboard-ai/breadboard/wiki/Connectors)
  */
-export type AssetType = "content" | "file";
+export type AssetType = "content" | "file" | "connector";
 
 export type AssetMetadata = {
   title: string;
