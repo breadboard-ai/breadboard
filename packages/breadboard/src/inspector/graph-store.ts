@@ -42,6 +42,7 @@ import {
   MutableGraphStore,
 } from "./types.js";
 import { filterEmptyValues } from "./utils.js";
+import { FileSystem, FileSystemEntry } from "../data/types.js";
 
 export { contextFromMutableGraph, GraphStore, makeTerribleOptions };
 
@@ -68,6 +69,29 @@ function makeTerribleOptions(
       },
     },
     loader: createLoader(),
+    fileSystem: {
+      read() {
+        throw new Error("Non-existent filesystem: Terrible Options were used.");
+      },
+      write() {
+        throw new Error("Non-existent filesystem: Terrible Options were used.");
+      },
+      query() {
+        throw new Error("Non-existent filesystem: Terrible Options were used.");
+      },
+      close: function (): Promise<void> {
+        throw new Error("Non-existent filesystem: Terrible Options were used.");
+      },
+      createRunFileSystem: function (): FileSystem {
+        throw new Error("Non-existent filesystem: Terrible Options were used.");
+      },
+      createModuleFileSystem: function (): FileSystem {
+        throw new Error("Non-existent filesystem: Terrible Options were used.");
+      },
+      env: function (): FileSystemEntry[] {
+        throw new Error("Non-existent filesystem: Terrible Options were used.");
+      },
+    },
   };
 }
 
@@ -78,6 +102,7 @@ class GraphStore
   readonly kits: readonly Kit[];
   readonly sandbox: Sandbox;
   readonly loader: GraphLoader;
+  readonly fileSystem: FileSystem;
 
   #legacyKits: GraphStoreEntry[];
 
@@ -91,6 +116,7 @@ class GraphStore
     this.kits = args.kits;
     this.sandbox = args.sandbox;
     this.loader = args.loader;
+    this.fileSystem = args.fileSystem;
     this.#legacyKits = this.#populateLegacyKits(args.kits);
   }
 

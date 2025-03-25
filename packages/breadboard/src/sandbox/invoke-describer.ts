@@ -90,7 +90,8 @@ async function invokeMainDescriber(
   graph: GraphDescriptor,
   inputs: InputValues,
   inputSchema?: Schema,
-  outputSchema?: Schema
+  outputSchema?: Schema,
+  capabilities?: CapabilitiesManager
 ): Promise<NodeDescriberResult | undefined | false> {
   const { main, modules: declarations } = graph;
   if (!declarations || !main) {
@@ -100,7 +101,11 @@ async function invokeMainDescriber(
     Object.entries(declarations).map(([name, spec]) => [name, spec.code])
   );
   await addImportedModules(modules, mutable);
-  const module = new SandboxedModule(mutable.store.sandbox, {}, modules);
+  const module = new SandboxedModule(
+    mutable.store.sandbox,
+    capabilities?.createSpec() || {},
+    modules
+  );
   try {
     const result = (await module.describe(main, {
       inputs,

@@ -29,6 +29,7 @@ import {
   NodeConfiguration,
   NodeDescriberResult,
   NodeDescriptor,
+  NodeHandlerContext,
   NodeHandlerMetadata,
   NodeIdentifier,
   NodeTypeIdentifier,
@@ -38,6 +39,7 @@ import {
 } from "../types.js";
 import {
   DataStore,
+  FileSystem,
   Outcome,
   RunStore,
   SerializedDataStoreGroup,
@@ -313,7 +315,10 @@ export type InspectableGraph = {
    * Returns the API of the graph. This function is designed to match the
    * output of the `NodeDescriberFunction`.
    */
-  describe(inputs?: InputValues): Promise<NodeDescriberResult>;
+  describe(
+    inputs?: InputValues,
+    context?: NodeHandlerContext
+  ): Promise<NodeDescriberResult>;
   /**
    * Returns the subgraphs that are embedded in this graph or `undefined` if
    * this is already a subgraph
@@ -376,6 +381,7 @@ export type InspectableGraphOptions = {
    * The Javascript Sandbox that will be used to run custom describers.
    */
   readonly sandbox?: Sandbox;
+  readonly fileSystem?: FileSystem;
 };
 
 export type DescribeResultCacheArgs = {
@@ -749,6 +755,7 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> &
     readonly kits: readonly Kit[];
     readonly sandbox: Sandbox;
     readonly loader: GraphLoader;
+    readonly fileSystem: FileSystem;
 
     get(mainGraphId: MainGraphIdentifier): MutableGraph | undefined;
 
@@ -1314,7 +1321,12 @@ export type SerializedRun = {
 };
 
 export type GraphDescriber = {
-  describe(inputs?: InputValues): Promise<NodeDescriberResult>;
+  describe(
+    inputs?: InputValues,
+    inputSchema?: Schema,
+    outputSchema?: Schema,
+    context?: NodeHandlerContext
+  ): Promise<NodeDescriberResult>;
 };
 
 export type GraphDescriberFactory = (

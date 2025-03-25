@@ -35,6 +35,7 @@ import { contextFromMutableGraph } from "../graph-store.js";
 import { SchemaDiffer } from "../../utils/schema-differ.js";
 import { UpdateEvent } from "./event.js";
 import { invokeMainDescriber } from "../../sandbox/invoke-describer.js";
+import { assetsFromGraphDescriptor } from "../../data/index.js";
 
 export { NodeTypeDescriberManager };
 
@@ -219,6 +220,11 @@ class NodeTypeDescriberManager implements DescribeResultCacheArgs {
       kits,
       sandbox: this.mutable.store.sandbox,
       graphStore: this.mutable.store,
+      fileSystem: this.mutable.store.fileSystem.createRunFileSystem({
+        graphUrl: handle.outerGraph().url!,
+        env: [],
+        assets: assetsFromGraphDescriptor(handle.outerGraph()),
+      }),
       wires: {
         incoming: Object.fromEntries(
           (options?.incoming ?? []).map((edge) => [

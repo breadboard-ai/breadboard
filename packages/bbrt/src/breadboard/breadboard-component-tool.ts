@@ -75,6 +75,43 @@ export class BreadboardComponentTool implements BBRTTool {
           throw new Error("TODO: runModule not implemented");
         },
       },
+      fileSystem: {
+        read() {
+          throw new Error(
+            "Non-existent filesystem: Terrible Options were used."
+          );
+        },
+        write() {
+          throw new Error(
+            "Non-existent filesystem: Terrible Options were used."
+          );
+        },
+        query() {
+          throw new Error(
+            "Non-existent filesystem: Terrible Options were used."
+          );
+        },
+        close: function (): Promise<void> {
+          throw new Error(
+            "Non-existent filesystem: Terrible Options were used."
+          );
+        },
+        createRunFileSystem: function () {
+          throw new Error(
+            "Non-existent filesystem: Terrible Options were used."
+          );
+        },
+        createModuleFileSystem: function () {
+          throw new Error(
+            "Non-existent filesystem: Terrible Options were used."
+          );
+        },
+        env: function () {
+          throw new Error(
+            "Non-existent filesystem: Terrible Options were used."
+          );
+        },
+      },
     });
 
     if (this.#describe) {

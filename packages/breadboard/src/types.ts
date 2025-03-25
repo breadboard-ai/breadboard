@@ -302,6 +302,7 @@ export type NodeDescriberContext = {
    * dependencies.
    */
   graphStore?: MutableGraphStore;
+  fileSystem?: FileSystem;
 };
 
 export type NodeDescriberWires = {

@@ -12,7 +12,11 @@ import {
 } from "@breadboard-ai/types";
 import { GraphDescriber, InspectableNode, MutableGraph } from "../types.js";
 import { GraphDescriptorHandle } from "./graph-descriptor-handle.js";
-import { NodeDescriberResult, Schema } from "../../types.js";
+import {
+  NodeDescriberResult,
+  NodeHandlerContext,
+  Schema,
+} from "../../types.js";
 import { describeInput, describeOutput } from "./schemas.js";
 import { combineSchemas, removeProperty } from "../../schema.js";
 import { invokeGraph } from "../../run/invoke-graph.js";
@@ -30,6 +34,7 @@ import {
   invokeDescriber,
   invokeMainDescriber,
 } from "../../sandbox/invoke-describer.js";
+import { CapabilitiesManagerImpl } from "../../sandbox/capabilities-manager.js";
 
 export { GraphDescriberManager };
 
@@ -161,7 +166,8 @@ class GraphDescriberManager implements GraphDescriber {
   }
 
   async #tryDescribingWithCustomDescriber(
-    inputs: InputValues
+    inputs: InputValues,
+    context?: NodeHandlerContext
   ): Promise<Outcome<NodeDescriberResult>> {
     const customDescriber =
       this.handle.graph().metadata?.describer ||
@@ -187,7 +193,8 @@ class GraphDescriberManager implements GraphDescriber {
             this.mutable.graph,
             inputs,
             inputSchema,
-            outputSchema
+            outputSchema,
+            new CapabilitiesManagerImpl(context)
           );
         } else {
           result = await invokeDescriber(
@@ -196,7 +203,8 @@ class GraphDescriberManager implements GraphDescriber {
             this.mutable.graph,
             inputs,
             inputSchema,
-            outputSchema
+            outputSchema,
+            new CapabilitiesManagerImpl(context)
           );
         }
         if (result) {
@@ -255,8 +263,16 @@ class GraphDescriberManager implements GraphDescriber {
     }
   }
 
-  async describe(inputs?: InputValues): Promise<NodeDescriberResult> {
-    const result = await this.#tryDescribingWithCustomDescriber(inputs || {});
+  async describe(
+    inputs?: InputValues,
+    _inputSchema?: Schema,
+    _outputSchema?: Schema,
+    context?: NodeHandlerContext
+  ): Promise<NodeDescriberResult> {
+    const result = await this.#tryDescribingWithCustomDescriber(
+      inputs || {},
+      context
+    );
     if (ok(result)) {
       return result;
     }
@@ -299,7 +315,8 @@ class ModuleDescriber implements GraphDescriber {
   async describe(
     inputs?: InputValues,
     inputSchema?: Schema,
-    outputSchema?: Schema
+    outputSchema?: Schema,
+    context?: NodeHandlerContext
   ): Promise<NodeDescriberResult> {
     const result = await invokeDescriber(
       this.moduleId,
@@ -307,7 +324,8 @@ class ModuleDescriber implements GraphDescriber {
       this.mutable.graph,
       inputs || {},
       inputSchema,
-      outputSchema
+      outputSchema,
+      new CapabilitiesManagerImpl(context)
     );
     if (!result) return emptyDescriberResult();
 

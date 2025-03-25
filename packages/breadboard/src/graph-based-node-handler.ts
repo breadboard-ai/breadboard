@@ -7,6 +7,7 @@
 import { emptyDescriberResult, filterEmptyValues } from "./inspector/utils.js";
 import { resolveGraph } from "./loader/loader.js";
 import { invokeGraph } from "./run/invoke-graph.js";
+import { CapabilitiesManagerImpl } from "./sandbox/capabilities-manager.js";
 import { invokeDescriber } from "./sandbox/invoke-describer.js";
 import {
   GraphDescriptor,
@@ -84,7 +85,8 @@ class GraphBasedNodeHandler implements NodeHandlerObject {
         graph,
         inputs || {},
         inputSchema,
-        outputSchema
+        outputSchema,
+        new CapabilitiesManagerImpl(context)
       );
       if (!result) {
         return emptyDescriberResult();
@@ -98,7 +100,7 @@ class GraphBasedNodeHandler implements NodeHandlerObject {
       if (!inspectableGraph) {
         return emptyDescriberResult();
       }
-      const result = await inspectableGraph.describe(inputs);
+      const result = await inspectableGraph.describe(inputs, context);
       return result;
     }
   }

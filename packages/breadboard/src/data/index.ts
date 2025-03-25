@@ -45,3 +45,5 @@ export { createEphemeralBlobStore } from "./file-system/ephemeral-blob-store.js"
 export { createFileSystem } from "./file-system/index.js";
 
 export { assetsFromGraphDescriptor } from "./file-system/assets.js";
+
+export { StubFileSystem } from "./file-system/stub-file-system.js";

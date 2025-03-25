@@ -35,6 +35,7 @@ export async function createFlowRunner(
     kits,
     loader: config.loader!,
     sandbox,
+    fileSystem: config.fileSystem!,
   });
   registerLegacyKits(graphStore);
 

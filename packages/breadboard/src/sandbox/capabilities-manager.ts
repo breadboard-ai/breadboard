@@ -148,7 +148,8 @@ function createDescribeHandler(context: NodeHandlerContext) {
         mutable.graph,
         inputs.inputs || {},
         inputs.inputSchema,
-        inputs.outputSchema
+        inputs.outputSchema,
+        new CapabilitiesManagerImpl(context)
       );
       if (!result) {
         return {
@@ -163,7 +164,7 @@ function createDescribeHandler(context: NodeHandlerContext) {
 }
 
 class CapabilitiesManagerImpl implements CapabilitiesManager {
-  constructor(public readonly context: NodeHandlerContext | undefined) {}
+  constructor(public readonly context?: NodeHandlerContext) {}
 
   createSpec(): CapabilitySpec {
     if (this.context) {
@@ -179,6 +180,28 @@ class CapabilitiesManagerImpl implements CapabilitiesManager {
         write: fs.write(),
       };
     }
-    return {};
+    return CapabilitiesManagerImpl.dummies();
+  }
+
+  static #dummies?: CapabilitySpec;
+
+  static dummies(): CapabilitySpec {
+    if (this.#dummies) return this.#dummies;
+
+    this.#dummies = Object.fromEntries(
+      [
+        "fetch",
+        "secrets",
+        "invoke",
+        "output",
+        "describe",
+        "query",
+        "read",
+        "write",
+      ].map((name) => {
+        return [name, () => ({ $error: "Capability not available" })];
+      })
+    );
+    return this.#dummies;
   }
 }

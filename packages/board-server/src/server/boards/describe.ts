@@ -9,6 +9,7 @@ import type { Request, Response } from "express";
 import {
   createGraphStore,
   createLoader,
+  StubFileSystem,
   type NodeDescriberResult,
 } from "@google-labs/breadboard";
 import { NodeSandbox } from "@breadboard-ai/jsandbox/node";
@@ -48,6 +49,7 @@ async function describe(_req: Request, res: Response): Promise<void> {
     kits: [],
     loader,
     sandbox: new NodeSandbox(),
+    fileSystem: new StubFileSystem(),
   });
 
   const adding = graphStore.addByDescriptor(graph);
