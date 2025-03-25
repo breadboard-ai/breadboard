@@ -12,7 +12,7 @@ import {
   createEmptyGraphSelectionState,
   inspectableEdgeToString,
 } from "../../utils/workspace";
-import { GraphEdge } from "./edge";
+import { GraphEdge } from "./graph-edge";
 import { GraphSelectionState } from "../../types/types";
 
 @customElement("bb-graph")
