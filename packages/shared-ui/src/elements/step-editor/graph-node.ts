@@ -134,6 +134,7 @@ export class GraphNode extends Box {
         display: none;
       }
 
+      :host(:focus),
       :host([selected]) #container {
         outline: 2px solid var(--border);
         z-index: 2;
@@ -274,6 +275,8 @@ export class GraphNode extends Box {
 
   constructor(public readonly nodeId: string) {
     super();
+
+    this.tabIndex = 0;
   }
 
   #toGridSize(value: number) {

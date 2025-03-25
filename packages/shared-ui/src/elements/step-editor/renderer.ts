@@ -31,6 +31,7 @@ import {
 import { WorkspaceSelectionStateEvent } from "../../events/events";
 import { styleMap } from "lit/directives/style-map.js";
 import { Entity } from "./entity";
+import { identity } from "./utils/identity";
 
 @customElement("bb-renderer")
 export class Renderer extends LitElement {
@@ -67,6 +68,9 @@ export class Renderer extends LitElement {
   @property()
   accessor graphFitPadding = 100;
 
+  @property()
+  accessor graphTopologyUpdateId = 0;
+
   @state()
   accessor _boundsDirty = new Set<string>();
 
@@ -85,6 +89,7 @@ export class Renderer extends LitElement {
       user-select: none;
       width: 100%;
       height: 100%;
+      outline: none;
     }
 
     #overlay {
@@ -141,6 +146,12 @@ export class Renderer extends LitElement {
   });
   #graphs = new Map<string, Graph>();
   #effects = new Map<string, () => void>();
+
+  constructor() {
+    super();
+
+    this.tabIndex = 0;
+  }
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -299,6 +310,14 @@ export class Renderer extends LitElement {
       this.#adjustToNewBounds();
     }
 
+    if (changedProperties.has("cullPadding")) {
+      if (this.cullPadding >= 0) {
+        this.style.setProperty("--cull-padding", null);
+      } else {
+        this.style.setProperty("--cull-padding", `${this.cullPadding}px`);
+      }
+    }
+
     if (changedProperties.has("selectionState") && this.selectionState) {
       for (const [graphId, selectionState] of this.selectionState.selectionState
         .graphs) {
@@ -311,7 +330,12 @@ export class Renderer extends LitElement {
       }
     }
 
-    if (changedProperties.has("graph") && this.graph) {
+    if (
+      (changedProperties.has("graph") ||
+        changedProperties.has("graphTopologyUpdateId")) &&
+      this.graph &&
+      this.camera
+    ) {
       // Main graph.
       let mainGraph = this.#graphs.get(MAIN_BOARD_ID);
       if (!mainGraph) {
@@ -321,6 +345,7 @@ export class Renderer extends LitElement {
 
       mainGraph.nodes = this.graph.nodes();
       mainGraph.edges = this.graph.edges();
+      identity(mainGraph.transform);
 
       // Subgraphs.
       for (const [id, graph] of Object.entries(this.graph.graphs() ?? {})) {
@@ -332,21 +357,15 @@ export class Renderer extends LitElement {
 
         subGraph.nodes = graph.nodes();
         subGraph.edges = graph.edges();
-      }
-    }
-
-    if (changedProperties.has("cullPadding")) {
-      if (this.cullPadding >= 0) {
-        this.style.setProperty("--cull-padding", null);
-      } else {
-        this.style.setProperty("--cull-padding", `${this.cullPadding}px`);
+        identity(subGraph.transform);
       }
     }
 
     if (
       (changedProperties.has("tick") ||
         changedProperties.has("_boundsDirty") ||
-        changedProperties.has("interactionMode")) &&
+        changedProperties.has("interactionMode") ||
+        changedProperties.has("graphTopologyUpdateId")) &&
       this.graph &&
       this.camera
     ) {

@@ -85,7 +85,9 @@ export class Graph extends Box {
         }
       );
 
-      graphNode.transform.translateSelf(x, y);
+      graphNode.transform.e = x;
+      graphNode.transform.f = y;
+
       graphNode.showBounds = this.showBounds;
       graphNode.boundsLabel = node.title();
     }

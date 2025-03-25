@@ -341,6 +341,7 @@ export class UI extends LitElement {
         if (useDOMRenderer) {
           return html`<bb-renderer
             .graph=${graph}
+            .graphTopologyUpdateId=${this.graphTopologyUpdateId}
             .selectionState=${this.selectionState}
           ></bb-renderer>`;
         }

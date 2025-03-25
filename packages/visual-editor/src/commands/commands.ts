@@ -13,7 +13,11 @@ import { MAIN_BOARD_ID } from "../runtime/util";
 function isFocusedOnGraphRenderer(evt: Event) {
   return evt
     .composedPath()
-    .some((target) => target instanceof BreadboardUI.Elements.GraphRenderer);
+    .some(
+      (target) =>
+        target instanceof BreadboardUI.Elements.GraphRenderer ||
+        target instanceof BreadboardUI.Elements.Renderer
+    );
 }
 
 export const DeleteCommand: KeyboardCommand = {
