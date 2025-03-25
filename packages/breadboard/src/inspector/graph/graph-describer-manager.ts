@@ -7,20 +7,34 @@
 import {
   GraphIdentifier,
   InputValues,
+  ModuleIdentifier,
   NodeTypeIdentifier,
 } from "@breadboard-ai/types";
-import { InspectableNode, MutableGraph } from "../types.js";
+import { GraphDescriber, InspectableNode, MutableGraph } from "../types.js";
 import { GraphDescriptorHandle } from "./graph-descriptor-handle.js";
-import { NodeDescriberResult, Schema } from "../../types.js";
+import {
+  NodeDescriberResult,
+  NodeHandlerContext,
+  Schema,
+} from "../../types.js";
 import { describeInput, describeOutput } from "./schemas.js";
 import { combineSchemas, removeProperty } from "../../schema.js";
-import { Result } from "../../editor/types.js";
+import { invokeGraph } from "../../run/invoke-graph.js";
+import { ParameterManager } from "../../run/parameter-manager.js";
+import { Outcome } from "../../data/types.js";
+import { err, ok } from "../../data/file-system/utils.js";
+import { ExportsDescriber } from "./exports-describer.js";
+import {
+  emptyDescriberResult,
+  filterEmptyValues,
+  getModuleId,
+  isModule,
+} from "../utils.js";
 import {
   invokeDescriber,
   invokeMainDescriber,
-} from "../../sandboxed-run-module.js";
-import { invokeGraph } from "../../run/invoke-graph.js";
-import { ParameterManager } from "../../run/parameter-manager.js";
+} from "../../sandbox/invoke-describer.js";
+import { CapabilitiesManagerImpl } from "../../sandbox/capabilities-manager.js";
 
 export { GraphDescriberManager };
 
@@ -28,14 +42,21 @@ export { GraphDescriberManager };
  * Contains all machinery that allows
  * describing a node or a graph
  */
-class GraphDescriberManager {
+class GraphDescriberManager implements GraphDescriber {
   private readonly params: ParameterManager;
+  private readonly exports: ExportsDescriber;
 
   private constructor(
     public readonly handle: GraphDescriptorHandle,
     public readonly mutable: MutableGraph
   ) {
     this.params = new ParameterManager(handle.graph());
+    this.exports = new ExportsDescriber(mutable, (graphId, mutable) => {
+      if (isModule(graphId)) {
+        return new ModuleDescriber(mutable, getModuleId(graphId));
+      }
+      return GraphDescriberManager.create(graphId, mutable);
+    });
   }
 
   #nodesByType(type: NodeTypeIdentifier): InspectableNode[] {
@@ -91,7 +112,14 @@ class GraphDescriberManager {
       "schema"
     );
 
-    return this.#presumeContextInOut({ inputSchema, outputSchema });
+    const adjustedResults = this.#presumeContextInOut({
+      inputSchema,
+      outputSchema,
+    });
+    // Do not add export describers when we are in a subgraph.
+    if (this.handle.graphId) return adjustedResults;
+
+    return this.exports.transform(adjustedResults);
   }
 
   /**
@@ -138,15 +166,16 @@ class GraphDescriberManager {
   }
 
   async #tryDescribingWithCustomDescriber(
-    inputs: InputValues
-  ): Promise<Result<NodeDescriberResult>> {
+    inputs: InputValues,
+    context?: NodeHandlerContext
+  ): Promise<Outcome<NodeDescriberResult>> {
     const customDescriber =
       this.handle.graph().metadata?.describer ||
       (this.handle.graph().main
         ? `module:${this.handle.graph().main}`
         : undefined);
     if (!customDescriber) {
-      return { success: false, error: "Unable to find custom describer" };
+      return err("Unable to find custom describer");
     }
     // invoke graph
     try {
@@ -164,7 +193,8 @@ class GraphDescriberManager {
             this.mutable.graph,
             inputs,
             inputSchema,
-            outputSchema
+            outputSchema,
+            new CapabilitiesManagerImpl(context)
           );
         } else {
           result = await invokeDescriber(
@@ -173,17 +203,15 @@ class GraphDescriberManager {
             this.mutable.graph,
             inputs,
             inputSchema,
-            outputSchema
+            outputSchema,
+            new CapabilitiesManagerImpl(context)
           );
         }
         if (result) {
-          return { success: true, result };
+          return result;
         }
         if (result === false) {
-          return {
-            success: false,
-            error: "Custom describer could not provide results.",
-          };
+          return err("Custom describer could not provide results.");
         }
       }
       const base = this.handle.url();
@@ -199,7 +227,7 @@ class GraphDescriberManager {
       if (!loadResult.success) {
         const error = `Could not load custom describer graph ${customDescriber}: ${loadResult.error}`;
         console.warn(error);
-        return { success: false, error };
+        return err(error);
       }
       const { inputSchema: $inputSchema, outputSchema: $outputSchema } =
         await this.#describeWithStaticAnalysis();
@@ -220,31 +248,33 @@ class GraphDescriberManager {
       if ("$error" in result) {
         const message = `Error while invoking graph's custom describer`;
         console.warn(message, result.$error);
-        return {
-          success: false,
-          error: `${message}: ${JSON.stringify(result.$error)}`,
-        };
+        return err(`${message}: ${JSON.stringify(result.$error)}`);
       }
       if (!result.inputSchema || !result.outputSchema) {
         const message = `Custom describer did not return input/output schemas`;
         console.warn(message, result);
-        return {
-          success: false,
-          error: `${message}: ${JSON.stringify(result)}`,
-        };
+        return err(`${message}: ${JSON.stringify(result)}`);
       }
-      return { success: true, result };
+      return result;
     } catch (e) {
       const message = `Error while invoking graph's custom describer`;
       console.warn(message, e);
-      return { success: false, error: `${message}: ${JSON.stringify(e)}` };
+      return err(`${message}: ${JSON.stringify(e)}`);
     }
   }
 
-  async describe(inputs?: InputValues): Promise<NodeDescriberResult> {
-    const result = await this.#tryDescribingWithCustomDescriber(inputs || {});
-    if (result.success) {
-      return result.result;
+  async describe(
+    inputs?: InputValues,
+    _inputSchema?: Schema,
+    _outputSchema?: Schema,
+    context?: NodeHandlerContext
+  ): Promise<NodeDescriberResult> {
+    const result = await this.#tryDescribingWithCustomDescriber(
+      inputs || {},
+      context
+    );
+    if (ok(result)) {
+      return result;
     }
     const staticResult = await this.#describeWithStaticAnalysis();
     const graph = this.handle.graph();
@@ -267,33 +297,38 @@ class GraphDescriberManager {
   static create(
     graphId: GraphIdentifier,
     cache: MutableGraph
-  ): Result<GraphDescriberManager> {
+  ): Outcome<GraphDescriberManager> {
     const handle = GraphDescriptorHandle.create(cache.graph, graphId);
     if (!handle.success) {
-      return handle;
+      return err(handle.error);
     }
-    return {
-      success: true,
-      result: new GraphDescriberManager(handle.result, cache),
-    };
+    return new GraphDescriberManager(handle.result, cache);
   }
 }
 
-/**
- * A utility function to filter out empty (null or undefined) values from
- * an object.
- *
- * @param obj -- The object to filter.
- * @returns -- The object with empty values removed.
- */
-function filterEmptyValues<T extends Record<string, unknown>>(obj: T): T {
-  return Object.fromEntries(
-    Object.entries(obj).filter(([, value]) => {
-      if (!value) return false;
-      if (typeof value === "object") {
-        return Object.keys(value).length > 0;
-      }
-      return true;
-    })
-  ) as T;
+class ModuleDescriber implements GraphDescriber {
+  constructor(
+    public readonly mutable: MutableGraph,
+    public readonly moduleId: ModuleIdentifier
+  ) {}
+
+  async describe(
+    inputs?: InputValues,
+    inputSchema?: Schema,
+    outputSchema?: Schema,
+    context?: NodeHandlerContext
+  ): Promise<NodeDescriberResult> {
+    const result = await invokeDescriber(
+      this.moduleId,
+      this.mutable,
+      this.mutable.graph,
+      inputs || {},
+      inputSchema,
+      outputSchema,
+      new CapabilitiesManagerImpl(context)
+    );
+    if (!result) return emptyDescriberResult();
+
+    return result;
+  }
 }

@@ -93,10 +93,13 @@ class SideboardRuntimeImpl
     private readonly proxy?: HarnessProxyConfig[]
   ) {
     super();
-    this.#graphStore = createGraphStore(args);
     this.#dataStore = new BoardServerAwareDataStore(getDataStore(), servers);
     this.#fileSystem = createFileSystem({
       local: createFileSystemBackend(createEphemeralBlobStore()),
+    });
+    this.#graphStore = createGraphStore({
+      ...args,
+      fileSystem: this.#fileSystem,
     });
   }
 

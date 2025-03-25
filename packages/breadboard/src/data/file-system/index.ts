@@ -30,6 +30,7 @@ import { err, noStreams, ok } from "./utils.js";
 import { PersistentFile } from "./persistent-file.js";
 import { InMemoryBlobStore } from "./in-memory-blob-store.js";
 import { transformBlobs } from "./blob-transform.js";
+import { baseURLFromString } from "../../loader/loader.js";
 
 export { FileSystemImpl, Path, createFileSystem };
 
@@ -180,7 +181,7 @@ class FileSystemImpl implements FileSystem {
   #tmp: FileMap;
 
   constructor(outer: Partial<OuterFileSystems>) {
-    this.#graphUrl = outer.graphUrl || "";
+    this.#graphUrl = getMainGraphUrl(outer.graphUrl);
     if (!outer.local) {
       throw new Error("Must supply persistent backend for file system to work");
     }
@@ -619,4 +620,19 @@ function mapToEntries(map: FileMap): FileSystemEntry[] {
     path,
     data: file.data,
   }));
+}
+
+/**
+ * Tries its darndest to strip out the module/subgraph ids
+ * and return the main graph URL
+ * @param url
+ */
+function getMainGraphUrl(url: string | undefined): string {
+  if (!url) return "";
+
+  try {
+    return baseURLFromString(url)?.href || "";
+  } catch (e) {
+    return "";
+  }
 }

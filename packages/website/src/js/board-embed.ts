@@ -18,6 +18,7 @@ import "@breadboard-ai/shared-ui/editor";
 
 import {
   GraphDescriptor,
+  StubFileSystem,
   asRuntimeKit,
   createGraphStore,
   createLoader,
@@ -132,6 +133,7 @@ export class BoardEmbed extends LitElement {
           throw new Error("TODO: Teach BoardEmbed about sandbox.");
         },
       },
+      fileSystem: new StubFileSystem(),
     });
 
     const graph = await loader.load(this.url, {

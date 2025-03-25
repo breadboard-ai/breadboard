@@ -6,6 +6,7 @@
 
 import {
   BoardServer,
+  FileSystem,
   GraphDescriptor,
   GraphLoader,
   Kit,
@@ -59,6 +60,7 @@ export interface RuntimeConfig {
   environment?: BreadboardUI.Contexts.Environment;
   tokenVendor: TokenVendor;
   settings: SettingsStore;
+  fileSystem: FileSystem;
   proxy?: HarnessProxyConfig[];
 }
 

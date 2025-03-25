@@ -25,10 +25,9 @@ import { VirtualNode } from "./virtual-node.js";
 import { Outcome } from "../../data/types.js";
 import { err } from "../../data/file-system/utils.js";
 import { baseURLFromString, SENTINEL_BASE_URL } from "../../loader/loader.js";
+import { getModuleId, isModule } from "../utils.js";
 
 export { GraphQueries };
-
-const MODULE_EXPORT_PREFIX = "#module:";
 
 /**
  * Encapsulates common graph operations.
@@ -103,20 +102,14 @@ class GraphQueries {
     const exports = this.#cache.graph.exports;
     if (!exports) return new Set();
     return new Set(
-      exports
-        .filter((e) => e.startsWith(MODULE_EXPORT_PREFIX))
-        .map((e) => e.slice(MODULE_EXPORT_PREFIX.length))
+      exports.filter((e) => isModule(e)).map((e) => getModuleId(e))
     );
   }
 
   graphExports(): Set<GraphIdentifier> {
     const exports = this.#cache.graph.exports;
     if (!exports) return new Set();
-    return new Set(
-      exports
-        .filter((e) => !e.startsWith(MODULE_EXPORT_PREFIX))
-        .map((e) => e.slice(1))
-    );
+    return new Set(exports.filter((e) => !isModule(e)).map((e) => e.slice(1)));
   }
 
   async imports(): Promise<Map<ImportIdentifier, Outcome<InspectableGraph>>> {

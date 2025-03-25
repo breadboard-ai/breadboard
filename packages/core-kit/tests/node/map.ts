@@ -12,6 +12,7 @@ import {
   ErrorObject,
   InputValues,
   OutputValues,
+  StubFileSystem,
   asRuntimeKit,
   createGraphStore,
   createLoader,
@@ -41,6 +42,7 @@ const runBoard = async (
         },
       },
       loader,
+      fileSystem: new StubFileSystem(),
     }),
   };
   for await (const result of run(config)) {

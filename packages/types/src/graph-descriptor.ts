@@ -290,6 +290,10 @@ export type GraphInlineMetadata = {
  *    access menu.
  * - `private`: Accessing the graph requires authentication (like a server
  *    API key)
+ * - `connector`: The graph represents a connector.
+ * - `connector-initialize`: The graph provides initialization of a connector.
+ * - `connector-load`: The graph provides loading capability of a connector.
+ * - `connector-save`: The graph provides saving capability of a connector.
  */
 export type GraphTag =
   | "published"
@@ -300,7 +304,11 @@ export type GraphTag =
   | "core"
   | "generative"
   | "quick-access"
-  | "private";
+  | "private"
+  | "connector"
+  | "connector-initialize"
+  | "connector-load"
+  | "connector-save";
 
 /**
  * Metadata about a parameter
@@ -583,8 +591,9 @@ export type AssetPath = string;
  * - "file" -- user-uploaded file. In this case, the data must be:
  *   - a single inlineData part with the right mimeType
  *   - of a single LLMContent item
+ * - "connector" -- a [connector](https://github.com/breadboard-ai/breadboard/wiki/Connectors)
  */
-export type AssetType = "content" | "file";
+export type AssetType = "content" | "file" | "connector";
 
 export type AssetMetadata = {
   title: string;

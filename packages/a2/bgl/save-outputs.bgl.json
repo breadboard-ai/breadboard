@@ -1,0 +1,74 @@
+{
+  "title": "A2 Save Outputs",
+  "description": "",
+  "version": "0.0.1",
+  "nodes": [],
+  "edges": [],
+  "metadata": {
+    "comments": [
+      {
+        "id": "comment-cc94afe8",
+        "text": "Intentionally Left Blank",
+        "metadata": {
+          "title": "Comment",
+          "visual": {
+            "x": 531,
+            "y": 374,
+            "collapsed": "expanded",
+            "outputHeight": 0
+          }
+        }
+      }
+    ],
+    "visual": {
+      "presentation": {
+        "themes": {
+          "5f3ca599-8fee-46fb-951f-0d47b16a6d56": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "5f3ca599-8fee-46fb-951f-0d47b16a6d56"
+      }
+    },
+    "tags": [
+      "published",
+      "tool",
+      "component"
+    ]
+  },
+  "modules": {
+    "main": {
+      "code": "/**\n * @fileoverview Saves outputs using a provided connector.\n */\nimport { Template } from \"./a2/template\";\nimport { ok } from \"./a2/utils\";\nexport { invoke as default, describe };\nasync function invoke({ context, connectors, ...options }) {\n    const template = new Template(connectors);\n    const saving = await template.save(context, options);\n    if (!ok(saving))\n        return saving;\n    return { context };\n}\nasync function describe({ inputs }) {\n    const template = new Template(inputs.connectors);\n    return {\n        title: \"Save Outputs\",\n        description: \"Saves outputs using a provided connector\",\n        metadata: {\n            icon: \"combine-outputs\",\n            tags: [\"quick-access\", \"core\", \"experimental\"],\n            order: 102,\n        },\n        inputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context in\",\n                },\n                connectors: {\n                    type: \"object\",\n                    behavior: [\"llm-content\", \"config\", \"hint-preview\"],\n                    title: \"Connectors\",\n                    description: \"Specify destination connectors: the outputs will be saved into these connectors\",\n                },\n                ...(await template.schemaProperties()),\n            },\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context out\",\n                },\n            },\n        },\n    };\n}\n",
+      "metadata": {
+        "title": "main",
+        "source": {
+          "code": "/**\n * @fileoverview Saves outputs using a provided connector.\n */\nimport { Template } from \"./a2/template\";\nimport { ok } from \"./a2/utils\";\n\nexport { invoke as default, describe };\n\ntype Inputs = {\n  /**\n   * Context that will be saved.\n   */\n  context?: LLMContent[];\n  /**\n   * The connectors that will be used to save this context.\n   */\n  connectors?: LLMContent;\n  [s: string]: unknown;\n};\n\ntype Outputs = {\n  context?: LLMContent[];\n};\n\nasync function invoke({\n  context,\n  connectors,\n  ...options\n}: Inputs): Promise<Outcome<Outputs>> {\n  const template = new Template(connectors);\n  const saving = await template.save(context, options);\n  if (!ok(saving)) return saving;\n  return { context };\n}\n\ntype DescribeInputs = {\n  inputs: Inputs;\n};\n\nasync function describe({ inputs }: DescribeInputs) {\n  const template = new Template(inputs.connectors);\n  return {\n    title: \"Save Outputs\",\n    description: \"Saves outputs using a provided connector\",\n    metadata: {\n      icon: \"combine-outputs\",\n      tags: [\"quick-access\", \"core\", \"experimental\"],\n      order: 102,\n    },\n    inputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context in\",\n        },\n        connectors: {\n          type: \"object\",\n          behavior: [\"llm-content\", \"config\", \"hint-preview\"],\n          title: \"Connectors\",\n          description:\n            \"Specify destination connectors: the outputs will be saved into these connectors\",\n        },\n        ...(await template.schemaProperties()),\n      },\n    } satisfies Schema,\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context out\",\n        },\n      },\n    } satisfies Schema,\n  };\n}\n",
+          "language": "typescript"
+        },
+        "description": "Saves outputs using a provided connector.",
+        "runnable": false
+      }
+    }
+  },
+  "imports": {
+    "a2": {
+      "url": "./a2.bgl.json"
+    }
+  },
+  "exports": [
+    "#module:main"
+  ]
+}

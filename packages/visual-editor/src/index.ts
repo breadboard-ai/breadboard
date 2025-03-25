@@ -537,6 +537,7 @@ export class Main extends LitElement {
           sandbox,
           settings: this.#settings!,
           proxy: this.#proxy,
+          fileSystem: this.#fileSystem,
         });
       })
       .then((runtime) => {

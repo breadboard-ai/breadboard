@@ -4,9 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { emptyDescriberResult, filterEmptyValues } from "./inspector/utils.js";
 import { resolveGraph } from "./loader/loader.js";
 import { invokeGraph } from "./run/invoke-graph.js";
-import { invokeDescriber } from "./sandboxed-run-module.js";
+import { CapabilitiesManagerImpl } from "./sandbox/capabilities-manager.js";
+import { invokeDescriber } from "./sandbox/invoke-describer.js";
 import {
   GraphDescriptor,
   GraphToRun,
@@ -83,7 +85,8 @@ class GraphBasedNodeHandler implements NodeHandlerObject {
         graph,
         inputs || {},
         inputSchema,
-        outputSchema
+        outputSchema,
+        new CapabilitiesManagerImpl(context)
       );
       if (!result) {
         return emptyDescriberResult();
@@ -97,7 +100,7 @@ class GraphBasedNodeHandler implements NodeHandlerObject {
       if (!inspectableGraph) {
         return emptyDescriberResult();
       }
-      const result = await inspectableGraph.describe(inputs);
+      const result = await inspectableGraph.describe(inputs, context);
       return result;
     }
   }
@@ -158,24 +161,4 @@ function toNodeHandlerMetadata(
       updating,
     });
   }
-}
-
-/**
- * A utility function to filter out empty (null or undefined) values from
- * an object.
- *
- * @param obj -- The object to filter.
- * @returns -- The object with empty values removed.
- */
-function filterEmptyValues<T extends Record<string, unknown>>(obj: T): T {
-  return Object.fromEntries(
-    Object.entries(obj).filter(([, value]) => !!value)
-  ) as T;
-}
-
-function emptyDescriberResult(): NodeDescriberResult {
-  return {
-    inputSchema: { type: "object" },
-    outputSchema: { type: "object" },
-  };
 }

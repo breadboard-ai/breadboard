@@ -498,9 +498,13 @@
 				"core",
 				"generative",
 				"quick-access",
-				"private"
+				"private",
+				"connector",
+				"connector-initialize",
+				"connector-load",
+				"connector-save"
 			],
-			"description": "A tag that can be associated with a graph.\n- `published`: The graph is published (as opposed to a draft). It may be    used in production and shared with others.\n- `tool`: The graph is intended to be a tool.\n- `experimental`: The graph is experimental and may not be stable.\n- `component`: The graph is intended to be a component.\n- `core`: The graph represents a component that provides \"core\"    functionality, like control flow, input/output, etc.\n- `generative`: The graph represents a component that uses an LLM\n- `quick-access`: The graph represents a component that is featured in quick    access menu.\n- `private`: Accessing the graph requires authentication (like a server    API key)"
+			"description": "A tag that can be associated with a graph.\n- `published`: The graph is published (as opposed to a draft). It may be    used in production and shared with others.\n- `tool`: The graph is intended to be a tool.\n- `experimental`: The graph is experimental and may not be stable.\n- `component`: The graph is intended to be a component.\n- `core`: The graph represents a component that provides \"core\"    functionality, like control flow, input/output, etc.\n- `generative`: The graph represents a component that uses an LLM\n- `quick-access`: The graph represents a component that is featured in quick    access menu.\n- `private`: Accessing the graph requires authentication (like a server    API key)\n- `connector`: The graph represents a connector.\n- `connector-initialize`: The graph provides initialization of a connector.\n- `connector-load`: The graph provides loading capability of a connector.\n- `connector-save`: The graph provides saving capability of a connector."
 		},
 		"InlineDataCapabilityPart": {
 			"type": "object",
@@ -822,9 +826,10 @@
 			"type": "string",
 			"enum": [
 				"content",
-				"file"
+				"file",
+				"connector"
 			],
-			"description": "Provides information on the structure of the data stored in the asset. All data is stored as LLMContent[], but this field allows us to better identify what is stored.\n\n- \"content\" -- the typical LLMContent[], should be editable in asset   viewer as if the configuration port of a component.\n- \"file\" -- user-uploaded file. In this case, the data must be:   - a single inlineData part with the right mimeType   - of a single LLMContent item"
+			"description": "Provides information on the structure of the data stored in the asset. All data is stored as LLMContent[], but this field allows us to better identify what is stored.\n\n- \"content\" -- the typical LLMContent[], should be editable in asset   viewer as if the configuration port of a component.\n- \"file\" -- user-uploaded file. In this case, the data must be:   - a single inlineData part with the right mimeType   - of a single LLMContent item\n- \"connector\" -- a [connector](https://github.com/breadboard-ai/breadboard/wiki/Connectors)"
 		},
 		"Import": {
 			"type": "object",

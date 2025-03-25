@@ -82,6 +82,7 @@ export async function create(config: RuntimeConfig): Promise<{
     kits,
     loader,
     sandbox: config.sandbox,
+    fileSystem: config.fileSystem,
   };
   const graphStore = createGraphStore(graphStoreArgs);
   registerLegacyKits(graphStore);

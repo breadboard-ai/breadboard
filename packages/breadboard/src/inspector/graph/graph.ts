@@ -16,6 +16,7 @@ import {
   Edge,
   GraphDescriptor,
   NodeDescriberResult,
+  NodeHandlerContext,
   NodeIdentifier,
   NodeTypeIdentifier,
 } from "../../types.js";
@@ -30,6 +31,7 @@ import {
 } from "../types.js";
 import { GraphDescriberManager } from "./graph-describer-manager.js";
 import { GraphQueries } from "./graph-queries.js";
+import { ok } from "../../data/file-system/utils.js";
 
 export { Graph };
 
@@ -115,12 +117,15 @@ class Graph implements InspectableGraph {
     return new GraphQueries(this.#mutable, this.#graphId).entries();
   }
 
-  async describe(inputs?: InputValues): Promise<NodeDescriberResult> {
+  async describe(
+    inputs?: InputValues,
+    context?: NodeHandlerContext
+  ): Promise<NodeDescriberResult> {
     const manager = GraphDescriberManager.create(this.#graphId, this.#mutable);
-    if (!manager.success) {
-      throw new Error(`Inspect API Integrity Error: ${manager.error}`);
+    if (!ok(manager)) {
+      throw new Error(`Inspect API Integrity Error: ${manager.$error}`);
     }
-    return manager.result.describe(inputs);
+    return manager.describe(inputs, undefined, undefined, context);
   }
 
   graphs(): InspectableSubgraphs | undefined {

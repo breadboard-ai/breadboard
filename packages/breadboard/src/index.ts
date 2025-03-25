@@ -128,6 +128,7 @@ export {
   isSerializedData,
   isStoredData,
   isTextCapabilityPart,
+  StubFileSystem,
   toInlineDataPart,
   toStoredDataPart,
   transformBlobs,

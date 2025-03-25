@@ -8,6 +8,7 @@ import { getDataStore } from "@breadboard-ai/data-store";
 import {
   createGraphStore,
   createLoader,
+  StubFileSystem,
   type ReanimationState,
 } from "@google-labs/breadboard";
 import { handleRunGraphRequest } from "@google-labs/breadboard/remote";
@@ -51,6 +52,7 @@ export const runBoard = async ({
     loader: runLoader,
     kits: runKits,
     sandbox: new NodeSandbox(),
+    fileSystem: new StubFileSystem(),
   });
 
   registerLegacyKits(graphStore);

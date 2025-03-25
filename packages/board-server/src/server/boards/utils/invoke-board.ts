@@ -11,6 +11,7 @@ import {
   createGraphStore,
   createLoader,
   inflateData,
+  StubFileSystem,
 } from "@google-labs/breadboard";
 import { BoardServerProvider } from "./board-server-provider.js";
 import { formatRunError } from "./format-run-error.js";
@@ -41,6 +42,7 @@ export const invokeBoard = async ({
     loader: invokeLoader,
     kits: invokeKits,
     sandbox: new NodeSandbox(),
+    fileSystem: new StubFileSystem(),
   });
   registerLegacyKits(graphStore);
 

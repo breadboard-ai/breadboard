@@ -6,12 +6,14 @@
 
 import { GraphStore } from "../../src/inspector/graph-store.js";
 import { InspectableGraphOptions } from "../../src/inspector/types.js";
+import { makeFs } from "../node/test-file-system.js";
 
 export { makeTestGraphStore };
 
 function makeTestGraphStore(options: InspectableGraphOptions = {}) {
   return new GraphStore({
     kits: options.kits || [],
+    fileSystem: makeFs(),
     sandbox: options.sandbox || {
       runModule() {
         throw new Error("Do not use sandbox with test graph store");
