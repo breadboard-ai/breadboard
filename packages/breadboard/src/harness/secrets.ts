@@ -80,8 +80,10 @@ const fallbackHandler = (
     // OAuth keys can only be handled interactively.
     const connectionKey =
       keys.length === 1 && keys[0].startsWith("connection:");
-    handlers = connectionKey ? [interactive] : [...handlers, interactive];
-    for (const handler of handlers) {
+    const adjustedHandlers = connectionKey
+      ? [interactive]
+      : [...handlers, interactive];
+    for (const handler of adjustedHandlers) {
       const outputs = await callHandler(handler, inputs, context);
       if (outputs && !outputs["$error"]) {
         return outputs;
