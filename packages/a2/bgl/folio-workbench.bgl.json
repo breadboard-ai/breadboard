@@ -96,7 +96,7 @@
           "parts": [
             {
               "json": {
-                "url": "file://bgl/folio-wip.bgl.json",
+                "url": "file://bgl/folio.bgl.json",
                 "configuration": {}
               }
             }

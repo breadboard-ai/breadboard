@@ -272,7 +272,7 @@ export type GraphInlineMetadata = {
  *    API key)
  * - `connector`: The graph represents a connector.
  * - `connector-initialize`: The graph provides initialization of a connector.
- * - `connector-asset`: The graph provides asset representation of a connector.
+ * - `connector-load`: The graph provides loading capability of a connector.
  * - `connector-save`: The graph provides saving capability of a connector.
  */
 export type GraphTag =
@@ -287,7 +287,7 @@ export type GraphTag =
   | "private"
   | "connector"
   | "connector-initialize"
-  | "connector-asset"
+  | "connector-load"
   | "connector-save";
 
 /**
