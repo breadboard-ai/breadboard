@@ -150,7 +150,6 @@ declare module "@describe" {
   };
 
   export type DescribeOutputs = {
-    $error?: string;
     title?: string;
     description?: string;
     metadata?: {
@@ -168,7 +167,7 @@ declare module "@describe" {
 
   export default function describe(
     inputs: DescribeInputs
-  ): Promise<DescribeOutputs>;
+  ): Promise<Outcome<DescribeOutputs>>;
 }
 
 declare type FunctionCallCapabilityPart = {

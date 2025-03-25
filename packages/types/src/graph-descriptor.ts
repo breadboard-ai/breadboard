@@ -270,6 +270,10 @@ export type GraphInlineMetadata = {
  *    access menu.
  * - `private`: Accessing the graph requires authentication (like a server
  *    API key)
+ * - `connector`: The graph represents a connector.
+ * - `connector-initialize`: The graph provides initialization of a connector.
+ * - `connector-asset`: The graph provides asset representation of a connector.
+ * - `connector-save`: The graph provides saving capability of a connector.
  */
 export type GraphTag =
   | "published"
@@ -280,7 +284,11 @@ export type GraphTag =
   | "core"
   | "generative"
   | "quick-access"
-  | "private";
+  | "private"
+  | "connector"
+  | "connector-initialize"
+  | "connector-asset"
+  | "connector-save";
 
 /**
  * Metadata about a parameter
