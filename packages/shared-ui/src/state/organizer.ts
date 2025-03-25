@@ -11,11 +11,12 @@ import {
   NodeValue,
   ParameterMetadata,
 } from "@breadboard-ai/types";
-import { Outcome } from "@google-labs/breadboard";
-import { GraphAsset, Organizer, ProjectInternal } from "./types";
+import { err, Outcome } from "@google-labs/breadboard";
+import { Connector, GraphAsset, Organizer, ProjectInternal } from "./types";
 import { RemoveAssetWithRefs } from "../transforms";
 import { UpdateAssetWithRefs } from "../transforms/update-asset-with-refs";
 import { ChangeParameterMetadata } from "../transforms/change-parameter-metadata";
+import { CreateConnector } from "../transforms/create-connector";
 
 export { ReactiveOrganizer };
 
@@ -24,12 +25,14 @@ class ReactiveOrganizer implements Organizer {
   readonly graphAssets: Map<AssetPath, GraphAsset>;
   readonly graphUrl: URL | null;
   readonly parameters: Map<string, ParameterMetadata>;
+  readonly connectors: Map<string, Connector>;
 
   constructor(project: ProjectInternal) {
     this.#project = project;
     this.graphAssets = project.graphAssets;
     this.graphUrl = project.graphUrl;
     this.parameters = project.parameters;
+    this.connectors = project.connectors;
   }
 
   async addGraphAsset(asset: GraphAsset): Promise<Outcome<void>> {
@@ -65,5 +68,12 @@ class ReactiveOrganizer implements Organizer {
     return this.#project.apply(
       new ChangeParameterMetadata(id, persistedMetadata, "")
     );
+  }
+
+  async createConnector(url: string | null): Promise<Outcome<void>> {
+    if (!url) {
+      return err(`Connector URL was not specified.`);
+    }
+    return this.#project.apply(new CreateConnector(url));
   }
 }

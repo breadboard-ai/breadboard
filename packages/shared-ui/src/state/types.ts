@@ -110,6 +110,12 @@ export type Organizer = {
     id: string,
     metadata: ParameterMetadata
   ): Promise<Outcome<void>>;
+
+  /**
+   * Available connectors
+   */
+  connectors: Map<string, Connector>;
+  createConnector(url: string | null): Promise<Outcome<void>>;
 };
 
 export type GraphAsset = {
@@ -139,6 +145,16 @@ export type Component = {
   description?: string;
 };
 
+export type Connector = {
+  /**
+   * The URL pointing to the connector BGL file.
+   */
+  url: string;
+  icon?: string;
+  title: string;
+  description?: string;
+};
+
 export type Components = Map<NodeIdentifier, Component>;
 
 /**
@@ -160,6 +176,7 @@ export type FastAccess = {
 export type Project = {
   graphAssets: Map<AssetPath, GraphAsset>;
   parameters: Map<string, ParameterMetadata>;
+  connectors: Map<string, Connector>;
   organizer: Organizer;
   fastAccess: FastAccess;
 };

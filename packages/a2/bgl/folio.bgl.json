@@ -5,6 +5,7 @@
   "nodes": [],
   "edges": [],
   "metadata": {
+    "icon": "generative",
     "visual": {
       "presentation": {
         "themes": {
@@ -29,10 +30,7 @@
       }
     },
     "userModified": true,
-    "tags": [
-      "connector",
-      "published"
-    ],
+    "tags": ["connector", "published"],
     "comments": [
       {
         "id": "comment-c74afa15",
@@ -80,8 +78,5 @@
       "url": "./a2.bgl.json"
     }
   },
-  "exports": [
-    "#module:save-state",
-    "#module:load-all"
-  ]
+  "exports": ["#module:save-state", "#module:load-all"]
 }

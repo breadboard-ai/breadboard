@@ -17,7 +17,7 @@ import {
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { SignalWatcher } from "@lit-labs/signals";
-import { GraphAsset, Organizer } from "../../state";
+import { Connector, GraphAsset, Organizer } from "../../state";
 import {
   AssetMetadata,
   AssetPath,
@@ -41,6 +41,7 @@ import { GoogleDriveFileId, LLMInput } from "../elements.js";
 import {
   isFileDataCapabilityPart,
   isLLMContent,
+  ok,
 } from "@google-labs/breadboard";
 import { InputChangeEvent } from "../../plugins/input-plugin.js";
 import { SIGN_IN_CONNECTION_ID } from "../../utils/signin-adapter.js";
@@ -749,6 +750,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
           title: "YouTube",
           name: "youtube",
         },
+        ...createConnectorActions(this.state?.connectors),
       ];
 
       if (this.showGDrive) {
@@ -795,6 +797,22 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                 "",
                 "youtube"
               );
+              break;
+            }
+
+            case "connector": {
+              console.log("CREATE CONNECTOR", evt);
+              const creatingConnector = await this.state?.createConnector(
+                evt.value
+              );
+              if (!ok(creatingConnector)) {
+                console.log(
+                  `Unable to create connector: ${creatingConnector.$error}`
+                );
+                this.dispatchEvent(
+                  new ToastEvent("Unable to create connector", ToastType.ERROR)
+                );
+              }
               break;
             }
           }
@@ -1316,4 +1334,18 @@ function toLLMContentArray(text: string): NodeValue {
     },
   ];
   return c as NodeValue;
+}
+
+function createConnectorActions(
+  connectors?: Map<string, Connector>
+): OverflowAction[] {
+  if (!connectors) return [];
+  return [...connectors.values()].map((connector) => {
+    return {
+      title: connector.title,
+      name: "connector",
+      icon: connector.icon || "content-add",
+      value: connector.url,
+    };
+  });
 }

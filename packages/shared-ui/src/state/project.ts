@@ -29,6 +29,7 @@ import { SignalMap } from "signal-utils/map";
 import { ReactiveOrganizer } from "./organizer";
 import {
   Component,
+  Connector,
   FastAccess,
   GeneratedAsset,
   GeneratedAssetIdentifier,
@@ -85,6 +86,7 @@ class ReactiveProject implements ProjectInternal {
   readonly fastAccess: FastAccess;
   readonly components: SignalMap<GraphIdentifier, ReactiveComponents>;
   readonly parameters: SignalMap<string, ParameterMetadata>;
+  readonly connectors: SignalMap<string, Connector>;
 
   constructor(
     mainGraphId: MainGraphIdentifier,
@@ -113,6 +115,7 @@ class ReactiveProject implements ProjectInternal {
     this.generatedAssets = new SignalMap();
     this.myTools = new SignalMap();
     this.parameters = new SignalMap();
+    this.connectors = new SignalMap();
     this.organizer = new ReactiveOrganizer(this);
     this.fastAccess = new ReactiveFastAccess(
       this,
@@ -128,6 +131,7 @@ class ReactiveProject implements ProjectInternal {
     this.#updateTools();
     this.#updateMyTools();
     this.#updateParameters();
+    this.#updateConnectors();
   }
 
   async apply(transform: EditTransform): Promise<Outcome<void>> {
@@ -301,6 +305,28 @@ class ReactiveProject implements ProjectInternal {
     updateMap(
       this.parameters,
       Object.entries(parameters).map(([id, parameter]) => [id, parameter])
+    );
+  }
+
+  #updateConnectors() {
+    const graphs = this.#store.mainGraphs();
+    const connectors = graphs.filter(
+      (graph) =>
+        graph.tags?.includes("connector") &&
+        graph.tags?.includes("published") &&
+        graph.url
+    );
+    updateMap(
+      this.connectors,
+      connectors.map((connector) => [
+        connector.url!,
+        {
+          url: connector.url,
+          icon: connector.icon,
+          title: connector.title,
+          description: connector.description,
+        },
+      ])
     );
   }
 }

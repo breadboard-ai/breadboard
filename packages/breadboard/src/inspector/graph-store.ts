@@ -151,6 +151,31 @@ class GraphStore
     };
   }
 
+  mainGraphs(): GraphStoreEntry[] {
+    const graphs = [...this.#mutables.entries()].map(
+      ([mainGraphId, snapshot]) => {
+        const current = snapshot.current();
+        const updating = snapshot.updating();
+        const descriptor = current.graph;
+        const mainGraphMetadata = filterEmptyValues({
+          title: descriptor.title,
+          description: descriptor.description,
+          icon: descriptor.metadata?.icon,
+          url: descriptor.url,
+          tags: descriptor.metadata?.tags,
+          help: descriptor.metadata?.help,
+          id: mainGraphId,
+        });
+        return {
+          ...mainGraphMetadata,
+          updating,
+          mainGraph: mainGraphMetadata,
+        };
+      }
+    );
+    return graphs;
+  }
+
   graphs(): GraphStoreEntry[] {
     const graphs = [...this.#mutables.entries()]
       .flatMap(([mainGraphId, snapshot]) => {

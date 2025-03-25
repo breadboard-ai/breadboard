@@ -18,12 +18,12 @@
       },
       "configuration": {
         "connectors": {
-          "role": "user",
           "parts": [
             {
-              "text": "{{\"type\":\"asset\",\"path\":\"connectors/c106abb1-ccf1-4444-ade9-7ca24583e226\",\"title\":\"Folio 1\"}}"
+              "text": "{{\"type\":\"asset\",\"path\":\"connectors/c106abb1-ccf1-4444-ade9-7ca24583e226\",\"title\":\"Folio 1\"}}{{\"type\":\"asset\",\"path\":\"connectors/2e551020-3674-4301-bd7c-98d0fefee67d\",\"title\":\"Scratch\"}}"
             }
-          ]
+          ],
+          "role": "user"
         },
         "folio-mode": "Replace"
       }
@@ -106,6 +106,24 @@
       ],
       "metadata": {
         "title": "Folio 1",
+        "type": "connector"
+      }
+    },
+    "connectors/2e551020-3674-4301-bd7c-98d0fefee67d": {
+      "data": [
+        {
+          "parts": [
+            {
+              "json": {
+                "url": "file://bgl/folio.bgl.json",
+                "configuration": {}
+              }
+            }
+          ]
+        }
+      ],
+      "metadata": {
+        "title": "Scratch",
         "type": "connector"
       }
     },
