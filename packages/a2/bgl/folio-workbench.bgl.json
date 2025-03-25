@@ -24,7 +24,8 @@
               "text": "{{\"type\":\"asset\",\"path\":\"connectors/c106abb1-ccf1-4444-ade9-7ca24583e226\",\"title\":\"Folio 1\"}}"
             }
           ]
-        }
+        },
+        "folio-mode": "Replace"
       }
     },
     {
@@ -45,7 +46,7 @@
           "role": "user",
           "parts": [
             {
-              "text": "Hello!"
+              "text": "Awesome"
             }
           ]
         }
