@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { GraphIdentifier } from "@breadboard-ai/types";
+
 const eventInit = {
   bubbles: true,
   cancelable: true,
@@ -19,6 +21,14 @@ export class SelectionTranslateEvent extends Event {
     public readonly hasSettled = false
   ) {
     super(SelectionTranslateEvent.eventName, { ...eventInit });
+  }
+}
+
+export class SelectGraphContentsEvent extends Event {
+  static eventName = "bbselectgraphcontents" as const;
+
+  constructor(public readonly graphId: GraphIdentifier) {
+    super(SelectGraphContentsEvent.eventName, { ...eventInit });
   }
 }
 
