@@ -53,6 +53,12 @@ export class Entity extends LitElement {
     return new DOMRect();
   }
 
+  resetTransform() {
+    this.transform = new DOMMatrix();
+    this.baseTransform = null;
+    this.worldTransform = new DOMMatrix();
+  }
+
   updateEntity(matrix = new DOMMatrix()) {
     // The order here is super important.
     // 1. Send the most recent world transform down to the child entities

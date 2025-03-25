@@ -6,7 +6,11 @@
 import { customElement, property } from "lit/decorators.js";
 import { Box } from "./box";
 import { calculateBounds } from "./utils/calculate-bounds";
-import { InspectableEdge, InspectableNode } from "@google-labs/breadboard";
+import {
+  GraphIdentifier,
+  InspectableEdge,
+  InspectableNode,
+} from "@google-labs/breadboard";
 import { GraphNode } from "./graph-node";
 import {
   createEmptyGraphSelectionState,
@@ -14,14 +18,55 @@ import {
 } from "../../utils/workspace";
 import { GraphEdge } from "./graph-edge";
 import { GraphSelectionState } from "../../types/types";
+import { css, html } from "lit";
+import { toCSSMatrix } from "./utils/to-css-matrix";
+import { styleMap } from "lit/directives/style-map.js";
+import { MAIN_BOARD_ID } from "../../constants/constants";
+import { SelectGraphContentsEvent } from "./events/events";
 
 @customElement("bb-graph")
 export class Graph extends Box {
-  static styles = [Box.styles];
+  static styles = [
+    Box.styles,
+    css`
+      #graph-boundary {
+        position: fixed;
+        border: 1px solid var(--bb-ui-300);
+        background: oklch(from var(--bb-neutral-0) l c h / 0.25);
+        border-radius: var(--bb-grid-size-4);
+        transform-origin: 0 0;
+        left: 0;
+        top: 0;
+
+        & label {
+          pointer-events: auto;
+          cursor: pointer;
+          position: fixed;
+          height: var(--bb-grid-size-6);
+          display: flex;
+          align-items: center;
+          left: var(--bb-grid-size-5);
+          top: calc(-1 * var(--bb-grid-size-3));
+          padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-8);
+          border: 1px solid var(--bb-ui-300);
+          border-radius: var(--bb-grid-size-16);
+          background: var(--bb-icon-home-repair-service) var(--bb-ui-50) 8px
+            center / 20px 20px no-repeat;
+          color: var(--bb-ui-900);
+          font: 500 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+            var(--bb-font-family);
+        }
+      }
+    `,
+  ];
 
   #nodes: InspectableNode[] = [];
   #edges: InspectableEdge[] = [];
   #lastUpdateTime = globalThis.performance.now();
+
+  constructor(public readonly graphId: GraphIdentifier) {
+    super();
+  }
 
   @property()
   set nodes(nodes: InspectableNode[]) {
@@ -202,6 +247,7 @@ export class Graph extends Box {
       return;
     }
 
+    console.log(this.graphId, this.selectionState.nodes);
     for (const node of this.selectionState.nodes) {
       const graphNode = this.entities.get(node) as GraphNode;
       if (!graphNode) {
@@ -218,6 +264,40 @@ export class Graph extends Box {
       if (hasSettled) {
         graphNode.baseTransform = null;
       }
+    }
+  }
+
+  #selectContents() {
+    for (const entity of this.entities.values()) {
+      entity.selected = true;
+    }
+
+    this.dispatchEvent(new SelectGraphContentsEvent(this.graphId));
+  }
+
+  protected renderSelf() {
+    const renderBoundary =
+      this.graphId !== MAIN_BOARD_ID && this.nodes.length > 0;
+
+    if (renderBoundary) {
+      const boundaryTransform = this.worldTransform.translate(-20, -20);
+      const styles: Record<string, string> = {
+        transform: `${toCSSMatrix(boundaryTransform)}`,
+        width: `${this.bounds.width + 40}px`,
+        height: `${this.bounds.height + 40}px`,
+      };
+
+      return html`<div id="graph-boundary" style=${styleMap(styles)}>
+          <label
+            @click=${() => {
+              this.#selectContents();
+            }}
+            >${this.boundsLabel || "Untitled tool"}</label
+          >
+        </div>
+        ${this.renderBounds()}`;
+    } else {
+      return this.renderBounds();
     }
   }
 

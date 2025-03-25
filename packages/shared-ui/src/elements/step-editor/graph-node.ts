@@ -376,7 +376,7 @@ export class GraphNode extends Box {
               }
 
               default: {
-                console.log(port);
+                // console.log(port);
                 value = nothing;
               }
             }

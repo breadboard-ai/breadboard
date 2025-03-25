@@ -20,9 +20,12 @@ import { repeat } from "lit/directives/repeat.js";
 import { classMap } from "lit/directives/class-map.js";
 import { calculateBounds } from "./utils/calculate-bounds";
 import { clamp } from "./utils/clamp";
-import { GraphIdentifier, InspectableGraph } from "@google-labs/breadboard";
+import { InspectableGraph } from "@google-labs/breadboard";
 import { MAIN_BOARD_ID } from "../../constants/constants";
-import { SelectionTranslateEvent } from "./events/events";
+import {
+  SelectGraphContentsEvent,
+  SelectionTranslateEvent,
+} from "./events/events";
 import { WorkspaceSelectionStateWithChangeId } from "../../types/types";
 import {
   createEmptyWorkspaceSelectionState,
@@ -31,7 +34,6 @@ import {
 import { WorkspaceSelectionStateEvent } from "../../events/events";
 import { styleMap } from "lit/directives/style-map.js";
 import { Entity } from "./entity";
-import { identity } from "./utils/identity";
 
 @customElement("bb-renderer")
 export class Renderer extends LitElement {
@@ -184,9 +186,9 @@ export class Renderer extends LitElement {
 
   #dragStart: DOMPoint | null = null;
   #dragRect: DOMRect | null = null;
+  #clickRect: DOMRect | null = null;
   #isToggleSelection = false;
   #isAdditiveSelection = false;
-  #movedDuringSelection = false;
   #onPointerDown(evt: PointerEvent) {
     this.#dragStart = new DOMPoint(
       evt.clientX - this.#boundsForInteraction.left,
@@ -196,17 +198,18 @@ export class Renderer extends LitElement {
     this.#isToggleSelection = isCtrlCommand(evt);
     this.#isAdditiveSelection = evt.shiftKey;
     this.#updateDragRect(evt);
-    this.#movedDuringSelection = false;
+    this.interactionMode = "selection";
     this.tick++;
 
     // If the interaction is with the renderer, go into selection mode proper.
     const [top, ...rest] = evt.composedPath();
-    if (top === this) {
-      this.interactionMode = "selection";
-    } else {
-      // If the user has clicked on an unselected entity .
+    if (top !== this) {
+      // If the user has clicked on an unselected entity, change the behavior to
+      // that of a click.
       const nearestEntity = rest.find((el) => el instanceof Entity);
       if (nearestEntity && !nearestEntity.selected) {
+        this.#clickRect = DOMRect.fromRect(this.#dragRect);
+        this.#dragRect = null;
         return;
       }
 
@@ -220,12 +223,12 @@ export class Renderer extends LitElement {
     }
 
     this.#updateDragRect(evt);
-    this.#movedDuringSelection = true;
     this.tick++;
   }
 
   #onPointerUp() {
     this.#dragStart = null;
+    this.#dragRect = null;
     this.interactionMode = "inert";
     this.#isAdditiveSelection = false;
     this.#isToggleSelection = false;
@@ -339,25 +342,37 @@ export class Renderer extends LitElement {
       // Main graph.
       let mainGraph = this.#graphs.get(MAIN_BOARD_ID);
       if (!mainGraph) {
-        mainGraph = new Graph();
+        mainGraph = new Graph(MAIN_BOARD_ID);
         this.#graphs.set(MAIN_BOARD_ID, mainGraph);
       }
 
+      mainGraph.boundsLabel = this.graph.raw().title ?? "Untitled";
       mainGraph.nodes = this.graph.nodes();
       mainGraph.edges = this.graph.edges();
-      identity(mainGraph.transform);
+      mainGraph.resetTransform();
 
       // Subgraphs.
       for (const [id, graph] of Object.entries(this.graph.graphs() ?? {})) {
         let subGraph = this.#graphs.get(id);
         if (!subGraph) {
-          subGraph = new Graph();
+          subGraph = new Graph(id);
           this.#graphs.set(id, subGraph);
         }
 
+        subGraph.boundsLabel = graph.raw().title ?? "Custom Tool";
         subGraph.nodes = graph.nodes();
         subGraph.edges = graph.edges();
-        identity(subGraph.transform);
+        subGraph.resetTransform();
+      }
+
+      // Remove any stale graphs.
+      const subGraphs = this.graph.graphs() ?? {};
+      for (const graphId of this.#graphs.keys()) {
+        if (graphId === MAIN_BOARD_ID || subGraphs[graphId]) {
+          continue;
+        }
+
+        this.#graphs.delete(graphId);
       }
     }
 
@@ -370,30 +385,28 @@ export class Renderer extends LitElement {
       this.camera
     ) {
       const inverseCameraMatrix = this.camera.transform.inverse();
-      for (const [id, graph] of this.#graphs) {
+      for (const graph of this.#graphs.values()) {
         graph.updateEntity(inverseCameraMatrix);
 
-        if (this.#dragRect) {
-          if (this.interactionMode === "selection") {
+        if (this.interactionMode === "selection") {
+          // Drag-select.
+          if (this.#dragRect) {
             graph.selectInsideOf(
               this.#dragRect,
               0,
               this.#isAdditiveSelection,
               false
             );
-            this.#updateSelectionFromGraph(id, graph);
-          } else if (
-            this.interactionMode === "inert" &&
-            !this.#movedDuringSelection
-          ) {
+          } else if (this.#clickRect) {
+            // Click-select.
             graph.selectInsideOf(
-              this.#dragRect,
+              this.#clickRect,
               0,
               this.#isAdditiveSelection,
               this.#isToggleSelection
             );
-            this.#updateSelectionFromGraph(id, graph);
           }
+          this.#updateSelectionFromGraph(graph);
         }
 
         if (this.camera?.bounds) {
@@ -402,6 +415,7 @@ export class Renderer extends LitElement {
       }
     }
 
+    this.#clickRect = null;
     this._boundsDirty.clear();
   }
 
@@ -537,6 +551,8 @@ export class Renderer extends LitElement {
       return;
     }
 
+    console.log("Selection trans", x, y);
+
     for (const graphId of this.selectionState.selectionState.graphs.keys()) {
       const graph = this.#graphs.get(graphId);
       if (!graph) {
@@ -547,17 +563,14 @@ export class Renderer extends LitElement {
     }
   }
 
-  #updateSelectionFromGraph(graphId: GraphIdentifier, graph: Graph) {
-    // Use the existing state if that's the mode we're in.
-    let newState = this.#isAdditiveSelection
-      ? (this.selectionState?.selectionState ?? null)
-      : null;
-    if (!newState) {
-      newState = createEmptyWorkspaceSelectionState();
-    }
+  #updateSelectionFromGraph(graph: Graph, createNewSelection = true) {
+    const newState = createNewSelection
+      ? createEmptyWorkspaceSelectionState()
+      : (this.selectionState?.selectionState ??
+        createEmptyWorkspaceSelectionState());
 
     if (graph.selectionState) {
-      newState.graphs.set(graphId, graph.selectionState);
+      newState.graphs.set(graph.graphId, graph.selectionState);
     }
 
     const selectionChangeId = createWorkspaceSelectionChangeId();
@@ -603,6 +616,14 @@ export class Renderer extends LitElement {
           graph.showBounds = this.debug;
 
           return html`<div
+            @bbselectgraphcontents=${(evt: SelectGraphContentsEvent) => {
+              const graph = this.#graphs.get(evt.graphId);
+              if (!graph) {
+                return;
+              }
+
+              this.#updateSelectionFromGraph(graph, true);
+            }}
             @bbselectiontranslate=${(evt: SelectionTranslateEvent) => {
               this.#applyTranslationToSelection(evt.x, evt.y, evt.hasSettled);
 
