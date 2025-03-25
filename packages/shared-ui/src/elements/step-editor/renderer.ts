@@ -293,7 +293,6 @@ export class Renderer extends LitElement {
         this.selectionState.selectionChangeId ===
         changedProperties.get("selectionState")?.selectionChangeId
       ) {
-        console.log("Intercepted a change");
         return false;
       }
     }
@@ -551,8 +550,6 @@ export class Renderer extends LitElement {
       return;
     }
 
-    console.log("Selection trans", x, y);
-
     for (const graphId of this.selectionState.selectionState.graphs.keys()) {
       const graph = this.#graphs.get(graphId);
       if (!graph) {
@@ -563,7 +560,7 @@ export class Renderer extends LitElement {
     }
   }
 
-  #updateSelectionFromGraph(graph: Graph, createNewSelection = true) {
+  #updateSelectionFromGraph(graph: Graph, createNewSelection = false) {
     const newState = createNewSelection
       ? createEmptyWorkspaceSelectionState()
       : (this.selectionState?.selectionState ??

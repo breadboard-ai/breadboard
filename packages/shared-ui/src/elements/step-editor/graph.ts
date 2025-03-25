@@ -247,7 +247,6 @@ export class Graph extends Box {
       return;
     }
 
-    console.log(this.graphId, this.selectionState.nodes);
     for (const node of this.selectionState.nodes) {
       const graphNode = this.entities.get(node) as GraphNode;
       if (!graphNode) {
@@ -289,6 +288,9 @@ export class Graph extends Box {
 
       return html`<div id="graph-boundary" style=${styleMap(styles)}>
           <label
+            @pointerdown=${(evt: PointerEvent) => {
+              evt.stopImmediatePropagation();
+            }}
             @click=${() => {
               this.#selectContents();
             }}
