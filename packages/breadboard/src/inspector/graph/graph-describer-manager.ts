@@ -15,10 +15,6 @@ import { GraphDescriptorHandle } from "./graph-descriptor-handle.js";
 import { NodeDescriberResult, Schema } from "../../types.js";
 import { describeInput, describeOutput } from "./schemas.js";
 import { combineSchemas, removeProperty } from "../../schema.js";
-import {
-  invokeDescriber,
-  invokeMainDescriber,
-} from "../../sandboxed-run-module.js";
 import { invokeGraph } from "../../run/invoke-graph.js";
 import { ParameterManager } from "../../run/parameter-manager.js";
 import { Outcome } from "../../data/types.js";
@@ -30,6 +26,10 @@ import {
   getModuleId,
   isModule,
 } from "../utils.js";
+import {
+  invokeDescriber,
+  invokeMainDescriber,
+} from "../../sandbox/invoke-describer.js";
 
 export { GraphDescriberManager };
 

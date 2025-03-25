@@ -28,13 +28,13 @@ import {
   edgesToSchema,
   EdgeType,
 } from "./schemas.js";
-import { invokeMainDescriber } from "../../sandboxed-run-module.js";
 import { createLoader } from "../../loader/index.js";
 import { getHandler } from "../../handler.js";
 import { GraphDescriptorHandle } from "./graph-descriptor-handle.js";
 import { contextFromMutableGraph } from "../graph-store.js";
 import { SchemaDiffer } from "../../utils/schema-differ.js";
 import { UpdateEvent } from "./event.js";
+import { invokeMainDescriber } from "../../sandbox/invoke-describer.js";
 
 export { NodeTypeDescriberManager };
 

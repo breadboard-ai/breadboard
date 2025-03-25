@@ -7,7 +7,7 @@
 import { emptyDescriberResult, filterEmptyValues } from "./inspector/utils.js";
 import { resolveGraph } from "./loader/loader.js";
 import { invokeGraph } from "./run/invoke-graph.js";
-import { invokeDescriber } from "./sandboxed-run-module.js";
+import { invokeDescriber } from "./sandbox/invoke-describer.js";
 import {
   GraphDescriptor,
   GraphToRun,
