@@ -4,24 +4,24 @@
   "version": "0.0.1",
   "nodes": [
     {
-      "id": "eddcc16b-5c59-4a2a-b18c-8f36bf45d580",
+      "id": "f0a24a3f-e9b9-4c16-a71e-5974aee9e776",
       "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
-        "title": "Write Names to Folio",
+        "title": "Compare Names with Folio",
         "visual": {
-          "x": 60,
-          "y": 580,
+          "x": 160,
+          "y": 440,
           "collapsed": "expanded",
           "outputHeight": 88
         },
         "userModified": false,
-        "description": "Writes the list of names (Bob, Alice, Jack, Jill, Wednesday) into the file Folio."
+        "description": "Compares a provided list of names (Bob, Alice, Jill, Jack, Friday) with the data from the 'Folio' document, identifying similarities and differences."
       },
       "configuration": {
         "description": {
           "parts": [
             {
-              "text": "Write the following into {{\"type\":\"tool\",\"path\":\"file://bgl/folio-wip.bgl.json\",\"title\":\"Folio\"}}:\n\nBob\nAlice\nJack\nJill\nWednesday"
+              "text": "Look at what's in {{\"type\":\"asset\",\"path\":\"connectors/c106abb1-ccf1-4444-ade9-7ca24583e226\",\"title\":\"Folio 1\"}} and compare it with this list:\n\nBob\nAlice\nJill\nJack\nFriday\n\nHow are they different? How are they similar?"
             }
           ],
           "role": "user"
@@ -55,7 +55,8 @@
       }
     },
     "userModified": true,
-    "tags": []
+    "tags": [],
+    "parameters": {}
   },
   "assets": {
     "connectors/c106abb1-ccf1-4444-ade9-7ca24583e226": {
@@ -64,7 +65,7 @@
           "parts": [
             {
               "json": {
-                "type": "file://bgl/folio-wip.bgl.json",
+                "url": "file://bgl/folio-wip.bgl.json",
                 "configuration": {}
               }
             }
@@ -73,7 +74,7 @@
         }
       ],
       "metadata": {
-        "title": "Untitled Connector",
+        "title": "Folio 1",
         "type": "connector"
       }
     },
@@ -82,46 +83,7 @@
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI2MC4yNyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iOTAuNjEiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI2NS41MiIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KICAgICAgPHJlY3QgeD0iMTQ5LjM5IgogICAgICAgICAgICAgICAgICAgIHk9Ijc0LjIxIgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI5MC42MSIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjY1LjUyIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgogICAgPC9zdmc+"
-    }
-  },
-  "graphs": {
-    "d69c5448-7461-4700-b906-2db0de8794b5": {
-      "title": "Compare Data with Folio",
-      "nodes": [
-        {
-          "id": "69e8a8d3-458d-4837-90c7-cf9e76549704",
-          "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
-          "metadata": {
-            "title": "Compare Names with Folio",
-            "visual": {
-              "x": 460,
-              "y": 620,
-              "collapsed": "expanded",
-              "outputHeight": 88
-            },
-            "userModified": false,
-            "description": "Compares a provided list of names (Bob, Alice, Jill, Jack, Friday) with the data from the 'Folio' document, identifying similarities and differences."
-          },
-          "configuration": {
-            "description": {
-              "parts": [
-                {
-                  "text": "Look at what's in {{\"type\":\"tool\",\"path\":\"file://bgl/folio-wip.bgl.json\",\"title\":\"Folio\"}} and compare it with this list:\n\nBob\nAlice\nJill\nJack\nFriday\n\nHow are they different? How are they similar?"
-                }
-              ],
-              "role": "user"
-            }
-          }
-        }
-      ],
-      "edges": [],
-      "metadata": {
-        "visual": {
-          "minimized": false
-        }
-      },
-      "description": "Compares a list of names (Bob, Alice, Jill, Jack, Friday) with the content found inside the 'Folio' document. The differences and similarities are then determined. Parameters: context (string) - Additional context or information relevant to the comparison, such as the specific task or goal for comparison, any known relationships between the names and the contents of 'Folio', or any prior findings from past comparisons."
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSIxNi44NSIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMjMwLjAwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTY2LjMxIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
     }
   }
 }
