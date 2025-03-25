@@ -158,6 +158,16 @@ export class Graph extends Box {
       graphNode.selected =
         selectionState?.nodes.has(node.descriptor.id) ?? false;
     }
+
+    for (const edge of this.#edges) {
+      const id = inspectableEdgeToString(edge);
+      const graphEdge = this.entities.get(id) as GraphEdge;
+      if (!graphEdge) {
+        continue;
+      }
+
+      graphEdge.selected = selectionState?.edges.has(id) ?? false;
+    }
   }
   get selectionState() {
     const selectionState = createEmptyGraphSelectionState();
@@ -169,6 +179,18 @@ export class Graph extends Box {
 
       if (graphNode.selected) {
         selectionState.nodes.add(node.descriptor.id);
+      }
+    }
+
+    for (const edge of this.#edges) {
+      const id = inspectableEdgeToString(edge);
+      const graphEdge = this.entities.get(id) as GraphEdge;
+      if (!graphEdge) {
+        continue;
+      }
+
+      if (graphEdge.selected) {
+        selectionState.edges.add(id);
       }
     }
 
