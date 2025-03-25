@@ -54,7 +54,7 @@ export class FlowGenerator {
     if (constraint && !context?.flow) {
       throw new Error(
         `Error editing flow with constraint ${constraint.kind}:` +
-          ` An original flow was not provided.`
+        ` An original flow was not provided.`
       );
     }
     const request: AppCatalystChatRequest = {
@@ -110,7 +110,7 @@ export class FlowGenerator {
       }
       throw new Error(
         `Expected a new flow and/or an error message,` +
-          ` got ${JSON.stringify(messages)}.`
+        ` got ${JSON.stringify(messages)}.`
       );
     }
 
@@ -132,21 +132,22 @@ export class FlowGenerator {
         if (!originalStep) {
           throw new Error(
             `Error creating prompt for ${constraint.kind} constraint:` +
-              ` An original step was not found` +
-              ` with ID ${JSON.stringify(constraint.stepId)}.`
+            ` An original step was not found` +
+            ` with ID ${JSON.stringify(constraint.stepId)}.`
           );
         }
         const title = originalStep?.metadata?.title;
         if (!title) {
           throw new Error(
             `Error creating prompt for ${constraint.kind} constraint:` +
-              ` Original step did not have a title` +
-              ` with ID ${JSON.stringify(constraint.stepId)}.`
+            ` Original step did not have a title` +
+            ` with ID ${JSON.stringify(constraint.stepId)}.`
           );
         }
         return (
-          `IMPORTANT: You MUST edit the configuration of "${title}", ` +
-          ` but you MUST NOT change its name in any way.`
+          `IMPORTANT: You MUST edit the configuration ONLY for Step "${title}". ` +
+          ` You MUST NOT change the step name or output name in any way.` +
+          ` Do not change any other steps or metadata in the app.`
         );
       }
       default: {
@@ -172,8 +173,8 @@ export class FlowGenerator {
         if (!originalStepClone) {
           throw new Error(
             `Error applying ${constraint.kind} constraint to flow:` +
-              ` An original step was not found` +
-              ` with id ${JSON.stringify(originalStepId)}.`
+            ` An original step was not found` +
+            ` with id ${JSON.stringify(originalStepId)}.`
           );
         }
         const originalTitle = originalStepClone.metadata?.title;
@@ -186,9 +187,9 @@ export class FlowGenerator {
         if (!generatedStep) {
           throw new Error(
             `Error applying ${constraint.kind} constraint to flow:` +
-              ` A generated step was not found` +
-              ` with id ${JSON.stringify(originalStepId)}` +
-              ` nor title ${JSON.stringify(originalTitle)}.`
+            ` A generated step was not found` +
+            ` with id ${JSON.stringify(originalStepId)}` +
+            ` nor title ${JSON.stringify(originalTitle)}.`
           );
         }
         const originalConfig = originalStepClone.configuration;
