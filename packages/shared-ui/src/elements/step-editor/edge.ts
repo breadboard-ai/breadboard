@@ -3,7 +3,7 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { customElement, property } from "lit/decorators.js";
+import { customElement } from "lit/decorators.js";
 import { Box } from "./box";
 import { GraphNode } from "./graph-node";
 import { css, html, svg } from "lit";
@@ -12,6 +12,9 @@ import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { toCSSMatrix } from "./utils/to-css-matrix";
 import { GRID_SIZE } from "./constants";
+import { createRef, Ref, ref } from "lit/directives/ref.js";
+import { intersects } from "./utils/rect-intersection";
+import { getGlobalColor } from "../../utils/color";
 
 interface Connection {
   n1: DOMPoint;
@@ -19,6 +22,9 @@ interface Connection {
   s1: "Top" | "Right" | "Bottom" | "Left";
   s2: "Top" | "Right" | "Bottom" | "Left";
 }
+
+const EDGE_STANDARD = getGlobalColor("--bb-neutral-400");
+const EDGE_SELECTED = getGlobalColor("--bb-ui-600");
 
 @customElement("bb-graph-edge")
 export class GraphEdge extends Box {
@@ -31,8 +37,7 @@ export class GraphEdge extends Box {
     `,
   ];
 
-  @property()
-  accessor location = "bottom";
+  #edgeRef: Ref<SVGSVGElement> = createRef();
 
   constructor(
     public readonly node1: GraphNode,
@@ -62,6 +67,37 @@ export class GraphEdge extends Box {
     const height = bottom - top;
 
     return new DOMRect(0, 0, width, height);
+  }
+
+  intersects(targetBounds: DOMRect, padding = 0) {
+    const boundsIntersection = super.intersects(targetBounds, padding);
+    if (!boundsIntersection) {
+      return false;
+    }
+
+    // Check the edge graphic more closely.
+    if (!this.#edgeRef.value) {
+      return false;
+    }
+
+    // Get the SVG's bounding box and convert it to a world coordinates bounding
+    // box. Then use that for the intersection calculation.
+    const localBounds = this.#edgeRef.value.getBBox();
+    const tl = new DOMPoint(localBounds.x, localBounds.y).matrixTransform(
+      this.worldTransform
+    );
+    const tr = new DOMPoint(
+      localBounds.x + localBounds.width,
+      localBounds.y
+    ).matrixTransform(this.worldTransform);
+    const bl = new DOMPoint(
+      localBounds.x,
+      localBounds.y + localBounds.height
+    ).matrixTransform(this.worldTransform);
+
+    const worldBounds = new DOMRect(tl.x, tl.y, tr.x - tl.x, bl.y - tl.y);
+
+    return intersects(worldBounds, targetBounds, padding);
   }
 
   #calculateShortestPath() {
@@ -306,25 +342,25 @@ export class GraphEdge extends Box {
         style=${styleMap(styles)}
       >
         ${svg`
-          <svg version="1.1"
+          <svg ${ref(this.#edgeRef)} version="1.1"
                width=${this.bounds.width} height=${this.bounds.height}
                xmlns="http://www.w3.org/2000/svg">
                 <path d=${steps.join(" ")}
-                  stroke="#c2c2c2"
-                  stroke-width="2" fill="none" />
+                  stroke=${this.selected ? EDGE_SELECTED : EDGE_STANDARD}
+                  stroke-width="2" fill="none" stroke-linecap="round" />
 
                 <line x1=${connectionPoints.n2.x}
                   y1=${connectionPoints.n2.y}
                   x2=${connectionPoints.n2.x - arrowSize}
                   y2=${connectionPoints.n2.y - arrowSize}
                   transform=${`rotate(${rotation}, ${connectionPoints.n2.x}, ${connectionPoints.n2.y})`}
-                  stroke="#c2c2c2" stroke-width="2" stroke-linecap="round" />
+                  stroke=${this.selected ? EDGE_SELECTED : EDGE_STANDARD} stroke-width="2" stroke-linecap="round" />
 
                 <line x1=${connectionPoints.n2.x} y1=${connectionPoints.n2.y}
                 x2=${connectionPoints.n2.x - arrowSize}
                 y2=${connectionPoints.n2.y + arrowSize}
                 transform=${`rotate(${rotation}, ${connectionPoints.n2.x}, ${connectionPoints.n2.y})`}
-                stroke="#c2c2c2" stroke-width="2" stroke-linecap="round" />
+                stroke=${this.selected ? EDGE_SELECTED : EDGE_STANDARD} stroke-width="2" stroke-linecap="round" />
           </svg>
         `}
       </section>

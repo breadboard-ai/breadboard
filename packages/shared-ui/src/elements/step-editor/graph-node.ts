@@ -11,8 +11,7 @@ import { toCSSMatrix } from "./utils/to-css-matrix";
 import { Box } from "./box";
 import {
   NodeBoundsUpdateRequestEvent,
-  NodeSelectEvent,
-  NodeTranslateEvent,
+  SelectionTranslateEvent,
 } from "./events/events";
 import { GRID_SIZE } from "./constants";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
@@ -35,12 +34,6 @@ export class GraphNode extends Box {
 
   @property({ reflect: true, type: Boolean })
   accessor updating = false;
-
-  @property({ reflect: true, type: Boolean })
-  accessor selected = false;
-
-  @property({ reflect: true, type: Boolean })
-  accessor moving = false;
 
   @property()
   set ports(ports: InspectableNodePorts | null) {
@@ -142,7 +135,7 @@ export class GraphNode extends Box {
       }
 
       :host([selected]) #container {
-        outline: 3px solid var(--border);
+        outline: 2px solid var(--border);
         z-index: 2;
       }
 
@@ -279,7 +272,7 @@ export class GraphNode extends Box {
   #lastBounds: DOMRect | null = null;
   #ports: InspectableNodePorts | null = null;
 
-  constructor(public readonly id: string) {
+  constructor(public readonly nodeId: string) {
     super();
   }
 
@@ -413,9 +406,6 @@ export class GraphNode extends Box {
             this.#dragStart.x = evt.clientX;
             this.#dragStart.y = evt.clientY;
 
-            this.moving = true;
-            this.dispatchEvent(new NodeSelectEvent(this.id));
-
             this.#translateStart = new DOMPoint(
               this.transform.e,
               this.transform.f
@@ -436,31 +426,61 @@ export class GraphNode extends Box {
             const deltaY =
               (dragPosition.y - this.#dragStart.y) / this.worldTransform.a;
 
-            this.transform.e = this.#toGridSize(
-              this.#translateStart.x + deltaX
-            );
-            this.transform.f = this.#toGridSize(
-              this.#translateStart.y + deltaY
-            );
+            const xTranslation = this.#toGridSize(deltaX);
+            const yTranslation = this.#toGridSize(deltaY);
 
-            this.dispatchEvent(new NodeTranslateEvent());
+            if (xTranslation === 0 && yTranslation === 0) {
+              return;
+            }
+
+            this.dispatchEvent(
+              new SelectionTranslateEvent(xTranslation, yTranslation)
+            );
           }}
           @pointerup=${(evt: PointerEvent) => {
+            if (!this.#translateStart || !this.#dragStart) {
+              return;
+            }
+
             if (!(evt.target instanceof HTMLElement)) {
               return;
             }
 
             evt.target.releasePointerCapture(evt.pointerId);
 
-            this.moving = false;
+            const dragPosition = new DOMPoint(evt.clientX, evt.clientY);
+            const deltaX =
+              (dragPosition.x - this.#dragStart.x) / this.worldTransform.a;
+            const deltaY =
+              (dragPosition.y - this.#dragStart.y) / this.worldTransform.a;
+
+            const xTranslation = this.#toGridSize(deltaX);
+            const yTranslation = this.#toGridSize(deltaY);
+
             this.#dragStart = null;
             this.#translateStart = null;
-            this.dispatchEvent(new NodeTranslateEvent(/** hasSettled */ true));
+
+            if (xTranslation === 0 && yTranslation === 0) {
+              return;
+            }
+
+            this.dispatchEvent(
+              new SelectionTranslateEvent(
+                xTranslation,
+                yTranslation,
+                /** hasSettled */ true
+              )
+            );
           }}
         >
           ${this.nodeTitle}
         </header>
-        <div id="content">
+        <div
+          id="content"
+          @pointerdown=${(evt: Event) => {
+            evt.stopImmediatePropagation();
+          }}
+        >
           ${this.updating
             ? html`<p class="loading">Loading step details...</p>`
             : this.#renderPorts()}

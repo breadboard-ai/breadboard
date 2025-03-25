@@ -339,7 +339,10 @@ export class UI extends LitElement {
       ],
       () => {
         if (useDOMRenderer) {
-          return html`<bb-renderer .graph=${graph}></bb-renderer>`;
+          return html`<bb-renderer
+            .graph=${graph}
+            .selectionState=${this.selectionState}
+          ></bb-renderer>`;
         }
 
         return html`<bb-editor

@@ -4,12 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { LitElement, html, nothing, HTMLTemplateResult, svg } from "lit";
-import { property } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { toCSSMatrix } from "./utils/to-css-matrix";
 import { intersects } from "./utils/rect-intersection";
 
+@customElement("bb-graph-entity")
 export class Entity extends LitElement {
   boundsLabel = "";
   entities = new Map<string, Entity>();
@@ -32,11 +33,21 @@ export class Entity extends LitElement {
   @property()
   accessor transform = new DOMMatrix();
 
+  /**
+   * Used when there is a transform delta applied. Holds the original position
+   * data for the entity.
+   */
+  @property()
+  accessor baseTransform: DOMMatrix | null = null;
+
   @property()
   accessor worldTransform = new DOMMatrix();
 
   @property({ reflect: true, type: Boolean })
   accessor hidden = false;
+
+  @property({ reflect: true, type: Boolean })
+  accessor selected = false;
 
   getLocalBounds() {
     return new DOMRect();
@@ -111,8 +122,46 @@ export class Entity extends LitElement {
     }
   }
 
+  intersects(targetBounds: DOMRect, padding: number) {
+    return intersects(this.worldBounds, targetBounds, padding);
+  }
+
+  selectInsideOf(
+    bounds: DOMRect,
+    padding = 0,
+    isAdditiveSelection = false,
+    isToggleSelection = false
+  ) {
+    if (!this.worldBounds) {
+      this.selected = false;
+      return;
+    }
+
+    const intersecting = this.intersects(bounds, padding);
+    if (isToggleSelection && intersecting) {
+      this.selected = !this.selected;
+    } else if (isAdditiveSelection) {
+      this.selected = this.selected || intersecting;
+    } else if (!isAdditiveSelection && !isToggleSelection) {
+      this.selected = intersecting;
+    }
+
+    for (const entity of this.entities.values()) {
+      entity.selectInsideOf(
+        bounds,
+        padding,
+        isAdditiveSelection,
+        isToggleSelection
+      );
+    }
+  }
+
   adjustTranslation(x: number, y: number) {
     this.transform.translateSelf(x, y);
+
+    if (this.baseTransform) {
+      this.baseTransform.translateSelf(x, y);
+    }
   }
 
   protected renderSelf(): HTMLTemplateResult | symbol {

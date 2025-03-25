@@ -8,8 +8,12 @@ import { Box } from "./box";
 import { calculateBounds } from "./utils/calculate-bounds";
 import { InspectableEdge, InspectableNode } from "@google-labs/breadboard";
 import { GraphNode } from "./graph-node";
-import { inspectableEdgeToString } from "../../utils/workspace";
+import {
+  createEmptyGraphSelectionState,
+  inspectableEdgeToString,
+} from "../../utils/workspace";
 import { GraphEdge } from "./edge";
+import { GraphSelectionState } from "../../types/types";
 
 @customElement("bb-graph")
 export class Graph extends Box {
@@ -139,6 +143,58 @@ export class Graph extends Box {
   }
   get edges() {
     return this.#edges;
+  }
+
+  @property()
+  set selectionState(selectionState: GraphSelectionState | null) {
+    for (const node of this.#nodes) {
+      const graphNode = this.entities.get(node.descriptor.id) as GraphNode;
+      if (!graphNode) {
+        continue;
+      }
+
+      graphNode.selected =
+        selectionState?.nodes.has(node.descriptor.id) ?? false;
+    }
+  }
+  get selectionState() {
+    const selectionState = createEmptyGraphSelectionState();
+    for (const node of this.#nodes) {
+      const graphNode = this.entities.get(node.descriptor.id) as GraphNode;
+      if (!graphNode) {
+        continue;
+      }
+
+      if (graphNode.selected) {
+        selectionState.nodes.add(node.descriptor.id);
+      }
+    }
+
+    return selectionState;
+  }
+
+  applyTranslationToSelection(x: number, y: number, hasSettled: boolean) {
+    if (!this.selectionState) {
+      return;
+    }
+
+    for (const node of this.selectionState.nodes) {
+      const graphNode = this.entities.get(node) as GraphNode;
+      if (!graphNode) {
+        continue;
+      }
+
+      if (!graphNode.baseTransform) {
+        graphNode.baseTransform = DOMMatrix.fromMatrix(graphNode.transform);
+      }
+
+      graphNode.transform.e = graphNode.baseTransform.e + x;
+      graphNode.transform.f = graphNode.baseTransform.f + y;
+
+      if (hasSettled) {
+        graphNode.baseTransform = null;
+      }
+    }
   }
 
   calculateLocalBounds(): DOMRect {

@@ -4,17 +4,33 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css, nothing, PropertyValues } from "lit";
+import {
+  LitElement,
+  html,
+  css,
+  nothing,
+  PropertyValues,
+  HTMLTemplateResult,
+} from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { Graph } from "./graph";
 import { Camera } from "./camera";
-import { isCtrlCommand } from "./utils/is-mac";
+import { isCtrlCommand } from "./utils/is-ctrl-command";
 import { repeat } from "lit/directives/repeat.js";
 import { classMap } from "lit/directives/class-map.js";
 import { calculateBounds } from "./utils/calculate-bounds";
 import { clamp } from "./utils/clamp";
-import { InspectableGraph } from "@google-labs/breadboard";
+import { GraphIdentifier, InspectableGraph } from "@google-labs/breadboard";
 import { MAIN_BOARD_ID } from "../../constants/constants";
+import { SelectionTranslateEvent } from "./events/events";
+import { WorkspaceSelectionStateWithChangeId } from "../../types/types";
+import {
+  createEmptyWorkspaceSelectionState,
+  createWorkspaceSelectionChangeId,
+} from "../../utils/workspace";
+import { WorkspaceSelectionStateEvent } from "../../events/events";
+import { styleMap } from "lit/directives/style-map.js";
+import { Entity } from "./entity";
 
 @customElement("bb-renderer")
 export class Renderer extends LitElement {
@@ -23,6 +39,12 @@ export class Renderer extends LitElement {
 
   @property()
   accessor graph: InspectableGraph | null = null;
+
+  @property()
+  accessor selectionState: WorkspaceSelectionStateWithChangeId | null = null;
+
+  @property()
+  accessor interactionMode: "inert" | "selection" | "move" = "inert";
 
   @property()
   accessor camera = new Camera();
@@ -79,6 +101,15 @@ export class Renderer extends LitElement {
         display: block;
       }
     }
+
+    #selection {
+      display: block;
+      pointer-events: none;
+      position: absolute;
+      border: 1px solid var(--bb-neutral-500);
+      background: oklch(from var(--bb-neutral-900) l c h / 0.05);
+      z-index: 3;
+    }
   `;
 
   #lastBoundsForInteraction = new DOMRect();
@@ -88,6 +119,10 @@ export class Renderer extends LitElement {
   #firstResize = true;
 
   #onWheelBound = this.#onWheel.bind(this);
+  #onPointerDownBound = this.#onPointerDown.bind(this);
+  #onPointerMoveBound = this.#onPointerMove.bind(this);
+  #onPointerUpBound = this.#onPointerUp.bind(this);
+
   #resizeObserver = new ResizeObserver((entries) => {
     this.#lastBoundsForInteraction = this.#boundsForInteraction;
     this.#boundsForInteraction = this.getBoundingClientRect();
@@ -107,6 +142,26 @@ export class Renderer extends LitElement {
   #graphs = new Map<string, Graph>();
   #effects = new Map<string, () => void>();
 
+  connectedCallback(): void {
+    super.connectedCallback();
+
+    this.#resizeObserver.observe(this);
+    this.addEventListener("wheel", this.#onWheelBound);
+    this.addEventListener("pointerdown", this.#onPointerDownBound);
+    this.addEventListener("pointermove", this.#onPointerMoveBound);
+    this.addEventListener("pointerup", this.#onPointerUpBound);
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+
+    this.#resizeObserver.disconnect();
+    this.removeEventListener("wheel", this.#onWheelBound);
+    this.removeEventListener("pointerdown", this.#onPointerDownBound);
+    this.removeEventListener("pointermove", this.#onPointerMoveBound);
+    this.removeEventListener("pointerup", this.#onPointerUpBound);
+  }
+
   #addEffect(name: string, effect: () => void) {
     this.#effects.set(name, effect);
     this.#runEffects();
@@ -114,6 +169,75 @@ export class Renderer extends LitElement {
 
   #removeEffect(name: string) {
     this.#effects.delete(name);
+  }
+
+  #dragStart: DOMPoint | null = null;
+  #dragRect: DOMRect | null = null;
+  #isToggleSelection = false;
+  #isAdditiveSelection = false;
+  #movedDuringSelection = false;
+  #onPointerDown(evt: PointerEvent) {
+    this.#dragStart = new DOMPoint(
+      evt.clientX - this.#boundsForInteraction.left,
+      evt.clientY - this.#boundsForInteraction.top
+    );
+    this.#dragRect = new DOMRect();
+    this.#isToggleSelection = isCtrlCommand(evt);
+    this.#isAdditiveSelection = evt.shiftKey;
+    this.#updateDragRect(evt);
+    this.#movedDuringSelection = false;
+    this.tick++;
+
+    // If the interaction is with the renderer, go into selection mode proper.
+    const [top, ...rest] = evt.composedPath();
+    if (top === this) {
+      this.interactionMode = "selection";
+    } else {
+      // If the user has clicked on an unselected entity .
+      const nearestEntity = rest.find((el) => el instanceof Entity);
+      if (nearestEntity && !nearestEntity.selected) {
+        return;
+      }
+
+      this.interactionMode = "move";
+    }
+  }
+
+  #onPointerMove(evt: PointerEvent) {
+    if (!this.#dragStart || !this.#dragRect) {
+      return;
+    }
+
+    this.#updateDragRect(evt);
+    this.#movedDuringSelection = true;
+    this.tick++;
+  }
+
+  #onPointerUp() {
+    this.#dragStart = null;
+    this.interactionMode = "inert";
+    this.#isAdditiveSelection = false;
+    this.#isToggleSelection = false;
+  }
+
+  #updateDragRect(evt: PointerEvent) {
+    if (!this.#dragStart || !this.#dragRect) {
+      return;
+    }
+
+    const dragCurrent = new DOMPoint(
+      evt.clientX - this.#boundsForInteraction.left,
+      evt.clientY - this.#boundsForInteraction.top
+    );
+    const x = Math.min(this.#dragStart.x, dragCurrent.x);
+    const y = Math.min(this.#dragStart.y, dragCurrent.y);
+    const width = Math.abs(this.#dragStart.x - dragCurrent.x);
+    const height = Math.abs(this.#dragStart.y - dragCurrent.y);
+
+    this.#dragRect.x = x;
+    this.#dragRect.y = y;
+    this.#dragRect.width = width;
+    this.#dragRect.height = height;
   }
 
   #onWheel(evt: WheelEvent) {
@@ -149,18 +273,18 @@ export class Renderer extends LitElement {
     this.tick++;
   }
 
-  connectedCallback(): void {
-    super.connectedCallback();
+  protected shouldUpdate(changedProperties: PropertyValues): boolean {
+    if (changedProperties.has("selectionState") && this.selectionState) {
+      if (
+        this.selectionState.selectionChangeId ===
+        changedProperties.get("selectionState")?.selectionChangeId
+      ) {
+        console.log("Intercepted a change");
+        return false;
+      }
+    }
 
-    this.#resizeObserver.observe(this);
-    this.addEventListener("wheel", this.#onWheelBound);
-  }
-
-  disconnectedCallback(): void {
-    super.disconnectedCallback();
-
-    this.#resizeObserver.disconnect();
-    this.removeEventListener("wheel", this.#onWheelBound);
+    return true;
   }
 
   protected willUpdate(changedProperties: PropertyValues): void {
@@ -173,6 +297,18 @@ export class Renderer extends LitElement {
       this.#attemptAdjustToNewBounds = false;
       this.#removeEffect("camera");
       this.#adjustToNewBounds();
+    }
+
+    if (changedProperties.has("selectionState") && this.selectionState) {
+      for (const [graphId, selectionState] of this.selectionState.selectionState
+        .graphs) {
+        const graph = this.#graphs.get(graphId);
+        if (!graph) {
+          continue;
+        }
+
+        graph.selectionState = selectionState;
+      }
     }
 
     if (changedProperties.has("graph") && this.graph) {
@@ -209,12 +345,37 @@ export class Renderer extends LitElement {
 
     if (
       (changedProperties.has("tick") ||
-        changedProperties.has("_boundsDirty")) &&
+        changedProperties.has("_boundsDirty") ||
+        changedProperties.has("interactionMode")) &&
       this.graph &&
       this.camera
     ) {
-      for (const graph of this.#graphs.values()) {
-        graph.updateEntity(this.camera.transform.inverse());
+      const inverseCameraMatrix = this.camera.transform.inverse();
+      for (const [id, graph] of this.#graphs) {
+        graph.updateEntity(inverseCameraMatrix);
+
+        if (this.#dragRect) {
+          if (this.interactionMode === "selection") {
+            graph.selectInsideOf(
+              this.#dragRect,
+              0,
+              this.#isAdditiveSelection,
+              false
+            );
+            this.#updateSelectionFromGraph(id, graph);
+          } else if (
+            this.interactionMode === "inert" &&
+            !this.#movedDuringSelection
+          ) {
+            graph.selectInsideOf(
+              this.#dragRect,
+              0,
+              this.#isAdditiveSelection,
+              this.#isToggleSelection
+            );
+            this.#updateSelectionFromGraph(id, graph);
+          }
+        }
 
         if (this.camera?.bounds) {
           graph.cullOutsideOf(this.camera.bounds, this.cullPadding);
@@ -352,12 +513,64 @@ export class Renderer extends LitElement {
     return targetMatrix;
   }
 
+  #applyTranslationToSelection(x: number, y: number, hasSettled: boolean) {
+    if (!this.selectionState) {
+      return;
+    }
+
+    for (const graphId of this.selectionState.selectionState.graphs.keys()) {
+      const graph = this.#graphs.get(graphId);
+      if (!graph) {
+        return;
+      }
+
+      graph.applyTranslationToSelection(x, y, hasSettled);
+    }
+  }
+
+  #updateSelectionFromGraph(graphId: GraphIdentifier, graph: Graph) {
+    // Use the existing state if that's the mode we're in.
+    let newState = this.#isAdditiveSelection
+      ? (this.selectionState?.selectionState ?? null)
+      : null;
+    if (!newState) {
+      newState = createEmptyWorkspaceSelectionState();
+    }
+
+    if (graph.selectionState) {
+      newState.graphs.set(graphId, graph.selectionState);
+    }
+
+    const selectionChangeId = createWorkspaceSelectionChangeId();
+    this.dispatchEvent(
+      new WorkspaceSelectionStateEvent(
+        selectionChangeId,
+        newState,
+        !this.#isAdditiveSelection,
+        /** animated **/ false
+      )
+    );
+  }
+
   render() {
     if (!this.#graphs || !this.camera) {
       return nothing;
     }
 
     this.camera.showBounds = this.debug;
+
+    let selectionRectangle: HTMLTemplateResult | symbol = nothing;
+    if (this.interactionMode === "selection" && this.#dragRect) {
+      selectionRectangle = html`<div
+        style=${styleMap({
+          left: `${this.#dragRect.x}px`,
+          top: `${this.#dragRect.y}px`,
+          width: `${this.#dragRect.width}px`,
+          height: `${this.#dragRect.height}px`,
+        })}
+        id="selection"
+      ></div>`;
+    }
 
     return [
       html`${repeat(
@@ -371,10 +584,9 @@ export class Renderer extends LitElement {
           graph.showBounds = this.debug;
 
           return html`<div
-            @bbnodeselect=${() => {
-              this.tick++;
-            }}
-            @bbnodetranslate=${() => {
+            @bbselectiontranslate=${(evt: SelectionTranslateEvent) => {
+              this.#applyTranslationToSelection(evt.x, evt.y, evt.hasSettled);
+
               this._boundsDirty = new Set([
                 ...this._boundsDirty,
                 graph.boundsLabel,
@@ -397,6 +609,7 @@ export class Renderer extends LitElement {
         id="overlay"
         class=${classMap({ active: this.cullPadding < 0 })}
       ></div>`,
+      selectionRectangle,
     ];
   }
 }
