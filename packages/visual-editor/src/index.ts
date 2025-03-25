@@ -1169,7 +1169,9 @@ export class Main extends LitElement {
       const isFocusedOnRenderer = evt
         .composedPath()
         .find(
-          (target) => target instanceof BreadboardUI.Elements.GraphRenderer
+          (target) =>
+            target instanceof BreadboardUI.Elements.GraphRenderer ||
+            target instanceof BreadboardUI.Elements.Renderer
         );
 
       if (!isFocusedOnRenderer) {

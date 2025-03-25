@@ -63,6 +63,7 @@ export { Overlay } from "./overlay/overlay.js";
 export { PDFViewer } from "./output/pdf-viewer/pdf-viewer.js";
 export { PortTooltip } from "./editor/port-tooltip.js";
 export { ProjectListing } from "./welcome-panel/project-listing.js";
+export { Renderer } from "./step-editor/renderer.js";
 export { SaveAsOverlay } from "./overlay/save-as.js";
 export { SchemaEditor } from "./input/schema-editor/schema-editor.js";
 export { SettingsEditOverlay } from "./overlay/settings-edit.js";

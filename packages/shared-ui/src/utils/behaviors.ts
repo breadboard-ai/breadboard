@@ -55,6 +55,10 @@ export function isMainPortBehavior(schema: Schema): boolean {
   return !!schema.behavior?.includes("main-port");
 }
 
+export function isPreviewBehavior(schema: Schema): boolean {
+  return !!schema.behavior?.includes("hint-preview");
+}
+
 export function behaviorsMatch(schema1: Schema, schema2: Schema): boolean {
   if (schema1.behavior?.length !== schema2.behavior?.length) {
     return false;
