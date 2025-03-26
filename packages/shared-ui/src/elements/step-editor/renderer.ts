@@ -20,7 +20,7 @@ import { repeat } from "lit/directives/repeat.js";
 import { classMap } from "lit/directives/class-map.js";
 import { calculateBounds } from "./utils/calculate-bounds";
 import { clamp } from "./utils/clamp";
-import { InspectableGraph } from "@google-labs/breadboard";
+import { EditSpec, InspectableGraph } from "@google-labs/breadboard";
 import { MAIN_BOARD_ID } from "../../constants/constants";
 import {
   SelectGraphContentsEvent,
@@ -31,9 +31,13 @@ import {
   createEmptyWorkspaceSelectionState,
   createWorkspaceSelectionChangeId,
 } from "../../utils/workspace";
-import { WorkspaceSelectionStateEvent } from "../../events/events";
+import {
+  MultiEditEvent,
+  WorkspaceSelectionStateEvent,
+} from "../../events/events";
 import { styleMap } from "lit/directives/style-map.js";
 import { Entity } from "./entity";
+import { toGridSize } from "./utils/to-grid-size";
 
 @customElement("bb-renderer")
 export class Renderer extends LitElement {
@@ -553,10 +557,60 @@ export class Renderer extends LitElement {
     for (const graphId of this.selectionState.selectionState.graphs.keys()) {
       const graph = this.#graphs.get(graphId);
       if (!graph) {
-        return;
+        continue;
       }
 
       graph.applyTranslationToSelection(x, y, hasSettled);
+    }
+
+    // When the dragging settles, send out the update on all the node locations
+    // so they can be persisted.
+    if (hasSettled) {
+      const edits: EditSpec[] = [];
+
+      for (const graphId of this.selectionState.selectionState.graphs.keys()) {
+        const graph = this.#graphs.get(graphId);
+        const graphSelection =
+          this.selectionState.selectionState.graphs.get(graphId);
+        if (!graph || !graphSelection) {
+          continue;
+        }
+
+        for (const nodeId of graphSelection.nodes) {
+          // Find the InspectableNode and the GraphNode entity and create the
+          // updated metadata from the two.
+          const graphNode = graph.nodes.find(
+            (node) => node.descriptor.id === nodeId
+          );
+          const graphNodeEntity = graph.entities.get(nodeId);
+          if (!graphNode || !graphNodeEntity) {
+            continue;
+          }
+
+          const metadata = { ...(graphNode.metadata() ?? {}) };
+          metadata.visual ??= {};
+
+          const visual = metadata.visual as Record<string, number>;
+          visual.x = toGridSize(
+            graph.transform.e + graphNodeEntity.transform.e
+          );
+          visual.y = toGridSize(
+            graph.transform.f + graphNodeEntity.transform.f
+          );
+
+          const editGraphId = graphId === MAIN_BOARD_ID ? "" : graphId;
+          edits.push({
+            type: "changemetadata",
+            graphId: editGraphId,
+            id: nodeId,
+            metadata,
+          });
+        }
+      }
+
+      this.dispatchEvent(
+        new MultiEditEvent(edits, "Update selection transform")
+      );
     }
   }
 
