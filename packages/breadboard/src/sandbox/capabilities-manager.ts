@@ -167,18 +167,25 @@ class CapabilitiesManagerImpl implements CapabilitiesManager {
   constructor(public readonly context?: NodeHandlerContext) {}
 
   createSpec(): CapabilitySpec {
-    if (this.context) {
-      const fs = new FileSystemHandlerFactory(this.context.fileSystem);
-      return {
-        fetch: getHandler("fetch", this.context),
-        secrets: getHandler("secrets", this.context),
-        invoke: getHandler("invoke", this.context),
-        output: createOutputHandler(this.context),
-        describe: createDescribeHandler(this.context),
-        query: fs.query(),
-        read: fs.read(),
-        write: fs.write(),
-      };
+    try {
+      if (this.context) {
+        const fs = new FileSystemHandlerFactory(this.context.fileSystem);
+        return {
+          fetch: getHandler("fetch", this.context),
+          secrets: getHandler("secrets", this.context),
+          invoke: getHandler("invoke", this.context),
+          output: createOutputHandler(this.context),
+          describe: createDescribeHandler(this.context),
+          query: fs.query(),
+          read: fs.read(),
+          write: fs.write(),
+        };
+      }
+    } catch (e) {
+      // eat error
+      // TODO: Make sure this never happens. This will likely happen when
+      // a misconfigured context is supplied, which is fine in most cases:
+      // we just give you back no capabilities.
     }
     return CapabilitiesManagerImpl.dummies();
   }
