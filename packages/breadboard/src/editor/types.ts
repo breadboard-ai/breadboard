@@ -305,6 +305,11 @@ export type EditHistory = {
   redo(): void;
 
   /**
+   * Jumps to the entry with the given index.
+   */
+  jump(index: number): void;
+
+  /**
    * Returns a list of all entries in the history.
    */
   entries(): EditHistoryEntry[];
