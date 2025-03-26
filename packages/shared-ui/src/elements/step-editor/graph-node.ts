@@ -13,7 +13,6 @@ import {
   NodeBoundsUpdateRequestEvent,
   SelectionTranslateEvent,
 } from "./events/events";
-import { GRID_SIZE } from "./constants";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { repeat } from "lit/directives/repeat.js";
 import { InspectableNodePorts } from "@google-labs/breadboard";
@@ -23,6 +22,7 @@ import { isPreviewBehavior } from "../../utils/behaviors";
 import { createTruncatedValue } from "./utils/create-truncated-value";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { styles as ChicletStyles } from "../shared-styles/chiclet.js";
+import { toGridSize } from "./utils/to-grid-size";
 
 @customElement("bb-graph-node")
 export class GraphNode extends Box {
@@ -279,10 +279,6 @@ export class GraphNode extends Box {
     this.tabIndex = 0;
   }
 
-  #toGridSize(value: number) {
-    return Math.round(value / GRID_SIZE) * GRID_SIZE;
-  }
-
   calculateLocalBounds(): DOMRect {
     if (!this.#containerRef.value) {
       return new DOMRect();
@@ -429,8 +425,8 @@ export class GraphNode extends Box {
             const deltaY =
               (dragPosition.y - this.#dragStart.y) / this.worldTransform.a;
 
-            const xTranslation = this.#toGridSize(deltaX);
-            const yTranslation = this.#toGridSize(deltaY);
+            const xTranslation = toGridSize(deltaX);
+            const yTranslation = toGridSize(deltaY);
 
             if (xTranslation === 0 && yTranslation === 0) {
               return;
@@ -457,8 +453,8 @@ export class GraphNode extends Box {
             const deltaY =
               (dragPosition.y - this.#dragStart.y) / this.worldTransform.a;
 
-            const xTranslation = this.#toGridSize(deltaX);
-            const yTranslation = this.#toGridSize(deltaY);
+            const xTranslation = toGridSize(deltaX);
+            const yTranslation = toGridSize(deltaY);
 
             this.#dragStart = null;
             this.#translateStart = null;
