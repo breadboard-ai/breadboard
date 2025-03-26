@@ -829,6 +829,10 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
       ></bb-overflow-menu>`;
     }
 
+    const assetType = this.#isGraphAsset(this.selectedItem)
+      ? this.selectedItem.metadata?.type
+      : undefined;
+
     return html` <div
         id="background"
         @pointerdown=${() => {
@@ -1067,16 +1071,12 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
             <section
               id="details"
               class=${classMap({
-                padded: this.#isGraphAsset(this.selectedItem)
-                  ? this.selectedItem.metadata?.type === "file"
-                  : false,
+                padded: assetType === "file",
               })}
             >
               ${itemData
                 ? html`
-                    ${this.#isGraphAsset(this.selectedItem) &&
-                    (this.selectedItem.metadata?.type === "content" ||
-                      this.selectedItem.metadata?.type === "connector")
+                    ${assetType === "content" || assetType === "connector"
                       ? html`<div>
                           <button
                             id="edit-asset"
@@ -1122,34 +1122,44 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                         </div>`
                       : nothing}
                     ${this.editAssetContent
-                      ? html`<bb-llm-input
-                          ${ref(this.#contentInputRef)}
-                          @keydown=${(evt: KeyboardEvent) => {
-                            const isMac =
-                              navigator.platform.indexOf("Mac") === 0;
-                            const isCtrlCommand = isMac
-                              ? evt.metaKey
-                              : evt.ctrlKey;
+                      ? assetType === "connector"
+                        ? html`<bb-edit-connector
+                            .state=${this.state}
+                            .path=${this.editAssetContent.path}
+                          ></bb-edit-connector>`
+                        : html`<bb-llm-input
+                            ${ref(this.#contentInputRef)}
+                            @keydown=${(evt: KeyboardEvent) => {
+                              const isMac =
+                                navigator.platform.indexOf("Mac") === 0;
+                              const isCtrlCommand = isMac
+                                ? evt.metaKey
+                                : evt.ctrlKey;
 
-                            if (evt.key === "Enter" && isCtrlCommand) {
-                              this.#attemptUpdateAsset();
-                            }
-                          }}
-                          .value=${itemData}
-                          .clamped=${false}
-                          .description=${null}
-                          .showInlineControlsToggle=${hasEditableParts}
-                          .showInlineControls=${hasEditableParts}
-                          .showPartControls=${hasEditableParts}
-                          .autofocus=${true}
-                        ></bb-llm-input>`
-                      : html`<bb-llm-output
-                          .value=${itemData}
-                          .clamped=${false}
-                          .graphUrl=${this.state?.graphUrl || null}
-                          .showExportControls=${true}
-                          .supportedExportControls=${supportedExportControls}
-                        ></bb-llm-output>`}
+                              if (evt.key === "Enter" && isCtrlCommand) {
+                                this.#attemptUpdateAsset();
+                              }
+                            }}
+                            .value=${itemData}
+                            .clamped=${false}
+                            .description=${null}
+                            .showInlineControlsToggle=${hasEditableParts}
+                            .showInlineControls=${hasEditableParts}
+                            .showPartControls=${hasEditableParts}
+                            .autofocus=${true}
+                          ></bb-llm-input>`
+                      : assetType === "connector"
+                        ? html`<bb-view-connector
+                            .state=${this.state}
+                            .path=${this.selectedItem?.path}
+                          ></bb-view-connector>`
+                        : html`<bb-llm-output
+                            .value=${itemData}
+                            .clamped=${false}
+                            .graphUrl=${this.state?.graphUrl || null}
+                            .showExportControls=${true}
+                            .supportedExportControls=${supportedExportControls}
+                          ></bb-llm-output>`}
                   `
                 : isParameter
                   ? html` <div>

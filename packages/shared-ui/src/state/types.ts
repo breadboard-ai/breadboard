@@ -20,6 +20,8 @@ import {
   PortIdentifier,
 } from "@google-labs/breadboard";
 import { SideBoardRuntime } from "../sideboards/types";
+import { ConnectorView } from "../connectors/types";
+import { JsonSerializable } from "@breadboard-ai/build";
 
 export type ChatStatus = "running" | "paused" | "stopped";
 
@@ -85,7 +87,7 @@ export type ChatState = {
   statusDetail: string;
 };
 
-export type OrganizerStatus = "free" | "busy" | "connector-edit";
+export type OrganizerStage = "free" | "busy" | "connector-edit";
 
 /**
  * Represents the Model+Controller for the Asset Organizer.
@@ -94,7 +96,7 @@ export type Organizer = {
   /**
    * Current status of the organizer
    */
-  status: OrganizerStatus;
+  stage: OrganizerStage;
 
   /**
    * Current graph's assets.
@@ -135,6 +137,12 @@ export type Organizer = {
    * Cancels all pending work.
    */
   cancel(): Promise<void>;
+
+  /**
+   * Gets the connector view: the values and the schema to use to render these
+   * values.
+   */
+  getConnectorView(path: AssetPath): Promise<Outcome<ConnectorView>>;
 };
 
 export type GraphAsset = {

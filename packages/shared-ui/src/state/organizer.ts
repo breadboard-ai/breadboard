@@ -17,7 +17,7 @@ import {
   Connector,
   GraphAsset,
   Organizer,
-  OrganizerStatus,
+  OrganizerStage,
   ProjectInternal,
 } from "./types";
 import { RemoveAssetWithRefs } from "../transforms";
@@ -25,7 +25,11 @@ import { UpdateAssetWithRefs } from "../transforms/update-asset-with-refs";
 import { ChangeParameterMetadata } from "../transforms/change-parameter-metadata";
 import { signal } from "signal-utils";
 import { Configurator } from "../connectors";
-import { ConnectorEdit } from "../connectors/types";
+import {
+  ConnectorConfiguration,
+  ConnectorEdit,
+  ConnectorView,
+} from "../connectors/types";
 import { CreateConnector } from "../transforms/create-connector";
 import { EditConnector } from "../transforms/edit-connector";
 
@@ -33,7 +37,7 @@ export { ReactiveOrganizer };
 
 class ReactiveOrganizer implements Organizer {
   @signal
-  accessor status: OrganizerStatus = "free";
+  accessor stage: OrganizerStage = "free";
 
   #project: ProjectInternal;
   readonly graphAssets: Map<AssetPath, GraphAsset>;
@@ -90,13 +94,13 @@ class ReactiveOrganizer implements Organizer {
     if (!url) {
       return err(`Connector URL was not specified.`);
     }
-    if (this.status !== "free") {
+    if (this.stage !== "free") {
       return err(
         `Can't create connector: the organizer is already busy doing something else`
       );
     }
 
-    this.status = "busy";
+    this.stage = "busy";
 
     const id = globalThis.crypto.randomUUID();
 
@@ -114,14 +118,14 @@ class ReactiveOrganizer implements Organizer {
     const reading = await configurator.read(initializing.configuration);
     if (!ok(reading)) return this.#free(reading);
 
-    this.status = "connector-edit";
+    this.stage = "connector-edit";
   }
 
   async commitConnectorInstanceEdits(
     id: UUID,
     edit: ConnectorEdit
   ): Promise<Outcome<void>> {
-    if (this.status !== "connector-edit") {
+    if (this.stage !== "connector-edit") {
       return this.#free(
         err(
           `Can't commit connector edits: the organizer is already doing somethign else`
@@ -129,7 +133,7 @@ class ReactiveOrganizer implements Organizer {
       );
     }
 
-    this.status = "busy";
+    this.stage = "busy";
 
     const runtime = this.#project.runtime();
     const configurator = new Configurator(runtime, id, edit.configuration.url);
@@ -142,16 +146,47 @@ class ReactiveOrganizer implements Organizer {
     );
     if (!ok(updatingGraph)) return this.#free(updatingGraph);
 
-    this.status = "free";
+    this.stage = "free";
+  }
+
+  async getConnectorView(path: AssetPath): Promise<Outcome<ConnectorView>> {
+    const runtime = this.#project.runtime();
+
+    const id = path.split("/")[1] as UUID;
+    if (!id) return err(`Path "${path}" is not a valid connector path`);
+
+    const connector = this.graphAssets.get(path);
+    if (!connector) return err(`Connector "${path}" does not exist`);
+
+    if (connector.metadata?.type !== "connector") {
+      return err(`The asset "${path}" is not of "connector" type`);
+    }
+
+    const part = connector.data.at(-1)?.parts.at(0);
+    if (!part || !("json" in part)) {
+      return err(`The connector instance "${path}" is misconfigured`);
+    }
+
+    const configuration = part.json as ConnectorConfiguration;
+
+    const configurator = new Configurator(runtime, id, configuration.url);
+
+    this.stage = "busy";
+    const reading = await configurator.read(configuration);
+    if (!ok(reading)) return this.#free(reading);
+
+    this.stage = "free";
+
+    return reading;
   }
 
   #free<T>(outcome: T): T {
-    this.status = "free";
+    this.stage = "free";
     return outcome;
   }
 
   async cancel(): Promise<void> {
-    this.status = "free";
+    this.stage = "free";
     // TODO: Do clean up work.
   }
 }
