@@ -139,6 +139,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
 
       #edit-parameter,
       #edit-asset,
+      #cancel-edit,
       #add-asset {
         font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
           var(--bb-font-family);
@@ -157,6 +158,11 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
         &:focus {
           background-color: Var(--bb-neutral-300);
         }
+      }
+
+      #cancel-edit {
+        background-image: var(--bb-icon-eject);
+        margin-bottom: var(--bb-grid-size-4);
       }
 
       #edit-parameter,
@@ -1069,7 +1075,8 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
               ${itemData
                 ? html`
                     ${this.#isGraphAsset(this.selectedItem) &&
-                    this.selectedItem.metadata?.type === "content"
+                    (this.selectedItem.metadata?.type === "content" ||
+                      this.selectedItem.metadata?.type === "connector")
                       ? html`<div>
                           <button
                             id="edit-asset"
@@ -1101,6 +1108,17 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                               ? Strings.from("COMMAND_SAVE_ASSET")
                               : Strings.from("COMMAND_EDIT_ASSET")}
                           </button>
+                          ${this.editAssetContent
+                            ? html`<button
+                                id="cancel-edit"
+                                @click=${() => {
+                                  this.state?.cancel();
+                                  this.editAssetContent = null;
+                                }}
+                              >
+                                ${Strings.from("COMMAND_CANCEL")}
+                              </button>`
+                            : nothing}
                         </div>`
                       : nothing}
                     ${this.editAssetContent

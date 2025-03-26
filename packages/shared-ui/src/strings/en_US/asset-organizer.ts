@@ -20,6 +20,9 @@ export default {
   COMMAND_EDIT_ASSET: {
     str: "Edit Asset Content",
   },
+  COMMAND_CANCEL: {
+    str: "Cancel",
+  },
   COMMAND_SAVE_ASSET: {
     str: "Save Asset Content",
   },
