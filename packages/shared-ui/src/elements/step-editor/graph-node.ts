@@ -11,6 +11,7 @@ import { toCSSMatrix } from "./utils/to-css-matrix";
 import { Box } from "./box";
 import {
   NodeBoundsUpdateRequestEvent,
+  NodeConfigurationRequestEvent,
   SelectionTranslateEvent,
 } from "./events/events";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
@@ -470,13 +471,20 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         class=${classMap({ bounds: this.showBounds })}
         style=${styleMap(styles)}
         ${ref(this.#containerRef)}
+        @click=${() => {
+          this.dispatchEvent(new NodeConfigurationRequestEvent(this.nodeId));
+        }}
       >
         <header
+          @click=${(evt: Event) => {
+            evt.stopImmediatePropagation();
+          }}
           @pointerdown=${(evt: PointerEvent) => {
             if (!(evt.target instanceof HTMLElement)) {
               return;
             }
 
+            evt.stopImmediatePropagation();
             evt.target.setPointerCapture(evt.pointerId);
             this.#dragStart = new DOMPoint();
             this.#dragStart.x = evt.clientX;

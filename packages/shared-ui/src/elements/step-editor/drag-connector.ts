@@ -173,6 +173,8 @@ export class DragConnector extends LitElement {
           },
         ];
 
+        console.log(edits);
+
         this.dispatchEvent(new MultiEditEvent(edits, "Add edge"));
         break;
       }
