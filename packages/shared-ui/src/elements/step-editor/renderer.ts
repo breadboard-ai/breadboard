@@ -29,6 +29,7 @@ import {
 } from "@google-labs/breadboard";
 import { MAIN_BOARD_ID } from "../../constants/constants";
 import {
+  NodeAddEvent,
   SelectGraphContentsEvent,
   SelectionTranslateEvent,
 } from "./events/events";
@@ -388,7 +389,8 @@ export class Renderer extends LitElement {
     if (top !== this) {
       // If the user has clicked on an unselected entity, change the behavior to
       // that of a click.
-      const nearestEntity = rest.find((el) => el instanceof Entity);
+      const nearestEntity =
+        top instanceof Entity ? top : rest.find((el) => el instanceof Entity);
       if (nearestEntity && !nearestEntity.selected) {
         this.#clickRect = DOMRect.fromRect(this.#dragRect);
         this.#dragRect = null;
@@ -607,7 +609,7 @@ export class Renderer extends LitElement {
             this.#updateSelectionFromGraph(graph);
           } else if (this.#clickRect) {
             // Click-select.
-            graph.selectInsideOf(
+            graph.selectAt(
               this.#clickRect,
               0,
               this.#isAdditiveSelection,
@@ -931,6 +933,9 @@ export class Renderer extends LitElement {
         .showExperimentalComponents=${this.showExperimentalComponents}
         @wheel=${(evt: WheelEvent) => {
           evt.stopImmediatePropagation();
+        }}
+        @bbnodeadd=${(evt: NodeAddEvent) => {
+          this.#createNode(evt.nodeType);
         }}
         @bbzoomtofit=${(evt: ZoomToFitEvent) => {
           this.fitToView(evt.animate);

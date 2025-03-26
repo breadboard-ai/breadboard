@@ -77,7 +77,11 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           var(--bb-font-family);
         color: var(--bb-neutral-900);
         line-height: var(--bb-grid-size-6);
-        z-index: 1;
+        z-index: 2;
+      }
+
+      :host([selected]) {
+        z-index: 3;
       }
 
       :host {
@@ -166,7 +170,6 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
       :host([selected]) #container {
         outline: 2px solid var(--border);
-        z-index: 2;
       }
 
       :host([highlighted]) #container {

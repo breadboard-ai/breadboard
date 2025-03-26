@@ -30,6 +30,7 @@ import {
 import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { DATA_TYPE } from "./constants.js";
+import { NodeAddEvent } from "./events/events.js";
 
 const QUICK_ADD_ADJUSTMENT = -20;
 
@@ -558,100 +559,7 @@ export class EditorControls extends LitElement {
   }
 
   #handleChosenKitItem(nodeType: string) {
-    console.log(nodeType);
-    // if (!this.#graphRendererRef.value) {
-    //   return;
-    // }
-
-    // const id = createRandomID(nodeType);
-    // const visual: NodeMetadata["visual"] = {};
-    // const graphId =
-    //   this.#componentLibraryConfiguration?.subGraphId ?? this.subGraphId ?? "";
-    // if (
-    //   this.#componentLibraryConfiguration &&
-    //   this.#componentLibraryConfiguration.id
-    // ) {
-    //   if (this.#componentLibraryConfiguration.freeDrop) {
-    //     const { x, y } = this.#graphRendererRef.value.toContainerCoordinates({
-    //       x: this.#componentLibraryConfiguration.x,
-    //       // We adjust the y position here to account for the header height but
-    //       // also the fact that the header port is slightly below the top of the
-    //       // node.
-    //       y:
-    //         this.#componentLibraryConfiguration.y -
-    //         HEADER_HEIGHT -
-    //         HEADER_PORT_ADJSUTMENT,
-    //     });
-
-    //     visual.x = Math.round(x / GRID_SIZE) * GRID_SIZE;
-    //     visual.y = Math.round(y / GRID_SIZE) * GRID_SIZE;
-    //   } else if (this.#componentLibraryConfiguration.id) {
-    //     const sourceVisual = this.graph
-    //       ?.nodeById(this.#componentLibraryConfiguration.id)
-
-    //       ?.metadata().visual as Record<string, number> | undefined;
-    //     if (sourceVisual) {
-    //       visual.y = sourceVisual.y;
-    //       visual.x =
-    //         sourceVisual.x + GRAPH_NODE_WIDTH + GRAPH_NODE_QUICK_ADD_GAP;
-    //     }
-    //   }
-    // } else {
-    //   // Middle of the canvas.
-    //   const bounds = this.getBoundingClientRect();
-    //   const location = this.#graphRendererRef.value.toContainerCoordinates({
-    //     x: bounds.x + bounds.width * 0.5,
-    //     y: bounds.y + bounds.height * 0.5,
-    //   });
-
-    //   visual.x = location.x - GRAPH_NODE_WIDTH / 2;
-    //   visual.y = location.y - QUICK_ADD_ADJUSTMENT * 3;
-    // }
-
-    // const title = this.#getGraphTitleByType(nodeType);
-
-    // let options: { sourceId: NodeIdentifier; portId: PortIdentifier } | null =
-    //   null;
-
-    // if (this.#componentLibraryConfiguration) {
-    //   const { id: sourceId, portId } = this.#componentLibraryConfiguration;
-    //   if (sourceId && portId) {
-    //     options = { sourceId, portId };
-    //   }
-    // }
-
-    // this.dispatchEvent(
-    //   new NodeCreateEvent(
-    //     id,
-    //     nodeType,
-    //     graphId,
-    //     null,
-    //     { title, visual },
-    //     options
-    //   )
-    // );
-
-    // if (this.#componentLibraryConfiguration) {
-    //   let animate = this.#componentLibraryConfiguration.id !== null;
-
-    //   // By default we will zoom to the currently-selected node. We therefore
-    //   // wait a frame so that the newly-added node is selected.
-    //   requestAnimationFrame(() => {
-    //     if (!this.#graphRendererRef.value) {
-    //       return;
-    //     }
-
-    //     if (
-    //       window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
-    //       this.#componentLibraryConfiguration?.freeDrop === false
-    //     ) {
-    //       animate = false;
-    //     }
-
-    //     this.#graphRendererRef.value.zoomToSelectionIfPossible(animate);
-    //   });
-    // }
-
+    this.dispatchEvent(new NodeAddEvent(nodeType));
     this.hidePickers();
   }
 

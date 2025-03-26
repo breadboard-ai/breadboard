@@ -8,21 +8,72 @@ import type { GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
 import { Graph } from "../graph";
 import { GraphNode } from "../graph-node";
 import { PortIdentifier } from "@google-labs/breadboard";
+import { GraphEdge } from "../graph-edge";
+
+export function collectEdgeAndGraphId(evt: Event) {
+  let graphId: GraphIdentifier | null = null;
+  let edgeId: string | null = null;
+
+  const path = evt.composedPath();
+
+  for (const el of path) {
+    if (el instanceof Graph && !graphId) {
+      graphId = el.graphId;
+    }
+
+    if (el instanceof GraphEdge && !edgeId) {
+      edgeId = el.edgeId;
+    }
+
+    if (edgeId && graphId) {
+      break;
+    }
+  }
+
+  return { graphId, edgeId };
+}
+
+export function collectNodeAndGraphId(evt: Event) {
+  let graphId: GraphIdentifier | null = null;
+  let nodeId: NodeIdentifier | null = null;
+
+  const path = evt.composedPath();
+
+  for (const el of path) {
+    if (el instanceof Graph && !graphId) {
+      graphId = el.graphId;
+    }
+
+    if (el instanceof GraphNode && !nodeId) {
+      nodeId = el.nodeId;
+    }
+
+    if (nodeId && graphId) {
+      break;
+    }
+  }
+
+  return { graphId, nodeId };
+}
 
 export function collectIds(evt: Event, dir: "in" | "out") {
   let graphId: GraphIdentifier | null = null;
   let nodeId: NodeIdentifier | null = null;
   let portId: PortIdentifier | null = null;
+
   const path = evt.composedPath();
+
   for (const el of path) {
-    if (el instanceof Graph) {
+    if (el instanceof Graph && !graphId) {
       graphId = el.graphId;
     }
 
     if (el instanceof GraphNode) {
-      nodeId = el.nodeId;
+      if (!nodeId) {
+        nodeId = el.nodeId;
+      }
 
-      if (el.ports) {
+      if (el.ports && !portId) {
         const ports = dir === "in" ? el.ports.inputs : el.ports.outputs;
 
         for (const port of ports.ports) {
