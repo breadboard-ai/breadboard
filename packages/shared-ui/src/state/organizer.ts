@@ -87,7 +87,9 @@ class ReactiveOrganizer implements Organizer {
       return err(`Connector URL was not specified.`);
     }
     if (this.status !== "free") {
-      return err(`Can't create connector: already busy doing something else.`);
+      return err(
+        `Can't create connector: the organizer is already busy doing something else.`
+      );
     }
 
     this.status = "busy";
