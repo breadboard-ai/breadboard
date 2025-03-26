@@ -51,10 +51,10 @@ export class Renderer extends LitElement {
   accessor selectionState: WorkspaceSelectionStateWithChangeId | null = null;
 
   @property({ reflect: true })
-  accessor interactionMode: "inert" | "selection" | "move" = "inert";
+  accessor interactionMode: "inert" | "selection" | "pan" | "move" = "inert";
 
   @property({ reflect: true, type: Boolean })
-  accessor isDragMoving = false;
+  accessor isDragPanning = false;
 
   @property()
   accessor camera = new Camera();
@@ -101,11 +101,11 @@ export class Renderer extends LitElement {
       outline: none;
     }
 
-    :host([interactionmode="move"]) {
+    :host([interactionmode="pan"]) {
       cursor: grab;
     }
 
-    :host([interactionmode="move"][isdragmoving]) {
+    :host([interactionmode="pan"][isdragpanning]) {
       cursor: grabbing;
     }
 
@@ -208,11 +208,11 @@ export class Renderer extends LitElement {
   }
 
   #onKeyDown(evt: KeyboardEvent) {
-    if (evt.code !== "Space" || this.interactionMode === "move") {
+    if (evt.code !== "Space" || this.interactionMode === "pan") {
       return;
     }
 
-    this.interactionMode = "move";
+    this.interactionMode = "pan";
   }
 
   #onKeyUp() {
@@ -230,8 +230,8 @@ export class Renderer extends LitElement {
       evt.clientY - this.#boundsForInteraction.top
     );
 
-    if (this.interactionMode === "move") {
-      this.isDragMoving = true;
+    if (this.interactionMode === "pan") {
+      this.isDragPanning = true;
       return;
     }
 
@@ -263,7 +263,7 @@ export class Renderer extends LitElement {
       return;
     }
 
-    if (this.interactionMode === "move") {
+    if (this.interactionMode === "pan") {
       const delta = new DOMPoint(
         evt.clientX - this.#boundsForInteraction.left - this.#dragStart.x,
         evt.clientY - this.#boundsForInteraction.top - this.#dragStart.y
@@ -288,13 +288,13 @@ export class Renderer extends LitElement {
     this.#dragStart = null;
     this.#dragRect = null;
 
-    if (this.interactionMode !== "move") {
+    if (this.interactionMode !== "pan") {
       this.interactionMode = "inert";
     }
     this.#isAdditiveSelection = false;
     this.#isToggleSelection = false;
     this.camera.baseTransform = null;
-    this.isDragMoving = false;
+    this.isDragPanning = false;
   }
 
   #updateDragRect(evt: PointerEvent) {
