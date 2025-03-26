@@ -340,9 +340,17 @@ export class UI extends LitElement {
       () => {
         if (useDOMRenderer) {
           return html`<bb-renderer
+            .boardServerKits=${this.boardServerKits}
             .graph=${graph}
             .graphTopologyUpdateId=${this.graphTopologyUpdateId}
+            .graphStore=${this.graphStore}
+            .graphStoreUpdateId=${this.graphStoreUpdateId}
             .selectionState=${this.selectionState}
+            .mainGraphId=${this.mainGraphId}
+            .showExperimentalComponents=${showExperimentalComponents}
+            @bbshowassetorganizer=${() => {
+              this.showAssetOrganizer = true;
+            }}
           ></bb-renderer>`;
         }
 
@@ -363,7 +371,6 @@ export class UI extends LitElement {
           .invertZoomScrollDirection=${invertZoomScrollDirection}
           .readOnly=${this.readOnly}
           .run=${run}
-          .showExperimentalComponents=${showExperimentalComponents}
           .showNodePreviewValues=${showNodePreviewValues}
           .showNodeShortcuts=${showNodeShortcuts}
           .showPortTooltips=${showPortTooltips}

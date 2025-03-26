@@ -33,6 +33,7 @@ export { DescribeEditButton } from "../flow-gen/describe-edit-button.js";
 export { DragDockOverlay } from "./overlay/drag-dock-overlay.js";
 export { DrawableInput } from "./input/drawable/drawable.js";
 export { Editor } from "./editor/editor.js";
+export { EditorControls } from "./step-editor/editor-controls.js";
 export { EventDetails } from "./event-details/event-details.js";
 export { ExportToolbar } from "./output/llm-output/export-toolbar.js";
 export { FancyJson } from "./editor/fancy-json.js";

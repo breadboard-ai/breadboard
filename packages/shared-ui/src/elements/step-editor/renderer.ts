@@ -20,7 +20,13 @@ import { repeat } from "lit/directives/repeat.js";
 import { classMap } from "lit/directives/class-map.js";
 import { calculateBounds } from "./utils/calculate-bounds";
 import { clamp } from "./utils/clamp";
-import { EditSpec, InspectableGraph } from "@google-labs/breadboard";
+import {
+  EditSpec,
+  InspectableGraph,
+  Kit,
+  MainGraphIdentifier,
+  MutableGraphStore,
+} from "@google-labs/breadboard";
 import { MAIN_BOARD_ID } from "../../constants/constants";
 import {
   SelectGraphContentsEvent,
@@ -35,12 +41,16 @@ import {
   DragConnectorStartEvent,
   MultiEditEvent,
   WorkspaceSelectionStateEvent,
+  ZoomToFitEvent,
 } from "../../events/events";
 import { styleMap } from "lit/directives/style-map.js";
 import { Entity } from "./entity";
 import { toGridSize } from "./utils/to-grid-size";
 import { DragConnector } from "./drag-connector";
 import { collectIds } from "./utils/collect-ids";
+import { EditorControls } from "./editor-controls";
+import { createRef, ref, Ref } from "lit/directives/ref.js";
+import { DATA_TYPE } from "./constants";
 
 @customElement("bb-renderer")
 export class Renderer extends LitElement {
@@ -48,7 +58,22 @@ export class Renderer extends LitElement {
   accessor debug = false;
 
   @property()
+  accessor boardServerKits: Kit[] | null = null;
+
+  @property()
   accessor graph: InspectableGraph | null = null;
+
+  @property()
+  accessor graphStore: MutableGraphStore | null = null;
+
+  @property()
+  accessor graphStoreUpdateId = 0;
+
+  @property()
+  accessor mainGraphId: MainGraphIdentifier | null = null;
+
+  @property()
+  accessor showExperimentalComponents = false;
 
   @property()
   accessor selectionState: WorkspaceSelectionStateWithChangeId | null = null;
@@ -136,9 +161,26 @@ export class Renderer extends LitElement {
       position: absolute;
       border: 1px solid var(--bb-neutral-500);
       background: oklch(from var(--bb-neutral-900) l c h / 0.05);
+      z-index: 4;
+    }
+
+    bb-editor-controls {
+      position: absolute;
+      display: flex;
+      bottom: var(--bb-grid-size-10);
+      left: 0;
+      width: 100%;
+      height: var(--bb-grid-size-9);
       z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+        var(--bb-font-family);
     }
   `;
+
+  #editorControls: Ref<EditorControls> = createRef();
 
   #lastBoundsForInteraction = new DOMRect();
   #boundsForInteraction = new DOMRect();
@@ -149,6 +191,8 @@ export class Renderer extends LitElement {
   #onWheelBound = this.#onWheel.bind(this);
   #onKeyDownBound = this.#onKeyDown.bind(this);
   #onKeyUpBound = this.#onKeyUp.bind(this);
+  #onDragOverBound = this.#onDragOver.bind(this);
+  #onDropBound = this.#onDrop.bind(this);
   #onPointerDownBound = this.#onPointerDown.bind(this);
   #onPointerMoveBound = this.#onPointerMove.bind(this);
   #onPointerUpBound = this.#onPointerUp.bind(this);
@@ -186,6 +230,8 @@ export class Renderer extends LitElement {
     this.addEventListener("pointerdown", this.#onPointerDownBound);
     this.addEventListener("pointermove", this.#onPointerMoveBound);
     this.addEventListener("pointerup", this.#onPointerUpBound);
+    this.addEventListener("dragover", this.#onDragOverBound);
+    this.addEventListener("drop", this.#onDropBound);
 
     window.addEventListener("keydown", this.#onKeyDownBound);
     window.addEventListener("keyup", this.#onKeyUpBound);
@@ -199,6 +245,8 @@ export class Renderer extends LitElement {
     this.removeEventListener("pointerdown", this.#onPointerDownBound);
     this.removeEventListener("pointermove", this.#onPointerMoveBound);
     this.removeEventListener("pointerup", this.#onPointerUpBound);
+    this.removeEventListener("dragover", this.#onDragOverBound);
+    this.removeEventListener("drop", this.#onDropBound);
 
     window.removeEventListener("keydown", this.#onKeyDownBound);
     window.removeEventListener("keyup", this.#onKeyUpBound);
@@ -225,12 +273,99 @@ export class Renderer extends LitElement {
     this.interactionMode = "inert";
   }
 
+  #onDragOver(evt: DragEvent) {
+    evt.preventDefault();
+  }
+
+  #onDrop(evt: DragEvent) {
+    const nodeType = evt.dataTransfer?.getData(DATA_TYPE);
+    if (!nodeType) {
+      return;
+    }
+
+    this.#createNode(
+      nodeType,
+      evt.clientX - this.#boundsForInteraction.x,
+      evt.clientY - this.#boundsForInteraction.y
+    );
+  }
+
+  #getGraphTitleByType(nodeType: string) {
+    let title = "Untitled item";
+    for (const graph of this.graphStore?.graphs() ?? []) {
+      if (graph.url === nodeType && graph.title) {
+        title = graph.title;
+        break;
+      }
+    }
+
+    return title;
+  }
+
+  #createNode(nodeType: string, x?: number, y?: number) {
+    if (!x || !y) {
+      x = this.#boundsForInteraction.width * 0.5;
+      y = this.#boundsForInteraction.height * 0.5;
+    }
+
+    const addLocation = new DOMRect(x, y, 0, 0);
+    let targetGraphId = MAIN_BOARD_ID;
+    for (const [graphId, graph] of this.#graphs) {
+      if (graphId === MAIN_BOARD_ID) {
+        continue;
+      }
+
+      if (graph.intersects(addLocation, 0)) {
+        targetGraphId = graphId;
+        break;
+      }
+    }
+
+    const targetGraph = this.#graphs.get(targetGraphId);
+    if (!targetGraph) {
+      console.warn("Unable to add to graph");
+      return;
+    }
+
+    const graphLocation = new DOMPoint(x, y).matrixTransform(
+      targetGraph.worldTransform.inverse()
+    );
+
+    graphLocation.x += targetGraph.transform.e;
+    graphLocation.y += targetGraph.transform.f;
+
+    const id = globalThis.crypto.randomUUID();
+    const edits: EditSpec[] = [
+      {
+        type: "addnode",
+        graphId: targetGraphId === MAIN_BOARD_ID ? "" : targetGraphId,
+        node: {
+          id,
+          type: nodeType,
+          metadata: {
+            title: this.#getGraphTitleByType(nodeType),
+            visual: {
+              x: toGridSize(graphLocation.x - 130),
+              y: toGridSize(graphLocation.y - 20),
+            },
+          },
+        },
+      },
+    ];
+
+    this.dispatchEvent(new MultiEditEvent(edits, "Add node"));
+  }
+
   #dragStart: DOMPoint | null = null;
   #dragRect: DOMRect | null = null;
   #clickRect: DOMRect | null = null;
   #isToggleSelection = false;
   #isAdditiveSelection = false;
   #onPointerDown(evt: PointerEvent) {
+    if (this.#editorControls.value) {
+      this.#editorControls.value.hidePickers();
+    }
+
     this.#dragStart = new DOMPoint(
       evt.clientX - this.#boundsForInteraction.left,
       evt.clientY - this.#boundsForInteraction.top
@@ -421,6 +556,10 @@ export class Renderer extends LitElement {
 
       // Subgraphs.
       for (const [id, graph] of Object.entries(this.graph.graphs() ?? {})) {
+        if (graph.nodes().length === 0) {
+          continue;
+        }
+
         let subGraph = this.#graphs.get(id);
         if (!subGraph) {
           subGraph = new Graph(id);
@@ -782,6 +921,21 @@ export class Renderer extends LitElement {
         }
       )}
       </div>`,
+      html`<bb-editor-controls
+        ${ref(this.#editorControls)}
+        .boardServerKits=${this.boardServerKits}
+        .graph=${this.graph}
+        .graphStore=${this.graphStore}
+        .graphStoreUpdateId=${this.graphStoreUpdateId}
+        .mainGraphId=${this.mainGraphId}
+        .showExperimentalComponents=${this.showExperimentalComponents}
+        @wheel=${(evt: WheelEvent) => {
+          evt.stopImmediatePropagation();
+        }}
+        @bbzoomtofit=${(evt: ZoomToFitEvent) => {
+          this.fitToView(evt.animate);
+        }}
+      ></bb-editor-controls>`,
       this.camera,
       html`<div
         id="overlay"
