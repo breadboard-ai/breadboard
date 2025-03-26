@@ -137,7 +137,7 @@
     "@codemirror/lang-javascript": "^6.2.3",
     "@codemirror/lang-json": "^6.0.1",
     "@codemirror/language": "^6.11.0",
-    "@codemirror/lint": "^6.8.4",
+    "@codemirror/lint": "^6.8.5",
     "@codemirror/search": "^6.5.10",
     "@codemirror/theme-one-dark": "^6.1.2",
     "@codemirror/view": "^6.36.4",
