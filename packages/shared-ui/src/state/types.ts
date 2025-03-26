@@ -84,10 +84,17 @@ export type ChatState = {
   statusDetail: string;
 };
 
+export type OrganizerStatus = "free" | "busy" | "edit-connector";
+
 /**
  * Represents the Model+Controller for the Asset Organizer.
  */
 export type Organizer = {
+  /**
+   * Current status of the organizer
+   */
+  status: OrganizerStatus;
+
   /**
    * Current graph's assets.
    */
@@ -115,7 +122,18 @@ export type Organizer = {
    * Available connectors
    */
   connectors: Map<string, Connector>;
-  createConnector(url: string | null): Promise<Outcome<void>>;
+
+  /**
+   * Starts creating a new Connector instance
+   *
+   * @param url -- URL of the connector.
+   */
+  startCreatingConnectorInstance(url: string | null): Promise<Outcome<void>>;
+
+  /**
+   * Cancels all pending work.
+   */
+  cancel(): Promise<void>;
 };
 
 export type GraphAsset = {

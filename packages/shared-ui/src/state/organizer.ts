@@ -12,15 +12,25 @@ import {
   ParameterMetadata,
 } from "@breadboard-ai/types";
 import { err, Outcome } from "@google-labs/breadboard";
-import { Connector, GraphAsset, Organizer, ProjectInternal } from "./types";
+import {
+  Connector,
+  GraphAsset,
+  Organizer,
+  OrganizerStatus,
+  ProjectInternal,
+} from "./types";
 import { RemoveAssetWithRefs } from "../transforms";
 import { UpdateAssetWithRefs } from "../transforms/update-asset-with-refs";
 import { ChangeParameterMetadata } from "../transforms/change-parameter-metadata";
 import { CreateConnector } from "../transforms/create-connector";
+import { signal } from "signal-utils";
 
 export { ReactiveOrganizer };
 
 class ReactiveOrganizer implements Organizer {
+  @signal
+  accessor status: OrganizerStatus = "free";
+
   #project: ProjectInternal;
   readonly graphAssets: Map<AssetPath, GraphAsset>;
   readonly graphUrl: URL | null;
@@ -70,10 +80,38 @@ class ReactiveOrganizer implements Organizer {
     );
   }
 
-  async createConnector(url: string | null): Promise<Outcome<void>> {
+  async startCreatingConnectorInstance(
+    url: string | null
+  ): Promise<Outcome<void>> {
     if (!url) {
       return err(`Connector URL was not specified.`);
     }
-    return this.#project.apply(new CreateConnector(url));
+    if (this.status !== "free") {
+      return err(`Can't create connector: already busy doing something else.`);
+    }
+
+    this.status = "busy";
+
+    // Stage 1: Run initializer describer, get schema
+
+    // status = edit-connector
+
+    // return here.
+
+    // Stage 2: User enters information, hits submit
+
+    // status = busy
+
+    // Stage 3: Take the information and run initializer invoker
+
+    // Stage 4: Store invoker's value as asset
+    const result = await this.#project.apply(new CreateConnector(url));
+    this.status = "free";
+    return result;
+  }
+
+  async cancel(): Promise<void> {
+    this.status = "free";
+    // TODO: Do clean up work.
   }
 }
