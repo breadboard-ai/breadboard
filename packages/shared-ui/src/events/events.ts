@@ -326,19 +326,14 @@ export class DelayEvent extends Event {
   }
 }
 
-/** @deprecated */
 export class DragConnectorStartEvent extends Event {
   static eventName = "bbdragconnectorstart";
 
-  constructor(
-    public readonly location: { x: number; y: number },
-    public readonly graphId: GraphIdentifier
-  ) {
+  constructor(public readonly location: DOMPoint) {
     super(DragConnectorStartEvent.eventName, { ...eventInit });
   }
 }
 
-/** @deprecated */
 export class DragConnectorCancelledEvent extends Event {
   static eventName = "bbdragconnectorcancelled";
 

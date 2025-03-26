@@ -32,12 +32,15 @@ import {
   createWorkspaceSelectionChangeId,
 } from "../../utils/workspace";
 import {
+  DragConnectorStartEvent,
   MultiEditEvent,
   WorkspaceSelectionStateEvent,
 } from "../../events/events";
 import { styleMap } from "lit/directives/style-map.js";
 import { Entity } from "./entity";
 import { toGridSize } from "./utils/to-grid-size";
+import { DragConnector } from "./drag-connector";
+import { collectIds } from "./utils/collect-ids";
 
 @customElement("bb-renderer")
 export class Renderer extends LitElement {
@@ -58,6 +61,9 @@ export class Renderer extends LitElement {
 
   @property()
   accessor camera = new Camera();
+
+  @property()
+  accessor dragConnector = new DragConnector();
 
   @property()
   accessor tick = 0;
@@ -459,6 +465,7 @@ export class Renderer extends LitElement {
               this.#isAdditiveSelection,
               false
             );
+            this.#updateSelectionFromGraph(graph);
           } else if (this.#clickRect) {
             // Click-select.
             graph.selectInsideOf(
@@ -467,8 +474,8 @@ export class Renderer extends LitElement {
               this.#isAdditiveSelection,
               this.#isToggleSelection
             );
+            this.#updateSelectionFromGraph(graph);
           }
-          this.#updateSelectionFromGraph(graph);
         }
 
         if (this.camera?.bounds) {
@@ -686,6 +693,7 @@ export class Renderer extends LitElement {
     }
 
     const selectionChangeId = createWorkspaceSelectionChangeId();
+
     this.dispatchEvent(
       new WorkspaceSelectionStateEvent(
         selectionChangeId,
@@ -728,6 +736,24 @@ export class Renderer extends LitElement {
           graph.showBounds = this.debug;
 
           return html`<div
+            @bbdragconnectorstart=${(evt: DragConnectorStartEvent) => {
+              const { nodeId, graphId, portId } = collectIds(evt, "out");
+
+              if (!nodeId || !graphId || !portId) {
+                console.warn(
+                  "Unable to connect - no node/graph/port combination found"
+                );
+              }
+
+              this.dragConnector.offset = new DOMPoint(
+                this.#boundsForInteraction.x,
+                this.#boundsForInteraction.y
+              );
+              this.dragConnector.start = evt.location;
+              this.dragConnector.graphId = graphId;
+              this.dragConnector.nodeId = nodeId;
+              this.dragConnector.portId = portId;
+            }}
             @bbselectgraphcontents=${(evt: SelectGraphContentsEvent) => {
               const graph = this.#graphs.get(evt.graphId);
               if (!graph) {
@@ -762,6 +788,7 @@ export class Renderer extends LitElement {
         class=${classMap({ active: this.cullPadding < 0 })}
       ></div>`,
       selectionRectangle,
+      this.dragConnector,
     ];
   }
 }

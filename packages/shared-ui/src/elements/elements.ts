@@ -78,7 +78,6 @@ export { Tooltip } from "./tooltip/tooltip.js";
 export { UI } from "./ui-controller/ui-controller.js";
 export { UserInput } from "./input/user-input.js";
 export { WebcamInput } from "./input/webcam/webcam.js";
-export { WorkspaceOutline } from "./workspace-outline/workspace-outline.js";
 
 export { tokenVendorContext } from "../contexts/token-vendor.js";
 export { googleDriveFileIdInputPlugin } from "./google-drive/google-drive-file-id.js";
