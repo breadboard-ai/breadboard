@@ -50,8 +50,11 @@ export class Renderer extends LitElement {
   @property()
   accessor selectionState: WorkspaceSelectionStateWithChangeId | null = null;
 
-  @property()
+  @property({ reflect: true })
   accessor interactionMode: "inert" | "selection" | "move" = "inert";
+
+  @property({ reflect: true, type: Boolean })
+  accessor isDragMoving = false;
 
   @property()
   accessor camera = new Camera();
@@ -98,6 +101,14 @@ export class Renderer extends LitElement {
       outline: none;
     }
 
+    :host([interactionmode="move"]) {
+      cursor: grab;
+    }
+
+    :host([interactionmode="move"][isdragmoving]) {
+      cursor: grabbing;
+    }
+
     #overlay {
       display: none;
       position: absolute;
@@ -130,6 +141,8 @@ export class Renderer extends LitElement {
   #firstResize = true;
 
   #onWheelBound = this.#onWheel.bind(this);
+  #onKeyDownBound = this.#onKeyDown.bind(this);
+  #onKeyUpBound = this.#onKeyUp.bind(this);
   #onPointerDownBound = this.#onPointerDown.bind(this);
   #onPointerMoveBound = this.#onPointerMove.bind(this);
   #onPointerUpBound = this.#onPointerUp.bind(this);
@@ -167,6 +180,9 @@ export class Renderer extends LitElement {
     this.addEventListener("pointerdown", this.#onPointerDownBound);
     this.addEventListener("pointermove", this.#onPointerMoveBound);
     this.addEventListener("pointerup", this.#onPointerUpBound);
+
+    window.addEventListener("keydown", this.#onKeyDownBound);
+    window.addEventListener("keyup", this.#onKeyUpBound);
   }
 
   disconnectedCallback(): void {
@@ -177,6 +193,9 @@ export class Renderer extends LitElement {
     this.removeEventListener("pointerdown", this.#onPointerDownBound);
     this.removeEventListener("pointermove", this.#onPointerMoveBound);
     this.removeEventListener("pointerup", this.#onPointerUpBound);
+
+    window.removeEventListener("keydown", this.#onKeyDownBound);
+    window.removeEventListener("keyup", this.#onKeyUpBound);
   }
 
   #addEffect(name: string, effect: () => void) {
@@ -186,6 +205,18 @@ export class Renderer extends LitElement {
 
   #removeEffect(name: string) {
     this.#effects.delete(name);
+  }
+
+  #onKeyDown(evt: KeyboardEvent) {
+    if (evt.code !== "Space" || this.interactionMode === "move") {
+      return;
+    }
+
+    this.interactionMode = "move";
+  }
+
+  #onKeyUp() {
+    this.interactionMode = "inert";
   }
 
   #dragStart: DOMPoint | null = null;
@@ -198,6 +229,12 @@ export class Renderer extends LitElement {
       evt.clientX - this.#boundsForInteraction.left,
       evt.clientY - this.#boundsForInteraction.top
     );
+
+    if (this.interactionMode === "move") {
+      this.isDragMoving = true;
+      return;
+    }
+
     this.#dragRect = new DOMRect();
     this.#isToggleSelection = isCtrlCommand(evt);
     this.#isAdditiveSelection = evt.shiftKey;
@@ -222,20 +259,42 @@ export class Renderer extends LitElement {
   }
 
   #onPointerMove(evt: PointerEvent) {
-    if (!this.#dragStart || !this.#dragRect) {
+    if (!this.#dragStart) {
       return;
     }
 
-    this.#updateDragRect(evt);
+    if (this.interactionMode === "move") {
+      const delta = new DOMPoint(
+        evt.clientX - this.#boundsForInteraction.left - this.#dragStart.x,
+        evt.clientY - this.#boundsForInteraction.top - this.#dragStart.y
+      );
+
+      if (!this.camera.baseTransform) {
+        this.camera.baseTransform = DOMMatrix.fromMatrix(this.camera.transform);
+      }
+
+      this.camera.transform.e =
+        this.camera.baseTransform.e - delta.x * this.camera.transform.a;
+      this.camera.transform.f =
+        this.camera.baseTransform.f - delta.y * this.camera.transform.a;
+    } else if (this.#dragRect) {
+      this.#updateDragRect(evt);
+    }
+
     this.tick++;
   }
 
   #onPointerUp() {
     this.#dragStart = null;
     this.#dragRect = null;
-    this.interactionMode = "inert";
+
+    if (this.interactionMode !== "move") {
+      this.interactionMode = "inert";
+    }
     this.#isAdditiveSelection = false;
     this.#isToggleSelection = false;
+    this.camera.baseTransform = null;
+    this.isDragMoving = false;
   }
 
   #updateDragRect(evt: PointerEvent) {
@@ -566,52 +625,54 @@ export class Renderer extends LitElement {
     // When the dragging settles, send out the update on all the node locations
     // so they can be persisted.
     if (hasSettled) {
-      const edits: EditSpec[] = [];
+      this.#emitSettledLocationEdits();
+    }
+  }
 
-      for (const graphId of this.selectionState.selectionState.graphs.keys()) {
-        const graph = this.#graphs.get(graphId);
-        const graphSelection =
-          this.selectionState.selectionState.graphs.get(graphId);
-        if (!graph || !graphSelection) {
+  #emitSettledLocationEdits() {
+    if (!this.selectionState) {
+      return;
+    }
+
+    const edits: EditSpec[] = [];
+
+    for (const graphId of this.selectionState.selectionState.graphs.keys()) {
+      const graph = this.#graphs.get(graphId);
+      const graphSelection =
+        this.selectionState.selectionState.graphs.get(graphId);
+      if (!graph || !graphSelection) {
+        continue;
+      }
+
+      for (const nodeId of graphSelection.nodes) {
+        // Find the InspectableNode and the GraphNode entity and create the
+        // updated metadata from the two.
+        const graphNode = graph.nodes.find(
+          (node) => node.descriptor.id === nodeId
+        );
+        const graphNodeEntity = graph.entities.get(nodeId);
+        if (!graphNode || !graphNodeEntity) {
           continue;
         }
 
-        for (const nodeId of graphSelection.nodes) {
-          // Find the InspectableNode and the GraphNode entity and create the
-          // updated metadata from the two.
-          const graphNode = graph.nodes.find(
-            (node) => node.descriptor.id === nodeId
-          );
-          const graphNodeEntity = graph.entities.get(nodeId);
-          if (!graphNode || !graphNodeEntity) {
-            continue;
-          }
+        const metadata = { ...(graphNode.metadata() ?? {}) };
+        metadata.visual ??= {};
 
-          const metadata = { ...(graphNode.metadata() ?? {}) };
-          metadata.visual ??= {};
+        const visual = metadata.visual as Record<string, number>;
+        visual.x = toGridSize(graph.transform.e + graphNodeEntity.transform.e);
+        visual.y = toGridSize(graph.transform.f + graphNodeEntity.transform.f);
 
-          const visual = metadata.visual as Record<string, number>;
-          visual.x = toGridSize(
-            graph.transform.e + graphNodeEntity.transform.e
-          );
-          visual.y = toGridSize(
-            graph.transform.f + graphNodeEntity.transform.f
-          );
-
-          const editGraphId = graphId === MAIN_BOARD_ID ? "" : graphId;
-          edits.push({
-            type: "changemetadata",
-            graphId: editGraphId,
-            id: nodeId,
-            metadata,
-          });
-        }
+        const editGraphId = graphId === MAIN_BOARD_ID ? "" : graphId;
+        edits.push({
+          type: "changemetadata",
+          graphId: editGraphId,
+          id: nodeId,
+          metadata,
+        });
       }
-
-      this.dispatchEvent(
-        new MultiEditEvent(edits, "Update selection transform")
-      );
     }
+
+    this.dispatchEvent(new MultiEditEvent(edits, "Update selection transform"));
   }
 
   #updateSelectionFromGraph(graph: Graph, createNewSelection = false) {
