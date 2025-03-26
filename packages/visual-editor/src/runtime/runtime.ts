@@ -128,7 +128,7 @@ export async function create(config: RuntimeConfig): Promise<{
       config.settings
     ),
     run: new Run(graphStore, dataStore, config.runStore),
-    state: new StateManager(graphStore, servers),
+    state: new StateManager(graphStore, sideboards, servers),
     sideboards,
     select: new Select(),
     util: Util,

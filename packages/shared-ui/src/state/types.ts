@@ -19,6 +19,7 @@ import {
   Outcome,
   PortIdentifier,
 } from "@google-labs/breadboard";
+import { SideBoardRuntime } from "../sideboards/types";
 
 export type ChatStatus = "running" | "paused" | "stopped";
 
@@ -84,7 +85,7 @@ export type ChatState = {
   statusDetail: string;
 };
 
-export type OrganizerStatus = "free" | "busy" | "edit-connector";
+export type OrganizerStatus = "free" | "busy" | "connector-edit";
 
 /**
  * Represents the Model+Controller for the Asset Organizer.
@@ -128,7 +129,7 @@ export type Organizer = {
    *
    * @param url -- URL of the connector.
    */
-  startCreatingConnectorInstance(url: string | null): Promise<Outcome<void>>;
+  initializeConnectorInstance(url: string | null): Promise<Outcome<void>>;
 
   /**
    * Cancels all pending work.
@@ -201,6 +202,7 @@ export type Project = {
 
 export type ProjectInternal = Project & {
   graphUrl: URL | null;
+  runtime(): SideBoardRuntime;
   apply(transform: EditTransform): Promise<Outcome<void>>;
   edit(spec: EditSpec[], label: string): Promise<Outcome<void>>;
   persistBlobs(contents: LLMContent[]): Promise<LLMContent[]>;

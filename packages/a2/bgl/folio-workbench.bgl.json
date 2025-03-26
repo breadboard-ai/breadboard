@@ -127,6 +127,24 @@
         "type": "connector"
       }
     },
+    "connectors/4cddea08-a495-41ef-9439-14ef00cace01": {
+      "data": [
+        {
+          "parts": [
+            {
+              "json": {
+                "url": "file://bgl/folio.bgl.json",
+                "configuration": {}
+              }
+            }
+          ]
+        }
+      ],
+      "metadata": {
+        "title": "Untitled Folio",
+        "type": "connector"
+      }
+    },
     "@@thumbnail": {
       "metadata": {
         "title": "Thumbnail",

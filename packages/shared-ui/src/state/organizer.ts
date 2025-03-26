@@ -10,8 +10,9 @@ import {
   LLMContent,
   NodeValue,
   ParameterMetadata,
+  UUID,
 } from "@breadboard-ai/types";
-import { err, Outcome } from "@google-labs/breadboard";
+import { err, ok, Outcome } from "@google-labs/breadboard";
 import {
   Connector,
   GraphAsset,
@@ -22,8 +23,11 @@ import {
 import { RemoveAssetWithRefs } from "../transforms";
 import { UpdateAssetWithRefs } from "../transforms/update-asset-with-refs";
 import { ChangeParameterMetadata } from "../transforms/change-parameter-metadata";
-import { CreateConnector } from "../transforms/create-connector";
 import { signal } from "signal-utils";
+import { Configurator } from "../connectors";
+import { ConnectorEdit } from "../connectors/types";
+import { CreateConnector } from "../transforms/create-connector";
+import { EditConnector } from "../transforms/edit-connector";
 
 export { ReactiveOrganizer };
 
@@ -80,7 +84,7 @@ class ReactiveOrganizer implements Organizer {
     );
   }
 
-  async startCreatingConnectorInstance(
+  async initializeConnectorInstance(
     url: string | null
   ): Promise<Outcome<void>> {
     if (!url) {
@@ -88,28 +92,62 @@ class ReactiveOrganizer implements Organizer {
     }
     if (this.status !== "free") {
       return err(
-        `Can't create connector: the organizer is already busy doing something else.`
+        `Can't create connector: the organizer is already busy doing something else`
       );
     }
 
     this.status = "busy";
 
-    // Stage 1: Run initializer describer, get schema
+    const id = globalThis.crypto.randomUUID();
 
-    // status = edit-connector
+    const runtime = this.#project.runtime();
+    const configurator = new Configurator(runtime, id, url);
 
-    // return here.
+    const initializing = await configurator.initialize();
+    if (!ok(initializing)) return this.#free(initializing);
 
-    // Stage 2: User enters information, hits submit
+    const updatingGraph = await this.#project.apply(
+      new CreateConnector(url, id, initializing)
+    );
+    if (!ok(updatingGraph)) return this.#free(updatingGraph);
 
-    // status = busy
+    const reading = await configurator.read(initializing.configuration);
+    if (!ok(reading)) return this.#free(reading);
 
-    // Stage 3: Take the information and run initializer invoker
+    this.status = "connector-edit";
+  }
 
-    // Stage 4: Store invoker's value as asset
-    const result = await this.#project.apply(new CreateConnector(url));
+  async commitConnectorInstanceEdits(
+    id: UUID,
+    edit: ConnectorEdit
+  ): Promise<Outcome<void>> {
+    if (this.status !== "connector-edit") {
+      return this.#free(
+        err(
+          `Can't commit connector edits: the organizer is already doing somethign else`
+        )
+      );
+    }
+
+    this.status = "busy";
+
+    const runtime = this.#project.runtime();
+    const configurator = new Configurator(runtime, id, edit.configuration.url);
+
+    const writing = await configurator.write(edit);
+    if (!ok(writing)) return this.#free(writing);
+
+    const updatingGraph = await this.#project.apply(
+      new EditConnector(id, writing)
+    );
+    if (!ok(updatingGraph)) return this.#free(updatingGraph);
+
     this.status = "free";
-    return result;
+  }
+
+  #free<T>(outcome: T): T {
+    this.status = "free";
+    return outcome;
   }
 
   async cancel(): Promise<void> {

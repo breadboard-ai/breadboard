@@ -7,6 +7,7 @@
 import { LLMContent } from "@breadboard-ai/types";
 import {
   GraphDescriptor,
+  NodeDescriberResult,
   Outcome,
   TypedEventTarget,
   TypedEventTargetType,
@@ -21,9 +22,10 @@ import { HarnessRunner } from "@google-labs/breadboard/harness";
 export type SideBoardRuntime =
   TypedEventTargetType<SideBoardRuntimeEventMap> & {
     createRunner(
-      graph: GraphDescriptor,
+      graph: GraphDescriptor | string,
       graphURLForProxy?: string
     ): Promise<HarnessRunner>;
+    describe(url: string): Promise<Outcome<NodeDescriberResult>>;
     runTask(task: SideBoardRuntimeTaskSpec): Promise<Outcome<LLMContent[]>>;
     discardTasks(): void;
   };
@@ -44,6 +46,6 @@ export type SideBoardRuntimeTaskSpec = {
    * URL of the graph on behalf of which we run the task.
    */
   url?: string;
-  graph: GraphDescriptor;
+  graph: GraphDescriptor | string;
   context: LLMContent[];
 };

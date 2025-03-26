@@ -801,9 +801,8 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
             }
 
             case "connector": {
-              console.log("CREATE CONNECTOR", evt);
               const creatingConnector =
-                await this.state?.startCreatingConnectorInstance(evt.value);
+                await this.state?.initializeConnectorInstance(evt.value);
               if (!ok(creatingConnector)) {
                 console.log(
                   `Unable to create connector: ${creatingConnector.$error}`

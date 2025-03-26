@@ -10,16 +10,19 @@ import {
   EditTransform,
   EditTransformResult,
 } from "@google-labs/breadboard";
+import { ConnectorInitializerResult } from "../connectors/types";
 
 export { CreateConnector };
 
 class CreateConnector implements EditTransform {
-  constructor(public readonly url: string) {}
+  constructor(
+    public readonly url: string,
+    public readonly id: string,
+    public readonly initialValues: ConnectorInitializerResult
+  ) {}
 
   async apply(context: EditOperationContext): Promise<EditTransformResult> {
-    const id = globalThis.crypto.randomUUID();
-
-    const path = `connectors/${id}`;
+    const path = `connectors/${this.id}`;
 
     const data: NodeValue = [
       {
@@ -27,7 +30,7 @@ class CreateConnector implements EditTransform {
           {
             json: {
               url: this.url,
-              configuration: {},
+              configuration: this.initialValues.configuration,
             },
           },
         ],
@@ -35,7 +38,7 @@ class CreateConnector implements EditTransform {
     ] satisfies LLMContent[];
 
     const metadata: AssetMetadata = {
-      title: "Untitled Folio",
+      title: this.initialValues.title,
       type: "connector",
     };
 
