@@ -3836,6 +3836,10 @@ export class Main extends LitElement {
                     edit.type === "addnode" ? edit.node.id : null
                   )
                   .filter((item) => item !== null);
+                if (additions.length === 0) {
+                  console.log("No additions; making no selection changes");
+                  return;
+                }
                 this.#runtime.select.selectNodes(
                   this.tab.id,
                   this.#runtime.select.generateId(),

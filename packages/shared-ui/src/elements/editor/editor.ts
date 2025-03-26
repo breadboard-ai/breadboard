@@ -1458,46 +1458,16 @@ export class Editor extends LitElement implements DragConnectorReceiver {
     );
   }
 
-  isOnDragConnectorTarget(x: number, y: number): string | null {
-    if (!this.#graphRendererRef.value) {
-      return null;
-    }
-
-    const pointer = {
-      x: x - this.#left + window.scrollX,
-      y: y - this.#top - window.scrollY,
-    };
-
-    const boardPort =
-      this.#graphRendererRef.value.intersectingBoardPort(pointer);
-
-    if (boardPort) {
-      return `${boardPort.graphId}|${boardPort.nodeId}|${boardPort.portId}`;
-    }
-
-    return null;
+  isOnDragConnectorTarget(): boolean {
+    return false;
   }
 
-  highlight(x: number, y: number): void {
-    if (!this.#graphRendererRef.value) {
-      return;
-    }
-
-    const pointer = {
-      x: x - this.#left + window.scrollX,
-      y: y - this.#top - window.scrollY,
-    };
-
-    this.#graphRendererRef.value.removeBoardPortHighlights();
-    this.#graphRendererRef.value.highlightBoardPort(pointer);
+  highlight(): void {
+    // TODO.
   }
 
   removeHighlight(): void {
-    if (!this.#graphRendererRef.value) {
-      return;
-    }
-
-    this.#graphRendererRef.value.removeBoardPortHighlights();
+    // TODO.
   }
 
   #createComponentList(graphStore: MutableGraphStore, typeTag: string) {

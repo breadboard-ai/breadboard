@@ -2219,9 +2219,7 @@ export class GraphRenderer extends LitElement {
           return;
         }
 
-        this.dispatchEvent(
-          new DragConnectorStartEvent({ x, y }, `#${graph.subGraphId}`)
-        );
+        this.dispatchEvent(new DragConnectorStartEvent(new DOMPoint(x, y)));
       }
     );
 

@@ -477,9 +477,9 @@ export interface WorkspaceSelectionStateWithChangeId {
 }
 
 export interface DragConnectorReceiver extends HTMLElement {
-  isOnDragConnectorTarget(x: number, y: number): string | null;
-  highlight(x: number, y: number): void;
-  removeHighlight(x: number, y: number): void;
+  isOnDragConnectorTarget(): boolean;
+  highlight(): void;
+  removeHighlight(): void;
 }
 
 export type LanguagePackEntry = Record<

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphIdentifier } from "@breadboard-ai/types";
+import { GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
 
 const eventInit = {
   bubbles: true,
@@ -29,6 +29,14 @@ export class SelectGraphContentsEvent extends Event {
 
   constructor(public readonly graphId: GraphIdentifier) {
     super(SelectGraphContentsEvent.eventName, { ...eventInit });
+  }
+}
+
+export class NodeConnectStartEvent extends Event {
+  static eventName = "bbnodeconnectstart" as const;
+
+  constructor(public readonly nodeId: NodeIdentifier) {
+    super(NodeConnectStartEvent.eventName, { ...eventInit });
   }
 }
 

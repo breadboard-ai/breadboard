@@ -23,9 +23,11 @@ import { createTruncatedValue } from "./utils/create-truncated-value";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { styles as ChicletStyles } from "../shared-styles/chiclet.js";
 import { toGridSize } from "./utils/to-grid-size";
+import { DragConnectorReceiver } from "../../types/types";
+import { DragConnectorStartEvent } from "../../events/events";
 
 @customElement("bb-graph-node")
-export class GraphNode extends Box {
+export class GraphNode extends Box implements DragConnectorReceiver {
   @property()
   accessor nodeTitle = "";
 
@@ -36,8 +38,25 @@ export class GraphNode extends Box {
   accessor updating = false;
 
   @property()
+  accessor hasMainPort = false;
+
+  @property({ reflect: true, type: Boolean })
+  accessor highlighted = false;
+
+  @property()
   set ports(ports: InspectableNodePorts | null) {
     this.#ports = ports;
+
+    if (!ports) {
+      return;
+    }
+
+    for (const port of ports.outputs.ports) {
+      if (port.schema.behavior?.includes("main-port")) {
+        this.hasMainPort = true;
+        break;
+      }
+    }
   }
   get ports() {
     return this.#ports;
@@ -151,6 +170,10 @@ export class GraphNode extends Box {
         z-index: 2;
       }
 
+      :host([highlighted]) #container {
+        outline: 3px solid var(--border);
+      }
+
       :host([moving]) #container header {
         cursor: grabbing;
       }
@@ -173,6 +196,7 @@ export class GraphNode extends Box {
           font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
             var(--bb-font-family);
           cursor: pointer;
+          position: relative;
 
           &::before {
             content: "";
@@ -185,6 +209,26 @@ export class GraphNode extends Box {
 
           & > * {
             pointer-events: none;
+          }
+
+          & #connection-trigger {
+            position: absolute;
+            display: block;
+            pointer-events: auto;
+            width: 10px;
+            height: 10px;
+            border: none;
+            border-radius: 50%;
+            background: var(--border);
+            right: -5px;
+            top: 50%;
+            translate: 0 -50%;
+            font-size: 0;
+            padding: 0;
+
+            &:not([disabled]) {
+              cursor: pointer;
+            }
           }
         }
 
@@ -333,6 +377,18 @@ export class GraphNode extends Box {
     }
   }
 
+  isOnDragConnectorTarget(): boolean {
+    return true;
+  }
+
+  highlight(): void {
+    this.highlighted = true;
+  }
+
+  removeHighlight(): void {
+    this.highlighted = false;
+  }
+
   #renderPorts() {
     if (!this.#ports) {
       return nothing;
@@ -439,10 +495,6 @@ export class GraphNode extends Box {
             const xTranslation = toGridSize(deltaX);
             const yTranslation = toGridSize(deltaY);
 
-            if (xTranslation === 0 && yTranslation === 0) {
-              return;
-            }
-
             this.dispatchEvent(
               new SelectionTranslateEvent(xTranslation, yTranslation)
             );
@@ -470,10 +522,6 @@ export class GraphNode extends Box {
             this.#dragStart = null;
             this.#translateStart = null;
 
-            if (xTranslation === 0 && yTranslation === 0) {
-              return;
-            }
-
             this.dispatchEvent(
               new SelectionTranslateEvent(
                 xTranslation,
@@ -484,6 +532,26 @@ export class GraphNode extends Box {
           }}
         >
           ${this.nodeTitle}
+          ${this.hasMainPort
+            ? html`<button
+                id="connection-trigger"
+                ?disabled=${this.updating}
+                @pointerdown=${(evt: PointerEvent) => {
+                  evt.stopImmediatePropagation();
+
+                  // This event is picked up by the graph itself to ensure that it
+                  // is tagged with the graph's ID (and thereby preventing edges
+                  // across graphs).
+                  this.dispatchEvent(
+                    new DragConnectorStartEvent(
+                      new DOMPoint(evt.clientX, evt.clientY)
+                    )
+                  );
+                }}
+              >
+                Connect to..
+              </button>`
+            : nothing}
         </header>
         <div
           id="content"
