@@ -202,7 +202,7 @@ export class ToggleBoardActivityEvent extends Event {
 
 export class ZoomToFitEvent extends Event {
   static eventName = "bbzoomtofit";
-  constructor() {
+  constructor(public readonly animate = true) {
     super(ZoomToFitEvent.eventName, { ...eventInit });
   }
 }

@@ -6,3 +6,4 @@
 
 export const GRID_SIZE = 20;
 export const DEGRAD = Math.PI / 180;
+export const DATA_TYPE = "text/plain";

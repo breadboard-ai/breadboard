@@ -32,7 +32,15 @@ export class GraphEdge extends Box {
     Box.styles,
     css`
       :host {
-        z-index: 0;
+        z-index: 1;
+      }
+
+      :host([selected]) {
+        z-index: 2;
+      }
+
+      svg > * {
+        pointer-events: auto;
       }
     `,
   ];
@@ -41,7 +49,8 @@ export class GraphEdge extends Box {
 
   constructor(
     public readonly node1: GraphNode,
-    public readonly node2: GraphNode
+    public readonly node2: GraphNode,
+    public readonly edgeId: string
   ) {
     super();
 

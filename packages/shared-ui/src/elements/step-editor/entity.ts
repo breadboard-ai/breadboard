@@ -162,6 +162,53 @@ export class Entity extends LitElement {
     }
   }
 
+  selectAt(
+    bounds: DOMRect,
+    padding = 0,
+    isAdditiveSelection = false,
+    isToggleSelection = false
+  ) {
+    if (!this.worldBounds) {
+      this.selected = false;
+      return;
+    }
+
+    const intersecting = this.intersects(bounds, padding);
+    if (isToggleSelection && intersecting) {
+      this.selected = !this.selected;
+    } else if (isAdditiveSelection) {
+      this.selected = this.selected || intersecting;
+    } else if (!isAdditiveSelection && !isToggleSelection) {
+      this.selected = intersecting;
+    }
+
+    for (const entity of this.entities.values()) {
+      entity.selected = false;
+    }
+
+    const depthOrderedEntities = [...this.entities.values()]
+      .reverse()
+      .sort((e1, e2) => {
+        const e1ZIndex = parseInt(window.getComputedStyle(e1).zIndex, 0);
+        const e2ZIndex = parseInt(window.getComputedStyle(e2).zIndex, 0);
+
+        return e2ZIndex - e1ZIndex;
+      });
+
+    for (const entity of depthOrderedEntities) {
+      entity.selectInsideOf(
+        bounds,
+        padding,
+        isAdditiveSelection,
+        isToggleSelection
+      );
+
+      if (entity.selected) {
+        return;
+      }
+    }
+  }
+
   adjustTranslation(x: number, y: number) {
     this.transform.translateSelf(x, y);
 

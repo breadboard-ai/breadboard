@@ -32,6 +32,14 @@ export class SelectGraphContentsEvent extends Event {
   }
 }
 
+export class NodeAddEvent extends Event {
+  static eventName = "bbnodeadd" as const;
+
+  constructor(public readonly nodeType: string) {
+    super(NodeAddEvent.eventName, { ...eventInit });
+  }
+}
+
 export class NodeConnectStartEvent extends Event {
   static eventName = "bbnodeconnectstart" as const;
 

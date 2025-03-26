@@ -77,7 +77,11 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           var(--bb-font-family);
         color: var(--bb-neutral-900);
         line-height: var(--bb-grid-size-6);
-        z-index: 1;
+        z-index: 2;
+      }
+
+      :host([selected]) {
+        z-index: 3;
       }
 
       :host {
@@ -164,10 +168,8 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         display: none;
       }
 
-      :host(:focus),
       :host([selected]) #container {
         outline: 2px solid var(--border);
-        z-index: 2;
       }
 
       :host([highlighted]) #container {
@@ -198,7 +200,15 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           cursor: pointer;
           position: relative;
 
+          & span {
+            flex: 1 1 auto;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+          }
+
           &::before {
+            flex: 0 0 auto;
             content: "";
             width: 20px;
             height: 20px;
@@ -531,7 +541,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
             );
           }}
         >
-          ${this.nodeTitle}
+          <span>${this.nodeTitle}</span>
           ${this.hasMainPort
             ? html`<button
                 id="connection-trigger"

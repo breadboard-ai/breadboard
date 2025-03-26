@@ -158,18 +158,18 @@ export class Graph extends Box {
 
     // Add new edges.
     for (const edge of this.#edges) {
-      const label = inspectableEdgeToString(edge);
-      let graphEdge = this.entities.get(label) as GraphEdge;
+      const edgeId = inspectableEdgeToString(edge);
+      let graphEdge = this.entities.get(edgeId) as GraphEdge;
       if (!graphEdge) {
         const from = this.entities.get(edge.from.descriptor.id) as GraphNode;
         const to = this.entities.get(edge.to.descriptor.id) as GraphNode;
         if (!from || !to) {
-          console.warn(`Edge declared for non-existent nodes ${label}`);
+          console.warn(`Edge declared for non-existent nodes ${edgeId}`);
         }
 
-        graphEdge = new GraphEdge(from, to);
-        graphEdge.boundsLabel = label;
-        this.entities.set(label, graphEdge);
+        graphEdge = new GraphEdge(from, to, edgeId);
+        graphEdge.boundsLabel = edgeId;
+        this.entities.set(edgeId, graphEdge);
       }
     }
 
