@@ -30,6 +30,7 @@ import {
 import { MAIN_BOARD_ID } from "../../constants/constants";
 import {
   NodeAddEvent,
+  NodeConfigurationRequestEvent,
   SelectGraphContentsEvent,
   SelectionTranslateEvent,
 } from "./events/events";
@@ -41,6 +42,7 @@ import {
 import {
   DragConnectorStartEvent,
   MultiEditEvent,
+  NodeConfigurationUpdateRequestEvent,
   WorkspaceSelectionStateEvent,
   ZoomToFitEvent,
 } from "../../events/events";
@@ -868,8 +870,8 @@ export class Renderer extends LitElement {
     return [
       html`${repeat(
         this.#graphs,
-        ([id]) => id,
-        ([, graph]) => {
+        ([graphId]) => graphId,
+        ([graphId, graph]) => {
           if (!this.camera) {
             return nothing;
           }
@@ -877,6 +879,19 @@ export class Renderer extends LitElement {
           graph.showBounds = this.debug;
 
           return html`<div
+            @bbnodeconfigurationrequest=${(
+              evt: NodeConfigurationRequestEvent
+            ) => {
+              console.log("node config requ", evt.nodeId);
+              this.dispatchEvent(
+                new NodeConfigurationUpdateRequestEvent(
+                  evt.nodeId,
+                  graphId === MAIN_BOARD_ID ? "" : graphId,
+                  null,
+                  null
+                )
+              );
+            }}
             @bbdragconnectorstart=${(evt: DragConnectorStartEvent) => {
               const { nodeId, graphId, portId } = collectIds(evt, "out");
 

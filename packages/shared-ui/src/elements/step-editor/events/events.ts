@@ -55,3 +55,11 @@ export class NodeBoundsUpdateRequestEvent extends Event {
     super(NodeBoundsUpdateRequestEvent.eventName, { ...eventInit });
   }
 }
+
+export class NodeConfigurationRequestEvent extends Event {
+  static eventName = "bbnodeconfigurationrequest" as const;
+
+  constructor(public readonly nodeId: NodeIdentifier) {
+    super(NodeConfigurationRequestEvent.eventName, { ...eventInit });
+  }
+}
