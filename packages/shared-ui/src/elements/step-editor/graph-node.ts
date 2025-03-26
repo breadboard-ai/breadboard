@@ -71,9 +71,17 @@ export class GraphNode extends Box {
         --background: var(--bb-neutral-100);
         --border: var(--bb-neutral-600);
         --header-border: var(--bb-neutral-300);
+
+        & #content {
+          min-height: 120px;
+        }
       }
 
-      :host(.generative) {
+      :host(.generative),
+      :host([icon="generative"]),
+      :host([icon="generative-image"]),
+      :host([icon="generative-audio"]),
+      :host([icon="generative-text"]) {
         --background: var(--bb-generative-100);
         --border: var(--bb-generative-600);
         --header-border: var(--bb-generative-300);
@@ -87,7 +95,10 @@ export class GraphNode extends Box {
 
       :host(.input),
       :host(.output),
-      :host(.core) {
+      :host(.core),
+      :host([icon="input"]),
+      :host([icon="output"]),
+      :host([icon="combine-outputs"]) {
         --background: var(--bb-input-50);
         --border: var(--bb-input-600);
         --header-border: var(--bb-input-300);

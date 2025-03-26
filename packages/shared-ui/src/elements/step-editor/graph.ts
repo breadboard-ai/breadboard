@@ -90,45 +90,43 @@ export class Graph extends Box {
       graphNode.nodeTitle = node.title();
 
       const lastUpdateTime = this.#lastUpdateTime;
-      Promise.all([node.describe(), node.type().metadata()]).then(
-        ([, metadata]) => {
-          // Ensure the most recent values before proceeding.
-          if (lastUpdateTime !== this.#lastUpdateTime) {
-            return;
-          }
+      node.describe().then(() => {
+        // Ensure the most recent values before proceeding.
+        if (lastUpdateTime !== this.#lastUpdateTime) {
+          return;
+        }
 
-          const ports = node.currentPorts();
-          if (ports.updating) {
-            console.warn(
-              "Ports are still updating after describer has completed"
-            );
-          }
+        const ports = node.currentPorts();
+        if (ports.updating) {
+          console.warn(
+            "Ports are still updating after describer has completed"
+          );
+        }
 
-          graphNode.updating = metadata.updating ?? false;
-          graphNode.icon = metadata.icon ?? null;
-          graphNode.ports = ports;
+        const metadata = node.type().currentMetadata();
 
-          if (metadata.tags) {
-            for (const tag of metadata.tags ?? []) {
-              graphNode.classList.add(tag);
-            }
-          }
-
-          // Ignore URL types as they should be resolved above.
-          const legacyNodeType = node.type().type();
-          if (!URL.canParse(legacyNodeType)) {
-            if (!graphNode.icon) {
-              graphNode.icon = legacyNodeType;
-            }
-
-            if (legacyNodeType.startsWith("#module")) {
-              graphNode.classList.add("module");
-            } else {
-              graphNode.classList.add(legacyNodeType);
-            }
+        graphNode.updating = ports.updating ?? false;
+        graphNode.icon = metadata.icon ?? null;
+        graphNode.ports = ports;
+        if (metadata.tags) {
+          for (const tag of metadata.tags ?? []) {
+            graphNode.classList.add(tag);
           }
         }
-      );
+
+        // Ignore URL types as they should be resolved above.
+        const legacyNodeType = node.type().type();
+        if (!URL.canParse(legacyNodeType)) {
+          if (!graphNode.icon) {
+            graphNode.icon = legacyNodeType;
+          }
+          if (legacyNodeType.startsWith("#module")) {
+            graphNode.classList.add("module");
+          } else {
+            graphNode.classList.add(legacyNodeType);
+          }
+        }
+      });
 
       graphNode.transform.e = x;
       graphNode.transform.f = y;
