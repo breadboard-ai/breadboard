@@ -10,6 +10,8 @@ import {
   EditHistoryController,
   EditHistoryEntry,
 } from "./types.js";
+import { SignalArray } from "signal-utils/array";
+import { signal } from "signal-utils";
 
 export class GraphEditHistory implements EditHistory {
   #controller: EditHistoryController;
@@ -56,6 +58,13 @@ export class GraphEditHistory implements EditHistory {
     this.#controller.setGraph(graph);
   }
 
+  jump(index: number): void {
+    this.#history.resume(this.#controller.graph(), this.#controller.version());
+    const graph = this.#history.jump(index);
+    if (!graph) return;
+    this.#controller.setGraph(graph);
+  }
+
   entries(): EditHistoryEntry[] {
     return this.#history.history;
   }
@@ -66,8 +75,9 @@ export class GraphEditHistory implements EditHistory {
 }
 
 export class EditHistoryManager {
-  history: EditHistoryEntry[] = [];
-  #index: number = 0;
+  readonly history = new SignalArray<EditHistoryEntry>();
+  @signal
+  accessor #index = 0;
   pauseLabel: string | null = null;
   #version: number = 0;
 
@@ -86,7 +96,11 @@ export class EditHistoryManager {
     // Chop off the history at #index.
     this.history.splice(this.#index + 1);
     // Insert new entry.
-    this.history.push({ graph: structuredClone(graph), label });
+    this.history.push({
+      graph: structuredClone(graph),
+      label,
+      timestamp: Date.now(),
+    });
     // Point #index the new entry.
     this.#index = this.history.length - 1;
   }
@@ -100,16 +114,18 @@ export class EditHistoryManager {
   }
 
   back(): GraphDescriptor | null {
-    if (this.paused()) return null;
-    this.#index && this.#index--;
-    return this.current();
+    return this.jump(this.#index - 1);
   }
 
   forth(): GraphDescriptor | null {
-    if (this.paused()) return null;
-    const newIndex = this.#index + 1;
-    const maxIndex = this.history.length - 1;
-    if (newIndex <= maxIndex) {
+    return this.jump(this.#index + 1);
+  }
+
+  jump(newIndex: number) {
+    if (this.paused()) {
+      return null;
+    }
+    if (newIndex >= 0 && newIndex < this.history.length) {
       this.#index = newIndex;
     }
     return this.current();

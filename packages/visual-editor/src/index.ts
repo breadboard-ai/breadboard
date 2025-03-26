@@ -81,7 +81,10 @@ import {
   SelectAllCommand,
   UngroupCommand,
 } from "./commands/commands";
-import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
+import {
+  SigninAdapter,
+  signinAdapterContext,
+} from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
 import { sideBoardRuntime } from "@breadboard-ai/shared-ui/contexts/side-board-runtime.js";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { OverflowAction } from "@breadboard-ai/shared-ui/types/types.js";
@@ -260,6 +263,9 @@ export class Main extends LitElement {
 
   @provide({ context: sideBoardRuntime })
   accessor sideBoardRuntime!: SideBoardRuntime;
+
+  @provide({ context: signinAdapterContext })
+  accessor signinAdapter!: SigninAdapter;
 
   @state()
   accessor selectedBoardServer = "Browser Storage";
@@ -553,6 +559,12 @@ export class Main extends LitElement {
         this.sideBoardRuntime.addEventListener("running", () => {
           this.canRun = false;
         });
+
+        this.signinAdapter = new BreadboardUI.Utils.SigninAdapter(
+          this.tokenVendor,
+          this.environment,
+          this.settingsHelper
+        );
 
         this.#graphStore.addEventListener("update", (evt) => {
           const { mainGraphId } = evt;

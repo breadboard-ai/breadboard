@@ -305,6 +305,11 @@ export type EditHistory = {
   redo(): void;
 
   /**
+   * Jumps to the entry with the given index.
+   */
+  jump(index: number): void;
+
+  /**
    * Returns a list of all entries in the history.
    */
   entries(): EditHistoryEntry[];
@@ -315,7 +320,11 @@ export type EditHistory = {
   index(): number;
 };
 
-export type EditHistoryEntry = { graph: GraphDescriptor; label: string };
+export type EditHistoryEntry = {
+  graph: GraphDescriptor;
+  label: string;
+  timestamp: number;
+};
 
 export type EditableGraphOptions = InspectableGraphOptions & {
   /**

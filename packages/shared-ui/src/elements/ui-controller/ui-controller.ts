@@ -60,6 +60,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { Sandbox } from "@breadboard-ai/jsandbox";
 import { ChatController } from "../../state/chat-controller.js";
 import { Organizer } from "../../state/types.js";
+import "../../revision-history/revision-history-panel.js";
 
 @customElement("bb-ui-controller")
 export class UI extends LitElement {
@@ -127,8 +128,12 @@ export class UI extends LitElement {
   accessor mode = "tree" as const;
 
   @property()
-  accessor sideNavItem: "app-view" | "console" | "capabilities" | null =
-    "app-view";
+  accessor sideNavItem:
+    | "app-view"
+    | "console"
+    | "capabilities"
+    | "revision-history"
+    | null = "revision-history";
 
   @property()
   accessor selectionState: WorkspaceSelectionStateWithChangeId | null = null;
@@ -608,6 +613,28 @@ export class UI extends LitElement {
         )}`;
         break;
       }
+
+      case "revision-history": {
+        sideNavItem = html`
+          <bb-revision-history-panel
+            .history=${this.history}
+          ></bb-revision-history-panel>
+        `;
+        break;
+      }
+
+      case null: {
+        sideNavItem = nothing;
+        break;
+      }
+
+      default: {
+        console.error(
+          `Internal error: Unexpected sideNavItem:`,
+          this.sideNavItem satisfies never
+        );
+        break;
+      }
     }
 
     let assetOrganizer: HTMLTemplateResult | symbol = nothing;
@@ -657,6 +684,9 @@ export class UI extends LitElement {
         <button ?disabled=${this.sideNavItem === "console"} @click=${() => {
           this.sideNavItem = "console";
         }}>Console</button>
+        <button ?disabled=${this.sideNavItem === "revision-history"} @click=${() => {
+          this.sideNavItem = "revision-history";
+        }}>Revision history</button>
         </div>
         <div id="side-nav-content">
         ${sideNavItem}

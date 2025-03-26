@@ -64,34 +64,22 @@ function jsonEqual(a: JsonSerializable, b: JsonSerializable): boolean {
   }
 
   if (typeof a === "object") {
-    if (typeof b !== "object") {
+    if (b === null || typeof b !== "object") {
       return false;
     }
-    const doneInFirstPass = new Set<string>();
-    for (const keyA of Object.getOwnPropertyNames(a)) {
-      if (
-        !jsonEqual(
-          (a as Record<string, JsonSerializable>)[keyA],
-          (b as Record<string, JsonSerializable>)[keyA]
-        )
-      ) {
+    for (const [key, valA] of Object.entries(a)) {
+      const valB = (b as Record<string, JsonSerializable | undefined>)[key];
+      if (valB === undefined || !jsonEqual(valA, valB)) {
         return false;
       }
-      doneInFirstPass.add(keyA);
     }
-    for (const keyB of Object.getOwnPropertyNames(b)) {
-      if (
-        !doneInFirstPass.has(keyB) &&
-        !jsonEqual(
-          (a as Record<string, JsonSerializable>)[keyB],
-          (b as Record<string, JsonSerializable>)[keyB]
-        )
-      ) {
+    for (const key of Object.keys(b)) {
+      if (!Object.hasOwn(a, key)) {
         return false;
       }
     }
     return true;
   }
 
-  throw new Error(`"Not a valid JSON object: <${typeof a}>`, a);
+  throw new Error(`"Not a valid JSON value: <${typeof a}>`, a satisfies never);
 }

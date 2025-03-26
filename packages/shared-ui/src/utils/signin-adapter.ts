@@ -17,6 +17,7 @@ import {
   oauthTokenBroadcastChannelName,
 } from "../elements/connection/connection-common";
 import { SETTINGS_TYPE, SettingsHelper } from "../types/types";
+import { createContext } from "@lit/context";
 
 export { SigninAdapter };
 
@@ -33,6 +34,10 @@ export const SIGN_IN_CONNECTION_ID = "$sign-in";
  *                function properly.
  */
 export type SigninState = "signedout" | "valid" | "anonymous" | "invalid";
+
+export const signinAdapterContext = createContext<SigninAdapter | undefined>(
+  "SigninAdapter"
+);
 
 /**
  * A specialized adapter to handle sign in using the connection server
