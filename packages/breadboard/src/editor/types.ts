@@ -320,7 +320,11 @@ export type EditHistory = {
   index(): number;
 };
 
-export type EditHistoryEntry = { graph: GraphDescriptor; label: string };
+export type EditHistoryEntry = {
+  graph: GraphDescriptor;
+  label: string;
+  timestamp: number;
+};
 
 export type EditableGraphOptions = InspectableGraphOptions & {
   /**

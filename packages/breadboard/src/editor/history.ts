@@ -96,7 +96,11 @@ export class EditHistoryManager {
     // Chop off the history at #index.
     this.history.splice(this.#index + 1);
     // Insert new entry.
-    this.history.push({ graph: structuredClone(graph), label });
+    this.history.push({
+      graph: structuredClone(graph),
+      label,
+      timestamp: Date.now(),
+    });
     // Point #index the new entry.
     this.#index = this.history.length - 1;
   }
