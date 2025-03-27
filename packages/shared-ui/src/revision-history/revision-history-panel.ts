@@ -117,7 +117,8 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
   accessor history: EditHistory | undefined | null = undefined;
 
   override render() {
-    if (!this.history) {
+    const history = this.history;
+    if (!history) {
       return html`
         <p id="no-history-msg">
           <span class="g-icon">progress_activity</span>
@@ -126,9 +127,26 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
       `;
     }
     const rows = [];
-    const revisions = this.history.entries();
-    for (let i = revisions.length - 1; i >= 0; i--) {
-      rows.push(this.#renderRevision(revisions, i));
+    const pending = history.pending;
+    if (pending) {
+      rows.push(this.#renderRevision(pending, true, true));
+    }
+    const committed = history.entries();
+    for (
+      // When we roll back and then add an edit, the history array's length
+      // won't reflect the truncation until the pending entry is committed.
+      let i = pending ? history.index() : committed.length - 1;
+      i >= 0;
+      i--
+    ) {
+      rows.push(
+        this.#renderRevision(
+          committed[i],
+          !pending && i === committed.length - 1,
+          !pending && i === history.index(),
+          () => history.jump(i)
+        )
+      );
     }
     return html`
       <p id="wip-msg">
@@ -140,10 +158,12 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
     `;
   }
 
-  #renderRevision(revisions: EditHistoryEntry[], index: number) {
-    const revision = revisions[index];
-    const isCurrent = index === revisions.length - 1;
-    const isDisplayed = index === this.history?.index();
+  #renderRevision(
+    revision: EditHistoryEntry,
+    isCurrent: boolean,
+    isDisplayed: boolean,
+    onClick?: () => void
+  ) {
     const formattedDate = new Date(revision.timestamp)
       .toLocaleString("en-US", {
         month: "long",
@@ -156,7 +176,7 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
     return html`
       <li
         class=${classMap({ revision: true, displayed: isDisplayed })}
-        @click=${() => this.#onClickRevision(index)}
+        @click=${onClick}
       >
         <span class="date">${formattedDate}</span>
         ${isCurrent

@@ -310,7 +310,16 @@ export type EditHistory = {
   jump(index: number): void;
 
   /**
-   * Returns a list of all entries in the history.
+   * The pending history entry, if there is one. Changes are not committed to
+   * the entries array immediately, so that they can be batched to reduce churn.
+   *
+   * This value should effectively be treated as the latest history entry, with
+   * the caveat that it might change before it is committed.
+   */
+  readonly pending: EditHistoryEntry | undefined;
+
+  /**
+   * Returns a list of all committed entries in the history.
    */
   entries(): EditHistoryEntry[];
 

@@ -72,12 +72,18 @@ export class GraphEditHistory implements EditHistory {
   index(): number {
     return this.#history.index();
   }
+
+  get pending() {
+    return this.#history.pending;
+  }
 }
 
 export class EditHistoryManager {
   readonly history = new SignalArray<EditHistoryEntry>();
   @signal
   accessor #index = 0;
+  @signal
+  accessor pending: EditHistoryEntry | undefined;
   pauseLabel: string | null = null;
   #version: number = 0;
 
@@ -140,6 +146,7 @@ export class EditHistoryManager {
       this.resume(graph, version);
     }
     this.pauseLabel = label;
+    this.pending = { graph, label, timestamp: Date.now() };
     this.#version = version;
   }
 
@@ -147,6 +154,7 @@ export class EditHistoryManager {
     if (this.pauseLabel === null) return;
     const label = this.pauseLabel;
     this.pauseLabel = null;
+    this.pending = undefined;
     if (this.#version !== version) {
       this.add(graph, label);
     }
