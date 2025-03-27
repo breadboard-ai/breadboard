@@ -5,6 +5,7 @@
  */
 
 import { State } from "@breadboard-ai/shared-ui";
+import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 
 import {
   BoardServer,
@@ -21,10 +22,16 @@ export { StateManager };
 class StateManager {
   #map: Map<MainGraphIdentifier, State.Project> = new Map();
   #store: MutableGraphStore;
+  #runtime: SideBoardRuntime;
   #servers: BoardServer[];
 
-  constructor(store: MutableGraphStore, boardServers: BoardServer[]) {
+  constructor(
+    store: MutableGraphStore,
+    runtime: SideBoardRuntime,
+    boardServers: BoardServer[]
+  ) {
     this.#store = store;
+    this.#runtime = runtime;
     this.#servers = boardServers;
   }
 
@@ -52,6 +59,7 @@ class StateManager {
     state = State.createProjectState(
       mainGraphId,
       this.#store,
+      this.#runtime,
       this.#findServer.bind(this),
       editable || undefined
     );

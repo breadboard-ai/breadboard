@@ -30,6 +30,7 @@ import {
   FileSystem,
   Outcome,
   err,
+  NodeDescriberResult,
 } from "@google-labs/breadboard";
 import {
   createFileSystemBackend,
@@ -161,37 +162,51 @@ class SideboardRuntimeImpl
     return null;
   }
 
-  async createRunner(
-    graph: GraphDescriptor,
+  async createConfig(
+    graph: GraphDescriptor | string,
     graphURLForProxy?: string
-  ): Promise<HarnessRunner> {
-    if (!graph.url) {
-      // Side-boards often won't have the required `url` property,
-      // because they might have been imported e.g. via the JS import
-      // graph, instead of via a board loader (note that board loaders
-      // inject `url` into the graphs they load). In this case, an
-      // arbitrary one will be fine, as long as the board doesn't need
-      // to load any other boards via non-self relative URLs.
-      graph = { ...graph };
-      graph.url = `file://sideboard/${crypto.randomUUID()}`;
+  ): Promise<RunConfig> {
+    let loadGraph = false;
+    let url;
+    if (typeof graph === "string") {
+      // This is a URL to the graph, rather than the GraphDescriptor.
+      // Let's load it first.
+      const added = this.#graphStore.addByURL(graph, [], {});
+      url = graph;
+      graph = (await this.#graphStore.getLatest(added.mutable)).graph;
+      loadGraph = true;
+    } else {
+      if (!graph.url) {
+        // Side-boards often won't have the required `url` property,
+        // because they might have been imported e.g. via the JS import
+        // graph, instead of via a board loader (note that board loaders
+        // inject `url` into the graphs they load). In this case, an
+        // arbitrary one will be fine, as long as the board doesn't need
+        // to load any other boards via non-self relative URLs.
+        graph = { ...graph };
+        graph.url = `file://sideboard/${crypto.randomUUID()}`;
+      }
+      this.#graphStore.addByDescriptor(graph);
+      url = graph.url!;
     }
-    this.#graphStore.addByDescriptor(graph);
-
     let config: RunConfig = {
-      url: graph.url,
-      runner: graph,
+      url,
       diagnostics: true,
       kits: [...this.#graphStore.kits],
       loader: this.#graphStore.loader,
       store: this.#dataStore,
       graphStore: this.#graphStore,
       fileSystem: this.#fileSystem.createRunFileSystem({
-        graphUrl: graph.url,
+        graphUrl: url,
         env: [],
         assets: assetsFromGraphDescriptor(graph),
       }),
       interactiveSecrets: true,
     };
+
+    if (!loadGraph) {
+      config.runner = graph;
+    }
 
     if (this.proxy) {
       config = addNodeProxyServerConfig(
@@ -199,9 +214,28 @@ class SideboardRuntimeImpl
         config,
         this.settings,
         undefined,
-        await this.#getProxyURL(graphURLForProxy ?? graph.url)
+        await this.#getProxyURL(graphURLForProxy ?? url)
       );
     }
+    return config;
+  }
+
+  async describe(
+    url: string,
+    graphURLForProxy?: string
+  ): Promise<Outcome<NodeDescriberResult>> {
+    const config = await this.createConfig(url, graphURLForProxy);
+    const { mutable } = config.graphStore!.addByURL(url, [], {}) || {};
+
+    const inspectable = config.graphStore!.inspect(mutable.id, "");
+    return inspectable!.describe({}, config);
+  }
+
+  async createRunner(
+    graph: GraphDescriptor | string,
+    graphURLForProxy?: string
+  ): Promise<HarnessRunner> {
+    const config = await this.createConfig(graph, graphURLForProxy);
 
     const runner = createRunner(config);
     runner.addEventListener("secret", async (event) => {

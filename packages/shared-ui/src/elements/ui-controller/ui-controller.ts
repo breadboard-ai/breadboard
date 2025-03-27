@@ -366,6 +366,7 @@ export class UI extends LitElement {
           .boardServerKits=${this.boardServerKits}
           .graphStore=${this.graphStore}
           .mainGraphId=${this.mainGraphId}
+          .showExperimentalComponents=${showExperimentalComponents}
           .canRedo=${canRedo}
           .canUndo=${canUndo}
           .capabilities=${capabilities}

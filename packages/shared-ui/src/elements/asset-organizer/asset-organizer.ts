@@ -17,10 +17,11 @@ import {
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { SignalWatcher } from "@lit-labs/signals";
-import { GraphAsset, Organizer } from "../../state";
+import { Connector, GraphAsset, Organizer } from "../../state";
 import {
   AssetMetadata,
   AssetPath,
+  JsonSerializable,
   LLMContent,
   NodeValue,
   ParameterMetadata,
@@ -29,6 +30,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { OverflowAction } from "../../types/types.js";
 import {
   HideTooltipEvent,
+  InputEnterEvent,
   OverflowMenuActionEvent,
   OverlayDismissedEvent,
   ParamDeleteEvent,
@@ -41,6 +43,7 @@ import { GoogleDriveFileId, LLMInput } from "../elements.js";
 import {
   isFileDataCapabilityPart,
   isLLMContent,
+  ok,
 } from "@google-labs/breadboard";
 import { InputChangeEvent } from "../../plugins/input-plugin.js";
 import { SIGN_IN_CONNECTION_ID } from "../../utils/signin-adapter.js";
@@ -138,6 +141,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
 
       #edit-parameter,
       #edit-asset,
+      #cancel-edit,
       #add-asset {
         font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
           var(--bb-font-family);
@@ -156,6 +160,11 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
         &:focus {
           background-color: Var(--bb-neutral-300);
         }
+      }
+
+      #cancel-edit {
+        background-image: var(--bb-icon-eject);
+        margin-bottom: var(--bb-grid-size-4);
       }
 
       #edit-parameter,
@@ -749,6 +758,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
           title: "YouTube",
           name: "youtube",
         },
+        ...createConnectorActions(this.state?.connectors),
       ];
 
       if (this.showGDrive) {
@@ -797,6 +807,20 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
               );
               break;
             }
+
+            case "connector": {
+              const creatingConnector =
+                await this.state?.initializeConnectorInstance(evt.value);
+              if (!ok(creatingConnector)) {
+                console.log(
+                  `Unable to create connector: ${creatingConnector.$error}`
+                );
+                this.dispatchEvent(
+                  new ToastEvent("Unable to create connector", ToastType.ERROR)
+                );
+              }
+              break;
+            }
           }
 
           this.showAddOverflowMenu = false;
@@ -806,6 +830,10 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
         }}
       ></bb-overflow-menu>`;
     }
+
+    const assetType = this.#isGraphAsset(this.selectedItem)
+      ? this.selectedItem.metadata?.type
+      : undefined;
 
     return html` <div
         id="background"
@@ -1045,15 +1073,12 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
             <section
               id="details"
               class=${classMap({
-                padded: this.#isGraphAsset(this.selectedItem)
-                  ? this.selectedItem.metadata?.type === "file"
-                  : false,
+                padded: assetType === "file",
               })}
             >
               ${itemData
                 ? html`
-                    ${this.#isGraphAsset(this.selectedItem) &&
-                    this.selectedItem.metadata?.type === "content"
+                    ${assetType === "content" || assetType === "connector"
                       ? html`<div>
                           <button
                             id="edit-asset"
@@ -1078,44 +1103,120 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                                 return;
                               }
 
-                              this.#attemptUpdateAsset();
+                              if (assetType === "connector") {
+                                const path = this.selectedItem?.path;
+                                if (!path) return;
+
+                                this.state
+                                  ?.commitConnectorInstanceEdits(
+                                    path,
+                                    this.#contentInputRef.value.value as Record<
+                                      string,
+                                      JsonSerializable
+                                    >
+                                  )
+                                  .then((result) => {
+                                    this.editAssetContent = null;
+                                    if (!ok(result)) {
+                                      console.warn(
+                                        `Unable to update connector: ${result.$error}`
+                                      );
+                                      this.dispatchEvent(
+                                        new ToastEvent(
+                                          "Unable to update connector",
+                                          ToastType.ERROR
+                                        )
+                                      );
+                                    }
+                                  });
+                              } else {
+                                this.#attemptUpdateAsset();
+                              }
                             }}
                           >
                             ${this.editAssetContent
                               ? Strings.from("COMMAND_SAVE_ASSET")
                               : Strings.from("COMMAND_EDIT_ASSET")}
                           </button>
+                          ${this.editAssetContent
+                            ? html`<button
+                                id="cancel-edit"
+                                @click=${() => {
+                                  this.state?.cancel();
+                                  this.editAssetContent = null;
+                                }}
+                              >
+                                ${Strings.from("COMMAND_CANCEL")}
+                              </button>`
+                            : nothing}
                         </div>`
                       : nothing}
                     ${this.editAssetContent
-                      ? html`<bb-llm-input
-                          ${ref(this.#contentInputRef)}
-                          @keydown=${(evt: KeyboardEvent) => {
-                            const isMac =
-                              navigator.platform.indexOf("Mac") === 0;
-                            const isCtrlCommand = isMac
-                              ? evt.metaKey
-                              : evt.ctrlKey;
+                      ? assetType === "connector"
+                        ? html`<bb-edit-connector
+                            ${ref(this.#contentInputRef)}
+                            @bbinputenter=${(evt: InputEnterEvent) => {
+                              evt.stopImmediatePropagation();
 
-                            if (evt.key === "Enter" && isCtrlCommand) {
-                              this.#attemptUpdateAsset();
-                            }
-                          }}
-                          .value=${itemData}
-                          .clamped=${false}
-                          .description=${null}
-                          .showInlineControlsToggle=${hasEditableParts}
-                          .showInlineControls=${hasEditableParts}
-                          .showPartControls=${hasEditableParts}
-                          .autofocus=${true}
-                        ></bb-llm-input>`
-                      : html`<bb-llm-output
-                          .value=${itemData}
-                          .clamped=${false}
-                          .graphUrl=${this.state?.graphUrl || null}
-                          .showExportControls=${true}
-                          .supportedExportControls=${supportedExportControls}
-                        ></bb-llm-output>`}
+                              const path = this.selectedItem?.path;
+                              if (!path) return;
+
+                              this.state
+                                ?.commitConnectorInstanceEdits(
+                                  path,
+                                  evt.data as Record<string, JsonSerializable>
+                                )
+                                .then((result) => {
+                                  this.editAssetContent = null;
+                                  if (!ok(result)) {
+                                    console.warn(
+                                      `Unable to update connector: ${result.$error}`
+                                    );
+                                    this.dispatchEvent(
+                                      new ToastEvent(
+                                        "Unable to update connector",
+                                        ToastType.ERROR
+                                      )
+                                    );
+                                  }
+                                });
+                            }}
+                            .state=${this.state}
+                            .path=${this.editAssetContent.path}
+                          ></bb-edit-connector>`
+                        : html`<bb-llm-input
+                            ${ref(this.#contentInputRef)}
+                            @keydown=${(evt: KeyboardEvent) => {
+                              const isMac =
+                                navigator.platform.indexOf("Mac") === 0;
+                              const isCtrlCommand = isMac
+                                ? evt.metaKey
+                                : evt.ctrlKey;
+
+                              if (evt.key === "Enter" && isCtrlCommand) {
+                                this.#attemptUpdateAsset();
+                              }
+                            }}
+                            .value=${itemData}
+                            .clamped=${false}
+                            .description=${null}
+                            .showInlineControlsToggle=${hasEditableParts}
+                            .showInlineControls=${hasEditableParts}
+                            .showPartControls=${hasEditableParts}
+                            .autofocus=${true}
+                          ></bb-llm-input>`
+                      : assetType === "connector"
+                        ? html`<bb-view-connector
+                            .state=${this.state}
+                            .path=${this.selectedItem?.path}
+                          ></bb-view-connector>`
+                        : html`<bb-llm-output
+                            .value=${itemData}
+                            .clamped=${false}
+                            .graphUrl=${this.state?.graphUrl || null}
+                            .showExportControls=${true}
+                            .supportedExportControls=${supportedExportControls}
+                          ></bb-llm-output>`}
                   `
                 : isParameter
                   ? html` <div>
@@ -1316,4 +1417,18 @@ function toLLMContentArray(text: string): NodeValue {
     },
   ];
   return c as NodeValue;
+}
+
+function createConnectorActions(
+  connectors?: Map<string, Connector>
+): OverflowAction[] {
+  if (!connectors) return [];
+  return [...connectors.values()].map((connector) => {
+    return {
+      title: connector.title,
+      name: "connector",
+      icon: connector.icon || "content-add",
+      value: connector.url,
+    };
+  });
 }

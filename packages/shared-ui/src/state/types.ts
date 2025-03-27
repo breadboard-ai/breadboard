@@ -8,6 +8,7 @@ import {
   AssetMetadata,
   AssetPath,
   GraphIdentifier,
+  JsonSerializable,
   LLMContent,
   NodeIdentifier,
   NodeValue,
@@ -19,6 +20,8 @@ import {
   Outcome,
   PortIdentifier,
 } from "@google-labs/breadboard";
+import { SideBoardRuntime } from "../sideboards/types";
+import { ConnectorView } from "../connectors/types";
 
 export type ChatStatus = "running" | "paused" | "stopped";
 
@@ -84,10 +87,17 @@ export type ChatState = {
   statusDetail: string;
 };
 
+export type OrganizerStage = "free" | "busy";
+
 /**
  * Represents the Model+Controller for the Asset Organizer.
  */
 export type Organizer = {
+  /**
+   * Current status of the organizer
+   */
+  stage: OrganizerStage;
+
   /**
    * Current graph's assets.
    */
@@ -110,6 +120,32 @@ export type Organizer = {
     id: string,
     metadata: ParameterMetadata
   ): Promise<Outcome<void>>;
+
+  /**
+   * Available connectors
+   */
+  connectors: Map<string, Connector>;
+
+  /**
+   * Starts creating a new Connector instance
+   *
+   * @param url -- URL of the connector.
+   */
+  initializeConnectorInstance(url: string | null): Promise<Outcome<void>>;
+  commitConnectorInstanceEdits(
+    path: AssetPath,
+    values: Record<string, JsonSerializable>
+  ): Promise<Outcome<void>>;
+  /**
+   * Cancels all pending work.
+   */
+  cancel(): Promise<void>;
+
+  /**
+   * Gets the connector view: the values and the schema to use to render these
+   * values.
+   */
+  getConnectorView(path: AssetPath): Promise<Outcome<ConnectorView>>;
 };
 
 export type GraphAsset = {
@@ -139,6 +175,16 @@ export type Component = {
   description?: string;
 };
 
+export type Connector = {
+  /**
+   * The URL pointing to the connector BGL file.
+   */
+  url: string;
+  icon?: string;
+  title: string;
+  description?: string;
+};
+
 export type Components = Map<NodeIdentifier, Component>;
 
 /**
@@ -160,12 +206,14 @@ export type FastAccess = {
 export type Project = {
   graphAssets: Map<AssetPath, GraphAsset>;
   parameters: Map<string, ParameterMetadata>;
+  connectors: Map<string, Connector>;
   organizer: Organizer;
   fastAccess: FastAccess;
 };
 
 export type ProjectInternal = Project & {
   graphUrl: URL | null;
+  runtime(): SideBoardRuntime;
   apply(transform: EditTransform): Promise<Outcome<void>>;
   edit(spec: EditSpec[], label: string): Promise<Outcome<void>>;
   persistBlobs(contents: LLMContent[]): Promise<LLMContent[]>;

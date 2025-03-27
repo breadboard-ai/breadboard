@@ -29,6 +29,7 @@ import { SignalMap } from "signal-utils/map";
 import { ReactiveOrganizer } from "./organizer";
 import {
   Component,
+  Connector,
   FastAccess,
   GeneratedAsset,
   GeneratedAssetIdentifier,
@@ -39,6 +40,7 @@ import {
   Tool,
 } from "./types";
 import { ReactiveFastAccess } from "./fast-access";
+import { SideBoardRuntime } from "../sideboards/types";
 
 export { createProjectState, ReactiveProject };
 
@@ -61,10 +63,17 @@ function isTool(entry: GraphStoreEntry) {
 function createProjectState(
   mainGraphId: MainGraphIdentifier,
   store: MutableGraphStore,
+  runtime: SideBoardRuntime,
   boardServerFinder: (url: URL) => BoardServer | null,
   editable?: EditableGraph
 ): Project {
-  return new ReactiveProject(mainGraphId, store, boardServerFinder, editable);
+  return new ReactiveProject(
+    mainGraphId,
+    store,
+    runtime,
+    boardServerFinder,
+    editable
+  );
 }
 
 type ReactiveComponents = SignalMap<NodeIdentifier, Component>;
@@ -74,6 +83,7 @@ type BoardServerFinder = (url: URL) => BoardServer | null;
 class ReactiveProject implements ProjectInternal {
   #mainGraphId: MainGraphIdentifier;
   #store: MutableGraphStore;
+  #runtime: SideBoardRuntime;
   #boardServerFinder: BoardServerFinder;
   #editable?: EditableGraph;
   readonly graphUrl: URL | null;
@@ -85,15 +95,18 @@ class ReactiveProject implements ProjectInternal {
   readonly fastAccess: FastAccess;
   readonly components: SignalMap<GraphIdentifier, ReactiveComponents>;
   readonly parameters: SignalMap<string, ParameterMetadata>;
+  readonly connectors: SignalMap<string, Connector>;
 
   constructor(
     mainGraphId: MainGraphIdentifier,
     store: MutableGraphStore,
+    runtime: SideBoardRuntime,
     boardServerFinder: BoardServerFinder,
     editable?: EditableGraph
   ) {
     this.#mainGraphId = mainGraphId;
     this.#store = store;
+    this.#runtime = runtime;
     this.#boardServerFinder = boardServerFinder;
     this.#editable = editable;
     store.addEventListener("update", (event) => {
@@ -113,6 +126,7 @@ class ReactiveProject implements ProjectInternal {
     this.generatedAssets = new SignalMap();
     this.myTools = new SignalMap();
     this.parameters = new SignalMap();
+    this.connectors = new SignalMap();
     this.organizer = new ReactiveOrganizer(this);
     this.fastAccess = new ReactiveFastAccess(
       this,
@@ -128,6 +142,11 @@ class ReactiveProject implements ProjectInternal {
     this.#updateTools();
     this.#updateMyTools();
     this.#updateParameters();
+    this.#updateConnectors();
+  }
+
+  runtime(): SideBoardRuntime {
+    return this.#runtime;
   }
 
   async apply(transform: EditTransform): Promise<Outcome<void>> {
@@ -301,6 +320,28 @@ class ReactiveProject implements ProjectInternal {
     updateMap(
       this.parameters,
       Object.entries(parameters).map(([id, parameter]) => [id, parameter])
+    );
+  }
+
+  #updateConnectors() {
+    const graphs = this.#store.mainGraphs();
+    const connectors = graphs.filter(
+      (graph) =>
+        graph.tags?.includes("connector") &&
+        graph.tags?.includes("published") &&
+        graph.url
+    );
+    updateMap(
+      this.connectors,
+      connectors.map((connector) => [
+        connector.url!,
+        {
+          url: connector.url,
+          icon: connector.icon,
+          title: connector.title,
+          description: connector.description,
+        },
+      ])
     );
   }
 }
