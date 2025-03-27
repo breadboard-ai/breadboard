@@ -23,6 +23,7 @@ import { toCSSMatrix } from "./utils/to-css-matrix";
 import { styleMap } from "lit/directives/style-map.js";
 import { MAIN_BOARD_ID } from "../../constants/constants";
 import { SelectGraphContentsEvent } from "./events/events";
+import { OverflowMenuActionEvent } from "../../events/events";
 
 @customElement("bb-graph")
 export class Graph extends Box {
@@ -308,6 +309,16 @@ export class Graph extends Box {
           <label
             @pointerdown=${(evt: PointerEvent) => {
               evt.stopImmediatePropagation();
+            }}
+            @dblclick=${(evt: PointerEvent) => {
+              this.dispatchEvent(
+                new OverflowMenuActionEvent(
+                  "edit-board-details",
+                  this.graphId,
+                  evt.clientX,
+                  evt.clientY
+                )
+              );
             }}
             @click=${() => {
               this.#selectContents();
