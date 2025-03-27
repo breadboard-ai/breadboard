@@ -34,7 +34,10 @@ import {
   SelectGraphContentsEvent,
   SelectionTranslateEvent,
 } from "./events/events";
-import { WorkspaceSelectionStateWithChangeId } from "../../types/types";
+import {
+  TopGraphRunResult,
+  WorkspaceSelectionStateWithChangeId,
+} from "../../types/types";
 import {
   createEmptyWorkspaceSelectionState,
   createWorkspaceSelectionChangeId,
@@ -59,6 +62,9 @@ import { DATA_TYPE } from "./constants";
 export class Renderer extends LitElement {
   @property()
   accessor debug = false;
+
+  @property()
+  accessor topGraphResult: TopGraphRunResult | null = null;
 
   @property()
   accessor boardServerKits: Kit[] | null = null;
@@ -540,6 +546,13 @@ export class Renderer extends LitElement {
       }
     }
 
+    if (changedProperties.has("topGraphResult")) {
+      const mainGraph = this.#graphs.get(MAIN_BOARD_ID);
+      if (mainGraph) {
+        mainGraph.highlightActivity(this.topGraphResult);
+      }
+    }
+
     if (
       (changedProperties.has("graph") ||
         changedProperties.has("graphTopologyUpdateId")) &&
@@ -882,7 +895,6 @@ export class Renderer extends LitElement {
             @bbnodeconfigurationrequest=${(
               evt: NodeConfigurationRequestEvent
             ) => {
-              console.log("node config requ", evt.nodeId);
               this.dispatchEvent(
                 new NodeConfigurationUpdateRequestEvent(
                   evt.nodeId,

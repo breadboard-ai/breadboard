@@ -44,6 +44,9 @@ export class GraphNode extends Box implements DragConnectorReceiver {
   @property({ reflect: true, type: Boolean })
   accessor highlighted = false;
 
+  @property({ reflect: true, type: Boolean })
+  accessor active = false;
+
   @property()
   set ports(ports: InspectableNodePorts | null) {
     this.#ports = ports;
@@ -83,6 +86,16 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
       :host([selected]) {
         z-index: 3;
+      }
+
+      :host([active]) #container::before {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        outline: 8px solid oklch(from var(--bb-ui-600) l c h / 0.25);
+        border-radius: 8px;
+        z-index: 0;
       }
 
       :host {
@@ -157,6 +170,10 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         background: var(--bb-icon-input) center center / 20px 20px no-repeat;
       }
 
+      :host([icon="output"]) #container header::before {
+        background: var(--bb-icon-output) center center / 20px 20px no-repeat;
+      }
+
       :host([icon="smart-toy"]) #container header::before {
         background: var(--bb-icon-smart-toy) center center / 20px 20px no-repeat;
       }
@@ -186,6 +203,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         border-radius: var(--bb-grid-size-2);
         outline: 1px solid var(--border);
         color: var(--bb-neutral-900);
+        position: relative;
 
         & header {
           display: flex;
@@ -244,12 +262,14 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         }
 
         & #content {
+          position: relative;
           background: var(--bb-neutral-0);
           padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
           font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
             var(--bb-font-family);
           color: var(--bb-neutral-900);
           line-height: var(--bb-grid-size-6);
+          border-radius: 0 0 var(--bb-grid-size-2) var(--bb-grid-size-2);
 
           p {
             margin: 0 0 var(--bb-grid-size-2) 0;
@@ -484,7 +504,6 @@ export class GraphNode extends Box implements DragConnectorReceiver {
               return;
             }
 
-            evt.stopImmediatePropagation();
             evt.target.setPointerCapture(evt.pointerId);
             this.#dragStart = new DOMPoint();
             this.#dragStart.x = evt.clientX;

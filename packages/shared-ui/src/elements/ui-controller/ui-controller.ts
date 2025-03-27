@@ -133,7 +133,7 @@ export class UI extends LitElement {
     | "console"
     | "capabilities"
     | "revision-history"
-    | null = "revision-history";
+    | null = "app-view";
 
   @property()
   accessor selectionState: WorkspaceSelectionStateWithChangeId | null = null;
@@ -353,6 +353,7 @@ export class UI extends LitElement {
             .selectionState=${this.selectionState}
             .mainGraphId=${this.mainGraphId}
             .showExperimentalComponents=${showExperimentalComponents}
+            .topGraphResult=${this.topGraphResult}
             @bbshowassetorganizer=${() => {
               this.showAssetOrganizer = true;
             }}

@@ -3,7 +3,7 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { customElement } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { Box } from "./box";
 import { GraphNode } from "./graph-node";
 import { css, html, svg } from "lit";
@@ -26,8 +26,18 @@ interface Connection {
 const EDGE_STANDARD = getGlobalColor("--bb-neutral-400");
 const EDGE_SELECTED = getGlobalColor("--bb-ui-600");
 
+// Value is no longer on the wire, because it was consumed by the receiving
+// component. Constant wires never reach this state.
+const EDGE_CONSUMED = getGlobalColor("--bb-input-600");
+
+// Value is on the wire, but hasn't been consumed by receiving component yet.
+const EDGE_STORED = getGlobalColor("--bb-human-600");
+
 @customElement("bb-graph-edge")
 export class GraphEdge extends Box {
+  @property()
+  accessor status: "consumed" | "initial" | "stored" | null = null;
+
   static styles = [
     Box.styles,
     css`
@@ -345,6 +355,25 @@ export class GraphEdge extends Box {
     const rotation = this.#createRotationFromConnectionPoints(connectionPoints);
     const steps = this.#createStepsFromConnectionPoints(connectionPoints);
 
+    let edgeColor;
+    switch (this.status) {
+      case "stored": {
+        edgeColor = EDGE_STORED;
+        break;
+      }
+
+      case "consumed": {
+        edgeColor = EDGE_CONSUMED;
+        break;
+      }
+
+      case "initial":
+      default: {
+        edgeColor = EDGE_STANDARD;
+        break;
+      }
+    }
+
     return html`<section
         id="container"
         class=${classMap({ bounds: this.showBounds })}
@@ -355,7 +384,7 @@ export class GraphEdge extends Box {
                width=${this.bounds.width} height=${this.bounds.height}
                xmlns="http://www.w3.org/2000/svg">
                 <path d=${steps.join(" ")}
-                  stroke=${this.selected ? EDGE_SELECTED : EDGE_STANDARD}
+                  stroke=${this.selected ? EDGE_SELECTED : edgeColor}
                   stroke-width="2" fill="none" stroke-linecap="round" />
 
                 <line x1=${connectionPoints.n2.x}
@@ -363,13 +392,13 @@ export class GraphEdge extends Box {
                   x2=${connectionPoints.n2.x - arrowSize}
                   y2=${connectionPoints.n2.y - arrowSize}
                   transform=${`rotate(${rotation}, ${connectionPoints.n2.x}, ${connectionPoints.n2.y})`}
-                  stroke=${this.selected ? EDGE_SELECTED : EDGE_STANDARD} stroke-width="2" stroke-linecap="round" />
+                  stroke=${this.selected ? EDGE_SELECTED : edgeColor} stroke-width="2" stroke-linecap="round" />
 
                 <line x1=${connectionPoints.n2.x} y1=${connectionPoints.n2.y}
                 x2=${connectionPoints.n2.x - arrowSize}
                 y2=${connectionPoints.n2.y + arrowSize}
                 transform=${`rotate(${rotation}, ${connectionPoints.n2.x}, ${connectionPoints.n2.y})`}
-                stroke=${this.selected ? EDGE_SELECTED : EDGE_STANDARD} stroke-width="2" stroke-linecap="round" />
+                stroke=${this.selected ? EDGE_SELECTED : edgeColor} stroke-width="2" stroke-linecap="round" />
           </svg>
         `}
       </section>

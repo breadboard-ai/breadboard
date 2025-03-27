@@ -17,7 +17,7 @@ import {
   inspectableEdgeToString,
 } from "../../utils/workspace";
 import { GraphEdge } from "./graph-edge";
-import { GraphSelectionState } from "../../types/types";
+import { GraphSelectionState, TopGraphRunResult } from "../../types/types";
 import { css, html } from "lit";
 import { toCSSMatrix } from "./utils/to-css-matrix";
 import { styleMap } from "lit/directives/style-map.js";
@@ -318,5 +318,29 @@ export class Graph extends Box {
     }
 
     return new DOMRect(0, 0, bounds.width, bounds.height);
+  }
+
+  highlightActivity(topGraphResult: TopGraphRunResult | null) {
+    for (const node of this.#nodes) {
+      const graphNode = this.entities.get(node.descriptor.id) as GraphNode;
+      if (!graphNode) {
+        continue;
+      }
+
+      graphNode.active =
+        topGraphResult?.currentNode?.descriptor.id === node.descriptor.id;
+    }
+
+    for (const edge of this.#edges) {
+      const graphEdge = this.entities.get(
+        inspectableEdgeToString(edge)
+      ) as GraphEdge;
+      if (!graphEdge) {
+        continue;
+      }
+
+      const edgeStatus = topGraphResult?.edgeValues.get(edge);
+      graphEdge.status = edgeStatus?.at(-1)?.status ?? null;
+    }
   }
 }
