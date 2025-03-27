@@ -16,6 +16,7 @@ import {
 import { collectIds } from "./utils/collect-ids";
 import { EditSpec, PortIdentifier } from "@google-labs/breadboard";
 import { MAIN_BOARD_ID } from "../../constants/constants";
+import { NodeSelectEvent } from "./events/events";
 
 @customElement("bb-drag-connector")
 export class DragConnector extends LitElement {
@@ -173,8 +174,6 @@ export class DragConnector extends LitElement {
           },
         ];
 
-        console.log(edits);
-
         this.dispatchEvent(new MultiEditEvent(edits, "Add edge"));
         break;
       }
@@ -182,6 +181,7 @@ export class DragConnector extends LitElement {
 
     if (!foundTarget) {
       this.dispatchEvent(new DragConnectorCancelledEvent());
+      this.dispatchEvent(new NodeSelectEvent(evt.clientX, evt.clientY));
     }
 
     this.start = null;

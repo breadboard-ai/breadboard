@@ -392,6 +392,8 @@ export class EditorControls extends LitElement {
         position: fixed;
         left: var(--component-library-x, 100px);
         top: var(--component-library-y, 100px);
+        right: auto;
+        bottom: auto;
         transform: none;
       }
     }
@@ -527,6 +529,23 @@ export class EditorControls extends LitElement {
     }
   }
 
+  showComponentLibraryAt(
+    x: number,
+    y: number,
+    nodeId: string,
+    subGraphId: string | null
+  ) {
+    this.#componentLibraryConfiguration = {
+      x: x,
+      y: y,
+      freeDrop: true,
+      id: nodeId,
+      subGraphId: subGraphId,
+      portId: null,
+    };
+    this.showComponentLibrary = true;
+  }
+
   #showComponentPicker(target: HTMLElement, typeTag: string) {
     if (!this.graphStore) {
       return;
@@ -585,7 +604,21 @@ export class EditorControls extends LitElement {
   }
 
   #handleChosenKitItem(nodeType: string) {
-    this.dispatchEvent(new NodeAddEvent(nodeType));
+    let x;
+    let y;
+    let nodeId;
+    let subGraphId;
+    let createAtCenter = true;
+    if (this.#componentLibraryConfiguration?.freeDrop) {
+      x = this.#componentLibraryConfiguration.x;
+      y = this.#componentLibraryConfiguration.y;
+      nodeId = this.#componentLibraryConfiguration.id ?? undefined;
+      subGraphId = this.#componentLibraryConfiguration.subGraphId ?? undefined;
+      createAtCenter = false;
+    }
+    this.dispatchEvent(
+      new NodeAddEvent(nodeType, createAtCenter, x, y, nodeId, subGraphId)
+    );
     this.hidePickers();
   }
 

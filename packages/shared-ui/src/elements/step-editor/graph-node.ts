@@ -547,7 +547,16 @@ export class GraphNode extends Box implements DragConnectorReceiver {
               ${value}
             </div>`;
           })
-        : html`Tap to configure`}
+        : html`<div
+            class=${classMap({ port: true })}
+            @click=${() => {
+              this.dispatchEvent(
+                new NodeConfigurationRequestEvent(this.nodeId, this.worldBounds)
+              );
+            }}
+          >
+            Tap to configure
+          </div>`}
     </div>`;
   }
 
