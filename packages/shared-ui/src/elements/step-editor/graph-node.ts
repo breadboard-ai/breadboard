@@ -566,6 +566,11 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           @click=${(evt: Event) => {
             evt.stopImmediatePropagation();
           }}
+          @dblclick=${() => {
+            this.dispatchEvent(
+              new NodeConfigurationRequestEvent(this.nodeId, this.worldBounds)
+            );
+          }}
           @pointerdown=${(evt: PointerEvent) => {
             if (!(evt.target instanceof HTMLElement)) {
               return;
