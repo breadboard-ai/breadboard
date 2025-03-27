@@ -1168,7 +1168,7 @@ export class ProjectListing extends LitElement {
                       return canShow;
                     }
                     const filter = new RegExp(this.filter, "gim");
-                    return filter.test(name) && canShow;
+                    return filter.test(item.title ?? name) && canShow;
                   })
                   .sort(([, dataA], [, dataB]) => {
                     // Sort by recency.
