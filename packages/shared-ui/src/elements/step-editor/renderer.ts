@@ -143,6 +143,7 @@ export class Renderer extends LitElement {
       width: 100%;
       height: 100%;
       outline: none;
+      touch-action: none;
     }
 
     :host([interactionmode="pan"]) {
@@ -490,7 +491,7 @@ export class Renderer extends LitElement {
     }
 
     this.#removeEffect("camera");
-    if (isCtrlCommand(evt)) {
+    if (isCtrlCommand(evt) || evt.ctrlKey) {
       const currentScale = this.camera.transform.a;
       const newScale = currentScale * (1 - evt.deltaY / this.zoomFactor);
 
