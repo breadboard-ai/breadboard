@@ -7,6 +7,7 @@
 import {
   AssetMetadata,
   AssetPath,
+  JsonSerializable,
   LLMContent,
   NodeValue,
   ParameterMetadata,
@@ -25,11 +26,7 @@ import { UpdateAssetWithRefs } from "../transforms/update-asset-with-refs";
 import { ChangeParameterMetadata } from "../transforms/change-parameter-metadata";
 import { signal } from "signal-utils";
 import { Configurator } from "../connectors";
-import {
-  ConnectorConfiguration,
-  ConnectorEdit,
-  ConnectorView,
-} from "../connectors/types";
+import { ConnectorConfiguration, ConnectorView } from "../connectors/types";
 import { CreateConnector } from "../transforms/create-connector";
 import { EditConnector } from "../transforms/edit-connector";
 
@@ -113,12 +110,7 @@ class ReactiveOrganizer implements Organizer {
     const updatingGraph = await this.#project.apply(
       new CreateConnector(url, id, initializing)
     );
-    if (!ok(updatingGraph)) return this.#free(updatingGraph);
-
-    const reading = await configurator.read(initializing.configuration);
-    if (!ok(reading)) return this.#free(reading);
-
-    this.stage = "connector-edit";
+    return this.#free(updatingGraph);
   }
 
   #getConnectorInstance(
@@ -144,16 +136,8 @@ class ReactiveOrganizer implements Organizer {
 
   async commitConnectorInstanceEdits(
     path: AssetPath,
-    edit: ConnectorEdit
+    values: Record<string, JsonSerializable>
   ): Promise<Outcome<void>> {
-    // if (this.stage !== "connector-edit") {
-    //   return this.#free(
-    //     err(
-    //       `Can't commit connector edits: the organizer is already doing something else`
-    //     )
-    //   );
-    // }
-
     this.stage = "busy";
 
     const runtime = this.#project.runtime();
@@ -166,7 +150,7 @@ class ReactiveOrganizer implements Organizer {
 
     const configurator = new Configurator(runtime, id, configuration.url);
 
-    const writing = await configurator.write(edit);
+    const writing = await configurator.write(values);
     if (!ok(writing)) return this.#free(writing);
 
     const updatingGraph = await this.#project.apply(

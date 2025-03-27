@@ -1108,13 +1108,13 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                                 if (!path) return;
 
                                 this.state
-                                  ?.commitConnectorInstanceEdits(path, {
-                                    values: this.#contentInputRef.value
-                                      .value as Record<
+                                  ?.commitConnectorInstanceEdits(
+                                    path,
+                                    this.#contentInputRef.value.value as Record<
                                       string,
                                       JsonSerializable
-                                    >,
-                                  })
+                                    >
+                                  )
                                   .then((result) => {
                                     this.editAssetContent = null;
                                     if (!ok(result)) {
@@ -1162,12 +1162,10 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                               if (!path) return;
 
                               this.state
-                                ?.commitConnectorInstanceEdits(path, {
-                                  values: evt.data as Record<
-                                    string,
-                                    JsonSerializable
-                                  >,
-                                })
+                                ?.commitConnectorInstanceEdits(
+                                  path,
+                                  evt.data as Record<string, JsonSerializable>
+                                )
                                 .then((result) => {
                                   this.editAssetContent = null;
                                   if (!ok(result)) {

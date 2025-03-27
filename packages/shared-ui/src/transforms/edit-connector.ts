@@ -9,19 +9,55 @@ import {
   EditOperationContext,
   EditTransform,
   EditTransformResult,
+  hash,
 } from "@google-labs/breadboard";
 import { ConnectorConfiguration } from "../connectors/types";
 
 export { EditConnector };
 
+type ConfigLLMContentArray = {
+  parts: {
+    json: ConnectorConfiguration;
+  }[];
+}[];
+
 class EditConnector implements EditTransform {
   constructor(
-    public readonly id: string,
+    public readonly path: string,
     public readonly configuration: ConnectorConfiguration
   ) {}
 
+  #sameConfig(data: NodeValue) {
+    const config = (data as ConfigLLMContentArray).at(-1)?.parts.at(0)
+      ?.json as ConnectorConfiguration;
+    if (!config) return true;
+
+    const { url, configuration } = config;
+
+    if (this.configuration.url !== url) return false;
+
+    return hash(this.configuration.configuration) === hash(configuration);
+  }
+
   async apply(context: EditOperationContext): Promise<EditTransformResult> {
-    const path = `connectors/${this.id}`;
+    const { path } = this;
+
+    // Get current metadata
+    const { graph } = context;
+    const asset = graph.assets?.[path];
+    if (!asset) {
+      return {
+        success: false,
+        error: `The asset "${path}" could not be edited, because it doesn't exist`,
+      };
+    }
+
+    const { metadata, data: existingData } = asset;
+
+    if (this.#sameConfig(existingData))
+      return {
+        success: true,
+      };
 
     const data: NodeValue = [
       {
@@ -32,18 +68,6 @@ class EditConnector implements EditTransform {
         ],
       },
     ] satisfies LLMContent[];
-
-    // Get current metadata
-    const { graph } = context;
-    const asset = graph.assets?.[this.id];
-    if (!asset) {
-      return {
-        success: false,
-        error: `The asset with id "${this.id}" could not be edited, because it doesn't exist`,
-      };
-    }
-
-    const { metadata } = asset;
 
     return context.apply(
       [

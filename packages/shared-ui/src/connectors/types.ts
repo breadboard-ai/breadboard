@@ -23,8 +23,3 @@ export type ConnectorView = {
   schema: Schema;
   values: JsonSerializable;
 };
-
-export type ConnectorEdit = {
-  configuration?: JsonSerializable;
-  values: JsonSerializable;
-};

@@ -5,11 +5,7 @@
  */
 
 import { err, NodeDescriberResult, ok, Outcome } from "@google-labs/breadboard";
-import {
-  ConnectorEdit,
-  ConnectorInitializerResult,
-  ConnectorView,
-} from "./types";
+import { ConnectorInitializerResult, ConnectorView } from "./types";
 import {
   GraphTag,
   JsonSerializable,
@@ -82,12 +78,13 @@ class Configurator {
     return result as ConnectorView;
   }
 
-  async write(edit: ConnectorEdit): Promise<Outcome<void>> {
+  async write(
+    values: Record<string, JsonSerializable>
+  ): Promise<Outcome<void>> {
     const result = await this.#invokeConfigurator({
       stage: "write",
       id: this.id,
-      configuration: edit.configuration!,
-      values: edit.values,
+      values,
     });
     if (!ok(result)) return result;
   }

@@ -8,6 +8,7 @@ import {
   AssetMetadata,
   AssetPath,
   GraphIdentifier,
+  JsonSerializable,
   LLMContent,
   NodeIdentifier,
   NodeValue,
@@ -20,7 +21,7 @@ import {
   PortIdentifier,
 } from "@google-labs/breadboard";
 import { SideBoardRuntime } from "../sideboards/types";
-import { ConnectorEdit, ConnectorView } from "../connectors/types";
+import { ConnectorView } from "../connectors/types";
 
 export type ChatStatus = "running" | "paused" | "stopped";
 
@@ -86,7 +87,7 @@ export type ChatState = {
   statusDetail: string;
 };
 
-export type OrganizerStage = "free" | "busy" | "connector-edit";
+export type OrganizerStage = "free" | "busy";
 
 /**
  * Represents the Model+Controller for the Asset Organizer.
@@ -133,7 +134,7 @@ export type Organizer = {
   initializeConnectorInstance(url: string | null): Promise<Outcome<void>>;
   commitConnectorInstanceEdits(
     path: AssetPath,
-    edit: ConnectorEdit
+    values: Record<string, JsonSerializable>
   ): Promise<Outcome<void>>;
   /**
    * Cancels all pending work.
