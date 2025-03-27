@@ -4,59 +4,89 @@
   "version": "0.0.1",
   "nodes": [
     {
-      "id": "save-outputs-4f17756f",
-      "type": "file://bgl/save-outputs.bgl.json#module:main",
+      "id": "a2-21392cf2",
+      "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
+        "title": "Get News",
         "visual": {
-          "x": 340,
-          "y": 320,
+          "x": -80,
+          "y": 1020.0000000000002,
           "collapsed": "expanded",
           "outputHeight": 88
         },
+        "userModified": false
+      },
+      "configuration": {
+        "description": {
+          "parts": [
+            {
+              "text": "Get summary of the latest US news headlines for today.\n\nWrite the summary in the following format:\n\n{{\"type\":\"asset\",\"path\":\"8a2a2ffc-c44e-45b3-9e03-c75cf26e175f\",\"title\":\"News Format\"}}\n\nUse the {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-web\",\"title\":\"Search Web\"}} tool to make multiple simultaneous calls on each subject."
+            }
+          ],
+          "role": "user"
+        }
+      }
+    },
+    {
+      "id": "a2-e35e6183",
+      "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+      "metadata": {
+        "title": "Make Text",
+        "visual": {
+          "x": 520,
+          "y": 1020,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "description": {
+          "parts": [
+            {
+              "text": "Read the contents of News File:\n\n--- News File --\n\n{{\"type\":\"asset\",\"path\":\"connectors/f34e2313-52d7-4758-96bb-512ebf2bf05d\",\"title\":\"News File\"}}\n\n-- News File --\n\nWrite a summary titled \"Since you last checked\" by comparing two last updates in the News File. This summary is meant to catch up the user on what happened since they last checked the news, providing only new and updated pieces of news. Write it gossip-style."
+            }
+          ],
+          "role": "user"
+        }
+      }
+    },
+    {
+      "id": "save-outputs-60cf13b4",
+      "type": "file://bgl/save-outputs.bgl.json#module:main",
+      "metadata": {
         "title": "Save Outputs",
+        "visual": {
+          "x": 220,
+          "y": 1020.0000000000007,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        },
         "userModified": false
       },
       "configuration": {
         "connectors": {
-          "parts": [
-            {
-              "text": "{{\"type\":\"asset\",\"path\":\"connectors/2e551020-3674-4301-bd7c-98d0fefee67d\",\"title\":\"Scratch\"}}"
-            }
-          ],
-          "role": "user"
-        },
-        "folio-mode": "Replace"
-      }
-    },
-    {
-      "id": "a2-84b3d967",
-      "type": "file://bgl/a2.bgl.json#module:combine-outputs",
-      "metadata": {
-        "title": "Combine Outputs",
-        "visual": {
-          "x": 20,
-          "y": 320,
-          "collapsed": "expanded",
-          "outputHeight": 88
-        },
-        "userModified": false
-      },
-      "configuration": {
-        "text": {
           "role": "user",
           "parts": [
             {
-              "text": "Awesome"
+              "text": "{{\"type\":\"asset\",\"path\":\"connectors/f34e2313-52d7-4758-96bb-512ebf2bf05d\",\"title\":\"News File\"}}"
             }
           ]
-        }
+        },
+        "folio-mode": "Append"
       }
     }
   ],
   "edges": [
     {
-      "from": "a2-84b3d967",
-      "to": "save-outputs-4f17756f",
+      "from": "a2-21392cf2",
+      "to": "save-outputs-60cf13b4",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "save-outputs-60cf13b4",
+      "to": "a2-e35e6183",
       "out": "context",
       "in": "context"
     }
@@ -90,7 +120,7 @@
     "parameters": {}
   },
   "assets": {
-    "connectors/2e551020-3674-4301-bd7c-98d0fefee67d": {
+    "connectors/f34e2313-52d7-4758-96bb-512ebf2bf05d": {
       "data": [
         {
           "parts": [
@@ -104,26 +134,24 @@
         }
       ],
       "metadata": {
-        "title": "Scratch",
+        "title": "News File",
         "type": "connector"
       }
     },
-    "connectors/6614a1f3-e473-4e6a-a34a-07e17ab8bc7b": {
+    "8a2a2ffc-c44e-45b3-9e03-c75cf26e175f": {
       "data": [
         {
           "parts": [
             {
-              "json": {
-                "url": "file://bgl/folio.bgl.json",
-                "configuration": {}
-              }
+              "text": "- Second-level heading \"News for [Today's Date]\"\n- Sub-heading \"Business\"\n- Sub-heading \"Politics\"\n- Sub-heading \"Sports\"\n- Sub-heading \"Entertainment\""
             }
-          ]
+          ],
+          "role": "user"
         }
       ],
       "metadata": {
-        "title": "Untitled Folio",
-        "type": "connector"
+        "title": "News Format",
+        "type": "content"
       }
     },
     "@@thumbnail": {
@@ -131,46 +159,7 @@
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMzYuNTciCiAgICAgICAgICAgICAgICAgICAgeT0iMTAuMDAiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjEwMC4yOCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjcyLjUxIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMjBhMjAyIiAvPgo8cmVjdCB4PSIxMy4xNSIKICAgICAgICAgICAgICAgICAgICB5PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTAwLjI4IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNzIuNTEiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyMGEyMDIiIC8+CiAgICAgIDxyZWN0IHg9IjEwOC4zNiIKICAgICAgICAgICAgICAgICAgICB5PSIxMTcuNDkiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjEwMC4yOCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjcyLjUxIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgogICAgPC9zdmc+"
-    }
-  },
-  "graphs": {
-    "0cc18cc8-7795-400e-bf2e-5f08a0c17f0c": {
-      "title": "Compare Asset Content to Names",
-      "nodes": [
-        {
-          "id": "c2d58ca3-fb2e-4cca-b9da-462fd9ca8163",
-          "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
-          "metadata": {
-            "title": "Compare Asset Content to Names",
-            "visual": {
-              "x": 266.8671875,
-              "y": 598.6953125,
-              "collapsed": "expanded",
-              "outputHeight": 88
-            },
-            "userModified": false,
-            "description": "Retrieves the content of an asset and compares it against a predefined list of names (Bob, Alice, Jill, Jack, Friday) to identify similarities and differences."
-          },
-          "configuration": {
-            "description": {
-              "parts": [
-                {
-                  "text": "Look at what's in {{\"type\":\"asset\",\"path\":\"connectors/2e551020-3674-4301-bd7c-98d0fefee67d\",\"title\":\"Scratch\"}} and compare it with this list:\n\nBob\nAlice\nJill\nJack\nFriday\n\nHow are they different? How are they similar?"
-                }
-              ],
-              "role": "user"
-            }
-          }
-        }
-      ],
-      "edges": [],
-      "metadata": {
-        "visual": {
-          "minimized": false
-        }
-      },
-      "description": "Compares the content of a specified asset against a predefined list of names (Bob, Alice, Jill, Jack, Friday) to identify similarities and differences.  It accepts one optional parameter: 'context' (string) -- reserved for future use to provide additional context for the comparison, influencing how the comparison is done or which data is used. Currently, the 'context' parameter is unused, and its purpose will be documented when implemented. The graph compares content from a specified asset against a predefined list of names. The asset is referenced via a connector, and the list of names is hardcoded into the node configuration."
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI3NC44NiIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iNjkuNTMiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI1MC4yOCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KPHJlY3QgeD0iMTcwLjQ3IgogICAgICAgICAgICAgICAgICAgIHk9Ijc0Ljg2IgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI2OS41MyIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjUwLjI4IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgo8cmVjdCB4PSI5MC4yMyIKICAgICAgICAgICAgICAgICAgICB5PSI3NC44NiIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iNjkuNTMiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI1MC4yOCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KICAgICAgCiAgICA8L3N2Zz4="
     }
   }
 }
