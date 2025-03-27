@@ -882,6 +882,10 @@ export class Renderer extends LitElement {
       return nothing;
     }
 
+    const showDefaultAdd =
+      this.graph?.nodes().length === 0 &&
+      Object.keys(this.graph.graphs() ?? {}).length === 0;
+
     this.camera.showBounds = this.debug;
 
     let selectionRectangle: HTMLTemplateResult | symbol = nothing;
@@ -978,6 +982,7 @@ export class Renderer extends LitElement {
         .graphStore=${this.graphStore}
         .graphStoreUpdateId=${this.graphStoreUpdateId}
         .mainGraphId=${this.mainGraphId}
+        .showDefaultAdd=${showDefaultAdd}
         .showExperimentalComponents=${this.showExperimentalComponents}
         @wheel=${(evt: WheelEvent) => {
           evt.stopImmediatePropagation();
