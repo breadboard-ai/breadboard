@@ -397,7 +397,7 @@ export class LLMOutput extends LitElement {
             const tmpl = partDataURL.then((url: string) => {
               if (part.inlineData.mimeType.startsWith("image")) {
                 return cache(html`
-                  ${canCopy
+                  ${canCopy && part.inlineData.mimeType === "image/png"
                     ? html` <div class="copy-image-to-clipboard">
                         <img src="${url}" alt="LLM Image" />
                         <button
