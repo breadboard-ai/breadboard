@@ -313,8 +313,12 @@ export class Renderer extends LitElement {
 
   #createNode(nodeType: string, x?: number, y?: number) {
     if (!x || !y) {
-      x = this.#boundsForInteraction.width * 0.5;
-      y = this.#boundsForInteraction.height * 0.5;
+      x =
+        this.#boundsForInteraction.width * 0.5 -
+        this.#boundsForInteraction.left;
+      y =
+        this.#boundsForInteraction.height * 0.5 -
+        this.#boundsForInteraction.top;
     }
 
     const addLocation = new DOMRect(x, y, 0, 0);
@@ -336,12 +340,17 @@ export class Renderer extends LitElement {
       return;
     }
 
-    const graphLocation = new DOMPoint(x, y).matrixTransform(
+    let graphLocation = new DOMPoint(x, y).matrixTransform(
       targetGraph.worldTransform.inverse()
     );
 
     graphLocation.x += targetGraph.transform.e;
     graphLocation.y += targetGraph.transform.f;
+
+    if (Number.isNaN(graphLocation.x) || Number.isNaN(graphLocation.y)) {
+      // Set as 130, 20 so that it gets reset to 0, 0 below.
+      graphLocation = new DOMPoint(130, 20);
+    }
 
     const id = globalThis.crypto.randomUUID();
     const edits: EditSpec[] = [
@@ -564,6 +573,14 @@ export class Renderer extends LitElement {
       if (!mainGraph) {
         mainGraph = new Graph(MAIN_BOARD_ID);
         this.#graphs.set(MAIN_BOARD_ID, mainGraph);
+      }
+
+      // When going from an empty main graph to something populated ensure that
+      // we re-center the graph to the view.
+      if (mainGraph.nodes.length === 0 && this.graph.nodes()) {
+        requestAnimationFrame(() => {
+          this.fitToView(false);
+        });
       }
 
       mainGraph.boundsLabel = this.graph.raw().title ?? "Untitled";
@@ -900,7 +917,11 @@ export class Renderer extends LitElement {
                   evt.nodeId,
                   graphId === MAIN_BOARD_ID ? "" : graphId,
                   null,
-                  null
+                  null,
+                  undefined,
+                  undefined,
+                  false,
+                  evt.bounds
                 )
               );
             }}

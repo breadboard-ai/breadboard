@@ -61,8 +61,9 @@ export class Entity extends LitElement {
 
   updateEntity(matrix = new DOMMatrix()) {
     // The order here is super important.
-    // 1. Send the most recent world transform down to the child entities
-    // 2. Calculate the local bounds (which may also adjust the local transform)
+    // 1. Send the most recent world transform down to the child entities.
+    // 2. Calculate the local bounds (which may also adjust this entity's local
+    //    transform).
     // 3. Apply the parent's matrix to the current entity *after* the bounds
     //    have been checked and any local transforms adjusted.
     for (const entity of this.entities.values()) {
