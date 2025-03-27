@@ -55,6 +55,9 @@ export class EditorControls extends LitElement {
   accessor mainGraphId: MainGraphIdentifier | null = null;
 
   @property()
+  accessor showDefaultAdd = false;
+
+  @property()
   accessor showExperimentalComponents = false;
 
   @state()
@@ -83,6 +86,29 @@ export class EditorControls extends LitElement {
   static styles = css`
     :host {
       display: block;
+    }
+
+    #default-add {
+      position: fixed;
+      top: 100px;
+      left: 50%;
+      translate: -50% 0;
+      z-index: 4;
+      border: 1px solid var(--bb-neutral-300);
+      color: var(--bb-neutral-600);
+      font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
+        var(--bb-font-family);
+      border-radius: var(--bb-grid-size-16);
+      background: transparent var(--bb-icon-library-add) 8px center / 20px 20px
+        no-repeat;
+      padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-8);
+      transition: border 0.2s cubic-bezier(0, 0, 0.3, 1);
+      height: var(--bb-grid-size-7);
+      cursor: pointer;
+
+      &:hover {
+        border: 1px solid var(--bb-neutral-500);
+      }
     }
 
     #shelf {
@@ -568,6 +594,27 @@ export class EditorControls extends LitElement {
       return nothing;
     }
 
+    let defaultAdd: HTMLTemplateResult | symbol = nothing;
+    if (this.showDefaultAdd) {
+      defaultAdd = html`<button
+        id="default-add"
+        @click=${async (evt: PointerEvent) => {
+          await this.#storeReady;
+          this.#componentLibraryConfiguration = {
+            x: evt.clientX - 165,
+            y: 80,
+            freeDrop: false,
+            id: null,
+            subGraphId: null,
+            portId: null,
+          };
+          this.showComponentLibrary = true;
+        }}
+      >
+        ${Strings.from("LABEL_ADD_ITEM")}
+      </button>`;
+    }
+
     let componentLibrary: HTMLTemplateResult | symbol = nothing;
     if (this.showComponentLibrary) {
       const isDetached = this.#componentLibraryConfiguration !== null;
@@ -855,6 +902,6 @@ export class EditorControls extends LitElement {
       </div>`;
     }
 
-    return [shelf, componentLibrary, componentPicker];
+    return [shelf, defaultAdd, componentLibrary, componentPicker];
   }
 }
