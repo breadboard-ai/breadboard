@@ -375,6 +375,21 @@ export class GraphNode extends Box implements DragConnectorReceiver {
                     20px no-repeat;
                 }
 
+                &.audio::before {
+                  background: var(--bb-icon-mic) center center / 20px 20px
+                    no-repeat;
+                }
+
+                &.image::before {
+                  background: var(--bb-icon-image) center center / 20px 20px
+                    no-repeat;
+                }
+
+                &.video::before {
+                  background: var(--bb-icon-add-video) center center / 20px 20px
+                    no-repeat;
+                }
+
                 &.joiner::before {
                   background: var(--bb-icon-merge-type) center center / 20px
                     20px no-repeat;
