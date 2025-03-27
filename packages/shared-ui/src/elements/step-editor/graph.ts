@@ -272,6 +272,26 @@ export class Graph extends Box {
     this.dispatchEvent(new SelectGraphContentsEvent(this.graphId));
   }
 
+  expandSelections() {
+    for (const entity of this.entities.values()) {
+      if (entity instanceof GraphNode && entity.selected) {
+        const nodeEdges = this.#edges.filter(
+          (edge) =>
+            edge.from.descriptor.id === entity.nodeId ||
+            edge.to.descriptor.id === entity.nodeId
+        );
+        for (const edge of nodeEdges) {
+          const graphEdge = this.entities.get(inspectableEdgeToString(edge));
+          if (!graphEdge) {
+            continue;
+          }
+
+          graphEdge.selected = true;
+        }
+      }
+    }
+  }
+
   protected renderSelf() {
     const renderBoundary =
       this.graphId !== MAIN_BOARD_ID && this.nodes.length > 0;

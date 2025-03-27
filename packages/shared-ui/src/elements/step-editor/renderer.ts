@@ -109,7 +109,7 @@ export class Renderer extends LitElement {
   accessor minScale = 0.5;
 
   @property()
-  accessor maxScale = 1.8;
+  accessor maxScale = 3;
 
   @property()
   accessor cullPadding = 0;
@@ -119,6 +119,9 @@ export class Renderer extends LitElement {
 
   @property()
   accessor graphTopologyUpdateId = 0;
+
+  @property()
+  accessor expandSelections = true;
 
   @state()
   accessor _boundsDirty = new Set<string>();
@@ -647,6 +650,11 @@ export class Renderer extends LitElement {
               this.#isAdditiveSelection,
               this.#isToggleSelection
             );
+
+            // Expands node selections to include edges.
+            if (this.expandSelections) {
+              graph.expandSelections();
+            }
             this.#updateSelectionFromGraph(graph);
           }
         }

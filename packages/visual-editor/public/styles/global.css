@@ -269,6 +269,9 @@ body.hide-cursor {
   --bb-icon-home-repair-service: url(/third_party/icons/home-repair-service.svg);
   --bb-icon-home-repair-service-inverted: url(/third_party/icons/home-repair-service-inverted.svg);
 
+  --bb-icon-image: url(/third_party/icons/image.svg);
+  --bb-icon-image-inverted: url(/third_party/icons/image-inverted.svg);
+
   --bb-icon-input: url(/third_party/icons/input.svg);
   --bb-icon-input-inverted: url(/third_party/icons/input-inverted.svg);
 
@@ -1054,6 +1057,9 @@ body.hide-cursor {
 
   --bb-icon-flowchart: url(/third_party/icons/flowchart-inverted.svg);
   --bb-icon-flowchart-inverted: url(/third_party/icons/flowchart.svg);
+
+  --bb-icon-image: url(/third_party/icons/image-inverted.svg);
+  --bb-icon-image-inverted: url(/third_party/icons/image.svg);
 
   --bb-icon-input: url(/third_party/icons/input-inverted.svg);
   --bb-icon-input-inverted: url(/third_party/icons/input.svg);
