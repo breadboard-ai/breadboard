@@ -39,6 +39,7 @@ import {
   WorkspaceSelectionStateWithChangeId,
 } from "../../types/types";
 import {
+  createEmptyGraphSelectionState,
   createEmptyWorkspaceSelectionState,
   createWorkspaceSelectionChangeId,
 } from "../../utils/workspace";
@@ -519,6 +520,7 @@ export class Renderer extends LitElement {
         this.selectionState.selectionChangeId ===
         changedProperties.get("selectionState")?.selectionChangeId
       ) {
+        console.log("Ignoring selection state change");
         return false;
       }
     }
@@ -547,14 +549,14 @@ export class Renderer extends LitElement {
     }
 
     if (changedProperties.has("selectionState") && this.selectionState) {
-      for (const [graphId, selectionState] of this.selectionState.selectionState
-        .graphs) {
-        const graph = this.#graphs.get(graphId);
-        if (!graph) {
-          continue;
+      for (const [graphId, graph] of this.#graphs) {
+        const selectionState =
+          this.selectionState.selectionState.graphs.get(graphId);
+        if (selectionState) {
+          graph.selectionState = selectionState;
+        } else {
+          graph.selectionState = createEmptyGraphSelectionState();
         }
-
-        graph.selectionState = selectionState;
       }
     }
 

@@ -22,8 +22,12 @@ import { css, html } from "lit";
 import { toCSSMatrix } from "./utils/to-css-matrix";
 import { styleMap } from "lit/directives/style-map.js";
 import { MAIN_BOARD_ID } from "../../constants/constants";
-import { SelectGraphContentsEvent } from "./events/events";
+import {
+  SelectGraphContentsEvent,
+  SelectionTranslateEvent,
+} from "./events/events";
 import { OverflowMenuActionEvent } from "../../events/events";
+import { toGridSize } from "./utils/to-grid-size";
 
 @customElement("bb-graph")
 export class Graph extends Box {
@@ -64,6 +68,8 @@ export class Graph extends Box {
   #nodes: InspectableNode[] = [];
   #edges: InspectableEdge[] = [];
   #lastUpdateTime = globalThis.performance.now();
+  #translateStart: DOMPoint | null = null;
+  #dragStart: DOMPoint | null = null;
 
   constructor(public readonly graphId: GraphIdentifier) {
     super();
@@ -309,6 +315,74 @@ export class Graph extends Box {
           <label
             @pointerdown=${(evt: PointerEvent) => {
               evt.stopImmediatePropagation();
+              this.#selectContents();
+
+              if (!(evt.target instanceof HTMLElement)) {
+                return;
+              }
+
+              evt.target.setPointerCapture(evt.pointerId);
+              this.#dragStart = new DOMPoint();
+              this.#dragStart.x = evt.clientX;
+              this.#dragStart.y = evt.clientY;
+
+              this.#translateStart = new DOMPoint(
+                this.transform.e,
+                this.transform.f
+              );
+            }}
+            @pointermove=${(evt: PointerEvent) => {
+              if (!this.#translateStart || !this.#dragStart) {
+                return;
+              }
+
+              if (!(evt.target instanceof HTMLElement)) {
+                return;
+              }
+
+              const dragPosition = new DOMPoint(evt.clientX, evt.clientY);
+              const deltaX =
+                (dragPosition.x - this.#dragStart.x) / this.worldTransform.a;
+              const deltaY =
+                (dragPosition.y - this.#dragStart.y) / this.worldTransform.a;
+
+              const xTranslation = toGridSize(deltaX);
+              const yTranslation = toGridSize(deltaY);
+
+              this.dispatchEvent(
+                new SelectionTranslateEvent(xTranslation, yTranslation)
+              );
+            }}
+            @pointerup=${(evt: PointerEvent) => {
+              if (!this.#translateStart || !this.#dragStart) {
+                return;
+              }
+
+              if (!(evt.target instanceof HTMLElement)) {
+                return;
+              }
+
+              evt.target.releasePointerCapture(evt.pointerId);
+
+              const dragPosition = new DOMPoint(evt.clientX, evt.clientY);
+              const deltaX =
+                (dragPosition.x - this.#dragStart.x) / this.worldTransform.a;
+              const deltaY =
+                (dragPosition.y - this.#dragStart.y) / this.worldTransform.a;
+
+              const xTranslation = toGridSize(deltaX);
+              const yTranslation = toGridSize(deltaY);
+
+              this.#dragStart = null;
+              this.#translateStart = null;
+
+              this.dispatchEvent(
+                new SelectionTranslateEvent(
+                  xTranslation,
+                  yTranslation,
+                  /** hasSettled */ true
+                )
+              );
             }}
             @dblclick=${(evt: PointerEvent) => {
               this.dispatchEvent(
@@ -319,9 +393,6 @@ export class Graph extends Box {
                   evt.clientY
                 )
               );
-            }}
-            @click=${() => {
-              this.#selectContents();
             }}
             >${this.boundsLabel || "Untitled tool"}</label
           >
