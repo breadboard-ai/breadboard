@@ -6,7 +6,6 @@
 
 import { err, NodeDescriberResult, ok, Outcome } from "@google-labs/breadboard";
 import {
-  ConnectorConfiguration,
   ConnectorEdit,
   ConnectorInitializerResult,
   ConnectorView,
@@ -80,13 +79,17 @@ class Configurator {
     });
     if (!ok(result)) return result;
 
-    console.log("READ RESULT", result);
-
     return result as ConnectorView;
   }
 
-  async write(_edit: ConnectorEdit): Promise<Outcome<ConnectorConfiguration>> {
-    return err(`Not implemented`);
+  async write(edit: ConnectorEdit): Promise<Outcome<void>> {
+    const result = await this.#invokeConfigurator({
+      stage: "write",
+      id: this.id,
+      configuration: edit.configuration!,
+      values: edit.values,
+    });
+    if (!ok(result)) return result;
   }
 }
 

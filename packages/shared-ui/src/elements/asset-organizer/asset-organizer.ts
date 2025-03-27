@@ -21,6 +21,7 @@ import { Connector, GraphAsset, Organizer } from "../../state";
 import {
   AssetMetadata,
   AssetPath,
+  JsonSerializable,
   LLMContent,
   NodeValue,
   ParameterMetadata,
@@ -29,6 +30,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { OverflowAction } from "../../types/types.js";
 import {
   HideTooltipEvent,
+  InputEnterEvent,
   OverflowMenuActionEvent,
   OverlayDismissedEvent,
   ParamDeleteEvent,
@@ -1101,7 +1103,35 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                                 return;
                               }
 
-                              this.#attemptUpdateAsset();
+                              if (assetType === "connector") {
+                                const path = this.selectedItem?.path;
+                                if (!path) return;
+
+                                this.state
+                                  ?.commitConnectorInstanceEdits(path, {
+                                    values: this.#contentInputRef.value
+                                      .value as Record<
+                                      string,
+                                      JsonSerializable
+                                    >,
+                                  })
+                                  .then((result) => {
+                                    this.editAssetContent = null;
+                                    if (!ok(result)) {
+                                      console.warn(
+                                        `Unable to update connector: ${result.$error}`
+                                      );
+                                      this.dispatchEvent(
+                                        new ToastEvent(
+                                          "Unable to update connector",
+                                          ToastType.ERROR
+                                        )
+                                      );
+                                    }
+                                  });
+                              } else {
+                                this.#attemptUpdateAsset();
+                              }
                             }}
                           >
                             ${this.editAssetContent
@@ -1124,6 +1154,35 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                     ${this.editAssetContent
                       ? assetType === "connector"
                         ? html`<bb-edit-connector
+                            ${ref(this.#contentInputRef)}
+                            @bbinputenter=${(evt: InputEnterEvent) => {
+                              evt.stopImmediatePropagation();
+
+                              const path = this.selectedItem?.path;
+                              if (!path) return;
+
+                              this.state
+                                ?.commitConnectorInstanceEdits(path, {
+                                  values: evt.data as Record<
+                                    string,
+                                    JsonSerializable
+                                  >,
+                                })
+                                .then((result) => {
+                                  this.editAssetContent = null;
+                                  if (!ok(result)) {
+                                    console.warn(
+                                      `Unable to update connector: ${result.$error}`
+                                    );
+                                    this.dispatchEvent(
+                                      new ToastEvent(
+                                        "Unable to update connector",
+                                        ToastType.ERROR
+                                      )
+                                    );
+                                  }
+                                });
+                            }}
                             .state=${this.state}
                             .path=${this.editAssetContent.path}
                           ></bb-edit-connector>`

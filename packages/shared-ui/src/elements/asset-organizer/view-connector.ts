@@ -36,6 +36,6 @@ export class ViewConnector extends LitElement {
         ></bb-multi-output>`;
       });
 
-    return html`${until(view, html`Loading...`)}`;
+    return html`${until(view)}`;
   }
 }

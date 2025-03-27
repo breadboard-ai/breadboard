@@ -20,7 +20,7 @@
         "connectors": {
           "parts": [
             {
-              "text": "{{\"type\":\"asset\",\"path\":\"connectors/c106abb1-ccf1-4444-ade9-7ca24583e226\",\"title\":\"Folio 1\"}}{{\"type\":\"asset\",\"path\":\"connectors/2e551020-3674-4301-bd7c-98d0fefee67d\",\"title\":\"Scratch\"}}"
+              "text": "{{\"type\":\"asset\",\"path\":\"connectors/2e551020-3674-4301-bd7c-98d0fefee67d\",\"title\":\"Scratch\"}}"
             }
           ],
           "role": "user"
@@ -90,25 +90,6 @@
     "parameters": {}
   },
   "assets": {
-    "connectors/c106abb1-ccf1-4444-ade9-7ca24583e226": {
-      "data": [
-        {
-          "parts": [
-            {
-              "json": {
-                "url": "file://bgl/folio.bgl.json",
-                "configuration": {}
-              }
-            }
-          ],
-          "role": "user"
-        }
-      ],
-      "metadata": {
-        "title": "Folio 1",
-        "type": "connector"
-      }
-    },
     "connectors/2e551020-3674-4301-bd7c-98d0fefee67d": {
       "data": [
         {
@@ -127,6 +108,24 @@
         "type": "connector"
       }
     },
+    "connectors/1587dfd0-d057-4c54-bcba-37fb8224eb50": {
+      "data": [
+        {
+          "parts": [
+            {
+              "json": {
+                "url": "file://bgl/folio.bgl.json",
+                "configuration": {}
+              }
+            }
+          ]
+        }
+      ],
+      "metadata": {
+        "title": "Untitled Folio",
+        "type": "connector"
+      }
+    },
     "@@thumbnail": {
       "metadata": {
         "title": "Thumbnail",
@@ -137,13 +136,13 @@
   },
   "graphs": {
     "0cc18cc8-7795-400e-bf2e-5f08a0c17f0c": {
-      "title": "Compare Asset to List",
+      "title": "Compare Asset Content to Names",
       "nodes": [
         {
           "id": "c2d58ca3-fb2e-4cca-b9da-462fd9ca8163",
           "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
           "metadata": {
-            "title": "Compare Asset Content",
+            "title": "Compare Asset Content to Names",
             "visual": {
               "x": 266.8671875,
               "y": 598.6953125,
@@ -151,13 +150,13 @@
               "outputHeight": 88
             },
             "userModified": false,
-            "description": "Compares the content of the asset 'Folio 1' (defined in the asset path) with a list of names (Bob, Alice, Jill, Jack, Friday), highlighting similarities and differences."
+            "description": "Retrieves the content of an asset and compares it against a predefined list of names (Bob, Alice, Jill, Jack, Friday) to identify similarities and differences."
           },
           "configuration": {
             "description": {
               "parts": [
                 {
-                  "text": "Look at what's in {{\"type\":\"asset\",\"path\":\"connectors/c106abb1-ccf1-4444-ade9-7ca24583e226\",\"title\":\"Folio 1\"}} and compare it with this list:\n\nBob\nAlice\nJill\nJack\nFriday\n\nHow are they different? How are they similar?"
+                  "text": "Look at what's in {{\"type\":\"asset\",\"path\":\"connectors/2e551020-3674-4301-bd7c-98d0fefee67d\",\"title\":\"Scratch\"}} and compare it with this list:\n\nBob\nAlice\nJill\nJack\nFriday\n\nHow are they different? How are they similar?"
                 }
               ],
               "role": "user"
@@ -171,7 +170,7 @@
           "minimized": false
         }
       },
-      "description": "Compare the contents of 'Folio 1' with a list of predefined names (Bob, Alice, Jill, Jack, Friday) to identify similarities and differences. Input parameter: context (string). This parameter is not used currently. It is reserved for future use, and can be removed if no longer needed in the future versions of the graph. The parameter could provide additional context for the comparison, if needed, and its purpose should be well documented when the time comes, to improve the graph's usability and maintainability. The context will influence how the comparison will be done (or which data to compare against). The connector used in the asset path may not be available, and can be replaced with the appropriate connector in the future, or made configurable if the graph is intended to be reusable across Folios or assets with similar structures and names. This will require changes to the current hardcoded asset path, and add a parameter to the graph, to configure the asset path and connector on each use. This graph could also benefit from having a default or fallback behavior if the target asset 'Folio 1' is not found, to avoid the entire graph failing to accomplish its task when the connector is unavailable, or the path does not exists. This can be achieved by implementing error handling to gracefully manage missing or unavailable connector in the asset path, either by providing a default comparison, or offering user-friendly guidance on how to fix the issue, so that the user can recover without assistance from support staff. Providing such mechanisms in this kind of graph would enhance the graph's resilience and usability by handling external dependencies gracefully, ensuring a more robust and user-friendly experience in dynamic or varying environments. This kind of exception handling mechanism should be configurable so it can be fine-tuned as needed in different environments, and so it does not require code changes on each edge case or new environment encountered when using the graph in practice. Error handling is often overlooked, but can greatly improve the production readiness of the graph, and the experience of those that use it in the field, by reducing reliance on technical expertise to operate the graph and deal with failures and missing external dependencies when the graph is being used by end users in real world scenarios that are out of the control of the graph creator or owner. Consider adding this type of improvement to make the graph more useful, resilient, and maintainable across a broad range of field scenarios and usage environments in the future. Also, consider removing the use of the term 'folio', as it represents a specific implementation that may not be needed, and is not common knowledge amongst all users that may be using this graph. Consider naming it asset instead, to provide a more generic term that can be used in a wide array of products and scenarios, or provide parameters to configure this terminology, so that it can be customized as needed in different usage settings of the graph.\n\nBy making the graph more resilient and robust to external dependencies, and providing configuration mechanisms to control the terminology used in the graph, the graph could provide much broader appeal across the organization, reduce the amount of technical expertise needed to operate, and reduce the need to customize the code base when external dependencies change or are not available."
+      "description": "Compares the content of a specified asset against a predefined list of names (Bob, Alice, Jill, Jack, Friday) to identify similarities and differences.  It accepts one optional parameter: 'context' (string) -- reserved for future use to provide additional context for the comparison, influencing how the comparison is done or which data is used. Currently, the 'context' parameter is unused, and its purpose will be documented when implemented. The graph compares content from a specified asset against a predefined list of names. The asset is referenced via a connector, and the list of names is hardcoded into the node configuration."
     }
   }
 }

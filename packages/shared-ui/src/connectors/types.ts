@@ -25,6 +25,6 @@ export type ConnectorView = {
 };
 
 export type ConnectorEdit = {
-  configuration: ConnectorConfiguration;
+  configuration?: JsonSerializable;
   values: JsonSerializable;
 };

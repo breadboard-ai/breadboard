@@ -121,37 +121,9 @@ class ReactiveOrganizer implements Organizer {
     this.stage = "connector-edit";
   }
 
-  async commitConnectorInstanceEdits(
-    id: UUID,
-    edit: ConnectorEdit
-  ): Promise<Outcome<void>> {
-    if (this.stage !== "connector-edit") {
-      return this.#free(
-        err(
-          `Can't commit connector edits: the organizer is already doing somethign else`
-        )
-      );
-    }
-
-    this.stage = "busy";
-
-    const runtime = this.#project.runtime();
-    const configurator = new Configurator(runtime, id, edit.configuration.url);
-
-    const writing = await configurator.write(edit);
-    if (!ok(writing)) return this.#free(writing);
-
-    const updatingGraph = await this.#project.apply(
-      new EditConnector(id, writing)
-    );
-    if (!ok(updatingGraph)) return this.#free(updatingGraph);
-
-    this.stage = "free";
-  }
-
-  async getConnectorView(path: AssetPath): Promise<Outcome<ConnectorView>> {
-    const runtime = this.#project.runtime();
-
+  #getConnectorInstance(
+    path: AssetPath
+  ): Outcome<{ id: UUID; configuration: ConnectorConfiguration }> {
     const id = path.split("/")[1] as UUID;
     if (!id) return err(`Path "${path}" is not a valid connector path`);
 
@@ -167,7 +139,51 @@ class ReactiveOrganizer implements Organizer {
       return err(`The connector instance "${path}" is misconfigured`);
     }
 
-    const configuration = part.json as ConnectorConfiguration;
+    return { configuration: part.json as ConnectorConfiguration, id };
+  }
+
+  async commitConnectorInstanceEdits(
+    path: AssetPath,
+    edit: ConnectorEdit
+  ): Promise<Outcome<void>> {
+    // if (this.stage !== "connector-edit") {
+    //   return this.#free(
+    //     err(
+    //       `Can't commit connector edits: the organizer is already doing something else`
+    //     )
+    //   );
+    // }
+
+    this.stage = "busy";
+
+    const runtime = this.#project.runtime();
+
+    const config = this.#getConnectorInstance(path);
+
+    if (!ok(config)) return config;
+
+    const { id, configuration } = config;
+
+    const configurator = new Configurator(runtime, id, configuration.url);
+
+    const writing = await configurator.write(edit);
+    if (!ok(writing)) return this.#free(writing);
+
+    const updatingGraph = await this.#project.apply(
+      new EditConnector(path, configuration)
+    );
+    if (!ok(updatingGraph)) return this.#free(updatingGraph);
+
+    this.stage = "free";
+  }
+
+  async getConnectorView(path: AssetPath): Promise<Outcome<ConnectorView>> {
+    const runtime = this.#project.runtime();
+
+    const config = this.#getConnectorInstance(path);
+    if (!ok(config)) return config;
+
+    const { configuration, id } = config;
 
     const configurator = new Configurator(runtime, id, configuration.url);
 

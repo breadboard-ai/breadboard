@@ -20,8 +20,7 @@ import {
   PortIdentifier,
 } from "@google-labs/breadboard";
 import { SideBoardRuntime } from "../sideboards/types";
-import { ConnectorView } from "../connectors/types";
-import { JsonSerializable } from "@breadboard-ai/build";
+import { ConnectorEdit, ConnectorView } from "../connectors/types";
 
 export type ChatStatus = "running" | "paused" | "stopped";
 
@@ -132,7 +131,10 @@ export type Organizer = {
    * @param url -- URL of the connector.
    */
   initializeConnectorInstance(url: string | null): Promise<Outcome<void>>;
-
+  commitConnectorInstanceEdits(
+    path: AssetPath,
+    edit: ConnectorEdit
+  ): Promise<Outcome<void>>;
   /**
    * Cancels all pending work.
    */
