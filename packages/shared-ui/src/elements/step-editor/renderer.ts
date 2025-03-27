@@ -22,15 +22,18 @@ import { calculateBounds } from "./utils/calculate-bounds";
 import { clamp } from "./utils/clamp";
 import {
   EditSpec,
+  GraphIdentifier,
   InspectableGraph,
   Kit,
   MainGraphIdentifier,
   MutableGraphStore,
+  NodeIdentifier,
 } from "@google-labs/breadboard";
 import { MAIN_BOARD_ID } from "../../constants/constants";
 import {
   NodeAddEvent,
   NodeConfigurationRequestEvent,
+  NodeSelectEvent,
   SelectGraphContentsEvent,
   SelectionTranslateEvent,
 } from "./events/events";
@@ -298,6 +301,7 @@ export class Renderer extends LitElement {
 
     this.#createNode(
       nodeType,
+      /** create at center */ true,
       evt.clientX - this.#boundsForInteraction.x,
       evt.clientY - this.#boundsForInteraction.y
     );
@@ -315,7 +319,14 @@ export class Renderer extends LitElement {
     return title;
   }
 
-  #createNode(nodeType: string, x?: number, y?: number) {
+  #createNode(
+    nodeType: string,
+    createAtCenter = true,
+    x?: number,
+    y?: number,
+    connectedTo?: NodeIdentifier,
+    subGraphId?: GraphIdentifier
+  ) {
     if (!x || !y) {
       x =
         this.#boundsForInteraction.width * 0.5 -
@@ -325,6 +336,7 @@ export class Renderer extends LitElement {
         this.#boundsForInteraction.top;
     }
 
+    // Start with finding the natural intersection for the created node.
     const addLocation = new DOMRect(x, y, 0, 0);
     let targetGraphId = MAIN_BOARD_ID;
     for (const [graphId, graph] of this.#graphs) {
@@ -336,6 +348,11 @@ export class Renderer extends LitElement {
         targetGraphId = graphId;
         break;
       }
+    }
+
+    // If a subGraph has been provided, use that instead.
+    if (subGraphId) {
+      targetGraphId = subGraphId;
     }
 
     const targetGraph = this.#graphs.get(targetGraphId);
@@ -368,13 +385,22 @@ export class Renderer extends LitElement {
           metadata: {
             title,
             visual: {
-              x: toGridSize(graphLocation.x - 130),
-              y: toGridSize(graphLocation.y - 20),
+              x: toGridSize(graphLocation.x - (createAtCenter ? 130 : 0)),
+              y: toGridSize(graphLocation.y - (createAtCenter ? 20 : 0)),
             },
           },
         },
       },
     ];
+
+    if (connectedTo) {
+      edits.push({
+        type: "addedge",
+        // TODO: Derive main ports here.
+        edge: { from: connectedTo, to: id, out: "context", in: "context" },
+        graphId: targetGraphId === MAIN_BOARD_ID ? "" : targetGraphId,
+      });
+    }
 
     this.dispatchEvent(new MultiEditEvent(edits, `Add step: ${title}`));
   }
@@ -942,7 +968,6 @@ export class Renderer extends LitElement {
             }}
             @bbdragconnectorstart=${(evt: DragConnectorStartEvent) => {
               const { nodeId, graphId, portId } = collectIds(evt, "out");
-
               if (!nodeId || !graphId || !portId) {
                 console.warn(
                   "Unable to connect - no node/graph/port combination found"
@@ -957,6 +982,23 @@ export class Renderer extends LitElement {
               this.dragConnector.graphId = graphId;
               this.dragConnector.nodeId = nodeId;
               this.dragConnector.portId = portId;
+              this.dragConnector.addEventListener(
+                "bbnodeselect",
+                (evt: Event) => {
+                  if (!this.#editorControls.value || !nodeId) {
+                    return;
+                  }
+
+                  const selectEvent = evt as NodeSelectEvent;
+                  this.#editorControls.value.showComponentLibraryAt(
+                    selectEvent.x - this.#boundsForInteraction.x,
+                    selectEvent.y - this.#boundsForInteraction.y,
+                    nodeId,
+                    graphId
+                  );
+                },
+                { once: true }
+              );
             }}
             @bbselectgraphcontents=${(evt: SelectGraphContentsEvent) => {
               const graph = this.#graphs.get(evt.graphId);
@@ -999,7 +1041,14 @@ export class Renderer extends LitElement {
           evt.stopImmediatePropagation();
         }}
         @bbnodeadd=${(evt: NodeAddEvent) => {
-          this.#createNode(evt.nodeType);
+          this.#createNode(
+            evt.nodeType,
+            evt.createAtCenter,
+            evt.x,
+            evt.y,
+            evt.connectedTo,
+            evt.subGraphId
+          );
         }}
         @bbzoomtofit=${(evt: ZoomToFitEvent) => {
           this.fitToView(evt.animate);
