@@ -180,7 +180,7 @@ export class Renderer extends LitElement {
     bb-editor-controls {
       position: absolute;
       display: flex;
-      bottom: var(--bb-grid-size-10);
+      bottom: var(--bb-grid-size-5);
       left: 0;
       width: 100%;
       height: var(--bb-grid-size-9);
@@ -357,6 +357,7 @@ export class Renderer extends LitElement {
     }
 
     const id = globalThis.crypto.randomUUID();
+    const title = this.#getGraphTitleByType(nodeType);
     const edits: EditSpec[] = [
       {
         type: "addnode",
@@ -365,7 +366,7 @@ export class Renderer extends LitElement {
           id,
           type: nodeType,
           metadata: {
-            title: this.#getGraphTitleByType(nodeType),
+            title,
             visual: {
               x: toGridSize(graphLocation.x - 130),
               y: toGridSize(graphLocation.y - 20),
@@ -375,7 +376,7 @@ export class Renderer extends LitElement {
       },
     ];
 
-    this.dispatchEvent(new MultiEditEvent(edits, "Add node"));
+    this.dispatchEvent(new MultiEditEvent(edits, `Add step: ${title}`));
   }
 
   #dragStart: DOMPoint | null = null;
@@ -862,7 +863,7 @@ export class Renderer extends LitElement {
       }
     }
 
-    this.dispatchEvent(new MultiEditEvent(edits, "Update selection transform"));
+    this.dispatchEvent(new MultiEditEvent(edits, "Update selection position"));
   }
 
   #updateSelectionFromGraph(graph: Graph, createNewSelection = false) {
