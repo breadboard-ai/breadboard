@@ -44,7 +44,7 @@
         "description": {
           "parts": [
             {
-              "text": "Read the contents of News File:\n\n--- News File --\n\n{{\"type\":\"asset\",\"path\":\"connectors/f34e2313-52d7-4758-96bb-512ebf2bf05d\",\"title\":\"News File\"}}\n\n-- News File --\n\nWrite a summary titled \"Since you last checked\" by comparing two last updates in the News File. This summary is meant to catch up the user on what happened since they last checked the news, providing only new and updated pieces of news. Write it gossip-style."
+              "text": "Read the contents of the News File and write a summary titled \"Since you last checked\" by comparing the very last update in the News File with all previous updates. This summary is meant to catch up the user on what happened since they last checked the news, providing only what is actually new. Write it gossip-style.\n\n# News File\n\n{{\"type\":\"asset\",\"path\":\"connectors/f34e2313-52d7-4758-96bb-512ebf2bf05d\",\"title\":\"News File\"}}"
             }
           ],
           "role": "user"
