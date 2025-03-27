@@ -290,61 +290,95 @@ export class GraphNode extends Box implements DragConnectorReceiver {
               align-items: center;
             }
 
-            & .object {
-              white-space: pre-line;
-              margin-bottom: var(--bb-grid-size-4);
-              overflow: hidden;
+            & .port {
+              transition:
+                background-color 0.2s cubic-bezier(0, 0, 0.3, 1),
+                outline 0.2s cubic-bezier(0, 0, 0.3, 1);
+              border-radius: var(--bb-grid-size);
+              outline: 4px solid transparent;
+              cursor: pointer;
 
-              /** 7 lines of text **/
-              max-height: 168px;
-              align-items: flex-start;
-
-              p {
-                /** Create space for chiclet borders */
-                padding: 1px;
+              &:focus,
+              &:hover {
+                background: var(--bb-ui-50);
+                outline: 4px solid var(--bb-ui-50);
               }
 
-              & .chiclet {
-                cursor: default;
-              }
-            }
-
-            & .boolean {
-              &::before {
-                content: "";
-                display: block;
-                width: 20px;
-                height: 20px;
-                margin-right: var(--bb-grid-size-2);
-                border-radius: var(--bb-grid-size);
-                border: 1px solid var(--bb-neutral-300);
-                box-sizing: border-box;
+              > * {
+                pointer-events: none;
               }
 
-              &.checked::before {
-                background: var(--bb-icon-check) center center / 20px 20px
-                  no-repeat;
-              }
-            }
+              &.object {
+                white-space: pre-line;
+                margin-bottom: var(--bb-grid-size-3);
+                overflow: hidden;
 
-            & .string {
-              &::before {
-                content: "";
-                display: block;
-                width: 20px;
-                height: 20px;
-                margin-right: var(--bb-grid-size-2);
-                box-sizing: border-box;
+                /** 7 lines of text **/
+                max-height: 168px;
+                align-items: flex-start;
+
+                p {
+                  /** Create space for chiclet borders */
+                  padding: 1px;
+                }
+
+                & .missing {
+                  width: 100%;
+                  white-space: normal;
+                  color: var(--bb-warning-700);
+
+                  & span {
+                    display: inline-flex;
+                    align-items: center;
+                    margin-top: var(--bb-grid-size);
+                    background: var(--bb-neutral-200) var(--bb-icon-add) 8px
+                      center / 20px 20px no-repeat;
+                    height: var(--bb-grid-size-7);
+                    padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-7);
+                    border-radius: var(--bb-grid-size-16);
+                    color: var(--bb-neutral-700);
+                  }
+                }
               }
 
-              &.multimodal::before {
-                background: var(--bb-icon-multimodal) center center / 20px 20px
-                  no-repeat;
+              &.boolean {
+                &::before {
+                  content: "";
+                  display: block;
+                  width: 20px;
+                  height: 20px;
+                  background: var(--bb-neutral-0);
+                  margin-right: var(--bb-grid-size-2);
+                  border-radius: var(--bb-grid-size);
+                  border: 1px solid var(--bb-neutral-300);
+                  box-sizing: border-box;
+                }
+
+                &.checked::before {
+                  background: var(--bb-neutral-0) var(--bb-icon-check) center
+                    center / 20px 20px no-repeat;
+                }
               }
 
-              &.joiner::before {
-                background: var(--bb-icon-merge-type) center center / 20px 20px
-                  no-repeat;
+              &.string {
+                &::before {
+                  content: "";
+                  display: block;
+                  width: 20px;
+                  height: 20px;
+                  margin-right: var(--bb-grid-size-2);
+                  box-sizing: border-box;
+                }
+
+                &.multimodal::before {
+                  background: var(--bb-icon-multimodal) center center / 20px
+                    20px no-repeat;
+                }
+
+                &.joiner::before {
+                  background: var(--bb-icon-merge-type) center center / 20px
+                    20px no-repeat;
+                }
               }
             }
           }
@@ -436,14 +470,21 @@ export class GraphNode extends Box implements DragConnectorReceiver {
     return html`<div id="ports">
       ${previewPorts.length > 0
         ? map(previewPorts, (port) => {
-            const classes: Record<string, boolean> = {};
+            const classes: Record<string, boolean> = { port: true };
             let value: HTMLTemplateResult | symbol = html`No value`;
             switch (port.schema.type) {
               case "object": {
                 classes.object = true;
-                value = html`${unsafeHTML(
-                  `<p>${createTruncatedValue(port)}</p>`
-                )}`;
+                if (port.value) {
+                  value = html`${unsafeHTML(
+                    `<p>${createTruncatedValue(port)}</p>`
+                  )}`;
+                } else {
+                  value = html`<div class="missing">
+                    <p>Missing details for this step</p>
+                    <span>Add</span>
+                  </div>`;
+                }
                 break;
               }
 
@@ -465,7 +506,9 @@ export class GraphNode extends Box implements DragConnectorReceiver {
                   classes[port.schema.icon] = true;
                 }
 
-                value = html`<label>${port.title}: ${port.value}</label>`;
+                value = html`<label
+                  >${port.title}: ${port.value ?? "Value not set"}</label
+                >`;
                 break;
               }
 
@@ -475,7 +518,19 @@ export class GraphNode extends Box implements DragConnectorReceiver {
               }
             }
 
-            return html`<div class=${classMap(classes)}>${value}</div>`;
+            return html`<div
+              class=${classMap(classes)}
+              @click=${() => {
+                this.dispatchEvent(
+                  new NodeConfigurationRequestEvent(
+                    this.nodeId,
+                    this.worldBounds
+                  )
+                );
+              }}
+            >
+              ${value}
+            </div>`;
           })
         : html`Tap to configure`}
     </div>`;
@@ -491,9 +546,6 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         class=${classMap({ bounds: this.showBounds })}
         style=${styleMap(styles)}
         ${ref(this.#containerRef)}
-        @click=${() => {
-          this.dispatchEvent(new NodeConfigurationRequestEvent(this.nodeId));
-        }}
       >
         <header
           @click=${(evt: Event) => {

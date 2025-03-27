@@ -21,6 +21,8 @@ export class Box extends Entity {
       left: 0;
       transform-origin: 0 0;
       pointer-events: none;
+      width: 0;
+      height: 0;
     }
 
     :host([hidden]) {

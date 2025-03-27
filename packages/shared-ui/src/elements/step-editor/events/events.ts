@@ -59,7 +59,10 @@ export class NodeBoundsUpdateRequestEvent extends Event {
 export class NodeConfigurationRequestEvent extends Event {
   static eventName = "bbnodeconfigurationrequest" as const;
 
-  constructor(public readonly nodeId: NodeIdentifier) {
+  constructor(
+    public readonly nodeId: NodeIdentifier,
+    public readonly bounds: DOMRect | null = null
+  ) {
     super(NodeConfigurationRequestEvent.eventName, { ...eventInit });
   }
 }
