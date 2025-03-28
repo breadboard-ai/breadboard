@@ -1007,6 +1007,9 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                       ${Strings.from("LABEL_NO_ASSETS")}
                     </div>`}
 
+                <h3>Connectors</h3>
+                <div id="no-assets">Connector instances go here</div>
+
                 <h3>Parameters</h3>
                 ${parameters && parameters.size > 0
                   ? html`<menu>

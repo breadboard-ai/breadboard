@@ -18,7 +18,7 @@
         "description": {
           "parts": [
             {
-              "text": "{{\"type\":\"asset\",\"path\":\"connectors/c22f1fa8-d02a-435b-a656-4b82d85ada86\",\"title\":\"Untitled GMail Connector\"}}"
+              "text": "Read the latest emails using {{\"type\":\"tool\",\"path\":\"file://bgl/gmail.bgl.json#module:get-emails\",\"title\":\"Get emails\"}} and provide a summary as Kermit the Frog"
             }
           ],
           "role": "user"
@@ -56,24 +56,6 @@
     "parameters": {}
   },
   "assets": {
-    "connectors/c22f1fa8-d02a-435b-a656-4b82d85ada86": {
-      "data": [
-        {
-          "parts": [
-            {
-              "json": {
-                "url": "file://bgl/gmail.bgl.json",
-                "configuration": {}
-              }
-            }
-          ]
-        }
-      ],
-      "metadata": {
-        "title": "Untitled GMail Connector",
-        "type": "connector"
-      }
-    },
     "@@thumbnail": {
       "metadata": {
         "title": "Thumbnail",

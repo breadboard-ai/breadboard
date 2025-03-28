@@ -7,6 +7,7 @@
 import {
   AssetPath,
   GraphIdentifier,
+  GraphTag,
   LLMContent,
   NodeIdentifier,
   ParameterMetadata,
@@ -19,6 +20,7 @@ import {
   err,
   GraphStoreEntry,
   MainGraphIdentifier,
+  MainGraphStoreExport,
   MutableGraphStore,
   ok,
   Outcome,
@@ -31,8 +33,6 @@ import {
   Component,
   Connector,
   FastAccess,
-  GeneratedAsset,
-  GeneratedAssetIdentifier,
   GraphAsset,
   Organizer,
   Project,
@@ -41,6 +41,7 @@ import {
 } from "./types";
 import { ReactiveFastAccess } from "./fast-access";
 import { SideBoardRuntime } from "../sideboards/types";
+import { configFromData } from "../connectors/util";
 
 export { createProjectState, ReactiveProject };
 
@@ -51,8 +52,10 @@ const THUMBNAIL_KEY = "@@thumbnail";
  * section of the "@" menu.
  */
 function isTool(entry: GraphStoreEntry) {
+  const isPartOfConnector = !!entry.mainGraph.tags?.includes("connector");
   return (
     !entry.updating &&
+    !isPartOfConnector &&
     entry.tags?.includes("tool") &&
     !!entry.url &&
     entry?.tags.includes("quick-access") &&
@@ -88,7 +91,7 @@ class ReactiveProject implements ProjectInternal {
   #editable?: EditableGraph;
   readonly graphUrl: URL | null;
   readonly graphAssets: SignalMap<AssetPath, GraphAsset>;
-  readonly generatedAssets: SignalMap<GeneratedAssetIdentifier, GeneratedAsset>;
+
   readonly tools: SignalMap<string, Tool>;
   readonly myTools: SignalMap<string, Tool>;
   readonly organizer: Organizer;
@@ -114,35 +117,35 @@ class ReactiveProject implements ProjectInternal {
         this.#updateComponents();
         this.#updateGraphAssets();
         this.#updateParameters();
+        this.#updateMyTools();
       }
+      this.#updateConnectors();
       this.#updateTools();
-      this.#updateMyTools();
     });
     const graphUrlString = this.#store.get(mainGraphId)?.graph.url;
     this.graphUrl = graphUrlString ? new URL(graphUrlString) : null;
     this.graphAssets = new SignalMap();
     this.tools = new SignalMap();
     this.components = new SignalMap();
-    this.generatedAssets = new SignalMap();
     this.myTools = new SignalMap();
     this.parameters = new SignalMap();
     this.connectors = new SignalMap();
     this.organizer = new ReactiveOrganizer(this);
+    this.#updateConnectors();
     this.fastAccess = new ReactiveFastAccess(
       this,
       this.graphAssets,
-      this.generatedAssets,
       this.tools,
       this.myTools,
       this.components,
-      this.parameters
+      this.parameters,
+      this.connectors
     );
     this.#updateGraphAssets();
     this.#updateComponents();
     this.#updateTools();
     this.#updateMyTools();
     this.#updateParameters();
-    this.#updateConnectors();
   }
 
   runtime(): SideBoardRuntime {
@@ -305,10 +308,28 @@ class ReactiveProject implements ProjectInternal {
     // Special-case the thumnail and splash so they doesn't show up.
     delete assets[THUMBNAIL_KEY];
 
-    updateMap(
-      this.graphAssets,
-      Object.entries(assets).map(([path, asset]) => [path, { ...asset, path }])
+    const graphAssets = Object.entries(assets).map<[string, GraphAsset]>(
+      ([path, asset]) => {
+        const graphAsset: GraphAsset = {
+          metadata: asset.metadata,
+          data: asset.data as LLMContent[],
+          path,
+        };
+        if (asset.metadata?.type === "connector") {
+          const config = configFromData(asset.data);
+          if (ok(config)) {
+            const connector = this.connectors.get(config.url);
+            if (connector) {
+              graphAsset.connector = connector;
+            }
+          }
+        }
+
+        return [path, graphAsset];
+      }
     );
+
+    updateMap(this.graphAssets, graphAssets);
   }
 
   #updateParameters() {
@@ -333,15 +354,22 @@ class ReactiveProject implements ProjectInternal {
     );
     updateMap(
       this.connectors,
-      connectors.map((connector) => [
-        connector.url!,
-        {
-          url: connector.url,
-          icon: connector.icon,
-          title: connector.title,
-          description: connector.description,
-        },
-      ])
+      connectors.map((connector) => {
+        const load = connector.exportTags.includes("connector-load");
+        const save = connector.exportTags.includes("connector-save");
+        return [
+          connector.url!,
+          {
+            url: connector.url,
+            icon: connector.icon,
+            title: connector.title,
+            description: connector.description,
+            load,
+            save,
+            tools: createToolList(connector.exports),
+          },
+        ];
+      })
     );
   }
 }
@@ -364,4 +392,23 @@ function updateMap<T extends SignalMap>(
   [...toDelete.values()].forEach((key) => {
     map.delete(key);
   });
+}
+
+function createToolList(exports: MainGraphStoreExport[]) {
+  exports.filter((e) =>
+    noneOfTags(e.tags, [
+      "connector-configure",
+      "connector-load",
+      "connector-save",
+    ])
+  );
+}
+
+function noneOfTags(tags: string[] | undefined, noneOf: GraphTag[]): boolean {
+  if (!tags) return true;
+  const comparing = new Set<string>(noneOf);
+  for (const tag of tags) {
+    comparing.delete(tag);
+  }
+  return noneOf.length === comparing.size;
 }

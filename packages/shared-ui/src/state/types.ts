@@ -152,6 +152,7 @@ export type GraphAsset = {
   metadata?: AssetMetadata;
   data: LLMContent[];
   path: AssetPath;
+  connector?: Connector;
 };
 
 export type GeneratedAssetIdentifier = string;
@@ -183,6 +184,9 @@ export type Connector = {
   icon?: string;
   title: string;
   description?: string;
+  load: boolean;
+  save: boolean;
+  tools: Tool;
 };
 
 export type Components = Map<NodeIdentifier, Component>;
@@ -192,7 +196,6 @@ export type Components = Map<NodeIdentifier, Component>;
  */
 export type FastAccess = {
   graphAssets: Map<AssetPath, GraphAsset>;
-  generatedAssets: Map<GeneratedAssetIdentifier, GeneratedAsset>;
   tools: Map<string, Tool>;
   myTools: Map<string, Tool>;
   components: Map<GraphIdentifier, Components>;
