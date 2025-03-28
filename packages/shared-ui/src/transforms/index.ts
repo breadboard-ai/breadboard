@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+export { AddNodeWithEdge } from "./add-node-with-edge";
 export { AutoWireInPorts } from "./autowire-in-ports";
 export { ChangeEdge } from "./change-edge";
 export { CreateNode } from "./create-node";

@@ -3861,43 +3861,25 @@ export class Main extends LitElement {
                   additions
                 );
               }}
-              @bbfastconnect=${async (
-                evt: BreadboardUI.Events.FastConnectEvent
+              @bbaddnodewithedge=${async (
+                evt: BreadboardUI.Events.AddNodeWithEdgeEvent
               ) => {
                 if (!this.tab) {
                   return;
                 }
 
-                // First do the multi-edit.
-                await this.#runtime.edit.multiEdit(
+                await this.#runtime.edit.addNodeWithEdge(
                   this.tab,
-                  evt.edits,
-                  evt.description
-                );
-
-                // Then trigger the edge addition.
-                await this.#runtime.edit.changeEdge(
-                  this.tab,
-                  "add",
+                  evt.node,
                   evt.edge,
-                  undefined,
                   evt.subGraphId
                 );
-
-                const additions: string[] = evt.edits
-                  .map((edit) =>
-                    edit.type === "addnode" ? edit.node.id : null
-                  )
-                  .filter((item) => item !== null);
-                if (additions.length === 0) {
-                  return;
-                }
 
                 this.#runtime.select.selectNodes(
                   this.tab.id,
                   this.#runtime.select.generateId(),
                   evt.subGraphId ?? BreadboardUI.Constants.MAIN_BOARD_ID,
-                  additions
+                  [evt.node.id]
                 );
               }}
               @bbnodecreate=${async (

@@ -1257,6 +1257,28 @@ export class Edit extends EventTarget {
     this.dispatchEvent(new RuntimeVisualChangeEvent(visualChangeId));
   }
 
+  async addNodeWithEdge(
+    tab: Tab | null,
+    node: NodeDescriptor,
+    edge: Edge,
+    subGraphId: string | null = null
+  ) {
+    const editableGraph = this.getEditor(tab);
+    const graphId = subGraphId || "";
+
+    if (!editableGraph) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to find board to edit"));
+      return;
+    }
+
+    const changing = await editableGraph.apply(
+      new BreadboardUI.Transforms.AddNodeWithEdge(node, edge, graphId)
+    );
+    if (changing.success) return;
+
+    this.dispatchEvent(new RuntimeErrorEvent(changing.error));
+  }
+
   async changeEdge(
     tab: Tab | null,
     changeType: "add" | "remove" | "move",
