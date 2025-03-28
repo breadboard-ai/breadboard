@@ -49,6 +49,7 @@ import {
 } from "../../utils/workspace";
 import {
   DragConnectorStartEvent,
+  EditorPointerPositionChangeEvent,
   FastConnectEvent,
   MultiEditEvent,
   NodeConfigurationUpdateRequestEvent,
@@ -466,6 +467,18 @@ export class Renderer extends LitElement {
   }
 
   #onPointerMove(evt: PointerEvent) {
+    // This event informs the Visual Editor's root handler about the last known
+    // cursor location for things like copy-paste. We adjust it with the
+    // camera's transform before sending it so that they are renderer
+    // coordinates rather than screen coordinates.
+    const location = new DOMPoint(
+      evt.clientX - this.#boundsForInteraction.left,
+      evt.clientY - this.#boundsForInteraction.top
+    ).matrixTransform(this.camera.transform);
+    this.dispatchEvent(
+      new EditorPointerPositionChangeEvent(location.x, location.y)
+    );
+
     if (!this.#dragStart) {
       return;
     }
