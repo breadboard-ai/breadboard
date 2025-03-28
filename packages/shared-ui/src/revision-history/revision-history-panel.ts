@@ -66,6 +66,7 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
         flex: 1;
         display: flex;
         flex-direction: column;
+        gap: 4px;
       }
 
       .revision {
@@ -78,6 +79,13 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
         gap: 8px;
         &.displayed {
           background: var(--bb-neutral-50);
+          cursor: initial;
+        }
+        &:not(.displayed) {
+          &:hover,
+          &:focus {
+            background: var(--bb-neutral-100);
+          }
         }
       }
       .date {
@@ -139,12 +147,14 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
       i >= 0;
       i--
     ) {
+      const isCurrent = !pending && i === committed.length - 1;
+      const isDisplayed = !pending && i === history.index();
       rows.push(
         this.#renderRevision(
           committed[i],
-          !pending && i === committed.length - 1,
-          !pending && i === history.index(),
-          () => history.jump(i)
+          isCurrent,
+          isDisplayed,
+          isDisplayed ? undefined : () => history.jump(i)
         )
       );
     }
@@ -162,7 +172,7 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
     revision: EditHistoryEntry,
     isCurrent: boolean,
     isDisplayed: boolean,
-    onClick?: () => void
+    selectRevisionFn?: () => void
   ) {
     const formattedDate = new Date(revision.timestamp)
       .toLocaleString("en-US", {
@@ -176,7 +186,11 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
     return html`
       <li
         class=${classMap({ revision: true, displayed: isDisplayed })}
-        @click=${onClick}
+        tabindex="0"
+        role="button"
+        @click=${selectRevisionFn}
+        @keydown=${selectRevisionFn &&
+        (({ key }: KeyboardEvent) => key === "Enter" && selectRevisionFn())}
       >
         <span class="date">${formattedDate}</span>
         ${isCurrent
@@ -201,10 +215,6 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
         </span>
       </li>
     `;
-  }
-
-  #onClickRevision(index: number) {
-    this.history?.jump(index);
   }
 }
 
