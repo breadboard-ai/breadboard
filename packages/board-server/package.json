@@ -141,7 +141,7 @@
     "@types/uuid": "^10.0.0",
     "esbuild": "^0.25.1",
     "eslint": "^8.57.1",
-    "firebase-tools": "^13.35.1",
+    "firebase-tools": "^14.0.0",
     "supertest": "^7.1.0",
     "typescript": "^5.8.2",
     "wireit": "^0.15.0-pre.1"
