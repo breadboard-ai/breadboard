@@ -60,6 +60,7 @@ export class GraphEdge extends Box {
 
       svg > * {
         pointer-events: auto;
+        cursor: pointer;
       }
     `,
   ];
