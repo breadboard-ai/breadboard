@@ -5,6 +5,7 @@
  */
 
 import type {
+  Edge,
   GraphIdentifier,
   GraphMetadata,
   GraphTheme,
@@ -918,20 +919,8 @@ export class EdgeChangeEvent extends Event {
 
   constructor(
     public readonly changeType: "add" | "remove" | "move",
-    public readonly from: {
-      from: string;
-      to: string;
-      in: string;
-      out: string;
-      constant?: boolean;
-    },
-    public readonly to?: {
-      from: string;
-      to: string;
-      in: string;
-      out: string;
-      constant?: boolean;
-    },
+    public readonly from: Edge,
+    public readonly to?: Edge,
     public readonly subGraphId: string | null = null
   ) {
     super(EdgeChangeEvent.eventName, { ...eventInit });
@@ -946,6 +935,18 @@ export class MultiEditEvent extends Event {
     public readonly subGraphId: string | null = null
   ) {
     super(MultiEditEvent.eventName, { ...eventInit });
+  }
+}
+
+export class FastConnectEvent extends Event {
+  static eventName = "bbfastconnect";
+  constructor(
+    public readonly edits: EditSpec[],
+    public readonly edge: Edge,
+    public readonly description: string,
+    public readonly subGraphId: string | null = null
+  ) {
+    super(FastConnectEvent.eventName, { ...eventInit });
   }
 }
 

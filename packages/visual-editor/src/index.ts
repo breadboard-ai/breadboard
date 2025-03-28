@@ -3811,8 +3811,10 @@ export class Main extends LitElement {
               ) => {
                 await this.#attemptNodeRun(evt.id);
               }}
-              @bbedgechange=${(evt: BreadboardUI.Events.EdgeChangeEvent) => {
-                this.#runtime.edit.changeEdge(
+              @bbedgechange=${async (
+                evt: BreadboardUI.Events.EdgeChangeEvent
+              ) => {
+                await this.#runtime.edit.changeEdge(
                   this.tab,
                   evt.changeType,
                   evt.from,
@@ -3833,15 +3835,54 @@ export class Main extends LitElement {
               @bbmultiedit=${async (
                 evt: BreadboardUI.Events.MultiEditEvent
               ) => {
+                if (!this.tab) {
+                  return;
+                }
+
                 await this.#runtime.edit.multiEdit(
                   this.tab,
                   evt.edits,
                   evt.description
                 );
 
+                const additions: string[] = evt.edits
+                  .map((edit) =>
+                    edit.type === "addnode" ? edit.node.id : null
+                  )
+                  .filter((item) => item !== null);
+                if (additions.length === 0) {
+                  return;
+                }
+
+                this.#runtime.select.selectNodes(
+                  this.tab.id,
+                  this.#runtime.select.generateId(),
+                  evt.subGraphId ?? BreadboardUI.Constants.MAIN_BOARD_ID,
+                  additions
+                );
+              }}
+              @bbfastconnect=${async (
+                evt: BreadboardUI.Events.FastConnectEvent
+              ) => {
                 if (!this.tab) {
                   return;
                 }
+
+                // First do the multi-edit.
+                await this.#runtime.edit.multiEdit(
+                  this.tab,
+                  evt.edits,
+                  evt.description
+                );
+
+                // Then trigger the edge addition.
+                await this.#runtime.edit.changeEdge(
+                  this.tab,
+                  "add",
+                  evt.edge,
+                  undefined,
+                  evt.subGraphId
+                );
 
                 const additions: string[] = evt.edits
                   .map((edit) =>

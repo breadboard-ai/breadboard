@@ -9,12 +9,12 @@ import { DragConnectorReceiver } from "../../types/types";
 import { Edge, GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
 import {
   DragConnectorCancelledEvent,
-  MultiEditEvent,
+  EdgeChangeEvent,
   ToastEvent,
   ToastType,
 } from "../../events/events";
 import { collectIds } from "./utils/collect-ids";
-import { EditSpec, PortIdentifier } from "@google-labs/breadboard";
+import { PortIdentifier } from "@google-labs/breadboard";
 import { MAIN_BOARD_ID } from "../../constants/constants";
 import { NodeSelectEvent } from "./events/events";
 
@@ -131,15 +131,8 @@ export class DragConnector extends LitElement {
         el.removeHighlight();
         this.isOnTarget = false;
 
-        const { nodeId, graphId, portId } = collectIds(evt, "in");
-        if (
-          !nodeId ||
-          !graphId ||
-          !portId ||
-          !this.graphId ||
-          !this.nodeId ||
-          !this.portId
-        ) {
+        const { nodeId, graphId } = collectIds(evt, "in");
+        if (!nodeId || !graphId || !this.graphId || !this.nodeId) {
           break;
         }
 
@@ -159,22 +152,19 @@ export class DragConnector extends LitElement {
 
         foundTarget = true;
 
-        const edge: Edge = {
+        const from: Edge = {
           from: this.nodeId,
-          out: this.portId,
           to: nodeId,
-          in: portId,
         };
 
-        const edits: EditSpec[] = [
-          {
-            type: "addedge",
-            edge,
-            graphId: graphId === MAIN_BOARD_ID ? "" : graphId,
-          },
-        ];
-
-        this.dispatchEvent(new MultiEditEvent(edits, "Add edge"));
+        this.dispatchEvent(
+          new EdgeChangeEvent(
+            "add",
+            from,
+            undefined,
+            graphId === MAIN_BOARD_ID ? null : graphId
+          )
+        );
         break;
       }
     }
