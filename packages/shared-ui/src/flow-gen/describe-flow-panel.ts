@@ -261,7 +261,9 @@ export class DescribeFlowPanel extends LitElement {
     if (this.#state.status !== "generating") {
       return;
     }
-    this.dispatchEvent(new GraphBoardServerGeneratedBoardEvent(graph));
+    this.dispatchEvent(
+      new GraphBoardServerGeneratedBoardEvent(graph, { role: "assistant" })
+    );
   }
 
   #onGenerateError(error: unknown) {

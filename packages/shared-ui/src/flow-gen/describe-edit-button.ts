@@ -310,7 +310,7 @@ export class DescribeEditButton extends LitElement {
     if (this.#state.status !== "generating") {
       return;
     }
-    this.dispatchEvent(new GraphReplaceEvent(graph));
+    this.dispatchEvent(new GraphReplaceEvent(graph, { role: "assistant" }));
     this.#closePanel();
   }
 

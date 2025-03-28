@@ -9,10 +9,14 @@ import { customElement, property } from "lit/decorators.js";
 import { icons } from "../styles/icons.js";
 import { classMap } from "lit/directives/class-map.js";
 import { SignalWatcher } from "@lit-labs/signals";
-import { EditHistory, EditHistoryEntry } from "@google-labs/breadboard";
+import type {
+  EditHistory,
+  EditHistoryCreator,
+  EditHistoryEntry,
+} from "@google-labs/breadboard";
 import { consume } from "@lit/context";
 import {
-  SigninAdapter,
+  type SigninAdapter,
   signinAdapterContext,
 } from "../utils/signin-adapter.js";
 
@@ -70,21 +74,25 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
       }
 
       .revision {
-        cursor: pointer;
         list-style-type: none;
         display: flex;
         flex-direction: column;
         padding: 12px 16px;
         border-radius: 12px;
         gap: 8px;
-        &.displayed {
-          background: var(--bb-neutral-50);
-          cursor: initial;
-        }
         &:not(.displayed) {
+          cursor: pointer;
+          background: transparent;
           &:hover,
           &:focus {
             background: var(--bb-neutral-100);
+          }
+        }
+        &.displayed {
+          cursor: initial;
+          background: var(--bb-neutral-50);
+          &.role-assistant {
+            background: var(--bb-generative-50);
           }
         }
       }
@@ -104,14 +112,17 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
         align-items: center;
         font-size: 12px;
         & > .icon {
-          &.placeholder {
-            margin: 0 4px 0 -3px;
-          }
-          &.signedin {
+          & > .signedin {
             width: 16px;
             aspect-ratio: 1;
             border-radius: 50%;
             margin-right: 8px;
+          }
+          & > .assistant {
+            color: var(--bb-generative-600);
+          }
+          & > .placeholder {
+            margin: 0 4px 0 -3px;
           }
         }
       }
@@ -134,10 +145,10 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
         </p>
       `;
     }
-    const rows = [];
+    const listItems = [];
     const pending = history.pending;
     if (pending) {
-      rows.push(this.#renderRevision(pending, true, true));
+      listItems.push(this.#renderRevision(pending, true, true));
     }
     const committed = history.entries();
     for (
@@ -149,7 +160,7 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
     ) {
       const isCurrent = !pending && i === committed.length - 1;
       const isDisplayed = !pending && i === history.index();
-      rows.push(
+      listItems.push(
         this.#renderRevision(
           committed[i],
           isCurrent,
@@ -163,7 +174,7 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
         Revision history is a work in progress with known bugs.
       </p>
       <ul id="revisions">
-        ${rows}
+        ${listItems}
       </ul>
     `;
   }
@@ -185,7 +196,11 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
       .replace(" at ", ", ");
     return html`
       <li
-        class=${classMap({ revision: true, displayed: isDisplayed })}
+        class=${classMap({
+          revision: true,
+          [`role-${revision.creator.role}`]: true,
+          displayed: isDisplayed,
+        })}
         tabindex="0"
         role="button"
         @click=${selectRevisionFn}
@@ -198,23 +213,57 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
           : nothing}
         <span class="label">${revision.label}</span>
         <span class="creator">
-          ${this.signinAdapter?.picture
-            ? html`
-                <img
-                  class="icon signedin"
-                  crossorigin="anonymous"
-                  src=${this.signinAdapter.picture}
-                />
-              `
-            : html`
-                <span class="icon placeholder g-icon filled">person</span>
-              `}
-          <span class="name"
-            >${this.signinAdapter?.name ?? "Unknown User"}</span
-          >
+          <span class="icon">${this.#creatorIcon(revision.creator)}</span>
+          <span class="name">${this.#creatorName(revision.creator)}</span>
         </span>
       </li>
     `;
+  }
+
+  #creatorIcon(creator: EditHistoryCreator) {
+    switch (creator.role) {
+      // TODO(aomarks) Don't assume "unknown" is the current user after updating
+      // all change events to be explicit about creator.
+      case "user":
+      case "unknown": {
+        return this.signinAdapter?.picture
+          ? html`
+              <img
+                class="signedin"
+                crossorigin="anonymous"
+                src=${this.signinAdapter.picture}
+              />
+            `
+          : html`<span class="placeholder g-icon filled">person</span>`;
+      }
+      case "assistant": {
+        return html`<span class="assistant g-icon filled">spark</span>`;
+      }
+      default: {
+        console.error(`Unexpected creator`, creator satisfies never);
+        return html`
+          <span class="placeholder g-icon filled">question_mark</span>
+        `;
+      }
+    }
+  }
+
+  #creatorName(creator: EditHistoryCreator) {
+    switch (creator.role) {
+      // TODO(aomarks) Don't assume "unknown" is the current user after updating
+      // all change events to be explicit about creator.
+      case "user":
+      case "unknown": {
+        return this.signinAdapter?.name ?? "Unknown User";
+      }
+      case "assistant": {
+        return "Assistant";
+      }
+      default: {
+        console.error(`Unexpected creator`, creator satisfies never);
+        return "Unknown";
+      }
+    }
   }
 }
 

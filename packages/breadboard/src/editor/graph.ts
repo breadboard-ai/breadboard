@@ -20,6 +20,7 @@ import {
   EditTransformResult,
   EditOperationConductor,
   AffectedNode,
+  EditHistoryCreator,
 } from "./types.js";
 import { ChangeEvent, ChangeRejectEvent } from "./events.js";
 import { AddEdge } from "./operations/add-edge.js";
@@ -124,7 +125,7 @@ export class Graph implements EditableGraph {
         );
       },
     });
-    this.#history.add(this.raw(), "Clean slate");
+    this.#history.add(this.raw(), "Clean slate", options.creator);
   }
 
   #updateGraph(
@@ -250,6 +251,7 @@ export class Graph implements EditableGraph {
     const checkpoint = structuredClone(this.#graph);
     const log: EditResultLogEntry[] = [];
     let label = "";
+    let creator: EditHistoryCreator = { role: "unknown" };
 
     let error: string | null = null;
     // Presume that all edits will result in no changes.
@@ -288,6 +290,9 @@ export class Graph implements EditableGraph {
         if (!result.visualOnly) {
           visualOnly = false;
         }
+        if ("creator" in edit) {
+          creator = edit.creator;
+        }
       }
       return { success: true, result: undefined };
     };
@@ -321,7 +326,13 @@ export class Graph implements EditableGraph {
       return { success: true, log };
     }
 
-    this.#history.addEdit(this.raw(), checkpoint, label, this.#version);
+    this.#history.addEdit(
+      this.raw(),
+      checkpoint,
+      label,
+      this.#version,
+      creator
+    );
 
     !dryRun &&
       this.#updateGraph(

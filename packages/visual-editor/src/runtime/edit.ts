@@ -8,6 +8,7 @@ import {
   blankLLMContent,
   defaultModuleContent,
   EditableGraph,
+  EditHistoryCreator,
   EditSpec,
   GraphDescriptor,
   GraphLoader,
@@ -90,7 +91,9 @@ export class Edit extends EventTarget {
       return this.#editors.get(tab.id)!;
     }
 
-    const editor = this.graphStore.editByDescriptor(tab.graph);
+    const editor = this.graphStore.editByDescriptor(tab.graph, {
+      creator: tab.creator,
+    });
     if (!editor) {
       return null;
     }
@@ -1763,7 +1766,11 @@ export class Edit extends EventTarget {
     );
   }
 
-  replaceGraph(tab: Tab | null, replacement: GraphDescriptor) {
+  replaceGraph(
+    tab: Tab | null,
+    replacement: GraphDescriptor,
+    creator: EditHistoryCreator
+  ) {
     if (tab?.readOnly) {
       return;
     }
@@ -1773,7 +1780,7 @@ export class Edit extends EventTarget {
       return;
     }
     editableGraph.edit(
-      [{ type: "replacegraph", replacement }],
+      [{ type: "replacegraph", replacement, creator }],
       `Replace graph`
     );
   }

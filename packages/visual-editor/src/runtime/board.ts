@@ -9,6 +9,7 @@ import {
   BoardServerExtension,
   BoardServerExtensionNamespace,
   createLoader,
+  EditHistoryCreator,
   GraphDescriptor,
   GraphLoader,
   GraphProvider,
@@ -690,7 +691,8 @@ export class Board extends EventTarget {
     readOnly = false,
     dispatchTabChangeEvent = true,
     moduleId: ModuleIdentifier | null = null,
-    subGraphId: GraphIdentifier | null = null
+    subGraphId: GraphIdentifier | null = null,
+    creator: EditHistoryCreator | null = null
   ) {
     let url = this.#makeRelativeToCurrentBoard(boardUrl, currentUrl);
 
@@ -786,6 +788,7 @@ export class Board extends EventTarget {
         type: TabType.URL,
         version: 1,
         readOnly,
+        creator: creator ?? undefined,
       });
 
       this.#currentTabId = id;

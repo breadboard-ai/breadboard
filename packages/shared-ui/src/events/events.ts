@@ -19,6 +19,7 @@ import type {
   NodeValue,
 } from "@breadboard-ai/types";
 import type {
+  EditHistoryCreator,
   EditSpec,
   GraphDescriptor,
   InspectablePort,
@@ -68,7 +69,8 @@ export class StartEvent extends Event {
 
   constructor(
     public readonly url: string | null = null,
-    public readonly descriptor: GraphDescriptor | null = null
+    public readonly descriptor: GraphDescriptor | null = null,
+    public readonly creator: EditHistoryCreator | null = null
   ) {
     super(StartEvent.eventName, { ...eventInit });
 
@@ -656,7 +658,10 @@ export class GraphBoardServerBlankBoardEvent extends Event {
 export class GraphBoardServerGeneratedBoardEvent extends Event {
   static eventName = "bbgraphboardservergeneratedboard";
 
-  constructor(public readonly graph: GraphDescriptor) {
+  constructor(
+    public readonly graph: GraphDescriptor,
+    public readonly creator: EditHistoryCreator
+  ) {
     super(GraphBoardServerGeneratedBoardEvent.eventName, { ...eventInit });
   }
 }
@@ -1234,7 +1239,10 @@ export class GraphNodeRunRequestEvent extends Event {
 export class GraphReplaceEvent extends Event {
   static eventName = "bbgraphreplace";
 
-  constructor(public readonly replacement: GraphDescriptor) {
+  constructor(
+    public readonly replacement: GraphDescriptor,
+    public readonly creator: EditHistoryCreator
+  ) {
     super(GraphReplaceEvent.eventName, { ...eventInit });
   }
 }
