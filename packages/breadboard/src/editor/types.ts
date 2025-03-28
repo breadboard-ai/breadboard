@@ -200,6 +200,7 @@ export type RemoveAssetSpec = {
 export type ReplaceGraphSpec = {
   type: "replacegraph";
   replacement: GraphDescriptor;
+  creator: EditHistoryCreator;
 };
 
 export type EditOperationConductor = (
@@ -333,7 +334,13 @@ export type EditHistoryEntry = {
   graph: GraphDescriptor;
   label: string;
   timestamp: number;
+  creator: EditHistoryCreator;
 };
+
+export type EditHistoryCreator =
+  | { role: "user" }
+  | { role: "assistant" }
+  | { role: "unknown" };
 
 export type EditableGraphOptions = InspectableGraphOptions & {
   /**

@@ -19,6 +19,7 @@ import type {
   NodeValue,
 } from "@breadboard-ai/types";
 import type {
+  EditHistoryCreator,
   EditSpec,
   GraphDescriptor,
   InspectablePort,
@@ -1234,7 +1235,10 @@ export class GraphNodeRunRequestEvent extends Event {
 export class GraphReplaceEvent extends Event {
   static eventName = "bbgraphreplace";
 
-  constructor(public readonly replacement: GraphDescriptor) {
+  constructor(
+    public readonly replacement: GraphDescriptor,
+    public readonly creator: EditHistoryCreator
+  ) {
     super(GraphReplaceEvent.eventName, { ...eventInit });
   }
 }

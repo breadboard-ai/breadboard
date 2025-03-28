@@ -134,10 +134,10 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
         </p>
       `;
     }
-    const rows = [];
+    const listItems = [];
     const pending = history.pending;
     if (pending) {
-      rows.push(this.#renderRevision(pending, true, true));
+      listItems.push(this.#renderRevision(pending, true, true));
     }
     const committed = history.entries();
     for (
@@ -149,7 +149,7 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
     ) {
       const isCurrent = !pending && i === committed.length - 1;
       const isDisplayed = !pending && i === history.index();
-      rows.push(
+      listItems.push(
         this.#renderRevision(
           committed[i],
           isCurrent,
@@ -163,7 +163,7 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
         Revision history is a work in progress with known bugs.
       </p>
       <ul id="revisions">
-        ${rows}
+        ${listItems}
       </ul>
     `;
   }
