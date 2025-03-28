@@ -239,6 +239,9 @@ body.hide-cursor {
   --bb-icon-fork-down-right: url(/third_party/icons/fork-down-right.svg);
   --bb-icon-fork-down-right-inverted: url(/third_party/icons/fork-down-right-inverted.svg);
 
+  --bb-icon-frame-source: url(/third_party/icons/frame-source.svg);
+  --bb-icon-frame-source-inverted: url(/third_party/icons/frame-source-inverted.svg);
+
   --bb-icon-grid-view: url(/third_party/icons/grid-view.svg);
   --bb-icon-grid-view-inverted: url(/third_party/icons/grid-view-inverted.svg);
 
@@ -511,6 +514,9 @@ body.hide-cursor {
 
   --bb-icon-visibility-off: url(/third_party/icons/visibility-off.svg);
   --bb-icon-visibility-off-inverted: url(/third_party/icons/visibility-off-inverted.svg);
+
+  --bb-icon-voice-selection: url(/third_party/icons/voice-selection.svg);
+  --bb-icon-voice-selection-inverted: url(/third_party/icons/voice-selection-inverted.svg);
 
   --bb-icon-warning: url(/third_party/icons/warning.svg);
 
@@ -1028,6 +1034,9 @@ body.hide-cursor {
   --bb-icon-fork-down-right: url(/third_party/icons/fork-down-right-inverted.svg);
   --bb-icon-fork-down-right-inverted: url(/third_party/icons/fork-down-right.svg);
 
+  --bb-icon-frame-source: url(/third_party/icons/frame-source-inverted.svg);
+  --bb-icon-frame-source-inverted: url(/third_party/icons/frame-source.svg);
+
   --bb-icon-google-drive: url(/third_party/icons/google-drive-inverted.svg);
   --bb-icon-google-drive-inverted: url(/third_party/icons/google-drive.svg);
 
@@ -1300,6 +1309,9 @@ body.hide-cursor {
 
   --bb-icon-visibility-off: url(/third_party/icons/visibility-off-inverted.svg);
   --bb-icon-visibility-off-inverted: url(/third_party/icons/visibility-off.svg);
+
+  --bb-icon-voice-selection: url(/third_party/icons/voice-selection-inverted.svg);
+  --bb-icon-voice-selection-inverted: url(/third_party/icons/voice-selection.svg);
 
   --bb-icon-warning: url(/third_party/icons/warning.svg);
 

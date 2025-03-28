@@ -17,7 +17,6 @@ import {
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { repeat } from "lit/directives/repeat.js";
 import { InspectableNodePorts } from "@google-labs/breadboard";
-import { isContextOnly } from "./utils/is-context-only";
 import { map } from "lit/directives/map.js";
 import { isPreviewBehavior } from "../../utils/behaviors";
 import { createTruncatedValue } from "./utils/create-truncated-value";
@@ -120,6 +119,9 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       :host([icon="generative-audio"]),
       :host([icon="generative-text"]),
       :host([icon="generative-image-edit"]),
+      :host([icon="generative-code"]),
+      :host([icon="generative-video"]),
+      :host([icon="generative-search"]),
       :host([icon="laps"]) {
         --background: var(--bb-generative-100);
         --border: var(--bb-generative-600);
@@ -143,6 +145,28 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         --header-border: var(--bb-input-300);
       }
 
+      :host([icon="search"]) #container header::before {
+        background: var(--bb-icon-search) center center / 20px 20px no-repeat;
+      }
+
+      :host([icon="map-search"]) #container header::before {
+        background: var(--bb-icon-map-search) center center / 20px 20px
+          no-repeat;
+      }
+
+      :host([icon="globe-book"]) #container header::before {
+        background: var(--bb-icon-globe-book) center center / 20px 20px
+          no-repeat;
+      }
+
+      :host([icon="language"]) #container header::before {
+        background: var(--bb-icon-language) center center / 20px 20px no-repeat;
+      }
+
+      :host([icon="sunny"]) #container header::before {
+        background: var(--bb-icon-sunny) center center / 20px 20px no-repeat;
+      }
+
       :host([icon="generative"]) #container header::before {
         background: var(--bb-add-icon-generative) center center / 20px 20px
           no-repeat;
@@ -154,17 +178,32 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       }
 
       :host([icon="generative-image-edit"]) #container header::before {
-        background: var(--bb-add-icon-generative-image) center center / 20px
-          20px no-repeat;
+        background: var(--bb-add-icon-generative-image-edit-auto) center
+          center / 20px 20px no-repeat;
       }
 
       :host([icon="generative-text"]) #container header::before {
-        background: var(--bb-add-icon-generative-text) center center / 20px 20px
-          no-repeat;
+        background: var(--bb-add-icon-generative-text-analysis) center center /
+          20px 20px no-repeat;
       }
 
       :host([icon="generative-audio"]) #container header::before {
         background: var(--bb-add-icon-generative-audio) center center / 20px
+          20px no-repeat;
+      }
+
+      :host([icon="generative-video"]) #container header::before {
+        background: var(--bb-add-icon-generative-videocam-auto) center center /
+          20px 20px no-repeat;
+      }
+
+      :host([icon="generative-code"]) #container header::before {
+        background: var(--bb-add-icon-generative-code) center center / 20px 20px
+          no-repeat;
+      }
+
+      :host([icon="generative-search"]) #container header::before {
+        background: var(--bb-add-icon-generative-search) center center / 20px
           20px no-repeat;
       }
 
@@ -368,13 +407,29 @@ export class GraphNode extends Box implements DragConnectorReceiver {
               }
 
               &.string {
-                &::before {
+                &.voice-selection::before,
+                &.frame-source::before,
+                &.multimodal::before,
+                &.audio::before,
+                &.image::before,
+                &.video::before,
+                &.joiner::before {
                   content: "";
                   display: block;
                   width: 20px;
                   height: 20px;
                   margin-right: var(--bb-grid-size-2);
                   box-sizing: border-box;
+                }
+
+                &.voice-selection::before {
+                  background: var(--bb-icon-voice-selection) center center /
+                    20px 20px no-repeat;
+                }
+
+                &.frame-source::before {
+                  background: var(--bb-icon-frame-source) center center / 20px
+                    20px no-repeat;
                 }
 
                 &.multimodal::before {
@@ -481,67 +536,79 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       return nothing;
     }
 
-    if (!isContextOnly(this.#ports.inputs, this.#ports.outputs)) {
-      return html`Unknown port type`;
-    }
-
     const previewPorts = this.#ports.inputs.ports.filter((port) =>
       isPreviewBehavior(port.schema)
     );
 
+    const portsArePopulated = previewPorts.some(
+      (port) => port.value !== undefined
+    );
+
     return html`<div id="ports">
       ${previewPorts.length > 0
-        ? map(previewPorts, (port) => {
-            const classes: Record<string, boolean> = { port: true };
-            let value: HTMLTemplateResult | symbol = html`No value`;
-            switch (port.schema.type) {
-              case "object": {
-                classes.object = true;
-                if (port.value) {
-                  value = html`${unsafeHTML(
-                    `<p>${createTruncatedValue(port)}</p>`
-                  )}`;
-                } else {
-                  value = html`<div class="missing">
-                    <p>Missing details for this step</p>
-                    <span>Add</span>
-                  </div>`;
-                }
-                break;
-              }
-
-              case "boolean": {
-                const checked = !!port.value;
-                classes.boolean = true;
-                classes.checked = checked;
-                if (port.schema.icon) {
-                  classes[port.schema.icon] = true;
+        ? portsArePopulated
+          ? map(previewPorts, (port) => {
+              const classes: Record<string, boolean> = { port: true };
+              let value: HTMLTemplateResult | symbol = html`No value`;
+              switch (port.schema.type) {
+                case "object": {
+                  classes.object = true;
+                  if (port.value) {
+                    value = html`${unsafeHTML(
+                      `<p>${createTruncatedValue(port)}</p>`
+                    )}`;
+                  } else {
+                    value = html`<p>Value not set</p>`;
+                  }
+                  break;
                 }
 
-                value = html`<label>${port.title}</label>`;
-                break;
-              }
+                case "boolean": {
+                  const checked = !!port.value;
+                  classes.boolean = true;
+                  classes.checked = checked;
+                  if (port.schema.icon) {
+                    classes[port.schema.icon] = true;
+                  }
 
-              case "string": {
-                classes.string = true;
-                if (port.schema.icon) {
-                  classes[port.schema.icon] = true;
+                  value = html`<label>${port.title}</label>`;
+                  break;
                 }
 
-                value = html`<label
-                  >${port.title}: ${port.value ?? "Value not set"}</label
-                >`;
-                break;
+                case "string": {
+                  classes.string = true;
+                  if (port.schema.icon) {
+                    classes[port.schema.icon] = true;
+                  }
+
+                  value = html`<label
+                    >${port.title}: ${port.value ?? "Value not set"}</label
+                  >`;
+                  break;
+                }
+
+                default: {
+                  // console.log(port);
+                  value = nothing;
+                }
               }
 
-              default: {
-                // console.log(port);
-                value = nothing;
-              }
-            }
-
-            return html`<div
-              class=${classMap(classes)}
+              return html`<div
+                class=${classMap(classes)}
+                @click=${() => {
+                  this.dispatchEvent(
+                    new NodeConfigurationRequestEvent(
+                      this.nodeId,
+                      this.worldBounds
+                    )
+                  );
+                }}
+              >
+                ${value}
+              </div>`;
+            })
+          : html`<div
+              class="port object"
               @click=${() => {
                 this.dispatchEvent(
                   new NodeConfigurationRequestEvent(
@@ -551,9 +618,11 @@ export class GraphNode extends Box implements DragConnectorReceiver {
                 );
               }}
             >
-              ${value}
-            </div>`;
-          })
+              <div class="missing">
+                <p>Missing details for this step</p>
+                <span>Add</span>
+              </div>
+            </div>`
         : html`<div
             class=${classMap({ port: true })}
             @click=${() => {
