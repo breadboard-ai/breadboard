@@ -156,7 +156,7 @@ class AccessTokenCache {
     this.#lastCleanup = now;
     return new Promise<void>((resolve) => {
       [...this.#map.entries()]
-        .filter(([_, entry]) => entry.expires > now)
+        .filter(([_, entry]) => entry.expires < now)
         .forEach(([token]) => {
           this.#map.delete(token);
         });
