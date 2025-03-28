@@ -275,20 +275,31 @@ export class Graph extends Box {
   }
 
   expandSelections() {
-    for (const entity of this.entities.values()) {
-      if (entity instanceof GraphNode && entity.selected) {
-        const nodeEdges = this.#edges.filter(
-          (edge) =>
-            edge.from.descriptor.id === entity.nodeId ||
-            edge.to.descriptor.id === entity.nodeId
-        );
-        for (const edge of nodeEdges) {
-          const graphEdge = this.entities.get(inspectableEdgeToString(edge));
-          if (!graphEdge) {
-            continue;
+    for (const graphNode of this.entities.values()) {
+      if (graphNode instanceof GraphNode) {
+        if (graphNode.selected) {
+          const nodeEdges = this.#edges.filter(
+            (edge) =>
+              edge.from.descriptor.id === graphNode.nodeId ||
+              edge.to.descriptor.id === graphNode.nodeId
+          );
+
+          let isConnectedOut = false;
+          for (const edge of nodeEdges) {
+            if (edge.from.descriptor.id === graphNode.nodeId) {
+              isConnectedOut = true;
+            }
+            const graphEdge = this.entities.get(inspectableEdgeToString(edge));
+            if (!graphEdge) {
+              continue;
+            }
+
+            graphEdge.selected = true;
           }
 
-          graphEdge.selected = true;
+          graphNode.showDefaultAdd = !isConnectedOut;
+        } else {
+          graphNode.showDefaultAdd = false;
         }
       }
     }
