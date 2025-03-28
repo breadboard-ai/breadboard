@@ -174,6 +174,9 @@ body.hide-cursor {
   --bb-icon-directions-active: url(/third_party/icons/directions-active.svg);
   --bb-icon-directions-inverted: url(/third_party/icons/directions-inverted.svg);
 
+  --bb-icon-do-not-disturb: url(/third_party/icons/do-not-disturb.svg);
+  --bb-icon-do-not-disturb-inverted: url(/third_party/icons/do-not-disturb-inverted.svg);
+
   --bb-icon-dock-to-right: url(/third_party/icons/dock-to-right.svg);
   --bb-icon-dock-to-right-inverted: url(/third_party/icons/dock-to-right-inverted.svg);
 
@@ -968,6 +971,9 @@ body.hide-cursor {
   --bb-icon-directions: url(/third_party/icons/directions-inverted.svg);
   --bb-icon-directions-active: url(/third_party/icons/directions-active.svg);
   --bb-icon-directions-inverted: url(/third_party/icons/directions.svg);
+
+  --bb-icon-do-not-disturb: url(/third_party/icons/do-not-disturb-inverted.svg);
+  --bb-icon-do-not-disturb-inverted: url(/third_party/icons/do-not-disturb.svg);
 
   --bb-icon-dock-to-right: url(/third_party/icons/dock-to-right-inverted.svg);
   --bb-icon-dock-to-right-inverted: url(/third_party/icons/dock-to-right.svg);
