@@ -442,6 +442,10 @@ export class Renderer extends LitElement {
         top instanceof Entity ? top : rest.find((el) => el instanceof Entity);
       if (nearestEntity && !nearestEntity.selected) {
         this.#clickRect = DOMRect.fromRect(this.#dragRect);
+        this.#clickRect.x -= 5;
+        this.#clickRect.y -= 5;
+        this.#clickRect.width = 10;
+        this.#clickRect.height = 10;
         this.#dragRect = null;
         return;
       }
