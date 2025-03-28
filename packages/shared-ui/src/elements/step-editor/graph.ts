@@ -105,12 +105,6 @@ export class Graph extends Box {
         }
 
         const ports = node.currentPorts();
-        if (ports.updating) {
-          console.warn(
-            "Ports are still updating after describer has completed"
-          );
-        }
-
         const metadata = node.type().currentMetadata();
 
         graphNode.updating = ports.updating ?? false;

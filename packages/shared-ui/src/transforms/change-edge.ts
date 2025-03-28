@@ -104,7 +104,7 @@ class ChangeEdge implements EditTransform {
 
     const editingConfig = await context.apply(
       [{ type: "changeconfiguration", id, graphId, configuration }],
-      `Adding "@" refernce to port "${contentPort.name}" of node "${id}"`
+      `Adding "@" reference to port "${contentPort.name}" of node "${id}"`
     );
     if (!editingConfig.success) {
       return editingConfig;

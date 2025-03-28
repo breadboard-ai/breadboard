@@ -37,6 +37,7 @@ import {
 } from "./events";
 import {
   CommentNode,
+  Edge,
   GraphIdentifier,
   GraphMetadata,
   GraphTag,
@@ -1259,20 +1260,8 @@ export class Edit extends EventTarget {
   async changeEdge(
     tab: Tab | null,
     changeType: "add" | "remove" | "move",
-    from: {
-      from: string;
-      to: string;
-      in: string;
-      out: string;
-      constant?: boolean;
-    },
-    to?: {
-      from: string;
-      to: string;
-      in: string;
-      out: string;
-      constant?: boolean;
-    },
+    from: Edge,
+    to?: Edge,
     subGraphId: string | null = null
   ) {
     const editableGraph = this.getEditor(tab);

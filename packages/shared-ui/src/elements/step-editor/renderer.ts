@@ -21,6 +21,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { calculateBounds } from "./utils/calculate-bounds";
 import { clamp } from "./utils/clamp";
 import {
+  Edge,
   EditSpec,
   GraphIdentifier,
   InspectableGraph,
@@ -48,6 +49,7 @@ import {
 } from "../../utils/workspace";
 import {
   DragConnectorStartEvent,
+  FastConnectEvent,
   MultiEditEvent,
   NodeConfigurationUpdateRequestEvent,
   WorkspaceSelectionStateEvent,
@@ -328,7 +330,11 @@ export class Renderer extends LitElement {
     connectedTo?: NodeIdentifier,
     subGraphId?: GraphIdentifier
   ) {
+    let useXandYCoordinatesForSubgraph = true;
     if (!x || !y) {
+      // Auto-drop to the middle, don't use the x & y coordinates.
+      useXandYCoordinatesForSubgraph = false;
+
       x =
         this.#boundsForInteraction.width * 0.5 -
         this.#boundsForInteraction.left;
@@ -337,17 +343,20 @@ export class Renderer extends LitElement {
         this.#boundsForInteraction.top;
     }
 
-    // Start with finding the natural intersection for the created node.
+    // Start with finding the natural intersection for the created node if the
+    // x & y coordinates were set.
     const addLocation = new DOMRect(x, y, 0, 0);
     let targetGraphId = MAIN_BOARD_ID;
-    for (const [graphId, graph] of this.#graphs) {
-      if (graphId === MAIN_BOARD_ID) {
-        continue;
-      }
+    if (useXandYCoordinatesForSubgraph) {
+      for (const [graphId, graph] of this.#graphs) {
+        if (graphId === MAIN_BOARD_ID) {
+          continue;
+        }
 
-      if (graph.intersects(addLocation, 0)) {
-        targetGraphId = graphId;
-        break;
+        if (graph.intersects(addLocation, 0)) {
+          targetGraphId = graphId;
+          break;
+        }
       }
     }
 
@@ -395,15 +404,17 @@ export class Renderer extends LitElement {
     ];
 
     if (connectedTo) {
-      edits.push({
-        type: "addedge",
-        // TODO: Derive main ports here.
-        edge: { from: connectedTo, to: id, out: "context", in: "context" },
-        graphId: targetGraphId === MAIN_BOARD_ID ? "" : targetGraphId,
-      });
-    }
+      const edge: Edge = {
+        from: connectedTo,
+        to: id,
+      };
 
-    this.dispatchEvent(new MultiEditEvent(edits, `Add step: ${title}`));
+      this.dispatchEvent(
+        new FastConnectEvent(edits, edge, `Add step: ${title}`)
+      );
+    } else {
+      this.dispatchEvent(new MultiEditEvent(edits, `Add step: ${title}`));
+    }
   }
 
   #dragStart: DOMPoint | null = null;
