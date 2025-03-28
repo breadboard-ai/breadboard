@@ -14,10 +14,18 @@
           "outputHeight": 308
         },
         "title": "Get Weather",
-        "logLevel": "info"
+        "logLevel": "info",
+        "userModified": false
       },
       "configuration": {
-        "p-location": "Boulder"
+        "p-location": {
+          "parts": [
+            {
+              "text": "{{\"type\":\"param\",\"path\":\"location\",\"title\":\"Location\"}}"
+            }
+          ],
+          "role": "user"
+        }
       }
     },
     {
@@ -54,6 +62,45 @@
     }
   ],
   "metadata": {
-    "visual": {}
+    "visual": {
+      "presentation": {
+        "themes": {
+          "e65cb117-d15b-40a2-8126-061dc14de88c": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "e65cb117-d15b-40a2-8126-061dc14de88c"
+      }
+    },
+    "parameters": {
+      "location": {
+        "title": "Location",
+        "usedIn": [
+          "tools-179d6e70"
+        ]
+      }
+    }
+  },
+  "assets": {
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSIxOS4xMCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTAzLjEwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTYxLjc5IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMmU4YmU4IiAvPgo8cmVjdCB4PSIxMzYuOTAiCiAgICAgICAgICAgICAgICAgICAgeT0iMTkuMTAiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjEwMy4xMCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9Ijk4LjM0IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+    }
   }
 }
