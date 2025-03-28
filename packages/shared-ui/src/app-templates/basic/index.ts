@@ -415,6 +415,7 @@ export class Template extends LitElement implements AppTemplate {
               --output-string-margin-bottom-y: var(--bb-grid-size-3);
               --output-margin-bottom: var(--bb-grid-size-4);
               --output-background-color: var(--bb-neutral-0);
+              --multi-output-value-padding-x: 0;
               flex: 1 0 auto;
 
               animation: fadeIn 0.6s cubic-bezier(0, 0, 0.3, 1) forwards;
