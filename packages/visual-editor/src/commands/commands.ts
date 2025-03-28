@@ -363,6 +363,16 @@ export const PasteCommand: KeyboardCommand = {
           const destGraphIds = [];
           if (selectionState) {
             for (const id of selectionState.selectionState.graphs.keys()) {
+              const state = selectionState.selectionState.graphs.get(id);
+              if (
+                !state ||
+                (state.edges.size === 0 &&
+                  state.nodes.size === 0 &&
+                  state.comments.size === 0)
+              ) {
+                continue;
+              }
+
               if (id === MAIN_BOARD_ID) {
                 destGraphIds.push("");
                 continue;

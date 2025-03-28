@@ -103,6 +103,10 @@ export function generateBoardFrom(
         selectionState.comments.has(comment.id)
       );
     }
+
+    delete graph.assets;
+    delete graph.exports;
+    delete graph.metadata?.visual;
   };
 
   const subGraphs = filteredGraph.graphs ?? {};
@@ -586,6 +590,10 @@ export function generateAddEditSpecFromDescriptor(
 
     // Subgraphs.
     for (const subGraph of Object.values(sourceGraph.graphs ?? {})) {
+      if (subGraph.nodes.length === 0) {
+        continue;
+      }
+
       graphToSpec(subGraph);
     }
   };
