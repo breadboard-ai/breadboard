@@ -28,6 +28,7 @@ import {
   Kit,
   MainGraphIdentifier,
   MutableGraphStore,
+  NodeDescriptor,
   NodeIdentifier,
 } from "@google-labs/breadboard";
 import { MAIN_BOARD_ID } from "../../constants/constants";
@@ -50,7 +51,7 @@ import {
 import {
   DragConnectorStartEvent,
   EditorPointerPositionChangeEvent,
-  FastConnectEvent,
+  AddNodeWithEdgeEvent,
   MultiEditEvent,
   NodeConfigurationUpdateRequestEvent,
   WorkspaceSelectionStateEvent,
@@ -386,23 +387,17 @@ export class Renderer extends LitElement {
 
     const id = globalThis.crypto.randomUUID();
     const title = this.#getGraphTitleByType(nodeType);
-    const edits: EditSpec[] = [
-      {
-        type: "addnode",
-        graphId: targetGraphId === MAIN_BOARD_ID ? "" : targetGraphId,
-        node: {
-          id,
-          type: nodeType,
-          metadata: {
-            title,
-            visual: {
-              x: toGridSize(graphLocation.x - (createAtCenter ? 130 : 0)),
-              y: toGridSize(graphLocation.y - (createAtCenter ? 20 : 0)),
-            },
-          },
+    const node: NodeDescriptor = {
+      id,
+      type: nodeType,
+      metadata: {
+        title,
+        visual: {
+          x: toGridSize(graphLocation.x - (createAtCenter ? 130 : 0)),
+          y: toGridSize(graphLocation.y - (createAtCenter ? 20 : 0)),
         },
       },
-    ];
+    };
 
     if (connectedTo) {
       const edge: Edge = {
@@ -411,15 +406,25 @@ export class Renderer extends LitElement {
       };
 
       this.dispatchEvent(
-        new FastConnectEvent(
-          edits,
+        new AddNodeWithEdgeEvent(
+          node,
           edge,
-          `Add step: ${title}`,
           targetGraphId === MAIN_BOARD_ID ? "" : targetGraphId
         )
       );
     } else {
-      this.dispatchEvent(new MultiEditEvent(edits, `Add step: ${title}`));
+      this.dispatchEvent(
+        new MultiEditEvent(
+          [
+            {
+              type: "addnode",
+              graphId: targetGraphId === MAIN_BOARD_ID ? "" : targetGraphId,
+              node,
+            },
+          ],
+          `Add step: ${title}`
+        )
+      );
     }
   }
 

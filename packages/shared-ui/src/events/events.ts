@@ -938,15 +938,14 @@ export class MultiEditEvent extends Event {
   }
 }
 
-export class FastConnectEvent extends Event {
-  static eventName = "bbfastconnect";
+export class AddNodeWithEdgeEvent extends Event {
+  static eventName = "bbaddnodewithedge";
   constructor(
-    public readonly edits: EditSpec[],
+    public readonly node: NodeDescriptor,
     public readonly edge: Edge,
-    public readonly description: string,
     public readonly subGraphId: string | null = null
   ) {
-    super(FastConnectEvent.eventName, { ...eventInit });
+    super(AddNodeWithEdgeEvent.eventName, { ...eventInit });
   }
 }
 
