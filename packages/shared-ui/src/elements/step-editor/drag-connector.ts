@@ -18,6 +18,8 @@ import { PortIdentifier } from "@google-labs/breadboard";
 import { MAIN_BOARD_ID } from "../../constants/constants";
 import { NodeSelectEvent } from "./events/events";
 
+const HEADER_ADJUSTMENT = 18;
+
 @customElement("bb-drag-connector")
 export class DragConnector extends LitElement {
   @property()
@@ -171,7 +173,9 @@ export class DragConnector extends LitElement {
 
     if (!foundTarget) {
       this.dispatchEvent(new DragConnectorCancelledEvent());
-      this.dispatchEvent(new NodeSelectEvent(evt.clientX, evt.clientY));
+      this.dispatchEvent(
+        new NodeSelectEvent(evt.clientX, evt.clientY - HEADER_ADJUSTMENT)
+      );
     }
 
     this.start = null;

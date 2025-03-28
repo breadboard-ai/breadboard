@@ -3,7 +3,17 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { html, css, PropertyValues, nothing, HTMLTemplateResult } from "lit";
+import * as StringsHelper from "../../strings/helper.js";
+const Strings = StringsHelper.forSection("Editor");
+
+import {
+  html,
+  css,
+  PropertyValues,
+  nothing,
+  HTMLTemplateResult,
+  svg,
+} from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -12,6 +22,7 @@ import { Box } from "./box";
 import {
   NodeBoundsUpdateRequestEvent,
   NodeConfigurationRequestEvent,
+  NodeSelectEvent,
   SelectionTranslateEvent,
 } from "./events/events";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
@@ -25,6 +36,34 @@ import { styles as ChicletStyles } from "../shared-styles/chiclet.js";
 import { toGridSize } from "./utils/to-grid-size";
 import { DragConnectorReceiver } from "../../types/types";
 import { DragConnectorStartEvent } from "../../events/events";
+import { getGlobalColor } from "../../utils/color.js";
+
+const EDGE_STANDARD = getGlobalColor("--bb-neutral-400");
+
+const arrowWidth = 46;
+const arrowHeight = 36;
+const arrowSize = 8;
+const rightArrow = html`${svg`
+  <svg id="right-arrow" version="1.1"
+      width="${arrowWidth}" height=${arrowHeight}
+      xmlns="http://www.w3.org/2000/svg">
+    <line x1="0"
+      y1=${arrowHeight * 0.5}
+      x2=${arrowWidth}
+      y2=${arrowHeight * 0.5}
+      stroke=${EDGE_STANDARD} stroke-width="2" stroke-linecap="round" />
+
+    <line x1=${arrowWidth}
+      y1=${arrowHeight * 0.5}
+      x2=${arrowWidth - arrowSize}
+      y2=${arrowHeight * 0.5 - arrowSize}
+      stroke=${EDGE_STANDARD} stroke-width="2" stroke-linecap="round" />
+
+    <line x1=${arrowWidth} y1=${arrowHeight * 0.5}
+    x2=${arrowWidth - arrowSize}
+    y2=${arrowHeight * 0.5 + arrowSize}
+    stroke=${EDGE_STANDARD} stroke-width="2" stroke-linecap="round" />
+  </svg>`}`;
 
 @customElement("bb-graph-node")
 export class GraphNode extends Box implements DragConnectorReceiver {
@@ -45,6 +84,9 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
   @property({ reflect: true, type: String })
   accessor active: "pre" | "current" | "post" | "error" = "pre";
+
+  @property()
+  accessor showDefaultAdd = false;
 
   @property()
   set ports(ports: InspectableNodePorts | null) {
@@ -265,6 +307,39 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         outline: 1px solid var(--border);
         color: var(--bb-neutral-900);
         position: relative;
+
+        #right-arrow {
+          position: absolute;
+          top: 0px;
+          left: 100%;
+          width: 46px;
+          height: 36px;
+        }
+
+        #default-add {
+          position: absolute;
+          top: 18px;
+          left: 100%;
+          transform: translateX(48px) translateY(-50%);
+          z-index: 4;
+          border: 1px solid var(--bb-neutral-300);
+          color: var(--bb-neutral-600);
+          font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
+            var(--bb-font-family);
+          border-radius: var(--bb-grid-size-16);
+          background: var(--bb-ui-50) var(--bb-icon-library-add) 8px center /
+            20px 20px no-repeat;
+          padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-8);
+          transition: border 0.2s cubic-bezier(0, 0, 0.3, 1);
+          height: var(--bb-grid-size-7);
+          cursor: pointer;
+          white-space: nowrap;
+          pointer-events: auto;
+
+          &:hover {
+            border: 1px solid var(--bb-neutral-500);
+          }
+        }
 
         & header {
           display: flex;
@@ -667,6 +742,30 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       transform: toCSSMatrix(this.worldTransform),
     };
 
+    let defaultAdd: HTMLTemplateResult | symbol = nothing;
+    if (this.showDefaultAdd) {
+      defaultAdd = html` ${rightArrow}
+        <button
+          id="default-add"
+          @click=${async (evt: PointerEvent) => {
+            evt.stopImmediatePropagation();
+
+            if (!this.worldBounds || !(evt.target instanceof HTMLElement)) {
+              return;
+            }
+
+            this.showDefaultAdd = false;
+
+            const target = evt.target.getBoundingClientRect();
+            this.dispatchEvent(
+              new NodeSelectEvent(target.x + 16, target.y, this.nodeId)
+            );
+          }}
+        >
+          ${Strings.from("LABEL_ADD_ITEM")}
+        </button>`;
+    }
+
     return html`<section
         id="container"
         class=${classMap({ bounds: this.showBounds })}
@@ -753,24 +852,25 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         >
           <span>${this.nodeTitle}</span>
           ${this.hasMainPort
-            ? html`<button
-                id="connection-trigger"
-                ?disabled=${this.updating}
-                @pointerdown=${(evt: PointerEvent) => {
-                  evt.stopImmediatePropagation();
+            ? html` ${defaultAdd}
+                <button
+                  id="connection-trigger"
+                  ?disabled=${this.updating}
+                  @pointerdown=${(evt: PointerEvent) => {
+                    evt.stopImmediatePropagation();
 
-                  // This event is picked up by the graph itself to ensure that it
-                  // is tagged with the graph's ID (and thereby preventing edges
-                  // across graphs).
-                  this.dispatchEvent(
-                    new DragConnectorStartEvent(
-                      new DOMPoint(evt.clientX, evt.clientY)
-                    )
-                  );
-                }}
-              >
-                Connect to..
-              </button>`
+                    // This event is picked up by the graph itself to ensure that it
+                    // is tagged with the graph's ID (and thereby preventing edges
+                    // across graphs).
+                    this.dispatchEvent(
+                      new DragConnectorStartEvent(
+                        new DOMPoint(evt.clientX, evt.clientY)
+                      )
+                    );
+                  }}
+                >
+                  Connect to..
+                </button>`
             : nothing}
         </header>
         <div

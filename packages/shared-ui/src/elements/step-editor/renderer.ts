@@ -411,7 +411,12 @@ export class Renderer extends LitElement {
       };
 
       this.dispatchEvent(
-        new FastConnectEvent(edits, edge, `Add step: ${title}`)
+        new FastConnectEvent(
+          edits,
+          edge,
+          `Add step: ${title}`,
+          targetGraphId === MAIN_BOARD_ID ? "" : targetGraphId
+        )
       );
     } else {
       this.dispatchEvent(new MultiEditEvent(edits, `Add step: ${title}`));
@@ -699,7 +704,6 @@ export class Renderer extends LitElement {
               this.#isAdditiveSelection,
               false
             );
-            this.#updateSelectionFromGraph(graph);
           } else if (this.#clickRect) {
             // Click-select.
             graph.selectAt(
@@ -708,13 +712,14 @@ export class Renderer extends LitElement {
               this.#isAdditiveSelection,
               this.#isToggleSelection
             );
-
-            // Expands node selections to include edges.
-            if (this.expandSelections) {
-              graph.expandSelections();
-            }
-            this.#updateSelectionFromGraph(graph);
           }
+
+          // Expands node selections to include edges.
+          if (this.expandSelections) {
+            graph.expandSelections();
+          }
+
+          this.#updateSelectionFromGraph(graph);
         }
 
         if (this.camera?.bounds) {
@@ -993,6 +998,18 @@ export class Renderer extends LitElement {
                   false,
                   evt.bounds
                 )
+              );
+            }}
+            @bbnodeselect=${(evt: NodeSelectEvent) => {
+              if (!this.#editorControls.value || !evt.connectedTo) {
+                return;
+              }
+
+              this.#editorControls.value.showComponentLibraryAt(
+                evt.x - this.#boundsForInteraction.x,
+                evt.y - this.#boundsForInteraction.y,
+                evt.connectedTo,
+                graphId
               );
             }}
             @bbdragconnectorstart=${(evt: DragConnectorStartEvent) => {
