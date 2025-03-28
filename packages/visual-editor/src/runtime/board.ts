@@ -44,10 +44,20 @@ import {
   ModuleIdentifier,
   NodeDescriptor,
 } from "@breadboard-ai/types";
+import * as idb from "idb";
 
 const documentStyles = getComputedStyle(document.documentElement);
 
 type ValidColorStrings = `#${string}` | `--${string}`;
+
+const LOCAL_REVISION_HISTORY_KEY = "revision-history";
+const LOCAL_REVISION_HISTORY_VERSION = 1;
+interface LocalRevisionHistoryDBSchema extends idb.DBSchema {
+  revisions: {
+    key: string;
+    value: EditHistoryEntry[];
+  };
+}
 
 export function getGlobalColor(
   name: ValidColorStrings,
@@ -790,6 +800,8 @@ export class Board extends EventTarget {
         version: 1,
         readOnly,
         creator: creator ?? undefined,
+        history: await this.#loadLocalHistory(url),
+        onHistoryChanged: (history) => this.#saveLocalHistory(url, history),
       });
 
       this.#currentTabId = id;
@@ -1104,5 +1116,35 @@ export class Board extends EventTarget {
         await ns[action].call(null, ...args);
       }
     }
+  }
+
+  async #loadLocalHistory(url: string): Promise<EditHistoryEntry[]> {
+    const db = await this.#openLocalHistoryDB();
+    const revisions = (await db.get("revisions", url)) ?? [];
+    db.close();
+    return revisions;
+  }
+
+  async #saveLocalHistory(
+    url: string,
+    history: readonly EditHistoryEntry[]
+  ): Promise<void> {
+    const db = await this.#openLocalHistoryDB();
+    await db.put("revisions", history as EditHistoryEntry[], url);
+    db.close();
+  }
+
+  async #openLocalHistoryDB() {
+    return await idb.openDB<LocalRevisionHistoryDBSchema>(
+      LOCAL_REVISION_HISTORY_KEY,
+      LOCAL_REVISION_HISTORY_VERSION,
+      {
+        upgrade(db) {
+          if (!db.objectStoreNames.contains("revisions")) {
+            db.createObjectStore("revisions");
+          }
+        },
+      }
+    );
   }
 }
