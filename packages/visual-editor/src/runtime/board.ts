@@ -10,6 +10,7 @@ import {
   BoardServerExtensionNamespace,
   createLoader,
   EditHistoryCreator,
+  EditHistoryEntry,
   GraphDescriptor,
   GraphLoader,
   GraphProvider,

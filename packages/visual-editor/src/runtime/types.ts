@@ -7,6 +7,7 @@
 import {
   BoardServer,
   EditHistoryCreator,
+  EditHistoryEntry,
   FileSystem,
   GraphDescriptor,
   GraphLoader,
@@ -52,6 +53,8 @@ export interface Tab {
   readOnly: boolean;
   type: TabType;
   creator?: EditHistoryCreator;
+  history?: EditHistoryEntry[];
+  onHistoryChanged?: (history: readonly EditHistoryEntry[]) => void;
 }
 
 export interface RuntimeConfig {

@@ -22,8 +22,14 @@ export class GraphEditHistory implements EditHistory {
     this.#controller = controller;
   }
 
-  add(graph: GraphDescriptor, label: string, creator?: EditHistoryCreator) {
-    this.#history.add(graph, label, creator);
+  add(
+    graph: GraphDescriptor,
+    label: string,
+    creator?: EditHistoryCreator,
+    timestamp?: number
+  ) {
+    this.#history.add(graph, label, creator, timestamp);
+    this.#controller.onHistoryChanged?.(this.#historyIncludingPending);
   }
 
   addEdit(
@@ -34,8 +40,8 @@ export class GraphEditHistory implements EditHistory {
     creator?: EditHistoryCreator
   ) {
     this.#history.pause(label, checkpoint, version, creator);
-
     this.#history.add(graph, label, creator);
+    this.#controller.onHistoryChanged?.(this.#historyIncludingPending);
   }
 
   canUndo(): boolean {
@@ -49,22 +55,28 @@ export class GraphEditHistory implements EditHistory {
   undo(): void {
     this.#history.resume(this.#controller.graph(), this.#controller.version());
     const graph = this.#history.back();
-    if (!graph) return;
-    this.#controller.setGraph(graph);
+    if (graph) {
+      this.#controller.setGraph(graph);
+    }
+    this.#controller.onHistoryChanged?.(this.#historyIncludingPending);
   }
 
   redo(): void {
     this.#history.resume(this.#controller.graph(), this.#controller.version());
     const graph = this.#history.forth();
-    if (!graph) return;
-    this.#controller.setGraph(graph);
+    if (graph) {
+      this.#controller.setGraph(graph);
+    }
+    this.#controller.onHistoryChanged?.(this.#historyIncludingPending);
   }
 
   jump(index: number): void {
     this.#history.resume(this.#controller.graph(), this.#controller.version());
     const graph = this.#history.jump(index);
-    if (!graph) return;
-    this.#controller.setGraph(graph);
+    if (graph) {
+      this.#controller.setGraph(graph);
+    }
+    this.#controller.onHistoryChanged?.(this.#historyIncludingPending);
   }
 
   entries(): EditHistoryEntry[] {
@@ -77,6 +89,13 @@ export class GraphEditHistory implements EditHistory {
 
   get pending() {
     return this.#history.pending;
+  }
+
+  get #historyIncludingPending() {
+    const { pending, history } = this.#history;
+    return pending
+      ? [...history.slice(0, this.#history.index() + 1), pending]
+      : history.slice();
   }
 }
 
@@ -99,7 +118,12 @@ export class EditHistoryManager {
     return this.#index;
   }
 
-  add(graph: GraphDescriptor, label: string, creator?: EditHistoryCreator) {
+  add(
+    graph: GraphDescriptor,
+    label: string,
+    creator?: EditHistoryCreator,
+    timestamp?: number
+  ) {
     if (this.paused()) return;
     // Chop off the history at #index.
     this.history.splice(this.#index + 1);
@@ -107,7 +131,7 @@ export class EditHistoryManager {
     this.history.push({
       graph: structuredClone(graph),
       label,
-      timestamp: Date.now(),
+      timestamp: timestamp ?? Date.now(),
       creator: creator ?? { role: "unknown" },
     });
     // Point #index the new entry.

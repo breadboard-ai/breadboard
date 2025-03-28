@@ -280,6 +280,7 @@ export type EditHistoryController = {
   graph(): GraphDescriptor;
   setGraph(graph: GraphDescriptor): void;
   version(): number;
+  onHistoryChanged?: (entries: readonly EditHistoryEntry[]) => void;
 };
 
 export type EditHistory = {
@@ -348,6 +349,8 @@ export type EditableGraphOptions = InspectableGraphOptions & {
    */
   version?: number;
   creator?: EditHistoryCreator;
+  history?: EditHistoryEntry[];
+  onHistoryChanged?: (history: readonly EditHistoryEntry[]) => void;
 };
 
 export type EditableNodeSpec = NodeDescriptor;
