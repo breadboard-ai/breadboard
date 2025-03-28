@@ -125,7 +125,7 @@ export class Graph implements EditableGraph {
         );
       },
     });
-    this.#history.add(this.raw(), "Clean slate");
+    this.#history.add(this.raw(), "Clean slate", options.creator);
   }
 
   #updateGraph(

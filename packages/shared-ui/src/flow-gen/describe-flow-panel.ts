@@ -261,9 +261,9 @@ export class DescribeFlowPanel extends LitElement {
     if (this.#state.status !== "generating") {
       return;
     }
-    // TODO(aomarks) Add assistant creator annotation here so that it can be
-    // shown as such in the revision panel.
-    this.dispatchEvent(new GraphBoardServerGeneratedBoardEvent(graph));
+    this.dispatchEvent(
+      new GraphBoardServerGeneratedBoardEvent(graph, { role: "assistant" })
+    );
   }
 
   #onGenerateError(error: unknown) {

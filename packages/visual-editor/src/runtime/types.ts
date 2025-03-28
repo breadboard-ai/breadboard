@@ -6,6 +6,7 @@
 
 import {
   BoardServer,
+  EditHistoryCreator,
   FileSystem,
   GraphDescriptor,
   GraphLoader,
@@ -50,6 +51,7 @@ export interface Tab {
   version: number;
   readOnly: boolean;
   type: TabType;
+  creator?: EditHistoryCreator;
 }
 
 export interface RuntimeConfig {

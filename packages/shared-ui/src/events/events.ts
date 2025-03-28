@@ -69,7 +69,8 @@ export class StartEvent extends Event {
 
   constructor(
     public readonly url: string | null = null,
-    public readonly descriptor: GraphDescriptor | null = null
+    public readonly descriptor: GraphDescriptor | null = null,
+    public readonly creator: EditHistoryCreator | null = null
   ) {
     super(StartEvent.eventName, { ...eventInit });
 
@@ -657,7 +658,10 @@ export class GraphBoardServerBlankBoardEvent extends Event {
 export class GraphBoardServerGeneratedBoardEvent extends Event {
   static eventName = "bbgraphboardservergeneratedboard";
 
-  constructor(public readonly graph: GraphDescriptor) {
+  constructor(
+    public readonly graph: GraphDescriptor,
+    public readonly creator: EditHistoryCreator
+  ) {
     super(GraphBoardServerGeneratedBoardEvent.eventName, { ...eventInit });
   }
 }

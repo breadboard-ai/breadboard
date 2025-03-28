@@ -35,6 +35,7 @@ import {
   blank,
   isInlineData,
   isStoredData,
+  EditHistoryCreator,
 } from "@google-labs/breadboard";
 import {
   createFileSystemBackend,
@@ -1481,7 +1482,8 @@ export class Main extends LitElement {
       start: Strings.from("STATUS_SAVING_PROJECT"),
       end: Strings.from("STATUS_PROJECT_SAVED"),
       error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
-    }
+    },
+    creator: EditHistoryCreator
   ) {
     if (this.#isSaving) {
       return;
@@ -1522,7 +1524,9 @@ export class Main extends LitElement {
     this.#setBoardPendingSaveState(false);
     this.#persistBoardServerAndLocation(boardServerName, location);
 
-    this.#attemptBoardLoad(new BreadboardUI.Events.StartEvent(url.href));
+    this.#attemptBoardLoad(
+      new BreadboardUI.Events.StartEvent(url.href, undefined, creator)
+    );
 
     if (ackUser && id) {
       this.toast(
@@ -1581,7 +1585,10 @@ export class Main extends LitElement {
     this.boardServerNavState = globalThis.crypto.randomUUID();
   }
 
-  async #attemptBoardCreate(graph: GraphDescriptor) {
+  async #attemptBoardCreate(
+    graph: GraphDescriptor,
+    creator: EditHistoryCreator
+  ) {
     const boardServerName = this.selectedBoardServer;
     const location = this.selectedLocation;
     const fileName = `${globalThis.crypto.randomUUID()}.bgl.json`;
@@ -1596,7 +1603,8 @@ export class Main extends LitElement {
         start: Strings.from("STATUS_CREATING_PROJECT"),
         end: Strings.from("STATUS_PROJECT_CREATED"),
         error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
-      }
+      },
+      creator
     );
   }
 
@@ -1957,7 +1965,16 @@ export class Main extends LitElement {
         );
       }, LOADING_TIMEOUT);
 
-      await this.#runtime.board.createTabFromURL(evt.url);
+      await this.#runtime.board.createTabFromURL(
+        evt.url,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        evt.creator
+      );
       clearTimeout(loadingTimeout);
       this.untoast(id);
     } else if (evt.descriptor) {
@@ -2537,7 +2554,10 @@ export class Main extends LitElement {
                 boardServerName,
                 location,
                 fileName,
-                graph
+                graph,
+                undefined,
+                undefined,
+                { role: "user" }
               );
             }}
           ></bb-save-as-overlay>`;
@@ -2648,7 +2668,7 @@ export class Main extends LitElement {
             }}
             @bbgraphboardserverblankboard=${() => {
               this.showOpenBoardOverlay = false;
-              this.#attemptBoardCreate(blank());
+              this.#attemptBoardCreate(blank(), { role: "user" });
             }}
             @bbgraphboardserveradd=${() => {
               this.showBoardServerAddOverlay = true;
@@ -3653,7 +3673,7 @@ export class Main extends LitElement {
                 this.requestUpdate();
               }}
               @bbgraphboardserverblankboard=${() => {
-                this.#attemptBoardCreate(blank());
+                this.#attemptBoardCreate(blank(), { role: "user" });
               }}
               @bbsubgraphcreate=${async (
                 evt: BreadboardUI.Events.SubGraphCreateEvent
@@ -4005,12 +4025,12 @@ export class Main extends LitElement {
                 .boardServerNavState=${this.boardServerNavState}
                 .showAdditionalSources=${showAdditionalSources}
                 @bbgraphboardserverblankboard=${() => {
-                  this.#attemptBoardCreate(blank());
+                  this.#attemptBoardCreate(blank(), { role: "user" });
                 }}
                 @bbgraphboardservergeneratedboard=${(
                   evt: BreadboardUI.Events.GraphBoardServerGeneratedBoardEvent
                 ) => {
-                  this.#attemptBoardCreate(evt.graph);
+                  this.#attemptBoardCreate(evt.graph, evt.creator);
                 }}
                 @bbgraphboardserveradd=${() => {
                   this.showBoardServerAddOverlay = true;

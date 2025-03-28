@@ -91,7 +91,9 @@ export class Edit extends EventTarget {
       return this.#editors.get(tab.id)!;
     }
 
-    const editor = this.graphStore.editByDescriptor(tab.graph);
+    const editor = this.graphStore.editByDescriptor(tab.graph, {
+      creator: tab.creator,
+    });
     if (!editor) {
       return null;
     }

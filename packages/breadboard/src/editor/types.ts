@@ -347,6 +347,7 @@ export type EditableGraphOptions = InspectableGraphOptions & {
    * The initial version of the graph
    */
   version?: number;
+  creator?: EditHistoryCreator;
 };
 
 export type EditableNodeSpec = NodeDescriptor;
