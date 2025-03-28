@@ -93,6 +93,8 @@ export class Edit extends EventTarget {
 
     const editor = this.graphStore.editByDescriptor(tab.graph, {
       creator: tab.creator,
+      history: tab.history,
+      onHistoryChanged: tab.onHistoryChanged,
     });
     if (!editor) {
       return null;
