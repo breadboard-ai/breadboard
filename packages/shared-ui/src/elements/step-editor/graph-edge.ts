@@ -54,6 +54,10 @@ export class GraphEdge extends Box {
         z-index: 2;
       }
 
+      svg {
+        pointer-events: none;
+      }
+
       svg > * {
         pointer-events: auto;
       }
@@ -61,6 +65,7 @@ export class GraphEdge extends Box {
   ];
 
   #edgeRef: Ref<SVGSVGElement> = createRef();
+  #edgeHitAreaRef: Ref<SVGPathElement> = createRef();
 
   constructor(
     public readonly node1: GraphNode,
@@ -119,9 +124,48 @@ export class GraphEdge extends Box {
       localBounds.y + localBounds.height
     ).matrixTransform(this.worldTransform);
 
+    // Coarse intersection check. If we aren't even in the bounding box area for
+    // this edge then don't consider it further.
     const worldBounds = new DOMRect(tl.x, tl.y, tr.x - tl.x, bl.y - tl.y);
+    if (!intersects(worldBounds, targetBounds, padding)) {
+      return false;
+    }
 
-    return intersects(worldBounds, targetBounds, padding);
+    // Refined intersection check. Here we transform the target bounds of the
+    // selection into an SVGRect that is in the SVG's coordinate system. From
+    // there we can use the built-in checkIntersection method to see if it
+    // intersects with the path.
+    //
+    // If there's no hit area then bail but assume there was an intersection.
+    if (!this.#edgeHitAreaRef.value) {
+      return true;
+    }
+
+    // Now perform the more refined check.
+    const inverseWorldTransform = this.worldTransform.inverse();
+    const intersectTL = new DOMPoint(
+      targetBounds.x,
+      targetBounds.y
+    ).matrixTransform(inverseWorldTransform);
+    const intersectTR = new DOMPoint(
+      targetBounds.x + targetBounds.width,
+      targetBounds.y
+    ).matrixTransform(inverseWorldTransform);
+    const intersectBL = new DOMPoint(
+      targetBounds.x,
+      targetBounds.y + targetBounds.height
+    ).matrixTransform(inverseWorldTransform);
+
+    const selectBox = this.#edgeRef.value.createSVGRect();
+    selectBox.x = intersectTL.x;
+    selectBox.y = intersectTL.y;
+    selectBox.width = intersectTR.x - intersectTL.x;
+    selectBox.height = intersectBL.y - intersectTL.y;
+
+    return this.#edgeRef.value.checkIntersection(
+      this.#edgeHitAreaRef.value,
+      selectBox
+    );
   }
 
   #calculateShortestPath() {
@@ -422,6 +466,10 @@ export class GraphEdge extends Box {
                 <path d=${steps.join(" ")}
                   stroke=${this.selected ? EDGE_SELECTED : edgeColor}
                   stroke-width="2" fill="none" stroke-linecap="round" />
+
+                <path ${ref(this.#edgeHitAreaRef)} d=${steps.join(" ")}
+                  stroke="#ff00ff00"
+                  stroke-width="10" fill="none" stroke-linecap="round" />
 
                 <line x1=${connectionPoints.n2.x}
                   y1=${connectionPoints.n2.y}
