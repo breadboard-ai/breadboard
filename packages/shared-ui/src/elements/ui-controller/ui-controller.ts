@@ -55,12 +55,14 @@ import {
   COMMAND_SET_MODULE_EDITOR,
   MAIN_BOARD_ID,
 } from "../../constants/constants.js";
-import { Editor, UserInput } from "../elements.js";
+import { Editor } from "../elements.js";
 import { classMap } from "lit/directives/class-map.js";
 import { Sandbox } from "@breadboard-ai/jsandbox";
 import { ChatController } from "../../state/chat-controller.js";
 import { Organizer } from "../../state/types.js";
 import "../../revision-history/revision-history-panel.js";
+
+const SIDE_ITEM_KEY = "bb-ui-controller-side-nav-item";
 
 @customElement("bb-ui-controller")
 export class UI extends LitElement {
@@ -128,12 +130,23 @@ export class UI extends LitElement {
   accessor mode = "tree" as const;
 
   @property()
-  accessor sideNavItem:
-    | "app-view"
-    | "console"
-    | "capabilities"
-    | "revision-history"
-    | null = "app-view";
+  set sideNavItem(
+    item: "app-view" | "console" | "capabilities" | "revision-history"
+  ) {
+    if (item === this.#sideNavItem) {
+      return;
+    }
+
+    this.#sideNavItem = item;
+    if (item) {
+      globalThis.localStorage.setItem(SIDE_ITEM_KEY, item);
+    } else {
+      globalThis.localStorage.removeItem(SIDE_ITEM_KEY);
+    }
+  }
+  get sideNavItem() {
+    return this.#sideNavItem;
+  }
 
   @property()
   accessor selectionState: WorkspaceSelectionStateWithChangeId | null = null;
@@ -184,21 +197,31 @@ export class UI extends LitElement {
   @state()
   accessor showAssetOrganizer = false;
 
-  #lastEventPosition = 0;
+  #sideNavItem: "app-view" | "console" | "capabilities" | "revision-history" =
+    "app-view";
   #graphEditorRef: Ref<Editor> = createRef();
   #moduleEditorRef: Ref<ModuleEditor> = createRef();
-  #userInputRef: Ref<UserInput> = createRef();
 
   static styles = uiControllerStyles;
+
+  connectedCallback(): void {
+    super.connectedCallback();
+
+    const sideNavItem = globalThis.localStorage.getItem(SIDE_ITEM_KEY) as
+      | typeof this.sideNavItem
+      | null;
+
+    if (!sideNavItem) {
+      this.sideNavItem = "app-view";
+    } else {
+      this.sideNavItem = sideNavItem;
+    }
+  }
 
   editorRender = 0;
   protected willUpdate(changedProperties: PropertyValues): void {
     if (changedProperties.has("isShowingBoardActivityOverlay")) {
       this.editorRender++;
-    }
-
-    if (changedProperties.has("topGraphResult")) {
-      this.#lastEventPosition = 0;
     }
 
     if (changedProperties.has("selectionState")) {
@@ -312,10 +335,6 @@ export class UI extends LitElement {
     const lastRun = this.runs?.[1] ?? null;
     const events = run?.events ?? [];
     const eventPosition = events.length - 1;
-
-    if (this.popoutExpanded) {
-      this.#lastEventPosition = this.runs?.[0]?.events.length ?? 0;
-    }
 
     const graphEditor = guard(
       [
@@ -688,7 +707,7 @@ export class UI extends LitElement {
         }}>Console</button>
         <button ?disabled=${this.sideNavItem === "revision-history"} @click=${() => {
           this.sideNavItem = "revision-history";
-        }}>Revision history</button>
+        }}>History</button>
         </div>
         <div id="side-nav-content">
         ${sideNavItem}

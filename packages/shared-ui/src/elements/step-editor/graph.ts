@@ -425,7 +425,14 @@ export class Graph extends Box {
       }
 
       graphNode.active =
-        topGraphResult?.currentNode?.descriptor.id === node.descriptor.id;
+        topGraphResult?.currentNode?.descriptor.id === node.descriptor.id
+          ? "current"
+          : topGraphResult?.log.findIndex(
+                (l) =>
+                  l.type === "node" && l.descriptor.id === node.descriptor.id
+              ) !== -1
+            ? "post"
+            : "pre";
     }
 
     for (const edge of this.#edges) {
