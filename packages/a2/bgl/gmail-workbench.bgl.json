@@ -18,7 +18,7 @@
         "description": {
           "parts": [
             {
-              "text": "Read the latest emails using {{\"type\":\"tool\",\"path\":\"file://bgl/gmail.bgl.json#module:get-emails\",\"title\":\"Get emails\"}} and provide a summary as Kermit the Frog"
+              "text": "Read the latest emails using {{\"type\":\"tool\",\"path\":\"file://bgl/gmail.bgl.json#module:get-emails|connectors/a586d0cb-080d-4d10-9cae-b0bbd5f8eb16\",\"title\":\"GMail: Get emails\"}} and provide a summary in the style of Kermit the Frog."
             }
           ],
           "role": "user"
@@ -56,6 +56,24 @@
     "parameters": {}
   },
   "assets": {
+    "connectors/a586d0cb-080d-4d10-9cae-b0bbd5f8eb16": {
+      "data": [
+        {
+          "parts": [
+            {
+              "json": {
+                "url": "file://bgl/gmail.bgl.json",
+                "configuration": {}
+              }
+            }
+          ]
+        }
+      ],
+      "metadata": {
+        "title": "GMail",
+        "type": "connector"
+      }
+    },
     "@@thumbnail": {
       "metadata": {
         "title": "Thumbnail",

@@ -52,10 +52,8 @@ const THUMBNAIL_KEY = "@@thumbnail";
  * section of the "@" menu.
  */
 function isTool(entry: GraphStoreEntry) {
-  const isPartOfConnector = !!entry.mainGraph.tags?.includes("connector");
   return (
     !entry.updating &&
-    !isPartOfConnector &&
     entry.tags?.includes("tool") &&
     !!entry.url &&
     entry?.tags.includes("quick-access") &&
@@ -251,19 +249,63 @@ class ReactiveProject implements ProjectInternal {
     updateMap(this.myTools, tools);
   }
 
+  /**
+   * Must run **after** #updateGraphAssets.
+   */
   #updateTools() {
     const graphs = this.#store.graphs();
-    const tools = graphs.filter(isTool).map<[string, Tool]>((entry) => [
-      entry.url!,
-      {
-        url: entry.url!,
-        title: entry.title,
-        description: entry.description,
-        order: entry.order || Number.MAX_SAFE_INTEGER,
-        icon: entry.icon,
-      },
-    ]);
+    const toolGraphEntries = graphs.filter(isTool);
+
+    const tools: [string, Tool][] = [];
+
+    for (const entry of toolGraphEntries) {
+      const tool = toTool(entry);
+      const isPartOfConnector = !!entry.mainGraph.tags?.includes("connector");
+      if (!isPartOfConnector) {
+        tools.push(tool);
+      }
+    }
+
+    // Create product: component tool x component instance
+    for (const graphAsset of this.graphAssets.values()) {
+      const { path, connector, metadata: { title } = {} } = graphAsset;
+      if (!connector) continue;
+
+      for (const tool of connector.tools || []) {
+        const connectorPath = makeConnectorToolPath(path, tool);
+        tools.push([connectorPath, instancify(tool, connectorPath, title)]);
+      }
+    }
+
     updateMap(this.tools, tools);
+
+    function makeConnectorToolPath(path: string, tool: Tool) {
+      return `${tool.url}|${path}`;
+    }
+
+    /**
+     *
+     * Imbue the tool with the connector instance information.
+     *
+     */
+    function instancify(tool: Tool, path: string, title?: string): Tool {
+      title =
+        (title ? `${title}: ${tool.title}` : tool.title) || "Unnamed tool";
+      return { ...tool, url: path, title };
+    }
+
+    function toTool(entry: GraphStoreEntry): [string, Tool] {
+      return [
+        entry.url!,
+        {
+          url: entry.url!,
+          title: entry.title,
+          description: entry.description,
+          order: entry.order || Number.MAX_SAFE_INTEGER,
+          icon: entry.icon,
+        },
+      ];
+    }
   }
 
   #updateComponents() {
@@ -395,7 +437,7 @@ function updateMap<T extends SignalMap>(
 }
 
 function createToolList(exports: MainGraphStoreExport[]) {
-  exports.filter((e) =>
+  return exports.filter((e) =>
     noneOfTags(e.tags, [
       "connector-configure",
       "connector-load",

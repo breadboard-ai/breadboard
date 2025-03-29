@@ -186,7 +186,7 @@ export type Connector = {
   description?: string;
   load: boolean;
   save: boolean;
-  tools: Tool;
+  tools: Tool[];
 };
 
 export type Components = Map<NodeIdentifier, Component>;
