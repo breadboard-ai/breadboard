@@ -1,0 +1,89 @@
+{
+  "title": "Gmail",
+  "description": "Provides tools to communicate with GMail",
+  "version": "0.0.1",
+  "nodes": [],
+  "edges": [],
+  "metadata": {
+    "icon": "generative",
+    "visual": {
+      "presentation": {
+        "themes": {
+          "f65ea9aa-b8c6-4c80-9667-a08c4f631013": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "f65ea9aa-b8c6-4c80-9667-a08c4f631013"
+      }
+    },
+    "userModified": true,
+    "tags": [
+      "connector",
+      "connector-singleton",
+      "published"
+    ],
+    "comments": [
+      {
+        "id": "comment-c74afa15",
+        "text": "Intentionally Left Blank",
+        "metadata": {
+          "title": "Comment",
+          "visual": {
+            "x": 281,
+            "y": 501,
+            "collapsed": "expanded",
+            "outputHeight": 0
+          }
+        }
+      }
+    ]
+  },
+  "modules": {
+    "configurator": {
+      "code": "/**\n * @fileoverview Add a description for your module here.\n */\nimport { err, ok } from \"./a2/utils\";\nimport read from \"@read\";\nimport write from \"@write\";\nexport { invoke as default, describe };\nfunction cx(json) {\n    return { context: [{ parts: [{ json }] }] };\n}\nconst invoke = createConfiguratorInvoke({\n    title: \"GMail\",\n    initialize: async () => {\n        return { title: \"GMail\", configuration: {} };\n    },\n});\nfunction createConfiguratorInvoke(configurator) {\n    return async function ({ context, }) {\n        const inputs = context?.at(-1)?.parts?.at(0)?.json;\n        if (!inputs || !(\"stage\" in inputs)) {\n            return err(`Can't configure ${configurator.title || \"\"} connector: invalid input structure`);\n        }\n        if (inputs.stage === \"initialize\") {\n            const initializing = await configurator.initialize(inputs);\n            if (!ok(initializing))\n                return initializing;\n            return cx(initializing);\n        }\n        else if (inputs.stage === \"read\") {\n            const reading = await configurator.read?.(inputs);\n            if (!reading) {\n                return cx({\n                    schema: {},\n                    values: {},\n                });\n            }\n            if (!ok(reading))\n                return reading;\n            return cx(reading);\n        }\n        else if (inputs.stage === \"write\") {\n            const writing = await configurator.write?.(inputs);\n            if (!writing)\n                return cx({});\n            if (!ok(writing))\n                return writing;\n            return cx({});\n        }\n        return err(`Unknown stage: ${inputs[\"stage\"]}`);\n    };\n}\nasync function describe() {\n    return {\n        title: \"Configure a Temp File\",\n        description: \"Helps configure a new temp file or edit configuration of an existing temp file\",\n        metadata: {\n            tags: [\"connector-configure\"],\n        },\n        inputSchema: {\n            type: \"object\",\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context out\",\n                },\n            },\n        },\n    };\n}\n",
+      "metadata": {
+        "title": "configurator",
+        "source": {
+          "code": "/**\n * @fileoverview Add a description for your module here.\n */\n\nimport { err, ok } from \"./a2/utils\";\nimport read from \"@read\";\nimport write from \"@write\";\n\nexport { invoke as default, describe };\n\ntype InitializeInput = {\n  stage: \"initialize\";\n  id: string;\n};\n\ntype InitializeOutput<C extends Record<string, unknown>> = {\n  title: string;\n  configuration: C;\n};\n\ntype ReadInput<C extends Record<string, unknown>> = {\n  stage: \"read\";\n  id: string;\n  configuration: C;\n};\n\ntype ReadOutput<V extends Record<string, unknown>> = {\n  schema: Schema;\n  values: V;\n};\n\ntype WriteInput<V extends Record<string, unknown>> = {\n  stage: \"write\";\n  id: string;\n  values: V;\n};\n\ntype WriteOutput = {};\n\ntype Inputs<\n  C extends Record<string, unknown>,\n  V extends Record<string, unknown>,\n> = {\n  context?: {\n    parts?: { json?: InitializeInput | ReadInput<C> | WriteInput<V> }[];\n  }[];\n};\n\ntype Outputs<\n  C extends Record<string, unknown>,\n  V extends Record<string, unknown>,\n> = {\n  context: {\n    parts: { json: InitializeOutput<C> | ReadOutput<V> | WriteOutput }[];\n  }[];\n};\n\nfunction cx<\n  C extends Record<string, unknown>,\n  V extends Record<string, unknown>,\n>(json: InitializeOutput<C> | ReadOutput<V> | WriteOutput): Outputs<C, V> {\n  return { context: [{ parts: [{ json }] }] };\n}\n\ntype Configurator<\n  C extends Record<string, unknown>,\n  V extends Record<string, unknown>,\n> = {\n  title: string;\n  initialize: (input: InitializeInput) => Promise<Outcome<InitializeOutput<C>>>;\n  read?: (input: ReadInput<C>) => Promise<Outcome<ReadOutput<V>>>;\n  write?: (input: WriteInput<V>) => Promise<Outcome<WriteOutput>>;\n};\n\nconst invoke = createConfiguratorInvoke({\n  title: \"GMail\",\n  initialize: async () => {\n    return { title: \"GMail\", configuration: {} };\n  },\n});\n\nfunction createConfiguratorInvoke<\n  C extends Record<string, unknown> = Record<string, unknown>,\n  V extends Record<string, unknown> = Record<string, unknown>,\n>(configurator: Configurator<C, V>) {\n  return async function ({\n    context,\n  }: Inputs<C, V>): Promise<Outcome<Outputs<C, V>>> {\n    const inputs = context?.at(-1)?.parts?.at(0)?.json;\n    if (!inputs || !(\"stage\" in inputs)) {\n      return err(\n        `Can't configure ${configurator.title || \"\"} connector: invalid input structure`\n      );\n    }\n\n    if (inputs.stage === \"initialize\") {\n      const initializing = await configurator.initialize(inputs);\n      if (!ok(initializing)) return initializing;\n      return cx(initializing);\n    } else if (inputs.stage === \"read\") {\n      const reading = await configurator.read?.(inputs);\n      if (!reading) {\n        return cx({\n          schema: {},\n          values: {},\n        });\n      }\n      if (!ok(reading)) return reading;\n      return cx(reading);\n    } else if (inputs.stage === \"write\") {\n      const writing = await configurator.write?.(inputs);\n      if (!writing) return cx({});\n      if (!ok(writing)) return writing;\n      return cx({});\n    }\n    return err(`Unknown stage: ${inputs[\"stage\"]}`);\n  };\n}\n\nasync function describe() {\n  return {\n    title: \"Configure a Temp File\",\n    description:\n      \"Helps configure a new temp file or edit configuration of an existing temp file\",\n    metadata: {\n      tags: [\"connector-configure\"],\n    },\n    inputSchema: {\n      type: \"object\",\n    } satisfies Schema,\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context out\",\n        },\n      },\n    } satisfies Schema,\n  };\n}\n",
+          "language": "typescript"
+        },
+        "description": "Add a description for your module here.",
+        "runnable": false
+      }
+    },
+    "get-emails": {
+      "code": "/**\n * @fileoverview Gets a list of emails\n */\nimport {} from \"@describe\";\nimport { err } from \"./a2/utils\";\nimport fetch from \"@fetch\";\nimport secrets from \"@secrets\";\nfunction maybeExtractError(e) {\n    try {\n        const parsed = JSON.parse(e);\n        return parsed.error.message;\n    }\n    catch (error) {\n        return e;\n    }\n}\nimport { ok } from \"./a2/utils\";\nexport { invoke as default, describe };\nasync function invoke() {\n    // Get an authentication token.\n    const key = \"connection:$sign-in\";\n    const token = (await secrets({ keys: [key] }))[key];\n    // Call the API.\n    const url = \"https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeStep\";\n    const fetchResult = await fetch({\n        url: url,\n        method: \"POST\",\n        headers: {\n            \"Content-Type\": \"application/json\",\n            Authorization: `Bearer ${token}`,\n        },\n        body: {\n            planStep: {\n                stepName: \"get_emails\",\n                modelApi: \"get_emails\",\n                output: \"emails\",\n                inputParameters: [],\n                isListOutput: false,\n            },\n            app_integration_token: token,\n        },\n    });\n    let $error = \"Unknown error\";\n    if (!ok(fetchResult)) {\n        const { status, $error: errObject } = fetchResult;\n        console.warn($error);\n        if (!status) {\n            // This is not an error response, presume fatal error.\n            return { $error };\n        }\n        $error = maybeExtractError(errObject);\n        return { $error };\n    }\n    const response = fetchResult.response;\n    const data = response.executionOutputs[\"get_emails\"].chunks.at(0)?.data;\n    if (!data) {\n        return err(`Invalid response`);\n    }\n    const emails = atob(data);\n    return { emails };\n}\nasync function describe() {\n    return {\n        title: \"Get emails\",\n        description: \"Gets a list of latest 10 unread emails\",\n        metadata: {\n            icon: \"email\",\n            tags: [\"tool\"],\n        },\n        inputSchema: {\n            type: \"object\",\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                emails: {\n                    type: \"string\",\n                    title: \"Unread emails\",\n                },\n            },\n        },\n    };\n}\n",
+      "metadata": {
+        "title": "get-emails",
+        "source": {
+          "code": "/**\n * @fileoverview Gets a list of emails\n */\n\nimport { type DescribeOutputs } from \"@describe\";\nimport { err } from \"./a2/utils\";\nimport fetch from \"@fetch\";\nimport secrets from \"@secrets\";\n\ntype FetchErrorResponse = {\n  $error: string;\n  status: number;\n  statusText: string;\n  contentType: string;\n  responseHeaders: Record<string, string>;\n};\n\nfunction maybeExtractError(e: string): string {\n  try {\n    const parsed = JSON.parse(e);\n    return parsed.error.message;\n  } catch (error) {\n    return e;\n  }\n}\n\nimport { ok } from \"./a2/utils\";\n\nexport { invoke as default, describe };\n\ntype Chunk = {\n  mimetype: string;\n  data: string;\n};\n\nexport type Content = {\n  chunks: Chunk[];\n};\n\nexport interface ContentMap {\n  [key: string]: Content;\n}\n\nexport interface ExecuteStepResponse {\n  executionOutputs: ContentMap;\n}\n\nasync function invoke() {\n  // Get an authentication token.\n  const key = \"connection:$sign-in\";\n  const token = (await secrets({ keys: [key] }))[key];\n  // Call the API.\n  const url =\n    \"https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeStep\";\n  const fetchResult = await fetch({\n    url: url,\n    method: \"POST\",\n    headers: {\n      \"Content-Type\": \"application/json\",\n      Authorization: `Bearer ${token}`,\n    },\n    body: {\n      planStep: {\n        stepName: \"get_emails\",\n        modelApi: \"get_emails\",\n        output: \"emails\",\n        inputParameters: [],\n        isListOutput: false,\n      },\n      app_integration_token: token,\n    },\n  });\n  let $error: string = \"Unknown error\";\n  if (!ok(fetchResult)) {\n    const { status, $error: errObject } = fetchResult as FetchErrorResponse;\n    console.warn($error);\n    if (!status) {\n      // This is not an error response, presume fatal error.\n      return { $error };\n    }\n    $error = maybeExtractError(errObject);\n    return { $error };\n  }\n  const response = fetchResult.response as ExecuteStepResponse;\n  const data = response.executionOutputs[\"get_emails\"].chunks.at(0)?.data;\n  if (!data) {\n    return err(`Invalid response`);\n  }\n\n  const emails = atob(data);\n\n  return { emails };\n}\n\nasync function describe() {\n  return {\n    title: \"Get emails\",\n    description: \"Gets a list of latest 10 unread emails\",\n    metadata: {\n      icon: \"email\",\n      tags: [\"tool\"],\n    },\n    inputSchema: {\n      type: \"object\",\n    } satisfies Schema,\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        emails: {\n          type: \"string\",\n          title: \"Unread emails\",\n        },\n      },\n    } satisfies Schema,\n  } satisfies DescribeOutputs;\n}\n",
+          "language": "typescript"
+        },
+        "description": "Gets a list of emails",
+        "runnable": false
+      }
+    }
+  },
+  "imports": {
+    "a2": {
+      "url": "./a2.bgl.json"
+    }
+  },
+  "exports": [
+    "#module:configurator",
+    "#module:get-emails"
+  ]
+}

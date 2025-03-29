@@ -728,6 +728,15 @@ export type InspectableGraphCache = {
 
 export type MainGraphIdentifier = UUID;
 
+export type MainGraphStoreEntry = NodeHandlerMetadata & {
+  id: MainGraphIdentifier;
+  exports: MainGraphStoreExport[];
+  exportTags: string[];
+  updating: boolean;
+};
+
+export type MainGraphStoreExport = NodeHandlerMetadata & { updating: boolean };
+
 export type GraphStoreEntry = NodeHandlerMetadata & {
   mainGraph: NodeHandlerMetadata & { id: MainGraphIdentifier };
   updating: boolean;
@@ -765,7 +774,7 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> &
 
     get(mainGraphId: MainGraphIdentifier): MutableGraph | undefined;
 
-    mainGraphs(): GraphStoreEntry[];
+    mainGraphs(): MainGraphStoreEntry[];
 
     graphs(): GraphStoreEntry[];
     /**

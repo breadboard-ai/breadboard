@@ -10,16 +10,12 @@ import {
   EditTransform,
   EditTransformResult,
   hash,
+  ok,
 } from "@google-labs/breadboard";
 import { ConnectorConfiguration } from "../connectors/types";
+import { configFromData } from "../connectors/util";
 
 export { EditConnector };
-
-type ConfigLLMContentArray = {
-  parts: {
-    json: ConnectorConfiguration;
-  }[];
-}[];
 
 class EditConnector implements EditTransform {
   constructor(
@@ -28,9 +24,8 @@ class EditConnector implements EditTransform {
   ) {}
 
   #sameConfig(data: NodeValue) {
-    const config = (data as ConfigLLMContentArray).at(-1)?.parts.at(0)
-      ?.json as ConnectorConfiguration;
-    if (!config) return true;
+    const config = configFromData(data);
+    if (!ok(config)) return true;
 
     const { url, configuration } = config;
 

@@ -471,7 +471,10 @@ export class RemoteBoardServer implements BoardServer, RemoteConnector {
       const owner = project.metadata.owner;
       if (
         !project.metadata?.tags ||
-        !project.metadata?.tags.includes("component")
+        !(
+          project.metadata?.tags.includes("component") ||
+          project.metadata?.tags.includes("connector")
+        )
       ) {
         continue;
       }

@@ -15,7 +15,6 @@ import { customElement, property, state } from "lit/decorators.js";
 import { Component, FastAccess, GraphAsset, Tool } from "../../state";
 import {
   GraphIdentifier,
-  LLMContent,
   NodeIdentifier,
   ParameterMetadata,
 } from "@breadboard-ai/types";
@@ -155,11 +154,11 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
     #assets menu button.text {
       background-image: var(--bb-icon-text);
-    } 
+    }
 
     #assets menu button.video {
       background-image: var(--bb-icon-add-video);
-    }     
+    }
 
     #parameters {
       & #create-new-param {
@@ -260,7 +259,9 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
   protected willUpdate(): void {
     const graphId = this.graphId || "";
-    let assets = [...(this.state?.graphAssets.values() || [])];
+    let assets = [...(this.state?.graphAssets.values() || [])].filter(
+      (asset) => !asset.connector || asset.connector.load
+    );
     let tools = [
       ...(this.state?.tools.values() || []),
       ...(this.state?.myTools.values() || []),
@@ -539,7 +540,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
           ? html` <menu>
               ${this.#items.assets.map((asset) => {
                 const classesDict: Record<string, boolean> = {
-                 active: idx === this.selectedIndex,
+                  active: idx === this.selectedIndex,
                 };
 
                 const assetType = getAssetType(getMimeType(asset.data));

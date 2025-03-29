@@ -105,6 +105,11 @@ export type Organizer = {
 
   graphUrl: URL | null;
 
+  // This double-plumbing is inelegant -- it just calls the
+  // method by the same name in Project.
+  // TODO: Make this more elegant.
+  connectorInstanceExists(url: string): boolean;
+
   addGraphAsset(asset: GraphAsset): Promise<Outcome<void>>;
   removeGraphAsset(path: AssetPath): Promise<Outcome<void>>;
   changeGraphAssetMetadata(
@@ -152,6 +157,7 @@ export type GraphAsset = {
   metadata?: AssetMetadata;
   data: LLMContent[];
   path: AssetPath;
+  connector?: Connector;
 };
 
 export type GeneratedAssetIdentifier = string;
@@ -183,6 +189,10 @@ export type Connector = {
   icon?: string;
   title: string;
   description?: string;
+  singleton: boolean;
+  load: boolean;
+  save: boolean;
+  tools: Tool[];
 };
 
 export type Components = Map<NodeIdentifier, Component>;
@@ -192,7 +202,6 @@ export type Components = Map<NodeIdentifier, Component>;
  */
 export type FastAccess = {
   graphAssets: Map<AssetPath, GraphAsset>;
-  generatedAssets: Map<GeneratedAssetIdentifier, GeneratedAsset>;
   tools: Map<string, Tool>;
   myTools: Map<string, Tool>;
   components: Map<GraphIdentifier, Components>;
@@ -221,4 +230,5 @@ export type ProjectInternal = Project & {
     graphId: GraphIdentifier,
     id: NodeIdentifier
   ): Outcome<{ id: PortIdentifier; title: string }>;
+  connectorInstanceExists(url: string): boolean;
 };

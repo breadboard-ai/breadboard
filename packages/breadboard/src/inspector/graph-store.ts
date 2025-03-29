@@ -38,6 +38,8 @@ import {
   InspectableGraph,
   InspectableGraphOptions,
   MainGraphIdentifier,
+  MainGraphStoreEntry,
+  MainGraphStoreExport,
   MutableGraph,
   MutableGraphStore,
 } from "./types.js";
@@ -151,7 +153,7 @@ class GraphStore
     };
   }
 
-  mainGraphs(): GraphStoreEntry[] {
+  mainGraphs(): MainGraphStoreEntry[] {
     const graphs = [...this.#mutables.entries()].map(
       ([mainGraphId, snapshot]) => {
         const current = snapshot.current();
@@ -168,8 +170,8 @@ class GraphStore
         });
         return {
           ...mainGraphMetadata,
+          ...getExports(current),
           updating,
-          mainGraph: mainGraphMetadata,
         };
       }
     );
@@ -575,4 +577,22 @@ function entryFromExport(
       updating,
     });
   }
+}
+
+function getExports(mutable: MutableGraph): {
+  exports: MainGraphStoreExport[];
+  exportTags: string[];
+} {
+  const result: MainGraphStoreExport[] = [];
+  const tags: Set<string> = new Set();
+  const { exports = [] } = mutable.graph;
+
+  for (const id of exports) {
+    const entry = entryFromExport(mutable, id, mutable.id);
+    if (!entry) continue;
+    result.push(entry);
+    (entry.tags || []).forEach((tag) => tags.add(tag));
+  }
+
+  return { exports: result, exportTags: Array.from(tags.values()) };
 }

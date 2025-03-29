@@ -11,9 +11,8 @@ import {
 } from "@breadboard-ai/types";
 import {
   Components,
+  Connector,
   FastAccess,
-  GeneratedAsset,
-  GeneratedAssetIdentifier,
   GraphAsset,
   ProjectInternal,
   Tool,
@@ -27,14 +26,11 @@ class ReactiveFastAccess implements FastAccess {
   constructor(
     project: ProjectInternal,
     public readonly graphAssets: Map<AssetPath, GraphAsset>,
-    public readonly generatedAssets: Map<
-      GeneratedAssetIdentifier,
-      GeneratedAsset
-    >,
     public readonly tools: Map<string, Tool>,
     public readonly myTools: Map<string, Tool>,
     public readonly components: Map<GraphIdentifier, Components>,
-    public readonly parameters: Map<string, ParameterMetadata>
+    public readonly parameters: Map<string, ParameterMetadata>,
+    public readonly connectors: Map<string, Connector>
   ) {
     this.#project = project;
   }
