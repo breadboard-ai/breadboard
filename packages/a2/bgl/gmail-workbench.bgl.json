@@ -18,7 +18,7 @@
         "description": {
           "parts": [
             {
-              "text": "Read the latest emails using {{\"type\":\"tool\",\"path\":\"file://bgl/gmail.bgl.json#module:get-emails|connectors/a586d0cb-080d-4d10-9cae-b0bbd5f8eb16\",\"title\":\"GMail: Get emails\"}} and provide a summary in the style of Kermit the Frog."
+              "text": "Read the latest emails using {{\"type\":\"tool\",\"path\":\"file://bgl/gmail.bgl.json#module:get-emails|connectors/233940d9-d9c8-4f24-b2d8-c26ccc78678a\",\"title\":\"GMail: Get emails\"}} and provide a summary in the style of Kermit the Frog."
             }
           ],
           "role": "user"
@@ -56,7 +56,7 @@
     "parameters": {}
   },
   "assets": {
-    "connectors/a586d0cb-080d-4d10-9cae-b0bbd5f8eb16": {
+    "connectors/233940d9-d9c8-4f24-b2d8-c26ccc78678a": {
       "data": [
         {
           "parts": [

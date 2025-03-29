@@ -17,7 +17,7 @@ import {
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { SignalWatcher } from "@lit-labs/signals";
-import { Connector, GraphAsset, Organizer } from "../../state";
+import { GraphAsset, Organizer } from "../../state";
 import {
   AssetMetadata,
   AssetPath,
@@ -758,7 +758,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
           title: "YouTube",
           name: "youtube",
         },
-        ...createConnectorActions(this.state?.connectors),
+        ...createConnectorActions(this.state),
       ];
 
       if (this.showGDrive) {
@@ -1006,9 +1006,6 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                   : html`<div id="no-assets">
                       ${Strings.from("LABEL_NO_ASSETS")}
                     </div>`}
-
-                <h3>Connectors</h3>
-                <div id="no-assets">Connector instances go here</div>
 
                 <h3>Parameters</h3>
                 ${parameters && parameters.size > 0
@@ -1422,16 +1419,20 @@ function toLLMContentArray(text: string): NodeValue {
   return c as NodeValue;
 }
 
-function createConnectorActions(
-  connectors?: Map<string, Connector>
-): OverflowAction[] {
-  if (!connectors) return [];
-  return [...connectors.values()].map((connector) => {
-    return {
-      title: connector.title,
-      name: "connector",
-      icon: connector.icon || "content-add",
-      value: connector.url,
-    };
-  });
+function createConnectorActions(organizer: Organizer | null): OverflowAction[] {
+  if (!organizer) return [];
+  return [...organizer.connectors.values()]
+    .filter(
+      (connector) =>
+        !connector.singleton ||
+        !organizer.connectorInstanceExists(connector.url)
+    )
+    .map((connector) => {
+      return {
+        title: connector.title,
+        name: "connector",
+        icon: connector.icon || "content-add",
+        value: connector.url,
+      };
+    });
 }

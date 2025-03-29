@@ -573,13 +573,14 @@
 			"type": "object"
 		},
 		"GraphTag": {
-			"description": "A tag that can be associated with a graph.\n- `published`: The graph is published (as opposed to a draft). It may be    used in production and shared with others.\n- `tool`: The graph is intended to be a tool.\n- `experimental`: The graph is experimental and may not be stable.\n- `component`: The graph is intended to be a component.\n- `core`: The graph represents a component that provides \"core\"    functionality, like control flow, input/output, etc.\n- `generative`: The graph represents a component that uses an LLM\n- `quick-access`: The graph represents a component that is featured in quick    access menu.\n- `private`: Accessing the graph requires authentication (like a server    API key)\n- `connector`: The graph represents a connector.\n- `connector-configure`: The graph provides configuration of a connector.\n- `connector-load`: The graph provides loading capability of a connector.\n- `connector-save`: The graph provides saving capability of a connector.",
+			"description": "A tag that can be associated with a graph.\n- `published`: The graph is published (as opposed to a draft). It may be    used in production and shared with others.\n- `tool`: The graph is intended to be a tool.\n- `experimental`: The graph is experimental and may not be stable.\n- `component`: The graph is intended to be a component.\n- `core`: The graph represents a component that provides \"core\"    functionality, like control flow, input/output, etc.\n- `generative`: The graph represents a component that uses an LLM\n- `quick-access`: The graph represents a component that is featured in quick    access menu.\n- `private`: Accessing the graph requires authentication (like a server    API key)\n- `connector`: The graph represents a connector.\n- `connector-singleton`: This connector is a singleton: only one instance    can be created.\n- `connector-configure`: The graph provides configuration of a connector.\n- `connector-load`: The graph provides loading capability of a connector.\n- `connector-save`: The graph provides saving capability of a connector.",
 			"enum": [
 				"component",
 				"connector",
 				"connector-configure",
 				"connector-load",
 				"connector-save",
+				"connector-singleton",
 				"core",
 				"deprecated",
 				"experimental",

@@ -291,6 +291,8 @@ export type GraphInlineMetadata = {
  * - `private`: Accessing the graph requires authentication (like a server
  *    API key)
  * - `connector`: The graph represents a connector.
+ * - `connector-singleton`: This connector is a singleton: only one instance
+ *    can be created.
  * - `connector-configure`: The graph provides configuration of a connector.
  * - `connector-load`: The graph provides loading capability of a connector.
  * - `connector-save`: The graph provides saving capability of a connector.
@@ -306,6 +308,7 @@ export type GraphTag =
   | "quick-access"
   | "private"
   | "connector"
+  | "connector-singleton"
   | "connector-configure"
   | "connector-load"
   | "connector-save";

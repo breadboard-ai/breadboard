@@ -189,4 +189,8 @@ class ReactiveOrganizer implements Organizer {
     this.stage = "free";
     // TODO: Do clean up work.
   }
+
+  connectorInstanceExists(url: string): boolean {
+    return this.#project.connectorInstanceExists(url);
+  }
 }

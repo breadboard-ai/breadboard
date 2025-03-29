@@ -105,6 +105,11 @@ export type Organizer = {
 
   graphUrl: URL | null;
 
+  // This double-plumbing is inelegant -- it just calls the
+  // method by the same name in Project.
+  // TODO: Make this more elegant.
+  connectorInstanceExists(url: string): boolean;
+
   addGraphAsset(asset: GraphAsset): Promise<Outcome<void>>;
   removeGraphAsset(path: AssetPath): Promise<Outcome<void>>;
   changeGraphAssetMetadata(
@@ -184,6 +189,7 @@ export type Connector = {
   icon?: string;
   title: string;
   description?: string;
+  singleton: boolean;
   load: boolean;
   save: boolean;
   tools: Tool[];
@@ -224,4 +230,5 @@ export type ProjectInternal = Project & {
     graphId: GraphIdentifier,
     id: NodeIdentifier
   ): Outcome<{ id: PortIdentifier; title: string }>;
+  connectorInstanceExists(url: string): boolean;
 };

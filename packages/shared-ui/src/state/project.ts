@@ -87,6 +87,8 @@ class ReactiveProject implements ProjectInternal {
   #runtime: SideBoardRuntime;
   #boardServerFinder: BoardServerFinder;
   #editable?: EditableGraph;
+  #connectorInstances: Set<string> = new Set();
+
   readonly graphUrl: URL | null;
   readonly graphAssets: SignalMap<AssetPath, GraphAsset>;
 
@@ -346,6 +348,8 @@ class ReactiveProject implements ProjectInternal {
     const mutable = this.#store.get(this.#mainGraphId);
     if (!mutable) return;
 
+    this.#connectorInstances.clear();
+
     const { assets = {} } = mutable.graph;
     // Special-case the thumnail and splash so they doesn't show up.
     delete assets[THUMBNAIL_KEY];
@@ -363,6 +367,7 @@ class ReactiveProject implements ProjectInternal {
             const connector = this.connectors.get(config.url);
             if (connector) {
               graphAsset.connector = connector;
+              this.#connectorInstances.add(config.url);
             }
           }
         }
@@ -399,6 +404,7 @@ class ReactiveProject implements ProjectInternal {
       connectors.map((connector) => {
         const load = connector.exportTags.includes("connector-load");
         const save = connector.exportTags.includes("connector-save");
+        const singleton = connector.tags?.includes("connector-singleton");
         return [
           connector.url!,
           {
@@ -406,6 +412,7 @@ class ReactiveProject implements ProjectInternal {
             icon: connector.icon,
             title: connector.title,
             description: connector.description,
+            singleton,
             load,
             save,
             tools: createToolList(connector.exports),
@@ -413,6 +420,10 @@ class ReactiveProject implements ProjectInternal {
         ];
       })
     );
+  }
+
+  connectorInstanceExists(url: string): boolean {
+    return this.#connectorInstances.has(url);
   }
 }
 
