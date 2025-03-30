@@ -1,0 +1,521 @@
+{
+  "title": "GOAL Future Storm Workbench",
+  "description": "",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "874c53e0-cb00-4302-923d-784a6b9ec410",
+      "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+      "metadata": {
+        "title": "Generate Game World",
+        "visual": {
+          "x": -140,
+          "y": -360,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        },
+        "userModified": false,
+        "description": "Generates the initial game world including characters and key locations based on provided game rules, setting and main character. It creates detailed descriptions of characters and key locations including physical appearance and back stories."
+      },
+      "configuration": {
+        "description": {
+          "parts": [
+            {
+              "text": "Design the world for an adventure game that follow these rules:\n\n{{\"type\":\"asset\",\"path\":\"d8d3e0b2-776b-4f66-862f-32cab68247c4\",\"title\":\"Game Rules\"}}\n\nThe game setting is this:\n\n{{\"type\":\"asset\",\"path\":\"91efedd7-b8f6-47a9-8c3e-76c814a939f7\",\"title\":\"Setting\"}}\n\nThe player plays the following character:\n\n{{\"type\":\"asset\",\"path\":\"696d77c3-b853-44ae-9bcf-5cc8124cc962\",\"title\":\"Main Character\"}}\n\nExpand these into entire world:\n\n## Characters\nThe detailed descriptions of all characters that will be part of the game play. For each character:\n\n  - physical appearance: gender, age, eye/hair color, facial features, what they wear, etc.). These will be used for generating game assets, so make sure to be as detailed as possible to ensure visual consistency.\n  - back story. The back stories will be used to determine how the character will react in various situations. Use enneagram to provide anchoring personalities.\n\n### Key Locations\n\nThe detailed descriptions of key locations in the storyline. These will be used for generating game assets, so make sure to be as detailed as possible to ensure visual consistency."
+            }
+          ],
+          "role": "user"
+        }
+      }
+    },
+    {
+      "id": "30ab1870-fc3f-4fde-a2fa-4a826aa3ce9a",
+      "type": "file://bgl/save-outputs.bgl.json#module:main",
+      "metadata": {
+        "title": "Save Game World",
+        "visual": {
+          "x": 160,
+          "y": -360,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        },
+        "userModified": false,
+        "description": "Saves the generated world as an asset, making it available for subsequent steps in the game design process.  It connects to the 'World' asset."
+      },
+      "configuration": {
+        "connectors": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "{{\"type\":\"asset\",\"path\":\"connectors/55a0c5c5-e042-4f5d-8848-416cbd3fa1a3\",\"title\":\"World\"}}"
+            }
+          ]
+        },
+        "folio-mode": "Replace"
+      }
+    },
+    {
+      "id": "fd8d6a8a-d953-4589-a9c0-fd905285ace2",
+      "type": "file://bgl/go-over-list.bgl.json#module:main",
+      "metadata": {
+        "title": "Orchestrate Turns",
+        "visual": {
+          "x": 160,
+          "y": 140,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        },
+        "userModified": true
+      },
+      "configuration": {
+        "plan": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "You are a game turn orchestrator. You are provided with the intro story that sets up the gameplay.\n\nCreate a plan that is a set of turns for the game following these rules:\n\n{{\"type\":\"asset\",\"path\":\"d8d3e0b2-776b-4f66-862f-32cab68247c4\",\"title\":\"Game Rules\"}}\n\nThe turns you create must take the game to its conclusion.\n\nEach turn describes the situation that the player's character is in and a single preferred choice that the player should make to move the story along the plan. Invoke the game turn handler with these arguments. Don't generate other choices, they will be added by the game turn handler.\n\nSituation format: describe location, the characters involved and the decision they are facing.  \n\nAfter it completes, the game turn handler will include player's response, which may necessitate adjusting and extending the storyline. Depending on the player's choices, it may deviate wildly from the original storyline. Just keep gently nudging the story along the Hero's Journey arc.\n\nUse {{\"type\":\"tool\",\"path\":\"#ddad1c05-4efe-41d5-93b1-7374f367b8bd\",\"title\":\"Handle Game Turn\"}} to advance the turns.\n\n# Specific Game Information\n\nThe player is playing this character:\n\n{{\"type\":\"asset\",\"path\":\"696d77c3-b853-44ae-9bcf-5cc8124cc962\",\"title\":\"Main Character\"}}\n\nHere are the detailed descriptions of game characters and locations:\n\n{{\"type\":\"asset\",\"path\":\"connectors/55a0c5c5-e042-4f5d-8848-416cbd3fa1a3\",\"title\":\"World\"}}\n\nGame play storyline so far:\n\n{{\"type\":\"asset\",\"path\":\"connectors/9d6b8e2d-f834-4c04-a5f3-08f9a982afda\",\"title\":\"Game Memory\"}}"
+            }
+          ]
+        },
+        "strategy": "Think as I go"
+      }
+    },
+    {
+      "id": "27bddabc-2ab1-47ad-9585-0b5149d1c4fc",
+      "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+      "metadata": {
+        "title": "Generate Intro Story",
+        "visual": {
+          "x": 160,
+          "y": -200,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        },
+        "userModified": false,
+        "description": "Generates the intro story for the game based on the defined game world. It uses the game rules and world description to write the introductory narrative shown to the player."
+      },
+      "configuration": {
+        "description": {
+          "parts": [
+            {
+              "text": "You are a game designer, designing a game that follows these rules:\n\n{{\"type\":\"asset\",\"path\":\"d8d3e0b2-776b-4f66-862f-32cab68247c4\",\"title\":\"Game Rules\"}}\n\nBased on the provided description of the world, write the intro story for the game. This intro story will be shown to the player at the beginning of the game.\n\nDon't write the choices, they will be added at a later stage."
+            }
+          ],
+          "role": "user"
+        }
+      }
+    },
+    {
+      "id": "cb720319-61f8-4eca-8f1e-433038b1db1f",
+      "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+      "metadata": {
+        "title": "Summarize Intro",
+        "visual": {
+          "x": 480,
+          "y": -200
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "description": {
+          "parts": [
+            {
+              "text": "You are documenting the game play. Given the intro story, summarize it as a third-voice paragraph that would go into the game play memory ledger.\n\nThe format of summary is as follows:\n\n**Location**: [Location]\n[The summary]"
+            }
+          ],
+          "role": "user"
+        }
+      }
+    },
+    {
+      "id": "23ce9052-125e-42f5-8653-2536d72afed0",
+      "type": "file://bgl/save-outputs.bgl.json#module:main",
+      "metadata": {
+        "title": "Save Outputs",
+        "visual": {
+          "x": 480,
+          "y": 140
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "connectors": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "{{\"type\":\"asset\",\"path\":\"connectors/9d6b8e2d-f834-4c04-a5f3-08f9a982afda\",\"title\":\"Game Memory\"}}"
+            }
+          ]
+        },
+        "folio-mode": "Replace"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "874c53e0-cb00-4302-923d-784a6b9ec410",
+      "to": "30ab1870-fc3f-4fde-a2fa-4a826aa3ce9a",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "30ab1870-fc3f-4fde-a2fa-4a826aa3ce9a",
+      "to": "27bddabc-2ab1-47ad-9585-0b5149d1c4fc",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "27bddabc-2ab1-47ad-9585-0b5149d1c4fc",
+      "to": "cb720319-61f8-4eca-8f1e-433038b1db1f",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "cb720319-61f8-4eca-8f1e-433038b1db1f",
+      "to": "23ce9052-125e-42f5-8653-2536d72afed0",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "23ce9052-125e-42f5-8653-2536d72afed0",
+      "to": "fd8d6a8a-d953-4589-a9c0-fd905285ace2",
+      "out": "context",
+      "in": "context"
+    }
+  ],
+  "metadata": {
+    "visual": {
+      "presentation": {
+        "themes": {
+          "39239b49-62d0-4182-b919-924c4db67941": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "39239b49-62d0-4182-b919-924c4db67941"
+      }
+    },
+    "userModified": true,
+    "tags": [],
+    "parameters": {
+      "situation": {
+        "title": "Situation",
+        "usedIn": []
+      },
+      "expected-response": {
+        "title": "Expected Response",
+        "usedIn": []
+      },
+      "turn": {
+        "title": "Turn",
+        "usedIn": []
+      }
+    }
+  },
+  "assets": {
+    "696d77c3-b853-44ae-9bcf-5cc8124cc962": {
+      "data": [
+        {
+          "parts": [
+            {
+              "text": "Storm, an orphan who lives at the resistance base of operations."
+            }
+          ],
+          "role": "user"
+        }
+      ],
+      "metadata": {
+        "title": "Main Character",
+        "type": "content"
+      }
+    },
+    "91efedd7-b8f6-47a9-8c3e-76c814a939f7": {
+      "data": [
+        {
+          "parts": [
+            {
+              "text": "The year is 2235. Alien invasion ravaged Earth. After a devastating war, all governments submitted to the rule of the aliens. Despite the reign of terror, bands of resistance fighters continue to strike at the aliens."
+            }
+          ],
+          "role": "user"
+        }
+      ],
+      "metadata": {
+        "title": "Setting",
+        "type": "content"
+      }
+    },
+    "d8d3e0b2-776b-4f66-862f-32cab68247c4": {
+      "data": [
+        {
+          "parts": [
+            {
+              "text": "This is a turn-based game that goes like this:\n\n- the player is playing the character\n- at the start of each turn, the game offers a description of the current situation, presented in second voice, and offers four choices that the player needs to make\n- the player makes changes\n- the game proceeds to next turn until there are no more turns left\n\nEven though the next turn may change based on the player's choices, the turns must follow Hero's Journey story arc as the underlying framing of the game story."
+            }
+          ],
+          "role": "user"
+        }
+      ],
+      "metadata": {
+        "title": "Game Rules",
+        "type": "content"
+      }
+    },
+    "connectors/55a0c5c5-e042-4f5d-8848-416cbd3fa1a3": {
+      "data": [
+        {
+          "parts": [
+            {
+              "json": {
+                "url": "file://bgl/folio.bgl.json",
+                "configuration": {}
+              }
+            }
+          ]
+        }
+      ],
+      "metadata": {
+        "title": "World",
+        "type": "connector"
+      }
+    },
+    "connectors/9d6b8e2d-f834-4c04-a5f3-08f9a982afda": {
+      "data": [
+        {
+          "parts": [
+            {
+              "json": {
+                "url": "file://bgl/folio.bgl.json",
+                "configuration": {}
+              }
+            }
+          ]
+        }
+      ],
+      "metadata": {
+        "title": "Game Memory",
+        "type": "connector"
+      }
+    },
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI1Mi41OCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMzAuODIiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIyMi4yOSIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KPHJlY3QgeD0iNDUuNTciCiAgICAgICAgICAgICAgICAgICAgeT0iNTIuNTgiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjMwLjgyIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMjIuMjkiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyMGEyMDIiIC8+CjxyZWN0IHg9IjQ1LjU3IgogICAgICAgICAgICAgICAgICAgIHk9IjExMS44NiIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMzAuODIiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIyMi4yOSIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzJlOGJlOCIgLz4KPHJlY3QgeD0iNDUuNTciCiAgICAgICAgICAgICAgICAgICAgeT0iNzEuNTUiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjMwLjgyIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMjIuMjkiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CjxyZWN0IHg9IjgzLjUxIgogICAgICAgICAgICAgICAgICAgIHk9IjcxLjU1IgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSIzMC44MiIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjExLjg2IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgo8cmVjdCB4PSI4My41MSIKICAgICAgICAgICAgICAgICAgICB5PSIxMTEuODYiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjMwLjgyIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTEuODYiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyMGEyMDIiIC8+CiAgICAgIDxyZWN0IHg9IjEzNS42NyIKICAgICAgICAgICAgICAgICAgICB5PSI1NC45NSIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMzAuODIiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIyMi4yOSIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KPHJlY3QgeD0iMTczLjYxIgogICAgICAgICAgICAgICAgICAgIHk9IjEzNS41NyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMzAuODIiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIxMS44NiIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KPHJlY3QgeD0iMTczLjYxIgogICAgICAgICAgICAgICAgICAgIHk9IjExNC4yMyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMzAuODIiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIxMS44NiIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KPHJlY3QgeD0iMTczLjYxIgogICAgICAgICAgICAgICAgICAgIHk9Ijk1LjI2IgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSIzMC44MiIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjExLjg2IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMjBhMjAyIiAvPgo8cmVjdCB4PSIxNzMuNjEiCiAgICAgICAgICAgICAgICAgICAgeT0iNTQuOTUiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjMwLjgyIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTEuODYiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CjxyZWN0IHg9IjIwOS4xOCIKICAgICAgICAgICAgICAgICAgICB5PSI1NC45NSIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMzAuODIiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIxMS44NiIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KICAgIDwvc3ZnPg=="
+    }
+  },
+  "graphs": {
+    "ddad1c05-4efe-41d5-93b1-7374f367b8bd": {
+      "title": "Handle Game Turn",
+      "nodes": [
+        {
+          "id": "6cba419d-0302-45d8-bbcd-3d4d6c72cbd7",
+          "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+          "metadata": {
+            "title": "Write Turn Copy",
+            "visual": {
+              "x": 920,
+              "y": -340,
+              "collapsed": "expanded",
+              "outputHeight": 88
+            },
+            "userModified": false,
+            "description": "Generates the game turn's text. It takes the game rules, situation, preferred response, character information, setting, and game memory as context. It outputs the generated game text with options for the user to pick."
+          },
+          "configuration": {
+            "description": {
+              "parts": [
+                {
+                  "text": "You are writing copy for an adventure game that follows these rules:\n\n{{\"type\":\"asset\",\"path\":\"d8d3e0b2-776b-4f66-862f-32cab68247c4\",\"title\":\"Game Rules\"}}\n\nGiven situation below and the preferred response, write copy for the turn in the following format:\n\n- One paragraph describing the situation in second voice\n- An ordered list (a,b,c,d) of choices that the player will could based on the situation that include the preferred response.\n\nMake sure that the choices are diverse, allowing the player to change the direction of the game. Do not reveal the preferred response, just make sure it is listed as one of the choices.\n\nSituation:\n\n{{\"type\":\"param\",\"path\":\"situation\",\"title\":\"Situation\"}}\n\nPreferred response:\n\n{{\"type\":\"param\",\"path\":\"expected-response\",\"title\":\"Expected Response\"}}\n\n## Game Setting and Information\n\nThe player is playing this character:\n\n{{\"type\":\"asset\",\"path\":\"696d77c3-b853-44ae-9bcf-5cc8124cc962\",\"title\":\"Main Character\"}}\n\nThe setting of the game is:\n\n{{\"type\":\"asset\",\"path\":\"91efedd7-b8f6-47a9-8c3e-76c814a939f7\",\"title\":\"Setting\"}}\n\nThe detailed description of game characters and locations is as follows:\n\n{{\"type\":\"asset\",\"path\":\"connectors/55a0c5c5-e042-4f5d-8848-416cbd3fa1a3\",\"title\":\"World\"}}\n\nHere's the gameplay so far:\n\n{{\"type\":\"asset\",\"path\":\"connectors/9d6b8e2d-f834-4c04-a5f3-08f9a982afda\",\"title\":\"Game Memory\"}}"
+                }
+              ],
+              "role": "user"
+            }
+          }
+        },
+        {
+          "id": "662a2bd2-ad9d-4351-9cb9-5f7d68d21921",
+          "type": "file://bgl/a2.bgl.json#module:image-generator",
+          "metadata": {
+            "title": "Illustrate Turn",
+            "visual": {
+              "x": 1240,
+              "y": 340
+            },
+            "userModified": false,
+            "description": "Generates an 8-bit art style image to accompany the game turn's copy, by incorporating the game's world and character information. Use the 'World' asset to ensure accurate depictions."
+          },
+          "configuration": {
+            "instruction": {
+              "parts": [
+                {
+                  "text": "Generate a picture that goes with the provided copy in the game.\n\nThe style of the picture is:\n\n8-bit art, retro video game\n\nUse the following information to ensure the characters are depicted accurately:\n\n{{\"type\":\"asset\",\"path\":\"connectors/55a0c5c5-e042-4f5d-8848-416cbd3fa1a3\",\"title\":\"World\"}}"
+                }
+              ],
+              "role": "user"
+            }
+          }
+        },
+        {
+          "id": "fbf8203a-cd8e-4f2e-9d5b-2a9ba07a1569",
+          "type": "file://bgl/a2.bgl.json#module:combine-outputs",
+          "metadata": {
+            "title": "Combine Turn Media",
+            "visual": {
+              "x": 1240,
+              "y": 160
+            },
+            "userModified": false,
+            "description": "Combines the game turn's illustrated image and the turn's written copy into a unified output for the turn screen. It takes the image output from the \"Illustrate Turn\" node, and the game copy from the \"Write Turn Copy\" node."
+          },
+          "configuration": {
+            "text": {
+              "parts": [
+                {
+                  "text": "{{\"type\":\"in\",\"path\":\"0612b949-17f5-4dcf-89cf-7fa0189db75b\",\"title\":\"Illustrate Turn\"}}\n{{\"type\":\"in\",\"path\":\"8770ff6c-6af4-421e-854b-05679b04a111\",\"title\":\"Write Turn Copy\"}}"
+                }
+              ],
+              "role": "user"
+            }
+          }
+        },
+        {
+          "id": "fb99333c-ce93-465b-9d86-8634beda66b1",
+          "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
+          "metadata": {
+            "title": "Create Turn Screen",
+            "visual": {
+              "x": 1240,
+              "y": 0
+            },
+            "userModified": false,
+            "description": "Creates the turn screen, based on the combined image and text from the previous steps."
+          },
+          "configuration": {
+            "description": {
+              "role": "user",
+              "parts": [
+                {
+                  "text": "{{\"type\":\"in\",\"path\":\"4e987736-d54e-4e4d-bcbb-f2558a67a19b\",\"title\":\"Create Turn Screen\"}}"
+                }
+              ]
+            },
+            "p-modality": "Any"
+          }
+        },
+        {
+          "id": "dc07213f-0384-406b-a201-08cb73f597ab",
+          "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+          "metadata": {
+            "title": "Summarize Turn",
+            "visual": {
+              "x": 1240,
+              "y": -340
+            },
+            "userModified": false,
+            "description": "Summarizes the game play of a turn into a third-person paragraph, capturing the location and key events. It utilizes the turn copy, the user's choice, and the existing game memory to create the summary. It updates the game play memory with the turn summary."
+          },
+          "configuration": {
+            "description": {
+              "parts": [
+                {
+                  "text": "You are documenting the game play. Given the turn copy and the choice the user has made, summarize the turn as a third-voice paragraph that would go into the game play memory ledger.\n\nThe format of summary is as follows:\n\n**Location**: [Location]\n[The summary]\n\nTurn Copy:\n\n{{\"type\":\"in\",\"path\":\"8770ff6c-6af4-421e-854b-05679b04a111\",\"title\":\"Write Turn Copy\"}}\n\nUser choice:\n\n{{\"type\":\"in\",\"path\":\"bf555d6e-61fb-4c92-a957-b68f8841cb64\",\"title\":\"Ask Player to Choose\"}}\n\nGameplay so far:\n\n{{\"type\":\"asset\",\"path\":\"connectors/9d6b8e2d-f834-4c04-a5f3-08f9a982afda\",\"title\":\"Game Memory\"}}"
+                }
+              ],
+              "role": "user"
+            }
+          }
+        },
+        {
+          "id": "412cf401-afbc-41df-a837-711fef7f1256",
+          "type": "file://bgl/save-outputs.bgl.json#module:main",
+          "metadata": {
+            "title": "Save to Game Memory",
+            "visual": {
+              "x": 1540,
+              "y": -340
+            },
+            "userModified": false,
+            "description": "Appends the current turn's summary to the game memory. It takes the summarized game play as input and appends it to the existing \"Game Memory\" asset, and store it for future reference, therefore enabling the LLM to use the information in the future to generate more relevant text."
+          },
+          "configuration": {
+            "connectors": {
+              "role": "user",
+              "parts": [
+                {
+                  "text": "{{\"type\":\"asset\",\"path\":\"connectors/9d6b8e2d-f834-4c04-a5f3-08f9a982afda\",\"title\":\"Game Memory\"}}"
+                }
+              ]
+            },
+            "folio-mode": "Append"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "6cba419d-0302-45d8-bbcd-3d4d6c72cbd7",
+          "to": "662a2bd2-ad9d-4351-9cb9-5f7d68d21921",
+          "out": "context",
+          "in": "context"
+        },
+        {
+          "from": "662a2bd2-ad9d-4351-9cb9-5f7d68d21921",
+          "to": "fbf8203a-cd8e-4f2e-9d5b-2a9ba07a1569",
+          "out": "context",
+          "in": "p-z-0612b949-17f5-4dcf-89cf-7fa0189db75b"
+        },
+        {
+          "from": "6cba419d-0302-45d8-bbcd-3d4d6c72cbd7",
+          "to": "fbf8203a-cd8e-4f2e-9d5b-2a9ba07a1569",
+          "out": "context",
+          "in": "p-z-8770ff6c-6af4-421e-854b-05679b04a111"
+        },
+        {
+          "from": "fbf8203a-cd8e-4f2e-9d5b-2a9ba07a1569",
+          "to": "fb99333c-ce93-465b-9d86-8634beda66b1",
+          "out": "context",
+          "in": "p-z-4e987736-d54e-4e4d-bcbb-f2558a67a19b"
+        },
+        {
+          "from": "6cba419d-0302-45d8-bbcd-3d4d6c72cbd7",
+          "to": "dc07213f-0384-406b-a201-08cb73f597ab",
+          "out": "context",
+          "in": "p-z-8770ff6c-6af4-421e-854b-05679b04a111"
+        },
+        {
+          "from": "fb99333c-ce93-465b-9d86-8634beda66b1",
+          "to": "dc07213f-0384-406b-a201-08cb73f597ab",
+          "out": "context",
+          "in": "p-z-bf555d6e-61fb-4c92-a957-b68f8841cb64"
+        },
+        {
+          "from": "dc07213f-0384-406b-a201-08cb73f597ab",
+          "to": "412cf401-afbc-41df-a837-711fef7f1256",
+          "out": "context",
+          "in": "context"
+        }
+      ],
+      "description": "Working in conjunction with the orchestrator, handles a single game turn, enriching it with details and asking the player to respond.  The 'situation' argument is a simple one-sentence description of what happens during the turn. The \"expected_response\" argument is the expected response the player should make to continue along the story.",
+      "version": "",
+      "metadata": {
+        "userModified": true,
+        "tags": []
+      }
+    }
+  },
+  "exports": [
+    "#ddad1c05-4efe-41d5-93b1-7374f367b8bd"
+  ]
+}
