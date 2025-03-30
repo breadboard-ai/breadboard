@@ -130,7 +130,7 @@
       "id": "23ce9052-125e-42f5-8653-2536d72afed0",
       "type": "file://bgl/save-outputs.bgl.json#module:main",
       "metadata": {
-        "title": "Save Outputs",
+        "title": "Reset Game Memory",
         "visual": {
           "x": 480,
           "y": 140
@@ -308,12 +308,28 @@
         "type": "connector"
       }
     },
+    "76dee6f6-d176-46af-b371-7c5dc427f450": {
+      "data": [
+        {
+          "parts": [
+            {
+              "text": "8-bit art, retro video game"
+            }
+          ],
+          "role": "user"
+        }
+      ],
+      "metadata": {
+        "title": "Illustration Style",
+        "type": "content"
+      }
+    },
     "@@thumbnail": {
       "metadata": {
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI1Mi41OCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMzAuODIiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIyMi4yOSIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KPHJlY3QgeD0iNDUuNTciCiAgICAgICAgICAgICAgICAgICAgeT0iNTIuNTgiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjMwLjgyIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMjIuMjkiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyMGEyMDIiIC8+CjxyZWN0IHg9IjQ1LjU3IgogICAgICAgICAgICAgICAgICAgIHk9IjExMS44NiIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMzAuODIiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIyMi4yOSIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzJlOGJlOCIgLz4KPHJlY3QgeD0iNDUuNTciCiAgICAgICAgICAgICAgICAgICAgeT0iNzEuNTUiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjMwLjgyIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMjIuMjkiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CjxyZWN0IHg9IjgzLjUxIgogICAgICAgICAgICAgICAgICAgIHk9IjcxLjU1IgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSIzMC44MiIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjExLjg2IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgo8cmVjdCB4PSI4My41MSIKICAgICAgICAgICAgICAgICAgICB5PSIxMTEuODYiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjMwLjgyIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTEuODYiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyMGEyMDIiIC8+CiAgICAgIDxyZWN0IHg9IjEzNS42NyIKICAgICAgICAgICAgICAgICAgICB5PSI1NC45NSIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMzAuODIiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIyMi4yOSIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KPHJlY3QgeD0iMTczLjYxIgogICAgICAgICAgICAgICAgICAgIHk9IjEzNS41NyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMzAuODIiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIxMS44NiIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KPHJlY3QgeD0iMTczLjYxIgogICAgICAgICAgICAgICAgICAgIHk9IjExNC4yMyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMzAuODIiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIxMS44NiIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KPHJlY3QgeD0iMTczLjYxIgogICAgICAgICAgICAgICAgICAgIHk9Ijk1LjI2IgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSIzMC44MiIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjExLjg2IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMjBhMjAyIiAvPgo8cmVjdCB4PSIxNzMuNjEiCiAgICAgICAgICAgICAgICAgICAgeT0iNTQuOTUiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjMwLjgyIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTEuODYiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CjxyZWN0IHg9IjIwOS4xOCIKICAgICAgICAgICAgICAgICAgICB5PSI1NC45NSIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMzAuODIiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIxMS44NiIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KICAgIDwvc3ZnPg=="
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI1MS4yNSIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMzIuNTAiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIyMy41MCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KPHJlY3QgeD0iNDcuNTAiCiAgICAgICAgICAgICAgICAgICAgeT0iNTEuMjUiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjMyLjUwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMjMuNTAiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyMGEyMDIiIC8+CjxyZWN0IHg9IjQ3LjUwIgogICAgICAgICAgICAgICAgICAgIHk9IjExMy43NSIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMzIuNTAiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIyMy41MCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzJlOGJlOCIgLz4KPHJlY3QgeD0iNDcuNTAiCiAgICAgICAgICAgICAgICAgICAgeT0iNzEuMjUiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjMyLjUwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMjMuNTAiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CjxyZWN0IHg9Ijg3LjUwIgogICAgICAgICAgICAgICAgICAgIHk9IjcxLjI1IgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSIzMi41MCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjEyLjUwIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgo8cmVjdCB4PSI4Ny41MCIKICAgICAgICAgICAgICAgICAgICB5PSIxMTMuNzUiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjMyLjUwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTIuNTAiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyMGEyMDIiIC8+CiAgICAgIDxyZWN0IHg9IjEzMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI1MS4yNSIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMzIuNTAiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIyMy41MCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KPHJlY3QgeD0iMTcwLjAwIgogICAgICAgICAgICAgICAgICAgIHk9IjEzNi4yNSIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMzIuNTAiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIxMi41MCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KPHJlY3QgeD0iMTcwLjAwIgogICAgICAgICAgICAgICAgICAgIHk9IjExMy43NSIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMzIuNTAiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIxMi41MCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KPHJlY3QgeD0iMTcwLjAwIgogICAgICAgICAgICAgICAgICAgIHk9IjkzLjc1IgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSIzMi41MCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjEyLjUwIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMjBhMjAyIiAvPgo8cmVjdCB4PSIxNzAuMDAiCiAgICAgICAgICAgICAgICAgICAgeT0iNTEuMjUiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjMyLjUwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTIuNTAiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CjxyZWN0IHg9IjIwNy41MCIKICAgICAgICAgICAgICAgICAgICB5PSI1MS4yNSIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMzIuNTAiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIxMi41MCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KICAgIDwvc3ZnPg=="
     }
   },
   "graphs": {
@@ -326,8 +342,8 @@
           "metadata": {
             "title": "Write Turn Copy",
             "visual": {
-              "x": 920,
-              "y": -340,
+              "x": 820,
+              "y": -360,
               "collapsed": "expanded",
               "outputHeight": 88
             },
@@ -349,19 +365,19 @@
           "id": "662a2bd2-ad9d-4351-9cb9-5f7d68d21921",
           "type": "file://bgl/a2.bgl.json#module:image-generator",
           "metadata": {
-            "title": "Illustrate Turn",
+            "title": "Generate Turn Image",
             "visual": {
-              "x": 1240,
-              "y": 340
+              "x": 1140,
+              "y": 320
             },
             "userModified": false,
-            "description": "Generates an 8-bit art style image to accompany the game turn's copy, by incorporating the game's world and character information. Use the 'World' asset to ensure accurate depictions."
+            "description": "Generates an image for the game turn based on the provided game copy and a specified illustration style, using character and world information to ensure accuracy."
           },
           "configuration": {
             "instruction": {
               "parts": [
                 {
-                  "text": "Generate a picture that goes with the provided copy in the game.\n\nThe style of the picture is:\n\n8-bit art, retro video game\n\nUse the following information to ensure the characters are depicted accurately:\n\n{{\"type\":\"asset\",\"path\":\"connectors/55a0c5c5-e042-4f5d-8848-416cbd3fa1a3\",\"title\":\"World\"}}"
+                  "text": "Generate a picture that goes with the provided copy in the game.\n\nThe style of the picture is:\n\n{{\"type\":\"asset\",\"path\":\"76dee6f6-d176-46af-b371-7c5dc427f450\",\"title\":\"Illustration Style\"}}\n\nUse the following information to ensure the characters are depicted accurately:\n\n{{\"type\":\"asset\",\"path\":\"connectors/55a0c5c5-e042-4f5d-8848-416cbd3fa1a3\",\"title\":\"World\"}}"
                 }
               ],
               "role": "user"
@@ -374,8 +390,8 @@
           "metadata": {
             "title": "Combine Turn Media",
             "visual": {
-              "x": 1240,
-              "y": 160
+              "x": 1140,
+              "y": 140
             },
             "userModified": false,
             "description": "Combines the game turn's illustrated image and the turn's written copy into a unified output for the turn screen. It takes the image output from the \"Illustrate Turn\" node, and the game copy from the \"Write Turn Copy\" node."
@@ -397,8 +413,8 @@
           "metadata": {
             "title": "Create Turn Screen",
             "visual": {
-              "x": 1240,
-              "y": 0
+              "x": 1140,
+              "y": -20
             },
             "userModified": false,
             "description": "Creates the turn screen, based on the combined image and text from the previous steps."
@@ -421,8 +437,8 @@
           "metadata": {
             "title": "Summarize Turn",
             "visual": {
-              "x": 1240,
-              "y": -340
+              "x": 1140,
+              "y": -360
             },
             "userModified": false,
             "description": "Summarizes the game play of a turn into a third-person paragraph, capturing the location and key events. It utilizes the turn copy, the user's choice, and the existing game memory to create the summary. It updates the game play memory with the turn summary."
@@ -444,8 +460,8 @@
           "metadata": {
             "title": "Save to Game Memory",
             "visual": {
-              "x": 1540,
-              "y": -340
+              "x": 1440,
+              "y": -360
             },
             "userModified": false,
             "description": "Appends the current turn's summary to the game memory. It takes the summarized game play as input and appends it to the existing \"Game Memory\" asset, and store it for future reference, therefore enabling the LLM to use the information in the future to generate more relevant text."
