@@ -46,14 +46,14 @@ class ChangeEdge implements EditTransform {
     if (!source) {
       return { success: false, error: `Unable to find node with id "${id}"` };
     }
-    let out = from.out;
-    if (!out) {
+    let outPort = from.out;
+    if (outPort === undefined) {
       const sourcePorts = await source.ports();
       const sourceMainPort = sourcePorts.outputs.ports.find((port) =>
         port.schema.behavior?.includes("main-port")
       );
       if (sourceMainPort) {
-        out = sourceMainPort.name;
+        outPort = sourceMainPort.name;
       }
     }
 
@@ -62,13 +62,39 @@ class ChangeEdge implements EditTransform {
       return { success: false, error: `Unable to find node with id "${id}"` };
     }
 
+    let inPort = from.in;
+    let inPortFound = true;
+    if (inPort === undefined) {
+      inPortFound = false;
+      const destinationPorts = await destination.ports();
+      const destinationMainPort = destinationPorts.inputs.ports.find((port) =>
+        port.schema.behavior?.includes("main-port")
+      );
+      if (destinationMainPort) {
+        inPort = destinationMainPort.name;
+        inPortFound = true;
+      }
+    }
+
     const defaultEdit: [spec: EditSpec[], message: string] = [
-      [{ type: "addedge", edge: { ...from, out }, graphId }],
+      [
+        {
+          type: "addedge",
+          edge: { ...from, out: outPort, in: inPort },
+          graphId,
+        },
+      ],
       `Add edge between ${from.from} and ${from.to}`,
     ];
 
     const description = await destination.describe();
     if (!description.inputSchema.behavior?.includes("at-wireable")) {
+      if (!inPortFound) {
+        return {
+          success: false,
+          error: `Unable to add adge: in port was not supplied for ${from.to}`,
+        };
+      }
       // Do the usual thing, just add the edge.
       return context.apply(...defaultEdit);
     }
@@ -76,7 +102,7 @@ class ChangeEdge implements EditTransform {
     const willBeFirst = destination.incoming().length === 0;
     if (willBeFirst) {
       // Check to see if the the "in" port is "main-port".
-      if (isMainPort(destination)) {
+      if (inPortFound || isMainPort(destination)) {
         // add the first edge as usual.
         return context.apply(...defaultEdit);
       }
@@ -125,7 +151,7 @@ class ChangeEdge implements EditTransform {
       [
         {
           type: "addedge",
-          edge: { ...from, out, in: atPortName(from) },
+          edge: { ...from, out: outPort, in: atPortName(from) },
           graphId,
         },
       ],
