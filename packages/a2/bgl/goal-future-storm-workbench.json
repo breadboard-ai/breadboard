@@ -1,0 +1,273 @@
+{
+  "title": "GOAL Future Storm Workbench",
+  "description": "",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "101d6505-d60e-4700-80e3-7c416a367b77",
+      "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+      "metadata": {
+        "title": "Build World",
+        "visual": {
+          "x": -140,
+          "y": -80
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "description": {
+          "parts": [
+            {
+              "text": "Design the world for an adventure game that follow these rules:\n\n{{\"type\":\"asset\",\"path\":\"d8d3e0b2-776b-4f66-862f-32cab68247c4\",\"title\":\"Game Rules\"}}\n\nThe game setting is this:\n\n{{\"type\":\"asset\",\"path\":\"91efedd7-b8f6-47a9-8c3e-76c814a939f7\",\"title\":\"Setting\"}}\n\nThe player plays the following character:\n\n{{\"type\":\"asset\",\"path\":\"696d77c3-b853-44ae-9bcf-5cc8124cc962\",\"title\":\"Main Character\"}}\n\nExpand these into entire world:\n\n## Characters\nThe detailed descriptions of all characters that will be part of the game play. For each character:\n\n  - physical appearance: gender, age, eye/hair color, facial features, what they wear, etc.). These will be used for generating game assets, so make sure to be as detailed as possible to ensure visual consistency.\n  - back story. The back stories will be used to determine how the character will react in various situations. Use enneagram to provide anchoring personalities.\n\n### Key Locations\n\nThe detailed descriptions of key locations in the storyline. These will be used for generating game assets, so make sure to be as detailed as possible to ensure visual consistency."
+            }
+          ],
+          "role": "user"
+        }
+      }
+    },
+    {
+      "id": "8e0cc71c-c009-4992-9a8e-c274cc680720",
+      "type": "file://bgl/save-outputs.bgl.json#module:main",
+      "metadata": {
+        "title": "Save World",
+        "visual": {
+          "x": 200,
+          "y": -80
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "connectors": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "{{\"type\":\"asset\",\"path\":\"connectors/55a0c5c5-e042-4f5d-8848-416cbd3fa1a3\",\"title\":\"World\"}}"
+            }
+          ]
+        },
+        "folio-mode": "Replace"
+      }
+    },
+    {
+      "id": "4d705b50-ca33-41d1-8d7a-bb83dace1a2a",
+      "type": "file://bgl/go-over-list.bgl.json#module:main",
+      "metadata": {
+        "title": "Orchestrate Turns",
+        "visual": {
+          "x": 200,
+          "y": 420
+        },
+        "userModified": true
+      },
+      "configuration": {
+        "plan": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "You are a game turn orchestrator. You are provided with the intro story. Create a plan that is a set of turns for the game following these rules:\n\n{{\"type\":\"asset\",\"path\":\"d8d3e0b2-776b-4f66-862f-32cab68247c4\",\"title\":\"Game Rules\"}}\n\nThe turns you create must take the game to its conclusion.\n\nEach turn describes the situation that the player's character is in and a single choice that the player should make to move the story along the plan. Invoke the game turn handler with these arguments. Don't generate other choices, they will be added by the game turn handler. \n\nAfter it completes, the game turn handler will include player's response, which may necessitate adjusting and extending the storyline. Depending on the player's choices, it may deviate wildly from the original storyline. Just keep gently nudging the story along the Hero's Journey arc.\n\nUse {{\"type\":\"tool\",\"path\":\"#5ef83bcc-f14c-4d80-9a7e-c3f5eb7abbd5\",\"title\":\"Handle Game Turn\"}} to advance the turns.\n\n# Specific Game Information\n\nThe player is playing this character:\n\n{{\"type\":\"asset\",\"path\":\"696d77c3-b853-44ae-9bcf-5cc8124cc962\",\"title\":\"Main Character\"}}\n\nHere are the detailed descriptions of game characters and locations:\n\n{{\"type\":\"asset\",\"path\":\"connectors/55a0c5c5-e042-4f5d-8848-416cbd3fa1a3\",\"title\":\"World\"}}"
+            }
+          ]
+        },
+        "strategy": "Think as I go"
+      }
+    },
+    {
+      "id": "e28ab35c-3d9d-41de-9572-ae6ab0c915f2",
+      "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+      "metadata": {
+        "title": "Write Intro",
+        "visual": {
+          "x": 200,
+          "y": 80
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "description": {
+          "parts": [
+            {
+              "text": "You are a game designer, designing a game that follows these rules:\n\n{{\"type\":\"asset\",\"path\":\"d8d3e0b2-776b-4f66-862f-32cab68247c4\",\"title\":\"Game Rules\"}}\n\nBased on the provided description of the world, write the intro story for the game. This intro story will be shown to the player at the beginning of the game.\n\nDon't write the choices, they will be added at a later stage."
+            }
+          ],
+          "role": "user"
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "101d6505-d60e-4700-80e3-7c416a367b77",
+      "to": "8e0cc71c-c009-4992-9a8e-c274cc680720",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "8e0cc71c-c009-4992-9a8e-c274cc680720",
+      "to": "e28ab35c-3d9d-41de-9572-ae6ab0c915f2",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "e28ab35c-3d9d-41de-9572-ae6ab0c915f2",
+      "to": "4d705b50-ca33-41d1-8d7a-bb83dace1a2a",
+      "out": "context",
+      "in": "context"
+    }
+  ],
+  "metadata": {
+    "visual": {
+      "presentation": {
+        "themes": {
+          "39239b49-62d0-4182-b919-924c4db67941": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "39239b49-62d0-4182-b919-924c4db67941"
+      }
+    },
+    "userModified": true,
+    "tags": [],
+    "parameters": {
+      "situation": {
+        "title": "Situation",
+        "usedIn": []
+      },
+      "turn": {
+        "title": "Turn",
+        "usedIn": []
+      },
+      "expected-response": {
+        "title": "Expected Response",
+        "usedIn": []
+      }
+    }
+  },
+  "assets": {
+    "696d77c3-b853-44ae-9bcf-5cc8124cc962": {
+      "data": [
+        {
+          "parts": [
+            {
+              "text": "Storm, an orphan who lives at the resistance base of operations."
+            }
+          ],
+          "role": "user"
+        }
+      ],
+      "metadata": {
+        "title": "Main Character",
+        "type": "content"
+      }
+    },
+    "91efedd7-b8f6-47a9-8c3e-76c814a939f7": {
+      "data": [
+        {
+          "parts": [
+            {
+              "text": "The year is 2235. Alien invasion ravaged Earth. After a devastating war, all governments submitted to the rule of the aliens. Despite the reign of terror, bands of resistance fighters continue to strike at the aliens."
+            }
+          ],
+          "role": "user"
+        }
+      ],
+      "metadata": {
+        "title": "Setting",
+        "type": "content"
+      }
+    },
+    "d8d3e0b2-776b-4f66-862f-32cab68247c4": {
+      "data": [
+        {
+          "parts": [
+            {
+              "text": "This is a turn-based game that goes like this:\n\n- the player is playing the character\n- at the start of each turn, the game offers a description of the current situation, presented in second voice, and offers four choices that the player needs to make\n- the player makes changes\n- the game proceeds to next turn until there are no more turns left\n\nEven though the next turn may change based on the player's choices, the turns must follow Hero's Journey story arc as the underlying framing of the game story."
+            }
+          ],
+          "role": "user"
+        }
+      ],
+      "metadata": {
+        "title": "Game Rules",
+        "type": "content"
+      }
+    },
+    "connectors/55a0c5c5-e042-4f5d-8848-416cbd3fa1a3": {
+      "data": [
+        {
+          "parts": [
+            {
+              "json": {
+                "url": "file://bgl/folio.bgl.json",
+                "configuration": {}
+              }
+            }
+          ]
+        }
+      ],
+      "metadata": {
+        "title": "World",
+        "type": "connector"
+      }
+    },
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSIyNS4wMCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iNjUuMDAiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIyNS4wMCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KPHJlY3QgeD0iOTUuMDAiCiAgICAgICAgICAgICAgICAgICAgeT0iMjUuMDAiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjY1LjAwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMjUuMDAiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyMGEyMDIiIC8+CjxyZWN0IHg9Ijk1LjAwIgogICAgICAgICAgICAgICAgICAgIHk9IjE1MC4wMCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iNjUuMDAiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIyNS4wMCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzJlOGJlOCIgLz4KPHJlY3QgeD0iOTUuMDAiCiAgICAgICAgICAgICAgICAgICAgeT0iNjUuMDAiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjY1LjAwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMjUuMDAiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CiAgICAgIDxyZWN0IHg9IjE3NS4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI5NS4wMCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iNjUuMDAiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIyNS4wMCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KICAgIDwvc3ZnPg=="
+    }
+  },
+  "exports": [
+    "#5ef83bcc-f14c-4d80-9a7e-c3f5eb7abbd5"
+  ],
+  "graphs": {
+    "5ef83bcc-f14c-4d80-9a7e-c3f5eb7abbd5": {
+      "title": "Handle Game Turn",
+      "nodes": [
+        {
+          "id": "30dd597b-dc00-471e-96d8-cfcf83c4daa3",
+          "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
+          "metadata": {
+            "title": "Ask Player to Respond to Situation",
+            "visual": {
+              "x": 520,
+              "y": 200
+            },
+            "userModified": true
+          },
+          "configuration": {
+            "description": {
+              "role": "user",
+              "parts": [
+                {
+                  "text": "{{\"type\":\"param\",\"path\":\"situation\",\"title\":\"Situation\"}}\n{{\"type\":\"param\",\"path\":\"expected-response\",\"title\":\"Expected Response\"}}"
+                }
+              ]
+            },
+            "p-modality": "Any"
+          }
+        }
+      ],
+      "edges": [],
+      "description": "Working in conjunction with the orchestrator, handles a single game turn, enriching it with details and asking the player to respond.  The 'situation' argument is a simple one-sentence description of what happens during the turn. The \"expected_response\" argument is the expected response the player should make to continue along the story.",
+      "version": "",
+      "metadata": {
+        "userModified": true,
+        "tags": []
+      }
+    }
+  }
+}
