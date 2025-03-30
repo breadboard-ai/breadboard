@@ -20,6 +20,7 @@ const USER_ID = "shared";
 const BGL_SUFFIX = ".bgl.json";
 
 function whatToPush(entry: string) {
+  if (entry.startsWith("_")) return false;
   if (!entry.endsWith(BGL_SUFFIX)) return false;
   entry = entry.slice(0, -BGL_SUFFIX.length);
   if (entry.endsWith("workbench")) return false;
