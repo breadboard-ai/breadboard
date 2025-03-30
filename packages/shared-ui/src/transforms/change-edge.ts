@@ -46,6 +46,16 @@ class ChangeEdge implements EditTransform {
     if (!source) {
       return { success: false, error: `Unable to find node with id "${id}"` };
     }
+    let out = from.out;
+    if (!out) {
+      const sourcePorts = await source.ports();
+      const sourceMainPort = sourcePorts.outputs.ports.find((port) =>
+        port.schema.behavior?.includes("main-port")
+      );
+      if (sourceMainPort) {
+        out = sourceMainPort.name;
+      }
+    }
 
     const destination = inspectableGraph.nodeById(id);
     if (!destination) {
@@ -53,7 +63,7 @@ class ChangeEdge implements EditTransform {
     }
 
     const defaultEdit: [spec: EditSpec[], message: string] = [
-      [{ type: "addedge", edge: from, graphId }],
+      [{ type: "addedge", edge: { ...from, out }, graphId }],
       `Add edge between ${from.from} and ${from.to}`,
     ];
 
@@ -115,7 +125,7 @@ class ChangeEdge implements EditTransform {
       [
         {
           type: "addedge",
-          edge: { ...from, in: atPortName(from) },
+          edge: { ...from, out, in: atPortName(from) },
           graphId,
         },
       ],
