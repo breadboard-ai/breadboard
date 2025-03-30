@@ -10639,6 +10639,7 @@
                           "hint-image",
                           "hint-multimodal",
                           "hint-preview",
+                          "hint-single-line",
                           "hint-text",
                           "json-schema",
                           "llm-content",

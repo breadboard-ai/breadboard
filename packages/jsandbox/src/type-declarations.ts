@@ -352,6 +352,10 @@ declare type BehaviorSchema =
    * or any other larger context.
    */
   | "hint-preview"
+   /**
+   * Hints that the text is short (e.g. a query) and needs a single line treatment.
+   */
+   | "hint-single-line"
   /**
    * Indicates that the input or output port represents an image. The image can
    * be a URL or a base64 encoded image.
