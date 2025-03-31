@@ -5,7 +5,10 @@
  */
 
 import { Edge, GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
-import { EdgeAttachmentPoint } from "../../../types/types";
+import {
+  EdgeAttachmentPoint,
+  HighlightStateWithChangeId,
+} from "../../../types/types";
 
 const eventInit = {
   bubbles: true,
@@ -109,5 +112,13 @@ export class NodeConfigurationRequestEvent extends Event {
     public readonly bounds: DOMRect | null = null
   ) {
     super(NodeConfigurationRequestEvent.eventName, { ...eventInit });
+  }
+}
+
+export class HighlightEvent extends Event {
+  static eventName = "bbhighlight" as const;
+
+  constructor(public readonly highlightState: HighlightStateWithChangeId) {
+    super(HighlightEvent.eventName, { ...eventInit });
   }
 }
