@@ -142,6 +142,8 @@ export class DragConnector extends LitElement {
           break;
         }
 
+        foundTarget = true;
+
         if (graphId !== this.graphId) {
           this.dispatchEvent(
             new ToastEvent(
@@ -151,8 +153,6 @@ export class DragConnector extends LitElement {
           );
           break;
         }
-
-        foundTarget = true;
 
         const from: Edge = {
           from: this.nodeId,
