@@ -818,8 +818,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
               new SelectionTranslateEvent(
                 xTranslation,
                 yTranslation,
-                /* hasSettled */ false,
-                /* isReparenting */ evt.shiftKey
+                /* hasSettled */ false
               )
             );
           }}
@@ -850,8 +849,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
               new SelectionTranslateEvent(
                 xTranslation,
                 yTranslation,
-                /* hasSettled */ true,
-                /* isReparenting */ evt.shiftKey
+                /* hasSettled */ true
               )
             );
           }}
