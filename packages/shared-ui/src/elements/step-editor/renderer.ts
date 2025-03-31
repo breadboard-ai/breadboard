@@ -461,11 +461,10 @@ export class Renderer extends LitElement {
     // If the interaction is with the renderer, go into selection mode proper.
     const [top, ...rest] = evt.composedPath();
     if (top !== this) {
-      // If the user has clicked on an unselected entity, change the behavior to
-      // that of a click.
+      // If the user has clicked on an entity, change the behavior to a click.
       const nearestEntity =
         top instanceof Entity ? top : rest.find((el) => el instanceof Entity);
-      if (nearestEntity && !nearestEntity.selected) {
+      if (nearestEntity) {
         this.#clickRect = DOMRect.fromRect(this.#dragRect);
         this.#clickRect.x -= 5;
         this.#clickRect.y -= 5;
@@ -875,6 +874,10 @@ export class Renderer extends LitElement {
     hasSettled: boolean
   ) {
     if (!this.selectionState || !this.graph) {
+      return;
+    }
+
+    if (deltaX === 0 && deltaY === 0) {
       return;
     }
 
