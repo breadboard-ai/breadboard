@@ -140,6 +140,18 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
   @property({ attribute: false })
   accessor history: EditHistory | undefined | null = undefined;
 
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this.dispatchEvent(new HighlightEvent(null));
+    if (
+      this.history &&
+      this.history.entries().length > 0 &&
+      !this.history.pending
+    ) {
+      this.history.jump(this.history.entries().length - 1);
+    }
+  }
+
   override render() {
     const history = this.history;
     if (!history) {

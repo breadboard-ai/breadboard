@@ -118,7 +118,9 @@ export class NodeConfigurationRequestEvent extends Event {
 export class HighlightEvent extends Event {
   static eventName = "bbhighlight" as const;
 
-  constructor(public readonly highlightState: HighlightStateWithChangeId) {
+  constructor(
+    public readonly highlightState: HighlightStateWithChangeId | null
+  ) {
     super(HighlightEvent.eventName, { ...eventInit });
   }
 }
