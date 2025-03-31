@@ -13,12 +13,17 @@ import type {
   EditHistory,
   EditHistoryCreator,
   EditHistoryEntry,
+  GraphDescriptor,
 } from "@google-labs/breadboard";
 import { consume } from "@lit/context";
 import {
   type SigninAdapter,
   signinAdapterContext,
 } from "../utils/signin-adapter.js";
+import type { HighlightStateWithChangeId } from "../types/types.js";
+import { findChangedNodes } from "../flow-gen/flow-diff.js";
+import { HighlightEvent } from "../elements/step-editor/events/events.js";
+import { MAIN_BOARD_ID } from "../constants/constants.js";
 
 @customElement("bb-revision-history-panel")
 export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
@@ -160,12 +165,20 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
     ) {
       const isCurrent = !pending && i === committed.length - 1;
       const isDisplayed = !pending && i === history.index();
+      const revision = committed[i];
       listItems.push(
         this.#renderRevision(
-          committed[i],
+          revision,
           isCurrent,
           isDisplayed,
-          isDisplayed ? undefined : () => history.jump(i)
+          isDisplayed
+            ? undefined
+            : () => {
+                history.jump(i);
+                const prior = committed[i - 1];
+                const highlights = findHighlights(revision, prior?.graph ?? {});
+                this.dispatchEvent(new HighlightEvent(highlights));
+              }
         )
       );
     }
