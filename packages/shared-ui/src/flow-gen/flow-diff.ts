@@ -8,6 +8,7 @@ import type {
   GraphDescriptor,
   JsonSerializable,
   NodeConfiguration,
+  NodeDescriptor,
 } from "@breadboard-ai/types";
 import type { ChangeConfigurationSpec } from "@google-labs/breadboard";
 
@@ -36,6 +37,31 @@ export function findConfigurationChanges(
     }
   }
   return changes;
+}
+
+/**
+ * Returns the set of node ids in `newFlow` for nodes that were added or changed
+ * compared to `oldFlow`.
+ */
+export function findChangedNodes(
+  oldFlow: GraphDescriptor,
+  newFlow: GraphDescriptor
+): Set<string> {
+  const oldNodes = new Map<string, NodeDescriptor>();
+  for (const oldNode of oldFlow.nodes ?? []) {
+    oldNodes.set(oldNode.id, oldNode);
+  }
+  const changedNodeIds = new Set<string>();
+  for (const newNode of newFlow.nodes ?? []) {
+    const oldNode = oldNodes.get(newNode.id);
+    if (
+      !oldNode ||
+      !jsonEqual(oldNode as JsonSerializable, newNode as JsonSerializable)
+    ) {
+      changedNodeIds.add(newNode.id);
+    }
+  }
+  return changedNodeIds;
 }
 
 function jsonEqual(a: JsonSerializable, b: JsonSerializable): boolean {

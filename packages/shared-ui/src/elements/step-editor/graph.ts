@@ -281,8 +281,6 @@ export class Graph extends Box {
 
   @property()
   set highlightState(highlightState: GraphHighlightState | null) {
-    console.log(highlightState);
-
     for (const node of this.#nodes) {
       const graphNode = this.entities.get(node.descriptor.id) as GraphNode;
       if (!graphNode) {

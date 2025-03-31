@@ -657,7 +657,7 @@ export class Renderer extends LitElement {
     return true;
   }
 
-  protected willUpdate(changedProperties: PropertyValues): void {
+  protected willUpdate(changedProperties: PropertyValues<this>): void {
     if (this.#attemptFitToView) {
       this.#attemptFitToView = false;
       this.fitToView(false);
@@ -689,7 +689,10 @@ export class Renderer extends LitElement {
       }
     }
 
-    if (changedProperties.has("highlightState")) {
+    if (
+      changedProperties.has("highlightState") ||
+      changedProperties.has("topGraphResult")
+    ) {
       if (this.highlightState) {
         for (const [graphId, graph] of this.#graphs) {
           const highlightState =

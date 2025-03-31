@@ -13,12 +13,17 @@ import type {
   EditHistory,
   EditHistoryCreator,
   EditHistoryEntry,
+  GraphDescriptor,
 } from "@google-labs/breadboard";
 import { consume } from "@lit/context";
 import {
   type SigninAdapter,
   signinAdapterContext,
 } from "../utils/signin-adapter.js";
+import type { HighlightStateWithChangeId } from "../types/types.js";
+import { findChangedNodes } from "../flow-gen/flow-diff.js";
+import { HighlightEvent } from "../elements/step-editor/events/events.js";
+import { MAIN_BOARD_ID } from "../constants/constants.js";
 
 @customElement("bb-revision-history-panel")
 export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
@@ -135,6 +140,18 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
   @property({ attribute: false })
   accessor history: EditHistory | undefined | null = undefined;
 
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this.dispatchEvent(new HighlightEvent(null));
+    if (
+      this.history &&
+      this.history.entries().length > 0 &&
+      !this.history.pending
+    ) {
+      this.history.jump(this.history.entries().length - 1);
+    }
+  }
+
   override render() {
     const history = this.history;
     if (!history) {
@@ -160,13 +177,14 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
     ) {
       const isCurrent = !pending && i === committed.length - 1;
       const isDisplayed = !pending && i === history.index();
+      const revision = committed[i];
       listItems.push(
-        this.#renderRevision(
-          committed[i],
-          isCurrent,
-          isDisplayed,
-          isDisplayed ? undefined : () => history.jump(i)
-        )
+        this.#renderRevision(revision, isCurrent, isDisplayed, () => {
+          history.jump(i);
+          const prior = committed[i - 1];
+          const highlights = findHighlights(revision, prior?.graph ?? {});
+          this.dispatchEvent(new HighlightEvent(highlights));
+        })
       );
     }
     return html`
@@ -265,6 +283,34 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
       }
     }
   }
+}
+
+function findHighlights(
+  revision: EditHistoryEntry,
+  previous: GraphDescriptor
+): HighlightStateWithChangeId {
+  return {
+    highlightChangeId: crypto.randomUUID(),
+    highlightType:
+      revision.creator.role === "user"
+        ? "user"
+        : revision.creator.role === "assistant"
+          ? "model"
+          : "user",
+    highlightState: {
+      graphs: new Map([
+        [
+          MAIN_BOARD_ID,
+          {
+            nodes: findChangedNodes(previous, revision.graph),
+            // TODO(aomarks) Add changed edges.
+            edges: new Set(),
+            comments: new Set(),
+          },
+        ],
+      ]),
+    },
+  };
 }
 
 declare global {
