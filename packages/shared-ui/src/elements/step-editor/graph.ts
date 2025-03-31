@@ -13,12 +13,14 @@ import {
 } from "@google-labs/breadboard";
 import { GraphNode } from "./graph-node";
 import {
+  createEmptyGraphHighlightState,
   createEmptyGraphSelectionState,
   inspectableEdgeToString,
 } from "../../utils/workspace";
 import { GraphEdge } from "./graph-edge";
 import {
   EdgeAttachmentPoint,
+  GraphHighlightState,
   GraphSelectionState,
   TopGraphRunResult,
 } from "../../types/types";
@@ -41,6 +43,9 @@ export class Graph extends Box {
 
   @property()
   accessor allowEdgeAttachmentMove = false;
+
+  @property()
+  accessor highlightType: "user" | "model" = "user";
 
   static styles = [
     Box.styles,
@@ -272,6 +277,60 @@ export class Graph extends Box {
     }
 
     return selectionState;
+  }
+
+  @property()
+  set highlightState(highlightState: GraphHighlightState | null) {
+    console.log(highlightState);
+
+    for (const node of this.#nodes) {
+      const graphNode = this.entities.get(node.descriptor.id) as GraphNode;
+      if (!graphNode) {
+        continue;
+      }
+
+      graphNode.highlightType = this.highlightType;
+      graphNode.highlighted =
+        highlightState?.nodes.has(node.descriptor.id) ?? false;
+    }
+
+    for (const edge of this.#edges) {
+      const id = inspectableEdgeToString(edge);
+      const graphEdge = this.entities.get(id) as GraphEdge;
+      if (!graphEdge) {
+        continue;
+      }
+
+      graphEdge.highlightType = this.highlightType;
+      graphEdge.highlighted = highlightState?.edges.has(id) ?? false;
+    }
+  }
+  get highlightState() {
+    const highlightState = createEmptyGraphHighlightState();
+    for (const node of this.#nodes) {
+      const graphNode = this.entities.get(node.descriptor.id) as GraphNode;
+      if (!graphNode) {
+        continue;
+      }
+
+      if (graphNode.highlighted) {
+        highlightState.nodes.add(node.descriptor.id);
+      }
+    }
+
+    for (const edge of this.#edges) {
+      const id = inspectableEdgeToString(edge);
+      const graphEdge = this.entities.get(id) as GraphEdge;
+      if (!graphEdge) {
+        continue;
+      }
+
+      if (graphEdge.highlighted) {
+        highlightState.edges.add(id);
+      }
+    }
+
+    return highlightState;
   }
 
   applyTranslationToSelection(x: number, y: number, hasSettled: boolean) {

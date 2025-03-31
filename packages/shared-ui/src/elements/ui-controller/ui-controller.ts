@@ -35,6 +35,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import { guard } from "lit/directives/guard.js";
 import {
   AppTemplateAdditionalOptionsAvailable,
+  HighlightStateWithChangeId,
   RecentBoard,
   SETTINGS_TYPE,
   STATUS,
@@ -61,6 +62,10 @@ import { Sandbox } from "@breadboard-ai/jsandbox";
 import { ChatController } from "../../state/chat-controller.js";
 import { Organizer } from "../../state/types.js";
 import "../../revision-history/revision-history-panel.js";
+import {
+  createEmptyHighlightState,
+  createHighlightId,
+} from "../../utils/workspace.js";
 
 const SIDE_ITEM_KEY = "bb-ui-controller-side-nav-item";
 
@@ -106,7 +111,7 @@ export class UI extends LitElement {
   accessor failedToLoad = false;
 
   @property()
-  accessor readOnly = false;
+  accessor readOnly = true;
 
   @property()
   accessor version = "dev";
@@ -150,6 +155,9 @@ export class UI extends LitElement {
 
   @property()
   accessor selectionState: WorkspaceSelectionStateWithChangeId | null = null;
+
+  @property()
+  accessor highlightState: HighlightStateWithChangeId | null = null;
 
   @property()
   accessor visualChangeId: WorkspaceVisualChangeId | null = null;
@@ -413,7 +421,9 @@ export class UI extends LitElement {
           .graphStore=${this.graphStore}
           .graphStoreUpdateId=${this.graphStoreUpdateId}
           .selectionState=${this.selectionState}
+          .highlightState=${this.highlightState}
           .mainGraphId=${this.mainGraphId}
+          .readOnly=${this.readOnly}
           .showExperimentalComponents=${showExperimentalComponents}
           .topGraphResult=${this.topGraphResult}
           @bbshowassetorganizer=${() => {

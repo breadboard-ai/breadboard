@@ -38,6 +38,10 @@ const EDGE_CONSUMED = getGlobalColor("--bb-input-600");
 // Value is on the wire, but hasn't been consumed by receiving component yet.
 const EDGE_STORED = getGlobalColor("--bb-human-600");
 
+// Value is on the wire, but hasn't been consumed by receiving component yet.
+const EDGE_USER = getGlobalColor("--bb-joiner-600");
+const EDGE_MODEL = getGlobalColor("--bb-generative-600");
+
 const HALF_HEADER_HEIGHT = 18;
 const LINE_CLEARANCE = 8;
 const ARROW_SIZE = 8;
@@ -62,6 +66,12 @@ export class GraphEdge extends Box {
 
   @property({ reflect: true, type: Boolean })
   accessor showEdgePointSelectors = false;
+
+  @property({ reflect: true, type: String })
+  accessor highlightType: "user" | "model" = "user";
+
+  @property({ reflect: true, type: Boolean })
+  accessor highlighted = false;
 
   static styles = [
     Box.styles,
@@ -615,6 +625,20 @@ export class GraphEdge extends Box {
       default: {
         edgeColor = EDGE_STANDARD;
         break;
+      }
+    }
+
+    if (this.highlighted) {
+      switch (this.highlightType) {
+        case "user": {
+          edgeColor = EDGE_USER;
+          break;
+        }
+
+        case "model": {
+          edgeColor = EDGE_MODEL;
+          break;
+        }
       }
     }
 

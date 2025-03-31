@@ -476,6 +476,21 @@ export interface WorkspaceSelectionStateWithChangeId {
   moveToSelection: "immediate" | "animated" | false;
 }
 
+export interface GraphHighlightState {
+  nodes: Set<NodeIdentifier>;
+  comments: Set<string>;
+  edges: Set<string>;
+}
+export type HighlightChangeId = ReturnType<typeof crypto.randomUUID>;
+export type HighlightState = {
+  graphs: Map<GraphIdentifier, GraphHighlightState>;
+};
+export interface HighlightStateWithChangeId {
+  highlightChangeId: HighlightChangeId;
+  highlightState: HighlightState;
+  highlightType: "user" | "model";
+}
+
 export interface DragConnectorReceiver extends HTMLElement {
   isOnDragConnectorTarget(): boolean;
   highlight(): void;
