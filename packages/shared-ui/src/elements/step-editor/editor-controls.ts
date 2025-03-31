@@ -371,6 +371,21 @@ export class EditorControls extends LitElement {
               background: var(--bb-add-icon-generative-image) top left / 20px
                 20px no-repeat;
             }
+
+            &.generative-image-edit {
+              background: var(--bb-add-icon-generative-image-edit-auto) top
+                left / 20px 20px no-repeat;
+            }
+
+            &.generative-video {
+              background: var(--bb-add-icon-generative-videocam-auto) top left /
+                20px 20px no-repeat;
+            }
+
+            &.generative-search {
+              background: var(--bb-add-icon-generative-search) top left / 20px
+                20px no-repeat;
+            }
           }
         }
 
