@@ -3831,6 +3831,34 @@ export class Main extends LitElement {
               ) => {
                 await this.#attemptNodeRun(evt.id);
               }}
+              @bbmovenodes=${async (
+                evt: BreadboardUI.Events.MoveNodesEvent
+              ) => {
+                const { destinationGraphId } = evt;
+                for (const [sourceGraphId, nodes] of evt.sourceNodes) {
+                  await this.#runtime.edit.moveNodesToGraph(
+                    this.tab,
+                    nodes,
+                    sourceGraphId === MAIN_BOARD_ID ? "" : sourceGraphId,
+                    destinationGraphId === MAIN_BOARD_ID
+                      ? ""
+                      : destinationGraphId,
+                    evt.positionDelta
+                  );
+                }
+
+                if (!this.tab) {
+                  return;
+                }
+
+                // Clear all selections.
+                this.#runtime.select.processSelections(
+                  this.tab.id,
+                  this.#runtime.util.createWorkspaceSelectionChangeId(),
+                  null,
+                  true
+                );
+              }}
               @bbedgechange=${async (
                 evt: BreadboardUI.Events.EdgeChangeEvent
               ) => {

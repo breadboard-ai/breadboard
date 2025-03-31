@@ -28,12 +28,20 @@ import {
 } from "./events/events";
 import { OverflowMenuActionEvent } from "../../events/events";
 import { toGridSize } from "./utils/to-grid-size";
+import { MOVE_GRAPH_ID } from "./constants";
 
 @customElement("bb-graph")
 export class Graph extends Box {
+  @property({ reflect: true, type: Boolean })
+  accessor showGhosted = false;
+
   static styles = [
     Box.styles,
     css`
+      :host([showghosted]) {
+        opacity: 0.5;
+      }
+
       #graph-boundary {
         position: fixed;
         border: 1px solid var(--bb-ui-300);
@@ -73,6 +81,10 @@ export class Graph extends Box {
 
   constructor(public readonly graphId: GraphIdentifier) {
     super();
+
+    if (graphId === MOVE_GRAPH_ID) {
+      this.showGhosted = true;
+    }
   }
 
   @property()
@@ -266,6 +278,26 @@ export class Graph extends Box {
     }
   }
 
+  applyTranslationToNodes(x: number, y: number, hasSettled: boolean) {
+    for (const node of this.#nodes) {
+      const graphNode = this.entities.get(node.descriptor.id) as GraphNode;
+      if (!graphNode) {
+        continue;
+      }
+
+      if (!graphNode.baseTransform) {
+        graphNode.baseTransform = DOMMatrix.fromMatrix(graphNode.transform);
+      }
+
+      graphNode.transform.e = graphNode.baseTransform.e + x;
+      graphNode.transform.f = graphNode.baseTransform.f + y;
+
+      if (hasSettled) {
+        graphNode.baseTransform = null;
+      }
+    }
+  }
+
   #selectContents() {
     for (const entity of this.entities.values()) {
       entity.selected = true;
@@ -307,7 +339,9 @@ export class Graph extends Box {
 
   protected renderSelf() {
     const renderBoundary =
-      this.graphId !== MAIN_BOARD_ID && this.nodes.length > 0;
+      this.graphId !== MAIN_BOARD_ID &&
+      this.graphId !== MOVE_GRAPH_ID &&
+      this.nodes.length > 0;
 
     if (renderBoundary) {
       const boundaryTransform = this.worldTransform.translate(-20, -20);

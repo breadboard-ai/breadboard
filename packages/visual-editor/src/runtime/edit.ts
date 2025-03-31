@@ -1538,7 +1538,8 @@ export class Edit extends EventTarget {
     tab: Tab | null,
     ids: NodeIdentifier[],
     sourceGraphId: GraphIdentifier,
-    destinationGraphId: GraphIdentifier | null = null
+    destinationGraphId: GraphIdentifier | null = null,
+    positionDelta: DOMPoint | null = null
   ) {
     if (tab?.readOnly) {
       return;
@@ -1555,7 +1556,8 @@ export class Edit extends EventTarget {
       new BreadboardUI.Transforms.MoveNodesToGraph(
         ids,
         sourceGraphId,
-        destinationGraphId
+        destinationGraphId,
+        positionDelta
       )
     );
   }
