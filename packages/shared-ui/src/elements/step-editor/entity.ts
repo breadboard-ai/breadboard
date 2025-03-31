@@ -183,8 +183,10 @@ export class Entity extends LitElement {
       this.selected = intersecting;
     }
 
-    for (const entity of this.entities.values()) {
-      entity.selected = false;
+    if (!isAdditiveSelection && !isToggleSelection) {
+      for (const entity of this.entities.values()) {
+        entity.selected = false;
+      }
     }
 
     const depthOrderedEntities = [...this.entities.values()]
@@ -204,7 +206,7 @@ export class Entity extends LitElement {
         isToggleSelection
       );
 
-      if (entity.selected) {
+      if (entity.selected && !isAdditiveSelection && !isToggleSelection) {
         return;
       }
     }
