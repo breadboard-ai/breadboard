@@ -14,7 +14,7 @@ import { Board } from "./board.js";
 import { Run } from "./run.js";
 import { Edit } from "./edit.js";
 import { Util } from "./util.js";
-import { RuntimeConfig } from "./types.js";
+import { RuntimeConfig, RuntimeConfigBoardServers } from "./types.js";
 
 import {
   createDefaultLocalBoardServer,
@@ -77,6 +77,9 @@ export async function create(config: RuntimeConfig): Promise<{
     servers = await getBoardServers();
   }
 
+  // Add board servers that are built into
+  servers.push(...config.builtInBoardServers);
+
   const loader = createLoader(servers);
   const graphStoreArgs = {
     kits,
@@ -100,10 +103,11 @@ export async function create(config: RuntimeConfig): Promise<{
     });
   });
 
-  const boardServers = {
+  const boardServers: RuntimeConfigBoardServers = {
     servers,
     loader,
     graphStore,
+    builtInBoardServers: config.builtInBoardServers,
   };
 
   const dataStore = new BoardServerAwareDataStore(getDataStore(), servers);

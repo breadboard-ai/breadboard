@@ -68,12 +68,19 @@ export interface RuntimeConfig {
   settings: SettingsStore;
   fileSystem: FileSystem;
   proxy?: HarnessProxyConfig[];
+  // The board servers that are built in: initialized separately and come
+  // as part of the environment.
+  builtInBoardServers: BoardServer[];
 }
 
 export interface RuntimeConfigBoardServers {
   servers: BoardServer[];
   loader: GraphLoader;
   graphStore: MutableGraphStore;
+  // The board servers that are built in: initialized separately and come
+  // as part of the environment.
+
+  builtInBoardServers: BoardServer[];
 }
 
 export type Result<T> =

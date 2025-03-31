@@ -2,8 +2,26 @@
   "compilerOptions": {
     "rootDir": ".",
     "outDir": "./dist",
-    "resolveJsonModule": true
+    "target": "ES2020",
+    "module": "ESNext",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "types": ["vite/client"]
   },
-  "include": ["scripts/**/*"],
+  "include": ["src/**/*.ts", "tests/**/*.ts"],
+  "exclude": ["bgl/src"],
   "extends": "@google-labs/tsconfig/base.json"
 }

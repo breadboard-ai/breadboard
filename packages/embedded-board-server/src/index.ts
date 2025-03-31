@@ -10,17 +10,29 @@ import {
   BoardServerExtension,
   BoardServerProject,
   ChangeNotificationCallback,
+  err,
   GraphDescriptor,
   GraphProviderCapabilities,
   GraphProviderExtendedCapabilities,
+  GraphProviderPreloadHandler,
   GraphProviderStore,
   Kit,
+  ok,
+  Outcome,
   Permission,
   Secrets,
   User,
 } from "@google-labs/breadboard";
 
-export { EmbeddedBoardServer };
+export { EmbeddedBoardServer, isFromEmbeddedServer };
+
+const EMBEDDED_SERVER_PREFIX = "embed:";
+
+function isFromEmbeddedServer(url: URL | string, urlPrefix: string): boolean {
+  const urlString = typeof url === "string" ? url : url.href;
+  const prefix = `${EMBEDDED_SERVER_PREFIX}${urlPrefix}/`;
+  return urlString.startsWith(prefix);
+}
 
 class EmbeddedBoardServer implements BoardServer {
   user: User = {
@@ -42,10 +54,53 @@ class EmbeddedBoardServer implements BoardServer {
     preview: false,
   };
 
+  #items: Map<string, GraphProviderStore>;
+
   constructor(
+    public readonly title: string,
     public readonly urlPrefix: string,
     public readonly bgls: Map<string, GraphDescriptor>
-  ) {}
+  ) {
+    this.#items = new Map([
+      [
+        "default",
+        {
+          permission: "granted",
+          title,
+          items: new Map(
+            [...bgls.entries()].map(([id, descriptor]) => {
+              return [
+                id,
+                {
+                  url: this.#makeBoardUrl(id),
+                  title: descriptor.title,
+                  tags: descriptor.metadata?.tags || [],
+                  version: descriptor.version,
+                  description: descriptor.description,
+                  mine: false,
+                  readonly: true,
+                  handle: null,
+                },
+              ];
+            })
+          ),
+        },
+      ],
+    ]);
+  }
+
+  #makeBoardUrl(id: string) {
+    return `${EMBEDDED_SERVER_PREFIX}${this.urlPrefix}/${id}.bgl.json`;
+  }
+
+  #bglKeyFromUrl(url: URL): Outcome<string> {
+    const urlString = url.href;
+    const prefix = `${EMBEDDED_SERVER_PREFIX}${this.urlPrefix}/`;
+    if (urlString.startsWith(prefix)) {
+      return urlString.slice(prefix.length, -".bgl.json".length);
+    }
+    return err(`Nope`);
+  }
 
   get projects(): Promise<BoardServerProject[]> {
     return Promise.resolve<BoardServerProject[]>(
@@ -61,27 +116,27 @@ class EmbeddedBoardServer implements BoardServer {
     );
   }
 
+  async preload(preloader: GraphProviderPreloadHandler): Promise<void> {
+    const def = this.#items.get("default")!;
+    for (const entry of def.items.values()) {
+      preloader(entry);
+    }
+  }
+
   getAccess(_url: URL, _user: User): Promise<Permission> {
     throw new Error("Method not implemented.");
   }
 
-  ready(): Promise<void> {
-    throw new Error("Method not implemented.");
-  }
+  async ready(): Promise<void> {}
 
   isSupported(): boolean {
     return true;
   }
 
   canProvide(url: URL): false | GraphProviderCapabilities {
-    const urlString = url.href;
-    return this.bgls.has(urlString)
-      ? {
-          load: true,
-          save: false,
-          delete: false,
-        }
-      : false;
+    const key = this.#bglKeyFromUrl(url);
+    if (!ok(key)) return false;
+    return { load: true, save: false, delete: false };
   }
 
   extendedCapabilities(): GraphProviderExtendedCapabilities {
@@ -96,67 +151,76 @@ class EmbeddedBoardServer implements BoardServer {
   }
 
   async load(url: URL): Promise<GraphDescriptor | null> {
-    const urlString = url.href;
-    return this.bgls.get(urlString) || null;
+    const key = this.#bglKeyFromUrl(url);
+    if (!ok(key)) return null;
+    return this.bgls.get(key) || null;
   }
 
-  save(
+  async save(
     _url: URL,
     _descriptor: GraphDescriptor
   ): Promise<{ result: boolean; error?: string }> {
-    throw new Error("Not Implemented");
+    return { result: false, error: "Can't save to embedded board server" };
   }
 
-  createBlank(_url: URL): Promise<{ result: boolean; error?: string }> {
-    throw new Error("Method not implemented.");
+  async createBlank(_url: URL): Promise<{ result: boolean; error?: string }> {
+    return {
+      result: false,
+      error: "Can't create boards on embedded board server",
+    };
   }
 
-  create(
+  async create(
     _url: URL,
     _graph: GraphDescriptor
   ): Promise<{ result: boolean; error?: string; url?: string }> {
-    throw new Error("Method not implemented.");
+    return {
+      result: false,
+      error: "Can't create boards to embedded board server",
+    };
   }
 
-  delete(_url: URL): Promise<{ result: boolean; error?: string }> {
-    throw new Error("Method not implemented.");
+  async delete(_url: URL): Promise<{ result: boolean; error?: string }> {
+    return {
+      result: false,
+      error: "Can't delete boards to embedded board server",
+    };
   }
 
-  connect(_location?: string, _auth?: unknown): Promise<boolean> {
-    throw new Error("Method not implemented.");
+  async connect(_location?: string, _auth?: unknown): Promise<boolean> {
+    return false;
   }
 
-  disconnect(_location: string): Promise<boolean> {
-    throw new Error("Method not implemented.");
+  async disconnect(_location: string): Promise<boolean> {
+    return false;
   }
 
-  refresh(_location: string): Promise<boolean> {
-    throw new Error("Method not implemented.");
+  async refresh(_location: string): Promise<boolean> {
+    return true;
   }
 
-  createURL(_location: string, _fileName: string): Promise<string | null> {
-    throw new Error("Method not implemented.");
+  async createURL(
+    _location: string,
+    _fileName: string
+  ): Promise<string | null> {
+    return null;
   }
 
   parseURL(_url: URL): { location: string; fileName: string } {
     throw new Error("Method not implemented.");
   }
 
-  restore(): Promise<void> {
-    throw new Error("Method not implemented.");
-  }
+  async restore(): Promise<void> {}
 
   items(): Map<string, GraphProviderStore> {
-    throw new Error("Method not implemented.");
+    return this.#items;
   }
 
   startingURL(): URL | null {
-    throw new Error("Method not implemented.");
+    return null;
   }
 
-  watch(_callback: ChangeNotificationCallback): void {
-    throw new Error("Method not implemented.");
-  }
+  watch(_callback: ChangeNotificationCallback): void {}
 
   preview(_url: URL): Promise<URL> {
     throw new Error("Method not implemented.");

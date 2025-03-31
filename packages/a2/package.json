@@ -2,12 +2,44 @@
   "name": "@breadboard-ai/a2",
   "version": "0.3.0",
   "description": "Breadboard Components for building AI systems",
-  "exports": {
-    "gemini": "./bgl/a2-gemini.bgl.json"
-  },
+  "main": "./dist/src/index.js",
   "type": "module",
   "scripts": {
-    "push": "tsx scripts/push.ts"
+    "push": "tsx scripts/push.ts",
+    "build": "wireit"
+  },
+  "wireit": {
+    "build": {
+      "dependencies": [
+        "<dependencies>#<this>",
+        "build:tsc"
+      ]
+    },
+    "typescript-files-and-deps": {
+      "dependencies": [
+        "<dependencies>#build:tsc"
+      ],
+      "files": [
+        "src/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ]
+    },
+    "build:tsc": {
+      "command": "tsc -b --pretty",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "typescript-files-and-deps"
+      ],
+      "files": [],
+      "output": [
+        "dist/",
+        "!dist/**/*.min.js{,.map}"
+      ],
+      "clean": "if-file-deleted"
+    }
   },
   "repository": {
     "directory": "packages/a2",
@@ -29,5 +61,9 @@
     "dotenv": "^16.4.7",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2"
+  },
+  "dependencies": {
+    "@breadboard-ai/embedded-board-server": "^0.0.1",
+    "@google-labs/breadboard": "^0.33.0"
   }
 }

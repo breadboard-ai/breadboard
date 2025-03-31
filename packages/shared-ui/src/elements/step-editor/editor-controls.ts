@@ -538,8 +538,9 @@ export class EditorControls extends LitElement {
 
     function isKnownGood(mainGraph: NodeHandlerMetadata) {
       return (
-        mainGraph.url?.includes("/@shared/") ||
-        mainGraph.url?.startsWith("file:")
+        // mainGraph.url?.includes("/@shared/") ||
+        // mainGraph.url?.startsWith("file:")
+        mainGraph.url?.startsWith("embed:std")
       );
     }
   }

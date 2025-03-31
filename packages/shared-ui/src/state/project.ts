@@ -55,7 +55,8 @@ function isTool(entry: GraphStoreEntry) {
     entry.tags?.includes("tool") &&
     !!entry.url &&
     entry?.tags.includes("quick-access") &&
-    (entry.url?.includes("/@shared/") || entry.url?.startsWith("file:"))
+    entry.url?.startsWith("embed:std")
+    // (entry.url?.includes("/@shared/") || entry.url?.startsWith("file:"))
   );
 }
 
