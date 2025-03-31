@@ -34,6 +34,7 @@ import type {
   AppTemplateAdditionalOptionsAvailable,
   AppTheme,
   Command,
+  EdgeAttachmentPoint,
   EdgeData,
   Settings,
   TopGraphEdgeInfo,
@@ -962,6 +963,19 @@ export class MoveNodesEvent extends Event {
     public readonly positionDelta: DOMPoint | null = null
   ) {
     super(MoveNodesEvent.eventName, { ...eventInit });
+  }
+}
+
+export class EdgeAttachmentMoveEvent extends Event {
+  static eventName = "bbedgeattachmentmove" as const;
+
+  constructor(
+    public readonly graphId: GraphIdentifier,
+    public readonly edge: Edge,
+    public readonly which: "from" | "to",
+    public readonly attachmentPoint: EdgeAttachmentPoint
+  ) {
+    super(EdgeAttachmentMoveEvent.eventName, { ...eventInit });
   }
 }
 

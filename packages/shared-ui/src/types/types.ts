@@ -559,3 +559,5 @@ export interface Utterance {
   confidence: number;
   transcript: string;
 }
+
+export type EdgeAttachmentPoint = "Top" | "Right" | "Bottom" | "Left" | "Auto";

@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
+import { Edge, GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
+import { EdgeAttachmentPoint } from "../../../types/types";
 
 const eventInit = {
   bubbles: true,
@@ -35,6 +36,17 @@ export class SelectionMoveEvent extends Event {
     public readonly hasSettled = false
   ) {
     super(SelectionMoveEvent.eventName, { ...eventInit });
+  }
+}
+export class GraphEdgeAttachmentMoveEvent extends Event {
+  static eventName = "bbgraphedgeattachmentmove" as const;
+
+  constructor(
+    public readonly edge: Edge,
+    public readonly which: "from" | "to",
+    public readonly value: EdgeAttachmentPoint
+  ) {
+    super(GraphEdgeAttachmentMoveEvent.eventName, { ...eventInit });
   }
 }
 

@@ -3859,6 +3859,18 @@ export class Main extends LitElement {
                   true
                 );
               }}
+              @bbedgeattachmentmove=${async (
+                evt: BreadboardUI.Events.EdgeAttachmentMoveEvent
+              ) => {
+                const { graphId } = evt;
+                await this.#runtime.edit.changeEdgeAttachmentPoint(
+                  this.tab,
+                  graphId === MAIN_BOARD_ID ? "" : graphId,
+                  evt.edge,
+                  evt.which,
+                  evt.attachmentPoint
+                );
+              }}
               @bbedgechange=${async (
                 evt: BreadboardUI.Events.EdgeChangeEvent
               ) => {

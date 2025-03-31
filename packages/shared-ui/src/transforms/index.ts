@@ -7,6 +7,7 @@
 export { AddNodeWithEdge } from "./add-node-with-edge";
 export { AutoWireInPorts } from "./autowire-in-ports";
 export { ChangeEdge } from "./change-edge";
+export { ChangeEdgeAttachmentPoint } from "./change-edge-attachment-point";
 export { CreateNode } from "./create-node";
 export { CreateParam } from "./create-param";
 export { DeleteParam } from "./delete-param";

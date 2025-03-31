@@ -34,6 +34,7 @@ import {
 } from "@google-labs/breadboard";
 import { MAIN_BOARD_ID } from "../../constants/constants";
 import {
+  GraphEdgeAttachmentMoveEvent,
   NodeAddEvent,
   NodeConfigurationRequestEvent,
   NodeSelectEvent,
@@ -59,6 +60,7 @@ import {
   WorkspaceSelectionStateEvent,
   ZoomToFitEvent,
   MoveNodesEvent,
+  EdgeAttachmentMoveEvent,
 } from "../../events/events";
 import { styleMap } from "lit/directives/style-map.js";
 import { Entity } from "./entity";
@@ -133,6 +135,9 @@ export class Renderer extends LitElement {
 
   @property()
   accessor expandSelections = true;
+
+  @property()
+  accessor allowEdgeAttachmentMove = false;
 
   @state()
   accessor _boundsDirty = new Set<string>();
@@ -637,7 +642,8 @@ export class Renderer extends LitElement {
 
     if (
       (changedProperties.has("graph") ||
-        changedProperties.has("graphTopologyUpdateId")) &&
+        changedProperties.has("graphTopologyUpdateId") ||
+        changedProperties.has("allowEdgeAttachmentMove")) &&
       this.graph &&
       this.camera
     ) {
@@ -659,6 +665,7 @@ export class Renderer extends LitElement {
       mainGraph.boundsLabel = this.graph.raw().title ?? "Untitled";
       mainGraph.nodes = this.graph.nodes();
       mainGraph.edges = this.graph.edges();
+      mainGraph.allowEdgeAttachmentMove = this.allowEdgeAttachmentMove;
       mainGraph.resetTransform();
 
       // Subgraphs.
@@ -676,6 +683,7 @@ export class Renderer extends LitElement {
         subGraph.boundsLabel = graph.raw().title ?? "Custom Tool";
         subGraph.nodes = graph.nodes();
         subGraph.edges = graph.edges();
+        subGraph.allowEdgeAttachmentMove = this.allowEdgeAttachmentMove;
         subGraph.resetTransform();
       }
 
@@ -1171,6 +1179,18 @@ export class Renderer extends LitElement {
                 ...this._boundsDirty,
                 graph.boundsLabel,
               ]);
+            }}
+            @bbgraphedgeattachmentmove=${(
+              evt: GraphEdgeAttachmentMoveEvent
+            ) => {
+              this.dispatchEvent(
+                new EdgeAttachmentMoveEvent(
+                  graphId,
+                  evt.edge,
+                  evt.which,
+                  evt.value
+                )
+              );
             }}
             @bbnodeboundsupdaterequest=${() => {
               this._boundsDirty = new Set([
