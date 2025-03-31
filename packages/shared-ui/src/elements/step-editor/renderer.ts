@@ -958,9 +958,12 @@ export class Renderer extends LitElement {
       return nothing;
     }
 
+    const hasNoSubGraphs = Object.keys(this.graph?.graphs() ?? {}).length === 0;
+    const subGraphsAreEmpty = Object.values(this.graph?.graphs() ?? {}).every(
+      (graph) => graph.nodes().length === 0
+    );
     const showDefaultAdd =
-      this.graph?.nodes().length === 0 &&
-      Object.keys(this.graph.graphs() ?? {}).length === 0;
+      this.graph?.nodes().length === 0 && (hasNoSubGraphs || subGraphsAreEmpty);
 
     this.camera.showBounds = this.debug;
 
