@@ -267,6 +267,34 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
   }
 }
 
+function findHighlights(
+  revision: EditHistoryEntry,
+  previous: GraphDescriptor
+): HighlightStateWithChangeId {
+  return {
+    highlightChangeId: crypto.randomUUID(),
+    highlightType:
+      revision.creator.role === "user"
+        ? "user"
+        : revision.creator.role === "assistant"
+          ? "model"
+          : "user",
+    highlightState: {
+      graphs: new Map([
+        [
+          MAIN_BOARD_ID,
+          {
+            nodes: findChangedNodes(previous, revision.graph),
+            // TODO(aomarks) Add changed edges.
+            edges: new Set(),
+            comments: new Set(),
+          },
+        ],
+      ]),
+    },
+  };
+}
+
 declare global {
   interface HTMLElementTagNameMap {
     "bb-revision-history-panel": RevisionHistoryPanel;
