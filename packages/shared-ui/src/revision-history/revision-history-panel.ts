@@ -179,19 +179,12 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
       const isDisplayed = !pending && i === history.index();
       const revision = committed[i];
       listItems.push(
-        this.#renderRevision(
-          revision,
-          isCurrent,
-          isDisplayed,
-          isDisplayed
-            ? undefined
-            : () => {
-                history.jump(i);
-                const prior = committed[i - 1];
-                const highlights = findHighlights(revision, prior?.graph ?? {});
-                this.dispatchEvent(new HighlightEvent(highlights));
-              }
-        )
+        this.#renderRevision(revision, isCurrent, isDisplayed, () => {
+          history.jump(i);
+          const prior = committed[i - 1];
+          const highlights = findHighlights(revision, prior?.graph ?? {});
+          this.dispatchEvent(new HighlightEvent(highlights));
+        })
       );
     }
     return html`
