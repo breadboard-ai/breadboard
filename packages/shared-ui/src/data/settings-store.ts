@@ -204,10 +204,18 @@ export class SettingsStore implements BreadboardUI_Types.SettingsStore {
           },
         ],
         [
-          "Enable Experimental Graph Renderer",
+          "Use Legacy Graph Renderer",
           {
-            name: "Enable Experimental Graph Renderer",
-            description: "Toggles a WIP graph renderer",
+            name: "Use Legacy Graph Renderer",
+            description: "Toggles the legacy canvas renderer",
+            value: false,
+          },
+        ],
+        [
+          "Enable Arrow Reattachment",
+          {
+            name: "Enable Arrow Reattachment",
+            description: "Toggles the WIP arrow reattachment in the renderer",
             value: false,
           },
         ],
