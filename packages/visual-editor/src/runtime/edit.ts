@@ -54,7 +54,10 @@ import {
 import { Sandbox } from "@breadboard-ai/jsandbox";
 import { createGraphId, MAIN_BOARD_ID } from "./util";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import { AppTheme } from "@breadboard-ai/shared-ui/types/types.js";
+import {
+  AppTheme,
+  EdgeAttachmentPoint,
+} from "@breadboard-ai/shared-ui/types/types.js";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { Autoname } from "@breadboard-ai/shared-ui/sideboards/autoname.js";
 
@@ -1301,6 +1304,32 @@ export class Edit extends EventTarget {
 
     const changing = await editableGraph.apply(
       new BreadboardUI.Transforms.ChangeEdge(changeType, graphId, from, to)
+    );
+    if (changing.success) return;
+
+    this.dispatchEvent(new RuntimeErrorEvent(changing.error));
+  }
+
+  async changeEdgeAttachmentPoint(
+    tab: Tab | null,
+    graphId: GraphIdentifier,
+    edge: Edge,
+    which: "from" | "to",
+    attachmentPoint: EdgeAttachmentPoint
+  ) {
+    const editableGraph = this.getEditor(tab);
+    if (!editableGraph) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to find board to edit"));
+      return;
+    }
+
+    const changing = await editableGraph.apply(
+      new BreadboardUI.Transforms.ChangeEdgeAttachmentPoint(
+        graphId,
+        edge,
+        which,
+        attachmentPoint
+      )
     );
     if (changing.success) return;
 

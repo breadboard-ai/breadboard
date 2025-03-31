@@ -17,7 +17,11 @@ import {
   inspectableEdgeToString,
 } from "../../utils/workspace";
 import { GraphEdge } from "./graph-edge";
-import { GraphSelectionState, TopGraphRunResult } from "../../types/types";
+import {
+  EdgeAttachmentPoint,
+  GraphSelectionState,
+  TopGraphRunResult,
+} from "../../types/types";
 import { css, html } from "lit";
 import { toCSSMatrix } from "./utils/to-css-matrix";
 import { styleMap } from "lit/directives/style-map.js";
@@ -34,6 +38,9 @@ import { MOVE_GRAPH_ID } from "./constants";
 export class Graph extends Box {
   @property({ reflect: true, type: Boolean })
   accessor showGhosted = false;
+
+  @property()
+  accessor allowEdgeAttachmentMove = false;
 
   static styles = [
     Box.styles,
@@ -181,10 +188,17 @@ export class Graph extends Box {
           console.warn(`Edge declared for non-existent nodes ${edgeId}`);
         }
 
-        graphEdge = new GraphEdge(from, to, edgeId);
+        graphEdge = new GraphEdge(from, to, edge);
         graphEdge.boundsLabel = edgeId;
         this.entities.set(edgeId, graphEdge);
       }
+
+      const visual = (edge.metadata()?.visual ?? {}) as Record<
+        "from" | "to",
+        EdgeAttachmentPoint
+      >;
+      graphEdge.from = visual.from ?? "Auto";
+      graphEdge.to = visual.to ?? "Auto";
     }
 
     // Remove stale edges.
@@ -206,6 +220,8 @@ export class Graph extends Box {
 
   @property()
   set selectionState(selectionState: GraphSelectionState | null) {
+    const showEdgePointSelectors =
+      selectionState?.nodes.size === 0 && selectionState.edges.size === 1;
     for (const node of this.#nodes) {
       const graphNode = this.entities.get(node.descriptor.id) as GraphNode;
       if (!graphNode) {
@@ -224,6 +240,10 @@ export class Graph extends Box {
       }
 
       graphEdge.selected = selectionState?.edges.has(id) ?? false;
+      graphEdge.showEdgePointSelectors =
+        this.allowEdgeAttachmentMove &&
+        showEdgePointSelectors &&
+        graphEdge.selected;
     }
   }
   get selectionState() {

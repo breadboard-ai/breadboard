@@ -6,7 +6,7 @@
 import { customElement, property } from "lit/decorators.js";
 import { Box } from "./box";
 import { GraphNode } from "./graph-node";
-import { css, html, nothing, svg } from "lit";
+import { css, html, HTMLTemplateResult, nothing, svg } from "lit";
 import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit/directives/style-map.js";
@@ -16,12 +16,16 @@ import { createRef, Ref, ref } from "lit/directives/ref.js";
 import { intersects } from "./utils/rect-intersection";
 import { getGlobalColor } from "../../utils/color";
 import { clamp } from "./utils/clamp";
+import { EdgeAttachmentPoint } from "../../types/types";
+import { inspectableEdgeToString } from "../../utils/workspace";
+import { InspectableEdge } from "@google-labs/breadboard";
+import { GraphEdgeAttachmentMoveEvent } from "./events/events";
 
 interface Connection {
   n1: DOMPoint;
   n2: DOMPoint;
-  s1: "Top" | "Right" | "Bottom" | "Left";
-  s2: "Top" | "Right" | "Bottom" | "Left";
+  from: "Top" | "Right" | "Bottom" | "Left";
+  to: "Top" | "Right" | "Bottom" | "Left";
 }
 
 const EDGE_STANDARD = getGlobalColor("--bb-neutral-400");
@@ -38,10 +42,26 @@ const HALF_HEADER_HEIGHT = 18;
 const LINE_CLEARANCE = 8;
 const ARROW_SIZE = 8;
 
+type NodeBoundPoints = {
+  n1t: DOMPoint;
+  n1r: DOMPoint;
+  n1b: DOMPoint;
+  n1l: DOMPoint;
+  n2t: DOMPoint;
+  n2r: DOMPoint;
+  n2b: DOMPoint;
+  n2l: DOMPoint;
+};
+
+const CONNECTION_POINT_RADIUS = 8;
+
 @customElement("bb-graph-edge")
 export class GraphEdge extends Box {
   @property()
   accessor status: "consumed" | "initial" | "stored" | null = null;
+
+  @property({ reflect: true, type: Boolean })
+  accessor showEdgePointSelectors = false;
 
   static styles = [
     Box.styles,
@@ -54,13 +74,29 @@ export class GraphEdge extends Box {
         z-index: 2;
       }
 
+      :host([selected][showedgepointselectors]) {
+        z-index: 3;
+      }
+
       svg {
         pointer-events: none;
       }
 
       svg > * {
         pointer-events: auto;
+      }
+
+      #edge > *,
+      #point-selectors > * {
         cursor: pointer;
+      }
+
+      #point-selectors {
+        position: absolute;
+        top: -8px;
+        left: -8px;
+        pointer-events: auto;
+        z-index: 4;
       }
     `,
   ];
@@ -68,26 +104,43 @@ export class GraphEdge extends Box {
   #edgeRef: Ref<SVGSVGElement> = createRef();
   #edgeHitAreaRef: Ref<SVGPathElement> = createRef();
 
+  @property()
+  accessor from: EdgeAttachmentPoint = "Auto";
+
+  @property()
+  accessor to: EdgeAttachmentPoint = "Auto";
+
   constructor(
     public readonly node1: GraphNode,
     public readonly node2: GraphNode,
-    public readonly edgeId: string
+    public readonly edge: InspectableEdge
   ) {
     super();
 
     this.cullable = true;
   }
 
+  get edgeId() {
+    return inspectableEdgeToString(this.edge);
+  }
+
+  set edgeId(_edgeId: string) {
+    throw new Error("Unable to set edge ID - read only");
+  }
+
   calculateLocalBounds(): DOMRect {
-    const top = Math.min(this.node1.transform.f, this.node2.transform.f);
-    const bottom = Math.max(
-      this.node1.transform.f + this.node1.bounds.height,
-      this.node2.transform.f + this.node2.bounds.height
+    const top = Math.min(
+      this.node1.transform.f - 25,
+      this.node2.transform.f - 25
     );
-    const left = Math.min(this.node1.transform.e, this.node2.transform.e);
+    const bottom = Math.max(
+      this.node1.transform.f + this.node1.bounds.height + 50,
+      this.node2.transform.f + this.node2.bounds.height + 50
+    );
+    const left = Math.min(this.node1.transform.e, this.node2.transform.e - 25);
     const right = Math.max(
-      this.node1.transform.e + this.node1.bounds.width,
-      this.node2.transform.e + this.node2.bounds.width
+      this.node1.transform.e + this.node1.bounds.width + 50,
+      this.node2.transform.e + this.node2.bounds.width + 50
     );
 
     this.transform.e = left;
@@ -109,6 +162,8 @@ export class GraphEdge extends Box {
     if (!this.#edgeRef.value) {
       return false;
     }
+
+    console.log("in");
 
     // Get the SVG's bounding box and convert it to a world coordinates bounding
     // box. Then use that for the intersection calculation.
@@ -169,7 +224,7 @@ export class GraphEdge extends Box {
     );
   }
 
-  #calculateShortestPath() {
+  #getNodeBoundPoints(): NodeBoundPoints {
     // Node 1 points.
     const n1l = new DOMPoint(this.node1.bounds.x, HALF_HEADER_HEIGHT);
     const n1r = new DOMPoint(
@@ -186,54 +241,19 @@ export class GraphEdge extends Box {
     );
 
     // Node 2 points.
-    const n2l = new DOMPoint(this.node2.bounds.x - 2, HALF_HEADER_HEIGHT);
+    const n2l = new DOMPoint(this.node2.bounds.x, HALF_HEADER_HEIGHT);
     const n2r = new DOMPoint(
-      this.node2.bounds.x + this.node2.bounds.width + 2,
+      this.node2.bounds.x + this.node2.bounds.width,
       HALF_HEADER_HEIGHT
     );
     const n2t = new DOMPoint(
       this.node2.bounds.x + this.node2.bounds.width * 0.5,
-      this.node2.bounds.y - 2
+      this.node2.bounds.y
     );
     const n2b = new DOMPoint(
       this.node2.bounds.x + this.node2.bounds.width * 0.5,
-      this.node2.bounds.y + this.node2.bounds.height + 2
+      this.node2.bounds.y + this.node2.bounds.height
     );
-
-    // Set up the smallest distance and the candidates.
-    let smallestDist = Number.POSITIVE_INFINITY;
-    const candidates: Connection = {
-      n1: new DOMPoint(),
-      n2: new DOMPoint(),
-      s1: "Top",
-      s2: "Top",
-    };
-    const cSP = (
-      n1: DOMPoint,
-      n2: DOMPoint,
-      t1: DOMPoint,
-      t2: DOMPoint,
-      s1: "Top" | "Right" | "Bottom" | "Left",
-      s2: "Top" | "Right" | "Bottom" | "Left"
-    ) => {
-      const dist = this.#distanceSq(n1, n2, t1, t2);
-      if (dist > smallestDist) {
-        return;
-      }
-
-      if (dist === smallestDist) {
-        return;
-      }
-
-      smallestDist = dist;
-
-      candidates.n1.x = n1.x + t1.x;
-      candidates.n1.y = n1.y + t1.y;
-      candidates.n2.x = n2.x + t2.x;
-      candidates.n2.y = n2.y + t2.y;
-      candidates.s1 = s1;
-      candidates.s2 = s2;
-    };
 
     const t1 = new DOMPoint(
       this.node1.transform.e - this.transform.e,
@@ -245,34 +265,139 @@ export class GraphEdge extends Box {
       this.node2.transform.f - this.transform.f
     );
 
+    const applyTransform = (n: DOMPoint, t: DOMPoint) => {
+      n.x += t.x;
+      n.y += t.y;
+    };
+
+    applyTransform(n1t, t1);
+    applyTransform(n1r, t1);
+    applyTransform(n1b, t1);
+    applyTransform(n1l, t1);
+
+    applyTransform(n2t, t2);
+    applyTransform(n2r, t2);
+    applyTransform(n2b, t2);
+    applyTransform(n2l, t2);
+
+    return {
+      n1t,
+      n1r,
+      n1b,
+      n1l,
+      n2t,
+      n2r,
+      n2b,
+      n2l,
+    };
+  }
+
+  #calculateConnectionPoints({
+    n1t,
+    n1r,
+    n1b,
+    n1l,
+    n2t,
+    n2r,
+    n2b,
+    n2l,
+  }: NodeBoundPoints) {
+    // Set up the smallest distance and the candidates.
+    let smallestDist = Number.POSITIVE_INFINITY;
+    const candidates: Connection = {
+      n1: new DOMPoint(),
+      n2: new DOMPoint(),
+      from: "Top",
+      to: "Top",
+    };
+
+    const calculateShortestPath = (
+      n1: DOMPoint,
+      n2: DOMPoint,
+      from: "Top" | "Right" | "Bottom" | "Left",
+      to: "Top" | "Right" | "Bottom" | "Left"
+    ) => {
+      const dist = this.#distanceSq(n1, n2);
+      if (dist > smallestDist) {
+        return;
+      }
+
+      if (dist === smallestDist) {
+        return;
+      }
+
+      smallestDist = dist;
+
+      candidates.n1.x = n1.x;
+      candidates.n1.y = n1.y;
+      candidates.n2.x = n2.x;
+      candidates.n2.y = n2.y;
+      candidates.from = from;
+      candidates.to = to;
+    };
+
+    const copyPoint = (src: DOMPointReadOnly, dest: DOMPoint) => {
+      dest.x = src.x;
+      dest.y = src.y;
+    };
+
     // Top.
-    cSP(n1t, n2l, t1, t2, "Top", "Left");
-    cSP(n1t, n2b, t1, t2, "Top", "Bottom");
-    cSP(n1t, n2r, t1, t2, "Top", "Right");
+    calculateShortestPath(n1t, n2l, "Top", "Left");
+    calculateShortestPath(n1t, n2b, "Top", "Bottom");
+    calculateShortestPath(n1t, n2r, "Top", "Right");
 
     // Right.
-    cSP(n1r, n2t, t1, t2, "Right", "Top");
-    cSP(n1r, n2l, t1, t2, "Right", "Left");
-    cSP(n1r, n2b, t1, t2, "Right", "Bottom");
+    calculateShortestPath(n1r, n2t, "Right", "Top");
+    calculateShortestPath(n1r, n2l, "Right", "Left");
+    calculateShortestPath(n1r, n2b, "Right", "Bottom");
 
     // Bottom.
-    cSP(n1b, n2r, t1, t2, "Bottom", "Right");
-    cSP(n1b, n2t, t1, t2, "Bottom", "Top");
-    cSP(n1b, n2l, t1, t2, "Bottom", "Left");
+    calculateShortestPath(n1b, n2r, "Bottom", "Right");
+    calculateShortestPath(n1b, n2t, "Bottom", "Top");
+    calculateShortestPath(n1b, n2l, "Bottom", "Left");
 
     // Left.
-    cSP(n1l, n2t, t1, t2, "Left", "Top");
-    cSP(n1l, n2r, t1, t2, "Left", "Right");
-    cSP(n1l, n2b, t1, t2, "Left", "Bottom");
+    calculateShortestPath(n1l, n2t, "Left", "Top");
+    calculateShortestPath(n1l, n2r, "Left", "Right");
+    calculateShortestPath(n1l, n2b, "Left", "Bottom");
+
+    if (this.from === "Top") copyPoint(n1t, candidates.n1);
+    if (this.from === "Right") copyPoint(n1r, candidates.n1);
+    if (this.from === "Bottom") copyPoint(n1b, candidates.n1);
+    if (this.from === "Left") copyPoint(n1l, candidates.n1);
+
+    if (this.to === "Top") copyPoint(n2t, candidates.n2);
+    if (this.to === "Right") copyPoint(n2r, candidates.n2);
+    if (this.to === "Bottom") copyPoint(n2b, candidates.n2);
+    if (this.to === "Left") copyPoint(n2l, candidates.n2);
+
+    if (this.from !== "Auto") {
+      candidates.from = this.from;
+    }
+
+    if (this.to !== "Auto") {
+      candidates.to = this.to;
+    }
+
+    // Final adjustments so that the arrow has a bit of breathing room before it
+    // goes into the node.
+    if (candidates.from === "Left") candidates.n1.x -= 4;
+    if (candidates.from === "Right") candidates.n1.x += 4;
+    if (candidates.from === "Top") candidates.n1.y -= 4;
+    if (candidates.from === "Bottom") candidates.n1.y += 4;
+    if (candidates.to === "Left") candidates.n2.x -= 4;
+    if (candidates.to === "Right") candidates.n2.x += 4;
+    if (candidates.to === "Top") candidates.n2.y -= 4;
+    if (candidates.to === "Bottom") candidates.n2.y += 4;
 
     return candidates;
   }
 
-  #distanceSq(p1: DOMPoint, p2: DOMPoint, t1: DOMPoint, t2: DOMPoint) {
-    const x1 = p1.x + t1.x;
-    const y1 = p1.y + t1.y;
-    const x2 = p2.x + t2.x;
-    const y2 = p2.y + t2.y;
+  #distanceSq(p1: DOMPoint, p2: DOMPoint) {
+    const x1 = p1.x;
+    const y1 = p1.y;
+    const x2 = p2.x;
+    const y2 = p2.y;
 
     return (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
   }
@@ -289,11 +414,13 @@ export class GraphEdge extends Box {
       (connectionPoints.n2.y - connectionPoints.n1.y) * 0.5;
 
     if (
-      (connectionPoints.s1 === "Right" && connectionPoints.s2 === "Left") ||
-      (connectionPoints.s1 === "Left" && connectionPoints.s2 === "Right")
+      (connectionPoints.from === "Right" && connectionPoints.to === "Left") ||
+      (connectionPoints.from === "Left" && connectionPoints.to === "Right") ||
+      (connectionPoints.from === "Left" && connectionPoints.to === "Left") ||
+      (connectionPoints.from === "Right" && connectionPoints.to === "Right")
     ) {
       const dir =
-        connectionPoints.s1 === "Left" && connectionPoints.s2 === "Right"
+        connectionPoints.from === "Left" && connectionPoints.to === "Right"
           ? -1
           : 1;
       const clearance =
@@ -309,11 +436,14 @@ export class GraphEdge extends Box {
         `L ${connectionPoints.n2.x} ${connectionPoints.n2.y}`
       );
     } else if (
-      (connectionPoints.s1 === "Bottom" && connectionPoints.s2 === "Top") ||
-      (connectionPoints.s1 === "Top" && connectionPoints.s2 === "Bottom")
+      (connectionPoints.from === "Bottom" && connectionPoints.to === "Top") ||
+      (connectionPoints.from === "Top" && connectionPoints.to === "Bottom") ||
+      (connectionPoints.from === "Bottom" &&
+        connectionPoints.to === "Bottom") ||
+      (connectionPoints.from === "Top" && connectionPoints.to === "Top")
     ) {
       const dir =
-        connectionPoints.s1 === "Top" && connectionPoints.s2 === "Bottom"
+        connectionPoints.from === "Top" && connectionPoints.to === "Bottom"
           ? -1
           : 1;
       const clearance =
@@ -322,40 +452,48 @@ export class GraphEdge extends Box {
           LINE_CLEARANCE
         ) * dir;
 
-      steps.push(
-        `M ${connectionPoints.n1.x} ${connectionPoints.n1.y}`,
-        `L ${connectionPoints.n1.x} ${connectionPoints.n1.y + clearance}`,
-        `C ${connectionPoints.n1.x} ${midY}, ${connectionPoints.n2.x} ${midY}, ${connectionPoints.n2.x} ${connectionPoints.n2.y - clearance}`,
-        `L ${connectionPoints.n2.x} ${connectionPoints.n2.y}`
-      );
+      if (clearance === 0) {
+        steps.push(
+          `M ${connectionPoints.n1.x} ${connectionPoints.n1.y}`,
+          `Q ${midX} ${midY + 50}, ${connectionPoints.n2.x} ${connectionPoints.n2.y}`,
+          `L ${connectionPoints.n2.x} ${connectionPoints.n2.y}`
+        );
+      } else {
+        steps.push(
+          `M ${connectionPoints.n1.x} ${connectionPoints.n1.y}`,
+          `L ${connectionPoints.n1.x} ${connectionPoints.n1.y + clearance}`,
+          `C ${connectionPoints.n1.x} ${midY}, ${connectionPoints.n2.x} ${midY}, ${connectionPoints.n2.x} ${connectionPoints.n2.y - clearance}`,
+          `L ${connectionPoints.n2.x} ${connectionPoints.n2.y}`
+        );
+      }
     } else if (
-      (connectionPoints.s1 === "Bottom" && connectionPoints.s2 === "Left") ||
-      (connectionPoints.s1 === "Top" && connectionPoints.s2 === "Right") ||
-      (connectionPoints.s1 === "Bottom" && connectionPoints.s2 === "Right") ||
-      (connectionPoints.s1 === "Top" && connectionPoints.s2 === "Left")
+      (connectionPoints.from === "Bottom" && connectionPoints.to === "Left") ||
+      (connectionPoints.from === "Top" && connectionPoints.to === "Right") ||
+      (connectionPoints.from === "Bottom" && connectionPoints.to === "Right") ||
+      (connectionPoints.from === "Top" && connectionPoints.to === "Left")
     ) {
       // Maybe adjust.
       if (
-        connectionPoints.s1 === "Bottom" &&
-        connectionPoints.s2 === "Left" &&
+        connectionPoints.from === "Bottom" &&
+        connectionPoints.to === "Left" &&
         connectionPoints.n1.x > connectionPoints.n2.x - GRID_SIZE
       ) {
         connectionPoints.n1.x = connectionPoints.n2.x - GRID_SIZE;
       } else if (
-        connectionPoints.s1 === "Bottom" &&
-        connectionPoints.s2 === "Right" &&
+        connectionPoints.from === "Bottom" &&
+        connectionPoints.to === "Right" &&
         connectionPoints.n1.x < connectionPoints.n2.x + GRID_SIZE
       ) {
         connectionPoints.n1.x = connectionPoints.n2.x + GRID_SIZE;
       } else if (
-        connectionPoints.s1 === "Top" &&
-        connectionPoints.s2 === "Right" &&
+        connectionPoints.from === "Top" &&
+        connectionPoints.to === "Right" &&
         connectionPoints.n1.x < connectionPoints.n2.x + GRID_SIZE
       ) {
         connectionPoints.n1.x = connectionPoints.n2.x + GRID_SIZE;
       } else if (
-        connectionPoints.s1 === "Top" &&
-        connectionPoints.s2 === "Left" &&
+        connectionPoints.from === "Top" &&
+        connectionPoints.to === "Left" &&
         connectionPoints.n1.x > connectionPoints.n2.x - GRID_SIZE
       ) {
         connectionPoints.n1.x = connectionPoints.n2.x - GRID_SIZE;
@@ -366,10 +504,10 @@ export class GraphEdge extends Box {
         `C ${connectionPoints.n1.x} ${midY}, ${connectionPoints.n1.x} ${connectionPoints.n2.y}, ${connectionPoints.n2.x} ${connectionPoints.n2.y}`
       );
     } else if (
-      (connectionPoints.s1 === "Right" && connectionPoints.s2 === "Top") ||
-      (connectionPoints.s1 === "Left" && connectionPoints.s2 === "Top") ||
-      (connectionPoints.s1 === "Left" && connectionPoints.s2 === "Bottom") ||
-      (connectionPoints.s1 === "Right" && connectionPoints.s2 === "Bottom")
+      (connectionPoints.from === "Right" && connectionPoints.to === "Top") ||
+      (connectionPoints.from === "Left" && connectionPoints.to === "Top") ||
+      (connectionPoints.from === "Left" && connectionPoints.to === "Bottom") ||
+      (connectionPoints.from === "Right" && connectionPoints.to === "Bottom")
     ) {
       steps.push(
         `M ${connectionPoints.n1.x} ${connectionPoints.n1.y}`,
@@ -382,7 +520,7 @@ export class GraphEdge extends Box {
 
   #createRotationFromConnectionPoints(connectionPoints: Connection) {
     let rotation = 0;
-    switch (connectionPoints.s2) {
+    switch (connectionPoints.to) {
       case "Top":
         rotation = 90;
         break;
@@ -397,6 +535,26 @@ export class GraphEdge extends Box {
     return rotation;
   }
 
+  #emitAttachmentPointChange(
+    evt: PointerEvent,
+    which: "from" | "to",
+    attachmentPoint: EdgeAttachmentPoint
+  ) {
+    evt.stopImmediatePropagation();
+
+    if (which === "from" && this.from === attachmentPoint) {
+      attachmentPoint = "Auto";
+    }
+
+    if (which === "to" && this.to === attachmentPoint) {
+      attachmentPoint = "Auto";
+    }
+
+    this.dispatchEvent(
+      new GraphEdgeAttachmentMoveEvent(this.edge.raw(), which, attachmentPoint)
+    );
+  }
+
   protected renderSelf() {
     if (intersects(this.node1.worldBounds, this.node2.worldBounds, 0)) {
       return nothing;
@@ -406,32 +564,37 @@ export class GraphEdge extends Box {
       transform: toCSSMatrix(this.worldTransform),
     };
 
-    const connectionPoints = this.#calculateShortestPath();
+    const nodeBoundPoints = this.#getNodeBoundPoints();
+    const { n1t, n1r, n1b, n1l, n2t, n2r, n2b, n2l } = nodeBoundPoints;
+
+    const connectionPointRadius = CONNECTION_POINT_RADIUS - 2;
+    const connectionPoints = this.#calculateConnectionPoints(nodeBoundPoints);
+
     const rotation = this.#createRotationFromConnectionPoints(connectionPoints);
     const steps = this.#createStepsFromConnectionPoints(connectionPoints);
     let arrowSize = ARROW_SIZE;
-    if (connectionPoints.s2 === "Top") {
+    if (connectionPoints.to === "Top") {
       arrowSize = clamp(
         connectionPoints.n2.y - connectionPoints.n1.y,
-        0,
+        3,
         ARROW_SIZE
       );
-    } else if (connectionPoints.s2 === "Bottom") {
+    } else if (connectionPoints.to === "Bottom") {
       arrowSize = clamp(
         connectionPoints.n1.y - connectionPoints.n2.y,
-        0,
+        3,
         ARROW_SIZE
       );
-    } else if (connectionPoints.s2 === "Left") {
+    } else if (connectionPoints.to === "Left") {
       arrowSize = clamp(
         connectionPoints.n2.x - connectionPoints.n1.x,
-        0,
+        3,
         ARROW_SIZE
       );
-    } else if (connectionPoints.s2 === "Right") {
+    } else if (connectionPoints.to === "Right") {
       arrowSize = clamp(
         connectionPoints.n1.x - connectionPoints.n2.x,
-        0,
+        3,
         ARROW_SIZE
       );
     }
@@ -455,14 +618,82 @@ export class GraphEdge extends Box {
       }
     }
 
+    let fromEdgePoint: HTMLTemplateResult | symbol = nothing;
+    let toEdgePoint: HTMLTemplateResult | symbol = nothing;
+    if (this.from !== "Auto") {
+      let x = 0;
+      let y = 0;
+      switch (this.from) {
+        case "Top": {
+          x = n1t.x;
+          y = n1t.y;
+          break;
+        }
+        case "Right": {
+          x = n1r.x;
+          y = n1r.y;
+          break;
+        }
+        case "Bottom": {
+          x = n1b.x;
+          y = n1b.y;
+          break;
+        }
+        case "Left": {
+          x = n1l.x;
+          y = n1l.y;
+          break;
+        }
+      }
+
+      fromEdgePoint = html`${svg`<circle
+        cx=${x + CONNECTION_POINT_RADIUS}
+        cy=${y + CONNECTION_POINT_RADIUS}
+        r=${connectionPointRadius - 2}
+        fill="#3399ff" />`}`;
+    }
+
+    if (this.to !== "Auto") {
+      let x = 0;
+      let y = 0;
+      switch (this.to) {
+        case "Top": {
+          x = n2t.x;
+          y = n2t.y;
+          break;
+        }
+        case "Right": {
+          x = n2r.x;
+          y = n2r.y;
+          break;
+        }
+        case "Bottom": {
+          x = n2b.x;
+          y = n2b.y;
+          break;
+        }
+        case "Left": {
+          x = n2l.x;
+          y = n2l.y;
+          break;
+        }
+      }
+
+      toEdgePoint = html`${svg`<circle
+        cx=${x + CONNECTION_POINT_RADIUS}
+        cy=${y + CONNECTION_POINT_RADIUS}
+        r=${connectionPointRadius - 2}
+        fill="#3399ff" />`}`;
+    }
+
     return html`<section
         id="container"
         class=${classMap({ bounds: this.showBounds })}
         style=${styleMap(styles)}
       >
         ${svg`
-          <svg ${ref(this.#edgeRef)} version="1.1"
-               width=${this.bounds.width} height=${this.bounds.height}
+          <svg id="edge" ${ref(this.#edgeRef)} version="1.1"
+               width=${this.bounds.width} height=${this.bounds.height} viewBox="0 0 ${this.bounds.width} ${this.bounds.height}"
                xmlns="http://www.w3.org/2000/svg">
                 <path d=${steps.join(" ")}
                   stroke=${this.selected ? EDGE_SELECTED : edgeColor}
@@ -485,7 +716,23 @@ export class GraphEdge extends Box {
                 transform=${`rotate(${rotation}, ${connectionPoints.n2.x}, ${connectionPoints.n2.y})`}
                 stroke=${this.selected ? EDGE_SELECTED : edgeColor} stroke-width="2" stroke-linecap="round" />
           </svg>
-        `}
+        `} ${this.showEdgePointSelectors
+          ? svg`<svg } id="point-selectors" version="1.1"
+               width=${this.bounds.width + CONNECTION_POINT_RADIUS * 2} height=${this.bounds.height + CONNECTION_POINT_RADIUS * 2}
+               xmlns="http://www.w3.org/2000/svg">
+                ${this.from !== "Auto" ? fromEdgePoint : nothing}
+                ${this.to !== "Auto" ? toEdgePoint : nothing}
+                <circle @pointerdown=${(evt: PointerEvent) => this.#emitAttachmentPointChange(evt, "from", "Top")} cx=${n1t.x + CONNECTION_POINT_RADIUS} cy=${n1t.y + CONNECTION_POINT_RADIUS} r=${connectionPointRadius} stroke="#246db5aa" fill="#ff00ff00" />
+                <circle @pointerdown=${(evt: PointerEvent) => this.#emitAttachmentPointChange(evt, "from", "Right")} cx=${n1r.x + CONNECTION_POINT_RADIUS} cy=${n1r.y + CONNECTION_POINT_RADIUS} r=${connectionPointRadius} stroke="#246db5aa" fill="#ff00ff00" />
+                <circle @pointerdown=${(evt: PointerEvent) => this.#emitAttachmentPointChange(evt, "from", "Bottom")} cx=${n1b.x + CONNECTION_POINT_RADIUS} cy=${n1b.y + CONNECTION_POINT_RADIUS} r=${connectionPointRadius} stroke="#246db5aa" fill="#ff00ff00" />
+                <circle @pointerdown=${(evt: PointerEvent) => this.#emitAttachmentPointChange(evt, "from", "Left")} cx=${n1l.x + CONNECTION_POINT_RADIUS} cy=${n1l.y + CONNECTION_POINT_RADIUS} r=${connectionPointRadius} stroke="#246db5aa" fill="#ff00ff00" />
+
+                <circle @pointerdown=${(evt: PointerEvent) => this.#emitAttachmentPointChange(evt, "to", "Top")} cx=${n2t.x + CONNECTION_POINT_RADIUS} cy=${n2t.y + CONNECTION_POINT_RADIUS} r=${connectionPointRadius} stroke="#246db5aa" fill="#ff00ff00" />
+                <circle @pointerdown=${(evt: PointerEvent) => this.#emitAttachmentPointChange(evt, "to", "Right")} cx=${n2r.x + CONNECTION_POINT_RADIUS} cy=${n2r.y + CONNECTION_POINT_RADIUS} r=${connectionPointRadius} stroke="#246db5aa" fill="#ff00ff00" />
+                <circle @pointerdown=${(evt: PointerEvent) => this.#emitAttachmentPointChange(evt, "to", "Bottom")} cx=${n2b.x + CONNECTION_POINT_RADIUS} cy=${n2b.y + CONNECTION_POINT_RADIUS} r=${connectionPointRadius} stroke="#246db5aa" fill="#ff00ff00" />
+                <circle @pointerdown=${(evt: PointerEvent) => this.#emitAttachmentPointChange(evt, "to", "Left")} cx=${n2l.x + CONNECTION_POINT_RADIUS} cy=${n2l.y + CONNECTION_POINT_RADIUS} r=${connectionPointRadius} stroke="#246db5aa" fill="#ff00ff00" />
+          </svg>`
+          : nothing}
       </section>
       ${this.renderBounds()}`;
   }
