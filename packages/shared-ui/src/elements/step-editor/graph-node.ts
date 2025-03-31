@@ -123,6 +123,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         color: var(--bb-neutral-900);
         line-height: var(--bb-grid-size-6);
         z-index: 3;
+        outline: none;
       }
 
       :host([selected]) {
@@ -689,7 +690,6 @@ export class GraphNode extends Box implements DragConnectorReceiver {
                 }
 
                 default: {
-                  // console.log(port);
                   value = nothing;
                 }
               }
@@ -815,7 +815,12 @@ export class GraphNode extends Box implements DragConnectorReceiver {
             const yTranslation = toGridSize(deltaY);
 
             this.dispatchEvent(
-              new SelectionTranslateEvent(xTranslation, yTranslation)
+              new SelectionTranslateEvent(
+                xTranslation,
+                yTranslation,
+                /* hasSettled */ false,
+                /* isReparenting */ evt.shiftKey
+              )
             );
           }}
           @pointerup=${(evt: PointerEvent) => {
@@ -845,7 +850,8 @@ export class GraphNode extends Box implements DragConnectorReceiver {
               new SelectionTranslateEvent(
                 xTranslation,
                 yTranslation,
-                /** hasSettled */ true
+                /* hasSettled */ true,
+                /* isReparenting */ evt.shiftKey
               )
             );
           }}
@@ -858,6 +864,8 @@ export class GraphNode extends Box implements DragConnectorReceiver {
                   ?disabled=${this.updating}
                   @pointerdown=${(evt: PointerEvent) => {
                     evt.stopImmediatePropagation();
+
+                    this.showDefaultAdd = false;
 
                     // This event is picked up by the graph itself to ensure that it
                     // is tagged with the graph's ID (and thereby preventing edges
