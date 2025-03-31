@@ -43,10 +43,12 @@ import {
   SelectionTranslateEvent,
 } from "./events/events";
 import {
+  HighlightStateWithChangeId,
   TopGraphRunResult,
   WorkspaceSelectionStateWithChangeId,
 } from "../../types/types";
 import {
+  createEmptyGraphHighlightState,
   createEmptyGraphSelectionState,
   createEmptyWorkspaceSelectionState,
   createWorkspaceSelectionChangeId,
@@ -76,6 +78,9 @@ export class Renderer extends LitElement {
   @property()
   accessor debug = false;
 
+  @property({ reflect: true, type: Boolean })
+  accessor readOnly = false;
+
   @property()
   accessor topGraphResult: TopGraphRunResult | null = null;
 
@@ -99,6 +104,9 @@ export class Renderer extends LitElement {
 
   @property()
   accessor selectionState: WorkspaceSelectionStateWithChangeId | null = null;
+
+  @property()
+  accessor highlightState: HighlightStateWithChangeId | null = null;
 
   @property({ reflect: true })
   accessor interactionMode: "inert" | "selection" | "pan" | "move" = "inert";
@@ -159,6 +167,36 @@ export class Renderer extends LitElement {
       height: 100%;
       outline: none;
       touch-action: none;
+    }
+
+    :host([readonly])::after {
+      content: "";
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0);
+      top: 0;
+      left: 0;
+      z-index: 100;
+    }
+
+    :host([readonly])::before {
+      content: "Read Only";
+      display: flex;
+      align-items: center;
+      box-sizing: border-box;
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      translate: -50% 0;
+      border-radius: var(--bb-grid-size-16);
+      height: var(--bb-grid-size-7);
+      border: 1px solid var(--bb-ui-200);
+      background: var(--bb-ui-100);
+      color: var(--bb-ui-800);
+      padding: 0 var(--bb-grid-size-3);
+      font: 400 var(--bb-label-small) / var(--bb-label-line-height-small)
+        var(--bb-font-family);
     }
 
     :host([interactionmode="pan"]) {
@@ -588,12 +626,30 @@ export class Renderer extends LitElement {
   }
 
   protected shouldUpdate(changedProperties: PropertyValues): boolean {
-    if (changedProperties.has("selectionState") && this.selectionState) {
+    if (
+      changedProperties.size === 1 &&
+      changedProperties.has("selectionState") &&
+      this.selectionState
+    ) {
       if (
         this.selectionState.selectionChangeId ===
         changedProperties.get("selectionState")?.selectionChangeId
       ) {
         console.log("Ignoring selection state change");
+        return false;
+      }
+    }
+
+    if (
+      changedProperties.size === 1 &&
+      changedProperties.has("highlightState") &&
+      this.highlightState
+    ) {
+      if (
+        this.highlightState.highlightChangeId ===
+        changedProperties.get("highlightState")?.highlightChangeId
+      ) {
+        console.log("Ignoring highlight state change");
         return false;
       }
     }
@@ -629,6 +685,26 @@ export class Renderer extends LitElement {
           graph.selectionState = selectionState;
         } else {
           graph.selectionState = createEmptyGraphSelectionState();
+        }
+      }
+    }
+
+    if (changedProperties.has("highlightState")) {
+      if (this.highlightState) {
+        for (const [graphId, graph] of this.#graphs) {
+          const highlightState =
+            this.highlightState.highlightState.graphs?.get(graphId);
+          if (highlightState) {
+            graph.highlightState = highlightState;
+          } else {
+            graph.highlightState = createEmptyGraphHighlightState();
+          }
+
+          graph.highlightType = this.highlightState.highlightType;
+        }
+      } else {
+        for (const graph of this.#graphs.values()) {
+          graph.highlightState = createEmptyGraphHighlightState();
         }
       }
     }

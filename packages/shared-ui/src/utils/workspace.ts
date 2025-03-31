@@ -12,7 +12,9 @@ import {
   NodeIdentifier,
 } from "@google-labs/breadboard";
 import {
+  GraphHighlightState,
   GraphSelectionState,
+  HighlightState,
   WorkspaceSelectionChangeId,
   WorkspaceSelectionState,
 } from "../types/types";
@@ -47,12 +49,32 @@ export function createEmptyWorkspaceSelectionState(): WorkspaceSelectionState {
   };
 }
 
+export function createHighlightId(): ReturnType<
+  typeof globalThis.crypto.randomUUID
+> {
+  return globalThis.crypto.randomUUID();
+}
+
+export function createEmptyHighlightState(): HighlightState {
+  return {
+    graphs: new Map(),
+  };
+}
+
 export function createEmptyGraphSelectionState(): GraphSelectionState {
   return {
     nodes: new Set(),
     comments: new Set(),
     edges: new Set(),
     references: new Set(),
+  };
+}
+
+export function createEmptyGraphHighlightState(): GraphHighlightState {
+  return {
+    nodes: new Set(),
+    comments: new Set(),
+    edges: new Set(),
   };
 }
 

@@ -80,6 +80,9 @@ export class GraphNode extends Box implements DragConnectorReceiver {
   @property()
   accessor hasMainPort = false;
 
+  @property({ reflect: true, type: String })
+  accessor highlightType: "user" | "model" = "model";
+
   @property({ reflect: true, type: Boolean })
   accessor highlighted = false;
 
@@ -295,8 +298,12 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         outline: 2px solid var(--border);
       }
 
-      :host([highlighted]) #container {
-        outline: 3px solid var(--border);
+      :host(:not([updating])[highlighted][highlighttype="model"]) #container {
+        outline: 6px solid oklch(from var(--bb-generative-700) l c h / 0.4);
+      }
+
+      :host(:not([updating])[highlighted][highlighttype="user"]) #container {
+        outline: 6px solid oklch(from var(--bb-joiner-700) l c h / 0.4);
       }
 
       :host([moving]) #container header {
