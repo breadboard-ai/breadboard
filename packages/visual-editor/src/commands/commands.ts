@@ -228,13 +228,21 @@ export const GroupCommand: KeyboardCommand = {
         continue;
       }
 
-      runtime.edit.moveNodesToGraph(
+      await runtime.edit.moveNodesToGraph(
         tab,
         [...selection.nodes],
         sourceGraphId === MAIN_BOARD_ID ? "" : sourceGraphId,
         destinationGraphId
       );
     }
+
+    // Clear all selections.
+    runtime.select.processSelections(
+      tab.id,
+      runtime.util.createWorkspaceSelectionChangeId(),
+      null,
+      true
+    );
   },
 };
 
@@ -268,6 +276,7 @@ export const UngroupCommand: KeyboardCommand = {
       throw new Error("Nothing to ungroup");
     }
 
+    console.log(selectionState.selectionState);
     for (const [sourceGraphId, selection] of selectionState.selectionState
       .graphs) {
       if (selection.nodes.size === 0) {
@@ -278,13 +287,21 @@ export const UngroupCommand: KeyboardCommand = {
         continue;
       }
 
-      runtime.edit.moveNodesToGraph(
+      await runtime.edit.moveNodesToGraph(
         tab,
         [...selection.nodes],
         sourceGraphId,
         ""
       );
     }
+
+    // Clear all selections.
+    runtime.select.processSelections(
+      tab.id,
+      runtime.util.createWorkspaceSelectionChangeId(),
+      null,
+      true
+    );
   },
 };
 

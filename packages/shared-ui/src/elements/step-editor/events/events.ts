@@ -24,6 +24,20 @@ export class SelectionTranslateEvent extends Event {
   }
 }
 
+export class SelectionMoveEvent extends Event {
+  static eventName = "bbselectionmove" as const;
+
+  constructor(
+    public readonly eventX: number,
+    public readonly eventY: number,
+    public readonly deltaX: number,
+    public readonly deltaY: number,
+    public readonly hasSettled = false
+  ) {
+    super(SelectionMoveEvent.eventName, { ...eventInit });
+  }
+}
+
 export class SelectGraphContentsEvent extends Event {
   static eventName = "bbselectgraphcontents" as const;
 

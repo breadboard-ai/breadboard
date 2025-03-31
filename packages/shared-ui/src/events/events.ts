@@ -954,6 +954,17 @@ export class AddNodeWithEdgeEvent extends Event {
   }
 }
 
+export class MoveNodesEvent extends Event {
+  static eventName = "bbmovenodes" as const;
+  constructor(
+    public readonly sourceNodes: Map<GraphIdentifier, NodeIdentifier[]>,
+    public readonly destinationGraphId: GraphIdentifier | null = null,
+    public readonly positionDelta: DOMPoint | null = null
+  ) {
+    super(MoveNodesEvent.eventName, { ...eventInit });
+  }
+}
+
 /** @deprecated */
 export class EdgeValueSelectedEvent extends Event {
   static eventName = "bbedgevalueselected";

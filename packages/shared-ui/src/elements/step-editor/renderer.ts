@@ -25,6 +25,7 @@ import {
   EditSpec,
   GraphIdentifier,
   InspectableGraph,
+  InspectableNode,
   Kit,
   MainGraphIdentifier,
   MutableGraphStore,
@@ -37,6 +38,7 @@ import {
   NodeConfigurationRequestEvent,
   NodeSelectEvent,
   SelectGraphContentsEvent,
+  SelectionMoveEvent,
   SelectionTranslateEvent,
 } from "./events/events";
 import {
@@ -56,6 +58,7 @@ import {
   NodeConfigurationUpdateRequestEvent,
   WorkspaceSelectionStateEvent,
   ZoomToFitEvent,
+  MoveNodesEvent,
 } from "../../events/events";
 import { styleMap } from "lit/directives/style-map.js";
 import { Entity } from "./entity";
@@ -64,7 +67,7 @@ import { DragConnector } from "./drag-connector";
 import { collectIds } from "./utils/collect-ids";
 import { EditorControls } from "./editor-controls";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { DATA_TYPE } from "./constants";
+import { DATA_TYPE, MOVE_GRAPH_ID } from "./constants";
 
 @customElement("bb-renderer")
 export class Renderer extends LitElement {
@@ -864,6 +867,93 @@ export class Renderer extends LitElement {
     return targetMatrix;
   }
 
+  #applyMoveToSelection(
+    eventX: number,
+    eventY: number,
+    deltaX: number,
+    deltaY: number,
+    hasSettled: boolean
+  ) {
+    if (!this.selectionState || !this.graph) {
+      return;
+    }
+
+    let moveGraph = this.#graphs.get(MOVE_GRAPH_ID);
+    if (!moveGraph) {
+      moveGraph = new Graph(MOVE_GRAPH_ID);
+
+      const nodes: InspectableNode[] = [];
+      for (const [graphId, graph] of this.selectionState.selectionState
+        .graphs) {
+        for (const node of graph.nodes) {
+          const targetGraph =
+            graphId === MAIN_BOARD_ID
+              ? this.graph
+              : this.graph.graphs()?.[graphId];
+          if (!targetGraph) {
+            continue;
+          }
+
+          const inspectableNode = targetGraph.nodeById(node);
+          if (!inspectableNode) {
+            continue;
+          }
+
+          nodes.push(inspectableNode);
+        }
+      }
+
+      moveGraph.nodes = nodes;
+      this.#graphs.set(MOVE_GRAPH_ID, moveGraph);
+      this.tick++;
+    }
+
+    moveGraph.applyTranslationToNodes(deltaX, deltaY, hasSettled);
+
+    if (hasSettled) {
+      this.#graphs.delete(MOVE_GRAPH_ID);
+
+      // Finding the natural intersection for the selection.
+      const x = eventX - this.#boundsForInteraction.x;
+      const y = eventY - this.#boundsForInteraction.y;
+      const addLocation = new DOMRect(x, y, 0, 0);
+      let targetGraphId = MAIN_BOARD_ID;
+      for (const [graphId, graph] of this.#graphs) {
+        if (graphId === MAIN_BOARD_ID) {
+          continue;
+        }
+
+        if (graph.intersects(addLocation, 0)) {
+          targetGraphId = graphId;
+          break;
+        }
+      }
+
+      // Flatten the selection down
+      const moveNodes = new Map<GraphIdentifier, NodeIdentifier[]>();
+      for (const [graphId, graph] of this.selectionState.selectionState
+        .graphs) {
+        let moveNodeGraphItems = moveNodes.get(graphId);
+        if (!moveNodeGraphItems) {
+          moveNodeGraphItems = [];
+          moveNodes.set(graphId, moveNodeGraphItems);
+        }
+
+        for (const node of graph.nodes) {
+          moveNodeGraphItems.push(node);
+        }
+      }
+
+      this.dispatchEvent(
+        new MoveNodesEvent(
+          moveNodes,
+          targetGraphId,
+          new DOMPoint(deltaX, deltaY)
+        )
+      );
+    }
+  }
+
   #applyTranslationToSelection(x: number, y: number, hasSettled: boolean) {
     if (!this.selectionState) {
       return;
@@ -1061,6 +1151,15 @@ export class Renderer extends LitElement {
               }
 
               this.#updateSelectionFromGraph(graph, true);
+            }}
+            @bbselectionmove=${(evt: SelectionMoveEvent) => {
+              this.#applyMoveToSelection(
+                evt.eventX,
+                evt.eventY,
+                evt.deltaX,
+                evt.deltaY,
+                evt.hasSettled
+              );
             }}
             @bbselectiontranslate=${(evt: SelectionTranslateEvent) => {
               this.#applyTranslationToSelection(evt.x, evt.y, evt.hasSettled);

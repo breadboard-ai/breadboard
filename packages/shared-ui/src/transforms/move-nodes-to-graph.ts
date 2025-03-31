@@ -19,7 +19,9 @@ class MoveNodesToGraph implements EditTransform {
   constructor(
     public readonly ids: NodeIdentifier[],
     public readonly sourceGraphId: GraphIdentifier,
-    public destGraphId: GraphIdentifier | null = null
+    // A null value here means to create a new subgraph.
+    public readonly destGraphId: GraphIdentifier | null = null,
+    public readonly positionDelta: DOMPoint | null = null
   ) {
     if (this.destGraphId === null) {
       this.destGraphId = globalThis.crypto.randomUUID();
@@ -69,6 +71,16 @@ class MoveNodesToGraph implements EditTransform {
       const newId = globalThis.crypto.randomUUID();
       remappedIds.set(id, newId);
 
+      const metadata = { ...sourceNode.descriptor.metadata };
+      metadata.visual ??= {};
+
+      // Update the positions of each node if needed.
+      const visual = metadata.visual as Record<string, number>;
+      if (visual.x && this.positionDelta) {
+        visual.x += this.positionDelta.x;
+        visual.y += this.positionDelta.y;
+      }
+
       // Make a new node with a new ID.
       edits.push({
         type: "addnode",
@@ -76,7 +88,7 @@ class MoveNodesToGraph implements EditTransform {
         node: {
           id: newId,
           type: sourceNode.descriptor.type,
-          metadata: sourceNode.descriptor.metadata,
+          metadata,
           configuration: sourceNode.descriptor.configuration,
         },
       });

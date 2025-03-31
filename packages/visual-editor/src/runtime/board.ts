@@ -778,6 +778,12 @@ export class Board extends EventTarget {
         subGraphId = null;
       }
 
+      if (graph.graphs?.["Main board"]) {
+        graph.graphs[globalThis.crypto.randomUUID()] =
+          graph.graphs?.["Main board"];
+        delete graph.graphs?.["Main board"];
+      }
+
       this.#migrateThemeInformationIfPresent(graph);
 
       // This is not elegant, since we actually load the graph by URL,
