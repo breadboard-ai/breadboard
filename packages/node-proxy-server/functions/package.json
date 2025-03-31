@@ -82,7 +82,7 @@
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-terser": "^0.4.4",
     "firebase-functions-test": "^3.4.1",
-    "rollup": "^4.37.0",
+    "rollup": "^4.38.0",
     "typescript": "^5.8.2"
   },
   "private": true,
