@@ -62,10 +62,7 @@ import { Sandbox } from "@breadboard-ai/jsandbox";
 import { ChatController } from "../../state/chat-controller.js";
 import { Organizer } from "../../state/types.js";
 import "../../revision-history/revision-history-panel.js";
-import {
-  createEmptyHighlightState,
-  createHighlightId,
-} from "../../utils/workspace.js";
+import type { HighlightEvent } from "../step-editor/events/events.js";
 
 const SIDE_ITEM_KEY = "bb-ui-controller-side-nav-item";
 
@@ -656,6 +653,9 @@ export class UI extends LitElement {
         sideNavItem = html`
           <bb-revision-history-panel
             .history=${this.history}
+            @bbhighlight=${(event: HighlightEvent) => {
+              this.highlightState = event.highlightState;
+            }}
           ></bb-revision-history-panel>
         `;
         break;
