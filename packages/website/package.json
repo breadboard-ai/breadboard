@@ -121,7 +121,7 @@
     "@google-labs/template-kit": "^0.3.18",
     "@breadboard-ai/shared-ui": "1.24.0",
     "eleventy-plugin-youtube-embed": "^1.12.0",
-    "esbuild": "^0.25.1",
+    "esbuild": "^0.25.2",
     "typescript": "^5.8.2"
   },
   "devDependencies": {
