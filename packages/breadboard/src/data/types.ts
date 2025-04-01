@@ -104,6 +104,8 @@ export type DataStoreScope = "run" | "session" | "client";
  * Specifies the type of the transformation:
  * - `persistent` -- converts every data part into a `StoredDataPart` pointing
  *   to the persistent handle (url that starts with https://)
+ * - `persistent-temporary` -- same as `persistent`, but the URL is expected
+ *    to live for a very short amount of time.
  * - `ephemeral` -- converts every data part into a `StoredDataPart` pointing
  *   to the ephemeral handle (a blob URL)
  * - `inline` -- converts every data part into an `InlineDataPart`.
@@ -112,6 +114,7 @@ export type DataStoreScope = "run" | "session" | "client";
  */
 export type DataPartTransformType =
   | "persistent"
+  | "persistent-temporary"
   | "ephemeral"
   | "inline"
   | "file";

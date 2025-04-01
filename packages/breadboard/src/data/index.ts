@@ -15,7 +15,11 @@ export const createDefaultRunStore = (): RunStore => {
   return new DefaultRunStore();
 };
 
-export { deflateData, inflateData } from "./inflate-deflate.js";
+export {
+  deflateData,
+  inflateData,
+  transformContents,
+} from "./inflate-deflate.js";
 
 export {
   asBase64,
