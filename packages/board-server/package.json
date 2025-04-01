@@ -139,7 +139,7 @@
     "@types/node": "^22.0.0",
     "@types/supertest": "^6.0.3",
     "@types/uuid": "^10.0.0",
-    "esbuild": "^0.25.1",
+    "esbuild": "^0.25.2",
     "eslint": "^8.57.1",
     "firebase-tools": "^14.0.0",
     "supertest": "^7.1.0",
