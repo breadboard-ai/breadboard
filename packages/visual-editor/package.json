@@ -310,7 +310,7 @@
     "jszip": "^3.10.1",
     "lit": "^3.2.1",
     "markdown-it": "^14.1.0",
-    "pdfjs-dist": "^5.0.375",
+    "pdfjs-dist": "^5.1.91",
     "pixi.js": "^8.8.1",
     "prettier": "^3.5.3"
   }
