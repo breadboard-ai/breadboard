@@ -140,18 +140,6 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
   @property({ attribute: false })
   accessor history: EditHistory | undefined | null = undefined;
 
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    this.dispatchEvent(new HighlightEvent(null));
-    if (
-      this.history &&
-      this.history.entries().length > 0 &&
-      !this.history.pending
-    ) {
-      this.history.jump(this.history.entries().length - 1);
-    }
-  }
-
   override render() {
     const history = this.history;
     if (!history) {
@@ -179,12 +167,9 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
       const isDisplayed = !pending && i === history.index();
       const revision = committed[i];
       listItems.push(
-        this.#renderRevision(revision, isCurrent, isDisplayed, () => {
-          history.jump(i);
-          const prior = committed[i - 1];
-          const highlights = findHighlights(revision, prior?.graph ?? {});
-          this.dispatchEvent(new HighlightEvent(highlights));
-        })
+        this.#renderRevision(revision, isCurrent, isDisplayed, () =>
+          history.jump(i)
+        )
       );
     }
     return html`
@@ -195,6 +180,39 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
         ${listItems}
       </ul>
     `;
+  }
+
+  override updated() {
+    if (!this.history) {
+      return;
+    }
+    let current: EditHistoryEntry;
+    let previous: EditHistoryEntry | undefined;
+    const revisions = this.history.entries();
+    if (this.history.pending) {
+      current = this.history.pending;
+      previous = revisions.at(-1);
+    } else {
+      current = revisions[this.history.index()];
+      previous = revisions[this.history.index() - 1];
+    }
+    const highlights = findHighlights(
+      current,
+      previous?.graph ?? { nodes: [], edges: [] }
+    );
+    this.dispatchEvent(new HighlightEvent(highlights));
+  }
+
+  override disconnectedCallback() {
+    super.disconnectedCallback();
+    if (
+      this.history &&
+      this.history.entries().length > 0 &&
+      !this.history.pending
+    ) {
+      this.history.jump(this.history.entries().length - 1);
+    }
+    this.dispatchEvent(new HighlightEvent(null));
   }
 
   #renderRevision(
