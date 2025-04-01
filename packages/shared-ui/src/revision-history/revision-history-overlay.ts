@@ -167,7 +167,7 @@ export class RevisionHistoryOverlay extends SignalWatcher(LitElement) {
     if (!this.history) {
       return;
     }
-    this.history.revert(this.history.index());
+    this.history.revertTo(this.history.index());
   }
 
   #onClickOverlay(event: MouseEvent & { target: Node }) {

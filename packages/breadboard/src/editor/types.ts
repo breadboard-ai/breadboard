@@ -330,7 +330,7 @@ export type EditHistory = {
    */
   index(): number;
 
-  revert(index: number): EditHistoryEntry;
+  revertTo(index: number): EditHistoryEntry;
 };
 
 export type EditHistoryEntry = {
