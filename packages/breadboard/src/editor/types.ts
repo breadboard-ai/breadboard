@@ -329,6 +329,8 @@ export type EditHistory = {
    * Current index in the history.
    */
   index(): number;
+
+  revertTo(index: number): EditHistoryEntry;
 };
 
 export type EditHistoryEntry = {

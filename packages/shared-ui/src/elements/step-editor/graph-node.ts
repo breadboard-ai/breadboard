@@ -299,11 +299,11 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       }
 
       :host(:not([updating])[highlighted][highlighttype="model"]) #container {
-        outline: 6px solid oklch(from var(--bb-generative-700) l c h / 0.4);
+        outline: 7px solid oklch(from var(--bb-generative-700) l c h / 0.6);
       }
 
       :host(:not([updating])[highlighted][highlighttype="user"]) #container {
-        outline: 6px solid oklch(from var(--bb-joiner-700) l c h / 0.4);
+        outline: 7px solid oklch(from var(--bb-ui-600) l c h / 0.6);
       }
 
       :host([moving]) #container header {
