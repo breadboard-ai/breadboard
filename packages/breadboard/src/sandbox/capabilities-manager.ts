@@ -257,6 +257,7 @@ class CapabilitiesManagerImpl implements CapabilitiesManager {
         "query",
         "read",
         "write",
+        "blob",
       ].map((name) => {
         return [name, () => ({ $error: "Capability not available" })];
       })

@@ -118,7 +118,8 @@ pub async fn run_module(
         "describe",
         "query",
         "read",
-        "write"
+        "write",
+        "blob",
     );
 
     let mut peer_loader = BuiltinLoader::default();

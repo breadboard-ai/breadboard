@@ -141,6 +141,18 @@ declare module "@output" {
   export default function output(inputs: OutputInputs): Promise<OutputOutputs>;
 }
 
+declare module "@blob" {
+  export type BlobInputs = {
+    contents: LLMContent[];
+    transform: "persistent-temporary";
+  };
+  export type BlobOutputs = {
+    contents: LLMContent[];
+  };
+
+  export default function blob(inputs: BlobInputs): Promise<BlobOutputs>;
+}
+
 declare module "@describe" {
   export type DescribeInputs = {
     url: string;
@@ -352,10 +364,10 @@ declare type BehaviorSchema =
    * or any other larger context.
    */
   | "hint-preview"
-   /**
+  /**
    * Hints that the text is short (e.g. a query) and needs a single line treatment.
    */
-   | "hint-single-line"
+  | "hint-single-line"
   /**
    * Indicates that the input or output port represents an image. The image can
    * be a URL or a base64 encoded image.

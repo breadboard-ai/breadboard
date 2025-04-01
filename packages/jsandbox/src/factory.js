@@ -1,4 +1,4 @@
-import { fetch, secrets, invoke, output, describe, query, read, write } from './capabilities.js';
+import { fetch, secrets, invoke, output, describe, query, read, write, blob } from './capabilities.js';
 
         export const RAW_WASM = Symbol();
         export default function() {
@@ -196,7 +196,7 @@ CLOSURE_DTORS.register(real, state, state);
 return real;
 }
 function __wbg_adapter_24(arg0, arg1, arg2) {
-wasm.closure94_externref_shim(arg0, arg1, arg2);
+wasm.closure98_externref_shim(arg0, arg1, arg2);
 }
 
 function takeFromExternrefTable0(idx) {
@@ -280,8 +280,8 @@ const idx = addToExternrefTable0(e);
 wasm.__wbindgen_exn_store(idx);
 }
 }
-function __wbg_adapter_71(arg0, arg1, arg2, arg3) {
-wasm.closure115_externref_shim(arg0, arg1, arg2, arg3);
+function __wbg_adapter_73(arg0, arg1, arg2, arg3) {
+wasm.closure119_externref_shim(arg0, arg1, arg2, arg3);
 }
 
  function __wbg_query_613fc9b5583de0f7(arg0, arg1, arg2, arg3) {
@@ -394,6 +394,24 @@ deferred0_1 = arg1;
 deferred1_0 = arg2;
 deferred1_1 = arg3;
 const ret = describe(getStringFromWasm0(arg0, arg1), getStringFromWasm0(arg2, arg3));
+return ret;
+} finally {
+wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
+wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+}
+};
+
+ function __wbg_blob_e4ac3c7b616aecc1(arg0, arg1, arg2, arg3) {
+let deferred0_0;
+let deferred0_1;
+let deferred1_0;
+let deferred1_1;
+try {
+deferred0_0 = arg0;
+deferred0_1 = arg1;
+deferred1_0 = arg2;
+deferred1_1 = arg3;
+const ret = blob(getStringFromWasm0(arg0, arg1), getStringFromWasm0(arg2, arg3));
 return ret;
 } finally {
 wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
@@ -570,7 +588,7 @@ var cb0 = (arg0, arg1) => {
 const a = state0.a;
 state0.a = 0;
 try {
-return __wbg_adapter_71(a, state0.b, arg0, arg1);
+return __wbg_adapter_73(a, state0.b, arg0, arg1);
 } finally {
 state0.a = a;
 }
@@ -614,8 +632,8 @@ getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
 throw new Error(getStringFromWasm0(arg0, arg1));
 };
 
- function __wbindgen_closure_wrapper280(arg0, arg1, arg2) {
-const ret = makeMutClosure(arg0, arg1, 95, __wbg_adapter_24);
+ function __wbindgen_closure_wrapper290(arg0, arg1, arg2) {
+const ret = makeMutClosure(arg0, arg1, 99, __wbg_adapter_24);
 return ret;
 };
 
@@ -650,6 +668,8 @@ __wbg_read_755ee9c8622f9470
 __wbg_write_b6e5c4220ac10a32
 ,
 __wbg_describe_47b99ea8f240afa3
+,
+__wbg_blob_e4ac3c7b616aecc1
 ,
 __wbg_fetch_f1f32fc92128b512
 ,
@@ -715,7 +735,7 @@ __wbindgen_debug_string
 ,
 __wbindgen_throw
 ,
-__wbindgen_closure_wrapper280
+__wbindgen_closure_wrapper290
 ,
 __wbindgen_init_externref_table
 ,
