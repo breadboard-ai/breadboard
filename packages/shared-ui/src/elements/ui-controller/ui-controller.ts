@@ -62,6 +62,7 @@ import { Sandbox } from "@breadboard-ai/jsandbox";
 import { ChatController } from "../../state/chat-controller.js";
 import { Organizer } from "../../state/types.js";
 import "../../revision-history/revision-history-panel.js";
+import "../../revision-history/revision-history-overlay.js";
 import type { HighlightEvent } from "../step-editor/events/events.js";
 
 const SIDE_ITEM_KEY = "bb-ui-controller-side-nav-item";
@@ -711,6 +712,8 @@ export class UI extends LitElement {
         }}
       >
       <div id="graph-container" slot="slot-0">
+        <bb-revision-history-overlay .history=${this.history}>
+        </bb-revision-history-overlay>
         ${graphEditor}
         ${themeEditor}
       </div>
