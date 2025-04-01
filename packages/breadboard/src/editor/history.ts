@@ -44,6 +44,13 @@ export class GraphEditHistory implements EditHistory {
     this.#controller.onHistoryChanged?.(this.#historyIncludingPending);
   }
 
+  revert(index: number) {
+    const revision = this.#history.revert(index);
+    this.#controller.setGraph(revision.graph);
+    this.#controller.onHistoryChanged?.(this.#historyIncludingPending);
+    return revision;
+  }
+
   canUndo(): boolean {
     return this.#history.canGoBack();
   }
@@ -116,6 +123,14 @@ export class EditHistoryManager {
 
   index() {
     return this.#index;
+  }
+
+  revert(index: number) {
+    this.history.splice(index + 1);
+    this.#index = index;
+    this.pending = undefined;
+    this.pauseLabel = null;
+    return this.history[index];
   }
 
   add(
