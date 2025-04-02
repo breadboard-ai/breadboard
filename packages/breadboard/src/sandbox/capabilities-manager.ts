@@ -19,6 +19,7 @@ import { invokeDescriber } from "./invoke-describer.js";
 import { FileSystemHandlerFactory } from "./file-system-handler-factory.js";
 import { err, ok } from "../data/file-system/utils.js";
 import { transformContents } from "../data/inflate-deflate.js";
+import { baseURLFromContext } from "../loader/loader.js";
 
 export { CapabilitiesManagerImpl };
 
@@ -137,7 +138,7 @@ function createBlobHandler(context: NodeHandlerContext) {
       return err(`DataStore is required to provide blob transform`);
     }
 
-    const graphUrl = context.base;
+    const graphUrl = baseURLFromContext(context);
     if (!graphUrl) {
       return err(`Graph URL is required to provide blob transform`);
     }
