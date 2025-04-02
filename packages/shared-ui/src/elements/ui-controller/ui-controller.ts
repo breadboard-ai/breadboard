@@ -319,12 +319,6 @@ export class UI extends LitElement {
           .items.get("Use Legacy Graph Renderer")?.value
       : false;
 
-    const allowEdgeAttachmentMove = this.settings
-      ? this.settings
-          .getSection(SETTINGS_TYPE.GENERAL)
-          .items.get("Enable Arrow Reattachment")?.value
-      : false;
-
     const graph = this.editor?.inspect("") || null;
     let capabilities: false | GraphProviderCapabilities = false;
     let extendedCapabilities: false | GraphProviderExtendedCapabilities = false;
@@ -412,7 +406,6 @@ export class UI extends LitElement {
         }
 
         return html`<bb-renderer
-          .allowEdgeAttachmentMove=${allowEdgeAttachmentMove}
           .boardServerKits=${this.boardServerKits}
           .graph=${graph}
           .graphTopologyUpdateId=${this.graphTopologyUpdateId}
