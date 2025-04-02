@@ -26,6 +26,10 @@ export function isCodeBehavior(schema: Schema): boolean {
   return schema.behavior?.includes("hint-code") ?? false;
 }
 
+export function isSingleLineBehavior(schema: Schema): boolean {
+  return schema.behavior?.includes("hint-single-line") ?? false;
+}
+
 export function isLLMContentBehavior(schema: Schema): boolean {
   return schema.behavior?.includes("llm-content") ?? false;
 }

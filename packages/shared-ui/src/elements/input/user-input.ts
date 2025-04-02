@@ -66,6 +66,7 @@ import {
   StreamlinedSchemaEditor,
 } from "../elements";
 import "./delegating-input.js";
+import { isSingleLineBehavior } from "../../utils/behaviors";
 
 const NO_MODULE = " -- No module";
 
@@ -1025,6 +1026,7 @@ export class UserInput extends LitElement {
                     .nodeId=${this.nodeId}
                     .subGraphId=${this.subGraphId}
                     .projectState=${this.projectState}
+                    .singleLine=${isSingleLineBehavior(input.schema)}
                     .streamlined=${this.llmInputStreamlined}
                     .showPartControls=${this.llmInputShowPartControls}
                     .showInlineControlsToggle=${this

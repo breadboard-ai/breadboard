@@ -12,7 +12,7 @@ import { Project } from "../../../state";
 import { FastAccessMenu } from "../../elements";
 import { escapeHTMLEntities } from "../../../utils";
 
-import {getAssetType} from "../../../utils/mime-type";
+import { getAssetType } from "../../../utils/mime-type";
 
 @customElement("bb-text-editor")
 export class TextEditor extends LitElement {
@@ -32,6 +32,9 @@ export class TextEditor extends LitElement {
   get value(): string {
     return this.#value;
   }
+
+  @property()
+  accessor supportsFastAccess = true;
 
   @property()
   accessor nodeId: string | null = null;
@@ -116,7 +119,7 @@ export class TextEditor extends LitElement {
         outline: 1px solid var(--bb-asset-100);
         color: var(--bb-asset-700);
       }
-      
+
       &.audio {
         background-image: var(--bb-icon-sound);
       }
@@ -286,7 +289,12 @@ export class TextEditor extends LitElement {
     selection.addRange(this.#lastRange);
   }
 
-  #add(path: string, title: string, templatePartType: TemplatePartType, mimeType?: string) {
+  #add(
+    path: string,
+    title: string,
+    templatePartType: TemplatePartType,
+    mimeType?: string
+  ) {
     if (!this.#editorRef.value) {
       return null;
     }
@@ -783,7 +791,7 @@ export class TextEditor extends LitElement {
             return;
           }
 
-          if (this.projectState && evt.key === "@") {
+          if (this.projectState && this.supportsFastAccess && evt.key === "@") {
             this.#lastRange = this.#getCurrentRange();
             const bounds = this.#lastRange?.getBoundingClientRect();
             this.#showFastAccess(bounds);

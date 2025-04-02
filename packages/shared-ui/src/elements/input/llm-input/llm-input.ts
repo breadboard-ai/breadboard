@@ -101,6 +101,9 @@ export class LLMInput extends LitElement {
   @property()
   accessor projectState: Project | null = null;
 
+  @property({ reflect: true, type: Boolean })
+  accessor singleLine = false;
+
   #forceRenderCount = 0;
   #focusLastPart = false;
   #triggerSelectionFlow = false;
@@ -325,6 +328,7 @@ export class LLMInput extends LitElement {
     .part {
       position: relative;
       margin: 0 var(--bb-grid-size-3);
+      border-radius: var(--bb-grid-size);
 
       &:last-of-type {
         & .content {
@@ -438,8 +442,7 @@ export class LLMInput extends LitElement {
 
     .value textarea,
     .value input[type="text"],
-    .value input[type="url"],
-    .value bb-text-editor {
+    .value input[type="url"] {
       background: transparent;
       font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
         var(--bb-font-family);
@@ -569,9 +572,11 @@ export class LLMInput extends LitElement {
       height: 0;
     }
 
-    :host([streamlined]) {
+    :host([streamlined]:not([singleline])) {
       --text-editor-height: 316px;
+    }
 
+    :host([streamlined]) {
       #container {
         border: 1px solid var(--bb-neutral-300);
         padding: 0;
@@ -1232,6 +1237,7 @@ export class LLMInput extends LitElement {
                   .nodeId=${this.nodeId}
                   .subGraphId=${this.subGraphId}
                   .projectState=${this.projectState}
+                  .supportsFastAccess=${!this.singleLine}
                   @input=${(evt: Event) => {
                     if (!isTextCapabilityPart(part)) {
                       return;
