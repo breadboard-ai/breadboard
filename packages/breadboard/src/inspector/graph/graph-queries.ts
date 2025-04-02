@@ -5,14 +5,19 @@
  */
 
 import {
+  AssetPath,
   GraphDescriptor,
   GraphIdentifier,
   ImportIdentifier,
+  LLMContent,
   ModuleIdentifier,
+  NodeConfiguration,
   NodeIdentifier,
   NodeTypeIdentifier,
 } from "@breadboard-ai/types";
 import {
+  InspectableAsset,
+  InspectableAssetEdge,
   InspectableEdge,
   InspectableGraph,
   InspectableNode,
@@ -26,23 +31,59 @@ import { Outcome } from "../../data/types.js";
 import { err } from "../../data/file-system/utils.js";
 import { baseURLFromString, SENTINEL_BASE_URL } from "../../loader/loader.js";
 import { getModuleId, isModule } from "../utils.js";
+import { Template, TemplatePart } from "../../utils/template.js";
+import { isLLMContent, isLLMContentArray } from "../../data/common.js";
+import { InspectableAssetImpl } from "./inspectable-asset.js";
 
 export { GraphQueries };
+
+/**
+ * Performs an action based on the supplied template part
+ */
+export type TemplatePartScanner = (part: TemplatePart) => void;
+
+function scanConfiguration(
+  config: NodeConfiguration,
+  scanner: TemplatePartScanner
+): void {
+  for (const [, portValue] of Object.entries(config)) {
+    let contents: LLMContent[] | null = null;
+    if (isLLMContent(portValue)) {
+      contents = [portValue];
+    } else if (isLLMContentArray(portValue)) {
+      contents = portValue;
+    }
+    if (!contents) continue;
+    for (const content of contents) {
+      for (const part of content.parts) {
+        if ("text" in part) {
+          const template = new Template(part.text);
+          if (template.hasPlaceholders) {
+            template.transform((part) => {
+              scanner(part);
+              return part;
+            });
+          }
+        }
+      }
+    }
+  }
+}
 
 /**
  * Encapsulates common graph operations.
  */
 class GraphQueries {
-  #cache: MutableGraph;
+  #mutable: MutableGraph;
   #graphId: GraphIdentifier;
 
   constructor(cache: MutableGraph, graphId: GraphIdentifier) {
-    this.#cache = cache;
+    this.#mutable = cache;
     this.#graphId = graphId;
   }
 
   #graph(): GraphDescriptor {
-    const graph = this.#cache.graph;
+    const graph = this.#mutable.graph;
     return this.#graphId ? graph.graphs![this.#graphId]! : graph;
   }
 
@@ -57,17 +98,17 @@ class GraphQueries {
   incoming(id: NodeIdentifier): InspectableEdge[] {
     return this.#graph()
       .edges.filter((edge) => edge.to === id)
-      .map((edge) => this.#cache.edges.getOrCreate(edge, this.#graphId));
+      .map((edge) => this.#mutable.edges.getOrCreate(edge, this.#graphId));
   }
 
   outgoing(id: NodeIdentifier): InspectableEdge[] {
     return this.#graph()
       .edges.filter((edge) => edge.from === id)
-      .map((edge) => this.#cache.edges.getOrCreate(edge, this.#graphId));
+      .map((edge) => this.#mutable.edges.getOrCreate(edge, this.#graphId));
   }
 
   entries(): InspectableNode[] {
-    return this.#cache.nodes
+    return this.#mutable.nodes
       .nodes(this.#graphId)
       .filter((node) => node.isEntry());
   }
@@ -76,7 +117,7 @@ class GraphQueries {
     if (this.#graph().virtual) {
       return new VirtualNode({ id });
     }
-    return this.#cache.nodes.get(id, this.#graphId);
+    return this.#mutable.nodes.get(id, this.#graphId);
   }
 
   typeForNode(id: NodeIdentifier): InspectableNodeType | undefined {
@@ -88,18 +129,18 @@ class GraphQueries {
   }
 
   typeById(id: NodeTypeIdentifier): InspectableNodeType | undefined {
-    const knownNodeType = this.#cache.kits.getType(id);
+    const knownNodeType = this.#mutable.kits.getType(id);
     if (knownNodeType) {
       return knownNodeType;
     }
     if (!graphUrlLike(id)) {
       return undefined;
     }
-    return createGraphNodeType(id, this.#cache);
+    return createGraphNodeType(id, this.#mutable);
   }
 
   moduleExports(): Set<ModuleIdentifier> {
-    const exports = this.#cache.graph.exports;
+    const exports = this.#mutable.graph.exports;
     if (!exports) return new Set();
     return new Set(
       exports.filter((e) => isModule(e)).map((e) => getModuleId(e))
@@ -107,16 +148,16 @@ class GraphQueries {
   }
 
   graphExports(): Set<GraphIdentifier> {
-    const exports = this.#cache.graph.exports;
+    const exports = this.#mutable.graph.exports;
     if (!exports) return new Set();
     return new Set(exports.filter((e) => !isModule(e)).map((e) => e.slice(1)));
   }
 
   async imports(): Promise<Map<ImportIdentifier, Outcome<InspectableGraph>>> {
-    if (this.#graphId || !this.#cache.graph.imports) return new Map();
+    if (this.#graphId || !this.#mutable.graph.imports) return new Map();
 
     const results: Map<ImportIdentifier, Outcome<InspectableGraph>> = new Map();
-    const entries = Object.entries(this.#cache.graph.imports);
+    const entries = Object.entries(this.#mutable.graph.imports);
     for (const [name, value] of entries) {
       let outcome: Outcome<InspectableGraph> = err(
         `Unknown error resolving import "${name}`
@@ -127,10 +168,10 @@ class GraphQueries {
         try {
           const url = new URL(
             value.url,
-            baseURLFromString(this.#cache.graph.url) || SENTINEL_BASE_URL
+            baseURLFromString(this.#mutable.graph.url) || SENTINEL_BASE_URL
           ).href;
-          const store = this.#cache.store;
-          const adding = store.addByURL(url, [this.#cache.id], {});
+          const store = this.#mutable.store;
+          const adding = store.addByURL(url, [this.#mutable.id], {});
           const mutable = await store.getLatest(adding.mutable);
           const inspectable = store.inspect(mutable.id, "");
           if (!inspectable) {
@@ -146,5 +187,44 @@ class GraphQueries {
       }
     }
     return results;
+  }
+
+  assets(): Map<AssetPath, InspectableAsset> {
+    const entries = Object.entries(this.#mutable.graph.assets || []);
+    return new Map(
+      entries.map(([path, asset]) => {
+        return [path, new InspectableAssetImpl(path, asset)];
+      })
+    );
+  }
+
+  assetEdges(): Outcome<InspectableAssetEdge[]> {
+    const edges: InspectableAssetEdge[] = [];
+    const errors: string[] = [];
+    for (const node of this.#mutable.nodes.nodes(this.#graphId)) {
+      scanConfiguration(node.configuration(), (part) => {
+        if (part.type !== "asset") return;
+
+        const { path, invalid } = part;
+        if (invalid) return;
+
+        const asset = this.#mutable.graph.assets?.[path];
+        if (!asset) {
+          errors.push(
+            `Node with id "${node.descriptor.id}" ("${node.title()}") refers to non-existent asset "${path}"`
+          );
+          return;
+        }
+        edges.push({
+          direction: "load",
+          asset: new InspectableAssetImpl(path, asset),
+          node: node,
+        });
+      });
+    }
+    if (errors.length > 0) {
+      return err(errors.join("\n"));
+    }
+    return edges;
   }
 }

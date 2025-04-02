@@ -16,6 +16,9 @@ import type {
   NodeMetadata,
   TraversalResult,
   UUID,
+  AssetPath,
+  AssetType,
+  LLMContent,
 } from "@breadboard-ai/types";
 import { HarnessRunResult, SecretResult } from "../harness/types.js";
 import { GraphLoader, GraphLoaderContext } from "../loader/types.js";
@@ -368,7 +371,45 @@ export type InspectableGraph = {
    * instances.
    */
   imports(): Promise<Map<ImportIdentifier, Outcome<InspectableGraph>>>;
+  /**
+   * Returns graph assets.
+   */
+  assets(): Map<AssetPath, InspectableAsset>;
+  /**
+   * Returns asset edges.
+   * Asset edge represents a connection between a node and an asset.
+   * This value is computed dynamically based on the chiclets present in
+   * node configuration.
+   */
+  assetEdges(): Outcome<InspectableAssetEdge[]>;
 };
+
+/**
+ * Represents an asset edge.
+ */
+export type InspectableAsset = {
+  readonly title: string;
+  readonly description: string;
+  readonly type: AssetType;
+  readonly data: LLMContent[];
+  readonly visual: Record<string, unknown>;
+};
+
+/**
+ * Represents a connection between a node and an asset.
+ */
+export type InspectableAssetEdge = {
+  /**
+   * Can be either "load" or "save":
+   * - "load" = (asset -> node), the asset is being loaded into the node
+   * - "save" = (node -> asset), the node output is being saved into asset
+   */
+  readonly direction: InspectableAssetEdgeDirection;
+  readonly asset: InspectableAsset;
+  readonly node: InspectableNode;
+};
+
+export type InspectableAssetEdgeDirection = "load" | "save";
 
 /**
  * Options to supply to the `inspectableGraph` function.

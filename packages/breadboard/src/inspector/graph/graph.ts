@@ -5,6 +5,7 @@
  */
 
 import {
+  AssetPath,
   GraphIdentifier,
   GraphMetadata,
   ImportIdentifier,
@@ -21,6 +22,8 @@ import {
   NodeTypeIdentifier,
 } from "../../types.js";
 import {
+  InspectableAsset,
+  InspectableAssetEdge,
   InspectableEdge,
   InspectableGraph,
   InspectableModules,
@@ -147,5 +150,13 @@ class Graph implements InspectableGraph {
 
   imports(): Promise<Map<ImportIdentifier, Outcome<InspectableGraph>>> {
     return new GraphQueries(this.#mutable, this.#graphId).imports();
+  }
+
+  assets(): Map<AssetPath, InspectableAsset> {
+    return new GraphQueries(this.#mutable, this.#graphId).assets();
+  }
+
+  assetEdges(): Outcome<InspectableAssetEdge[]> {
+    return new GraphQueries(this.#mutable, this.#graphId).assetEdges();
   }
 }
