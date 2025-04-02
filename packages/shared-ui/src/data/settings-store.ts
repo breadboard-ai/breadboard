@@ -211,14 +211,6 @@ export class SettingsStore implements BreadboardUI_Types.SettingsStore {
             value: false,
           },
         ],
-        [
-          "Enable Arrow Reattachment",
-          {
-            name: "Enable Arrow Reattachment",
-            description: "Toggles the WIP arrow reattachment in the renderer",
-            value: false,
-          },
-        ],
       ]),
     },
     [BreadboardUI_Types.SETTINGS_TYPE.SECRETS]: {

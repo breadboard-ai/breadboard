@@ -11,21 +11,21 @@ import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { toCSSMatrix } from "./utils/to-css-matrix";
-import { GRID_SIZE } from "./constants";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
 import { intersects } from "./utils/rect-intersection";
 import { getGlobalColor } from "../../utils/color";
-import { clamp } from "./utils/clamp";
 import { EdgeAttachmentPoint } from "../../types/types";
 import { inspectableEdgeToString } from "../../utils/workspace";
 import { InspectableEdge } from "@google-labs/breadboard";
 import { GraphEdgeAttachmentMoveEvent } from "./events/events";
+import { clamp } from "./utils/clamp";
 
 interface Connection {
   n1: DOMPoint;
   n2: DOMPoint;
   from: "Top" | "Right" | "Bottom" | "Left";
   to: "Top" | "Right" | "Bottom" | "Left";
+  distance: number;
 }
 
 const EDGE_STANDARD = getGlobalColor("--bb-neutral-400");
@@ -42,8 +42,8 @@ const EDGE_STORED = getGlobalColor("--bb-human-600");
 const EDGE_USER = getGlobalColor("--bb-joiner-600");
 const EDGE_MODEL = getGlobalColor("--bb-generative-600");
 
+const EDGE_CLEARANCE = 100;
 const HALF_HEADER_HEIGHT = 18;
-const LINE_CLEARANCE = 8;
 const ARROW_SIZE = 8;
 
 type NodeBoundPoints = {
@@ -140,17 +140,20 @@ export class GraphEdge extends Box {
 
   calculateLocalBounds(): DOMRect {
     const top = Math.min(
-      this.node1.transform.f - 25,
-      this.node2.transform.f - 25
+      this.node1.transform.f - EDGE_CLEARANCE,
+      this.node2.transform.f - EDGE_CLEARANCE
     );
     const bottom = Math.max(
-      this.node1.transform.f + this.node1.bounds.height + 50,
-      this.node2.transform.f + this.node2.bounds.height + 50
+      this.node1.transform.f + this.node1.bounds.height + EDGE_CLEARANCE * 2,
+      this.node2.transform.f + this.node2.bounds.height + EDGE_CLEARANCE * 2
     );
-    const left = Math.min(this.node1.transform.e, this.node2.transform.e - 25);
+    const left = Math.min(
+      this.node1.transform.e,
+      this.node2.transform.e - EDGE_CLEARANCE
+    );
     const right = Math.max(
-      this.node1.transform.e + this.node1.bounds.width + 50,
-      this.node2.transform.e + this.node2.bounds.width + 50
+      this.node1.transform.e + this.node1.bounds.width + EDGE_CLEARANCE * 2,
+      this.node2.transform.e + this.node2.bounds.width + EDGE_CLEARANCE * 2
     );
 
     this.transform.e = left;
@@ -172,8 +175,6 @@ export class GraphEdge extends Box {
     if (!this.#edgeRef.value) {
       return false;
     }
-
-    console.log("in");
 
     // Get the SVG's bounding box and convert it to a world coordinates bounding
     // box. Then use that for the intersection calculation.
@@ -312,13 +313,12 @@ export class GraphEdge extends Box {
     n2b,
     n2l,
   }: NodeBoundPoints) {
-    // Set up the smallest distance and the candidates.
-    let smallestDist = Number.POSITIVE_INFINITY;
     const candidates: Connection = {
       n1: new DOMPoint(),
       n2: new DOMPoint(),
       from: "Top",
       to: "Top",
+      distance: Number.POSITIVE_INFINITY,
     };
 
     const calculateShortestPath = (
@@ -328,15 +328,13 @@ export class GraphEdge extends Box {
       to: "Top" | "Right" | "Bottom" | "Left"
     ) => {
       const dist = this.#distanceSq(n1, n2);
-      if (dist > smallestDist) {
+      if (dist > candidates.distance) {
         return;
       }
 
-      if (dist === smallestDist) {
+      if (dist === candidates.distance) {
         return;
       }
-
-      smallestDist = dist;
 
       candidates.n1.x = n1.x;
       candidates.n1.y = n1.y;
@@ -344,6 +342,7 @@ export class GraphEdge extends Box {
       candidates.n2.y = n2.y;
       candidates.from = from;
       candidates.to = to;
+      candidates.distance = dist;
     };
 
     const copyPoint = (src: DOMPointReadOnly, dest: DOMPoint) => {
@@ -400,6 +399,9 @@ export class GraphEdge extends Box {
     if (candidates.to === "Top") candidates.n2.y -= 4;
     if (candidates.to === "Bottom") candidates.n2.y += 4;
 
+    // We were working with squared distances so adjust the final distance.
+    candidates.distance = Math.sqrt(candidates.distance);
+
     return candidates;
   }
 
@@ -414,116 +416,43 @@ export class GraphEdge extends Box {
 
   #createStepsFromConnectionPoints(connectionPoints: Connection) {
     const steps: string[] = [];
+    const n1adjust = new DOMPoint();
+    const n2adjust = new DOMPoint();
+    const c1adjust = new DOMPoint();
+    const c2adjust = new DOMPoint();
 
-    const midX =
-      connectionPoints.n1.x +
-      (connectionPoints.n2.x - connectionPoints.n1.x) * 0.5;
+    const dist = Math.sqrt(
+      this.#distanceSq(connectionPoints.n1, connectionPoints.n2)
+    );
+    const nDist = clamp(dist * 0.1, 0, 10);
+    const cDist = clamp(dist * 0.5, 25, 100);
 
-    const midY =
-      connectionPoints.n1.y +
-      (connectionPoints.n2.y - connectionPoints.n1.y) * 0.5;
+    if (connectionPoints.from === "Top") n1adjust.y = -nDist;
+    if (connectionPoints.from === "Bottom") n1adjust.y = nDist;
+    if (connectionPoints.from === "Left") n1adjust.x = -nDist;
+    if (connectionPoints.from === "Right") n1adjust.x = nDist;
 
-    if (
-      (connectionPoints.from === "Right" && connectionPoints.to === "Left") ||
-      (connectionPoints.from === "Left" && connectionPoints.to === "Right") ||
-      (connectionPoints.from === "Left" && connectionPoints.to === "Left") ||
-      (connectionPoints.from === "Right" && connectionPoints.to === "Right")
-    ) {
-      const dir =
-        connectionPoints.from === "Left" && connectionPoints.to === "Right"
-          ? -1
-          : 1;
-      const clearance =
-        Math.min(
-          Math.abs(connectionPoints.n2.x - connectionPoints.n1.x) / 2,
-          LINE_CLEARANCE
-        ) * dir;
+    if (connectionPoints.from === "Top") c1adjust.y = -cDist;
+    if (connectionPoints.from === "Bottom") c1adjust.y = cDist;
+    if (connectionPoints.from === "Left") c1adjust.x = -cDist;
+    if (connectionPoints.from === "Right") c1adjust.x = cDist;
 
-      steps.push(
-        `M ${connectionPoints.n1.x} ${connectionPoints.n1.y}`,
-        `L ${connectionPoints.n1.x + clearance} ${connectionPoints.n1.y}`,
-        `C ${midX} ${connectionPoints.n1.y}, ${midX} ${connectionPoints.n2.y}, ${connectionPoints.n2.x - clearance} ${connectionPoints.n2.y}`,
-        `L ${connectionPoints.n2.x} ${connectionPoints.n2.y}`
-      );
-    } else if (
-      (connectionPoints.from === "Bottom" && connectionPoints.to === "Top") ||
-      (connectionPoints.from === "Top" && connectionPoints.to === "Bottom") ||
-      (connectionPoints.from === "Bottom" &&
-        connectionPoints.to === "Bottom") ||
-      (connectionPoints.from === "Top" && connectionPoints.to === "Top")
-    ) {
-      const dir =
-        connectionPoints.from === "Top" && connectionPoints.to === "Bottom"
-          ? -1
-          : 1;
-      const clearance =
-        Math.min(
-          Math.abs(connectionPoints.n2.y - connectionPoints.n1.y) / 2,
-          LINE_CLEARANCE
-        ) * dir;
+    if (connectionPoints.to === "Top") n2adjust.y = -nDist;
+    if (connectionPoints.to === "Bottom") n2adjust.y = nDist;
+    if (connectionPoints.to === "Left") n2adjust.x = -nDist;
+    if (connectionPoints.to === "Right") n2adjust.x = nDist;
 
-      if (clearance === 0) {
-        steps.push(
-          `M ${connectionPoints.n1.x} ${connectionPoints.n1.y}`,
-          `Q ${midX} ${midY + 50}, ${connectionPoints.n2.x} ${connectionPoints.n2.y}`,
-          `L ${connectionPoints.n2.x} ${connectionPoints.n2.y}`
-        );
-      } else {
-        steps.push(
-          `M ${connectionPoints.n1.x} ${connectionPoints.n1.y}`,
-          `L ${connectionPoints.n1.x} ${connectionPoints.n1.y + clearance}`,
-          `C ${connectionPoints.n1.x} ${midY}, ${connectionPoints.n2.x} ${midY}, ${connectionPoints.n2.x} ${connectionPoints.n2.y - clearance}`,
-          `L ${connectionPoints.n2.x} ${connectionPoints.n2.y}`
-        );
-      }
-    } else if (
-      (connectionPoints.from === "Bottom" && connectionPoints.to === "Left") ||
-      (connectionPoints.from === "Top" && connectionPoints.to === "Right") ||
-      (connectionPoints.from === "Bottom" && connectionPoints.to === "Right") ||
-      (connectionPoints.from === "Top" && connectionPoints.to === "Left")
-    ) {
-      // Maybe adjust.
-      if (
-        connectionPoints.from === "Bottom" &&
-        connectionPoints.to === "Left" &&
-        connectionPoints.n1.x > connectionPoints.n2.x - GRID_SIZE
-      ) {
-        connectionPoints.n1.x = connectionPoints.n2.x - GRID_SIZE;
-      } else if (
-        connectionPoints.from === "Bottom" &&
-        connectionPoints.to === "Right" &&
-        connectionPoints.n1.x < connectionPoints.n2.x + GRID_SIZE
-      ) {
-        connectionPoints.n1.x = connectionPoints.n2.x + GRID_SIZE;
-      } else if (
-        connectionPoints.from === "Top" &&
-        connectionPoints.to === "Right" &&
-        connectionPoints.n1.x < connectionPoints.n2.x + GRID_SIZE
-      ) {
-        connectionPoints.n1.x = connectionPoints.n2.x + GRID_SIZE;
-      } else if (
-        connectionPoints.from === "Top" &&
-        connectionPoints.to === "Left" &&
-        connectionPoints.n1.x > connectionPoints.n2.x - GRID_SIZE
-      ) {
-        connectionPoints.n1.x = connectionPoints.n2.x - GRID_SIZE;
-      }
+    if (connectionPoints.to === "Top") c2adjust.y = -cDist;
+    if (connectionPoints.to === "Bottom") c2adjust.y = cDist;
+    if (connectionPoints.to === "Left") c2adjust.x = -cDist;
+    if (connectionPoints.to === "Right") c2adjust.x = cDist;
 
-      steps.push(
-        `M ${connectionPoints.n1.x} ${connectionPoints.n1.y}`,
-        `C ${connectionPoints.n1.x} ${midY}, ${connectionPoints.n1.x} ${connectionPoints.n2.y}, ${connectionPoints.n2.x} ${connectionPoints.n2.y}`
-      );
-    } else if (
-      (connectionPoints.from === "Right" && connectionPoints.to === "Top") ||
-      (connectionPoints.from === "Left" && connectionPoints.to === "Top") ||
-      (connectionPoints.from === "Left" && connectionPoints.to === "Bottom") ||
-      (connectionPoints.from === "Right" && connectionPoints.to === "Bottom")
-    ) {
-      steps.push(
-        `M ${connectionPoints.n1.x} ${connectionPoints.n1.y}`,
-        `C ${midX} ${connectionPoints.n1.y}, ${connectionPoints.n2.x} ${connectionPoints.n1.y}, ${connectionPoints.n2.x} ${connectionPoints.n2.y}`
-      );
-    }
+    steps.push(
+      `M ${connectionPoints.n1.x} ${connectionPoints.n1.y}`,
+      `L ${connectionPoints.n1.x + n1adjust.x} ${connectionPoints.n1.y + n1adjust.y}`,
+      `C ${connectionPoints.n1.x + c1adjust.x} ${connectionPoints.n1.y + c1adjust.y}, ${connectionPoints.n2.x + c2adjust.x} ${connectionPoints.n2.y + c2adjust.y}, ${connectionPoints.n2.x + n2adjust.x} ${connectionPoints.n2.y + n2adjust.y}`,
+      `L ${connectionPoints.n2.x} ${connectionPoints.n2.y}`
+    );
 
     return steps;
   }
@@ -566,10 +495,6 @@ export class GraphEdge extends Box {
   }
 
   protected renderSelf() {
-    if (intersects(this.node1.worldBounds, this.node2.worldBounds, 0)) {
-      return nothing;
-    }
-
     const styles: Record<string, string> = {
       transform: toCSSMatrix(this.worldTransform),
     };
@@ -580,34 +505,13 @@ export class GraphEdge extends Box {
     const connectionPointRadius = CONNECTION_POINT_RADIUS - 2;
     const connectionPoints = this.#calculateConnectionPoints(nodeBoundPoints);
 
+    if (this.#distanceSq(connectionPoints.n1, connectionPoints.n2) < 400) {
+      return nothing;
+    }
+
     const rotation = this.#createRotationFromConnectionPoints(connectionPoints);
     const steps = this.#createStepsFromConnectionPoints(connectionPoints);
-    let arrowSize = ARROW_SIZE;
-    if (connectionPoints.to === "Top") {
-      arrowSize = clamp(
-        connectionPoints.n2.y - connectionPoints.n1.y,
-        3,
-        ARROW_SIZE
-      );
-    } else if (connectionPoints.to === "Bottom") {
-      arrowSize = clamp(
-        connectionPoints.n1.y - connectionPoints.n2.y,
-        3,
-        ARROW_SIZE
-      );
-    } else if (connectionPoints.to === "Left") {
-      arrowSize = clamp(
-        connectionPoints.n2.x - connectionPoints.n1.x,
-        3,
-        ARROW_SIZE
-      );
-    } else if (connectionPoints.to === "Right") {
-      arrowSize = clamp(
-        connectionPoints.n1.x - connectionPoints.n2.x,
-        3,
-        ARROW_SIZE
-      );
-    }
+    const arrowSize = ARROW_SIZE;
 
     let edgeColor;
     switch (this.status) {

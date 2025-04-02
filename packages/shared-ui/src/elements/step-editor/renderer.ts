@@ -145,7 +145,7 @@ export class Renderer extends LitElement {
   accessor expandSelections = true;
 
   @property()
-  accessor allowEdgeAttachmentMove = false;
+  accessor allowEdgeAttachmentMove = true;
 
   @state()
   accessor _boundsDirty = new Set<string>();
