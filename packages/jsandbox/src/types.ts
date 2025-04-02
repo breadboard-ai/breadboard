@@ -33,6 +33,7 @@ export type CapabilitySpec = {
   query?: Capability;
   read?: Capability;
   write?: Capability;
+  blob?: Capability;
 };
 
 export type Sandbox = {

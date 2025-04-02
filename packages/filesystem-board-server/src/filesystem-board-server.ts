@@ -6,6 +6,7 @@
 
 import {
   blank,
+  DataPartTransformer,
   GraphProviderPreloadHandler,
   type BoardServer,
   type BoardServerCapabilities,
@@ -21,6 +22,7 @@ import {
   type Permission,
   type User,
 } from "@google-labs/breadboard";
+import { FileSystemDataPartTransformer } from "./data-part-transformer";
 
 type FileSystemWalkerEntry = FileSystemDirectoryHandle | FileSystemFileHandle;
 
@@ -469,5 +471,9 @@ export class FileSystemBoardServer extends EventTarget implements BoardServer {
         preloader(item);
       });
     });
+  }
+
+  dataPartTransformer(): DataPartTransformer {
+    return new FileSystemDataPartTransformer();
   }
 }

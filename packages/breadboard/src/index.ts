@@ -114,6 +114,7 @@ export {
   createFileSystem,
   deflateData,
   inflateData,
+  transformContents,
   isDataCapability,
   isFileDataCapabilityPart,
   isFunctionCallCapabilityPart,
