@@ -2,9 +2,12 @@
 
 ## The lay of the land
 
-This repository is configured as a TypeScript monorepo, using Node's built-in [workspace](https://docs.npmjs.com/cli/v9/using-npm/workspaces?v=true) capability.
+This repository is configured as a TypeScript monorepo, using Node's built-in
+[workspace](https://docs.npmjs.com/cli/v9/using-npm/workspaces?v=true)
+capability.
 
-Each item within the project lives as an `npm` package, though not all packages are actively published _to_ npm.
+Each item within the project lives as an `npm` package, though not all packages
+are actively published _to_ npm.
 
 ### Packages
 
@@ -24,7 +27,6 @@ Each item within the project lives as an `npm` package, though not all packages 
 | [`@google-labs/palm-kit`](./packages/palm-kit)                            | [![Published on npm](https://img.shields.io/npm/v/@google-labs/palm-kit.svg?logo=npm)](https://www.npmjs.com/package/@google-labs/palm-kit)                 | Breadboard kit for working with the PaLM API in boards                                                |
 | [`@exadev/breadboard-kits`](https://github.com/ExaDev-io/breadboard-kits) | [![Published on npm](https://img.shields.io/npm/v/@exadev/breadboard-kits?logo=npm)](https://www.npmjs.com/package/@exadev/breadboard-kits)                 | A variety of utilities, general purpose nodes, and kits specific scenarios                            |
 | _Tools & Support Libraries_                                               |                                                                                                                                                             |                                                                                                       |
-| [`@google-labs/breadboard-cli`](./packages/breadboard-cli)                | [![Published on npm](https://img.shields.io/npm/v/@google-labs/breadboard-cli.svg?logo=npm)](https://www.npmjs.com/package/@google-labs/breadboard-cli)     | Command-line tool for generating, running, and debugging boards                                       |
 | [`@breadboard-ai/import`](./packages/import)                              | [![Published on npm](https://img.shields.io/npm/v/@breadboard-ai/import.svg?logo=npm)](https://www.npmjs.com/package/@breadboard-ai/import)                 | Library for importing boards from an OpenAPI spec                                                     |
 | _Internal/Experiments_                                                    |                                                                                                                                                             |                                                                                                       |
 | [`@breadboard-ai/manifest`](./packages/manifest)                          | _Unpublished_                                                                                                                                               | An internal tool that generates a JSON list of board files                                            |
@@ -40,7 +42,8 @@ Each item within the project lives as an `npm` package, though not all packages 
 
 ## Building a package
 
-We use [Wireit](https://github.com/google/wireit) as the build tool for the monorepo.
+We use [Wireit](https://github.com/google/wireit) as the build tool for the
+monorepo.
 
 All packages within the monorepo have a similar structure:
 
@@ -62,7 +65,8 @@ All packages within the monorepo have a similar structure:
 
 Project source files go into the `src` directory, while tests go into `tests`.
 
-The TypeScript build is configured to produce a `dist` directory in the root of each package. This is the directory that is published to `npm`.
+The TypeScript build is configured to produce a `dist` directory in the root of
+each package. This is the directory that is published to `npm`.
 
 ## Getting started
 
@@ -86,7 +90,8 @@ To run all tests:
 npm run test
 ```
 
-Most of the time, you will likely want to bring up the Breadboard Web UI. To do so, run the `w` command:
+Most of the time, you will likely want to bring up the Breadboard Web UI. To do
+so, run the `w` command:
 
 ```bash
 npm run w
@@ -104,12 +109,15 @@ To start a board server and a Breadboard Web UI:
 npm run s
 ```
 
-Occasionally, there will be changes that will require a full rebuild with installing new packages, etc.
+Occasionally, there will be changes that will require a full rebuild with
+installing new packages, etc.
 
-When you find your repo in a funky state, use `npm run clean`. It will delete all build artifacts and bring the repo back to the pristine state, allowing you to restart with `npm i` and all those things.
+When you find your repo in a funky state, use `npm run clean`. It will delete
+all build artifacts and bring the repo back to the pristine state, allowing you
+to restart with `npm i` and all those things.
 
-> [!CAUTION]
-> If you have any local files that you have saved in the tree, they will be deleted.
+> [!CAUTION] If you have any local files that you have saved in the tree, they
+> will be deleted.
 
 ```bash
 npm run clean
@@ -120,7 +128,9 @@ npm run clean
 
 To create a new package:
 
-:one: Copy a template project as a new directory under `packages`. For example, if the name of your new prototyping project is `awesome-ai-game`, you would run something like this:
+:one: Copy a template project as a new directory under `packages`. For example,
+if the name of your new prototyping project is `awesome-ai-game`, you would run
+something like this:
 
 ```bash
 cp -rf templates/blank packages/awesome-ai-game
@@ -128,10 +138,12 @@ cp -rf templates/blank packages/awesome-ai-game
 
 :two: Replace the following placeholders:
 
-- `{{name}}` -- specify the name of the package. It usually matches the name of the directory you just created, like `awesome-ai-game`.
+- `{{name}}` -- specify the name of the package. It usually matches the name of
+  the directory you just created, like `awesome-ai-game`.
 - `{{description}}` -- describe the nature of the project in one sentence.
 
-:three: Add project as a reference to the `tsconfig.json`. For example, for `awesome-ai-game`:
+:three: Add project as a reference to the `tsconfig.json`. For example, for
+`awesome-ai-game`:
 
 ```json
 {
@@ -141,7 +153,8 @@ cp -rf templates/blank packages/awesome-ai-game
 }
 ```
 
-:four: Verify that you have the right setup. Run `npm i` and `npm run build` and make sure that the new package shows up in the build log. Then try to run it:
+:four: Verify that you have the right setup. Run `npm i` and `npm run build` and
+make sure that the new package shows up in the build log. Then try to run it:
 
 ```bash
 cd packages/awesome-ai-game
@@ -152,13 +165,18 @@ You should see `code goes here` as output.
 
 :five: Build whatever it is you've dreamed up!
 
-The new package is configured as a private package by default. If you would like to publish it to `npm`, flip the `private` flag to `true` in `package.json`.
+The new package is configured as a private package by default. If you would like
+to publish it to `npm`, flip the `private` flag to `true` in `package.json`.
 
 ## Working on your project
 
-If everything is set up well, you will spend most of your time tinkering inside of your package.
+If everything is set up well, you will spend most of your time tinkering inside
+of your package.
 
-We recommend opening [VSCode](https://code.visualstudio.com/) in the package directory to reduce the amount of clutter. When you run `npm run` inside of your package directory, it will automatically scope the build to only dependencies in your package.
+We recommend opening [VSCode](https://code.visualstudio.com/) in the package
+directory to reduce the amount of clutter. When you run `npm run` inside of your
+package directory, it will automatically scope the build to only dependencies in
+your package.
 
 To build your package:
 
@@ -172,13 +190,20 @@ To test your package:
 npm test
 ```
 
-You can add more commands to `package.json` and invoke them using `npm run <command>`.
+You can add more commands to `package.json` and invoke them using
+`npm run <command>`.
 
-To add a new dependency for your package, just run `npm i <package-name>` in your package working directory.
+To add a new dependency for your package, just run `npm i <package-name>` in
+your package working directory.
 
-When you need to refer to other packages in the monorepo, you will need to do a bit of manual wiring.
+When you need to refer to other packages in the monorepo, you will need to do a
+bit of manual wiring.
 
-In your project's `package.json` edit the contents of `dependencies` (or `devDependencies`) to add the entry for the package on which you want this package to depend. For example, if we're adding a dependency on the package called `"@google-labs/ai-game-engine"` that also resides in this monorepo, we will do:
+In your project's `package.json` edit the contents of `dependencies` (or
+`devDependencies`) to add the entry for the package on which you want this
+package to depend. For example, if we're adding a dependency on the package
+called `"@google-labs/ai-game-engine"` that also resides in this monorepo, we
+will do:
 
 ```json
 "dependencies": {
@@ -188,11 +213,15 @@ In your project's `package.json` edit the contents of `dependencies` (or `devDep
 
 ## Testing
 
-Out of the box, the project template is configured to use [ava](https://github.com/avajs/ava) for testing. You can pick a different test framework. Just make sure to configure your `package.json` to point to it, so that `npm` can run it.
+Out of the box, the project template is configured to use
+[ava](https://github.com/avajs/ava) for testing. You can pick a different test
+framework. Just make sure to configure your `package.json` to point to it, so
+that `npm` can run it.
 
 ## Cleaning stuff
 
-Sometimes, TypeScript Compiler or Wireit (or both!) gets confused, and the only way forward is to clean up the build artifacts and start over. To do that, run:
+Sometimes, TypeScript Compiler or Wireit (or both!) gets confused, and the only
+way forward is to clean up the build artifacts and start over. To do that, run:
 
 ```bash
 npm run clean
@@ -215,18 +244,24 @@ doesn't comply with the license.)
 
 ## TypeScript Developer Happy Path
 
-This section describes that we generally use within the Breadboard team, and it's probably what will give you the most comfortable developer experience in this repo.
+This section describes that we generally use within the Breadboard team, and
+it's probably what will give you the most comfortable developer experience in
+this repo.
 
 ### VSCode
 
-Get [VSCode](https://code.visualstudio.com/). There are tons of other editors, but VSCode has likely the most seamless TypeScript integration.
+Get [VSCode](https://code.visualstudio.com/). There are tons of other editors,
+but VSCode has likely the most seamless TypeScript integration.
 
-Install “ESLint” and “Prettier” extensions. TypeScript support is built-in by default.
+Install “ESLint” and “Prettier” extensions. TypeScript support is built-in by
+default.
 
 - “ESLint” – provides live commentary on the quality of your code.
 - “Prettier” – will make your code look pretty automatically.
 
-Tweak the settings to your liking. The most important one is to format-on-save, so that you never need to worry about formatting TypeScript ever again. Here is what we have:
+Tweak the settings to your liking. The most important one is to format-on-save,
+so that you never need to worry about formatting TypeScript ever again. Here is
+what we have:
 
 ```
 "editor.rulers": [80] <-- Draws a nice ruler at 80 columns
@@ -236,14 +271,23 @@ Tweak the settings to your liking. The most important one is to format-on-save, 
 "editor.formatOnSave": true, <-- format with Prettier on save
 ```
 
-Use the built-in terminal (Ctrl+`). For convenience, split the TERMINAL and PROBLEMS tabs horizontally.
+Use the built-in terminal (Ctrl+`). For convenience, split the TERMINAL and
+PROBLEMS tabs horizontally.
 
-This setup creates a really nice separation of the workspace: the top part is where we write code, and the bottom part is where we see if it works. As we type, the problems come and go in the bottom-right window. When we are ready to try running my code, we switch to the terminal and run it from there.
+This setup creates a really nice separation of the workspace: the top part is
+where we write code, and the bottom part is where we see if it works. As we
+type, the problems come and go in the bottom-right window. When we are ready to
+try running my code, we switch to the terminal and run it from there.
 
-Because TypeScript is built-in, TypeScript errors will show up live in the PROBLEMS window as well, which is super-convenient.
-Learn keyboard shortcuts. Ctrl+P (Cmd+P) and Ctrl+Shift+P (Cmd+Shift+P) are likely the most important ones.
+Because TypeScript is built-in, TypeScript errors will show up live in the
+PROBLEMS window as well, which is super-convenient. Learn keyboard shortcuts.
+Ctrl+P (Cmd+P) and Ctrl+Shift+P (Cmd+Shift+P) are likely the most important
+ones.
 
-Occasionally, VSCode’s built-in TypeScript machinery gets into a confused state. For this purpose, there’s a “TypeScript: Restart TS Server“ command available via Cmd/Ctrl+Shift+P. We can also use the “Developer: Reload Windows“ command to flush out the gremlins.
+Occasionally, VSCode’s built-in TypeScript machinery gets into a confused state.
+For this purpose, there’s a “TypeScript: Restart TS Server“ command available
+via Cmd/Ctrl+Shift+P. We can also use the “Developer: Reload Windows“ command to
+flush out the gremlins.
 
 ### Workflow
 
@@ -251,65 +295,86 @@ The dev cycle is:
 
 - Open the directory of the package (or several of them) in VSCode
 - Write some code
-- Make ESLint and TypeScript live-compiler happy (no errors show up in the PROBLEMS window)
-- Run `npm run build` to build the code. For packages like the Visual Editor we generally use `npm run dev`, which often provides a live reload feature in the browser.
-- Run your code with `node .` or whatever is the right way to run it. For convenience, create an [npm script](https://docs.npmjs.com/cli/v9/using-npm/scripts) to combine building and running.
+- Make ESLint and TypeScript live-compiler happy (no errors show up in the
+  PROBLEMS window)
+- Run `npm run build` to build the code. For packages like the Visual Editor we
+  generally use `npm run dev`, which often provides a live reload feature in the
+  browser.
+- Run your code with `node .` or whatever is the right way to run it. For
+  convenience, create an
+  [npm script](https://docs.npmjs.com/cli/v9/using-npm/scripts) to combine
+  building and running.
 - Go to the “Write some code” step.
 
 ### Build system
 
-This is a monorepo, which in Node.js vernacular means that it is a flat list of npm packages that are all hosted in the same git repository.
+This is a monorepo, which in Node.js vernacular means that it is a flat list of
+npm packages that are all hosted in the same git repository.
 
-The main reason we need to run `npm run build` is because in the monorepo, we need to compute the dependency graph before compiling TypeScript to Javascript, and that is not something that comes standard with the TypeScript compiler.
+The main reason we need to run `npm run build` is because in the monorepo, we
+need to compute the dependency graph before compiling TypeScript to Javascript,
+and that is not something that comes standard with the TypeScript compiler.
 
 #### Front-end
 
-[Vite](https://vitejs.dev/) is currently brought up in the `visual-editor` package. Use it as a template for other front-end TypeScript packages.
+[Vite](https://vitejs.dev/) is currently brought up in the `visual-editor`
+package. Use it as a template for other front-end TypeScript packages.
 
 ## Sending PRs
 
-This repo protects the `main` branch, which means all changes must go through a GitHub PR. This enforces that all tests pass and packages builds before any change lands, and provides an opportunity for code review.
+This repo protects the `main` branch, which means all changes must go through a
+GitHub PR. This enforces that all tests pass and packages builds before any
+change lands, and provides an opportunity for code review.
 
-> [!TIP]
-> The [GitHub CLI](https://cli.github.com/) makes it easy to send PRs by
+> [!TIP] The [GitHub CLI](https://cli.github.com/) makes it easy to send PRs by
 > typing `gh pr create`. You can use the `--fill` or `-f` flag to automatically
-> populate the title and description from your commits. See the [create command
-> documentation](https://cli.github.com/manual/gh_pr_create) for more
-> information.
+> populate the title and description from your commits. See the
+> [create command documentation](https://cli.github.com/manual/gh_pr_create) for
+> more information.
 
 ### Changesets
 
-This repo uses [Changesets](https://github.com/changesets/changesets) to ease the burden of releasing of NPM packages. The benefits are that it publishes multiple packages at once, understands the dependencies between all packages in the monorepo, automatically updates the `package.json` and `CHANGELOG.md` files, and automatically creates release tags.
+This repo uses [Changesets](https://github.com/changesets/changesets) to ease
+the burden of releasing of NPM packages. The benefits are that it publishes
+multiple packages at once, understands the dependencies between all packages in
+the monorepo, automatically updates the `package.json` and `CHANGELOG.md` files,
+and automatically creates release tags.
 
-> [!TIP]
-> If you need to publish NPM packages, see the [Publishing NPM
-> packages](#publishing-npm-packages) section below.
+> [!TIP] If you need to publish NPM packages, see the
+> [Publishing NPM packages](#publishing-npm-packages) section below.
 
-After sending a PR, you may receive a comment from [**changeset-bot**](https://github.com/apps/changeset-bot) that looks like this:
+After sending a PR, you may receive a comment from
+[**changeset-bot**](https://github.com/apps/changeset-bot) that looks like this:
 
 ![changeset-bot comment](https://user-images.githubusercontent.com/11481355/66183943-dc418680-e6bd-11e9-998d-e43f90a974bd.png)
 
-This bot is telling you that your PR does not contain a [Changeset file](https://github.com/changesets/changesets/blob/main/docs/detailed-explanation.md). Changeset files are how Changesets understands which packages need to be released at any given time, along with the kind of version bump that is needed for them.
+This bot is telling you that your PR does not contain a
+[Changeset file](https://github.com/changesets/changesets/blob/main/docs/detailed-explanation.md).
+Changeset files are how Changesets understands which packages need to be
+released at any given time, along with the kind of version bump that is needed
+for them.
 
-The easiest way to create a Changeset file for your PR is to run this command from the root of the monorepo:
+The easiest way to create a Changeset file for your PR is to run this command
+from the root of the monorepo:
 
 ```
 npx changeset
 ```
 
-This command will prompt you with an interactive list of packages. Select the packages that the PR affects and indicate whether the changes are [semver](https://semver.org/) `major` (breaking), `minor` (new features), or `patch` (bug fixes).
+This command will prompt you with an interactive list of packages. Select the
+packages that the PR affects and indicate whether the changes are
+[semver](https://semver.org/) `major` (breaking), `minor` (new features), or
+`patch` (bug fixes).
 
-> [!NOTE]
-> If your change only affects **unpublished** packages, then you can
+> [!NOTE] If your change only affects **unpublished** packages, then you can
 > safely skip adding a changeset file and ignore the bot.
 
 Then just push the generated changeset file to your PR!
 
 ## Publishing NPM packages
 
-To publish an NPM package, you have to be a Googler. This is unlikely
-to change in the future. Having said that, here are the steps to publish a
-package.
+To publish an NPM package, you have to be a Googler. This is unlikely to change
+in the future. Having said that, here are the steps to publish a package.
 
 1. At the root of the repository, ensure you are synchronized to the tip of
    `main` and create a new release branch.
@@ -331,9 +396,12 @@ package.
    npx changeset version
    ```
 
-   > [!NOTE]
-   > Sometimes, the command may fail with a fairly cryptic error like "TypeError: Cannot destructure property 'packageJson' of 'undefined' as it is undefined.". This typically means that a package was renamed sometime between the last release and now. To fix, look through the `.md` files in the `./.changeset` directory, and remove all lines that reference the package by its
-   > old name.
+   > [!NOTE] Sometimes, the command may fail with a fairly cryptic error like
+   > "TypeError: Cannot destructure property 'packageJson' of 'undefined' as it
+   > is undefined.". This typically means that a package was renamed sometime
+   > between the last release and now. To fix, look through the `.md` files in
+   > the `./.changeset` directory, and remove all lines that reference the
+   > package by its old name.
 
 3. Check what is planned to be published by looking at the latest commit which
    Changesets created in the previous step. Make sure it looks reasonable, and

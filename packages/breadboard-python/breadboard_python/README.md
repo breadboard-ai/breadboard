@@ -1,10 +1,10 @@
 # Breadboard Oython
 
-Breadboard Python is a library that allows developers to define Breadboards with Python.
+Breadboard Python is a library that allows developers to define Breadboards with
+Python.
 
-Each Breadboard can be serialized into a JSON graph. An executor can take this graph and run it.
-
-The available executors are currently breadboard-web, and breadboard-cli.
+Each Breadboard can be serialized into a JSON graph. An executor can take this
+graph and run it.
 
 # Installation
 
@@ -50,14 +50,17 @@ class Echo(Board[InputSchema, OutputSchema]):
 There are 4 steps to do when defining a Board:
 
 1. Define input and output schemas by inheriting SchemaObject.
-2. Creating a child class of Board, passing in the input and output schema classes
+2. Creating a child class of Board, passing in the input and output schema
+   classes
 3. Populating the metadata fields: "title", "description", and "version".
-4. Implementing the `describe(self, input, output)` method, which defines sub-Boards and describes how they wire into each other.
+4. Implementing the `describe(self, input, output)` method, which defines
+   sub-Boards and describes how they wire into each other.
 
 ## Defining Input and Output Schemas
 
-Input and Output schemas should inherit from the SchemaObject class, which is a wrapper around Pydantic.
-Field metadata can be populated in the Field constructor.
+Input and Output schemas should inherit from the SchemaObject class, which is a
+wrapper around Pydantic. Field metadata can be populated in the Field
+constructor.
 
 Example:
 
@@ -68,8 +71,8 @@ class InputSchema(SchemaObject):
   input2: List[int] = Field([], description="Another description.")
 ```
 
-If an InputSchema or OutputSchema is not provided, they will default to Any.
-In this example, the Board input/output signature simply defaults ot Any, Any
+If an InputSchema or OutputSchema is not provided, they will default to Any. In
+this example, the Board input/output signature simply defaults ot Any, Any
 
 ```python
 class ExampleBoard(Board):
@@ -78,7 +81,8 @@ class ExampleBoard(Board):
 
 ## Defining a Board
 
-The Input and Output schemas should be passed into the generic Board arguments when inheriting from Board.
+The Input and Output schemas should be passed into the generic Board arguments
+when inheriting from Board.
 
 ```python
 class ExampleBoard(Board[SomeInputSchema, SomeOutputSchema]):
@@ -89,11 +93,12 @@ class ExampleBoard(Board[SomeInputSchema, SomeOutputSchema]):
 
 ## Implementing describe
 
-The describe function has two parameters: input and output, which represent the input and output nodes.
+The describe function has two parameters: input and output, which represent the
+input and output nodes.
 
 Here, component Boards are defined, and they are wired to and from each other.
-Wiring is one-directional, and is done by making a call to the component.
-For instance, in this example:
+Wiring is one-directional, and is done by making a call to the component. For
+instance, in this example:
 
 ```python
 class ExampleBoard(Board):
@@ -103,9 +108,10 @@ class ExampleBoard(Board):
     output(self.componentB)
 ```
 
-The "text" field from the input is fed into componentA's "arg2" input field.
-The "output1" output field from componentA is fed into componentB's "arg3" input field.
-Finally, all of componentB's output fields are fed into output under the same names.
+The "text" field from the input is fed into componentA's "arg2" input field. The
+"output1" output field from componentA is fed into componentB's "arg3" input
+field. Finally, all of componentB's output fields are fed into output under the
+same names.
 
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
@@ -121,8 +127,9 @@ classDef componentB stroke:#a64d79,fill:#ead1dcff,color:#000
 
 ## Importing functions from Javascript
 
-Javascript kits are each a collection of handlers and are published to npm. Javascript handlers can be thought of as Boards.
-To utilize Javascript kits, you can import them with breadboard_python.import_nodes.require.
+Javascript kits are each a collection of handlers and are published to npm.
+Javascript handlers can be thought of as Boards. To utilize Javascript kits, you
+can import them with breadboard_python.import_nodes.require.
 
 For instance:
 
