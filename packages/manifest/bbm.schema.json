@@ -58,6 +58,37 @@
 				},
 				"type": {
 					"$ref": "#/definitions/AssetType"
+				},
+				"visual": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "number"
+						},
+						{
+							"type": "boolean"
+						},
+						{
+							"type": "null"
+						},
+						{
+							"items": {
+								"$ref": "#/definitions/NodeValue"
+							},
+							"type": "array"
+						},
+						{
+							"$ref": "#/definitions/Capability"
+						},
+						{
+							"additionalProperties": {
+								"$ref": "#/definitions/NodeValue"
+							},
+							"type": "object"
+						}
+					]
 				}
 			},
 			"required": [
