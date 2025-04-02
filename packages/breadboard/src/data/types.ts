@@ -122,7 +122,8 @@ export type DataPartTransformType =
 export type DataPartTransformer = {
   persistPart: (
     graphUrl: URL,
-    part: InlineDataCapabilityPart
+    part: InlineDataCapabilityPart,
+    temporary: boolean
   ) => Promise<Outcome<StoredDataCapabilityPart>>;
   addEphemeralBlob: (blob: Blob) => StoredDataCapabilityPart;
   persistentToEphemeral: (
