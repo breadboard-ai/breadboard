@@ -20,14 +20,12 @@
     "test:node": "wireit",
     "build": "wireit",
     "build:tsc": "wireit",
-    "build:rollup": "wireit",
     "lint": "wireit",
     "merm": "wireit"
   },
   "wireit": {
     "build": {
       "dependencies": [
-        "build:rollup",
         "build:tsc"
       ]
     },
@@ -51,19 +49,6 @@
         "!dist/**/*.min.js{,.map}"
       ],
       "clean": "if-file-deleted"
-    },
-    "build:rollup": {
-      "command": "rollup -c",
-      "dependencies": [
-        "build:tsc"
-      ],
-      "files": [
-        "rollup.config.js",
-        "package.json"
-      ],
-      "output": [
-        "dist/**/*.min.js{,.map}"
-      ]
     },
     "test": {
       "dependencies": [
@@ -159,18 +144,12 @@
   "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
-    "@definitelytyped/dtslint": "^0.2.30",
     "@google-labs/tsconfig": "^0.0.1",
-    "@rollup/plugin-json": "^6.1.0",
-    "@rollup/plugin-node-resolve": "^16.0.1",
-    "@rollup/plugin-terser": "^0.4.4",
     "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
     "ava": "^5.2.0",
     "jsonschema": "^1.5.0",
-    "rollup": "^4.39.0",
-    "rollup-plugin-dts": "^6.2.1",
     "typescript": "^5.8.2"
   },
   "engines": {
