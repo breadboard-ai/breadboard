@@ -32,13 +32,7 @@ export class GraphEditHistory implements EditHistory {
     this.#controller.onHistoryChanged?.(this.#historyIncludingPending);
   }
 
-  addEdit(
-    graph: GraphDescriptor,
-    checkpoint: GraphDescriptor,
-    label: string,
-    creator?: EditHistoryCreator
-  ) {
-    this.#history.pause(label, checkpoint, creator);
+  addEdit(graph: GraphDescriptor, label: string, creator?: EditHistoryCreator) {
     this.#history.add(graph, label, creator);
     this.#controller.onHistoryChanged?.(this.#historyIncludingPending);
   }
@@ -59,7 +53,6 @@ export class GraphEditHistory implements EditHistory {
   }
 
   undo(): void {
-    this.#history.resume(this.#controller.graph());
     const graph = this.#history.back();
     if (graph) {
       this.#controller.setGraph(graph);
@@ -68,7 +61,6 @@ export class GraphEditHistory implements EditHistory {
   }
 
   redo(): void {
-    this.#history.resume(this.#controller.graph());
     const graph = this.#history.forth();
     if (graph) {
       this.#controller.setGraph(graph);
@@ -77,7 +69,6 @@ export class GraphEditHistory implements EditHistory {
   }
 
   jump(index: number): void {
-    this.#history.resume(this.#controller.graph());
     const graph = this.#history.jump(index);
     if (graph) {
       this.#controller.setGraph(graph);
@@ -111,7 +102,6 @@ export class EditHistoryManager {
   accessor #index = 0;
   @signal
   accessor pending: EditHistoryEntry | undefined;
-  pauseLabel: string | null = null;
 
   current(): GraphDescriptor | null {
     const entry = this.history[this.#index];
@@ -127,7 +117,6 @@ export class EditHistoryManager {
     this.history.splice(index + 1);
     this.#index = index;
     this.pending = undefined;
-    this.pauseLabel = null;
     return this.history[index];
   }
 
@@ -137,7 +126,6 @@ export class EditHistoryManager {
     creator?: EditHistoryCreator,
     timestamp?: number
   ) {
-    if (this.paused()) return;
     // Chop off the history at #index.
     this.history.splice(this.#index + 1);
     // Insert new entry.
@@ -168,37 +156,9 @@ export class EditHistoryManager {
   }
 
   jump(newIndex: number) {
-    if (this.paused()) {
-      return null;
-    }
     if (newIndex >= 0 && newIndex < this.history.length) {
       this.#index = newIndex;
     }
     return this.current();
-  }
-
-  paused() {
-    return this.pauseLabel !== null;
-  }
-
-  pause(label: string, graph: GraphDescriptor, creator?: EditHistoryCreator) {
-    if (this.pauseLabel !== label) {
-      this.resume(graph);
-    }
-    this.pauseLabel = label;
-    this.pending = {
-      graph,
-      label,
-      timestamp: Date.now(),
-      creator: creator ?? { role: "unknown" },
-    };
-  }
-
-  resume(graph: GraphDescriptor) {
-    if (this.pauseLabel === null) return;
-    const label = this.pauseLabel;
-    this.pauseLabel = null;
-    this.add(graph, label, this.pending?.creator);
-    this.pending = undefined;
   }
 }
