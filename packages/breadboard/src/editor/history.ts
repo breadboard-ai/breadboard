@@ -25,15 +25,10 @@ export class GraphEditHistory implements EditHistory {
   add(
     graph: GraphDescriptor,
     label: string,
-    creator?: EditHistoryCreator,
-    timestamp?: number
+    creator: EditHistoryCreator,
+    timestamp: number
   ) {
     this.#history.add(graph, label, creator, timestamp);
-    this.#controller.onHistoryChanged?.(this.#historyIncludingPending);
-  }
-
-  addEdit(graph: GraphDescriptor, label: string, creator?: EditHistoryCreator) {
-    this.#history.add(graph, label, creator);
     this.#controller.onHistoryChanged?.(this.#historyIncludingPending);
   }
 
@@ -123,8 +118,8 @@ export class EditHistoryManager {
   add(
     graph: GraphDescriptor,
     label: string,
-    creator?: EditHistoryCreator,
-    timestamp?: number
+    creator: EditHistoryCreator,
+    timestamp: number
   ) {
     // Chop off the history at #index.
     this.history.splice(this.#index + 1);
@@ -132,8 +127,8 @@ export class EditHistoryManager {
     this.history.push({
       graph: structuredClone(graph),
       label,
-      timestamp: timestamp ?? Date.now(),
-      creator: creator ?? { role: "unknown" },
+      timestamp,
+      creator,
     });
     // Point #index the new entry.
     this.#index = this.history.length - 1;
