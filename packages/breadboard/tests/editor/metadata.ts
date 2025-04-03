@@ -47,7 +47,6 @@ test("editGraph correctly edits node metadata", async (t) => {
     "test"
   );
   t.is(changeResult.success, true);
-  t.is(graph.version(), 1);
 
   const changedMetadata = graph.inspect("").nodeById("node0")
     ?.descriptor?.metadata;
@@ -65,7 +64,6 @@ test("editGraph correctly edits node metadata", async (t) => {
     "test"
   );
   t.is(invalidResult.success, false);
-  t.is(graph.version(), 1);
 });
 
 test("editGraph correctly edits visual node metadata", async (t) => {
@@ -90,7 +88,6 @@ test("editGraph correctly edits visual node metadata", async (t) => {
     "test"
   );
   t.is(changeResult.success, true);
-  t.is(graph.version(), 1);
 
   const changedMetadata = graph.inspect("").nodeById("node0")
     ?.descriptor?.metadata;
@@ -108,7 +105,6 @@ test("editGraph correctly edits visual node metadata", async (t) => {
     "test"
   );
   t.is(invalidResult.success, false);
-  t.is(graph.version(), 1);
 });
 
 test("editGraph correctly distinguishes between `reset` and incremental graph metadata changes", async (t) => {

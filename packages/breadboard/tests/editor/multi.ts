@@ -40,7 +40,6 @@ test("Multi-edit can do multiple successful edits", async (t) => {
     graph.addEventListener("graphchangereject", () => {
       graphChangeRejectDispatched = true;
     });
-    const oldVersion = graph.version();
     const graphId = "";
     const result = await graph.edit(
       [
@@ -55,7 +54,6 @@ test("Multi-edit can do multiple successful edits", async (t) => {
     t.assert(inspector.nodeById("node-1"));
     t.assert(inspector.nodeById("node-2"));
     t.assert(inspector.nodeById("node-3"));
-    t.assert(oldVersion === graph.version() - 1);
     t.true(graphChangeDispatched);
     t.false(graphChangeRejectDispatched);
   }
@@ -69,7 +67,6 @@ test("Multi-edit can do multiple successful edits", async (t) => {
     graph.addEventListener("graphchangereject", () => {
       graphChangeRejectDispatched = true;
     });
-    const oldVersion = graph.version();
     const graphId = "";
     const result = await graph.edit(
       [
@@ -85,7 +82,6 @@ test("Multi-edit can do multiple successful edits", async (t) => {
     t.assert(!inspector.nodeById("node-1"));
     t.assert(!inspector.nodeById("node-2"));
     t.assert(!inspector.nodeById("node-3"));
-    t.assert(oldVersion === graph.version());
     t.false(graphChangeDispatched);
     t.false(graphChangeRejectDispatched);
   }
@@ -102,7 +98,6 @@ test("Multi-edit gracefully fails", async (t) => {
     graph.addEventListener("graphchangereject", () => {
       graphChangeRejectDispatched = true;
     });
-    const oldVersion = graph.version();
     const graphId = "";
     const result = await graph.edit(
       [
@@ -125,7 +120,6 @@ test("Multi-edit gracefully fails", async (t) => {
     const inspector = graph.inspect("");
     t.assert(!inspector.nodeById("node-1"));
     t.assert(!inspector.nodeById("node-3"));
-    t.assert(oldVersion === graph.version());
     t.false(graphChangeDispatched);
     t.true(graphChangeRejectDispatched);
   }
@@ -139,7 +133,6 @@ test("Multi-edit gracefully fails", async (t) => {
     graph.addEventListener("graphchangereject", () => {
       graphChangeRejectDispatched = true;
     });
-    const oldVersion = graph.version();
     const graphId = "";
     const result = await graph.edit(
       [
@@ -162,7 +155,6 @@ test("Multi-edit gracefully fails", async (t) => {
     const inspector = graph.inspect("");
     t.assert(!inspector.nodeById("node-1"));
     t.assert(!inspector.nodeById("node-3"));
-    t.assert(oldVersion === graph.version());
     t.false(graphChangeDispatched);
     t.true(graphChangeRejectDispatched);
   }

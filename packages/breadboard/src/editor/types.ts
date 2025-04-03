@@ -32,7 +32,6 @@ export type ChangeEventType = "edit" | "history";
 
 export type GraphChangeEvent = Event & {
   graph: GraphDescriptor;
-  version: number;
   visualOnly: boolean;
   changeType: ChangeEventType;
   affectedNodes: AffectedNode[];
@@ -244,12 +243,6 @@ export type EditableGraph = {
     eventName: Key,
     listener: ((evt: EditableGraphEventMap[Key]) => void) | null
   ): void;
-  /**
-   * Returns the current version of the graph. This number increments with
-   * every edit.
-   * @throws when used on an embedded subgraph.
-   */
-  version(): number;
 
   /**
    * Performs an edit operation on the graph.
@@ -279,7 +272,6 @@ export type EditableGraph = {
 export type EditHistoryController = {
   graph(): GraphDescriptor;
   setGraph(graph: GraphDescriptor): void;
-  version(): number;
   onHistoryChanged?: (entries: readonly EditHistoryEntry[]) => void;
 };
 
