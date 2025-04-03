@@ -3,7 +3,8 @@
  */
 
 import fetch from "@fetch";
-import { ok } from "./a2/utils";
+import { ok, err } from "./a2/utils";
+import { executeStep } from "./a2/step-executor";
 
 export { invoke as default, describe };
 
@@ -17,6 +18,44 @@ export type GetWebPageOutputs = {
 
 export type GetWebPageResults = string;
 
+export type GetContentFromUrlResponse = {
+  body: string;
+  header: string;
+  status: string;
+};
+
+async function getContentFromUrl(url: string): Promise<Outcome<string>> {
+  const api = "get_content_from_url";
+  const response = await executeStep({
+    planStep: {
+      stepName: api,
+      modelApi: api,
+      output: "data",
+      inputParameters: ["url"],
+      isListOutput: false,
+    },
+    execution_inputs: {
+      url: { chunks: [{ mimetype: "text/plain", data: btoa(url) }] },
+    },
+  });
+  if (!ok(response)) return response;
+
+  const data = response?.executionOutputs["data"].chunks.at(0)?.data;
+  if (!data) {
+    return err(`Invalid response from "${api}" backend`);
+  }
+  const jsonString = atob(data);
+  try {
+    const json = JSON.parse(jsonString) as GetContentFromUrlResponse;
+    const output = json.body;
+    return `\`\`\`html\n\n${output}\n\n\`\`\``;
+  } catch (e) {
+    return err(
+      `Error parsing "${api}" backend response: ${(e as Error).message}`
+    );
+  }
+}
+
 async function invoke({
   url,
 }: GetWebPageInputs): Promise<Outcome<GetWebPageOutputs>> {
@@ -27,6 +66,8 @@ async function invoke({
     return fetching;
   }
   const results = fetching.response as GetWebPageResults;
+  // const results = await getContentFromUrl(url);
+  if (!ok(results)) return results;
   return { results };
 }
 
