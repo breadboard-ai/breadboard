@@ -317,7 +317,7 @@ export class Graph implements EditableGraph {
       return { success: true, log };
     }
 
-    this.#history.addEdit(this.raw(), checkpoint, label, creator);
+    this.#history.addEdit(this.raw(), label, creator);
 
     !dryRun &&
       this.#updateGraph(
