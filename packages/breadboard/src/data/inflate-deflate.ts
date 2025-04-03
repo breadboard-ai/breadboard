@@ -13,8 +13,39 @@ import {
   isStoredData,
   transformDataParts,
 } from "./common.js";
-import { DataInflator, DataStore, SerializedDataStoreGroup } from "./types.js";
+import {
+  DataInflator,
+  DataPartTransformType,
+  DataStore,
+  Outcome,
+  SerializedDataStoreGroup,
+} from "./types.js";
 import { ok } from "./file-system/utils.js";
+
+export { transformContents };
+
+async function transformContents(
+  store: DataInflator,
+  content: LLMContent[],
+  type: DataPartTransformType,
+  graphUrl: URL
+): Promise<Outcome<LLMContent[]>> {
+  const transformer = store.transformer?.(graphUrl);
+  if (!transformer) return content;
+
+  // TODO: Implement support for other types.
+  if (type !== "persistent-temporary") return content;
+
+  const transforming = await transformDataParts(
+    graphUrl,
+    content,
+    type,
+    transformer
+  );
+  if (!ok(transforming)) return transforming;
+
+  return transforming;
+}
 
 /**
  * Recursively descends into the data object and inflates any

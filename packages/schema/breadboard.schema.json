@@ -815,6 +815,37 @@
 				},
 				"subType": {
 					"type": "string"
+				},
+				"visual": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "number"
+						},
+						{
+							"type": "boolean"
+						},
+						{
+							"type": "null"
+						},
+						{
+							"type": "array",
+							"items": {
+								"$ref": "#/definitions/NodeValue"
+							}
+						},
+						{
+							"$ref": "#/definitions/Capability"
+						},
+						{
+							"type": "object",
+							"additionalProperties": {
+								"$ref": "#/definitions/NodeValue"
+							}
+						}
+					]
 				}
 			},
 			"required": [

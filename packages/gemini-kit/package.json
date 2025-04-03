@@ -21,14 +21,12 @@
     "dev": {
       "command": "breadboard debug src/boards --watch -n",
       "dependencies": [
-        "../breadboard-cli#build",
         "build"
       ]
     },
     "build": {
       "dependencies": [
         "<dependencies>#<this>",
-        "!../breadboard-cli#build",
         "build:tsc"
       ]
     },
@@ -38,8 +36,7 @@
         "FORCE_COLOR": "1"
       },
       "dependencies": [
-        "<dependencies>#<this>",
-        "!../breadboard-cli#<this>"
+        "<dependencies>#<this>"
       ],
       "files": [
         "src/**/*.ts",
@@ -69,17 +66,6 @@
         "../../.eslintrc.json"
       ],
       "output": []
-    },
-    "generate:graphs": {
-      "command": "mkdir graphs && ls dist/src/boards/*.js | xargs -n1 -r -I{} ../breadboard-cli/dist/src/index.js make \"$PWD/{}\" -o \"$PWD/graphs/\" --format",
-      "dependencies": [
-        "build:tsc",
-        "../breadboard-cli#build"
-      ],
-      "files": [],
-      "output": [
-        "graphs/"
-      ]
     }
   },
   "repository": {
@@ -98,7 +84,6 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
-    "@google-labs/breadboard-cli": "^0.13.1",
     "@google-labs/tsconfig": "^0.0.1",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",

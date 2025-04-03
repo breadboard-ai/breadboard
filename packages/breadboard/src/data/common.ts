@@ -245,9 +245,14 @@ export async function transformDataParts(
           // convert inline to ephemeral
           const blob = await asBlob(part);
           transformedPart = transformer.addEphemeralBlob(blob);
-        } else if (to === "persistent") {
+        } else if (to === "persistent" || to === "persistent-temporary") {
+          const temporary = to === "persistent-temporary";
           // convert inline to persistent
-          const persisted = await transformer.persistPart(graphUrl, part);
+          const persisted = await transformer.persistPart(
+            graphUrl,
+            part,
+            temporary
+          );
           if (!ok(persisted)) return persisted;
           transformedPart = persisted;
         }
@@ -263,11 +268,16 @@ export async function transformDataParts(
         } else if (to === "inline") {
           // convert persisent or ephemeral to inline
           transformedPart = await toInlineDataPart(part);
-        } else if (to == "persistent") {
+        } else if (to == "persistent" || to === "persistent-temporary") {
           if (isEphemeral) {
             // convert ephemeral to persistent
             const inline = await toInlineDataPart(part);
-            const persisted = await transformer.persistPart(graphUrl, inline);
+            const temporary = to === "persistent-temporary";
+            const persisted = await transformer.persistPart(
+              graphUrl,
+              inline,
+              temporary
+            );
             if (!ok(persisted)) return persisted;
             transformedPart = persisted;
           }

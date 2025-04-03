@@ -603,6 +603,7 @@ export type AssetMetadata = {
   description?: string;
   type: AssetType;
   subType?: string;
+  visual?: NodeValue;
 };
 
 export type Asset = {

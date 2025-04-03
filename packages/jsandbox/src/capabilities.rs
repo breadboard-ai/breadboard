@@ -20,6 +20,7 @@ impl ModuleDef for CapabilitiesModule {
         decl.declare("query")?;
         decl.declare("read")?;
         decl.declare("write")?;
+        decl.declare("blob")?;
 
         Ok(())
     }
@@ -57,6 +58,10 @@ impl ModuleDef for CapabilitiesModule {
         exports.export(
             "write",
             Function::new(ctx.clone(), Async(write_value))?.with_name("write")?,
+        )?;
+        exports.export(
+            "blob",
+            Function::new(ctx.clone(), Async(blob_value))?.with_name("blob")?,
         )?;
 
         Ok(())
@@ -102,6 +107,7 @@ create_value_function!(describe_value, describe);
 create_value_function!(query_value, query);
 create_value_function!(read_value, read);
 create_value_function!(write_value, write);
+create_value_function!(blob_value, blob);
 
 #[wasm_bindgen(raw_module = "./capabilities.js")]
 extern "C" {
@@ -113,4 +119,5 @@ extern "C" {
     async fn query(invocation_id: String, inputs: String) -> JsValue;
     async fn read(invocation_id: String, inputs: String) -> JsValue;
     async fn write(invocation_id: String, inputs: String) -> JsValue;
+    async fn blob(invocation_id: String, inputs: String) -> JsValue;
 }

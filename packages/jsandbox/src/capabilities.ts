@@ -17,6 +17,7 @@ export {
   query,
   read,
   write,
+  blob,
   Capabilities,
 };
 
@@ -120,4 +121,8 @@ async function read(invocationId: UUID, inputs: string) {
 
 async function write(invocationId: UUID, inputs: string) {
   return Capabilities.instance().invoke(invocationId, "write", inputs);
+}
+
+async function blob(invocationId: UUID, inputs: string) {
+  return Capabilities.instance().invoke(invocationId, "blob", inputs);
 }

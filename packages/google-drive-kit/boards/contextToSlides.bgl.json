@@ -105,7 +105,7 @@
         "$module": "main"
       },
       "metadata": {
-        "title": "Turns LLM Conversation Context into a Google Slides presentation"
+        "title": "Run \"Context to Slides v3\" module"
       }
     },
     {
@@ -135,29 +135,6 @@
       "published",
       "component"
     ],
-    "icon": "google-drive",
-    "visual": {
-      "presentation": {
-        "themes": {
-          "84e4e4df-b024-464c-bb27-30ee3b3bb460": {
-            "themeColors": {
-              "primaryColor": "#246db5",
-              "secondaryColor": "#5cadff",
-              "backgroundColor": "#ffffff",
-              "textColor": "#1a1a1a",
-              "primaryTextColor": "#ffffff"
-            },
-            "template": "basic",
-            "splashScreen": {
-              "storedData": {
-                "handle": "/images/app/generic-flow.jpg",
-                "mimeType": "image/jpeg"
-              }
-            }
-          }
-        },
-        "theme": "84e4e4df-b024-464c-bb27-30ee3b3bb460"
-      }
-    }
+    "icon": "google-drive"
   }
 }
