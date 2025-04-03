@@ -199,12 +199,7 @@ export class Entity extends LitElement {
       });
 
     for (const entity of depthOrderedEntities) {
-      entity.selectInsideOf(
-        bounds,
-        padding,
-        isAdditiveSelection,
-        isToggleSelection
-      );
+      entity.selectAt(bounds, padding, isAdditiveSelection, isToggleSelection);
 
       if (entity.selected && !isAdditiveSelection && !isToggleSelection) {
         return;

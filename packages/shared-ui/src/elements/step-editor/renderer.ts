@@ -31,6 +31,7 @@ import {
   MutableGraphStore,
   NodeDescriptor,
   NodeIdentifier,
+  NodeValue,
 } from "@google-labs/breadboard";
 import { MAIN_BOARD_ID } from "../../constants/constants";
 import {
@@ -72,6 +73,7 @@ import { collectIds } from "./utils/collect-ids";
 import { EditorControls } from "./editor-controls";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { DATA_TYPE, MOVE_GRAPH_ID } from "./constants";
+import { AssetMetadata } from "@breadboard-ai/types";
 
 @customElement("bb-renderer")
 export class Renderer extends LitElement {
@@ -507,7 +509,10 @@ export class Renderer extends LitElement {
       // If the user has clicked on an entity, change the behavior to a click.
       const nearestEntity =
         top instanceof Entity ? top : rest.find((el) => el instanceof Entity);
-      if (nearestEntity) {
+      if (
+        nearestEntity &&
+        (!nearestEntity.selected || this.#isToggleSelection)
+      ) {
         this.#clickRect = DOMRect.fromRect(this.#dragRect);
         this.#clickRect.x -= 5;
         this.#clickRect.y -= 5;
@@ -726,6 +731,8 @@ export class Renderer extends LitElement {
       this.graph &&
       this.camera
     ) {
+      const graphUrl = new URL(this.graph.raw().url ?? window.location.href);
+
       // Main graph.
       let mainGraph = this.#graphs.get(MAIN_BOARD_ID);
       if (!mainGraph) {
@@ -741,9 +748,11 @@ export class Renderer extends LitElement {
         });
       }
 
+      mainGraph.url = graphUrl;
       mainGraph.boundsLabel = this.graph.raw().title ?? "Untitled";
       mainGraph.nodes = this.graph.nodes();
       mainGraph.edges = this.graph.edges();
+      mainGraph.assets = this.graph.assets();
       mainGraph.allowEdgeAttachmentMove = this.allowEdgeAttachmentMove;
       mainGraph.resetTransform();
 
@@ -759,6 +768,7 @@ export class Renderer extends LitElement {
           this.#graphs.set(id, subGraph);
         }
 
+        subGraph.url = graphUrl;
         subGraph.boundsLabel = graph.raw().title ?? "Custom Tool";
         subGraph.nodes = graph.nodes();
         subGraph.edges = graph.edges();
@@ -1103,6 +1113,33 @@ export class Renderer extends LitElement {
           type: "changemetadata",
           graphId: editGraphId,
           id: nodeId,
+          metadata,
+        });
+      }
+
+      for (const assetPath of graphSelection.assets) {
+        // Find the InspectableNode and the GraphNode entity and create the
+        // updated metadata from the two.
+        const graphAsset = graph.assets.get(assetPath);
+        const graphAssetEntity = graph.entities.get(assetPath);
+        if (!graphAsset || !graphAssetEntity) {
+          continue;
+        }
+
+        const visual = (graphAsset.visual ?? {}) as Record<string, NodeValue>;
+        visual.x = toGridSize(graph.transform.e + graphAssetEntity.transform.e);
+        visual.y = toGridSize(graph.transform.f + graphAssetEntity.transform.f);
+
+        const metadata: AssetMetadata = {
+          title: graphAsset.title,
+          type: graphAsset.type,
+          description: graphAsset.description,
+          visual,
+        };
+
+        edits.push({
+          type: "changeassetmetadata",
+          path: assetPath,
           metadata,
         });
       }

@@ -22,6 +22,7 @@ import {
   InspectableRun,
 } from "@google-labs/breadboard";
 import {
+  AssetPath,
   CommentNode,
   GraphIdentifier,
   GraphMetadata,
@@ -440,6 +441,7 @@ export type ReferenceIdentifier =
 
 export interface GraphSelectionState {
   nodes: Set<NodeIdentifier>;
+  assets: Set<AssetPath>;
   comments: Set<string>;
   edges: Set<string>;
   references: Set<ReferenceIdentifier>;

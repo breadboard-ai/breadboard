@@ -94,10 +94,6 @@ export class GraphEdge extends Box {
 
       svg > * {
         pointer-events: auto;
-      }
-
-      #edge > *,
-      #point-selectors > * {
         cursor: pointer;
       }
 
@@ -105,7 +101,6 @@ export class GraphEdge extends Box {
         position: absolute;
         top: -8px;
         left: -8px;
-        pointer-events: auto;
         z-index: 4;
       }
     `,

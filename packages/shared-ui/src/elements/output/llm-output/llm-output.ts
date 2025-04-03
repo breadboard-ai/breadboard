@@ -50,10 +50,10 @@ export class LLMOutput extends LitElement {
   @property()
   accessor value: LLMContent | null = null;
 
-  @property({ reflect: true })
+  @property({ reflect: true, type: Boolean })
   accessor clamped = true;
 
-  @property({ reflect: true })
+  @property({ reflect: true, type: Boolean })
   accessor lite = false;
 
   @property()
@@ -95,14 +95,18 @@ export class LLMOutput extends LitElement {
       background: var(--output-background-color, transparent);
     }
 
-    :host([clamped="true"]) {
+    :host([clamped]) {
       resize: vertical;
       overflow: auto;
       height: 200px;
       min-height: var(--bb-grid-size-6);
     }
 
-    :host([lite="true"]) {
+    :host(:not([clamped])) {
+      min-height: var(--output-min-height, 0);
+    }
+
+    :host([lite]) {
       border: 1px solid var(--output-lite-border-color, var(--bb-neutral-100));
       background: var(--output-lite-background-color, var(--bb-neutral-0));
     }
@@ -180,7 +184,6 @@ export class LLMOutput extends LitElement {
     .value img,
     .value video,
     iframe.html-view {
-      outline: 1px solid var(--bb-neutral-300);
       border-radius: var(--output-border-radius);
     }
 
@@ -209,7 +212,7 @@ export class LLMOutput extends LitElement {
     }
 
     .value * {
-      margin: var(--bb-grid-size) 0;
+      margin: 0;
     }
 
     .value h1 {
@@ -264,7 +267,7 @@ export class LLMOutput extends LitElement {
         var(--bb-font-family-mono);
     }
 
-    :host([lite="true"]) .value {
+    :host([lite]) .value {
       margin: 0;
     }
 
@@ -348,15 +351,34 @@ export class LLMOutput extends LitElement {
     this.#partDataURLs.clear();
   }
 
+  #renderableParts = 0;
   protected willUpdate(changedProperties: PropertyValues): void {
     if (changedProperties.has("value")) {
       this.#clearPartDataURLs();
+
+      this.#renderableParts = this.value?.parts.length ?? 0;
     }
+  }
+
+  protected updated(_changedProperties: PropertyValues): void {
+    this.#dispatchIfAllLoaded();
+  }
+
+  #outputLoaded() {
+    this.#renderableParts--;
+    this.#dispatchIfAllLoaded();
+  }
+
+  #dispatchIfAllLoaded() {
+    if (this.#renderableParts > 0) {
+      return;
+    }
+
+    this.dispatchEvent(new Event("outputsloaded"));
   }
 
   render() {
     const canCopy = this.showExportControls && "ClipboardItem" in window;
-
     return this.value && this.value.parts.length
       ? html` ${this.showExportControls
           ? html`<bb-export-toolbar
@@ -375,6 +397,8 @@ export class LLMOutput extends LitElement {
             } else {
               value = html`${markdown(part.text)}`;
             }
+
+            this.#outputLoaded();
           } else if (isInlineData(part)) {
             const key = idx;
             let partDataURL: Promise<string> = Promise.resolve("No source");
@@ -399,7 +423,13 @@ export class LLMOutput extends LitElement {
                 return cache(html`
                   ${canCopy && part.inlineData.mimeType === "image/png"
                     ? html` <div class="copy-image-to-clipboard">
-                        <img src="${url}" alt="LLM Image" />
+                        <img
+                          @load=${() => {
+                            this.#outputLoaded();
+                          }}
+                          src="${url}"
+                          alt="LLM Image"
+                        />
                         <button
                           @click=${async () => {
                             const data = await fetch(url);
@@ -422,7 +452,13 @@ export class LLMOutput extends LitElement {
                           Copy image to clipboard
                         </button>
                       </div>`
-                    : html`<img src="${url}" alt="LLM Image" />`}
+                    : html`<img
+                        @load=${() => {
+                          this.#outputLoaded();
+                        }}
+                        src="${url}"
+                        alt="LLM Image"
+                      />`}
                 `);
               }
               if (part.inlineData.mimeType.startsWith("audio")) {
@@ -451,6 +487,7 @@ export class LLMOutput extends LitElement {
                         ? getGlobalColor("--bb-generative-600")
                         : getGlobalColor("--bb-ui-600");
 
+                    this.#outputLoaded();
                     return cache(
                       html`<div class="play-audio-container">
                         <bb-audio-handler
@@ -468,6 +505,7 @@ export class LLMOutput extends LitElement {
                 return cache(html`${until(audioHandler)}`);
               }
               if (part.inlineData.mimeType.startsWith("text/html")) {
+                this.#outputLoaded();
                 return cache(
                   html`<iframe
                     srcdoc="${part.inlineData.data}"
@@ -477,7 +515,15 @@ export class LLMOutput extends LitElement {
                 );
               }
               if (part.inlineData.mimeType.startsWith("video")) {
-                return cache(html`<video src="${url}" controls />`);
+                return cache(
+                  html`<video
+                    @load=${() => {
+                      this.#outputLoaded();
+                    }}
+                    src="${url}"
+                    controls
+                  />`
+                );
               }
               if (part.inlineData.mimeType.startsWith("text")) {
                 return cache(
@@ -489,6 +535,7 @@ export class LLMOutput extends LitElement {
                 const pdfHandler = fetch(url)
                   .then((r) => r.arrayBuffer())
                   .then((pdfData) => {
+                    this.#outputLoaded();
                     return cache(
                       html`<bb-pdf-viewer
                         .showControls=${true}
@@ -505,10 +552,12 @@ export class LLMOutput extends LitElement {
             isFunctionCallCapabilityPart(part) ||
             isFunctionResponseCapabilityPart(part)
           ) {
+            this.#outputLoaded();
             value = html` <bb-json-tree .json=${part}></bb-json-tree>`;
           } else if (isStoredData(part)) {
             let url = part.storedData.handle;
             if (!url) {
+              this.#outputLoaded();
               value = html`<div>Failed to retrieve stored data</div>`;
             } else {
               const { mimeType } = part.storedData;
@@ -520,21 +569,41 @@ export class LLMOutput extends LitElement {
                 return response.text();
               };
               if (mimeType.startsWith("image")) {
-                value = html`<img src="${url}" alt="LLM Image" />`;
+                value = html`<img
+                  @load=${() => {
+                    this.#outputLoaded();
+                  }}
+                  src="${url}"
+                  alt="LLM Image"
+                />`;
               }
               if (mimeType.startsWith("audio")) {
-                value = html`<audio src="${url}" controls />`;
+                value = html`<audio
+                  @loadedmetadata=${() => {
+                    this.#outputLoaded();
+                  }}
+                  src="${url}"
+                  controls
+                />`;
               }
               if (mimeType.startsWith("video")) {
-                value = html`<video src="${url}" controls />`;
+                value = html`<video
+                  @loadedmetadata=${() => {
+                    this.#outputLoaded();
+                  }}
+                  src="${url}"
+                  controls
+                />`;
               }
               if (mimeType.startsWith("text")) {
+                this.#outputLoaded();
                 value = html`<div class="plain-text">${until(getData())}</div>`;
               }
               if (part.storedData.mimeType === "application/pdf") {
                 const pdfHandler = fetch(url)
                   .then((r) => r.arrayBuffer())
                   .then((pdfData) => {
+                    this.#outputLoaded();
                     return cache(
                       html`<bb-pdf-viewer
                         .showControls=${true}
@@ -577,10 +646,12 @@ export class LLMOutput extends LitElement {
                     allowfullscreen
                   ></iframe>`;
                 }
+                this.#outputLoaded();
                 break;
               }
 
               default: {
+                this.#outputLoaded();
                 if (
                   part.fileData.mimeType.startsWith(
                     "application/vnd.google-apps"
@@ -599,8 +670,10 @@ export class LLMOutput extends LitElement {
               }
             }
           } else if (isJSONPart(part)) {
+            this.#outputLoaded();
             value = html`<bb-json-tree .json=${part.json}></bb-json-tree>`;
           } else if (isListPart(part)) {
+            this.#outputLoaded();
             value = html`${part.list
               .map((item) => {
                 const content = item.content.at(-1);

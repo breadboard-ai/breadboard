@@ -64,6 +64,7 @@ export function createEmptyHighlightState(): HighlightState {
 export function createEmptyGraphSelectionState(): GraphSelectionState {
   return {
     nodes: new Set(),
+    assets: new Set(),
     comments: new Set(),
     edges: new Set(),
     references: new Set(),
