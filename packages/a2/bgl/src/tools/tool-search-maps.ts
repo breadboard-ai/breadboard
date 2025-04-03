@@ -6,7 +6,7 @@ import secrets from "@secrets";
 import fetch from "@fetch";
 
 import { ok, err } from "./a2/utils";
-import { executeStep } from "./a2/step-executor";
+import { executeTool } from "./a2/step-executor";
 
 export { invoke as default, describe };
 
@@ -58,34 +58,12 @@ ${results.places
 }
 
 async function executeMapSearch(query: string): Promise<Outcome<string>> {
-  const api = "map_search";
-  const executing = await executeStep({
-    planStep: {
-      stepName: api,
-      modelApi: api,
-      output: "data",
-      inputParameters: ["query"],
-      isListOutput: false,
-    },
-    execution_inputs: {
-      query: { chunks: [{ mimetype: "text/plain", data: btoa(query) }] },
-    },
+  const executing = await executeTool<SearchMapResults>("map_search", {
+    query,
   });
   if (!ok(executing)) return executing;
 
-  const data = executing?.executionOutputs["data"].chunks.at(0)?.data;
-  if (!data) {
-    return err(`Invalid response from "${api}" backend`);
-  }
-  const jsonString = atob(data);
-  try {
-    const json = JSON.parse(jsonString) as SearchMapResults;
-    return formatResults(query, json);
-  } catch (e) {
-    return err(
-      `Error parsing "${api}" backend response: ${(e as Error).message}`
-    );
-  }
+  return formatResults(query, executing);
 }
 
 async function invoke({
@@ -95,30 +73,6 @@ async function invoke({
   if (!ok(results)) return results;
 
   return { results };
-
-  // const key = await secrets({ keys: ["GOOGLE_MAPS_API_KEY"] });
-  // if (!ok(key)) {
-  //   return key;
-  // }
-  // const fetching = await fetch({
-  //   url: "https://places.googleapis.com/v1/places:searchText",
-  //   method: "POST",
-  //   headers: {
-  //     "Content-Type": "application/json",
-  //     "X-Goog-Api-Key": `${key.GOOGLE_MAPS_API_KEY}`,
-  //     "X-Goog-FieldMask":
-  //       "places.id,places.displayName,places.formattedAddress,places.websiteUri,places.rating,places.userRatingCount,places.editorialSummary",
-  //   },
-  //   body: {
-  //     textQuery: query,
-  //   },
-  // });
-  // if (!ok(fetching)) {
-  //   return fetching;
-  // }
-  // return {
-  //   results: formatResults(query, fetching.response as SearchMapResults),
-  // };
 }
 
 async function describe() {
