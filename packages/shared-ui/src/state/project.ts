@@ -25,6 +25,7 @@ import {
   PortIdentifier,
   transformDataParts,
 } from "@google-labs/breadboard";
+import { isFromEmbeddedServer } from "@breadboard-ai/embedded-board-server";
 import { SignalMap } from "signal-utils/map";
 import { ReactiveOrganizer } from "./organizer";
 import {
@@ -55,7 +56,7 @@ function isTool(entry: GraphStoreEntry) {
     entry.tags?.includes("tool") &&
     !!entry.url &&
     entry?.tags.includes("quick-access") &&
-    entry.url?.startsWith("embed:std")
+    isFromEmbeddedServer(entry?.url, "std")
     // (entry.url?.includes("/@shared/") || entry.url?.startsWith("file:"))
   );
 }

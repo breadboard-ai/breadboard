@@ -95,6 +95,7 @@ import "./graph-renderer.js";
 import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
 import { NodeMetadata } from "@breadboard-ai/types";
+import { isFromEmbeddedServer } from "@breadboard-ai/embedded-board-server";
 
 const ZOOM_KEY = "bb-editor-zoom-to-highlighted-node-during-runs";
 const DATA_TYPE = "text/plain";
@@ -1590,7 +1591,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       return (
         // mainGraph.url?.includes("/@shared/") ||
         // mainGraph.url?.startsWith("file:")
-        mainGraph.url?.startsWith("embed:std")
+        isFromEmbeddedServer(mainGraph.url, "std")
       );
     }
   }

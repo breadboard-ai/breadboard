@@ -26,9 +26,13 @@ import {
 
 export { EmbeddedBoardServer, isFromEmbeddedServer };
 
-const EMBEDDED_SERVER_PREFIX = "embed:";
+const EMBEDDED_SERVER_PREFIX = "embed://";
 
-function isFromEmbeddedServer(url: URL | string, urlPrefix: string): boolean {
+function isFromEmbeddedServer(
+  url: URL | string | undefined,
+  urlPrefix: string
+): boolean {
+  if (!url) return false;
   const urlString = typeof url === "string" ? url : url.href;
   const prefix = `${EMBEDDED_SERVER_PREFIX}${urlPrefix}/`;
   return urlString.startsWith(prefix);
