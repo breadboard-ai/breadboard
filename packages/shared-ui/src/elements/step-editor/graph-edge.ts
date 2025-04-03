@@ -5,7 +5,6 @@
  */
 import { customElement, property } from "lit/decorators.js";
 import { Box } from "./box";
-import { GraphNode } from "./graph-node";
 import { css, html, HTMLTemplateResult, nothing, svg } from "lit";
 import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -16,9 +15,10 @@ import { intersects } from "./utils/rect-intersection";
 import { getGlobalColor } from "../../utils/color";
 import { EdgeAttachmentPoint } from "../../types/types";
 import { inspectableEdgeToString } from "../../utils/workspace";
-import { InspectableEdge } from "@google-labs/breadboard";
+import { InspectableAssetEdge, InspectableEdge } from "@google-labs/breadboard";
 import { GraphEdgeAttachmentMoveEvent } from "./events/events";
 import { clamp } from "./utils/clamp";
+import { Entity } from "./entity";
 
 interface Connection {
   n1: DOMPoint;
@@ -80,6 +80,10 @@ export class GraphEdge extends Box {
         z-index: 1;
       }
 
+      :host([showbounds]) #bounds {
+        outline: 2px solid blue;
+      }
+
       :host([selected]) {
         z-index: 2;
       }
@@ -116,17 +120,28 @@ export class GraphEdge extends Box {
   accessor to: EdgeAttachmentPoint = "Auto";
 
   constructor(
-    public readonly node1: GraphNode,
-    public readonly node2: GraphNode,
-    public readonly edge: InspectableEdge
+    public readonly node1: Entity,
+    public readonly node2: Entity,
+    public readonly edge: InspectableEdge | InspectableAssetEdge,
+    public readonly edgeType: "node" | "asset"
   ) {
     super();
 
     this.cullable = true;
   }
 
+  #isInspectableEdge(
+    edge: InspectableEdge | InspectableAssetEdge
+  ): edge is InspectableEdge {
+    return `raw` in (edge as InspectableEdge);
+  }
+
   get edgeId() {
-    return inspectableEdgeToString(this.edge);
+    if (this.#isInspectableEdge(this.edge)) {
+      return inspectableEdgeToString(this.edge);
+    }
+
+    return this.edge.assetPath;
   }
 
   set edgeId(_edgeId: string) {
@@ -139,16 +154,16 @@ export class GraphEdge extends Box {
       this.node2.transform.f - EDGE_CLEARANCE
     );
     const bottom = Math.max(
-      this.node1.transform.f + this.node1.bounds.height + EDGE_CLEARANCE * 2,
-      this.node2.transform.f + this.node2.bounds.height + EDGE_CLEARANCE * 2
+      this.node1.transform.f + this.node1.bounds.height + EDGE_CLEARANCE,
+      this.node2.transform.f + this.node2.bounds.height + EDGE_CLEARANCE
     );
     const left = Math.min(
-      this.node1.transform.e,
+      this.node1.transform.e - EDGE_CLEARANCE,
       this.node2.transform.e - EDGE_CLEARANCE
     );
     const right = Math.max(
-      this.node1.transform.e + this.node1.bounds.width + EDGE_CLEARANCE * 2,
-      this.node2.transform.e + this.node2.bounds.width + EDGE_CLEARANCE * 2
+      this.node1.transform.e + this.node1.bounds.width + EDGE_CLEARANCE,
+      this.node2.transform.e + this.node2.bounds.width + EDGE_CLEARANCE
     );
 
     this.transform.e = left;
@@ -484,6 +499,10 @@ export class GraphEdge extends Box {
       attachmentPoint = "Auto";
     }
 
+    if (!this.#isInspectableEdge(this.edge)) {
+      return;
+    }
+
     this.dispatchEvent(
       new GraphEdgeAttachmentMoveEvent(this.edge.raw(), which, attachmentPoint)
     );
@@ -609,6 +628,11 @@ export class GraphEdge extends Box {
         fill="#3399ff" />`}`;
     }
 
+    let dashArray = ``;
+    if (this.edgeType === "asset") {
+      dashArray = `6 7`;
+    }
+
     return html`<section
         id="container"
         class=${classMap({ bounds: this.showBounds })}
@@ -620,7 +644,7 @@ export class GraphEdge extends Box {
                xmlns="http://www.w3.org/2000/svg">
                 <path d=${steps.join(" ")}
                   stroke=${this.selected ? EDGE_SELECTED : edgeColor}
-                  stroke-width="2" fill="none" stroke-linecap="round" />
+                  stroke-width="2" fill="none" stroke-linecap="round" stroke-dasharray=${dashArray} />
 
                 <path ${ref(this.#edgeHitAreaRef)} d=${steps.join(" ")}
                   stroke="#ff00ff00"

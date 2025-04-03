@@ -405,6 +405,7 @@ export type InspectableAssetEdge = {
    * - "save" = (node -> asset), the node output is being saved into asset
    */
   readonly direction: InspectableAssetEdgeDirection;
+  readonly assetPath: AssetPath;
   readonly asset: InspectableAsset;
   readonly node: InspectableNode;
 };

@@ -9,13 +9,16 @@ import { calculateBounds } from "./utils/calculate-bounds";
 import {
   GraphIdentifier,
   InspectableAsset,
+  InspectableAssetEdge,
   InspectableEdge,
   InspectableNode,
+  Outcome,
 } from "@google-labs/breadboard";
 import { GraphNode } from "./graph-node";
 import {
   createEmptyGraphHighlightState,
   createEmptyGraphSelectionState,
+  inspectableAssetEdgeToString,
   inspectableEdgeToString,
 } from "../../utils/workspace";
 import { GraphEdge } from "./graph-edge";
@@ -94,6 +97,7 @@ export class Graph extends Box {
   #nodes: InspectableNode[] = [];
   #edges: InspectableEdge[] = [];
   #assets: Map<AssetPath, InspectableAsset> = new Map();
+  #assetEdges: Outcome<InspectableAssetEdge[]> = [];
   #lastUpdateTimes: Map<"nodes" | "assets", number> = new Map();
   #translateStart: DOMPoint | null = null;
   #dragStart: DOMPoint | null = null;
@@ -200,7 +204,7 @@ export class Graph extends Box {
           console.warn(`Edge declared for non-existent nodes ${edgeId}`);
         }
 
-        graphEdge = new GraphEdge(from, to, edge);
+        graphEdge = new GraphEdge(from, to, edge, "node");
         graphEdge.boundsLabel = edgeId;
         this.entities.set(edgeId, graphEdge);
       }
@@ -219,6 +223,10 @@ export class Graph extends Box {
         continue;
       }
 
+      if (entity.edgeType !== "node") {
+        continue;
+      }
+
       if (edges.find((edge) => inspectableEdgeToString(edge) === id)) {
         continue;
       }
@@ -228,6 +236,57 @@ export class Graph extends Box {
   }
   get edges() {
     return this.#edges;
+  }
+
+  @property()
+  set assetEdges(assetEdges: Outcome<InspectableAssetEdge[]>) {
+    this.#assetEdges = assetEdges;
+
+    if (!Array.isArray(assetEdges)) {
+      console.warn(assetEdges.$error);
+      return;
+    }
+
+    // Add new edges.
+    for (const edge of assetEdges) {
+      const edgeId = inspectableAssetEdgeToString(edge);
+      let graphEdge = this.entities.get(edgeId) as GraphEdge;
+      if (!graphEdge) {
+        const from = this.entities.get(edge.assetPath) as GraphAsset;
+        const to = this.entities.get(edge.node.descriptor.id) as GraphNode;
+        if (!from || !to) {
+          console.warn(`Edge declared for non-existent nodes ${edgeId}`);
+        }
+
+        graphEdge = new GraphEdge(from, to, edge, "asset");
+        graphEdge.boundsLabel = edgeId;
+        this.entities.set(edgeId, graphEdge);
+      }
+
+      // TODO: Update asset edge attachment points.
+    }
+
+    // Remove stale edges.
+    for (const [id, entity] of this.entities) {
+      if (!(entity instanceof GraphEdge)) {
+        continue;
+      }
+
+      if (entity.edgeType !== "asset") {
+        continue;
+      }
+
+      if (
+        assetEdges.find((edge) => inspectableAssetEdgeToString(edge) === id)
+      ) {
+        continue;
+      }
+
+      this.entities.delete(id);
+    }
+  }
+  get assetEdges() {
+    return this.#assetEdges;
   }
 
   @property()

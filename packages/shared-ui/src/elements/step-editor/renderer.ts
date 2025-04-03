@@ -72,7 +72,7 @@ import { DragConnector } from "./drag-connector";
 import { collectIds } from "./utils/collect-ids";
 import { EditorControls } from "./editor-controls";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { DATA_TYPE, MOVE_GRAPH_ID } from "./constants";
+import { DATA_TYPE, MOVE_GRAPH_ID, TOOLBAR_CLEARANCE } from "./constants";
 import { AssetMetadata } from "@breadboard-ai/types";
 
 @customElement("bb-renderer")
@@ -103,6 +103,9 @@ export class Renderer extends LitElement {
 
   @property()
   accessor showExperimentalComponents = false;
+
+  @property()
+  accessor showAssetsInGraph = false;
 
   @property()
   accessor selectionState: WorkspaceSelectionStateWithChangeId | null = null;
@@ -752,7 +755,11 @@ export class Renderer extends LitElement {
       mainGraph.boundsLabel = this.graph.raw().title ?? "Untitled";
       mainGraph.nodes = this.graph.nodes();
       mainGraph.edges = this.graph.edges();
-      mainGraph.assets = this.graph.assets();
+      if (this.showAssetsInGraph) {
+        mainGraph.assets = this.graph.assets();
+        mainGraph.assetEdges = this.graph.assetEdges();
+      }
+
       mainGraph.allowEdgeAttachmentMove = this.allowEdgeAttachmentMove;
       mainGraph.resetTransform();
 

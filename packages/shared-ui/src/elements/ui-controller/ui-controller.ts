@@ -319,6 +319,12 @@ export class UI extends LitElement {
           .items.get("Use Legacy Graph Renderer")?.value
       : false;
 
+    const showAssetsInGraph = this.settings
+      ? this.settings
+          .getSection(SETTINGS_TYPE.GENERAL)
+          .items.get("Show Assets in Graph")?.value
+      : false;
+
     const graph = this.editor?.inspect("") || null;
     let capabilities: false | GraphProviderCapabilities = false;
     let extendedCapabilities: false | GraphProviderExtendedCapabilities = false;
@@ -412,6 +418,7 @@ export class UI extends LitElement {
           .graphStore=${this.graphStore}
           .graphStoreUpdateId=${this.graphStoreUpdateId}
           .selectionState=${this.selectionState}
+          .showAssetsInGraph=${showAssetsInGraph}
           .highlightState=${this.highlightState}
           .mainGraphId=${this.mainGraphId}
           .readOnly=${this.readOnly}
