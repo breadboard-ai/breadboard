@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "./dist",
+    "resolveJsonModule": true
+  },
+  "include": ["scripts/**/*"],
+  "extends": "@google-labs/tsconfig/base.json"
+}

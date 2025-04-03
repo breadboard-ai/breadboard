@@ -7,7 +7,9 @@
 import {
   blank,
   DataPartTransformer,
+  err,
   GraphProviderPreloadHandler,
+  Outcome,
   type BoardServer,
   type BoardServerCapabilities,
   type BoardServerConfiguration,
@@ -23,6 +25,7 @@ import {
   type User,
 } from "@google-labs/breadboard";
 import { FileSystemDataPartTransformer } from "./data-part-transformer";
+import { Modules } from "@breadboard-ai/types";
 
 type FileSystemWalkerEntry = FileSystemDirectoryHandle | FileSystemFileHandle;
 
@@ -47,6 +50,10 @@ export interface FileSystemDirectoryHandle {
     name: string,
     options?: { create: boolean }
   ): Promise<FileSystemFileHandle>;
+  getDirectoryHandle(
+    name: string,
+    options?: { create: boolean }
+  ): Promise<FileSystemDirectoryHandle>;
 }
 
 interface FileSystemFileHandle {
@@ -321,6 +328,49 @@ export class FileSystemBoardServer extends EventTarget implements BoardServer {
     return null;
   }
 
+  async #writeModuleCode(
+    url: URL,
+    modules: Modules | undefined
+  ): Promise<Outcome<void>> {
+    if (!modules) return;
+
+    const entries = Object.entries(modules);
+    if (entries.length === 0) return;
+
+    const { handle: dir } = this;
+
+    const name = url.pathname.split("/").at(-1)?.split(".").at(0);
+    if (!name) {
+      const msg = `Unable to extract name from "${url.href}`;
+      console.warn(msg);
+      return err(msg);
+    }
+
+    try {
+      const codeDir = await dir.getDirectoryHandle("src", { create: true });
+      const moduleDir = await codeDir.getDirectoryHandle(name, {
+        create: true,
+      });
+      for (const [moduleName, entry] of entries) {
+        const source = entry.metadata?.source;
+        if (!source) return;
+        const code = source.code;
+        const ext = source.language === "typescript" ? "ts" : "js";
+        const fileizedModuleName = `${moduleName.replace("/", "-")}.${ext}`;
+        const handle = await moduleDir.getFileHandle(fileizedModuleName, {
+          create: true,
+        });
+        const stream = await handle.createWritable();
+        await stream.write(code);
+        await stream.close();
+      }
+    } catch (e) {
+      const msg = `Unable to create module dir: ${(e as Error).message}`;
+      console.warn(msg);
+      return err(msg);
+    }
+  }
+
   async save(
     url: URL,
     descriptor: GraphDescriptor
@@ -344,6 +394,8 @@ export class FileSystemBoardServer extends EventTarget implements BoardServer {
       const stream = await handle.createWritable();
       const data = structuredClone(descriptor);
       delete data["url"];
+
+      await this.#writeModuleCode(url, data.modules);
 
       await stream.write(JSON.stringify(data, null, 2));
       await stream.close();
