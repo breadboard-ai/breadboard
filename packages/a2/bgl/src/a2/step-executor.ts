@@ -25,29 +25,32 @@ export type Content = {
   chunks: Chunk[];
 };
 
-export interface ContentMap {
+export type ContentMap = {
   [key: string]: Content;
-}
+};
 
-export interface ExecuteStepRequest {
-  planStep: {
-    stepName: string;
-    modelApi: string;
-    inputParameters: string[];
-    systemPrompt: string;
-    stepIntent?: string;
-    output?: string;
-    options?: {
-      disablePromptRewrite: boolean;
-      renderMode: string;
-    };
+export type PlanStep = {
+  stepName: string;
+  modelApi: string;
+  inputParameters: string[];
+  systemPrompt?: string;
+  stepIntent?: string;
+  output?: string;
+  isListOutput?: boolean;
+  options?: {
+    disablePromptRewrite: boolean;
+    renderMode: string;
   };
-  execution_inputs: ContentMap;
-}
+};
 
-export interface ExecuteStepResponse {
+export type ExecuteStepRequest = {
+  planStep: PlanStep;
+  execution_inputs: ContentMap;
+};
+
+export type ExecuteStepResponse = {
   executionOutputs: ContentMap;
-}
+};
 
 function maybeExtractError(e: string): string {
   try {

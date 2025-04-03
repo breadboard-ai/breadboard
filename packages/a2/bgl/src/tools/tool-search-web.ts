@@ -4,7 +4,8 @@
 
 import { ToolManager } from "./a2/tool-manager";
 import { GeminiPrompt } from "./a2/gemini-prompt";
-import { ok, toText } from "./a2/utils";
+import { ok, err, toText } from "./a2/utils";
+import { executeStep } from "./a2/step-executor";
 
 import secrets from "@secrets";
 import fetch from "@fetch";
@@ -71,6 +72,37 @@ ${item.snippet}
   })
   .join("\n\n")}
 `;
+}
+
+async function getSearchLink2(query: string): Promise<Outcome<string>> {
+  const results = await executeStep({
+    planStep: {
+      stepName: "google_search",
+      modelApi: "google_search",
+      output: "data",
+      inputParameters: ["query"],
+      isListOutput: false,
+    },
+    execution_inputs: {
+      query: {
+        chunks: [
+          {
+            mimetype: "text/plain",
+            data: btoa(query),
+          },
+        ],
+      },
+    },
+  });
+  if (!ok(results)) return results;
+
+  const data = results.executionOutputs["data"].chunks.at(0)?.data;
+  if (!data) {
+    return err(`Invalid results from search`);
+  }
+  const json = atob(data);
+  // TODO: Format search results once we have 10 links + snippets.
+  return json;
 }
 
 async function getSearchLinks(query: string): Promise<Outcome<string>> {

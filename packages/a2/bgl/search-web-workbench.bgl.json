@@ -13,13 +13,14 @@
           "collapsed": false
         },
         "title": "Make Text",
-        "logLevel": "info"
+        "logLevel": "info",
+        "userModified": false
       },
       "configuration": {
         "description": {
           "parts": [
             {
-              "text": "Write a business brief for a CEO about Google Gemini 2.0 models. Use {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-web\",\"title\":\"Search Web\"}} to do research."
+              "text": "Write a business brief for a CEO about Google Gemini 2.5 model. Use {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-web\",\"title\":\"Search Web\"}} to do research."
             }
           ],
           "role": "user"
@@ -29,7 +30,30 @@
   ],
   "edges": [],
   "metadata": {
-    "visual": {}
+    "visual": {
+      "presentation": {
+        "themes": {
+          "68610ada-424a-4426-b41d-142da7352fe3": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "68610ada-424a-4426-b41d-142da7352fe3"
+      }
+    },
+    "parameters": {}
   },
   "assets": {
     "@@thumbnail": {
