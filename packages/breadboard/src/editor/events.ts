@@ -22,7 +22,6 @@ export class ChangeEvent extends Event implements GraphChangeEvent {
 
   constructor(
     public readonly graph: GraphDescriptor,
-    public readonly version: number,
     public readonly visualOnly: boolean,
     public readonly changeType: ChangeEventType,
     public readonly affectedNodes: AffectedNode[],

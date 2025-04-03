@@ -36,10 +36,9 @@ export class GraphEditHistory implements EditHistory {
     graph: GraphDescriptor,
     checkpoint: GraphDescriptor,
     label: string,
-    version: number,
     creator?: EditHistoryCreator
   ) {
-    this.#history.pause(label, checkpoint, version, creator);
+    this.#history.pause(label, checkpoint, creator);
     this.#history.add(graph, label, creator);
     this.#controller.onHistoryChanged?.(this.#historyIncludingPending);
   }
@@ -60,7 +59,7 @@ export class GraphEditHistory implements EditHistory {
   }
 
   undo(): void {
-    this.#history.resume(this.#controller.graph(), this.#controller.version());
+    this.#history.resume(this.#controller.graph());
     const graph = this.#history.back();
     if (graph) {
       this.#controller.setGraph(graph);
@@ -69,7 +68,7 @@ export class GraphEditHistory implements EditHistory {
   }
 
   redo(): void {
-    this.#history.resume(this.#controller.graph(), this.#controller.version());
+    this.#history.resume(this.#controller.graph());
     const graph = this.#history.forth();
     if (graph) {
       this.#controller.setGraph(graph);
@@ -78,7 +77,7 @@ export class GraphEditHistory implements EditHistory {
   }
 
   jump(index: number): void {
-    this.#history.resume(this.#controller.graph(), this.#controller.version());
+    this.#history.resume(this.#controller.graph());
     const graph = this.#history.jump(index);
     if (graph) {
       this.#controller.setGraph(graph);
@@ -113,7 +112,6 @@ export class EditHistoryManager {
   @signal
   accessor pending: EditHistoryEntry | undefined;
   pauseLabel: string | null = null;
-  #version: number = 0;
 
   current(): GraphDescriptor | null {
     const entry = this.history[this.#index];
@@ -183,14 +181,9 @@ export class EditHistoryManager {
     return this.pauseLabel !== null;
   }
 
-  pause(
-    label: string,
-    graph: GraphDescriptor,
-    version: number,
-    creator?: EditHistoryCreator
-  ) {
+  pause(label: string, graph: GraphDescriptor, creator?: EditHistoryCreator) {
     if (this.pauseLabel !== label) {
-      this.resume(graph, version);
+      this.resume(graph);
     }
     this.pauseLabel = label;
     this.pending = {
@@ -199,16 +192,13 @@ export class EditHistoryManager {
       timestamp: Date.now(),
       creator: creator ?? { role: "unknown" },
     };
-    this.#version = version;
   }
 
-  resume(graph: GraphDescriptor, version: number) {
+  resume(graph: GraphDescriptor) {
     if (this.pauseLabel === null) return;
     const label = this.pauseLabel;
     this.pauseLabel = null;
-    if (this.#version !== version) {
-      this.add(graph, label, this.pending?.creator);
-    }
+    this.add(graph, label, this.pending?.creator);
     this.pending = undefined;
   }
 }

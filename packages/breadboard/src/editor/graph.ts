@@ -83,7 +83,6 @@ const operations = new Map<EditSpec["type"], EditOperation>([
 ]);
 
 export class Graph implements EditableGraph {
-  #version = 0;
   #mutable: MutableGraphImpl;
   #graph: GraphDescriptor;
   #eventTarget: EventTarget = new EventTarget();
@@ -99,29 +98,15 @@ export class Graph implements EditableGraph {
       this.#graph = graph;
     }
     this.#mutable = mutable;
-    this.#version = options.version || 0;
     this.#history = new GraphEditHistory({
       graph: () => {
         return this.raw();
       },
-      version: () => {
-        return this.#version;
-      },
       setGraph: (graph) => {
         this.#graph = graph;
-        this.#version++;
         this.#mutable.rebuild(graph);
         this.#eventTarget.dispatchEvent(
-          new ChangeEvent(
-            this.raw(),
-            this.#version,
-            false,
-            "history",
-            [],
-            [],
-            [],
-            null
-          )
+          new ChangeEvent(this.raw(), false, "history", [], [], [], null)
         );
       },
       onHistoryChanged: options.onHistoryChanged,
@@ -147,7 +132,6 @@ export class Graph implements EditableGraph {
     affectedGraphs: GraphIdentifier[],
     label: string
   ) {
-    this.#version++;
     this.#mutable.update(
       this.#graph,
       visualOnly,
@@ -157,7 +141,6 @@ export class Graph implements EditableGraph {
     this.#eventTarget.dispatchEvent(
       new ChangeEvent(
         this.#graph,
-        this.#version,
         visualOnly,
         "edit",
         affectedNodes,
@@ -189,10 +172,6 @@ export class Graph implements EditableGraph {
 
   addEventListener(eventName: string, listener: EventListener): void {
     this.#eventTarget.addEventListener(eventName, listener);
-  }
-
-  version() {
-    return this.#version;
   }
 
   #shouldDiscardEdit(edit: EditSpec) {
@@ -338,13 +317,7 @@ export class Graph implements EditableGraph {
       return { success: true, log };
     }
 
-    this.#history.addEdit(
-      this.raw(),
-      checkpoint,
-      label,
-      this.#version,
-      creator
-    );
+    this.#history.addEdit(this.raw(), checkpoint, label, creator);
 
     !dryRun &&
       this.#updateGraph(
