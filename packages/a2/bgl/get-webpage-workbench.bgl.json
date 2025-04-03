@@ -21,7 +21,7 @@
         "description": {
           "parts": [
             {
-              "text": "Given the documentation URL, please help me understand how to set up the connection server.\n\nDocumentation URL:\nhttps://breadboard-ai.github.io/breadboard/docs/guides/breadboard-from-scratch/\n\nUse {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:get-webpage\",\"title\":\"Get Webpage\"}}  tool to do the research."
+              "text": "Given the documentation URL, please help me understand how to set up the connection server.\n\nDocumentation URL:\nhttps://breadboard-ai.github.io/breadboard/docs/guides/breadboard-from-scratch/\n\nUse {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:get-webpage\",\"title\":\"Get Webpage\"}}  tool to do the research. Just give me the exact steps."
             }
           ],
           "role": "user"

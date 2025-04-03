@@ -2,9 +2,6 @@
  * @fileoverview The guts of the Search Maps tool.
  */
 
-import secrets from "@secrets";
-import fetch from "@fetch";
-
 import { ok, err } from "./a2/utils";
 import { executeTool } from "./a2/step-executor";
 
@@ -57,20 +54,15 @@ ${results.places
 `;
 }
 
-async function executeMapSearch(query: string): Promise<Outcome<string>> {
+async function invoke({
+  query,
+}: SearchMapsInputs): Promise<Outcome<SearchMapsOutputs>> {
   const executing = await executeTool<SearchMapResults>("map_search", {
     query,
   });
   if (!ok(executing)) return executing;
 
-  return formatResults(query, executing);
-}
-
-async function invoke({
-  query,
-}: SearchMapsInputs): Promise<Outcome<SearchMapsOutputs>> {
-  const results = await executeMapSearch(query);
-  if (!ok(results)) return results;
+  const results = formatResults(query, executing);
 
   return { results };
 }
