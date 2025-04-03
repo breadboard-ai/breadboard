@@ -21,7 +21,6 @@
       ],
       "files": [
         "src/**/*.ts",
-        "bgl/**/*.bgl.json",
         "tsconfig.json",
         "../../core/tsconfig/base.json"
       ]
