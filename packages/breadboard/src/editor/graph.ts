@@ -121,7 +121,12 @@ export class Graph implements EditableGraph {
         );
       }
     } else {
-      this.#history.add(this.raw(), "Clean slate", options.creator);
+      this.#history.add(
+        this.raw(),
+        "Clean slate",
+        options.creator ?? { role: "unknown" },
+        Date.now()
+      );
     }
   }
 
@@ -317,7 +322,7 @@ export class Graph implements EditableGraph {
       return { success: true, log };
     }
 
-    this.#history.addEdit(this.raw(), label, creator);
+    this.#history.add(this.raw(), label, creator, Date.now());
 
     !dryRun &&
       this.#updateGraph(
