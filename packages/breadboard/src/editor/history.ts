@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor } from "../types.js";
-import {
+import type { GraphDescriptor } from "../types.js";
+import type {
   EditHistory,
   EditHistoryController,
   EditHistoryCreator,
@@ -15,8 +15,9 @@ import { SignalArray } from "signal-utils/array";
 import { signal } from "signal-utils";
 
 export class GraphEditHistory implements EditHistory {
-  #controller: EditHistoryController;
-  #history: EditHistoryManager = new EditHistoryManager();
+  readonly #controller: EditHistoryController;
+  readonly #entries = new SignalArray<EditHistoryEntry>();
+  @signal accessor #index = 0;
 
   constructor(controller: EditHistoryController) {
     this.#controller = controller;
@@ -27,133 +28,70 @@ export class GraphEditHistory implements EditHistory {
     label: string,
     creator: EditHistoryCreator,
     timestamp: number
-  ) {
-    this.#history.add(graph, label, creator, timestamp);
-    this.#controller.onHistoryChanged?.(this.#historyIncludingPending);
-  }
-
-  revertTo(index: number) {
-    const revision = this.#history.revertTo(index);
-    this.#controller.setGraph(revision.graph);
-    this.#controller.onHistoryChanged?.(this.#historyIncludingPending);
-    return revision;
-  }
-
-  canUndo(): boolean {
-    return this.#history.canGoBack();
-  }
-
-  canRedo(): boolean {
-    return this.#history.canGoForth();
-  }
-
-  undo(): void {
-    const graph = this.#history.back();
-    if (graph) {
-      this.#controller.setGraph(graph);
-    }
-    this.#controller.onHistoryChanged?.(this.#historyIncludingPending);
-  }
-
-  redo(): void {
-    const graph = this.#history.forth();
-    if (graph) {
-      this.#controller.setGraph(graph);
-    }
-    this.#controller.onHistoryChanged?.(this.#historyIncludingPending);
-  }
-
-  jump(index: number): void {
-    const graph = this.#history.jump(index);
-    if (graph) {
-      this.#controller.setGraph(graph);
-    }
-    this.#controller.onHistoryChanged?.(this.#historyIncludingPending);
-  }
-
-  entries(): EditHistoryEntry[] {
-    return this.#history.history;
-  }
-
-  index(): number {
-    return this.#history.index();
-  }
-
-  get pending() {
-    return this.#history.pending;
-  }
-
-  get #historyIncludingPending() {
-    const { pending, history } = this.#history;
-    return pending
-      ? [...history.slice(0, this.#history.index() + 1), pending]
-      : history.slice();
-  }
-}
-
-export class EditHistoryManager {
-  readonly history = new SignalArray<EditHistoryEntry>();
-  @signal
-  accessor #index = 0;
-  @signal
-  accessor pending: EditHistoryEntry | undefined;
-
-  current(): GraphDescriptor | null {
-    const entry = this.history[this.#index];
-    if (!entry) return null;
-    return structuredClone(entry.graph);
-  }
-
-  index() {
-    return this.#index;
-  }
-
-  revertTo(index: number) {
-    this.history.splice(index + 1);
-    this.#index = index;
-    this.pending = undefined;
-    return this.history[index];
-  }
-
-  add(
-    graph: GraphDescriptor,
-    label: string,
-    creator: EditHistoryCreator,
-    timestamp: number
-  ) {
-    // Chop off the history at #index.
-    this.history.splice(this.#index + 1);
-    // Insert new entry.
-    this.history.push({
+  ): void {
+    this.#entries.splice(this.#index + 1);
+    this.#entries.push({
       graph: structuredClone(graph),
       label,
       timestamp,
       creator,
     });
-    // Point #index the new entry.
-    this.#index = this.history.length - 1;
+    this.#index = this.#entries.length - 1;
+    this.#controller.onHistoryChanged?.([...this.#entries]);
   }
 
-  canGoBack(): boolean {
+  revertTo(newIndex: number): EditHistoryEntry {
+    this.#entries.splice(newIndex + 1);
+    this.#index = newIndex;
+    const revision = this.#entries[newIndex];
+    this.#controller.setGraph(revision.graph);
+    this.#controller.onHistoryChanged?.([...this.#entries]);
+    return revision;
+  }
+
+  canUndo(): boolean {
     return this.#index > 0;
   }
 
-  canGoForth(): boolean {
-    return this.#index < this.history.length - 1;
+  canRedo(): boolean {
+    return this.#index < this.#entries.length - 1;
   }
 
-  back(): GraphDescriptor | null {
+  undo(): GraphDescriptor | null {
     return this.jump(this.#index - 1);
   }
 
-  forth(): GraphDescriptor | null {
+  redo(): GraphDescriptor | null {
     return this.jump(this.#index + 1);
   }
 
-  jump(newIndex: number) {
-    if (newIndex >= 0 && newIndex < this.history.length) {
+  jump(newIndex: number): GraphDescriptor | null {
+    if (newIndex >= 0 && newIndex < this.#entries.length) {
       this.#index = newIndex;
     }
-    return this.current();
+    const entry = this.#entries[this.#index];
+    const graph = entry ? structuredClone(entry.graph) : null;
+    if (graph) {
+      this.#controller.setGraph(graph);
+    }
+    this.#controller.onHistoryChanged?.([...this.#entries]);
+    return graph;
+  }
+
+  entries(): EditHistoryEntry[] {
+    return this.#entries;
+  }
+
+  index(): number {
+    return this.#index;
+  }
+
+  current(): GraphDescriptor | null {
+    return this.#entries[this.#index]?.graph ?? null;
+  }
+
+  get pending(): EditHistoryEntry | undefined {
+    // TODO(aomarks) Add back (or refactor) when we are doing edit coalescing.
+    return undefined;
   }
 }
