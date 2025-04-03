@@ -240,6 +240,10 @@ export class Select extends EventTarget {
       for (const references of selectionState.references) {
         this.#addToGraphsCollection(tab, id, "references", references);
       }
+
+      for (const references of selectionState.assets) {
+        this.#addToGraphsCollection(tab, id, "assets", references);
+      }
     }
 
     for (const id of selections.modules) {
@@ -316,6 +320,10 @@ export class Select extends EventTarget {
 
       for (const comment of graph.metadata()?.comments ?? []) {
         selections.comments.add(comment.id);
+      }
+
+      for (const asset of (graph.assets() ?? new Map()).keys()) {
+        selections.comments.add(asset);
       }
 
       return selections;

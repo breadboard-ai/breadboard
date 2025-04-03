@@ -7,6 +7,7 @@
 import {
   Edge,
   GraphIdentifier,
+  InspectableAssetEdge,
   InspectableEdge,
   InspectableGraph,
   NodeIdentifier,
@@ -28,6 +29,12 @@ export function edgeToString(edge: Edge): string {
 
 export function inspectableEdgeToString(edge: InspectableEdge): string {
   return edgeToString(edge.raw());
+}
+
+export function inspectableAssetEdgeToString(
+  edge: InspectableAssetEdge
+): string {
+  return `${edge.assetPath}->${edge.node.descriptor.id}:${edge.direction}`;
 }
 
 export function createNodeId(): NodeIdentifier {
@@ -64,6 +71,7 @@ export function createEmptyHighlightState(): HighlightState {
 export function createEmptyGraphSelectionState(): GraphSelectionState {
   return {
     nodes: new Set(),
+    assets: new Set(),
     comments: new Set(),
     edges: new Set(),
     references: new Set(),

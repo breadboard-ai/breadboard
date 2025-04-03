@@ -1,0 +1,523 @@
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+import * as StringsHelper from "../../strings/helper.js";
+const Strings = StringsHelper.forSection("Editor");
+
+import {
+  html,
+  css,
+  PropertyValues,
+  nothing,
+  HTMLTemplateResult,
+  svg,
+} from "lit";
+import { customElement, property } from "lit/decorators.js";
+import { styleMap } from "lit/directives/style-map.js";
+import { classMap } from "lit/directives/class-map.js";
+import { toCSSMatrix } from "./utils/to-css-matrix";
+import { Box } from "./box";
+import {
+  NodeBoundsUpdateRequestEvent,
+  NodeSelectEvent,
+  SelectionMoveEvent,
+  SelectionTranslateEvent,
+} from "./events/events";
+import { createRef, ref, Ref } from "lit/directives/ref.js";
+import { repeat } from "lit/directives/repeat.js";
+import { toGridSize } from "./utils/to-grid-size";
+import { DragConnectorReceiver } from "../../types/types";
+import { DragConnectorStartEvent } from "../../events/events";
+import { getGlobalColor } from "../../utils/color.js";
+import { AssetPath } from "@breadboard-ai/types";
+import { InspectableAsset } from "@google-labs/breadboard";
+
+const EDGE_STANDARD = getGlobalColor("--bb-neutral-400");
+
+const arrowWidth = 46;
+const arrowHeight = 36;
+const arrowSize = 8;
+const rightArrow = html`${svg`
+  <svg id="right-arrow" version="1.1"
+      width="${arrowWidth}" height=${arrowHeight}
+      xmlns="http://www.w3.org/2000/svg">
+    <line x1="0"
+      y1=${arrowHeight * 0.5}
+      x2=${arrowWidth}
+      y2=${arrowHeight * 0.5}
+      stroke=${EDGE_STANDARD} stroke-width="2" stroke-linecap="round" />
+
+    <line x1=${arrowWidth}
+      y1=${arrowHeight * 0.5}
+      x2=${arrowWidth - arrowSize}
+      y2=${arrowHeight * 0.5 - arrowSize}
+      stroke=${EDGE_STANDARD} stroke-width="2" stroke-linecap="round" />
+
+    <line x1=${arrowWidth} y1=${arrowHeight * 0.5}
+    x2=${arrowWidth - arrowSize}
+    y2=${arrowHeight * 0.5 + arrowSize}
+    stroke=${EDGE_STANDARD} stroke-width="2" stroke-linecap="round" />
+  </svg>`}`;
+
+@customElement("bb-graph-asset")
+export class GraphAsset extends Box implements DragConnectorReceiver {
+  @property()
+  accessor assetTitle = "";
+
+  @property({ reflect: true })
+  accessor icon: string | null = null;
+
+  @property({ reflect: true, type: Boolean })
+  accessor updating = true;
+
+  @property({ reflect: true, type: String })
+  accessor highlightType: "user" | "model" = "model";
+
+  @property({ reflect: true, type: Boolean })
+  accessor highlighted = false;
+
+  @property()
+  accessor showDefaultAdd = false;
+
+  @property()
+  accessor asset: InspectableAsset | null = null;
+
+  @property()
+  accessor graphUrl: URL | null = null;
+
+  static styles = [
+    Box.styles,
+    css`
+      * {
+        box-sizing: border-box;
+      }
+
+      :host {
+        pointer-events: auto;
+        user-select: none;
+        font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
+          var(--bb-font-family);
+        color: var(--bb-neutral-900);
+        line-height: var(--bb-grid-size-6);
+        z-index: 3;
+        outline: none;
+      }
+
+      :host([selected]) {
+        z-index: 4;
+      }
+
+      :host {
+        --background: var(--bb-inputs-100);
+        --border: var(--bb-inputs-600);
+        --header-border: var(--bb-inputs-300);
+      }
+
+      :host([updating]) {
+        --background: var(--bb-neutral-100);
+        --border: var(--bb-neutral-600);
+        --header-border: var(--bb-neutral-300);
+      }
+
+      :host([selected]) #container {
+        outline: 2px solid var(--border);
+      }
+
+      #container {
+        width: 260px;
+        border-radius: var(--bb-grid-size-2);
+        outline: 1px solid var(--border);
+        color: var(--bb-neutral-900);
+        position: relative;
+
+        #right-arrow {
+          position: absolute;
+          top: 0px;
+          left: 100%;
+          width: 46px;
+          height: 36px;
+        }
+
+        #default-add {
+          position: absolute;
+          top: 18px;
+          left: 100%;
+          transform: translateX(48px) translateY(-50%);
+          z-index: 4;
+          border: 1px solid var(--bb-neutral-300);
+          color: var(--bb-neutral-600);
+          font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
+            var(--bb-font-family);
+          border-radius: var(--bb-grid-size-16);
+          background: var(--bb-ui-50) var(--bb-icon-library-add) 8px center /
+            20px 20px no-repeat;
+          padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-8);
+          transition: border 0.2s cubic-bezier(0, 0, 0.3, 1);
+          height: var(--bb-grid-size-7);
+          cursor: pointer;
+          white-space: nowrap;
+          pointer-events: auto;
+
+          &:hover {
+            border: 1px solid var(--bb-neutral-500);
+          }
+        }
+
+        & header {
+          display: flex;
+          align-items: center;
+          background: var(--background);
+          height: var(--bb-grid-size-9);
+          width: 100%;
+          padding: 0 var(--bb-grid-size-3);
+          border-radius: var(--bb-grid-size-2) var(--bb-grid-size-2) 0 0;
+          border-bottom: 1px solid var(--header-border);
+          font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
+            var(--bb-font-family);
+          cursor: pointer;
+          position: relative;
+
+          & span {
+            flex: 1 1 auto;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+          }
+
+          &::before {
+            flex: 0 0 auto;
+            content: "";
+            width: 20px;
+            height: 20px;
+            background: var(--bb-icon-alternate-email) center center / 20px 20px
+              no-repeat;
+            margin-right: var(--bb-grid-size-2);
+          }
+
+          & > * {
+            pointer-events: none;
+          }
+
+          & #connection-trigger {
+            position: absolute;
+            display: block;
+            pointer-events: auto;
+            width: 10px;
+            height: 10px;
+            border: none;
+            border-radius: 50%;
+            background: var(--border);
+            right: -5px;
+            top: 18px;
+            translate: 0 -50%;
+            font-size: 0;
+            padding: 0;
+
+            &:not([disabled]) {
+              cursor: pointer;
+            }
+          }
+        }
+
+        & #content {
+          position: relative;
+          background: var(--bb-neutral-0);
+          padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
+          font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
+            var(--bb-font-family);
+          color: var(--bb-neutral-900);
+          line-height: var(--bb-grid-size-6);
+          border-radius: 0 0 var(--bb-grid-size-2) var(--bb-grid-size-2);
+
+          & .loading {
+            margin: 0;
+          }
+
+          bb-llm-output {
+            --output-lite-border-color: transparent;
+            --output-border-radius: var(--bb-grid-size);
+          }
+        }
+      }
+
+      :host([updating]) #container #content bb-llm-output {
+        clip-path: rect(0 0 0 0);
+        height: 0px;
+      }
+    `,
+  ];
+
+  #translateStart: DOMPoint | null = null;
+  #dragStart: DOMPoint | null = null;
+  #containerRef: Ref<HTMLElement> = createRef();
+  #lastBounds: DOMRect | null = null;
+
+  constructor(public readonly assetPath: AssetPath) {
+    super();
+
+    this.tabIndex = 0;
+  }
+
+  calculateLocalBounds(): DOMRect {
+    if (!this.#containerRef.value) {
+      return new DOMRect();
+    }
+
+    if (this.hidden && this.#lastBounds) {
+      return this.#lastBounds;
+    }
+
+    this.#lastBounds = new DOMRect(
+      0,
+      0,
+      this.#containerRef.value.offsetWidth,
+      this.#containerRef.value.offsetHeight
+    );
+
+    return this.#lastBounds;
+  }
+
+  protected updated(changedProperties: PropertyValues): void {
+    if (
+      changedProperties.has("nodeTitle") ||
+      changedProperties.has("updating")
+    ) {
+      requestAnimationFrame(() => {
+        this.cullable = true;
+        this.dispatchEvent(new NodeBoundsUpdateRequestEvent());
+      });
+    }
+  }
+
+  adjustTranslation(x: number, y: number) {
+    super.adjustTranslation(x, y);
+
+    // If the translation is adjusted from the outside by the graph we update
+    // the translation start so that our drag behaviors are orientated from the
+    // correct location.
+    if (this.#translateStart) {
+      this.#translateStart.x += x;
+      this.#translateStart.y += y;
+    }
+  }
+
+  isOnDragConnectorTarget(): boolean {
+    return true;
+  }
+
+  highlight(): void {
+    this.highlighted = true;
+  }
+
+  removeHighlight(): void {
+    this.highlighted = false;
+  }
+
+  protected renderSelf() {
+    const styles: Record<string, string> = {
+      transform: toCSSMatrix(this.worldTransform),
+    };
+
+    let defaultAdd: HTMLTemplateResult | symbol = nothing;
+    if (this.showDefaultAdd) {
+      defaultAdd = html` ${rightArrow}
+        <button
+          id="default-add"
+          @click=${async (evt: PointerEvent) => {
+            evt.stopImmediatePropagation();
+
+            if (!this.worldBounds || !(evt.target instanceof HTMLElement)) {
+              return;
+            }
+
+            this.showDefaultAdd = false;
+
+            const target = evt.target.getBoundingClientRect();
+            this.dispatchEvent(
+              new NodeSelectEvent(target.x + 16, target.y, this.assetPath)
+            );
+          }}
+        >
+          ${Strings.from("LABEL_ADD_ITEM")}
+        </button>`;
+    }
+
+    return html`<section
+        id="container"
+        class=${classMap({ bounds: this.showBounds })}
+        style=${styleMap(styles)}
+        ${ref(this.#containerRef)}
+      >
+        <header
+          @click=${(evt: Event) => {
+            evt.stopImmediatePropagation();
+          }}
+          @dblclick=${() => {
+            // this.dispatchEvent(
+            //   new NodeConfigurationRequestEvent(
+            //     this.assetPath,
+            //     this.worldBounds
+            //   )
+            // );
+          }}
+          @pointerdown=${(evt: PointerEvent) => {
+            if (!(evt.target instanceof HTMLElement)) {
+              return;
+            }
+
+            evt.target.setPointerCapture(evt.pointerId);
+            this.#dragStart = new DOMPoint();
+            this.#dragStart.x = evt.clientX;
+            this.#dragStart.y = evt.clientY;
+
+            this.#translateStart = new DOMPoint(
+              this.transform.e,
+              this.transform.f
+            );
+          }}
+          @pointermove=${(evt: PointerEvent) => {
+            if (!this.#translateStart || !this.#dragStart) {
+              return;
+            }
+
+            if (!(evt.target instanceof HTMLElement)) {
+              return;
+            }
+
+            const dragPosition = new DOMPoint(evt.clientX, evt.clientY);
+            const deltaX =
+              (dragPosition.x - this.#dragStart.x) / this.worldTransform.a;
+            const deltaY =
+              (dragPosition.y - this.#dragStart.y) / this.worldTransform.a;
+
+            const xTranslation = toGridSize(deltaX);
+            const yTranslation = toGridSize(deltaY);
+
+            if (evt.shiftKey) {
+              this.dispatchEvent(
+                new SelectionMoveEvent(
+                  evt.clientX,
+                  evt.clientY,
+                  xTranslation,
+                  yTranslation,
+                  /* hasSettled */ false
+                )
+              );
+              return;
+            }
+
+            this.dispatchEvent(
+              new SelectionTranslateEvent(
+                xTranslation,
+                yTranslation,
+                /* hasSettled */ false
+              )
+            );
+          }}
+          @pointerup=${(evt: PointerEvent) => {
+            if (!this.#translateStart || !this.#dragStart) {
+              return;
+            }
+
+            if (!(evt.target instanceof HTMLElement)) {
+              return;
+            }
+
+            evt.target.releasePointerCapture(evt.pointerId);
+
+            const dragPosition = new DOMPoint(evt.clientX, evt.clientY);
+            const deltaX =
+              (dragPosition.x - this.#dragStart.x) / this.worldTransform.a;
+            const deltaY =
+              (dragPosition.y - this.#dragStart.y) / this.worldTransform.a;
+
+            const xTranslation = toGridSize(deltaX);
+            const yTranslation = toGridSize(deltaY);
+
+            this.#dragStart = null;
+            this.#translateStart = null;
+
+            if (evt.shiftKey) {
+              this.dispatchEvent(
+                new SelectionMoveEvent(
+                  evt.clientX,
+                  evt.clientY,
+                  xTranslation,
+                  yTranslation,
+                  /* hasSettled */ true
+                )
+              );
+              return;
+            }
+
+            this.dispatchEvent(
+              new SelectionTranslateEvent(
+                xTranslation,
+                yTranslation,
+                /* hasSettled */ true
+              )
+            );
+          }}
+        >
+          <span>${this.assetTitle}</span>
+          ${defaultAdd}
+          <button
+            id="connection-trigger"
+            ?disabled=${this.updating}
+            @pointerdown=${(evt: PointerEvent) => {
+              evt.stopImmediatePropagation();
+
+              this.showDefaultAdd = false;
+
+              // This event is picked up by the graph itself to ensure that it
+              // is tagged with the graph's ID (and thereby preventing edges
+              // across graphs).
+              this.dispatchEvent(
+                new DragConnectorStartEvent(
+                  new DOMPoint(evt.clientX, evt.clientY)
+                )
+              );
+            }}
+          >
+            Connect to..
+          </button>
+        </header>
+        <div
+          id="content"
+          @pointerdown=${(evt: Event) => {
+            evt.stopImmediatePropagation();
+          }}
+        >
+          ${this.updating
+            ? html`<p class="loading">Loading asset details...</p>`
+            : nothing}
+          <bb-llm-output
+            @outputsloaded=${() => {
+              this.updating = false;
+            }}
+            .value=${this.asset?.data.at(-1) ?? null}
+            .clamped=${false}
+            .lite=${true}
+            .showModeToggle=${false}
+            .showEntrySelector=${false}
+            .showExportControls=${false}
+            .graphUrl=${this.graphUrl}
+          ></bb-llm-output>
+        </div>
+      </section>
+
+      ${this.renderBounds()}`;
+  }
+
+  render() {
+    return [
+      this.renderSelf(),
+      html`${repeat(this.entities.values(), (entity) => {
+        entity.showBounds = this.showBounds;
+        return html`${entity}`;
+      })}`,
+    ];
+  }
+}

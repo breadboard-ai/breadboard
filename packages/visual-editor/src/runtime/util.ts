@@ -73,6 +73,7 @@ export function createEmptyWorkspaceSelectionState(): WorkspaceSelectionState {
 export function createEmptyGraphSelectionState(): GraphSelectionState {
   return {
     nodes: new Set(),
+    assets: new Set(),
     comments: new Set(),
     edges: new Set(),
     references: new Set(),

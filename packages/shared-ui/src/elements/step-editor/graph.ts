@@ -8,13 +8,17 @@ import { Box } from "./box";
 import { calculateBounds } from "./utils/calculate-bounds";
 import {
   GraphIdentifier,
+  InspectableAsset,
+  InspectableAssetEdge,
   InspectableEdge,
   InspectableNode,
+  Outcome,
 } from "@google-labs/breadboard";
 import { GraphNode } from "./graph-node";
 import {
   createEmptyGraphHighlightState,
   createEmptyGraphSelectionState,
+  inspectableAssetEdgeToString,
   inspectableEdgeToString,
 } from "../../utils/workspace";
 import { GraphEdge } from "./graph-edge";
@@ -35,6 +39,8 @@ import {
 import { OverflowMenuActionEvent } from "../../events/events";
 import { toGridSize } from "./utils/to-grid-size";
 import { MOVE_GRAPH_ID } from "./constants";
+import { GraphAsset } from "./graph-asset";
+import { AssetPath } from "@breadboard-ai/types";
 
 @customElement("bb-graph")
 export class Graph extends Box {
@@ -46,6 +52,9 @@ export class Graph extends Box {
 
   @property()
   accessor highlightType: "user" | "model" = "user";
+
+  @property()
+  accessor url: URL | null = null;
 
   static styles = [
     Box.styles,
@@ -87,7 +96,9 @@ export class Graph extends Box {
 
   #nodes: InspectableNode[] = [];
   #edges: InspectableEdge[] = [];
-  #lastUpdateTime = globalThis.performance.now();
+  #assets: Map<AssetPath, InspectableAsset> = new Map();
+  #assetEdges: Outcome<InspectableAssetEdge[]> = [];
+  #lastUpdateTimes: Map<"nodes" | "assets", number> = new Map();
   #translateStart: DOMPoint | null = null;
   #dragStart: DOMPoint | null = null;
 
@@ -103,7 +114,7 @@ export class Graph extends Box {
   set nodes(nodes: InspectableNode[]) {
     this.#nodes = nodes;
 
-    this.#lastUpdateTime = globalThis.performance.now();
+    this.#lastUpdateTimes.set("nodes", globalThis.performance.now());
 
     // Add new nodes.
     for (const node of this.#nodes) {
@@ -120,11 +131,11 @@ export class Graph extends Box {
       graphNode.updating = node.type().currentMetadata().updating ?? false;
       graphNode.nodeTitle = node.title();
 
-      const lastUpdateTime = this.#lastUpdateTime;
+      const lastUpdateTime = this.#lastUpdateTimes.get("nodes") ?? 0;
 
       Promise.all([node.describe(), node.type().metadata()]).then(() => {
         // Ensure the most recent values before proceeding.
-        if (lastUpdateTime !== this.#lastUpdateTime) {
+        if (lastUpdateTime !== this.#lastUpdateTimes.get("nodes")) {
           return;
         }
 
@@ -193,7 +204,7 @@ export class Graph extends Box {
           console.warn(`Edge declared for non-existent nodes ${edgeId}`);
         }
 
-        graphEdge = new GraphEdge(from, to, edge);
+        graphEdge = new GraphEdge(from, to, edge, "node");
         graphEdge.boundsLabel = edgeId;
         this.entities.set(edgeId, graphEdge);
       }
@@ -212,6 +223,10 @@ export class Graph extends Box {
         continue;
       }
 
+      if (entity.edgeType !== "node") {
+        continue;
+      }
+
       if (edges.find((edge) => inspectableEdgeToString(edge) === id)) {
         continue;
       }
@@ -221,6 +236,100 @@ export class Graph extends Box {
   }
   get edges() {
     return this.#edges;
+  }
+
+  @property()
+  set assetEdges(assetEdges: Outcome<InspectableAssetEdge[]>) {
+    this.#assetEdges = assetEdges;
+
+    if (!Array.isArray(assetEdges)) {
+      console.warn(assetEdges.$error);
+      return;
+    }
+
+    // Add new edges.
+    for (const edge of assetEdges) {
+      const edgeId = inspectableAssetEdgeToString(edge);
+      let graphEdge = this.entities.get(edgeId) as GraphEdge;
+      if (!graphEdge) {
+        const from = this.entities.get(edge.assetPath) as GraphAsset;
+        const to = this.entities.get(edge.node.descriptor.id) as GraphNode;
+        if (!from || !to) {
+          console.warn(`Edge declared for non-existent nodes ${edgeId}`);
+        }
+
+        graphEdge = new GraphEdge(from, to, edge, "asset");
+        graphEdge.boundsLabel = edgeId;
+        this.entities.set(edgeId, graphEdge);
+      }
+
+      // TODO: Update asset edge attachment points.
+    }
+
+    // Remove stale edges.
+    for (const [id, entity] of this.entities) {
+      if (!(entity instanceof GraphEdge)) {
+        continue;
+      }
+
+      if (entity.edgeType !== "asset") {
+        continue;
+      }
+
+      if (
+        assetEdges.find((edge) => inspectableAssetEdgeToString(edge) === id)
+      ) {
+        continue;
+      }
+
+      this.entities.delete(id);
+    }
+  }
+  get assetEdges() {
+    return this.#assetEdges;
+  }
+
+  @property()
+  set assets(assets: Map<AssetPath, InspectableAsset>) {
+    this.#assets = assets;
+
+    // Add new assets.
+    for (const [assetPath, asset] of this.#assets) {
+      let graphAsset = this.entities.get(assetPath) as GraphAsset;
+      if (!graphAsset) {
+        graphAsset = new GraphAsset(assetPath);
+        this.entities.set(assetPath, graphAsset);
+      }
+
+      const visual = (asset.visual ?? {}) as Record<string, number>;
+      const x = visual?.x ?? 0;
+      const y = visual?.y ?? 0;
+
+      graphAsset.assetTitle = asset.title;
+      graphAsset.asset = asset;
+      graphAsset.graphUrl = this.url;
+      graphAsset.transform.e = x;
+      graphAsset.transform.f = y;
+
+      graphAsset.showBounds = this.showBounds;
+      graphAsset.boundsLabel = asset.title;
+    }
+
+    // Remove stale assets.
+    for (const [id, entity] of this.entities) {
+      if (!(entity instanceof GraphAsset)) {
+        continue;
+      }
+
+      if (assets.has(id)) {
+        continue;
+      }
+
+      this.entities.delete(id);
+    }
+  }
+  get assets() {
+    return this.#assets;
   }
 
   @property()
@@ -250,6 +359,15 @@ export class Graph extends Box {
         showEdgePointSelectors &&
         graphEdge.selected;
     }
+
+    for (const assetPath of this.#assets.keys()) {
+      const graphAsset = this.entities.get(assetPath) as GraphAsset;
+      if (!graphAsset) {
+        continue;
+      }
+
+      graphAsset.selected = selectionState?.assets.has(assetPath) ?? false;
+    }
   }
   get selectionState() {
     const selectionState = createEmptyGraphSelectionState();
@@ -273,6 +391,17 @@ export class Graph extends Box {
 
       if (graphEdge.selected) {
         selectionState.edges.add(id);
+      }
+    }
+
+    for (const assetPath of this.#assets.keys()) {
+      const graphAsset = this.entities.get(assetPath) as GraphAsset;
+      if (!graphAsset) {
+        continue;
+      }
+
+      if (graphAsset.selected) {
+        selectionState.assets.add(assetPath);
       }
     }
 
@@ -353,6 +482,24 @@ export class Graph extends Box {
         graphNode.baseTransform = null;
       }
     }
+
+    for (const assetPath of this.selectionState.assets) {
+      const graphAsset = this.entities.get(assetPath) as GraphAsset;
+      if (!graphAsset) {
+        continue;
+      }
+
+      if (!graphAsset.baseTransform) {
+        graphAsset.baseTransform = DOMMatrix.fromMatrix(graphAsset.transform);
+      }
+
+      graphAsset.transform.e = graphAsset.baseTransform.e + x;
+      graphAsset.transform.f = graphAsset.baseTransform.f + y;
+
+      if (hasSettled) {
+        graphAsset.baseTransform = null;
+      }
+    }
   }
 
   applyTranslationToNodes(x: number, y: number, hasSettled: boolean) {
@@ -371,6 +518,24 @@ export class Graph extends Box {
 
       if (hasSettled) {
         graphNode.baseTransform = null;
+      }
+    }
+
+    for (const assetPath of this.#assets.keys()) {
+      const graphAsset = this.entities.get(assetPath) as GraphAsset;
+      if (!graphAsset) {
+        continue;
+      }
+
+      if (!graphAsset.baseTransform) {
+        graphAsset.baseTransform = DOMMatrix.fromMatrix(graphAsset.transform);
+      }
+
+      graphAsset.transform.e = graphAsset.baseTransform.e + x;
+      graphAsset.transform.f = graphAsset.baseTransform.f + y;
+
+      if (hasSettled) {
+        graphAsset.baseTransform = null;
       }
     }
   }

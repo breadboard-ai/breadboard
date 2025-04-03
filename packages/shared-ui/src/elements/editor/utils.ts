@@ -17,6 +17,7 @@ import {
   type GraphSelectionState,
 } from "../../types/types.js";
 import { ComponentExpansionState, VisualMetadata } from "./types.js";
+import { AssetPath } from "@breadboard-ai/types";
 
 const documentStyles = getComputedStyle(document.documentElement);
 
@@ -140,6 +141,7 @@ export function emptyWorkspaceSelectionState(): WorkspaceSelectionState {
 export function emptySelectionState(): GraphSelectionState {
   return {
     nodes: new Set<NodeIdentifier>(),
+    assets: new Set<AssetPath>(),
     comments: new Set<string>(),
     edges: new Set<string>(),
     references: new Set<ReferenceIdentifier>(),

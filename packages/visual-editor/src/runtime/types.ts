@@ -22,6 +22,7 @@ import {
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { TokenVendor } from "@breadboard-ai/connection-client";
 import {
+  AssetPath,
   GraphIdentifier,
   GraphMetadata,
   ModuleIdentifier,
@@ -94,6 +95,7 @@ export type ReferenceIdentifier =
 
 export interface GraphSelectionState {
   nodes: Set<NodeIdentifier>;
+  assets: Set<AssetPath>;
   comments: Set<string>;
   edges: Set<string>;
   references: Set<ReferenceIdentifier>;

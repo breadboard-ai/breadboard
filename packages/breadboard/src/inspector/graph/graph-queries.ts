@@ -219,6 +219,7 @@ class GraphQueries {
           direction: "load",
           asset: new InspectableAssetImpl(path, asset),
           node: node,
+          assetPath: path,
         });
       });
     }
