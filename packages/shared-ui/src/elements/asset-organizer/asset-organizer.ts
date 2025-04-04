@@ -721,7 +721,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
     return metadata !== null && "subType" in (metadata as AssetMetadata);
   }
 
-  #actions = new Signal.Computed(() => {
+  readonly #actions = new Signal.Computed(() => {
     if (!this.state) return DEFAULT_ACTIONS;
     const actions = [
       ...DEFAULT_ACTIONS,
