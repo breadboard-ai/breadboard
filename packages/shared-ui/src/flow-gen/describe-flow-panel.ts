@@ -163,6 +163,7 @@ export class DescribeFlowPanel extends LitElement {
           <bb-expanding-textarea
             ${ref(this.#descriptionInput)}
             .placeholder=${Strings.from("LABEL_PLACEHOLDER_DESCRIPTION")}
+            submitButtonIcon="pen_spark"
             @change=${this.#onInputChange}
           >
           </bb-expanding-textarea>
