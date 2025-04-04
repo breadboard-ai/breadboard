@@ -106,11 +106,6 @@ export class DescribeFlowPanel extends LitElement {
         line-height: 20px;
         caret-color: var(--bb-ui-500);
 
-        &:focus {
-          border-color: #3271ea;
-          box-shadow: 0px 4px 10.1px 0px rgba(0, 0, 0, 0.1);
-        }
-
         &::part(textarea)::placeholder {
           color: var(--bb-neutral-500);
         }
