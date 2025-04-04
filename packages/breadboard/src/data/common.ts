@@ -207,7 +207,12 @@ export async function toInlineDataPart(
 ): Promise<InlineDataCapabilityPart> {
   const raw = await retrieveAsBlob(part, graphUrl);
   const mimeType = part.storedData.mimeType;
-  const data = await asBase64(raw);
+  let data;
+  if (mimeType.startsWith("text/")) {
+    data = await raw.text();
+  } else {
+    data = await asBase64(raw);
+  }
   return { inlineData: { mimeType, data } };
 }
 

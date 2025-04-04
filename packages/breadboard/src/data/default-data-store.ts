@@ -227,7 +227,12 @@ export class DefaultDataStore implements DataStore {
             const response = await fetch(handle);
             const blob = await response.blob();
             const mimeType = blob.type;
-            const data = await asBase64(blob);
+            let data;
+            if (mimeType.startsWith("text/")) {
+              data = await blob.text();
+            } else {
+              data = await asBase64(blob);
+            }
             return { handle, inlineData: { mimeType, data } };
           });
         }
