@@ -80,12 +80,23 @@ export class DescribeFlowPanel extends LitElement {
         color: inherit;
       }
 
+      #gradient-border-container {
+        flex: 1;
+        display: flex;
+        width: 100%;
+        background: linear-gradient(0deg, #fdf7f8, #f7f9fe);
+        border-radius: 100px;
+        padding: 10px;
+      }
+
       bb-expanding-textarea {
-        background: #fff;
         flex: 1;
         width: 100%;
+        background: #fff;
         color: var(--bb-neutral-900);
-        border-color: var(--bb-neutral-200);
+        border: none;
+        border-radius: 100px;
+        padding: 0.5lh 1lh;
         --submit-button-color: #3271ea;
         --min-lines: 1;
         --max-lines: 6;
@@ -160,13 +171,15 @@ export class DescribeFlowPanel extends LitElement {
     switch (this.#state.status) {
       case "initial": {
         return html`
-          <bb-expanding-textarea
-            ${ref(this.#descriptionInput)}
-            .placeholder=${Strings.from("LABEL_PLACEHOLDER_DESCRIPTION")}
-            submitButtonIcon="pen_spark"
-            @change=${this.#onInputChange}
-          >
-          </bb-expanding-textarea>
+          <div id="gradient-border-container">
+            <bb-expanding-textarea
+              ${ref(this.#descriptionInput)}
+              .placeholder=${Strings.from("LABEL_PLACEHOLDER_DESCRIPTION")}
+              submitButtonIcon="pen_spark"
+              @change=${this.#onInputChange}
+            >
+            </bb-expanding-textarea>
+          </div>
           ${this.#renderTemplateChips()}
         `;
       }
