@@ -27,17 +27,15 @@ const { invoke, describe } = createConfigurator<Configuration>({
       schema: {
         type: "object",
         properties: {
-          picker: {
-            type: "string",
+          file: {
+            type: "object",
             title: "Google Drive File",
             description: "Select Google Drive File",
             behavior: ["google-drive-file-id"],
           },
         },
       },
-      values: {
-        picker: configuration.file,
-      },
+      values: configuration,
     };
   },
   write: async ({ id, values }) => {

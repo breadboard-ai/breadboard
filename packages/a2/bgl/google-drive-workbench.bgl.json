@@ -93,7 +93,7 @@
               "json": {
                 "url": "file://bgl/google-drive.bgl.json",
                 "configuration": {
-                  "picker": {
+                  "file": {
                     "id": "1vh3G5CCASgAO6wXaQQ8DkRxXL0p3Txj7PeFHdSdA4Wc",
                     "preview": "Untitled Document",
                     "mimeType": "application/vnd.google-apps.document",

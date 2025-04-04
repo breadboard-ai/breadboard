@@ -8,6 +8,7 @@ import {
   isImageURL,
   isLLMContent,
   isLLMContentArray,
+  Schema,
 } from "@google-labs/breadboard";
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
@@ -20,6 +21,9 @@ import { until } from "lit/directives/until.js";
 export class MultiOutput extends LitElement {
   @property()
   accessor outputs: OutputValues | null = null;
+
+  @property()
+  accessor schema: Schema | null = null;
 
   @property()
   accessor message = "No outputs provided";
@@ -220,63 +224,74 @@ export class MultiOutput extends LitElement {
       return html`${this.message}`;
     }
 
-    return html`${map(Object.values(this.outputs), (outputValue) => {
+    return html`${map(Object.entries(this.outputs), ([name, outputValue]) => {
+      const schema = this.schema?.properties?.[name];
       let value: HTMLTemplateResult | symbol = nothing;
-      if (typeof outputValue === "object") {
-        if (isLLMContentArray(outputValue)) {
-          value = html`<bb-llm-output-array
-            .clamped=${false}
-            .showModeToggle=${false}
-            .showEntrySelector=${false}
-            .showExportControls=${true}
-            .values=${outputValue}
-          ></bb-llm-output-array>`;
-        } else if (isLLMContent(outputValue)) {
-          if (!outputValue.parts) {
-            // Special case for "$metadata" item.
-            // See https://github.com/breadboard-ai/breadboard/issues/1673
-            // TODO: Make this not ugly.
-            const data = (outputValue as unknown as { data: unknown }).data;
-            value = html`<bb-json-tree .json=${data}></bb-json-tree>`;
-          }
-
-          if (!outputValue.parts.length) {
-            value = html`No data provided`;
-          }
-
-          value = outputValue.parts.length
-            ? html`<bb-llm-output
-                .clamped=${false}
-                .lite=${true}
-                .showExportControls=${true}
-                .value=${outputValue}
-              ></bb-llm-output>`
-            : html`No data provided`;
-        } else if (isImageURL(outputValue)) {
-          value = html`<img src=${outputValue.image_url} />`;
-        } else {
-          value = html`<bb-json-tree .json=${outputValue}></bb-json-tree>`;
+      if (schema) {
+        // Work with well-structured data here
+        if (schema.behavior?.includes("google-drive-file-id")) {
+          const output = outputValue as { preview?: string; id: string };
+          // TODO: Make this look pretty.
+          value = html`Google Drive File: ${output.preview || output.id}`;
         }
       } else {
-        let renderableValue: HTMLTemplateResult | symbol = nothing;
-        if (typeof outputValue === "string") {
-          if (outputValue.startsWith("data")) {
-            renderableValue = this.#renderDataURL(outputValue);
+        // Handle loosely structured data here
+        if (typeof outputValue === "object") {
+          if (isLLMContentArray(outputValue)) {
+            value = html`<bb-llm-output-array
+              .clamped=${false}
+              .showModeToggle=${false}
+              .showEntrySelector=${false}
+              .showExportControls=${true}
+              .values=${outputValue}
+            ></bb-llm-output-array>`;
+          } else if (isLLMContent(outputValue)) {
+            if (!outputValue.parts) {
+              // Special case for "$metadata" item.
+              // See https://github.com/breadboard-ai/breadboard/issues/1673
+              // TODO: Make this not ugly.
+              const data = (outputValue as unknown as { data: unknown }).data;
+              value = html`<bb-json-tree .json=${data}></bb-json-tree>`;
+            }
+
+            if (!outputValue.parts.length) {
+              value = html`No data provided`;
+            }
+
+            value = outputValue.parts.length
+              ? html`<bb-llm-output
+                  .clamped=${false}
+                  .lite=${true}
+                  .showExportControls=${true}
+                  .value=${outputValue}
+                ></bb-llm-output>`
+              : html`No data provided`;
+          } else if (isImageURL(outputValue)) {
+            value = html`<img src=${outputValue.image_url} />`;
           } else {
-            renderableValue = html`${markdown(outputValue)}`;
+            value = html`<bb-json-tree .json=${outputValue}></bb-json-tree>`;
           }
         } else {
-          renderableValue = html`${outputValue !== undefined
-            ? outputValue
-            : html`<span class="no-value">[No value provided]</span>`}`;
-        }
+          let renderableValue: HTMLTemplateResult | symbol = nothing;
+          if (typeof outputValue === "string") {
+            if (outputValue.startsWith("data")) {
+              renderableValue = this.#renderDataURL(outputValue);
+            } else {
+              renderableValue = html`${markdown(outputValue)}`;
+            }
+          } else {
+            renderableValue = html`${outputValue !== undefined
+              ? outputValue
+              : html`<span class="no-value">[No value provided]</span>`}`;
+          }
 
-        // prettier-ignore
-        value = html`<div
+          // prettier-ignore
+          value = html`<div
                       class=${classMap({
                         value: true,
                       })}
                     >${renderableValue}</div>`;
+        }
       }
 
       return html` <div class="output">
