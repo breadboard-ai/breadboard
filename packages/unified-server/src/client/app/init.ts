@@ -173,6 +173,8 @@ function extractThemeFromFlow(flow: GraphDescriptor | null): {
 
   const theme: AppTheme = createDefaultTheme();
 
+  console.log(flow);
+
   if (flow?.metadata?.visual?.presentation) {
     if (
       flow.metadata.visual.presentation.themes &&
@@ -194,6 +196,12 @@ function extractThemeFromFlow(flow: GraphDescriptor | null): {
       }
       if (splashScreen) {
         theme.splashScreen = splashScreen;
+      }
+
+      if (appTheme.templateAdditionalOptions) {
+        templateAdditionalOptionsChosen = {
+          ...appTheme.templateAdditionalOptions,
+        };
       }
     } else {
       const themeColors = flow.metadata.visual.presentation.themeColors;

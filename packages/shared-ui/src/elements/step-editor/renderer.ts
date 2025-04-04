@@ -141,7 +141,7 @@ export class Renderer extends LitElement {
   accessor cullPadding = 0;
 
   @property()
-  accessor graphFitPadding = 100;
+  accessor graphFitPadding = 64;
 
   @property()
   accessor graphTopologyUpdateId = 0;

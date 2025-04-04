@@ -36,13 +36,6 @@ const PAGE_SIZE_DETAILED = 8;
 const PAGE_SIZE_CONDENSED = 24;
 const OVERFLOW_MENU_CLEARANCE = 4;
 
-interface Guides {
-  title: string;
-  description: string;
-  url: string;
-  image?: string;
-}
-
 @customElement("bb-project-listing")
 export class ProjectListing extends LitElement {
   @property()
@@ -97,26 +90,6 @@ export class ProjectListing extends LitElement {
   @property()
   accessor recencyType: "local" | "session" = "session";
 
-  @state()
-  accessor guides: Guides[] = [
-    {
-      title: "Getting Started with Breadboard",
-      description: "Learn the basics of using the Visual Editor",
-      url: "https://breadboard-ai.github.io/breadboard/docs/visual-editor/",
-    },
-    {
-      title: "Building a Librarian with the Agent Kit",
-      description:
-        "Learn to make a simple agent that helps us finding interesting books",
-      url: "https://breadboard-ai.github.io/breadboard/docs/guides/librarian/",
-    },
-    {
-      title: "Building our First Tool",
-      description: "Create your first tool, and use it within a board",
-      url: "https://breadboard-ai.github.io/breadboard/docs/guides/first-tool/",
-    },
-  ];
-
   #selectedIndex = 0;
 
   static styles = [
@@ -146,9 +119,8 @@ export class ProjectListing extends LitElement {
           align-items: center;
 
           & h1 {
-            font:
-              400 32px "Google Sans",
-              sans-serif;
+            font: 400 var(--bb-title-xx-large) /
+              var(--bb-title-line-height-xx-large) var(--bb-font-family);
             padding: 0;
             margin: 76px 0 0 0;
 
@@ -166,9 +138,8 @@ export class ProjectListing extends LitElement {
           }
 
           & #cta {
-            font:
-              400 14px "Google Sans",
-              sans-serif;
+            font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
+              var(--bb-font-family);
             color: var(--bb-neutral-700);
             padding: 0;
             margin: 8px 0 0 0;
@@ -282,73 +253,6 @@ export class ProjectListing extends LitElement {
           }
         }
 
-        & #guides {
-          display: grid;
-          grid-template-columns: 1fr;
-          grid-auto-rows: auto;
-          column-gap: var(--bb-grid-size-10);
-          row-gap: var(--bb-grid-size-2);
-          margin: var(--bb-grid-size-8) 0 var(--bb-grid-size-16) 0;
-
-          & h2 {
-            margin: var(--bb-grid-size-5) 0;
-            padding: 0;
-            font: 400 var(--bb-title-large) / var(--bb-title-line-height-large)
-              var(--bb-font-family);
-            width: 100%;
-            color: var(--bb-neutral-900);
-            text-align: left;
-          }
-
-          .guide {
-            display: flex;
-            flex-direction: column;
-            font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
-              var(--bb-font-family);
-            color: var(--bb-neutral-900);
-            background: transparent;
-            border: 1px solid var(--bb-neutral-300);
-            outline: 1px solid transparent;
-            border-radius: var(--bb-grid-size-2);
-            cursor: pointer;
-            transition:
-              background 0.2s cubic-bezier(0, 0, 0.3, 1),
-              border 0.2s cubic-bezier(0, 0, 0.3, 1),
-              outline 0.2s cubic-bezier(0, 0, 0.3, 1);
-            align-items: center;
-            text-decoration: none;
-            width: 100%;
-            overflow: hidden;
-
-            & .img {
-              display: none;
-            }
-
-            & .title,
-            & .description {
-              display: block;
-              width: 100%;
-              text-align: left;
-            }
-
-            & .title {
-              padding: var(--bb-grid-size-4) var(--bb-grid-size-4)
-                var(--bb-grid-size-2) var(--bb-grid-size-4);
-              font-weight: 500;
-            }
-
-            & .description {
-              padding: 0 var(--bb-grid-size-4) var(--bb-grid-size-4)
-                var(--bb-grid-size-4);
-            }
-
-            &:hover,
-            &:focus {
-              background: var(--bb-ui-50);
-            }
-          }
-        }
-
         & #buttons {
           order: 0;
           height: 80px;
@@ -427,9 +331,8 @@ export class ProjectListing extends LitElement {
           & #new-project {
             color: #004a77;
             background-color: #c2e7ff;
-            font-family: "Google Sans", sans-serif;
-            font-size: 14px;
-            font-weight: 500;
+            font: 500 var(--bb-title-small) / var(--bb-title-line-height-small)
+              var(--bb-font-family);
             display: flex;
             align-items: center;
             border-radius: 100px;

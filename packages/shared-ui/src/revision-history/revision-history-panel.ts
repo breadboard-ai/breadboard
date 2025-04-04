@@ -34,7 +34,8 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
         display: flex;
         flex-direction: column;
         gap: 16px;
-        font-family: "Google Sans", sans-serif;
+        font: 400 var(--bb-title-medium) / var(--bb-title-line-height-medium)
+          var(--bb-font-family);
         height: 100%;
         overflow-y: auto;
         padding: 16px;

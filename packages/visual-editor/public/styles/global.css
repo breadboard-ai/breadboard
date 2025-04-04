@@ -30,26 +30,6 @@ body.hide-cursor {
   --bb-grid-size-15: calc(var(--bb-grid-size) * 15);
   --bb-grid-size-16: calc(var(--bb-grid-size) * 16);
 
-  --bb-selected-color: rgb(46, 139, 232);
-  --bb-ui-500: #c0dfff;
-  --bb-font-family-header: "FiraCode";
-  --bb-font-family-mono: "Courier New", Courier, monospace;
-  --bb-font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --bb-font-color: rgb(23, 23, 23);
-  --bb-font-color-faded: rgb(59, 59, 59);
-  --bb-warning-color: rgb(251, 137, 3);
-  --bb-error-color: rgb(251, 3, 3);
-  --bb-output-color: rgb(51, 235, 168);
-  --bb-done-color: rgb(3, 190, 122);
-  --bb-text-default: 1rem;
-  --bb-text-medium: 0.875rem;
-  --bb-text-small: 0.75rem;
-  --bb-text-nano: 0.7rem;
-  --bb-text-pico: 0.65rem;
-  --bb-easing: cubic-bezier(0, 0, 0.3, 1);
-  --bb-easing-duration-in: 0.15s;
-  --bb-easing-duration-out: 0.3s;
-
   /* Icons */
 
   --bb-icon-add: url(/third_party/icons/add.svg);
@@ -775,6 +755,9 @@ body.hide-cursor {
 
   /** Text */
 
+  --bb-title-xx-large: 32px;
+  --bb-title-line-height-xx-large: 24px;
+
   --bb-title-x-large: 22px;
   --bb-title-line-height-x-large: 24px;
 
@@ -1344,7 +1327,7 @@ body {
   overscroll-behavior: none;
   padding: 0;
   margin: 0;
-  font-family: var(--bb-font-family);
+  font-family: var(--bb-font-family, Arial);
   color: var(--bb-font-color);
   width: 100svw;
   height: 100svh;

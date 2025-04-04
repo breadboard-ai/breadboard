@@ -35,7 +35,8 @@ export class RevisionHistoryOverlay extends SignalWatcher(LitElement) {
       }
       #banner {
         padding: 10px;
-        font-family: "Google Sans", sans-serif;
+        font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
+          var(--bb-font-family);
         display: inline-flex;
         flex-direction: column;
         cursor: initial;
@@ -54,17 +55,18 @@ export class RevisionHistoryOverlay extends SignalWatcher(LitElement) {
         align-items: center;
       }
       #date {
-        font-family: "Google Sans", sans-serif;
-        font-weight: 500;
-        font-size: 16px;
+        font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
+          var(--bb-font-family);
+
         /* Ensure there is enough space for the longest date so that changing
         revisions doesn't bounce around. */
         min-width: 10em;
         text-align: center;
       }
       #message {
-        font-weight: 500;
-        font-size: 16px;
+        font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
+          var(--bb-font-family);
+
         margin: 0 0 12px 0;
       }
       #back-button {

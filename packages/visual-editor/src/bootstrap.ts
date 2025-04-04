@@ -24,9 +24,20 @@ function bootstrap(args: BootstrapArguments = {}) {
   icon.href = MAIN_ICON;
   document.head.appendChild(icon);
 
+  if (FONT_LINK !== undefined) {
+    const fonts = document.createElement("link");
+    fonts.rel = "stylesheet";
+    fonts.href = FONT_LINK;
+    document.head.appendChild(fonts);
+  }
+
   const assetPack = document.createElement("style");
   assetPack.textContent = ASSET_PACK;
   document.head.appendChild(assetPack);
+
+  const fontPack = document.createElement("style");
+  fontPack.textContent = FONT_PACK;
+  document.head.appendChild(fontPack);
 
   const params = new URLSearchParams(location.search);
   if (params.has("dark")) {
