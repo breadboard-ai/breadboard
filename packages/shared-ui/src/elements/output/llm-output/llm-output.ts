@@ -597,7 +597,18 @@ export class LLMOutput extends LitElement {
               }
               if (mimeType.startsWith("text")) {
                 this.#outputLoaded();
-                value = html`<div class="plain-text">${until(getData())}</div>`;
+                if (mimeType === "text/html") {
+                  this.#outputLoaded();
+                  value = html`<iframe
+                    srcdoc="${until(getData())}"
+                    frameborder="0"
+                    class="html-view"
+                  ></iframe>`;
+                } else {
+                  value = html`<div class="plain-text">
+                    ${until(getData())}
+                  </div>`;
+                }
               }
               if (part.storedData.mimeType === "application/pdf") {
                 const pdfHandler = fetch(url)

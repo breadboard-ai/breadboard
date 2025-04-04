@@ -118,7 +118,12 @@ export const asBlob = async (
   if (isStoredData(part)) {
     url = part.storedData.handle;
   } else {
-    url = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+    const { mimeType } = part.inlineData;
+    let { data } = part.inlineData;
+    if (mimeType.startsWith("text")) {
+      data = btoa(data);
+    }
+    url = `data:${mimeType};base64,${data}`;
   }
   const response = await fetch(url);
   const data = await response.blob();
