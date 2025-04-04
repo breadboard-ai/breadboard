@@ -258,7 +258,8 @@ export class Renderer extends LitElement {
 
   #lastBoundsForInteraction = new DOMRect();
   #boundsForInteraction = new DOMRect();
-  #attemptFitToView = false;
+  #fitToViewPre = false;
+  #fitToViewPost = false;
   #attemptAdjustToNewBounds = false;
   #firstResize = true;
 
@@ -276,7 +277,7 @@ export class Renderer extends LitElement {
     this.#boundsForInteraction = this.getBoundingClientRect();
 
     if (this.#firstResize) {
-      this.#attemptFitToView = true;
+      this.#fitToViewPre = true;
     } else {
       this.#attemptAdjustToNewBounds = true;
     }
@@ -748,8 +749,8 @@ export class Renderer extends LitElement {
   }
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
-    if (this.#attemptFitToView) {
-      this.#attemptFitToView = false;
+    if (this.#fitToViewPre) {
+      this.#fitToViewPre = false;
       this.fitToView(false);
     }
 
@@ -827,10 +828,11 @@ export class Renderer extends LitElement {
 
       // When going from an empty main graph to something populated ensure that
       // we re-center the graph to the view.
-      if (mainGraph.nodes.length === 0 && this.graph.nodes()) {
-        requestAnimationFrame(() => {
-          this.fitToView(false);
-        });
+      const entitiesBefore = mainGraph.nodes.length + mainGraph.assets.size;
+      const entitiesAfter =
+        this.graph.nodes().length + this.graph.assets().size;
+      if (entitiesBefore === 0 && entitiesAfter > 0) {
+        this.#fitToViewPost = true;
       }
 
       mainGraph.url = graphUrl;
@@ -925,6 +927,17 @@ export class Renderer extends LitElement {
     this._boundsDirty.clear();
   }
 
+  protected updated(_changedProperties: PropertyValues): void {
+    if (!this.#fitToViewPost) {
+      return;
+    }
+
+    this.#fitToViewPost = false;
+    requestAnimationFrame(() => {
+      this.fitToView(false);
+    });
+  }
+
   #adjustToNewBounds() {
     if (!this.camera) {
       return;
@@ -940,13 +953,18 @@ export class Renderer extends LitElement {
     );
   }
 
-  fitToView(animated = true) {
+  fitToView(animated = true, retryOnEmpty = false) {
     if (!this.#graphs || !this.#boundsForInteraction || !this.camera) {
       return;
     }
 
     const allGraphBounds = calculateBounds(this.#graphs);
     if (allGraphBounds.width === 0) {
+      if (retryOnEmpty) {
+        requestAnimationFrame(() => {
+          this.fitToView(animated);
+        });
+      }
       return;
     }
 
@@ -1264,12 +1282,15 @@ export class Renderer extends LitElement {
       return nothing;
     }
 
+    const hasNoAssets = (this.graph?.assets() ?? new Map()).size === 0;
     const hasNoSubGraphs = Object.keys(this.graph?.graphs() ?? {}).length === 0;
     const subGraphsAreEmpty = Object.values(this.graph?.graphs() ?? {}).every(
       (graph) => graph.nodes().length === 0
     );
     const showDefaultAdd =
-      this.graph?.nodes().length === 0 && (hasNoSubGraphs || subGraphsAreEmpty);
+      this.graph?.nodes().length === 0 &&
+      hasNoAssets &&
+      (hasNoSubGraphs || subGraphsAreEmpty);
 
     this.camera.showBounds = this.debug;
 

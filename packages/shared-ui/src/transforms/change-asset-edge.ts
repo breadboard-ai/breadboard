@@ -14,7 +14,11 @@ import {
 } from "@google-labs/breadboard";
 import { AssetEdge } from "../types/types";
 import { isLLMContentBehavior, isPreviewBehavior } from "../utils/behaviors";
-import { LLMContent, TextCapabilityPart } from "@breadboard-ai/types";
+import {
+  LLMContent,
+  NodeValue,
+  TextCapabilityPart,
+} from "@breadboard-ai/types";
 import { getMimeType } from "../utils/mime-type";
 
 export { ChangeAssetEdge as ChangeAssetEdge };
@@ -23,13 +27,13 @@ export type ChangeType = "add" | "remove";
 
 const failState = {
   success: false,
-  error: `Unable to add asset`,
+  error: `Unable to change asset`,
 };
 
 function createAssetString(edge: AssetEdge, asset: InspectableAsset) {
-  return `{{"type": "asset", "path": "${
+  return `{{"type":"asset","path":"${
     edge.assetPath
-  }", "mimeType": "${getMimeType(asset.data)}", "title": "${asset.title}"}}`;
+  }","mimeType":"${getMimeType(asset.data)}","title":"${asset.title}"}}`;
 }
 
 class ChangeAssetEdge implements EditTransform {
@@ -48,7 +52,7 @@ class ChangeAssetEdge implements EditTransform {
 
     const inspectableNode = inspectableGraph.nodeById(this.edge.nodeId);
     if (!inspectableNode) {
-      return failState;
+      return { success: true };
     }
 
     const targetPort = (await inspectableNode.ports()).inputs.ports.find(
@@ -77,6 +81,7 @@ class ChangeAssetEdge implements EditTransform {
 
       targetPart = parts[0];
       targetPortConfiguration = item;
+      configuration[targetPort.name] = targetPortConfiguration as NodeValue;
     } else {
       const textPart = targetPortConfiguration.parts.find((part) =>
         isTextCapabilityPart(part)

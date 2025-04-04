@@ -280,7 +280,7 @@ export class GraphAsset extends Box implements DragConnectorReceiver {
 
   protected updated(changedProperties: PropertyValues): void {
     if (
-      changedProperties.has("nodeTitle") ||
+      changedProperties.has("assetTitle") ||
       changedProperties.has("updating")
     ) {
       requestAnimationFrame(() => {

@@ -60,22 +60,7 @@ export const DeleteCommand: KeyboardCommand = {
     const deleteActions: Promise<unknown>[] = [];
     let projectState: BreadboardUI.State.Project | null = null;
     for (const selectionGraph of selectionState.selectionState.graphs.values()) {
-      // Delete any selected Assets.
-      if (selectionGraph.assets.size) {
-        if (!projectState) {
-          projectState = runtime.state.getOrCreate(tab.mainGraphId, editor);
-        }
-
-        if (!projectState) {
-          continue;
-        }
-
-        for (const asset of selectionGraph.assets) {
-          deleteActions.push(projectState.organizer.removeGraphAsset(asset));
-        }
-      }
-
-      // Delete any selected Asset Edges.
+      // First delete any selected Asset Edges.
       if (selectionGraph.assetEdges.size) {
         const assetEdges = graph.assetEdges();
 
@@ -101,11 +86,29 @@ export const DeleteCommand: KeyboardCommand = {
           }
         }
       }
+
+      // Then delete any selected Assets.
+      if (selectionGraph.assets.size) {
+        if (!projectState) {
+          projectState = runtime.state.getOrCreate(tab.mainGraphId, editor);
+        }
+
+        if (!projectState) {
+          continue;
+        }
+
+        for (const asset of selectionGraph.assets) {
+          deleteActions.push(projectState.organizer.removeGraphAsset(asset));
+        }
+      }
     }
 
     const actions = [
-      editor.apply(new BreadboardUI.Transforms.MarkInPortsInvalidSpec(spec)),
+      // Make sure to delete assets and asset edges first before anything else
+      // otherwise the transforms will fail because the target node may no
+      // longer exist.
       ...deleteActions,
+      editor.apply(new BreadboardUI.Transforms.MarkInPortsInvalidSpec(spec)),
     ];
 
     await Promise.all(actions);
