@@ -35,6 +35,10 @@ function bootstrap(args: BootstrapArguments = {}) {
   assetPack.textContent = ASSET_PACK;
   document.head.appendChild(assetPack);
 
+  const fontPack = document.createElement("style");
+  fontPack.textContent = FONT_PACK;
+  document.head.appendChild(fontPack);
+
   const params = new URLSearchParams(location.search);
   if (params.has("dark")) {
     globalThis.localStorage.setItem("dark-theme", "true");

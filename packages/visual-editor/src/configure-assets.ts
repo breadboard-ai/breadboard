@@ -22,6 +22,7 @@ export type ConfigureAssetOutputs = {
   ASSET_PACK: string;
   ASSET_PACK_ICONS: string;
   MAIN_ICON: string;
+  FONT_PACK: string;
   FONT_LINK: string;
 };
 
@@ -66,6 +67,7 @@ async function configureAssets(
     ASSET_PACK: JSON.stringify(assetPack.styles),
     ASSET_PACK_ICONS: JSON.stringify(assetPack.assets),
     MAIN_ICON: JSON.stringify(assetPack.mainIcon),
+    FONT_PACK: JSON.stringify(assetPack.fonts),
     FONT_LINK: JSON.stringify(FONT_LINK),
   };
 }
@@ -81,6 +83,7 @@ async function processAssetPack(
 
   const assets: [string, string][] = [];
   const styles: string[] = [];
+  const fonts: string[] = [];
   let mainIcon = "";
   for (const file of files) {
     // TODO: Support nested dirs.
@@ -119,18 +122,18 @@ async function processAssetPack(
     assets.push([fileNameAsStyleProp, base64Str]);
     styles.push(`--bb-${fileNameAsStyleProp}: url("${base64Str}")`);
 
-    if (fontFace) {
-      styles.push(`--bb-font-family: ${fontFace}`);
-    }
-
-    if (fontFaceMono) {
-      styles.push(`--bb-font-family-mono: ${fontFaceMono}`);
-    }
-
     // Special-case the logo.
     if (file.name === "logo.svg") {
       mainIcon = `data:${mimeType};base64,${btoa(data)}`;
     }
+  }
+
+  if (fontFace) {
+    fonts.push(`--bb-font-family: ${fontFace}`);
+  }
+
+  if (fontFaceMono) {
+    fonts.push(`--bb-font-family-mono: ${fontFaceMono}`);
   }
 
   return {
@@ -142,6 +145,14 @@ async function processAssetPack(
     */
     :root {
       ${styles.join(";\n")};
+    }`,
+    fonts: `/**
+    * @license
+    * Copyright 2025 Google LLC
+    * SPDX-License-Identifier: Apache-2.0
+    */
+    :root {
+      ${fonts.join(";\n")};
     }`,
     assets,
   };

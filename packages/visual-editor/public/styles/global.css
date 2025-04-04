@@ -1327,7 +1327,7 @@ body {
   overscroll-behavior: none;
   padding: 0;
   margin: 0;
-  /* font-family: var(--bb-font-family); */
+  font-family: var(--bb-font-family, Arial);
   color: var(--bb-font-color);
   width: 100svw;
   height: 100svh;
