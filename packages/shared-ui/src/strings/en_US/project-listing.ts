@@ -9,7 +9,7 @@ import { LanguagePackEntry } from "../../types/types";
 export default {
   // Commands.
   COMMAND_NEW_PROJECT: {
-    str: "New Flow",
+    str: "Start from blank canvas",
   },
   COMMAND_DESCRIBE_FLOW: {
     str: "Describe your flow",
