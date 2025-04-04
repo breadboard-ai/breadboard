@@ -12,6 +12,7 @@ import {
 } from "@google-labs/breadboard";
 import {
   EXPIRATION_TIME_MS,
+  InvalidRequestError,
   type BoardServerStore,
   type ServerInfo,
   type StorageBoard,
@@ -143,17 +144,41 @@ export class FirestoreStorageProvider
     });
   }
 
-  async updateBoard(board: StorageBoard): Promise<void> {
+  async updateBoard(board: Readonly<Partial<StorageBoard>>): Promise<void> {
+    if (!board.owner) {
+      throw new InvalidRequestError("Firestore requires an owner set");
+    }
+    if (!board.name) {
+      throw new InvalidRequestError("Firestore requires board's name");
+    }
     await this.#getBoardDoc(board.owner, board.name).set({
       name: board.name,
-      title: board.displayName,
-      description: board.description,
-      tags: board.tags,
-      graph: JSON.stringify(board.graph),
+      title: board.displayName || "",
+      description: board.description || "",
+      tags: board.tags || [],
+      graph: JSON.stringify(board.graph || {}),
     });
   }
 
+  async upsertBoard(board: Readonly<Partial<StorageBoard>>): Promise<StorageBoard> {
+    const name = board.name || crypto.randomUUID();
+    const updatedBoard: Partial<StorageBoard> = {...board, name};
+    await this.updateBoard(updatedBoard);
+    const result = await this.loadBoard({name, owner: updatedBoard.owner});
+    if (!result) {
+      throw new Error(`Failed to create the board ${updatedBoard.name}`);
+    }
+    return result;
+  }
+
   async createBoard(userId: string, name: string): Promise<void> {
+    if (!name) {
+      throw new InvalidRequestError("Board name is required");
+    }
+    const board = await this.loadBoard({ name, owner: userId });
+    if (board) {
+      throw new InvalidRequestError(`Board ${name} already exists`);
+    }
     await this.#getBoardDoc(userId, name).set({
       name,
       graph: JSON.stringify(blank()),
