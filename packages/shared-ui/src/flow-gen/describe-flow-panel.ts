@@ -87,8 +87,8 @@ export class DescribeFlowPanel extends LitElement {
         color: var(--bb-neutral-900);
         border-color: var(--bb-neutral-200);
         --submit-button-color: #3271ea;
-        --min-lines: 3;
-        --max-lines: 8;
+        --min-lines: 1;
+        --max-lines: 6;
         font:
           400 14px "Google Sans",
           sans-serif;
