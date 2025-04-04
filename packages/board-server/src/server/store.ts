@@ -22,6 +22,12 @@ export type StorageBoard = {
   graph?: GraphDescriptor;
 };
 
+export class InvalidRequestError extends Error {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
 export interface BoardServerStore {
   /** Get basic information about this server. */
   getServerInfo(): Promise<ServerInfo | null>;

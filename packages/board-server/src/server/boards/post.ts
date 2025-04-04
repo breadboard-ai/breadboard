@@ -8,7 +8,7 @@ import type { NextFunction, Request, Response } from "express";
 
 import { type GraphDescriptor } from "@google-labs/breadboard";
 
-import { asPath, type BoardServerStore } from "../store.js";
+import { asPath, InvalidRequestError, type BoardServerStore } from "../store.js";
 import type { BoardId } from "../types.js";
 
 import del from "./delete.js";
@@ -40,11 +40,6 @@ async function update(
 
   // If an owner is given, it must match the current user
   // TODO factor this check to middleware
-  const owner = boardId.user;
-  if (owner && owner !== userId) {
-    res.sendStatus(403);
-    return;
-  }
 
   const graph = asGraph(req.body);
   if (!graph) {
@@ -54,7 +49,7 @@ async function update(
   }
 
   try {
-    await store.updateBoard({
+    const result = await store.upsertBoard({
       name: boardId.name,
       owner: userId,
       displayName: graph.title || boardId.name,
@@ -65,9 +60,15 @@ async function update(
     });
     // TODO what does the client do with this response, and why is the property
     // called "created"?
-    res.json({ created: asPath(userId, boardId.name) });
+    const created = asPath(userId, boardId.name);
+    res.json({ ...result, created,  });
   } catch (e) {
-    next(e);
+    if (e instanceof InvalidRequestError) {
+      res.statusMessage = e.message;
+      res.sendStatus(403);
+    } else {
+      next(e);
+    }
   }
 }
 
