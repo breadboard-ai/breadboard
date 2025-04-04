@@ -22,6 +22,6 @@
     "types": ["vite/client"]
   },
   "include": ["src/**/*.ts", "bgl/**/*.bgl.json"],
-  "exclude": ["bgl/src"],
+  "exclude": ["bgl/src/**/*.ts"],
   "extends": "@google-labs/tsconfig/base.json"
 }
