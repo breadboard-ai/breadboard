@@ -18,9 +18,8 @@ export type GetWebPageOutputs = {
 export type GetWebPageResults = string;
 
 export type GetContentFromUrlResponse = {
-  ["`Task_1_responseBody`"]: string;
-  header: string;
-  status: string;
+  html_body: string;
+  markdown?: string;
 };
 
 async function getContentFromUrl(url: string): Promise<Outcome<string>> {
@@ -30,8 +29,12 @@ async function getContentFromUrl(url: string): Promise<Outcome<string>> {
   );
   if (!ok(executing)) return executing;
   console.log("GET CONTENT", executing);
-  const output = executing["`Task_1_responseBody`"];
-  return `\`\`\`html\n\n${output}\n\n\`\`\``;
+  const { html_body, markdown } = executing;
+  if (markdown) {
+    return markdown;
+  } else {
+    return `\`\`\`html\n\n${html_body}\n\n\`\`\``;
+  }
 }
 
 async function invoke({

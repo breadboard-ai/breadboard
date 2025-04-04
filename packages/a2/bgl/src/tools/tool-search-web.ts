@@ -20,6 +20,11 @@ export type SearchWebOutputs = {
   results: string;
 };
 
+export type SearchBackendOutput = {
+  url: string;
+  webpage_text_content: string;
+};
+
 export type CustomSearchEngineResponse = {
   queries: {
     request: {
@@ -74,27 +79,27 @@ ${item.snippet}
 `;
 }
 
-async function getSearchLink2(query: string): Promise<Outcome<string>> {
-  const results = await executeTool("google_search", { query });
-  if (!ok(results)) return results;
+function formatBackendSearchResults(results: SearchBackendOutput[]): string {
+  return `## Search Results
 
-  // TODO: Format search results once we have 10 links + snippets.
-  return JSON.stringify(results);
+    ${results
+      .map((result) => {
+        return `## Source: ${result.url}
+Source content:
+
+${result.webpage_text_content}
+`;
+      })
+      .join("\n\n")}
+`;
 }
 
 async function getSearchLinks(query: string): Promise<Outcome<string>> {
-  const keys = await secrets({ keys: ["CSE_ID", "SEARCH_API_KEY"] });
-  if (!ok(keys)) {
-    return keys;
-  }
-  const url = `https://customsearch.googleapis.com/customsearch/v1?cx=${keys.CSE_ID}&q=${query}&key=${keys.SEARCH_API_KEY}`;
-  const fetching = await fetch({ url });
-  if (!ok(fetching)) {
-    return fetching;
-  }
-  const searchResults = fetching.response as CustomSearchEngineResponse;
-
-  return formatSearchResults(searchResults);
+  const results = await executeTool<SearchBackendOutput[]>("google_search", {
+    query,
+  });
+  if (!ok(results)) return results;
+  return formatBackendSearchResults(results);
 }
 
 async function invoke({
