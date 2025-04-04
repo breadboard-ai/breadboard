@@ -728,8 +728,9 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
       ...[...this.state.connectors.values()]
         .filter(
           (connector) =>
-            !connector.singleton ||
-            !this.state?.connectorInstanceExists(connector.url)
+            !connector.url.includes("/_") &&
+            (!connector.singleton ||
+              !this.state?.connectorInstanceExists(connector.url))
         )
         .map((connector) => {
           return {

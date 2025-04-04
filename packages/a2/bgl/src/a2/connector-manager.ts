@@ -6,7 +6,7 @@ import { err, ok, isLLMContentArray } from "./utils";
 import read from "@read";
 import describeConnector, { type DescribeOutputs } from "@describe";
 import invokeConnector from "@invoke";
-export { ConnectorManager, createConfiguratorInvoke };
+export { ConnectorManager, createConfigurator };
 
 type InitializeInput = {
   stage: "initialize";
@@ -71,6 +71,45 @@ export type Configurator<
   read?: (input: ReadInput<C>) => Promise<Outcome<ReadOutput<V>>>;
   write?: (input: WriteInput<V>) => Promise<Outcome<WriteOutput>>;
 };
+
+function createConfigurator<
+  C extends Record<string, unknown> = Record<string, unknown>,
+  V extends Record<string, unknown> = Record<string, unknown>,
+>(configurator: Configurator<C, V>) {
+  return {
+    invoke: createConfiguratorInvoke(configurator),
+    describe: createConfiguratorDescribe(configurator),
+  };
+}
+
+function createConfiguratorDescribe<
+  C extends Record<string, unknown> = Record<string, unknown>,
+  V extends Record<string, unknown> = Record<string, unknown>,
+>(configurator: Configurator<C, V>) {
+  const { title } = configurator;
+  return async function () {
+    return {
+      title: title,
+      description: "",
+      metadata: {
+        tags: ["connector-configure"],
+      },
+      inputSchema: {
+        type: "object",
+      } satisfies Schema,
+      outputSchema: {
+        type: "object",
+        properties: {
+          context: {
+            type: "array",
+            items: { type: "object", behavior: ["llm-content"] },
+            title: "Context out",
+          },
+        },
+      } satisfies Schema,
+    };
+  };
+}
 
 function createConfiguratorInvoke<
   C extends Record<string, unknown> = Record<string, unknown>,

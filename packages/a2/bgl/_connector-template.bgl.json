@@ -30,7 +30,11 @@
       }
     },
     "userModified": true,
-    "tags": ["connector", "connector-singleton", "published"],
+    "tags": [
+      "connector",
+      "connector-singleton",
+      "published"
+    ],
     "comments": [
       {
         "id": "comment-c74afa15",
@@ -49,11 +53,11 @@
   },
   "modules": {
     "configurator": {
-      "code": "/**\n * @fileoverview Add a description for your module here.\n */\nimport { err, ok } from \"./a2/utils\";\nimport { createConfiguratorInvoke } from \"./a2/connector-manager\";\nimport read from \"@read\";\nimport write from \"@write\";\nexport { invoke as default, describe };\nconst CONNECTOR_TITLE = \"{{ title }}\";\nconst invoke = createConfiguratorInvoke({\n    title: CONNECTOR_TITLE,\n    initialize: async () => {\n        return { title: CONNECTOR_TITLE, configuration: {} };\n    },\n});\nasync function describe() {\n    return {\n        title: CONNECTOR_TITLE,\n        description: \"\",\n        metadata: {\n            tags: [\"connector-configure\"],\n        },\n        inputSchema: {\n            type: \"object\",\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context out\",\n                },\n            },\n        },\n    };\n}\n",
+      "code": "/**\n * @fileoverview Add a description for your module here.\n */\nimport { err, ok } from \"./a2/utils\";\nimport { createConfigurator } from \"./a2/connector-manager\";\nimport read from \"@read\";\nimport write from \"@write\";\nexport { invoke as default, describe };\nconst CONNECTOR_TITLE = \"{{ title }}\";\nconst { invoke, describe } = createConfigurator({\n    title: CONNECTOR_TITLE,\n    initialize: async () => {\n        return { title: CONNECTOR_TITLE, configuration: {} };\n    },\n});\n",
       "metadata": {
         "title": "configurator",
         "source": {
-          "code": "/**\n * @fileoverview Add a description for your module here.\n */\n\nimport { err, ok } from \"./a2/utils\";\nimport { createConfiguratorInvoke } from \"./a2/connector-manager\";\n\nimport read from \"@read\";\nimport write from \"@write\";\n\nexport { invoke as default, describe };\n\nconst CONNECTOR_TITLE = \"{{ title }}\";\n\nconst invoke = createConfiguratorInvoke({\n  title: CONNECTOR_TITLE,\n  initialize: async () => {\n    return { title: CONNECTOR_TITLE, configuration: {} };\n  },\n});\n\nasync function describe() {\n  return {\n    title: CONNECTOR_TITLE,\n    description: \"\",\n    metadata: {\n      tags: [\"connector-configure\"],\n    },\n    inputSchema: {\n      type: \"object\",\n    } satisfies Schema,\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context out\",\n        },\n      },\n    } satisfies Schema,\n  };\n}\n",
+          "code": "/**\n * @fileoverview Add a description for your module here.\n */\n\nimport { err, ok } from \"./a2/utils\";\nimport { createConfigurator } from \"./a2/connector-manager\";\n\nimport read from \"@read\";\nimport write from \"@write\";\n\nexport { invoke as default, describe };\n\nconst CONNECTOR_TITLE = \"{{ title }}\";\n\nconst { invoke, describe } = createConfigurator({\n  title: CONNECTOR_TITLE,\n  initialize: async () => {\n    return { title: CONNECTOR_TITLE, configuration: {} };\n  },\n});\n",
           "language": "typescript"
         },
         "description": "Add a description for your module here.",
@@ -66,5 +70,7 @@
       "url": "./a2.bgl.json"
     }
   },
-  "exports": ["#module:configurator"]
+  "exports": [
+    "#module:configurator"
+  ]
 }
