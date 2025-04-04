@@ -20,7 +20,7 @@ async function create(req: Request, res: Response): Promise<void> {
 
   const request = req.body as CreateRequest;
 
-  const userId = res.locals.userId;
+  const userId: string = res.locals.userId;
   if (!request.owner) {
     request.owner = userId;
   } else if (request.owner !== userId) {
