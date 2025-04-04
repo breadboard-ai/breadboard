@@ -100,9 +100,8 @@ export class DescribeFlowPanel extends LitElement {
         --submit-button-color: #3271ea;
         --min-lines: 1;
         --max-lines: 6;
-        font:
-          400 14px "Google Sans",
-          sans-serif;
+        font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
+          var(--bb-font-family);
         line-height: 20px;
         caret-color: var(--bb-ui-500);
 
@@ -116,9 +115,8 @@ export class DescribeFlowPanel extends LitElement {
         border-radius: 0.5lh;
         padding: 1lh;
         display: flex;
-        font:
-          400 "Google Sans",
-          sans-serif;
+        font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
+          var(--bb-font-family);
         box-shadow: 0px 4px 10.1px 0px rgba(0, 0, 0, 0.1);
       }
 

@@ -12,6 +12,9 @@ export { configureAssets };
 export type ConfigureAssetsInputs = {
   VITE_LANGUAGE_PACK?: string;
   VITE_ASSET_PACK?: string;
+  VITE_FONT_FACE_MONO?: string;
+  VITE_FONT_FACE?: string;
+  VITE_FONT_LINK?: string;
 };
 
 export type ConfigureAssetOutputs = {
@@ -19,14 +22,20 @@ export type ConfigureAssetOutputs = {
   ASSET_PACK: string;
   ASSET_PACK_ICONS: string;
   MAIN_ICON: string;
+  FONT_LINK: string;
 };
 
 async function configureAssets(
   root: string,
   config: ConfigureAssetsInputs
 ): Promise<ConfigureAssetOutputs> {
-  const { VITE_LANGUAGE_PACK: LANGUAGE_PACK, VITE_ASSET_PACK: ASSET_PACK } =
-    config;
+  const {
+    VITE_LANGUAGE_PACK: LANGUAGE_PACK,
+    VITE_ASSET_PACK: ASSET_PACK,
+    VITE_FONT_FACE: FONT_FACE,
+    VITE_FONT_FACE_MONO: FONT_FACE_MONO,
+    VITE_FONT_LINK: FONT_LINK,
+  } = config;
 
   if (!LANGUAGE_PACK) {
     throw new Error("Language Pack not specified");
@@ -45,17 +54,28 @@ async function configureAssets(
     throw new Error("Unable to import language pack");
   }
 
-  const assetPack = await processAssetPack(root, ASSET_PACK);
+  const assetPack = await processAssetPack(
+    root,
+    ASSET_PACK,
+    FONT_FACE,
+    FONT_FACE_MONO
+  );
 
   return {
     LANGUAGE_PACK: JSON.stringify(languagePack),
     ASSET_PACK: JSON.stringify(assetPack.styles),
     ASSET_PACK_ICONS: JSON.stringify(assetPack.assets),
     MAIN_ICON: JSON.stringify(assetPack.mainIcon),
+    FONT_LINK: JSON.stringify(FONT_LINK),
   };
 }
 
-async function processAssetPack(root: string, src: string) {
+async function processAssetPack(
+  root: string,
+  src: string,
+  fontFace?: string,
+  fontFaceMono?: string
+) {
   const srcPath = path.join(root, src);
   const files = await fs.readdir(srcPath, { withFileTypes: true });
 
@@ -98,6 +118,14 @@ async function processAssetPack(root: string, src: string) {
     const base64Str = `data:${mimeType};base64,${btoa(data)}`;
     assets.push([fileNameAsStyleProp, base64Str]);
     styles.push(`--bb-${fileNameAsStyleProp}: url("${base64Str}")`);
+
+    if (fontFace) {
+      styles.push(`--bb-font-family: ${fontFace}`);
+    }
+
+    if (fontFaceMono) {
+      styles.push(`--bb-font-family-mono: ${fontFaceMono}`);
+    }
 
     // Special-case the logo.
     if (file.name === "logo.svg") {
