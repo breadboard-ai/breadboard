@@ -1,0 +1,77 @@
+{
+  "title": "Code Gen Workbench",
+  "description": "",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "49314d0c-8544-4570-af58-6eb375d994bb",
+      "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+      "metadata": {
+        "title": "Make Text",
+        "visual": {
+          "x": 0,
+          "y": 0
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "description": {
+          "parts": [
+            {
+              "text": "Use {{\"type\":\"tool\",\"path\":\"#module:get-google-news\",\"title\":\"Google News\"}} to get the latest news headlines and write a short story about them."
+            }
+          ],
+          "role": "user"
+        }
+      }
+    }
+  ],
+  "edges": [],
+  "metadata": {
+    "visual": {
+      "presentation": {
+        "themes": {
+          "39239b49-62d0-4182-b919-924c4db67941": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "39239b49-62d0-4182-b919-924c4db67941"
+      }
+    },
+    "userModified": true,
+    "tags": [],
+    "parameters": {}
+  },
+  "modules": {
+    "get-google-news": {
+      "code": "/**\n * @license\n * Copyright 2024 Google LLC\n * SPDX-License-Identifier: Apache-2.0\n */\n\nimport fetch from \"@fetch\";\n\n/**\n * A basic function to decode common XML entities.\n * The sandbox doesn't provide DOMParser, so we do a minimal cleanup.\n * @param {string} text The text to decode.\n * @returns {string} The decoded text.\n */\nfunction simpleXmlDecode(text) {\n  if (typeof text !== \"string\") return text;\n  return (\n    text\n      .replace(/&/g, \"&\")\n      .replace(/</g, \"<\")\n      .replace(/>/g, \">\")\n      .replace(/\"/g, '\"')\n      .replace(/'/g, \"'\")\n      // Remove CDATA tags if present\n      .replace(/<!\\[CDATA\\[(.*?)\\]\\]>/gs, \"$1\")\n  );\n}\n\n/**\n * Fetches the latest headlines from Google News RSS feed and returns them\n * as a Markdown formatted string.\n *\n * @param {Record<string, import(\"./types\").JsonSerializable>} inputs - The input object (not used in this implementation).\n * @returns {Promise<import(\"./types\").Outcome<Record<string, import(\"./types\").JsonSerializable>>>} - An Outcome object containing either the Markdown string under the key \"headlinesMarkdown\" or an $error property.\n */\nasync function invoke(inputs) {\n  // Google News RSS feed URL (US English). Adjust hl and gl for other regions/languages.\n  const rssUrl = \"https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en\";\n\n  try {\n    console.log(`Fetching RSS feed from: ${rssUrl}`);\n    const fetchResult = await fetch({ url: rssUrl, method: \"GET\" });\n\n    // Check for errors reported by the fetch module itself\n    if (fetchResult.$error) {\n      const errorMessage = `Fetch module error: ${JSON.stringify(fetchResult.$error)}`;\n      console.error(errorMessage);\n      return { $error: errorMessage };\n    }\n\n    // Check for non-successful HTTP status codes\n    if (fetchResult.status < 200 || fetchResult.status >= 300) {\n      const errorMessage = `HTTP Error: ${fetchResult.status} ${fetchResult.statusText}`;\n      console.error(errorMessage, \"Response:\", fetchResult.response);\n      return { $error: errorMessage };\n    }\n\n    // Ensure the response is a string (expected for XML/text content)\n    if (typeof fetchResult.response !== \"string\") {\n      const errorMessage = `Unexpected response type: ${typeof fetchResult.response}. Expected string containing XML.`;\n      console.error(errorMessage);\n      return { $error: errorMessage };\n    }\n\n    const xmlData = fetchResult.response;\n    console.log(`Received RSS data (length: ${xmlData.length})`);\n\n    // Basic Regex to extract item titles and links from the RSS feed\n    // It looks for <item>, then captures content within <title> and <link>\n    // The 's' flag allows '.' to match newline characters.\n    // The 'g' flag allows finding all matches.\n    const itemRegex =\n      /<item>.*?<title>(.*?)<\\/title>.*?<link>(.*?)<\\/link>.*?<\\/item>/gs;\n    const headlines = [];\n    let match;\n\n    console.log(\"Parsing RSS items...\");\n    while ((match = itemRegex.exec(xmlData)) !== null) {\n      // match[1] is the title, match[2] is the link\n      if (match[1] && match[2]) {\n        const title = simpleXmlDecode(match[1].trim());\n        const link = simpleXmlDecode(match[2].trim());\n        // Format as Markdown list item: \"- [Title](Link)\"\n        headlines.push(`- [${title}](${link})`);\n      }\n    }\n\n    if (headlines.length === 0) {\n      console.warn(\n        \"No headlines extracted. RSS structure might have changed, the feed might be empty, or the regex failed.\"\n      );\n      // Return empty markdown instead of an error if no items found but fetch was successful.\n      return { headlinesMarkdown: \"# No headlines found\" };\n    }\n\n    console.log(`Extracted ${headlines.length} headlines.`);\n\n    // Join all markdown lines into a single string\n    const markdownOutput = `# Latest Google News Headlines\\n\\n${headlines.join(\"\\n\")}`;\n\n    // Return the successful outcome\n    return {\n      headlinesMarkdown: markdownOutput,\n    };\n  } catch (error) {\n    console.error(\"Error processing Google News RSS feed:\", error);\n    // Ensure the error message is a string\n    const errorMessage = error instanceof Error ? error.message : String(error);\n    return {\n      $error: `Failed to process Google News RSS feed: ${errorMessage}`,\n    };\n  }\n}\n\nasync function describe() {\n  return {\n    title: \"Get Google News\",\n    description: \"Returns latest news headlines using Google News API\",\n    inputSchema: {\n      type: \"object\",\n    },\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        headlinesMarkdown: {\n          type: \"string\",\n        },\n      },\n    },\n  };\n}\n\n// Export the function as the default export, as required by the environment.\nexport { invoke as default, describe };\n",
+      "metadata": {
+        "title": "get-google-news",
+        "description": "",
+        "runnable": true
+      }
+    }
+  },
+  "assets": {
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI1NS43NyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMjMwLjAwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iODguNDYiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CiAgICAgIAogICAgPC9zdmc+"
+    }
+  }
+}
