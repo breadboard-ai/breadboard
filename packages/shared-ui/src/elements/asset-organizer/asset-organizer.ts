@@ -7,16 +7,9 @@
 import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("AssetOrganizer");
 
-import {
-  css,
-  html,
-  HTMLTemplateResult,
-  LitElement,
-  nothing,
-  PropertyValues,
-} from "lit";
+import { css, LitElement, nothing, PropertyValues, TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { SignalWatcher } from "@lit-labs/signals";
+import { Signal, SignalWatcher, html } from "@lit-labs/signals";
 import { GraphAsset, Organizer } from "../../state";
 import {
   AssetMetadata,
@@ -51,6 +44,20 @@ import { styleMap } from "lit/directives/style-map.js";
 import { map } from "lit/directives/map.js";
 
 const OVERFLOW_MENU_PADDING = 12;
+
+const DEFAULT_ACTIONS: OverflowAction[] = [
+  { icon: "upload", title: "Upload from device", name: "upload" },
+  {
+    icon: "content-add",
+    title: "Create empty content",
+    name: "content-add",
+  },
+  {
+    icon: "youtube",
+    title: "YouTube",
+    name: "youtube",
+  },
+];
 
 interface GraphParameter {
   path: string;
@@ -714,6 +721,37 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
     return metadata !== null && "subType" in (metadata as AssetMetadata);
   }
 
+  #actions = new Signal.Computed(() => {
+    if (!this.state) return DEFAULT_ACTIONS;
+    const actions = [
+      ...DEFAULT_ACTIONS,
+      ...[...this.state.connectors.values()]
+        .filter(
+          (connector) =>
+            !connector.singleton ||
+            !this.state?.connectorInstanceExists(connector.url)
+        )
+        .map((connector) => {
+          return {
+            title: connector.title,
+            name: "connector",
+            icon: connector.icon || "content-add",
+            value: connector.url,
+          };
+        }),
+    ];
+
+    if (this.showGDrive) {
+      actions.push({
+        icon: "gdrive",
+        title: "Google Drive",
+        name: "gdrive",
+      });
+    }
+
+    return actions;
+  });
+
   render() {
     const assets = this.state?.graphAssets;
     const parameters = this.state?.parameters;
@@ -744,33 +782,10 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
         type === "content" && subType !== "gdrive" && subType !== "youtube";
     }
 
-    let addOverflowMenu: HTMLTemplateResult | symbol = nothing;
+    let addOverflowMenu: TemplateResult | symbol = nothing;
     if (this.showAddOverflowMenu) {
-      const actions: OverflowAction[] = [
-        { icon: "upload", title: "Upload from device", name: "upload" },
-        {
-          icon: "content-add",
-          title: "Create empty content",
-          name: "content-add",
-        },
-        {
-          icon: "youtube",
-          title: "YouTube",
-          name: "youtube",
-        },
-        ...createConnectorActions(this.state),
-      ];
-
-      if (this.showGDrive) {
-        actions.push({
-          icon: "gdrive",
-          title: "Google Drive",
-          name: "gdrive",
-        });
-      }
-
       addOverflowMenu = html`<bb-overflow-menu
-        .actions=${actions}
+        .actions=${this.#actions}
         .disabled=${false}
         style=${styleMap({
           left: `${this.#addOverflowLocation.x}px`,
@@ -1417,22 +1432,4 @@ function toLLMContentArray(text: string): NodeValue {
     },
   ];
   return c as NodeValue;
-}
-
-function createConnectorActions(organizer: Organizer | null): OverflowAction[] {
-  if (!organizer) return [];
-  return [...organizer.connectors.values()]
-    .filter(
-      (connector) =>
-        !connector.singleton ||
-        !organizer.connectorInstanceExists(connector.url)
-    )
-    .map((connector) => {
-      return {
-        title: connector.title,
-        name: "connector",
-        icon: connector.icon || "content-add",
-        value: connector.url,
-      };
-    });
 }
