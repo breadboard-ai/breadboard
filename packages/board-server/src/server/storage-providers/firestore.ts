@@ -153,6 +153,16 @@ export class FirestoreStorageProvider
     });
   }
 
+  async upsertBoard(board: Readonly<StorageBoard>): Promise<StorageBoard> {
+    const updatedBoard: StorageBoard = {...board, name: board.name || crypto.randomUUID()};
+    await this.updateBoard(updatedBoard);
+    const result = await this.loadBoard({name: updatedBoard.name, owner: updatedBoard.owner});
+    if (!result) {
+      throw new Error(`Failed to create the board ${updatedBoard.name}`);
+    }
+    return result;
+  }
+
   async createBoard(userId: string, name: string): Promise<void> {
     await this.#getBoardDoc(userId, name).set({
       name,

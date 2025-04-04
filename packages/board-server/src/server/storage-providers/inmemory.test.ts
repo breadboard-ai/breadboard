@@ -73,6 +73,26 @@ suite("In-memory storage provider", () => {
     );
   });
 
+  test("upsert board", async () => {
+    const board: StorageBoard = {
+      name: '',  // Explicitly no name - new board.
+      owner: '',
+      displayName: "Test Board",
+      description: "Board For Testing",
+      tags: ["published"],
+      thumbnail: "tbnail",
+      graph: GRAPH,
+    };
+
+    const created = await provider.upsertBoard(board);
+    assert.notEqual(created.name, ""); // The result must have a name assigned.
+    board.name = created.name;
+    assert.deepEqual(created, board);
+    board.description = 'updated';
+    const updated = await provider.upsertBoard(board);
+    assert.deepEqual(updated, board);
+  });
+
   test("load board by name", async () => {
     const board = {
       name: "test-board",

@@ -42,7 +42,7 @@ export class InMemoryStorageProvider implements BoardServerStore {
   async createBoard(userId: string, name: string): Promise<void> {
     this.#boards[name] = {
       name,
-      owner: userId,
+    owner: userId,
       displayName: name,
       description: "",
       tags: [],
@@ -53,6 +53,12 @@ export class InMemoryStorageProvider implements BoardServerStore {
 
   async updateBoard(board: StorageBoard): Promise<void> {
     this.#boards[board.name] = board;
+  }
+
+  async upsertBoard(board: Readonly<StorageBoard>): Promise<StorageBoard> {
+    const updatedBoard: StorageBoard = {...board, name: board.name || crypto.randomUUID()};
+    this.#boards[updatedBoard.name] = updatedBoard;
+    return updatedBoard;
   }
 
   async deleteBoard(_userId: string, boardName: string): Promise<void> {
