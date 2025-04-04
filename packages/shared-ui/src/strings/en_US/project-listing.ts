@@ -46,16 +46,16 @@ export default {
     str: "Sort by",
   },
   LABEL_WELCOME_MESSAGE_A: {
-    str: "Welcome to",
+    str: "Make a",
   },
   LABEL_WELCOME_MESSAGE_B: {
-    str: "Flows",
+    str: "Flow",
   },
   LABEL_WELCOME_CTA: {
-    str: "Describe your flow or select a template to start.",
+    str: "What do you want to create today?  Type it in or select a template.",
   },
   LABEL_PLACEHOLDER_DESCRIPTION: {
-    str: "Create a blog flow that generates a blog post with images for a subject I give it",
+    str: "Describe what you want to make in 1-2 sentences",
   },
   LABEL_FEATURED_GUIDES: {
     str: "Guides and Tutorials",
