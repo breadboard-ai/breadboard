@@ -118,7 +118,12 @@ export const asBlob = async (
   if (isStoredData(part)) {
     url = part.storedData.handle;
   } else {
-    url = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+    const { mimeType } = part.inlineData;
+    let { data } = part.inlineData;
+    if (mimeType.startsWith("text")) {
+      data = btoa(data);
+    }
+    url = `data:${mimeType};base64,${data}`;
   }
   const response = await fetch(url);
   const data = await response.blob();
@@ -202,7 +207,12 @@ export async function toInlineDataPart(
 ): Promise<InlineDataCapabilityPart> {
   const raw = await retrieveAsBlob(part, graphUrl);
   const mimeType = part.storedData.mimeType;
-  const data = await asBase64(raw);
+  let data;
+  if (mimeType.startsWith("text/")) {
+    data = await raw.text();
+  } else {
+    data = await asBase64(raw);
+  }
   return { inlineData: { mimeType, data } };
 }
 

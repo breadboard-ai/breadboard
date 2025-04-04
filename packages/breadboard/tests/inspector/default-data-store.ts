@@ -323,7 +323,7 @@ test("Default Data Store serializes groups", async (t) => {
   t.deepEqual(serialized?.length, 1);
   t.truthy(serialized![0].handle);
   t.deepEqual(serialized![0].inlineData, {
-    data: "aabbcQ",
+    data: "aabbcc",
     mimeType: "text/plain",
   });
 
