@@ -56,6 +56,7 @@ import { createGraphId, MAIN_BOARD_ID } from "./util";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import {
   AppTheme,
+  AssetEdge,
   EdgeAttachmentPoint,
 } from "@breadboard-ai/shared-ui/types/types.js";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
@@ -540,8 +541,6 @@ export class Edit extends EventTarget {
       ],
       `Replacing graph "${title}"`
     );
-
-    // editableGraph.replaceGraph(subGraphId, subGraphDescriptor);
   }
 
   async updateModuleInfo(
@@ -1304,6 +1303,28 @@ export class Edit extends EventTarget {
 
     const changing = await editableGraph.apply(
       new BreadboardUI.Transforms.ChangeEdge(changeType, graphId, from, to)
+    );
+    if (changing.success) return;
+
+    this.dispatchEvent(new RuntimeErrorEvent(changing.error));
+  }
+
+  async changeAssetEdge(
+    tab: Tab | null,
+    changeType: "add" | "remove",
+    edge: AssetEdge,
+    subGraphId: string | null = null
+  ) {
+    const editableGraph = this.getEditor(tab);
+    const graphId = subGraphId || "";
+
+    if (!editableGraph) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to find board to edit"));
+      return;
+    }
+
+    const changing = await editableGraph.apply(
+      new BreadboardUI.Transforms.ChangeAssetEdge(changeType, graphId, edge)
     );
     if (changing.success) return;
 

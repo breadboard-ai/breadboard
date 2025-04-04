@@ -9,6 +9,7 @@ import { KeyboardCommand, KeyboardCommandDeps } from "./types";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { EditSpec } from "@google-labs/breadboard";
 import { MAIN_BOARD_ID } from "../runtime/util";
+import { inspectableAssetEdgeToString } from "@breadboard-ai/shared-ui/utils/workspace.js";
 
 function isFocusedOnGraphRenderer(evt: Event) {
   return evt
@@ -56,9 +57,61 @@ export const DeleteCommand: KeyboardCommand = {
       graph
     );
 
-    await editor.apply(
-      new BreadboardUI.Transforms.MarkInPortsInvalidSpec(spec)
-    );
+    const deleteActions: Promise<unknown>[] = [];
+    let projectState: BreadboardUI.State.Project | null = null;
+    for (const selectionGraph of selectionState.selectionState.graphs.values()) {
+      // First delete any selected Asset Edges.
+      if (selectionGraph.assetEdges.size) {
+        const assetEdges = graph.assetEdges();
+
+        if (Array.isArray(assetEdges)) {
+          for (const selectedAssetEdge of selectionGraph.assetEdges) {
+            for (const assetEdge of assetEdges) {
+              if (
+                selectedAssetEdge !== inspectableAssetEdgeToString(assetEdge)
+              ) {
+                continue;
+              }
+
+              deleteActions.push(
+                editor.apply(
+                  new BreadboardUI.Transforms.ChangeAssetEdge("remove", "", {
+                    assetPath: assetEdge.assetPath,
+                    direction: assetEdge.direction,
+                    nodeId: assetEdge.node.descriptor.id,
+                  })
+                )
+              );
+            }
+          }
+        }
+      }
+
+      // Then delete any selected Assets.
+      if (selectionGraph.assets.size) {
+        if (!projectState) {
+          projectState = runtime.state.getOrCreate(tab.mainGraphId, editor);
+        }
+
+        if (!projectState) {
+          continue;
+        }
+
+        for (const asset of selectionGraph.assets) {
+          deleteActions.push(projectState.organizer.removeGraphAsset(asset));
+        }
+      }
+    }
+
+    const actions = [
+      // Make sure to delete assets and asset edges first before anything else
+      // otherwise the transforms will fail because the target node may no
+      // longer exist.
+      ...deleteActions,
+      editor.apply(new BreadboardUI.Transforms.MarkInPortsInvalidSpec(spec)),
+    ];
+
+    await Promise.all(actions);
 
     runtime.select.deselectAll(
       tab.id,
@@ -276,7 +329,6 @@ export const UngroupCommand: KeyboardCommand = {
       throw new Error("Nothing to ungroup");
     }
 
-    console.log(selectionState.selectionState);
     for (const [sourceGraphId, selection] of selectionState.selectionState
       .graphs) {
       if (selection.nodes.size === 0) {

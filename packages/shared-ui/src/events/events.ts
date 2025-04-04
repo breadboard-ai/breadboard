@@ -33,7 +33,9 @@ import { ComponentExpansionState } from "../elements/editor/types.js";
 import type {
   AppTemplateAdditionalOptionsAvailable,
   AppTheme,
+  AssetEdge,
   Command,
+  DroppedAsset,
   EdgeAttachmentPoint,
   EdgeData,
   Settings,
@@ -333,7 +335,10 @@ export class DelayEvent extends Event {
 export class DragConnectorStartEvent extends Event {
   static eventName = "bbdragconnectorstart";
 
-  constructor(public readonly location: DOMPoint) {
+  constructor(
+    public readonly connectorType: "node" | "asset",
+    public readonly location: DOMPoint
+  ) {
     super(DragConnectorStartEvent.eventName, { ...eventInit });
   }
 }
@@ -933,6 +938,18 @@ export class EdgeChangeEvent extends Event {
   }
 }
 
+export class AssetEdgeChangeEvent extends Event {
+  static eventName = "bbassetedgechange";
+
+  constructor(
+    public readonly changeType: "add" | "remove",
+    public readonly assetEdge: AssetEdge,
+    public readonly subGraphId: string | null = null
+  ) {
+    super(AssetEdgeChangeEvent.eventName, { ...eventInit });
+  }
+}
+
 export class MultiEditEvent extends Event {
   static eventName = "bbmultiedit";
   constructor(
@@ -976,6 +993,13 @@ export class EdgeAttachmentMoveEvent extends Event {
     public readonly attachmentPoint: EdgeAttachmentPoint
   ) {
     super(EdgeAttachmentMoveEvent.eventName, { ...eventInit });
+  }
+}
+
+export class DroppedAssetsEvent extends Event {
+  static eventName = "bbdroppedassets" as const;
+  constructor(public readonly assets: DroppedAsset[]) {
+    super(DroppedAssetsEvent.eventName, { ...eventInit });
   }
 }
 

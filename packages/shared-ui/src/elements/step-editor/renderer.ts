@@ -44,6 +44,7 @@ import {
   SelectionTranslateEvent,
 } from "./events/events";
 import {
+  DroppedAsset,
   HighlightStateWithChangeId,
   TopGraphRunResult,
   WorkspaceSelectionStateWithChangeId,
@@ -64,15 +65,16 @@ import {
   ZoomToFitEvent,
   MoveNodesEvent,
   EdgeAttachmentMoveEvent,
+  DroppedAssetsEvent,
 } from "../../events/events";
 import { styleMap } from "lit/directives/style-map.js";
 import { Entity } from "./entity";
 import { toGridSize } from "./utils/to-grid-size";
 import { DragConnector } from "./drag-connector";
-import { collectIds } from "./utils/collect-ids";
+import { collectAssetIds, collectNodeIds } from "./utils/collect-ids";
 import { EditorControls } from "./editor-controls";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { DATA_TYPE, MOVE_GRAPH_ID, TOOLBAR_CLEARANCE } from "./constants";
+import { DATA_TYPE, MOVE_GRAPH_ID } from "./constants";
 import { AssetMetadata } from "@breadboard-ai/types";
 
 @customElement("bb-renderer")
@@ -256,7 +258,8 @@ export class Renderer extends LitElement {
 
   #lastBoundsForInteraction = new DOMRect();
   #boundsForInteraction = new DOMRect();
-  #attemptFitToView = false;
+  #fitToViewPre = false;
+  #fitToViewPost = false;
   #attemptAdjustToNewBounds = false;
   #firstResize = true;
 
@@ -274,7 +277,7 @@ export class Renderer extends LitElement {
     this.#boundsForInteraction = this.getBoundingClientRect();
 
     if (this.#firstResize) {
-      this.#attemptFitToView = true;
+      this.#fitToViewPre = true;
     } else {
       this.#attemptAdjustToNewBounds = true;
     }
@@ -345,13 +348,93 @@ export class Renderer extends LitElement {
     this.interactionMode = "inert";
   }
 
+  async #createAssets(evt: DragEvent) {
+    if (
+      !evt.dataTransfer ||
+      !evt.dataTransfer.files ||
+      !evt.dataTransfer.files.length
+    ) {
+      return;
+    }
+
+    const filesDropped = evt.dataTransfer.files;
+    if ([...filesDropped].some((file) => file.type.includes("json"))) {
+      return;
+    }
+
+    evt.stopImmediatePropagation();
+
+    const targetGraph = this.#graphs.get(MAIN_BOARD_ID);
+    if (!targetGraph) {
+      console.warn("Unable to add to graph");
+      return;
+    }
+
+    const x = evt.clientX - this.#boundsForInteraction.x;
+    const y = evt.clientY - this.#boundsForInteraction.y;
+    let graphLocation = new DOMPoint(x, y).matrixTransform(
+      targetGraph.worldTransform.inverse()
+    );
+
+    graphLocation.x += targetGraph.transform.e;
+    graphLocation.y += targetGraph.transform.f;
+
+    if (Number.isNaN(graphLocation.x) || Number.isNaN(graphLocation.y)) {
+      // Set as 130, 20 so that it gets reset to 0, 0 below.
+      graphLocation = new DOMPoint(130, 20);
+    }
+
+    const visual = {
+      x: toGridSize(graphLocation.x - 130),
+      y: toGridSize(graphLocation.y - 20),
+    };
+
+    const assetLoad = [...filesDropped].map((file, idx) => {
+      return new Promise<DroppedAsset>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.addEventListener("loadend", () => {
+          if (reader.result === null) {
+            reject("");
+            return;
+          }
+
+          const preamble = `data:${file.type};base64,`;
+          const data = (reader.result as string).substring(preamble.length);
+
+          resolve({
+            name: file.name,
+            visual: { x: visual.x + idx * 10, y: visual.y + idx * 10 },
+            content: {
+              role: "user",
+              parts: [
+                {
+                  inlineData: {
+                    data,
+                    mimeType: file.type,
+                  },
+                },
+              ],
+            },
+          });
+        });
+        reader.readAsDataURL(file);
+      });
+    });
+
+    const assets = await Promise.all(assetLoad);
+    this.dispatchEvent(new DroppedAssetsEvent(assets));
+  }
+
   #onDragOver(evt: DragEvent) {
     evt.preventDefault();
   }
 
   #onDrop(evt: DragEvent) {
+    evt.preventDefault();
+
     const nodeType = evt.dataTransfer?.getData(DATA_TYPE);
     if (!nodeType) {
+      this.#createAssets(evt);
       return;
     }
 
@@ -666,8 +749,8 @@ export class Renderer extends LitElement {
   }
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
-    if (this.#attemptFitToView) {
-      this.#attemptFitToView = false;
+    if (this.#fitToViewPre) {
+      this.#fitToViewPre = false;
       this.fitToView(false);
     }
 
@@ -745,10 +828,11 @@ export class Renderer extends LitElement {
 
       // When going from an empty main graph to something populated ensure that
       // we re-center the graph to the view.
-      if (mainGraph.nodes.length === 0 && this.graph.nodes()) {
-        requestAnimationFrame(() => {
-          this.fitToView(false);
-        });
+      const entitiesBefore = mainGraph.nodes.length + mainGraph.assets.size;
+      const entitiesAfter =
+        this.graph.nodes().length + this.graph.assets().size;
+      if (entitiesBefore === 0 && entitiesAfter > 0) {
+        this.#fitToViewPost = true;
       }
 
       mainGraph.url = graphUrl;
@@ -843,6 +927,17 @@ export class Renderer extends LitElement {
     this._boundsDirty.clear();
   }
 
+  protected updated(_changedProperties: PropertyValues): void {
+    if (!this.#fitToViewPost) {
+      return;
+    }
+
+    this.#fitToViewPost = false;
+    requestAnimationFrame(() => {
+      this.fitToView(false);
+    });
+  }
+
   #adjustToNewBounds() {
     if (!this.camera) {
       return;
@@ -858,13 +953,18 @@ export class Renderer extends LitElement {
     );
   }
 
-  fitToView(animated = true) {
+  fitToView(animated = true, retryOnEmpty = false) {
     if (!this.#graphs || !this.#boundsForInteraction || !this.camera) {
       return;
     }
 
     const allGraphBounds = calculateBounds(this.#graphs);
     if (allGraphBounds.width === 0) {
+      if (retryOnEmpty) {
+        requestAnimationFrame(() => {
+          this.fitToView(animated);
+        });
+      }
       return;
     }
 
@@ -1182,12 +1282,15 @@ export class Renderer extends LitElement {
       return nothing;
     }
 
+    const hasNoAssets = (this.graph?.assets() ?? new Map()).size === 0;
     const hasNoSubGraphs = Object.keys(this.graph?.graphs() ?? {}).length === 0;
     const subGraphsAreEmpty = Object.values(this.graph?.graphs() ?? {}).every(
       (graph) => graph.nodes().length === 0
     );
     const showDefaultAdd =
-      this.graph?.nodes().length === 0 && (hasNoSubGraphs || subGraphsAreEmpty);
+      this.graph?.nodes().length === 0 &&
+      hasNoAssets &&
+      (hasNoSubGraphs || subGraphsAreEmpty);
 
     this.camera.showBounds = this.debug;
 
@@ -1245,38 +1348,49 @@ export class Renderer extends LitElement {
               );
             }}
             @bbdragconnectorstart=${(evt: DragConnectorStartEvent) => {
-              const { nodeId, graphId, portId } = collectIds(evt, "out");
-              if (!nodeId || !graphId || !portId) {
-                console.warn(
-                  "Unable to connect - no node/graph/port combination found"
-                );
-              }
-
               this.dragConnector.offset = new DOMPoint(
                 this.#boundsForInteraction.x,
                 this.#boundsForInteraction.y
               );
-              this.dragConnector.start = evt.location;
-              this.dragConnector.graphId = graphId;
-              this.dragConnector.nodeId = nodeId;
-              this.dragConnector.portId = portId;
-              this.dragConnector.addEventListener(
-                "bbnodeselect",
-                (evt: Event) => {
-                  if (!this.#editorControls.value || !nodeId) {
-                    return;
-                  }
 
-                  const selectEvent = evt as NodeSelectEvent;
-                  this.#editorControls.value.showComponentLibraryAt(
-                    selectEvent.x - this.#boundsForInteraction.x,
-                    selectEvent.y - this.#boundsForInteraction.y,
-                    nodeId,
-                    graphId
+              this.dragConnector.start = evt.location;
+              this.dragConnector.connectorType = evt.connectorType;
+
+              if (evt.connectorType === "node") {
+                const { nodeId, graphId, portId } = collectNodeIds(evt, "out");
+                if (!nodeId || !graphId || !portId) {
+                  console.warn(
+                    "Unable to connect - no node/graph/port combination found"
                   );
-                },
-                { once: true }
-              );
+                  return;
+                }
+
+                this.dragConnector.graphId = graphId;
+                this.dragConnector.nodeId = nodeId;
+                this.dragConnector.portId = portId;
+
+                this.dragConnector.addEventListener(
+                  "bbnodeselect",
+                  (evt: Event) => {
+                    if (!this.#editorControls.value || !nodeId) {
+                      return;
+                    }
+
+                    const selectEvent = evt as NodeSelectEvent;
+                    this.#editorControls.value.showComponentLibraryAt(
+                      selectEvent.x - this.#boundsForInteraction.x,
+                      selectEvent.y - this.#boundsForInteraction.y,
+                      nodeId,
+                      graphId
+                    );
+                  },
+                  { once: true }
+                );
+              } else if (evt.connectorType === "asset") {
+                const { graphId, assetPath } = collectAssetIds(evt);
+                this.dragConnector.graphId = graphId;
+                this.dragConnector.assetPath = assetPath;
+              }
             }}
             @bbselectgraphcontents=${(evt: SelectGraphContentsEvent) => {
               const graph = this.#graphs.get(evt.graphId);
