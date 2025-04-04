@@ -360,6 +360,18 @@ export class Graph extends Box {
         graphEdge.selected;
     }
 
+    if (Array.isArray(this.#assetEdges)) {
+      for (const assetEdge of this.#assetEdges) {
+        const id = inspectableAssetEdgeToString(assetEdge);
+        const graphAssetEdge = this.entities.get(id) as GraphEdge;
+        if (!graphAssetEdge) {
+          continue;
+        }
+
+        graphAssetEdge.selected = selectionState?.assetEdges.has(id) ?? false;
+      }
+    }
+
     for (const assetPath of this.#assets.keys()) {
       const graphAsset = this.entities.get(assetPath) as GraphAsset;
       if (!graphAsset) {
@@ -402,6 +414,20 @@ export class Graph extends Box {
 
       if (graphAsset.selected) {
         selectionState.assets.add(assetPath);
+      }
+    }
+
+    if (Array.isArray(this.#assetEdges)) {
+      for (const assetEdge of this.#assetEdges) {
+        const id = inspectableAssetEdgeToString(assetEdge);
+        const graphAssetEdge = this.entities.get(id) as GraphEdge;
+        if (!graphAssetEdge) {
+          continue;
+        }
+
+        if (graphAssetEdge.selected) {
+          selectionState.assetEdges.add(id);
+        }
       }
     }
 

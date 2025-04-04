@@ -5,15 +5,21 @@
  */
 import { LitElement, html, css, nothing, PropertyValues, svg } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { DragConnectorReceiver } from "../../types/types";
-import { Edge, GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
+import { AssetEdge, DragConnectorReceiver } from "../../types/types";
 import {
+  AssetPath,
+  Edge,
+  GraphIdentifier,
+  NodeIdentifier,
+} from "@breadboard-ai/types";
+import {
+  AssetEdgeChangeEvent,
   DragConnectorCancelledEvent,
   EdgeChangeEvent,
   ToastEvent,
   ToastType,
 } from "../../events/events";
-import { collectIds } from "./utils/collect-ids";
+import { collectNodeIds } from "./utils/collect-ids";
 import { PortIdentifier } from "@google-labs/breadboard";
 import { MAIN_BOARD_ID } from "../../constants/constants";
 import { NodeSelectEvent } from "./events/events";
@@ -36,6 +42,12 @@ export class DragConnector extends LitElement {
 
   @property()
   accessor portId: PortIdentifier | null = null;
+
+  @property()
+  accessor assetPath: AssetPath | null = null;
+
+  @property()
+  accessor connectorType: "asset" | "node" = "node";
 
   @property()
   accessor end: DOMPoint | null = null;
@@ -95,7 +107,7 @@ export class DragConnector extends LitElement {
       targetFound = el;
       this.#targets.add(el);
       if (el.isOnDragConnectorTarget()) {
-        const { nodeId } = collectIds(evt, "in");
+        const { nodeId } = collectNodeIds(evt, "in");
         if (nodeId !== this.nodeId) {
           el.highlight();
           this.isOnTarget = true;
@@ -133,12 +145,16 @@ export class DragConnector extends LitElement {
         el.removeHighlight();
         this.isOnTarget = false;
 
-        const { nodeId, graphId } = collectIds(evt, "in");
-        if (!nodeId || !graphId || !this.graphId || !this.nodeId) {
+        const { nodeId, graphId } = collectNodeIds(evt, "in");
+        if (!nodeId || !graphId || !this.graphId) {
           break;
         }
 
-        if (nodeId === this.nodeId) {
+        if (this.connectorType === "node" && nodeId === this.nodeId) {
+          break;
+        }
+
+        if (this.connectorType === "asset" && !this.assetPath) {
           break;
         }
 
@@ -147,26 +163,42 @@ export class DragConnector extends LitElement {
         if (graphId !== this.graphId) {
           this.dispatchEvent(
             new ToastEvent(
-              "Connected steps must belong in the same flow",
+              "Connected items must belong in the same flow",
               ToastType.INFORMATION
             )
           );
           break;
         }
 
-        const from: Edge = {
-          from: this.nodeId,
-          to: nodeId,
-        };
+        if (this.connectorType === "node" && this.nodeId) {
+          const from: Edge = {
+            from: this.nodeId,
+            to: nodeId,
+          };
 
-        this.dispatchEvent(
-          new EdgeChangeEvent(
-            "add",
-            from,
-            undefined,
-            graphId === MAIN_BOARD_ID ? null : graphId
-          )
-        );
+          this.dispatchEvent(
+            new EdgeChangeEvent(
+              "add",
+              from,
+              undefined,
+              graphId === MAIN_BOARD_ID ? null : graphId
+            )
+          );
+        } else if (this.connectorType === "asset" && this.assetPath) {
+          const assetEdge: AssetEdge = {
+            direction: "load",
+            assetPath: this.assetPath,
+            nodeId,
+          };
+
+          this.dispatchEvent(
+            new AssetEdgeChangeEvent(
+              "add",
+              assetEdge,
+              graphId === MAIN_BOARD_ID ? null : graphId
+            )
+          );
+        }
         break;
       }
     }
@@ -178,8 +210,13 @@ export class DragConnector extends LitElement {
       );
     }
 
+    this.#targets.clear();
     this.start = null;
     this.end = null;
+    this.nodeId = null;
+    this.portId = null;
+    this.graphId = null;
+    this.assetPath = null;
     window.removeEventListener("pointermove", this.#onPointerMoveBound);
   }
 
@@ -202,13 +239,7 @@ export class DragConnector extends LitElement {
   }
 
   render() {
-    if (
-      !this.start ||
-      !this.end ||
-      !this.dimensions ||
-      !this.graphId ||
-      !this.nodeId
-    ) {
+    if (!this.start || !this.end || !this.dimensions) {
       return nothing;
     }
 

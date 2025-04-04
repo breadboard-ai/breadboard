@@ -142,6 +142,7 @@ export function emptySelectionState(): GraphSelectionState {
   return {
     nodes: new Set<NodeIdentifier>(),
     assets: new Set<AssetPath>(),
+    assetEdges: new Set<string>(),
     comments: new Set<string>(),
     edges: new Set<string>(),
     references: new Set<ReferenceIdentifier>(),

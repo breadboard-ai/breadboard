@@ -20,6 +20,7 @@ import {
   PortIdentifier,
   NodeHandlerMetadata,
   InspectableRun,
+  InspectableAssetEdgeDirection,
 } from "@google-labs/breadboard";
 import {
   AssetPath,
@@ -27,6 +28,7 @@ import {
   GraphIdentifier,
   GraphMetadata,
   InlineDataCapabilityPart,
+  LLMContent,
   ModuleIdentifier,
   NodeMetadata,
   StoredDataCapabilityPart,
@@ -442,6 +444,7 @@ export type ReferenceIdentifier =
 export interface GraphSelectionState {
   nodes: Set<NodeIdentifier>;
   assets: Set<AssetPath>;
+  assetEdges: Set<string>;
   comments: Set<string>;
   edges: Set<string>;
   references: Set<ReferenceIdentifier>;
@@ -578,3 +581,15 @@ export interface Utterance {
 }
 
 export type EdgeAttachmentPoint = "Top" | "Right" | "Bottom" | "Left" | "Auto";
+
+export interface DroppedAsset {
+  name: string;
+  visual: Record<string, number>;
+  content: LLMContent;
+}
+
+export interface AssetEdge {
+  direction: InspectableAssetEdgeDirection;
+  nodeId: NodeIdentifier;
+  assetPath: AssetPath;
+}

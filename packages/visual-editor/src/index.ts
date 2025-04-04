@@ -3859,6 +3859,36 @@ export class Main extends LitElement {
                   true
                 );
               }}
+              @bbdroppedassets=${async (
+                evt: BreadboardUI.Events.DroppedAssetsEvent
+              ) => {
+                const projectState = this.#runtime.state.getOrCreate(
+                  this.tab?.mainGraphId,
+                  this.#runtime.edit.getEditor(this.tab)
+                );
+
+                if (!projectState) {
+                  this.toast(
+                    "Unable to add",
+                    BreadboardUI.Events.ToastType.ERROR
+                  );
+                  return;
+                }
+
+                await Promise.all(
+                  evt.assets.map((asset) => {
+                    return projectState?.organizer.addGraphAsset({
+                      path: asset.name,
+                      metadata: {
+                        title: asset.name,
+                        type: "file",
+                        visual: asset.visual,
+                      },
+                      data: [asset.content],
+                    });
+                  })
+                );
+              }}
               @bbedgeattachmentmove=${async (
                 evt: BreadboardUI.Events.EdgeAttachmentMoveEvent
               ) => {
@@ -3879,6 +3909,16 @@ export class Main extends LitElement {
                   evt.changeType,
                   evt.from,
                   evt.to,
+                  evt.subGraphId
+                );
+              }}
+              @bbassetedgechange=${async (
+                evt: BreadboardUI.Events.AssetEdgeChangeEvent
+              ) => {
+                await this.#runtime.edit.changeAssetEdge(
+                  this.tab,
+                  evt.changeType,
+                  evt.assetEdge,
                   evt.subGraphId
                 );
               }}

@@ -241,8 +241,12 @@ export class Select extends EventTarget {
         this.#addToGraphsCollection(tab, id, "references", references);
       }
 
-      for (const references of selectionState.assets) {
-        this.#addToGraphsCollection(tab, id, "assets", references);
+      for (const assets of selectionState.assets) {
+        this.#addToGraphsCollection(tab, id, "assets", assets);
+      }
+
+      for (const assetEdges of selectionState.assetEdges) {
+        this.#addToGraphsCollection(tab, id, "assetEdges", assetEdges);
       }
     }
 

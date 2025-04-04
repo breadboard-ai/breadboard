@@ -22,7 +22,6 @@ import { Box } from "./box";
 import {
   NodeBoundsUpdateRequestEvent,
   NodeSelectEvent,
-  SelectionMoveEvent,
   SelectionTranslateEvent,
 } from "./events/events";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
@@ -395,19 +394,6 @@ export class GraphAsset extends Box implements DragConnectorReceiver {
             const xTranslation = toGridSize(deltaX);
             const yTranslation = toGridSize(deltaY);
 
-            if (evt.shiftKey) {
-              this.dispatchEvent(
-                new SelectionMoveEvent(
-                  evt.clientX,
-                  evt.clientY,
-                  xTranslation,
-                  yTranslation,
-                  /* hasSettled */ false
-                )
-              );
-              return;
-            }
-
             this.dispatchEvent(
               new SelectionTranslateEvent(
                 xTranslation,
@@ -439,19 +425,6 @@ export class GraphAsset extends Box implements DragConnectorReceiver {
             this.#dragStart = null;
             this.#translateStart = null;
 
-            if (evt.shiftKey) {
-              this.dispatchEvent(
-                new SelectionMoveEvent(
-                  evt.clientX,
-                  evt.clientY,
-                  xTranslation,
-                  yTranslation,
-                  /* hasSettled */ true
-                )
-              );
-              return;
-            }
-
             this.dispatchEvent(
               new SelectionTranslateEvent(
                 xTranslation,
@@ -476,6 +449,7 @@ export class GraphAsset extends Box implements DragConnectorReceiver {
               // across graphs).
               this.dispatchEvent(
                 new DragConnectorStartEvent(
+                  "asset",
                   new DOMPoint(evt.clientX, evt.clientY)
                 )
               );

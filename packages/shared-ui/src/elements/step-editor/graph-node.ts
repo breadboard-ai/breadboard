@@ -476,6 +476,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
                 p {
                   /** Create space for chiclet borders */
                   padding: 1px;
+                  width: 100%;
                 }
 
                 & .missing {
@@ -904,6 +905,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
                     // across graphs).
                     this.dispatchEvent(
                       new DragConnectorStartEvent(
+                        "node",
                         new DOMPoint(evt.clientX, evt.clientY)
                       )
                     );

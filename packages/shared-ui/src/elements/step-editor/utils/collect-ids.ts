@@ -4,11 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
+import type {
+  AssetPath,
+  GraphIdentifier,
+  NodeIdentifier,
+} from "@breadboard-ai/types";
 import { Graph } from "../graph";
 import { GraphNode } from "../graph-node";
 import { PortIdentifier } from "@google-labs/breadboard";
 import { GraphEdge } from "../graph-edge";
+import { GraphAsset } from "../graph-asset";
 
 export function collectEdgeAndGraphId(evt: Event) {
   let graphId: GraphIdentifier | null = null;
@@ -56,7 +61,7 @@ export function collectNodeAndGraphId(evt: Event) {
   return { graphId, nodeId };
 }
 
-export function collectIds(evt: Event, dir: "in" | "out") {
+export function collectNodeIds(evt: Event, dir: "in" | "out") {
   let graphId: GraphIdentifier | null = null;
   let nodeId: NodeIdentifier | null = null;
   let portId: PortIdentifier | null = null;
@@ -90,4 +95,29 @@ export function collectIds(evt: Event, dir: "in" | "out") {
   }
 
   return { graphId, nodeId, portId };
+}
+
+export function collectAssetIds(evt: Event) {
+  let graphId: GraphIdentifier | null = null;
+  let assetPath: AssetPath | null = null;
+
+  const path = evt.composedPath();
+
+  for (const el of path) {
+    if (el instanceof Graph && !graphId) {
+      graphId = el.graphId;
+    }
+
+    if (el instanceof GraphAsset) {
+      if (!assetPath) {
+        assetPath = el.assetPath;
+      }
+    }
+
+    if (assetPath && graphId) {
+      break;
+    }
+  }
+
+  return { graphId, assetPath };
 }

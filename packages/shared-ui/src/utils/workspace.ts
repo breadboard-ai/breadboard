@@ -72,6 +72,7 @@ export function createEmptyGraphSelectionState(): GraphSelectionState {
   return {
     nodes: new Set(),
     assets: new Set(),
+    assetEdges: new Set(),
     comments: new Set(),
     edges: new Set(),
     references: new Set(),

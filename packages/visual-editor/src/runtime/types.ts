@@ -96,6 +96,7 @@ export type ReferenceIdentifier =
 export interface GraphSelectionState {
   nodes: Set<NodeIdentifier>;
   assets: Set<AssetPath>;
+  assetEdges: Set<string>;
   comments: Set<string>;
   edges: Set<string>;
   references: Set<ReferenceIdentifier>;

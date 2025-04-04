@@ -771,7 +771,7 @@ export class TextEditor extends LitElement {
           const isMac = navigator.platform.indexOf("Mac") === 0;
           const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
 
-          if (evt.key === "c" && isCtrlCommand) {
+          if ((evt.key === "c" || evt.key === "x") && isCtrlCommand) {
             evt.preventDefault();
 
             const range = this.#getCurrentRange();
@@ -779,7 +779,12 @@ export class TextEditor extends LitElement {
               navigator.clipboard.writeText(
                 range.toString().replace(/\uFEFF/gim, "")
               );
+
+              if (evt.key === "x") {
+                range.deleteContents();
+              }
             }
+
             return;
           }
 
