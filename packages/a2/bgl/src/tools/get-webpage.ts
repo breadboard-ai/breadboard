@@ -168,7 +168,7 @@ async function describe(inputs: DescribeInputs) {
 
     metadata: {
       icon: "language",
-      tags: ["quick-access", "tool"],
+      tags: ["quick-access", "tool", "component"],
       order: 4,
     },
   };

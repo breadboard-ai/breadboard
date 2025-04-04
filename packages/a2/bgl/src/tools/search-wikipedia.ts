@@ -133,7 +133,7 @@ async function describe(inputs: DescribeInputs) {
     } satisfies Schema,
     metadata: {
       icon: "globe-book",
-      tags: ["quick-access", "tool"],
+      tags: ["quick-access", "tool", "component"],
       order: 3,
     },
   };
