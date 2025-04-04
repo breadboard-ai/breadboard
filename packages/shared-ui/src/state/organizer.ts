@@ -154,7 +154,10 @@ class ReactiveOrganizer implements Organizer {
     if (!ok(writing)) return this.#free(writing);
 
     const updatingGraph = await this.#project.apply(
-      new EditConnector(path, configuration)
+      new EditConnector(path, {
+        ...configuration,
+        configuration: values,
+      })
     );
     if (!ok(updatingGraph)) return this.#free(updatingGraph);
 

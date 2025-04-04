@@ -30,7 +30,10 @@
       }
     },
     "userModified": true,
-    "tags": ["connector", "published"],
+    "tags": [
+      "connector",
+      "published"
+    ],
     "comments": [
       {
         "id": "comment-c74afa15",
@@ -49,11 +52,11 @@
   },
   "modules": {
     "configurator": {
-      "code": "/**\n * @fileoverview Add a description for your module here.\n */\nimport { err, ok } from \"./a2/utils\";\nimport { createConfigurator } from \"./a2/connector-manager\";\nexport { invoke as default, describe };\nconst CONNECTOR_TITLE = \"Google Drive\";\nconst { invoke, describe } = createConfigurator({\n    title: CONNECTOR_TITLE,\n    initialize: async () => {\n        return { title: \"Untitled Drive File\", configuration: {} };\n    },\n});\n",
+      "code": "/**\n * @fileoverview Add a description for your module here.\n */\nimport { err, ok } from \"./a2/utils\";\nimport { createConfigurator } from \"./a2/connector-manager\";\nexport { invoke as default, describe };\nconst CONNECTOR_TITLE = \"Google Drive\";\nconst { invoke, describe } = createConfigurator({\n    title: CONNECTOR_TITLE,\n    initialize: async () => {\n        return { title: \"Untitled Drive File\", configuration: {} };\n    },\n    read: async ({ id, configuration }) => {\n        return {\n            schema: {\n                type: \"object\",\n                properties: {\n                    picker: {\n                        type: \"string\",\n                        title: \"Google Drive File\",\n                        description: \"Select Google Drive File\",\n                        behavior: [\"google-drive-file-id\"],\n                    },\n                },\n            },\n            values: {\n                picker: configuration.file,\n            },\n        };\n    },\n    write: async ({ id, values }) => {\n        console.log(\"WRITE\", id, values);\n        return {};\n    },\n});\n",
       "metadata": {
         "title": "configurator",
         "source": {
-          "code": "/**\n * @fileoverview Add a description for your module here.\n */\n\nimport { err, ok } from \"./a2/utils\";\nimport { createConfigurator } from \"./a2/connector-manager\";\n\nexport { invoke as default, describe };\n\nconst CONNECTOR_TITLE = \"Google Drive\";\n\nconst { invoke, describe } = createConfigurator({\n  title: CONNECTOR_TITLE,\n  initialize: async () => {\n    return { title: \"Untitled Drive File\", configuration: {} };\n  },\n});\n",
+          "code": "/**\n * @fileoverview Add a description for your module here.\n */\n\nimport { err, ok } from \"./a2/utils\";\nimport { createConfigurator } from \"./a2/connector-manager\";\n\nexport { invoke as default, describe };\n\nconst CONNECTOR_TITLE = \"Google Drive\";\n\ntype Configuration = {\n  file?: {\n    preview: string;\n    id: string;\n    mimeType: string;\n  };\n};\n\nconst { invoke, describe } = createConfigurator<Configuration>({\n  title: CONNECTOR_TITLE,\n  initialize: async () => {\n    return { title: \"Untitled Drive File\", configuration: {} };\n  },\n  read: async ({ id, configuration }) => {\n    return {\n      schema: {\n        type: \"object\",\n        properties: {\n          picker: {\n            type: \"string\",\n            title: \"Google Drive File\",\n            description: \"Select Google Drive File\",\n            behavior: [\"google-drive-file-id\"],\n          },\n        },\n      },\n      values: {\n        picker: configuration.file,\n      },\n    };\n  },\n  write: async ({ id, values }) => {\n    console.log(\"WRITE\", id, values);\n    return {};\n  },\n});\n",
           "language": "typescript"
         },
         "description": "Add a description for your module here.",

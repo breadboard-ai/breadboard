@@ -16,12 +16,12 @@
       },
       "configuration": {
         "text": {
-          "role": "user",
           "parts": [
             {
               "text": "This is some text\n\n-- old text --\n\n{{\"type\":\"asset\",\"path\":\"connectors/82048405-ea54-4876-a464-03f25a40df62\",\"title\":\"Google Drive\"}}"
             }
-          ]
+          ],
+          "role": "user"
         }
       }
     },
@@ -38,12 +38,12 @@
       },
       "configuration": {
         "connectors": {
-          "role": "user",
           "parts": [
             {
               "text": "{{\"type\":\"asset\",\"path\":\"connectors/82048405-ea54-4876-a464-03f25a40df62\",\"title\":\"Google Drive\"}}"
             }
-          ]
+          ],
+          "role": "user"
         }
       }
     }
@@ -92,7 +92,14 @@
             {
               "json": {
                 "url": "file://bgl/google-drive.bgl.json",
-                "configuration": {}
+                "configuration": {
+                  "picker": {
+                    "id": "1vh3G5CCASgAO6wXaQQ8DkRxXL0p3Txj7PeFHdSdA4Wc",
+                    "preview": "Untitled Document",
+                    "mimeType": "application/vnd.google-apps.document",
+                    "connectionName": "google-drive-limited"
+                  }
+                }
               }
             }
           ]
