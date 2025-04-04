@@ -14,13 +14,14 @@
           "outputHeight": 88
         },
         "title": "Make Text",
-        "logLevel": "info"
+        "logLevel": "info",
+        "userModified": false
       },
       "configuration": {
         "description": {
           "parts": [
             {
-              "text": "Given the documentation URL, please help me understand how to set up the connection server.\n\nDocumentation URL:\nhttps://breadboard-ai.github.io/breadboard/docs/guides/breadboard-from-scratch/\n\nUse {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:get-webpage\",\"title\":\"Get Webpage\"}}  tool to get the documentation."
+              "text": "Given the documentation URL, please help me understand how to set up the connection server.\n\nDocumentation URL:\nhttps://breadboard-ai.github.io/breadboard/docs/guides/breadboard-from-scratch/\n\nUse {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:get-webpage\",\"title\":\"Get Webpage\"}}  tool to do the research. Just give me the exact steps."
             }
           ],
           "role": "user"
@@ -31,7 +32,30 @@
   ],
   "edges": [],
   "metadata": {
-    "visual": {}
+    "visual": {
+      "presentation": {
+        "themes": {
+          "a786b35f-0144-4e8c-867c-3ce294f42e86": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "a786b35f-0144-4e8c-867c-3ce294f42e86"
+      }
+    },
+    "parameters": {}
   },
   "assets": {
     "@@thumbnail": {

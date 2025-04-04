@@ -82,6 +82,10 @@ async function invokeDescriber(
   } catch (e) {
     // swallow the error. It's okay that some modules don't have
     // custom describers.
+    console.warn(
+      `Unable to invoke describer for "${moduleId}"`,
+      (e as Error).message
+    );
   }
 }
 

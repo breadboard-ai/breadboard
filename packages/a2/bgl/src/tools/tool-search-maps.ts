@@ -2,10 +2,8 @@
  * @fileoverview The guts of the Search Maps tool.
  */
 
-import secrets from "@secrets";
-import fetch from "@fetch";
-
-import { ok } from "./a2/utils";
+import { ok, err } from "./a2/utils";
+import { executeTool } from "./a2/step-executor";
 
 export { invoke as default, describe };
 
@@ -59,29 +57,14 @@ ${results.places
 async function invoke({
   query,
 }: SearchMapsInputs): Promise<Outcome<SearchMapsOutputs>> {
-  const key = await secrets({ keys: ["GOOGLE_MAPS_API_KEY"] });
-  if (!ok(key)) {
-    return key;
-  }
-  const fetching = await fetch({
-    url: "https://places.googleapis.com/v1/places:searchText",
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Goog-Api-Key": `${key.GOOGLE_MAPS_API_KEY}`,
-      "X-Goog-FieldMask":
-        "places.id,places.displayName,places.formattedAddress,places.websiteUri,places.rating,places.userRatingCount,places.editorialSummary",
-    },
-    body: {
-      textQuery: query,
-    },
+  const executing = await executeTool<SearchMapResults>("map_search", {
+    query,
   });
-  if (!ok(fetching)) {
-    return fetching;
-  }
-  return {
-    results: formatResults(query, fetching.response as SearchMapResults),
-  };
+  if (!ok(executing)) return executing;
+
+  const results = formatResults(query, executing);
+
+  return { results };
 }
 
 async function describe() {

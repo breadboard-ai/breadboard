@@ -4,7 +4,8 @@
 
 import { ToolManager } from "./a2/tool-manager";
 import { GeminiPrompt } from "./a2/gemini-prompt";
-import { ok, toText } from "./a2/utils";
+import { ok, err, toText } from "./a2/utils";
+import { executeTool } from "./a2/step-executor";
 
 import secrets from "@secrets";
 import fetch from "@fetch";
@@ -17,6 +18,11 @@ export type SearchWebInputs = {
 
 export type SearchWebOutputs = {
   results: string;
+};
+
+export type SearchBackendOutput = {
+  url: string;
+  webpage_text_content: string;
 };
 
 export type CustomSearchEngineResponse = {
@@ -73,19 +79,27 @@ ${item.snippet}
 `;
 }
 
-async function getSearchLinks(query: string): Promise<Outcome<string>> {
-  const keys = await secrets({ keys: ["CSE_ID", "SEARCH_API_KEY"] });
-  if (!ok(keys)) {
-    return keys;
-  }
-  const url = `https://customsearch.googleapis.com/customsearch/v1?cx=${keys.CSE_ID}&q=${query}&key=${keys.SEARCH_API_KEY}`;
-  const fetching = await fetch({ url });
-  if (!ok(fetching)) {
-    return fetching;
-  }
-  const searchResults = fetching.response as CustomSearchEngineResponse;
+function formatBackendSearchResults(results: SearchBackendOutput[]): string {
+  return `## Search Results
 
-  return formatSearchResults(searchResults);
+    ${results
+      .map((result) => {
+        return `## Source: ${result.url}
+Source content:
+
+${result.webpage_text_content}
+`;
+      })
+      .join("\n\n")}
+`;
+}
+
+async function getSearchLinks(query: string): Promise<Outcome<string>> {
+  const results = await executeTool<SearchBackendOutput[]>("google_search", {
+    query,
+  });
+  if (!ok(results)) return results;
+  return formatBackendSearchResults(results);
 }
 
 async function invoke({

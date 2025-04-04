@@ -2,7 +2,7 @@
  * @fileoverview Utilities to execute tools on the AppCatalyst backend server.
  */
 
-export { executeStep };
+export { executeStep, executeTool };
 
 import fetch from "@fetch";
 import secrets from "@secrets";
@@ -25,29 +25,32 @@ export type Content = {
   chunks: Chunk[];
 };
 
-export interface ContentMap {
+export type ContentMap = {
   [key: string]: Content;
-}
+};
 
-export interface ExecuteStepRequest {
-  planStep: {
-    stepName: string;
-    modelApi: string;
-    inputParameters: string[];
-    systemPrompt: string;
-    stepIntent?: string;
-    output?: string;
-    options?: {
-      disablePromptRewrite: boolean;
-      renderMode: string;
-    };
+export type PlanStep = {
+  stepName: string;
+  modelApi: string;
+  inputParameters: string[];
+  systemPrompt?: string;
+  stepIntent?: string;
+  output?: string;
+  isListOutput?: boolean;
+  options?: {
+    disablePromptRewrite: boolean;
+    renderMode: string;
   };
-  execution_inputs: ContentMap;
-}
+};
 
-export interface ExecuteStepResponse {
+export type ExecuteStepRequest = {
+  planStep: PlanStep;
+  execution_inputs: ContentMap;
+};
+
+export type ExecuteStepResponse = {
   executionOutputs: ContentMap;
-}
+};
 
 function maybeExtractError(e: string): string {
   try {
@@ -55,6 +58,46 @@ function maybeExtractError(e: string): string {
     return parsed.error.message;
   } catch (error) {
     return e;
+  }
+}
+
+async function executeTool<
+  T extends JsonSerializable = Record<string, JsonSerializable>,
+>(api: string, params: Record<string, string>): Promise<Outcome<T>> {
+  const inputParameters = Object.keys(params);
+  const execution_inputs = Object.fromEntries(
+    Object.entries(params).map(([name, value]) => {
+      return [
+        name,
+        {
+          chunks: [{ mimetype: "text/plan", data: btoa(value) }],
+        },
+      ];
+    })
+  );
+  const response = await executeStep({
+    planStep: {
+      stepName: api,
+      modelApi: api,
+      output: "data",
+      inputParameters,
+      isListOutput: false,
+    },
+    execution_inputs,
+  });
+  if (!ok(response)) return response;
+
+  const data = response?.executionOutputs["data"].chunks.at(0)?.data;
+  if (!data) {
+    return err(`Invalid response from "${api}" backend`);
+  }
+  const jsonString = atob(data);
+  try {
+    return JSON.parse(jsonString) as T;
+  } catch (e) {
+    return err(
+      `Error parsing "${api}" backend response: ${(e as Error).message}`
+    );
   }
 }
 
