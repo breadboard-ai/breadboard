@@ -38,8 +38,8 @@ export type PlanStep = {
   output?: string;
   isListOutput?: boolean;
   options?: {
-    disablePromptRewrite: boolean;
-    renderMode: string;
+    disablePromptRewrite?: boolean;
+    renderMode?: string;
   };
 };
 

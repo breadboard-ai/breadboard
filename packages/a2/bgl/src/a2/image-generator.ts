@@ -23,6 +23,7 @@ import {
   llm,
   extractInlineData,
   extractTextData,
+  mergeContent,
 } from "./utils";
 import { callImageGen, callImageEdit, promptExpander } from "./image-utils";
 import { Template } from "./template";
@@ -162,7 +163,7 @@ async function invoke({
             imageContext[0],
             disablePromptRewrite
           );
-          return generatedImage;
+          return mergeContent(generatedImage, "model");
         } else {
           console.log("Step as text only, using generation API");
           let imagePrompt: LLMContent;
@@ -178,7 +179,7 @@ async function invoke({
           }
           console.log("PROMPT", toText(imagePrompt).trim());
           const generatedImage = await callImageGen(toText(imagePrompt).trim());
-          return generatedImage;
+          return mergeContent(generatedImage, "model");
         }
       }
       return gracefulExit(

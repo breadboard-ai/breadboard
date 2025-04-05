@@ -128,11 +128,7 @@ async function invoke({
           imageContext[0],
           disablePromptRewrite
         );
-        if (!ok(generatedImage)) {
-          return generatedImage;
-        }
-
-        return generatedImage;
+        return generatedImage[0];
       }
 
       return gracefulExit(
