@@ -24,38 +24,9 @@
           "role": "user"
         }
       }
-    },
-    {
-      "id": "7fcea0ec-b3f1-4e22-b348-4e65fb801945",
-      "type": "file://bgl/save-outputs.bgl.json#module:main",
-      "metadata": {
-        "title": "Save Outputs",
-        "visual": {
-          "x": 160,
-          "y": -100
-        },
-        "userModified": false
-      },
-      "configuration": {
-        "connectors": {
-          "parts": [
-            {
-              "text": "{{\"type\":\"asset\",\"path\":\"connectors/82048405-ea54-4876-a464-03f25a40df62\",\"title\":\"Google Drive\"}}"
-            }
-          ],
-          "role": "user"
-        }
-      }
     }
   ],
-  "edges": [
-    {
-      "from": "a366420d-fdfe-47e1-abbf-a06c14ff20e4",
-      "to": "7fcea0ec-b3f1-4e22-b348-4e65fb801945",
-      "out": "context",
-      "in": "context"
-    }
-  ],
+  "edges": [],
   "metadata": {
     "visual": {
       "presentation": {
@@ -94,8 +65,8 @@
                 "url": "file://bgl/google-drive.bgl.json",
                 "configuration": {
                   "file": {
-                    "id": "1vh3G5CCASgAO6wXaQQ8DkRxXL0p3Txj7PeFHdSdA4Wc",
-                    "preview": "Untitled Document",
+                    "id": "1lhlygqXjVzYbySoOnM8Rev42xbMV27DCv6FtPyhmszc",
+                    "preview": "Game Play Memory",
                     "mimeType": "application/vnd.google-apps.document",
                     "connectionName": "google-drive-limited"
                   }
@@ -115,7 +86,7 @@
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI3OS40NiIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTA2Ljc5IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNDEuMDciCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyMGEyMDIiIC8+CjxyZWN0IHg9IjEzMy4yMSIKICAgICAgICAgICAgICAgICAgICB5PSI3OS40NiIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTA2Ljc5IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNDEuMDciCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyMGEyMDIiIC8+CiAgICAgIAogICAgPC9zdmc+"
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI1NS43NyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMjMwLjAwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iODguNDYiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyMGEyMDIiIC8+CiAgICAgIAogICAgPC9zdmc+"
     }
   }
 }

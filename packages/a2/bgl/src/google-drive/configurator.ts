@@ -4,20 +4,16 @@
 
 import { err, ok } from "./a2/utils";
 import { createConfigurator } from "./a2/connector-manager";
+import type { ConnectorConfiguration } from "./types";
 
 export { invoke as default, describe };
 
 const CONNECTOR_TITLE = "Google Drive";
 
-type Configuration = {
-  file?: {
-    preview: string;
-    id: string;
-    mimeType: string;
-  };
-};
-
-const { invoke, describe } = createConfigurator<Configuration>({
+const { invoke, describe } = createConfigurator<
+  ConnectorConfiguration,
+  ConnectorConfiguration
+>({
   title: CONNECTOR_TITLE,
   initialize: async () => {
     return { title: "Untitled Drive File", configuration: {} };

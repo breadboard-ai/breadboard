@@ -99,7 +99,7 @@ export class EditConnector extends SignalWatcher(LitElement) {
 
     return html`<bb-user-input
       ${ref(this.#userInputRef)}
-      .inputs=${this.config.value}
+      .inputs=${this.config.value || []}
       .llmShowInlineControlsToggle=${false}
       .llmInputShowPartControls=${false}
       @keydown=${(evt: KeyboardEvent) => {

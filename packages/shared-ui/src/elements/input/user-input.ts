@@ -788,10 +788,11 @@ export class UserInput extends LitElement {
             isGoogleDriveFileId(input.schema) ||
             isGoogleDriveQuery(input.schema)
           ) {
+            const value = normalizeValue(input);
             inputField = html`<bb-delegating-input
               id=${id}
               .schema=${input.schema}
-              .value=${input.value ?? defaultValue}
+              .value=${value ?? defaultValue}
             ></bb-delegating-input>`;
           } else if (isBoardBehavior(input.schema)) {
             inputField = createBoardInput(
@@ -1342,4 +1343,17 @@ function stringifyObject(o: unknown, defaultValue?: unknown): string {
       return "";
     }
   }
+}
+
+function normalizeValue(input: UserInputConfiguration) {
+  if (!input.value) return input.value;
+  if (input.schema?.type === "object") {
+    if (typeof input.value === "string")
+      try {
+        return JSON.parse(input.value as string);
+      } catch (e) {
+        return input.value;
+      }
+  }
+  return input.value;
 }
