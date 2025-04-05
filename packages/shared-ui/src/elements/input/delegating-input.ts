@@ -19,6 +19,7 @@ import type {
   InputPlugin,
   InputWidget,
 } from "../../plugins/input-plugin.js";
+import { Schema } from "@google-labs/breadboard";
 
 /**
  * An input widget which doesn't render anything directly, but instead matches
@@ -125,11 +126,20 @@ declare global {
 }
 
 function chooseBestPlugin(schema: JSONSchema4, environment: Environment) {
+  const behavior = schema.behavior?.at(0);
   // TODO(aomarks) Performance of this search could be improved by
   // partitioning by the top-level "type" field. But note we have to account
   // for schema compositions like `{ anyOf: { ... } }`, so it's not so
   // simple.
   for (const plugin of environment.plugins.input) {
+    const pluginSchema = plugin.match.schema as Schema;
+    if (
+      behavior &&
+      pluginSchema.behavior &&
+      pluginSchema.behavior.includes(behavior)
+    ) {
+      return plugin;
+    }
     // TODO If there are ties, a good starting heuristic could be to prefer
     // the widget with the most narrowly defined schema, and a proxy for
     // that could simply be JSON.stringify(match.schema).length.

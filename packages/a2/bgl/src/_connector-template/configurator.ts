@@ -10,9 +10,11 @@ import write from "@write";
 
 export { invoke as default, describe };
 
+const CONNECTOR_TITLE = "{{ title }}";
+
 const { invoke, describe } = createConfigurator({
-  title: "GMail",
+  title: CONNECTOR_TITLE,
   initialize: async () => {
-    return { title: "GMail", configuration: {} };
+    return { title: CONNECTOR_TITLE, configuration: {} };
   },
 });

@@ -4,13 +4,13 @@
   "version": "0.0.1",
   "nodes": [
     {
-      "id": "a366420d-fdfe-47e1-abbf-a06c14ff20e4",
+      "id": "9b033378-138f-4f6d-9fe6-52119e6af4df",
       "type": "file://bgl/a2.bgl.json#module:combine-outputs",
       "metadata": {
         "title": "Combine Outputs",
         "visual": {
           "x": -140,
-          "y": -100
+          "y": 0
         },
         "userModified": false
       },
@@ -19,20 +19,20 @@
           "role": "user",
           "parts": [
             {
-              "text": "This is some text\n\n-- old text --\n\n{{\"type\":\"asset\",\"path\":\"connectors/82048405-ea54-4876-a464-03f25a40df62\",\"title\":\"Google Drive\"}}"
+              "text": "THIS IS TEXT"
             }
           ]
         }
       }
     },
     {
-      "id": "7fcea0ec-b3f1-4e22-b348-4e65fb801945",
+      "id": "a257b57c-88fc-4ea0-a6fe-560d19b55911",
       "type": "file://bgl/save-outputs.bgl.json#module:main",
       "metadata": {
         "title": "Save Outputs",
         "visual": {
           "x": 160,
-          "y": -100
+          "y": 0
         },
         "userModified": false
       },
@@ -50,8 +50,8 @@
   ],
   "edges": [
     {
-      "from": "a366420d-fdfe-47e1-abbf-a06c14ff20e4",
-      "to": "7fcea0ec-b3f1-4e22-b348-4e65fb801945",
+      "from": "9b033378-138f-4f6d-9fe6-52119e6af4df",
+      "to": "a257b57c-88fc-4ea0-a6fe-560d19b55911",
       "out": "context",
       "in": "context"
     }
@@ -92,7 +92,14 @@
             {
               "json": {
                 "url": "file://bgl/google-drive.bgl.json",
-                "configuration": {}
+                "configuration": {
+                  "file": {
+                    "id": "1lhlygqXjVzYbySoOnM8Rev42xbMV27DCv6FtPyhmszc",
+                    "preview": "Game Play Memory",
+                    "mimeType": "application/vnd.google-apps.document",
+                    "connectionName": "google-drive-limited"
+                  }
+                }
               }
             }
           ]
