@@ -4,95 +4,124 @@
   "version": "0.0.1",
   "nodes": [
     {
-      "type": "input",
-      "id": "input",
-      "configuration": {
-        "schema": {
-          "properties": {
-            "context": {
-              "type": "array",
-              "title": "Context",
-              "items": {
-                "type": "object",
-                "behavior": [
-                  "llm-content"
-                ]
-              },
-              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"Something brighter\"}]}]",
-              "description": ""
-            }
-          },
-          "type": "object",
-          "required": []
-        }
-      },
+      "id": "0b5b080b-ccae-4a62-9454-8253cd2b4b90",
+      "type": "file://bgl/audio-generator.bgl.json#module:main",
       "metadata": {
+        "title": "Make Speech",
         "visual": {
-          "x": -260,
-          "y": 99.99999999999989,
-          "collapsed": "expanded"
+          "x": 120,
+          "y": 0
         },
-        "logLevel": "info"
+        "userModified": false
+      },
+      "configuration": {
+        "text": {
+          "parts": [
+            {
+              "text": "{{\"type\":\"in\",\"path\":\"0d40c175-167e-40a6-9285-c608be133bf8\",\"title\":\"Make Text\"}}\n{{\"type\":\"asset\",\"path\":\"d50102da-7919-44ee-82ed-92e17afd7269\",\"title\":\"Sentence\"}}\n{{\"type\":\"in\",\"path\":\"0d40c175-167e-40a6-9285-c608be133bf8\",\"title\":\"Make Text\"}}"
+            }
+          ],
+          "role": "user"
+        },
+        "voice": "Female (English)"
       }
     },
     {
-      "type": "output",
-      "id": "output",
-      "configuration": {
-        "schema": {
-          "properties": {
-            "context": {
-              "type": "array",
-              "title": "Context",
-              "items": {
-                "type": "object",
-                "behavior": [
-                  "llm-content"
-                ]
-              },
-              "default": "null"
-            }
-          },
-          "type": "object",
-          "required": []
-        }
-      },
+      "id": "0d40c175-167e-40a6-9285-c608be133bf8",
+      "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
+        "title": "Make Text",
         "visual": {
-          "x": 359.99999999999983,
-          "y": 99.99999999999989,
-          "collapsed": "expanded"
-        }
-      }
-    },
-    {
-      "id": "a2-2dc96128",
-      "type": "file://bgl/a2.bgl.json#module:audio-generator",
-      "metadata": {
-        "visual": {
-          "x": 40,
-          "y": 100,
-          "collapsed": "expanded"
+          "x": -100,
+          "y": -160
         },
-        "title": "Audio Generator"
+        "userModified": false
+      },
+      "configuration": {
+        "description": {
+          "parts": [
+            {
+              "text": "Say the word \"cat\""
+            }
+          ],
+          "role": "user"
+        }
       }
     }
   ],
   "edges": [
     {
-      "from": "input",
-      "to": "a2-2dc96128",
+      "from": "0d40c175-167e-40a6-9285-c608be133bf8",
+      "to": "0b5b080b-ccae-4a62-9454-8253cd2b4b90",
       "out": "context",
-      "in": "context"
-    },
-    {
-      "from": "a2-2dc96128",
-      "to": "output",
-      "out": "context",
-      "in": "context"
+      "in": "p-z-0d40c175-167e-40a6-9285-c608be133bf8"
     }
   ],
   "metadata": {
-    "visual": {}
+    "visual": {
+      "presentation": {
+        "themes": {
+          "2a26daf9-c222-40f6-a6c4-7dce09b6e31c": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "2a26daf9-c222-40f6-a6c4-7dce09b6e31c"
+      }
+    },
+    "parameters": {}
+  },
+  "assets": {
+    "1c8eaf46-a294-4c10-8b83-a5fc46ddb361": {
+      "data": [
+        {
+          "parts": [
+            {
+              "text": "Cat"
+            }
+          ],
+          "role": "user"
+        }
+      ],
+      "metadata": {
+        "title": "Word",
+        "type": "content"
+      }
+    },
+    "d50102da-7919-44ee-82ed-92e17afd7269": {
+      "data": [
+        {
+          "parts": [
+            {
+              "text": "The cat sat on the mat"
+            }
+          ],
+          "role": "user"
+        }
+      ],
+      "metadata": {
+        "title": "Sentence",
+        "type": "content"
+      }
+    },
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMTUuNDIiCiAgICAgICAgICAgICAgICAgICAgeT0iMTE0LjM4IgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSIxMjQuNTgiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI0Ny45MiIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KPHJlY3QgeD0iMTAuMDAiCiAgICAgICAgICAgICAgICAgICAgeT0iMzcuNzEiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjEyNC41OCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjQ3LjkyIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+    }
   }
 }
