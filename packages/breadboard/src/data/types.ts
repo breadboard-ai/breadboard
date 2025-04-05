@@ -462,10 +462,21 @@ export type CreateModuleFileSystemArgs = {
   assets?: FileSystemEntry[];
 };
 
+export type FileSystemWriteStreamArguments = {
+  path: FileSystemPath;
+  stream: ReadableStream<LLMContent>;
+};
+
 export type FileSystem = {
   query(args: FileSystemQueryArguments): Promise<FileSystemQueryResult>;
   read(args: FileSystemReadArguments): Promise<FileSystemReadResult>;
   write(args: FileSystemWriteArguments): Promise<FileSystemWriteResult>;
+  /**
+   * Hands a ReadableStream over to the FileSystem to manage as a stream
+   * file.
+   * @param args
+   */
+  addStream(args: FileSystemWriteStreamArguments): Promise<Outcome<void>>;
   /**
    * Cleans up
    */

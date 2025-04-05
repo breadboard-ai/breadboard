@@ -3,7 +3,13 @@
  */
 
 import fetch from "@fetch";
+import read from "@read";
 
+export type NonPromise<T> = T extends Promise<unknown> ? never : T;
+
+function ok<T>(o: Outcome<NonPromise<T>>): o is NonPromise<T> {
+  return !(o && typeof o === "object" && "$error" in o);
+}
 export { invoke as default, describe };
 
 type Inputs = {
@@ -15,9 +21,15 @@ type Outputs = {
 };
 
 async function invoke({ endpoint }: Inputs): Promise<Outcome<Outputs>> {
-  const response = await fetch({ url: endpoint, file: "/local/saved" });
-  if ("$error" in response) return { $error: response.$error as string };
-  return { result: response.response };
+  const response = await fetch({
+    url: endpoint,
+    file: "/local/saved",
+    stream: "text",
+  });
+  if (!ok(response)) return response;
+  const reading = await read({ path: response.response as FileSystemPath });
+  if (!ok(reading)) return reading;
+  return { result: reading.data };
 }
 
 async function describe() {

@@ -10,6 +10,7 @@ import {
   FileSystemQueryResult,
   FileSystemReadResult,
   FileSystemWriteResult,
+  Outcome,
 } from "../types.js";
 
 export { StubFileSystem };
@@ -22,6 +23,9 @@ class StubFileSystem implements FileSystem {
     throw new Error("Attempting to use stubbed-out file system.");
   }
   write(): Promise<FileSystemWriteResult> {
+    throw new Error("Attempting to use stubbed-out file system.");
+  }
+  addStream(): Promise<Outcome<void>> {
     throw new Error("Attempting to use stubbed-out file system.");
   }
   close(): Promise<void> {

@@ -14,7 +14,6 @@ import { JsonSerializable } from "@breadboard-ai/build/internal/type-system/type
 import {
   DataStore,
   NodeHandlerContext,
-  StreamCapability,
   asBlob,
   inflateData,
   isDataCapability,
@@ -125,8 +124,8 @@ export default defineNodeType({
       title: "Stream",
       behavior: ["config"],
       description: "Whether or not to return a stream",
-      type: "boolean",
-      default: false,
+      type: enumeration("sse", "text", "json"),
+      optional: true,
     },
     redirect: {
       title: "Redirect",
@@ -208,18 +207,34 @@ export default defineNodeType({
       if (!data.body) {
         throw new Error("Response is not streamable.");
       }
+      if (!fileSystem) {
+        throw new Error(
+          "File system isn't available. Unable to save streaming response"
+        );
+      }
+      if (!file) {
+        throw new Error("File path must be specified.");
+      }
+      const path = writablePathFromString(file);
+      if (!ok(path)) {
+        throw new Error(path.$error);
+      }
+      const stream = data.body
+        .pipeThrough(new TextDecoderStream())
+        .pipeThrough(serverSentEventTransform());
+      const writing = await fileSystem.addStream({
+        path,
+        stream,
+      });
+      if (!ok(writing)) return writing;
+
       return {
-        stream: new StreamCapability(
-          data.body
-            .pipeThrough(new TextDecoderStream())
-            .pipeThrough(serverSentEventTransform())
-        ),
-        // TODO(aomarks) Figure out how to model streaming responses better.
-        // For now we just cast the problem away and assume the runtime knows
-        // what to do.
-        //
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any;
+        response: file,
+        status,
+        statusText,
+        contentType,
+        responseHeaders,
+      };
     } else {
       let response;
       if (!contentType) {

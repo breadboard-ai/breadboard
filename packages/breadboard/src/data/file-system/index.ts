@@ -24,6 +24,7 @@ import {
   FileSystemBlobStore,
   CreateRunFileSystemArgs,
   CreateModuleFileSystemArgs,
+  FileSystemWriteStreamArguments,
 } from "../types.js";
 import { Path, writablePathFromString } from "./path.js";
 import { err, noStreams, ok } from "./utils.js";
@@ -556,6 +557,12 @@ class FileSystemImpl implements FileSystem {
     for (const entry of entries) {
       this.#deleteFile(entry.path);
     }
+  }
+
+  async addStream(
+    _args: FileSystemWriteStreamArguments
+  ): Promise<Outcome<void>> {
+    return err(`Not implemented`);
   }
 
   async close(): Promise<void> {
