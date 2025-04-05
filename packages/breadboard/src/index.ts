@@ -112,6 +112,7 @@ export {
   createDefaultRunStore,
   createEphemeralBlobStore,
   createFileSystem,
+  writablePathFromString,
   deflateData,
   inflateData,
   transformContents,

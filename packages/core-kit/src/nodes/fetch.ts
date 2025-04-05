@@ -18,6 +18,8 @@ import {
   asBlob,
   inflateData,
   isDataCapability,
+  ok,
+  writablePathFromString,
 } from "@google-labs/breadboard";
 
 const serverSentEventTransform = () =>
@@ -131,6 +133,12 @@ export default defineNodeType({
       type: enumeration("follow", "error", "manual"),
       default: "follow",
     },
+    file: {
+      title: "File",
+      description: "The File System Path where the response will be saved",
+      type: "string",
+      optional: true,
+    },
   },
   outputs: {
     response: {
@@ -161,9 +169,9 @@ export default defineNodeType({
     },
   },
   invoke: async (
-    { url, method, body, headers, raw, stream, redirect },
+    { url, method, body, headers, raw, stream, redirect, file },
     _, // No dynamic inputs.
-    { signal, store }: NodeHandlerContext
+    { signal, store, fileSystem }: NodeHandlerContext
   ) => {
     if (!url) throw new Error("Fetch requires `url` input");
     const init: RequestInit = {
@@ -233,6 +241,28 @@ export default defineNodeType({
           const blob = await data.blob();
           response = await store.store(blob);
         }
+      }
+      if (file && fileSystem) {
+        const path = writablePathFromString(file);
+        if (!ok(path)) {
+          throw new Error(path.$error);
+        }
+        let data;
+        if (typeof response === "string") {
+          data = [{ parts: [{ text: response }] }];
+        } else if ("storedData" in response) {
+          data = [{ parts: [response] }];
+        } else {
+          data = [{ parts: [{ json: response }] }];
+        }
+        const stored = await fileSystem.write({
+          path,
+          data,
+        });
+        if (!ok(stored)) {
+          throw new Error(stored.$error);
+        }
+        response = path;
       }
       return { response, status, statusText, contentType, responseHeaders };
     }

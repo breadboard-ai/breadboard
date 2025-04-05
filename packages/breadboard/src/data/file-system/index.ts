@@ -25,14 +25,14 @@ import {
   CreateRunFileSystemArgs,
   CreateModuleFileSystemArgs,
 } from "../types.js";
-import { Path } from "./path.js";
+import { Path, writablePathFromString } from "./path.js";
 import { err, noStreams, ok } from "./utils.js";
 import { PersistentFile } from "./persistent-file.js";
 import { InMemoryBlobStore } from "./in-memory-blob-store.js";
 import { transformBlobs } from "./blob-transform.js";
 import { baseURLFromString } from "../../loader/loader.js";
 
-export { FileSystemImpl, Path, createFileSystem };
+export { FileSystemImpl, Path, createFileSystem, writablePathFromString };
 
 function createFileSystem(
   args: Omit<

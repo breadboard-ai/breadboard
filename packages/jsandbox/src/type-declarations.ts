@@ -67,6 +67,10 @@ declare module "@fetch" {
      * with a redirect status.
      */
     redirect?: "follow" | "error" | "manual";
+    /**
+     * The FileSystem path to save the response to
+     */
+    file?: FileSystemPath;
   };
 
   export type FetchOutputs = {
