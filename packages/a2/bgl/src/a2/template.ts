@@ -99,12 +99,15 @@ class Template {
 
   #mergeTextParts(parts: TemplatePart[]) {
     const merged = [];
-    for (const part of parts) {
+    for (let part of parts) {
       if ("text" in part) {
         const last = merged[merged.length - 1];
         if (last && "text" in last) {
           last.text += part.text;
         } else {
+          // We do a copy here otherwise the part is mutated, which
+          // causes problems if the same part appears in the list twice.
+          part = JSON.parse(JSON.stringify(part));
           merged.push(part);
         }
       } else {

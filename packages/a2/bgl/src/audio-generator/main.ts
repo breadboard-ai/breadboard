@@ -202,7 +202,7 @@ async function describe({ inputs: { text } }: DescribeInputs) {
       },
       additionalProperties: false,
     } satisfies Schema,
-    title: "Make Speech [v2, WIP]",
+    title: "Make Speech",
     metadata: {
       icon: "generative-audio",
       tags: ["quick-access", "generative", "experimental"],
