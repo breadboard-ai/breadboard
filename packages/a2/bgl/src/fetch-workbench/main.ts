@@ -4,6 +4,7 @@
 
 import fetch from "@fetch";
 import read from "@read";
+import output from "@output";
 
 export type NonPromise<T> = T extends Promise<unknown> ? never : T;
 
@@ -23,7 +24,7 @@ type Outputs = {
 async function invoke({ endpoint }: Inputs): Promise<Outcome<Outputs>> {
   const response = await fetch({
     url: endpoint,
-    file: "/local/saved",
+    file: "/run/saved",
     stream: "text",
   });
   if (!ok(response)) return response;
