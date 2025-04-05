@@ -29,7 +29,7 @@ async function callImageEdit(
   instruction: string,
   image_content: LLMContent,
   disablePromptRewrite: boolean
-): Promise<LLMContent> {
+): Promise<LLMContent[]> {
   const imageChunk = toInlineData(image_content);
   if (!imageChunk) {
     throw new Error("No image provided to image edit call");
@@ -73,20 +73,17 @@ async function callImageEdit(
   console.log("response");
   console.log(response);
   if (!ok(response)) {
-    return toLLMContent("Image Editing failed: " + response.$error);
+    return [toLLMContent("Image Editing failed: " + response.$error)];
   }
 
   const outContent = response.executionOutputs[OUTPUT_NAME];
   if (!outContent) {
-    return toLLMContent("Error: No image returned from backend");
+    return [toLLMContent("Error: No image returned from backend")];
   }
-  return toLLMContentInline(
-    outContent.chunks[0].mimetype,
-    outContent.chunks[0].data
-  );
+  return outContent.chunks.map((c) => toLLMContentInline(c.mimetype, c.data));
 }
 
-async function callImageGen(imageInstruction: string): Promise<LLMContent> {
+async function callImageGen(imageInstruction: string): Promise<LLMContent[]> {
   const executionInputs: ContentMap = {};
   const encodedInstruction = btoa(
     unescape(encodeURIComponent(imageInstruction))
@@ -112,20 +109,14 @@ async function callImageGen(imageInstruction: string): Promise<LLMContent> {
   } satisfies ExecuteStepRequest;
   const response = await executeStep(body);
   if (!ok(response)) {
-    return toLLMContent("Image generation failed: " + response.$error);
+    return [toLLMContent("Image generation failed: " + response.$error)];
   }
 
-  let returnVal;
-  for (let value of Object.values(response.executionOutputs)) {
-    const mimetype = value.chunks[0].mimetype;
-    if (mimetype.startsWith("image")) {
-      returnVal = toLLMContentInline(mimetype, value.chunks[0].data);
-    }
+  const outContent = response.executionOutputs[OUTPUT_NAME];
+  if (!outContent) {
+    return [toLLMContent("Error: No image returned from backend")];
   }
-  if (!returnVal) {
-    return toLLMContent("Error: No image returned from backend");
-  }
-  return returnVal;
+  return outContent.chunks.map((c) => toLLMContentInline(c.mimetype, c.data));
 }
 
 function promptExpander(

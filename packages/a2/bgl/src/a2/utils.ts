@@ -268,6 +268,19 @@ function toInlineData(c: LLMContent | LLMContent[]) {
   }
 }
 
+export function mergeContent(content: LLMContent[], role: string): LLMContent {
+  const parts: DataPart[] = [];
+  for (const el of content) {
+    for (const part of el.parts) {
+      parts.push(part);
+    }
+  }
+  return {
+    parts: parts,
+    role: role,
+  } satisfies LLMContent;
+}
+
 function generateId() {
   return Math.random().toString(36).substring(2, 5);
 }
