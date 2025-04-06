@@ -64,6 +64,14 @@ async function callImageEdit(
           },
         ],
       },
+      aspect_ratio_key: {
+        chunks: [
+          {
+            mimetype: "text/plain",
+            data: btoa(aspectRatio),
+          },
+        ],
+      },
     },
   } satisfies ExecuteStepRequest;
   // TODO(askerryryan): Remove once functional.
@@ -97,6 +105,14 @@ async function callImageGen(
       {
         mimetype: "text/plain",
         data: encodedInstruction,
+      },
+    ],
+  };
+  executionInputs["aspect_ratio_key"] = {
+    chunks: [
+      {
+        mimetype: "text/plain",
+        data: btoa(aspectRatio),
       },
     ],
   };

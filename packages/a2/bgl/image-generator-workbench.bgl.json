@@ -8,7 +8,7 @@
       "type": "file://bgl/a2.bgl.json#module:image-generator",
       "metadata": {
         "visual": {
-          "x": -280.00000000000006,
+          "x": -280,
           "y": -420,
           "collapsed": "expanded",
           "outputHeight": 228
@@ -25,7 +25,8 @@
               "text": "A venn diagram of people who like potatoes and people who are in tech"
             }
           ]
-        }
+        },
+        "p-aspect-ratio": "9:16"
       }
     },
     {
@@ -34,7 +35,7 @@
       "metadata": {
         "title": "Make Image No Expansion",
         "visual": {
-          "x": -280.00000000000006,
+          "x": -280,
           "y": -280,
           "collapsed": "expanded",
           "outputHeight": 88
@@ -50,7 +51,8 @@
             }
           ]
         },
-        "p-disable-prompt-rewrite": true
+        "p-disable-prompt-rewrite": true,
+        "p-aspect-ratio": "16:9"
       }
     },
     {
@@ -74,7 +76,8 @@
             }
           ],
           "role": "user"
-        }
+        },
+        "p-render-mode": "Manual"
       }
     }
   ],
