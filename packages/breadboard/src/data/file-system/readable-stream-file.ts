@@ -32,6 +32,10 @@ class ReadableStreamFile implements FileSystemFile {
       const { value, done } = await reader.read();
       return { data: value ? [value] : [], done };
     } catch (e) {
+      const error = e as Error;
+      if (error.name === "AbortError") {
+        return err(`Run stopped`);
+      }
       return err(`Unable to read stream: ${(e as Error).message}`);
     } finally {
       reader.releaseLock();

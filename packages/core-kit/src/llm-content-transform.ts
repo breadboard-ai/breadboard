@@ -17,7 +17,7 @@ function makePart(stream: Omit<StreamType, "sse">, chunk: string): DataPart {
     try {
       return { json: JSON.parse(chunk) };
     } catch (e) {
-      return { json: JSON.stringify(chunk) };
+      return { text: chunk };
     }
   }
 }

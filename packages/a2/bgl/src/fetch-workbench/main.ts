@@ -89,7 +89,7 @@ async function invoke({ endpoint }: Inputs): Promise<Outcome<Outputs>> {
   const response = await fetch({
     url: endpoint,
     file: "/run/saved",
-    stream: "json",
+    stream: "text",
   });
   if (!ok(response)) return response;
   for (;;) {
@@ -117,7 +117,7 @@ async function describe() {
         endpoint: {
           type: "string",
           title: "Endpoint URL",
-          default: "https://echo.free.beeceptor.com",
+          default: "https://sse.dev/test",
         },
       },
     } satisfies Schema,
