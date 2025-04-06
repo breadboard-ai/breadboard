@@ -11,8 +11,11 @@ import { KitBuilder } from "../kits/builder.js";
 import {
   ErrorResponse,
   InputValues,
+  Kit,
   NodeDescriptor,
   NodeHandlerContext,
+  NodeHandlers,
+  NodeIdentifier,
   OutputValues,
 } from "../types.js";
 import { NodeProxyConfig, NodeProxySpec, ProxyServerConfig } from "./config.js";
@@ -196,7 +199,8 @@ export class ProxyClient {
     }
   }
 
-  createProxyKit(args: NodeProxyConfig = []) {
+  createProxyKit(args: NodeProxyConfig = [], fallback: Kit[] = []) {
+    const fallbackHandlers = handlersFromKits(fallback);
     const nodesToProxy = args.map((arg) => {
       if (typeof arg === "string") return arg;
       else return arg.node;
@@ -212,6 +216,9 @@ export class ProxyClient {
             ) => {
               // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               const descriptor = context.descriptor!;
+              if (keepLocal(descriptor, inputs)) {
+                return invokeFallback(type, inputs, context, fallbackHandlers);
+              }
               const result = await this.proxy(descriptor, inputs, context);
               return result;
             },
@@ -221,6 +228,25 @@ export class ProxyClient {
     );
     return asRuntimeKit(new KitBuilder({ url: "proxy" }).build(proxiedNodes));
   }
+}
+
+async function invokeFallback(
+  id: NodeIdentifier,
+  inputs: InputValues,
+  context: NodeHandlerContext,
+  fallbackHandlers: NodeHandlers
+): Promise<void | OutputValues> {
+  const handler = fallbackHandlers[id];
+  return callHandler(handler, inputs, context);
+}
+
+/**
+ * A helper that lets the proxy know not to proxy the handler
+ */
+function keepLocal(node: NodeDescriptor, inputs: InputValues): boolean {
+  if (node.type !== "fetch") return false;
+  // We can't handle file system-based fetch on the proxy server.
+  return "file" in inputs;
 }
 
 function isGeminiApiFetch(node: NodeDescriptor, inputs: InputValues): boolean {

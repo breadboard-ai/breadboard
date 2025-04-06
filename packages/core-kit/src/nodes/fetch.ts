@@ -14,34 +14,36 @@ import { JsonSerializable } from "@breadboard-ai/build/internal/type-system/type
 import {
   DataStore,
   NodeHandlerContext,
-  StreamCapability,
   asBlob,
   inflateData,
   isDataCapability,
+  ok,
+  writablePathFromString,
 } from "@google-labs/breadboard";
+import { llmContentTransform } from "../llm-content-transform.js";
 
-const serverSentEventTransform = () =>
-  new TransformStream({
-    transform(chunk, controller) {
-      const text = chunk.toString();
-      const lines = text.split("\n");
-      for (const line of lines) {
-        if (line.startsWith("data: ")) {
-          const data = line.slice(6);
-          let chunk;
-          try {
-            // Special case for OpenAI's API.
-            if (data === "[DONE]") continue;
-            chunk = JSON.parse(data);
-          } catch (e) {
-            // TODO: Handle this more gracefully.
-            chunk = data;
-          }
-          controller.enqueue(chunk);
-        }
-      }
-    },
-  });
+// const serverSentEventTransform = () =>
+//   new TransformStream({
+//     transform(chunk, controller) {
+//       const text = chunk.toString();
+//       const lines = text.split("\n");
+//       for (const line of lines) {
+//         if (line.startsWith("data: ")) {
+//           const data = line.slice(6);
+//           let chunk;
+//           try {
+//             // Special case for OpenAI's API.
+//             if (data === "[DONE]") continue;
+//             chunk = JSON.parse(data);
+//           } catch (e) {
+//             // TODO: Handle this more gracefully.
+//             chunk = data;
+//           }
+//           controller.enqueue(chunk);
+//         }
+//       }
+//     },
+//   });
 
 const createBody = async (
   body: unknown,
@@ -123,13 +125,19 @@ export default defineNodeType({
       title: "Stream",
       behavior: ["config"],
       description: "Whether or not to return a stream",
-      type: "boolean",
-      default: false,
+      type: enumeration("sse", "text", "json"),
+      optional: true,
     },
     redirect: {
       title: "Redirect",
       type: enumeration("follow", "error", "manual"),
       default: "follow",
+    },
+    file: {
+      title: "File",
+      description: "The File System Path where the response will be saved",
+      type: "string",
+      optional: true,
     },
   },
   outputs: {
@@ -161,9 +169,9 @@ export default defineNodeType({
     },
   },
   invoke: async (
-    { url, method, body, headers, raw, stream, redirect },
+    { url, method, body, headers, raw, stream, redirect, file },
     _, // No dynamic inputs.
-    { signal, store }: NodeHandlerContext
+    { signal, store, fileSystem }: NodeHandlerContext
   ) => {
     if (!url) throw new Error("Fetch requires `url` input");
     const init: RequestInit = {
@@ -200,18 +208,34 @@ export default defineNodeType({
       if (!data.body) {
         throw new Error("Response is not streamable.");
       }
+      if (!fileSystem) {
+        throw new Error(
+          "File system isn't available. Unable to save streaming response"
+        );
+      }
+      if (!file) {
+        throw new Error("File path must be specified.");
+      }
+      const path = writablePathFromString(file);
+      if (!ok(path)) {
+        throw new Error(path.$error);
+      }
+      const readable = data.body
+        .pipeThrough(new TextDecoderStream())
+        .pipeThrough(llmContentTransform(stream));
+      const writing = await fileSystem.addStream({
+        path,
+        stream: readable,
+      });
+      if (!ok(writing)) return writing;
+
       return {
-        stream: new StreamCapability(
-          data.body
-            .pipeThrough(new TextDecoderStream())
-            .pipeThrough(serverSentEventTransform())
-        ),
-        // TODO(aomarks) Figure out how to model streaming responses better.
-        // For now we just cast the problem away and assume the runtime knows
-        // what to do.
-        //
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any;
+        response: file,
+        status,
+        statusText,
+        contentType,
+        responseHeaders,
+      };
     } else {
       let response;
       if (!contentType) {
@@ -233,6 +257,28 @@ export default defineNodeType({
           const blob = await data.blob();
           response = await store.store(blob);
         }
+      }
+      if (file && fileSystem) {
+        const path = writablePathFromString(file);
+        if (!ok(path)) {
+          throw new Error(path.$error);
+        }
+        let data;
+        if (typeof response === "string") {
+          data = [{ parts: [{ text: response }] }];
+        } else if ("storedData" in response) {
+          data = [{ parts: [response] }];
+        } else {
+          data = [{ parts: [{ json: response }] }];
+        }
+        const stored = await fileSystem.write({
+          path,
+          data,
+        });
+        if (!ok(stored)) {
+          throw new Error(stored.$error);
+        }
+        response = path;
       }
       return { response, status, statusText, contentType, responseHeaders };
     }

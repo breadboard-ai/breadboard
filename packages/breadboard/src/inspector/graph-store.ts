@@ -81,6 +81,9 @@ function makeTerribleOptions(
       query() {
         throw new Error("Non-existent filesystem: Terrible Options were used.");
       },
+      addStream() {
+        throw new Error("Non-existent filesystem: Terrible Options were used.");
+      },
       close: function (): Promise<void> {
         throw new Error("Non-existent filesystem: Terrible Options were used.");
       },

@@ -18,3 +18,4 @@ export type * from "./types.js";
 export type * from "./config.js";
 export type * from "./http.js";
 export { handleRunGraphRequest } from "./run-graph-server.js";
+export { chunkRepairTransform } from "./chunk-repair.js";

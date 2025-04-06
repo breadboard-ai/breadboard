@@ -1,0 +1,93 @@
+{
+  "title": "Fetch Workbench",
+  "description": "",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "metadata": {
+        "title": "Input"
+      }
+    },
+    {
+      "id": "run-module",
+      "type": "runModule",
+      "configuration": {
+        "$module": "main"
+      },
+      "metadata": {
+        "title": "Fetch Workbench"
+      }
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "metadata": {
+        "title": "Output"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "input",
+      "to": "run-module",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "run-module",
+      "to": "output",
+      "out": "*",
+      "in": ""
+    }
+  ],
+  "main": "main",
+  "metadata": {
+    "visual": {
+      "presentation": {
+        "themes": {
+          "39239b49-62d0-4182-b919-924c4db67941": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "39239b49-62d0-4182-b919-924c4db67941"
+      }
+    },
+    "userModified": true,
+    "tags": [],
+    "parameters": {}
+  },
+  "modules": {
+    "main": {
+      "code": "/**\n * @fileoverview Add a description for your module here.\n */\nimport fetch from \"@fetch\";\nimport read from \"@read\";\nimport output from \"@output\";\nimport { ok } from \"./a2/utils\";\nimport { report } from \"./a2/output\";\nexport { invoke as default, describe };\nasync function invoke({ endpoint }) {\n    const response = await fetch({\n        url: endpoint,\n        file: \"/run/saved\",\n        stream: \"sse\",\n    });\n    if (!ok(response))\n        return response;\n    for (;;) {\n        const reading = await read({ path: response.response });\n        console.log(\"READING\", reading);\n        if (!ok(reading))\n            return reading;\n        if (\"done\" in reading && reading.done) {\n            return { result: \"done\" };\n        }\n        await report({\n            actor: \"Fetch\",\n            category: \"Streaming\",\n            name: \"Streaming OMG\",\n            details: reading.data?.at(-1) || \"none\",\n        });\n    }\n    return { result: \"done\" };\n}\nasync function describe() {\n    return {\n        inputSchema: {\n            type: \"object\",\n            properties: {\n                endpoint: {\n                    type: \"string\",\n                    title: \"Endpoint URL\",\n                    default: \"https://sse.dev/test\",\n                },\n            },\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                result: {\n                    type: \"object\",\n                    title: \"Result\",\n                },\n            },\n        },\n    };\n}\n",
+      "metadata": {
+        "title": "main",
+        "source": {
+          "code": "/**\n * @fileoverview Add a description for your module here.\n */\n\nimport fetch from \"@fetch\";\nimport read from \"@read\";\nimport output from \"@output\";\n\nimport { ok } from \"./a2/utils\";\nimport { report } from \"./a2/output\";\n\nexport { invoke as default, describe };\n\ntype Inputs = {\n  endpoint: string;\n};\n\ntype Outputs = {\n  result: unknown;\n};\n\nasync function invoke({ endpoint }: Inputs): Promise<Outcome<Outputs>> {\n  const response = await fetch({\n    url: endpoint,\n    file: \"/run/saved\",\n    stream: \"sse\",\n  });\n  if (!ok(response)) return response;\n  for (;;) {\n    const reading = await read({ path: response.response as FileSystemPath });\n    console.log(\"READING\", reading);\n    if (!ok(reading)) return reading;\n    if (\"done\" in reading && reading.done) {\n      return { result: \"done\" };\n    }\n    await report({\n      actor: \"Fetch\",\n      category: \"Streaming\",\n      name: \"Streaming OMG\",\n      details: reading.data?.at(-1) || \"none\",\n    });\n  }\n  return { result: \"done\" };\n}\n\nasync function describe() {\n  return {\n    inputSchema: {\n      type: \"object\",\n      properties: {\n        endpoint: {\n          type: \"string\",\n          title: \"Endpoint URL\",\n          default: \"https://sse.dev/test\",\n        },\n      },\n    } satisfies Schema,\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        result: {\n          type: \"object\",\n          title: \"Result\",\n        },\n      },\n    } satisfies Schema,\n  };\n}\n",
+          "language": "typescript"
+        },
+        "description": "Add a description for your module here.",
+        "runnable": true
+      }
+    }
+  },
+  "imports": {
+    "a2": {
+      "url": "./a2.bgl.json"
+    }
+  }
+}

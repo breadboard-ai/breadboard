@@ -273,13 +273,6 @@
         },
         {
           "from": "inputs",
-          "to": "fetch-gemini-api",
-          "out": "useStreaming",
-          "in": "stream",
-          "constant": true
-        },
-        {
-          "from": "inputs",
           "to": "make-url",
           "out": "model",
           "in": "model"

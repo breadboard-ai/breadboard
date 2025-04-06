@@ -4,7 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { annotate, anyOf, array, board, enumeration, input, object, output, unsafeType } from "@breadboard-ai/build";
+import {
+  annotate,
+  anyOf,
+  array,
+  board,
+  enumeration,
+  input,
+  object,
+  output,
+  unsafeType,
+} from "@breadboard-ai/build";
 import { Schema } from "@google-labs/breadboard";
 import { secret, fetch } from "@google-labs/core-kit";
 import { jsonata } from "@google-labs/json-kit";
@@ -56,7 +66,7 @@ const functionDeclaration = object({
   parameters: unsafeType<Schema>({ type: "object" }),
 });
 
-const textDefault = "What is the correct term for the paddle in cricket?"
+const textDefault = "What is the correct term for the paddle in cricket?";
 
 const text = input({
   $id: "Text",
@@ -182,9 +192,8 @@ const fetchResult = fetch({
   $id: "callOpenAI",
   url: "https://api.openai.com/v1/chat/completions",
   method: "POST",
-  stream: false,
   headers: formattedRequest.unsafeOutput("headers"),
-  body: formattedRequest.unsafeOutput("body")
+  body: formattedRequest.unsafeOutput("body"),
 });
 
 const jsonResponse = jsonata({
@@ -212,6 +221,6 @@ export default board({
   outputs: {
     context: output(getNewContext.unsafeOutput("result")),
     text: output(jsonResponse.unsafeOutput("text")),
-    toolCalls: output(jsonResponse.unsafeOutput("tool_calls"))
+    toolCalls: output(jsonResponse.unsafeOutput("tool_calls")),
   },
 });

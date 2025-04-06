@@ -494,7 +494,6 @@ const fetchResult = fetch({
   $id: "fetch-gemini-api",
   $metadata: { title: "Make API Call", description: "Calling Gemini API" },
   method: "POST",
-  stream: constant(useStreaming),
   url: constant(makeUrl),
   body,
 });

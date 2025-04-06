@@ -67,6 +67,15 @@ declare module "@fetch" {
      * with a redirect status.
      */
     redirect?: "follow" | "error" | "manual";
+    /**
+     * The FileSystem path to save the response to
+     */
+    file?: FileSystemPath;
+    /**
+     * If provided, saves the response as a stream file.
+     * Only valid when "file" is supplied as well.
+     */
+    stream?: "sse" | "text" | "json";
   };
 
   export type FetchOutputs = {

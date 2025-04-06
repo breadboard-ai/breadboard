@@ -24,15 +24,17 @@ import {
   FileSystemBlobStore,
   CreateRunFileSystemArgs,
   CreateModuleFileSystemArgs,
+  FileSystemWriteStreamArguments,
 } from "../types.js";
-import { Path } from "./path.js";
+import { Path, writablePathFromString } from "./path.js";
 import { err, noStreams, ok } from "./utils.js";
 import { PersistentFile } from "./persistent-file.js";
 import { InMemoryBlobStore } from "./in-memory-blob-store.js";
 import { transformBlobs } from "./blob-transform.js";
 import { baseURLFromString } from "../../loader/loader.js";
+import { ReadableStreamFile } from "./readable-stream-file.js";
 
-export { FileSystemImpl, Path, createFileSystem };
+export { FileSystemImpl, Path, createFileSystem, writablePathFromString };
 
 function createFileSystem(
   args: Omit<
@@ -556,6 +558,28 @@ class FileSystemImpl implements FileSystem {
     for (const entry of entries) {
       this.#deleteFile(entry.path);
     }
+  }
+
+  async addStream({
+    path,
+    stream,
+  }: FileSystemWriteStreamArguments): Promise<Outcome<void>> {
+    const parsedPath = Path.create(path);
+    if (!ok(parsedPath)) return parsedPath;
+
+    if (!parsedPath.writable) {
+      return err(`Can't write streams to path "${path}"`);
+    }
+    if (parsedPath.root === "local") {
+      return err(`Can't write streams to "/${parsedPath.root}/*"`);
+    }
+
+    const map = this.#getFileMap(parsedPath);
+    if (!ok(map)) return map;
+
+    const file = new ReadableStreamFile(stream);
+
+    map.set(path, file);
   }
 
   async close(): Promise<void> {

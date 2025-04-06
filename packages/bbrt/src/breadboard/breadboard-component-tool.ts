@@ -86,6 +86,11 @@ export class BreadboardComponentTool implements BBRTTool {
             "Non-existent filesystem: Terrible Options were used."
           );
         },
+        addStream() {
+          throw new Error(
+            "Non-existent filesystem: Terrible Options were used."
+          );
+        },
         query() {
           throw new Error(
             "Non-existent filesystem: Terrible Options were used."

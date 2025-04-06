@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { FileSystemPath, Outcome } from "../types.js";
-import { ok } from "./utils.js";
+import { FileSystemPath, FileSystemReadWritePath, Outcome } from "../types.js";
+import { err, ok } from "./utils.js";
 
 export { Path };
 
@@ -30,6 +30,17 @@ const ROOT_DIRS: readonly RootDirSpec[] = [
   { name: "env", writable: false, persistent: false },
   { name: "assets", writable: false, persistent: false },
 ] as const;
+
+export function writablePathFromString(
+  s: string
+): Outcome<FileSystemReadWritePath> {
+  const path = Path.create(s as FileSystemPath);
+  if (!ok(path)) return path;
+  if (!path.writable) {
+    return err(`Path "${s}" is not writable`);
+  }
+  return s as FileSystemReadWritePath;
+}
 
 class Path {
   static roots = new Set(ROOT_DIRS.map((item) => item.name));

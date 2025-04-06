@@ -128,6 +128,7 @@
   },
   "dependencies": {
     "@breadboard-ai/build": "0.12.1",
+    "@breadboard-ai/types": "0.6.0",
     "@google-labs/breadboard": "^0.33.0"
   }
 }
