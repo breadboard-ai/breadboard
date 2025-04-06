@@ -163,7 +163,9 @@ async function invoke({
               "Error: an image editing instruction must be provided along side the reference image."
             );
           }
-          console.log("PROMPT: " + combinedInstruction);
+          const finalInstriction =
+            combinedInstruction + "\nAspect ratio: " + aspectRatio;
+          console.log("PROMPT: " + finalInstriction);
           const generatedImage = await callImageEdit(
             combinedInstruction,
             imageContext[0],
@@ -184,11 +186,9 @@ async function invoke({
             if (!ok(generatingPrompt)) return generatingPrompt;
             imagePrompt = generatingPrompt.last;
           }
-          console.log("PROMPT", toText(imagePrompt).trim());
-          const generatedImage = await callImageGen(
-            toText(imagePrompt).trim(),
-            aspectRatio
-          );
+          const iPrompt = toText(imagePrompt).trim();
+          console.log("PROMPT", iPrompt);
+          const generatedImage = await callImageGen(iPrompt, aspectRatio);
           return mergeContent(generatedImage, "model");
         }
       }
@@ -239,7 +239,6 @@ async function describe({ inputs: { instruction } }: DescribeInputs) {
           type: "string",
           behavior: ["hint-text", "config"],
           title: "Aspect Ratio",
-          icon: "voice-selection",
           enum: ASPECT_RATIOS,
           description: "The aspect ratio of the generated image",
           default: "1:1",

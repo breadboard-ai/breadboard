@@ -34,10 +34,13 @@ import {
   executeStep,
 } from "./a2/step-executor";
 
+const ASPECT_RATIOS = ["9:16", "16:9"];
+
 type VideoGeneratorInputs = {
   context: LLMContent[];
   instruction?: LLMContent;
   "p-disable-prompt-rewrite": boolean;
+  "p-aspect-ratio": string;
 };
 
 type VideoGeneratorOutputs = {
@@ -49,7 +52,8 @@ export { invoke as default, describe };
 async function callVideoGen(
   prompt: string,
   imageContent: LLMContent | undefined,
-  disablePromptRewrite: boolean
+  disablePromptRewrite: boolean,
+  aspectRatio: string
 ): Promise<LLMContent> {
   // TODO(askerryryan): Respect disablePromptRewrite;
   const executionInputs: ContentMap = {};
@@ -59,6 +63,14 @@ async function callVideoGen(
       {
         mimetype: "text/plain",
         data: encodedPrompt,
+      },
+    ],
+  };
+  executionInputs["aspect_ratio_key"] = {
+    chunks: [
+      {
+        mimetype: "text/plain",
+        data: btoa(aspectRatio),
       },
     ],
   };
@@ -117,12 +129,16 @@ async function invoke({
   context,
   instruction,
   "p-disable-prompt-rewrite": disablePromptRewrite,
+  "p-aspect-ratio": aspectRatio,
   ...params
 }: VideoGeneratorInputs): Promise<Outcome<VideoGeneratorOutputs>> {
   context ??= [];
   let instructionText = "";
   if (instruction) {
     instructionText = toText(instruction).trim();
+  }
+  if (!aspectRatio) {
+    aspectRatio = "9:16";
   }
   // 2) Substitute variables and magic image reference.
   // Note: it is important that images are not subsituted in here as they will
@@ -174,7 +190,8 @@ async function invoke({
       const content = await callVideoGen(
         combinedInstruction,
         imageContext.at(0),
-        disablePromptRewrite
+        disablePromptRewrite,
+        aspectRatio
       );
       return content;
     }
@@ -216,6 +233,14 @@ async function describe({ inputs: { instruction } }: DescribeInputs) {
           description:
             "By default, inputs and instructions can be automatically expanded into a higher quality video prompt. Check to disable this re-writing behavior.",
         },
+        "p-aspect-ratio": {
+          type: "string",
+          behavior: ["hint-text", "config"],
+          title: "Aspect Ratio",
+          enum: ASPECT_RATIOS,
+          description: "The aspect ratio of the generated video",
+          default: "1:1",
+        },
         ...template.schemas(),
       },
       behavior: ["at-wireable"],
@@ -233,7 +258,7 @@ async function describe({ inputs: { instruction } }: DescribeInputs) {
       },
       additionalProperties: false,
     } satisfies Schema,
-    title: "Make Video [Beta]",
+    title: "Make Video",
     metadata: {
       icon: "generative-video",
       tags: ["quick-access", "generative"],

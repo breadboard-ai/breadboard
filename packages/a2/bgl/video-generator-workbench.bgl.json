@@ -4,30 +4,6 @@
   "version": "0.0.1",
   "nodes": [
     {
-      "id": "video-generator-35bbada9",
-      "type": "file://bgl/video-generator.bgl.json#module:main",
-      "metadata": {
-        "title": "Make Video [WIP]",
-        "visual": {
-          "x": 20,
-          "y": -160,
-          "collapsed": "expanded",
-          "outputHeight": 88
-        },
-        "userModified": false
-      },
-      "configuration": {
-        "instruction": {
-          "role": "user",
-          "parts": [
-            {
-              "text": "Use 1960s cartoon style."
-            }
-          ]
-        }
-      }
-    },
-    {
       "id": "a2-71c73c7a",
       "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
       "metadata": {
@@ -51,12 +27,35 @@
         },
         "p-modality": "Any"
       }
+    },
+    {
+      "id": "a66428d1-4ccc-444a-82b2-2ab5de7aaff3",
+      "type": "file://bgl/video-generator.bgl.json#module:main",
+      "metadata": {
+        "title": "Make Video",
+        "visual": {
+          "x": -20,
+          "y": -160
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "instruction": {
+          "parts": [
+            {
+              "text": "1960s minimalist cartoon style"
+            }
+          ],
+          "role": "user"
+        },
+        "p-aspect-ratio": "9:16"
+      }
     }
   ],
   "edges": [
     {
       "from": "a2-71c73c7a",
-      "to": "video-generator-35bbada9",
+      "to": "a66428d1-4ccc-444a-82b2-2ab5de7aaff3",
       "out": "context",
       "in": "context"
     }
@@ -90,28 +89,12 @@
     "parameters": {}
   },
   "assets": {
-    "3a63cfe2-8621-4f8c-8a7d-26d6c11e664a": {
-      "data": [
-        {
-          "parts": [
-            {
-              "text": "Place your content here"
-            }
-          ],
-          "role": "user"
-        }
-      ],
-      "metadata": {
-        "title": "Untitled Content",
-        "type": "content"
-      }
-    },
     "@@thumbnail": {
       "metadata": {
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxNDYuNTYiCiAgICAgICAgICAgICAgICAgICAgeT0iNjYuMjIiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjkzLjQ0IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNjcuNTYiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CjxyZWN0IHg9IjEwLjAwIgogICAgICAgICAgICAgICAgICAgIHk9IjY2LjIyIgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI5My40NCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjY3LjU2IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMjBhMjAyIiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI2My45NyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iOTkuNjciCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI3Mi4wNyIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KPHJlY3QgeD0iMTQwLjMzIgogICAgICAgICAgICAgICAgICAgIHk9IjYzLjk3IgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI5OS42NyIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjM4LjMzIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMmU4YmU4IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
     }
   }
 }
