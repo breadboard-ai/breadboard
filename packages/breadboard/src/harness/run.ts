@@ -30,7 +30,7 @@ const configureKits = async (config: RunConfig): Promise<Kit[]> => {
           const proxyClient = new ProxyClient(
             new HTTPClientTransport(proxyConfig.url)
           );
-          kits.push(proxyClient.createProxyKit(proxyConfig.nodes));
+          kits.push(proxyClient.createProxyKit(proxyConfig.nodes, config.kits));
           break;
         }
         default: {
