@@ -28,7 +28,8 @@ const API_NAME = "ai_image_editing";
 async function callImageEdit(
   instruction: string,
   image_content: LLMContent,
-  disablePromptRewrite: boolean
+  disablePromptRewrite: boolean,
+  aspectRatio: string = "1:1"
 ): Promise<LLMContent[]> {
   const imageChunk = toInlineData(image_content);
   if (!imageChunk) {
@@ -83,7 +84,10 @@ async function callImageEdit(
   return outContent.chunks.map((c) => toLLMContentInline(c.mimetype, c.data));
 }
 
-async function callImageGen(imageInstruction: string): Promise<LLMContent[]> {
+async function callImageGen(
+  imageInstruction: string,
+  aspectRatio: string = "1:1"
+): Promise<LLMContent[]> {
   const executionInputs: ContentMap = {};
   const encodedInstruction = btoa(
     unescape(encodeURIComponent(imageInstruction))

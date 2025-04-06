@@ -34,11 +34,13 @@ import { ArgumentNameGenerator } from "./introducer";
 import { ListExpander } from "./lists";
 
 const MAKE_IMAGE_ICON = "generative-image";
+const ASPECT_RATIOS = ["1:1", "9:16", "16:9", "4:3", "3:4"];
 
 type ImageGeneratorInputs = {
   context: LLMContent[];
   instruction: LLMContent;
   "p-disable-prompt-rewrite": boolean;
+  "p-aspect-ratio": string;
 } & Params;
 
 type ImageGeneratorOutputs = {
@@ -96,11 +98,15 @@ async function invoke({
   context: incomingContext,
   instruction,
   "p-disable-prompt-rewrite": disablePromptRewrite,
+  "p-aspect-ratio": aspectRatio,
   ...params
 }: ImageGeneratorInputs): Promise<Outcome<ImageGeneratorOutputs>> {
   incomingContext ??= [];
   if (!instruction) {
     instruction = toLLMContent("");
+  }
+  if (!aspectRatio) {
+    aspectRatio = "1:1";
   }
   console.log(instruction);
   console.log(incomingContext);
@@ -161,7 +167,8 @@ async function invoke({
           const generatedImage = await callImageEdit(
             combinedInstruction,
             imageContext[0],
-            disablePromptRewrite
+            disablePromptRewrite,
+            aspectRatio
           );
           return mergeContent(generatedImage, "model");
         } else {
@@ -178,7 +185,10 @@ async function invoke({
             imagePrompt = generatingPrompt.last;
           }
           console.log("PROMPT", toText(imagePrompt).trim());
-          const generatedImage = await callImageGen(toText(imagePrompt).trim());
+          const generatedImage = await callImageGen(
+            toText(imagePrompt).trim(),
+            aspectRatio
+          );
           return mergeContent(generatedImage, "model");
         }
       }
@@ -224,6 +234,15 @@ async function describe({ inputs: { instruction } }: DescribeInputs) {
           behavior: ["config"],
           description:
             "By default, inputs and instructions will be automatically expanded into a high quality image prompt. Check to disable this re-writing behavior.",
+        },
+        "p-aspect-ratio": {
+          type: "string",
+          behavior: ["hint-text", "config"],
+          title: "Aspect Ratio",
+          icon: "voice-selection",
+          enum: ASPECT_RATIOS,
+          description: "The aspect ratio of the generated image",
+          default: "1:1",
         },
         ...template.schemas(),
       },
