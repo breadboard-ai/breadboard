@@ -4,18 +4,32 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LLMContent } from "@breadboard-ai/types";
+import { DataPart, LLMContent } from "@breadboard-ai/types";
 
 export { llmContentTransform };
 
+type StreamType = "sse" | "text" | "json";
+
+function makePart(stream: Omit<StreamType, "sse">, chunk: string): DataPart {
+  if (stream === "text") {
+    return { text: chunk };
+  } else {
+    try {
+      return { json: JSON.parse(chunk) };
+    } catch (e) {
+      return { json: JSON.stringify(chunk) };
+    }
+  }
+}
+
 function llmContentTransform(
-  stream: "sse" | "text" | "json"
+  stream: StreamType
 ): TransformStream<string, LLMContent> {
-  if (stream !== "text") throw new Error("Only text supported");
+  if (stream === "sse") throw new Error("Only text and json supported");
   return new TransformStream({
     transform(chunk, controller) {
       controller.enqueue({
-        parts: [{ text: chunk }],
+        parts: [makePart(stream, chunk)],
       });
     },
   });

@@ -21,16 +21,92 @@ type Outputs = {
   result: unknown;
 };
 
+type ReportInputs = {
+  /**
+   * The name of the actor providing the report
+   */
+  actor: string;
+  /**
+   * The general category of the report
+   */
+  category: string;
+  /**
+   * The name of the report
+   */
+  name: string;
+  /**
+   * The details of the report
+   */
+  details: string | LLMContent;
+  /**
+   * The icon to use
+   */
+  icon?: string;
+};
+
+export { report };
+
+async function report(inputs: ReportInputs): Promise<boolean> {
+  const { actor: title, category: description, name, details, icon } = inputs;
+
+  const detailsSchema: Schema =
+    typeof details === "string"
+      ? {
+          title: name,
+          type: "string",
+          format: "markdown",
+        }
+      : {
+          title: name,
+          type: "object",
+          behavior: ["llm-content"],
+        };
+
+  if (icon) {
+    detailsSchema.icon = icon;
+  }
+
+  const schema: Schema = {
+    type: "object",
+    properties: {
+      details: detailsSchema,
+    },
+  };
+
+  const { delivered } = await output({
+    $metadata: {
+      title,
+      description,
+      icon,
+    },
+    schema,
+    details,
+  });
+  return delivered;
+}
+
 async function invoke({ endpoint }: Inputs): Promise<Outcome<Outputs>> {
   const response = await fetch({
     url: endpoint,
     file: "/run/saved",
-    stream: "text",
+    stream: "json",
   });
   if (!ok(response)) return response;
-  const reading = await read({ path: response.response as FileSystemPath });
-  if (!ok(reading)) return reading;
-  return { result: reading.data };
+  for (;;) {
+    const reading = await read({ path: response.response as FileSystemPath });
+    console.log("READING", reading);
+    if (!ok(reading)) return reading;
+    if ("done" in reading && reading.done) {
+      return { result: "done" };
+    }
+    await report({
+      actor: "Fetch",
+      category: "Streaming",
+      name: "Streaming OMG",
+      details: reading.data?.at(-1) || "none",
+    });
+  }
+  return { result: "done" };
 }
 
 async function describe() {

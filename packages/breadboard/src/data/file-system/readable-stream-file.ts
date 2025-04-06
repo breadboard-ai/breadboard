@@ -51,6 +51,6 @@ class ReadableStreamFile implements FileSystemFile {
   }
 
   async delete(): Promise<FileSystemWriteResult> {
-    return err(`Deleting read-only streams is not supported`);
+    this.stream.cancel().catch(() => {});
   }
 }
