@@ -4,7 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { annotate, anyOf, array, board, enumeration, input, object, output } from "@breadboard-ai/build";
+import {
+  annotate,
+  anyOf,
+  array,
+  board,
+  enumeration,
+  input,
+  object,
+  output,
+} from "@breadboard-ai/build";
 import { secret, fetch } from "@google-labs/core-kit";
 import { jsonata } from "@google-labs/json-kit";
 
@@ -23,10 +32,7 @@ const imagePartType = object({
   }),
 });
 
-const partType = anyOf(
-  textPartType,
-  imagePartType
-);
+const partType = anyOf(textPartType, imagePartType);
 
 const generateContentContentsType = object({
   role: "string",
@@ -48,7 +54,6 @@ const fetchResult = fetch({
   $id: "openai",
   url: "https://api.openai.com/v1/chat/completions",
   method: "POST",
-  stream: false,
   headers: jsonata({
     $id: "makeHeaders",
     expression: `{
@@ -81,8 +86,8 @@ const fetchResult = fetch({
       "presence_penalty": 0
     }`,
     content,
-    useStreaming: false
-  }).unsafeOutput("result")
+    useStreaming: false,
+  }).unsafeOutput("result"),
 });
 
 const formattedResponse = jsonata({
@@ -99,5 +104,5 @@ export default board({
   inputs: { content },
   outputs: {
     text: output(formattedResponse.unsafeOutput("result")),
-  }
+  },
 });
