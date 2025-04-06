@@ -88,7 +88,7 @@ async function describe() {
     title: "Make Audio",
     metadata: {
       icon: "generative-audio",
-      tags: ["quick-access", "generative"],
+      tags: ["quick-access", "generative", "experimental"],
       order: 3,
     },
   };

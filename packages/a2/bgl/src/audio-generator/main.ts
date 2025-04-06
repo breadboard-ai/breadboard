@@ -205,7 +205,7 @@ async function describe({ inputs: { text } }: DescribeInputs) {
     title: "Make Speech",
     metadata: {
       icon: "generative-audio",
-      tags: ["quick-access", "generative", "experimental"],
+      tags: ["quick-access", "generative"],
       order: 3,
     },
   };
