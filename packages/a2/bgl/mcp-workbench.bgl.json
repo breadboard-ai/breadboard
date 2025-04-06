@@ -1,0 +1,57 @@
+{
+  "title": "MCP Workbench",
+  "description": "",
+  "version": "0.0.1",
+  "nodes": [],
+  "edges": [],
+  "metadata": {
+    "visual": {
+      "presentation": {
+        "themes": {
+          "39239b49-62d0-4182-b919-924c4db67941": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "39239b49-62d0-4182-b919-924c4db67941"
+      }
+    },
+    "userModified": true,
+    "tags": [],
+    "parameters": {}
+  },
+  "assets": {
+    "connectors/fe7f8355-cf2d-4dd3-8640-50a0ef2c8806": {
+      "data": [
+        {
+          "parts": [
+            {
+              "json": {
+                "url": "file://bgl/mcp.bgl.json",
+                "configuration": {
+                  "endpoint": "http://localhost:3001/sse"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "metadata": {
+        "title": "MCP Server",
+        "type": "connector"
+      }
+    }
+  }
+}
