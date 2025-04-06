@@ -33,6 +33,11 @@ export type TemplatePart = {
    */
   invalid?: true;
   mimeType?: string;
+  /**
+   * Connector instance. Used to point a tool that represents the
+   * connector tool bundle to a particular instance of a connector.
+   */
+  instance?: string;
 };
 
 export type TemplatePartTransformCallback = (
@@ -172,9 +177,14 @@ class Template {
     return `{${JSON.stringify(part)}}`;
   }
 
-  static preamble({ type, path, mimeType }: TemplatePart) {
-    const maybeMimeType = mimeType ? `"mimeType": ${JSON.stringify(mimeType)}, ` : "";
-    return `{{"type": ${JSON.stringify(type)}, "path": ${JSON.stringify(path)}, ${maybeMimeType}"title": "`;
+  static preamble({ type, path, mimeType, instance }: TemplatePart) {
+    const maybeMimeType = mimeType
+      ? `"mimeType": ${JSON.stringify(mimeType)}, `
+      : "";
+    const maybeInstance = instance
+      ? `"instance": ${JSON.stringify(instance)},`
+      : "";
+    return `{{"type": ${JSON.stringify(type)}, "path": ${JSON.stringify(path)}, ${maybeMimeType}${maybeInstance}"title": "`;
   }
 
   static postamble() {

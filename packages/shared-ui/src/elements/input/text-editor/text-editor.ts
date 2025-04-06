@@ -293,7 +293,8 @@ export class TextEditor extends LitElement {
     path: string,
     title: string,
     templatePartType: TemplatePartType,
-    mimeType?: string
+    mimeType?: string,
+    instance?: string
   ) {
     if (!this.#editorRef.value) {
       return null;
@@ -325,6 +326,7 @@ export class TextEditor extends LitElement {
         path,
         type: templatePartType,
         mimeType,
+        instance,
       });
       postamableText.textContent = Template.postamble();
       titleText.textContent = title;
@@ -822,7 +824,13 @@ export class TextEditor extends LitElement {
         @bbfastaccessselect=${(evt: FastAccessSelectEvent) => {
           this.#hideFastAccess();
           this.#restoreLastRange();
-          this.#add(evt.path, evt.title, evt.accessType, evt.mimeType);
+          this.#add(
+            evt.path,
+            evt.title,
+            evt.accessType,
+            evt.mimeType,
+            evt.instance
+          );
 
           this.#captureEditorValue();
         }}

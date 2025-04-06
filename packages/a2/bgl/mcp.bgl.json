@@ -75,6 +75,18 @@
         "description": "Breadboard MCP Client",
         "runnable": false
       }
+    },
+    "connector-tools": {
+      "code": "/**\n * @fileoverview The tools export for the connector.\n */\nexport { invoke as default, describe };\nasync function invoke({ context }) {\n    return { context };\n}\nasync function describe() {\n    return {\n        title: \"MCP Server Tool Export\",\n        metadata: {\n            tags: [\"connector-tools\"],\n        },\n        inputSchema: {\n            type: \"object\",\n        },\n        outputSchema: {\n            type: \"object\",\n        },\n    };\n}\n",
+      "metadata": {
+        "title": "connector-tools",
+        "source": {
+          "code": "/**\n * @fileoverview The tools export for the connector.\n */\n\nexport { invoke as default, describe };\n\nasync function invoke({ context }: { context: LLMContent[] }) {\n  return { context };\n}\n\nasync function describe() {\n  return {\n    title: \"MCP Server Tool Export\",\n    metadata: {\n      tags: [\"connector-tools\"],\n    },\n    inputSchema: {\n      type: \"object\",\n    } satisfies Schema,\n    outputSchema: {\n      type: \"object\",\n    } satisfies Schema,\n  };\n}\n",
+          "language": "typescript"
+        },
+        "description": "The tools export for the connector.",
+        "runnable": false
+      }
     }
   },
   "imports": {
@@ -83,6 +95,7 @@
     }
   },
   "exports": [
-    "#module:configurator"
+    "#module:configurator",
+    "#module:connector-tools"
   ]
 }

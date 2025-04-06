@@ -1386,7 +1386,8 @@ export class FastAccessSelectEvent extends Event {
     public readonly path: string,
     public readonly title: string,
     public readonly accessType: "asset" | "tool" | "in" | "param",
-    public readonly mimeType?: string
+    public readonly mimeType?: string,
+    public readonly instance?: string
   ) {
     super(FastAccessSelectEvent.eventName, { ...eventInit });
   }
