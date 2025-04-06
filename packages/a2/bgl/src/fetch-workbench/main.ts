@@ -6,11 +6,9 @@ import fetch from "@fetch";
 import read from "@read";
 import output from "@output";
 
-export type NonPromise<T> = T extends Promise<unknown> ? never : T;
+import { ok } from "./a2/utils";
+import { report } from "./a2/output";
 
-function ok<T>(o: Outcome<NonPromise<T>>): o is NonPromise<T> {
-  return !(o && typeof o === "object" && "$error" in o);
-}
 export { invoke as default, describe };
 
 type Inputs = {
@@ -21,75 +19,11 @@ type Outputs = {
   result: unknown;
 };
 
-type ReportInputs = {
-  /**
-   * The name of the actor providing the report
-   */
-  actor: string;
-  /**
-   * The general category of the report
-   */
-  category: string;
-  /**
-   * The name of the report
-   */
-  name: string;
-  /**
-   * The details of the report
-   */
-  details: string | LLMContent;
-  /**
-   * The icon to use
-   */
-  icon?: string;
-};
-
-export { report };
-
-async function report(inputs: ReportInputs): Promise<boolean> {
-  const { actor: title, category: description, name, details, icon } = inputs;
-
-  const detailsSchema: Schema =
-    typeof details === "string"
-      ? {
-          title: name,
-          type: "string",
-          format: "markdown",
-        }
-      : {
-          title: name,
-          type: "object",
-          behavior: ["llm-content"],
-        };
-
-  if (icon) {
-    detailsSchema.icon = icon;
-  }
-
-  const schema: Schema = {
-    type: "object",
-    properties: {
-      details: detailsSchema,
-    },
-  };
-
-  const { delivered } = await output({
-    $metadata: {
-      title,
-      description,
-      icon,
-    },
-    schema,
-    details,
-  });
-  return delivered;
-}
-
 async function invoke({ endpoint }: Inputs): Promise<Outcome<Outputs>> {
   const response = await fetch({
     url: endpoint,
     file: "/run/saved",
-    stream: "text",
+    stream: "sse",
   });
   if (!ok(response)) return response;
   for (;;) {
