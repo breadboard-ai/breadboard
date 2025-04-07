@@ -5,7 +5,7 @@
  */
 
 import { BoardServer, GraphProviderItem } from "@google-labs/breadboard";
-import { css, html, LitElement, nothing } from "lit";
+import { css, html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { GraphBoardServerLoadRequestEvent } from "../../events/events.js";

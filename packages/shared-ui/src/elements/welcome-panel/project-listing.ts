@@ -13,7 +13,6 @@ import {
   GraphBoardServerAddEvent,
   GraphBoardServerBlankBoardEvent,
   GraphBoardServerDisconnectEvent,
-  GraphBoardServerLoadRequestEvent,
   GraphBoardServerRefreshEvent,
   GraphBoardServerRenewAccessRequestEvent,
   GraphBoardServerSelectionChangeEvent,
@@ -21,7 +20,11 @@ import {
 import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { until } from "lit/directives/until.js";
-import { BoardServer, GraphProviderStore } from "@google-labs/breadboard";
+import {
+  BoardServer,
+  GraphProviderItem,
+  GraphProviderStore,
+} from "@google-labs/breadboard";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
 import "../../flow-gen/describe-flow-panel.js";
@@ -1189,8 +1192,15 @@ export class ProjectListing extends LitElement {
                   boardListing = html`<div
                       class=${classMap({ boards: true, [this.mode]: true })}
                     >
+                      <h3>Yours</h3>
                       <bb-gallery
-                        .items=${items}
+                        .items=${items.filter(itemIsMine)}
+                        .boardServer=${boardServer}
+                      ></bb-gallery>
+
+                      <h3>Samples</h3>
+                      <bb-gallery
+                        .items=${items.filter(itemIsSample)}
                         .boardServer=${boardServer}
                       ></bb-gallery>
                     </div>
@@ -1332,4 +1342,12 @@ export class ProjectListing extends LitElement {
 
       <div id="app-version">${this.version} (${this.gitCommitHash})</div>`;
   }
+}
+
+function itemIsSample([_name, item]: [string, GraphProviderItem]): boolean {
+  return (item.tags ?? []).includes("featured");
+}
+
+function itemIsMine([_name, item]: [string, GraphProviderItem]): boolean {
+  return item.mine;
 }
