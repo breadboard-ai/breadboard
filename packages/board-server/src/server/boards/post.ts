@@ -8,7 +8,7 @@ import type { NextFunction, Request, Response } from "express";
 
 import { type GraphDescriptor } from "@google-labs/breadboard";
 
-import { asPath, InvalidRequestError, type BoardServerStore } from "../store.js";
+import { InvalidRequestError, type BoardServerStore } from "../store.js";
 import type { BoardId } from "../types.js";
 
 import del from "./delete.js";
@@ -60,7 +60,7 @@ async function update(
     });
     // TODO what does the client do with this response, and why is the property
     // called "created"?
-    const created = asPath(userId, boardId.name);
+    const created = boardId.name;
     res.json({ ...result, created,  });
   } catch (e) {
     if (e instanceof InvalidRequestError) {

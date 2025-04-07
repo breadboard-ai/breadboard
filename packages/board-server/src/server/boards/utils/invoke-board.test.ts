@@ -22,7 +22,7 @@ const mockSecretsKit: Kit = {
 
 describe("Board Server Invokes Boards", () => {
   test("can invoke a simple board", async () => {
-    const path = "/boards/user/name";
+    const path = "/boards/name";
     const inputs = { text: "bar" };
     const result = await invokeBoard({
       serverUrl: "https://example.com",
