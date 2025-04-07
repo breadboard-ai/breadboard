@@ -6,7 +6,15 @@ import toolGetWebpage, {
   describe as toolGetWebpageDescribe,
 } from "./tool-get-webpage";
 import { Template } from "./a2/template";
-import { ok, err, toText, toLLMContent, defaultLLMContent } from "./a2/utils";
+import {
+  ok,
+  err,
+  toText,
+  toLLMContent,
+  defaultLLMContent,
+  toTextConcat,
+} from "./a2/utils";
+import { ListExpander } from "./a2/lists";
 
 export { invoke as default, describe };
 
@@ -18,13 +26,13 @@ export type GetWebPageOutputs = {
   results: string;
 };
 
-async function resolveInput(inputContent: LLMContent): Promise<string> {
+async function resolveInput(inputContent: LLMContent): Promise<LLMContent> {
   const template = new Template(inputContent);
   const substituting = await template.substitute({}, async () => "");
   if (!ok(substituting)) {
-    return substituting.$error;
+    return toLLMContent(substituting.$error);
   }
-  return toText(substituting);
+  return substituting;
 }
 
 type Inputs =
@@ -40,39 +48,70 @@ type Outputs =
     }
   | GetWebPageOutputs;
 
+function extractURL(maybeMarkdownLink: string): string {
+  // Sometimes Listification returns URLS in markdown format.
+  const singleRegex: RegExp = /\[.*?\]\(([^)]+)\)/;
+  const match: RegExpMatchArray | null = maybeMarkdownLink.match(singleRegex);
+
+  if (match && match[1]) {
+    // match[1] is the content of the first capturing group (the URL)
+    const url: string = match[1];
+    return url;
+  }
+  return maybeMarkdownLink;
+}
+
 async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
-  let url: string;
+  let urlContext: LLMContent[] = [];
   let mode: "step" | "tool";
   if ("context" in inputs) {
     mode = "step";
-    const last = inputs.context?.at(-1);
-    if (last) {
-      url = toText(last);
+    if (inputs.context) {
+      urlContext = inputs.context;
     } else {
-      return err("Please provide a query");
+      return err("Please provide a URL");
     }
   } else if ("p-url" in inputs) {
-    url = await resolveInput(inputs["p-url"]);
+    const urlContent = await resolveInput(inputs["p-url"]);
+    if (!ok(urlContent)) {
+      return urlContent;
+    }
+    urlContext = [urlContent];
     mode = "step";
   } else {
-    url = inputs.url;
+    urlContext = [toLLMContent(inputs.url)];
     mode = "tool";
   }
-  url = (url || "").trim();
-  if (!url) {
-    return err("Please provide a URL");
-  }
-  console.log("URL: " + url);
-  const getting = await toolGetWebpage({ url });
-  if (!ok(getting)) {
-    return getting;
+  console.log("urlContext");
+  console.log(urlContext);
+  const results = await new ListExpander(
+    toLLMContent(defaultLLMContent()),
+    urlContext
+  ).map(async (_, itemContext) => {
+    console.log("itemContext");
+    console.log(itemContext);
+    let urlString = extractURL(toText(itemContext));
+    urlString = (urlString || "").trim();
+    if (!urlString) {
+      return err("Please provide a URL");
+    }
+    console.log("URL: ", urlString);
+    const getting = await toolGetWebpage({ url: urlString });
+    if (!ok(getting)) {
+      return toLLMContent(getting.$error);
+    }
+    return toLLMContent(getting.results);
+  });
+
+  if (!ok(results)) {
+    return results;
   }
   if (mode == "step") {
     return {
-      context: [toLLMContent(getting.results)],
+      context: results,
     };
   }
-  return getting;
+  return { results: toTextConcat(results) };
 }
 
 export type DescribeInputs = {

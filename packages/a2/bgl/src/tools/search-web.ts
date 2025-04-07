@@ -10,10 +10,12 @@ import {
   ok,
   err,
   toText,
+  toTextConcat,
   toLLMContent,
   addUserTurn,
   defaultLLMContent,
 } from "./a2/utils";
+import { ListExpander } from "./a2/lists";
 import toolSearchWeb, {
   type SearchWebOutputs,
   describe as toolSearchWebDescribe,
@@ -38,46 +40,70 @@ type Outputs =
     }
   | SearchWebOutputs;
 
-async function resolveInput(inputContent: LLMContent): Promise<string> {
+async function resolveInput(inputContent: LLMContent): Promise<LLMContent> {
   const template = new Template(inputContent);
   const substituting = await template.substitute({}, async () => "");
   if (!ok(substituting)) {
-    return substituting.$error;
+    return toLLMContent(substituting.$error);
   }
-  return toText(substituting);
+  return substituting;
+}
+
+function extractQuery(maybeMarkdownListItem: string): string {
+  if (maybeMarkdownListItem.startsWith("* ")) {
+    return maybeMarkdownListItem.replace("* ", "");
+  }
+  return maybeMarkdownListItem;
 }
 
 async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
-  let query: string;
+  let query: LLMContent[];
   let mode: "step" | "tool";
   if ("context" in inputs) {
     mode = "step";
     const last = inputs.context?.at(-1);
-    if (last) {
-      query = toText(last);
+    if (inputs.context) {
+      query = inputs.context;
     } else {
-      return err("Please provide a query");
+      return err("Please provide a URL");
     }
   } else if ("p-query" in inputs) {
-    query = await resolveInput(inputs["p-query"]);
+    const queryContent = await resolveInput(inputs["p-query"]);
+    if (!ok(queryContent)) {
+      return queryContent;
+    }
+    query = [queryContent];
     mode = "step";
   } else {
-    query = inputs.query;
+    query = [toLLMContent(inputs.query)];
     mode = "tool";
   }
-  query = (query || "").trim();
-  if (!query) {
-    return err("Please provide a query");
-  }
-  console.log("Query: " + query);
-  const searchResults = await toolSearchWeb({ query });
+
+  const searchResults = await new ListExpander(
+    toLLMContent(defaultLLMContent()),
+    query
+  ).map(async (_, itemContext) => {
+    let queryString = extractQuery(toText(itemContext));
+    queryString = (queryString || "").trim();
+    if (!queryString) {
+      return err("Please provide a query");
+    }
+    console.log("Query: ", queryString);
+    const getting = await toolSearchWeb({ query: queryString });
+    if (!ok(getting)) {
+      return toLLMContent(getting.$error);
+    }
+    return toLLMContent(getting.results);
+  });
   if (!ok(searchResults)) {
     return searchResults;
   }
   if (mode === "step") {
-    return { context: [toLLMContent(searchResults.results)] };
+    return {
+      context: searchResults,
+    };
   }
-  return searchResults;
+  return { results: toTextConcat(searchResults) };
 }
 
 export type DescribeInputs = {
