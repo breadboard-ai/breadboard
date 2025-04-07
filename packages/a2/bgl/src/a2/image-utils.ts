@@ -27,14 +27,24 @@ const API_NAME = "ai_image_editing";
 
 async function callImageEdit(
   instruction: string,
-  image_content: LLMContent,
+  imageContent: LLMContent[],
   disablePromptRewrite: boolean,
   aspectRatio: string = "1:1"
 ): Promise<LLMContent[]> {
-  const imageChunk = toInlineData(image_content);
-  if (!imageChunk) {
+  const imageChunks = [];
+  for (const element of imageContent) {
+    const inlineChunk = toInlineData(element);
+    if (inlineChunk && inlineChunk != null) {
+      imageChunks.push({
+        mimetype: inlineChunk.mimeType,
+        data: inlineChunk.data,
+      });
+    }
+  }
+  if (!imageChunks) {
     throw new Error("No image provided to image edit call");
   }
+  console.log("Number of input images: " + String(imageChunks.length));
   const encodedInstruction = btoa(unescape(encodeURIComponent(instruction)));
   const body = {
     planStep: {
@@ -49,12 +59,7 @@ async function callImageEdit(
     },
     execution_inputs: {
       input_image: {
-        chunks: [
-          {
-            mimetype: imageChunk.mimeType,
-            data: imageChunk.data,
-          },
-        ],
+        chunks: imageChunks,
       },
       input_instruction: {
         chunks: [
