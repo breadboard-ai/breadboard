@@ -157,8 +157,9 @@ class ToolManager {
         const { url, description } = tool;
         this.#addOneTool(url, description, false, connector);
       }
-      // Not sure what to return here.
-      return "Browser";
+      // Return empty string, which will inform the
+      // substitution machinery to just reuse title.
+      return "";
     }
 
     let description = (await describeGraph({

@@ -206,7 +206,9 @@ class Template {
       }
       return reading.data;
     } else if (isTool(param)) {
-      return await whenTool(param);
+      const substituted = await whenTool(param);
+      if (!ok(substituted)) return substituted;
+      if (!substituted) return param.title;
     } else if (isParameter(param)) {
       const path: FileSystemPath = `/env/parameters/${param.path}`;
       const reading = await readFile({ path });
@@ -238,7 +240,6 @@ class Template {
           replaced.push(...value.parts);
         } else if (isLLMContentArray(value)) {
           const last = this.#getLastNonMetadata(value);
-          console.log("LAST", last);
           if (last) {
             replaced.push(...last.parts);
           }
