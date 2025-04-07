@@ -28,6 +28,7 @@ import "../../flow-gen/describe-flow-panel.js";
 import "./homepage-search-button.js";
 import type { HomepageSearchButton } from "./homepage-search-button.js";
 import { icons } from "../../styles/icons.js";
+import "./gallery.js";
 
 const SHOW_OTHER_PEOPLES_BOARDS_KEY =
   "bb-project-listing-show-other-peoples-boards";
@@ -379,7 +380,7 @@ export class ProjectListing extends LitElement {
           display: flex;
           flex-direction: column;
 
-          & .boards {
+          & .boardsx {
             order: 1;
 
             display: grid;
@@ -648,6 +649,10 @@ export class ProjectListing extends LitElement {
           "wght" 600,
           "GRAD" 0,
           "opsz" 48;
+      }
+
+      #sample-gallery {
+        order: 0;
       }
     `,
   ];
@@ -1119,69 +1124,14 @@ export class ProjectListing extends LitElement {
                   });
 
                 type BoardInfo = (typeof items)[0];
-                const renderBoards = ([
-                  name,
-                  { url, mine, username, title, description, thumbnail },
-                ]: BoardInfo) => {
+                const renderBoards = ([_name, { thumbnail }]: BoardInfo) => {
                   const styles: Record<string, string> = {};
 
                   if (thumbnail !== null && thumbnail !== undefined) {
                     styles["--background-image"] = `url(${thumbnail})`;
                   }
 
-                  return html`<button
-                    @click=${(evt: PointerEvent) => {
-                      const isMac = navigator.platform.indexOf("Mac") === 0;
-                      const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
-
-                      // Track for future invocations.
-                      const currentIndex = this.#recentItems.findIndex(
-                        (item) => item === url
-                      );
-                      if (currentIndex === -1) {
-                        this.#recentItems.unshift(url);
-                      } else {
-                        const [item] = this.#recentItems.splice(
-                          currentIndex,
-                          1
-                        );
-                        this.#recentItems.unshift(item);
-                      }
-
-                      this.#saveRecentItemsForKey(this.recentItemsKey);
-
-                      this.dispatchEvent(
-                        new GraphBoardServerLoadRequestEvent(
-                          boardServer.name,
-                          url,
-                          isCtrlCommand
-                        )
-                      );
-                    }}
-                    data-board-server=${boardServer.name}
-                    data-url=${url}
-                    class=${classMap({
-                      mine,
-                      board: true,
-                    })}
-                  >
-                    <span
-                      class=${classMap({
-                        img: true,
-                        custom: thumbnail !== null && thumbnail !== undefined,
-                      })}
-                      style=${styleMap(styles)}
-                    ></span>
-                    <span class="title"> ${title ?? name} </span>
-                    <span class="description">
-                      ${description ?? "No description"}
-                    </span>
-                    ${mine
-                      ? nothing
-                      : username
-                        ? html`<span class="username">@${username}</span>`
-                        : nothing}
-                  </button> `;
+                  return html`MOVED`;
                 };
 
                 const pageSize =
@@ -1239,7 +1189,10 @@ export class ProjectListing extends LitElement {
                   boardListing = html`<div
                       class=${classMap({ boards: true, [this.mode]: true })}
                     >
-                      ${myRecentBoards}
+                      <bb-gallery
+                        .items=${items}
+                        .boardServer=${boardServer}
+                      ></bb-gallery>
                     </div>
                     ${pagination}`;
                 } else {
