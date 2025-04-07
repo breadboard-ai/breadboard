@@ -43,6 +43,12 @@ export type DescriberResultTransformer = {
   transform(result: DescriberResult): Promise<Outcome<DescriberResult | null>>;
 };
 
+export type CallToolCallback = (
+  tool: string,
+  args: object,
+  passContext?: boolean
+) => Promise<void>;
+
 export type AgentInputs = {
   /**
    * Whether (true) or not (false) the agent is allowed to chat with user.

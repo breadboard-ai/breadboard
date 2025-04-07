@@ -26,6 +26,7 @@ export type InitializeResponse = {
 
 export type ListToolsTool = {
   name: string;
+  description: string;
   // Schema is Breadboard-specific, but this should work well enough
   inputSchema: Schema;
 };

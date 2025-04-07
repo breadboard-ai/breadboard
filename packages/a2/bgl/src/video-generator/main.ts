@@ -147,7 +147,7 @@ async function invoke({
   const toolManager = new ToolManager(new ArgumentNameGenerator());
   const substituting = await template.substitute(
     params,
-    async ({ path: url }) => toolManager.addTool(url)
+    async ({ path: url, instance }) => toolManager.addTool(url, instance)
   );
   if (!ok(substituting)) {
     return substituting;

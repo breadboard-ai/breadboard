@@ -154,7 +154,7 @@ async function invoke({
   const template = new Template(plan);
   const substituting = await template.substitute(
     params,
-    async ({ path: url }) => toolManager.addTool(url)
+    async ({ path: url, instance }) => toolManager.addTool(url, instance)
   );
   if (!ok(substituting)) {
     return substituting;

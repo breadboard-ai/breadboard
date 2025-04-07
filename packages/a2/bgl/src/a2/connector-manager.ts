@@ -6,6 +6,8 @@ import { err, ok, isLLMContentArray } from "./utils";
 import read from "@read";
 import describeConnector, { type DescribeOutputs } from "@describe";
 import invokeConnector from "@invoke";
+import type { ExportDescriberResult, CallToolCallback } from "./common";
+
 export { ConnectorManager, createConfigurator };
 
 type InitializeInput = {
@@ -149,8 +151,9 @@ function createConfiguratorInvoke<
   };
 }
 
-type AssetParamPart = {
+type ConnectorConfig = {
   path: string;
+  instance?: string;
 };
 
 type ConnectorInfo = {
@@ -174,11 +177,42 @@ type LoadOutput = {
   context?: LLMContent[];
 };
 
-class ConnectorManager {
-  constructor(public readonly part: AssetParamPart) {}
+export type ListMethodOutput = {
+  list: ListToolResult[];
+};
 
-  async #getInvocationArgs(tag: string): Promise<Outcome<InvocationArgs>> {
+export type ListToolResult = {
+  url: string;
+  description: ExportDescriberResult;
+  passContext: boolean;
+};
+
+export type InvokeMethodOutput = {
+  result: string;
+};
+
+type ConnectorManagerState = {
+  info: ConnectorInfo;
+  describeOutputs: DescribeOutputs;
+};
+
+class ConnectorManager {
+  constructor(public readonly part: ConnectorConfig) {}
+
+  #state: ConnectorManagerState | null = null;
+
+  async title(): Promise<Outcome<string>> {
+    const state = await this.#getState();
+    if (!ok(state)) return state;
+
+    return state.info.url
+  }
+
+  async #getState(): Promise<Outcome<ConnectorManagerState>> {
     const path: FileSystemPath = `/assets/${this.part.path}`;
+
+    if (this.#state) return this.#state;
+
     const reading = await read({ path });
     if (!ok(reading)) return reading;
 
@@ -187,14 +221,51 @@ class ConnectorManager {
 
     const describing = await describeConnector({ url: info.url });
     if (!ok(describing)) return describing;
+    this.#state = { info, describeOutputs: describing };
+    return this.#state;
+  }
 
-    const url = getExportUrl(tag, describing);
+  async #getInvocationArgs(tag: string): Promise<Outcome<InvocationArgs>> {
+    const state = await this.#getState();
+    if (!ok(state)) return state;
+
+    const url = getExportUrl(tag, state.describeOutputs);
     if (!ok(url)) return url;
 
     const id = getConnectorId(this.part);
     if (!ok(id)) return id;
 
-    return { $board: url, id, info };
+    return { $board: url, id, info: state.info };
+  }
+
+  async listTools(): Promise<Outcome<ListToolResult[]>> {
+    const args = await this.#getInvocationArgs("connector-tools");
+    if (!ok(args)) return args;
+
+    const invoking = await invokeConnector({ method: "list", ...args });
+    if (!ok(invoking)) return invoking;
+
+    const output = invoking as ListMethodOutput;
+    console.log("LIST TOOLS OUTPUT", output);
+    return output.list;
+  }
+
+  async invokeTool(
+    name: string,
+    args: Record<string, unknown>,
+    callTool: CallToolCallback
+  ): Promise<Outcome<unknown>> {
+    const invocationArgs = await this.#getInvocationArgs("connector-tools");
+    if (!ok(invocationArgs)) return invocationArgs;
+
+    const { id, info } = invocationArgs;
+    await callTool(invocationArgs.$board, {
+      method: "invoke",
+      id,
+      info,
+      name,
+      args,
+    });
   }
 
   async materialize(): Promise<Outcome<unknown>> {
@@ -240,12 +311,12 @@ class ConnectorManager {
     if (!ok(invoking)) return invoking;
   }
 
-  static isConnector(part: AssetParamPart) {
+  static isConnector(part: ConnectorConfig) {
     return part.path.startsWith("connectors/");
   }
 }
 
-function getConnectorId(part: AssetParamPart): Outcome<string> {
+function getConnectorId(part: ConnectorConfig): Outcome<string> {
   const id = part.path.split("/").at(-1);
   if (!id) return err(`Invalid connector path: ${part.path}`);
   return id;

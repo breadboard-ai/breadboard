@@ -60,7 +60,7 @@ async function invoke({ context }: Inputs): Promise<Outputs> {
   const toolManager = new ToolManager(new ArgumentNameGenerator());
   const substituting = await template.substitute(
     params,
-    async ({ path: url }) => toolManager.addTool(url)
+    async ({ path: url, instance }) => toolManager.addTool(url, instance)
   );
   if (!ok(substituting)) {
     return substituting;
@@ -126,7 +126,7 @@ The following errors were encountered: ${toolManager.errors.join(",")}`;
     console.log("TOOL RESULTS", toolResults);
     if (errors.length > 0) {
       console.error("TOOL ERRORS", errors);
-      return err(``)
+      return err(`Tool Errors: ${errors.join("\n\n")}`);
     }
 
     // 3) Handle tool results
