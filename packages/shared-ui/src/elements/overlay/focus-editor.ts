@@ -703,6 +703,8 @@ export class FocusEditor extends LitElement {
       this.#destroyCodeEditors();
     }
 
+    console.log(id, subGraphId, outputs, metadata, false, ins);
+
     this.dispatchEvent(
       new NodePartialUpdateEvent(
         id,

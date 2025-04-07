@@ -640,6 +640,13 @@ export const styles = css`
 
     & #side-nav-content {
       height: calc(100% - var(--bb-grid-size-11));
+
+      & bb-entity-editor {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        z-index: 2;
+      }
     }
   }
 
