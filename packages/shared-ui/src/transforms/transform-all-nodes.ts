@@ -93,7 +93,7 @@ class TransformAllNodes implements EditTransform {
      * If present, skips this node, since it is the node that is triggering
      * all the edits. If absent, there is no node that triggers the transform.
      */
-    public readonly currentNode?: NodeIdentifier
+    public readonly skippedNodes?: NodeIdentifier[]
   ) {}
 
   async apply(context: EditOperationContext): Promise<EditTransformResult> {
@@ -107,7 +107,7 @@ class TransformAllNodes implements EditTransform {
 
     for (const node of inspectable.nodes()) {
       const id = node.descriptor.id;
-      if (id === this.currentNode) continue;
+      if (this.skippedNodes?.includes(id)) continue;
       const newConfig = transformConfiguration(
         node.configuration(),
         this.templateTransformer

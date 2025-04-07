@@ -104,7 +104,6 @@ class ChangeAssetEdge implements EditTransform {
       case "remove": {
         const tmpl = new Template(targetPart.text);
         tmpl.substitute((part) => {
-          console.log(part.path, this.edge.assetPath);
           if (part.path === this.edge.assetPath) {
             return "";
           }
