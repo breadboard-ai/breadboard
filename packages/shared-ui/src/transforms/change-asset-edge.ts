@@ -9,8 +9,8 @@ import {
   EditTransform,
   EditTransformResult,
   GraphIdentifier,
-  InspectableAsset,
   isTextCapabilityPart,
+  Template,
 } from "@google-labs/breadboard";
 import { AssetEdge } from "../types/types";
 import { isLLMContentBehavior, isPreviewBehavior } from "../utils/behaviors";
@@ -29,12 +29,6 @@ const failState = {
   success: false,
   error: `Unable to change asset`,
 };
-
-function createAssetString(edge: AssetEdge, asset: InspectableAsset) {
-  return `{{"type":"asset","path":"${
-    edge.assetPath
-  }","mimeType":"${getMimeType(asset.data)}","title":"${asset.title}"}}`;
-}
 
 class ChangeAssetEdge implements EditTransform {
   constructor(
@@ -96,15 +90,29 @@ class ChangeAssetEdge implements EditTransform {
     // Then either add the asset to the text, or remove it.
     switch (this.changeType) {
       case "add": {
-        targetPart.text += ` ${createAssetString(this.edge, asset)} `;
+        const item = `${Template.preamble({
+          title: this.edge.assetPath,
+          path: this.edge.assetPath,
+          type: "asset",
+          mimeType: getMimeType(asset.data),
+        })}${asset.title}${Template.postamble()}`;
+
+        targetPart.text += ` ${item} `;
         break;
       }
 
       case "remove": {
-        targetPart.text = targetPart.text.replace(
-          new RegExp(createAssetString(this.edge, asset), "gim"),
-          ""
-        );
+        const tmpl = new Template(targetPart.text);
+        tmpl.substitute((part) => {
+          console.log(part.path, this.edge.assetPath);
+          if (part.path === this.edge.assetPath) {
+            return "";
+          }
+
+          return `{${JSON.stringify(part)}}`;
+        });
+
+        targetPart.text = tmpl.renderable;
         break;
       }
     }
