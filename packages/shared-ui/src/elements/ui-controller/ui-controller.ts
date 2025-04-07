@@ -60,7 +60,7 @@ import { Editor } from "../elements.js";
 import { classMap } from "lit/directives/class-map.js";
 import { Sandbox } from "@breadboard-ai/jsandbox";
 import { ChatController } from "../../state/chat-controller.js";
-import { Organizer } from "../../state/types.js";
+import { Project } from "../../state/types.js";
 import "../../revision-history/revision-history-panel.js";
 import "../../revision-history/revision-history-overlay.js";
 import type { HighlightEvent } from "../step-editor/events/events.js";
@@ -134,7 +134,12 @@ export class UI extends LitElement {
 
   @property()
   set sideNavItem(
-    item: "app-view" | "console" | "capabilities" | "revision-history"
+    item:
+      | "app-view"
+      | "console"
+      | "capabilities"
+      | "revision-history"
+      | "editor"
   ) {
     if (item === this.#sideNavItem) {
       return;
@@ -195,7 +200,7 @@ export class UI extends LitElement {
   accessor popoutExpanded = false;
 
   @state()
-  accessor organizer: Organizer | null = null;
+  accessor projectState: Project | null = null;
 
   @state()
   accessor signedIn = false;
@@ -203,8 +208,12 @@ export class UI extends LitElement {
   @state()
   accessor showAssetOrganizer = false;
 
-  #sideNavItem: "app-view" | "console" | "capabilities" | "revision-history" =
-    "app-view";
+  #sideNavItem:
+    | "app-view"
+    | "console"
+    | "capabilities"
+    | "revision-history"
+    | "editor" = "app-view";
   #graphEditorRef: Ref<Editor> = createRef();
   #moduleEditorRef: Ref<ModuleEditor> = createRef();
 
@@ -662,6 +671,20 @@ export class UI extends LitElement {
         break;
       }
 
+      case "editor": {
+        sideNavItem = html`<bb-entity-editor
+          .graph=${graph}
+          .graphTopologyUpdateId=${this.graphTopologyUpdateId}
+          .graphStore=${this.graphStore}
+          .graphStoreUpdateId=${this.graphStoreUpdateId}
+          .selectionState=${this.selectionState}
+          .mainGraphId=${this.mainGraphId}
+          .readOnly=${this.readOnly}
+          .projectState=${this.projectState}
+        ></bb-entity-editor>`;
+        break;
+      }
+
       case null: {
         sideNavItem = nothing;
         break;
@@ -679,7 +702,7 @@ export class UI extends LitElement {
     let assetOrganizer: HTMLTemplateResult | symbol = nothing;
     if (this.showAssetOrganizer) {
       assetOrganizer = html`<bb-asset-organizer
-        .state=${this.organizer}
+        .state=${this.projectState?.organizer ?? null}
         .showGDrive=${this.signedIn}
         @bboverlaydismissed=${() => {
           this.showAssetOrganizer = false;
@@ -721,10 +744,13 @@ export class UI extends LitElement {
         <div id="side-nav-controls">
         <button ?disabled=${this.sideNavItem === "app-view"} @click=${() => {
           this.sideNavItem = "app-view";
-        }}>App view</button>
+        }}>App</button>
+        <button ?disabled=${this.sideNavItem === "editor"} @click=${() => {
+          this.sideNavItem = "editor";
+        }}>Editor</button>
         <button ?disabled=${this.sideNavItem === "console"} @click=${() => {
           this.sideNavItem = "console";
-        }}>Console</button>
+        }}>Activity</button>
         <button ?disabled=${this.sideNavItem === "revision-history"} @click=${() => {
           this.sideNavItem = "revision-history";
         }}>History</button>

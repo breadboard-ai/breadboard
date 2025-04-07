@@ -66,9 +66,14 @@ export class TextEditor extends LitElement {
       white-space: pre-line;
       height: var(--text-editor-height, auto);
       width: 100%;
+      min-height: 100%;
       line-height: var(--bb-grid-size-6);
       overflow-y: scroll;
-      padding: var(--bb-grid-size-2);
+      overflow-x: hidden;
+      padding: var(--text-editor-padding-top, var(--bb-grid-size-2))
+        var(--text-editor-padding-right, var(--bb-grid-size-2))
+        var(--text-editor-padding-bottom, var(--bb-grid-size-2))
+        var(--text-editor-padding-left, var(--bb-grid-size-2));
     }
 
     .chiclet {
@@ -189,7 +194,7 @@ export class TextEditor extends LitElement {
   #renderableValue = "";
   #isUsingFastAccess = false;
   #lastRange: Range | null = null;
-  #editorRef: Ref<HTMLDivElement> = createRef();
+  #editorRef: Ref<HTMLSpanElement> = createRef();
   #proxyRef: Ref<HTMLDivElement> = createRef();
   #fastAccessRef: Ref<FastAccessMenu> = createRef();
 
@@ -697,6 +702,17 @@ export class TextEditor extends LitElement {
     }
 
     this.#editorRef.value.focus({ preventScroll: true });
+
+    const selection = this.#getCurrentSelection();
+    if (!selection || !this.#editorRef.value.lastChild) {
+      return;
+    }
+
+    const range = new Range();
+    range.selectNode(this.#editorRef.value.lastChild);
+    range.collapse(false);
+    selection.removeAllRanges();
+    selection.addRange(range);
   }
 
   #showFastAccess(bounds: DOMRect | undefined) {
