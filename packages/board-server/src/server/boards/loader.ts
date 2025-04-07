@@ -5,7 +5,6 @@ import type { BoardId } from "../types.js";
 
 export function parseBoardId(opts?: { addJsonSuffix?: boolean }) {
   return (req: Request, res: Response, next: NextFunction) => {
-    console.log('vvv parseBoardId', req.params);
     let { user = "", name = "" } = req.params;
     if (!!opts?.addJsonSuffix) {
       name += ".json";
