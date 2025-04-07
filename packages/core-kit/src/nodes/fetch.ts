@@ -177,9 +177,11 @@ export default defineNodeType({
     const init: RequestInit = {
       method,
       headers,
-      signal,
       redirect,
     };
+    if (!stream && signal) {
+      init.signal = signal;
+    }
     // GET can not have a body.
     if (method !== "GET") {
       init.body = await createBody(body, headers, store);

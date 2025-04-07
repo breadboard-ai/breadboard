@@ -5,27 +5,24 @@
 import describeGraph from "@describe";
 import invokeGraph from "@invoke";
 import { ok, err } from "./utils";
-import {
-  type DescriberResult,
-  type ExportDescriberResult,
-  type DescriberResultTransformer,
+import type {
+  DescriberResult,
+  ExportDescriberResult,
+  DescriberResultTransformer,
+  CallToolCallback,
 } from "./common";
 import {
   type FunctionDeclaration,
   type GeminiSchema,
   type Tool,
 } from "./gemini";
-
-export type CallToolCallback = (
-  tool: string,
-  args: object,
-  passContext?: boolean
-) => Promise<void>;
+import { ConnectorManager } from "./connector-manager";
 
 export type ToolHandle = {
   tool: FunctionDeclaration;
   url: string;
   passContext: boolean;
+  connector?: ConnectorManager;
 };
 
 export type ConnectorHandle = {
@@ -119,7 +116,8 @@ class ToolManager {
   #createToolHandle(
     url: string,
     description: ExportDescriberResult,
-    passContext: boolean
+    passContext: boolean,
+    connector?: ConnectorManager
   ): [string, ToolHandle] {
     const name = this.#toName(description.title);
     const functionDeclaration: FunctionDeclaration = {
@@ -130,30 +128,47 @@ class ToolManager {
     if (parameters.properties) {
       functionDeclaration.parameters = parameters;
     }
-    return [name, { tool: functionDeclaration, url, passContext }];
+    return [name, { tool: functionDeclaration, url, passContext, connector }];
   }
 
   #addOneTool(
     url: string,
     description: ExportDescriberResult,
-    passContext: boolean
+    passContext: boolean,
+    connector?: ConnectorManager
   ): Outcome<string> {
     const [name, handle] = this.#createToolHandle(
       url,
       description,
-      passContext
+      passContext,
+      connector
     );
     this.tools.set(name, handle);
     return description.title || name;
   }
 
-  async addTool(url: string): Promise<Outcome<string>> {
+  async addTool(url: string, instance?: string): Promise<Outcome<string>> {
+    if (instance) {
+      // This is a connector.
+      const connector = new ConnectorManager({ path: instance });
+      const tools = await connector.listTools();
+      if (!ok(tools)) return tools;
+      for (const tool of tools) {
+        const { url, description } = tool;
+        this.#addOneTool(url, description, false, connector);
+      }
+      // Return empty string, which will inform the
+      // substitution machinery to just reuse title.
+      return "";
+    }
+
     let description = (await describeGraph({
       url,
     })) as Outcome<DescriberResult>;
     let passContext = false;
     if (!ok(description)) return description;
 
+    // TODO: Remove this altogether?
     // Let's see if there are exports. If yes, let's add the exports
     // instead of the tool.
     if (description.exports) {
@@ -242,8 +257,16 @@ class ToolManager {
         const { args, name } = part.functionCall;
         const handle = this.tools.get(name);
         if (handle) {
-          const { url, passContext } = handle;
-          await callTool(url, part.functionCall.args, passContext);
+          const { url, passContext, connector } = handle;
+          if (connector) {
+            await connector.invokeTool(
+              name,
+              args as Record<string, unknown>,
+              callTool
+            );
+          } else {
+            await callTool(url, part.functionCall.args, passContext);
+          }
         }
       }
     }

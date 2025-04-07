@@ -473,7 +473,9 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
         new FastAccessSelectEvent(
           tool.url,
           tool.title ?? "Untitled tool",
-          "tool"
+          "tool",
+          undefined,
+          tool.connectorInstance
         )
       );
       return;

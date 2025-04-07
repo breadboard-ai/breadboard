@@ -172,7 +172,8 @@ export type Tool = {
   title?: string;
   description?: string;
   icon?: string;
-  order: number;
+  connectorInstance?: string;
+  order?: number;
 };
 
 export type Component = {
@@ -192,7 +193,7 @@ export type Connector = {
   singleton: boolean;
   load: boolean;
   save: boolean;
-  tools: Tool[];
+  tools: boolean;
 };
 
 export type Components = Map<NodeIdentifier, Component>;

@@ -32,7 +32,7 @@ export type ToolParamPart = {
   type: "tool";
   path: string;
   title: string;
-  connectorInstance?: string;
+  instance?: string;
 };
 
 export type AssetParamPart = {
@@ -144,14 +144,14 @@ class Template {
             maybeTemplatePart = JSON.parse(json);
             if (isParamPart(maybeTemplatePart)) {
               // Do some extra parsing for connector tools
-              if (isTool(maybeTemplatePart)) {
-                const [path, connector] = maybeTemplatePart.path.split("|");
-                if (connector && connector.startsWith("connectors/")) {
-                  maybeTemplatePart.path = path;
-                  maybeTemplatePart.connectorInstance = connector;
-                }
-                console.log("TOOL", maybeTemplatePart);
-              }
+              // if (isTool(maybeTemplatePart)) {
+              //   const [path, connector] = maybeTemplatePart.path.split("|");
+              //   if (connector && connector.startsWith("connectors/")) {
+              //     maybeTemplatePart.path = path;
+              //     maybeTemplatePart.instance = connector;
+              //   }
+              //   console.log("TOOL", maybeTemplatePart);
+              // }
               parts.push(maybeTemplatePart);
             } else {
               maybeTemplatePart = null;
@@ -206,7 +206,9 @@ class Template {
       }
       return reading.data;
     } else if (isTool(param)) {
-      return await whenTool(param);
+      const substituted = await whenTool(param);
+      if (!ok(substituted)) return substituted;
+      if (!substituted) return param.title;
     } else if (isParameter(param)) {
       const path: FileSystemPath = `/env/parameters/${param.path}`;
       const reading = await readFile({ path });
@@ -238,7 +240,6 @@ class Template {
           replaced.push(...value.parts);
         } else if (isLLMContentArray(value)) {
           const last = this.#getLastNonMetadata(value);
-          console.log("LAST", last);
           if (last) {
             replaced.push(...last.parts);
           }

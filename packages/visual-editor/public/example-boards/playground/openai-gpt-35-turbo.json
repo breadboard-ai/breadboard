@@ -341,7 +341,6 @@
       "type": "fetch",
       "configuration": {
         "method": "POST",
-        "stream": false,
         "url": "https://api.openai.com/v1/chat/completions"
       }
     },

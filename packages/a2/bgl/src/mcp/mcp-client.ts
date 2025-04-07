@@ -1,25 +1,15 @@
 /**
- * @fileoverview Add a description for your module here.
+ * @fileoverview Breadboard MCP Client
  */
 
 import fetch from "@fetch";
 import read from "@read";
 import write from "@write";
 import query from "@query";
-import output from "@output";
 
 import { ok, err } from "./a2/utils";
-import { report } from "./a2/output";
 
-export { invoke as default, describe };
-
-type Inputs = {
-  endpoint: string;
-};
-
-type Outputs = {
-  result: unknown;
-};
+export { McpClient };
 
 export type InitializeResponse = {
   capabilities: {
@@ -36,6 +26,7 @@ export type InitializeResponse = {
 
 export type ListToolsTool = {
   name: string;
+  description: string;
   // Schema is Breadboard-specific, but this should work well enough
   inputSchema: Schema;
 };
@@ -278,87 +269,12 @@ class McpClient {
 
     // Close the stream.
     const deleting = await write({ path, delete: true });
+    // Delete the saved session
+    const deletingSession = await write({
+      path: this.#sessionIdPath(),
+      delete: true,
+    });
     if (!ok(deleting)) return deleting;
+    if (!ok(deletingSession)) return deletingSession;
   }
-}
-
-async function mcp(url: string) {
-  const client = new McpClient("connectorid", url);
-  const connecting = await client.connect();
-  if (!ok(connecting)) return connecting;
-
-  const tools = await client.listTools();
-  if (!ok(tools)) return tools;
-  await report({
-    actor: "MCP Client",
-    category: "response",
-    name: "List of Tools",
-    details: { parts: [{ json: tools }] },
-  });
-
-  const callingTool = await client.callTool("browser_navigate", {
-    url: "https://google.com",
-  });
-  if (!ok(callingTool)) return callingTool;
-  await report({
-    actor: "MCP Client",
-    category: "response",
-    name: "Calling Tool",
-    details: { parts: [{ json: callingTool }] },
-  });
-
-  // const disconnecting = await client.disconnect();
-  // if (!ok(disconnecting)) return disconnecting;
-}
-
-async function invoke({ endpoint }: Inputs): Promise<Outcome<Outputs>> {
-  const result = await mcp(endpoint);
-  if (!ok(result)) return result;
-  return { result: "foo" };
-  // const response = await fetch({
-  //   url: endpoint,
-  //   file: "/run/saved",
-  //   stream: "sse",
-  // });
-  // if (!ok(response)) return response;
-  // for (;;) {
-  //   const reading = await read({ path: response.response as FileSystemPath });
-  //   console.log("READING", reading);
-  //   if (!ok(reading)) return reading;
-  //   if ("done" in reading && reading.done) {
-  //     return { result: "done" };
-  //   }
-  //   await report({
-  //     actor: "Fetch",
-  //     category: "Streaming",
-  //     name: "Streaming OMG",
-  //     details: reading.data?.at(-1) || "none",
-  //   });
-  // }
-  // return { result: "done" };
-}
-
-async function describe() {
-  return {
-    inputSchema: {
-      type: "object",
-      properties: {
-        endpoint: {
-          type: "string",
-          title: "Endpoint URL",
-          default:
-            "http://127.0.0.1:6277/sse?transportType=sse&url=http%3A%2F%2Flocalhost%3A3001%2Fsse",
-        },
-      },
-    } satisfies Schema,
-    outputSchema: {
-      type: "object",
-      properties: {
-        result: {
-          type: "object",
-          title: "Result",
-        },
-      },
-    } satisfies Schema,
-  };
 }
