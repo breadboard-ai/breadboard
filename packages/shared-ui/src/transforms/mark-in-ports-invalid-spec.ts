@@ -46,7 +46,9 @@ class MarkInPortsInvalidSpec implements EditTransform {
           if (ids.has(path)) return { ...part, invalid: true };
           return null;
         },
-        `Marking "@" in port as invalid`
+        `Marking "@" in port as invalid`,
+        /* nodeTransformer */ undefined,
+        /* skippedNodes */ [...ids]
       ).apply(context);
       if (!marking.success) return marking;
     }

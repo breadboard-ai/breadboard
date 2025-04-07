@@ -46,7 +46,7 @@ export class Toast extends LitElement {
 
       translate: 0 calc(var(--offset) * var(--bb-grid-size) * -8);
       transition: translate 0.2s cubic-bezier(0, 0, 0.3, 1);
-      animation: slideIn var(--bb-easing-duration-in) var(--bb-easing) forwards;
+      animation: slideIn 0.15s cubic-bezier(0, 0, 0.3, 1) forwards;
       max-width: min(360px, 80vw);
     }
 
@@ -65,8 +65,7 @@ export class Toast extends LitElement {
     }
 
     :host(.toasted) {
-      animation: slideOut var(--bb-easing-duration-out) var(--bb-easing)
-        forwards;
+      animation: slideOut 0.3s cubic-bezier(0, 0, 0.3, 1) forwards;
     }
 
     :host::before {

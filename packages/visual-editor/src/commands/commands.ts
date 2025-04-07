@@ -57,7 +57,6 @@ export const DeleteCommand: KeyboardCommand = {
       graph
     );
 
-    const deleteActions: Promise<unknown>[] = [];
     let projectState: BreadboardUI.State.Project | null = null;
     for (const selectionGraph of selectionState.selectionState.graphs.values()) {
       // First delete any selected Asset Edges.
@@ -73,14 +72,12 @@ export const DeleteCommand: KeyboardCommand = {
                 continue;
               }
 
-              deleteActions.push(
-                editor.apply(
-                  new BreadboardUI.Transforms.ChangeAssetEdge("remove", "", {
-                    assetPath: assetEdge.assetPath,
-                    direction: assetEdge.direction,
-                    nodeId: assetEdge.node.descriptor.id,
-                  })
-                )
+              await editor.apply(
+                new BreadboardUI.Transforms.ChangeAssetEdge("remove", "", {
+                  assetPath: assetEdge.assetPath,
+                  direction: assetEdge.direction,
+                  nodeId: assetEdge.node.descriptor.id,
+                })
               );
             }
           }
@@ -98,20 +95,14 @@ export const DeleteCommand: KeyboardCommand = {
         }
 
         for (const asset of selectionGraph.assets) {
-          deleteActions.push(projectState.organizer.removeGraphAsset(asset));
+          await projectState.organizer.removeGraphAsset(asset);
         }
       }
     }
 
-    const actions = [
-      // Make sure to delete assets and asset edges first before anything else
-      // otherwise the transforms will fail because the target node may no
-      // longer exist.
-      ...deleteActions,
-      editor.apply(new BreadboardUI.Transforms.MarkInPortsInvalidSpec(spec)),
-    ];
-
-    await Promise.all(actions);
+    await editor.apply(
+      new BreadboardUI.Transforms.MarkInPortsInvalidSpec(spec)
+    );
 
     runtime.select.deselectAll(
       tab.id,
