@@ -645,21 +645,18 @@ export class EntityEditor extends LitElement {
                   }
 
                   if (port.schema.enum) {
-                    value = html`<label for=${port.name}
-                      >${port.title}<label
-                        ><select name=${port.name} id=${port.name}>
-                          ${map(port.schema.enum, (option) => {
-                            return html`<option
-                              value=${option}
-                              ?selected=${port.value === option ||
-                              (!port.value && option === port.schema.default)}
-                            >
-                              ${option}
-                            </option>`;
-                          })}
-                        </select></label
-                      ></label
-                    >`;
+                    value = html`<label for=${port.name}>${port.title}</label
+                      ><select name=${port.name} id=${port.name}>
+                        ${map(port.schema.enum, (option) => {
+                          return html`<option
+                            value=${option}
+                            ?selected=${port.value === option ||
+                            (!port.value && option === port.schema.default)}
+                          >
+                            ${option}
+                          </option>`;
+                        })}
+                      </select>`;
                     break;
                   }
 

@@ -49,7 +49,9 @@ import { ModuleEditor } from "../module-editor/module-editor.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import {
   CommandsSetSwitchEvent,
+  NodeConfigurationUpdateRequestEvent,
   ThemeEditRequestEvent,
+  WorkspaceSelectionStateEvent,
 } from "../../events/events.js";
 import {
   COMMAND_SET_GRAPH_EDITOR,
@@ -64,6 +66,11 @@ import { Project } from "../../state/types.js";
 import "../../revision-history/revision-history-panel.js";
 import "../../revision-history/revision-history-overlay.js";
 import type { HighlightEvent } from "../step-editor/events/events.js";
+import {
+  createEmptyGraphSelectionState,
+  createEmptyWorkspaceSelectionState,
+  createWorkspaceSelectionChangeId,
+} from "../../utils/workspace.js";
 
 const SIDE_ITEM_KEY = "bb-ui-controller-side-nav-item";
 
@@ -433,6 +440,44 @@ export class UI extends LitElement {
           .readOnly=${this.readOnly}
           .showExperimentalComponents=${showExperimentalComponents}
           .topGraphResult=${this.topGraphResult}
+          @bbnodeconfigurationupdaterequest=${(
+            evt: NodeConfigurationUpdateRequestEvent
+          ) => {
+            if (!evt.id) {
+              return;
+            }
+
+            this.sideNavItem = "editor";
+            const newState = createEmptyWorkspaceSelectionState();
+            const graphState = createEmptyGraphSelectionState();
+            const graphId = evt.subGraphId ? evt.subGraphId : MAIN_BOARD_ID;
+            const selectionChangeId = createWorkspaceSelectionChangeId();
+            graphState.nodes.add(evt.id);
+            newState.graphs.set(graphId, graphState);
+
+            // If the item is already selected, skip the change.
+            if (
+              this.selectionState?.selectionState.graphs.has(graphId) &&
+              this.selectionState.selectionState.graphs
+                .get(graphId)
+                ?.nodes.has(evt.id)
+            ) {
+              return;
+            }
+
+            // Intercept the port value click and convert it to a selection
+            // change *and* switch the side nav item with it.
+            evt.stopImmediatePropagation();
+
+            this.dispatchEvent(
+              new WorkspaceSelectionStateEvent(
+                selectionChangeId,
+                newState,
+                /** replaceExistingSelection */ true,
+                /** animated **/ false
+              )
+            );
+          }}
           @bbshowassetorganizer=${() => {
             this.showAssetOrganizer = true;
           }}
