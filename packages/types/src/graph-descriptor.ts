@@ -315,7 +315,8 @@ export type GraphTag =
   | "connector-configure"
   | "connector-load"
   | "connector-save"
-  | "connector-tools";
+  | "connector-tools"
+  | "featured";
 
 /**
  * Metadata about a parameter

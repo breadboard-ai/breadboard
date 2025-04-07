@@ -616,6 +616,7 @@
 				"core",
 				"deprecated",
 				"experimental",
+				"featured",
 				"generative",
 				"private",
 				"published",
