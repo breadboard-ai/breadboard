@@ -12,14 +12,7 @@ import {
   TemplatePart,
   TemplatePartTransformCallback,
 } from "@google-labs/breadboard";
-import {
-  LitElement,
-  html,
-  css,
-  HTMLTemplateResult,
-  nothing,
-  PropertyValues,
-} from "lit";
+import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { WorkspaceSelectionStateWithChangeId } from "../../types/types";
 import {
@@ -93,12 +86,22 @@ export class EntityEditor extends LitElement {
       font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
         var(--bb-font-family);
 
-      & span {
+      & input {
         flex: 1 0 auto;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        width: calc(100% - var(--bb-grid-size-7));
+        font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
+          var(--bb-font-family);
+        background: transparent;
+        padding: var(--bb-grid-size) var(--bb-grid-size);
+        border: 1px solid transparent;
+        border-radius: var(--bb-grid-size);
+        field-sizing: content;
+        max-width: 100%;
+        min-width: 20%;
+
+        &:hover,
+        &:focus {
+          border: 1px solid var(--outer-border);
+        }
       }
 
       &::before {
@@ -106,7 +109,7 @@ export class EntityEditor extends LitElement {
         width: 20px;
         height: 20px;
         flex: 0 0 auto;
-        margin-right: var(--bb-grid-size-2);
+        margin-right: var(--bb-grid-size);
       }
     }
 
@@ -122,11 +125,13 @@ export class EntityEditor extends LitElement {
 
     .node {
       & h1 {
+        --outer-border: var(--bb-ui-300);
         background: var(--bb-ui-100);
       }
 
       &.module {
         & h1 {
+          --outer-border: var(--bb-neutral-200);
           background: var(--bb-neutral-50);
         }
       }
@@ -140,6 +145,7 @@ export class EntityEditor extends LitElement {
       &.generative-code,
       &.generative-search {
         & h1 {
+          --outer-border: var(--bb-generative-200);
           background: var(--bb-generative-50);
         }
       }
@@ -149,6 +155,7 @@ export class EntityEditor extends LitElement {
       &.core,
       &.combine-outputs {
         & h1 {
+          --outer-border: var(--bb-input-200);
           background: var(--bb-input-50);
         }
       }
@@ -461,6 +468,11 @@ export class EntityEditor extends LitElement {
 
     const configuration = { ...node.configuration() };
     const metadata = { ...node.metadata() };
+    const title =
+      this.#formRef.value.querySelector<HTMLInputElement>("#node-title");
+    if (title) {
+      metadata.title = title.value;
+    }
 
     for (const port of ports) {
       const portEl = this.#formRef.value.querySelector<HTMLInputElement>(
@@ -486,14 +498,6 @@ export class EntityEditor extends LitElement {
       }
     }
 
-    console.log(
-      nodeId,
-      graphId !== MAIN_BOARD_ID ? graphId : null,
-      configuration,
-      metadata,
-      false,
-      ins
-    );
     this.dispatchEvent(
       new NodePartialUpdateEvent(
         nodeId,
@@ -576,7 +580,7 @@ export class EntityEditor extends LitElement {
 
         return html`<div class=${classMap(classes)}>
           <h1 id="title">
-            <span>${node.title()}</span>
+            <input id="node-title" name="node-title" .value=${node.title()} />
           </h1>
           <div id="type"></div>
           <div id="content">
@@ -751,18 +755,6 @@ export class EntityEditor extends LitElement {
     >
       ${value}
     </form>`;
-  }
-
-  protected updated(changedProperties: PropertyValues): void {
-    if (changedProperties.has("selectionState")) {
-      requestAnimationFrame(() => {
-        if (!this.#editorRef.value) {
-          return;
-        }
-
-        this.#editorRef.value.focus();
-      });
-    }
   }
 
   render() {
