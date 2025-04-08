@@ -454,6 +454,15 @@ declare type BehaviorSchema =
    */
   | "reactive";
 
+declare type SchemaEnumValue =
+  | string
+  | {
+      id: string;
+      title?: string;
+      description?: string;
+      icon?: string;
+    };
+
 declare type Schema = {
   title?: string;
   description?: string;
@@ -473,7 +482,7 @@ declare type Schema = {
    */
   icon?: string;
   transient?: boolean;
-  enum?: string[];
+  enum?: SchemaEnumValue[];
   /**
    * The default value of the schema. The UI can use this to pre-populate a
    * field with a value, if there is no "examples" present.

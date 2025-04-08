@@ -28,7 +28,11 @@ import {
 } from "./events/events";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { repeat } from "lit/directives/repeat.js";
-import { InspectableNodePorts } from "@google-labs/breadboard";
+import {
+  InspectableNodePorts,
+  NodeValue,
+  SchemaEnumValue,
+} from "@google-labs/breadboard";
 import { map } from "lit/directives/map.js";
 import { isPreviewBehavior } from "../../utils/behaviors";
 import { createTruncatedValue } from "./utils/create-truncated-value";
@@ -694,12 +698,14 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
                 case "string": {
                   classes.string = true;
-                  if (port.schema.icon) {
-                    classes[port.schema.icon] = true;
+                  const { icon, enum: e } = port.schema;
+                  if (icon) {
+                    classes[icon] = true;
                   }
+                  const enumValue = enumTitle(port.value, e);
 
                   value = html`<label
-                    >${port.title}: ${port.value ?? "Value not set"}</label
+                    >${port.title}: ${enumValue ?? "Value not set"}</label
                   >`;
                   break;
                 }
@@ -914,4 +920,11 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       })}`,
     ];
   }
+}
+
+function enumTitle(v: NodeValue, e: SchemaEnumValue[] | undefined): string {
+  const s = v as string;
+  const entry = e?.find((item) => typeof item !== "string" && item.id === s);
+  if (!entry) return s;
+  return (entry as { title: string }).title;
 }
