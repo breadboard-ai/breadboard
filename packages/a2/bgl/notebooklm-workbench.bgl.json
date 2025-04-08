@@ -19,7 +19,7 @@
           "role": "user",
           "parts": [
             {
-              "text": "Describe the concepts behind Gemini Flows using {{\"type\":\"tool\",\"path\":\"file://bgl/notebooklm-connector.bgl.json\",\"instance\":\"connectors/b0e7aba8-46e0-4a5c-9201-c3e6b21dad2d\",\"title\":\"NotebookLM Tools\"}}"
+              "text": "Describe the concept of flowgramming using {{\"type\":\"tool\",\"path\":\"file://bgl/notebooklm-connector.bgl.json\",\"instance\":\"connectors/b0e7aba8-46e0-4a5c-9201-c3e6b21dad2d\",\"title\":\"Gemini Flows Notebook Tools\"}}"
             }
           ]
         },
@@ -74,7 +74,7 @@
         }
       ],
       "metadata": {
-        "title": "NotebookLM",
+        "title": "Gemini Flows Notebook",
         "type": "connector"
       }
     },
