@@ -55,7 +55,8 @@ function cx(json: InitializeOutput | ReadOutput | WriteOutput): Outputs {
 
 async function invoke({ context }: Inputs): Promise<Outcome<Outputs>> {
   const inputs = context?.at(-1)?.parts?.at(0)?.json;
-  if (!inputs) return err(`Can't configure Temp File: invalid input structure`);
+  if (!inputs)
+    return err(`Can't configure Local Memory: invalid input structure`);
 
   if (inputs.stage === "initialize") {
     const writing = await write({
@@ -63,7 +64,7 @@ async function invoke({ context }: Inputs): Promise<Outcome<Outputs>> {
       data: [{ parts: [{ text: "" }] }],
     });
     if (!ok(writing)) return writing;
-    return cx({ title: "Untitled Temp File", configuration: {} });
+    return cx({ title: "Untitled Local Memory", configuration: {} });
   } else if (inputs.stage === "read") {
     const reading = await read({ path: `/local/folio/${inputs.id}` });
     const data = ok(reading) ? reading.data : [];
@@ -93,9 +94,9 @@ async function invoke({ context }: Inputs): Promise<Outcome<Outputs>> {
 
 async function describe() {
   return {
-    title: "Configure a Temp File",
+    title: "Configure Local Memory",
     description:
-      "Helps configure a new temp file or edit configuration of an existing temp file",
+      "Helps configure a new local memory store or edit configuration of an existing local memory store",
     metadata: {
       tags: ["connector-configure"],
     },

@@ -30,11 +30,7 @@
       }
     },
     "userModified": true,
-    "tags": [
-      "connector",
-      "connector-singleton",
-      "published"
-    ],
+    "tags": ["connector", "connector-singleton", "experimental", "published"],
     "comments": [
       {
         "id": "comment-c74afa15",
@@ -82,8 +78,5 @@
       "url": "./a2.bgl.json"
     }
   },
-  "exports": [
-    "#module:configurator",
-    "#module:get-emails"
-  ]
+  "exports": ["#module:configurator", "#module:get-emails"]
 }
