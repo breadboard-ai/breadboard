@@ -35,16 +35,13 @@ async function invoke({
   if (!ok(substituting)) {
     return substituting;
   }
-  console.log(substituting);
   let context = await fanOutContext(
     substituting,
     undefined,
     async (instruction) => instruction
   );
-  console.log(context);
   if (!ok(context)) return context;
   context = flattenContext(context);
-  console.log(context);
   renderMode = renderMode || "Manual";
   console.log("Rendering mode: " + renderMode);
   let out = context;
