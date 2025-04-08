@@ -108,8 +108,6 @@ async function invoke({
   if (!aspectRatio) {
     aspectRatio = "1:1";
   }
-  console.log(instruction);
-  console.log(incomingContext);
   let imageContext = extractInlineData(incomingContext);
   const textContext = extractTextData(incomingContext);
   // Substitute params in instruction.
@@ -121,7 +119,6 @@ async function invoke({
   if (!ok(substituting)) {
     return substituting;
   }
-  console.log(substituting);
 
   const fanningOut = await new ListExpander(substituting, incomingContext).map(
     async (instruction, context) => {
@@ -139,7 +136,7 @@ async function invoke({
 
       const refImages = extractInlineData([instruction]);
       const refText = instruction
-        ? extractTextData([instruction])[0]
+        ? toLLMContent(toTextConcat(extractTextData([instruction])))
         : toLLMContent("");
       imageContext = imageContext.concat(refImages);
 

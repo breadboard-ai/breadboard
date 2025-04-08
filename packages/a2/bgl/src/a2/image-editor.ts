@@ -127,7 +127,7 @@ async function invoke({
       while (retryCount--) {
         const generatedImage = await callImageEdit(
           combinedInstruction,
-          imageContext[0],
+          imageContext,
           disablePromptRewrite
         );
         return generatedImage[0];
@@ -192,7 +192,7 @@ async function describe({ inputs: { instruction } }: DescribeInputs) {
         },
       },
     } satisfies Schema,
-    title: "Edit Image",
+    title: "Edit Image [Deprecated, Use Make Image]",
     metadata: {
       icon: MAKE_IMAGE_ICON,
       tags: ["quick-access", "generative", "experimental"],
