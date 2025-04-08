@@ -172,7 +172,7 @@ export class ProjectListing extends LitElement {
         }
 
         & #buttons {
-          order: 0;
+          order: 1;
           height: 80px;
           display: flex;
           align-items: center;
@@ -297,16 +297,16 @@ export class ProjectListing extends LitElement {
           display: flex;
           flex-direction: column;
 
-          & .boardsx {
-            order: 1;
-
+          & .boards {
+            order: 2;
+            /*
             display: grid;
             grid-template-columns: 1fr;
             grid-auto-rows: auto;
             column-gap: var(--bb-grid-size-12);
             row-gap: var(--bb-grid-size-5);
-            margin-bottom: var(--bb-grid-size-8);
-
+            margin-bottom: var(--bb-grid-size-8); */
+            /*
             & button {
               width: 100%;
               height: 240px;
@@ -422,8 +422,8 @@ export class ProjectListing extends LitElement {
                 & .img {
                   display: none;
                 }
-              }
-            }
+              } */
+            /* } */
           }
         }
       }
