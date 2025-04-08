@@ -8,46 +8,33 @@ import type {
   ListToolResult,
   ListMethodOutput,
   InvokeMethodOutput,
+  ConnectorInfo,
 } from "./a2/connector-manager";
+import { createTools } from "./a2/connector-manager";
 
 export { invoke as default, describe };
 
-type Inputs =
-  | {
-      method: "list";
-      id: string;
-      info: {
-        url: string;
-        configuration: {
-          endpoint: string;
-        };
-      };
-    }
-  | {
-      method: "invoke";
-      id: string;
-      info: {
-        url: string;
-        configuration: {
-          endpoint: string;
-        };
-      };
-      name: string;
-      args: Record<string, unknown>;
-    };
+type Configuration = {
+  endpoint: string;
+};
 
-type Outputs = ListMethodOutput | InvokeMethodOutput;
-
-async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
-  const { method, id, info } = inputs;
-  const endpoint = info.configuration.endpoint;
+async function getClient(
+  id: string,
+  info: ConnectorInfo<Configuration>
+): Promise<Outcome<McpClient>> {
   // for now, wrap it to point at MCP proxy
-  const url = `http://127.0.0.1:6277/sse?transportType=sse&url=${encodeURIComponent(endpoint)}`;
+  const url = `http://127.0.0.1:6277/sse?transportType=sse&url=${encodeURIComponent(info.configuration.endpoint)}`;
   const client = new McpClient(id, url);
   const connecting = await client.connect();
   if (!ok(connecting)) return connecting;
+  return client;
+}
 
-  if (method === "list") {
+const { invoke, describe } = createTools<Configuration>({
+  title: "MCP Server",
+  list: async (id, info) => {
+    const client = await getClient(id, info);
+    if (!ok(client)) return client;
     const listing = await client.listTools();
     if (!ok(listing)) return listing;
 
@@ -60,29 +47,14 @@ async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
       };
     });
     return { list };
-  } else if (method === "invoke") {
-    const { name, args } = inputs;
-    const invoking = await client.callTool(
-      name,
-      args as Record<string, JsonSerializable>
-    );
+  },
+  invoke: async (id, info, name, args) => {
+    const client = await getClient(id, info);
+    if (!ok(client)) return client;
+    const connecting = await client.connect();
+    if (!ok(connecting)) return connecting;
+    const invoking = await client.callTool(name, args);
     if (!ok(invoking)) return invoking;
     return { result: JSON.stringify(invoking) };
-  }
-  return err(`Unknown method: "${method}""`);
-}
-
-async function describe() {
-  return {
-    title: "MCP Server Tool Export",
-    metadata: {
-      tags: ["connector-tools"],
-    },
-    inputSchema: {
-      type: "object",
-    } satisfies Schema,
-    outputSchema: {
-      type: "object",
-    } satisfies Schema,
-  };
-}
+  },
+});
