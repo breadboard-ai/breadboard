@@ -3,16 +3,15 @@
  */
 
 import { Template } from "./template";
-import { ok, toText, isEmpty } from "./utils";
+import { ok, toText, isEmpty, toLLMContent } from "./utils";
 import { callGenWebpage } from "./html-generator";
-import { ListExpander } from "./lists";
+import { fanOutContext, flattenContext } from "./lists";
 
 export { invoke as default, describe };
 
 type InvokeInputs = {
   text?: LLMContent;
   instruction?: string;
-  "p-auto-render": boolean;
   "p-render-mode": string;
 };
 
@@ -25,48 +24,49 @@ type DescribeInputs = {
 async function invoke({
   text,
   instruction,
-  "p-auto-render": autoRender,
   "p-render-mode": renderMode,
   ...params
 }: InvokeInputs) {
+  if (!text) {
+    text = toLLMContent("");
+  }
   const template = new Template(text);
   const substituting = await template.substitute(params, async () => "");
   if (!ok(substituting)) {
     return substituting;
   }
-  if (autoRender && !renderMode) {
-    renderMode = "Markdown";
-  }
+  console.log(substituting);
+  let context = await fanOutContext(
+    substituting,
+    undefined,
+    async (instruction) => instruction
+  );
+  console.log(context);
+  if (!ok(context)) return context;
+  context = flattenContext(context);
+  console.log(context);
   renderMode = renderMode || "Manual";
   console.log("Rendering mode: " + renderMode);
-  const context = await new ListExpander(substituting, []).map(
-    async (content) => {
-      let out = content;
-      if (renderMode != "Manual") {
-        let instruction = "Render content with markdown format.";
-        if (renderMode === "HTML" || renderMode === "Interactive") {
-          instruction = "Render content as a mobile webpage.";
-        }
-        instruction +=
-          " Assume content will render on a mobile device. Use a responsive or mobile-friendly layout whenever possible and minimize unnecessary padding or margins.";
-        console.log("Generating output based on instruction: ", instruction);
-        const webPage = await callGenWebpage(
-          instruction,
-          [substituting],
-          renderMode
-        );
-        if (!ok(webPage)) {
-          console.error("Failed to generated output");
-        } else {
-          out = await webPage;
-          console.log(out);
-        }
-      }
-      return out;
+  let out = context;
+  if (renderMode != "Manual") {
+    let instruction = "Render content with markdown format.";
+    if (renderMode === "HTML" || renderMode === "Interactive") {
+      instruction = "Render content as a mobile webpage.";
     }
-  );
-  if (!ok(context)) return context;
-  return { context };
+    instruction +=
+      " Assume content will render on a mobile device. Use a responsive or mobile-friendly layout whenever possible and minimize unnecessary padding or margins.";
+    console.log("Generating output based on instruction: ", instruction);
+    const webPage = await callGenWebpage(instruction, context, renderMode);
+    if (!ok(webPage)) {
+      console.error("Failed to generated html output");
+    } else {
+      out = [await webPage];
+      console.log(out);
+    }
+  }
+  return out;
+  if (!ok(out)) return out;
+  return { context: out };
 }
 
 async function describe({ inputs: { text } }: DescribeInputs) {
