@@ -36,8 +36,6 @@ import "./gallery.js";
 const SHOW_OTHER_PEOPLES_BOARDS_KEY =
   "bb-project-listing-show-other-peoples-boards";
 const MODE_KEY = "bb-project-listing-mode";
-const PAGE_SIZE_DETAILED = 8;
-const PAGE_SIZE_CONDENSED = 24;
 const OVERFLOW_MENU_CLEARANCE = 4;
 
 @customElement("bb-project-listing")
@@ -1000,58 +998,42 @@ export class ProjectListing extends LitElement {
                 }
 
                 const { permission } = store;
-                const items = [...store.items]
-                  .filter(([name, item]) => {
-                    const canShow =
-                      this.showOtherPeoplesBoards ||
-                      item.mine ||
-                      store.title === "Example Boards" ||
-                      store.title === "Playground Boards";
-
-                    if (!this.filter) {
-                      return canShow;
-                    }
-                    const filter = new RegExp(this.filter, "gim");
-                    return filter.test(item.title ?? name) && canShow;
-                  })
-                  .sort(([, dataA], [, dataB]) => {
-                    // Sort by recency.
-                    const indexA = this.#recentItems.indexOf(dataA.url);
-                    const indexB = this.#recentItems.indexOf(dataB.url);
-                    if (indexA !== -1 && indexB === -1) {
-                      return -1;
-                    }
-                    if (indexA === -1 && indexB !== -1) {
-                      return 1;
-                    }
-
-                    if (indexA !== -1 && indexB !== -1) {
-                      return indexA - indexB;
-                    }
-
-                    // If both are unknown for recency, choose those that are
-                    // mine.
-                    if (dataA.mine && !dataB.mine) {
-                      return -1;
-                    }
-
-                    if (!dataA.mine && dataB.mine) {
-                      return 1;
-                    }
-
-                    return 0;
-                  });
-
-                type BoardInfo = (typeof items)[0];
-                const renderBoards = ([_name, { thumbnail }]: BoardInfo) => {
-                  const styles: Record<string, string> = {};
-
-                  if (thumbnail !== null && thumbnail !== undefined) {
-                    styles["--background-image"] = `url(${thumbnail})`;
+                const filterRegexp = this.filter
+                  ? new RegExp(this.filter, "gim")
+                  : undefined;
+                const items = (
+                  filterRegexp
+                    ? [...store.items].filter((item) =>
+                        itemMatchesSearchPattern(item, filterRegexp)
+                      )
+                    : [...store.items]
+                ).sort(([, dataA], [, dataB]) => {
+                  // Sort by recency.
+                  const indexA = this.#recentItems.indexOf(dataA.url);
+                  const indexB = this.#recentItems.indexOf(dataB.url);
+                  if (indexA !== -1 && indexB === -1) {
+                    return -1;
+                  }
+                  if (indexA === -1 && indexB !== -1) {
+                    return 1;
                   }
 
-                  return html`MOVED`;
-                };
+                  if (indexA !== -1 && indexB !== -1) {
+                    return indexA - indexB;
+                  }
+
+                  // If both are unknown for recency, choose those that are
+                  // mine.
+                  if (dataA.mine && !dataB.mine) {
+                    return -1;
+                  }
+
+                  if (!dataA.mine && dataB.mine) {
+                    return 1;
+                  }
+
+                  return 0;
+                });
 
                 // const myRecentBoards = html`${map(
                 //   items.slice(this.page * pageSize, (this.page + 1) * pageSize),
@@ -1065,14 +1047,18 @@ export class ProjectListing extends LitElement {
                   >
                     <h3>Yours</h3>
                     <bb-gallery
-                      .items=${items.filter(itemIsMine)}
                       .boardServer=${boardServer}
+                      .items=${items.filter(
+                        ([, item]) => this.showOtherPeoplesBoards || item.mine
+                      )}
                     ></bb-gallery>
 
                     <h3>Samples</h3>
                     <bb-gallery
-                      .items=${items.filter(itemIsSample)}
                       .boardServer=${boardServer}
+                      .items=${items.filter(([, item]) =>
+                        (item.tags ?? []).includes("featured")
+                      )}
                     ></bb-gallery>
                   </div>`;
                 } else {
@@ -1214,10 +1200,12 @@ export class ProjectListing extends LitElement {
   }
 }
 
-function itemIsSample([_name, item]: [string, GraphProviderItem]): boolean {
-  return (item.tags ?? []).includes("featured");
-}
-
-function itemIsMine([_name, item]: [string, GraphProviderItem]): boolean {
-  return item.mine;
+function itemMatchesSearchPattern(
+  [name, item]: [string, GraphProviderItem],
+  pattern: RegExp
+): boolean {
+  return !!(
+    (item.title && pattern.test(item.title)) ||
+    (name && pattern.test(name))
+  );
 }
