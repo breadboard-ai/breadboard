@@ -8,7 +8,31 @@ import describeConnector, { type DescribeOutputs } from "@describe";
 import invokeConnector from "@invoke";
 import type { ExportDescriberResult, CallToolCallback } from "./common";
 
-export { ConnectorManager, createConfigurator };
+export { ConnectorManager, createConfigurator, createTools };
+
+type ToolsListInput<C extends Record<string, JsonSerializable>> = {
+  method: "list";
+  id: string;
+  info: ConnectorInfo<C>;
+};
+
+type ToolsInvokeInput<
+  C extends Record<string, JsonSerializable>,
+  A extends Record<string, JsonSerializable> = Record<string, JsonSerializable>,
+> = {
+  method: "invoke";
+  id: string;
+  info: ConnectorInfo<C>;
+  name: string;
+  args: A;
+};
+
+type ToolsInput<
+  C extends Record<string, JsonSerializable>,
+  A extends Record<string, JsonSerializable>,
+> = ToolsListInput<C> | ToolsInvokeInput<C, A>;
+
+type ToolsOutput = ListMethodOutput | InvokeMethodOutput;
 
 type InitializeInput = {
   stage: "initialize";
@@ -73,6 +97,55 @@ export type Configurator<
   read?: (input: ReadInput<C>) => Promise<Outcome<ReadOutput<V>>>;
   write?: (input: WriteInput<V>) => Promise<Outcome<WriteOutput>>;
 };
+
+export type ToolHandler<
+  C extends Record<string, JsonSerializable>,
+  A extends Record<string, JsonSerializable> = Record<string, JsonSerializable>,
+> = {
+  title: string;
+  list(id: string, info: ConnectorInfo<C>): Promise<Outcome<ListMethodOutput>>;
+  invoke(
+    id: string,
+    info: ConnectorInfo<C>,
+    name: string,
+    args: A
+  ): Promise<Outcome<InvokeMethodOutput>>;
+};
+
+function createTools<
+  C extends Record<string, JsonSerializable>,
+  A extends Record<string, JsonSerializable> = Record<string, JsonSerializable>,
+>(handler: ToolHandler<C, A>) {
+  return {
+    invoke: async function (
+      inputs: ToolsInput<C, A>
+    ): Promise<Outcome<ToolsOutput>> {
+      const { method, id, info } = inputs;
+      if (method === "list") {
+        return handler.list(id, info);
+      } else if (method === "invoke") {
+        const { name, args } = inputs;
+        return handler.invoke(id, info, name, args);
+      }
+      return err(`Unknown method: "${method}""`);
+    },
+    describe: async function () {
+      const { title } = handler;
+      return {
+        title,
+        metadata: {
+          tags: ["connector-tools"],
+        },
+        inputSchema: {
+          type: "object",
+        } satisfies Schema,
+        outputSchema: {
+          type: "object",
+        } satisfies Schema,
+      };
+    },
+  };
+}
 
 function createConfigurator<
   C extends Record<string, unknown> = Record<string, unknown>,
@@ -156,7 +229,9 @@ type ConnectorConfig = {
   instance?: string;
 };
 
-type ConnectorInfo = {
+export type ConnectorInfo<
+  C extends Record<string, JsonSerializable> = Record<string, JsonSerializable>,
+> = {
   /**
    * The URL of the connector
    */
@@ -164,7 +239,7 @@ type ConnectorInfo = {
   /**
    * The configuration of the connector
    */
-  configuration: unknown;
+  configuration: C;
 };
 
 type InvocationArgs = {
@@ -205,7 +280,7 @@ class ConnectorManager {
     const state = await this.#getState();
     if (!ok(state)) return state;
 
-    return state.info.url
+    return state.info.url;
   }
 
   async #getState(): Promise<Outcome<ConnectorManagerState>> {

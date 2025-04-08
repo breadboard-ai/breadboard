@@ -194,6 +194,7 @@ export type Connector = {
   load: boolean;
   save: boolean;
   tools: boolean;
+  experimental: boolean;
 };
 
 export type Components = Map<NodeIdentifier, Component>;

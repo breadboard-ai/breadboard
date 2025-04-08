@@ -149,11 +149,6 @@ async function invoke({
         // Image editing case.
         if (imageContext.length > 0) {
           console.log("Step has reference image, using editing API");
-          if (imageContext.length != 1) {
-            console.log(
-              "Image editing API got multiple images, using only the last"
-            );
-          }
           const instructionText = refText ? toText(refText) : "";
           const combinedInstruction = toTextConcat(
             joinContent(instructionText, textContext, false)
@@ -163,12 +158,12 @@ async function invoke({
               "Error: an image editing instruction must be provided along side the reference image."
             );
           }
-          const finalInstriction =
+          const finalInstruction =
             combinedInstruction + "\nAspect ratio: " + aspectRatio;
-          console.log("PROMPT: " + finalInstriction);
+          console.log("PROMPT: " + finalInstruction);
           const generatedImage = await callImageEdit(
-            combinedInstruction,
-            imageContext[0],
+            finalInstruction,
+            imageContext,
             disablePromptRewrite,
             aspectRatio
           );

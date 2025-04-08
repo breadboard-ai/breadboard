@@ -15,7 +15,6 @@ import {
 import { customElement, property, state } from "lit/decorators.js";
 import { Graph } from "./graph";
 import { Camera } from "./camera";
-import { isCtrlCommand } from "./utils/is-ctrl-command";
 import { repeat } from "lit/directives/repeat.js";
 import { classMap } from "lit/directives/class-map.js";
 import { calculateBounds } from "./utils/calculate-bounds";
@@ -76,6 +75,7 @@ import { EditorControls } from "./editor-controls";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { DATA_TYPE, MOVE_GRAPH_ID } from "./constants";
 import { AssetMetadata } from "@breadboard-ai/types";
+import { isCtrlCommand } from "../../utils/is-ctrl-command";
 
 @customElement("bb-renderer")
 export class Renderer extends LitElement {
@@ -1177,7 +1177,8 @@ export class Renderer extends LitElement {
 
     // When the dragging settles, send out the update on all the node locations
     // so they can be persisted.
-    if (hasSettled) {
+    const hasMoved = x !== 0 || y !== 0;
+    if (hasSettled && hasMoved) {
       this.#emitSettledLocationEdits();
     }
   }

@@ -1,0 +1,89 @@
+{
+  "title": "NotebookLM Workbench",
+  "description": "",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "63ad551f-d7ab-45b1-bfd7-782b0a2e2f70",
+      "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+      "metadata": {
+        "title": "Make Text",
+        "visual": {
+          "x": 0,
+          "y": 0
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "description": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Describe the concept of flowgramming using {{\"type\":\"tool\",\"path\":\"file://bgl/notebooklm-connector.bgl.json\",\"instance\":\"connectors/b0e7aba8-46e0-4a5c-9201-c3e6b21dad2d\",\"title\":\"Gemini Flows Notebook Tools\"}}"
+            }
+          ]
+        },
+        "p-chat": false,
+        "p-list": false
+      }
+    }
+  ],
+  "edges": [],
+  "metadata": {
+    "visual": {
+      "presentation": {
+        "themes": {
+          "39239b49-62d0-4182-b919-924c4db67941": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "39239b49-62d0-4182-b919-924c4db67941"
+      }
+    },
+    "userModified": true,
+    "tags": [],
+    "parameters": {}
+  },
+  "assets": {
+    "connectors/b0e7aba8-46e0-4a5c-9201-c3e6b21dad2d": {
+      "data": [
+        {
+          "parts": [
+            {
+              "json": {
+                "url": "file://bgl/notebooklm-connector.bgl.json",
+                "configuration": {
+                  "notebookId": "add9cfcc-aedb-4cad-9302-b03747575c60"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "metadata": {
+        "title": "Gemini Flows Notebook",
+        "type": "connector"
+      }
+    },
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI1NS43NyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMjMwLjAwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iODguNDYiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CiAgICAgIAogICAgPC9zdmc+"
+    }
+  }
+}

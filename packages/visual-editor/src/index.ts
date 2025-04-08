@@ -3408,6 +3408,7 @@ export class Main extends LitElement {
               .graphStoreUpdateId=${this.graphStoreUpdateId}
               .showBoardReferenceMarkers=${this.showBoardReferenceMarkers}
               .chatController=${observers?.chatController}
+              .projectState=${projectState}
               .organizer=${projectState?.organizer}
               .signedIn=${signInAdapter.state === "valid"}
               .canRun=${this.canRun}

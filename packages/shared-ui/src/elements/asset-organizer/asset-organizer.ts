@@ -91,6 +91,9 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
   @property()
   accessor editParameterContent: GraphParameter | null = null;
 
+  @property()
+  accessor showExperimentalComponents = false;
+
   static styles = css`
     * {
       box-sizing: border-box;
@@ -729,6 +732,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
         .filter(
           (connector) =>
             !connector.url.includes("/_") &&
+            (!connector.experimental || this.showExperimentalComponents) &&
             (!connector.singleton ||
               !this.state?.connectorInstanceExists(connector.url))
         )

@@ -1,0 +1,94 @@
+{
+  "title": "NotebookLM",
+  "description": "",
+  "version": "0.0.1",
+  "nodes": [],
+  "edges": [],
+  "metadata": {
+    "icon": "generative",
+    "visual": {
+      "presentation": {
+        "themes": {
+          "f65ea9aa-b8c6-4c80-9667-a08c4f631013": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "f65ea9aa-b8c6-4c80-9667-a08c4f631013"
+      }
+    },
+    "userModified": true,
+    "tags": ["connector", "published", "experimental"],
+    "comments": [
+      {
+        "id": "comment-c74afa15",
+        "text": "Intentionally Left Blank",
+        "metadata": {
+          "title": "Comment",
+          "visual": {
+            "x": 281,
+            "y": 501,
+            "collapsed": "expanded",
+            "outputHeight": 0
+          }
+        }
+      }
+    ]
+  },
+  "modules": {
+    "configurator": {
+      "code": "/**\n * @fileoverview Add a description for your module here.\n */\nimport { err, ok } from \"./a2/utils\";\nimport { createConfigurator } from \"./a2/connector-manager\";\nimport { executeTool } from \"./a2/step-executor\";\nimport read from \"@read\";\nimport write from \"@write\";\nexport { invoke as default, describe };\nconst { invoke, describe } = createConfigurator({\n    title: \"NotebookLM\",\n    initialize: async () => {\n        return {\n            title: \"Untitled NotebookLM\",\n            configuration: {},\n        };\n    },\n    read: async ({ id, configuration }) => {\n        const readingNotebooks = await executeTool(\"notebooklm_list_projects\", {});\n        if (!ok(readingNotebooks))\n            return readingNotebooks;\n        console.log(\"READING NOTEBOOKS\", readingNotebooks);\n        return {\n            schema: {\n                type: \"object\",\n                properties: {\n                    notebookId: {\n                        type: \"string\",\n                        title: \"Notebook\",\n                        description: \"The notebook to query\",\n                    },\n                },\n            },\n            values: configuration,\n        };\n    },\n});\n",
+      "metadata": {
+        "title": "configurator",
+        "source": {
+          "code": "/**\n * @fileoverview Add a description for your module here.\n */\n\nimport { err, ok } from \"./a2/utils\";\nimport { createConfigurator } from \"./a2/connector-manager\";\nimport { executeTool } from \"./a2/step-executor\";\nimport type { Configuration } from \"./types\";\n\nimport read from \"@read\";\nimport write from \"@write\";\n\nexport { invoke as default, describe };\n\nconst { invoke, describe } = createConfigurator<Configuration, Configuration>({\n  title: \"NotebookLM\",\n  initialize: async () => {\n    return {\n      title: \"Untitled NotebookLM\",\n      configuration: {},\n    };\n  },\n  read: async ({ id, configuration }) => {\n    const readingNotebooks = await executeTool(\"notebooklm_list_projects\", {});\n    if (!ok(readingNotebooks)) return readingNotebooks;\n    console.log(\"READING NOTEBOOKS\", readingNotebooks);\n    return {\n      schema: {\n        type: \"object\",\n        properties: {\n          notebookId: {\n            type: \"string\",\n            title: \"Notebook\",\n            description: \"The notebook to query\",\n          },\n        },\n      },\n      values: configuration,\n    };\n  },\n});\n",
+          "language": "typescript"
+        },
+        "description": "Add a description for your module here.",
+        "runnable": false
+      }
+    },
+    "connector-tools": {
+      "code": "/**\n * @fileoverview The tools export for the connector.\n */\nimport { err, ok } from \"./a2/utils\";\nimport { createTools } from \"./a2/connector-manager\";\nimport { executeTool } from \"./a2/step-executor\";\nexport { invoke as default, describe };\nconst QUERY_TOOL = \"query_notebooklm\";\nconst { invoke, describe } = createTools({\n    title: \"NotebookLM\",\n    list: async (id, info) => {\n        const list = [\n            {\n                url: info.url,\n                description: {\n                    title: QUERY_TOOL,\n                    description: \"Given a query, replies with a snippet of relevant content from NotebookLM\",\n                    inputSchema: {\n                        type: \"object\",\n                        properties: {\n                            query: { type: \"string\", description: \"The text query\" },\n                        },\n                    },\n                },\n                passContext: false,\n            },\n        ];\n        return { list };\n    },\n    invoke: async (id, info, name, args) => {\n        if (name !== QUERY_TOOL) {\n            return err(`Unknown tool \"${name}\"`);\n        }\n        const { notebookId } = info.configuration;\n        const { query } = args;\n        if (!notebookId) {\n            return err(`First, select the notebook to query.`);\n        }\n        const executing = await executeTool(\"notebooklm_query\", {\n            project_id: notebookId,\n            query,\n        });\n        if (!ok(executing))\n            return executing;\n        return { result: JSON.stringify(executing) };\n    },\n});\n",
+      "metadata": {
+        "title": "connector-tools",
+        "source": {
+          "code": "/**\n * @fileoverview The tools export for the connector.\n */\n\nimport { err, ok } from \"./a2/utils\";\nimport type {\n  ListToolResult,\n  ListMethodOutput,\n  InvokeMethodOutput,\n  ConnectorInfo,\n} from \"./a2/connector-manager\";\nimport { createTools } from \"./a2/connector-manager\";\nimport { executeTool } from \"./a2/step-executor\";\nimport type { Configuration, ToolArgs } from \"./types\";\n\nexport { invoke as default, describe };\n\nconst QUERY_TOOL = \"query_notebooklm\";\n\nconst { invoke, describe } = createTools<Configuration, ToolArgs>({\n  title: \"NotebookLM\",\n  list: async (id, info) => {\n    const list: ListToolResult[] = [\n      {\n        url: info.url,\n        description: {\n          title: QUERY_TOOL,\n          description:\n            \"Given a query, replies with a snippet of relevant content from NotebookLM\",\n          inputSchema: {\n            type: \"object\",\n            properties: {\n              query: { type: \"string\", description: \"The text query\" },\n            },\n          },\n        },\n        passContext: false,\n      },\n    ];\n    return { list };\n  },\n  invoke: async (id, info, name, args) => {\n    if (name !== QUERY_TOOL) {\n      return err(`Unknown tool \"${name}\"`);\n    }\n    const { notebookId } = info.configuration;\n    const { query } = args;\n    if (!notebookId) {\n      return err(`First, select the notebook to query.`);\n    }\n\n    const executing = await executeTool(\"notebooklm_query\", {\n      project_id: notebookId,\n      query,\n    });\n    if (!ok(executing)) return executing;\n\n    return { result: JSON.stringify(executing) };\n  },\n});\n",
+          "language": "typescript"
+        },
+        "description": "The tools export for the connector.",
+        "runnable": false
+      }
+    },
+    "types": {
+      "code": "/**\n * @fileoverview Commmon types for the connector.\n */\n",
+      "metadata": {
+        "title": "types",
+        "source": {
+          "code": "/**\n * @fileoverview Commmon types for the connector.\n */\n\nexport type Configuration = {\n  notebookId?: string;\n};\n\nexport type ToolArgs = {\n  query: string;\n};\n",
+          "language": "typescript"
+        },
+        "description": "Commmon types for the connector.",
+        "runnable": false
+      }
+    }
+  },
+  "imports": {
+    "a2": {
+      "url": "./a2.bgl.json"
+    }
+  },
+  "exports": ["#module:configurator", "#module:connector-tools"]
+}

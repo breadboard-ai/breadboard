@@ -66,9 +66,26 @@ export class TextEditor extends LitElement {
       white-space: pre-line;
       height: var(--text-editor-height, auto);
       width: 100%;
+      min-height: 100%;
       line-height: var(--bb-grid-size-6);
       overflow-y: scroll;
-      padding: var(--bb-grid-size-2);
+      overflow-x: hidden;
+      padding: var(--text-editor-padding-top, var(--bb-grid-size-2))
+        var(--text-editor-padding-right, var(--bb-grid-size-2))
+        var(--text-editor-padding-bottom, var(--bb-grid-size-2))
+        var(--text-editor-padding-left, var(--bb-grid-size-2));
+
+      &.placeholder::before {
+        content: "Enter text";
+        font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
+          var(--bb-font-family);
+        color: var(--bb-neutral-600);
+        line-height: var(--bb-grid-size-6);
+
+        position: absolute;
+        top: var(--text-editor-padding-top, var(--bb-grid-size-2));
+        left: var(--text-editor-padding-left, var(--bb-grid-size-2));
+      }
     }
 
     .chiclet {
@@ -189,7 +206,7 @@ export class TextEditor extends LitElement {
   #renderableValue = "";
   #isUsingFastAccess = false;
   #lastRange: Range | null = null;
-  #editorRef: Ref<HTMLDivElement> = createRef();
+  #editorRef: Ref<HTMLSpanElement> = createRef();
   #proxyRef: Ref<HTMLDivElement> = createRef();
   #fastAccessRef: Ref<FastAccessMenu> = createRef();
 
@@ -597,6 +614,17 @@ export class TextEditor extends LitElement {
     this.dispatchEvent(new InputEvent("input"));
   }
 
+  #togglePlaceholder(forcedValue?: boolean) {
+    if (!this.#editorRef.value) {
+      return;
+    }
+
+    this.#editorRef.value.classList.toggle(
+      "placeholder",
+      forcedValue !== undefined ? forcedValue : this.#value === ""
+    );
+  }
+
   #sanitizePastedContent(evt: ClipboardEvent) {
     evt.preventDefault();
 
@@ -697,6 +725,17 @@ export class TextEditor extends LitElement {
     }
 
     this.#editorRef.value.focus({ preventScroll: true });
+
+    const selection = this.#getCurrentSelection();
+    if (!selection || !this.#editorRef.value.lastChild) {
+      return;
+    }
+
+    const range = new Range();
+    range.selectNode(this.#editorRef.value.lastChild);
+    range.collapse(false);
+    selection.removeAllRanges();
+    selection.addRange(range);
   }
 
   #showFastAccess(bounds: DOMRect | undefined) {
@@ -757,6 +796,7 @@ export class TextEditor extends LitElement {
 
     this.#editorRef.value.innerHTML = this.#renderableValue;
     this.#ensureAllChicletsHaveSpace();
+    this.#togglePlaceholder();
 
     if (this.#focusOnFirstRender) {
       this.focus();
@@ -790,6 +830,9 @@ export class TextEditor extends LitElement {
             return;
           }
 
+          if (/\W/.test(evt.key)) {
+            this.#togglePlaceholder(false);
+          }
           this.#ensureSafeRangePosition(evt);
         }}
         @keyup=${(evt: KeyboardEvent) => {
@@ -803,10 +846,12 @@ export class TextEditor extends LitElement {
             const bounds = this.#lastRange?.getBoundingClientRect();
             this.#showFastAccess(bounds);
           }
+          this.#togglePlaceholder();
         }}
         @input=${() => {
           this.#ensureAllChicletsHaveSpace();
           this.#captureEditorValue();
+          this.#togglePlaceholder();
         }}
         id="editor"
         contenteditable="true"
