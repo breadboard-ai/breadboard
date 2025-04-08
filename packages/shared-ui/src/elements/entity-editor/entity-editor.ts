@@ -12,7 +12,14 @@ import {
   TemplatePart,
   TemplatePartTransformCallback,
 } from "@google-labs/breadboard";
-import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
+import {
+  LitElement,
+  html,
+  css,
+  HTMLTemplateResult,
+  nothing,
+  PropertyValues,
+} from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { WorkspaceSelectionStateWithChangeId } from "../../types/types";
 import {
@@ -63,6 +70,9 @@ export class EntityEditor extends LitElement {
   @property({ reflect: true, type: Boolean })
   accessor readOnly = false;
 
+  @property()
+  accessor autoFocus = false;
+
   static styles = css`
     :host {
       display: block;
@@ -85,6 +95,14 @@ export class EntityEditor extends LitElement {
       border-bottom: 1px solid var(--bb-neutral-300);
       font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
         var(--bb-font-family);
+
+      & span {
+        flex: 1 0 auto;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: calc(100% - var(--bb-grid-size-7));
+      }
 
       & input {
         flex: 1 0 auto;
@@ -387,6 +405,7 @@ export class EntityEditor extends LitElement {
 
   #lastUpdateTimes: Map<"nodes" | "assets", number> = new Map();
   #editorRef: Ref<TextEditor> = createRef();
+  #edited = false;
   #formRef: Ref<HTMLFormElement> = createRef();
 
   #calculateSelectionSize() {
@@ -752,9 +771,43 @@ export class EntityEditor extends LitElement {
       @submit=${(evt: SubmitEvent) => {
         evt.preventDefault();
       }}
+      @input=${() => {
+        this.#edited = true;
+      }}
     >
       ${value}
     </form>`;
+  }
+
+  protected willUpdate(changedProperties: PropertyValues<this>): void {
+    if (changedProperties.has("selectionState") && this.#edited) {
+      // Eagerly process a change.
+      this.#edited = false;
+      this.#emitUpdatedNodeConfiguration();
+    }
+
+    if (changedProperties.has("autoFocus")) {
+      this.autoFocus = false;
+      this.focus();
+    }
+  }
+
+  focus() {
+    requestAnimationFrame(() => {
+      if (!this.#editorRef.value) {
+        return;
+      }
+
+      this.#editorRef.value.focus();
+    });
+  }
+
+  protected firstUpdated(changedProperties: PropertyValues): void {
+    if (!changedProperties.has("selectionState")) {
+      return;
+    }
+
+    this.focus();
   }
 
   render() {

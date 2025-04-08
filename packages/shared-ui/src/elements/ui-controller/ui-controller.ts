@@ -215,6 +215,10 @@ export class UI extends LitElement {
   @state()
   accessor showAssetOrganizer = false;
 
+  @state()
+  accessor autoFocusEditor = false;
+
+  #autoFocusEditorOnRender = false;
   #sideNavItem:
     | "app-view"
     | "console"
@@ -265,6 +269,11 @@ export class UI extends LitElement {
           this.#moduleEditorRef.value.destroyEditor();
         }
       }
+    }
+
+    if (changedProperties.has("autoFocusEditor")) {
+      this.#autoFocusEditorOnRender = true;
+      this.autoFocusEditor = false;
     }
   }
 
@@ -448,12 +457,17 @@ export class UI extends LitElement {
             }
 
             this.sideNavItem = "editor";
+            this.autoFocusEditor = true;
             const newState = createEmptyWorkspaceSelectionState();
             const graphState = createEmptyGraphSelectionState();
             const graphId = evt.subGraphId ? evt.subGraphId : MAIN_BOARD_ID;
             const selectionChangeId = createWorkspaceSelectionChangeId();
             graphState.nodes.add(evt.id);
             newState.graphs.set(graphId, graphState);
+
+            // Intercept the port value click and convert it to a selection
+            // change *and* switch the side nav item with it.
+            evt.stopImmediatePropagation();
 
             // If the item is already selected, skip the change.
             if (
@@ -464,10 +478,6 @@ export class UI extends LitElement {
             ) {
               return;
             }
-
-            // Intercept the port value click and convert it to a selection
-            // change *and* switch the side nav item with it.
-            evt.stopImmediatePropagation();
 
             this.dispatchEvent(
               new WorkspaceSelectionStateEvent(
@@ -718,6 +728,7 @@ export class UI extends LitElement {
 
       case "editor": {
         sideNavItem = html`<bb-entity-editor
+          .autoFocus=${this.#autoFocusEditorOnRender}
           .graph=${graph}
           .graphTopologyUpdateId=${this.graphTopologyUpdateId}
           .graphStore=${this.graphStore}
@@ -727,6 +738,8 @@ export class UI extends LitElement {
           .readOnly=${this.readOnly}
           .projectState=${this.projectState}
         ></bb-entity-editor>`;
+
+        this.#autoFocusEditorOnRender = false;
         break;
       }
 
