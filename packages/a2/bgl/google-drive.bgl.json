@@ -30,10 +30,7 @@
       }
     },
     "userModified": true,
-    "tags": [
-      "connector",
-      "published"
-    ],
+    "tags": ["connector", "published", "experimental"],
     "comments": [
       {
         "id": "comment-c74afa15",

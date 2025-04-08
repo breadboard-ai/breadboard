@@ -749,6 +749,7 @@ export class UI extends LitElement {
       assetOrganizer = html`<bb-asset-organizer
         .state=${this.projectState?.organizer ?? null}
         .showGDrive=${this.signedIn}
+        .showExperimentalComponents=${showExperimentalComponents}
         @bboverlaydismissed=${() => {
           this.showAssetOrganizer = false;
         }}

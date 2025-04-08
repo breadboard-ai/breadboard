@@ -395,6 +395,7 @@ class ReactiveProject implements ProjectInternal {
         const save = connector.exportTags.includes("connector-save");
         const tools = connector.exportTags.includes("connector-tools");
         const singleton = !!connector.tags?.includes("connector-singleton");
+        const experimental = !!connector.tags?.includes("experimental");
         return [
           url,
           {
@@ -406,6 +407,7 @@ class ReactiveProject implements ProjectInternal {
             load,
             save,
             tools,
+            experimental,
           } satisfies Connector,
         ];
       })
