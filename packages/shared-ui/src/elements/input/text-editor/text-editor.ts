@@ -74,6 +74,18 @@ export class TextEditor extends LitElement {
         var(--text-editor-padding-right, var(--bb-grid-size-2))
         var(--text-editor-padding-bottom, var(--bb-grid-size-2))
         var(--text-editor-padding-left, var(--bb-grid-size-2));
+
+      &.placeholder::before {
+        content: "Enter text";
+        font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
+          var(--bb-font-family);
+        color: var(--bb-neutral-600);
+        line-height: var(--bb-grid-size-6);
+
+        position: absolute;
+        top: var(--text-editor-padding-top, var(--bb-grid-size-2));
+        left: var(--text-editor-padding-left, var(--bb-grid-size-2));
+      }
     }
 
     .chiclet {
@@ -602,6 +614,17 @@ export class TextEditor extends LitElement {
     this.dispatchEvent(new InputEvent("input"));
   }
 
+  #togglePlaceholder(forcedValue?: boolean) {
+    if (!this.#editorRef.value) {
+      return;
+    }
+
+    this.#editorRef.value.classList.toggle(
+      "placeholder",
+      forcedValue !== undefined ? forcedValue : this.#value === ""
+    );
+  }
+
   #sanitizePastedContent(evt: ClipboardEvent) {
     evt.preventDefault();
 
@@ -773,6 +796,7 @@ export class TextEditor extends LitElement {
 
     this.#editorRef.value.innerHTML = this.#renderableValue;
     this.#ensureAllChicletsHaveSpace();
+    this.#togglePlaceholder();
 
     if (this.#focusOnFirstRender) {
       this.focus();
@@ -806,6 +830,9 @@ export class TextEditor extends LitElement {
             return;
           }
 
+          if (/\W/.test(evt.key)) {
+            this.#togglePlaceholder(false);
+          }
           this.#ensureSafeRangePosition(evt);
         }}
         @keyup=${(evt: KeyboardEvent) => {
@@ -819,10 +846,12 @@ export class TextEditor extends LitElement {
             const bounds = this.#lastRange?.getBoundingClientRect();
             this.#showFastAccess(bounds);
           }
+          this.#togglePlaceholder();
         }}
         @input=${() => {
           this.#ensureAllChicletsHaveSpace();
           this.#captureEditorValue();
+          this.#togglePlaceholder();
         }}
         id="editor"
         contenteditable="true"
