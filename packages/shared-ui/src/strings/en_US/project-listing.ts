@@ -114,6 +114,12 @@ export default {
   LABEL_GENERATING_FLOW_DETAIL: {
     str: "Your flow will open automatically when ready",
   },
+  LABEL_SAMPLE_GALLERY_TITLE: {
+    str: "Sample gallery",
+  },
+  LABEL_SAMPLE_GALLERY_DESCRIPTION: {
+    str: "Get inspired by exploring some sample flows and apps",
+  },
 
   // Queries.
   QUERY_CONFIRM_REMOVE_SERVER: {

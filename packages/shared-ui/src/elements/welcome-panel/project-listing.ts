@@ -270,8 +270,6 @@ export class ProjectListing extends LitElement {
           & #location-selector {
             margin: var(--bb-grid-size-5) 0;
             padding: 0;
-            font: 400 var(--bb-title-large) / var(--bb-title-line-height-large)
-              var(--bb-font-family);
             border: none;
           }
         }
@@ -290,10 +288,19 @@ export class ProjectListing extends LitElement {
           display: flex;
           flex-direction: column;
 
-          & bb-gallery {
+          & .gallery-wrapper {
             order: 1;
           }
         }
+      }
+
+      .gallery-title {
+        font: 400 var(--bb-title-large) / var(--bb-title-line-height-large)
+          var(--bb-font-family);
+      }
+      .gallery-description {
+        font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
+          var(--bb-font-family);
       }
 
       #board-server-settings {
@@ -725,6 +732,7 @@ export class ProjectListing extends LitElement {
               ${this.showAdditionalSources
                 ? html`<select
                       id="location-selector"
+                      class="gallery-title"
                       @input=${(evt: Event) => {
                         if (!(evt.target instanceof HTMLSelectElement)) {
                           return;
@@ -833,20 +841,16 @@ export class ProjectListing extends LitElement {
                 }
 
                 const { permission } = store;
-                const items = [...store.items]
-                  .filter(([name, item]) => {
-                    const canShow =
-                      this.showOtherPeoplesBoards ||
-                      item.mine ||
-                      store.title === "Example Boards" ||
-                      store.title === "Playground Boards";
-
-                    if (!this.filter) {
-                      return canShow;
-                    }
-                    const filter = new RegExp(this.filter, "gim");
-                    return filter.test(item.title ?? name) && canShow;
-                  })
+                const filter = this.filter
+                  ? new RegExp(this.filter, "gim")
+                  : undefined;
+                const allItems = [...store.items]
+                  .filter(
+                    ([name, item]) =>
+                      !filter ||
+                      (item.title && filter.test(item.title)) ||
+                      (name && filter.test(name))
+                  )
                   .sort(([, dataA], [, dataB]) => {
                     // Sort by recency.
                     const indexA = this.#recentItems.indexOf(dataA.url);
@@ -874,28 +878,51 @@ export class ProjectListing extends LitElement {
 
                     return 0;
                   });
-
-                let boardListing;
-                if (items.length) {
-                  boardListing = html`
-                    <bb-gallery
-                      .items=${items}
-                      .boardServer=${boardServer}
-                      .mode=${this.mode}
-                    ></bb-gallery>
-                  `;
-                } else {
-                  boardListing = html`<div id="no-projects">
-                    <p>${Strings.from("LABEL_NO_PROJECTS_FOUND")}</p>
-                    <p>${Strings.from("COMMAND_GET_STARTED")}</p>
-                  </div>`;
-                }
+                const myItems = allItems.filter(
+                  ([, item]) => this.showOtherPeoplesBoards || item.mine
+                );
+                const sampleItems = allItems.filter(([, item]) =>
+                  (item.tags ?? []).includes("featured")
+                );
+                const boardListings = [
+                  myItems.length
+                    ? html`
+                        <div class="gallery-wrapper">
+                          <bb-gallery
+                            .items=${myItems}
+                            .boardServer=${boardServer}
+                            .mode=${this.mode}
+                          ></bb-gallery>
+                        </div>
+                      `
+                    : html`
+                        <div id="no-projects">
+                          <p>${Strings.from("LABEL_NO_PROJECTS_FOUND")}</p>
+                          <p>${Strings.from("COMMAND_GET_STARTED")}</p>
+                        </div>
+                      `,
+                  html`
+                    <div class="gallery-wrapper">
+                      <h2 class="gallery-title">
+                        ${Strings.from("LABEL_SAMPLE_GALLERY_TITLE")}
+                      </h2>
+                      <p class="gallery-description">
+                        ${Strings.from("LABEL_SAMPLE_GALLERY_DESCRIPTION")}
+                      </p>
+                      <bb-gallery
+                        .items=${sampleItems}
+                        .boardServer=${boardServer}
+                        .mode=${this.mode}
+                      ></bb-gallery>
+                    </div>
+                  `,
+                ];
 
                 return permission === "granted"
                   ? [
-                      boardListing,
+                      boardListings,
                       html` <div id="buttons">
-                        ${items.length
+                        ${myItems.length
                           ? html`<div id="mode-container">
                               <input
                                 ?checked=${this.mode === "condensed"}

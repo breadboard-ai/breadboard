@@ -337,6 +337,9 @@ export class Gallery extends LitElement {
       items.length % pageSize === 0
         ? items.length / pageSize
         : Math.floor(items.length / pageSize) + 1;
+    if (pages <= 1) {
+      return nothing;
+    }
     return html`
       <menu id="pagination">
         <li>
