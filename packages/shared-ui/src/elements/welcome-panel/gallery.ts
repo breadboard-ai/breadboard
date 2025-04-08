@@ -13,8 +13,8 @@ import * as StringsHelper from "../../strings/helper.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
-const PAGE_SIZE_DETAILED = 8;
-const PAGE_SIZE_CONDENSED = 24;
+const PAGE_SIZE_DETAILED = 4;
+const PAGE_SIZE_CONDENSED = 16;
 
 @customElement("bb-gallery")
 export class Gallery extends LitElement {
