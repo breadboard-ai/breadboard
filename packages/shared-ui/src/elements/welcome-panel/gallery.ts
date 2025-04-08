@@ -5,7 +5,7 @@
  */
 
 import { BoardServer, GraphProviderItem } from "@google-labs/breadboard";
-import { css, html, LitElement } from "lit";
+import { css, html, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { GraphBoardServerLoadRequestEvent } from "../../events/events.js";
@@ -24,40 +24,43 @@ export class Gallery extends LitElement {
         display: grid;
         grid-template-columns: repeat(auto-fit, 265px);
         gap: 24.4px;
-        & .board {
-          display: flex;
-          flex-direction: column;
-          background: none;
-          border: 1px solid var(--bb-neutral-300);
-          border-radius: 12px;
-          overflow: hidden;
-          padding: 0;
-          cursor: pointer;
-          transition: box-shadow;
-          &:hover {
-            box-shadow: rgb(0 0 0 / 11%) 3px 3px 5px;
-          }
-          & .img-container {
-            height: 188px;
-            border-bottom: 1px solid var(--bb-neutral-300);
-            & img {
-              width: 100%;
-              height: 100%;
-              object-fit: cover;
-            }
-            & .details {
-              padding: 12px;
-              text-align: left;
-            }
-            & .title {
-              font-size: 14px;
-            }
-            & .description {
-              font-size: 12px;
-            }
-          }
+      }
+
+      .board {
+        display: flex;
+        flex-direction: column;
+        background: none;
+        border: 1px solid var(--bb-neutral-300);
+        border-radius: 12px;
+        overflow: hidden;
+        padding: 0;
+        cursor: pointer;
+        transition: box-shadow;
+        &:hover {
+          box-shadow: rgb(0 0 0 / 11%) 3px 3px 5px;
         }
       }
+
+      .img-container {
+        height: 188px;
+        border-bottom: 1px solid var(--bb-neutral-300);
+        & img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        & .details {
+          padding: 12px;
+          text-align: left;
+        }
+        & .title {
+          font-size: 14px;
+        }
+        & .description {
+          font-size: 12px;
+        }
+      }
+
       #pagination {
         margin: 0;
         padding: 0;
@@ -157,9 +160,29 @@ export class Gallery extends LitElement {
 
   override render() {
     return html`
-      <div id="items">${this.items.map((item) => this.#renderItem(item))}</div>
+      <div id="boards">
+        ${this.#currentPageItems().map((item) => this.#renderItem(item))}
+      </div>
       ${this.#renderPagination()}
     `;
+  }
+
+  #pageSize() {
+    return this.mode === "condensed" ? PAGE_SIZE_CONDENSED : PAGE_SIZE_DETAILED;
+  }
+
+  #numPages() {
+    const pageSize = this.#pageSize();
+    const items = this.items;
+    return items.length % pageSize === 0
+      ? items.length / pageSize
+      : Math.floor(items.length / pageSize) + 1;
+  }
+
+  #currentPageItems(): [string, GraphProviderItem][] {
+    const pageSize = this.#pageSize();
+    const start = this.page * pageSize;
+    return this.items.slice(start, start + pageSize);
   }
 
   #renderItem([name, item]: [string, GraphProviderItem]) {
@@ -185,13 +208,10 @@ export class Gallery extends LitElement {
   }
 
   #renderPagination() {
-    const pageSize =
-      this.mode === "condensed" ? PAGE_SIZE_CONDENSED : PAGE_SIZE_DETAILED;
-    const items = this.items;
-    const pages =
-      items.length % pageSize === 0
-        ? items.length / pageSize
-        : Math.floor(items.length / pageSize) + 1;
+    const numPages = this.#numPages();
+    if (numPages === 1) {
+      return nothing;
+    }
     return html`
       <menu id="pagination">
         <li>
@@ -205,7 +225,7 @@ export class Gallery extends LitElement {
             ${Strings.from("COMMAND_PREVIOUS")}
           </button>
         </li>
-        ${new Array(pages).fill(undefined).map((_, idx) => {
+        ${new Array(numPages).fill(undefined).map((_, idx) => {
           return html`<li>
             <button
               ?disabled=${idx === this.page}
@@ -220,7 +240,7 @@ export class Gallery extends LitElement {
         <li>
           <button
             id="next"
-            ?disabled=${this.page === pages - 1}
+            ?disabled=${this.page === numPages - 1}
             @click=${() => {
               this.page++;
             }}
