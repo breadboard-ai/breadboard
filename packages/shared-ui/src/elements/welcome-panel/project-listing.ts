@@ -173,90 +173,6 @@ export class ProjectListing extends LitElement {
           }
         }
 
-        & #pagination {
-          order: 2;
-          margin: 0;
-          padding: 0;
-          list-style: none;
-          display: flex;
-          justify-content: flex-end;
-          height: var(--bb-grid-size-8);
-          margin-bottom: var(--bb-grid-size-10);
-          width: 100%;
-          overflow: hidden;
-
-          & button {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
-              var(--bb-font-family);
-            width: var(--bb-grid-size-8);
-            height: var(--bb-grid-size-8);
-            background: none;
-            border: none;
-            margin-left: var(--bb-grid-size-2);
-            border-radius: var(--bb-grid-size-2);
-            color: var(--bb-neutral-900);
-            transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
-            padding: 0;
-
-            &:not([disabled]) {
-              cursor: pointer;
-
-              &:hover,
-              &:focus {
-                background: var(--bb-neutral-50);
-              }
-            }
-
-            &[disabled] {
-              background: var(--bb-neutral-100);
-            }
-
-            &#prev,
-            &#next {
-              width: auto;
-
-              &[disabled] {
-                background: transparent;
-                color: var(--bb-neutral-400);
-
-                &::before,
-                &::after {
-                  opacity: 0.4;
-                }
-              }
-            }
-
-            &#prev {
-              padding: 0 var(--bb-grid-size-2) 0 var(--bb-grid-size);
-
-              &::before {
-                content: "";
-                width: 20px;
-                height: 20px;
-                background: var(--bb-icon-before) center center / 20px 20px
-                  no-repeat;
-                margin-right: var(--bb-grid-size-2);
-              }
-            }
-
-            &#next {
-              padding: 0 var(--bb-grid-size) 0 var(--bb-grid-size-2);
-
-              &::after {
-                content: "";
-                width: 20px;
-                height: 20px;
-                background: var(--bb-icon-next) center center / 20px 20px
-                  no-repeat;
-                margin-left: var(--bb-grid-size-2);
-              }
-            }
-          }
-        }
-
         & #buttons {
           order: 0;
           height: 80px;
@@ -1137,74 +1053,28 @@ export class ProjectListing extends LitElement {
                   return html`MOVED`;
                 };
 
-                const pageSize =
-                  this.mode === "condensed"
-                    ? PAGE_SIZE_CONDENSED
-                    : PAGE_SIZE_DETAILED;
-                const myRecentBoards = html`${map(
-                  items.slice(this.page * pageSize, (this.page + 1) * pageSize),
-                  renderBoards
-                )}`;
-
-                const pages =
-                  items.length % pageSize === 0
-                    ? items.length / pageSize
-                    : Math.floor(items.length / pageSize) + 1;
-                const pagination = html`<menu id="pagination">
-                  <li>
-                    <button
-                      id="prev"
-                      ?disabled=${this.page === 0}
-                      @click=${() => {
-                        this.page--;
-                      }}
-                    >
-                      ${Strings.from("COMMAND_PREVIOUS")}
-                    </button>
-                  </li>
-                  ${new Array(pages).fill(undefined).map((_, idx) => {
-                    return html`<li>
-                      <button
-                        ?disabled=${idx === this.page}
-                        @click=${() => {
-                          this.page = idx;
-                        }}
-                      >
-                        ${idx + 1}
-                      </button>
-                    </li>`;
-                  })}
-                  <li>
-                    <button
-                      id="next"
-                      ?disabled=${this.page === pages - 1}
-                      @click=${() => {
-                        this.page++;
-                      }}
-                    >
-                      ${Strings.from("COMMAND_NEXT")}
-                    </button>
-                  </li>
-                </menu>`;
+                // const myRecentBoards = html`${map(
+                //   items.slice(this.page * pageSize, (this.page + 1) * pageSize),
+                //   renderBoards
+                // )}`;
 
                 let boardListing;
                 if (items.length) {
                   boardListing = html`<div
-                      class=${classMap({ boards: true, [this.mode]: true })}
-                    >
-                      <h3>Yours</h3>
-                      <bb-gallery
-                        .items=${items.filter(itemIsMine)}
-                        .boardServer=${boardServer}
-                      ></bb-gallery>
+                    class=${classMap({ boards: true, [this.mode]: true })}
+                  >
+                    <h3>Yours</h3>
+                    <bb-gallery
+                      .items=${items.filter(itemIsMine)}
+                      .boardServer=${boardServer}
+                    ></bb-gallery>
 
-                      <h3>Samples</h3>
-                      <bb-gallery
-                        .items=${items.filter(itemIsSample)}
-                        .boardServer=${boardServer}
-                      ></bb-gallery>
-                    </div>
-                    ${pagination}`;
+                    <h3>Samples</h3>
+                    <bb-gallery
+                      .items=${items.filter(itemIsSample)}
+                      .boardServer=${boardServer}
+                    ></bb-gallery>
+                  </div>`;
                 } else {
                   boardListing = html`<div id="no-projects">
                     <p>${Strings.from("LABEL_NO_PROJECTS_FOUND")}</p>
