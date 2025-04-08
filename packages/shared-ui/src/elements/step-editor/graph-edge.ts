@@ -16,9 +16,13 @@ import { getGlobalColor } from "../../utils/color";
 import { EdgeAttachmentPoint } from "../../types/types";
 import { inspectableEdgeToString } from "../../utils/workspace";
 import { InspectableAssetEdge, InspectableEdge } from "@google-labs/breadboard";
-import { GraphEdgeAttachmentMoveEvent } from "./events/events";
+import {
+  GraphEdgeAttachmentMoveEvent,
+  NodeBoundsUpdateRequestEvent,
+} from "./events/events";
 import { clamp } from "./utils/clamp";
 import { Entity } from "./entity";
+import { calculatePointsOnCubicBezierCurve } from "./utils/cubic-bezier";
 
 interface Connection {
   n1: DOMPoint;
@@ -42,7 +46,7 @@ const EDGE_STORED = getGlobalColor("--bb-human-600");
 const EDGE_USER = getGlobalColor("--bb-joiner-600");
 const EDGE_MODEL = getGlobalColor("--bb-generative-600");
 
-const EDGE_CLEARANCE = 100;
+const EDGE_CLEARANCE = 0;
 const HALF_HEADER_HEIGHT = 18;
 const ARROW_SIZE = 8;
 
@@ -149,21 +153,55 @@ export class GraphEdge extends Box {
   }
 
   calculateLocalBounds(): DOMRect {
+    const nodeBoundPoints = this.#getNodeBoundPoints();
+    const connectionPoints = this.#calculateConnectionPoints(nodeBoundPoints);
+    const steps = this.#createStepsFromConnectionPoints(connectionPoints);
+    const points = calculatePointsOnCubicBezierCurve(
+      steps.cpA.x,
+      steps.cpA.y,
+      steps.cp1.x,
+      steps.cp1.y,
+      steps.cp2.x,
+      steps.cp2.y,
+      steps.cpB.x,
+      steps.cpB.y,
+      0,
+      1,
+      0.1
+    );
+
+    let minX = Number.POSITIVE_INFINITY;
+    let minY = Number.POSITIVE_INFINITY;
+    let maxX = Number.NEGATIVE_INFINITY;
+    let maxY = Number.NEGATIVE_INFINITY;
+    for (const point of points) {
+      minX = Math.min(minX, point.x - 5);
+      minY = Math.min(minY, point.y - 5);
+      maxX = Math.max(maxX, point.x + 5);
+      maxY = Math.max(maxY, point.y + 5);
+    }
+
+    const pointBounds = new DOMRect(minX, minY, maxX - minX, maxY - minY);
+
     const top = Math.min(
       this.node1.transform.f - EDGE_CLEARANCE,
-      this.node2.transform.f - EDGE_CLEARANCE
+      this.node2.transform.f - EDGE_CLEARANCE,
+      pointBounds.y
     );
     const bottom = Math.max(
       this.node1.transform.f + this.node1.bounds.height + EDGE_CLEARANCE,
-      this.node2.transform.f + this.node2.bounds.height + EDGE_CLEARANCE
+      this.node2.transform.f + this.node2.bounds.height + EDGE_CLEARANCE,
+      pointBounds.y + pointBounds.height
     );
     const left = Math.min(
       this.node1.transform.e - EDGE_CLEARANCE,
-      this.node2.transform.e - EDGE_CLEARANCE
+      this.node2.transform.e - EDGE_CLEARANCE,
+      pointBounds.x
     );
     const right = Math.max(
       this.node1.transform.e + this.node1.bounds.width + EDGE_CLEARANCE,
-      this.node2.transform.e + this.node2.bounds.width + EDGE_CLEARANCE
+      this.node2.transform.e + this.node2.bounds.width + EDGE_CLEARANCE,
+      pointBounds.x + pointBounds.width
     );
 
     this.transform.e = left;
@@ -425,7 +463,6 @@ export class GraphEdge extends Box {
   }
 
   #createStepsFromConnectionPoints(connectionPoints: Connection) {
-    const steps: string[] = [];
     const n1adjust = new DOMPoint();
     const n2adjust = new DOMPoint();
     const c1adjust = new DOMPoint();
@@ -457,14 +494,36 @@ export class GraphEdge extends Box {
     if (connectionPoints.to === "Left") c2adjust.x = -cDist;
     if (connectionPoints.to === "Right") c2adjust.x = cDist;
 
-    steps.push(
-      `M ${connectionPoints.n1.x} ${connectionPoints.n1.y}`,
-      `L ${connectionPoints.n1.x + n1adjust.x} ${connectionPoints.n1.y + n1adjust.y}`,
-      `C ${connectionPoints.n1.x + c1adjust.x} ${connectionPoints.n1.y + c1adjust.y}, ${connectionPoints.n2.x + c2adjust.x} ${connectionPoints.n2.y + c2adjust.y}, ${connectionPoints.n2.x + n2adjust.x} ${connectionPoints.n2.y + n2adjust.y}`,
-      `L ${connectionPoints.n2.x} ${connectionPoints.n2.y}`
-    );
+    return {
+      start: new DOMPoint(connectionPoints.n1.x, connectionPoints.n1.y),
+      end: new DOMPoint(connectionPoints.n2.x, connectionPoints.n2.y),
+      cpA: new DOMPoint(
+        connectionPoints.n1.x + n1adjust.x,
+        connectionPoints.n1.y + n1adjust.y
+      ),
+      cpB: new DOMPoint(
+        connectionPoints.n2.x + n2adjust.x,
+        connectionPoints.n2.y + n2adjust.y
+      ),
+      cp1: new DOMPoint(
+        connectionPoints.n1.x + c1adjust.x,
+        connectionPoints.n1.y + c1adjust.y
+      ),
+      cp2: new DOMPoint(
+        connectionPoints.n2.x + c2adjust.x,
+        connectionPoints.n2.y + c2adjust.y
+      ),
+    };
+  }
 
-    return steps;
+  #createSVGStepsFromConnectionPoints(connectionPoints: Connection) {
+    const steps = this.#createStepsFromConnectionPoints(connectionPoints);
+    return [
+      `M ${steps.start.x} ${steps.start.y}`,
+      `L ${steps.cpA.x} ${steps.cpA.y}`,
+      `C ${steps.cp1.x} ${steps.cp1.y}, ${steps.cp2.x} ${steps.cp2.y}, ${steps.cpB.x} ${steps.cpB.y}`,
+      `L ${steps.end.x} ${steps.end.y}`,
+    ];
   }
 
   #createRotationFromConnectionPoints(connectionPoints: Connection) {
@@ -524,7 +583,7 @@ export class GraphEdge extends Box {
     }
 
     const rotation = this.#createRotationFromConnectionPoints(connectionPoints);
-    const steps = this.#createStepsFromConnectionPoints(connectionPoints);
+    const steps = this.#createSVGStepsFromConnectionPoints(connectionPoints);
     const arrowSize = ARROW_SIZE;
 
     let edgeColor;
@@ -682,6 +741,12 @@ export class GraphEdge extends Box {
           : nothing}
       </section>
       ${this.renderBounds()}`;
+  }
+
+  protected firstUpdated(): void {
+    if (this.#edgeRef.value) {
+      this.dispatchEvent(new NodeBoundsUpdateRequestEvent());
+    }
   }
 
   render() {
