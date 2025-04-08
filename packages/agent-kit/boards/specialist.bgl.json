@@ -3715,6 +3715,7 @@
                       "main-port",
                       "module",
                       "ports-spec",
+                      "reactive",
                       "side",
                       "stream",
                       "transient"
