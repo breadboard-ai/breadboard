@@ -3649,14 +3649,14 @@
                   "type": "string"
                 },
                 "parameters": {
-                  "$ref": "#/definitions/def-14"
+                  "$ref": "#/definitions/def-15"
                 }
               },
               "required": [
                 "name"
               ]
             },
-            "def-14": {
+            "def-15": {
               "type": "object",
               "properties": {
                 "title": {
@@ -3733,7 +3733,31 @@
                 "enum": {
                   "type": "array",
                   "items": {
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "icon": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id"
+                        ]
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   }
                 },
                 "default": {
@@ -3743,7 +3767,7 @@
                 "additionalProperties": {
                   "anyOf": [
                     {
-                      "$ref": "#/definitions/def-14"
+                      "$ref": "#/definitions/def-15"
                     },
                     {
                       "type": "boolean"
@@ -3753,12 +3777,12 @@
                 "items": {
                   "anyOf": [
                     {
-                      "$ref": "#/definitions/def-14"
+                      "$ref": "#/definitions/def-15"
                     },
                     {
                       "type": "array",
                       "items": {
-                        "$ref": "#/definitions/def-14"
+                        "$ref": "#/definitions/def-15"
                       }
                     }
                   ]

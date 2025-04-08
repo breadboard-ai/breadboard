@@ -9,6 +9,7 @@ import {
   isTextCapabilityPart,
   MainGraphIdentifier,
   MutableGraphStore,
+  SchemaEnumValue,
   Template,
   TemplatePart,
   TemplatePartTransformCallback,
@@ -696,12 +697,13 @@ export class EntityEditor extends LitElement {
                       id=${port.name}
                     >
                       ${map(port.schema.enum, (option) => {
+                        const { id, title } = enumValue(option);
                         return html`<option
-                          value=${option}
-                          ?selected=${port.value === option ||
-                          (!port.value && option === port.schema.default)}
+                          value=${id}
+                          ?selected=${port.value === id ||
+                          (!port.value && id === port.schema.default)}
                         >
-                          ${option}
+                          ${title}
                         </option>`;
                       })}
                     </select>`;
@@ -846,4 +848,11 @@ export class EntityEditor extends LitElement {
 
     return this.#renderSelectedItem();
   }
+}
+
+function enumValue(value: SchemaEnumValue): { title: string; id: string } {
+  if (typeof value === "string") {
+    return { title: value, id: value };
+  }
+  return { title: value.title || value.description || value.id, id: value.id };
 }
