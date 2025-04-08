@@ -75,6 +75,7 @@ async function describe({ inputs }: DescribeInputs) {
             time: {
               type: "string",
               title: "Time",
+              behavior: ["config", "hint-preview"],
               description: "Specify time in minutes for microwaving",
             },
           };

@@ -538,6 +538,8 @@ export class EntityEditor extends LitElement {
       }
     }
 
+    this.values = configuration;
+
     this.dispatchEvent(
       new NodePartialUpdateEvent(
         nodeId,
