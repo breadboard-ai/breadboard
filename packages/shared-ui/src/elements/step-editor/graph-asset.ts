@@ -109,8 +109,8 @@ export class GraphAsset extends Box implements DragConnectorReceiver {
       }
 
       :host {
-        --background: var(--bb-inputs-100);
-        --border: var(--bb-inputs-600);
+        --background: var(--bb-inputs-50);
+        --border: var(--bb-neutral-500);
         --header-border: var(--bb-inputs-300);
       }
 
@@ -126,7 +126,7 @@ export class GraphAsset extends Box implements DragConnectorReceiver {
 
       #container {
         width: 260px;
-        border-radius: var(--bb-grid-size-2);
+        border-radius: var(--bb-grid-size-3);
         outline: 1px solid var(--border);
         color: var(--bb-neutral-900);
         position: relative;
@@ -150,8 +150,8 @@ export class GraphAsset extends Box implements DragConnectorReceiver {
           font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
             var(--bb-font-family);
           border-radius: var(--bb-grid-size-16);
-          background: var(--bb-ui-50) var(--bb-icon-library-add) 8px center /
-            20px 20px no-repeat;
+          background: var(--bb-neutral-50) var(--bb-icon-library-add) 8px
+            center / 20px 20px no-repeat;
           padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-8);
           transition: border 0.2s cubic-bezier(0, 0, 0.3, 1);
           height: var(--bb-grid-size-7);
@@ -171,15 +171,14 @@ export class GraphAsset extends Box implements DragConnectorReceiver {
           height: var(--bb-grid-size-9);
           width: 100%;
           padding: 0 var(--bb-grid-size-3);
-          border-radius: var(--bb-grid-size-2) var(--bb-grid-size-2) 0 0;
-          border-bottom: 1px solid var(--header-border);
+          border-radius: var(--bb-grid-size-3) var(--bb-grid-size-3) 0 0;
           font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
             var(--bb-font-family);
           cursor: pointer;
           position: relative;
+          justify-content: center;
 
           & span {
-            flex: 1 1 auto;
             text-overflow: ellipsis;
             overflow: hidden;
             white-space: nowrap;
@@ -223,12 +222,12 @@ export class GraphAsset extends Box implements DragConnectorReceiver {
         & #content {
           position: relative;
           background: var(--bb-neutral-0);
-          padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
+          padding: var(--bb-grid-size-2) var(--bb-grid-size-2);
           font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
             var(--bb-font-family);
           color: var(--bb-neutral-900);
           line-height: var(--bb-grid-size-6);
-          border-radius: 0 0 var(--bb-grid-size-2) var(--bb-grid-size-2);
+          border-radius: 0 0 var(--bb-grid-size-3) var(--bb-grid-size-3);
 
           & .loading {
             margin: 0;

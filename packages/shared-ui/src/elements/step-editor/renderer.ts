@@ -164,7 +164,7 @@ export class Renderer extends LitElement {
 
     :host {
       display: block;
-      background: var(--bb-ui-50);
+      background: var(--bb-neutral-50);
       overflow: hidden;
       transform: translate(0, 0);
       contain: strict;

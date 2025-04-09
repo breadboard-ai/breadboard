@@ -64,9 +64,13 @@ export const styles = css`
 
     & #controls {
       padding-bottom: var(--bb-grid-size-3);
+      display: flex;
+      align-item: flex-end;
 
       & #url,
-      & #designer {
+      & #designer,
+      & #details,
+      & #output {
         border: none;
         border-radius: var(--bb-grid-size-16);
         font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
@@ -74,6 +78,7 @@ export const styles = css`
         height: var(--bb-grid-size-8);
         padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-8);
         transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
+        margin: 0 var(--bb-grid-size);
 
         &:not([disabled]) {
           cursor: pointer;
@@ -85,6 +90,11 @@ export const styles = css`
         }
       }
 
+      & #details {
+        background: var(--bb-icon-edit) var(--bb-neutral-0) 8px center / 20px
+          20px no-repeat;
+      }
+
       & #designer {
         background: var(--bb-icon-palette) var(--bb-neutral-0) 8px center / 20px
           20px no-repeat;
@@ -93,6 +103,31 @@ export const styles = css`
       & #url {
         background: var(--bb-icon-link) var(--bb-neutral-0) 8px center / 20px
           20px no-repeat;
+      }
+
+      & #output {
+        padding: 0;
+        width: 32px;
+        height: 32px;
+
+        &:not([disabled]) {
+          cursor: pointer;
+
+          &:focus,
+          &:hover {
+            background-color: var(--bb-ui-50);
+          }
+        }
+
+        &.app {
+          background: var(--bb-icon-phone) var(--bb-neutral-0) center center /
+            20px 20px no-repeat;
+        }
+
+        &.console {
+          background: var(--bb-icon-list) var(--bb-neutral-0) center center /
+            20px 20px no-repeat;
+        }
       }
     }
 
