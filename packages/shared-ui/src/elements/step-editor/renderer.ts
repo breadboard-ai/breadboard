@@ -567,6 +567,7 @@ export class Renderer extends LitElement {
   #clickRect: DOMRect | null = null;
   #isToggleSelection = false;
   #isAdditiveSelection = false;
+  #refocusSelf = false;
   #onPointerDown(evt: PointerEvent) {
     if (this.#editorControls.value) {
       this.#editorControls.value.hidePickers();
@@ -582,6 +583,7 @@ export class Renderer extends LitElement {
       return;
     }
 
+    this.#refocusSelf = true;
     this.#dragRect = new DOMRect();
     this.#isToggleSelection = isCtrlCommand(evt);
     this.#isAdditiveSelection = evt.shiftKey;
@@ -661,6 +663,18 @@ export class Renderer extends LitElement {
     this.#isToggleSelection = false;
     this.camera.baseTransform = null;
     this.isDragPanning = false;
+
+    if (!this.#refocusSelf) {
+      return;
+    }
+
+    // Because the drag event will trigger a selection change and, with it, a
+    // re-render, we will lose focus on the renderer. As such when the pointer
+    // comes back up we schedule a focus call to restore it.
+    requestAnimationFrame(() => {
+      this.#refocusSelf = false;
+      this.focus();
+    });
   }
 
   #updateDragRect(evt: PointerEvent) {

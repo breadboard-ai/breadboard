@@ -43,6 +43,12 @@ import { MAIN_BOARD_ID } from "../../constants/constants";
 import { Project } from "../../state";
 import { NodePartialUpdateEvent } from "../../events/events";
 
+interface EnumValue {
+  title: string;
+  id: string;
+  icon?: string;
+}
+
 const INVALID_ITEM = html`<div id="invalid-item">
   Unable to render selected item
 </div>`;
@@ -284,21 +290,38 @@ export class EntityEditor extends LitElement {
       flex-direction: column;
       height: 100%;
       overflow: auto;
+      padding: var(--bb-grid-size-3) 0 0 0;
 
       > div {
-        margin-bottom: var(--bb-grid-size);
         height: var(--bb-grid-size-5);
         display: flex;
         align-items: center;
         font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
           var(--bb-font-family);
 
+        &.stretch:has(+ :not(.stretch)) {
+          margin-bottom: var(--bb-grid-size-3);
+          border-bottom: 1px solid var(--bb-neutral-300);
+        }
+
+        &:not(.stretch):has(+ .stretch) {
+          margin-bottom: var(--bb-grid-size-3);
+          padding-bottom: var(--bb-grid-size-3);
+          border-bottom: 1px solid var(--bb-neutral-300);
+        }
+
+        &:not(.stretch):has(+ :not(.stretch)) {
+          margin-bottom: var(--bb-grid-size-2);
+        }
+
         &.stretch {
           overflow-y: auto;
           overflow-x: hidden;
           flex: 1 1 auto;
-          border-bottom: 1px solid var(--bb-neutral-300);
-          margin-bottom: var(--bb-grid-size-3);
+
+          &:not(:last-of-type) {
+            padding-bottom: var(--bb-grid-size-3);
+          }
         }
 
         &:not(.stretch) {
@@ -348,6 +371,123 @@ export class EntityEditor extends LitElement {
 
         label {
           margin-right: var(--bb-grid-size-2);
+          display: inline-flex;
+          align-items: center;
+
+          &.icon {
+            &::before {
+              content: "";
+              width: 20px;
+              height: 20px;
+              background: red;
+              margin-right: var(--bb-grid-size-2);
+            }
+
+            &.search::before {
+              background: var(--bb-icon-search) center center / 20px 20px
+                no-repeat;
+            }
+
+            &.map-search::before {
+              background: var(--bb-icon-map-search) center center / 20px 20px
+                no-repeat;
+            }
+
+            &.globe-book::before {
+              background: var(--bb-icon-globe-book) center center / 20px 20px
+                no-repeat;
+            }
+
+            &.language::before {
+              background: var(--bb-icon-language) center center / 20px 20px
+                no-repeat;
+            }
+
+            &.sunny::before {
+              background: var(--bb-icon-sunny) center center / 20px 20px
+                no-repeat;
+            }
+
+            &.generative::before {
+              background: var(--bb-add-icon-generative) center center / 20px
+                20px no-repeat;
+            }
+
+            &.generative-image::before {
+              background: var(--bb-add-icon-generative-image) center center /
+                20px 20px no-repeat;
+            }
+
+            &.generative-image-edit::before {
+              background: var(--bb-add-icon-generative-image-edit-auto) center
+                center / 20px 20px no-repeat;
+            }
+
+            &.generative-text::before {
+              background: var(--bb-add-icon-generative-text-analysis) center
+                center / 20px 20px no-repeat;
+            }
+
+            &.generative-audio::before {
+              background: var(--bb-add-icon-generative-audio) center center /
+                20px 20px no-repeat;
+            }
+
+            &.generative-video::before {
+              background: var(--bb-add-icon-generative-videocam-auto) center
+                center / 20px 20px no-repeat;
+            }
+
+            &.generative-code::before {
+              background: var(--bb-add-icon-generative-code) center center /
+                20px 20px no-repeat;
+            }
+
+            &.generative-search::before {
+              background: var(--bb-add-icon-generative-search) center center /
+                20px 20px no-repeat;
+            }
+
+            &.combine-outputs::before {
+              background: var(--bb-icon-table-rows) center center / 20px 20px
+                no-repeat;
+            }
+
+            &.input::before {
+              background: var(--bb-icon-input) center center / 20px 20px
+                no-repeat;
+            }
+
+            &.output::before {
+              background: var(--bb-icon-output) center center / 20px 20px
+                no-repeat;
+            }
+
+            &.smart-toy::before {
+              background: var(--bb-icon-smart-toy) center center / 20px 20px
+                no-repeat;
+            }
+
+            &.laps::before {
+              background: var(--bb-icon-laps) center center / 20px 20px
+                no-repeat;
+            }
+
+            &.merge-type::before {
+              background: var(--bb-icon-merge-type) center center / 20px 20px
+                no-repeat;
+            }
+
+            &.code-blocks::before {
+              background: var(--bb-icon-code-blocks) center center / 20px 20px
+                no-repeat;
+            }
+
+            &.human::before {
+              background: var(--bb-icon-human) center center / 20px 20px
+                no-repeat;
+            }
+          }
         }
 
         input,
@@ -366,9 +506,9 @@ export class EntityEditor extends LitElement {
         width: 100%;
         height: 100%;
         --text-editor-height: 100%;
-        --text-editor-padding-top: var(--bb-grid-size-4);
+        --text-editor-padding-top: 0;
         --text-editor-padding-right: var(--bb-grid-size-6);
-        --text-editor-padding-bottom: var(--bb-grid-size-4);
+        --text-editor-padding-bottom: 0;
         --text-editor-padding-left: var(--bb-grid-size-6);
       }
 
@@ -595,29 +735,11 @@ export class EntityEditor extends LitElement {
       // By convention we assume there will be a single llm-content port
       // and multiple other configurable ports. Therefore we order & filter
       // ports on that basis.
-      const inputPorts = ports.inputs.ports
-        .filter((port) => {
-          if (port.star || port.name === "") return false;
-          if (!isConfigurableBehavior(port.schema)) return false;
-          return true;
-        })
-        .sort((portA, portB) => {
-          if (
-            isLLMContentBehavior(portA.schema) &&
-            !isLLMContentBehavior(portB.schema)
-          ) {
-            return -1;
-          }
-
-          if (
-            !isLLMContentBehavior(portA.schema) &&
-            isLLMContentBehavior(portB.schema)
-          ) {
-            return 1;
-          }
-
-          return 0;
-        });
+      const inputPorts = ports.inputs.ports.filter((port) => {
+        if (port.star || port.name === "") return false;
+        if (!isConfigurableBehavior(port.schema)) return false;
+        return true;
+      });
 
       return html`<div class=${classMap(classes)}>
         <h1 id="title">
@@ -690,7 +812,22 @@ export class EntityEditor extends LitElement {
                 }
 
                 if (port.schema.enum) {
-                  value = html`<label for=${port.name}>${port.title}</label
+                  const currentValue = enumValue(
+                    port.schema.enum.find(
+                      (value) => enumValue(value).id == port.value
+                    ) ?? port.schema.enum[0]
+                  );
+
+                  const classes: Record<string, boolean> = {};
+                  if (currentValue.icon) {
+                    classes.icon = true;
+                    classes[currentValue.icon] = true;
+                  }
+
+                  value = html`<label
+                      for=${port.name}
+                      class=${classMap(classes)}
+                      >${port.title}</label
                     ><select
                       @change=${this.#reactiveChange(port)}
                       name=${port.name}
@@ -850,9 +987,17 @@ export class EntityEditor extends LitElement {
   }
 }
 
-function enumValue(value: SchemaEnumValue): { title: string; id: string } {
+function enumValue(value: SchemaEnumValue): EnumValue {
   if (typeof value === "string") {
     return { title: value, id: value };
   }
-  return { title: value.title || value.description || value.id, id: value.id };
+  const enumVal: EnumValue = {
+    title: value.title || value.description || value.id,
+    id: value.id,
+  };
+  if (value.icon) {
+    enumVal.icon = value.icon;
+  }
+
+  return enumVal;
 }
