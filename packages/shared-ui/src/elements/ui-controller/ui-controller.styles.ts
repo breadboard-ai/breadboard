@@ -819,4 +819,16 @@ export const styles = css`
       color: var(--bb-neutral-900);
     }
   }
+
+  bb-capabilities-selector,
+  bb-revision-history-panel,
+  #board-console-container,
+  bb-app-preview,
+  bb-entity-editor {
+    display: none;
+
+    &.active {
+      display: block;
+    }
+  }
 `;

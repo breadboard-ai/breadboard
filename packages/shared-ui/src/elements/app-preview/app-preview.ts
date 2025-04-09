@@ -478,22 +478,6 @@ export class AppPreview extends LitElement {
     return html`<div id="container">
       <div id="controls">
         <button
-          id="details"
-          ?disabled=${this.#loadingTemplate}
-          @click=${(evt: PointerEvent) => {
-            this.dispatchEvent(
-              new OverflowMenuActionEvent(
-                "edit-board-details",
-                null,
-                evt.clientX,
-                evt.clientY
-              )
-            );
-          }}
-        >
-          Details
-        </button>
-        <button
           id="designer"
           ?disabled=${this.#loadingTemplate}
           @click=${() => {
