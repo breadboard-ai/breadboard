@@ -11,7 +11,7 @@
 import Database from "better-sqlite3";
 import type { RunBoardStateStore } from "../types.js";
 import type { ServerInfo } from "../store.js";
-import { asPath, EXPIRATION_TIME_MS } from "../store.js";
+import { EXPIRATION_TIME_MS } from "../store.js";
 import type {
   GraphDescriptor,
   ReanimationState,

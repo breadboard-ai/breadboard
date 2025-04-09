@@ -121,7 +121,3 @@ export type ServerInfo = {
    */
   url?: string;
 };
-
-export const asPath = (userStore: string, boardName: string) => {
-  return `@${userStore}/${boardName}`;
-};
