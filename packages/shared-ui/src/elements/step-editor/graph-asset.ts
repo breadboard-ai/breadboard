@@ -228,6 +228,7 @@ export class GraphAsset extends Box implements DragConnectorReceiver {
           color: var(--bb-neutral-900);
           line-height: var(--bb-grid-size-6);
           border-radius: 0 0 var(--bb-grid-size-3) var(--bb-grid-size-3);
+          pointer-events: none;
 
           & .loading {
             margin: 0;
