@@ -33,6 +33,8 @@ import { styleMap } from "lit/directives/style-map.js";
 import {
   AddAssetEvent,
   AddAssetRequestEvent,
+  BoardDescriptionUpdateEvent,
+  BoardTitleUpdateEvent,
   InputEnterEvent,
   RunEvent,
   SignInRequestedEvent,
@@ -102,6 +104,9 @@ export class Template extends LitElement implements AppTemplate {
 
   @property({ reflect: true, type: Boolean })
   accessor hasRenderedSplash = false;
+
+  @property()
+  accessor readOnly = true;
 
   @state()
   accessor showAddAssetModal = false;
@@ -1177,10 +1182,54 @@ export class Template extends LitElement implements AppTemplate {
           this.hasRenderedSplash = true;
         }}
       >
-        <h1>${this.options.title}</h1>
-        ${this.options.description
-          ? html`<p>${this.options.description}</p>`
-          : nothing}
+        <h1
+          ?contenteditable=${!this.readOnly}
+          @blur=${(evt: Event) => {
+            if (this.readOnly) {
+              return;
+            }
+
+            if (
+              !(evt.target instanceof HTMLElement) ||
+              !evt.target.textContent
+            ) {
+              return;
+            }
+
+            this.dispatchEvent(
+              new BoardTitleUpdateEvent(evt.target.textContent.trim())
+            );
+          }}
+        >
+          ${this.options.title}
+        </h1>
+        <p
+          ?contenteditable=${!this.readOnly}
+          @blur=${(evt: Event) => {
+            if (this.readOnly) {
+              return;
+            }
+
+            if (this.readOnly) {
+              return;
+            }
+
+            if (
+              !(evt.target instanceof HTMLElement) ||
+              !evt.target.textContent
+            ) {
+              return;
+            }
+
+            this.dispatchEvent(
+              new BoardDescriptionUpdateEvent(evt.target.textContent.trim())
+            );
+          }}
+        >
+          ${this.options.description
+            ? html`${this.options.description}`
+            : nothing}
+        </p>
       </div>
       <div id="input" class="stopped">
         <div>

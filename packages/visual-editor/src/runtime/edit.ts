@@ -958,6 +958,26 @@ export class Edit extends EventTarget {
     );
   }
 
+  async updateBoardTitle(tab: Tab | null, title: string) {
+    if (!tab) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to find tab"));
+      return null;
+    }
+
+    tab.graph.title = title;
+    this.dispatchEvent(new RuntimeBoardEditEvent(null, [], false));
+  }
+
+  async updateBoardDescription(tab: Tab | null, description: string) {
+    if (!tab) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to find tab"));
+      return null;
+    }
+
+    tab.graph.description = description;
+    this.dispatchEvent(new RuntimeBoardEditEvent(null, [], false));
+  }
+
   #updateGraphValues(
     graph: GraphDescriptor,
     title: string,
