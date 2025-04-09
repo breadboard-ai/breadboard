@@ -1195,10 +1195,11 @@ export class Template extends LitElement implements AppTemplate {
             ) {
               return;
             }
-
-            this.dispatchEvent(
-              new BoardTitleUpdateEvent(evt.target.textContent.trim())
-            );
+            const newTitle = evt.target.textContent.trim();
+            if (newTitle === this.options.title) {
+              return;
+            }
+            this.dispatchEvent(new BoardTitleUpdateEvent(newTitle));
           }}
         >
           ${this.options.title}
@@ -1221,9 +1222,12 @@ export class Template extends LitElement implements AppTemplate {
               return;
             }
 
-            this.dispatchEvent(
-              new BoardDescriptionUpdateEvent(evt.target.textContent.trim())
-            );
+            const newDescription = evt.target.textContent.trim();
+            if (newDescription === this.options.description) {
+              return;
+            }
+
+            this.dispatchEvent(new BoardDescriptionUpdateEvent(newDescription));
           }}
         >
           ${this.options.description
