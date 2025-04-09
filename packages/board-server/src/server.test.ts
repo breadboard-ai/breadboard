@@ -102,7 +102,7 @@ suite("Board Server integration test", () => {
         .send({ nodes: [], edges: [] });
 
       assert.equal(response.status, 200);
-      assert.equal(response.body.created, `test-board`);
+      assert.equal(response.body.created, `@${user.username}/test-board`);
     });
 
     test("POST /boards/:name -> updates", async () => {
@@ -113,7 +113,7 @@ suite("Board Server integration test", () => {
         .send({ nodes: [], edges: [] });
 
       assert.equal(response.status, 200);
-      assert.equal(response.body.created, `test-board`);
+      assert.equal(response.body.created, `@${user.username}/test-board`);
     });
 
     test("POST /boards/@:user/:name -> deletes", async () => {
@@ -125,7 +125,7 @@ suite("Board Server integration test", () => {
 
       assert.equal(response.status, 200);
       assert.deepEqual(response.body, {
-        deleted: `test-board`,
+        deleted: `@${user.username}/test-board`,
       });
     });
 
@@ -138,7 +138,7 @@ suite("Board Server integration test", () => {
 
       assert.equal(response.status, 200);
       assert.deepEqual(response.body, {
-        deleted: `test-board`,
+        deleted: `@${user.username}/test-board`,
       });
     });
 

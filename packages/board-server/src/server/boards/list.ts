@@ -6,7 +6,7 @@
 
 import type { NextFunction, Request, Response } from "express";
 
-import { type BoardServerStore, type StorageBoard } from "../store.js";
+import { asPath, type BoardServerStore, type StorageBoard } from "../store.js";
 
 type BoardListEntry = {
   title: string;
@@ -36,7 +36,7 @@ function toListEntry(userId: string, board: StorageBoard): BoardListEntry {
   return {
     title: board.displayName,
     description: board.description ?? undefined,
-    path: board.name,
+    path: asPath(board.owner, board.name),
     username: board.owner,
     readonly: board.owner !== userId,
     mine: board.owner === userId,

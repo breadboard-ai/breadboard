@@ -6,7 +6,7 @@
 
 import type { NextFunction, Request, Response } from "express";
 
-import { type BoardServerStore } from "../store.js";
+import { asPath, type BoardServerStore } from "../store.js";
 import type { BoardId } from "../types.js";
 
 async function del(
@@ -34,7 +34,7 @@ async function del(
   }
 
   // TODO don't return a response on delete. 200 OK is sufficient
-  res.json({ deleted: boardId.name });
+  res.json({ deleted: asPath(userId, boardId.name) });
 }
 
 export default del;
