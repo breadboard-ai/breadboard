@@ -125,6 +125,22 @@ export class SaveAsEvent extends Event {
   }
 }
 
+export class BoardTitleUpdateEvent extends Event {
+  static eventName = "bbboardtitleupdate";
+
+  constructor(public readonly title: string) {
+    super(BoardTitleUpdateEvent.eventName, { ...eventInit });
+  }
+}
+
+export class BoardDescriptionUpdateEvent extends Event {
+  static eventName = "bbboarddescriptionupdate";
+
+  constructor(public readonly description: string) {
+    super(BoardDescriptionUpdateEvent.eventName, { ...eventInit });
+  }
+}
+
 export class BoardInfoUpdateEvent extends Event {
   static eventName = "bbboardinfoupdate";
 

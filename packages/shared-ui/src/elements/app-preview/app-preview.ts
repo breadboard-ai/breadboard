@@ -473,6 +473,7 @@ export class AppPreview extends LitElement {
       this.#appTemplate.showGDrive = this.showGDrive;
       this.#appTemplate.isInSelectionState = this.isInSelectionState;
       this.#appTemplate.showingOlderResult = this.showingOlderResult;
+      this.#appTemplate.readOnly = false;
     }
 
     return html`<div id="container">

@@ -572,6 +572,7 @@ export interface AppTemplate extends LitElement {
   isInSelectionState: boolean;
   showingOlderResult: boolean;
   appURL: string | null;
+  readOnly: boolean;
 }
 
 export interface Utterance {

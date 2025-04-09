@@ -3657,6 +3657,19 @@ export class Main extends LitElement {
                 this.toast(evt.detail, BreadboardUI.Events.ToastType.ERROR);
                 return;
               }}
+              @bbboardtitleupdate=${async (
+                evt: BreadboardUI.Events.BoardTitleUpdateEvent
+              ) => {
+                await this.#runtime.edit.updateBoardTitle(this.tab, evt.title);
+              }}
+              @bbboarddescriptionupdate=${async (
+                evt: BreadboardUI.Events.BoardDescriptionUpdateEvent
+              ) => {
+                await this.#runtime.edit.updateBoardDescription(
+                  this.tab,
+                  evt.description
+                );
+              }}
               @bbboardinfoupdate=${async (
                 evt: BreadboardUI.Events.BoardInfoUpdateEvent
               ) => {
