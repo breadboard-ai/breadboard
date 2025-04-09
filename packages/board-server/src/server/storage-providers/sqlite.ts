@@ -313,7 +313,7 @@ export class SQLiteStorageProvider implements RunBoardStateStore {
       stmt.run(userStore, proposal, proposal, "", JSON.stringify({})); // Empty title, tags, and graph
     }
 
-    const path = asPath(userStore, `${proposal}.bgl.json`);
+    const path = `${proposal}.bgl.json`;
     return { success: true, path, error: undefined };
   }
 
