@@ -7,6 +7,7 @@
 import type { Request, Response } from "express";
 
 import {
+  asPath,
   InvalidRequestError,
   type BoardServerStore,
   type StorageBoard,
@@ -29,8 +30,7 @@ async function create(req: Request, res: Response): Promise<void> {
 
   try {
     const result = await store.upsertBoard(request);
-    const path = result.name;
-    res.json({ ...result,  path });
+    res.json({ ...result,  path: asPath(result.owner, result.name) });
   } catch (e) {
     if (e instanceof InvalidRequestError) {
       res.statusMessage = e.message;

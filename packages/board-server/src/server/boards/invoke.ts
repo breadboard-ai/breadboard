@@ -14,6 +14,7 @@ import { invokeBoard } from "./utils/invoke-board.js";
 import { verifyKey } from "./utils/verify-key.js";
 import type { BoardServerStore } from "../store.js";
 import type { BoardId } from "../types.js";
+import { asPath } from "../store.js";
 
 async function invokeHandler(
   config: ServerConfig,
@@ -27,7 +28,8 @@ async function invokeHandler(
   const serverUrl = (await store.getServerInfo())?.url ?? "";
 
   const url = new URL(req.url, config.hostname);
-  url.pathname = `boards/${boardId.name}`;
+  const path = asPath(boardId.user, boardId.name);
+  url.pathname = `boards/${path}`;
   url.search = "";
 
   const inputs = req.body as Record<string, any>;
@@ -42,7 +44,7 @@ async function invokeHandler(
   const result = await invokeBoard({
     serverUrl,
     url: url.href,
-    path: `boards/${boardId.name}`,
+    path,
     inputs,
     loader: createBoardLoader(store, userId),
     kitOverrides: [secretsKit],

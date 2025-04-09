@@ -10,6 +10,7 @@ import type { RemoteMessage } from "@google-labs/breadboard/remote";
 
 import type { ServerConfig } from "../config.js";
 import { secretsKit } from "../proxy/secrets.js";
+import { asPath } from "../store.js";
 
 import { createBoardLoader } from "./utils/board-server-provider.js";
 import { runBoard, timestamp } from "./utils/run-board.js";
@@ -25,7 +26,7 @@ async function runHandler(
   const store: BoardServerStore = req.app.locals.store;
 
   const boardId: BoardId = res.locals.boardId;
-  const path = boardId.name;
+  const path = asPath(boardId.user, boardId.name);
 
   const serverUrl = (await store.getServerInfo())?.url ?? "";
 
