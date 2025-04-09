@@ -4,37 +4,30 @@
   "version": "0.0.1",
   "nodes": [
     {
-      "id": "e56071c9-137b-4f71-87af-e073cc34b1bb",
+      "id": "bbc7c1aa-1192-43ee-8f01-4b34688567c2",
       "type": "file://bgl/generate.bgl.json#module:main",
       "metadata": {
         "title": "Generate",
         "visual": {
-          "x": -20,
-          "y": -60
+          "x": 0,
+          "y": -120
         },
         "userModified": false
       },
       "configuration": {
-        "generation-mode": "./a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
-        "instruction": {
+        "config$prompt": {
           "role": "user",
           "parts": [
             {
-              "text": ""
+              "text": "Research the latest news on opals using {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-web\",\"title\":\"Search Web\"}}"
             }
           ]
         },
-        "p-disable-prompt-rewrite": false,
-        "description": {
-          "role": "user",
-          "parts": [
-            {
-              "text": "Create a poem about an opal"
-            }
-          ]
-        },
+        "generation-mode": "./a2.bgl.json#module:image-generator",
         "p-chat": false,
-        "p-list": false
+        "p-list": false,
+        "p-disable-prompt-rewrite": false,
+        "z-list": false
       }
     }
   ],

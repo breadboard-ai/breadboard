@@ -12,10 +12,12 @@ export { invoke as default, describe };
 
 type GenerationModes = (typeof MODES)[number];
 
+type ModeId = GenerationModes["id"];
+
 type Inputs = {
   context?: LLMContent[];
-  "generation-mode"?: GenerationModes["id"];
-} & Params;
+  "generation-mode"?: ModeId;
+} & Record<string, unknown>;
 
 type DescribeInputs = {
   inputs: Inputs;
@@ -51,9 +53,72 @@ const MODES = [
 
 const DEFAULT_MODE = MODES[0];
 
+const PROMPT_PORT = "config$prompt";
+const ASK_USER_PORT = "config$ask-user";
+const LIST_PORT = "config$list";
+
+// Maps the prompt port to various names of the other ports.
+const portMapForward = new Map<ModeId, Map<string, string>>([
+  [
+    MODES[0].id,
+    new Map([
+      [PROMPT_PORT, "description"],
+      [ASK_USER_PORT, "p-chat"],
+      [LIST_PORT, "p-list"],
+    ]),
+  ],
+  [MODES[1].id, new Map([[PROMPT_PORT, "instruction"]])],
+  [MODES[2].id, new Map([[PROMPT_PORT, "text"]])],
+  [MODES[3].id, new Map([[PROMPT_PORT, "instruction"]])],
+  [
+    MODES[4].id,
+    new Map([
+      [PROMPT_PORT, "plan"],
+      [LIST_PORT, "z-list"],
+    ]),
+  ],
+]);
+
+const portMapReverse = new Map(
+  Array.from(portMapForward.entries()).map(([mode, map]) => {
+    const inverted = new Map<string, string>();
+    for (const [from, to] of map) {
+      inverted.set(to, from);
+    }
+    return [mode, inverted];
+  })
+);
+
+function translate<T extends Record<string, unknown>>(
+  ports: T,
+  map: Map<string, string>
+): T {
+  return Object.fromEntries(
+    Object.entries(ports).map(([name, value]) => [map.get(name) || name, value])
+  ) as T;
+}
+
+function forwardPorts<T extends Record<string, unknown>>(
+  mode: ModeId,
+  ports: T
+): T {
+  const forwardingMap = portMapForward.get(mode);
+  if (!forwardingMap) return ports;
+  return translate(ports, forwardingMap);
+}
+
+function receivePorts<T extends Record<string, unknown>>(
+  mode: ModeId,
+  ports: T
+): T {
+  const reverseMap = portMapReverse.get(mode);
+  if (!reverseMap) return ports;
+  return translate(ports, reverseMap);
+}
+
 async function invoke({ "generation-mode": mode, ...rest }: Inputs) {
   const $board = mode || DEFAULT_MODE.id;
-  return await invokeGraph({ $board, ...rest });
+  return await invokeGraph({ $board, ...forwardPorts($board, rest) });
 }
 
 async function describe({ inputs }: DescribeInputs) {
@@ -62,7 +127,10 @@ async function describe({ inputs }: DescribeInputs) {
   const describing = await describeGraph({ url: mode, inputs });
   let modeSchema: Record<string, Schema> = {};
   if (ok(describing)) {
-    modeSchema = describing.inputSchema.properties || modeSchema;
+    modeSchema = receivePorts(
+      mode,
+      describing.inputSchema.properties || modeSchema
+    );
   }
 
   return {
