@@ -52,12 +52,12 @@ export class Toast extends LitElement {
 
     :host([type="warning"]) {
       --bb-toast-icon: var(--bb-icon-warning);
-      color: var(--bb-warning-700);
+      color: var(--bb-boards-600);
     }
 
     :host([type="error"]) {
       --bb-toast-icon: var(--bb-icon-error);
-      color: var(--bb-boards-600);
+      color: var(--bb-warning-600);
     }
 
     :host([type="pending"]) {
