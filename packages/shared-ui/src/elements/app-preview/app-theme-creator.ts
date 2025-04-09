@@ -552,9 +552,13 @@ export class AppThemeCreator extends LitElement {
       this.dispatchEvent(new ThemeCreateEvent(newTheme));
     } catch (err) {
       console.warn(err);
-      this.dispatchEvent(
-        new ToastEvent((err as Error).message, ToastType.ERROR)
-      );
+      let errMessage = "Error";
+      if (typeof err === "string") {
+        errMessage = err;
+      } else if (typeof err === "object") {
+        errMessage = (err as Error).message ?? "Unknown error";
+      }
+      this.dispatchEvent(new ToastEvent(errMessage, ToastType.ERROR));
     } finally {
       this._generating = false;
     }
