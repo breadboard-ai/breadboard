@@ -10636,6 +10636,7 @@
                           "google-drive-query",
                           "hint-audio",
                           "hint-code",
+                          "hint-controller",
                           "hint-image",
                           "hint-multimodal",
                           "hint-preview",

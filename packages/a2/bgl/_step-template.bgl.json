@@ -1,0 +1,74 @@
+{
+  "title": "{{ Step Name}}",
+  "description": "",
+  "version": "0.0.1",
+  "nodes": [],
+  "edges": [],
+  "metadata": {
+    "comments": [
+      {
+        "id": "comment-cc94afe8",
+        "text": "Intentionally Left Blank",
+        "metadata": {
+          "title": "Comment",
+          "visual": {
+            "x": 531,
+            "y": 374,
+            "collapsed": "expanded",
+            "outputHeight": 0
+          }
+        }
+      }
+    ],
+    "visual": {
+      "presentation": {
+        "themes": {
+          "5f3ca599-8fee-46fb-951f-0d47b16a6d56": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "5f3ca599-8fee-46fb-951f-0d47b16a6d56"
+      }
+    },
+    "tags": [
+      "published",
+      "tool",
+      "component"
+    ]
+  },
+  "imports": {
+    "a2": {
+      "url": "./a2.bgl.json"
+    }
+  },
+  "modules": {
+    "main": {
+      "code": "/**\n * @fileoverview Add a description for your module here.\n */\nexport { invoke as default, describe };\nasync function invoke({ context }) {\n    return { context };\n}\nasync function describe() {\n    return {\n        inputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context in\",\n                },\n            },\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context out\",\n                },\n            },\n        },\n    };\n}\n",
+      "metadata": {
+        "title": "main",
+        "source": {
+          "code": "/**\n * @fileoverview Add a description for your module here.\n */\n\nexport { invoke as default, describe };\n\nasync function invoke({ context }: { context: LLMContent[] }) {\n  return { context };\n}\n\nasync function describe() {\n  return {\n    inputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context in\",\n        },\n      },\n    } satisfies Schema,\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context out\",\n        },\n      },\n    } satisfies Schema,\n  };\n}\n",
+          "language": "typescript"
+        },
+        "description": "Add a description for your module here.",
+        "runnable": false
+      }
+    }
+  },
+  "exports": [
+    "#module:main"
+  ]
+}

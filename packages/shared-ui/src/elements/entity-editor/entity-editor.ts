@@ -735,11 +735,24 @@ export class EntityEditor extends LitElement {
       // By convention we assume there will be a single llm-content port
       // and multiple other configurable ports. Therefore we order & filter
       // ports on that basis.
-      const inputPorts = ports.inputs.ports.filter((port) => {
-        if (port.star || port.name === "") return false;
-        if (!isConfigurableBehavior(port.schema)) return false;
-        return true;
-      });
+      const inputPorts = ports.inputs.ports
+        .filter((port) => {
+          if (port.star || port.name === "") return false;
+          if (!isConfigurableBehavior(port.schema)) return false;
+          return true;
+        })
+        .sort((a, b) => {
+          if (isController(a)) return -1;
+          if (isController(b)) return 1;
+          if (isLLMContentBehavior(a.schema)) return -1;
+          if (isLLMContentBehavior(b.schema)) return 1;
+
+          return a.title.localeCompare(b.title);
+
+          function isController(p: InspectablePort) {
+            return p.schema.behavior?.includes("hint-controller");
+          }
+        });
 
       return html`<div class=${classMap(classes)}>
         <h1 id="title">
