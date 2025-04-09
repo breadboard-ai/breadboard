@@ -65,7 +65,6 @@ import { ChatController } from "../../state/chat-controller.js";
 import { Project } from "../../state/types.js";
 import "../../revision-history/revision-history-panel.js";
 import "../../revision-history/revision-history-overlay.js";
-import type { HighlightEvent } from "../step-editor/events/events.js";
 import {
   createEmptyGraphSelectionState,
   createEmptyWorkspaceSelectionState,
@@ -377,6 +376,7 @@ export class UI extends LitElement {
         this.editorRender,
         this.mode,
         this.selectionState,
+        this.highlightState,
         this.visualChangeId,
         this.graphTopologyUpdateId,
         this.showBoardReferenceMarkers,
@@ -543,18 +543,6 @@ export class UI extends LitElement {
       );
     }
     const sideNavItem = [
-      html` <bb-capabilities-selector
-        class=${classMap({ active: this.sideNavItem === "capabilities" })}
-      ></bb-capabilities-selector>`,
-      html`
-        <bb-revision-history-panel
-          .history=${this.history}
-          class=${classMap({ active: this.sideNavItem === "revision-history" })}
-          @bbhighlight=${(event: HighlightEvent) => {
-            this.highlightState = event.highlightState;
-          }}
-        ></bb-revision-history-panel>
-      `,
       html`${guard(
         [run, events, eventPosition, this.debugEvent],
         () =>
