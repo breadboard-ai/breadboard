@@ -28,6 +28,8 @@ import { createRequest, getSigninToken } from "./utils";
 import { TokenVendor } from "@breadboard-ai/connection-client";
 import { RemotePartTransformer } from "./remote-part-transformer";
 
+const USER_REGEX = /\/@[^/]+\//;
+
 export class RemoteBoardServer implements BoardServer, RemoteConnector {
   public readonly url: URL;
   public readonly users: User[];
@@ -130,9 +132,7 @@ export class RemoteBoardServer implements BoardServer, RemoteConnector {
   }
 
   async getAccess(url: URL, user: User): Promise<Permission> {
-    const project = this.#projects.find((project) => {
-      return url.pathname.startsWith(project.url.pathname);
-    });
+    const project = this.#findProject(url.pathname);
 
     const defaultPermission = {
       create: false,
@@ -152,14 +152,18 @@ export class RemoteBoardServer implements BoardServer, RemoteConnector {
     return true;
   }
 
+  #findProject(url: string): BoardServerProject | null {
+    return this.#projects.find(project => {
+      return url.startsWith(project.url.pathname) || url.startsWith(project.url.pathname.replace(USER_REGEX, '/'));
+    }) ?? null;
+  }
+
   canProvide(url: URL): false | GraphProviderCapabilities {
-    if (!url.href.startsWith(this.url.href)) {
+    if (!url.href.startsWith(this.url.href) && !url.href.startsWith(this.url.href.replace(USER_REGEX, "/"))) {
       return false;
     }
 
-    const project = this.#projects.find((project) => {
-      return url.pathname.startsWith(project.url.pathname);
-    });
+    const project = this.#findProject(url.pathname);
 
     // We recognize it as something that can be loaded from this Board Server,
     // but we can't assess the access for it, so assume loading alone is
@@ -198,15 +202,12 @@ export class RemoteBoardServer implements BoardServer, RemoteConnector {
   }
 
   async load(url: URL): Promise<GraphDescriptor | null> {
-    const projects = await this.projects;
-    const project = projects.find((project) => {
-      return url.pathname.startsWith(project.url.pathname);
-    });
+    const project = this.#findProject(url.pathname);
     if (!project) {
       return null;
     }
 
-    if (project.url.href === url.href) {
+    if (project.url.href === url.href || project.url.href.replace(USER_REGEX, '/') === url.href) {
       const request = createRequest(url, await this.connectionArgs(), "GET");
       const response = await fetch(request);
       const graph = await response.json();
