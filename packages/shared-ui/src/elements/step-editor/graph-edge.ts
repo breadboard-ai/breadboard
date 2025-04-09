@@ -33,7 +33,7 @@ interface Connection {
 }
 
 const EDGE_STANDARD = getGlobalColor("--bb-neutral-400");
-const EDGE_SELECTED = getGlobalColor("--bb-ui-600");
+const EDGE_SELECTED = getGlobalColor("--bb-ui-500");
 
 // Value is no longer on the wire, because it was consumed by the receiving
 // component. Constant wires never reach this state.

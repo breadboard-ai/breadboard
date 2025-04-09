@@ -8,17 +8,19 @@ import { GraphDescriptor, LLMContent } from "@breadboard-ai/types";
 import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("AppPreview");
 
-import { LitElement, PropertyValues, html } from "lit";
+import { LitElement, PropertyValues, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
   BoardServer,
   InspectableRun,
+  InspectableRunEvent,
   isInlineData,
   isStoredData,
 } from "@google-labs/breadboard";
 
 import { styles as appPreviewStyles } from "./app-preview.styles.js";
 import {
+  OverflowMenuActionEvent,
   ThemeEditRequestEvent,
   ToastEvent,
   ToastType,
@@ -27,6 +29,8 @@ import {
   AppTemplate,
   AppTemplateOptions,
   AppTheme,
+  SettingsStore,
+  STATUS,
   TopGraphRunResult,
 } from "../../types/types.js";
 import { getGlobalColor } from "../../utils/color.js";
@@ -107,8 +111,20 @@ export class AppPreview extends LitElement {
   @property()
   accessor themeHash: string | null = null;
 
+  @property()
+  accessor settings: SettingsStore | null = null;
+
+  @state()
+  accessor debugEvent: InspectableRunEvent | null = null;
+
+  @property({ reflect: true })
+  accessor status = STATUS.RUNNING;
+
   @state()
   accessor _originalTheme: AppTheme | null = null;
+
+  @state()
+  accessor _outputMode: "app" | "console" = "app";
 
   static styles = appPreviewStyles;
 
@@ -397,6 +413,57 @@ export class AppPreview extends LitElement {
     }
   }
 
+  #renderActivity() {
+    const run = this.run ?? null;
+    const events = run?.events ?? [];
+    const eventPosition = events.length - 1;
+
+    const hideLast = this.status === STATUS.STOPPED;
+    const graphUrl = this.graph?.url ? new URL(this.graph.url) : null;
+    const nextNodeId = this.topGraphResult?.currentNode?.descriptor.id ?? null;
+
+    return html`<div id="board-console-container">
+      <bb-board-activity
+        class=${classMap({ collapsed: this.debugEvent !== null })}
+        .graphUrl=${graphUrl}
+        .run=${run}
+        .events=${events}
+        .eventPosition=${eventPosition}
+        .showExtendedInfo=${true}
+        .settings=${this.settings}
+        .showLogTitle=${false}
+        .logTitle=${"Run"}
+        .hideLast=${hideLast}
+        .boardServers=${this.boardServers}
+        .showDebugControls=${false}
+        .nextNodeId=${nextNodeId}
+        @pointerdown=${(evt: PointerEvent) => {
+          const [top] = evt.composedPath();
+          if (!(top instanceof HTMLElement) || !top.dataset.messageId) {
+            return;
+          }
+          evt.stopImmediatePropagation();
+          const id = top.dataset.messageId;
+          const event = run?.getEventById(id);
+          if (!event) {
+            // TODO: Offer the user more information.
+            console.warn(`Unable to find event with ID "${id}"`);
+            return;
+          }
+          if (event.type !== "node") {
+            return;
+          }
+
+          this.debugEvent = event;
+        }}
+        name=${Strings.from("LABEL_PROJECT")}
+      ></bb-board-activity>
+      ${this.debugEvent
+        ? html`<bb-event-details .event=${this.debugEvent}></bb-event-details>`
+        : nothing}
+    </div>`;
+  }
+
   render() {
     if (this.#appTemplate) {
       this.#appTemplate.graph = this.graph;
@@ -410,6 +477,22 @@ export class AppPreview extends LitElement {
 
     return html`<div id="container">
       <div id="controls">
+        <button
+          id="details"
+          ?disabled=${this.#loadingTemplate}
+          @click=${(evt: PointerEvent) => {
+            this.dispatchEvent(
+              new OverflowMenuActionEvent(
+                "edit-board-details",
+                null,
+                evt.clientX,
+                evt.clientY
+              )
+            );
+          }}
+        >
+          Details
+        </button>
         <button
           id="designer"
           ?disabled=${this.#loadingTemplate}
@@ -444,14 +527,24 @@ export class AppPreview extends LitElement {
         >
           URL
         </button>
+        <button
+          id="output"
+          ?disabled=${this.#loadingTemplate}
+          class=${classMap({ [this._outputMode]: true })}
+          @click=${async () => {
+            this._outputMode = this._outputMode === "app" ? "console" : "app";
+          }}
+        ></button>
       </div>
 
-      <div
-        id="content"
-        class=${classMap({ active: this.#appTemplate !== null })}
-      >
-        ${this.#template}
-      </div>
+      ${this._outputMode === "app"
+        ? html`<div
+            id="content"
+            class=${classMap({ active: this.#appTemplate !== null })}
+          >
+            ${this.#template}
+          </div>`
+        : this.#renderActivity()}
     </div>`;
   }
 }

@@ -11,7 +11,7 @@ import { FastAccessSelectEvent } from "../../../events/events";
 import { Project } from "../../../state";
 import { FastAccessMenu } from "../../elements";
 import { escapeHTMLEntities } from "../../../utils";
-
+import { styles as ChicletStyles } from "../../../styles/chiclet.js";
 import { getAssetType } from "../../../utils/mime-type";
 
 @customElement("bb-text-editor")
@@ -45,162 +45,73 @@ export class TextEditor extends LitElement {
   @property()
   accessor projectState: Project | null = null;
 
-  static styles = css`
-    * {
-      box-sizing: border-box;
-    }
+  static styles = [
+    ChicletStyles,
+    css`
+      * {
+        box-sizing: border-box;
+      }
 
-    :host {
-      display: block;
-      background: var(--bb-neutral-0);
-      font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
-        var(--bb-font-family);
-      color: var(--bb-neutral-900);
-      line-height: var(--bb-grid-size-6);
-      position: relative;
-    }
-
-    #editor {
-      outline: none;
-      display: block;
-      white-space: pre-line;
-      height: var(--text-editor-height, auto);
-      width: 100%;
-      min-height: 100%;
-      line-height: var(--bb-grid-size-6);
-      overflow-y: scroll;
-      overflow-x: hidden;
-      padding: var(--text-editor-padding-top, var(--bb-grid-size-2))
-        var(--text-editor-padding-right, var(--bb-grid-size-2))
-        var(--text-editor-padding-bottom, var(--bb-grid-size-2))
-        var(--text-editor-padding-left, var(--bb-grid-size-2));
-
-      &.placeholder::before {
-        content: "Enter text";
+      :host {
+        display: block;
+        background: var(--bb-neutral-0);
         font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
           var(--bb-font-family);
-        color: var(--bb-neutral-600);
+        color: var(--bb-neutral-900);
         line-height: var(--bb-grid-size-6);
-
-        position: absolute;
-        top: var(--text-editor-padding-top, var(--bb-grid-size-2));
-        left: var(--text-editor-padding-left, var(--bb-grid-size-2));
-      }
-    }
-
-    .chiclet {
-      cursor: pointer;
-      display: inline-flex;
-      padding: 0 var(--bb-grid-size-2) 0 var(--bb-grid-size-6);
-      background: var(--bb-neutral-50);
-      outline: 1px solid var(--bb-neutral-100);
-      color: var(--bb-neutral-700);
-      border-radius: var(--bb-grid-size-16);
-      border: none;
-      height: var(--bb-grid-size-5);
-      caret-color: transparent;
-      align-items: center;
-      justify-content: center;
-      vertical-align: middle;
-      user-select: none;
-      white-space: nowrap;
-      font: normal var(--bb-body-small) / var(--bb-body-line-height-small)
-        var(--bb-font-family);
-
-      & * {
-        caret-color: transparent;
-        &::selection {
-          background: none;
-        }
+        position: relative;
       }
 
-      & span {
-        display: none;
-
-        &.visible {
-          display: inline;
-          pointer-events: none;
-        }
-      }
-
-      &.in {
-        background: var(--bb-input-50) var(--bb-icon-output) 5px center / 16px
-          16px no-repeat;
-        outline: 1px solid var(--bb-input-100);
-        color: var(--bb-input-700);
-      }
-
-      &.asset {
-        background: var(--bb-asset-50) var(--bb-icon-text) 5px center / 16px
-          16px no-repeat;
-        outline: 1px solid var(--bb-asset-100);
-        color: var(--bb-asset-700);
-      }
-
-      &.audio {
-        background-image: var(--bb-icon-sound);
-      }
-
-      &.video {
-        background-image: var(--bb-icon-add-video);
-      }
-
-      &.text {
-        background-image: var(--bb-icon-text);
-      }
-
-      &.image {
-        background-image: var(--bb-icon-add-image);
-      }
-
-      &.tool {
-        background: var(--bb-tool-50) var(--bb-icon-home-repair-service) 5px
-          center / 16px 16px no-repeat;
-        outline: 1px solid var(--bb-tool-100);
-        color: var(--bb-tool-700);
-      }
-
-      &.param {
-        background: var(--bb-param-50) var(--bb-icon-contact-support) 5px
-          center / 16px 16px no-repeat;
-        outline: 1px solid var(--bb-param-100);
-        color: var(--bb-param-700);
-      }
-
-      &.selected {
-        background-color: var(--bb-ui-500);
-        outline: 1px solid var(--bb-ui-700);
-        color: var(--bb-neutral-0);
-      }
-
-      &.invalid {
-        background-color: var(--bb-warning-100);
-        outline: 1px solid var(--bb-warning-200);
-        color: var(--bb-warning-700);
-      }
-    }
-
-    bb-fast-access-menu {
-      display: none;
-      position: absolute;
-      z-index: 10;
-
-      &.active {
+      #editor {
+        outline: none;
         display: block;
-        left: var(--fast-access-x, 10);
-        top: var(--fast-access-y, 10);
-      }
-    }
+        white-space: pre-line;
+        height: var(--text-editor-height, auto);
+        width: 100%;
+        min-height: 100%;
+        line-height: var(--bb-grid-size-6);
+        overflow-y: scroll;
+        overflow-x: hidden;
+        padding: var(--text-editor-padding-top, var(--bb-grid-size-2))
+          var(--text-editor-padding-right, var(--bb-grid-size-2))
+          var(--text-editor-padding-bottom, var(--bb-grid-size-2))
+          var(--text-editor-padding-left, var(--bb-grid-size-2));
 
-    #proxy {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 0;
-      background: red;
-    }
-  `;
+        &.placeholder::before {
+          content: "Enter text";
+          font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
+            var(--bb-font-family);
+          color: var(--bb-neutral-600);
+          line-height: var(--bb-grid-size-6);
+
+          position: absolute;
+          top: var(--text-editor-padding-top, var(--bb-grid-size-2));
+          left: var(--text-editor-padding-left, var(--bb-grid-size-2));
+        }
+      }
+
+      bb-fast-access-menu {
+        display: none;
+        position: absolute;
+        z-index: 10;
+
+        &.active {
+          display: block;
+          left: var(--fast-access-x, 10);
+          top: var(--fast-access-y, 10);
+        }
+      }
+
+      #proxy {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 0;
+        background: red;
+      }
+    `,
+  ];
 
   #value = "";
   #renderableValue = "";
