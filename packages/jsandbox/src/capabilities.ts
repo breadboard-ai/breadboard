@@ -53,10 +53,17 @@ class Capabilities {
         parsedInputs,
         metadata
       )) || 0;
-    const outputs = await capability(
-      parsedInputs,
-      installed.telemetry?.invocationPath(path) || []
-    );
+    let outputs;
+    try {
+      outputs = await capability(
+        parsedInputs,
+        installed.telemetry?.invocationPath(path) || []
+      );
+    } catch (e) {
+      outputs = {
+        $error: `Unable to invoke capability: ${(e as Error).message}`,
+      };
+    }
     await installed.telemetry?.endCapability(
       name,
       path,

@@ -182,35 +182,39 @@ function createDescribeHandler(context: NodeHandlerContext) {
         $error: `Unable to describe: "${inputs.url}" is not a string`,
       };
     }
-    const addResult = graphStore.addByURL(inputs.url, [], context);
-    const mutable = await graphStore.getLatest(addResult.mutable);
+    try {
+      const addResult = graphStore.addByURL(inputs.url, [], context);
+      const mutable = await graphStore.getLatest(addResult.mutable);
 
-    const inspectable = mutable.graphs.get(addResult.graphId);
+      const inspectable = mutable.graphs.get(addResult.graphId);
 
-    if (!inspectable) {
-      return {
-        $error: `Unable to describe: ${inputs.url}: is not inspectable`,
-      };
-    }
-
-    if (addResult.moduleId) {
-      const result = await invokeDescriber(
-        addResult.moduleId,
-        mutable,
-        mutable.graph,
-        inputs.inputs || {},
-        inputs.inputSchema,
-        inputs.outputSchema,
-        new CapabilitiesManagerImpl(context)
-      );
-      if (!result) {
+      if (!inspectable) {
         return {
-          $error: `Unable to describe: ${addResult.moduleId} has no describer`,
+          $error: `Unable to describe: ${inputs.url}: is not inspectable`,
         };
       }
-      return result;
-    } else {
-      return inspectable.describe(inputs.inputs);
+
+      if (addResult.moduleId) {
+        const result = await invokeDescriber(
+          addResult.moduleId,
+          mutable,
+          mutable.graph,
+          inputs.inputs || {},
+          inputs.inputSchema,
+          inputs.outputSchema,
+          new CapabilitiesManagerImpl(context)
+        );
+        if (!result) {
+          return {
+            $error: `Unable to describe: ${addResult.moduleId} has no describer`,
+          };
+        }
+        return result;
+      } else {
+        return inspectable.describe(inputs.inputs);
+      }
+    } catch (e) {
+      return err(`Unable to describe: ${(e as Error).message}`);
     }
   }) as Capability;
 }
