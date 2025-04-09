@@ -14,7 +14,6 @@ import { invokeBoard } from "./utils/invoke-board.js";
 import { verifyKey } from "./utils/verify-key.js";
 import type { BoardServerStore } from "../store.js";
 import type { BoardId } from "../types.js";
-import { asPath } from "../store.js";
 
 async function invokeHandler(
   config: ServerConfig,
@@ -28,7 +27,7 @@ async function invokeHandler(
   const serverUrl = (await store.getServerInfo())?.url ?? "";
 
   const url = new URL(req.url, config.hostname);
-  const path = asPath(boardId.user, boardId.name);
+  const path = boardId.name;
   url.pathname = `boards/${path}`;
   url.search = "";
 

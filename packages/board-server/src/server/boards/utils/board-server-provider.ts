@@ -26,12 +26,13 @@ export function createBoardLoader(
 ): BoardServerLoadFunction {
   return async (path: string): Promise<GraphDescriptor | null> => {
     const { userStore, boardName } = parsePath(path);
-    if (!userStore || !boardName) {
+    const owner = userStore || userId;
+    if (!owner || !boardName) {
       return null;
     }
     const board = await store.loadBoard({
       name: boardName,
-      owner: userStore,
+      owner,
       requestingUserId: userId,
     });
     return board?.graph ?? null;
@@ -40,6 +41,9 @@ export function createBoardLoader(
 
 function parsePath(path: string) {
   const [userStore, boardName] = path.split("/");
+  if (boardName === undefined) {  // This means there is no slash hence this is the new path without user id in it.
+    return { userStore: undefined, boardName: path };
+  }
   if (!userStore || userStore[0] !== "@") {
     return {};
   }

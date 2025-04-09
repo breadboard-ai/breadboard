@@ -11,7 +11,7 @@
 import Database from "better-sqlite3";
 import type { RunBoardStateStore } from "../types.js";
 import type { ServerInfo } from "../store.js";
-import { asPath, EXPIRATION_TIME_MS } from "../store.js";
+import { EXPIRATION_TIME_MS } from "../store.js";
 import type {
   GraphDescriptor,
   ReanimationState,
@@ -313,7 +313,7 @@ export class SQLiteStorageProvider implements RunBoardStateStore {
       stmt.run(userStore, proposal, proposal, "", JSON.stringify({})); // Empty title, tags, and graph
     }
 
-    const path = asPath(userStore, `${proposal}.bgl.json`);
+    const path = `${proposal}.bgl.json`;
     return { success: true, path, error: undefined };
   }
 
