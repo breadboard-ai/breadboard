@@ -79,6 +79,7 @@ const BEHAVIOR_AFFECTS_TYPE_CHECKING: { [K in BehaviorSchema]: boolean } = {
   side: false,
   "main-port": false,
   "at-wireable": false,
+  reactive: false,
 };
 
 export const collectPorts = (

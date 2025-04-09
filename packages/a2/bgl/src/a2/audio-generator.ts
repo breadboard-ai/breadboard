@@ -85,7 +85,7 @@ async function describe() {
       },
       additionalProperties: false,
     } satisfies Schema,
-    title: "Make Audio",
+    title: "Make Audio [Deprecated, Use Make Speech]",
     metadata: {
       icon: "generative-audio",
       tags: ["quick-access", "generative", "experimental"],

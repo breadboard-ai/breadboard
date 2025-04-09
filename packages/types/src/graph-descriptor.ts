@@ -304,6 +304,7 @@ export type GraphTag =
   | "published"
   | "tool"
   | "experimental"
+  | "featured"
   | "component"
   | "deprecated"
   | "core"

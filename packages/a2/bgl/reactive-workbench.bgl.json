@@ -1,0 +1,85 @@
+{
+  "title": "Reactive Ports Workbench",
+  "description": "",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "9a4098b3-dbdd-4839-a09c-97cf5e32c12f",
+      "type": "#module:reactive-step",
+      "metadata": {
+        "title": "Awesome",
+        "visual": {
+          "x": -120,
+          "y": -400
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "selector": "cold",
+        "perfect": {
+          "role": "user",
+          "parts": [
+            {
+              "text": ""
+            }
+          ]
+        },
+        "cool": false,
+        "heat": "stove",
+        "temperature": "Low"
+      }
+    }
+  ],
+  "edges": [],
+  "metadata": {
+    "visual": {
+      "presentation": {
+        "themes": {
+          "39239b49-62d0-4182-b919-924c4db67941": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "39239b49-62d0-4182-b919-924c4db67941"
+      }
+    },
+    "userModified": true,
+    "tags": [],
+    "parameters": {}
+  },
+  "modules": {
+    "reactive-step": {
+      "code": "/**\n * @fileoverview Add a description for your module here.\n */\nexport { invoke as default, describe };\nasync function invoke({ context }) {\n    return { context };\n}\nasync function describe({ inputs }) {\n    const selector = inputs.selector || \"lgtm\";\n    let extraSchema = {};\n    switch (inputs.selector) {\n        case \"hot\": {\n            extraSchema = {\n                cool: {\n                    type: \"boolean\",\n                    title: \"Cool it\",\n                    behavior: [\"config\", \"hint-preview\"],\n                    description: \"Check to blow on porridge to cool it down\",\n                },\n            };\n            break;\n        }\n        case \"lgtm\": {\n            extraSchema = {\n                perfect: {\n                    type: \"object\",\n                    title: \"Praise it\",\n                    behavior: [\"config\", \"hint-preview\", \"llm-content\"],\n                    description: \"Enter the words of praise for perfect porridge\",\n                },\n            };\n            break;\n        }\n        case \"cold\": {\n            extraSchema = {\n                heat: {\n                    type: \"string\",\n                    title: \"Heat it\",\n                    behavior: [\"config\", \"hint-preview\", \"reactive\"],\n                    description: \"Heat the porridge using these methods\",\n                    enum: [\n                        { title: \"Stove\", id: \"stove\", icon: \"generative\" },\n                        { title: \"Microwave\", id: \"microwave\", icon: \"merge-type\" },\n                        { title: \"Sun\", id: \"sun\", icon: \"code-blocks\" },\n                    ],\n                },\n            };\n            const heat = inputs.heat || \"stove\";\n            switch (heat) {\n                case \"stove\": {\n                    extraSchema = {\n                        ...extraSchema,\n                        temperature: {\n                            type: \"string\",\n                            title: \"Heat Level\",\n                            description: \"Specify heat level\",\n                            behavior: [\"config\", \"hint-preview\"],\n                            enum: [\"Low\", \"Medium\", \"High\"],\n                        },\n                    };\n                    break;\n                }\n                case \"microwave\": {\n                    extraSchema = {\n                        ...extraSchema,\n                        time: {\n                            type: \"string\",\n                            title: \"Time\",\n                            behavior: [\"config\", \"hint-preview\"],\n                            description: \"Specify time in minutes for microwaving\",\n                        },\n                    };\n                    break;\n                }\n            }\n            break;\n        }\n    }\n    return {\n        title: \"Reactive Step\",\n        metadata: {\n            icon: \"generative\",\n        },\n        inputSchema: {\n            type: \"object\",\n            properties: {\n                selector: {\n                    type: \"string\",\n                    title: \"Porridge Temperature\",\n                    enum: [\n                        { title: \"Hot\", id: \"hot\", icon: \"human\" },\n                        { title: \"Just Right\", id: \"lgtm\", icon: \"smart-toy\" },\n                        { title: \"Cold\", id: \"cold\", icon: \"laps\" },\n                    ],\n                    behavior: [\"config\", \"reactive\", \"hint-preview\"],\n                },\n                ...extraSchema,\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context in\",\n                },\n            },\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context out\",\n                },\n            },\n        },\n    };\n}\n",
+      "metadata": {
+        "title": "reactive-step",
+        "source": {
+          "code": "/**\n * @fileoverview Add a description for your module here.\n */\n\nexport { invoke as default, describe };\n\ntype Inputs =\n  | {\n      context?: LLMContent[];\n      selector?: \"cold\";\n      heat?: \"stove\" | \"microwave\" | \"sun\";\n    }\n  | {\n      context?: LLMContent[];\n      selector?: \"hot\";\n    }\n  | {\n      context?: LLMContent[];\n      selector?: \"lgtm\";\n    };\n\ntype DescribeInputs = {\n  inputs: Inputs;\n};\n\nasync function invoke({ context }: { context: LLMContent[] }) {\n  return { context };\n}\n\nasync function describe({ inputs }: DescribeInputs) {\n  const selector = inputs.selector || \"lgtm\";\n  let extraSchema: Record<string, Schema> = {};\n  switch (inputs.selector) {\n    case \"hot\": {\n      extraSchema = {\n        cool: {\n          type: \"boolean\",\n          title: \"Cool it\",\n          behavior: [\"config\", \"hint-preview\"],\n          description: \"Check to blow on porridge to cool it down\",\n        },\n      };\n      break;\n    }\n    case \"lgtm\": {\n      extraSchema = {\n        perfect: {\n          type: \"object\",\n          title: \"Praise it\",\n          behavior: [\"config\", \"hint-preview\", \"llm-content\"],\n          description: \"Enter the words of praise for perfect porridge\",\n        },\n      };\n      break;\n    }\n    case \"cold\": {\n      extraSchema = {\n        heat: {\n          type: \"string\",\n          title: \"Heat it\",\n          behavior: [\"config\", \"hint-preview\", \"reactive\"],\n          description: \"Heat the porridge using these methods\",\n          enum: [\n            { title: \"Stove\", id: \"stove\", icon: \"generative\" },\n            { title: \"Microwave\", id: \"microwave\", icon: \"merge-type\" },\n            { title: \"Sun\", id: \"sun\", icon: \"code-blocks\" },\n          ],\n        },\n      };\n      const heat = inputs.heat || \"stove\";\n      switch (heat) {\n        case \"stove\": {\n          extraSchema = {\n            ...extraSchema,\n            temperature: {\n              type: \"string\",\n              title: \"Heat Level\",\n              description: \"Specify heat level\",\n              behavior: [\"config\", \"hint-preview\"],\n              enum: [\"Low\", \"Medium\", \"High\"],\n            },\n          };\n          break;\n        }\n        case \"microwave\": {\n          extraSchema = {\n            ...extraSchema,\n            time: {\n              type: \"string\",\n              title: \"Time\",\n              behavior: [\"config\", \"hint-preview\"],\n              description: \"Specify time in minutes for microwaving\",\n            },\n          };\n          break;\n        }\n      }\n      break;\n    }\n  }\n  return {\n    title: \"Reactive Step\",\n    metadata: {\n      icon: \"generative\",\n    },\n    inputSchema: {\n      type: \"object\",\n      properties: {\n        selector: {\n          type: \"string\",\n          title: \"Porridge Temperature\",\n          enum: [\n            { title: \"Hot\", id: \"hot\", icon: \"human\" },\n            { title: \"Just Right\", id: \"lgtm\", icon: \"smart-toy\" },\n            { title: \"Cold\", id: \"cold\", icon: \"laps\" },\n          ],\n          behavior: [\"config\", \"reactive\", \"hint-preview\"],\n        },\n        ...extraSchema,\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context in\",\n        },\n      },\n    } satisfies Schema,\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context out\",\n        },\n      },\n    } satisfies Schema,\n  };\n}\n",
+          "language": "typescript"
+        },
+        "description": "Add a description for your module here.",
+        "runnable": true
+      }
+    }
+  },
+  "assets": {
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI1NS43NyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMjMwLjAwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iODguNDYiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CiAgICAgIAogICAgPC9zdmc+"
+    }
+  }
+}

@@ -28,7 +28,11 @@ import {
 } from "./events/events";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { repeat } from "lit/directives/repeat.js";
-import { InspectableNodePorts } from "@google-labs/breadboard";
+import {
+  InspectableNodePorts,
+  NodeValue,
+  SchemaEnumValue,
+} from "@google-labs/breadboard";
 import { map } from "lit/directives/map.js";
 import { isPreviewBehavior } from "../../utils/behaviors";
 import { createTruncatedValue } from "./utils/create-truncated-value";
@@ -316,6 +320,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         outline: 1px solid var(--border);
         color: var(--bb-neutral-900);
         position: relative;
+        cursor: pointer;
 
         #right-arrow {
           position: absolute;
@@ -361,7 +366,6 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           border-bottom: 1px solid var(--header-border);
           font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
             var(--bb-font-family);
-          cursor: pointer;
           position: relative;
 
           & span {
@@ -426,6 +430,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           color: var(--bb-neutral-900);
           line-height: var(--bb-grid-size-6);
           border-radius: 0 0 var(--bb-grid-size-2) var(--bb-grid-size-2);
+          pointer-events: none;
 
           p {
             margin: 0 0 var(--bb-grid-size-2) 0;
@@ -452,17 +457,6 @@ export class GraphNode extends Box implements DragConnectorReceiver {
                 outline 0.2s cubic-bezier(0, 0, 0.3, 1);
               border-radius: var(--bb-grid-size);
               outline: 4px solid transparent;
-              cursor: pointer;
-
-              &:focus,
-              &:hover {
-                background: var(--bb-ui-50);
-                outline: 4px solid var(--bb-ui-50);
-              }
-
-              > * {
-                pointer-events: none;
-              }
 
               &.object {
                 white-space: pre-line;
@@ -580,20 +574,9 @@ export class GraphNode extends Box implements DragConnectorReceiver {
   #containerRef: Ref<HTMLElement> = createRef();
   #lastBounds: DOMRect | null = null;
   #ports: InspectableNodePorts | null = null;
-
-  constructor(public readonly nodeId: string) {
-    super();
-
-    this.tabIndex = 0;
-  }
-
-  calculateLocalBounds(): DOMRect {
+  #resizeObserver = new ResizeObserver(() => {
     if (!this.#containerRef.value) {
-      return new DOMRect();
-    }
-
-    if (this.hidden && this.#lastBounds) {
-      return this.#lastBounds;
+      return;
     }
 
     this.#lastBounds = new DOMRect(
@@ -603,9 +586,24 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       this.#containerRef.value.offsetHeight
     );
 
+    this.dispatchEvent(new NodeBoundsUpdateRequestEvent());
+  });
+
+  constructor(public readonly nodeId: string) {
+    super();
+
+    this.tabIndex = 0;
+  }
+
+  calculateLocalBounds(): DOMRect {
+    if (!this.#containerRef.value || !this.#lastBounds) {
+      return new DOMRect();
+    }
+
     return this.#lastBounds;
   }
 
+  #watchingResize = false;
   protected updated(changedProperties: PropertyValues): void {
     if (
       changedProperties.has("nodeTitle") ||
@@ -615,6 +613,18 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         this.cullable = true;
         this.dispatchEvent(new NodeBoundsUpdateRequestEvent());
       });
+    }
+
+    if (!this.#watchingResize && this.#containerRef.value) {
+      this.#watchingResize = true;
+      this.#lastBounds = new DOMRect(
+        0,
+        0,
+        this.#containerRef.value.offsetWidth,
+        this.#containerRef.value.offsetHeight
+      );
+
+      this.#resizeObserver.observe(this.#containerRef.value);
     }
   }
 
@@ -688,12 +698,14 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
                 case "string": {
                   classes.string = true;
-                  if (port.schema.icon) {
-                    classes[port.schema.icon] = true;
+                  const { icon, enum: e } = port.schema;
+                  if (icon) {
+                    classes[icon] = true;
                   }
+                  const enumValue = enumTitle(port.value, e);
 
                   value = html`<label
-                    >${port.title}: ${port.value ?? "Value not set"}</label
+                    >${port.title}: ${enumValue ?? "Value not set"}</label
                   >`;
                   break;
                 }
@@ -703,46 +715,15 @@ export class GraphNode extends Box implements DragConnectorReceiver {
                 }
               }
 
-              return html`<div
-                class=${classMap(classes)}
-                @click=${() => {
-                  this.dispatchEvent(
-                    new NodeConfigurationRequestEvent(
-                      this.nodeId,
-                      this.worldBounds
-                    )
-                  );
-                }}
-              >
-                ${value}
-              </div>`;
+              return html`<div class=${classMap(classes)}>${value}</div>`;
             })
-          : html`<div
-              class="port object"
-              @click=${() => {
-                this.dispatchEvent(
-                  new NodeConfigurationRequestEvent(
-                    this.nodeId,
-                    this.worldBounds
-                  )
-                );
-              }}
-            >
+          : html`<div class="port object">
               <div class="missing">
                 <p>Missing details for this step</p>
                 <span>Add</span>
               </div>
             </div>`
-        : html`<div
-            class=${classMap({ port: true })}
-            @click=${() => {
-              this.dispatchEvent(
-                new NodeConfigurationRequestEvent(this.nodeId, this.worldBounds)
-              );
-            }}
-          >
-            Tap to configure
-          </div>`}
+        : html`<div class=${classMap({ port: true })}>Tap to configure</div>`}
     </div>`;
   }
 
@@ -780,15 +761,15 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         class=${classMap({ bounds: this.showBounds })}
         style=${styleMap(styles)}
         ${ref(this.#containerRef)}
+        @dblclick=${() => {
+          this.dispatchEvent(
+            new NodeConfigurationRequestEvent(this.nodeId, this.worldBounds)
+          );
+        }}
       >
         <header
           @click=${(evt: Event) => {
             evt.stopImmediatePropagation();
-          }}
-          @dblclick=${() => {
-            this.dispatchEvent(
-              new NodeConfigurationRequestEvent(this.nodeId, this.worldBounds)
-            );
           }}
           @pointerdown=${(evt: PointerEvent) => {
             if (!(evt.target instanceof HTMLElement)) {
@@ -939,4 +920,11 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       })}`,
     ];
   }
+}
+
+function enumTitle(v: NodeValue, e: SchemaEnumValue[] | undefined): string {
+  const s = v as string;
+  const entry = e?.find((item) => typeof item !== "string" && item.id === s);
+  if (!entry) return s;
+  return (entry as { title: string }).title;
 }

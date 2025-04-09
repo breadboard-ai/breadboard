@@ -493,6 +493,7 @@
 				"published",
 				"tool",
 				"experimental",
+				"featured",
 				"component",
 				"deprecated",
 				"core",

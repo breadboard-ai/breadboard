@@ -5,19 +5,29 @@
  */
 import {
   InspectableGraph,
+  InspectablePort,
   isTextCapabilityPart,
   MainGraphIdentifier,
   MutableGraphStore,
+  SchemaEnumValue,
   Template,
   TemplatePart,
   TemplatePartTransformCallback,
 } from "@google-labs/breadboard";
-import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import {
+  LitElement,
+  html,
+  css,
+  HTMLTemplateResult,
+  nothing,
+  PropertyValues,
+} from "lit";
+import { customElement, property, state } from "lit/decorators.js";
 import { WorkspaceSelectionStateWithChangeId } from "../../types/types";
 import {
   AssetPath,
   GraphIdentifier,
+  InputValues,
   LLMContent,
   NodeIdentifier,
   TextCapabilityPart,
@@ -63,6 +73,12 @@ export class EntityEditor extends LitElement {
   @property({ reflect: true, type: Boolean })
   accessor readOnly = false;
 
+  @property()
+  accessor autoFocus = false;
+
+  @state()
+  accessor values: InputValues | undefined;
+
   static styles = css`
     :host {
       display: block;
@@ -85,6 +101,14 @@ export class EntityEditor extends LitElement {
       border-bottom: 1px solid var(--bb-neutral-300);
       font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
         var(--bb-font-family);
+
+      & span {
+        flex: 1 0 auto;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: calc(100% - var(--bb-grid-size-7));
+      }
 
       & input {
         flex: 1 0 auto;
@@ -387,7 +411,24 @@ export class EntityEditor extends LitElement {
 
   #lastUpdateTimes: Map<"nodes" | "assets", number> = new Map();
   #editorRef: Ref<TextEditor> = createRef();
+  #edited = false;
   #formRef: Ref<HTMLFormElement> = createRef();
+
+  #reactiveChange(port: InspectablePort) {
+    const reactive = port.schema.behavior?.includes("reactive");
+    if (!reactive) return () => {};
+
+    return (evt: Event) => {
+      const { target } = evt;
+      if (target instanceof HTMLSelectElement) {
+        const { value } = target;
+        this.values = {
+          ...this.values,
+          [port.name]: value,
+        };
+      }
+    };
+  }
 
   #calculateSelectionSize() {
     if (!this.selectionState) {
@@ -498,6 +539,8 @@ export class EntityEditor extends LitElement {
       }
     }
 
+    this.values = configuration;
+
     this.dispatchEvent(
       new NodePartialUpdateEvent(
         nodeId,
@@ -532,166 +575,168 @@ export class EntityEditor extends LitElement {
     this.#lastUpdateTimes.set("nodes", globalThis.performance.now());
     const lastUpdateTime = this.#lastUpdateTimes.get("nodes") ?? 0;
 
-    const value = Promise.all([node.describe(), node.type().metadata()]).then(
-      () => {
-        // Ensure the most recent values before proceeding.
-        if (lastUpdateTime !== this.#lastUpdateTimes.get("nodes")) {
-          return;
-        }
+    const value = node.ports(this.values).then((ports) => {
+      // Ensure the most recent values before proceeding.
+      if (lastUpdateTime !== this.#lastUpdateTimes.get("nodes")) {
+        return;
+      }
 
-        const ports = node.currentPorts();
-        const metadata = node.type().currentMetadata();
-        const classes: Record<string, boolean> = { node: true };
+      const metadata = node.type().currentMetadata();
+      const classes: Record<string, boolean> = { node: true };
 
-        if (metadata.icon) {
-          classes[metadata.icon] = true;
-        }
+      if (metadata.icon) {
+        classes[metadata.icon] = true;
+      }
 
-        if (node.type().type().startsWith("#module")) {
-          classes["module"] = true;
-        }
+      if (node.type().type().startsWith("#module")) {
+        classes["module"] = true;
+      }
 
-        // By convention we assume there will be a single llm-content port
-        // and multiple other configurable ports. Therefore we order & filter
-        // ports on that basis.
-        const inputPorts = ports.inputs.ports
-          .filter((port) => {
-            if (port.star || port.name === "") return false;
-            if (!isConfigurableBehavior(port.schema)) return false;
-            return true;
-          })
-          .sort((portA, portB) => {
-            if (
-              isLLMContentBehavior(portA.schema) &&
-              !isLLMContentBehavior(portB.schema)
-            ) {
-              return -1;
+      // By convention we assume there will be a single llm-content port
+      // and multiple other configurable ports. Therefore we order & filter
+      // ports on that basis.
+      const inputPorts = ports.inputs.ports
+        .filter((port) => {
+          if (port.star || port.name === "") return false;
+          if (!isConfigurableBehavior(port.schema)) return false;
+          return true;
+        })
+        .sort((portA, portB) => {
+          if (
+            isLLMContentBehavior(portA.schema) &&
+            !isLLMContentBehavior(portB.schema)
+          ) {
+            return -1;
+          }
+
+          if (
+            !isLLMContentBehavior(portA.schema) &&
+            isLLMContentBehavior(portB.schema)
+          ) {
+            return 1;
+          }
+
+          return 0;
+        });
+
+      return html`<div class=${classMap(classes)}>
+        <h1 id="title">
+          <input id="node-title" name="node-title" .value=${node.title()} />
+        </h1>
+        <div id="type"></div>
+        <div id="content">
+          ${inputPorts.map((port) => {
+            const classes: Record<string, boolean> = {};
+            if (isLLMContentBehavior(port.schema)) {
+              classes["stretch"] = true;
             }
 
-            if (
-              !isLLMContentBehavior(portA.schema) &&
-              isLLMContentBehavior(portB.schema)
-            ) {
-              return 1;
-            }
+            let value: HTMLTemplateResult | symbol = html`No value`;
+            switch (port.schema.type) {
+              case "object": {
+                const portValue = (port.value ?? {
+                  role: "user",
+                  parts: [{ text: "" }],
+                }) as LLMContent;
+                const textPart = portValue.parts.find((part) =>
+                  isTextCapabilityPart(part)
+                );
+                if (!textPart) {
+                  value = html`Invalid value`;
+                  break;
+                }
 
-            return 0;
-          });
+                classes.object = true;
+                value = html`<bb-text-editor
+                  ${ref(this.#editorRef)}
+                  .value=${textPart.text}
+                  .projectState=${this.projectState}
+                  .subGraphId=${graphId !== MAIN_BOARD_ID ? graphId : null}
+                  id=${port.name}
+                  name=${port.name}
+                  @keydown=${(evt: KeyboardEvent) => {
+                    if (!isCtrlCommand(evt) || evt.key !== "Enter") {
+                      return;
+                    }
 
-        return html`<div class=${classMap(classes)}>
-          <h1 id="title">
-            <input id="node-title" name="node-title" .value=${node.title()} />
-          </h1>
-          <div id="type"></div>
-          <div id="content">
-            ${inputPorts.map((port) => {
-              const classes: Record<string, boolean> = {};
-              if (isLLMContentBehavior(port.schema)) {
-                classes["stretch"] = true;
+                    this.#emitUpdatedNodeConfiguration();
+                  }}
+                ></bb-text-editor>`;
+                break;
               }
 
-              let value: HTMLTemplateResult | symbol = html`No value`;
-              switch (port.schema.type) {
-                case "object": {
-                  const portValue = (port.value ?? {
-                    role: "user",
-                    parts: [{ text: "" }],
-                  }) as LLMContent;
-                  const textPart = portValue.parts.find((part) =>
-                    isTextCapabilityPart(part)
-                  );
-                  if (!textPart) {
-                    value = html`Invalid value`;
-                    break;
-                  }
+              case "boolean": {
+                const checked = !!port.value;
+                classes.boolean = true;
+                classes.checked = checked;
+                if (port.schema.icon) {
+                  classes[port.schema.icon] = true;
+                }
 
-                  classes.object = true;
-                  value = html`<bb-text-editor
-                    ${ref(this.#editorRef)}
-                    .value=${textPart.text}
-                    .projectState=${this.projectState}
-                    .subGraphId=${graphId !== MAIN_BOARD_ID ? graphId : null}
+                value = html`<label for=${port.name}>${port.title}</label
+                  ><input
+                    type="checkbox"
+                    ?checked=${port.value === true}
                     id=${port.name}
                     name=${port.name}
-                    @keydown=${(evt: KeyboardEvent) => {
-                      if (!isCtrlCommand(evt) || evt.key !== "Enter") {
-                        return;
-                      }
-
-                      this.#emitUpdatedNodeConfiguration();
-                    }}
-                  ></bb-text-editor>`;
-                  break;
-                }
-
-                case "boolean": {
-                  const checked = !!port.value;
-                  classes.boolean = true;
-                  classes.checked = checked;
-                  if (port.schema.icon) {
-                    classes[port.schema.icon] = true;
-                  }
-
-                  value = html`<label for=${port.name}>${port.title}</label
-                    ><input
-                      type="checkbox"
-                      ?checked=${port.value === true}
-                      id=${port.name}
-                      name=${port.name}
-                    />`;
-                  break;
-                }
-
-                case "string": {
-                  classes.string = true;
-                  if (port.schema.icon) {
-                    classes[port.schema.icon] = true;
-                  }
-
-                  if (port.schema.enum) {
-                    value = html`<label for=${port.name}>${port.title}</label
-                      ><select name=${port.name} id=${port.name}>
-                        ${map(port.schema.enum, (option) => {
-                          return html`<option
-                            value=${option}
-                            ?selected=${port.value === option ||
-                            (!port.value && option === port.schema.default)}
-                          >
-                            ${option}
-                          </option>`;
-                        })}
-                      </select>`;
-                    break;
-                  }
-
-                  value = html`<label
-                    >${port.title}: ${port.value ?? "Value not set"}</label
-                  >`;
-                  break;
-                }
-
-                default: {
-                  value = nothing;
-                }
+                  />`;
+                break;
               }
 
-              return html`<div class=${classMap(classes)}>${value}</div>`;
-            })}
-          </div>
-          <div id="controls">
-            <button
-              @click=${() => {
-                this.#emitUpdatedNodeConfiguration();
-              }}
-            >
-              Update
-            </button>
-          </div>
-          <input type="hidden" name="graph-id" .value=${graphId} />
-          <input type="hidden" name="node-id" .value=${nodeId} />
-        </div>`;
-      }
-    );
+              case "string": {
+                classes.string = true;
+                if (port.schema.icon) {
+                  classes[port.schema.icon] = true;
+                }
+
+                if (port.schema.enum) {
+                  value = html`<label for=${port.name}>${port.title}</label
+                    ><select
+                      @change=${this.#reactiveChange(port)}
+                      name=${port.name}
+                      id=${port.name}
+                    >
+                      ${map(port.schema.enum, (option) => {
+                        const { id, title } = enumValue(option);
+                        return html`<option
+                          value=${id}
+                          ?selected=${port.value === id ||
+                          (!port.value && id === port.schema.default)}
+                        >
+                          ${title}
+                        </option>`;
+                      })}
+                    </select>`;
+                  break;
+                }
+
+                value = html`<label
+                  >${port.title}: ${port.value ?? "Value not set"}</label
+                >`;
+                break;
+              }
+
+              default: {
+                value = nothing;
+              }
+            }
+
+            return html`<div class=${classMap(classes)}>${value}</div>`;
+          })}
+        </div>
+        <div id="controls">
+          <button
+            @click=${() => {
+              this.#emitUpdatedNodeConfiguration();
+            }}
+          >
+            Update
+          </button>
+        </div>
+        <input type="hidden" name="graph-id" .value=${graphId} />
+        <input type="hidden" name="node-id" .value=${nodeId} />
+      </div>`;
+    });
 
     return html`${until(value, html`<div id="generic-status">Loading...</div>`)}`;
   }
@@ -752,9 +797,43 @@ export class EntityEditor extends LitElement {
       @submit=${(evt: SubmitEvent) => {
         evt.preventDefault();
       }}
+      @input=${() => {
+        this.#edited = true;
+      }}
     >
       ${value}
     </form>`;
+  }
+
+  protected willUpdate(changedProperties: PropertyValues<this>): void {
+    if (changedProperties.has("selectionState") && this.#edited) {
+      // Eagerly process a change.
+      this.#edited = false;
+      this.#emitUpdatedNodeConfiguration();
+    }
+
+    if (changedProperties.has("autoFocus")) {
+      this.autoFocus = false;
+      this.focus();
+    }
+  }
+
+  focus() {
+    requestAnimationFrame(() => {
+      if (!this.#editorRef.value) {
+        return;
+      }
+
+      this.#editorRef.value.focus();
+    });
+  }
+
+  protected firstUpdated(changedProperties: PropertyValues): void {
+    if (!changedProperties.has("selectionState")) {
+      return;
+    }
+
+    this.focus();
   }
 
   render() {
@@ -769,4 +848,11 @@ export class EntityEditor extends LitElement {
 
     return this.#renderSelectedItem();
   }
+}
+
+function enumValue(value: SchemaEnumValue): { title: string; id: string } {
+  if (typeof value === "string") {
+    return { title: value, id: value };
+  }
+  return { title: value.title || value.description || value.id, id: value.id };
 }
