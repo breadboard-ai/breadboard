@@ -1,0 +1,79 @@
+{
+  "title": "Generate Workbench",
+  "description": "",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "e56071c9-137b-4f71-87af-e073cc34b1bb",
+      "type": "file://bgl/generate.bgl.json#module:main",
+      "metadata": {
+        "title": "Generate",
+        "visual": {
+          "x": -20,
+          "y": -60
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "generation-mode": "./a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+        "instruction": {
+          "role": "user",
+          "parts": [
+            {
+              "text": ""
+            }
+          ]
+        },
+        "p-disable-prompt-rewrite": false,
+        "description": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Create a poem about an opal"
+            }
+          ]
+        },
+        "p-chat": false,
+        "p-list": false
+      }
+    }
+  ],
+  "edges": [],
+  "metadata": {
+    "visual": {
+      "presentation": {
+        "themes": {
+          "39239b49-62d0-4182-b919-924c4db67941": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "39239b49-62d0-4182-b919-924c4db67941"
+      }
+    },
+    "userModified": true,
+    "tags": [],
+    "parameters": {}
+  },
+  "assets": {
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI1NS43NyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMjMwLjAwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iODguNDYiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CiAgICAgIAogICAgPC9zdmc+"
+    }
+  }
+}

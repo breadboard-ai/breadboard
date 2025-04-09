@@ -1,0 +1,75 @@
+{
+  "title": "Generate",
+  "description": "",
+  "version": "0.0.1",
+  "nodes": [],
+  "edges": [],
+  "metadata": {
+    "comments": [
+      {
+        "id": "comment-cc94afe8",
+        "text": "Intentionally Left Blank",
+        "metadata": {
+          "title": "Comment",
+          "visual": {
+            "x": 531,
+            "y": 374,
+            "collapsed": "expanded",
+            "outputHeight": 0
+          }
+        }
+      }
+    ],
+    "visual": {
+      "presentation": {
+        "themes": {
+          "5f3ca599-8fee-46fb-951f-0d47b16a6d56": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "5f3ca599-8fee-46fb-951f-0d47b16a6d56"
+      }
+    },
+    "tags": [
+      "published",
+      "tool",
+      "component"
+    ],
+    "userModified": true
+  },
+  "imports": {
+    "a2": {
+      "url": "./a2.bgl.json"
+    }
+  },
+  "modules": {
+    "main": {
+      "code": "/**\n * @fileoverview Add a description for your module here.\n */\nimport describeGraph from \"@describe\";\nimport invokeGraph from \"@invoke\";\nimport { ok } from \"./a2/utils\";\nimport {} from \"./a2/common\";\nexport { invoke as default, describe };\nconst MODES = [\n    {\n        id: \"./a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c\",\n        title: \"Generate Text\",\n        icon: \"generative-text\",\n    },\n    {\n        id: \"./a2.bgl.json#module:image-generator\",\n        title: \"Generate Image\",\n        icon: \"generative-image\",\n    },\n    {\n        id: \"./audio-generator.bgl.json#module:main\",\n        title: \"Generate Audio\",\n        icon: \"generative-audio\",\n    },\n    {\n        id: \"./video-generator.bgl.json#module:main\",\n        title: \"Generate Video\",\n        icon: \"generative-video\",\n    },\n    {\n        id: \"./go-over-list.bgl.json#module:main\",\n        title: \"Think and Execute\",\n        icon: \"generative\",\n    },\n];\nconst DEFAULT_MODE = MODES[0];\nasync function invoke({ \"generation-mode\": mode, ...rest }) {\n    const $board = mode || DEFAULT_MODE.id;\n    return await invokeGraph({ $board, ...rest });\n}\nasync function describe({ inputs }) {\n    const mode = inputs[\"generation-mode\"] || DEFAULT_MODE.id;\n    const describing = await describeGraph({ url: mode, inputs });\n    let modeSchema = {};\n    if (ok(describing)) {\n        modeSchema = describing.inputSchema.properties || modeSchema;\n    }\n    return {\n        title: \"Generate\",\n        description: \"Uses Gemini to generate content and call tools\",\n        metadata: {\n            icon: \"generative\",\n            tags: [\"quick-access\", \"generative\", \"experimental\"],\n            order: 1,\n        },\n        inputSchema: {\n            type: \"object\",\n            properties: {\n                \"generation-mode\": {\n                    type: \"string\",\n                    title: \"Mode\",\n                    enum: MODES,\n                    behavior: [\"config\", \"hint-preview\", \"reactive\", \"hint-controller\"],\n                },\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context in\",\n                },\n                ...modeSchema,\n            },\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context out\",\n                },\n            },\n        },\n    };\n}\n",
+      "metadata": {
+        "title": "main",
+        "source": {
+          "code": "/**\n * @fileoverview Add a description for your module here.\n */\n\nimport describeGraph from \"@describe\";\nimport invokeGraph from \"@invoke\";\n\nimport { ok } from \"./a2/utils\";\nimport { type Params } from \"./a2/common\";\n\nexport { invoke as default, describe };\n\ntype GenerationModes = (typeof MODES)[number];\n\ntype Inputs = {\n  context?: LLMContent[];\n  \"generation-mode\"?: GenerationModes[\"id\"];\n} & Params;\n\ntype DescribeInputs = {\n  inputs: Inputs;\n};\n\nconst MODES = [\n  {\n    id: \"./a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c\",\n    title: \"Generate Text\",\n    icon: \"generative-text\",\n  },\n  {\n    id: \"./a2.bgl.json#module:image-generator\",\n    title: \"Generate Image\",\n    icon: \"generative-image\",\n  },\n  {\n    id: \"./audio-generator.bgl.json#module:main\",\n    title: \"Generate Audio\",\n    icon: \"generative-audio\",\n  },\n  {\n    id: \"./video-generator.bgl.json#module:main\",\n    title: \"Generate Video\",\n    icon: \"generative-video\",\n  },\n  {\n    id: \"./go-over-list.bgl.json#module:main\",\n    title: \"Think and Execute\",\n    icon: \"generative\",\n  },\n] as const;\n\nconst DEFAULT_MODE = MODES[0];\n\nasync function invoke({ \"generation-mode\": mode, ...rest }: Inputs) {\n  const $board = mode || DEFAULT_MODE.id;\n  return await invokeGraph({ $board, ...rest });\n}\n\nasync function describe({ inputs }: DescribeInputs) {\n  const mode = inputs[\"generation-mode\"] || DEFAULT_MODE.id;\n\n  const describing = await describeGraph({ url: mode, inputs });\n  let modeSchema: Record<string, Schema> = {};\n  if (ok(describing)) {\n    modeSchema = describing.inputSchema.properties || modeSchema;\n  }\n\n  return {\n    title: \"Generate\",\n    description: \"Uses Gemini to generate content and call tools\",\n    metadata: {\n      icon: \"generative\",\n      tags: [\"quick-access\", \"generative\", \"experimental\"],\n      order: 1,\n    },\n    inputSchema: {\n      type: \"object\",\n      properties: {\n        \"generation-mode\": {\n          type: \"string\",\n          title: \"Mode\",\n          enum: MODES as unknown as SchemaEnumValue[],\n          behavior: [\"config\", \"hint-preview\", \"reactive\", \"hint-controller\"],\n        },\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context in\",\n        },\n        ...modeSchema,\n      },\n    } satisfies Schema,\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context out\",\n        },\n      },\n    } satisfies Schema,\n  };\n}\n",
+          "language": "typescript"
+        },
+        "description": "Add a description for your module here.",
+        "runnable": false
+      }
+    }
+  },
+  "exports": [
+    "#module:main"
+  ]
+}

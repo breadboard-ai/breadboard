@@ -99,6 +99,12 @@ export type BehaviorSchema =
    */
   | "hint-preview"
   /**
+   * In combination with "config" and "reactive", hints that the port controls
+   * the rest of the configuration and may be used as the first to be
+   * displayed in the UI.
+   */
+  | "hint-controller"
+  /**
    * Hints that the text is short (e.g. a query) and needs a single line treatment.
    */
   | "hint-single-line"
