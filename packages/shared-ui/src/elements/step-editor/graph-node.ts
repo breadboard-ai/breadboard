@@ -485,7 +485,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
                 & .missing {
                   width: 100%;
                   white-space: normal;
-                  color: var(--bb-warning-700);
+                  color: var(--bb-boards-600);
 
                   & span {
                     display: inline-flex;
@@ -743,8 +743,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
               })
             : html`<div class="port object">
                 <div class="missing">
-                  <p>Missing details for this step</p>
-                  <span>Add</span>
+                  <p>(Empty step)</p>
                 </div>
               </div>`
           : html`<div class=${classMap({ port: true })}>Tap to configure</div>`}

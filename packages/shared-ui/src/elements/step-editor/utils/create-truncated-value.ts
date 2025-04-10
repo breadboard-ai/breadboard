@@ -49,10 +49,10 @@ export function createTruncatedValue(port: InspectablePort | null) {
             try {
               const items = JSON.parse(port.schema.default);
               if (items.length === 0) {
-                return "(empty list)";
+                return "(Empty list)";
               }
             } catch (err) {
-              return "(empty)";
+              return "(Empty)";
             }
           }
 
@@ -91,7 +91,7 @@ export function createTruncatedValue(port: InspectablePort | null) {
         if (isTextCapabilityPart(firstPart)) {
           valStr = firstPart.text;
           if (valStr === "") {
-            valStr = "(empty text)";
+            valStr = "(Empty)";
           }
         } else if (isInlineData(firstPart)) {
           valStr = firstPart.inlineData.mimeType;
