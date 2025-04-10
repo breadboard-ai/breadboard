@@ -194,7 +194,11 @@ export class TextEditor extends LitElement {
     this.#checkSelectionsBound(evt);
   }
 
-  #restoreLastRange() {
+  storeLastRange() {
+    this.#lastRange = this.#getCurrentRange();
+  }
+
+  restoreLastRange(offsetLastChar = true) {
     if (!this.#lastRange) {
       return;
     }
@@ -206,7 +210,7 @@ export class TextEditor extends LitElement {
     }
 
     // Expand the range to include the @ symbol.
-    if (this.#lastRange.startOffset > 0) {
+    if (this.#lastRange.startOffset > 0 && offsetLastChar) {
       this.#lastRange.setStart(
         this.#lastRange.startContainer,
         this.#lastRange.startOffset - 1
@@ -217,7 +221,7 @@ export class TextEditor extends LitElement {
     selection.addRange(this.#lastRange);
   }
 
-  #add(
+  addItem(
     path: string,
     title: string,
     templatePartType: TemplatePartType,
@@ -229,7 +233,7 @@ export class TextEditor extends LitElement {
     }
 
     if (!this.#getCurrentRange()) {
-      this.#restoreLastRange();
+      this.restoreLastRange();
     }
 
     requestAnimationFrame(() => {
@@ -753,7 +757,7 @@ export class TextEditor extends LitElement {
           }
 
           if (this.projectState && this.supportsFastAccess && evt.key === "@") {
-            this.#lastRange = this.#getCurrentRange();
+            this.storeLastRange();
             const bounds = this.#lastRange?.getBoundingClientRect();
             this.#showFastAccess(bounds);
           }
@@ -775,12 +779,12 @@ export class TextEditor extends LitElement {
         @bbfastaccessdismissed=${() => {
           this.#hideFastAccess();
           this.#captureEditorValue();
-          this.#restoreLastRange();
+          this.restoreLastRange();
         }}
         @bbfastaccessselect=${(evt: FastAccessSelectEvent) => {
           this.#hideFastAccess();
-          this.#restoreLastRange();
-          this.#add(
+          this.restoreLastRange();
+          this.addItem(
             evt.path,
             evt.title,
             evt.accessType,
