@@ -186,22 +186,23 @@ export class GraphEdge extends Box {
     const top = Math.min(
       this.node1.transform.f - EDGE_CLEARANCE,
       this.node2.transform.f - EDGE_CLEARANCE,
-      pointBounds.y
+      pointBounds.y + this.transform.f
     );
     const bottom = Math.max(
       this.node1.transform.f + this.node1.bounds.height + EDGE_CLEARANCE,
       this.node2.transform.f + this.node2.bounds.height + EDGE_CLEARANCE,
-      pointBounds.y + pointBounds.height
+      pointBounds.y + pointBounds.height + this.transform.f
     );
+
     const left = Math.min(
       this.node1.transform.e - EDGE_CLEARANCE,
       this.node2.transform.e - EDGE_CLEARANCE,
-      pointBounds.x
+      pointBounds.x + this.transform.e
     );
     const right = Math.max(
       this.node1.transform.e + this.node1.bounds.width + EDGE_CLEARANCE,
       this.node2.transform.e + this.node2.bounds.width + EDGE_CLEARANCE,
-      pointBounds.x + pointBounds.width
+      pointBounds.x + this.transform.e + pointBounds.width
     );
 
     this.transform.e = left;
