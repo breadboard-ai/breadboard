@@ -92,7 +92,7 @@ class ChangeEdge implements EditTransform {
       if (!inPortFound) {
         return {
           success: false,
-          error: `Unable to add adge: in port was not supplied for ${from.to}`,
+          error: `Unable to add edge: in port was not supplied for ${from.to}`,
         };
       }
       // Do the usual thing, just add the edge.
