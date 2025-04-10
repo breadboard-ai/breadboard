@@ -128,6 +128,7 @@ async function describe({
         },
         ...template.schemas(),
       },
+      behavior: ["at-wireable"],
       additionalProperties: true,
       ...template.requireds(),
     } satisfies Schema,

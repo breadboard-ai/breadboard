@@ -22,7 +22,7 @@
           "role": "user",
           "parts": [
             {
-              "text": "Tell me about your day"
+              "text": "Tell me about your day\n{{\"type\":\"in\",\"path\":\"7d391991-7529-4255-9fe4-13a28986168d\",\"title\":\"Combine Outputs\"}} e"
             }
           ]
         },
@@ -53,7 +53,14 @@
       }
     }
   ],
-  "edges": [],
+  "edges": [
+    {
+      "from": "7d391991-7529-4255-9fe4-13a28986168d",
+      "to": "a2-21820fca",
+      "out": "context",
+      "in": "p-z-7d391991-7529-4255-9fe4-13a28986168d"
+    }
+  ],
   "metadata": {
     "visual": {
       "presentation": {
@@ -77,7 +84,8 @@
         },
         "theme": "2777068e-7503-4208-ad34-1c5f02781340"
       }
-    }
+    },
+    "parameters": {}
   },
   "assets": {
     "@@thumbnail": {
