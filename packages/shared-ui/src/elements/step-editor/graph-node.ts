@@ -592,7 +592,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
   #lastBounds: DOMRect | null = null;
   #ports: InspectableNodePorts | null = null;
   #resizeObserver = new ResizeObserver(() => {
-    if (!this.#containerRef.value) {
+    if (!this.#containerRef.value || this.hidden) {
       return;
     }
 
