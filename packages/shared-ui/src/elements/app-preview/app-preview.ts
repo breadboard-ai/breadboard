@@ -20,7 +20,6 @@ import {
 
 import { styles as appPreviewStyles } from "./app-preview.styles.js";
 import {
-  OverflowMenuActionEvent,
   ThemeEditRequestEvent,
   ToastEvent,
   ToastType,
@@ -478,21 +477,32 @@ export class AppPreview extends LitElement {
 
     return html`<div id="container">
       <div id="controls">
+        <div>
+          <button
+            id="app"
+            ?disabled=${this._outputMode === "app"}
+            class=${classMap({ [this._outputMode]: true })}
+            @click=${async () => {
+              this._outputMode = "app";
+            }}
+          >
+            App view
+          </button>
+
+          <button
+            id="console"
+            ?disabled=${this._outputMode === "console"}
+            class=${classMap({ [this._outputMode]: true })}
+            @click=${async () => {
+              this._outputMode = "console";
+            }}
+          >
+            Activity
+          </button>
+        </div>
+
         <button
-          id="designer"
-          ?disabled=${this.#loadingTemplate}
-          @click=${() => {
-            this.dispatchEvent(
-              new ThemeEditRequestEvent(
-                this.#appTemplate?.additionalOptions ?? null
-              )
-            );
-          }}
-        >
-          Designer
-        </button>
-        <button
-          id="url"
+          id="share"
           ?disabled=${this.#loadingTemplate}
           @click=${async () => {
             const url = await this.#deriveAppURL();
@@ -512,14 +522,6 @@ export class AppPreview extends LitElement {
         >
           URL
         </button>
-        <button
-          id="output"
-          ?disabled=${this.#loadingTemplate}
-          class=${classMap({ [this._outputMode]: true })}
-          @click=${async () => {
-            this._outputMode = this._outputMode === "app" ? "console" : "app";
-          }}
-        ></button>
       </div>
 
       ${this._outputMode === "app"
@@ -530,6 +532,23 @@ export class AppPreview extends LitElement {
             ${this.#template}
           </div>`
         : this.#renderActivity()}
+      ${this._outputMode === "app"
+        ? html`<div id="theme-edit">
+            <button
+              id="designer"
+              ?disabled=${this.#loadingTemplate}
+              @click=${() => {
+                this.dispatchEvent(
+                  new ThemeEditRequestEvent(
+                    this.#appTemplate?.additionalOptions ?? null
+                  )
+                );
+              }}
+            >
+              Edit Theme
+            </button>
+          </div>`
+        : nothing}
     </div>`;
   }
 }

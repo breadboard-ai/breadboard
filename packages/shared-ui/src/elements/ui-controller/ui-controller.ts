@@ -773,7 +773,7 @@ export class UI extends LitElement {
       <div id="side-nav" slot="slot-1">
         <div id="side-nav-content">
         ${sideNavItem}
-      </div>
+        </div>
       </div>
       </bb-splitter> ${modules.length > 0 ? moduleEditor : nothing}
     </div>`;

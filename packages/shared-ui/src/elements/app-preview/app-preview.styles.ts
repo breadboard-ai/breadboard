@@ -63,70 +63,100 @@ export const styles = css`
     --output-padding: var(--bb-grid-size-5);
 
     & #controls {
-      padding-bottom: var(--bb-grid-size-3);
       display: flex;
-      align-item: flex-end;
+      align-items: flex-end;
+      justify-content: space-between;
+      width: 100%;
+      padding-bottom: var(--bb-grid-size-3);
+      height: var(--bb-grid-size-11);
+      position: relative;
 
-      & #url,
-      & #designer,
-      & #details,
-      & #output {
-        border: none;
-        border-radius: var(--bb-grid-size-16);
+      &::after {
+        content: "";
+        height: 1px;
+        bottom: var(--bb-grid-size-3);
+        position: absolute;
+        left: calc(-1 * var(--output-padding));
+        width: calc(100% + 2 * var(--output-padding));
+        background: var(--bb-neutral-200);
+      }
+
+      & > div > button {
         font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
           var(--bb-font-family);
-        height: var(--bb-grid-size-8);
-        padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-8);
-        transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
-        margin: 0 var(--bb-grid-size);
+        background: none;
+        color: var(--bb-neutral-600);
+        height: 32px;
+        border: none;
+        margin: 0 var(--bb-grid-size-2);
+        padding: 0 var(--bb-grid-size-2);
+        position: relative;
+        display: inline-flex;
+        align-items: flex-start;
+        cursor: pointer;
 
-        &:not([disabled]) {
-          cursor: pointer;
+        &[disabled] {
+          color: var(--bb-neutral-900);
+          cursor: auto;
 
-          &:focus,
-          &:hover {
-            background-color: var(--bb-neutral-50);
+          &::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            border-radius: var(--bb-grid-size) var(--bb-grid-size) 0 0;
+            background: var(--bb-ui-500);
+            height: 3px;
           }
         }
       }
 
-      & #details {
-        background: var(--bb-icon-edit) var(--bb-neutral-0) 8px center / 20px
-          20px no-repeat;
+      & #share {
+        width: 20px;
+        height: 20px;
+        background: var(--bb-icon-share) center center / 20px 20px no-repeat;
+        font-size: 0;
+        margin: 0 0 var(--bb-grid-size-3) 0;
+        border: none;
+        opacity: 0.5;
+        transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+
+        &:not([disabled]) {
+          cursor: pointer;
+
+          &:hover,
+          &:focus {
+            opacity: 1;
+          }
+        }
       }
+    }
+
+    & #theme-edit {
+      padding: var(--bb-grid-size-3) 0 var(--bb-grid-size-4) 0;
+      width: 100%;
+      max-width: 450px;
 
       & #designer {
-        background: var(--bb-icon-palette) var(--bb-neutral-0) 8px center / 20px
+        height: var(--bb-grid-size-8);
+        border-radius: var(--bb-grid-size-16);
+        background: var(--bb-icon-edit) var(--bb-neutral-100) 8px center / 20px
           20px no-repeat;
-      }
-
-      & #url {
-        background: var(--bb-icon-link) var(--bb-neutral-0) 8px center / 20px
-          20px no-repeat;
-      }
-
-      & #output {
-        padding: 0;
-        width: 32px;
-        height: 32px;
+        color: var(--bb-neutral-800);
+        font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+          var(--bb-font-family);
+        transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
+        border: none;
+        padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-8);
 
         &:not([disabled]) {
           cursor: pointer;
 
-          &:focus,
-          &:hover {
-            background-color: var(--bb-ui-50);
+          &:hover,
+          &:focus {
+            background-color: var(--bb-neutral-200);
           }
-        }
-
-        &.app {
-          background: var(--bb-icon-phone) var(--bb-neutral-0) center center /
-            20px 20px no-repeat;
-        }
-
-        &.console {
-          background: var(--bb-icon-list) var(--bb-neutral-0) center center /
-            20px 20px no-repeat;
         }
       }
     }
