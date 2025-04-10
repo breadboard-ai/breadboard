@@ -140,6 +140,6 @@
     "@web/test-runner-playwright": "^0.11.0",
     "typescript": "^5.8.2",
     "vite": "^6.2.5",
-    "wireit": "^0.15.0-pre.1"
+    "wireit": "^0.15.0-pre.2"
   }
 }

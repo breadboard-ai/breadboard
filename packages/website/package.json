@@ -137,6 +137,6 @@
     "markdown-it-github-alerts": "^0.3.1",
     "markdown-it-github-headings": "^2.0.1",
     "rollup-plugin-import-assert": "^3.0.1",
-    "wireit": "^0.15.0-pre.1"
+    "wireit": "^0.15.0-pre.2"
   }
 }

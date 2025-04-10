@@ -166,7 +166,7 @@
     "dotenv": "^16.4.7",
     "typescript": "^5.8.2",
     "vite-plugin-compression2": "^1.3.3",
-    "wireit": "^0.15.0-pre.1"
+    "wireit": "^0.15.0-pre.2"
   },
   "dependencies": {
     "@google-labs/breadboard": "0.33.0",
