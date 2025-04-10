@@ -4,30 +4,38 @@
   "version": "0.0.1",
   "nodes": [
     {
-      "id": "bbc7c1aa-1192-43ee-8f01-4b34688567c2",
-      "type": "file://bgl/generate.bgl.json#module:main",
+      "id": "f96b7ce5-fd33-4956-a5d3-9d9917433a3d",
+      "type": "embed://a2/generate.bgl.json#module:main",
       "metadata": {
         "title": "Generate",
         "visual": {
           "x": 0,
-          "y": -120
+          "y": 0
         },
         "userModified": false
       },
       "configuration": {
+        "config$ask-user": false,
+        "config$list": false,
         "config$prompt": {
           "role": "user",
           "parts": [
             {
-              "text": "Research the latest news on opals using {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-web\",\"title\":\"Search Web\"}}"
+              "text": "Express the word \"opal\" in your best possible way."
             }
           ]
         },
-        "generation-mode": "./a2.bgl.json#module:image-generator",
+        "generation-mode": "embed://a2/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+        "description": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "test"
+            }
+          ]
+        },
         "p-chat": false,
-        "p-list": false,
-        "p-disable-prompt-rewrite": false,
-        "z-list": false
+        "p-list": false
       }
     }
   ],

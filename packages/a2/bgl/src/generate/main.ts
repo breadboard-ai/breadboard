@@ -25,27 +25,27 @@ type DescribeInputs = {
 
 const MODES = [
   {
-    id: "./a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+    id: "embed://a2/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
     title: "Generate Text",
     icon: "generative-text",
   },
   {
-    id: "./a2.bgl.json#module:image-generator",
+    id: "embed://a2/a2.bgl.json#module:image-generator",
     title: "Generate Image",
     icon: "generative-image",
   },
   {
-    id: "./audio-generator.bgl.json#module:main",
+    id: "embed://a2/audio-generator.bgl.json#module:main",
     title: "Generate Audio",
     icon: "generative-audio",
   },
   {
-    id: "./video-generator.bgl.json#module:main",
+    id: "embed://a2/video-generator.bgl.json#module:main",
     title: "Generate Video",
     icon: "generative-video",
   },
   {
-    id: "./go-over-list.bgl.json#module:main",
+    id: "embed://a2/go-over-list.bgl.json#module:main",
     title: "Think and Execute",
     icon: "generative",
   },
