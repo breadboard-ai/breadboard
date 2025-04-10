@@ -8,13 +8,14 @@
       "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
       "metadata": {
         "visual": {
-          "x": -720,
+          "x": -600,
           "y": -380,
           "collapsed": "expanded",
           "outputHeight": 308
         },
         "title": "Ask User",
-        "logLevel": "info"
+        "logLevel": "info",
+        "userModified": false
       },
       "configuration": {
         "description": {
@@ -27,11 +28,56 @@
         },
         "p-modality": "Image"
       }
+    },
+    {
+      "id": "7d391991-7529-4255-9fe4-13a28986168d",
+      "type": "embed://a2/a2.bgl.json#module:combine-outputs",
+      "metadata": {
+        "title": "Combine Outputs",
+        "visual": {
+          "x": -920,
+          "y": -380
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "text": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "It's a beautiful day!"
+            }
+          ]
+        },
+        "z-flatten-list": false
+      }
     }
   ],
   "edges": [],
   "metadata": {
-    "visual": {}
+    "visual": {
+      "presentation": {
+        "themes": {
+          "2777068e-7503-4208-ad34-1c5f02781340": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "2777068e-7503-4208-ad34-1c5f02781340"
+      }
+    }
   },
   "assets": {
     "@@thumbnail": {
@@ -39,7 +85,7 @@
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSI2Ny42NSIKICAgICAgICAgICAgICAgICAgICB5PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTE0LjcxIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTgwLjAwIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMjBhMjAyIiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMzYuOTAiCiAgICAgICAgICAgICAgICAgICAgeT0iMTkuMTAiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjEwMy4xMCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjE2MS43OSIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KPHJlY3QgeD0iMTAuMDAiCiAgICAgICAgICAgICAgICAgICAgeT0iMTkuMTAiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjEwMy4xMCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjM5LjY2IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMjBhMjAyIiAvPgogICAgICAKICAgIDwvc3ZnPg=="
     }
   }
 }
