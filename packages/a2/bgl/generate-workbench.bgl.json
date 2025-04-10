@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "nodes": [
     {
-      "id": "f96b7ce5-fd33-4956-a5d3-9d9917433a3d",
+      "id": "60447c1a-44f5-4ee1-9c3f-c8e5806cbb83",
       "type": "embed://a2/generate.bgl.json#module:main",
       "metadata": {
         "title": "Generate",
@@ -21,21 +21,11 @@
           "role": "user",
           "parts": [
             {
-              "text": "Express the word \"opal\" in your best possible way."
+              "text": "Express the word \"Breadboard\" in the best way you know."
             }
           ]
         },
-        "generation-mode": "embed://a2/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
-        "description": {
-          "role": "user",
-          "parts": [
-            {
-              "text": "test"
-            }
-          ]
-        },
-        "p-chat": false,
-        "p-list": false
+        "generation-mode": "embed://a2/a2.bgl.json#module:image-generator"
       }
     }
   ],
