@@ -11,6 +11,7 @@ import {
   isInlineData,
   isJSONPart,
   isListPart,
+  isLLMContent,
   isStoredData,
   isTextCapabilityPart,
 } from "@google-labs/breadboard";
@@ -356,6 +357,12 @@ export class LLMOutput extends LitElement {
     if (changedProperties.has("value")) {
       this.#clearPartDataURLs();
 
+      if (this.value !== null && !isLLMContent(this.value)) {
+        console.warn("Received unexpected value for LLM output", this.value);
+        this.#renderableParts = 0;
+        return;
+      }
+
       this.#renderableParts = this.value?.parts.length ?? 0;
     }
   }
@@ -379,6 +386,11 @@ export class LLMOutput extends LitElement {
 
   render() {
     const canCopy = this.showExportControls && "ClipboardItem" in window;
+    if (this.value && !isLLMContent(this.value)) {
+      console.warn(`Unexpected value for LLM Output`, this.value);
+      return nothing;
+    }
+
     return this.value && this.value.parts.length
       ? html` ${this.showExportControls
           ? html`<bb-export-toolbar
