@@ -31,10 +31,10 @@ export default {
     str: "Copy full URL",
   },
   COMMAND_COPY_APP_PREVIEW_URL: {
-    str: "Copy App Preview URL",
+    str: "Share App",
   },
   COMMAND_EDIT_PROJECT_INFORMATION: {
-    str: "Edit Flow information...",
+    str: "Edit Details...",
   },
   COMMAND_OPEN_MODULE: {
     str: "Open Module...",
@@ -46,13 +46,13 @@ export default {
     str: "Create Module...",
   },
   COMMAND_COPY_PROJECT_CONTENTS: {
-    str: "Copy Flow Contents",
+    str: "Copy JSON",
   },
   COMMAND_DELETE_PROJECT: {
-    str: "Delete Flow",
+    str: "Delete",
   },
   COMMAND_EXPORT_PROJECT: {
-    str: "Export Flow",
+    str: "Export JSON",
   },
   COMMAND_EDIT_SETTINGS: {
     str: "Edit Settings",

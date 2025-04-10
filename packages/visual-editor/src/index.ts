@@ -2792,13 +2792,27 @@ export class Main extends LitElement {
           this.#boardOverflowMenuConfiguration
         ) {
           const tabId = this.#boardOverflowMenuConfiguration.tabId;
-          const actions: BreadboardUI.Types.OverflowAction[] = [
-            {
-              title: Strings.from("COMMAND_SAVE_PROJECT_AS"),
-              name: "save-as",
-              icon: "save",
+          const actions: BreadboardUI.Types.OverflowAction[] = [];
+
+          if (this.#runtime.board.canSave(tabId)) {
+            actions.push({
+              title: Strings.from("COMMAND_EDIT_PROJECT_INFORMATION"),
+              name: "edit",
+              icon: "edit",
               value: tabId,
-            },
+            });
+          }
+
+          if (this.#runtime.board.canPreview(tabId)) {
+            actions.push({
+              title: Strings.from("COMMAND_COPY_APP_PREVIEW_URL"),
+              name: "copy-preview-to-clipboard",
+              icon: "share",
+              value: tabId,
+            });
+          }
+
+          actions.push(
             {
               title: Strings.from("COMMAND_COPY_PROJECT_CONTENTS"),
               name: "copy-board-contents",
@@ -2806,43 +2820,14 @@ export class Main extends LitElement {
               value: tabId,
             },
             {
-              title: Strings.from("COMMAND_COPY_PROJECT_URL"),
-              name: "copy-to-clipboard",
-              icon: "copy",
+              title: Strings.from("COMMAND_EXPORT_PROJECT"),
+              name: "download",
+              icon: "download",
               value: tabId,
-            },
-            {
-              title: Strings.from("COMMAND_COPY_FULL_URL"),
-              name: "copy-tab-to-clipboard",
-              icon: "copy",
-              value: tabId,
-            },
-          ];
-
-          if (this.#runtime.board.canPreview(tabId)) {
-            actions.push({
-              title: Strings.from("COMMAND_COPY_APP_PREVIEW_URL"),
-              name: "copy-preview-to-clipboard",
-              icon: "copy",
-              value: tabId,
-            });
-          }
+            }
+          );
 
           if (this.#runtime.board.canSave(tabId)) {
-            actions.unshift({
-              title: Strings.from("COMMAND_SAVE_PROJECT"),
-              name: "save",
-              icon: "save",
-              value: tabId,
-            });
-
-            actions.push({
-              title: Strings.from("COMMAND_EDIT_PROJECT_INFORMATION"),
-              name: "edit",
-              icon: "edit",
-              value: tabId,
-            });
-
             actions.push({
               title: Strings.from("COMMAND_DELETE_PROJECT"),
               name: "delete",
@@ -2850,13 +2835,6 @@ export class Main extends LitElement {
               value: tabId,
             });
           }
-
-          actions.push({
-            title: Strings.from("COMMAND_EXPORT_PROJECT"),
-            name: "download",
-            icon: "download",
-            value: tabId,
-          });
 
           boardOverflowMenu = html`<bb-overflow-menu
             id="board-overflow"
