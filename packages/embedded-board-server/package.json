@@ -1,12 +1,20 @@
 {
-  "name": "@breadboard-ai/a2",
-  "version": "0.3.0",
-  "description": "Breadboard Components for building AI systems",
-  "main": "./dist/src/index.js",
+  "name": "@breadboard-ai/embedded-board-server",
+  "version": "0.0.1",
+  "description": "Embedded Board Server for Breadboard",
+  "main": "./dist/index.js",
+  "exports": {
+    ".": {
+      "default": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "types": "dist/index.d.ts",
   "type": "module",
   "scripts": {
-    "push": "tsx scripts/push.ts",
-    "build": "wireit"
+    "prepack": "npm run build",
+    "build": "wireit",
+    "build:tsc": "wireit"
   },
   "wireit": {
     "build": {
@@ -21,7 +29,6 @@
       ],
       "files": [
         "src/**/*.ts",
-        "bgl/**/*.json",
         "tsconfig.json",
         "../../core/tsconfig/base.json"
       ]
@@ -43,28 +50,25 @@
     }
   },
   "repository": {
-    "directory": "packages/a2",
+    "directory": "packages/embedded-board-server",
     "type": "git",
-    "url": "https://github.com/breadboard-ai/breadboard.git"
+    "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
+  "files": [
+    "dist/"
+  ],
   "keywords": [],
   "author": "Google Labs Team",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/breadboard-ai/breadboard/issues"
   },
-  "homepage": "https://github.com/breadboard-ai/breadboard#readme",
+  "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/embedded-board-server#readme",
   "devDependencies": {
-    "@google-cloud/firestore": "^7.11.0",
     "@types/node": "^22.0.0",
-    "@typescript-eslint/eslint-plugin": "^7.18.0",
-    "@typescript-eslint/parser": "^7.18.0",
-    "dotenv": "^16.4.7",
-    "tsx": "^4.19.3",
     "typescript": "^5.8.2"
   },
   "dependencies": {
-    "@breadboard-ai/embedded-board-server": "0.0.1",
     "@google-labs/breadboard": "^0.33.0"
   }
 }

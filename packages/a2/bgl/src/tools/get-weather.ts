@@ -143,7 +143,7 @@ async function describe(inputs: DescribeInputs) {
     } satisfies Schema,
     metadata: {
       icon: "sunny",
-      tags: ["quick-access", "tool"],
+      tags: ["quick-access", "tool", "component"],
       order: 5,
     },
   };

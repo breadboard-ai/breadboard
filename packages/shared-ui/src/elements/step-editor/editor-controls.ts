@@ -24,13 +24,13 @@ import {
   Kit,
   MainGraphIdentifier,
   MutableGraphStore,
-  NodeHandlerMetadata,
   PortIdentifier,
 } from "@google-labs/breadboard";
 import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { DATA_TYPE } from "./constants.js";
 import { NodeAddEvent } from "./events/events.js";
+import { isA2 } from "@breadboard-ai/a2";
 
 const QUICK_ADD_ADJUSTMENT = -20;
 
@@ -425,6 +425,9 @@ export class EditorControls extends LitElement {
     const graphs = graphStore.graphs();
 
     for (const graph of graphs) {
+      const { mainGraph } = graph;
+      if (!isA2(mainGraph.url)) continue;
+
       // Don't show items that are still updating.
       if (graph.updating) continue;
 
@@ -438,7 +441,6 @@ export class EditorControls extends LitElement {
         continue;
       }
 
-      const { mainGraph } = graph;
       if (
         !mainGraph.title ||
         mainGraph.tags?.includes("deprecated") ||
@@ -468,11 +470,6 @@ export class EditorControls extends LitElement {
       // TODO(dglazkov): Refactor graphstore machinery to make this not
       //                 necessary.
       if (mainGraph.url?.startsWith("module:")) continue;
-
-      // This is a temporary hack to ensure that if only the graphs that
-      // are coming from "@shared" user are visible in quick access.
-      // TODO(dglazkov): Make this more robust and not user-specific.
-      if (!isKnownGood(mainGraph)) continue;
 
       kitList.push({ id: graph.url!, metadata: graph });
     }
@@ -535,13 +532,6 @@ export class EditorControls extends LitElement {
     }
 
     return kitList;
-
-    function isKnownGood(mainGraph: NodeHandlerMetadata) {
-      return (
-        mainGraph.url?.includes("/@shared/") ||
-        mainGraph.url?.startsWith("file:")
-      );
-    }
   }
 
   showComponentLibraryAt(

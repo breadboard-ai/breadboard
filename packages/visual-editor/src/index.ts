@@ -90,6 +90,7 @@ import { sideBoardRuntime } from "@breadboard-ai/shared-ui/contexts/side-board-r
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { OverflowAction } from "@breadboard-ai/shared-ui/types/types.js";
 import { MAIN_BOARD_ID } from "@breadboard-ai/shared-ui/constants/constants.js";
+import { createA2Server } from "@breadboard-ai/a2";
 
 const STORAGE_PREFIX = "bb-main";
 const LOADING_TIMEOUT = 250;
@@ -545,6 +546,7 @@ export class Main extends LitElement {
           settings: this.#settings!,
           proxy: this.#proxy,
           fileSystem: this.#fileSystem,
+          builtInBoardServers: [createA2Server()],
         });
       })
       .then((runtime) => {

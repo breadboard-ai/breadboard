@@ -152,7 +152,10 @@ export class Board extends EventTarget {
       // the user is notified.
       return { success: false };
     } else {
-      this.boardServers.servers = await getBoardServers(this.tokenVendor);
+      this.boardServers.servers = [
+        ...(await getBoardServers(this.tokenVendor)),
+        ...this.boardServers.builtInBoardServers,
+      ];
       this.boardServers.loader = createLoader(this.boardServers.servers);
       this.dispatchEvent(
         new RuntimeBoardServerChangeEvent(
@@ -178,7 +181,10 @@ export class Board extends EventTarget {
       // the user is notified.
       return { success: false };
     }
-    this.boardServers.servers = await getBoardServers(this.tokenVendor);
+    this.boardServers.servers = [
+      ...(await getBoardServers(this.tokenVendor)),
+      ...this.boardServers.builtInBoardServers,
+    ];
     this.boardServers.loader = createLoader(this.boardServers.servers);
     this.dispatchEvent(new RuntimeBoardServerChangeEvent());
   }

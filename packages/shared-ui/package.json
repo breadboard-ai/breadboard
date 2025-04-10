@@ -130,6 +130,7 @@
     "@breadboard-ai/build": "0.12.1",
     "@breadboard-ai/connection-client": "0.2.0",
     "@breadboard-ai/data-store": "0.3.2",
+    "@breadboard-ai/embedded-board-server": "0.0.1",
     "@breadboard-ai/jsandbox": "0.5.0",
     "@breadboard-ai/types": "0.6.0",
     "@codemirror/autocomplete": "^6.18.6",
