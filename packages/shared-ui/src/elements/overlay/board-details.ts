@@ -119,10 +119,9 @@ export class BoardDetailsOverlay extends LitElement {
       min-width: 410px;
       width: max(350px, 450px);
       min-height: 250px;
-      height: 360px;
+      height: 288px;
       display: flex;
       flex-direction: column;
-      resize: both;
       overflow: auto;
       container-type: size;
     }
@@ -138,54 +137,16 @@ export class BoardDetailsOverlay extends LitElement {
     }
 
     #buttons {
-      padding: var(--bb-grid-size-2) var(--bb-grid-size-4) var(--bb-grid-size-4)
-        var(--bb-grid-size-4);
+      height: var(--bb-grid-size-10);
+      padding: 0 var(--bb-grid-size-4);
+      border-top: 1px solid var(--bb-neutral-200);
       display: flex;
-      justify-content: flex-end;
       align-items: center;
     }
 
     #buttons > div {
       display: flex;
       flex: 0 0 auto;
-    }
-
-    #run-node {
-      background: var(--bb-neutral-100);
-      border: none;
-      font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
-        var(--bb-font-family);
-      color: var(--bb-neutral-600);
-      padding: var(--bb-grid-size) var(--bb-grid-size-4) var(--bb-grid-size)
-        var(--bb-grid-size-2);
-      border-radius: var(--bb-grid-size-12);
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      cursor: pointer;
-      transition: background-color 0.3s cubic-bezier(0, 0, 0.3, 1);
-    }
-
-    #run-node::before {
-      content: "";
-      display: block;
-      width: 20px;
-      height: 20px;
-      background: transparent var(--bb-icon-play-filled) center center / 20px
-        20px no-repeat;
-      opacity: 0.4;
-      margin-right: var(--bb-grid-size);
-    }
-
-    #run-node:not([disabled]):hover,
-    #run-node:not([disabled]):focus {
-      background: var(--bb-neutral-300);
-      transition-duration: 0.1s;
-    }
-
-    #run-node[disabled] {
-      opacity: 0.3;
-      cursor: initial;
     }
 
     #cancel {
@@ -200,27 +161,16 @@ export class BoardDetailsOverlay extends LitElement {
     #update {
       background: var(--bb-ui-500);
       border: none;
-      font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
+      font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
         var(--bb-font-family);
       color: var(--bb-neutral-0);
-      padding: var(--bb-grid-size) var(--bb-grid-size-4) var(--bb-grid-size)
-        var(--bb-grid-size-2);
+      padding: 0 var(--bb-grid-size-4);
+      height: var(--bb-grid-size-6);
       border-radius: var(--bb-grid-size-12);
       display: flex;
-      justify-content: flex-end;
       align-items: center;
       cursor: pointer;
       transition: background-color 0.3s cubic-bezier(0, 0, 0.3, 1);
-    }
-
-    #update::before {
-      content: "";
-      display: block;
-      width: 20px;
-      height: 20px;
-      background: transparent var(--bb-icon-check-inverted) center center / 20px
-        20px no-repeat;
-      margin-right: var(--bb-grid-size-2);
     }
 
     #update:hover,
@@ -229,31 +179,17 @@ export class BoardDetailsOverlay extends LitElement {
       transition-duration: 0.1s;
     }
 
-    #minmax {
-      width: 20px;
-      height: 20px;
-      border: none;
-      padding: 0;
-      margin: 0;
-      font-size: 0;
-      cursor: pointer;
-      background: transparent var(--bb-icon-maximize) center center / 20px 20px
-        no-repeat;
-    }
-
-    #minmax.maximized {
-      background: transparent var(--bb-icon-minimize) center center / 20px 20px
-        no-repeat;
-    }
-
     form {
       display: grid;
       grid-template-columns: 90px auto;
       grid-template-rows: var(--bb-grid-size-7);
-      align-items: center;
       row-gap: var(--bb-grid-size-2);
       padding: 0 0 var(--bb-grid-size-4) 0;
       column-gap: var(--bb-grid-size-4);
+    }
+
+    form > label {
+      margin-top: var(--bb-grid-size-2);
     }
 
     input[type="checkbox"] {
@@ -272,33 +208,9 @@ export class BoardDetailsOverlay extends LitElement {
     }
 
     .additional-items {
-      display: flex;
+      display: none;
       align-items: center;
       height: 20px;
-    }
-
-    @container (min-width: 600px) {
-      form {
-        grid-template-columns: 90px auto 90px auto;
-        grid-template-rows: var(--bb-grid-size-7);
-        column-gap: var(--bb-grid-size-4);
-      }
-
-      form textarea {
-        grid-column: 2/5;
-      }
-
-      label[for="log-level"] {
-        justify-self: end;
-      }
-
-      label.component {
-        grid-column: 1/2;
-      }
-
-      .additional-items {
-        grid-column: 2/5;
-      }
     }
 
     input[type="text"],
@@ -314,12 +226,22 @@ export class BoardDetailsOverlay extends LitElement {
     textarea {
       resize: none;
       field-sizing: content;
+      min-height: 120px;
       max-height: 300px;
     }
 
     label {
       font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
         var(--bb-font-family);
+    }
+
+    label[for="version"],
+    label[for="status"],
+    label[for="is-tool"],
+    label[for="is-component"],
+    #version,
+    #status {
+      display: none;
     }
 
     bb-user-input {
@@ -526,21 +448,8 @@ export class BoardDetailsOverlay extends LitElement {
           @pointerup=${() => {
             dragging = false;
           }}
-          @dblclick=${() => {
-            this.#toggleMaximize();
-          }}
         >
           <span>Edit Details</span>
-          <button
-            id="minmax"
-            title=${this.maximized ? "Minimize overlay" : "Maximize overlay"}
-            class=${classMap({ maximized: this.maximized })}
-            @click=${() => {
-              this.#toggleMaximize();
-            }}
-          >
-            ${this.maximized ? "Minimize" : "Maximize"}
-          </button>
         </h1>
         <div id="content">
           <div id="container">
@@ -553,7 +462,7 @@ export class BoardDetailsOverlay extends LitElement {
                 this.#pendingSave = true;
               }}
             >
-              <label for="title">Title</label>
+              <label for="title">Name</label>
               <input
                 id="title"
                 name="title"
@@ -568,7 +477,7 @@ export class BoardDetailsOverlay extends LitElement {
                       id="version"
                       name="version"
                       pattern="\\d+\\.\\d+\\.\\d+"
-                      type="text"
+                      type="hidden"
                       required
                       .value=${this.boardVersion || ""}
                     />`
@@ -679,20 +588,20 @@ export class BoardDetailsOverlay extends LitElement {
         <div id="buttons">
           <div>
             <button
-              id="cancel"
-              @click=${() => {
-                this.dispatchEvent(new OverlayDismissedEvent());
-              }}
-            >
-              Cancel
-            </button>
-            <button
               id="update"
               @click=${() => {
                 this.processData();
               }}
             >
               Update
+            </button>
+            <button
+              id="cancel"
+              @click=${() => {
+                this.dispatchEvent(new OverlayDismissedEvent());
+              }}
+            >
+              Cancel
             </button>
           </div>
         </div>
