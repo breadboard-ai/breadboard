@@ -12,7 +12,6 @@ import {
   BoardInfoUpdateEvent,
   OverlayDismissedEvent,
 } from "../../events/events.js";
-import { classMap } from "lit/directives/class-map.js";
 
 const MAXIMIZE_KEY = "bb-board-details-overlay-maximized";
 const OVERLAY_CLEARANCE = 20;

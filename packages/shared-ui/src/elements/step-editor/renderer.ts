@@ -543,7 +543,7 @@ export class Renderer extends LitElement {
         new AddNodeWithEdgeEvent(
           node,
           edge,
-          targetGraphId === MAIN_BOARD_ID ? "" : targetGraphId
+          targetGraphId === MAIN_BOARD_ID ? null : targetGraphId
         )
       );
     } else {
