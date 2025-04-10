@@ -80,6 +80,10 @@ export class OverflowMenu extends LitElement {
         }
       }
 
+      &.share {
+        background-image: var(--bb-icon-share);
+      }
+
       &.copy {
         background-image: var(--bb-icon-copy-to-clipboard);
       }
@@ -221,7 +225,7 @@ export class OverflowMenu extends LitElement {
     div {
       display: flex;
       align-items: center;
-      border-bottom: 1px solid var(--bb-neutral-300);
+      border-bottom: 1px solid var(--bb-neutral-100);
     }
 
     div:last-of-type {
