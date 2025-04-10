@@ -95,7 +95,7 @@ import "./graph-renderer.js";
 import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
 import { NodeMetadata } from "@breadboard-ai/types";
-import { isFromEmbeddedServer } from "@breadboard-ai/embedded-board-server";
+import { isA2 } from "@breadboard-ai/a2";
 
 const ZOOM_KEY = "bb-editor-zoom-to-highlighted-node-during-runs";
 const DATA_TYPE = "text/plain";
@@ -1520,10 +1520,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       //                 necessary.
       if (mainGraph.url?.startsWith("module:")) continue;
 
-      // This is a temporary hack to ensure that if only the graphs that
-      // are coming from "@shared" user are visible in quick access.
-      // TODO(dglazkov): Make this more robust and not user-specific.
-      if (!isKnownGood(mainGraph)) continue;
+      if (!isA2(mainGraph.url)) continue;
 
       kitList.push({ id: graph.url!, metadata: graph });
     }
@@ -1586,14 +1583,6 @@ export class Editor extends LitElement implements DragConnectorReceiver {
     }
 
     return kitList;
-
-    function isKnownGood(mainGraph: NodeHandlerMetadata) {
-      return (
-        // mainGraph.url?.includes("/@shared/") ||
-        // mainGraph.url?.startsWith("file:")
-        isFromEmbeddedServer(mainGraph.url, "std")
-      );
-    }
   }
 
   #showComponentPicker(target: HTMLElement, typeTag: string) {

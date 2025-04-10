@@ -20,7 +20,7 @@ import { KitNodeChosenEvent } from "../../events/events.js";
 import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { cache } from "lit/directives/cache.js";
-import { isFromEmbeddedServer } from "@breadboard-ai/embedded-board-server";
+import { isA2 } from "@breadboard-ai/a2";
 
 const ACTIVE_KITS_KEY = "bb-component-selector-overlay-active-kits";
 const DATA_TYPE = "text/plain";
@@ -404,11 +404,7 @@ export class ComponentSelectorOverlay extends LitElement {
 
       const { mainGraph } = graph;
 
-      if (
-        mainGraph.title?.startsWith("A2") &&
-        !isFromEmbeddedServer(mainGraph.url, "std")
-      )
-        continue;
+      if (mainGraph.title?.startsWith("A2") && !isA2(mainGraph.url)) continue;
 
       if (!mainGraph.title) {
         continue;
