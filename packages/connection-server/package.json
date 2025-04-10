@@ -82,7 +82,7 @@
     "@types/node": "^22.0.0",
     "eslint": "^8.57.1",
     "typescript": "^5.8.2",
-    "wireit": "^0.15.0-pre.1"
+    "wireit": "^0.15.0-pre.2"
   },
   "dependencies": {
     "cors": "^2.8.5",

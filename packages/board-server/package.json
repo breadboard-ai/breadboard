@@ -144,7 +144,7 @@
     "firebase-tools": "^14.1.0",
     "supertest": "^7.1.0",
     "typescript": "^5.8.2",
-    "wireit": "^0.15.0-pre.1"
+    "wireit": "^0.15.0-pre.2"
   },
   "dependencies": {
     "@breadboard-ai/connection-client": "0.2.0",
