@@ -5,9 +5,18 @@
  */
 
 import { config } from "dotenv";
-import { loadEnv, UserConfig } from "vite";
+import { HmrContext, loadEnv, Plugin, UserConfig } from "vite";
 import { configureAssets } from "./src/configure-assets";
 import { tryGetGitHash } from "./src/build-info";
+
+function noHrmlForDir(dir: string): Plugin {
+  return {
+    name: "no-hmr-for-dir",
+    handleHotUpdate: ({ modules }: HmrContext) => {
+      return modules.filter((module) => !module.file?.includes(dir));
+    },
+  };
+}
 
 export const buildCustomAllowList = (value?: string) => {
   if (!value) return {};
@@ -50,6 +59,7 @@ export default async ({ mode }: UserConfig) => {
     server: {
       ...buildCustomAllowList(process.env.VITE_FS_ALLOW),
     },
+    plugins: [noHrmlForDir("packages/a2")],
     test: {
       include: ["tests/**/*.ts"],
     },
