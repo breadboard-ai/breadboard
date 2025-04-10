@@ -42,6 +42,7 @@ import { isCtrlCommand } from "../../utils/is-ctrl-command";
 import { MAIN_BOARD_ID } from "../../constants/constants";
 import { Project } from "../../state";
 import { NodePartialUpdateEvent } from "../../events/events";
+import { isControllerBehavior } from "../../utils/behaviors";
 
 interface EnumValue {
   title: string;
@@ -370,7 +371,13 @@ export class EntityEditor extends LitElement {
         }
 
         label {
-          margin-right: var(--bb-grid-size-2);
+          &:not(.slim) {
+            margin-right: var(--bb-grid-size-2);
+
+            &.icon::before {
+              margin-right: var(--bb-grid-size-2);
+            }
+          }
           display: inline-flex;
           align-items: center;
 
@@ -380,7 +387,6 @@ export class EntityEditor extends LitElement {
               width: 20px;
               height: 20px;
               background: red;
-              margin-right: var(--bb-grid-size-2);
             }
 
             &.search::before {
@@ -713,16 +719,12 @@ export class EntityEditor extends LitElement {
           return true;
         })
         .sort((a, b) => {
-          if (isController(a)) return -1;
-          if (isController(b)) return 1;
+          if (isControllerBehavior(a.schema)) return -1;
+          if (isControllerBehavior(b.schema)) return 1;
           if (isLLMContentBehavior(a.schema)) return -1;
           if (isLLMContentBehavior(b.schema)) return 1;
 
           return a.title.localeCompare(b.title);
-
-          function isController(p: InspectablePort) {
-            return p.schema.behavior?.includes("hint-controller");
-          }
         });
 
       return html`<div class=${classMap(classes)}>
@@ -779,7 +781,14 @@ export class EntityEditor extends LitElement {
                   classes[port.schema.icon] = true;
                 }
 
-                value = html`<label for=${port.name}>${port.title}</label
+                value = html` <label
+                    for=${port.name}
+                    class=${classMap({
+                      slim: isControllerBehavior(port.schema),
+                    })}
+                    >${!isControllerBehavior(port.schema)
+                      ? port.title
+                      : ""}</label
                   ><input
                     type="checkbox"
                     ?checked=${port.value === true}
@@ -806,12 +815,15 @@ export class EntityEditor extends LitElement {
                   if (currentValue.icon) {
                     classes.icon = true;
                     classes[currentValue.icon] = true;
+                    classes.slim = isControllerBehavior(port.schema);
                   }
 
                   value = html`<label
                       for=${port.name}
                       class=${classMap(classes)}
-                      >${port.title}</label
+                      >${!isControllerBehavior(port.schema)
+                        ? port.title
+                        : ""}</label
                     ><select
                       @change=${this.#reactiveChange(port)}
                       name=${port.name}
@@ -832,7 +844,11 @@ export class EntityEditor extends LitElement {
                 }
 
                 value = html`<label
-                  >${port.title}: ${port.value ?? "Value not set"}</label
+                  class=${classMap({ slim: isControllerBehavior(port.schema) })}
+                  >${!isControllerBehavior(port.schema)
+                    ? html`${port.title}: `
+                    : ""}
+                  ${port.value ?? "Value not set"}</label
                 >`;
                 break;
               }

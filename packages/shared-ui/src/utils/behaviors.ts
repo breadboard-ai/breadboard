@@ -6,6 +6,10 @@
 
 import type { Schema } from "@google-labs/breadboard";
 
+export function isControllerBehavior(schema: Schema): boolean {
+  return schema.behavior?.includes("hint-controller") ?? false;
+}
+
 export function isBoardBehavior(schema: Schema): boolean {
   return schema.behavior?.includes("board") ?? false;
 }
