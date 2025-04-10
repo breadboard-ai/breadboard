@@ -192,9 +192,11 @@ class GraphQueries {
   assets(): Map<AssetPath, InspectableAsset> {
     const entries = Object.entries(this.#mutable.graph.assets || []);
     return new Map(
-      entries.map(([path, asset]) => {
-        return [path, new InspectableAssetImpl(path, asset)];
-      })
+      entries
+        .filter(([path]) => !path.startsWith("@@"))
+        .map(([path, asset]) => {
+          return [path, new InspectableAssetImpl(path, asset)];
+        })
     );
   }
 
