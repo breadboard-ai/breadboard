@@ -25,14 +25,16 @@ import videoGenerator from "../bgl/video-generator.bgl.json" with { type: "json"
 
 export { createA2Server, isA2 };
 
+const SERVER_NAME = "a2";
+
 function isA2(url: URL | string | undefined) {
-  return isFromEmbeddedServer(url, "std");
+  return isFromEmbeddedServer(url, SERVER_NAME);
 }
 
 function createA2Server(): BoardServer {
   return new EmbeddedBoardServer(
     "A2",
-    "std",
+    SERVER_NAME,
     new Map([
       ["a2", a2 as GraphDescriptor],
       ["audio-generator", audioGenerator as GraphDescriptor],
