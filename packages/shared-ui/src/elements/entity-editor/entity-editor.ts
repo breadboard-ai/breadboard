@@ -26,6 +26,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import { WorkspaceSelectionStateWithChangeId } from "../../types/types";
 import {
   AssetPath,
+  GraphDescriptor,
   GraphIdentifier,
   InputValues,
   LLMContent,
@@ -36,13 +37,22 @@ import { classMap } from "lit/directives/class-map.js";
 import { until } from "lit/directives/until.js";
 import { isConfigurableBehavior, isLLMContentBehavior } from "../../utils";
 import { map } from "lit/directives/map.js";
-import { TextEditor } from "../elements";
+import { FastAccessMenu, TextEditor } from "../elements";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { isCtrlCommand } from "../../utils/is-ctrl-command";
 import { MAIN_BOARD_ID } from "../../constants/constants";
 import { Project } from "../../state";
-import { NodePartialUpdateEvent } from "../../events/events";
+import {
+  FastAccessSelectEvent,
+  GraphReplaceEvent,
+  NodePartialUpdateEvent,
+} from "../../events/events";
 import { isControllerBehavior } from "../../utils/behaviors";
+
+import * as StringsHelper from "../../strings/helper.js";
+import { FlowGenConstraint } from "../../flow-gen/flow-generator";
+import { findConfigurationChanges } from "../../flow-gen/flow-diff";
+const Strings = StringsHelper.forSection("Editor");
 
 interface EnumValue {
   title: string;
@@ -506,6 +516,51 @@ export class EntityEditor extends LitElement {
           margin: 0;
           padding: 0 var(--bb-grid-size-2);
         }
+
+        #controls-container {
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          flex: 1 0 auto;
+
+          & #controls {
+            display: flex;
+            align-items: center;
+
+            height: var(--bb-grid-size-7);
+            background: var(--bb-neutral-200);
+            border-radius: var(--bb-grid-size-16);
+            padding: 0 var(--bb-grid-size-2);
+
+            bb-describe-edit-button {
+              z-index: 1;
+              margin: 0 var(--bb-grid-size);
+            }
+
+            #tools {
+              width: 20px;
+              height: 20px;
+              margin: 0 var(--bb-grid-size);
+              border: none;
+              background: var(--bb-neutral-200)
+                var(--bb-icon-home-repair-service) center center / 20px 20px
+                no-repeat;
+              transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
+              border-radius: var(--bb-grid-size);
+              padding: 0;
+              font-size: 0;
+
+              &:not([disabled]) {
+                cursor: pointer;
+
+                &:hover,
+                &:focus {
+                  background-color: var(--bb-neutral-300);
+                }
+              }
+            }
+          }
+        }
       }
 
       & bb-text-editor {
@@ -524,12 +579,51 @@ export class EntityEditor extends LitElement {
         --output-border-radius: var(--bb-grid-size);
       }
     }
+
+    bb-fast-access-menu {
+      display: none;
+      position: absolute;
+      z-index: 10;
+
+      &.active {
+        display: block;
+        left: var(--fast-access-x, 10);
+        top: var(--fast-access-y, 10);
+      }
+    }
+
+    #proxy {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 0;
+      background: red;
+    }
   `;
 
   #lastUpdateTimes: Map<"nodes" | "assets", number> = new Map();
   #editorRef: Ref<TextEditor> = createRef();
   #edited = false;
   #formRef: Ref<HTMLFormElement> = createRef();
+  #proxyRef: Ref<HTMLDivElement> = createRef();
+  #fastAccessRef: Ref<FastAccessMenu> = createRef();
+  #isUsingFastAccess = false;
+  #onPointerDownBound = this.#onPointerDown.bind(this);
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    window.addEventListener("pointerdown", this.#onPointerDownBound);
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    window.removeEventListener("pointerdown", this.#onPointerDownBound);
+  }
+
+  #onPointerDown() {
+    this.#hideFastAccess();
+  }
 
   #reactiveChange(port: InspectablePort) {
     const reactive = port.schema.behavior?.includes("reactive");
@@ -709,9 +803,6 @@ export class EntityEditor extends LitElement {
         classes["module"] = true;
       }
 
-      // By convention we assume there will be a single llm-content port
-      // and multiple other configurable ports. Therefore we order & filter
-      // ports on that basis.
       const inputPorts = ports.inputs.ports
         .filter((port) => {
           if (port.star || port.name === "") return false;
@@ -726,6 +817,10 @@ export class EntityEditor extends LitElement {
 
           return a.title.localeCompare(b.title);
         });
+
+      const hasTextEditor =
+        inputPorts.findIndex((port) => isLLMContentBehavior(port.schema)) !==
+        -1;
 
       return html`<div class=${classMap(classes)}>
         <h1 id="title">
@@ -858,7 +953,52 @@ export class EntityEditor extends LitElement {
               }
             }
 
-            return html`<div class=${classMap(classes)}>${value}</div>`;
+            let controls: HTMLTemplateResult | symbol = nothing;
+            if (isControllerBehavior(port.schema)) {
+              controls = html`<div id="controls-container">
+                <div id="controls">
+                  ${this.graph
+                    ? html`<bb-describe-edit-button
+                        monochrome
+                        popoverPosition="below"
+                        .label=${Strings.from("COMMAND_DESCRIBE_EDIT_STEP")}
+                        .currentGraph=${this.graph.raw() satisfies GraphDescriptor}
+                        .constraint=${{
+                          kind: "EDIT_STEP_CONFIG",
+                          stepId: nodeId,
+                        } satisfies FlowGenConstraint}
+                        @bbgraphreplace=${this.#onFlowgenEdit}
+                      ></bb-describe-edit-button>`
+                    : nothing}
+                  ${hasTextEditor
+                    ? html`<button
+                        id="tools"
+                        @pointerdown=${() => {
+                          if (!this.#editorRef.value) {
+                            return;
+                          }
+
+                          this.#editorRef.value.storeLastRange();
+                        }}
+                        @click=${(evt: PointerEvent) => {
+                          const bounds = new DOMRect(
+                            evt.clientX,
+                            evt.clientY,
+                            0,
+                            0
+                          );
+                          this.#showFastAccess(bounds);
+                        }}
+                      >
+                        Tools
+                      </button>`
+                    : nothing}
+                </div>
+              </div>`;
+            }
+            return html`<div class=${classMap(classes)}>
+              ${value} ${controls}
+            </div>`;
           })}
         </div>
         <input type="hidden" name="graph-id" .value=${graphId} />
@@ -867,6 +1007,88 @@ export class EntityEditor extends LitElement {
     });
 
     return html`${until(value, html`<div id="generic-status">Loading...</div>`)}`;
+  }
+
+  #showFastAccess(bounds: DOMRect | undefined) {
+    if (!bounds || this.#isUsingFastAccess) {
+      return;
+    }
+
+    if (!this.#fastAccessRef.value || !this.#proxyRef.value) {
+      return;
+    }
+
+    const containerBounds = this.getBoundingClientRect();
+    const proxyBounds = this.#proxyRef.value.getBoundingClientRect();
+    let top = Math.round(bounds.top - proxyBounds.top);
+    let left = Math.round(bounds.left - proxyBounds.left);
+
+    // If the fast access menu is about to go off the right, bring it back.
+    if (left + 280 > proxyBounds.width) {
+      left = proxyBounds.width - 280;
+    }
+
+    // Similarly, if it's going to go off the bottom bring it back.
+    if (top + 312 > containerBounds.height) {
+      top = containerBounds.height - 312;
+    }
+
+    if (bounds.top === 0 || bounds.left === 0) {
+      top = 0;
+      left = 0;
+    }
+
+    this.style.setProperty("--fast-access-x", `${left}px`);
+    this.style.setProperty("--fast-access-y", `${top}px`);
+    this.#fastAccessRef.value.classList.add("active");
+
+    requestAnimationFrame(() => {
+      if (!this.#fastAccessRef.value) {
+        return;
+      }
+
+      this.#fastAccessRef.value.focusFilter();
+    });
+    this.#isUsingFastAccess = true;
+  }
+
+  #hideFastAccess() {
+    this.#isUsingFastAccess = false;
+    if (!this.#fastAccessRef.value) {
+      return;
+    }
+
+    this.#fastAccessRef.value.classList.remove("active");
+  }
+
+  async #onFlowgenEdit(event: GraphReplaceEvent) {
+    event.stopPropagation();
+    if (!this.graph) {
+      return;
+    }
+    const oldFlow = this.graph?.raw();
+    const newFlow = event.replacement;
+    if (!oldFlow || !newFlow) {
+      return;
+    }
+    const allConfigChanges = findConfigurationChanges(oldFlow, newFlow);
+    const id = "";
+    console.log(allConfigChanges);
+    const thisChange = allConfigChanges.find(
+      (change) => change.id && change.id === id
+    );
+    if (!thisChange) {
+      return;
+    }
+    // this.#generatedConfig = thisChange.configuration;
+    // // TODO(aomarks) It seems that <bb-text-editor> does not re-render when its
+    // // value changes from the outside for some reason. This trick forces a full
+    // // re-render of that and any other input elements, which does seem to work.
+    // // Figure out what's going on and replace with something less hacky.
+    // const oldConfig = this.configuration;
+    // this.configuration = null;
+    // await this.updateComplete;
+    // this.configuration = oldConfig;
   }
 
   #renderAsset(assetPath: AssetPath) {
@@ -974,7 +1196,41 @@ export class EntityEditor extends LitElement {
       return html`<div id="generic-status">Multiple items selected</div>`;
     }
 
-    return this.#renderSelectedItem();
+    return [
+      this.#renderSelectedItem(),
+      html`<bb-fast-access-menu
+          ${ref(this.#fastAccessRef)}
+          .showTools=${true}
+          .showAssets=${false}
+          .showComponents=${false}
+          .showParameters=${false}
+          @pointerdown=${(evt: PointerEvent) => {
+            evt.stopImmediatePropagation();
+          }}
+          @bbfastaccessdismissed=${() => {
+            this.#hideFastAccess();
+          }}
+          @bbfastaccessselect=${(evt: FastAccessSelectEvent) => {
+            this.#hideFastAccess();
+            if (!this.#editorRef.value) {
+              return;
+            }
+
+            this.#editorRef.value.restoreLastRange(false /* offsetLastChar */);
+            this.#editorRef.value.addItem(
+              evt.path,
+              evt.title,
+              evt.accessType,
+              evt.mimeType,
+              evt.instance
+            );
+          }}
+          .graphId=${null}
+          .nodeId=${null}
+          .state=${this.projectState?.fastAccess}
+        ></bb-fast-access-menu>
+        <div ${ref(this.#proxyRef)} id="proxy"></div>`,
+    ];
   }
 }
 

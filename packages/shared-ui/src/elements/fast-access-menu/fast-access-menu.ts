@@ -44,6 +44,18 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
   @property()
   accessor filter: string | null = null;
 
+  @property()
+  accessor showAssets = true;
+
+  @property()
+  accessor showTools = true;
+
+  @property()
+  accessor showComponents = true;
+
+  @property()
+  accessor showParameters = true;
+
   static styles = css`
     * {
       box-sizing: border-box;
@@ -301,10 +313,10 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     }
 
     this.#items = {
-      assets,
-      tools,
-      components,
-      parameters,
+      assets: this.showAssets ? assets : [],
+      tools: this.showTools ? tools : [],
+      components: this.showComponents ? components : [],
+      parameters: this.showParameters ? parameters : [],
     };
 
     const totalSize =
@@ -424,7 +436,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       this.filter !== "";
 
     if (idx === -1) {
-      if (this.filter && uniqueAndNew) {
+      if (this.filter && uniqueAndNew && this.showParameters) {
         // emit.
         const paramPath = this.filter.toLocaleLowerCase().replace(/\W/gim, "-");
         const title = toUpperCase(this.filter)!;
@@ -507,7 +519,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       this.#items.components.length === 0 &&
       this.#items.parameters.length === 0 &&
       this.#items.tools.length === 0 &&
-      this.filter !== "";
+      this.filter !== "" &&
+      this.showParameters;
 
     return html` <div ${ref(this.#itemContainerRef)}>
       <header>
@@ -538,7 +551,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
         />
       </header>
       <section id="assets">
-        <h3>Assets</h3>
+        ${this.showAssets ? html`<h3>Assets</h3>` : nothing}
         ${this.#items.assets.length
           ? html` <menu>
               ${this.#items.assets.map((asset) => {
@@ -567,11 +580,13 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                 </li>`;
               })}
             </menu>`
-          : html`<div class="no-items">No assets</div>`}
+          : this.showAssets
+            ? html`<div class="no-items">No assets</div>`
+            : nothing}
       </section>
 
       <section id="parameters">
-        <h3>Parameters</h3>
+        ${this.showParameters ? html`<h3>Parameters</h3>` : nothing}
         ${this.#items.parameters.length
           ? html` <menu>
               ${this.#items.parameters.map((parameter) => {
@@ -593,23 +608,25 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                 </li>`;
               })}
             </menu>`
-          : html`<div class="no-items">
-              No parameters
-              ${uniqueAndNew
-                ? html`<button
-                    id="create-new-param"
-                    @click=${() => {
-                      this.#emitCurrentItem();
-                    }}
-                  >
-                    Add "${toUpperCase(this.filter)}"
-                  </button>`
-                : nothing}
-            </div>`}
+          : this.showParameters
+            ? html`<div class="no-items">
+                No parameters
+                ${uniqueAndNew
+                  ? html`<button
+                      id="create-new-param"
+                      @click=${() => {
+                        this.#emitCurrentItem();
+                      }}
+                    >
+                      Add "${toUpperCase(this.filter)}"
+                    </button>`
+                  : nothing}
+              </div>`
+            : nothing}
       </section>
 
       <section id="tools">
-        <h3>Tools</h3>
+        ${this.showTools ? html`<h3>Tools</h3>` : nothing}
         ${this.#items.tools.length
           ? html` <menu>
               ${this.#items.tools.map((tool) => {
@@ -632,11 +649,13 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                 </li>`;
               })}
             </menu>`
-          : html`<div class="no-items">No tools</div>`}
+          : this.showTools
+            ? html`<div class="no-items">No tools</div>`
+            : nothing}
       </section>
 
       <section id="outputs">
-        <h3>Flow output from</h3>
+        ${this.showComponents ? html`<h3>Flow output from</h3>` : nothing}
         ${this.#items.components.length
           ? html` <menu>
               ${this.#items.components.map((component) => {
@@ -658,7 +677,9 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                 </li>`;
               })}
             </menu>`
-          : html`<div class="no-items">No components</div>`}
+          : this.showComponents
+            ? html`<div class="no-items">No components</div>`
+            : nothing}
       </section>
     </div>`;
   }

@@ -8,15 +8,16 @@ import { css } from "lit";
 
 export const fabStyles = css`
   .bb-fab {
-    background: var(--bb-ui-500) var(--bb-icon, var(--bb-icon-help)) center
-      center / var(--background-size, 20px) var(--background-size, 20px)
-      no-repeat;
+    background: var(--background-color, var(--bb-ui-500))
+      var(--bb-icon, var(--bb-icon-help)) center center /
+      var(--background-size, 20px) var(--background-size, 20px) no-repeat;
     width: var(--bb-grid-size-9);
     aspect-ratio: 1;
-    box-shadow: var(--bb-elevation-1);
-    border-radius: var(--bb-grid-size-16);
+    box-shadow: var(--box-shadow, var(--bb-elevation-1));
+    border-radius: var(--border-radius, var(--bb-grid-size-16));
     border: none;
     font-size: 0;
+    padding: 0;
 
     &:not([disabled]) {
       cursor: pointer;
@@ -24,7 +25,7 @@ export const fabStyles = css`
 
       &:focus,
       &:hover {
-        background-color: var(--bb-ui-700);
+        background-color: var(--background-color-active, var(--bb-ui-700));
       }
     }
   }
