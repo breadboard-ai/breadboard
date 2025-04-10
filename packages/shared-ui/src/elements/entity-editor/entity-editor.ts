@@ -518,35 +518,6 @@ export class EntityEditor extends LitElement {
         --output-border-radius: var(--bb-grid-size);
       }
     }
-
-    #controls {
-      height: var(--bb-grid-size-10);
-      display: flex;
-      align-items: center;
-      border-top: 1px solid var(--bb-neutral-300);
-      padding: 0 var(--bb-grid-size-4);
-
-      & button {
-        background: var(--bb-ui-500);
-        color: var(--bb-neutral-0);
-        font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
-          var(--bb-font-family);
-        border: none;
-        border-radius: var(--bb-grid-size-16);
-        height: var(--bb-grid-size-6);
-        padding: 0 var(--bb-grid-size-3);
-        transition: background-color 0.3s cubic-bezier(0, 0, 0.3, 1);
-
-        &:not([disabled]) {
-          cursor: pointer;
-
-          &:hover,
-          &:focus {
-            background-color: var(--bb-ui-600);
-          }
-        }
-      }
-    }
   `;
 
   #lastUpdateTimes: Map<"nodes" | "assets", number> = new Map();
@@ -873,15 +844,6 @@ export class EntityEditor extends LitElement {
 
             return html`<div class=${classMap(classes)}>${value}</div>`;
           })}
-        </div>
-        <div id="controls">
-          <button
-            @click=${() => {
-              this.#emitUpdatedNodeConfiguration();
-            }}
-          >
-            Update
-          </button>
         </div>
         <input type="hidden" name="graph-id" .value=${graphId} />
         <input type="hidden" name="node-id" .value=${nodeId} />
