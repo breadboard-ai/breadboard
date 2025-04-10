@@ -3563,7 +3563,8 @@ export class Main extends LitElement {
                   evt.id,
                   evt.configuration,
                   evt.subGraphId,
-                  evt.metadata
+                  evt.metadata,
+                  evt.ins
                 );
               }}
               @bbworkspacenewitemcreaterequest=${() => {
