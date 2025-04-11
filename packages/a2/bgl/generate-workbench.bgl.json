@@ -25,7 +25,9 @@
             }
           ]
         },
-        "generation-mode": "image"
+        "generation-mode": "image",
+        "p-aspect-ratio": "1:1",
+        "p-disable-prompt-rewrite": false
       }
     }
   ],
