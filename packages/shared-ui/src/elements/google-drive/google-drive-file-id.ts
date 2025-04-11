@@ -106,7 +106,7 @@ export class GoogleDriveFileId extends LitElement {
   accessor value: PickedValue | null = null;
 
   @property()
-  accessor connectionName = "google-drive-limited";
+  accessor connectionName = "$sign-in";
 
   #picker?: google.picker.Picker;
 

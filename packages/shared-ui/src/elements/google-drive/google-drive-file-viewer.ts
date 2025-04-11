@@ -8,7 +8,7 @@ import { LitElement, css, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { type InputEnterEvent } from "../../events/events.js";
 import "../connection/connection-input.js";
-import { loadDriveApi, loadGapi } from "./google-apis.js";
+import { loadDriveApi, loadGapiClient } from "./google-apis.js";
 import { until } from "lit/directives/until.js";
 
 @customElement("bb-google-drive-file-viewer")
@@ -48,7 +48,7 @@ export class GoogleDriveFileViewer extends LitElement {
   accessor mimeType: string | null = null;
 
   @property()
-  accessor connectionName = "google-drive-limited";
+  accessor connectionName = "$sign-in";
 
   #picker?: google.picker.Picker;
 
@@ -68,8 +68,8 @@ export class GoogleDriveFileViewer extends LitElement {
       return html`No file set`;
     }
 
-    const driveFile = loadGapi()
-      .then((gapi) => {
+    const driveFile = loadGapiClient()
+      .then(() => {
         if (!this._authorization) {
           return;
         }
