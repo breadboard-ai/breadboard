@@ -151,7 +151,7 @@ async function describe({
     description: "Uses Gemini to generate content and call tools",
     metadata: {
       icon: "generative",
-      tags: ["quick-access", "generative", "experimental", "generate"],
+      tags: ["quick-access", "generative", "generate"],
       order: 1,
     },
     inputSchema: {
