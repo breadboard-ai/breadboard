@@ -14,11 +14,7 @@ import { inspectableAssetEdgeToString } from "@breadboard-ai/shared-ui/utils/wor
 function isFocusedOnGraphRenderer(evt: Event) {
   return evt
     .composedPath()
-    .some(
-      (target) =>
-        target instanceof BreadboardUI.Elements.GraphRenderer ||
-        target instanceof BreadboardUI.Elements.Renderer
-    );
+    .some((target) => target instanceof BreadboardUI.Elements.Renderer);
 }
 
 export const DeleteCommand: KeyboardCommand = {
