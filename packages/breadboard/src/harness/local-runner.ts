@@ -142,6 +142,7 @@ export class LocalRunner
               this.dispatchEvent(new InputEvent(false, data));
               if (this.#resumeWith) {
                 reply({ inputs: this.#resumeWith });
+                this.#pendingResult = null;
                 this.#resumeWith = undefined;
               } else {
                 this.dispatchEvent(
@@ -200,6 +201,7 @@ export class LocalRunner
               this.dispatchEvent(new SecretEvent(false, data));
               if (this.#resumeWith) {
                 reply({ inputs: this.#resumeWith });
+                this.#pendingResult = null;
                 this.#resumeWith = undefined;
               } else {
                 this.dispatchEvent(
