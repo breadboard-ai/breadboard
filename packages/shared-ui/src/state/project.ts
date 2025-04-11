@@ -25,7 +25,6 @@ import {
   PortIdentifier,
   transformDataParts,
 } from "@google-labs/breadboard";
-import { isFromEmbeddedServer } from "@breadboard-ai/embedded-board-server";
 import { SignalMap } from "signal-utils/map";
 import { ReactiveOrganizer } from "./organizer";
 import {
@@ -41,6 +40,7 @@ import {
 import { ReactiveFastAccess } from "./fast-access";
 import { SideBoardRuntime } from "../sideboards/types";
 import { configFromData } from "../connectors/util";
+import { isA2 } from "@breadboard-ai/a2";
 
 export { createProjectState, ReactiveProject };
 
@@ -56,8 +56,7 @@ function isTool(entry: GraphStoreEntry) {
     entry.tags?.includes("tool") &&
     !!entry.url &&
     entry?.tags.includes("quick-access") &&
-    isFromEmbeddedServer(entry?.url, "std")
-    // (entry.url?.includes("/@shared/") || entry.url?.startsWith("file:"))
+    isA2(entry.url)
   );
 }
 
