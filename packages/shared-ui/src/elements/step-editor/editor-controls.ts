@@ -31,6 +31,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { DATA_TYPE } from "./constants.js";
 import { NodeAddEvent } from "./events/events.js";
 import { isA2 } from "@breadboard-ai/a2";
+import { until } from "lit/directives/until.js";
 
 const QUICK_ADD_ADJUSTMENT = -20;
 
@@ -84,8 +85,21 @@ export class EditorControls extends LitElement {
   };
 
   static styles = css`
+    * {
+      box-sizing: border-box;
+    }
+
     :host {
       display: block;
+      align-items: center;
+      justify-content: center;
+      font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+        var(--bb-font-family);
+      pointer-events: none;
+    }
+
+    :host > * {
+      pointer-events: auto;
     }
 
     #default-add {
@@ -111,30 +125,103 @@ export class EditorControls extends LitElement {
       }
     }
 
-    #shelf {
-      border-radius: var(--bb-grid-size-16);
-      height: 100%;
+    #top-shelf {
+      position: absolute;
       display: flex;
-      align-items: center;
-      padding: 0 var(--bb-grid-size) 0 var(--bb-grid-size-2);
-      box-shadow: var(--bb-elevation-1);
-      background: var(--bb-neutral-0);
-      margin: 0 var(--bb-grid-size-4);
+      left: 50%;
+      translate: -50% 0;
+      top: var(--bb-grid-size-5);
+
+      & .loading {
+        padding: 0 var(--bb-grid-size-4);
+        display: flex;
+        align-items: center;
+
+        &::before {
+          content: "";
+          display: block;
+          width: 20px;
+          height: 20px;
+          margin-right: var(--bb-grid-size-2);
+          background: url(/images/progress-ui.svg) center center / 20px 20px
+            no-repeat;
+        }
+      }
+
+      & #items {
+        display: flex;
+        align-items: center;
+
+        border-radius: var(--bb-grid-size-16);
+        height: var(--bb-grid-size-10);
+        box-shadow: var(--bb-elevation-1);
+        background: var(--bb-neutral-0);
+        padding: 0;
+
+        & button {
+          margin-right: var(--bb-grid-size);
+          background-color: var(--bb-neutral-0);
+          transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
+
+          &:first-of-type {
+            border-radius: var(--bb-grid-size-16) var(--bb-grid-size-2)
+              var(--bb-grid-size-2) var(--bb-grid-size-16);
+            margin-left: 2px;
+            padding-left: var(--bb-grid-size-4);
+          }
+
+          &:last-of-type {
+            border-radius: var(--bb-grid-size-2) var(--bb-grid-size-16)
+              var(--bb-grid-size-16) var(--bb-grid-size-2);
+            margin-right: 2px;
+            padding-right: var(--bb-grid-size-4);
+          }
+
+          &:hover,
+          &:focus {
+            background-color: var(--bb-neutral-50);
+          }
+
+          &::before {
+            content: "";
+            width: 20px;
+            height: 20px;
+            margin-right: var(--bb-grid-size-2);
+            background: var(--bb-icon-board) center center / 20px 20px no-repeat;
+          }
+
+          &.generative::before {
+            background-image: var(--bb-add-icon-generative);
+          }
+
+          &.input::before {
+            background-image: var(--bb-icon-input);
+          }
+
+          &.combine-outputs::before {
+            background-image: var(--bb-icon-table-rows);
+          }
+        }
+      }
 
       & button {
-        font-size: 0;
-        width: var(--bb-grid-size-7);
+        display: flex;
+        align-items: center;
         height: var(--bb-grid-size-9);
         border: none;
-        padding: 0 var(--bb-grid-size);
-        background: var(--bb-icon-board) center center / 20px 20px no-repeat;
+        border-radius: var(--bb-grid-size);
+        padding: 0 var(--bb-grid-size-2);
         position: relative;
         opacity: 0.3;
+        background: var(--bb-neutral-0);
+        font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
+          var(--bb-font-family);
+        transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+        white-space: nowrap;
 
         &:not([disabled]) {
-          opacity: 0.6;
           cursor: pointer;
-          transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+          opacity: 1;
 
           &:focus,
           &:hover {
@@ -142,70 +229,39 @@ export class EditorControls extends LitElement {
           }
         }
 
-        &#preset-comment {
-          background: var(--bb-icon-comment) center center / 20px 20px no-repeat;
-        }
-
         &#show-asset-organizer {
-          background: var(--bb-icon-alternate-email) 8px center / 20px 20px
-            no-repeat;
-          font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
-            var(--bb-font-family);
+          font-size: 0;
+          border-radius: 50%;
+          background: var(--bb-neutral-0) var(--bb-icon-alternate-email) center
+            center / 20px 20px no-repeat;
           padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-8);
-          width: auto;
-          border-left: 1px solid var(--bb-neutral-300);
+          width: var(--bb-grid-size-10);
+          height: var(--bb-grid-size-10);
+          box-shadow: var(--bb-elevation-1);
+          margin-left: var(--bb-grid-size-3);
         }
 
         &#zoom-to-fit {
-          border-left: 1px solid var(--bb-neutral-300);
+          font-size: 0;
+          border-radius: 50%;
+          margin-left: var(--bb-grid-size-3);
           width: var(--bb-grid-size-10);
-          background: var(--bb-icon-fit) center center / 20px 20px no-repeat;
-        }
-
-        &.expandable {
-          width: var(--bb-grid-size-12);
-          background:
-            var(--bb-icon-board) 8px center / 20px 20px no-repeat,
-            var(--bb-icon-keyboard-arrow-down) 28px center / 12px 12px no-repeat;
-
-          &#preset-all {
-            border-right: 1px solid var(--bb-neutral-100);
-            background:
-              var(--bb-icon-library-add) 8px center / 20px 20px no-repeat,
-              var(--bb-icon-keyboard-arrow-down) 28px center / 12px 12px
-                no-repeat;
-          }
-
-          &#preset-a2 {
-            background:
-              var(--bb-add-icon-generative) 10px center / 16px 16px no-repeat,
-              var(--bb-icon-keyboard-arrow-down) 28px center / 12px 12px
-                no-repeat;
-          }
-
-          &#preset-built-in {
-            background:
-              var(--bb-icon-route) 8px center / 20px 20px no-repeat,
-              var(--bb-icon-keyboard-arrow-down) 28px center / 12px 12px
-                no-repeat;
-          }
-
-          &#preset-tools {
-            background:
-              var(--bb-icon-home-repair-service) 8px center / 20px 20px
-                no-repeat,
-              var(--bb-icon-keyboard-arrow-down) 28px center / 12px 12px
-                no-repeat;
-          }
-
-          &#preset-modules {
-            background:
-              var(--bb-icon-step) 8px center / 20px 20px no-repeat,
-              var(--bb-icon-keyboard-arrow-down) 28px center / 12px 12px
-                no-repeat;
-          }
+          height: var(--bb-grid-size-10);
+          background: var(--bb-neutral-0) var(--bb-icon-fit) center center /
+            20px 20px no-repeat;
+          box-shadow: var(--bb-elevation-1);
         }
       }
+    }
+
+    #shelf {
+      position: absolute;
+      bottom: var(--bb-grid-size-5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     #component-picker {
@@ -551,21 +607,6 @@ export class EditorControls extends LitElement {
     this.showComponentLibrary = true;
   }
 
-  #showComponentPicker(target: HTMLElement, typeTag: string) {
-    if (!this.graphStore) {
-      return;
-    }
-
-    const bounds = target.getBoundingClientRect();
-    this.#componentPickerConfiguration = {
-      components: this.#createComponentList(this.graphStore, typeTag),
-      x: bounds.left - 5,
-      y: window.innerHeight - bounds.top + 16,
-    };
-
-    this.showComponentPicker = !this.showComponentPicker;
-  }
-
   #storeReady: Promise<void> = Promise.resolve();
   willUpdate() {
     this.#storeReady = Promise.resolve();
@@ -684,188 +725,100 @@ export class EditorControls extends LitElement {
       </bb-component-selector-overlay>`;
     }
 
-    const shelf = html`<div id="shelf">
-        <button
-          id="preset-all"
-          class="expandable"
-          ?disabled=${this.readOnly}
-          @pointerover=${(evt: PointerEvent) => {
-            this.dispatchEvent(
-              new ShowTooltipEvent(
-                Strings.from("COMMAND_SHOW_LIBRARY"),
-                evt.clientX,
-                evt.clientY
-              )
-            );
-          }}
-          @pointerout=${() => {
-            this.dispatchEvent(new HideTooltipEvent());
-          }}
-          @click=${async () => {
-            await this.#storeReady;
-            this.showComponentLibrary = !this.showComponentLibrary;
-          }}
-        >
-          ${Strings.from("LABEL_COMPONENT_LIBRARY")}
-        </button>
-        <button
-          id="preset-a2"
-          class="expandable"
-          ?disabled=${this.readOnly}
-          @pointerover=${(evt: PointerEvent) => {
-            this.dispatchEvent(
-              new ShowTooltipEvent(
-                Strings.from("COMMAND_LIBRARY_GROUP_1"),
-                evt.clientX,
-                evt.clientY
-              )
-            );
-          }}
-          @pointerout=${() => {
-            this.dispatchEvent(new HideTooltipEvent());
-          }}
-          @click=${async (evt: PointerEvent) => {
-            if (!(evt.target instanceof HTMLButtonElement)) {
-              return;
-            }
+    const mainItems = this.#storeReady.then(() => {
+      if (!this.graphStore) {
+        return html`Unable to load steps`;
+      }
 
-            await this.#storeReady;
-            this.#showComponentPicker(evt.target, "generative");
-          }}
-        >
-          ${Strings.from("LABEL_SHOW_LIST")}
-        </button>
-        <button
-          id="preset-built-in"
-          class="expandable"
-          ?disabled=${this.readOnly}
-          @pointerover=${(evt: PointerEvent) => {
-            this.dispatchEvent(
-              new ShowTooltipEvent(
-                Strings.from("COMMAND_LIBRARY_GROUP_2"),
-                evt.clientX,
-                evt.clientY
-              )
-            );
-          }}
-          @pointerout=${() => {
-            this.dispatchEvent(new HideTooltipEvent());
-          }}
-          @click=${async (evt: PointerEvent) => {
-            if (!(evt.target instanceof HTMLButtonElement)) {
-              return;
-            }
+      // TODO: Just do this in a single pass.
+      const generate = this.#createComponentList(this.graphStore, "generate");
+      const input = this.#createComponentList(this.graphStore, "input");
+      const output = this.#createComponentList(this.graphStore, "output");
 
-            await this.#storeReady;
-            this.#showComponentPicker(evt.target, "core");
-          }}
-        >
-          ${Strings.from("LABEL_SHOW_LIST")}
-        </button>
-        <button
-          id="preset-tools"
-          class="expandable"
-          ?disabled=${this.readOnly}
-          @pointerover=${(evt: PointerEvent) => {
-            this.dispatchEvent(
-              new ShowTooltipEvent(
-                Strings.from("COMMAND_LIBRARY_GROUP_3"),
-                evt.clientX,
-                evt.clientY
-              )
-            );
-          }}
-          @pointerout=${() => {
-            this.dispatchEvent(new HideTooltipEvent());
-          }}
-          @click=${async (evt: PointerEvent) => {
-            if (!(evt.target instanceof HTMLButtonElement)) {
-              return;
-            }
-
-            await this.#storeReady;
-            this.#showComponentPicker(evt.target, "tool");
-          }}
-        >
-          ${Strings.from("LABEL_SHOW_LIST")}
-        </button>
-        ${
-          Object.keys(this.graph.modules()).length > 0
-            ? html`<button
-                id="preset-modules"
-                class="expandable"
-                ?disabled=${this.readOnly}
-                @pointerover=${(evt: PointerEvent) => {
-                  this.dispatchEvent(
-                    new ShowTooltipEvent(
-                      Strings.from("COMMAND_LIBRARY_MODULES"),
-                      evt.clientX,
-                      evt.clientY
-                    )
-                  );
-                }}
-                @pointerout=${() => {
-                  this.dispatchEvent(new HideTooltipEvent());
-                }}
-                @click=${async (evt: PointerEvent) => {
-                  if (!(evt.target instanceof HTMLButtonElement)) {
-                    return;
-                  }
-
-                  await this.#storeReady;
-                  this.#showComponentPicker(evt.target, "modules");
-                }}
-              >
-                ${Strings.from("LABEL_SHOW_LIST")}
-              </button>`
-            : nothing
+      const items: HTMLTemplateResult[] = [
+        ...generate,
+        ...input,
+        ...output,
+      ].map((item) => {
+        const classes: Record<string, boolean> = {};
+        if (item.metadata.icon) {
+          classes[item.metadata.icon] = true;
         }
-        <button
-          id="show-asset-organizer"
-          @pointerover=${(evt: PointerEvent) => {
-            this.dispatchEvent(
-              new ShowTooltipEvent(
-                Strings.from("COMMAND_ASSET_ORGANIZER"),
-                evt.clientX,
-                evt.clientY
-              )
-            );
-          }}
-          @pointerout=${() => {
-            this.dispatchEvent(new HideTooltipEvent());
-          }}
+
+        return html`<button
+          draggable="true"
+          class=${classMap(classes)}
           @click=${() => {
-            this.dispatchEvent(new ShowAssetOrganizerEvent());
+            this.#handleChosenKitItem(item.id);
           }}
-        >
-          Assets
-        </button>
-        <button
-          id="zoom-to-fit"
-          @pointerover=${(evt: PointerEvent) => {
-            this.dispatchEvent(
-              new ShowTooltipEvent(
-                Strings.from("COMMAND_ZOOM_TO_FIT"),
-                evt.clientX,
-                evt.clientY
-              )
-            );
-          }}
-          @pointerout=${() => {
-            this.dispatchEvent(new HideTooltipEvent());
-          }}
-          @click=${() => {
-            let animate = true;
-            if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-              animate = false;
+          @dragstart=${(evt: DragEvent) => {
+            if (!evt.dataTransfer) {
+              return;
             }
 
-            this.dispatchEvent(new ZoomToFitEvent(animate));
+            evt.dataTransfer.setData(DATA_TYPE, item.id);
           }}
         >
-          Zoom to fit
-        </button>
+          ${item.metadata.title ?? "Untitled"}
+        </button>`;
+      });
+
+      return items;
+    });
+
+    const topShelf = html`<div id="top-shelf">
+      <div id="items">
+        ${until(mainItems, html`<div class="loading">Loading steps...</div>`)}
       </div>
+
+      <button
+        id="show-asset-organizer"
+        @pointerover=${(evt: PointerEvent) => {
+          this.dispatchEvent(
+            new ShowTooltipEvent(
+              Strings.from("COMMAND_ASSET_ORGANIZER"),
+              evt.clientX,
+              evt.clientY
+            )
+          );
+        }}
+        @pointerout=${() => {
+          this.dispatchEvent(new HideTooltipEvent());
+        }}
+        @click=${() => {
+          this.dispatchEvent(new ShowAssetOrganizerEvent());
+        }}
+      >
+        Assets
+      </button>
+      <button
+        id="zoom-to-fit"
+        @pointerover=${(evt: PointerEvent) => {
+          this.dispatchEvent(
+            new ShowTooltipEvent(
+              Strings.from("COMMAND_ZOOM_TO_FIT"),
+              evt.clientX,
+              evt.clientY
+            )
+          );
+        }}
+        @pointerout=${() => {
+          this.dispatchEvent(new HideTooltipEvent());
+        }}
+        @click=${() => {
+          let animate = true;
+          if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            animate = false;
+          }
+
+          this.dispatchEvent(new ZoomToFitEvent(animate));
+        }}
+      >
+        Zoom to fit
+      </button>
+    </div>`;
+
+    const shelf = html`<div id="shelf">
       <bb-describe-edit-button
         popoverPosition="above"
         .label=${Strings.from("COMMAND_DESCRIBE_EDIT_FLOW")}
@@ -940,6 +893,6 @@ export class EditorControls extends LitElement {
       </div>`;
     }
 
-    return [shelf, defaultAdd, componentLibrary, componentPicker];
+    return [topShelf, shelf, defaultAdd, componentLibrary, componentPicker];
   }
 }

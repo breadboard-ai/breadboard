@@ -102,8 +102,8 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
     :host {
       display: block;
       position: fixed;
-      width: 100svw;
-      height: 100svh;
+      width: 100%;
+      height: 100%;
       left: 0;
       top: 0;
     }

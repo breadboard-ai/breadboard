@@ -240,17 +240,11 @@ export class Renderer extends LitElement {
 
     bb-editor-controls {
       position: absolute;
-      display: flex;
-      bottom: var(--bb-grid-size-5);
+      top: 0;
       left: 0;
       width: 100%;
-      height: var(--bb-grid-size-9);
+      height: 100%;
       z-index: 3;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
-        var(--bb-font-family);
     }
   `;
 
