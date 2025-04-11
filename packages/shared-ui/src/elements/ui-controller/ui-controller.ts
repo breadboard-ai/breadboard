@@ -14,7 +14,6 @@ import {
   GraphDescriptor,
   GraphLoader,
   GraphProviderCapabilities,
-  GraphProviderExtendedCapabilities,
   InspectableRun,
   InspectableRunEvent,
   InspectableRunInputs,
@@ -58,7 +57,6 @@ import {
   COMMAND_SET_MODULE_EDITOR,
   MAIN_BOARD_ID,
 } from "../../constants/constants.js";
-import { Editor } from "../elements.js";
 import { classMap } from "lit/directives/class-map.js";
 import { Sandbox } from "@breadboard-ai/jsandbox";
 import { ChatController } from "../../state/chat-controller.js";
@@ -218,7 +216,6 @@ export class UI extends LitElement {
   #autoFocusEditorOnRender = false;
   #sideNavItem: "console" | "capabilities" | "revision-history" | "editor" =
     "editor";
-  #graphEditorRef: Ref<Editor> = createRef();
   #moduleEditorRef: Ref<ModuleEditor> = createRef();
 
   static styles = uiControllerStyles;
@@ -331,12 +328,6 @@ export class UI extends LitElement {
           .items.get("Enable Custom Step Creation")?.value
       : false;
 
-    const useLegacyRenderer = this.settings
-      ? this.settings
-          .getSection(SETTINGS_TYPE.GENERAL)
-          .items.get("Use Legacy Graph Renderer")?.value
-      : false;
-
     const showAssetsInGraph = this.settings
       ? this.settings
           .getSection(SETTINGS_TYPE.GENERAL)
@@ -345,7 +336,6 @@ export class UI extends LitElement {
 
     const graph = this.editor?.inspect("") || null;
     let capabilities: false | GraphProviderCapabilities = false;
-    let extendedCapabilities: false | GraphProviderExtendedCapabilities = false;
     for (const boardServer of this.boardServers) {
       if (!this.graph || !this.graph.url) {
         continue;
@@ -354,7 +344,6 @@ export class UI extends LitElement {
       const canProvide = boardServer.canProvide(new URL(this.graph.url));
       if (canProvide) {
         capabilities = canProvide;
-        extendedCapabilities = boardServer.extendedCapabilities();
         break;
       }
     }
@@ -393,43 +382,6 @@ export class UI extends LitElement {
         showCustomStepEditing,
       ],
       () => {
-        if (useLegacyRenderer) {
-          return html`<bb-editor
-            ${ref(this.#graphEditorRef)}
-            .graphStoreUpdateId=${this.graphStoreUpdateId}
-            .boardServerKits=${this.boardServerKits}
-            .graphStore=${this.graphStore}
-            .mainGraphId=${this.mainGraphId}
-            .showExperimentalComponents=${showExperimentalComponents}
-            .canRedo=${canRedo}
-            .canUndo=${canUndo}
-            .capabilities=${capabilities}
-            .collapseNodesByDefault=${collapseNodesByDefault}
-            .extendedCapabilities=${extendedCapabilities}
-            .graph=${graph}
-            .hideSubboardSelectorWhenEmpty=${hideSubboardSelectorWhenEmpty}
-            .highlightInvalidWires=${highlightInvalidWires}
-            .invertZoomScrollDirection=${invertZoomScrollDirection}
-            .readOnly=${this.readOnly}
-            .run=${run}
-            .showNodePreviewValues=${showNodePreviewValues}
-            .showNodeShortcuts=${showNodeShortcuts}
-            .showPortTooltips=${showPortTooltips}
-            .showSubgraphsInline=${this.mode === "tree"}
-            .showReadOnlyOverlay=${true}
-            .tabURLs=${this.tabURLs}
-            .topGraphResult=${this.topGraphResult}
-            .selectionState=${this.selectionState}
-            .visualChangeId=${this.visualChangeId}
-            .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-            .boardServers=${this.boardServers}
-            .showBoardReferenceMarkers=${this.showBoardReferenceMarkers}
-            @bbshowassetorganizer=${() => {
-              this.showAssetOrganizer = true;
-            }}
-          ></bb-editor>`;
-        }
-
         return html`<bb-renderer
           .boardServerKits=${this.boardServerKits}
           .graph=${graph}

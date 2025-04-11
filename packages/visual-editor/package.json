@@ -291,7 +291,6 @@
     "@codemirror/autocomplete": "^6.18.6",
     "@codemirror/commands": "^6.8.0",
     "@codemirror/lang-javascript": "^6.2.3",
-    "@dagrejs/dagre": "^1.1.4",
     "@google-labs/agent-kit": "^0.17.0",
     "@google-labs/breadboard": "^0.33.0",
     "@google-labs/core-kit": "^0.18.1",
@@ -312,7 +311,6 @@
     "lit": "^3.2.1",
     "markdown-it": "^14.1.0",
     "pdfjs-dist": "^5.1.91",
-    "pixi.js": "^8.8.1",
     "prettier": "^3.5.3"
   }
 }

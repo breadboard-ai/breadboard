@@ -154,23 +154,10 @@ export class BoardEmbed extends LitElement {
     }
     const inspectableGraph = graphStore.inspect(adding.result, "");
 
-    const collapseNodesByDefault = this.collapseNodesByDefault === "true";
-    return html`<bb-editor
-        .loader=${loader}
-        .kits=${kits}
-        .assetPrefix=${"/breadboard/static"}
+    return html`<bb-renderer
         .graph=${inspectableGraph}
-        .boardId=${1}
-        .editable=${false}
-        .showControls=${false}
-        .mode=${"minimal"}
-        .collapseNodesByDefault=${collapseNodesByDefault}
-        .hideSubboardSelectorWhenEmpty=${true}
-        .showNodePreviewValues=${false}
-        .showReadOnlyLabel=${false}
-        .readOnly=${true}
-        .hideRibbonMenu=${true}
-      ></bb-editor>
+        .graphTopologyUpdateId=${1}
+      ></bb-renderer>
       <div id="overlay"></div>
       ${this.url
         ? html`<a
