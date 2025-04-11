@@ -800,10 +800,7 @@ export class Renderer extends LitElement {
       }
     }
 
-    if (
-      changedProperties.has("highlightState") ||
-      changedProperties.has("topGraphResult")
-    ) {
+    if (changedProperties.has("highlightState")) {
       if (this.highlightState) {
         for (const [graphId, graph] of this.#graphs) {
           const highlightState =

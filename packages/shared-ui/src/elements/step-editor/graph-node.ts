@@ -95,7 +95,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
   @property({ reflect: true, type: Boolean })
   accessor highlighted = false;
 
-  @property({ reflect: false, type: String })
+  @property({ reflect: true, type: String })
   accessor active: "pre" | "current" | "post" | "error" = "pre";
 
   @property()
@@ -150,37 +150,13 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         height: 100%;
         outline: var(--bb-grid-size-2) solid
           oklch(from var(--bb-ui-600) l c h / 0.25);
-        border-radius: var(--bb-grid-size-2);
+        border-radius: var(--bb-grid-size-3);
         z-index: 0;
-      }
-
-      :host([active="pre"]) #container header::after,
-      :host([active="current"]) #container header::after,
-      :host([active="active"]) #container header::after,
-      :host([active="post"]) #container header::after {
-        flex: 0 0 auto;
-        content: "";
-        width: 20px;
-        height: 20px;
-        opacity: 0.3;
-        background: var(--bb-icon-do-not-disturb) center center / 20px 20px
-          no-repeat;
-        margin-left: var(--bb-grid-size-2);
       }
 
       :host([active="current"]) #container header::after {
         opacity: 1;
         background-image: url(/images/progress-ui.svg);
-      }
-
-      :host([active="post"]) #container header::after {
-        opacity: 1;
-        border-radius: 50%;
-        margin: var(--bb-grid-size);
-        width: 16px;
-        height: 16px;
-        background: var(--bb-ui-500) var(--bb-icon-check-inverted) center
-          center / 16px 16px no-repeat;
       }
 
       :host {
