@@ -1184,11 +1184,7 @@ export class Main extends LitElement {
     if (evt.key === "z" && isCtrlCommand) {
       const isFocusedOnRenderer = evt
         .composedPath()
-        .find(
-          (target) =>
-            target instanceof BreadboardUI.Elements.GraphRenderer ||
-            target instanceof BreadboardUI.Elements.Renderer
-        );
+        .find((target) => target instanceof BreadboardUI.Elements.Renderer);
 
       if (!isFocusedOnRenderer) {
         return;

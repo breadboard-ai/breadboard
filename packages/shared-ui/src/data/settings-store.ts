@@ -204,14 +204,6 @@ export class SettingsStore implements BreadboardUI_Types.SettingsStore {
           },
         ],
         [
-          "Use Legacy Graph Renderer",
-          {
-            name: "Use Legacy Graph Renderer",
-            description: "Toggles the legacy canvas renderer",
-            value: false,
-          },
-        ],
-        [
           "Show Assets in Graph",
           {
             name: "Show Assets in Graph",

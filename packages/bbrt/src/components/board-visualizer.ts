@@ -13,7 +13,6 @@ import {
 import { LitElement, css, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { MAIN_BOARD_ID } from "../../../shared-ui/dist/constants/constants.js";
-import type { GraphOpts } from "../../../shared-ui/dist/elements/editor/types.js";
 import { TopGraphObserver } from "../../../shared-ui/dist/utils/utils.js";
 import { loadSharedUi } from "../util/load-shared-ui.js";
 
@@ -55,7 +54,7 @@ export class BBRTBoardVisualizer extends LitElement {
     ></bb-graph-renderer>`;
   }
 
-  #config(graph: GraphDescriptor): GraphOpts {
+  #config(graph: GraphDescriptor): unknown {
     const inspectable = inspect(graph);
     const ports = new Map<string, InspectableNodePorts>();
     const typeMetadata = new Map<string, NodeHandlerMetadata>();

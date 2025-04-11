@@ -29,7 +29,6 @@ import type {
   Schema,
   TemplatePart,
 } from "@google-labs/breadboard";
-import { ComponentExpansionState } from "../elements/editor/types.js";
 import type {
   AppTemplateAdditionalOptionsAvailable,
   AppTheme,
@@ -1082,23 +1081,6 @@ export class GraphInteractionEvent extends Event {
 
   constructor() {
     super(GraphInteractionEvent.eventName, { ...eventInit });
-  }
-}
-
-export class GraphNodesVisualUpdateEvent extends Event {
-  static eventName = "bbgraphnodesmove";
-
-  constructor(
-    public readonly nodes: Array<{
-      readonly id: string;
-      readonly type: "node" | "comment";
-      readonly x: number;
-      readonly y: number;
-      readonly expansionState: ComponentExpansionState;
-    }>,
-    public readonly subGraphId: string | null
-  ) {
-    super(GraphNodesVisualUpdateEvent.eventName, { ...eventInit });
   }
 }
 

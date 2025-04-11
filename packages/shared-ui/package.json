@@ -33,8 +33,8 @@
       "types": "./dist/data/settings-store.d.ts"
     },
     "./editor": {
-      "types": "./dist/elements/editor/editor.d.ts",
-      "default": "./dist/elements/editor/editor.js"
+      "types": "./dist/elements/step-editor/renderer.d.ts",
+      "default": "./dist/elements/step-editor/renderer.js"
     },
     "./strings/en_US": {
       "types": "./dist/strings/en_US/index.d.ts",

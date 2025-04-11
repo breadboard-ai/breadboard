@@ -48,7 +48,6 @@ import {
   COMMAND_SET_MODULE_EDITOR,
   MAIN_BOARD_ID,
 } from "../../constants/constants";
-import { GraphOpts } from "../editor/types";
 
 const PREVIEW_KEY = "bb-module-editor-preview-visible";
 
@@ -692,7 +691,7 @@ export class ModuleEditor extends LitElement {
     url: string,
     subGraphId: string | null,
     selectedGraph: InspectableGraph
-  ): GraphOpts {
+  ) {
     const ports = new Map<string, InspectableNodePorts>();
     const typeMetadata = new Map<string, NodeHandlerMetadata>();
     for (const node of selectedGraph.nodes()) {
@@ -725,7 +724,7 @@ export class ModuleEditor extends LitElement {
 
   #createModuleGraphConfig(
     isMainModule = false
-  ): Map<GraphIdentifier, GraphOpts> | null {
+  ): Map<GraphIdentifier, unknown> | null {
     if (!this.moduleId || !this.modules) {
       return null;
     }
