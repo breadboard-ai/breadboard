@@ -1,0 +1,68 @@
+{
+  "title": "Env Metadata Workbench",
+  "description": "",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "e5e6d8cf-9609-4f90-8045-92a6eb954fa8",
+      "type": "embed://a2/a2.bgl.json#module:render-outputs",
+      "metadata": {
+        "title": "Render Outputs",
+        "visual": {
+          "x": 0,
+          "y": -120
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "p-render-mode": "HTML",
+        "text": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Show \"COOL STUFF\" in very large letters, and under it, a subtitle \"This is so cool\"."
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "edges": [],
+  "metadata": {
+    "visual": {
+      "presentation": {
+        "themes": {
+          "39239b49-62d0-4182-b919-924c4db67941": {
+            "themeColors": {
+              "primaryColor": "#44b724",
+              "secondaryColor": "#ecff5c",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#c3b6b6"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "39239b49-62d0-4182-b919-924c4db67941"
+      }
+    },
+    "userModified": true,
+    "tags": [],
+    "parameters": {}
+  },
+  "assets": {
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI1NS43NyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMjMwLjAwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iODguNDYiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyMGEyMDIiIC8+CiAgICAgIAogICAgPC9zdmc+"
+    }
+  }
+}

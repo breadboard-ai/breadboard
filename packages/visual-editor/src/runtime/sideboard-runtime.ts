@@ -31,6 +31,7 @@ import {
   Outcome,
   err,
   NodeDescriberResult,
+  envFromGraphDescriptor,
 } from "@google-labs/breadboard";
 import {
   createFileSystemBackend,
@@ -198,7 +199,7 @@ class SideboardRuntimeImpl
       graphStore: this.#graphStore,
       fileSystem: this.#fileSystem.createRunFileSystem({
         graphUrl: url,
-        env: [],
+        env: envFromGraphDescriptor(graph),
         assets: assetsFromGraphDescriptor(graph),
       }),
       interactiveSecrets: true,

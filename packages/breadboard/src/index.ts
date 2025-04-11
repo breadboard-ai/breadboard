@@ -107,6 +107,7 @@ export {
   asBase64,
   asBlob,
   assetsFromGraphDescriptor,
+  envFromGraphDescriptor,
   convertStoredPartsToAbsoluteUrls,
   createDefaultDataStore,
   createDefaultRunStore,

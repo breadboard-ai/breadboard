@@ -52,6 +52,9 @@ export {
   writablePathFromString,
 } from "./file-system/index.js";
 
-export { assetsFromGraphDescriptor } from "./file-system/assets.js";
+export {
+  assetsFromGraphDescriptor,
+  envFromGraphDescriptor,
+} from "./file-system/assets.js";
 
 export { StubFileSystem } from "./file-system/stub-file-system.js";

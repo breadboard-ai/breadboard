@@ -3,9 +3,11 @@
  */
 
 import { Template } from "./template";
-import { ok, toText, isEmpty, toLLMContent } from "./utils";
+import { ok, err, toText, isEmpty, toLLMContent } from "./utils";
 import { callGenWebpage } from "./html-generator";
 import { fanOutContext, flattenContext } from "./lists";
+
+import read from "@read";
 
 export { invoke as default, describe };
 
@@ -20,6 +22,89 @@ type DescribeInputs = {
     text?: LLMContent;
   };
 };
+
+type GraphMetadata = {
+  title?: string;
+  description?: string;
+  version?: string;
+  url?: string;
+  icon?: string;
+  visual?: {
+    presentation?: Presentation;
+  };
+  userModified?: boolean;
+  tags?: string[];
+  comments: Comment[];
+};
+
+type Comment = {
+  id: string;
+  text: string;
+  metadata: {
+    title: string;
+    visual: {
+      x: number;
+      y: number;
+      collapsed: "expanded";
+      outputHeight: number;
+    };
+  };
+};
+
+type Presentation = {
+  themes?: Record<string, Theme>;
+  theme?: string;
+};
+
+type Theme = {
+  themeColors?: ThemeColors;
+  template?: string;
+  splashScreen?: StoredDataCapabilityPart;
+};
+
+type ThemeColors = {
+  primaryColor?: string;
+  secondaryColor?: string;
+  backgroundColor?: string;
+  textColor?: string;
+  primaryTextColor?: string;
+};
+
+function defaultThemeColors(): ThemeColors {
+  return {
+    primaryColor: "#246db5",
+    secondaryColor: "#5cadff",
+    backgroundColor: "#ffffff",
+    textColor: "#1a1a1a",
+    primaryTextColor: "#ffffff",
+  };
+}
+
+async function getThemeColors(): Promise<ThemeColors> {
+  const readingMetadata = await read({ path: "/env/metadata" });
+  if (!ok(readingMetadata)) return defaultThemeColors();
+  const metadata = (readingMetadata.data?.at(0)?.parts?.at(0) as JSONPart)
+    ?.json as GraphMetadata;
+  if (!metadata) return defaultThemeColors();
+  const currentThemeId = metadata?.visual?.presentation?.theme;
+  if (!currentThemeId) return defaultThemeColors();
+  const themeColors =
+    metadata?.visual?.presentation?.themes?.[currentThemeId]?.themeColors;
+  if (!themeColors) return defaultThemeColors();
+  return { ...defaultThemeColors(), ...themeColors };
+}
+
+function themeColorsPrompt(colors: ThemeColors): string {
+  return `Use the following theme colors:
+
+- primary color: ${colors.primaryColor}
+- secondary color: ${colors.secondaryColor}
+- background color: ${colors.backgroundColor}
+- text color: ${colors.textColor}
+- primary text color: ${colors.primaryTextColor}
+
+`;
+}
 
 async function invoke({
   text,
@@ -48,7 +133,10 @@ async function invoke({
   if (renderMode != "Manual") {
     let instruction = "Render content with markdown format.";
     if (renderMode === "HTML" || renderMode === "Interactive") {
-      instruction = "Render content as a mobile webpage.";
+      instruction = `Render content as a mobile webpage.
+
+${themeColorsPrompt(await getThemeColors())}
+`;
     }
     instruction +=
       " Assume content will render on a mobile device. Use a responsive or mobile-friendly layout whenever possible and minimize unnecessary padding or margins.";

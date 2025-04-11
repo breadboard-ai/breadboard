@@ -13,6 +13,7 @@ import {
   createFileSystem,
   createGraphStore,
   createRunObserver,
+  envFromGraphDescriptor,
   Kit,
 } from "@google-labs/breadboard";
 import { BoardServerAwareDataStore } from "@breadboard-ai/board-server-management";
@@ -78,7 +79,7 @@ export async function createFlowRunner(
     graphStore: graphStore,
     fileSystem: fileSystem.createRunFileSystem({
       graphUrl: graph.url!,
-      env: [],
+      env: envFromGraphDescriptor(graph),
       assets: assetsFromGraphDescriptor(graph),
     }),
   };
