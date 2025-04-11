@@ -32,7 +32,7 @@ export class ExpandingTextarea extends LitElement {
   @property()
   accessor placeholder = "";
 
-  @property({ type: Boolean })
+  @property({ type: Boolean, reflect: true })
   accessor disabled = false;
 
   #measure = createRef<HTMLElement>();
@@ -48,6 +48,15 @@ export class ExpandingTextarea extends LitElement {
         border: 1px solid currentColor;
         border-radius: 0.5lh;
         overflow-y: hidden;
+      }
+      :host([disabled]) {
+        textarea {
+          color: rgb(from currentColor r g b / 50%);
+          cursor: wait;
+        }
+        #submit {
+          cursor: wait;
+        }
       }
       #outer-container {
         display: flex;
