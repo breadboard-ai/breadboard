@@ -8,7 +8,8 @@
   "description": "Board Server",
   "main": "./dist/server/index.js",
   "exports": {
-    ".": "./dist/lib/src/server.js"
+    ".": "./dist/lib/src/server.js",
+    "./firestore.js": "./dist/lib/src/server/storage-providers/firestore.js"
   },
   "type": "module",
   "scripts": {

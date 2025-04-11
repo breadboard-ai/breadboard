@@ -4,7 +4,9 @@
   "version": "0.0.1",
   "description": "A collection of maintenance scripts",
   "type": "module",
-  "scripts": {},
+  "scripts": {
+    "list": "tsx src/firestore.ts"
+  },
   "repository": {
     "directory": "packages/blank",
     "type": "git",
@@ -18,10 +20,14 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
+    "@google-labs/tsconfig": "^0.0.1",
+    "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
-    "@types/node": "^22.0.0",
-    "typescript": "^5.8.2",
-    "@google-labs/tsconfig": "^0.0.1"
+    "typescript": "^5.8.2"
+  },
+  "dependencies": {
+    "@breadboard-ai/board-server": "0.13.0",
+    "@google-cloud/firestore": "^7.11.0"
   }
 }
