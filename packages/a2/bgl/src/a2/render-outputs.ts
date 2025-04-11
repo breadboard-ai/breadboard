@@ -110,7 +110,7 @@ async function describe({ inputs: { text } }: DescribeInputs) {
     title: "Render Outputs",
     metadata: {
       icon: "combine-outputs",
-      tags: ["quick-access", "core"],
+      tags: ["quick-access", "core", "output"],
       order: 100,
     },
   };

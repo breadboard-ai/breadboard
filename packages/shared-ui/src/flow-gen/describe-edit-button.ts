@@ -72,6 +72,8 @@ export class DescribeEditButton extends LitElement {
       }
       :host([popoverPosition="above"]) #panel {
         bottom: calc(36px + 8px);
+        right: 50%;
+        translate: 50% 0;
       }
       :host([popoverPosition="below"]) #panel {
         top: calc(36px + 8px);

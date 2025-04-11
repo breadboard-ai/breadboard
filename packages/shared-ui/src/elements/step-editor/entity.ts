@@ -66,8 +66,9 @@ export class Entity extends LitElement {
     //    transform).
     // 3. Apply the parent's matrix to the current entity *after* the bounds
     //    have been checked and any local transforms adjusted.
+    const updatedTransform = matrix.multiply(this.transform);
     for (const entity of this.entities.values()) {
-      entity.updateEntity(matrix.multiply(this.transform));
+      entity.updateEntity(updatedTransform);
     }
 
     this.bounds = this.calculateLocalBounds();

@@ -147,7 +147,7 @@ async function describe({
     title: "Ask User",
     metadata: {
       icon: "input",
-      tags: ["quick-access", "core"],
+      tags: ["quick-access", "core", "input"],
       order: 1,
     },
   };
