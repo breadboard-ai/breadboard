@@ -4,13 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, css, html, nothing, type PropertyValues } from "lit";
+import { LitElement, css, html, type PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { icons } from "../../styles/icons.js";
 
 /**
  * A text input which grows to fit its content.
+ *
+ * Use the "submit" slot to set the config icon, e.g.:
+ *   <span slot="submit" class="g-icon">spark</span>
  *
  * Use the `--min-lines` and `--max-lines` CSS custom properties to configure
  * the height (relative to `line-height`).
@@ -31,9 +34,6 @@ export class ExpandingTextarea extends LitElement {
 
   @property({ type: Boolean })
   accessor disabled = false;
-
-  @property()
-  accessor submitButtonIcon = "spark";
 
   #measure = createRef<HTMLElement>();
   #textarea = createRef<HTMLTextAreaElement>();
@@ -136,18 +136,22 @@ export class ExpandingTextarea extends LitElement {
           ></textarea>
           <div id="measure" ${ref(this.#measure)}></div>
         </div>
-        ${this.submitButtonIcon
-          ? html`
-              <button id="submit" aria-label="Submit" @click=${this.#submit}>
-                <span class="g-icon">${this.submitButtonIcon}</span>
-              </button>
-            `
-          : nothing}
+        <button id="submit" aria-label="Submit" @click=${this.#submit}>
+          <slot name="submit">
+            <span class="g-icon">spark</span>
+          </slot>
+        </button>
       </div>
     `;
   }
 
-  focus() {
+  async focus() {
+    if (this.isUpdatePending) {
+      // Handle the case where disabled has been set to false, and then focus()
+      // was called, but before this element has a chance to update the internal
+      // disabled state of the textarea (which will prevent focus while true).
+      await this.updateComplete;
+    }
     this.#textarea.value?.focus();
   }
 

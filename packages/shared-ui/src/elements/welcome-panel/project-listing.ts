@@ -132,16 +132,7 @@ export class ProjectListing extends LitElement {
             }
           }
 
-          & #cta {
-            font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
-              var(--bb-font-family);
-            color: var(--bb-neutral-700);
-            padding: 0;
-            margin: 8px 0 0 0;
-          }
-
           & bb-describe-flow-panel {
-            margin-top: 32px;
             width: 100%;
             max-width: 976px;
           }
@@ -707,7 +698,6 @@ export class ProjectListing extends LitElement {
               >${Strings.from("LABEL_WELCOME_MESSAGE_B")}</span
             >
           </h1>
-          <p id="cta">${Strings.from("LABEL_WELCOME_CTA")}</p>
           <bb-describe-flow-panel></bb-describe-flow-panel>
         </section>
 
