@@ -789,7 +789,7 @@ export class EntityEditor extends LitElement {
     const value = node.ports(this.values).then((ports) => {
       // Ensure the most recent values before proceeding.
       if (lastUpdateTime !== this.#lastUpdateTimes.get("nodes")) {
-        return;
+        return nothing;
       }
 
       const metadata = node.type().currentMetadata();
@@ -1157,9 +1157,14 @@ export class EntityEditor extends LitElement {
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     if (changedProperties.has("selectionState") && this.#edited) {
-      // Eagerly process a change.
-      this.#edited = false;
-      this.#emitUpdatedNodeConfiguration();
+      if (this.#edited) {
+        // Autosave.
+        this.#edited = false;
+        this.#emitUpdatedNodeConfiguration();
+      }
+
+      // Reset the node value so that we don't receive incorrect port data.
+      this.values = undefined;
     }
 
     if (changedProperties.has("autoFocus")) {
