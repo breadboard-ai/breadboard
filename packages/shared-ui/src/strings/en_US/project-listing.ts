@@ -52,7 +52,7 @@ export default {
     str: "Flow",
   },
   LABEL_WELCOME_CTA: {
-    str: "What do you want to create today?  Type it in or select a template.",
+    str: "Describe what you want to build or remix from the gallery",
   },
   LABEL_PLACEHOLDER_DESCRIPTION: {
     str: "Describe what you want to make in 1-2 sentences",
@@ -109,7 +109,7 @@ export default {
     str: "Search Flows",
   },
   LABEL_GENERATING_FLOW: {
-    str: "Generating your flow",
+    str: "Generating your flow ...",
   },
   LABEL_GENERATING_FLOW_DETAIL: {
     str: "Your flow will open automatically when ready",

@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css } from "lit";
-import { customElement, state } from "lit/decorators.js";
+import { LitElement, html, css, type PropertyValues } from "lit";
+import { customElement, property, state } from "lit/decorators.js";
 import * as StringsHelper from "../strings/helper.js";
 import { outlineButtonWithIcon } from "../styles/outline-button-with-icon.js";
 import { createRef, ref } from "lit/directives/ref.js";
@@ -20,6 +20,7 @@ import "../elements/input/expanding-textarea.js";
 import { chipStyles } from "../styles/chip.js";
 import { FlowGenerator } from "./flow-generator.js";
 import { AppCatalystApiClient } from "./app-catalyst.js";
+import { classMap } from "lit/directives/class-map.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
@@ -73,11 +74,19 @@ export class DescribeFlowPanel extends LitElement {
         flex-direction: column;
         justify-content: center;
         align-items: center;
+        margin: 15px 0 0 0;
       }
 
-      #describe-button {
-        --bb-icon: var(--bb-add-icon-generative-text);
-        color: inherit;
+      #feedback {
+        font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
+          var(--bb-font-family);
+        color: var(--bb-neutral-700);
+        padding: 0;
+        word-break: break-all;
+
+        > .error {
+          color: var(--bb-warning-500);
+        }
       }
 
       #gradient-border-container {
@@ -87,6 +96,13 @@ export class DescribeFlowPanel extends LitElement {
         background: linear-gradient(0deg, #fdf7f8, #f7f9fe);
         border-radius: 100px;
         padding: 10px;
+        margin: 20px 0 0 0;
+        transition: box-shadow 1s ease-out;
+      }
+
+      :host([highlighted]) #gradient-border-container {
+        transition: box-shadow 200ms ease-in;
+        box-shadow: 0 0 10px 4px rgb(255 0 0 / 20%);
       }
 
       bb-expanding-textarea {
@@ -97,7 +113,6 @@ export class DescribeFlowPanel extends LitElement {
         border: none;
         border-radius: 100px;
         padding: 0.5lh 1lh;
-        --submit-button-color: #3271ea;
         --min-lines: 1;
         --max-lines: 6;
         font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
@@ -108,36 +123,9 @@ export class DescribeFlowPanel extends LitElement {
         &::part(textarea)::placeholder {
           color: var(--bb-neutral-500);
         }
-      }
-
-      #generating-container {
-        background: #fff;
-        border-radius: 0.5lh;
-        padding: 1lh;
-        display: flex;
-        font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
-          var(--bb-font-family);
-        box-shadow: 0px 4px 10.1px 0px rgba(0, 0, 0, 0.1);
-      }
-
-      #generating-spinner {
-        width: 30px;
-        aspect-ratio: 1;
-        margin-right: 20px;
-      }
-
-      #generating-status {
-        font-size: 18px;
-      }
-
-      #generating-status-detail {
-        margin-top: 8px;
-        font-size: 14px;
-        color: var(--bb-neutral-500);
-      }
-
-      #error {
-        color: var(--bb-error-color);
+        > [slot~="submit"] {
+          color: #3271ea;
+        }
       }
 
       #chips {
@@ -149,6 +137,26 @@ export class DescribeFlowPanel extends LitElement {
           background: #ebf5ff;
         }
       }
+
+      .spin {
+        animation: spin 1.5s linear infinite;
+      }
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .g-icon {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 600,
+          "GRAD" 0,
+          "opsz" 48;
+      }
     `,
   ];
 
@@ -158,38 +166,34 @@ export class DescribeFlowPanel extends LitElement {
   @state()
   accessor #state: State = { status: "initial" };
 
+  @property({ reflect: true, type: Boolean })
+  accessor highlighted = false;
+
   readonly #descriptionInput = createRef<ExpandingTextarea>();
 
-  render() {
+  override render() {
+    return [
+      html`<p id="feedback">${this.#renderFeedback()}</p>`,
+      this.#renderInput(),
+      this.#renderTemplateChips(),
+    ];
+  }
+
+  override async updated(changes: PropertyValues) {
+    if (changes.has("#state") && this.#state.status === "error") {
+      this.#descriptionInput.value?.focus();
+      this.highlighted = true;
+      setTimeout(() => (this.highlighted = false), 2500);
+    }
+  }
+
+  #renderFeedback() {
     switch (this.#state.status) {
       case "initial": {
-        return html`
-          <div id="gradient-border-container">
-            <bb-expanding-textarea
-              ${ref(this.#descriptionInput)}
-              .placeholder=${Strings.from("LABEL_PLACEHOLDER_DESCRIPTION")}
-              submitButtonIcon="pen_spark"
-              @change=${this.#onInputChange}
-            >
-            </bb-expanding-textarea>
-          </div>
-          ${this.#renderTemplateChips()}
-        `;
+        return Strings.from("LABEL_WELCOME_CTA");
       }
       case "generating": {
-        return html`
-          <div id="generating-container">
-            <img id="generating-spinner" src="/images/progress-ui.svg" />
-            <div>
-              <div id="generating-status">
-                ${Strings.from("LABEL_GENERATING_FLOW")}
-              </div>
-              <div id="generating-status-detail">
-                ${Strings.from("LABEL_GENERATING_FLOW_DETAIL")}
-              </div>
-            </div>
-          </div>
-        `;
+        return Strings.from("LABEL_GENERATING_FLOW");
       }
       case "error": {
         let error = this.#state.error as
@@ -207,12 +211,32 @@ export class DescribeFlowPanel extends LitElement {
         } else {
           message = String(error);
         }
-        return html`<div id="error">${message}</div>`;
+        return html`<span class="error">${message}</span>`;
       }
       default: {
         this.#state satisfies never;
       }
     }
+  }
+
+  #renderInput() {
+    const isGenerating = this.#state.status === "generating";
+    return html`
+      <div id="gradient-border-container">
+        <bb-expanding-textarea
+          ${ref(this.#descriptionInput)}
+          .placeholder=${Strings.from("LABEL_PLACEHOLDER_DESCRIPTION")}
+          .disabled=${isGenerating}
+          @change=${this.#onInputChange}
+        >
+          <span
+            slot="submit"
+            class=${classMap({ "g-icon": true, spin: isGenerating })}
+            >${isGenerating ? "progress_activity" : "spark"}</span
+          >
+        </bb-expanding-textarea>
+      </div>
+    `;
   }
 
   #renderTemplateChips() {
@@ -245,7 +269,13 @@ export class DescribeFlowPanel extends LitElement {
     const input = this.#descriptionInput.value;
     const description = input?.value;
     if (description) {
-      input.value = "";
+      if (description === "/force generating") {
+        this.#state = { status: "generating" };
+        return;
+      } else if (description === "/force initial") {
+        this.#state = { status: "initial" };
+        return;
+      }
       this.#state = { status: "generating" };
       void this.#generateBoard(description)
         .then((graph) => this.#onGenerateComplete(graph))

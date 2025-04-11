@@ -54,8 +54,12 @@ export class FlowGenerator {
     if (constraint && !context?.flow) {
       throw new Error(
         `Error editing flow with constraint ${constraint.kind}:` +
-        ` An original flow was not provided.`
+          ` An original flow was not provided.`
       );
+    }
+    if (intent.startsWith("/force error ")) {
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      throw new Error(intent.slice("/force error ".length));
     }
     const request: AppCatalystChatRequest = {
       messages: [
@@ -106,11 +110,12 @@ export class FlowGenerator {
       // explaining why.
       const probableErrorMessage = responseMessages.join("\n\n");
       if (probableErrorMessage) {
-        throw new Error(`No flow was generated: ${probableErrorMessage}`);
+        // TODO(aomarks) This shouldn't be an exception, it's a very normal part
+        // of the expected flow. Return a more detailed result object instead.
+        throw new Error(probableErrorMessage);
       }
       throw new Error(
-        `Expected a new flow and/or an error message,` +
-        ` got ${JSON.stringify(messages)}.`
+        `Unexpected error: backend did not return a response. Please try again.`
       );
     }
 
@@ -132,16 +137,16 @@ export class FlowGenerator {
         if (!originalStep) {
           throw new Error(
             `Error creating prompt for ${constraint.kind} constraint:` +
-            ` An original step was not found` +
-            ` with ID ${JSON.stringify(constraint.stepId)}.`
+              ` An original step was not found` +
+              ` with ID ${JSON.stringify(constraint.stepId)}.`
           );
         }
         const title = originalStep?.metadata?.title;
         if (!title) {
           throw new Error(
             `Error creating prompt for ${constraint.kind} constraint:` +
-            ` Original step did not have a title` +
-            ` with ID ${JSON.stringify(constraint.stepId)}.`
+              ` Original step did not have a title` +
+              ` with ID ${JSON.stringify(constraint.stepId)}.`
           );
         }
         return (
@@ -173,8 +178,8 @@ export class FlowGenerator {
         if (!originalStepClone) {
           throw new Error(
             `Error applying ${constraint.kind} constraint to flow:` +
-            ` An original step was not found` +
-            ` with id ${JSON.stringify(originalStepId)}.`
+              ` An original step was not found` +
+              ` with id ${JSON.stringify(originalStepId)}.`
           );
         }
         const originalTitle = originalStepClone.metadata?.title;
@@ -187,9 +192,9 @@ export class FlowGenerator {
         if (!generatedStep) {
           throw new Error(
             `Error applying ${constraint.kind} constraint to flow:` +
-            ` A generated step was not found` +
-            ` with id ${JSON.stringify(originalStepId)}` +
-            ` nor title ${JSON.stringify(originalTitle)}.`
+              ` A generated step was not found` +
+              ` with id ${JSON.stringify(originalStepId)}` +
+              ` nor title ${JSON.stringify(originalTitle)}.`
           );
         }
         const originalConfig = originalStepClone.configuration;
