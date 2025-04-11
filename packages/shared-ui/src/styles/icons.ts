@@ -41,6 +41,7 @@ export const icons = css`
     direction: ltr;
     -webkit-font-feature-settings: "liga";
     -webkit-font-smoothing: antialiased;
+    overflow: hidden;
 
     font-variation-settings:
       "FILL" 0,
