@@ -705,6 +705,12 @@ export class Renderer extends LitElement {
     }
 
     this.#removeEffect("camera");
+
+    // Only allow pan-drag and zoom when there are no other actions going on.
+    if (this.interactionMode !== "inert") {
+      return;
+    }
+
     if (isCtrlCommand(evt) || evt.ctrlKey) {
       const currentScale = this.camera.transform.a;
       const newScale = currentScale * (1 - evt.deltaY / this.zoomFactor);
@@ -1425,6 +1431,10 @@ export class Renderer extends LitElement {
               );
             }}
             @bbselectiontranslate=${(evt: SelectionTranslateEvent) => {
+              if (this.interactionMode === "pan") {
+                return;
+              }
+
               this.#applyTranslationToSelection(evt.x, evt.y, evt.hasSettled);
 
               this._boundsDirty = new Set([
