@@ -48,7 +48,7 @@ export class GoogleDriveFileViewer extends LitElement {
   accessor mimeType: string | null = null;
 
   @property()
-  accessor connectionName = "google-drive-limited";
+  accessor connectionName = "$sign-in";
 
   #picker?: google.picker.Picker;
 

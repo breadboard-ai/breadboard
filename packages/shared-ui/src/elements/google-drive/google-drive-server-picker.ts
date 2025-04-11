@@ -12,7 +12,7 @@ import {
 } from "../../events/events";
 import { Task } from "@lit/task";
 
-const DRIVE_CONNECTION_ID = "google-drive-limited";
+const DRIVE_CONNECTION_ID = "$sign-in";
 const ALL_BOARD_SERVER_FOLDERS_QUERY =
   "appProperties has { key = 'breadboard' and value = 'root' } and trashed = false";
 
