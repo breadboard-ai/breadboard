@@ -36,6 +36,7 @@ import {
   isInlineData,
   isStoredData,
   EditHistoryCreator,
+  envFromGraphDescriptor,
 } from "@google-labs/breadboard";
 import {
   createFileSystemBackend,
@@ -1327,7 +1328,7 @@ export class Main extends LitElement {
           graphStore: this.#graphStore,
           fileSystem: this.#fileSystem.createRunFileSystem({
             graphUrl: url,
-            env: [],
+            env: envFromGraphDescriptor(graph),
             assets: assetsFromGraphDescriptor(graph),
           }),
           inputs: BreadboardUI.Data.inputsFromSettings(this.#settings),
