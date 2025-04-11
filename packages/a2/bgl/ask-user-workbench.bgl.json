@@ -4,17 +4,14 @@
   "version": "0.0.1",
   "nodes": [
     {
-      "id": "a2-21820fca",
-      "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
+      "id": "98e0f227-02d4-41cd-b81e-06ca190d8c68",
+      "type": "embed://a2/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
       "metadata": {
+        "title": "Ask User",
         "visual": {
           "x": -600,
-          "y": -380,
-          "collapsed": "expanded",
-          "outputHeight": 308
+          "y": -380
         },
-        "title": "Ask User",
-        "logLevel": "info",
         "userModified": false
       },
       "configuration": {
@@ -22,21 +19,21 @@
           "role": "user",
           "parts": [
             {
-              "text": "Tell me about your day\n{{\"type\":\"in\",\"path\":\"7d391991-7529-4255-9fe4-13a28986168d\",\"title\":\"Combine Outputs\"}} e"
+              "text": "{{\"type\":\"in\",\"path\":\"1464b633-d235-4b1c-ab2d-fb99e970bc98\",\"title\":\"Make Speech\"}}"
             }
           ]
         },
-        "p-modality": "Image"
+        "p-modality": "Any"
       }
     },
     {
-      "id": "7d391991-7529-4255-9fe4-13a28986168d",
-      "type": "embed://a2/a2.bgl.json#module:combine-outputs",
+      "id": "1464b633-d235-4b1c-ab2d-fb99e970bc98",
+      "type": "embed://a2/audio-generator.bgl.json#module:main",
       "metadata": {
-        "title": "Combine Outputs",
+        "title": "Make Speech",
         "visual": {
-          "x": -920,
-          "y": -380
+          "x": -900,
+          "y": -440
         },
         "userModified": false
       },
@@ -45,20 +42,20 @@
           "role": "user",
           "parts": [
             {
-              "text": "It's a beautiful day!"
+              "text": "Hello world!"
             }
           ]
         },
-        "z-flatten-list": false
+        "voice": "Female (English)"
       }
     }
   ],
   "edges": [
     {
-      "from": "7d391991-7529-4255-9fe4-13a28986168d",
-      "to": "a2-21820fca",
+      "from": "1464b633-d235-4b1c-ab2d-fb99e970bc98",
+      "to": "98e0f227-02d4-41cd-b81e-06ca190d8c68",
       "out": "context",
-      "in": "p-z-7d391991-7529-4255-9fe4-13a28986168d"
+      "in": "p-z-1464b633-d235-4b1c-ab2d-fb99e970bc98"
     }
   ],
   "metadata": {
@@ -93,7 +90,7 @@
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMzYuOTAiCiAgICAgICAgICAgICAgICAgICAgeT0iMTkuMTAiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjEwMy4xMCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjE2MS43OSIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KPHJlY3QgeD0iMTAuMDAiCiAgICAgICAgICAgICAgICAgICAgeT0iMTkuMTAiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjEwMy4xMCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjM5LjY2IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMjBhMjAyIiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMzMuMjEiCiAgICAgICAgICAgICAgICAgICAgeT0iOTEuNzkiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjEwNi43OSIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjQxLjA3IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMjBhMjAyIiAvPgo8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI2Ny4xNCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTA2Ljc5IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNDEuMDciCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CiAgICAgIAogICAgPC9zdmc+"
     }
   }
 }
