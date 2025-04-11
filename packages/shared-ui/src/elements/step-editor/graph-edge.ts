@@ -439,10 +439,6 @@ export class GraphEdge extends Box {
 
     // Final adjustments so that the arrow has a bit of breathing room before it
     // goes into the node.
-    if (candidates.from === "Left") candidates.n1.x -= 4;
-    if (candidates.from === "Right") candidates.n1.x += 4;
-    if (candidates.from === "Top") candidates.n1.y -= 4;
-    if (candidates.from === "Bottom") candidates.n1.y += 4;
     if (candidates.to === "Left") candidates.n2.x -= 4;
     if (candidates.to === "Right") candidates.n2.x += 4;
     if (candidates.to === "Top") candidates.n2.y -= 4;
