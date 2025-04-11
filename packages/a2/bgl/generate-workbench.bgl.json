@@ -25,7 +25,7 @@
             }
           ]
         },
-        "generation-mode": "embed://a2/a2.bgl.json#module:image-generator"
+        "generation-mode": "image"
       }
     }
   ],

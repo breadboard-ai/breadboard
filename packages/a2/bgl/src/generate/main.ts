@@ -25,33 +25,40 @@ type DescribeInputs = {
 
 const MODES = [
   {
-    id: "embed://a2/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+    id: "text",
+    url: "embed://a2/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
     title: "Generate Text",
     icon: "generative-text",
   },
   {
-    id: "embed://a2/a2.bgl.json#module:image-generator",
+    id: "image",
+    url: "embed://a2/a2.bgl.json#module:image-generator",
     title: "Generate Image",
     icon: "generative-image",
   },
   {
-    id: "embed://a2/audio-generator.bgl.json#module:main",
+    id: "audio",
+    url: "embed://a2/audio-generator.bgl.json#module:main",
     title: "Generate Audio",
     icon: "generative-audio",
   },
   {
-    id: "embed://a2/video-generator.bgl.json#module:main",
+    id: "video",
+    url: "embed://a2/video-generator.bgl.json#module:main",
     title: "Generate Video",
     icon: "generative-video",
   },
   {
-    id: "embed://a2/go-over-list.bgl.json#module:main",
+    id: "think",
+    url: "embed://a2/go-over-list.bgl.json#module:main",
     title: "Think and Execute",
     icon: "generative",
   },
 ] as const;
 
 const DEFAULT_MODE = MODES[0];
+
+const modeMap = new Map(MODES.map((mode) => [mode.id, mode]));
 
 const PROMPT_PORT = "config$prompt";
 const ASK_USER_PORT = "config$ask-user";
@@ -116,19 +123,25 @@ function receivePorts<T extends Record<string, unknown>>(
   return translate(ports, reverseMap);
 }
 
-async function invoke({ "generation-mode": mode, ...rest }: Inputs) {
-  const $board = mode || DEFAULT_MODE.id;
-  return await invokeGraph({ $board, ...forwardPorts($board, rest) });
+function getMode(modeId: ModeId | undefined): GenerationModes {
+  return modeMap.get(modeId || DEFAULT_MODE.id) || DEFAULT_MODE;
 }
 
-async function describe({ inputs }: DescribeInputs) {
-  const mode = inputs["generation-mode"] || DEFAULT_MODE.id;
+async function invoke({ "generation-mode": mode, ...rest }: Inputs) {
+  const { url: $board, id } = getMode(mode);
+  return await invokeGraph({ $board, ...forwardPorts(id, rest) });
+}
 
-  const describing = await describeGraph({ url: mode, inputs });
+async function describe({
+  inputs: { "generation-mode": mode, ...rest },
+}: DescribeInputs) {
+  const { url, id } = getMode(mode);
+
+  const describing = await describeGraph({ url, inputs: rest });
   let modeSchema: Record<string, Schema> = {};
   if (ok(describing)) {
     modeSchema = receivePorts(
-      mode,
+      id,
       describing.inputSchema.properties || modeSchema
     );
   }
