@@ -41,6 +41,7 @@ import { toGridSize } from "./utils/to-grid-size";
 import { MOVE_GRAPH_ID } from "./constants";
 import { GraphAsset } from "./graph-asset";
 import { AssetPath } from "@breadboard-ai/types";
+import { isControllerBehavior } from "../../utils/behaviors";
 
 @customElement("bb-graph")
 export class Graph extends Box {
@@ -145,6 +146,32 @@ export class Graph extends Box {
         graphNode.updating = ports.updating ?? false;
         graphNode.icon = metadata.icon ?? null;
         graphNode.ports = ports;
+        for (const port of ports.inputs.ports) {
+          if (isControllerBehavior(port.schema) && port.schema.enum) {
+            const selectedControllerType = port.schema.enum.find((v) => {
+              if (typeof v === "string") {
+                return false;
+              }
+
+              return v.id === port.value;
+            });
+
+            if (
+              !selectedControllerType ||
+              typeof selectedControllerType === "string"
+            ) {
+              continue;
+            }
+
+            if (!selectedControllerType.icon) {
+              continue;
+            }
+
+            graphNode.icon = selectedControllerType.icon;
+            break;
+          }
+        }
+
         if (metadata.tags) {
           for (const tag of metadata.tags ?? []) {
             graphNode.classList.add(tag);
