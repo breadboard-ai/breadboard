@@ -4,13 +4,21 @@ import { afterEach, before, suite, test } from "node:test";
 import request from "supertest";
 
 import { createServer, createServerConfig } from "./server.js";
-import type { BoardServerStore } from "./server/store.js";
+import type { BoardServerStore, StorageBoard } from "./server/store.js";
 
 suite("Board Server integration test", () => {
   const user = { username: "test-user", apiKey: "test-api-key" };
 
   let server: Express;
   let store: BoardServerStore;
+  const defaultBoard: Readonly<Partial<StorageBoard>> = {
+    name: "test-board",
+    owner: user.username,
+    graph: {
+      nodes: [{ type: "input", id: "input" }],
+      edges: [],
+    },
+  };
 
   before(async () => {
     process.env.STORAGE_BUCKET = "test-bucket";
@@ -75,7 +83,7 @@ suite("Board Server integration test", () => {
     });
 
     test("GET /boards/@:user/:name", async () => {
-      await store.createBoard(user.username, "test-board");
+      await store.upsertBoard(defaultBoard);
 
       const response = await request(server).get(
         `/boards/@${user.username}/test-board?API_KEY=${user.apiKey}`
@@ -85,7 +93,7 @@ suite("Board Server integration test", () => {
     });
 
     test("GET /:name", async () => {
-      await store.createBoard(user.username, "test-board");
+      await store.upsertBoard(defaultBoard);
 
       const response = await request(server).get(
         `/boards/test-board?API_KEY=${user.apiKey}`
@@ -95,7 +103,7 @@ suite("Board Server integration test", () => {
     });
 
     test("POST /boards/@:user/:name -> updates", async () => {
-      await store.createBoard(user.username, "test-board");
+      await store.upsertBoard(defaultBoard);
 
       const response = await request(server)
         .post(`/boards/@${user.username}/test-board?API_KEY=${user.apiKey}`)
@@ -106,7 +114,7 @@ suite("Board Server integration test", () => {
     });
 
     test("POST /boards/:name -> updates", async () => {
-      await store.createBoard(user.username, "test-board");
+      await store.upsertBoard(defaultBoard);
 
       const response = await request(server)
         .post(`/boards/test-board?API_KEY=${user.apiKey}`)
@@ -117,7 +125,7 @@ suite("Board Server integration test", () => {
     });
 
     test("POST /boards/@:user/:name -> deletes", async () => {
-      await store.createBoard(user.username, "test-board");
+      await store.upsertBoard(defaultBoard);
 
       const response = await request(server)
         .post(`/boards/@${user.username}/test-board?API_KEY=${user.apiKey}`)
@@ -130,7 +138,7 @@ suite("Board Server integration test", () => {
     });
 
     test("POST /boards/:name -> deletes", async () => {
-      await store.createBoard(user.username, "test-board");
+      await store.upsertBoard(defaultBoard);
 
       const response = await request(server)
         .post(`/boards/test-board?API_KEY=${user.apiKey}`)
@@ -143,20 +151,7 @@ suite("Board Server integration test", () => {
     });
 
     test("POST /boards/@:user/:name.api/invoke", async () => {
-      await store.createBoard(user.username, "test-board.json");
-      await store.updateBoard({
-        name: "test-board.json",
-        owner: user.username,
-        displayName: "",
-        description: "",
-        tags: [],
-        thumbnail: "",
-        // TODO make this a real board that runs
-        graph: {
-          nodes: [{ type: "input", id: "input" }],
-          edges: [],
-        },
-      });
+      await store.upsertBoard({...defaultBoard, name: 'test-board.json'});
 
       const response = await request(server)
         .post(`/boards/@${user.username}/test-board.api/invoke`)
@@ -166,20 +161,7 @@ suite("Board Server integration test", () => {
     });
 
     test("POST /boards/@:user/:name/invoke", async () => {
-      await store.createBoard(user.username, "test-board");
-      await store.updateBoard({
-        name: "test-board",
-        owner: user.username,
-        displayName: "",
-        description: "",
-        tags: [],
-        thumbnail: "",
-        // TODO make this a real board that runs
-        graph: {
-          nodes: [{ type: "input", id: "input" }],
-          edges: [],
-        },
-      });
+      await store.upsertBoard(defaultBoard);
 
       const response = await request(server)
         .post(`/boards/@${user.username}/test-board/invoke`)
@@ -189,7 +171,7 @@ suite("Board Server integration test", () => {
     });
 
     test("POST /boards/@:user/:name.api/describe", async () => {
-      await store.createBoard(user.username, "test-board.json");
+      await store.upsertBoard({...defaultBoard, name: 'test-board.json'});
       const path = `@${user.username}/test-board.api`;
 
       const response = await request(server)
@@ -200,7 +182,7 @@ suite("Board Server integration test", () => {
     });
 
     test("POST /boards/@:user/:name/describe", async () => {
-      await store.createBoard(user.username, "test-board");
+      await store.upsertBoard(defaultBoard);
       const path = `@${user.username}/test-board`;
 
       const response = await request(server)
@@ -211,7 +193,7 @@ suite("Board Server integration test", () => {
     });
 
     test("POST /boards/:name/describe", async () => {
-      await store.createBoard(user.username, "test-board");
+      await store.upsertBoard(defaultBoard);
 
       const response = await request(server)
         .post(`/boards/test-board/describe?API_KEY=${user.apiKey}`)
@@ -221,7 +203,7 @@ suite("Board Server integration test", () => {
     });
 
     test("POST /boards/@:user/:name.api/run", async () => {
-      store.createBoard(user.username, "test-board.json");
+      await store.upsertBoard({...defaultBoard, name: 'test-board.json'});
 
       const response = await request(server)
         .post(`/boards/@${user.username}/test-board.api/run`)
@@ -231,7 +213,7 @@ suite("Board Server integration test", () => {
     });
 
     test("POST /boards/@:user/:name/run", async () => {
-      store.createBoard(user.username, "test-board");
+      await store.upsertBoard(defaultBoard);
 
       const response = await request(server)
         .post(`/boards/@${user.username}/test-board/run`)

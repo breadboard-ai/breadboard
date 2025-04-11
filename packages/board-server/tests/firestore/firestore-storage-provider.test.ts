@@ -71,7 +71,7 @@ suite("Firestore storage provider", () => {
     };
 
     // Technically, it's not necessary to create the board first
-    await provider.updateBoard(updatedBoard);
+    await provider.upsertBoard(updatedBoard);
 
     assertBoard(updatedBoard);
     assertGraph(updatedBoard);
@@ -115,10 +115,10 @@ suite("Firestore storage provider", () => {
       graph: GRAPH,
     };
 
-    await provider.updateBoard(ownedBoard);
-    await provider.updateBoard(publishedBoard);
-    await provider.updateBoard(unlistedBoard);
-    await provider.updateBoard(privateBoard);
+    await provider.upsertBoard(ownedBoard);
+    await provider.upsertBoard(publishedBoard);
+    await provider.upsertBoard(unlistedBoard);
+    await provider.upsertBoard(privateBoard);
 
     const ownedBoardResult = await provider.loadBoard({
       name: "owned-board",
@@ -177,9 +177,9 @@ suite("Firestore storage provider", () => {
       graph: GRAPH,
     };
 
-    await provider.updateBoard(ownedBoard);
-    await provider.updateBoard(publishedBoard);
-    await provider.updateBoard(privateBoard);
+    await provider.upsertBoard(ownedBoard);
+    await provider.upsertBoard(publishedBoard);
+    await provider.upsertBoard(privateBoard);
 
     const boards = await provider.listBoards("me");
     assert.equal(boards.length, 2);

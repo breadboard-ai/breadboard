@@ -32,12 +32,12 @@ suite("In-memory storage provider", () => {
   test("create board", async () => {
     assert.equal(await provider.loadBoard({ name: "test-board" }), null);
 
-    provider.createBoard("user", "test-board");
+    provider.upsertBoard({owner: "user", name: "test-board"});
 
     assert.deepEqual(await provider.loadBoard({ name: "test-board" }), {
       name: "test-board",
       owner: "user",
-      displayName: "test-board",
+      displayName: "",
       description: "",
       tags: [],
       thumbnail: "",
@@ -65,7 +65,7 @@ suite("In-memory storage provider", () => {
     };
 
     // Technically, it's not necessary to create the board first
-    provider.updateBoard(updatedBoard);
+    provider.upsertBoard(updatedBoard);
 
     assert.deepEqual(
       await provider.loadBoard({ name: "test-board" }),
@@ -104,7 +104,7 @@ suite("In-memory storage provider", () => {
       graph: GRAPH,
     };
 
-    await provider.updateBoard(board);
+    await provider.upsertBoard(board);
 
     assert.deepEqual(await provider.loadBoard({ name: "test-board" }), board);
     assert.equal(await provider.loadBoard({ name: "other-board" }), null);
@@ -139,15 +139,12 @@ suite("In-memory storage provider", () => {
       graph: GRAPH,
     };
 
-    provider.updateBoard(ownedBoard);
-    provider.updateBoard(publishedBoard);
-    provider.updateBoard(privateBoard);
+    provider.upsertBoard(ownedBoard);
+    provider.upsertBoard(publishedBoard);
+    provider.upsertBoard(privateBoard);
 
     const boards = await provider.listBoards("me");
-
-    assert(boards.includes(ownedBoard));
-    assert(boards.includes(publishedBoard));
-    assert(!boards.includes(privateBoard));
+    assert.deepEqual(boards.map((board => board.name)), ['ownedBoard', 'publishedBoard']);
   });
 });
 

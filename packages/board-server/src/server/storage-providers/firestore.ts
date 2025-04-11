@@ -144,7 +144,10 @@ export class FirestoreStorageProvider
     });
   }
 
-  async updateBoard(board: Readonly<Partial<StorageBoard>>): Promise<void> {
+  async upsertBoard(board: Readonly<Partial<StorageBoard>>): Promise<StorageBoard> {
+    const name = board.name || crypto.randomUUID();
+    const updatedBoard: Partial<StorageBoard> = {...board, name};
+
     if (!board.owner) {
       throw new InvalidRequestError("Firestore requires an owner set");
     }
@@ -158,15 +161,9 @@ export class FirestoreStorageProvider
       tags: board.tags || [],
       graph: JSON.stringify(board.graph || {}),
     });
-  }
-
-  async upsertBoard(board: Readonly<Partial<StorageBoard>>): Promise<StorageBoard> {
-    const name = board.name || crypto.randomUUID();
-    const updatedBoard: Partial<StorageBoard> = {...board, name};
-    await this.updateBoard(updatedBoard);
     const result = await this.loadBoard({name, owner: updatedBoard.owner});
     if (!result) {
-      throw new Error(`Failed to create the board ${updatedBoard.name}`);
+      throw new Error(`upsertBoard(${updatedBoard.name}) failed`);
     }
     return result;
   }
