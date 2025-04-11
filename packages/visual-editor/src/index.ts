@@ -3558,7 +3558,7 @@ export class Main extends LitElement {
                   this.showNodeConfigurator = false;
                 }
 
-                this.#runtime.edit.changeNodeConfigurationPart(
+                await this.#runtime.edit.changeNodeConfigurationPart(
                   this.tab,
                   evt.id,
                   evt.configuration,
