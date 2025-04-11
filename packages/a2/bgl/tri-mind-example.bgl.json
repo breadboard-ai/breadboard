@@ -1,0 +1,325 @@
+{
+  "title": "Tri-mind",
+  "description": "",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "de846648-aa0c-4336-b2b7-8dfbbb38fb07",
+      "type": "embed://a2/a2.bgl.json#module:combine-outputs",
+      "metadata": {
+        "title": "Intro",
+        "visual": {
+          "x": 363.578125,
+          "y": 256.92578125
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "text": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "# Yo, I am a tri-mind. \n\n\nI help people solve problems\nwith my massive three minds in one:\n- one mind a skeptic\n- one mind an optimist\n- and one mind a careful observer\n\n## Tell me of a problem you're having and I'll help you mine more interesting insights about it"
+            }
+          ]
+        },
+        "z-flatten-list": false
+      }
+    },
+    {
+      "id": "e7ca4f82-71e0-484b-85b0-de2252a542d5",
+      "type": "embed://a2/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
+      "metadata": {
+        "title": "What's your problem?",
+        "visual": {
+          "x": 663.578125,
+          "y": 256.92578125
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "description": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "{{\"type\":\"in\",\"path\":\"de846648-aa0c-4336-b2b7-8dfbbb38fb07\",\"title\":\"Intro\"}}\n\n\nWhat's on your mind?"
+            }
+          ]
+        },
+        "p-modality": "Any"
+      }
+    },
+    {
+      "id": "c34c9116-68b1-4652-a8cc-622100d437b2",
+      "type": "embed://a2/generate.bgl.json#module:main",
+      "metadata": {
+        "title": "Skeptic",
+        "visual": {
+          "x": 663.578125,
+          "y": 476.92578125
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "config$ask-user": false,
+        "config$list": false,
+        "config$prompt": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "You are a skeptic. Given the provided problem, provide an insightful, yet skeptical perspective on it. Offer detailed ideas and thoughts, various lenses that might fit into this truly skeptical take."
+            }
+          ]
+        },
+        "generation-mode": "embed://a2/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c"
+      }
+    },
+    {
+      "id": "99f8b6cc-d430-4cfc-8c94-a10c9cadc5a3",
+      "type": "embed://a2/generate.bgl.json#module:main",
+      "metadata": {
+        "title": "Optimist",
+        "visual": {
+          "x": 663.578125,
+          "y": 596.92578125
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "config$ask-user": false,
+        "config$list": false,
+        "config$prompt": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "You are an optimist. Given the provided problem and a skeptical perspective, provide a counterpoint: an optimistic perspective. Offer detailed ideas and thoughts, various lenses that might fit into this truly optimistic take."
+            }
+          ]
+        },
+        "generation-mode": "embed://a2/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c"
+      }
+    },
+    {
+      "id": "2637283b-873c-4827-8cd6-f0b86473db04",
+      "type": "embed://a2/a2.bgl.json#module:combine-outputs",
+      "metadata": {
+        "title": "Specification Doc",
+        "visual": {
+          "x": 1103.578125,
+          "y": 556.92578125
+        },
+        "userModified": true
+      },
+      "configuration": {
+        "text": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "-- Here's the stated problem --\n\n{{\"type\":\"in\",\"path\":\"e7ca4f82-71e0-484b-85b0-de2252a542d5\",\"title\":\"What's your problem?\"}}\n\n--- Here's a skeptical take ---\n\n{{\"type\":\"in\",\"path\":\"c34c9116-68b1-4652-a8cc-622100d437b2\",\"title\":\"Skeptic\"}}\n\n-- Here's an optimistic take ---\n\n\n{{\"type\":\"in\",\"path\":\"99f8b6cc-d430-4cfc-8c94-a10c9cadc5a3\",\"title\":\"Optimist\"}}\n\n-- Here's an observer's take -- {{\"title\":\"Observer\",\"path\":\"ed374260-9f15-4b5f-afa1-38f79685be8e\",\"type\":\"in\"}}"
+            }
+          ]
+        },
+        "z-flatten-list": false
+      }
+    },
+    {
+      "id": "ed374260-9f15-4b5f-afa1-38f79685be8e",
+      "type": "embed://a2/generate.bgl.json#module:main",
+      "metadata": {
+        "title": "Observer",
+        "visual": {
+          "x": 1103.578125,
+          "y": 376.92578125
+        },
+        "userModified": true
+      },
+      "configuration": {
+        "config$ask-user": false,
+        "config$list": false,
+        "config$prompt": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "You are a neutral observer. You enjoy looking at different perspectives and picking out the most interesting insights: how the perspectives are similar, how they are different, where they agree without realizing it, where they actually disagree\n\nTake the optimist perspective and the skeptic perspective and come up with a detailed assessment based on your observation skills.\n\n-- Original problem --\n\n{{\"type\":\"in\",\"path\":\"e7ca4f82-71e0-484b-85b0-de2252a542d5\",\"title\":\"What's your problem?\"}}\n\n-- Optimistic take --\n\n{{\"type\":\"in\",\"path\":\"99f8b6cc-d430-4cfc-8c94-a10c9cadc5a3\",\"title\":\"Optimist\"}}\n\n-- Skeptical take --\n\n{{\"type\":\"in\",\"path\":\"c34c9116-68b1-4652-a8cc-622100d437b2\",\"title\":\"Skeptic\"}}"
+            }
+          ]
+        },
+        "generation-mode": "embed://a2/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c"
+      }
+    },
+    {
+      "id": "6b73c58e-1d66-4eba-9922-87b2c2a7fa0b",
+      "type": "embed://a2/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
+      "metadata": {
+        "title": "Ask for revision",
+        "visual": {
+          "x": 1463.578125,
+          "y": 416.92578125
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "description": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Here's what I have so far:\n\n{{\"type\":\"in\",\"path\":\"2637283b-873c-4827-8cd6-f0b86473db04\",\"title\":\"Specification Doc\"}}\n\nWhat revisions would you like to make?"
+            }
+          ]
+        },
+        "p-modality": "Any"
+      }
+    },
+    {
+      "id": "da6da46e-ba4f-4085-9329-e9deb3cec66a",
+      "type": "embed://a2/generate.bgl.json#module:main",
+      "metadata": {
+        "title": "Revision Loop",
+        "visual": {
+          "x": 1463.578125,
+          "y": 616.92578125
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "config$ask-user": true,
+        "config$list": false,
+        "config$prompt": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "You are an editor. You take the provided doc and the suggestions for revision and apply those revisions to the doc.\n\nThe doc:\n\n{{\"type\":\"in\",\"path\":\"2637283b-873c-4827-8cd6-f0b86473db04\",\"title\":\"Specification Doc\"}}\n\nThe revision request:\n\n{{\"type\":\"in\",\"path\":\"6b73c58e-1d66-4eba-9922-87b2c2a7fa0b\",\"title\":\"Ask for revision\"}}"
+            }
+          ]
+        },
+        "generation-mode": "embed://a2/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "de846648-aa0c-4336-b2b7-8dfbbb38fb07",
+      "to": "e7ca4f82-71e0-484b-85b0-de2252a542d5",
+      "out": "context",
+      "in": "p-z-de846648-aa0c-4336-b2b7-8dfbbb38fb07"
+    },
+    {
+      "from": "e7ca4f82-71e0-484b-85b0-de2252a542d5",
+      "to": "c34c9116-68b1-4652-a8cc-622100d437b2",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "c34c9116-68b1-4652-a8cc-622100d437b2",
+      "to": "99f8b6cc-d430-4cfc-8c94-a10c9cadc5a3",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "99f8b6cc-d430-4cfc-8c94-a10c9cadc5a3",
+      "to": "2637283b-873c-4827-8cd6-f0b86473db04",
+      "out": "context",
+      "in": "p-z-99f8b6cc-d430-4cfc-8c94-a10c9cadc5a3"
+    },
+    {
+      "from": "c34c9116-68b1-4652-a8cc-622100d437b2",
+      "to": "2637283b-873c-4827-8cd6-f0b86473db04",
+      "out": "context",
+      "in": "p-z-c34c9116-68b1-4652-a8cc-622100d437b2"
+    },
+    {
+      "from": "e7ca4f82-71e0-484b-85b0-de2252a542d5",
+      "to": "2637283b-873c-4827-8cd6-f0b86473db04",
+      "out": "context",
+      "in": "p-z-e7ca4f82-71e0-484b-85b0-de2252a542d5",
+      "metadata": {
+        "visual": {
+          "from": "Right"
+        }
+      }
+    },
+    {
+      "from": "e7ca4f82-71e0-484b-85b0-de2252a542d5",
+      "to": "ed374260-9f15-4b5f-afa1-38f79685be8e",
+      "out": "context",
+      "in": "p-z-e7ca4f82-71e0-484b-85b0-de2252a542d5"
+    },
+    {
+      "from": "99f8b6cc-d430-4cfc-8c94-a10c9cadc5a3",
+      "to": "ed374260-9f15-4b5f-afa1-38f79685be8e",
+      "out": "context",
+      "in": "p-z-99f8b6cc-d430-4cfc-8c94-a10c9cadc5a3",
+      "metadata": {
+        "visual": {
+          "to": "Left"
+        }
+      }
+    },
+    {
+      "from": "c34c9116-68b1-4652-a8cc-622100d437b2",
+      "to": "ed374260-9f15-4b5f-afa1-38f79685be8e",
+      "out": "context",
+      "in": "p-z-c34c9116-68b1-4652-a8cc-622100d437b2"
+    },
+    {
+      "from": "ed374260-9f15-4b5f-afa1-38f79685be8e",
+      "to": "2637283b-873c-4827-8cd6-f0b86473db04",
+      "out": "context",
+      "in": "p-z-ed374260-9f15-4b5f-afa1-38f79685be8e"
+    },
+    {
+      "from": "2637283b-873c-4827-8cd6-f0b86473db04",
+      "to": "6b73c58e-1d66-4eba-9922-87b2c2a7fa0b",
+      "out": "context",
+      "in": "p-z-2637283b-873c-4827-8cd6-f0b86473db04"
+    },
+    {
+      "from": "2637283b-873c-4827-8cd6-f0b86473db04",
+      "to": "da6da46e-ba4f-4085-9329-e9deb3cec66a",
+      "out": "context",
+      "in": "p-z-2637283b-873c-4827-8cd6-f0b86473db04"
+    },
+    {
+      "from": "6b73c58e-1d66-4eba-9922-87b2c2a7fa0b",
+      "to": "da6da46e-ba4f-4085-9329-e9deb3cec66a",
+      "out": "context",
+      "in": "p-z-6b73c58e-1d66-4eba-9922-87b2c2a7fa0b"
+    }
+  ],
+  "metadata": {
+    "visual": {
+      "presentation": {
+        "themes": {
+          "41bcd6f9-8f96-46ce-87d6-e6ce844ed371": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "41bcd6f9-8f96-46ce-87d6-e6ce844ed371"
+      }
+    },
+    "userModified": true,
+    "tags": []
+  },
+  "assets": {
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI2MS4xMCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iNDMuOTciCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIxNi45MSIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KPHJlY3QgeD0iNjAuNzQiCiAgICAgICAgICAgICAgICAgICAgeT0iNjEuMTAiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjQzLjk3IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTYuOTEiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyMGEyMDIiIC8+CjxyZWN0IHg9IjYwLjc0IgogICAgICAgICAgICAgICAgICAgIHk9Ijk4LjMxIgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI0My45NyIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjE2LjkxIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgo8cmVjdCB4PSI2MC43NCIKICAgICAgICAgICAgICAgICAgICB5PSIxMTguNjAiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjQzLjk3IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTYuOTEiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CjxyZWN0IHg9IjEzNS4xNSIKICAgICAgICAgICAgICAgICAgICB5PSIxMTEuODQiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjQzLjk3IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTYuOTEiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyMGEyMDIiIC8+CjxyZWN0IHg9IjEzNS4xNSIKICAgICAgICAgICAgICAgICAgICB5PSI4MS40MCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iNDMuOTciCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIxNi45MSIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KPHJlY3QgeD0iMTk2LjAzIgogICAgICAgICAgICAgICAgICAgIHk9Ijg4LjE2IgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI0My45NyIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjE2LjkxIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMjBhMjAyIiAvPgo8cmVjdCB4PSIxOTYuMDMiCiAgICAgICAgICAgICAgICAgICAgeT0iMTIxLjk5IgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI0My45NyIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjE2LjkxIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+    }
+  }
+}
