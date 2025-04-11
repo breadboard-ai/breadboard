@@ -147,8 +147,8 @@ function computeEdgeDiff(current: Edge[], incoming: Edge[]) {
   return { toInsert, toDelete };
 }
 
-function edgeKey(edge: Edge) {
-  return JSON.stringify(edge);
+function edgeKey({ metadata: _m, ...rest }: Edge) {
+  return JSON.stringify(rest);
 }
 
 function getDefaultOutputPort(from: InspectableNode | undefined) {
