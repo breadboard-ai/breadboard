@@ -42,6 +42,7 @@ import { InputChangeEvent } from "../../plugins/input-plugin.js";
 import { SIGN_IN_CONNECTION_ID } from "../../utils/signin-adapter.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { map } from "lit/directives/map.js";
+import { isA2 } from "@breadboard-ai/a2";
 
 const OVERFLOW_MENU_PADDING = 12;
 
@@ -733,6 +734,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
           (connector) =>
             !connector.url.includes("/_") &&
             (!connector.experimental || this.showExperimentalComponents) &&
+            isA2(connector.url) &&
             (!connector.singleton ||
               !this.state?.connectorInstanceExists(connector.url))
         )
