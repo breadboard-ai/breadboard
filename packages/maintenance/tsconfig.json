@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "./dist"
+  },
+  "include": ["scripts/**/*"],
+  "extends": "@google-labs/tsconfig/base.json"
+}
