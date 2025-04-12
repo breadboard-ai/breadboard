@@ -153,13 +153,21 @@ export class RemoteBoardServer implements BoardServer, RemoteConnector {
   }
 
   #findProject(url: string): BoardServerProject | null {
-    return this.#projects.find(project => {
-      return url.startsWith(project.url.pathname) || url.startsWith(project.url.pathname.replace(USER_REGEX, '/'));
-    }) ?? null;
+    return (
+      this.#projects.find((project) => {
+        return (
+          url.startsWith(project.url.pathname) ||
+          url.startsWith(project.url.pathname.replace(USER_REGEX, "/"))
+        );
+      }) ?? null
+    );
   }
 
   canProvide(url: URL): false | GraphProviderCapabilities {
-    if (!url.href.startsWith(this.url.href) && !url.href.startsWith(this.url.href.replace(USER_REGEX, "/"))) {
+    if (
+      !url.href.startsWith(this.url.href) &&
+      !url.href.startsWith(this.url.href.replace(USER_REGEX, "/"))
+    ) {
       return false;
     }
 
@@ -207,7 +215,10 @@ export class RemoteBoardServer implements BoardServer, RemoteConnector {
       return null;
     }
 
-    if (project.url.href === url.href || project.url.href.replace(USER_REGEX, '/') === url.href) {
+    if (
+      project.url.href === url.href ||
+      project.url.href.replace(USER_REGEX, "/") === url.href
+    ) {
       const request = createRequest(url, await this.connectionArgs(), "GET");
       const response = await fetch(request);
       const graph = await response.json();
@@ -548,7 +559,7 @@ export class RemoteBoardServer implements BoardServer, RemoteConnector {
     );
   }
 
-  dataPartTransformer(): DataPartTransformer {
-    return new RemotePartTransformer(this);
+  dataPartTransformer(graphUrl: URL): DataPartTransformer {
+    return new RemotePartTransformer(this, graphUrl);
   }
 }
