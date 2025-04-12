@@ -41,10 +41,11 @@ class BoardServerAwareDataStore implements DataStore {
   }
 
   transformer(graphUrl: URL): DataPartTransformer | undefined {
-    const server = this.#findServer(this.graphUrl || graphUrl);
+    const url = this.graphUrl || graphUrl;
+    const server = this.#findServer(url);
     if (!server || !server.dataPartTransformer) return;
 
-    return server.dataPartTransformer();
+    return server.dataPartTransformer(url);
   }
 
   #findServer(url: URL): BoardServer | null {

@@ -26,7 +26,10 @@ type FileInfo = {
 };
 
 class RemotePartTransformer implements DataPartTransformer {
-  constructor(public readonly connector: RemoteConnector) {}
+  constructor(
+    public readonly connector: RemoteConnector,
+    public readonly graphUrl: URL
+  ) {}
 
   async persistPart(
     graphUrl: URL,
@@ -52,18 +55,18 @@ class RemotePartTransformer implements DataPartTransformer {
   }
 
   async toFileData(
-    graphUrl: URL,
+    _graphUrl: URL,
     part: StoredDataCapabilityPart | FileDataPart
   ): Promise<Outcome<FileDataPart>> {
     if ("fileData" in part) {
       if (GoogleDriveToGemini.isGoogleDriveDocument(part)) {
-        const toGemini = new GoogleDriveToGemini(graphUrl, this.connector);
+        const toGemini = new GoogleDriveToGemini(this.graphUrl, this.connector);
         return toGemini.update(part);
       }
       return part;
     } else {
       const { handle: blobPath, mimeType } = part.storedData;
-      const persistedUrl = new URL(blobPath, graphUrl);
+      const persistedUrl = new URL(blobPath, this.graphUrl);
       persistedUrl.pathname += "/file";
       try {
         const response = await fetch(

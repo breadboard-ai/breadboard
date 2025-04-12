@@ -235,7 +235,7 @@ export type GraphProvider = {
   /**
    * Provides a way to transfom DataParts (InlineDataPart and StoredDataPart).
    */
-  dataPartTransformer?: () => DataPartTransformer;
+  dataPartTransformer?: (graphUrl: URL) => DataPartTransformer;
 };
 
 /**
