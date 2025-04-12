@@ -110,7 +110,11 @@ export async function create(config: RuntimeConfig): Promise<{
     builtInBoardServers: config.builtInBoardServers,
   };
 
-  const dataStore = new BoardServerAwareDataStore(getDataStore(), servers);
+  const dataStore = new BoardServerAwareDataStore(
+    getDataStore(),
+    servers,
+    undefined
+  );
 
   const sideboards = createSideboardRuntimeProvider(
     graphStoreArgs,

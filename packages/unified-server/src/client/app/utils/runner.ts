@@ -63,7 +63,11 @@ export async function createFlowRunner(
   registerLegacyKits(graphStore);
 
   const runStore = getRunStore();
-  const dataStore = new BoardServerAwareDataStore(getDataStore(), servers);
+  const dataStore = new BoardServerAwareDataStore(
+    getDataStore(),
+    servers,
+    new URL(config.url)
+  );
   const abortController = new AbortController();
   const fileSystem = createFileSystem({
     local: createFileSystemBackend(createEphemeralBlobStore()),

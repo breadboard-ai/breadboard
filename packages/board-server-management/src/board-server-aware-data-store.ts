@@ -22,11 +22,26 @@ export { BoardServerAwareDataStore };
 class BoardServerAwareDataStore implements DataStore {
   constructor(
     public readonly innerStore: DataStore,
-    public readonly boardServers: BoardServer[]
+    public readonly boardServers: BoardServer[],
+    public readonly graphUrl: URL | undefined
   ) {}
 
+  createRunDataStore(graphUrlString: string) {
+    let graphUrl;
+    try {
+      graphUrl = new URL(graphUrlString);
+    } catch (e) {
+      // Eat the error and presume that the URL is bogus.
+    }
+    return new BoardServerAwareDataStore(
+      this.innerStore,
+      this.boardServers,
+      graphUrl
+    );
+  }
+
   transformer(graphUrl: URL): DataPartTransformer | undefined {
-    const server = this.#findServer(graphUrl);
+    const server = this.#findServer(this.graphUrl || graphUrl);
     if (!server || !server.dataPartTransformer) return;
 
     return server.dataPartTransformer();

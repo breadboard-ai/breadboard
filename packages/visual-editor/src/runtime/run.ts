@@ -6,7 +6,6 @@
 
 import {
   createRunObserver,
-  DataStore,
   GraphLoader,
   InputValues,
   InspectableRunObserver,
@@ -40,6 +39,7 @@ import {
 } from "@google-labs/breadboard/harness";
 import { RuntimeBoardRunEvent } from "./events";
 import { sandbox } from "../sandbox";
+import { BoardServerAwareDataStore } from "@breadboard-ai/board-server-management";
 
 export class Run extends EventTarget {
   #runs = new Map<
@@ -56,7 +56,7 @@ export class Run extends EventTarget {
 
   constructor(
     public readonly graphStore: MutableGraphStore,
-    public readonly dataStore: DataStore,
+    public readonly dataStore: BoardServerAwareDataStore,
     public readonly runStore: RunStore
   ) {
     super();
@@ -135,7 +135,7 @@ export class Run extends EventTarget {
     const tabId = tab.id;
     config = {
       ...config,
-      store: this.dataStore,
+      store: this.dataStore.createRunDataStore(config.url),
       kits: [...this.graphStore.kits, ...tab.boardServerKits],
       signal: abortController.signal,
       graphStore: this.graphStore,
