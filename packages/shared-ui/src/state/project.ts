@@ -180,17 +180,19 @@ class ReactiveProject implements ProjectInternal {
   }
 
   async persistBlobs(contents: LLMContent[]): Promise<LLMContent[]> {
-    const url = this.#store.get(this.#mainGraphId)?.graph.url;
-    if (!url) return contents;
+    const urlString = this.#store.get(this.#mainGraphId)?.graph.url;
+    if (!urlString) return contents;
 
-    const server = this.#boardServerFinder(new URL(url));
+    const server = this.#boardServerFinder(new URL(urlString));
     if (!server || !server.dataPartTransformer) return contents;
 
+    const url = new URL(urlString);
+
     const transformed = await transformDataParts(
-      new URL(url),
+      url,
       contents,
       "persistent",
-      server.dataPartTransformer()
+      server.dataPartTransformer(url)
     );
     if (!ok(transformed)) {
       return contents;
