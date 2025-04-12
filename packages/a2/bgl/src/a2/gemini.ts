@@ -290,6 +290,12 @@ function conformBody(body: GeminiBody): GeminiBody {
   };
 }
 
+async function getGeminiUrl(model: string): Promise<Outcome<string>> {
+  const gettingApiKey = await secrets({ keys: ["GEMINI_KEY"] });
+  if (!ok(gettingApiKey)) return gettingApiKey;
+  return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${gettingApiKey.GEMINI_KEY}`;
+}
+
 async function getAccessToken() {
   const signInSecretName = "connection:$sign-in";
   const result = await secrets({ keys: [signInSecretName] });
@@ -302,16 +308,14 @@ async function callAPI(
   body: GeminiBody,
   $metadata?: Metadata
 ): Promise<Outcome<GeminiAPIOutputs>> {
-  const accessToken = await getAccessToken();
+  const url = await getGeminiUrl(model);
+  if (!ok(url)) return url;
   let $error: string = "Unknown error";
   while (retries) {
     const result = await fetch({
       $metadata,
-      url: endpointURL(model),
+      url,
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
       body: conformBody(body),
     });
     if (!ok(result)) {
