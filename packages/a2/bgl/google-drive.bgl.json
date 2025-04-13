@@ -5,7 +5,7 @@
   "nodes": [],
   "edges": [],
   "metadata": {
-    "icon": "generative",
+    "icon": "gdrive",
     "visual": {
       "presentation": {
         "themes": {
@@ -30,11 +30,7 @@
       }
     },
     "userModified": true,
-    "tags": [
-      "connector",
-      "published",
-      "experimental"
-    ],
+    "tags": ["connector", "published", "experimental"],
     "comments": [
       {
         "id": "comment-c74afa15",
