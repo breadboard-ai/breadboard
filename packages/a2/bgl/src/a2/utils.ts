@@ -7,6 +7,7 @@ export {
   toLLMContent,
   toInlineData,
   toLLMContentInline,
+  toLLMContentStored,
   toText,
   joinContent,
   contentToJSON,
@@ -246,6 +247,24 @@ function toLLMContentInline(
         inlineData: {
           mimeType: mimetype,
           data: value,
+        },
+      },
+    ],
+    role,
+  };
+}
+
+function toLLMContentStored(
+  mimetype: string,
+  handle: string,
+  role: LLMContent["role"] = "user"
+) {
+  return {
+    parts: [
+      {
+        storedData: {
+          mimeType: mimetype,
+          handle: handle,
         },
       },
     ],

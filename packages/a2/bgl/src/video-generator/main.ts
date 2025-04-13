@@ -15,6 +15,7 @@ import {
   joinContent,
   toLLMContent,
   toLLMContentInline,
+  toLLMContentStored,
   toText,
   toInlineData,
   extractInlineData,
@@ -35,6 +36,10 @@ import {
 } from "./a2/step-executor";
 
 const ASPECT_RATIOS = ["9:16", "16:9"];
+const OUTPUT_NAME = "generated_video";
+const GCS_PROJECT = "appcatalyst-449123";
+const STORAGE_PREFIX = "https://storage.mtls.cloud.google.com";
+const STORE_IN_GCS = false;
 
 type VideoGeneratorInputs = {
   context: LLMContent[];
@@ -55,6 +60,14 @@ async function callVideoGen(
   disablePromptRewrite: boolean,
   aspectRatio: string
 ): Promise<LLMContent> {
+  let gcsOutputConfig;
+  if (STORE_IN_GCS) {
+    gcsOutputConfig = {
+      bucket_name: "appcatalyst-bucket-test",
+      folder_path: "generated_videos",
+      project_name: GCS_PROJECT,
+    };
+  }
   // TODO(askerryryan): Respect disablePromptRewrite;
   const executionInputs: ContentMap = {};
   const encodedPrompt = btoa(unescape(encodeURIComponent(prompt)));
@@ -99,8 +112,10 @@ async function callVideoGen(
       modelApi: "generate_video",
       inputParameters: inputParameters,
       systemPrompt: "",
+      output: OUTPUT_NAME,
     },
     execution_inputs: executionInputs,
+    output_gcs_config: gcsOutputConfig,
   } satisfies ExecuteStepRequest;
   // TODO(askerryryan): Remove when stable.
   console.log("REQUEST:");
@@ -117,6 +132,11 @@ async function callVideoGen(
     const mimetype = value.chunks[0].mimetype;
     if (mimetype.startsWith("video")) {
       returnVal = toLLMContentInline(mimetype, value.chunks[0].data);
+    } else if (mimetype == "text/gcs-path") {
+      const returnedHandle = atob(value.chunks[0].data);
+      console.log("Payload written to ", returnedHandle);
+      const gcsUrl = returnedHandle.replace(GCS_PROJECT, STORAGE_PREFIX);
+      returnVal = toLLMContentStored(mimetype, gcsUrl);
     }
   }
   if (!returnVal) {

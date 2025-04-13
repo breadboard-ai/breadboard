@@ -43,9 +43,16 @@ export type PlanStep = {
   };
 };
 
+export type GcsConfig = {
+  bucket_name: string;
+  folder_path: string;
+  project_name: string;
+};
+
 export type ExecuteStepRequest = {
   planStep: PlanStep;
   execution_inputs: ContentMap;
+  output_gcs_config?: GcsConfig;
 };
 
 export type ExecuteStepResponse = {
