@@ -17,6 +17,7 @@ import { AppViewConfig, BootstrapArguments } from "./types/types.js";
 
 import * as Elements from "./elements/elements.js";
 import {
+  createRunObserver,
   GraphDescriptor,
   isInlineData,
   isStoredData,
@@ -24,12 +25,16 @@ import {
 import * as BreadboardUIContext from "@breadboard-ai/shared-ui/contexts";
 import * as ConnectionClient from "@breadboard-ai/connection-client";
 import { SettingsHelperImpl } from "./utils/settings.js";
-import { createRunConfigWithProxy } from "./utils/run-config.js";
-import { RunConfig } from "@google-labs/breadboard/harness";
-import { createFlowRunner } from "./utils/runner.js";
+import { createRunConfig } from "./utils/run-config.js";
+import {
+  RunConfig,
+  createRunner as createBreadboardRunner,
+} from "@google-labs/breadboard/harness";
 import { getGlobalColor } from "./utils/color.js";
 import { LLMContent } from "@breadboard-ai/types";
-import { TokenVendor } from "@breadboard-ai/connection-client";
+import { getRunStore } from "@breadboard-ai/data-store";
+import { sandbox } from "./sandbox.js";
+import { TopGraphObserver } from "@breadboard-ai/shared-ui/utils/top-graph-observer";
 
 const primaryColor = getGlobalColor("--bb-ui-700");
 const secondaryColor = getGlobalColor("--bb-ui-400");
@@ -138,10 +143,37 @@ async function createTokenVendor(
 
 async function createRunner(
   runConfig: RunConfig | null,
-  boardServerUrl: URL,
-  tokenVendor: TokenVendor
+  abortController: AbortController
 ) {
-  return createFlowRunner(runConfig, boardServerUrl, tokenVendor);
+  if (!runConfig) return null;
+
+  const runStore = getRunStore();
+
+  const harnessRunner = createBreadboardRunner(runConfig);
+  const runObserver = createRunObserver(runConfig.graphStore!, {
+    logLevel: "debug",
+    dataStore: runConfig.store!,
+    runStore: runStore,
+    kits: runConfig.kits,
+    sandbox,
+  });
+
+  const topGraphObserver = new TopGraphObserver(
+    harnessRunner,
+    runConfig.signal,
+    runObserver
+  );
+
+  harnessRunner.addObserver(runObserver);
+
+  return {
+    harnessRunner,
+    topGraphObserver,
+    runObserver,
+    abortController,
+    kits: runConfig.kits,
+    runStore,
+  };
 }
 
 function createDefaultTheme(): AppTheme {
@@ -264,12 +296,14 @@ async function bootstrap(args: BootstrapArguments = {}) {
     const environment = await createEnvironment(args);
     const settingsHelper = new SettingsHelperImpl();
     const tokenVendor = await createTokenVendor(settingsHelper, environment);
-    const runConfig = await createRunConfigWithProxy(flow, args, tokenVendor);
-    const runner = await createRunner(
-      runConfig,
-      args.boardServerUrl!,
-      tokenVendor
+    const abortController = new AbortController();
+    const runConfig = await createRunConfig(
+      flow,
+      args,
+      tokenVendor,
+      abortController
     );
+    const runner = await createRunner(runConfig, abortController);
 
     const extractedTheme = extractThemeFromFlow(flow);
     const config: AppViewConfig = {
