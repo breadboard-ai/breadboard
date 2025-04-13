@@ -95,7 +95,7 @@ async function getThemeColors(): Promise<ThemeColors> {
 }
 
 function themeColorsPrompt(colors: ThemeColors): string {
-  return `Use the following theme colors:
+  return `Unless otherwise specified, use the following theme colors:
 
 - primary color: ${colors.primaryColor}
 - secondary color: ${colors.secondaryColor}
