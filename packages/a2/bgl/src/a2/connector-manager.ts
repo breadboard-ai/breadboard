@@ -266,6 +266,10 @@ export type InvokeMethodOutput = {
   result: string;
 };
 
+export type CanSaveMethodOutput = {
+  canSave: boolean;
+};
+
 type ConnectorManagerState = {
   info: ConnectorInfo;
   describeOutputs: DescribeOutputs;
@@ -375,6 +379,18 @@ class ConnectorManager {
     return props;
   }
 
+  async canSave(): Promise<Outcome<boolean>> {
+    const args = await this.#getInvocationArgs("connector-save");
+    if (!ok(args)) return false;
+
+    const invoking = await invokeConnector({
+      ...args,
+      method: "canSave",
+    });
+    if (!ok(invoking)) return false;
+    return !!(invoking as CanSaveMethodOutput).canSave;
+  }
+
   async save(
     context: LLMContent[],
     options: Record<string, unknown>
@@ -382,7 +398,12 @@ class ConnectorManager {
     const args = await this.#getInvocationArgs("connector-save");
     if (!ok(args)) return args;
 
-    const invoking = await invokeConnector({ ...args, context, ...options });
+    const invoking = await invokeConnector({
+      ...args,
+      context,
+      ...options,
+      method: "save",
+    });
     if (!ok(invoking)) return invoking;
   }
 

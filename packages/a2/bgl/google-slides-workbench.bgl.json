@@ -1,0 +1,193 @@
+{
+  "title": "Google Slides Workbench",
+  "description": "",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "89b25348-4aae-4975-99b7-bc7a8488c26c",
+      "type": "embed://a2/generate.bgl.json#module:main",
+      "metadata": {
+        "title": "Generate",
+        "visual": {
+          "x": -120,
+          "y": -40
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "config$ask-user": false,
+        "config$list": false,
+        "config$prompt": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Analyze this spreadsheet and describe what it is about\n\n{{\"type\":\"asset\",\"path\":\"connectors/6f16787c-ae2f-45c7-8c1d-e4f36ae8e129\",\"title\":\"Macros\"}}"
+            }
+          ]
+        },
+        "generation-mode": "text"
+      }
+    },
+    {
+      "id": "7db54764-0af2-4a48-b9d9-c09bca9fa446",
+      "type": "embed://a2/save-outputs.bgl.json#module:main",
+      "metadata": {
+        "title": "Save Outputs",
+        "visual": {
+          "x": 200,
+          "y": -40
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "connectors": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "{{\"type\":\"asset\",\"path\":\"connectors/e7676b81-3d64-4549-bef0-ce98123c0ef5\",\"title\":\"Doc to Save\"}}"
+            }
+          ]
+        },
+        "folio-mode": "Append"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "89b25348-4aae-4975-99b7-bc7a8488c26c",
+      "to": "7db54764-0af2-4a48-b9d9-c09bca9fa446",
+      "out": "context",
+      "in": "context"
+    }
+  ],
+  "metadata": {
+    "visual": {
+      "presentation": {
+        "themes": {
+          "39239b49-62d0-4182-b919-924c4db67941": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "39239b49-62d0-4182-b919-924c4db67941"
+      }
+    },
+    "userModified": true,
+    "tags": [],
+    "parameters": {}
+  },
+  "assets": {
+    "connectors/f7ee2d90-818a-4a1f-978e-3935b354d38a": {
+      "data": [
+        {
+          "parts": [
+            {
+              "json": {
+                "url": "embed://a2/google-drive.bgl.json",
+                "configuration": {
+                  "file": {
+                    "id": "1ZF5ZENZ7Q3EZgMoOl8hVy6r2G3Cj74eTaLvshyGoSCM",
+                    "preview": "UX Pattern Slides",
+                    "mimeType": "application/vnd.google-apps.presentation",
+                    "connectionName": "$sign-in"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "metadata": {
+        "title": "UX Pattern Slides",
+        "type": "connector"
+      }
+    },
+    "connectors/6f16787c-ae2f-45c7-8c1d-e4f36ae8e129": {
+      "data": [
+        {
+          "parts": [
+            {
+              "json": {
+                "url": "embed://a2/google-drive.bgl.json",
+                "configuration": {
+                  "file": {
+                    "id": "1AZtNeaUN_2YTbm4GhCGuy6V19PaDm4cqGElkfZyo2ug",
+                    "preview": "Macros in Blink code base",
+                    "mimeType": "application/vnd.google-apps.spreadsheet",
+                    "connectionName": "$sign-in"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "metadata": {
+        "title": "Macros",
+        "type": "connector"
+      }
+    },
+    "connectors/26557812-98f1-4c9d-b6ba-3164932343bd": {
+      "data": [
+        {
+          "parts": [
+            {
+              "json": {
+                "url": "embed://a2/folio.bgl.json",
+                "configuration": {}
+              }
+            }
+          ]
+        }
+      ],
+      "metadata": {
+        "title": "Memory",
+        "type": "connector"
+      }
+    },
+    "connectors/e7676b81-3d64-4549-bef0-ce98123c0ef5": {
+      "data": [
+        {
+          "parts": [
+            {
+              "json": {
+                "url": "embed://a2/google-drive.bgl.json",
+                "configuration": {
+                  "file": {
+                    "id": "1AZtNeaUN_2YTbm4GhCGuy6V19PaDm4cqGElkfZyo2ug",
+                    "preview": "Macros in Blink code base",
+                    "mimeType": "application/vnd.google-apps.spreadsheet",
+                    "connectionName": "$sign-in"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "metadata": {
+        "title": "Doc to Save",
+        "type": "connector"
+      }
+    },
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI4MC4xNyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTAzLjEwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMzkuNjYiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CjxyZWN0IHg9IjEzNi45MCIKICAgICAgICAgICAgICAgICAgICB5PSI4MC4xNyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTAzLjEwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMzkuNjYiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyMGEyMDIiIC8+CiAgICAgIAogICAgPC9zdmc+"
+    }
+  }
+}

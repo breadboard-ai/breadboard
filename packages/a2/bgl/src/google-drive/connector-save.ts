@@ -2,7 +2,7 @@
  * @fileoverview Connector Save Export.
  */
 import { type DescribeOutputs } from "@describe";
-import { toText, ok } from "./a2/utils";
+import { toText, ok, err } from "./a2/utils";
 import { contextToRequests, DOC_MIME_TYPE } from "./docs";
 import { connect, query, create, getDoc, updateDoc } from "./api";
 import type { ConnectorConfiguration } from "./types";
@@ -12,36 +12,52 @@ export { invoke as default, describe };
 type Inputs = {
   id: string;
   info?: { configuration?: ConnectorConfiguration };
-  context: LLMContent[];
+  method: "canSave" | "save";
+  context?: LLMContent[];
 };
 
-type Outputs = {
-  context: LLMContent[];
-};
+type Outputs =
+  | {
+      context: LLMContent[];
+    }
+  | {
+      canSave: boolean;
+    };
 
 async function invoke({
+  method,
   id: connectorId,
   context,
   info,
 }: Inputs): Promise<Outcome<Outputs>> {
-  const token = await connect({ title: "Get Auth Token" });
-  const gettingCollector = await getCollector(
-    token,
-    connectorId,
-    "Untitled Document",
-    info?.configuration?.file?.id
-  );
-  if (!ok(gettingCollector)) return gettingCollector;
-  const { id, end } = gettingCollector;
-  const requests = await contextToRequests(context, end);
-  const updating = await updateDoc(
-    token,
-    id,
-    { requests },
-    { title: "Append to Google Doc" }
-  );
-  if (!ok(updating)) return updating;
-  return { context };
+  const mimeType = info?.configuration?.file?.mimeType;
+  const canSave = mimeType === DOC_MIME_TYPE || mimeType === undefined;
+  if (method === "save") {
+    if (!canSave) {
+      return err(`Unable to save files of type "${mimeType}"`);
+    }
+    const token = await connect({ title: "Get Auth Token" });
+    const gettingCollector = await getCollector(
+      token,
+      connectorId,
+      "Untitled Document",
+      info?.configuration?.file?.id
+    );
+    if (!ok(gettingCollector)) return gettingCollector;
+    const { id, end } = gettingCollector;
+    const requests = await contextToRequests(context, end);
+    const updating = await updateDoc(
+      token,
+      id,
+      { requests },
+      { title: "Append to Google Doc" }
+    );
+    if (!ok(updating)) return updating;
+    return { context: context || [] };
+  } else if (method == "canSave") {
+    return { canSave };
+  }
+  return err(`Unknown method: "${method}"`);
 }
 
 type CollectorData = {
