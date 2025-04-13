@@ -353,7 +353,7 @@ export class FileSystemBoardServer extends EventTarget implements BoardServer {
       });
       for (const [moduleName, entry] of entries) {
         const source = entry.metadata?.source;
-        if (!source) return;
+        if (!source) continue;
         const code = source.code;
         const ext = source.language === "typescript" ? "ts" : "js";
         const fileizedModuleName = `${moduleName.replace("/", "-")}.${ext}`;
