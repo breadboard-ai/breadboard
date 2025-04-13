@@ -169,7 +169,7 @@
     "wireit": "^0.15.0-pre.2"
   },
   "dependencies": {
-    "@breadboard-ai/a2": "^0.3.0",
+    "@breadboard-ai/a2": "0.3.0",
     "@breadboard-ai/board-server": "0.13.0",
     "@breadboard-ai/board-server-management": "1.20.1",
     "@breadboard-ai/connection-client": "0.2.0",
