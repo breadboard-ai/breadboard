@@ -36,7 +36,9 @@ function getHandler(handlerName: string, context: NodeHandlerContext) {
   const handler = findHandler(handlerName, context.kits);
 
   if (!handler || typeof handler === "string") {
-    throw new Error("Trying to get one of the non-core handlers");
+    throw new Error(
+      `Trying to get one of the non-core handlers: ${JSON.stringify(handlerName)}`
+    );
   }
 
   const invoke = "invoke" in handler ? handler.invoke : handler;
@@ -211,7 +213,7 @@ function createDescribeHandler(context: NodeHandlerContext) {
         }
         return result;
       } else {
-        return inspectable.describe(inputs.inputs);
+        return inspectable.describe(inputs.inputs, context);
       }
     } catch (e) {
       return err(`Unable to describe: ${(e as Error).message}`);
@@ -243,6 +245,7 @@ class CapabilitiesManagerImpl implements CapabilitiesManager {
       // TODO: Make sure this never happens. This will likely happen when
       // a misconfigured context is supplied, which is fine in most cases:
       // we just give you back no capabilities.
+      console.warn(`Unable to create spec: ${(e as Error).message}`);
     }
     return CapabilitiesManagerImpl.dummies();
   }

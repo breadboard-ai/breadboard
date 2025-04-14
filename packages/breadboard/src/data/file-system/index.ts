@@ -39,7 +39,7 @@ export { FileSystemImpl, Path, createFileSystem, writablePathFromString };
 function createFileSystem(
   args: Omit<
     OuterFileSystems,
-    "graphUrl" | "blobs" | "session" | "run" | "env" | "assets"
+    "graphUrl" | "blobs" | "session" | "run" | "assets"
   >
 ): FileSystem {
   return new FileSystemImpl({ ...args, graphUrl: "" });

@@ -37,6 +37,7 @@ import {
   isStoredData,
   EditHistoryCreator,
   envFromGraphDescriptor,
+  FileSystem,
 } from "@google-labs/breadboard";
 import {
   createFileSystemBackend,
@@ -92,6 +93,7 @@ import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { OverflowAction } from "@breadboard-ai/shared-ui/types/types.js";
 import { MAIN_BOARD_ID } from "@breadboard-ai/shared-ui/constants/constants.js";
 import { createA2Server } from "@breadboard-ai/a2";
+import { envFromSettings } from "./utils/env-from-settings";
 
 const STORAGE_PREFIX = "bb-main";
 const LOADING_TIMEOUT = 250;
@@ -327,9 +329,7 @@ export class Main extends LitElement {
   #isSaving = false;
   #graphStore!: MutableGraphStore;
   #runStore = getRunStore();
-  #fileSystem = createFileSystem({
-    local: createFileSystemBackend(createEphemeralBlobStore()),
-  });
+  #fileSystem!: FileSystem;
   #selectionState: WorkspaceSelectionStateWithChangeId | null = null;
   #lastVisualChangeId: WorkspaceVisualChangeId | null = null;
   #lastPointerPosition = { x: 0, y: 0 };
@@ -537,6 +537,10 @@ export class Main extends LitElement {
         return this.#settings?.restore();
       })
       .then(() => {
+        this.#fileSystem = createFileSystem({
+          env: envFromSettings(this.#settings),
+          local: createFileSystemBackend(createEphemeralBlobStore()),
+        });
         return Runtime.create({
           graphStore: this.#graphStore,
           runStore: this.#runStore,
@@ -1328,7 +1332,7 @@ export class Main extends LitElement {
           graphStore: this.#graphStore,
           fileSystem: this.#fileSystem.createRunFileSystem({
             graphUrl: url,
-            env: envFromGraphDescriptor(graph),
+            env: envFromGraphDescriptor(this.#fileSystem.env(), graph),
             assets: assetsFromGraphDescriptor(graph),
           }),
           inputs: BreadboardUI.Data.inputsFromSettings(this.#settings),

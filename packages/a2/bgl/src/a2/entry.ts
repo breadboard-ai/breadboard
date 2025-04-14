@@ -7,8 +7,9 @@ import {
   type AgentInputs,
   type DescribeInputs,
 } from "./common";
-import { toLLMContent, defaultLLMContent } from "./utils";
+import { ok, toLLMContent, defaultLLMContent } from "./utils";
 import { Template } from "./template";
+import { readSettings } from "./settings";
 
 export { invoke as default, describe };
 
@@ -57,7 +58,31 @@ async function invoke({
 }
 
 async function describe({ inputs: { description } }: DescribeInputs) {
+  const settings = await readSettings();
+  const experimental =
+    ok(settings) && !!settings["Show Experimental Components"];
   const template = new Template(description);
+  let extra: Record<string, Schema> = {};
+  if (experimental) {
+    extra = {
+      "p-chat": {
+        type: "boolean",
+        title: "Chat with User",
+        behavior: ["config", "hint-preview"],
+        icon: "chat",
+        description:
+          "When checked, this step will chat with the user, asking to review work, requesting additional information, etc.",
+      },
+      "p-list": {
+        type: "boolean",
+        title: "Make a list",
+        behavior: ["config", "hint-preview"],
+        icon: "summarize",
+        description:
+          "When checked, this step will try to create a list as its output. Make sure that the prompt asks for a list of some sort",
+      },
+    };
+  }
   return {
     inputSchema: {
       type: "object",
@@ -76,22 +101,7 @@ async function describe({ inputs: { description } }: DescribeInputs) {
           title: "Context in",
           behavior: ["main-port"],
         },
-        "p-chat": {
-          type: "boolean",
-          title: "Chat with User",
-          behavior: ["config", "hint-preview"],
-          icon: "chat",
-          description:
-            "When checked, this step will chat with the user, asking to review work, requesting additional information, etc.",
-        },
-        "p-list": {
-          type: "boolean",
-          title: "Make a list",
-          behavior: ["config", "hint-preview"],
-          icon: "summarize",
-          description:
-            "When checked, this step will try to create a list as its output. Make sure that the prompt asks for a list of some sort",
-        },
+        ...extra,
         ...template.schemas(),
       },
       behavior: ["at-wireable"],
