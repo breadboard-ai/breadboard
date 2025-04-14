@@ -59,6 +59,7 @@ export const styles = css`
 
     & #board-console-container {
       height: 100%;
+      width: 100%;
       overflow: auto;
       position: relative;
       scroll-padding-bottom: 60px;
