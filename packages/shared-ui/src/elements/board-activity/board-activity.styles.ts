@@ -116,12 +116,12 @@ export const styles = css`
       font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
         var(--bb-font-family);
       display: flex;
-      align-items: center;
       margin: 0;
       border-radius: var(--bb-grid-size);
       color: var(--bb-neutral-700);
       position: relative;
       border: 1px solid var(--bb-neutral-100);
+      flex-direction: column;
 
       & summary {
         position: relative;

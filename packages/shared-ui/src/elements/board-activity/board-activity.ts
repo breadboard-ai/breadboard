@@ -671,26 +671,26 @@ export class BoardActivity extends LitElement {
                                     })}
                                     >${node.title()}</span
                                   >
-                                  <button
-                                    class="run-component m-icon filled"
-                                    @click=${() => {
-                                      this.dispatchEvent(
-                                        new RunIsolatedNodeEvent(
-                                          event.node.descriptor.id,
-                                          true
-                                        )
-                                      );
-                                    }}
-                                  >
-                                    play_arrow
-                                  </button>
                                   ${this.showExtendedInfo
-                                    ? html`<button
-                                        class="details m-icon"
-                                        data-message-id=${event.id}
-                                      >
-                                        data_info_alert
-                                      </button>`
+                                    ? html` <button
+                                          class="run-component m-icon filled"
+                                          @click=${() => {
+                                            this.dispatchEvent(
+                                              new RunIsolatedNodeEvent(
+                                                event.node.descriptor.id,
+                                                true
+                                              )
+                                            );
+                                          }}
+                                        >
+                                          play_arrow
+                                        </button>
+                                        <button
+                                          class="details m-icon"
+                                          data-message-id=${event.id}
+                                        >
+                                          data_info_alert
+                                        </button>`
                                     : nothing}
                                 </summary>
                                 ${this.#renderComponentActivity(event.runs)}
