@@ -1354,7 +1354,9 @@ export class Main extends LitElement {
 
     abortController.abort(Strings.from("STATUS_GENERIC_RUN_STOPPED"));
     const runner = this.#runtime.run.getRunner(tabId);
-    await runner?.run();
+    if (runner?.running()) {
+      await runner?.run();
+    }
 
     if (clearLastRun) {
       await this.#runtime.run.clearLastRun(tabId, this.tab?.graph.url);
