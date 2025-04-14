@@ -46,13 +46,13 @@ export default {
     str: "Sort by",
   },
   LABEL_WELCOME_MESSAGE_A: {
-    str: "Make a",
+    str: "Breadboards",
   },
   LABEL_WELCOME_MESSAGE_B: {
-    str: "Flow",
+    str: "are mini AI apps anyone can build",
   },
   LABEL_WELCOME_CTA: {
-    str: "Describe what you want to build or remix from the gallery",
+    str: "Describe what you want to build",
   },
   LABEL_PLACEHOLDER_DESCRIPTION: {
     str: "Describe what you want to make in 1-2 sentences",
