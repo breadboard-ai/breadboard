@@ -111,7 +111,12 @@
       ],
       "metadata": {
         "title": "UX Pattern Slides",
-        "type": "connector"
+        "type": "connector",
+        "description": "",
+        "visual": {
+          "x": 220,
+          "y": 140
+        }
       }
     },
     "connectors/6f16787c-ae2f-45c7-8c1d-e4f36ae8e129": {
@@ -136,7 +141,12 @@
       ],
       "metadata": {
         "title": "Macros",
-        "type": "connector"
+        "type": "connector",
+        "description": "",
+        "visual": {
+          "x": -180,
+          "y": 140
+        }
       }
     },
     "connectors/26557812-98f1-4c9d-b6ba-3164932343bd": {
@@ -154,7 +164,12 @@
       ],
       "metadata": {
         "title": "Memory",
-        "type": "connector"
+        "type": "connector",
+        "description": "",
+        "visual": {
+          "x": 60,
+          "y": 360
+        }
       }
     },
     "connectors/e7676b81-3d64-4549-bef0-ce98123c0ef5": {
@@ -179,7 +194,12 @@
       ],
       "metadata": {
         "title": "Doc to Save",
-        "type": "connector"
+        "type": "connector",
+        "description": "",
+        "visual": {
+          "x": 180,
+          "y": -340
+        }
       }
     },
     "@@thumbnail": {

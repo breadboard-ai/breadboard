@@ -5,10 +5,10 @@
  */
 import {
   InspectableGraph,
-  InspectablePort,
   isTextCapabilityPart,
   MainGraphIdentifier,
   MutableGraphStore,
+  Schema,
   SchemaEnumValue,
   Template,
   TemplatePart,
@@ -31,6 +31,7 @@ import {
   InputValues,
   LLMContent,
   NodeIdentifier,
+  NodeValue,
   TextCapabilityPart,
 } from "@breadboard-ai/types";
 import { classMap } from "lit/directives/class-map.js";
@@ -54,11 +55,20 @@ import { FlowGenConstraint } from "../../flow-gen/flow-generator";
 import { findConfigurationChanges } from "../../flow-gen/flow-diff";
 const Strings = StringsHelper.forSection("Editor");
 
-interface EnumValue {
+type EnumValue = {
   title: string;
   id: string;
   icon?: string;
-}
+};
+
+// A type that is like a port (and fits InspectablePort), but could also be
+// used to describe parameters for connectors.
+type PortLike = {
+  title: string;
+  name: string;
+  schema: Schema;
+  value: NodeValue;
+};
 
 const INVALID_ITEM = html`<div id="invalid-item">
   Unable to render selected item
@@ -625,7 +635,7 @@ export class EntityEditor extends LitElement {
     this.#hideFastAccess();
   }
 
-  #reactiveChange(port: InspectablePort) {
+  #reactiveChange(port: PortLike) {
     const reactive = port.schema.behavior?.includes("reactive");
     if (!reactive) return () => {};
 
@@ -818,188 +828,13 @@ export class EntityEditor extends LitElement {
           return a.title.localeCompare(b.title);
         });
 
-      const hasTextEditor =
-        inputPorts.findIndex((port) => isLLMContentBehavior(port.schema)) !==
-        -1;
-
       return html`<div class=${classMap(classes)}>
         <h1 id="title">
           <input id="node-title" name="node-title" .value=${node.title()} />
         </h1>
         <div id="type"></div>
         <div id="content">
-          ${inputPorts.map((port) => {
-            const classes: Record<string, boolean> = {};
-            if (isLLMContentBehavior(port.schema)) {
-              classes["stretch"] = true;
-            }
-
-            let value: HTMLTemplateResult | symbol = html`No value`;
-            switch (port.schema.type) {
-              case "object": {
-                const portValue = (port.value ?? {
-                  role: "user",
-                  parts: [{ text: "" }],
-                }) as LLMContent;
-                const textPart = portValue.parts.find((part) =>
-                  isTextCapabilityPart(part)
-                );
-                if (!textPart) {
-                  value = html`Invalid value`;
-                  break;
-                }
-
-                classes.object = true;
-                value = html`<bb-text-editor
-                  ${ref(this.#editorRef)}
-                  .value=${textPart.text}
-                  .projectState=${this.projectState}
-                  .subGraphId=${graphId !== MAIN_BOARD_ID ? graphId : null}
-                  id=${port.name}
-                  name=${port.name}
-                  @keydown=${(evt: KeyboardEvent) => {
-                    if (!isCtrlCommand(evt) || evt.key !== "Enter") {
-                      return;
-                    }
-
-                    this.#emitUpdatedNodeConfiguration();
-                  }}
-                ></bb-text-editor>`;
-                break;
-              }
-
-              case "boolean": {
-                const checked = !!port.value;
-                classes.boolean = true;
-                classes.checked = checked;
-                if (port.schema.icon) {
-                  classes[port.schema.icon] = true;
-                }
-
-                value = html` <label
-                    for=${port.name}
-                    class=${classMap({
-                      slim: isControllerBehavior(port.schema),
-                    })}
-                    >${!isControllerBehavior(port.schema)
-                      ? port.title
-                      : ""}</label
-                  ><input
-                    type="checkbox"
-                    ?checked=${port.value === true}
-                    id=${port.name}
-                    name=${port.name}
-                  />`;
-                break;
-              }
-
-              case "string": {
-                classes.string = true;
-                if (port.schema.icon) {
-                  classes[port.schema.icon] = true;
-                }
-
-                if (port.schema.enum) {
-                  const currentValue = enumValue(
-                    port.schema.enum.find(
-                      (value) => enumValue(value).id == port.value
-                    ) ?? port.schema.enum[0]
-                  );
-
-                  const classes: Record<string, boolean> = {};
-                  if (currentValue.icon) {
-                    classes.icon = true;
-                    classes[currentValue.icon] = true;
-                    classes.slim = isControllerBehavior(port.schema);
-                  }
-
-                  value = html`<label
-                      for=${port.name}
-                      class=${classMap(classes)}
-                      >${!isControllerBehavior(port.schema)
-                        ? port.title
-                        : ""}</label
-                    ><select
-                      @change=${this.#reactiveChange(port)}
-                      name=${port.name}
-                      id=${port.name}
-                    >
-                      ${map(port.schema.enum, (option) => {
-                        const { id, title } = enumValue(option);
-                        return html`<option
-                          value=${id}
-                          ?selected=${port.value === id ||
-                          (!port.value && id === port.schema.default)}
-                        >
-                          ${title}
-                        </option>`;
-                      })}
-                    </select>`;
-                  break;
-                }
-
-                value = html`<label
-                  class=${classMap({ slim: isControllerBehavior(port.schema) })}
-                  >${!isControllerBehavior(port.schema)
-                    ? html`${port.title}: `
-                    : ""}
-                  ${port.value ?? "Value not set"}</label
-                >`;
-                break;
-              }
-
-              default: {
-                value = nothing;
-              }
-            }
-
-            let controls: HTMLTemplateResult | symbol = nothing;
-            if (isControllerBehavior(port.schema)) {
-              controls = html`<div id="controls-container">
-                <div id="controls">
-                  ${this.graph
-                    ? html`<bb-describe-edit-button
-                        monochrome
-                        popoverPosition="below"
-                        .label=${Strings.from("COMMAND_DESCRIBE_EDIT_STEP")}
-                        .currentGraph=${this.graph.raw() satisfies GraphDescriptor}
-                        .constraint=${{
-                          kind: "EDIT_STEP_CONFIG",
-                          stepId: nodeId,
-                        } satisfies FlowGenConstraint}
-                        @bbgraphreplace=${this.#onFlowgenEdit}
-                      ></bb-describe-edit-button>`
-                    : nothing}
-                  ${hasTextEditor
-                    ? html`<button
-                        id="tools"
-                        @pointerdown=${() => {
-                          if (!this.#editorRef.value) {
-                            return;
-                          }
-
-                          this.#editorRef.value.storeLastRange();
-                        }}
-                        @click=${(evt: PointerEvent) => {
-                          const bounds = new DOMRect(
-                            evt.clientX,
-                            evt.clientY,
-                            0,
-                            0
-                          );
-                          this.#showFastAccess(bounds);
-                        }}
-                      >
-                        Tools
-                      </button>`
-                    : nothing}
-                </div>
-              </div>`;
-            }
-            return html`<div class=${classMap(classes)}>
-              ${value} ${controls}
-            </div>`;
-          })}
+          ${this.#renderPorts(graphId, nodeId, inputPorts)}
         </div>
         <input type="hidden" name="graph-id" .value=${graphId} />
         <input type="hidden" name="node-id" .value=${nodeId} />
@@ -1007,6 +842,173 @@ export class EntityEditor extends LitElement {
     });
 
     return html`${until(value, html`<div id="generic-status">Loading...</div>`)}`;
+  }
+
+  #renderPorts(
+    graphId: GraphIdentifier,
+    nodeId: NodeIdentifier,
+    inputPorts: PortLike[]
+  ) {
+    const hasTextEditor =
+      inputPorts.findIndex((port) => isLLMContentBehavior(port.schema)) !== -1;
+
+    return inputPorts.map((port) => {
+      const classes: Record<string, boolean> = {};
+      if (isLLMContentBehavior(port.schema)) {
+        classes["stretch"] = true;
+      }
+
+      let value: HTMLTemplateResult | symbol = html`No value`;
+      switch (port.schema.type) {
+        case "object": {
+          const portValue = (port.value ?? {
+            role: "user",
+            parts: [{ text: "" }],
+          }) as LLMContent;
+          const textPart = portValue.parts.find((part) =>
+            isTextCapabilityPart(part)
+          );
+          if (!textPart) {
+            value = html`Invalid value`;
+            break;
+          }
+
+          classes.object = true;
+          value = html`<bb-text-editor
+            ${ref(this.#editorRef)}
+            .value=${textPart.text}
+            .projectState=${this.projectState}
+            .subGraphId=${graphId !== MAIN_BOARD_ID ? graphId : null}
+            id=${port.name}
+            name=${port.name}
+            @keydown=${(evt: KeyboardEvent) => {
+              if (!isCtrlCommand(evt) || evt.key !== "Enter") {
+                return;
+              }
+
+              this.#emitUpdatedNodeConfiguration();
+            }}
+          ></bb-text-editor>`;
+          break;
+        }
+
+        case "boolean": {
+          const checked = !!port.value;
+          classes.boolean = true;
+          classes.checked = checked;
+          if (port.schema.icon) {
+            classes[port.schema.icon] = true;
+          }
+
+          value = html` <label
+              for=${port.name}
+              class=${classMap({
+                slim: isControllerBehavior(port.schema),
+              })}
+              >${!isControllerBehavior(port.schema) ? port.title : ""}</label
+            ><input
+              type="checkbox"
+              ?checked=${port.value === true}
+              id=${port.name}
+              name=${port.name}
+            />`;
+          break;
+        }
+
+        case "string": {
+          classes.string = true;
+          if (port.schema.icon) {
+            classes[port.schema.icon] = true;
+          }
+
+          if (port.schema.enum) {
+            const currentValue = enumValue(
+              port.schema.enum.find(
+                (value) => enumValue(value).id == port.value
+              ) ?? port.schema.enum[0]
+            );
+
+            const classes: Record<string, boolean> = {};
+            if (currentValue.icon) {
+              classes.icon = true;
+              classes[currentValue.icon] = true;
+              classes.slim = isControllerBehavior(port.schema);
+            }
+
+            value = html`<label for=${port.name} class=${classMap(classes)}
+                >${!isControllerBehavior(port.schema) ? port.title : ""}</label
+              ><select
+                @change=${this.#reactiveChange(port)}
+                name=${port.name}
+                id=${port.name}
+              >
+                ${map(port.schema.enum, (option) => {
+                  const { id, title } = enumValue(option);
+                  return html`<option
+                    value=${id}
+                    ?selected=${port.value === id ||
+                    (!port.value && id === port.schema.default)}
+                  >
+                    ${title}
+                  </option>`;
+                })}
+              </select>`;
+            break;
+          }
+
+          value = html`<label
+            class=${classMap({ slim: isControllerBehavior(port.schema) })}
+            >${!isControllerBehavior(port.schema) ? html`${port.title}: ` : ""}
+            ${port.value ?? "Value not set"}</label
+          >`;
+          break;
+        }
+
+        default: {
+          value = nothing;
+        }
+      }
+
+      let controls: HTMLTemplateResult | symbol = nothing;
+      if (isControllerBehavior(port.schema)) {
+        controls = html`<div id="controls-container">
+          <div id="controls">
+            ${this.graph
+              ? html`<bb-describe-edit-button
+                  monochrome
+                  popoverPosition="below"
+                  .label=${Strings.from("COMMAND_DESCRIBE_EDIT_STEP")}
+                  .currentGraph=${this.graph.raw() satisfies GraphDescriptor}
+                  .constraint=${{
+                    kind: "EDIT_STEP_CONFIG",
+                    stepId: nodeId,
+                  } satisfies FlowGenConstraint}
+                  @bbgraphreplace=${this.#onFlowgenEdit}
+                ></bb-describe-edit-button>`
+              : nothing}
+            ${hasTextEditor
+              ? html`<button
+                  id="tools"
+                  @pointerdown=${() => {
+                    if (!this.#editorRef.value) {
+                      return;
+                    }
+
+                    this.#editorRef.value.storeLastRange();
+                  }}
+                  @click=${(evt: PointerEvent) => {
+                    const bounds = new DOMRect(evt.clientX, evt.clientY, 0, 0);
+                    this.#showFastAccess(bounds);
+                  }}
+                >
+                  Tools
+                </button>`
+              : nothing}
+          </div>
+        </div>`;
+      }
+      return html`<div class=${classMap(classes)}>${value} ${controls}</div>`;
+    });
   }
 
   #showFastAccess(bounds: DOMRect | undefined) {
