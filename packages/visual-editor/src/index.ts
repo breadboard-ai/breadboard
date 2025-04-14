@@ -3191,7 +3191,13 @@ export class Main extends LitElement {
                 this.#runtime.board.closeTab(this.tab.id);
               }}
                   ?disabled=${this.tab === null}>
-                ${Strings.from("APP_NAME")}
+                ${
+                  this.showWelcomePanel
+                    ? html`<span class="product-name"
+                        >${Strings.from("APP_NAME")}</span
+                      >`
+                    : nothing
+                }
               </button>
 
               ${

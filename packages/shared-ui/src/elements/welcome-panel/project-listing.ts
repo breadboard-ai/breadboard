@@ -680,10 +680,10 @@ export class ProjectListing extends LitElement {
     return html` <div id="wrapper" ${ref(this.#wrapperRef)}>
         <section id="hero">
           <h1>
-            ${Strings.from("LABEL_WELCOME_MESSAGE_A")}
             <span class="gradient"
-              >${Strings.from("LABEL_WELCOME_MESSAGE_B")}</span
+              >${Strings.from("LABEL_WELCOME_MESSAGE_A")}</span
             >
+            ${Strings.from("LABEL_WELCOME_MESSAGE_B")}
           </h1>
           <bb-describe-flow-panel></bb-describe-flow-panel>
         </section>
