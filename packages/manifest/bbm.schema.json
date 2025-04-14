@@ -505,6 +505,10 @@
 					"description": "The icon that identifies the graph. Can be a URL or a Material Design id.",
 					"type": "string"
 				},
+				"intent": {
+					"description": "The overall intent or goal of the application.",
+					"type": "string"
+				},
 				"order": {
 					"description": "Allows specifying relative order of this graph when it is represented as a component in any menu. Currently used when populating the quick access menu.",
 					"type": "number"

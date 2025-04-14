@@ -265,6 +265,10 @@
 					},
 					"description": "Tags associated with the graph."
 				},
+				"intent": {
+					"type": "string",
+					"description": "The overall intent or goal of the application."
+				},
 				"help": {
 					"type": "object",
 					"properties": {

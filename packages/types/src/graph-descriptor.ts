@@ -365,6 +365,10 @@ export type GraphMetadata = {
    */
   tags?: GraphTag[];
   /**
+   * The overall intent or goal of the application.
+   */
+  intent?: string;
+  /**
    * The documentation for the graph, expressed as a URL and optional description.
    */
   help?: {
