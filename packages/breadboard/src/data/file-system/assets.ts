@@ -11,9 +11,10 @@ import { isLLMContentArray } from "../common.js";
 export { assetsFromGraphDescriptor, envFromGraphDescriptor };
 
 function envFromGraphDescriptor(
+  current: FileSystemEntry[],
   descriptor?: GraphDescriptor
 ): FileSystemEntry[] {
-  if (!descriptor) return [];
+  if (!descriptor) return [...current];
 
   const { title, description, url, version, metadata } = descriptor;
 
@@ -26,6 +27,7 @@ function envFromGraphDescriptor(
   } as JsonSerializable;
 
   return [
+    ...current,
     {
       path: "/env/metadata",
       data: [{ parts: [{ json }] }],

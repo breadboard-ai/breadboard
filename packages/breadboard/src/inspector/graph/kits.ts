@@ -327,7 +327,9 @@ class CustomNodeType implements InspectableNodeType {
       {
         graphStore: this.#mutable.store,
         outerGraph: this.#mutable.graph,
+        kits: [...this.#mutable.store.kits],
         wires: {} as NodeDescriberWires,
+        fileSystem: this.#mutable.store.fileSystem,
       }
     );
     if (

@@ -223,7 +223,10 @@ class NodeTypeDescriberManager implements DescribeResultCacheArgs {
       graphStore: this.mutable.store,
       fileSystem: this.mutable.store.fileSystem.createRunFileSystem({
         graphUrl: handle.outerGraph().url!,
-        env: envFromGraphDescriptor(handle.outerGraph()),
+        env: envFromGraphDescriptor(
+          this.mutable.store.fileSystem.env(),
+          handle.outerGraph()
+        ),
         assets: assetsFromGraphDescriptor(handle.outerGraph()),
       }),
       wires: {

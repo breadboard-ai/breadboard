@@ -71,6 +71,7 @@ export async function createRunConfig(
 
   // 4) Create the file system
   const fileSystem = createFileSystem({
+    env: [],
     local: createFileSystemBackend(createEphemeralBlobStore()),
   });
 
@@ -119,7 +120,7 @@ export async function createRunConfig(
     graphStore: graphStore,
     fileSystem: fileSystem.createRunFileSystem({
       graphUrl: graph.url!,
-      env: envFromGraphDescriptor(graph),
+      env: envFromGraphDescriptor([], graph),
       assets: assetsFromGraphDescriptor(graph),
     }),
   };

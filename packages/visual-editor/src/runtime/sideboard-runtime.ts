@@ -100,6 +100,7 @@ class SideboardRuntimeImpl
       undefined
     );
     this.#fileSystem = createFileSystem({
+      env: [],
       local: createFileSystemBackend(createEphemeralBlobStore()),
     });
     this.#graphStore = createGraphStore({
@@ -202,7 +203,7 @@ class SideboardRuntimeImpl
       graphStore: this.#graphStore,
       fileSystem: this.#fileSystem.createRunFileSystem({
         graphUrl: url,
-        env: envFromGraphDescriptor(graph),
+        env: envFromGraphDescriptor([], graph),
         assets: assetsFromGraphDescriptor(graph),
       }),
       interactiveSecrets: true,
