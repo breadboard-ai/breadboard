@@ -63,9 +63,6 @@ export default {
   LABEL_PROJECT_SERVER_SETTINGS: {
     str: "Flow Server Settings",
   },
-  LABEL_LIST_OTHERS_PROJECTS: {
-    str: "List others' Flows",
-  },
   LABEL_NO_VERSION: {
     str: "(no version)",
   },

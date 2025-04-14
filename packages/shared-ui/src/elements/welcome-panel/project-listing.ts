@@ -64,9 +64,6 @@ export class ProjectListing extends LitElement {
   accessor filter: string | null = null;
 
   @state()
-  accessor showOtherPeoplesBoards = false;
-
-  @state()
   accessor showBoardServerOverflowMenu = false;
   #overflowMenu = {
     x: 0,
@@ -401,9 +398,6 @@ export class ProjectListing extends LitElement {
 
     this.addEventListener("click", this.#hideBoardServerOverflowMenuBound);
 
-    this.showOtherPeoplesBoards =
-      this.showAdditionalSources &&
-      globalThis.localStorage.getItem(SHOW_OTHER_PEOPLES_BOARDS_KEY) === "true";
     this.#attemptFocus = true;
 
     this.mode =
@@ -425,7 +419,6 @@ export class ProjectListing extends LitElement {
           boardServers: BoardServer[];
           selectedBoardServer: string;
           selectedLocation: string;
-          showOtherPeoplesBoards: boolean;
           mode: boolean;
           filter: string | null;
         }>
@@ -447,7 +440,6 @@ export class ProjectListing extends LitElement {
       changedProperties.has("boardServers") ||
       changedProperties.has("selectedLocation") ||
       changedProperties.has("selectedBoardServer") ||
-      changedProperties.has("showOtherPeoplesBoards") ||
       changedProperties.has("filter") ||
       changedProperties.has("mode")
     ) {
@@ -772,26 +764,6 @@ export class ProjectListing extends LitElement {
                     >
                       ${Strings.from("LABEL_PROJECT_SERVER_SETTINGS")}
                     </button>
-
-                    <div id="list-other-peoples-boards-container">
-                      <input
-                        id="list-other-peoples-boards"
-                        type="checkbox"
-                        ?checked=${this.showOtherPeoplesBoards}
-                        @click=${(evt: Event) => {
-                          if (!(evt.target instanceof HTMLInputElement)) {
-                            return;
-                          }
-
-                          this.showOtherPeoplesBoards = evt.target.checked;
-                          globalThis.localStorage.setItem(
-                            SHOW_OTHER_PEOPLES_BOARDS_KEY,
-                            `${this.showOtherPeoplesBoards}`
-                          );
-                        }}
-                      /><label for="list-other-peoples-boards"
-                        >${Strings.from("LABEL_LIST_OTHERS_PROJECTS")}</label
-                      >
                     </div>`
                 : html`<h2 id="location-selector">
                     ${this.#getCurrentStoreName(selected)}
@@ -863,9 +835,7 @@ export class ProjectListing extends LitElement {
 
                     return 0;
                   });
-                const myItems = allItems.filter(
-                  ([, item]) => this.showOtherPeoplesBoards || item.mine
-                );
+                const myItems = allItems.filter(([, item]) => item.mine);
                 const sampleItems = allItems.filter(([, item]) =>
                   (item.tags ?? []).includes("featured")
                 );
