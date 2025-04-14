@@ -8,6 +8,7 @@ import {
   isTextCapabilityPart,
   MainGraphIdentifier,
   MutableGraphStore,
+  ok,
   Schema,
   SchemaEnumValue,
   Template,
@@ -48,7 +49,10 @@ import {
   GraphReplaceEvent,
   NodePartialUpdateEvent,
 } from "../../events/events";
-import { isControllerBehavior } from "../../utils/behaviors";
+import {
+  isControllerBehavior,
+  isLLMContentArrayBehavior,
+} from "../../utils/behaviors";
 
 import * as StringsHelper from "../../strings/helper.js";
 import { FlowGenConstraint } from "../../flow-gen/flow-generator";
@@ -854,41 +858,82 @@ export class EntityEditor extends LitElement {
 
     return inputPorts.map((port) => {
       const classes: Record<string, boolean> = {};
-      if (isLLMContentBehavior(port.schema)) {
-        classes["stretch"] = true;
-      }
-
       let value: HTMLTemplateResult | symbol = html`No value`;
       switch (port.schema.type) {
         case "object": {
-          const portValue = (port.value ?? {
-            role: "user",
-            parts: [{ text: "" }],
-          }) as LLMContent;
-          const textPart = portValue.parts.find((part) =>
-            isTextCapabilityPart(part)
-          );
-          if (!textPart) {
-            value = html`Invalid value`;
-            break;
+          if (isLLMContentBehavior(port.schema)) {
+            classes["stretch"] = true;
+            const portValue = (port.value ?? {
+              role: "user",
+              parts: [{ text: "" }],
+            }) as LLMContent;
+            const textPart = portValue.parts.find((part) =>
+              isTextCapabilityPart(part)
+            );
+            if (!textPart) {
+              value = html`Invalid value`;
+              break;
+            }
+
+            classes.object = true;
+            value = html`<bb-text-editor
+              ${ref(this.#editorRef)}
+              .value=${textPart.text}
+              .projectState=${this.projectState}
+              .subGraphId=${graphId !== MAIN_BOARD_ID ? graphId : null}
+              id=${port.name}
+              name=${port.name}
+              @keydown=${(evt: KeyboardEvent) => {
+                if (!isCtrlCommand(evt) || evt.key !== "Enter") {
+                  return;
+                }
+
+                this.#emitUpdatedNodeConfiguration();
+              }}
+            ></bb-text-editor>`;
+          } else {
+            value = html`<bb-delegating-input
+              id=${port.name}
+              .schema=${port.schema}
+              .value=${port.value}
+            ></bb-delegating-input>`;
           }
+          break;
+        }
 
-          classes.object = true;
-          value = html`<bb-text-editor
-            ${ref(this.#editorRef)}
-            .value=${textPart.text}
-            .projectState=${this.projectState}
-            .subGraphId=${graphId !== MAIN_BOARD_ID ? graphId : null}
-            id=${port.name}
-            name=${port.name}
-            @keydown=${(evt: KeyboardEvent) => {
-              if (!isCtrlCommand(evt) || evt.key !== "Enter") {
-                return;
-              }
+        case "array": {
+          if (isLLMContentArrayBehavior(port.schema)) {
+            classes["stretch"] = true;
+            const context = port.value as LLMContent[];
+            const portValue = (context.at(-1) ?? {
+              role: "user",
+              parts: [{ text: "" }],
+            }) as LLMContent;
+            const textPart = portValue.parts.find((part) =>
+              isTextCapabilityPart(part)
+            );
+            if (!textPart) {
+              value = html`Invalid value`;
+              break;
+            }
 
-              this.#emitUpdatedNodeConfiguration();
-            }}
-          ></bb-text-editor>`;
+            classes.object = true;
+            value = html`<bb-text-editor
+              ${ref(this.#editorRef)}
+              .value=${textPart.text}
+              .projectState=${this.projectState}
+              .subGraphId=${graphId !== MAIN_BOARD_ID ? graphId : null}
+              id=${port.name}
+              name=${port.name}
+              @keydown=${(evt: KeyboardEvent) => {
+                if (!isCtrlCommand(evt) || evt.key !== "Enter") {
+                  return;
+                }
+
+                this.#emitUpdatedNodeConfiguration();
+              }}
+            ></bb-text-editor>`;
+          }
           break;
         }
 
@@ -1103,21 +1148,48 @@ export class EntityEditor extends LitElement {
       return INVALID_ITEM;
     }
 
-    const graphUrl = new URL(this.graph.raw().url ?? window.location.href);
+    let value;
+    if (asset.type === "connector") {
+      value = this.projectState?.organizer
+        .getConnectorView(assetPath)
+        .then((view) => {
+          if (!ok(view)) return nothing;
+
+          const properties = view.schema.properties || {};
+          const values = view.values as Record<string, unknown>;
+
+          const ports = Object.entries(properties).map(([name, schema]) => {
+            return {
+              name,
+              title: schema.title || name,
+              schema,
+              value: values[name] as NodeValue,
+            } satisfies PortLike;
+          });
+
+          return this.#renderPorts("", "", ports);
+        });
+      // return html`${until(
+      //   value,
+      //   html`<div id="generic-status">Loading...</div>`
+      // )}`;
+    } else {
+      const graphUrl = new URL(this.graph.raw().url ?? window.location.href);
+
+      value = html`<bb-llm-output
+        .value=${asset?.data.at(-1) ?? null}
+        .clamped=${false}
+        .lite=${true}
+        .showModeToggle=${false}
+        .showEntrySelector=${false}
+        .showExportControls=${false}
+        .graphUrl=${graphUrl}
+      ></bb-llm-output>`;
+    }
 
     return html`<div class=${classMap({ asset: true })}>
       <h1 id="title"><span>${asset.title}</span></h1>
-      <div id="content">
-        <bb-llm-output
-          .value=${asset?.data.at(-1) ?? null}
-          .clamped=${false}
-          .lite=${true}
-          .showModeToggle=${false}
-          .showEntrySelector=${false}
-          .showExportControls=${false}
-          .graphUrl=${graphUrl}
-        ></bb-llm-output>
-      </div>
+      <div id="content">${until(value)}</div>
     </div>`;
   }
 
