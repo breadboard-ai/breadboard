@@ -643,11 +643,6 @@ export class ProjectListing extends LitElement {
     this.#searchRef.value.select();
   }
 
-  #toggleMode() {
-    this.mode = this.mode === "condensed" ? "detailed" : "condensed";
-    globalThis.localStorage.setItem(MODE_KEY, this.mode);
-  }
-
   #createUrl(boardServer: string, location: string) {
     return `${boardServer}::${location}`;
   }
@@ -881,7 +876,6 @@ export class ProjectListing extends LitElement {
                           <bb-gallery
                             .items=${myItems}
                             .boardServer=${boardServer}
-                            .mode=${this.mode}
                           ></bb-gallery>
                         </div>
                       `
@@ -902,7 +896,6 @@ export class ProjectListing extends LitElement {
                       <bb-gallery
                         .items=${sampleItems}
                         .boardServer=${boardServer}
-                        .mode=${this.mode}
                       ></bb-gallery>
                     </div>
                   `,
@@ -912,24 +905,6 @@ export class ProjectListing extends LitElement {
                   ? [
                       boardListings,
                       html` <div id="buttons">
-                        ${myItems.length
-                          ? html`<div id="mode-container">
-                              <input
-                                ?checked=${this.mode === "condensed"}
-                                type="checkbox"
-                                id="mode"
-                                @input=${() => {
-                                  this.#toggleMode();
-                                }}
-                              />
-                              <label for="mode"
-                                ><span class="detailed"></span
-                                ><span class="condensed"></span>
-                                <span class="sort-by-icon"></span
-                                >${Strings.from("LABEL_SORT_BY")}</label
-                              >
-                            </div>`
-                          : nothing}
                         <div id="new-project-container">
                           <button
                             id="new-project"
