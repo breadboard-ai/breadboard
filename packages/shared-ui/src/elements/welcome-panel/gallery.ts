@@ -13,8 +13,6 @@ import { GraphBoardServerLoadRequestEvent } from "../../events/events.js";
 import * as StringsHelper from "../../strings/helper.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
-const PAGE_SIZE_DETAILED = 8;
-const PAGE_SIZE_CONDENSED = 24;
 
 @customElement("bb-gallery")
 export class Gallery extends LitElement {
@@ -224,13 +222,6 @@ export class Gallery extends LitElement {
         }
       }
 
-      :host([mode="condensed"]) button {
-        height: auto !important;
-        & .img {
-          display: none;
-        }
-      }
-
       @media (min-width: 480px) and (max-width: 800px) {
         #boards {
           grid-template-columns: repeat(2, 1fr);
@@ -260,26 +251,28 @@ export class Gallery extends LitElement {
   @property({ attribute: false })
   accessor boardServer: BoardServer | undefined = undefined;
 
-  @property({ reflect: true })
-  accessor mode: "detailed" | "condensed" = "detailed";
-
   @property({ type: Number })
   accessor page = 0;
 
+  /**
+   * How many items to display per page. Set to -1 to disable pagination.
+   */
+  @property({ type: Number })
+  accessor pageSize = 8;
+
   override render() {
-    const pageSize = this.#pageSize;
-    const pageItems = (this.items ?? []).slice(
-      this.page * pageSize,
-      (this.page + 1) * pageSize
-    );
+    const pageSize = this.pageSize ?? -1;
+    const pageItems =
+      this.pageSize > 0
+        ? (this.items ?? []).slice(
+            this.page * pageSize,
+            (this.page + 1) * pageSize
+          )
+        : (this.items ?? []);
     return html`
       <div id="boards">${pageItems.map((item) => this.#renderBoard(item))}</div>
       ${this.#renderPagination()}
     `;
-  }
-
-  get #pageSize(): number {
-    return this.mode === "condensed" ? PAGE_SIZE_CONDENSED : PAGE_SIZE_DETAILED;
   }
 
   #renderBoard([name, item]: [string, GraphProviderItem]) {
@@ -331,7 +324,7 @@ export class Gallery extends LitElement {
   }
 
   #renderPagination() {
-    const pageSize = this.#pageSize;
+    const pageSize = this.pageSize;
     const items = this.items ?? [];
     const pages =
       items.length % pageSize === 0
