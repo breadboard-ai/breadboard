@@ -4,9 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as StringsHelper from "../../strings/helper.js";
-const Strings = StringsHelper.forSection("UIController");
-
 import {
   BoardServer,
   EditHistory,
@@ -351,7 +348,6 @@ export class UI extends LitElement {
     const canUndo = this.history?.canUndo() ?? false;
     const canRedo = this.history?.canRedo() ?? false;
     const run = this.runs?.[0] ?? null;
-    const lastRun = this.runs?.[1] ?? null;
     const events = run?.events ?? [];
     const eventPosition = events.length - 1;
 
@@ -474,11 +470,6 @@ export class UI extends LitElement {
       themeHash = hash(themes[theme]);
     }
 
-    const hideLast = this.status === STATUS.STOPPED;
-    const inputsFromLastRun = lastRun?.inputs() ?? null;
-    const nextNodeId = this.topGraphResult?.currentNode?.descriptor.id ?? null;
-    const graphUrl = this.graph?.url ? new URL(this.graph.url) : null;
-
     let selectionCount = 0;
     if (this.selectionState) {
       selectionCount = [...this.selectionState.selectionState.graphs].reduce(
@@ -495,56 +486,6 @@ export class UI extends LitElement {
       );
     }
     const sideNavItem = [
-      html`${guard(
-        [run, events, eventPosition, this.debugEvent],
-        () =>
-          html` <div
-            id="board-console-container"
-            class=${classMap({ active: this.sideNavItem === "console" })}
-          >
-            <bb-board-activity
-              class=${classMap({ collapsed: this.debugEvent !== null })}
-              .graphUrl=${graphUrl}
-              .run=${run}
-              .events=${events}
-              .eventPosition=${eventPosition}
-              .inputsFromLastRun=${inputsFromLastRun}
-              .showExtendedInfo=${true}
-              .settings=${this.settings}
-              .showLogTitle=${false}
-              .logTitle=${"Run"}
-              .hideLast=${hideLast}
-              .boardServers=${this.boardServers}
-              .showDebugControls=${false}
-              .nextNodeId=${nextNodeId}
-              @pointerdown=${(evt: PointerEvent) => {
-                const [top] = evt.composedPath();
-                if (!(top instanceof HTMLElement) || !top.dataset.messageId) {
-                  return;
-                }
-                evt.stopImmediatePropagation();
-                const id = top.dataset.messageId;
-                const event = run?.getEventById(id);
-                if (!event) {
-                  // TODO: Offer the user more information.
-                  console.warn(`Unable to find event with ID "${id}"`);
-                  return;
-                }
-                if (event.type !== "node") {
-                  return;
-                }
-
-                this.debugEvent = event;
-              }}
-              name=${Strings.from("LABEL_PROJECT")}
-            ></bb-board-activity>
-            ${this.debugEvent
-              ? html`<bb-event-details
-                  .event=${this.debugEvent}
-                ></bb-event-details>`
-              : nothing}
-          </div>`
-      )}`,
       html`${guard(
         [
           run,

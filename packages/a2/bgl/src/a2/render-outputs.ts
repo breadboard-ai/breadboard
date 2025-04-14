@@ -149,7 +149,6 @@ ${themeColorsPrompt(await getThemeColors())}
       console.log(out);
     }
   }
-  return out;
   if (!ok(out)) return out;
   return { context: out };
 }

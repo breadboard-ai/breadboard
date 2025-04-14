@@ -428,7 +428,7 @@ export class AppPreview extends LitElement {
         .run=${run}
         .events=${events}
         .eventPosition=${eventPosition}
-        .showExtendedInfo=${true}
+        .showExtendedInfo=${false}
         .settings=${this.settings}
         .showLogTitle=${false}
         .logTitle=${"Run"}

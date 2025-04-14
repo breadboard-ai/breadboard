@@ -123,7 +123,7 @@ async function processAssetPack(
     styles.push(`--bb-${fileNameAsStyleProp}: url("${base64Str}")`);
 
     // Special-case the logo.
-    if (file.name === "logo.svg") {
+    if (path.parse(file.name).name === "logo") {
       mainIcon = `data:${mimeType};base64,${btoa(data)}`;
     }
   }

@@ -226,16 +226,20 @@ export const styles = css`
       height: 100%;
 
       & #logo {
-        font-size: 0;
+        color: #404041;
+        font-family: var(--bb-font-family);
+        font-size: 20px;
+        font-weight: 500;
         border: none;
         width: 24px;
         height: 24px;
         margin: 0 var(--bb-grid-size-4);
-        background: var(--bb-logo) center center / 24px 24px no-repeat;
+        background: var(--bb-logo) left center / 24px 24px no-repeat;
         padding: 0;
-        display: flex;
-        align-items: center;
-        position: relative;
+
+        & > .product-name {
+          padding-left: 40px;
+        }
 
         &:not([disabled]) {
           cursor: pointer;
