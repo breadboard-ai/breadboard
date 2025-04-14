@@ -823,6 +823,13 @@ export class EditorControls extends LitElement {
         popoverPosition="above"
         .label=${Strings.from("COMMAND_DESCRIBE_EDIT_FLOW")}
         .currentGraph=${this.graph.raw()}
+        @pointerdown=${(event: PointerEvent) => {
+          // TODO(aomarks) <bb-renderer> listens for pointerdown and steals
+          // focus, making it impossible to interact with this element unless we
+          // mask the event. Probably this shelf shouldn't even be within the
+          // renderer?
+          event.stopPropagation();
+        }}
       ></bb-describe-edit-button>
     </div>`;
 
