@@ -36,6 +36,6 @@ const { invoke, describe } = createConfigurator<
   },
   write: async ({ id, values }) => {
     console.log("WRITE", id, values);
-    return {};
+    return values;
   },
 });

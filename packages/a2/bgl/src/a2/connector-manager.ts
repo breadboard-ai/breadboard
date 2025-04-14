@@ -218,7 +218,7 @@ function createConfiguratorInvoke<
       const writing = await configurator.write?.(inputs);
       if (!writing) return cx({});
       if (!ok(writing)) return writing;
-      return cx({});
+      return cx(writing);
     }
     return err(`Unknown stage: ${inputs["stage"]}`);
   };
