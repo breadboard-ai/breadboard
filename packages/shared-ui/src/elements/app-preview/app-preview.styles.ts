@@ -57,6 +57,14 @@ export const styles = css`
       }
     }
 
+    & #board-console-container {
+      height: 100%;
+      overflow: auto;
+      position: relative;
+      scroll-padding-bottom: 60px;
+      scrollbar-width: none;
+    }
+
     --output-border-width: 1px;
     --output-border-color: var(--bb-neutral-300);
     --output-border-radius: var(--bb-grid-size-4);
