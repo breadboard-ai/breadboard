@@ -54,9 +54,6 @@ export default {
   LABEL_WELCOME_CTA: {
     str: "Describe what you want to build",
   },
-  LABEL_PLACEHOLDER_DESCRIPTION: {
-    str: "Describe what you want to make in 1-2 sentences",
-  },
   LABEL_FEATURED_GUIDES: {
     str: "Guides and Tutorials",
   },
