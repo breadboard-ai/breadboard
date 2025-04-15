@@ -32,6 +32,7 @@ export { ConnectionInput } from "./connection/connection-input.js";
 export { ConnectionSettings } from "./connection/connection-settings.js";
 export { ConnectionSignin } from "./connection/connection-signin.js";
 export { FlowgenInStepButton } from "../flow-gen/flowgen-in-step-button.js";
+export { FlowgenEditorInput } from "../flow-gen/flowgen-editor-input.js";
 export { DragDockOverlay } from "./overlay/drag-dock-overlay.js";
 export { DrawableInput } from "./input/drawable/drawable.js";
 export { EditorControls } from "./step-editor/editor-controls.js";

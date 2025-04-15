@@ -99,6 +99,9 @@ export default {
   LABEL_SEARCH_BOARDS: {
     str: "Search Flows",
   },
+  LABEL_SUGGEST_AN_EDIT: {
+    str: "Suggest an edit",
+  },
   LABEL_GENERATING_FLOW: {
     str: "Generating your flow ...",
   },
