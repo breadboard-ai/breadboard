@@ -80,13 +80,13 @@ class Configurator {
 
   async write(
     values: Record<string, JsonSerializable>
-  ): Promise<Outcome<void>> {
+  ): Promise<Outcome<JsonSerializable>> {
     const result = await this.#invokeConfigurator({
       stage: "write",
       id: this.id,
       values,
     });
-    if (!ok(result)) return result;
+    return result;
   }
 }
 

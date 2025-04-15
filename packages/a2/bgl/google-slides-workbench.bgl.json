@@ -34,8 +34,8 @@
       "metadata": {
         "title": "Save Outputs",
         "visual": {
-          "x": 200,
-          "y": -40
+          "x": 220,
+          "y": 0
         },
         "userModified": false
       },
@@ -44,7 +44,7 @@
           "role": "user",
           "parts": [
             {
-              "text": "{{\"type\":\"asset\",\"path\":\"connectors/e7676b81-3d64-4549-bef0-ce98123c0ef5\",\"title\":\"Doc to Save\"}}"
+              "text": "{{\"type\":\"asset\",\"path\":\"connectors/6f16787c-ae2f-45c7-8c1d-e4f36ae8e129\",\"title\":\"Macros\"}}"
             }
           ]
         },
@@ -111,7 +111,12 @@
       ],
       "metadata": {
         "title": "UX Pattern Slides",
-        "type": "connector"
+        "type": "connector",
+        "description": "",
+        "visual": {
+          "x": 360,
+          "y": 180
+        }
       }
     },
     "connectors/6f16787c-ae2f-45c7-8c1d-e4f36ae8e129": {
@@ -136,7 +141,12 @@
       ],
       "metadata": {
         "title": "Macros",
-        "type": "connector"
+        "type": "connector",
+        "description": "",
+        "visual": {
+          "x": -140,
+          "y": 160
+        }
       }
     },
     "connectors/26557812-98f1-4c9d-b6ba-3164932343bd": {
@@ -154,7 +164,12 @@
       ],
       "metadata": {
         "title": "Memory",
-        "type": "connector"
+        "type": "connector",
+        "description": "",
+        "visual": {
+          "x": 60,
+          "y": 360
+        }
       }
     },
     "connectors/e7676b81-3d64-4549-bef0-ce98123c0ef5": {
@@ -179,7 +194,12 @@
       ],
       "metadata": {
         "title": "Doc to Save",
-        "type": "connector"
+        "type": "connector",
+        "description": "",
+        "visual": {
+          "x": 180,
+          "y": -340
+        }
       }
     },
     "@@thumbnail": {
@@ -187,7 +207,7 @@
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI4MC4xNyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTAzLjEwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMzkuNjYiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CjxyZWN0IHg9IjEzNi45MCIKICAgICAgICAgICAgICAgICAgICB5PSI4MC4xNyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTAzLjEwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMzkuNjYiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyMGEyMDIiIC8+CiAgICAgIAogICAgPC9zdmc+"
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI3My4xNyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iOTkuNjciCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIzOC4zMyIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KPHJlY3QgeD0iMTQwLjMzIgogICAgICAgICAgICAgICAgICAgIHk9Ijg4LjUwIgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI5OS42NyIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjM4LjMzIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMjBhMjAyIiAvPgogICAgICAKICAgIDwvc3ZnPg=="
     }
   }
 }
