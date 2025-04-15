@@ -26,9 +26,6 @@ export default {
   COMMAND_RENEW_ACCESS: {
     str: "Renew Access",
   },
-  COMMAND_GET_STARTED: {
-    str: "Add a new Flow to get started",
-  },
   COMMAND_PREVIOUS: {
     str: "Previous",
   },
