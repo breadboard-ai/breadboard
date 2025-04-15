@@ -165,6 +165,15 @@ export class ExpandingTextarea extends LitElement {
       event.preventDefault();
       event.stopImmediatePropagation();
       this.#submit();
+    } else if (
+      event.key === "Tab" &&
+      this.placeholder &&
+      this.#textarea.value &&
+      !this.#textarea.value.value
+    ) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      this.value = this.#textarea.value.value = this.placeholder;
     }
   }
 
@@ -186,7 +195,7 @@ export class ExpandingTextarea extends LitElement {
     if (!textarea || !measure) {
       return;
     }
-    measure.textContent = textarea.value;
+    measure.textContent = textarea.value || this.placeholder;
     // Instead of directly matching the height, round to the nearest number of
     // lines, and then multiply by line height. This ensures our height is
     // always a multiple of line height, and accounts for tiny rendering

@@ -29,37 +29,11 @@ type State =
   | { status: "generating" }
   | { status: "error"; error: unknown };
 
-type TemplateFlow = {
-  icon: string;
-  label: string;
-  prompt: string;
-};
-
-const TEMPLATE_FLOWS: TemplateFlow[] = [
-  {
-    label: "Content writer",
-    icon: "smart_campaign",
-    prompt:
-      "Create a flow that takes a business name and description, and generates 1 social media post with an eye-catching picture",
-  },
-  {
-    label: "Research analyst",
-    icon: "search_spark",
-    prompt:
-      "Create a flow that takes a product area, performs research on the web, and produces a report",
-  },
-  {
-    label: "Movie maker",
-    icon: "movie",
-    prompt:
-      "Create a flow that takes a movie description, and generates 3 scene descriptions, along with a storyboard sketch for each.",
-  },
-  {
-    label: "Multi-agent manager",
-    icon: "group_auto",
-    prompt:
-      "Create a flow that takes a task description, divides the task into 3 sub-tasks, assigns them to 3 independent agents, and then combines the result into a report",
-  },
+const SUGGESTED_FLOWS = [
+  "Create a flow that takes a business name and description, and generates 1 social media post with an eye-catching picture",
+  "Create a flow that takes a product area, performs research on the web, and produces a report",
+  "Create a flow that takes a movie description, and generates 3 scene descriptions, along with a storyboard sketch for each.",
+  "Create a flow that takes a task description, divides the task into 3 sub-tasks, assigns them to 3 independent agents, and then combines the result into a report",
 ];
 
 @customElement("bb-describe-flow-panel")
@@ -169,13 +143,16 @@ export class DescribeFlowPanel extends LitElement {
   @property({ reflect: true, type: Boolean })
   accessor highlighted = false;
 
+  @property()
+  accessor placeholder =
+    SUGGESTED_FLOWS[Math.floor(Math.random() * SUGGESTED_FLOWS.length)];
+
   readonly #descriptionInput = createRef<ExpandingTextarea>();
 
   override render() {
     return [
       html`<p id="feedback">${this.#renderFeedback()}</p>`,
       this.#renderInput(),
-      this.#renderTemplateChips(),
     ];
   }
 
@@ -225,7 +202,7 @@ export class DescribeFlowPanel extends LitElement {
       <div id="gradient-border-container">
         <bb-expanding-textarea
           ${ref(this.#descriptionInput)}
-          .placeholder=${Strings.from("LABEL_PLACEHOLDER_DESCRIPTION")}
+          .placeholder=${this.placeholder}
           .disabled=${isGenerating}
           @change=${this.#onInputChange}
         >
@@ -237,32 +214,6 @@ export class DescribeFlowPanel extends LitElement {
         </bb-expanding-textarea>
       </div>
     `;
-  }
-
-  #renderTemplateChips() {
-    return html`
-      <div id="chips">
-        ${TEMPLATE_FLOWS.map(
-          (chip) => html`
-            <button
-              class="bb-chip"
-              @click=${() => this.#onClickTemplateChip(chip)}
-            >
-              <span class="g-icon">${chip.icon}</span>
-              <span>${chip.label}</span>
-            </button>
-          `
-        )}
-      </div>
-    `;
-  }
-
-  #onClickTemplateChip(flow: TemplateFlow) {
-    const input = this.#descriptionInput?.value;
-    if (input) {
-      input.value = flow.prompt;
-      input.focus();
-    }
   }
 
   #onInputChange() {
