@@ -264,7 +264,6 @@ export class FlowgenEditorInput extends LitElement {
     }
     console.error("Error generating board", error);
     this.#state = { status: "error", error };
-    this.#clearInput();
     this.generating = false;
   }
 
