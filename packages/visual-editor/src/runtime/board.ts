@@ -215,7 +215,11 @@ export class Board extends EventTarget {
     );
   }
 
-  getBoardServers(): BoardServer[] {
+  getBoardServers(forcedBoardServiceName?: string): BoardServer[] {
+    if (forcedBoardServiceName) {
+      const service = this.getBoardServerByName(forcedBoardServiceName);
+      return service ? [service] : [];
+    }
     return this.boardServers.servers;
   }
 

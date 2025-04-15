@@ -101,6 +101,8 @@ const LOADING_TIMEOUT = 250;
 export type MainArguments = {
   boards?: BreadboardUI.Types.Board[];
   providers?: BoardServer[]; // Deprecated.
+  /** When specified, this will be the only available board service. */
+  forcedBoardServiceName?: string;
   settings?: SettingsStore;
   proxy?: HarnessProxyConfig[];
   version?: string;
@@ -123,6 +125,7 @@ export type MainArguments = {
    * Whether or not this instance of requires sign in.
    */
   requiresSignin?: boolean;
+
 };
 
 type SaveAsConfiguration = {
@@ -308,6 +311,7 @@ export class Main extends LitElement {
   #tabBoardStatus = new Map<TabId, BreadboardUI.Types.STATUS>();
   #tabLoadStatus = new Map<TabId, BreadboardUI.Types.BOARD_LOAD_STATUS>();
   #boardServers: BoardServer[];
+  #forcedBoardServiceName?: string;
   #settings: SettingsStore | null;
   #secretsHelper: SecretsHelper | null = null;
   /**
@@ -466,6 +470,8 @@ export class Main extends LitElement {
     this.#boardServers = [];
     this.#settings = config.settings || null;
     this.#proxy = config.proxy || [];
+    this.#forcedBoardServiceName = config.forcedBoardServiceName;
+    console.log('vvv forcedBoardServiceName', this.#forcedBoardServiceName);
     if (this.#settings) {
       this.settingsHelper = new SettingsHelperImpl(this.#settings);
       this.tokenVendor = createTokenVendor(
@@ -557,7 +563,7 @@ export class Main extends LitElement {
       .then((runtime) => {
         this.#runtime = runtime;
         this.#graphStore = runtime.board.getGraphStore();
-        this.#boardServers = runtime.board.getBoardServers() || [];
+        this.#boardServers = runtime.board.getBoardServers(this.#forcedBoardServiceName) || [];
 
         this.sideBoardRuntime = runtime.sideboards;
 

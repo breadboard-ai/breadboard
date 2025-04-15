@@ -65,6 +65,7 @@ function bootstrap(args: BootstrapArguments = {}) {
       boardServerUrl: args?.boardServerUrl,
       connectionServerUrl: args?.connectionServerUrl,
       requiresSignin: args?.requiresSignin,
+      forcedBoardServiceName: FORCED_BOARD_SERVICE_NAME,
     };
 
     window.oncontextmenu = (evt) => evt.preventDefault();
