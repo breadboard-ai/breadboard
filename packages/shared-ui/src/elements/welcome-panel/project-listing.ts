@@ -33,6 +33,7 @@ const SHOW_OTHER_PEOPLES_BOARDS_KEY =
   "bb-project-listing-show-other-peoples-boards";
 const MODE_KEY = "bb-project-listing-mode";
 const OVERFLOW_MENU_CLEARANCE = 4;
+const FORCE_NO_BOARDS = new URL(document.URL).searchParams.has("forceNoBoards");
 
 @customElement("bb-project-listing")
 export class ProjectListing extends LitElement {
@@ -139,8 +140,7 @@ export class ProjectListing extends LitElement {
           margin-top: 24px;
         }
 
-        & #loading-message,
-        & #no-projects {
+        & #loading-message {
           color: var(--bb-neutral-700);
           font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
             var(--bb-font-family);
@@ -149,6 +149,20 @@ export class ProjectListing extends LitElement {
 
           & p {
             margin: 0 0 var(--bb-grid-size) 0;
+          }
+        }
+
+        & #no-projects-panel {
+          background: #f8fafd;
+          border-radius: var(--bb-grid-size-6);
+          padding: 34px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          p {
+            color: var(--bb-neutral-700);
+            font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
+              var(--bb-font-family);
           }
         }
 
@@ -226,29 +240,6 @@ export class ProjectListing extends LitElement {
         & #new-project-container {
           display: flex;
           justify-content: center;
-
-          & #new-project {
-            color: #004a77;
-            background-color: #c2e7ff;
-            font: 500 var(--bb-title-small) / var(--bb-title-line-height-small)
-              var(--bb-font-family);
-            display: flex;
-            align-items: center;
-            border-radius: 100px;
-            border: none;
-            padding: 6px 12px;
-            transition: background 0.2s cubic-bezier(0, 0, 0.3, 1);
-            cursor: pointer;
-
-            & > .g-icon {
-              margin-right: 4px;
-            }
-
-            &:hover,
-            &:focus {
-              background-color: #96d6ff;
-            }
-          }
         }
 
         & #location-selector-container {
@@ -381,6 +372,29 @@ export class ProjectListing extends LitElement {
           "wght" 600,
           "GRAD" 0,
           "opsz" 48;
+      }
+
+      #create-new-button {
+        color: #004a77;
+        background-color: #c2e7ff;
+        font: 500 var(--bb-title-small) / var(--bb-title-line-height-small)
+          var(--bb-font-family);
+        display: flex;
+        align-items: center;
+        border-radius: 100px;
+        border: none;
+        padding: 6px 12px;
+        transition: background 0.2s cubic-bezier(0, 0, 0.3, 1);
+        cursor: pointer;
+
+        & > .g-icon {
+          margin-right: 4px;
+        }
+
+        &:hover,
+        &:focus {
+          background-color: #96d6ff;
+        }
       }
     `,
   ];
@@ -840,7 +854,7 @@ export class ProjectListing extends LitElement {
                   (item.tags ?? []).includes("featured")
                 );
                 const boardListings = [
-                  myItems.length
+                  myItems.length && !FORCE_NO_BOARDS
                     ? html`
                         <div class="gallery-wrapper">
                           <bb-gallery
@@ -851,9 +865,9 @@ export class ProjectListing extends LitElement {
                         </div>
                       `
                     : html`
-                        <div id="no-projects">
+                        <div id="no-projects-panel">
                           <p>${Strings.from("LABEL_NO_PROJECTS_FOUND")}</p>
-                          <p>${Strings.from("COMMAND_GET_STARTED")}</p>
+                          ${this.#renderCreateNewButton()}
                         </div>
                       `,
                   html`
@@ -876,27 +890,15 @@ export class ProjectListing extends LitElement {
                 return permission === "granted"
                   ? [
                       boardListings,
-                      html` <div id="buttons">
-                        <div id="new-project-container">
-                          <button
-                            id="new-project"
-                            @click=${(evt: Event) => {
-                              if (!(evt.target instanceof HTMLButtonElement)) {
-                                return;
-                              }
-
-                              evt.target.disabled = true;
-
-                              this.dispatchEvent(
-                                new GraphBoardServerBlankBoardEvent()
-                              );
-                            }}
-                          >
-                            <span class="g-icon">add</span>
-                            ${Strings.from("COMMAND_NEW_PROJECT")}
-                          </button>
-                        </div>
-                      </div>`,
+                      myItems.length && !FORCE_NO_BOARDS
+                        ? html`
+                            <div id="buttons">
+                              <div id="create-new-button-container">
+                                ${this.#renderCreateNewButton()}
+                              </div>
+                            </div>
+                          `
+                        : nothing,
                     ]
                   : html`<div id="renew-access">
                       <span
@@ -984,5 +986,22 @@ export class ProjectListing extends LitElement {
         : nothing}
 
       <div id="app-version">${this.version} (${this.gitCommitHash})</div>`;
+  }
+
+  #renderCreateNewButton() {
+    return html`
+      <button id="create-new-button" @click=${this.#clickNewProjectButton}>
+        <span class="g-icon">add</span>
+        ${Strings.from("COMMAND_NEW_PROJECT")}
+      </button>
+    `;
+  }
+
+  #clickNewProjectButton(evt: Event) {
+    if (!(evt.target instanceof HTMLButtonElement)) {
+      return;
+    }
+    evt.target.disabled = true;
+    this.dispatchEvent(new GraphBoardServerBlankBoardEvent());
   }
 }
