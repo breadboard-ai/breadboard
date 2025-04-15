@@ -726,7 +726,7 @@ export class EntityEditor extends LitElement {
       const ports = this.#connectorPorts.get(assetPath) || [];
       const { values } = this.#takePortValues(form, ports);
       console.log("VALUES", values);
-      this.projectState?.organizer.commitConnectorInstanceEdits(
+      this.projectState?.connectors.commitInstanceEdits(
         assetPath,
         values as Record<string, JsonSerializable>
       );
@@ -1169,8 +1169,8 @@ export class EntityEditor extends LitElement {
 
     let value;
     if (asset.type === "connector") {
-      value = this.projectState?.organizer
-        .getConnectorView(assetPath)
+      value = this.projectState?.connectors
+        .getInstanceView(assetPath)
         .then((view) => {
           if (!ok(view)) return nothing;
           const ports = portsFromView(view);

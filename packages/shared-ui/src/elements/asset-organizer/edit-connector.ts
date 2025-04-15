@@ -36,7 +36,9 @@ export class EditConnector extends SignalWatcher(LitElement) {
 
   readonly config = new AsyncComputed(async (signal) => {
     if (!this.state || !this.path) return [];
-    const connectorView = await this.state.getConnectorView(this.path);
+    const connectorView = await this.state.connectors.getInstanceView(
+      this.path
+    );
     signal.throwIfAborted();
 
     if (!ok(connectorView)) throw new Error(connectorView.$error);

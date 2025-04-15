@@ -23,8 +23,8 @@ export class ViewConnector extends LitElement {
   render() {
     if (!this.state || !this.path) return nothing;
 
-    const view = this.state
-      .getConnectorView(this.path)
+    const view = this.state.connectors
+      .getInstanceView(this.path)
       .then((connectorView) => {
         if (!ok(connectorView)) {
           return html`Error loading ${connectorView.$error}`;

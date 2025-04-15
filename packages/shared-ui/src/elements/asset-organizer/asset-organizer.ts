@@ -729,14 +729,14 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
     if (!this.state) return DEFAULT_ACTIONS;
     const actions = [
       ...DEFAULT_ACTIONS,
-      ...[...this.state.connectors.values()]
+      ...[...this.state.connectors.types.values()]
         .filter(
           (connector) =>
             !connector.url.includes("/_") &&
             (!connector.experimental || this.showExperimentalComponents) &&
             isA2(connector.url) &&
             (!connector.singleton ||
-              !this.state?.connectorInstanceExists(connector.url))
+              !this.state?.connectors.instanceExists(connector.url))
         )
         .map((connector) => {
           return {
@@ -832,7 +832,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
 
             case "connector": {
               const creatingConnector =
-                await this.state?.initializeConnectorInstance(evt.value);
+                await this.state?.connectors.initializeInstance(evt.value);
               if (!ok(creatingConnector)) {
                 console.log(
                   `Unable to create connector: ${creatingConnector.$error}`
@@ -1129,8 +1129,8 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                                 const path = this.selectedItem?.path;
                                 if (!path) return;
 
-                                this.state
-                                  ?.commitConnectorInstanceEdits(
+                                this.state?.connectors
+                                  .commitInstanceEdits?.(
                                     path,
                                     this.#contentInputRef.value.value as Record<
                                       string,
@@ -1164,7 +1164,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                             ? html`<button
                                 id="cancel-edit"
                                 @click=${() => {
-                                  this.state?.cancel();
+                                  this.state?.connectors.cancel();
                                   this.editAssetContent = null;
                                 }}
                               >
@@ -1183,8 +1183,8 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                               const path = this.selectedItem?.path;
                               if (!path) return;
 
-                              this.state
-                                ?.commitConnectorInstanceEdits(
+                              this.state?.connectors
+                                .commitInstanceEdits(
                                   path,
                                   evt.data as Record<string, JsonSerializable>
                                 )

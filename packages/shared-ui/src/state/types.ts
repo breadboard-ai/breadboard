@@ -94,21 +94,11 @@ export type OrganizerStage = "free" | "busy";
  */
 export type Organizer = {
   /**
-   * Current status of the organizer
-   */
-  stage: OrganizerStage;
-
-  /**
    * Current graph's assets.
    */
   graphAssets: Map<AssetPath, GraphAsset>;
 
   graphUrl: URL | null;
-
-  // This double-plumbing is inelegant -- it just calls the
-  // method by the same name in Project.
-  // TODO: Make this more elegant.
-  connectorInstanceExists(url: string): boolean;
 
   addGraphAsset(asset: GraphAsset): Promise<Outcome<void>>;
   removeGraphAsset(path: AssetPath): Promise<Outcome<void>>;
@@ -129,28 +119,7 @@ export type Organizer = {
   /**
    * Available connectors
    */
-  connectors: Map<string, Connector>;
-
-  /**
-   * Starts creating a new Connector instance
-   *
-   * @param url -- URL of the connector.
-   */
-  initializeConnectorInstance(url: string | null): Promise<Outcome<void>>;
-  commitConnectorInstanceEdits(
-    path: AssetPath,
-    values: Record<string, JsonSerializable>
-  ): Promise<Outcome<void>>;
-  /**
-   * Cancels all pending work.
-   */
-  cancel(): Promise<void>;
-
-  /**
-   * Gets the connector view: the values and the schema to use to render these
-   * values.
-   */
-  getConnectorView(path: AssetPath): Promise<Outcome<ConnectorView>>;
+  connectors: ConnectorState;
 };
 
 export type GraphAsset = {
@@ -210,6 +179,47 @@ export type FastAccess = {
   parameters: Map<string, ParameterMetadata>;
 };
 
+export type RendererState = {
+  connectors: ConnectorState;
+};
+
+export type ConnectorState = {
+  types: Map<string, Connector>;
+
+  // This double-plumbing is inelegant -- it just calls the
+  // method by the same name in Project.
+  // TODO: Make this more elegant.
+  instanceExists(url: string): boolean;
+
+  /**
+   * Starts creating a new Connector instance
+   *
+   * @param url -- URL of the connector.
+   */
+  initializeInstance(url: string | null): Promise<Outcome<void>>;
+
+  /**
+   * Commits edits to the connector instance
+   * @param path -- asset path representing connector instance
+   * @param values -- values to update
+   */
+  commitInstanceEdits(
+    path: AssetPath,
+    values: Record<string, JsonSerializable>
+  ): Promise<Outcome<void>>;
+
+  /**
+   * Gets the connector instance view:
+   * the values and the schema to use to render these values.
+   */
+  getInstanceView(path: AssetPath): Promise<Outcome<ConnectorView>>;
+
+  /**
+   * Cancel any pending work.
+   */
+  cancel(): Promise<void>;
+};
+
 /**
  * Represents the Model+Controller for the entire Project.
  * Contains all the state for the project.
@@ -217,9 +227,10 @@ export type FastAccess = {
 export type Project = {
   graphAssets: Map<AssetPath, GraphAsset>;
   parameters: Map<string, ParameterMetadata>;
-  connectors: Map<string, Connector>;
+  connectors: ConnectorState;
   organizer: Organizer;
   fastAccess: FastAccess;
+  renderer: RendererState;
 };
 
 export type ProjectInternal = Project & {
