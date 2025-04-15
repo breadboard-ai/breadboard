@@ -76,6 +76,7 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { DATA_TYPE, MOVE_GRAPH_ID } from "./constants";
 import { AssetMetadata } from "@breadboard-ai/types";
 import { isCtrlCommand } from "../../utils/is-ctrl-command";
+import { RendererState } from "../../state";
 
 @customElement("bb-renderer")
 export class Renderer extends LitElement {
@@ -96,6 +97,9 @@ export class Renderer extends LitElement {
 
   @property()
   accessor graphStore: MutableGraphStore | null = null;
+
+  @property()
+  accessor state: RendererState | null = null;
 
   @property()
   accessor graphStoreUpdateId = 0;
@@ -850,6 +854,7 @@ export class Renderer extends LitElement {
       mainGraph.boundsLabel = this.graph.raw().title ?? "Untitled";
       mainGraph.nodes = this.graph.nodes();
       mainGraph.edges = this.graph.edges();
+      mainGraph.rendererState = this.state;
       if (this.showAssetsInGraph) {
         mainGraph.assets = this.graph.assets();
         mainGraph.assetEdges = this.graph.assetEdges();
@@ -874,6 +879,7 @@ export class Renderer extends LitElement {
         subGraph.boundsLabel = graph.raw().title ?? "Custom Tool";
         subGraph.nodes = graph.nodes();
         subGraph.edges = graph.edges();
+        subGraph.rendererState = this.state;
         subGraph.allowEdgeAttachmentMove = this.allowEdgeAttachmentMove;
         subGraph.resetTransform();
       }

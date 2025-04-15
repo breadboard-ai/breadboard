@@ -32,6 +32,8 @@ import { DragConnectorStartEvent } from "../../events/events";
 import { getGlobalColor } from "../../utils/color.js";
 import { AssetPath } from "@breadboard-ai/types";
 import { InspectableAsset } from "@google-labs/breadboard";
+import { SignalWatcher } from "@lit-labs/signals";
+import { ConnectorState } from "../../state/types.js";
 
 const EDGE_STANDARD = getGlobalColor("--bb-neutral-400");
 
@@ -61,7 +63,10 @@ const rightArrow = html`${svg`
   </svg>`}`;
 
 @customElement("bb-graph-asset")
-export class GraphAsset extends Box implements DragConnectorReceiver {
+export class GraphAsset
+  extends SignalWatcher(Box)
+  implements DragConnectorReceiver
+{
   @property()
   accessor assetTitle = "";
 
@@ -85,6 +90,9 @@ export class GraphAsset extends Box implements DragConnectorReceiver {
 
   @property()
   accessor graphUrl: URL | null = null;
+
+  @property()
+  accessor connectors: ConnectorState | null = null;
 
   static styles = [
     Box.styles,
