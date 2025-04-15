@@ -16,10 +16,10 @@ import { SideBoardRuntime } from "../sideboards/types.js";
 import type { ExpandingTextarea } from "../elements/input/expanding-textarea.js";
 import { icons } from "../styles/icons.js";
 import "../elements/input/expanding-textarea.js";
-import { chipStyles } from "../styles/chip.js";
 import { FlowGenerator } from "./flow-generator.js";
 import { AppCatalystApiClient } from "./app-catalyst.js";
 import { classMap } from "lit/directives/class-map.js";
+import { spinAnimationStyles } from "../styles/spin-animation.js";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -32,7 +32,7 @@ type State =
 export class FlowgenEditorInput extends LitElement {
   static styles = [
     icons,
-    chipStyles,
+    spinAnimationStyles,
     css`
       * {
         box-sizing: border-box;
@@ -114,18 +114,6 @@ export class FlowgenEditorInput extends LitElement {
         > [slot~="submit"] {
           color: var(--icon-color);
           transition: var(--color-transition);
-        }
-      }
-
-      .spin {
-        animation: spin 1.5s linear infinite;
-      }
-      @keyframes spin {
-        from {
-          transform: rotate(0deg);
-        }
-        to {
-          transform: rotate(360deg);
         }
       }
 
