@@ -819,7 +819,7 @@ export class EditorControls extends LitElement {
     </div>`;
 
     const shelf = html`<div id="shelf">
-      <bb-describe-edit-button
+      <bb-flowgen-in-step-button
         popoverPosition="above"
         .label=${Strings.from("COMMAND_DESCRIBE_EDIT_FLOW")}
         .currentGraph=${this.graph.raw()}
@@ -830,7 +830,7 @@ export class EditorControls extends LitElement {
           // renderer?
           event.stopPropagation();
         }}
-      ></bb-describe-edit-button>
+      ></bb-flowgen-in-step-button>
     </div>`;
 
     let componentPicker: HTMLTemplateResult | symbol = nothing;

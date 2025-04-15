@@ -36,8 +36,8 @@ const SUGGESTED_FLOWS = [
   "Create a flow that takes a task description, divides the task into 3 sub-tasks, assigns them to 3 independent agents, and then combines the result into a report",
 ];
 
-@customElement("bb-describe-flow-panel")
-export class DescribeFlowPanel extends LitElement {
+@customElement("bb-flowgen-homepage-panel")
+export class FlowgenHomepagePanel extends LitElement {
   static styles = [
     outlineButtonWithIcon,
     icons,
@@ -265,6 +265,6 @@ export class DescribeFlowPanel extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "bb-describe-flow-panel": DescribeFlowPanel;
+    "bb-describe-flow-panel": FlowgenHomepagePanel;
   }
 }
