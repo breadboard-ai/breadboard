@@ -9,7 +9,7 @@ import { LanguagePackEntry } from "../../types/types";
 export default {
   // Commands.
   COMMAND_NEW_PROJECT: {
-    str: "Start from blank canvas",
+    str: "Create New",
   },
   COMMAND_DESCRIBE_FLOW: {
     str: "Describe your flow",
@@ -53,9 +53,6 @@ export default {
   },
   LABEL_WELCOME_CTA: {
     str: "Describe what you want to build",
-  },
-  LABEL_PLACEHOLDER_DESCRIPTION: {
-    str: "Describe what you want to make in 1-2 sentences",
   },
   LABEL_FEATURED_GUIDES: {
     str: "Guides and Tutorials",
