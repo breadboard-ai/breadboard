@@ -24,11 +24,13 @@ import type { HighlightStateWithChangeId } from "../types/types.js";
 import { findChangedNodes } from "../flow-gen/flow-diff.js";
 import { HighlightEvent } from "../elements/step-editor/events/events.js";
 import { MAIN_BOARD_ID } from "../constants/constants.js";
+import { spinAnimationStyles } from "../styles/spin-animation.js";
 
 @customElement("bb-revision-history-panel")
 export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
   static styles = [
     icons,
+    spinAnimationStyles,
     css`
       :host {
         display: flex;
@@ -59,14 +61,6 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
         & > .g-icon {
           margin-right: 8px;
           animation: spin 1.5s linear infinite;
-        }
-      }
-      @keyframes spin {
-        from {
-          transform: rotate(0deg);
-        }
-        to {
-          transform: rotate(360deg);
         }
       }
 

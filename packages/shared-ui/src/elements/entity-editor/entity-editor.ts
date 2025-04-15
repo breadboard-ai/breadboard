@@ -551,7 +551,7 @@ export class EntityEditor extends LitElement {
             border-radius: var(--bb-grid-size-16);
             padding: 0 var(--bb-grid-size-2);
 
-            bb-describe-edit-button {
+            bb-flowgen-in-step-button {
               z-index: 1;
               margin: 0 var(--bb-grid-size);
             }
@@ -1052,7 +1052,7 @@ export class EntityEditor extends LitElement {
         controls = html`<div id="controls-container">
           <div id="controls">
             ${this.graph
-              ? html`<bb-describe-edit-button
+              ? html`<bb-flowgen-in-step-button
                   monochrome
                   popoverPosition="below"
                   .label=${Strings.from("COMMAND_DESCRIBE_EDIT_STEP")}
@@ -1062,7 +1062,7 @@ export class EntityEditor extends LitElement {
                     stepId: nodeId,
                   } satisfies FlowGenConstraint}
                   @bbgraphreplace=${this.#onFlowgenEdit}
-                ></bb-describe-edit-button>`
+                ></bb-flowgen-in-step-button>`
               : nothing}
             ${hasTextEditor
               ? html`<button

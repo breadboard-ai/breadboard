@@ -23,7 +23,7 @@ import { until } from "lit/directives/until.js";
 import { BoardServer, GraphProviderStore } from "@google-labs/breadboard";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
-import "../../flow-gen/describe-flow-panel.js";
+import "../../flow-gen/flowgen-homepage-panel.js";
 import "./homepage-search-button.js";
 import type { HomepageSearchButton } from "./homepage-search-button.js";
 import { icons } from "../../styles/icons.js";
@@ -130,7 +130,7 @@ export class ProjectListing extends LitElement {
             }
           }
 
-          & bb-describe-flow-panel {
+          & bb-flowgen-homepage-panel {
             width: 100%;
             max-width: 976px;
           }
@@ -699,7 +699,7 @@ export class ProjectListing extends LitElement {
             >
             ${Strings.from("LABEL_WELCOME_MESSAGE_B")}
           </h1>
-          <bb-describe-flow-panel></bb-describe-flow-panel>
+          <bb-flowgen-homepage-panel></bb-flowgen-homepage-panel>
         </section>
 
         <div id="board-listing">

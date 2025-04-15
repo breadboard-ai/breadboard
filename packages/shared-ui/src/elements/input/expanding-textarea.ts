@@ -35,6 +35,9 @@ export class ExpandingTextarea extends LitElement {
   @property({ type: Boolean })
   accessor disabled = false;
 
+  @property({ type: Boolean })
+  accessor tabCompletesPlaceholder = false;
+
   #measure = createRef<HTMLElement>();
   #textarea = createRef<HTMLTextAreaElement>();
 
@@ -166,6 +169,7 @@ export class ExpandingTextarea extends LitElement {
       event.stopImmediatePropagation();
       this.#submit();
     } else if (
+      this.tabCompletesPlaceholder &&
       event.key === "Tab" &&
       this.placeholder &&
       this.#textarea.value &&

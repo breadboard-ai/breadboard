@@ -256,7 +256,7 @@ export class EditorControls extends LitElement {
 
     #shelf {
       position: absolute;
-      bottom: var(--bb-grid-size-5);
+      bottom: 28px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -819,9 +819,7 @@ export class EditorControls extends LitElement {
     </div>`;
 
     const shelf = html`<div id="shelf">
-      <bb-describe-edit-button
-        popoverPosition="above"
-        .label=${Strings.from("COMMAND_DESCRIBE_EDIT_FLOW")}
+      <bb-flowgen-editor-input
         .currentGraph=${this.graph.raw()}
         @pointerdown=${(event: PointerEvent) => {
           // TODO(aomarks) <bb-renderer> listens for pointerdown and steals
@@ -830,7 +828,7 @@ export class EditorControls extends LitElement {
           // renderer?
           event.stopPropagation();
         }}
-      ></bb-describe-edit-button>
+      ></bb-flowgen-editor-input>
     </div>`;
 
     let componentPicker: HTMLTemplateResult | symbol = nothing;

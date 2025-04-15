@@ -28,7 +28,7 @@ import {
 import { isLLMContentBehavior } from "../../utils";
 import { EditorMode, filterConfigByMode } from "../../utils/mode";
 import { UserInput } from "../elements";
-import "../../flow-gen/describe-edit-button.js";
+import "../../flow-gen/flowgen-in-step-button.js";
 import type { FlowGenConstraint } from "../../flow-gen/flow-generator.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { findConfigurationChanges } from "../../flow-gen/flow-diff.js";
@@ -205,7 +205,7 @@ export class FocusEditor extends LitElement {
             }
           }
 
-          bb-describe-edit-button {
+          bb-flowgen-in-step-button {
             z-index: 1;
             width: 24px;
             margin-left: auto;
@@ -833,7 +833,7 @@ export class FocusEditor extends LitElement {
             />
           </h1>
           ${this.graph && this.configuration?.id
-            ? html`<bb-describe-edit-button
+            ? html`<bb-flowgen-in-step-button
                 popoverPosition="below"
                 .label=${Strings.from("COMMAND_DESCRIBE_EDIT_STEP")}
                 .currentGraph=${this.graph satisfies GraphDescriptor}
@@ -842,7 +842,7 @@ export class FocusEditor extends LitElement {
                   stepId: this.configuration?.id,
                 } satisfies FlowGenConstraint}
                 @bbgraphreplace=${this.#onFlowgenEdit}
-              ></bb-describe-edit-button>`
+              ></bb-flowgen-in-step-button>`
             : nothing}
         </header>
         <section id="content">

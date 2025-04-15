@@ -36,7 +36,7 @@ export default {
     str: "Describe an edit",
   },
   COMMAND_DESCRIBE_EDIT_FLOW: {
-    str: "Describe an edit to this flow [Experimental]",
+    str: "Describe an edit",
   },
   COMMAND_DESCRIBE_EDIT_STEP: {
     str: "Describe an edit to this prompt",

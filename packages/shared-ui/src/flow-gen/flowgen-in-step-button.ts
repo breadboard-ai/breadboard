@@ -31,8 +31,8 @@ type State =
   | { status: "generating"; abort: AbortController }
   | { status: "error"; error: unknown; abort: AbortController };
 
-@customElement("bb-describe-edit-button")
-export class DescribeEditButton extends LitElement {
+@customElement("bb-flowgen-in-step-button")
+export class FlowgenInStepButton extends LitElement {
   static styles = [
     fabStyles,
     floatingPanelStyles,
@@ -351,6 +351,6 @@ export class DescribeEditButton extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "bb-describe-edit-button": DescribeEditButton;
+    "bb-flowgen-in-step-button": FlowgenInStepButton;
   }
 }
