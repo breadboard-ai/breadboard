@@ -1061,7 +1061,6 @@ export class EntityEditor extends LitElement {
                     kind: "EDIT_STEP_CONFIG",
                     stepId: nodeId,
                   } satisfies FlowGenConstraint}
-                  @bbgraphreplace=${this.#onFlowgenEdit}
                 ></bb-flowgen-in-step-button>`
               : nothing}
             ${hasTextEditor
@@ -1139,36 +1138,6 @@ export class EntityEditor extends LitElement {
     }
 
     this.#fastAccessRef.value.classList.remove("active");
-  }
-
-  async #onFlowgenEdit(event: GraphReplaceEvent) {
-    event.stopPropagation();
-    if (!this.graph) {
-      return;
-    }
-    const oldFlow = this.graph?.raw();
-    const newFlow = event.replacement;
-    if (!oldFlow || !newFlow) {
-      return;
-    }
-    const allConfigChanges = findConfigurationChanges(oldFlow, newFlow);
-    const id = "";
-    console.log(allConfigChanges);
-    const thisChange = allConfigChanges.find(
-      (change) => change.id && change.id === id
-    );
-    if (!thisChange) {
-      return;
-    }
-    // this.#generatedConfig = thisChange.configuration;
-    // // TODO(aomarks) It seems that <bb-text-editor> does not re-render when its
-    // // value changes from the outside for some reason. This trick forces a full
-    // // re-render of that and any other input elements, which does seem to work.
-    // // Figure out what's going on and replace with something less hacky.
-    // const oldConfig = this.configuration;
-    // this.configuration = null;
-    // await this.updateComplete;
-    // this.configuration = oldConfig;
   }
 
   #renderAsset(assetPath: AssetPath) {
