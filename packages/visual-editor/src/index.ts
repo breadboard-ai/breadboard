@@ -558,6 +558,7 @@ export class Main extends LitElement {
           proxy: this.#proxy,
           fileSystem: this.#fileSystem,
           builtInBoardServers: [createA2Server()],
+          forcedBoardServiceName: config.forcedBoardServiceName,
         });
       })
       .then((runtime) => {
@@ -707,7 +708,7 @@ export class Main extends LitElement {
           Runtime.Events.RuntimeBoardServerChangeEvent.eventName,
           (evt: Runtime.Events.RuntimeBoardServerChangeEvent) => {
             this.showBoardServerAddOverlay = false;
-            this.#boardServers = runtime.board.getBoardServers() || [];
+            this.#boardServers = runtime.board.getBoardServers(this.#forcedBoardServiceName) || [];
 
             if (evt.connectedBoardServerName && evt.connectedBoardServerURL) {
               this.selectedBoardServer = evt.connectedBoardServerName;

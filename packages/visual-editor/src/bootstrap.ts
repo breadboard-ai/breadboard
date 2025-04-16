@@ -12,6 +12,7 @@ import { LanguagePack } from "@breadboard-ai/shared-ui/types/types.js";
 export { bootstrap };
 
 export type BootstrapArguments = {
+  /** Used only when forcedBoardServiceName is NOT specified. */
   boardServerUrl?: URL;
   connectionServerUrl?: URL;
   requiresSignin?: boolean;

@@ -71,6 +71,7 @@ export interface RuntimeConfig {
   // The board servers that are built in: initialized separately and come
   // as part of the environment.
   builtInBoardServers: BoardServer[];
+  forcedBoardServiceName?: string;
 }
 
 export interface RuntimeConfigBoardServers {
@@ -81,6 +82,7 @@ export interface RuntimeConfigBoardServers {
   // as part of the environment.
 
   builtInBoardServers: BoardServer[];
+  forcedBoardServiceName?: string;
 }
 
 export type Result<T> =

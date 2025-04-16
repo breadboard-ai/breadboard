@@ -44,9 +44,19 @@ interface BoardServerListing extends idb.DBSchema {
 }
 
 export async function getBoardServers(
+  options: {
   tokenVendor?: TokenVendor,
-  skipPlaygroundExamples = false
+  skipPlaygroundExamples?: boolean,
+  forcedBoardServiceName?: string
+  } = {
+    tokenVendor: undefined,
+    skipPlaygroundExamples: false,
+    forcedBoardServiceName: undefined,
+  }
 ): Promise<BoardServer[]> {
+  if (!options.forcedBoardServiceName) {
+    debugger;
+  }
   const db = await idb.openDB<BoardServerListing>(
     BOARD_SERVER_LISTING_DB,
     BOARD_SERVER_LISTING_VERSION,
@@ -62,31 +72,36 @@ export async function getBoardServers(
 
   const stores = await Promise.all(
     storeUrls.map(({ url, title, user, handle }) => {
-      if (url.startsWith(IDBBoardServer.PROTOCOL)) {
+      if (options.forcedBoardServiceName && url.startsWith(IDBBoardServer.PROTOCOL)) {
         return IDBBoardServer.from(url, title, user);
       }
 
       if (
+        options.forcedBoardServiceName &&
         url.startsWith(RemoteBoardServer.PROTOCOL) ||
         url.startsWith(RemoteBoardServer.LOCALHOST)
       ) {
-        return RemoteBoardServer.from(url, title, user, tokenVendor);
+        return RemoteBoardServer.from(url, title, user, options.tokenVendor);
       }
 
-      if (url.startsWith(ExampleBoardServer.PROTOCOL)) {
-        if (url === PLAYGROUND_BOARDS && skipPlaygroundExamples) {
+      if (
+        options.forcedBoardServiceName &&
+        url.startsWith(ExampleBoardServer.PROTOCOL)) {
+        if (url === PLAYGROUND_BOARDS && options.skipPlaygroundExamples) {
           return null;
         }
 
         return ExampleBoardServer.from(url, title, user);
       }
 
-      if (url.startsWith(FileSystemBoardServer.PROTOCOL)) {
+      if (options.forcedBoardServiceName &&
+        url.startsWith(FileSystemBoardServer.PROTOCOL)) {
         return FileSystemBoardServer.from(url, title, user, handle);
       }
 
-      if (url.startsWith(GoogleDriveBoardServer.PROTOCOL) && tokenVendor) {
-        return GoogleDriveBoardServer.from(url, title, user, tokenVendor);
+      console.assert(!options.forcedBoardServiceName || options.forcedBoardServiceName !== 'GoogleDriveBoardServer');
+      if (url.startsWith(GoogleDriveBoardServer.PROTOCOL) && options.tokenVendor) {
+        return GoogleDriveBoardServer.from(url, title, user, options.tokenVendor);
       }
 
       console.warn(`Unsupported store URL: ${url}`);
@@ -100,9 +115,14 @@ export async function getBoardServers(
 export async function connectToBoardServer(
   location?: string,
   apiKey?: string,
-  tokenVendor?: TokenVendor
+  tokenVendor?: TokenVendor,
+  forcedBoardServiceName?: string
 ): Promise<{ title: string; url: string } | null> {
-  const existingServers = await getBoardServers(tokenVendor);
+  const existingServers = await getBoardServers(
+    {
+      tokenVendor, 
+      forcedBoardServiceName,
+    });
   if (location) {
     if (
       location.startsWith(RemoteBoardServer.PROTOCOL) ||
@@ -138,7 +158,7 @@ export async function connectToBoardServer(
       return null;
     } else if (location.startsWith(GoogleDriveBoardServer.PROTOCOL)) {
       const existingServer = existingServers.find(
-        (server) => server.url.origin === location
+        (server) => server.url.protocol === location
       );
       if (existingServer) {
         console.warn("Server already connected");

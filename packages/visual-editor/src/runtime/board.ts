@@ -140,7 +140,8 @@ export class Board extends EventTarget {
     const boardServerInfo = await connectToBoardServer(
       location,
       apiKey,
-      this.tokenVendor
+      this.tokenVendor,
+      this.boardServers.forcedBoardServiceName
     );
     if (!boardServerInfo) {
       this.dispatchEvent(
@@ -153,7 +154,8 @@ export class Board extends EventTarget {
       return { success: false };
     } else {
       this.boardServers.servers = [
-        ...(await getBoardServers(this.tokenVendor)),
+        ...(await getBoardServers({tokenVendor: this.tokenVendor,
+          forcedBoardServiceName: this.boardServers.forcedBoardServiceName})),
         ...this.boardServers.builtInBoardServers,
       ];
       this.boardServers.loader = createLoader(this.boardServers.servers);
@@ -182,7 +184,8 @@ export class Board extends EventTarget {
       return { success: false };
     }
     this.boardServers.servers = [
-      ...(await getBoardServers(this.tokenVendor)),
+      ...(await getBoardServers({tokenVendor: this.tokenVendor,
+        forcedBoardServiceName: this.boardServers.forcedBoardServiceName})),
       ...this.boardServers.builtInBoardServers,
     ];
     this.boardServers.loader = createLoader(this.boardServers.servers);
