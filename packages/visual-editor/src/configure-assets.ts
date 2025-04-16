@@ -15,6 +15,7 @@ export type ConfigureAssetsInputs = {
   VITE_FONT_FACE_MONO?: string;
   VITE_FONT_FACE?: string;
   VITE_FONT_LINK?: string;
+  /** Supported values are: "drive:" or "/board/". */
   VITE_BOARD_SERVICE?: string;
 };
 
@@ -72,7 +73,7 @@ async function configureAssets(
     MAIN_ICON: JSON.stringify(assetPack.mainIcon),
     FONT_PACK: JSON.stringify(assetPack.fonts),
     FONT_LINK: JSON.stringify(FONT_LINK),
-    BOARDS_SERVICE: JSON.stringify(BOARD_SERVICE ?? ""),
+    BOARD_SERVICE: JSON.stringify(BOARD_SERVICE ?? ""),
   };
 }
 

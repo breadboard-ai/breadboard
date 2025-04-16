@@ -8,15 +8,27 @@ import * as pkg from "../package.json";
 import * as StringsHelper from "@breadboard-ai/shared-ui/strings";
 import { MainArguments } from "./index.js";
 import { LanguagePack } from "@breadboard-ai/shared-ui/types/types.js";
+import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 
 export { bootstrap };
 
 export type BootstrapArguments = {
-  TODO;
-  boardServerUrl?: URL;
   connectionServerUrl?: URL;
   requiresSignin?: boolean;
 };
+
+function getUrlFromBoardServiceFlag(boardService: string): URL {
+  if (boardService.startsWith(GoogleDriveBoardServer.PROTOCOL)) {
+    // Just say GDrive here, it will be appended with the folder ID once it's fetched in
+    // packages/visual-editor/src/index.ts
+    return new URL(boardService);
+  } else if (boardService.startsWith('/')) {
+    // Convert relative URLs.
+    return new URL(boardService, window.location.href);
+  }
+  // Fallback.
+  return new URL(boardService);
+}
 
 function bootstrap(args: BootstrapArguments = {}) {
   const icon = document.createElement("link");
@@ -63,7 +75,7 @@ function bootstrap(args: BootstrapArguments = {}) {
       settings: SettingsStore.instance(),
       version: pkg.version,
       gitCommitHash: GIT_HASH,
-      boardServerUrl: args?.boardServerUrl,
+      boardServerUrl: getUrlFromBoardServiceFlag(BOARD_SERVICE),
       connectionServerUrl: args?.connectionServerUrl,
       requiresSignin: args?.requiresSignin,
     };

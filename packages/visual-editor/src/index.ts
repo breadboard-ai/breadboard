@@ -881,8 +881,6 @@ export class Main extends LitElement {
         for (const server of this.#boardServers) {
           if (
             server.url.href === config.boardServerUrl.href
-            //
-            //|| (config.boardServerUrl.protocol === 'drive:' && config.boardServerUrl.protocol === server.url.protocol)
           ) {
             hasMountedBoardServer = true;
             this.selectedBoardServer = server.name;

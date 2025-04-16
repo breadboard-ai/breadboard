@@ -58,10 +58,6 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
         return null;
       }
 
-      // if (!("name" in folder)) {
-      //   return null;
-      // }
-
       return { title: folder.name || "Google Drive", username: "board-builder" };
     } catch (err) {
       console.warn(err);
