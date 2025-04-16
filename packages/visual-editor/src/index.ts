@@ -1590,10 +1590,7 @@ export class Main extends LitElement {
     this.boardServerNavState = globalThis.crypto.randomUUID();
   }
 
-  async #attemptRemix(creator: EditHistoryCreator) {
-    const graph = this.tab?.graph;
-    if (!graph) return;
-
+  async #attemptRemix(graph: GraphDescriptor, creator: EditHistoryCreator) {
     const remixedGraph = { ...graph, title: `${graph.title} Remix` };
 
     return this.#attemptBoardCreate(remixedGraph, creator);
@@ -3295,11 +3292,11 @@ export class Main extends LitElement {
                             return;
                           }
 
-                          if (!this.tab) {
+                          if (!this.tab?.graph) {
                             return;
                           }
 
-                          this.#attemptRemix({ role: "user" });
+                          this.#attemptRemix(this.tab.graph, { role: "user" });
                         }}
                       >
                         Remix
@@ -4213,6 +4210,18 @@ export class Main extends LitElement {
                   this.#attemptBoardLoad(
                     new BreadboardUI.Events.StartEvent(evt.url)
                   );
+                }}
+                @bbgraphboardserverremixrequest=${async (
+                  evt: BreadboardUI.Events.GraphBoardServerRemixRequestEvent
+                ) => {
+                  const graphStore = this.#runtime.board.getGraphStore();
+                  const addResult = graphStore.addByURL(evt.url, [], {});
+                  const graph = (await graphStore.getLatest(addResult.mutable))
+                    .graph;
+                  if (graph) {
+                    await this.#attemptRemix(graph, { role: "user" });
+                    this.showWelcomePanel = false;
+                  }
                 }}
                 @bbgraphboardserverdeleterequest=${async (
                   evt: BreadboardUI.Events.GraphBoardServerDeleteRequestEvent

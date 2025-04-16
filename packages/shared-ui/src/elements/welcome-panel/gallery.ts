@@ -9,7 +9,10 @@ import { css, html, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit/directives/style-map.js";
-import { GraphBoardServerLoadRequestEvent } from "../../events/events.js";
+import {
+  GraphBoardServerLoadRequestEvent,
+  GraphBoardServerRemixRequestEvent,
+} from "../../events/events.js";
 import * as StringsHelper from "../../strings/helper.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
@@ -30,7 +33,7 @@ export class Gallery extends LitElement {
         row-gap: var(--bb-grid-size-5);
         margin-bottom: var(--bb-grid-size-8);
 
-        & button {
+        & .board {
           width: 100%;
           height: 240px;
           border: 1px solid var(--bb-neutral-300);
@@ -131,8 +134,8 @@ export class Gallery extends LitElement {
             padding: 0 var(--bb-grid-size-2);
           }
 
-          &:hover,
-          &:focus {
+          &:hover:not(:has(button:hover)),
+          &:focus:not(:has(button:focus)) {
             border: 1px solid var(--bb-neutral-400);
             outline: 1px solid var(--bb-neutral-400);
           }
@@ -222,6 +225,22 @@ export class Gallery extends LitElement {
         }
       }
 
+      .remix-button {
+        align-self: flex-end;
+        margin: 0 8px 8px 8px;
+        padding: 6px 16px;
+        background: transparent;
+        font: 500 var(--bb-body-medium) / var(--bb-body-line-height-medium)
+          var(--bb-font-family);
+        color: #575b5f;
+        border: 1px solid var(--bb-neutral-400);
+        border-radius: 8px;
+        cursor: pointer;
+        &:hover {
+          outline: 1px solid var(--bb-neutral-400);
+        }
+      }
+
       @media (min-width: 480px) and (max-width: 800px) {
         #boards {
           grid-template-columns: repeat(2, 1fr);
@@ -284,26 +303,11 @@ export class Gallery extends LitElement {
     }
 
     return html`
-      <button
-        @click=${(evt: PointerEvent) => {
-          const isMac = navigator.platform.indexOf("Mac") === 0;
-          const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
-          if (!this.boardServer) {
-            return;
-          }
-          this.dispatchEvent(
-            new GraphBoardServerLoadRequestEvent(
-              this.boardServer.name,
-              url,
-              isCtrlCommand
-            )
-          );
-        }}
-        data-url=${url}
-        class=${classMap({
-          mine,
-          board: true,
-        })}
+      <div
+        class=${classMap({ board: true, mine })}
+        aria-role="button"
+        tabindex="0"
+        @click=${(event: PointerEvent) => this.#clickBoard(event, url)}
       >
         <span
           class=${classMap({
@@ -316,10 +320,21 @@ export class Gallery extends LitElement {
         <span class="description"> ${description ?? "No description"} </span>
         ${mine
           ? nothing
-          : username
-            ? html`<span class="username">@${username}</span>`
-            : nothing}
-      </button>
+          : [
+              html`
+                <button
+                  class="remix-button"
+                  @click=${(event: PointerEvent) =>
+                    this.#clickRemix(event, url)}
+                >
+                  ${Strings.from("COMMAND_REMIX")}
+                </button>
+              `,
+              username
+                ? html`<span class="username">@${username}</span>`
+                : nothing,
+            ]}
+      </div>
     `;
   }
 
@@ -371,6 +386,32 @@ export class Gallery extends LitElement {
         </li>
       </menu>
     `;
+  }
+
+  #clickBoard(event: PointerEvent, url: string) {
+    if (!url || !this.boardServer) {
+      return;
+    }
+    this.dispatchEvent(
+      new GraphBoardServerLoadRequestEvent(
+        this.boardServer.name,
+        url,
+        this.#isCtrlCommand(event)
+      )
+    );
+  }
+
+  #clickRemix(event: PointerEvent, url: string) {
+    event.stopPropagation();
+    if (!url) {
+      return;
+    }
+    this.dispatchEvent(new GraphBoardServerRemixRequestEvent(url));
+  }
+
+  #isCtrlCommand(event: PointerEvent) {
+    const isMac = navigator.platform.indexOf("Mac") === 0;
+    return isMac ? event.metaKey : event.ctrlKey;
   }
 }
 
