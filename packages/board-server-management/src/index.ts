@@ -45,20 +45,11 @@ interface BoardServerListing extends idb.DBSchema {
 
 export async function getBoardServers(
   tokenVendor?: TokenVendor,
-  skipPlaygroundExamples = false
+  skipPlaygroundExamples?: boolean
 ): Promise<BoardServer[]> {
-  const db = await idb.openDB<BoardServerListing>(
-    BOARD_SERVER_LISTING_DB,
-    BOARD_SERVER_LISTING_VERSION,
-    {
-      upgrade(db) {
-        db.createObjectStore("servers", { keyPath: "url" });
-      },
-    }
-  );
+  const db = getServersDb();
 
-  const storeUrls = await db.getAll("servers");
-  db.close();
+  const storeUrls = await readAllServers();
 
   const stores = await Promise.all(
     storeUrls.map(({ url, title, user, handle }) => {
@@ -138,7 +129,7 @@ export async function connectToBoardServer(
       return null;
     } else if (location.startsWith(GoogleDriveBoardServer.PROTOCOL)) {
       const existingServer = existingServers.find(
-        (server) => server.url.origin === location
+        (server) => server.url.protocol === location
       );
       if (existingServer) {
         console.warn("Server already connected");
@@ -205,8 +196,8 @@ export async function connectToBoardServer(
   }
 }
 
-export async function disconnectFromBoardServer(location: string) {
-  const db = await idb.openDB<BoardServerListing>(
+function getServersDb(): Promise<idb.IDBPDatabase<BoardServerListing>> {
+  return idb.openDB<BoardServerListing>(
     BOARD_SERVER_LISTING_DB,
     BOARD_SERVER_LISTING_VERSION,
     {
@@ -215,7 +206,28 @@ export async function disconnectFromBoardServer(location: string) {
       },
     }
   );
+}
 
+async function readAllServers(): Promise<BoardServerItem[]> {
+  const db = await getServersDb();
+  try {
+    return db.getAll("servers");
+  } finally {
+    db.close();
+  }
+}
+
+export async function getGoogleDriveBoardService(): Promise<
+  BoardServerItem | undefined
+> {
+  const services = await readAllServers();
+  return services.find((service) =>
+    service.url.startsWith(GoogleDriveBoardServer.PROTOCOL)
+  );
+}
+
+export async function disconnectFromBoardServer(location: string) {
+  const db = await getServersDb();
   const url = new URL(location);
   await db.delete("servers", IDBKeyRange.only(url.href));
   db.close();
@@ -228,15 +240,7 @@ async function storeBoardServer(
   user: User,
   handle?: FileSystemDirectoryHandle
 ) {
-  const db = await idb.openDB<BoardServerListing>(
-    BOARD_SERVER_LISTING_DB,
-    BOARD_SERVER_LISTING_VERSION,
-    {
-      upgrade(db) {
-        db.createObjectStore("servers", { keyPath: "url" });
-      },
-    }
-  );
+  const db = await getServersDb();
 
   const server: BoardServerItem = { url: url.href, title, user };
   if (handle) {

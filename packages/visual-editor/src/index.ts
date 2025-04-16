@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
+
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
@@ -94,6 +96,7 @@ import { OverflowAction } from "@breadboard-ai/shared-ui/types/types.js";
 import { MAIN_BOARD_ID } from "@breadboard-ai/shared-ui/constants/constants.js";
 import { createA2Server } from "@breadboard-ai/a2";
 import { envFromSettings } from "./utils/env-from-settings";
+import { getGoogleDriveBoardService } from "@breadboard-ai/board-server-management";
 
 const STORAGE_PREFIX = "bb-main";
 const LOADING_TIMEOUT = 250;
@@ -860,14 +863,27 @@ export class Main extends LitElement {
 
         return this.#runtime.board.createTabsFromURL(currentUrl);
       })
-      .then(() => {
+      .then(async () => {
         if (!config.boardServerUrl) {
           return;
         }
 
+        if (
+          config.boardServerUrl.protocol === GoogleDriveBoardServer.PROTOCOL
+        ) {
+          const gdrive = await getGoogleDriveBoardService();
+          if (gdrive) {
+            config.boardServerUrl = new URL(gdrive.url);
+          }
+        }
+
         let hasMountedBoardServer = false;
         for (const server of this.#boardServers) {
-          if (server.url.href === config.boardServerUrl.href) {
+          if (
+            server.url.href === config.boardServerUrl.href
+            //
+            //|| (config.boardServerUrl.protocol === 'drive:' && config.boardServerUrl.protocol === server.url.protocol)
+          ) {
             hasMountedBoardServer = true;
             this.selectedBoardServer = server.name;
             this.selectedLocation = server.url.href;

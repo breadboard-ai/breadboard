@@ -12,6 +12,7 @@ import { LanguagePack } from "@breadboard-ai/shared-ui/types/types.js";
 export { bootstrap };
 
 export type BootstrapArguments = {
+  TODO;
   boardServerUrl?: URL;
   connectionServerUrl?: URL;
   requiresSignin?: boolean;
