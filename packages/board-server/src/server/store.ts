@@ -69,27 +69,10 @@ export interface BoardServerStore {
   listBoards(userId: string): Promise<StorageBoard[]>;
 
   /**
-   * Create a blank board with no graph.
-   *
-   * TODO This shouldn't really be necessary, we can just use "update"
-   * 
-   * @deprecated migrate to upsertBoard() API.
-   */
-  createBoard(userId: string, name: string): Promise<void>;
-
-  /** 
-   * Updates the given board. Creates if it doesn't exist. 
-   * 
-   * @deprecated migrate to upsertBoard() API.
-   */
-  updateBoard(board: StorageBoard): Promise<void>;
-
-
-  /**
    * Creates or inserts the given board.
    * 
    */
-  upsertBoard(board: Readonly<StorageBoard>): Promise<StorageBoard>;
+  upsertBoard(board: Readonly<Partial<StorageBoard>>): Promise<StorageBoard>;
 
   /** Deletes a board by name */
   deleteBoard(userId: string, boardName: string): Promise<void>;

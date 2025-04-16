@@ -39,24 +39,16 @@ export class InMemoryStorageProvider implements BoardServerStore {
     });
   }
 
-  async createBoard(userId: string, name: string): Promise<void> {
-    this.#boards[name] = {
-      name,
-    owner: userId,
-      displayName: name,
-      description: "",
-      tags: [],
-      thumbnail: "",
-      graph: blank(),
+  async upsertBoard(board: Readonly<Partial<StorageBoard>>): Promise<StorageBoard> {
+    const updatedBoard: StorageBoard = {
+      name: board.name || crypto.randomUUID(),
+      owner: board.owner || "",
+      displayName: board.displayName || "",
+      description: board.description || "",
+      tags: board.tags || [],
+      thumbnail: board.thumbnail || "",
+      graph: board.graph || blank(),
     };
-  }
-
-  async updateBoard(board: StorageBoard): Promise<void> {
-    this.#boards[board.name] = board;
-  }
-
-  async upsertBoard(board: Readonly<StorageBoard>): Promise<StorageBoard> {
-    const updatedBoard: StorageBoard = {...board, name: board.name || crypto.randomUUID()};
     this.#boards[updatedBoard.name] = updatedBoard;
     return updatedBoard;
   }
