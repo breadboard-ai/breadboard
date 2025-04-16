@@ -1590,6 +1590,15 @@ export class Main extends LitElement {
     this.boardServerNavState = globalThis.crypto.randomUUID();
   }
 
+  async #attemptRemix(creator: EditHistoryCreator) {
+    const graph = this.tab?.graph;
+    if (!graph) return;
+
+    const remixedGraph = { ...graph, title: `${graph.title} Remix` };
+
+    return this.#attemptBoardCreate(remixedGraph, creator);
+  }
+
   async #attemptBoardCreate(
     graph: GraphDescriptor,
     creator: EditHistoryCreator
@@ -3265,6 +3274,36 @@ export class Main extends LitElement {
                             ${selectedItem}
                           </button>`
                         : nothing}
+                      <button
+                        id="remix"
+                        @pointerover=${(evt: PointerEvent) => {
+                          this.dispatchEvent(
+                            new BreadboardUI.Events.ShowTooltipEvent(
+                              Strings.from("COMMAND_REMIX"),
+                              evt.clientX,
+                              evt.clientY
+                            )
+                          );
+                        }}
+                        @pointerout=${() => {
+                          this.dispatchEvent(
+                            new BreadboardUI.Events.HideTooltipEvent()
+                          );
+                        }}
+                        @click=${(evt: PointerEvent) => {
+                          if (!(evt.target instanceof HTMLButtonElement)) {
+                            return;
+                          }
+
+                          if (!this.tab) {
+                            return;
+                          }
+
+                          this.#attemptRemix({ role: "user" });
+                        }}
+                      >
+                        Remix
+                      </button>
                       <button
                         id="toggle-overflow-menu"
                         @pointerover=${(evt: PointerEvent) => {

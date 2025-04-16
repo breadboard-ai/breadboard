@@ -706,7 +706,7 @@ export class Board extends EventTarget {
   async createTabFromURL(
     boardUrl: string,
     currentUrl: string | null = null,
-    createNewTab = false,
+    _createNewTab = false,
     readOnly = false,
     dispatchTabChangeEvent = true,
     moduleId: ModuleIdentifier | null = null,
@@ -754,19 +754,6 @@ export class Board extends EventTarget {
         }
       }
 
-      // Re-use an existing tab if possible.
-      if (!createNewTab) {
-        for (const [id, tab] of this.#tabs) {
-          if (tab.graph.url !== boardUrl) {
-            continue;
-          }
-
-          this.#currentTabId = id;
-          this.dispatchEvent(new RuntimeTabChangeEvent());
-          return;
-        }
-      }
-
       if (!graph) {
         this.dispatchEvent(new RuntimeErrorEvent("Unable to load board"));
         return;
@@ -801,7 +788,7 @@ export class Board extends EventTarget {
       if (!mainGraphId.success) {
         throw new Error(`Unable to add graph: ${mainGraphId.error}`);
       }
-      const id = globalThis.crypto.randomUUID();
+      const id = this.#currentTabId || globalThis.crypto.randomUUID();
       this.#tabs.set(id, {
         id,
         boardServerKits: kits,
@@ -921,7 +908,10 @@ export class Board extends EventTarget {
 
     for (const store of boardServer.items().values()) {
       for (const item of store.items.values()) {
-        if (item.url !== tab.graph.url && item.url.replace(USER_REGEX, "/") !== tab.graph.url) {
+        if (
+          item.url !== tab.graph.url &&
+          item.url.replace(USER_REGEX, "/") !== tab.graph.url
+        ) {
           continue;
         }
 
