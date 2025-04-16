@@ -30,10 +30,10 @@ type State =
   | { status: "error"; error: unknown };
 
 const SUGGESTED_FLOWS = [
-  "Create a flow that takes a business name and description, and generates 1 social media post with an eye-catching picture",
-  "Create a flow that takes a product area, performs research on the web, and produces a report",
-  "Create a flow that takes a movie description, and generates 3 scene descriptions, along with a storyboard sketch for each.",
-  "Create a flow that takes a task description, divides the task into 3 sub-tasks, assigns them to 3 independent agents, and then combines the result into a report",
+  "Create a flow that takes a business name and description, searches information about the business, and generates a social media post with an eye-catching picture.",
+  "Create a research agent agent that takes a product, performs research on the web, and produces a competitive analysis report about the product.",
+  "Create an app that takes a movie description, and generates 3 scene descriptions, along with a storyboard sketch for each scene.",
+  "Create a workflow that takes a job description and a potential job candidate and generates a personalized recruitment email for the candidate. Do research about the candidate to personalize the email.",
 ];
 
 @customElement("bb-flowgen-homepage-panel")
