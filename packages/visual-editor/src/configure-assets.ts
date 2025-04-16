@@ -73,7 +73,7 @@ async function configureAssets(
     MAIN_ICON: JSON.stringify(assetPack.mainIcon),
     FONT_PACK: JSON.stringify(assetPack.fonts),
     FONT_LINK: JSON.stringify(FONT_LINK),
-    BOARD_SERVICE: JSON.stringify(BOARD_SERVICE ?? ""),
+    BOARD_SERVICE: JSON.stringify(BOARD_SERVICE),
   };
 }
 
