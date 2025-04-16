@@ -140,7 +140,7 @@ export class Board extends EventTarget {
     const boardServerInfo = await connectToBoardServer(
       location,
       apiKey,
-      this.tokenVendor
+      this.tokenVendor,
     );
     if (!boardServerInfo) {
       this.dispatchEvent(
