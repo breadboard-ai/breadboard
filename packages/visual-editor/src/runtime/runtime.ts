@@ -52,16 +52,13 @@ export async function create(config: RuntimeConfig): Promise<{
   sideboards: SideBoardRuntime;
   state: StateManager;
   util: typeof Util;
-  forcedBoardServiceName?: string;
 }> {
   const kits = withRunModule(loadKits());
 
   const skipPlaygroundExamples = import.meta.env.MODE !== "development";
-  let servers = await getBoardServers({
-    tokenVendor: config.tokenVendor,
-    skipPlaygroundExamples,
-    forcedBoardServiceName: config.forcedBoardServiceName,
-  }
+  let servers = await getBoardServers(
+    config.tokenVendor,
+    skipPlaygroundExamples
   );
 
   // First run - set everything up.
@@ -111,7 +108,6 @@ export async function create(config: RuntimeConfig): Promise<{
     loader,
     graphStore,
     builtInBoardServers: config.builtInBoardServers,
-    forcedBoardServiceName: config.forcedBoardServiceName,
   };
 
   const dataStore = new BoardServerAwareDataStore(

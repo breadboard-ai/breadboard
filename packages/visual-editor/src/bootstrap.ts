@@ -12,7 +12,7 @@ import { LanguagePack } from "@breadboard-ai/shared-ui/types/types.js";
 export { bootstrap };
 
 export type BootstrapArguments = {
-  /** Used only when forcedBoardServiceName is NOT specified. */
+  TODO;
   boardServerUrl?: URL;
   connectionServerUrl?: URL;
   requiresSignin?: boolean;
@@ -66,7 +66,6 @@ function bootstrap(args: BootstrapArguments = {}) {
       boardServerUrl: args?.boardServerUrl,
       connectionServerUrl: args?.connectionServerUrl,
       requiresSignin: args?.requiresSignin,
-      forcedBoardServiceName: FORCED_BOARD_SERVICE_NAME,
     };
 
     window.oncontextmenu = (evt) => evt.preventDefault();

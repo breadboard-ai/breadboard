@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
+
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
@@ -94,6 +96,7 @@ import { OverflowAction } from "@breadboard-ai/shared-ui/types/types.js";
 import { MAIN_BOARD_ID } from "@breadboard-ai/shared-ui/constants/constants.js";
 import { createA2Server } from "@breadboard-ai/a2";
 import { envFromSettings } from "./utils/env-from-settings";
+import { getGoogleDriveBoardService } from "@breadboard-ai/board-server-management";
 
 const STORAGE_PREFIX = "bb-main";
 const LOADING_TIMEOUT = 250;
@@ -101,8 +104,6 @@ const LOADING_TIMEOUT = 250;
 export type MainArguments = {
   boards?: BreadboardUI.Types.Board[];
   providers?: BoardServer[]; // Deprecated.
-  /** When specified, this will be the only available board service. */
-  forcedBoardServiceName?: string;
   settings?: SettingsStore;
   proxy?: HarnessProxyConfig[];
   version?: string;
@@ -125,7 +126,6 @@ export type MainArguments = {
    * Whether or not this instance of requires sign in.
    */
   requiresSignin?: boolean;
-
 };
 
 type SaveAsConfiguration = {
@@ -311,7 +311,6 @@ export class Main extends LitElement {
   #tabBoardStatus = new Map<TabId, BreadboardUI.Types.STATUS>();
   #tabLoadStatus = new Map<TabId, BreadboardUI.Types.BOARD_LOAD_STATUS>();
   #boardServers: BoardServer[];
-  #forcedBoardServiceName?: string;
   #settings: SettingsStore | null;
   #secretsHelper: SecretsHelper | null = null;
   /**
@@ -470,8 +469,6 @@ export class Main extends LitElement {
     this.#boardServers = [];
     this.#settings = config.settings || null;
     this.#proxy = config.proxy || [];
-    this.#forcedBoardServiceName = config.forcedBoardServiceName;
-    console.log('vvv forcedBoardServiceName', this.#forcedBoardServiceName);
     if (this.#settings) {
       this.settingsHelper = new SettingsHelperImpl(this.#settings);
       this.tokenVendor = createTokenVendor(
@@ -558,13 +555,12 @@ export class Main extends LitElement {
           proxy: this.#proxy,
           fileSystem: this.#fileSystem,
           builtInBoardServers: [createA2Server()],
-          forcedBoardServiceName: config.forcedBoardServiceName,
         });
       })
       .then((runtime) => {
         this.#runtime = runtime;
         this.#graphStore = runtime.board.getGraphStore();
-        this.#boardServers = runtime.board.getBoardServers(this.#forcedBoardServiceName) || [];
+        this.#boardServers = runtime.board.getBoardServers() || [];
 
         this.sideBoardRuntime = runtime.sideboards;
 
@@ -708,7 +704,7 @@ export class Main extends LitElement {
           Runtime.Events.RuntimeBoardServerChangeEvent.eventName,
           (evt: Runtime.Events.RuntimeBoardServerChangeEvent) => {
             this.showBoardServerAddOverlay = false;
-            this.#boardServers = runtime.board.getBoardServers(this.#forcedBoardServiceName) || [];
+            this.#boardServers = runtime.board.getBoardServers() || [];
 
             if (evt.connectedBoardServerName && evt.connectedBoardServerURL) {
               this.selectedBoardServer = evt.connectedBoardServerName;
@@ -867,14 +863,27 @@ export class Main extends LitElement {
 
         return this.#runtime.board.createTabsFromURL(currentUrl);
       })
-      .then(() => {
+      .then(async () => {
         if (!config.boardServerUrl) {
           return;
         }
 
+        if (
+          config.boardServerUrl.protocol === GoogleDriveBoardServer.PROTOCOL
+        ) {
+          const gdrive = await getGoogleDriveBoardService();
+          if (gdrive) {
+            config.boardServerUrl = new URL(gdrive.url);
+          }
+        }
+
         let hasMountedBoardServer = false;
         for (const server of this.#boardServers) {
-          if (server.url.href === config.boardServerUrl.href) {
+          if (
+            server.url.href === config.boardServerUrl.href
+            //
+            //|| (config.boardServerUrl.protocol === 'drive:' && config.boardServerUrl.protocol === server.url.protocol)
+          ) {
             hasMountedBoardServer = true;
             this.selectedBoardServer = server.name;
             this.selectedLocation = server.url.href;

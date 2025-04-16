@@ -15,7 +15,7 @@ export type ConfigureAssetsInputs = {
   VITE_FONT_FACE_MONO?: string;
   VITE_FONT_FACE?: string;
   VITE_FONT_LINK?: string;
-  VITE_FORCED_BOARD_SERVICE_NAME?: string;
+  VITE_BOARD_SERVICE?: string;
 };
 
 export type ConfigureAssetOutputs = {
@@ -25,21 +25,20 @@ export type ConfigureAssetOutputs = {
   MAIN_ICON: string;
   FONT_PACK: string;
   FONT_LINK: string;
-  FORCED_BOARD_SERVICE_NAME: string;
+  BOARD_SERVICE: string;
 };
 
 async function configureAssets(
   root: string,
   config: ConfigureAssetsInputs
 ): Promise<ConfigureAssetOutputs> {
-  console.log('vvv configureAssets', arguments);
   const {
     VITE_LANGUAGE_PACK: LANGUAGE_PACK,
     VITE_ASSET_PACK: ASSET_PACK,
     VITE_FONT_FACE: FONT_FACE,
     VITE_FONT_FACE_MONO: FONT_FACE_MONO,
     VITE_FONT_LINK: FONT_LINK,
-    VITE_FORCED_BOARD_SERVICE_NAME: FORCED_BOARD_SERVICE_NAME,
+    VITE_BOARD_SERVICE: BOARD_SERVICE,
   } = config;
 
   if (!LANGUAGE_PACK) {
@@ -73,7 +72,7 @@ async function configureAssets(
     MAIN_ICON: JSON.stringify(assetPack.mainIcon),
     FONT_PACK: JSON.stringify(assetPack.fonts),
     FONT_LINK: JSON.stringify(FONT_LINK),
-    FORCED_BOARD_SERVICE_NAME: JSON.stringify(FORCED_BOARD_SERVICE_NAME ?? ""),
+    BOARDS_SERVICE: JSON.stringify(BOARD_SERVICE ?? ""),
   };
 }
 
