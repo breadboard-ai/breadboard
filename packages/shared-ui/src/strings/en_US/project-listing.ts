@@ -32,6 +32,9 @@ export default {
   COMMAND_NEXT: {
     str: "Next",
   },
+  COMMAND_REMIX: {
+    str: "Remix",
+  },
 
   // Statuses.
   STATUS_LOADING: {

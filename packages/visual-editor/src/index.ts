@@ -4214,13 +4214,13 @@ export class Main extends LitElement {
                 @bbgraphboardserverremixrequest=${async (
                   evt: BreadboardUI.Events.GraphBoardServerRemixRequestEvent
                 ) => {
-                  this.showWelcomePanel = false;
                   const graphStore = this.#runtime.board.getGraphStore();
                   const addResult = graphStore.addByURL(evt.url, [], {});
                   const graph = (await graphStore.getLatest(addResult.mutable))
                     .graph;
                   if (graph) {
-                    this.#attemptRemix(graph, { role: "user" });
+                    await this.#attemptRemix(graph, { role: "user" });
+                    this.showWelcomePanel = false;
                   }
                 }}
                 @bbgraphboardserverdeleterequest=${async (
