@@ -73,9 +73,10 @@ export class FlowGenerator {
       },
     };
     if (context?.flow) {
+      const stringifiedFlow = JSON.stringify(context.flow);
       request.messages.push({
         mimetype: "text/breadboard",
-        data: btoa(JSON.stringify(context.flow)),
+        data: btoa(unescape(encodeURIComponent(stringifiedFlow))),
       });
     }
     if (constraint) {
