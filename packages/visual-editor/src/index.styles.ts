@@ -485,4 +485,29 @@ export const styles = css`
   bb-settings-edit-overlay {
     position: fixed;
   }
+
+  #remix {
+    height: var(--bb-grid-size-7);
+    padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-9);
+    border-radius: var(--bb-grid-size-16);
+    margin: 0 var(--bb-grid-size-2) 0 0;
+    background: var(--bb-neutral-0);
+    cursor: pointer;
+
+    color: #004a77;
+    font: 500 var(--bb-title-small) / var(--bb-title-line-height-small)
+      var(--bb-font-family);
+    display: flex;
+    align-items: center;
+    border-radius: 100px;
+    border: none;
+    transition: background 0.2s cubic-bezier(0, 0, 0.3, 1);
+    cursor: pointer;
+
+    background: var(--bb-icon-remix) var(--bb-grid-size-3) center / 18px 18px no-repeat #c2e7ff;
+
+    &:hover,
+    &:focus {
+      background-color: #96d6ff;
+    }
 `;

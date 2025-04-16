@@ -249,6 +249,9 @@ body.hide-cursor {
   --bb-icon-flowchart: url(/third_party/icons/flowchart.svg);
   --bb-icon-flowchart-inverted: url(/third_party/icons/flowchart-inverted.svg);
 
+  --bb-icon-remix: url(/third_party/icons/remix.svg);
+  --bb-icon-remix-inverted: url(/third_party/icons/remix-inverted.svg);
+
   --bb-icon-google-drive: url(/third_party/icons/graph/google-drive-48px.svg);
   --bb-icon-google-drive-outline: url(/third_party/icons/graph/google-drive-outline.svg);
 
