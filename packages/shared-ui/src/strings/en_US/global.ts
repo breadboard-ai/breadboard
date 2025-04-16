@@ -57,6 +57,9 @@ export default {
   COMMAND_EDIT_SETTINGS: {
     str: "Edit Settings",
   },
+  COMMAND_REMIX: {
+    str: "Remix",
+  },
   COMMAND_ADDITIONAL_ITEMS: {
     str: "See additional items",
   },
