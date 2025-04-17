@@ -67,7 +67,7 @@ export class ComponentSelectorOverlay extends LitElement {
     :host {
       display: flex;
       width: 328px;
-      height: 400px;
+      max-height: 400px;
       flex-direction: column;
       color: var(--bb-neutral-900);
       background: var(--bb-neutral-0);
@@ -97,7 +97,7 @@ export class ComponentSelectorOverlay extends LitElement {
       display: grid;
       grid-template-rows: var(--bb-grid-size-9) 1fr;
       row-gap: var(--bb-grid-size-2);
-      padding: var(--bb-grid-size-3) var(--bb-grid-size-3) 0
+      padding: var(--bb-grid-size-3) var(--bb-grid-size-3) var(--bb-grid-size-3)
         var(--bb-grid-size-3);
       border-bottom: 1px solid var(--bb-neutral-300);
 
@@ -404,6 +404,18 @@ export class ComponentSelectorOverlay extends LitElement {
 
       const { mainGraph } = graph;
 
+      if (
+        !this.showExperimentalComponents &&
+        !(
+          graph.tags?.includes("quick-access") &&
+          (graph.tags?.includes("input") ||
+            graph.tags?.includes("output") ||
+            graph.tags?.includes("generate"))
+        )
+      ) {
+        continue;
+      }
+
       if (mainGraph.title?.startsWith("A2") && !isA2(mainGraph.url)) continue;
 
       if (!mainGraph.title) {
@@ -517,19 +529,9 @@ export class ComponentSelectorOverlay extends LitElement {
     this.#searchInputRef.value.select();
   }
 
-  render() {
-    if (!this.graphStore || !this.mainGraphId) {
-      return nothing;
-    }
-
-    const kitList = this.#createKitList(this.graphStore, this.mainGraphId);
-    const allComponents = this.#createComponentList(
-      this.graphStore,
-      this.mainGraphId
-    );
-    const componentList = this.#filterComponentList(allComponents);
-
-    return html` <header>${Strings.from("LABEL_TITLE")}</header>
+  #renderControls() {
+    if (!this.showExperimentalComponents) return;
+    return html`
       <div id="controls">
         <input
           id="search"
@@ -569,6 +571,23 @@ export class ComponentSelectorOverlay extends LitElement {
           </button>
         </div>
       </div>
+    `;
+  }
+
+  render() {
+    if (!this.graphStore || !this.mainGraphId) {
+      return nothing;
+    }
+
+    const kitList = this.#createKitList(this.graphStore, this.mainGraphId);
+    const allComponents = this.#createComponentList(
+      this.graphStore,
+      this.mainGraphId
+    );
+    const componentList = this.#filterComponentList(allComponents);
+
+    return html` <header>${Strings.from("LABEL_TITLE")}</header>
+      ${this.#renderControls()}
       <div id="content">
         <div id="container">
           ${this.view === "components"
