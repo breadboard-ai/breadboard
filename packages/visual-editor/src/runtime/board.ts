@@ -140,11 +140,11 @@ export class Board extends EventTarget {
     const boardServerInfo = await connectToBoardServer(
       location,
       apiKey,
-      this.tokenVendor,
+      this.tokenVendor
     );
     if (!boardServerInfo) {
       this.dispatchEvent(
-        new RuntimeErrorEvent("Unable to connect to Board Server")
+        new RuntimeErrorEvent(`Unable to connect to Server "${location}"`)
       );
 
       // We return true here because we don't need the toast from the Visual
