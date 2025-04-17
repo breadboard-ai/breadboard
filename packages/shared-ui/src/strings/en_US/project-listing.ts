@@ -112,7 +112,7 @@ export default {
     str: "Your flow will open automatically when ready",
   },
   LABEL_SAMPLE_GALLERY_TITLE: {
-    str: "Sample gallery",
+    str: "Gallery",
   },
   LABEL_SAMPLE_GALLERY_DESCRIPTION: {
     str: "Get inspired by exploring some sample flows and apps",
