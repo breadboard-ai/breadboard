@@ -645,11 +645,7 @@ export class GraphBoardServerRemixRequestEvent extends Event {
 export class GraphBoardServerLoadRequestEvent extends Event {
   static eventName = "bbgraphboardserverloadrequest";
 
-  constructor(
-    public readonly boardServerName: string,
-    public readonly url: string,
-    public readonly newTab = false
-  ) {
+  constructor(public readonly url: string) {
     super(GraphBoardServerLoadRequestEvent.eventName, { ...eventInit });
   }
 }

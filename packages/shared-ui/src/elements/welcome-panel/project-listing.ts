@@ -863,7 +863,6 @@ export class ProjectListing extends LitElement {
                           <bb-gallery
                             .items=${myItems}
                             .pageSize=${8}
-                            .boardServer=${boardServer}
                           ></bb-gallery>
                         </div>
                       `
@@ -884,7 +883,6 @@ export class ProjectListing extends LitElement {
                       <bb-gallery
                         .items=${sampleItems}
                         .pageSize=${/* Unlimited */ -1}
-                        .boardServer=${boardServer}
                       ></bb-gallery>
                     </div>
                   `,
