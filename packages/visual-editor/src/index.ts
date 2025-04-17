@@ -864,6 +864,10 @@ export class Main extends LitElement {
         return this.#runtime.board.createTabsFromURL(currentUrl);
       })
       .then(async () => {
+        if (!config.boardServerUrl) {
+          return;
+        }
+
         // Check if we're signed in and return early if not: we're just
         // showing a sign-in screen, no need to continue with initialization.
         const signInAdapter = new SigninAdapter(
@@ -872,10 +876,6 @@ export class Main extends LitElement {
           this.settingsHelper
         );
         if (signInAdapter.state === "signedout") {
-          return;
-        }
-
-        if (!config.boardServerUrl) {
           return;
         }
 
