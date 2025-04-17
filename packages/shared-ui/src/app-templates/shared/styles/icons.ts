@@ -412,6 +412,10 @@ export default css`
       --bb-icon-table-rows: url(/third_party/icons/table-rows.svg);
       --bb-icon-table-rows-inverted: url(/third_party/icons/table-rows-inverted.svg);
 
+      --bb-icon-responsive-layout: url(/third_party/icons/responsive-layout.svg);
+
+      --bb-icon-chat-mirror: url(/third_party/icons/chat-mirror.svg);
+
       --bb-icon-text: url(/third_party/icons/text.svg);
       --bb-icon-text-inverted: url(/third_party/icons/text-inverted.svg);
 

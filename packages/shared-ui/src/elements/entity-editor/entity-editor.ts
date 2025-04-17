@@ -49,7 +49,6 @@ import { MAIN_BOARD_ID } from "../../constants/constants";
 import { Project } from "../../state";
 import {
   FastAccessSelectEvent,
-  GraphReplaceEvent,
   NodePartialUpdateEvent,
 } from "../../events/events";
 import {
@@ -59,7 +58,6 @@ import {
 
 import * as StringsHelper from "../../strings/helper.js";
 import { FlowGenConstraint } from "../../flow-gen/flow-generator";
-import { findConfigurationChanges } from "../../flow-gen/flow-diff";
 import { ConnectorView } from "../../connectors/types";
 const Strings = StringsHelper.forSection("Editor");
 
@@ -287,6 +285,15 @@ export class EntityEditor extends LitElement {
           no-repeat;
       }
 
+      &.display h1::before {
+        background: var(--bb-icon-responsive-layout) center center / 20px 20px
+          no-repeat;
+      }
+      &.ask-user h1::before {
+        background: var(--bb-icon-chat-mirror) center center / 20px 20px
+          no-repeat;
+      }
+
       &.input h1::before {
         background: var(--bb-icon-input) center center / 20px 20px no-repeat;
       }
@@ -485,6 +492,16 @@ export class EntityEditor extends LitElement {
 
             &.combine-outputs::before {
               background: var(--bb-icon-table-rows) center center / 20px 20px
+                no-repeat;
+            }
+
+            &.display::before {
+              background: var(--bb-icon-responsive-layout) center center / 20px
+                20px no-repeat;
+            }
+
+            &.ask-user::before {
+              background: var(--bb-icon-chat-mirror) center center / 20px 20px
                 no-repeat;
             }
 

@@ -216,6 +216,16 @@ export class ComponentSelectorOverlay extends LitElement {
                 no-repeat;
             }
 
+            &.display {
+              background: var(--bb-icon-responsive-layout) top left / 20px 20px
+                no-repeat;
+            }
+
+            &.ask-user {
+              background: var(--bb-icon-chat-mirror) top left / 20px 20px
+                no-repeat;
+            }
+
             &.generative {
               background: var(--bb-add-icon-generative) top left / 20px 20px
                 no-repeat;

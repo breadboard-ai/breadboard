@@ -274,6 +274,16 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           no-repeat;
       }
 
+      :host([icon="display"]) #container header::before {
+        background: var(--bb-icon-responsive-layout) center center / 20px 20px
+          no-repeat;
+      }
+
+      :host([icon="ask-user"]) #container header::before {
+        background: var(--bb-icon-chat-mirror) center center / 20px 20px
+          no-repeat;
+      }
+
       :host([icon="input"]) #container header::before {
         background: var(--bb-icon-input) center center / 20px 20px no-repeat;
       }
