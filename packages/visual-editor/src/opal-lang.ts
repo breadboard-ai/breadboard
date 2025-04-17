@@ -71,6 +71,9 @@ export default {
     LABEL_WELCOME_MESSAGE_A: {
       str: "Opals",
     },
+    LABEL_TEAM_NAME: {
+      str: "Opals Team",
+    },
     LABEL_TABLE_DESCRIPTION_YOUR_PROJECTS: {
       str: "Your opals",
     },
