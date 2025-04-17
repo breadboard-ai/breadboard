@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { BoardServer, GraphProviderItem } from "@google-labs/breadboard";
+import type { GraphProviderItem } from "@google-labs/breadboard";
 import { consume } from "@lit/context";
 import { css, html, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
@@ -250,9 +250,6 @@ export class Gallery extends LitElement {
   @property({ attribute: false })
   accessor recentItems: string[] | undefined = undefined;
 
-  @property({ attribute: false })
-  accessor boardServer: BoardServer | undefined = undefined;
-
   @property({ type: Number })
   accessor page = 0;
 
@@ -391,17 +388,8 @@ export class Gallery extends LitElement {
     `;
   }
 
-  #onBoardClick(event: PointerEvent | KeyboardEvent, url: string) {
-    if (!this.boardServer) {
-      return;
-    }
-    this.dispatchEvent(
-      new GraphBoardServerLoadRequestEvent(
-        this.boardServer.name,
-        url,
-        this.#isCtrlCommand(event)
-      )
-    );
+  #onBoardClick(_event: PointerEvent | KeyboardEvent, url: string) {
+    this.dispatchEvent(new GraphBoardServerLoadRequestEvent(url));
   }
 
   #onBoardKeydown(event: KeyboardEvent, url: string) {
