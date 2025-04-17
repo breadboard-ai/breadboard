@@ -201,6 +201,14 @@ export class EditorControls extends LitElement {
           &.combine-outputs::before {
             background-image: var(--bb-icon-table-rows);
           }
+
+          &.display::before {
+            background-image: var(--bb-icon-responsive-layout);
+          }
+
+          &.ask-user::before {
+            background-image: var(--bb-icon-chat-mirror);
+          }
         }
       }
 

@@ -231,6 +231,14 @@ export class NodeConfigurationOverlay extends LitElement {
             background-image: var(--bb-icon-table-rows);
           }
 
+          &.display::before {
+            background-image: var(--bb-icon-responsive-layout);
+          }
+
+          &.ask-user::before {
+            background-image: var(--bb-icon-chat-mirror);
+          }
+
           &.text::before {
             background-image: var(--bb-icon-text);
           }

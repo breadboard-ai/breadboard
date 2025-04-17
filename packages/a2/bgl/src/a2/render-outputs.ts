@@ -194,9 +194,9 @@ async function describe({ inputs: { text } }: DescribeInputs) {
         },
       },
     } satisfies Schema,
-    title: "Render Outputs",
+    title: "Display",
     metadata: {
-      icon: "combine-outputs",
+      icon: "display",
       tags: ["quick-access", "core", "output"],
       order: 100,
     },

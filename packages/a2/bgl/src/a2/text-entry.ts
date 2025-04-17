@@ -146,7 +146,7 @@ async function describe({
     } satisfies Schema,
     title: "Ask User",
     metadata: {
-      icon: "input",
+      icon: "ask-user",
       tags: ["quick-access", "core", "input"],
       order: 1,
     },
