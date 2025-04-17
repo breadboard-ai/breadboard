@@ -1,8 +1,10 @@
 name: Deploy Website
 on:
   # Deploy whenever we merge to main.
-  push:
-    branches: ["main"]
+
+  # Disabled since this started failing, but is not currently being maintained
+  # push:
+  #   branches: ["main"]
 
   # Allows deploying manually from the Actions tab
   workflow_dispatch:
