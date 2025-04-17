@@ -864,6 +864,17 @@ export class Main extends LitElement {
         return this.#runtime.board.createTabsFromURL(currentUrl);
       })
       .then(async () => {
+        // Check if we're signed in and return early if not: we're just
+        // showing a sign-in screen, no need to continue with initialization.
+        const signInAdapter = new SigninAdapter(
+          this.tokenVendor,
+          this.environment,
+          this.settingsHelper
+        );
+        if (signInAdapter.state === "signedout") {
+          return;
+        }
+
         if (!config.boardServerUrl) {
           return;
         }
@@ -879,9 +890,7 @@ export class Main extends LitElement {
 
         let hasMountedBoardServer = false;
         for (const server of this.#boardServers) {
-          if (
-            server.url.href === config.boardServerUrl.href
-          ) {
+          if (server.url.href === config.boardServerUrl.href) {
             hasMountedBoardServer = true;
             this.selectedBoardServer = server.name;
             this.selectedLocation = server.url.href;
