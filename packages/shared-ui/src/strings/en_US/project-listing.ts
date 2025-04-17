@@ -85,7 +85,7 @@ export default {
     str: "Owner",
   },
   LABEL_TABLE_DESCRIPTION_YOUR_PROJECTS: {
-    str: "Your Flow",
+    str: "Your Flows",
   },
   LABEL_TABLE_DESCRIPTION_OTHER_PEOPLES_PROJECTS: {
     str: "Other people's Flows",
