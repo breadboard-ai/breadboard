@@ -27,32 +27,37 @@ const MODES = [
   {
     id: "text",
     url: "embed://a2/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
-    title: "Generate Text",
+    title: "Gemini 2.0 Flash",
+    description: "For everyday tasks, plus more",
     icon: "generative-text",
+  },
+  {
+    id: "think",
+    url: "embed://a2/go-over-list.bgl.json#module:main",
+    title: "Gemini 2.0 Flash + Thinking",
+    description: "For complex task, does additional thinking and planning",
+    icon: "generative",
   },
   {
     id: "image",
     url: "embed://a2/a2.bgl.json#module:image-generator",
-    title: "Generate Image",
+    title: "Juno",
+    description: "Generates images",
     icon: "generative-image",
   },
   {
     id: "audio",
     url: "embed://a2/audio-generator.bgl.json#module:main",
-    title: "Generate Audio",
+    title: "AudioLM",
+    description: "Generates audio from text",
     icon: "generative-audio",
   },
   {
     id: "video",
     url: "embed://a2/video-generator.bgl.json#module:main",
-    title: "Generate Video",
+    title: "Veo 2",
+    description: "GEnerates videos from text",
     icon: "generative-video",
-  },
-  {
-    id: "think",
-    url: "embed://a2/go-over-list.bgl.json#module:main",
-    title: "Think and Execute",
-    icon: "generative",
   },
 ] as const;
 
