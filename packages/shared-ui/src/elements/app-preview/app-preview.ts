@@ -12,6 +12,7 @@ import { LitElement, PropertyValues, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
   BoardServer,
+  type EditHistory,
   InspectableRun,
   InspectableRunEvent,
   isInlineData,
@@ -34,6 +35,7 @@ import {
 } from "../../types/types.js";
 import { getGlobalColor } from "../../utils/color.js";
 import { classMap } from "lit/directives/class-map.js";
+import { icons } from "../../styles/icons.js";
 
 const primaryColor = getGlobalColor("--bb-ui-700");
 const secondaryColor = getGlobalColor("--bb-ui-400");
@@ -125,7 +127,13 @@ export class AppPreview extends LitElement {
   @state()
   accessor _outputMode: "app" | "activity" = "app";
 
-  static styles = appPreviewStyles;
+  @property({ attribute: false })
+  accessor history: EditHistory | undefined | null = undefined;
+
+  @state()
+  accessor #showEditHistory = false;
+
+  static styles = [icons, appPreviewStyles];
 
   #loadingTemplate = false;
   #appTemplate: AppTemplate | null = null;
@@ -439,7 +447,7 @@ export class AppPreview extends LitElement {
             id="app"
             ?disabled=${this._outputMode === "app"}
             class=${classMap({ [this._outputMode]: true })}
-            @click=${async () => {
+            @click=${() => {
               this._outputMode = "app";
             }}
           >
@@ -450,8 +458,9 @@ export class AppPreview extends LitElement {
             id="activity"
             ?disabled=${this._outputMode === "activity"}
             class=${classMap({ [this._outputMode]: true })}
-            @click=${async () => {
+            @click=${() => {
               this._outputMode = "activity";
+              this.#showEditHistory = false;
             }}
           >
             Activity
@@ -488,7 +497,12 @@ export class AppPreview extends LitElement {
       case "app":
         return this.#renderApp();
       case "activity":
-        return this.#renderActivity();
+        return [
+          this.#renderEditHistoryButtons(),
+          this.#showEditHistory
+            ? this.#renderEditHistory()
+            : this.#renderActivity(),
+        ];
       default: {
         console.error(
           "Unhandled output mode",
@@ -522,6 +536,51 @@ export class AppPreview extends LitElement {
           Edit Theme
         </button>
       </div>
+    `;
+  }
+
+  #renderEditHistoryButtons() {
+    return html`
+      <div id="edit-history-buttons">
+        <button
+          id="toggle-edit-history"
+          aria-label=${this.#showEditHistory
+            ? "Close edit history"
+            : "Open edit history"}
+          @click=${this.#onClickToggleEditHistory}
+        >
+          <span class="g-icon">history_2</span>
+          Edit history
+        </button>
+
+        ${this.#showEditHistory
+          ? html`
+              <button
+                id="close-edit-history"
+                aria-label="Close edit history"
+                @click=${this.#onClickCloseEditHistory}
+              >
+                <span class="g-icon">close</span>
+              </button>
+            `
+          : nothing}
+      </div>
+    `;
+  }
+
+  #onClickToggleEditHistory() {
+    this.#showEditHistory = !this.#showEditHistory;
+  }
+
+  #onClickCloseEditHistory() {
+    this.#showEditHistory = false;
+  }
+
+  #renderEditHistory() {
+    return html`
+      <bb-revision-history-panel
+        .history=${this.history}
+      ></bb-revision-history-panel>
     `;
   }
 

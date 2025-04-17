@@ -595,6 +595,7 @@ export class UI extends LitElement {
             .settings=${this.settings}
             .boardServers=${this.boardServers}
             .status=${this.status}
+            .history=${this.history}
             @bbthemeeditrequest=${(evt: ThemeEditRequestEvent) => {
               this.showThemeDesigner = true;
               this.#themeOptions = evt.themeOptions;
