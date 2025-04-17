@@ -29,8 +29,6 @@ import type { HomepageSearchButton } from "./homepage-search-button.js";
 import { icons } from "../../styles/icons.js";
 import "./gallery.js";
 
-const SHOW_OTHER_PEOPLES_BOARDS_KEY =
-  "bb-project-listing-show-other-peoples-boards";
 const MODE_KEY = "bb-project-listing-mode";
 const OVERFLOW_MENU_CLEARANCE = 4;
 const FORCE_NO_BOARDS = new URL(document.URL).searchParams.has("forceNoBoards");
@@ -657,18 +655,23 @@ export class ProjectListing extends LitElement {
     return url.split("::");
   }
 
-  #getCurrentStoreName(url: string) {
-    for (const boardServer of this.boardServers) {
-      for (const [location, store] of boardServer.items()) {
-        const value = `${boardServer.name}::${store.url ?? location}`;
+  #getCurrentStoreName(_url: string) {
+    // For now, simply return a fixed title string, like "Your flows",
+    // instead of getting the title from the server.
+    // TODO: Figure out what the right thing to do is here.
+    return Strings.from("LABEL_TABLE_DESCRIPTION_YOUR_PROJECTS");
 
-        if (value === url) {
-          return store.title;
-        }
-      }
-    }
+    // for (const boardServer of this.boardServers) {
+    //   for (const [location, store] of boardServer.items()) {
+    //     const value = `${boardServer.name}::${store.url ?? location}`;
 
-    return "Unknown Store";
+    //     if (value === url) {
+    //       return store.title;
+    //     }
+    //   }
+    // }
+
+    // return "Unknown Store";
   }
 
   render() {
