@@ -17,12 +17,16 @@ export type BootstrapArguments = {
   requiresSignin?: boolean;
 };
 
-function getUrlFromBoardServiceFlag(boardService: string): URL {
+function getUrlFromBoardServiceFlag(
+  boardService: string | undefined
+): URL | undefined {
+  if (!boardService) return undefined;
+
   if (boardService.startsWith(GoogleDriveBoardServer.PROTOCOL)) {
     // Just say GDrive here, it will be appended with the folder ID once it's fetched in
     // packages/visual-editor/src/index.ts
     return new URL(boardService);
-  } else if (boardService.startsWith('/')) {
+  } else if (boardService.startsWith("/")) {
     // Convert relative URLs.
     return new URL(boardService, window.location.href);
   }
