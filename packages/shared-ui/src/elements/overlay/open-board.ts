@@ -718,14 +718,12 @@ export class OpenBoardOverlay extends LitElement {
       return;
     }
 
-    const { url, boardServer } = selected.dataset;
+    const { url } = selected.dataset;
     if (!url) {
       return;
     }
 
-    this.dispatchEvent(
-      new GraphBoardServerLoadRequestEvent(boardServer ?? "", url)
-    );
+    this.dispatchEvent(new GraphBoardServerLoadRequestEvent(url));
   }
 
   #onKeyDown(evt: KeyboardEvent) {
@@ -960,16 +958,9 @@ export class OpenBoardOverlay extends LitElement {
                         this.#selectedIndex = itemIdx;
                         this.#highlightSelectedBoard();
                       }}
-                      @click=${(evt: PointerEvent) => {
-                        const isMac = navigator.platform.indexOf("Mac") === 0;
-                        const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
-
+                      @click=${() => {
                         this.dispatchEvent(
-                          new GraphBoardServerLoadRequestEvent(
-                            boardServer.name,
-                            url,
-                            isCtrlCommand
-                          )
+                          new GraphBoardServerLoadRequestEvent(url)
                         );
                       }}
                       data-board-server=${boardServer.name}
