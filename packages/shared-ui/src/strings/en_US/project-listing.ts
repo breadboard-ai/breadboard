@@ -45,6 +45,9 @@ export default {
   LABEL_SORT_BY: {
     str: "Sort by",
   },
+  LABEL_TEAM_NAME: {
+    str: "Breadboard Team",
+  },
   LABEL_WELCOME_MESSAGE_A: {
     str: "Breadboards",
   },
