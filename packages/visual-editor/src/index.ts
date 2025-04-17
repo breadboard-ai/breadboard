@@ -34,7 +34,7 @@ import {
   createFileSystem,
   createEphemeralBlobStore,
   assetsFromGraphDescriptor,
-  blank,
+  blank as breadboardBlank,
   isInlineData,
   isStoredData,
   EditHistoryCreator,
@@ -4407,4 +4407,10 @@ export class Main extends LitElement {
     const tooltip = html`<bb-tooltip ${ref(this.#tooltipRef)}></bb-tooltip>`;
     return [until(uiController), tooltip, toasts];
   }
+}
+
+function blank() {
+  const blankBoard = breadboardBlank();
+  const title = Strings.from("TITLE_UNTITLED_PROJECT") || blankBoard.title;
+  return { ...breadboardBlank(), title };
 }
