@@ -13,6 +13,7 @@ import {
   llm,
   toLLMContent,
   toLLMContentInline,
+  toLLMContentStored,
   toTextConcat,
   joinContent,
   toText,
@@ -96,12 +97,20 @@ async function callAudioGen(
   for (let value of Object.values(response.executionOutputs)) {
     const mimetype = value.chunks[0].mimetype;
     if (mimetype.startsWith("audio")) {
-      returnVal = toLLMContentInline(mimetype, value.chunks[0].data);
+      if (mimetype.endsWith("/storedData")) {
+        returnVal = toLLMContentStored(
+          mimetype.replace("/storedData", ""),
+          value.chunks[0].data
+        );
+      } else {
+        returnVal = toLLMContentInline(mimetype, value.chunks[0].data);
+      }
     }
   }
   if (!returnVal) {
     return toLLMContent("Error: No audio returned from backend");
   }
+  console.log(returnVal);
   return returnVal;
 }
 
