@@ -31,9 +31,9 @@ import { DragConnectorReceiver } from "../../types/types";
 import { DragConnectorStartEvent } from "../../events/events";
 import { getGlobalColor } from "../../utils/color.js";
 import { AssetPath } from "@breadboard-ai/types";
-import { InspectableAsset } from "@google-labs/breadboard";
+import { InspectableAsset, ok } from "@google-labs/breadboard";
 import { SignalWatcher } from "@lit-labs/signals";
-import { ConnectorState } from "../../state/types.js";
+import { GraphAsset as GraphAssetState } from "../../state/types.js";
 
 const EDGE_STANDARD = getGlobalColor("--bb-neutral-400");
 
@@ -92,7 +92,7 @@ export class GraphAsset
   accessor graphUrl: URL | null = null;
 
   @property()
-  accessor connectors: ConnectorState | null = null;
+  accessor state: GraphAssetState | null = null;
 
   static styles = [
     Box.styles,
@@ -475,22 +475,34 @@ export class GraphAsset
           ${this.updating
             ? html`<p class="loading">Loading asset details...</p>`
             : nothing}
-          <bb-llm-output
-            @outputsloaded=${() => {
-              this.updating = false;
-            }}
-            .value=${this.asset?.data.at(-1) ?? null}
-            .clamped=${false}
-            .lite=${true}
-            .showModeToggle=${false}
-            .showEntrySelector=${false}
-            .showExportControls=${false}
-            .graphUrl=${this.graphUrl}
-          ></bb-llm-output>
+          ${this.asset?.type === "connector"
+            ? this.#renderConnector()
+            : html`<bb-llm-output
+                @outputsloaded=${() => {
+                  this.updating = false;
+                }}
+                .value=${this.asset?.data.at(-1) ?? null}
+                .clamped=${false}
+                .lite=${true}
+                .showModeToggle=${false}
+                .showEntrySelector=${false}
+                .showExportControls=${false}
+                .graphUrl=${this.graphUrl}
+              ></bb-llm-output>`}
         </div>
       </section>
 
       ${this.renderBounds()}`;
+  }
+
+  #renderConnector() {
+    const view = this.state?.connector?.view;
+    if (!view || !ok(view)) return nothing;
+    this.updating = false;
+    return html`<bb-multi-output
+      .schema=${view.schema}
+      .outputs=${view.values}
+    ></bb-multi-output>`;
   }
 
   render() {

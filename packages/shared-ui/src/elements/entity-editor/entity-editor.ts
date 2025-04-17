@@ -1169,19 +1169,12 @@ export class EntityEditor extends LitElement {
 
     let value;
     if (asset.type === "connector") {
-      value = this.projectState?.connectors
-        .getInstanceView(assetPath)
-        .then((view) => {
-          if (!ok(view)) return nothing;
-          const ports = portsFromView(view);
-          this.#connectorPorts.set(assetPath, ports);
-
-          return this.#renderPorts("", "", ports);
-        });
-      // return html`${until(
-      //   value,
-      //   html`<div id="generic-status">Loading...</div>`
-      // )}`;
+      const view =
+        this.projectState?.graphAssets.get(assetPath)?.connector?.view;
+      if (!view || !ok(view)) return nothing;
+      const ports = portsFromView(view);
+      this.#connectorPorts.set(assetPath, ports);
+      value = this.#renderPorts("", "", ports);
     } else {
       const graphUrl = new URL(this.graph.raw().url ?? window.location.href);
 
@@ -1198,7 +1191,7 @@ export class EntityEditor extends LitElement {
 
     return html`<div class=${classMap({ asset: true })}>
       <h1 id="title"><span>${asset.title}</span></h1>
-      <div id="content">${until(value)}</div>
+      <div id="content">${value}</div>
       <input type="hidden" name="asset-path" .value=${assetPath} />
     </div>`;
   }

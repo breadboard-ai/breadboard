@@ -273,7 +273,9 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     const graphId = this.graphId || "";
     let assets = [...(this.state?.graphAssets.values() || [])].filter(
       (asset) =>
-        !asset.connector || asset.connector.load || asset.connector.save
+        !asset.connector ||
+        asset.connector.type.load ||
+        asset.connector.type.save
     );
     let tools = [
       ...(this.state?.tools.values() || []),

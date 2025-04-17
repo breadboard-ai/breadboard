@@ -345,7 +345,7 @@ export class Graph extends Box {
 
       graphAsset.showBounds = this.showBounds;
       graphAsset.boundsLabel = asset.title;
-      graphAsset.connectors = this.rendererState?.connectors || null;
+      graphAsset.state = this.rendererState?.graphAssets.get(assetPath) || null;
     }
 
     // Remove stale assets.

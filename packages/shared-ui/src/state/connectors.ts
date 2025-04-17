@@ -6,13 +6,8 @@
 
 import { AssetPath, JsonSerializable, UUID } from "@breadboard-ai/types";
 import { err, ok, Outcome } from "@google-labs/breadboard";
-import { ConnectorConfiguration, ConnectorView } from "../connectors/types";
-import {
-  Connector,
-  ConnectorState,
-  OrganizerStage,
-  ProjectInternal,
-} from "./types";
+import { ConnectorConfiguration, ConnectorType } from "../connectors/types";
+import { ConnectorState, OrganizerStage, ProjectInternal } from "./types";
 import { signal } from "signal-utils";
 import { Configurator } from "../connectors/configurator";
 import { CreateConnector } from "../transforms/create-connector";
@@ -25,12 +20,15 @@ class ConnectorStateImpl implements ConnectorState {
   accessor stage: OrganizerStage = "free";
   #project: ProjectInternal;
 
-  constructor(project: ProjectInternal, connectorMap: Map<string, Connector>) {
+  constructor(
+    project: ProjectInternal,
+    connectorMap: Map<string, ConnectorType>
+  ) {
     this.#project = project;
     this.types = connectorMap;
   }
 
-  types: Map<string, Connector>;
+  types: Map<string, ConnectorType>;
 
   #getConnectorInstance(
     path: AssetPath
@@ -107,25 +105,6 @@ class ConnectorStateImpl implements ConnectorState {
     if (!ok(updatingGraph)) return this.#free(updatingGraph);
 
     this.stage = "free";
-  }
-
-  async getInstanceView(path: AssetPath): Promise<Outcome<ConnectorView>> {
-    const runtime = this.#project.runtime();
-
-    const config = this.#getConnectorInstance(path);
-    if (!ok(config)) return config;
-
-    const { configuration, id } = config;
-
-    const configurator = new Configurator(runtime, id, configuration.url);
-
-    this.stage = "busy";
-    const reading = await configurator.read(configuration.configuration);
-    if (!ok(reading)) return this.#free(reading);
-
-    this.stage = "free";
-
-    return reading;
   }
 
   #free<T>(outcome: T): T {

@@ -21,7 +21,7 @@ import {
   PortIdentifier,
 } from "@google-labs/breadboard";
 import { SideBoardRuntime } from "../sideboards/types";
-import { ConnectorView } from "../connectors/types";
+import { ConnectorInstance, ConnectorType } from "../connectors/types";
 
 export type ChatStatus = "running" | "paused" | "stopped";
 
@@ -126,7 +126,7 @@ export type GraphAsset = {
   metadata?: AssetMetadata;
   data: LLMContent[];
   path: AssetPath;
-  connector?: Connector;
+  connector?: ConnectorInstance;
 };
 
 export type GeneratedAssetIdentifier = string;
@@ -151,21 +151,6 @@ export type Component = {
   description?: string;
 };
 
-export type Connector = {
-  /**
-   * The URL pointing to the connector BGL file.
-   */
-  url: string;
-  icon?: string;
-  title: string;
-  description?: string;
-  singleton: boolean;
-  load: boolean;
-  save: boolean;
-  tools: boolean;
-  experimental: boolean;
-};
-
 export type Components = Map<NodeIdentifier, Component>;
 
 /**
@@ -179,12 +164,15 @@ export type FastAccess = {
   parameters: Map<string, ParameterMetadata>;
 };
 
+/**
+ * Represents the Model+Controller for the Renderer (the visual editor)
+ */
 export type RendererState = {
-  connectors: ConnectorState;
+  graphAssets: Map<AssetPath, GraphAsset>;
 };
 
 export type ConnectorState = {
-  types: Map<string, Connector>;
+  types: Map<string, ConnectorType>;
 
   // This double-plumbing is inelegant -- it just calls the
   // method by the same name in Project.
@@ -207,12 +195,6 @@ export type ConnectorState = {
     path: AssetPath,
     values: Record<string, JsonSerializable>
   ): Promise<Outcome<void>>;
-
-  /**
-   * Gets the connector instance view:
-   * the values and the schema to use to render these values.
-   */
-  getInstanceView(path: AssetPath): Promise<Outcome<ConnectorView>>;
 
   /**
    * Cancel any pending work.

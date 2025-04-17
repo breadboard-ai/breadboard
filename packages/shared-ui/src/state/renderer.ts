@@ -4,10 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ConnectorState, RendererState } from "./types";
+import { AssetPath } from "@breadboard-ai/types";
+import { GraphAsset, RendererState } from "./types";
 
 export { RendererStateImpl };
 
 class RendererStateImpl implements RendererState {
-  constructor(public readonly connectors: ConnectorState) {}
+  constructor(public readonly graphAssets: Map<AssetPath, GraphAsset>) {}
 }
