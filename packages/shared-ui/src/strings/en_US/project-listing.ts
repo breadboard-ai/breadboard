@@ -45,6 +45,9 @@ export default {
   LABEL_SORT_BY: {
     str: "Sort by",
   },
+  LABEL_TEAM_NAME: {
+    str: "Breadboard Team",
+  },
   LABEL_WELCOME_MESSAGE_A: {
     str: "Breadboards",
   },
@@ -112,7 +115,7 @@ export default {
     str: "Your flow will open automatically when ready",
   },
   LABEL_SAMPLE_GALLERY_TITLE: {
-    str: "Sample gallery",
+    str: "Gallery",
   },
   LABEL_SAMPLE_GALLERY_DESCRIPTION: {
     str: "Get inspired by exploring some sample flows and apps",
