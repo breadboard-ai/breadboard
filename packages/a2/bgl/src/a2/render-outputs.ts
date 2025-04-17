@@ -11,6 +11,9 @@ import read from "@read";
 
 export { invoke as default, describe };
 
+const MANUAL_MODE = "Layout manually";
+const AUTO_MODE = "Display with autolayout";
+
 type InvokeInputs = {
   text?: LLMContent;
   instruction?: string;
@@ -127,7 +130,14 @@ async function invoke({
   );
   if (!ok(context)) return context;
   context = flattenContext(context);
-  renderMode = renderMode || "Manual";
+  // TODO(askerryryan): Further cleanup modes once FlowGen is fully in sync.
+  if (renderMode == MANUAL_MODE) {
+    renderMode = "Manual";
+  } else if (renderMode == AUTO_MODE) {
+    renderMode = "HTML";
+  } else if (!renderMode) {
+    renderMode = "Manual";
+  }
   console.log("Rendering mode: " + renderMode);
   let out = context;
   if (renderMode != "Manual") {
@@ -168,10 +178,10 @@ async function describe({ inputs: { text } }: DescribeInputs) {
         },
         "p-render-mode": {
           type: "string",
-          enum: ["Manual", "Markdown", "HTML", "Interactive"],
-          title: "Rendering mode",
+          enum: [MANUAL_MODE, AUTO_MODE],
+          title: "Display",
           behavior: ["config", "hint-preview"],
-          default: "Manual",
+          default: MANUAL_MODE,
           description:
             "Choose how to combine the outputs (Manual: output is rendered exactly as configured below. Markdown: automatically combine the results into a markdown document, HTML: automatically combine the results into a webpage, Interactive: an interactive visualization or widget)",
         },
