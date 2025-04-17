@@ -123,7 +123,7 @@ export class AppPreview extends LitElement {
   accessor _originalTheme: AppTheme | null = null;
 
   @state()
-  accessor _outputMode: "app" | "console" = "app";
+  accessor _outputMode: "app" | "activity" = "app";
 
   static styles = appPreviewStyles;
 
@@ -447,11 +447,11 @@ export class AppPreview extends LitElement {
           </button>
 
           <button
-            id="console"
-            ?disabled=${this._outputMode === "console"}
+            id="activity"
+            ?disabled=${this._outputMode === "activity"}
             class=${classMap({ [this._outputMode]: true })}
             @click=${async () => {
-              this._outputMode = "console";
+              this._outputMode = "activity";
             }}
           >
             Activity
@@ -487,7 +487,7 @@ export class AppPreview extends LitElement {
     switch (this._outputMode) {
       case "app":
         return this.#renderApp();
-      case "console":
+      case "activity":
         return this.#renderActivity();
       default: {
         console.error(
@@ -535,7 +535,7 @@ export class AppPreview extends LitElement {
     const nextNodeId = this.topGraphResult?.currentNode?.descriptor.id ?? null;
 
     return html`
-      <div id="board-console-container">
+      <div id="board-activity-container">
         <bb-board-activity
           class=${classMap({ collapsed: this.debugEvent !== null })}
           .graphUrl=${graphUrl}

@@ -57,7 +57,7 @@ export const styles = css`
       }
     }
 
-    & #board-console-container {
+    & #board-activity-container {
       height: 100%;
       width: 100%;
       overflow: auto;

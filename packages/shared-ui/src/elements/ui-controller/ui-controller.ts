@@ -207,9 +207,6 @@ export class UI extends LitElement {
   @state()
   accessor autoFocusEditor = false;
 
-  @state()
-  accessor outputMode: "app" | "console" = "app";
-
   #autoFocusEditorOnRender = false;
   #sideNavItem: "console" | "capabilities" | "revision-history" | "editor" =
     "editor";
