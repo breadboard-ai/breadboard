@@ -52,9 +52,9 @@ type ValidColorStrings = `#${string}` | `--${string}`;
 
 const USER_REGEX = /\/@[^/]+\//;
 
-const LOCAL_REVISION_HISTORY_KEY = "revision-history";
-const LOCAL_REVISION_HISTORY_VERSION = 1;
-interface LocalRevisionHistoryDBSchema extends idb.DBSchema {
+const LOCAL_EDIT_HISTORY_KEY = "revision-history";
+const LOCAL_EDIT_HISTORY_VERSION = 1;
+interface LocalEditHistoryDBSchema extends idb.DBSchema {
   revisions: {
     key: string;
     value: EditHistoryEntry[];
@@ -1139,9 +1139,9 @@ export class Board extends EventTarget {
   }
 
   async #openLocalHistoryDB() {
-    return await idb.openDB<LocalRevisionHistoryDBSchema>(
-      LOCAL_REVISION_HISTORY_KEY,
-      LOCAL_REVISION_HISTORY_VERSION,
+    return await idb.openDB<LocalEditHistoryDBSchema>(
+      LOCAL_EDIT_HISTORY_KEY,
+      LOCAL_EDIT_HISTORY_VERSION,
       {
         upgrade(db) {
           if (!db.objectStoreNames.contains("revisions")) {

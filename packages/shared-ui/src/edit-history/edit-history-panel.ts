@@ -26,8 +26,8 @@ import { HighlightEvent } from "../elements/step-editor/events/events.js";
 import { MAIN_BOARD_ID } from "../constants/constants.js";
 import { spinAnimationStyles } from "../styles/spin-animation.js";
 
-@customElement("bb-revision-history-panel")
-export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
+@customElement("bb-edit-history-panel")
+export class EditHistoryPanel extends SignalWatcher(LitElement) {
   static styles = [
     icons,
     spinAnimationStyles,
@@ -314,6 +314,6 @@ function findHighlights(
 
 declare global {
   interface HTMLElementTagNameMap {
-    "bb-revision-history-panel": RevisionHistoryPanel;
+    "bb-edit-history-panel": EditHistoryPanel;
   }
 }

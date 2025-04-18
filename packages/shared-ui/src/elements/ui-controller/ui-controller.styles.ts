@@ -821,7 +821,7 @@ export const styles = css`
   }
 
   bb-capabilities-selector,
-  bb-revision-history-panel,
+  bb-edit-history-panel,
   #board-activity-container,
   bb-app-preview,
   bb-entity-editor {
