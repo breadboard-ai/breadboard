@@ -204,7 +204,8 @@ function createDescribeHandler(context: NodeHandlerContext) {
           inputs.inputs || {},
           inputs.inputSchema,
           inputs.outputSchema,
-          new CapabilitiesManagerImpl(context)
+          new CapabilitiesManagerImpl(context),
+          false
         );
         if (!result) {
           return {

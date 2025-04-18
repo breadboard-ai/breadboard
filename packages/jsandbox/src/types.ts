@@ -14,6 +14,7 @@ export type DescriberInputs = {
   inputs?: Values;
   inputSchema?: unknown;
   outputSchema?: unknown;
+  asType?: boolean;
 };
 export type DescriberOutputs = { inputSchema: unknown; outputSchema: unknown };
 export type InvokeInputs = Values;

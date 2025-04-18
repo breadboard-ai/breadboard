@@ -61,7 +61,7 @@ class NodeTypeDescriberManager implements DescribeResultCacheArgs {
   }
 
   latestType(type: NodeTypeIdentifier): Promise<NodeDescriberResult> {
-    return this.getLatestDescription(type, "");
+    return this.getLatestDescription(type, "", { asType: true });
   }
 
   initial(
@@ -84,11 +84,16 @@ class NodeTypeDescriberManager implements DescribeResultCacheArgs {
     if (!node) {
       return emptyResult();
     }
-    return this.getLatestDescription(node.descriptor.type, graphId, {
-      incoming: node.incoming(),
-      outgoing: node.outgoing(),
-      inputs: { ...node.configuration(), ...inputs },
-    });
+    const result = await this.getLatestDescription(
+      node.descriptor.type,
+      graphId,
+      {
+        incoming: node.incoming(),
+        outgoing: node.outgoing(),
+        inputs: { ...node.configuration(), ...inputs },
+      }
+    );
+    return result;
   }
 
   willUpdate(
@@ -251,6 +256,7 @@ class NodeTypeDescriberManager implements DescribeResultCacheArgs {
           ])
         ),
       },
+      asType: !!options?.asType,
     };
     if (handle.url()) {
       context.base = handle.url();

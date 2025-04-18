@@ -134,7 +134,7 @@ export class Graph extends Box {
 
       const lastUpdateTime = this.#lastUpdateTimes.get("nodes") ?? 0;
 
-      Promise.all([node.describe(), node.type().metadata()]).then(() => {
+      node.describe().then(() => {
         // Ensure the most recent values before proceeding.
         if (lastUpdateTime !== this.#lastUpdateTimes.get("nodes")) {
           return;

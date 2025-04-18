@@ -12,8 +12,8 @@ import type { EditHistory } from "@google-labs/breadboard";
 import { HighlightEvent } from "../elements/step-editor/events/events.js";
 import { createRef, ref } from "lit/directives/ref.js";
 
-@customElement("bb-revision-history-overlay")
-export class RevisionHistoryOverlay extends SignalWatcher(LitElement) {
+@customElement("bb-edit-history-overlay")
+export class EditHistoryOverlay extends SignalWatcher(LitElement) {
   static styles = [
     icons,
     css`
@@ -188,6 +188,6 @@ export class RevisionHistoryOverlay extends SignalWatcher(LitElement) {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "bb-revision-history-overlay": RevisionHistoryOverlay;
+    "bb-edit-history-overlay": EditHistoryOverlay;
   }
 }

@@ -44,7 +44,8 @@ const STRATEGISTS: Strategist[] = [
   new ThinkStrategist(),
 ];
 
-function findStrategist(name: string): Strategist | undefined {
+function findStrategist(name?: string): Strategist | undefined {
+  if (!name) return STRATEGISTS[0];
   return STRATEGISTS.find((strategist) => strategist.name === name);
 }
 

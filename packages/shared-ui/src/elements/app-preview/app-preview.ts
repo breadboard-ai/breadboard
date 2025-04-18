@@ -578,9 +578,7 @@ export class AppPreview extends LitElement {
 
   #renderEditHistory() {
     return html`
-      <bb-revision-history-panel
-        .history=${this.history}
-      ></bb-revision-history-panel>
+      <bb-edit-history-panel .history=${this.history}></bb-edit-history-panel>
     `;
   }
 

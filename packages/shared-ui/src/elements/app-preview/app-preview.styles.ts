@@ -381,7 +381,7 @@ export const styles = css`
     }
   }
 
-  bb-revision-history-panel {
+  bb-edit-history-panel {
     width: 100%;
     margin-top: var(--bb-grid-size-4);
     padding-bottom: var(--bb-grid-size-4);
