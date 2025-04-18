@@ -68,7 +68,7 @@ export class FlowgenHomepagePanel extends LitElement {
         display: flex;
         width: 100%;
         background: linear-gradient(0deg, #fdf7f8, #f7f9fe);
-        border-radius: 100px;
+        border-radius: 50px;
         padding: 10px;
         margin: 20px 0 0 0;
         transition: box-shadow 1s ease-out;
@@ -85,7 +85,7 @@ export class FlowgenHomepagePanel extends LitElement {
         background: #fff;
         color: var(--bb-neutral-900);
         border: none;
-        border-radius: 100px;
+        border-radius: 40px;
         padding: 0.5lh 1lh;
         --min-lines: 1;
         --max-lines: 6;

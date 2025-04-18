@@ -85,6 +85,7 @@ export class ExpandingTextarea extends LitElement {
         border: none;
         resize: none;
         overflow-y: auto;
+        scrollbar-color: #e1e1e1 transparent;
       }
       textarea:focus-visible {
         outline: none;
