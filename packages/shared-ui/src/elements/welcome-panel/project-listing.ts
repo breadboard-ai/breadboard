@@ -782,7 +782,7 @@ export class ProjectListing extends LitElement {
                       ${Strings.from("LABEL_PROJECT_SERVER_SETTINGS")}
                     </button>
                     </div>`
-                : html`<h2 id="location-selector">
+                : html`<h2 id="location-selector" class="gallery-title">
                     ${this.#getCurrentStoreName(selected)}
                   </h2>`}
             </div>
