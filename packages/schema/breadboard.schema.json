@@ -269,6 +269,13 @@
 					"type": "string",
 					"description": "The overall intent or goal of the application."
 				},
+				"revision_intents": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					},
+					"description": "Followups to the original intent."
+				},
 				"help": {
 					"type": "object",
 					"properties": {
