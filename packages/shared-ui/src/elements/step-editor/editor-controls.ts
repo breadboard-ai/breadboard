@@ -264,12 +264,17 @@ export class EditorControls extends LitElement {
 
     #shelf {
       position: absolute;
-      bottom: 28px;
+      bottom: 0;
       display: flex;
       align-items: center;
       justify-content: center;
       width: 100%;
       box-sizing: border-box;
+    }
+
+    bb-flowgen-editor-input {
+      flex: 1;
+      margin: var(--bb-grid-size-7) var(--bb-grid-size-3);
     }
 
     #component-picker {
