@@ -28,6 +28,17 @@ import "./homepage-search-button.js";
 import type { HomepageSearchButton } from "./homepage-search-button.js";
 import { icons } from "../../styles/icons.js";
 import "./gallery.js";
+import {
+  Connection,
+  fetchAvailableConnections,
+} from "../connection/connection-server.js";
+import { consume } from "@lit/context";
+
+import {
+  environmentContext,
+  type Environment,
+} from "../../contexts/environment.js";
+import { Task, TaskStatus } from "@lit/task";
 
 const MODE_KEY = "bb-project-listing-mode";
 const OVERFLOW_MENU_CLEARANCE = 4;
@@ -81,7 +92,12 @@ export class ProjectListing extends LitElement {
   @property()
   accessor recencyType: "local" | "session" = "session";
 
+  @consume({ context: environmentContext })
+  accessor environment!: Environment;
+
   #selectedIndex = 0;
+
+  #availableConnections?: Task<readonly unknown[], Connection[]>;
 
   static styles = [
     icons,
@@ -810,119 +826,161 @@ export class ProjectListing extends LitElement {
             }}
           >
             ${until(
-              this.#boardServerContents.then((store) => {
-                if (!store) {
-                  return nothing;
-                }
+              this.#boardServerContents.then(
+                (store) => {
+                  if (!store) {
+                    return nothing;
+                  }
 
-                const { permission } = store;
-                const filter = this.filter
-                  ? new RegExp(this.filter, "gim")
-                  : undefined;
-                const allItems = [...store.items]
-                  .filter(
-                    ([name, item]) =>
-                      !filter ||
-                      (item.title && filter.test(item.title)) ||
-                      (name && filter.test(name))
-                  )
-                  .sort(([, dataA], [, dataB]) => {
-                    // Sort by recency.
-                    const indexA = this.#recentItems.indexOf(dataA.url);
-                    const indexB = this.#recentItems.indexOf(dataB.url);
-                    if (indexA !== -1 && indexB === -1) {
-                      return -1;
-                    }
-                    if (indexA === -1 && indexB !== -1) {
-                      return 1;
-                    }
+                  const { permission } = store;
+                  const filter = this.filter
+                    ? new RegExp(this.filter, "gim")
+                    : undefined;
+                  const allItems = [...store.items]
+                    .filter(
+                      ([name, item]) =>
+                        !filter ||
+                        (item.title && filter.test(item.title)) ||
+                        (name && filter.test(name))
+                    )
+                    .sort(([, dataA], [, dataB]) => {
+                      // Sort by recency.
+                      const indexA = this.#recentItems.indexOf(dataA.url);
+                      const indexB = this.#recentItems.indexOf(dataB.url);
+                      if (indexA !== -1 && indexB === -1) {
+                        return -1;
+                      }
+                      if (indexA === -1 && indexB !== -1) {
+                        return 1;
+                      }
 
-                    if (indexA !== -1 && indexB !== -1) {
-                      return indexA - indexB;
-                    }
+                      if (indexA !== -1 && indexB !== -1) {
+                        return indexA - indexB;
+                      }
 
-                    // If both are unknown for recency, choose those that are
-                    // mine.
-                    if (dataA.mine && !dataB.mine) {
-                      return -1;
-                    }
+                      // If both are unknown for recency, choose those that are
+                      // mine.
+                      if (dataA.mine && !dataB.mine) {
+                        return -1;
+                      }
 
-                    if (!dataA.mine && dataB.mine) {
-                      return 1;
-                    }
+                      if (!dataA.mine && dataB.mine) {
+                        return 1;
+                      }
 
-                    return 0;
-                  });
-                const myItems = allItems.filter(([, item]) => item.mine);
-                const sampleItems = allItems.filter(([, item]) =>
-                  (item.tags ?? []).includes("featured")
-                );
-                const boardListings = [
-                  myItems.length && !FORCE_NO_BOARDS
-                    ? html`
-                        <div class="gallery-wrapper">
-                          <bb-gallery
-                            .items=${myItems}
-                            .pageSize=${8}
-                          ></bb-gallery>
-                        </div>
-                      `
-                    : html`
-                        <div id="no-projects-panel">
-                          <p>${Strings.from("LABEL_NO_PROJECTS_FOUND")}</p>
-                          ${this.#renderCreateNewButton()}
-                        </div>
-                      `,
-                  html`
-                    <div class="gallery-wrapper">
-                      <h2 class="gallery-title">
-                        ${Strings.from("LABEL_SAMPLE_GALLERY_TITLE")}
-                      </h2>
-                      <p class="gallery-description">
-                        ${Strings.from("LABEL_SAMPLE_GALLERY_DESCRIPTION")}
-                      </p>
-                      <bb-gallery
-                        .items=${sampleItems}
-                        .pageSize=${/* Unlimited */ -1}
-                      ></bb-gallery>
-                    </div>
-                  `,
-                ];
+                      return 0;
+                    });
+                  const myItems = allItems.filter(([, item]) => item.mine);
+                  const sampleItems = allItems.filter(([, item]) =>
+                    (item.tags ?? []).includes("featured")
+                  );
+                  const boardListings = [
+                    myItems.length && !FORCE_NO_BOARDS
+                      ? html`
+                          <div class="gallery-wrapper">
+                            <bb-gallery
+                              .items=${myItems}
+                              .pageSize=${8}
+                            ></bb-gallery>
+                          </div>
+                        `
+                      : html`
+                          <div id="no-projects-panel">
+                            <p>${Strings.from("LABEL_NO_PROJECTS_FOUND")}</p>
+                            ${this.#renderCreateNewButton()}
+                          </div>
+                        `,
+                    html`
+                      <div class="gallery-wrapper">
+                        <h2 class="gallery-title">
+                          ${Strings.from("LABEL_SAMPLE_GALLERY_TITLE")}
+                        </h2>
+                        <p class="gallery-description">
+                          ${Strings.from("LABEL_SAMPLE_GALLERY_DESCRIPTION")}
+                        </p>
+                        <bb-gallery
+                          .items=${sampleItems}
+                          .pageSize=${/* Unlimited */ -1}
+                        ></bb-gallery>
+                      </div>
+                    `,
+                  ];
 
-                return permission === "granted"
-                  ? [
-                      boardListings,
-                      myItems.length && !FORCE_NO_BOARDS
-                        ? html`
-                            <div id="buttons">
-                              <div id="create-new-button-container">
-                                ${this.#renderCreateNewButton()}
+                  return permission === "granted"
+                    ? [
+                        boardListings,
+                        myItems.length && !FORCE_NO_BOARDS
+                          ? html`
+                              <div id="buttons">
+                                <div id="create-new-button-container">
+                                  ${this.#renderCreateNewButton()}
+                                </div>
                               </div>
-                            </div>
-                          `
-                        : nothing,
-                    ]
-                  : html`<div id="renew-access">
-                      <span
-                        >${Strings.from(
-                          "LABEL_ACCESS_EXPIRED_PROJECT_SERVER"
-                        )}</span
-                      >
-                      <button
-                        id="request-renewed-access"
-                        @click=${() => {
-                          this.dispatchEvent(
-                            new GraphBoardServerRenewAccessRequestEvent(
-                              this.selectedBoardServer,
-                              this.selectedLocation
-                            )
-                          );
-                        }}
-                      >
-                        ${Strings.from("COMMAND_RENEW_ACCESS")}
-                      </button>
-                    </div>`;
-              }),
+                            `
+                          : nothing,
+                      ]
+                    : html`<div id="renew-access">
+                        <span
+                          >${Strings.from(
+                            "LABEL_ACCESS_EXPIRED_PROJECT_SERVER"
+                          )}</span
+                        >
+                        <button
+                          id="request-renewed-access"
+                          @click=${() => {
+                            this.dispatchEvent(
+                              new GraphBoardServerRenewAccessRequestEvent(
+                                this.selectedBoardServer,
+                                this.selectedLocation
+                              )
+                            );
+                          }}
+                        >
+                          ${Strings.from("COMMAND_RENEW_ACCESS")}
+                        </button>
+                      </div>`;
+                },
+                async (error) => {
+                  if (error.message.includes("No folder ID or access token")) {
+
+                    if (!this.#availableConnections) {
+                      this.#availableConnections = fetchAvailableConnections(
+                        this,
+                        () => this.environment,
+                        true
+                      );
+                    }
+                    if (
+                      this.#availableConnections!.status === TaskStatus.INITIAL
+                    ) {
+                      this.#availableConnections!.run();
+                    }
+
+                    return this.#availableConnections!.render({
+                      pending: () => html`<p>Loading connections ...</p>`,
+                      error: () => html`<p>Error loading connections</p>`,
+                      complete: (result: Connection[]) => {
+                        const gdrive = (result as Array<Object>).find(
+                          (connection: any) =>
+                            connection.id === "google-drive-limited"
+                        );
+                        if (gdrive) {
+                          return html`<div>
+                            <p class="loading-message">
+                              You haven't yet granted us Google Drive
+                              Permissions, please sign in into Google Drive in
+                              order to be able to create and save your Opals.
+                            </p>
+                            <bb-connection-signin
+                              .connection=${gdrive}
+                            ></bb-connection-signin>
+                          </div>`;
+                        }
+                      },
+                    });
+                  }
+                }
+              ),
               html`<div id="loading-message">
                 ${Strings.from("STATUS_LOADING")}
               </div>`
