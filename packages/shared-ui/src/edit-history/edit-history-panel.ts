@@ -59,16 +59,19 @@ export class EditHistoryPanel extends SignalWatcher(LitElement) {
         flex: 1;
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: var(--bb-grid-size-2);
       }
 
       .revision {
         list-style-type: none;
         display: flex;
-        flex-direction: column;
-        padding: 12px 16px;
+        align-items: center;
+        padding: var(--bb-grid-size) var(--bb-grid-size-3);
         border-radius: 12px;
+        min-height: 37.5px;
+        box-sizing: border-box;
         gap: 8px;
+        border: 1px solid transparent;
         &:not(.displayed) {
           cursor: pointer;
           background: transparent;
@@ -76,44 +79,45 @@ export class EditHistoryPanel extends SignalWatcher(LitElement) {
           &:focus {
             background: var(--bb-neutral-100);
           }
+          &.current {
+            &:hover,
+            &:focus {
+              background: #d9f1d4;
+            }
+          }
         }
         &.displayed {
           cursor: initial;
           background: var(--bb-neutral-50);
-          &.role-assistant {
-            background: var(--bb-generative-50);
-          }
+        }
+        &.current {
+          background: #e9f7e6;
+          border-color: #6ccb55;
         }
       }
-      .date {
-        font-size: 14px;
-        font-weight: 500;
-      }
-      .current {
-        font-size: 12px;
-        font-style: italic;
-      }
-      .label {
-        font-size: 12px;
-      }
-      .creator {
+
+      .icon {
         display: flex;
-        align-items: center;
-        font-size: 12px;
-        & > .icon {
-          & > .signedin {
-            width: 16px;
-            aspect-ratio: 1;
+        > * {
+          &.signed-in {
             border-radius: 50%;
-            margin-right: 8px;
+            width: 16px;
+            height: 16px;
           }
-          & > .assistant {
+          &.g-icon {
+            font-size: 22px;
+            margin: 0 -4px 0 -3px;
+          }
+          &.assistant {
             color: var(--bb-generative-600);
           }
-          & > .placeholder {
-            margin: 0 4px 0 -3px;
-          }
         }
+      }
+
+      .date {
+        font: 500 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+          var(--bb-font-family);
+        margin-left: var(--bb-grid-size);
       }
     `,
   ];
@@ -197,12 +201,12 @@ export class EditHistoryPanel extends SignalWatcher(LitElement) {
   }
 
   #renderRevision(
-    revision: EditHistoryEntry,
+    edit: EditHistoryEntry,
     isCurrent: boolean,
     isDisplayed: boolean,
     selectRevisionFn?: () => void
   ) {
-    const formattedDate = new Date(revision.timestamp)
+    const formattedDate = new Date(edit.timestamp)
       .toLocaleString("en-US", {
         month: "long",
         day: "numeric",
@@ -211,30 +215,40 @@ export class EditHistoryPanel extends SignalWatcher(LitElement) {
         hour12: true,
       })
       .replace(" at ", ", ");
+    const instruction = this.#extractGenerativeInstruction(edit);
+    const title =
+      `${edit.label} by ${this.#creatorName(edit.creator)}` +
+      (instruction ? ` with instruction ${JSON.stringify(instruction)}` : "");
     return html`
       <li
         class=${classMap({
           revision: true,
-          [`role-${revision.creator.role}`]: true,
+          [`role-${edit.creator.role}`]: true,
           displayed: isDisplayed,
+          current: isCurrent,
         })}
         tabindex="0"
         role="button"
+        title=${title}
         @click=${selectRevisionFn}
         @keydown=${selectRevisionFn &&
         (({ key }: KeyboardEvent) => key === "Enter" && selectRevisionFn())}
       >
+        <span class="icon">${this.#creatorIcon(edit.creator)}</span>
         <span class="date">${formattedDate}</span>
-        ${isCurrent
-          ? html`<span class="current">Current version</span>`
-          : nothing}
-        <span class="label">${revision.label}</span>
-        <span class="creator">
-          <span class="icon">${this.#creatorIcon(revision.creator)}</span>
-          <span class="name">${this.#creatorName(revision.creator)}</span>
-        </span>
       </li>
     `;
+  }
+
+  #extractGenerativeInstruction(edit: EditHistoryEntry) {
+    if (edit.creator.role !== "assistant") {
+      return "";
+    }
+    const { metadata } = edit.graph;
+    if (metadata?.revision_intents?.length) {
+      return metadata.revision_intents.at(-1);
+    }
+    return metadata?.intent;
   }
 
   #creatorIcon(creator: EditHistoryCreator) {
@@ -246,20 +260,20 @@ export class EditHistoryPanel extends SignalWatcher(LitElement) {
         return this.signinAdapter?.picture
           ? html`
               <img
-                class="signedin"
+                class="signed-in"
                 crossorigin="anonymous"
                 src=${this.signinAdapter.picture}
               />
             `
-          : html`<span class="placeholder g-icon filled">person</span>`;
+          : html`<span class="g-icon filled placeholder">person</span>`;
       }
       case "assistant": {
-        return html`<span class="assistant g-icon filled">spark</span>`;
+        return html`<span class="g-icon filled assistant">spark</span>`;
       }
       default: {
         console.error(`Unexpected creator`, creator satisfies never);
         return html`
-          <span class="placeholder g-icon filled">question_mark</span>
+          <span class="g-icon filled placeholder">question_mark</span>
         `;
       }
     }
