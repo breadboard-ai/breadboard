@@ -17,6 +17,7 @@ import {
   GraphBoardServerRefreshEvent,
   GraphBoardServerRenewAccessRequestEvent,
   GraphBoardServerSelectionChangeEvent,
+  InputEnterEvent,
 } from "../../events/events";
 import { map } from "lit/directives/map.js";
 import { until } from "lit/directives/until.js";
@@ -956,13 +957,14 @@ export class ProjectListing extends LitElement {
                       this.#availableConnections!.run();
                     }
 
+                    const gdriveConnectionID = "google-drive-limited";
                     return this.#availableConnections!.render({
                       pending: () => html`<p>Loading connections ...</p>`,
                       error: () => html`<p>Error loading connections</p>`,
                       complete: (result: Connection[]) => {
                         const gdrive = (result as Array<Object>).find(
                           (connection: any) =>
-                            connection.id === "google-drive-limited"
+                            connection.id === gdriveConnectionID
                         );
                         if (gdrive) {
                           return html`<div>
@@ -973,6 +975,13 @@ export class ProjectListing extends LitElement {
                             </p>
                             <bb-connection-signin
                               .connection=${gdrive}
+                                        @bbtokengranted=${({
+                              token,
+                              expiresIn,
+                            }: HTMLElementEventMap["bbtokengranted"]) => {
+                            this.dispatchEvent(new InputEnterEvent(this.id, {clientId: gdriveConnectionID, secret: token, expiresIn}, false));
+                            
+                            }}
                             ></bb-connection-signin>
                           </div>`;
                         }
