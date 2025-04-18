@@ -202,6 +202,10 @@ class BlobDataStore implements DataStore {
     return toStoredData(result, this.#serverOrigin, contentType);
   }
 
+  toBlobUrl(blobId: string): string {
+    return `${this.#serverOrigin}/board/blobs/${blobId}`;
+  }
+
   storeData(
     _key: string,
     _value: object | null,
