@@ -114,6 +114,7 @@ export class ProjectListing extends LitElement {
               var(--bb-title-line-height-xx-large) var(--bb-font-family);
             padding: 0;
             margin: 76px 0 0 0;
+            text-align: center;
 
             & .gradient {
               background: linear-gradient(
