@@ -761,14 +761,14 @@ export const styles = css`
   }
 
   #board-chat-container,
-  #board-console-container {
+  #board-activity-container {
     height: 100%;
     overflow: auto;
     position: relative;
     scroll-padding-bottom: 60px;
   }
 
-  #board-console-container {
+  #board-activity-container {
     padding: var(--bb-grid-size-2);
   }
 
@@ -822,7 +822,7 @@ export const styles = css`
 
   bb-capabilities-selector,
   bb-revision-history-panel,
-  #board-console-container,
+  #board-activity-container,
   bb-app-preview,
   bb-entity-editor {
     display: none;

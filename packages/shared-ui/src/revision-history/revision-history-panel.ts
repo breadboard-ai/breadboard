@@ -40,17 +40,6 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
           var(--bb-font-family);
         height: 100%;
         overflow-y: auto;
-        padding: 16px;
-      }
-
-      #wip-msg {
-        text-align: center;
-        background: #ffb61554;
-        border-radius: 12px;
-        padding: 12px 16px;
-        margin: 0;
-        font-size: 14px;
-        line-height: 1.5em;
       }
 
       #no-history-msg {
@@ -168,9 +157,6 @@ export class RevisionHistoryPanel extends SignalWatcher(LitElement) {
       );
     }
     return html`
-      <p id="wip-msg">
-        Revision history is a work in progress with known bugs.
-      </p>
       <ul id="revisions">
         ${listItems}
       </ul>

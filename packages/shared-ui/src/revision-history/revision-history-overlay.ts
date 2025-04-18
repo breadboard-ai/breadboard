@@ -34,15 +34,14 @@ export class RevisionHistoryOverlay extends SignalWatcher(LitElement) {
           "opsz" 48;
       }
       #banner {
-        padding: 10px;
+        width: 100%;
+        padding: var(--bb-grid-size-3);
         font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
           var(--bb-font-family);
         display: inline-flex;
         flex-direction: column;
         cursor: initial;
         background: var(--bb-neutral-0);
-        margin: 20px;
-        border-radius: 12px;
         box-shadow: 0 2px 5px 0px rgb(0 0 0 / 10%);
         transition: box-shadow 1s ease-out;
       }
@@ -75,8 +74,12 @@ export class RevisionHistoryOverlay extends SignalWatcher(LitElement) {
         padding: 10px;
         border: none;
         cursor: pointer;
+        transition: color 100ms;
         & > .g-icon {
           font-size: 24px;
+        }
+        &:hover {
+          color: var(--bb-neutral-600);
         }
       }
       #restore-button {
@@ -95,7 +98,9 @@ export class RevisionHistoryOverlay extends SignalWatcher(LitElement) {
         & > .g-icon {
           margin-right: 8px;
         }
-        transition: box-shadow filter 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        transition:
+          box-shadow 0.15s,
+          filter 0.15s;
         &:hover {
           filter: brightness(105%);
           box-shadow:
