@@ -253,7 +253,7 @@ export const maybeDeflateStepResponse = async (
 export function maybeAddGcsOutputConfig(data: unknown): unknown {
   // TODO(askerryryan): Add APIs requiring GCS once working e2e.
   // Until then, this is a noop.
-  const apiRequiresGcs = ["image_generation"];
+  const apiRequiresGcs: string[] = [];
   if (data === null || typeof data !== "object" || !("body" in data)) {
     return data;
   }
