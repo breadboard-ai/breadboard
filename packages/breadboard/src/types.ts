@@ -328,6 +328,11 @@ export type NodeDescriberContext = {
    */
   graphStore?: MutableGraphStore;
   fileSystem?: FileSystem;
+  /**
+   * A hint that this describing operation is for a type, which allows the
+   * describer to avoid doing extra work handling dynamic schemas, etc.
+   */
+  asType?: boolean;
 };
 
 export type NodeDescriberWires = {

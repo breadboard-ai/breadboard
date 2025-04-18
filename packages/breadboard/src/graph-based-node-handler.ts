@@ -86,7 +86,8 @@ class GraphBasedNodeHandler implements NodeHandlerObject {
         inputs || {},
         inputSchema,
         outputSchema,
-        new CapabilitiesManagerImpl(context)
+        new CapabilitiesManagerImpl(context),
+        context.asType || false
       );
       if (!result) {
         return emptyDescriberResult();
