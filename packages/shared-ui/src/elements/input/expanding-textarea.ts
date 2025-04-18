@@ -62,7 +62,7 @@ export class ExpandingTextarea extends LitElement {
       }
       #outer-container {
         display: flex;
-        align-items: flex-end;
+        align-items: center;
         --line-height: 1lh;
       }
       #inner-container {
@@ -127,6 +127,9 @@ export class ExpandingTextarea extends LitElement {
       }
       #submit:hover {
         filter: brightness(125%);
+      }
+      ::slotted(.g-icon) {
+        font-size: 22px !important;
       }
     `,
   ];

@@ -43,7 +43,8 @@ export class FlowgenEditorInput extends LitElement {
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        width: 360px;
+        max-width: 500px;
+        margin: 0 var(--bb-grid-size-2);
 
         --color-transition: color 100ms;
         --input-color: #24369c92;
@@ -76,7 +77,7 @@ export class FlowgenEditorInput extends LitElement {
         display: flex;
         width: 100%;
         background: linear-gradient(0deg, #f4f0f3, #e8eef7);
-        border-radius: 100px;
+        border-radius: 20px;
         padding: 10px;
         transition: box-shadow 1s ease-out;
       }
@@ -97,10 +98,10 @@ export class FlowgenEditorInput extends LitElement {
         transition: var(--color-transition);
         background: #fff;
         border: none;
-        border-radius: 100px;
-        padding: 8px 16px;
+        border-radius: 12px;
+        padding: var(--bb-grid-size-3) var(--bb-grid-size-4);
         --min-lines: 1;
-        --max-lines: 3;
+        --max-lines: 4;
         font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
           var(--bb-font-family);
         line-height: 20px;
@@ -199,8 +200,9 @@ export class FlowgenEditorInput extends LitElement {
         <bb-expanding-textarea
           ${ref(this.#descriptionInput)}
           .disabled=${isGenerating}
-          .placeholder=${Strings.from("COMMAND_DESCRIBE_EDIT_FLOW")}
-          .tabCompletesPlaceholder=${false}
+          .placeholder=${this.#originalIntent ||
+          Strings.from("COMMAND_DESCRIBE_EDIT_FLOW")}
+          .tabCompletesPlaceholder=${!!this.#originalIntent}
           @change=${this.#onInputChange}
           @focus=${this.#onInputFocus}
           @blur=${this.#onInputBlur}
@@ -213,6 +215,10 @@ export class FlowgenEditorInput extends LitElement {
         </bb-expanding-textarea>
       </div>
     `;
+  }
+
+  get #originalIntent() {
+    return this.currentGraph?.metadata?.intent;
   }
 
   #onInputChange() {
