@@ -15,6 +15,7 @@ import {
   transformDataParts,
 } from "./common.js";
 import {
+  BlobDataStore,
   Chunk,
   DataInflator,
   DataPartTransformType,
@@ -85,7 +86,10 @@ export const inflateData = async (
         }
       }
     } else if (isStoredData(value)) {
-      if (value.storedData.handle.startsWith("https://")) {
+      if (
+        value.storedData.handle.startsWith("https://") ||
+        value.storedData.handle.startsWith("http://")
+      ) {
         return value;
       }
       if (inflateToFileData && store.transformer && graphUrl) {
@@ -216,6 +220,8 @@ export const remapData = async (
   return result;
 };
 
+// TODO(askerryryan): This function might now be obsolete.
+// Look at killing it.
 export const maybeDeflateStepResponse = async (
   store: DataStore,
   data: unknown
@@ -230,9 +236,10 @@ export const maybeDeflateStepResponse = async (
     const newChunks: Chunk[] = [];
     for (const chunk of output.chunks) {
       if (
-        chunk.mimetype.startsWith("audio") ||
-        chunk.mimetype.startsWith("video") ||
-        chunk.mimetype.startsWith("image")
+        !chunk.mimetype.endsWith("/storedData") &&
+        (chunk.mimetype.startsWith("audio") ||
+          chunk.mimetype.startsWith("video") ||
+          chunk.mimetype.startsWith("image"))
       ) {
         const part = await store.store(await asBlob(chunk));
         newChunks.push({
@@ -250,10 +257,44 @@ export const maybeDeflateStepResponse = async (
   return result;
 };
 
+export const blobifyStepOutputs = async (store: DataStore, data: unknown) => {
+  const result = data;
+  const executionOutputs = maybeGetExecutionOutputs(data);
+  if (!executionOutputs) {
+    return result;
+  }
+  for (const key of Object.keys(executionOutputs)) {
+    const blobStore = store as BlobDataStore;
+    const output = executionOutputs[key] as StepContent;
+    const newChunks: Chunk[] = [];
+    for (const chunk of output.chunks) {
+      if (chunk.mimetype.startsWith("text/gcs-path")) {
+        // The executeStep API returns a mime like: text/gcs-path/real/mimetype.
+        const mimetype = chunk.mimetype.replace("text/gcs-path/", "");
+        // The executeStep API returns a path like: bucketname/filename.
+        const blobId = atob(chunk.data).split("/").slice(-1)[0];
+        const blobUrl = blobStore.toBlobUrl(blobId);
+        newChunks.push({
+          mimetype: mimetype + "/storedData",
+          data: blobUrl,
+        } as Chunk);
+      } else {
+        newChunks.push(chunk);
+      }
+    }
+    executionOutputs[key] = {
+      chunks: newChunks,
+    };
+  }
+  return result;
+};
+
 export function maybeAddGcsOutputConfig(data: unknown): unknown {
-  // TODO(askerryryan): Add APIs requiring GCS once working e2e.
-  // Until then, this is a noop.
-  const apiRequiresGcs: string[] = [];
+  const apiRequiresGcs: string[] = [
+    "image_generation",
+    "tts",
+    "generate_video",
+  ];
   if (data === null || typeof data !== "object" || !("body" in data)) {
     return data;
   }
@@ -269,11 +310,8 @@ export function maybeAddGcsOutputConfig(data: unknown): unknown {
   // TODO(askerryryan): Stop hard-coding this and derive programmatically.
   const gcsOutputConfig = {
     bucket_name: "bb-blob-store",
-    folder_path: "generated_content",
-    project_name: "appcatalyst-449123",
   };
   body["output_gcs_config"] = gcsOutputConfig;
-  console.log("Set GCS output config");
-  console.log(gcsOutputConfig);
+  console.log("Set GCS output config: ", gcsOutputConfig);
   return data;
 }

@@ -28,6 +28,7 @@ import {
 import { createTunnelKit, readConfig } from "./tunnel.js";
 import { timestamp } from "../timestamp.js";
 import {
+  blobifyStepOutputs,
   inflateData,
   maybeAddGcsOutputConfig,
   maybeDeflateStepResponse,
@@ -98,6 +99,7 @@ export class ProxyServer {
       }
 
       const [, { node, inputs }] = request.data;
+      const isExecuteStep = isExecuteStepFetch(node, inputs);
       const handlerConfig = getHandlerConfig(node.type, config.proxy);
 
       const handler = handlerConfig ? handlers[node.type] : undefined;
@@ -125,12 +127,17 @@ export class ProxyServer {
           ]);
           continue;
         }
-        const outputs = store
+        let outputs = store
           ? ((await inflateData(
               store,
               makeSerializable(result)
             )) as OutputValues)
           : result;
+        if (isExecuteStep) {
+          outputs = store
+            ? ((await blobifyStepOutputs(store, outputs)) as OutputValues)
+            : outputs;
+        }
         request.reply(["proxy", { outputs }]);
       } catch (e) {
         request.reply([

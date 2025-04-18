@@ -80,6 +80,9 @@ export type DataStore = DataInflator & {
   ): Promise<StoreDataResult>;
   retrieveData(key: string): Promise<RetrieveDataResult>;
 };
+export type BlobDataStore = DataStore & {
+  toBlobUrl(blobId: string): string;
+};
 
 export type StateStore = {
   load(key?: string): Promise<ReanimationState | undefined>;
