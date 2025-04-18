@@ -21,6 +21,7 @@ type Inputs = {
 
 type DescribeInputs = {
   inputs: Inputs;
+  asType?: boolean;
 };
 
 const MODES = [
@@ -79,16 +80,16 @@ const portMapForward = new Map<ModeId, Map<string, string>>([
       [LIST_PORT, "p-list"],
     ]),
   ],
-  [MODES[1].id, new Map([[PROMPT_PORT, "instruction"]])],
-  [MODES[2].id, new Map([[PROMPT_PORT, "text"]])],
-  [MODES[3].id, new Map([[PROMPT_PORT, "instruction"]])],
   [
-    MODES[4].id,
+    MODES[1].id,
     new Map([
       [PROMPT_PORT, "plan"],
       [LIST_PORT, "z-list"],
     ]),
   ],
+  [MODES[2].id, new Map([[PROMPT_PORT, "instruction"]])],
+  [MODES[3].id, new Map([[PROMPT_PORT, "text"]])],
+  [MODES[4].id, new Map([[PROMPT_PORT, "instruction"]])],
 ]);
 
 const portMapReverse = new Map(
@@ -139,9 +140,29 @@ async function invoke({ "generation-mode": mode, ...rest }: Inputs) {
 
 async function describe({
   inputs: { "generation-mode": mode, ...rest },
+  asType,
 }: DescribeInputs) {
-  const { url, id } = getMode(mode);
+  const metadata = {
+    title: "Generate",
+    description: "Uses Gemini to generate content and call tools",
+    metadata: {
+      icon: "generative",
+      tags: ["quick-access", "generative", "generate"],
+      order: 1,
+    },
+  };
 
+  // When asked for to be described as type, skip trying to
+  // get the detailed schema and just return metadata.
+  if (asType) {
+    return {
+      ...metadata,
+      inputSchema: {},
+      outputSchema: {},
+    };
+  }
+
+  const { url, id } = getMode(mode);
   const describing = await describeGraph({ url, inputs: rest });
   let modeSchema: Record<string, Schema> = {};
   if (ok(describing)) {
