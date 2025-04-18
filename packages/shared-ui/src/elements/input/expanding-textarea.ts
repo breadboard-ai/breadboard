@@ -10,6 +10,13 @@ import { createRef, ref } from "lit/directives/ref.js";
 import { icons } from "../../styles/icons.js";
 
 /**
+ * TODO(aomarks) Replace with some proper HTML, but that requires switching to a
+ * contenteditable approach. Since we need chips too, let's actually embed (or
+ * merge with) bb-text-editor, which already does contenteditable very well.
+ */
+const TEMPORARY_TAB_ICON_TEXT = " <Tab>";
+
+/**
  * A text input which grows to fit its content.
  *
  * Use the "submit" slot to set the config icon, e.g.:
@@ -148,7 +155,9 @@ export class ExpandingTextarea extends LitElement {
             ${ref(this.#textarea)}
             part="textarea"
             .value=${this.value}
-            .placeholder=${this.placeholder}
+            .placeholder=${this.tabCompletesPlaceholder
+              ? this.placeholder + TEMPORARY_TAB_ICON_TEXT
+              : this.placeholder}
             .disabled=${this.disabled}
             @input=${this.#onInput}
             @keydown=${this.#onKeydown}
@@ -215,7 +224,11 @@ export class ExpandingTextarea extends LitElement {
     if (!textarea || !measure) {
       return;
     }
-    measure.textContent = textarea.value || this.placeholder;
+    measure.textContent =
+      textarea.value ||
+      (this.tabCompletesPlaceholder
+        ? this.placeholder + TEMPORARY_TAB_ICON_TEXT
+        : this.placeholder);
     // Instead of directly matching the height, round to the nearest number of
     // lines, and then multiply by line height. This ensures our height is
     // always a multiple of line height, and accounts for tiny rendering
