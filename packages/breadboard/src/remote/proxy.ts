@@ -29,6 +29,7 @@ import { createTunnelKit, readConfig } from "./tunnel.js";
 import { timestamp } from "../timestamp.js";
 import {
   inflateData,
+  maybeAddGcsOutputConfig,
   maybeDeflateStepResponse,
 } from "../data/inflate-deflate.js";
 
@@ -181,7 +182,11 @@ export class ProxyClient {
           inflateToFileData
         )) as InputValues)
       : inputs;
-
+    if (isExecuteStep) {
+      inputs = store
+        ? (maybeAddGcsOutputConfig(inputs) as InputValues)
+        : inputs;
+    }
     writer.write(["proxy", { node, inputs }]);
     writer.close();
 
