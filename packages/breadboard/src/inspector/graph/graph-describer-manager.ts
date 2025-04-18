@@ -13,8 +13,8 @@ import {
 import { GraphDescriber, InspectableNode, MutableGraph } from "../types.js";
 import { GraphDescriptorHandle } from "./graph-descriptor-handle.js";
 import {
+  NodeDescriberContext,
   NodeDescriberResult,
-  NodeHandlerContext,
   Schema,
 } from "../../types.js";
 import { describeInput, describeOutput } from "./schemas.js";
@@ -167,7 +167,7 @@ class GraphDescriberManager implements GraphDescriber {
 
   async #tryDescribingWithCustomDescriber(
     inputs: InputValues,
-    context?: NodeHandlerContext
+    context?: NodeDescriberContext
   ): Promise<Outcome<NodeDescriberResult>> {
     const customDescriber =
       this.handle.graph().metadata?.describer ||
@@ -194,7 +194,8 @@ class GraphDescriberManager implements GraphDescriber {
             inputs,
             inputSchema,
             outputSchema,
-            new CapabilitiesManagerImpl(context)
+            new CapabilitiesManagerImpl(context),
+            context?.asType || false
           );
         } else {
           result = await invokeDescriber(
@@ -204,7 +205,8 @@ class GraphDescriberManager implements GraphDescriber {
             inputs,
             inputSchema,
             outputSchema,
-            new CapabilitiesManagerImpl(context)
+            new CapabilitiesManagerImpl(context),
+            context?.asType || false
           );
         }
         if (result) {
@@ -267,7 +269,7 @@ class GraphDescriberManager implements GraphDescriber {
     inputs?: InputValues,
     _inputSchema?: Schema,
     _outputSchema?: Schema,
-    context?: NodeHandlerContext
+    context?: NodeDescriberContext
   ): Promise<NodeDescriberResult> {
     const result = await this.#tryDescribingWithCustomDescriber(
       inputs || {},
@@ -316,7 +318,7 @@ class ModuleDescriber implements GraphDescriber {
     inputs?: InputValues,
     inputSchema?: Schema,
     outputSchema?: Schema,
-    context?: NodeHandlerContext
+    context?: NodeDescriberContext
   ): Promise<NodeDescriberResult> {
     const result = await invokeDescriber(
       this.moduleId,
@@ -325,7 +327,8 @@ class ModuleDescriber implements GraphDescriber {
       inputs || {},
       inputSchema,
       outputSchema,
-      new CapabilitiesManagerImpl(context)
+      new CapabilitiesManagerImpl(context),
+      context?.asType || false
     );
     if (!result) return emptyDescriberResult();
 

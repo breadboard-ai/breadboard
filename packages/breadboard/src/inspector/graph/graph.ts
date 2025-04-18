@@ -16,8 +16,8 @@ import { Outcome } from "../../data/types.js";
 import {
   Edge,
   GraphDescriptor,
+  NodeDescriberContext,
   NodeDescriberResult,
-  NodeHandlerContext,
   NodeIdentifier,
   NodeTypeIdentifier,
 } from "../../types.js";
@@ -122,7 +122,7 @@ class Graph implements InspectableGraph {
 
   async describe(
     inputs?: InputValues,
-    context?: NodeHandlerContext
+    context?: NodeDescriberContext
   ): Promise<NodeDescriberResult> {
     const manager = GraphDescriberManager.create(this.#graphId, this.#mutable);
     if (!ok(manager)) {

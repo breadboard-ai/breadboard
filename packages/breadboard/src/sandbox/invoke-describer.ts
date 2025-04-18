@@ -43,7 +43,8 @@ async function invokeDescriber(
   inputs: InputValues,
   inputSchema?: Schema,
   outputSchema?: Schema,
-  capabilities?: CapabilitiesManager
+  capabilities?: CapabilitiesManager,
+  asType?: boolean
 ): Promise<NodeDescriberResult | undefined> {
   const declarations = graph.modules;
   if (!declarations) {
@@ -63,6 +64,7 @@ async function invokeDescriber(
       inputs,
       inputSchema,
       outputSchema,
+      asType,
     })) as NodeDescriberResult;
     const moduleData = declarations[moduleId]!;
     const metadata: Omit<NodeDescriberResult, "inputSchema" | "outputSchema"> =
@@ -95,7 +97,8 @@ async function invokeMainDescriber(
   inputs: InputValues,
   inputSchema?: Schema,
   outputSchema?: Schema,
-  capabilities?: CapabilitiesManager
+  capabilities?: CapabilitiesManager,
+  asType?: boolean
 ): Promise<NodeDescriberResult | undefined | false> {
   const { main, modules: declarations } = graph;
   if (!declarations || !main) {
@@ -115,6 +118,7 @@ async function invokeMainDescriber(
       inputs,
       inputSchema,
       outputSchema,
+      asType,
     })) as NodeDescriberResult;
     const metadata: Omit<NodeDescriberResult, "inputSchema" | "outputSchema"> =
       filterEmptyValues({
