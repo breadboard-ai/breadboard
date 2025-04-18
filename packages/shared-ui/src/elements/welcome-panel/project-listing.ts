@@ -971,7 +971,7 @@ export class ProjectListing extends LitElement {
                             <p class="loading-message">
                               You haven't yet granted us Google Drive
                               Permissions, please sign in into Google Drive in
-                              order to be able to create and save your Opals.
+                              order to be able to create and save your Flows.
                             </p>
                             <bb-connection-signin
                               .connection=${gdrive}
