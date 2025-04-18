@@ -71,8 +71,8 @@ export class ExpandingTextarea extends LitElement {
         font-size: inherit;
         font-weight: inherit;
         font-family: inherit;
-        word-break: break-all;
-        white-space: pre-wrap;
+        word-break: normal;
+        white-space: normal;
       }
       textarea {
         flex: 1;
@@ -95,8 +95,12 @@ export class ExpandingTextarea extends LitElement {
         pointer-events: none;
         position: absolute;
         user-select: none;
-        top: 0;
-        left: 0;
+        top: 2px;
+        left: 2px;
+        border: none;
+        /* Not sure why, but we need this small adjustment to make the #measure
+           div consistently align with the textarea. */
+        margin-right: 2px;
       }
       #measure::after {
         /* Unlike our <textarea>, our measurement <div> won't claim height for
