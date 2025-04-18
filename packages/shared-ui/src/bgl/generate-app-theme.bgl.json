@@ -5,7 +5,7 @@
   "nodes": [
     {
       "id": "a2-632a79e8",
-      "type": "https://breadboard.live/boards/@shared/a2.bgl.json#module:image-generator",
+      "type": "embed://a2/a2.bgl.json#module:image-generator",
       "metadata": {
         "title": "Icon",
         "visual": {
@@ -14,7 +14,8 @@
           "collapsed": "expanded",
           "outputHeight": 248
         },
-        "logLevel": "info"
+        "logLevel": "info",
+        "userModified": false
       },
       "configuration": {
         "instruction": {
@@ -24,12 +25,14 @@
               "text": "## Context\nYou are creating an app splash screen for a mobile web app. You should use the context to understand what the web is called as well as any other requirements for the splash screen.\n\n## Style\nYou should create something unique and interesting, avoiding cliches and obvious motifs. You should use relatively few colors. The background must be a solid color without any adornments. You should also use the context to understand if there are additional instructions on what the style and contents should be. Under no circumstances should you ever deviate from the colors provided or use text in the splash screen.\n\n## Format\nThe image absolutely must be a portrait image in a 9/16 ratio, suitable for use on a mobile device's application launch screen. The contents of the image should be centered, leaving plenty of room around it for any background color. The image must be very high resolution and clear."
             }
           ]
-        }
+        },
+        "p-aspect-ratio": "9:16",
+        "p-disable-prompt-rewrite": false
       }
     },
     {
       "id": "a2-fce4f8de",
-      "type": "https://breadboard.live/boards/@shared/a2.bgl.json#module:combine-outputs",
+      "type": "embed://a2/a2.bgl.json#module:combine-outputs",
       "metadata": {
         "title": "Combine Outputs",
         "visual": {
@@ -53,7 +56,7 @@
     },
     {
       "id": "a2-5f1e8d70",
-      "type": "https://breadboard.live/boards/@shared/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+      "type": "embed://a2/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
         "title": "CSS Colors",
         "visual": {
@@ -96,7 +99,9 @@
               "items": {
                 "type": "object",
                 "examples": [],
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]",
               "description": ""
@@ -134,7 +139,6 @@
       "in": "context"
     }
   ],
-  "url": "idb://board-server-local/generate-app-theme.bgl.json",
   "modules": {
     "My-Item": {
       "code": "/**\n * @fileoverview Add a description for your module here.\n */\nexport { invoke as default, describe };\nasync function invoke({ context }) {\n    return { context };\n}\nasync function describe() {\n    return {\n        inputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context in\",\n                },\n            },\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context out\",\n                },\n            },\n        },\n    };\n}\n",
@@ -150,8 +154,31 @@
     }
   },
   "metadata": {
-    "visual": {},
-    "tags": []
+    "visual": {
+      "presentation": {
+        "themes": {
+          "6f49df22-b8c8-404e-be92-55b08946bf11": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "6f49df22-b8c8-404e-be92-55b08946bf11"
+      }
+    },
+    "tags": [],
+    "parameters": {}
   },
   "assets": {
     "@@thumbnail": {
