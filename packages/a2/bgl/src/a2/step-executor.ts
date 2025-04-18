@@ -127,7 +127,7 @@ async function executeStep(
   let $error: string = "Unknown error";
   if (!ok(fetchResult)) {
     const { status, $error: errObject } = fetchResult as FetchErrorResponse;
-    console.warn($error);
+    console.warn("Error response", fetchResult);
     if (!status) {
       // This is not an error response, presume fatal error.
       return { $error };

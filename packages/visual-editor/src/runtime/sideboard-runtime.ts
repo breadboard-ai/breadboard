@@ -99,6 +99,7 @@ class SideboardRuntimeImpl
       servers,
       undefined
     );
+    this.#dataStore.createGroup("sideboard");
     this.#fileSystem = createFileSystem({
       env: [],
       local: createFileSystemBackend(createEphemeralBlobStore()),
