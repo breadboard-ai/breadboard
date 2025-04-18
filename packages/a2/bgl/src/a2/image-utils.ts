@@ -7,6 +7,7 @@ import {
   ok,
   toLLMContent,
   toLLMContentInline,
+  toLLMContentStored,
   toInlineData,
   toText,
   addUserTurn,
@@ -94,7 +95,12 @@ async function callImageEdit(
   if (!outContent) {
     return [toLLMContent("Error: No image returned from backend")];
   }
-  return outContent.chunks.map((c) => toLLMContentInline(c.mimetype, c.data));
+  return outContent.chunks.map((c) => {
+    if (c.mimetype.endsWith("/storedData")) {
+      return toLLMContentStored(c.mimetype.replace("/storedData", ""), c.data);
+    }
+    return toLLMContentInline(c.mimetype, c.data);
+  });
 }
 
 async function callImageGen(
@@ -141,7 +147,12 @@ async function callImageGen(
   if (!outContent) {
     return [toLLMContent("Error: No image returned from backend")];
   }
-  return outContent.chunks.map((c) => toLLMContentInline(c.mimetype, c.data));
+  return outContent.chunks.map((c) => {
+    if (c.mimetype.endsWith("/storedData")) {
+      return toLLMContentStored(c.mimetype.replace("/storedData", ""), c.data);
+    }
+    return toLLMContentInline(c.mimetype, c.data);
+  });
 }
 
 function promptExpander(

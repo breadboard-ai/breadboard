@@ -44,6 +44,14 @@ export type DataInflator = {
   transformer?(graphUrl: URL): DataPartTransformer | undefined;
 };
 
+export type Chunk = {
+  mimetype: string;
+  data: string;
+};
+export type StepContent = {
+  chunks: Chunk[];
+};
+
 export type DataStore = DataInflator & {
   createGroup(groupId: string): void;
   drop(): Promise<void>;
