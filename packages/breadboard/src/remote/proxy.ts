@@ -27,7 +27,10 @@ import {
 } from "./types.js";
 import { createTunnelKit, readConfig } from "./tunnel.js";
 import { timestamp } from "../timestamp.js";
-import { inflateData } from "../data/inflate-deflate.js";
+import {
+  inflateData,
+  maybeDeflateStepResponse,
+} from "../data/inflate-deflate.js";
 
 type ProxyServerTransport = ServerTransport<
   AnyProxyRequestMessage,
@@ -167,6 +170,7 @@ export class ProxyClient {
     const reader = stream.readableResponses.getReader();
 
     const inflateToFileData = isGeminiApiFetch(node, inputs);
+    const isExecuteStep = isExecuteStepFetch(node, inputs);
 
     const store = context.store;
     inputs = store
@@ -188,7 +192,15 @@ export class ProxyClient {
     const [type] = result.value;
     if (type === "proxy") {
       const [, { outputs }] = result.value;
-      return outputs;
+      if (isExecuteStep) {
+        // If the response is a ExecuteStep with beefy data, we need to deflate it.
+        const deflated = store
+          ? maybeDeflateStepResponse(store, outputs)
+          : outputs;
+        return deflated as OutputValues;
+      } else {
+        return outputs;
+      }
     } else if (type === "error") {
       const [, { error }] = result.value;
       throw new Error(JSON.stringify(error));
@@ -256,5 +268,20 @@ function isGeminiApiFetch(node: NodeDescriptor, inputs: InputValues): boolean {
     !!inputs.url &&
     typeof inputs.url === "string" &&
     inputs.url.startsWith("https://generativelanguage.googleapis.com")
+  );
+}
+
+function isExecuteStepFetch(
+  node: NodeDescriptor,
+  inputs: InputValues
+): boolean {
+  if (node.type !== "fetch") return false;
+  return (
+    "url" in inputs &&
+    !!inputs.url &&
+    typeof inputs.url === "string" &&
+    inputs.url.startsWith(
+      "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeStep"
+    )
   );
 }

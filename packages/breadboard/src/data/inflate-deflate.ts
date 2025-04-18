@@ -11,14 +11,17 @@ import {
   isFileDataCapabilityPart,
   isInlineData,
   isStoredData,
+  maybeGetExecutionOutputs,
   transformDataParts,
 } from "./common.js";
 import {
+  Chunk,
   DataInflator,
   DataPartTransformType,
   DataStore,
   Outcome,
   SerializedDataStoreGroup,
+  StepContent,
 } from "./types.js";
 import { ok } from "./file-system/utils.js";
 
@@ -210,5 +213,39 @@ export const remapData = async (
   };
 
   const result = await descender(o);
+  return result;
+};
+
+export const maybeDeflateStepResponse = async (
+  store: DataStore,
+  data: unknown
+) => {
+  const result = data;
+  const executionOutputs = maybeGetExecutionOutputs(data);
+  if (!executionOutputs) {
+    return result;
+  }
+  for (const key of Object.keys(executionOutputs)) {
+    const output = executionOutputs[key] as StepContent;
+    const newChunks: Chunk[] = [];
+    for (const chunk of output.chunks) {
+      if (
+        chunk.mimetype.startsWith("audio") ||
+        chunk.mimetype.startsWith("video") ||
+        chunk.mimetype.startsWith("image")
+      ) {
+        const part = await store.store(await asBlob(chunk));
+        newChunks.push({
+          mimetype: chunk.mimetype + "/storedData",
+          data: part.storedData.handle,
+        } as Chunk);
+      } else {
+        newChunks.push(chunk);
+      }
+    }
+    executionOutputs[key] = {
+      chunks: newChunks,
+    };
+  }
   return result;
 };

@@ -38,7 +38,6 @@ import {
 const ASPECT_RATIOS = ["9:16", "16:9"];
 const OUTPUT_NAME = "generated_video";
 const GCS_PROJECT = "appcatalyst-449123";
-const STORAGE_PREFIX = "https://storage.mtls.cloud.google.com";
 const STORE_IN_GCS = false;
 
 type VideoGeneratorInputs = {
@@ -131,12 +130,14 @@ async function callVideoGen(
   for (let value of Object.values(response.executionOutputs)) {
     const mimetype = value.chunks[0].mimetype;
     if (mimetype.startsWith("video")) {
-      returnVal = toLLMContentInline(mimetype, value.chunks[0].data);
-    } else if (mimetype == "text/gcs-path") {
-      const returnedHandle = atob(value.chunks[0].data);
-      console.log("Payload written to ", returnedHandle);
-      const gcsUrl = returnedHandle.replace(GCS_PROJECT, STORAGE_PREFIX);
-      returnVal = toLLMContentStored(mimetype, gcsUrl);
+      if (mimetype.endsWith("/storedData")) {
+        returnVal = toLLMContentStored(
+          mimetype.replace("/storedData", ""),
+          value.chunks[0].data
+        );
+      } else {
+        returnVal = toLLMContentInline(mimetype, value.chunks[0].data);
+      }
     }
   }
   if (!returnVal) {
