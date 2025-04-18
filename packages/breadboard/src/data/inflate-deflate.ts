@@ -249,3 +249,31 @@ export const maybeDeflateStepResponse = async (
   }
   return result;
 };
+
+export function maybeAddGcsOutputConfig(data: unknown): unknown {
+  // TODO(askerryryan): Add APIs requiring GCS once working e2e.
+  // Until then, this is a noop.
+  const apiRequiresGcs = ["image_generation"];
+  if (data === null || typeof data !== "object" || !("body" in data)) {
+    return data;
+  }
+  const body = data.body as Record<string, unknown>;
+  if (body === null || typeof body !== "object" || !("planStep" in body)) {
+    return data;
+  }
+  const planStep = body.planStep as Record<string, unknown>;
+  const modelApi = planStep["modelApi"] as string;
+  if (!apiRequiresGcs.includes(modelApi)) {
+    return data;
+  }
+  // TODO(askerryryan): Stop hard-coding this and derive programmatically.
+  const gcsOutputConfig = {
+    bucket_name: "bb-blob-store",
+    folder_path: "generated_content",
+    project_name: "appcatalyst-449123",
+  };
+  body["output_gcs_config"] = gcsOutputConfig;
+  console.log("Set GCS output config");
+  console.log(gcsOutputConfig);
+  return data;
+}
