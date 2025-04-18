@@ -517,6 +517,13 @@
 					"$ref": "#/definitions/Record%3Cstring%2CParameterMetadata%3E",
 					"description": "Provides a way to store metadata about parameters See https://github.com/breadboard-ai/breadboard/wiki/Parameters-Design"
 				},
+				"revision_intents": {
+					"description": "Followups to the original intent.",
+					"items": {
+						"type": "string"
+					},
+					"type": "array"
+				},
 				"tags": {
 					"description": "Tags associated with the graph.",
 					"items": {

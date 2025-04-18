@@ -369,6 +369,10 @@ export type GraphMetadata = {
    */
   intent?: string;
   /**
+   * Followups to the original intent.
+   */
+  revision_intents?: string[];
+  /**
    * The documentation for the graph, expressed as a URL and optional description.
    */
   help?: {

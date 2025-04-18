@@ -58,8 +58,8 @@ import { classMap } from "lit/directives/class-map.js";
 import { Sandbox } from "@breadboard-ai/jsandbox";
 import { ChatController } from "../../state/chat-controller.js";
 import { Project } from "../../state/types.js";
-import "../../revision-history/revision-history-panel.js";
-import "../../revision-history/revision-history-overlay.js";
+import "../../edit-history/edit-history-panel.js";
+import "../../edit-history/edit-history-overlay.js";
 import {
   createEmptyGraphSelectionState,
   createEmptyWorkspaceSelectionState,
@@ -135,7 +135,7 @@ export class UI extends LitElement {
 
   @property()
   set sideNavItem(
-    item: "console" | "capabilities" | "revision-history" | "editor"
+    item: "console" | "capabilities" | "edit-history" | "editor"
   ) {
     if (item === this.#sideNavItem) {
       return;
@@ -208,7 +208,7 @@ export class UI extends LitElement {
   accessor autoFocusEditor = false;
 
   #autoFocusEditorOnRender = false;
-  #sideNavItem: "console" | "capabilities" | "revision-history" | "editor" =
+  #sideNavItem: "console" | "capabilities" | "edit-history" | "editor" =
     "editor";
   #moduleEditorRef: Ref<ModuleEditor> = createRef();
 
@@ -656,8 +656,8 @@ export class UI extends LitElement {
         }}
       >
       <div id="graph-container" slot="slot-0">
-        <bb-revision-history-overlay .history=${this.history}>
-        </bb-revision-history-overlay>
+        <bb-edit-history-overlay .history=${this.history}>
+        </bb-edit-history-overlay>
         ${graphEditor}
         ${themeEditor}
       </div>
