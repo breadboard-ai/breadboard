@@ -40,6 +40,7 @@ export class ExpandingTextarea extends LitElement {
 
   #measure = createRef<HTMLElement>();
   #textarea = createRef<HTMLTextAreaElement>();
+  #resizeObserver = new ResizeObserver(() => this.#recomputeHeight());
 
   static override styles = [
     icons,
@@ -118,7 +119,17 @@ export class ExpandingTextarea extends LitElement {
     `,
   ];
 
-  updated(changes: PropertyValues<this>) {
+  override connectedCallback() {
+    super.connectedCallback();
+    this.#resizeObserver.observe(this);
+  }
+
+  override disconnectedCallback() {
+    super.disconnectedCallback();
+    this.#resizeObserver.disconnect();
+  }
+
+  override updated(changes: PropertyValues<this>) {
     if (changes.has("value")) {
       this.updateComplete.then(() => this.#recomputeHeight());
     }
