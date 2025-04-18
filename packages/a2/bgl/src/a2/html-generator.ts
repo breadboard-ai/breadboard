@@ -58,6 +58,17 @@ async function callGenWebpage(
             },
           ],
         };
+      } else if ("storedData" in part) {
+        const key = `media_${i}`;
+        inputParameters.push(key);
+        executionInputs[key] = {
+          chunks: [
+            {
+              mimetype: "url/" + part.storedData.mimeType,
+              data: btoa(unescape(encodeURIComponent(part.storedData.handle))),
+            },
+          ],
+        };
       } else {
         console.error("Skipping unexpected content part");
       }
