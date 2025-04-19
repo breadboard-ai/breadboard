@@ -119,36 +119,6 @@
         }
       }
     },
-    "connectors/e7676b81-3d64-4549-bef0-ce98123c0ef5": {
-      "data": [
-        {
-          "parts": [
-            {
-              "json": {
-                "url": "embed://a2/google-drive.bgl.json",
-                "configuration": {
-                  "file": {
-                    "id": "19ZCGTQIo4ab6U9uD0OLjOZKAYb1MeoKLivlTWnxcv8M",
-                    "preview": "Untitled Document",
-                    "mimeType": "application/vnd.google-apps.document",
-                    "connectionName": "$sign-in"
-                  }
-                }
-              }
-            }
-          ]
-        }
-      ],
-      "metadata": {
-        "title": "Doc to Save",
-        "type": "connector",
-        "description": "",
-        "visual": {
-          "x": 180,
-          "y": -200
-        }
-      }
-    },
     "connectors/f7ee2d90-818a-4a1f-978e-3935b354d38a": {
       "data": [
         {

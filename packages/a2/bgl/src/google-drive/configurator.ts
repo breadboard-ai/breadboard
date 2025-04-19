@@ -36,7 +36,12 @@ const { invoke, describe } = createConfigurator<
   },
   preview: async ({ configuration }) => {
     const { id, mimeType } = configuration.file || {};
-    if (!id || !mimeType) return [];
+    if (!id || !mimeType)
+      return [
+        {
+          parts: [{ text: "Untitled Document" }],
+        },
+      ];
     return [{ parts: [{ fileData: { fileUri: id, mimeType } }] }];
   },
   write: async ({ id, values }) => {
