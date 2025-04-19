@@ -4,9 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { AssetPath, UUID } from "@breadboard-ai/types";
 import { err, ok, Outcome } from "@google-labs/breadboard";
-import { ConnectorConfiguration, ConnectorType } from "../connectors/types";
+import { ConnectorType } from "../connectors/types";
 import { ConnectorState, OrganizerStage, ProjectInternal } from "./types";
 import { signal } from "signal-utils";
 import { Configurator } from "../connectors/configurator";
@@ -28,27 +27,6 @@ class ConnectorStateImpl implements ConnectorState {
   }
 
   types: Map<string, ConnectorType>;
-
-  #getConnectorInstance(
-    path: AssetPath
-  ): Outcome<{ id: UUID; configuration: ConnectorConfiguration }> {
-    const id = path.split("/")[1] as UUID;
-    if (!id) return err(`Path "${path}" is not a valid connector path`);
-
-    const connector = this.#project.graphAssets.get(path);
-    if (!connector) return err(`Connector "${path}" does not exist`);
-
-    if (connector.metadata?.type !== "connector") {
-      return err(`The asset "${path}" is not of "connector" type`);
-    }
-
-    const part = connector.data.at(-1)?.parts.at(0);
-    if (!part || !("json" in part)) {
-      return err(`The connector instance "${path}" is misconfigured`);
-    }
-
-    return { configuration: part.json as ConnectorConfiguration, id };
-  }
 
   async initializeInstance(url: string | null): Promise<Outcome<void>> {
     if (!url) {

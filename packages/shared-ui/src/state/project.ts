@@ -371,6 +371,7 @@ class ReactiveProject implements ProjectInternal {
                 graphAsset,
                 this
               );
+              this.#connectorInstances.add(config.url);
             }
           }
         }
