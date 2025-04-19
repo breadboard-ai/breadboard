@@ -65,7 +65,7 @@ export class FlowGenerator {
       messages: [
         {
           mimetype: "text/plain",
-          data: btoa(intent),
+          data: btoa(unescape(encodeURIComponent(intent))),
         },
       ],
       appOptions: {
@@ -82,7 +82,13 @@ export class FlowGenerator {
     if (constraint) {
       request.messages.push({
         mimetype: "text/plain",
-        data: btoa(this.#promptForConstraint(constraint, context!.flow!)),
+        data: btoa(
+          unescape(
+            encodeURIComponent(
+              this.#promptForConstraint(constraint, context!.flow!)
+            )
+          )
+        ),
       });
     }
 
@@ -176,6 +182,8 @@ export class FlowGenerator {
           originalFlowClone,
           originalStepId
         );
+        // The error states below should no longer be possible, but we keep
+        // in the case of misbehaving backend.
         if (!originalStepClone) {
           throw new Error(
             `Error applying ${constraint.kind} constraint to flow:` +
