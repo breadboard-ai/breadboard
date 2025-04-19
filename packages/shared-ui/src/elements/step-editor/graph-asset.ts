@@ -30,7 +30,7 @@ import { toGridSize } from "./utils/to-grid-size";
 import { DragConnectorReceiver } from "../../types/types";
 import { DragConnectorStartEvent } from "../../events/events";
 import { getGlobalColor } from "../../utils/color.js";
-import { AssetPath } from "@breadboard-ai/types";
+import { AssetPath, LLMContent } from "@breadboard-ai/types";
 import { InspectableAsset, ok } from "@google-labs/breadboard";
 import { SignalWatcher } from "@lit-labs/signals";
 import { GraphAsset as GraphAssetState } from "../../state/types.js";
@@ -475,34 +475,34 @@ export class GraphAsset
           ${this.updating
             ? html`<p class="loading">Loading asset details...</p>`
             : nothing}
-          ${this.asset?.type === "connector"
-            ? this.#renderConnector()
-            : html`<bb-llm-output
-                @outputsloaded=${() => {
-                  this.updating = false;
-                }}
-                .value=${this.asset?.data.at(-1) ?? null}
-                .clamped=${false}
-                .lite=${true}
-                .showModeToggle=${false}
-                .showEntrySelector=${false}
-                .showExportControls=${false}
-                .graphUrl=${this.graphUrl}
-              ></bb-llm-output>`}
+          ${html`<bb-llm-output
+            @outputsloaded=${() => {
+              this.updating = false;
+            }}
+            .value=${this.#getPreviewValue()}
+            .clamped=${false}
+            .lite=${true}
+            .showModeToggle=${false}
+            .showEntrySelector=${false}
+            .showExportControls=${false}
+            .graphUrl=${this.graphUrl}
+          ></bb-llm-output>`}
         </div>
       </section>
 
       ${this.renderBounds()}`;
   }
 
-  #renderConnector() {
-    const view = this.state?.connector?.view;
-    if (!view || !ok(view)) return nothing;
-    this.updating = false;
-    return html`<bb-multi-output
-      .schema=${view.schema}
-      .outputs=${view.values}
-    ></bb-multi-output>`;
+  #getPreviewValue(): LLMContent | null {
+    let context: LLMContent[] | undefined;
+    if (this.asset?.type === "connector") {
+      const preview = this.state?.connector?.preview;
+      if (!preview || !ok(preview)) return null;
+      context = preview;
+    } else {
+      context = this.asset?.data;
+    }
+    return context?.at(-1) ?? null;
   }
 
   render() {

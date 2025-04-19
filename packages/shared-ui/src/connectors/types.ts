@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { JsonSerializable, UUID } from "@breadboard-ai/types";
+import { JsonSerializable, LLMContent, UUID } from "@breadboard-ai/types";
 import { Outcome, Schema } from "@google-labs/breadboard";
 
 export type ConfiguratorStage = "initialize" | "read" | "write";
@@ -29,6 +29,7 @@ export type ConnectorInstance = {
   id: UUID;
   configuration: Outcome<ConnectorConfiguration>;
   view: Outcome<ConnectorView>;
+  preview: Outcome<LLMContent[]>;
   commitEdits(values: Record<string, JsonSerializable>): Promise<Outcome<void>>;
 };
 

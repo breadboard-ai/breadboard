@@ -55,6 +55,14 @@ type ReadOutput<V extends Record<string, unknown>> = {
   values: V;
 };
 
+type PreviewInput<C extends Record<string, unknown>> = {
+  stage: "preview";
+  id: string;
+  configuration: C;
+};
+
+type PreviewOutput = LLMContent[];
+
 type WriteInput<V extends Record<string, unknown>> = {
   stage: "write";
   id: string;
@@ -68,18 +76,24 @@ type Inputs<
   V extends Record<string, unknown>,
 > = {
   context?: {
-    parts?: { json?: InitializeInput | ReadInput<C> | WriteInput<V> }[];
+    parts?: {
+      json?: InitializeInput | ReadInput<C> | PreviewInput<C> | WriteInput<V>;
+    }[];
   }[];
 };
 
 type Outputs<
   C extends Record<string, unknown>,
   V extends Record<string, unknown>,
-> = {
-  context: {
-    parts: { json: InitializeOutput<C> | ReadOutput<V> | WriteOutput }[];
-  }[];
-};
+> =
+  | {
+      context: {
+        parts: { json: InitializeOutput<C> | ReadOutput<V> | WriteOutput }[];
+      }[];
+    }
+  | {
+      context: PreviewOutput;
+    };
 
 function cx<
   C extends Record<string, unknown>,
@@ -96,6 +110,7 @@ export type Configurator<
   initialize: (input: InitializeInput) => Promise<Outcome<InitializeOutput<C>>>;
   read?: (input: ReadInput<C>) => Promise<Outcome<ReadOutput<V>>>;
   write?: (input: WriteInput<V>) => Promise<Outcome<WriteOutput>>;
+  preview?: (input: PreviewInput<C>) => Promise<Outcome<PreviewOutput>>;
 };
 
 export type ToolHandler<
@@ -214,6 +229,12 @@ function createConfiguratorInvoke<
       }
       if (!ok(reading)) return reading;
       return cx(reading);
+    } else if (inputs.stage === "preview") {
+      const previewing = await configurator.preview?.(inputs);
+      if (!previewing || !ok(previewing)) {
+        return { context: [{ parts: [{ text: "" }] }] };
+      }
+      return { context: previewing };
     } else if (inputs.stage === "write") {
       const writing = await configurator.write?.(inputs);
       if (!writing) return cx({});

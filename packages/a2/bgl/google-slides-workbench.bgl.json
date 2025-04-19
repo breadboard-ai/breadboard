@@ -44,7 +44,7 @@
           "role": "user",
           "parts": [
             {
-              "text": "{{\"type\":\"asset\",\"path\":\"connectors/6f16787c-ae2f-45c7-8c1d-e4f36ae8e129\",\"title\":\"Macros\"}}"
+              "text": "{{\"type\":\"asset\",\"path\":\"connectors/26557812-98f1-4c9d-b6ba-3164932343bd\",\"title\":\"Memory\"}}"
             }
           ]
         },
@@ -89,29 +89,6 @@
     "parameters": {}
   },
   "assets": {
-    "connectors/26557812-98f1-4c9d-b6ba-3164932343bd": {
-      "data": [
-        {
-          "parts": [
-            {
-              "json": {
-                "url": "embed://a2/folio.bgl.json",
-                "configuration": {}
-              }
-            }
-          ]
-        }
-      ],
-      "metadata": {
-        "title": "Memory",
-        "type": "connector",
-        "description": "",
-        "visual": {
-          "x": 40,
-          "y": 300
-        }
-      }
-    },
     "connectors/6f16787c-ae2f-45c7-8c1d-e4f36ae8e129": {
       "data": [
         {
@@ -137,7 +114,7 @@
         "type": "connector",
         "description": "",
         "visual": {
-          "x": -100,
+          "x": -120,
           "y": 160
         }
       }
@@ -168,7 +145,7 @@
         "description": "",
         "visual": {
           "x": 180,
-          "y": -160
+          "y": -200
         }
       }
     },
@@ -197,8 +174,42 @@
         "type": "connector",
         "description": "",
         "visual": {
-          "x": 340,
-          "y": 160
+          "x": 400,
+          "y": 260
+        }
+      }
+    },
+    "connectors/26557812-98f1-4c9d-b6ba-3164932343bd": {
+      "data": [
+        {
+          "parts": [
+            {
+              "json": {
+                "url": "embed://a2/folio.bgl.json",
+                "configuration": {
+                  "data": [
+                    {
+                      "role": "user",
+                      "parts": [
+                        {
+                          "text": "```\nThe spreadsheet appears to be a header file or a documentation page for a C++ library or framework, likely related to web development. It defines various macros, data structures, and function declarations used within the framework, related to memory management, assertions, string conversion, object creation, event handling, and attribute management. The document provides brief descriptions of what each macro or function does.\n```\n\nhello, this is me!"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "metadata": {
+        "title": "Memory",
+        "type": "connector",
+        "description": "",
+        "visual": {
+          "x": 40,
+          "y": 300
         }
       }
     },

@@ -67,16 +67,39 @@ class ConnectorInstanceImpl implements ConnectorInstance {
       configuration.url
     );
 
-    const reading = await configurator.read(configuration.configuration);
-    if (!ok(reading)) return reading;
-    return reading;
+    return configurator.read(configuration.configuration);
   });
 
   get view() {
-    if (this.#view.error) {
-      return err(JSON.stringify(this.#view.error));
+    const view = this.#view.value;
+    if (!view) {
+      return err(`Connector "${this.id}" view not avaialable`);
     }
-    return this.#view.value!;
+    return view;
+  }
+
+  #preview = new AsyncComputed(async (signal) => {
+    signal.throwIfAborted();
+    this.#connectorDataChanged.get();
+
+    const configuration = this.configuration;
+    if (!ok(configuration)) return configuration;
+
+    const configurator = new Configurator(
+      this.project.runtime(),
+      this.id,
+      configuration.url
+    );
+
+    return configurator.preview(configuration.configuration);
+  });
+
+  get preview() {
+    const preview = this.#preview.value;
+    if (!preview) {
+      return err(`Connector "${this.id}" preview not available`);
+    }
+    return preview;
   }
 
   async commitEdits(

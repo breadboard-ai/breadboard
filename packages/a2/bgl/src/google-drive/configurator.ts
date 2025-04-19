@@ -34,6 +34,9 @@ const { invoke, describe } = createConfigurator<
       values: configuration,
     };
   },
+  preview: async ({ id, configuration }) => {
+    return [{ parts: [{ text: "HELLO" }] }];
+  },
   write: async ({ id, values }) => {
     console.log("WRITE", id, values);
     return values;
