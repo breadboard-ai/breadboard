@@ -21,6 +21,7 @@ import {
   NodeTypeIdentifier,
   Schema,
 } from "./types.js";
+import { MutableGraph } from "./inspector/types.js";
 
 export {
   GraphBasedNodeHandler,
@@ -67,9 +68,18 @@ class GraphBasedNodeHandler implements NodeHandlerObject {
     if (!graphStore) {
       return emptyDescriberResult();
     }
-    const adding = graphStore.addByDescriptor(this.#graph.graph);
-    if (!adding.success) {
-      return emptyDescriberResult();
+    const url = this.#graph.graph.url;
+    let mutable: MutableGraph;
+    if (url) {
+      // In the most common case, just use the URL of the graph.
+      const adding = graphStore.addByURL(url, [], context);
+      mutable = adding.mutable;
+    } else {
+      const adding = graphStore.addByDescriptor(this.#graph.graph);
+      if (!adding.success) {
+        return emptyDescriberResult();
+      }
+      mutable = graphStore.get(adding.result)!;
     }
     if (this.#graph.moduleId) {
       const moduleId = this.#graph.moduleId;
@@ -81,7 +91,7 @@ class GraphBasedNodeHandler implements NodeHandlerObject {
       }
       const result = await invokeDescriber(
         moduleId,
-        graphStore.get(adding.result)!,
+        mutable,
         graph,
         inputs || {},
         inputSchema,
@@ -95,7 +105,7 @@ class GraphBasedNodeHandler implements NodeHandlerObject {
       return result;
     } else {
       const inspectableGraph = graphStore.inspect(
-        adding.result,
+        mutable.id,
         this.#graph.subGraphId || ""
       );
       if (!inspectableGraph) {
