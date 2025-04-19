@@ -78,6 +78,22 @@ class Configurator {
     return result as ConnectorView;
   }
 
+  async preview(
+    configuration: JsonSerializable
+  ): Promise<Outcome<LLMContent[]>> {
+    const configuratorUrl = await this.#getConfigurator();
+    if (!ok(configuratorUrl)) return configuratorUrl;
+    const invokingPreview = await this.runtime.runTask({
+      graph: configuratorUrl,
+      context: toLLMContentArray({
+        stage: "preview",
+        id: this.id,
+        configuration,
+      }),
+    });
+    return invokingPreview;
+  }
+
   async write(
     values: Record<string, JsonSerializable>
   ): Promise<Outcome<JsonSerializable>> {

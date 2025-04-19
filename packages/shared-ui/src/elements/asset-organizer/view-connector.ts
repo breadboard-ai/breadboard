@@ -9,7 +9,6 @@ import { LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Organizer } from "../../state";
 import { AssetPath } from "@breadboard-ai/types";
-import { until } from "lit/directives/until.js";
 import { ok } from "@google-labs/breadboard";
 
 @customElement("bb-view-connector")
@@ -23,19 +22,12 @@ export class ViewConnector extends LitElement {
   render() {
     if (!this.state || !this.path) return nothing;
 
-    const view = this.state
-      .getConnectorView(this.path)
-      .then((connectorView) => {
-        if (!ok(connectorView)) {
-          return html`Error loading ${connectorView.$error}`;
-        }
+    const view = this.state?.graphAssets?.get(this.path)?.connector?.view;
+    if (!view || !ok(view)) return nothing;
 
-        return html`<bb-multi-output
-          .schema=${connectorView.schema}
-          .outputs=${connectorView.values}
-        ></bb-multi-output>`;
-      });
-
-    return html`${until(view)}`;
+    return html`<bb-multi-output
+      .schema=${view.schema}
+      .outputs=${view.values}
+    ></bb-multi-output>`;
   }
 }

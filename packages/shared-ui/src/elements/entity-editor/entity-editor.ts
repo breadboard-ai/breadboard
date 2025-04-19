@@ -59,6 +59,7 @@ import {
 import * as StringsHelper from "../../strings/helper.js";
 import { FlowGenConstraint } from "../../flow-gen/flow-generator";
 import { ConnectorView } from "../../connectors/types";
+import { SignalWatcher } from "@lit-labs/signals";
 const Strings = StringsHelper.forSection("Editor");
 
 type EnumValue = {
@@ -82,7 +83,7 @@ const INVALID_ITEM = html`<div id="invalid-item">
 </div>`;
 
 @customElement("bb-entity-editor")
-export class EntityEditor extends LitElement {
+export class EntityEditor extends SignalWatcher(LitElement) {
   @property()
   accessor graph: InspectableGraph | null = null;
 
@@ -723,13 +724,12 @@ export class EntityEditor extends LitElement {
     }
     const assetPath = data.get("asset-path") as string | null;
     if (assetPath !== null) {
+      // When "asset-path" is submitted, we know that this is a connector.
       const ports = this.#connectorPorts.get(assetPath) || [];
       const { values } = this.#takePortValues(form, ports);
-      console.log("VALUES", values);
-      this.projectState?.organizer.commitConnectorInstanceEdits(
-        assetPath,
-        values as Record<string, JsonSerializable>
-      );
+      this.projectState?.graphAssets
+        .get(assetPath)
+        ?.connector?.commitEdits(values as Record<string, JsonSerializable>);
     }
   }
 
@@ -1169,19 +1169,12 @@ export class EntityEditor extends LitElement {
 
     let value;
     if (asset.type === "connector") {
-      value = this.projectState?.organizer
-        .getConnectorView(assetPath)
-        .then((view) => {
-          if (!ok(view)) return nothing;
-          const ports = portsFromView(view);
-          this.#connectorPorts.set(assetPath, ports);
-
-          return this.#renderPorts("", "", ports);
-        });
-      // return html`${until(
-      //   value,
-      //   html`<div id="generic-status">Loading...</div>`
-      // )}`;
+      const view =
+        this.projectState?.graphAssets.get(assetPath)?.connector?.view;
+      if (!view || !ok(view)) return nothing;
+      const ports = portsFromView(view);
+      this.#connectorPorts.set(assetPath, ports);
+      value = this.#renderPorts("", "", ports);
     } else {
       const graphUrl = new URL(this.graph.raw().url ?? window.location.href);
 
@@ -1198,7 +1191,7 @@ export class EntityEditor extends LitElement {
 
     return html`<div class=${classMap({ asset: true })}>
       <h1 id="title"><span>${asset.title}</span></h1>
-      <div id="content">${until(value)}</div>
+      <div id="content">${value}</div>
       <input type="hidden" name="asset-path" .value=${assetPath} />
     </div>`;
   }

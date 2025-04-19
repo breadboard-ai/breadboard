@@ -380,6 +380,7 @@ export class UI extends LitElement {
           .graph=${graph}
           .graphTopologyUpdateId=${this.graphTopologyUpdateId}
           .graphStore=${this.graphStore}
+          .state=${this.projectState?.renderer}
           .graphStoreUpdateId=${this.graphStoreUpdateId}
           .selectionState=${this.selectionState}
           .showAssetsInGraph=${showAssetsInGraph}

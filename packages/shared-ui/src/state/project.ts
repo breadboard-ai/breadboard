@@ -29,18 +29,23 @@ import { SignalMap } from "signal-utils/map";
 import { ReactiveOrganizer } from "./organizer";
 import {
   Component,
-  Connector,
+  ConnectorState,
   FastAccess,
   GraphAsset,
   Organizer,
   Project,
   ProjectInternal,
+  RendererState,
   Tool,
 } from "./types";
 import { ReactiveFastAccess } from "./fast-access";
 import { SideBoardRuntime } from "../sideboards/types";
 import { configFromData } from "../connectors/util";
 import { isA2 } from "@breadboard-ai/a2";
+import { RendererStateImpl } from "./renderer";
+import { ConnectorStateImpl } from "./connectors";
+import { ConnectorType } from "../connectors/types";
+import { ConnectorInstanceImpl } from "./connector-instance";
 
 export { createProjectState, ReactiveProject };
 
@@ -87,6 +92,7 @@ class ReactiveProject implements ProjectInternal {
   #boardServerFinder: BoardServerFinder;
   #editable?: EditableGraph;
   #connectorInstances: Set<string> = new Set();
+  #connectorMap: SignalMap<string, ConnectorType>;
 
   readonly graphUrl: URL | null;
   readonly graphAssets: SignalMap<AssetPath, GraphAsset>;
@@ -97,7 +103,8 @@ class ReactiveProject implements ProjectInternal {
   readonly fastAccess: FastAccess;
   readonly components: SignalMap<GraphIdentifier, ReactiveComponents>;
   readonly parameters: SignalMap<string, ParameterMetadata>;
-  readonly connectors: SignalMap<string, Connector>;
+  readonly connectors: ConnectorState;
+  readonly renderer: RendererState;
 
   constructor(
     mainGraphId: MainGraphIdentifier,
@@ -128,19 +135,20 @@ class ReactiveProject implements ProjectInternal {
     this.components = new SignalMap();
     this.myTools = new SignalMap();
     this.parameters = new SignalMap();
-    this.connectors = new SignalMap();
-    this.organizer = new ReactiveOrganizer(this);
+    this.#connectorMap = new SignalMap();
     this.#updateConnectors();
+    this.connectors = new ConnectorStateImpl(this, this.#connectorMap);
+    this.organizer = new ReactiveOrganizer(this);
     this.fastAccess = new ReactiveFastAccess(
       this,
       this.graphAssets,
       this.tools,
       this.myTools,
       this.components,
-      this.parameters,
-      this.connectors
+      this.parameters
     );
     this.#updateGraphAssets();
+    this.renderer = new RendererStateImpl(this.graphAssets);
     this.#updateComponents();
     this.#updateTools();
     this.#updateMyTools();
@@ -272,14 +280,14 @@ class ReactiveProject implements ProjectInternal {
     // Add a tool bundle for each connector with "tools" export
     for (const graphAsset of this.graphAssets.values()) {
       const { path, connector, metadata: { title } = {} } = graphAsset;
-      if (!connector || !connector.tools) continue;
+      if (!connector || !connector.type.tools) continue;
 
       tools.push([
-        connector.url,
+        connector.type.url,
         {
-          url: connector.url,
+          url: connector.type.url,
           title: `${title} Tools`,
-          icon: connector.icon,
+          icon: connector.type.icon,
           connectorInstance: path,
         } satisfies Tool,
       ]);
@@ -355,9 +363,14 @@ class ReactiveProject implements ProjectInternal {
         if (asset.metadata?.type === "connector") {
           const config = configFromData(asset.data);
           if (ok(config)) {
-            const connector = this.connectors.get(config.url);
+            const connector = this.#connectorMap.get(config.url);
             if (connector) {
-              graphAsset.connector = connector;
+              graphAsset.connector = new ConnectorInstanceImpl(
+                connector,
+                path,
+                graphAsset,
+                this
+              );
               this.#connectorInstances.add(config.url);
             }
           }
@@ -391,7 +404,7 @@ class ReactiveProject implements ProjectInternal {
         graph.url
     );
     updateMap(
-      this.connectors,
+      this.#connectorMap,
       connectors.map((connector) => {
         const url = connector.url!;
         const load = connector.exportTags.includes("connector-load");
@@ -411,7 +424,7 @@ class ReactiveProject implements ProjectInternal {
             save,
             tools,
             experimental,
-          } satisfies Connector,
+          } satisfies ConnectorType,
         ];
       })
     );

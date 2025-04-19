@@ -42,6 +42,7 @@ import { MOVE_GRAPH_ID } from "./constants";
 import { GraphAsset } from "./graph-asset";
 import { AssetPath } from "@breadboard-ai/types";
 import { isControllerBehavior } from "../../utils/behaviors";
+import { RendererState } from "../../state";
 
 @customElement("bb-graph")
 export class Graph extends Box {
@@ -56,6 +57,10 @@ export class Graph extends Box {
 
   @property()
   accessor url: URL | null = null;
+
+  // TODO: Make it GraphState
+  @property()
+  accessor rendererState: RendererState | null = null;
 
   static styles = [
     Box.styles,
@@ -340,6 +345,7 @@ export class Graph extends Box {
 
       graphAsset.showBounds = this.showBounds;
       graphAsset.boundsLabel = asset.title;
+      graphAsset.state = this.rendererState?.graphAssets.get(assetPath) || null;
     }
 
     // Remove stale assets.

@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { JsonSerializable } from "@breadboard-ai/types";
-import { Schema } from "@google-labs/breadboard";
+import { JsonSerializable, LLMContent, UUID } from "@breadboard-ai/types";
+import { Outcome, Schema } from "@google-labs/breadboard";
 
 export type ConfiguratorStage = "initialize" | "read" | "write";
 
@@ -22,4 +22,28 @@ export type ConnectorConfiguration = {
 export type ConnectorView = {
   schema: Schema;
   values: JsonSerializable;
+};
+
+export type ConnectorInstance = {
+  type: ConnectorType;
+  id: UUID;
+  configuration: Outcome<ConnectorConfiguration>;
+  view: Outcome<ConnectorView>;
+  preview: Outcome<LLMContent[]>;
+  commitEdits(values: Record<string, JsonSerializable>): Promise<Outcome<void>>;
+};
+
+export type ConnectorType = {
+  /**
+   * The URL pointing to the connector BGL file.
+   */
+  url: string;
+  icon?: string;
+  title: string;
+  description?: string;
+  singleton: boolean;
+  load: boolean;
+  save: boolean;
+  tools: boolean;
+  experimental: boolean;
 };

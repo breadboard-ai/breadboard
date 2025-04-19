@@ -34,8 +34,8 @@
       "metadata": {
         "title": "Save Outputs",
         "visual": {
-          "x": 220,
-          "y": 0
+          "x": 260,
+          "y": -20
         },
         "userModified": false
       },
@@ -44,7 +44,7 @@
           "role": "user",
           "parts": [
             {
-              "text": "{{\"type\":\"asset\",\"path\":\"connectors/6f16787c-ae2f-45c7-8c1d-e4f36ae8e129\",\"title\":\"Macros\"}}"
+              "text": "{{\"type\":\"asset\",\"path\":\"connectors/26557812-98f1-4c9d-b6ba-3164932343bd\",\"title\":\"Memory\"}}"
             }
           ]
         },
@@ -89,36 +89,6 @@
     "parameters": {}
   },
   "assets": {
-    "connectors/f7ee2d90-818a-4a1f-978e-3935b354d38a": {
-      "data": [
-        {
-          "parts": [
-            {
-              "json": {
-                "url": "embed://a2/google-drive.bgl.json",
-                "configuration": {
-                  "file": {
-                    "id": "1ZF5ZENZ7Q3EZgMoOl8hVy6r2G3Cj74eTaLvshyGoSCM",
-                    "preview": "UX Pattern Slides",
-                    "mimeType": "application/vnd.google-apps.presentation",
-                    "connectionName": "$sign-in"
-                  }
-                }
-              }
-            }
-          ]
-        }
-      ],
-      "metadata": {
-        "title": "UX Pattern Slides",
-        "type": "connector",
-        "description": "",
-        "visual": {
-          "x": 360,
-          "y": 180
-        }
-      }
-    },
     "connectors/6f16787c-ae2f-45c7-8c1d-e4f36ae8e129": {
       "data": [
         {
@@ -144,8 +114,38 @@
         "type": "connector",
         "description": "",
         "visual": {
-          "x": -140,
+          "x": -120,
           "y": 160
+        }
+      }
+    },
+    "connectors/f7ee2d90-818a-4a1f-978e-3935b354d38a": {
+      "data": [
+        {
+          "parts": [
+            {
+              "json": {
+                "url": "embed://a2/google-drive.bgl.json",
+                "configuration": {
+                  "file": {
+                    "id": "1peUSMsvFGvqD5yKh3GprskLC3KVdAlLGOsK6gFoEOD0",
+                    "preview": "Towards a modern Web stack (PUBLICLY SHARED)",
+                    "mimeType": "application/vnd.google-apps.document",
+                    "connectionName": "$sign-in"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "metadata": {
+        "title": "UX Pattern Slides",
+        "type": "connector",
+        "description": "",
+        "visual": {
+          "x": 400,
+          "y": 260
         }
       }
     },
@@ -156,7 +156,18 @@
             {
               "json": {
                 "url": "embed://a2/folio.bgl.json",
-                "configuration": {}
+                "configuration": {
+                  "data": [
+                    {
+                      "role": "user",
+                      "parts": [
+                        {
+                          "text": "```\nThe spreadsheet appears to be a header file or a documentation page for a C++ library or framework, likely related to web development. It defines various macros, data structures, and function declarations used within the framework, related to memory management, assertions, string conversion, object creation, event handling, and attribute management. The document provides brief descriptions of what each macro or function does.\n```\n\nhello, this is me!"
+                        }
+                      ]
+                    }
+                  ]
+                }
               }
             }
           ]
@@ -167,38 +178,8 @@
         "type": "connector",
         "description": "",
         "visual": {
-          "x": 60,
-          "y": 360
-        }
-      }
-    },
-    "connectors/e7676b81-3d64-4549-bef0-ce98123c0ef5": {
-      "data": [
-        {
-          "parts": [
-            {
-              "json": {
-                "url": "embed://a2/google-drive.bgl.json",
-                "configuration": {
-                  "file": {
-                    "id": "1AZtNeaUN_2YTbm4GhCGuy6V19PaDm4cqGElkfZyo2ug",
-                    "preview": "Macros in Blink code base",
-                    "mimeType": "application/vnd.google-apps.spreadsheet",
-                    "connectionName": "$sign-in"
-                  }
-                }
-              }
-            }
-          ]
-        }
-      ],
-      "metadata": {
-        "title": "Doc to Save",
-        "type": "connector",
-        "description": "",
-        "visual": {
-          "x": 180,
-          "y": -340
+          "x": 40,
+          "y": 300
         }
       }
     },
@@ -207,7 +188,7 @@
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI3My4xNyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iOTkuNjciCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIzOC4zMyIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KPHJlY3QgeD0iMTQwLjMzIgogICAgICAgICAgICAgICAgICAgIHk9Ijg4LjUwIgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI5OS42NyIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjM4LjMzIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMjBhMjAyIiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI3OC40NCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iOTMuNDQiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIzNS45NCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KPHJlY3QgeD0iMTQ2LjU2IgogICAgICAgICAgICAgICAgICAgIHk9Ijg1LjYzIgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI5My40NCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjM1Ljk0IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMjBhMjAyIiAvPgogICAgICAKICAgIDwvc3ZnPg=="
     }
   }
 }

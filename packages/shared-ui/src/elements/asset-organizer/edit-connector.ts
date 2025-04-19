@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { html, SignalWatcher } from "@lit-labs/signals";
-import { AsyncComputed } from "signal-utils/async-computed";
+import { html, Signal, SignalWatcher } from "@lit-labs/signals";
 import { LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Organizer } from "../../state";
@@ -34,12 +33,13 @@ export class EditConnector extends SignalWatcher(LitElement) {
     return this.#userInputRef.value?.processData(false) || {};
   }
 
-  readonly config = new AsyncComputed(async (signal) => {
+  readonly config = new Signal.Computed(() => {
     if (!this.state || !this.path) return [];
-    const connectorView = await this.state.getConnectorView(this.path);
-    signal.throwIfAborted();
+    const connectorView = this.state?.graphAssets.get(this.path)?.connector
+      ?.view;
 
-    if (!ok(connectorView)) throw new Error(connectorView.$error);
+    if (!connectorView || !ok(connectorView))
+      throw new Error(connectorView?.$error);
 
     const props = connectorView.schema.properties;
     if (!props) {
@@ -99,7 +99,7 @@ export class EditConnector extends SignalWatcher(LitElement) {
 
     return html`<bb-user-input
       ${ref(this.#userInputRef)}
-      .inputs=${this.config.value || []}
+      .inputs=${this.config.get() || []}
       .llmShowInlineControlsToggle=${false}
       .llmInputShowPartControls=${false}
       @keydown=${(evt: KeyboardEvent) => {

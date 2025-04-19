@@ -8,7 +8,6 @@ import {
   AssetMetadata,
   AssetPath,
   GraphIdentifier,
-  JsonSerializable,
   LLMContent,
   NodeIdentifier,
   NodeValue,
@@ -21,7 +20,7 @@ import {
   PortIdentifier,
 } from "@google-labs/breadboard";
 import { SideBoardRuntime } from "../sideboards/types";
-import { ConnectorView } from "../connectors/types";
+import { ConnectorInstance, ConnectorType } from "../connectors/types";
 
 export type ChatStatus = "running" | "paused" | "stopped";
 
@@ -94,21 +93,11 @@ export type OrganizerStage = "free" | "busy";
  */
 export type Organizer = {
   /**
-   * Current status of the organizer
-   */
-  stage: OrganizerStage;
-
-  /**
    * Current graph's assets.
    */
   graphAssets: Map<AssetPath, GraphAsset>;
 
   graphUrl: URL | null;
-
-  // This double-plumbing is inelegant -- it just calls the
-  // method by the same name in Project.
-  // TODO: Make this more elegant.
-  connectorInstanceExists(url: string): boolean;
 
   addGraphAsset(asset: GraphAsset): Promise<Outcome<void>>;
   removeGraphAsset(path: AssetPath): Promise<Outcome<void>>;
@@ -129,35 +118,14 @@ export type Organizer = {
   /**
    * Available connectors
    */
-  connectors: Map<string, Connector>;
-
-  /**
-   * Starts creating a new Connector instance
-   *
-   * @param url -- URL of the connector.
-   */
-  initializeConnectorInstance(url: string | null): Promise<Outcome<void>>;
-  commitConnectorInstanceEdits(
-    path: AssetPath,
-    values: Record<string, JsonSerializable>
-  ): Promise<Outcome<void>>;
-  /**
-   * Cancels all pending work.
-   */
-  cancel(): Promise<void>;
-
-  /**
-   * Gets the connector view: the values and the schema to use to render these
-   * values.
-   */
-  getConnectorView(path: AssetPath): Promise<Outcome<ConnectorView>>;
+  connectors: ConnectorState;
 };
 
 export type GraphAsset = {
   metadata?: AssetMetadata;
   data: LLMContent[];
   path: AssetPath;
-  connector?: Connector;
+  connector?: ConnectorInstance;
 };
 
 export type GeneratedAssetIdentifier = string;
@@ -182,21 +150,6 @@ export type Component = {
   description?: string;
 };
 
-export type Connector = {
-  /**
-   * The URL pointing to the connector BGL file.
-   */
-  url: string;
-  icon?: string;
-  title: string;
-  description?: string;
-  singleton: boolean;
-  load: boolean;
-  save: boolean;
-  tools: boolean;
-  experimental: boolean;
-};
-
 export type Components = Map<NodeIdentifier, Component>;
 
 /**
@@ -211,15 +164,44 @@ export type FastAccess = {
 };
 
 /**
+ * Represents the Model+Controller for the Renderer (the visual editor)
+ */
+export type RendererState = {
+  graphAssets: Map<AssetPath, GraphAsset>;
+};
+
+export type ConnectorState = {
+  types: Map<string, ConnectorType>;
+
+  // This double-plumbing is inelegant -- it just calls the
+  // method by the same name in Project.
+  // TODO: Make this more elegant.
+  instanceExists(url: string): boolean;
+
+  /**
+   * Starts creating a new Connector instance
+   *
+   * @param url -- URL of the connector.
+   */
+  initializeInstance(url: string | null): Promise<Outcome<void>>;
+
+  /**
+   * Cancel any pending work.
+   */
+  cancel(): Promise<void>;
+};
+
+/**
  * Represents the Model+Controller for the entire Project.
  * Contains all the state for the project.
  */
 export type Project = {
   graphAssets: Map<AssetPath, GraphAsset>;
   parameters: Map<string, ParameterMetadata>;
-  connectors: Map<string, Connector>;
+  connectors: ConnectorState;
   organizer: Organizer;
   fastAccess: FastAccess;
+  renderer: RendererState;
 };
 
 export type ProjectInternal = Project & {
