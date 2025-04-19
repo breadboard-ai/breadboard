@@ -1129,9 +1129,9 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                                 const path = this.selectedItem?.path;
                                 if (!path) return;
 
-                                this.state?.connectors
-                                  .commitInstanceEdits?.(
-                                    path,
+                                this.state?.graphAssets
+                                  .get(path)
+                                  ?.connector?.commitEdits(
                                     this.#contentInputRef.value.value as Record<
                                       string,
                                       JsonSerializable
@@ -1183,9 +1183,9 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                               const path = this.selectedItem?.path;
                               if (!path) return;
 
-                              this.state?.connectors
-                                .commitInstanceEdits(
-                                  path,
+                              this.state?.graphAssets
+                                .get(path)
+                                ?.connector?.commitEdits(
                                   evt.data as Record<string, JsonSerializable>
                                 )
                                 .then((result) => {

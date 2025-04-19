@@ -8,7 +8,6 @@ import {
   AssetMetadata,
   AssetPath,
   GraphIdentifier,
-  JsonSerializable,
   LLMContent,
   NodeIdentifier,
   NodeValue,
@@ -185,16 +184,6 @@ export type ConnectorState = {
    * @param url -- URL of the connector.
    */
   initializeInstance(url: string | null): Promise<Outcome<void>>;
-
-  /**
-   * Commits edits to the connector instance
-   * @param path -- asset path representing connector instance
-   * @param values -- values to update
-   */
-  commitInstanceEdits(
-    path: AssetPath,
-    values: Record<string, JsonSerializable>
-  ): Promise<Outcome<void>>;
 
   /**
    * Cancel any pending work.

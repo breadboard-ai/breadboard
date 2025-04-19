@@ -369,7 +369,7 @@ class ReactiveProject implements ProjectInternal {
                 connector,
                 path,
                 graphAsset,
-                this.#runtime
+                this
               );
             }
           }

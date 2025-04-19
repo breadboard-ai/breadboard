@@ -4,14 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { AssetPath, JsonSerializable, UUID } from "@breadboard-ai/types";
+import { AssetPath, UUID } from "@breadboard-ai/types";
 import { err, ok, Outcome } from "@google-labs/breadboard";
 import { ConnectorConfiguration, ConnectorType } from "../connectors/types";
 import { ConnectorState, OrganizerStage, ProjectInternal } from "./types";
 import { signal } from "signal-utils";
 import { Configurator } from "../connectors/configurator";
 import { CreateConnector } from "../transforms/create-connector";
-import { EditConnector } from "../transforms/edit-connector";
 
 export { ConnectorStateImpl };
 
@@ -75,36 +74,6 @@ class ConnectorStateImpl implements ConnectorState {
       new CreateConnector(url, id, initializing)
     );
     return this.#free(updatingGraph);
-  }
-
-  async commitInstanceEdits(
-    path: AssetPath,
-    values: Record<string, JsonSerializable>
-  ): Promise<Outcome<void>> {
-    this.stage = "busy";
-
-    const runtime = this.#project.runtime();
-
-    const config = this.#getConnectorInstance(path);
-
-    if (!ok(config)) return config;
-
-    const { id, configuration } = config;
-
-    const configurator = new Configurator(runtime, id, configuration.url);
-
-    const writing = await configurator.write(values);
-    if (!ok(writing)) return this.#free(writing);
-
-    const updatingGraph = await this.#project.apply(
-      new EditConnector(path, {
-        ...configuration,
-        configuration: writing,
-      })
-    );
-    if (!ok(updatingGraph)) return this.#free(updatingGraph);
-
-    this.stage = "free";
   }
 
   #free<T>(outcome: T): T {

@@ -10,14 +10,14 @@ import {
   ConnectorInstance,
   ConnectorType,
 } from "../connectors/types";
-import { AssetPath } from "@breadboard-ai/types";
-import { GraphAsset } from "./types";
+import { AssetPath, JsonSerializable } from "@breadboard-ai/types";
+import { GraphAsset, ProjectInternal } from "./types";
 import { signal } from "signal-utils";
 import { AsyncComputed } from "signal-utils/async-computed";
 import { Signal } from "signal-polyfill";
-import { err, ok } from "@google-labs/breadboard";
-import { SideBoardRuntime } from "../sideboards/types";
+import { err, ok, Outcome } from "@google-labs/breadboard";
 import { Configurator } from "../connectors/configurator";
+import { EditConnector } from "../transforms/edit-connector";
 
 export { ConnectorInstanceImpl };
 
@@ -26,11 +26,13 @@ class ConnectorInstanceImpl implements ConnectorInstance {
 
   @signal accessor #asset: GraphAsset;
 
+  readonly #connectorDataChanged = new Signal.State({});
+
   constructor(
     public readonly type: ConnectorType,
-    path: AssetPath,
+    public readonly path: AssetPath,
     asset: GraphAsset,
-    private readonly runtime: SideBoardRuntime
+    private readonly project: ProjectInternal
   ) {
     this.id = path.split("/")[1] as UUID;
     this.#asset = asset;
@@ -54,12 +56,13 @@ class ConnectorInstanceImpl implements ConnectorInstance {
 
   #view = new AsyncComputed(async (signal) => {
     signal.throwIfAborted();
+    this.#connectorDataChanged.get();
 
     const configuration = this.configuration;
     if (!ok(configuration)) return configuration;
 
     const configurator = new Configurator(
-      this.runtime,
+      this.project.runtime(),
       this.id,
       configuration.url
     );
@@ -74,5 +77,30 @@ class ConnectorInstanceImpl implements ConnectorInstance {
       return err(JSON.stringify(this.#view.error));
     }
     return this.#view.value!;
+  }
+
+  async commitEdits(
+    values: Record<string, JsonSerializable>
+  ): Promise<Outcome<void>> {
+    const configuration = this.configuration;
+    if (!ok(configuration)) return configuration;
+
+    const configurator = new Configurator(
+      this.project.runtime(),
+      this.id,
+      configuration.url
+    );
+
+    const writing = await configurator.write(values);
+    if (!ok(writing)) return writing;
+
+    const updatingGraph = await this.project.apply(
+      new EditConnector(this.path, {
+        ...configuration,
+        configuration: writing,
+      })
+    );
+    if (!ok(updatingGraph)) return updatingGraph;
+    this.#connectorDataChanged.set({});
   }
 }

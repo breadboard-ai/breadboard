@@ -29,6 +29,7 @@ export type ConnectorInstance = {
   id: UUID;
   configuration: Outcome<ConnectorConfiguration>;
   view: Outcome<ConnectorView>;
+  commitEdits(values: Record<string, JsonSerializable>): Promise<Outcome<void>>;
 };
 
 export type ConnectorType = {
