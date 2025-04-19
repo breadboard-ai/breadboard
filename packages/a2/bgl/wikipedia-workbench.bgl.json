@@ -14,22 +14,55 @@
           "outputHeight": 348
         },
         "title": "Make Text",
-        "logLevel": "info"
+        "logLevel": "info",
+        "userModified": false
       },
       "configuration": {
         "description": {
+          "role": "user",
           "parts": [
             {
-              "text": "Write a brief essay on Omon Ra. Use {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-wikipedia\",\"title\":\"Search Wikipedia\"}} tool to research the essay."
+              "text": "Write a brief essay on brownian motion. Use {{\"type\":\"tool\",\"path\":\"file://bgl/tools.bgl.json#module:search-wikipedia\",\"title\":\"Search Wikipedia\"}} tool to research the essay."
             }
-          ],
-          "role": "user"
+          ]
         }
       }
     }
   ],
   "edges": [],
   "metadata": {
-    "visual": {}
+    "visual": {
+      "presentation": {
+        "themes": {
+          "e3e4546a-c95a-48b6-add6-ba039311f60c": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "e3e4546a-c95a-48b6-add6-ba039311f60c"
+      }
+    },
+    "parameters": {}
+  },
+  "assets": {
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSI3Mi43NyIKICAgICAgICAgICAgICAgICAgICB5PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTA0LjQ2IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTgwLjAwIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+    }
   }
 }

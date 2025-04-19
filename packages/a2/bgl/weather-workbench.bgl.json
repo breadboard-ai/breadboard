@@ -4,31 +4,6 @@
   "version": "0.0.1",
   "nodes": [
     {
-      "id": "tools-179d6e70",
-      "type": "file://bgl/tools.bgl.json#module:get-weather",
-      "metadata": {
-        "visual": {
-          "x": 20,
-          "y": -200,
-          "collapsed": "expanded",
-          "outputHeight": 308
-        },
-        "title": "Get Weather",
-        "logLevel": "info",
-        "userModified": false
-      },
-      "configuration": {
-        "p-location": {
-          "parts": [
-            {
-              "text": "{{\"type\":\"param\",\"path\":\"location\",\"title\":\"Location\"}}"
-            }
-          ],
-          "role": "user"
-        }
-      }
-    },
-    {
       "id": "a2-136ee999",
       "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
@@ -39,28 +14,22 @@
           "collapsed": "expanded",
           "outputHeight": 148
         },
-        "logLevel": "info"
+        "logLevel": "info",
+        "userModified": false
       },
       "configuration": {
         "description": {
+          "role": "user",
           "parts": [
             {
-              "text": "Write a short poem describing the weather and the location provided"
+              "text": "Write a short poem describing the weather in London. Use {{\"type\":\"tool\",\"path\":\"embed://a2/tools.bgl.json#module:get-weather\",\"title\":\"Get Weather\"}} tool to get current weather."
             }
-          ],
-          "role": "user"
+          ]
         }
       }
     }
   ],
-  "edges": [
-    {
-      "from": "tools-179d6e70",
-      "to": "a2-136ee999",
-      "out": "context",
-      "in": "context"
-    }
-  ],
+  "edges": [],
   "metadata": {
     "visual": {
       "presentation": {
@@ -88,9 +57,7 @@
     "parameters": {
       "location": {
         "title": "Location",
-        "usedIn": [
-          "tools-179d6e70"
-        ]
+        "usedIn": []
       }
     }
   },
@@ -100,7 +67,7 @@
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSIxOS4xMCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTAzLjEwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTYxLjc5IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMmU4YmU4IiAvPgo8cmVjdCB4PSIxMzYuOTAiCiAgICAgICAgICAgICAgICAgICAgeT0iMTkuMTAiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjEwMy4xMCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9Ijk4LjM0IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIzMC42NSIKICAgICAgICAgICAgICAgICAgICB5PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTg4LjcxIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTgwLjAwIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
     }
   }
 }
