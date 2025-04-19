@@ -21,7 +21,7 @@ import {
   toTextConcat,
   joinContent,
   llm,
-  extractInlineData,
+  extractMediaData,
   extractTextData,
   mergeContent,
 } from "./utils";
@@ -108,7 +108,7 @@ async function invoke({
   if (!aspectRatio) {
     aspectRatio = "1:1";
   }
-  let imageContext = extractInlineData(incomingContext);
+  let imageContext = extractMediaData(incomingContext);
   const textContext = extractTextData(incomingContext);
   // Substitute params in instruction.
   const toolManager = new ToolManager(new ArgumentNameGenerator());
@@ -134,7 +134,7 @@ async function invoke({
         context.push(...gatheringInformation.all);
       }
 
-      const refImages = extractInlineData([instruction]);
+      const refImages = extractMediaData([instruction]);
       const refText = instruction
         ? toLLMContent(toTextConcat(extractTextData([instruction])))
         : toLLMContent("");
