@@ -11,8 +11,8 @@ import read from "@read";
 
 export { invoke as default, describe };
 
-const MANUAL_MODE = "Layout manually";
-const AUTO_MODE = "Display with autolayout";
+const MANUAL_MODE = "Manual layout";
+const AUTO_MODE = "Webpage with auto-layout";
 
 type InvokeInputs = {
   text?: LLMContent;
@@ -179,11 +179,10 @@ async function describe({ inputs: { text } }: DescribeInputs) {
         "p-render-mode": {
           type: "string",
           enum: [MANUAL_MODE, AUTO_MODE],
-          title: "Display",
+          title: "Display format",
           behavior: ["config", "hint-preview"],
           default: MANUAL_MODE,
-          description:
-            "Choose how to combine the outputs (Manual: output is rendered exactly as configured below. Markdown: automatically combine the results into a markdown document, HTML: automatically combine the results into a webpage, Interactive: an interactive visualization or widget)",
+          description: "Choose how to combine and display the outputs",
         },
         ...template.schemas(),
       },

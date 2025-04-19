@@ -109,10 +109,10 @@ export default {
     str: "Suggest an edit",
   },
   LABEL_GENERATING_FLOW: {
-    str: "Generating your flow ...",
+    str: "Generating your application ...",
   },
   LABEL_GENERATING_FLOW_DETAIL: {
-    str: "Your flow will open automatically when ready",
+    str: "Your application will open automatically when ready",
   },
   LABEL_SAMPLE_GALLERY_TITLE: {
     str: "Gallery",
