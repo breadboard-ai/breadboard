@@ -37,6 +37,7 @@ async function resolveInput(inputContent: LLMContent): Promise<string> {
 }
 
 async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
+  console.log("MAPS INPUTS", inputs);
   let query: string;
   let mode: "step" | "tool";
   if ("context" in inputs) {
@@ -76,9 +77,10 @@ async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
 export type DescribeInputs = {
   inputs: Inputs;
   inputSchema: Schema;
+  asType?: boolean;
 };
 
-async function describe(inputs: DescribeInputs) {
+async function describe({ asType, ...inputs }: DescribeInputs) {
   const isTool = inputs && Object.keys(inputs).length === 1;
   if (isTool) {
     return toolSearchMapsDescribe();

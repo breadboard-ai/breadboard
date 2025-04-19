@@ -117,8 +117,9 @@ async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
 export type DescribeInputs = {
   inputs: Inputs;
   inputSchema: Schema;
+  asType?: boolean;
 };
-async function describe(inputs: DescribeInputs) {
+async function describe({ asType, ...inputs }: DescribeInputs) {
   const isTool = inputs && Object.keys(inputs).length === 1;
   if (isTool) {
     return toolGetWebpageDescribe();
