@@ -11,14 +11,16 @@ import {
   err,
   ok,
   llm,
+  isStoredData,
   toTextConcat,
   joinContent,
   toLLMContent,
+  toInlineReference,
   toLLMContentInline,
   toLLMContentStored,
   toText,
   toInlineData,
-  extractInlineData,
+  extractMediaData,
   extractTextData,
   defaultLLMContent,
 } from "./a2/utils";
@@ -89,8 +91,13 @@ async function callVideoGen(
   const inputParameters: string[] = ["text_instruction"];
   if (imageContent) {
     console.log("Image found, using i2v");
-    const imageChunk = toInlineData(imageContent);
-    if (!imageChunk) {
+    let imageChunk;
+    if (isStoredData(imageContent)) {
+      imageChunk = toInlineReference(imageContent);
+    } else {
+      imageChunk = toInlineData(imageContent);
+    }
+    if (!imageChunk || typeof imageChunk == "string") {
       return toLLMContent("Image content did not have expected format");
     }
     executionInputs["reference_image"] = {
@@ -183,11 +190,11 @@ async function invoke({
   const results = await new ListExpander(substituting, context).map(
     async (itemInstruction, itemContext) => {
       // 1) Extract any image and text data from context (with history).
-      let imageContext = extractInlineData(itemContext);
+      let imageContext = extractMediaData(itemContext);
       const textContext = extractTextData(itemContext);
 
       // 3) Extract image and text data from (non-history) references.
-      const refImages = extractInlineData([itemInstruction]);
+      const refImages = extractMediaData([itemInstruction]);
       const refText = extractTextData([itemInstruction]);
 
       // 4) Combine with whatever data was extracted from context.

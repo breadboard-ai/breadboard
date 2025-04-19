@@ -7,6 +7,7 @@ export {
   toLLMContent,
   toInlineData,
   toLLMContentInline,
+  toInlineReference,
   toLLMContentStored,
   toText,
   joinContent,
@@ -15,6 +16,7 @@ export {
   endsWithRole,
   addUserTurn,
   isEmpty,
+  isStoredData,
   llm,
   ok,
   err,
@@ -23,6 +25,7 @@ export {
   toTextConcat,
   extractTextData,
   extractInlineData,
+  extractMediaData,
 };
 
 export type NonPromise<T> = T extends Promise<unknown> ? never : T;
@@ -141,6 +144,14 @@ function isEmpty(c: LLMContent): boolean {
   return true;
 }
 
+function isStoredData(c: LLMContent) {
+  const part = c.parts.at(-1);
+  if (!part) {
+    return false;
+  }
+  return "storedData" in part && part.storedData != null;
+}
+
 function toText(c: LLMContent | LLMContent[]): string {
   if (isLLMContent(c)) {
     return contentToText(c);
@@ -195,6 +206,27 @@ function extractInlineData(context: LLMContent[]): LLMContent[] {
         if ("inlineData" in part && part.inlineData) {
           results.push(
             toLLMContentInline(part.inlineData.mimeType, part.inlineData.data)
+          );
+        }
+      }
+    }
+  }
+  return results;
+}
+
+function extractMediaData(context: LLMContent[]): LLMContent[] {
+  const results = [];
+  for (let el of context) {
+    for (let part of el.parts) {
+      if (part) {
+        if ("inlineData" in part && part.inlineData) {
+          results.push(
+            toLLMContentInline(part.inlineData.mimeType, part.inlineData.data)
+          );
+        }
+        if ("storedData" in part && part.storedData) {
+          results.push(
+            toLLMContentStored(part.storedData.mimeType, part.storedData.handle)
           );
         }
       }
@@ -285,6 +317,18 @@ function toInlineData(c: LLMContent | LLMContent[]) {
     if (!part) return "";
     return "inlineData" in part && part.inlineData ? part.inlineData : null;
   }
+}
+
+// TODO(askerryryan): Move this to the middleware.
+function toInlineReference(c: LLMContent) {
+  const last = c.parts.at(-1);
+  if (last == undefined || !("storedData" in last)) {
+    return toInlineData(c);
+  }
+  const blobId = last.storedData.handle.split("/").slice(-1)[0];
+  const gcs_handle = "bb-blob-store/" + blobId;
+  console.log(gcs_handle);
+  return toInlineData(toLLMContentInline("text/gcs-path", btoa(gcs_handle)));
 }
 
 export function mergeContent(content: LLMContent[], role: string): LLMContent {

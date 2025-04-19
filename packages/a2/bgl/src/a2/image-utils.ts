@@ -5,9 +5,11 @@
 import {
   err,
   ok,
+  isStoredData,
   toLLMContent,
   toLLMContentInline,
   toLLMContentStored,
+  toInlineReference,
   toInlineData,
   toText,
   addUserTurn,
@@ -34,8 +36,13 @@ async function callImageEdit(
 ): Promise<LLMContent[]> {
   const imageChunks = [];
   for (const element of imageContent) {
-    const inlineChunk = toInlineData(element);
-    if (inlineChunk && inlineChunk != null) {
+    let inlineChunk;
+    if (isStoredData(element)) {
+      inlineChunk = toInlineReference(element);
+    } else {
+      inlineChunk = toInlineData(element);
+    }
+    if (inlineChunk && inlineChunk != null && typeof inlineChunk != "string") {
       imageChunks.push({
         mimetype: inlineChunk.mimeType,
         data: inlineChunk.data,
