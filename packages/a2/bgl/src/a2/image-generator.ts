@@ -166,7 +166,7 @@ async function invoke({
           );
           return mergeContent(generatedImage, "model");
         } else {
-          console.log("Step as text only, using generation API");
+          console.log("Step has text only, using generation API");
           let imagePrompt: LLMContent;
           if (disablePromptRewrite) {
             imagePrompt = toLLMContent(toText(addUserTurn(refText, context)));
@@ -181,8 +181,6 @@ async function invoke({
           const iPrompt = toText(imagePrompt).trim();
           console.log("PROMPT", iPrompt);
           const generatedImage = await callImageGen(iPrompt, aspectRatio);
-          console.log("generatedImage");
-          console.log(generatedImage);
           return mergeContent(generatedImage, "model");
         }
       }
