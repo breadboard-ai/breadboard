@@ -31,7 +31,6 @@ import {
   blobifyStepOutputs,
   inflateData,
   maybeAddGcsOutputConfig,
-  maybeDeflateStepResponse,
 } from "../data/inflate-deflate.js";
 
 type ProxyServerTransport = ServerTransport<
@@ -204,15 +203,7 @@ export class ProxyClient {
     const [type] = result.value;
     if (type === "proxy") {
       const [, { outputs }] = result.value;
-      if (isExecuteStep) {
-        // If the response is a ExecuteStep with beefy data, we need to deflate it.
-        const deflated = store
-          ? maybeDeflateStepResponse(store, outputs)
-          : outputs;
-        return deflated as OutputValues;
-      } else {
-        return outputs;
-      }
+      return outputs;
     } else if (type === "error") {
       const [, { error }] = result.value;
       throw new Error(JSON.stringify(error));

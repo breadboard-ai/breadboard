@@ -220,43 +220,6 @@ export const remapData = async (
   return result;
 };
 
-// TODO(askerryryan): This function might now be obsolete.
-// Look at killing it.
-export const maybeDeflateStepResponse = async (
-  store: DataStore,
-  data: unknown
-) => {
-  const result = data;
-  const executionOutputs = maybeGetExecutionOutputs(data);
-  if (!executionOutputs) {
-    return result;
-  }
-  for (const key of Object.keys(executionOutputs)) {
-    const output = executionOutputs[key] as StepContent;
-    const newChunks: Chunk[] = [];
-    for (const chunk of output.chunks) {
-      if (
-        !chunk.mimetype.endsWith("/storedData") &&
-        (chunk.mimetype.startsWith("audio") ||
-          chunk.mimetype.startsWith("video") ||
-          chunk.mimetype.startsWith("image"))
-      ) {
-        const part = await store.store(await asBlob(chunk));
-        newChunks.push({
-          mimetype: chunk.mimetype + "/storedData",
-          data: part.storedData.handle,
-        } as Chunk);
-      } else {
-        newChunks.push(chunk);
-      }
-    }
-    executionOutputs[key] = {
-      chunks: newChunks,
-    };
-  }
-  return result;
-};
-
 export const blobifyStepOutputs = async (store: DataStore, data: unknown) => {
   const result = data;
   const executionOutputs = maybeGetExecutionOutputs(data);
