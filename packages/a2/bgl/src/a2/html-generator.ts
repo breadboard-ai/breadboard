@@ -109,7 +109,6 @@ async function callGenWebpage(
   const mimetype = outputChunk.chunks[0].mimetype;
   const base64Data = outputChunk.chunks[0].data;
   const data = base64DecodeNonAsciiStandard(base64Data);
-  console.log(data);
   if (mimetype == "text/html") {
     returnVal = toLLMContentInline(mimetype, data);
   } else {

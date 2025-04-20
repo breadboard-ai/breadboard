@@ -327,7 +327,6 @@ function toInlineReference(c: LLMContent) {
   }
   const blobId = last.storedData.handle.split("/").slice(-1)[0];
   const gcs_handle = "bb-blob-store/" + blobId;
-  console.log(gcs_handle);
   return toInlineData(toLLMContentInline("text/gcs-path", btoa(gcs_handle)));
 }
 
