@@ -5,7 +5,7 @@
  */
 
 /// <reference types="@types/gapi" />
-/// <reference types="@types/gapi.drive" />
+/// <reference types="@types/gapi.client.drive-v3" />
 /// <reference types="@types/google.picker" />
 
 let gapiPromise: Promise<typeof globalThis.gapi>;

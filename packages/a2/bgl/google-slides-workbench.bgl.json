@@ -178,8 +178,31 @@
         "type": "connector",
         "description": "",
         "visual": {
-          "x": 40,
-          "y": 300
+          "x": 240,
+          "y": -260
+        }
+      }
+    },
+    "connectors/5057d85a-1a4d-4ac5-9cd6-9dc040aabdaa": {
+      "data": [
+        {
+          "parts": [
+            {
+              "json": {
+                "url": "embed://a2/google-drive.bgl.json",
+                "configuration": {}
+              }
+            }
+          ]
+        }
+      ],
+      "metadata": {
+        "title": "Hi",
+        "type": "connector",
+        "description": "",
+        "visual": {
+          "x": -40,
+          "y": -380
         }
       }
     },
