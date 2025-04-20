@@ -114,8 +114,8 @@
         "type": "connector",
         "description": "",
         "visual": {
-          "x": -120,
-          "y": 160
+          "x": -140,
+          "y": 140
         }
       }
     },
@@ -144,8 +144,8 @@
         "type": "connector",
         "description": "",
         "visual": {
-          "x": 400,
-          "y": 260
+          "x": 200,
+          "y": 180
         }
       }
     },
@@ -180,36 +180,6 @@
         "visual": {
           "x": 240,
           "y": -260
-        }
-      }
-    },
-    "connectors/c820d8c5-b4db-4980-9a68-7321562ebdb5": {
-      "data": [
-        {
-          "parts": [
-            {
-              "json": {
-                "url": "embed://a2/google-drive.bgl.json",
-                "configuration": {
-                  "file": {
-                    "id": "1_fXgXndeRxutFsjHWtcJRzaDcqPmTXqsIgXQRxyqSj8",
-                    "preview": "Hello",
-                    "mimeType": "application/vnd.google-apps.document",
-                    "connectionName": "$sign-in"
-                  }
-                }
-              }
-            }
-          ]
-        }
-      ],
-      "metadata": {
-        "title": "Hello",
-        "type": "connector",
-        "description": "",
-        "visual": {
-          "x": -80,
-          "y": -360
         }
       }
     },
