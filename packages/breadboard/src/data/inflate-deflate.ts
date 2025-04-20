@@ -275,6 +275,5 @@ export function maybeAddGcsOutputConfig(data: unknown): unknown {
     bucket_name: "bb-blob-store",
   };
   body["output_gcs_config"] = gcsOutputConfig;
-  console.log("Set GCS output config: ", gcsOutputConfig);
   return data;
 }
