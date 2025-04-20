@@ -896,7 +896,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         </h1>
         <div id="type"></div>
         <div id="content">
-          ${this.#renderPorts(graphId, nodeId, inputPorts)}
+          ${this.#renderPorts(graphId, nodeId, inputPorts, node.title())}
         </div>
         <input type="hidden" name="graph-id" .value=${graphId} />
         <input type="hidden" name="node-id" .value=${nodeId} />
@@ -940,7 +940,8 @@ export class EntityEditor extends SignalWatcher(LitElement) {
   #renderPorts(
     graphId: GraphIdentifier,
     nodeId: NodeIdentifier,
-    inputPorts: PortLike[]
+    inputPorts: PortLike[],
+    title: string
   ) {
     const hasTextEditor =
       inputPorts.findIndex((port) => isLLMContentBehavior(port.schema)) !== -1;
@@ -962,6 +963,9 @@ export class EntityEditor extends SignalWatcher(LitElement) {
             value = html`<bb-delegating-input
               id=${port.name}
               name=${port.name}
+              .metadata=${{
+                docName: title,
+              }}
               .schema=${port.schema}
               .value=${port.value}
               @input=${() => {
@@ -1174,7 +1178,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       if (!view || !ok(view)) return nothing;
       const ports = portsFromView(view);
       this.#connectorPorts.set(assetPath, ports);
-      value = this.#renderPorts("", "", ports);
+      value = this.#renderPorts("", "", ports, asset.title);
     } else {
       const graphUrl = new URL(this.graph.raw().url ?? window.location.href);
 

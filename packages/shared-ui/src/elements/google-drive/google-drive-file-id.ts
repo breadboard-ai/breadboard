@@ -25,6 +25,10 @@ type PickedValue = {
   connectionName: string;
 };
 
+type PickerMetadata = {
+  docName?: string;
+};
+
 const MIME_TYPES = [
   "application/vnd.google-apps.document",
   "application/vnd.google-apps.file",
@@ -113,6 +117,9 @@ export class GoogleDriveFileId extends LitElement {
   accessor value: PickedValue | null = null;
 
   @property()
+  accessor metadata: PickerMetadata | null = null;
+
+  @property()
   accessor connectionName = "$sign-in";
 
   #picker?: google.picker.Picker;
@@ -180,7 +187,7 @@ export class GoogleDriveFileId extends LitElement {
   async #onCreateNewDoc() {
     if (this._authorization === undefined) return;
 
-    const name = this.docName ?? "Untitled Document";
+    const name = this.metadata?.docName ?? this.docName ?? "Untitled Document";
     const mimeType = "application/vnd.google-apps.document";
 
     try {

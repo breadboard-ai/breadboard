@@ -183,26 +183,33 @@
         }
       }
     },
-    "connectors/5057d85a-1a4d-4ac5-9cd6-9dc040aabdaa": {
+    "connectors/c820d8c5-b4db-4980-9a68-7321562ebdb5": {
       "data": [
         {
           "parts": [
             {
               "json": {
                 "url": "embed://a2/google-drive.bgl.json",
-                "configuration": {}
+                "configuration": {
+                  "file": {
+                    "id": "1_fXgXndeRxutFsjHWtcJRzaDcqPmTXqsIgXQRxyqSj8",
+                    "preview": "Hello",
+                    "mimeType": "application/vnd.google-apps.document",
+                    "connectionName": "$sign-in"
+                  }
+                }
               }
             }
           ]
         }
       ],
       "metadata": {
-        "title": "Hi",
+        "title": "Hello",
         "type": "connector",
         "description": "",
         "visual": {
-          "x": -40,
-          "y": -380
+          "x": -80,
+          "y": -360
         }
       }
     },
