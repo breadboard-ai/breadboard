@@ -27,11 +27,7 @@ import {
 } from "./types.js";
 import { createTunnelKit, readConfig } from "./tunnel.js";
 import { timestamp } from "../timestamp.js";
-import {
-  blobifyStepOutputs,
-  inflateData,
-  maybeAddGcsOutputConfig,
-} from "../data/inflate-deflate.js";
+import { inflateData } from "../data/inflate-deflate.js";
 
 type ProxyServerTransport = ServerTransport<
   AnyProxyRequestMessage,
@@ -98,7 +94,6 @@ export class ProxyServer {
       }
 
       const [, { node, inputs }] = request.data;
-      const isExecuteStep = isExecuteStepFetch(node, inputs);
       const handlerConfig = getHandlerConfig(node.type, config.proxy);
 
       const handler = handlerConfig ? handlers[node.type] : undefined;
@@ -126,17 +121,12 @@ export class ProxyServer {
           ]);
           continue;
         }
-        let outputs = store
+        const outputs = store
           ? ((await inflateData(
               store,
               makeSerializable(result)
             )) as OutputValues)
           : result;
-        if (isExecuteStep) {
-          outputs = store
-            ? ((await blobifyStepOutputs(store, outputs)) as OutputValues)
-            : outputs;
-        }
         request.reply(["proxy", { outputs }]);
       } catch (e) {
         request.reply([
@@ -177,7 +167,6 @@ export class ProxyClient {
     const reader = stream.readableResponses.getReader();
 
     const inflateToFileData = isGeminiApiFetch(node, inputs);
-    const isExecuteStep = isExecuteStepFetch(node, inputs);
 
     const store = context.store;
     inputs = store
@@ -188,11 +177,6 @@ export class ProxyClient {
           inflateToFileData
         )) as InputValues)
       : inputs;
-    if (isExecuteStep) {
-      inputs = store
-        ? (maybeAddGcsOutputConfig(inputs) as InputValues)
-        : inputs;
-    }
     writer.write(["proxy", { node, inputs }]);
     writer.close();
 
@@ -271,20 +255,5 @@ function isGeminiApiFetch(node: NodeDescriptor, inputs: InputValues): boolean {
     !!inputs.url &&
     typeof inputs.url === "string" &&
     inputs.url.startsWith("https://generativelanguage.googleapis.com")
-  );
-}
-
-function isExecuteStepFetch(
-  node: NodeDescriptor,
-  inputs: InputValues
-): boolean {
-  if (node.type !== "fetch") return false;
-  return (
-    "url" in inputs &&
-    !!inputs.url &&
-    typeof inputs.url === "string" &&
-    inputs.url.startsWith(
-      "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeStep"
-    )
   );
 }

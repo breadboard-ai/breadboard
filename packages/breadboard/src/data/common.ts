@@ -24,7 +24,6 @@ import {
   DataPartTransformer,
   DataPartTransformType,
   Outcome,
-  StepContent,
 } from "./types.js";
 import { ok } from "./file-system/utils.js";
 
@@ -164,23 +163,6 @@ export const isInlineData = (
   if (!("inlineData" in data)) return false;
   if (typeof data.inlineData.data !== "string") return false;
   return true;
-};
-
-export const maybeGetExecutionOutputs = (
-  data: unknown
-): Record<string, unknown> | undefined => {
-  if (typeof data === "object" && data !== null && "response" in data) {
-    const { response } = data;
-    if (
-      typeof response === "object" &&
-      response !== null &&
-      "executionOutputs" in response
-    ) {
-      const { executionOutputs } = response;
-      return executionOutputs as Record<string, StepContent>;
-    }
-  }
-  return;
 };
 
 export const isSerializedData = (
