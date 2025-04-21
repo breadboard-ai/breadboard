@@ -10,7 +10,7 @@ import {
   EditTransform,
   EditTransformResult,
 } from "@google-labs/breadboard";
-import { TransformAllNodes } from "./transform-all-nodes";
+import { UpdateAssetRefs } from "./update-asset-refs";
 
 export { UpdateAssetWithRefs };
 
@@ -23,22 +23,10 @@ class UpdateAssetWithRefs implements EditTransform {
   async apply(context: EditOperationContext): Promise<EditTransformResult> {
     const { path, metadata } = this;
 
-    const graphIds = [...Object.keys(context.graph.graphs || {}), ""];
-
-    for (const graphId of graphIds) {
-      const updatingRef = await new TransformAllNodes(
-        graphId,
-        (part) => {
-          const { type, path } = part;
-          if (type === "asset" && path === this.path) {
-            return { ...part, title: metadata.title };
-          }
-          return null;
-        },
-        `Updating title for asset "${this.path}"`
-      ).apply(context);
-      if (!updatingRef.success) return updatingRef;
-    }
+    const updatingRef = await new UpdateAssetRefs(path, metadata.title).apply(
+      context
+    );
+    if (!updatingRef.success) return updatingRef;
 
     return context.apply(
       [{ type: "changeassetmetadata", path, metadata }],

@@ -14,6 +14,8 @@ import {
 } from "@google-labs/breadboard";
 import { ConnectorConfiguration } from "../connectors/types";
 import { configFromData } from "../connectors/util";
+import { UpdateAssetWithRefs } from "./update-asset-with-refs";
+import { UpdateAssetRefs } from "./update-asset-refs";
 
 export { EditConnector };
 
@@ -44,39 +46,52 @@ class EditConnector implements EditTransform {
     if (!asset) {
       return {
         success: false,
-        error: `The asset "${path}" could not be edited, because it doesn't exist`,
+        error: `The connector asset "${path}" could not be edited, because it doesn't exist`,
       };
     }
 
     let { metadata } = asset;
     const { data: existingData } = asset;
 
-    if (
-      title !== undefined &&
-      metadata !== undefined &&
-      metadata?.title !== title
-    ) {
+    if (!metadata) {
+      return {
+        success: false,
+        error: `The connector asset "${path}" could not be edited, because it has not yet been initialized.`,
+      };
+    }
+
+    let changeTitle = false;
+
+    if (title !== undefined && metadata?.title !== title) {
       metadata = { ...metadata, title };
-    } else if (this.#sameConfig(existingData)) {
+      changeTitle = true;
+    }
+
+    if (this.#sameConfig(existingData)) {
+      if (changeTitle) {
+        const updatingAsset = await new UpdateAssetWithRefs(
+          path,
+          metadata!
+        ).apply(context);
+        if (!updatingAsset.success) return updatingAsset;
+      }
       return { success: true };
     }
 
-    const data: NodeValue = [
-      {
-        parts: [
-          {
-            json: this.configuration,
-          },
-        ],
-      },
-    ] satisfies LLMContent[];
+    const json = this.configuration;
+    const data: NodeValue = [{ parts: [{ json }] }] satisfies LLMContent[];
 
-    return context.apply(
+    const editing = await context.apply(
       [
         { type: "removeasset", path },
         { type: "addasset", path, data, metadata },
       ],
       `Editing asset at path "${path}"`
     );
+    if (!editing.success) return editing;
+
+    if (!changeTitle) return { success: true };
+
+    return new UpdateAssetRefs(path, title!).apply(context);
   }
 }

@@ -18,12 +18,12 @@
         "config$ask-user": false,
         "config$list": false,
         "config$prompt": {
-          "role": "user",
           "parts": [
             {
               "text": "Analyze this spreadsheet and describe what it is about\n\n{{\"type\":\"asset\",\"path\":\"connectors/6f16787c-ae2f-45c7-8c1d-e4f36ae8e129\",\"title\":\"Macros\"}}"
             }
-          ]
+          ],
+          "role": "user"
         },
         "generation-mode": "text"
       }
