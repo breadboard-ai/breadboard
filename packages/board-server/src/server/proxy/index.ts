@@ -10,7 +10,6 @@ import { URL } from "node:url";
 import {
   ProxyServer,
   type ServerResponse as ProxyServerResponse,
-  type AnyProxyRequestMessage,
   HTTPServerTransport,
   type ProxyServerConfig,
 } from "@google-labs/breadboard/remote";
@@ -22,6 +21,7 @@ import { badRequest } from "../errors.js";
 import { buildSecretsTunnel, secretsKit } from "./secrets.js";
 import type { ServerConfig } from "../config.js";
 import { BlobDataStore, GoogleStorageBlobStore } from "../blob-store.js";
+import { GcsAwareFetch } from "./gcs-aware-fetch.js";
 
 class ResponseAdapter implements ProxyServerResponse {
   #response: Response;
@@ -62,6 +62,11 @@ async function post(
   req: Request,
   res: Response
 ): Promise<void> {
+  const gcsAwareFetchKit = GcsAwareFetch.instance(
+    req.app.locals.store,
+    serverConfig
+  ).createKit(asRuntimeKit(Core));
+
   const server = new ProxyServer(
     new HTTPServerTransport({ body: req.body }, new ResponseAdapter(res))
   );
@@ -70,7 +75,7 @@ async function post(
 
   const tunnel = await buildSecretsTunnel();
   const config: ProxyServerConfig = {
-    kits: [secretsKit, asRuntimeKit(Core)],
+    kits: [secretsKit, gcsAwareFetchKit],
     store,
     proxy: ["fetch", { node: "secrets", tunnel }],
   };
