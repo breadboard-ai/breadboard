@@ -16,7 +16,6 @@ const AUTO_MODE = "Webpage with auto-layout";
 
 type InvokeInputs = {
   text?: LLMContent;
-  instruction?: string;
   "p-render-mode": string;
 };
 
@@ -111,7 +110,6 @@ function themeColorsPrompt(colors: ThemeColors): string {
 
 async function invoke({
   text,
-  instruction,
   "p-render-mode": renderMode,
   ...params
 }: InvokeInputs) {
@@ -123,11 +121,7 @@ async function invoke({
   if (!ok(substituting)) {
     return substituting;
   }
-  let context = await fanOutContext(
-    substituting,
-    undefined,
-    async (instruction) => instruction
-  );
+  let context = await fanOutContext(substituting, undefined, async (_) => _);
   if (!ok(context)) return context;
   context = flattenContext(context);
   // TODO(askerryryan): Further cleanup modes once FlowGen is fully in sync.
@@ -141,15 +135,11 @@ async function invoke({
   console.log("Rendering mode: " + renderMode);
   let out = context;
   if (renderMode != "Manual") {
-    let instruction = "Render content with markdown format.";
-    if (renderMode === "HTML" || renderMode === "Interactive") {
-      instruction = `Render content as a mobile webpage.
-
+    let instruction = `Render content as a mobile webpage.
 ${themeColorsPrompt(await getThemeColors())}
 `;
-    }
     instruction +=
-      " Assume content will render on a mobile device. Use a responsive or mobile-friendly layout whenever possible and minimize unnecessary padding or margins.";
+      " Use a responsive or mobile-friendly layout whenever possible and minimize unnecessary padding or margins.";
     console.log("Generating output based on instruction: ", instruction);
     const webPage = await callGenWebpage(instruction, context, renderMode);
     if (!ok(webPage)) {
