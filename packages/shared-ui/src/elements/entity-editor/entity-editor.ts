@@ -50,6 +50,8 @@ import { Project } from "../../state";
 import {
   FastAccessSelectEvent,
   NodePartialUpdateEvent,
+  ToastEvent,
+  ToastType,
 } from "../../events/events";
 import {
   isControllerBehavior,
@@ -748,12 +750,18 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       if (connector) {
         const ports = this.#connectorPorts.get(assetPath) || [];
         const { values } = this.#takePortValues(form, ports);
-        connector.commitEdits(
+        const commiting = await connector.commitEdits(
           title,
           values as Record<string, JsonSerializable>
         );
+        if (!ok(commiting)) {
+          this.dispatchEvent(new ToastEvent(commiting.$error, ToastType.ERROR));
+        }
       } else {
-        // TODO: Update title in the normal asset, if needed
+        const updating = await asset.updateTitle(title);
+        if (!ok(updating)) {
+          this.dispatchEvent(new ToastEvent(updating.$error, ToastType.ERROR));
+        }
       }
     }
   }

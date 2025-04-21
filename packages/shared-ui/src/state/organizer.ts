@@ -15,6 +15,7 @@ import { Outcome } from "@google-labs/breadboard";
 import {
   ConnectorState,
   GraphAsset,
+  GraphAssetDescriptor,
   Organizer,
   ProjectInternal,
 } from "./types";
@@ -39,7 +40,7 @@ class ReactiveOrganizer implements Organizer {
     this.connectors = project.connectors;
   }
 
-  async addGraphAsset(asset: GraphAsset): Promise<Outcome<void>> {
+  async addGraphAsset(asset: GraphAssetDescriptor): Promise<Outcome<void>> {
     const { data: assetData, metadata, path } = asset;
     const data = (await this.#project.persistBlobs(assetData)) as NodeValue;
     return this.#project.edit(
