@@ -253,11 +253,7 @@ export const blobifyStepOutputs = async (store: DataStore, data: unknown) => {
 };
 
 export function maybeAddGcsOutputConfig(data: unknown): unknown {
-  const apiRequiresGcs: string[] = [
-    "image_generation",
-    "tts",
-    "generate_video",
-  ];
+  const apiRequiresGcs: string[] = [];
   if (data === null || typeof data !== "object" || !("body" in data)) {
     return data;
   }
