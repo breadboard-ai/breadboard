@@ -48,6 +48,10 @@ export interface InputWidget<T = unknown> extends HTMLElement {
   value?: T;
   /** The JSON schema of the value this widget is collecting. */
   schema?: JSONSchema4;
+  /**
+   * Any metadata that is passed down to this instance
+   */
+  metadata?: Record<string, unknown>;
 }
 
 /**

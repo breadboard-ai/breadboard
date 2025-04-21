@@ -103,20 +103,14 @@ export class GoogleDriveFileViewer extends LitElement {
             ><img
               cross-origin
               src=${item.result.thumbnailLink}
-              alt="${item.result.title ??
-              // @ts-expect-error GDocs type error.
-              item.result.name ??
-              "Google Document"}"
+              alt="${item.result.name ?? "Google Document"}"
           /></a>`;
         } else {
           return html`<a href="${item.result.webViewLink}" target="_blank"
             ><img
               cross-origin
               src=${item.result.iconLink}
-              alt="${item.result.title ??
-              // @ts-expect-error GDocs type error.
-              item.result.name ??
-              "Google Document"}"
+              alt="${item.result.name ?? "Google Document"}"
           /></a>`;
         }
       });

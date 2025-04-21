@@ -40,12 +40,11 @@ import {
 } from "./types";
 import { ReactiveFastAccess } from "./fast-access";
 import { SideBoardRuntime } from "../sideboards/types";
-import { configFromData } from "../connectors/util";
 import { isA2 } from "@breadboard-ai/a2";
 import { RendererStateImpl } from "./renderer";
 import { ConnectorStateImpl } from "./connectors";
 import { ConnectorType } from "../connectors/types";
-import { ConnectorInstanceImpl } from "./connector-instance";
+import { GraphAssetImpl } from "./graph-asset";
 
 export { createProjectState, ReactiveProject };
 
@@ -354,30 +353,7 @@ class ReactiveProject implements ProjectInternal {
     delete assets[THUMBNAIL_KEY];
 
     const graphAssets = Object.entries(assets).map<[string, GraphAsset]>(
-      ([path, asset]) => {
-        const graphAsset: GraphAsset = {
-          metadata: asset.metadata,
-          data: asset.data as LLMContent[],
-          path,
-        };
-        if (asset.metadata?.type === "connector") {
-          const config = configFromData(asset.data);
-          if (ok(config)) {
-            const connector = this.#connectorMap.get(config.url);
-            if (connector) {
-              graphAsset.connector = new ConnectorInstanceImpl(
-                connector,
-                path,
-                graphAsset,
-                this
-              );
-              this.#connectorInstances.add(config.url);
-            }
-          }
-        }
-
-        return [path, graphAsset];
-      }
+      ([path, asset]) => [path, new GraphAssetImpl(this, path, asset)]
     );
 
     updateMap(this.graphAssets, graphAssets);
@@ -432,6 +408,10 @@ class ReactiveProject implements ProjectInternal {
 
   connectorInstanceExists(url: string): boolean {
     return this.#connectorInstances.has(url);
+  }
+
+  addConnectorInstance(url: string): void {
+    this.#connectorInstances.add(url);
   }
 }
 

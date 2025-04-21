@@ -99,7 +99,7 @@ export type Organizer = {
 
   graphUrl: URL | null;
 
-  addGraphAsset(asset: GraphAsset): Promise<Outcome<void>>;
+  addGraphAsset(asset: GraphAssetDescriptor): Promise<Outcome<void>>;
   removeGraphAsset(path: AssetPath): Promise<Outcome<void>>;
   changeGraphAssetMetadata(
     path: AssetPath,
@@ -121,10 +121,14 @@ export type Organizer = {
   connectors: ConnectorState;
 };
 
-export type GraphAsset = {
+export type GraphAssetDescriptor = {
   metadata?: AssetMetadata;
   data: LLMContent[];
   path: AssetPath;
+};
+
+export type GraphAsset = GraphAssetDescriptor & {
+  updateTitle(title: string): Promise<Outcome<void>>;
   connector?: ConnectorInstance;
 };
 
@@ -215,4 +219,5 @@ export type ProjectInternal = Project & {
     id: NodeIdentifier
   ): Outcome<{ id: PortIdentifier; title: string }>;
   connectorInstanceExists(url: string): boolean;
+  addConnectorInstance(url: string): void;
 };

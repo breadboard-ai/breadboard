@@ -14,12 +14,15 @@ import {
 } from "@google-labs/breadboard";
 import { ConnectorConfiguration } from "../connectors/types";
 import { configFromData } from "../connectors/util";
+import { UpdateAssetWithRefs } from "./update-asset-with-refs";
+import { UpdateAssetRefs } from "./update-asset-refs";
 
 export { EditConnector };
 
 class EditConnector implements EditTransform {
   constructor(
     public readonly path: string,
+    public readonly title: string | undefined,
     public readonly configuration: ConnectorConfiguration
   ) {}
 
@@ -35,7 +38,7 @@ class EditConnector implements EditTransform {
   }
 
   async apply(context: EditOperationContext): Promise<EditTransformResult> {
-    const { path } = this;
+    const { path, title } = this;
 
     // Get current metadata
     const { graph } = context;
@@ -43,33 +46,52 @@ class EditConnector implements EditTransform {
     if (!asset) {
       return {
         success: false,
-        error: `The asset "${path}" could not be edited, because it doesn't exist`,
+        error: `The connector asset "${path}" could not be edited, because it doesn't exist`,
       };
     }
 
-    const { metadata, data: existingData } = asset;
+    let { metadata } = asset;
+    const { data: existingData } = asset;
 
-    if (this.#sameConfig(existingData))
+    if (!metadata) {
       return {
-        success: true,
+        success: false,
+        error: `The connector asset "${path}" could not be edited, because it has not yet been initialized.`,
       };
+    }
 
-    const data: NodeValue = [
-      {
-        parts: [
-          {
-            json: this.configuration,
-          },
-        ],
-      },
-    ] satisfies LLMContent[];
+    let changeTitle = false;
 
-    return context.apply(
+    if (title !== undefined && metadata?.title !== title) {
+      metadata = { ...metadata, title };
+      changeTitle = true;
+    }
+
+    if (this.#sameConfig(existingData)) {
+      if (changeTitle) {
+        const updatingAsset = await new UpdateAssetWithRefs(
+          path,
+          metadata!
+        ).apply(context);
+        if (!updatingAsset.success) return updatingAsset;
+      }
+      return { success: true };
+    }
+
+    const json = this.configuration;
+    const data: NodeValue = [{ parts: [{ json }] }] satisfies LLMContent[];
+
+    const editing = await context.apply(
       [
         { type: "removeasset", path },
         { type: "addasset", path, data, metadata },
       ],
       `Editing asset at path "${path}"`
     );
+    if (!editing.success) return editing;
+
+    if (!changeTitle) return { success: true };
+
+    return new UpdateAssetRefs(path, title!).apply(context);
   }
 }
