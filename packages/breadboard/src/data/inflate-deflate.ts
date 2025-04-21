@@ -11,18 +11,14 @@ import {
   isFileDataCapabilityPart,
   isInlineData,
   isStoredData,
-  maybeGetExecutionOutputs,
   transformDataParts,
 } from "./common.js";
 import {
-  BlobDataStore,
-  Chunk,
   DataInflator,
   DataPartTransformType,
   DataStore,
   Outcome,
   SerializedDataStoreGroup,
-  StepContent,
 } from "./types.js";
 import { ok } from "./file-system/utils.js";
 
@@ -219,57 +215,3 @@ export const remapData = async (
   const result = await descender(o);
   return result;
 };
-
-export const blobifyStepOutputs = async (store: DataStore, data: unknown) => {
-  const result = data;
-  const executionOutputs = maybeGetExecutionOutputs(data);
-  if (!executionOutputs) {
-    return result;
-  }
-  for (const key of Object.keys(executionOutputs)) {
-    const blobStore = store as BlobDataStore;
-    const output = executionOutputs[key] as StepContent;
-    const newChunks: Chunk[] = [];
-    for (const chunk of output.chunks) {
-      if (chunk.mimetype.startsWith("text/gcs-path")) {
-        // The executeStep API returns a mime like: text/gcs-path/real/mimetype.
-        const mimetype = chunk.mimetype.replace("text/gcs-path/", "");
-        // The executeStep API returns a path like: bucketname/filename.
-        const blobId = atob(chunk.data).split("/").slice(-1)[0];
-        const blobUrl = blobStore.toBlobUrl(blobId);
-        newChunks.push({
-          mimetype: mimetype + "/storedData",
-          data: blobUrl,
-        } as Chunk);
-      } else {
-        newChunks.push(chunk);
-      }
-    }
-    executionOutputs[key] = {
-      chunks: newChunks,
-    };
-  }
-  return result;
-};
-
-export function maybeAddGcsOutputConfig(data: unknown): unknown {
-  const apiRequiresGcs: string[] = [];
-  if (data === null || typeof data !== "object" || !("body" in data)) {
-    return data;
-  }
-  const body = data.body as Record<string, unknown>;
-  if (body === null || typeof body !== "object" || !("planStep" in body)) {
-    return data;
-  }
-  const planStep = body.planStep as Record<string, unknown>;
-  const modelApi = planStep["modelApi"] as string;
-  if (!apiRequiresGcs.includes(modelApi)) {
-    return data;
-  }
-  // TODO(askerryryan): Stop hard-coding this and derive programmatically.
-  const gcsOutputConfig = {
-    bucket_name: "bb-blob-store",
-  };
-  body["output_gcs_config"] = gcsOutputConfig;
-  return data;
-}

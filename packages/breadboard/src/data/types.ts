@@ -48,9 +48,6 @@ export type Chunk = {
   mimetype: string;
   data: string;
 };
-export type StepContent = {
-  chunks: Chunk[];
-};
 
 export type DataStore = DataInflator & {
   createGroup(groupId: string): void;
@@ -79,9 +76,6 @@ export type DataStore = DataInflator & {
     scope: DataStoreScope
   ): Promise<StoreDataResult>;
   retrieveData(key: string): Promise<RetrieveDataResult>;
-};
-export type BlobDataStore = DataStore & {
-  toBlobUrl(blobId: string): string;
 };
 
 export type StateStore = {
