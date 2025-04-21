@@ -30,7 +30,10 @@ export type ConnectorInstance = {
   configuration: Outcome<ConnectorConfiguration>;
   view: Outcome<ConnectorView>;
   preview: Outcome<LLMContent[]>;
-  commitEdits(values: Record<string, JsonSerializable>): Promise<Outcome<void>>;
+  commitEdits(
+    title: string | undefined,
+    values: Record<string, JsonSerializable>
+  ): Promise<Outcome<void>>;
 };
 
 export type ConnectorType = {

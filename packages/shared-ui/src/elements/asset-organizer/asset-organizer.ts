@@ -1132,6 +1132,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                                 this.state?.graphAssets
                                   .get(path)
                                   ?.connector?.commitEdits(
+                                    undefined,
                                     this.#contentInputRef.value.value as Record<
                                       string,
                                       JsonSerializable
@@ -1186,6 +1187,7 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                               this.state?.graphAssets
                                 .get(path)
                                 ?.connector?.commitEdits(
+                                  undefined,
                                   evt.data as Record<string, JsonSerializable>
                                 )
                                 .then((result) => {

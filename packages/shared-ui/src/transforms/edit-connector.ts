@@ -20,6 +20,7 @@ export { EditConnector };
 class EditConnector implements EditTransform {
   constructor(
     public readonly path: string,
+    public readonly title: string | undefined,
     public readonly configuration: ConnectorConfiguration
   ) {}
 
@@ -35,7 +36,7 @@ class EditConnector implements EditTransform {
   }
 
   async apply(context: EditOperationContext): Promise<EditTransformResult> {
-    const { path } = this;
+    const { path, title } = this;
 
     // Get current metadata
     const { graph } = context;
@@ -47,12 +48,18 @@ class EditConnector implements EditTransform {
       };
     }
 
-    const { metadata, data: existingData } = asset;
+    let { metadata } = asset;
+    const { data: existingData } = asset;
 
-    if (this.#sameConfig(existingData))
-      return {
-        success: true,
-      };
+    if (
+      title !== undefined &&
+      metadata !== undefined &&
+      metadata?.title !== title
+    ) {
+      metadata = { ...metadata, title };
+    } else if (this.#sameConfig(existingData)) {
+      return { success: true };
+    }
 
     const data: NodeValue = [
       {

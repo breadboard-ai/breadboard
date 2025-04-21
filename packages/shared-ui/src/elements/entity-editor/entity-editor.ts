@@ -710,7 +710,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     part.text = new Template(part.text).transform(callback);
   }
 
-  #submit() {
+  async #submit() {
     if (!this.#formRef.value) {
       return;
     }
@@ -721,15 +721,40 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     const nodeId = data.get("node-id") as string | null;
     if (nodeId !== null && graphId !== null) {
       this.#emitUpdatedNodeConfiguration(form, graphId, nodeId);
+      return;
     }
     const assetPath = data.get("asset-path") as string | null;
     if (assetPath !== null) {
-      // When "asset-path" is submitted, we know that this is a connector.
-      const ports = this.#connectorPorts.get(assetPath) || [];
-      const { values } = this.#takePortValues(form, ports);
-      this.projectState?.graphAssets
-        .get(assetPath)
-        ?.connector?.commitEdits(values as Record<string, JsonSerializable>);
+      // When "asset-path" is submitted, we know that this is a an asset.
+
+      // 1) Get the right asset
+      const asset = this.projectState?.graphAssets.get(assetPath);
+      if (!asset) {
+        console.warn(`Unable to commit edits to asset "${assetPath}`);
+        return;
+      }
+
+      // 2) get title
+      const title = form.querySelector<HTMLInputElement>("#node-title")?.value;
+      if (!title) {
+        console.warn(
+          `Unable to find title for in step editor, likely a form integrity problem`
+        );
+        return;
+      }
+
+      // 3) update connector configuration
+      const connector = asset.connector;
+      if (connector) {
+        const ports = this.#connectorPorts.get(assetPath) || [];
+        const { values } = this.#takePortValues(form, ports);
+        connector.commitEdits(
+          title,
+          values as Record<string, JsonSerializable>
+        );
+      } else {
+        // TODO: Update title in the normal asset, if needed
+      }
     }
   }
 
@@ -1194,7 +1219,9 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     }
 
     return html`<div class=${classMap({ asset: true })}>
-      <h1 id="title"><span>${asset.title}</span></h1>
+      <h1 id="title">
+        <input id="node-title" name="node-title" .value=${asset.title} />
+      </h1>
       <div id="content">${value}</div>
       <input type="hidden" name="asset-path" .value=${assetPath} />
     </div>`;
