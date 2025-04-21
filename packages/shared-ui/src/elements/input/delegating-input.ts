@@ -34,6 +34,9 @@ export class DelegatingInput
   @property({ attribute: false })
   accessor schema: JSONSchema4 | undefined = undefined;
 
+  @property()
+  accessor metadata: Record<string, unknown> | undefined = undefined;
+
   // See #onChange for why we maintain a private #value shadow.
   #value: unknown;
   get value(): unknown {
@@ -106,6 +109,7 @@ export class DelegatingInput
       plugin.instantiate.customElementName
     ) as InputWidget;
     element.schema = schema;
+    element.metadata = this.metadata;
     element.addEventListener("bb-input-change", this.#onChange, { signal });
     return element;
   }

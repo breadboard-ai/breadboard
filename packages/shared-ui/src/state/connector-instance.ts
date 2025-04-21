@@ -103,6 +103,7 @@ class ConnectorInstanceImpl implements ConnectorInstance {
   }
 
   async commitEdits(
+    title: string | undefined,
     values: Record<string, JsonSerializable>
   ): Promise<Outcome<void>> {
     const configuration = this.configuration;
@@ -118,7 +119,7 @@ class ConnectorInstanceImpl implements ConnectorInstance {
     if (!ok(writing)) return writing;
 
     const updatingGraph = await this.project.apply(
-      new EditConnector(this.path, {
+      new EditConnector(this.path, title, {
         ...configuration,
         configuration: writing,
       })

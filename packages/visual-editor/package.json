@@ -300,7 +300,7 @@
     "@lit/context": "^1.1.4",
     "@lit/task": "^1.0.2",
     "@types/gapi": "^0.0.47",
-    "@types/gapi.drive": "^0.0.9",
+    "@types/gapi.client.drive-v3": "^0.0.5",
     "@types/google.picker": "^0.0.50",
     "@types/jszip": "^3.4.1",
     "ajv": "^8.17.1",

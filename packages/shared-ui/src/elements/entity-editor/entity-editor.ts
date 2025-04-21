@@ -50,6 +50,8 @@ import { Project } from "../../state";
 import {
   FastAccessSelectEvent,
   NodePartialUpdateEvent,
+  ToastEvent,
+  ToastType,
 } from "../../events/events";
 import {
   isControllerBehavior,
@@ -710,7 +712,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     part.text = new Template(part.text).transform(callback);
   }
 
-  #submit() {
+  async #submit() {
     if (!this.#formRef.value) {
       return;
     }
@@ -721,15 +723,46 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     const nodeId = data.get("node-id") as string | null;
     if (nodeId !== null && graphId !== null) {
       this.#emitUpdatedNodeConfiguration(form, graphId, nodeId);
+      return;
     }
     const assetPath = data.get("asset-path") as string | null;
     if (assetPath !== null) {
-      // When "asset-path" is submitted, we know that this is a connector.
-      const ports = this.#connectorPorts.get(assetPath) || [];
-      const { values } = this.#takePortValues(form, ports);
-      this.projectState?.graphAssets
-        .get(assetPath)
-        ?.connector?.commitEdits(values as Record<string, JsonSerializable>);
+      // When "asset-path" is submitted, we know that this is a an asset.
+
+      // 1) Get the right asset
+      const asset = this.projectState?.graphAssets.get(assetPath);
+      if (!asset) {
+        console.warn(`Unable to commit edits to asset "${assetPath}`);
+        return;
+      }
+
+      // 2) get title
+      const title = form.querySelector<HTMLInputElement>("#node-title")?.value;
+      if (!title) {
+        console.warn(
+          `Unable to find title for in step editor, likely a form integrity problem`
+        );
+        return;
+      }
+
+      // 3) update connector configuration
+      const connector = asset.connector;
+      if (connector) {
+        const ports = this.#connectorPorts.get(assetPath) || [];
+        const { values } = this.#takePortValues(form, ports);
+        const commiting = await connector.commitEdits(
+          title,
+          values as Record<string, JsonSerializable>
+        );
+        if (!ok(commiting)) {
+          this.dispatchEvent(new ToastEvent(commiting.$error, ToastType.ERROR));
+        }
+      } else {
+        const updating = await asset.updateTitle(title);
+        if (!ok(updating)) {
+          this.dispatchEvent(new ToastEvent(updating.$error, ToastType.ERROR));
+        }
+      }
     }
   }
 
@@ -896,7 +929,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         </h1>
         <div id="type"></div>
         <div id="content">
-          ${this.#renderPorts(graphId, nodeId, inputPorts)}
+          ${this.#renderPorts(graphId, nodeId, inputPorts, node.title())}
         </div>
         <input type="hidden" name="graph-id" .value=${graphId} />
         <input type="hidden" name="node-id" .value=${nodeId} />
@@ -940,7 +973,8 @@ export class EntityEditor extends SignalWatcher(LitElement) {
   #renderPorts(
     graphId: GraphIdentifier,
     nodeId: NodeIdentifier,
-    inputPorts: PortLike[]
+    inputPorts: PortLike[],
+    title: string
   ) {
     const hasTextEditor =
       inputPorts.findIndex((port) => isLLMContentBehavior(port.schema)) !== -1;
@@ -962,6 +996,9 @@ export class EntityEditor extends SignalWatcher(LitElement) {
             value = html`<bb-delegating-input
               id=${port.name}
               name=${port.name}
+              .metadata=${{
+                docName: title,
+              }}
               .schema=${port.schema}
               .value=${port.value}
               @input=${() => {
@@ -1174,7 +1211,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       if (!view || !ok(view)) return nothing;
       const ports = portsFromView(view);
       this.#connectorPorts.set(assetPath, ports);
-      value = this.#renderPorts("", "", ports);
+      value = this.#renderPorts("", "", ports, asset.title);
     } else {
       const graphUrl = new URL(this.graph.raw().url ?? window.location.href);
 
@@ -1190,7 +1227,9 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     }
 
     return html`<div class=${classMap({ asset: true })}>
-      <h1 id="title"><span>${asset.title}</span></h1>
+      <h1 id="title">
+        <input id="node-title" name="node-title" .value=${asset.title} />
+      </h1>
       <div id="content">${value}</div>
       <input type="hidden" name="asset-path" .value=${assetPath} />
     </div>`;
