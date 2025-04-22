@@ -965,6 +965,8 @@ export class Edit extends EventTarget {
     }
 
     tab.graph.title = title;
+    tab.graph.metadata ??= {};
+    tab.graph.metadata.userModified = true;
     this.dispatchEvent(new RuntimeBoardEditEvent(null, [], false));
   }
 
@@ -975,6 +977,8 @@ export class Edit extends EventTarget {
     }
 
     tab.graph.description = description;
+    tab.graph.metadata ??= {};
+    tab.graph.metadata.userModified = true;
     this.dispatchEvent(new RuntimeBoardEditEvent(null, [], false));
   }
 
