@@ -19,6 +19,7 @@ import {
   type SigninAdapter,
   signinAdapterContext,
 } from "../../utils/signin-adapter.js";
+import { keyed } from "lit/directives/keyed.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
@@ -68,6 +69,9 @@ export class Gallery extends LitElement {
         overflow: hidden;
         display: flex;
         flex-direction: column;
+        padding: 0;
+        text-align: left;
+
         &:hover:not(:has(button:hover)),
         &:focus:not(:has(button:focus)) {
           outline: 1px solid var(--bb-neutral-400);
@@ -277,14 +281,19 @@ export class Gallery extends LitElement {
   #renderBoard([name, item]: [string, GraphProviderItem]) {
     const { url, mine, title, description, thumbnail } = item;
     return html`
-      <div
+      <button
         class=${classMap({ board: true, mine })}
-        aria-role="button"
         tabindex="0"
         @click=${(event: PointerEvent) => this.#onBoardClick(event, url)}
         @keydown=${(event: KeyboardEvent) => this.#onBoardKeydown(event, url)}
       >
-        <img class="thumbnail" src=${thumbnail ?? "/images/placeholder.svg"} />
+        ${keyed(
+          thumbnail,
+          html`<img
+            class="thumbnail"
+            src=${thumbnail ?? "/images/placeholder.svg"}
+          />`
+        )}
         <div class="details">
           <div class="creator">
             <span class="pic">${this.#renderCreatorImage(item)}</span>
@@ -308,7 +317,7 @@ export class Gallery extends LitElement {
                 </div>
               `}
         </div>
-      </div>
+      </button>
     `;
   }
 
@@ -408,11 +417,6 @@ export class Gallery extends LitElement {
       event.stopPropagation();
       return this.#onRemixButtonClick(event, url);
     }
-  }
-
-  #isCtrlCommand(event: PointerEvent | KeyboardEvent) {
-    const isMac = navigator.platform.indexOf("Mac") === 0;
-    return isMac ? event.metaKey : event.ctrlKey;
   }
 }
 
