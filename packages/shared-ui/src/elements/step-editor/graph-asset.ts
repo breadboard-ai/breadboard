@@ -237,6 +237,8 @@ export class GraphAsset
           line-height: var(--bb-grid-size-6);
           border-radius: 0 0 var(--bb-grid-size-3) var(--bb-grid-size-3);
           pointer-events: none;
+          max-height: 320px;
+          overflow: hidden;
 
           & .loading {
             margin: 0;
@@ -260,20 +262,9 @@ export class GraphAsset
   #dragStart: DOMPoint | null = null;
   #containerRef: Ref<HTMLElement> = createRef();
   #lastBounds: DOMRect | null = null;
-
-  constructor(public readonly assetPath: AssetPath) {
-    super();
-
-    this.tabIndex = 0;
-  }
-
-  calculateLocalBounds(): DOMRect {
-    if (!this.#containerRef.value) {
-      return new DOMRect();
-    }
-
-    if (this.hidden && this.#lastBounds) {
-      return this.#lastBounds;
+  #resizeObserver = new ResizeObserver(() => {
+    if (!this.#containerRef.value || this.hidden) {
+      return;
     }
 
     this.#lastBounds = new DOMRect(
@@ -283,9 +274,24 @@ export class GraphAsset
       this.#containerRef.value.offsetHeight
     );
 
+    this.dispatchEvent(new NodeBoundsUpdateRequestEvent());
+  });
+
+  constructor(public readonly assetPath: AssetPath) {
+    super();
+
+    this.tabIndex = 0;
+  }
+
+  calculateLocalBounds(): DOMRect {
+    if (!this.#containerRef.value || !this.#lastBounds) {
+      return new DOMRect();
+    }
+
     return this.#lastBounds;
   }
 
+  #watchingResize = false;
   protected updated(changedProperties: PropertyValues): void {
     if (
       changedProperties.has("assetTitle") ||
@@ -293,8 +299,21 @@ export class GraphAsset
     ) {
       requestAnimationFrame(() => {
         this.cullable = true;
+        this.#lastBounds = null;
         this.dispatchEvent(new NodeBoundsUpdateRequestEvent());
       });
+    }
+
+    if (!this.#watchingResize && this.#containerRef.value) {
+      this.#watchingResize = true;
+      this.#lastBounds = new DOMRect(
+        0,
+        0,
+        this.#containerRef.value.offsetWidth,
+        this.#containerRef.value.offsetHeight
+      );
+
+      this.#resizeObserver.observe(this.#containerRef.value);
     }
   }
 
