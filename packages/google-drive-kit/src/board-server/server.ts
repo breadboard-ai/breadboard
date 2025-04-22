@@ -313,7 +313,7 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
       );
 
       const file: DriveFile = await response.json();
-      const updatedUrl = `${GoogleDriveBoardServer.PROTOCOL}//${parent}/${file.id}`;
+      const updatedUrl = `${GoogleDriveBoardServer.PROTOCOL}/${file.id}`;
 
       this.projects = this.#refreshProjects();
 
