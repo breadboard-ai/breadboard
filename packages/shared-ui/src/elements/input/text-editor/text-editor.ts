@@ -236,6 +236,20 @@ export class TextEditor extends LitElement {
       this.restoreLastRange();
     }
 
+    const completeAddAction = () => {
+      this.#ensureAllChicletsHaveSpace();
+      this.#captureEditorValue();
+      this.#togglePlaceholder();
+
+      this.dispatchEvent(
+        new InputEvent("input", {
+          bubbles: true,
+          composed: true,
+          cancelable: true,
+        })
+      );
+    };
+
     requestAnimationFrame(() => {
       if (!this.#editorRef.value) {
         return;
@@ -272,6 +286,7 @@ export class TextEditor extends LitElement {
       const range = this.#getCurrentRange();
       if (!range) {
         this.#editorRef.value.appendChild(label);
+        completeAddAction();
       } else {
         if (
           range.commonAncestorContainer !== this.#editorRef.value &&
@@ -295,8 +310,7 @@ export class TextEditor extends LitElement {
 
           selection.removeAllRanges();
           selection.addRange(range);
-          this.#ensureAllChicletsHaveSpace();
-          this.#captureEditorValue();
+          completeAddAction();
         });
       }
     });
@@ -793,6 +807,7 @@ export class TextEditor extends LitElement {
           );
 
           this.#captureEditorValue();
+          this.#togglePlaceholder();
         }}
         .graphId=${this.subGraphId}
         .nodeId=${this.nodeId}
