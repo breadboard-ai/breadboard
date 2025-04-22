@@ -127,11 +127,29 @@ class Autoname {
       }
     }
 
+    const abortController = new AbortController();
+    let graphChanged = false;
+    editor.addEventListener(
+      "graphchange",
+      () => {
+        graphChanged = true;
+        abortController.abort();
+      },
+      { once: true }
+    );
+
     const outputs = await this.runtime.runTask({
       graph: AutonameSideboard,
       context: asLLMContent({ graph, graphId, nodes }),
       url: graph.url,
+      signal: abortController.signal,
     });
+
+    if (graphChanged) {
+      // Graph changed in the middle of a task, throw away the results.
+      console.log("Autonaming results discarded due to graph change");
+      return;
+    }
     if (!ok(outputs)) {
       console.error("Autonaming error", outputs.$error);
       return outputs;

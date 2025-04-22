@@ -177,8 +177,12 @@ export class Graph implements EditableGraph {
     this.#eventTarget.dispatchEvent(new ChangeRejectEvent(this.raw(), reason));
   }
 
-  addEventListener(eventName: string, listener: EventListener): void {
-    this.#eventTarget.addEventListener(eventName, listener);
+  addEventListener(
+    eventName: string,
+    listener: EventListener,
+    options?: { once?: boolean }
+  ): void {
+    this.#eventTarget.addEventListener(eventName, listener, options);
   }
 
   #shouldDiscardEdit(edit: EditSpec) {

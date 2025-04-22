@@ -241,7 +241,8 @@ export type EditSpec =
 export type EditableGraph = {
   addEventListener<Key extends keyof EditableGraphEventMap>(
     eventName: Key,
-    listener: ((evt: EditableGraphEventMap[Key]) => void) | null
+    listener: ((evt: EditableGraphEventMap[Key]) => void) | null,
+    options?: { once?: boolean }
   ): void;
 
   /**
