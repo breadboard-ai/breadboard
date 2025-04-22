@@ -58,11 +58,11 @@ export default async ({ mode }: UserConfig) => {
     define,
     server: {
       ...buildCustomAllowList(process.env.VITE_FS_ALLOW),
+      watch: {
+        ignored: ["**/.wireit/**", "**/example-boards/**", "**/*.kit.json/**"],
+      },
     },
     plugins: [noHrmlForDir("packages/a2")],
-    test: {
-      include: ["tests/**/*.ts"],
-    },
     optimizeDeps: {
       exclude: [
         // @breadboard-ai/python-wasm has dependency on pyodide (which is the
@@ -74,5 +74,5 @@ export default async ({ mode }: UserConfig) => {
     resolve: {
       dedupe: ["lit"],
     },
-  };
+  } satisfies UserConfig;
 };

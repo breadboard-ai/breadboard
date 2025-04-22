@@ -51,11 +51,22 @@ export default defineConfig(async ({ mode }): Promise<UserConfig> => {
         threshold: 1024,
         deleteOriginalAssets: false,
       }),
+      {
+        name: "cool",
+        watchChange: (id, change) => {
+          console.log("CHANGE>", id, change);
+        },
+      },
     ],
     server: {
       watch: {
-        ignored: ["**/shared-ui/src/bgl/**"],
+        ignored: [
+          "**/shared-ui/src/bgl/**",
+          "**/.wireit/**",
+          "**/example-boards/**",
+          "**/*.kit.json/**",
+        ],
       },
     },
-  };
+  } satisfies UserConfig;
 });
