@@ -81,6 +81,10 @@ declare global {
   }
 }
 
+type Config = {
+  writeTypeScriptSources?: boolean;
+};
+
 export class FileSystemBoardServer extends EventTarget implements BoardServer {
   public readonly url: URL;
   public readonly kits: Kit[];
@@ -88,6 +92,8 @@ export class FileSystemBoardServer extends EventTarget implements BoardServer {
   public readonly secrets = new Map<string, string>();
   public readonly extensions: BoardServerExtension[] = [];
   public readonly capabilities: BoardServerCapabilities;
+
+  #config: Config | undefined;
 
   projects: Promise<BoardServerProject[]>;
 
@@ -191,6 +197,15 @@ export class FileSystemBoardServer extends EventTarget implements BoardServer {
     return new URL(`${this.url.href}${name}`);
   }
 
+  async #loadConfig(handle: FileSystemFileHandle) {
+    const file = await (await handle.getFile()).text();
+    try {
+      this.#config = JSON.parse(file) as Config;
+    } catch (e) {
+      console.error(`Unable to parse File System Board Server config`, e);
+    }
+  }
+
   async #refreshProjects() {
     this.#permission = await this.handle.queryPermission({ mode: "readwrite" });
     if (this.#permission !== "granted") {
@@ -204,6 +219,11 @@ export class FileSystemBoardServer extends EventTarget implements BoardServer {
       }
 
       if (!handle.name.endsWith("json")) {
+        continue;
+      }
+
+      if (handle.name === "config.json") {
+        await this.#loadConfig(handle);
         continue;
       }
 
@@ -395,7 +415,9 @@ export class FileSystemBoardServer extends EventTarget implements BoardServer {
       const data = structuredClone(descriptor);
       delete data["url"];
 
-      await this.#writeModuleCode(url, data.modules);
+      if (this.#config?.writeTypeScriptSources) {
+        await this.#writeModuleCode(url, data.modules);
+      }
 
       await stream.write(JSON.stringify(data, null, 2));
       await stream.close();
