@@ -39,6 +39,10 @@ interface DriveFileQuery {
   files: DriveFile[];
 }
 
+// TODO(aomarks) Make this configurable via a VITE_ env variable.
+const GOOGLE_DRIVE_FOLDER_NAME = "Breadboard";
+const GOOGLE_DRIVE_FOLDER_MIME_TYPE = "application/vnd.google-apps.folder";
+
 // This whole package should probably be called
 // "@breadboard-ai/google-drive-board-server".
 // But it's good that we have both components and the board server here:
@@ -138,7 +142,7 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
   }
 
   async #refreshProjects(): Promise<BoardServerProject[]> {
-    const folderId = this.url.hostname;
+    const folderId = await this.#findOrCreateUserRootFolder();
     const accessToken = await getAccessToken(this.vendor);
     const query = `"${folderId}" in parents and mimeType = "application/json"`;
 
@@ -290,7 +294,7 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
   ): Promise<{ result: boolean; error?: string; url?: string }> {
     // First create the file, then save.
 
-    const parent = this.url.hostname;
+    const parent = await this.#findOrCreateUserRootFolder();
     const fileName = url.href.replace(`${this.url.href}/`, "");
     const accessToken = await getAccessToken(this.vendor);
 
@@ -409,6 +413,44 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
 
   async preview(_url: URL): Promise<URL> {
     throw new Error("Method not implemented.");
+  }
+
+  async #findOrCreateUserRootFolder(): Promise<string> {
+    const accessToken = await getAccessToken(this.vendor);
+    if (!accessToken) {
+      throw new Error("No access token");
+    }
+    const api = new Files(accessToken);
+
+    const findRequest = api.makeQueryRequest(
+      `name="${GOOGLE_DRIVE_FOLDER_NAME}"` +
+        ` and mimeType="${GOOGLE_DRIVE_FOLDER_MIME_TYPE}"`
+    );
+    const { files } = (await (
+      await fetch(findRequest)
+    ).json()) as DriveFileQuery;
+    if (files.length > 0) {
+      if (files.length > 1) {
+        console.warn(
+          "Google Drive: Multiple candidate root folders found," +
+            " picking the first one arbitrarily:",
+          files
+        );
+      }
+      const id = files[0]!.id;
+      console.log("Google Drive: Found existing root folder", id);
+      return id;
+    }
+
+    const createRequest = api.makeCreateRequest({
+      name: GOOGLE_DRIVE_FOLDER_NAME,
+      mimeType: GOOGLE_DRIVE_FOLDER_MIME_TYPE,
+    });
+    const { id } = (await (await fetch(createRequest)).json()) as {
+      id: string;
+    };
+    console.log("Google Drive: Created new root folder", id);
+    return id;
   }
 }
 
