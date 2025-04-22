@@ -21,6 +21,8 @@ import { GoogleDriveToGemini } from "./google-drive-to-gemini";
 
 export { RemotePartTransformer };
 
+const blobIdRegex = /^https?:\/\/[^\/]+.*\/blobs\/(.+)$/;
+
 type FileInfo = {
   fileUri: string;
 };
@@ -66,7 +68,18 @@ class RemotePartTransformer implements DataPartTransformer {
       return part;
     } else {
       const { handle: blobPath, mimeType } = part.storedData;
-      const persistedUrl = new URL(blobPath, this.graphUrl);
+      let persistedUrl;
+      if (blobPath.startsWith("https://") || blobPath.startsWith("http://")) {
+        const match = blobIdRegex.exec(blobPath);
+        if (!match || !match[1]) {
+          // If it doesn't match regex, assume it's already a valid file URI.
+          return { fileData: { fileUri: blobPath, mimeType } };
+        }
+        const blobId = match[1];
+        persistedUrl = new URL("../../blobs/" + blobId, this.graphUrl);
+      } else {
+        persistedUrl = new URL(blobPath, this.graphUrl);
+      }
       persistedUrl.pathname += "/file";
       try {
         const response = await fetch(
