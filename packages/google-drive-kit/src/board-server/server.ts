@@ -320,6 +320,7 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
 
       this.projects = this.#refreshProjects();
 
+      console.log("Google Drive: Created new board", updatedUrl);
       return { result: true, url: updatedUrl };
     } catch (err) {
       console.warn(err);
