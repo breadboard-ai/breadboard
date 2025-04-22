@@ -127,12 +127,13 @@ export async function* runLocally(config: RunConfig, kits: Kit[]) {
     try {
       let last: LastNode | undefined;
 
-      const probe = config.diagnostics
-        ? new Diagnostics(async (message) => {
-            last = maybeSaveProbe(message, last);
-            await next(fromProbe(message));
-          })
-        : undefined;
+      const probe =
+        config.diagnostics === true || config.diagnostics === "top"
+          ? new Diagnostics(async (message) => {
+              last = maybeSaveProbe(message, last);
+              await next(fromProbe(message));
+            })
+          : undefined;
 
       for await (const data of runGraph(graphToRun, {
         probe,
@@ -154,7 +155,9 @@ export async function* runLocally(config: RunConfig, kits: Kit[]) {
       await next(endResult(last));
     } catch (e) {
       const error = extractError(e);
-      console.error("Local Run error:", error);
+      if (config.diagnostics !== "silent") {
+        console.error("Local Run error:", error);
+      }
       await next(errorResult(error));
     }
   });

@@ -51,6 +51,7 @@ import { RemoveAsset } from "./operations/remove-asset.js";
 import { ChangeAssetMetadata } from "./operations/change-asset-metadata.js";
 import { ReplaceGraph } from "./operations/replace-graph.js";
 import { ChangeEdgeMetadata } from "./operations/change-edge-metadata.js";
+import { PromiseQueue } from "../utils/promise-queue.js";
 
 const validImperativeEdits: EditSpec["type"][] = [
   "addmodule",
@@ -88,6 +89,7 @@ export class Graph implements EditableGraph {
   #eventTarget: EventTarget = new EventTarget();
   #history: GraphEditHistory;
   #imperativeMain: string | null = null;
+  #edits: PromiseQueue<EditResult> = new PromiseQueue();
 
   constructor(mutable: MutableGraph, options: EditableGraphOptions) {
     const graph = mutable.graph;
@@ -175,8 +177,12 @@ export class Graph implements EditableGraph {
     this.#eventTarget.dispatchEvent(new ChangeRejectEvent(this.raw(), reason));
   }
 
-  addEventListener(eventName: string, listener: EventListener): void {
-    this.#eventTarget.addEventListener(eventName, listener);
+  addEventListener(
+    eventName: string,
+    listener: EventListener,
+    options?: { once?: boolean }
+  ): void {
+    this.#eventTarget.addEventListener(eventName, listener, options);
   }
 
   #shouldDiscardEdit(edit: EditSpec) {
@@ -205,19 +211,18 @@ export class Graph implements EditableGraph {
     label: string,
     dryRun = false
   ): Promise<EditResult> {
-    return this.#applyEdits(async (context) => {
-      await context.apply(edits, label);
-      return {
-        success: true,
-        spec: { edits, label },
-      };
-    }, dryRun);
+    return this.#edits.add(() =>
+      this.#applyEdits(async (context) => {
+        await context.apply(edits, label);
+        return { success: true, spec: { edits, label } };
+      }, dryRun)
+    );
   }
 
   async apply(transform: EditTransform, dryRun = false): Promise<EditResult> {
-    return this.#applyEdits((context) => {
-      return transform.apply(context);
-    }, dryRun);
+    return this.#edits.add(() =>
+      this.#applyEdits((context) => transform.apply(context), dryRun)
+    );
   }
 
   history(): EditHistory {
@@ -296,17 +301,9 @@ export class Graph implements EditableGraph {
     if (dryRun) {
       const graph = checkpoint;
       const mutable = new MutableGraphImpl(graph, this.#mutable.store);
-      context = {
-        graph,
-        mutable,
-        apply,
-      };
+      context = { graph, mutable, apply };
     } else {
-      context = {
-        graph: this.#graph,
-        mutable: this.#mutable,
-        apply,
-      };
+      context = { graph: this.#graph, mutable: this.#mutable, apply };
     }
     const result = await transformer(context);
     if (!result.success) {

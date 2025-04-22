@@ -48,4 +48,5 @@ export type SideBoardRuntimeTaskSpec = {
   url?: string;
   graph: GraphDescriptor | string;
   context: LLMContent[];
+  signal?: AbortSignal;
 };

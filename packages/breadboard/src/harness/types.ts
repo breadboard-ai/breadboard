@@ -149,11 +149,13 @@ export type HarnessRemoteConfig =
  * The level of diagnostics to supply during the run.
  * If `true`, all probe events will be supplied.
  * If `"top"`, only the top-level probe events will be supplied.
+ * If `"silent"`, not even errors will be reported. This is particularly
+ * useful for sideboards.
  * If `false`, no probe events will be supplied.
  *
  * Defaults to `false`.
  */
-export type RunDiagnosticsLevel = boolean | "top";
+export type RunDiagnosticsLevel = boolean | "top" | "silent";
 
 export type RunConfig = {
   /**
