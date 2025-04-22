@@ -14,6 +14,8 @@ import {
   KitNodeChosenEvent,
   ShowAssetOrganizerEvent,
   ShowTooltipEvent,
+  ZoomInEvent,
+  ZoomOutEvent,
   ZoomToFitEvent,
 } from "../../events/events.js";
 import { GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
@@ -125,6 +127,68 @@ export class EditorControls extends LitElement {
       }
     }
 
+    #graph-controls {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      right: var(--bb-grid-size-6);
+      bottom: var(--bb-grid-size-7);
+      background: var(--bb-neutral-0);
+      border-radius: var(--bb-grid-size-16);
+      padding: var(--bb-grid-size) var(--bb-grid-size);
+      box-shadow: var(--bb-elevation-16-light);
+
+      &::before {
+        content: "";
+        position: absolute;
+        width: calc(100% - 2px);
+        height: 1px;
+        left: 1px;
+        top: var(--bb-grid-size-12);
+        background: var(--bb-neutral-200);
+      }
+
+      & button {
+        font-size: 0;
+        background: var(--bb-neutral-0) var(--bb-icon-fit) center center / 20px
+          20px no-repeat;
+        width: var(--bb-grid-size-7);
+        height: var(--bb-grid-size-7);
+        padding: 0;
+        border: none;
+        transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
+        border-radius: var(--bb-grid-size);
+
+        &#zoom-to-fit {
+          height: var(--bb-grid-size-10);
+          background-image: var(--bb-icon-fit);
+          margin-bottom: var(--bb-grid-size);
+          border-radius: var(--bb-grid-size-12) var(--bb-grid-size-12)
+            var(--bb-grid-size) var(--bb-grid-size);
+        }
+
+        &#zoom-in {
+          background-image: var(--bb-icon-add);
+          margin-top: var(--bb-grid-size);
+        }
+
+        &#zoom-out {
+          background-image: var(--bb-icon-remove);
+          border-radius: var(--bb-grid-size) var(--bb-grid-size)
+            var(--bb-grid-size-12) var(--bb-grid-size-12);
+        }
+
+        &:not([disabled]) {
+          cursor: pointer;
+
+          &:hover,
+          &:focus {
+            background-color: var(--bb-neutral-50);
+          }
+        }
+      }
+    }
+
     #top-shelf {
       position: absolute;
       display: flex;
@@ -154,7 +218,7 @@ export class EditorControls extends LitElement {
 
         border-radius: var(--bb-grid-size-16);
         height: var(--bb-grid-size-10);
-        box-shadow: var(--bb-elevation-1);
+        box-shadow: var(--bb-elevation-16-heavy);
         background: var(--bb-neutral-0);
         padding: 0;
 
@@ -245,19 +309,8 @@ export class EditorControls extends LitElement {
           padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-8);
           width: var(--bb-grid-size-10);
           height: var(--bb-grid-size-10);
-          box-shadow: var(--bb-elevation-1);
+          box-shadow: var(--bb-elevation-16-heavy);
           margin-left: var(--bb-grid-size-3);
-        }
-
-        &#zoom-to-fit {
-          font-size: 0;
-          border-radius: 50%;
-          margin-left: var(--bb-grid-size-3);
-          width: var(--bb-grid-size-10);
-          height: var(--bb-grid-size-10);
-          background: var(--bb-neutral-0) var(--bb-icon-fit) center center /
-            20px 20px no-repeat;
-          box-shadow: var(--bb-elevation-1);
         }
       }
     }
@@ -749,8 +802,8 @@ export class EditorControls extends LitElement {
       const output = this.#createComponentList(this.graphStore, "output");
 
       const items: HTMLTemplateResult[] = [
-        ...generate,
         ...input,
+        ...generate,
         ...output,
       ].map((item) => {
         const classes: Record<string, boolean> = {};
@@ -804,6 +857,22 @@ export class EditorControls extends LitElement {
       >
         Assets
       </button>
+    </div>`;
+
+    const shelf = html`<div id="shelf">
+      <bb-flowgen-editor-input
+        .currentGraph=${this.graph.raw()}
+        @pointerdown=${(evt: PointerEvent) => {
+          // <bb-renderer> listens for pointerdown and retains focus so that
+          // after selection updates the user can do things like delete nodes
+          // with the keyboard. The corresponding effect makes it impossible to
+          // interact with this element so we catch the event here first.
+          evt.stopPropagation();
+        }}
+      ></bb-flowgen-editor-input>
+    </div>`;
+
+    const graphControls = html`<div id="graph-controls">
       <button
         id="zoom-to-fit"
         @pointerover=${(evt: PointerEvent) => {
@@ -829,19 +898,58 @@ export class EditorControls extends LitElement {
       >
         Zoom to fit
       </button>
-    </div>`;
 
-    const shelf = html`<div id="shelf">
-      <bb-flowgen-editor-input
-        .currentGraph=${this.graph.raw()}
-        @pointerdown=${(event: PointerEvent) => {
-          // TODO(aomarks) <bb-renderer> listens for pointerdown and steals
-          // focus, making it impossible to interact with this element unless we
-          // mask the event. Probably this shelf shouldn't even be within the
-          // renderer?
-          event.stopPropagation();
+      <button
+        id="zoom-in"
+        @pointerover=${(evt: PointerEvent) => {
+          this.dispatchEvent(
+            new ShowTooltipEvent(
+              Strings.from("COMMAND_ZOOM_IN"),
+              evt.clientX,
+              evt.clientY
+            )
+          );
         }}
-      ></bb-flowgen-editor-input>
+        @pointerout=${() => {
+          this.dispatchEvent(new HideTooltipEvent());
+        }}
+        @click=${() => {
+          let animate = true;
+          if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            animate = false;
+          }
+
+          this.dispatchEvent(new ZoomInEvent(animate));
+        }}
+      >
+        Zoom in
+      </button>
+
+      <button
+        id="zoom-out"
+        @pointerover=${(evt: PointerEvent) => {
+          this.dispatchEvent(
+            new ShowTooltipEvent(
+              Strings.from("COMMAND_ZOOM_OUT"),
+              evt.clientX,
+              evt.clientY
+            )
+          );
+        }}
+        @pointerout=${() => {
+          this.dispatchEvent(new HideTooltipEvent());
+        }}
+        @click=${() => {
+          let animate = true;
+          if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            animate = false;
+          }
+
+          this.dispatchEvent(new ZoomOutEvent(animate));
+        }}
+      >
+        Zoom out
+      </button>
     </div>`;
 
     let componentPicker: HTMLTemplateResult | symbol = nothing;
@@ -911,6 +1019,13 @@ export class EditorControls extends LitElement {
       </div>`;
     }
 
-    return [topShelf, shelf, defaultAdd, componentLibrary, componentPicker];
+    return [
+      topShelf,
+      shelf,
+      graphControls,
+      defaultAdd,
+      componentLibrary,
+      componentPicker,
+    ];
   }
 }

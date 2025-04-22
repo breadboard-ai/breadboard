@@ -65,6 +65,8 @@ import {
   MoveNodesEvent,
   EdgeAttachmentMoveEvent,
   DroppedAssetsEvent,
+  ZoomInEvent,
+  ZoomOutEvent,
 } from "../../events/events";
 import { styleMap } from "lit/directives/style-map.js";
 import { Entity } from "./entity";
@@ -970,6 +972,31 @@ export class Renderer extends LitElement {
     );
   }
 
+  zoom(animated = false, requestedDelta = 0) {
+    const currentScale = this.camera.transform.a;
+    const newScale = currentScale * (1 - requestedDelta);
+
+    let delta = currentScale / newScale;
+    if (
+      currentScale * delta < this.minScale ||
+      currentScale * delta > this.maxScale
+    ) {
+      delta = 1;
+    }
+
+    const targetMatrix = this.camera.transform.translate(0, 0); // Clone.
+    const offsetX =
+      this.#boundsForInteraction.width * 0.5 - this.#boundsForInteraction.x;
+    const offsetY =
+      this.#boundsForInteraction.height * 0.5 - this.#boundsForInteraction.y;
+
+    targetMatrix.translateSelf(offsetX, offsetY);
+    targetMatrix.scaleSelf(delta, delta);
+    targetMatrix.translateSelf(-offsetX, -offsetY);
+
+    this.#updateCamera(animated, targetMatrix);
+  }
+
   fitToView(animated = true, retryOnEmpty = false) {
     if (!this.#graphs || !this.#boundsForInteraction || !this.camera) {
       return;
@@ -986,6 +1013,10 @@ export class Renderer extends LitElement {
     }
 
     const targetMatrix = this.#calculateCameraMatrixFromBounds(allGraphBounds);
+    this.#updateCamera(animated, targetMatrix);
+  }
+
+  #updateCamera(animated = false, targetMatrix: DOMMatrix) {
     if (!animated) {
       this.camera.transform = targetMatrix;
     } else {
@@ -1484,6 +1515,12 @@ export class Renderer extends LitElement {
             evt.connectedTo,
             evt.subGraphId
           );
+        }}
+        @bbzoomin=${(evt: ZoomInEvent) => {
+          this.zoom(evt.animate, -0.25);
+        }}
+        @bbzoomout=${(evt: ZoomOutEvent) => {
+          this.zoom(evt.animate, 0.25);
         }}
         @bbzoomtofit=${(evt: ZoomToFitEvent) => {
           this.fitToView(evt.animate);

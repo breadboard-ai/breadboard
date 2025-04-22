@@ -3993,7 +3993,7 @@ export class Main extends LitElement {
               @bbgraphreplace=${async (
                 evt: BreadboardUI.Events.GraphReplaceEvent
               ) => {
-                this.#runtime.edit.replaceGraph(
+                await this.#runtime.edit.replaceGraph(
                   this.tab,
                   evt.replacement,
                   evt.creator

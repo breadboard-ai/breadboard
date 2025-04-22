@@ -228,6 +228,20 @@ export class ZoomToFitEvent extends Event {
   }
 }
 
+export class ZoomInEvent extends Event {
+  static eventName = "bbzoomin";
+  constructor(public readonly animate = true) {
+    super(ZoomInEvent.eventName, { ...eventInit });
+  }
+}
+
+export class ZoomOutEvent extends Event {
+  static eventName = "bbzoomout";
+  constructor(public readonly animate = true) {
+    super(ZoomOutEvent.eventName, { ...eventInit });
+  }
+}
+
 export class ToggleFollowEvent extends Event {
   static eventName = "bbtogglefollow";
   constructor() {

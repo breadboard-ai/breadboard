@@ -29,6 +29,12 @@ export default {
   COMMAND_ZOOM_TO_FIT: {
     str: "Fit to Screen",
   },
+  COMMAND_ZOOM_IN: {
+    str: "Zoom In",
+  },
+  COMMAND_ZOOM_OUT: {
+    str: "Zoom Out",
+  },
   COMMAND_RUN_ISOLATED: {
     str: "Run this Step",
   },
