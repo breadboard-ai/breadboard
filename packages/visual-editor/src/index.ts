@@ -128,12 +128,6 @@ export type MainArguments = {
   requiresSignin?: boolean;
 };
 
-type SaveAsConfiguration = {
-  title: string;
-  graph: GraphDescriptor;
-  isNewBoard: boolean;
-};
-
 type BoardOverlowMenuConfiguration = {
   tabId: TabId;
   x: number;
@@ -210,10 +204,6 @@ export class Main extends LitElement {
   @state()
   accessor showUserOverflowMenu = false;
   #userOverflowMenuConfiguration: UserOverflowMenuConfiguration | null = null;
-
-  @state()
-  accessor showSaveAsDialog = false;
-  #saveAsState: SaveAsConfiguration | null = null;
 
   @state()
   accessor showNodeConfigurator = false;
@@ -382,14 +372,6 @@ export class Main extends LitElement {
       icon: "save",
       callback: () => {
         this.#attemptBoardSave();
-      },
-    },
-    {
-      title: Strings.from("COMMAND_SAVE_PROJECT_AS"),
-      name: "save-board-as",
-      icon: "save",
-      callback: () => {
-        this.showSaveAsDialog = true;
       },
     },
     {
@@ -969,7 +951,6 @@ export class Main extends LitElement {
     this.boardEditOverlayInfo = null;
     this.showSettingsOverlay = false;
     this.showBoardServerAddOverlay = false;
-    this.showSaveAsDialog = false;
     this.showNodeConfigurator = false;
     this.showCommentEditor = false;
   }
@@ -1194,11 +1175,6 @@ export class Main extends LitElement {
     if (evt.key === "s" && isCtrlCommand) {
       evt.preventDefault();
 
-      if (evt.shiftKey) {
-        this.showSaveAsDialog = true;
-        return;
-      }
-
       let saveMessage = Strings.from("STATUS_PROJECT_SAVED");
       if (this.#nodeConfiguratorRef.value && this.#nodeConfiguratorData) {
         this.#nodeConfiguratorRef.value.processData();
@@ -1403,7 +1379,7 @@ export class Main extends LitElement {
     tabToSave = this.tab,
     message = Strings.from("STATUS_PROJECT_SAVED"),
     ackUser = true,
-    showSaveAsIfNeeded = true,
+    _showSaveAsIfNeeded = true,
     timeout = 0
   ) {
     if (!tabToSave) {
@@ -1443,9 +1419,6 @@ export class Main extends LitElement {
     }
 
     if (!this.#runtime.board.canSave(tabToSave.id)) {
-      if (showSaveAsIfNeeded) {
-        this.showSaveAsDialog = true;
-      }
       return;
     }
 
@@ -2307,7 +2280,6 @@ export class Main extends LitElement {
       this.showSettingsOverlay ||
       this.showFirstRun ||
       this.showBoardServerAddOverlay ||
-      this.showSaveAsDialog ||
       this.showNodeConfigurator ||
       this.showCommentEditor ||
       this.showOpenBoardOverlay ||
@@ -2561,43 +2533,6 @@ export class Main extends LitElement {
             BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
             "Show additional sources"
           )?.value ?? false;
-
-        let saveAsDialogOverlay: HTMLTemplateResult | symbol = nothing;
-        if (this.showSaveAsDialog) {
-          saveAsDialogOverlay = html`<bb-save-as-overlay
-            .panelTitle=${this.#saveAsState?.title ??
-            Strings.from("COMMAND_SAVE_PROJECT_AS")}
-            .boardServers=${this.#boardServers}
-            .selectedBoardServer=${this.selectedBoardServer}
-            .selectedLocation=${this.selectedLocation}
-            .showAdditionalSources=${showAdditionalSources}
-            .graph=${structuredClone(
-              this.#saveAsState?.graph ?? this.tab?.graph
-            )}
-            .isNewBoard=${this.#saveAsState?.isNewBoard ?? false}
-            @bboverlaydismissed=${() => {
-              this.showSaveAsDialog = false;
-            }}
-            @bbgraphboardserversaveboard=${async (
-              evt: BreadboardUI.Events.GraphBoardServerSaveBoardEvent
-            ) => {
-              this.showSaveAsDialog = false;
-
-              const { boardServerName, location, fileName, graph } = evt;
-              await this.#attemptBoardSaveAs(
-                boardServerName,
-                location,
-                fileName,
-                graph,
-                undefined,
-                undefined,
-                { role: "user" }
-              );
-            }}
-          ></bb-save-as-overlay>`;
-
-          this.#saveAsState = null;
-        }
 
         const canRunNode = this.#nodeConfiguratorData
           ? topGraphResult.nodeInformation.canRunNode(
@@ -3038,17 +2973,6 @@ export class Main extends LitElement {
 
                 case "save": {
                   this.#attemptBoardSave(tab);
-                  break;
-                }
-
-                case "save-as": {
-                  this.#saveAsState = {
-                    title: Strings.from("COMMAND_SAVE_PROJECT_AS"),
-                    graph: tab.graph,
-                    isNewBoard: false,
-                  };
-
-                  this.showSaveAsDialog = true;
                   break;
                 }
 
@@ -3650,9 +3574,6 @@ export class Main extends LitElement {
               }}
               @bbsave=${() => {
                 this.#attemptBoardSave();
-              }}
-              @bbsaveas=${() => {
-                this.showSaveAsDialog = true;
               }}
               @bbstart=${(evt: BreadboardUI.Events.StartEvent) => {
                 this.#attemptBoardLoad(evt);
@@ -4394,7 +4315,6 @@ export class Main extends LitElement {
           boardServerAddOverlay,
           nodeConfiguratorOverlay,
           commentOverlay,
-          saveAsDialogOverlay,
           openDialogOverlay,
           commandPalette,
           modulePalette,
