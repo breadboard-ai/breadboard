@@ -51,12 +51,6 @@ export default defineConfig(async ({ mode }): Promise<UserConfig> => {
         threshold: 1024,
         deleteOriginalAssets: false,
       }),
-      {
-        name: "cool",
-        watchChange: (id, change) => {
-          console.log("CHANGE>", id, change);
-        },
-      },
     ],
     server: {
       watch: {
