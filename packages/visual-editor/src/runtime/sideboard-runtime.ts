@@ -198,7 +198,7 @@ class SideboardRuntimeImpl
     }
     let config: RunConfig = {
       url,
-      diagnostics: true,
+      diagnostics: "silent",
       kits: [...this.#graphStore.kits],
       loader: this.#graphStore.loader,
       store: this.#dataStore.createRunDataStore(url),
