@@ -382,6 +382,9 @@ body.hide-cursor {
   --bb-icon-replay: url(/third_party/icons/replay.svg);
   --bb-icon-replay-inverted: url(/third_party/icons/replay-inverted.svg);
 
+  --bb-icon-remove: url(/third_party/icons/remove.svg);
+  --bb-icon-remove-inverted: url(/third_party/icons/remove-inverted.svg);
+
   --bb-icon-rerun: url(/third_party/icons/rerun.svg);
   --bb-icon-rerun-inverted: url(/third_party/icons/rerun-inverted.svg);
 
@@ -805,6 +808,9 @@ body.hide-cursor {
   --bb-depth-4: hsl(39deg, 60%, 92%);
   --bb-depth-5: hsl(36deg, 60%, 90%);
 
+  --bb-elevation-16-heavy: 0px 3px 16px rgba(137, 143, 175, 0.4);
+  --bb-elevation-16-light: 0px 3px 16px rgba(137, 143, 175, 0.1);
+
   --bb-elevation-6:
     0px 8px 12px 6px rgba(0, 0, 0, 0.15), 0px 4px 4px rgba(0, 0, 0, 0.3);
   --bb-elevation-5:
@@ -1183,6 +1189,9 @@ body.hide-cursor {
 
   --bb-icon-refresh: url(/third_party/icons/refresh-inverted.svg);
   --bb-icon-refresh-inverted: url(/third_party/icons/refresh.svg);
+
+  --bb-icon-remove: url(/third_party/icons/remove-inverted.svg);
+  --bb-icon-remove-inverted: url(/third_party/icons/remove.svg);
 
   --bb-icon-replay: url(/third_party/icons/replay-inverted.svg);
   --bb-icon-replay-inverted: url(/third_party/icons/replay.svg);

@@ -1853,7 +1853,7 @@ export class Edit extends EventTarget {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to find board to edit"));
       return;
     }
-    editableGraph.edit(
+    return editableGraph.edit(
       [{ type: "replacegraph", replacement, creator }],
       `Replace graph`
     );
