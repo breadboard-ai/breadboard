@@ -13,7 +13,7 @@ import {
   LLMContent,
   OutputValues,
 } from "@breadboard-ai/types";
-import GenerateAppTheme from "@breadboard-ai/shared-ui/bgl/generate-app-theme.bgl.json" with { type: "json" };
+import GenerateAppTheme from "../../sideboards/sideboards-bgl/generate-app-theme.bgl.json" with { type: "json" };
 import MarkdownIt from "markdown-it";
 import {
   AppTemplateAdditionalOptionsAvailable,

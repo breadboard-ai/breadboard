@@ -57,7 +57,8 @@
   "scripts": {
     "prepack": "npm run build",
     "build": "wireit",
-    "build:tsc": "wireit"
+    "build:tsc": "wireit",
+    "update-sideboards": "wireit"
   },
   "wireit": {
     "build": {
@@ -92,6 +93,9 @@
         "!dist/**/*.min.js{,.map}"
       ],
       "clean": "if-file-deleted"
+    },
+    "update-sideboards": {
+      "command": "cp -f src/sideboards/sideboards-bgl/*.bgl.json dist/sideboards/sideboards-bgl"
     }
   },
   "repository": {
