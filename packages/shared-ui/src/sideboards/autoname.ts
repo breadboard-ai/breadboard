@@ -15,7 +15,7 @@ import {
 } from "@google-labs/breadboard";
 import { SideBoardRuntime } from "./types";
 
-import AutonameSideboard from "../bgl/autoname.bgl.json" with { type: "json" };
+import AutonameSideboard from "./sideboards-bgl/autoname.bgl.json" with { type: "json" };
 import {
   GraphDescriptor,
   GraphIdentifier,

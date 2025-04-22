@@ -10,7 +10,7 @@ import type {
   OutputValues,
 } from "@breadboard-ai/types";
 import type { SideBoardRuntime } from "../sideboards/types.js";
-import AppCatalystChatBgl from "@breadboard-ai/shared-ui/bgl/app-catalyst-chat.bgl.json" with { type: "json" };
+import AppCatalystChatBgl from "../sideboards/sideboards-bgl/app-catalyst-chat.bgl.json" with { type: "json" };
 
 export interface AppCatalystChatRequest {
   messages: AppCatalystContentChunk[];
