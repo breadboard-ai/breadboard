@@ -5,12 +5,16 @@
 import output from "@output";
 
 import type { SharedContext } from "./types";
+
 import { report } from "./a2/output";
-import { err, ok, defaultLLMContent } from "./a2/utils";
+import { err, ok, defaultLLMContent, llm } from "./a2/utils";
 import { Template } from "./a2/template";
 import { ArgumentNameGenerator } from "./a2/introducer";
 import { ToolManager } from "./a2/tool-manager";
-import { ListExpander } from "./a2/lists";
+import { ListExpander, listPrompt, toList, listSchema } from "./a2/lists";
+
+import { defaultSafetySettings } from "./a2/gemini";
+import { GeminiPrompt } from "./a2/gemini-prompt";
 
 export { invoke as default, describe };
 
@@ -24,6 +28,48 @@ type Outputs = {
   toInput?: Schema;
   done?: LLMContent[];
 };
+
+type WorkMode = "generate" | "call-tools" | "summarize";
+
+function prompt(
+  description: LLMContent,
+  mode: WorkMode,
+  chat: boolean
+): LLMContent {
+  const preamble = llm`
+${description}
+
+`;
+  const postamble = `
+
+Today is ${new Date().toLocaleString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  })}`;
+
+  switch (mode) {
+    case "summarize":
+      return llm` 
+${preamble}
+Summarize the research results to fulfill the specified task.
+${postamble}`.asContent();
+
+    case "call-tools":
+      return llm`
+${preamble}
+Generate multiple function calls to fulfill the specified task.
+${postamble}`.asContent();
+
+    case "generate":
+      return llm`
+${preamble}
+Provide the response that fulfills the specified task.
+${postamble}`.asContent();
+  }
+}
 
 async function invoke({ context }: Inputs) {
   if (!context.description) {
@@ -54,25 +100,67 @@ async function invoke({ context }: Inputs) {
     context.params,
     async ({ path: url, instance }) => toolManager.addTool(url, instance)
   );
+  console.log("Tools", substituting);
   if (!ok(substituting)) {
     return substituting;
   }
 
-  const { work, makeList } = context;
+  const { work } = context;
+  const mode = "generate";
   const result = await new ListExpander(
     substituting,
     work.length > 0 ? work : context.context
   ).map(async (description, work, isList) => {
     // Disallow making nested lists
-    const disallowNestedMakeList = makeList && !isList;
+    const makeList = context.makeList && !isList;
 
-    // 1) Make first attempt to make text
+    let product: LLMContent;
+    if (makeList) {
+      const generating = await new GeminiPrompt(
+        {
+          body: {
+            contents: [
+              ...context.context,
+              listPrompt(prompt(description, mode, context.chat)),
+            ],
+            safetySettings: defaultSafetySettings(),
+            generationConfig: {
+              responseSchema: listSchema(),
+              responseMimeType: "application/json",
+            },
+            tools: toolManager.list(),
+          },
+        },
+        {
+          toolManager,
+        }
+      ).invoke();
+      if (!ok(generating)) return generating;
 
-    // 2) Call tools
+      const list = toList(generating.last);
+      if (!ok(list)) return list;
 
-    // 3) Handle tool results
-
-    return { parts: [{ text: "FOO" }] };
+      product = list;
+    } else {
+      const result = await new GeminiPrompt(
+        {
+          body: {
+            contents: [
+              ...context.context,
+              prompt(description, mode, context.chat),
+            ],
+            safetySettings: defaultSafetySettings(),
+            tools: toolManager.list(),
+          },
+        },
+        {
+          toolManager,
+        }
+      ).invoke();
+      if (!ok(result)) return result;
+      product = result.last;
+    }
+    return product;
   });
   if (!ok(result)) return result;
 

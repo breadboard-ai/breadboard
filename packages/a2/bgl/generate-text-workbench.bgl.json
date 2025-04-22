@@ -7,20 +7,20 @@
       "id": "3740bd42-4f06-4856-8629-6d14912b834f",
       "type": "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
-        "title": "Generate Text from Prompt",
+        "title": "Generate Text with Weather",
         "visual": {
           "x": -20,
           "y": -500
         },
         "userModified": false,
-        "description": "Generates text using a user-provided prompt. The 'description' parameter allows for specifying the user's prompt to the LLM."
+        "description": "Generates text based on a user prompt, incorporating weather information retrieved using the 'Get Weather' tool. The user role and prompt parts are configurable."
       },
       "configuration": {
         "description": {
           "role": "user",
           "parts": [
             {
-              "text": "Say hello"
+              "text": "{{\"type\":\"tool\",\"path\":\"embed://a2/tools.bgl.json#module:get-weather\",\"title\":\"Get Weather\"}} for 94022"
             }
           ]
         },
