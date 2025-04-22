@@ -144,7 +144,10 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
   async #refreshProjects(): Promise<BoardServerProject[]> {
     const folderId = await this.#findOrCreateUserRootFolder();
     const accessToken = await getAccessToken(this.vendor);
-    const query = `"${folderId}" in parents and mimeType = "application/json"`;
+    const query =
+      `"${folderId}" in parents` +
+      ` and mimeType = "application/json"` +
+      ` and trashed=false`;
 
     if (!folderId || !accessToken) {
       throw new Error("No folder ID or access token");
@@ -424,7 +427,8 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
 
     const findRequest = api.makeQueryRequest(
       `name="${GOOGLE_DRIVE_FOLDER_NAME}"` +
-        ` and mimeType="${GOOGLE_DRIVE_FOLDER_MIME_TYPE}"`
+        ` and mimeType="${GOOGLE_DRIVE_FOLDER_MIME_TYPE}"` +
+        ` and trashed=false`
     );
     const { files } = (await (
       await fetch(findRequest)
