@@ -29,33 +29,45 @@
       }
     },
     {
-      "id": "699c38cb-0dd2-4f68-879f-c78ea97583de",
-      "type": "file://bgl/a2.bgl.json#module:image-generator",
+      "id": "39ffd7c5-9ce0-4173-bac4-f00d91d90a5c",
+      "type": "embed://a2/generate.bgl.json#module:main",
       "metadata": {
-        "title": "Make Image",
+        "title": "Generate",
         "visual": {
           "x": 0,
-          "y": -260
+          "y": -280
         },
         "userModified": false
       },
       "configuration": {
-        "instruction": {
+        "config$ask-user": false,
+        "config$list": false,
+        "config$prompt": {
+          "role": "user",
           "parts": [
             {
-              "text": "Add a hat to the image"
+              "text": ""
             }
-          ],
-          "role": "user"
+          ]
         },
-        "p-aspect-ratio": "16:9"
+        "generation-mode": "image",
+        "p-aspect-ratio": "1:1",
+        "p-disable-prompt-rewrite": false,
+        "instruction": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Add a rainbow beanie that says Opal"
+            }
+          ]
+        }
       }
     }
   ],
   "edges": [
     {
       "from": "a2-efb03857",
-      "to": "699c38cb-0dd2-4f68-879f-c78ea97583de",
+      "to": "39ffd7c5-9ce0-4173-bac4-f00d91d90a5c",
       "out": "context",
       "in": "context"
     }
@@ -93,7 +105,7 @@
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI2My45NyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iOTkuNjciCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI3Mi4wNyIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KPHJlY3QgeD0iMTQwLjMzIgogICAgICAgICAgICAgICAgICAgIHk9IjcxLjYzIgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI5OS42NyIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjM4LjMzIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI2My45NyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iOTkuNjciCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI3Mi4wNyIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzJlOGJlOCIgLz4KPHJlY3QgeD0iMTQwLjMzIgogICAgICAgICAgICAgICAgICAgIHk9IjYzLjk3IgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI5OS42NyIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjM4LjMzIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
     }
   }
 }

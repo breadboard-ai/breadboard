@@ -1,59 +1,88 @@
 /**
- * @fileoverview Edits an image using the supplied context.
+ * @fileoverview Generates an image using supplied context (generation and editing).
  */
 
 import invokeBoard from "@invoke";
-import fetch from "@fetch";
-import secrets from "@secrets";
 
+import gemini, {
+  defaultSafetySettings,
+  type GeminiOutputs,
+  type GeminiInputs,
+  type Tool,
+} from "./gemini";
+import { GeminiPrompt } from "./gemini-prompt";
 import {
   err,
   ok,
-  isEmpty,
   toLLMContent,
-  toLLMContentInline,
-  toText,
-  toTextConcat,
-  toInlineData,
-  joinContent,
-  addUserTurn,
-  extractInlineData,
-  extractTextData,
-  llm,
   defaultLLMContent,
+  toText,
+  addUserTurn,
+  toTextConcat,
+  joinContent,
+  llm,
+  extractMediaData,
+  extractTextData,
+  mergeContent,
 } from "./utils";
+import { callImageGen, callImageEdit, promptExpander } from "./image-utils";
 import { Template } from "./template";
-import { callImageEdit } from "./image-utils";
-import { executeStep } from "./step-executor";
-import type { ExecuteStepRequest, Content } from "./step-executor";
 import { ToolManager } from "./tool-manager";
-import { type Params } from "./common";
+import { type Params, type DescriberResult } from "./common";
 import { report } from "./output";
 import { ArgumentNameGenerator } from "./introducer";
 import { ListExpander } from "./lists";
 
-const MAKE_IMAGE_ICON = "generative-image-edit";
+const MAKE_IMAGE_ICON = "generative-image";
+const ASPECT_RATIOS = ["1:1", "9:16", "16:9", "4:3", "3:4"];
 
 type ImageGeneratorInputs = {
   context: LLMContent[];
   instruction: LLMContent;
   "p-disable-prompt-rewrite": boolean;
+  "p-aspect-ratio": string;
 } & Params;
 
 type ImageGeneratorOutputs = {
-  context: LLMContent[];
+  context: LLMContent[] | DescriberResult;
 };
 
 export { invoke as default, describe };
 
-async function gracefulExit(notOk: {
-  $error: string;
-}): Promise<Outcome<LLMContent>> {
-  await report({
+function gatheringRequest(
+  contents: LLMContent[] | undefined,
+  instruction: LLMContent,
+  toolManager: ToolManager
+): GeminiPrompt {
+  const promptText = llm`
+Analyze the instruction below and rather than following it, determine what information needs to be gathered to 
+generate an accurate prompt for a text-to-image model in the next turn:
+-- begin instruction --
+${instruction}
+-- end instruction --
+
+Call the tools to gather the necessary information that could be used to create an accurate prompt.`;
+  return new GeminiPrompt(
+    {
+      body: {
+        contents: addUserTurn(promptText.asContent(), contents),
+        tools: toolManager.list(),
+        systemInstruction: toLLMContent(`
+You are a researcher whose specialty is to call tools whose output helps gather the necessary information
+to be used to create an accurate prompt for a text-to-image model.
+`),
+      },
+    },
+    toolManager
+  );
+}
+
+function gracefulExit(notOk: { $error: string }): Outcome<LLMContent> {
+  report({
     actor: "Make Image",
     category: "Warning",
     name: "Graceful exit",
-    details: `I tried a couple of times, but the Image Editing API failed to generate the image you requested with the following error:
+    details: `I tried a couple of times, but the Gemini API failed to generate the image you requested with the following error:
 
 ### ${notOk.$error}
 
@@ -65,82 +94,104 @@ To keep things moving, I will return a blank result. My apologies!`,
 
 const MAX_RETRIES = 5;
 
-/**
- * Handles 4 distinct cases:
- * 1) The editing directive (without explicit reference) is provided as static instruction
- * 2) The editing directive is provided as static instruction w/ interleaved @ reference to the image
- * 3) The editing directive is provided without explicit reference as context
- * 4) The editing directive is provided as context with explicit interleaved @reference to the image.
- * 3 + 4 Currently assume the directive is provided as @ in the instruction, but the image is not.
- * **/
 async function invoke({
-  context,
+  context: incomingContext,
   instruction,
   "p-disable-prompt-rewrite": disablePromptRewrite,
+  "p-aspect-ratio": aspectRatio,
   ...params
 }: ImageGeneratorInputs): Promise<Outcome<ImageGeneratorOutputs>> {
-  context ??= [];
-  let instructionText = "";
-  if (instruction) {
-    instructionText = toText(instruction).trim();
+  incomingContext ??= [];
+  if (!instruction) {
+    instruction = toLLMContent("");
   }
-  // 1) Extract any image and text data from context (with history).
-  let imageContext = extractInlineData(context);
-  const textContext = extractTextData(context);
-
-  // 2) Substitute variables and magic image reference.
-  // Note: it is important that images are not subsituted in here as they will
-  // not be handled properly. At this point, only text variables should be left.
+  if (!aspectRatio) {
+    aspectRatio = "1:1";
+  }
+  let imageContext = extractMediaData(incomingContext);
+  const textContext = extractTextData(incomingContext);
+  // Substitute params in instruction.
   const toolManager = new ToolManager(new ArgumentNameGenerator());
-  const substituting = await new Template(
-    toLLMContent(instructionText)
-  ).substitute(params, async ({ path: url, instance }) =>
-    toolManager.addTool(url, instance)
+  const substituting = await new Template(instruction).substitute(
+    params,
+    async ({ path: url, instance }) => toolManager.addTool(url, instance)
   );
   if (!ok(substituting)) {
     return substituting;
   }
 
-  const results = await new ListExpander(substituting, context).map(
-    async (instruction, context, isList) => {
-      // 3) Extract image and text data from (non-history) references.
-      const refImages = extractInlineData([instruction]);
-      const refText = extractTextData([instruction]);
+  const fanningOut = await new ListExpander(substituting, incomingContext).map(
+    async (instruction, context) => {
+      // If there are tools in instruction, add an extra step of preparing
+      // information via tools.
+      if (toolManager.hasTools()) {
+        const gatheringInformation = await gatheringRequest(
+          context,
+          instruction,
+          toolManager
+        ).invoke();
+        if (!ok(gatheringInformation)) return gatheringInformation;
+        context.push(...gatheringInformation.all);
+      }
 
-      // 4) Combine with whatever data was extracted from context. Validate that
-      // we have exactly one image and some textual instruction.
+      const refImages = extractMediaData([instruction]);
+      const refText = instruction
+        ? toLLMContent(toTextConcat(extractTextData([instruction])))
+        : toLLMContent("");
       imageContext = imageContext.concat(refImages);
-      if (imageContext.length != 1) {
-        return toLLMContent(
-          `AI image editing needs exactly one image input, please! Got ${imageContext.length} images.`
-        );
-      }
-      const combinedInstruction = toTextConcat(
-        joinContent(toTextConcat(refText), textContext, false)
-      );
-      if (!combinedInstruction) {
-        return toLLMContent("An image editing instruction must be provided.");
-      }
-      console.log("PROMPT: " + combinedInstruction);
 
       let retryCount = MAX_RETRIES;
-      while (retryCount--) {
-        const generatedImage = await callImageEdit(
-          combinedInstruction,
-          imageContext,
-          disablePromptRewrite
-        );
-        return generatedImage[0];
-      }
 
+      while (retryCount--) {
+        // Image editing case.
+        if (imageContext.length > 0) {
+          console.log("Step has reference image, using editing API");
+          const instructionText = refText ? toText(refText) : "";
+          const combinedInstruction = toTextConcat(
+            joinContent(instructionText, textContext, false)
+          ).trim();
+          if (!combinedInstruction) {
+            return err(
+              `An image editing instruction must be provided along side the reference image.`
+            );
+          }
+          const finalInstruction =
+            combinedInstruction + "\nAspect ratio: " + aspectRatio;
+          console.log("PROMPT: " + finalInstruction);
+          const generatedImage = await callImageEdit(
+            finalInstruction,
+            imageContext,
+            disablePromptRewrite,
+            aspectRatio
+          );
+          return mergeContent(generatedImage, "model");
+        } else {
+          console.log("Step has text only, using generation API");
+          let imagePrompt: LLMContent;
+          if (disablePromptRewrite) {
+            imagePrompt = toLLMContent(toText(addUserTurn(refText, context)));
+          } else {
+            const generatingPrompt = await promptExpander(
+              context,
+              refText
+            ).invoke();
+            if (!ok(generatingPrompt)) return generatingPrompt;
+            imagePrompt = generatingPrompt.last;
+          }
+          const iPrompt = toText(imagePrompt).trim();
+          console.log("PROMPT", iPrompt);
+          const generatedImage = await callImageGen(iPrompt, aspectRatio);
+          return mergeContent(generatedImage, "model");
+        }
+      }
       return gracefulExit(
-        err(`Failed to generate a edited image after ${MAX_RETRIES} tries.`)
+        err(`Failed to generate an image after ${MAX_RETRIES} tries.`)
       );
     }
   );
 
-  if (!ok(results)) return results;
-  return { context: results };
+  if (!ok(fanningOut)) return fanningOut;
+  return { context: fanningOut };
 }
 
 type DescribeInputs = {
@@ -158,7 +209,7 @@ async function describe({ inputs: { instruction } }: DescribeInputs) {
         context: {
           type: "array",
           items: { type: "object", behavior: ["llm-content"] },
-          title: "Context",
+          title: "Context in",
           behavior: ["main-port"],
         },
         instruction: {
@@ -166,7 +217,7 @@ async function describe({ inputs: { instruction } }: DescribeInputs) {
           behavior: ["llm-content", "config", "hint-preview"],
           title: "Instruction",
           description:
-            "Describe how to change or edit an image. Use @ to add the image to edit. Example: 'Make the person from @<reference image>' have pink hair'",
+            "Describe how to generate the image (content, style, etc). Use @ to reference params or outputs from other steps.",
           default: defaultLLMContent(),
         },
         "p-disable-prompt-rewrite": {
@@ -174,7 +225,15 @@ async function describe({ inputs: { instruction } }: DescribeInputs) {
           title: "Disable prompt expansion",
           behavior: ["config"],
           description:
-            "By default, inputs and instructions may be automatically expanded into a higher quality image prompt. Check to disable this re-writing behavior.",
+            "By default, inputs and instructions will be automatically expanded into a high quality image prompt. Check to disable this re-writing behavior.",
+        },
+        "p-aspect-ratio": {
+          type: "string",
+          behavior: ["hint-text", "config"],
+          title: "Aspect Ratio",
+          enum: ASPECT_RATIOS,
+          description: "The aspect ratio of the generated image",
+          default: "1:1",
         },
         ...template.schemas(),
       },
@@ -192,10 +251,10 @@ async function describe({ inputs: { instruction } }: DescribeInputs) {
         },
       },
     } satisfies Schema,
-    title: "Edit Image [Deprecated, Use Make Image]",
+    title: "Edit Image",
     metadata: {
       icon: MAKE_IMAGE_ICON,
-      tags: ["quick-access", "generative", "experimental"],
+      tags: ["quick-access", "generative"],
       order: 2,
     },
   };
