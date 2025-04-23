@@ -25,7 +25,7 @@ import {
   extractTextData,
   mergeContent,
 } from "./utils";
-import { callImageGen, callImageEdit, promptExpander } from "./image-utils";
+import { callImageGen, promptExpander } from "./image-utils";
 import { Template } from "./template";
 import { ToolManager } from "./tool-manager";
 import { type Params, type DescriberResult } from "./common";

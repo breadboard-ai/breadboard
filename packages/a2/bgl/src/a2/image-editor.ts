@@ -25,7 +25,7 @@ import {
   extractTextData,
   mergeContent,
 } from "./utils";
-import { callImageGen, callImageEdit, promptExpander } from "./image-utils";
+import { callImageGen, callGeminiImage, promptExpander } from "./image-utils";
 import { Template } from "./template";
 import { ToolManager } from "./tool-manager";
 import { type Params, type DescriberResult } from "./common";
@@ -145,7 +145,7 @@ async function invoke({
       while (retryCount--) {
         // Image editing case.
         if (imageContext.length > 0) {
-          console.log("Step has reference image, using editing API");
+          console.log("Step has reference image, using Gemini Image API: i2i");
           const instructionText = refText ? toText(refText) : "";
           const combinedInstruction = toTextConcat(
             joinContent(instructionText, textContext, false)
@@ -158,7 +158,7 @@ async function invoke({
           const finalInstruction =
             combinedInstruction + "\nAspect ratio: " + aspectRatio;
           console.log("PROMPT: " + finalInstruction);
-          const generatedImage = await callImageEdit(
+          const generatedImage = await callGeminiImage(
             finalInstruction,
             imageContext,
             disablePromptRewrite,
@@ -166,7 +166,7 @@ async function invoke({
           );
           return mergeContent(generatedImage, "model");
         } else {
-          console.log("Step has text only, using generation API");
+          console.log("Step has text only, using Gemini Image API: t2i");
           let imagePrompt: LLMContent;
           if (disablePromptRewrite) {
             imagePrompt = toLLMContent(toText(addUserTurn(refText, context)));
@@ -180,7 +180,12 @@ async function invoke({
           }
           const iPrompt = toText(imagePrompt).trim();
           console.log("PROMPT", iPrompt);
-          const generatedImage = await callImageGen(iPrompt, aspectRatio);
+          const generatedImage = await callGeminiImage(
+            iPrompt,
+            [],
+            disablePromptRewrite,
+            aspectRatio
+          );
           return mergeContent(generatedImage, "model");
         }
       }

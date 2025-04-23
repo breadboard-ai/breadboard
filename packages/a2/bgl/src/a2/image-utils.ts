@@ -22,13 +22,13 @@ import {
 } from "./step-executor";
 import { GeminiPrompt } from "./gemini-prompt";
 
-export { callImageGen, callImageEdit, promptExpander };
+export { callImageGen, callGeminiImage, promptExpander };
 
-const STEP_NAME = "AI Edit Image";
+const STEP_NAME = "AI Image Tool";
 const OUTPUT_NAME = "generated_image";
-const API_NAME = "ai_image_editing";
+const API_NAME = "ai_image_tool";
 
-async function callImageEdit(
+async function callGeminiImage(
   instruction: string,
   imageContent: LLMContent[],
   disablePromptRewrite: boolean,
@@ -49,43 +49,47 @@ async function callImageEdit(
       });
     }
   }
-  if (!imageChunks) {
-    throw new Error("No image provided to image edit call");
+  const input_parameters = ["input_instruction"];
+  if (imageChunks.length > 0) {
+    input_parameters.push("input_image");
   }
   console.log("Number of input images: " + String(imageChunks.length));
   const encodedInstruction = btoa(unescape(encodeURIComponent(instruction)));
+  const executionInputs: ContentMap = {
+    input_instruction: {
+      chunks: [
+        {
+          mimetype: "text/plain",
+          data: encodedInstruction,
+        },
+      ],
+    },
+    aspect_ratio_key: {
+      chunks: [
+        {
+          mimetype: "text/plain",
+          data: btoa(aspectRatio),
+        },
+      ],
+    },
+  };
+  if (imageChunks.length > 0) {
+    executionInputs["input_image"] = {
+      chunks: imageChunks,
+    };
+  }
   const body = {
     planStep: {
       stepName: STEP_NAME,
       modelApi: API_NAME,
-      inputParameters: ["input_image", "input_instruction"],
+      inputParameters: input_parameters,
       systemPrompt: "",
       options: {
         disablePromptRewrite: disablePromptRewrite,
       },
       output: OUTPUT_NAME,
     },
-    execution_inputs: {
-      input_image: {
-        chunks: imageChunks,
-      },
-      input_instruction: {
-        chunks: [
-          {
-            mimetype: "text/plain",
-            data: encodedInstruction,
-          },
-        ],
-      },
-      aspect_ratio_key: {
-        chunks: [
-          {
-            mimetype: "text/plain",
-            data: btoa(aspectRatio),
-          },
-        ],
-      },
-    },
+    execution_inputs: executionInputs,
   } satisfies ExecuteStepRequest;
   // TODO(askerryryan): Remove once functional.
   console.log("request body");
@@ -95,7 +99,13 @@ async function callImageEdit(
   console.log("response");
   console.log(response);
   if (!ok(response)) {
-    return [toLLMContent("Image Editing failed: " + response.$error)];
+    return [
+      toLLMContent(
+        "Gemini image generation failed: " +
+          response.$error +
+          " Check your prompt to ensure it is valid and policy compliant."
+      ),
+    ];
   }
 
   const outContent = response.executionOutputs[OUTPUT_NAME];
@@ -147,7 +157,7 @@ async function callImageGen(
   } satisfies ExecuteStepRequest;
   const response = await executeStep(body);
   if (!ok(response)) {
-    return [toLLMContent("Image generation failed: " + response.$error)];
+    return [toLLMContent("Imagen image generation failed: " + response.$error)];
   }
 
   const outContent = response.executionOutputs[OUTPUT_NAME];
@@ -173,20 +183,23 @@ function promptExpander(
 ${instruction}
 
 Typical output format:
+"""
+Create the following image:
 
 ## Setting/background
 
-Detailed description of everything that is in the background of the image.
+<Detailed description of everything that is in the background of the image.>
 
 ## Foreground/focus
 
-Detailed description of object and/or shapes that are in the foreground and are the main focal point of the image
+<Detailed description of object and/or shapes that are in the foreground and are the main focal point of the image>
 
 ## Style
 
-Detailed description of the style, color scheme, vibe, kind of drawing (illustration, photorealistic, etc.)
+<Detailed description of the style, color scheme, vibe, kind of drawing (illustration, photorealistic, etc.)>
 
 You output will be fed directly into the text-to-image model, so it must be prompt only, no additional chit-chat
+"""
 `;
   return new GeminiPrompt({
     body: {

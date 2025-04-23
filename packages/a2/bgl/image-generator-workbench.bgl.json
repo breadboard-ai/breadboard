@@ -4,21 +4,20 @@
   "version": "0.0.1",
   "nodes": [
     {
-      "id": "a2-e1b460ea",
-      "type": "file://bgl/a2.bgl.json#module:image-generator",
+      "id": "c5bd377c-d2e3-4a48-b708-83365b2d49af",
+      "type": "embed://a2/generate.bgl.json#module:main",
       "metadata": {
+        "title": "Make Image With Expansion",
         "visual": {
           "x": -280,
-          "y": -420,
-          "collapsed": "expanded",
-          "outputHeight": 228
+          "y": -540
         },
-        "title": "Make Image With Expansion",
-        "logLevel": "info",
-        "userModified": true
+        "userModified": false
       },
       "configuration": {
-        "instruction": {
+        "config$ask-user": false,
+        "config$list": false,
+        "config$prompt": {
           "role": "user",
           "parts": [
             {
@@ -26,24 +25,26 @@
             }
           ]
         },
-        "p-aspect-ratio": "9:16"
+        "generation-mode": "image-gen",
+        "p-aspect-ratio": "1:1",
+        "p-disable-prompt-rewrite": false
       }
     },
     {
-      "id": "a2-cb8951a1",
-      "type": "file://bgl/a2.bgl.json#module:image-generator",
+      "id": "397a66e1-0fe8-4678-8370-406333548a48",
+      "type": "embed://a2/generate.bgl.json#module:main",
       "metadata": {
-        "title": "Make Image No Expansion",
+        "title": "Make Image With No Expansion",
         "visual": {
           "x": -280,
-          "y": -280,
-          "collapsed": "expanded",
-          "outputHeight": 88
+          "y": -360
         },
         "userModified": false
       },
       "configuration": {
-        "instruction": {
+        "config$ask-user": false,
+        "config$list": false,
+        "config$prompt": {
           "role": "user",
           "parts": [
             {
@@ -51,48 +52,45 @@
             }
           ]
         },
-        "p-disable-prompt-rewrite": true,
-        "p-aspect-ratio": "16:9"
+        "generation-mode": "image-gen",
+        "p-aspect-ratio": "1:1",
+        "p-disable-prompt-rewrite": false
       }
     },
     {
-      "id": "a2-2f9e3114",
-      "type": "file://bgl/a2.bgl.json#module:render-outputs",
+      "id": "8cf692ae-9633-468c-a0d7-e3656b56f217",
+      "type": "embed://a2/a2.bgl.json#module:render-outputs",
       "metadata": {
-        "title": "Render Outputs",
+        "title": "Display",
         "visual": {
-          "x": 60,
-          "y": -320,
-          "collapsed": "expanded",
-          "outputHeight": 88
-        },
-        "userModified": false
+          "x": 40,
+          "y": -440
+        }
       },
       "configuration": {
         "text": {
           "parts": [
             {
-              "text": "{{\"type\":\"in\",\"path\":\"a2-e1b460ea\",\"title\":\"Make Image With Expansion\"}} {{\"type\":\"in\",\"path\":\"a2-cb8951a1\",\"title\":\"Make Image No Expansion\"}}"
+              "text": "{{\"title\":\"Make Image With Expansion\",\"path\":\"c5bd377c-d2e3-4a48-b708-83365b2d49af\",\"type\":\"in\"}} {{\"title\":\"Make Image With No Expansion\",\"path\":\"397a66e1-0fe8-4678-8370-406333548a48\",\"type\":\"in\"}}"
             }
           ],
           "role": "user"
-        },
-        "p-render-mode": "Manual"
+        }
       }
     }
   ],
   "edges": [
     {
-      "from": "a2-e1b460ea",
-      "to": "a2-2f9e3114",
+      "from": "c5bd377c-d2e3-4a48-b708-83365b2d49af",
+      "to": "8cf692ae-9633-468c-a0d7-e3656b56f217",
       "out": "context",
-      "in": "p-z-a2-e1b460ea"
+      "in": "p-z-c5bd377c-d2e3-4a48-b708-83365b2d49af"
     },
     {
-      "from": "a2-cb8951a1",
-      "to": "a2-2f9e3114",
+      "from": "397a66e1-0fe8-4678-8370-406333548a48",
+      "to": "8cf692ae-9633-468c-a0d7-e3656b56f217",
       "out": "context",
-      "in": "p-z-a2-cb8951a1"
+      "in": "p-z-397a66e1-0fe8-4678-8370-406333548a48"
     }
   ],
   "metadata": {
@@ -127,7 +125,7 @@
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSIzNy4xMyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iOTkuNjciCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIxMjUuNzMiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CjxyZWN0IHg9IjEwLjAwIgogICAgICAgICAgICAgICAgICAgIHk9IjkwLjgwIgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI5OS42NyIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjcyLjA3IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgo8cmVjdCB4PSIxNDAuMzMiCiAgICAgICAgICAgICAgICAgICAgeT0iNzUuNDciCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9Ijk5LjY3IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNzIuMDciCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyMGEyMDIiIC8+CiAgICAgIAogICAgPC9zdmc+"
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI0NC40OCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTAzLjEwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMzkuNjYiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CjxyZWN0IHg9IjEwLjAwIgogICAgICAgICAgICAgICAgICAgIHk9IjExNS44NiIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTAzLjEwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMzkuNjYiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CjxyZWN0IHg9IjEzNi45MCIKICAgICAgICAgICAgICAgICAgICB5PSI4NC4xNCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTAzLjEwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMzkuNjYiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyZThiZTgiIC8+CiAgICAgIAogICAgPC9zdmc+"
     }
   }
 }
