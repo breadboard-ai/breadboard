@@ -718,7 +718,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     part.text = new Template(part.text).transform(callback);
   }
 
-  async #submit() {
+  async #submit(currentValues: InputValues | undefined) {
     if (!this.#formRef.value) {
       return;
     }
@@ -728,7 +728,12 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     const graphId = data.get("graph-id") as string | null;
     const nodeId = data.get("node-id") as string | null;
     if (nodeId !== null && graphId !== null) {
-      await this.#emitUpdatedNodeConfiguration(form, graphId, nodeId);
+      await this.#emitUpdatedNodeConfiguration(
+        currentValues,
+        form,
+        graphId,
+        nodeId
+      );
       return;
     }
     const assetPath = data.get("asset-path") as string | null;
@@ -773,6 +778,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
   }
 
   async #emitUpdatedNodeConfiguration(
+    currentValues: InputValues | undefined,
     form: HTMLFormElement,
     graphId: GraphIdentifier,
     nodeId: NodeIdentifier
@@ -801,7 +807,12 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       metadata.title = title.value;
     }
 
-    const ports = (await node.ports(this.values)).inputs.ports.filter(
+    // Because the rest of the function is async and the values of the form
+    // element may change as the selection changes, let's copy the form values,
+    // so that we have a stable set of values to work with.
+    const formValues = this.#copyFormValues(form);
+
+    const ports = (await node.ports(currentValues)).inputs.ports.filter(
       (port) => {
         if (port.star || port.name === "") return false;
         if (!isConfigurableBehavior(port.schema)) return false;
@@ -809,10 +820,8 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       }
     );
 
-    const { values, ins } = this.#takePortValues(form, ports);
+    const { values, ins } = this.#takePortValues(formValues, ports);
     const configuration = { ...node.configuration(), ...values };
-
-    this.values = configuration;
 
     this.dispatchEvent(
       new NodePartialUpdateEvent(
@@ -826,8 +835,21 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     );
   }
 
+  #copyFormValues(form: HTMLFormElement): InputValues {
+    const result: InputValues = {};
+    for (const input of form.querySelectorAll<HTMLInputElement>("[name]")) {
+      const name = input.getAttribute("name");
+      if (!name) {
+        continue;
+      }
+      const value = input.type === "checkbox" ? input.checked : input.value;
+      result[name] = value;
+    }
+    return result;
+  }
+
   #takePortValues(
-    form: HTMLFormElement,
+    formValues: InputValues,
     ports: PortLike[]
   ): { values: Record<string, NodeValue>; ins: TemplatePart[] } {
     const values: Record<string, NodeValue> = {};
@@ -843,33 +865,31 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     };
 
     for (const port of ports) {
-      const portEl = form.querySelector<HTMLInputElement>(
-        `[name="${port.name}"]`
-      );
+      const formValue = formValues[port.name];
       switch (port.schema.type) {
         case "array":
         case "object": {
           if (isLLMContentBehavior(port.schema)) {
-            const value = { text: portEl?.value ?? "" };
+            const value = { text: (formValue as string) ?? "" };
             this.#updateComponentParamsInText(value, transform);
             values[port.name] = { role: "user", parts: [value] };
           } else if (isLLMContentArrayBehavior(port.schema)) {
-            const value = { text: portEl?.value ?? "" };
+            const value = { text: (formValue as string) ?? "" };
             this.#updateComponentParamsInText(value, transform);
             values[port.name] = [{ role: "user", parts: [value] }];
           } else {
-            values[port.name] = portEl?.value;
+            values[port.name] = formValue;
           }
           break;
         }
 
         case "boolean": {
-          values[port.name] = portEl?.checked ?? false;
+          values[port.name] = formValue ?? false;
           break;
         }
 
         case "string": {
-          values[port.name] = portEl?.value ?? undefined;
+          values[port.name] = formValue ?? undefined;
           break;
         }
       }
@@ -973,7 +993,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           return;
         }
 
-        this.#submit();
+        this.#submit(this.values);
       }}
     ></bb-text-editor>`;
   }
@@ -1303,7 +1323,9 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       if (this.#edited) {
         // Autosave.
         this.#edited = false;
-        this.#submit();
+        // Because this function is async, let's pass it the current values,
+        // so that when they are set to undefined later, we still have them.
+        this.#submit(this.values);
       }
 
       // Reset the node value so that we don't receive incorrect port data.
