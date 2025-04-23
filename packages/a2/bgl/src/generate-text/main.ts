@@ -5,6 +5,7 @@
 import output from "@output";
 
 import type { SharedContext } from "./types";
+import { createDoneTool, createKeepChattingTool } from "./chat-tools";
 
 import { report } from "./a2/output";
 import { err, ok, defaultLLMContent, llm } from "./a2/utils";
@@ -72,31 +73,6 @@ ${postamble}`.asContent();
   }
 }
 
-class DoneTool {
-  #invoked = false;
-
-  public readonly name = "User_Says_Done";
-
-  get invoked() {
-    return this.#invoked;
-  }
-
-  public readonly declaration = {
-    name: this.name,
-    description:
-      "Call when the user indicates they are done with the conversation and are ready to move on",
-  };
-
-  public readonly handle: ToolHandle = {
-    tool: this.declaration,
-    url: "",
-    passContext: false,
-    invoke: async () => {
-      this.#invoked = true;
-    },
-  };
-}
-
 async function invoke({ context }: Inputs) {
   if (!context.description) {
     const msg = "No instruction supplied";
@@ -122,14 +98,21 @@ async function invoke({ context }: Inputs) {
 
   const template = new Template(context.description);
   const toolManager = new ToolManager(new ArgumentNameGenerator());
-  const doneTool = new DoneTool();
+  const doneTool = createDoneTool();
+  const keepChattingTool = createKeepChattingTool();
   const substituting = await template.substitute(
     context.params,
     async ({ path: url, instance }) => toolManager.addTool(url, instance)
   );
   const hasTools = toolManager.hasTools();
-  if (context.chat && hasTools) {
-    toolManager.addCustomTool(doneTool.name, doneTool.handle);
+  if (context.chat) {
+    toolManager.addCustomTool(doneTool.name, doneTool.handle());
+    if (!hasTools) {
+      toolManager.addCustomTool(
+        keepChattingTool.name,
+        keepChattingTool.handle()
+      );
+    }
   }
   if (!ok(substituting)) {
     return substituting;
@@ -182,18 +165,22 @@ Take a Deep Breath, read the instructions again, read the inputs again.
 Each instruction is crucial and must be executed with utmost care and attention to detail.`.asContent();
       const tools = toolManager.list();
       const inputs: GeminiInputs = { body: { contents, safetySettings } };
-      if (hasTools) {
+      if (context.chat) {
         inputs.body.tools = [...tools];
         inputs.body.toolConfig = { functionCallingConfig: { mode: "ANY" } };
       }
       const prompt = new GeminiPrompt(inputs, { toolManager });
       const result = await prompt.invoke();
       if (!ok(result)) return result;
-      if (prompt.calledTools) {
+      const calledTools =
+        prompt.calledTools || doneTool.invoked || keepChattingTool.invoked;
+      if (calledTools) {
         if (doneTool.invoked) {
           return result.last;
         }
-        contents.push(...result.all);
+        if (!keepChattingTool.invoked) {
+          contents.push(...result.all);
+        }
         const inputs: GeminiInputs = {
           body: { contents, systemInstruction, safetySettings },
         };

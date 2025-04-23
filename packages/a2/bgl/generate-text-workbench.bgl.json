@@ -7,7 +7,7 @@
       "id": "3740bd42-4f06-4856-8629-6d14912b834f",
       "type": "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
-        "title": "Generate Text from Weather",
+        "title": "Generate Text",
         "visual": {
           "x": 0,
           "y": -540
@@ -20,7 +20,7 @@
           "role": "user",
           "parts": [
             {
-              "text": "Tell me a story"
+              "text": "Tell me a story that is happening in Seattle. Use {{\"type\":\"tool\",\"path\":\"embed://a2/tools.bgl.json#module:get-weather\",\"title\":\"Get Weather\"}} tool to get the current weather"
             }
           ]
         },
