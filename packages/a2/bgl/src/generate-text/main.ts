@@ -167,7 +167,6 @@ Each instruction is crucial and must be executed with utmost care and attention 
       const inputs: GeminiInputs = { body: { contents, safetySettings } };
       if (context.chat) {
         inputs.body.tools = [...tools];
-        inputs.body.toolConfig = { functionCallingConfig: { mode: "ANY" } };
       }
       const prompt = new GeminiPrompt(inputs, { toolManager });
       const result = await prompt.invoke();
@@ -204,10 +203,8 @@ Each instruction is crucial and must be executed with utmost care and attention 
   }
 
   // 4) Handle chat.
-  let epilog;
   if (context.chat) {
     const last = result.at(-1)!;
-    epilog ??= "Please provide feedback on the draft";
     await output({
       schema: {
         type: "object",
@@ -217,19 +214,13 @@ Each instruction is crucial and must be executed with utmost care and attention 
             behavior: ["llm-content"],
             title: "Draft",
           },
-          "b-message": {
-            type: "string",
-            title: "",
-            format: "markdown",
-          },
         },
       },
       $metadata: {
         title: "Writer",
-        description: "Asking for feedback on a draft",
+        description: "Asking user",
         icon: "generative-text",
       },
-      "b-message": epilog,
       "a-product": last,
     });
 

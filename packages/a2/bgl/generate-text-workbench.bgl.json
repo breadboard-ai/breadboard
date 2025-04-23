@@ -9,8 +9,8 @@
       "metadata": {
         "title": "Generate Text",
         "visual": {
-          "x": 0,
-          "y": -540
+          "x": -180,
+          "y": -580
         },
         "userModified": false,
         "description": "Generates text based on the weather conditions for a given location. Uses the 'Get Weather' tool for weather information."
@@ -20,7 +20,7 @@
           "role": "user",
           "parts": [
             {
-              "text": "Tell me a story that is happening in Seattle. Use {{\"type\":\"tool\",\"path\":\"embed://a2/tools.bgl.json#module:get-weather\",\"title\":\"Get Weather\"}} tool to get the current weather"
+              "text": "Use {{\"type\":\"tool\",\"path\":\"embed://a2/tools.bgl.json#module:search-web\",\"title\":\"Search Web\"}} to find the perfect car for the user\n\nThe user wants a family SUV that would seat 5 people comfortably, very safety conscious"
             }
           ]
         },
