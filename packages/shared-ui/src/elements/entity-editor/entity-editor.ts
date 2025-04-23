@@ -1394,6 +1394,10 @@ function enumValue(value: SchemaEnumValue): EnumValue {
     enumVal.icon = value.icon;
   }
 
+  if (value.description) {
+    enumVal.description = value.description;
+  }
+
   return enumVal;
 }
 
