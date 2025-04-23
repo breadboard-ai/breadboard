@@ -594,3 +594,11 @@ export interface AssetEdge {
   nodeId: NodeIdentifier;
   assetPath: AssetPath;
 }
+
+export type EnumValue = {
+  title: string;
+  id: string;
+  icon?: string;
+  description?: string;
+  tag?: string; // Typically used for keyboard shortcuts.
+};
