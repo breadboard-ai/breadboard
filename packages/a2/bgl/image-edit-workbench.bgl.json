@@ -9,8 +9,8 @@
       "metadata": {
         "title": "Image Input",
         "visual": {
-          "x": -340,
-          "y": -280,
+          "x": -520,
+          "y": -320,
           "collapsed": "expanded",
           "outputHeight": 88
         },
@@ -34,8 +34,8 @@
       "metadata": {
         "title": "Generate",
         "visual": {
-          "x": 0,
-          "y": -280
+          "x": -180,
+          "y": -320
         },
         "userModified": false
       },
@@ -62,6 +62,62 @@
           ]
         }
       }
+    },
+    {
+      "id": "9b5501f0-318c-470d-88ab-1509c7bd571d",
+      "type": "embed://a2/generate.bgl.json#module:main",
+      "metadata": {
+        "title": "Generate",
+        "visual": {
+          "x": -180,
+          "y": -160
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "config$ask-user": false,
+        "config$list": false,
+        "config$prompt": {
+          "role": "user",
+          "parts": [
+            {
+              "text": ""
+            }
+          ]
+        },
+        "generation-mode": "image",
+        "instruction": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Image of a frog"
+            }
+          ]
+        },
+        "p-aspect-ratio": "1:1",
+        "p-disable-prompt-rewrite": false
+      }
+    },
+    {
+      "id": "bb342fa6-429d-4426-bbad-36bce824ffcc",
+      "type": "embed://a2/a2.bgl.json#module:render-outputs",
+      "metadata": {
+        "title": "Display",
+        "visual": {
+          "x": 140,
+          "y": -260
+        }
+      },
+      "configuration": {
+        "text": {
+          "parts": [
+            {
+              "text": "{{\"title\":\"Generate\",\"path\":\"39ffd7c5-9ce0-4173-bac4-f00d91d90a5c\",\"type\":\"in\"}} {{\"title\":\"Generate\",\"path\":\"9b5501f0-318c-470d-88ab-1509c7bd571d\",\"type\":\"in\"}}"
+            }
+          ],
+          "role": "user"
+        }
+      }
     }
   ],
   "edges": [
@@ -70,6 +126,18 @@
       "to": "39ffd7c5-9ce0-4173-bac4-f00d91d90a5c",
       "out": "context",
       "in": "context"
+    },
+    {
+      "from": "39ffd7c5-9ce0-4173-bac4-f00d91d90a5c",
+      "to": "bb342fa6-429d-4426-bbad-36bce824ffcc",
+      "out": "context",
+      "in": "p-z-39ffd7c5-9ce0-4173-bac4-f00d91d90a5c"
+    },
+    {
+      "from": "9b5501f0-318c-470d-88ab-1509c7bd571d",
+      "to": "bb342fa6-429d-4426-bbad-36bce824ffcc",
+      "out": "context",
+      "in": "p-z-9b5501f0-318c-470d-88ab-1509c7bd571d"
     }
   ],
   "metadata": {
@@ -105,7 +173,7 @@
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI2My45NyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iOTkuNjciCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI3Mi4wNyIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzJlOGJlOCIgLz4KPHJlY3QgeD0iMTQwLjMzIgogICAgICAgICAgICAgICAgICAgIHk9IjYzLjk3IgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI5OS42NyIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjM4LjMzIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI2Ny41MCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iNjUuMDAiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI0Ny4wMCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzJlOGJlOCIgLz4KPHJlY3QgeD0iOTUuMDAiCiAgICAgICAgICAgICAgICAgICAgeT0iNjcuNTAiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjY1LjAwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMjUuMDAiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CjxyZWN0IHg9Ijk1LjAwIgogICAgICAgICAgICAgICAgICAgIHk9IjEwNy41MCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iNjUuMDAiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIyNS4wMCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KPHJlY3QgeD0iMTc1LjAwIgogICAgICAgICAgICAgICAgICAgIHk9IjgyLjUwIgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI2NS4wMCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjI1LjAwIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMmU4YmU4IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
     }
   }
 }
