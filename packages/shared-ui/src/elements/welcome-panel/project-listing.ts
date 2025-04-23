@@ -43,7 +43,13 @@ import { Task, TaskStatus } from "@lit/task";
 
 const MODE_KEY = "bb-project-listing-mode";
 const OVERFLOW_MENU_CLEARANCE = 4;
-const FORCE_NO_BOARDS = new URL(document.URL).searchParams.has("forceNoBoards");
+
+const URL_PARAMS = new URL(document.URL).searchParams;
+const FORCE_NO_BOARDS = URL_PARAMS.has("forceNoBoards");
+const SHOW_GOOGLE_DRIVE_DEBUG_PANEL = URL_PARAMS.has("driveDebug");
+if (SHOW_GOOGLE_DRIVE_DEBUG_PANEL) {
+  import("../google-drive/google-drive-debug-panel.js");
+}
 
 @customElement("bb-project-listing")
 export class ProjectListing extends LitElement {
@@ -712,7 +718,8 @@ export class ProjectListing extends LitElement {
       this.selectedLocation
     );
 
-    return html` <div id="wrapper" ${ref(this.#wrapperRef)}>
+    return html`
+      <div id="wrapper" ${ref(this.#wrapperRef)}>
         <section id="hero">
           <h1>
             <span class="gradient"
@@ -1054,7 +1061,11 @@ export class ProjectListing extends LitElement {
           </div>`
         : nothing}
 
-      <div id="app-version">${this.version} (${this.gitCommitHash})</div>`;
+      <div id="app-version">${this.version} (${this.gitCommitHash})</div>
+      ${SHOW_GOOGLE_DRIVE_DEBUG_PANEL
+        ? html`<bb-google-drive-debug-panel></bb-google-drive-debug-panel>`
+        : nothing}
+    `;
   }
 
   #renderCreateNewButton() {

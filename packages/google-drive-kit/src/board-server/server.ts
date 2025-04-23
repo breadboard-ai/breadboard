@@ -126,7 +126,7 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
     super();
 
     this.url = configuration.url;
-    this.projects = this.#refreshProjects();
+    this.projects = this.refreshProjects();
     this.kits = configuration.kits;
     this.users = configuration.users;
     this.secrets = configuration.secrets;
@@ -141,8 +141,8 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
     this.#projects = await this.projects;
   }
 
-  async #refreshProjects(): Promise<BoardServerProject[]> {
-    const folderId = await this.#findOrCreateUserRootFolder();
+  async refreshProjects(): Promise<BoardServerProject[]> {
+    const folderId = await this.findOrCreateFolder();
     const accessToken = await getAccessToken(this.vendor);
     const query =
       `"${folderId}" in parents` +
@@ -195,6 +195,33 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
       console.warn(err);
       return [];
     }
+  }
+
+  async listSharedBoards(): Promise<string[]> {
+    const accessToken = await getAccessToken(this.vendor);
+    if (!accessToken) {
+      throw new Error("No folder ID or access token");
+    }
+    const query =
+      `mimeType = "application/json"` +
+      ` and sharedWithMe=true` +
+      ` and trashed=false`;
+    const api = new Files(accessToken);
+    const fileRequest = await fetch(api.makeQueryRequest(query));
+    const response: DriveFileQuery = await fileRequest.json();
+    return response.files.map((file) => file.id);
+  }
+
+  async listAssets(): Promise<string[]> {
+    const accessToken = await getAccessToken(this.vendor);
+    if (!accessToken) {
+      throw new Error("No folder ID or access token");
+    }
+    const query = `(mimeType contains 'image/')` + ` and trashed=false`;
+    const api = new Files(accessToken);
+    const fileRequest = await fetch(api.makeQueryRequest(query));
+    const response: DriveFileQuery = await fileRequest.json();
+    return response.files.map((file) => file.id);
   }
 
   getAccess(_url: URL, _user: User): Promise<Permission> {
@@ -297,7 +324,7 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
   ): Promise<{ result: boolean; error?: string; url?: string }> {
     // First create the file, then save.
 
-    const parent = await this.#findOrCreateUserRootFolder();
+    const parent = await this.findOrCreateFolder();
     const fileName = url.href.replace(`${this.url.href}/`, "");
     const accessToken = await getAccessToken(this.vendor);
 
@@ -318,7 +345,7 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
       const file: DriveFile = await response.json();
       const updatedUrl = `${GoogleDriveBoardServer.PROTOCOL}/${file.id}`;
 
-      this.projects = this.#refreshProjects();
+      this.projects = this.refreshProjects();
 
       console.log("Google Drive: Created new board", updatedUrl);
       return { result: true, url: updatedUrl };
@@ -335,7 +362,7 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
       const api = new Files(accessToken!);
       await fetch(api.makeDeleteRequest(file));
 
-      this.projects = this.#refreshProjects();
+      this.projects = this.refreshProjects();
 
       return { result: true };
     } catch (err) {
@@ -419,7 +446,7 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
     throw new Error("Method not implemented.");
   }
 
-  async #findOrCreateUserRootFolder(): Promise<string> {
+  async findOrCreateFolder(): Promise<string> {
     const accessToken = await getAccessToken(this.vendor);
     if (!accessToken) {
       throw new Error("No access token");
