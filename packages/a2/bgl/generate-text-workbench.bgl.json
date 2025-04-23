@@ -7,10 +7,10 @@
       "id": "3740bd42-4f06-4856-8629-6d14912b834f",
       "type": "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
-        "title": "Generate Text from Weather",
+        "title": "Generate Text",
         "visual": {
-          "x": 0,
-          "y": -540
+          "x": -180,
+          "y": -580
         },
         "userModified": false,
         "description": "Generates text based on the weather conditions for a given location. Uses the 'Get Weather' tool for weather information."
@@ -20,7 +20,7 @@
           "role": "user",
           "parts": [
             {
-              "text": "Tell me a story"
+              "text": "Use {{\"type\":\"tool\",\"path\":\"embed://a2/tools.bgl.json#module:search-web\",\"title\":\"Search Web\"}} to find the perfect car for the user\n\nThe user wants a family SUV that would seat 5 people comfortably, very safety conscious"
             }
           ]
         },
