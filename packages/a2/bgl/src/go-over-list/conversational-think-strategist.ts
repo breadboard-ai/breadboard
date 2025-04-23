@@ -22,7 +22,7 @@ export { ConversationalThinkStrategist };
 const OVERRUN_BUFFER = 10;
 
 class ConversationalThinkStrategist implements Strategist {
-  readonly name = "Conversational Think as I go";
+  readonly name = "[Alpha] Conversational Think as I go";
   readonly tasks: string[] = [];
   readonly extraPlannerPrompt = `
 If the objective calls to organize or summarize results at the end, do not add that as a step.
