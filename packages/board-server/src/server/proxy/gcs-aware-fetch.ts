@@ -104,6 +104,8 @@ function maybeAddGcsOutputConfig(
 ): InputValues {
   const apiRequiresGcs: string[] = [
     "image_generation",
+    "ai_image_editing",
+    "ai_image_tool",
     "tts",
     "generate_video",
   ];
