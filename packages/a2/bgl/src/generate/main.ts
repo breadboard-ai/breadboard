@@ -24,6 +24,10 @@ type DescribeInputs = {
   asType?: boolean;
 };
 
+const PROMPT_PORT = "config$prompt";
+const ASK_USER_PORT = "config$ask-user";
+const LIST_PORT = "config$list";
+
 const MODES = [
   {
     id: "text",
@@ -31,6 +35,11 @@ const MODES = [
     title: "Gemini 2.0 Flash",
     description: "For everyday tasks, plus more",
     icon: "generative-text",
+    map: new Map([
+      [PROMPT_PORT, "description"],
+      [ASK_USER_PORT, "p-chat"],
+      [LIST_PORT, "p-list"],
+    ]),
   },
   {
     id: "think",
@@ -38,6 +47,10 @@ const MODES = [
     title: "Plan and Execute with Gemini 2.0 Flash",
     description: "Plans and executes complex tasks",
     icon: "generative",
+    map: new Map([
+      [PROMPT_PORT, "plan"],
+      [LIST_PORT, "z-list"],
+    ]),
   },
   {
     id: "image-gen",
@@ -45,6 +58,7 @@ const MODES = [
     title: "Imagen 3",
     description: "Generates images from text",
     icon: "generative-image",
+    map: new Map([[PROMPT_PORT, "instruction"]]),
   },
   {
     id: "image",
@@ -52,6 +66,7 @@ const MODES = [
     title: "Gemini 2.0 Flash: Image Generation",
     description: "Generates images from text and images",
     icon: "generative-image",
+    map: new Map([[PROMPT_PORT, "instruction"]]),
   },
   {
     id: "audio",
@@ -59,6 +74,7 @@ const MODES = [
     title: "AudioLM",
     description: "Generates speech from text",
     icon: "generative-audio",
+    map: new Map([[PROMPT_PORT, "text"]]),
   },
   {
     id: "video",
@@ -66,6 +82,7 @@ const MODES = [
     title: "Veo 2",
     description: "Generates videos from text and images",
     icon: "generative-video",
+    map: new Map([[PROMPT_PORT, "instruction"]]),
   },
 ] as const;
 
@@ -73,32 +90,10 @@ const DEFAULT_MODE = MODES[0];
 
 const modeMap = new Map(MODES.map((mode) => [mode.id, mode]));
 
-const PROMPT_PORT = "config$prompt";
-const ASK_USER_PORT = "config$ask-user";
-const LIST_PORT = "config$list";
-
 // Maps the prompt port to various names of the other ports.
-const portMapForward = new Map<ModeId, Map<string, string>>([
-  [
-    MODES[0].id,
-    new Map([
-      [PROMPT_PORT, "description"],
-      [ASK_USER_PORT, "p-chat"],
-      [LIST_PORT, "p-list"],
-    ]),
-  ],
-  [
-    MODES[1].id,
-    new Map([
-      [PROMPT_PORT, "plan"],
-      [LIST_PORT, "z-list"],
-    ]),
-  ],
-  [MODES[2].id, new Map([[PROMPT_PORT, "instruction"]])],
-  [MODES[3].id, new Map([[PROMPT_PORT, "instruction"]])],
-  [MODES[4].id, new Map([[PROMPT_PORT, "text"]])],
-  [MODES[5].id, new Map([[PROMPT_PORT, "instruction"]])],
-]);
+const portMapForward = new Map<ModeId, Map<string, string>>(
+  MODES.map((value) => [value.id, value.map])
+);
 
 const portMapReverse = new Map(
   Array.from(portMapForward.entries()).map(([mode, map]) => {
@@ -144,6 +139,15 @@ function getMode(modeId: ModeId | undefined): GenerationModes {
 async function invoke({ "generation-mode": mode, ...rest }: Inputs) {
   const { url: $board, id } = getMode(mode);
   return await invokeGraph({ $board, ...forwardPorts(id, rest) });
+}
+
+function modesToEnum(): SchemaEnumValue[] {
+  return MODES.map((mode) => ({
+    id: mode.id,
+    title: mode.title,
+    description: mode.description,
+    icon: mode.icon,
+  }));
 }
 
 async function describe({
@@ -194,7 +198,7 @@ async function describe({
         "generation-mode": {
           type: "string",
           title: "Mode",
-          enum: MODES as unknown as SchemaEnumValue[],
+          enum: modesToEnum(),
           behavior: ["config", "hint-preview", "reactive", "hint-controller"],
         },
         context: {
