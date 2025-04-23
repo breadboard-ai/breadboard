@@ -35,7 +35,11 @@ import { styleMap } from "lit/directives/style-map.js";
 import { sideBoardRuntime } from "../../contexts/side-board-runtime.js";
 import { SideBoardRuntime } from "../../sideboards/types.js";
 import { classMap } from "lit/directives/class-map.js";
-import { isInlineData, isTextCapabilityPart } from "@google-labs/breadboard";
+import {
+  isInlineData,
+  isStoredData,
+  isTextCapabilityPart,
+} from "@google-labs/breadboard";
 import { map } from "lit/directives/map.js";
 
 @customElement("bb-app-theme-creator")
@@ -508,7 +512,10 @@ export class AppThemeCreator extends LitElement {
     const [splashScreen, colorsRaw] = response.parts;
     console.log(splashScreen, colorsRaw);
 
-    if (!isInlineData(splashScreen) || !isTextCapabilityPart(colorsRaw)) {
+    if (
+      !(isInlineData(splashScreen) || isStoredData(splashScreen)) ||
+      !isTextCapabilityPart(colorsRaw)
+    ) {
       throw new Error("Invalid model response");
     }
 
