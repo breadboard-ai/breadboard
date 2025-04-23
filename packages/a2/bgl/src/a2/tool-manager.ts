@@ -23,6 +23,7 @@ export type ToolHandle = {
   url: string;
   passContext: boolean;
   connector?: ConnectorManager;
+  invoke?: (args: Record<string, unknown>) => Promise<Outcome<void>>;
 };
 
 export type ConnectorHandle = {
@@ -147,6 +148,10 @@ class ToolManager {
     return description.title || name;
   }
 
+  addCustomTool(name: string, handle: ToolHandle) {
+    this.tools.set(name, handle);
+  }
+
   async addTool(url: string, instance?: string): Promise<Outcome<string>> {
     if (instance) {
       // This is a connector.
@@ -257,15 +262,19 @@ class ToolManager {
         const { args, name } = part.functionCall;
         const handle = this.tools.get(name);
         if (handle) {
-          const { url, passContext, connector } = handle;
-          if (connector) {
-            await connector.invokeTool(
-              name,
-              args as Record<string, unknown>,
-              callTool
-            );
+          if (handle.invoke) {
+            await handle.invoke(args as Record<string, unknown>);
           } else {
-            await callTool(url, part.functionCall.args, passContext);
+            const { url, passContext, connector } = handle;
+            if (connector) {
+              await connector.invokeTool(
+                name,
+                args as Record<string, unknown>,
+                callTool
+              );
+            } else {
+              await callTool(url, part.functionCall.args, passContext);
+            }
           }
         }
       }

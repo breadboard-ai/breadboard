@@ -208,7 +208,7 @@ class Template {
     } else if (isTool(param)) {
       const substituted = await whenTool(param);
       if (!ok(substituted)) return substituted;
-      if (!substituted) return param.title;
+      return substituted || param.title;
     } else if (isParameter(param)) {
       const path: FileSystemPath = `/env/parameters/${param.path}`;
       const reading = await readFile({ path });
