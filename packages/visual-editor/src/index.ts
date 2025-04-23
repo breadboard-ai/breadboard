@@ -22,6 +22,7 @@ import { map } from "lit/directives/map.js";
 import { customElement, property, state } from "lit/decorators.js";
 import { LitElement, html, HTMLTemplateResult, nothing } from "lit";
 import {
+  asBase64,
   createRunObserver,
   GraphDescriptor,
   BoardServer,
@@ -3777,6 +3778,16 @@ export class Main extends LitElement {
 
                 // TODO: Show some status.
                 if (evt.theme.splashScreen) {
+                  if (isStoredData(evt.theme.splashScreen)) {
+                    // Fetch the stored data so that we can add to the graph.
+                    const response = await fetch(
+                      evt.theme.splashScreen.storedData.handle
+                    );
+                    const imgBlob = await response.blob();
+                    const data = await asBase64(imgBlob);
+                    const mimeType = imgBlob.type;
+                    evt.theme.splashScreen = { inlineData: { data, mimeType } };
+                  }
                   const data: LLMContent[] = [
                     {
                       role: "user",
