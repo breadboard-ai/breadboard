@@ -279,6 +279,8 @@ export class ItemSelect extends LitElement {
         }}
         @beforetoggle=${(evt: ToggleEvent) => {
           this.#highlighted = this.#selected;
+          this.requestUpdate();
+
           if (evt.newState === "closed") {
             return;
           }

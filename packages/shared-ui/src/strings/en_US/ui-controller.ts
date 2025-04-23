@@ -19,6 +19,9 @@ export default {
   },
 
   // Statuses.
+  STATUS_COPIED_TO_CLIPBOARD: {
+    str: "App URL copied to clipboard",
+  },
 
   // Labels.
   LABEL_SECTION_NAV_CHAT: {
@@ -69,7 +72,6 @@ export default {
   LABEL_SHARE_DESCRIPTION: {
     str: "Share this URL with friends",
   },
-
   LABEL_TOGGLE_EXPAND: {
     str: "Toggle expand",
   },

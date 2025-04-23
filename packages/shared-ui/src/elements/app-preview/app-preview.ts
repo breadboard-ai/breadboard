@@ -8,11 +8,10 @@ import { GraphDescriptor, LLMContent } from "@breadboard-ai/types";
 import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("AppPreview");
 
-import { LitElement, PropertyValues, html, nothing } from "lit";
+import { LitElement, PropertyValues, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
   BoardServer,
-  type EditHistory,
   InspectableRun,
   InspectableRunEvent,
   isInlineData,
@@ -20,11 +19,7 @@ import {
 } from "@google-labs/breadboard";
 
 import { styles as appPreviewStyles } from "./app-preview.styles.js";
-import {
-  ThemeEditRequestEvent,
-  ToastEvent,
-  ToastType,
-} from "../../events/events.js";
+import { ThemeEditRequestEvent } from "../../events/events.js";
 import {
   AppTemplate,
   AppTemplateOptions,
@@ -35,7 +30,6 @@ import {
 } from "../../types/types.js";
 import { getGlobalColor } from "../../utils/color.js";
 import { classMap } from "lit/directives/class-map.js";
-import { icons } from "../../styles/icons.js";
 
 const primaryColor = getGlobalColor("--bb-ui-700");
 const secondaryColor = getGlobalColor("--bb-ui-400");
@@ -124,16 +118,7 @@ export class AppPreview extends LitElement {
   @state()
   accessor _originalTheme: AppTheme | null = null;
 
-  @state()
-  accessor _outputMode: "app" | "activity" = "app";
-
-  @property({ attribute: false })
-  accessor history: EditHistory | undefined | null = undefined;
-
-  @state()
-  accessor #showEditHistory = false;
-
-  static styles = [icons, appPreviewStyles];
+  static styles = appPreviewStyles;
 
   #loadingTemplate = false;
   #appTemplate: AppTemplate | null = null;
@@ -434,205 +419,27 @@ export class AppPreview extends LitElement {
 
     return html`
       <div id="container">
-        ${this.#renderControls()} ${this.#renderContent()}
-      </div>
-    `;
-  }
-
-  #renderControls() {
-    return html`
-      <div id="controls">
-        <div>
+        <div
+          id="content"
+          class=${classMap({ active: this.#appTemplate !== null })}
+        >
+          ${this.#template}
+        </div>
+        <div id="theme-edit">
           <button
-            id="app"
-            ?disabled=${this._outputMode === "app"}
-            class=${classMap({ [this._outputMode]: true })}
+            id="designer"
+            ?disabled=${this.#loadingTemplate}
             @click=${() => {
-              this._outputMode = "app";
+              this.dispatchEvent(
+                new ThemeEditRequestEvent(
+                  this.#appTemplate?.additionalOptions ?? null
+                )
+              );
             }}
           >
-            App view
-          </button>
-
-          <button
-            id="activity"
-            ?disabled=${this._outputMode === "activity"}
-            class=${classMap({ [this._outputMode]: true })}
-            @click=${() => {
-              this._outputMode = "activity";
-              this.#showEditHistory = false;
-            }}
-          >
-            Activity
+            Edit Theme
           </button>
         </div>
-
-        <button
-          id="share"
-          ?disabled=${this.#loadingTemplate}
-          @click=${async () => {
-            const url = await this.#deriveAppURL();
-            if (!url) {
-              return;
-            }
-
-            await navigator.clipboard.writeText(url.href);
-
-            this.dispatchEvent(
-              new ToastEvent(
-                Strings.from("STATUS_COPIED_TO_CLIPBOARD"),
-                ToastType.INFORMATION
-              )
-            );
-          }}
-        >
-          URL
-        </button>
-      </div>
-    `;
-  }
-
-  #renderContent() {
-    switch (this._outputMode) {
-      case "app":
-        return this.#renderApp();
-      case "activity":
-        return [
-          this.#renderEditHistoryButtons(),
-          this.#showEditHistory
-            ? this.#renderEditHistory()
-            : this.#renderActivity(),
-        ];
-      default: {
-        console.error(
-          "Unhandled output mode",
-          this._outputMode satisfies never
-        );
-        return nothing;
-      }
-    }
-  }
-
-  #renderApp() {
-    return html`
-      <div
-        id="content"
-        class=${classMap({ active: this.#appTemplate !== null })}
-      >
-        ${this.#template}
-      </div>
-      <div id="theme-edit">
-        <button
-          id="designer"
-          ?disabled=${this.#loadingTemplate}
-          @click=${() => {
-            this.dispatchEvent(
-              new ThemeEditRequestEvent(
-                this.#appTemplate?.additionalOptions ?? null
-              )
-            );
-          }}
-        >
-          Edit Theme
-        </button>
-      </div>
-    `;
-  }
-
-  #renderEditHistoryButtons() {
-    return html`
-      <div id="edit-history-buttons">
-        <button
-          id="toggle-edit-history"
-          aria-label=${this.#showEditHistory
-            ? "Close edit history"
-            : "Open edit history"}
-          @click=${this.#onClickToggleEditHistory}
-        >
-          <span class="g-icon">history_2</span>
-          Edit history
-        </button>
-
-        ${this.#showEditHistory
-          ? html`
-              <button
-                id="close-edit-history"
-                aria-label="Close edit history"
-                @click=${this.#onClickCloseEditHistory}
-              >
-                <span class="g-icon">close</span>
-              </button>
-            `
-          : nothing}
-      </div>
-    `;
-  }
-
-  #onClickToggleEditHistory() {
-    this.#showEditHistory = !this.#showEditHistory;
-  }
-
-  #onClickCloseEditHistory() {
-    this.#showEditHistory = false;
-  }
-
-  #renderEditHistory() {
-    return html`
-      <bb-edit-history-panel .history=${this.history}></bb-edit-history-panel>
-    `;
-  }
-
-  #renderActivity() {
-    const run = this.run ?? null;
-    const events = run?.events ?? [];
-    const eventPosition = events.length - 1;
-
-    const hideLast = this.status === STATUS.STOPPED;
-    const graphUrl = this.graph?.url ? new URL(this.graph.url) : null;
-    const nextNodeId = this.topGraphResult?.currentNode?.descriptor.id ?? null;
-
-    return html`
-      <div id="board-activity-container">
-        <bb-board-activity
-          class=${classMap({ collapsed: this.debugEvent !== null })}
-          .graphUrl=${graphUrl}
-          .run=${run}
-          .events=${events}
-          .eventPosition=${eventPosition}
-          .showExtendedInfo=${false}
-          .settings=${this.settings}
-          .showLogTitle=${false}
-          .logTitle=${"Run"}
-          .hideLast=${hideLast}
-          .boardServers=${this.boardServers}
-          .showDebugControls=${false}
-          .nextNodeId=${nextNodeId}
-          @pointerdown=${(evt: PointerEvent) => {
-            const [top] = evt.composedPath();
-            if (!(top instanceof HTMLElement) || !top.dataset.messageId) {
-              return;
-            }
-            evt.stopImmediatePropagation();
-            const id = top.dataset.messageId;
-            const event = run?.getEventById(id);
-            if (!event) {
-              // TODO: Offer the user more information.
-              console.warn(`Unable to find event with ID "${id}"`);
-              return;
-            }
-            if (event.type !== "node") {
-              return;
-            }
-
-            this.debugEvent = event;
-          }}
-          name=${Strings.from("LABEL_PROJECT")}
-        ></bb-board-activity>
-        ${this.debugEvent
-          ? html`<bb-event-details
-              .event=${this.debugEvent}
-            ></bb-event-details>`
-          : nothing}
       </div>
     `;
   }

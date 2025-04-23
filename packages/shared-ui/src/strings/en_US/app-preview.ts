@@ -22,9 +22,6 @@ export default {
   STATUS_LOADING_APP_PREVIEW: {
     str: "Loading App Preview...",
   },
-  STATUS_COPIED_TO_CLIPBOARD: {
-    str: "App URL copied to clipboard",
-  },
 
   // Labels.
   LABEL_WAITING_MESSAGE: {

@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as StringsHelper from "../../strings/helper.js";
+const Strings = StringsHelper.forSection("UIController");
+
 import {
   BoardServer,
   EditHistory,
@@ -47,6 +50,8 @@ import {
   CommandsSetSwitchEvent,
   NodeConfigurationUpdateRequestEvent,
   ThemeEditRequestEvent,
+  ToastEvent,
+  ToastType,
   WorkspaceSelectionStateEvent,
 } from "../../events/events.js";
 import {
@@ -65,6 +70,7 @@ import {
   createEmptyWorkspaceSelectionState,
   createWorkspaceSelectionChangeId,
 } from "../../utils/workspace.js";
+import { icons } from "../../styles/icons.js";
 
 const SIDE_ITEM_KEY = "bb-ui-controller-side-nav-item";
 
@@ -135,7 +141,7 @@ export class UI extends LitElement {
 
   @property()
   set sideNavItem(
-    item: "console" | "capabilities" | "edit-history" | "editor"
+    item: "activity" | "capabilities" | "edit-history" | "editor" | "app-view"
   ) {
     if (item === this.#sideNavItem) {
       return;
@@ -207,12 +213,19 @@ export class UI extends LitElement {
   @state()
   accessor autoFocusEditor = false;
 
+  @state()
+  accessor #showEditHistory = false;
+
   #autoFocusEditorOnRender = false;
-  #sideNavItem: "console" | "capabilities" | "edit-history" | "editor" =
-    "editor";
+  #sideNavItem:
+    | "activity"
+    | "capabilities"
+    | "edit-history"
+    | "editor"
+    | "app-view" = "editor";
   #moduleEditorRef: Ref<ModuleEditor> = createRef();
 
-  static styles = uiControllerStyles;
+  static styles = [icons, uiControllerStyles];
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -221,8 +234,8 @@ export class UI extends LitElement {
       | typeof this.sideNavItem
       | null;
 
-    if (!sideNavItem || (sideNavItem as unknown as "app-view") === "app-view") {
-      this.sideNavItem = "editor";
+    if (!sideNavItem) {
+      this.sideNavItem = "app-view";
     } else {
       this.sideNavItem = sideNavItem;
     }
@@ -259,6 +272,138 @@ export class UI extends LitElement {
       this.#autoFocusEditorOnRender = true;
       this.autoFocusEditor = false;
     }
+
+    let newSelectionCount = 0;
+    if (this.selectionState) {
+      newSelectionCount = [...this.selectionState.selectionState.graphs].reduce(
+        (prev, [, graph]) => {
+          return (
+            prev +
+            graph.assets.size +
+            graph.comments.size +
+            graph.nodes.size +
+            graph.references.size
+          );
+        },
+        0
+      );
+    }
+
+    if (newSelectionCount === 0 && this.sideNavItem === "editor") {
+      this.sideNavItem = "app-view";
+    }
+
+    if (
+      newSelectionCount > 0 &&
+      this.sideNavItem !== "editor" &&
+      !changedProperties.has("sideNavItem")
+    ) {
+      this.sideNavItem = "editor";
+    }
+  }
+
+  async #deriveAppURL() {
+    if (!this.graph?.url) {
+      return;
+    }
+
+    for (const server of this.boardServers) {
+      const graphUrl = new URL(this.graph.url);
+      const capabilities = server.canProvide(graphUrl);
+      if (!capabilities) {
+        continue;
+      }
+
+      if (server.extendedCapabilities().preview) {
+        return server.preview(graphUrl);
+      }
+    }
+
+    return null;
+  }
+
+  #renderEditHistoryButtons() {
+    return html`
+      <div id="edit-history-buttons">
+        <button
+          id="toggle-edit-history"
+          aria-label=${this.#showEditHistory
+            ? "Close edit history"
+            : "Open edit history"}
+          @click=${this.#onClickToggleEditHistory}
+        >
+          <span class="g-icon">history_2</span>
+          Edit history
+        </button>
+
+        ${this.#showEditHistory
+          ? html`
+              <button
+                id="close-edit-history"
+                aria-label="Close edit history"
+                @click=${this.#onClickCloseEditHistory}
+              >
+                <span class="g-icon">close</span>
+              </button>
+            `
+          : nothing}
+      </div>
+    `;
+  }
+
+  #renderActivity() {
+    const run = this.runs?.[0] ?? null;
+    const events = run?.events ?? [];
+    const eventPosition = events.length - 1;
+
+    const hideLast = this.status === STATUS.STOPPED;
+    const graphUrl = this.graph?.url ? new URL(this.graph.url) : null;
+    const nextNodeId = this.topGraphResult?.currentNode?.descriptor.id ?? null;
+
+    return html`
+      <div id="board-activity-container">
+        <bb-board-activity
+          class=${classMap({ collapsed: this.debugEvent !== null })}
+          .graphUrl=${graphUrl}
+          .run=${run}
+          .events=${events}
+          .eventPosition=${eventPosition}
+          .showExtendedInfo=${false}
+          .settings=${this.settings}
+          .showLogTitle=${false}
+          .logTitle=${"Run"}
+          .hideLast=${hideLast}
+          .boardServers=${this.boardServers}
+          .showDebugControls=${false}
+          .nextNodeId=${nextNodeId}
+          @pointerdown=${(evt: PointerEvent) => {
+            const [top] = evt.composedPath();
+            if (!(top instanceof HTMLElement) || !top.dataset.messageId) {
+              return;
+            }
+            evt.stopImmediatePropagation();
+            const id = top.dataset.messageId;
+            const event = run?.getEventById(id);
+            if (!event) {
+              // TODO: Offer the user more information.
+              console.warn(`Unable to find event with ID "${id}"`);
+              return;
+            }
+            if (event.type !== "node") {
+              return;
+            }
+
+            this.debugEvent = event;
+          }}
+          name=${Strings.from("LABEL_PROJECT")}
+        ></bb-board-activity>
+        ${this.debugEvent
+          ? html`<bb-event-details
+              .event=${this.debugEvent}
+            ></bb-event-details>`
+          : nothing}
+      </div>
+    `;
   }
 
   render() {
@@ -495,6 +640,7 @@ export class UI extends LitElement {
           themeHash,
           selectionCount,
           this.boardServers,
+          this.sideNavItem,
         ],
         () => {
           let topGraphResult = this.topGraphResult;
@@ -583,7 +729,7 @@ export class UI extends LitElement {
 
           return html`<bb-app-preview
             class=${classMap({
-              active: this.sideNavItem === "editor" && selectionCount === 0,
+              active: this.sideNavItem === "app-view",
             })}
             .graph=${this.graph}
             .themeHash=${themeHash}
@@ -606,7 +752,7 @@ export class UI extends LitElement {
       )}`,
       html`<bb-entity-editor
         class=${classMap({
-          active: this.sideNavItem === "editor" && selectionCount > 0,
+          active: this.sideNavItem === "editor",
         })}
         .autoFocus=${this.#autoFocusEditorOnRender}
         .graph=${graph}
@@ -618,6 +764,17 @@ export class UI extends LitElement {
         .readOnly=${this.readOnly}
         .projectState=${this.projectState}
       ></bb-entity-editor>`,
+      html`<div
+        id="history-activity-container"
+        class=${classMap({
+          active: this.sideNavItem === "activity",
+        })}
+      >
+        ${this.#renderEditHistoryButtons()}
+        ${this.#showEditHistory
+          ? this.#renderEditHistory()
+          : this.#renderActivity()}
+      </div>`,
     ];
 
     let assetOrganizer: HTMLTemplateResult | symbol = nothing;
@@ -656,19 +813,70 @@ export class UI extends LitElement {
           this.showThemeDesigner = false;
         }}
       >
-      <div id="graph-container" slot="slot-0">
-        <bb-edit-history-overlay .history=${this.history}>
-        </bb-edit-history-overlay>
-        ${graphEditor}
-        ${themeEditor}
-      </div>
-      <div id="side-nav" slot="slot-1">
-        <div id="side-nav-content">
-        ${sideNavItem}
+        <div id="graph-container" slot="slot-0">
+          <bb-edit-history-overlay .history=${this.history}>
+          </bb-edit-history-overlay>
+          ${graphEditor} ${themeEditor}
         </div>
-      </div>
-      </bb-splitter> ${modules.length > 0 ? moduleEditor : nothing}
-    </div>`;
+        <div id="side-nav" slot="slot-1">
+          <div id="side-nav-controls">
+            <div id="side-nav-controls-left">
+              <button
+                ?disabled=${this.sideNavItem === "app-view"}
+                @click=${() => {
+                  this.sideNavItem = "app-view";
+                }}
+              >
+                App view
+              </button>
+              <button
+                ?disabled=${this.sideNavItem === "activity"}
+                @click=${() => {
+                  this.sideNavItem = "activity";
+                }}
+              >
+                Activity
+              </button>
+            </div>
+            <div id="side-nav-controls-right">
+              ${selectionCount > 0
+                ? html`<button
+                    ?disabled=${this.sideNavItem === "editor"}
+                    @click=${() => {
+                      this.sideNavItem = "editor";
+                    }}
+                  >
+                    Editor
+                  </button>`
+                : nothing}
+
+              <button
+                id="share"
+                @click=${async () => {
+                  const url = await this.#deriveAppURL();
+                  if (!url) {
+                    return;
+                  }
+
+                  await navigator.clipboard.writeText(url.href);
+
+                  this.dispatchEvent(
+                    new ToastEvent(
+                      Strings.from("STATUS_COPIED_TO_CLIPBOARD"),
+                      ToastType.INFORMATION
+                    )
+                  );
+                }}
+              >
+                URL
+              </button>
+            </div>
+          </div>
+          <div id="side-nav-content">${sideNavItem}</div>
+        </div>
+      </bb-splitter>
+      ${modules.length > 0 ? moduleEditor : nothing}
+    `;
 
     return graph
       ? html`<section id="create-view">
@@ -689,5 +897,24 @@ export class UI extends LitElement {
           : COMMAND_SET_GRAPH_EDITOR
       )
     );
+  }
+
+  #onClickToggleEditHistory() {
+    this.#showEditHistory = !this.#showEditHistory;
+  }
+
+  #onClickCloseEditHistory() {
+    this.#showEditHistory = false;
+  }
+
+  #renderEditHistory() {
+    return html`
+      <bb-edit-history-panel
+        class=${classMap({
+          active: this.sideNavItem === "activity",
+        })}
+        .history=${this.history}
+      ></bb-edit-history-panel>
+    `;
   }
 }
