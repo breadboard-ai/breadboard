@@ -10,10 +10,15 @@ import { report } from "./a2/output";
 import { err, ok, defaultLLMContent, llm } from "./a2/utils";
 import { Template } from "./a2/template";
 import { ArgumentNameGenerator } from "./a2/introducer";
-import { ToolManager } from "./a2/tool-manager";
+import { ToolManager, type ToolHandle } from "./a2/tool-manager";
 import { ListExpander, listPrompt, toList, listSchema } from "./a2/lists";
 
-import { defaultSafetySettings, type GeminiInputs } from "./a2/gemini";
+import {
+  defaultSafetySettings,
+  type GeminiInputs,
+  type GeminiSchema,
+  type Tool,
+} from "./a2/gemini";
 import { GeminiPrompt } from "./a2/gemini-prompt";
 
 export { invoke as default, describe };
@@ -30,6 +35,43 @@ type Outputs = {
 };
 
 type WorkMode = "generate" | "call-tools" | "summarize";
+
+// type ChatResponse = {
+//   response?: string;
+//   requestForFeedback?: string;
+//   userReadyToMoveOn?: boolean;
+// };
+
+// function chatSchema(): GeminiSchema {
+//   return {
+//     type: "object",
+//     properties: {
+//       response: {
+//         type: "string",
+//         description:
+//           "Model response, in markdown. without any additional conversation",
+//       },
+//       requestForFeedback: {
+//         type: "string",
+//         description:
+//           "Ask the user to provide feedback on the model response as a friendly assistant might or thank them when conversation concludes",
+//       },
+//       userReadyToMoveOn: {
+//         type: "boolean",
+//       },
+//     },
+//     required: ["response", "requestForFeedback", "userReadyToMoveOn"],
+//   };
+// }
+
+// function getChatResponse(response: LLMContent): Outcome<ChatResponse> {
+//   const part = response.parts.at(0);
+//   if (part && "json" in part) {
+//     return part.json as ChatResponse;
+//   }
+//   console.error("Invalid response from the model", response);
+//   return err(`Invalid response from the model, see Dev Tools console`);
+// }
 
 function promptOld(description: LLMContent, mode: WorkMode): LLMContent {
   const preamble = llm`
@@ -67,6 +109,35 @@ ${postamble}`.asContent();
   }
 }
 
+class DoneTool {
+  #invoked = false;
+
+  public readonly name = "User_Says_Done";
+
+  get invoked() {
+    return this.#invoked;
+  }
+
+  public readonly declaration = {
+    name: this.name,
+    description:
+      "Call when the user indicates they are done with the conversation and are ready to move on",
+  };
+
+  public readonly tool: Tool = {
+    functionDeclarations: [this.declaration],
+  };
+
+  public readonly handle: ToolHandle = {
+    tool: this.declaration,
+    url: "",
+    passContext: false,
+    invoke: async () => {
+      this.#invoked = true;
+    },
+  };
+}
+
 async function invoke({ context }: Inputs) {
   if (!context.description) {
     const msg = "No instruction supplied";
@@ -92,10 +163,14 @@ async function invoke({ context }: Inputs) {
 
   const template = new Template(context.description);
   const toolManager = new ToolManager(new ArgumentNameGenerator());
+  const doneTool = new DoneTool();
   const substituting = await template.substitute(
     context.params,
     async ({ path: url, instance }) => toolManager.addTool(url, instance)
   );
+  if (context.chat) {
+    toolManager.addCustomTool(doneTool.name, doneTool.handle);
+  }
   if (!ok(substituting)) {
     return substituting;
   }
@@ -141,6 +216,14 @@ async function invoke({ context }: Inputs) {
       const work = context.work.length > 0 ? context.work : [description];
       const contents = [...context.context, ...work];
       const safetySettings = defaultSafetySettings();
+      //       const doneFunctionPreamble = context.chat
+      //         ? llm`
+      // If and only if, in the previous conversation context, the user indicates their satisfaction with the outcome of
+      // the conversation and is asking to move on, set the "userReadyToMoveOn" flag to "true".
+
+      // If there's no such indication, make sure to set the "userReadyToMoveOn" flag to "false".
+      // IMPORTANT: Only set it to true when you actually hear the user indicate their intent to move on`.asContent()
+      //         : llm``.asContent();
       const systemInstruction = llm`
 IMPORTANT NOTE: Start directly with the output, do not output any delimiters.
 Take a Deep Breath, read the instructions again, read the inputs again.
@@ -148,19 +231,36 @@ Each instruction is crucial and must be executed with utmost care and attention 
       const tools = toolManager.list();
       const inputs: GeminiInputs = { body: { contents, safetySettings } };
       if (tools.length) {
-        inputs.body.tools = tools;
+        inputs.body.tools = [...tools];
         inputs.body.toolConfig = { functionCallingConfig: { mode: "ANY" } };
       }
       const prompt = new GeminiPrompt(inputs, { toolManager });
       const result = await prompt.invoke();
       if (!ok(result)) return result;
       if (prompt.calledTools) {
+        if (doneTool.invoked) {
+          return result.last;
+        }
         contents.push(...result.all);
-        const afterTools = await new GeminiPrompt({
+        const inputs: GeminiInputs = {
           body: { contents, systemInstruction, safetySettings },
-        }).invoke();
+        };
+        // if (context.chat) {
+        //   inputs.body.generationConfig = {
+        //     responseSchema: chatSchema(),
+        //     responseMimeType: "application/json",
+        //   };
+        // }
+        const afterTools = await new GeminiPrompt(inputs).invoke();
         if (!ok(afterTools)) return afterTools;
+        // if (context.chat) {
+        //   const chatResponse = getChatResponse(afterTools.last);
+        //   if (!ok(chatResponse)) return chatResponse;
+        //   console.log("Chat response", chatResponse);
+        //   product = llm`${chatResponse.response}`.asContent();
+        // } else {
         product = afterTools.last;
+        // }
       } else {
         product = result.last;
       }
@@ -168,6 +268,12 @@ Each instruction is crucial and must be executed with utmost care and attention 
     return product;
   });
   if (!ok(result)) return result;
+  // This really needs work, since it will not work with lists
+  // Also the -2 is ugly.
+  // TODO: Fix the ugly and listify.
+  if (doneTool.invoked) {
+    return { done: work.at(-2) };
+  }
 
   // 4) Handle chat.
   let epilog;
