@@ -26,7 +26,10 @@ import {
   PropertyValues,
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { WorkspaceSelectionStateWithChangeId } from "../../types/types";
+import {
+  EnumValue,
+  WorkspaceSelectionStateWithChangeId,
+} from "../../types/types";
 import {
   AssetPath,
   GraphDescriptor,
@@ -41,8 +44,7 @@ import {
 import { classMap } from "lit/directives/class-map.js";
 import { until } from "lit/directives/until.js";
 import { isConfigurableBehavior, isLLMContentBehavior } from "../../utils";
-import { map } from "lit/directives/map.js";
-import { FastAccessMenu, TextEditor } from "../elements";
+import { FastAccessMenu, ItemSelect, TextEditor } from "../elements";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { isCtrlCommand } from "../../utils/is-ctrl-command";
 import { MAIN_BOARD_ID } from "../../constants/constants";
@@ -63,12 +65,6 @@ import { FlowGenConstraint } from "../../flow-gen/flow-generator";
 import { ConnectorView } from "../../connectors/types";
 import { SignalWatcher } from "@lit-labs/signals";
 const Strings = StringsHelper.forSection("Editor");
-
-type EnumValue = {
-  title: string;
-  id: string;
-  icon?: string;
-};
 
 // A type that is like a port (and fits InspectablePort), but could also be
 // used to describe parameters for connectors.
@@ -556,18 +552,24 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           padding: 0 var(--bb-grid-size-2);
         }
 
+        .item-select-container {
+          flex: 1 1 auto;
+          overflow: hidden;
+          margin-right: var(--bb-grid-size-2);
+        }
+
         #controls-container {
           display: flex;
           align-items: center;
           justify-content: flex-end;
-          flex: 1 0 auto;
+          flex: 0 0 auto;
 
           & #controls {
             display: flex;
             align-items: center;
 
             height: var(--bb-grid-size-7);
-            background: var(--bb-neutral-200);
+            background: var(--bb-neutral-100);
             border-radius: var(--bb-grid-size-16);
             padding: 0 var(--bb-grid-size-2);
 
@@ -581,7 +583,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
               height: 20px;
               margin: 0 var(--bb-grid-size);
               border: none;
-              background: var(--bb-neutral-200)
+              background: var(--bb-neutral-100)
                 var(--bb-icon-home-repair-service) center center / 20px 20px
                 no-repeat;
               transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
@@ -594,7 +596,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
                 &:hover,
                 &:focus {
-                  background-color: var(--bb-neutral-300);
+                  background-color: var(--bb-neutral-200);
                 }
               }
             }
@@ -667,11 +669,15 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
   #reactiveChange(port: PortLike) {
     const reactive = port.schema.behavior?.includes("reactive");
-    if (!reactive) return () => {};
+    if (!reactive)
+      return () => {
+        this.#edited = true;
+      };
 
     return (evt: Event) => {
       const { target } = evt;
-      if (target instanceof HTMLSelectElement) {
+      if (target instanceof HTMLSelectElement || target instanceof ItemSelect) {
+        this.#edited = true;
         const { value } = target;
         this.values = {
           ...this.values,
@@ -722,7 +728,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     const graphId = data.get("graph-id") as string | null;
     const nodeId = data.get("node-id") as string | null;
     if (nodeId !== null && graphId !== null) {
-      this.#emitUpdatedNodeConfiguration(form, graphId, nodeId);
+      await this.#emitUpdatedNodeConfiguration(form, graphId, nodeId);
       return;
     }
     const assetPath = data.get("asset-path") as string | null;
@@ -766,7 +772,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     }
   }
 
-  #emitUpdatedNodeConfiguration(
+  async #emitUpdatedNodeConfiguration(
     form: HTMLFormElement,
     graphId: GraphIdentifier,
     nodeId: NodeIdentifier
@@ -795,11 +801,13 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       metadata.title = title.value;
     }
 
-    const ports = node.currentPorts().inputs.ports.filter((port) => {
-      if (port.star || port.name === "") return false;
-      if (!isConfigurableBehavior(port.schema)) return false;
-      return true;
-    });
+    const ports = (await node.ports(this.values)).inputs.ports.filter(
+      (port) => {
+        if (port.star || port.name === "") return false;
+        if (!isConfigurableBehavior(port.schema)) return false;
+        return true;
+      }
+    );
 
     const { values, ins } = this.#takePortValues(form, ports);
     const configuration = { ...node.configuration(), ...values };
@@ -866,6 +874,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         }
       }
     }
+    console.log({ values, ins });
     return { values, ins };
   }
 
@@ -1062,29 +1071,48 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
             const classes: Record<string, boolean> = {};
             if (currentValue.icon) {
-              classes.icon = true;
-              classes[currentValue.icon] = true;
               classes.slim = isControllerBehavior(port.schema);
             }
 
             value = html`<label for=${port.name} class=${classMap(classes)}
                 >${!isControllerBehavior(port.schema) ? port.title : ""}</label
-              ><select
-                @change=${this.#reactiveChange(port)}
-                name=${port.name}
-                id=${port.name}
               >
-                ${map(port.schema.enum, (option) => {
-                  const { id, title } = enumValue(option);
-                  return html`<option
-                    value=${id}
-                    ?selected=${port.value === id ||
-                    (!port.value && id === port.schema.default)}
-                  >
-                    ${title}
-                  </option>`;
-                })}
-              </select>`;
+              <div class="item-select-container">
+                <bb-item-select
+                  @change=${this.#reactiveChange(port)}
+                  name=${port.name}
+                  id=${port.name}
+                  .alignment=${isControllerBehavior(port.schema)
+                    ? "bottom"
+                    : "top"}
+                  .values=${port.schema.enum.map((option) => {
+                    const v = enumValue(option);
+                    // TODO: Remap these to icons at the source level
+                    if (v.icon) {
+                      switch (v.icon) {
+                        case "generative":
+                          v.icon = "spark";
+                          break;
+                        case "generative-text":
+                          v.icon = "text_analysis";
+                          break;
+                        case "generative-image":
+                          v.icon = "photo_spark";
+                          break;
+                        case "generative-audio":
+                          v.icon = "audio_magic_eraser";
+                          break;
+                        case "generative-video":
+                          v.icon = "videocam_auto";
+                          break;
+                      }
+                    }
+
+                    return v;
+                  })}
+                  .value=${port.value}
+                ></bb-item-select>
+              </div>`;
             break;
           }
 

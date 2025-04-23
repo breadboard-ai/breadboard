@@ -57,8 +57,8 @@ export class FlowgenInStepButton extends LitElement {
 
         & #edit-button {
           --background-size: 16px;
-          --background-color: var(--bb-neutral-200);
-          --background-color-active: var(--bb-neutral-300);
+          --background-color: var(--bb-neutral-100);
+          --background-color-active: var(--bb-neutral-200);
           --box-shadow: none;
           --border-radius: var(--bb-grid-size);
           --bb-icon: var(--bb-add-icon-generative-text);
