@@ -13,7 +13,7 @@ import { ArgumentNameGenerator } from "./a2/introducer";
 import { ToolManager } from "./a2/tool-manager";
 import { ListExpander, listPrompt, toList, listSchema } from "./a2/lists";
 
-import { defaultSafetySettings } from "./a2/gemini";
+import { defaultSafetySettings, type GeminiInputs } from "./a2/gemini";
 import { GeminiPrompt } from "./a2/gemini-prompt";
 
 export { invoke as default, describe };
@@ -31,11 +31,7 @@ type Outputs = {
 
 type WorkMode = "generate" | "call-tools" | "summarize";
 
-function prompt(
-  description: LLMContent,
-  mode: WorkMode,
-  chat: boolean
-): LLMContent {
+function promptOld(description: LLMContent, mode: WorkMode): LLMContent {
   const preamble = llm`
 ${description}
 
@@ -100,7 +96,6 @@ async function invoke({ context }: Inputs) {
     context.params,
     async ({ path: url, instance }) => toolManager.addTool(url, instance)
   );
-  console.log("Tools", substituting);
   if (!ok(substituting)) {
     return substituting;
   }
@@ -116,12 +111,13 @@ async function invoke({ context }: Inputs) {
 
     let product: LLMContent;
     if (makeList) {
+      // TODO: Make this work as well.
       const generating = await new GeminiPrompt(
         {
           body: {
             contents: [
               ...context.context,
-              listPrompt(prompt(description, mode, context.chat)),
+              listPrompt(promptOld(description, mode)),
             ],
             safetySettings: defaultSafetySettings(),
             generationConfig: {
@@ -142,23 +138,32 @@ async function invoke({ context }: Inputs) {
 
       product = list;
     } else {
-      const result = await new GeminiPrompt(
-        {
-          body: {
-            contents: [
-              ...context.context,
-              prompt(description, mode, context.chat),
-            ],
-            safetySettings: defaultSafetySettings(),
-            tools: toolManager.list(),
-          },
-        },
-        {
-          toolManager,
-        }
-      ).invoke();
+      const work = context.work.length > 0 ? context.work : [description];
+      const contents = [...context.context, ...work];
+      const safetySettings = defaultSafetySettings();
+      const systemInstruction = llm`
+IMPORTANT NOTE: Start directly with the output, do not output any delimiters.
+Take a Deep Breath, read the instructions again, read the inputs again.
+Each instruction is crucial and must be executed with utmost care and attention to detail.`.asContent();
+      const tools = toolManager.list();
+      const inputs: GeminiInputs = { body: { contents, safetySettings } };
+      if (tools.length) {
+        inputs.body.tools = tools;
+        inputs.body.toolConfig = { functionCallingConfig: { mode: "ANY" } };
+      }
+      const prompt = new GeminiPrompt(inputs, { toolManager });
+      const result = await prompt.invoke();
       if (!ok(result)) return result;
-      product = result.last;
+      if (prompt.calledTools) {
+        contents.push(...result.all);
+        const afterTools = await new GeminiPrompt({
+          body: { contents, systemInstruction, safetySettings },
+        }).invoke();
+        if (!ok(afterTools)) return afterTools;
+        product = afterTools.last;
+      } else {
+        product = result.last;
+      }
     }
     return product;
   });

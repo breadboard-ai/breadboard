@@ -7,24 +7,24 @@
       "id": "3740bd42-4f06-4856-8629-6d14912b834f",
       "type": "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
-        "title": "Generate Text with Weather",
+        "title": "Generate Text from Weather",
         "visual": {
-          "x": -20,
-          "y": -500
+          "x": 0,
+          "y": -540
         },
         "userModified": false,
-        "description": "Generates text based on a user prompt, incorporating weather information retrieved using the 'Get Weather' tool. The user role and prompt parts are configurable."
+        "description": "Generates text based on the weather conditions for a given location. Uses the 'Get Weather' tool for weather information."
       },
       "configuration": {
         "description": {
           "role": "user",
           "parts": [
             {
-              "text": "{{\"type\":\"tool\",\"path\":\"embed://a2/tools.bgl.json#module:get-weather\",\"title\":\"Get Weather\"}} for 94022"
+              "text": "{{\"type\":\"tool\",\"path\":\"embed://a2/tools.bgl.json#module:get-weather\",\"title\":\"Get Weather\"}} for 90210"
             }
           ]
         },
-        "p-chat": false,
+        "p-chat": true,
         "p-list": false
       }
     }
