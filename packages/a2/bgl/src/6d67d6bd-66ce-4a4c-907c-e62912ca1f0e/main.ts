@@ -95,9 +95,8 @@ const portMapForward = new Map<ModeId, Map<string, string>>([
     ]),
   ],
   [MODES[2].id, new Map([[PROMPT_PORT, "instruction"]])],
-  [MODES[3].id, new Map([[PROMPT_PORT, "instruction"]])],
-  [MODES[4].id, new Map([[PROMPT_PORT, "text"]])],
-  [MODES[5].id, new Map([[PROMPT_PORT, "instruction"]])],
+  [MODES[3].id, new Map([[PROMPT_PORT, "text"]])],
+  [MODES[4].id, new Map([[PROMPT_PORT, "instruction"]])],
 ]);
 
 const portMapReverse = new Map(
