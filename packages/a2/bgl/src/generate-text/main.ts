@@ -36,43 +36,6 @@ type Outputs = {
 
 type WorkMode = "generate" | "call-tools" | "summarize";
 
-// type ChatResponse = {
-//   response?: string;
-//   requestForFeedback?: string;
-//   userReadyToMoveOn?: boolean;
-// };
-
-// function chatSchema(): GeminiSchema {
-//   return {
-//     type: "object",
-//     properties: {
-//       response: {
-//         type: "string",
-//         description:
-//           "Model response, in markdown. without any additional conversation",
-//       },
-//       requestForFeedback: {
-//         type: "string",
-//         description:
-//           "Ask the user to provide feedback on the model response as a friendly assistant might or thank them when conversation concludes",
-//       },
-//       userReadyToMoveOn: {
-//         type: "boolean",
-//       },
-//     },
-//     required: ["response", "requestForFeedback", "userReadyToMoveOn"],
-//   };
-// }
-
-// function getChatResponse(response: LLMContent): Outcome<ChatResponse> {
-//   const part = response.parts.at(0);
-//   if (part && "json" in part) {
-//     return part.json as ChatResponse;
-//   }
-//   console.error("Invalid response from the model", response);
-//   return err(`Invalid response from the model, see Dev Tools console`);
-// }
-
 function promptOld(description: LLMContent, mode: WorkMode): LLMContent {
   const preamble = llm`
 ${description}
@@ -124,10 +87,6 @@ class DoneTool {
       "Call when the user indicates they are done with the conversation and are ready to move on",
   };
 
-  public readonly tool: Tool = {
-    functionDeclarations: [this.declaration],
-  };
-
   public readonly handle: ToolHandle = {
     tool: this.declaration,
     url: "",
@@ -168,7 +127,8 @@ async function invoke({ context }: Inputs) {
     context.params,
     async ({ path: url, instance }) => toolManager.addTool(url, instance)
   );
-  if (context.chat) {
+  const hasTools = toolManager.hasTools();
+  if (context.chat && hasTools) {
     toolManager.addCustomTool(doneTool.name, doneTool.handle);
   }
   if (!ok(substituting)) {
@@ -216,21 +176,13 @@ async function invoke({ context }: Inputs) {
       const work = context.work.length > 0 ? context.work : [description];
       const contents = [...context.context, ...work];
       const safetySettings = defaultSafetySettings();
-      //       const doneFunctionPreamble = context.chat
-      //         ? llm`
-      // If and only if, in the previous conversation context, the user indicates their satisfaction with the outcome of
-      // the conversation and is asking to move on, set the "userReadyToMoveOn" flag to "true".
-
-      // If there's no such indication, make sure to set the "userReadyToMoveOn" flag to "false".
-      // IMPORTANT: Only set it to true when you actually hear the user indicate their intent to move on`.asContent()
-      //         : llm``.asContent();
       const systemInstruction = llm`
 IMPORTANT NOTE: Start directly with the output, do not output any delimiters.
 Take a Deep Breath, read the instructions again, read the inputs again.
 Each instruction is crucial and must be executed with utmost care and attention to detail.`.asContent();
       const tools = toolManager.list();
       const inputs: GeminiInputs = { body: { contents, safetySettings } };
-      if (tools.length) {
+      if (hasTools) {
         inputs.body.tools = [...tools];
         inputs.body.toolConfig = { functionCallingConfig: { mode: "ANY" } };
       }
@@ -245,22 +197,9 @@ Each instruction is crucial and must be executed with utmost care and attention 
         const inputs: GeminiInputs = {
           body: { contents, systemInstruction, safetySettings },
         };
-        // if (context.chat) {
-        //   inputs.body.generationConfig = {
-        //     responseSchema: chatSchema(),
-        //     responseMimeType: "application/json",
-        //   };
-        // }
         const afterTools = await new GeminiPrompt(inputs).invoke();
         if (!ok(afterTools)) return afterTools;
-        // if (context.chat) {
-        //   const chatResponse = getChatResponse(afterTools.last);
-        //   if (!ok(chatResponse)) return chatResponse;
-        //   console.log("Chat response", chatResponse);
-        //   product = llm`${chatResponse.response}`.asContent();
-        // } else {
         product = afterTools.last;
-        // }
       } else {
         product = result.last;
       }
@@ -269,10 +208,12 @@ Each instruction is crucial and must be executed with utmost care and attention 
   });
   if (!ok(result)) return result;
   // This really needs work, since it will not work with lists
-  // Also the -2 is ugly.
-  // TODO: Fix the ugly and listify.
+  // TODO: Listify.
   if (doneTool.invoked) {
-    return { done: work.at(-2) };
+    // If done tool was invoked, rewind removing the last interaction
+    // and return that.
+    const previousResult = work.at(-2);
+    return previousResult ? { done: [previousResult] } : { done: result };
   }
 
   // 4) Handle chat.

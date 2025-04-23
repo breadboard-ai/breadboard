@@ -20,7 +20,7 @@
           "role": "user",
           "parts": [
             {
-              "text": "{{\"type\":\"tool\",\"path\":\"embed://a2/tools.bgl.json#module:get-weather\",\"title\":\"Get Weather\"}} for 90210"
+              "text": "Tell me a story"
             }
           ]
         },
