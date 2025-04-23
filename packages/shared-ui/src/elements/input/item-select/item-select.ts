@@ -50,12 +50,6 @@ export class ItemSelect extends LitElement {
     this.#highlighted = this.#selected;
   }
   get value() {
-    console.log(
-      "Value requested",
-      this.#selected,
-      this.#values,
-      this.#values[this.#selected]?.id
-    );
     return this.#values[this.#selected]?.id ?? "";
   }
 

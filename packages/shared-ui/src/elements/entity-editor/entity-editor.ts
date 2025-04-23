@@ -874,7 +874,6 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         }
       }
     }
-    console.log({ values, ins });
     return { values, ins };
   }
 
