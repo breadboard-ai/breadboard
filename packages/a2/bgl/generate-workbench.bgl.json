@@ -25,8 +25,8 @@
             }
           ]
         },
-        "generation-mode": "image",
-        "p-aspect-ratio": "1:1",
+        "generation-mode": "image-gen",
+        "p-aspect-ratio": "9:16",
         "p-disable-prompt-rewrite": false
       }
     }
