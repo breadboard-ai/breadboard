@@ -5,6 +5,12 @@ import fetch from "@fetch";
 
 export { invoke as default, describe };
 
+import { ok, err } from "./a2/utils";
+import { executeTool } from "./a2/step-executor";
+import { toLLMContent } from "./a2/utils";
+
+const USE_METEO = false;
+
 export type WeatherInputs = {
   location: string;
 };
@@ -230,7 +236,14 @@ function getConditions(weather_code: number): Conditions {
 
 async function invoke({
   location,
-}: WeatherInputs): Promise<Outcome<WeatherOutputs>> {
+}: WeatherInputs): Promise<Outcome<LLMContent>> {
+  if (!USE_METEO) {
+    const executing = await executeTool<string>("get_weather", {
+      location,
+    });
+    if (!ok(executing)) return executing;
+    return toLLMContent(executing);
+  }
   const geocodingResponse = await fetch({ url: geocodingUrl(location) });
   if ("$error" in geocodingResponse) {
     return { $error: geocodingResponse.$error as string };
@@ -269,7 +282,8 @@ async function invoke({
   if (current.rain) {
     weather.rain = true;
   }
-  return { weather };
+  const result = JSON.stringify(weather, null, 2);
+  return toLLMContent(result);
 }
 
 async function describe() {

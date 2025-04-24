@@ -2,18 +2,10 @@
  * @fileoverview Add a description for your module here.
  */
 
-import {
-  ok,
-  err,
-  toLLMContent,
-  toText,
-  addUserTurn,
-  defaultLLMContent,
-} from "./a2/utils";
+import { ok, err, toLLMContent, toText, defaultLLMContent } from "./a2/utils";
 import getWeather, {
   describe as getWeatherDescriber,
   type WeatherInputs,
-  type WeatherOutputs,
 } from "./get-weather-tool";
 import { Template } from "./a2/template";
 
@@ -43,11 +35,9 @@ export type Inputs =
     }
   | WeatherInputs;
 
-export type Outputs =
-  | WeatherOutputs
-  | {
-      context: LLMContent[];
-    };
+export type Outputs = {
+  context: LLMContent[];
+};
 
 async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
   let location;
@@ -72,21 +62,17 @@ async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
     return err("Please provide a location");
   }
   console.log("Location: " + location);
-  const result = await getWeather({ location });
-  if (!ok(result)) {
-    return result;
+  const weatherResult = await getWeather({ location });
+  if (!ok(weatherResult)) {
+    return weatherResult;
   }
-  if (mode == "step") {
-    return {
-      context: [
-        toLLMContent(
-          `Location: ${location}\n\n Weather information: \n\n\`\`\`json\n${JSON.stringify(result, null, 2)}\n\`\`\``
-        ),
-      ],
-    };
-  } else {
-    return result;
-  }
+  return {
+    context: [
+      toLLMContent(
+        `Location: ${location}\n\n Weather information: ${toText(weatherResult)}`
+      ),
+    ],
+  };
 }
 
 export type DescribeInputs = {

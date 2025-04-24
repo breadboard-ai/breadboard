@@ -33,7 +33,14 @@ export type SearchMapResults = {
   }[];
 };
 
-function formatResults(query: string, results: SearchMapResults) {
+function formatResults(query: string, results: string | SearchMapResults) {
+  // If the result is already in string format, not SearchMap results, return as is.
+  if (typeof results == "string") {
+    return `Search Query: ${query}
+## Google Places Search Results
+${results}
+    `;
+  }
   return `Search Query: ${query}
 
 
