@@ -713,21 +713,7 @@ export class Board extends EventTarget {
     subGraphId: GraphIdentifier | null = null,
     creator: EditHistoryCreator | null = null
   ) {
-    let url = this.#makeRelativeToCurrentBoard(boardUrl, currentUrl);
-
-    // Redirect older /graphs examples to /example-boards
-    if (url?.startsWith("/graphs")) {
-      url = url.replace(/^\/graphs/, "/example-boards");
-    }
-
-    // Match any older URLs like /example-boards/blank.json and redirect to the
-    // newer /example-boards/playground/blank.json
-    const pgRegex = /example-boards\/([^\\/]+.json)$/;
-    const matches = pgRegex.exec(boardUrl ?? "");
-    if (url && matches && matches.length === 2) {
-      url = `/example-boards/playground/${matches[1]}`;
-    }
-
+    const url = this.#makeRelativeToCurrentBoard(boardUrl, currentUrl);
     if (!url) {
       return;
     }

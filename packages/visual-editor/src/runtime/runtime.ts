@@ -21,7 +21,6 @@ import {
   getBoardServers,
   migrateIDBGraphProviders,
   migrateRemoteGraphProviders,
-  migrateExampleGraphProviders,
   migrateFileSystemProviders,
   legacyGraphProviderExists,
   BoardServerAwareDataStore,
@@ -55,11 +54,7 @@ export async function create(config: RuntimeConfig): Promise<{
 }> {
   const kits = withRunModule(loadKits());
 
-  const skipPlaygroundExamples = import.meta.env.MODE !== "development";
-  let servers = await getBoardServers(
-    config.tokenVendor,
-    skipPlaygroundExamples
-  );
+  let servers = await getBoardServers(config.tokenVendor);
 
   // First run - set everything up.
   if (servers.length === 0) {
@@ -70,7 +65,6 @@ export async function create(config: RuntimeConfig): Promise<{
     if (await legacyGraphProviderExists()) {
       await migrateIDBGraphProviders();
       await migrateRemoteGraphProviders();
-      await migrateExampleGraphProviders();
       await migrateFileSystemProviders();
     }
 

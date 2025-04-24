@@ -57,7 +57,6 @@ export default defineConfig(async ({ mode }): Promise<UserConfig> => {
         ignored: [
           "**/shared-ui/src/bgl/**",
           "**/.wireit/**",
-          "**/example-boards/**",
           "**/*.kit.json/**",
         ],
       },

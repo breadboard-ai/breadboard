@@ -59,7 +59,7 @@ export default async ({ mode }: UserConfig) => {
     server: {
       ...buildCustomAllowList(process.env.VITE_FS_ALLOW),
       watch: {
-        ignored: ["**/.wireit/**", "**/example-boards/**", "**/*.kit.json/**"],
+        ignored: ["**/.wireit/**", "**/*.kit.json/**"],
       },
     },
     plugins: [noHrmlForDir("packages/a2")],
