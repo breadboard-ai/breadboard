@@ -20,7 +20,7 @@
           "role": "user",
           "parts": [
             {
-              "text": "Use {{\"type\":\"tool\",\"path\":\"embed://a2/tools.bgl.json#module:search-web\",\"title\":\"Search Web\"}} to find the perfect car for the user\n\nThe user wants a family SUV that would seat 5 people comfortably, very safety conscious"
+              "text": "Write me a poem about today. Use {{\"type\":\"tool\",\"path\":\"embed://a2/tools.bgl.json#module:search-wikipedia\",\"title\":\"Search Wikipedia\"}} to get information about the date"
             }
           ]
         },
