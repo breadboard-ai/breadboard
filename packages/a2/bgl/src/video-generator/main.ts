@@ -39,8 +39,6 @@ import {
 
 const ASPECT_RATIOS = ["9:16", "16:9"];
 const OUTPUT_NAME = "generated_video";
-const GCS_PROJECT = "appcatalyst-449123";
-const STORE_IN_GCS = false;
 
 type VideoGeneratorInputs = {
   context: LLMContent[];
@@ -61,14 +59,6 @@ async function callVideoGen(
   disablePromptRewrite: boolean,
   aspectRatio: string
 ): Promise<LLMContent> {
-  let gcsOutputConfig;
-  if (STORE_IN_GCS) {
-    gcsOutputConfig = {
-      bucket_name: "appcatalyst-bucket-test",
-      folder_path: "generated_videos",
-      project_name: GCS_PROJECT,
-    };
-  }
   // TODO(askerryryan): Respect disablePromptRewrite;
   const executionInputs: ContentMap = {};
   const encodedPrompt = btoa(unescape(encodeURIComponent(prompt)));
@@ -121,7 +111,6 @@ async function callVideoGen(
       output: OUTPUT_NAME,
     },
     execution_inputs: executionInputs,
-    output_gcs_config: gcsOutputConfig,
   } satisfies ExecuteStepRequest;
   // TODO(askerryryan): Remove when stable.
   console.log("REQUEST:");
@@ -131,6 +120,9 @@ async function callVideoGen(
   console.log(response);
   if (!ok(response)) {
     return toLLMContent("Video generation failed: " + response.$error);
+  }
+  if (!response.executionOutputs) {
+    return toLLMContent("Video generation failed to generate video");
   }
 
   let returnVal;

@@ -85,12 +85,16 @@ async function callAudioGen(
       modelApi: "tts",
       inputParameters: inputParameters,
       systemPrompt: "",
+      output: "generated_speech",
     },
     execution_inputs: executionInputs,
   } satisfies ExecuteStepRequest;
   const response = await executeStep(body);
   if (!ok(response)) {
     return toLLMContent("TTS generation failed: " + response.$error);
+  }
+  if (!response.executionOutputs) {
+    return toLLMContent("TTS returned no audio");
   }
 
   let returnVal;
