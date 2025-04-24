@@ -62,19 +62,8 @@ class ChangeEdge implements EditTransform {
       return { success: false, error: `Unable to find node with id "${id}"` };
     }
 
-    let inPort = from.in;
-    let inPortFound = true;
-    if (inPort === undefined) {
-      inPortFound = false;
-      const destinationPorts = await destination.ports();
-      const destinationMainPort = destinationPorts.inputs.ports.find((port) =>
-        port.schema.behavior?.includes("main-port")
-      );
-      if (destinationMainPort) {
-        inPort = destinationMainPort.name;
-        inPortFound = true;
-      }
-    }
+    const inPort = from.in;
+    const inPortFound = inPort !== undefined;
 
     const defaultEdit: [spec: EditSpec[], message: string] = [
       [
