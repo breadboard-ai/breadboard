@@ -75,7 +75,6 @@
   "dependencies": {
     "@breadboard-ai/build": "0.12.1",
     "@breadboard-ai/connection-client": "0.2.0",
-    "@breadboard-ai/example-board-server": "1.18.5",
     "@breadboard-ai/filesystem-board-server": "1.20.1",
     "@breadboard-ai/google-drive-kit": "0.5.1",
     "@breadboard-ai/idb-board-server": "1.19.3",

@@ -12,7 +12,6 @@ import {
   getSigninToken,
   RemoteBoardServer,
 } from "@breadboard-ai/remote-board-server";
-import { ExampleBoardServer } from "@breadboard-ai/example-board-server";
 import {
   FileSystemBoardServer,
   type FileSystemDirectoryHandle,
@@ -21,8 +20,6 @@ import {
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 import { TokenVendor } from "@breadboard-ai/connection-client";
 
-const PLAYGROUND_BOARDS = "example://playground-boards";
-const EXAMPLE_BOARDS = "example://example-boards";
 const BOARD_SERVER_LISTING_DB = "board-server";
 const BOARD_SERVER_LISTING_VERSION = 1;
 
@@ -44,11 +41,8 @@ interface BoardServerListing extends idb.DBSchema {
 }
 
 export async function getBoardServers(
-  tokenVendor?: TokenVendor,
-  skipPlaygroundExamples?: boolean
+  tokenVendor?: TokenVendor
 ): Promise<BoardServer[]> {
-  const db = getServersDb();
-
   const storeUrls = await readAllServers();
 
   const stores = await Promise.all(
@@ -62,14 +56,6 @@ export async function getBoardServers(
         url.startsWith(RemoteBoardServer.LOCALHOST)
       ) {
         return RemoteBoardServer.from(url, title, user, tokenVendor);
-      }
-
-      if (url.startsWith(ExampleBoardServer.PROTOCOL)) {
-        if (url === PLAYGROUND_BOARDS && skipPlaygroundExamples) {
-          return null;
-        }
-
-        return ExampleBoardServer.from(url, title, user);
       }
 
       if (url.startsWith(FileSystemBoardServer.PROTOCOL)) {
@@ -391,18 +377,6 @@ export async function migrateFileSystemProviders() {
     await storeBoardServer(new URL(url), store.name, user, store);
   }
   db.close();
-}
-
-export async function migrateExampleGraphProviders() {
-  const user = {
-    // TODO: Replace this with the actual username.
-    username: "example-board-builder",
-    apiKey: "",
-    secrets: new Map(),
-  };
-
-  await storeBoardServer(new URL(EXAMPLE_BOARDS), "Example Boards", user);
-  await storeBoardServer(new URL(PLAYGROUND_BOARDS), "Playground Boards", user);
 }
 
 export { BoardServerAwareDataStore } from "./board-server-aware-data-store";

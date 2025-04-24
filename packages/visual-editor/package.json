@@ -42,7 +42,6 @@
     "build": "wireit",
     "build:vite": "wireit",
     "build:tsc": "wireit",
-    "copy-example-boards": "wireit",
     "copy-bbrt-assets": "wireit"
   },
   "wireit": {
@@ -90,7 +89,6 @@
       },
       "dependencies": [
         "typescript-files-and-deps",
-        "../example-boards#build",
         "copy-pyoide-assets",
         "update-sandbox-runtime",
         {
@@ -129,10 +127,6 @@
         },
         {
           "script": "update-sandbox-runtime",
-          "cascade": false
-        },
-        {
-          "script": "copy-example-boards",
           "cascade": false
         },
         {
@@ -179,18 +173,6 @@
       "files": [
         "vite.config.ts",
         ".env"
-      ]
-    },
-    "copy-example-boards": {
-      "command": "tsx src/copy-example-boards.ts",
-      "dependencies": [
-        "../example-boards#build"
-      ],
-      "files": [
-        "src/copy-example-boards.ts"
-      ],
-      "output": [
-        "public/example-boards/*.json"
       ]
     },
     "copy-bbrt-assets": {
@@ -280,7 +262,6 @@
     "@breadboard-ai/board-server-utils": "0.1.9",
     "@breadboard-ai/build": "0.12.1",
     "@breadboard-ai/data-store": "0.3.2",
-    "@breadboard-ai/example-boards": "0.4.1",
     "@breadboard-ai/google-drive-kit": "0.5.1",
     "@breadboard-ai/idb-board-server": "1.19.3",
     "@breadboard-ai/jsandbox": "0.5.0",
