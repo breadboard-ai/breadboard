@@ -35,44 +35,6 @@ type Outputs = {
   done?: LLMContent[];
 };
 
-type WorkMode = "generate" | "call-tools" | "summarize";
-
-function promptOld(description: LLMContent, mode: WorkMode): LLMContent {
-  const preamble = llm`
-${description}
-
-`;
-  const postamble = `
-
-Today is ${new Date().toLocaleString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  })}`;
-
-  switch (mode) {
-    case "summarize":
-      return llm` 
-${preamble}
-Summarize the research results to fulfill the specified task.
-${postamble}`.asContent();
-
-    case "call-tools":
-      return llm`
-${preamble}
-Generate multiple function calls to fulfill the specified task.
-${postamble}`.asContent();
-
-    case "generate":
-      return llm`
-${preamble}
-Provide the response that fulfills the specified task.
-${postamble}`.asContent();
-  }
-}
-
 async function invoke({ context }: Inputs) {
   if (!context.description) {
     const msg = "No instruction supplied";
@@ -119,80 +81,61 @@ async function invoke({ context }: Inputs) {
   }
 
   const { work } = context;
-  const mode = "generate";
-  const result = await new ListExpander(
-    substituting,
-    work.length > 0 ? work : context.context
-  ).map(async (description, work, isList) => {
+  const result = await new ListExpander(substituting, [
+    ...context.context,
+    ...work,
+  ]).map(async (description, work, isList) => {
     // Disallow making nested lists
     const makeList = context.makeList && !isList;
 
     let product: LLMContent;
-    if (makeList) {
-      // TODO: Make this work as well.
-      const generating = await new GeminiPrompt(
-        {
-          body: {
-            contents: [
-              ...context.context,
-              listPrompt(promptOld(description, mode)),
-            ],
-            safetySettings: defaultSafetySettings(),
-            generationConfig: {
-              responseSchema: listSchema(),
-              responseMimeType: "application/json",
-            },
-            tools: toolManager.list(),
-          },
-        },
-        {
-          toolManager,
-        }
-      ).invoke();
-      if (!ok(generating)) return generating;
+    const contents = work.length > 0 ? work : [description];
+    const safetySettings = defaultSafetySettings();
+    const systemInstruction = llm`
 
-      const list = toList(generating.last);
-      if (!ok(list)) return list;
-
-      product = list;
-    } else {
-      const work = context.work.length > 0 ? context.work : [description];
-      const contents = [...context.context, ...work];
-      const safetySettings = defaultSafetySettings();
-      const systemInstruction = llm`
+Today is ${new Date().toLocaleString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    })}
+    
 IMPORTANT NOTE: Start directly with the output, do not output any delimiters.
 Take a Deep Breath, read the instructions again, read the inputs again.
 Each instruction is crucial and must be executed with utmost care and attention to detail.`.asContent();
-      const tools = toolManager.list();
-      const inputs: GeminiInputs = { body: { contents, safetySettings } };
-      if (context.chat) {
-        inputs.body.tools = [...tools];
-      }
-      const prompt = new GeminiPrompt(inputs, { toolManager });
-      const result = await prompt.invoke();
-      if (!ok(result)) return result;
-      const calledTools =
-        prompt.calledTools || doneTool.invoked || keepChattingTool.invoked;
-      if (calledTools) {
-        if (doneTool.invoked) {
-          return result.last;
-        }
-        if (!keepChattingTool.invoked) {
-          contents.push(...result.all);
-        }
-        const inputs: GeminiInputs = {
-          body: { contents, systemInstruction, safetySettings },
-        };
-        const afterTools = await new GeminiPrompt(inputs).invoke();
-        if (!ok(afterTools)) return afterTools;
-        product = afterTools.last;
-      } else {
-        product = result.last;
-      }
+    const tools = toolManager.list();
+    const inputs: GeminiInputs = { body: { contents, safetySettings } };
+    if (context.chat) {
+      inputs.body.tools = [...tools];
+      inputs.body.toolConfig = { functionCallingConfig: { mode: "ANY" } };
     }
+    const prompt = new GeminiPrompt(inputs, { toolManager });
+    const result = await prompt.invoke();
+    if (!ok(result)) return result;
+    const calledTools =
+      prompt.calledTools || doneTool.invoked || keepChattingTool.invoked;
+    if (calledTools) {
+      if (doneTool.invoked) {
+        return result.last;
+      }
+      if (!keepChattingTool.invoked) {
+        contents.push(...result.all);
+      }
+      const inputs: GeminiInputs = {
+        body: { contents, systemInstruction, safetySettings },
+      };
+      const afterTools = await new GeminiPrompt(inputs).invoke();
+      if (!ok(afterTools)) return afterTools;
+      product = afterTools.last;
+    } else {
+      product = result.last;
+    }
+
     return product;
   });
   if (!ok(result)) return result;
+  console.log("RESULT", result);
   // This really needs work, since it will not work with lists
   // TODO: Listify.
   if (doneTool.invoked) {
