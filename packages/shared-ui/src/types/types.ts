@@ -24,6 +24,7 @@ import {
 } from "@google-labs/breadboard";
 import {
   AssetPath,
+  AssetType,
   CommentNode,
   GraphIdentifier,
   GraphMetadata,
@@ -583,10 +584,13 @@ export interface Utterance {
 
 export type EdgeAttachmentPoint = "Top" | "Right" | "Bottom" | "Left" | "Auto";
 
-export interface DroppedAsset {
+export interface NewAsset {
   name: string;
-  visual: Record<string, number>;
-  content: LLMContent;
+  type: AssetType;
+  path: AssetPath;
+  data: LLMContent;
+  subType?: string;
+  visual?: Record<string, number>;
 }
 
 export interface AssetEdge {
@@ -601,4 +605,5 @@ export type EnumValue = {
   icon?: string;
   description?: string;
   tag?: string; // Typically used for keyboard shortcuts.
+  hidden?: boolean;
 };

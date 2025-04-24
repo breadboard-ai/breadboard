@@ -12,8 +12,27 @@ export function isEmbedUri(uri: string | null): boolean {
   return /^https:\/\/www\.youtube\.com\/embed\//.test(uri);
 }
 
+export function isShareUri(uri: string | null): boolean {
+  if (!uri) {
+    return false;
+  }
+
+  return /^https:\/\/youtu\.be\//.test(uri);
+}
+
 export function isWatchUri(uri: string): boolean {
   return /^https:\/\/www\.youtube\.com\/watch\?v=/.test(uri);
+}
+
+export function convertShareUriToEmbedUri(uri: string) {
+  const regex = /^https:\/\/youtu\.be\/(.*?)(?:[&\\?]|$)/;
+  const matches = regex.exec(uri);
+  if (!matches) {
+    return null;
+  }
+
+  const embedId = matches[1];
+  return `https://www.youtube.com/embed/${embedId}`;
 }
 
 export function convertWatchUriToEmbedUri(uri: string) {

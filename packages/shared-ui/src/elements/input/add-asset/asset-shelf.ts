@@ -12,8 +12,10 @@ import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
 import {
+  convertShareUriToEmbedUri,
   convertWatchUriToEmbedUri,
   isEmbedUri,
+  isShareUri,
   isWatchUri,
   videoIdFromWatchOrEmbedUri,
 } from "../../../utils/youtube";
@@ -145,6 +147,8 @@ export class AssetShelf extends LitElement {
               let uri: string | null = part.fileData.fileUri;
               if (isWatchUri(uri)) {
                 uri = convertWatchUriToEmbedUri(uri);
+              } else if (isShareUri(uri)) {
+                uri = convertShareUriToEmbedUri(uri);
               } else if (!isEmbedUri(uri)) {
                 uri = null;
               }

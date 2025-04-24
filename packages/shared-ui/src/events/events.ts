@@ -34,7 +34,7 @@ import type {
   AppTheme,
   AssetEdge,
   Command,
-  DroppedAsset,
+  NewAsset,
   EdgeAttachmentPoint,
   EdgeData,
   Settings,
@@ -1031,7 +1031,7 @@ export class EdgeAttachmentMoveEvent extends Event {
 
 export class DroppedAssetsEvent extends Event {
   static eventName = "bbdroppedassets" as const;
-  constructor(public readonly assets: DroppedAsset[]) {
+  constructor(public readonly assets: NewAsset[]) {
     super(DroppedAssetsEvent.eventName, { ...eventInit });
   }
 }

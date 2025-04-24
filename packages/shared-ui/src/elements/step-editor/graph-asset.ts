@@ -299,7 +299,6 @@ export class GraphAsset
     ) {
       requestAnimationFrame(() => {
         this.cullable = true;
-        this.#lastBounds = null;
         this.dispatchEvent(new NodeBoundsUpdateRequestEvent());
       });
     }
