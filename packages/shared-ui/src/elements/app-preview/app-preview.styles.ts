@@ -40,6 +40,7 @@ export const styles = css`
     background: var(--bb-neutral-0);
     position: relative;
     padding: var(--bb-grid-size-4);
+    container-type: size;
 
     & #status {
       padding: var(--bb-grid-size-2);
@@ -123,9 +124,11 @@ export const styles = css`
     }
 
     & #theme-edit {
+      display: flex;
+      align-items: center;
+      justify-content: center;
       padding: var(--bb-grid-size-3) 0 var(--bb-grid-size-4) 0;
       width: 100%;
-      max-width: 386px;
 
       & #designer {
         height: var(--bb-grid-size-8);
@@ -155,11 +158,10 @@ export const styles = css`
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
-      width: 100%;
 
       margin: 0 auto;
-      max-width: 386px;
-      max-height: 100%;
+      max-width: 100cqmin;
+      max-height: 100cqmax;
       aspect-ratio: 9/16;
 
       overflow: auto;
