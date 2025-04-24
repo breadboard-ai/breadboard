@@ -70,6 +70,7 @@ import {
 
 import { sandbox } from "./sandbox";
 import {
+  AssetMetadata,
   GraphIdentifier,
   GraphTheme,
   InputValues,
@@ -3872,14 +3873,20 @@ export class Main extends LitElement {
 
                 await Promise.all(
                   evt.assets.map((asset) => {
+                    const metadata: AssetMetadata = {
+                      title: asset.name,
+                      type: asset.type,
+                      visual: asset.visual,
+                    };
+
+                    if (asset.subType) {
+                      metadata.subType = asset.subType;
+                    }
+
                     return projectState?.organizer.addGraphAsset({
-                      path: asset.name,
-                      metadata: {
-                        title: asset.name,
-                        type: "file",
-                        visual: asset.visual,
-                      },
-                      data: [asset.content],
+                      path: asset.path,
+                      metadata,
+                      data: [asset.data],
                     });
                   })
                 );

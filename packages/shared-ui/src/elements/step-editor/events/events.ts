@@ -8,6 +8,7 @@ import { Edge, GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
 import {
   EdgeAttachmentPoint,
   HighlightStateWithChangeId,
+  NewAsset,
 } from "../../../types/types";
 
 const eventInit = {
@@ -122,5 +123,13 @@ export class HighlightEvent extends Event {
     public readonly highlightState: HighlightStateWithChangeId | null
   ) {
     super(HighlightEvent.eventName, { ...eventInit });
+  }
+}
+
+export class CreateNewAssetsEvent extends Event {
+  static eventName = "bbcreatenewasset" as const;
+
+  constructor(public readonly assets: NewAsset[]) {
+    super(CreateNewAssetsEvent.eventName, { ...eventInit });
   }
 }

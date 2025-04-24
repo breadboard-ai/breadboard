@@ -151,7 +151,6 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         padding: var(--bb-grid-size) var(--bb-grid-size);
         border: 1px solid transparent;
         border-radius: var(--bb-grid-size);
-        field-sizing: content;
         max-width: 100%;
         min-width: 20%;
 
@@ -312,6 +311,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
     .asset {
       & h1 {
+        --outer-border: var(--bb-inputs-100);
         background: var(--bb-inputs-50);
 
         &::before {
@@ -953,7 +953,12 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
       return html`<div class=${classMap(classes)}>
         <h1 id="title">
-          <input id="node-title" name="node-title" .value=${node.title()} />
+          <input
+            autocomplete="off"
+            id="node-title"
+            name="node-title"
+            .value=${node.title()}
+          />
         </h1>
         <div id="type"></div>
         <div id="content">
@@ -1275,7 +1280,12 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
     return html`<div class=${classMap({ asset: true })}>
       <h1 id="title">
-        <input id="node-title" name="node-title" .value=${asset.title} />
+        <input
+          autocomplete="off"
+          id="node-title"
+          name="node-title"
+          .value=${asset.title}
+        />
       </h1>
       <div id="content">${value}</div>
       <input type="hidden" name="asset-path" .value=${assetPath} />

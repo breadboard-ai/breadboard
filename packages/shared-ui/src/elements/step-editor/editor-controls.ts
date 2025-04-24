@@ -31,9 +31,10 @@ import {
 import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { DATA_TYPE } from "./constants.js";
-import { NodeAddEvent } from "./events/events.js";
+import { CreateNewAssetsEvent, NodeAddEvent } from "./events/events.js";
 import { isA2 } from "@breadboard-ai/a2";
 import { until } from "lit/directives/until.js";
+import { ItemSelect } from "../elements.js";
 
 const QUICK_ADD_ADJUSTMENT = -20;
 
@@ -222,6 +223,31 @@ export class EditorControls extends LitElement {
         background: var(--bb-neutral-0);
         padding: 0;
 
+        & bb-item-select {
+          position: relative;
+          margin: 0 2px;
+
+          --menu-width: 200px;
+          --selected-item-column-gap: var(--bb-grid-size);
+          --selected-item-height: var(--bb-grid-size-9);
+          --selected-item-hover-color: var(--bb-neutral-50);
+          --selected-item-border-radius: var(--bb-grid-size-2)
+            var(--bb-grid-size-16) var(--bb-grid-size-16) var(--bb-grid-size-2);
+          --selected-item-font: 400 var(--bb-label-large) /
+            var(--bb-label-line-height-large) var(--bb-font-family);
+          --selected-item-title-padding: 0 var(--bb-grid-size-2) 0 0;
+
+          &::before {
+            content: "";
+            height: calc(100% + 4px);
+            position: absolute;
+            top: -2px;
+            left: -3px;
+            translate: -0.5px 0;
+            border-left: 1px solid var(--bb-neutral-100);
+          }
+        }
+
         & button {
           margin-right: var(--bb-grid-size);
           background-color: var(--bb-neutral-0);
@@ -232,13 +258,6 @@ export class EditorControls extends LitElement {
               var(--bb-grid-size-2) var(--bb-grid-size-16);
             margin-left: 2px;
             padding-left: var(--bb-grid-size-4);
-          }
-
-          &:last-of-type {
-            border-radius: var(--bb-grid-size-2) var(--bb-grid-size-16)
-              var(--bb-grid-size-16) var(--bb-grid-size-2);
-            margin-right: 2px;
-            padding-right: var(--bb-grid-size-4);
           }
 
           &:hover,
@@ -828,6 +847,82 @@ export class EditorControls extends LitElement {
           ${item.metadata.title ?? "Untitled"}
         </button>`;
       });
+
+      items.push(
+        html`<bb-item-select
+          .heading=${Strings.from("LABEL_ADD_ASSETS")}
+          @change=${(evt: Event) => {
+            const [select] = evt.composedPath();
+            if (!(select instanceof ItemSelect)) {
+              return;
+            }
+
+            switch (select.value) {
+              case "blank-content": {
+                this.dispatchEvent(
+                  new CreateNewAssetsEvent([
+                    {
+                      path: globalThis.crypto.randomUUID(),
+                      type: "content",
+                      name: "Blank Content",
+                      data: {
+                        role: "user",
+                        parts: [{ text: "" }],
+                      },
+                    },
+                  ])
+                );
+                break;
+              }
+
+              case "youtube": {
+                this.dispatchEvent(
+                  new CreateNewAssetsEvent([
+                    {
+                      path: globalThis.crypto.randomUUID(),
+                      name: "YouTube Video",
+                      type: "content",
+                      subType: "youtube",
+                      data: {
+                        role: "user",
+                        parts: [
+                          { fileData: { fileUri: "", mimeType: "video/mp4" } },
+                        ],
+                      },
+                    },
+                  ])
+                );
+                break;
+              }
+
+              default: {
+                console.log("Init", select.value);
+                break;
+              }
+            }
+          }}
+          .freezeValue=${0}
+          .transparent=${true}
+          .values=${[
+            {
+              id: "asset",
+              title: "Asset",
+              icon: "alternate_email",
+              hidden: true,
+            },
+            {
+              id: "blank-content",
+              title: "Blank Content",
+              icon: "edit_note",
+            },
+            {
+              id: "youtube",
+              title: "YouTube",
+              icon: "video_youtube",
+            },
+          ]}
+        ></bb-item-select>`
+      );
 
       return items;
     });

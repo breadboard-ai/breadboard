@@ -23,6 +23,9 @@ export class ItemSelect extends LitElement {
   accessor alignment: "top" | "bottom" = "bottom";
 
   @property()
+  accessor freezeValue = -1;
+
+  @property()
   set values(values: EnumValue[]) {
     this.#values = values;
     if (this.#value) {
@@ -59,12 +62,27 @@ export class ItemSelect extends LitElement {
       :host {
         display: block;
         position: relative;
-        --max-width: 280px;
+        --menu-width: 280px;
+        --menu-item-column-gap: var(--bb-grid-size-3);
+        --selected-item-column-gap: var(--bb-grid-size-3);
+        --selected-item-height: var(--bb-grid-size-7);
+        --selected-item-hover-color: transparent;
+        --selected-item-border-radius: var(--bb-grid-size);
+        --selected-item-font: normal var(--bb-label-medium) /
+          var(--bb-label-line-height-medium) var(--bb-font-family);
+        --selected-item-title-padding: 0;
       }
 
       :host([transparent]) {
         & button.selected {
           background-color: transparent;
+
+          &:not([disabled]) {
+            &:focus,
+            &:hover {
+              background-color: var(--selected-item-hover-color);
+            }
+          }
         }
       }
 
@@ -83,7 +101,6 @@ export class ItemSelect extends LitElement {
         align-items: center;
         padding-left: var(--bb-grid-size-3);
         padding-right: var(--bb-grid-size-3);
-        column-gap: var(--bb-grid-size-3);
 
         &.tag {
           .i-tag {
@@ -111,12 +128,6 @@ export class ItemSelect extends LitElement {
           }
         }
 
-        &.selected {
-          background: var(--bb-neutral-50);
-          width: max-content;
-          max-width: 100%;
-        }
-
         &.double {
           height: var(--bb-grid-size-13);
           padding-top: var(--bb-grid-size-2);
@@ -140,6 +151,20 @@ export class ItemSelect extends LitElement {
           font: normal var(--bb-label-small) / var(--bb-label-line-height-small)
             var(--bb-font-family);
         }
+
+        &.selected {
+          background: var(--bb-neutral-50);
+          width: max-content;
+          max-width: 100%;
+          height: var(--selected-item-height);
+          column-gap: var(--selected-item-column-gap);
+          border-radius: var(--selected-item-border-radius);
+
+          & .title {
+            font: var(--selected-item-font);
+            padding: var(--selected-item-title-padding);
+          }
+        }
       }
 
       #item-selector {
@@ -147,7 +172,7 @@ export class ItemSelect extends LitElement {
         left: var(--left);
         background: var(--bb-neutral-0);
         padding: var(--bb-grid-size);
-        width: var(--max-width);
+        width: var(--menu-width);
         height: fit-content;
         margin: 0;
         border: none;
@@ -177,6 +202,7 @@ export class ItemSelect extends LitElement {
 
             & button {
               outline: none;
+              column-gap: var(--menu-item-column-gap);
             }
           }
         }
@@ -218,13 +244,14 @@ export class ItemSelect extends LitElement {
   }
 
   render() {
-    const currentValue = this.#values[this.#selected] ?? {
+    const idx = this.freezeValue !== -1 ? this.freezeValue : this.#selected;
+    const renderedValue = this.#values[idx] ?? {
       title: "No items available",
       value: "none",
     };
     const classes: Record<string, boolean> = {
       selected: true,
-      icon: currentValue.icon !== undefined,
+      icon: renderedValue.icon !== undefined,
     };
 
     return html`<button
@@ -238,10 +265,10 @@ export class ItemSelect extends LitElement {
         }}
         ${ref(this.#toggleRef)}
       >
-        ${currentValue.icon
-          ? html`<span class="g-icon">${currentValue.icon}</span>`
+        ${renderedValue.icon
+          ? html`<span class="g-icon">${renderedValue.icon}</span>`
           : nothing}
-        <span class="title">${currentValue.title}</span>
+        <span class="title">${renderedValue.title}</span>
       </button>
 
       <dialog
@@ -301,15 +328,14 @@ export class ItemSelect extends LitElement {
             top = window.innerHeight - 360;
           }
 
-          // Adjust so that it's the distance from the viewport bottom.
-          bottom = window.innerHeight - bottom + 32;
-
-          // Adjust to below the button.
-          top += 32;
-
+          const adjustment = bounds.height + 8;
           if (this.alignment === "bottom") {
+            // Adjust to below the button.
+            top += adjustment;
             this.style.setProperty("--top", `${top}px`);
           } else {
+            // Adjust so that it's the distance from the viewport bottom.
+            bottom = window.innerHeight - bottom + adjustment;
             this.style.setProperty("--bottom", `${bottom}px`);
           }
           this.style.setProperty("--left", `${left}px`);
@@ -323,6 +349,10 @@ export class ItemSelect extends LitElement {
             this.#values,
             (v) => v.id,
             (value, idx) => {
+              if (value.hidden) {
+                return nothing;
+              }
+
               const classes: Record<string, boolean> = {
                 double: value.description !== undefined,
                 icon: value.icon !== undefined,

@@ -75,6 +75,9 @@ export default {
   LABEL_UPDATING: {
     str: "Updating step definition.",
   },
+  LABEL_ADD_ASSETS: {
+    str: "Add @Assets",
+  },
 
   // Queries.
 
