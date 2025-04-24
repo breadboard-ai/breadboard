@@ -108,7 +108,8 @@ async function callGeminiImage(
     ];
   }
 
-  const outContent = response.executionOutputs[OUTPUT_NAME];
+  const outContent =
+    response.executionOutputs && response.executionOutputs[OUTPUT_NAME];
   if (!outContent) {
     return [toLLMContent("Error: No image returned from backend")];
   }
@@ -156,11 +157,13 @@ async function callImageGen(
     execution_inputs: executionInputs,
   } satisfies ExecuteStepRequest;
   const response = await executeStep(body);
+  console.log(response);
   if (!ok(response)) {
     return [toLLMContent("Imagen image generation failed: " + response.$error)];
   }
 
-  const outContent = response.executionOutputs[OUTPUT_NAME];
+  const outContent =
+    response.executionOutputs && response.executionOutputs[OUTPUT_NAME];
   if (!outContent) {
     return [toLLMContent("Error: No image returned from backend")];
   }
