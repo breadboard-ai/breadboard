@@ -200,9 +200,7 @@ export class FlowgenEditorInput extends LitElement {
         <bb-expanding-textarea
           ${ref(this.#descriptionInput)}
           .disabled=${isGenerating}
-          .placeholder=${this.#originalIntent ||
-          Strings.from("COMMAND_DESCRIBE_EDIT_FLOW")}
-          .tabCompletesPlaceholder=${!!this.#originalIntent}
+          .placeholder=${Strings.from("COMMAND_DESCRIBE_EDIT_FLOW")}
           @change=${this.#onInputChange}
           @focus=${this.#onInputFocus}
           @blur=${this.#onInputBlur}
