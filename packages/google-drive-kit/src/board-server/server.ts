@@ -42,6 +42,8 @@ interface DriveFileQuery {
 // TODO(aomarks) Make this configurable via a VITE_ env variable.
 const GOOGLE_DRIVE_FOLDER_NAME = "Breadboard";
 const GOOGLE_DRIVE_FOLDER_MIME_TYPE = "application/vnd.google-apps.folder";
+const PROJECT_MIME_TYPE = "application/vnd.breadboard.project+json";
+const DEPRECATED_PROJECT_MIME_TYPE = "application/json";
 
 // This whole package should probably be called
 // "@breadboard-ai/google-drive-board-server".
@@ -146,7 +148,8 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
     const accessToken = await getAccessToken(this.vendor);
     const query =
       `"${folderId}" in parents` +
-      ` and mimeType = "application/json"` +
+      ` and (mimeType="${PROJECT_MIME_TYPE}"` +
+      `      or mimeType="${DEPRECATED_PROJECT_MIME_TYPE}")` +
       ` and trashed=false`;
 
     if (!folderId || !accessToken) {
@@ -175,20 +178,18 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
         console.warn(response);
       }
 
-      const projects = response.files
-        .filter((file) => file.mimeType === "application/json")
-        .map((file) => {
-          const { title, tags } = readAppProperties(file);
-          return {
-            url: new URL(`${this.url}/${file.id}`),
-            metadata: {
-              owner: "board-builder",
-              tags,
-              title,
-              access,
-            },
-          };
-        });
+      const projects = response.files.map((file) => {
+        const { title, tags } = readAppProperties(file);
+        return {
+          url: new URL(`${this.url}/${file.id}`),
+          metadata: {
+            owner: "board-builder",
+            tags,
+            title,
+            access,
+          },
+        };
+      });
 
       return projects;
     } catch (err) {
@@ -203,7 +204,7 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
       throw new Error("No folder ID or access token");
     }
     const query =
-      `mimeType = "application/json"` +
+      `mimeType = "${PROJECT_MIME_TYPE}"` +
       ` and sharedWithMe=true` +
       ` and trashed=false`;
     const api = new Files(accessToken);
@@ -302,7 +303,10 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
       await fetch(
         api.makePatchRequest(
           file,
-          createAppProperties(file, descriptor),
+          {
+            ...createAppProperties(file, descriptor),
+            mimeType: PROJECT_MIME_TYPE,
+          },
           descriptor
         )
       );
@@ -334,7 +338,7 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
         api.makeMultipartCreateRequest(
           {
             name: fileName,
-            mimeType: "application/json",
+            mimeType: PROJECT_MIME_TYPE,
             parents: [parent],
             ...createAppProperties(fileName, descriptor),
           },
