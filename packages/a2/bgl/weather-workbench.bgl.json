@@ -7,10 +7,10 @@
       "id": "a2-136ee999",
       "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
-        "title": "Make Text",
+        "title": "Embedded tool",
         "visual": {
-          "x": 340,
-          "y": -200,
+          "x": 200,
+          "y": -100,
           "collapsed": "expanded",
           "outputHeight": 148
         },
@@ -25,11 +25,74 @@
               "text": "Write a short poem describing the weather in London. Use {{\"type\":\"tool\",\"path\":\"embed://a2/tools.bgl.json#module:get-weather\",\"title\":\"Get Weather\"}} tool to get current weather."
             }
           ]
-        }
+        },
+        "p-chat": false,
+        "p-list": false
+      }
+    },
+    {
+      "id": "183f9393-260f-46ac-b68a-d61d91f1c2e2",
+      "type": "embed://a2/generate.bgl.json#module:main",
+      "metadata": {
+        "title": "Standalone",
+        "visual": {
+          "x": 200,
+          "y": -260
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "config$ask-user": false,
+        "config$list": false,
+        "config$prompt": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Use {{\"type\":\"tool\",\"path\":\"embed://a2/tools.bgl.json#module:get-weather\",\"title\":\"Get Weather\"}} to look up the weather in 94040"
+            }
+          ]
+        },
+        "generation-mode": "text"
+      }
+    },
+    {
+      "id": "11796b4e-b2cf-469a-8bd2-c0c97b011270",
+      "type": "embed://a2/a2.bgl.json#module:render-outputs",
+      "metadata": {
+        "title": "Display",
+        "visual": {
+          "x": 580,
+          "y": -200
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "text": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Standalone\n{{\"type\":\"in\",\"path\":\"183f9393-260f-46ac-b68a-d61d91f1c2e2\",\"title\":\"Standalone\"}}\n\nEmbedded\n {{\"type\":\"in\",\"path\":\"a2-136ee999\",\"title\":\"Embedded tool\"}}"
+            }
+          ]
+        },
+        "p-render-mode": "Manual layout"
       }
     }
   ],
-  "edges": [],
+  "edges": [
+    {
+      "from": "183f9393-260f-46ac-b68a-d61d91f1c2e2",
+      "to": "11796b4e-b2cf-469a-8bd2-c0c97b011270",
+      "out": "context",
+      "in": "p-z-183f9393-260f-46ac-b68a-d61d91f1c2e2"
+    },
+    {
+      "from": "a2-136ee999",
+      "to": "11796b4e-b2cf-469a-8bd2-c0c97b011270",
+      "out": "context",
+      "in": "p-z-a2-136ee999"
+    }
+  ],
   "metadata": {
     "visual": {
       "presentation": {
@@ -67,7 +130,7 @@
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIzMC42NSIKICAgICAgICAgICAgICAgICAgICB5PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTg4LjcxIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTgwLjAwIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI4NC4xOSIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iOTMuNDQiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI4OS4xMyIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KPHJlY3QgeD0iMTAuMDAiCiAgICAgICAgICAgICAgICAgICAgeT0iMjYuNjkiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjkzLjQ0IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMzUuOTQiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CjxyZWN0IHg9IjE0Ni41NiIKICAgICAgICAgICAgICAgICAgICB5PSI0OC4yNSIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iOTMuNDQiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIzNS45NCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzJlOGJlOCIgLz4KICAgICAgCiAgICA8L3N2Zz4="
     }
   }
 }

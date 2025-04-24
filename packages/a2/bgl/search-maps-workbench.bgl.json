@@ -26,19 +26,103 @@
           "role": "user"
         }
       }
+    },
+    {
+      "id": "1e5d68c5-5949-4852-9c11-41b07e854dbb",
+      "type": "embed://a2/generate.bgl.json#module:main",
+      "metadata": {
+        "title": "Generate",
+        "visual": {
+          "x": 220,
+          "y": -440
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "config$ask-user": false,
+        "config$list": false,
+        "config$prompt": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Use {{\"type\":\"tool\",\"path\":\"embed://a2/tools.bgl.json#module:search-maps\",\"title\":\"Search Maps\"}} to answer the query: \"Coffee shops near mountain view, CA\""
+            }
+          ]
+        },
+        "generation-mode": "text"
+      }
+    },
+    {
+      "id": "5db00b0f-140f-4b52-a4bb-639c25832615",
+      "type": "embed://a2/a2.bgl.json#module:render-outputs",
+      "metadata": {
+        "title": "Display",
+        "visual": {
+          "x": 680,
+          "y": -140
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "text": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Standalone\n{{\"type\":\"in\",\"path\":\"1e5d68c5-5949-4852-9c11-41b07e854dbb\",\"title\":\"Generate\"}} \n\nEmbedded:\n{{\"type\":\"in\",\"path\":\"a2-a6c6f885\",\"title\":\"Make Text\"}}"
+            }
+          ]
+        },
+        "p-render-mode": "Manual layout"
+      }
     }
   ],
-  "edges": [],
+  "edges": [
+    {
+      "from": "1e5d68c5-5949-4852-9c11-41b07e854dbb",
+      "to": "5db00b0f-140f-4b52-a4bb-639c25832615",
+      "out": "context",
+      "in": "p-z-1e5d68c5-5949-4852-9c11-41b07e854dbb"
+    },
+    {
+      "from": "a2-a6c6f885",
+      "to": "5db00b0f-140f-4b52-a4bb-639c25832615",
+      "out": "context",
+      "in": "p-z-a2-a6c6f885"
+    }
+  ],
   "assets": {
     "@@thumbnail": {
       "metadata": {
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSI1Ny43NiIKICAgICAgICAgICAgICAgICAgICB5PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTM0LjQ4IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTgwLjAwIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSI0NC44MCIKICAgICAgICAgICAgICAgICAgICB5PSIxMTIuNDgiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjU3LjkyIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNzcuNTIiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CjxyZWN0IHg9IjQ0LjgwIgogICAgICAgICAgICAgICAgICAgIHk9IjEwLjAwIgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI1Ny45MiIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjIyLjI4IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgo8cmVjdCB4PSIxNDcuMjgiCiAgICAgICAgICAgICAgICAgICAgeT0iNzYuODMiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjU3LjkyIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMjIuMjgiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyZThiZTgiIC8+CiAgICAgIAogICAgPC9zdmc+"
     }
   },
   "metadata": {
-    "visual": {}
+    "visual": {
+      "presentation": {
+        "themes": {
+          "cf0089ce-691b-4f31-b650-3a29123e5267": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "cf0089ce-691b-4f31-b650-3a29123e5267"
+      }
+    },
+    "parameters": {}
   }
 }
