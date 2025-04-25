@@ -27,6 +27,7 @@ export class TextEditor extends LitElement {
     });
     this.#value = template.raw;
     this.#renderableValue = template.renderable;
+    this.#updateEditorValue();
   }
 
   get value(): string {
@@ -723,7 +724,7 @@ export class TextEditor extends LitElement {
     this.#fastAccessRef.value.classList.remove("active");
   }
 
-  protected firstUpdated(): void {
+  #updateEditorValue() {
     if (!this.#editorRef.value) {
       return;
     }
@@ -731,6 +732,10 @@ export class TextEditor extends LitElement {
     this.#editorRef.value.innerHTML = this.#renderableValue;
     this.#ensureAllChicletsHaveSpace();
     this.#togglePlaceholder();
+  }
+
+  protected firstUpdated(): void {
+    this.#updateEditorValue();
 
     if (this.#focusOnFirstRender) {
       this.focus();
