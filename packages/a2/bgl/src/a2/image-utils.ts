@@ -103,7 +103,7 @@ async function callGeminiImage(
       toLLMContent(
         "Gemini image generation failed: " +
           response.$error +
-          " Check your prompt to ensure it is valid and policy compliant."
+          " Check your prompt to ensure it is a valid image prompt and policy compliant."
       ),
     ];
   }
@@ -159,7 +159,7 @@ async function callImageGen(
   const response = await executeStep(body);
   console.log(response);
   if (!ok(response)) {
-    return [toLLMContent("Imagen image generation failed: " + response.$error)];
+    return [toLLMContent("Image generation failed: " + response.$error)];
   }
 
   const outContent =

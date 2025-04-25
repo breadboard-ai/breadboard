@@ -57,6 +57,7 @@ export type ExecuteStepRequest = {
 
 export type ExecuteStepResponse = {
   executionOutputs: ContentMap;
+  errorMessage?: string;
 };
 
 function maybeExtractError(e: string): string {
@@ -136,5 +137,9 @@ async function executeStep(
     return { $error };
   }
   const response = fetchResult.response as ExecuteStepResponse;
+  if (response.errorMessage) {
+    $error = response.errorMessage;
+    return { $error };
+  }
   return response;
 }
