@@ -370,12 +370,16 @@ export class GraphAsset
 
     let icon = "alternate_email";
     if (this.asset?.subType) {
-      if (this.asset?.subType === "youtube") {
-        icon = "video_youtube";
-      }
-
-      if (this.asset?.subType === "drawable") {
-        icon = "draw";
+      switch (this.asset.subType) {
+        case "youtube":
+          icon = "video_youtube";
+          break;
+        case "drawable":
+          icon = "draw";
+          break;
+        case "gdrive":
+          icon = "drive";
+          break;
       }
     }
 

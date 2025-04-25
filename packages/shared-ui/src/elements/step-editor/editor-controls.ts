@@ -14,6 +14,8 @@ import {
   KitNodeChosenEvent,
   ShowAssetOrganizerEvent,
   ShowTooltipEvent,
+  ToastEvent,
+  ToastType,
   ZoomInEvent,
   ZoomOutEvent,
   ZoomToFitEvent,
@@ -34,8 +36,11 @@ import { DATA_TYPE } from "./constants.js";
 import { CreateNewAssetsEvent, NodeAddEvent } from "./events/events.js";
 import { isA2 } from "@breadboard-ai/a2";
 import { until } from "lit/directives/until.js";
-import { ItemSelect } from "../elements.js";
+import { GoogleDriveFileId, ItemSelect } from "../elements.js";
 import { NewAsset } from "../../types/types.js";
+import { createRef, ref, Ref } from "lit/directives/ref.js";
+import { SIGN_IN_CONNECTION_ID } from "../../utils/signin-adapter.js";
+import { InputChangeEvent } from "../../plugins/input-plugin.js";
 
 const QUICK_ADD_ADJUSTMENT = -20;
 
@@ -554,12 +559,37 @@ export class EditorControls extends LitElement {
         transform: none;
       }
     }
+
+    #add-drive-proxy {
+      display: block;
+      width: 0;
+      height: 0;
+      position: absolute;
+      pointer-events: none;
+      overflow: hidden;
+    }
   `;
+
+  #addDriveInputRef: Ref<GoogleDriveFileId> = createRef();
 
   hidePickers() {
     this.#componentLibraryConfiguration = null;
     this.showComponentLibrary = false;
     this.showComponentPicker = false;
+  }
+
+  #attemptGDrivePickerFlow() {
+    if (!this.#addDriveInputRef.value) {
+      return;
+    }
+
+    try {
+      this.#addDriveInputRef.value.triggerFlow();
+    } catch (err) {
+      this.dispatchEvent(
+        new ToastEvent("Unable to load Google Drive", ToastType.ERROR)
+      );
+    }
   }
 
   #createComponentList(graphStore: MutableGraphStore, typeTag: string) {
@@ -851,168 +881,217 @@ export class EditorControls extends LitElement {
 
       items.push(
         html`<bb-item-select
-          .heading=${Strings.from("LABEL_ADD_ASSETS")}
-          @change=${(evt: Event) => {
-            const [select] = evt.composedPath();
-            if (!(select instanceof ItemSelect)) {
-              return;
-            }
-
-            switch (select.value) {
-              case "text": {
-                this.dispatchEvent(
-                  new CreateNewAssetsEvent([
-                    {
-                      path: globalThis.crypto.randomUUID(),
-                      type: "content",
-                      name: "Text",
-                      data: {
-                        role: "user",
-                        parts: [{ text: "" }],
-                      },
-                    },
-                  ])
-                );
-                break;
+            .heading=${Strings.from("LABEL_ADD_ASSETS")}
+            @change=${(evt: Event) => {
+              const [select] = evt.composedPath();
+              if (!(select instanceof ItemSelect)) {
+                return;
               }
 
-              case "drawing": {
-                this.dispatchEvent(
-                  new CreateNewAssetsEvent([
-                    {
-                      path: globalThis.crypto.randomUUID(),
-                      type: "content",
-                      subType: "drawable",
-                      name: "Drawing",
-                      data: {
-                        role: "user",
-                        parts: [
-                          { inlineData: { mimeType: "image/png", data: "" } },
-                        ],
-                      },
-                    },
-                  ])
-                );
-                break;
-              }
-
-              case "upload": {
-                const f = document.createElement("input");
-                f.type = "file";
-                f.multiple = true;
-                f.addEventListener("change", () => {
-                  if (!f.files) {
-                    return;
-                  }
-
-                  Promise.all(
-                    [...f.files].map((file) => {
-                      return new Promise<{
-                        name: string;
-                        mimeType: string;
-                        data: string;
-                      }>((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.onloadend = () => {
-                          const preamble = `data:${file.type};base64,`;
-                          const data = (reader.result as string).substring(
-                            preamble.length
-                          );
-                          resolve({
-                            name: file.name,
-                            mimeType: file.type,
-                            data,
-                          });
-                        };
-                        reader.onerror = () => reject("File read error");
-                        reader.readAsDataURL(file);
-                      });
-                    })
-                  ).then((files) => {
-                    const assets: NewAsset[] = files.map((file) => {
-                      return {
+              switch (select.value) {
+                case "text": {
+                  this.dispatchEvent(
+                    new CreateNewAssetsEvent([
+                      {
                         path: globalThis.crypto.randomUUID(),
-                        type: "file",
-                        name: file.name,
+                        type: "content",
+                        name: "Text",
+                        data: {
+                          role: "user",
+                          parts: [{ text: "" }],
+                        },
+                      },
+                    ])
+                  );
+                  break;
+                }
+
+                case "drawing": {
+                  this.dispatchEvent(
+                    new CreateNewAssetsEvent([
+                      {
+                        path: globalThis.crypto.randomUUID(),
+                        type: "content",
+                        subType: "drawable",
+                        name: "Drawing",
+                        data: {
+                          role: "user",
+                          parts: [
+                            { inlineData: { mimeType: "image/png", data: "" } },
+                          ],
+                        },
+                      },
+                    ])
+                  );
+                  break;
+                }
+
+                case "upload": {
+                  const f = document.createElement("input");
+                  f.type = "file";
+                  f.multiple = true;
+                  f.addEventListener("change", () => {
+                    if (!f.files) {
+                      return;
+                    }
+
+                    Promise.all(
+                      [...f.files].map((file) => {
+                        return new Promise<{
+                          name: string;
+                          mimeType: string;
+                          data: string;
+                        }>((resolve, reject) => {
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            const preamble = `data:${file.type};base64,`;
+                            const data = (reader.result as string).substring(
+                              preamble.length
+                            );
+                            resolve({
+                              name: file.name,
+                              mimeType: file.type,
+                              data,
+                            });
+                          };
+                          reader.onerror = () => reject("File read error");
+                          reader.readAsDataURL(file);
+                        });
+                      })
+                    ).then((files) => {
+                      const assets: NewAsset[] = files.map((file) => {
+                        return {
+                          path: globalThis.crypto.randomUUID(),
+                          type: "file",
+                          name: file.name,
+                          data: {
+                            role: "user",
+                            parts: [
+                              {
+                                inlineData: {
+                                  mimeType: file.mimeType,
+                                  data: file.data,
+                                },
+                              },
+                            ],
+                          },
+                        };
+                      });
+
+                      this.dispatchEvent(new CreateNewAssetsEvent(assets));
+                    });
+                  });
+
+                  f.click();
+                  break;
+                }
+
+                case "youtube": {
+                  this.dispatchEvent(
+                    new CreateNewAssetsEvent([
+                      {
+                        path: globalThis.crypto.randomUUID(),
+                        name: "YouTube Video",
+                        type: "content",
+                        subType: "youtube",
                         data: {
                           role: "user",
                           parts: [
                             {
-                              inlineData: {
-                                mimeType: file.mimeType,
-                                data: file.data,
-                              },
+                              fileData: { fileUri: "", mimeType: "video/mp4" },
                             },
                           ],
                         },
-                      };
-                    });
+                      },
+                    ])
+                  );
+                  break;
+                }
 
-                    this.dispatchEvent(new CreateNewAssetsEvent(assets));
-                  });
-                });
+                case "gdrive": {
+                  this.#attemptGDrivePickerFlow();
+                  break;
+                }
 
-                f.click();
-                break;
+                default: {
+                  console.log("Init", select.value);
+                  break;
+                }
               }
+            }}
+            .freezeValue=${0}
+            .transparent=${true}
+            .values=${[
+              {
+                id: "asset",
+                title: "Asset",
+                icon: "alternate_email",
+                hidden: true,
+              },
+              {
+                id: "text",
+                title: "Text",
+                icon: "edit_note",
+              },
+              {
+                id: "upload",
+                title: "Upload file",
+                icon: "upload",
+              },
+              {
+                id: "gdrive",
+                title: "Google Drive",
+                icon: "drive",
+              },
+              {
+                id: "youtube",
+                title: "YouTube",
+                icon: "video_youtube",
+              },
+              {
+                id: "drawing",
+                title: "Drawing",
+                icon: "draw",
+              },
+            ]}
+          ></bb-item-select>
+          <div>
+            <bb-google-drive-file-id
+              id="add-drive-proxy"
+              ${ref(this.#addDriveInputRef)}
+              .connectionName=${SIGN_IN_CONNECTION_ID}
+              .ownedByMeOnly=${true}
+              @bb-input-change=${(evt: InputChangeEvent) => {
+                const driveFile = evt.value as {
+                  preview: string;
+                  id: string;
+                  mimeType: string;
+                };
 
-              case "youtube": {
                 this.dispatchEvent(
                   new CreateNewAssetsEvent([
                     {
                       path: globalThis.crypto.randomUUID(),
-                      name: "YouTube Video",
+                      name: driveFile.preview,
                       type: "content",
-                      subType: "youtube",
+                      subType: "gdrive",
                       data: {
                         role: "user",
                         parts: [
-                          { fileData: { fileUri: "", mimeType: "video/mp4" } },
+                          {
+                            fileData: {
+                              fileUri: driveFile.id,
+                              mimeType: driveFile.mimeType,
+                            },
+                          },
                         ],
                       },
                     },
                   ])
                 );
-                break;
-              }
-
-              default: {
-                console.log("Init", select.value);
-                break;
-              }
-            }
-          }}
-          .freezeValue=${0}
-          .transparent=${true}
-          .values=${[
-            {
-              id: "asset",
-              title: "Asset",
-              icon: "alternate_email",
-              hidden: true,
-            },
-            {
-              id: "text",
-              title: "Text",
-              icon: "edit_note",
-            },
-            {
-              id: "upload",
-              title: "Upload file",
-              icon: "upload",
-            },
-            {
-              id: "drawing",
-              title: "Drawing",
-              icon: "draw",
-            },
-            {
-              id: "youtube",
-              title: "YouTube",
-              icon: "video_youtube",
-            },
-          ]}
-        ></bb-item-select>`
+              }}
+            ></bb-google-drive-file-id>
+          </div> `
       );
 
       return items;
