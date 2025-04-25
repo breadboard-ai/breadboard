@@ -42,8 +42,8 @@ interface DriveFileQuery {
 // TODO(aomarks) Make this configurable via a VITE_ env variable.
 const GOOGLE_DRIVE_FOLDER_NAME = "Breadboard";
 const GOOGLE_DRIVE_FOLDER_MIME_TYPE = "application/vnd.google-apps.folder";
-const PROJECT_MIME_TYPE = "application/vnd.breadboard.graph+json";
-const DEPRECATED_PROJECT_MIME_TYPE = "application/json";
+const GRAPH_MIME_TYPE = "application/vnd.breadboard.graph+json";
+const DEPRECATED_GRAPH_MIME_TYPE = "application/json";
 
 // This whole package should probably be called
 // "@breadboard-ai/google-drive-board-server".
@@ -148,8 +148,8 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
     const accessToken = await getAccessToken(this.vendor);
     const query =
       `"${folderId}" in parents` +
-      ` and (mimeType="${PROJECT_MIME_TYPE}"` +
-      `      or mimeType="${DEPRECATED_PROJECT_MIME_TYPE}")` +
+      ` and (mimeType="${GRAPH_MIME_TYPE}"` +
+      `      or mimeType="${DEPRECATED_GRAPH_MIME_TYPE}")` +
       ` and trashed=false`;
 
     if (!folderId || !accessToken) {
@@ -204,7 +204,7 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
       throw new Error("No folder ID or access token");
     }
     const query =
-      `mimeType = "${PROJECT_MIME_TYPE}"` +
+      `mimeType = "${GRAPH_MIME_TYPE}"` +
       ` and sharedWithMe=true` +
       ` and trashed=false`;
     const api = new Files(accessToken);
@@ -305,7 +305,7 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
           file,
           {
             ...createAppProperties(file, descriptor),
-            mimeType: PROJECT_MIME_TYPE,
+            mimeType: GRAPH_MIME_TYPE,
           },
           descriptor
         )
@@ -338,7 +338,7 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
         api.makeMultipartCreateRequest(
           {
             name: fileName,
-            mimeType: PROJECT_MIME_TYPE,
+            mimeType: GRAPH_MIME_TYPE,
             parents: [parent],
             ...createAppProperties(fileName, descriptor),
           },
