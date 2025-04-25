@@ -169,6 +169,7 @@ export class LLMOutput extends LitElement {
       }
 
       & .empty-text-part {
+        color: var(--bb-neutral-900);
         margin: 0;
         padding: 0;
         border-radius: var(--bb-grid-size-16);
@@ -430,10 +431,20 @@ export class LLMOutput extends LitElement {
                   this.#partDataURLs.set(key, url);
                   return url;
                 });
+            } else if (
+              part.inlineData.data === "" &&
+              !part.inlineData.mimeType.startsWith("text")
+            ) {
+              partDataURL = Promise.resolve("");
             }
 
             const tmpl = partDataURL.then((url: string) => {
               if (part.inlineData.mimeType.startsWith("image")) {
+                if (part.inlineData.data === "") {
+                  this.#outputLoaded();
+                  return html`No image provided`;
+                }
+
                 return cache(html`
                   ${canCopy && part.inlineData.mimeType === "image/png"
                     ? html` <div class="copy-image-to-clipboard">
@@ -583,13 +594,24 @@ export class LLMOutput extends LitElement {
                 return response.text();
               };
               if (mimeType.startsWith("image")) {
-                value = html`<img
-                  @load=${() => {
+                const imgData = new Promise((resolve) => {
+                  const image = new Image();
+                  image.setAttribute("alt", url);
+                  image.onload = () => {
                     this.#outputLoaded();
-                  }}
-                  src="${url}"
-                  alt="LLM Image"
-                />`;
+                    resolve(image);
+                  };
+                  image.onerror = () => {
+                    this.#outputLoaded();
+                    resolve(
+                      html`<span class="empty-text-part"
+                        >No image provided</span
+                      >`
+                    );
+                  };
+                  image.src = url;
+                });
+                value = html`${until(imgData)}`;
               }
               if (mimeType.startsWith("audio")) {
                 value = html`<audio

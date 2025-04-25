@@ -1338,6 +1338,7 @@ export class Renderer extends LitElement {
           title: graphAsset.title,
           type: graphAsset.type,
           description: graphAsset.description,
+          subType: graphAsset.subType,
           visual,
         };
 

@@ -7,6 +7,7 @@ import {
   InspectableGraph,
   isLLMContent,
   isLLMContentArray,
+  isStoredData,
   isTextCapabilityPart,
   MainGraphIdentifier,
   MutableGraphStore,
@@ -44,7 +45,12 @@ import {
 import { classMap } from "lit/directives/class-map.js";
 import { until } from "lit/directives/until.js";
 import { isConfigurableBehavior, isLLMContentBehavior } from "../../utils";
-import { FastAccessMenu, ItemSelect, TextEditor } from "../elements";
+import {
+  FastAccessMenu,
+  ItemSelect,
+  LLMPartInput,
+  TextEditor,
+} from "../elements";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { isCtrlCommand } from "../../utils/is-ctrl-command";
 import { MAIN_BOARD_ID } from "../../constants/constants";
@@ -619,6 +625,17 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         --output-lite-border-color: transparent;
         --output-border-radius: var(--bb-grid-size);
       }
+
+      & bb-llm-part-input {
+        border-bottom: 1px solid var(--bb-neutral-100);
+
+        &.fill {
+          width: 100%;
+          height: 100%;
+          overflow: auto;
+          border-bottom: none;
+        }
+      }
     }
 
     bb-fast-access-menu {
@@ -769,7 +786,15 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           this.dispatchEvent(new ToastEvent(commiting.$error, ToastType.ERROR));
         }
       } else {
-        const updating = await asset.updateTitle(title);
+        const dataPart =
+          form.querySelector<LLMPartInput>("#asset-value")?.dataPart;
+
+        let data: LLMContent[] | undefined = undefined;
+        if (dataPart) {
+          data = [{ role: "user", parts: [dataPart] }];
+        }
+
+        const updating = await asset.update(title, data);
         if (!ok(updating)) {
           this.dispatchEvent(new ToastEvent(updating.$error, ToastType.ERROR));
         }
@@ -1266,16 +1291,47 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       value = this.#renderPorts("", "", ports, asset.title);
     } else {
       const graphUrl = new URL(this.graph.raw().url ?? window.location.href);
+      const itemData = asset?.data.at(-1) ?? null;
+      const dataPart = itemData?.parts[0] ?? null;
+      const isDrawable = isStoredData(dataPart) && asset.subType === "drawable";
+      const skipOutput = isTextCapabilityPart(dataPart) || isDrawable;
 
-      value = html`<bb-llm-output
-        .value=${asset?.data.at(-1) ?? null}
-        .clamped=${false}
-        .lite=${true}
-        .showModeToggle=${false}
-        .showEntrySelector=${false}
-        .showExportControls=${false}
+      const partEditor = html`<bb-llm-part-input
+        class=${classMap({ fill: skipOutput })}
+        id="asset-value"
+        @submit=${(evt: SubmitEvent) => {
+          evt.preventDefault();
+          evt.stopImmediatePropagation();
+
+          this.#submit(this.values);
+        }}
         .graphUrl=${graphUrl}
-      ></bb-llm-output>`;
+        .subType=${asset.subType}
+        .projectState=${this.projectState}
+        .dataPart=${dataPart}
+      ></bb-llm-part-input>`;
+
+      let input: HTMLTemplateResult | symbol = nothing;
+      if (skipOutput) {
+        input = html`<div class="stretch object">${partEditor}</div>`;
+      } else {
+        input = partEditor;
+      }
+
+      let output: HTMLTemplateResult | symbol = nothing;
+      if (!skipOutput) {
+        output = html` <bb-llm-output
+          .value=${itemData}
+          .clamped=${false}
+          .lite=${true}
+          .showModeToggle=${false}
+          .showEntrySelector=${false}
+          .showExportControls=${false}
+          .graphUrl=${graphUrl}
+        ></bb-llm-output>`;
+      }
+
+      value = [input, output];
     }
 
     return html`<div class=${classMap({ asset: true })}>

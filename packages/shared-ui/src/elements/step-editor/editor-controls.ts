@@ -875,6 +875,26 @@ export class EditorControls extends LitElement {
                 break;
               }
 
+              case "drawing": {
+                this.dispatchEvent(
+                  new CreateNewAssetsEvent([
+                    {
+                      path: globalThis.crypto.randomUUID(),
+                      type: "content",
+                      subType: "drawable",
+                      name: "Drawing",
+                      data: {
+                        role: "user",
+                        parts: [
+                          { inlineData: { mimeType: "image/png", data: "" } },
+                        ],
+                      },
+                    },
+                  ])
+                );
+                break;
+              }
+
               case "youtube": {
                 this.dispatchEvent(
                   new CreateNewAssetsEvent([
@@ -914,6 +934,11 @@ export class EditorControls extends LitElement {
               id: "blank-content",
               title: "Blank Content",
               icon: "edit_note",
+            },
+            {
+              id: "drawing",
+              title: "Drawing",
+              icon: "draw",
             },
             {
               id: "youtube",

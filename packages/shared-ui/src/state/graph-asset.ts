@@ -16,6 +16,7 @@ import { err, ok, Outcome } from "@google-labs/breadboard";
 import { configFromData } from "../connectors/util";
 import { ConnectorInstanceImpl } from "./connector-instance";
 import { UpdateAssetWithRefs } from "../transforms/update-asset-with-refs";
+import { UpdateAssetData } from "../transforms/update-asset-data";
 
 export { GraphAssetImpl };
 
@@ -49,13 +50,30 @@ class GraphAssetImpl implements GraphAsset {
     project.addConnectorInstance(config.url);
   }
 
-  async updateTitle(title: string): Promise<Outcome<void>> {
+  async update(title: string, data: LLMContent[]): Promise<Outcome<void>> {
     if (!this.metadata) {
       return err(
         `Graph asset "${this.path}" has no metadata, can't update the title`
       );
     }
     const metadata = { ...this.metadata, title };
-    return this.project.apply(new UpdateAssetWithRefs(this.path, metadata));
+
+    // Start by applying the update to the refs.
+    let update = this.project.apply(
+      new UpdateAssetWithRefs(this.path, metadata)
+    );
+
+    // If the data has changed, await the first update
+    if (data) {
+      await update;
+
+      // Now persist blobs and update the asset data.
+      const persistedData = await this.project.persistBlobs(data);
+      update = this.project.apply(
+        new UpdateAssetData(this.path, metadata, persistedData)
+      );
+    }
+
+    return update;
   }
 }
