@@ -14,6 +14,10 @@ class ChatTool {
     public readonly description: string
   ) {}
 
+  reset() {
+    this.#invoked = false;
+  }
+
   get invoked() {
     return this.#invoked;
   }

@@ -20,7 +20,7 @@
           "role": "user",
           "parts": [
             {
-              "text": "Write me a poem about today. Use {{\"type\":\"tool\",\"path\":\"embed://a2/tools.bgl.json#module:search-wikipedia\",\"title\":\"Search Wikipedia\"}} to get information about the date"
+              "text": "Write me a poem about today. Use {{\"type\":\"tool\",\"path\":\"embed://a2/tools.bgl.json#module:search-web\",\"title\":\"Search Web\"}} to get information about the date"
             }
           ]
         },

@@ -35,58 +35,59 @@ type Outputs = {
   done?: LLMContent[];
 };
 
-async function invoke({ context }: Inputs) {
-  if (!context.description) {
-    const msg = "No instruction supplied";
-    await report({
-      actor: "Text Generator",
-      name: msg,
-      category: "Runtime error",
-      details: `In order to run, I need to have an instruction.`,
-    });
-    return err(msg);
+type ToolLike = {
+  invoked: boolean;
+  reset(): void;
+};
+
+class GenerateText {
+  private toolManager!: ToolManager;
+  private doneTool!: ToolLike;
+  private keepChattingTool!: ToolLike;
+  public description!: LLMContent;
+
+  constructor(public readonly context: SharedContext) {
+    this.invoke = this.invoke.bind(this);
   }
 
-  // Check to see if the user ended chat and return early.
-  const { userEndedChat, userInputs, last } = context;
-  if (userEndedChat) {
-    if (!last) {
-      return err("Chat ended without any work");
+  async initialize(): Promise<Outcome<void>> {
+    const template = new Template(this.context.description);
+    const toolManager = new ToolManager(new ArgumentNameGenerator());
+    const doneTool = createDoneTool();
+    const keepChattingTool = createKeepChattingTool();
+    const substituting = await template.substitute(
+      this.context.params,
+      async ({ path: url, instance }) => toolManager.addTool(url, instance)
+    );
+    const hasTools = toolManager.hasTools();
+    if (this.context.chat) {
+      toolManager.addCustomTool(doneTool.name, doneTool.handle());
+      if (!hasTools) {
+        toolManager.addCustomTool(
+          keepChattingTool.name,
+          keepChattingTool.handle()
+        );
+      }
     }
-    return {
-      done: [...context.context, last],
-    };
-  }
-
-  const template = new Template(context.description);
-  const toolManager = new ToolManager(new ArgumentNameGenerator());
-  const doneTool = createDoneTool();
-  const keepChattingTool = createKeepChattingTool();
-  const substituting = await template.substitute(
-    context.params,
-    async ({ path: url, instance }) => toolManager.addTool(url, instance)
-  );
-  const hasTools = toolManager.hasTools();
-  if (context.chat) {
-    toolManager.addCustomTool(doneTool.name, doneTool.handle());
-    if (!hasTools) {
-      toolManager.addCustomTool(
-        keepChattingTool.name,
-        keepChattingTool.handle()
-      );
+    if (!ok(substituting)) {
+      return substituting;
     }
-  }
-  if (!ok(substituting)) {
-    return substituting;
+    this.description = substituting;
+    this.toolManager = toolManager;
+    this.doneTool = doneTool;
+    this.keepChattingTool = keepChattingTool;
   }
 
-  const { work } = context;
-  const result = await new ListExpander(substituting, [
-    ...context.context,
-    ...work,
-  ]).map(async (description, work, isList) => {
+  async invoke(
+    description: LLMContent,
+    work: LLMContent[],
+    isList: boolean
+  ): Promise<Outcome<LLMContent>> {
+    const toolManager = this.toolManager!;
+    const doneTool = this.doneTool!;
+    const keepChattingTool = this.keepChattingTool!;
     // Disallow making nested lists
-    const makeList = context.makeList && !isList;
+    const makeList = this.context.makeList && !isList;
 
     let product: LLMContent;
     const contents = work.length > 0 ? work : [description];
@@ -106,7 +107,7 @@ Take a Deep Breath, read the instructions again, read the inputs again.
 Each instruction is crucial and must be executed with utmost care and attention to detail.`.asContent();
     const tools = toolManager.list();
     const inputs: GeminiInputs = { body: { contents, safetySettings } };
-    if (context.chat) {
+    if (this.context.chat) {
       inputs.body.tools = [...tools];
       inputs.body.toolConfig = { functionCallingConfig: { mode: "ANY" } };
     }
@@ -133,15 +134,52 @@ Each instruction is crucial and must be executed with utmost care and attention 
     }
 
     return product;
-  });
+  }
+
+  isDone(): boolean {
+    return !!this.doneTool?.invoked;
+  }
+}
+
+async function invoke({ context }: Inputs) {
+  if (!context.description) {
+    const msg = "No instruction supplied";
+    await report({
+      actor: "Text Generator",
+      name: msg,
+      category: "Runtime error",
+      details: `In order to run, I need to have an instruction.`,
+    });
+    return err(msg);
+  }
+
+  // Check to see if the user ended chat and return early.
+  const { userEndedChat, userInputs, last } = context;
+  if (userEndedChat) {
+    if (!last) {
+      return err("Chat ended without any work");
+    }
+    return {
+      done: [...context.context, last],
+    };
+  }
+
+  const gen = new GenerateText(context);
+  const initializing = await gen.initialize();
+  if (!ok(initializing)) return initializing;
+
+  const result = await new ListExpander(gen.description, [
+    ...context.context,
+    ...context.work,
+  ]).map(gen.invoke);
   if (!ok(result)) return result;
   console.log("RESULT", result);
   // This really needs work, since it will not work with lists
   // TODO: Listify.
-  if (doneTool.invoked) {
+  if (gen.isDone()) {
     // If done tool was invoked, rewind removing the last interaction
     // and return that.
-    const previousResult = work.at(-2);
+    const previousResult = context.work.at(-2);
     return previousResult ? { done: [previousResult] } : { done: result };
   }
 
