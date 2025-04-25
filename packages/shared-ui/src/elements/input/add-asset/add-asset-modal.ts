@@ -167,7 +167,21 @@ export class AddAssetModal extends LitElement {
         }
 
         case "drawable": {
-          item = input.value as LLMContent;
+          if (!(input instanceof DrawableInput)) {
+            return;
+          }
+
+          item = {
+            role: "user",
+            parts: [
+              {
+                inlineData: {
+                  data: input.value as string,
+                  mimeType: input.type,
+                },
+              },
+            ],
+          };
           break;
         }
 

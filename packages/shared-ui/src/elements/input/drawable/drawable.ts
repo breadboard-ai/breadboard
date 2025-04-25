@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { LLMContent } from "@breadboard-ai/types";
 import { LitElement, html, css } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
@@ -19,13 +18,6 @@ export class DrawableInput extends LitElement {
 
   @state()
   accessor strokeColor = "#333333";
-
-  #drawing = false;
-  #canvasRef: Ref<HTMLCanvasElement> = createRef();
-  #bounds = { x: 0, y: 0 };
-  #lastPosition = { x: 0, y: 0 };
-  #lastDimensions = { w: 0, h: 0 };
-  #onWindowResizeBound = this.#onWindowResize.bind(this);
 
   static styles = css`
     :host {
@@ -141,16 +133,101 @@ export class DrawableInput extends LitElement {
     }
   `;
 
+  #drawing = false;
+  #moved = false;
+  #canvasRef: Ref<HTMLCanvasElement> = createRef();
+  #bounds: DOMRect = new DOMRect();
+  #pointer: DOMPoint = new DOMPoint();
+  #ctx: CanvasRenderingContext2D | null = null;
+
+  #resizeObserver = new ResizeObserver((entries) => {
+    if (!this.#canvasRef.value) {
+      return;
+    }
+
+    const canvas = this.#canvasRef.value;
+    const { contentRect } = entries[0];
+    const ctx = this.#getCtx();
+    if (!ctx) {
+      return;
+    }
+
+    let { width, height } = contentRect;
+    width = Math.floor(width);
+    height = Math.floor(height);
+
+    const dPR = window.devicePixelRatio;
+
+    // Preserve the image during the resize.
+    let imageData: OffscreenCanvas | null = null;
+    if (this.#bounds.width !== 0 && this.#bounds.height !== 0) {
+      imageData = new OffscreenCanvas(canvas.width * 1.5, canvas.height * 1.5);
+      const imageDataCtx = imageData.getContext("2d");
+      if (imageDataCtx) {
+        imageDataCtx.imageSmoothingEnabled = true;
+        imageDataCtx.imageSmoothingQuality = "high";
+        imageDataCtx.drawImage(
+          canvas,
+          0,
+          0,
+          canvas.width * 1.5,
+          canvas.height * 1.5
+        );
+      }
+    }
+
+    canvas.width = width * dPR;
+    canvas.height = height * dPR;
+
+    this.#bounds = canvas.getBoundingClientRect();
+    this.#fillCanvas();
+
+    if (imageData !== null) {
+      ctx.drawImage(
+        imageData,
+        0,
+        0,
+        imageData.width,
+        imageData.height,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+    }
+
+    ctx.scale(dPR, dPR);
+  });
+
   connectedCallback(): void {
     super.connectedCallback();
 
-    window.addEventListener("resize", this.#onWindowResizeBound);
+    this.#resizeObserver.observe(this);
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
 
-    window.removeEventListener("resize", this.#onWindowResizeBound);
+    this.#resizeObserver.disconnect();
+  }
+
+  #getCtx() {
+    if (!this.#canvasRef.value) {
+      return null;
+    }
+
+    if (!this.#ctx) {
+      this.#ctx = this.#canvasRef.value.getContext("2d", {
+        willReadFrequently: true,
+      });
+
+      if (this.#ctx) {
+        this.#ctx.imageSmoothingEnabled = true;
+        this.#ctx.imageSmoothingQuality = "high";
+      }
+    }
+
+    return this.#ctx;
   }
 
   #onColorInput(evt: InputEvent) {
@@ -162,124 +239,47 @@ export class DrawableInput extends LitElement {
   }
 
   #fillCanvas() {
-    if (!this.#canvasRef.value) {
-      return;
-    }
-
-    const ctx = this.#canvasRef.value.getContext("2d");
+    const ctx = this.#getCtx();
     if (!ctx) {
       return;
     }
 
     ctx.fillStyle = "#FFF";
-    ctx.fillRect(0, 0, this.#lastDimensions.w, this.#lastDimensions.h);
+    ctx.fillRect(0, 0, this.#bounds.width, this.#bounds.height);
   }
 
   #onReset() {
     this.#fillCanvas();
   }
 
-  #onWindowResize() {
-    if (!this.#canvasRef.value) {
-      return;
-    }
-
-    const canvas = this.#canvasRef.value;
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
-    if (!ctx) {
-      return;
-    }
-
-    let { width, height } = canvas.getBoundingClientRect();
-    width = Math.floor(width);
-    height = Math.floor(height);
-
-    // Preserve the image during the resize.
-    let imageData: ImageData | null = null;
-    if (this.#lastDimensions.w !== 0 && this.#lastDimensions.h !== 0) {
-      imageData = ctx.getImageData(
-        0,
-        0,
-        this.#lastDimensions.w,
-        this.#lastDimensions.h
-      );
-    }
-
-    canvas.width = width;
-    canvas.height = height;
-
-    this.#lastDimensions.w = width;
-    this.#lastDimensions.h = height;
-
-    this.#fillCanvas();
-
-    if (imageData !== null) {
-      ctx.putImageData(imageData, 0, 0);
-    }
-  }
-
   #onPointerDown(evt: PointerEvent) {
-    if (!this.#canvasRef.value) {
-      return;
-    }
-
-    const canvas = this.#canvasRef.value;
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    const ctx = this.#getCtx();
     if (!ctx) {
       return;
     }
 
-    if (evt.composedPath()[0] !== canvas) {
+    const [top] = evt.composedPath();
+    if (!this.#canvasRef.value || top !== this.#canvasRef.value) {
       return;
     }
 
-    const bounds = canvas.getBoundingClientRect();
-    const { x, y } = bounds;
-    const width = Math.floor(bounds.width);
-    const height = Math.floor(bounds.height);
-
-    if (this.#lastDimensions.w !== width || this.#lastDimensions.h !== height) {
-      this.#onWindowResize();
-    }
-
-    canvas.setPointerCapture(evt.pointerId);
+    (top as HTMLCanvasElement).setPointerCapture(evt.pointerId);
 
     this.#drawing = true;
-    this.#bounds.x = x;
-    this.#bounds.y = y;
+    this.#moved = false;
 
     ctx.strokeStyle = this.strokeColor;
     ctx.lineCap = "round";
     ctx.lineWidth = 3;
 
-    const startX = evt.pageX - this.#bounds.x + window.scrollX;
-    const startY = evt.pageY - this.#bounds.y - window.scrollY;
+    const startX = evt.clientX - this.#bounds.x + window.scrollX;
+    const startY = evt.clientY - this.#bounds.y - window.scrollY;
+    this.#pointer.x = startX;
+    this.#pointer.y = startY;
 
     ctx.beginPath();
     ctx.moveTo(startX, startY);
-
-    this.#lastPosition.x = startX;
-    this.#lastPosition.y = startY;
-  }
-
-  #onPointerUp() {
-    if (!this.#drawing) {
-      return;
-    }
-
-    this.#drawing = false;
-
-    if (!this.#canvasRef.value) {
-      return;
-    }
-
-    const canvas = this.#canvasRef.value;
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
-    if (!ctx) {
-      return;
-    }
-
-    ctx.closePath();
+    ctx.lineTo(startX, startY);
   }
 
   #onPointerMove(evt: PointerEvent) {
@@ -287,43 +287,73 @@ export class DrawableInput extends LitElement {
       return;
     }
 
-    if (!this.#canvasRef.value) {
-      return;
-    }
-
-    const canvas = this.#canvasRef.value;
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    this.#moved = true;
+    const ctx = this.#getCtx();
     if (!ctx) {
       return;
     }
 
-    ctx.moveTo(this.#lastPosition.x, this.#lastPosition.y);
+    ctx.moveTo(this.#pointer.x, this.#pointer.y);
 
-    const x = evt.pageX - this.#bounds.x + window.scrollX;
-    const y = evt.pageY - this.#bounds.y - window.scrollY;
+    const x = evt.clientX - this.#bounds.x + window.scrollX;
+    const y = evt.clientY - this.#bounds.y - window.scrollY;
 
     ctx.lineTo(x, y);
     ctx.stroke();
 
-    this.#lastPosition.x = x;
-    this.#lastPosition.y = y;
+    this.#pointer.x = x;
+    this.#pointer.y = y;
   }
 
-  get value(): LLMContent {
+  #onPointerUp(evt: PointerEvent) {
+    if (!this.#drawing) {
+      return;
+    }
+
+    this.#drawing = false;
+
+    const ctx = this.#getCtx();
+    if (!ctx) {
+      return;
+    }
+
+    if (!this.#moved) {
+      ctx.moveTo(this.#pointer.x - 0.5, this.#pointer.y - 0.5);
+
+      const x = evt.clientX - this.#bounds.x + window.scrollX;
+      const y = evt.clientY - this.#bounds.y - window.scrollY;
+
+      ctx.lineTo(x, y);
+      ctx.stroke();
+    }
+
+    ctx.closePath();
+  }
+
+  @property()
+  set url(url: URL | null) {
+    if (!url) {
+      return;
+    }
+
+    const img = new Image();
+    img.src = url.href;
+    img.onload = () => {
+      const ctx = this.#getCtx();
+      if (!ctx) {
+        console.log("Unable to render");
+        return;
+      }
+
+      ctx.drawImage(img, 0, 0, this.#bounds.width, this.#bounds.height);
+    };
+  }
+
+  get value(): string {
     const inlineData = this.#canvasRef.value?.toDataURL(this.type, 80) || "";
     const preamble = `data:${this.type};base64,`;
 
-    return {
-      role: "user",
-      parts: [
-        {
-          inlineData: {
-            data: inlineData.substring(preamble.length),
-            mimeType: this.type,
-          },
-        },
-      ],
-    };
+    return inlineData.substring(preamble.length);
   }
 
   render() {

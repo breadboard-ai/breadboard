@@ -122,6 +122,9 @@ export class GoogleDriveFileId extends LitElement {
   @property()
   accessor connectionName = "$sign-in";
 
+  @property()
+  accessor ownedByMeOnly = false;
+
   #picker?: google.picker.Picker;
 
   override async connectedCallback(): Promise<void> {
@@ -227,6 +230,9 @@ export class GoogleDriveFileId extends LitElement {
 
     const view = new this._pickerLib.DocsView(google.picker.ViewId.DOCS);
     view.setMimeTypes(MIME_TYPES);
+    if (this.ownedByMeOnly) {
+      view.setOwnedByMe(true);
+    }
     view.setMode(google.picker.DocsViewMode.LIST);
 
     // See https://developers.google.com/drive/picker/reference

@@ -391,6 +391,7 @@ export type InspectableAsset = {
   readonly title: string;
   readonly description: string;
   readonly type: AssetType;
+  readonly subType: string;
   readonly data: LLMContent[];
   readonly visual: Record<string, unknown>;
 };

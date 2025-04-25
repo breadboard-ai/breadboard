@@ -128,7 +128,7 @@ export type GraphAssetDescriptor = {
 };
 
 export type GraphAsset = GraphAssetDescriptor & {
-  updateTitle(title: string): Promise<Outcome<void>>;
+  update(title: string, data?: LLMContent[]): Promise<Outcome<void>>;
   connector?: ConnectorInstance;
 };
 

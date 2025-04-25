@@ -178,6 +178,7 @@ export class PDFViewer extends LitElement {
     this.#resizeObserver.observe(this.#containerRef.value);
   }
 
+  #initialRender = true;
   #isRendering = false;
   protected willUpdate(changedProperties: PropertyValues): void {
     if (changedProperties.has("data")) {
@@ -256,6 +257,12 @@ export class PDFViewer extends LitElement {
         });
 
         await renderTask.promise;
+
+        if (this.#initialRender) {
+          this.#initialRender = false;
+          this.dispatchEvent(new Event("pdfinitialrender"));
+        }
+
         this.disabled = false;
         this.#isRendering = false;
 

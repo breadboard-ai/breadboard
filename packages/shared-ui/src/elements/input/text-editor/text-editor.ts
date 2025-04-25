@@ -33,6 +33,10 @@ export class TextEditor extends LitElement {
     return this.#value;
   }
 
+  get type(): string {
+    return "string";
+  }
+
   @property()
   accessor supportsFastAccess = true;
 
@@ -597,6 +601,7 @@ export class TextEditor extends LitElement {
     selection.addRange(range);
 
     this.#captureEditorValue();
+    this.#togglePlaceholder();
   }
 
   #clearChicletSelections() {
