@@ -10,7 +10,7 @@ import {
   isStoredData,
   isTextCapabilityPart,
 } from "@google-labs/breadboard";
-import { LitElement, html, css, PropertyValues } from "lit";
+import { LitElement, html, css, PropertyValues, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Project } from "../../../state";
 import { TextEditor } from "../text-editor/text-editor";
@@ -68,6 +68,7 @@ export class LLMPartInput extends LitElement {
         width: 100%;
         padding: var(--bb-grid-size) var(--bb-grid-size-6) var(--bb-grid-size-5)
           var(--bb-grid-size-6);
+        border-bottom: 1px solid var(--bb-neutral-100);
 
         & input {
           flex: 1;
@@ -314,8 +315,6 @@ export class LLMPartInput extends LitElement {
       </div>`;
     }
 
-    return html`<div class="no-edit-available">
-      This asset can't be edited
-    </div>`;
+    return nothing;
   }
 }

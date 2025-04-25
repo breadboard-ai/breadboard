@@ -627,13 +627,10 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       }
 
       & bb-llm-part-input {
-        border-bottom: 1px solid var(--bb-neutral-100);
-
         &.fill {
           width: 100%;
           height: 100%;
           overflow: auto;
-          border-bottom: none;
         }
       }
     }
