@@ -42,7 +42,7 @@ interface DriveFileQuery {
 // TODO(aomarks) Make this configurable via a VITE_ env variable.
 const GOOGLE_DRIVE_FOLDER_NAME = "Breadboard";
 const GOOGLE_DRIVE_FOLDER_MIME_TYPE = "application/vnd.google-apps.folder";
-const PROJECT_MIME_TYPE = "application/vnd.breadboard.project+json";
+const PROJECT_MIME_TYPE = "application/vnd.breadboard.graph+json";
 const DEPRECATED_PROJECT_MIME_TYPE = "application/json";
 
 // This whole package should probably be called
