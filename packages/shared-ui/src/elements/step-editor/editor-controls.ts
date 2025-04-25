@@ -35,6 +35,7 @@ import { CreateNewAssetsEvent, NodeAddEvent } from "./events/events.js";
 import { isA2 } from "@breadboard-ai/a2";
 import { until } from "lit/directives/until.js";
 import { ItemSelect } from "../elements.js";
+import { NewAsset } from "../../types/types.js";
 
 const QUICK_ADD_ADJUSTMENT = -20;
 
@@ -858,13 +859,13 @@ export class EditorControls extends LitElement {
             }
 
             switch (select.value) {
-              case "blank-content": {
+              case "text": {
                 this.dispatchEvent(
                   new CreateNewAssetsEvent([
                     {
                       path: globalThis.crypto.randomUUID(),
                       type: "content",
-                      name: "Blank Content",
+                      name: "Text",
                       data: {
                         role: "user",
                         parts: [{ text: "" }],
@@ -892,6 +893,66 @@ export class EditorControls extends LitElement {
                     },
                   ])
                 );
+                break;
+              }
+
+              case "upload": {
+                const f = document.createElement("input");
+                f.type = "file";
+                f.multiple = true;
+                f.addEventListener("change", () => {
+                  if (!f.files) {
+                    return;
+                  }
+
+                  Promise.all(
+                    [...f.files].map((file) => {
+                      return new Promise<{
+                        name: string;
+                        mimeType: string;
+                        data: string;
+                      }>((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          const preamble = `data:${file.type};base64,`;
+                          const data = (reader.result as string).substring(
+                            preamble.length
+                          );
+                          resolve({
+                            name: file.name,
+                            mimeType: file.type,
+                            data,
+                          });
+                        };
+                        reader.onerror = () => reject("File read error");
+                        reader.readAsDataURL(file);
+                      });
+                    })
+                  ).then((files) => {
+                    const assets: NewAsset[] = files.map((file) => {
+                      return {
+                        path: globalThis.crypto.randomUUID(),
+                        type: "file",
+                        name: file.name,
+                        data: {
+                          role: "user",
+                          parts: [
+                            {
+                              inlineData: {
+                                mimeType: file.mimeType,
+                                data: file.data,
+                              },
+                            },
+                          ],
+                        },
+                      };
+                    });
+
+                    this.dispatchEvent(new CreateNewAssetsEvent(assets));
+                  });
+                });
+
+                f.click();
                 break;
               }
 
@@ -931,9 +992,14 @@ export class EditorControls extends LitElement {
               hidden: true,
             },
             {
-              id: "blank-content",
-              title: "Blank Content",
+              id: "text",
+              title: "Text",
               icon: "edit_note",
+            },
+            {
+              id: "upload",
+              title: "Upload file",
+              icon: "upload",
             },
             {
               id: "drawing",

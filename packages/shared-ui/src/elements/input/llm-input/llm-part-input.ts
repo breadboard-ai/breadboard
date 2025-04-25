@@ -314,6 +314,8 @@ export class LLMPartInput extends LitElement {
       </div>`;
     }
 
-    return html`<div class="no-edit-available">This can't be edited</div>`;
+    return html`<div class="no-edit-available">
+      This asset can't be edited
+    </div>`;
   }
 }

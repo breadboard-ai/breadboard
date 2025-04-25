@@ -63,6 +63,9 @@ export class LLMOutput extends LitElement {
   accessor showExportControls = false;
 
   @property()
+  accessor showPDFControls = true;
+
+  @property()
   accessor supportedExportControls = { drive: false, clipboard: false };
 
   @property()
@@ -112,6 +115,23 @@ export class LLMOutput extends LitElement {
     :host([lite]) {
       border: 1px solid var(--output-lite-border-color, var(--bb-neutral-100));
       background: var(--output-lite-background-color, var(--bb-neutral-0));
+    }
+
+    .loading {
+      display: flex;
+      align-items: center;
+      height: 20px;
+      font: normal var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+
+      &::before {
+        content: "";
+        width: 20px;
+        height: 20px;
+        background: url(/images/progress-ui.svg) center center / 20px 20px
+          no-repeat;
+        margin-right: var(--bb-grid-size-2);
+      }
     }
 
     .content {
@@ -560,10 +580,12 @@ export class LLMOutput extends LitElement {
                 const pdfHandler = fetch(url)
                   .then((r) => r.arrayBuffer())
                   .then((pdfData) => {
-                    this.#outputLoaded();
                     return cache(
                       html`<bb-pdf-viewer
-                        .showControls=${true}
+                        @pdfinitialrender=${() => {
+                          this.#outputLoaded();
+                        }}
+                        .showControls=${this.showPDFControls}
                         .data=${pdfData}
                       ></bb-pdf-viewer>`
                     );
@@ -641,19 +663,20 @@ export class LLMOutput extends LitElement {
                     class="html-view"
                   ></iframe>`;
                 } else {
-                  value = html`<div class="plain-text">
-                    ${until(getData())}
-                  </div>`;
+                  // prettier-ignore
+                  value = html`<div class="plain-text">${until(getData())}</div>`;
                 }
               }
               if (part.storedData.mimeType === "application/pdf") {
                 const pdfHandler = fetch(url)
                   .then((r) => r.arrayBuffer())
                   .then((pdfData) => {
-                    this.#outputLoaded();
                     return cache(
                       html`<bb-pdf-viewer
-                        .showControls=${true}
+                        @pdfinitialrender=${() => {
+                          this.#outputLoaded();
+                        }}
+                        .showControls=${this.showPDFControls}
                         .data=${pdfData}
                       ></bb-pdf-viewer>`
                     );

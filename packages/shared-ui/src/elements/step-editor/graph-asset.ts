@@ -34,6 +34,7 @@ import { AssetPath, LLMContent } from "@breadboard-ai/types";
 import { InspectableAsset, ok } from "@google-labs/breadboard";
 import { SignalWatcher } from "@lit-labs/signals";
 import { GraphAsset as GraphAssetState } from "../../state/types.js";
+import { icons } from "../../styles/icons.js";
 
 const EDGE_STANDARD = getGlobalColor("--bb-neutral-400");
 
@@ -95,6 +96,7 @@ export class GraphAsset
   accessor state: GraphAssetState | null = null;
 
   static styles = [
+    icons,
     Box.styles,
     css`
       * {
@@ -186,19 +188,16 @@ export class GraphAsset
           position: relative;
           justify-content: center;
 
-          & span {
+          & span:not(.g-icon) {
             text-overflow: ellipsis;
             overflow: hidden;
             white-space: nowrap;
           }
 
-          &::before {
+          & span.g-icon {
             flex: 0 0 auto;
-            content: "";
             width: 20px;
             height: 20px;
-            background: var(--bb-icon-alternate-email) center center / 20px 20px
-              no-repeat;
             margin-right: var(--bb-grid-size-2);
           }
 
@@ -369,6 +368,17 @@ export class GraphAsset
         </button>`;
     }
 
+    let icon = "alternate_email";
+    if (this.asset?.subType) {
+      if (this.asset?.subType === "youtube") {
+        icon = "video_youtube";
+      }
+
+      if (this.asset?.subType === "drawable") {
+        icon = "draw";
+      }
+    }
+
     return html`<section
         id="container"
         class=${classMap({ bounds: this.showBounds })}
@@ -378,14 +388,6 @@ export class GraphAsset
         <header
           @click=${(evt: Event) => {
             evt.stopImmediatePropagation();
-          }}
-          @dblclick=${() => {
-            // this.dispatchEvent(
-            //   new NodeConfigurationRequestEvent(
-            //     this.assetPath,
-            //     this.worldBounds
-            //   )
-            // );
           }}
           @pointerdown=${(evt: PointerEvent) => {
             if (!(evt.target instanceof HTMLElement)) {
@@ -460,6 +462,7 @@ export class GraphAsset
             );
           }}
         >
+          <span class="g-icon">${icon}</span>
           <span>${this.assetTitle}</span>
           ${defaultAdd}
           <button
@@ -500,6 +503,7 @@ export class GraphAsset
             .value=${this.#getPreviewValue()}
             .clamped=${false}
             .lite=${true}
+            .showPDFControls=${false}
             .showModeToggle=${false}
             .showEntrySelector=${false}
             .showExportControls=${false}
