@@ -4,9 +4,16 @@
 
 import type { ToolHandle } from "./a2/tool-manager";
 
+export type ChatTool = {
+  readonly name: string;
+  handle(): ToolHandle;
+  reset(): void;
+  readonly invoked: boolean;
+};
+
 export { createDoneTool, createKeepChattingTool };
 
-class ChatTool {
+class ChatToolImpl implements ChatTool {
   #invoked = false;
 
   constructor(
@@ -41,15 +48,15 @@ class ChatTool {
   }
 }
 
-function createDoneTool() {
-  return new ChatTool(
+function createDoneTool(): ChatTool {
+  return new ChatToolImpl(
     "User_Says_Done",
     "Call when the user indicates they are done with the conversation and are ready to move on"
   );
 }
 
-function createKeepChattingTool() {
-  return new ChatTool(
+function createKeepChattingTool(): ChatTool {
+  return new ChatToolImpl(
     "User_Asks_For_More_Work",
     "Call when the user asked a question or issued instruction to do more work"
   );

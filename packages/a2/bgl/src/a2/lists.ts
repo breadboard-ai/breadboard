@@ -132,6 +132,7 @@ class ListExpander {
   #originalListItems: LLMContent[][] = [];
   #id: string = "";
   #instructions?: UnzippedResult;
+  #expanded = false;
 
   constructor(
     private readonly instruction: LLMContent,
@@ -140,6 +141,7 @@ class ListExpander {
   ) {}
 
   expand(): void {
+    if (this.#expanded) return;
     const instructions = unzipContent(this.instruction);
     let list: ExpanderListItem[] = [];
     let id: string;
@@ -182,6 +184,7 @@ class ListExpander {
     this.#list = list;
     this.#id = id;
     this.#originalListItems = originalListItems;
+    this.#expanded = true;
   }
 
   list() {

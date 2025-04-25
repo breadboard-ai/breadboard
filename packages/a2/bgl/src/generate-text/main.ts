@@ -5,7 +5,11 @@
 import output from "@output";
 
 import type { SharedContext } from "./types";
-import { createDoneTool, createKeepChattingTool } from "./chat-tools";
+import {
+  createDoneTool,
+  createKeepChattingTool,
+  type ChatTool,
+} from "./chat-tools";
 
 import { report } from "./a2/output";
 import { err, ok, defaultLLMContent, llm } from "./a2/utils";
@@ -35,32 +39,30 @@ type Outputs = {
   done?: LLMContent[];
 };
 
-type ToolLike = {
-  invoked: boolean;
-  reset(): void;
-};
-
 class GenerateText {
   private toolManager!: ToolManager;
-  private doneTool!: ToolLike;
-  private keepChattingTool!: ToolLike;
+  private doneTool!: ChatTool;
+  private keepChattingTool!: ChatTool;
   public description!: LLMContent;
+  public context!: LLMContent[];
+  public listMode = false;
 
-  constructor(public readonly context: SharedContext) {
+  constructor(public readonly sharedContext: SharedContext) {
     this.invoke = this.invoke.bind(this);
   }
 
   async initialize(): Promise<Outcome<void>> {
-    const template = new Template(this.context.description);
+    const { sharedContext } = this;
+    const template = new Template(sharedContext.description);
     const toolManager = new ToolManager(new ArgumentNameGenerator());
     const doneTool = createDoneTool();
     const keepChattingTool = createKeepChattingTool();
     const substituting = await template.substitute(
-      this.context.params,
+      sharedContext.params,
       async ({ path: url, instance }) => toolManager.addTool(url, instance)
     );
     const hasTools = toolManager.hasTools();
-    if (this.context.chat) {
+    if (sharedContext.chat) {
       toolManager.addCustomTool(doneTool.name, doneTool.handle());
       if (!hasTools) {
         toolManager.addCustomTool(
@@ -76,18 +78,30 @@ class GenerateText {
     this.toolManager = toolManager;
     this.doneTool = doneTool;
     this.keepChattingTool = keepChattingTool;
+    this.context = [...sharedContext.context, ...sharedContext.work];
   }
 
+  /**
+   * Invokes the text generator.
+   * Significant mode flags:
+   * - chat: boolean -- chat mode is on/off
+   * - tools: boolean -- whether or not has tools
+   * - makeList: boolean -- asked to generate a list
+   * - isList: boolean -- is currently in list mode
+   */
   async invoke(
     description: LLMContent,
     work: LLMContent[],
     isList: boolean
   ): Promise<Outcome<LLMContent>> {
+    const { sharedContext } = this;
     const toolManager = this.toolManager!;
     const doneTool = this.doneTool!;
     const keepChattingTool = this.keepChattingTool!;
-    // Disallow making nested lists
-    const makeList = this.context.makeList && !isList;
+    // Disallow making nested lists (for now).
+    const makeList = sharedContext.makeList && !isList;
+    // Can't have chat inside a list (yet).
+    const chat = sharedContext.chat && !isList;
 
     let product: LLMContent;
     const contents = work.length > 0 ? work : [description];
@@ -107,7 +121,7 @@ Take a Deep Breath, read the instructions again, read the inputs again.
 Each instruction is crucial and must be executed with utmost care and attention to detail.`.asContent();
     const tools = toolManager.list();
     const inputs: GeminiInputs = { body: { contents, safetySettings } };
-    if (this.context.chat) {
+    if (sharedContext.chat) {
       inputs.body.tools = [...tools];
       inputs.body.toolConfig = { functionCallingConfig: { mode: "ANY" } };
     }
@@ -168,10 +182,11 @@ async function invoke({ context }: Inputs) {
   const initializing = await gen.initialize();
   if (!ok(initializing)) return initializing;
 
-  const result = await new ListExpander(gen.description, [
-    ...context.context,
-    ...context.work,
-  ]).map(gen.invoke);
+  const expander = new ListExpander(gen.description, gen.context);
+  expander.expand();
+  gen.listMode = expander.list().length > 1;
+
+  const result = await expander.map(gen.invoke);
   if (!ok(result)) return result;
   console.log("RESULT", result);
   // This really needs work, since it will not work with lists
