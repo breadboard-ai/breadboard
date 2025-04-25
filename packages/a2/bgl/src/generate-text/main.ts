@@ -81,6 +81,27 @@ class GenerateText {
     this.context = [...sharedContext.context, ...sharedContext.work];
   }
 
+  createSystemInstruction(makeList: boolean) {
+    const initial = llm`
+
+Today is ${new Date().toLocaleString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    })}
+    
+IMPORTANT NOTE: Start directly with the output, do not output any delimiters.
+You are working as part of an AI system, so no chit-chat and no explainining what you're doing and why.
+DO NOT start with "Okay", or "Alright" or any preambles.
+Just the output, please.
+Take a Deep Breath, read the instructions again, read the inputs again.
+Each instruction is crucial and must be executed with utmost care and attention to detail.`.asContent();
+    if (!makeList) return initial;
+    return listPrompt(initial);
+  }
+
   /**
    * Invokes the text generator.
    * Significant mode flags:
@@ -95,35 +116,29 @@ class GenerateText {
     isList: boolean
   ): Promise<Outcome<LLMContent>> {
     const { sharedContext } = this;
-    const toolManager = this.toolManager!;
-    const doneTool = this.doneTool!;
-    const keepChattingTool = this.keepChattingTool!;
+    const toolManager = this.toolManager;
+    const doneTool = this.doneTool;
+    const keepChattingTool = this.keepChattingTool;
     // Disallow making nested lists (for now).
     const makeList = sharedContext.makeList && !isList;
-    // Can't have chat inside a list (yet).
-    const chat = sharedContext.chat && !isList;
 
     let product: LLMContent;
     const contents = work.length > 0 ? work : [description];
     const safetySettings = defaultSafetySettings();
-    const systemInstruction = llm`
-
-Today is ${new Date().toLocaleString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    })}
-    
-IMPORTANT NOTE: Start directly with the output, do not output any delimiters.
-Take a Deep Breath, read the instructions again, read the inputs again.
-Each instruction is crucial and must be executed with utmost care and attention to detail.`.asContent();
+    const systemInstruction = this.createSystemInstruction(makeList);
     const tools = toolManager.list();
     const inputs: GeminiInputs = { body: { contents, safetySettings } };
-    if (sharedContext.chat) {
+    if (this.chat || toolManager.hasTools()) {
       inputs.body.tools = [...tools];
       inputs.body.toolConfig = { functionCallingConfig: { mode: "ANY" } };
+    }
+    // When we have tools, the first call will not try to make a list,
+    // because JSON mode and tool-calling are incompatible.
+    if (makeList && !toolManager.hasTools()) {
+      inputs.body.generationConfig = {
+        responseSchema: listSchema(),
+        responseMimeType: "application/json",
+      };
     }
     const prompt = new GeminiPrompt(inputs, { toolManager });
     const result = await prompt.invoke();
@@ -140,19 +155,93 @@ Each instruction is crucial and must be executed with utmost care and attention 
       const inputs: GeminiInputs = {
         body: { contents, systemInstruction, safetySettings },
       };
+      if (makeList) {
+        inputs.body.generationConfig = {
+          responseSchema: listSchema(),
+          responseMimeType: "application/json",
+        };
+      }
       const afterTools = await new GeminiPrompt(inputs).invoke();
       if (!ok(afterTools)) return afterTools;
-      product = afterTools.last;
+      if (makeList) {
+        const list = toList(afterTools.last);
+        if (!ok(list)) return list;
+        product = list;
+      } else {
+        product = afterTools.last;
+      }
     } else {
-      product = result.last;
+      if (makeList) {
+        const list = toList(result.last);
+        if (!ok(list)) return list;
+        product = list;
+      } else {
+        product = result.last;
+      }
     }
 
     return product;
   }
 
-  isDone(): boolean {
+  get chat(): boolean {
+    // When we are in list mode, disable chat.
+    // Can't have chat inside of a list (yet).
+    return this.sharedContext.chat && !this.listMode;
+  }
+
+  get doneChatting(): boolean {
     return !!this.doneTool?.invoked;
   }
+}
+
+function done(result: LLMContent[]) {
+  return { done: result };
+}
+
+async function keepChatting(
+  sharedContext: SharedContext,
+  result: LLMContent[]
+) {
+  const last = result.at(-1)!;
+  await output({
+    schema: {
+      type: "object",
+      properties: {
+        "a-product": {
+          type: "object",
+          behavior: ["llm-content"],
+          title: "Draft",
+        },
+      },
+    },
+    $metadata: {
+      title: "Writer",
+      description: "Asking user",
+      icon: "generative-text",
+    },
+    "a-product": last,
+  });
+
+  const toInput: Schema = {
+    type: "object",
+    properties: {
+      request: {
+        type: "object",
+        title: "Please provide feedback",
+        description: "Provide feedback or click submit to continue",
+        behavior: ["transient", "llm-content"],
+        examples: [defaultLLMContent()],
+      },
+    },
+  };
+  return {
+    toInput,
+    context: {
+      ...sharedContext,
+      work: result,
+      last,
+    },
+  };
 }
 
 async function invoke({ context }: Inputs) {
@@ -173,9 +262,7 @@ async function invoke({ context }: Inputs) {
     if (!last) {
       return err("Chat ended without any work");
     }
-    return {
-      done: [...context.context, last],
-    };
+    return done([...context.context, last]);
   }
 
   const gen = new GenerateText(context);
@@ -189,64 +276,24 @@ async function invoke({ context }: Inputs) {
   const result = await expander.map(gen.invoke);
   if (!ok(result)) return result;
   console.log("RESULT", result);
-  // This really needs work, since it will not work with lists
-  // TODO: Listify.
-  if (gen.isDone()) {
-    // If done tool was invoked, rewind removing the last interaction
+  if (gen.doneChatting) {
+    // If done tool was invoked, rewind to remove the last interaction
     // and return that.
     const previousResult = context.work.at(-2);
-    return previousResult ? { done: [previousResult] } : { done: result };
-  }
-
-  // 4) Handle chat.
-  if (context.chat) {
-    const last = result.at(-1)!;
-    await output({
-      schema: {
-        type: "object",
-        properties: {
-          "a-product": {
-            type: "object",
-            behavior: ["llm-content"],
-            title: "Draft",
-          },
-        },
-      },
-      $metadata: {
-        title: "Writer",
-        description: "Asking user",
-        icon: "generative-text",
-      },
-      "a-product": last,
-    });
-
-    const { userInputs } = context;
-    if (!userEndedChat) {
-      const toInput: Schema = {
-        type: "object",
-        properties: {
-          request: {
-            type: "object",
-            title: "Please provide feedback",
-            description: "Provide feedback or click submit to continue",
-            behavior: ["transient", "llm-content"],
-            examples: [defaultLLMContent()],
-          },
-        },
-      };
-      return {
-        toInput,
-        context: {
-          ...context,
-          work: result,
-          last,
-        },
-      };
+    if (!previousResult) {
+      return err(`Done chatting, but have nothing to pass along to next step.`);
     }
+    return done([previousResult]);
   }
 
-  // 5) Fall through to default response.
-  return { done: result };
+  // Use the gen.chat here, because it will correctly prevent
+  // chat mode when we're in list mode.
+  if (gen.chat && !userEndedChat) {
+    return keepChatting(gen.sharedContext, result);
+  }
+
+  // Fall through to default response.
+  return done(result);
 }
 
 async function describe() {
