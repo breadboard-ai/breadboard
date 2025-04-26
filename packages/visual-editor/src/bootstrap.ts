@@ -9,7 +9,12 @@ import * as StringsHelper from "@breadboard-ai/shared-ui/strings";
 import { MainArguments } from "./index.js";
 import { LanguagePack } from "@breadboard-ai/shared-ui/types/types.js";
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
-import { Kit, MutableGraphStore } from "@google-labs/breadboard";
+import {
+  Kit,
+  MutableGraphStore,
+  NodeHandlerContext,
+  Outcome,
+} from "@google-labs/breadboard";
 
 export { bootstrap };
 
@@ -18,6 +23,7 @@ export type BootstrapArguments = {
   requiresSignin?: boolean;
   kits?: Kit[];
   graphStorePreloader?: (graphStore: MutableGraphStore) => void;
+  moduleInvocationFilter?: (context: NodeHandlerContext) => Outcome<void>;
 };
 
 function getUrlFromBoardServiceFlag(
@@ -87,6 +93,7 @@ function bootstrap(args: BootstrapArguments = {}) {
       requiresSignin: args?.requiresSignin,
       kits: args?.kits,
       graphStorePreloader: args?.graphStorePreloader,
+      moduleInvocationFilter: args?.moduleInvocationFilter,
     };
 
     window.oncontextmenu = (evt) => evt.preventDefault();
