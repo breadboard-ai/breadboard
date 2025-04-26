@@ -43,6 +43,8 @@ import {
   FileSystem,
   Kit,
   addSandboxedRunModule,
+  NodeHandlerContext,
+  Outcome,
 } from "@google-labs/breadboard";
 import {
   createFileSystemBackend,
@@ -132,6 +134,7 @@ export type MainArguments = {
   requiresSignin?: boolean;
   kits?: Kit[];
   graphStorePreloader?: (graphStore: MutableGraphStore) => void;
+  moduleInvocationFilter?: (context: NodeHandlerContext) => Outcome<void>;
 };
 
 type BoardOverlowMenuConfiguration = {
@@ -543,7 +546,11 @@ export class Main extends LitElement {
           proxy: this.#proxy,
           fileSystem: this.#fileSystem,
           builtInBoardServers: [createA2Server()],
-          kits: addSandboxedRunModule(sandbox, config.kits || []),
+          kits: addSandboxedRunModule(
+            sandbox,
+            config.kits || [],
+            config.moduleInvocationFilter
+          ),
         });
       })
       .then((runtime) => {
