@@ -1,5 +1,5 @@
 /**
- * @fileoverview Add a description for your module here.
+ * @fileoverview Manages Gemini prompt.
  */
 
 import invokeBoard from "@invoke";

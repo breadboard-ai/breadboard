@@ -145,12 +145,13 @@ ${themeColorsPrompt(await getThemeColors())}
     const webPage = await callGenWebpage(instruction, [context], renderMode);
     if (!ok(webPage)) {
       console.error("Failed to generated html output");
+      return webPage;
     } else {
       out = await webPage;
       console.log(out);
     }
   }
-  if (!ok(out)) return out;
+  if (!ok(out)) return err(out);
   return { context: out };
 }
 
