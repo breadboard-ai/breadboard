@@ -20,7 +20,7 @@
           "role": "user",
           "parts": [
             {
-              "text": "Write three instagram posts about Monday"
+              "text": "Use {{\"type\":\"tool\",\"path\":\"embed://a2/tools.bgl.json#module:search-web\",\"title\":\"Search Web\"}}to create three blog post ideas based on current events"
             }
           ]
         },
