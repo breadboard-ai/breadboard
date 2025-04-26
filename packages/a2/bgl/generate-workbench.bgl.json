@@ -15,7 +15,7 @@
         "userModified": false
       },
       "configuration": {
-        "config$ask-user": false,
+        "config$ask-user": true,
         "config$list": false,
         "config$prompt": {
           "role": "user",
