@@ -103,6 +103,11 @@ import { getGoogleDriveBoardService } from "@breadboard-ai/board-server-manageme
 const STORAGE_PREFIX = "bb-main";
 const LOADING_TIMEOUT = 250;
 
+const TOS_KEY = "tos-status";
+enum TosStatus {
+  ACCEPTED = "accepted",
+}
+
 export type MainArguments = {
   boards?: BreadboardUI.Types.Board[];
   providers?: BoardServer[]; // Deprecated.
@@ -128,6 +133,8 @@ export type MainArguments = {
    * Whether or not this instance of requires sign in.
    */
   requiresSignin?: boolean;
+  /** If true enforces ToS acceptance by the user on the first visit. */
+  enableTos?: boolean;
 };
 
 type BoardOverlowMenuConfiguration = {
@@ -251,6 +258,9 @@ export class Main extends LitElement {
       persistent: boolean;
     }
   >();
+
+  @state()
+  accessor showToS = false;
 
   @provide({ context: BreadboardUI.Contexts.environmentContext })
   accessor environment: BreadboardUI.Contexts.Environment;
@@ -423,6 +433,8 @@ export class Main extends LitElement {
   #initialize: Promise<void>;
   constructor(config: MainArguments) {
     super();
+
+    this.showToS = !!config.enableTos && localStorage.getItem(TOS_KEY) !== TosStatus.ACCEPTED;
 
     // This is a big hacky, since we're assigning a value to a constant object,
     // but okay here, because this constant is never re-assigned and is only
@@ -2278,6 +2290,7 @@ export class Main extends LitElement {
     )}`;
 
     const showingOverlay =
+      this.showToS ||
       this.boardEditOverlayInfo !== null ||
       this.showSettingsOverlay ||
       this.showFirstRun ||
@@ -3138,7 +3151,7 @@ export class Main extends LitElement {
         }
 
         const ui = html`<header>
-          <div id="header-bar" data-active=${this.tab ? "true" : nothing} ?inert=${showingOverlay}>
+          <div class="accept-tos" id="header-bar" data-active=${this.tab ? "true" : nothing} ?inert=${showingOverlay}>
             <div id="tab-info">
               <button id="logo" @click=${() => {
                 if (!this.tab) {
@@ -4325,6 +4338,7 @@ export class Main extends LitElement {
         }
 
         return [
+          this.showToS ? this.createTosDialog() : nothing,
           ui,
           boardOverlay,
           settingsOverlay,
@@ -4344,6 +4358,37 @@ export class Main extends LitElement {
 
     const tooltip = html`<bb-tooltip ${ref(this.#tooltipRef)}></bb-tooltip>`;
     return [until(uiController), tooltip, toasts];
+  }
+
+  createTosDialog() {
+    const tosText = Strings.from("TOS_TEXT");
+    const tosTitle = Strings.from("TOS_TITLE");
+    return html`<dialog
+      ${ref((el: Element | undefined) => {
+        if (el && this.showToS && el.isConnected) {
+          const dialog = el as HTMLDialogElement;
+          if (!dialog.open) {
+            dialog.showModal();
+          }
+        }
+        
+      })}>
+      <p></p>
+      <form method="dialog">
+        <div>
+        <h2>${tosTitle}</h2>
+        </div>
+        <div>
+          <p>${tosText}</p>
+        <div>
+          <button @click=${() => {
+            this.showToS = false;
+            localStorage.setItem(TOS_KEY, TosStatus.ACCEPTED);
+          }}>Accept</button>
+        </div>
+      </form>
+    </dialog>`;
+
   }
 }
 

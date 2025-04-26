@@ -205,4 +205,11 @@ export default {
   QUERY_SAVE_PROJECT: {
     str: "The current Flow isn't saved - would you like to save first?",
   },
+
+  TOS_TITLE: {
+    str: "Terms of Service",
+  },
+  TOS_TEXT: {
+    str: 'Do you agree?',
+  }
 } as LanguagePackEntry;

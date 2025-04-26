@@ -82,6 +82,7 @@ function bootstrap(args: BootstrapArguments = {}) {
       boardServerUrl: getUrlFromBoardServiceFlag(BOARD_SERVICE),
       connectionServerUrl: args?.connectionServerUrl,
       requiresSignin: args?.requiresSignin,
+      enableTos: ENABLE_TOS,
     };
 
     window.oncontextmenu = (evt) => evt.preventDefault();
