@@ -1,4 +1,4 @@
-FROM node:lts
+FROM node:20-slim
 WORKDIR /breadboard
 
 # This file uses a named context that points to the root of the monorepo.
