@@ -8,10 +8,6 @@
       "types": "./build/src/index.d.ts",
       "default": "./build/src/index.js"
     },
-    "./preview.js": {
-      "types": "./build/preview.d.ts",
-      "default": "./build/preview.js"
-    },
     "./config.js": {
       "types": "./build/src/config.d.ts",
       "default": "./build/src/config.js"
@@ -19,14 +15,6 @@
     "./public": "./public",
     "./index.html": "./index.html",
     "./preview.html": "./preview.html",
-    "./embed.js": "./build/embed.js",
-    "./core-kit.js": "./build/core-kit.js",
-    "./json-kit.js": "./build/json-kit.js",
-    "./template-kit.js": "./build/template-kit.js",
-    "./providers": {
-      "types": "./build/providers/types.d.ts",
-      "default": "./build/providers/types.js"
-    },
     "./vite": "./build/src/configure-assets.js",
     "./build-info": "./build/src/build-info.js",
     "./bootstrap": "./build/src/bootstrap.js"
