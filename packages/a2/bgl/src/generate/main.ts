@@ -27,7 +27,7 @@ type DescribeInputs = {
 const MODES = [
   {
     id: "text",
-    url: "embed://a2/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+    url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
     title: "Gemini 2.0 Flash",
     description: "For everyday tasks, plus more",
     icon: "generative-text",
