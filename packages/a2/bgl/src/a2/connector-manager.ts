@@ -1,5 +1,5 @@
 /**
- * @fileoverview Add a description for your module here.
+ * @fileoverview Manages connectors.
  */
 
 import { err, ok, isLLMContentArray } from "./utils";

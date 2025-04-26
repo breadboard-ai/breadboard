@@ -1019,14 +1019,18 @@ export class Template extends LitElement implements AppTemplate {
                 }
               }
             }
-
+            const hasAssetEntered =
+              this.#assetShelfRef?.value == undefined ||
+              this.#assetShelfRef?.value.value.length == 0;
             return html`<div class="user-input">
               <p>
                 ${schema.description ? html`${schema.description}` : nothing}
               </p>
 
               <textarea
-                placeholder="Type something"
+                placeholder=${hasAssetEntered
+                  ? "Type or upload your response."
+                  : "⌘-⏎ to submit"}
                 name=${name}
                 type="text"
                 data-type=${dataType}

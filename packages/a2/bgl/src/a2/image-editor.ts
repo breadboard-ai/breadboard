@@ -164,6 +164,7 @@ async function invoke({
             disablePromptRewrite,
             aspectRatio
           );
+          if (!ok(generatedImage)) return generatedImage;
           return mergeContent(generatedImage, "model");
         } else {
           console.log("Step has text only, using Gemini Image API: t2i");
@@ -186,6 +187,7 @@ async function invoke({
             disablePromptRewrite,
             aspectRatio
           );
+          if (!ok(generatedImage)) return generatedImage;
           return mergeContent(generatedImage, "model");
         }
       }
