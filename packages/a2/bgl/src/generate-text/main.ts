@@ -163,7 +163,7 @@ Each instruction is crucial and must be executed with utmost care and attention 
       }
       const afterTools = await new GeminiPrompt(inputs).invoke();
       if (!ok(afterTools)) return afterTools;
-      if (makeList) {
+      if (makeList && !this.chat) {
         const list = toList(afterTools.last);
         if (!ok(list)) return list;
         product = list;
@@ -171,7 +171,7 @@ Each instruction is crucial and must be executed with utmost care and attention 
         product = afterTools.last;
       }
     } else {
-      if (makeList) {
+      if (makeList && !this.chat) {
         const list = toList(result.last);
         if (!ok(list)) return list;
         product = list;
@@ -194,15 +194,27 @@ Each instruction is crucial and must be executed with utmost care and attention 
   }
 }
 
-function done(result: LLMContent[]) {
+function done(result: LLMContent[], makeList: boolean = false) {
+  if (makeList) {
+    const list = toList(result.at(-1)!);
+    if (!ok(list)) return list;
+    result = [list];
+  }
   return { done: result };
 }
 
 async function keepChatting(
   sharedContext: SharedContext,
-  result: LLMContent[]
+  result: LLMContent[],
+  isList: boolean
 ) {
   const last = result.at(-1)!;
+  let product = last;
+  if (isList) {
+    const list = toList(last);
+    if (!ok(list)) return list;
+    product = list;
+  }
   await output({
     schema: {
       type: "object",
@@ -219,7 +231,7 @@ async function keepChatting(
       description: "Asking user",
       icon: "generative-text",
     },
-    "a-product": last,
+    "a-product": product,
   });
 
   const toInput: Schema = {
@@ -262,7 +274,7 @@ async function invoke({ context }: Inputs) {
     if (!last) {
       return err("Chat ended without any work");
     }
-    return done([...context.context, last]);
+    return done([...context.context, last], context.makeList);
   }
 
   const gen = new GenerateText(context);
@@ -283,13 +295,13 @@ async function invoke({ context }: Inputs) {
     if (!previousResult) {
       return err(`Done chatting, but have nothing to pass along to next step.`);
     }
-    return done([previousResult]);
+    return done([previousResult], context.makeList);
   }
 
   // Use the gen.chat here, because it will correctly prevent
   // chat mode when we're in list mode.
   if (gen.chat && !userEndedChat) {
-    return keepChatting(gen.sharedContext, result);
+    return keepChatting(gen.sharedContext, result, context.makeList);
   }
 
   // Fall through to default response.

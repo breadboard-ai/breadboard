@@ -20,12 +20,12 @@
           "role": "user",
           "parts": [
             {
-              "text": "Use {{\"type\":\"tool\",\"path\":\"embed://a2/tools.bgl.json#module:search-web\",\"title\":\"Search Web\"}} to write a poem about current events"
+              "text": "Write three instagram posts about Monday"
             }
           ]
         },
         "p-chat": true,
-        "p-list": false
+        "p-list": true
       }
     }
   ],
