@@ -5,7 +5,11 @@
 import output from "@output";
 
 import type { SharedContext } from "./types";
-import { createDoneTool, createKeepChattingTool } from "./chat-tools";
+import {
+  createDoneTool,
+  createKeepChattingTool,
+  type ChatTool,
+} from "./chat-tools";
 
 import { report } from "./a2/output";
 import { err, ok, defaultLLMContent, llm } from "./a2/utils";
@@ -35,6 +39,223 @@ type Outputs = {
   done?: LLMContent[];
 };
 
+class GenerateText {
+  private toolManager!: ToolManager;
+  private doneTool!: ChatTool;
+  private keepChattingTool!: ChatTool;
+  public description!: LLMContent;
+  public context!: LLMContent[];
+  public listMode = false;
+
+  constructor(public readonly sharedContext: SharedContext) {
+    this.invoke = this.invoke.bind(this);
+  }
+
+  async initialize(): Promise<Outcome<void>> {
+    const { sharedContext } = this;
+    const template = new Template(sharedContext.description);
+    const toolManager = new ToolManager(new ArgumentNameGenerator());
+    const doneTool = createDoneTool();
+    const keepChattingTool = createKeepChattingTool();
+    const substituting = await template.substitute(
+      sharedContext.params,
+      async ({ path: url, instance }) => toolManager.addTool(url, instance)
+    );
+    const hasTools = toolManager.hasTools();
+    if (sharedContext.chat) {
+      toolManager.addCustomTool(doneTool.name, doneTool.handle());
+      if (!hasTools) {
+        toolManager.addCustomTool(
+          keepChattingTool.name,
+          keepChattingTool.handle()
+        );
+      }
+    }
+    if (!ok(substituting)) {
+      return substituting;
+    }
+    this.description = substituting;
+    this.toolManager = toolManager;
+    this.doneTool = doneTool;
+    this.keepChattingTool = keepChattingTool;
+    this.context = [...sharedContext.context, ...sharedContext.work];
+  }
+
+  createSystemInstruction(makeList: boolean) {
+    const initial = llm`
+
+Today is ${new Date().toLocaleString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    })}
+    
+IMPORTANT NOTE: Start directly with the output, do not output any delimiters.
+You are working as part of an AI system, so no chit-chat and no explainining what you're doing and why.
+DO NOT start with "Okay", or "Alright" or any preambles.
+Just the output, please.
+Take a Deep Breath, read the instructions again, read the inputs again.
+Each instruction is crucial and must be executed with utmost care and attention to detail.`.asContent();
+    if (!makeList) return initial;
+    return listPrompt(initial);
+  }
+
+  /**
+   * Invokes the text generator.
+   * Significant mode flags:
+   * - chat: boolean -- chat mode is on/off
+   * - tools: boolean -- whether or not has tools
+   * - makeList: boolean -- asked to generate a list
+   * - isList: boolean -- is currently in list mode
+   */
+  async invoke(
+    description: LLMContent,
+    work: LLMContent[],
+    isList: boolean
+  ): Promise<Outcome<LLMContent>> {
+    const { sharedContext } = this;
+    const toolManager = this.toolManager;
+    const doneTool = this.doneTool;
+    const keepChattingTool = this.keepChattingTool;
+    // Disallow making nested lists (for now).
+    const makeList = sharedContext.makeList && !isList;
+
+    let product: LLMContent;
+    const contents = work.length > 0 ? work : [description];
+    const safetySettings = defaultSafetySettings();
+    const systemInstruction = this.createSystemInstruction(makeList);
+    const tools = toolManager.list();
+    const inputs: GeminiInputs = { body: { contents, safetySettings } };
+    if (this.chat || toolManager.hasTools()) {
+      inputs.body.tools = [...tools];
+      inputs.body.toolConfig = { functionCallingConfig: { mode: "ANY" } };
+    }
+    // When we have tools, the first call will not try to make a list,
+    // because JSON mode and tool-calling are incompatible.
+    if (makeList && !toolManager.hasTools()) {
+      inputs.body.generationConfig = {
+        responseSchema: listSchema(),
+        responseMimeType: "application/json",
+      };
+    }
+    const prompt = new GeminiPrompt(inputs, { toolManager });
+    const result = await prompt.invoke();
+    if (!ok(result)) return result;
+    const calledTools =
+      prompt.calledTools || doneTool.invoked || keepChattingTool.invoked;
+    if (calledTools) {
+      if (doneTool.invoked) {
+        return result.last;
+      }
+      if (!keepChattingTool.invoked) {
+        contents.push(...result.all);
+      }
+      const inputs: GeminiInputs = {
+        body: { contents, systemInstruction, safetySettings },
+      };
+      if (makeList) {
+        inputs.body.generationConfig = {
+          responseSchema: listSchema(),
+          responseMimeType: "application/json",
+        };
+      }
+      const afterTools = await new GeminiPrompt(inputs).invoke();
+      if (!ok(afterTools)) return afterTools;
+      if (makeList && !this.chat) {
+        const list = toList(afterTools.last);
+        if (!ok(list)) return list;
+        product = list;
+      } else {
+        product = afterTools.last;
+      }
+    } else {
+      if (makeList && !this.chat) {
+        const list = toList(result.last);
+        if (!ok(list)) return list;
+        product = list;
+      } else {
+        product = result.last;
+      }
+    }
+
+    return product;
+  }
+
+  get chat(): boolean {
+    // When we are in list mode, disable chat.
+    // Can't have chat inside of a list (yet).
+    return this.sharedContext.chat && !this.listMode;
+  }
+
+  get doneChatting(): boolean {
+    return !!this.doneTool?.invoked;
+  }
+}
+
+function done(result: LLMContent[], makeList: boolean = false) {
+  if (makeList) {
+    const list = toList(result.at(-1)!);
+    if (!ok(list)) return list;
+    result = [list];
+  }
+  return { done: result };
+}
+
+async function keepChatting(
+  sharedContext: SharedContext,
+  result: LLMContent[],
+  isList: boolean
+) {
+  const last = result.at(-1)!;
+  let product = last;
+  if (isList) {
+    const list = toList(last);
+    if (!ok(list)) return list;
+    product = list;
+  }
+  await output({
+    schema: {
+      type: "object",
+      properties: {
+        "a-product": {
+          type: "object",
+          behavior: ["llm-content"],
+          title: "Draft",
+        },
+      },
+    },
+    $metadata: {
+      title: "Writer",
+      description: "Asking user",
+      icon: "generative-text",
+    },
+    "a-product": product,
+  });
+
+  const toInput: Schema = {
+    type: "object",
+    properties: {
+      request: {
+        type: "object",
+        title: "Please provide feedback",
+        description: "Provide feedback or click submit to continue",
+        behavior: ["transient", "llm-content"],
+        examples: [defaultLLMContent()],
+      },
+    },
+  };
+  return {
+    toInput,
+    context: {
+      ...sharedContext,
+      work: result,
+      last,
+    },
+  };
+}
+
 async function invoke({ context }: Inputs) {
   if (!context.description) {
     const msg = "No instruction supplied";
@@ -53,147 +274,38 @@ async function invoke({ context }: Inputs) {
     if (!last) {
       return err("Chat ended without any work");
     }
-    return {
-      done: [...context.context, last],
-    };
+    return done([...context.context, last], context.makeList);
   }
 
-  const template = new Template(context.description);
-  const toolManager = new ToolManager(new ArgumentNameGenerator());
-  const doneTool = createDoneTool();
-  const keepChattingTool = createKeepChattingTool();
-  const substituting = await template.substitute(
-    context.params,
-    async ({ path: url, instance }) => toolManager.addTool(url, instance)
-  );
-  const hasTools = toolManager.hasTools();
-  if (context.chat) {
-    toolManager.addCustomTool(doneTool.name, doneTool.handle());
-    if (!hasTools) {
-      toolManager.addCustomTool(
-        keepChattingTool.name,
-        keepChattingTool.handle()
-      );
-    }
-  }
-  if (!ok(substituting)) {
-    return substituting;
-  }
+  const gen = new GenerateText(context);
+  const initializing = await gen.initialize();
+  if (!ok(initializing)) return initializing;
 
-  const { work } = context;
-  const result = await new ListExpander(substituting, [
-    ...context.context,
-    ...work,
-  ]).map(async (description, work, isList) => {
-    // Disallow making nested lists
-    const makeList = context.makeList && !isList;
+  const expander = new ListExpander(gen.description, gen.context);
+  expander.expand();
+  gen.listMode = expander.list().length > 1;
 
-    let product: LLMContent;
-    const contents = work.length > 0 ? work : [description];
-    const safetySettings = defaultSafetySettings();
-    const systemInstruction = llm`
-
-Today is ${new Date().toLocaleString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    })}
-    
-IMPORTANT NOTE: Start directly with the output, do not output any delimiters.
-Take a Deep Breath, read the instructions again, read the inputs again.
-Each instruction is crucial and must be executed with utmost care and attention to detail.`.asContent();
-    const tools = toolManager.list();
-    const inputs: GeminiInputs = { body: { contents, safetySettings } };
-    if (context.chat) {
-      inputs.body.tools = [...tools];
-      inputs.body.toolConfig = { functionCallingConfig: { mode: "ANY" } };
-    }
-    const prompt = new GeminiPrompt(inputs, { toolManager });
-    const result = await prompt.invoke();
-    if (!ok(result)) return result;
-    const calledTools =
-      prompt.calledTools || doneTool.invoked || keepChattingTool.invoked;
-    if (calledTools) {
-      if (doneTool.invoked) {
-        return result.last;
-      }
-      if (!keepChattingTool.invoked) {
-        contents.push(...result.all);
-      }
-      const inputs: GeminiInputs = {
-        body: { contents, systemInstruction, safetySettings },
-      };
-      const afterTools = await new GeminiPrompt(inputs).invoke();
-      if (!ok(afterTools)) return afterTools;
-      product = afterTools.last;
-    } else {
-      product = result.last;
-    }
-
-    return product;
-  });
+  const result = await expander.map(gen.invoke);
   if (!ok(result)) return result;
   console.log("RESULT", result);
-  // This really needs work, since it will not work with lists
-  // TODO: Listify.
-  if (doneTool.invoked) {
-    // If done tool was invoked, rewind removing the last interaction
+  if (gen.doneChatting) {
+    // If done tool was invoked, rewind to remove the last interaction
     // and return that.
-    const previousResult = work.at(-2);
-    return previousResult ? { done: [previousResult] } : { done: result };
-  }
-
-  // 4) Handle chat.
-  if (context.chat) {
-    const last = result.at(-1)!;
-    await output({
-      schema: {
-        type: "object",
-        properties: {
-          "a-product": {
-            type: "object",
-            behavior: ["llm-content"],
-            title: "Draft",
-          },
-        },
-      },
-      $metadata: {
-        title: "Writer",
-        description: "Asking user",
-        icon: "generative-text",
-      },
-      "a-product": last,
-    });
-
-    const { userInputs } = context;
-    if (!userEndedChat) {
-      const toInput: Schema = {
-        type: "object",
-        properties: {
-          request: {
-            type: "object",
-            title: "Please provide feedback",
-            description: "Provide feedback or click submit to continue",
-            behavior: ["transient", "llm-content"],
-            examples: [defaultLLMContent()],
-          },
-        },
-      };
-      return {
-        toInput,
-        context: {
-          ...context,
-          work: result,
-          last,
-        },
-      };
+    const previousResult = context.work.at(-2);
+    if (!previousResult) {
+      return err(`Done chatting, but have nothing to pass along to next step.`);
     }
+    return done([previousResult], context.makeList);
   }
 
-  // 5) Fall through to default response.
-  return { done: result };
+  // Use the gen.chat here, because it will correctly prevent
+  // chat mode when we're in list mode.
+  if (gen.chat && !userEndedChat) {
+    return keepChatting(gen.sharedContext, result, context.makeList);
+  }
+
+  // Fall through to default response.
+  return done(result);
 }
 
 async function describe() {

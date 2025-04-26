@@ -1,0 +1,102 @@
+{
+  "title": "Generate Text Workbench",
+  "description": "",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "3740bd42-4f06-4856-8629-6d14912b834f",
+      "type": "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+      "metadata": {
+        "title": "Generate Text",
+        "visual": {
+          "x": -320,
+          "y": -620
+        },
+        "userModified": false,
+        "description": "Generates text based on the weather conditions for a given location. Uses the 'Get Weather' tool for weather information."
+      },
+      "configuration": {
+        "description": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Come up with three ideas to research the topic of software testing"
+            }
+          ]
+        },
+        "p-chat": false,
+        "p-list": true
+      }
+    },
+    {
+      "id": "bf9e5ed4-0cf6-4589-91a8-a59f20f27680",
+      "type": "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+      "metadata": {
+        "title": "Generate Text",
+        "visual": {
+          "x": 0,
+          "y": -620
+        },
+        "userModified": false,
+        "description": "Generates text based on the weather conditions for a given location. Uses the 'Get Weather' tool for weather information."
+      },
+      "configuration": {
+        "description": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Use {{\"type\":\"tool\",\"path\":\"embed://a2/tools.bgl.json#module:search-web\",\"title\":\"Search Web\"}} to come up with three blog post titles based on the idea\n\n{{\"type\":\"in\",\"path\":\"3740bd42-4f06-4856-8629-6d14912b834f\",\"title\":\"Generate Text\"}}"
+            }
+          ]
+        },
+        "p-chat": true,
+        "p-list": true
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "3740bd42-4f06-4856-8629-6d14912b834f",
+      "to": "bf9e5ed4-0cf6-4589-91a8-a59f20f27680",
+      "out": "context",
+      "in": "p-z-3740bd42-4f06-4856-8629-6d14912b834f"
+    }
+  ],
+  "metadata": {
+    "visual": {
+      "presentation": {
+        "themes": {
+          "39239b49-62d0-4182-b919-924c4db67941": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "39239b49-62d0-4182-b919-924c4db67941"
+      }
+    },
+    "userModified": true,
+    "tags": [],
+    "parameters": {}
+  },
+  "assets": {
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI4MC4xNyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTAzLjEwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMzkuNjYiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CjxyZWN0IHg9IjEzNi45MCIKICAgICAgICAgICAgICAgICAgICB5PSI4MC4xNyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTAzLjEwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMzkuNjYiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CiAgICAgIAogICAgPC9zdmc+"
+    }
+  }
+}
