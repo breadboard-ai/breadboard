@@ -123,14 +123,19 @@ Each instruction is crucial and must be executed with utmost care and attention 
     const makeList = sharedContext.makeList && !isList;
 
     let product: LLMContent;
-    const contents = work.length > 0 ? work : [description];
+    const contents = [description, ...work];
     const safetySettings = defaultSafetySettings();
     const systemInstruction = this.createSystemInstruction(makeList);
     const tools = toolManager.list();
     const inputs: GeminiInputs = { body: { contents, safetySettings } };
+    // We always supply tools when chatting, since we add
+    // the "Done" and "Keep Chatting" tools to figure out when
+    // the conversation ends.
     if (this.chat || toolManager.hasTools()) {
       inputs.body.tools = [...tools];
       inputs.body.toolConfig = { functionCallingConfig: { mode: "ANY" } };
+    } else {
+      inputs.body.systemInstruction = systemInstruction;
     }
     // When we have tools, the first call will not try to make a list,
     // because JSON mode and tool-calling are incompatible.

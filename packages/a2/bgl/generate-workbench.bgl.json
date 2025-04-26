@@ -15,7 +15,7 @@
         "userModified": false
       },
       "configuration": {
-        "config$ask-user": false,
+        "config$ask-user": true,
         "config$list": false,
         "config$prompt": {
           "role": "user",
@@ -25,7 +25,7 @@
             }
           ]
         },
-        "generation-mode": "image",
+        "generation-mode": "text",
         "p-aspect-ratio": "1:1",
         "p-disable-prompt-rewrite": false
       }
