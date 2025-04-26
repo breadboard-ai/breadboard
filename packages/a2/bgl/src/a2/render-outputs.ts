@@ -3,7 +3,7 @@
  */
 
 import { Template } from "./template";
-import { ok, err, toText, isEmpty, toLLMContent } from "./utils";
+import { ok, err, toText, isEmpty, mergeContent, toLLMContent } from "./utils";
 import { callGenWebpage } from "./html-generator";
 import { fanOutContext, flattenContext } from "./lists";
 
@@ -121,10 +121,11 @@ async function invoke({
   if (!ok(substituting)) {
     return substituting;
   }
-  let context = await fanOutContext(substituting, undefined, async (_) => _);
-  if (!ok(context)) return context;
-  context = flattenContext(context);
-  // TODO(askerryryan): Further cleanup modes once FlowGen is fully in sync.
+
+  const context = mergeContent(
+    flattenContext([substituting], true, "\n\n"),
+    "user"
+  );
   if (renderMode == MANUAL_MODE) {
     renderMode = "Manual";
   } else if (renderMode == AUTO_MODE) {
@@ -141,11 +142,11 @@ ${themeColorsPrompt(await getThemeColors())}
     instruction +=
       " Use a responsive or mobile-friendly layout whenever possible and minimize unnecessary padding or margins.";
     console.log("Generating output based on instruction: ", instruction);
-    const webPage = await callGenWebpage(instruction, context, renderMode);
+    const webPage = await callGenWebpage(instruction, [context], renderMode);
     if (!ok(webPage)) {
       console.error("Failed to generated html output");
     } else {
-      out = [await webPage];
+      out = await webPage;
       console.log(out);
     }
   }

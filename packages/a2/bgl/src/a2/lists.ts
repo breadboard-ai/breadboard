@@ -250,51 +250,68 @@ async function fanOutContext(
 
 function flattenContext(
   context: LLMContent[] | undefined,
-  all = false
+  all = false,
+  separator = ""
 ): LLMContent[] {
   context ??= []; // Look at the first part of the last context and see if it's a list.
   const last = context.at(-1);
   if (!last) return context;
   if (all) {
-    return context.map((content) => flattenContent(content, all)).flat();
+    return context
+      .map((content) => flattenContent(content, all, separator))
+      .flat();
   }
   const remainder = context.slice(0, -1);
-  return [...remainder, ...flattenContent(last, all)];
+  return [...remainder, ...flattenContent(last, all, separator)];
 }
 
-function zipContexts(contexts: LLMContent[][]): LLMContent[] {
+function zipContexts(
+  contexts: LLMContent[][],
+  separator: string = ""
+): LLMContent[] {
   let maxLength = 0;
   contexts.forEach((context) => {
     if (maxLength < context.length) maxLength = context.length;
   });
-  return new Array(maxLength).fill(0).map((_, index) => {
+  const result: LLMContent[] = [];
+  for (let i = 0; i < maxLength; i++) {
     let role: string | undefined;
-    const parts = mergeTextParts(
-      contexts
-        .map((context) => {
-          const item = context.at(index);
-          if (!item) return null;
-          if (!role) role = item.role;
-          return item.parts;
-        })
-        .filter((item) => item !== null)
-        .flat()
-    );
+    let zippedParts = [];
+    for (const context of contexts) {
+      const item = context.at(i);
+      if (!item) continue;
+      if (!role) role = item.role;
+      zippedParts.push(item.parts);
+      // Add separator if previous element was text.
+      const lastItem = item.parts.slice(-1)[0];
+      if (separator.length > 0 && lastItem && "text" in lastItem) {
+        zippedParts.push({ text: separator });
+      }
+    }
+    const parts = mergeTextParts(zippedParts.flat());
     role ??= "user";
-    return {
+    result.push({
       parts,
       role,
-    };
-  });
+    });
+  }
+  return result;
 }
 
-function flattenContent(content: LLMContent, all = false): LLMContent[] {
+function flattenContent(
+  content: LLMContent,
+  all = false,
+  separatator = ""
+): LLMContent[] {
   let hadList = false;
   const flattened = content.parts
     .map((part) => {
       if (isListPart(part)) {
         hadList = true;
-        return zipContexts(part.list.map((item) => item.content));
+        return zipContexts(
+          part.list.map((item) => item.content),
+          separatator
+        );
       }
       return {
         parts: [part],
