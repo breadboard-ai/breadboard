@@ -5,5 +5,9 @@
  */
 
 import { bootstrap } from "./bootstrap";
+import { loadKits, registerLegacyKits } from "./utils/kit-loader";
 
-bootstrap();
+bootstrap({
+  kits: loadKits(),
+  graphStorePreloader: registerLegacyKits,
+});
