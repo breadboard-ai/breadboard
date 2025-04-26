@@ -41,6 +41,8 @@ import {
   EditHistoryCreator,
   envFromGraphDescriptor,
   FileSystem,
+  Kit,
+  addSandboxedRunModule,
 } from "@google-labs/breadboard";
 import {
   createFileSystemBackend,
@@ -128,6 +130,8 @@ export type MainArguments = {
    * Whether or not this instance of requires sign in.
    */
   requiresSignin?: boolean;
+  kits?: Kit[];
+  graphStorePreloader?: (graphStore: MutableGraphStore) => void;
 };
 
 type BoardOverlowMenuConfiguration = {
@@ -539,6 +543,7 @@ export class Main extends LitElement {
           proxy: this.#proxy,
           fileSystem: this.#fileSystem,
           builtInBoardServers: [createA2Server()],
+          kits: addSandboxedRunModule(sandbox, config.kits || []),
         });
       })
       .then((runtime) => {
@@ -547,6 +552,10 @@ export class Main extends LitElement {
         this.#boardServers = runtime.board.getBoardServers() || [];
 
         this.sideBoardRuntime = runtime.sideboards;
+
+        // This is currently used only for legacy graph kits (Agent,
+        // Google Drive).
+        config.graphStorePreloader?.(this.#graphStore);
 
         this.sideBoardRuntime.addEventListener("empty", () => {
           this.canRun = true;
