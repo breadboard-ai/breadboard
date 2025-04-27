@@ -341,6 +341,33 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
           var(--bb-font-family);
 
+        &.object:has(details) {
+          padding-right: 0;
+        }
+
+        &:has(bb-text-editor) {
+          min-height: var(--bb-grid-size-5);
+          height: auto;
+          align-items: flex-start;
+          flex-direction: column;
+
+          &:not(.stretch) details {
+            bb-text-editor {
+              padding-top: var(--bb-grid-size-2);
+              padding-bottom: var(--bb-grid-size-2);
+              height: calc(200px - var(--bb-grid-size) * 2);
+              --text-editor-padding-top: 0;
+              --text-editor-padding-bottom: 0;
+              --text-editor-padding-left: 0;
+            }
+          }
+
+          &:not(:last-of-type) {
+            border-bottom: 1px solid var(--bb-neutral-300);
+            padding-bottom: var(--bb-grid-size-3);
+          }
+        }
+
         &.stretch:has(+ :not(.stretch)) {
           margin-bottom: var(--bb-grid-size-3);
           border-bottom: 1px solid var(--bb-neutral-300);
@@ -409,6 +436,11 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           & input {
             display: none;
           }
+        }
+
+        details {
+          display: flex;
+          flex-direction: column;
         }
 
         label {
@@ -967,10 +999,17 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         .sort((a, b) => {
           if (isControllerBehavior(a.schema)) return -1;
           if (isControllerBehavior(b.schema)) return 1;
-          if (isLLMContentBehavior(a.schema)) return -1;
-          if (isLLMContentBehavior(b.schema)) return 1;
+          if (shouldBeAtTop(a.schema)) return -1;
+          if (shouldBeAtTop(b.schema)) return 1;
 
-          return a.title.localeCompare(b.title);
+          return a.name.localeCompare(b.name);
+
+          function shouldBeAtTop(schema: Schema) {
+            return (
+              isLLMContentBehavior(schema) &&
+              !schema.behavior?.includes("hint-advanced")
+            );
+          }
         });
 
       return html`<div class=${classMap(classes)}>
@@ -997,12 +1036,10 @@ export class EntityEditor extends SignalWatcher(LitElement) {
   #renderTextEditorPort(
     port: PortLike,
     value: LLMContent | undefined,
-    graphId: GraphIdentifier
+    graphId: GraphIdentifier,
+    fastAccess: boolean
   ) {
-    const portValue: LLMContent = value ?? {
-      role: "user",
-      parts: [{ text: "" }],
-    };
+    const portValue = getLLMContentPortValue(value, port.schema);
     const textPart = portValue.parts.find((part) => isTextCapabilityPart(part));
     if (!textPart) {
       return html`Invalid value`;
@@ -1013,6 +1050,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       .value=${textPart.text}
       .projectState=${this.projectState}
       .subGraphId=${graphId !== MAIN_BOARD_ID ? graphId : null}
+      .supportsFastAccess=${fastAccess}
       id=${port.name}
       name=${port.name}
       @keydown=${(evt: KeyboardEvent) => {
@@ -1040,13 +1078,31 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       switch (port.schema.type) {
         case "object": {
           if (isLLMContentBehavior(port.schema)) {
-            classes.stretch = true;
             classes.object = true;
+
+            // This check has an iffy quality to it, since it likely overly
+            // specific. It's necessary to render the system instruction port
+            // on text generator :)
+            // Ideally, we'll probably need to use `at-wireable` or something,
+            // and instead of negative check, use if (at-wireable) check.
+            const advanced = port.schema.behavior?.includes("hint-advanced");
             value = this.#renderTextEditorPort(
               port,
               isLLMContent(port.value) ? port.value : undefined,
-              graphId
+              graphId,
+              !advanced
             );
+            if (advanced) {
+              // This is also super iffy. Ideally, we have a whole "Advanced"
+              // configuration section, but for now, we just wrap the text
+              // editor.
+              value = html`<details>
+                <summary>${port.title}</summary>
+                ${value}
+              </details>`;
+            } else {
+              classes.stretch = true;
+            }
           } else {
             value = html`<bb-delegating-input
               id=${port.name}
@@ -1073,7 +1129,8 @@ export class EntityEditor extends SignalWatcher(LitElement) {
               isLLMContentArray(port.value)
                 ? (port.value.at(-1) as LLMContent)
                 : undefined,
-              graphId
+              graphId,
+              true
             );
           }
           break;
@@ -1496,4 +1553,26 @@ function portsFromView(view: ConnectorView): PortLike[] {
       value: (values as Record<string, NodeValue>)[name],
     } satisfies PortLike;
   });
+}
+
+function getLLMContentPortValue(
+  value: LLMContent | undefined,
+  schema: Schema
+): LLMContent {
+  if (!value) {
+    const defaultValue = schema.default;
+    if (defaultValue) {
+      try {
+        return JSON.parse(defaultValue);
+      } catch (e) {
+        // eat the error, just fall through
+      }
+    }
+  } else {
+    return value;
+  }
+  return {
+    role: "user",
+    parts: [{ text: "" }],
+  };
 }
