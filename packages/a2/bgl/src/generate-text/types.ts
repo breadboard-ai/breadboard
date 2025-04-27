@@ -32,6 +32,10 @@ export type GenerateTextInputs = {
    */
   description?: LLMContent;
   /**
+   *
+   */
+  systemInstruction?: LLMContent;
+  /**
    * Last work product.
    */
   last?: LLMContent;

@@ -7,6 +7,7 @@ import type { SharedContext } from "./types";
 import { ok, toLLMContent, defaultLLMContent } from "./a2/utils";
 import { Template } from "./a2/template";
 import { readSettings } from "./a2/settings";
+import { defaultSystemInstruction } from "./system-instruction";
 
 export { invoke as default, describe };
 
@@ -15,6 +16,7 @@ export type EntryInputs = {
   description: LLMContent;
   "p-chat": boolean;
   "p-list": boolean;
+  "b-system-instruction": LLMContent;
 } & Params;
 
 export type DescribeInputs = {
@@ -29,6 +31,7 @@ async function invoke({
   context,
   "p-chat": chat,
   "p-list": makeList,
+  "b-system-instruction": systemInstruction,
   description,
   ...params
 }: EntryInputs): Promise<Outputs> {
@@ -52,6 +55,7 @@ async function invoke({
       work: [],
       userEndedChat: false,
       params,
+      systemInstruction,
     },
   };
 }
@@ -80,12 +84,12 @@ async function describe({ inputs: { description } }: DescribeInputs) {
         description:
           "When checked, this step will try to create a list as its output. Make sure that the prompt asks for a list of some sort",
       },
-      "p-system-instruction": {
+      "b-system-instruction": {
         type: "object",
         behavior: ["llm-content", "config", "hint-advanced"],
         title: "System Instruction",
         description: "The system instruction for the model",
-        default: defaultLLMContent(),
+        default: JSON.stringify(defaultSystemInstruction()),
       },
     };
   }
