@@ -51,16 +51,38 @@ export class FlowgenHomepagePanel extends LitElement {
         margin: 15px 0 0 0;
       }
 
+      #dismiss-button {
+        background: none;
+        border: none;
+        color: var(--bb-neutral-200);
+        font-size: 1.2rem;
+        cursor: pointer;
+        padding: 0;
+        margin-left: var(--bb-grid-size-5);
+      }
+
+      .dismiss-button:hover {
+        color: var(--bb-neutral-400);
+      }
+
+      p {
+        word-break: break-all;
+      }
+
       #feedback {
         font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
           var(--bb-font-family);
-        color: var(--bb-neutral-700);
-        padding: 0;
+        color: var(--bb-neutral-200);
+        transition: var(--color-transition);
+        background: var(--bb-neutral-800);
+        border-radius: var(--bb-grid-size-2);
+        padding-left: var(--bb-grid-size-5);
+        padding-right: var(--bb-grid-size-5);
         word-break: break-all;
-
-        > .error {
-          color: var(--bb-warning-500);
-        }
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: var(--bb-grid-size-4);
       }
 
       #gradient-border-container {
@@ -128,8 +150,13 @@ export class FlowgenHomepagePanel extends LitElement {
   readonly #descriptionInput = createRef<ExpandingTextarea>();
 
   override render() {
+    const errorFeedback = html` <div id="feedback">
+      <p>${this.#renderFeedback()}</p>
+      <button id="dismiss-button" @click=${this.#onClearError}>&#215</button>
+    </div>`;
+    const statusFeedback = html`<p>${this.#renderFeedback()}</p>`;
     return [
-      html`<p id="feedback">${this.#renderFeedback()}</p>`,
+      this.#state.status === "error" ? errorFeedback : statusFeedback,
       this.#renderInput(),
     ];
   }
@@ -211,6 +238,10 @@ export class FlowgenHomepagePanel extends LitElement {
         .then((graph) => this.#onGenerateComplete(graph))
         .catch((error) => this.#onGenerateError(error));
     }
+  }
+
+  #onClearError() {
+    this.#state = { status: "initial" };
   }
 
   async #generateBoard(intent: string): Promise<GraphDescriptor> {
