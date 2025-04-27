@@ -341,6 +341,10 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
           var(--bb-font-family);
 
+        &.object:has(details) {
+          padding-right: 0;
+        }
+
         &:has(bb-text-editor) {
           min-height: var(--bb-grid-size-5);
           height: auto;
@@ -354,7 +358,6 @@ export class EntityEditor extends SignalWatcher(LitElement) {
               height: calc(200px - var(--bb-grid-size) * 2);
               --text-editor-padding-top: 0;
               --text-editor-padding-bottom: 0;
-              --text-editor-padding-right: 0;
               --text-editor-padding-left: 0;
             }
           }
