@@ -1093,6 +1093,9 @@ export class EntityEditor extends SignalWatcher(LitElement) {
               !advanced
             );
             if (advanced) {
+              // This is also super iffy. Ideally, we have a whole "Advanced"
+              // configuration section, but for now, we just wrap the text
+              // editor.
               value = html`<details>
                 <summary>${port.title}</summary>
                 ${value}
