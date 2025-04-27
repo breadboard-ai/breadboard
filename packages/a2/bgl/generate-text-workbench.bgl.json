@@ -25,7 +25,15 @@
           ]
         },
         "p-chat": true,
-        "p-list": true
+        "p-list": true,
+        "p-system-instruction": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "hello"
+            }
+          ]
+        }
       }
     }
   ],

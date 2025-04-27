@@ -10634,6 +10634,7 @@
                           "error",
                           "google-drive-file-id",
                           "google-drive-query",
+                          "hint-advanced",
                           "hint-audio",
                           "hint-code",
                           "hint-controller",

@@ -80,6 +80,13 @@ async function describe({ inputs: { description } }: DescribeInputs) {
         description:
           "When checked, this step will try to create a list as its output. Make sure that the prompt asks for a list of some sort",
       },
+      "p-system-instruction": {
+        type: "object",
+        behavior: ["llm-content", "config", "hint-advanced"],
+        title: "System Instruction",
+        description: "The system instruction for the model",
+        default: defaultLLMContent(),
+      },
     };
   }
   return {
@@ -89,7 +96,7 @@ async function describe({ inputs: { description } }: DescribeInputs) {
         description: {
           type: "object",
           behavior: ["llm-content", "config", "hint-preview"],
-          title: "Instruction",
+          title: "Prompt",
           description:
             "Give the model additional context on what to do, like specific rules/guidelines to adhere to or specify behavior separate from the provided context.",
           default: defaultLLMContent(),
