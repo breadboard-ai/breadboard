@@ -83,7 +83,7 @@ export class TextEditor extends LitElement {
           var(--text-editor-padding-left, var(--bb-grid-size-2));
 
         &.placeholder::before {
-          content: "Enter text";
+          content: "Type your prompt here. You can use @ to add assets or previous step outputs.";
           font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
             var(--bb-font-family);
           color: var(--bb-neutral-600);

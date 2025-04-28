@@ -28,6 +28,13 @@ const STEP_NAME = "AI Image Tool";
 const OUTPUT_NAME = "generated_image";
 const API_NAME = "ai_image_tool";
 
+const SUPPORTED_IMAGE_MIMETYPES = [
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "image/webp",
+];
+
 async function callGeminiImage(
   instruction: string,
   imageContent: LLMContent[],
@@ -41,6 +48,16 @@ async function callGeminiImage(
       inlineChunk = toInlineReference(element);
     } else {
       inlineChunk = toInlineData(element);
+    }
+    if (
+      inlineChunk &&
+      inlineChunk != null &&
+      typeof inlineChunk != "string" &&
+      !SUPPORTED_IMAGE_MIMETYPES.includes(inlineChunk.mimeType)
+    ) {
+      return err(
+        "Image inputs must be: " + SUPPORTED_IMAGE_MIMETYPES.join(",")
+      );
     }
     if (inlineChunk && inlineChunk != null && typeof inlineChunk != "string") {
       imageChunks.push({
