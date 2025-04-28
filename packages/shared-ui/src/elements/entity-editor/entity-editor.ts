@@ -1189,29 +1189,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
                     ? "bottom"
                     : "top"}
                   .values=${port.schema.enum.map((option) => {
-                    const v = enumValue(option);
-                    // TODO: Remap these to icons at the source level
-                    if (v.icon) {
-                      switch (v.icon) {
-                        case "generative":
-                          v.icon = "spark";
-                          break;
-                        case "generative-text":
-                          v.icon = "text_analysis";
-                          break;
-                        case "generative-image":
-                          v.icon = "photo_spark";
-                          break;
-                        case "generative-audio":
-                          v.icon = "audio_magic_eraser";
-                          break;
-                        case "generative-video":
-                          v.icon = "videocam_auto";
-                          break;
-                      }
-                    }
-
-                    return v;
+                    return enumValue(option);
                   })}
                   .value=${port.value}
                 ></bb-item-select>

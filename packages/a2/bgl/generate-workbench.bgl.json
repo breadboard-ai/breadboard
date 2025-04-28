@@ -27,7 +27,16 @@
         },
         "generation-mode": "text",
         "p-aspect-ratio": "1:1",
-        "p-disable-prompt-rewrite": false
+        "p-disable-prompt-rewrite": false,
+        "voice": "Male (English)",
+        "b-system-instruction": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "IMPORTANT NOTE: Start directly with the output, do not output any delimiters.\nYou are working as part of an AI system, so no chit-chat and no explaining what you're doing and why.\nDO NOT start with \"Okay\", or \"Alright\" or any preambles.\nJust the output, please.\nTake a Deep Breath, read the instructions again, read the inputs again.\nEach instruction is crucial and must be executed with utmost care and attention to detail."
+            }
+          ]
+        }
       }
     }
   ],
