@@ -105,6 +105,9 @@ export class Template extends LitElement implements AppTemplate {
   @property({ reflect: true, type: Boolean })
   accessor hasRenderedSplash = false;
 
+  @property({ reflect: true, type: Boolean })
+  accessor showShareButton = true;
+
   @property()
   accessor readOnly = true;
 
@@ -374,6 +377,8 @@ export class Template extends LitElement implements AppTemplate {
               }
 
               &#share {
+                opacity: 0;
+                pointer-events: none;
                 background: var(--bb-icon-share) center center / 20px 20px
                   no-repeat;
               }
@@ -687,6 +692,19 @@ export class Template extends LitElement implements AppTemplate {
 
               &.active.paused #input-container {
                 transform: translateY(0);
+              }
+            }
+          }
+        }
+      }
+
+      :host([showsharebutton]) {
+        @scope (.app-template) {
+          & #content {
+            & #controls {
+              & button#share {
+                opacity: 1;
+                pointer-events: auto;
               }
             }
           }
@@ -1019,14 +1037,18 @@ export class Template extends LitElement implements AppTemplate {
                 }
               }
             }
-
+            const hasAssetEntered =
+              this.#assetShelfRef?.value == undefined ||
+              this.#assetShelfRef?.value.value.length == 0;
             return html`<div class="user-input">
               <p>
                 ${schema.description ? html`${schema.description}` : nothing}
               </p>
 
               <textarea
-                placeholder="Type something"
+                placeholder=${hasAssetEntered
+                  ? "Type or upload your response."
+                  : "⌘-⏎ to submit"}
                 name=${name}
                 type="text"
                 data-type=${dataType}

@@ -71,6 +71,7 @@ export interface RuntimeConfig {
   // The board servers that are built in: initialized separately and come
   // as part of the environment.
   builtInBoardServers: BoardServer[];
+  kits: Kit[];
 }
 
 export interface RuntimeConfigBoardServers {

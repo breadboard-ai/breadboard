@@ -11,6 +11,7 @@ import type {
   NodeHandlerObject,
   Schema,
   Kit,
+  NodeHandlerContext,
 } from "./types.js";
 
 import {
@@ -21,8 +22,22 @@ import {
 import { inflateData } from "./data/inflate-deflate.js";
 import { MutableGraph } from "./inspector/types.js";
 import { CapabilitiesManagerImpl } from "./sandbox/capabilities-manager.js";
+import { ok } from "./data/file-system/utils.js";
+import { Outcome } from "./data/types.js";
 
 export { addSandboxedRunModule };
+
+/**
+ * This is likely too limiting and crude for the long term, but it works well
+ * for the specific use case we need right now.
+ *
+ * In the future, I am imagining something like a capability attenuator, which
+ * allows tuning capabilities for each invoked module, including module
+ * invocation itself.
+ */
+export type RunModuleInvocationFilter = (
+  context: NodeHandlerContext
+) => Outcome<void>;
 
 function findHandler(handlerName: string, kits?: Kit[]) {
   const handler = kits
@@ -33,7 +48,11 @@ function findHandler(handlerName: string, kits?: Kit[]) {
   return handler;
 }
 
-function addSandboxedRunModule(sandbox: Sandbox, kits: Kit[]): Kit[] {
+function addSandboxedRunModule(
+  sandbox: Sandbox,
+  kits: Kit[],
+  invocationFilter?: RunModuleInvocationFilter
+): Kit[] {
   const existingRunModule = findHandler("runModule", kits);
   const originalDescriber =
     (existingRunModule &&
@@ -52,6 +71,11 @@ function addSandboxedRunModule(sandbox: Sandbox, kits: Kit[]): Kit[] {
       handlers: {
         runModule: {
           invoke: async ({ $module, ...rest }, context) => {
+            // Run invocation filter first, and report error if it tells us
+            // we can't run this module.
+            const filtering = invocationFilter?.(context);
+            if (!ok(filtering)) return filtering;
+
             const moduleDeclaration = context.outerGraph?.modules;
             if (!moduleDeclaration) {
               return {

@@ -70,6 +70,7 @@ import * as StringsHelper from "../../strings/helper.js";
 import { FlowGenConstraint } from "../../flow-gen/flow-generator";
 import { ConnectorView } from "../../connectors/types";
 import { SignalWatcher } from "@lit-labs/signals";
+import { icons } from "../../styles/icons";
 const Strings = StringsHelper.forSection("Editor");
 
 // A type that is like a port (and fits InspectablePort), but could also be
@@ -118,544 +119,626 @@ export class EntityEditor extends SignalWatcher(LitElement) {
   @state()
   accessor values: InputValues | undefined;
 
-  static styles = css`
-    :host {
-      display: block;
-    }
-
-    #invalid-item,
-    #generic-status {
-      padding: var(--bb-grid-size-2);
-      text-align: center;
-      font: 500 var(--bb-body-medium) / var(--bb-body-line-height-medium)
-        var(--bb-font-family);
-    }
-
-    h1 {
-      display: flex;
-      align-items: center;
-      margin: 0;
-      height: var(--bb-grid-size-12);
-      padding: 0 var(--bb-grid-size-6);
-      border-bottom: 1px solid var(--bb-neutral-300);
-      font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
-        var(--bb-font-family);
-
-      & span {
-        flex: 1 0 auto;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        width: calc(100% - var(--bb-grid-size-7));
+  static styles = [
+    icons,
+    css`
+      :host {
+        display: block;
       }
 
-      & input {
-        flex: 1 0 auto;
-        font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
+      #invalid-item,
+      #generic-status {
+        padding: var(--bb-grid-size-2);
+        text-align: center;
+        font: 500 var(--bb-body-medium) / var(--bb-body-line-height-medium)
           var(--bb-font-family);
-        background: transparent;
-        padding: var(--bb-grid-size) var(--bb-grid-size);
-        border: 1px solid transparent;
-        border-radius: var(--bb-grid-size);
-        max-width: 100%;
-        min-width: 20%;
-
-        &:hover,
-        &:focus {
-          border: 1px solid var(--outer-border);
-        }
       }
 
-      &::before {
-        content: "";
-        width: 20px;
-        height: 20px;
-        flex: 0 0 auto;
-        margin-right: var(--bb-grid-size);
-      }
-    }
-
-    form {
-      height: 100%;
-
-      > * {
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-      }
-    }
-
-    .node {
-      & h1 {
-        --outer-border: var(--bb-ui-300);
-        background: var(--bb-ui-100);
-      }
-
-      &.module {
-        & h1 {
-          --outer-border: var(--bb-neutral-200);
-          background: var(--bb-neutral-50);
-        }
-      }
-
-      &.generative,
-      &.generative-image,
-      &.generative-image-edit,
-      &.generative-text,
-      &.generative-audio,
-      &.generative-video,
-      &.generative-code,
-      &.generative-search {
-        & h1 {
-          --outer-border: var(--bb-generative-200);
-          background: var(--bb-generative-50);
-        }
-      }
-
-      &.input,
-      &.output,
-      &.core,
-      &.combine-outputs {
-        & h1 {
-          --outer-border: var(--bb-input-200);
-          background: var(--bb-input-50);
-        }
-      }
-
-      &.search h1::before {
-        background: var(--bb-icon-search) center center / 20px 20px no-repeat;
-      }
-
-      &.map-search h1::before {
-        background: var(--bb-icon-map-search) center center / 20px 20px
-          no-repeat;
-      }
-
-      &.globe-book h1::before {
-        background: var(--bb-icon-globe-book) center center / 20px 20px
-          no-repeat;
-      }
-
-      &.language h1::before {
-        background: var(--bb-icon-language) center center / 20px 20px no-repeat;
-      }
-
-      &.sunny h1::before {
-        background: var(--bb-icon-sunny) center center / 20px 20px no-repeat;
-      }
-
-      &.generative h1::before {
-        background: var(--bb-add-icon-generative) center center / 20px 20px
-          no-repeat;
-      }
-
-      &.generative-image h1::before {
-        background: var(--bb-add-icon-generative-image) center center / 20px
-          20px no-repeat;
-      }
-
-      &.generative-image-edit h1::before {
-        background: var(--bb-add-icon-generative-image-edit-auto) center
-          center / 20px 20px no-repeat;
-      }
-
-      &.generative-text h1::before {
-        background: var(--bb-add-icon-generative-text-analysis) center center /
-          20px 20px no-repeat;
-      }
-
-      &.generative-audio h1::before {
-        background: var(--bb-add-icon-generative-audio) center center / 20px
-          20px no-repeat;
-      }
-
-      &.generative-video h1::before {
-        background: var(--bb-add-icon-generative-videocam-auto) center center /
-          20px 20px no-repeat;
-      }
-
-      &.generative-code h1::before {
-        background: var(--bb-add-icon-generative-code) center center / 20px 20px
-          no-repeat;
-      }
-
-      &.generative-search h1::before {
-        background: var(--bb-add-icon-generative-search) center center / 20px
-          20px no-repeat;
-      }
-
-      &.combine-outputs h1::before {
-        background: var(--bb-icon-table-rows) center center / 20px 20px
-          no-repeat;
-      }
-
-      &.display h1::before {
-        background: var(--bb-icon-responsive-layout) center center / 20px 20px
-          no-repeat;
-      }
-      &.ask-user h1::before {
-        background: var(--bb-icon-chat-mirror) center center / 20px 20px
-          no-repeat;
-      }
-
-      &.input h1::before {
-        background: var(--bb-icon-input) center center / 20px 20px no-repeat;
-      }
-
-      &.output h1::before {
-        background: var(--bb-icon-output) center center / 20px 20px no-repeat;
-      }
-
-      &.smart-toy h1::before {
-        background: var(--bb-icon-smart-toy) center center / 20px 20px no-repeat;
-      }
-
-      &.laps h1::before {
-        background: var(--bb-icon-laps) center center / 20px 20px no-repeat;
-      }
-    }
-
-    .asset {
-      & h1 {
-        --outer-border: var(--bb-inputs-100);
-        background: var(--bb-inputs-50);
-
-        &::before {
-          background: var(--bb-icon-alternate-email) center center / 20px 20px
-            no-repeat;
-        }
-      }
-    }
-
-    #content {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      overflow: auto;
-      padding: var(--bb-grid-size-3) 0 0 0;
-
-      > div {
-        height: var(--bb-grid-size-5);
+      h1 {
         display: flex;
         align-items: center;
-        font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+        margin: 0;
+        height: var(--bb-grid-size-12);
+        padding: 0 var(--bb-grid-size-6);
+        border-bottom: 1px solid var(--bb-neutral-300);
+        font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
           var(--bb-font-family);
 
-        &.stretch:has(+ :not(.stretch)) {
-          margin-bottom: var(--bb-grid-size-3);
-          border-bottom: 1px solid var(--bb-neutral-300);
+        & span {
+          flex: 1 0 auto;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          width: calc(100% - var(--bb-grid-size-7));
         }
 
-        &:not(.stretch):has(+ .stretch) {
-          margin-bottom: var(--bb-grid-size-3);
-          padding-bottom: var(--bb-grid-size-3);
-          border-bottom: 1px solid var(--bb-neutral-300);
-        }
+        & input {
+          flex: 1 0 auto;
+          font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
+            var(--bb-font-family);
+          background: transparent;
+          padding: var(--bb-grid-size) var(--bb-grid-size);
+          border: 1px solid transparent;
+          border-radius: var(--bb-grid-size);
+          max-width: 100%;
+          min-width: 20%;
 
-        &:not(.stretch):has(+ :not(.stretch)) {
-          margin-bottom: var(--bb-grid-size-2);
-        }
-
-        &.stretch {
-          overflow-y: auto;
-          overflow-x: hidden;
-          flex: 1 1 auto;
-
-          &:not(:last-of-type) {
-            padding-bottom: var(--bb-grid-size-3);
+          &:hover,
+          &:focus {
+            border: 1px solid var(--outer-border);
           }
         }
 
-        &:not(.stretch) {
-          padding: 0 var(--bb-grid-size-6);
+        &::before {
+          content: "";
+          width: 20px;
+          height: 20px;
+          flex: 0 0 auto;
+          margin-right: var(--bb-grid-size);
+        }
+      }
 
-          &:last-of-type {
-            padding-bottom: var(--bb-grid-size-3);
+      form {
+        height: 100%;
+
+        > * {
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+        }
+      }
+
+      .node {
+        & h1 {
+          --outer-border: var(--bb-ui-300);
+          background: var(--bb-ui-100);
+        }
+
+        &.module {
+          & h1 {
+            --outer-border: var(--bb-neutral-200);
+            background: var(--bb-neutral-50);
           }
         }
 
-        &.boolean {
-          & label {
+        &.generative,
+        &.generative-image,
+        &.generative-image-edit,
+        &.generative-text,
+        &.generative-audio,
+        &.generative-video,
+        &.generative-code,
+        &.generative-search {
+          & h1 {
+            --outer-border: var(--bb-generative-200);
+            background: var(--bb-generative-50);
+          }
+        }
+
+        &.input,
+        &.output,
+        &.core,
+        &.combine-outputs {
+          & h1 {
+            --outer-border: var(--bb-input-200);
+            background: var(--bb-input-50);
+          }
+        }
+
+        &.search h1::before {
+          background: var(--bb-icon-search) center center / 20px 20px no-repeat;
+        }
+
+        &.map-search h1::before {
+          background: var(--bb-icon-map-search) center center / 20px 20px
+            no-repeat;
+        }
+
+        &.globe-book h1::before {
+          background: var(--bb-icon-globe-book) center center / 20px 20px
+            no-repeat;
+        }
+
+        &.language h1::before {
+          background: var(--bb-icon-language) center center / 20px 20px
+            no-repeat;
+        }
+
+        &.sunny h1::before {
+          background: var(--bb-icon-sunny) center center / 20px 20px no-repeat;
+        }
+
+        &.generative h1::before {
+          background: var(--bb-add-icon-generative) center center / 20px 20px
+            no-repeat;
+        }
+
+        &.generative-image h1::before {
+          background: var(--bb-add-icon-generative-image) center center / 20px
+            20px no-repeat;
+        }
+
+        &.generative-image-edit h1::before {
+          background: var(--bb-add-icon-generative-image-edit-auto) center
+            center / 20px 20px no-repeat;
+        }
+
+        &.generative-text h1::before {
+          background: var(--bb-add-icon-generative-text-analysis) center
+            center / 20px 20px no-repeat;
+        }
+
+        &.generative-audio h1::before {
+          background: var(--bb-add-icon-generative-audio) center center / 20px
+            20px no-repeat;
+        }
+
+        &.generative-video h1::before {
+          background: var(--bb-add-icon-generative-videocam-auto) center
+            center / 20px 20px no-repeat;
+        }
+
+        &.generative-code h1::before {
+          background: var(--bb-add-icon-generative-code) center center / 20px
+            20px no-repeat;
+        }
+
+        &.generative-search h1::before {
+          background: var(--bb-add-icon-generative-search) center center / 20px
+            20px no-repeat;
+        }
+
+        &.combine-outputs h1::before {
+          background: var(--bb-icon-table-rows) center center / 20px 20px
+            no-repeat;
+        }
+
+        &.display h1::before {
+          background: var(--bb-icon-responsive-layout) center center / 20px 20px
+            no-repeat;
+        }
+        &.ask-user h1::before {
+          background: var(--bb-icon-chat-mirror) center center / 20px 20px
+            no-repeat;
+        }
+
+        &.input h1::before {
+          background: var(--bb-icon-input) center center / 20px 20px no-repeat;
+        }
+
+        &.output h1::before {
+          background: var(--bb-icon-output) center center / 20px 20px no-repeat;
+        }
+
+        &.smart-toy h1::before {
+          background: var(--bb-icon-smart-toy) center center / 20px 20px
+            no-repeat;
+        }
+
+        &.laps h1::before {
+          background: var(--bb-icon-laps) center center / 20px 20px no-repeat;
+        }
+      }
+
+      .asset {
+        & h1 {
+          --outer-border: var(--bb-inputs-100);
+          background: var(--bb-inputs-50);
+
+          &::before {
+            background: var(--bb-icon-alternate-email) center center / 20px 20px
+              no-repeat;
+          }
+        }
+      }
+
+      #content {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: auto;
+        padding: var(--bb-grid-size-3) 0 0 0;
+
+        > details {
+          display: flex;
+          flex-direction: column;
+          border-top: 1px solid var(--bb-neutral-300);
+          color: var(--bb-neutral-900);
+          font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+            var(--bb-font-family);
+          padding: var(--bb-grid-size-3) var(--bb-grid-size-6)
+            var(--bb-grid-size-3) var(--bb-grid-size-6);
+
+          & summary {
             display: flex;
             align-items: center;
-            padding-left: 0;
+            list-style: none;
+            cursor: pointer;
+            user-select: none;
+            height: var(--bb-grid-size-5);
 
-            &::before {
-              content: "";
-              display: block;
-              width: 16px;
-              height: 16px;
-              border-radius: var(--bb-grid-size);
-              border: 1px solid var(--bb-neutral-600);
-              flex: 0 0 auto;
-              margin-right: var(--bb-grid-size-2);
+            & .g-icon::before {
+              content: "keyboard_arrow_down";
+            }
+          }
+
+          & summary::-webkit-details-marker {
+            display: none;
+          }
+
+          &[open] summary {
+            margin-bottom: var(--bb-grid-size-3);
+
+            & .g-icon::before {
+              content: "keyboard_arrow_up";
+            }
+          }
+
+          label {
+            display: block;
+            margin-bottom: var(--bb-grid-size);
+          }
+
+          bb-text-editor {
+            --text-editor-padding-top: var(--bb-grid-size-2);
+            --text-editor-padding-right: var(--bb-grid-size-3);
+            --text-editor-padding-bottom: var(--bb-grid-size-2);
+            --text-editor-padding-left: var(--bb-grid-size-3);
+            border-radius: var(--bb-grid-size-2);
+            border: 1px solid var(--bb-neutral-300);
+          }
+        }
+
+        > div {
+          height: var(--bb-grid-size-5);
+          display: flex;
+          align-items: center;
+          font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+            var(--bb-font-family);
+
+          &.object:has(details) {
+            padding-right: 0;
+          }
+
+          &:has(bb-text-editor) {
+            min-height: var(--bb-grid-size-5);
+            height: auto;
+            align-items: flex-start;
+            flex-direction: column;
+
+            &:not(.stretch) details {
+              bb-text-editor {
+                padding-top: var(--bb-grid-size-2);
+                padding-bottom: var(--bb-grid-size-2);
+                height: calc(200px - var(--bb-grid-size) * 2);
+                --text-editor-padding-top: 0;
+                --text-editor-padding-bottom: 0;
+                --text-editor-padding-left: 0;
+              }
             }
 
-            &:has(+ input:checked)::before {
-              background: var(--bb-icon-check) center center / 20px 20px
-                no-repeat;
+            &:not(:last-of-type) {
+              border-bottom: 1px solid var(--bb-neutral-300);
+              padding-bottom: var(--bb-grid-size-3);
             }
+          }
 
-            &:focus {
-              outline: none;
+          &.stretch:has(+ :not(.stretch)) {
+            margin-bottom: var(--bb-grid-size-3);
+            border-bottom: 1px solid var(--bb-neutral-300);
+          }
+
+          &:not(.stretch):has(+ .stretch) {
+            margin-bottom: var(--bb-grid-size-3);
+            padding-bottom: var(--bb-grid-size-3);
+            border-bottom: 1px solid var(--bb-neutral-300);
+          }
+
+          &:not(.stretch):has(+ :not(.stretch)) {
+            margin-bottom: var(--bb-grid-size-2);
+          }
+
+          &.stretch {
+            overflow-y: auto;
+            overflow-x: hidden;
+            flex: 1 1 auto;
+
+            &:not(:last-of-type) {
+              padding-bottom: var(--bb-grid-size-3);
+            }
+          }
+
+          &:not(.stretch) {
+            padding: 0 var(--bb-grid-size-6);
+
+            &:last-of-type {
+              padding-bottom: var(--bb-grid-size-3);
+            }
+          }
+
+          &.boolean {
+            & label {
+              display: flex;
+              align-items: center;
+              padding-left: 0;
 
               &::before {
-                border: 1px solid var(--bb-ui-700);
-                outline: 1px solid var(--bb-ui-700);
+                content: "";
+                display: block;
+                width: 16px;
+                height: 16px;
+                border-radius: var(--bb-grid-size);
+                border: 1px solid var(--bb-neutral-600);
+                flex: 0 0 auto;
+                margin-right: var(--bb-grid-size-2);
+              }
+
+              &:has(+ input:checked)::before {
+                background: var(--bb-icon-check) center center / 20px 20px
+                  no-repeat;
+              }
+
+              &:focus {
+                outline: none;
+
+                &::before {
+                  border: 1px solid var(--bb-ui-700);
+                  outline: 1px solid var(--bb-ui-700);
+                }
+              }
+            }
+
+            & input {
+              display: none;
+            }
+          }
+
+          label {
+            &:not(.slim) {
+              margin-right: var(--bb-grid-size-2);
+
+              &.icon::before {
+                margin-right: var(--bb-grid-size-2);
+              }
+            }
+            display: inline-flex;
+            align-items: center;
+
+            &.icon {
+              &::before {
+                content: "";
+                width: 20px;
+                height: 20px;
+                background: red;
+              }
+
+              &.search::before {
+                background: var(--bb-icon-search) center center / 20px 20px
+                  no-repeat;
+              }
+
+              &.map-search::before {
+                background: var(--bb-icon-map-search) center center / 20px 20px
+                  no-repeat;
+              }
+
+              &.globe-book::before {
+                background: var(--bb-icon-globe-book) center center / 20px 20px
+                  no-repeat;
+              }
+
+              &.language::before {
+                background: var(--bb-icon-language) center center / 20px 20px
+                  no-repeat;
+              }
+
+              &.sunny::before {
+                background: var(--bb-icon-sunny) center center / 20px 20px
+                  no-repeat;
+              }
+
+              &.generative::before {
+                background: var(--bb-add-icon-generative) center center / 20px
+                  20px no-repeat;
+              }
+
+              &.generative-image::before {
+                background: var(--bb-add-icon-generative-image) center center /
+                  20px 20px no-repeat;
+              }
+
+              &.generative-image-edit::before {
+                background: var(--bb-add-icon-generative-image-edit-auto) center
+                  center / 20px 20px no-repeat;
+              }
+
+              &.generative-text::before {
+                background: var(--bb-add-icon-generative-text-analysis) center
+                  center / 20px 20px no-repeat;
+              }
+
+              &.generative-audio::before {
+                background: var(--bb-add-icon-generative-audio) center center /
+                  20px 20px no-repeat;
+              }
+
+              &.generative-video::before {
+                background: var(--bb-add-icon-generative-videocam-auto) center
+                  center / 20px 20px no-repeat;
+              }
+
+              &.generative-code::before {
+                background: var(--bb-add-icon-generative-code) center center /
+                  20px 20px no-repeat;
+              }
+
+              &.generative-search::before {
+                background: var(--bb-add-icon-generative-search) center center /
+                  20px 20px no-repeat;
+              }
+
+              &.combine-outputs::before {
+                background: var(--bb-icon-table-rows) center center / 20px 20px
+                  no-repeat;
+              }
+
+              &.display::before {
+                background: var(--bb-icon-responsive-layout) center center /
+                  20px 20px no-repeat;
+              }
+
+              &.ask-user::before {
+                background: var(--bb-icon-chat-mirror) center center / 20px 20px
+                  no-repeat;
+              }
+
+              &.input::before {
+                background: var(--bb-icon-input) center center / 20px 20px
+                  no-repeat;
+              }
+
+              &.output::before {
+                background: var(--bb-icon-output) center center / 20px 20px
+                  no-repeat;
+              }
+
+              &.smart-toy::before {
+                background: var(--bb-icon-smart-toy) center center / 20px 20px
+                  no-repeat;
+              }
+
+              &.laps::before {
+                background: var(--bb-icon-laps) center center / 20px 20px
+                  no-repeat;
+              }
+
+              &.merge-type::before {
+                background: var(--bb-icon-merge-type) center center / 20px 20px
+                  no-repeat;
+              }
+
+              &.code-blocks::before {
+                background: var(--bb-icon-code-blocks) center center / 20px 20px
+                  no-repeat;
+              }
+
+              &.human::before {
+                background: var(--bb-icon-human) center center / 20px 20px
+                  no-repeat;
               }
             }
           }
 
-          & input {
-            display: none;
+          input,
+          select,
+          textarea {
+            font: 400 var(--bb-label-medium) /
+              var(--bb-label-line-height-medium) var(--bb-font-family);
+            height: var(--bb-grid-size-5);
+            border: none;
+            margin: 0;
+            padding: 0 var(--bb-grid-size-2);
           }
-        }
 
-        label {
-          &:not(.slim) {
+          .item-select-container {
+            flex: 1 1 auto;
+            overflow: hidden;
             margin-right: var(--bb-grid-size-2);
-
-            &.icon::before {
-              margin-right: var(--bb-grid-size-2);
-            }
           }
-          display: inline-flex;
-          align-items: center;
 
-          &.icon {
-            &::before {
-              content: "";
-              width: 20px;
-              height: 20px;
-              background: red;
-            }
-
-            &.search::before {
-              background: var(--bb-icon-search) center center / 20px 20px
-                no-repeat;
-            }
-
-            &.map-search::before {
-              background: var(--bb-icon-map-search) center center / 20px 20px
-                no-repeat;
-            }
-
-            &.globe-book::before {
-              background: var(--bb-icon-globe-book) center center / 20px 20px
-                no-repeat;
-            }
-
-            &.language::before {
-              background: var(--bb-icon-language) center center / 20px 20px
-                no-repeat;
-            }
-
-            &.sunny::before {
-              background: var(--bb-icon-sunny) center center / 20px 20px
-                no-repeat;
-            }
-
-            &.generative::before {
-              background: var(--bb-add-icon-generative) center center / 20px
-                20px no-repeat;
-            }
-
-            &.generative-image::before {
-              background: var(--bb-add-icon-generative-image) center center /
-                20px 20px no-repeat;
-            }
-
-            &.generative-image-edit::before {
-              background: var(--bb-add-icon-generative-image-edit-auto) center
-                center / 20px 20px no-repeat;
-            }
-
-            &.generative-text::before {
-              background: var(--bb-add-icon-generative-text-analysis) center
-                center / 20px 20px no-repeat;
-            }
-
-            &.generative-audio::before {
-              background: var(--bb-add-icon-generative-audio) center center /
-                20px 20px no-repeat;
-            }
-
-            &.generative-video::before {
-              background: var(--bb-add-icon-generative-videocam-auto) center
-                center / 20px 20px no-repeat;
-            }
-
-            &.generative-code::before {
-              background: var(--bb-add-icon-generative-code) center center /
-                20px 20px no-repeat;
-            }
-
-            &.generative-search::before {
-              background: var(--bb-add-icon-generative-search) center center /
-                20px 20px no-repeat;
-            }
-
-            &.combine-outputs::before {
-              background: var(--bb-icon-table-rows) center center / 20px 20px
-                no-repeat;
-            }
-
-            &.display::before {
-              background: var(--bb-icon-responsive-layout) center center / 20px
-                20px no-repeat;
-            }
-
-            &.ask-user::before {
-              background: var(--bb-icon-chat-mirror) center center / 20px 20px
-                no-repeat;
-            }
-
-            &.input::before {
-              background: var(--bb-icon-input) center center / 20px 20px
-                no-repeat;
-            }
-
-            &.output::before {
-              background: var(--bb-icon-output) center center / 20px 20px
-                no-repeat;
-            }
-
-            &.smart-toy::before {
-              background: var(--bb-icon-smart-toy) center center / 20px 20px
-                no-repeat;
-            }
-
-            &.laps::before {
-              background: var(--bb-icon-laps) center center / 20px 20px
-                no-repeat;
-            }
-
-            &.merge-type::before {
-              background: var(--bb-icon-merge-type) center center / 20px 20px
-                no-repeat;
-            }
-
-            &.code-blocks::before {
-              background: var(--bb-icon-code-blocks) center center / 20px 20px
-                no-repeat;
-            }
-
-            &.human::before {
-              background: var(--bb-icon-human) center center / 20px 20px
-                no-repeat;
-            }
-          }
-        }
-
-        input,
-        select,
-        textarea {
-          font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
-            var(--bb-font-family);
-          height: var(--bb-grid-size-5);
-          border: none;
-          margin: 0;
-          padding: 0 var(--bb-grid-size-2);
-        }
-
-        .item-select-container {
-          flex: 1 1 auto;
-          overflow: hidden;
-          margin-right: var(--bb-grid-size-2);
-        }
-
-        #controls-container {
-          display: flex;
-          align-items: center;
-          justify-content: flex-end;
-          flex: 0 0 auto;
-
-          & #controls {
+          #controls-container {
             display: flex;
             align-items: center;
+            justify-content: flex-end;
+            flex: 0 0 auto;
 
-            height: var(--bb-grid-size-7);
-            background: var(--bb-neutral-100);
-            border-radius: var(--bb-grid-size-16);
-            padding: 0 var(--bb-grid-size-2);
+            & #controls {
+              display: flex;
+              align-items: center;
 
-            bb-flowgen-in-step-button {
-              z-index: 1;
-              margin: 0 var(--bb-grid-size);
-            }
+              height: var(--bb-grid-size-7);
+              background: var(--bb-neutral-100);
+              border-radius: var(--bb-grid-size-16);
+              padding: 0 var(--bb-grid-size-2);
 
-            #tools {
-              width: 20px;
-              height: 20px;
-              margin: 0 var(--bb-grid-size);
-              border: none;
-              background: var(--bb-neutral-100)
-                var(--bb-icon-home-repair-service) center center / 20px 20px
-                no-repeat;
-              transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
-              border-radius: var(--bb-grid-size);
-              padding: 0;
-              font-size: 0;
+              bb-flowgen-in-step-button {
+                z-index: 1;
+                margin: 0 var(--bb-grid-size);
+              }
 
-              &:not([disabled]) {
-                cursor: pointer;
+              #tools {
+                width: 20px;
+                height: 20px;
+                margin: 0 var(--bb-grid-size);
+                border: none;
+                background: var(--bb-neutral-100)
+                  var(--bb-icon-home-repair-service) center center / 20px 20px
+                  no-repeat;
+                transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
+                border-radius: var(--bb-grid-size);
+                padding: 0;
+                font-size: 0;
 
-                &:hover,
-                &:focus {
-                  background-color: var(--bb-neutral-200);
+                &:not([disabled]) {
+                  cursor: pointer;
+
+                  &:hover,
+                  &:focus {
+                    background-color: var(--bb-neutral-200);
+                  }
                 }
               }
             }
           }
         }
-      }
 
-      & bb-text-editor {
-        width: 100%;
-        height: 100%;
-        --text-editor-height: 100%;
-        --text-editor-padding-top: 0;
-        --text-editor-padding-right: var(--bb-grid-size-6);
-        --text-editor-padding-bottom: 0;
-        --text-editor-padding-left: var(--bb-grid-size-6);
-      }
-
-      & bb-llm-output {
-        margin: var(--bb-grid-size-3) var(--bb-grid-size-6);
-        --output-lite-border-color: transparent;
-        --output-border-radius: var(--bb-grid-size);
-      }
-
-      & bb-llm-part-input {
-        &.fill {
+        & bb-text-editor {
           width: 100%;
           height: 100%;
-          overflow: auto;
+          --text-editor-height: 100%;
+          --text-editor-padding-top: 0;
+          --text-editor-padding-right: var(--bb-grid-size-6);
+          --text-editor-padding-bottom: 0;
+          --text-editor-padding-left: var(--bb-grid-size-6);
+        }
+
+        & bb-llm-output {
+          margin: var(--bb-grid-size-3) var(--bb-grid-size-6);
+          --output-lite-border-color: transparent;
+          --output-border-radius: var(--bb-grid-size);
+        }
+
+        & bb-llm-part-input {
+          &.fill {
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+          }
         }
       }
-    }
 
-    bb-fast-access-menu {
-      display: none;
-      position: absolute;
-      z-index: 10;
+      bb-fast-access-menu {
+        display: none;
+        position: absolute;
+        z-index: 10;
 
-      &.active {
-        display: block;
-        left: var(--fast-access-x, 10);
-        top: var(--fast-access-y, 10);
+        &.active {
+          display: block;
+          left: var(--fast-access-x, 10);
+          top: var(--fast-access-y, 10);
+        }
       }
-    }
 
-    #proxy {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 0;
-      background: red;
-    }
-  `;
+      #proxy {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 0;
+        background: red;
+      }
+    `,
+  ];
 
   #lastUpdateTimes: Map<"nodes" | "assets", number> = new Map();
   #connectorPorts: Map<AssetPath, PortLike[]> = new Map();
@@ -967,10 +1050,17 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         .sort((a, b) => {
           if (isControllerBehavior(a.schema)) return -1;
           if (isControllerBehavior(b.schema)) return 1;
-          if (isLLMContentBehavior(a.schema)) return -1;
-          if (isLLMContentBehavior(b.schema)) return 1;
+          if (shouldBeAtTop(a.schema)) return -1;
+          if (shouldBeAtTop(b.schema)) return 1;
 
-          return a.title.localeCompare(b.title);
+          return a.name.localeCompare(b.name);
+
+          function shouldBeAtTop(schema: Schema) {
+            return (
+              isLLMContentBehavior(schema) &&
+              !schema.behavior?.includes("hint-advanced")
+            );
+          }
         });
 
       return html`<div class=${classMap(classes)}>
@@ -997,12 +1087,10 @@ export class EntityEditor extends SignalWatcher(LitElement) {
   #renderTextEditorPort(
     port: PortLike,
     value: LLMContent | undefined,
-    graphId: GraphIdentifier
+    graphId: GraphIdentifier,
+    fastAccess: boolean
   ) {
-    const portValue: LLMContent = value ?? {
-      role: "user",
-      parts: [{ text: "" }],
-    };
+    const portValue = getLLMContentPortValue(value, port.schema);
     const textPart = portValue.parts.find((part) => isTextCapabilityPart(part));
     if (!textPart) {
       return html`Invalid value`;
@@ -1013,6 +1101,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       .value=${textPart.text}
       .projectState=${this.projectState}
       .subGraphId=${graphId !== MAIN_BOARD_ID ? graphId : null}
+      .supportsFastAccess=${fastAccess}
       id=${port.name}
       name=${port.name}
       @keydown=${(evt: KeyboardEvent) => {
@@ -1034,19 +1123,31 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     const hasTextEditor =
       inputPorts.findIndex((port) => isLLMContentBehavior(port.schema)) !== -1;
 
-    return inputPorts.map((port) => {
+    const portRender = (port: PortLike) => {
       const classes: Record<string, boolean> = {};
-      let value: HTMLTemplateResult | symbol = html`No value`;
+      let value:
+        | HTMLTemplateResult
+        | symbol
+        | Array<HTMLTemplateResult | symbol> = html`No value`;
       switch (port.schema.type) {
         case "object": {
           if (isLLMContentBehavior(port.schema)) {
-            classes.stretch = true;
+            const advanced = port.schema.behavior?.includes("hint-advanced");
+
             classes.object = true;
-            value = this.#renderTextEditorPort(
-              port,
-              isLLMContent(port.value) ? port.value : undefined,
-              graphId
-            );
+            classes.stretch = !advanced;
+
+            value = [
+              advanced
+                ? html`<label for=${port.name}>${port.title}</label>`
+                : nothing,
+              this.#renderTextEditorPort(
+                port,
+                isLLMContent(port.value) ? port.value : undefined,
+                graphId,
+                !advanced
+              ),
+            ];
           } else {
             value = html`<bb-delegating-input
               id=${port.name}
@@ -1073,7 +1174,8 @@ export class EntityEditor extends SignalWatcher(LitElement) {
               isLLMContentArray(port.value)
                 ? (port.value.at(-1) as LLMContent)
                 : undefined,
-              graphId
+              graphId,
+              true
             );
           }
           break;
@@ -1132,29 +1234,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
                     ? "bottom"
                     : "top"}
                   .values=${port.schema.enum.map((option) => {
-                    const v = enumValue(option);
-                    // TODO: Remap these to icons at the source level
-                    if (v.icon) {
-                      switch (v.icon) {
-                        case "generative":
-                          v.icon = "spark";
-                          break;
-                        case "generative-text":
-                          v.icon = "text_analysis";
-                          break;
-                        case "generative-image":
-                          v.icon = "photo_spark";
-                          break;
-                        case "generative-audio":
-                          v.icon = "audio_magic_eraser";
-                          break;
-                        case "generative-video":
-                          v.icon = "videocam_auto";
-                          break;
-                      }
-                    }
-
-                    return v;
+                    return enumValue(option);
                   })}
                   .value=${port.value}
                 ></bb-item-select>
@@ -1213,7 +1293,27 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         </div>`;
       }
       return html`<div class=${classMap(classes)}>${value} ${controls}</div>`;
-    });
+    };
+
+    const basicPorts: PortLike[] = [];
+    const advancedPorts: PortLike[] = [];
+    for (const port of inputPorts) {
+      const advanced = port.schema.behavior?.includes("hint-advanced");
+      if (advanced) {
+        advancedPorts.push(port);
+        continue;
+      }
+
+      basicPorts.push(port);
+    }
+
+    return [
+      ...basicPorts.map(portRender),
+      html`<details id="advanced-settings">
+        <summary><span class="g-icon"></span>Advanced settings</summary>
+        ${[...advancedPorts.map(portRender)]}
+      </details>`,
+    ];
   }
 
   #showFastAccess(bounds: DOMRect | undefined) {
@@ -1496,4 +1596,26 @@ function portsFromView(view: ConnectorView): PortLike[] {
       value: (values as Record<string, NodeValue>)[name],
     } satisfies PortLike;
   });
+}
+
+function getLLMContentPortValue(
+  value: LLMContent | undefined,
+  schema: Schema
+): LLMContent {
+  if (!value) {
+    const defaultValue = schema.default;
+    if (defaultValue) {
+      try {
+        return JSON.parse(defaultValue);
+      } catch (e) {
+        // eat the error, just fall through
+      }
+    }
+  } else {
+    return value;
+  }
+  return {
+    role: "user",
+    parts: [{ text: "" }],
+  };
 }

@@ -10,6 +10,7 @@ import {
   createKeepChattingTool,
   type ChatTool,
 } from "./chat-tools";
+import { createSystemInstruction } from "./system-instruction";
 
 import { report } from "./a2/output";
 import { err, ok, defaultLLMContent, llm } from "./a2/utils";
@@ -82,24 +83,10 @@ class GenerateText {
   }
 
   createSystemInstruction(makeList: boolean) {
-    const initial = llm`
-
-Today is ${new Date().toLocaleString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    })}
-    
-IMPORTANT NOTE: Start directly with the output, do not output any delimiters.
-You are working as part of an AI system, so no chit-chat and no explainining what you're doing and why.
-DO NOT start with "Okay", or "Alright" or any preambles.
-Just the output, please.
-Take a Deep Breath, read the instructions again, read the inputs again.
-Each instruction is crucial and must be executed with utmost care and attention to detail.`.asContent();
-    if (!makeList) return initial;
-    return listPrompt(initial);
+    return createSystemInstruction(
+      this.sharedContext.systemInstruction,
+      makeList
+    );
   }
 
   /**
@@ -123,14 +110,19 @@ Each instruction is crucial and must be executed with utmost care and attention 
     const makeList = sharedContext.makeList && !isList;
 
     let product: LLMContent;
-    const contents = work.length > 0 ? work : [description];
+    const contents = [description, ...work];
     const safetySettings = defaultSafetySettings();
     const systemInstruction = this.createSystemInstruction(makeList);
     const tools = toolManager.list();
     const inputs: GeminiInputs = { body: { contents, safetySettings } };
+    // We always supply tools when chatting, since we add
+    // the "Done" and "Keep Chatting" tools to figure out when
+    // the conversation ends.
     if (this.chat || toolManager.hasTools()) {
       inputs.body.tools = [...tools];
       inputs.body.toolConfig = { functionCallingConfig: { mode: "ANY" } };
+    } else {
+      inputs.body.systemInstruction = systemInstruction;
     }
     // When we have tools, the first call will not try to make a list,
     // because JSON mode and tool-calling are incompatible.

@@ -176,14 +176,15 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       }
 
       :host(.generative),
-      :host([icon="generative"]),
-      :host([icon="generative-image"]),
-      :host([icon="generative-audio"]),
-      :host([icon="generative-text"]),
+      :host([icon="spark"]),
+      :host([icon="photo_spark"]),
+      :host([icon="audio_magic_eraser"]),
+      :host([icon="text_analysis"]),
       :host([icon="generative-image-edit"]),
       :host([icon="generative-code"]),
-      :host([icon="generative-video"]),
+      :host([icon="videocam_auto"]),
       :host([icon="generative-search"]),
+      :host([icon="generative"]),
       :host([icon="laps"]) {
         --background: var(--bb-generative-100);
         --border: var(--bb-neutral-500);
@@ -229,12 +230,13 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         background: var(--bb-icon-sunny) center center / 20px 20px no-repeat;
       }
 
-      :host([icon="generative"]) #container header::before {
+      :host([icon="generative"]) #container header::before,
+      :host([icon="spark"]) #container header::before {
         background: var(--bb-add-icon-generative) center center / 20px 20px
           no-repeat;
       }
 
-      :host([icon="generative-image"]) #container header::before {
+      :host([icon="photo_spark"]) #container header::before {
         background: var(--bb-add-icon-generative-image) center center / 20px
           20px no-repeat;
       }
@@ -244,17 +246,17 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           center / 20px 20px no-repeat;
       }
 
-      :host([icon="generative-text"]) #container header::before {
+      :host([icon="text_analysis"]) #container header::before {
         background: var(--bb-add-icon-generative-text-analysis) center center /
           20px 20px no-repeat;
       }
 
-      :host([icon="generative-audio"]) #container header::before {
+      :host([icon="audio_magic_eraser"]) #container header::before {
         background: var(--bb-add-icon-generative-audio) center center / 20px
           20px no-repeat;
       }
 
-      :host([icon="generative-video"]) #container header::before {
+      :host([icon="videocam_auto"]) #container header::before {
         background: var(--bb-add-icon-generative-videocam-auto) center center /
           20px 20px no-repeat;
       }
@@ -566,6 +568,10 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
           & > * {
             margin: 0 2px;
+          }
+
+          & .chiclet {
+            max-width: 100%;
           }
         }
       }

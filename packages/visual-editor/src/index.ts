@@ -41,6 +41,10 @@ import {
   EditHistoryCreator,
   envFromGraphDescriptor,
   FileSystem,
+  Kit,
+  addSandboxedRunModule,
+  NodeHandlerContext,
+  Outcome,
 } from "@google-labs/breadboard";
 import {
   createFileSystemBackend,
@@ -139,6 +143,9 @@ export type MainArguments = {
   enableTos?: boolean;
   /** Terms of Service content. */
   tosHtml?: string;
+  kits?: Kit[];
+  graphStorePreloader?: (graphStore: MutableGraphStore) => void;
+  moduleInvocationFilter?: (context: NodeHandlerContext) => Outcome<void>;
 };
 
 type BoardOverlowMenuConfiguration = {
@@ -557,6 +564,11 @@ export class Main extends LitElement {
           proxy: this.#proxy,
           fileSystem: this.#fileSystem,
           builtInBoardServers: [createA2Server()],
+          kits: addSandboxedRunModule(
+            sandbox,
+            config.kits || [],
+            config.moduleInvocationFilter
+          ),
         });
       })
       .then((runtime) => {
@@ -565,6 +577,10 @@ export class Main extends LitElement {
         this.#boardServers = runtime.board.getBoardServers() || [];
 
         this.sideBoardRuntime = runtime.sideboards;
+
+        // This is currently used only for legacy graph kits (Agent,
+        // Google Drive).
+        config.graphStorePreloader?.(this.#graphStore);
 
         this.sideBoardRuntime.addEventListener("empty", () => {
           this.canRun = true;

@@ -33,7 +33,7 @@ async function callGeminiImage(
   imageContent: LLMContent[],
   disablePromptRewrite: boolean,
   aspectRatio: string = "1:1"
-): Promise<LLMContent[]> {
+): Promise<Outcome<LLMContent[]>> {
   const imageChunks = [];
   for (const element of imageContent) {
     let inlineChunk;
@@ -99,19 +99,17 @@ async function callGeminiImage(
   console.log("response");
   console.log(response);
   if (!ok(response)) {
-    return [
-      toLLMContent(
-        "Gemini image generation failed: " +
-          response.$error +
-          " Check your prompt to ensure it is a valid image prompt and policy compliant."
-      ),
-    ];
+    return err(
+      "Image generation failed. " +
+        response.$error +
+        " Check your prompt to ensure it is a valid and compliant image prompt."
+    );
   }
 
   const outContent =
     response.executionOutputs && response.executionOutputs[OUTPUT_NAME];
   if (!outContent) {
-    return [toLLMContent("Error: No image returned from backend")];
+    return err("Error: No image returned from backend");
   }
   return outContent.chunks.map((c) => {
     if (c.mimetype.endsWith("/storedData")) {
@@ -124,7 +122,7 @@ async function callGeminiImage(
 async function callImageGen(
   imageInstruction: string,
   aspectRatio: string = "1:1"
-): Promise<LLMContent[]> {
+): Promise<Outcome<LLMContent[]>> {
   const executionInputs: ContentMap = {};
   const encodedInstruction = btoa(
     unescape(encodeURIComponent(imageInstruction))
@@ -159,13 +157,13 @@ async function callImageGen(
   const response = await executeStep(body);
   console.log(response);
   if (!ok(response)) {
-    return [toLLMContent("Image generation failed: " + response.$error)];
+    return err("Image generation failed. " + response.$error);
   }
 
   const outContent =
     response.executionOutputs && response.executionOutputs[OUTPUT_NAME];
   if (!outContent) {
-    return [toLLMContent("Error: No image returned from backend")];
+    return err("Error: No image returned from backend");
   }
   return outContent.chunks.map((c) => {
     if (c.mimetype.endsWith("/storedData")) {

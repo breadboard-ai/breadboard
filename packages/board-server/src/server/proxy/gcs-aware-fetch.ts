@@ -146,7 +146,10 @@ export const blobifyStepOutputs = (
         const mimetype = chunk.mimetype.replace("text/gcs-path/", "");
         // The executeStep API returns a path like: bucketname/filename.
         const blobId = atob(chunk.data).split("/").slice(-1)[0];
-        const blobUrl = `${serverUrl}/blobs/${blobId}`;
+        if (!serverUrl.endsWith("/")) {
+          serverUrl += "/";
+        }
+        const blobUrl = `${serverUrl}blobs/${blobId}`;
         newChunks.push({
           mimetype: mimetype + "/storedData",
           data: blobUrl,
