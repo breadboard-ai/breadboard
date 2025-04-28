@@ -39,6 +39,12 @@ import {
 
 const ASPECT_RATIOS = ["9:16", "16:9"];
 const OUTPUT_NAME = "generated_video";
+const SUPPORTED_IMAGE_MIMETYPES = [
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "image/webp",
+];
 
 type VideoGeneratorInputs = {
   context: LLMContent[];
@@ -59,7 +65,6 @@ async function callVideoGen(
   disablePromptRewrite: boolean,
   aspectRatio: string
 ): Promise<LLMContent> {
-  // TODO(askerryryan): Respect disablePromptRewrite;
   const executionInputs: ContentMap = {};
   const encodedPrompt = btoa(unescape(encodeURIComponent(prompt)));
   executionInputs["text_instruction"] = {
@@ -90,6 +95,11 @@ async function callVideoGen(
     if (!imageChunk || typeof imageChunk == "string") {
       return toLLMContent("Image content did not have expected format");
     }
+    if (!SUPPORTED_IMAGE_MIMETYPES.includes(imageChunk.mimeType)) {
+      return toLLMContent(
+        "Image inputs must be: " + SUPPORTED_IMAGE_MIMETYPES.join(",")
+      );
+    }
     executionInputs["reference_image"] = {
       chunks: [
         {
@@ -109,6 +119,9 @@ async function callVideoGen(
       inputParameters: inputParameters,
       systemPrompt: "",
       output: OUTPUT_NAME,
+      options: {
+        disablePromptRewrite,
+      },
     },
     execution_inputs: executionInputs,
   } satisfies ExecuteStepRequest;
@@ -116,8 +129,6 @@ async function callVideoGen(
   console.log("REQUEST:");
   console.log(body);
   const response = await executeStep(body);
-  console.log("RESPONSE:");
-  console.log(response);
   if (!ok(response)) {
     return toLLMContent("Video generation failed: " + response.$error);
   }
