@@ -459,15 +459,19 @@ export class LLMOutput extends LitElement {
             }
 
             const tmpl = partDataURL.then((url: string) => {
-              if (part.inlineData.mimeType.startsWith("image")) {
+              if (
+                part.inlineData.mimeType.startsWith("image") &&
+                (part.inlineData.mimeType === "image/png" ||
+                  part.inlineData.mimeType === "image/jpeg")
+              ) {
                 if (part.inlineData.data === "") {
                   this.#outputLoaded();
                   return html`No image provided`;
                 }
 
                 return cache(html`
-                  ${canCopy && part.inlineData.mimeType === "image/png"
-                    ? html` <div class="copy-image-to-clipboard">
+                  ${canCopy
+                    ? html`<div class="copy-image-to-clipboard">
                         <img
                           @load=${() => {
                             this.#outputLoaded();
@@ -477,21 +481,45 @@ export class LLMOutput extends LitElement {
                         />
                         <button
                           @click=${async () => {
-                            const data = await fetch(url);
-                            const imageData = await data.blob();
+                            const image = new Image();
+                            image.crossOrigin = "anonymous"; // Ensure cross-origin compatibility
+                            image.src = url;
 
-                            await navigator.clipboard.write([
-                              new ClipboardItem({
-                                [part.inlineData.mimeType]: imageData,
-                              }),
-                            ]);
+                            image.onload = async () => {
+                              const canvas = document.createElement("canvas");
+                              canvas.width = image.width;
+                              canvas.height = image.height;
+                              const ctx = canvas.getContext("2d");
+                              if (ctx) {
+                                ctx.drawImage(image, 0, 0);
+                                const pngDataUrl =
+                                  canvas.toDataURL("image/png");
+                                const response = await fetch(pngDataUrl);
+                                const imageData = await response.blob();
 
-                            this.dispatchEvent(
-                              new ToastEvent(
-                                "Copied image to Clipboard",
-                                ToastType.INFORMATION
-                              )
-                            );
+                                await navigator.clipboard.write([
+                                  new ClipboardItem({
+                                    "image/png": imageData,
+                                  }),
+                                ]);
+
+                                this.dispatchEvent(
+                                  new ToastEvent(
+                                    "Copied image to Clipboard",
+                                    ToastType.INFORMATION
+                                  )
+                                );
+                              }
+                            };
+
+                            image.onerror = () => {
+                              this.dispatchEvent(
+                                new ToastEvent(
+                                  "Failed to copy image to Clipboard",
+                                  ToastType.ERROR
+                                )
+                              );
+                            };
                           }}
                         >
                           Copy image to clipboard
