@@ -84,13 +84,6 @@ async function describe({ inputs: { description } }: DescribeInputs) {
         description:
           "When checked, this step will try to create a list as its output. Make sure that the prompt asks for a list of some sort",
       },
-      "b-system-instruction": {
-        type: "object",
-        behavior: ["llm-content", "config", "hint-advanced"],
-        title: "System Instruction",
-        description: "The system instruction for the model",
-        default: JSON.stringify(defaultSystemInstruction()),
-      },
     };
   }
   return {
@@ -110,6 +103,13 @@ async function describe({ inputs: { description } }: DescribeInputs) {
           items: { type: "object", behavior: ["llm-content"] },
           title: "Context in",
           behavior: ["main-port"],
+        },
+        "b-system-instruction": {
+          type: "object",
+          behavior: ["llm-content", "config", "hint-advanced"],
+          title: "System Instruction",
+          description: "The system instruction for the model",
+          default: JSON.stringify(defaultSystemInstruction()),
         },
         ...extra,
         ...template.schemas(),
