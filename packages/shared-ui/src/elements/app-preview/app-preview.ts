@@ -415,6 +415,7 @@ export class AppPreview extends LitElement {
       this.#appTemplate.isInSelectionState = this.isInSelectionState;
       this.#appTemplate.showingOlderResult = this.showingOlderResult;
       this.#appTemplate.readOnly = false;
+      this.#appTemplate.showShareButton = false;
     }
 
     return html`
