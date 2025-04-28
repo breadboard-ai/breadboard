@@ -40,6 +40,7 @@ export type PlanStep = {
   options?: {
     disablePromptRewrite?: boolean;
     renderMode?: string;
+    modelName?: string;
   };
 };
 

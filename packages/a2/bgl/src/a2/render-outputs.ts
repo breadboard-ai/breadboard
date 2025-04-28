@@ -12,7 +12,9 @@ import read from "@read";
 export { invoke as default, describe };
 
 const MANUAL_MODE = "Manual layout";
-const AUTO_MODE = "Webpage with auto-layout";
+const AUTO_MODE_LEGACY = "Webpage with auto-layout";
+const FLASH_MODE = "Webpage with auto-layout by 2.5 Flash";
+const PRO_MODE = "Webpage with auto-layout by 2.5 Pro";
 
 type InvokeInputs = {
   text?: LLMContent;
@@ -126,10 +128,16 @@ async function invoke({
     flattenContext([substituting], true, "\n\n"),
     "user"
   );
+  let modelName = "";
+  // TODO(askerryryan): Clean up after backend backwards compatibility window.
   if (renderMode == MANUAL_MODE) {
     renderMode = "Manual";
-  } else if (renderMode == AUTO_MODE) {
+  } else if (renderMode == FLASH_MODE || renderMode == AUTO_MODE_LEGACY) {
+    modelName = "gemini-2.5-flash-preview-04-17";
     renderMode = "HTML";
+  } else if (renderMode == PRO_MODE) {
+    modelName = "gemini-2.5-pro-preview-03-25";
+    renderMode = "Interactive";
   } else if (!renderMode) {
     renderMode = "Manual";
   }
@@ -142,7 +150,12 @@ ${themeColorsPrompt(await getThemeColors())}
     instruction +=
       " Use a responsive or mobile-friendly layout whenever possible and minimize unnecessary padding or margins.";
     console.log("Generating output based on instruction: ", instruction);
-    const webPage = await callGenWebpage(instruction, [context], renderMode);
+    const webPage = await callGenWebpage(
+      instruction,
+      [context],
+      renderMode,
+      modelName
+    );
     if (!ok(webPage)) {
       console.error("Failed to generated html output");
       return webPage;
@@ -170,7 +183,7 @@ async function describe({ inputs: { text } }: DescribeInputs) {
         },
         "p-render-mode": {
           type: "string",
-          enum: [MANUAL_MODE, AUTO_MODE],
+          enum: [MANUAL_MODE, FLASH_MODE, PRO_MODE],
           title: "Display format",
           behavior: ["config", "hint-preview"],
           default: MANUAL_MODE,
