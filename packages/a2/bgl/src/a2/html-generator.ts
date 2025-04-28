@@ -27,7 +27,8 @@ function base64DecodeNonAsciiStandard(base64String: string) {
 async function callGenWebpage(
   instruction: string,
   content: LLMContent[],
-  renderMode: string
+  renderMode: string,
+  modelName: string
 ): Promise<Outcome<LLMContent>> {
   const executionInputs: ContentMap = {};
   const inputParameters: string[] = [];
@@ -85,6 +86,7 @@ async function callGenWebpage(
       options: {
         disablePromptRewrite: true,
         renderMode: renderMode,
+        modelName: modelName,
       },
     },
     execution_inputs: executionInputs,
