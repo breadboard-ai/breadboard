@@ -882,6 +882,7 @@ export class EditorControls extends LitElement {
       items.push(
         html`<bb-item-select
             .heading=${Strings.from("LABEL_ADD_ASSETS")}
+            .showDownArrow=${false}
             @change=${(evt: Event) => {
               const [select] = evt.composedPath();
               if (!(select instanceof ItemSelect)) {
