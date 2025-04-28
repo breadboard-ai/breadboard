@@ -87,7 +87,7 @@ export class SettingsStore implements BreadboardUI_Types.SettingsStore {
           {
             name: "Show Experimental Components",
             description:
-              "Toggles the visibility of experimental components and kits",
+              "Toggles the visibility of experimental features & steps",
             value: false,
           },
         ],
