@@ -38,6 +38,9 @@ export const styles = css`
       &.visible {
         display: inline;
         pointer-events: none;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
     }
 

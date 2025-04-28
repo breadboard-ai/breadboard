@@ -574,6 +574,7 @@ export interface AppTemplate extends LitElement {
   showingOlderResult: boolean;
   appURL: string | null;
   readOnly: boolean;
+  showShareButton: boolean;
 }
 
 export interface Utterance {

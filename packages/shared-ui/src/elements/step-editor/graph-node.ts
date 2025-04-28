@@ -569,6 +569,10 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           & > * {
             margin: 0 2px;
           }
+
+          & .chiclet {
+            max-width: 100%;
+          }
         }
       }
     `,
