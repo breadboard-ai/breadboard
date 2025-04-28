@@ -135,6 +135,8 @@ export type MainArguments = {
   requiresSignin?: boolean;
   /** If true enforces ToS acceptance by the user on the first visit. */
   enableTos?: boolean;
+  /** Terms of Service content. */
+  tosHtml?: string;
 };
 
 type BoardOverlowMenuConfiguration = {
@@ -338,6 +340,7 @@ export class Main extends LitElement {
   #selectionState: WorkspaceSelectionStateWithChangeId | null = null;
   #lastVisualChangeId: WorkspaceVisualChangeId | null = null;
   #lastPointerPosition = { x: 0, y: 0 };
+  #tosHtml?: string;
 
   /**
    * Monotonically increases whenever the graph topology of a graph in the
@@ -434,7 +437,8 @@ export class Main extends LitElement {
   constructor(config: MainArguments) {
     super();
 
-    this.showToS = !!config.enableTos && localStorage.getItem(TOS_KEY) !== TosStatus.ACCEPTED;
+    this.showToS = !!config.enableTos && !!config.tosHtml && localStorage.getItem(TOS_KEY) !== TosStatus.ACCEPTED;
+    this.#tosHtml = config.tosHtml;
 
     // This is a big hacky, since we're assigning a value to a constant object,
     // but okay here, because this constant is never re-assigned and is only
@@ -4361,7 +4365,6 @@ export class Main extends LitElement {
   }
 
   createTosDialog() {
-    const tosText = Strings.from("TOS_TEXT");
     const tosTitle = Strings.from("TOS_TITLE");
     return html`<dialog
       ${ref((el: Element | undefined) => {
@@ -4379,7 +4382,7 @@ export class Main extends LitElement {
         <h2>${tosTitle}</h2>
         </div>
         <div>
-          <p>${tosText}</p>
+          <p>${this.#tosHtml}</p>
         <div>
           <button @click=${() => {
             this.showToS = false;

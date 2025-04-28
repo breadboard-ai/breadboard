@@ -209,7 +209,4 @@ export default {
   TOS_TITLE: {
     str: "Terms of Service",
   },
-  TOS_TEXT: {
-    str: 'Do you agree?',
-  }
 } as LanguagePackEntry;

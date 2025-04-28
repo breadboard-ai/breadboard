@@ -18,6 +18,7 @@ export type ConfigureAssetsInputs = {
   /** Supported values are: "drive:" or "/board/". */
   VITE_BOARD_SERVICE?: string;
   VITE_ENABLE_TOS?: boolean;
+  VITE_TOS_HTML_PATH?: string;
 };
 
 export type ConfigureAssetOutputs = {
@@ -29,6 +30,7 @@ export type ConfigureAssetOutputs = {
   FONT_LINK: string;
   BOARD_SERVICE: string;
   ENABLE_TOS: boolean;
+  TOS_HTML: string;
 };
 
 async function configureAssets(
@@ -43,6 +45,7 @@ async function configureAssets(
     VITE_FONT_LINK: FONT_LINK,
     VITE_BOARD_SERVICE: BOARD_SERVICE,
     VITE_ENABLE_TOS: ENABLE_TOS,
+    VITE_TOS_HTML_PATH: TOS_HTML_PATH,
   } = config;
 
   if (!LANGUAGE_PACK) {
@@ -69,6 +72,13 @@ async function configureAssets(
     FONT_FACE_MONO
   );
 
+  let tosHtml = "";
+  if (TOS_HTML_PATH) {
+    const tosHtmlPath = path.join(root, TOS_HTML_PATH);
+    tosHtml = await fs.readFile(tosHtmlPath, { encoding: "utf-8" });
+  }
+  console.log("VVV TOS HTML:", TOS_HTML_PATH, tosHtml);
+
   return {
     LANGUAGE_PACK: JSON.stringify(languagePack),
     ASSET_PACK: JSON.stringify(assetPack.styles),
@@ -78,6 +88,7 @@ async function configureAssets(
     FONT_LINK: JSON.stringify(FONT_LINK),
     BOARD_SERVICE: JSON.stringify(BOARD_SERVICE),
     ENABLE_TOS: ENABLE_TOS ?? false,
+    TOS_HTML: JSON.stringify(tosHtml),
   };
 }
 

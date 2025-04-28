@@ -83,6 +83,7 @@ function bootstrap(args: BootstrapArguments = {}) {
       connectionServerUrl: args?.connectionServerUrl,
       requiresSignin: args?.requiresSignin,
       enableTos: ENABLE_TOS,
+      tosHtml: TOS_HTML,
     };
 
     window.oncontextmenu = (evt) => evt.preventDefault();
