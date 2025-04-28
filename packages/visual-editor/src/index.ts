@@ -100,6 +100,8 @@ import { createA2Server } from "@breadboard-ai/a2";
 import { envFromSettings } from "./utils/env-from-settings";
 import { getGoogleDriveBoardService } from "@breadboard-ai/board-server-management";
 
+import {unsafeHTML} from 'lit/directives/unsafe-html.js';
+
 const STORAGE_PREFIX = "bb-main";
 const LOADING_TIMEOUT = 250;
 
@@ -4382,7 +4384,7 @@ export class Main extends LitElement {
         <h2>${tosTitle}</h2>
         </div>
         <div>
-          <p>${this.#tosHtml}</p>
+          ${unsafeHTML(this.#tosHtml)}
         <div>
           <button @click=${() => {
             this.showToS = false;

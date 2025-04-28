@@ -77,7 +77,6 @@ async function configureAssets(
     const tosHtmlPath = path.join(root, TOS_HTML_PATH);
     tosHtml = await fs.readFile(tosHtmlPath, { encoding: "utf-8" });
   }
-  console.log("VVV TOS HTML:", TOS_HTML_PATH, tosHtml);
 
   return {
     LANGUAGE_PACK: JSON.stringify(languagePack),
