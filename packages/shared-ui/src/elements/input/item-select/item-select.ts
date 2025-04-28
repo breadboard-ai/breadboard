@@ -25,6 +25,9 @@ export class ItemSelect extends LitElement {
   @property()
   accessor freezeValue = -1;
 
+  @property({ reflect: true, type: Boolean })
+  accessor showDownArrow = true;
+
   @property()
   set values(values: EnumValue[]) {
     this.#values = values;
@@ -83,6 +86,13 @@ export class ItemSelect extends LitElement {
               background-color: var(--selected-item-hover-color);
             }
           }
+        }
+      }
+
+      :host([showdownarrow]) button.selected {
+        &.icon:not(.tag) {
+          grid-template-columns: 20px minmax(0, 1fr) 20px;
+          padding-right: 0;
         }
       }
 
@@ -157,12 +167,15 @@ export class ItemSelect extends LitElement {
           width: max-content;
           max-width: 100%;
           height: var(--selected-item-height);
-          column-gap: var(--selected-item-column-gap);
           border-radius: var(--selected-item-border-radius);
 
           & .title {
             font: var(--selected-item-font);
             padding: var(--selected-item-title-padding);
+          }
+
+          &.icon .title {
+            margin-left: var(--selected-item-column-gap);
           }
         }
       }
@@ -269,6 +282,10 @@ export class ItemSelect extends LitElement {
           ? html`<span class="g-icon">${renderedValue.icon}</span>`
           : nothing}
         <span class="title">${renderedValue.title}</span>
+
+        ${this.showDownArrow
+          ? html`<span class="g-icon">arrow_drop_down</span>`
+          : nothing}
       </button>
 
       <dialog

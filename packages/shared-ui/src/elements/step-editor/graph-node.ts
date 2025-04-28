@@ -184,6 +184,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       :host([icon="generative-code"]),
       :host([icon="videocam_auto"]),
       :host([icon="generative-search"]),
+      :host([icon="generative"]),
       :host([icon="laps"]) {
         --background: var(--bb-generative-100);
         --border: var(--bb-neutral-500);
@@ -229,6 +230,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         background: var(--bb-icon-sunny) center center / 20px 20px no-repeat;
       }
 
+      :host([icon="generative"]) #container header::before,
       :host([icon="spark"]) #container header::before {
         background: var(--bb-add-icon-generative) center center / 20px 20px
           no-repeat;

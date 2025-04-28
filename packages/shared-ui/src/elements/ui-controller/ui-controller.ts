@@ -242,6 +242,7 @@ export class UI extends LitElement {
   }
 
   editorRender = 0;
+  #preventAutoSwitchToEditor = false;
   protected willUpdate(changedProperties: PropertyValues): void {
     if (changedProperties.has("isShowingBoardActivityOverlay")) {
       this.editorRender++;
@@ -289,6 +290,12 @@ export class UI extends LitElement {
       );
     }
 
+    if (newSelectionCount > 0 && changedProperties.has("sideNavItem")) {
+      this.#preventAutoSwitchToEditor = true;
+    } else if (newSelectionCount === 0 && this.#preventAutoSwitchToEditor) {
+      this.#preventAutoSwitchToEditor = false;
+    }
+
     if (newSelectionCount === 0 && this.sideNavItem === "editor") {
       this.sideNavItem = "app-view";
     }
@@ -296,7 +303,7 @@ export class UI extends LitElement {
     if (
       newSelectionCount > 0 &&
       this.sideNavItem !== "editor" &&
-      !changedProperties.has("sideNavItem")
+      !this.#preventAutoSwitchToEditor
     ) {
       this.sideNavItem = "editor";
     }
