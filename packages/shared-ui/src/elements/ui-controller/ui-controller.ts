@@ -815,7 +815,7 @@ export class UI extends LitElement {
       <bb-splitter
         direction=${"horizontal"}
         name="layout-main"
-        split="[0.75, 0.25]"
+        split="[0.70, 0.30]"
         @pointerdown=${() => {
           this.showThemeDesigner = false;
         }}
