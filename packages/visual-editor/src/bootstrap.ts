@@ -91,6 +91,8 @@ function bootstrap(args: BootstrapArguments = {}) {
       boardServerUrl: getUrlFromBoardServiceFlag(BOARD_SERVICE),
       connectionServerUrl: args?.connectionServerUrl,
       requiresSignin: args?.requiresSignin,
+      enableTos: ENABLE_TOS,
+      tosHtml: TOS_HTML,
       kits: args?.kits,
       graphStorePreloader: args?.graphStorePreloader,
       moduleInvocationFilter: args?.moduleInvocationFilter,

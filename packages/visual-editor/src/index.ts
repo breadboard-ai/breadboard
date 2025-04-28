@@ -104,8 +104,15 @@ import { createA2Server } from "@breadboard-ai/a2";
 import { envFromSettings } from "./utils/env-from-settings";
 import { getGoogleDriveBoardService } from "@breadboard-ai/board-server-management";
 
+import {unsafeHTML} from 'lit/directives/unsafe-html.js';
+
 const STORAGE_PREFIX = "bb-main";
 const LOADING_TIMEOUT = 250;
+
+const TOS_KEY = "tos-status";
+enum TosStatus {
+  ACCEPTED = "accepted",
+}
 
 export type MainArguments = {
   boards?: BreadboardUI.Types.Board[];
@@ -132,6 +139,10 @@ export type MainArguments = {
    * Whether or not this instance of requires sign in.
    */
   requiresSignin?: boolean;
+  /** If true enforces ToS acceptance by the user on the first visit. */
+  enableTos?: boolean;
+  /** Terms of Service content. */
+  tosHtml?: string;
   kits?: Kit[];
   graphStorePreloader?: (graphStore: MutableGraphStore) => void;
   moduleInvocationFilter?: (context: NodeHandlerContext) => Outcome<void>;
@@ -259,6 +270,9 @@ export class Main extends LitElement {
     }
   >();
 
+  @state()
+  accessor showToS = false;
+
   @provide({ context: BreadboardUI.Contexts.environmentContext })
   accessor environment: BreadboardUI.Contexts.Environment;
 
@@ -335,6 +349,7 @@ export class Main extends LitElement {
   #selectionState: WorkspaceSelectionStateWithChangeId | null = null;
   #lastVisualChangeId: WorkspaceVisualChangeId | null = null;
   #lastPointerPosition = { x: 0, y: 0 };
+  #tosHtml?: string;
 
   /**
    * Monotonically increases whenever the graph topology of a graph in the
@@ -430,6 +445,9 @@ export class Main extends LitElement {
   #initialize: Promise<void>;
   constructor(config: MainArguments) {
     super();
+
+    this.showToS = !!config.enableTos && !!config.tosHtml && localStorage.getItem(TOS_KEY) !== TosStatus.ACCEPTED;
+    this.#tosHtml = config.tosHtml;
 
     // This is a big hacky, since we're assigning a value to a constant object,
     // but okay here, because this constant is never re-assigned and is only
@@ -2294,6 +2312,7 @@ export class Main extends LitElement {
     )}`;
 
     const showingOverlay =
+      this.showToS ||
       this.boardEditOverlayInfo !== null ||
       this.showSettingsOverlay ||
       this.showFirstRun ||
@@ -3154,7 +3173,7 @@ export class Main extends LitElement {
         }
 
         const ui = html`<header>
-          <div id="header-bar" data-active=${this.tab ? "true" : nothing} ?inert=${showingOverlay}>
+          <div class="accept-tos" id="header-bar" data-active=${this.tab ? "true" : nothing} ?inert=${showingOverlay}>
             <div id="tab-info">
               <button id="logo" @click=${() => {
                 if (!this.tab) {
@@ -4341,6 +4360,7 @@ export class Main extends LitElement {
         }
 
         return [
+          this.showToS ? this.createTosDialog() : nothing,
           ui,
           boardOverlay,
           settingsOverlay,
@@ -4360,6 +4380,36 @@ export class Main extends LitElement {
 
     const tooltip = html`<bb-tooltip ${ref(this.#tooltipRef)}></bb-tooltip>`;
     return [until(uiController), tooltip, toasts];
+  }
+
+  createTosDialog() {
+    const tosTitle = Strings.from("TOS_TITLE");
+    return html`<dialog
+      ${ref((el: Element | undefined) => {
+        if (el && this.showToS && el.isConnected) {
+          const dialog = el as HTMLDialogElement;
+          if (!dialog.open) {
+            dialog.showModal();
+          }
+        }
+        
+      })}>
+      <p></p>
+      <form method="dialog">
+        <div>
+        <h2>${tosTitle}</h2>
+        </div>
+        <div>
+          ${unsafeHTML(this.#tosHtml)}
+        <div>
+          <button @click=${() => {
+            this.showToS = false;
+            localStorage.setItem(TOS_KEY, TosStatus.ACCEPTED);
+          }}>Accept</button>
+        </div>
+      </form>
+    </dialog>`;
+
   }
 }
 

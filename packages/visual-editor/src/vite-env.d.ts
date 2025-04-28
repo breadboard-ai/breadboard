@@ -7,3 +7,5 @@ declare const GIT_HASH: string;
 declare const FONT_PACK: string;
 declare const FONT_LINK: string;
 declare const BOARD_SERVICE: string;
+declare const ENABLE_TOS: boolean;
+declare const TOS_HTML: string;
