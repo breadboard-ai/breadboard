@@ -186,6 +186,8 @@ export class MultiOutput extends LitElement {
     switch (mime) {
       case "image/png":
       case "image/jpg":
+      case "image/jpeg":
+      case "image/wepb":
       case "image/gif": {
         return html`<img src=${data} />`;
       }
