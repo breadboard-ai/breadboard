@@ -638,6 +638,25 @@ export class GraphNode extends Box implements DragConnectorReceiver {
   #lastBounds: DOMRect | null = null;
   #ports: InspectableNodePorts | null = null;
   #resizeObserver = new ResizeObserver(() => {
+    this.#getSize();
+    this.dispatchEvent(new NodeBoundsUpdateRequestEvent());
+  });
+
+  constructor(public readonly nodeId: string) {
+    super();
+
+    this.tabIndex = 0;
+  }
+
+  calculateLocalBounds(): DOMRect {
+    if (!this.#containerRef.value || !this.#lastBounds) {
+      return new DOMRect();
+    }
+
+    return this.#lastBounds;
+  }
+
+  #getSize() {
     if (!this.#containerRef.value || this.hidden) {
       return;
     }
@@ -659,22 +678,6 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           40
       );
     }
-
-    this.dispatchEvent(new NodeBoundsUpdateRequestEvent());
-  });
-
-  constructor(public readonly nodeId: string) {
-    super();
-
-    this.tabIndex = 0;
-  }
-
-  calculateLocalBounds(): DOMRect {
-    if (!this.#containerRef.value || !this.#lastBounds) {
-      return new DOMRect();
-    }
-
-    return this.#lastBounds;
   }
 
   #watchingResize = false;
@@ -689,16 +692,17 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       });
     }
 
-    if (!this.#watchingResize && this.#containerRef.value) {
-      this.#watchingResize = true;
-      this.#lastBounds = new DOMRect(
-        0,
-        0,
-        this.#containerRef.value.offsetWidth,
-        this.#containerRef.value.offsetHeight
-      );
+    if (changedProperties.has("hasChatAdornment")) {
+      this.#getSize();
+    }
 
-      this.#resizeObserver.observe(this.#containerRef.value);
+    if (!this.#watchingResize) {
+      this.#watchingResize = true;
+      this.#getSize();
+
+      if (this.#containerRef.value) {
+        this.#resizeObserver.observe(this.#containerRef.value);
+      }
     }
   }
 
