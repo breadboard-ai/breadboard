@@ -15,7 +15,11 @@ import {
   type SigninAdapter,
   signinAdapterContext,
 } from "../../utils/signin-adapter.js";
-import { loadDriveApi, loadDrivePicker } from "./google-apis.js";
+import {
+  loadDriveApi,
+  loadDrivePicker,
+  loadDriveShare,
+} from "./google-apis.js";
 import { createRef, ref } from "lit/directives/ref.js";
 
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
@@ -132,6 +136,8 @@ export class GoogleDriveDebugPanel extends LitElement {
 
       <br /><br />
 
+      <button @click=${this.#openSharingDialog}>Open sharing dialog</button>
+
       <p>My projects</p>
       <ul>
         ${until(this.#renderUserBoards(), "Loading...")}
@@ -214,8 +220,8 @@ export class GoogleDriveDebugPanel extends LitElement {
     }
     const pickerLib = await loadDrivePicker();
     const view = new pickerLib.DocsView(google.picker.ViewId.DOCS);
-    view.setMimeTypes("application/json");
     view.setMode(google.picker.DocsViewMode.LIST);
+    view.setSelectFolderEnabled(true);
     // See https://developers.google.com/drive/picker/reference
     const picker = new pickerLib.PickerBuilder()
       .addView(view)
@@ -245,6 +251,7 @@ export class GoogleDriveDebugPanel extends LitElement {
     view.setMimeTypes("application/json");
     view.setFileIds(fileId);
     view.setMode(google.picker.DocsViewMode.GRID);
+    view.setSelectFolderEnabled(true);
 
     const overlay = document.createElement("bb-google-drive-picker-overlay");
     const underlay = document.createElement("bb-google-drive-picker-underlay");
@@ -397,6 +404,23 @@ export class GoogleDriveDebugPanel extends LitElement {
       })
       .build();
     picker.setVisible(true);
+  }
+
+  async #openSharingDialog() {
+    const fileIds = this.#fileIdInput.value?.value;
+    if (!fileIds) {
+      return;
+    }
+    const driveShare = await loadDriveShare();
+    const auth = await this.signinAdapter?.refresh();
+    if (auth?.state !== "valid") {
+      return;
+    }
+    const client = new driveShare.ShareClient();
+    client.setOAuthToken(auth.grant.access_token);
+    const itemIds = fileIds.split(",");
+    client.setItemIds(itemIds);
+    client.showSettingsDialog();
   }
 }
 

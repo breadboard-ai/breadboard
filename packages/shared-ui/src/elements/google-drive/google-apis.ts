@@ -74,6 +74,33 @@ export async function loadDrivePicker(): Promise<
   })());
 }
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
+declare namespace gapi.drive.share {
+  class ShareClient {
+    setOAuthToken: (oauthToken: string) => void;
+    setItemIds: (itemIds: string[]) => void;
+    showSettingsDialog: () => void;
+  }
+}
+
+let sharingDialogPromise: Promise<typeof gapi.drive.share>;
+/**
+ * Load the the GAPI (Google API) Drive Sharing Dialog API.
+ *
+ * See https://developers.google.com/workspace/drive/api/guides/share-button
+ */
+export async function loadDriveShare(): Promise<typeof gapi.drive.share> {
+  return (sharingDialogPromise ??= (async () => {
+    await Promise.all([
+      (async () => {
+        const gapi = await loadGapi();
+        await new Promise((resolve) => gapi.load("drive-share", resolve));
+      })(),
+    ]);
+    return gapi.drive.share;
+  })());
+}
+
 /**
  * This is like `import`, except for JavaScript that can't be executed as a
  * module, like GAPI.
