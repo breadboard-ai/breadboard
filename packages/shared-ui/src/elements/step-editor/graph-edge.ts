@@ -23,6 +23,7 @@ import {
 import { clamp } from "./utils/clamp";
 import { Entity } from "./entity";
 import { calculatePointsOnCubicBezierCurve } from "./utils/cubic-bezier";
+import { icons } from "../../styles/icons";
 
 interface Connection {
   n1: DOMPoint;
@@ -78,6 +79,7 @@ export class GraphEdge extends Box {
   accessor highlighted = false;
 
   static styles = [
+    icons,
     Box.styles,
     css`
       :host {
@@ -111,6 +113,16 @@ export class GraphEdge extends Box {
         left: -8px;
         z-index: 4;
       }
+
+      .g-icon {
+        font-size: 12px;
+        font-variation-settings:
+          "FILL" 0,
+          "GRAD" 0,
+          "ROND" 100,
+          "wght" 500;
+        color: var(--bb-neutral-0);
+      }
     `,
   ];
 
@@ -122,6 +134,9 @@ export class GraphEdge extends Box {
 
   @property()
   accessor to: EdgeAttachmentPoint = "Auto";
+
+  @property()
+  accessor carriesList = false;
 
   constructor(
     public readonly node1: Entity,
@@ -574,6 +589,12 @@ export class GraphEdge extends Box {
 
     const connectionPointRadius = CONNECTION_POINT_RADIUS - 2;
     const connectionPoints = this.#calculateConnectionPoints(nodeBoundPoints);
+    const midX =
+      connectionPoints.n1.x +
+      (connectionPoints.n2.x - connectionPoints.n1.x) * 0.5;
+    const midY =
+      connectionPoints.n1.y +
+      (connectionPoints.n2.y - connectionPoints.n1.y) * 0.5;
 
     if (this.#distanceSq(connectionPoints.n1, connectionPoints.n2) < 400) {
       return nothing;
@@ -686,7 +707,7 @@ export class GraphEdge extends Box {
 
     let dashArray = ``;
     if (this.edgeType === "asset") {
-      dashArray = `6 7`;
+      dashArray = `4 4`;
     }
 
     return html`<section
@@ -718,6 +739,15 @@ export class GraphEdge extends Box {
                 y2=${connectionPoints.n2.y + arrowSize}
                 transform=${`rotate(${rotation}, ${connectionPoints.n2.x}, ${connectionPoints.n2.y})`}
                 stroke=${this.selected ? EDGE_SELECTED : edgeColor} stroke-width="2" stroke-linecap="round" />
+
+                ${
+                  this.carriesList
+                    ? svg`<circle cx=${midX} cy=${midY} r="7" fill=${this.selected ? EDGE_SELECTED : edgeColor} />
+                  <foreignObject x=${midX - 6} y=${midY - 9} width="14" height="14">
+                    <span xmlns="http://www.w3.org/1999/xhtml" class="g-icon">data_array</span>
+                  </foreignObject>`
+                    : nothing
+                }
           </svg>
         `} ${this.showEdgePointSelectors
           ? svg`<svg } id="point-selectors" version="1.1"

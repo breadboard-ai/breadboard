@@ -48,8 +48,10 @@ import { DragConnectorReceiver } from "../../types/types";
 import { DragConnectorStartEvent } from "../../events/events";
 import { getGlobalColor } from "../../utils/color.js";
 import { createChiclets } from "./utils/create-chiclets.js";
+import { icons } from "../../styles/icons.js";
 
 const EDGE_STANDARD = getGlobalColor("--bb-neutral-400");
+const EDGE_SELECTED = getGlobalColor("--bb-ui-500");
 
 const arrowWidth = 46;
 const arrowHeight = 36;
@@ -90,6 +92,9 @@ export class GraphNode extends Box implements DragConnectorReceiver {
   @property()
   accessor hasMainPort = false;
 
+  @property({ reflect: true, type: Boolean })
+  accessor hasChatAdornment = false;
+
   @property({ reflect: true, type: String })
   accessor highlightType: "user" | "model" = "model";
 
@@ -125,6 +130,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
   }
 
   static styles = [
+    icons,
     Box.styles,
     ChicletStyles,
     css`
@@ -310,7 +316,8 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         display: none;
       }
 
-      :host([selected]) #container {
+      :host([selected]) #container,
+      :host([selected]) #container #chat-adornment {
         outline: 2px solid var(--bb-ui-500);
       }
 
@@ -333,6 +340,48 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         color: var(--bb-neutral-900);
         position: relative;
         cursor: pointer;
+
+        #edge {
+          position: absolute;
+          top: 100%;
+          pointer-events: none;
+        }
+
+        #adornment-surround {
+          position: absolute;
+          top: calc(-1 * var(--bb-grid-size-4));
+          left: calc(-1 * var(--bb-grid-size-4));
+          pointer-events: none;
+        }
+
+        & #chat-adornment {
+          position: absolute;
+          top: calc(100% + var(--bb-grid-size-10));
+          width: 100%;
+          border-radius: var(--bb-grid-size-3);
+          outline: 1px solid var(--border);
+          color: var(--bb-neutral-900);
+          cursor: pointer;
+
+          header {
+            --background: var(--bb-input-50);
+            --border: var(--bb-neutral-500);
+            --header-border: var(--bb-input-300);
+
+            &::before {
+              display: none;
+            }
+
+            .g-icon {
+              margin-right: var(--bb-grid-size-2);
+            }
+          }
+
+          #content {
+            text-align: center;
+            pointer-events: none;
+          }
+        }
 
         #right-arrow {
           position: absolute;
@@ -585,6 +634,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
   #translateStart: DOMPoint | null = null;
   #dragStart: DOMPoint | null = null;
   #containerRef: Ref<HTMLElement> = createRef();
+  #adornmentRef: Ref<HTMLElement> = createRef();
   #lastBounds: DOMRect | null = null;
   #ports: InspectableNodePorts | null = null;
   #resizeObserver = new ResizeObserver(() => {
@@ -592,12 +642,23 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       return;
     }
 
-    this.#lastBounds = new DOMRect(
-      0,
-      0,
-      this.#containerRef.value.offsetWidth,
-      this.#containerRef.value.offsetHeight
-    );
+    if (!this.#adornmentRef.value) {
+      this.#lastBounds = new DOMRect(
+        0,
+        0,
+        this.#containerRef.value.offsetWidth,
+        this.#containerRef.value.offsetHeight
+      );
+    } else {
+      this.#lastBounds = new DOMRect(
+        0,
+        0,
+        this.#containerRef.value.offsetWidth,
+        this.#containerRef.value.offsetHeight +
+          this.#adornmentRef.value.offsetHeight +
+          40
+      );
+    }
 
     this.dispatchEvent(new NodeBoundsUpdateRequestEvent());
   });
@@ -776,6 +837,48 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         </button>`;
     }
 
+    let chatAdornment: HTMLTemplateResult[] | symbol = nothing;
+    if (this.hasChatAdornment) {
+      chatAdornment = [
+        html`${svg`
+        <svg id="edge" version="1.1"
+          width="260" height="40" viewBox="0 0 260 40"
+          xmlns="http://www.w3.org/2000/svg">
+          <path d="M 130 4 L 130 4 L 130 36"
+            stroke=${this.selected ? EDGE_SELECTED : EDGE_STANDARD}
+            stroke-width="2" fill="none" stroke-linecap="round" />
+
+          <line x1="130"
+            y1="4"
+            x2=${130 - arrowSize}
+            y2=${4 + arrowSize}
+            stroke=${this.selected ? EDGE_SELECTED : EDGE_STANDARD} stroke-width="2" stroke-linecap="round" />
+
+          <line x1="130"
+            y1="4"
+            x2=${130 + arrowSize}
+            y2=${4 + arrowSize}
+            stroke=${this.selected ? EDGE_SELECTED : EDGE_STANDARD} stroke-width="2" stroke-linecap="round" />
+
+          <line x1="130"
+            y1="36"
+            x2=${130 - arrowSize}
+            y2=${36 - arrowSize}
+            stroke=${this.selected ? EDGE_SELECTED : EDGE_STANDARD} stroke-width="2" stroke-linecap="round" />
+
+          <line x1="130"
+            y1="36"
+            x2=${130 + arrowSize}
+            y2=${36 - arrowSize}
+            stroke=${this.selected ? EDGE_SELECTED : EDGE_STANDARD} stroke-width="2" stroke-linecap="round" />
+        </svg>`}`,
+        html`<div id="chat-adornment" ${ref(this.#adornmentRef)}>
+          <header><span class="g-icon">3p</span>User input</header>
+          <div id="content">(${this.nodeTitle} chats with the user)</div>
+        </div>`,
+      ];
+    }
+
     return html`<section
         id="container"
         class=${classMap({ bounds: this.showBounds })}
@@ -926,8 +1029,19 @@ export class GraphNode extends Box implements DragConnectorReceiver {
             ? html`<p class="loading">Loading step details...</p>`
             : this.#renderPorts()}
         </div>
+        ${chatAdornment}
+        ${this.updating || !this.hasChatAdornment
+          ? nothing
+          : html`${svg`
+              <svg id="adornment-surround" version="1.1"
+                width=${this.bounds.width + 32} height=${this.bounds.height + 32} viewBox="0 0 ${this.bounds.width + 32} ${this.bounds.height + 32}"
+                xmlns="http://www.w3.org/2000/svg">
+                <rect x="1" y="1" width=${this.bounds.width + 30} height=${this.bounds.height + 30} rx="24"
+                  stroke=${this.selected ? EDGE_SELECTED : EDGE_STANDARD}
+                  stroke-width="2" fill="none" stroke-dasharray="4 4" />
+              </svg>
+            `}`}
       </section>
-
       ${this.renderBounds()}`;
   }
 

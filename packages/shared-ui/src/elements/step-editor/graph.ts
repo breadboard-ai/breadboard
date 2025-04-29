@@ -139,7 +139,7 @@ export class Graph extends Box {
 
       const lastUpdateTime = this.#lastUpdateTimes.get("nodes") ?? 0;
 
-      node.describe().then(() => {
+      node.describe().then((nodeDescription) => {
         // Ensure the most recent values before proceeding.
         if (lastUpdateTime !== this.#lastUpdateTimes.get("nodes")) {
           return;
@@ -148,6 +148,9 @@ export class Graph extends Box {
         const ports = node.currentPorts();
         const metadata = node.type().currentMetadata();
 
+        graphNode.hasChatAdornment =
+          nodeDescription.inputSchema.behavior?.includes("hint-chat-mode") ??
+          false;
         graphNode.updating = ports.updating ?? false;
         graphNode.icon = metadata.icon ?? null;
         graphNode.ports = ports;
@@ -247,6 +250,9 @@ export class Graph extends Box {
       >;
       graphEdge.from = visual.from ?? "Auto";
       graphEdge.to = visual.to ?? "Auto";
+
+      // TODO: figure out how this should be set.
+      // graphEdge.carriesList = true;
     }
 
     // Remove stale edges.

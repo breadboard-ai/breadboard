@@ -1070,6 +1070,15 @@ export class EntityEditor extends SignalWatcher(LitElement) {
             id="node-title"
             name="node-title"
             .value=${node.title()}
+            @keydown=${(evt: KeyboardEvent) => {
+              if (evt.key !== "Enter") {
+                return;
+              }
+
+              evt.preventDefault();
+              evt.stopPropagation();
+              this.#submit(this.values);
+            }}
           />
         </h1>
         <div id="type"></div>

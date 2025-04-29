@@ -90,6 +90,8 @@ export class ItemSelect extends LitElement {
       }
 
       :host([showdownarrow]) button.selected {
+        grid-template-columns: minmax(0, 1fr) 20px;
+
         &.icon:not(.tag) {
           grid-template-columns: 20px minmax(0, 1fr) 20px;
           padding-right: 0;
