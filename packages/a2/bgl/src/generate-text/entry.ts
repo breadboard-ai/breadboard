@@ -72,14 +72,6 @@ async function describe({
   let extra: Record<string, Schema> = {};
   if (experimental) {
     extra = {
-      "p-chat": {
-        type: "boolean",
-        title: "Chat with User",
-        behavior: ["config", "hint-preview"],
-        icon: "chat",
-        description:
-          "When checked, this step will chat with the user, asking to review work, requesting additional information, etc.",
-      },
       "p-list": {
         type: "boolean",
         title: "Make a list",
@@ -107,6 +99,14 @@ async function describe({
           items: { type: "object", behavior: ["llm-content"] },
           title: "Context in",
           behavior: ["main-port"],
+        },
+        "p-chat": {
+          type: "boolean",
+          title: "Refine based on user input",
+          behavior: ["config", "hint-preview"],
+          icon: "chat",
+          description:
+            "When checked, this step will chat with the user, asking to review work, requesting additional information, etc.",
         },
         "b-system-instruction": {
           type: "object",
