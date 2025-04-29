@@ -138,6 +138,12 @@ export class GoogleDriveDebugPanel extends LitElement {
 
       <button @click=${this.#openSharingDialog}>Open sharing dialog</button>
 
+      <br /><br />
+
+      <button @click=${this.#listFolderContentsInConsole}>
+        List folder contents in console
+      </button>
+
       <p>My projects</p>
       <ul>
         ${until(this.#renderUserBoards(), "Loading...")}
@@ -421,6 +427,26 @@ export class GoogleDriveDebugPanel extends LitElement {
     const itemIds = fileIds.split(",");
     client.setItemIds(itemIds);
     client.showSettingsDialog();
+  }
+
+  async #listFolderContentsInConsole() {
+    const folderId = this.#fileIdInput.value?.value;
+    if (!folderId) {
+      return;
+    }
+
+    const drive = await loadDriveApi();
+    const auth = await this.signinAdapter?.refresh();
+    if (auth?.state !== "valid") {
+      return;
+    }
+    const { access_token } = auth.grant;
+    const response = await drive.files.list({
+      access_token,
+      q: `"${folderId}" in parents`,
+    });
+    const result = JSON.parse(response.body);
+    console.log({ result });
   }
 }
 
