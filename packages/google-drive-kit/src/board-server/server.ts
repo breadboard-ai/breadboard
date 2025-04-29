@@ -64,7 +64,10 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
         return null;
       }
 
-      return { title: folder.name || "Google Drive", username: "board-builder" };
+      return {
+        title: folder.name || "Google Drive",
+        username: "board-builder",
+      };
     } catch (err) {
       console.warn(err);
       return null;
@@ -204,7 +207,8 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
       throw new Error("No folder ID or access token");
     }
     const query =
-      `mimeType = "${GRAPH_MIME_TYPE}"` +
+      ` (mimeType="${GRAPH_MIME_TYPE}"` +
+      `  or mimeType="${DEPRECATED_GRAPH_MIME_TYPE}")` +
       ` and sharedWithMe=true` +
       ` and trashed=false`;
     const api = new Files(accessToken);
