@@ -118,7 +118,10 @@ class GenerateText {
     // We always supply tools when chatting, since we add
     // the "Done" and "Keep Chatting" tools to figure out when
     // the conversation ends.
-    if (this.chat || toolManager.hasTools()) {
+    if (
+      (this.chat && sharedContext.userInputs.length > 0) ||
+      toolManager.hasTools()
+    ) {
       inputs.body.tools = [...tools];
       inputs.body.toolConfig = { functionCallingConfig: { mode: "ANY" } };
     } else {
