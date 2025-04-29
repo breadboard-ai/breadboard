@@ -29,6 +29,7 @@ import {
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { repeat } from "lit/directives/repeat.js";
 import {
+  BehaviorSchema,
   InspectableNodePorts,
   NodeValue,
   SchemaEnumValue,
@@ -100,6 +101,9 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
   @property()
   accessor showDefaultAdd = false;
+
+  @property()
+  accessor behavior: BehaviorSchema[] = [];
 
   @property()
   set ports(ports: InspectableNodePorts | null) {

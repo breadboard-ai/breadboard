@@ -385,6 +385,11 @@ declare type BehaviorSchema =
    */
   | "hint-advanced"
   /**
+   * Hints that the node is in a chat mode: it interacts with the user
+   * as part of its invocation
+   */
+  | "hint-chat-mode"
+  /**
    * Hints that the text is short (e.g. a query) and needs a single line treatment.
    */
   | "hint-single-line"

@@ -361,6 +361,11 @@ declare type BehaviorSchema =
    */
   | "hint-controller"
   /**
+   * Hints that the node is in a chat mode: it interacts with the user
+   * as part of its invocation
+   */
+  | "hint-chat-mode"
+  /**
    * In combination with "config", Indicates that this port is part of the
    * advanced configuration.
    */

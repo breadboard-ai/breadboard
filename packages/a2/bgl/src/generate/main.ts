@@ -172,12 +172,14 @@ async function describe({
 
   const { url, id } = getMode(mode);
   const describing = await describeGraph({ url, inputs: rest });
+  let behavior: BehaviorSchema[] = [];
   let modeSchema: Record<string, Schema> = {};
   if (ok(describing)) {
     modeSchema = receivePorts(
       id,
       describing.inputSchema.properties || modeSchema
     );
+    behavior = describing.inputSchema.behavior || [];
   }
 
   return {
@@ -205,7 +207,7 @@ async function describe({
         },
         ...modeSchema,
       },
-      behavior: ["at-wireable"],
+      behavior,
     } satisfies Schema,
     outputSchema: {
       type: "object",

@@ -3705,6 +3705,7 @@
                       "google-drive-query",
                       "hint-advanced",
                       "hint-audio",
+                      "hint-chat-mode",
                       "hint-code",
                       "hint-controller",
                       "hint-image",

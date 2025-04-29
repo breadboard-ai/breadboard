@@ -75,6 +75,7 @@ const BEHAVIOR_AFFECTS_TYPE_CHECKING: { [K in BehaviorSchema]: boolean } = {
   "hint-multimodal": false,
   "hint-preview": false,
   "hint-advanced": false,
+  "hint-chat-mode": false,
   "hint-controller": false,
   "hint-single-line": false,
   module: true,
@@ -294,6 +295,7 @@ function describerResultToPorts(
   const outgoing = node.outgoing();
   const inputs: InspectablePortList = {
     fixed: described.inputSchema?.additionalProperties === false,
+    behavior: described.inputSchema.behavior,
     ports: collectPorts(
       EdgeType.In,
       incoming,
