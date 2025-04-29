@@ -1309,10 +1309,12 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
     return [
       ...basicPorts.map(portRender),
-      html`<details id="advanced-settings">
-        <summary><span class="g-icon"></span>Advanced settings</summary>
-        ${[...advancedPorts.map(portRender)]}
-      </details>`,
+      advancedPorts.length > 0
+        ? html`<details id="advanced-settings">
+            <summary><span class="g-icon"></span>Advanced settings</summary>
+            ${[...advancedPorts.map(portRender)]}
+          </details>`
+        : nothing,
     ];
   }
 
