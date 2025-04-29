@@ -214,8 +214,8 @@ export class GoogleDriveDebugPanel extends LitElement {
     }
     const pickerLib = await loadDrivePicker();
     const view = new pickerLib.DocsView(google.picker.ViewId.DOCS);
-    view.setMimeTypes("application/json");
     view.setMode(google.picker.DocsViewMode.LIST);
+    view.setSelectFolderEnabled(true);
     // See https://developers.google.com/drive/picker/reference
     const picker = new pickerLib.PickerBuilder()
       .addView(view)
@@ -245,6 +245,7 @@ export class GoogleDriveDebugPanel extends LitElement {
     view.setMimeTypes("application/json");
     view.setFileIds(fileId);
     view.setMode(google.picker.DocsViewMode.GRID);
+    view.setSelectFolderEnabled(true);
 
     const overlay = document.createElement("bb-google-drive-picker-overlay");
     const underlay = document.createElement("bb-google-drive-picker-underlay");
