@@ -4384,7 +4384,7 @@ export class Main extends LitElement {
 
   createTosDialog() {
     const tosTitle = Strings.from("TOS_TITLE");
-    return html`<dialog
+    return html`<dialog style="max-width: 1024px;"
       ${ref((el: Element | undefined) => {
         if (el && this.showToS && el.isConnected) {
           const dialog = el as HTMLDialogElement;
