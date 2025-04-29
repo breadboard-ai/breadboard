@@ -17,6 +17,7 @@ export type EntryInputs = {
   "p-chat": boolean;
   "p-list": boolean;
   "b-system-instruction": LLMContent;
+  "config$ask-user"?: boolean;
 } & Params;
 
 export type DescribeInputs = {
@@ -60,8 +61,11 @@ async function invoke({
   };
 }
 
-async function describe({ inputs: { description } }: DescribeInputs) {
+async function describe({
+  inputs: { description, "config$ask-user": chat },
+}: DescribeInputs) {
   const settings = await readSettings();
+  const chatSchema: BehaviorSchema[] = chat ? ["hint-chat-mode"] : [];
   const experimental =
     ok(settings) && !!settings["Show Experimental Components"];
   const template = new Template(description);
@@ -114,7 +118,7 @@ async function describe({ inputs: { description } }: DescribeInputs) {
         ...extra,
         ...template.schemas(),
       },
-      behavior: ["at-wireable"],
+      behavior: ["at-wireable", ...chatSchema],
       ...template.requireds(),
     } satisfies Schema,
     outputSchema: {

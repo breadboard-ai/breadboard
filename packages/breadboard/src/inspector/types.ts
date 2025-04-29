@@ -601,6 +601,10 @@ export type InspectablePortList = {
    */
   ports: InspectablePort[];
   /**
+   * The behavior list that is on the input schema of a node, not the ports.
+   */
+  behavior?: BehaviorSchema[];
+  /**
    * Returns true if the list of ports is fixed. Returns false if the node
    * expects a dynamic number of ports.
    *

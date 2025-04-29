@@ -295,6 +295,7 @@ function describerResultToPorts(
   const outgoing = node.outgoing();
   const inputs: InspectablePortList = {
     fixed: described.inputSchema?.additionalProperties === false,
+    behavior: described.inputSchema.behavior,
     ports: collectPorts(
       EdgeType.In,
       incoming,
