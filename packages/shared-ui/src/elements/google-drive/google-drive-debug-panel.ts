@@ -15,7 +15,7 @@ import {
   type SigninAdapter,
   signinAdapterContext,
 } from "../../utils/signin-adapter.js";
-import { loadDrivePicker } from "./google-apis.js";
+import { loadDriveApi, loadDrivePicker } from "./google-apis.js";
 import { createRef, ref } from "lit/directives/ref.js";
 
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
@@ -64,6 +64,7 @@ export class GoogleDriveDebugPanel extends LitElement {
     null;
 
   accessor #fileIdInput = createRef<HTMLInputElement>();
+  accessor #emailAddressInput = createRef<HTMLInputElement>();
 
   override update(changes: PropertyValues<this>) {
     super.update(changes);
@@ -115,9 +116,19 @@ export class GoogleDriveDebugPanel extends LitElement {
         ${ref(this.#fileIdInput)}
         placeholder="Comma-delimited Drive file ids"
       ></textarea>
+
       <button @click=${this.#openPickerForSpecificFile}>
         Force pick specific files
       </button>
+
+      <br /><br />
+
+      <textarea
+        ${ref(this.#emailAddressInput)}
+        placeholder="Comma-delimited emails"
+      ></textarea>
+
+      <button @click=${this.#shareFile}>Share file</button>
 
       <br /><br />
 
@@ -273,6 +284,7 @@ export class GoogleDriveDebugPanel extends LitElement {
       if (dialog && iframe) {
         break;
       }
+      console.error("Could not find picker, retrying", { dialog, iframe });
       // TODO(aomarks) Give up after a while in case something went wrong.
       await new Promise((resolve) => requestAnimationFrame(resolve));
     }
@@ -311,6 +323,46 @@ export class GoogleDriveDebugPanel extends LitElement {
 
     document.body.appendChild(underlay);
     document.body.appendChild(overlay);
+  }
+
+  async #shareFile() {
+    const fileId = this.#fileIdInput.value?.value;
+    const emailAddress = this.#emailAddressInput.value?.value;
+    if (!fileId || !emailAddress) {
+      return;
+    }
+    const auth = await this.signinAdapter?.refresh();
+    if (auth?.state !== "valid") {
+      return;
+    }
+    const drive = await loadDriveApi();
+    const { access_token } = auth.grant;
+    const getResponse = await drive.files.get({
+      access_token,
+      fileId,
+      fields: "capabilities,permissions",
+    });
+    const getResult = JSON.parse(getResponse.body) as {
+      capabilities: { canShare: boolean };
+      permissions: {};
+    };
+    if (!getResult.capabilities.canShare) {
+      console.error("User is not allowed to share.");
+      return;
+    }
+    const createResponse = await drive.permissions.create({
+      access_token,
+      fileId,
+      resource: {
+        type: "user",
+        role: "reader",
+        emailAddress,
+      },
+      sendNotificationEmail: true,
+      emailMessage: "Check out my cool project",
+    });
+    const createResult = JSON.parse(createResponse.body);
+    console.log({ createResult });
   }
 
   async #openPickerToUploadAsset() {
