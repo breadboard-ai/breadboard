@@ -255,7 +255,6 @@ export class GoogleDriveDebugPanel extends LitElement {
           underlay.remove();
           picker.dispose();
           resizeObserver?.disconnect();
-          //   observer2?.foo
           if (result.action === "picked") {
             console.log(
               `Google Drive file is now readable: ${JSON.stringify(result)}`
@@ -406,7 +405,7 @@ export class GoogleDrivePickerOverlay extends LitElement {
         min-width: var(--google-drive-picker-width);
         max-width: 600px;
         background: #fff;
-        font-family: "Google Sans", sans-serif;
+        font-family: var(--bb-font-family), sans-serif;
         text-align: center;
       }
       h3 {
