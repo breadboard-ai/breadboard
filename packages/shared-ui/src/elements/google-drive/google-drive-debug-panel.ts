@@ -15,7 +15,11 @@ import {
   type SigninAdapter,
   signinAdapterContext,
 } from "../../utils/signin-adapter.js";
-import { loadDriveApi, loadDrivePicker } from "./google-apis.js";
+import {
+  loadDriveApi,
+  loadDrivePicker,
+  loadDriveShare,
+} from "./google-apis.js";
 import { createRef, ref } from "lit/directives/ref.js";
 
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
@@ -131,6 +135,8 @@ export class GoogleDriveDebugPanel extends LitElement {
       <button @click=${this.#shareFile}>Share file</button>
 
       <br /><br />
+
+      <button @click=${this.#openSharingDialog}>Open sharing dialog</button>
 
       <p>My projects</p>
       <ul>
@@ -398,6 +404,23 @@ export class GoogleDriveDebugPanel extends LitElement {
       })
       .build();
     picker.setVisible(true);
+  }
+
+  async #openSharingDialog() {
+    const fileIds = this.#fileIdInput.value?.value;
+    if (!fileIds) {
+      return;
+    }
+    const driveShare = await loadDriveShare();
+    const auth = await this.signinAdapter?.refresh();
+    if (auth?.state !== "valid") {
+      return;
+    }
+    const client = new driveShare.ShareClient();
+    client.setOAuthToken(auth.grant.access_token);
+    const itemIds = fileIds.split(",");
+    client.setItemIds(itemIds);
+    client.showSettingsDialog();
   }
 }
 
