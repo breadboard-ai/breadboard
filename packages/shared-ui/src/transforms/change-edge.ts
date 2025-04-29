@@ -155,13 +155,13 @@ class ChangeEdge implements EditTransform {
     }
 
     function findFirstContentPort(node: InspectableNode) {
-      return node
-        .currentPorts()
-        .inputs.ports.find(
-          (port) =>
-            port.schema.behavior?.includes("llm-content") &&
-            port.schema.behavior?.includes("config")
-        );
+      return node.currentPorts().inputs.ports.find(
+        (port) =>
+          port.schema.behavior?.includes("llm-content") &&
+          port.schema.behavior?.includes("config") &&
+          // Avoid wiring into system instruction and such.
+          !port.schema.behavior?.includes("hint-advanced")
+      );
     }
 
     function atPortName(edge: Edge) {
