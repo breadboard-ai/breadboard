@@ -402,7 +402,6 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
           &:has(bb-text-editor) {
             min-height: var(--bb-grid-size-5);
-            height: auto;
             align-items: flex-start;
             flex-direction: column;
 
