@@ -11,7 +11,14 @@ export type ChatTool = {
   readonly invoked: boolean;
 };
 
-export { createDoneTool, createKeepChattingTool };
+export { createDoneTool, createKeepChattingTool, createKeepChattingResult };
+
+function createKeepChattingResult() {
+  return {
+    parts: [{ functionCall: { name: "User_Asks_For_More_Work", args: {} } }],
+    role: "model",
+  };
+}
 
 class ChatToolImpl implements ChatTool {
   #invoked = false;
