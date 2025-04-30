@@ -156,26 +156,42 @@ class GenerateText {
       if (doneTool.invoked) {
         return result.last;
       }
-      if (!keepChattingTool.invoked) {
-        contents.push(...result.all);
-      }
-      const inputs: GeminiInputs = {
-        body: { contents, systemInstruction, safetySettings },
-      };
-      if (makeList) {
-        inputs.body.generationConfig = {
-          responseSchema: listSchema(),
-          responseMimeType: "application/json",
-        };
-      }
-      const afterTools = await new GeminiPrompt(inputs).invoke();
-      if (!ok(afterTools)) return afterTools;
-      if (makeList && !this.chat) {
-        const list = toList(afterTools.last);
-        if (!ok(list)) return list;
-        product = list;
+      const invokedSubgraph = prompt.calledCustomTools;
+      if (invokedSubgraph) {
+        if (makeList && !this.chat) {
+          // This case might be unusual (making a list of images directly?),
+          // but handle it for completeness.
+          // TODO: support this case properly. This seems
+          const list = toList(result.last);
+          if (!ok(list)) return list;
+          product = list;
+        } else {
+          // Be careful to return subgraph output (which can be media) as-is
+          // without rewriting/summarizing it with gemini because gemini cannot generate media.
+          product = result.last;
+        }
       } else {
-        product = afterTools.last;
+        if (!keepChattingTool.invoked) {
+          contents.push(...result.all);
+        }
+        const inputs: GeminiInputs = {
+          body: { contents, systemInstruction, safetySettings },
+        };
+        if (makeList) {
+          inputs.body.generationConfig = {
+            responseSchema: listSchema(),
+            responseMimeType: "application/json",
+          };
+        }
+        const afterTools = await new GeminiPrompt(inputs).invoke();
+        if (!ok(afterTools)) return afterTools;
+        if (makeList && !this.chat) {
+          const list = toList(afterTools.last);
+          if (!ok(list)) return list;
+          product = list;
+        } else {
+          product = afterTools.last;
+        }
       }
     } else {
       if (makeList && !this.chat) {
