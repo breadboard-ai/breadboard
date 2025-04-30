@@ -8,6 +8,7 @@ import type { SharedContext } from "./types";
 import {
   createDoneTool,
   createKeepChattingTool,
+  createKeepChattingResult,
   type ChatTool,
 } from "./chat-tools";
 import { createSystemInstruction } from "./system-instruction";
@@ -47,6 +48,7 @@ class GenerateText {
   public description!: LLMContent;
   public context!: LLMContent[];
   public listMode = false;
+  #hasTools = false;
 
   constructor(public readonly sharedContext: SharedContext) {
     this.invoke = this.invoke.bind(this);
@@ -62,10 +64,10 @@ class GenerateText {
       sharedContext.params,
       async ({ path: url, instance }) => toolManager.addTool(url, instance)
     );
-    const hasTools = toolManager.hasTools();
+    this.#hasTools = toolManager.hasTools();
     if (sharedContext.chat) {
       toolManager.addCustomTool(doneTool.name, doneTool.handle());
-      if (!hasTools) {
+      if (!this.#hasTools) {
         toolManager.addCustomTool(
           keepChattingTool.name,
           keepChattingTool.handle()
@@ -87,6 +89,11 @@ class GenerateText {
       this.sharedContext.systemInstruction,
       makeList
     );
+  }
+
+  addKeepChattingResult(context: LLMContent[]) {
+    context.push(createKeepChattingResult());
+    return context;
   }
 
   /**
@@ -115,16 +122,21 @@ class GenerateText {
     const systemInstruction = this.createSystemInstruction(makeList);
     const tools = toolManager.list();
     const inputs: GeminiInputs = { body: { contents, safetySettings } };
-    // We always supply tools when chatting, since we add
-    // the "Done" and "Keep Chatting" tools to figure out when
+    // Unless it's a very first turn, we always supply tools when chatting,
+    // since we add the "Done" and "Keep Chatting" tools to figure out when
     // the conversation ends.
-    if (
-      (this.chat && sharedContext.userInputs.length > 0) ||
-      toolManager.hasTools()
-    ) {
+    // In the first turn, we actually create fake "keep chatting" result,
+    // to help the LLM get into the rhythm. Like, "come on, LLM".
+    const firstTurn = this.firstTurn;
+    const shouldAddTools = (this.chat && !firstTurn) || this.#hasTools;
+    const shouldAddFakeResult = this.chat && firstTurn;
+    if (shouldAddTools) {
       inputs.body.tools = [...tools];
       inputs.body.toolConfig = { functionCallingConfig: { mode: "ANY" } };
     } else {
+      if (shouldAddFakeResult) {
+        this.addKeepChattingResult(contents);
+      }
       inputs.body.systemInstruction = systemInstruction;
     }
     // When we have tools, the first call will not try to make a list,
@@ -176,6 +188,10 @@ class GenerateText {
     }
 
     return product;
+  }
+
+  get firstTurn(): boolean {
+    return this.sharedContext.userInputs.length === 0;
   }
 
   get chat(): boolean {
