@@ -777,11 +777,14 @@ export class UI extends LitElement {
           active: this.sideNavItem === "activity",
         })}
       >
-        ${this.#renderEditHistoryButtons()}
-        ${this.#showEditHistory
-          ? this.#renderEditHistory()
-          : this.#renderActivity()}
+        ${this.#renderActivity()}
       </div>`,
+      html`<bb-edit-history-panel
+        class=${classMap({
+          active: this.sideNavItem === "edit-history",
+        })}
+        .history=${this.history}
+      ></bb-edit-history-panel>`,
     ];
 
     let assetOrganizer: HTMLTemplateResult | symbol = nothing;
@@ -856,6 +859,16 @@ export class UI extends LitElement {
                     Editor
                   </button>`
                 : nothing}
+
+              <button
+                ?disabled=${this.sideNavItem === "edit-history"}
+                @click=${() => {
+                  this.sideNavItem = "edit-history";
+                }}
+                aria-label="Edit History"
+              >
+                <span class="g-icon">history</span>
+              </button>
 
               <button
                 id="share"

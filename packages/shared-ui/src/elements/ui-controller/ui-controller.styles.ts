@@ -666,7 +666,7 @@ export const styles = css`
     }
 
     & #side-nav-content {
-      height: 100%;
+      height: calc(100% - var(--bb-grid-size-11));
 
       & bb-entity-editor {
         position: relative;
