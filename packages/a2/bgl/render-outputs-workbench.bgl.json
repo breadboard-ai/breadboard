@@ -78,12 +78,12 @@
       }
     },
     {
-      "id": "2ca6c59a-caff-4a86-8a0c-7e7efb895198",
+      "id": "fd1c928c-3d6a-4ced-92d6-5a8028e13d42",
       "type": "embed://a2/a2.bgl.json#module:render-outputs",
       "metadata": {
         "title": "Display",
         "visual": {
-          "x": 140,
+          "x": 120,
           "y": -1260
         },
         "userModified": false
@@ -97,26 +97,34 @@
             }
           ]
         },
-        "p-render-mode": "Webpage with auto-layout by 2.5 Pro"
+        "b-system-instruction": {
+          "role": "user",
+          "parts": [
+            {
+              "text": ""
+            }
+          ]
+        },
+        "p-render-mode": "Webpage with auto-layout by 2.5 Flash"
       }
     }
   ],
   "edges": [
     {
       "from": "8469df91-7949-4f85-b5d8-74e4b643c7e5",
-      "to": "2ca6c59a-caff-4a86-8a0c-7e7efb895198",
+      "to": "fd1c928c-3d6a-4ced-92d6-5a8028e13d42",
       "out": "context",
       "in": "p-z-8469df91-7949-4f85-b5d8-74e4b643c7e5"
     },
     {
       "from": "a2-4fee0499",
-      "to": "2ca6c59a-caff-4a86-8a0c-7e7efb895198",
+      "to": "fd1c928c-3d6a-4ced-92d6-5a8028e13d42",
       "out": "context",
       "in": "p-z-a2-4fee0499"
     },
     {
       "from": "3fff96f5-cfdc-4119-8c8c-134609caffa8",
-      "to": "2ca6c59a-caff-4a86-8a0c-7e7efb895198",
+      "to": "fd1c928c-3d6a-4ced-92d6-5a8028e13d42",
       "out": "context",
       "in": "p-z-3fff96f5-cfdc-4119-8c8c-134609caffa8"
     }
@@ -154,7 +162,7 @@
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxNS44MSIKICAgICAgICAgICAgICAgICAgICB5PSI2OS41NiIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iODYuMDMiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI0Ny42NSIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KPHJlY3QgeD0iMTUuODEiCiAgICAgICAgICAgICAgICAgICAgeT0iMTAuMDAiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9Ijg2LjAzIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNTQuMjYiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyMGEyMDIiIC8+CjxyZWN0IHg9IjE1LjgxIgogICAgICAgICAgICAgICAgICAgIHk9IjEzNS43NCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iODYuMDMiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI1NC4yNiIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KPHJlY3QgeD0iMTQ4LjE2IgogICAgICAgICAgICAgICAgICAgIHk9IjY5LjU2IgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI4Ni4wMyIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjMzLjA5IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMmU4YmU4IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxOS4xMiIKICAgICAgICAgICAgICAgICAgICB5PSI2OS41NiIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iODYuMDMiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI0Ny42NSIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KPHJlY3QgeD0iMTkuMTIiCiAgICAgICAgICAgICAgICAgICAgeT0iMTAuMDAiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9Ijg2LjAzIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNTQuMjYiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyMGEyMDIiIC8+CjxyZWN0IHg9IjE5LjEyIgogICAgICAgICAgICAgICAgICAgIHk9IjEzNS43NCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iODYuMDMiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI1NC4yNiIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KPHJlY3QgeD0iMTQ0Ljg1IgogICAgICAgICAgICAgICAgICAgIHk9IjY5LjU2IgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI4Ni4wMyIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjMzLjA5IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMmU4YmU4IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
     }
   }
 }

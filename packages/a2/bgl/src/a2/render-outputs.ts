@@ -3,7 +3,15 @@
  */
 
 import { Template } from "./template";
-import { ok, err, toText, isEmpty, mergeContent, toLLMContent } from "./utils";
+import {
+  ok,
+  err,
+  llm,
+  toText,
+  isEmpty,
+  mergeContent,
+  toLLMContent,
+} from "./utils";
 import { callGenWebpage } from "./html-generator";
 import { fanOutContext, flattenContext } from "./lists";
 
@@ -16,9 +24,14 @@ const AUTO_MODE_LEGACY = "Webpage with auto-layout";
 const FLASH_MODE = "Webpage with auto-layout by 2.5 Flash";
 const PRO_MODE = "Webpage with auto-layout by 2.5 Pro";
 
+function defaultSystemInstruction(): LLMContent {
+  return llm`You are a skilled web developer specializing in creating intuitive and visually appealing HTML web pages based on user instructions and data. Your task is to generate a valid HTML webpage that will be rendered in an iframe. The generated code must be valid and functional HTML with JavaScript and CSS embedded inline within <script> and <style> tags respectively. Return only the code, and open the HTML codeblock with the literal string '\`\`\`html'. Render content as a clean, well-structured webpage, paying careful attention to user instructions. Use a responsive or mobile-friendly layout whenever possible and minimize unnecessary padding or margins.`.asContent();
+}
+
 type InvokeInputs = {
   text?: LLMContent;
   "p-render-mode": string;
+  "b-system-instruction"?: LLMContent;
 };
 
 type DescribeInputs = {
@@ -113,11 +126,16 @@ function themeColorsPrompt(colors: ThemeColors): string {
 async function invoke({
   text,
   "p-render-mode": renderMode,
+  "b-system-instruction": systemInstruction,
   ...params
 }: InvokeInputs) {
   if (!text) {
     text = toLLMContent("");
   }
+  if (!systemInstruction) {
+    systemInstruction = defaultSystemInstruction();
+  }
+  let systemText = toText(systemInstruction);
   const template = new Template(text);
   const substituting = await template.substitute(params, async () => "");
   if (!ok(substituting)) {
@@ -144,14 +162,9 @@ async function invoke({
   console.log("Rendering mode: " + renderMode);
   let out = context;
   if (renderMode != "Manual") {
-    let instruction = `Render content as a mobile webpage.
-${themeColorsPrompt(await getThemeColors())}
-`;
-    instruction +=
-      " Use a responsive or mobile-friendly layout whenever possible and minimize unnecessary padding or margins.";
-    console.log("Generating output based on instruction: ", instruction);
+    systemText += themeColorsPrompt(await getThemeColors());
     const webPage = await callGenWebpage(
-      instruction,
+      systemText,
       [context],
       renderMode,
       modelName
@@ -188,6 +201,12 @@ async function describe({ inputs: { text } }: DescribeInputs) {
           behavior: ["config", "hint-preview"],
           default: MANUAL_MODE,
           description: "Choose how to combine and display the outputs",
+        },
+        "b-system-instruction": {
+          type: "object",
+          behavior: ["llm-content", "config", "hint-advanced"],
+          title: "System Instruction",
+          description: "The system instruction used for auto-layout",
         },
         ...template.schemas(),
       },
