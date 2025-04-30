@@ -29,12 +29,14 @@ type State =
   | { status: "generating" }
   | { status: "error"; error: unknown };
 
-const SUGGESTED_FLOWS = [
+const SAMPLE_INTENTS = [
   "Create a flow that takes a business name and description, searches information about the business, and generates a social media post with an eye-catching picture.",
   "Create a research agent agent that takes a product, performs research on the web, and produces a competitive analysis report about the product.",
   "Create an app that takes a movie description, and generates 3 scene descriptions, along with a storyboard sketch for each scene.",
   "Create a workflow that takes a job description and a potential job candidate and generates a personalized recruitment email for the candidate. Do research about the candidate to personalize the email.",
 ];
+
+const SAMPLE_INTENTS_ROTATION_MS = 3000;
 
 @customElement("bb-flowgen-homepage-panel")
 export class FlowgenHomepagePanel extends LitElement {
@@ -143,11 +145,30 @@ export class FlowgenHomepagePanel extends LitElement {
   @property({ reflect: true, type: Boolean })
   accessor highlighted = false;
 
-  @property()
-  accessor placeholder =
-    SUGGESTED_FLOWS[Math.floor(Math.random() * SUGGESTED_FLOWS.length)];
+  @state()
+  accessor #sampleIntentIndex = Math.floor(
+    Math.random() * SAMPLE_INTENTS.length
+  );
+
+  #rotateSampleIntentTimerId?: ReturnType<typeof setInterval>;
 
   readonly #descriptionInput = createRef<ExpandingTextarea>();
+
+  override connectedCallback() {
+    super.connectedCallback();
+    this.#rotateSampleIntentTimerId = setInterval(
+      () =>
+        (this.#sampleIntentIndex =
+          (this.#sampleIntentIndex + 1) % SAMPLE_INTENTS.length),
+      SAMPLE_INTENTS_ROTATION_MS
+    );
+  }
+
+  override disconnectedCallback() {
+    super.disconnectedCallback();
+    clearInterval(this.#rotateSampleIntentTimerId);
+    this.#rotateSampleIntentTimerId = undefined;
+  }
 
   override render() {
     const errorFeedback = html` <div id="feedback">
@@ -207,7 +228,7 @@ export class FlowgenHomepagePanel extends LitElement {
       <div id="gradient-border-container">
         <bb-expanding-textarea
           ${ref(this.#descriptionInput)}
-          .placeholder=${this.placeholder}
+          .placeholder=${SAMPLE_INTENTS[this.#sampleIntentIndex]}
           .tabCompletesPlaceholder=${true}
           .disabled=${isGenerating}
           @change=${this.#onInputChange}
