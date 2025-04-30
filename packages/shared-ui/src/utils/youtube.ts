@@ -57,3 +57,7 @@ export function videoIdFromWatchOrEmbedUri(uri: string) {
 
   return matches[1];
 }
+
+export function createWatchUriFromVideoId(id: string) {
+  return `https://www.youtube.com/watch?v=${id}`;
+}
