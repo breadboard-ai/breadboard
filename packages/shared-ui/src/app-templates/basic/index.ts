@@ -921,9 +921,7 @@ export class Template extends LitElement implements AppTemplate {
 
         let value: string | LLMContent = input.value;
         if (typeof value === "string") {
-          console.log("Before", value);
           value = maybeConvertToYouTube(input.value);
-          console.log("After", value);
         }
 
         if (typeof value === "string") {
