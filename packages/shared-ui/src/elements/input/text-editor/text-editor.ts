@@ -557,7 +557,13 @@ export class TextEditor extends LitElement {
       ""
     );
     this.#value = escapeHTMLEntities(value);
-    this.dispatchEvent(new InputEvent("input"));
+    this.dispatchEvent(
+      new InputEvent("input", {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+      })
+    );
   }
 
   #togglePlaceholder(forcedValue?: boolean) {
