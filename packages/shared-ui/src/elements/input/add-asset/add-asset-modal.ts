@@ -274,7 +274,7 @@ export class AddAssetModal extends LitElement {
         assetCollector = html`<input
           type="file"
           required
-          accept="image/*,audio/*,text/plain"
+          accept="image/*,audio/*,text/plain,application/pdf,text/csv"
         />`;
         break;
 
