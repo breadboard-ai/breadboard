@@ -69,6 +69,7 @@ export class AssetShelf extends LitElement {
             20px no-repeat;
         }
 
+        & .movie,
         & .csv,
         & .pdf {
           display: flex;
@@ -159,6 +160,10 @@ export class AssetShelf extends LitElement {
             </div>`;
           } else if (part.inlineData.mimeType.startsWith("text")) {
             value = html`<div class="text"></div>`;
+          } else if (part.inlineData.mimeType.startsWith("video")) {
+            value = html`<div class="movie">
+              <span class="g-icon">movie</span>
+            </div>`;
           } else if (part.inlineData.mimeType.includes("pdf")) {
             value = html`<div class="pdf">
               <span class="g-icon">drive_pdf</span>
