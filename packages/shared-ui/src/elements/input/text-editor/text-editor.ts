@@ -203,8 +203,14 @@ export class TextEditor extends LitElement {
     this.#lastRange = this.#getCurrentRange();
   }
 
+  #isRangeValid(range: Range) {
+    return (
+      this.#editorRef.value?.contains(range.commonAncestorContainer) ?? false
+    );
+  }
+
   restoreLastRange(offsetLastChar = true) {
-    if (!this.#lastRange) {
+    if (!this.#lastRange || !this.#isRangeValid(this.#lastRange)) {
       return;
     }
 
@@ -223,7 +229,13 @@ export class TextEditor extends LitElement {
     }
 
     selection.removeAllRanges();
-    selection.addRange(this.#lastRange);
+    try {
+      console.log(this.#isRangeValid(this.#lastRange));
+      selection.addRange(this.#lastRange);
+    } catch (err) {
+      console.log(11111);
+      console.log(err);
+    }
   }
 
   addItem(

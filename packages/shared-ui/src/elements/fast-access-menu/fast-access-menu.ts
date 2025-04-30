@@ -263,7 +263,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
   disconnectedCallback(): void {
     super.disconnectedCallback();
 
-    window.addEventListener("keydown", this.#onEscapeOrBackspaceBound, {
+    window.removeEventListener("keydown", this.#onEscapeOrBackspaceBound, {
       capture: true,
     });
     window.removeEventListener("keydown", this.#onKeyDownBound);
