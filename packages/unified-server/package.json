@@ -181,7 +181,7 @@
     "@google-labs/breadboard": "0.33.0",
     "@lit/context": "^1.1.4",
     "express": "^4.21.2",
-    "vite": "^6.2.6",
+    "vite": "^6.2.7",
     "vite-express": "^0.20.0"
   }
 }
