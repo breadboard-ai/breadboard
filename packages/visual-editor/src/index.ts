@@ -104,7 +104,7 @@ import { createA2Server } from "@breadboard-ai/a2";
 import { envFromSettings } from "./utils/env-from-settings";
 import { getGoogleDriveBoardService } from "@breadboard-ai/board-server-management";
 
-import {unsafeHTML} from 'lit/directives/unsafe-html.js';
+import { unsafeHTML } from "lit/directives/unsafe-html.js";
 
 const STORAGE_PREFIX = "bb-main";
 const LOADING_TIMEOUT = 250;
@@ -446,7 +446,10 @@ export class Main extends LitElement {
   constructor(config: MainArguments) {
     super();
 
-    this.showToS = !!config.enableTos && !!config.tosHtml && localStorage.getItem(TOS_KEY) !== TosStatus.ACCEPTED;
+    this.showToS =
+      !!config.enableTos &&
+      !!config.tosHtml &&
+      localStorage.getItem(TOS_KEY) !== TosStatus.ACCEPTED;
     this.#tosHtml = config.tosHtml;
 
     // This is a big hacky, since we're assigning a value to a constant object,
@@ -4384,7 +4387,7 @@ export class Main extends LitElement {
 
   createTosDialog() {
     const tosTitle = Strings.from("TOS_TITLE");
-    return html`<dialog style="max-width: 1024px;"
+    return html`<dialog id="tos-dialog"
       ${ref((el: Element | undefined) => {
         if (el && this.showToS && el.isConnected) {
           const dialog = el as HTMLDialogElement;
@@ -4392,24 +4395,21 @@ export class Main extends LitElement {
             dialog.showModal();
           }
         }
-        
       })}>
-      <p></p>
       <form method="dialog">
         <div>
-        <h2>${tosTitle}</h2>
+         <p class="heading">${tosTitle}</p>
         </div>
-        <div>
+        <div class="tos-content">
           ${unsafeHTML(this.#tosHtml)}
-        <div>
+        <div class="button-section">
           <button @click=${() => {
             this.showToS = false;
             localStorage.setItem(TOS_KEY, TosStatus.ACCEPTED);
-          }}>Accept</button>
+          }}>Continue</button>
         </div>
       </form>
     </dialog>`;
-
   }
 }
 

@@ -212,6 +212,55 @@ export const styles = css`
     height: 100%;
   }
 
+  #tos-dialog {
+    max-width: 640px;
+    border-radius: var(--bb-grid-size-4);
+    padding: var(--bb-grid-size-5);
+    border: none;
+
+    form {
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+      width: 100%;
+      margin: auto;
+    }
+
+    .heading {
+      margin-top: 0;
+      padding-bottom: var(--bb-grid-size-3);
+      border-bottom: 2px solid #eee;
+    }
+
+    .tos-content {
+      flex-grow: 1;
+      overflow-y: auto;
+      max-height: 300px;
+    }
+
+    .consent-section {
+      margin-top: 20px;
+      border-top: 2px solid #eee;
+      padding-top: var(--bb-grid-size-4);
+      padding-right: var(--bb-grid-size-2);
+    }
+
+    .button-section {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    button {
+      padding: var(--bb-grid-size-2);
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background-color: var(--bb-ui-600);
+      color: white;
+
+    }
+  }
+
   #header-bar {
     display: flex;
     align-items: center;
