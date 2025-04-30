@@ -39,12 +39,6 @@ import {
 
 const ASPECT_RATIOS = ["9:16", "16:9"];
 const OUTPUT_NAME = "generated_video";
-const SUPPORTED_IMAGE_MIMETYPES = [
-  "image/png",
-  "image/jpeg",
-  "image/jpg",
-  "image/webp",
-];
 
 type VideoGeneratorInputs = {
   context: LLMContent[];
@@ -94,11 +88,6 @@ async function callVideoGen(
     }
     if (!imageChunk || typeof imageChunk == "string") {
       return toLLMContent("Image content did not have expected format");
-    }
-    if (!SUPPORTED_IMAGE_MIMETYPES.includes(imageChunk.mimeType)) {
-      return toLLMContent(
-        "Image inputs must be: " + SUPPORTED_IMAGE_MIMETYPES.join(",")
-      );
     }
     executionInputs["reference_image"] = {
       chunks: [
