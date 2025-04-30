@@ -19,79 +19,96 @@ import {
   isWatchUri,
   videoIdFromWatchOrEmbedUri,
 } from "../../../utils/youtube";
+import { icons } from "../../../styles/icons.js";
 
 @customElement("bb-asset-shelf")
 export class AssetShelf extends LitElement {
   @property()
   accessor name: string = "asset-shelf";
 
-  static styles = css`
-    :host {
-      display: flex;
-      overflow-x: scroll;
-      overflow-y: hidden;
-      scrollbar-width: none;
-    }
-
-    .value {
-      display: block;
-      height: 72px;
-      aspect-ratio: 16/9;
-      margin: var(--bb-grid-size-2) var(--bb-grid-size-2) 0 0;
-      position: relative;
-      flex: 0 0 auto;
-
-      & :not(button) {
-        object-fit: cover;
-        width: 100%;
-        height: 100%;
-        border-radius: var(--bb-grid-size-2);
+  static styles = [
+    icons,
+    css`
+      :host {
+        display: flex;
+        overflow-x: scroll;
+        overflow-y: hidden;
+        scrollbar-width: none;
       }
 
-      & .text,
-      & .audio,
-      & .gdrive {
-        border: 1px solid var(--primary-color, var(--bb-neutral-300));
-      }
+      .value {
+        display: block;
+        height: 72px;
+        aspect-ratio: 16/9;
+        margin: var(--bb-grid-size-2) var(--bb-grid-size-2) 0 0;
+        position: relative;
+        flex: 0 0 auto;
 
-      & .audio {
-        background: var(--bb-icon-mic)
-          var(--background-color, var(--bb-neutral-0)) center center / 20px 20px
-          no-repeat;
-      }
+        & > *:not(button) {
+          object-fit: cover;
+          width: 100%;
+          height: 100%;
+          border-radius: var(--bb-grid-size-2);
+        }
 
-      & .text {
-        background: var(--bb-icon-text)
-          var(--background-color, var(--bb-neutral-0)) center center / 20px 20px
-          no-repeat;
-      }
+        & .text,
+        & .audio,
+        & .gdrive {
+          border: 1px solid var(--primary-color, var(--bb-neutral-300));
+        }
 
-      & .gdrive {
-        background: var(--bb-icon-google-drive-outline)
-          var(--background-color, var(--bb-neutral-0)) center center / 20px 20px
-          no-repeat;
-      }
+        & .audio {
+          background: var(--bb-icon-mic)
+            var(--background-color, var(--bb-neutral-0)) center center / 20px
+            20px no-repeat;
+        }
 
-      & .delete {
-        position: absolute;
-        top: calc(-1 * var(--bb-grid-size-2));
-        right: calc(-1 * var(--bb-grid-size-2));
-        width: 20px;
-        height: 20px;
-        border: none;
-        border-radius: 50%;
-        font-size: 0;
-        background: var(--secondary-color) var(--bb-icon-close) center center /
-          20px 20px no-repeat;
-        z-index: 1;
+        & .text {
+          background: var(--bb-icon-text)
+            var(--background-color, var(--bb-neutral-0)) center center / 20px
+            20px no-repeat;
+        }
 
-        &:not([disabled]) {
-          opacity: 1;
-          cursor: pointer;
+        & .csv,
+        & .pdf {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--primary-color, var(--bb-neutral-300));
+          background: var(--background-color, var(--bb-neutral-0));
+
+          & .g-icon {
+            font-size: var(--bb-grid-size-11);
+          }
+        }
+
+        & .gdrive {
+          background: var(--bb-icon-google-drive-outline)
+            var(--background-color, var(--bb-neutral-0)) center center / 20px
+            20px no-repeat;
+        }
+
+        & .delete {
+          position: absolute;
+          top: calc(-1 * var(--bb-grid-size-2));
+          right: calc(-1 * var(--bb-grid-size-2));
+          width: 20px;
+          height: 20px;
+          border: none;
+          border-radius: 50%;
+          font-size: 0;
+          background: var(--secondary-color) var(--bb-icon-close) center
+            center / 20px 20px no-repeat;
+          z-index: 1;
+
+          &:not([disabled]) {
+            opacity: 1;
+            cursor: pointer;
+          }
         }
       }
-    }
-  `;
+    `,
+  ];
 
   #assets: LLMContent[] = [];
 
@@ -134,12 +151,18 @@ export class AssetShelf extends LitElement {
               src="data:${part.inlineData.mimeType};base64,${part.inlineData
                 .data}"
             />`;
-          }
-          if (part.inlineData.mimeType.startsWith("audio")) {
+          } else if (part.inlineData.mimeType.startsWith("audio")) {
             value = html`<div class="audio"></div>`;
-          }
-          if (part.inlineData.mimeType.startsWith("text")) {
+          } else if (part.inlineData.mimeType === "text/csv") {
+            value = html`<div class="csv">
+              <span class="g-icon">csv</span>
+            </div>`;
+          } else if (part.inlineData.mimeType.startsWith("text")) {
             value = html`<div class="text"></div>`;
+          } else if (part.inlineData.mimeType.includes("pdf")) {
+            value = html`<div class="pdf">
+              <span class="g-icon">drive_pdf</span>
+            </div>`;
           }
         } else if (isFileDataCapabilityPart(part)) {
           switch (part.fileData.mimeType) {
