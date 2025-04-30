@@ -47,6 +47,7 @@ import {
 import { SIGN_IN_CONNECTION_ID } from "../../../utils/signin-adapter.js";
 
 const PCM_AUDIO = "audio/l16;codec=pcm;rate=24000";
+const SANDBOX_RESTRICTIONS = "allow-scripts allow-forms";
 
 @customElement("bb-llm-output")
 export class LLMOutput extends LitElement {
@@ -584,6 +585,7 @@ export class LLMOutput extends LitElement {
                     srcdoc="${part.inlineData.data}"
                     frameborder="0"
                     class="html-view"
+                    sandbox="${SANDBOX_RESTRICTIONS}"
                   ></iframe>`
                 );
               }
@@ -689,6 +691,7 @@ export class LLMOutput extends LitElement {
                     srcdoc="${until(getData())}"
                     frameborder="0"
                     class="html-view"
+                    sandbox="${SANDBOX_RESTRICTIONS}"
                   ></iframe>`;
                 } else {
                   // prettier-ignore
