@@ -44,7 +44,7 @@ export class Toast extends LitElement {
       padding: var(--bb-grid-size-3) var(--bb-grid-size-5) var(--bb-grid-size-3)
         var(--bb-grid-size-10);
 
-      translate: 0 calc(var(--offset) * var(--bb-grid-size) * -8);
+      translate: 0 calc(var(--offset) * var(--bb-grid-size-16) * -1);
       transition: translate 0.2s cubic-bezier(0, 0, 0.3, 1);
       animation: slideIn 0.15s cubic-bezier(0, 0, 0.3, 1) forwards;
       max-width: min(360px, 80vw);
