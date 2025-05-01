@@ -109,6 +109,7 @@ export class ExpandingTextarea extends LitElement {
         /* Not sure why, but we need this small adjustment to make the #measure
            div consistently align with the textarea. */
         margin-right: 2px;
+        white-space: pre-wrap;
       }
       #measure::after {
         /* Unlike our <textarea>, our measurement <div> won't claim height for
@@ -145,7 +146,7 @@ export class ExpandingTextarea extends LitElement {
   }
 
   override updated(changes: PropertyValues<this>) {
-    if (changes.has("value")) {
+    if (changes.has("value") || changes.has("placeholder")) {
       this.updateComplete.then(() => this.#recomputeHeight());
     }
   }
