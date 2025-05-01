@@ -342,8 +342,18 @@ export class Template extends LitElement implements AppTemplate {
               }
             }
 
+            #progress-container {
+              flex: 1 1 auto;
+              margin: 0 var(--bb-grid-size-2);
+              height: 100%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+
             #progress {
-              width: 100px;
+              width: 100%;
+              max-width: 320px;
               height: 4px;
               background: var(--secondary-color);
               border-radius: var(--bb-grid-size-16);
@@ -378,9 +388,13 @@ export class Template extends LitElement implements AppTemplate {
               }
 
               &#share {
-                opacity: 0;
-                pointer-events: none;
+                display: none;
                 background: var(--bb-icon-share) center center / 20px 20px
+                  no-repeat;
+              }
+
+              &#restart {
+                background: var(--bb-icon-replay) center center / 20px 20px
                   no-repeat;
               }
 
@@ -705,8 +719,8 @@ export class Template extends LitElement implements AppTemplate {
           & #content {
             & #controls {
               & button#share {
-                opacity: 1;
-                pointer-events: auto;
+                display: block;
+                margin-left: var(--bb-grid-size-2);
               }
             }
           }
@@ -741,10 +755,18 @@ export class Template extends LitElement implements AppTemplate {
       >
         Back
       </button>
-      <div
-        id="progress"
-        style=${styleMap({ "--percentage": percentage.toFixed(2) })}
-      ></div>
+      <div id="progress-container">
+        <div
+          id="progress"
+          style=${styleMap({ "--percentage": percentage.toFixed(2) })}
+        ></div>
+      </div>
+      <button
+        id="restart"
+        @click=${() => {
+          this.dispatchEvent(new StopEvent(true));
+        }}
+      ></button>
       ${showShare
         ? html`<button
             id="share"
@@ -757,7 +779,7 @@ export class Template extends LitElement implements AppTemplate {
           >
             Share
           </button>`
-        : html`<div id="share"></div>`}
+        : nothing}
       <div
         id="older-data"
         class=${classMap({
