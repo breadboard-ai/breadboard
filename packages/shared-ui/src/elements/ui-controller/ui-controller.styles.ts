@@ -624,6 +624,7 @@ export const styles = css`
         display: flex;
         align-items: flex-start;
         cursor: pointer;
+        white-space: nowrap;
 
         &[disabled] {
           color: var(--bb-neutral-900);
