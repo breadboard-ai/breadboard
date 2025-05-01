@@ -312,16 +312,6 @@ export class ModuleEditor extends LitElement {
       font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
         var(--bb-font-family);
     }
-
-    bb-command-palette {
-      position: absolute;
-      top: calc(var(--bb-grid-size-2) + 44px);
-      left: 50%;
-      width: 75%;
-      max-width: 650px;
-      transform: translateX(-50%);
-      z-index: 6;
-    }
   `;
 
   #moduleRibbonMenuRef: Ref<ModuleRibbonMenu> = createRef();
