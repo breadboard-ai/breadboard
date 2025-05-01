@@ -618,10 +618,11 @@ export class Template extends LitElement implements AppTemplate {
                   & p {
                     display: flex;
                     align-items: flex-end;
-                    font: 400 var(--bb-title-medium) /
-                      var(--bb-title-line-height-medium) var(--bb-font-family);
+                    font: 500 var(--bb-title-small) /
+                      var(--bb-title-line-height-small) var(--bb-font-family);
                     margin: 0 0 var(--bb-grid-size-3) 0;
                     flex: 1;
+                    opacity: 0.8;
 
                     &.api-message {
                       font: 400 var(--bb-body-x-small) /
