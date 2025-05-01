@@ -1,5 +1,148 @@
 # @breadboard-ai/a2
 
+## 0.4.0
+
+### Minor Changes
+
+- 228d3c4: Start showing parameters in various UI surfaces.
+- 470e548: Start landing connector infrastructure.
+- 81d2666: Land early (mostly stubs) listification bits.
+- ac39a64: Make "chat mode" work with and without tools.
+- 26fdb89: Add support for tools in connectors.
+- 8537c16: Teach "Ask User" to display multi-modal content rather than just
+  text.
+- 013d624: Make "Generate Text" work across lists/chat/tool modes.
+- e76a576: Save TypeScript sources of modules as separate files.
+- 394daae: Improve summarizer/organizer for GOAL.
+- 9d75ab2: [a2] Switch tools to use the new backend API.
+- 01eb8d8: Teach GOAL to think in lists
+- e21ee39: Implement autonaming behind flag.
+- 8abad23: Move System Instruction out of experimental.
+- 0810b47: Teach connectors to be editable with `bb-entity-editor`.
+- b393b0d: Introduce the NotebookLM connector.
+- fedacbd: Expose `/env/settings/general` to module file system and use it to
+  hide experimental bits.
+- 856c387: Introduce "Generate" step.
+- 2484861: Add support for connector previews.
+- e7abb8a: Add support for reactive ports.
+- a63fb1e: Switch Gemini API calls to use OAuth in A2.
+- af10dc4: Introduce parameters infrastructure.
+- a2d4ee5: Introduce `hint-chat-mode` behavior.
+- 9a078bd: Teach various steps about lists.
+- 3dab17c: Introduce Google Drive connector (WIP)
+- 8cffe63: More progress on listification.
+- 11a6c4a: Switch to use opaque `generation-mode` in Generate step.
+- e1a1696: Disallow nested lists for now.
+- f337039: Update Generation Mode titles to match the underlying models.
+- fd23454: Introduce embedded board server and use it for A2 server.
+- 7e17fe2: Teach Gemini API to flatten list if it seem them, and add tests.
+- c4d29c0: Teach listification to "Make Text" and GOAL.
+- 2c27b5f: Update generate step to have Juno and Gemini Image out
+- 4f0b23e: Various improvements to "Think as I go" strategy.
+- 0c6ad80: Plumb Graph metadata as `/env/metadata` and teach "Render Outputs" to
+  use it to pick theme colors.
+- 3128d36: Rename "Render Outputs" to "Display" and update icons.
+- a53adf0: Add support for system instruction in "Generate Text"
+- bea10c4: Add an example with multiple steps.
+- 763063b: Implement instance-aware saving and slides/sheets load support for
+  Google Drive connector.
+- 34e24f0: Implement MCP connector.
+- 99a5d95: Teach fetch to handle streams and files.
+- e307f33: Clean up sideboards and switch Autoname to use embedded A2.
+- 06aafd9: Switch theme creator sideboard to use embedded A2.
+- eba969c: Teach parameters to work in subgraphs.
+- 8ce093a: Add "Create New Document" to Google Drive file picker and many other
+  fixes.
+- ff4864a: Teach Drive Connector to use Drive Picker.
+- e0aefd1: Add a workbench to exercise GOAL and memory.
+- da380d1: Teach params about modalities and sample values.
+- f7bb416: Add support for images when saving to Google Drive.
+- fea9351: Remove circular dependency.
+- 10c7441: Introduce support for rich enum metadata.
+- a6a0533: Start using the new "Generate Text".
+- 99dd67b: Further separate Imagent and Gemini Image steps
+- c8876ee: Polish parameters a bit.
+- 9f87f37: First complete rev of Connector machinery.
+- 8feb690: Bring "chat with user" back.
+- 6c846f0: Remove "Self-critique" option for now (it didn't do anything anyway)
+- 1838960: Add a new (not yet used) Generate Text backing node (will replace
+  "text" in Generate step)
+- 62d04cd: Remap "Generate" icons at source level
+
+### Patch Changes
+
+- c61a5d3: Teach "generate" to actually be at-wireable and connectable.
+- 3823d5e: Bring back tools
+- 30578bc: Use fewer words in "Ask user"
+- 3de4459: Various "Chat with user" fixes.
+- 53f53b0: Various fixes to "Ask User" and "Change Edge".
+- 49ac76c: Teach "Ask User" to be at-wireable.
+- f11621f: Add `asType` flag for describers.
+- 01d42eb: Adjust tool URLs in push.
+- 398ac99: Ensure absolute blob paths are converted to FileData in Gemini API
+- 42f34b8: Align A2 configurations
+- 63ab291: Add a README
+- c575292: Add module-making experiment
+- 913bc45: Minor logging, documentation, and error handling cleanups
+- dce4fe8: Update port forwarding mapping to account for "image-gen".
+- 4e4efc6: Handle empty executionOutputs
+- a8fafd0: Styling tweaks for Activity panel.
+- 08972a2: Remove old code in generate text.
+- b39bc95: Filter out non-A2 connectors and remove "experimental" flag from
+  "Generate"
+- 669b6f6: Fix the issue where the chat exits early.
+- 0996277: Teach StructuredResponse about more than 3 parts.
+- 053ccbd: Unbreak "Make Text" when used with tools.
+- ec25bbe: Clear pending result in LocalRunner after resuming
+- ee084e8: A bunch of fixs to bring app view back up again.
+- 06f21e1: Update node selection shelf
+- dc544cc: Update tools to work with the newly added `asType` argument.
+- f11621f: Update the order of portt maps to match the list of options.
+- Updated dependencies [470e548]
+- Updated dependencies [81d2666]
+- Updated dependencies [26fdb89]
+- Updated dependencies [9d75ab2]
+- Updated dependencies [e21ee39]
+- Updated dependencies [66a01e0]
+- Updated dependencies [fedacbd]
+- Updated dependencies [856c387]
+- Updated dependencies [0c0a419]
+- Updated dependencies [e7abb8a]
+- Updated dependencies [f11621f]
+- Updated dependencies [a63fb1e]
+- Updated dependencies [af10dc4]
+- Updated dependencies [a2d4ee5]
+- Updated dependencies [97be783]
+- Updated dependencies [2eee8da]
+- Updated dependencies [a564054]
+- Updated dependencies [fd23454]
+- Updated dependencies [9203afc]
+- Updated dependencies [7e17fe2]
+- Updated dependencies [0e6f849]
+- Updated dependencies [2074b64]
+- Updated dependencies [0c6ad80]
+- Updated dependencies [a53adf0]
+- Updated dependencies [da0a7a2]
+- Updated dependencies [410bc4e]
+- Updated dependencies [34e24f0]
+- Updated dependencies [ae68b4d]
+- Updated dependencies [99a5d95]
+- Updated dependencies [eba969c]
+- Updated dependencies [b9681e9]
+- Updated dependencies [8ce093a]
+- Updated dependencies [da380d1]
+- Updated dependencies [7b67a8c]
+- Updated dependencies [f7bb416]
+- Updated dependencies [0d0953e]
+- Updated dependencies [10c7441]
+- Updated dependencies [ec25bbe]
+- Updated dependencies [c8876ee]
+- Updated dependencies [9f87f37]
+- Updated dependencies [e58b680]
+- Updated dependencies [eef58fa]
+  - @google-labs/breadboard@0.34.0
+  - @breadboard-ai/embedded-board-server@0.1.0
+
 ## 0.3.0
 
 ### Minor Changes

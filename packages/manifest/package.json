@@ -1,8 +1,8 @@
 {
   "author": "Google Labs Team",
   "dependencies": {
-    "@google-labs/breadboard": "^0.33.0",
-    "@google-labs/breadboard-schema": "^1.13.0"
+    "@google-labs/breadboard": "^0.34.0",
+    "@google-labs/breadboard-schema": "^1.14.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
@@ -46,7 +46,7 @@
     "validate": "wireit"
   },
   "type": "module",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "wireit": {
     "build": {
       "dependencies": [

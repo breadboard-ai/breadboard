@@ -1,5 +1,5 @@
 {
-	"$id": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@breadboard-ai/manifest@0.9.0/packages/manifest/bbm.schema.json",
+	"$id": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@breadboard-ai/manifest@0.10.0/packages/manifest/bbm.schema.json",
 	"$ref": "#/definitions/BreadboardManifest",
 	"$schema": "http://json-schema.org/draft-07/schema#",
 	"definitions": {
@@ -107,7 +107,7 @@
 			"type": "string"
 		},
 		"Board": {
-			"$ref": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.13.0/packages/schema/breadboard.schema.json#/definitions/GraphDescriptor",
+			"$ref": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.14.0/packages/schema/breadboard.schema.json#/definitions/GraphDescriptor",
 			"description": "A reference to the BGL schema GraphDescriptor type.",
 			"type": "object"
 		},

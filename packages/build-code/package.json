@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/build-code",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Convert TypeScript functions to Breadboard runJavascript components",
   "license": "Apache-2.0",
   "author": "Google LLC",
@@ -102,8 +102,8 @@
     }
   },
   "dependencies": {
-    "@breadboard-ai/build": "0.12.1",
-    "@google-labs/core-kit": "^0.18.1",
+    "@breadboard-ai/build": "0.12.2",
+    "@google-labs/core-kit": "^0.19.0",
     "@types/node": "^22.0.0",
     "esbuild": "^0.25.2",
     "json-schema": "^0.4.0",
@@ -112,7 +112,7 @@
     "typescript-json-schema": "^0.65.1"
   },
   "devDependencies": {
-    "@google-labs/breadboard": "^0.33.0",
+    "@google-labs/breadboard": "^0.34.0",
     "eslint": "^8.57.1",
     "typescript": "^5.8.2",
     "wireit": "^0.15.0-pre.2"

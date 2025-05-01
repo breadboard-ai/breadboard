@@ -1,5 +1,5 @@
 {
-	"$id": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.13.0/packages/schema/breadboard.schema.json",
+	"$id": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.14.0/packages/schema/breadboard.schema.json",
 	"$schema": "http://json-schema.org/draft-07/schema#",
 	"$ref": "#/definitions/GraphDescriptor",
 	"definitions": {

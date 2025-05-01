@@ -1,5 +1,23 @@
 # @breadboard-ai/google-drive-kit
 
+## 0.6.0
+
+### Minor Changes
+
+- 3dab17c: Introduce Google Drive connector (WIP)
+- f7bb416: Add support for images when saving to Google Drive.
+
+### Patch Changes
+
+- a84201a: Various Fixes including GAPI client instantiation, default connection
+  id change, and edge comparison.
+- Updated dependencies [470e548]
+- Updated dependencies [34e24f0]
+- Updated dependencies [99a5d95]
+  - @google-labs/core-kit@0.19.0
+  - @breadboard-ai/build@0.12.2
+  - @google-labs/template-kit@0.3.19
+
 ## 0.5.1
 
 ### Patch Changes

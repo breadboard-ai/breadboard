@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/jsandbox",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Breadboard Javascript Sandbox",
   "main": "./dist/src/index.js",
   "exports": {
@@ -117,7 +117,7 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
-    "@breadboard-ai/types": "0.6.0",
+    "@breadboard-ai/types": "0.7.0",
     "@google-labs/tsconfig": "^0.0.1",
     "@types/node": "^22.0.0",
     "eslint": "^8.57.1",

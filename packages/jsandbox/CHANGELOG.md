@@ -1,5 +1,25 @@
 # @breadboard-ai/jsandbox
 
+## 0.6.0
+
+### Minor Changes
+
+- 470e548: Start landing connector infrastructure.
+- 81d2666: Land early (mostly stubs) listification bits.
+- 856c387: Introduce "Generate" step.
+- e7abb8a: Add support for reactive ports.
+- f11621f: Add `asType` flag for describers.
+- a2d4ee5: Introduce `hint-chat-mode` behavior.
+- 8cffe63: More progress on listification.
+- a53adf0: Add support for system instruction in "Generate Text"
+- 99a5d95: Teach fetch to handle streams and files.
+- f7bb416: Add support for images when saving to Google Drive.
+- 10c7441: Introduce support for rich enum metadata.
+
+### Patch Changes
+
+- 0e6f849: Add a bit more robust error handling around capabilities.
+
 ## 0.5.0
 
 ### Minor Changes

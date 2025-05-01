@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/filesystem-board-server",
-  "version": "1.20.1",
+  "version": "1.21.0",
   "description": "File System Board Server for Breadboard",
   "main": "./dist/index.js",
   "exports": {
@@ -82,10 +82,10 @@
     "vitest": "^3.1.1"
   },
   "dependencies": {
-    "@breadboard-ai/build": "0.12.1",
-    "@breadboard-ai/data-store": "0.3.2",
-    "@breadboard-ai/types": "0.6.0",
-    "@google-labs/breadboard": "^0.33.0",
-    "@google-labs/breadboard-schema": "^1.13.0"
+    "@breadboard-ai/build": "0.12.2",
+    "@breadboard-ai/data-store": "0.3.3",
+    "@breadboard-ai/types": "0.7.0",
+    "@google-labs/breadboard": "^0.34.0",
+    "@google-labs/breadboard-schema": "^1.14.0"
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/embedded-board-server",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Embedded Board Server for Breadboard",
   "main": "./dist/index.js",
   "exports": {
@@ -69,6 +69,6 @@
     "typescript": "^5.8.2"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.33.0"
+    "@google-labs/breadboard": "^0.34.0"
   }
 }

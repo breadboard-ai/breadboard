@@ -73,10 +73,10 @@
     "firebase-functions": "^6.3.2"
   },
   "devDependencies": {
-    "@google-labs/breadboard": "^0.33.0",
-    "@google-labs/core-kit": "^0.18.1",
-    "@google-labs/palm-kit": "^0.1.10",
-    "@google-labs/template-kit": "^0.3.18",
+    "@google-labs/breadboard": "^0.34.0",
+    "@google-labs/core-kit": "^0.19.0",
+    "@google-labs/palm-kit": "^0.1.11",
+    "@google-labs/template-kit": "^0.3.19",
     "@rollup/plugin-commonjs": "^28.0.3",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.1",

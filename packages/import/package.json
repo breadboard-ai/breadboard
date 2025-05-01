@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/import",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "description": "The OpenAPI import library for Breadboard",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
@@ -52,7 +52,7 @@
   "dependencies": {
     "openapi-types": "^12.1.3",
     "yaml": "^2.7.0",
-    "@google-labs/breadboard": "^0.33.0"
+    "@google-labs/breadboard": "^0.34.0"
   },
   "wireit": {
     "build": {
