@@ -419,6 +419,7 @@ export const styles = css`
     margin-bottom: 2px;
     color: var(--bb-neutral-700);
     white-space: nowrap;
+    margin-right: var(--bb-grid-size-2);
   }
 
   .save-status {
