@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/a2",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Breadboard Components for building AI systems",
   "main": "./dist/src/index.js",
   "type": "module",
@@ -64,7 +64,7 @@
     "typescript": "^5.8.2"
   },
   "dependencies": {
-    "@breadboard-ai/embedded-board-server": "0.0.1",
-    "@google-labs/breadboard": "^0.33.0"
+    "@breadboard-ai/embedded-board-server": "0.1.0",
+    "@google-labs/breadboard": "^0.34.0"
   }
 }

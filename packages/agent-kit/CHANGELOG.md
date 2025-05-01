@@ -1,5 +1,32 @@
 # @google-labs/agent-kit
 
+## 0.18.0
+
+### Minor Changes
+
+- 856c387: Introduce "Generate" step.
+- e7abb8a: Add support for reactive ports.
+- a2d4ee5: Introduce `hint-chat-mode` behavior.
+- a53adf0: Add support for system instruction in "Generate Text"
+- 10c7441: Introduce support for rich enum metadata.
+
+### Patch Changes
+
+- Updated dependencies [228d3c4]
+- Updated dependencies [470e548]
+- Updated dependencies [81d2666]
+- Updated dependencies [26fdb89]
+- Updated dependencies [8cffe63]
+- Updated dependencies [7c6388f]
+- Updated dependencies [34e24f0]
+- Updated dependencies [da380d1]
+- Updated dependencies [7b67a8c]
+- Updated dependencies [27b9c34]
+- Updated dependencies [9f87f37]
+- Updated dependencies [eef58fa]
+  - @breadboard-ai/types@0.7.0
+  - @breadboard-ai/build@0.12.2
+
 ## 0.17.0
 
 ### Minor Changes

@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "0.3.16",
+  "version": "0.3.17",
   "description": "A Breadboard Kit containing nodes that facilitate wrangling JSON objects",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
@@ -98,8 +98,8 @@
     "typescript": "^5.8.2"
   },
   "dependencies": {
-    "@breadboard-ai/build": "0.12.1",
-    "@google-labs/breadboard": "^0.33.0",
+    "@breadboard-ai/build": "0.12.2",
+    "@google-labs/breadboard": "^0.34.0",
     "@rgrove/parse-xml": "^4.2.0",
     "@types/json-schema": "^7.0.15",
     "ajv": "^8.17.1",

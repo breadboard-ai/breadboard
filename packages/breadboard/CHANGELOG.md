@@ -1,5 +1,81 @@
 # Changelog
 
+## 0.34.0
+
+### Minor Changes
+
+- 470e548: Start landing connector infrastructure.
+- 81d2666: Land early (mostly stubs) listification bits.
+- 26fdb89: Add support for tools in connectors.
+- 9d75ab2: [a2] Switch tools to use the new backend API.
+- e21ee39: Implement autonaming behind flag.
+- 66a01e0: Make autoname more polite to user.
+- fedacbd: Expose `/env/settings/general` to module file system and use it to
+  hide experimental bits.
+- 856c387: Introduce "Generate" step.
+- e7abb8a: Add support for reactive ports.
+- f11621f: Add `asType` flag for describers.
+- a63fb1e: Switch Gemini API calls to use OAuth in A2.
+- af10dc4: Introduce parameters infrastructure.
+- a2d4ee5: Introduce `hint-chat-mode` behavior.
+- 9203afc: Only allow invoking modules in A2.
+- 7e17fe2: Teach Gemini API to flatten list if it seem them, and add tests.
+- 0c6ad80: Plumb Graph metadata as `/env/metadata` and teach "Render Outputs" to
+  use it to pick theme colors.
+- a53adf0: Add support for system instruction in "Generate Text"
+- 34e24f0: Implement MCP connector.
+- 99a5d95: Teach fetch to handle streams and files.
+- eba969c: Teach parameters to work in subgraphs.
+- 8ce093a: Add "Create New Document" to Google Drive file picker and many other
+  fixes.
+- da380d1: Teach params about modalities and sample values.
+- 7b67a8c: Introduce Edge metadata.
+- f7bb416: Add support for images when saving to Google Drive.
+- 10c7441: Introduce support for rich enum metadata.
+- c8876ee: Polish parameters a bit.
+- 9f87f37: First complete rev of Connector machinery.
+- e58b680: Teach `RemotePartTransformer` to use main graph URL.
+- eef58fa: Add `assets` and `assetEdge` to `InspectableGraph`.
+
+### Patch Changes
+
+- 0c0a419: Fix the describer crash.
+- 97be783: Add assets to the graph
+- 2eee8da: Add support for editing assets in the entity editor
+- a564054: Make describer use a faster path for graphs with URLs.
+- 0e6f849: Add a bit more robust error handling around capabilities.
+- 2074b64: Teach deflate and llm-output to handle text/html mimeType
+- da0a7a2: Filter assets that start "@@": these are internal to BGL.
+- 410bc4e: Fix the bug where secrets are always asked for.
+- ae68b4d: Correctly resolve subgraph URLs.
+- b9681e9: Improve text-editor behaviors
+- 0d0953e: Temporarily remove auth check from proxy requests.
+- ec25bbe: Clear pending result in LocalRunner after resuming
+- Updated dependencies [228d3c4]
+- Updated dependencies [470e548]
+- Updated dependencies [81d2666]
+- Updated dependencies [26fdb89]
+- Updated dependencies [856c387]
+- Updated dependencies [e7abb8a]
+- Updated dependencies [f11621f]
+- Updated dependencies [a2d4ee5]
+- Updated dependencies [8cffe63]
+- Updated dependencies [0e6f849]
+- Updated dependencies [7c6388f]
+- Updated dependencies [a53adf0]
+- Updated dependencies [34e24f0]
+- Updated dependencies [99a5d95]
+- Updated dependencies [da380d1]
+- Updated dependencies [7b67a8c]
+- Updated dependencies [f7bb416]
+- Updated dependencies [10c7441]
+- Updated dependencies [27b9c34]
+- Updated dependencies [9f87f37]
+- Updated dependencies [eef58fa]
+  - @google-labs/breadboard-schema@1.14.0
+  - @breadboard-ai/types@0.7.0
+  - @breadboard-ai/jsandbox@0.6.0
+
 ## 0.33.0
 
 ### Minor Changes

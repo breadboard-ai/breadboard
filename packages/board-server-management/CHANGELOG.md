@@ -1,5 +1,72 @@
 # @breadboard-ai/board-server-management
 
+## 1.21.0
+
+### Minor Changes
+
+- 0c9b3a0: Remove example boards and playground boards from visual editor.
+- e58b680: Teach `RemotePartTransformer` to use main graph URL.
+- 5aeb84c: Teach BoardServerAwareDataStore to choose the main graph URL to find
+  the right board server.
+
+### Patch Changes
+
+- ee084e8: A bunch of fixs to bring app view back up again.
+- Updated dependencies [470e548]
+- Updated dependencies [81d2666]
+- Updated dependencies [26fdb89]
+- Updated dependencies [e76a576]
+- Updated dependencies [9d75ab2]
+- Updated dependencies [e21ee39]
+- Updated dependencies [66a01e0]
+- Updated dependencies [fedacbd]
+- Updated dependencies [856c387]
+- Updated dependencies [0c0a419]
+- Updated dependencies [e7abb8a]
+- Updated dependencies [f11621f]
+- Updated dependencies [a63fb1e]
+- Updated dependencies [af10dc4]
+- Updated dependencies [a2d4ee5]
+- Updated dependencies [97be783]
+- Updated dependencies [3dab17c]
+- Updated dependencies [0ff2c4f]
+- Updated dependencies [a84201a]
+- Updated dependencies [2eee8da]
+- Updated dependencies [a564054]
+- Updated dependencies [9203afc]
+- Updated dependencies [7e17fe2]
+- Updated dependencies [0e6f849]
+- Updated dependencies [2074b64]
+- Updated dependencies [0c6ad80]
+- Updated dependencies [a53adf0]
+- Updated dependencies [da0a7a2]
+- Updated dependencies [410bc4e]
+- Updated dependencies [763063b]
+- Updated dependencies [34e24f0]
+- Updated dependencies [ae68b4d]
+- Updated dependencies [99a5d95]
+- Updated dependencies [e307f33]
+- Updated dependencies [eba969c]
+- Updated dependencies [b9681e9]
+- Updated dependencies [8ce093a]
+- Updated dependencies [da380d1]
+- Updated dependencies [7b67a8c]
+- Updated dependencies [f7bb416]
+- Updated dependencies [e9f7282]
+- Updated dependencies [0d0953e]
+- Updated dependencies [10c7441]
+- Updated dependencies [ec25bbe]
+- Updated dependencies [c8876ee]
+- Updated dependencies [9f87f37]
+- Updated dependencies [e58b680]
+- Updated dependencies [eef58fa]
+  - @google-labs/breadboard@0.34.0
+  - @breadboard-ai/remote-board-server@1.22.0
+  - @breadboard-ai/filesystem-board-server@1.21.0
+  - @breadboard-ai/google-drive-kit@0.6.0
+  - @breadboard-ai/build@0.12.2
+  - @breadboard-ai/idb-board-server@1.19.4
+
 ## 1.20.1
 
 ### Patch Changes

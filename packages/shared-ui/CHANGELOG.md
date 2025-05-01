@@ -1,5 +1,264 @@
 # @breadboard-ai/shared-ui
 
+## 1.25.0
+
+### Minor Changes
+
+- 228d3c4: Start showing parameters in various UI surfaces.
+- ab8b1db: Teach app view about OAuth secrets.
+- 81d2666: Land early (mostly stubs) listification bits.
+- 26fdb89: Add support for tools in connectors.
+- e21ee39: Implement autonaming behind flag.
+- 66a01e0: Make autoname more polite to user.
+- 0810b47: Teach connectors to be editable with `bb-entity-editor`.
+- b393b0d: Introduce the NotebookLM connector.
+- 856c387: Introduce "Generate" step.
+- 2484861: Add support for connector previews.
+- e7abb8a: Add support for reactive ports.
+- f11621f: Add `asType` flag for describers.
+- af10dc4: Introduce parameters infrastructure.
+- a2d4ee5: Introduce `hint-chat-mode` behavior.
+- dab4f44: Add "Remix" button to the main editor.
+- 3dab17c: Introduce Google Drive connector (WIP)
+- 8cffe63: More progress on listification.
+- 0ff2c4f: Add app view to unified server
+- bc6a69c: Remove legacy renderer
+- eaae0ca: Only show three steps in component selector.
+- f3f1060: Use a constant label for project list.
+- fd23454: Introduce embedded board server and use it for A2 server.
+- 7e0b806: Introduce DOM Renderer
+- 7c6388f: Disable autonaming once user edits title/description.
+- 2d5b5fe: Switch to "chiclet" as the default at-wire behavior.
+- b62fb04: Introduce `SideBoardRuntime.runTask`.
+- 3128d36: Rename "Render Outputs" to "Display" and update icons.
+- a53adf0: Add support for system instruction in "Generate Text"
+- 34e24f0: Implement MCP connector.
+- e307f33: Clean up sideboards and switch Autoname to use embedded A2.
+- 06aafd9: Switch theme creator sideboard to use embedded A2.
+- eba969c: Teach parameters to work in subgraphs.
+- 8ce093a: Add "Create New Document" to Google Drive file picker and many other
+  fixes.
+- ff4864a: Teach Drive Connector to use Drive Picker.
+- da380d1: Teach params about modalities and sample values.
+- 49ff87e: Introduce `ClipboardReader`.
+- 10c7441: Introduce support for rich enum metadata.
+- c8876ee: Polish parameters a bit.
+- 27b9c34: Unify the create and app views
+- d4d4976: Enable subgraph autonaming by default.
+- 9f87f37: First complete rev of Connector machinery.
+- 62d04cd: Remap "Generate" icons at source level
+
+### Patch Changes
+
+- 27ae371: Make some small UI tweaks
+- 8eba7c4: Teach DOM Renderer about run activity
+- 6596b6d: Fix adornment sizing calculations
+- 99555ff: Handle errors a bit more thoroughly.
+- 00d99f4: Use transform to add/remove assets
+- 4371756: Add safety around LLM Output
+- 60d0f38: Fix graph edge point bound calculation
+- 600abe3: Various small tweaks to entity editor
+- 3823d5e: Bring back tools
+- ae798d3: Update styles for focus-/text-editor
+- 3de4459: Various "Chat with user" fixes.
+- 995b231: Prevent toasts from overlapping
+- a18d4d0: Unbreak parameters.
+- b20067e: Fix fonts so they are consistent
+- 580b154: Simplify main overflow menu
+- eada90d: Add placeholder to text editor
+- 53f53b0: Various fixes to "Ask User" and "Change Edge".
+- ca6b1af: Tweak project listing
+- 668f490: Fix the racing condition in autonaming machinery
+- 2b5e8da: Clamp graph-asset height
+- 7bbc529: Adjust app / console output
+- c788caa: Teach subgraphs about borders and selection
+- b8e5d8e: Teach Fast Access, Text Editor and Graph about params
+- 4fb9548: Improve box-edge intersection
+- 79ed176: Teach app view about assets
+- cbd054b: Tweak theme creator
+- c758054: Fix project listing search
+- 0606a47: Improve selection behavior in DOM Renderer
+- 1429a75: Add restart button to app view
+- 03d6689: Teach DOM Renderer about spacebar-dragging
+- 0487137: Add support for PDF & CSV files
+- 96709bd: Various UI improvements
+- cedeb8a: Allow running of imperative graph
+- 298aaaa: Update step management UI
+- 5842ecf: Teach DOM Renderer to emit location data on settle
+- 97be783: Add assets to the graph
+- 53d6241: Update empty step message
+- 4659244: Switch out icons
+- fa670bc: Teach MegaStep about subtypes in graph
+- fae6d68: Remove "owned by me" view restriction in Google Drive picker.
+- a84201a: Various Fixes including GAPI client instantiation, default connection
+  id change, and edge comparison.
+- 9ba5774: Fix bug with Fast Access & Text Editor
+- 5e05aff: Update app view to use newer theme info
+- 8dfa0f3: Trigger events when chiclet is added
+- 42f34b8: Align A2 configurations
+- 411fb40: More app view tweaks
+- 43c8675: Start work on asset menu in shelf
+- 9f82224: Teach entity editor to about remembering the right values.
+- 5c6a3bc: Move the UI furniture around a bit
+- 2eee8da: Add support for editing assets in the entity editor
+- 50a22e9: Promote Focus Editor to main
+- 8008d80: [shared-ui] Add drag-to-add from node (part 2)
+- 0bde091: Hide advanced settings when there aren't any.
+- 90beb79: Fix edge rendering
+- e24c47d: Have the app preview grow to the available space
+- f75eb53: Teach text-editor & llm-input about single line hint
+- 46c749d: Teach DOM Renderer about highlights
+- c0d7bcc: Minor UX tweaks
+- bd3a6dc: Ensure test flow is atop other elements
+- 72f6f4b: Fix text-editor height / scroll bug
+- 6855223: Check for secrets input first in app view.
+- 913bc45: Minor logging, documentation, and error handling cleanups
+- 2ce0c63: Fix paging on welcome screen
+- ac0f7b5: Teach Asset Organizer about unused params
+- 6437ff9: Teach app view about various input modalities
+- ad1209a: Teach DOM Renderer about moving nodes
+- 9bab4f4: Show Edit tab when editing step
+- d9e6563: Add pinch zoom to DOM Renderer
+- b0f917a: Teach asset organizer to add/edit parameter metadata #4814
+- 6ad43c4: Improve custom step selection
+- 41e5ca2: Introduce an editor side panel
+- 6333fa2: Teach DOM Renderer about "Add Step"
+- d30e1a9: Disallow moving while dragging nodes
+- 2074b64: Teach deflate and llm-output to handle text/html mimeType
+- cc3bab5: Teach app view about secrets
+- 12cec82: Fix scrolling bugs in Activity pane
+- 500efd2: Plumb descriptions to item-select
+- f64a87f: Shift the Asset Organizer into experimental
+- 3d5eeb7: Allow users to update the title and description of apps using the
+  app-preview
+- edbc353: Prevent button wraps
+- ed4cf99: Couple of smaller tweaks to (un)group
+- 2e70d94: DOM Renderer tidying
+- 798bd91: Teach DOM Renderer about edge attachment moving
+- 22c1f73: Add basic UI support for `hint-controller`
+- 55b02bf: Shift advanced settings into details
+- a8fafd0: Styling tweaks for Activity panel.
+- f958cc2: Teach UI controller to recall side nav item
+- e78dc5e: Convert arrows to beziers
+- ebdc849: Fix handling of storedData media urls in theme generation
+- 2be935a: Fix paste behaviors
+- b39bc95: Filter out non-A2 connectors and remove "experimental" flag from
+  "Generate"
+- 736c829: Show custom steps in selector
+- 0b48053: Move test flow UI
+- 17210fc: Convert YouTube URIs automatically
+- 04afc35: Teach Visual Editor about grouping and ungrouping
+- 17bc777: Teach DOM Renderer about drag and drop
+- 0b83587: Teach DOM Renderer about moving subgraphs
+- 6a328df: Various improvements to the editor
+- 230101e: Only show port label when not controller
+- 2164f57: Tweaks to the app view
+- 0e201da: Teach DOM Renderer about node statuses
+- 7b5f10f: Trigger edit flow on dblclick of node header
+- 597e613: Teach graph nodes about "ask user" adornments
+- af190a1: Improve transform order when assets etc are removed
+- a04deb3: Add asset edge management
+- eb745e0: Fix case where stale port data is shown
+- b9681e9: Improve text-editor behaviors
+- 7eae5b1: Add missing icons for steps
+- 72539b6: Move assets to header & convert to overlay
+- ffa44d2: Update default renderer
+- 15a3f22: Various UI fixes
+- 8f83f7a: Various DOM Renderer fixes
+- 5e98a8a: Add extended settings searchParam check
+- 7734a89: Support node renaming in editor
+- 223c73e: Teach sideboard runner about proxies
+- e82924e: Add support for video uploads in app view
+- 78c5333: Small fixes to DOM Renderer
+- 15b96a9: Bring back renaming & exporting of graph items
+- 5b234da: Remove deprecated elements
+- a11b943: Simplify board details pane
+- e9f7282: Teach listing about thumbnails
+- 0c95613: Add drag-to-add from node
+- 336b628: Teach App View about GDrive
+- 9155162: Teach app view about thoughts
+- b3ab629: Teach added step to show Default Add
+- 333a4db: Add node-with-edge transform
+- b641a6f: Make activity panel scrollable again.
+- ff59f4e: Teach DOM Renderer about editing subgraphs
+- e5a7b77: Teach `ChangeEdge` to correctly pick the in port.
+- 1122a5a: Restore highlight on run
+- bcfc401: Teach app view about drawables
+- c9fb81f: Fix board server overflow menu
+- b88eba4: Switch select to item-select
+- 5357e88: Improve edge management
+- 86e23ef: Teach UI about dynamic enums
+- 90191c3: Only show runnable steps in the component selectory overlay
+- ee084e8: A bunch of fixs to bring app view back up again.
+- 78f2b59: Add missing icons & tweak empty graph check
+- 6dcb6ed: Minor bug fixes to app rendering
+- c92c9c1: Promote edge point reparenting from experimental
+- 0167b2a: Fix "Add Step" selection state bug
+- e8d271e: Only show clipboard option for supported image types
+- 51ad7fd: Improve state toggle between editor & app view
+- 4ffd3a1: Teach DOM Renderer to edit nodes
+- cb01e87: Tidy app view a little
+- 06f21e1: Update node selection shelf
+- f78a1ae: Various small bug fixes
+- 4ceaf9e: Teach DOM Renderer about creating edges
+- Updated dependencies [228d3c4]
+- Updated dependencies [470e548]
+- Updated dependencies [81d2666]
+- Updated dependencies [26fdb89]
+- Updated dependencies [9d75ab2]
+- Updated dependencies [e21ee39]
+- Updated dependencies [66a01e0]
+- Updated dependencies [fedacbd]
+- Updated dependencies [856c387]
+- Updated dependencies [0c0a419]
+- Updated dependencies [e7abb8a]
+- Updated dependencies [f11621f]
+- Updated dependencies [a63fb1e]
+- Updated dependencies [af10dc4]
+- Updated dependencies [a2d4ee5]
+- Updated dependencies [97be783]
+- Updated dependencies [3dab17c]
+- Updated dependencies [8cffe63]
+- Updated dependencies [a84201a]
+- Updated dependencies [2eee8da]
+- Updated dependencies [a564054]
+- Updated dependencies [fd23454]
+- Updated dependencies [9203afc]
+- Updated dependencies [7e17fe2]
+- Updated dependencies [0e6f849]
+- Updated dependencies [7c6388f]
+- Updated dependencies [2074b64]
+- Updated dependencies [0c6ad80]
+- Updated dependencies [a53adf0]
+- Updated dependencies [da0a7a2]
+- Updated dependencies [410bc4e]
+- Updated dependencies [34e24f0]
+- Updated dependencies [ae68b4d]
+- Updated dependencies [99a5d95]
+- Updated dependencies [eba969c]
+- Updated dependencies [b9681e9]
+- Updated dependencies [8ce093a]
+- Updated dependencies [da380d1]
+- Updated dependencies [7b67a8c]
+- Updated dependencies [f7bb416]
+- Updated dependencies [0d0953e]
+- Updated dependencies [10c7441]
+- Updated dependencies [ec25bbe]
+- Updated dependencies [c8876ee]
+- Updated dependencies [27b9c34]
+- Updated dependencies [9f87f37]
+- Updated dependencies [e58b680]
+- Updated dependencies [eef58fa]
+  - @google-labs/breadboard-schema@1.14.0
+  - @breadboard-ai/types@0.7.0
+  - @google-labs/breadboard@0.34.0
+  - @google-labs/core-kit@0.19.0
+  - @breadboard-ai/jsandbox@0.6.0
+  - @breadboard-ai/google-drive-kit@0.6.0
+  - @breadboard-ai/embedded-board-server@0.1.0
+  - @breadboard-ai/build@0.12.2
+  - @breadboard-ai/data-store@0.3.3
+
 ## 1.24.0
 
 ### Minor Changes

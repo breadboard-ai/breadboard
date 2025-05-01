@@ -1,5 +1,20 @@
 # @google-labs/breadboard-schema
 
+## 1.14.0
+
+### Minor Changes
+
+- 228d3c4: Start showing parameters in various UI surfaces.
+- 470e548: Start landing connector infrastructure.
+- 26fdb89: Add support for tools in connectors.
+- 7c6388f: Disable autonaming once user edits title/description.
+- 34e24f0: Implement MCP connector.
+- da380d1: Teach params about modalities and sample values.
+- 7b67a8c: Introduce Edge metadata.
+- 27b9c34: Unify the create and app views
+- 9f87f37: First complete rev of Connector machinery.
+- eef58fa: Add `assets` and `assetEdge` to `InspectableGraph`.
+
 ## 1.13.0
 
 ### Minor Changes

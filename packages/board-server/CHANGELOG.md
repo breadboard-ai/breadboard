@@ -1,5 +1,79 @@
 # @breadboard-ai/board-server
 
+## 0.14.0
+
+### Minor Changes
+
+- 470e548: Start landing connector infrastructure.
+- 21403d9: Delete all UI endpoints from board server
+- 3128d36: Rename "Render Outputs" to "Display" and update icons.
+- cd456ce: Add a `GcsAwareFetch` that nests Core Kit's fetch and does nothing
+  (for now).
+- 27b9c34: Unify the create and app views
+
+### Patch Changes
+
+- e86e6da: refigure board routing logic
+- 913bc45: Minor logging, documentation, and error handling cleanups
+- 5aa08f6: Remove invite mechanism
+- c778fff: update board route handling
+- 30685e1: Get rid of deduplication logic for board creation
+- e9f7282: Teach listing about thumbnails
+- 0d0953e: Temporarily remove auth check from proxy requests.
+- caaa43f: Use origin for BlobDataStore
+- Updated dependencies [228d3c4]
+- Updated dependencies [470e548]
+- Updated dependencies [81d2666]
+- Updated dependencies [26fdb89]
+- Updated dependencies [9d75ab2]
+- Updated dependencies [e21ee39]
+- Updated dependencies [66a01e0]
+- Updated dependencies [fedacbd]
+- Updated dependencies [856c387]
+- Updated dependencies [0c0a419]
+- Updated dependencies [e7abb8a]
+- Updated dependencies [f11621f]
+- Updated dependencies [a63fb1e]
+- Updated dependencies [af10dc4]
+- Updated dependencies [a2d4ee5]
+- Updated dependencies [97be783]
+- Updated dependencies [3dab17c]
+- Updated dependencies [8cffe63]
+- Updated dependencies [a84201a]
+- Updated dependencies [2eee8da]
+- Updated dependencies [a564054]
+- Updated dependencies [9203afc]
+- Updated dependencies [7e17fe2]
+- Updated dependencies [0e6f849]
+- Updated dependencies [7c6388f]
+- Updated dependencies [2074b64]
+- Updated dependencies [0c6ad80]
+- Updated dependencies [a53adf0]
+- Updated dependencies [da0a7a2]
+- Updated dependencies [410bc4e]
+- Updated dependencies [34e24f0]
+- Updated dependencies [ae68b4d]
+- Updated dependencies [99a5d95]
+- Updated dependencies [eba969c]
+- Updated dependencies [b9681e9]
+- Updated dependencies [8ce093a]
+- Updated dependencies [da380d1]
+- Updated dependencies [7b67a8c]
+- Updated dependencies [f7bb416]
+- Updated dependencies [0d0953e]
+- Updated dependencies [10c7441]
+- Updated dependencies [ec25bbe]
+- Updated dependencies [c8876ee]
+- Updated dependencies [27b9c34]
+- Updated dependencies [9f87f37]
+- Updated dependencies [e58b680]
+- Updated dependencies [eef58fa]
+  - @breadboard-ai/types@0.7.0
+  - @google-labs/breadboard@0.34.0
+  - @breadboard-ai/jsandbox@0.6.0
+  - @breadboard-ai/google-drive-kit@0.6.0
+  - @breadboard-ai/data-store@0.3.3
+
 ## 0.13.0
 
 ### Minor Changes

@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/board-server-management",
-  "version": "1.20.1",
+  "version": "1.21.0",
   "description": "Board Server management for Breadboard's Visual Editor",
   "main": "./dist/index.js",
   "exports": {
@@ -73,13 +73,13 @@
     "typescript": "^5.8.2"
   },
   "dependencies": {
-    "@breadboard-ai/build": "0.12.1",
+    "@breadboard-ai/build": "0.12.2",
     "@breadboard-ai/connection-client": "0.2.0",
-    "@breadboard-ai/filesystem-board-server": "1.20.1",
-    "@breadboard-ai/google-drive-kit": "0.5.1",
-    "@breadboard-ai/idb-board-server": "1.19.3",
-    "@breadboard-ai/remote-board-server": "1.21.0",
-    "@google-labs/breadboard": "^0.33.0",
+    "@breadboard-ai/filesystem-board-server": "1.21.0",
+    "@breadboard-ai/google-drive-kit": "0.6.0",
+    "@breadboard-ai/idb-board-server": "1.19.4",
+    "@breadboard-ai/remote-board-server": "1.22.0",
+    "@google-labs/breadboard": "^0.34.0",
     "idb": "^8.0.2"
   }
 }
