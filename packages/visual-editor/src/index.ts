@@ -2815,7 +2815,7 @@ export class Main extends LitElement {
           if (this.#runtime.board.canPreview(tabId)) {
             actions.push({
               title: Strings.from("COMMAND_COPY_APP_PREVIEW_URL"),
-              name: "copy-preview-to-clipboard",
+              name: "share",
               icon: "share",
               value: tabId,
             });
@@ -3016,22 +3016,24 @@ export class Main extends LitElement {
                   break;
                 }
 
-                case "copy-preview-to-clipboard": {
-                  if (!tab.graph || !tab.graph.url) {
+                case "share": {
+                  const url = tab?.graph?.url ? new URL(tab.graph.url) : null;
+                  if (!url) {
+                    return;
+                  }
+                  if (url.protocol === "drive:") {
+                    this.#uiRef.value?.openSharePanel();
                     return;
                   }
 
-                  const boardServer = this.#runtime.board.getBoardServerForURL(
-                    new URL(tab.graph.url)
-                  );
+                  const boardServer =
+                    this.#runtime.board.getBoardServerForURL(url);
                   if (!boardServer) {
                     return;
                   }
 
                   try {
-                    const previewUrl = await boardServer.preview(
-                      new URL(tab.graph.url)
-                    );
+                    const previewUrl = await boardServer.preview(url);
 
                     await navigator.clipboard.writeText(previewUrl.href);
                     this.toast(
