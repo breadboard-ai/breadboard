@@ -845,6 +845,11 @@ export class Renderer extends LitElement {
         } else {
           graph.selectionState = createEmptyGraphSelectionState();
         }
+
+        // Expands node selections to include edges.
+        if (this.expandSelections) {
+          graph.expandSelections();
+        }
       }
     }
 
