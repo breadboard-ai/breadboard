@@ -146,7 +146,7 @@ export class ExpandingTextarea extends LitElement {
   }
 
   override updated(changes: PropertyValues<this>) {
-    if (changes.has("value")) {
+    if (changes.has("value") || changes.has("placeholder")) {
       this.updateComplete.then(() => this.#recomputeHeight());
     }
   }
