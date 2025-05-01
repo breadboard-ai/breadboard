@@ -16,6 +16,7 @@ bootstrap({
   connectionServerUrl: new URL("/connection/", window.location.href),
   requiresSignin: true,
   kits: [asRuntimeKit(Core)],
+  defaultBoardService: "/board/",
   moduleInvocationFilter: (context) => {
     if (!import.meta.env.VITE_NO_3P_MODULES) return;
     if (!isA2(baseURLFromContext(context))) {

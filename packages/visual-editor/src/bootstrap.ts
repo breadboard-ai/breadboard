@@ -21,6 +21,7 @@ export { bootstrap };
 export type BootstrapArguments = {
   connectionServerUrl?: URL;
   requiresSignin?: boolean;
+  defaultBoardService?: string;
   kits?: Kit[];
   graphStorePreloader?: (graphStore: MutableGraphStore) => void;
   moduleInvocationFilter?: (context: NodeHandlerContext) => Outcome<void>;
@@ -101,7 +102,9 @@ function bootstrap(args: BootstrapArguments = {}) {
       settings: SettingsStore.instance(),
       version: pkg.version,
       gitCommitHash: GIT_HASH,
-      boardServerUrl: getUrlFromBoardServiceFlag(BOARD_SERVICE),
+      boardServerUrl: getUrlFromBoardServiceFlag(
+        BOARD_SERVICE || args.defaultBoardService
+      ),
       connectionServerUrl: args?.connectionServerUrl,
       requiresSignin: args?.requiresSignin,
       enableTos: ENABLE_TOS,
