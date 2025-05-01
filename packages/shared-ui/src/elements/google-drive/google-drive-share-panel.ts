@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { FileDataPart } from "@breadboard-ai/types";
+import { type GraphDescriptor, type LLMContent } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
 import { css, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
@@ -11,7 +13,6 @@ import {
   type SigninAdapter,
   signinAdapterContext,
 } from "../../utils/signin-adapter.js";
-import { GraphDescriptor } from "@breadboard-ai/types";
 import { loadDriveShare } from "./google-apis.js";
 
 // Silly dynamic type expression because "gapi.drive.share.ShareClient" doesn't
@@ -55,13 +56,18 @@ export class GoogleDriveSharePanel extends LitElement {
     if (this.#status !== "closed") {
       return;
     }
-    if (globalShareClientLocked) {
-      console.error("Global ShareClient was locked");
+    const graph = this.graph;
+    if (!graph) {
+      console.error("No graph");
       return;
     }
-    const url = this.graph?.url ? new URL(this.graph.url) : null;
+    const url = graph.url ? new URL(graph.url) : null;
     if (url?.protocol !== "drive:") {
-      console.error(`Expected "drive:" URL, got: ${this.graph?.url}`);
+      console.error(`Expected "drive:" URL, got: ${graph?.url}`);
+      return;
+    }
+    if (globalShareClientLocked) {
+      console.error("Global ShareClient was locked");
       return;
     }
     const auth = await this.signinAdapter?.refresh();
@@ -77,10 +83,9 @@ export class GoogleDriveSharePanel extends LitElement {
       globalShareClient = new shareLib.ShareClient();
     }
 
-    const fileId = url.pathname.replace(/^\/+/, "");
-    // TODO(aomarks) Also find all referenced Drive assets in the graph, and add
-    // those to the list.
-    globalShareClient.setItemIds([fileId]);
+    const graphFileId = url.pathname.replace(/^\/+/, "");
+    const assetFileIds = findGoogleDriveAssetsInGraph(graph);
+    globalShareClient.setItemIds([graphFileId, ...assetFileIds]);
     globalShareClient.setOAuthToken(auth.grant.access_token);
 
     // Weirdly, there is no API for getting the dialog element, or for finding
@@ -117,4 +122,22 @@ declare global {
   interface HTMLElementTagNameMap {
     "bb-google-drive-share-panel": GoogleDriveSharePanel;
   }
+}
+
+function findGoogleDriveAssetsInGraph(graph: GraphDescriptor): string[] {
+  // Use a set because there can be duplicates.
+  const fileIds = new Set<string>();
+  for (const asset of Object.values(graph?.assets ?? {})) {
+    if (asset.metadata?.subType === "gdrive") {
+      // Cast needed because `data` is very broadly typed as `NodeValue`.
+      const firstPart = (asset.data as LLMContent[])[0]?.parts[0];
+      if (firstPart && "fileData" in firstPart) {
+        const fileId = firstPart.fileData?.fileUri;
+        if (fileId) {
+          fileIds.add(fileId);
+        }
+      }
+    }
+  }
+  return [...fileIds];
 }
