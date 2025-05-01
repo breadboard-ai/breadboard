@@ -78,6 +78,8 @@ export class GoogleDriveSharePanel extends LitElement {
     }
 
     const fileId = url.pathname.replace(/^\/+/, "");
+    // TODO(aomarks) Also find all referenced Drive assets in the graph, and add
+    // those to the list.
     globalShareClient.setItemIds([fileId]);
     globalShareClient.setOAuthToken(auth.grant.access_token);
 
