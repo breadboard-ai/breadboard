@@ -143,6 +143,8 @@ export type MainArguments = {
   enableTos?: boolean;
   /** Terms of Service content. */
   tosHtml?: string;
+  /** If true shows more settings. */
+  showExtendedSettings?: boolean;
   kits?: Kit[];
   graphStorePreloader?: (graphStore: MutableGraphStore) => void;
   moduleInvocationFilter?: (context: NodeHandlerContext) => Outcome<void>;
@@ -207,6 +209,9 @@ export class Main extends LitElement {
 
   @state()
   accessor showNewWorkspaceItemOverlay = false;
+
+  @state()
+  accessor showExtendedSettings = false;
 
   @state()
   accessor showBoardOverflowMenu = false;
@@ -385,6 +390,8 @@ export class Main extends LitElement {
       !!config.tosHtml &&
       localStorage.getItem(TOS_KEY) !== TosStatus.ACCEPTED;
     this.#tosHtml = config.tosHtml;
+
+    this.showExtendedSettings = config.showExtendedSettings ?? false;
 
     // This is a big hacky, since we're assigning a value to a constant object,
     // but okay here, because this constant is never re-assigned and is only
@@ -3110,29 +3117,33 @@ export class Main extends LitElement {
                       </button>`
                   : nothing
               }
-              <button
-                class=${classMap({ active: this.showSettingsOverlay })}
-                id="toggle-settings"
-                @pointerover=${(evt: PointerEvent) => {
-                  this.dispatchEvent(
-                    new BreadboardUI.Events.ShowTooltipEvent(
-                      Strings.from("COMMAND_EDIT_SETTINGS"),
-                      evt.clientX,
-                      evt.clientY
-                    )
-                  );
-                }}
-                @pointerout=${() => {
-                  this.dispatchEvent(
-                    new BreadboardUI.Events.HideTooltipEvent()
-                  );
-                }}
-                @click=${() => {
-                  this.showSettingsOverlay = true;
-                }}
-              >
-                Settings
-              </button>
+              ${
+                this.showExtendedSettings
+                  ? html`<button
+                      class=${classMap({ active: this.showSettingsOverlay })}
+                      id="toggle-settings"
+                      @pointerover=${(evt: PointerEvent) => {
+                        this.dispatchEvent(
+                          new BreadboardUI.Events.ShowTooltipEvent(
+                            Strings.from("COMMAND_EDIT_SETTINGS"),
+                            evt.clientX,
+                            evt.clientY
+                          )
+                        );
+                      }}
+                      @pointerout=${() => {
+                        this.dispatchEvent(
+                          new BreadboardUI.Events.HideTooltipEvent()
+                        );
+                      }}
+                      @click=${() => {
+                        this.showSettingsOverlay = true;
+                      }}
+                    >
+                      Settings
+                    </button>`
+                  : nothing
+              }
               ${
                 signInAdapter.state === "valid" && signInAdapter.picture
                   ? html`<button

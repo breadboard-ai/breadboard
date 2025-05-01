@@ -626,6 +626,11 @@ export class Renderer extends LitElement {
       evt.clientY - this.#boundsForInteraction.top
     );
 
+    // Middle mouse button.
+    if (evt.button === 1) {
+      this.interactionMode = "pan";
+    }
+
     if (this.interactionMode === "pan") {
       this.isDragPanning = true;
       return;
@@ -700,11 +705,11 @@ export class Renderer extends LitElement {
     this.tick++;
   }
 
-  #onPointerUp() {
+  #onPointerUp(evt: PointerEvent) {
     this.#dragStart = null;
     this.#dragRect = null;
 
-    if (this.interactionMode !== "pan") {
+    if (this.interactionMode !== "pan" || evt.button === 1) {
       this.interactionMode = "inert";
     }
     this.#isAdditiveSelection = false;
