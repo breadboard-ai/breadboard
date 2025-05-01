@@ -3200,28 +3200,6 @@ export class Main extends LitElement {
               ${
                 this.tab
                   ? html` <span class="tab-title">${this.tab.graph.title}</span>
-                      <button
-                        id="tab-edit"
-                        class=${classMap({
-                          "can-save": canSave,
-                        })}
-                        @click=${(evt: PointerEvent) => {
-                          if (!this.tab || !canSave) {
-                            return;
-                          }
-
-                          this.#showBoardEditOverlay(
-                            this.tab,
-                            evt.clientX,
-                            evt.clientY,
-                            this.tab.subGraphId,
-                            null
-                          );
-                        }}
-                      >
-                        Edit
-                      </button>
-
                       <span
                         class=${classMap({
                           "save-status": true,
