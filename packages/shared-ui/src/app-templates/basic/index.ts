@@ -618,10 +618,11 @@ export class Template extends LitElement implements AppTemplate {
                   & p {
                     display: flex;
                     align-items: flex-end;
-                    font: 400 var(--bb-title-medium) /
-                      var(--bb-title-line-height-medium) var(--bb-font-family);
+                    font: 500 var(--bb-title-small) /
+                      var(--bb-title-line-height-small) var(--bb-font-family);
                     margin: 0 0 var(--bb-grid-size-3) 0;
                     flex: 1;
+                    opacity: 0.8;
 
                     &.api-message {
                       font: 400 var(--bb-body-x-small) /
@@ -893,6 +894,7 @@ export class Template extends LitElement implements AppTemplate {
     return { role: "user", parts: [{ text }] };
   }
 
+  #hasFocusableInput = false;
   #renderInput(topGraphResult: TopGraphRunResult) {
     const placeholder = html`<div class="user-input">
         <p>&nbsp;</p>
@@ -1108,7 +1110,20 @@ export class Template extends LitElement implements AppTemplate {
       status = "finished";
     }
 
+    this.#hasFocusableInput = active;
+
     return html`<div
+      @transitionend=${() => {
+        if (!this.#inputRef.value || !active) {
+          return;
+        }
+
+        const input =
+          this.#inputRef.value.querySelector<HTMLInputElement>(
+            "input,textarea"
+          );
+        input?.focus();
+      }}
       @keydown=${(evt: KeyboardEvent) => {
         const isMac = navigator.platform.indexOf("Mac") === 0;
         const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
