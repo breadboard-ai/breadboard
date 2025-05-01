@@ -499,16 +499,6 @@ export const styles = css`
     display: block;
   }
 
-  bb-command-palette {
-    position: absolute;
-    top: calc(var(--bb-grid-size-2) + 92px);
-    left: 50%;
-    width: 75%;
-    max-width: 650px;
-    transform: translateX(-50%);
-    z-index: 6;
-  }
-
   #user-overflow,
   #board-overflow,
   #board-items-overflow {
