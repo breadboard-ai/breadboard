@@ -10,6 +10,7 @@ import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { EditSpec } from "@google-labs/breadboard";
 import { MAIN_BOARD_ID } from "../runtime/util";
 import { inspectableAssetEdgeToString } from "@breadboard-ai/shared-ui/utils/workspace.js";
+import { ClipboardReader } from "../utils/clipboard-reader";
 
 function isFocusedOnGraphRenderer(evt: Event) {
   return evt
@@ -344,35 +345,6 @@ export const UngroupCommand: KeyboardCommand = {
   },
 };
 
-// We do this unusual concatenation to bamboozle TypeScript. If we just check
-// for the presence of 'canParse' in URL then the else case assumes we're
-// dealing with the nodejs version of URL, which isn't necessarily the case; we
-// could just as well be dealing with an older browser version. So we do this
-// concatenation which is functionally inert but which means the TypeScript
-// compiler continues to work on the assumption that it's a browser URL.
-const cP = "" + "canParse";
-function canParse(urlLike: string): boolean {
-  const maybeFragment = urlLike.startsWith("#");
-
-  if (cP in URL) {
-    if (maybeFragment) {
-      return URL.canParse(urlLike, window.location.href);
-    }
-    return URL.canParse(urlLike);
-  }
-
-  try {
-    if (maybeFragment) {
-      new URL(urlLike, window.location.href);
-    } else {
-      new URL(urlLike);
-    }
-    return true;
-  } catch (err) {
-    return false;
-  }
-}
-
 export const PasteCommand: KeyboardCommand = {
   keys: ["Cmd+v", "Ctrl+v"],
 
@@ -386,95 +358,87 @@ export const PasteCommand: KeyboardCommand = {
     selectionState,
     pointerLocation,
   }: KeyboardCommandDeps): Promise<void> {
-    const clipboardContents = await navigator.clipboard.readText();
+    const result = await new ClipboardReader(
+      tab?.graph.url,
+      runtime.edit.graphStore
+    ).read();
+
     let boardContents: GraphDescriptor | undefined;
     let boardUrl: string | undefined;
-    try {
-      if (canParse(clipboardContents)) {
-        boardUrl = (
-          URL.parse(clipboardContents, tab?.graph.url) ?? { href: undefined }
-        ).href;
-      } else {
-        boardContents = JSON.parse(clipboardContents);
-        // TODO: Proper board checks.
-        if (
-          !boardContents ||
-          !("edges" in boardContents && "nodes" in boardContents)
-        ) {
-          throw new Error("Not a board");
-        }
+    if ("graphUrl" in result) {
+      boardUrl = result.graphUrl;
+    } else if ("graphDescriptor" in result) {
+      boardContents = result.graphDescriptor;
+    }
+    // .. and more
+
+    // Option 1. User pastes a board when there is no tab - create a new tab
+    if (tab) {
+      const editor = runtime.edit.getEditor(tab);
+      if (!editor) {
+        throw new Error("Unable to edit graph");
       }
 
-      // Option 1. User pastes a board when there is no tab - create a new tab
-      if (tab) {
-        const editor = runtime.edit.getEditor(tab);
-        if (!editor) {
-          throw new Error("Unable to edit graph");
-        }
-
-        const graph = editor.inspect("");
-        let spec: EditSpec[] = [];
-        // 1a. Paste a board.
-        if (boardContents) {
-          const destGraphIds = [];
-          if (selectionState) {
-            for (const id of selectionState.selectionState.graphs.keys()) {
-              const state = selectionState.selectionState.graphs.get(id);
-              if (
-                !state ||
-                (state.edges.size === 0 &&
-                  state.nodes.size === 0 &&
-                  state.comments.size === 0)
-              ) {
-                continue;
-              }
-
-              if (id === MAIN_BOARD_ID) {
-                destGraphIds.push("");
-                continue;
-              }
-
-              destGraphIds.push(id);
+      const graph = editor.inspect("");
+      let spec: EditSpec[] = [];
+      // 1a. Paste a board.
+      if (boardContents) {
+        const destGraphIds = [];
+        if (selectionState) {
+          for (const id of selectionState.selectionState.graphs.keys()) {
+            const state = selectionState.selectionState.graphs.get(id);
+            if (
+              !state ||
+              (state.edges.size === 0 &&
+                state.nodes.size === 0 &&
+                state.comments.size === 0)
+            ) {
+              continue;
             }
-          }
 
-          if (destGraphIds.length === 0) {
-            destGraphIds.push("");
-          }
+            if (id === MAIN_BOARD_ID) {
+              destGraphIds.push("");
+              continue;
+            }
 
-          spec = runtime.util.generateAddEditSpecFromDescriptor(
-            boardContents,
-            graph,
-            pointerLocation,
-            destGraphIds
-          );
-        } else if (boardUrl) {
-          // 1b. Paste a URL.
-          spec = runtime.util.generateAddEditSpecFromURL(
-            boardUrl,
-            graph,
-            pointerLocation
-          );
-        } else {
-          throw new Error("Unable to paste; neither URL nor GraphDescriptor");
+            destGraphIds.push(id);
+          }
         }
 
-        await editor.edit(spec, runtime.util.createEditChangeId());
-        const workspaceSelection = runtime.util.generateSelectionFrom(spec);
+        if (destGraphIds.length === 0) {
+          destGraphIds.push("");
+        }
 
-        runtime.select.processSelections(
-          tab.id,
-          runtime.util.createWorkspaceSelectionChangeId(),
-          workspaceSelection
+        spec = runtime.util.generateAddEditSpecFromDescriptor(
+          boardContents,
+          graph,
+          pointerLocation,
+          destGraphIds
+        );
+      } else if (boardUrl) {
+        // 1b. Paste a URL.
+        spec = runtime.util.generateAddEditSpecFromURL(
+          boardUrl,
+          graph,
+          pointerLocation
         );
       } else {
-        // Option 2. User pastes a board.
-        if (boardContents) {
-          runtime.board.createTabFromDescriptor(boardContents);
-        }
+        throw new Error("Unable to paste; neither URL nor GraphDescriptor");
       }
-    } catch (err) {
-      throw new Error("Invalid clipboard contents");
+
+      await editor.edit(spec, runtime.util.createEditChangeId());
+      const workspaceSelection = runtime.util.generateSelectionFrom(spec);
+
+      runtime.select.processSelections(
+        tab.id,
+        runtime.util.createWorkspaceSelectionChangeId(),
+        workspaceSelection
+      );
+    } else {
+      // Option 2. User pastes a board.
+      if (boardContents) {
+        runtime.board.createTabFromDescriptor(boardContents);
+      }
     }
   },
 };

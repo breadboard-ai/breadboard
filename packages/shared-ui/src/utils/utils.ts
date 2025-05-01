@@ -12,3 +12,4 @@ export { getModuleId } from "./module-id.js";
 export * as Workspace from "./workspace.js";
 export { SigninAdapter } from "./signin-adapter.js";
 export * as Color from "./color.js";
+export * as YouTube from "./youtube.js";
