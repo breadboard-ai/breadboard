@@ -936,7 +936,7 @@ export class UI extends LitElement {
       return;
     }
     if (graphUrl.protocol === "drive:") {
-      this.#sharePanelRef?.value?.open();
+      this.openSharePanel();
       return;
     }
 
@@ -951,5 +951,9 @@ export class UI extends LitElement {
         ToastType.INFORMATION
       )
     );
+  }
+
+  openSharePanel() {
+    this.#sharePanelRef?.value?.open();
   }
 }
