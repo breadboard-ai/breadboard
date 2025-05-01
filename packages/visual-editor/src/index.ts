@@ -4094,6 +4094,12 @@ export class Main extends LitElement {
   }
 }
 
+declare global {
+  interface HTMLElementTagNameMap {
+    "bb-main": Main;
+  }
+}
+
 function blank() {
   const blankBoard = breadboardBlank();
   const title = Strings.from("TITLE_UNTITLED_PROJECT") || blankBoard.title;

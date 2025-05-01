@@ -712,7 +712,7 @@ export class Board extends EventTarget {
     moduleId: ModuleIdentifier | null = null,
     subGraphId: GraphIdentifier | null = null,
     creator: EditHistoryCreator | null = null
-  ) {
+  ): Promise<void> {
     const url = this.#makeRelativeToCurrentBoard(boardUrl, currentUrl);
     if (!url) {
       return;
@@ -741,8 +741,53 @@ export class Board extends EventTarget {
       }
 
       if (!graph) {
-        this.dispatchEvent(new RuntimeErrorEvent("Unable to load board"));
-        return;
+        const urlObj = new URL(url);
+        if (urlObj.protocol === "drive:") {
+          // If we can't load a Google Drive board, it's likely that the user
+          // needs to "pick" it so that it's visible to our application (this is
+          // an expected byproduct of using the drive.file OAuth scope).
+          const picker = document.createElement("bb-google-drive-picker");
+          picker.mode = "pick-shared-board";
+          picker.fileIds = [urlObj.pathname.replace(/^\/+/, "")];
+
+          // Note we must put the picker in <bb-main>, because we need access to
+          // a SigninAdapter which is provided via a Lit context provided there.
+          const main = document.body.querySelector("bb-main");
+          if (!main) {
+            console.error("Could not find <bb-main>");
+            return;
+          }
+          // TODO(aomarks) It would be better if this was a method on main,
+          // since it breaks encapsulation, and if we're not careful we could
+          // step on Lit's toes a bit. In practice, this works fine for now,
+          // especially because we remove the element after the picker closes so
+          // Lit shouldn't even notice anything happened.
+          if (!main.shadowRoot) {
+            console.error("<bb-main> did not have a shadowRoot");
+            return;
+          }
+          main.shadowRoot.appendChild(picker);
+
+          picker.open();
+          await new Promise<void>((resolve) => {
+            picker.addEventListener("close", () => resolve());
+          });
+          picker.remove();
+          // Try again!
+          return this.createTabFromURL(
+            boardUrl,
+            currentUrl,
+            _createNewTab,
+            readOnly,
+            dispatchTabChangeEvent,
+            moduleId,
+            subGraphId,
+            creator
+          );
+        } else {
+          this.dispatchEvent(new RuntimeErrorEvent("Unable to load board"));
+          return;
+        }
       }
 
       // Check to see if this is an imperative grpah
