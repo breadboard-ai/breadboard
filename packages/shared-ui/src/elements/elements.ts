@@ -44,6 +44,7 @@ export { FocusEditor } from "./overlay/focus-editor.js";
 export { GoogleDriveDirectoryPicker } from "./google-drive/google-drive-directory-picker.js";
 export { GoogleDriveFileViewer } from "./google-drive/google-drive-file-viewer.js";
 export { GoogleDriveFileId } from "./google-drive/google-drive-file-id.js";
+export { GoogleDrivePicker } from "./google-drive/google-drive-picker.js";
 export { GoogleDriveQuery } from "./google-drive/google-drive-query.js";
 export { GoogleDriveServerPicker } from "./google-drive/google-drive-server-picker.js";
 export { GoogleDriveSharePanel } from "./google-drive/google-drive-share-panel.js";
