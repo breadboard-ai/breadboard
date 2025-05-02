@@ -10,9 +10,15 @@ COPY --from=breadboard / .
 
 RUN npm clean-install
 
+ARG VITE_BOARD_SERVICE
+
+# Built-time vars
+ENV VITE_BOARD_SERVICE=${VITE_BOARD_SERVICE:-/board/}
+
 WORKDIR packages/unified-server
 RUN npm run build
 
+# Run-time vars
 ENV CONNECTIONS_FILE="/breadboard/packages/unified-server/secrets/secrets.json"
 ENV NODE_ENV="production"
 ENV FIRESTORE_DB_NAME="unified-server"
