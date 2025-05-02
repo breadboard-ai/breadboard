@@ -203,14 +203,6 @@ export class SettingsStore implements BreadboardUI_Types.SettingsStore {
             value: false,
           },
         ],
-        [
-          "Show Assets in Graph",
-          {
-            name: "Show Assets in Graph",
-            description: "Toggles the visibility of Assets in the graph",
-            value: false,
-          },
-        ],
       ]),
     },
     [BreadboardUI_Types.SETTINGS_TYPE.SECRETS]: {
