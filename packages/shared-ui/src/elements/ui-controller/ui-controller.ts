@@ -652,90 +652,6 @@ export class UI extends LitElement {
           this.sideNavItem,
         ],
         () => {
-          let topGraphResult = this.topGraphResult;
-          let isInSelectionState = false;
-          let showingOlderResult = false;
-          const mainBoardSelection =
-            this.selectionState?.selectionState.graphs.get(MAIN_BOARD_ID);
-          if (
-            mainBoardSelection &&
-            mainBoardSelection.nodes.size === 1 &&
-            this.topGraphResult
-          ) {
-            isInSelectionState = true;
-            topGraphResult = {
-              currentNode: structuredClone(this.topGraphResult.currentNode),
-              log: structuredClone(this.topGraphResult.log),
-              status: this.topGraphResult.status,
-            } as TopGraphRunResult;
-
-            const currentItem = [...mainBoardSelection.nodes][0];
-            if (currentItem) {
-              // Truncate the topGraphResult log to the end of the current
-              // item.
-              let currentItemId: string | null = null;
-              for (let i = 0; i < topGraphResult.log.length; i++) {
-                const entry = topGraphResult.log[i];
-                if (currentItemId !== null) {
-                  if (
-                    entry.type === "node" &&
-                    entry.descriptor.id !== currentItem
-                  ) {
-                    topGraphResult.log.length = i;
-                    break;
-                  }
-
-                  if (
-                    entry.type === "edge" &&
-                    entry.id?.startsWith(currentItemId)
-                  ) {
-                    // Include this edge value if it is an input.
-                    topGraphResult.log.length =
-                      entry.descriptor?.type === "input" ? i + 1 : i;
-                    break;
-                  }
-                }
-
-                if (entry.type !== "node") {
-                  continue;
-                }
-
-                if (entry.descriptor.id === currentItem) {
-                  currentItemId = entry.id;
-                  topGraphResult.currentNode = entry;
-                }
-              }
-
-              // If we are at the head of the topGraphResult just use whatever
-              // its status is. If it's earlier in the run then we decide
-              // based on the most recent item. If it's an open edge then we
-              // consider it to be running, otherwise it is paused.
-              if (topGraphResult.log.length < this.topGraphResult.log.length) {
-                showingOlderResult = true;
-                const newestItem = topGraphResult.log.at(-1);
-                if (newestItem?.type === "edge" && newestItem.end === null) {
-                  topGraphResult.status = "running";
-                } else {
-                  topGraphResult.status = "paused";
-                }
-              } else {
-                if (topGraphResult.currentNode?.descriptor.id !== currentItem) {
-                  // Tip of tree. Check to see if we've seen the currently
-                  // selected node. If not then this is a future node and we
-                  // should therefore remove the entire state.
-                  topGraphResult.currentNode = null;
-                  topGraphResult.log.length = 0;
-                  topGraphResult.status = "paused";
-                }
-              }
-            } else {
-              console.warn(
-                "Error with selection state",
-                this.selectionState?.selectionState
-              );
-            }
-          }
-
           return html`<bb-app-preview
             class=${classMap({
               active: this.sideNavItem === "app-view",
@@ -744,10 +660,10 @@ export class UI extends LitElement {
             .themeHash=${themeHash}
             .run=${run}
             .eventPosition=${eventPosition}
-            .topGraphResult=${topGraphResult}
+            .topGraphResult=${this.topGraphResult}
             .showGDrive=${this.signedIn}
-            .isInSelectionState=${isInSelectionState}
-            .showingOlderResult=${showingOlderResult}
+            .isInSelectionState=${false}
+            .showingOlderResult=${false}
             .settings=${this.settings}
             .boardServers=${this.boardServers}
             .status=${this.status}
