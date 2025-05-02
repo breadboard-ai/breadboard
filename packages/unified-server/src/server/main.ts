@@ -59,7 +59,7 @@ function proxyServerAllowFilter(
 
   const url = parseUrl(inputs.url);
   if (!url) return false;
-  return url.origin.endsWith("googleapis.com");
+  return url.origin.endsWith(".googleapis.com");
 }
 
 function parseUrl(s: string): URL | undefined {
