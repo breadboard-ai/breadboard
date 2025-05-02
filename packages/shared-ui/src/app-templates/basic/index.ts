@@ -115,6 +115,7 @@ export class Template extends LitElement implements AppTemplate {
   @state()
   accessor showAddAssetModal = false;
   #addAssetType: string | null = null;
+  #allowedMimeTypes: string | null = null;
 
   get additionalOptions() {
     return {
@@ -644,6 +645,14 @@ export class Template extends LitElement implements AppTemplate {
                     }
                   }
 
+                  .no-text-input {
+                    background: transparent;
+                    color: var(--primary-text-color);
+                    font: 400 var(--bb-title-medium) /
+                      var(--bb-title-line-height-medium) var(--bb-font-family);
+                    user-select: none;
+                  }
+
                   & textarea,
                   & input[type="password"] {
                     field-sizing: content;
@@ -916,7 +925,6 @@ export class Template extends LitElement implements AppTemplate {
     return { role: "user", parts: [{ text }] };
   }
 
-  #hasFocusableInput = false;
   #renderInput(topGraphResult: TopGraphRunResult) {
     const placeholder = html`<div class="user-input">
         <p>&nbsp;</p>
@@ -1039,14 +1047,91 @@ export class Template extends LitElement implements AppTemplate {
         const disabled =
           valueIsDefined && (valueHasKeys || valueIsNonEmptyArray);
 
-        inputContents = html`
-          <bb-add-asset-button
-            .anchor=${"above"}
-            .useGlobalPosition=${false}
-            .showGDrive=${this.showGDrive}
-            ?disabled=${disabled}
-          ></bb-add-asset-button>
+        // We have to inspect the properties to determine what is allowed here,
+        // but it is theoretically possible for multiple properties to define
+        // different allowed values. For now we just roll through and pick out
+        // the first one and go with what it says.
+        let allowAddAssets = false;
 
+        // Setting this to null will allow all default types through.
+        let allowedUploadMimeTypes: string | null = null;
+        let textToSpeech = false;
+        let textInput = false;
+
+        const supportedActions = {
+          upload: false,
+          youtube: false,
+          drawable: false,
+          gdrive: false,
+        };
+
+        propSearch: for (const [, prop] of props) {
+          if (!prop.format) {
+            continue;
+          }
+
+          switch (prop.format) {
+            case "upload": {
+              allowAddAssets = true;
+              supportedActions.upload = true;
+              break propSearch;
+            }
+
+            case "mic": {
+              allowAddAssets = true;
+              allowedUploadMimeTypes = "audio/*";
+              supportedActions.upload = true;
+              break propSearch;
+            }
+
+            case "video": {
+              allowAddAssets = true;
+              allowedUploadMimeTypes = "video/*";
+              supportedActions.youtube = true;
+              break propSearch;
+            }
+
+            case "image": {
+              allowAddAssets = true;
+              allowedUploadMimeTypes = "image/*";
+              supportedActions.upload = true;
+              break propSearch;
+            }
+
+            case "edit_note": {
+              allowAddAssets = true;
+              allowedUploadMimeTypes = "text/*";
+              supportedActions.upload = true;
+              textToSpeech = true;
+              textInput = true;
+              break propSearch;
+            }
+
+            default: {
+              // Any.
+              allowAddAssets = true;
+              textToSpeech = true;
+              textInput = true;
+              supportedActions.upload = true;
+              supportedActions.youtube = true;
+              supportedActions.drawable = true;
+              supportedActions.gdrive = true;
+              break propSearch;
+            }
+          }
+        }
+
+        inputContents = html`
+          ${allowAddAssets
+            ? html`<bb-add-asset-button
+                .anchor=${"above"}
+                .supportedActions=${supportedActions}
+                .allowedUploadMimeTypes=${allowedUploadMimeTypes}
+                .useGlobalPosition=${false}
+                .showGDrive=${this.showGDrive}
+                ?disabled=${disabled}
+              ></bb-add-asset-button>`
+            : nothing}
           ${repeat(props, ([name, schema]) => {
             const dataType = isLLMContentArrayBehavior(schema)
               ? "llm-content-array"
@@ -1071,41 +1156,56 @@ export class Template extends LitElement implements AppTemplate {
                 ${schema.description ? html`${schema.description}` : nothing}
               </p>
 
-              <textarea
-                placeholder=${hasAssetEntered
-                  ? "Type or upload your response."
-                  : "Press Submit to continue"}
-                name=${name}
-                type="text"
-                data-type=${dataType}
-                .value=${inputValue}
-                ?disabled=${disabled}
-              ></textarea>
-              <bb-asset-shelf ${ref(this.#assetShelfRef)}></bb-asset-shelf>
+              ${textInput
+                ? html`<textarea
+                    placeholder=${hasAssetEntered
+                      ? "Type or upload your response."
+                      : "Press Submit to continue"}
+                    name=${name}
+                    type="text"
+                    data-type=${dataType}
+                    .value=${inputValue}
+                    ?disabled=${disabled}
+                  ></textarea>`
+                : allowAddAssets
+                  ? html`<div class="no-text-input">
+                      ${hasAssetEntered
+                        ? "Upload your response."
+                        : "Press Submit to continue"}
+                    </div>`
+                  : nothing}
+              <bb-asset-shelf
+                @assetchanged=${() => {
+                  this.requestUpdate();
+                }}
+                ${ref(this.#assetShelfRef)}
+              ></bb-asset-shelf>
             </div>`;
           })}
 
           <div class="controls">
-            <bb-speech-to-text
-              ?disabled=${disabled}
-              @bbutterance=${(evt: UtteranceEvent) => {
-                if (!this.#inputRef.value) {
-                  return;
-                }
+            ${textToSpeech
+              ? html`<bb-speech-to-text
+                  ?disabled=${disabled}
+                  @bbutterance=${(evt: UtteranceEvent) => {
+                    if (!this.#inputRef.value) {
+                      return;
+                    }
 
-                const inputField =
-                  this.#inputRef.value.querySelector<HTMLTextAreaElement>(
-                    "textarea"
-                  );
-                if (!inputField) {
-                  return;
-                }
+                    const inputField =
+                      this.#inputRef.value.querySelector<HTMLTextAreaElement>(
+                        "textarea"
+                      );
+                    if (!inputField) {
+                      return;
+                    }
 
-                inputField.value = evt.parts
-                  .map((part) => part.transcript)
-                  .join("");
-              }}
-            ></bb-speech-to-text>
+                    inputField.value = evt.parts
+                      .map((part) => part.transcript)
+                      .join("");
+                  }}
+                ></bb-speech-to-text>`
+              : nothing}
             <button
               id="continue"
               ?disabled=${disabled}
@@ -1132,8 +1232,6 @@ export class Template extends LitElement implements AppTemplate {
     if (topGraphResult.status === "stopped" && topGraphResult.log.length > 0) {
       status = "finished";
     }
-
-    this.#hasFocusableInput = active;
 
     return html`<div
       @transitionend=${() => {
@@ -1326,6 +1424,7 @@ export class Template extends LitElement implements AppTemplate {
     if (this.showAddAssetModal) {
       addAssetModal = html`<bb-add-asset-modal
         .assetType=${this.#addAssetType}
+        .allowedMimeTypes=${this.#allowedMimeTypes}
         @bboverlaydismissed=${() => {
           this.showAddAssetModal = false;
         }}
@@ -1367,6 +1466,7 @@ export class Template extends LitElement implements AppTemplate {
       @bbaddassetrequest=${(evt: AddAssetRequestEvent) => {
         this.showAddAssetModal = true;
         this.#addAssetType = evt.assetType;
+        this.#allowedMimeTypes = evt.allowedMimeTypes;
       }}
     >
       <div id="content">${content}</div>

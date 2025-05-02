@@ -130,6 +130,7 @@ export class AssetShelf extends LitElement {
 
   removeAsset(removedAsset: LLMContent) {
     this.#assets = this.#assets.filter((asset) => asset !== removedAsset);
+    this.dispatchEvent(new Event("assetchanged"));
     requestAnimationFrame(() => {
       this.requestUpdate();
     });
