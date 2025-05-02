@@ -18,36 +18,31 @@ export class ConnectionBroker extends HTMLElement {
 
   async connectedCallback() {
     const shadow = this.shadowRoot!;
+    const displayError = (message: string) => {
+      const p = document.createElement("p");
+      p.textContent = `Error: ${message} Please close this window and try to sign in again.`;
+      shadow.appendChild(p);
+    };
 
     // Unpack the state parameter.
     const thisUrl = new URL(window.location.href);
     const stateStr = thisUrl.searchParams.get("state");
     if (!stateStr) {
-      shadow.innerHTML = `
-        <p>Error: No "state" parameter could be found in the URL.
-        Please close this window and try to sign in again.</p>
-      `;
+      displayError('No "state" parameter could be found in the URL.');
       return;
     }
     let state: OAuthStateParameter;
     try {
       state = JSON.parse(stateStr);
     } catch (e) {
-      shadow.innerHTML = `
-        <p>Error: "state" contained invalid JSON.
-        Please close this window and try to sign in again.</p>
-      `;
-      console.error(e);
+      displayError('"state" contained invalid JSON.');
       return;
     }
 
     // Figure out where we are going to send the response.
     const nonce = state.nonce;
     if (!nonce) {
-      shadow.innerHTML = `
-        <p>Error: No "nonce" parameter could be found in "state".
-        Please close this window and try to sign in again.</p>
-      `;
+      displayError('No "nonce" parameter could be found in "state".');
       return;
     }
     const channelName = oauthTokenBroadcastChannelName(nonce);
@@ -56,24 +51,18 @@ export class ConnectionBroker extends HTMLElement {
     // Unpack the data needed to call the token grant API.
     const connectionId = state.connectionId;
     if (!connectionId) {
-      shadow.innerHTML = `
-        <p>Error: No "connection_id" parameter could be found in "state".
-        Please close this window and try to sign in again.</p>
-      `;
+      displayError('"connection_id" parameter could be found in "state".');
       return;
     }
     const code = thisUrl.searchParams.get("code");
     if (!code) {
-      shadow.innerHTML = `
-        <p>Error: No "code" parameter could be found in the URL.
-        Please close this window and try to sign in again.</p>
-      `;
+      displayError('No "code" parameter could be found in the URL.');
       return;
     }
 
     // Call the token grant API.
     if (!import.meta.env.VITE_CONNECTION_SERVER_URL) {
-      shadow.innerHTML = `<p>Error: Could not find a grant URL for this origin.</p>`;
+      displayError("Could not find a grant URL for this origin.");
       return;
     }
     const absoluteConnectionServerUrl = new URL(
@@ -89,19 +78,14 @@ export class ConnectionBroker extends HTMLElement {
     );
     const response = await fetch(grantUrl, { credentials: "include" });
     if (!response.ok) {
-      const text = await response.text().catch((e) => `Text read error: ${e}`);
-      shadow.innerHTML = `
-<p>Error: Connection service returned HTTP ${response.status}.</p>
-<pre>${text}</pre>`;
+      displayError("Connection service returned unexpected HTTP status.");
       return;
     }
     let grantResponse: GrantResponse;
     try {
       grantResponse = await response.json();
     } catch (e) {
-      shadow.innerHTML =
-        "<p>Error: Could not read JSON response from backend.</p>";
-      console.error(e);
+      displayError("Could not read JSON response from backend.");
       return;
     }
 
