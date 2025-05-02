@@ -17,6 +17,7 @@ export type EntryInputs = {
   "p-chat": boolean;
   "p-list": boolean;
   "b-system-instruction": LLMContent;
+  "p-model-name": string;
   "config$ask-user"?: boolean;
 } & Params;
 
@@ -33,13 +34,13 @@ async function invoke({
   "p-chat": chat,
   "p-list": makeList,
   "b-system-instruction": systemInstruction,
+  "p-model-name": model = "",
   description,
   ...params
 }: EntryInputs): Promise<Outputs> {
   // Make sure it's a boolean.
   chat = !!chat;
   context ??= [];
-  const defaultModel = "";
   const type = "work";
   return {
     context: {
@@ -49,8 +50,8 @@ async function invoke({
       listPath: [],
       context,
       userInputs: [],
-      defaultModel,
-      model: "",
+      defaultModel: model,
+      model: model,
       description,
       type,
       work: [],
@@ -114,6 +115,12 @@ async function describe({
           title: "System Instruction",
           description: "The system instruction for the model",
           default: JSON.stringify(defaultSystemInstruction()),
+        },
+        "p-model-name": {
+          type: "string",
+          behavior: ["llm-content"],
+          title: "Model",
+          description: "The specific model version to generate with",
         },
         ...extra,
         ...template.schemas(),

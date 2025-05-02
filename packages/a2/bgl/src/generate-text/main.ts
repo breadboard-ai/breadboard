@@ -103,6 +103,7 @@ class GenerateText {
    * - tools: boolean -- whether or not has tools
    * - makeList: boolean -- asked to generate a list
    * - isList: boolean -- is currently in list mode
+   * - model: string -- the model to generate with
    */
   async invoke(
     description: LLMContent,
@@ -121,7 +122,10 @@ class GenerateText {
     const safetySettings = defaultSafetySettings();
     const systemInstruction = this.createSystemInstruction(makeList);
     const tools = toolManager.list();
-    const inputs: GeminiInputs = { body: { contents, safetySettings } };
+    const inputs: GeminiInputs = {
+      body: { contents, safetySettings },
+      model: sharedContext.model,
+    };
     // Unless it's a very first turn, we always supply tools when chatting,
     // since we add the "Done" and "Keep Chatting" tools to figure out when
     // the conversation ends.

@@ -1,5 +1,5 @@
 /**
- * @fileoverview Add a description for your module here.
+ * @fileoverview Mega step for generation capabilities.
  */
 
 import describeGraph from "@describe";
@@ -24,23 +24,56 @@ type DescribeInputs = {
   asType?: boolean;
 };
 
-const MODES = [
+type Mode = {
+  id: string;
+  type: string;
+  url: string;
+  title: string;
+  description: string;
+  icon: string;
+  modelName?: string;
+};
+
+const MODES: Mode[] = [
   {
     id: "text",
+    type: "text",
     url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
     title: "Gemini 2.0 Flash",
     description: "For everyday tasks, plus more",
     icon: "text_analysis",
+    modelName: "gemini-2.0-flash",
+  },
+  {
+    id: "text-2.5-flash",
+    type: "text",
+    url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+    title: "Gemini 2.5 Flash [Experimental]",
+    description: "Uses advanced reasoning",
+    icon: "text_analysis",
+    modelName: "gemini-2.5-flash-preview-04-17",
+  },
+  {
+    id: "text-2.5-pro",
+    type: "text",
+    url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+    title: "Gemini 2.5 Pro [Experimental]",
+    description: "Best for complex tasks",
+    icon: "text_analysis",
+    modelName: "gemini-2.5-pro-preview-03-25",
   },
   {
     id: "think",
+    type: "think",
     url: "embed://a2/go-over-list.bgl.json#module:main",
     title: "Plan and Execute with Gemini 2.0 Flash",
     description: "Plans and executes complex tasks",
     icon: "spark",
+    modelName: "gemini-2.0-flash",
   },
   {
     id: "image-gen",
+    type: "image-gen",
     url: "embed://a2/a2.bgl.json#module:image-generator",
     title: "Imagen 3",
     description: "Generates images from text",
@@ -48,6 +81,7 @@ const MODES = [
   },
   {
     id: "image",
+    type: "image",
     url: "embed://a2/a2.bgl.json#module:image-editor",
     title: "Gemini 2.0 Flash: Image Generation",
     description: "Generates images from text and images",
@@ -55,6 +89,7 @@ const MODES = [
   },
   {
     id: "audio",
+    type: "audio",
     url: "embed://a2/audio-generator.bgl.json#module:main",
     title: "AudioLM",
     description: "Generates speech from text",
@@ -62,6 +97,7 @@ const MODES = [
   },
   {
     id: "video",
+    type: "video",
     url: "embed://a2/video-generator.bgl.json#module:main",
     title: "Veo 2",
     description: "Generates videos from text and images",
@@ -76,6 +112,7 @@ const modeMap = new Map(MODES.map((mode) => [mode.id, mode]));
 const PROMPT_PORT = "config$prompt";
 const ASK_USER_PORT = "config$ask-user";
 const LIST_PORT = "config$list";
+const MODEL_PORT = "modelName";
 
 // Maps the prompt port to various names of the other ports.
 const portMapForward = new Map<ModeId, Map<string, string>>([
@@ -90,14 +127,30 @@ const portMapForward = new Map<ModeId, Map<string, string>>([
   [
     MODES[1].id,
     new Map([
+      [PROMPT_PORT, "description"],
+      [ASK_USER_PORT, "p-chat"],
+      [LIST_PORT, "p-list"],
+    ]),
+  ],
+  [
+    MODES[2].id,
+    new Map([
+      [PROMPT_PORT, "description"],
+      [ASK_USER_PORT, "p-chat"],
+      [LIST_PORT, "p-list"],
+    ]),
+  ],
+  [
+    MODES[3].id,
+    new Map([
       [PROMPT_PORT, "plan"],
       [LIST_PORT, "z-list"],
     ]),
   ],
-  [MODES[2].id, new Map([[PROMPT_PORT, "instruction"]])],
-  [MODES[3].id, new Map([[PROMPT_PORT, "instruction"]])],
-  [MODES[4].id, new Map([[PROMPT_PORT, "text"]])],
+  [MODES[4].id, new Map([[PROMPT_PORT, "instruction"]])],
   [MODES[5].id, new Map([[PROMPT_PORT, "instruction"]])],
+  [MODES[6].id, new Map([[PROMPT_PORT, "text"]])],
+  [MODES[7].id, new Map([[PROMPT_PORT, "instruction"]])],
 ]);
 
 const portMapReverse = new Map(
@@ -142,8 +195,13 @@ function getMode(modeId: ModeId | undefined): GenerationModes {
 }
 
 async function invoke({ "generation-mode": mode, ...rest }: Inputs) {
-  const { url: $board, id } = getMode(mode);
-  return await invokeGraph({ $board, ...forwardPorts(id, rest) });
+  const { url: $board, type, modelName } = getMode(mode);
+  // Model is treated as part of the Mode, but actually maps N:1
+  // on actual underlying step type.
+  if (!modelName) {
+    rest["p-model-name"] = modelName;
+  }
+  return await invokeGraph({ $board, ...forwardPorts(type, rest) });
 }
 
 async function describe({
@@ -170,13 +228,13 @@ async function describe({
     };
   }
 
-  const { url, id } = getMode(mode);
+  const { url, type } = getMode(mode);
   const describing = await describeGraph({ url, inputs: rest });
   let behavior: BehaviorSchema[] = [];
   let modeSchema: Record<string, Schema> = {};
   if (ok(describing)) {
     modeSchema = receivePorts(
-      id,
+      type,
       describing.inputSchema.properties || modeSchema
     );
     behavior = describing.inputSchema.behavior || [];
