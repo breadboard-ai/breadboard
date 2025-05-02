@@ -543,10 +543,3 @@ export class GoogleDrivePickerOverlay extends LitElement {
     `;
   }
 }
-
-declare global {
-  interface HTMLElementTagNameMap {
-    "bb-google-drive-picker-underlay": GoogleDrivePickerUnderlay;
-    "bb-google-drive-picker-overlay": GoogleDrivePickerOverlay;
-  }
-}

@@ -71,7 +71,17 @@ import {
   createWorkspaceSelectionChangeId,
 } from "../../utils/workspace.js";
 import { icons } from "../../styles/icons.js";
-import { GoogleDriveSharePanel } from "../elements.js";
+import {
+  type GoogleDriveSharePanel,
+  type GoogleDrivePicker,
+} from "../elements.js";
+import { consume } from "@lit/context";
+import {
+  type SigninAdapter,
+  signinAdapterContext,
+} from "../../utils/signin-adapter.js";
+import { findGoogleDriveAssetsInGraph } from "../google-drive/find-google-drive-assets-in-graph.js";
+import { loadDriveApi } from "../google-drive/google-apis.js";
 
 const SIDE_ITEM_KEY = "bb-ui-controller-side-nav-item";
 
@@ -217,6 +227,10 @@ export class UI extends LitElement {
   @state()
   accessor #showEditHistory = false;
 
+  @consume({ context: signinAdapterContext })
+  @property({ attribute: false })
+  accessor signinAdapter: SigninAdapter | undefined = undefined;
+
   #autoFocusEditorOnRender = false;
   #sideNavItem:
     | "activity"
@@ -225,7 +239,8 @@ export class UI extends LitElement {
     | "editor"
     | "app-view" = "editor";
   #moduleEditorRef: Ref<ModuleEditor> = createRef();
-  #sharePanelRef: Ref<GoogleDriveSharePanel> = createRef();
+  #googleDriveSharePanelRef: Ref<GoogleDriveSharePanel> = createRef();
+  #googleDriveAssetAccessPickerRef: Ref<GoogleDrivePicker> = createRef();
 
   static styles = [icons, uiControllerStyles];
 
@@ -245,9 +260,9 @@ export class UI extends LitElement {
 
   editorRender = 0;
   #preventAutoSwitchToEditor = false;
-  protected willUpdate(changedProperties: PropertyValues): void {
-    if (changedProperties.has("isShowingBoardActivityOverlay")) {
-      this.editorRender++;
+  protected willUpdate(changedProperties: PropertyValues<this>): void {
+    if (changedProperties.has("graph")) {
+      this.updateComplete.then(() => this.#checkGoogleDriveAssetsAreReadable());
     }
 
     if (changedProperties.has("selectionState")) {
@@ -802,9 +817,14 @@ export class UI extends LitElement {
       html`
         <bb-google-drive-share-panel
           .graph=${this.graph}
-          ${ref(this.#sharePanelRef)}
+          ${ref(this.#googleDriveSharePanelRef)}
         >
         </bb-google-drive-share-panel>
+        <bb-google-drive-picker
+          ${ref(this.#googleDriveAssetAccessPickerRef)},
+          mode="pick-shared-assets"
+        >
+        </bb-google-drive-picker>
       `,
     ];
   }
@@ -866,6 +886,61 @@ export class UI extends LitElement {
   }
 
   openSharePanel() {
-    this.#sharePanelRef?.value?.open();
+    this.#googleDriveSharePanelRef?.value?.open();
+  }
+
+  async #checkGoogleDriveAssetsAreReadable() {
+    if (!this.graph) {
+      return;
+    }
+    const driveAssetFileIds = findGoogleDriveAssetsInGraph(this.graph);
+    if (driveAssetFileIds.length === 0) {
+      return;
+    }
+    const drive = await loadDriveApi();
+    const auth = await this.signinAdapter?.refresh();
+    if (auth?.state !== "valid") {
+      console.error(`Expected "valid" auth state, got "${auth?.state}"`);
+      return;
+    }
+    const needsPicking: string[] = [];
+    await Promise.all(
+      driveAssetFileIds.map(async (fileId) => {
+        try {
+          await drive.files.get({
+            access_token: auth.grant.access_token,
+            fileId,
+          });
+        } catch (error) {
+          if (
+            typeof error === "object" &&
+            error !== null &&
+            "status" in error &&
+            error.status === 404
+          ) {
+            needsPicking.push(fileId);
+          } else {
+            console.error(
+              "Unhandled error checking drive asset readability:",
+              error
+            );
+          }
+        }
+      })
+    );
+    if (needsPicking.length > 0) {
+      const picker = this.#googleDriveAssetAccessPickerRef.value;
+      if (picker) {
+        picker.fileIds = needsPicking;
+        picker.open();
+        picker.addEventListener(
+          "close",
+          () => {
+            picker.fileIds = [];
+          },
+          { once: true }
+        );
+      }
+    }
   }
 }

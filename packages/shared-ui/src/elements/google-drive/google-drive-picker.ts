@@ -4,13 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { type TokenVendor } from "@breadboard-ai/connection-client";
-import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { consume } from "@lit/context";
-import { css, html, LitElement, nothing, type PropertyValues } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
-import { tokenVendorContext } from "../../contexts/token-vendor.js";
+import { css, html, LitElement, nothing } from "lit";
+import { customElement, property } from "lit/decorators.js";
 import {
   type SigninAdapter,
   signinAdapterContext,
@@ -23,6 +20,8 @@ const BOARD_MIME_TYPES = [
   "application/vnd.breadboard.graph+json",
   "application/json",
 ].join(",");
+
+export type Mode = "pick-shared-board" | "pick-shared-assets";
 
 @customElement("bb-google-drive-picker")
 export class GoogleDrivePicker extends LitElement {
@@ -38,36 +37,11 @@ export class GoogleDrivePicker extends LitElement {
   @property({ attribute: false })
   accessor signinAdapter: SigninAdapter | undefined = undefined;
 
-  @consume({ context: tokenVendorContext })
-  @property({ attribute: false })
-  accessor tokenVendor!: TokenVendor;
-
   @property({ type: Array })
   accessor fileIds: string[] = [];
 
   @property()
-  accessor mode: "pick-shared-board" | "pick-shared-assets" =
-    "pick-shared-board";
-
-  @state()
-  accessor #googleDriveBoardServer: Promise<GoogleDriveBoardServer | null> | null =
-    null;
-
-  override update(changes: PropertyValues<this>) {
-    super.update(changes);
-    if (changes.has("tokenVendor")) {
-      if (this.tokenVendor) {
-        this.#googleDriveBoardServer = GoogleDriveBoardServer.from(
-          "drive:",
-          "Google Drive",
-          { username: "", apiKey: "", secrets: new Map() },
-          this.tokenVendor
-        );
-      } else {
-        this.#googleDriveBoardServer = null;
-      }
-    }
-  }
+  accessor mode: Mode = "pick-shared-board";
 
   override render() {
     return nothing;
@@ -76,6 +50,9 @@ export class GoogleDrivePicker extends LitElement {
   async open() {
     switch (this.mode) {
       case "pick-shared-board": {
+        // TODO(aomarks) There's a lot of shared code between the two modes, but
+        // also lots of small differences. Some kind of cleanup/consolidation
+        // might be nice (maybe just factoring out a few functions).
         return this.#openInPickSharedBoardMode();
       }
       case "pick-shared-assets": {
@@ -113,8 +90,9 @@ export class GoogleDrivePicker extends LitElement {
     view.setFileIds(this.fileIds[0]);
     view.setMode(google.picker.DocsViewMode.GRID);
 
-    const overlay = document.createElement("bb-google-drive-picker-overlay");
     const underlay = document.createElement("bb-google-drive-picker-underlay");
+    const overlay = document.createElement("bb-google-drive-picker-overlay");
+    underlay.mode = overlay.mode = "pick-shared-board";
 
     // https://developers.google.com/drive/picker/reference
     const picker = new pickerLib.PickerBuilder()
@@ -147,18 +125,7 @@ export class GoogleDrivePicker extends LitElement {
 
     picker.setVisible(true);
 
-    // TODO(aomarks) Use a mutation observer instead of a loop.
-    let dialog, iframe;
-    while (true) {
-      dialog = document.body.querySelector("div.picker-dialog" as "div");
-      iframe = dialog?.querySelector("iframe.picker-frame" as "iframe");
-      if (dialog && iframe) {
-        break;
-      }
-      console.error("Could not find picker, retrying", { dialog, iframe });
-      // TODO(aomarks) Give up after a while in case something went wrong.
-      await new Promise((resolve) => requestAnimationFrame(resolve));
-    }
+    const { dialog, iframe } = await this.#findPickerDOM();
 
     // Squish the tile and buttons together vertically.
     iframe.style.height = "430px";
@@ -197,7 +164,100 @@ export class GoogleDrivePicker extends LitElement {
   }
 
   async #openInPickSharedAssetsMode() {
-    console.error("Not implemented yet");
+    if (this.fileIds.length === 0) {
+      console.error("No file ids to pick");
+      return;
+    }
+    const pickerLib = await loadDrivePicker();
+    const auth = await this.signinAdapter?.refresh();
+    if (auth?.state !== "valid") {
+      console.error(`Expected "valid" auth state, got "${auth?.state}"`);
+      return;
+    }
+
+    const view = new pickerLib.DocsView(google.picker.ViewId.DOCS);
+    view.setFileIds(this.fileIds.join(","));
+    view.setMode(google.picker.DocsViewMode.GRID);
+
+    const underlay = document.createElement("bb-google-drive-picker-underlay");
+    const overlay = document.createElement("bb-google-drive-picker-overlay");
+    underlay.mode = overlay.mode = "pick-shared-assets";
+
+    const picker = new pickerLib.PickerBuilder()
+      .addView(view)
+      .setAppId(auth.grant.client_id)
+      .setOAuthToken(auth.grant.access_token)
+      .enableFeature(google.picker.Feature.NAV_HIDDEN)
+      .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
+      .setSize(1200, 480)
+      .setCallback((result: google.picker.ResponseObject) => {
+        if (result.action === "picked" || result.action === "cancel") {
+          overlay.remove();
+          underlay.remove();
+          picker.dispose();
+          if (result.action === "picked") {
+            console.log(
+              `Google Drive file is now readable: ${JSON.stringify(result)}`
+            );
+          }
+          this.dispatchEvent(new Event("close"));
+        } else if (result.action !== "loaded") {
+          console.error(`Unhandled picker callback action:`, result.action);
+        }
+      })
+      .build();
+
+    // Note the resize observer is initialized later in this function, but we
+    // need a reference now for the callback, so it is declared early.
+    let resizeObserver: ResizeObserver | undefined = undefined;
+
+    picker.setVisible(true);
+
+    const { dialog } = await this.#findPickerDOM();
+
+    // Remove the dialog's original background styling; we're replacing it.
+    dialog.style.background = "none";
+    dialog.style.border = "none";
+    dialog.style.boxShadow = "none";
+
+    // The dialog is way off-center now, but it monitors for window resize
+    // events to re-position itself, so we can fake one of those.
+    window.dispatchEvent(new Event("resize"));
+
+    // Detect the dimensions of the dialog so that we can position and size
+    // our underlay/overlay accordingly.
+    const detectPickerSize = () => {
+      const rect = dialog.getBoundingClientRect();
+      for (const property of ["top", "left", "width", "height"] as const) {
+        document.body.style.setProperty(
+          `--google-drive-picker-${property}`,
+          `${rect[property]}px`
+        );
+      }
+    };
+    detectPickerSize();
+    resizeObserver = new ResizeObserver(() => detectPickerSize());
+    resizeObserver.observe(dialog);
+    resizeObserver.observe(document.body);
+
+    document.body.appendChild(underlay);
+    document.body.appendChild(overlay);
+  }
+
+  async #findPickerDOM() {
+    // TODO(aomarks) Use a mutation observer instead of a loop.
+    let dialog, iframe;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      dialog = document.body.querySelector("div.picker-dialog" as "div");
+      iframe = dialog?.querySelector("iframe.picker-frame" as "iframe");
+      if (dialog && iframe) {
+        return { dialog, iframe };
+      }
+      console.error("Could not find picker, retrying", { dialog, iframe });
+      // TODO(aomarks) Give up after a while in case something went wrong.
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    }
   }
 }
 
@@ -209,6 +269,9 @@ declare global {
 
 @customElement("bb-google-drive-picker-underlay")
 export class GoogleDrivePickerUnderlay extends LitElement {
+  @property({ reflect: true })
+  accessor mode: Mode = "pick-shared-board";
+
   static styles = [
     css`
       :host {
@@ -216,20 +279,32 @@ export class GoogleDrivePickerUnderlay extends LitElement {
         /* Right below the picker. */
         z-index: 999;
         width: 100vw;
-        height: calc(var(--google-drive-picker-height) - 50px);
-        top: var(--google-drive-picker-top);
         left: 0;
         display: flex;
         justify-content: center;
       }
       #container {
-        min-width: var(--google-drive-picker-width);
-        max-width: 600px;
-        width: 100%;
         background: #fff;
         border-radius: 15px;
         box-shadow: rgb(100 100 111 / 50%) 0 0 10px 3px;
         margin: 0 10px;
+      }
+
+      :host([mode="pick-shared-board"]) {
+        top: var(--google-drive-picker-top);
+        height: calc(var(--google-drive-picker-height) - 50px);
+        #container {
+          min-width: var(--google-drive-picker-width);
+          max-width: 600px;
+          width: 100%;
+        }
+      }
+      :host([mode="pick-shared-assets"]) {
+        top: var(--google-drive-picker-top);
+        height: calc(var(--google-drive-picker-height) + 15px);
+        #container {
+          width: calc(var(--google-drive-picker-width) + 15px + 15px);
+        }
       }
     `,
   ];
@@ -247,6 +322,9 @@ declare global {
 
 @customElement("bb-google-drive-picker-overlay")
 export class GoogleDrivePickerOverlay extends LitElement {
+  @property({ reflect: true })
+  accessor mode: Mode = "pick-shared-board";
+
   static styles = [
     css`
       :host {
@@ -255,14 +333,11 @@ export class GoogleDrivePickerOverlay extends LitElement {
         z-index: 1001;
         width: 100vw;
         height: 120px;
-        top: calc(var(--google-drive-picker-top) + 15px);
         left: 0;
         display: flex;
         justify-content: center;
       }
       #banner {
-        min-width: var(--google-drive-picker-width);
-        max-width: 600px;
         background: #fff;
         font-family: var(--bb-font-family), sans-serif;
         text-align: center;
@@ -287,17 +362,55 @@ export class GoogleDrivePickerOverlay extends LitElement {
         width: var(--google-drive-picker-width);
         height: 5px;
       }
+
+      :host([mode="pick-shared-board"]) {
+        top: calc(var(--google-drive-picker-top) + 15px);
+        #banner {
+          min-width: var(--google-drive-picker-width);
+          max-width: 600px;
+        }
+      }
+      :host([mode="pick-shared-assets"]) {
+        top: calc(var(--google-drive-picker-top) + 15px);
+        #banner {
+          width: var(--google-drive-picker-width);
+        }
+      }
     `,
   ];
 
   override render() {
-    return html`
-      <div id="banner">
-        <h3>An ${Strings.from("APP_NAME")} has been shared with you!</h3>
-        <p>To run it, choose it below and click <em>Select</em>.</p>
-      </div>
-      <div id="line-hider"></div>
-    `;
+    switch (this.mode) {
+      case "pick-shared-board": {
+        return html`
+          <div id="banner">
+            <h3>An ${Strings.from("APP_NAME")} has been shared with you!</h3>
+            <p>To run it, choose it below and click <em>Select</em>.</p>
+          </div>
+          <div id="line-hider"></div>
+        `;
+      }
+      case "pick-shared-assets": {
+        return html`
+          <div id="banner">
+            <h3>
+              This ${Strings.from("APP_NAME")} requires access to additional
+              assets.
+            </h3>
+            <p>
+              To continue, please hold Shift, choose all items listed below, and
+              click <em>Select</em>.
+            </p>
+          </div>
+        `;
+      }
+      default: {
+        console.error(
+          `Unknown mode ${JSON.stringify(this.mode satisfies never)}`
+        );
+        return;
+      }
+    }
   }
 }
 
