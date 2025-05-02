@@ -198,7 +198,8 @@ async function invoke({ "generation-mode": mode, ...rest }: Inputs) {
   const { url: $board, type, modelName } = getMode(mode);
   // Model is treated as part of the Mode, but actually maps N:1
   // on actual underlying step type.
-  if (!modelName) {
+  if (modelName) {
+    console.log(`Generating with ${modelName}`);
     rest["p-model-name"] = modelName;
   }
   return await invokeGraph({ $board, ...forwardPorts(type, rest) });
