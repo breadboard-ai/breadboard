@@ -78,6 +78,7 @@ async function post(
     kits: [secretsKit, gcsAwareFetchKit],
     store,
     proxy: ["fetch", { node: "secrets", tunnel }],
+    allowed: serverConfig.proxyServerAllowFilter,
   };
 
   try {

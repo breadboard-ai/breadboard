@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { AllowFilterFunction } from "@google-labs/breadboard/remote";
+
 export type StorageProvider = "firestore" | "in-memory";
 
 export interface ServerConfig {
@@ -20,4 +22,5 @@ export interface ServerConfig {
    */
   serverUrl?: string;
   storageBucket?: string;
+  proxyServerAllowFilter?: AllowFilterFunction;
 }

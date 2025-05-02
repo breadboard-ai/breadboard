@@ -5,7 +5,12 @@
  */
 
 import { DataStore } from "../data/types.js";
-import { Kit, NodeTypeIdentifier } from "../types.js";
+import {
+  InputValues,
+  Kit,
+  NodeDescriptor,
+  NodeTypeIdentifier,
+} from "../types.js";
 
 /**
  * A detailed specification for ProxyServer and ProxyClient.
@@ -90,6 +95,11 @@ export type TunnelSpec = {
 
 export type NodeProxyConfig = (NodeTypeIdentifier | NodeProxySpec)[];
 
+export type AllowFilterFunction = (
+  node: NodeDescriptor,
+  inputs: InputValues
+) => boolean;
+
 export type ProxyServerConfig = {
   /**
    * The kits to use to provide the handlers for the nodes that are proxied.
@@ -104,6 +114,10 @@ export type ProxyServerConfig = {
    * The data store to use for storing data.
    */
   store?: DataStore;
+  /**
+   * Allow filter.
+   */
+  allowed?: AllowFilterFunction;
 };
 
 export const defineConfig = (config: ProxyServerConfig) => config;

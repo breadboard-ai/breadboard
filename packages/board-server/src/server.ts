@@ -19,6 +19,7 @@ import { type BoardServerStore } from "./server/store.js";
 import { loadBoard } from "./server/boards/loader.js";
 import { InMemoryStorageProvider } from "./server/storage-providers/inmemory.js";
 import { FirestoreStorageProvider } from "./server/storage-providers/firestore.js";
+import type { AllowFilterFunction } from "@google-labs/breadboard/remote";
 
 export type { ServerConfig, StorageProvider };
 
@@ -79,6 +80,7 @@ export function createRouter(config: ServerConfig): Router {
 
 export function createServerConfig(opts: {
   storageProvider: StorageProvider;
+  proxyServerAllowFilter?: AllowFilterFunction;
 }): ServerConfig {
   const {
     PORT = DEFAULT_PORT,
@@ -93,5 +95,6 @@ export function createServerConfig(opts: {
     storageProvider: opts?.storageProvider ?? "firestore",
     serverUrl: SERVER_URL,
     storageBucket: STORAGE_BUCKET,
+    proxyServerAllowFilter: opts?.proxyServerAllowFilter,
   };
 }
