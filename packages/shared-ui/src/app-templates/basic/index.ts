@@ -1084,9 +1084,10 @@ export class Template extends LitElement implements AppTemplate {
               break propSearch;
             }
 
-            case "video": {
+            case "videocam": {
               allowAddAssets = true;
               allowedUploadMimeTypes = "video/*";
+              supportedActions.upload = true;
               supportedActions.youtube = true;
               break propSearch;
             }
