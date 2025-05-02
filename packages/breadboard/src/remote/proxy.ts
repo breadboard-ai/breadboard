@@ -109,6 +109,17 @@ export class ProxyServer {
       }
 
       try {
+        const allowed = config.allowed?.(node, inputs);
+        if (allowed === false) {
+          request.reply([
+            "error",
+            {
+              error: "This proxy request is not allowed",
+              timestamp: timestamp(),
+            },
+          ]);
+          continue;
+        }
         const result = await callHandler(handler, inputs, {
           descriptor: node,
           store,
