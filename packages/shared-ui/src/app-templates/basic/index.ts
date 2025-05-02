@@ -1074,7 +1074,7 @@ export class Template extends LitElement implements AppTemplate {
               <textarea
                 placeholder=${hasAssetEntered
                   ? "Type or upload your response."
-                  : "⌘-⏎ to submit"}
+                  : "Press Submit to continue"}
                 name=${name}
                 type="text"
                 data-type=${dataType}
@@ -1109,6 +1109,7 @@ export class Template extends LitElement implements AppTemplate {
             <button
               id="continue"
               ?disabled=${disabled}
+              title="Submit"
               @click=${() => {
                 continueRun(currentItem.id ?? "unknown");
               }}
