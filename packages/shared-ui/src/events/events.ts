@@ -1566,3 +1566,13 @@ export class ParamDeleteEvent extends Event {
     super(ParamDeleteEvent.eventName, { ...eventInit });
   }
 }
+
+/** Board */
+
+export class BoardDeleteEvent extends Event {
+  static eventName = "bbboarddelete";
+
+  constructor(public readonly url: string) {
+    super(BoardDeleteEvent.eventName, { ...eventInit });
+  }
+}

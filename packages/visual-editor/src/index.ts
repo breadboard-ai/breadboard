@@ -1503,6 +1503,7 @@ export class Main extends LitElement {
       boardServerName,
       url
     );
+
     if (result) {
       this.toast(
         Strings.from("STATUS_PROJECT_DELETED"),
@@ -3923,6 +3924,22 @@ export class Main extends LitElement {
                 .boardServers=${this.#boardServers}
                 .boardServerNavState=${this.boardServerNavState}
                 .showAdditionalSources=${showAdditionalSources}
+                @bbboarddelete=${async (
+                  evt: BreadboardUI.Events.BoardDeleteEvent
+                ) => {
+                  const boardServer = this.#runtime.board.getBoardServerForURL(
+                    new URL(evt.url)
+                  );
+                  if (!boardServer) {
+                    return;
+                  }
+
+                  await this.#attemptBoardDelete(
+                    boardServer.name,
+                    evt.url,
+                    false
+                  );
+                }}
                 @bbgraphboardserverblankboard=${() => {
                   this.#attemptBoardCreate(blank(), { role: "user" });
                 }}
