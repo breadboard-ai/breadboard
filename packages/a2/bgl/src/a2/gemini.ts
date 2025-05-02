@@ -317,10 +317,9 @@ async function callAPI(
     if (!ok(result)) {
       // Fetch is a bit weird, because it returns various props
       // along with the `$error`. Let's handle that here.
-      console.log("ERROR RESULT", result);
       const { status, $error: errObject } = result as FetchErrorResponse;
       if (!status) {
-        if (errObject) return { $error: errObject }
+        if (errObject) return { $error: errObject };
         // This is not an error response, presume fatal error.
         return { $error };
       }
