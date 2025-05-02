@@ -1,0 +1,258 @@
+{
+  "title": "Blogpost Workbench",
+  "description": "A blank board. Use it as a starting point for your creations.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "a2778426-8b58-4fa2-94df-fc6b67236bdf",
+      "type": "embed://a2/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
+      "metadata": {
+        "title": "Blogpost topic",
+        "visual": {
+          "x": 180,
+          "y": -280
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "description": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Enter your blogpost topic"
+            }
+          ]
+        },
+        "p-modality": "Any"
+      }
+    },
+    {
+      "id": "3e765f0f-17e0-4a9b-84a0-099cac64ccd1",
+      "type": "embed://a2/generate.bgl.json#module:main",
+      "metadata": {
+        "title": "Generate blogpost cover image concept",
+        "visual": {
+          "x": 520,
+          "y": -340
+        },
+        "userModified": true
+      },
+      "configuration": {
+        "config$prompt": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Create a blogpost cover image concept about\n{{\"type\":\"in\",\"path\":\"a2778426-8b58-4fa2-94df-fc6b67236bdf\",\"title\":\"Blogpost topic\"}}"
+            }
+          ]
+        },
+        "b-system-instruction": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "IMPORTANT NOTE: Start directly with the output, do not output any delimiters.\nYou are working as part of an AI system, so no chit-chat and no explaining what you're doing and why.\nDO NOT start with \"Okay\", or \"Alright\" or any preambles.\nJust the output, please.\nTake a Deep Breath, read the instructions again, read the inputs again.\nEach instruction is crucial and must be executed with utmost care and attention to detail."
+            }
+          ]
+        },
+        "generation-mode": "text-2.5-flash",
+        "config$ask-user": false,
+        "config$list": false
+      }
+    },
+    {
+      "id": "66253477-5b94-40bc-b768-c33b2b1b19d3",
+      "type": "embed://a2/generate.bgl.json#module:main",
+      "metadata": {
+        "title": "Generate Blogpost Outline",
+        "visual": {
+          "x": 520,
+          "y": -180
+        },
+        "userModified": true
+      },
+      "configuration": {
+        "b-system-instruction": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "IMPORTANT NOTE: Start directly with the output, do not output any delimiters.\nYou are working as part of an AI system, so no chit-chat and no explaining what you're doing and why.\nDO NOT start with \"Okay\", or \"Alright\" or any preambles.\nJust the output, please.\nTake a Deep Breath, read the instructions again, read the inputs again.\nEach instruction is crucial and must be executed with utmost care and attention to detail."
+            }
+          ]
+        },
+        "config$ask-user": false,
+        "config$list": false,
+        "config$prompt": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Create a blogpost outline about the topic:\n{{\"type\":\"in\",\"path\":\"a2778426-8b58-4fa2-94df-fc6b67236bdf\",\"title\":\"Blogpost topic\"}}"
+            }
+          ]
+        },
+        "generation-mode": "text"
+      }
+    },
+    {
+      "id": "000aadb5-350e-41ad-8627-a744d84329cd",
+      "type": "embed://a2/generate.bgl.json#module:main",
+      "metadata": {
+        "title": "Generate Cover Image",
+        "visual": {
+          "x": 840,
+          "y": -340
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "config$prompt": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "{{\"type\":\"in\",\"path\":\"3e765f0f-17e0-4a9b-84a0-099cac64ccd1\",\"title\":\"Generate blogpost cover image concept\"}}"
+            }
+          ]
+        },
+        "generation-mode": "image-gen",
+        "p-aspect-ratio": "1:1",
+        "p-disable-prompt-rewrite": false
+      }
+    },
+    {
+      "id": "cec6c400-30f2-4368-bda8-b1175d727daf",
+      "type": "embed://a2/generate.bgl.json#module:main",
+      "metadata": {
+        "title": "Generate Blogpost",
+        "visual": {
+          "x": 840,
+          "y": -180
+        },
+        "userModified": true
+      },
+      "configuration": {
+        "config$prompt": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Create blog post based on this outline:\n{{\"type\":\"in\",\"path\":\"66253477-5b94-40bc-b768-c33b2b1b19d3\",\"title\":\"Generate Blogpost Outline\"}}"
+            }
+          ]
+        },
+        "b-system-instruction": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "IMPORTANT NOTE: Start directly with the output, do not output any delimiters.\nYou are working as part of an AI system, so no chit-chat and no explaining what you're doing and why.\nDO NOT start with \"Okay\", or \"Alright\" or any preambles.\nJust the output, please.\nTake a Deep Breath, read the instructions again, read the inputs again.\nEach instruction is crucial and must be executed with utmost care and attention to detail."
+            }
+          ]
+        },
+        "generation-mode": "text-2.5-pro",
+        "config$ask-user": false,
+        "config$list": false
+      }
+    },
+    {
+      "id": "a9ddd00b-02b6-445b-900c-bf5dfdbde3e9",
+      "type": "embed://a2/a2.bgl.json#module:render-outputs",
+      "metadata": {
+        "title": "Display",
+        "visual": {
+          "x": 1180,
+          "y": -280
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "text": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "{{\"type\":\"in\",\"path\":\"000aadb5-350e-41ad-8627-a744d84329cd\",\"title\":\"Generate Cover Image\"}}\n {{\"type\":\"in\",\"path\":\"cec6c400-30f2-4368-bda8-b1175d727daf\",\"title\":\"Generate Blogpost\"}}"
+            }
+          ]
+        },
+        "b-system-instruction": {
+          "role": "user",
+          "parts": [
+            {
+              "text": ""
+            }
+          ]
+        },
+        "p-render-mode": "Manual layout"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "a2778426-8b58-4fa2-94df-fc6b67236bdf",
+      "to": "3e765f0f-17e0-4a9b-84a0-099cac64ccd1",
+      "out": "context",
+      "in": "p-z-a2778426-8b58-4fa2-94df-fc6b67236bdf"
+    },
+    {
+      "from": "a2778426-8b58-4fa2-94df-fc6b67236bdf",
+      "to": "66253477-5b94-40bc-b768-c33b2b1b19d3",
+      "out": "context",
+      "in": "p-z-a2778426-8b58-4fa2-94df-fc6b67236bdf"
+    },
+    {
+      "from": "3e765f0f-17e0-4a9b-84a0-099cac64ccd1",
+      "to": "000aadb5-350e-41ad-8627-a744d84329cd",
+      "out": "context",
+      "in": "p-z-3e765f0f-17e0-4a9b-84a0-099cac64ccd1"
+    },
+    {
+      "from": "000aadb5-350e-41ad-8627-a744d84329cd",
+      "to": "a9ddd00b-02b6-445b-900c-bf5dfdbde3e9",
+      "out": "context",
+      "in": "p-z-000aadb5-350e-41ad-8627-a744d84329cd"
+    },
+    {
+      "from": "cec6c400-30f2-4368-bda8-b1175d727daf",
+      "to": "a9ddd00b-02b6-445b-900c-bf5dfdbde3e9",
+      "out": "context",
+      "in": "p-z-cec6c400-30f2-4368-bda8-b1175d727daf"
+    },
+    {
+      "from": "66253477-5b94-40bc-b768-c33b2b1b19d3",
+      "to": "cec6c400-30f2-4368-bda8-b1175d727daf",
+      "out": "context",
+      "in": "p-z-66253477-5b94-40bc-b768-c33b2b1b19d3"
+    }
+  ],
+  "assets": {
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI4Ny4yMiIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iNDcuNDYiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIxOC4yNSIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzJlOGJlOCIgLz4KPHJlY3QgeD0iNzIuMDYiCiAgICAgICAgICAgICAgICAgICAgeT0iNzYuMjciCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjQ3LjQ2IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTguMjUiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CjxyZWN0IHg9IjcyLjA2IgogICAgICAgICAgICAgICAgICAgIHk9IjEwNS40OCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iNDcuNDYiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIxOC4yNSIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KPHJlY3QgeD0iMTMwLjQ4IgogICAgICAgICAgICAgICAgICAgIHk9Ijc2LjI3IgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI0Ny40NiIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjE4LjI1IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgo8cmVjdCB4PSIxMzAuNDgiCiAgICAgICAgICAgICAgICAgICAgeT0iMTA1LjQ4IgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI0Ny40NiIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjE4LjI1IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgo8cmVjdCB4PSIxOTIuNTQiCiAgICAgICAgICAgICAgICAgICAgeT0iODcuMjIiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjQ3LjQ2IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMTguMjUiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyZThiZTgiIC8+CiAgICAgIAogICAgPC9zdmc+"
+    }
+  },
+  "metadata": {
+    "visual": {
+      "presentation": {
+        "themes": {
+          "cf0089ce-691b-4f31-b650-3a29123e5267": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "cf0089ce-691b-4f31-b650-3a29123e5267"
+      }
+    },
+    "parameters": {}
+  }
+}
