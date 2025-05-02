@@ -235,7 +235,7 @@ export const styles = css`
     .tos-content {
       flex-grow: 1;
       overflow-y: auto;
-      max-height: 300px;
+      max-height: 320px;
     }
 
     .consent-section {

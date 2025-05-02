@@ -4100,6 +4100,7 @@ export class Main extends LitElement {
         </div>
         <div class="tos-content">
           ${unsafeHTML(this.#tosHtml)}
+        </div>
         <div class="button-section">
           <button @click=${() => {
             this.showToS = false;
