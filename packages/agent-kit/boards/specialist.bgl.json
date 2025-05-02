@@ -3710,7 +3710,6 @@
                       "hint-controller",
                       "hint-image",
                       "hint-multimodal",
-                      "hint-no-prompt",
                       "hint-preview",
                       "hint-single-line",
                       "hint-text",

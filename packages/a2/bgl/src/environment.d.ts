@@ -355,11 +355,6 @@ declare type BehaviorSchema =
    */
   | "hint-preview"
   /**
-   * Hints that the node input is not a traditional LLM prompt, rather some other
-   * kind of textual input.
-   */
-  | "hint-no-prompt"
-  /**
    * In combination with "config" and "reactive", hints that the port controls
    * the rest of the configuration and may be used as the first to be
    * displayed in the UI.
