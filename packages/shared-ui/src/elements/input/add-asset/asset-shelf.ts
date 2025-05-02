@@ -49,6 +49,12 @@ export class AssetShelf extends LitElement {
           width: 100%;
           height: 100%;
           border-radius: var(--bb-grid-size-2);
+
+          > * {
+            display: block;
+            height: 100%;
+            border-radius: var(--bb-grid-size-2);
+          }
         }
 
         & .text,
