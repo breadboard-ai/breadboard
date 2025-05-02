@@ -76,7 +76,6 @@ const BEHAVIOR_AFFECTS_TYPE_CHECKING: { [K in BehaviorSchema]: boolean } = {
   "hint-preview": false,
   "hint-advanced": false,
   "hint-chat-mode": false,
-  "hint-no-prompt": false,
   "hint-controller": false,
   "hint-single-line": false,
   module: true,
