@@ -24,6 +24,17 @@ export class AddAssetButton extends LitElement {
   accessor showGDrive = false;
 
   @property()
+  accessor supportedActions = {
+    upload: true,
+    youtube: true,
+    drawable: true,
+    gdrive: true,
+  };
+
+  @property()
+  accessor allowedUploadMimeTypes: string | null = null;
+
+  @property()
   accessor anchor: "above" | "below" = "below";
 
   @state()
@@ -74,25 +85,33 @@ export class AddAssetButton extends LitElement {
   render() {
     let overflowMenu: HTMLTemplateResult | symbol = nothing;
     if (this._showOverflowMenu) {
-      const actions: OverflowAction[] = [
-        {
+      const actions: OverflowAction[] = [];
+
+      if (this.supportedActions.upload) {
+        actions.push({
           icon: "upload",
           name: "upload",
           title: "Upload from device",
-        },
-        {
+        });
+      }
+
+      if (this.supportedActions.youtube) {
+        actions.push({
           icon: "youtube",
           name: "youtube",
           title: "Add YouTube Video",
-        },
-        {
+        });
+      }
+
+      if (this.supportedActions.drawable) {
+        actions.push({
           icon: "drawable",
           name: "drawable",
           title: "Add a Drawing",
-        },
-      ];
+        });
+      }
 
-      if (this.showGDrive) {
+      if (this.supportedActions.gdrive && this.showGDrive) {
         actions.push({
           icon: "gdrive",
           title: "Google Drive",
@@ -117,7 +136,9 @@ export class AddAssetButton extends LitElement {
           evt.stopImmediatePropagation();
           this._showOverflowMenu = false;
 
-          this.dispatchEvent(new AddAssetRequestEvent(evt.action));
+          this.dispatchEvent(
+            new AddAssetRequestEvent(evt.action, this.allowedUploadMimeTypes)
+          );
         }}
         @bboverflowmenudismissed=${() => {
           this._showOverflowMenu = false;

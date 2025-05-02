@@ -17,6 +17,9 @@ export class AddAssetModal extends LitElement {
   @property()
   accessor assetType: string | null = null;
 
+  @property()
+  accessor allowedMimeTypes: string | null = null;
+
   static styles = css`
     * {
       box-sizing: border-box;
@@ -306,7 +309,9 @@ export class AddAssetModal extends LitElement {
         assetCollector = html`<input
           type="file"
           required
-          accept="image/*,audio/*,video/*,text/plain,application/pdf,text/csv"
+          accept=${this.allowedMimeTypes
+            ? this.allowedMimeTypes
+            : "image/*,audio/*,video/*,text/plain,application/pdf,text/csv"}
           ${ref(this.#inputRef)}
           @change=${() => {
             this.#processAndEmit();

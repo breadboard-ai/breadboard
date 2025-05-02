@@ -1525,7 +1525,10 @@ export class ShowAssetOrganizerEvent extends Event {
 export class AddAssetRequestEvent extends Event {
   static eventName = "bbaddassetrequest";
 
-  constructor(public readonly assetType: string) {
+  constructor(
+    public readonly assetType: string,
+    public readonly allowedMimeTypes: string | null = null
+  ) {
     super(AddAssetRequestEvent.eventName, { ...eventInit });
   }
 }
