@@ -958,7 +958,10 @@ export class Template extends LitElement implements AppTemplate {
 
         if (typeof value === "string") {
           if (input.dataset.type === "llm-content") {
-            inputValues[input.name] = this.#toLLMContentWithTextPart(value);
+            inputValues[input.name] =
+              input.dataset.empty === "true"
+                ? { parts: [] }
+                : this.#toLLMContentWithTextPart(value);
           } else if (input.dataset.type === "llm-content-array") {
             inputValues[input.name] = [this.#toLLMContentWithTextPart(value)];
           } else {
@@ -1170,10 +1173,16 @@ export class Template extends LitElement implements AppTemplate {
                   ></textarea>`
                 : allowAddAssets
                   ? html`<div class="no-text-input">
-                      ${hasAssetEntered
-                        ? "Upload your response."
-                        : "Press Submit to continue"}
-                    </div>`
+                        ${hasAssetEntered
+                          ? "Upload your response."
+                          : "Press Submit to continue"}
+                      </div>
+                      <input
+                        type="hidden"
+                        data-type=${dataType}
+                        data-empty="true"
+                        name=${name}
+                      />`
                   : nothing}
               <bb-asset-shelf
                 @assetchanged=${() => {
