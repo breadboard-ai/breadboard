@@ -115,6 +115,11 @@ export type BehaviorSchema =
    */
   | "hint-chat-mode"
   /**
+   * Hints that the node input is not a traditional LLM prompt, rather some other
+   * kind of textual input.
+   */
+  | "hint-no-prompt"
+  /**
    * Hints that the text is short (e.g. a query) and needs a single line treatment.
    */
   | "hint-single-line"
