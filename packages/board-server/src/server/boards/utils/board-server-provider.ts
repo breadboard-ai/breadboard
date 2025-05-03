@@ -7,6 +7,7 @@
 import {
   type BoardServer,
   type BoardServerCapabilities,
+  type BoardServerEventTarget,
   type BoardServerProject,
   type ChangeNotificationCallback,
   type GraphDescriptor,
@@ -46,7 +47,10 @@ function parsePath(path: string) {
   return { userStore: userStore.slice(1), boardName };
 }
 
-export class BoardServerProvider implements BoardServer {
+export class BoardServerProvider
+  extends (EventTarget as BoardServerEventTarget)
+  implements BoardServer
+{
   #initialized = false;
   #serverUrl: string | undefined;
   #path: string;
@@ -79,6 +83,7 @@ export class BoardServerProvider implements BoardServer {
     path: string,
     loader: BoardServerLoadFunction
   ) {
+    super();
     this.#serverUrl = serverUrl;
     this.#path = path;
     this.#loader = loader;
