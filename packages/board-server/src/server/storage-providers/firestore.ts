@@ -151,11 +151,28 @@ export class FirestoreStorageProvider
     if (!board.name) {
       throw new InvalidRequestError("Firestore requires board's name");
     }
-    await this.#getBoardDoc(board.owner, board.name).set({
+    const doc = this.#getBoardDoc(board.owner, board.name);
+
+    // The "featured" tag is not something the client has access to or should be
+    // able to modify (because otherwise anybody could make something
+    // featured!). We instead set it manually through the Firebase UI as an
+    // admin. So, we should ignore if it did come from the client, but also we
+    // should preserve it if it was already there.
+    const wasAlreadyFeatured = ((await doc.get()).data()?.tags ?? []).includes(
+      "featured"
+    );
+    const tags = board.tags
+      ? board.tags.filter((tag) => tag !== "featured")
+      : [];
+    if (wasAlreadyFeatured) {
+      tags.push("featured");
+    }
+
+    await doc.set({
       name: board.name,
       title: board.displayName || "",
       description: board.description || "",
-      tags: board.tags || [],
+      tags,
       graph: JSON.stringify(board.graph || {}),
     });
   }
