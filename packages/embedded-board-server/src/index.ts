@@ -7,6 +7,7 @@
 import {
   BoardServer,
   BoardServerCapabilities,
+  BoardServerEventTarget,
   BoardServerExtension,
   BoardServerProject,
   ChangeNotificationCallback,
@@ -38,7 +39,10 @@ function isFromEmbeddedServer(
   return urlString.startsWith(prefix);
 }
 
-class EmbeddedBoardServer implements BoardServer {
+class EmbeddedBoardServer
+  extends (EventTarget as BoardServerEventTarget)
+  implements BoardServer
+{
   user: User = {
     username: "",
     apiKey: "",
@@ -65,6 +69,7 @@ class EmbeddedBoardServer implements BoardServer {
     public readonly urlPrefix: string,
     public readonly bgls: Map<string, GraphDescriptor>
   ) {
+    super();
     this.#items = new Map([
       [
         "default",

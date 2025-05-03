@@ -12,6 +12,10 @@ import {
 } from "@breadboard-ai/types";
 import { GraphToRun, Kit } from "../types.js";
 import { DataPartTransformer } from "../data/types.js";
+import {
+  TypedEventTarget,
+  TypedEventTargetType,
+} from "../utils/typed-event-target.js";
 
 export type GraphProviderItem = {
   url: string;
@@ -318,7 +322,18 @@ export interface BoardServerConfiguration {
   capabilities: BoardServerCapabilities;
 }
 
-export interface BoardServer extends GraphProvider, BoardServerConfiguration {
+export type BoardServerUpdateEvent = Event;
+
+export type BoardServerEventMap = {
+  update: BoardServerUpdateEvent;
+};
+
+export type BoardServerEventTarget = TypedEventTarget<BoardServerEventMap>;
+
+export interface BoardServer
+  extends GraphProvider,
+    BoardServerConfiguration,
+    TypedEventTargetType<BoardServerEventMap> {
   user: User;
   getAccess(url: URL, user: User): Promise<Permission>;
 }

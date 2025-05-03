@@ -9,6 +9,7 @@ import type {
   BoardServer,
   BoardServerCapabilities,
   BoardServerConfiguration,
+  BoardServerEventTarget,
   BoardServerExtension,
   BoardServerProject,
   ChangeNotificationCallback,
@@ -49,7 +50,10 @@ const DEPRECATED_GRAPH_MIME_TYPE = "application/json";
 // "@breadboard-ai/google-drive-board-server".
 // But it's good that we have both components and the board server here:
 // Good use case.
-class GoogleDriveBoardServer extends EventTarget implements BoardServer {
+class GoogleDriveBoardServer
+  extends (EventTarget as BoardServerEventTarget)
+  implements BoardServer
+{
   static PROTOCOL = "drive:";
 
   static async connect(folderId: string, vendor: TokenVendor) {
