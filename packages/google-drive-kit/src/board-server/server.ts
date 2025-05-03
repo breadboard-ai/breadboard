@@ -5,22 +5,25 @@
  */
 
 import type { TokenVendor } from "@breadboard-ai/connection-client";
-import type {
-  BoardServer,
-  BoardServerCapabilities,
-  BoardServerConfiguration,
-  BoardServerEventTarget,
-  BoardServerExtension,
-  BoardServerProject,
-  ChangeNotificationCallback,
-  GraphDescriptor,
-  GraphProviderCapabilities,
-  GraphProviderExtendedCapabilities,
-  GraphProviderItem,
-  GraphProviderStore,
-  Kit,
-  Permission,
-  User,
+import {
+  err,
+  ok,
+  type BoardServer,
+  type BoardServerCapabilities,
+  type BoardServerConfiguration,
+  type BoardServerEventTarget,
+  type BoardServerExtension,
+  type BoardServerProject,
+  type ChangeNotificationCallback,
+  type GraphDescriptor,
+  type GraphProviderCapabilities,
+  type GraphProviderExtendedCapabilities,
+  type GraphProviderItem,
+  type GraphProviderStore,
+  type Kit,
+  type Outcome,
+  type Permission,
+  type User,
 } from "@google-labs/breadboard";
 import { getAccessToken } from "./access.js";
 import { Files } from "./api.js";
@@ -205,6 +208,105 @@ class GoogleDriveBoardServer
     }
   }
 
+  async writeGraphToDrive(
+    url: URL,
+    descriptor: GraphDescriptor
+  ): Promise<{ result: boolean; error?: string }> {
+    const file = url.href.replace(`${this.url.href}/`, "");
+    const accessToken = await getAccessToken(this.vendor);
+    try {
+      const api = new Files(accessToken!);
+
+      await fetch(
+        api.makePatchRequest(
+          file,
+          {
+            ...createAppProperties(file, descriptor),
+            mimeType: GRAPH_MIME_TYPE,
+          },
+          descriptor
+        )
+      );
+
+      return { result: true };
+    } catch (err) {
+      console.warn(err);
+      return { result: false, error: "Unable to save" };
+    }
+  }
+
+  async writeNewGraphToDrive(url: URL, descriptor: GraphDescriptor) {
+    const fileName = url.href.replace(`${this.url.href}/`, "");
+    const accessToken = await getAccessToken(this.vendor);
+
+    try {
+      const api = new Files(accessToken!);
+      const response = await fetch(
+        api.makeMultipartCreateRequest(
+          {
+            name: fileName,
+            mimeType: GRAPH_MIME_TYPE,
+            parents: [parent],
+            ...createAppProperties(fileName, descriptor),
+          },
+          descriptor
+        )
+      );
+
+      const file: DriveFile = await response.json();
+      const updatedUrl = `${GoogleDriveBoardServer.PROTOCOL}/${file.id}`;
+
+      console.log("Google Drive: Created new board", updatedUrl);
+      return { result: true, url: updatedUrl };
+    } catch (err) {
+      console.warn(err);
+      return { result: false, error: "Unable to create" };
+    }
+  }
+
+  async findOrCreateFolder(): Promise<Outcome<string>> {
+    const accessToken = await getAccessToken(this.vendor);
+    if (!accessToken) {
+      return err("No access token");
+    }
+    const api = new Files(accessToken);
+
+    const findRequest = api.makeQueryRequest(
+      `name="${GOOGLE_DRIVE_FOLDER_NAME}"` +
+        ` and mimeType="${GOOGLE_DRIVE_FOLDER_MIME_TYPE}"` +
+        ` and trashed=false`
+    );
+    try {
+      const { files } = (await (
+        await fetch(findRequest)
+      ).json()) as DriveFileQuery;
+      if (files.length > 0) {
+        if (files.length > 1) {
+          console.warn(
+            "Google Drive: Multiple candidate root folders found," +
+              " picking the first one arbitrarily:",
+            files
+          );
+        }
+        const id = files[0]!.id;
+        console.log("Google Drive: Found existing root folder", id);
+        return id;
+      }
+
+      const createRequest = api.makeCreateRequest({
+        name: GOOGLE_DRIVE_FOLDER_NAME,
+        mimeType: GOOGLE_DRIVE_FOLDER_MIME_TYPE,
+      });
+      const { id } = (await (await fetch(createRequest)).json()) as {
+        id: string;
+      };
+      console.log("Google Drive: Created new root folder", id);
+      return id;
+    } catch (e) {
+      return err((e as Error).message);
+    }
+  }
+
   async listSharedBoards(): Promise<string[]> {
     const accessToken = await getAccessToken(this.vendor);
     if (!accessToken) {
@@ -303,27 +405,7 @@ class GoogleDriveBoardServer
     url: URL,
     descriptor: GraphDescriptor
   ): Promise<{ result: boolean; error?: string }> {
-    const file = url.href.replace(`${this.url.href}/`, "");
-    const accessToken = await getAccessToken(this.vendor);
-    try {
-      const api = new Files(accessToken!);
-
-      await fetch(
-        api.makePatchRequest(
-          file,
-          {
-            ...createAppProperties(file, descriptor),
-            mimeType: GRAPH_MIME_TYPE,
-          },
-          descriptor
-        )
-      );
-
-      return { result: true };
-    } catch (err) {
-      console.warn(err);
-      return { result: false, error: "Unable to save" };
-    }
+    return this.writeGraphToDrive(url, descriptor);
   }
 
   createBlank(_url: URL): Promise<{ result: boolean; error?: string }> {
@@ -337,34 +419,15 @@ class GoogleDriveBoardServer
     // First create the file, then save.
 
     const parent = await this.findOrCreateFolder();
-    const fileName = url.href.replace(`${this.url.href}/`, "");
-    const accessToken = await getAccessToken(this.vendor);
-
-    try {
-      const api = new Files(accessToken!);
-      const response = await fetch(
-        api.makeMultipartCreateRequest(
-          {
-            name: fileName,
-            mimeType: GRAPH_MIME_TYPE,
-            parents: [parent],
-            ...createAppProperties(fileName, descriptor),
-          },
-          descriptor
-        )
-      );
-
-      const file: DriveFile = await response.json();
-      const updatedUrl = `${GoogleDriveBoardServer.PROTOCOL}/${file.id}`;
-
-      this.projects = this.refreshProjects();
-
-      console.log("Google Drive: Created new board", updatedUrl);
-      return { result: true, url: updatedUrl };
-    } catch (err) {
-      console.warn(err);
-      return { result: false, error: "Unable to create" };
+    if (!ok(parent)) {
+      return { result: false, error: parent.$error };
     }
+
+    const writing = await this.writeNewGraphToDrive(url, descriptor);
+    if (writing.result) {
+      this.projects = this.refreshProjects();
+    }
+    return writing;
   }
 
   async delete(url: URL): Promise<{ result: boolean; error?: string }> {
@@ -456,45 +519,6 @@ class GoogleDriveBoardServer
 
   async preview(_url: URL): Promise<URL> {
     throw new Error("Method not implemented.");
-  }
-
-  async findOrCreateFolder(): Promise<string> {
-    const accessToken = await getAccessToken(this.vendor);
-    if (!accessToken) {
-      throw new Error("No access token");
-    }
-    const api = new Files(accessToken);
-
-    const findRequest = api.makeQueryRequest(
-      `name="${GOOGLE_DRIVE_FOLDER_NAME}"` +
-        ` and mimeType="${GOOGLE_DRIVE_FOLDER_MIME_TYPE}"` +
-        ` and trashed=false`
-    );
-    const { files } = (await (
-      await fetch(findRequest)
-    ).json()) as DriveFileQuery;
-    if (files.length > 0) {
-      if (files.length > 1) {
-        console.warn(
-          "Google Drive: Multiple candidate root folders found," +
-            " picking the first one arbitrarily:",
-          files
-        );
-      }
-      const id = files[0]!.id;
-      console.log("Google Drive: Found existing root folder", id);
-      return id;
-    }
-
-    const createRequest = api.makeCreateRequest({
-      name: GOOGLE_DRIVE_FOLDER_NAME,
-      mimeType: GOOGLE_DRIVE_FOLDER_MIME_TYPE,
-    });
-    const { id } = (await (await fetch(createRequest)).json()) as {
-      id: string;
-    };
-    console.log("Google Drive: Created new root folder", id);
-    return id;
   }
 }
 
