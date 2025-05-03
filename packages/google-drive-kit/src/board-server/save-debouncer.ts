@@ -58,14 +58,18 @@ class SaveDebouncer {
       return err(`Drive Save: Save operation started unexpectedly`);
     }
     this.#saveOperationInProgress = true;
-    console.log("Drive Save: Performing actual save to drive");
     this.#status = "saving";
     const descriptor = this.#latest;
     this.#latest = null;
+    console.log("Drive Save: Performing actual save to drive");
+    console.time(`Drive Save: writing "${url.href}"`);
     const writing = await this.ops.writeGraphToDrive(url, descriptor);
+    console.timeEnd(`Drive Save: writing "${url.href}"`);
     this.#saveOperationInProgress = false;
     if (!writing.result) {
       console.warn(`Drive Save: save failed: ${writing.error}`);
+      // TODO: Introduce error status and learn to recover from errors.
+      this.#status = "idle";
       return err(writing.error!);
     }
     if (this.#latest !== null) {
