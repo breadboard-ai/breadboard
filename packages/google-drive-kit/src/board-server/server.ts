@@ -24,6 +24,7 @@ import {
   type User,
 } from "@google-labs/breadboard";
 import { DriveOperations, PROTOCOL } from "./operations.js";
+import { SaveDebouncer } from "./save-debouncer.js";
 
 export { GoogleDriveBoardServer };
 
@@ -115,6 +116,8 @@ class GoogleDriveBoardServer
     this.extensions = configuration.extensions;
     this.capabilities = configuration.capabilities;
   }
+
+  #saving = new Map<string, SaveDebouncer>();
 
   // This is a workaround for items() being sync. Since we expect ready() to be
   // awaited we know #projects will be populated by the time items() is called.
@@ -208,7 +211,13 @@ class GoogleDriveBoardServer
     url: URL,
     descriptor: GraphDescriptor
   ): Promise<{ result: boolean; error?: string }> {
-    return this.ops.writeGraphToDrive(url, descriptor);
+    let saving = this.#saving.get(url.href);
+    if (!saving) {
+      saving = new SaveDebouncer(this.ops);
+      this.#saving = this.#saving.set(url.href, saving);
+    }
+    saving.save(url, descriptor);
+    return { result: true };
   }
 
   createBlank(_url: URL): Promise<{ result: boolean; error?: string }> {
@@ -226,7 +235,11 @@ class GoogleDriveBoardServer
       return { result: false, error: parent.$error };
     }
 
-    const writing = await this.ops.writeNewGraphToDrive(url, descriptor);
+    const writing = await this.ops.writeNewGraphToDrive(
+      url,
+      parent,
+      descriptor
+    );
     if (writing.result) {
       this.projects = this.refreshProjects();
     }

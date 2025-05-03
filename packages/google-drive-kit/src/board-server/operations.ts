@@ -144,7 +144,11 @@ class DriveOperations {
     }
   }
 
-  async writeNewGraphToDrive(url: URL, descriptor: GraphDescriptor) {
+  async writeNewGraphToDrive(
+    url: URL,
+    parent: string,
+    descriptor: GraphDescriptor
+  ) {
     const fileName = url.href.replace(`${this.url.href}/`, "");
     const accessToken = await getAccessToken(this.vendor);
 
