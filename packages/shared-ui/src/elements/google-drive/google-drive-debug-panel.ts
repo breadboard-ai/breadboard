@@ -23,6 +23,7 @@ import {
 import { createRef, ref } from "lit/directives/ref.js";
 
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import { ok } from "@google-labs/breadboard";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
 const ASSET_MIME_TYPES = [
@@ -166,7 +167,7 @@ export class GoogleDriveDebugPanel extends LitElement {
     if (!server) {
       return nothing;
     }
-    const folderId = await server?.findOrCreateFolder();
+    const folderId = await server?.ops.findOrCreateFolder();
     return html`
       <a
         href="https://drive.google.com/corp/drive/folders/${folderId}"
@@ -182,7 +183,7 @@ export class GoogleDriveDebugPanel extends LitElement {
     if (!server) {
       return nothing;
     }
-    const projects = await server.refreshProjects();
+    const projects = await server.ops.readGraphList();
     return projects.map((project) => {
       const fileId = project.url.href.replace(/^drive:\//, "");
       return html` <li>${this.#renderFileLink(fileId)}</li> `;
@@ -194,7 +195,7 @@ export class GoogleDriveDebugPanel extends LitElement {
     if (!server) {
       return nothing;
     }
-    const fileIds = await server.listSharedBoards();
+    const fileIds = await server.ops.readSharedGraphList();
     return fileIds.map(
       (fileId) => html`<li>${this.#renderFileLink(fileId)}</li>`
     );
@@ -205,7 +206,7 @@ export class GoogleDriveDebugPanel extends LitElement {
     if (!server) {
       return nothing;
     }
-    const assets = await server.listAssets();
+    const assets = await server.ops.listAssets();
     return assets.map((fileId) => {
       return html`<li>${this.#renderFileLink(fileId)}</li>`;
     });
@@ -291,6 +292,7 @@ export class GoogleDriveDebugPanel extends LitElement {
     picker.setVisible(true);
 
     let dialog, iframe;
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       dialog = document.body.querySelector("div.picker-dialog" as "div");
       iframe = dialog?.querySelector("iframe.picker-frame" as "iframe");
@@ -357,6 +359,7 @@ export class GoogleDriveDebugPanel extends LitElement {
     });
     const getResult = JSON.parse(getResponse.body) as {
       capabilities: { canShare: boolean };
+      // eslint-disable-next-line @typescript-eslint/ban-types
       permissions: {};
     };
     if (!getResult.capabilities.canShare) {
@@ -387,7 +390,10 @@ export class GoogleDriveDebugPanel extends LitElement {
     if (!server) {
       return nothing;
     }
-    const folderId = await server?.findOrCreateFolder();
+    const folderId = await server?.ops.findOrCreateFolder();
+    if (!ok(folderId)) {
+      return nothing;
+    }
     const pickerLib = await loadDrivePicker();
 
     // https://developers.google.com/workspace/drive/picker/reference/picker.docsuploadview.md
