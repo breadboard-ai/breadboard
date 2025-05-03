@@ -183,7 +183,7 @@ export class GoogleDriveDebugPanel extends LitElement {
     if (!server) {
       return nothing;
     }
-    const projects = await server.ops.readGraphList();
+    const projects = await server.refreshProjects();
     return projects.map((project) => {
       const fileId = project.url.href.replace(/^drive:\//, "");
       return html` <li>${this.#renderFileLink(fileId)}</li> `;

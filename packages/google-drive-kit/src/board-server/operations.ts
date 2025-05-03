@@ -4,15 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { TokenVendor } from "@breadboard-ai/connection-client";
+import type { GraphTag } from "@breadboard-ai/types";
 import {
   err,
-  type BoardServerProject,
   type GraphDescriptor,
   type Outcome,
-  type User,
 } from "@google-labs/breadboard";
 import { getAccessToken } from "./access.js";
-import type { TokenVendor } from "@breadboard-ai/connection-client";
 import {
   Files,
   type AppProperties,
@@ -30,10 +29,16 @@ const GOOGLE_DRIVE_FOLDER_MIME_TYPE = "application/vnd.google-apps.folder";
 const GRAPH_MIME_TYPE = "application/vnd.breadboard.graph+json";
 const DEPRECATED_GRAPH_MIME_TYPE = "application/json";
 
+export type GraphInfo = {
+  id: string;
+  title: string;
+  tags: GraphTag[];
+};
+
 class DriveOperations {
   constructor(
     public readonly vendor: TokenVendor,
-    public readonly user: User,
+    public readonly username: string,
     public readonly url: URL
   ) {}
 
@@ -56,7 +61,7 @@ class DriveOperations {
     }
   }
 
-  async readGraphList(): Promise<BoardServerProject[]> {
+  async readGraphList(): Promise<Outcome<GraphInfo[]>> {
     const folderId = await this.findOrCreateFolder();
     const accessToken = await getAccessToken(this.vendor);
     const query =
@@ -73,41 +78,26 @@ class DriveOperations {
       const api = new Files(accessToken);
       const fileRequest = await fetch(api.makeQueryRequest(query));
       const response: DriveFileQuery = await fileRequest.json();
-      const canAccess = true;
-      const access = new Map([
-        [
-          this.user.username,
-          {
-            create: canAccess,
-            retrieve: canAccess,
-            update: canAccess,
-            delete: canAccess,
-          },
-        ],
-      ]);
 
       // TODO: This is likely due to an auth error.
       if (!("files" in response)) {
         console.warn(response);
+        return err(`Unable to get Drive folder contents. Likely an auth error`);
       }
 
-      const projects = response.files.map((file) => {
+      const result = response.files.map((file) => {
         const { title, tags } = readAppProperties(file);
         return {
-          url: new URL(`${this.url}/${file.id}`),
-          metadata: {
-            owner: "board-builder",
-            tags,
-            title,
-            access,
-          },
-        };
+          id: file.id,
+          title,
+          tags,
+        } satisfies GraphInfo;
       });
 
-      return projects;
-    } catch (err) {
-      console.warn(err);
-      return [];
+      return result;
+    } catch (e) {
+      console.warn(e);
+      return err((e as Error).message);
     }
   }
 

@@ -105,10 +105,10 @@ class GoogleDriveBoardServer
     public readonly vendor: TokenVendor
   ) {
     super();
-    this.ops = new DriveOperations(vendor, user, configuration.url);
+    this.ops = new DriveOperations(vendor, user.username, configuration.url);
 
     this.url = configuration.url;
-    this.projects = this.ops.readGraphList();
+    this.projects = this.refreshProjects();
     this.kits = configuration.kits;
     this.users = configuration.users;
     this.secrets = configuration.secrets;
@@ -121,6 +121,37 @@ class GoogleDriveBoardServer
   #projects: BoardServerProject[] = [];
   async ready(): Promise<void> {
     this.#projects = await this.projects;
+  }
+
+  async refreshProjects(): Promise<BoardServerProject[]> {
+    const files = await this.ops.readGraphList();
+    if (!ok(files)) return [];
+    const canAccess = true;
+    const access = new Map([
+      [
+        this.user.username,
+        {
+          create: canAccess,
+          retrieve: canAccess,
+          update: canAccess,
+          delete: canAccess,
+        },
+      ],
+    ]);
+
+    const projects = files.map(({ title, tags, id }) => {
+      return {
+        url: new URL(`${this.url}/${id}`),
+        metadata: {
+          owner: "board-builder",
+          tags,
+          title,
+          access,
+        },
+      };
+    });
+
+    return projects;
   }
 
   getAccess(_url: URL, _user: User): Promise<Permission> {
@@ -197,7 +228,7 @@ class GoogleDriveBoardServer
 
     const writing = await this.ops.writeNewGraphToDrive(url, descriptor);
     if (writing.result) {
-      this.projects = this.ops.readGraphList();
+      this.projects = this.refreshProjects();
     }
     return writing;
   }
@@ -207,7 +238,7 @@ class GoogleDriveBoardServer
     if (!ok(deleting)) {
       return { result: false, error: deleting.$error };
     }
-    this.projects = this.ops.readGraphList();
+    this.projects = this.refreshProjects();
 
     return { result: true };
   }
