@@ -6,6 +6,7 @@
 
 import {
   blank,
+  BoardServerEventTarget,
   DataPartTransformer,
   NodeIdentifier,
   type BoardServer,
@@ -30,7 +31,10 @@ import { RemotePartTransformer } from "./remote-part-transformer";
 
 const USER_REGEX = /\/@[^/]+\//;
 
-export class RemoteBoardServer implements BoardServer, RemoteConnector {
+export class RemoteBoardServer
+  extends (EventTarget as BoardServerEventTarget)
+  implements BoardServer, RemoteConnector
+{
   public readonly url: URL;
   public readonly users: User[];
   public readonly secrets = new Map<string, string>();
@@ -113,6 +117,7 @@ export class RemoteBoardServer implements BoardServer, RemoteConnector {
     public readonly tokenVendor?: TokenVendor,
     autoLoadProjects = true
   ) {
+    super();
     this.url = configuration.url;
     this.projects = autoLoadProjects
       ? this.#refreshProjects()

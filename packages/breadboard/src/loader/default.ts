@@ -8,6 +8,7 @@ import { GraphDescriptor } from "@breadboard-ai/types";
 import {
   BoardServer,
   BoardServerCapabilities,
+  BoardServerEventTarget,
   BoardServerProject,
   GraphProviderCapabilities,
   GraphProviderExtendedCapabilities,
@@ -55,7 +56,10 @@ export const loadWithFetch = async (url: string | URL) => {
   return await response?.json();
 };
 
-export class DefaultBoardServer implements BoardServer {
+export class DefaultBoardServer
+  extends (EventTarget as BoardServerEventTarget)
+  implements BoardServer
+{
   url: URL = new URL(
     typeof window !== "undefined"
       ? window.location.href

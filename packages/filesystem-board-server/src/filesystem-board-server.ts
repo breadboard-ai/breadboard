@@ -6,6 +6,7 @@
 
 import {
   blank,
+  BoardServerEventTarget,
   DataPartTransformer,
   err,
   GraphProviderPreloadHandler,
@@ -85,7 +86,10 @@ type Config = {
   writeTypeScriptSources?: boolean;
 };
 
-export class FileSystemBoardServer extends EventTarget implements BoardServer {
+export class FileSystemBoardServer
+  extends (EventTarget as BoardServerEventTarget)
+  implements BoardServer
+{
   public readonly url: URL;
   public readonly kits: Kit[];
   public readonly users: User[];

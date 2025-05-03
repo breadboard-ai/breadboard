@@ -6,6 +6,27 @@
 
 export { Files };
 
+export type DriveFile = {
+  id: string;
+  kind: string;
+  mimeType: string;
+  name: string;
+  resourceKey: string;
+  appProperties: Record<string, string>;
+};
+
+export type DriveFileQuery = {
+  files: DriveFile[];
+};
+
+export type AppProperties = {
+  appProperties: {
+    title: string;
+    description: string;
+    tags: string;
+  };
+};
+
 class Files {
   #accessToken: string;
 
