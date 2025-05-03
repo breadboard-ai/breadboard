@@ -1492,7 +1492,13 @@ export class EntityEditor extends SignalWatcher(LitElement) {
   }
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
-    if (changedProperties.has("selectionState") && this.#edited) {
+    // Auto-save both when a different step is selected
+    // and when the reactive change is triggered.
+    if (
+      (changedProperties.has("selectionState") ||
+        changedProperties.has("values")) &&
+      this.#edited
+    ) {
       if (this.#edited) {
         // Autosave.
         this.#edited = false;
