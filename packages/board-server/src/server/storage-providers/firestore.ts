@@ -95,11 +95,25 @@ export class FirestoreStorageProvider
   async listBoards(userId: string): Promise<StorageBoard[]> {
     const boards: StorageBoard[] = [];
 
+    // 1) get user's boards
     const docs = await this.#database
       .collection(`workspaces/${userId}/boards`)
       .get();
 
     docs.forEach((doc: DocumentSnapshot): void => {
+      const board = asStorageBoard(doc, userId, { requirePublished: true });
+      if (board) {
+        boards.push(board);
+      }
+    });
+
+    // 2) get featured boards
+    const featured = await this.#database
+      .collectionGroup("boards")
+      .where("tags", "array-contains", "featured")
+      .get();
+
+    featured.forEach((doc: DocumentSnapshot): void => {
       const board = asStorageBoard(doc, userId, { requirePublished: true });
       if (board) {
         boards.push(board);
