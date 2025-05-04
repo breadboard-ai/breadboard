@@ -133,11 +133,14 @@ export type GraphProvider = {
    * Given a URL, saves a `GraphDescriptor` instance to that URL.
    * @param url -- the URL to save.
    * @param descriptor -- the Graph Descriptor to save.
+   * @param userInitiated -- whether or not the user initiated the save,
+   *      as opposed to auto-save.
    * @returns -- the result of saving, with an error if saving failed.
    */
   save: (
     url: URL,
-    descriptor: GraphDescriptor
+    descriptor: GraphDescriptor,
+    userInitiated: boolean
   ) => Promise<{ result: boolean; error?: string }>;
   /**
    * Creates a blank board at the given URL
@@ -311,6 +314,12 @@ export interface BoardServerCapabilities {
   watch: boolean;
   preview: boolean;
   events?: boolean;
+  /**
+   * Whether or not the board server manages saving itself. If true,
+   * the client is encouraged to not debounce saves and just invoke
+   * `save` whenever the graph is updated.
+   */
+  autosave?: boolean;
 }
 
 export interface BoardServerConfiguration {

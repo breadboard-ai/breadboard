@@ -81,6 +81,7 @@ class GoogleDriveBoardServer
           watch: false,
           preview: true,
           events: true,
+          autosave: true,
         },
       };
 
@@ -211,7 +212,8 @@ class GoogleDriveBoardServer
 
   async save(
     url: URL,
-    descriptor: GraphDescriptor
+    descriptor: GraphDescriptor,
+    userInitiated: boolean
   ): Promise<{ result: boolean; error?: string }> {
     let saving = this.#saving.get(url.href);
     if (!saving) {
@@ -222,7 +224,7 @@ class GoogleDriveBoardServer
       });
       this.#saving = this.#saving.set(url.href, saving);
     }
-    saving.save(url, descriptor);
+    saving.save(url, descriptor, userInitiated);
     return { result: true };
   }
 

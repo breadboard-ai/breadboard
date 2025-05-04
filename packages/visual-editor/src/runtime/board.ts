@@ -979,7 +979,7 @@ export class Board extends EventTarget {
     return boardServer.capabilities.preview;
   }
 
-  async save(id: TabId | null) {
+  async save(id: TabId | null, userInitiated: boolean) {
     if (!id) {
       return { result: false, error: "Unable to save" };
     }
@@ -1016,7 +1016,7 @@ export class Board extends EventTarget {
       };
     }
 
-    return boardServer.save(boardUrl, tab.graph);
+    return boardServer.save(boardUrl, tab.graph, userInitiated);
   }
 
   async saveAs(

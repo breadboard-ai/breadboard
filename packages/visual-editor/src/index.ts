@@ -1348,9 +1348,11 @@ export class Main extends LitElement {
       return;
     }
 
+    const userInitiated = !timeout;
+    const boardServerAutosaves = !!this.tab?.boardServer?.capabilities.autosave;
     const useBoardServerEvents = !!this.tab?.boardServer?.capabilities.events;
 
-    if (timeout !== 0 && !useBoardServerEvents) {
+    if (timeout !== 0 && !boardServerAutosaves) {
       const saveId = globalThis.crypto.randomUUID();
       this.#tabSaveId.set(tabToSave.id, saveId);
       await new Promise((r) => setTimeout(r, timeout));
@@ -1400,7 +1402,10 @@ export class Main extends LitElement {
     }
 
     try {
-      const { result } = await this.#runtime.board.save(tabToSave.id);
+      const { result } = await this.#runtime.board.save(
+        tabToSave.id,
+        userInitiated
+      );
 
       if (!useBoardServerEvents) {
         this.#tabSaveStatus.set(
@@ -3413,9 +3418,6 @@ export class Main extends LitElement {
                   evt.id,
                   evt.title
                 );
-              }}
-              @bbsave=${() => {
-                this.#attemptBoardSave();
               }}
               @bbstart=${(evt: BreadboardUI.Events.StartEvent) => {
                 this.#attemptBoardLoad(evt);
