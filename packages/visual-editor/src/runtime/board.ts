@@ -195,20 +195,6 @@ export class Board extends EventTarget {
     );
   }
 
-  /**
-   * @deprecated Use getBoardServerByName instead.
-   */
-  getProviderByName(name: string) {
-    return this.providers.find((provider) => provider.name === name) || null;
-  }
-
-  /**
-   * @deprecated Use getBoardServerForURL instead.
-   */
-  getProviderForURL(url: URL) {
-    return this.providers.find((provider) => provider.canProvide(url)) || null;
-  }
-
   getBoardServerForURL(url: URL) {
     return (
       this.boardServers.servers.find((server) => server.canProvide(url)) || null
