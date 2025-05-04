@@ -168,17 +168,9 @@ async function invoke({
           return mergeContent(generatedImage, "model");
         } else {
           console.log("Step has text only, using Gemini Image API: t2i");
-          let imagePrompt: LLMContent;
-          if (disablePromptRewrite) {
-            imagePrompt = toLLMContent(toText(addUserTurn(refText, context)));
-          } else {
-            const generatingPrompt = await promptExpander(
-              context,
-              refText
-            ).invoke();
-            if (!ok(generatingPrompt)) return generatingPrompt;
-            imagePrompt = generatingPrompt.last;
-          }
+          const imagePrompt = toLLMContent(
+            toText(addUserTurn(refText, context))
+          );
           const iPrompt = toText(imagePrompt).trim();
           console.log("PROMPT", iPrompt);
           const generatedImage = await callGeminiImage(
