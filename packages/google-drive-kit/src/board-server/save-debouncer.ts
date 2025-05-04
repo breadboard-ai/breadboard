@@ -38,7 +38,7 @@ class SaveDebouncer {
     return this.#status;
   }
 
-  save(url: URL, descriptor: GraphDescriptor) {
+  save(url: URL, descriptor: GraphDescriptor, userInitiated: boolean) {
     this.#latest = structuredClone(descriptor);
     if (this.#timer) {
       clearTimeout(this.#timer);
@@ -51,7 +51,11 @@ class SaveDebouncer {
       this.callbacks.save(this.#status, url.href);
       return;
     }
-    this.#debounce(url);
+    if (userInitiated) {
+      this.#startSaveOperation(url);
+    } else {
+      this.#debounce(url);
+    }
   }
 
   #debounce(url: URL) {
