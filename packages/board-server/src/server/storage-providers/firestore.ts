@@ -95,7 +95,10 @@ export class FirestoreStorageProvider
   async listBoards(userId: string): Promise<StorageBoard[]> {
     const boards: StorageBoard[] = [];
 
-    const docs = await this.#database.collectionGroup("boards").get();
+    const docs = await this.#database
+      .collection(`workspaces/${userId}/boards`)
+      .get();
+
     docs.forEach((doc: DocumentSnapshot): void => {
       const board = asStorageBoard(doc, userId, { requirePublished: true });
       if (board) {
@@ -177,11 +180,13 @@ export class FirestoreStorageProvider
     });
   }
 
-  async upsertBoard(board: Readonly<Partial<StorageBoard>>): Promise<StorageBoard> {
+  async upsertBoard(
+    board: Readonly<Partial<StorageBoard>>
+  ): Promise<StorageBoard> {
     const name = board.name || crypto.randomUUID();
-    const updatedBoard: Partial<StorageBoard> = {...board, name};
+    const updatedBoard: Partial<StorageBoard> = { ...board, name };
     await this.updateBoard(updatedBoard);
-    const result = await this.loadBoard({name, owner: updatedBoard.owner});
+    const result = await this.loadBoard({ name, owner: updatedBoard.owner });
     if (!result) {
       throw new Error(`Failed to create the board ${updatedBoard.name}`);
     }
