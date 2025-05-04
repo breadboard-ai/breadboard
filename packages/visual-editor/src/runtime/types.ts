@@ -53,6 +53,12 @@ export interface Tab {
   version: number;
   readOnly: boolean;
   type: TabType;
+  /**
+   * The board server for this tab. Since we know what
+   * the graph is, we also know what the board server
+   * will be (if any).
+   */
+  boardServer: BoardServer | null;
   creator?: EditHistoryCreator;
   history?: EditHistoryEntry[];
   onHistoryChanged?: (history: readonly EditHistoryEntry[]) => void;

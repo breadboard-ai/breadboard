@@ -25,6 +25,7 @@ import {
 } from "@google-labs/breadboard";
 import { DriveOperations, PROTOCOL } from "./operations.js";
 import { SaveDebouncer } from "./save-debouncer.js";
+import { SaveEvent } from "./events.js";
 
 export { GoogleDriveBoardServer };
 
@@ -79,6 +80,7 @@ class GoogleDriveBoardServer
           refresh: true,
           watch: false,
           preview: true,
+          events: true,
         },
       };
 
@@ -213,7 +215,11 @@ class GoogleDriveBoardServer
   ): Promise<{ result: boolean; error?: string }> {
     let saving = this.#saving.get(url.href);
     if (!saving) {
-      saving = new SaveDebouncer(this.ops);
+      saving = new SaveDebouncer(this.ops, {
+        save: (status, url) => {
+          this.dispatchEvent(new SaveEvent(status, url));
+        },
+      });
       this.#saving = this.#saving.set(url.href, saving);
     }
     saving.save(url, descriptor);

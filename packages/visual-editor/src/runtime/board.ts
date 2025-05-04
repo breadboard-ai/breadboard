@@ -8,6 +8,7 @@ import {
   BoardServer,
   BoardServerExtension,
   BoardServerExtensionNamespace,
+  BoardServerSaveEventStatus,
   createLoader,
   EditHistoryCreator,
   EditHistoryEntry,
@@ -30,6 +31,7 @@ import {
   RuntimeTabCloseEvent,
   RuntimeBoardServerChangeEvent,
   RuntimeWorkspaceItemChangeEvent,
+  RuntimeBoardSaveStatusChangeEvent,
 } from "./events";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import {
@@ -45,6 +47,7 @@ import {
   NodeDescriptor,
 } from "@breadboard-ai/types";
 import * as idb from "idb";
+import { BOARD_SAVE_STATUS } from "@breadboard-ai/shared-ui/types/types.js";
 
 const documentStyles = getComputedStyle(document.documentElement);
 
@@ -89,6 +92,16 @@ export class Board extends EventTarget {
     private readonly tokenVendor?: TokenVendor
   ) {
     super();
+    boardServers.servers.forEach((server) => {
+      if (server.capabilities.events) {
+        // install event listeners
+        server.addEventListener("savestatuschange", ({ url, status }) => {
+          this.dispatchEvent(
+            new RuntimeBoardSaveStatusChangeEvent(toSaveStatus(status), url)
+          );
+        });
+      }
+    });
   }
 
   #canParse(url: string, base?: string) {
@@ -193,20 +206,6 @@ export class Board extends EventTarget {
     return (
       this.boardServers.servers.find((server) => server.name === name) || null
     );
-  }
-
-  /**
-   * @deprecated Use getBoardServerByName instead.
-   */
-  getProviderByName(name: string) {
-    return this.providers.find((provider) => provider.name === name) || null;
-  }
-
-  /**
-   * @deprecated Use getBoardServerForURL instead.
-   */
-  getProviderForURL(url: URL) {
-    return this.providers.find((provider) => provider.canProvide(url)) || null;
   }
 
   getBoardServerForURL(url: URL) {
@@ -564,6 +563,7 @@ export class Board extends EventTarget {
       mainGraphId: mainGraphId.result,
       graph: descriptor,
       subGraphId: null,
+      boardServer: null,
       moduleId,
       version: 1,
       type: TabType.DESCRIPTOR,
@@ -615,6 +615,7 @@ export class Board extends EventTarget {
       graph: descriptor,
       mainGraphId: mainGraphId.result,
       subGraphId: null,
+      boardServer: null,
       moduleId,
       version: 1,
       type: TabType.DESCRIPTOR,
@@ -720,11 +721,12 @@ export class Board extends EventTarget {
 
     try {
       const base = new URL(window.location.href);
+      let boardServer: BoardServer | null = null;
 
       let kits = this.boardServerKits;
       let graph: GraphDescriptor | null = null;
       if (this.#canParse(url, base.href)) {
-        const boardServer = this.getBoardServerForURL(new URL(url, base));
+        boardServer = this.getBoardServerForURL(new URL(url, base));
         if (boardServer) {
           // Ensure the the provider has actually loaded fully before
           // requesting the graph file from it.
@@ -828,6 +830,7 @@ export class Board extends EventTarget {
         mainGraphId: mainGraphId.result,
         subGraphId,
         moduleId,
+        boardServer,
         type: TabType.URL,
         version: 1,
         readOnly,
@@ -1182,4 +1185,25 @@ export class Board extends EventTarget {
       }
     );
   }
+}
+
+function toSaveStatus(status: BoardServerSaveEventStatus): BOARD_SAVE_STATUS {
+  let result;
+
+  switch (status) {
+    case "saving":
+      result = BreadboardUI.Types.BOARD_SAVE_STATUS.SAVING;
+      break;
+    case "idle":
+      result = BreadboardUI.Types.BOARD_SAVE_STATUS.SAVED;
+      break;
+    case "debouncing":
+    case "queued":
+      result = BreadboardUI.Types.BOARD_SAVE_STATUS.UNSAVED;
+      break;
+    default:
+      result = BreadboardUI.Types.BOARD_SAVE_STATUS.SAVED;
+      break;
+  }
+  return result;
 }

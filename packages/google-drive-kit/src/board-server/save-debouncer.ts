@@ -5,12 +5,20 @@
  */
 
 import type { GraphDescriptor } from "@breadboard-ai/types";
-import { err, type Outcome } from "@google-labs/breadboard";
+import {
+  err,
+  type BoardServerSaveEventStatus,
+  type Outcome,
+} from "@google-labs/breadboard";
 import type { DriveOperations } from "./operations.js";
 
 export { SaveDebouncer };
 
-export type SaveStatus = "idle" | "debouncing" | "queued" | "saving";
+export type SaveStatus = BoardServerSaveEventStatus;
+
+export type DebouncerCallbacks = {
+  save: (status: SaveStatus, url: string) => void;
+};
 
 const DEFAULT_DEBOUNCE_DELAY = 1_500;
 
@@ -22,6 +30,7 @@ class SaveDebouncer {
 
   constructor(
     private readonly ops: DriveOperations,
+    private readonly callbacks: DebouncerCallbacks,
     private readonly delay = DEFAULT_DEBOUNCE_DELAY
   ) {}
 
@@ -39,6 +48,7 @@ class SaveDebouncer {
         "Drive Save: Already saving. Queued latest data to save after."
       );
       this.#status = "queued";
+      this.callbacks.save(this.#status, url.href);
       return;
     }
     this.#debounce(url);
@@ -47,6 +57,7 @@ class SaveDebouncer {
   #debounce(url: URL) {
     console.log(`Drive Save: Setting debounce timer for ${this.delay} ms`);
     this.#status = "debouncing";
+    this.callbacks.save(this.#status, url.href);
     this.#timer = setTimeout(() => {
       this.#timer = null;
       this.#startSaveOperation(url);
@@ -59,6 +70,7 @@ class SaveDebouncer {
     }
     this.#saveOperationInProgress = true;
     this.#status = "saving";
+    this.callbacks.save(this.#status, url.href);
     const descriptor = this.#latest;
     this.#latest = null;
     console.log("Drive Save: Performing actual save to drive");
@@ -70,6 +82,7 @@ class SaveDebouncer {
       console.warn(`Drive Save: save failed: ${writing.error}`);
       // TODO: Introduce error status and learn to recover from errors.
       this.#status = "idle";
+      this.callbacks.save(this.#status, url.href);
       return err(writing.error!);
     }
     if (this.#latest !== null) {
@@ -80,6 +93,7 @@ class SaveDebouncer {
     } else {
       console.log("Drive Save: save finished successfully");
       this.#status = "idle";
+      this.callbacks.save(this.#status, url.href);
     }
   }
 }

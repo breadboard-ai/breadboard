@@ -310,6 +310,7 @@ export interface BoardServerCapabilities {
   refresh: boolean;
   watch: boolean;
   preview: boolean;
+  events?: boolean;
 }
 
 export interface BoardServerConfiguration {
@@ -322,10 +323,19 @@ export interface BoardServerConfiguration {
   capabilities: BoardServerCapabilities;
 }
 
-export type BoardServerUpdateEvent = Event;
+export type BoardServerSaveEventStatus =
+  | "idle"
+  | "debouncing"
+  | "queued"
+  | "saving";
+
+export type BoardServerSaveStatusChangeEvent = Event & {
+  status: BoardServerSaveEventStatus;
+  url: string;
+};
 
 export type BoardServerEventMap = {
-  update: BoardServerUpdateEvent;
+  savestatuschange: BoardServerSaveStatusChangeEvent;
 };
 
 export type BoardServerEventTarget = TypedEventTarget<BoardServerEventMap>;
