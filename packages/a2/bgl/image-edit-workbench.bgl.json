@@ -4,102 +4,57 @@
   "version": "0.0.1",
   "nodes": [
     {
-      "id": "a2-efb03857",
-      "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
-      "metadata": {
-        "title": "Image Input",
-        "visual": {
-          "x": -520,
-          "y": -320,
-          "collapsed": "expanded",
-          "outputHeight": 88
-        },
-        "logLevel": "info"
-      },
-      "configuration": {
-        "description": {
-          "role": "user",
-          "parts": [
-            {
-              "text": "Upload image"
-            }
-          ]
-        },
-        "p-modality": "Image"
-      }
-    },
-    {
-      "id": "39ffd7c5-9ce0-4173-bac4-f00d91d90a5c",
+      "id": "9451845e-8a04-4340-9ba0-c78e7ed6dfa2",
       "type": "embed://a2/generate.bgl.json#module:main",
       "metadata": {
-        "title": "Generate",
+        "title": "Add Hat",
         "visual": {
-          "x": -180,
-          "y": -320
+          "x": -200,
+          "y": -360
         },
-        "userModified": false
+        "userModified": true
       },
       "configuration": {
-        "config$ask-user": false,
-        "config$list": false,
         "config$prompt": {
           "role": "user",
           "parts": [
             {
-              "text": ""
+              "text": "Add rainbow beanie that says Opal \n{{\"type\":\"in\",\"path\":\"913f02b7-fe7f-4de0-a1a6-723d35bde5e1\",\"title\":\"Image\"}}"
             }
           ]
         },
         "generation-mode": "image",
-        "p-aspect-ratio": "1:1",
-        "p-disable-prompt-rewrite": false,
-        "instruction": {
-          "role": "user",
-          "parts": [
-            {
-              "text": "Add a rainbow beanie that says Opal"
-            }
-          ]
-        }
-      }
-    },
-    {
-      "id": "9b5501f0-318c-470d-88ab-1509c7bd571d",
-      "type": "embed://a2/generate.bgl.json#module:main",
-      "metadata": {
-        "title": "Generate",
-        "visual": {
-          "x": -180,
-          "y": -160
-        },
-        "userModified": false
-      },
-      "configuration": {
-        "config$ask-user": false,
-        "config$list": false,
-        "config$prompt": {
-          "role": "user",
-          "parts": [
-            {
-              "text": ""
-            }
-          ]
-        },
-        "generation-mode": "image",
-        "instruction": {
-          "role": "user",
-          "parts": [
-            {
-              "text": "Image of a frog"
-            }
-          ]
-        },
         "p-aspect-ratio": "1:1",
         "p-disable-prompt-rewrite": false
       }
     },
     {
-      "id": "bb342fa6-429d-4426-bbad-36bce824ffcc",
+      "id": "3a6531e1-a886-456b-a7f0-ba8632404259",
+      "type": "embed://a2/generate.bgl.json#module:main",
+      "metadata": {
+        "title": "Image of a frog",
+        "visual": {
+          "x": -200,
+          "y": -160
+        },
+        "userModified": true
+      },
+      "configuration": {
+        "config$prompt": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Hyper-realistic frog wearing a crown"
+            }
+          ]
+        },
+        "generation-mode": "image",
+        "p-aspect-ratio": "1:1",
+        "p-disable-prompt-rewrite": false
+      }
+    },
+    {
+      "id": "46ba7421-c8b6-4191-b43a-c148ffd2b46a",
       "type": "embed://a2/a2.bgl.json#module:render-outputs",
       "metadata": {
         "title": "Display",
@@ -112,32 +67,55 @@
         "text": {
           "parts": [
             {
-              "text": "{{\"title\":\"Generate\",\"path\":\"39ffd7c5-9ce0-4173-bac4-f00d91d90a5c\",\"type\":\"in\"}} {{\"title\":\"Generate\",\"path\":\"9b5501f0-318c-470d-88ab-1509c7bd571d\",\"type\":\"in\"}}"
+              "text": "{{\"title\":\"Add Hat\",\"path\":\"9451845e-8a04-4340-9ba0-c78e7ed6dfa2\",\"type\":\"in\"}} {{\"title\":\"Image of a frog\",\"path\":\"3a6531e1-a886-456b-a7f0-ba8632404259\",\"type\":\"in\"}}"
             }
           ],
           "role": "user"
         }
       }
+    },
+    {
+      "id": "913f02b7-fe7f-4de0-a1a6-723d35bde5e1",
+      "type": "embed://a2/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
+      "metadata": {
+        "title": "Image",
+        "visual": {
+          "x": -520,
+          "y": -300
+        },
+        "userModified": true
+      },
+      "configuration": {
+        "description": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Upload image"
+            }
+          ]
+        },
+        "p-modality": "Any"
+      }
     }
   ],
   "edges": [
     {
-      "from": "a2-efb03857",
-      "to": "39ffd7c5-9ce0-4173-bac4-f00d91d90a5c",
+      "from": "9451845e-8a04-4340-9ba0-c78e7ed6dfa2",
+      "to": "46ba7421-c8b6-4191-b43a-c148ffd2b46a",
       "out": "context",
-      "in": "context"
+      "in": "p-z-9451845e-8a04-4340-9ba0-c78e7ed6dfa2"
     },
     {
-      "from": "39ffd7c5-9ce0-4173-bac4-f00d91d90a5c",
-      "to": "bb342fa6-429d-4426-bbad-36bce824ffcc",
+      "from": "3a6531e1-a886-456b-a7f0-ba8632404259",
+      "to": "46ba7421-c8b6-4191-b43a-c148ffd2b46a",
       "out": "context",
-      "in": "p-z-39ffd7c5-9ce0-4173-bac4-f00d91d90a5c"
+      "in": "p-z-3a6531e1-a886-456b-a7f0-ba8632404259"
     },
     {
-      "from": "9b5501f0-318c-470d-88ab-1509c7bd571d",
-      "to": "bb342fa6-429d-4426-bbad-36bce824ffcc",
+      "from": "913f02b7-fe7f-4de0-a1a6-723d35bde5e1",
+      "to": "9451845e-8a04-4340-9ba0-c78e7ed6dfa2",
       "out": "context",
-      "in": "p-z-9b5501f0-318c-470d-88ab-1509c7bd571d"
+      "in": "p-z-913f02b7-fe7f-4de0-a1a6-723d35bde5e1"
     }
   ],
   "metadata": {
@@ -173,7 +151,7 @@
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI2Ny41MCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iNjUuMDAiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI0Ny4wMCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzJlOGJlOCIgLz4KPHJlY3QgeD0iOTUuMDAiCiAgICAgICAgICAgICAgICAgICAgeT0iNjcuNTAiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjY1LjAwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMjUuMDAiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CjxyZWN0IHg9Ijk1LjAwIgogICAgICAgICAgICAgICAgICAgIHk9IjEwNy41MCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iNjUuMDAiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIyNS4wMCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KPHJlY3QgeD0iMTc1LjAwIgogICAgICAgICAgICAgICAgICAgIHk9IjgyLjUwIgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI2NS4wMCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjI1LjAwIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMmU4YmU4IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSI5MC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI2Mi41MCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iNjUuMDAiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIyNS4wMCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KPHJlY3QgeD0iOTAuMDAiCiAgICAgICAgICAgICAgICAgICAgeT0iMTEyLjUwIgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI2NS4wMCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjI1LjAwIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgo8cmVjdCB4PSIxNzUuMDAiCiAgICAgICAgICAgICAgICAgICAgeT0iODcuNTAiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjY1LjAwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMjUuMDAiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyZThiZTgiIC8+CjxyZWN0IHg9IjEwLjAwIgogICAgICAgICAgICAgICAgICAgIHk9Ijc3LjUwIgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI2NS4wMCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjI1LjAwIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMmU4YmU4IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
     }
   }
 }
