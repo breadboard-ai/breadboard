@@ -100,7 +100,7 @@ async function invoke({
     details = substituting;
   }
   await report({
-    actor: "Ask User",
+    actor: "User Input",
     category: "Requesting Input",
     name: "",
     details,
@@ -156,7 +156,7 @@ async function describe({
       },
       additionalProperties: false,
     } satisfies Schema,
-    title: "Ask User",
+    title: "User Input",
     metadata: {
       icon: "ask-user",
       tags: ["quick-access", "core", "input"],
