@@ -745,6 +745,19 @@ export class Main extends LitElement {
           }
         );
 
+        this.#runtime.board.addEventListener(
+          Runtime.Events.RuntimeBoardSaveStatusChangeEvent.eventName,
+          ({
+            status,
+            url,
+          }: Runtime.Events.RuntimeBoardSaveStatusChangeEvent) => {
+            if (!this.tab || this.tab.graph.url !== url) return;
+
+            this.#tabSaveStatus.set(this.tab.id, status);
+            this.requestUpdate();
+          }
+        );
+
         this.#runtime.run.addEventListener(
           Runtime.Events.RuntimeBoardRunEvent.eventName,
           (evt: Runtime.Events.RuntimeBoardRunEvent) => {
@@ -1335,7 +1348,9 @@ export class Main extends LitElement {
       return;
     }
 
-    if (timeout !== 0) {
+    const useBoardServerEvents = !!this.tab?.boardServer?.capabilities.events;
+
+    if (timeout !== 0 && !useBoardServerEvents) {
       const saveId = globalThis.crypto.randomUUID();
       this.#tabSaveId.set(tabToSave.id, saveId);
       await new Promise((r) => setTimeout(r, timeout));
@@ -1376,20 +1391,24 @@ export class Main extends LitElement {
       );
     }
 
-    this.#tabSaveStatus.set(
-      tabToSave.id,
-      BreadboardUI.Types.BOARD_SAVE_STATUS.SAVING
-    );
-    this.requestUpdate();
+    if (!useBoardServerEvents) {
+      this.#tabSaveStatus.set(
+        tabToSave.id,
+        BreadboardUI.Types.BOARD_SAVE_STATUS.SAVING
+      );
+      this.requestUpdate();
+    }
 
     try {
       const { result } = await this.#runtime.board.save(tabToSave.id);
 
-      this.#tabSaveStatus.set(
-        tabToSave.id,
-        BreadboardUI.Types.BOARD_SAVE_STATUS.SAVED
-      );
-      this.requestUpdate();
+      if (!useBoardServerEvents) {
+        this.#tabSaveStatus.set(
+          tabToSave.id,
+          BreadboardUI.Types.BOARD_SAVE_STATUS.SAVED
+        );
+        this.requestUpdate();
+      }
 
       if (!result) {
         this.#tabSaveStatus.set(
@@ -4085,7 +4104,8 @@ export class Main extends LitElement {
 
   createTosDialog() {
     const tosTitle = Strings.from("TOS_TITLE");
-    return html`<dialog id="tos-dialog"
+    return html`<dialog
+      id="tos-dialog"
       ${ref((el: Element | undefined) => {
         if (el && this.showToS && el.isConnected) {
           const dialog = el as HTMLDialogElement;
@@ -4093,19 +4113,22 @@ export class Main extends LitElement {
             dialog.showModal();
           }
         }
-      })}>
+      })}
+    >
       <form method="dialog">
         <div>
-         <p class="heading">${tosTitle}</p>
+          <p class="heading">${tosTitle}</p>
         </div>
-        <div class="tos-content">
-          ${unsafeHTML(this.#tosHtml)}
-        </div>
+        <div class="tos-content">${unsafeHTML(this.#tosHtml)}</div>
         <div class="button-section">
-          <button @click=${() => {
-            this.showToS = false;
-            localStorage.setItem(TOS_KEY, TosStatus.ACCEPTED);
-          }}>Continue</button>
+          <button
+            @click=${() => {
+              this.showToS = false;
+              localStorage.setItem(TOS_KEY, TosStatus.ACCEPTED);
+            }}
+          >
+            Continue
+          </button>
         </div>
       </form>
     </dialog>`;

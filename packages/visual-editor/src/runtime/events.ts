@@ -19,13 +19,25 @@ import {
   NodeConfiguration,
   NodeIdentifier,
 } from "@google-labs/breadboard";
-import { ChatController } from "../../../shared-ui/dist/state";
+import { ChatController } from "@breadboard-ai/shared-ui/state/chat-controller.js";
+import { BOARD_SAVE_STATUS } from "@breadboard-ai/shared-ui/types/types.js";
 
 const eventInit = {
   bubbles: true,
   cancelable: true,
   composed: true,
 };
+
+export class RuntimeBoardSaveStatusChangeEvent extends Event {
+  static eventName = "runtimeboardsavestatuschange";
+
+  constructor(
+    public readonly status: BOARD_SAVE_STATUS,
+    public readonly url: string
+  ) {
+    super(RuntimeBoardSaveStatusChangeEvent.eventName, { ...eventInit });
+  }
+}
 
 export class RuntimeBoardLoadErrorEvent extends Event {
   static eventName = "runtimeboardloaderror" as const;
