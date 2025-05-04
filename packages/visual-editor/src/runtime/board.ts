@@ -1198,6 +1198,7 @@ function toSaveStatus(status: BoardServerSaveEventStatus): BOARD_SAVE_STATUS {
       result = BreadboardUI.Types.BOARD_SAVE_STATUS.SAVED;
       break;
     case "debouncing":
+    case "queued":
       result = BreadboardUI.Types.BOARD_SAVE_STATUS.UNSAVED;
       break;
     default:
