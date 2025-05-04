@@ -821,7 +821,8 @@ export class Board extends EventTarget {
       if (!mainGraphId.success) {
         throw new Error(`Unable to add graph: ${mainGraphId.error}`);
       }
-      const id = this.#currentTabId || globalThis.crypto.randomUUID();
+      // Always create a new tab.
+      const id = globalThis.crypto.randomUUID();
       this.#tabs.set(id, {
         id,
         boardServerKits: kits,
@@ -838,6 +839,12 @@ export class Board extends EventTarget {
         history: await this.#loadLocalHistory(url),
         onHistoryChanged: (history) => this.#saveLocalHistory(url, history),
       });
+
+      // If there's a current tab, close it.
+      // We are in a single-tab environment for now.
+      if (this.#currentTabId) {
+        this.closeTab(this.#currentTabId);
+      }
 
       this.#currentTabId = id;
 
