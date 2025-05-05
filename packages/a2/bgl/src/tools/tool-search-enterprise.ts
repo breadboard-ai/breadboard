@@ -9,6 +9,7 @@ export { invoke as default, describe };
 
 export type SearchInputs = {
   query: string;
+  search_engine_resource_name: string;
 };
 
 export type SearchOutputs = {
@@ -17,9 +18,11 @@ export type SearchOutputs = {
 
 async function invoke({
   query,
+  search_engine_resource_name,
 }: SearchInputs): Promise<Outcome<SearchOutputs>> {
   const executing = await executeTool<string>("enterprise_search", {
     query,
+    search_engine_resource_name,
   });
   if (!ok(executing)) return executing;
 
