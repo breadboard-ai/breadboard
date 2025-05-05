@@ -98,6 +98,13 @@ class ChangeEdge implements EditTransform {
       }
     }
 
+    // When traversing port references in configuration, we'll also see if
+    // there are any existing valid references in there. If there are, we can
+    // skip the process of adding a new edge and instead add a new reference.
+
+    let addNewEdge = true;
+    let addNewRef = true;
+
     // First, try to transform all port references in the configuration. This
     // will result in changes when there are existing references and they are
     // marked as invalid.
@@ -105,9 +112,12 @@ class ChangeEdge implements EditTransform {
       destination.descriptor.id,
       destination.configuration(),
       (part) => {
-        const { type, path } = part;
+        const { type, path, invalid } = part;
         if (type !== "in") return null;
         if (path === source.descriptor.id) {
+          if (!invalid) {
+            addNewEdge = false;
+          }
           const updatedPart = { ...part };
           delete updatedPart.invalid;
           return updatedPart;
@@ -115,6 +125,7 @@ class ChangeEdge implements EditTransform {
         return null;
       }
     );
+    addNewRef = updatedConfiguration === null || !addNewEdge;
     if (updatedConfiguration !== null) {
       // Configuration was updated, let's apply it.
       const editingConfig = await context.apply(
@@ -131,10 +142,13 @@ class ChangeEdge implements EditTransform {
       if (!editingConfig.success) {
         return editingConfig;
       }
-    } else {
-      // There were no changes in configuration, which indicates that there
-      // were no port references present in it. This means that we need to
-      // add a new reference.
+    }
+    if (addNewRef) {
+      // There were either:
+      // a) no changes in configuration, which indicates that there
+      //    were no port references present in it.
+      // b) the configuration already contains a valid reference.
+      // This means that we need to add a new reference.
 
       // By convention, "at-wireable" nodes must have one LLM Content port.
       const contentPort = findFirstContentPort(destination);
@@ -174,6 +188,8 @@ class ChangeEdge implements EditTransform {
         return editingConfig;
       }
     }
+    if (!addNewEdge) return { success: true };
+
     // Create a an "@"-wire
     return context.apply(
       [
