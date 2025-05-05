@@ -36,6 +36,12 @@ async function describe() {
           title: "Query",
           description: "The search query",
         },
+        search_engine_resource_name: {
+          type: "string",
+          title: "Search Engine Resource Name [Optional]",
+          description:
+            "An optional resource name for the search backend to use",
+        },
       },
     } satisfies Schema,
     outputSchema: {

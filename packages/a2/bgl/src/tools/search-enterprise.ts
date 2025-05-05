@@ -1,5 +1,5 @@
 /**
- * @fileoverview Add a description for your module here.
+ * @fileoverview Search an enterprise search engine.
  */
 
 import toolSearchEnterprise, {
