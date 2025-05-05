@@ -24,6 +24,7 @@ import { createRef, ref } from "lit/directives/ref.js";
 
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { ok } from "@google-labs/breadboard";
+import { Files } from "@breadboard-ai/google-drive-kit/board-server/api.js";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
 const ASSET_MIME_TYPES = [
@@ -144,6 +145,8 @@ export class GoogleDriveDebugPanel extends LitElement {
       <button @click=${this.#listFolderContentsInConsole}>
         List folder contents in console
       </button>
+
+      <button @click=${this.#getFile}>Get file</button>
 
       <p>My projects</p>
       <ul>
@@ -453,6 +456,28 @@ export class GoogleDriveDebugPanel extends LitElement {
     });
     const result = JSON.parse(response.body);
     console.log({ result });
+  }
+
+  async #getFile() {
+    const fileId = this.#fileIdInput.value?.value;
+    if (!fileId) {
+      return;
+    }
+    const auth = await this.signinAdapter?.refresh();
+    if (auth?.state !== "valid") {
+      return;
+    }
+    const { access_token } = auth.grant;
+    const files = new Files(
+      access_token,
+      new URL("/drive-proxy", document.location.href).href
+    );
+    const request = files.makeGetRequest(fileId);
+    console.log({ request });
+    const response = await fetch(request);
+    console.log({ status: response.status });
+    const text = await response.text();
+    console.log({ text });
   }
 }
 
