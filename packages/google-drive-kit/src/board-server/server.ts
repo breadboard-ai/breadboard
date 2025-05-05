@@ -218,7 +218,7 @@ class GoogleDriveBoardServer
     let saving = this.#saving.get(url.href);
     if (!saving) {
       saving = new SaveDebouncer(this.ops, {
-        save: (status, url) => {
+        savestatuschange: (status, url) => {
           this.dispatchEvent(new SaveEvent(status, url));
         },
       });
