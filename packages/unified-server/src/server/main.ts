@@ -5,6 +5,8 @@ import * as connectionServer from "@breadboard-ai/connection-server";
 import * as boardServer from "@breadboard-ai/board-server";
 import { InputValues, NodeDescriptor } from "@breadboard-ai/types";
 
+import { makeDriveProxyMiddleware } from "./drive-proxy.js";
+
 const server = express();
 
 const boardServerConfig = boardServer.createServerConfig({
@@ -22,6 +24,8 @@ server.use(
 );
 
 server.use("/app/@:user/:name", boardServer.middlewares.loadBoard());
+
+server.use("/drive-proxy", makeDriveProxyMiddleware());
 
 ViteExpress.config({
   transformer: (html: string, req: Request) => {

@@ -181,6 +181,7 @@
     "@google-labs/breadboard": "0.34.0",
     "@lit/context": "^1.1.4",
     "express": "^4.21.2",
+    "google-auth-library": "^9.15.1",
     "vite": "^6.2.7",
     "vite-express": "^0.21.1"
   }
