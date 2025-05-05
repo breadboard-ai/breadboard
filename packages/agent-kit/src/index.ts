@@ -18,7 +18,7 @@ const agentKit = await kit({
   title: "Agent Kit",
   description: "A collection of nodes for building Agent-like experiences.",
   version: "0.0.1",
-  url: "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/agent-kit/graphs/kit.json",
+  url: "https://raw.githubusercontent.com/breadboard-ai/breadboard/refs/heads/main/packages/agent-kit/agent.kit.json",
   components: {
     content,
     human,
