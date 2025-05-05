@@ -26,12 +26,14 @@ export { TransformAllNodes, transformConfiguration };
  * be replaced.
  */
 export type TemplatePartTransformer = (
-  part: TemplatePart
+  part: TemplatePart,
+  nodeId: NodeIdentifier
 ) => TemplatePart | null;
 
 export type EditTransformFactory = (id: NodeIdentifier) => EditTransform;
 
 function transformConfiguration(
+  id: NodeIdentifier,
   config: NodeConfiguration,
   templateTransformer: TemplatePartTransformer
 ): NodeConfiguration | null {
@@ -55,7 +57,7 @@ function transformConfiguration(
           const template = new Template(part.text);
           if (template.hasPlaceholders) {
             const text = template.transform((part) => {
-              const transformed = templateTransformer(part);
+              const transformed = templateTransformer(part, id);
               if (transformed === null) {
                 return part;
               } else {
@@ -109,6 +111,7 @@ class TransformAllNodes implements EditTransform {
       const id = node.descriptor.id;
       if (this.skippedNodes?.includes(id)) continue;
       const newConfig = transformConfiguration(
+        id,
         node.configuration(),
         this.templateTransformer
       );
