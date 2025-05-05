@@ -28,10 +28,12 @@ export type AppProperties = {
 };
 
 class Files {
-  #accessToken: string;
+  readonly #accessToken: string;
+  readonly #baseUrl: string;
 
-  constructor(accessToken: string) {
+  constructor(accessToken: string, baseUrl = "https://www.googleapis.com") {
     this.#accessToken = accessToken;
+    this.#baseUrl = baseUrl;
   }
 
   get #headers() {
@@ -65,18 +67,15 @@ ${JSON.stringify(body, null, 2)}
   }
 
   makeGetRequest(filename: string): Request {
-    return new Request(
-      `https://www.googleapis.com/drive/v3/files/${filename}`,
-      {
-        method: "GET",
-        ...this.#headers,
-      }
-    );
+    return new Request(`${this.#baseUrl}/drive/v3/files/${filename}`, {
+      method: "GET",
+      ...this.#headers,
+    });
   }
 
   makeQueryRequest(query: string): Request {
     return new Request(
-      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=*`,
+      `${this.#baseUrl}/drive/v3/files?q=${encodeURIComponent(query)}&fields=*`,
       {
         method: "GET",
         ...this.#headers,
@@ -85,17 +84,14 @@ ${JSON.stringify(body, null, 2)}
   }
 
   makeLoadRequest(file: string): Request {
-    return new Request(
-      `https://www.googleapis.com/drive/v3/files/${file}?alt=media`,
-      {
-        method: "GET",
-        ...this.#headers,
-      }
-    );
+    return new Request(`${this.#baseUrl}/drive/v3/files/${file}?alt=media`, {
+      method: "GET",
+      ...this.#headers,
+    });
   }
 
   makeCreateRequest(body: unknown): Request {
-    return new Request("https://www.googleapis.com/drive/v3/files", {
+    return new Request(`${this.#baseUrl}/drive/v3/files`, {
       method: "POST",
       ...this.#headers,
       body: JSON.stringify(body),
@@ -104,7 +100,7 @@ ${JSON.stringify(body, null, 2)}
 
   makeMultipartCreateRequest(metadata: unknown, body: unknown): Request {
     return new Request(
-      `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`,
+      `${this.#baseUrl}/upload/drive/v3/files?uploadType=multipart`,
       {
         method: "POST",
         ...this.#multipartRequest(metadata, body),
@@ -114,7 +110,7 @@ ${JSON.stringify(body, null, 2)}
 
   makePatchRequest(file: string, metadata: unknown, body: unknown): Request {
     return new Request(
-      `https://www.googleapis.com/upload/drive/v3/files/${file}?uploadType=multipart`,
+      `${this.#baseUrl}/upload/drive/v3/files/${file}?uploadType=multipart`,
       {
         method: "PATCH",
         ...this.#multipartRequest(metadata, body),
@@ -123,7 +119,7 @@ ${JSON.stringify(body, null, 2)}
   }
 
   makeDeleteRequest(file: string): Request {
-    return new Request(`https://www.googleapis.com/drive/v3/files/${file}`, {
+    return new Request(`${this.#baseUrl}/drive/v3/files/${file}`, {
       method: "DELETE",
       ...this.#headers,
     });
