@@ -21,11 +21,19 @@
           "role": "user",
           "parts": [
             {
-              "text": "Do research about the CEO of Apple using {{\"type\":\"tool\",\"path\":\"embed://a2/tools.bgl.json#module:search-enterprise\",\"title\":\"Search Enterprise\"}}"
+              "text": "Do research about the CEO of Apple using {{\"type\":\"tool\",\"path\":\"embed://a2/tools.bgl.json#module:search-enterprise\",\"title\":\"Search Enterprise\"}}\n\nUse the search resource name \"1234\""
             }
           ]
         },
-        "generation-mode": "text"
+        "generation-mode": "text",
+        "b-system-instruction": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "You are working as part of an AI system, so no chit-chat and no explaining what you're doing and why.\nDO NOT start with \"Okay\", or \"Alright\" or any preambles. Just the output, please."
+            }
+          ]
+        }
       }
     }
   ],
