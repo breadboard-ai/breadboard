@@ -39,13 +39,17 @@ class MarkInPortsInvalid implements EditTransform {
       };
     }
 
-    const newConfig = transformConfiguration(node.configuration(), (part) => {
-      const { path } = part;
-      if (path === this.from) {
-        return { ...part, invalid: true };
+    const newConfig = transformConfiguration(
+      this.to,
+      node.configuration(),
+      (part) => {
+        const { path } = part;
+        if (path === this.from) {
+          return { ...part, invalid: true };
+        }
+        return null;
       }
-      return null;
-    });
+    );
     if (newConfig !== null) {
       return context.apply(
         [

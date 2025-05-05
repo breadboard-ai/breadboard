@@ -15,6 +15,7 @@ import {
   NodeIdentifier,
   PortStatus,
 } from "@google-labs/breadboard";
+import { transformConfiguration } from "./transform-all-nodes";
 
 export { AutoWireInPorts };
 
@@ -45,11 +46,16 @@ class AutoWireInPorts implements EditTransform {
       return { success: false, error: `Unable to find node with id "${id}"` };
     }
 
+    const invalidReferences: NodeIdentifier[] = [];
+
     const incoming = dedupeEdges(
       ins
         .map((v) => {
           const out = getDefaultOutputPort(inspectableGraph.nodeById(v.path));
-          if (!out) return null;
+          if (!out) {
+            invalidReferences.push(v.path);
+            return null;
+          }
           return {
             from: v.path,
             to: inspectableNode.descriptor.id,
@@ -59,6 +65,8 @@ class AutoWireInPorts implements EditTransform {
         })
         .filter(Boolean) as Edge[]
     );
+    console.log("AUTOWIRES INVALID REFS", invalidReferences);
+
     console.group("UPDATE AUTOWIRES");
     console.log("Icoming:");
     console.table(incoming);
@@ -100,6 +108,29 @@ class AutoWireInPorts implements EditTransform {
           graphId,
         });
       });
+    }
+
+    if (invalidReferences.length > 0) {
+      const id = inspectableNode.descriptor.id;
+      const updatedConfiguration = transformConfiguration(
+        id,
+        inspectableNode.configuration(),
+        (part) => {
+          if (part.type !== "in") return null;
+          if (invalidReferences.includes(part.path)) {
+            return { ...part, invalid: true };
+          }
+          return null;
+        }
+      );
+      if (updatedConfiguration !== null) {
+        edits.push({
+          type: "changeconfiguration",
+          configuration: updatedConfiguration,
+          graphId,
+          id,
+        });
+      }
     }
 
     return context.apply(edits, "Autowiring incoming ports");
