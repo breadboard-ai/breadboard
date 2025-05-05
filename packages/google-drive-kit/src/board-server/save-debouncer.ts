@@ -43,11 +43,15 @@ class SaveDebouncer {
     this.callbacks.savestatuschange(status, url.href);
   }
 
-  save(url: URL, descriptor: GraphDescriptor, userInitiated: boolean) {
-    this.#latest = structuredClone(descriptor);
+  cancelPendingSave() {
     if (this.#timer) {
       clearTimeout(this.#timer);
     }
+  }
+
+  save(url: URL, descriptor: GraphDescriptor, userInitiated: boolean) {
+    this.#latest = structuredClone(descriptor);
+    this.cancelPendingSave();
     if (this.#saveOperationInProgress) {
       console.log(
         "Drive Save: Already saving. Queued latest data to save after."
@@ -91,9 +95,9 @@ class SaveDebouncer {
       return err(writing.error!);
     }
     if (this.#latest !== null) {
-      if (this.#timer) {
-        clearTimeout(this.#timer);
-      }
+      // If `save` was invoked again while operation was running, restart
+      // the debounce timer.
+      this.cancelPendingSave();
       this.#debounce(url);
     } else {
       console.log("Drive Save: save finished successfully");

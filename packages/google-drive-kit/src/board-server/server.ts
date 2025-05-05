@@ -255,6 +255,7 @@ class GoogleDriveBoardServer
   }
 
   async delete(url: URL): Promise<{ result: boolean; error?: string }> {
+    this.#saving.get(url.href)?.cancelPendingSave();
     const deleting = await this.ops.deleteGraph(url);
     if (!ok(deleting)) {
       return { result: false, error: deleting.$error };
