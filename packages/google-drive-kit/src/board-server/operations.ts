@@ -122,6 +122,7 @@ class DriveOperations {
     descriptor: GraphDescriptor
   ): Promise<{ result: boolean; error?: string }> {
     const file = url.href.replace(`${this.url.href}/`, "");
+    const name = getFileTitle(descriptor);
     const accessToken = await getAccessToken(this.vendor);
     try {
       const api = new Files(accessToken!);
@@ -130,6 +131,7 @@ class DriveOperations {
         api.makePatchRequest(
           file,
           {
+            name,
             ...createAppProperties(file, descriptor),
             mimeType: GRAPH_MIME_TYPE,
           },
@@ -150,6 +152,7 @@ class DriveOperations {
     descriptor: GraphDescriptor
   ) {
     const fileName = url.href.replace(`${this.url.href}/`, "");
+    const name = getFileTitle(descriptor);
     const accessToken = await getAccessToken(this.vendor);
 
     try {
@@ -157,7 +160,7 @@ class DriveOperations {
       const response = await fetch(
         api.makeMultipartCreateRequest(
           {
-            name: fileName,
+            name,
             mimeType: GRAPH_MIME_TYPE,
             parents: [parent],
             ...createAppProperties(fileName, descriptor),
@@ -298,4 +301,8 @@ function readAppProperties(file: DriveFile) {
     description,
     tags: parsedTags,
   };
+}
+
+function getFileTitle(descriptor: GraphDescriptor) {
+  return descriptor.title || "Untitled Graph";
 }

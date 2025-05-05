@@ -17,7 +17,7 @@ export { SaveDebouncer };
 export type SaveStatus = BoardServerSaveEventStatus;
 
 export type DebouncerCallbacks = {
-  save: (status: SaveStatus, url: string) => void;
+  savestatuschange: (status: SaveStatus, url: string) => void;
 };
 
 const DEFAULT_DEBOUNCE_DELAY = 1_500;
@@ -38,17 +38,25 @@ class SaveDebouncer {
     return this.#status;
   }
 
-  save(url: URL, descriptor: GraphDescriptor, userInitiated: boolean) {
-    this.#latest = structuredClone(descriptor);
+  #setStatus(status: SaveStatus, url: URL) {
+    this.#status = status;
+    this.callbacks.savestatuschange(status, url.href);
+  }
+
+  cancelPendingSave() {
     if (this.#timer) {
       clearTimeout(this.#timer);
     }
+  }
+
+  save(url: URL, descriptor: GraphDescriptor, userInitiated: boolean) {
+    this.#latest = structuredClone(descriptor);
+    this.cancelPendingSave();
     if (this.#saveOperationInProgress) {
       console.log(
         "Drive Save: Already saving. Queued latest data to save after."
       );
-      this.#status = "queued";
-      this.callbacks.save(this.#status, url.href);
+      this.#setStatus("queued", url);
       return;
     }
     if (userInitiated) {
@@ -60,8 +68,7 @@ class SaveDebouncer {
 
   #debounce(url: URL) {
     console.log(`Drive Save: Setting debounce timer for ${this.delay} ms`);
-    this.#status = "debouncing";
-    this.callbacks.save(this.#status, url.href);
+    this.#setStatus("debouncing", url);
     this.#timer = setTimeout(() => {
       this.#timer = null;
       this.#startSaveOperation(url);
@@ -73,8 +80,7 @@ class SaveDebouncer {
       return err(`Drive Save: Save operation started unexpectedly`);
     }
     this.#saveOperationInProgress = true;
-    this.#status = "saving";
-    this.callbacks.save(this.#status, url.href);
+    this.#setStatus("saving", url);
     const descriptor = this.#latest;
     this.#latest = null;
     console.log("Drive Save: Performing actual save to drive");
@@ -85,19 +91,17 @@ class SaveDebouncer {
     if (!writing.result) {
       console.warn(`Drive Save: save failed: ${writing.error}`);
       // TODO: Introduce error status and learn to recover from errors.
-      this.#status = "idle";
-      this.callbacks.save(this.#status, url.href);
+      this.#setStatus("idle", url);
       return err(writing.error!);
     }
     if (this.#latest !== null) {
-      if (this.#timer) {
-        clearTimeout(this.#timer);
-      }
+      // If `save` was invoked again while operation was running, restart
+      // the debounce timer.
+      this.cancelPendingSave();
       this.#debounce(url);
     } else {
       console.log("Drive Save: save finished successfully");
-      this.#status = "idle";
-      this.callbacks.save(this.#status, url.href);
+      this.#setStatus("idle", url);
     }
   }
 }

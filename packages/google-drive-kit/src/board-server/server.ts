@@ -218,7 +218,7 @@ class GoogleDriveBoardServer
     let saving = this.#saving.get(url.href);
     if (!saving) {
       saving = new SaveDebouncer(this.ops, {
-        save: (status, url) => {
+        savestatuschange: (status, url) => {
           this.dispatchEvent(new SaveEvent(status, url));
         },
       });
@@ -236,8 +236,6 @@ class GoogleDriveBoardServer
     url: URL,
     descriptor: GraphDescriptor
   ): Promise<{ result: boolean; error?: string; url?: string }> {
-    // First create the file, then save.
-
     const parent = await this.ops.findOrCreateFolder();
     if (!ok(parent)) {
       return { result: false, error: parent.$error };
@@ -255,6 +253,7 @@ class GoogleDriveBoardServer
   }
 
   async delete(url: URL): Promise<{ result: boolean; error?: string }> {
+    this.#saving.get(url.href)?.cancelPendingSave();
     const deleting = await this.ops.deleteGraph(url);
     if (!ok(deleting)) {
       return { result: false, error: deleting.$error };
