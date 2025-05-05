@@ -182,6 +182,6 @@
     "@lit/context": "^1.1.4",
     "express": "^4.21.2",
     "vite": "^6.2.7",
-    "vite-express": "^0.20.0"
+    "vite-express": "^0.21.1"
   }
 }
