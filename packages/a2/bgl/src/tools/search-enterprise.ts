@@ -1,5 +1,5 @@
 /**
- * @fileoverview Add a description for your module here.
+ * @fileoverview Search an enterprise search engine.
  */
 
 import toolSearchEnterprise, {
@@ -16,6 +16,7 @@ type Inputs =
     }
   | {
       query: string;
+      search_engine_resource_name?: string;
     };
 
 type Outputs =
@@ -38,6 +39,7 @@ async function resolveInput(inputContent: LLMContent): Promise<string> {
 async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
   console.log("ENTERPRISE SEARCH INPUTS", inputs);
   let query: string;
+  let search_engine_resource_name: string | undefined;
   let mode: "step" | "tool";
   if ("context" in inputs) {
     mode = "step";
@@ -52,15 +54,21 @@ async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
     mode = "step";
   } else {
     query = inputs.query;
+    search_engine_resource_name = inputs.search_engine_resource_name;
     mode = "tool";
   }
   query = (query || "").trim();
   if (!query) {
     return err("Please provide a query");
   }
-
+  if (search_engine_resource_name === undefined) {
+    search_engine_resource_name = "";
+  }
   console.log("Query: " + query);
-  const searchResults = await toolSearchEnterprise({ query });
+  const searchResults = await toolSearchEnterprise({
+    query,
+    search_engine_resource_name,
+  });
   if (!ok(searchResults)) {
     return searchResults;
   }
