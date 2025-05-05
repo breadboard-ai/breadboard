@@ -273,7 +273,7 @@ class ToolManager {
                 callTool
               );
             } else {
-              await callTool(url, part.functionCall.args, passContext);
+              await callTool(url, part.functionCall.args, passContext, name);
             }
           }
         }

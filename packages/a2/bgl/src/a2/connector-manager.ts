@@ -359,13 +359,18 @@ class ConnectorManager {
     if (!ok(invocationArgs)) return invocationArgs;
 
     const { id, info } = invocationArgs;
-    await callTool(invocationArgs.$board, {
-      method: "invoke",
-      id,
-      info,
-      name,
-      args,
-    });
+    await callTool(
+      invocationArgs.$board,
+      {
+        method: "invoke",
+        id,
+        info,
+        name,
+        args,
+      },
+      false,
+      name
+    );
   }
 
   async materialize(): Promise<Outcome<unknown>> {

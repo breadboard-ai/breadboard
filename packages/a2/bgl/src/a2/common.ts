@@ -46,7 +46,8 @@ export type DescriberResultTransformer = {
 export type CallToolCallback = (
   tool: string,
   args: object,
-  passContext?: boolean
+  passContext?: boolean,
+  name?: string // The name of the function declaration e.g. Fetch_Webpage
 ) => Promise<void>;
 
 export type AgentInputs = {
