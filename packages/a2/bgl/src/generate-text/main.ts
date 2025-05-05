@@ -181,12 +181,21 @@ class GenerateText {
         const inputs: GeminiInputs = {
           body: { contents, systemInstruction, safetySettings },
         };
+        if (shouldAddTools) {
+          // If we added function declarations (or saw a function call request) before, then we need to add them again so
+          // Gemini isn't confused by the presence of a function call request.
+          // However, set the mode to NONE so we don't call tools again.
+          inputs.body.tools = [...tools];
+          console.log("adding tools");
+          // Can't set to functionCallingConfig mode to NONE, as that seems to hallucinate tool use.
+        }
         if (makeList) {
           inputs.body.generationConfig = {
             responseSchema: listSchema(),
             responseMimeType: "application/json",
           };
         }
+        console.log("afterTools: ", inputs);
         const afterTools = await new GeminiPrompt(inputs).invoke();
         if (!ok(afterTools)) return afterTools;
         if (makeList && !this.chat) {
