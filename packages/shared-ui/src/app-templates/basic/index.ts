@@ -1070,6 +1070,14 @@ export class Template extends LitElement implements AppTemplate {
 
         propSearch: for (const [, prop] of props) {
           if (!prop.format) {
+            // Any.
+            allowAddAssets = true;
+            textToSpeech = true;
+            textInput = true;
+            supportedActions.upload = true;
+            supportedActions.youtube = true;
+            supportedActions.drawable = true;
+            supportedActions.gdrive = true;
             continue;
           }
 
