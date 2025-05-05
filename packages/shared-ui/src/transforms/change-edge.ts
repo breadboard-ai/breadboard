@@ -16,6 +16,7 @@ import {
   Template,
 } from "@google-labs/breadboard";
 import { MarkInPortsInvalid } from "./mark-in-ports-invalid";
+import { transformConfiguration } from "./transform-all-nodes";
 
 export { ChangeEdge };
 
@@ -97,44 +98,82 @@ class ChangeEdge implements EditTransform {
       }
     }
 
-    // By convention, "at-wireable" nodes must have one LLM Content port.
-    const contentPort = findFirstContentPort(destination);
-    if (!contentPort) {
-      return {
-        success: false,
-        error: `Unable to add edge: node "${destination.title()}" does not have an LLM Content port`,
-      };
-    }
-
-    const title = source.title();
-    const path = source.descriptor.id;
-    const text = Template.part({ title, path, type: "in" });
-
-    let portValue = contentPort.value as LLMContent | undefined;
-    if (!portValue) {
-      portValue = { parts: [], role: "user" };
-    } else {
-      portValue = structuredClone(portValue);
-    }
-    const textPart = portValue.parts.find((part) => "text" in part);
-    if (!textPart) {
-      portValue.parts.push({ text });
-    } else {
-      textPart.text += ` ${text}`;
-    }
-
-    const configuration = {
-      [contentPort.name]: portValue,
-    } as NodeConfiguration;
-
-    const editingConfig = await context.apply(
-      [{ type: "changeconfiguration", id, graphId, configuration }],
-      `Adding "@" reference to port "${contentPort.name}" of node "${id}"`
+    // First, try to transform all port references in the configuration. This
+    // will result in changes when there are existing references and they are
+    // marked as invalid.
+    const updatedConfiguration = transformConfiguration(
+      destination.descriptor.id,
+      destination.configuration(),
+      (part) => {
+        const { type, path } = part;
+        if (type !== "in") return null;
+        if (path === source.descriptor.id) {
+          const updatedPart = { ...part };
+          delete updatedPart.invalid;
+          return updatedPart;
+        }
+        return null;
+      }
     );
-    if (!editingConfig.success) {
-      return editingConfig;
-    }
+    if (updatedConfiguration !== null) {
+      // Configuration was updated, let's apply it.
+      const editingConfig = await context.apply(
+        [
+          {
+            type: "changeconfiguration",
+            id,
+            graphId,
+            configuration: updatedConfiguration,
+          },
+        ],
+        `Updating "@" references of node "${id}"`
+      );
+      if (!editingConfig.success) {
+        return editingConfig;
+      }
+    } else {
+      // There were no changes in configuration, which indicates that there
+      // were no port references present in it. This means that we need to
+      // add a new reference.
 
+      // By convention, "at-wireable" nodes must have one LLM Content port.
+      const contentPort = findFirstContentPort(destination);
+      if (!contentPort) {
+        return {
+          success: false,
+          error: `Unable to add edge: node "${destination.title()}" does not have an LLM Content port`,
+        };
+      }
+
+      const title = source.title();
+      const path = source.descriptor.id;
+      const text = Template.part({ title, path, type: "in" });
+
+      let portValue = contentPort.value as LLMContent | undefined;
+      if (!portValue) {
+        portValue = { parts: [], role: "user" };
+      } else {
+        portValue = structuredClone(portValue);
+      }
+      const textPart = portValue.parts.find((part) => "text" in part);
+      if (!textPart) {
+        portValue.parts.push({ text });
+      } else {
+        textPart.text += ` ${text}`;
+      }
+
+      const configuration = {
+        [contentPort.name]: portValue,
+      } as NodeConfiguration;
+
+      const editingConfig = await context.apply(
+        [{ type: "changeconfiguration", id, graphId, configuration }],
+        `Adding "@" reference to port "${contentPort.name}" of node "${id}"`
+      );
+      if (!editingConfig.success) {
+        return editingConfig;
+      }
+    }
     // Create a an "@"-wire
     return context.apply(
       [
