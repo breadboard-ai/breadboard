@@ -236,8 +236,6 @@ class GoogleDriveBoardServer
     url: URL,
     descriptor: GraphDescriptor
   ): Promise<{ result: boolean; error?: string; url?: string }> {
-    // First create the file, then save.
-
     const parent = await this.ops.findOrCreateFolder();
     if (!ok(parent)) {
       return { result: false, error: parent.$error };
