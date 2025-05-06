@@ -63,7 +63,21 @@ export async function getBoardServers(
       }
 
       if (url.startsWith(GoogleDriveBoardServer.PROTOCOL) && tokenVendor) {
-        return GoogleDriveBoardServer.from(url, title, user, tokenVendor);
+        const googleDrivePublicApiKey = import.meta.env
+          .VITE_GOOGLE_DRIVE_PUBLIC_API_KEY;
+        if (!googleDrivePublicApiKey) {
+          console.warn(
+            "No value for VITE_GOOGLE_DRIVE_PUBLIC_API_KEY was configured." +
+              " We will not be able to read public files from Google Drive."
+          );
+        }
+        return GoogleDriveBoardServer.from(
+          url,
+          title,
+          user,
+          tokenVendor,
+          googleDrivePublicApiKey
+        );
       }
 
       console.warn(`Unsupported store URL: ${url}`);

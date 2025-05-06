@@ -469,7 +469,7 @@ export class GoogleDriveDebugPanel extends LitElement {
     }
     const { access_token } = auth.grant;
     const files = new Files(
-      access_token,
+      { kind: "bearer", token: access_token },
       new URL("/drive-proxy", document.location.href).href
     );
     const request = files.makeGetRequest(fileId);
