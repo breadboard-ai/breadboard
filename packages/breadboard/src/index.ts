@@ -95,7 +95,7 @@ export type * from "./editor/types.js";
 /**
  * The Loader API
  */
-export { createLoader } from "./loader/index.js";
+export { createLoader, baseURLFromContext } from "./loader/index.js";
 export type * from "./loader/types.js";
 
 export { formatGraphDescriptor } from "./formatter.js";

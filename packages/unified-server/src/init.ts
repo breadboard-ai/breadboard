@@ -7,10 +7,14 @@
 /// <reference types="vite/client" />
 
 import { bootstrap } from "@breadboard-ai/visual-editor/bootstrap";
-import { asRuntimeKit, err } from "@google-labs/breadboard";
+import { asRuntimeKit, baseURLFromContext, err } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
 import { isA2 } from "@breadboard-ai/a2";
-import { baseURLFromContext } from "../../breadboard/dist/src/loader/loader";
+import { JsonSerializable, LLMContent } from "@breadboard-ai/types";
+
+const endpoint_url =
+  import.meta.env.VITE_BACKEND_API_ENDPOINT ||
+  "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeStep";
 
 bootstrap({
   connectionServerUrl: new URL("/connection/", window.location.href),
@@ -23,4 +27,14 @@ bootstrap({
       return err(`This module is not allowed to run in this configuration`);
     }
   },
+  env: [
+    {
+      path: "/env/settings/backend",
+      data: toLLMContent({ endpoint_url }),
+    },
+  ],
 });
+
+function toLLMContent(json: JsonSerializable): LLMContent[] {
+  return [{ parts: [{ json }] }];
+}

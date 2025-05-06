@@ -10,6 +10,7 @@ import { MainArguments } from "./index.js";
 import { LanguagePack } from "@breadboard-ai/shared-ui/types/types.js";
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 import {
+  FileSystemEntry,
   Kit,
   MutableGraphStore,
   NodeHandlerContext,
@@ -23,8 +24,24 @@ export type BootstrapArguments = {
   requiresSignin?: boolean;
   defaultBoardService?: string;
   kits?: Kit[];
+  /**
+   * Allows preloading graphs into the graphstore. Useful when you want to
+   * supply graphs that aren't part of any board server.
+   * @param graphStore
+   * @returns
+   */
   graphStorePreloader?: (graphStore: MutableGraphStore) => void;
+  /**
+   * Allows filtering what modules can be invoked by the runtime.
+   * @param context
+   * @returns
+   */
   moduleInvocationFilter?: (context: NodeHandlerContext) => Outcome<void>;
+  /**
+   * Provides a way to specify additional entries as part of the `/env/` file
+   * system.
+   */
+  env?: FileSystemEntry[];
 };
 
 function getUrlFromBoardServiceFlag(
@@ -113,6 +130,7 @@ function bootstrap(args: BootstrapArguments = {}) {
       showExtendedSettings,
       graphStorePreloader: args?.graphStorePreloader,
       moduleInvocationFilter: args?.moduleInvocationFilter,
+      env: args?.env,
     };
 
     window.oncontextmenu = (evt) => evt.preventDefault();

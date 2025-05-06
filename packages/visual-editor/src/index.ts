@@ -45,6 +45,7 @@ import {
   addSandboxedRunModule,
   NodeHandlerContext,
   Outcome,
+  FileSystemEntry,
 } from "@google-labs/breadboard";
 import {
   createFileSystemBackend,
@@ -148,6 +149,11 @@ export type MainArguments = {
   kits?: Kit[];
   graphStorePreloader?: (graphStore: MutableGraphStore) => void;
   moduleInvocationFilter?: (context: NodeHandlerContext) => Outcome<void>;
+  /**
+   * Provides a way to specify additional entries as part of the `/env/` file
+   * system.
+   */
+  env?: FileSystemEntry[];
 };
 
 type BoardOverlowMenuConfiguration = {
@@ -494,7 +500,7 @@ export class Main extends LitElement {
       })
       .then(() => {
         this.#fileSystem = createFileSystem({
-          env: envFromSettings(this.#settings),
+          env: [...envFromSettings(this.#settings), ...(config.env || [])],
           local: createFileSystemBackend(createEphemeralBlobStore()),
         });
         return Runtime.create({

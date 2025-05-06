@@ -19,4 +19,4 @@ export const createLoader = (
   return new Loader(servers);
 };
 
-export { SENTINEL_BASE_URL } from "./loader.js";
+export { SENTINEL_BASE_URL, baseURLFromContext } from "./loader.js";
