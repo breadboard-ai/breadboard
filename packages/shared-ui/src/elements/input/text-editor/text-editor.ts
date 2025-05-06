@@ -121,6 +121,7 @@ export class TextEditor extends LitElement {
   #value = "";
   #renderableValue = "";
   #isUsingFastAccess = false;
+  #showFastAccessMenuOnKeyUp = false;
   #lastRange: Range | null = null;
   #editorRef: Ref<HTMLSpanElement> = createRef();
   #proxyRef: Ref<HTMLDivElement> = createRef();
@@ -787,6 +788,10 @@ export class TextEditor extends LitElement {
             return;
           }
 
+          if (evt.key === "@") {
+            this.#showFastAccessMenuOnKeyUp = true;
+          }
+
           if (/\W/.test(evt.key)) {
             this.#togglePlaceholder(false);
           }
@@ -798,7 +803,12 @@ export class TextEditor extends LitElement {
             return;
           }
 
-          if (this.projectState && this.supportsFastAccess && evt.key === "@") {
+          if (
+            this.projectState &&
+            this.supportsFastAccess &&
+            this.#showFastAccessMenuOnKeyUp
+          ) {
+            this.#showFastAccessMenuOnKeyUp = false;
             this.storeLastRange();
             const bounds = this.#lastRange?.getBoundingClientRect();
             this.#showFastAccess(bounds);
