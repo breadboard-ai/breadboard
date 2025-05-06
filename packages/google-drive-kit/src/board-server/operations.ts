@@ -46,7 +46,7 @@ class DriveOperations {
     const accessToken = await getAccessToken(vendor);
 
     try {
-      const api = new Files(accessToken!);
+      const api = new Files({ kind: "bearer", token: accessToken! });
       const response = await fetch(api.makeGetRequest(folderId));
 
       const folder: DriveFile = await response.json();
@@ -75,7 +75,7 @@ class DriveOperations {
     }
 
     try {
-      const api = new Files(accessToken);
+      const api = new Files({ kind: "bearer", token: accessToken });
       const fileRequest = await fetch(api.makeQueryRequest(query));
       const response: DriveFileQuery = await fileRequest.json();
 
@@ -111,7 +111,7 @@ class DriveOperations {
       `  or mimeType="${DEPRECATED_GRAPH_MIME_TYPE}")` +
       ` and sharedWithMe=true` +
       ` and trashed=false`;
-    const api = new Files(accessToken);
+    const api = new Files({ kind: "bearer", token: accessToken });
     const fileRequest = await fetch(api.makeQueryRequest(query));
     const response: DriveFileQuery = await fileRequest.json();
     return response.files.map((file) => file.id);
@@ -125,7 +125,7 @@ class DriveOperations {
     const name = getFileTitle(descriptor);
     const accessToken = await getAccessToken(this.vendor);
     try {
-      const api = new Files(accessToken!);
+      const api = new Files({ kind: "bearer", token: accessToken! });
 
       await fetch(
         api.makePatchRequest(
@@ -156,7 +156,7 @@ class DriveOperations {
     const accessToken = await getAccessToken(this.vendor);
 
     try {
-      const api = new Files(accessToken!);
+      const api = new Files({ kind: "bearer", token: accessToken! });
       const response = await fetch(
         api.makeMultipartCreateRequest(
           {
@@ -186,7 +186,7 @@ class DriveOperations {
       throw new Error("No folder ID or access token");
     }
     const query = `(mimeType contains 'image/')` + ` and trashed=false`;
-    const api = new Files(accessToken);
+    const api = new Files({ kind: "bearer", token: accessToken });
     const fileRequest = await fetch(api.makeQueryRequest(query));
     const response: DriveFileQuery = await fileRequest.json();
     return response.files.map((file) => file.id);
@@ -197,7 +197,7 @@ class DriveOperations {
     const accessToken = await getAccessToken(this.vendor);
 
     try {
-      const api = new Files(accessToken!);
+      const api = new Files({ kind: "bearer", token: accessToken! });
       const response = await fetch(api.makeLoadRequest(file));
 
       const graph: GraphDescriptor = await response.json();
@@ -217,7 +217,7 @@ class DriveOperations {
     if (!accessToken) {
       return err("No access token");
     }
-    const api = new Files(accessToken);
+    const api = new Files({ kind: "bearer", token: accessToken });
 
     const findRequest = api.makeQueryRequest(
       `name="${GOOGLE_DRIVE_FOLDER_NAME}"` +
@@ -259,7 +259,7 @@ class DriveOperations {
     const file = url.href.replace(`${this.url.href}/`, "");
     const accessToken = await getAccessToken(this.vendor);
     try {
-      const api = new Files(accessToken!);
+      const api = new Files({ kind: "bearer", token: accessToken! });
       await fetch(api.makeDeleteRequest(file));
       return;
     } catch (e) {
