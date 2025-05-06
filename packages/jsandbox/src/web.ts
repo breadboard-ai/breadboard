@@ -65,14 +65,57 @@ class WebSandbox implements Sandbox {
       return { $error: `Unable to find module "${name}"` };
     }
 
+    const inputString = JSON.stringify(inputs);
+    console.log(
+      ...niceSize(`Run module: "${name}": input size`, inputString.length)
+    );
+
     const result = await sandbox.run_module(
       invocationId,
       method,
       name,
       modules,
       code,
-      JSON.stringify(inputs)
+      inputString
     );
     return JSON.parse(result);
   }
+}
+
+function niceSize(prefix: string, n: number): string[] {
+  if (!Number.isInteger(n)) {
+    console.warn(
+      "niceSize: Input number should be an integer. Proceeding with the given value."
+    );
+  }
+
+  const k = 1024;
+  const units = ["Bytes", "KiB", "MiB", "GiB", "TiB"];
+  const styles = [
+    "color:darkgray",
+    "color:blue",
+    "color:red;font-weight:bold",
+    "color:red;font-weight:bold",
+    "color:red;font-weight:bold",
+  ];
+
+  if (n === 0) {
+    return ["%c0", "color: lightgray", "Bytes"];
+  }
+
+  let i = 0;
+  while (n >= k && i < units.length - 1) {
+    n /= k;
+    i++;
+  }
+
+  const formattedValue = parseFloat(n.toFixed(2));
+  let unitString = units[i];
+  const style = styles[i];
+
+  if (n === 1) {
+    unitString = "Byte";
+  }
+
+  return [`${prefix} %c${formattedValue}`, style, unitString];
 }

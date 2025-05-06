@@ -32,6 +32,8 @@ class SandboxedModule {
     telemetry?: Telemetry
   ) {
     const invocationId = crypto.randomUUID();
+    const label = `${method === "describe" ? "Describe" : "Invoke"} module "${name}": uuid="${invocationId}"`;
+    console.time?.(label);
     Capabilities.instance().install(invocationId, this.capabilities, telemetry);
     await telemetry?.startModule();
     const outputs = await this.sandbox.runModule(
@@ -43,6 +45,7 @@ class SandboxedModule {
     );
     await telemetry?.endModule();
     Capabilities.instance().uninstall(invocationId);
+    console.timeEnd?.(label);
     return outputs;
   }
 
