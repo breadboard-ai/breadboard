@@ -154,7 +154,7 @@ async function invoke({
     modelName = "gemini-2.5-flash-preview-04-17";
     renderMode = "HTML";
   } else if (renderMode == PRO_MODE) {
-    modelName = "gemini-2.5-pro-preview-03-25";
+    modelName = "gemini-2.5-pro-preview-05-06";
     renderMode = "Interactive";
   } else if (!renderMode) {
     renderMode = "Manual";
