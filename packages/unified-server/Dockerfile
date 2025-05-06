@@ -11,6 +11,7 @@ COPY --from=breadboard / .
 RUN npm clean-install
 
 ARG VITE_BOARD_SERVICE
+ARG VITE_GOOGLE_DRIVE_PUBLIC_API_KEY
 
 # Built-time vars
 ENV VITE_BOARD_SERVICE=${VITE_BOARD_SERVICE:-/board/}
