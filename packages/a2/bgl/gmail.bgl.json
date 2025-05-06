@@ -30,7 +30,12 @@
       }
     },
     "userModified": true,
-    "tags": ["connector", "connector-singleton", "experimental", "published"],
+    "tags": [
+      "connector",
+      "connector-singleton",
+      "experimental",
+      "published"
+    ],
     "comments": [
       {
         "id": "comment-c74afa15",
@@ -49,7 +54,7 @@
   },
   "modules": {
     "configurator": {
-      "code": "/**\n * @fileoverview Add a description for your module here.\n */\nimport { err, ok } from \"./a2/utils\";\nimport { createConfigurator } from \"./a2/connector-manager\";\nimport read from \"@read\";\nimport write from \"@write\";\nexport { invoke as default, describe };\nconst { invoke, describe } = createConfigurator({\n    title: \"GMail\",\n    initialize: async () => {\n        return { title: \"GMail\", configuration: {} };\n    },\n});\n",
+      "code": "/**\n * @fileoverview Add a description for your module here.\n */\nimport { createConfigurator } from \"./a2/connector-manager\";\nexport { invoke as default, describe };\nconst { invoke, describe } = createConfigurator({\n    title: \"GMail\",\n    initialize: async () => {\n        return { title: \"GMail\", configuration: {} };\n    },\n});\n",
       "metadata": {
         "title": "configurator",
         "source": {
@@ -61,7 +66,7 @@
       }
     },
     "get-emails": {
-      "code": "/**\n * @fileoverview Gets a list of emails\n */\nimport {} from \"@describe\";\nimport { err } from \"./a2/utils\";\nimport fetch from \"@fetch\";\nimport secrets from \"@secrets\";\nfunction maybeExtractError(e) {\n    try {\n        const parsed = JSON.parse(e);\n        return parsed.error.message;\n    }\n    catch (error) {\n        return e;\n    }\n}\nimport { ok } from \"./a2/utils\";\nexport { invoke as default, describe };\nasync function invoke() {\n    // Get an authentication token.\n    const key = \"connection:$sign-in\";\n    const token = (await secrets({ keys: [key] }))[key];\n    // Call the API.\n    const url = \"https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeStep\";\n    const fetchResult = await fetch({\n        url: url,\n        method: \"POST\",\n        headers: {\n            \"Content-Type\": \"application/json\",\n            Authorization: `Bearer ${token}`,\n        },\n        body: {\n            planStep: {\n                stepName: \"get_emails\",\n                modelApi: \"get_emails\",\n                output: \"emails\",\n                inputParameters: [],\n                isListOutput: false,\n            },\n            app_integration_token: token,\n        },\n    });\n    let $error = \"Unknown error\";\n    if (!ok(fetchResult)) {\n        const { status, $error: errObject } = fetchResult;\n        console.warn($error);\n        if (!status) {\n            // This is not an error response, presume fatal error.\n            return { $error };\n        }\n        $error = maybeExtractError(errObject);\n        return { $error };\n    }\n    const response = fetchResult.response;\n    const data = response.executionOutputs[\"get_emails\"].chunks.at(0)?.data;\n    if (!data) {\n        return err(`Invalid response`);\n    }\n    const emails = atob(data);\n    return { emails };\n}\nasync function describe() {\n    return {\n        title: \"Get emails\",\n        description: \"Gets a list of latest 10 unread emails\",\n        metadata: {\n            icon: \"email\",\n            tags: [\"tool\"],\n        },\n        inputSchema: {\n            type: \"object\",\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                emails: {\n                    type: \"string\",\n                    title: \"Unread emails\",\n                },\n            },\n        },\n    };\n}\n",
+      "code": "/**\n * @fileoverview Gets a list of emails\n */\nimport { err } from \"./a2/utils\";\nimport fetch from \"@fetch\";\nimport secrets from \"@secrets\";\nfunction maybeExtractError(e) {\n    try {\n        const parsed = JSON.parse(e);\n        return parsed.error.message;\n    }\n    catch (error) {\n        return e;\n    }\n}\nimport { ok } from \"./a2/utils\";\nexport { invoke as default, describe };\nasync function invoke() {\n    // Get an authentication token.\n    const key = \"connection:$sign-in\";\n    const token = (await secrets({ keys: [key] }))[key];\n    // Call the API.\n    const url = \"https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeStep\";\n    const fetchResult = await fetch({\n        url: url,\n        method: \"POST\",\n        headers: {\n            \"Content-Type\": \"application/json\",\n            Authorization: `Bearer ${token}`,\n        },\n        body: {\n            planStep: {\n                stepName: \"get_emails\",\n                modelApi: \"get_emails\",\n                output: \"emails\",\n                inputParameters: [],\n                isListOutput: false,\n            },\n            app_integration_token: token,\n        },\n    });\n    let $error = \"Unknown error\";\n    if (!ok(fetchResult)) {\n        const { status, $error: errObject } = fetchResult;\n        console.warn($error);\n        if (!status) {\n            // This is not an error response, presume fatal error.\n            return { $error };\n        }\n        $error = maybeExtractError(errObject);\n        return { $error };\n    }\n    const response = fetchResult.response;\n    const data = response.executionOutputs[\"get_emails\"].chunks.at(0)?.data;\n    if (!data) {\n        return err(`Invalid response`);\n    }\n    const emails = atob(data);\n    return { emails };\n}\nasync function describe() {\n    return {\n        title: \"Get emails\",\n        description: \"Gets a list of latest 10 unread emails\",\n        metadata: {\n            icon: \"email\",\n            tags: [\"tool\"],\n        },\n        inputSchema: {\n            type: \"object\",\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                emails: {\n                    type: \"string\",\n                    title: \"Unread emails\",\n                },\n            },\n        },\n    };\n}\n",
       "metadata": {
         "title": "get-emails",
         "source": {
@@ -78,5 +83,8 @@
       "url": "./a2.bgl.json"
     }
   },
-  "exports": ["#module:configurator", "#module:get-emails"]
+  "exports": [
+    "#module:configurator",
+    "#module:get-emails"
+  ]
 }
