@@ -17,6 +17,7 @@ import {
   type AppProperties,
   type DriveFile,
   type DriveFileQuery,
+  type GoogleApiAuthorization,
 } from "./api.js";
 
 export { DriveOperations, PROTOCOL };
@@ -35,12 +36,19 @@ export type GraphInfo = {
   tags: GraphTag[];
 };
 
+let alreadyWarnedAboutMissingPublicApiKey = false;
+
 class DriveOperations {
+  readonly #publicApiKey?: string;
+
   constructor(
     public readonly vendor: TokenVendor,
     public readonly username: string,
-    public readonly url: URL
-  ) {}
+    public readonly url: URL,
+    publicApiKey?: string
+  ) {
+    this.#publicApiKey = publicApiKey;
+  }
 
   static async readFolder(folderId: string, vendor: TokenVendor) {
     const accessToken = await getAccessToken(vendor);
@@ -193,23 +201,47 @@ class DriveOperations {
   }
 
   async readGraphFromDrive(url: URL): Promise<GraphDescriptor | null> {
-    const file = url.href.replace(`${this.url.href}/`, "");
-    const accessToken = await getAccessToken(this.vendor);
-
-    try {
-      const api = new Files({ kind: "bearer", token: accessToken! });
-      const response = await fetch(api.makeLoadRequest(file));
-
-      const graph: GraphDescriptor = await response.json();
-      if (!graph || "error" in graph) {
-        return null;
+    const fileId = url.href.replace(`${this.url.href}/`, "");
+    let response = await this.#readFileWithUserAuth(fileId);
+    if (response?.status === 404) {
+      response = await this.#readFileWithPublicAuth(fileId);
+    }
+    if (response?.status === 200) {
+      const graph = (await response.json()) as GraphDescriptor;
+      if (graph && !("error" in graph)) {
+        return graph;
       }
+    }
+    return null;
+  }
 
-      return graph;
-    } catch (err) {
-      console.warn(err);
+  async #readFileWithUserAuth(fileId: string): Promise<Response | null> {
+    const token = await getAccessToken(this.vendor);
+    if (!token) {
       return null;
     }
+    return this.#readFile(fileId, { kind: "bearer", token });
+  }
+
+  async #readFileWithPublicAuth(fileId: string): Promise<Response | null> {
+    if (!this.#publicApiKey) {
+      if (!alreadyWarnedAboutMissingPublicApiKey) {
+        console.warn(
+          "Could not read a potentially public Google Drive file" +
+            " because a Google Drive API key was not configured."
+        );
+        alreadyWarnedAboutMissingPublicApiKey = true;
+      }
+      return null;
+    }
+    return this.#readFile(fileId, { kind: "key", key: this.#publicApiKey });
+  }
+
+  async #readFile(
+    fileId: string,
+    authorization: GoogleApiAuthorization
+  ): Promise<Response> {
+    return fetch(new Files(authorization).makeLoadRequest(fileId));
   }
 
   async findOrCreateFolder(): Promise<Outcome<string>> {

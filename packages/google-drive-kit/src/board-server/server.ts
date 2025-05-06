@@ -55,7 +55,8 @@ class GoogleDriveBoardServer
     url: string,
     title: string,
     user: User,
-    vendor: TokenVendor
+    vendor: TokenVendor,
+    publicApiKey?: string
   ) {
     const connection = await GoogleDriveBoardServer.connect(
       new URL(url).hostname,
@@ -85,7 +86,13 @@ class GoogleDriveBoardServer
         },
       };
 
-      return new GoogleDriveBoardServer(title, configuration, user, vendor);
+      return new GoogleDriveBoardServer(
+        title,
+        configuration,
+        user,
+        vendor,
+        publicApiKey
+      );
     } catch (err) {
       console.warn(err);
       return null;
@@ -106,10 +113,16 @@ class GoogleDriveBoardServer
     public readonly name: string,
     public readonly configuration: BoardServerConfiguration,
     public readonly user: User,
-    public readonly vendor: TokenVendor
+    public readonly vendor: TokenVendor,
+    publicApiKey?: string
   ) {
     super();
-    this.ops = new DriveOperations(vendor, user.username, configuration.url);
+    this.ops = new DriveOperations(
+      vendor,
+      user.username,
+      configuration.url,
+      publicApiKey
+    );
 
     this.url = configuration.url;
     this.projects = this.refreshProjects();
