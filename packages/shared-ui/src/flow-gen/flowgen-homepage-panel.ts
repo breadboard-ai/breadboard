@@ -32,11 +32,11 @@ type State =
 const SAMPLE_INTENTS = [
   "Create a flow that takes a business name and description, searches information about the business, and generates a social media post with an eye-catching picture.",
   "Create a research agent agent that takes a product, performs research on the web, and produces a competitive analysis report about the product.",
-  "Create an app that takes a movie description, and generates 3 scene descriptions, along with a storyboard sketch for each scene.",
+  "Create an app that takes a movie plot description, and generates 3 scene descriptions, along with a compelling storyboard sketch for each scene.",
   "Create a workflow that takes a job description and a potential job candidate and generates a personalized recruitment email for the candidate. Do research about the candidate to personalize the email.",
 ];
 
-const SAMPLE_INTENTS_ROTATION_MS = 3000;
+const SAMPLE_INTENTS_ROTATION_MS = 7000;
 
 @customElement("bb-flowgen-homepage-panel")
 export class FlowgenHomepagePanel extends LitElement {
