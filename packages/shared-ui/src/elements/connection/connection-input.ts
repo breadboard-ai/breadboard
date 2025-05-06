@@ -95,7 +95,7 @@ export class ConnectionInput extends LitElement {
       grant.grant.client_id,
       grant.grant.expires_in
     );
-    return this.#renderSigninButton();
+    return html`<div class="signed-in">Signed in</div>`;
   }
 
   #renderSigninButton() {
