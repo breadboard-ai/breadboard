@@ -6,7 +6,11 @@ export { executeStep, executeTool };
 
 import fetch from "@fetch";
 import secrets from "@secrets";
+import read from "@read";
 import { ok, err } from "./utils";
+
+const DEFAULT_BACKEND_ENDPOINT =
+  "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeStep";
 
 type FetchErrorResponse = {
   $error: string;
@@ -109,6 +113,23 @@ async function executeTool<
   }
 }
 
+type BackendSettings = {
+  endpoint_url: string;
+};
+async function getBackendUrl() {
+  const reading = await read({ path: "/env/settings/backend" });
+  if (ok(reading)) {
+    const part = reading.data?.at(0)?.parts?.at(0);
+    if (part && "json" in part) {
+      const settings = part.json as BackendSettings;
+      if (settings && settings.endpoint_url) {
+        return settings.endpoint_url;
+      }
+    }
+  }
+  return DEFAULT_BACKEND_ENDPOINT;
+}
+
 async function executeStep(
   body: ExecuteStepRequest
 ): Promise<Outcome<ExecuteStepResponse>> {
@@ -116,8 +137,7 @@ async function executeStep(
   const key = "connection:$sign-in";
   const token = (await secrets({ keys: [key] }))[key];
   // Call the API.
-  const url =
-    "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeStep";
+  const url = await getBackendUrl();
   const fetchResult = await fetch({
     url: url,
     method: "POST",
