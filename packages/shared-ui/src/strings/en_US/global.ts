@@ -36,6 +36,9 @@ export default {
   COMMAND_EDIT_PROJECT_INFORMATION: {
     str: "Edit Details...",
   },
+  COMMAND_COPY_PROJECT: {
+    str: "Copy Flow",
+  },
   COMMAND_OPEN_MODULE: {
     str: "Open Module...",
   },

@@ -2649,6 +2649,13 @@ export class Main extends LitElement {
               icon: "edit",
               value: tabId,
             });
+
+            actions.push({
+              title: Strings.from("COMMAND_COPY_PROJECT"),
+              name: "remix",
+              icon: "remix",
+              value: tabId,
+            });
           }
 
           if (this.#runtime.board.canPreview(tabId)) {
@@ -2724,6 +2731,17 @@ export class Main extends LitElement {
               switch (actionEvt.action) {
                 case "edit-board-details": {
                   this.#showBoardEditOverlay(tab, x, y, null, null);
+                  break;
+                }
+
+                case "remix": {
+                  if (!this.tab?.graph) {
+                    return;
+                  }
+
+                  this.#attemptRemix(this.tab.graph, {
+                    role: "user",
+                  });
                   break;
                 }
 
@@ -3077,36 +3095,40 @@ export class Main extends LitElement {
                             ${selectedItem}
                           </button>`
                         : nothing}
-                      <button
-                        id="remix"
-                        @pointerover=${(evt: PointerEvent) => {
-                          this.dispatchEvent(
-                            new BreadboardUI.Events.ShowTooltipEvent(
-                              Strings.from("COMMAND_REMIX"),
-                              evt.clientX,
-                              evt.clientY
-                            )
-                          );
-                        }}
-                        @pointerout=${() => {
-                          this.dispatchEvent(
-                            new BreadboardUI.Events.HideTooltipEvent()
-                          );
-                        }}
-                        @click=${(evt: PointerEvent) => {
-                          if (!(evt.target instanceof HTMLButtonElement)) {
-                            return;
-                          }
+                      ${this.#runtime.board.canSave(this.tab.id)
+                        ? nothing
+                        : html`<button
+                            id="remix"
+                            @pointerover=${(evt: PointerEvent) => {
+                              this.dispatchEvent(
+                                new BreadboardUI.Events.ShowTooltipEvent(
+                                  Strings.from("COMMAND_REMIX"),
+                                  evt.clientX,
+                                  evt.clientY
+                                )
+                              );
+                            }}
+                            @pointerout=${() => {
+                              this.dispatchEvent(
+                                new BreadboardUI.Events.HideTooltipEvent()
+                              );
+                            }}
+                            @click=${(evt: PointerEvent) => {
+                              if (!(evt.target instanceof HTMLButtonElement)) {
+                                return;
+                              }
 
-                          if (!this.tab?.graph) {
-                            return;
-                          }
+                              if (!this.tab?.graph) {
+                                return;
+                              }
 
-                          this.#attemptRemix(this.tab.graph, { role: "user" });
-                        }}
-                      >
-                        Remix
-                      </button>
+                              this.#attemptRemix(this.tab.graph, {
+                                role: "user",
+                              });
+                            }}
+                          >
+                            Remix
+                          </button>`}
                       <button
                         id="toggle-overflow-menu"
                         @pointerover=${(evt: PointerEvent) => {
