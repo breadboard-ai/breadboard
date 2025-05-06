@@ -45,6 +45,7 @@ import {
   isWatchUri,
 } from "../../../utils/youtube.js";
 import { SIGN_IN_CONNECTION_ID } from "../../../utils/signin-adapter.js";
+import { Task } from "@lit/task";
 
 const PCM_AUDIO = "audio/l16;codec=pcm;rate=24000";
 const SANDBOX_RESTRICTIONS = "allow-scripts allow-forms";
@@ -76,6 +77,7 @@ export class LLMOutput extends LitElement {
   accessor tokenVendor!: TokenVendor;
 
   #partDataURLs = new Map<number, string>();
+  #partTask = new Map<number, Task>();
 
   static styles = css`
     @keyframes fadeIn {
@@ -374,6 +376,7 @@ export class LLMOutput extends LitElement {
     }
 
     this.#partDataURLs.clear();
+    this.#partTask.clear();
   }
 
   #renderableParts = 0;
@@ -406,6 +409,20 @@ export class LLMOutput extends LitElement {
     }
 
     this.dispatchEvent(new Event("outputsloaded"));
+  }
+
+  #createPDFLoadTask(url: string) {
+    const task = new Task(this, {
+      task: async ([url]) => {
+        const response = await fetch(url);
+        const data = await response.arrayBuffer();
+        return data;
+      },
+      args: () => [url],
+    });
+
+    task.autoRun = false;
+    return task;
   }
 
   render() {
@@ -607,21 +624,28 @@ export class LLMOutput extends LitElement {
                 );
               }
               if (part.inlineData.mimeType === "application/pdf") {
-                const pdfHandler = fetch(url)
-                  .then((r) => r.arrayBuffer())
-                  .then((pdfData) => {
-                    return cache(
-                      html`<bb-pdf-viewer
-                        @pdfinitialrender=${() => {
-                          this.#outputLoaded();
-                        }}
-                        .showControls=${this.showPDFControls}
-                        .data=${pdfData}
-                      ></bb-pdf-viewer>`
-                    );
-                  });
+                let partTask = this.#partTask.get(idx);
 
-                return cache(html`${until(pdfHandler)}`);
+                if (!partTask) {
+                  partTask = this.#createPDFLoadTask(url);
+                  this.#partTask.set(idx, partTask);
+                  partTask.run();
+                }
+
+                return partTask.render({
+                  initial: () => html`Waiting to load PDF...`,
+                  pending: () => html`Loading PDF`,
+                  complete: (pdfData) => {
+                    return html`<bb-pdf-viewer
+                      @pdfinitialrender=${() => {
+                        this.#outputLoaded();
+                      }}
+                      .showControls=${this.showPDFControls}
+                      .data=${pdfData}
+                    ></bb-pdf-viewer>`;
+                  },
+                  error: () => html`Unable to load PDF`,
+                });
               }
             });
             value = html`${until(tmpl)}`;
@@ -699,21 +723,28 @@ export class LLMOutput extends LitElement {
                 }
               }
               if (part.storedData.mimeType === "application/pdf") {
-                const pdfHandler = fetch(url)
-                  .then((r) => r.arrayBuffer())
-                  .then((pdfData) => {
-                    return cache(
-                      html`<bb-pdf-viewer
-                        @pdfinitialrender=${() => {
-                          this.#outputLoaded();
-                        }}
-                        .showControls=${this.showPDFControls}
-                        .data=${pdfData}
-                      ></bb-pdf-viewer>`
-                    );
-                  });
+                let partTask = this.#partTask.get(idx);
 
-                value = html`${until(pdfHandler)}`;
+                if (!partTask) {
+                  partTask = this.#createPDFLoadTask(url);
+                  this.#partTask.set(idx, partTask);
+                  partTask.run();
+                }
+
+                value = partTask.render({
+                  initial: () => html`Waiting to load PDF...`,
+                  pending: () => html`Loading PDF`,
+                  complete: (pdfData) => {
+                    return html`<bb-pdf-viewer
+                      @pdfinitialrender=${() => {
+                        this.#outputLoaded();
+                      }}
+                      .showControls=${this.showPDFControls}
+                      .data=${pdfData}
+                    ></bb-pdf-viewer>`;
+                  },
+                  error: () => html`Unable to load PDF`,
+                });
               }
             }
           } else if (isFileDataCapabilityPart(part)) {

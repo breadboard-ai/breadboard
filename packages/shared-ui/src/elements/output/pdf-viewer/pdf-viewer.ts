@@ -156,6 +156,16 @@ export class PDFViewer extends LitElement {
   disconnectedCallback(): void {
     super.disconnectedCallback();
     this.#resizeObserver.disconnect();
+
+    if (this.#pdfFile) {
+      this.#pdfFile.then((pdf) => {
+        if (!pdf) {
+          return;
+        }
+
+        return pdf.destroy().then(() => pdf.cleanup());
+      });
+    }
   }
 
   async #loadLib() {
