@@ -156,11 +156,8 @@ export class FlowGenerator {
               ` with ID ${JSON.stringify(constraint.stepId)}.`
           );
         }
-        return (
-          `IMPORTANT: You MUST edit the configuration ONLY for Step "${title}". ` +
-          ` You MUST NOT change the step name or output name in any way.` +
-          ` Do not change any other steps or metadata in the app.`
-        );
+        // Note: this string is a magic contract with the backend planner.
+        return `IMPORTANT: You MUST edit the configuration ONLY for Step "${title}".`;
       }
       default: {
         constraint.kind satisfies never;
