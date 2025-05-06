@@ -187,6 +187,15 @@ export type NodeMetadata = {
    * If true, the title/description have been modified by the user.
    */
   userModified?: boolean;
+  /**
+   * If true, indicates that this node is marked as a starting node.
+   * This indicator is informative: it does not mean that the run starts
+   * with this node. Instead, when this node is both:
+   *  a) standalone (no ins/outs)
+   *  b) first among others with this flag
+   * Then, it will be chosen as a starting node.
+   */
+  start?: boolean;
 };
 
 /**
