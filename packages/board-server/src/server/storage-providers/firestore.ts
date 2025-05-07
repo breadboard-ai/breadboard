@@ -101,7 +101,7 @@ export class FirestoreStorageProvider
       .get();
 
     docs.forEach((doc: DocumentSnapshot): void => {
-      const board = asStorageBoard(doc, userId, { requirePublished: true });
+      const board = asStorageBoard(doc, userId, { requirePublished: false });
       if (board) {
         boards.push(board);
       }
@@ -114,7 +114,7 @@ export class FirestoreStorageProvider
       .get();
 
     featured.forEach((doc: DocumentSnapshot): void => {
-      const board = asStorageBoard(doc, userId, { requirePublished: true });
+      const board = asStorageBoard(doc, userId, { requirePublished: false });
       if (board) {
         boards.push(board);
       }
