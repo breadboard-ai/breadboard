@@ -95,6 +95,7 @@ import {
   UngroupCommand,
 } from "./commands/commands";
 import {
+  SIGN_IN_CONNECTION_ID,
   SigninAdapter,
   signinAdapterContext,
 } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
@@ -917,6 +918,26 @@ export class Main extends LitElement {
 
   #handleSecretEvent(event: RunSecretEvent, runner?: HarnessRunner) {
     const { keys } = event.data;
+    const signInKey = `connection:${SIGN_IN_CONNECTION_ID}`;
+
+    // Check and see if we're being asked for a sign-in key
+    if (keys.at(0) === signInKey) {
+      // Yay, we can handle this ourselves.
+      const signInAdapter = new SigninAdapter(
+        this.tokenVendor,
+        this.environment,
+        this.settingsHelper
+      );
+      if (signInAdapter.state === "valid") {
+        runner?.run({ [signInKey]: signInAdapter.accessToken() });
+      } else {
+        signInAdapter.refresh().then((token) => {
+          runner?.run({ [signInKey]: token?.grant?.access_token });
+        });
+      }
+      return;
+    }
+
     if (this.#secretsHelper) {
       this.#secretsHelper.setKeys(keys);
       if (this.#secretsHelper.hasAllSecrets()) {

@@ -47,7 +47,7 @@ import { LLMContent, NodeValue, OutputValues } from "@breadboard-ai/types";
 import { isLLMContentArrayBehavior, isLLMContentBehavior } from "../../utils";
 import { extractError } from "../shared/utils/utils";
 import { AssetShelf } from "../../elements/elements";
-import { SigninState } from "../../utils/signin-adapter";
+import { SIGN_IN_CONNECTION_ID, SigninState } from "../../utils/signin-adapter";
 
 /** Included so the app can be standalone */
 import "../../elements/input/add-asset/add-asset-button.js";
@@ -1014,6 +1014,11 @@ export class Template extends LitElement implements AppTemplate {
             </p>
             ${map(secretEvent.keys, (key) => {
               if (key.startsWith("connection:")) {
+                if (key === `connection:${SIGN_IN_CONNECTION_ID}`) {
+                  // When the connection id is a sign in, we never bring up
+                  // the input dialog -- it is presumed to exist.
+                  return nothing;
+                }
                 return html`<bb-connection-input
                   id=${key}
                   .connectionId=${key.replace(/^connection:/, "")}
