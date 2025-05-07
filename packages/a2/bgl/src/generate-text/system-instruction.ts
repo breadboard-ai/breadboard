@@ -14,22 +14,40 @@ DO NOT start with "Okay", or "Alright" or any preambles. Just the output, please
 
 function createSystemInstruction(
   existing: LLMContent | undefined,
-  makeList: boolean
+  makeList: boolean,
+  chatEnabled: boolean
 ) {
-  if (existing) {
-    existing = defaultSystemInstruction();
+  let userSystemInstruction = existing;
+  if (!userSystemInstruction) {
+    userSystemInstruction = defaultSystemInstruction();
   }
-  const builtIn = llm`
 
-Today is ${new Date().toLocaleString("en-US", {
+  const dateStr = new Date().toLocaleString("en-US", {
     month: "long",
     day: "numeric",
     year: "numeric",
     hour: "numeric",
     minute: "2-digit",
-  })}
+  });
+
+  let systemInstructionContent: LLMContent;
+
+  if (!chatEnabled) {
+    const noChatAddendum = `
+You cannot chat with the user.
+You cannot ask the user questions.
+You must provide the complete response based on the information and tools you have.
+`;
+    systemInstructionContent = llm`Today is ${dateStr}
     
-${existing}`.asContent();
-  if (!makeList) return builtIn;
-  return listPrompt(builtIn);
+${userSystemInstruction}
+${noChatAddendum}`.asContent();
+  } else {
+    systemInstructionContent = llm`Today is ${dateStr}
+    
+${userSystemInstruction}`.asContent();
+  }
+
+  if (!makeList) return systemInstructionContent;
+  return listPrompt(systemInstructionContent);
 }
