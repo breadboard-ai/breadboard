@@ -135,8 +135,6 @@ class DriveOperations {
     const api = new Files({ kind: "key", key: apiKey });
     const fileRequest = await fetch(api.makeQueryRequest(query));
     const response = (await fileRequest.json()) as DriveFileQuery;
-    const startTime = performance.now();
-    let neededAnySlowReadsForTitle = false;
     const results = await Promise.all(
       response.files.map(async (file) => {
         const properties = readAppProperties(file);
@@ -146,34 +144,11 @@ class DriveOperations {
           // whether it is featured.
           tags.push("featured");
         }
-        let title = properties.title;
-        if (!title) {
-          console.warn(
-            `No title was found in the Google Drive file properties` +
-              ` of featured gallery item` +
-              ` ${JSON.stringify(file.name)} (${file.id}).` +
-              ` Performing an inefficient full read of the graph to find it.`
-          );
-          neededAnySlowReadsForTitle = true;
-          const response = await this.#readFileWithPublicAuth(file.id);
-          if (response) {
-            const graph = (await response.json()) as GraphDescriptor;
-            title = graph.title ?? file.name;
-          } else {
-            title = file.name;
-          }
-        }
+        const title =
+          properties.title || file.name.replace(/(\.bgl)?\.json$/, "");
         return { id: file.id, title, tags };
       })
     );
-    if (neededAnySlowReadsForTitle) {
-      const endTime = performance.now();
-      const seconds = Math.round((endTime - startTime) / 1000);
-      console.warn(
-        `Up to ${seconds} second(s) of startup time could be saved by` +
-          ` caching all featured gallery titles in Drive file properties.`
-      );
-    }
     return results;
   }
 
