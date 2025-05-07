@@ -94,6 +94,14 @@ class SigninAdapter {
     this.name = grant?.name;
   }
 
+  accessToken(): string | null {
+    if (this.state === "valid") {
+      const token = this.#tokenVendor?.getToken(SIGN_IN_CONNECTION_ID);
+      return token?.grant?.access_token || null;
+    }
+    return null;
+  }
+
   async cachedPicture(): Promise<string | undefined> {
     if (SigninAdapter.#cachedPicture === undefined && this.picture) {
       try {
