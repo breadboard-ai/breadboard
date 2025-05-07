@@ -74,6 +74,7 @@ import { icons } from "../../styles/icons.js";
 import {
   type GoogleDriveSharePanel,
   type GoogleDrivePicker,
+  EntityEditor,
 } from "../elements.js";
 import { consume } from "@lit/context";
 import {
@@ -222,22 +223,19 @@ export class UI extends LitElement {
   accessor showAssetOrganizer = false;
 
   @state()
-  accessor autoFocusEditor = false;
-
-  @state()
   accessor #showEditHistory = false;
 
   @consume({ context: signinAdapterContext })
   @property({ attribute: false })
   accessor signinAdapter: SigninAdapter | undefined = undefined;
 
-  #autoFocusEditorOnRender = false;
   #sideNavItem:
     | "activity"
     | "capabilities"
     | "edit-history"
     | "editor"
     | "app-view" = "editor";
+  #entityEditorRef: Ref<EntityEditor> = createRef();
   #moduleEditorRef: Ref<ModuleEditor> = createRef();
   #googleDriveSharePanelRef: Ref<GoogleDriveSharePanel> = createRef();
   #googleDriveAssetAccessPickerRef: Ref<GoogleDrivePicker> = createRef();
@@ -286,11 +284,6 @@ export class UI extends LitElement {
       }
     }
 
-    if (changedProperties.has("autoFocusEditor")) {
-      this.#autoFocusEditorOnRender = true;
-      this.autoFocusEditor = false;
-    }
-
     let newSelectionCount = 0;
     if (this.selectionState) {
       newSelectionCount = [...this.selectionState.selectionState.graphs].reduce(
@@ -323,7 +316,6 @@ export class UI extends LitElement {
       !this.#preventAutoSwitchToEditor
     ) {
       this.sideNavItem = "editor";
-      this.#autoFocusEditorOnRender = true;
     }
   }
 
@@ -556,7 +548,11 @@ export class UI extends LitElement {
           .showExperimentalComponents=${showExperimentalComponents}
           .topGraphResult=${this.topGraphResult}
           @bbautofocuseditor=${() => {
-            this.autoFocusEditor = true;
+            if (!this.#entityEditorRef.value) {
+              return;
+            }
+
+            this.#entityEditorRef.value.focus();
           }}
           @bbnodeconfigurationupdaterequest=${(
             evt: NodeConfigurationUpdateRequestEvent
@@ -691,10 +687,10 @@ export class UI extends LitElement {
         }
       )}`,
       html`<bb-entity-editor
+        ${ref(this.#entityEditorRef)}
         class=${classMap({
           active: this.sideNavItem === "editor",
         })}
-        .autoFocus=${this.#autoFocusEditorOnRender}
         .graph=${graph}
         .graphTopologyUpdateId=${this.graphTopologyUpdateId}
         .graphStore=${this.graphStore}
@@ -834,8 +830,6 @@ export class UI extends LitElement {
   }
 
   updated() {
-    this.#autoFocusEditorOnRender = false;
-
     // Inform bb-main which command set is in use.
     const selectedModules = this.selectionState?.selectionState.modules;
     const modules = selectedModules ? [...selectedModules] : [];

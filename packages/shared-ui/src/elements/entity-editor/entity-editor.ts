@@ -113,7 +113,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
   @property({ reflect: true, type: Boolean })
   accessor readOnly = false;
 
-  @property()
+  @property({ reflect: true, type: Boolean })
   accessor autoFocus = false;
 
   @state()
@@ -1096,7 +1096,8 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     port: PortLike,
     value: LLMContent | undefined,
     graphId: GraphIdentifier,
-    fastAccess: boolean
+    fastAccess: boolean,
+    isReferenced: boolean
   ) {
     const portValue = getLLMContentPortValue(value, port.schema);
     const textPart = portValue.parts.find((part) => isTextCapabilityPart(part));
@@ -1105,7 +1106,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     }
 
     return html`<bb-text-editor
-      ${ref(this.#editorRef)}
+      ${isReferenced ? ref(this.#editorRef) : nothing}
       .value=${textPart.text}
       .projectState=${this.projectState}
       .subGraphId=${graphId !== MAIN_BOARD_ID ? graphId : null}
@@ -1144,6 +1145,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
             classes.object = true;
             classes.stretch = !advanced;
+            const isReferenced = !advanced;
 
             value = [
               advanced
@@ -1153,7 +1155,8 @@ export class EntityEditor extends SignalWatcher(LitElement) {
                 port,
                 isLLMContent(port.value) ? port.value : undefined,
                 graphId,
-                !advanced
+                !advanced,
+                isReferenced
               ),
             ];
           } else {
@@ -1177,12 +1180,14 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           if (isLLMContentArrayBehavior(port.schema)) {
             classes.stretch = true;
             classes.object = true;
+            classes.array = true;
             value = this.#renderTextEditorPort(
               port,
               isLLMContentArray(port.value)
                 ? (port.value.at(-1) as LLMContent)
                 : undefined,
               graphId,
+              true,
               true
             );
           }
@@ -1509,11 +1514,6 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
       // Reset the node value so that we don't receive incorrect port data.
       this.values = undefined;
-    }
-
-    if (changedProperties.has("autoFocus")) {
-      this.autoFocus = false;
-      this.focus();
     }
   }
 

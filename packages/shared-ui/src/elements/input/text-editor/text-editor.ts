@@ -678,18 +678,19 @@ export class TextEditor extends LitElement {
       return;
     }
 
-    this.#editorRef.value.focus({ preventScroll: true });
-
     const selection = this.#getCurrentSelection();
     if (!selection || !this.#editorRef.value.lastChild) {
       return;
     }
 
     const range = new Range();
-    range.selectNode(this.#editorRef.value.lastChild);
+    range.selectNodeContents(this.#editorRef.value);
     range.collapse(false);
     selection.removeAllRanges();
     selection.addRange(range);
+
+    this.#editorRef.value.scrollTop = this.#editorRef.value.scrollHeight;
+    this.#editorRef.value.focus();
   }
 
   #showFastAccess(bounds: DOMRect | undefined) {
