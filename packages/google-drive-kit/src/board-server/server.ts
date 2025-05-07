@@ -56,7 +56,8 @@ class GoogleDriveBoardServer
     title: string,
     user: User,
     vendor: TokenVendor,
-    publicApiKey?: string
+    publicApiKey?: string,
+    featuredGalleryFolderId?: string
   ) {
     const connection = await GoogleDriveBoardServer.connect(
       new URL(url).hostname,
@@ -91,7 +92,8 @@ class GoogleDriveBoardServer
         configuration,
         user,
         vendor,
-        publicApiKey
+        publicApiKey,
+        featuredGalleryFolderId
       );
     } catch (err) {
       console.warn(err);
@@ -114,14 +116,16 @@ class GoogleDriveBoardServer
     public readonly configuration: BoardServerConfiguration,
     public readonly user: User,
     public readonly vendor: TokenVendor,
-    publicApiKey?: string
+    publicApiKey?: string,
+    featuredGalleryFolderId?: string
   ) {
     super();
     this.ops = new DriveOperations(
       vendor,
       user.username,
       configuration.url,
-      publicApiKey
+      publicApiKey,
+      featuredGalleryFolderId
     );
 
     this.url = configuration.url;
@@ -143,8 +147,11 @@ class GoogleDriveBoardServer
   }
 
   async refreshProjects(): Promise<BoardServerProject[]> {
-    const files = await this.ops.readGraphList();
-    if (!ok(files)) return [];
+    const userGraphs = await this.ops.readGraphList();
+    if (!ok(userGraphs)) return [];
+    const featuredGraphs = await this.ops.readFeaturedGalleryGraphList();
+    if (!ok(featuredGraphs)) return [];
+    const files = [...userGraphs, ...featuredGraphs];
     const canAccess = true;
     const access = new Map([
       [
