@@ -2,12 +2,12 @@
   "compilerOptions": {
     "rootDir": ".",
     "outDir": "./dist",
-    "target": "ES2020",
-    "module": "ESNext",
+    "target": "ES2022",
+    "module": "Preserve",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
     "experimentalDecorators": true,
-    "useDefineForClassFields": false,
+    "useDefineForClassFields": true,
 
     /* Bundler mode */
     "moduleResolution": "bundler",
