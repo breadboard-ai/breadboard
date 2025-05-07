@@ -180,6 +180,7 @@ class GenerateText {
         }
         const inputs: GeminiInputs = {
           body: { contents, systemInstruction, safetySettings },
+          model: sharedContext.model,
         };
         if (shouldAddTools) {
           // If we added function declarations (or saw a function call request) before, then we need to add them again so
