@@ -20,8 +20,9 @@ export class HomepageSearchButton extends LitElement {
       :host {
         display: inline-flex;
         align-items: center;
-        height: 40px;
+        height: 30px;
       }
+
       button {
         background: none;
         border: none;
@@ -33,13 +34,17 @@ export class HomepageSearchButton extends LitElement {
           margin-right: 4px;
         }
       }
+
       input {
         border: 1px solid currentColor;
         height: 100%;
         border-radius: 100px;
         padding: 10px 32px 10px 16px;
         width: 230px;
+        font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
+          var(--bb-font-family);
       }
+
       #search-icon {
         margin-left: -32px;
       }

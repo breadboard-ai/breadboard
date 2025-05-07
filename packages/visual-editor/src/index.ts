@@ -314,6 +314,9 @@ export class Main extends LitElement {
   @property()
   accessor tab: Runtime.Types.Tab | null = null;
 
+  @state()
+  accessor projectFilter: string | null = null;
+
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
   #tooltipRef: Ref<BreadboardUI.Elements.Tooltip> = createRef();
   #boardId = 0;
@@ -3198,6 +3201,22 @@ export class Main extends LitElement {
                   : nothing
               }
               ${
+                this.tab
+                  ? nothing
+                  : html`
+                      <bb-homepage-search-button
+                        .value=${this.projectFilter ?? ""}
+                        @input=${(
+                          evt: InputEvent & {
+                            target: BreadboardUI.Elements.HomepageSearchButton;
+                          }
+                        ) => {
+                          this.projectFilter = evt.target.value;
+                        }}
+                      ></bb-homepage-search-button>
+                    `
+              }
+              ${
                 signInAdapter.state === "valid" && signInAdapter.picture
                   ? html`<button
                       id="toggle-user-menu"
@@ -3973,6 +3992,7 @@ export class Main extends LitElement {
                 .boardServers=${this.#boardServers}
                 .boardServerNavState=${this.boardServerNavState}
                 .showAdditionalSources=${showAdditionalSources}
+                .filter=${this.projectFilter}
                 @bbboarddelete=${async (
                   evt: BreadboardUI.Events.BoardDeleteEvent
                 ) => {
