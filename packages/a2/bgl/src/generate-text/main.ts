@@ -125,6 +125,7 @@ class GenerateText {
     const inputs: GeminiInputs = {
       body: { contents, safetySettings },
       model: sharedContext.model,
+      systemInstruction: systemInstruction,
     };
     // Unless it's a very first turn, we always supply tools when chatting,
     // since we add the "Done" and "Keep Chatting" tools to figure out when
@@ -141,7 +142,6 @@ class GenerateText {
       if (shouldAddFakeResult) {
         this.addKeepChattingResult(contents);
       }
-      inputs.body.systemInstruction = systemInstruction;
     }
     // When we have tools, the first call will not try to make a list,
     // because JSON mode and tool-calling are incompatible.

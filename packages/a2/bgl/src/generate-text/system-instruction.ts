@@ -16,7 +16,7 @@ function createSystemInstruction(
   existing: LLMContent | undefined,
   makeList: boolean
 ) {
-  if (existing) {
+  if (!existing) {
     existing = defaultSystemInstruction();
   }
   const builtIn = llm`
