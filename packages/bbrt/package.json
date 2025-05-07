@@ -128,7 +128,7 @@
     "@lit/context": "^1.1.4",
     "@types/json-schema": "^7.0.15",
     "jsonriver": "^1.0.0",
-    "lit": "^3.2.1",
+    "lit": "^3.3.0",
     "micromark": "^4.0.2",
     "micromark-extension-gfm": "^3.0.0",
     "signal-polyfill": "^0.2.2",
