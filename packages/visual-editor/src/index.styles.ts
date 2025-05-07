@@ -373,6 +373,10 @@ export const styles = css`
         }
       }
     }
+
+    & bb-homepage-search-button {
+      margin-right: var(--bb-grid-size-8);
+    }
   }
 
   #header-bar[data-active="true"] h1::after {
