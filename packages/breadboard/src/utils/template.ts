@@ -108,8 +108,6 @@ class Template {
   #renderableValue = "";
 
   constructor(public readonly raw: string) {
-    raw = raw.trim();
-
     this.#parsed = splitToParts(raw);
 
     this.#renderableValue = raw;
@@ -169,6 +167,7 @@ class Template {
     }
     // Ensure that if the final item is a chiclet we add a space on.
     if (typeof last !== "string") {
+      console.log("Append space", typeof last);
       this.#renderableValue += String.fromCharCode(65279);
     }
   }
