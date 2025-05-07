@@ -20,8 +20,8 @@ import { classMap } from "lit/directives/class-map.js";
 import { toCSSMatrix } from "./utils/to-css-matrix";
 import { Box } from "./box";
 import {
+  AutoFocusEditorRequest,
   NodeBoundsUpdateRequestEvent,
-  NodeConfigurationRequestEvent,
   NodeSelectEvent,
   SelectionMoveEvent,
   SelectionTranslateEvent,
@@ -892,9 +892,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         style=${styleMap(styles)}
         ${ref(this.#containerRef)}
         @dblclick=${() => {
-          this.dispatchEvent(
-            new NodeConfigurationRequestEvent(this.nodeId, this.worldBounds)
-          );
+          this.dispatchEvent(new AutoFocusEditorRequest());
         }}
       >
         <header

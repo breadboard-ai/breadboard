@@ -323,6 +323,7 @@ export class UI extends LitElement {
       !this.#preventAutoSwitchToEditor
     ) {
       this.sideNavItem = "editor";
+      this.#autoFocusEditorOnRender = true;
     }
   }
 
@@ -554,6 +555,9 @@ export class UI extends LitElement {
           .readOnly=${this.readOnly}
           .showExperimentalComponents=${showExperimentalComponents}
           .topGraphResult=${this.topGraphResult}
+          @bbautofocuseditor=${() => {
+            this.autoFocusEditor = true;
+          }}
           @bbnodeconfigurationupdaterequest=${(
             evt: NodeConfigurationUpdateRequestEvent
           ) => {
@@ -562,7 +566,7 @@ export class UI extends LitElement {
             }
 
             this.sideNavItem = "editor";
-            this.autoFocusEditor = true;
+
             const newState = createEmptyWorkspaceSelectionState();
             const graphState = createEmptyGraphSelectionState();
             const graphId = evt.subGraphId ? evt.subGraphId : MAIN_BOARD_ID;
@@ -830,6 +834,8 @@ export class UI extends LitElement {
   }
 
   updated() {
+    this.#autoFocusEditorOnRender = false;
+
     // Inform bb-main which command set is in use.
     const selectedModules = this.selectionState?.selectionState.modules;
     const modules = selectedModules ? [...selectedModules] : [];
