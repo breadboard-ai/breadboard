@@ -70,7 +70,7 @@ export class TextEditor extends LitElement {
       #editor {
         outline: none;
         display: block;
-        white-space: pre-line;
+        white-space: break-spaces;
         height: var(--text-editor-height, auto);
         width: 100%;
         min-height: 100%;
