@@ -53,7 +53,7 @@
   },
   "modules": {
     "configurator": {
-      "code": "/**\n * @fileoverview Add a description for your module here.\n */\nimport { createConfigurator } from \"./a2/connector-manager\";\nexport { invoke as default, describe };\nconst CONNECTOR_TITLE = \"{{ title }}\";\nconst { invoke, describe } = createConfigurator({\n    title: CONNECTOR_TITLE,\n    initialize: async () => {\n        return { title: CONNECTOR_TITLE, configuration: {} };\n    },\n});\n",
+      "code": "/**\n * @fileoverview Add a description for your module here.\n */\nimport { err, ok } from \"./a2/utils\";\nimport { createConfigurator } from \"./a2/connector-manager\";\nimport read from \"@read\";\nimport write from \"@write\";\nexport { invoke as default, describe };\nconst CONNECTOR_TITLE = \"{{ title }}\";\nconst { invoke, describe } = createConfigurator({\n    title: CONNECTOR_TITLE,\n    initialize: async () => {\n        return { title: CONNECTOR_TITLE, configuration: {} };\n    },\n});\n",
       "metadata": {
         "title": "configurator",
         "source": {
