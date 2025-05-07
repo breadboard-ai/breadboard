@@ -40,14 +40,17 @@ let alreadyWarnedAboutMissingPublicApiKey = false;
 
 class DriveOperations {
   readonly #publicApiKey?: string;
+  readonly #featuredGalleryFolderId?: string;
 
   constructor(
     public readonly vendor: TokenVendor,
     public readonly username: string,
     public readonly url: URL,
-    publicApiKey?: string
+    publicApiKey?: string,
+    featuredGalleryFolderId?: string
   ) {
     this.#publicApiKey = publicApiKey;
+    this.#featuredGalleryFolderId = featuredGalleryFolderId;
   }
 
   static async readFolder(folderId: string, vendor: TokenVendor) {
@@ -94,11 +97,11 @@ class DriveOperations {
       }
 
       const result = response.files.map((file) => {
-        const { title, tags } = readAppProperties(file);
+        const properties = readAppProperties(file);
         return {
           id: file.id,
-          title,
-          tags,
+          title: properties.title ?? file.name,
+          tags: properties.tags,
         } satisfies GraphInfo;
       });
 
@@ -107,6 +110,71 @@ class DriveOperations {
       console.warn(e);
       return err((e as Error).message);
     }
+  }
+
+  async readFeaturedGalleryGraphList(): Promise<Outcome<GraphInfo[]>> {
+    const folderId = this.#featuredGalleryFolderId;
+    if (!folderId) {
+      return err(
+        "Could not read featured gallery from Google Drive:" +
+          " No folder id configured."
+      );
+    }
+    const apiKey = this.#publicApiKey;
+    if (!apiKey) {
+      return err(
+        "Could not read featured gallery from Google Drive:" +
+          " No public API key configured."
+      );
+    }
+    const query =
+      `"${folderId}" in parents` +
+      ` and (mimeType="${GRAPH_MIME_TYPE}"` +
+      `      or mimeType="${DEPRECATED_GRAPH_MIME_TYPE}")` +
+      ` and trashed=false`;
+    const api = new Files({ kind: "key", key: apiKey });
+    const fileRequest = await fetch(api.makeQueryRequest(query));
+    const response = (await fileRequest.json()) as DriveFileQuery;
+    const startTime = performance.now();
+    let neededAnySlowReadsForTitle = false;
+    const results = await Promise.all(
+      response.files.map(async (file) => {
+        const properties = readAppProperties(file);
+        const tags = properties.tags;
+        if (!tags.includes("featured")) {
+          // The fact that a graph is in the featured folder alone determines
+          // whether it is featured.
+          tags.push("featured");
+        }
+        let title = properties.title;
+        if (!title) {
+          console.warn(
+            `No title was found in the Google Drive file properties` +
+              ` of featured gallery item` +
+              ` ${JSON.stringify(file.name)} (${file.id}).` +
+              ` Performing an inefficient full read of the graph to find it.`
+          );
+          neededAnySlowReadsForTitle = true;
+          const response = await this.#readFileWithPublicAuth(file.id);
+          if (response) {
+            const graph = (await response.json()) as GraphDescriptor;
+            title = graph.title ?? file.name;
+          } else {
+            title = file.name;
+          }
+        }
+        return { id: file.id, title, tags };
+      })
+    );
+    if (neededAnySlowReadsForTitle) {
+      const endTime = performance.now();
+      const seconds = Math.round((endTime - startTime) / 1000);
+      console.warn(
+        `Up to ${seconds} second(s) of startup time could be saved by` +
+          ` caching all featured gallery titles in Drive file properties.`
+      );
+    }
+    return results;
   }
 
   async readSharedGraphList(): Promise<string[]> {
@@ -319,8 +387,12 @@ function createAppProperties(
   };
 }
 
-function readAppProperties(file: DriveFile) {
-  const { name, appProperties: { title, description = "", tags } = {} } = file;
+function readAppProperties(file: DriveFile): {
+  title: string;
+  description: string;
+  tags: GraphTag[];
+} {
+  const { appProperties: { title, description = "", tags } = {} } = file;
   let parsedTags = [];
   try {
     parsedTags = tags ? JSON.parse(tags) : [];
@@ -329,7 +401,7 @@ function readAppProperties(file: DriveFile) {
     // do nothing.
   }
   return {
-    title: title || name,
+    title: title ?? "",
     description,
     tags: parsedTags,
   };

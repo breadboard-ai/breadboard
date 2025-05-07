@@ -71,12 +71,22 @@ export async function getBoardServers(
               " We will not be able to read public files from Google Drive."
           );
         }
+        const googleDriveFeaturedGalleryFolderId = import.meta.env
+          .VITE_GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID;
+        if (!googleDrivePublicApiKey) {
+          console.warn(
+            "No value for VITE_GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID" +
+              " was configured. We will not be able to read the featured" +
+              " gallery from Google Drive."
+          );
+        }
         return GoogleDriveBoardServer.from(
           url,
           title,
           user,
           tokenVendor,
-          googleDrivePublicApiKey
+          googleDrivePublicApiKey,
+          googleDriveFeaturedGalleryFolderId
         );
       }
 
