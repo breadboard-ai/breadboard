@@ -1265,10 +1265,7 @@ export class Template extends LitElement implements AppTemplate {
         input?.focus();
       }}
       @keydown=${(evt: KeyboardEvent) => {
-        const isMac = navigator.platform.indexOf("Mac") === 0;
-        const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
-
-        if (!(evt.key === "Enter" && isCtrlCommand)) {
+        if (evt.key !== "Enter") {
           return;
         }
 
