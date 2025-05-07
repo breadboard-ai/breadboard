@@ -64,7 +64,7 @@ class Runtime {
       };
       contents = [...context, toLLMContent(item.task)];
     }
-    const executing = await new GeminiPrompt(
+    const geminiPrompt = new GeminiPrompt(
       {
         body: {
           contents,
@@ -80,13 +80,29 @@ class Runtime {
           return structuredResponse?.parseContent(content);
         },
       }
-    ).invoke();
+    );
+    const executing = await geminiPrompt.invoke();
     if (!ok(executing)) {
       errors.push(executing.$error);
       return;
     }
-    return structuredResponse
-      ? toLLMContent(structuredResponse.body, "model")
-      : executing.last;
+    // gross hack. TODO: Instead, teach GeminiPrompt to do compositional
+    // function calling.
+    if (geminiPrompt.calledTools) {
+      return grossHackTransformFunctionResponses(executing.last);
+    }
+    return toLLMContent(structuredResponse!.body, "model");
   }
+}
+
+function grossHackTransformFunctionResponses(responses: LLMContent) {
+  const parts = responses.parts.map<DataPart>((part) => {
+    if ("functionResponse" in part) {
+      return {
+        text: JSON.stringify(part.functionResponse.response),
+      } as TextCapabilityPart;
+    }
+    return part;
+  });
+  return { parts, role: responses.role || "user" };
 }
