@@ -54,7 +54,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
   accessor showComponents = true;
 
   @property()
-  accessor showParameters = true;
+  accessor showParameters = false;
 
   static styles = css`
     * {
