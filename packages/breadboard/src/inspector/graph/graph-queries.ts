@@ -113,6 +113,11 @@ class GraphQueries {
       .filter((node) => node.isEntry());
   }
 
+  isStart(id: NodeIdentifier): boolean {
+    if (this.#graphId) return false;
+    return id === this.#mutable.representation.entries.at(0);
+  }
+
   nodeById(id: NodeIdentifier) {
     if (this.#graph().virtual) {
       return new VirtualNode({ id });

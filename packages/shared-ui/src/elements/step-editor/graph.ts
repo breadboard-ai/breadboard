@@ -137,6 +137,8 @@ export class Graph extends Box {
       graphNode.updating = node.type().currentMetadata().updating ?? false;
       graphNode.nodeTitle = node.title();
 
+      graphNode.isStart = node.isStart();
+
       const lastUpdateTime = this.#lastUpdateTimes.get("nodes") ?? 0;
 
       node.describe().then((nodeDescription) => {
