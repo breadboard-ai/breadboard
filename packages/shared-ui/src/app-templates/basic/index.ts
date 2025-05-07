@@ -912,7 +912,6 @@ export class Template extends LitElement implements AppTemplate {
         }
       }
 
-      console.log("last output", topGraphResult);
       if (lastOutput !== null) {
         activityContents = html`<bb-multi-output
           .outputs=${lastOutput.value ?? null}
