@@ -108,6 +108,42 @@ export const DeleteCommand: KeyboardCommand = {
   },
 };
 
+let componentStatus = "Enabled";
+export const ToggleExperimentalComponentsCommand: KeyboardCommand = {
+  keys: ["Cmd+Shift+e", "Ctrl+Shift+e"],
+  alwaysNotify: true,
+  get messageComplete() {
+    return `Experimental Components ${componentStatus}`;
+  },
+
+  willHandle() {
+    return true;
+  },
+
+  async do({ settings }: KeyboardCommandDeps): Promise<void> {
+    if (!settings) {
+      return;
+    }
+
+    const setting = settings.getItem(
+      BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
+      "Show Experimental Components"
+    );
+
+    if (setting && typeof setting.value === "boolean") {
+      const newSetting = structuredClone(setting);
+      newSetting.value = !newSetting.value;
+      componentStatus = newSetting.value ? "Enabled" : "Disabled";
+
+      settings.setItem(
+        BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
+        "Show Experimental Components",
+        newSetting
+      );
+    }
+  },
+};
+
 export const SelectAllCommand: KeyboardCommand = {
   keys: ["Cmd+a", "Ctrl+a"],
 

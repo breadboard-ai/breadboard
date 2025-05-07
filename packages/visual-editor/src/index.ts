@@ -91,6 +91,7 @@ import {
   GroupCommand,
   PasteCommand,
   SelectAllCommand,
+  ToggleExperimentalComponentsCommand,
   UngroupCommand,
 } from "./commands/commands";
 import {
@@ -1032,6 +1033,10 @@ export class Main extends LitElement {
     [PasteCommand.keys, PasteCommand],
     [GroupCommand.keys, GroupCommand],
     [UngroupCommand.keys, UngroupCommand],
+    [
+      ToggleExperimentalComponentsCommand.keys,
+      ToggleExperimentalComponentsCommand,
+    ],
   ]);
 
   #handlingKey = false;
@@ -1077,6 +1082,7 @@ export class Main extends LitElement {
       tab: this.tab,
       originalEvent: evt,
       pointerLocation: this.#lastPointerPosition,
+      settings: this.#settings,
     } as const;
 
     for (const [keys, command] of this.#commands) {

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import { RuntimeInstance } from "../runtime/runtime";
 import { Tab, WorkspaceSelectionStateWithChangeId } from "../runtime/types";
 import type * as BreadboardUI from "@breadboard-ai/shared-ui";
@@ -14,6 +15,7 @@ export interface KeyboardCommandDeps {
   tab: Tab | null;
   originalEvent: KeyboardEvent;
   pointerLocation: { x: number; y: number };
+  settings: SettingsStore | null;
 }
 
 export interface KeyboardCommand {
