@@ -39,6 +39,7 @@ import { Node } from "./node.js";
 import { PortCache } from "./port-cache.js";
 import { NodeTypeDescriberManager } from "./describer-manager.js";
 import { UpdateEvent } from "./event.js";
+import { GraphRepresentation } from "../../traversal/representation.js";
 
 export { MutableGraphImpl };
 
@@ -56,6 +57,7 @@ class MutableGraphImpl implements MutableGraph {
   describe!: InspectableDescriberResultCache;
   kits!: InspectableKitCache;
   ports!: InspectablePortCache;
+  representation!: GraphRepresentation;
 
   constructor(graph: GraphDescriptor, store: MutableGraphStore) {
     this.store = store;
@@ -100,6 +102,7 @@ class MutableGraphImpl implements MutableGraph {
       this.describe.update(affectedNodes);
       this.store.dispatchEvent(new UpdateEvent(this.id, "", "", []));
     }
+    this.representation = new GraphRepresentation(graph);
     this.graph = graph;
   }
 
@@ -119,6 +122,7 @@ class MutableGraphImpl implements MutableGraph {
     if (isImperativeGraph(graph)) {
       graph = toDeclarativeGraph(graph);
     }
+    this.representation = new GraphRepresentation(graph);
     this.graph = graph;
     this.nodes = new NodeCache((descriptor, graphId) => {
       const graph = graphId ? this.graphs.get(graphId) : this;

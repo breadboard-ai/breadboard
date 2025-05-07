@@ -66,6 +66,12 @@ export class Node implements InspectableNode {
     return this.outgoing().length === 0;
   }
 
+  isStart(): boolean {
+    return new GraphQueries(this.#graph, this.#graphId).isStart(
+      this.descriptor.id
+    );
+  }
+
   type(): InspectableNodeType {
     const type = new GraphQueries(this.#graph, this.#graphId).typeForNode(
       this.descriptor.id

@@ -70,6 +70,10 @@ export class BubbledInspectableNode implements InspectableNode {
     return this.#actual.isExit();
   }
 
+  isStart(): boolean {
+    return this.#actual.isStart();
+  }
+
   type(): InspectableNodeType {
     return this.#actual.type();
   }

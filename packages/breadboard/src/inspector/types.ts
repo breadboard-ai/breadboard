@@ -61,6 +61,7 @@ import {
   TypedEventTarget,
   TypedEventTargetType,
 } from "../utils/typed-event-target.js";
+import { GraphRepresentation } from "../traversal/representation.js";
 
 export type GraphVersion = number;
 
@@ -99,6 +100,10 @@ export type InspectableNode = {
    * Return true if the node is an exit node (no outgoing edges)
    */
   isExit(): boolean;
+  /**
+   * Returns true if the node is the start node.
+   */
+  isStart(): boolean;
   /**
    * Returns the `InspectableNodeType` instance for the node.
    */
@@ -914,6 +919,7 @@ export type MutableGraph = {
   readonly describe: InspectableDescriberResultCache;
   readonly kits: InspectableKitCache;
   readonly ports: InspectablePortCache;
+  readonly representation: GraphRepresentation;
 
   update(
     graph: GraphDescriptor,

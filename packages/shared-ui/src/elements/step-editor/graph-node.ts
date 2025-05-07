@@ -83,6 +83,9 @@ export class GraphNode extends Box implements DragConnectorReceiver {
   @property()
   accessor nodeTitle = "";
 
+  @property()
+  accessor isStart = false;
+
   @property({ reflect: true })
   accessor icon: string | null = null;
 
