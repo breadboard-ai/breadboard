@@ -837,6 +837,7 @@ export class Template extends LitElement implements AppTemplate {
       // Render the output.
       if (lastOutput !== null) {
         activityContents = html`<bb-multi-output
+          .showAsStatus=${true}
           .outputs=${lastOutput.value ?? null}
         ></bb-multi-output>`;
       }
@@ -911,6 +912,7 @@ export class Template extends LitElement implements AppTemplate {
         }
       }
 
+      console.log("last output", topGraphResult);
       if (lastOutput !== null) {
         activityContents = html`<bb-multi-output
           .outputs=${lastOutput.value ?? null}

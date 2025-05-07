@@ -167,7 +167,6 @@ class Template {
     }
     // Ensure that if the final item is a chiclet we add a space on.
     if (typeof last !== "string") {
-      console.log("Append space", typeof last);
       this.#renderableValue += String.fromCharCode(65279);
     }
   }

@@ -102,6 +102,25 @@ export class LLMOutput extends LitElement {
       border-radius: var(--output-border-radius, var(--bb-grid-size));
       margin-bottom: var(--bb-grid-size-2);
       background: var(--output-background-color, transparent);
+
+      --md-h1-font: 500 var(--bb-title-large) /
+        var(--bb-title-line-height-large) var(--bb-font-family);
+      --md-h1-margin: var(--bb-grid-size-6) 0 var(--bb-grid-size-2) 0;
+
+      --md-h2-font: 500 var(--bb-title-medium) /
+        var(--bb-title-line-height-medium) var(--bb-font-family);
+      --md-h2-margin: var(--bb-grid-size-4) 0 var(--bb-grid-size-2) 0;
+
+      --md-h-font: 500 var(--bb-title-small) / var(--bb-title-line-height-small)
+        var(--bb-font-family);
+      --md-h-margin: var(--bb-grid-size-3) 0 var(--bb-grid-size-2) 0;
+
+      --md-p-font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
+        var(--bb-font-family);
+      --md-p-margin: 0 0 var(--bb-grid-size-2) 0;
+      --md-p-text-align: left;
+      --md-color: var(--bb-neutral-900);
+      --md-a-color: var(--primary-color, var(--bb-ui-700));
     }
 
     :host([clamped]) {
@@ -144,72 +163,141 @@ export class LLMOutput extends LitElement {
       padding: var(--output-padding-y, 0) var(--output-padding-x, 0);
       overflow-y: auto;
       max-height: var(--bb-llm-output-content-max-height, unset);
-    }
+      &:last-of-type {
+        margin-bottom: 0;
+      }
 
-    .content:last-of-type {
-      margin-bottom: 0;
-    }
+      & .value {
+        display: flex;
+        flex-direction: column;
+        position: relative;
 
-    .value {
-      display: flex;
-      flex-direction: column;
-      position: relative;
+        margin: var(--output-value-margin-y, 0) var(--output-value-margin-x, 0);
+        font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
+          var(--bb-font-family);
+        color: var(--bb-neutral-900);
 
-      margin: var(--output-value-margin-y, 0) var(--output-value-margin-x, 0);
-      font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
-        var(--bb-font-family);
-      color: var(--bb-neutral-900);
-
-      padding: var(--output-value-padding-y, 0) var(--output-value-padding-x, 0);
-
-      white-space: normal;
-      border-radius: initial;
-      user-select: text;
-
-      &:has(> img),
-      &:has(> .copy-image-to-clipboard),
-      &:has(> video),
-      &:has(> audio) {
-        justify-content: center;
-        align-items: center;
         padding: var(--output-value-padding-y, 0)
           var(--output-value-padding-x, 0);
+
+        white-space: normal;
+        border-radius: initial;
+        user-select: text;
+
+        .no-data {
+          font: normal var(--bb-body-small) / var(--bb-body-line-height-small)
+            var(--bb-font-family-mono);
+        }
+
+        &:has(> img),
+        &:has(> .copy-image-to-clipboard),
+        &:has(> video),
+        &:has(> audio) {
+          justify-content: center;
+          align-items: center;
+          padding: var(--output-value-padding-y, 0)
+            var(--output-value-padding-x, 0);
+        }
+
+        &:has(> .html-view) {
+          padding: 0;
+          margin: 0;
+        }
+
+        & * {
+          margin: 0;
+        }
+
+        & img,
+        & video,
+        & audio {
+          width: 100%;
+          max-width: 360px;
+        }
+
+        & img,
+        & video {
+          border-radius: var(--output-border-radius);
+        }
+
+        & pre {
+          font: normal var(--bb-body-small) / var(--bb-body-line-height-small)
+            var(--bb-font-family);
+        }
+
+        & iframe {
+          aspect-ratio: 16/9;
+          margin: 0;
+        }
+
+        & .empty-text-part {
+          color: var(--bb-neutral-900);
+          margin: 0;
+          padding: 0;
+          border-radius: var(--bb-grid-size-16);
+          font: normal italic var(--bb-body-small) /
+            var(--bb-body-line-height-small) var(--bb-font-family);
+        }
       }
 
-      &:has(> .html-view) {
-        padding: 0;
-        margin: 0;
-      }
-
-      & pre {
-        font: normal var(--bb-body-small) / var(--bb-body-line-height-small)
-          var(--bb-font-family);
-      }
-
-      & iframe {
-        aspect-ratio: 16/9;
-        margin: 0;
-      }
-
-      & .empty-text-part {
+      & .plain-text {
+        white-space: pre;
+        font: 500 var(--bb-body-small) / var(--bb-body-line-height-small)
+          var(--bb-font-family-mono);
         color: var(--bb-neutral-900);
-        margin: 0;
-        padding: 0;
-        border-radius: var(--bb-grid-size-16);
-        font: normal italic var(--bb-body-small) /
-          var(--bb-body-line-height-small) var(--bb-font-family);
+      }
+
+      & .markdown {
+        line-height: 1.5;
+        overflow-x: auto;
+        color: var(--md-color);
+
+        & a {
+          color: var(--md-a-color);
+        }
+
+        h1 {
+          font: var(--md-h1-font);
+          margin: var(--md-h1-margin);
+        }
+
+        & h2 {
+          font: var(--md-h2-font);
+          margin: var(--md-h2-margin);
+        }
+
+        & h3,
+        & h4,
+        & h5 {
+          font: var(--md-h-font);
+          margin: var(--md-h-margin);
+        }
+
+        & h1:first-of-type,
+        & h2:first-of-type,
+        & h3:first-of-type,
+        & h4:first-of-type,
+        & h5:first-of-type {
+          margin-top: 0;
+        }
+
+        & p {
+          font: var(--md-p-font);
+          margin: var(--md-p-margin);
+          text-align: var(--md-p-text-align);
+          white-space: pre-line;
+
+          & strong:only-child {
+            margin: var(--bb-grid-size-2) 0 0 0;
+          }
+
+          &:last-of-type {
+            margin-bottom: 0;
+          }
+        }
       }
     }
 
-    .value img,
-    .value video,
-    .value audio {
-      width: 100%;
-      max-width: 360px;
-    }
-
-    .value img,
-    .value video,
     iframe.html-view {
       border-radius: var(--output-border-radius);
     }
@@ -219,79 +307,6 @@ export class LLMOutput extends LitElement {
       width: 100%;
       overflow-x: auto;
       height: 600px;
-    }
-
-    .value .plain-text {
-      white-space: pre;
-      font: 500 var(--bb-body-small) / var(--bb-body-line-height-small)
-        var(--bb-font-family-mono);
-      color: var(--bb-neutral-900);
-    }
-
-    .value.markdown {
-      line-height: 1.5;
-      overflow-x: auto;
-      color: var(--bb-neutral-900);
-
-      & a {
-        color: var(--primary-color, var(--bb-ui-700));
-      }
-    }
-
-    .value * {
-      margin: 0;
-    }
-
-    .value h1 {
-      font: 500 var(--bb-title-large) / var(--bb-title-line-height-large)
-        var(--bb-font-family);
-
-      margin: var(--bb-grid-size-6) 0 var(--bb-grid-size-2) 0;
-    }
-
-    .value h2 {
-      font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
-        var(--bb-font-family);
-
-      margin: var(--bb-grid-size-4) 0 var(--bb-grid-size-2) 0;
-    }
-
-    .value h3,
-    .value h4,
-    .value h5 {
-      font: 500 var(--bb-title-small) / var(--bb-title-line-height-small)
-        var(--bb-font-family);
-
-      margin: var(--bb-grid-size-3) 0 var(--bb-grid-size-2) 0;
-    }
-
-    .value p {
-      font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
-        var(--bb-font-family);
-
-      margin: 0 0 var(--bb-grid-size-2) 0;
-      white-space: pre-line;
-
-      & strong:only-child {
-        margin: var(--bb-grid-size-2) 0 0 0;
-      }
-    }
-
-    .value h1:first-of-type,
-    .value h2:first-of-type,
-    .value h3:first-of-type,
-    .value h4:first-of-type,
-    .value h5:first-of-type {
-      margin-top: 0;
-    }
-
-    .value p:last-of-type {
-      margin-bottom: 0;
-    }
-
-    .value.no-data {
-      font: normal var(--bb-body-small) / var(--bb-body-line-height-small)
-        var(--bb-font-family-mono);
     }
 
     :host([lite]) .value {

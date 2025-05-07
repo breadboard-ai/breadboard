@@ -28,6 +28,9 @@ export class MultiOutput extends LitElement {
   @property()
   accessor message = "No outputs provided";
 
+  @property({ reflect: true, type: Boolean })
+  accessor showAsStatus = false;
+
   static styles = css`
     :host {
       display: block;
@@ -35,6 +38,21 @@ export class MultiOutput extends LitElement {
       font: 400 var(--font-style, normal) var(--bb-body-small) /
         var(--bb-body-line-height-small)
         var(--font-family, var(--bb-font-family));
+    }
+
+    :host([showAsStatus]) {
+      & bb-llm-output {
+        --output-value-padding-y: 0;
+        --output-value-padding-x: 0;
+        --output-border-radius: 0;
+        --output-border: transparent;
+        --output-background-color: transparent;
+        --output-lite-border: transparent;
+        --output-lite-background-color: transparent;
+        --md-p-font: 400 var(--bb-title-x-large) /
+          var(--bb-title-line-height-xx-large) var(--bb-font-family);
+        --md-color: var(--primary-color, var(--bb-neutral-900));
+      }
     }
 
     .output {
