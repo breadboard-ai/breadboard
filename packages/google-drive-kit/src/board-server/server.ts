@@ -341,8 +341,11 @@ class GoogleDriveBoardServer
     throw new Error("Method not implemented.");
   }
 
-  async canProxy(_url: URL): Promise<string | false> {
-    return false;
+  async canProxy(url: URL): Promise<string | false> {
+    if (!this.canProvide(url)) {
+      return false;
+    }
+    return new URL('/board/proxy', location.origin).href
   }
 
   watch(_callback: ChangeNotificationCallback) {}
