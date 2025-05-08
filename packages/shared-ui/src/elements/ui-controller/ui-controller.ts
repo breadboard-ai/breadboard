@@ -83,6 +83,7 @@ import {
 } from "../../utils/signin-adapter.js";
 import { findGoogleDriveAssetsInGraph } from "../google-drive/find-google-drive-assets-in-graph.js";
 import { loadDriveApi } from "../google-drive/google-apis.js";
+import { SharePanel } from "../share-panel/share-panel.js";
 
 const SIDE_ITEM_KEY = "bb-ui-controller-side-nav-item";
 
@@ -237,7 +238,7 @@ export class UI extends LitElement {
     | "app-view" = "editor";
   #entityEditorRef: Ref<EntityEditor> = createRef();
   #moduleEditorRef: Ref<ModuleEditor> = createRef();
-  #googleDriveSharePanelRef: Ref<GoogleDriveSharePanel> = createRef();
+  #sharePanelRef: Ref<SharePanel> = createRef();
   #googleDriveAssetAccessPickerRef: Ref<GoogleDrivePicker> = createRef();
 
   static styles = [icons, uiControllerStyles];
@@ -815,11 +816,8 @@ export class UI extends LitElement {
           </section>`
         : html`<section id="content" class="welcome">${graphEditor}</section>`,
       html`
-        <bb-google-drive-share-panel
-          .graph=${this.graph}
-          ${ref(this.#googleDriveSharePanelRef)}
-        >
-        </bb-google-drive-share-panel>
+        <bb-share-panel .graph=${this.graph} ${ref(this.#sharePanelRef)}>
+        </bb-share-panel>
         <bb-google-drive-picker
           ${ref(this.#googleDriveAssetAccessPickerRef)},
           mode="pick-shared-assets"
@@ -886,7 +884,7 @@ export class UI extends LitElement {
   }
 
   openSharePanel() {
-    this.#googleDriveSharePanelRef?.value?.open();
+    this.#sharePanelRef?.value?.open();
   }
 
   async #checkGoogleDriveAssetsAreReadable() {

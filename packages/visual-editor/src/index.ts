@@ -106,6 +106,7 @@ import { MAIN_BOARD_ID } from "@breadboard-ai/shared-ui/constants/constants.js";
 import { createA2Server } from "@breadboard-ai/a2";
 import { envFromSettings } from "./utils/env-from-settings";
 import { getGoogleDriveBoardService } from "@breadboard-ai/board-server-management";
+import { type GoogleDrivePermission } from "@breadboard-ai/shared-ui/contexts/environment.js";
 
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 
@@ -185,7 +186,19 @@ const ENVIRONMENT: BreadboardUI.Contexts.Environment = {
       BreadboardUI.Elements.googleDriveQueryInputPlugin,
     ],
   },
+  googleDrive: {
+    publishPermissions: JSON.parse(
+      import.meta.env.VITE_GOOGLE_DRIVE_PUBLISH_PERMISSIONS || `[]`
+    ) as GoogleDrivePermission[],
+  },
 };
+
+if (ENVIRONMENT.googleDrive.publishPermissions.length === 0) {
+  console.warn(
+    "No googleDrive.publishPermissions were configured." +
+      " Publishing with Google Drive will not be supported."
+  );
+}
 
 const BOARD_AUTO_SAVE_TIMEOUT = 1_500;
 

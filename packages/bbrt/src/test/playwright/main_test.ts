@@ -13,6 +13,7 @@ describe("bbrt-main", () => {
       connectionRedirectUrl: "",
       connectionServerUrl: "",
       plugins: { input: [] },
+      googleDrive: { publishPermissions: [] },
     });
     expect(c).instanceOf(HTMLElement);
   });

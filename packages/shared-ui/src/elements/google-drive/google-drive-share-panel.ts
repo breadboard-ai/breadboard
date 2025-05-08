@@ -105,6 +105,7 @@ export class GoogleDriveSharePanel extends LitElement {
           this.#status = "closed";
           globalShareClientLocked = false;
           observer.disconnect();
+          this.dispatchEvent(new Event("close"));
         }
       }
     });

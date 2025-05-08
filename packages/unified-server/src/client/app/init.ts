@@ -117,6 +117,9 @@ async function createEnvironment(
     plugins: {
       input: [],
     },
+    googleDrive: {
+      publishPermissions: [],
+    },
   };
 }
 

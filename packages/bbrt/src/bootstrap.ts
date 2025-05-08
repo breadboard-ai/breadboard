@@ -15,5 +15,8 @@ document.body.appendChild(
     plugins: {
       input: [],
     },
+    googleDrive: {
+      publishPermissions: [],
+    },
   })
 );
