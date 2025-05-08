@@ -15,7 +15,7 @@ import {
   isImperativeGraph,
   toDeclarativeGraph,
 } from "../../run/run-imperative-graph.js";
-import { DescribeResultCache } from "../run/describe-cache.js";
+import { DescribeResultCache } from "./describe-cache.js";
 import {
   InspectableDescriberResultCache,
   InspectableEdgeCache,
