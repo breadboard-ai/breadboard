@@ -35,6 +35,7 @@ import {
   GraphStoreArgs,
   GraphStoreEntry,
   GraphStoreEventTarget,
+  InspectableDescriberResultTypeCache,
   InspectableGraph,
   InspectableGraphOptions,
   MainGraphIdentifier,
@@ -45,8 +46,15 @@ import {
 } from "./types.js";
 import { filterEmptyValues } from "./utils.js";
 import { FileSystem, FileSystemEntry } from "../data/types.js";
+import { DescribeResultTypeCache } from "./graph/describe-type-cache.js";
+import { NodeTypeDescriberManager } from "./graph/describer-manager.js";
 
-export { contextFromMutableGraph, GraphStore, makeTerribleOptions };
+export {
+  contextFromMutableGraph,
+  contextFromMutableGraphStore,
+  GraphStore,
+  makeTerribleOptions,
+};
 
 function contextFromMutableGraph(mutable: MutableGraph): NodeHandlerContext {
   const store = mutable.store;
@@ -56,6 +64,17 @@ function contextFromMutableGraph(mutable: MutableGraph): NodeHandlerContext {
     sandbox: store.sandbox,
     graphStore: store,
     outerGraph: mutable.graph,
+  };
+}
+
+function contextFromMutableGraphStore(
+  store: MutableGraphStore
+): NodeHandlerContext {
+  return {
+    kits: [...store.kits],
+    loader: store.loader,
+    sandbox: store.sandbox,
+    graphStore: store,
   };
 }
 
@@ -116,12 +135,18 @@ class GraphStore
     new Map();
   #dependencies: Map<MainGraphIdentifier, Set<MainGraphIdentifier>> = new Map();
 
+  public readonly types: InspectableDescriberResultTypeCache;
+
   constructor(args: GraphStoreArgs) {
     super();
     this.kits = args.kits;
     this.sandbox = args.sandbox;
     this.loader = args.loader;
     this.fileSystem = args.fileSystem;
+    this.types = new DescribeResultTypeCache(
+      new NodeTypeDescriberManager(this)
+    );
+
     this.#legacyKits = this.#populateLegacyKits(args.kits);
   }
 
@@ -543,7 +568,7 @@ function entryFromExport(
 ): (NodeHandlerMetadata & { updating: boolean }) | null {
   const graph = mutable.graph;
   const url = `${graph.url}${id}`;
-  const { current, updating } = mutable.describe.getByType(url);
+  const { current, updating } = mutable.store.types.get(url);
   const {
     title,
     description,

@@ -5,6 +5,7 @@
  */
 
 import {
+  GraphDescriptor,
   GraphIdentifier,
   InputValues,
   NodeIdentifier,
@@ -12,8 +13,10 @@ import {
 } from "@breadboard-ai/types";
 import {
   DescribeResultCacheArgs,
+  DescribeResultTypeCacheArgs,
   InspectableEdge,
   MutableGraph,
+  MutableGraphStore,
   NodeTypeDescriberOptions,
 } from "../types.js";
 import {
@@ -31,14 +34,19 @@ import {
 import { createLoader } from "../../loader/index.js";
 import { getHandler } from "../../handler.js";
 import { GraphDescriptorHandle } from "./graph-descriptor-handle.js";
-import { contextFromMutableGraph } from "../graph-store.js";
+import {
+  contextFromMutableGraph,
+  contextFromMutableGraphStore,
+} from "../graph-store.js";
 import { SchemaDiffer } from "../../utils/schema-differ.js";
 import { UpdateEvent } from "./event.js";
 import { invokeMainDescriber } from "../../sandbox/invoke-describer.js";
 import { assetsFromGraphDescriptor } from "../../data/index.js";
 import { envFromGraphDescriptor } from "../../data/file-system/assets.js";
 
-export { NodeTypeDescriberManager };
+export { NodeDescriberManager, NodeTypeDescriberManager };
+
+const PLACEHOLDER_ID = crypto.randomUUID();
 
 function emptyResult(): NodeDescriberResult {
   return {
@@ -47,22 +55,120 @@ function emptyResult(): NodeDescriberResult {
   };
 }
 
-class NodeTypeDescriberManager implements DescribeResultCacheArgs {
-  public constructor(public readonly mutable: MutableGraph) {}
+class NodeTypeDescriberManager implements DescribeResultTypeCacheArgs {
+  constructor(public readonly store: MutableGraphStore) {}
 
-  initialType(): NodeDescriberResult {
+  initial(): NodeDescriberResult {
     return emptyResult();
   }
 
-  updatedType(): void {
-    this.mutable.store.dispatchEvent(
-      new UpdateEvent(this.mutable.id, "", "", [])
-    );
+  updated(): void {
+    this.store.dispatchEvent(new UpdateEvent(PLACEHOLDER_ID, "", "", []));
   }
 
-  latestType(type: NodeTypeIdentifier): Promise<NodeDescriberResult> {
-    return this.getLatestDescription(type, "", { asType: true });
+  latest(type: NodeTypeIdentifier): Promise<NodeDescriberResult> {
+    return this.getLatestDescription(type, { asType: true });
   }
+
+  async getLatestDescription(
+    type: NodeTypeIdentifier,
+    options: NodeTypeDescriberOptions = {}
+  ) {
+    // The schema of an input or an output is defined by their
+    // configuration schema or their incoming/outgoing edges.
+    if (type === "input") {
+      return describeInput(options);
+    }
+    if (type === "output") {
+      return describeOutput(options);
+    }
+
+    const kits = [...this.store.kits];
+    const describer = await this.#getDescriber(type);
+    const asWired = NodeDescriberManager.asWired(
+      options.incoming,
+      options.outgoing
+    );
+    if (!describer) {
+      return asWired;
+    }
+    const loader = this.store.loader || createLoader();
+    // TODO: Fix this. We probably should always have an
+    // outer graph;
+    const outerGraph: GraphDescriptor = {
+      nodes: [],
+      edges: [],
+      url: "",
+    };
+    const context: NodeDescriberContext = {
+      outerGraph,
+      loader,
+      kits,
+      sandbox: this.store.sandbox,
+      graphStore: this.store,
+      fileSystem: this.store.fileSystem.createRunFileSystem({
+        graphUrl: outerGraph.url!,
+        env: envFromGraphDescriptor(this.store.fileSystem.env(), outerGraph),
+        assets: assetsFromGraphDescriptor(outerGraph),
+      }),
+      wires: {
+        incoming: Object.fromEntries(
+          (options?.incoming ?? []).map((edge) => [
+            edge.in,
+            {
+              outputPort: {
+                describe: async () => (await edge.outPort()).type.schema,
+              },
+            },
+          ])
+        ),
+        outgoing: Object.fromEntries(
+          (options?.outgoing ?? []).map((edge) => [
+            edge.out,
+            {
+              inputPort: {
+                describe: async () => (await edge.inPort()).type.schema,
+              },
+            },
+          ])
+        ),
+      },
+      asType: !!options?.asType,
+    };
+    try {
+      return describer(
+        options?.inputs || undefined,
+        asWired.inputSchema,
+        asWired.outputSchema,
+        context
+      );
+    } catch (e) {
+      console.warn(`Error describing node type ${type}`, e);
+      return asWired;
+    }
+  }
+
+  async #getDescriber(
+    type: NodeTypeIdentifier
+  ): Promise<NodeDescriberFunction | undefined> {
+    let handler: NodeHandler | undefined;
+    try {
+      handler = await getHandler(
+        type,
+        contextFromMutableGraphStore(this.store)
+      );
+    } catch (e) {
+      console.warn(`Error getting describer for node type ${type}`, e);
+    }
+    if (!handler || !("describe" in handler) || !handler.describe) {
+      return undefined;
+    }
+    return handler.describe;
+  }
+}
+
+class NodeDescriberManager implements DescribeResultCacheArgs {
+  public constructor(public readonly mutable: MutableGraph) {}
 
   initial(
     graphId: GraphIdentifier,
@@ -72,7 +178,7 @@ class NodeTypeDescriberManager implements DescribeResultCacheArgs {
     if (!node) {
       return emptyResult();
     }
-    return NodeTypeDescriberManager.asWired(node.incoming(), node.outgoing());
+    return NodeDescriberManager.asWired(node.incoming(), node.outgoing());
   }
 
   async latest(
@@ -212,7 +318,7 @@ class NodeTypeDescriberManager implements DescribeResultCacheArgs {
 
     const kits = [...this.mutable.store.kits];
     const describer = await this.#getDescriber(type);
-    const asWired = NodeTypeDescriberManager.asWired(
+    const asWired = NodeDescriberManager.asWired(
       options.incoming,
       options.outgoing
     );

@@ -37,7 +37,7 @@ import { ModuleCache } from "./module.js";
 import { NodeCache } from "./node-cache.js";
 import { Node } from "./node.js";
 import { PortCache } from "./port-cache.js";
-import { NodeTypeDescriberManager } from "./describer-manager.js";
+import { NodeDescriberManager } from "./describer-manager.js";
 import { UpdateEvent } from "./event.js";
 import { GraphRepresentation } from "../../traversal/representation.js";
 
@@ -137,7 +137,7 @@ class MutableGraphImpl implements MutableGraph {
       (edge, graphId) => new Edge(this, edge, graphId)
     );
     this.modules = new ModuleCache();
-    this.describe = new DescribeResultCache(new NodeTypeDescriberManager(this));
+    this.describe = new DescribeResultCache(new NodeDescriberManager(this));
     this.kits = new KitCache(this);
     this.graphs = new GraphCache((id) => new Graph(id, this));
     this.ports = new PortCache();

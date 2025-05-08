@@ -83,7 +83,7 @@ class GraphNodeType implements InspectableNodeType {
   }
 
   currentMetadata(): NodeHandlerMetadata {
-    const { current, updating } = this.#mutable.describe.getByType(this.#type);
+    const { current, updating } = this.#mutable.store.types.get(this.#type);
     const result = describerResultToNodeHandlerMetadata(current, updating);
     return result;
   }
