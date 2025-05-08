@@ -103,19 +103,19 @@ export class AddAssetButton extends LitElement {
         });
       }
 
+      if (this.supportedActions.gdrive && this.showGDrive) {
+        actions.push({
+          icon: "gdrive",
+          title: "Add from Google Drive",
+          name: "gdrive",
+        });
+      }
+
       if (this.supportedActions.drawable) {
         actions.push({
           icon: "drawable",
           name: "drawable",
           title: "Add a Drawing",
-        });
-      }
-
-      if (this.supportedActions.gdrive && this.showGDrive) {
-        actions.push({
-          icon: "gdrive",
-          title: "Google Drive",
-          name: "gdrive",
         });
       }
 
