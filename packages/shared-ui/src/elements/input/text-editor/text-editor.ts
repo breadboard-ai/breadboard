@@ -38,7 +38,7 @@ export class TextEditor extends LitElement {
     return "string";
   }
 
-  @property()
+  @property({ reflect: true, type: Boolean })
   accessor supportsFastAccess = true;
 
   @property()
@@ -93,6 +93,10 @@ export class TextEditor extends LitElement {
           top: var(--text-editor-padding-top, var(--bb-grid-size-2));
           left: var(--text-editor-padding-left, var(--bb-grid-size-2));
         }
+      }
+
+      :host([supportsFastAccess]) #editor.placeholder::before {
+        content: "Type your prompt here. Use @ to include other content.";
       }
 
       bb-fast-access-menu {
