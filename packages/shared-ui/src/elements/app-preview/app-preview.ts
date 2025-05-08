@@ -28,14 +28,13 @@ import {
   STATUS,
   TopGraphRunResult,
 } from "../../types/types.js";
-import { getGlobalColor } from "../../utils/color.js";
 import { classMap } from "lit/directives/class-map.js";
 
-const primaryColor = getGlobalColor("--bb-ui-700");
-const secondaryColor = getGlobalColor("--bb-ui-400");
-const backgroundColor = getGlobalColor("--bb-neutral-0");
-const textColor = getGlobalColor("--bb-neutral-900");
-const primaryTextColor = getGlobalColor("--bb-neutral-0");
+const primaryColor = "#ffffff";
+const secondaryColor = "#7a7a7a";
+const backgroundColor = "#ffffff";
+const textColor = "#1a1a1a";
+const primaryTextColor = "#1a1a1a";
 
 /**
  * Based on https://www.w3.org/TR/AERT/#color-contrast
@@ -164,6 +163,7 @@ export class AppPreview extends LitElement {
       const { themes, theme } = this.graph.metadata.visual.presentation;
       if (themes[theme]) {
         templateAdditionalOptions = themes[theme].templateAdditionalOptions;
+        options.isDefaultTheme = themes[theme].isDefaultTheme;
       }
     } else if (
       this.graph?.metadata?.visual?.presentation?.templateAdditionalOptions

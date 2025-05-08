@@ -272,10 +272,10 @@ export class Template extends LitElement implements AppTemplate {
 
             &::before {
               content: "";
-              width: 100%;
+              width: var(--splash-width, 100%);
               flex: 1;
-              background: var(--splash-image, url(/images/app/generic-flow.jpg))
-                center center / cover no-repeat;
+              background: var(--splash-image, var(--bb-logo)) center center /
+                var(--splash-fill, cover) no-repeat;
               mask-image: linear-gradient(
                 to bottom,
                 rgba(255, 0, 255, 1) 0%,
@@ -289,8 +289,8 @@ export class Template extends LitElement implements AppTemplate {
             & h1 {
               background: var(--background-color, none);
               border-radius: var(--bb-grid-size-2);
-              font: 500 var(--font-style) 32px / 42px var(--font-family);
-              color: var(--primary-color, var(--bb-neutral-700));
+              font: 400 var(--font-style) 32px / 42px var(--font-family);
+              color: var(--text-color, var(--bb-neutral-700));
               margin: 0 0 var(--bb-grid-size-3);
               flex: 0 0 auto;
               max-width: 80%;
@@ -568,7 +568,8 @@ export class Template extends LitElement implements AppTemplate {
                 var(--bb-icon-generative) 12px center / 16px 16px no-repeat;
               color: var(--primary-text-color, var(--bb-ui-700));
               border-radius: 20px;
-              border: 1px solid var(--primary-color, var(--bb-ui-100));
+              border: 1px solid
+                var(--start-border, var(--primary-color, var(--bb-ui-100)));
               font: 400 var(--bb-label-large) /
                 var(--bb-label-line-height-large) var(--bb-font-family);
               padding: 0 var(--bb-grid-size-5) 0 var(--bb-grid-size-9);
@@ -1339,6 +1340,14 @@ export class Template extends LitElement implements AppTemplate {
     }
 
     if (typeof this.options.splashImage === "string") {
+      // Special-case the default theme based on the mime types.
+      // TODO: Replace this with a more robust check.
+      if (this.options.isDefaultTheme) {
+        styles["--splash-width"] = "50%";
+        styles["--splash-fill"] = "contain";
+        styles["--start-border"] = "var(--secondary-color)";
+      }
+
       styles["--splash-image"] = this.options.splashImage;
     }
 

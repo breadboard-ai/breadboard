@@ -97,6 +97,13 @@ export class Gallery extends LitElement {
         border-bottom: var(--border);
         /* Matches the color of the placeholder background */
         background-color: #ebf5ff;
+
+        &.default {
+          background-color: var(--bb-neutral-0);
+          object-fit: contain;
+          box-sizing: border-box;
+          padding: var(--bb-grid-size-8);
+        }
       }
 
       .details {
@@ -367,6 +374,9 @@ export class Gallery extends LitElement {
 
   #renderBoard([name, item]: [string, GraphProviderItem]) {
     const { url, mine, title, description, thumbnail } = item;
+    // TODO: Replace this with a more robust check. The theme does include this
+    // information but the board server logic doesn't currently expose it.
+    const isDefaultTheme = thumbnail?.startsWith("data:") ?? false;
     return html`
       <div
         aria-role="button"
@@ -378,7 +388,7 @@ export class Gallery extends LitElement {
         ${keyed(
           thumbnail,
           html`<img
-            class="thumbnail"
+            class=${classMap({ thumbnail: true, default: isDefaultTheme })}
             src=${thumbnail ?? "/images/placeholder.svg"}
           />`
         )}

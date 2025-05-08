@@ -570,6 +570,9 @@
 				},
 				"splashScreen": {
 					"$ref": "#/definitions/StoredDataCapabilityPart"
+				},
+				"isDefaultTheme": {
+					"type": "boolean"
 				}
 			},
 			"additionalProperties": false

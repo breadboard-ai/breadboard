@@ -108,6 +108,7 @@ export class AppView extends LitElement {
 
     if (this.config.theme?.splashScreen) {
       options.splashImage = true;
+      options.isDefaultTheme = this.config.isDefautTheme;
 
       // Set the options here, then attempt to load the splash screen image.
       this.config.template.options = options;

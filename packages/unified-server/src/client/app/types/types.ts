@@ -31,6 +31,7 @@ export interface AppViewConfig {
   settingsHelper: SettingsHelperImpl;
   runner: Runner | null;
   theme: AppTheme | null;
+  isDefautTheme: boolean;
   title: string | null;
   description: string | null;
   templateAdditionalOptions: Record<string, string> | null;

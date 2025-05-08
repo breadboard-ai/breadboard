@@ -197,10 +197,12 @@ function extractThemeFromFlow(flow: GraphDescriptor | null): {
   templateAdditionalOptionsChosen: Record<string, string>;
   title: string;
   description: string | null;
+  isDefaultTheme: boolean;
 } | null {
   const title = flow?.title ?? "Untitled App";
   const description: string | null = flow?.description ?? null;
 
+  let isDefaultTheme = false;
   let templateAdditionalOptionsChosen: Record<string, string> = {};
 
   const theme: AppTheme = createDefaultTheme();
@@ -216,6 +218,7 @@ function extractThemeFromFlow(flow: GraphDescriptor | null): {
       const appTheme = themes[graphTheme];
       const themeColors = appTheme.themeColors;
       const splashScreen = appTheme.splashScreen;
+      isDefaultTheme = appTheme.isDefaultTheme ?? false;
 
       if (themeColors) {
         theme.primaryColor = themeColors["primaryColor"] ?? primaryColor;
@@ -272,6 +275,7 @@ function extractThemeFromFlow(flow: GraphDescriptor | null): {
     title,
     description,
     templateAdditionalOptionsChosen,
+    isDefaultTheme,
   };
 }
 
@@ -315,6 +319,7 @@ async function bootstrap(args: BootstrapArguments = {}) {
       theme: extractedTheme?.theme ?? null,
       title: extractedTheme?.title ?? null,
       description: extractedTheme?.description ?? null,
+      isDefautTheme: extractedTheme?.isDefaultTheme ?? false,
       templateAdditionalOptions:
         extractedTheme?.templateAdditionalOptionsChosen ?? null,
     };

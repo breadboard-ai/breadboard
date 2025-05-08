@@ -557,6 +557,7 @@ export interface AppTemplateOptions {
   description?: string | null;
   mode: "light" | "dark";
   theme?: AppThemeColors;
+  isDefaultTheme?: boolean;
   splashImage: string | boolean;
   additionalOptions?: AppTemplateAdditionalOptionsChosen;
 }

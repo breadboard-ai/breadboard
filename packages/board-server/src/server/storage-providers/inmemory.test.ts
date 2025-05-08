@@ -42,7 +42,7 @@ suite("In-memory storage provider", () => {
       tags: [],
       thumbnail: "",
       graph: {
-        description: "",
+        description: "Add a description",
         edges: [],
         nodes: [],
         title: "Untitled Flow",
@@ -75,8 +75,8 @@ suite("In-memory storage provider", () => {
 
   test("upsert board", async () => {
     const board: StorageBoard = {
-      name: '',  // Explicitly no name - new board.
-      owner: '',
+      name: "", // Explicitly no name - new board.
+      owner: "",
       displayName: "Test Board",
       description: "Board For Testing",
       tags: ["published"],
@@ -88,7 +88,7 @@ suite("In-memory storage provider", () => {
     assert.notEqual(created.name, ""); // The result must have a name assigned.
     board.name = created.name;
     assert.deepEqual(created, board);
-    board.description = 'updated';
+    board.description = "updated";
     const updated = await provider.upsertBoard(board);
     assert.deepEqual(updated, board);
   });
