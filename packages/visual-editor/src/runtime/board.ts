@@ -654,11 +654,11 @@ export class Board extends EventTarget {
 
       const graphTheme: GraphTheme = {
         themeColors: {
-          primaryColor: "#ffffff",
+          primaryColor: "#1a1a1a",
           secondaryColor: "#7a7a7a",
           backgroundColor: "#ffffff",
           textColor: "#1a1a1a",
-          primaryTextColor: "#1a1a1a",
+          primaryTextColor: "#ffffff",
         },
         template: "basic",
         splashScreen: {
