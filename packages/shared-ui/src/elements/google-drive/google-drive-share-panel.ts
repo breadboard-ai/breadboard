@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { FileDataPart } from "@breadboard-ai/types";
-import { type GraphDescriptor, type LLMContent } from "@breadboard-ai/types";
+import { type GraphDescriptor } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
 import { css, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
@@ -13,6 +12,7 @@ import {
   type SigninAdapter,
   signinAdapterContext,
 } from "../../utils/signin-adapter.js";
+import { findGoogleDriveAssetsInGraph } from "./find-google-drive-assets-in-graph.js";
 import { loadDriveShare } from "./google-apis.js";
 
 // Silly dynamic type expression because "gapi.drive.share.ShareClient" doesn't
@@ -122,22 +122,4 @@ declare global {
   interface HTMLElementTagNameMap {
     "bb-google-drive-share-panel": GoogleDriveSharePanel;
   }
-}
-
-function findGoogleDriveAssetsInGraph(graph: GraphDescriptor): string[] {
-  // Use a set because there can be duplicates.
-  const fileIds = new Set<string>();
-  for (const asset of Object.values(graph?.assets ?? {})) {
-    if (asset.metadata?.subType === "gdrive") {
-      // Cast needed because `data` is very broadly typed as `NodeValue`.
-      const firstPart = (asset.data as LLMContent[])[0]?.parts[0];
-      if (firstPart && "fileData" in firstPart) {
-        const fileId = firstPart.fileData?.fileUri;
-        if (fileId) {
-          fileIds.add(fileId);
-        }
-      }
-    }
-  }
-  return [...fileIds];
 }
