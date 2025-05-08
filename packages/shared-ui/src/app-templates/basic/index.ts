@@ -615,7 +615,7 @@ export class Template extends LitElement implements AppTemplate {
                   var(--bb-grid-size-4) var(--bb-grid-size-3);
                 transition: transform 0.6s cubic-bezier(0, 0, 0.3, 1);
                 transform: translateY(100%);
-                background: var(--primary-color);
+                background: var(--input-background, var(--primary-color));
                 color: var(--primary-text-color);
                 width: 100%;
                 display: flex;
@@ -1346,6 +1346,8 @@ export class Template extends LitElement implements AppTemplate {
         styles["--splash-width"] = "50%";
         styles["--splash-fill"] = "contain";
         styles["--start-border"] = "var(--secondary-color)";
+        styles["--input-background"] =
+          "oklch(from var(--background-color) calc(l - 0.05) c h)";
       }
 
       styles["--splash-image"] = this.options.splashImage;
