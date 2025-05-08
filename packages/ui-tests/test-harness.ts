@@ -1,4 +1,11 @@
-import { Page } from "playwright/test";
+import { Page, test as base } from "playwright/test";
+
+export const test = base.extend<{harness: BreadboardTestHarness}>({
+  harness: async ({ page }, use) => {
+    await page.goto("/");
+    await use(new BreadboardTestHarness(page));
+  }
+});
 
 type HarnessFunction = (harness: BreadboardTestHarness) => Promise<void>;
 

@@ -1,10 +1,8 @@
-import { test, expect } from "@playwright/test";
+import { expect } from "@playwright/test";
 
-import { BreadboardTestHarness } from "./test-harness";
+import { test, BreadboardTestHarness } from "./test-harness";
 
-test("smoke test", async ({ page }) => {
-  const harness = new BreadboardTestHarness(page);
-  await page.goto("/");
+test("smoke test", async ({ harness }) => {  
   await verifyMainPage(harness);
   await harness.newFlow();
   await verifyEditorButtons(harness);
