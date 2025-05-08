@@ -38,8 +38,13 @@ class Replay {
     const { index, timestamp, path, graphId, edges } = data;
     let { graph } = data;
     if (graph !== null) {
-      const inspector = this.#graphStore.inspectSnapshot(graph, graphId)!;
-      this.#graphs.set(index, inspector);
+      const mainGraphId = this.#graphStore.getByDescriptor(graph);
+      if (mainGraphId.success) {
+        const inspector = this.#graphStore.inspect(mainGraphId.result, graphId);
+        if (inspector) {
+          this.#graphs.set(index, inspector);
+        }
+      }
     } else {
       graph = this.#graphs.get(index)?.mainGraphDescriptor() || null;
     }

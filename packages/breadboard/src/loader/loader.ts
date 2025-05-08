@@ -16,7 +16,12 @@ import type {
 export const SENTINEL_BASE_URL = new URL("sentinel://sentinel/sentinel");
 const MODULE_PREFIX = "module:";
 
-export { resolveGraph, getGraphUrl, getGraphUrlComponents };
+export {
+  resolveGraph,
+  getGraphUrl,
+  getGraphUrlComponents,
+  urlComponentsFromString,
+};
 
 function getGraphUrl(path: string, context: GraphLoaderContext): URL {
   const base = baseURLFromContext(context);
@@ -29,7 +34,7 @@ function getGraphUrlComponents(url: URL): {
   moduleId?: string;
 } {
   const noHash = removeHash(url);
-  const mainGraphUrl = noHash.href;
+  const mainGraphUrl = baseURLFromString(noHash.href)!.href;
   const graphId = url.hash.slice(1);
   if (graphId.startsWith(MODULE_PREFIX)) {
     return {
@@ -66,6 +71,26 @@ export const removeHash = (url: URL): URL => {
 export const sameWithoutHash = (a: URL, b: URL): boolean => {
   return removeHash(a).href === removeHash(b).href;
 };
+
+function urlComponentsFromString(
+  urlString: string,
+  context: GraphLoaderContext = {}
+): {
+  mainGraphUrl: string;
+  graphId: string;
+  moduleId?: string;
+} {
+  if (urlString.startsWith(MODULE_PREFIX)) {
+    const parts = urlString.split(":");
+    const moduleId = parts[1];
+    return {
+      graphId: "",
+      moduleId,
+      mainGraphUrl: parts.slice(2).join(":"),
+    };
+  }
+  return getGraphUrlComponents(getGraphUrl(urlString, context));
+}
 
 export const baseURLFromString = (urlString: string | undefined) => {
   if (urlString) {

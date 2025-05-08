@@ -18,6 +18,7 @@ import {
 import { DescribeResultCache } from "./describe-cache.js";
 import {
   InspectableDescriberResultCache,
+  InspectableDescriberResultTypeCache,
   InspectableEdgeCache,
   InspectableGraphCache,
   InspectableKitCache,
@@ -37,9 +38,13 @@ import { ModuleCache } from "./module.js";
 import { NodeCache } from "./node-cache.js";
 import { Node } from "./node.js";
 import { PortCache } from "./port-cache.js";
-import { NodeDescriberManager } from "./describer-manager.js";
+import {
+  NodeDescriberManager,
+  NodeTypeDescriberManager,
+} from "./describer-manager.js";
 import { UpdateEvent } from "./event.js";
 import { GraphRepresentation } from "../../traversal/representation.js";
+import { DescribeResultTypeCache } from "./describe-type-cache.js";
 
 export { MutableGraphImpl };
 
@@ -58,6 +63,13 @@ class MutableGraphImpl implements MutableGraph {
   kits!: InspectableKitCache;
   ports!: InspectablePortCache;
   representation!: GraphRepresentation;
+
+  /**
+   * The cache of type describer results. These are different from the node
+   * describer results, because they aren't bound to a particular node.
+   * These describer resutls provide only a basic information about a type.
+   */
+  types!: InspectableDescriberResultTypeCache;
 
   constructor(graph: GraphDescriptor, store: MutableGraphStore) {
     this.store = store;
@@ -153,7 +165,8 @@ class MutableGraphImpl implements MutableGraph {
     this.edges.rebuild(graph);
     this.modules.rebuild(graph);
     this.kits.rebuild(graph);
-    // Finally, let's notify GraphStore that we've changed.
-    this.store.onGraphRebuild(this);
+    this.types = new DescribeResultTypeCache(
+      new NodeTypeDescriberManager(this)
+    );
   }
 }

@@ -67,7 +67,7 @@ export class RunNodeEvent implements InspectableRunNodeEvent {
       );
     }
 
-    if (entry.parent.graph.raw().virtual) {
+    if (entry.parent.graph.raw().virtual || entry.parent.moduleId) {
       this.#node = new VirtualNode(node);
     }
 

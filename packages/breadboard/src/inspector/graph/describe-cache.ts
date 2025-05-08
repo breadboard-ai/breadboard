@@ -4,18 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  GraphIdentifier,
-  InputValues,
-  NodeIdentifier,
-} from "@breadboard-ai/types";
+import type { GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
 import {
   DescribeResultCacheArgs,
   InspectableDescriberResultCache,
   InspectableDescriberResultCacheEntry,
 } from "../types.js";
 import { AffectedNode } from "../../editor/types.js";
-import { hash } from "../../utils/hash.js";
 import {
   SnapshotUpdater,
   SnapshotUpdaterArgs,
@@ -27,18 +22,14 @@ export { DescribeResultCache };
 type MapItem = SnapshotUpdater<NodeDescriberResult>;
 
 class DescribeResultCache implements InspectableDescriberResultCache {
-  #map = new Map<number, MapItem>();
+  #map = new Map<string, MapItem>();
 
   constructor(public readonly args: DescribeResultCacheArgs) {}
 
-  #createSnapshotArgs(
-    graphId: GraphIdentifier,
-    nodeId: NodeIdentifier,
-    inputs?: InputValues
-  ) {
+  #createSnapshotArgs(graphId: GraphIdentifier, nodeId: NodeIdentifier) {
     return {
       initial: () => this.args.initial(graphId, nodeId),
-      latest: () => this.args.latest(graphId, nodeId, inputs),
+      latest: () => this.args.latest(graphId, nodeId),
       willUpdate: (previous, current) =>
         this.args.willUpdate(previous, current),
       updated: () => {
@@ -47,44 +38,28 @@ class DescribeResultCache implements InspectableDescriberResultCache {
     } as SnapshotUpdaterArgs<NodeDescriberResult>;
   }
 
-  #createInertSnapshotArgs(
-    graphId: GraphIdentifier,
-    nodeId: NodeIdentifier,
-    inputs?: InputValues
-  ) {
-    return {
-      initial: () => this.args.initial(graphId, nodeId),
-      latest: () => this.args.latest(graphId, nodeId, inputs),
-      willUpdate() {},
-    } as SnapshotUpdaterArgs<NodeDescriberResult>;
+  #createKey(id: NodeIdentifier, graphId: GraphIdentifier) {
+    return `${graphId}:${id}`;
   }
 
   get(
     id: NodeIdentifier,
-    graphId: GraphIdentifier,
-    inputs?: InputValues
+    graphId: GraphIdentifier
   ): InspectableDescriberResultCacheEntry {
-    if (inputs && Object.keys(inputs).length > 0) {
-      // bypass cache when there are inputs. We can't cache these
-      // describer results ... yet.
-      return new SnapshotUpdater(
-        this.#createInertSnapshotArgs(graphId, id, inputs)
-      ).snapshot();
-    }
-    const hash = computeHash({ id, graphId });
-    let result = this.#map.get(hash);
+    const key = this.#createKey(id, graphId);
+    let result = this.#map.get(key);
     if (result) {
       return result.snapshot();
     }
     result = new SnapshotUpdater(this.#createSnapshotArgs(graphId, id));
-    this.#map.set(hash, result);
+    this.#map.set(key, result);
     return result.snapshot();
   }
 
   update(affectedNodes: AffectedNode[]) {
-    affectedNodes.forEach((affected) => {
-      const hash = computeHash(affected);
-      this.#map.get(hash)?.refresh();
+    affectedNodes.forEach(({ id, graphId }) => {
+      const key = this.#createKey(id, graphId);
+      this.#map.get(key)?.refresh();
     });
   }
 
@@ -92,13 +67,9 @@ class DescribeResultCache implements InspectableDescriberResultCache {
     if (visualOnly) {
       return;
     }
-    affectedNodes.forEach((node) => {
-      const hash = computeHash(node);
-      this.#map.delete(hash);
+    affectedNodes.forEach(({ id, graphId }) => {
+      const key = this.#createKey(id, graphId);
+      this.#map.delete(key);
     });
   }
-}
-
-function computeHash(node: AffectedNode): number {
-  return hash(node);
 }

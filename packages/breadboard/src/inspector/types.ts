@@ -125,7 +125,7 @@ export type InspectableNode = {
    * This function is designed to match the output of the
    * `NodeDescriberFunction`.
    */
-  describe(inputs?: InputValues): Promise<NodeDescriberResult>;
+  describe(): Promise<NodeDescriberResult>;
   /**
    * Returns configuration of the node.
    * TODO: Use a friendlier to inspection return type.
@@ -767,8 +767,7 @@ export type InspectableDescriberResultTypeCache = {
 export type InspectableDescriberResultCache = {
   get(
     id: NodeIdentifier,
-    graphId: GraphIdentifier,
-    inputs?: InputValues
+    graphId: GraphIdentifier
   ): InspectableDescriberResultCacheEntry;
   update(affectedNodes: AffectedNode[]): void;
   clear(visualOnly: boolean, affectedNodes: AffectedNode[]): void;
@@ -834,7 +833,6 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> &
     readonly sandbox: Sandbox;
     readonly loader: GraphLoader;
     readonly fileSystem: FileSystem;
-    readonly types: InspectableDescriberResultTypeCache;
 
     get(mainGraphId: MainGraphIdentifier): MutableGraph | undefined;
 
@@ -882,13 +880,6 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> &
       id: MainGraphIdentifier,
       graphId: GraphIdentifier
     ): InspectableGraph | undefined;
-    inspectSnapshot(
-      graph: GraphDescriptor,
-      graphId: GraphIdentifier
-    ): InspectableGraph | undefined;
-
-    // Notifies GraphStore that the provided graph was rebuilt.
-    onGraphRebuild(graph: MutableGraph): void;
   };
 
 export type PortIdentifier = string;
@@ -935,6 +926,7 @@ export type MutableGraph = {
   readonly kits: InspectableKitCache;
   readonly ports: InspectablePortCache;
   readonly representation: GraphRepresentation;
+  readonly types: InspectableDescriberResultTypeCache;
 
   update(
     graph: GraphDescriptor,
@@ -1283,6 +1275,7 @@ export type PathRegistryEntry = {
   children: PathRegistryEntry[];
   mainGraphId: MainGraphIdentifier | null;
   graphId: GraphIdentifier;
+  moduleId: ModuleIdentifier | null;
   graphStart: number;
   graphEnd: number | null;
   event: InspectableRunEvent | null;

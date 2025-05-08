@@ -92,11 +92,10 @@ export class Node implements InspectableNode {
     return this.descriptor.metadata || {};
   }
 
-  async describe(inputs?: InputValues): Promise<NodeDescriberResult> {
+  async describe(): Promise<NodeDescriberResult> {
     const describeEntry = this.#graph.describe.get(
       this.descriptor.id,
-      this.#graphId,
-      inputs
+      this.#graphId
     );
     return describeEntry.latest;
   }
@@ -122,7 +121,7 @@ export class Node implements InspectableNode {
     inputValues?: InputValues,
     outputValues?: OutputValues
   ): Promise<InspectableNodePorts> {
-    const described = await this.describe(inputValues);
+    const described = await this.describe();
     return describerResultToPorts(
       this,
       described,

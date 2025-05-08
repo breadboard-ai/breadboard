@@ -17,7 +17,11 @@ import {
   Result,
 } from "../editor/types.js";
 import { createLoader } from "../loader/index.js";
-import { getGraphUrl, getGraphUrlComponents } from "../loader/loader.js";
+import {
+  getGraphUrl,
+  getGraphUrlComponents,
+  urlComponentsFromString,
+} from "../loader/loader.js";
 import {
   GraphLoader,
   GraphLoaderContext,
@@ -35,7 +39,6 @@ import {
   GraphStoreArgs,
   GraphStoreEntry,
   GraphStoreEventTarget,
-  InspectableDescriberResultTypeCache,
   InspectableGraph,
   InspectableGraphOptions,
   MainGraphIdentifier,
@@ -46,8 +49,6 @@ import {
 } from "./types.js";
 import { filterEmptyValues } from "./utils.js";
 import { FileSystem, FileSystemEntry } from "../data/types.js";
-import { DescribeResultTypeCache } from "./graph/describe-type-cache.js";
-import { NodeTypeDescriberManager } from "./graph/describer-manager.js";
 
 export {
   contextFromMutableGraph,
@@ -134,16 +135,7 @@ class GraphStore
   #mutables: Map<MainGraphIdentifier, SnapshotUpdater<MutableGraph>> =
     new Map();
   #dependencies: Map<MainGraphIdentifier, Set<MainGraphIdentifier>> = new Map();
-
-  /**
-   * The cache of type describer results. These are currently
-   * entirely static: they are only loaded once and exist
-   * for the lifetime of the GraphStore. At the moment, this
-   * is ok, since the only graph that ever changes is the main
-   * graph, and we don't need its type. This will change
-   * probably, so we need to be on look out for when.
-   */
-  public readonly types: InspectableDescriberResultTypeCache;
+  #virtualGraph: MutableGraph;
 
   constructor(args: GraphStoreArgs) {
     super();
@@ -151,11 +143,17 @@ class GraphStore
     this.sandbox = args.sandbox;
     this.loader = args.loader;
     this.fileSystem = args.fileSystem;
-    this.types = new DescribeResultTypeCache(
-      new NodeTypeDescriberManager(this)
-    );
-
     this.#legacyKits = this.#populateLegacyKits(args.kits);
+
+    // create a single entry for virtual nodes
+    this.#virtualGraph = new MutableGraphImpl(
+      {
+        nodes: [],
+        edges: [],
+        virtual: true,
+      },
+      this
+    );
   }
 
   getEntryByDescriptor(
@@ -379,6 +377,10 @@ class GraphStore
     id: MainGraphIdentifier,
     options: EditableGraphOptions = {}
   ): EditableGraph | undefined {
+    if (id === this.#virtualGraph.id) {
+      console.warn(`Attempted to edit virtual graph`);
+      return undefined;
+    }
     const mutable = this.get(id);
     if (!mutable) return undefined;
 
@@ -389,18 +391,11 @@ class GraphStore
     id: MainGraphIdentifier,
     graphId: GraphIdentifier
   ): InspectableGraph | undefined {
+    if (id === this.#virtualGraph.id) return this.#virtualGraph.graphs.get("");
     const mutable = this.get(id);
     if (!mutable) return undefined;
 
     return mutable.graphs.get(graphId);
-  }
-
-  inspectSnapshot(
-    graph: GraphDescriptor,
-    graphId: GraphIdentifier
-  ): InspectableGraph | undefined {
-    const immutable = this.#snapshotFromGraphDescriptor(graph).current();
-    return immutable.graphs.get(graphId);
   }
 
   addByURL(
@@ -436,21 +431,12 @@ class GraphStore
   }
 
   async getLatest(mutable: MutableGraph): Promise<MutableGraph> {
+    if (mutable.id === this.#virtualGraph.id) return mutable;
     const snapshot = this.#mutables.get(mutable.id);
     if (!snapshot) {
       return mutable;
     }
     return snapshot.latest();
-  }
-
-  onGraphRebuild(graph: MutableGraph): void {
-    // TODO: Make this more comprehensive, move dispatching the update events
-    // here.
-
-    // 1) update type cache.
-    const nodeType = graph.graph.url;
-    if (!nodeType) return;
-    this.types.get(nodeType)?.refresh();
   }
 
   #addDependencies(
@@ -470,24 +456,28 @@ class GraphStore
   }
 
   getOrAdd(graph: GraphDescriptor, sameCheck: boolean): Result<MutableGraph> {
-    let url = graph.url;
-    let graphHash: number | null = null;
-    if (!url) {
-      graphHash = hash(graph);
-      url = `hash:${graphHash}`;
+    if (graph.virtual) {
+      // These graphs are special case and they don't really do anything.
+      // Virtual Graph is when a module calls back into the runtime, and we
+      // somehow need to represent it as an entity.
+      // To handle this, we use a single instance we created at the start
+      // Here, we just return a new instance every time.
+      return { success: true, result: this.#virtualGraph };
     }
+    const graphUrlString = graph.url;
+    if (!graphUrlString) {
+      return error(`GraphDescriptor.url is undefined`);
+    }
+    const { mainGraphUrl } = urlComponentsFromString(graphUrlString);
 
     // Find graph by URL.
-    const id = this.#mainGraphIds.get(url);
+    const id = this.#mainGraphIds.get(mainGraphUrl);
     if (id) {
       const existing = this.#mutables.get(id)?.current();
       if (!existing) {
         return error(`Integrity error: main graph "${id}" not found in store.`);
       }
-      const same =
-        !sameCheck ||
-        graphHash !== null ||
-        hash(existing.graph) === hash(graph);
+      const same = !sameCheck || hash(existing.graph) === hash(graph);
       if (!same) {
         // When not the same, rebuild the graph on the MutableGraphImpl.
         existing.rebuild(graph);
@@ -498,7 +488,7 @@ class GraphStore
       const snapshot = this.#snapshotFromGraphDescriptor(graph);
       const mutable = snapshot.current();
       this.#mutables.set(mutable.id, snapshot);
-      this.#mainGraphIds.set(url, mutable.id);
+      this.#mainGraphIds.set(mainGraphUrl, mutable.id);
       return { success: true, result: mutable };
     }
   }
@@ -559,6 +549,7 @@ class GraphStore
   }
 
   get(id: MainGraphIdentifier): MutableGraph | undefined {
+    if (id === this.#virtualGraph.id) return this.#virtualGraph;
     return this.#mutables.get(id)?.current();
   }
 }
@@ -586,7 +577,7 @@ function entryFromExport(
 ): (NodeHandlerMetadata & { updating: boolean }) | null {
   const graph = mutable.graph;
   const url = `${graph.url}${id}`;
-  const { current, updating } = mutable.store.types.get(url);
+  const { current, updating } = mutable.types.get(url);
   const {
     title,
     description,

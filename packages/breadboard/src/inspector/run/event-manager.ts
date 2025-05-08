@@ -52,6 +52,7 @@ import {
 } from "./conversions.js";
 import { ReanimationState } from "../../run/types.js";
 import { LifecycleManager } from "../../run/lifecycle.js";
+import { urlComponentsFromString } from "../../loader/loader.js";
 
 const shouldSkipEvent = (
   options: RunObserverOptions,
@@ -94,20 +95,22 @@ export class EventManager {
     if (!adding.success) {
       return;
     }
+    const { moduleId = null } = graph.url
+      ? urlComponentsFromString(graph.url)
+      : { moduleId: null };
     const mainGraphId = adding.result;
     const entry = this.#pathRegistry.create(path);
     entry.mainGraphId = mainGraphId;
     entry.graphId = graphId;
     entry.graphStart = timestamp;
+    entry.moduleId = moduleId;
     entry.view = {
       // Math: The start index is the length of the sequence before the
       // graphstart event is added.
       start: this.#sequence.length,
       sequence: this.#sequence,
     };
-    // TODO: Instead of creating a new instance, cache and store them
-    // in the GraphStore.
-    const inspector = this.#graphStore.inspectSnapshot(graph, graphId);
+    const inspector = this.#graphStore.inspect(mainGraphId, graphId);
     if (inspector) {
       entry.graph = inspector;
     } else {

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { ModuleIdentifier } from "@breadboard-ai/types";
 import { timestamp } from "../../timestamp.js";
 import { GraphIdentifier, OutputValues } from "../../types.js";
 import {
@@ -30,6 +31,7 @@ export const createSimpleEntry = (
     parent: null,
     children: [],
     mainGraphId: null,
+    moduleId: null,
     graphId: "",
     graphStart: 0,
     graphEnd: 0,
@@ -59,6 +61,11 @@ class Entry implements PathRegistryEntry {
   #trackedSidecars: Map<string, InspectableRunEvent> = new Map();
 
   mainGraphId: MainGraphIdentifier | null = null;
+  /**
+   * If this entry represents a module that is running, this value must be
+   * set to the id of the module.
+   */
+  moduleId: ModuleIdentifier | null = null;
   graphId: GraphIdentifier = "";
   // Wait until `graphstart` event to set the start time.
   graphStart: number = 0;

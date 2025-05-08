@@ -16,7 +16,6 @@ import {
   DescribeResultTypeCacheArgs,
   InspectableEdge,
   MutableGraph,
-  MutableGraphStore,
   NodeTypeDescriberOptions,
 } from "../types.js";
 import {
@@ -34,10 +33,7 @@ import {
 import { createLoader, SENTINEL_BASE_URL } from "../../loader/index.js";
 import { getHandler } from "../../handler.js";
 import { GraphDescriptorHandle } from "./graph-descriptor-handle.js";
-import {
-  contextFromMutableGraph,
-  contextFromMutableGraphStore,
-} from "../graph-store.js";
+import { contextFromMutableGraph } from "../graph-store.js";
 import { SchemaDiffer } from "../../utils/schema-differ.js";
 import { UpdateEvent } from "./event.js";
 import { invokeMainDescriber } from "../../sandbox/invoke-describer.js";
@@ -58,14 +54,16 @@ function emptyResult(): NodeDescriberResult {
 }
 
 class NodeTypeDescriberManager implements DescribeResultTypeCacheArgs {
-  constructor(public readonly store: MutableGraphStore) {}
+  constructor(public readonly mutable: MutableGraph) {}
 
   initial(): NodeDescriberResult {
     return emptyResult();
   }
 
   updated(): void {
-    this.store.dispatchEvent(new UpdateEvent(PLACEHOLDER_ID, "", "", []));
+    this.mutable.store.dispatchEvent(
+      new UpdateEvent(PLACEHOLDER_ID, "", "", [])
+    );
   }
 
   latest(type: NodeTypeIdentifier): Promise<NodeDescriberResult> {
@@ -82,13 +80,13 @@ class NodeTypeDescriberManager implements DescribeResultTypeCacheArgs {
       return describeOutput({});
     }
 
-    const kits = [...this.store.kits];
+    const kits = [...this.mutable.store.kits];
     const describer = await this.#getDescriber(type);
     const asWired = NodeDescriberManager.asWired();
     if (!describer) {
       return asWired;
     }
-    const loader = this.store.loader || createLoader();
+    const loader = this.mutable.store.loader || createLoader();
     // When describing types, we provide a weird empty graph with a special URL
     // because we're not actually inside of any graph, and that is ok.
     const outerGraph: GraphDescriptor = {
@@ -100,11 +98,11 @@ class NodeTypeDescriberManager implements DescribeResultTypeCacheArgs {
       outerGraph,
       loader,
       kits,
-      sandbox: this.store.sandbox,
-      graphStore: this.store,
-      fileSystem: this.store.fileSystem.createRunFileSystem({
+      sandbox: this.mutable.store.sandbox,
+      graphStore: this.mutable.store,
+      fileSystem: this.mutable.store.fileSystem.createRunFileSystem({
         graphUrl: TYPE_DESCRIPTOR_GRAPH_URL,
-        env: envFromGraphDescriptor(this.store.fileSystem.env()),
+        env: envFromGraphDescriptor(this.mutable.store.fileSystem.env()),
         assets: assetsFromGraphDescriptor(),
       }),
       wires: { incoming: {}, outgoing: {} },
@@ -128,10 +126,7 @@ class NodeTypeDescriberManager implements DescribeResultTypeCacheArgs {
   ): Promise<NodeDescriberFunction | undefined> {
     let handler: NodeHandler | undefined;
     try {
-      handler = await getHandler(
-        type,
-        contextFromMutableGraphStore(this.store)
-      );
+      handler = await getHandler(type, contextFromMutableGraph(this.mutable));
     } catch (e) {
       console.warn(`Error getting describer for node type ${type}`, e);
     }
