@@ -11,6 +11,8 @@ import {
   InputValues,
   NodeConfiguration,
   NodeDescriberResult,
+  NodeHandler,
+  NodeTypeIdentifier,
   OutputValues,
   Schema,
 } from "../../types.js";
@@ -324,3 +326,51 @@ function describerResultToPorts(
   };
   return { inputs, outputs, side, updating };
 }
+
+const emptyPorts = (): InspectableNodePorts => ({
+  inputs: {
+    ports: [],
+    fixed: false,
+  },
+  outputs: {
+    ports: [],
+    fixed: false,
+  },
+  side: {
+    ports: [],
+    fixed: true,
+  },
+  updating: false,
+});
+
+export const portsFromHandler = async (
+  type: NodeTypeIdentifier,
+  handler: NodeHandler | undefined
+): Promise<InspectableNodePorts> => {
+  if (!handler || typeof handler === "function" || !handler.describe) {
+    return emptyPorts();
+  }
+  try {
+    const described = await handler.describe();
+    const inputs = {
+      fixed: described.inputSchema.additionalProperties === false,
+      ports: collectPortsForType(described.inputSchema, "input"),
+    };
+    const side = {
+      fixed: true,
+      ports: filterSidePorts(inputs),
+    };
+    return {
+      inputs,
+      outputs: {
+        fixed: described.outputSchema.additionalProperties === false,
+        ports: collectPortsForType(described.outputSchema, "output"),
+      },
+      side,
+      updating: false,
+    };
+  } catch (e) {
+    console.warn(`Error describing node type ${type}:`, e);
+    return emptyPorts();
+  }
+};
