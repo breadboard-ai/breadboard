@@ -72,6 +72,7 @@ export { Renderer } from "./step-editor/renderer.js";
 export { SaveAsOverlay } from "./overlay/save-as.js";
 export { SchemaEditor } from "./input/schema-editor/schema-editor.js";
 export { SettingsEditOverlay } from "./overlay/settings-edit.js";
+export { SharePanel } from "./share-panel/share-panel.js";
 export { SlideBoardSelector } from "./input/board-selector/slide-board-selector.js";
 export { SpeechToText } from "./input/speech-to-text/speech-to-text.js";
 export { Splitter } from "./splitter/splitter.js";
