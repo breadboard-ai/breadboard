@@ -639,6 +639,9 @@
 		"GraphTheme": {
 			"additionalProperties": false,
 			"properties": {
+				"isDefaultTheme": {
+					"type": "boolean"
+				},
 				"splashScreen": {
 					"$ref": "#/definitions/StoredDataCapabilityPart"
 				},
