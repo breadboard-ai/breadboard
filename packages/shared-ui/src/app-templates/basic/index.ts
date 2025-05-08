@@ -386,6 +386,8 @@ export class Template extends LitElement implements AppTemplate {
               &#back {
                 background: var(--bb-icon-arrow-back) center center / 20px 20px
                   no-repeat;
+                opacity: 0;
+                pointer-events: none;
               }
 
               &#share {
