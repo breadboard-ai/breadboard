@@ -31,7 +31,7 @@ import {
   edgesToSchema,
   EdgeType,
 } from "./schemas.js";
-import { createLoader } from "../../loader/index.js";
+import { createLoader, SENTINEL_BASE_URL } from "../../loader/index.js";
 import { getHandler } from "../../handler.js";
 import { GraphDescriptorHandle } from "./graph-descriptor-handle.js";
 import {
@@ -47,6 +47,8 @@ import { envFromGraphDescriptor } from "../../data/file-system/assets.js";
 export { NodeDescriberManager, NodeTypeDescriberManager };
 
 const PLACEHOLDER_ID = crypto.randomUUID();
+
+const TYPE_DESCRIPTOR_GRAPH_URL = SENTINEL_BASE_URL.href;
 
 function emptyResult(): NodeDescriberResult {
   return {
@@ -67,38 +69,32 @@ class NodeTypeDescriberManager implements DescribeResultTypeCacheArgs {
   }
 
   latest(type: NodeTypeIdentifier): Promise<NodeDescriberResult> {
-    return this.getLatestDescription(type, { asType: true });
+    return this.getLatestDescription(type);
   }
 
-  async getLatestDescription(
-    type: NodeTypeIdentifier,
-    options: NodeTypeDescriberOptions = {}
-  ) {
+  async getLatestDescription(type: NodeTypeIdentifier) {
     // The schema of an input or an output is defined by their
     // configuration schema or their incoming/outgoing edges.
     if (type === "input") {
-      return describeInput(options);
+      return describeInput({});
     }
     if (type === "output") {
-      return describeOutput(options);
+      return describeOutput({});
     }
 
     const kits = [...this.store.kits];
     const describer = await this.#getDescriber(type);
-    const asWired = NodeDescriberManager.asWired(
-      options.incoming,
-      options.outgoing
-    );
+    const asWired = NodeDescriberManager.asWired();
     if (!describer) {
       return asWired;
     }
     const loader = this.store.loader || createLoader();
-    // TODO: Fix this. We probably should always have an
-    // outer graph;
+    // When describing types, we provide a weird empty graph with a special URL
+    // because we're not actually inside of any graph, and that is ok.
     const outerGraph: GraphDescriptor = {
       nodes: [],
       edges: [],
-      url: "",
+      url: TYPE_DESCRIPTOR_GRAPH_URL,
     };
     const context: NodeDescriberContext = {
       outerGraph,
@@ -107,37 +103,16 @@ class NodeTypeDescriberManager implements DescribeResultTypeCacheArgs {
       sandbox: this.store.sandbox,
       graphStore: this.store,
       fileSystem: this.store.fileSystem.createRunFileSystem({
-        graphUrl: outerGraph.url!,
-        env: envFromGraphDescriptor(this.store.fileSystem.env(), outerGraph),
-        assets: assetsFromGraphDescriptor(outerGraph),
+        graphUrl: TYPE_DESCRIPTOR_GRAPH_URL,
+        env: envFromGraphDescriptor(this.store.fileSystem.env()),
+        assets: assetsFromGraphDescriptor(),
       }),
-      wires: {
-        incoming: Object.fromEntries(
-          (options?.incoming ?? []).map((edge) => [
-            edge.in,
-            {
-              outputPort: {
-                describe: async () => (await edge.outPort()).type.schema,
-              },
-            },
-          ])
-        ),
-        outgoing: Object.fromEntries(
-          (options?.outgoing ?? []).map((edge) => [
-            edge.out,
-            {
-              inputPort: {
-                describe: async () => (await edge.inPort()).type.schema,
-              },
-            },
-          ])
-        ),
-      },
-      asType: !!options?.asType,
+      wires: { incoming: {}, outgoing: {} },
+      asType: true,
     };
     try {
       return describer(
-        options?.inputs || undefined,
+        undefined,
         asWired.inputSchema,
         asWired.outputSchema,
         context
