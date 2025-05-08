@@ -1500,7 +1500,8 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     // Auto-save both when a different step is selected
     // and when the reactive change is triggered.
     if (
-      (changedProperties.has("selectionState") ||
+      (changedProperties.has("graphTopologyUpdateId") ||
+        changedProperties.has("selectionState") ||
         changedProperties.has("values")) &&
       this.#edited
     ) {
