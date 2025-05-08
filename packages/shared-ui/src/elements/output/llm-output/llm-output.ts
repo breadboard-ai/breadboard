@@ -39,9 +39,10 @@ import { styleMap } from "lit/directives/style-map.js";
 import { getGlobalColor } from "../../../utils/color.js";
 import {
   convertShareUriToEmbedUri,
-  convertWatchUriToEmbedUri,
+  convertWatchOrShortsUriToEmbedUri,
   isEmbedUri,
   isShareUri,
+  isShortsUri,
   isWatchUri,
 } from "../../../utils/youtube.js";
 import { SIGN_IN_CONNECTION_ID } from "../../../utils/signin-adapter.js";
@@ -771,8 +772,8 @@ export class LLMOutput extends LitElement {
                   </span>`;
                 } else {
                   let uri: string | null = part.fileData.fileUri;
-                  if (isWatchUri(uri)) {
-                    uri = convertWatchUriToEmbedUri(uri);
+                  if (isWatchUri(uri) || isShortsUri(uri)) {
+                    uri = convertWatchOrShortsUriToEmbedUri(uri);
                   } else if (isShareUri(uri)) {
                     uri = convertShareUriToEmbedUri(uri);
                   } else if (!isEmbedUri(uri)) {

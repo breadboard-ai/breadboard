@@ -7,11 +7,11 @@
 import { LLMContent } from "@breadboard-ai/types";
 import {
   convertShareUriToEmbedUri,
-  convertWatchUriToEmbedUri,
+  convertWatchOrShortsUriToEmbedUri,
   createWatchUriFromVideoId,
   isShareUri,
   isWatchUri,
-  videoIdFromWatchOrEmbedUri,
+  videoIdFromWatchOrShortsOrEmbedUri,
 } from "./youtube";
 
 export function maybeConvertToYouTube(input: string): string | LLMContent {
@@ -19,11 +19,11 @@ export function maybeConvertToYouTube(input: string): string | LLMContent {
   if (isShareUri(input)) {
     converted = convertShareUriToEmbedUri(input);
   } else if (isWatchUri(input)) {
-    converted = convertWatchUriToEmbedUri(input);
+    converted = convertWatchOrShortsUriToEmbedUri(input);
   }
 
   if (converted) {
-    const videoId = videoIdFromWatchOrEmbedUri(converted);
+    const videoId = videoIdFromWatchOrShortsOrEmbedUri(converted);
     if (videoId) {
       const fileUri = createWatchUriFromVideoId(videoId);
 

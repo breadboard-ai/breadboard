@@ -13,11 +13,12 @@ import { customElement, property } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
 import {
   convertShareUriToEmbedUri,
-  convertWatchUriToEmbedUri,
+  convertWatchOrShortsUriToEmbedUri,
   isEmbedUri,
   isShareUri,
+  isShortsUri,
   isWatchUri,
-  videoIdFromWatchOrEmbedUri,
+  videoIdFromWatchOrShortsOrEmbedUri,
 } from "../../../utils/youtube";
 import { icons } from "../../../styles/icons.js";
 
@@ -180,8 +181,8 @@ export class AssetShelf extends LitElement {
           switch (part.fileData.mimeType) {
             case "video/mp4": {
               let uri: string | null = part.fileData.fileUri;
-              if (isWatchUri(uri)) {
-                uri = convertWatchUriToEmbedUri(uri);
+              if (isWatchUri(uri) || isShortsUri(uri)) {
+                uri = convertWatchOrShortsUriToEmbedUri(uri);
               } else if (isShareUri(uri)) {
                 uri = convertShareUriToEmbedUri(uri);
               } else if (!isEmbedUri(uri)) {
@@ -193,7 +194,7 @@ export class AssetShelf extends LitElement {
                 break;
               }
 
-              const videoId = videoIdFromWatchOrEmbedUri(uri);
+              const videoId = videoIdFromWatchOrShortsOrEmbedUri(uri);
               value = html`<a href="https://www.youtube.com/watch?v=${videoId}">
                 <img
                   src="https://img.youtube.com/vi/${videoId}/mqdefault.jpg"

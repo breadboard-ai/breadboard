@@ -12,6 +12,7 @@ import {
 } from "@breadboard-ai/types";
 import { asBase64, MutableGraphStore } from "@google-labs/breadboard";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import { isShortsUri } from "@breadboard-ai/shared-ui/utils/youtube.js";
 
 export { ClipboardReader };
 
@@ -122,10 +123,10 @@ function tryParsingYouTubeUrl(s: string) {
     isShareUri,
     isWatchUri,
     convertShareUriToEmbedUri,
-    convertWatchUriToEmbedUri,
+    convertWatchOrShortsUriToEmbedUri,
   } = BreadboardUI.Utils.YouTube;
-  if (isWatchUri(fileUri)) {
-    fileUri = convertWatchUriToEmbedUri(fileUri);
+  if (isWatchUri(fileUri) || isShortsUri(fileUri)) {
+    fileUri = convertWatchOrShortsUriToEmbedUri(fileUri);
   } else if (isShareUri(fileUri)) {
     fileUri = convertShareUriToEmbedUri(fileUri);
   } else if (!isEmbedUri(fileUri)) {

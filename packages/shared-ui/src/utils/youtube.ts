@@ -24,6 +24,10 @@ export function isWatchUri(uri: string): boolean {
   return /^https:\/\/www\.youtube\.com\/watch\?v=/.test(uri);
 }
 
+export function isShortsUri(uri: string): boolean {
+  return /^https:\/\/www\.youtube\.com\/shorts\//.test(uri);
+}
+
 export function convertShareUriToEmbedUri(uri: string) {
   const regex = /^https:\/\/youtu\.be\/(.*?)(?:[&\\?]|$)/;
   const matches = regex.exec(uri);
@@ -35,9 +39,9 @@ export function convertShareUriToEmbedUri(uri: string) {
   return `https://www.youtube.com/embed/${embedId}`;
 }
 
-export function convertWatchUriToEmbedUri(uri: string) {
+export function convertWatchOrShortsUriToEmbedUri(uri: string) {
   const regex =
-    /^https:\/\/www\.youtube\.com\/(?:embed\/|watch\?v=)(.*?)(?:[&\\?]|$)/;
+    /^https:\/\/www\.youtube\.com\/(?:shorts\/|embed\/|watch\?v=)(.*?)(?:[&\\?]|$)/;
   const matches = regex.exec(uri);
   if (!matches) {
     return null;
@@ -47,9 +51,9 @@ export function convertWatchUriToEmbedUri(uri: string) {
   return `https://www.youtube.com/embed/${embedId}`;
 }
 
-export function videoIdFromWatchOrEmbedUri(uri: string) {
+export function videoIdFromWatchOrShortsOrEmbedUri(uri: string) {
   const regex =
-    /^https:\/\/www\.youtube\.com\/(?:embed\/|watch\?v=)(.*?)(?:[&\\?]|$)/;
+    /^https:\/\/www\.youtube\.com\/(?:shorts\/|embed\/|watch\?v=)(.*?)(?:[&\\?]|$)/;
   const matches = regex.exec(uri);
   if (!matches) {
     return null;

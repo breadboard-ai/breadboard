@@ -74,7 +74,6 @@ export class AddAssetModal extends LitElement {
       & select {
         display: block;
         width: 100%;
-        min-width: 320px;
         border-radius: var(--bb-grid-size);
         background: var(--background-color, var(--bb-neutral-0));
         color: var(--text-color, var(--bb-neutral-900));
@@ -300,7 +299,7 @@ export class AddAssetModal extends LitElement {
         assetCollector = html`<input
           type="url"
           placeholder="https://www.youtube.com/watch?v=<video>"
-          pattern="^https://www.youtube.com/(watch|embed).*"
+          pattern="^https://www.youtube.com/(watch|embed|shorts).*"
         />`;
         break;
 
