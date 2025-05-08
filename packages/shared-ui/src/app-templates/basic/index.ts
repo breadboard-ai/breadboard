@@ -528,8 +528,8 @@ export class Template extends LitElement implements AppTemplate {
               width: calc(100% - var(--bb-grid-size-12));
               left: 50%;
               transform: translateX(-50%);
-              background: var(--bb-progress) var(--primary-color) 16px center /
-                20px 20px no-repeat;
+              background: var(--default-progress, var(--bb-progress))
+                var(--primary-color) 16px center / 20px 20px no-repeat;
               color: var(--primary-text-color);
               padding: var(--bb-grid-size-3) var(--bb-grid-size-4)
                 var(--bb-grid-size-3) var(--bb-grid-size-12);
@@ -565,7 +565,8 @@ export class Template extends LitElement implements AppTemplate {
               min-width: 76px;
               height: var(--bb-grid-size-10);
               background: var(--primary-color, var(--bb-ui-50))
-                var(--bb-icon-generative) 12px center / 16px 16px no-repeat;
+                var(--start-icon, var(--bb-icon-generative)) 12px center / 16px
+                16px no-repeat;
               color: var(--primary-text-color, var(--bb-ui-700));
               border-radius: 20px;
               border: 1px solid
@@ -1346,8 +1347,10 @@ export class Template extends LitElement implements AppTemplate {
         styles["--splash-width"] = "50%";
         styles["--splash-fill"] = "contain";
         styles["--start-border"] = "var(--secondary-color)";
+        styles["--default-progress"] = "url(/images/progress-inverted.svg)";
+        styles["--start-icon"] = "var(--bb-icon-generative-inverted)";
         styles["--input-background"] =
-          "oklch(from var(--background-color) calc(l - 0.05) c h)";
+          "oklch(from var(--primary-color) calc(l + 0.2) c h)";
       }
 
       styles["--splash-image"] = this.options.splashImage;
