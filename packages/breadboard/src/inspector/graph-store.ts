@@ -135,6 +135,14 @@ class GraphStore
     new Map();
   #dependencies: Map<MainGraphIdentifier, Set<MainGraphIdentifier>> = new Map();
 
+  /**
+   * The cache of type describer results. These are currently
+   * entirely static: they are only loaded once and exist
+   * for the lifetime of the GraphStore. At the moment, this
+   * is ok, since the only graph that ever changes is the main
+   * graph, and we don't need its type. This will change
+   * probably, so we need to be on look out for when.
+   */
   public readonly types: InspectableDescriberResultTypeCache;
 
   constructor(args: GraphStoreArgs) {
