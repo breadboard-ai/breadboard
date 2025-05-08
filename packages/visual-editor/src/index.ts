@@ -2736,9 +2736,6 @@ export class Main extends LitElement {
               actionEvt: BreadboardUI.Events.OverflowMenuActionEvent
             ) => {
               this.showBoardOverflowMenu = false;
-              const x = this.#boardOverflowMenuConfiguration?.x ?? 100;
-              const y = this.#boardOverflowMenuConfiguration?.y ?? 100;
-
               if (!actionEvt.value) {
                 this.toast(
                   Strings.from("ERROR_GENERIC"),
@@ -2759,8 +2756,14 @@ export class Main extends LitElement {
               }
 
               switch (actionEvt.action) {
-                case "edit-board-details": {
-                  this.#showBoardEditOverlay(tab, x, y, null, null);
+                case "edit": {
+                  this.#showBoardEditOverlay(
+                    tab,
+                    actionEvt.x,
+                    actionEvt.y,
+                    null,
+                    null
+                  );
                   break;
                 }
 
