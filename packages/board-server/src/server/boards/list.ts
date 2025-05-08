@@ -28,6 +28,7 @@ async function list(req: Request, res: Response, next: NextFunction) {
     const response = boards.map((board) => toListEntry(userId, board));
     res.json(response);
   } catch (err) {
+    console.log(err);
     next(err);
   }
 }
