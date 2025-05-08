@@ -746,6 +746,10 @@ export type InspectableDescriberResultCacheEntry = {
    * being updated
    */
   updating: boolean;
+  /**
+   * Call to update the current entry
+   */
+  refresh(): void;
 };
 
 export type DescribeResultTypeCacheArgs = {
@@ -882,6 +886,9 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> &
       graph: GraphDescriptor,
       graphId: GraphIdentifier
     ): InspectableGraph | undefined;
+
+    // Notifies GraphStore that the provided graph was rebuilt.
+    onGraphRebuild(graph: MutableGraph): void;
   };
 
 export type PortIdentifier = string;

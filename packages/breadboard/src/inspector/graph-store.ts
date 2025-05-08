@@ -443,6 +443,16 @@ class GraphStore
     return snapshot.latest();
   }
 
+  onGraphRebuild(graph: MutableGraph): void {
+    // TODO: Make this more comprehensive, move dispatching the update events
+    // here.
+
+    // 1) update type cache.
+    const nodeType = graph.graph.url;
+    if (!nodeType) return;
+    this.types.get(nodeType)?.refresh();
+  }
+
   #addDependencies(
     id: MainGraphIdentifier,
     dependencies: MainGraphIdentifier[]

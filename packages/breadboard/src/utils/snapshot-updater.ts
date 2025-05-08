@@ -15,6 +15,7 @@ type Snapshot<Value> = {
   current: Value;
   updating: boolean;
   latest: Promise<Value>;
+  refresh: () => void;
 };
 
 export { SnapshotUpdater };
@@ -43,6 +44,7 @@ class SnapshotUpdater<Value> {
       current: this.current(),
       latest: this.latest(),
       updating: this.#updating,
+      refresh: () => this.refresh(),
     };
   }
 

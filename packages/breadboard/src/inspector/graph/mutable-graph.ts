@@ -118,6 +118,13 @@ class MutableGraphImpl implements MutableGraph {
     this.edges.removeSubgraphEdges(graphId);
   }
 
+  /**
+   * Brute-force method for bringing this instance up to date with the supplied
+   * GraphDescriptor: just rebuild everything.
+   *
+   * Should be used sparingly, but is actually used quite a bit by editor
+   * TODO: Reduce the number of occasions where it is used.
+   */
   rebuild(graph: GraphDescriptor) {
     if (isImperativeGraph(graph)) {
       graph = toDeclarativeGraph(graph);
@@ -146,5 +153,7 @@ class MutableGraphImpl implements MutableGraph {
     this.edges.rebuild(graph);
     this.modules.rebuild(graph);
     this.kits.rebuild(graph);
+    // Finally, let's notify GraphStore that we've changed.
+    this.store.onGraphRebuild(this);
   }
 }
