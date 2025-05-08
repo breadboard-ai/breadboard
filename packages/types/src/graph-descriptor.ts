@@ -357,6 +357,7 @@ export type GraphTheme = {
   template?: string;
   templateAdditionalOptions?: Record<string, string>;
   splashScreen?: StoredDataCapabilityPart;
+  isDefaultTheme?: boolean;
 };
 
 /**

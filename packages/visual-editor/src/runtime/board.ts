@@ -654,19 +654,20 @@ export class Board extends EventTarget {
 
       const graphTheme: GraphTheme = {
         themeColors: {
-          primaryColor: "#246db5",
-          secondaryColor: "#5cadff",
+          primaryColor: "#ffffff",
+          secondaryColor: "#7a7a7a",
           backgroundColor: "#ffffff",
           textColor: "#1a1a1a",
-          primaryTextColor: "#ffffff",
+          primaryTextColor: "#1a1a1a",
         },
         template: "basic",
         splashScreen: {
           storedData: {
-            handle: "/images/app/generic-flow.jpg",
-            mimeType: "image/jpeg",
+            handle: MAIN_ICON,
+            mimeType: "image/svg+xml",
           },
         },
+        isDefaultTheme: true,
       };
 
       const themeId = globalThis.crypto.randomUUID();

@@ -251,6 +251,10 @@ export class AppThemeCreator extends LitElement {
                 background: url(/images/progress-ui.svg) center center / 20px
                   20px no-repeat;
                 border-radius: var(--bb-grid-size-2) var(--bb-grid-size-2) 0 0;
+
+                &.default {
+                  object-fit: contain;
+                }
               }
 
               & .color {
@@ -661,6 +665,9 @@ export class AppThemeCreator extends LitElement {
                   <img
                     src=${url ?? "/images/app/generic-flow.jpg"}
                     alt="Theme thumbnail"
+                    class=${classMap({
+                      default: theme.isDefaultTheme ?? false,
+                    })}
                   />
                   <span
                     class="color"
