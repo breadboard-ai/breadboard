@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {},
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -14,5 +13,11 @@
   },
   "dependencies": {
     "playwright": "^1.52.0"
-  }
+  },
+  "scripts": {
+    "test": "npx playwright test",
+    "test-ide": "npx playwright test --ui",
+    "debug": "npx playwright test --debug",
+    "show-report": "npx playwright show-report"
+  }  
 }

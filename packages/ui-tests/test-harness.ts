@@ -24,7 +24,7 @@ export class BreadboardTestHarness implements NodeHarness {
   constructor(public page: Page, private withContext?: Array<Promise<void>>) {}
 
   async newFlow() {
-    await (await this.page.getByText(/Create New/)).click();
+    await this.page.getByText(/Create New/).click();
   }
 
   async saveNodeEdit() {
