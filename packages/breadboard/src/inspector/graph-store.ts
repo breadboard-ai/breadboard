@@ -47,7 +47,7 @@ import {
 import { filterEmptyValues } from "./utils.js";
 import { FileSystem, FileSystemEntry } from "../data/types.js";
 import { DescribeResultTypeCache } from "./graph/describe-type-cache.js";
-import { NodeTypeDescriberManager } from "./graph/describer-manager.js";
+import { NodeTypeDescriberManager } from "./graph/node-type-describer-manager.js";
 
 export {
   contextFromMutableGraph,

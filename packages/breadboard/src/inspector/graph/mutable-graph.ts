@@ -37,7 +37,7 @@ import { ModuleCache } from "./module.js";
 import { NodeCache } from "./node-cache.js";
 import { Node } from "./node.js";
 import { PortCache } from "./port-cache.js";
-import { NodeDescriberManager } from "./describer-manager.js";
+import { NodeDescriberManager } from "./node-describer-manager.js";
 import { UpdateEvent } from "./event.js";
 import { GraphRepresentation } from "../../traversal/representation.js";
 
