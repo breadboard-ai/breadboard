@@ -100,6 +100,7 @@ export class GraphEdge extends Box {
 
       svg {
         pointer-events: none;
+        will-change: transform;
       }
 
       svg > * {
