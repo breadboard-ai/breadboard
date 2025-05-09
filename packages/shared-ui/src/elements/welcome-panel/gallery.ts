@@ -9,6 +9,9 @@ import { consume } from "@lit/context";
 import { css, html, HTMLTemplateResult, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
+import { keyed } from "lit/directives/keyed.js";
+import { createRef, ref } from "lit/directives/ref.js";
+import { styleMap } from "lit/directives/style-map.js";
 import {
   BoardDeleteEvent,
   GraphBoardServerLoadRequestEvent,
@@ -17,13 +20,11 @@ import {
 } from "../../events/events.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { icons } from "../../styles/icons.js";
+import { OverflowAction } from "../../types/types.js";
 import {
   type SigninAdapter,
   signinAdapterContext,
 } from "../../utils/signin-adapter.js";
-import { keyed } from "lit/directives/keyed.js";
-import { styleMap } from "lit/directives/style-map.js";
-import { OverflowAction } from "../../types/types.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
@@ -212,13 +213,18 @@ export class Gallery extends LitElement {
       #pagination {
         margin: 0;
         padding: 0;
-        list-style: none;
         display: flex;
         justify-content: flex-end;
-        height: var(--bb-grid-size-8);
+        justify-self: flex-end;
         margin-bottom: var(--bb-grid-size-10);
-        width: 100%;
+        max-width: 100%;
         overflow: hidden;
+
+        #page-numbers {
+          flex: 1;
+          display: flex;
+          overflow-x: hidden;
+        }
 
         & button {
           display: flex;
@@ -313,6 +319,8 @@ export class Gallery extends LitElement {
    */
   @property({ type: Number })
   accessor pageSize = 8;
+
+  readonly #paginationContainer = createRef<HTMLElement>();
 
   override render() {
     const pageSize = this.pageSize ?? -1;
@@ -487,42 +495,77 @@ export class Gallery extends LitElement {
     }
     return html`
       <menu id="pagination">
-        <li>
+        <span>
           <button
             id="prev"
             ?disabled=${this.page === 0}
-            @click=${() => {
-              this.page--;
-            }}
+            @click=${this.#onClickPrevPage}
           >
             ${Strings.from("COMMAND_PREVIOUS")}
           </button>
-        </li>
-        ${new Array(pages).fill(undefined).map((_, idx) => {
-          return html`<li>
-            <button
-              ?disabled=${idx === this.page}
-              @click=${() => {
-                this.page = idx;
-              }}
-            >
-              ${idx + 1}
-            </button>
-          </li>`;
-        })}
-        <li>
+        </span>
+        <div id="page-numbers" ${ref(this.#paginationContainer)}>
+          ${new Array(pages).fill(undefined).map((_, idx) => {
+            return html`
+              <span>
+                <button
+                  ?disabled=${idx === this.page}
+                  data-page-idx=${idx}
+                  @click=${this.#onClickPageNumber}
+                >
+                  ${idx + 1}
+                </button>
+              </span>
+            `;
+          })}
+        </div>
+        <span>
           <button
             id="next"
             ?disabled=${this.page === pages - 1}
-            @click=${() => {
-              this.page++;
-            }}
+            @click=${this.#onClickNextPage}
           >
             ${Strings.from("COMMAND_NEXT")}
           </button>
-        </li>
+        </span>
       </menu>
     `;
+  }
+
+  #onClickPageNumber(event: PointerEvent & { target: HTMLElement }) {
+    this.page = Number(event.target.dataset.pageIdx);
+    this.#scrollCurrentPageNumberButtonIntoView();
+  }
+
+  #onClickPrevPage() {
+    this.page--;
+    this.#scrollCurrentPageNumberButtonIntoView();
+  }
+
+  #onClickNextPage() {
+    this.page++;
+    this.#scrollCurrentPageNumberButtonIntoView();
+  }
+
+  #scrollCurrentPageNumberButtonIntoView() {
+    const container = this.#paginationContainer.value;
+    if (!container) {
+      console.error("Could not find pagination container");
+      return;
+    }
+    const button = container.querySelector(`[data-page-idx="${this.page}"]`);
+    if (!button) {
+      console.error("Could not find page number button");
+      return;
+    }
+    const isOverflowing = container.scrollWidth > container.clientWidth;
+    if (isOverflowing) {
+      button.scrollIntoView({
+        block: "nearest",
+        inline: "center",
+        behavior: "smooth",
+      });
+    }
   }
 
   #onBoardClick(_event: PointerEvent | KeyboardEvent, url: string) {
