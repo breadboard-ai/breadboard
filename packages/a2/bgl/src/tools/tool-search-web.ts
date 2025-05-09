@@ -79,7 +79,10 @@ ${item.snippet}
 `;
 }
 
-function formatBackendSearchResults(results: SearchBackendOutput[]): string {
+function formatBackendSearchResults(results: SearchBackendOutput[]|string): string {
+  if (typeof results === "string") {
+    return results;
+  }
   return `## Search Results
 
     ${results
