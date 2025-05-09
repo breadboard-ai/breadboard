@@ -45,7 +45,7 @@ export default {
     str: "Suggest an edit",
   },
   COMMAND_DESCRIBE_EDIT_STEP: {
-    str: "Describe an edit to this prompt",
+    str: "Suggest an edit",
   },
   COMMAND_ASSET_ORGANIZER: {
     str: "Show Assets",

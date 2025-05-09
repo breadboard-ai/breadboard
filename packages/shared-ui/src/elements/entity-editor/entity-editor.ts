@@ -396,6 +396,10 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
             var(--bb-font-family);
 
+          &.port {
+            container-type: size;
+          }
+
           &.object:has(details) {
             padding-right: 0;
           }
@@ -1133,7 +1137,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       inputPorts.findIndex((port) => isLLMContentBehavior(port.schema)) !== -1;
 
     const portRender = (port: PortLike) => {
-      const classes: Record<string, boolean> = {};
+      const classes: Record<string, boolean> = { port: true };
       let value:
         | HTMLTemplateResult
         | symbol
