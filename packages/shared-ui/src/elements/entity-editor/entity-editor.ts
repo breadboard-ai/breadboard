@@ -1417,6 +1417,9 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
           this.#submit(this.values);
         }}
+        @input=${() => {
+          this.#edited = true;
+        }}
         .graphUrl=${graphUrl}
         .subType=${asset.subType}
         .projectState=${this.projectState}

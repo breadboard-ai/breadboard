@@ -210,6 +210,17 @@ export class LLMPartInput extends LitElement {
           .projectState=${this.projectState}
           .supportsFastAccess=${true}
           .value=${this.#dataPart.text.trim()}
+          @input=${() => {
+            if (
+              !this.#inputRef.value ||
+              !this.#dataPart ||
+              !isTextCapabilityPart(this.#dataPart)
+            ) {
+              return;
+            }
+
+            this.#dataPart.text = this.#inputRef.value.value;
+          }}
         ></bb-text-editor>
       </div>`;
     } else if (isFileDataCapabilityPart(this.#dataPart)) {
@@ -222,6 +233,17 @@ export class LLMPartInput extends LitElement {
             autocomplete="off"
             placeholder="https://youtube.com/watch?v=<video>"
             .value=${this.#dataPart.fileData.fileUri}
+            @input=${() => {
+              if (
+                !this.#inputRef.value ||
+                !this.#dataPart ||
+                !isFileDataCapabilityPart(this.#dataPart)
+              ) {
+                return;
+              }
+
+              this.#dataPart.fileData.fileUri = this.#inputRef.value.value;
+            }}
             @keydown=${(evt: KeyboardEvent) => {
               if (
                 evt.key !== "Enter" ||
@@ -310,6 +332,18 @@ export class LLMPartInput extends LitElement {
           <bb-drawable-input
             ${ref(this.#inputRef)}
             .url=${url}
+            @input=${() => {
+              if (!this.#inputRef.value) {
+                return;
+              }
+
+              this.#dataPart = {
+                inlineData: {
+                  data: this.#inputRef.value.value,
+                  mimeType: this.#inputRef.value.type,
+                },
+              } satisfies InlineDataCapabilityPart;
+            }}
           ></bb-drawable-input>
         </div>
       </div>`;
