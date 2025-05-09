@@ -2232,17 +2232,22 @@ export class Main extends LitElement {
   }
 
   #createItemList(): OverflowAction[] {
-    const list: OverflowAction[] = Object.entries(
-      this.tab?.graph.modules ?? {}
-    ).map(([name, module]) => {
-      return {
-        name,
-        icon: module.metadata?.runnable ? "step" : "code",
-        title: module.metadata?.title ?? name,
-        secondaryAction: "delete",
-        disabled: this.#selectionState?.selectionState.modules.has(name),
-      };
-    });
+    const list: OverflowAction[] = Object.entries(this.tab?.graph.modules ?? {})
+      .map(([name, module]) => {
+        return {
+          name,
+          icon: module.metadata?.runnable ? "step" : "code",
+          title: module.metadata?.title ?? name,
+          secondaryAction: "delete",
+          disabled: this.#selectionState?.selectionState.modules.has(name),
+        };
+      })
+      .sort((a, b) => {
+        if (a.title.toLocaleLowerCase() > b.title.toLocaleLowerCase()) return 1;
+        if (a.title.toLocaleLowerCase() < b.title.toLocaleLowerCase())
+          return -1;
+        return 0;
+      });
 
     const hasNoGraphsSelected =
       this.#selectionState?.selectionState.graphs.size === 0;
