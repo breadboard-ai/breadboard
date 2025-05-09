@@ -7,7 +7,6 @@
 import {
   GraphDescriptor,
   GraphIdentifier,
-  InputValues,
   NodeIdentifier,
   NodeTypeIdentifier,
 } from "@breadboard-ai/types";
@@ -158,8 +157,7 @@ class NodeDescriberManager implements DescribeResultCacheArgs {
 
   async latest(
     graphId: GraphIdentifier,
-    nodeId: NodeIdentifier,
-    inputs?: InputValues
+    nodeId: NodeIdentifier
   ): Promise<NodeDescriberResult> {
     const node = this.mutable.nodes.get(nodeId, graphId);
     if (!node) {
@@ -171,7 +169,7 @@ class NodeDescriberManager implements DescribeResultCacheArgs {
       {
         incoming: node.incoming(),
         outgoing: node.outgoing(),
-        inputs: { ...node.configuration(), ...inputs },
+        inputs: { ...node.configuration() },
       }
     );
     return result;

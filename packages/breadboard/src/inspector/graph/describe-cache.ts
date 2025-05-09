@@ -4,11 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  GraphIdentifier,
-  InputValues,
-  NodeIdentifier,
-} from "@breadboard-ai/types";
+import type { GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
 import {
   DescribeResultCacheArgs,
   InspectableDescriberResultCache,
@@ -31,14 +27,10 @@ class DescribeResultCache implements InspectableDescriberResultCache {
 
   constructor(public readonly args: DescribeResultCacheArgs) {}
 
-  #createSnapshotArgs(
-    graphId: GraphIdentifier,
-    nodeId: NodeIdentifier,
-    inputs?: InputValues
-  ) {
+  #createSnapshotArgs(graphId: GraphIdentifier, nodeId: NodeIdentifier) {
     return {
       initial: () => this.args.initial(graphId, nodeId),
-      latest: () => this.args.latest(graphId, nodeId, inputs),
+      latest: () => this.args.latest(graphId, nodeId),
       willUpdate: (previous, current) =>
         this.args.willUpdate(previous, current),
       updated: () => {
@@ -47,30 +39,10 @@ class DescribeResultCache implements InspectableDescriberResultCache {
     } as SnapshotUpdaterArgs<NodeDescriberResult>;
   }
 
-  #createInertSnapshotArgs(
-    graphId: GraphIdentifier,
-    nodeId: NodeIdentifier,
-    inputs?: InputValues
-  ) {
-    return {
-      initial: () => this.args.initial(graphId, nodeId),
-      latest: () => this.args.latest(graphId, nodeId, inputs),
-      willUpdate() {},
-    } as SnapshotUpdaterArgs<NodeDescriberResult>;
-  }
-
   get(
     id: NodeIdentifier,
-    graphId: GraphIdentifier,
-    inputs?: InputValues
+    graphId: GraphIdentifier
   ): InspectableDescriberResultCacheEntry {
-    if (inputs && Object.keys(inputs).length > 0) {
-      // bypass cache when there are inputs. We can't cache these
-      // describer results ... yet.
-      return new SnapshotUpdater(
-        this.#createInertSnapshotArgs(graphId, id, inputs)
-      ).snapshot();
-    }
     const hash = computeHash({ id, graphId });
     let result = this.#map.get(hash);
     if (result) {

@@ -125,7 +125,7 @@ export type InspectableNode = {
    * This function is designed to match the output of the
    * `NodeDescriberFunction`.
    */
-  describe(inputs?: InputValues): Promise<NodeDescriberResult>;
+  describe(): Promise<NodeDescriberResult>;
   /**
    * Returns configuration of the node.
    * TODO: Use a friendlier to inspection return type.
@@ -445,8 +445,7 @@ export type DescribeResultCacheArgs = {
   ): NodeDescriberResult;
   latest(
     graphId: GraphIdentifier,
-    nodeId: NodeIdentifier,
-    inputs?: InputValues
+    nodeId: NodeIdentifier
   ): Promise<NodeDescriberResult>;
   willUpdate(previous: NodeDescriberResult, current: NodeDescriberResult): void;
   updated(graphId: GraphIdentifier, nodeId: NodeIdentifier): void;
@@ -763,8 +762,7 @@ export type InspectableDescriberResultTypeCache = {
 export type InspectableDescriberResultCache = {
   get(
     id: NodeIdentifier,
-    graphId: GraphIdentifier,
-    inputs?: InputValues
+    graphId: GraphIdentifier
   ): InspectableDescriberResultCacheEntry;
   update(affectedNodes: AffectedNode[]): void;
   clear(visualOnly: boolean, affectedNodes: AffectedNode[]): void;
