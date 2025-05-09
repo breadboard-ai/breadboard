@@ -6,13 +6,13 @@
 
 import { type GraphDescriptor } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
-import { css, html, LitElement, nothing } from "lit";
+import { css, html, LitElement, nothing, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import {
   environmentContext,
-  type GoogleDrivePermission,
   type Environment,
+  type GoogleDrivePermission,
 } from "../../contexts/environment.js";
 import { icons } from "../../styles/icons.js";
 import {
@@ -131,6 +131,13 @@ export class SharePanel extends LitElement {
   #dialog = createRef<HTMLDialogElement>();
   #publishedToggleInput = createRef<HTMLInputElement>();
   #googleDriveSharePanel = createRef<GoogleDriveSharePanel>();
+
+  override update(changes: PropertyValues<this>) {
+    super.update(changes);
+    if (changes.has("graph")) {
+      this.#publishState = { status: "initial" };
+    }
+  }
 
   override render() {
     if (this.#status === "closed") {
@@ -271,14 +278,25 @@ export class SharePanel extends LitElement {
       return undefined;
     }
 
+    const oldPublishState = this.#publishState;
     this.#publishState = { status: "reading" };
+    const [accessToken, drive] = await Promise.all([
+      this.#getAccessToken(),
+      loadDriveApi(),
+    ]);
+    if (!accessToken) {
+      this.#publishState = oldPublishState;
+      return;
+    }
 
-    const drive = await loadDriveApi();
-    const response = await drive.permissions.list({ fileId, fields: "*" });
+    const response = await drive.permissions.list({
+      access_token: accessToken,
+      fileId,
+      fields: "*",
+    });
     const result = JSON.parse(response.body) as {
       permissions: GoogleDrivePermission[];
     };
-
     const missingRequiredPermissions = new Set(
       publishPermissions.map(stringifyPermission)
     );
@@ -312,19 +330,21 @@ export class SharePanel extends LitElement {
     if (!fileId) {
       return;
     }
-    const oldPublished = this.#publishState;
+    const oldPublishState = this.#publishState;
     this.#publishState = { status: "writing", published: true };
-    const auth = await this.signinAdapter?.refresh();
-    if (auth?.state !== "valid") {
-      console.error(`Expected valid auth, got "${auth?.state}"`);
-      this.#publishState = oldPublished;
+    const [accessToken, drive] = await Promise.all([
+      this.#getAccessToken(),
+      loadDriveApi(),
+    ]);
+    if (!accessToken) {
+      this.#publishState = oldPublishState;
       return;
     }
-    const drive = await loadDriveApi();
+
     const responses = await Promise.all(
       publishPermissions.map((permission) =>
         drive.permissions.create({
-          access_token: auth.grant.access_token,
+          access_token: accessToken,
           fileId,
           resource: { ...permission, role: "reader" },
           sendNotificationEmail: false,
@@ -353,25 +373,44 @@ export class SharePanel extends LitElement {
     if (!fileId) {
       return;
     }
-    const oldPublished = this.#publishState;
+    const oldPublishState = this.#publishState;
     this.#publishState = { status: "writing", published: false };
-    const auth = await this.signinAdapter?.refresh();
-    if (auth?.state !== "valid") {
-      console.error(`Expected valid auth, got "${auth?.state}"`);
-      this.#publishState = oldPublished;
+    const [accessToken, drive] = await Promise.all([
+      this.#getAccessToken(),
+      loadDriveApi(),
+    ]);
+    if (!accessToken) {
+      this.#publishState = oldPublishState;
       return;
     }
-    const drive = await loadDriveApi();
+
     await Promise.all(
-      oldPublished.relevantPermissions.map((permission) =>
+      oldPublishState.relevantPermissions.map((permission) =>
         drive.permissions.delete({
-          access_token: auth.grant.access_token,
+          access_token: accessToken,
           fileId,
           permissionId: permission.id,
         })
       )
     );
     this.#publishState = { status: "written", published: false };
+  }
+
+  async #getAccessToken(): Promise<string> {
+    if (!this.signinAdapter) {
+      console.error(`No signinAdapter was provided`);
+      return "";
+    }
+    const auth = await this.signinAdapter.refresh();
+    if (auth?.state !== "valid") {
+      console.error(`Expected valid auth, got "${auth?.state}"`);
+      return "";
+    }
+    const accessToken = auth.grant.access_token;
+    if (!accessToken) {
+      console.error(`Access token was empty`);
+    }
+    return accessToken;
   }
 
   #getFileId(): string | undefined {
