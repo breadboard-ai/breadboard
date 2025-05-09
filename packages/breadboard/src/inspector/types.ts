@@ -439,10 +439,6 @@ export type InspectableGraphOptions = {
 };
 
 export type DescribeResultCacheArgs = {
-  initialType(): NodeDescriberResult;
-  latestType(type: NodeTypeIdentifier): Promise<NodeDescriberResult>;
-  updatedType(type: NodeTypeIdentifier): void;
-
   initial(
     graphId: GraphIdentifier,
     nodeId: NodeIdentifier
@@ -752,8 +748,19 @@ export type InspectableDescriberResultCacheEntry = {
   updating: boolean;
 };
 
+export type DescribeResultTypeCacheArgs = {
+  initial(): NodeDescriberResult;
+  latest(type: NodeTypeIdentifier): Promise<NodeDescriberResult>;
+  updated(type: NodeTypeIdentifier): void;
+};
+
+export type InspectableDescriberResultTypeCache = {
+  get(type: NodeTypeIdentifier): InspectableDescriberResultCacheEntry;
+  update(affectedTypes: NodeTypeIdentifier[]): void;
+  clear(): void;
+};
+
 export type InspectableDescriberResultCache = {
-  getByType(type: NodeTypeIdentifier): InspectableDescriberResultCacheEntry;
   get(
     id: NodeIdentifier,
     graphId: GraphIdentifier,
@@ -823,6 +830,7 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> &
     readonly sandbox: Sandbox;
     readonly loader: GraphLoader;
     readonly fileSystem: FileSystem;
+    readonly types: InspectableDescriberResultTypeCache;
 
     get(mainGraphId: MainGraphIdentifier): MutableGraph | undefined;
 
