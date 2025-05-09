@@ -15,6 +15,7 @@
     "build:vite": "wireit",
     "copy-assets": "wireit",
     "dev": "npm run serve --watch",
+    "dev-drive": "VITE_BOARD_SERVICE='drive:' npm run serve --watch",
     "docker-build": "docker build --build-context=breadboard=../.. --tag=unified-server .",
     "docker-clean": "docker image rm unified-server",
     "docker-logs": "docker logs unified-server",

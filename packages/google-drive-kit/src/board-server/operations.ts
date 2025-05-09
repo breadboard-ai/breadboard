@@ -38,6 +38,20 @@ export type GraphInfo = {
 
 let alreadyWarnedAboutMissingPublicApiKey = false;
 
+/** Retries fetch() calls until status is not an internal server error. */
+async function retriableFetch(
+  input: string|Request,
+  init?: RequestInit,
+  numRetries = 3
+): Promise<Response> {
+  let response: Response;
+  do {
+    response = await fetch(input, init);
+    numRetries--;
+  } while (response.status === 500 && numRetries >= 0);
+  return response;
+}
+
 class DriveOperations {
   readonly #publicApiKey?: string;
   readonly #featuredGalleryFolderId?: string;
@@ -58,7 +72,7 @@ class DriveOperations {
 
     try {
       const api = new Files({ kind: "bearer", token: accessToken! });
-      const response = await fetch(api.makeGetRequest(folderId));
+      const response = await retriableFetch(api.makeGetRequest(folderId));
 
       const folder: DriveFile = await response.json();
       if (!folder) {
@@ -87,7 +101,7 @@ class DriveOperations {
 
     try {
       const api = new Files({ kind: "bearer", token: accessToken });
-      const fileRequest = await fetch(api.makeQueryRequest(query));
+      const fileRequest = await retriableFetch(api.makeQueryRequest(query));
       const response: DriveFileQuery = await fileRequest.json();
 
       // TODO: This is likely due to an auth error.
@@ -133,7 +147,7 @@ class DriveOperations {
       `      or mimeType="${DEPRECATED_GRAPH_MIME_TYPE}")` +
       ` and trashed=false`;
     const api = new Files({ kind: "key", key: apiKey });
-    const fileRequest = await fetch(api.makeQueryRequest(query));
+    const fileRequest = await retriableFetch(api.makeQueryRequest(query));
     const response = (await fileRequest.json()) as DriveFileQuery;
     const results = await Promise.all(
       response.files.map(async (file) => {
@@ -163,7 +177,7 @@ class DriveOperations {
       ` and sharedWithMe=true` +
       ` and trashed=false`;
     const api = new Files({ kind: "bearer", token: accessToken });
-    const fileRequest = await fetch(api.makeQueryRequest(query));
+    const fileRequest = await retriableFetch(api.makeQueryRequest(query));
     const response: DriveFileQuery = await fileRequest.json();
     return response.files.map((file) => file.id);
   }
@@ -178,7 +192,7 @@ class DriveOperations {
     try {
       const api = new Files({ kind: "bearer", token: accessToken! });
 
-      await fetch(
+      await retriableFetch(
         api.makePatchRequest(
           file,
           {
@@ -208,7 +222,7 @@ class DriveOperations {
 
     try {
       const api = new Files({ kind: "bearer", token: accessToken! });
-      const response = await fetch(
+      const response = await retriableFetch(
         api.makeMultipartCreateRequest(
           {
             name,
@@ -238,7 +252,7 @@ class DriveOperations {
     }
     const query = `(mimeType contains 'image/')` + ` and trashed=false`;
     const api = new Files({ kind: "bearer", token: accessToken });
-    const fileRequest = await fetch(api.makeQueryRequest(query));
+    const fileRequest = await retriableFetch(api.makeQueryRequest(query));
     const response: DriveFileQuery = await fileRequest.json();
     return response.files.map((file) => file.id);
   }
@@ -284,7 +298,7 @@ class DriveOperations {
     fileId: string,
     authorization: GoogleApiAuthorization
   ): Promise<Response> {
-    return fetch(new Files(authorization).makeLoadRequest(fileId));
+    return retriableFetch(new Files(authorization).makeLoadRequest(fileId));
   }
 
   async findOrCreateFolder(): Promise<Outcome<string>> {
@@ -301,7 +315,7 @@ class DriveOperations {
     );
     try {
       const { files } = (await (
-        await fetch(findRequest)
+        await retriableFetch(findRequest)
       ).json()) as DriveFileQuery;
       if (files.length > 0) {
         if (files.length > 1) {
@@ -320,7 +334,7 @@ class DriveOperations {
         name: GOOGLE_DRIVE_FOLDER_NAME,
         mimeType: GOOGLE_DRIVE_FOLDER_MIME_TYPE,
       });
-      const { id } = (await (await fetch(createRequest)).json()) as {
+      const { id } = (await (await retriableFetch(createRequest)).json()) as {
         id: string;
       };
       console.log("Google Drive: Created new root folder", id);
@@ -335,7 +349,7 @@ class DriveOperations {
     const accessToken = await getAccessToken(this.vendor);
     try {
       const api = new Files({ kind: "bearer", token: accessToken! });
-      await fetch(api.makeDeleteRequest(file));
+      await retriableFetch(api.makeDeleteRequest(file));
       return;
     } catch (e) {
       console.warn(e);
