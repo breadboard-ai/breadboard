@@ -250,6 +250,14 @@ export class DrawableInput extends LitElement {
 
   #onReset() {
     this.#fillCanvas();
+
+    this.dispatchEvent(
+      new InputEvent("input", {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+      })
+    );
   }
 
   #onPointerDown(evt: PointerEvent) {
@@ -328,6 +336,14 @@ export class DrawableInput extends LitElement {
     }
 
     ctx.closePath();
+
+    this.dispatchEvent(
+      new InputEvent("input", {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+      })
+    );
   }
 
   @property()
