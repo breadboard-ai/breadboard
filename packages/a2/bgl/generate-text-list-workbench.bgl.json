@@ -45,12 +45,20 @@
           "role": "user",
           "parts": [
             {
-              "text": "Use {{\"type\":\"tool\",\"path\":\"embed://a2/tools.bgl.json#module:search-web\",\"title\":\"Search Web\"}} to come up with three blog post titles based on the idea\n\n{{\"type\":\"in\",\"path\":\"3740bd42-4f06-4856-8629-6d14912b834f\",\"title\":\"Generate Text\"}}"
+              "text": "Write three comments on the topic\n\n{{\"type\":\"in\",\"path\":\"3740bd42-4f06-4856-8629-6d14912b834f\",\"title\":\"Generate Text\"}}"
             }
           ]
         },
         "p-chat": true,
-        "p-list": true
+        "p-list": true,
+        "b-system-instruction": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "You are working as part of an AI system, so no chit-chat and no explaining what you're doing and why.\nDO NOT start with \"Okay\", or \"Alright\" or any preambles. Just the output, please."
+            }
+          ]
+        }
       }
     }
   ],

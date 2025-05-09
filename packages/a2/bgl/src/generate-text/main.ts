@@ -26,7 +26,7 @@ import {
   type GeminiSchema,
   type Tool,
 } from "./a2/gemini";
-import { GeminiPrompt } from "./a2/gemini-prompt";
+import { GeminiPrompt, type GeminiPromptOutput } from "./a2/gemini-prompt";
 
 export { invoke as default, describe };
 
@@ -117,15 +117,9 @@ class GenerateText {
     // Disallow making nested lists (for now).
     const makeList = sharedContext.makeList && !isList;
 
-    let product: LLMContent;
-    const contents = [description, ...work];
     const safetySettings = defaultSafetySettings();
     const systemInstruction = this.createSystemInstruction(makeList);
     const tools = toolManager.list();
-    const inputs: GeminiInputs = {
-      body: { contents, safetySettings },
-      model: sharedContext.model,
-    };
     // Unless it's a very first turn, we always supply tools when chatting,
     // since we add the "Done" and "Keep Chatting" tools to figure out when
     // the conversation ends.
@@ -134,22 +128,31 @@ class GenerateText {
     const firstTurn = this.firstTurn;
     const shouldAddTools = (this.chat && !firstTurn) || this.#hasTools;
     const shouldAddFakeResult = this.chat && firstTurn;
+
+    let product: LLMContent;
+    const context =
+      !shouldAddTools && shouldAddFakeResult
+        ? this.addKeepChattingResult([description])
+        : [description];
+    const contents = [...context, ...work];
+    const inputs: GeminiInputs = {
+      body: { contents, safetySettings },
+      model: sharedContext.model,
+    };
     if (shouldAddTools) {
       inputs.body.tools = [...tools];
       inputs.body.toolConfig = { functionCallingConfig: { mode: "ANY" } };
     } else {
-      if (shouldAddFakeResult) {
-        this.addKeepChattingResult(contents);
+      // When we have tools, the first call will not try to make a list,
+      // because JSON mode and tool-calling are incompatible.
+      if (makeList) {
+        inputs.body.generationConfig = {
+          responseSchema: listSchema(),
+          responseMimeType: "application/json",
+        };
       }
+
       inputs.body.systemInstruction = systemInstruction;
-    }
-    // When we have tools, the first call will not try to make a list,
-    // because JSON mode and tool-calling are incompatible.
-    if (makeList && !toolManager.hasTools()) {
-      inputs.body.generationConfig = {
-        responseSchema: listSchema(),
-        responseMimeType: "application/json",
-      };
     }
     const prompt = new GeminiPrompt(inputs, { toolManager });
     const result = await prompt.invoke();
@@ -179,25 +182,42 @@ class GenerateText {
           contents.push(...result.all);
         }
         const inputs: GeminiInputs = {
+          model: sharedContext.model,
           body: { contents, systemInstruction, safetySettings },
         };
-        if (shouldAddTools) {
-          // If we added function declarations (or saw a function call request) before, then we need to add them again so
-          // Gemini isn't confused by the presence of a function call request.
-          // However, set the mode to NONE so we don't call tools again.
-          inputs.body.tools = [...tools];
-          console.log("adding tools");
-          // Can't set to functionCallingConfig mode to NONE, as that seems to hallucinate tool use.
-        }
         if (makeList) {
           inputs.body.generationConfig = {
             responseSchema: listSchema(),
             responseMimeType: "application/json",
           };
+        } else {
+          if (shouldAddTools) {
+            // If we added function declarations (or saw a function call request) before, then we need to add them again so
+            // Gemini isn't confused by the presence of a function call request.
+            // However, set the mode to NONE so we don't call tools again.
+            inputs.body.tools = [...tools];
+            console.log("adding tools");
+            // Can't set to functionCallingConfig mode to NONE, as that seems to hallucinate tool use.
+          }
         }
-        console.log("afterTools: ", inputs);
-        const afterTools = await new GeminiPrompt(inputs).invoke();
-        if (!ok(afterTools)) return afterTools;
+        let keepCallingGemini = true;
+        let afterTools: GeminiPromptOutput | undefined = undefined;
+        while (keepCallingGemini) {
+          const nextTurn = new GeminiPrompt(inputs, { toolManager });
+          const nextTurnResult = await nextTurn.invoke();
+          if (!ok(nextTurnResult)) return nextTurnResult;
+          if (!nextTurn.calledTools) {
+            afterTools = nextTurnResult;
+            break;
+          }
+          inputs.body.contents = [
+            ...inputs.body.contents,
+            ...nextTurnResult.all,
+          ];
+        }
+        if (!afterTools) {
+          return err(`Invalid state: Somehow, "afterTools" is undefined.`);
+        }
         if (makeList && !this.chat) {
           const list = toList(afterTools.last);
           if (!ok(list)) return list;
