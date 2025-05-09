@@ -21,7 +21,13 @@ import {
   Schema,
   SerializedRun,
 } from "@google-labs/breadboard";
-import { LitElement, html, HTMLTemplateResult, nothing } from "lit";
+import {
+  LitElement,
+  html,
+  HTMLTemplateResult,
+  nothing,
+  PropertyValues,
+} from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
@@ -29,7 +35,9 @@ import { Ref, createRef, ref } from "lit/directives/ref.js";
 import {
   InputEnterEvent,
   InputRequestedEvent,
+  RunEvent,
   RunIsolatedNodeEvent,
+  StopEvent,
 } from "../../events/events.js";
 import { map } from "lit/directives/map.js";
 import { styleMap } from "lit/directives/style-map.js";
@@ -66,6 +74,9 @@ export class BoardActivity extends LitElement {
 
   @property({ reflect: true })
   accessor logTitle = "Activity Log";
+
+  @property({ reflect: true, type: Boolean })
+  accessor empty = false;
 
   @property()
   accessor waitingMessage = Strings.from("LABEL_WAITING_MESSAGE");
@@ -581,17 +592,46 @@ export class BoardActivity extends LitElement {
     </div>`;
   }
 
+  protected willUpdate(changedProperties: PropertyValues): void {
+    if (changedProperties.has("events")) {
+      this.empty = !this.events || this.events.length === 0;
+    }
+  }
+
   render() {
     const newestEvent = this.events?.at(-1);
 
     const waitingMessage =
       this.events && this.events.length
         ? nothing
-        : html`<div id="click-run">${this.waitingMessage}</div>`;
+        : html`<div id="click-run">
+            <div>${this.waitingMessage}</div>
+            <div>
+              <button
+                id="run"
+                @click=${() => {
+                  this.dispatchEvent(new RunEvent());
+                }}
+              >
+                <span class="g-icon">spark</span>Start
+              </button>
+            </div>
+          </div>`;
 
     const events =
       this.events && this.events.length
         ? html`
+            <div id="restart-container">
+              <button
+                id="restart"
+                @click=${() => {
+                  this.dispatchEvent(new StopEvent(true));
+                }}
+              >
+                <span class="g-icon">replay</span>Restart
+              </button>
+            </div>
+
             ${repeat(
               this.events,
               (event) => event.id,
