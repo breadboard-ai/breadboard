@@ -56,15 +56,19 @@ describe("getGraphHandler", () => {
   });
 
   test("returns handler with a describer for URL-like type", async () => {
-    const handler = await getGraphHandler("https://example.com/3", {
-      graphStore: makeTestGraphStore({
-        loader: {
-          async load(url: string) {
-            ok(url === "https://example.com/3");
-            return { success: true, graph: simple as GraphDescriptor };
-          },
+    const graphStore = makeTestGraphStore({
+      loader: {
+        async load(url: string) {
+          ok(url === "https://example.com/3");
+          return {
+            success: true,
+            graph: { ...simple, url } as GraphDescriptor,
+          };
         },
-      }),
+      },
+    });
+    const handler = await getGraphHandler("https://example.com/3", {
+      graphStore,
     });
     ok(handler !== undefined);
     ok("describe" in handler);
@@ -74,9 +78,9 @@ describe("getGraphHandler", () => {
       {},
       {
         kits: [],
-        outerGraph: simple,
+        outerGraph: { ...simple, url: "https://example.com/3" },
         wires: {} as NodeDescriberWires,
-        graphStore: makeTestGraphStore(),
+        graphStore,
       }
     );
     ok(description !== undefined);
