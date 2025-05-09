@@ -41,7 +41,7 @@ async function main(): Promise<void> {
   const dockerBuildArgs: string[] = [];
   for (let i = 3; i < argv.length; i++) {
     if (argv[i].includes("=")) {
-      dockerBuildArgs.push(`--build-arg ${argv[i]}`);
+      dockerBuildArgs.push(`--build-arg '${argv[i]}'`);
     } else {
       console.warn(
         `Warning: Ignoring argument "${argv[i]}" as it does not follow the KEY=VALUE format for Docker build-args.`
