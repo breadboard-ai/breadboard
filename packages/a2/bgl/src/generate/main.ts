@@ -36,7 +36,7 @@ type Mode = {
 
 const MODES: Mode[] = [
   {
-    id: "text",
+    id: "text-2.0-flash",
     type: "text",
     url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
     title: "Gemini 2.0 Flash",
@@ -45,10 +45,10 @@ const MODES: Mode[] = [
     modelName: "gemini-2.0-flash",
   },
   {
-    id: "text-2.5-flash",
+    id: "text",
     type: "text",
     url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
-    title: "Gemini 2.5 Flash [Experimental]",
+    title: "Gemini 2.5 Flash",
     description: "Uses advanced reasoning",
     icon: "text_analysis",
     modelName: "gemini-2.5-flash-preview-04-17",
@@ -57,10 +57,10 @@ const MODES: Mode[] = [
     id: "text-2.5-pro",
     type: "text",
     url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
-    title: "Gemini 2.5 Pro [Experimental]",
+    title: "Gemini 2.5 Pro",
     description: "Best for complex tasks",
     icon: "text_analysis",
-    modelName: "gemini-2.5-pro-preview-03-25",
+    modelName: "gemini-2.5-pro-preview-05-06",
   },
   {
     id: "think",
