@@ -16,7 +16,12 @@ import type {
 export const SENTINEL_BASE_URL = new URL("sentinel://sentinel/sentinel");
 const MODULE_PREFIX = "module:";
 
-export { resolveGraph, getGraphUrl, getGraphUrlComponents };
+export {
+  resolveGraph,
+  getGraphUrl,
+  getGraphUrlComponents,
+  urlComponentsFromString,
+};
 
 function getGraphUrl(path: string, context: GraphLoaderContext): URL {
   const base = baseURLFromContext(context);
@@ -91,6 +96,26 @@ export const baseURLFromContext = (context: GraphLoaderContext) => {
   if (context.base) return context.base;
   return SENTINEL_BASE_URL;
 };
+
+function urlComponentsFromString(
+  urlString: string,
+  context: GraphLoaderContext = {}
+): {
+  mainGraphUrl: string;
+  graphId: string;
+  moduleId?: string;
+} {
+  if (urlString.startsWith(MODULE_PREFIX)) {
+    const parts = urlString.split(":");
+    const moduleId = parts[1];
+    return {
+      graphId: "",
+      moduleId,
+      mainGraphUrl: parts.slice(2).join(":"),
+    };
+  }
+  return getGraphUrlComponents(getGraphUrl(urlString, context));
+}
 
 export class Loader implements GraphLoader {
   #graphProviders: GraphProvider[];

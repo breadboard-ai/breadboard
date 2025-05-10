@@ -5,141 +5,45 @@
  */
 
 import {
-  GraphDescriptor,
   GraphIdentifier,
-  InputValues,
   NodeIdentifier,
   NodeTypeIdentifier,
 } from "@breadboard-ai/types";
-import {
-  DescribeResultCacheArgs,
-  DescribeResultTypeCacheArgs,
-  InspectableEdge,
-  MutableGraph,
-  MutableGraphStore,
-  NodeTypeDescriberOptions,
-} from "../types.js";
+import { envFromGraphDescriptor } from "../../data/file-system/assets.js";
+import { assetsFromGraphDescriptor } from "../../data/index.js";
+import { getHandler } from "../../handler.js";
+import { createLoader } from "../../loader/index.js";
+import { invokeMainDescriber } from "../../sandbox/invoke-describer.js";
 import {
   NodeDescriberContext,
   NodeDescriberFunction,
   NodeDescriberResult,
   NodeHandler,
 } from "../../types.js";
+import { SchemaDiffer } from "../../utils/schema-differ.js";
+import { contextFromMutableGraph } from "../graph-store.js";
+import {
+  DescribeResultCacheArgs,
+  InspectableEdge,
+  MutableGraph,
+  NodeTypeDescriberOptions,
+} from "../types.js";
+import { UpdateEvent } from "./event.js";
+import { GraphDescriptorHandle } from "./graph-descriptor-handle.js";
 import {
   describeInput,
   describeOutput,
   edgesToSchema,
   EdgeType,
 } from "./schemas.js";
-import { createLoader, SENTINEL_BASE_URL } from "../../loader/index.js";
-import { getHandler } from "../../handler.js";
-import { GraphDescriptorHandle } from "./graph-descriptor-handle.js";
-import {
-  contextFromMutableGraph,
-  contextFromMutableGraphStore,
-} from "../graph-store.js";
-import { SchemaDiffer } from "../../utils/schema-differ.js";
-import { UpdateEvent } from "./event.js";
-import { invokeMainDescriber } from "../../sandbox/invoke-describer.js";
-import { assetsFromGraphDescriptor } from "../../data/index.js";
-import { envFromGraphDescriptor } from "../../data/file-system/assets.js";
 
-export { NodeDescriberManager, NodeTypeDescriberManager };
-
-const PLACEHOLDER_ID = crypto.randomUUID();
-
-const TYPE_DESCRIPTOR_GRAPH_URL = SENTINEL_BASE_URL.href;
+export { NodeDescriberManager, emptyResult };
 
 function emptyResult(): NodeDescriberResult {
   return {
     inputSchema: { type: "object" },
     outputSchema: { type: "object" },
   };
-}
-
-class NodeTypeDescriberManager implements DescribeResultTypeCacheArgs {
-  constructor(public readonly store: MutableGraphStore) {}
-
-  initial(): NodeDescriberResult {
-    return emptyResult();
-  }
-
-  updated(): void {
-    this.store.dispatchEvent(new UpdateEvent(PLACEHOLDER_ID, "", "", []));
-  }
-
-  latest(type: NodeTypeIdentifier): Promise<NodeDescriberResult> {
-    return this.getLatestDescription(type);
-  }
-
-  async getLatestDescription(type: NodeTypeIdentifier) {
-    // The schema of an input or an output is defined by their
-    // configuration schema or their incoming/outgoing edges.
-    if (type === "input") {
-      return describeInput({});
-    }
-    if (type === "output") {
-      return describeOutput({});
-    }
-
-    const kits = [...this.store.kits];
-    const describer = await this.#getDescriber(type);
-    const asWired = NodeDescriberManager.asWired();
-    if (!describer) {
-      return asWired;
-    }
-    const loader = this.store.loader || createLoader();
-    // When describing types, we provide a weird empty graph with a special URL
-    // because we're not actually inside of any graph, and that is ok.
-    const outerGraph: GraphDescriptor = {
-      nodes: [],
-      edges: [],
-      url: TYPE_DESCRIPTOR_GRAPH_URL,
-    };
-    const context: NodeDescriberContext = {
-      outerGraph,
-      loader,
-      kits,
-      sandbox: this.store.sandbox,
-      graphStore: this.store,
-      fileSystem: this.store.fileSystem.createRunFileSystem({
-        graphUrl: TYPE_DESCRIPTOR_GRAPH_URL,
-        env: envFromGraphDescriptor(this.store.fileSystem.env()),
-        assets: assetsFromGraphDescriptor(),
-      }),
-      wires: { incoming: {}, outgoing: {} },
-      asType: true,
-    };
-    try {
-      return describer(
-        undefined,
-        asWired.inputSchema,
-        asWired.outputSchema,
-        context
-      );
-    } catch (e) {
-      console.warn(`Error describing node type ${type}`, e);
-      return asWired;
-    }
-  }
-
-  async #getDescriber(
-    type: NodeTypeIdentifier
-  ): Promise<NodeDescriberFunction | undefined> {
-    let handler: NodeHandler | undefined;
-    try {
-      handler = await getHandler(
-        type,
-        contextFromMutableGraphStore(this.store)
-      );
-    } catch (e) {
-      console.warn(`Error getting describer for node type ${type}`, e);
-    }
-    if (!handler || !("describe" in handler) || !handler.describe) {
-      return undefined;
-    }
-    return handler.describe;
-  }
 }
 
 class NodeDescriberManager implements DescribeResultCacheArgs {
@@ -158,8 +62,7 @@ class NodeDescriberManager implements DescribeResultCacheArgs {
 
   async latest(
     graphId: GraphIdentifier,
-    nodeId: NodeIdentifier,
-    inputs?: InputValues
+    nodeId: NodeIdentifier
   ): Promise<NodeDescriberResult> {
     const node = this.mutable.nodes.get(nodeId, graphId);
     if (!node) {
@@ -171,7 +74,7 @@ class NodeDescriberManager implements DescribeResultCacheArgs {
       {
         incoming: node.incoming(),
         outgoing: node.outgoing(),
-        inputs: { ...node.configuration(), ...inputs },
+        inputs: { ...node.configuration() },
       }
     );
     return result;

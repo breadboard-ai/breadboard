@@ -359,7 +359,7 @@ export class BoardActivity extends LitElement {
 
   async #renderPendingInput(idx: number, event: InspectableRunNodeEvent) {
     const { inputs, node } = event;
-    const nodeSchema = await node.describe(inputs);
+    const nodeSchema = await node.describe();
     const descriptor = node.descriptor;
     let schema = nodeSchema?.outputSchema;
     if (!schema || Object.keys(schema).length === 0) {
