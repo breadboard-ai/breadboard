@@ -945,7 +945,9 @@ export class Main extends LitElement {
         runner?.run({ [signInKey]: signInAdapter.accessToken() });
       } else {
         signInAdapter.refresh().then((token) => {
-          runner?.run({ [signInKey]: token?.grant?.access_token });
+          if (!runner?.running()) {
+            runner?.run({ [signInKey]: token?.grant?.access_token });
+          }
         });
       }
       return;
