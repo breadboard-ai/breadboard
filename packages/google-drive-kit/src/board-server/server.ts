@@ -149,8 +149,11 @@ class GoogleDriveBoardServer
   async refreshProjects(): Promise<BoardServerProject[]> {
     const userGraphs = await this.ops.readGraphList();
     if (!ok(userGraphs)) return [];
-    const featuredGraphs = await this.ops.readFeaturedGalleryGraphList();
-    if (!ok(featuredGraphs)) return [];
+    let featuredGraphs = await this.ops.readFeaturedGalleryGraphList();
+    if (!ok(featuredGraphs)) {
+      console.warn(featuredGraphs.$error);
+      featuredGraphs = [];
+    }
     const files = [...userGraphs, ...featuredGraphs];
     const canAccess = true;
     const access = new Map([
@@ -352,7 +355,7 @@ class GoogleDriveBoardServer
     if (!this.canProvide(url)) {
       return false;
     }
-    return new URL('/board/proxy', location.origin).href
+    return new URL("/board/proxy", location.origin).href;
   }
 
   watch(_callback: ChangeNotificationCallback) {}
