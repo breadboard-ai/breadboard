@@ -362,7 +362,7 @@ export class BoardActivity extends LitElement {
     const nodeSchema = await node.describe();
     const descriptor = node.descriptor;
     let schema = nodeSchema?.outputSchema;
-    if (!schema || Object.keys(schema).length === 0) {
+    if (!schema || !schema.properties) {
       schema = inputs.schema as Schema;
     }
     const requiredFields = schema.required ?? [];
