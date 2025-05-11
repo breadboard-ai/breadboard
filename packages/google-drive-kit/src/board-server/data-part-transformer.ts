@@ -17,12 +17,26 @@ import {
   type Outcome,
 } from "@google-labs/breadboard";
 import type { GoogleDriveClient } from "../google-drive-client.js";
-import { GeminiFileApi } from "./gemini-file-api.js";
 
 export { GoogleDriveDataPartTransformer };
 
+export type GoogleDriveToGeminiResponse = {
+  part: FileDataPart;
+};
+
 class GoogleDriveDataPartTransformer implements DataPartTransformer {
   constructor(public readonly client: GoogleDriveClient) {}
+
+  async #createRequest(path: string, body: unknown): Promise<Request> {
+    return new Request(path, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        Authorization: `Bearer ${await this.client.accessToken()}`,
+      },
+      body: JSON.stringify(body),
+    });
+  }
 
   async persistPart(
     _graphUrl: URL,
@@ -50,6 +64,7 @@ class GoogleDriveDataPartTransformer implements DataPartTransformer {
     _graphUrl: URL,
     part: StoredDataCapabilityPart | FileDataPart
   ): Promise<Outcome<FileDataPart>> {
+    let mimeType;
     // Called by ProxyClient.proxy to ensure that parts are correctly turned
     // into handles that Gemini API can understand.
     // There are two kinds:
@@ -58,21 +73,26 @@ class GoogleDriveDataPartTransformer implements DataPartTransformer {
     // 2) StoredDataCapabilityPart. These need to be uploaded using
     //    Gemini File API to create the right FileDataPart.
     if (isFileDataCapabilityPart(part)) {
+      mimeType = part.fileData.mimeType;
       if (isGoogleDriveDocument(part)) {
         const fileId = part.fileData.fileUri;
-        // 1) Export the file as PDF
-        const exported = await this.client.exportFile(fileId);
-        // 2) Pipe it through to file API
-        const fileApi = new GeminiFileApi(await this.client.accessToken());
-        const uploading = await fileApi.upload(
-          exported,
-          fileId,
-          "application/pdf"
+        // TODO: Un-hardcode the path and get rid of the "@foo/bar".
+        const path = `/board/boards/@foo/bar/assets/drive/${fileId}`;
+        const converting = await fetch(
+          await this.#createRequest(path, { part })
         );
-        if (!ok(uploading)) return uploading;
+        if (!converting.ok) return err(await converting.text());
+
+        const converted =
+          (await converting.json()) as Outcome<GoogleDriveToGeminiResponse>;
+        if (!ok(converted)) return converted;
+
+        return converted.part;
       }
+    } else {
+      mimeType = part.storedData.mimeType;
     }
-    const msg = `Converting to FileData is not supported with Google Drive backend`;
+    const msg = `Converting to FileData of type "${mimeType}" is not supported with Google Drive backend`;
     console.debug(msg);
     return err(msg);
   }
