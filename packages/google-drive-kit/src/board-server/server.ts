@@ -238,7 +238,15 @@ class GoogleDriveBoardServer
   }
 
   async load(url: URL): Promise<GraphDescriptor | null> {
-    return this.ops.readGraphFromDrive(url);
+    const fileIdMatch = url.href.match(/^drive:\/(.+)/);
+    if (!fileIdMatch) {
+      throw new Error(
+        `Expected URL to have format "drive:FILE_ID", got "${url.href}"`
+      );
+    }
+    const fileId = fileIdMatch[1]!;
+    const response = await this.#googleDriveClient.getFileMedia(fileId);
+    return response.json();
   }
 
   async save(
