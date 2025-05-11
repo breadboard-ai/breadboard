@@ -461,6 +461,8 @@ function imageHandleToUrl(handle: string): URL | undefined {
     if (blobId) {
       return new URL(`/board/blobs/${blobId}`, window.location.href);
     }
+  } else if (handle.startsWith("data:")) {
+    return new URL(handle);
   }
   return undefined;
 }
