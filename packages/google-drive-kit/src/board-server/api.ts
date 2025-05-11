@@ -31,6 +31,12 @@ export type GoogleApiAuthorization =
   | { kind: "key"; key: string }
   | { kind: "bearer"; token: string };
 
+/** Returns ThumbnailId (in GCS) for the given drive file. */
+export function getThumbnailId(file: URL): string {
+  console.assert(file.protocol === "drive:", 'Drive protocol expected', file);
+  return file.pathname.replace('/', '');
+}
+
 class Files {
   readonly #authorization: GoogleApiAuthorization;
   readonly #baseUrl: string;

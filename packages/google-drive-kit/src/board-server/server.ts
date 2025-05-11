@@ -27,6 +27,7 @@ import { DriveOperations, PROTOCOL } from "./operations.js";
 import { SaveDebouncer } from "./save-debouncer.js";
 import { SaveEvent } from "./events.js";
 import { type GoogleDriveClient } from "../google-drive-client.js";
+import { getThumbnailId } from "./api.js";
 
 export { GoogleDriveBoardServer };
 
@@ -339,6 +340,7 @@ class GoogleDriveBoardServer
           handle: null,
           tags: project.metadata?.tags,
           username: project.metadata.owner,
+          thumbnail: `/board/blobs/${getThumbnailId(new URL(project.url))}`,
         },
       ]);
     }

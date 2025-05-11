@@ -385,6 +385,7 @@ export class Gallery extends LitElement {
     // TODO: Replace this with a more robust check. The theme does include this
     // information but the board server logic doesn't currently expose it.
     const isDefaultTheme = thumbnail?.startsWith("data:") ?? false;
+    const placeHolderThumbnail = "/images/placeholder.svg";
     return html`
       <div
         aria-role="button"
@@ -396,8 +397,11 @@ export class Gallery extends LitElement {
         ${keyed(
           thumbnail,
           html`<img
-            class=${classMap({ thumbnail: true, default: isDefaultTheme })}
-            src=${thumbnail ?? "/images/placeholder.svg"}
+            class="${classMap({ thumbnail: true, default: isDefaultTheme })}"
+            src="${thumbnail ?? placeHolderThumbnail}"
+            // When an image doesn't exist (typical for Google Drive's boards), 
+            // we will replace the src to the placeholder dynamically.
+            onerror="this.src = '${placeHolderThumbnail}'; this.onerror = null;"
           />`
         )}
         <div class="details">

@@ -14,6 +14,7 @@ import {
 import { getAccessToken } from "./access.js";
 import {
   Files,
+  getThumbnailId,
   type AppProperties,
   type DriveFile,
   type DriveFileQuery,
@@ -168,6 +169,30 @@ class DriveOperations {
     return response.files.map((file) => file.id);
   }
 
+  private parseAssetData(asset: string): { data: string; contentType: string } {
+    // Format: data:<contentType>;base64,<data>
+    const lastComma = asset.lastIndexOf(",");
+    const colonIndex = asset.indexOf(":");
+    const semicolonIndex = asset.indexOf(";");
+    const contentType = asset.slice(colonIndex + 1, semicolonIndex);
+    const data = asset.slice(lastComma + 1);
+    return { data, contentType };
+  }
+
+  private makeBlobUpsertRequest(
+    blobId: string,
+    body: string,
+    contentType: string
+  ): Request {
+    return new Request(`/board/blobs/${blobId}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        body,
+        contentType,
+      }),
+    });
+  }
+
   async writeGraphToDrive(
     url: URL,
     descriptor: GraphDescriptor
@@ -177,6 +202,23 @@ class DriveOperations {
     const accessToken = await getAccessToken(this.vendor);
     try {
       const api = new Files({ kind: "bearer", token: accessToken! });
+      const thumbnail = descriptor.assets?.["@@thumbnail"]?.data;
+      let maybeSaveThumbnailPromise: Promise<Response> | undefined;
+      console.assert(
+        typeof thumbnail === "string",
+        "Thumbnail is not a string",
+        thumbnail
+      );
+      if (thumbnail && typeof thumbnail === "string") {
+        const { data, contentType } = this.parseAssetData(thumbnail as string);
+        // Blob ID is the ID of the Google Drive file. This allows lookup without additional query to the Drive API during listing.
+        const blobId = getThumbnailId(url);
+
+        // Holding the promise and awaiting below so that the two requests can run in parallel.
+        maybeSaveThumbnailPromise = fetch(
+          this.makeBlobUpsertRequest(blobId, data, contentType)
+        );
+      }
 
       await fetch(
         api.makePatchRequest(
@@ -189,6 +231,10 @@ class DriveOperations {
           descriptor
         )
       );
+
+      if (maybeSaveThumbnailPromise) {
+        await maybeSaveThumbnailPromise;
+      }
 
       return { result: true };
     } catch (err) {
