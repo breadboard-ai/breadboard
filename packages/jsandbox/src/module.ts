@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { UUID } from "@breadboard-ai/types";
 import { Capabilities } from "./capabilities.js";
 import { Telemetry } from "./telemetry.js";
 import {
@@ -19,6 +20,8 @@ import {
 export { SandboxedModule };
 
 class SandboxedModule {
+  #timers: Map<UUID, number> = new Map();
+
   constructor(
     public readonly sandbox: Sandbox,
     public readonly capabilities: CapabilitySpec,
@@ -33,7 +36,7 @@ class SandboxedModule {
   ) {
     const invocationId = crypto.randomUUID();
     const label = `${method === "describe" ? "Describe" : "Invoke"} module "${name}": uuid="${invocationId}"`;
-    console.time?.(label);
+    this.#timers.set(invocationId, globalThis.performance.now());
     Capabilities.instance().install(invocationId, this.capabilities, telemetry);
     await telemetry?.startModule();
     const outputs = await this.sandbox.runModule(
@@ -45,7 +48,14 @@ class SandboxedModule {
     );
     await telemetry?.endModule();
     Capabilities.instance().uninstall(invocationId);
-    console.timeEnd?.(label);
+    const startTime = this.#timers.get(invocationId);
+    if (startTime !== undefined) {
+      const duration = globalThis.performance.now() - startTime;
+      console.debug?.(`${label}: ${duration.toFixed(0)} ms`);
+      this.#timers.delete(invocationId);
+    } else {
+      console.warn(`Unable to find timing for "${invocationId}"`);
+    }
     return outputs;
   }
 

@@ -29,13 +29,13 @@ class GoogleDriveDataPartTransformer implements DataPartTransformer {
       // Use case: creating publicly accessible URls for adding images to
       // documents/slides.
       const msg = `Persisting temporary blobs is not supported with Google Drive backend`;
-      console.info(msg);
+      console.debug(msg);
       return err(msg);
     } else {
       // This is is most likely the situation when a new BGL asset is saved
       // and being persisted.
       const msg = `Persisting assets is not supported with Google Drive backend`;
-      console.info(msg);
+      console.debug(msg);
       return err(msg);
     }
   }
@@ -52,7 +52,7 @@ class GoogleDriveDataPartTransformer implements DataPartTransformer {
     // 2) StoredDataCapabilityPart. These need to be uploaded using
     //    Gemini File API to create the right FileDataPart.
     const msg = `Converting to FileData is not supported with Google Drive backend`;
-    console.info(msg);
+    console.debug(msg);
     return err(msg);
   }
 
@@ -60,7 +60,7 @@ class GoogleDriveDataPartTransformer implements DataPartTransformer {
     _part: StoredDataCapabilityPart
   ): Promise<Outcome<StoredDataCapabilityPart>> {
     const msg = `Converting persistent blobs to ephemeral is not supported with Google Drive backend`;
-    console.info(msg);
+    console.debug(msg);
     return err(msg);
   }
 

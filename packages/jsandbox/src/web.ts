@@ -66,7 +66,7 @@ class WebSandbox implements Sandbox {
     }
 
     const inputString = JSON.stringify(inputs);
-    console.log(
+    console.debug(
       ...niceSize(`Run module: "${name}": input size`, inputString.length)
     );
 
