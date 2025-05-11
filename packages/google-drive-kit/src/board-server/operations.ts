@@ -18,7 +18,6 @@ import {
   type AppProperties,
   type DriveFile,
   type DriveFileQuery,
-  type GoogleApiAuthorization,
 } from "./api.js";
 
 export { DriveOperations, PROTOCOL };
@@ -36,8 +35,6 @@ export type GraphInfo = {
   title: string;
   tags: GraphTag[];
 };
-
-let alreadyWarnedAboutMissingPublicApiKey = false;
 
 class DriveOperations {
   readonly #publicApiKey?: string;
@@ -74,7 +71,10 @@ class DriveOperations {
   }
 
   async readGraphList(): Promise<Outcome<GraphInfo[]>> {
-    const folderId = await this.findOrCreateFolder();
+    const folderId = await this.findFolder();
+    if (!(typeof folderId === "string" && folderId)) {
+      return [];
+    }
     const accessToken = await getAccessToken(this.vendor);
     const query =
       `"${folderId}" in parents` +
@@ -289,57 +289,17 @@ class DriveOperations {
     return response.files.map((file) => file.id);
   }
 
-  async readGraphFromDrive(url: URL): Promise<GraphDescriptor | null> {
-    const fileId = url.href.replace(`${this.url.href}/`, "");
-    let response = await this.#readFileWithUserAuth(fileId);
-    if (response?.status === 404) {
-      response = await this.#readFileWithPublicAuth(fileId);
-    }
-    if (response?.status === 200) {
-      const graph = (await response.json()) as GraphDescriptor;
-      if (graph && !("error" in graph)) {
-        return graph;
-      }
-    }
-    return null;
-  }
+  #cachedFolderId?: string;
 
-  async #readFileWithUserAuth(fileId: string): Promise<Response | null> {
-    const token = await getAccessToken(this.vendor);
-    if (!token) {
-      return null;
+  async findFolder(): Promise<Outcome<string | undefined>> {
+    if (this.#cachedFolderId) {
+      return this.#cachedFolderId;
     }
-    return this.#readFile(fileId, { kind: "bearer", token });
-  }
-
-  async #readFileWithPublicAuth(fileId: string): Promise<Response | null> {
-    if (!this.#publicApiKey) {
-      if (!alreadyWarnedAboutMissingPublicApiKey) {
-        console.warn(
-          "Could not read a potentially public Google Drive file" +
-            " because a Google Drive API key was not configured."
-        );
-        alreadyWarnedAboutMissingPublicApiKey = true;
-      }
-      return null;
-    }
-    return this.#readFile(fileId, { kind: "key", key: this.#publicApiKey });
-  }
-
-  async #readFile(
-    fileId: string,
-    authorization: GoogleApiAuthorization
-  ): Promise<Response> {
-    return fetch(new Files(authorization).makeLoadRequest(fileId));
-  }
-
-  async findOrCreateFolder(): Promise<Outcome<string>> {
     const accessToken = await getAccessToken(this.vendor);
     if (!accessToken) {
       return err("No access token");
     }
     const api = new Files({ kind: "bearer", token: accessToken });
-
     const findRequest = api.makeQueryRequest(
       `name="${GOOGLE_DRIVE_FOLDER_NAME}"` +
         ` and mimeType="${GOOGLE_DRIVE_FOLDER_MIME_TYPE}"` +
@@ -359,17 +319,35 @@ class DriveOperations {
         }
         const id = files[0]!.id;
         console.log("Google Drive: Found existing root folder", id);
+        this.#cachedFolderId = id;
         return id;
       }
+    } catch (e) {
+      return err((e as Error).message);
+    }
+  }
 
-      const createRequest = api.makeCreateRequest({
-        name: GOOGLE_DRIVE_FOLDER_NAME,
-        mimeType: GOOGLE_DRIVE_FOLDER_MIME_TYPE,
-      });
+  async findOrCreateFolder(): Promise<Outcome<string>> {
+    const existing = await this.findFolder();
+    if (typeof existing === "string" && existing) {
+      return existing;
+    }
+
+    const accessToken = await getAccessToken(this.vendor);
+    if (!accessToken) {
+      return err("No access token");
+    }
+    const api = new Files({ kind: "bearer", token: accessToken });
+    const createRequest = api.makeCreateRequest({
+      name: GOOGLE_DRIVE_FOLDER_NAME,
+      mimeType: GOOGLE_DRIVE_FOLDER_MIME_TYPE,
+    });
+    try {
       const { id } = (await (await fetch(createRequest)).json()) as {
         id: string;
       };
       console.log("Google Drive: Created new root folder", id);
+      this.#cachedFolderId = id;
       return id;
     } catch (e) {
       return err((e as Error).message);

@@ -14,6 +14,7 @@ import {
   type BoardServerExtension,
   type BoardServerProject,
   type ChangeNotificationCallback,
+  type DataPartTransformer,
   type GraphDescriptor,
   type GraphProviderCapabilities,
   type GraphProviderExtendedCapabilities,
@@ -27,6 +28,7 @@ import { DriveOperations, PROTOCOL } from "./operations.js";
 import { SaveDebouncer } from "./save-debouncer.js";
 import { SaveEvent } from "./events.js";
 import { type GoogleDriveClient } from "../google-drive-client.js";
+import { GoogleDriveDataPartTransformer } from "./data-part-transformer.js";
 import { getThumbnailId } from "./api.js";
 
 export { GoogleDriveBoardServer };
@@ -237,7 +239,15 @@ class GoogleDriveBoardServer
   }
 
   async load(url: URL): Promise<GraphDescriptor | null> {
-    return this.ops.readGraphFromDrive(url);
+    const fileIdMatch = url.href.match(/^drive:\/(.+)/);
+    if (!fileIdMatch) {
+      throw new Error(
+        `Expected URL to have format "drive:FILE_ID", got "${url.href}"`
+      );
+    }
+    const fileId = fileIdMatch[1]!;
+    const response = await this.#googleDriveClient.getFileMedia(fileId);
+    return response.json();
   }
 
   async save(
@@ -353,6 +363,10 @@ class GoogleDriveBoardServer
     });
 
     return items;
+  }
+
+  dataPartTransformer(_graphUrl: URL): DataPartTransformer {
+    return new GoogleDriveDataPartTransformer();
   }
 
   startingURL(): URL | null {
