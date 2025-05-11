@@ -137,4 +137,37 @@ export class GoogleDriveClient {
     }
     return headers;
   }
+
+  async exportFile(
+    fileId: string,
+    options?: BaseRequestOptions
+  ): Promise<Response> {
+    const response = await this.#exportFile(fileId, options, {
+      kind: "bearer",
+      token: await this.#getUserAccessToken(),
+    });
+    if (response.status === 200) {
+      return response;
+    }
+    throw new Error(
+      `Google Drive exportFile ${response.status} error: ` +
+        (await response.text())
+    );
+  }
+
+  async #exportFile(
+    fileId: string,
+    options: BaseRequestOptions | undefined,
+    authorization: GoogleApiAuthorization
+  ): Promise<Response> {
+    const url = this.#makeUrl(
+      `drive/v3/files/${fileId}/export?mimeType=${encodeURIComponent("application/pdf")}`,
+      authorization
+    );
+
+    return fetch(url, {
+      headers: this.#makeHeaders(authorization),
+      signal: options?.signal,
+    });
+  }
 }
