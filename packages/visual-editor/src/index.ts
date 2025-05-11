@@ -439,12 +439,14 @@ export class Main extends LitElement {
       proxyUrl:
         "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/getOpalFile",
       publicApiKey: ENVIRONMENT.googleDrive.publicApiKey,
-      getUserCredentials: async () => {
+      getUserAccessToken: async () => {
         const token = await this.signinAdapter.refresh();
         if (token?.state === "valid") {
           return token.grant.access_token;
         }
-        return undefined;
+        throw new Error(
+          `User is unexpectedly signed out, or SigninAdapter is misconfigured`
+        );
       },
     });
 
