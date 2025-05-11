@@ -70,7 +70,10 @@ class DriveOperations {
   }
 
   async readGraphList(): Promise<Outcome<GraphInfo[]>> {
-    const folderId = await this.findOrCreateFolder();
+    const folderId = await this.findFolder();
+    if (!(typeof folderId === "string" && folderId)) {
+      return [];
+    }
     const accessToken = await getAccessToken(this.vendor);
     const query =
       `"${folderId}" in parents` +
@@ -240,13 +243,17 @@ class DriveOperations {
     return response.files.map((file) => file.id);
   }
 
-  async findOrCreateFolder(): Promise<Outcome<string>> {
+  #cachedFolderId?: string;
+
+  async findFolder(): Promise<Outcome<string | undefined>> {
+    if (this.#cachedFolderId) {
+      return this.#cachedFolderId;
+    }
     const accessToken = await getAccessToken(this.vendor);
     if (!accessToken) {
       return err("No access token");
     }
     const api = new Files({ kind: "bearer", token: accessToken });
-
     const findRequest = api.makeQueryRequest(
       `name="${GOOGLE_DRIVE_FOLDER_NAME}"` +
         ` and mimeType="${GOOGLE_DRIVE_FOLDER_MIME_TYPE}"` +
@@ -266,17 +273,35 @@ class DriveOperations {
         }
         const id = files[0]!.id;
         console.log("Google Drive: Found existing root folder", id);
+        this.#cachedFolderId = id;
         return id;
       }
+    } catch (e) {
+      return err((e as Error).message);
+    }
+  }
 
-      const createRequest = api.makeCreateRequest({
-        name: GOOGLE_DRIVE_FOLDER_NAME,
-        mimeType: GOOGLE_DRIVE_FOLDER_MIME_TYPE,
-      });
+  async findOrCreateFolder(): Promise<Outcome<string>> {
+    const existing = await this.findFolder();
+    if (typeof existing === "string" && existing) {
+      return existing;
+    }
+
+    const accessToken = await getAccessToken(this.vendor);
+    if (!accessToken) {
+      return err("No access token");
+    }
+    const api = new Files({ kind: "bearer", token: accessToken });
+    const createRequest = api.makeCreateRequest({
+      name: GOOGLE_DRIVE_FOLDER_NAME,
+      mimeType: GOOGLE_DRIVE_FOLDER_MIME_TYPE,
+    });
+    try {
       const { id } = (await (await fetch(createRequest)).json()) as {
         id: string;
       };
       console.log("Google Drive: Created new root folder", id);
+      this.#cachedFolderId = id;
       return id;
     } catch (e) {
       return err((e as Error).message);
