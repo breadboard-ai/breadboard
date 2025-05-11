@@ -6,8 +6,6 @@
 
 import { err, type Outcome } from "@google-labs/breadboard";
 
-import type { Readable } from "stream";
-
 // PORTED FROM
 // packages/board-server/src/server/blobs/utils/gemini-file-api.ts
 // TODO: Deduplicate (probably in favor of this one)
@@ -96,7 +94,7 @@ class GeminiFileApi {
   }
 
   #createUploadRequest(
-    body: Buffer,
+    body: ArrayBuffer,
     uploadUrl: string,
     length: number,
     offset: number,
@@ -149,12 +147,16 @@ class GeminiFileApi {
   }
 
   async upload(
-    length: string | number,
-    mimeType: string,
+    response: Response,
     displayName: string,
-    body: Readable
+    mimeType = "application/pdf"
   ): Promise<Outcome<FileAPIMetadata>> {
     try {
+      // Unfortunately, needs to read it all into memory
+      // to get the final size.
+      const blob = await response.blob();
+      const length = blob.size;
+
       const initializing = await fetch(
         this.#createInitialRequest(length, mimeType, displayName)
       );
@@ -170,11 +172,11 @@ class GeminiFileApi {
 
       let offset = 0;
 
-      for await (const buffer of readInChunks(body)) {
-        const finalize = buffer.length < CHUNK_GRANULARITY;
-        const length = buffer.length;
+      for await (const array of readInChunks(blob)) {
+        const finalize = array.byteLength < CHUNK_GRANULARITY;
+        const length = array.byteLength;
         const uploading = await fetch(
-          this.#createUploadRequest(buffer, uploadUrl, length, offset, finalize)
+          this.#createUploadRequest(array, uploadUrl, length, offset, finalize)
         );
         if (!uploading.ok) {
           return err(await uploading.text());
@@ -203,20 +205,27 @@ class GeminiFileApi {
   }
 }
 
-async function* readInChunks(stream: Readable) {
-  let buffer = Buffer.alloc(0);
-
-  for await (const chunk of stream) {
-    buffer = Buffer.concat([buffer, chunk]);
-
-    while (buffer.length >= CHUNK_GRANULARITY) {
-      yield buffer.subarray(0, CHUNK_GRANULARITY);
-      buffer = buffer.subarray(CHUNK_GRANULARITY);
-    }
-  }
-
-  if (buffer.length > 0) {
-    yield buffer;
+async function* readInChunks(blob: Blob) {
+  let offset = 0;
+  const size = blob.size;
+  while (offset < size) {
+    const currentChunkSize = Math.min(CHUNK_GRANULARITY, size - offset);
+    const chunk = blob.slice(offset, offset + currentChunkSize);
+    const reader = new FileReader();
+    yield new Promise<ArrayBuffer>((resolve, reject) => {
+      reader.onload = (event) => {
+        if (event.target && event.target.result instanceof ArrayBuffer) {
+          resolve(event.target.result);
+        } else {
+          reject(new Error(`Failed to read chunk as ArrayBuffer`));
+        }
+      };
+      reader.onerror = (event) => {
+        reject(new Error(`Error reading chunk: ${event.target?.error}`));
+      };
+      reader.readAsArrayBuffer(chunk);
+    });
+    offset += currentChunkSize;
   }
 }
 

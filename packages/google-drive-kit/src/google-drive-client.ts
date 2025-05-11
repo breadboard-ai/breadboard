@@ -40,6 +40,10 @@ export class GoogleDriveClient {
     this.#publicApiKey = options.publicApiKey;
   }
 
+  async accessToken(): Promise<string> {
+    return this.#getUserAccessToken();
+  }
+
   async getFile(
     fileId: string,
     options?: ReadFileOptions

@@ -364,7 +364,7 @@ class GoogleDriveBoardServer
   }
 
   dataPartTransformer(_graphUrl: URL): DataPartTransformer {
-    return new GoogleDriveDataPartTransformer();
+    return new GoogleDriveDataPartTransformer(this.#googleDriveClient);
   }
 
   startingURL(): URL | null {
