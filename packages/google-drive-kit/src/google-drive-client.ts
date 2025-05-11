@@ -36,16 +36,16 @@ export class GoogleDriveClient {
     this.#publicApiKey = options.publicApiKey;
   }
 
-  async readFile(
+  async getFile(
     fileId: string,
     options?: ReadFileOptions
   ): Promise<gapi.client.drive.File> {
-    let response = await this.#readFile(fileId, options, {
+    let response = await this.#getFile(fileId, options, {
       kind: "bearer",
       token: await this.#getUserAccessToken(),
     });
     if (response.status === 404) {
-      response = await this.#readFile(fileId, options, {
+      response = await this.#getFile(fileId, options, {
         kind: "key",
         key: this.#publicApiKey,
       });
@@ -60,7 +60,7 @@ export class GoogleDriveClient {
     );
   }
 
-  #readFile(
+  #getFile(
     fileId: string,
     options: ReadFileOptions | undefined,
     authorization: GoogleApiAuthorization
@@ -69,6 +69,43 @@ export class GoogleDriveClient {
     if (options?.fields?.length) {
       url.searchParams.set("fields", options.fields.join(","));
     }
+    return fetch(url, {
+      headers: this.#makeHeaders(authorization),
+      signal: options?.signal,
+    });
+  }
+
+  async getFileMedia(
+    fileId: string,
+    options?: BaseRequestOptions
+  ): Promise<Response> {
+    let response = await this.#getFileMedia(fileId, options, {
+      kind: "bearer",
+      token: await this.#getUserAccessToken(),
+    });
+    if (response.status === 404) {
+      response = await this.#getFileMedia(fileId, options, {
+        kind: "key",
+        key: this.#publicApiKey,
+      });
+    }
+    // TODO(aomarks) Also try falling back to the proxy.
+    if (response.status === 200) {
+      return response;
+    }
+    throw new Error(
+      `Google Drive readFile ${response.status} error: ` +
+        (await response.text())
+    );
+  }
+
+  #getFileMedia(
+    fileId: string,
+    options: BaseRequestOptions | undefined,
+    authorization: GoogleApiAuthorization
+  ): Promise<Response> {
+    const url = this.#makeUrl(`drive/v3/files/${fileId}`, authorization);
+    url.searchParams.set("alt", "media");
     return fetch(url, {
       headers: this.#makeHeaders(authorization),
       signal: options?.signal,

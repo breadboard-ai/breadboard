@@ -49,7 +49,7 @@ export class GoogleDriveFileViewer extends LitElement {
         return undefined;
       }
       try {
-        return await googleDriveClient.readFile(fileId, {
+        return await googleDriveClient.getFile(fileId, {
           fields: ["name", "webViewLink", "thumbnailLink", "iconLink"],
           signal,
         });

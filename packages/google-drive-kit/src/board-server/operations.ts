@@ -17,7 +17,6 @@ import {
   type AppProperties,
   type DriveFile,
   type DriveFileQuery,
-  type GoogleApiAuthorization,
 } from "./api.js";
 
 export { DriveOperations, PROTOCOL };
@@ -35,8 +34,6 @@ export type GraphInfo = {
   title: string;
   tags: GraphTag[];
 };
-
-let alreadyWarnedAboutMissingPublicApiKey = false;
 
 class DriveOperations {
   readonly #publicApiKey?: string;
@@ -241,50 +238,6 @@ class DriveOperations {
     const fileRequest = await fetch(api.makeQueryRequest(query));
     const response: DriveFileQuery = await fileRequest.json();
     return response.files.map((file) => file.id);
-  }
-
-  async readGraphFromDrive(url: URL): Promise<GraphDescriptor | null> {
-    const fileId = url.href.replace(`${this.url.href}/`, "");
-    let response = await this.#readFileWithUserAuth(fileId);
-    if (response?.status === 404) {
-      response = await this.#readFileWithPublicAuth(fileId);
-    }
-    if (response?.status === 200) {
-      const graph = (await response.json()) as GraphDescriptor;
-      if (graph && !("error" in graph)) {
-        return graph;
-      }
-    }
-    return null;
-  }
-
-  async #readFileWithUserAuth(fileId: string): Promise<Response | null> {
-    const token = await getAccessToken(this.vendor);
-    if (!token) {
-      return null;
-    }
-    return this.#readFile(fileId, { kind: "bearer", token });
-  }
-
-  async #readFileWithPublicAuth(fileId: string): Promise<Response | null> {
-    if (!this.#publicApiKey) {
-      if (!alreadyWarnedAboutMissingPublicApiKey) {
-        console.warn(
-          "Could not read a potentially public Google Drive file" +
-            " because a Google Drive API key was not configured."
-        );
-        alreadyWarnedAboutMissingPublicApiKey = true;
-      }
-      return null;
-    }
-    return this.#readFile(fileId, { kind: "key", key: this.#publicApiKey });
-  }
-
-  async #readFile(
-    fileId: string,
-    authorization: GoogleApiAuthorization
-  ): Promise<Response> {
-    return fetch(new Files(authorization).makeLoadRequest(fileId));
   }
 
   async findOrCreateFolder(): Promise<Outcome<string>> {
