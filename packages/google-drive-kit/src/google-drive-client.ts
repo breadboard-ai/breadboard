@@ -72,7 +72,7 @@ export class GoogleDriveClient {
           getMode: "GET_MODE_GET_MEDIA",
         } satisfies GetFileProxyRequest),
         headers: {
-          authorization: `Bearer ${this.#getUserAccessToken()}`,
+          authorization: `Bearer ${await this.#getUserAccessToken()}`,
           ["content-type"]: "application/json",
         },
         signal: options?.signal,
@@ -141,7 +141,7 @@ export class GoogleDriveClient {
           getMode: "GET_MODE_GET_MEDIA",
         } satisfies GetFileProxyRequest),
         headers: {
-          authorization: `Bearer ${this.#getUserAccessToken()}`,
+          authorization: `Bearer ${await this.#getUserAccessToken()}`,
           ["content-type"]: "application/json",
         },
         signal: options?.signal,
@@ -212,7 +212,7 @@ export class GoogleDriveClient {
           mimeType: options.mimeType,
         } satisfies GetFileProxyRequest),
         headers: {
-          authorization: `Bearer ${this.#getUserAccessToken()}`,
+          authorization: `Bearer ${await this.#getUserAccessToken()}`,
           ["content-type"]: "application/json",
         },
         signal: options?.signal,
