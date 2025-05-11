@@ -17,6 +17,7 @@ document.body.appendChild(
     },
     googleDrive: {
       publishPermissions: [],
+      publicApiKey: "",
     },
   })
 );
