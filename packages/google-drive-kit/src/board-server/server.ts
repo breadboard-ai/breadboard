@@ -26,6 +26,7 @@ import {
 import { DriveOperations, PROTOCOL } from "./operations.js";
 import { SaveDebouncer } from "./save-debouncer.js";
 import { SaveEvent } from "./events.js";
+import { type GoogleDriveClient } from "../google-drive-client.js";
 
 export { GoogleDriveBoardServer };
 
@@ -56,6 +57,7 @@ class GoogleDriveBoardServer
     title: string,
     user: User,
     vendor: TokenVendor,
+    googleDriveClient: GoogleDriveClient,
     publicApiKey?: string,
     featuredGalleryFolderId?: string
   ) {
@@ -92,6 +94,7 @@ class GoogleDriveBoardServer
         configuration,
         user,
         vendor,
+        googleDriveClient,
         publicApiKey,
         featuredGalleryFolderId
       );
@@ -107,6 +110,7 @@ class GoogleDriveBoardServer
   public readonly extensions: BoardServerExtension[] = [];
   public readonly capabilities: BoardServerCapabilities;
   public readonly ops: DriveOperations;
+  readonly #googleDriveClient: GoogleDriveClient;
 
   projects: Promise<BoardServerProject[]>;
   kits: Kit[];
@@ -116,6 +120,7 @@ class GoogleDriveBoardServer
     public readonly configuration: BoardServerConfiguration,
     public readonly user: User,
     public readonly vendor: TokenVendor,
+    googleDriveClient: GoogleDriveClient,
     publicApiKey?: string,
     featuredGalleryFolderId?: string
   ) {
@@ -129,12 +134,13 @@ class GoogleDriveBoardServer
     );
 
     this.url = configuration.url;
-    this.projects = this.refreshProjects();
     this.kits = configuration.kits;
     this.users = configuration.users;
     this.secrets = configuration.secrets;
     this.extensions = configuration.extensions;
     this.capabilities = configuration.capabilities;
+    this.#googleDriveClient = googleDriveClient;
+    this.projects = this.refreshProjects();
   }
 
   #saving = new Map<string, SaveDebouncer>();
@@ -149,8 +155,11 @@ class GoogleDriveBoardServer
   async refreshProjects(): Promise<BoardServerProject[]> {
     const userGraphs = await this.ops.readGraphList();
     if (!ok(userGraphs)) return [];
-    const featuredGraphs = await this.ops.readFeaturedGalleryGraphList();
-    if (!ok(featuredGraphs)) return [];
+    let featuredGraphs = await this.ops.readFeaturedGalleryGraphList();
+    if (!ok(featuredGraphs)) {
+      console.warn(featuredGraphs.$error);
+      featuredGraphs = [];
+    }
     const files = [...userGraphs, ...featuredGraphs];
     const canAccess = true;
     const access = new Map([
@@ -352,7 +361,7 @@ class GoogleDriveBoardServer
     if (!this.canProvide(url)) {
       return false;
     }
-    return new URL('/board/proxy', location.origin).href
+    return new URL("/board/proxy", location.origin).href;
   }
 
   watch(_callback: ChangeNotificationCallback) {}

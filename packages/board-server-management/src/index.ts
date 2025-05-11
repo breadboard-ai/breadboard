@@ -19,6 +19,7 @@ import {
 
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 import { TokenVendor } from "@breadboard-ai/connection-client";
+import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 
 const BOARD_SERVER_LISTING_DB = "board-server";
 const BOARD_SERVER_LISTING_VERSION = 1;
@@ -41,7 +42,8 @@ interface BoardServerListing extends idb.DBSchema {
 }
 
 export async function getBoardServers(
-  tokenVendor?: TokenVendor
+  tokenVendor?: TokenVendor,
+  googleDriveClient?: GoogleDriveClient
 ): Promise<BoardServer[]> {
   const storeUrls = await readAllServers();
 
@@ -62,7 +64,21 @@ export async function getBoardServers(
         return FileSystemBoardServer.from(url, title, user, handle);
       }
 
-      if (url.startsWith(GoogleDriveBoardServer.PROTOCOL) && tokenVendor) {
+      if (url.startsWith(GoogleDriveBoardServer.PROTOCOL)) {
+        if (!googleDriveClient) {
+          console.error(
+            "The Google Drive board server could not be initialized because" +
+              " a GoogleDriveClient was not provided"
+          );
+          return null;
+        }
+        if (!tokenVendor) {
+          console.error(
+            "The Google Drive board server could not be initialized because" +
+              " a TokenVendor was not provided"
+          );
+          return null;
+        }
         const googleDrivePublicApiKey = import.meta.env
           .VITE_GOOGLE_DRIVE_PUBLIC_API_KEY;
         if (!googleDrivePublicApiKey) {
@@ -85,6 +101,7 @@ export async function getBoardServers(
           title,
           user,
           tokenVendor,
+          googleDriveClient,
           googleDrivePublicApiKey,
           googleDriveFeaturedGalleryFolderId
         );

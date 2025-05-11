@@ -6,39 +6,38 @@
 
 import {
   GraphIdentifier,
-  InputValues,
   NodeIdentifier,
   NodeTypeIdentifier,
 } from "@breadboard-ai/types";
-import {
-  DescribeResultCacheArgs,
-  InspectableEdge,
-  MutableGraph,
-  NodeTypeDescriberOptions,
-} from "../types.js";
+import { envFromGraphDescriptor } from "../../data/file-system/assets.js";
+import { assetsFromGraphDescriptor } from "../../data/index.js";
+import { getHandler } from "../../handler.js";
+import { createLoader } from "../../loader/index.js";
+import { invokeMainDescriber } from "../../sandbox/invoke-describer.js";
 import {
   NodeDescriberContext,
   NodeDescriberFunction,
   NodeDescriberResult,
   NodeHandler,
 } from "../../types.js";
+import { SchemaDiffer } from "../../utils/schema-differ.js";
+import { contextFromMutableGraph } from "../graph-store.js";
+import {
+  DescribeResultCacheArgs,
+  InspectableEdge,
+  MutableGraph,
+  NodeTypeDescriberOptions,
+} from "../types.js";
+import { UpdateEvent } from "./event.js";
+import { GraphDescriptorHandle } from "./graph-descriptor-handle.js";
 import {
   describeInput,
   describeOutput,
   edgesToSchema,
   EdgeType,
 } from "./schemas.js";
-import { createLoader } from "../../loader/index.js";
-import { getHandler } from "../../handler.js";
-import { GraphDescriptorHandle } from "./graph-descriptor-handle.js";
-import { contextFromMutableGraph } from "../graph-store.js";
-import { SchemaDiffer } from "../../utils/schema-differ.js";
-import { UpdateEvent } from "./event.js";
-import { invokeMainDescriber } from "../../sandbox/invoke-describer.js";
-import { assetsFromGraphDescriptor } from "../../data/index.js";
-import { envFromGraphDescriptor } from "../../data/file-system/assets.js";
 
-export { NodeTypeDescriberManager };
+export { NodeDescriberManager, emptyResult };
 
 function emptyResult(): NodeDescriberResult {
   return {
@@ -47,22 +46,8 @@ function emptyResult(): NodeDescriberResult {
   };
 }
 
-class NodeTypeDescriberManager implements DescribeResultCacheArgs {
+class NodeDescriberManager implements DescribeResultCacheArgs {
   public constructor(public readonly mutable: MutableGraph) {}
-
-  initialType(): NodeDescriberResult {
-    return emptyResult();
-  }
-
-  updatedType(): void {
-    this.mutable.store.dispatchEvent(
-      new UpdateEvent(this.mutable.id, "", "", [])
-    );
-  }
-
-  latestType(type: NodeTypeIdentifier): Promise<NodeDescriberResult> {
-    return this.getLatestDescription(type, "", { asType: true });
-  }
 
   initial(
     graphId: GraphIdentifier,
@@ -72,13 +57,12 @@ class NodeTypeDescriberManager implements DescribeResultCacheArgs {
     if (!node) {
       return emptyResult();
     }
-    return NodeTypeDescriberManager.asWired(node.incoming(), node.outgoing());
+    return NodeDescriberManager.asWired(node.incoming(), node.outgoing());
   }
 
   async latest(
     graphId: GraphIdentifier,
-    nodeId: NodeIdentifier,
-    inputs?: InputValues
+    nodeId: NodeIdentifier
   ): Promise<NodeDescriberResult> {
     const node = this.mutable.nodes.get(nodeId, graphId);
     if (!node) {
@@ -90,7 +74,7 @@ class NodeTypeDescriberManager implements DescribeResultCacheArgs {
       {
         incoming: node.incoming(),
         outgoing: node.outgoing(),
-        inputs: { ...node.configuration(), ...inputs },
+        inputs: { ...node.configuration() },
       }
     );
     return result;
@@ -212,7 +196,7 @@ class NodeTypeDescriberManager implements DescribeResultCacheArgs {
 
     const kits = [...this.mutable.store.kits];
     const describer = await this.#getDescriber(type);
-    const asWired = NodeTypeDescriberManager.asWired(
+    const asWired = NodeDescriberManager.asWired(
       options.incoming,
       options.outgoing
     );

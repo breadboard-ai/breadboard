@@ -13,7 +13,7 @@ describe("bbrt-main", () => {
       connectionRedirectUrl: "",
       connectionServerUrl: "",
       plugins: { input: [] },
-      googleDrive: { publishPermissions: [] },
+      googleDrive: { publishPermissions: [], publicApiKey: "" },
     });
     expect(c).instanceOf(HTMLElement);
   });

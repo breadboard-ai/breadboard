@@ -81,6 +81,7 @@ class GraphBasedNodeHandler implements NodeHandlerObject {
       }
       mutable = graphStore.get(adding.result)!;
     }
+    mutable = await graphStore.getLatest(mutable);
     if (this.#graph.moduleId) {
       const moduleId = this.#graph.moduleId;
       const graph = this.#graph.graph;

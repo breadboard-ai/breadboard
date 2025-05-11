@@ -1,5 +1,5 @@
 /**
- * @fileoverview Add a description for your module here.
+ * @fileoverview Searches weather information on Google Search.
  */
 
 import { ok, err, toLLMContent, toText, defaultLLMContent } from "./a2/utils";

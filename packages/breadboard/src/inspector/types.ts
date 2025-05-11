@@ -125,7 +125,7 @@ export type InspectableNode = {
    * This function is designed to match the output of the
    * `NodeDescriberFunction`.
    */
-  describe(inputs?: InputValues): Promise<NodeDescriberResult>;
+  describe(): Promise<NodeDescriberResult>;
   /**
    * Returns configuration of the node.
    * TODO: Use a friendlier to inspection return type.
@@ -439,18 +439,13 @@ export type InspectableGraphOptions = {
 };
 
 export type DescribeResultCacheArgs = {
-  initialType(): NodeDescriberResult;
-  latestType(type: NodeTypeIdentifier): Promise<NodeDescriberResult>;
-  updatedType(type: NodeTypeIdentifier): void;
-
   initial(
     graphId: GraphIdentifier,
     nodeId: NodeIdentifier
   ): NodeDescriberResult;
   latest(
     graphId: GraphIdentifier,
-    nodeId: NodeIdentifier,
-    inputs?: InputValues
+    nodeId: NodeIdentifier
   ): Promise<NodeDescriberResult>;
   willUpdate(previous: NodeDescriberResult, current: NodeDescriberResult): void;
   updated(graphId: GraphIdentifier, nodeId: NodeIdentifier): void;
@@ -752,12 +747,22 @@ export type InspectableDescriberResultCacheEntry = {
   updating: boolean;
 };
 
+export type DescribeResultTypeCacheArgs = {
+  initial(): NodeDescriberResult;
+  latest(type: NodeTypeIdentifier): Promise<NodeDescriberResult>;
+  updated(type: NodeTypeIdentifier): void;
+};
+
+export type InspectableDescriberResultTypeCache = {
+  get(type: NodeTypeIdentifier): InspectableDescriberResultCacheEntry;
+  update(affectedTypes: NodeTypeIdentifier[]): void;
+  clear(): void;
+};
+
 export type InspectableDescriberResultCache = {
-  getByType(type: NodeTypeIdentifier): InspectableDescriberResultCacheEntry;
   get(
     id: NodeIdentifier,
-    graphId: GraphIdentifier,
-    inputs?: InputValues
+    graphId: GraphIdentifier
   ): InspectableDescriberResultCacheEntry;
   update(affectedNodes: AffectedNode[]): void;
   clear(visualOnly: boolean, affectedNodes: AffectedNode[]): void;
@@ -823,6 +828,7 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> &
     readonly sandbox: Sandbox;
     readonly loader: GraphLoader;
     readonly fileSystem: FileSystem;
+    readonly types: InspectableDescriberResultTypeCache;
 
     get(mainGraphId: MainGraphIdentifier): MutableGraph | undefined;
 

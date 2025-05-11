@@ -20,6 +20,7 @@ export interface Environment {
   };
   googleDrive: {
     publishPermissions: GoogleDrivePermission[];
+    publicApiKey: string;
   };
 }
 

@@ -153,7 +153,8 @@
     "@breadboard-ai/types": "0.7.0",
     "@google-labs/breadboard": "^0.34.0",
     "@google-labs/core-kit": "^0.19.0",
-    "@google-labs/template-kit": "^0.3.19"
+    "@google-labs/template-kit": "^0.3.19",
+    "@types/gapi.client.drive-v3": "^0.0.5"
   },
   "devDependencies": {
     "@breadboard-ai/build-code": "0.2.4",

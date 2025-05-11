@@ -205,9 +205,9 @@ export class AppPreview extends LitElement {
               return;
             }
 
-            let url = splashScreen.storedData.handle;
-            if (url.startsWith(".") && this.graph?.url) {
-              url = new URL(url, this.graph?.url).href;
+            const url = imageHandleToUrl(splashScreen.storedData.handle)?.href;
+            if (!url) {
+              return "";
             }
 
             const cachedSplashImage = this.#splashImage.get(url);
@@ -444,4 +444,23 @@ export class AppPreview extends LitElement {
       </div>
     `;
   }
+}
+
+/**
+ * Blob handles usually look like "../../blobs/<UUID>". It's a bit unclear why
+ * they are serialized with a very specific relative path and whether that's
+ * always consistent, so let's be lenient and assume any URL with a blobs/ path
+ * component is a blob.
+ */
+const BLOB_HANDLE_PATTERN = /^[./]*blobs\/(.+)/;
+
+function imageHandleToUrl(handle: string): URL | undefined {
+  const blobMatch = handle.match(BLOB_HANDLE_PATTERN);
+  if (blobMatch) {
+    const blobId = blobMatch[1];
+    if (blobId) {
+      return new URL(`/board/blobs/${blobId}`, window.location.href);
+    }
+  }
+  return undefined;
 }

@@ -100,6 +100,7 @@ import {
   signinAdapterContext,
 } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
 import { sideBoardRuntime } from "@breadboard-ai/shared-ui/contexts/side-board-runtime.js";
+import { googleDriveClientContext } from "@breadboard-ai/shared-ui/contexts/google-drive-client-context.js";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { OverflowAction } from "@breadboard-ai/shared-ui/types/types.js";
 import { MAIN_BOARD_ID } from "@breadboard-ai/shared-ui/constants/constants.js";
@@ -107,6 +108,7 @@ import { createA2Server } from "@breadboard-ai/a2";
 import { envFromSettings } from "./utils/env-from-settings";
 import { getGoogleDriveBoardService } from "@breadboard-ai/board-server-management";
 import { type GoogleDrivePermission } from "@breadboard-ai/shared-ui/contexts/environment.js";
+import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 
@@ -190,6 +192,7 @@ const ENVIRONMENT: BreadboardUI.Contexts.Environment = {
     publishPermissions: JSON.parse(
       import.meta.env.VITE_GOOGLE_DRIVE_PUBLISH_PERMISSIONS || `[]`
     ) as GoogleDrivePermission[],
+    publicApiKey: import.meta.env.VITE_GOOGLE_DRIVE_PUBLIC_API_KEY ?? "",
   },
 };
 
@@ -304,6 +307,9 @@ export class Main extends LitElement {
 
   @provide({ context: signinAdapterContext })
   accessor signinAdapter!: SigninAdapter;
+
+  @provide({ context: googleDriveClientContext })
+  accessor googleDriveClient: GoogleDriveClient | undefined;
 
   @state()
   accessor selectedBoardServer = "Browser Storage";
@@ -428,6 +434,21 @@ export class Main extends LitElement {
     // Due to https://github.com/lit/lit/issues/4675, context provider values
     // must be done in the constructor.
     this.environment = ENVIRONMENT;
+    this.googleDriveClient = new GoogleDriveClient({
+      apiBaseUrl: "https://www.googleapis.com",
+      proxyUrl:
+        "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/getOpalFile",
+      publicApiKey: ENVIRONMENT.googleDrive.publicApiKey,
+      getUserAccessToken: async () => {
+        const token = await this.signinAdapter.refresh();
+        if (token?.state === "valid") {
+          return token.grant.access_token;
+        }
+        throw new Error(
+          `User is unexpectedly signed out, or SigninAdapter is misconfigured`
+        );
+      },
+    });
 
     const boardServerLocation = globalThis.sessionStorage.getItem(
       `${STORAGE_PREFIX}-board-server`
@@ -537,6 +558,7 @@ export class Main extends LitElement {
             config.kits || [],
             config.moduleInvocationFilter
           ),
+          googleDriveClient: this.googleDriveClient,
         });
       })
       .then((runtime) => {
@@ -945,7 +967,9 @@ export class Main extends LitElement {
         runner?.run({ [signInKey]: signInAdapter.accessToken() });
       } else {
         signInAdapter.refresh().then((token) => {
-          runner?.run({ [signInKey]: token?.grant?.access_token });
+          if (!runner?.running()) {
+            runner?.run({ [signInKey]: token?.grant?.access_token });
+          }
         });
       }
       return;
@@ -2232,17 +2256,22 @@ export class Main extends LitElement {
   }
 
   #createItemList(): OverflowAction[] {
-    const list: OverflowAction[] = Object.entries(
-      this.tab?.graph.modules ?? {}
-    ).map(([name, module]) => {
-      return {
-        name,
-        icon: module.metadata?.runnable ? "step" : "code",
-        title: module.metadata?.title ?? name,
-        secondaryAction: "delete",
-        disabled: this.#selectionState?.selectionState.modules.has(name),
-      };
-    });
+    const list: OverflowAction[] = Object.entries(this.tab?.graph.modules ?? {})
+      .map(([name, module]) => {
+        return {
+          name,
+          icon: module.metadata?.runnable ? "step" : "code",
+          title: module.metadata?.title ?? name,
+          secondaryAction: "delete",
+          disabled: this.#selectionState?.selectionState.modules.has(name),
+        };
+      })
+      .sort((a, b) => {
+        if (a.title.toLocaleLowerCase() > b.title.toLocaleLowerCase()) return 1;
+        if (a.title.toLocaleLowerCase() < b.title.toLocaleLowerCase())
+          return -1;
+        return 0;
+      });
 
     const hasNoGraphsSelected =
       this.#selectionState?.selectionState.graphs.size === 0;

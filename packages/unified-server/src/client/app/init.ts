@@ -119,6 +119,7 @@ async function createEnvironment(
     },
     googleDrive: {
       publishPermissions: [],
+      publicApiKey: "",
     },
   };
 }
