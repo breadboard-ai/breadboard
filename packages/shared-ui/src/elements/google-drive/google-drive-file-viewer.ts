@@ -1,15 +1,15 @@
 /**
  * @license
- * Copyright 2024 Google LLC
+ * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { consume } from "@lit/context";
+import { Task } from "@lit/task";
 import { LitElement, css, html } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
-import { type InputEnterEvent } from "../../events/events.js";
-import "../connection/connection-input.js";
-import { loadDriveApi, loadGapiClient } from "./google-apis.js";
-import { until } from "lit/directives/until.js";
+import { customElement, property } from "lit/decorators.js";
+import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 
 @customElement("bb-google-drive-file-viewer")
 export class GoogleDriveFileViewer extends LitElement {
@@ -36,105 +36,56 @@ export class GoogleDriveFileViewer extends LitElement {
     }
   `;
 
-  @state()
-  private accessor _authorization:
-    | { clientId: string; secret: string; expiresIn?: number }
-    | undefined = undefined;
-
   @property()
-  accessor fileUri: string | null = null;
+  accessor fileId: string | null = null;
 
-  @property()
-  accessor mimeType: string | null = null;
+  @consume({ context: googleDriveClientContext })
+  @property({ attribute: false })
+  accessor googleDriveClient: GoogleDriveClient | undefined;
 
-  @property()
-  accessor connectionName = "$sign-in";
-
-  #picker?: google.picker.Picker;
-
-  override async connectedCallback(): Promise<void> {
-    super.connectedCallback();
-  }
+  readonly #loadTask = new Task(this, {
+    task: async ([googleDriveClient, fileId], { signal }) => {
+      if (!googleDriveClient || !fileId) {
+        return undefined;
+      }
+      try {
+        return await googleDriveClient.readFile(fileId, {
+          fields: ["name", "webViewLink", "thumbnailLink", "iconLink"],
+          signal,
+        });
+      } catch (e) {
+        console.error(e);
+        throw e;
+      }
+    },
+    args: () => [this.googleDriveClient, this.fileId],
+  });
 
   override render() {
-    if (this._authorization === undefined) {
-      return html`<bb-connection-input
-        @bbinputenter=${this.#onToken}
-        connectionId=${this.connectionName}
-      ></bb-connection-input>`;
-    }
-
-    if (!this.fileUri) {
-      return html`No file set`;
-    }
-
-    const driveFile = loadGapiClient()
-      .then(() => {
-        if (!this._authorization) {
-          return;
+    return this.#loadTask.render({
+      pending: () =>
+        html`<div class="loading">Loading Google Drive file...</div>`,
+      error: () => `Error loading Google Drive file`,
+      complete: (file) => {
+        if (!file) {
+          return `Unable to find Google Drive document`;
         }
-        gapi.auth.setToken({
-          access_token: this._authorization.secret,
-          error: "",
-          expires_in: `${this._authorization.expiresIn ?? 3600}`,
-          state: "https://www.googleapis.com/auth/drive",
-        });
-      })
-      .then(() => {
-        return loadDriveApi();
-      })
-      .then((drive) => {
-        if (!this.fileUri) {
-          return null;
-        }
-
-        return drive.files.get({
-          fileId: this.fileUri,
-          fields: "*",
-        });
-      })
-      .then((item) => {
-        if (!item) {
-          return html`Unable to find Google Drive document`;
-        }
-
-        if (item.result.hasThumbnail) {
-          return html`<a href="${item.result.webViewLink}" target="_blank"
-            ><img
+        return html`
+          <a href=${file.webViewLink ?? ""} target="_blank">
+            <img
               cross-origin
-              src=${item.result.thumbnailLink}
-              alt="${item.result.name ?? "Google Document"}"
-          /></a>`;
-        } else {
-          return html`<a href="${item.result.webViewLink}" target="_blank"
-            ><img
-              cross-origin
-              src=${item.result.iconLink}
-              alt="${item.result.name ?? "Google Document"}"
-          /></a>`;
-        }
-      });
-
-    return html`${until(
-      driveFile,
-      html`<div class="loading">Loading Google Drive file...</div>`
-    )}`;
+              src=${file.thumbnailLink || file.iconLink || ""}
+              alt=${file.name ?? "Google Document"}
+            />
+          </a>
+        `;
+      },
+    });
   }
+}
 
-  #onToken(event: InputEnterEvent) {
-    // Prevent ui-controller from receiving an unexpected bbinputenter event.
-    //
-    // TODO(aomarks) Let's not re-use bbinputenter here, we should instead use
-    // bbtokengranted, but there is a small bit of refactoring necessary for
-    // that to work.
-    event.stopImmediatePropagation();
-    const { clientId, secret, expiresIn } = event.data as {
-      clientId?: string;
-      secret?: string;
-      expiresIn?: number;
-    };
-    if (clientId && secret) {
-      this._authorization = { clientId, secret, expiresIn };
-    }
+declare global {
+  interface HTMLElementTagNameMap {
+    "bb-google-drive-file-viewer": GoogleDriveFileViewer;
   }
 }

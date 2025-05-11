@@ -6,7 +6,7 @@
 
 /// <reference types="@types/gapi.client.drive-v3" />
 
-import type { GoogleApiAuthorization } from "./board-server/api.js";
+import { type GoogleApiAuthorization } from "./board-server/api.js";
 
 export interface GoogleDriveClientOptions {
   apiBaseUrl: string;
