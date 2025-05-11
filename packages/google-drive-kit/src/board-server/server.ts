@@ -14,6 +14,7 @@ import {
   type BoardServerExtension,
   type BoardServerProject,
   type ChangeNotificationCallback,
+  type DataPartTransformer,
   type GraphDescriptor,
   type GraphProviderCapabilities,
   type GraphProviderExtendedCapabilities,
@@ -27,6 +28,7 @@ import { DriveOperations, PROTOCOL } from "./operations.js";
 import { SaveDebouncer } from "./save-debouncer.js";
 import { SaveEvent } from "./events.js";
 import { type GoogleDriveClient } from "../google-drive-client.js";
+import { GoogleDriveDataPartTransformer } from "./data-part-transformer.js";
 
 export { GoogleDriveBoardServer };
 
@@ -351,6 +353,10 @@ class GoogleDriveBoardServer
     });
 
     return items;
+  }
+
+  dataPartTransformer(_graphUrl: URL): DataPartTransformer {
+    return new GoogleDriveDataPartTransformer();
   }
 
   startingURL(): URL | null {
