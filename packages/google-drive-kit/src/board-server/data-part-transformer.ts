@@ -11,13 +11,33 @@ import type {
 } from "@breadboard-ai/types";
 import {
   err,
+  isFileDataCapabilityPart,
+  ok,
   type DataPartTransformer,
   type Outcome,
 } from "@google-labs/breadboard";
+import type { GoogleDriveClient } from "../google-drive-client.js";
 
 export { GoogleDriveDataPartTransformer };
 
+export type GoogleDriveToGeminiResponse = {
+  part: FileDataPart;
+};
+
 class GoogleDriveDataPartTransformer implements DataPartTransformer {
+  constructor(public readonly client: GoogleDriveClient) {}
+
+  async #createRequest(path: string, body: unknown): Promise<Request> {
+    return new Request(path, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        Authorization: `Bearer ${await this.client.accessToken()}`,
+      },
+      body: JSON.stringify(body),
+    });
+  }
+
   async persistPart(
     _graphUrl: URL,
     _part: InlineDataCapabilityPart,
@@ -42,8 +62,9 @@ class GoogleDriveDataPartTransformer implements DataPartTransformer {
 
   async toFileData(
     _graphUrl: URL,
-    _part: StoredDataCapabilityPart | FileDataPart
+    part: StoredDataCapabilityPart | FileDataPart
   ): Promise<Outcome<FileDataPart>> {
+    let mimeType;
     // Called by ProxyClient.proxy to ensure that parts are correctly turned
     // into handles that Gemini API can understand.
     // There are two kinds:
@@ -51,7 +72,27 @@ class GoogleDriveDataPartTransformer implements DataPartTransformer {
     //    as PDF, then uploaded using Gemini File API to get the right fileUri.
     // 2) StoredDataCapabilityPart. These need to be uploaded using
     //    Gemini File API to create the right FileDataPart.
-    const msg = `Converting to FileData is not supported with Google Drive backend`;
+    if (isFileDataCapabilityPart(part)) {
+      mimeType = part.fileData.mimeType;
+      if (isGoogleDriveDocument(part)) {
+        const fileId = part.fileData.fileUri;
+        // TODO: Un-hardcode the path and get rid of the "@foo/bar".
+        const path = `/board/boards/@foo/bar/assets/drive/${fileId}`;
+        const converting = await fetch(
+          await this.#createRequest(path, { part })
+        );
+        if (!converting.ok) return err(await converting.text());
+
+        const converted =
+          (await converting.json()) as Outcome<GoogleDriveToGeminiResponse>;
+        if (!ok(converted)) return converted;
+
+        return converted.part;
+      }
+    } else {
+      mimeType = part.storedData.mimeType;
+    }
+    const msg = `Converting to FileData of type "${mimeType}" is not supported with Google Drive backend`;
     console.debug(msg);
     return err(msg);
   }
@@ -67,4 +108,8 @@ class GoogleDriveDataPartTransformer implements DataPartTransformer {
   addEphemeralBlob(_blob: Blob): StoredDataCapabilityPart {
     throw new Error("Not implemented");
   }
+}
+
+function isGoogleDriveDocument(part: FileDataPart) {
+  return part.fileData.mimeType.startsWith("application/vnd.google-apps.");
 }
