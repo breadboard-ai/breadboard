@@ -808,9 +808,7 @@ export class LLMOutput extends LitElement {
                   )
                 ) {
                   value = html`<bb-google-drive-file-viewer
-                    .fileUri=${part.fileData.fileUri}
-                    .mimeType=${part.fileData.mimeType}
-                    .connectionName=${SIGN_IN_CONNECTION_ID}
+                    .fileId=${part.fileData.fileUri}
                   ></bb-google-drive-file-viewer>`;
                   break;
                 }
