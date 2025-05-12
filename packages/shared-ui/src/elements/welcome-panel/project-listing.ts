@@ -13,7 +13,6 @@ import {
   GraphBoardServerAddEvent,
   GraphBoardServerBlankBoardEvent,
   GraphBoardServerDisconnectEvent,
-  GraphBoardServerLoadRequestEvent,
   GraphBoardServerRefreshEvent,
   GraphBoardServerRenewAccessRequestEvent,
   GraphBoardServerSelectionChangeEvent,
@@ -39,6 +38,7 @@ import {
   type Environment,
 } from "../../contexts/environment.js";
 import { Task, TaskStatus } from "@lit/task";
+import { RecentBoard } from "../../types/types.js";
 
 const MODE_KEY = "bb-project-listing-mode";
 const OVERFLOW_MENU_CLEARANCE = 4;
@@ -77,6 +77,9 @@ export class ProjectListing extends LitElement {
   accessor selectedLocation = "Browser Storage";
 
   @property()
+  accessor recentBoards: RecentBoard[] = [];
+
+  @property()
   accessor filter: string | null = null;
 
   @state()
@@ -91,12 +94,6 @@ export class ProjectListing extends LitElement {
 
   @state()
   accessor mode: "detailed" | "condensed" = "detailed";
-
-  @property()
-  accessor recentItemsKey: string | null = null;
-
-  @property()
-  accessor recencyType: "local" | "session" = "session";
 
   @consume({ context: environmentContext })
   accessor environment!: Environment;
@@ -426,7 +423,6 @@ export class ProjectListing extends LitElement {
     this.#hideBoardServerOverflowMenu.bind(this);
   #attemptFocus = false;
   #attemptScrollUpdate = false;
-  #recentItems: string[] = [];
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -459,17 +455,6 @@ export class ProjectListing extends LitElement {
         }>
       | Map<PropertyKey, unknown>
   ): void {
-    if (
-      changedProperties.has("selectedLocation") ||
-      changedProperties.has("selectedBoardServer")
-    ) {
-      this.recentItemsKey = this.#createUrl(
-        this.selectedBoardServer,
-        this.selectedLocation
-      );
-      this.#restoreRecentItemsForKey(this.recentItemsKey);
-    }
-
     if (
       changedProperties.has("boardServerNavState") ||
       changedProperties.has("boardServers") ||
@@ -620,48 +605,6 @@ export class ProjectListing extends LitElement {
     });
   }
 
-  #restoreRecentItemsForKey(key: string | null) {
-    if (!key) {
-      return;
-    }
-
-    const store =
-      this.recencyType === "local"
-        ? globalThis.localStorage
-        : globalThis.sessionStorage;
-    try {
-      const data = store.getItem(`bb-project-listing-${key}`);
-      if (!data) {
-        return;
-      }
-      const items = JSON.parse(data);
-      if (
-        !Array.isArray(items) ||
-        !items.every((item) => typeof item === "string")
-      ) {
-        return;
-      }
-
-      this.#recentItems = items;
-    } catch (err) {
-      console.warn(err);
-      return;
-    }
-  }
-
-  #saveRecentItemsForKey(key: string | null) {
-    if (!key) {
-      return;
-    }
-
-    const items = JSON.stringify(this.#recentItems);
-    const store =
-      this.recencyType === "local"
-        ? globalThis.localStorage
-        : globalThis.sessionStorage;
-    store.setItem(`bb-project-listing-${key}`, items);
-  }
-
   #focusSearchField() {
     if (!this.#searchRef.value) {
       return;
@@ -679,22 +622,7 @@ export class ProjectListing extends LitElement {
   }
 
   #getCurrentStoreName(_url: string) {
-    // For now, simply return a fixed title string, like "Your flows",
-    // instead of getting the title from the server.
-    // TODO: Figure out what the right thing to do is here.
     return Strings.from("LABEL_TABLE_DESCRIPTION_YOUR_PROJECTS");
-
-    // for (const boardServer of this.boardServers) {
-    //   for (const [location, store] of boardServer.items()) {
-    //     const value = `${boardServer.name}::${store.url ?? location}`;
-
-    //     if (value === url) {
-    //       return store.title;
-    //     }
-    //   }
-    // }
-
-    // return "Unknown Store";
   }
 
   render() {
@@ -801,27 +729,7 @@ export class ProjectListing extends LitElement {
                   </h2>`}
             </div>
           </div>
-          <div
-            id="content"
-            @bbgraphboardserverloadrequest=${({
-              url,
-            }: GraphBoardServerLoadRequestEvent) => {
-              // Track for future invocations.
-              if (this.#recentItems) {
-                const currentIndex = this.#recentItems.findIndex(
-                  (item) => item === url
-                );
-                if (currentIndex === -1) {
-                  this.#recentItems.unshift(url);
-                } else {
-                  const [item] = this.#recentItems.splice(currentIndex, 1);
-                  this.#recentItems.unshift(item);
-                }
-
-                this.#saveRecentItemsForKey(this.recentItemsKey);
-              }
-            }}
-          >
+          <div id="content">
             ${until(
               this.#boardServerContents.then(
                 (store) => {
@@ -842,8 +750,14 @@ export class ProjectListing extends LitElement {
                     )
                     .sort(([, dataA], [, dataB]) => {
                       // Sort by recency.
-                      const indexA = this.#recentItems.indexOf(dataA.url);
-                      const indexB = this.#recentItems.indexOf(dataB.url);
+                      const urlA = new URL(dataA.url);
+                      const urlB = new URL(dataB.url);
+                      const indexA = this.recentBoards.findIndex(
+                        (board) => board.url === urlA.pathname
+                      );
+                      const indexB = this.recentBoards.findIndex(
+                        (board) => board.url === urlB.pathname
+                      );
                       if (indexA !== -1 && indexB === -1) {
                         return -1;
                       }
