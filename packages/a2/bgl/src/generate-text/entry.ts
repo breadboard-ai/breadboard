@@ -76,7 +76,7 @@ async function describe({
       "p-list": {
         type: "boolean",
         title: "Make a list",
-        behavior: ["config", "hint-preview"],
+        behavior: ["config", "hint-preview", "hint-advanced"],
         icon: "summarize",
         description:
           "When checked, this step will try to create a list as its output. Make sure that the prompt asks for a list of some sort",
@@ -104,7 +104,7 @@ async function describe({
         "p-chat": {
           type: "boolean",
           title: "Refine based on user input",
-          behavior: ["config", "hint-preview"],
+          behavior: ["config", "hint-preview", "hint-advanced"],
           icon: "chat",
           description:
             "When checked, this step will chat with the user, asking to review work, requesting additional information, etc.",

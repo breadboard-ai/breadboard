@@ -118,7 +118,7 @@ async function describe({ inputs: { plan } }: DescribeInputs) {
       "z-list": {
         type: "boolean",
         title: "Make a list",
-        behavior: ["config", "hint-preview"],
+        behavior: ["config", "hint-preview", "hint-advanced"],
         icon: "summarize",
         description:
           "When checked, this step will try to create a list as its output. Make sure that the prompt asks for a list of some sort",
@@ -149,7 +149,7 @@ async function describe({ inputs: { plan } }: DescribeInputs) {
 "${STRATEGISTS[1].name}" will build on previous work.
 "${STRATEGISTS[2].name}" will think after each step adjust the list if necessary`,
           type: "string",
-          behavior: ["config", "hint-preview"],
+          behavior: ["config", "hint-preview", "hint-advanced"],
           enum: STRATEGISTS.map((strategist) => strategist.name),
           icon: "joiner",
           default: STRATEGISTS[0].name,

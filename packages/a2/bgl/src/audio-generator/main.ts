@@ -191,7 +191,7 @@ async function describe({ inputs: { text } }: DescribeInputs) {
         },
         voice: {
           type: "string",
-          behavior: ["hint-text", "config"],
+          behavior: ["hint-text", "config", "hint-advanced"],
           title: "Voice",
           icon: "voice-selection",
           enum: VOICES,
