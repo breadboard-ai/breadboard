@@ -812,6 +812,7 @@ export class ProjectListing extends LitElement {
                         <bb-gallery
                           .items=${sampleItems}
                           .pageSize=${/* Unlimited */ -1}
+                          forceCreatorToBeTeam
                         ></bb-gallery>
                       </div>
                     `,
