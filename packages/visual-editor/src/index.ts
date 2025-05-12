@@ -1683,8 +1683,8 @@ export class Main extends LitElement {
       this.#recentBoards.unshift(item);
     }
 
-    if (this.#recentBoards.length > 5) {
-      this.#recentBoards.length = 5;
+    if (this.#recentBoards.length > 50) {
+      this.#recentBoards.length = 50;
     }
 
     await this.#recentBoardStore.store(this.#recentBoards);
