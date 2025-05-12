@@ -60,6 +60,7 @@ class GoogleDriveBoardServer
     user: User,
     vendor: TokenVendor,
     googleDriveClient: GoogleDriveClient,
+    userFolderName: string,
     publicApiKey?: string,
     featuredGalleryFolderId?: string
   ) {
@@ -97,6 +98,7 @@ class GoogleDriveBoardServer
         user,
         vendor,
         googleDriveClient,
+        userFolderName,
         publicApiKey,
         featuredGalleryFolderId
       );
@@ -123,6 +125,7 @@ class GoogleDriveBoardServer
     public readonly user: User,
     public readonly vendor: TokenVendor,
     googleDriveClient: GoogleDriveClient,
+    userFolderName: string,
     publicApiKey?: string,
     featuredGalleryFolderId?: string
   ) {
@@ -131,6 +134,7 @@ class GoogleDriveBoardServer
       vendor,
       user.username,
       configuration.url,
+      userFolderName,
       publicApiKey,
       featuredGalleryFolderId
     );

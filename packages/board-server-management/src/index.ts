@@ -96,12 +96,15 @@ export async function getBoardServers(
               " gallery from Google Drive."
           );
         }
+        const userFolderName =
+          import.meta.env.VITE_GOOGLE_DRIVE_USER_FOLDER_NAME || "Breadboard";
         return GoogleDriveBoardServer.from(
           url,
           title,
           user,
           tokenVendor,
           googleDriveClient,
+          userFolderName,
           googleDrivePublicApiKey,
           googleDriveFeaturedGalleryFolderId
         );
