@@ -307,7 +307,7 @@ export class LLMOutput extends LitElement {
       border: none;
       width: 100%;
       overflow-x: auto;
-      max-height: calc(100cqh - var(--bb-grid-size-11));
+      height: 600px;
     }
 
     :host([lite]) .value {
