@@ -421,7 +421,7 @@ export class Template extends LitElement implements AppTemplate {
           & #activity {
             flex: 1;
             overflow: auto;
-
+            container-type: size;
             display: flex;
             flex-direction: column;
             padding: var(--bb-grid-size-3);
