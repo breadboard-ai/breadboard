@@ -3,12 +3,11 @@
  */
 
 import { ToolManager } from "./a2/tool-manager";
-import { StructuredResponse } from "./a2/structured-response";
-import { ok, err, toLLMContent } from "./a2/utils";
+import { defaultSystemInstruction } from "./system-instruction";
+import { ok, toLLMContent } from "./a2/utils";
 import { GeminiPrompt } from "./a2/gemini-prompt";
 import {
   type ExecuteStepFunction,
-  type Plan,
   type Task,
   type Strategist,
 } from "./types";
@@ -47,13 +46,11 @@ class Runtime {
 
   async #execute(item: Task): Promise<LLMContent | undefined> {
     const { toolManager, context, errors } = this;
-    let structuredResponse: StructuredResponse | undefined;
     const prompt = toLLMContent(item.task);
     let contents;
     let toolConfig = {};
     if (!toolManager.hasTools()) {
-      structuredResponse = new StructuredResponse(generateId(), false);
-      contents = structuredResponse.addPrompt(context, prompt);
+      contents = [ ... context, prompt];
     } else {
       toolConfig = {
         toolConfig: {
@@ -71,14 +68,11 @@ class Runtime {
           tools: toolManager.list(),
           ...toolConfig,
         },
-        systemInstruction: structuredResponse?.instruction(),
+        systemInstruction: defaultSystemInstruction(),
       },
       {
         toolManager,
         allowToolErrors: true,
-        validator: (content) => {
-          return structuredResponse?.parseContent(content);
-        },
       }
     );
     const executing = await geminiPrompt.invoke();
@@ -91,7 +85,7 @@ class Runtime {
     if (geminiPrompt.calledTools) {
       return grossHackTransformFunctionResponses(executing.last);
     }
-    return toLLMContent(structuredResponse!.body, "model");
+    return executing.last;
   }
 }
 
