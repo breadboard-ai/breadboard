@@ -155,9 +155,11 @@ class GoogleDriveBoardServer
   }
 
   async refreshProjects(): Promise<BoardServerProject[]> {
-    const userGraphs = await this.ops.readGraphList();
-    if (!ok(userGraphs)) return [];
+    // Run two lists operations in parallel.
+    const userGraphsPromise = this.ops.readGraphList();
     let featuredGraphs = await this.ops.readFeaturedGalleryGraphList();
+    const userGraphs = await userGraphsPromise;
+    if (!ok(userGraphs)) return [];
     if (!ok(featuredGraphs)) {
       console.warn(featuredGraphs.$error);
       featuredGraphs = [];
