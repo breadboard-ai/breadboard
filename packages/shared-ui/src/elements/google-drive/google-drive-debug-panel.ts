@@ -87,7 +87,8 @@ export class GoogleDriveDebugPanel extends LitElement {
           "Google Drive",
           { username: "", apiKey: "", secrets: new Map() },
           this.tokenVendor,
-          this.googleDriveClient
+          this.googleDriveClient,
+          import.meta.env.VITE_GOOGLE_DRIVE_USER_FOLDER_NAME || "Breadboard"
         );
       } else {
         this.#googleDriveBoardServer = null;

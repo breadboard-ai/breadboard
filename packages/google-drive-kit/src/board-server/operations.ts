@@ -23,8 +23,6 @@ export { DriveOperations, PROTOCOL };
 
 const PROTOCOL = "drive:";
 
-// TODO(aomarks) Make this configurable via a VITE_ env variable.
-const GOOGLE_DRIVE_FOLDER_NAME = "Breadboard";
 const GOOGLE_DRIVE_FOLDER_MIME_TYPE = "application/vnd.google-apps.folder";
 const GRAPH_MIME_TYPE = "application/vnd.breadboard.graph+json";
 const DEPRECATED_GRAPH_MIME_TYPE = "application/json";
@@ -36,6 +34,7 @@ export type GraphInfo = {
 };
 
 class DriveOperations {
+  readonly #userFolderName: string;
   readonly #publicApiKey?: string;
   readonly #featuredGalleryFolderId?: string;
 
@@ -43,9 +42,14 @@ class DriveOperations {
     public readonly vendor: TokenVendor,
     public readonly username: string,
     public readonly url: URL,
+    userFolderName: string,
     publicApiKey?: string,
     featuredGalleryFolderId?: string
   ) {
+    if (!userFolderName) {
+      throw new Error(`userFolderName was empty`);
+    }
+    this.#userFolderName = userFolderName;
     this.#publicApiKey = publicApiKey;
     this.#featuredGalleryFolderId = featuredGalleryFolderId;
   }
@@ -255,7 +259,7 @@ class DriveOperations {
     }
     const api = new Files({ kind: "bearer", token: accessToken });
     const findRequest = api.makeQueryRequest(
-      `name="${GOOGLE_DRIVE_FOLDER_NAME}"` +
+      `name=${quote(this.#userFolderName)}` +
         ` and mimeType="${GOOGLE_DRIVE_FOLDER_MIME_TYPE}"` +
         ` and trashed=false`
     );
@@ -293,7 +297,7 @@ class DriveOperations {
     }
     const api = new Files({ kind: "bearer", token: accessToken });
     const createRequest = api.makeCreateRequest({
-      name: GOOGLE_DRIVE_FOLDER_NAME,
+      name: this.#userFolderName,
       mimeType: GOOGLE_DRIVE_FOLDER_MIME_TYPE,
     });
     try {
@@ -362,4 +366,12 @@ function readAppProperties(file: DriveFile): {
 
 function getFileTitle(descriptor: GraphDescriptor) {
   return descriptor.title || "Untitled Graph";
+}
+
+/**
+ * Safely quote a string for use in a Drive query. Note this includes the
+ * surrounding quotation marks.
+ */
+function quote(value: string) {
+  return `'${value.replace(/'/g, "\\'")}'`;
 }
