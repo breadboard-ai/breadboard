@@ -9,6 +9,7 @@ import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { mkdir, writeFile } from "fs/promises";
+import type { GraphDescriptor } from "@breadboard-ai/types";
 
 dotenv.config();
 
@@ -18,6 +19,32 @@ const OUT_DIR = join(ROOT_DIR, "out");
 
 async function ensureDir(dir: string) {
   await mkdir(dir, { recursive: true });
+}
+
+function translateGraphDescriptor(graph: GraphDescriptor): GraphDescriptor {
+  const url = graph.url;
+
+  // 1) strip thumbnail and splash
+  delete graph.assets?.["@@splath"];
+  delete graph.assets?.["@@thumbnail"];
+  if (graph.assets && Object.keys(graph.assets).length === 0) {
+    delete graph.assets;
+  }
+  // 2) delete URL
+  delete graph.url;
+
+  // 3) absolutize theme URLs
+  const themes = graph.metadata?.visual?.presentation?.themes || [];
+  Object.values(themes).forEach((theme) => {
+    const storedData = theme.splashScreen?.storedData;
+    if (!storedData) {
+      throw new Error(`Invalid relative theme URL in graph ${graph.title}`);
+    }
+    const relative = storedData.handle;
+    const absolute = new URL(relative, url).href;
+    storedData.handle = absolute;
+  });
+  return graph;
 }
 
 async function main() {
@@ -34,9 +61,13 @@ async function main() {
   ).forEach((doc: DocumentSnapshot): void => {
     const id = doc.id;
     const graphJson = doc.get("graph");
-    const graph = graphJson ? JSON.parse(graphJson) : undefined;
-    console.log("Writing", graph.title);
-    writeFile(join(OUT_DIR, `${id}.bgl.json`), JSON.stringify(graph, null, 2));
+    const graph = translateGraphDescriptor(JSON.parse(graphJson));
+    const title = graph?.title;
+    if (!title) {
+      throw new Error(`Graph ${id} has no title`);
+    }
+    console.log("Writing", title);
+    writeFile(join(OUT_DIR, title), JSON.stringify(graph, null, 2));
   });
 }
 
