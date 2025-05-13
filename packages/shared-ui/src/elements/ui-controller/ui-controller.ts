@@ -259,7 +259,6 @@ export class UI extends LitElement {
   }
 
   editorRender = 0;
-  #preventAutoSwitchToEditor = false;
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     if (changedProperties.has("graph")) {
       this.updateComplete.then(() => this.#checkGoogleDriveAssetsAreReadable());
