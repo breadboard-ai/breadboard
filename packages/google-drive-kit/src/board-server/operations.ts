@@ -120,26 +120,7 @@ class DriveOperations {
       return null;
     }
   }
-
-  async test() {
-    const accessToken = await getAccessToken(this.vendor);
-    const folderId = await this.findFolder();
-    if (!folderId || !accessToken) {
-      throw new Error("No folder ID or access token");
-    }
-    const api = new Files({ kind: "bearer", token: accessToken });
-    const query =
-      `"${folderId}" in parents and` +
-      ` (mimeType="${GRAPH_MIME_TYPE}"` +
-      `      or mimeType="${DEPRECATED_GRAPH_MIME_TYPE}")` +
-      ` and trashed=false`;
-    const fileRequest = await retryableFetch(api.makeQueryRequest(query));
-    const response: DriveFileQuery = await fileRequest.json();
-    return response.files.map((f) => {
-      return { id: f.id, appProperties: f.appProperties };
-    });
-  }
-
+  
   async readGraphList(): Promise<Outcome<GraphInfo[]>> {
     const folderId = await this.findFolder();
     if (!(typeof folderId === "string" && folderId)) {
