@@ -302,6 +302,8 @@ export class UI extends LitElement {
       );
     }
 
+    // Switching away from the editor should trigger the submit so that the user
+    // doesn't lose any changes.
     if (
       changedProperties.get("sideNavItem") === "editor" &&
       this.#entityEditorRef.value
@@ -309,20 +311,16 @@ export class UI extends LitElement {
       this.#entityEditorRef.value.triggerSubmit();
     }
 
-    if (newSelectionCount > 0 && changedProperties.has("sideNavItem")) {
-      this.#preventAutoSwitchToEditor = true;
-    } else if (newSelectionCount === 0 && this.#preventAutoSwitchToEditor) {
-      this.#preventAutoSwitchToEditor = false;
-    }
-
+    // Here we decide how to handle the changing sidenav items & selections.
+    // If there are no selections and we're in the editor switch out to the app
+    // view. Otherwise, if there's any change to the selection and the sidenav
+    // isn't set to the editor, switch to it.
     if (newSelectionCount === 0 && this.sideNavItem === "editor") {
       this.sideNavItem = "app-view";
-    }
-
-    if (
+    } else if (
       newSelectionCount > 0 &&
-      this.sideNavItem !== "editor" &&
-      !this.#preventAutoSwitchToEditor
+      changedProperties.has("selectionState") &&
+      this.sideNavItem !== "editor"
     ) {
       this.sideNavItem = "editor";
     }
