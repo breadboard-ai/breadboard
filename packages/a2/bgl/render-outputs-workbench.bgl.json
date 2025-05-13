@@ -93,7 +93,7 @@
           "role": "user",
           "parts": [
             {
-              "text": "{{\"title\":\"Name\",\"path\":\"8469df91-7949-4f85-b5d8-74e4b643c7e5\",\"type\":\"in\"}} {{\"title\":\"Time of Day\",\"path\":\"a2-4fee0499\",\"type\":\"in\"}} {{\"title\":\"Info\",\"path\":\"3fff96f5-cfdc-4119-8c8c-134609caffa8\",\"type\":\"in\"}}"
+              "text": "{{\"type\":\"in\",\"path\":\"8469df91-7949-4f85-b5d8-74e4b643c7e5\",\"title\":\"Name\"}} {{\"type\":\"in\",\"path\":\"a2-4fee0499\",\"title\":\"Time of Day\"}} {{\"type\":\"in\",\"path\":\"3fff96f5-cfdc-4119-8c8c-134609caffa8\",\"title\":\"Info\"}}\nUse lots of emoji"
             }
           ]
         },
