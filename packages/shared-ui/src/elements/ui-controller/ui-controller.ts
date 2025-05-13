@@ -78,7 +78,6 @@ import {
   signinAdapterContext,
 } from "../../utils/signin-adapter.js";
 import { findGoogleDriveAssetsInGraph } from "../google-drive/find-google-drive-assets-in-graph.js";
-import { loadDriveApi } from "../google-drive/google-apis.js";
 import { SharePanel } from "../share-panel/share-panel.js";
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
@@ -301,6 +300,13 @@ export class UI extends LitElement {
         },
         0
       );
+    }
+
+    if (
+      changedProperties.get("sideNavItem") === "editor" &&
+      this.#entityEditorRef.value
+    ) {
+      this.#entityEditorRef.value.triggerSubmit();
     }
 
     if (newSelectionCount > 0 && changedProperties.has("sideNavItem")) {

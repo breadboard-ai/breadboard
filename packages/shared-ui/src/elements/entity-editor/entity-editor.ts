@@ -1512,17 +1512,21 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         changedProperties.has("values")) &&
       this.#edited
     ) {
-      if (this.#edited) {
-        // Autosave.
-        this.#edited = false;
-        // Because this function is async, let's pass it the current values,
-        // so that when they are set to undefined later, we still have them.
-        this.#submit(this.values);
-      }
-
-      // Reset the node value so that we don't receive incorrect port data.
-      this.values = undefined;
+      this.triggerSubmit();
     }
+  }
+
+  triggerSubmit() {
+    if (!this.#edited) {
+      return;
+    }
+
+    // Autosave.
+    this.#edited = false;
+    this.#submit(this.values);
+
+    // Reset the node value so that we don't receive incorrect port data.
+    this.values = undefined;
   }
 
   focus() {
