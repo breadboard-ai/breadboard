@@ -19,6 +19,7 @@ export type ConfigureAssetsInputs = {
   VITE_BOARD_SERVICE?: string;
   VITE_ENABLE_TOS?: boolean;
   VITE_TOS_HTML_PATH?: string;
+  VITE_FEEDBACK_LINK?: string;
 };
 
 export type ConfigureAssetOutputs = {
@@ -31,6 +32,7 @@ export type ConfigureAssetOutputs = {
   BOARD_SERVICE: string;
   ENABLE_TOS: boolean;
   TOS_HTML: string;
+  FEEDBACK_LINK: string;
 };
 
 async function configureAssets(
@@ -46,6 +48,7 @@ async function configureAssets(
     VITE_BOARD_SERVICE: BOARD_SERVICE,
     VITE_ENABLE_TOS: ENABLE_TOS,
     VITE_TOS_HTML_PATH: TOS_HTML_PATH,
+    VITE_FEEDBACK_LINK: FEEDBACK_LINK,
   } = config;
 
   if (!LANGUAGE_PACK) {
@@ -88,6 +91,7 @@ async function configureAssets(
     BOARD_SERVICE: JSON.stringify(BOARD_SERVICE),
     ENABLE_TOS: ENABLE_TOS ?? false,
     TOS_HTML: JSON.stringify(tosHtml),
+    FEEDBACK_LINK: JSON.stringify(FEEDBACK_LINK),
   };
 }
 

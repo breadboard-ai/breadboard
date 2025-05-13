@@ -964,6 +964,47 @@ export class Board extends EventTarget {
     return false;
   }
 
+  isMine(id: TabId | null): boolean {
+    if (!id) {
+      return false;
+    }
+
+    const tab = this.#tabs.get(id);
+    if (!tab) {
+      return false;
+    }
+
+    if (!tab.graph || !tab.graph.url) {
+      return false;
+    }
+
+    const boardUrl = new URL(tab.graph.url);
+    const boardServer = this.getBoardServerForURL(boardUrl);
+    if (!boardServer) {
+      return false;
+    }
+
+    const capabilities = boardServer.canProvide(boardUrl);
+    if (!capabilities || !capabilities.save) {
+      return false;
+    }
+
+    for (const store of boardServer.items().values()) {
+      for (const item of store.items.values()) {
+        if (
+          item.url !== tab.graph.url &&
+          item.url.replace(USER_REGEX, "/") !== tab.graph.url
+        ) {
+          continue;
+        }
+
+        return item.mine;
+      }
+    }
+
+    return false;
+  }
+
   canPreview(id: TabId | null): boolean {
     if (!id) {
       return false;

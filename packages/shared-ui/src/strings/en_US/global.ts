@@ -54,6 +54,9 @@ export default {
   COMMAND_DELETE_PROJECT: {
     str: "Delete",
   },
+  COMMAND_SEND_FEEDBACK: {
+    str: "Send feedback",
+  },
   COMMAND_EXPORT_PROJECT: {
     str: "Export JSON",
   },
