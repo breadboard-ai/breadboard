@@ -70,8 +70,7 @@ async function handleAssetsDriveRequest(
     proxyUrl:
       "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/getOpalFile",
     publicApiKey: process.env["VITE_GOOGLE_DRIVE_PUBLIC_API_KEY"] ?? "",
-    publicApiSpoofReferer:
-      process.env["GOOGLE_DRIVE_PUBLIC_API_SPOOF_REFERER"] ?? "",
+    publicApiSpoofReferer: req.headers.referer,
     getUserAccessToken: async () => accessToken,
   });
 
