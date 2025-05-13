@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { GraphTag } from "@breadboard-ai/types";
+
 export { Files };
 
 export type DriveFile = {
@@ -20,11 +22,10 @@ export type DriveFileQuery = {
 };
 
 export type AppProperties = {
-  appProperties: {
-    title: string;
-    description: string;
-    tags: string;
-  };
+  title: string;
+  description: string;
+  tags: GraphTag[];
+  thumbnailUrl?: string;
 };
 
 export type GoogleApiAuthorization =
@@ -70,22 +71,26 @@ class Files {
     return headers;
   }
 
-  #multipartRequest(metadata: unknown, body: unknown) {
+  #multipartRequest(
+    parts: Array<{ contentType: string; data: object | string }>
+  ) {
     const boundary = globalThis.crypto.randomUUID();
     const headers = this.#makeHeaders();
     headers.set("Content-Type", `multipart/related; boundary=${boundary}`);
-    const multipartBody = `--${boundary}
-Content-Type: application/json; charset=UTF-8
+    const body = [
+      `--${boundary}\n`,
+      ...parts.map((part) => {
+        const data =
+          typeof part.data === "string"
+            ? part.data
+            : JSON.stringify(part.data, null, 2);
 
-${JSON.stringify(metadata, null, 2)}
---${boundary}
-Content-Type: application/json; charset=UTF-8
-
-${JSON.stringify(body, null, 2)}
---${boundary}--`;
+        return `Content-Type: ${part.contentType}\n\n${data}\n--${boundary}--`;
+      }),
+    ].join("\n");
     return {
       headers,
-      body: multipartBody,
+      body,
     };
   }
 
@@ -98,7 +103,9 @@ ${JSON.stringify(body, null, 2)}
 
   makeQueryRequest(query: string): Request {
     return new Request(
-      this.#makeUrl(`drive/v3/files?q=${encodeURIComponent(query)}&fields=*`),
+      this.#makeUrl(
+        `drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,appProperties)`
+      ),
       {
         method: "GET",
         headers: this.#makeHeaders(),
@@ -121,22 +128,27 @@ ${JSON.stringify(body, null, 2)}
     });
   }
 
-  makeMultipartCreateRequest(metadata: unknown, body: unknown): Request {
+  makeMultipartCreateRequest(
+    parts: Array<{ contentType: string; data: object | string }>
+  ): Request {
     return new Request(
       this.#makeUrl(`upload/drive/v3/files?uploadType=multipart`),
       {
         method: "POST",
-        ...this.#multipartRequest(metadata, body),
+        ...this.#multipartRequest(parts),
       }
     );
   }
 
-  makePatchRequest(file: string, metadata: unknown, body: unknown): Request {
+  makePatchRequest(
+    file: string,
+    parts: Array<{ contentType: string; data: object | string }>
+  ): Request {
     return new Request(
       this.#makeUrl(`upload/drive/v3/files/${file}?uploadType=multipart`),
       {
         method: "PATCH",
-        ...this.#multipartRequest(metadata, body),
+        ...this.#multipartRequest(parts),
       }
     );
   }
