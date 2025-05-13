@@ -37,6 +37,10 @@ import {
   RunSkipEvent,
 } from "@google-labs/breadboard/harness";
 
+const usingGoogleDrive = new URL(window.location.href).pathname.startsWith(
+  "/app/drive"
+);
+
 @customElement("app-view")
 export class AppView extends LitElement {
   static styles = css`
@@ -46,6 +50,11 @@ export class AppView extends LitElement {
       /** Mobile for now */
       max-width: 420px;
       max-height: 920px;
+    }
+
+    bb-connection-entry-signin {
+      width: 100%;
+      height: 100%;
     }
   `;
 
@@ -226,6 +235,26 @@ export class AppView extends LitElement {
   }
 
   render() {
+    if (usingGoogleDrive && this.#signInAdapter.state !== "valid") {
+      // With Google Drive, if a graph has been shared with specific people or a
+      // domain, we are not able to know anything about it until the user has
+      // signed in.
+      //
+      // If a graph has been shared fully publicy, we could in theory do the
+      // nicer thing and show the splash image etc. before sign-in (because we
+      // have an API key that lets us read those files without user
+      // credentials). But, for now we are keeping it simple and always
+      // requiring sign-in first.
+      return html`
+        <bb-connection-entry-signin
+          .adapter=${this.#signInAdapter}
+          @bbsignin=${() => {
+            window.location.reload();
+          }}
+        ></bb-connection-entry-signin>
+      `;
+    }
+
     if (!this.flow || !this.#runner) {
       return html`404 not found`;
     }
