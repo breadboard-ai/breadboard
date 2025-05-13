@@ -112,7 +112,10 @@ export class GoogleDriveClient {
     options: ReadFileOptions | undefined,
     authorization: GoogleApiAuthorization
   ): Promise<Response> {
-    const url = this.#makeUrl(`drive/v3/files/${fileId}`, authorization);
+    const url = this.#makeUrl(
+      `drive/v3/files/${encodeURIComponent(fileId)}`,
+      authorization
+    );
     if (options?.fields?.length) {
       url.searchParams.set("fields", options.fields.join(","));
     }
@@ -193,7 +196,10 @@ export class GoogleDriveClient {
     options: BaseRequestOptions | undefined,
     authorization: GoogleApiAuthorization
   ): Promise<Response> {
-    const url = this.#makeUrl(`drive/v3/files/${fileId}`, authorization);
+    const url = this.#makeUrl(
+      `drive/v3/files/${encodeURIComponent(fileId)}`,
+      authorization
+    );
     url.searchParams.set("alt", "media");
     return fetch(url, {
       headers: this.#makeHeaders(authorization),
@@ -264,7 +270,10 @@ export class GoogleDriveClient {
     options: ExportFileOptions,
     authorization: GoogleApiAuthorization
   ): Promise<Response> {
-    const url = this.#makeUrl(`drive/v3/files/${fileId}/export`, authorization);
+    const url = this.#makeUrl(
+      `drive/v3/files/${encodeURIComponent(fileId)}/export`,
+      authorization
+    );
     url.searchParams.set("mimeType", options.mimeType);
     return fetch(url, {
       headers: this.#makeHeaders(authorization),
