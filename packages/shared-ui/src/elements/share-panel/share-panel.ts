@@ -93,6 +93,11 @@ export class SharePanel extends LitElement {
           cursor: pointer;
         }
       }
+
+      #openAppLink {
+        display: block;
+        margin-top: var(--bb-grid-size-4);
+      }
     `,
   ];
 
@@ -197,6 +202,8 @@ export class SharePanel extends LitElement {
           </a>
           ${this.#renderPublishedToggle()}
         </div>
+
+        ${this.#renderAppViewLink()}
       </dialog>
     `;
   }
@@ -230,6 +237,29 @@ export class SharePanel extends LitElement {
         </label>
       </div>
     `;
+  }
+
+  #renderAppViewLink() {
+    const graphUrl = this.graph?.url;
+    if (!graphUrl) {
+      console.error("No graph URL");
+      return nothing;
+    }
+    if (
+      this.#publishState.status === "written" &&
+      this.#publishState.published
+    ) {
+      return html`
+        <a
+          id="openAppLink"
+          href="/app/${encodeURIComponent(graphUrl)}"
+          target="_blank"
+          >Open App</a
+        >
+      `;
+    } else {
+      return nothing;
+    }
   }
 
   #renderDriveShare() {
