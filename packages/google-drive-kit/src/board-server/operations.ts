@@ -17,15 +17,12 @@ import {
   type AppProperties,
   type DriveFile,
   type DriveFileQuery,
-  type GoogleApiAuthorization,
 } from "./api.js";
 
 export { DriveOperations, PROTOCOL };
 
 const PROTOCOL = "drive:";
 
-// TODO(aomarks) Make this configurable via a VITE_ env variable.
-const GOOGLE_DRIVE_FOLDER_NAME = "Breadboard";
 const GOOGLE_DRIVE_FOLDER_MIME_TYPE = "application/vnd.google-apps.folder";
 const GRAPH_MIME_TYPE = "application/vnd.breadboard.graph+json";
 const DEPRECATED_GRAPH_MIME_TYPE = "application/json";
@@ -38,8 +35,6 @@ export type GraphInfo = {
   title: string;
   tags: GraphTag[];
 };
-
-let alreadyWarnedAboutMissingPublicApiKey = false;
 
 /** Retries fetch() calls until status is not an internal server error. */
 async function retryableFetch(
@@ -77,6 +72,7 @@ async function retryableFetch(
 }
 
 class DriveOperations {
+  readonly #userFolderName: string;
   readonly #publicApiKey?: string;
   readonly #featuredGalleryFolderId?: string;
 
@@ -84,9 +80,14 @@ class DriveOperations {
     public readonly vendor: TokenVendor,
     public readonly username: string,
     public readonly url: URL,
+    userFolderName: string,
     publicApiKey?: string,
     featuredGalleryFolderId?: string
   ) {
+    if (!userFolderName) {
+      throw new Error(`userFolderName was empty`);
+    }
+    this.#userFolderName = userFolderName;
     this.#publicApiKey = publicApiKey;
     this.#featuredGalleryFolderId = featuredGalleryFolderId;
   }
@@ -111,7 +112,10 @@ class DriveOperations {
   }
 
   async readGraphList(): Promise<Outcome<GraphInfo[]>> {
-    const folderId = await this.findOrCreateFolder();
+    const folderId = await this.findFolder();
+    if (!(typeof folderId === "string" && folderId)) {
+      return [];
+    }
     const accessToken = await getAccessToken(this.vendor);
     const query =
       `"${folderId}" in parents` +
@@ -281,59 +285,19 @@ class DriveOperations {
     return response.files.map((file) => file.id);
   }
 
-  async readGraphFromDrive(url: URL): Promise<GraphDescriptor | null> {
-    const fileId = url.href.replace(`${this.url.href}/`, "");
-    let response = await this.#readFileWithUserAuth(fileId);
-    if (response?.status === 404) {
-      response = await this.#readFileWithPublicAuth(fileId);
-    }
-    if (response?.status === 200) {
-      const graph = (await response.json()) as GraphDescriptor;
-      if (graph && !("error" in graph)) {
-        return graph;
-      }
-    }
-    return null;
-  }
+  #cachedFolderId?: string;
 
-  async #readFileWithUserAuth(fileId: string): Promise<Response | null> {
-    const token = await getAccessToken(this.vendor);
-    if (!token) {
-      return null;
+  async findFolder(): Promise<Outcome<string | undefined>> {
+    if (this.#cachedFolderId) {
+      return this.#cachedFolderId;
     }
-    return this.#readFile(fileId, { kind: "bearer", token });
-  }
-
-  async #readFileWithPublicAuth(fileId: string): Promise<Response | null> {
-    if (!this.#publicApiKey) {
-      if (!alreadyWarnedAboutMissingPublicApiKey) {
-        console.warn(
-          "Could not read a potentially public Google Drive file" +
-            " because a Google Drive API key was not configured."
-        );
-        alreadyWarnedAboutMissingPublicApiKey = true;
-      }
-      return null;
-    }
-    return this.#readFile(fileId, { kind: "key", key: this.#publicApiKey });
-  }
-
-  async #readFile(
-    fileId: string,
-    authorization: GoogleApiAuthorization
-  ): Promise<Response> {
-    return retryableFetch(new Files(authorization).makeLoadRequest(fileId));
-  }
-
-  async findOrCreateFolder(): Promise<Outcome<string>> {
     const accessToken = await getAccessToken(this.vendor);
     if (!accessToken) {
       return err("No access token");
     }
     const api = new Files({ kind: "bearer", token: accessToken });
-
     const findRequest = api.makeQueryRequest(
-      `name="${GOOGLE_DRIVE_FOLDER_NAME}"` +
+      `name=${quote(this.#userFolderName)}` +
         ` and mimeType="${GOOGLE_DRIVE_FOLDER_MIME_TYPE}"` +
         ` and trashed=false`
     );
@@ -351,17 +315,35 @@ class DriveOperations {
         }
         const id = files[0]!.id;
         console.log("Google Drive: Found existing root folder", id);
+        this.#cachedFolderId = id;
         return id;
       }
+    } catch (e) {
+      return err((e as Error).message);
+    }
+  }
 
-      const createRequest = api.makeCreateRequest({
-        name: GOOGLE_DRIVE_FOLDER_NAME,
-        mimeType: GOOGLE_DRIVE_FOLDER_MIME_TYPE,
-      });
+  async findOrCreateFolder(): Promise<Outcome<string>> {
+    const existing = await this.findFolder();
+    if (typeof existing === "string" && existing) {
+      return existing;
+    }
+
+    const accessToken = await getAccessToken(this.vendor);
+    if (!accessToken) {
+      return err("No access token");
+    }
+    const api = new Files({ kind: "bearer", token: accessToken });
+    const createRequest = api.makeCreateRequest({
+      name: this.#userFolderName,
+      mimeType: GOOGLE_DRIVE_FOLDER_MIME_TYPE,
+    });
+    try {
       const { id } = (await (await retryableFetch(createRequest)).json()) as {
         id: string;
       };
       console.log("Google Drive: Created new root folder", id);
+      this.#cachedFolderId = id;
       return id;
     } catch (e) {
       return err((e as Error).message);
@@ -422,4 +404,12 @@ function readAppProperties(file: DriveFile): {
 
 function getFileTitle(descriptor: GraphDescriptor) {
   return descriptor.title || "Untitled Graph";
+}
+
+/**
+ * Safely quote a string for use in a Drive query. Note this includes the
+ * surrounding quotation marks.
+ */
+function quote(value: string) {
+  return `'${value.replace(/'/g, "\\'")}'`;
 }

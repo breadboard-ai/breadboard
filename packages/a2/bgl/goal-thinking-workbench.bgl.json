@@ -9,8 +9,8 @@
       "metadata": {
         "title": "Go over a list",
         "visual": {
-          "x": 280,
-          "y": 180,
+          "x": -20,
+          "y": 140,
           "collapsed": "expanded",
           "outputHeight": 88
         },
@@ -22,11 +22,12 @@
           "role": "user",
           "parts": [
             {
-              "text": "Develop material for the science fiction book based on a plot idea:  {{\"type\":\"asset\",\"path\":\"82234663-68ae-4554-add3-4c0ec97c4ba8\",\"title\":\"Plot Idea\"}}  \n\nThe material will contain multiple drafts of the following:\n- three potential names of alien races\n- what makes the alien race powerful\n- what is the alien race weakness\n- what are the technologies employed by humans\n- what are the technologies employed by aliens\n- what are the technological differences? How is the relative stalemate achieved?\n\nOutput all materials, because they will be used for further development."
+              "text": "Develop material for the science fiction book based on a plot idea:  {{\"type\":\"asset\",\"path\":\"82234663-68ae-4554-add3-4c0ec97c4ba8\",\"title\":\"Plot Idea\"}}  \n\nThe material will contain multiple drafts of the following:\n- three potential names of alien races\n- critique the name of the aliens and make improvements\n- pick one name of the alien race based on the critique\n- what makes this alien race powerful\n- what is this alien race's weakness\n- what are the technologies employed by humans\n- what are the technologies employed by aliens\n- what are the technological differences? How is the relative stalemate achieved?\n\n\n\nOutput all materials, because they will be used for further development."
             }
           ]
         },
-        "strategy": "Think as I go"
+        "strategy": "Think as I go",
+        "z-list": false
       }
     }
   ],
@@ -72,7 +73,13 @@
       ],
       "metadata": {
         "title": "Plot Idea",
-        "type": "content"
+        "type": "content",
+        "description": "",
+        "subType": "",
+        "visual": {
+          "x": -20,
+          "y": -100
+        }
       }
     },
     "@@thumbnail": {

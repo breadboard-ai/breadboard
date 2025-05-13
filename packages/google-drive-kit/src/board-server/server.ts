@@ -14,6 +14,7 @@ import {
   type BoardServerExtension,
   type BoardServerProject,
   type ChangeNotificationCallback,
+  type DataPartTransformer,
   type GraphDescriptor,
   type GraphProviderCapabilities,
   type GraphProviderExtendedCapabilities,
@@ -27,6 +28,7 @@ import { DriveOperations, PROTOCOL } from "./operations.js";
 import { SaveDebouncer } from "./save-debouncer.js";
 import { SaveEvent } from "./events.js";
 import { type GoogleDriveClient } from "../google-drive-client.js";
+import { GoogleDriveDataPartTransformer } from "./data-part-transformer.js";
 
 export { GoogleDriveBoardServer };
 
@@ -58,6 +60,7 @@ class GoogleDriveBoardServer
     user: User,
     vendor: TokenVendor,
     googleDriveClient: GoogleDriveClient,
+    userFolderName: string,
     publicApiKey?: string,
     featuredGalleryFolderId?: string
   ) {
@@ -95,6 +98,7 @@ class GoogleDriveBoardServer
         user,
         vendor,
         googleDriveClient,
+        userFolderName,
         publicApiKey,
         featuredGalleryFolderId
       );
@@ -121,6 +125,7 @@ class GoogleDriveBoardServer
     public readonly user: User,
     public readonly vendor: TokenVendor,
     googleDriveClient: GoogleDriveClient,
+    userFolderName: string,
     publicApiKey?: string,
     featuredGalleryFolderId?: string
   ) {
@@ -129,6 +134,7 @@ class GoogleDriveBoardServer
       vendor,
       user.username,
       configuration.url,
+      userFolderName,
       publicApiKey,
       featuredGalleryFolderId
     );
@@ -153,9 +159,11 @@ class GoogleDriveBoardServer
   }
 
   async refreshProjects(): Promise<BoardServerProject[]> {
-    const userGraphs = await this.ops.readGraphList();
-    if (!ok(userGraphs)) return [];
+    // Run two lists operations in parallel.
+    const userGraphsPromise = this.ops.readGraphList();
     let featuredGraphs = await this.ops.readFeaturedGalleryGraphList();
+    const userGraphs = await userGraphsPromise;
+    if (!ok(userGraphs)) return [];
     if (!ok(featuredGraphs)) {
       console.warn(featuredGraphs.$error);
       featuredGraphs = [];
@@ -236,7 +244,15 @@ class GoogleDriveBoardServer
   }
 
   async load(url: URL): Promise<GraphDescriptor | null> {
-    return this.ops.readGraphFromDrive(url);
+    const fileIdMatch = url.href.match(/^drive:\/(.+)/);
+    if (!fileIdMatch) {
+      throw new Error(
+        `Expected URL to have format "drive:FILE_ID", got "${url.href}"`
+      );
+    }
+    const fileId = fileIdMatch[1]!;
+    const response = await this.#googleDriveClient.getFileMedia(fileId);
+    return response.json();
   }
 
   async save(
@@ -351,6 +367,10 @@ class GoogleDriveBoardServer
     });
 
     return items;
+  }
+
+  dataPartTransformer(_graphUrl: URL): DataPartTransformer {
+    return new GoogleDriveDataPartTransformer(this.#googleDriveClient);
   }
 
   startingURL(): URL | null {

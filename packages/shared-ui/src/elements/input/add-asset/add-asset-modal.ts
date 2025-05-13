@@ -3,7 +3,14 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css, nothing, HTMLTemplateResult } from "lit";
+import {
+  LitElement,
+  html,
+  css,
+  nothing,
+  HTMLTemplateResult,
+  PropertyValues,
+} from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { AddAssetEvent, OverlayDismissedEvent } from "../../../events/events";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
@@ -20,6 +27,9 @@ export class AddAssetModal extends LitElement {
   @property()
   accessor allowedMimeTypes: string | null = null;
 
+  @property({ reflect: true, type: Boolean })
+  accessor visible = true;
+
   static styles = css`
     * {
       box-sizing: border-box;
@@ -34,6 +44,10 @@ export class AddAssetModal extends LitElement {
       height: 100%;
       z-index: 100;
       pointer-events: none;
+    }
+
+    :host(:not([visible])) {
+      display: none;
     }
 
     #container {
@@ -276,6 +290,17 @@ export class AddAssetModal extends LitElement {
     this.#inputRef.value.click();
   }
 
+  protected willUpdate(changedProperties: PropertyValues): void {
+    if (changedProperties.has("assetType") && this.assetType === "upload") {
+      console.log("Setting to hidden");
+      this.visible = false;
+    }
+
+    if (changedProperties.has("visible")) {
+      console.log("Changing visible", this.visible);
+    }
+  }
+
   render() {
     if (!this.assetType) {
       return nothing;
@@ -313,6 +338,7 @@ export class AddAssetModal extends LitElement {
             : "image/*,audio/*,video/*,text/plain,application/pdf,text/csv"}
           ${ref(this.#inputRef)}
           @change=${() => {
+            this.visible = true;
             this.#processAndEmit();
           }}
           @cancel=${() => {

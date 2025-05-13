@@ -30,9 +30,6 @@ const Strings = StringsHelper.forSection("ProjectListing");
 
 @customElement("bb-gallery")
 export class Gallery extends LitElement {
-  @property()
-  accessor showOverflowMenu = false;
-
   static readonly styles = [
     icons,
     css`
@@ -314,6 +311,12 @@ export class Gallery extends LitElement {
   @property({ type: Number })
   accessor page = 0;
 
+  @property({ type: Boolean })
+  accessor showOverflowMenu = false;
+
+  @property({ type: Boolean })
+  accessor forceCreatorToBeTeam = false;
+
   /**
    * How many items to display per page. Set to -1 to disable pagination.
    */
@@ -458,6 +461,9 @@ export class Gallery extends LitElement {
   }
 
   #renderCreatorImage(item: GraphProviderItem) {
+    if (this.forceCreatorToBeTeam) {
+      return html`<span class="g-icon">spark</span>`;
+    }
     if (item.mine && this.signinAdapter?.picture) {
       return html`
         <img
@@ -467,18 +473,15 @@ export class Gallery extends LitElement {
         />
       `;
     }
-    if (item.tags && item.tags.includes("featured")) {
-      return html`<span class="g-icon">spark</span>`;
-    }
     return html`<span class="g-icon">person</span>`;
   }
 
   #renderCreatorName(item: GraphProviderItem) {
+    if (this.forceCreatorToBeTeam) {
+      return Strings.from("LABEL_TEAM_NAME");
+    }
     if (item.mine && this.signinAdapter?.name) {
       return this.signinAdapter.name;
-    }
-    if (item.tags && item.tags.includes("featured")) {
-      return Strings.from("LABEL_TEAM_NAME");
     }
     return "Unknown User";
   }

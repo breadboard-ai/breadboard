@@ -15,12 +15,16 @@ export interface GoogleDriveClientOptions {
   publicApiKey: string;
 }
 
-interface BaseRequestOptions {
+export interface BaseRequestOptions {
   signal?: AbortSignal;
 }
 
 export interface ReadFileOptions extends BaseRequestOptions {
   fields?: string[];
+}
+
+export interface ExportFileOptions extends BaseRequestOptions {
+  mimeType: string;
 }
 
 export class GoogleDriveClient {
@@ -36,31 +40,67 @@ export class GoogleDriveClient {
     this.#publicApiKey = options.publicApiKey;
   }
 
-  async readFile(
+  async accessToken(): Promise<string> {
+    return this.#getUserAccessToken();
+  }
+
+  async getFile(
     fileId: string,
     options?: ReadFileOptions
   ): Promise<gapi.client.drive.File> {
-    let response = await this.#readFile(fileId, options, {
+    let response = await this.#getFile(fileId, options, {
       kind: "bearer",
       token: await this.#getUserAccessToken(),
     });
     if (response.status === 404) {
-      response = await this.#readFile(fileId, options, {
+      response = await this.#getFile(fileId, options, {
         kind: "key",
         key: this.#publicApiKey,
       });
     }
-    // TODO(aomarks) Also try falling back to the proxy.
     if (response.status === 200) {
       return response.json();
     }
+
+    if (response.status === 404 && this.#proxyUrl) {
+      const proxyResponse = await fetch(this.#proxyUrl, {
+        method: "POST",
+        body: JSON.stringify({
+          fileId: fileId,
+          // TODO(aomarks) Switch to GET_METADATA when implemented. Right now we
+          // are fetching the entire file contents and just ignoring it, which
+          // is wasteful.
+          getMode: "GET_MODE_EXPORT",
+          mimeType: "text/plain",
+        } satisfies GetFileProxyRequest),
+        headers: {
+          authorization: `Bearer ${await this.#getUserAccessToken()}`,
+          ["content-type"]: "application/json",
+        },
+        signal: options?.signal,
+      });
+      if (proxyResponse.status === 200) {
+        const proxyResult =
+          (await proxyResponse.json()) as GetFileProxyResponse;
+        const metadata = JSON.parse(
+          proxyResult.metadata
+        ) as gapi.client.drive.File;
+        return metadata;
+      } else {
+        console.log(
+          `Google Drive getFile proxy ${response.status} error:`,
+          await proxyResponse.text()
+        );
+      }
+    }
+
     throw new Error(
       `Google Drive readFile ${response.status} error: ` +
         (await response.text())
     );
   }
 
-  #readFile(
+  #getFile(
     fileId: string,
     options: ReadFileOptions | undefined,
     authorization: GoogleApiAuthorization
@@ -73,6 +113,151 @@ export class GoogleDriveClient {
       headers: this.#makeHeaders(authorization),
       signal: options?.signal,
     });
+  }
+
+  async getFileMedia(
+    fileId: string,
+    options?: BaseRequestOptions
+  ): Promise<Response> {
+    let response = await this.#getFileMedia(fileId, options, {
+      kind: "bearer",
+      token: await this.#getUserAccessToken(),
+    });
+    if (response.status === 404) {
+      response = await this.#getFileMedia(fileId, options, {
+        kind: "key",
+        key: this.#publicApiKey,
+      });
+    }
+    if (response.status === 200) {
+      return response;
+    }
+
+    if (response.status === 404 && this.#proxyUrl) {
+      const proxyResponse = await fetch(this.#proxyUrl, {
+        method: "POST",
+        body: JSON.stringify({
+          fileId: fileId,
+          getMode: "GET_MODE_GET_MEDIA",
+        } satisfies GetFileProxyRequest),
+        headers: {
+          authorization: `Bearer ${await this.#getUserAccessToken()}`,
+          ["content-type"]: "application/json",
+        },
+        signal: options?.signal,
+      });
+      if (proxyResponse.status === 200) {
+        const proxyResult =
+          (await proxyResponse.json()) as GetFileProxyResponse;
+        const metadata = JSON.parse(
+          proxyResult.metadata
+        ) as gapi.client.drive.File;
+        return responseFromBase64(
+          proxyResult.content,
+          metadata.mimeType || "application/octet-stream"
+        );
+      } else {
+        console.log(
+          `Google Drive getFileMedia proxy ${response.status} error:`,
+          await proxyResponse.text()
+        );
+      }
+    }
+
+    throw new Error(
+      `Google Drive getFileMedia ${response.status} error: ` +
+        (await response.text())
+    );
+  }
+
+  #getFileMedia(
+    fileId: string,
+    options: BaseRequestOptions | undefined,
+    authorization: GoogleApiAuthorization
+  ): Promise<Response> {
+    const url = this.#makeUrl(`drive/v3/files/${fileId}`, authorization);
+    url.searchParams.set("alt", "media");
+    return fetch(url, {
+      headers: this.#makeHeaders(authorization),
+      signal: options?.signal,
+    });
+  }
+
+  async exportFile(
+    fileId: string,
+    options: ExportFileOptions
+  ): Promise<Response> {
+    let response = await this.#exportFile(fileId, options, {
+      kind: "bearer",
+      token: await this.#getUserAccessToken(),
+    });
+    if (response.status === 404) {
+      response = await this.#exportFile(fileId, options, {
+        kind: "key",
+        key: this.#publicApiKey,
+      });
+    }
+    if (response.status === 200) {
+      return response;
+    }
+
+    if (response.status === 404 && this.#proxyUrl) {
+      const proxyResponse = await fetch(this.#proxyUrl, {
+        method: "POST",
+        body: JSON.stringify({
+          fileId: fileId,
+          getMode: "GET_MODE_EXPORT",
+          mimeType: options.mimeType,
+        } satisfies GetFileProxyRequest),
+        headers: {
+          authorization: `Bearer ${await this.#getUserAccessToken()}`,
+          ["content-type"]: "application/json",
+        },
+        signal: options?.signal,
+      });
+      if (proxyResponse.status === 200) {
+        const proxyResult =
+          (await proxyResponse.json()) as GetFileProxyResponse;
+        return responseFromBase64(proxyResult.content, options.mimeType);
+      } else {
+        console.log(
+          `Google Drive exportFile proxy ${response.status} error:`,
+          await proxyResponse.text()
+        );
+      }
+    }
+
+    throw new Error(
+      `Google Drive exportFile ${response.status} error: ` +
+        (await response.text())
+    );
+  }
+
+  #exportFile(
+    fileId: string,
+    options: ExportFileOptions,
+    authorization: GoogleApiAuthorization
+  ): Promise<Response> {
+    const url = this.#makeUrl(`drive/v3/files/${fileId}/export`, authorization);
+    url.searchParams.set("mimeType", options.mimeType);
+    return fetch(url, {
+      headers: this.#makeHeaders(authorization),
+      signal: options?.signal,
+    });
+  }
+
+  async isReadable(
+    fileId: string,
+    options?: BaseRequestOptions
+  ): Promise<boolean> {
+    try {
+      await this.getFile(fileId, options);
+      return true;
+    } catch {
+      // TODO(aomarks) We should be a little more discerning here. Only a 404
+      // should return false, anything else should be an exception.
+      return false;
+    }
   }
 
   #makeUrl(path: string, authorization: GoogleApiAuthorization): URL {
@@ -100,4 +285,29 @@ export class GoogleDriveClient {
     }
     return headers;
   }
+}
+
+type GetFileProxyRequest =
+  | {
+      fileId: string;
+      getMode: "GET_MODE_GET_MEDIA";
+    }
+  | {
+      fileId: string;
+      getMode: "GET_MODE_EXPORT";
+      mimeType: string;
+    };
+
+interface GetFileProxyResponse {
+  /** JSON */
+  metadata: string;
+  /** base64 bytes */
+  content: string;
+}
+
+function responseFromBase64(base64String: string, mimeType: string): Response {
+  return new Response(
+    Uint8Array.from(atob(base64String), (char) => char.charCodeAt(0)),
+    { headers: { "content-type": mimeType } }
+  );
 }

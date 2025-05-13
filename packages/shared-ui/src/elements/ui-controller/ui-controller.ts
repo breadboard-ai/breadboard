@@ -71,11 +71,7 @@ import {
   createWorkspaceSelectionChangeId,
 } from "../../utils/workspace.js";
 import { icons } from "../../styles/icons.js";
-import {
-  type GoogleDriveSharePanel,
-  type GoogleDrivePicker,
-  EntityEditor,
-} from "../elements.js";
+import { type GoogleDrivePicker, EntityEditor } from "../elements.js";
 import { consume } from "@lit/context";
 import {
   type SigninAdapter,
@@ -84,6 +80,8 @@ import {
 import { findGoogleDriveAssetsInGraph } from "../google-drive/find-google-drive-assets-in-graph.js";
 import { loadDriveApi } from "../google-drive/google-apis.js";
 import { SharePanel } from "../share-panel/share-panel.js";
+import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 
 const SIDE_ITEM_KEY = "bb-ui-controller-side-nav-item";
 
@@ -229,6 +227,10 @@ export class UI extends LitElement {
   @consume({ context: signinAdapterContext })
   @property({ attribute: false })
   accessor signinAdapter: SigninAdapter | undefined = undefined;
+
+  @consume({ context: googleDriveClientContext })
+  @property({ attribute: false })
+  accessor googleDriveClient: GoogleDriveClient | undefined;
 
   #sideNavItem:
     | "activity"
@@ -895,34 +897,17 @@ export class UI extends LitElement {
     if (driveAssetFileIds.length === 0) {
       return;
     }
-    const drive = await loadDriveApi();
-    const auth = await this.signinAdapter?.refresh();
-    if (auth?.state !== "valid") {
-      console.error(`Expected "valid" auth state, got "${auth?.state}"`);
+    const { googleDriveClient } = this;
+    if (!googleDriveClient) {
+      console.error(`No googleDriveClient was provided`);
       return;
     }
     const needsPicking: string[] = [];
     await Promise.all(
       driveAssetFileIds.map(async (fileId) => {
-        try {
-          await drive.files.get({
-            access_token: auth.grant.access_token,
-            fileId,
-          });
-        } catch (error) {
-          if (
-            typeof error === "object" &&
-            error !== null &&
-            "status" in error &&
-            error.status === 404
-          ) {
-            needsPicking.push(fileId);
-          } else {
-            console.error(
-              "Unhandled error checking drive asset readability:",
-              error
-            );
-          }
+        const readable = await googleDriveClient.isReadable(fileId);
+        if (!readable) {
+          needsPicking.push(fileId);
         }
       })
     );

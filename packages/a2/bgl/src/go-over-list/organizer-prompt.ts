@@ -3,12 +3,11 @@
  */
 
 import { defaultSafetySettings } from "./a2/gemini";
-import { llm, ok, toLLMContent } from "./a2/utils";
+import { llm, ok } from "./a2/utils";
 import { GeminiPrompt } from "./a2/gemini-prompt";
-import { StructuredResponse } from "./a2/structured-response";
-import { generateId } from "./runtime";
 import { type Invokable } from "./types";
 import { listPrompt, listSchema, toList } from "./a2/lists";
+import { defaultSystemInstruction } from "./system-instruction";
 
 export { organizerPrompt };
 
@@ -22,8 +21,6 @@ function organizerPrompt(
   const research = {
     parts: results.flatMap((item) => item.parts),
   };
-  console.log("RESEARCH", research);
-
   const extra = makeList
     ? `
 Your job is to examine in detail and organize the provided raw material into
@@ -82,28 +79,19 @@ ${research}
       },
     };
   } else {
-    const structuredResponse = new StructuredResponse(generateId(), false);
-
-    const geminiPrompt = new GeminiPrompt(
-      {
-        body: {
-          systemInstruction: structuredResponse.instruction(),
-          contents: structuredResponse.addPrompt([], prompt),
-          safetySettings: defaultSafetySettings(),
-        },
+    const geminiPrompt = new GeminiPrompt({
+      body: {
+        systemInstruction: defaultSystemInstruction(),
+        contents: [prompt],
+        safetySettings: defaultSafetySettings(),
       },
-      {
-        validator: (content) => {
-          return structuredResponse.parseContent(content);
-        },
-      }
-    );
+    });
 
     return {
       invoke: async () => {
         const invoking = await geminiPrompt.invoke();
         if (!ok(invoking)) return invoking;
-        const response = toLLMContent(structuredResponse.body, "model");
+        const response = invoking.last;
         return {
           ...invoking,
           last: response,

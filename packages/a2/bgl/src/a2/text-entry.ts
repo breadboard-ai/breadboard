@@ -133,7 +133,7 @@ async function describe({
         "p-modality": {
           type: "string",
           enum: combineModalities(MODALITY),
-          behavior: ["config", "hint-preview"],
+          behavior: ["config", "hint-preview", "hint-advanced"],
           icon,
           title: "Input type",
           description: "Set the type of input the user can provide",
