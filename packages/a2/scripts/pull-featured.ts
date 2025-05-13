@@ -67,7 +67,10 @@ async function main() {
       throw new Error(`Graph ${id} has no title`);
     }
     console.log("Writing", title);
-    writeFile(join(OUT_DIR, title), JSON.stringify(graph, null, 2));
+    writeFile(
+      join(OUT_DIR, `${title}.bgl.json`),
+      JSON.stringify(graph, null, 2)
+    );
   });
 }
 
