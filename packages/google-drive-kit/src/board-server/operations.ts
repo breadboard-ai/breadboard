@@ -214,7 +214,7 @@ class DriveOperations {
     url: URL,
     descriptor: GraphDescriptor
   ): Promise<{ result: boolean; error?: string }> {
-    const file = url.href.replace(`${this.url.href}/`, "");
+    const file = this.fileIdFromUrl(url);
     const name = getFileTitle(descriptor);
     const accessToken = await getAccessToken(this.vendor);
     try {
@@ -244,7 +244,7 @@ class DriveOperations {
     parent: string,
     descriptor: GraphDescriptor
   ) {
-    const fileName = url.href.replace(`${this.url.href}/`, "");
+    const fileName = this.fileIdFromUrl(url);
     const name = getFileTitle(descriptor);
     const accessToken = await getAccessToken(this.vendor);
 
@@ -351,7 +351,7 @@ class DriveOperations {
   }
 
   async deleteGraph(url: URL): Promise<Outcome<void>> {
-    const file = url.href.replace(`${this.url.href}/`, "");
+    const file = this.fileIdFromUrl(url);
     const accessToken = await getAccessToken(this.vendor);
     try {
       const api = new Files({ kind: "bearer", token: accessToken! });
@@ -361,6 +361,13 @@ class DriveOperations {
       console.warn(e);
       return err("Unable to delete");
     }
+  }
+
+  fileIdFromUrl(url: URL) {
+    return url.href.replace(
+      `${this.url.href}${this.url.pathname ? "" : "/"}`,
+      ""
+    );
   }
 }
 

@@ -210,7 +210,7 @@ class GoogleDriveBoardServer
 
     const galleryProjects = featuredGraphs.map(({ title, tags, id }) => {
       return {
-        url: new URL(`${this.url}/${id}`),
+        url: new URL(`${this.url}${this.url.pathname ? "" : "/"}${id}`),
         metadata: {
           owner: GALLERY_OWNER_USERNAME,
           tags,
