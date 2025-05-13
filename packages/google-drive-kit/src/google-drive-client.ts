@@ -63,17 +63,15 @@ export class GoogleDriveClient {
     }
 
     if (response.status === 404 && this.#proxyUrl) {
-      // TODO(aomarks) This is untested because the API is not available yet! It
-      // almost certainly has bugs.
-      //
-      // TODO(aomarks) The proxy only gives us GetMedia and Export, but not just
-      // a plain Get. So we're actually receiving all the file content bytes
-      // here even when we don't need them. The proxy should have another mode.
       const proxyResponse = await fetch(this.#proxyUrl, {
         method: "POST",
         body: JSON.stringify({
           fileId: fileId,
-          getMode: "GET_MODE_GET_MEDIA",
+          // TODO(aomarks) Switch to GET_METADATA when implemented. Right now we
+          // are fetching the entire file contents and just ignoring it, which
+          // is wasteful.
+          getMode: "GET_MODE_EXPORT",
+          mimeType: "text/plain",
         } satisfies GetFileProxyRequest),
         headers: {
           authorization: `Bearer ${await this.#getUserAccessToken()}`,
@@ -136,8 +134,6 @@ export class GoogleDriveClient {
     }
 
     if (response.status === 404 && this.#proxyUrl) {
-      // TODO(aomarks) This is untested because the API is not available yet! It
-      // almost certainly has bugs.
       const proxyResponse = await fetch(this.#proxyUrl, {
         method: "POST",
         body: JSON.stringify({
@@ -206,8 +202,6 @@ export class GoogleDriveClient {
     }
 
     if (response.status === 404 && this.#proxyUrl) {
-      // TODO(aomarks) This is untested because the API is not available yet! It
-      // almost certainly has bugs.
       const proxyResponse = await fetch(this.#proxyUrl, {
         method: "POST",
         body: JSON.stringify({
@@ -250,6 +244,20 @@ export class GoogleDriveClient {
       headers: this.#makeHeaders(authorization),
       signal: options?.signal,
     });
+  }
+
+  async isReadable(
+    fileId: string,
+    options?: BaseRequestOptions
+  ): Promise<boolean> {
+    try {
+      await this.getFile(fileId, options);
+      return true;
+    } catch {
+      // TODO(aomarks) We should be a little more discerning here. Only a 404
+      // should return false, anything else should be an exception.
+      return false;
+    }
   }
 
   #makeUrl(path: string, authorization: GoogleApiAuthorization): URL {
