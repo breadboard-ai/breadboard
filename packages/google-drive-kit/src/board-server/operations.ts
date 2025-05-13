@@ -18,7 +18,6 @@ import {
   type DriveFile,
   type DriveFileQuery,
 } from "./api.js";
-import { unescape } from "querystring";
 
 export { DriveOperations, PROTOCOL };
 
