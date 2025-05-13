@@ -366,11 +366,16 @@ export class EntityEditor extends SignalWatcher(LitElement) {
             display: none;
           }
 
-          &[open] summary {
-            margin-bottom: var(--bb-grid-size-3);
+          &[open] {
+            summary {
+              margin-bottom: var(--bb-grid-size-3);
 
-            & .g-icon::before {
-              content: "keyboard_arrow_up";
+              & .g-icon {
+                margin-right: var(--bb-grid-size-2);
+                ::before {
+                  content: "keyboard_arrow_up";
+                }
+              }
             }
           }
 
@@ -380,6 +385,8 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           }
 
           bb-text-editor {
+            width: 100%;
+            height: 100%;
             --text-editor-padding-top: var(--bb-grid-size-2);
             --text-editor-padding-right: var(--bb-grid-size-3);
             --text-editor-padding-bottom: var(--bb-grid-size-2);
@@ -387,17 +394,204 @@ export class EntityEditor extends SignalWatcher(LitElement) {
             border-radius: var(--bb-grid-size-2);
             border: 1px solid var(--bb-neutral-300);
           }
+
+          & .port {
+            margin-bottom: var(--bb-grid-size-2);
+          }
         }
 
-        > div {
-          height: var(--bb-grid-size-5);
+        div {
           display: flex;
           align-items: center;
           font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
             var(--bb-font-family);
 
           &.port {
-            container-type: size;
+            &.boolean {
+              & label {
+                display: flex;
+                align-items: center;
+                padding-left: 0;
+
+                & .g-icon {
+                  margin-right: var(--bb-grid-size-2);
+
+                  &::before {
+                    content: "check_box_outline_blank";
+                  }
+                }
+
+                &:has(+ input:checked) .g-icon::before {
+                  content: "check_box";
+                }
+
+                &:focus {
+                  outline: none;
+
+                  &::before {
+                    border: 1px solid var(--bb-ui-700);
+                    outline: 1px solid var(--bb-ui-700);
+                  }
+                }
+              }
+
+              & input {
+                display: none;
+              }
+            }
+
+            label {
+              &:not(.slim) {
+                margin-right: var(--bb-grid-size-2);
+
+                &.icon::before {
+                  margin-right: var(--bb-grid-size-2);
+                }
+              }
+              display: inline-flex;
+              align-items: center;
+
+              &.icon {
+                &::before {
+                  content: "";
+                  width: 20px;
+                  height: 20px;
+                  background: red;
+                }
+
+                &.search::before {
+                  background: var(--bb-icon-search) center center / 20px 20px
+                    no-repeat;
+                }
+
+                &.map-search::before {
+                  background: var(--bb-icon-map-search) center center / 20px
+                    20px no-repeat;
+                }
+
+                &.globe-book::before {
+                  background: var(--bb-icon-globe-book) center center / 20px
+                    20px no-repeat;
+                }
+
+                &.language::before {
+                  background: var(--bb-icon-language) center center / 20px 20px
+                    no-repeat;
+                }
+
+                &.sunny::before {
+                  background: var(--bb-icon-sunny) center center / 20px 20px
+                    no-repeat;
+                }
+
+                &.generative::before {
+                  background: var(--bb-add-icon-generative) center center / 20px
+                    20px no-repeat;
+                }
+
+                &.generative-image::before {
+                  background: var(--bb-add-icon-generative-image) center
+                    center / 20px 20px no-repeat;
+                }
+
+                &.generative-image-edit::before {
+                  background: var(--bb-add-icon-generative-image-edit-auto)
+                    center center / 20px 20px no-repeat;
+                }
+
+                &.generative-text::before {
+                  background: var(--bb-add-icon-generative-text-analysis) center
+                    center / 20px 20px no-repeat;
+                }
+
+                &.generative-audio::before {
+                  background: var(--bb-add-icon-generative-audio) center
+                    center / 20px 20px no-repeat;
+                }
+
+                &.generative-video::before {
+                  background: var(--bb-add-icon-generative-videocam-auto) center
+                    center / 20px 20px no-repeat;
+                }
+
+                &.generative-code::before {
+                  background: var(--bb-add-icon-generative-code) center center /
+                    20px 20px no-repeat;
+                }
+
+                &.generative-search::before {
+                  background: var(--bb-add-icon-generative-search) center
+                    center / 20px 20px no-repeat;
+                }
+
+                &.combine-outputs::before {
+                  background: var(--bb-icon-table-rows) center center / 20px
+                    20px no-repeat;
+                }
+
+                &.display::before {
+                  background: var(--bb-icon-responsive-layout) center center /
+                    20px 20px no-repeat;
+                }
+
+                &.ask-user::before {
+                  background: var(--bb-icon-chat-mirror) center center / 20px
+                    20px no-repeat;
+                }
+
+                &.input::before {
+                  background: var(--bb-icon-input) center center / 20px 20px
+                    no-repeat;
+                }
+
+                &.output::before {
+                  background: var(--bb-icon-output) center center / 20px 20px
+                    no-repeat;
+                }
+
+                &.smart-toy::before {
+                  background: var(--bb-icon-smart-toy) center center / 20px 20px
+                    no-repeat;
+                }
+
+                &.laps::before {
+                  background: var(--bb-icon-laps) center center / 20px 20px
+                    no-repeat;
+                }
+
+                &.merge-type::before {
+                  background: var(--bb-icon-merge-type) center center / 20px
+                    20px no-repeat;
+                }
+
+                &.code-blocks::before {
+                  background: var(--bb-icon-code-blocks) center center / 20px
+                    20px no-repeat;
+                }
+
+                &.human::before {
+                  background: var(--bb-icon-human) center center / 20px 20px
+                    no-repeat;
+                }
+              }
+            }
+
+            input,
+            select,
+            textarea {
+              font: 400 var(--bb-label-medium) /
+                var(--bb-label-line-height-medium) var(--bb-font-family);
+              height: var(--bb-grid-size-5);
+              border: none;
+              margin: 0;
+              padding: 0 var(--bb-grid-size-2);
+            }
+
+            .item-select-container {
+              flex: 1 1 auto;
+              overflow: hidden;
+              margin-right: var(--bb-grid-size-2);
+            }
           }
 
           &.object:has(details) {
@@ -421,12 +615,30 @@ export class EntityEditor extends SignalWatcher(LitElement) {
             }
 
             &:not(:last-of-type) {
-              border-bottom: 1px solid var(--bb-neutral-300);
               padding-bottom: var(--bb-grid-size-3);
             }
           }
 
-          &.stretch:has(+ :not(.stretch)) {
+          & bb-llm-output {
+            margin: var(--bb-grid-size-3) var(--bb-grid-size-6);
+            --output-lite-border-color: transparent;
+            --output-border-radius: var(--bb-grid-size);
+          }
+
+          & bb-llm-part-input {
+            &.fill {
+              width: 100%;
+              height: 100%;
+              overflow: auto;
+            }
+          }
+        }
+
+        > div {
+          &.port {
+          }
+
+          &.stretch:has(+ .port:not(.stretch)) {
             margin-bottom: var(--bb-grid-size-3);
             border-bottom: 1px solid var(--bb-neutral-300);
           }
@@ -453,200 +665,27 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
           &:not(.stretch) {
             padding: 0 var(--bb-grid-size-6);
+            flex: 0 0 auto;
 
             &:last-of-type {
               padding-bottom: var(--bb-grid-size-3);
             }
           }
 
-          &.boolean {
-            & label {
-              display: flex;
-              align-items: center;
-              padding-left: 0;
-
-              &::before {
-                content: "";
-                display: block;
-                width: 16px;
-                height: 16px;
-                border-radius: var(--bb-grid-size);
-                border: 1px solid var(--bb-neutral-600);
-                flex: 0 0 auto;
-                margin-right: var(--bb-grid-size-2);
-              }
-
-              &:has(+ input:checked)::before {
-                background: var(--bb-icon-check) center center / 20px 20px
-                  no-repeat;
-              }
-
-              &:focus {
-                outline: none;
-
-                &::before {
-                  border: 1px solid var(--bb-ui-700);
-                  outline: 1px solid var(--bb-ui-700);
-                }
-              }
-            }
-
-            & input {
-              display: none;
-            }
+          & bb-text-editor {
+            width: 100%;
+            height: 100%;
+            --text-editor-height: 100%;
+            --text-editor-padding-top: 0;
+            --text-editor-padding-right: var(--bb-grid-size-6);
+            --text-editor-padding-bottom: 0;
+            --text-editor-padding-left: var(--bb-grid-size-6);
           }
 
-          label {
-            &:not(.slim) {
-              margin-right: var(--bb-grid-size-2);
-
-              &.icon::before {
-                margin-right: var(--bb-grid-size-2);
-              }
+          &:has(bb-text-editor) {
+            &:not(:last-of-type) {
+              border-bottom: 1px solid var(--bb-neutral-300);
             }
-            display: inline-flex;
-            align-items: center;
-
-            &.icon {
-              &::before {
-                content: "";
-                width: 20px;
-                height: 20px;
-                background: red;
-              }
-
-              &.search::before {
-                background: var(--bb-icon-search) center center / 20px 20px
-                  no-repeat;
-              }
-
-              &.map-search::before {
-                background: var(--bb-icon-map-search) center center / 20px 20px
-                  no-repeat;
-              }
-
-              &.globe-book::before {
-                background: var(--bb-icon-globe-book) center center / 20px 20px
-                  no-repeat;
-              }
-
-              &.language::before {
-                background: var(--bb-icon-language) center center / 20px 20px
-                  no-repeat;
-              }
-
-              &.sunny::before {
-                background: var(--bb-icon-sunny) center center / 20px 20px
-                  no-repeat;
-              }
-
-              &.generative::before {
-                background: var(--bb-add-icon-generative) center center / 20px
-                  20px no-repeat;
-              }
-
-              &.generative-image::before {
-                background: var(--bb-add-icon-generative-image) center center /
-                  20px 20px no-repeat;
-              }
-
-              &.generative-image-edit::before {
-                background: var(--bb-add-icon-generative-image-edit-auto) center
-                  center / 20px 20px no-repeat;
-              }
-
-              &.generative-text::before {
-                background: var(--bb-add-icon-generative-text-analysis) center
-                  center / 20px 20px no-repeat;
-              }
-
-              &.generative-audio::before {
-                background: var(--bb-add-icon-generative-audio) center center /
-                  20px 20px no-repeat;
-              }
-
-              &.generative-video::before {
-                background: var(--bb-add-icon-generative-videocam-auto) center
-                  center / 20px 20px no-repeat;
-              }
-
-              &.generative-code::before {
-                background: var(--bb-add-icon-generative-code) center center /
-                  20px 20px no-repeat;
-              }
-
-              &.generative-search::before {
-                background: var(--bb-add-icon-generative-search) center center /
-                  20px 20px no-repeat;
-              }
-
-              &.combine-outputs::before {
-                background: var(--bb-icon-table-rows) center center / 20px 20px
-                  no-repeat;
-              }
-
-              &.display::before {
-                background: var(--bb-icon-responsive-layout) center center /
-                  20px 20px no-repeat;
-              }
-
-              &.ask-user::before {
-                background: var(--bb-icon-chat-mirror) center center / 20px 20px
-                  no-repeat;
-              }
-
-              &.input::before {
-                background: var(--bb-icon-input) center center / 20px 20px
-                  no-repeat;
-              }
-
-              &.output::before {
-                background: var(--bb-icon-output) center center / 20px 20px
-                  no-repeat;
-              }
-
-              &.smart-toy::before {
-                background: var(--bb-icon-smart-toy) center center / 20px 20px
-                  no-repeat;
-              }
-
-              &.laps::before {
-                background: var(--bb-icon-laps) center center / 20px 20px
-                  no-repeat;
-              }
-
-              &.merge-type::before {
-                background: var(--bb-icon-merge-type) center center / 20px 20px
-                  no-repeat;
-              }
-
-              &.code-blocks::before {
-                background: var(--bb-icon-code-blocks) center center / 20px 20px
-                  no-repeat;
-              }
-
-              &.human::before {
-                background: var(--bb-icon-human) center center / 20px 20px
-                  no-repeat;
-              }
-            }
-          }
-
-          input,
-          select,
-          textarea {
-            font: 400 var(--bb-label-medium) /
-              var(--bb-label-line-height-medium) var(--bb-font-family);
-            height: var(--bb-grid-size-5);
-            border: none;
-            margin: 0;
-            padding: 0 var(--bb-grid-size-2);
-          }
-
-          .item-select-container {
-            flex: 1 1 auto;
-            overflow: hidden;
-            margin-right: var(--bb-grid-size-2);
           }
 
           #controls-container {
@@ -692,30 +731,6 @@ export class EntityEditor extends SignalWatcher(LitElement) {
                 }
               }
             }
-          }
-        }
-
-        & bb-text-editor {
-          width: 100%;
-          height: 100%;
-          --text-editor-height: 100%;
-          --text-editor-padding-top: 0;
-          --text-editor-padding-right: var(--bb-grid-size-6);
-          --text-editor-padding-bottom: 0;
-          --text-editor-padding-left: var(--bb-grid-size-6);
-        }
-
-        & bb-llm-output {
-          margin: var(--bb-grid-size-3) var(--bb-grid-size-6);
-          --output-lite-border-color: transparent;
-          --output-border-radius: var(--bb-grid-size);
-        }
-
-        & bb-llm-part-input {
-          &.fill {
-            width: 100%;
-            height: 100%;
-            overflow: auto;
           }
         }
       }
@@ -1211,7 +1226,9 @@ export class EntityEditor extends SignalWatcher(LitElement) {
               class=${classMap({
                 slim: isControllerBehavior(port.schema),
               })}
-              >${!isControllerBehavior(port.schema) ? port.title : ""}</label
+              ><span class="g-icon"></span>${!isControllerBehavior(port.schema)
+                ? port.title
+                : ""}</label
             ><input
               type="checkbox"
               ?checked=${port.value === true}
