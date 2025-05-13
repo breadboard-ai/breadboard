@@ -122,6 +122,21 @@ class GoogleStorageBlobStore implements BlobStore {
     }
   }
 
+  async upsert(
+    blobId: string,
+    buffer: Buffer,
+    contentType: string
+  ): Promise<Outcome<void>> {
+    try {
+      const bucket = this.#storage.bucket(this.#bucketId);
+      const file = bucket.file(blobId);
+      await file.save(buffer, { contentType });
+      return;
+    } catch (e) {
+      return err((e as Error).message);
+    }
+  }
+
   async getBlob(handle: string): Promise<Outcome<BlobStoreGetResult>> {
     try {
       const bucket = this.#storage.bucket(this.#bucketId);

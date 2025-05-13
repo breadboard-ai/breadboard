@@ -24,5 +24,8 @@ async function serveBlob(
       "content-disposition": "inline",
     });
     res.end(result.data);
+  } else {
+    res.writeHead(404);
+    res.end();
   }
 }
