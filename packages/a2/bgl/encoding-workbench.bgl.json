@@ -1,0 +1,89 @@
+{
+  "title": "Encoding Workbench",
+  "description": "",
+  "version": "0.0.1",
+  "main": "main",
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "metadata": {
+        "title": "Input"
+      }
+    },
+    {
+      "id": "run-module",
+      "type": "runModule",
+      "configuration": {
+        "$module": "main"
+      },
+      "metadata": {
+        "title": "Encoding Workbench"
+      }
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "metadata": {
+        "title": "Output"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "input",
+      "to": "run-module",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "run-module",
+      "to": "output",
+      "out": "*",
+      "in": ""
+    }
+  ],
+  "metadata": {
+    "visual": {
+      "presentation": {
+        "themes": {
+          "39239b49-62d0-4182-b919-924c4db67941": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "39239b49-62d0-4182-b919-924c4db67941"
+      }
+    },
+    "userModified": true,
+    "tags": [],
+    "parameters": {}
+  },
+  "modules": {
+    "main": {
+      "code": "/**\n * @fileoverview Add a description for your module here.\n */\nexport { invoke as default, describe };\nconst b = \"VGhlIHdlYXRoZXIgaW4gTG9zIEFsdG9zLCBDQSB0b2RheSwgTW9uZGF5LCBNYXkgMTIsIDIwMjUsIGlzIG1vc3RseSBzdW5ueSB3aXRoIGEgY3VycmVudCB0ZW1wZXJhdHVyZSBvZiA2MsKwRiAoMTfCsEMpLiBJdCBmZWVscyBsaWtlIDYxwrBGICgxNsKwQykgd2l0aCA1NyUgaHVtaWRpdHkgYW5kIGEgMCUgY2hhbmNlIG9mIHJhaW4uCgpIZXJlIGlzIGEgbW9yZSBkZXRhaWxlZCBmb3JlY2FzdCBmb3IgdG9kYXk6CiogICAqKk1vcm5pbmc6KiogTW9zdGx5IGNsb3VkeSwgd2l0aCBhIGxvdyBjaGFuY2Ugb2YgYSBzaG93ZXIgaW4gdGhlIGFmdGVybm9vbiBbNF0uIFBhcnRseSBjbG91ZHkgbGF0ZSBpbiB0aGUgbW9ybmluZywgdGhlbiBiZWNvbWluZyBzdW5ueSBbNl0uCiogICAqKkFmdGVybm9vbjoqKiBBIG1peCBvZiBzdW4gYW5kIGNsb3VkcyBbNV0uIEhpZ2hzIGluIHRoZSA2MHMgWzZdLiBDaGFuY2Ugb2YgcmFpbiBhcm91bmQgMjAtMjklIFsyLCA0XS4KKiAgICoqRXZlbmluZzoqKiBTdW5ueSBpbiB0aGUgZXZlbmluZyBbNF0uIE1vc3RseSBjbGVhciBpbiB0aGUgZXZlbmluZywgdGhlbiBiZWNvbWluZyBtb3N0bHkgY2xvdWR5IFs2XS4gTG93cyBpbiB0aGUgbG93ZXIgNTBzIFs2XS4KKiAgICoqT3Zlcm5pZ2h0OioqIFBhcnRseSBjbG91ZHkgb3Zlcm5pZ2h0IFs0LCA1XS4gTW9zdGx5IGNsb3VkeSBbNl0uCgpXaW5kcyBhcmUgZXhwZWN0ZWQgdG8gYmUgd2VzdCBhdCAxMCB0byAyMCBtcGggWzUsIDZdLCB3aXRoIHNvbWUgc291cmNlcyBpbmRpY2F0aW5nIG5vcnRod2VzdCB3aW5kcyA5IHRvIDExIG1waCBbNywgOF0gb3Igc291dGh3ZXN0IHdpbmRzIDUgdG8gMTUgbXBoIFs2XS4KClRoZSBhaXIgcXVhbGl0eSBpcyBnZW5lcmFsbHkgYWNjZXB0YWJsZSBmb3IgbW9zdCBpbmRpdmlkdWFscywgdGhvdWdoIHNlbnNpdGl2ZSBncm91cHMgbWlnaHQgZXhwZXJpZW5jZSBtaW5vciB0byBtb2RlcmF0ZSBzeW1wdG9tcyBmcm9tIGxvbmctdGVybSBleHBvc3VyZSBbMl0u\";\nfunction decodeBase64(s) {\n    const latin1 = atob(s);\n    try {\n        return decodeURIComponent(latin1\n            .split(\"\")\n            .map((c) => `%${c.charCodeAt(0).toString(16).padStart(2, \"0\")}`)\n            .join(\"\"));\n    }\n    catch (error) {\n        console.error(\"Error decoding Base64 UTF-8 string:\", error);\n        return latin1;\n    }\n}\nasync function invoke({ context, }) {\n    const text = decodeBase64(b);\n    return { context: [{ parts: [{ text }] }] };\n}\nasync function describe() {\n    return {\n        inputSchema: {\n            type: \"object\",\n            properties: {},\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context out\",\n                },\n            },\n        },\n    };\n}\n",
+      "metadata": {
+        "title": "main",
+        "source": {
+          "code": "/**\n * @fileoverview Add a description for your module here.\n */\n\nexport { invoke as default, describe };\n\nconst b =\n  \"VGhlIHdlYXRoZXIgaW4gTG9zIEFsdG9zLCBDQSB0b2RheSwgTW9uZGF5LCBNYXkgMTIsIDIwMjUsIGlzIG1vc3RseSBzdW5ueSB3aXRoIGEgY3VycmVudCB0ZW1wZXJhdHVyZSBvZiA2MsKwRiAoMTfCsEMpLiBJdCBmZWVscyBsaWtlIDYxwrBGICgxNsKwQykgd2l0aCA1NyUgaHVtaWRpdHkgYW5kIGEgMCUgY2hhbmNlIG9mIHJhaW4uCgpIZXJlIGlzIGEgbW9yZSBkZXRhaWxlZCBmb3JlY2FzdCBmb3IgdG9kYXk6CiogICAqKk1vcm5pbmc6KiogTW9zdGx5IGNsb3VkeSwgd2l0aCBhIGxvdyBjaGFuY2Ugb2YgYSBzaG93ZXIgaW4gdGhlIGFmdGVybm9vbiBbNF0uIFBhcnRseSBjbG91ZHkgbGF0ZSBpbiB0aGUgbW9ybmluZywgdGhlbiBiZWNvbWluZyBzdW5ueSBbNl0uCiogICAqKkFmdGVybm9vbjoqKiBBIG1peCBvZiBzdW4gYW5kIGNsb3VkcyBbNV0uIEhpZ2hzIGluIHRoZSA2MHMgWzZdLiBDaGFuY2Ugb2YgcmFpbiBhcm91bmQgMjAtMjklIFsyLCA0XS4KKiAgICoqRXZlbmluZzoqKiBTdW5ueSBpbiB0aGUgZXZlbmluZyBbNF0uIE1vc3RseSBjbGVhciBpbiB0aGUgZXZlbmluZywgdGhlbiBiZWNvbWluZyBtb3N0bHkgY2xvdWR5IFs2XS4gTG93cyBpbiB0aGUgbG93ZXIgNTBzIFs2XS4KKiAgICoqT3Zlcm5pZ2h0OioqIFBhcnRseSBjbG91ZHkgb3Zlcm5pZ2h0IFs0LCA1XS4gTW9zdGx5IGNsb3VkeSBbNl0uCgpXaW5kcyBhcmUgZXhwZWN0ZWQgdG8gYmUgd2VzdCBhdCAxMCB0byAyMCBtcGggWzUsIDZdLCB3aXRoIHNvbWUgc291cmNlcyBpbmRpY2F0aW5nIG5vcnRod2VzdCB3aW5kcyA5IHRvIDExIG1waCBbNywgOF0gb3Igc291dGh3ZXN0IHdpbmRzIDUgdG8gMTUgbXBoIFs2XS4KClRoZSBhaXIgcXVhbGl0eSBpcyBnZW5lcmFsbHkgYWNjZXB0YWJsZSBmb3IgbW9zdCBpbmRpdmlkdWFscywgdGhvdWdoIHNlbnNpdGl2ZSBncm91cHMgbWlnaHQgZXhwZXJpZW5jZSBtaW5vciB0byBtb2RlcmF0ZSBzeW1wdG9tcyBmcm9tIGxvbmctdGVybSBleHBvc3VyZSBbMl0u\";\n\nfunction decodeBase64(s: string): string {\n  const latin1 = atob(s);\n  try {\n    return decodeURIComponent(\n      latin1\n        .split(\"\")\n        .map((c) => `%${c.charCodeAt(0).toString(16).padStart(2, \"0\")}`)\n        .join(\"\")\n    );\n  } catch (error) {\n    console.error(\"Error decoding Base64 UTF-8 string:\", error);\n    return latin1;\n  }\n}\n\nasync function invoke({\n  context,\n}: {\n  context: LLMContent[];\n}): Promise<Outcome<{ context: LLMContent[] }>> {\n  const text = decodeBase64(b);\n  return { context: [{ parts: [{ text }] }] };\n}\n\nasync function describe() {\n  return {\n    inputSchema: {\n      type: \"object\",\n      properties: {},\n    } satisfies Schema,\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context out\",\n        },\n      },\n    } satisfies Schema,\n  };\n}\n",
+          "language": "typescript"
+        },
+        "description": "Add a description for your module here.",
+        "runnable": true
+      }
+    }
+  },
+  "assets": {}
+}

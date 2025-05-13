@@ -3,7 +3,7 @@
  */
 
 import { type DescribeOutputs } from "@describe";
-import { err } from "./a2/utils";
+import { err, decodeBase64 } from "./a2/utils";
 import fetch from "@fetch";
 import secrets from "@secrets";
 
@@ -87,7 +87,7 @@ async function invoke() {
     return err(`Invalid response`);
   }
 
-  const emails = atob(data);
+  const emails = decodeBase64(data);
 
   return { emails };
 }

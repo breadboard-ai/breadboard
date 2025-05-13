@@ -26,6 +26,7 @@ export {
   extractTextData,
   extractInlineData,
   extractMediaData,
+  decodeBase64,
 };
 
 export type NonPromise<T> = T extends Promise<unknown> ? never : T;
@@ -345,4 +346,19 @@ export function mergeContent(content: LLMContent[], role: string): LLMContent {
 
 function generateId() {
   return Math.random().toString(36).substring(2, 5);
+}
+
+function decodeBase64(s: string): string {
+  const latin1 = atob(s);
+  try {
+    return decodeURIComponent(
+      latin1
+        .split("")
+        .map((c) => `%${c.charCodeAt(0).toString(16).padStart(2, "0")}`)
+        .join("")
+    );
+  } catch (error) {
+    console.error("Error decoding Base64 UTF-8 string:", error);
+    return latin1;
+  }
 }
