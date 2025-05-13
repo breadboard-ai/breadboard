@@ -13,6 +13,7 @@ export interface GoogleDriveClientOptions {
   proxyUrl: string;
   getUserAccessToken: () => Promise<string>;
   publicApiKey: string;
+  publicApiSpoofReferer?: string;
 }
 
 export interface BaseRequestOptions {
@@ -32,12 +33,14 @@ export class GoogleDriveClient {
   readonly #proxyUrl: string;
   readonly #getUserAccessToken: () => Promise<string>;
   readonly #publicApiKey: string;
+  readonly #publicApiSpoofReferer?: string;
 
   constructor(options: GoogleDriveClientOptions) {
     this.#apiBaseUrl = options.apiBaseUrl;
     this.#proxyUrl = options.proxyUrl;
     this.#getUserAccessToken = options.getUserAccessToken;
     this.#publicApiKey = options.publicApiKey;
+    this.#publicApiSpoofReferer = options.publicApiSpoofReferer;
   }
 
   async accessToken(): Promise<string> {
@@ -314,7 +317,9 @@ export class GoogleDriveClient {
     if (authKind === "bearer") {
       headers.set("authorization", `Bearer ${authorization.token}`);
     } else if (authKind === "key") {
-      // Nothing.
+      if (this.#publicApiSpoofReferer) {
+        headers.set("referer", this.#publicApiSpoofReferer);
+      }
     } else {
       throw new Error(`Unhandled authorization kind`, authKind satisfies never);
     }
