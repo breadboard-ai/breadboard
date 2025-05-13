@@ -1,5 +1,5 @@
 {
-  "title": "Moma Search Workbench",
+  "title": "Internal Search Workbench",
   "description": "A blank board. Use it as a starting point for your creations.",
   "version": "0.0.1",
   "nodes": [
@@ -21,7 +21,7 @@
           "role": "user",
           "parts": [
             {
-              "text": "Do research about Gemini API using {{\"type\":\"tool\",\"path\":\"embed://a2/tools.bgl.json#module:search-moma\",\"title\":\"Moma Search\"}}\nGive a summary of how to use it"
+              "text": "Do research about Gemini API using {{\"type\":\"tool\",\"path\":\"embed://a2/tools.bgl.json#module:search-internal\",\"title\":\"Internal Search\"}}\nGive a summary of how to use it"
             }
           ]
         },
