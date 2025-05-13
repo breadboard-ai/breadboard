@@ -36,6 +36,7 @@ import {
   RunSecretEvent,
   RunSkipEvent,
 } from "@google-labs/breadboard/harness";
+import { blobHandleToUrl } from "@breadboard-ai/shared-ui/elements/app-preview/app-preview.js";
 
 const usingGoogleDrive = new URL(window.location.href).pathname.startsWith(
   "/app/drive"
@@ -67,12 +68,13 @@ export class AppView extends LitElement {
   @provide({ context: BreadboardUIContext.settingsHelperContext })
   accessor settingsHelper: SettingsHelperImpl;
 
+  readonly flow: GraphDescriptor;
   #runner: Runner | null;
   #signInAdapter: SigninAdapter;
 
   constructor(
     private readonly config: AppViewConfig,
-    private readonly flow: GraphDescriptor | null
+    earlyLoadedFlow: GraphDescriptor | null
   ) {
     super();
 
@@ -80,11 +82,8 @@ export class AppView extends LitElement {
     this.tokenVendor = config.tokenVendor;
     this.settingsHelper = config.settingsHelper;
     this.#runner = config.runner;
-    this.#signInAdapter = new SigninAdapter(
-      this.tokenVendor,
-      this.environment,
-      this.settingsHelper
-    );
+    this.#signInAdapter = config.signinAdapter;
+    this.flow = earlyLoadedFlow ?? config.flow;
 
     this.#setDocumentTitle();
     this.#applyThemeToTemplate();
@@ -127,9 +126,9 @@ export class AppView extends LitElement {
         // Stored Data splash screen.
         Promise.resolve()
           .then(async () => {
-            let url = splashScreen.storedData.handle;
-            if (url.startsWith(".") && this.flow?.url) {
-              url = new URL(url, this.flow?.url).href;
+            const url = blobHandleToUrl(splashScreen.storedData.handle)?.href;
+            if (!url) {
+              return "";
             }
 
             const cachedSplashImage = this.#splashImage.get(url);

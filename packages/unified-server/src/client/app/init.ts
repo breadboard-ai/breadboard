@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/// <reference types="vite/client" />
+
 import pkg from "../../../package.json" with { type: "json" };
 import * as StringsHelper from "@breadboard-ai/shared-ui/strings";
 import {
@@ -35,6 +37,8 @@ import { LLMContent } from "@breadboard-ai/types";
 import { getRunStore } from "@breadboard-ai/data-store";
 import { sandbox } from "./sandbox.js";
 import { TopGraphObserver } from "@breadboard-ai/shared-ui/utils/top-graph-observer";
+import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
 
 const primaryColor = getGlobalColor("--bb-ui-700");
 const secondaryColor = getGlobalColor("--bb-ui-400");
@@ -42,9 +46,22 @@ const backgroundColor = getGlobalColor("--bb-neutral-0");
 const textColor = getGlobalColor("--bb-neutral-900");
 const primaryTextColor = getGlobalColor("--bb-neutral-0");
 
-async function fetchFlow() {
+async function fetchFlow(googleDriveClient: GoogleDriveClient) {
+  const url = new URL(window.location.href);
+
+  const decodedPathname = decodeURIComponent(
+    new URL(window.location.href).pathname
+  );
+  const googleDriveFileIdMatch = decodedPathname.match(/drive:\/(.+)/);
+  if (googleDriveFileIdMatch) {
+    const fileId = googleDriveFileIdMatch[1];
+    const file = await googleDriveClient.getFileMedia(fileId);
+    const graph = await file.json();
+    graph.url = `drive:/${fileId}`;
+    return graph;
+  }
+
   try {
-    const url = new URL(window.location.href);
     const matcher = /^\/app\/(.*?)\/(.*)$/;
     const matches = matcher.exec(url.pathname);
     if (!matches) {
@@ -211,8 +228,6 @@ function extractThemeFromFlow(flow: GraphDescriptor | null): {
 
   const theme: AppTheme = createDefaultTheme();
 
-  console.log(flow);
-
   if (flow?.metadata?.visual?.presentation) {
     if (
       flow.metadata.visual.presentation.themes &&
@@ -299,11 +314,31 @@ async function bootstrap(args: BootstrapArguments = {}) {
   await StringsHelper.initFrom(LANGUAGE_PACK as LanguagePack);
 
   async function initAppView() {
-    const flow = await fetchFlow();
-    const template = await fetchTemplate(flow);
     const environment = await createEnvironment(args);
     const settingsHelper = new SettingsHelperImpl();
     const tokenVendor = await createTokenVendor(settingsHelper, environment);
+    const signinAdapter = new SigninAdapter(
+      tokenVendor,
+      environment,
+      settingsHelper
+    );
+    const googleDriveClient = new GoogleDriveClient({
+      apiBaseUrl: "https://www.googleapis.com",
+      proxyUrl:
+        "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/getOpalFile",
+      publicApiKey: import.meta.env.VITE_GOOGLE_DRIVE_PUBLIC_API_KEY ?? "",
+      getUserAccessToken: async () => {
+        const token = await signinAdapter.refresh();
+        if (token?.state === "valid") {
+          return token.grant.access_token;
+        }
+        throw new Error(
+          `User is unexpectedly signed out, or SigninAdapter is misconfigured`
+        );
+      },
+    });
+    const flow = await fetchFlow(googleDriveClient);
+    const template = await fetchTemplate(flow);
     const abortController = new AbortController();
     const runConfig = await createRunConfig(
       flow,
@@ -315,9 +350,11 @@ async function bootstrap(args: BootstrapArguments = {}) {
 
     const extractedTheme = extractThemeFromFlow(flow);
     const config: AppViewConfig = {
+      flow,
       template,
       environment,
       tokenVendor,
+      signinAdapter,
       settingsHelper,
       runner,
       theme: extractedTheme?.theme ?? null,

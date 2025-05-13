@@ -205,7 +205,7 @@ export class AppPreview extends LitElement {
               return;
             }
 
-            const url = imageHandleToUrl(splashScreen.storedData.handle)?.href;
+            const url = blobHandleToUrl(splashScreen.storedData.handle)?.href;
             if (!url) {
               return "";
             }
@@ -454,7 +454,7 @@ export class AppPreview extends LitElement {
  */
 const BLOB_HANDLE_PATTERN = /^[./]*blobs\/(.+)/;
 
-function imageHandleToUrl(handle: string): URL | undefined {
+export function blobHandleToUrl(handle: string): URL | undefined {
   const blobMatch = handle.match(BLOB_HANDLE_PATTERN);
   if (blobMatch) {
     const blobId = blobMatch[1];

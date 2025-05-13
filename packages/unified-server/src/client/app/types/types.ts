@@ -13,7 +13,13 @@ import type * as ConnectionClient from "@breadboard-ai/connection-client";
 import { HarnessRunner } from "@google-labs/breadboard/harness";
 import { type SettingsHelperImpl } from "../utils/settings.js";
 import { TopGraphObserver } from "@breadboard-ai/shared-ui/utils/top-graph-observer";
-import { InspectableRunObserver, Kit, RunStore } from "@google-labs/breadboard";
+import {
+  GraphDescriptor,
+  InspectableRunObserver,
+  Kit,
+  RunStore,
+} from "@google-labs/breadboard";
+import { type SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
 
 export type Runner = {
   harnessRunner: HarnessRunner;
@@ -25,9 +31,11 @@ export type Runner = {
 };
 
 export interface AppViewConfig {
+  flow: GraphDescriptor;
   template: AppTemplate;
   environment: BreadboardUIContext.Environment;
   tokenVendor: ConnectionClient.TokenVendor;
+  signinAdapter: SigninAdapter;
   settingsHelper: SettingsHelperImpl;
   runner: Runner | null;
   theme: AppTheme | null;
