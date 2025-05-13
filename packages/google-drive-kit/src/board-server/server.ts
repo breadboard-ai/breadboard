@@ -196,7 +196,9 @@ class GoogleDriveBoardServer
 
     const userProjects = userGraphs.map(({ title, tags, id }) => {
       return {
-        url: new URL(`${this.url}/${id}`),
+        // TODO: This should just be new URL(id, this.url), but sadly, it will
+        // break existing instances of the Google Drive board server.
+        url: new URL(`${this.url}${this.url.pathname ? "" : "/"}${id}`),
         metadata: {
           owner: OWNER_USERNAME,
           tags,
