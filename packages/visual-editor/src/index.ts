@@ -2763,6 +2763,15 @@ export class Main extends LitElement {
             });
           }
 
+          if (FEEDBACK_LINK) {
+            actions.push({
+              title: Strings.from("COMMAND_SEND_FEEDBACK"),
+              name: "feedback",
+              icon: "flag",
+              value: tabId,
+            });
+          }
+
           boardOverflowMenu = html`<bb-overflow-menu
             id="board-overflow"
             style=${styleMap({
@@ -2980,6 +2989,14 @@ export class Main extends LitElement {
                   }
                   break;
                 }
+
+                case "feedback": {
+                  window.open(
+                    "https://goto.google.com/labs-opal-bug",
+                    "_blank"
+                  );
+                  break;
+                }
               }
             }}
           ></bb-overflow-menu>`;
@@ -3170,7 +3187,7 @@ export class Main extends LitElement {
                             ${selectedItem}
                           </button>`
                         : nothing}
-                      ${this.#runtime.board.canSave(this.tab.id)
+                      ${this.#runtime.board.isMine(this.tab.id)
                         ? nothing
                         : html`<button
                             id="remix"
