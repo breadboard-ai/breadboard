@@ -246,6 +246,20 @@ export class GoogleDriveClient {
     });
   }
 
+  async isReadable(
+    fileId: string,
+    options?: BaseRequestOptions
+  ): Promise<boolean> {
+    try {
+      await this.getFile(fileId, options);
+      return true;
+    } catch {
+      // TODO(aomarks) We should be a little more discerning here. Only a 404
+      // should return false, anything else should be an exception.
+      return false;
+    }
+  }
+
   #makeUrl(path: string, authorization: GoogleApiAuthorization): URL {
     const url = new URL(path, this.#apiBaseUrl);
     const authKind = authorization.kind;
