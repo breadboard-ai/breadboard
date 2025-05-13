@@ -53,6 +53,10 @@ export class GoogleDriveClient {
       token: await this.#getUserAccessToken(),
     });
     if (response.status === 404) {
+      console.log(
+        `Received 404 response for Google Drive file "${fileId}"` +
+          ` using user credentials, trying public fallback.`
+      );
       response = await this.#getFile(fileId, options, {
         kind: "key",
         key: this.#publicApiKey,
@@ -63,6 +67,10 @@ export class GoogleDriveClient {
     }
 
     if (response.status === 404 && this.#proxyUrl) {
+      console.log(
+        `Received 404 response for Google Drive file "${fileId}"` +
+          ` using public fallback, trying domain proxy fallback.`
+      );
       const proxyResponse = await fetch(this.#proxyUrl, {
         method: "POST",
         body: JSON.stringify({
@@ -124,6 +132,13 @@ export class GoogleDriveClient {
       token: await this.#getUserAccessToken(),
     });
     if (response.status === 404) {
+      // Note it is not possible to suppress the 404 error that will appear in
+      // the console, so this log statement and the similar ones throughout this
+      // file are here to hopefully make this look less concerning.
+      console.log(
+        `Received 404 response for Google Drive file "${fileId}"` +
+          ` using user credentials, trying public fallback.`
+      );
       response = await this.#getFileMedia(fileId, options, {
         kind: "key",
         key: this.#publicApiKey,
@@ -134,6 +149,10 @@ export class GoogleDriveClient {
     }
 
     if (response.status === 404 && this.#proxyUrl) {
+      console.log(
+        `Received 404 response for Google Drive file "${fileId}"` +
+          ` using public fallback, trying domain proxy fallback.`
+      );
       const proxyResponse = await fetch(this.#proxyUrl, {
         method: "POST",
         body: JSON.stringify({
@@ -192,6 +211,10 @@ export class GoogleDriveClient {
       token: await this.#getUserAccessToken(),
     });
     if (response.status === 404) {
+      console.log(
+        `Received 404 response for Google Drive file "${fileId}"` +
+          ` using user credentials, trying public fallback.`
+      );
       response = await this.#exportFile(fileId, options, {
         kind: "key",
         key: this.#publicApiKey,
@@ -202,6 +225,10 @@ export class GoogleDriveClient {
     }
 
     if (response.status === 404 && this.#proxyUrl) {
+      console.log(
+        `Received 404 response for Google Drive file "${fileId}"` +
+          ` using public fallback, trying domain proxy fallback.`
+      );
       const proxyResponse = await fetch(this.#proxyUrl, {
         method: "POST",
         body: JSON.stringify({
