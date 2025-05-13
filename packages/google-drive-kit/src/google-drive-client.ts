@@ -75,11 +75,10 @@ export class GoogleDriveClient {
         method: "POST",
         body: JSON.stringify({
           fileId: fileId,
-          // TODO(aomarks) Switch to GET_METADATA when implemented. Right now we
-          // are fetching the entire file contents and just ignoring it, which
-          // is wasteful.
-          getMode: "GET_MODE_EXPORT",
-          mimeType: "text/plain",
+          getMode: "GET_MODE_METADATA",
+          metadata_fields: options?.fields?.length
+            ? options.fields.join(",")
+            : undefined,
         } satisfies GetFileProxyRequest),
         headers: {
           authorization: `Bearer ${await this.#getUserAccessToken()}`,
@@ -317,10 +316,17 @@ export class GoogleDriveClient {
 type GetFileProxyRequest =
   | {
       fileId: string;
+      metadata_fields?: string;
+      getMode: "GET_MODE_METADATA";
+    }
+  | {
+      fileId: string;
+      metadata_fields?: string;
       getMode: "GET_MODE_GET_MEDIA";
     }
   | {
       fileId: string;
+      metadata_fields?: string;
       getMode: "GET_MODE_EXPORT";
       mimeType: string;
     };
