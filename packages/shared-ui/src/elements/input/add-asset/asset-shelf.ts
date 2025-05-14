@@ -50,6 +50,8 @@ export class AssetShelf extends LitElement {
           width: 100%;
           height: 100%;
           border-radius: var(--bb-grid-size-2);
+          box-sizing: border-box;
+          --icon-size: 32px;
 
           > * {
             display: block;
@@ -207,7 +209,9 @@ export class AssetShelf extends LitElement {
               if (
                 part.fileData.mimeType.startsWith("application/vnd.google-apps")
               ) {
-                value = html`<div class="gdrive"></div>`;
+                value = html`<bb-google-drive-file-viewer
+                  .fileId=${part.fileData.fileUri}
+                ></bb-google-drive-file-viewer>`;
                 break;
               }
             }

@@ -37,14 +37,17 @@ export class GoogleDriveFileViewer extends LitElement {
         max-width: 100%;
         border-radius: var(--bb-grid-size);
       }
+
       .image-placeholder {
-        width: 170px;
-        height: 220px;
+        width: 100%;
+        aspect-ratio: 170/220;
         display: flex;
         justify-content: center;
         align-items: center;
+        overflow: hidden;
+
         .g-icon {
-          font-size: 160px;
+          font-size: var(--icon-size, 160px);
           color: var(--bb-neutral-200);
         }
       }

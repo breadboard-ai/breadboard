@@ -47,7 +47,9 @@ export class AddAssetModal extends LitElement {
     }
 
     :host(:not([visible])) {
-      display: none;
+      display: block;
+      pointer-events: none;
+      opacity: 0;
     }
 
     #container {
@@ -286,18 +288,15 @@ export class AddAssetModal extends LitElement {
     if (!this.#inputRef.value) {
       return;
     }
-
     this.#inputRef.value.click();
   }
 
   protected willUpdate(changedProperties: PropertyValues): void {
-    if (changedProperties.has("assetType") && this.assetType === "upload") {
-      console.log("Setting to hidden");
+    if (
+      changedProperties.has("assetType") &&
+      (this.assetType === "upload" || this.assetType === "gdrive")
+    ) {
       this.visible = false;
-    }
-
-    if (changedProperties.has("visible")) {
-      console.log("Changing visible", this.visible);
     }
   }
 
@@ -360,6 +359,11 @@ export class AddAssetModal extends LitElement {
             id="add-drive-proxy"
             ${ref(this.#addDriveInputRef)}
             .connectionName=${SIGN_IN_CONNECTION_ID}
+            .autoTrigger=${true}
+            .ownedByMeOnly=${true}
+            @bb-input-change=${() => {
+              this.#processAndEmit();
+            }}
           ></bb-google-drive-file-id>
         `;
         break;
