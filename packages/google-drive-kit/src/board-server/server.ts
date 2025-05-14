@@ -208,17 +208,20 @@ class GoogleDriveBoardServer
       };
     });
 
-    const galleryProjects = featuredGraphs.map(({ title, tags, id }) => {
-      return {
-        url: new URL(`${this.url}${this.url.pathname ? "" : "/"}${id}`),
-        metadata: {
-          owner: GALLERY_OWNER_USERNAME,
-          tags,
-          title,
-          access: galleryAccess,
-        },
-      };
-    });
+    const galleryProjects = featuredGraphs.map(
+      ({ title, tags, thumbnailUrl, id }) => {
+        return {
+          url: new URL(`${this.url}${this.url.pathname ? "" : "/"}${id}`),
+          metadata: {
+            owner: GALLERY_OWNER_USERNAME,
+            tags,
+            title,
+            access: galleryAccess,
+            thumbnail: thumbnailUrl,
+          },
+        };
+      }
+    );
 
     return [...userProjects, ...galleryProjects];
   }
@@ -381,6 +384,7 @@ class GoogleDriveBoardServer
           handle: null,
           tags: project.metadata?.tags,
           username: project.metadata.owner,
+          thumbnail: project.metadata.thumbnail,
         },
       ]);
     }
