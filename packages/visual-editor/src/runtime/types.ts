@@ -49,6 +49,7 @@ export interface Tab {
   name: TabName;
   mainGraphId: MainGraphIdentifier;
   graph: GraphDescriptor;
+  graphIsMine: boolean;
   subGraphId: string | null;
   moduleId: ModuleIdentifier | null;
   version: number;
