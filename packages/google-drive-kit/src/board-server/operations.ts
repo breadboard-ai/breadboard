@@ -197,15 +197,14 @@ class DriveOperations {
     api: Files,
     files: Array<DriveFile>
   ): Promise<Array<GraphInfo>> {
-    const maybeFetchThumbnail = async (
-      file: DriveFile
-    ) => { 
+    const maybeFetchThumbnail = async (file: DriveFile) => {
       const appProperties = readAppProperties(file);
       const thumbnailUrl = appProperties.thumbnailUrl;
       if (thumbnailUrl) {
         const thumbnailFileId = getFileId(thumbnailUrl);
-        // TODO: Switch to retryable.
-        const response = await fetch(api.makeLoadRequest(thumbnailFileId));
+        const response = await retryableFetch(
+          api.makeLoadRequest(thumbnailFileId)
+        );
         const bytes = await response.bytes();
         const encoder = new TextDecoder("utf8");
         const data = encoder.decode(bytes);
@@ -219,7 +218,7 @@ class DriveOperations {
     const withThumbnails = await Promise.all(
       files.map((file) => maybeFetchThumbnail(file))
     );
-    return withThumbnails.map(({file, appProperties, thumbnail}) => {
+    return withThumbnails.map(({ file, appProperties, thumbnail }) => {
       return {
         id: file.id,
         title: appProperties.title || file.name.replace(/(\.bgl)?\.json$/, ""),
@@ -254,8 +253,7 @@ class DriveOperations {
     // data model hence didn't make it to here.
     // Since such requests are cheap and fast it's fine for now.
     // TODO(volodya): Pass the app properties and remove the need for this.
-    // TODO: switch to retryable.
-    const response = await fetch(api.makeGetRequest(boardFileId));
+    const response = await retryableFetch(api.makeGetRequest(boardFileId));
     const appProperties = readAppProperties(await response.json());
     const url = appProperties.thumbnailUrl;
     return url ? getFileId(url) : undefined;
@@ -364,7 +362,6 @@ class DriveOperations {
     graphFileName: string,
     asset?: Asset
   ): Promise<string | undefined> {
-    // TODO(volodya): Update the content if the file exists.
     if (!asset) {
       return undefined;
     }
@@ -384,8 +381,7 @@ class DriveOperations {
     // Start in parallel.
     const parentPromise = this.findOrCreateFolder();
 
-    // TODO: switch to retryable.
-    const responsePromise = fetch(
+    const responsePromise = retryableFetch(
       api.makeImageUploadRequest(
         thumbnailFileId,
         data,
@@ -400,7 +396,7 @@ class DriveOperations {
 
     const name = `${graphFileName} Thumbnail`;
     // Don't wait for the response since we don't depend on it
-    fetch(
+    retryableFetch(
       api.makeImageMetadataRequest(file.id, (await parentPromise) as string, {
         name,
       })
