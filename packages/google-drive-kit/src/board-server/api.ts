@@ -113,7 +113,7 @@ class Files {
     );
   }
 
-  makeImageMetadataRequest(fileId: string, parent: string, metadata: any) {
+  makeUpdateMetadataRequest(fileId: string, parent: string, metadata: any) {
     const headers = this.#makeHeaders();
     const url = `drive/v3/files/${fileId}?addParents=${parent}`;
     return new Request(
@@ -126,7 +126,7 @@ class Files {
     );
   }
 
-  makeImageUploadRequest(fileId: string|undefined, data: string, contentType: string) {
+  makeUploadRequest(fileId: string|undefined, data: string, contentType: string) {
     const headers = this.#makeHeaders();
     headers.append('Content-Type', contentType);
     headers.append('X-Upload-Content-Type', contentType);

@@ -5,7 +5,11 @@
  */
 
 import type { TokenVendor } from "@breadboard-ai/connection-client";
-import type { Asset, GraphTag } from "@breadboard-ai/types";
+import type {
+  Asset,
+  GraphTag,
+  InlineDataCapabilityPart,
+} from "@breadboard-ai/types";
 import {
   err,
   type GraphDescriptor,
@@ -206,8 +210,8 @@ class DriveOperations {
           api.makeLoadRequest(thumbnailFileId)
         );
         const bytes = await response.bytes();
-        const encoder = new TextDecoder("utf8");
-        const data = encoder.decode(bytes);
+        const decoder = new TextDecoder("utf8");
+        const data = decoder.decode(bytes);
         // TODO(volodya): Set correct content type.
         const thumbnail = `data:image/svg+xml;base64,${data}`;
         return { file, appProperties, thumbnail };
@@ -273,7 +277,7 @@ class DriveOperations {
         file,
         api,
         name,
-        descriptor.assets?.["@@thumbnail"]
+        descriptor
       );
 
       await retryableFetch(
@@ -319,7 +323,7 @@ class DriveOperations {
         fileName,
         api,
         name,
-        descriptor.assets?.["@@thumbnail"]
+        descriptor
       );
 
       const response = await retryableFetch(
@@ -355,13 +359,46 @@ class DriveOperations {
     }
   }
 
+  async saveDataPart(data: string, mimeType: string) {
+    const accessToken = await getAccessToken(this.vendor);
+    const api = new Files({ kind: "bearer", token: accessToken! });
+    // Start in parallel.
+    const parentPromise = this.findOrCreateFolder();
+    // TODO: Update to retryable.
+    const uploadResponse = await fetch(
+      api.makeUploadRequest(undefined, data, mimeType)
+    );
+    const parent = await parentPromise;
+    const file: DriveFile = await uploadResponse.json();
+    // TODO: Update to retryable.
+    fetch(
+      api.makeUpdateMetadataRequest(file.id, (await parentPromise) as string, {
+        // None, just the parent.
+      })
+    ).catch((e) => {
+      console.error("Failed to update image metadata", e);
+    });
+    return `${PROTOCOL}/${file.id}`;
+  }
+
   /** Also patches the asset with the url if a file got created.  */
   private async upsertThumbnailFile(
     boardFileId: string,
     api: Files,
     graphFileName: string,
-    asset?: Asset
+    descriptor?: GraphDescriptor,
   ): Promise<string | undefined> {
+    // First try the splash screen in the theme.
+    const presentation = descriptor?.metadata?.visual?.presentation;
+    if (presentation && presentation.theme) {
+      const theme = presentation.themes?.[presentation.theme];
+      const handle = theme?.splashScreen?.storedData.handle;
+      if (handle) {
+        return handle;
+      }
+    }
+    // Otherwise use @@thumbnail.
+    const asset = descriptor?.assets?.["@@thumbnail"];
     if (!asset) {
       return undefined;
     }
@@ -382,7 +419,7 @@ class DriveOperations {
     const parentPromise = this.findOrCreateFolder();
 
     const responsePromise = retryableFetch(
-      api.makeImageUploadRequest(
+      api.makeUploadRequest(
         thumbnailFileId,
         data,
         maybeStripBase64Suffix(contentType)
@@ -397,7 +434,7 @@ class DriveOperations {
     const name = `${graphFileName} Thumbnail`;
     // Don't wait for the response since we don't depend on it
     retryableFetch(
-      api.makeImageMetadataRequest(file.id, (await parentPromise) as string, {
+      api.makeUpdateMetadataRequest(file.id, (await parentPromise) as string, {
         name,
       })
     ).catch((e) => {
