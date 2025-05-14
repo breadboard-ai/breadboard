@@ -58,7 +58,10 @@ export async function create(config: RuntimeConfig): Promise<{
       await migrateFileSystemProviders();
     }
 
-    servers = await getBoardServers();
+    servers = await getBoardServers(
+      config.tokenVendor,
+      config.googleDriveClient
+    );
   }
 
   // Add board servers that are built into
@@ -108,7 +111,14 @@ export async function create(config: RuntimeConfig): Promise<{
   ).createSideboardRuntime();
 
   const runtime = {
-    board: new Board([], loader, kits, boardServers, config.tokenVendor),
+    board: new Board(
+      [],
+      loader,
+      kits,
+      boardServers,
+      config.tokenVendor,
+      config.googleDriveClient
+    ),
     edit: new Edit(
       [],
       loader,
