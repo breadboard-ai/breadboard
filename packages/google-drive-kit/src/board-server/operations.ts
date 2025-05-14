@@ -204,6 +204,9 @@ class DriveOperations {
   ): Promise<Array<GraphInfo>> {
     const maybeFetchThumbnail = async (file: DriveFile) => {
       const appProperties = readAppProperties(file);
+      if (file.properties?.thumbnailUrl) {
+        return { file, appProperties, thumbnail: file.properties!.thumbnailUrl };
+      }
       const thumbnailUrl = appProperties.thumbnailUrl;
       if (thumbnailUrl) {
         const thumbnailFileId = getFileId(thumbnailUrl);
@@ -583,11 +586,12 @@ function readAppProperties(file: DriveFile): AppProperties {
   } catch {
     // do nothing.
   }
+
   return {
     title: title ?? "",
     description,
     tags: parsedTags,
-    thumbnailUrl,
+    thumbnailUrl: file.properties?.thumbnailUrl ?? thumbnailUrl
   };
 }
 

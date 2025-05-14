@@ -110,7 +110,7 @@ class Files {
   makeQueryRequest(query: string): Request {
     return new Request(
       this.#makeUrl(
-        `drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,appProperties)`
+        `drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,appProperties,properties)`
       ),
       {
         method: "GET",

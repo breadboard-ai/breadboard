@@ -195,7 +195,7 @@ class GoogleDriveBoardServer
       ],
     ]);
 
-    const projects = files.map(({ title, tags, id, thumbnail }) => {
+    const userProjects = userGraphs.map(({ title, tags, id, thumbnail }) => {
       return {
         // TODO: This should just be new URL(id, this.url), but sadly, it will
         // break existing instances of the Google Drive board server.
@@ -204,13 +204,14 @@ class GoogleDriveBoardServer
           owner: OWNER_USERNAME,
           tags,
           title,
-          ownerAccess,
-        },
+          thumbnail,
+          access: ownerAccess,
+        } satisfies EntityMetadata,
       };
     });
 
     const galleryProjects = featuredGraphs.map(
-      ({ title, tags, thumbnailUrl, id }) => {
+      ({ title, tags, thumbnail, id }) => {
         return {
           url: new URL(`${this.url}${this.url.pathname ? "" : "/"}${id}`),
           metadata: {
@@ -218,8 +219,8 @@ class GoogleDriveBoardServer
             tags,
             title,
             access: galleryAccess,
-            thumbnail: thumbnailUrl,
-          },
+            thumbnail,
+          } satisfies EntityMetadata,
         };
       }
     );
