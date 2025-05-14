@@ -119,7 +119,7 @@ class Files {
     );
   }
 
-  makeUpdateMetadataRequest(fileId: string, parent: string, metadata: any) {
+  makeUpdateMetadataRequest(fileId: string, parent: string, metadata: unknown) {
     const headers = this.#makeHeaders();
     const url = `drive/v3/files/${fileId}?addParents=${parent}`;
     return new Request(
