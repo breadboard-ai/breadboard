@@ -210,10 +210,11 @@ class DriveOperations {
           api.makeLoadRequest(thumbnailFileId)
         );
         const bytes = await response.bytes();
-        const decoder = new TextDecoder("utf8");
-        const data = decoder.decode(bytes);
-        // TODO(volodya): Set correct content type.
-        const thumbnail = `data:image/svg+xml;base64,${data}`;
+        const contentType = response.headers.get("content-type");
+        const data = contentType?.includes("image/svg")
+          ? new TextDecoder("utf8").decode(bytes)
+          : bytesToBase64(bytes);
+        const thumbnail = `data:${contentType};base64,${data}`;
         return { file, appProperties, thumbnail };
       }
       return { file, appProperties };
@@ -386,7 +387,7 @@ class DriveOperations {
     boardFileId: string,
     api: Files,
     graphFileName: string,
-    descriptor?: GraphDescriptor,
+    descriptor?: GraphDescriptor
   ): Promise<string | undefined> {
     // First try the splash screen in the theme.
     const presentation = descriptor?.metadata?.visual?.presentation;
@@ -606,4 +607,10 @@ function getFileId(driveUrl: string): string {
     driveUrl = driveUrl.slice(PROTOCOL.length + 1);
   }
   return driveUrl;
+}
+function bytesToBase64(bytes: Uint8Array) {
+  const binString = Array.from(bytes, (byte) =>
+    String.fromCodePoint(byte)
+  ).join("");
+  return btoa(binString);
 }
