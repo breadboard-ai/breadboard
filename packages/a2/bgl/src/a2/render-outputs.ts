@@ -227,7 +227,7 @@ async function describe({ inputs: { text } }: DescribeInputs) {
         },
       },
     } satisfies Schema,
-    title: "Display",
+    title: "Display Output",
     metadata: {
       icon: "display",
       tags: ["quick-access", "core", "output"],
