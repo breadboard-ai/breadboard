@@ -77,17 +77,17 @@ class Files {
     const boundary = globalThis.crypto.randomUUID();
     const headers = this.#makeHeaders();
     headers.set("Content-Type", `multipart/related; boundary=${boundary}`);
-    const body = [
-      `--${boundary}\n`,
+    const body = `--${boundary}\n` + [
       ...parts.map((part) => {
         const data =
           typeof part.data === "string"
             ? part.data
             : JSON.stringify(part.data, null, 2);
 
-        return `Content-Type: ${part.contentType}\n\n${data}\n--${boundary}--`;
+        return `Content-Type: ${part.contentType}\n\n${data}\n`;
       }),
-    ].join("\n");
+      '',
+    ].join(`\n--${boundary}`) + `--`;
     return {
       headers,
       body,
@@ -109,6 +109,37 @@ class Files {
       {
         method: "GET",
         headers: this.#makeHeaders(),
+      }
+    );
+  }
+
+  makeImageMetadataRequest(fileId: string, parent: string, metadata: any) {
+    const headers = this.#makeHeaders();
+    const url = `drive/v3/files/${fileId}?addParents=${parent}`;
+    return new Request(
+      this.#makeUrl(url),
+      {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify(metadata),
+      }
+    );
+  }
+
+  makeImageUploadRequest(fileId: string|undefined, data: string, contentType: string) {
+    const headers = this.#makeHeaders();
+    headers.append('Content-Type', contentType);
+    headers.append('X-Upload-Content-Type', contentType);
+    headers.append('X-Upload-Content-Length', `${data.length}`);
+    const url = fileId 
+      ? `upload/drive/v3/files/${fileId}?uploadType=media` 
+      : "upload/drive/v3/files?uploadType=media";
+    return new Request(
+      this.#makeUrl(url),
+      {
+        method: fileId ? "PATCH" : "POST",
+        headers,
+        body: b64toBlob(data),
       }
     );
   }
@@ -159,4 +190,24 @@ class Files {
       headers: this.#makeHeaders(),
     });
   }
+}
+
+function b64toBlob(b64Data: string, contentType='', sliceSize=512) {
+  const byteCharacters = atob(b64Data);
+  const byteArrays = [];
+
+  for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+    const slice = byteCharacters.slice(offset, offset + sliceSize);
+
+    const byteNumbers = new Array(slice.length);
+    for (let i = 0; i < slice.length; i++) {
+      byteNumbers[i] = slice.charCodeAt(i);
+    }
+
+    const byteArray = new Uint8Array(byteNumbers);
+    byteArrays.push(byteArray);
+  }
+    
+  const blob = new Blob(byteArrays, {type: contentType});
+  return blob;
 }

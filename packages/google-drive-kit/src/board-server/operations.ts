@@ -18,7 +18,6 @@ import {
   type DriveFile,
   type DriveFileQuery,
 } from "./api.js";
-import { unescape } from "querystring";
 
 export { DriveOperations, PROTOCOL };
 
@@ -35,7 +34,7 @@ export type GraphInfo = {
   id: string;
   title: string;
   tags: GraphTag[];
-  thumbnailUrl: string | undefined;
+  thumbnail: string | undefined;
 };
 
 /** Defines api.ts:AppProperties as stored in the drive file */
@@ -120,7 +119,7 @@ class DriveOperations {
       return null;
     }
   }
-  
+
   async readGraphList(): Promise<Outcome<GraphInfo[]>> {
     const folderId = await this.findFolder();
     if (!(typeof folderId === "string" && folderId)) {
@@ -148,7 +147,7 @@ class DriveOperations {
         return err(`Unable to get Drive folder contents. Likely an auth error`);
       }
 
-      const result = response.files.map((file) => toGraphInfo(file));
+      const result = await this.toGraphInfos(api, response.files);
 
       return result;
     } catch (e) {
@@ -180,21 +179,54 @@ class DriveOperations {
     const api = new Files({ kind: "key", key: apiKey });
     const fileRequest = await retryableFetch(api.makeQueryRequest(query));
     const response = (await fileRequest.json()) as DriveFileQuery;
-    const results = await Promise.all(
-      response.files.map(async (file) => {
-        const result = toGraphInfo(file);
-        if (!result.tags.includes("featured")) {
+
+    const results = (await this.toGraphInfos(api, response.files)).map(
+      (graphInfo) => {
+        if (!graphInfo.tags.includes("featured")) {
           // The fact that a graph is in the featured folder alone determines
           // whether it is featured.
-          result.tags.push("featured");
+          graphInfo.tags.push("featured");
         }
-        if (!result.title) {
-          result.title = file.name.replace(/(\.bgl)?\.json$/, "");
-        }
-        return result;
-      })
+        return graphInfo;
+      }
     );
     return results;
+  }
+
+  async toGraphInfos(
+    api: Files,
+    files: Array<DriveFile>
+  ): Promise<Array<GraphInfo>> {
+    const maybeFetchThumbnail = async (
+      file: DriveFile
+    ) => { 
+      const appProperties = readAppProperties(file);
+      const thumbnailUrl = appProperties.thumbnailUrl;
+      if (thumbnailUrl) {
+        const thumbnailFileId = getFileId(thumbnailUrl);
+        // TODO: Switch to retryable.
+        const response = await fetch(api.makeLoadRequest(thumbnailFileId));
+        const bytes = await response.bytes();
+        const encoder = new TextDecoder("utf8");
+        const data = encoder.decode(bytes);
+        // TODO(volodya): Set correct content type.
+        const thumbnail = `data:image/svg+xml;base64,${data}`;
+        return { file, appProperties, thumbnail };
+      }
+      return { file, appProperties };
+    };
+
+    const withThumbnails = await Promise.all(
+      files.map((file) => maybeFetchThumbnail(file))
+    );
+    return withThumbnails.map(({file, appProperties, thumbnail}) => {
+      return {
+        id: file.id,
+        title: appProperties.title || file.name.replace(/(\.bgl)?\.json$/, ""),
+        tags: appProperties.tags,
+        thumbnail: thumbnail,
+      } satisfies GraphInfo;
+    });
   }
 
   async readSharedGraphList(): Promise<string[]> {
@@ -213,6 +245,22 @@ class DriveOperations {
     return response.files.map((file) => file.id);
   }
 
+  async getThumbnailFileId(
+    api: Files,
+    boardFileId: string
+  ): Promise<string | undefined> {
+    // There is probably a better way to do this - we need appProperties of the drive file.
+    // Those were read during load/listing of the board, however they don't have a place in the
+    // data model hence didn't make it to here.
+    // Since such requests are cheap and fast it's fine for now.
+    // TODO(volodya): Pass the app properties and remove the need for this.
+    // TODO: switch to retryable.
+    const response = await fetch(api.makeGetRequest(boardFileId));
+    const appProperties = readAppProperties(await response.json());
+    const url = appProperties.thumbnailUrl;
+    return url ? getFileId(url) : undefined;
+  }
+
   async writeGraphToDrive(
     url: URL,
     descriptor: GraphDescriptor
@@ -222,7 +270,9 @@ class DriveOperations {
     const accessToken = await getAccessToken(this.vendor);
     try {
       const api = new Files({ kind: "bearer", token: accessToken! });
-      const thumbnailUrl = await this.maybeCreateThumbnailFile(
+
+      const thumbnailUrl = await this.upsertThumbnailFile(
+        file,
         api,
         name,
         descriptor.assets?.["@@thumbnail"]
@@ -267,7 +317,8 @@ class DriveOperations {
 
     try {
       const api = new Files({ kind: "bearer", token: accessToken! });
-      const thumbnailUrl = await this.maybeCreateThumbnailFile(
+      const thumbnailUrl = await this.upsertThumbnailFile(
+        fileName,
         api,
         name,
         descriptor.assets?.["@@thumbnail"]
@@ -307,7 +358,8 @@ class DriveOperations {
   }
 
   /** Also patches the asset with the url if a file got created.  */
-  private async maybeCreateThumbnailFile(
+  private async upsertThumbnailFile(
+    boardFileId: string,
     api: Files,
     graphFileName: string,
     asset?: Asset
@@ -321,26 +373,40 @@ class DriveOperations {
       // Already a Drive file.
       return undefined; // No new files were created.
     }
-    const name = `${graphFileName} Thumbnail`;
+
+    const thumbnailFileId = await this.getThumbnailFileId(api, boardFileId);
+
     const { data, contentType } = this.parseAssetData(assetData);
     if (!data) {
       return undefined;
     }
-    const response = await retryableFetch(
-      api.makeMultipartCreateRequest([
-        {
-          contentType: "application/json; charset=UTF-8",
-          data: {
-            name,
-            mimeType: maybeStripBase64Suffix(contentType),
-            parents: [await this.findOrCreateFolder()],
-          },
-        },
-        { contentType, data },
-      ])
+
+    // Start in parallel.
+    const parentPromise = this.findOrCreateFolder();
+
+    // TODO: switch to retryable.
+    const responsePromise = fetch(
+      api.makeImageUploadRequest(
+        thumbnailFileId,
+        data,
+        maybeStripBase64Suffix(contentType)
+      )
     );
+    // TODO(volodya): Optimize - when dealing with an existing file there is no need to await here.
+    const response = await responsePromise;
+
     const file: DriveFile = await response.json();
     const thumbnailUrl = `${PROTOCOL}/${file.id}`;
+
+    const name = `${graphFileName} Thumbnail`;
+    // Don't wait for the response since we don't depend on it
+    fetch(
+      api.makeImageMetadataRequest(file.id, (await parentPromise) as string, {
+        name,
+      })
+    ).catch((e) => {
+      console.error("Failed to update image metadata", e);
+    });
 
     asset!.data = thumbnailUrl;
     return thumbnailUrl;
@@ -495,20 +561,16 @@ function quote(value: string) {
   return `'${value.replace(/'/g, "\\'")}'`;
 }
 
-function toGraphInfo(file: DriveFile): GraphInfo {
-  const { id, name } = file;
-  const { title, tags, thumbnailUrl } = readAppProperties(file);
-  return {
-    id,
-    title: title || name.replace(/(\.bgl)?\.json$/, ""),
-    tags,
-    thumbnailUrl,
-  } satisfies GraphInfo;
-}
-
 function maybeStripBase64Suffix(contentType: string): string {
   const semiColonIndex = contentType.indexOf(";");
   const result =
     semiColonIndex >= 0 ? contentType.slice(0, semiColonIndex) : contentType;
   return result;
+}
+
+function getFileId(driveUrl: string): string {
+  if (driveUrl.startsWith(PROTOCOL)) {
+    driveUrl = driveUrl.slice(PROTOCOL.length + 1);
+  }
+  return driveUrl;
 }
