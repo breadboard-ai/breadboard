@@ -15,6 +15,7 @@ import {
   type BoardServerProject,
   type ChangeNotificationCallback,
   type DataPartTransformer,
+  type EntityMetadata,
   type GraphDescriptor,
   type GraphProviderCapabilities,
   type GraphProviderExtendedCapabilities,
@@ -179,7 +180,7 @@ class GoogleDriveBoardServer
           retrieve: true,
           update: true,
           delete: true,
-        },
+        } satisfies Permission,
       ],
     ]);
     const galleryAccess = new Map([
@@ -190,11 +191,11 @@ class GoogleDriveBoardServer
           retrieve: true,
           update: false,
           delete: false,
-        },
+        } satisfies Permission,
       ],
     ]);
 
-    const userProjects = userGraphs.map(({ title, tags, id }) => {
+    const userProjects = userGraphs.map(({ title, tags, id, thumbnail }) => {
       return {
         // TODO: This should just be new URL(id, this.url), but sadly, it will
         // break existing instances of the Google Drive board server.
@@ -203,13 +204,14 @@ class GoogleDriveBoardServer
           owner: OWNER_USERNAME,
           tags,
           title,
+          thumbnail,
           access: ownerAccess,
-        },
+        } satisfies EntityMetadata,
       };
     });
 
     const galleryProjects = featuredGraphs.map(
-      ({ title, tags, thumbnailUrl, id }) => {
+      ({ title, tags, thumbnail, id }) => {
         return {
           url: new URL(`${this.url}${this.url.pathname ? "" : "/"}${id}`),
           metadata: {
@@ -217,8 +219,8 @@ class GoogleDriveBoardServer
             tags,
             title,
             access: galleryAccess,
-            thumbnail: thumbnailUrl,
-          },
+            thumbnail,
+          } satisfies EntityMetadata,
         };
       }
     );
@@ -400,7 +402,7 @@ class GoogleDriveBoardServer
   }
 
   dataPartTransformer(_graphUrl: URL): DataPartTransformer {
-    return new GoogleDriveDataPartTransformer(this.#googleDriveClient);
+    return new GoogleDriveDataPartTransformer(this.#googleDriveClient, this.ops);
   }
 
   startingURL(): URL | null {

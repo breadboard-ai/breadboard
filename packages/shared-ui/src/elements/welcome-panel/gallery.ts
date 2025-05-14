@@ -6,7 +6,7 @@
 
 import type { GraphProviderItem } from "@google-labs/breadboard";
 import { consume } from "@lit/context";
-import { css, html, HTMLTemplateResult, LitElement, nothing } from "lit";
+import { css, html, HTMLTemplateResult, LitElement, nothing, svg } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { keyed } from "lit/directives/keyed.js";
@@ -25,6 +25,7 @@ import {
   type SigninAdapter,
   signinAdapterContext,
 } from "../../utils/signin-adapter.js";
+import { unsafeHTML } from "lit/directives/unsafe-html.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
@@ -383,11 +384,21 @@ export class Gallery extends LitElement {
     `;
   }
 
+  #renderThumbnail(thumbnail?: string | null) {
+    const svgPrefix = "data:image/svg+xml;base64,";
+    if (thumbnail?.startsWith(svgPrefix)) {
+      return svg`${unsafeHTML(thumbnail!.substring(svgPrefix.length))}`;
+    } else {
+      return html`<img
+        class=${classMap({ thumbnail: true })}
+        src=${thumbnail ?? "/images/placeholder.svg"}
+      />`;
+    }
+  }
+
   #renderBoard([name, item]: [string, GraphProviderItem]) {
     const { url, mine, title, description, thumbnail } = item;
-    // TODO: Replace this with a more robust check. The theme does include this
-    // information but the board server logic doesn't currently expose it.
-    const isDefaultTheme = thumbnail?.startsWith("data:") ?? false;
+
     return html`
       <div
         aria-role="button"
@@ -396,13 +407,7 @@ export class Gallery extends LitElement {
         @click=${(event: PointerEvent) => this.#onBoardClick(event, url)}
         @keydown=${(event: KeyboardEvent) => this.#onBoardKeydown(event, url)}
       >
-        ${keyed(
-          thumbnail,
-          html`<img
-            class=${classMap({ thumbnail: true, default: isDefaultTheme })}
-            src=${thumbnail ?? "/images/placeholder.svg"}
-          />`
-        )}
+        ${keyed(thumbnail, this.#renderThumbnail(thumbnail))}
         <div class="details">
           <div class="creator">
             <span>

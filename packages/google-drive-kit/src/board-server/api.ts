@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { GraphTag } from "@breadboard-ai/types";
+
 export { Files };
 
 export type DriveFile = {
@@ -26,11 +28,10 @@ export type Properties = {
 };
 
 export type AppProperties = {
-  appProperties: {
-    title: string;
-    description: string;
-    tags: string;
-  };
+  title: string;
+  description: string;
+  tags: GraphTag[];
+  thumbnailUrl?: string;
 };
 
 export type GoogleApiAuthorization =
@@ -76,22 +77,26 @@ class Files {
     return headers;
   }
 
-  #multipartRequest(metadata: unknown, body: unknown) {
+  #multipartRequest(
+    parts: Array<{ contentType: string; data: object | string }>
+  ) {
     const boundary = globalThis.crypto.randomUUID();
     const headers = this.#makeHeaders();
     headers.set("Content-Type", `multipart/related; boundary=${boundary}`);
-    const multipartBody = `--${boundary}
-Content-Type: application/json; charset=UTF-8
+    const body = `--${boundary}\n` + [
+      ...parts.map((part) => {
+        const data =
+          typeof part.data === "string"
+            ? part.data
+            : JSON.stringify(part.data, null, 2);
 
-${JSON.stringify(metadata, null, 2)}
---${boundary}
-Content-Type: application/json; charset=UTF-8
-
-${JSON.stringify(body, null, 2)}
---${boundary}--`;
+        return `Content-Type: ${part.contentType}\n\n${data}\n`;
+      }),
+      '',
+    ].join(`\n--${boundary}`) + `--`;
     return {
       headers,
-      body: multipartBody,
+      body,
     };
   }
 
@@ -104,10 +109,43 @@ ${JSON.stringify(body, null, 2)}
 
   makeQueryRequest(query: string): Request {
     return new Request(
-      this.#makeUrl(`drive/v3/files?q=${encodeURIComponent(query)}&fields=*`),
+      this.#makeUrl(
+        `drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,appProperties,properties)`
+      ),
       {
         method: "GET",
         headers: this.#makeHeaders(),
+      }
+    );
+  }
+
+  makeUpdateMetadataRequest(fileId: string, parent: string, metadata: unknown) {
+    const headers = this.#makeHeaders();
+    const url = `drive/v3/files/${fileId}?addParents=${parent}`;
+    return new Request(
+      this.#makeUrl(url),
+      {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify(metadata),
+      }
+    );
+  }
+
+  makeUploadRequest(fileId: string|undefined, data: string, contentType: string) {
+    const headers = this.#makeHeaders();
+    headers.append('Content-Type', contentType);
+    headers.append('X-Upload-Content-Type', contentType);
+    headers.append('X-Upload-Content-Length', `${data.length}`);
+    const url = fileId 
+      ? `upload/drive/v3/files/${fileId}?uploadType=media` 
+      : "upload/drive/v3/files?uploadType=media";
+    return new Request(
+      this.#makeUrl(url),
+      {
+        method: fileId ? "PATCH" : "POST",
+        headers,
+        body: b64toBlob(data),
       }
     );
   }
@@ -127,22 +165,27 @@ ${JSON.stringify(body, null, 2)}
     });
   }
 
-  makeMultipartCreateRequest(metadata: unknown, body: unknown): Request {
+  makeMultipartCreateRequest(
+    parts: Array<{ contentType: string; data: object | string }>
+  ): Request {
     return new Request(
       this.#makeUrl(`upload/drive/v3/files?uploadType=multipart`),
       {
         method: "POST",
-        ...this.#multipartRequest(metadata, body),
+        ...this.#multipartRequest(parts),
       }
     );
   }
 
-  makePatchRequest(file: string, metadata: unknown, body: unknown): Request {
+  makePatchRequest(
+    file: string,
+    parts: Array<{ contentType: string; data: object | string }>
+  ): Request {
     return new Request(
       this.#makeUrl(`upload/drive/v3/files/${file}?uploadType=multipart`),
       {
         method: "PATCH",
-        ...this.#multipartRequest(metadata, body),
+        ...this.#multipartRequest(parts),
       }
     );
   }
@@ -153,4 +196,24 @@ ${JSON.stringify(body, null, 2)}
       headers: this.#makeHeaders(),
     });
   }
+}
+
+function b64toBlob(b64Data: string, contentType='', sliceSize=512) {
+  const byteCharacters = atob(b64Data);
+  const byteArrays = [];
+
+  for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+    const slice = byteCharacters.slice(offset, offset + sliceSize);
+
+    const byteNumbers = new Array(slice.length);
+    for (let i = 0; i < slice.length; i++) {
+      byteNumbers[i] = slice.charCodeAt(i);
+    }
+
+    const byteArray = new Uint8Array(byteNumbers);
+    byteArrays.push(byteArray);
+  }
+    
+  const blob = new Blob(byteArrays, {type: contentType});
+  return blob;
 }
