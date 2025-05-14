@@ -122,3 +122,9 @@ export class ConnectionEntrySignin extends LitElement {
     </div>`;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    "bb-connection-entry-signin": ConnectionEntrySignin;
+  }
+}

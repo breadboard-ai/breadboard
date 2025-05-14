@@ -12,6 +12,7 @@ import { Readable } from "node:stream";
 import { GeminiFileApi } from "../blobs/utils/gemini-file-api.js";
 import { hasExpired } from "../blobs/file-info.js";
 import type { ServerResponse } from "node:http";
+import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 
 type CavemanCacheEntry = { expirationTime: string; fileUri: string };
 
@@ -64,6 +65,14 @@ async function handleAssetsDriveRequest(
 ): Promise<void> {
   const accessToken: string = res.locals.accessToken;
   const driveId = req.params["driveId"] ?? "";
+  const googleDriveClient = new GoogleDriveClient({
+    apiBaseUrl: "https://www.googleapis.com",
+    proxyUrl:
+      "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/getOpalFile",
+    publicApiKey: process.env["VITE_GOOGLE_DRIVE_PUBLIC_API_KEY"] ?? "",
+    publicApiSpoofReferer: req.headers.referer,
+    getUserAccessToken: async () => accessToken,
+  });
 
   const part = CavemanCache.instance().get(driveId);
   if (part) {
@@ -71,13 +80,9 @@ async function handleAssetsDriveRequest(
     return;
   }
 
-  const url = `https://www.googleapis.com/drive/v3/files/${driveId}/export?mimeType=${encodeURIComponent("application/pdf")}`;
-
   try {
-    const exporting = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
+    const exporting = await googleDriveClient.exportFile(driveId, {
+      mimeType: "application/pdf",
     });
     if (!exporting.ok) {
       serverError(

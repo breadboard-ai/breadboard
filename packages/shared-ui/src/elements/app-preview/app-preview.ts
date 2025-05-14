@@ -82,6 +82,9 @@ export class AppPreview extends LitElement {
   accessor eventPosition = 0;
 
   @property()
+  accessor isMine = false;
+
+  @property()
   accessor isInSelectionState = false;
 
   @property()
@@ -416,6 +419,7 @@ export class AppPreview extends LitElement {
       this.#appTemplate.showingOlderResult = this.showingOlderResult;
       this.#appTemplate.readOnly = false;
       this.#appTemplate.showShareButton = false;
+      this.#appTemplate.showContentWarning = !this.isMine;
     }
 
     return html`
@@ -451,6 +455,8 @@ export class AppPreview extends LitElement {
  * they are serialized with a very specific relative path and whether that's
  * always consistent, so let's be lenient and assume any URL with a blobs/ path
  * component is a blob.
+ *
+ * The reason why they are like this is because they're relative to graph URL.
  */
 const BLOB_HANDLE_PATTERN = /^[./]*blobs\/(.+)/;
 
@@ -461,7 +467,11 @@ export function blobHandleToUrl(handle: string): URL | undefined {
     if (blobId) {
       return new URL(`/board/blobs/${blobId}`, window.location.href);
     }
-  } else if (handle.startsWith("data:")) {
+  } else if (
+    handle.startsWith("data:") ||
+    handle.startsWith("http:") ||
+    handle.startsWith("https:")
+  ) {
     return new URL(handle);
   }
   return undefined;

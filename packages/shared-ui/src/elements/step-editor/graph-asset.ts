@@ -222,6 +222,17 @@ export class GraphAsset
 
             &:not([disabled]) {
               cursor: pointer;
+
+              &::before {
+                content: "";
+                width: 20px;
+                height: 20px;
+                position: absolute;
+                top: -5px;
+                left: -5px;
+                border-radius: 50%;
+                background: transparent;
+              }
             }
           }
         }

@@ -33,6 +33,9 @@ import { GoogleDriveDataPartTransformer } from "./data-part-transformer.js";
 
 export { GoogleDriveBoardServer };
 
+const OWNER_USERNAME = "board-builder";
+const GALLERY_OWNER_USERNAME = "gallery-owner";
+
 // This whole package should probably be called
 // "@breadboard-ai/google-drive-board-server".
 // But it's good that we have both components and the board server here:
@@ -51,7 +54,7 @@ class GoogleDriveBoardServer
 
     return {
       title: folder.name || "Google Drive",
-      username: "board-builder",
+      username: OWNER_USERNAME,
     };
   }
 
@@ -169,34 +172,59 @@ class GoogleDriveBoardServer
       console.warn(featuredGraphs.$error);
       featuredGraphs = [];
     }
-    const files = [...userGraphs, ...featuredGraphs];
-    const canAccess = true;
-    const access = new Map([
+    const ownerAccess = new Map([
       [
         this.user.username,
         {
-          create: canAccess,
-          retrieve: canAccess,
-          update: canAccess,
-          delete: canAccess,
+          create: true,
+          retrieve: true,
+          update: true,
+          delete: true,
+        } satisfies Permission,
+      ],
+    ]);
+    const galleryAccess = new Map([
+      [
+        GALLERY_OWNER_USERNAME,
+        {
+          create: false,
+          retrieve: true,
+          update: false,
+          delete: false,
         } satisfies Permission,
       ],
     ]);
 
     const projects = files.map(({ title, tags, id, thumbnail }) => {
       return {
-        url: new URL(`${this.url}/${id}`),
+        // TODO: This should just be new URL(id, this.url), but sadly, it will
+        // break existing instances of the Google Drive board server.
+        url: new URL(`${this.url}${this.url.pathname ? "" : "/"}${id}`),
         metadata: {
-          owner: "board-builder",
+          owner: OWNER_USERNAME,
           tags,
           title,
-          access,
-          thumbnail: thumbnail,
-        } satisfies EntityMetadata,
-      } satisfies BoardServerProject;
+          ownerAccess,
+        },
+      };
     });
 
-    return projects;
+    const galleryProjects = featuredGraphs.map(
+      ({ title, tags, thumbnailUrl, id }) => {
+        return {
+          url: new URL(`${this.url}${this.url.pathname ? "" : "/"}${id}`),
+          metadata: {
+            owner: GALLERY_OWNER_USERNAME,
+            tags,
+            title,
+            access: galleryAccess,
+            thumbnail: thumbnailUrl,
+          },
+        };
+      }
+    );
+
+    return [...userProjects, ...galleryProjects];
   }
 
   getAccess(_url: URL, _user: User): Promise<Permission> {

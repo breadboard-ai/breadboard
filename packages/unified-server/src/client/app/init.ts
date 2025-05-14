@@ -39,12 +39,18 @@ import { sandbox } from "./sandbox.js";
 import { TopGraphObserver } from "@breadboard-ai/shared-ui/utils/top-graph-observer";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
+import "@breadboard-ai/shared-ui/elements/connection/connection-entry-signin.js";
 
 const primaryColor = getGlobalColor("--bb-ui-700");
 const secondaryColor = getGlobalColor("--bb-ui-400");
 const backgroundColor = getGlobalColor("--bb-neutral-0");
 const textColor = getGlobalColor("--bb-neutral-900");
 const primaryTextColor = getGlobalColor("--bb-neutral-0");
+
+const TOS_KEY = "tos-status";
+enum TosStatus {
+  ACCEPTED = "accepted",
+}
 
 async function fetchFlow(googleDriveClient: GoogleDriveClient) {
   const url = new URL(window.location.href);
@@ -322,6 +328,27 @@ async function bootstrap(args: BootstrapArguments = {}) {
       environment,
       settingsHelper
     );
+
+    // For Google Drive, we can't necessarily load the graph before the user has
+    // signed in.
+    const usingGoogleDrive = new URL(window.location.href).pathname.startsWith(
+      "/app/drive"
+    );
+    if (usingGoogleDrive) {
+      const token = await signinAdapter.refresh();
+      if (!token || token.state === "signedout") {
+        const signinScreen = document.createElement(
+          "bb-connection-entry-signin"
+        );
+        signinScreen.adapter = signinAdapter;
+        document.body.appendChild(signinScreen);
+        await new Promise<void>((resolve) =>
+          signinScreen.addEventListener("bbsignin", () => resolve())
+        );
+        signinScreen.remove();
+      }
+    }
+
     const googleDriveClient = new GoogleDriveClient({
       apiBaseUrl: "https://www.googleapis.com",
       proxyUrl:
@@ -377,9 +404,20 @@ async function bootstrap(args: BootstrapArguments = {}) {
       await initAppView();
     });
   }
-
   console.log(`[App View: Version ${pkg.version}; Commit ${GIT_HASH}]`);
   await initAppView();
+
+  const hasAcceptedTos =
+    (localStorage.getItem(TOS_KEY) ?? false) === TosStatus.ACCEPTED;
+  if (ENABLE_TOS && !hasAcceptedTos) {
+    showTerms(TOS_HTML);
+  }
+}
+
+function showTerms(html: string) {
+  const terms = new Elements.TermsOfService();
+  terms.tosHtml = html;
+  document.body.appendChild(terms);
 }
 
 bootstrap({

@@ -6,6 +6,8 @@
 
 import { type GraphDescriptor } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
+import "@material/web/switch/switch.js";
+import { type MdSwitch } from "@material/web/switch/switch.js";
 import { css, html, LitElement, nothing, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
@@ -14,6 +16,8 @@ import {
   type Environment,
   type GoogleDrivePermission,
 } from "../../contexts/environment.js";
+import { ToastEvent, ToastType } from "../../events/events.js";
+import * as StringsHelper from "../../strings/helper.js";
 import { icons } from "../../styles/icons.js";
 import {
   signinAdapterContext,
@@ -21,6 +25,8 @@ import {
 } from "../../utils/signin-adapter.js";
 import { type GoogleDriveSharePanel } from "../elements.js";
 import { loadDriveApi } from "../google-drive/google-apis.js";
+
+const Strings = StringsHelper.forSection("UIController");
 
 @customElement("bb-share-panel")
 export class SharePanel extends LitElement {
@@ -39,12 +45,12 @@ export class SharePanel extends LitElement {
           0px 1px 3px 0px rgba(0, 0, 0, 0.3);
         font-family: var(--bb-font-family);
         padding: var(--bb-grid-size-5);
+        width: 420px;
+        min-height: 240px;
 
-        /* Match the width and backdrop of the Google Drive sharing panel, whose
-           style we don't control, and which will replace our own dialog if the
+        /* Match the backdrop of the Google Drive sharing panel, whose style we
+           don't (easily) control, and which will replace our own dialog if the
            user clicks "View permissions". */
-        width: 512px;
-        box-sizing: border-box;
         &::backdrop {
           background-color: #fff;
           opacity: 50%;
@@ -67,36 +73,127 @@ export class SharePanel extends LitElement {
         cursor: pointer;
         padding: 0;
         font-size: 24px;
-        /* Our default icon weight is too thin. */
-        font-variation-settings:
-          "FILL" 0,
-          "wght" 600,
-          "GRAD" 0,
-          "opsz" 48;
+      }
+
+      #helpText {
+        font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+          var(--bb-font-family);
       }
 
       #permissions {
         display: flex;
         justify-content: space-between;
         margin-top: var(--bb-grid-size-4);
+        min-height: 24px;
       }
       #viewPermissionsButton {
         text-decoration: none;
         color: inherit;
+        font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+          var(--bb-font-family);
         &:hover {
           text-decoration: underline;
         }
       }
-      #publishedToggle {
-        input,
+      #loading {
+        display: inline-block;
+        font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
+          var(--bb-font-family);
+        margin: 0;
+      }
+      #publishedSwitchContainer {
+        display: flex;
+        align-items: center;
+        md-switch {
+          --md-switch-track-width: 40px;
+          --md-switch-track-height: 24px;
+          --md-switch-selected-handle-width: 20px;
+          --md-switch-selected-handle-height: 20px;
+          --md-sys-color-primary: var(--bb-ui-500);
+          --md-sys-color-primary-container: var(--bb-ui-50);
+          --md-sys-color-surface: var(--bb-neutral-400);
+          --md-sys-color-surface-container-highest: var(--bb-neutral-50);
+          --md-sys-color-outline: var(--bb-neutral-600);
+          &[disabled] {
+            cursor: wait;
+          }
+        }
         label {
-          cursor: pointer;
+          display: inline-block;
+          width: 3.1em;
+          margin: 0 var(--bb-grid-size) 0 var(--bb-grid-size-2);
+          font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
+            var(--bb-font-family);
         }
       }
 
-      #openAppLink {
-        display: block;
-        margin-top: var(--bb-grid-size-4);
+      #appPanel {
+        background: var(--bb-neutral-10);
+        border-radius: var(--bb-grid-size-3);
+        padding: var(--bb-grid-size-3) var(--bb-grid-size-4);
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        margin-top: var(--bb-grid-size-3);
+        #appIcon {
+          box-sizing: border-box;
+          height: 60px;
+          width: 60px;
+          background-color: #2f6bb2;
+          border: 1.5px solid #586069;
+          border-radius: var(--bb-grid-size-3);
+        }
+        #titleAndCreator {
+          margin-left: var(--bb-grid-size-4);
+          #title {
+            color: var(--bb-neutral-900);
+            font: 500 var(--bb-title-small) / var(--bb-title-line-height-small)
+              var(--bb-font-family);
+            margin: 0;
+          }
+          #creator {
+            font: 400 var(--bb-label-medium) /
+              var(--bb-label-line-height-medium) var(--bb-font-family);
+            margin: var(--bb-grid-size) 0 0 0;
+            color: var(--bb-neutral-600);
+          }
+        }
+        #copyLinkButton {
+          margin-left: auto;
+          padding: 6px 12px;
+          background: none;
+          display: flex;
+          align-items: center;
+          border: 1px solid var(--bb-neutral-700);
+          border-radius: 20px;
+          font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+            var(--bb-font-family);
+          color: var(--bb-neutral-700);
+          cursor: pointer;
+
+          &[disabled] {
+            opacity: 50%;
+            cursor: wait;
+          }
+
+          &:hover:not([disabled]) {
+            background: var(--bb-neutral-50);
+          }
+
+          .g-icon {
+            margin-right: var(--bb-grid-size);
+            color: var(--bb-neutral-700);
+          }
+        }
+      }
+
+      .g-icon {
+        /* Our default icon weight is too thin. */
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 600,
+          "GRAD" 0,
+          "opsz" 48;
       }
     `,
   ];
@@ -122,11 +219,18 @@ export class SharePanel extends LitElement {
     | {
         status: "written";
         published: true;
+        writable: true;
         relevantPermissions: GoogleDrivePermission[];
       }
     | {
         status: "written";
         published: false;
+        writable: true;
+      }
+    | {
+        status: "written";
+        published: boolean;
+        writable: false;
       }
     | {
         status: "writing";
@@ -134,7 +238,7 @@ export class SharePanel extends LitElement {
       } = { status: "initial" };
 
   #dialog = createRef<HTMLDialogElement>();
-  #publishedToggleInput = createRef<HTMLInputElement>();
+  #publishedSwitch = createRef<MdSwitch>();
   #googleDriveSharePanel = createRef<GoogleDriveSharePanel>();
 
   override update(changes: PropertyValues<this>) {
@@ -192,6 +296,8 @@ export class SharePanel extends LitElement {
           </button>
         </header>
 
+        <p id="helpText">Please make this public to access share link</p>
+
         <div id="permissions">
           <a
             id="viewPermissionsButton"
@@ -200,66 +306,69 @@ export class SharePanel extends LitElement {
           >
             View permissions
           </a>
-          ${this.#renderPublishedToggle()}
+          ${this.#renderPublishedSwitch()}
         </div>
 
-        ${this.#renderAppViewLink()}
+        ${this.#renderAppPanel()}
       </dialog>
     `;
   }
 
-  #renderPublishedToggle() {
+  #renderPublishedSwitch() {
     const status = this.#publishState.status;
     if (status === "initial" || status === "reading") {
-      return html`<p>Checking ...</p>`;
+      return html`<p id="loading">Loading ...</p>`;
     }
 
     status satisfies "written" | "writing";
     const published = this.#publishState.published;
+    const writable = status === "written" && this.#publishState.writable;
     return html`
-      <div id="publishedToggle">
-        <input
-          ${ref(this.#publishedToggleInput)}
-          id="publishedToggleInput"
-          type="checkbox"
-          ?checked=${published}
-          ?disabled=${status === "writing"}
-          @change=${this.#onPublishedToggleChange}
-        />
-        <label for="publishedToggleInput">
-          ${status === "written"
-            ? published
-              ? "Published"
-              : "Private"
-            : published
-              ? "Publishing ..."
-              : "Unpublishing ..."}
+      <div id="publishedSwitchContainer">
+        <md-switch
+          ${ref(this.#publishedSwitch)}
+          ?selected=${published}
+          ?disabled=${!writable}
+          @change=${this.#onPublishedSwitchChange}
+        ></md-switch>
+        <label for="publishedSwitch">
+          ${published ? "Public" : "Private"}
         </label>
       </div>
     `;
   }
 
-  #renderAppViewLink() {
-    const graphUrl = this.graph?.url;
-    if (!graphUrl) {
-      console.error("No graph URL");
+  #renderAppPanel() {
+    return html`
+      <div id="appPanel">
+        <div id="appIcon"></div>
+        <div id="titleAndCreator">
+          <h3 id="title">${this.graph?.title}</h3>
+          <p id="creator">By ${this.signinAdapter?.name ?? "Unknown User"}</p>
+        </div>
+        ${this.#renderCopyLinkButton()}
+      </div>
+    `;
+  }
+
+  #renderCopyLinkButton() {
+    const { status } = this.#publishState;
+    const published =
+      (status === "written" || status === "writing") &&
+      this.#publishState.published;
+    if (!published) {
       return nothing;
     }
-    if (
-      this.#publishState.status === "written" &&
-      this.#publishState.published
-    ) {
-      return html`
-        <a
-          id="openAppLink"
-          href="/app/${encodeURIComponent(graphUrl)}"
-          target="_blank"
-          >Open App</a
-        >
-      `;
-    } else {
-      return nothing;
-    }
+    return html`
+      <button
+        id="copyLinkButton"
+        ?disabled=${status === "writing"}
+        @click=${this.#onClickCopyLinkButton}
+      >
+        <span class="g-icon">link</span>
+        Copy link
+      </button>
+    `;
   }
 
   #renderDriveShare() {
@@ -277,18 +386,37 @@ export class SharePanel extends LitElement {
     this.#status = "drive-share";
   }
 
-  #onPublishedToggleChange() {
-    const input = this.#publishedToggleInput.value;
+  #onPublishedSwitchChange() {
+    const input = this.#publishedSwitch.value;
     if (!input) {
       console.error("Expected input element to be rendered");
       return;
     }
-    const checked = input.checked;
-    if (checked) {
+    const selected = input.selected;
+    if (selected) {
       this.#publish();
     } else {
       this.#unpublish();
     }
+  }
+
+  async #onClickCopyLinkButton() {
+    const graphUrl = this.graph?.url;
+    if (!graphUrl) {
+      console.error("No graph URL");
+      return nothing;
+    }
+    const appUrl = new URL(
+      `/app/${encodeURIComponent(graphUrl)}`,
+      window.location.href
+    );
+    await navigator.clipboard.writeText(appUrl.href);
+    this.dispatchEvent(
+      new ToastEvent(
+        Strings.from("STATUS_COPIED_TO_CLIPBOARD"),
+        ToastType.INFORMATION
+      )
+    );
   }
 
   #onGoogleDriveSharePanelClose() {
@@ -298,7 +426,7 @@ export class SharePanel extends LitElement {
     this.open();
   }
 
-  async #readPublishedState(): Promise<boolean | undefined> {
+  async #readPublishedState(): Promise<void> {
     const publishPermissions = this.#getPublishPermissions();
     if (publishPermissions.length === 0) {
       return undefined;
@@ -319,11 +447,33 @@ export class SharePanel extends LitElement {
       return;
     }
 
-    const response = await drive.permissions.list({
-      access_token: accessToken,
-      fileId,
-      fields: "*",
-    });
+    let response;
+    try {
+      response = await drive.permissions.list({
+        access_token: accessToken,
+        fileId,
+        fields: "*",
+      });
+    } catch (error) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "status" in error &&
+        error.status === 404
+      ) {
+        // We can't access permissions. This must mean we don't have write
+        // access to the file. But, we got this far, so the graph must at least
+        // be visible to us. Let's assume we're viewing somebody else's graph,
+        // which means we're published but not writable.
+        this.#publishState = {
+          status: "written",
+          published: true,
+          writable: false,
+        };
+        return;
+      }
+      throw error;
+    }
     const result = JSON.parse(response.body) as {
       permissions: GoogleDrivePermission[];
     };
@@ -340,6 +490,7 @@ export class SharePanel extends LitElement {
     this.#publishState = {
       status: "written",
       published,
+      writable: true,
       relevantPermissions,
     };
   }
@@ -387,13 +538,17 @@ export class SharePanel extends LitElement {
     this.#publishState = {
       status: "written",
       published: true,
+      writable: true,
       relevantPermissions,
     };
   }
 
   async #unpublish() {
-    if (this.#publishState.status !== "written") {
-      console.error('Expected published status to be "written"');
+    if (
+      this.#publishState.status !== "written" ||
+      !this.#publishState.writable
+    ) {
+      console.error('Expected published status to be "written" and "writable"');
       return;
     }
     if (this.#publishState.published === false) {
@@ -423,7 +578,11 @@ export class SharePanel extends LitElement {
         })
       )
     );
-    this.#publishState = { status: "written", published: false };
+    this.#publishState = {
+      status: "written",
+      published: false,
+      writable: true,
+    };
   }
 
   async #getAccessToken(): Promise<string> {

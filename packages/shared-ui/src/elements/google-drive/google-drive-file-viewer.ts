@@ -7,34 +7,52 @@
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { consume } from "@lit/context";
 import { Task } from "@lit/task";
-import { LitElement, css, html } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { LitElement, type PropertyValues, css, html } from "lit";
+import { customElement, property, state } from "lit/decorators.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
+import { icons } from "../../styles/icons.js";
 
 @customElement("bb-google-drive-file-viewer")
 export class GoogleDriveFileViewer extends LitElement {
-  static styles = css`
-    :host {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--bb-neutral-50);
-      padding: var(--bb-grid-size-3);
-      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
-        var(--bb-font-family);
-    }
+  static styles = [
+    icons,
+    css`
+      :host {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bb-neutral-50);
+        padding: var(--bb-grid-size-3);
+        font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+          var(--bb-font-family);
+      }
 
-    .loading {
-      padding-left: var(--bb-grid-size-8);
-      background: url(/images/progress-neutral.svg) 0 center / 20px 20px
-        no-repeat;
-    }
+      .loading {
+        padding-left: var(--bb-grid-size-8);
+        background: url(/images/progress-neutral.svg) 0 center / 20px 20px
+          no-repeat;
+      }
 
-    img {
-      max-width: 100%;
-      border-radius: var(--bb-grid-size);
-    }
-  `;
+      img {
+        max-width: 100%;
+        border-radius: var(--bb-grid-size);
+      }
+
+      .image-placeholder {
+        width: 100%;
+        aspect-ratio: 170/220;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+
+        .g-icon {
+          font-size: var(--icon-size, 160px);
+          color: var(--bb-neutral-200);
+        }
+      }
+    `,
+  ];
 
   @property()
   accessor fileId: string | null = null;
@@ -42,6 +60,9 @@ export class GoogleDriveFileViewer extends LitElement {
   @consume({ context: googleDriveClientContext })
   @property({ attribute: false })
   accessor googleDriveClient: GoogleDriveClient | undefined;
+
+  @state()
+  accessor #imageFailedToLoad = false;
 
   readonly #loadTask = new Task(this, {
     task: async ([googleDriveClient, fileId], { signal }) => {
@@ -61,6 +82,12 @@ export class GoogleDriveFileViewer extends LitElement {
     args: () => [this.googleDriveClient, this.fileId],
   });
 
+  override willUpdate(changes: PropertyValues<this>) {
+    if (changes.has("fileId")) {
+      this.#imageFailedToLoad = false;
+    }
+  }
+
   override render() {
     return this.#loadTask.render({
       pending: () =>
@@ -70,17 +97,36 @@ export class GoogleDriveFileViewer extends LitElement {
         if (!file) {
           return `Unable to find Google Drive document`;
         }
+        const openUrl =
+          file.webViewLink ?? `https://drive.google.com/open?id=${file.id}`;
+        const imageUrl = file.thumbnailLink || file.iconLink;
         return html`
-          <a href=${file.webViewLink ?? ""} target="_blank">
-            <img
-              cross-origin
-              src=${file.thumbnailLink || file.iconLink || ""}
-              alt=${file.name ?? "Google Document"}
-            />
+          <a href=${openUrl} target="_blank">
+            ${imageUrl && !this.#imageFailedToLoad
+              ? html`
+                  <img
+                    cross-origin
+                    src=${imageUrl}
+                    alt=${file.name ?? "Google Document"}
+                    @error=${this.#onImageError}
+                  />
+                `
+              : html`
+                  <div class="image-placeholder">
+                    <span class="g-icon">docs</span>
+                  </div>
+                `}
           </a>
         `;
       },
     });
+  }
+
+  #onImageError() {
+    // We quite often get 429 Too Many Requests errors during development when
+    // rendering thumbnail images. Probably the Google Drive image service has a
+    // very low throttle threshold when the Referrer is localhost.
+    this.#imageFailedToLoad = true;
   }
 }
 

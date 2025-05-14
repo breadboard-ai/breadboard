@@ -48,6 +48,7 @@ import {
 } from "@breadboard-ai/types";
 import * as idb from "idb";
 import { BOARD_SAVE_STATUS } from "@breadboard-ai/shared-ui/types/types.js";
+import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 
 const documentStyles = getComputedStyle(document.documentElement);
 
@@ -89,7 +90,8 @@ export class Board extends EventTarget {
      * */
     private readonly boardServerKits: Kit[],
     private readonly boardServers: RuntimeConfigBoardServers,
-    private readonly tokenVendor?: TokenVendor
+    private readonly tokenVendor?: TokenVendor,
+    private readonly googleDriveClient?: GoogleDriveClient
   ) {
     super();
     boardServers.servers.forEach((server) => {
@@ -153,7 +155,8 @@ export class Board extends EventTarget {
     const boardServerInfo = await connectToBoardServer(
       location,
       apiKey,
-      this.tokenVendor
+      this.tokenVendor,
+      this.googleDriveClient
     );
     if (!boardServerInfo) {
       this.dispatchEvent(
@@ -166,7 +169,7 @@ export class Board extends EventTarget {
       return { success: false };
     } else {
       this.boardServers.servers = [
-        ...(await getBoardServers(this.tokenVendor)),
+        ...(await getBoardServers(this.tokenVendor, this.googleDriveClient)),
         ...this.boardServers.builtInBoardServers,
       ];
       this.boardServers.loader = createLoader(this.boardServers.servers);
@@ -195,7 +198,7 @@ export class Board extends EventTarget {
       return { success: false };
     }
     this.boardServers.servers = [
-      ...(await getBoardServers(this.tokenVendor)),
+      ...(await getBoardServers(this.tokenVendor, this.googleDriveClient)),
       ...this.boardServers.builtInBoardServers,
     ];
     this.boardServers.loader = createLoader(this.boardServers.servers);
@@ -562,6 +565,7 @@ export class Board extends EventTarget {
       name: descriptor.title ?? "Untitled board",
       mainGraphId: mainGraphId.result,
       graph: descriptor,
+      graphIsMine: true,
       subGraphId: null,
       boardServer: null,
       moduleId,
@@ -613,6 +617,7 @@ export class Board extends EventTarget {
       boardServerKits: this.boardServerKits,
       name: descriptor.title ?? "Untitled board",
       graph: descriptor,
+      graphIsMine: true,
       mainGraphId: mainGraphId.result,
       subGraphId: null,
       boardServer: null,
@@ -824,11 +829,13 @@ export class Board extends EventTarget {
       }
       // Always create a new tab.
       const id = globalThis.crypto.randomUUID();
+      const graphIsMine = this.isMine(graph.url);
       this.#tabs.set(id, {
         id,
         boardServerKits: kits,
         name: graph.title ?? "Untitled board",
         graph,
+        graphIsMine,
         mainGraphId: mainGraphId.result,
         subGraphId,
         moduleId,
@@ -964,21 +971,12 @@ export class Board extends EventTarget {
     return false;
   }
 
-  isMine(id: TabId | null): boolean {
-    if (!id) {
+  isMine(url: string | undefined): boolean {
+    if (!url) {
       return false;
     }
 
-    const tab = this.#tabs.get(id);
-    if (!tab) {
-      return false;
-    }
-
-    if (!tab.graph || !tab.graph.url) {
-      return false;
-    }
-
-    const boardUrl = new URL(tab.graph.url);
+    const boardUrl = new URL(url);
     const boardServer = this.getBoardServerForURL(boardUrl);
     if (!boardServer) {
       return false;
@@ -991,10 +989,7 @@ export class Board extends EventTarget {
 
     for (const store of boardServer.items().values()) {
       for (const item of store.items.values()) {
-        if (
-          item.url !== tab.graph.url &&
-          item.url.replace(USER_REGEX, "/") !== tab.graph.url
-        ) {
+        if (item.url !== url && item.url.replace(USER_REGEX, "/") !== url) {
           continue;
         }
 

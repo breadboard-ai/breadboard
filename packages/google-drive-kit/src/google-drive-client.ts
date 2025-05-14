@@ -13,6 +13,7 @@ export interface GoogleDriveClientOptions {
   proxyUrl: string;
   getUserAccessToken: () => Promise<string>;
   publicApiKey: string;
+  publicApiSpoofReferer?: string;
 }
 
 export interface BaseRequestOptions {
@@ -32,12 +33,14 @@ export class GoogleDriveClient {
   readonly #proxyUrl: string;
   readonly #getUserAccessToken: () => Promise<string>;
   readonly #publicApiKey: string;
+  readonly #publicApiSpoofReferer?: string;
 
   constructor(options: GoogleDriveClientOptions) {
     this.#apiBaseUrl = options.apiBaseUrl;
     this.#proxyUrl = options.proxyUrl;
     this.#getUserAccessToken = options.getUserAccessToken;
     this.#publicApiKey = options.publicApiKey;
+    this.#publicApiSpoofReferer = options.publicApiSpoofReferer;
   }
 
   async accessToken(): Promise<string> {
@@ -53,6 +56,10 @@ export class GoogleDriveClient {
       token: await this.#getUserAccessToken(),
     });
     if (response.status === 404) {
+      console.log(
+        `Received 404 response for Google Drive file "${fileId}"` +
+          ` using user credentials, trying public fallback.`
+      );
       response = await this.#getFile(fileId, options, {
         kind: "key",
         key: this.#publicApiKey,
@@ -63,15 +70,18 @@ export class GoogleDriveClient {
     }
 
     if (response.status === 404 && this.#proxyUrl) {
+      console.log(
+        `Received 404 response for Google Drive file "${fileId}"` +
+          ` using public fallback, trying domain proxy fallback.`
+      );
       const proxyResponse = await fetch(this.#proxyUrl, {
         method: "POST",
         body: JSON.stringify({
           fileId: fileId,
-          // TODO(aomarks) Switch to GET_METADATA when implemented. Right now we
-          // are fetching the entire file contents and just ignoring it, which
-          // is wasteful.
-          getMode: "GET_MODE_EXPORT",
-          mimeType: "text/plain",
+          getMode: "GET_MODE_METADATA",
+          metadata_fields: options?.fields?.length
+            ? options.fields.join(",")
+            : undefined,
         } satisfies GetFileProxyRequest),
         headers: {
           authorization: `Bearer ${await this.#getUserAccessToken()}`,
@@ -105,7 +115,10 @@ export class GoogleDriveClient {
     options: ReadFileOptions | undefined,
     authorization: GoogleApiAuthorization
   ): Promise<Response> {
-    const url = this.#makeUrl(`drive/v3/files/${fileId}`, authorization);
+    const url = this.#makeUrl(
+      `drive/v3/files/${encodeURIComponent(fileId)}`,
+      authorization
+    );
     if (options?.fields?.length) {
       url.searchParams.set("fields", options.fields.join(","));
     }
@@ -124,6 +137,13 @@ export class GoogleDriveClient {
       token: await this.#getUserAccessToken(),
     });
     if (response.status === 404) {
+      // Note it is not possible to suppress the 404 error that will appear in
+      // the console, so this log statement and the similar ones throughout this
+      // file are here to hopefully make this look less concerning.
+      console.log(
+        `Received 404 response for Google Drive file "${fileId}"` +
+          ` using user credentials, trying public fallback.`
+      );
       response = await this.#getFileMedia(fileId, options, {
         kind: "key",
         key: this.#publicApiKey,
@@ -134,6 +154,10 @@ export class GoogleDriveClient {
     }
 
     if (response.status === 404 && this.#proxyUrl) {
+      console.log(
+        `Received 404 response for Google Drive file "${fileId}"` +
+          ` using public fallback, trying domain proxy fallback.`
+      );
       const proxyResponse = await fetch(this.#proxyUrl, {
         method: "POST",
         body: JSON.stringify({
@@ -175,7 +199,10 @@ export class GoogleDriveClient {
     options: BaseRequestOptions | undefined,
     authorization: GoogleApiAuthorization
   ): Promise<Response> {
-    const url = this.#makeUrl(`drive/v3/files/${fileId}`, authorization);
+    const url = this.#makeUrl(
+      `drive/v3/files/${encodeURIComponent(fileId)}`,
+      authorization
+    );
     url.searchParams.set("alt", "media");
     return fetch(url, {
       headers: this.#makeHeaders(authorization),
@@ -192,6 +219,10 @@ export class GoogleDriveClient {
       token: await this.#getUserAccessToken(),
     });
     if (response.status === 404) {
+      console.log(
+        `Received 404 response for Google Drive file "${fileId}"` +
+          ` using user credentials, trying public fallback.`
+      );
       response = await this.#exportFile(fileId, options, {
         kind: "key",
         key: this.#publicApiKey,
@@ -202,6 +233,10 @@ export class GoogleDriveClient {
     }
 
     if (response.status === 404 && this.#proxyUrl) {
+      console.log(
+        `Received 404 response for Google Drive file "${fileId}"` +
+          ` using public fallback, trying domain proxy fallback.`
+      );
       const proxyResponse = await fetch(this.#proxyUrl, {
         method: "POST",
         body: JSON.stringify({
@@ -238,7 +273,10 @@ export class GoogleDriveClient {
     options: ExportFileOptions,
     authorization: GoogleApiAuthorization
   ): Promise<Response> {
-    const url = this.#makeUrl(`drive/v3/files/${fileId}/export`, authorization);
+    const url = this.#makeUrl(
+      `drive/v3/files/${encodeURIComponent(fileId)}/export`,
+      authorization
+    );
     url.searchParams.set("mimeType", options.mimeType);
     return fetch(url, {
       headers: this.#makeHeaders(authorization),
@@ -279,7 +317,9 @@ export class GoogleDriveClient {
     if (authKind === "bearer") {
       headers.set("authorization", `Bearer ${authorization.token}`);
     } else if (authKind === "key") {
-      // Nothing.
+      if (this.#publicApiSpoofReferer) {
+        headers.set("referer", this.#publicApiSpoofReferer);
+      }
     } else {
       throw new Error(`Unhandled authorization kind`, authKind satisfies never);
     }
@@ -290,10 +330,17 @@ export class GoogleDriveClient {
 type GetFileProxyRequest =
   | {
       fileId: string;
+      metadata_fields?: string;
+      getMode: "GET_MODE_METADATA";
+    }
+  | {
+      fileId: string;
+      metadata_fields?: string;
       getMode: "GET_MODE_GET_MEDIA";
     }
   | {
       fileId: string;
+      metadata_fields?: string;
       getMode: "GET_MODE_EXPORT";
       mimeType: string;
     };
