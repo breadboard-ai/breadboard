@@ -113,7 +113,16 @@ export class Template extends LitElement implements AppTemplate {
   accessor readOnly = true;
 
   @property()
-  accessor showContentWarning = true;
+  set showContentWarning(showContentWarning: boolean) {
+    // Only accept an updated value if it's false or unset.
+    if (!showContentWarning || this.#showContentWarning === undefined) {
+      this.#showContentWarning = showContentWarning;
+    }
+  }
+  get showContentWarning() {
+    return this.#showContentWarning ?? true;
+  }
+  #showContentWarning: boolean | undefined = undefined;
 
   @state()
   accessor showAddAssetModal = false;
