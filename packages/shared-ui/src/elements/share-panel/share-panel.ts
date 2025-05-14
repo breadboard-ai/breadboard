@@ -219,11 +219,18 @@ export class SharePanel extends LitElement {
     | {
         status: "written";
         published: true;
+        writable: true;
         relevantPermissions: GoogleDrivePermission[];
       }
     | {
         status: "written";
         published: false;
+        writable: true;
+      }
+    | {
+        status: "written";
+        published: boolean;
+        writable: false;
       }
     | {
         status: "writing";
@@ -315,12 +322,13 @@ export class SharePanel extends LitElement {
 
     status satisfies "written" | "writing";
     const published = this.#publishState.published;
+    const writable = status === "written" && this.#publishState.writable;
     return html`
       <div id="publishedSwitchContainer">
         <md-switch
           ${ref(this.#publishedSwitch)}
           ?selected=${published}
-          ?disabled=${status === "writing"}
+          ?disabled=${!writable}
           @change=${this.#onPublishedSwitchChange}
         ></md-switch>
         <label for="publishedSwitch">
@@ -418,7 +426,7 @@ export class SharePanel extends LitElement {
     this.open();
   }
 
-  async #readPublishedState(): Promise<boolean | undefined> {
+  async #readPublishedState(): Promise<void> {
     const publishPermissions = this.#getPublishPermissions();
     if (publishPermissions.length === 0) {
       return undefined;
@@ -439,11 +447,33 @@ export class SharePanel extends LitElement {
       return;
     }
 
-    const response = await drive.permissions.list({
-      access_token: accessToken,
-      fileId,
-      fields: "*",
-    });
+    let response;
+    try {
+      response = await drive.permissions.list({
+        access_token: accessToken,
+        fileId,
+        fields: "*",
+      });
+    } catch (error) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "status" in error &&
+        error.status === 404
+      ) {
+        // We can't access permissions. This must mean we don't have write
+        // access to the file. But, we got this far, so the graph must at least
+        // be visible to us. Let's assume we're viewing somebody else's graph,
+        // which means we're published but not writable.
+        this.#publishState = {
+          status: "written",
+          published: true,
+          writable: false,
+        };
+        return;
+      }
+      throw error;
+    }
     const result = JSON.parse(response.body) as {
       permissions: GoogleDrivePermission[];
     };
@@ -460,6 +490,7 @@ export class SharePanel extends LitElement {
     this.#publishState = {
       status: "written",
       published,
+      writable: true,
       relevantPermissions,
     };
   }
@@ -507,13 +538,17 @@ export class SharePanel extends LitElement {
     this.#publishState = {
       status: "written",
       published: true,
+      writable: true,
       relevantPermissions,
     };
   }
 
   async #unpublish() {
-    if (this.#publishState.status !== "written") {
-      console.error('Expected published status to be "written"');
+    if (
+      this.#publishState.status !== "written" ||
+      !this.#publishState.writable
+    ) {
+      console.error('Expected published status to be "written" and "writable"');
       return;
     }
     if (this.#publishState.published === false) {
@@ -543,7 +578,11 @@ export class SharePanel extends LitElement {
         })
       )
     );
-    this.#publishState = { status: "written", published: false };
+    this.#publishState = {
+      status: "written",
+      published: false,
+      writable: true,
+    };
   }
 
   async #getAccessToken(): Promise<string> {
