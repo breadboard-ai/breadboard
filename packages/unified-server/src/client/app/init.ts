@@ -46,6 +46,11 @@ const backgroundColor = getGlobalColor("--bb-neutral-0");
 const textColor = getGlobalColor("--bb-neutral-900");
 const primaryTextColor = getGlobalColor("--bb-neutral-0");
 
+const TOS_KEY = "tos-status";
+enum TosStatus {
+  ACCEPTED = "accepted",
+}
+
 async function fetchFlow(googleDriveClient: GoogleDriveClient) {
   const url = new URL(window.location.href);
 
@@ -377,9 +382,20 @@ async function bootstrap(args: BootstrapArguments = {}) {
       await initAppView();
     });
   }
-
   console.log(`[App View: Version ${pkg.version}; Commit ${GIT_HASH}]`);
   await initAppView();
+
+  const hasAcceptedTos =
+    (localStorage.getItem(TOS_KEY) ?? false) === TosStatus.ACCEPTED;
+  if (ENABLE_TOS && !hasAcceptedTos) {
+    showTerms(TOS_HTML);
+  }
+}
+
+function showTerms(html: string) {
+  const terms = new Elements.TermsOfService();
+  terms.tosHtml = html;
+  document.body.appendChild(terms);
 }
 
 bootstrap({

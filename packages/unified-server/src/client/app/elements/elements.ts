@@ -5,3 +5,4 @@
  */
 
 export { AppView } from "./app-view/app-view.js";
+export { TermsOfService } from "./app-view/terms.js";

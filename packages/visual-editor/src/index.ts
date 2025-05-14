@@ -4256,11 +4256,9 @@ export class Main extends LitElement {
       })}
     >
       <form method="dialog">
-        <div>
-          <p class="heading">${tosTitle}</p>
-        </div>
+        <h1>${tosTitle}</h1>
         <div class="tos-content">${unsafeHTML(this.#tosHtml)}</div>
-        <div class="button-section">
+        <div class="controls">
           <button
             @click=${() => {
               this.showToS = false;
