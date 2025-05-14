@@ -17,6 +17,7 @@ import {
   type AppProperties,
   type DriveFile,
   type DriveFileQuery,
+  type Properties,
 } from "./api.js";
 
 export { DriveOperations, PROTOCOL };
@@ -34,6 +35,7 @@ export type GraphInfo = {
   id: string;
   title: string;
   tags: GraphTag[];
+  thumbnailUrl?: string;
 };
 
 /** Retries fetch() calls until status is not an internal server error. */
@@ -179,16 +181,11 @@ class DriveOperations {
     const response = (await fileRequest.json()) as DriveFileQuery;
     const results = await Promise.all(
       response.files.map(async (file) => {
-        const properties = readAppProperties(file);
-        const tags = properties.tags;
-        if (!tags.includes("featured")) {
-          // The fact that a graph is in the featured folder alone determines
-          // whether it is featured.
-          tags.push("featured");
-        }
-        const title =
-          properties.title || file.name.replace(/(\.bgl)?\.json$/, "");
-        return { id: file.id, title, tags };
+        const properties = readProperties(file);
+        const tags: GraphTag[] = ["featured"];
+        const thumbnailUrl = properties.thumbnailUrl;
+        const title = file.name.replace(/(\.bgl)?\.json$/, "");
+        return { id: file.id, title, tags, thumbnailUrl };
       })
     );
     return results;
@@ -407,6 +404,11 @@ function readAppProperties(file: DriveFile): {
     description,
     tags: parsedTags,
   };
+}
+
+function readProperties(file: DriveFile): Properties["properties"] {
+  const { properties: { thumbnailUrl = "" } = {} } = file;
+  return { thumbnailUrl };
 }
 
 function getFileTitle(descriptor: GraphDescriptor) {

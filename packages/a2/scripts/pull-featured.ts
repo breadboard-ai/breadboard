@@ -25,7 +25,7 @@ function translateGraphDescriptor(graph: GraphDescriptor): GraphDescriptor {
   const url = graph.url;
 
   // 1) strip thumbnail and splash
-  delete graph.assets?.["@@splath"];
+  delete graph.assets?.["@@splash"];
   delete graph.assets?.["@@thumbnail"];
   if (graph.assets && Object.keys(graph.assets).length === 0) {
     delete graph.assets;

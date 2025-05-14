@@ -4,6 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { JsonSerializable } from "@breadboard-ai/types";
+
+// Copied from packages/google-drive-kit/src/board-server/api.ts
+
 export { Files };
 
 export type DriveFile = {
@@ -13,16 +17,10 @@ export type DriveFile = {
   name: string;
   resourceKey: string;
   appProperties: Record<string, string>;
-} & Properties;
+};
 
 export type DriveFileQuery = {
   files: DriveFile[];
-};
-
-export type Properties = {
-  properties: {
-    thumbnailUrl: string;
-  };
 };
 
 export type AppProperties = {
@@ -70,6 +68,7 @@ class Files {
       // Nothing.
     } else if (authKind === "key") {
       // Nothing.
+      headers.set("referer", "http://localhost:3000");
     } else {
       throw new Error(`Unhandled authorization kind`, authKind satisfies never);
     }
@@ -135,6 +134,14 @@ ${JSON.stringify(body, null, 2)}
         ...this.#multipartRequest(metadata, body),
       }
     );
+  }
+
+  makePatchMetadataRequest(file: string, metadata: JsonSerializable): Request {
+    return new Request(this.#makeUrl(`drive/v3/files/${file}`), {
+      method: "PATCH",
+      headers: this.#makeHeaders(),
+      body: JSON.stringify(metadata),
+    });
   }
 
   makePatchRequest(file: string, metadata: unknown, body: unknown): Request {
