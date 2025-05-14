@@ -584,6 +584,12 @@ export class Main extends LitElement {
           this.environment,
           this.settingsHelper
         );
+        if (
+          this.signinAdapter.state === "invalid" ||
+          this.signinAdapter.state === "signedout"
+        ) {
+          return;
+        }
 
         this.#graphStore.addEventListener("update", (evt) => {
           const { mainGraphId } = evt;
