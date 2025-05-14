@@ -599,8 +599,9 @@ export class AppThemeCreator extends LitElement {
     const url = thumbnail?.handle;
     let data: string | undefined;
     const drivePrefix = "drive:/";
-    if (url?.startsWith(drivePrefix)) {
-      const driveFileId = url.substring(drivePrefix.length);
+    const isOnDrive = url?.startsWith(drivePrefix) ?? false;
+    if (isOnDrive) {
+      const driveFileId = url!.substring(drivePrefix.length);
       const response = await this.googleDriveClient!.getFileMedia(driveFileId);
       const bytes = await response.bytes();
       const base64 = bytesToBase64(bytes);
@@ -613,7 +614,7 @@ export class AppThemeCreator extends LitElement {
       src=${data ?? "/images/app/generic-flow.jpg"}
       alt="Theme thumbnail"
       class=${classMap({
-        default: theme.isDefaultTheme ?? false,
+        default: !isOnDrive && (theme.isDefaultTheme ?? false),
       })}
     />`;
   }

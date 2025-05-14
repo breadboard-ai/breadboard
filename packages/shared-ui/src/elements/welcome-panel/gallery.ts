@@ -385,15 +385,12 @@ export class Gallery extends LitElement {
   }
 
   #renderThumbnail(thumbnail?: string | null) {
-    // TODO: Replace this with a more robust check. The theme does include this
-    // information but the board server logic doesn't currently expose it.
     const svgPrefix = "data:image/svg+xml;base64,";
     if (thumbnail?.startsWith(svgPrefix)) {
       return svg`${unsafeHTML(thumbnail!.substring(svgPrefix.length))}`;
     } else {
-      const isDefaultTheme = thumbnail?.startsWith("data:") ?? false;
       return html`<img
-        class=${classMap({ thumbnail: true, default: isDefaultTheme })}
+        class=${classMap({ thumbnail: true })}
         src=${thumbnail ?? "/images/placeholder.svg"}
       />`;
     }

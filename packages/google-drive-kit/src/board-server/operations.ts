@@ -608,6 +608,7 @@ function getFileId(driveUrl: string): string {
   }
   return driveUrl;
 }
+
 function bytesToBase64(bytes: Uint8Array) {
   const binString = Array.from(bytes, (byte) =>
     String.fromCodePoint(byte)
