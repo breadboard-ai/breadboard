@@ -48,6 +48,7 @@ import {
 } from "@breadboard-ai/types";
 import * as idb from "idb";
 import { BOARD_SAVE_STATUS } from "@breadboard-ai/shared-ui/types/types.js";
+import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 
 const documentStyles = getComputedStyle(document.documentElement);
 
@@ -89,7 +90,8 @@ export class Board extends EventTarget {
      * */
     private readonly boardServerKits: Kit[],
     private readonly boardServers: RuntimeConfigBoardServers,
-    private readonly tokenVendor?: TokenVendor
+    private readonly tokenVendor?: TokenVendor,
+    private readonly googleDriveClient?: GoogleDriveClient
   ) {
     super();
     boardServers.servers.forEach((server) => {
@@ -153,7 +155,8 @@ export class Board extends EventTarget {
     const boardServerInfo = await connectToBoardServer(
       location,
       apiKey,
-      this.tokenVendor
+      this.tokenVendor,
+      this.googleDriveClient
     );
     if (!boardServerInfo) {
       this.dispatchEvent(
@@ -166,7 +169,7 @@ export class Board extends EventTarget {
       return { success: false };
     } else {
       this.boardServers.servers = [
-        ...(await getBoardServers(this.tokenVendor)),
+        ...(await getBoardServers(this.tokenVendor, this.googleDriveClient)),
         ...this.boardServers.builtInBoardServers,
       ];
       this.boardServers.loader = createLoader(this.boardServers.servers);
@@ -195,7 +198,7 @@ export class Board extends EventTarget {
       return { success: false };
     }
     this.boardServers.servers = [
-      ...(await getBoardServers(this.tokenVendor)),
+      ...(await getBoardServers(this.tokenVendor, this.googleDriveClient)),
       ...this.boardServers.builtInBoardServers,
     ];
     this.boardServers.loader = createLoader(this.boardServers.servers);

@@ -121,9 +121,10 @@ export async function getBoardServers(
 export async function connectToBoardServer(
   location?: string,
   apiKey?: string,
-  tokenVendor?: TokenVendor
+  tokenVendor?: TokenVendor,
+  googleDriveClient?: GoogleDriveClient
 ): Promise<{ title: string; url: string } | null> {
-  const existingServers = await getBoardServers(tokenVendor);
+  const existingServers = await getBoardServers(tokenVendor, googleDriveClient);
   if (location) {
     if (
       location.startsWith(RemoteBoardServer.PROTOCOL) ||
