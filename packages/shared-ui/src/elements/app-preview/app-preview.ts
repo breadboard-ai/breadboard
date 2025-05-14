@@ -82,6 +82,9 @@ export class AppPreview extends LitElement {
   accessor eventPosition = 0;
 
   @property()
+  accessor isMine = false;
+
+  @property()
   accessor isInSelectionState = false;
 
   @property()
@@ -416,6 +419,7 @@ export class AppPreview extends LitElement {
       this.#appTemplate.showingOlderResult = this.showingOlderResult;
       this.#appTemplate.readOnly = false;
       this.#appTemplate.showShareButton = false;
+      this.#appTemplate.showContentWarning = !this.isMine;
     }
 
     return html`

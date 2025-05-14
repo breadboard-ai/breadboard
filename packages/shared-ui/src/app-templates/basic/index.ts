@@ -112,6 +112,9 @@ export class Template extends LitElement implements AppTemplate {
   @property()
   accessor readOnly = true;
 
+  @property()
+  accessor showContentWarning = true;
+
   @state()
   accessor showAddAssetModal = false;
   #addAssetType: string | null = null;
@@ -232,6 +235,47 @@ export class Template extends LitElement implements AppTemplate {
               height: var(--bb-grid-size-8);
               padding-left: var(--bb-grid-size-8);
               background: var(--bb-progress) 4px center / 20px 20px no-repeat;
+            }
+          }
+
+          #content-warning {
+            border-top: 1px solid var(--bb-neutral-0);
+            display: flex;
+            justify-content: space-between;
+            background: var(--bb-neutral-100);
+            padding: var(--bb-grid-size-6) var(--bb-grid-size-3);
+            min-height: var(--bb-grid-size-11);
+            color: var(--bb-neutral-900);
+            font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+              var(--bb-font-family);
+
+            & .message {
+              margin-right: var(--bb-grid-size-16);
+
+              & a {
+                font-weight: 500;
+                color: var(--bb-ui-500);
+                text-decoration: none;
+              }
+            }
+
+            & .dismiss {
+              color: var(--bb-ui-600);
+              padding: 0;
+              margin: 0;
+              background: transparent;
+              border: none;
+              font: 500 var(--bb-body-small) / var(--bb-body-line-height-small)
+                var(--bb-font-family);
+
+              &:not([disabled]) {
+                cursor: pointer;
+
+                &:focus,
+                &:hover {
+                  color: var(--bb-ui-600);
+                }
+              }
             }
           }
 
@@ -1506,7 +1550,28 @@ export class Template extends LitElement implements AppTemplate {
         this.#allowedMimeTypes = evt.allowedMimeTypes;
       }}
     >
-      <div id="content">${content}</div>
+      <div id="content">
+        ${content}
+        ${this.showContentWarning
+          ? html`<div id="content-warning">
+              <div class="message">
+                This content was created by another person. It may be inaccurate
+                or unsafe.
+                <a href="https://support.google.com/legal/answer/3110420?hl=en"
+                  >Report unsafe content</a
+                >
+              </div>
+              <button
+                class="dismiss"
+                @click=${() => {
+                  this.showContentWarning = false;
+                }}
+              >
+                Dismiss
+              </button>
+            </div>`
+          : nothing}
+      </div>
     </section>`;
   }
 }

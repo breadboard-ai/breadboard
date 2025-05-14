@@ -3187,7 +3187,7 @@ export class Main extends LitElement {
                             ${selectedItem}
                           </button>`
                         : nothing}
-                      ${this.#runtime.board.isMine(this.tab.id)
+                      ${this.#runtime.board.isMine(this.tab.graph.url)
                         ? nothing
                         : html`<button
                             id="remix"
@@ -3343,40 +3343,41 @@ export class Main extends LitElement {
         <bb-ui-controller
               ${ref(this.#uiRef)}
               ?inert=${showingOverlay}
+              .boardId=${this.#boardId}
+              .boardServerKits=${this.tab?.boardServerKits ?? []}
+              .boardServers=${this.#boardServers}
+              .canRun=${this.canRun}
+              .chatController=${observers?.chatController}
+              .editor=${this.#runtime.edit.getEditor(this.tab)}
+              .fileSystem=${this.#fileSystem}
+              .graph=${this.tab?.graph ?? null}
+              .graphIsMine=${this.tab?.graphIsMine ?? false}
+              .graphStore=${this.#graphStore}
+              .graphStoreUpdateId=${this.graphStoreUpdateId}
+              .graphTopologyUpdateId=${this.graphTopologyUpdateId}
+              .history=${this.#runtime.edit.getHistory(this.tab)}
+              .inputsFromLastRun=${inputsFromLastRun}
+              .loader=${this.#runtime.board.getLoader()}
+              .mainGraphId=${this.tab?.mainGraphId}
+              .moduleId=${this.tab?.moduleId ?? null}
+              .organizer=${projectState?.organizer}
+              .projectState=${projectState}
+              .readOnly=${this.tab?.readOnly ?? true}
+              .recentBoards=${this.#recentBoards}
+              .runs=${runs ?? null}
               .runStore=${this.#runStore}
               .sandbox=${sandbox}
-              .fileSystem=${this.#fileSystem}
-              .graphStore=${this.#graphStore}
-              .mainGraphId=${this.tab?.mainGraphId}
-              .readOnly=${this.tab?.readOnly ?? true}
-              .graph=${this.tab?.graph ?? null}
-              .editor=${this.#runtime.edit.getEditor(this.tab)}
-              .subGraphId=${this.tab?.subGraphId ?? null}
-              .moduleId=${this.tab?.moduleId ?? null}
-              .runs=${runs ?? null}
-              .topGraphResult=${topGraphResult}
-              .boardServerKits=${this.tab?.boardServerKits ?? []}
-              .loader=${this.#runtime.board.getLoader()}
-              .status=${tabStatus}
-              .boardId=${this.#boardId}
-              .tabLoadStatus=${tabLoadStatus}
-              .settings=${this.#settings}
-              .boardServers=${this.#boardServers}
-              .history=${this.#runtime.edit.getHistory(this.tab)}
-              .version=${this.#version}
-              .recentBoards=${this.#recentBoards}
-              .inputsFromLastRun=${inputsFromLastRun}
-              .tabURLs=${tabURLs}
               .selectionState=${this.#selectionState}
-              .visualChangeId=${this.#lastVisualChangeId}
-              .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-              .graphStoreUpdateId=${this.graphStoreUpdateId}
+              .settings=${this.#settings}
               .showBoardReferenceMarkers=${this.showBoardReferenceMarkers}
-              .chatController=${observers?.chatController}
-              .projectState=${projectState}
-              .organizer=${projectState?.organizer}
               .signedIn=${signInAdapter.state === "valid"}
-              .canRun=${this.canRun}
+              .status=${tabStatus}
+              .subGraphId=${this.tab?.subGraphId ?? null}
+              .tabLoadStatus=${tabLoadStatus}
+              .tabURLs=${tabURLs}
+              .topGraphResult=${topGraphResult}
+              .version=${this.#version}
+              .visualChangeId=${this.#lastVisualChangeId}
               @bbrun=${async () => {
                 if (!this.canRun) return;
                 await this.#attemptBoardStart();

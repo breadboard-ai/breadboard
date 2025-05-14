@@ -562,6 +562,7 @@ export class Board extends EventTarget {
       name: descriptor.title ?? "Untitled board",
       mainGraphId: mainGraphId.result,
       graph: descriptor,
+      graphIsMine: true,
       subGraphId: null,
       boardServer: null,
       moduleId,
@@ -613,6 +614,7 @@ export class Board extends EventTarget {
       boardServerKits: this.boardServerKits,
       name: descriptor.title ?? "Untitled board",
       graph: descriptor,
+      graphIsMine: true,
       mainGraphId: mainGraphId.result,
       subGraphId: null,
       boardServer: null,
@@ -824,11 +826,13 @@ export class Board extends EventTarget {
       }
       // Always create a new tab.
       const id = globalThis.crypto.randomUUID();
+      const graphIsMine = this.isMine(graph.url);
       this.#tabs.set(id, {
         id,
         boardServerKits: kits,
         name: graph.title ?? "Untitled board",
         graph,
+        graphIsMine,
         mainGraphId: mainGraphId.result,
         subGraphId,
         moduleId,
@@ -964,21 +968,12 @@ export class Board extends EventTarget {
     return false;
   }
 
-  isMine(id: TabId | null): boolean {
-    if (!id) {
+  isMine(url: string | undefined): boolean {
+    if (!url) {
       return false;
     }
 
-    const tab = this.#tabs.get(id);
-    if (!tab) {
-      return false;
-    }
-
-    if (!tab.graph || !tab.graph.url) {
-      return false;
-    }
-
-    const boardUrl = new URL(tab.graph.url);
+    const boardUrl = new URL(url);
     const boardServer = this.getBoardServerForURL(boardUrl);
     if (!boardServer) {
       return false;
@@ -991,10 +986,7 @@ export class Board extends EventTarget {
 
     for (const store of boardServer.items().values()) {
       for (const item of store.items.values()) {
-        if (
-          item.url !== tab.graph.url &&
-          item.url.replace(USER_REGEX, "/") !== tab.graph.url
-        ) {
+        if (item.url !== url && item.url.replace(USER_REGEX, "/") !== url) {
           continue;
         }
 

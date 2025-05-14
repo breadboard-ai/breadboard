@@ -90,6 +90,9 @@ export class UI extends LitElement {
   accessor graph: GraphDescriptor | null = null;
 
   @property()
+  accessor graphIsMine = false;
+
+  @property()
   accessor mainGraphId: MainGraphIdentifier | null = null;
 
   @property()
@@ -685,6 +688,7 @@ export class UI extends LitElement {
             .boardServers=${this.boardServers}
             .status=${this.status}
             .history=${this.history}
+            .isMine=${this.graphIsMine}
             @bbthemeeditrequest=${(evt: ThemeEditRequestEvent) => {
               this.showThemeDesigner = true;
               this.#themeOptions = evt.themeOptions;
