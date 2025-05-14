@@ -45,7 +45,6 @@ import {
   isShortsUri,
   isWatchUri,
 } from "../../../utils/youtube.js";
-import { SIGN_IN_CONNECTION_ID } from "../../../utils/signin-adapter.js";
 import { Task } from "@lit/task";
 
 const PCM_AUDIO = "audio/l16;codec=pcm;rate=24000";

@@ -330,6 +330,10 @@ export class EntityEditor extends SignalWatcher(LitElement) {
               no-repeat;
           }
         }
+
+        #content {
+          padding: var(--bb-grid-size-3) var(--bb-grid-size-6);
+        }
       }
 
       #content {
