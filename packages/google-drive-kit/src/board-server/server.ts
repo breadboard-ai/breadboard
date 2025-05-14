@@ -183,7 +183,7 @@ class GoogleDriveBoardServer
       ],
     ]);
 
-    const projects = files.map(({ title, tags, id, thumbnailUrl }) => {
+    const projects = files.map(({ title, tags, id, thumbnail }) => {
       return {
         url: new URL(`${this.url}/${id}`),
         metadata: {
@@ -191,7 +191,7 @@ class GoogleDriveBoardServer
           tags,
           title,
           access,
-          thumbnail: thumbnailUrl,
+          thumbnail: thumbnail,
         } satisfies EntityMetadata,
       } satisfies BoardServerProject;
     });
@@ -357,7 +357,7 @@ class GoogleDriveBoardServer
           handle: null,
           tags: project.metadata?.tags,
           username: project.metadata.owner,
-          thumbnail: maybeDriveRefToUrl(project.metadata.thumbnail),
+          thumbnail: project.metadata.thumbnail,
         },
       ]);
     }
@@ -373,7 +373,7 @@ class GoogleDriveBoardServer
   }
 
   dataPartTransformer(_graphUrl: URL): DataPartTransformer {
-    return new GoogleDriveDataPartTransformer(this.#googleDriveClient);
+    return new GoogleDriveDataPartTransformer(this.#googleDriveClient, this.ops);
   }
 
   startingURL(): URL | null {
@@ -392,16 +392,4 @@ class GoogleDriveBoardServer
   async preview(_url: URL): Promise<URL> {
     throw new Error("Method not implemented.");
   }
-}
-
-function maybeDriveRefToUrl(ref: string | undefined): string | undefined {
-  if (!ref) {
-    return undefined;
-  }
-  if (ref.startsWith(PROTOCOL)) {
-    const id = ref.slice(PROTOCOL.length + 1);
-    return `https://drive.google.com/file/d/${id}/view`;
-  }
-  // So far only drive:// links are supposed to be here, later we may extend it to support http://
-  return undefined;
 }

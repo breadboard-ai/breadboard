@@ -17,6 +17,7 @@ import {
   type Outcome,
 } from "@google-labs/breadboard";
 import type { GoogleDriveClient } from "../google-drive-client.js";
+import type { DriveOperations } from "./operations.js";
 
 export { GoogleDriveDataPartTransformer };
 
@@ -25,7 +26,10 @@ export type GoogleDriveToGeminiResponse = {
 };
 
 class GoogleDriveDataPartTransformer implements DataPartTransformer {
-  constructor(public readonly client: GoogleDriveClient) {}
+  constructor(
+    public readonly client: GoogleDriveClient,
+    private readonly ops: DriveOperations
+  ) {}
 
   async #createRequest(path: string, body: unknown): Promise<Request> {
     return new Request(path, {
@@ -40,7 +44,7 @@ class GoogleDriveDataPartTransformer implements DataPartTransformer {
 
   async persistPart(
     _graphUrl: URL,
-    _part: InlineDataCapabilityPart,
+    part: InlineDataCapabilityPart,
     temporary: boolean
   ): Promise<Outcome<StoredDataCapabilityPart>> {
     if (temporary) {
@@ -52,11 +56,16 @@ class GoogleDriveDataPartTransformer implements DataPartTransformer {
       console.debug(msg);
       return err(msg);
     } else {
-      // This is is most likely the situation when a new BGL asset is saved
-      // and being persisted.
-      const msg = `Persisting assets is not supported with Google Drive backend`;
-      console.debug(msg);
-      return err(msg);
+      const driveFileUrl = await this.ops.saveDataPart(
+        part.inlineData.data,
+        part.inlineData.mimeType,
+      );
+      return {
+        storedData: {
+          handle: driveFileUrl,
+          mimeType: part.inlineData.mimeType,
+        },
+      };
     }
   }
 
