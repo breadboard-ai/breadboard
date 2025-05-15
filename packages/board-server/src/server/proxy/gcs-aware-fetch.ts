@@ -64,6 +64,9 @@ class GcsAwareFetch {
           const serverUrl = this.serverConfig.serverUrl || serverInfo?.url;
           const storageBucket = this.serverConfig.storageBucket;
           if (!serverUrl || !storageBucket) {
+            console.log(
+              `No server URL (${serverUrl}) or storage bucket (${storageBucket}) found`
+            );
             // If no server URL found at all, just do the usual fetch handler.
             return callHandler(nestedFetch, inputs, context);
           }
@@ -125,6 +128,7 @@ function maybeAddGcsOutputConfig(
     bucket_name: bucketName,
   };
   body["output_gcs_config"] = gcsOutputConfig;
+  console.log("Set output_gcs_config: ", gcsOutputConfig);
   return data;
 }
 
