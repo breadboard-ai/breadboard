@@ -352,31 +352,17 @@ class DriveOperations {
     descriptor?: GraphDescriptor
   ): Promise<string | undefined> {
     // First try the splash screen in the theme.
-    const presentation = descriptor?.metadata?.visual?.presentation;
-    if (presentation && presentation.theme) {
-      const theme = presentation.themes?.[presentation.theme];
-      const handle = theme?.splashScreen?.storedData.handle;
-      if (handle) {
-        return handle;
-      }
-    }
-    // Otherwise use @@thumbnail.
-    const asset = descriptor?.assets?.["@@thumbnail"];
-    if (!asset) {
-      return undefined;
-    }
-    const assetData = asset.data as string;
-    if (assetData?.startsWith(PROTOCOL)) {
-      // Already a Drive file.
-      return undefined; // No new files were created.
-    }
 
-    const thumbnailFileId = await this.getThumbnailFileId(api, boardFileId);
-
-    const { data, contentType } = this.parseAssetData(assetData);
+    const { data, contentType, asset } = getThumbnail(descriptor);
     if (!data) {
       return undefined;
     }
+
+    if (isDriveFile(data)) {
+      return data;
+    }
+
+    const thumbnailFileId = await this.getThumbnailFileId(api, boardFileId);
 
     // Start in parallel.
     const parentPromise = this.findOrCreateFolder();
@@ -385,7 +371,7 @@ class DriveOperations {
       api.makeUploadRequest(
         thumbnailFileId,
         data,
-        maybeStripBase64Suffix(contentType)
+        maybeStripBase64Suffix(contentType ?? "")
       )
     );
     // TODO(volodya): Optimize - when dealing with an existing file there is no need to await here.
@@ -404,17 +390,10 @@ class DriveOperations {
       console.error("Failed to update image metadata", e);
     });
 
-    asset!.data = thumbnailUrl;
+    if (asset) {
+      asset.data = thumbnailUrl;
+    }
     return thumbnailUrl;
-  }
-
-  private parseAssetData(asset: string): { data: string; contentType: string } {
-    // Format: data:<contentType>;base64,<data>
-    const lastComma = asset.lastIndexOf(",");
-    const colonIndex = asset.indexOf(":");
-    const contentType = asset.slice(colonIndex + 1, lastComma);
-    const data = asset.slice(lastComma + 1);
-    return { data, contentType };
   }
 
   async listAssets(): Promise<string[]> {
@@ -574,9 +553,18 @@ function maybeStripBase64Suffix(contentType: string): string {
   return result;
 }
 
-function getFileId(driveUrl: string): string {
+export function isDriveFile(url?: string): boolean {
+  return !!url && url?.startsWith(PROTOCOL);
+}
+
+export function getFileId(driveUrl: string): string {
   if (driveUrl.startsWith(PROTOCOL)) {
     driveUrl = driveUrl.slice(PROTOCOL.length + 1);
+    while (driveUrl.startsWith("/")) {
+      driveUrl = driveUrl.substring(1);
+    }
+    // Take the folderId off.
+    driveUrl = driveUrl.split("/").at(-1)!;
   }
   return driveUrl;
 }
@@ -592,4 +580,47 @@ function toGraphInfos(files: Array<DriveFile>): Array<GraphInfo> {
     } satisfies GraphInfo;
   });
   return result;
+}
+
+/**
+ * Returns thumbnail data from the descriptor - either theme thumbnail or `@@thumbnail`.
+ * In case of the latter also returns the holding `asset` so that it can be updated with the new url.
+ */
+function getThumbnail(descriptor?: GraphDescriptor): {
+  data?: string;
+  contentType?: string;
+  asset?: Asset;
+} {
+  const presentation = descriptor?.metadata?.visual?.presentation;
+  if (presentation && presentation.theme) {
+    const theme = presentation.themes?.[presentation.theme];
+    const handle = theme?.splashScreen?.storedData.handle;
+    if (isDriveFile(handle)) {
+      return { data: handle };
+    }
+  }
+  // Otherwise use @@thumbnail.
+  const asset = descriptor?.assets?.["@@thumbnail"];
+  if (!asset) {
+    return {};
+  }
+  const assetData = asset.data as string;
+  if (isDriveFile(assetData)) {
+    // Already a Drive file.
+    return { data: assetData, asset };
+  }
+
+  if (assetData) {
+    return { ...parseAssetData(assetData), asset };
+  }
+  return {};
+}
+
+function parseAssetData(asset: string): { data: string; contentType: string } {
+  // Format: data:<contentType>;base64,<data>
+  const lastComma = asset.lastIndexOf(",");
+  const colonIndex = asset.indexOf(":");
+  const contentType = asset.slice(colonIndex + 1, lastComma);
+  const data = asset.slice(lastComma + 1);
+  return { data, contentType };
 }

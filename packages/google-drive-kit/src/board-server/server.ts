@@ -25,7 +25,7 @@ import {
   type Permission,
   type User,
 } from "@google-labs/breadboard";
-import { DriveOperations, PROTOCOL } from "./operations.js";
+import { DriveOperations, getFileId, PROTOCOL } from "./operations.js";
 import { SaveDebouncer } from "./save-debouncer.js";
 import { SaveEvent } from "./events.js";
 import { type GoogleDriveClient } from "../google-drive-client.js";
@@ -275,13 +275,7 @@ class GoogleDriveBoardServer
   }
 
   async load(url: URL): Promise<GraphDescriptor | null> {
-    const fileIdMatch = url.href.match(/^drive:\/(.+)/);
-    if (!fileIdMatch) {
-      throw new Error(
-        `Expected URL to have format "drive:FILE_ID", got "${url.href}"`
-      );
-    }
-    const fileId = fileIdMatch[1]!;
+    const fileId = getFileId(url.href);
     const response = await this.#googleDriveClient.getFileMedia(fileId);
     return response.json();
   }
@@ -402,7 +396,10 @@ class GoogleDriveBoardServer
   }
 
   dataPartTransformer(_graphUrl: URL): DataPartTransformer {
-    return new GoogleDriveDataPartTransformer(this.#googleDriveClient, this.ops);
+    return new GoogleDriveDataPartTransformer(
+      this.#googleDriveClient,
+      this.ops
+    );
   }
 
   startingURL(): URL | null {
