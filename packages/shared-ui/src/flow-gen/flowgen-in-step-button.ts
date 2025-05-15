@@ -379,7 +379,6 @@ export class FlowgenInStepButton extends LitElement {
     if (this.#state.status !== "generating") {
       return;
     }
-    console.log(22222, graph);
     this.dispatchEvent(new GraphReplaceEvent(graph, { role: "assistant" }));
     this.#closePanel();
   }
