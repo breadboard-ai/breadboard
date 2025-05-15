@@ -39,7 +39,6 @@ import { sandbox } from "./sandbox.js";
 import { TopGraphObserver } from "@breadboard-ai/shared-ui/utils/top-graph-observer";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
-import "@breadboard-ai/shared-ui/elements/connection/connection-entry-signin.js";
 
 const primaryColor = getGlobalColor("--bb-ui-700");
 const secondaryColor = getGlobalColor("--bb-ui-400");
@@ -337,6 +336,12 @@ async function bootstrap(args: BootstrapArguments = {}) {
     if (usingGoogleDrive) {
       const token = await signinAdapter.refresh();
       if (!token || token.state === "signedout") {
+        // Note our components assume Strings have been initialized before their
+        // modules execute, so it is only ever safe to import a component
+        // dynamically after the StringsHelper.initFrom promise has resolved.
+        await import(
+          "@breadboard-ai/shared-ui/elements/connection/connection-entry-signin.js"
+        );
         const signinScreen = document.createElement(
           "bb-connection-entry-signin"
         );
