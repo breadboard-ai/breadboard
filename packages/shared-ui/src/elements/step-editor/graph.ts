@@ -534,7 +534,7 @@ export class Graph extends Box {
 
     for (const node of this.selectionState.nodes) {
       const graphNode = this.entities.get(node) as GraphNode;
-      if (!graphNode) {
+      if (!graphNode || graphNode.readOnly) {
         continue;
       }
 
@@ -552,7 +552,7 @@ export class Graph extends Box {
 
     for (const assetPath of this.selectionState.assets) {
       const graphAsset = this.entities.get(assetPath) as GraphAsset;
-      if (!graphAsset) {
+      if (!graphAsset || graphAsset.readOnly) {
         continue;
       }
 
@@ -572,7 +572,7 @@ export class Graph extends Box {
   applyTranslationToNodes(x: number, y: number, hasSettled: boolean) {
     for (const node of this.#nodes) {
       const graphNode = this.entities.get(node.descriptor.id) as GraphNode;
-      if (!graphNode) {
+      if (!graphNode || graphNode.readOnly) {
         continue;
       }
 
@@ -590,7 +590,7 @@ export class Graph extends Box {
 
     for (const assetPath of this.#assets.keys()) {
       const graphAsset = this.entities.get(assetPath) as GraphAsset;
-      if (!graphAsset) {
+      if (!graphAsset || graphAsset.readOnly) {
         continue;
       }
 

@@ -832,7 +832,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
     };
 
     let defaultAdd: HTMLTemplateResult | symbol = nothing;
-    if (this.showDefaultAdd) {
+    if (this.showDefaultAdd && !this.readOnly) {
       defaultAdd = html` ${rightArrow}
         <button
           id="default-add"

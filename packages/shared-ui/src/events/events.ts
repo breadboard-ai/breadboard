@@ -1566,7 +1566,10 @@ export class BoardDeleteEvent extends Event {
 export class SnackbarActionEvent extends Event {
   static eventName = "bbsnackbaraction";
 
-  constructor(public readonly value: string) {
+  constructor(
+    public readonly action: string,
+    public readonly value?: string
+  ) {
     super(SnackbarActionEvent.eventName, { ...eventInit });
   }
 }

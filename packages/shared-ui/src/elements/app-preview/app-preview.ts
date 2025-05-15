@@ -8,7 +8,7 @@ import { GraphDescriptor, LLMContent } from "@breadboard-ai/types";
 import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("AppPreview");
 
-import { LitElement, PropertyValues, html } from "lit";
+import { LitElement, PropertyValues, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
   BoardServer,
@@ -430,21 +430,23 @@ export class AppPreview extends LitElement {
         >
           ${this.#template}
         </div>
-        <div id="theme-edit">
-          <button
-            id="designer"
-            ?disabled=${this.#loadingTemplate}
-            @click=${() => {
-              this.dispatchEvent(
-                new ThemeEditRequestEvent(
-                  this.#appTemplate?.additionalOptions ?? null
-                )
-              );
-            }}
-          >
-            Edit Theme
-          </button>
-        </div>
+        ${this.isMine
+          ? html`<div id="theme-edit">
+              <button
+                id="designer"
+                ?disabled=${this.#loadingTemplate}
+                @click=${() => {
+                  this.dispatchEvent(
+                    new ThemeEditRequestEvent(
+                      this.#appTemplate?.additionalOptions ?? null
+                    )
+                  );
+                }}
+              >
+                Edit Theme
+              </button>
+            </div>`
+          : nothing}
       </div>
     `;
   }

@@ -623,7 +623,8 @@ export type SnackbarUUID = ReturnType<typeof globalThis.crypto.randomUUID>;
 
 export type SnackbarAction = {
   title: string;
-  value: string;
+  action: string;
+  value?: string;
 };
 
 export type SnackbarMessage = {
