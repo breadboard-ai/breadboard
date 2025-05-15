@@ -64,6 +64,8 @@ import { map } from "lit/directives/map.js";
 import { markdown } from "../../directives/markdown";
 import { maybeConvertToYouTube } from "../../utils/substitute-input";
 
+const SIGN_IN_SECRET_KEY = `connection:${SIGN_IN_CONNECTION_ID}`;
+
 function keyFromGraphUrl(url: string) {
   return `cw-${url.replace(/\W/gi, "-")}`;
 }
@@ -1101,9 +1103,19 @@ export class Template extends LitElement implements AppTemplate {
             </p>
             ${map(secretEvent.keys, (key) => {
               if (key.startsWith("connection:")) {
-                if (key === `connection:${SIGN_IN_CONNECTION_ID}`) {
+                if (key === SIGN_IN_SECRET_KEY) {
                   // When the connection id is a sign in, we never bring up
                   // the input dialog -- it is presumed to exist.
+                  // However, we still need to send an event so that AppView
+                  // catches it and interprets it
+                  this.dispatchEvent(
+                    new InputEnterEvent(
+                      SIGN_IN_SECRET_KEY,
+                      { secret: "" },
+                      /* allowSavingIfSecret */ true
+                    )
+                  );
+
                   return nothing;
                 }
                 return html`<bb-connection-input
