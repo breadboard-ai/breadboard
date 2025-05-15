@@ -63,7 +63,7 @@ export class Snackbar extends LitElement {
         --text-color: var(--bb-snackbar-error-text);
       }
 
-      > .g-icon {
+      .g-icon {
         flex: 0 0 auto;
         color: var(--text-color);
         margin-right: var(--bb-grid-size-4);
@@ -112,6 +112,10 @@ export class Snackbar extends LitElement {
         margin: 0 0 0 var(--bb-grid-size-2);
         opacity: 0.7;
         transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+
+        .g-icon {
+          margin-right: 0;
+        }
 
         &:not([disabled]) {
           cursor: pointer;

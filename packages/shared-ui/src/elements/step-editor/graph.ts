@@ -38,7 +38,7 @@ import {
 } from "./events/events";
 import { OverflowMenuActionEvent } from "../../events/events";
 import { toGridSize } from "./utils/to-grid-size";
-import { MOVE_GRAPH_ID } from "./constants";
+import { GRID_SIZE, MOVE_GRAPH_ID } from "./constants";
 import { GraphAsset } from "./graph-asset";
 import { AssetPath } from "@breadboard-ai/types";
 import { isControllerBehavior } from "../../utils/behaviors";
@@ -545,6 +545,11 @@ export class Graph extends Box {
       graphNode.transform.e = graphNode.baseTransform.e + x;
       graphNode.transform.f = graphNode.baseTransform.f + y;
 
+      graphNode.transform.e =
+        Math.round(graphNode.transform.e / GRID_SIZE) * GRID_SIZE;
+      graphNode.transform.f =
+        Math.round(graphNode.transform.f / GRID_SIZE) * GRID_SIZE;
+
       if (hasSettled) {
         graphNode.baseTransform = null;
       }
@@ -562,6 +567,11 @@ export class Graph extends Box {
 
       graphAsset.transform.e = graphAsset.baseTransform.e + x;
       graphAsset.transform.f = graphAsset.baseTransform.f + y;
+
+      graphAsset.transform.e =
+        Math.round(graphAsset.transform.e / GRID_SIZE) * GRID_SIZE;
+      graphAsset.transform.f =
+        Math.round(graphAsset.transform.f / GRID_SIZE) * GRID_SIZE;
 
       if (hasSettled) {
         graphAsset.baseTransform = null;
