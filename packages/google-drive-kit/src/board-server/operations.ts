@@ -152,8 +152,7 @@ class DriveOperations {
         return err(`Unable to get Drive folder contents. Likely an auth error`);
       }
 
-      const result = await this.toGraphInfos(api, response.files);
-
+      const result = toGraphInfos(response.files);
       return result;
     } catch (e) {
       console.warn(e);
@@ -185,56 +184,15 @@ class DriveOperations {
     const fileRequest = await retryableFetch(api.makeQueryRequest(query));
     const response = (await fileRequest.json()) as DriveFileQuery;
 
-    const results = (await this.toGraphInfos(api, response.files)).map(
-      (graphInfo) => {
-        if (!graphInfo.tags.includes("featured")) {
-          // The fact that a graph is in the featured folder alone determines
-          // whether it is featured.
-          graphInfo.tags.push("featured");
-        }
-        return graphInfo;
+    const results = toGraphInfos(response.files).map((graphInfo) => {
+      if (!graphInfo.tags.includes("featured")) {
+        // The fact that a graph is in the featured folder alone determines
+        // whether it is featured.
+        graphInfo.tags.push("featured");
       }
-    );
-    return results;
-  }
-
-  async toGraphInfos(
-    api: Files,
-    files: Array<DriveFile>
-  ): Promise<Array<GraphInfo>> {
-    const maybeFetchThumbnail = async (file: DriveFile) => {
-      const appProperties = readAppProperties(file);
-      if (file.properties?.thumbnailUrl) {
-        return { file, appProperties, thumbnail: file.properties!.thumbnailUrl };
-      }
-      const thumbnailUrl = appProperties.thumbnailUrl;
-      if (thumbnailUrl) {
-        const thumbnailFileId = getFileId(thumbnailUrl);
-        const response = await retryableFetch(
-          api.makeLoadRequest(thumbnailFileId)
-        );
-        const bytes = await response.bytes();
-        const contentType = response.headers.get("content-type");
-        const data = contentType?.includes("image/svg")
-          ? new TextDecoder("utf8").decode(bytes)
-          : bytesToBase64(bytes);
-        const thumbnail = `data:${contentType};base64,${data}`;
-        return { file, appProperties, thumbnail };
-      }
-      return { file, appProperties };
-    };
-
-    const withThumbnails = await Promise.all(
-      files.map((file) => maybeFetchThumbnail(file))
-    );
-    return withThumbnails.map(({ file, appProperties, thumbnail }) => {
-      return {
-        id: file.id,
-        title: appProperties.title || file.name.replace(/(\.bgl)?\.json$/, ""),
-        tags: appProperties.tags,
-        thumbnail: thumbnail,
-      } satisfies GraphInfo;
+      return graphInfo;
     });
+    return results;
   }
 
   async readSharedGraphList(): Promise<string[]> {
@@ -575,7 +533,9 @@ function createAppProperties(
   };
 }
 
-function readAppProperties(file: DriveFile): AppProperties {
+function readAppProperties(
+  file: DriveFile
+): AppProperties & Properties["properties"] {
   const {
     appProperties: { title, description = "", tags, thumbnailUrl } = {},
   } = file;
@@ -591,13 +551,8 @@ function readAppProperties(file: DriveFile): AppProperties {
     title: title ?? "",
     description,
     tags: parsedTags,
-    thumbnailUrl: file.properties?.thumbnailUrl ?? thumbnailUrl
+    thumbnailUrl: file.properties?.thumbnailUrl ?? thumbnailUrl,
   };
-}
-
-function readProperties(file: DriveFile): Properties["properties"] {
-  const { properties: { thumbnailUrl = "" } = {} } = file;
-  return { thumbnailUrl };
 }
 
 function getFileTitle(descriptor: GraphDescriptor) {
@@ -626,9 +581,15 @@ function getFileId(driveUrl: string): string {
   return driveUrl;
 }
 
-function bytesToBase64(bytes: Uint8Array) {
-  const binString = Array.from(bytes, (byte) =>
-    String.fromCodePoint(byte)
-  ).join("");
-  return btoa(binString);
+function toGraphInfos(files: Array<DriveFile>): Array<GraphInfo> {
+  const result = files.map((file: DriveFile) => {
+    const appProperties = readAppProperties(file);
+    return {
+      id: file.id,
+      title: appProperties.title || file.name.replace(/(\.bgl)?\.json$/, ""),
+      tags: appProperties.tags,
+      thumbnail: appProperties.thumbnailUrl,
+    } satisfies GraphInfo;
+  });
+  return result;
 }

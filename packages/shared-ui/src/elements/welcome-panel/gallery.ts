@@ -26,6 +26,10 @@ import {
   signinAdapterContext,
 } from "../../utils/signin-adapter.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
+import { until } from "lit/directives/until.js";
+import { renderThumbnail, resolveImage } from "../../utils/image.js";
+import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
+import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
@@ -303,6 +307,9 @@ export class Gallery extends LitElement {
   @consume({ context: signinAdapterContext })
   accessor signinAdapter: SigninAdapter | undefined = undefined;
 
+  @consume({ context: googleDriveClientContext })
+  accessor googleDriveClient!: GoogleDriveClient | undefined;
+
   @property({ attribute: false })
   accessor items: [string, GraphProviderItem][] | undefined = undefined;
 
@@ -384,16 +391,13 @@ export class Gallery extends LitElement {
     `;
   }
 
-  #renderThumbnail(thumbnail?: string | null) {
-    const svgPrefix = "data:image/svg+xml;base64,";
-    if (thumbnail?.startsWith(svgPrefix)) {
-      return svg`${unsafeHTML(thumbnail!.substring(svgPrefix.length))}`;
-    } else {
-      return html`<img
-        class=${classMap({ thumbnail: true })}
-        src=${thumbnail ?? "/images/placeholder.svg"}
-      />`;
-    }
+  async #renderThumbnail(thumbnail: string | null | undefined) {
+    return await renderThumbnail(
+      thumbnail,
+      "/images/placeholder.svg",
+      this.googleDriveClient!,
+      { thumbnail: true }
+    );
   }
 
   #renderBoard([name, item]: [string, GraphProviderItem]) {
@@ -407,7 +411,7 @@ export class Gallery extends LitElement {
         @click=${(event: PointerEvent) => this.#onBoardClick(event, url)}
         @keydown=${(event: KeyboardEvent) => this.#onBoardKeydown(event, url)}
       >
-        ${keyed(thumbnail, this.#renderThumbnail(thumbnail))}
+        ${keyed(thumbnail, until(this.#renderThumbnail(thumbnail)))}
         <div class="details">
           <div class="creator">
             <span>
