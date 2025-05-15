@@ -120,10 +120,11 @@ export class SharePanel extends LitElement {
         }
         label {
           display: inline-block;
-          width: 3.1em;
+          width: 4.5em;
           margin: 0 var(--bb-grid-size) 0 var(--bb-grid-size-2);
           font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
             var(--bb-font-family);
+          text-align: center;
         }
       }
 
@@ -296,7 +297,7 @@ export class SharePanel extends LitElement {
           </button>
         </header>
 
-        <p id="helpText">Please make this public to access share link</p>
+        <p id="helpText">Please publish to access share link</p>
 
         <div id="permissions">
           <a
@@ -332,7 +333,7 @@ export class SharePanel extends LitElement {
           @change=${this.#onPublishedSwitchChange}
         ></md-switch>
         <label for="publishedSwitch">
-          ${published ? "Public" : "Private"}
+          ${published ? "Published" : "Private"}
         </label>
       </div>
     `;
