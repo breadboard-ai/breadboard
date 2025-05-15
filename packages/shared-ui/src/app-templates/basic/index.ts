@@ -763,6 +763,10 @@ export class Template extends LitElement implements AppTemplate {
                   display: flex;
                   align-items: flex-end;
 
+                  bb-speech-to-text {
+                    --primary-color: var(--bb-neutral-0);
+                  }
+
                   & #continue {
                     margin-left: var(--bb-grid-size-2);
                     background: oklch(

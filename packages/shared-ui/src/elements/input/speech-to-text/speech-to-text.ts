@@ -8,6 +8,7 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Utterance } from "../../../types/types";
 import { UtteranceEvent } from "../../../events/events";
+import { icons } from "../../../styles/icons";
 
 declare global {
   interface SpeechRecognition extends EventTarget {
@@ -34,54 +35,62 @@ export class SpeechToText extends LitElement {
   @property({ type: Boolean })
   accessor disabled = false;
 
-  static styles = css`
-    :host {
-      display: block;
-    }
-
-    #checking-permission {
-      width: var(--button-size, 40px);
-      height: var(--button-size, 40px);
-      font-size: 0;
-
-      background: var(--bb-progress) center center / 20px 20px no-repeat;
-    }
-
-    button {
-      width: var(--button-size, 40px);
-      height: var(--button-size, 40px);
-      background: oklch(
-          from var(--primary-text-color) l c h / calc(alpha - 0.75)
-        )
-        var(--bb-icon-mic) center center / 20px 20px no-repeat;
-
-      font-size: 0;
-      border: none;
-      border-radius: 50%;
-
-      --transition-properties: opacity;
-      transition: var(--transition);
-
-      &[disabled] {
-        cursor: auto;
-        opacity: 0.5;
+  static styles = [
+    icons,
+    css`
+      :host {
+        display: block;
       }
 
-      &:not([disabled]) {
-        cursor: pointer;
-        opacity: 0.5;
+      #checking-permission {
+        width: var(--button-size, 40px);
+        height: var(--button-size, 40px);
+        font-size: 0;
 
-        &:hover,
-        &:focus {
-          opacity: 1;
+        background: var(--bb-progress, url(/images/progress-ui.svg)) center
+          center / 20px 20px no-repeat;
+      }
+
+      button {
+        --default-background: oklch(
+          from var(--primary-text-color, var(--bb-neutral-900)) l c h /
+            calc(alpha - 0.8)
+        );
+
+        width: var(--button-size, 40px);
+        height: var(--button-size, 40px);
+        color: var(--bb-icon-color, var(--bb-neutral-900));
+        background: var(--background, var(--default-background, transparent));
+        font-size: 0;
+        border: none;
+        border-radius: 50%;
+        padding: 0;
+        margin: 0;
+
+        --transition-properties: opacity;
+        transition: var(--transition);
+
+        &[disabled] {
+          cursor: auto;
+          opacity: 0.8;
+        }
+
+        &:not([disabled]) {
+          cursor: pointer;
+          opacity: 0.8;
+
+          &:hover,
+          &:focus {
+            opacity: 1;
+          }
         }
       }
-    }
 
-    span:not(.final) {
-      opacity: 0.7;
-    }
-  `;
+      span:not(.final) {
+        opacity: 0.7;
+      }
+    `,
+  ];
 
   #parts: Utterance[] = [];
   #speechRecognition =
@@ -184,7 +193,7 @@ export class SpeechToText extends LitElement {
             this.#stopTranscription();
           }}
         >
-          Transcribe
+          <span class="g-icon">mic</span>
         </button>`;
       },
 

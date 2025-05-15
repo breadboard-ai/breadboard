@@ -15,6 +15,7 @@ import {
   GraphReplaceEvent,
   HideTooltipEvent,
   ShowTooltipEvent,
+  UtteranceEvent,
 } from "../events/events.js";
 import { fabStyles } from "../styles/fab.js";
 import { floatingPanelStyles } from "../styles/floating-panel.js";
@@ -101,6 +102,13 @@ export class FlowgenInStepButton extends LitElement {
         border: 1px solid transparent;
         background: var(--bb-neutral-0);
 
+        bb-speech-to-text {
+          --button-size: var(--bb-grid-size-8);
+          --alpha-adjustment: 0;
+          --background: transparent;
+          margin-left: 2px;
+        }
+
         & textarea {
           min-height: var(--bb-grid-size-9);
           background: transparent;
@@ -108,7 +116,8 @@ export class FlowgenInStepButton extends LitElement {
           outline: none;
           field-sizing: content;
           box-sizing: border-box;
-          padding: var(--bb-grid-size-2);
+          padding: var(--bb-grid-size-2) var(--bb-grid-size-2)
+            var(--bb-grid-size-2) 0;
           font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
             var(--bb-font-family);
         }
@@ -118,6 +127,9 @@ export class FlowgenInStepButton extends LitElement {
         }
 
         & #submit-button {
+          display: flex;
+          align-items: center;
+
           box-shadow: none;
           border: none;
           margin: 0 8px;
@@ -230,6 +242,17 @@ export class FlowgenInStepButton extends LitElement {
     return html`
       <div id="panel" class="${this.#state.status}">
         <div id="panel-top">
+          <bb-speech-to-text
+            @bbutterance=${(evt: UtteranceEvent) => {
+              if (!this.#descriptionInput.value) {
+                return;
+              }
+
+              this.#descriptionInput.value.value = evt.parts
+                .map((part) => part.transcript)
+                .join("");
+            }}
+          ></bb-speech-to-text>
           <textarea
             id="description-input"
             class="bb-multi-line-input"
