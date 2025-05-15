@@ -361,8 +361,12 @@ export class EntityEditor extends SignalWatcher(LitElement) {
             user-select: none;
             height: var(--bb-grid-size-5);
 
-            & .g-icon::before {
-              content: "keyboard_arrow_down";
+            & .g-icon {
+              margin-right: var(--bb-grid-size-2);
+
+              &::before {
+                content: "keyboard_arrow_down";
+              }
             }
           }
 
@@ -375,8 +379,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
               margin-bottom: var(--bb-grid-size-3);
 
               & .g-icon {
-                margin-right: var(--bb-grid-size-2);
-                ::before {
+                &::before {
                   content: "keyboard_arrow_up";
                 }
               }
