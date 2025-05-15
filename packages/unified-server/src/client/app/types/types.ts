@@ -20,6 +20,7 @@ import {
   RunStore,
 } from "@google-labs/breadboard";
 import { type SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
+import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 
 export type Runner = {
   harnessRunner: HarnessRunner;
@@ -43,6 +44,7 @@ export interface AppViewConfig {
   title: string | null;
   description: string | null;
   templateAdditionalOptions: Record<string, string> | null;
+  googleDriveClient: GoogleDriveClient;
 }
 
 export type BootstrapArguments = {

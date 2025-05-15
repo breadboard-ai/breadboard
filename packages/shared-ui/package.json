@@ -24,6 +24,10 @@
       "default": "./dist/utils/top-graph-observer/index.js",
       "types": "./dist/utils/top-graph-observer/index.d.ts"
     },
+    "./utils/image": {
+      "default": "./dist/utils/image.js",
+      "types": "./dist/utils/image.d.ts"
+    },
     "./elements/connection/connection-broker.ts": {
       "default": "./dist/elements/connection/connection-broker.js",
       "types": "./dist/elements/connection/connection-broker.d.ts"

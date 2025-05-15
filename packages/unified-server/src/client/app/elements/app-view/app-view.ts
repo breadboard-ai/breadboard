@@ -39,6 +39,10 @@ import {
   RunSecretEvent,
   RunSkipEvent,
 } from "@google-labs/breadboard/harness";
+import { googleDriveClientContext } from "@breadboard-ai/shared-ui/contexts/google-drive-client-context.js";
+import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { loadImage } from "@breadboard-ai/shared-ui/utils/image.js";
+
 import { blobHandleToUrl } from "@breadboard-ai/shared-ui/elements/app-preview/app-preview.js";
 
 @customElement("app-view")
@@ -67,6 +71,9 @@ export class AppView extends LitElement {
   @provide({ context: BreadboardUIContext.settingsHelperContext })
   accessor settingsHelper: SettingsHelperImpl;
 
+  @provide({ context: googleDriveClientContext })
+  accessor googleDriveClient: GoogleDriveClient;
+
   readonly flow: GraphDescriptor;
   #runner: Runner | null;
   #signInAdapter: SigninAdapter;
@@ -83,6 +90,7 @@ export class AppView extends LitElement {
     this.#runner = config.runner;
     this.#signInAdapter = config.signinAdapter;
     this.flow = earlyLoadedFlow ?? config.flow;
+    this.googleDriveClient = config.googleDriveClient;
 
     this.#setDocumentTitle();
     this.#applyThemeToTemplate();
@@ -136,17 +144,11 @@ export class AppView extends LitElement {
             } else {
               this.#splashImage.clear();
 
-              const response = await fetch(url);
-              const data = await response.blob();
-              return new Promise<string>((resolve) => {
-                const reader = new FileReader();
-                reader.addEventListener("loadend", () => {
-                  const result = reader.result as string;
-                  this.#splashImage.set(url, result);
-                  resolve(result);
-                });
-                reader.readAsDataURL(data);
-              });
+              const imageData = await loadImage(this.googleDriveClient!, url);
+              if (imageData) {
+                this.#splashImage.set(url, imageData);
+              }
+              return imageData;
             }
           })
           .then((base64DataUrl) => {

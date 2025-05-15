@@ -1,3 +1,4 @@
+import { isDriveFile } from "@breadboard-ai/google-drive-kit/board-server/operations.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { asBase64 } from "@google-labs/breadboard";
 import { html } from "lit";
@@ -51,5 +52,31 @@ export async function resolveImage(
     return result;
   } else {
     return url ?? undefined;
+  }
+}
+
+/**
+ * Returns image content, unlike `resolveImage()` it loads the content from urls that could have
+ * went directly into src tag.
+ */
+export async function loadImage(
+  googleDriveClient: GoogleDriveClient,
+  url?: string
+) {
+  if (isDriveFile(url)) {
+    const imageData = await resolveImage(googleDriveClient, url);
+    return imageData ?? "";
+  } else if (url) {
+    const response = await fetch(url);
+    const data = await response.blob();
+    return new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.addEventListener("loadend", () => {
+        const result = reader.result as string;
+
+        resolve(result);
+      });
+      reader.readAsDataURL(data);
+    });
   }
 }
