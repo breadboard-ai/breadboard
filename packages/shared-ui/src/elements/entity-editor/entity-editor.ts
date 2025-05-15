@@ -657,6 +657,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
         > div {
           &.port {
+            container-type: inline-size;
           }
 
           &.stretch:has(+ .port:not(.stretch)) {
@@ -788,6 +789,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
   #fastAccessRef: Ref<FastAccessMenu> = createRef();
   #isUsingFastAccess = false;
   #onPointerDownBound = this.#onPointerDown.bind(this);
+  #advancedOpen = false;
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -1326,6 +1328,11 @@ export class EntityEditor extends SignalWatcher(LitElement) {
                     kind: "EDIT_STEP_CONFIG",
                     stepId: nodeId,
                   } satisfies FlowGenConstraint}
+                  @bbgraphreplace=${() => {
+                    // Ignore all edits to this point so that we don't issue
+                    // a submit and stomp the new values.
+                    this.#edited = false;
+                  }}
                 ></bb-flowgen-in-step-button>`
               : nothing}
             ${hasTextEditor
@@ -1369,7 +1376,17 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     return [
       ...basicPorts.map(portRender),
       advancedPorts.length > 0
-        ? html`<details id="advanced-settings">
+        ? html`<details
+            id="advanced-settings"
+            ?open=${this.#advancedOpen}
+            @toggle=${(evt: Event) => {
+              if (!(evt.target instanceof HTMLDetailsElement)) {
+                return;
+              }
+
+              this.#advancedOpen = evt.target.open;
+            }}
+          >
             <summary><span class="g-icon"></span>Advanced settings</summary>
             ${[...advancedPorts.map(portRender)]}
           </details>`
