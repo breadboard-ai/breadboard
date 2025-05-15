@@ -54,6 +54,11 @@ import {
 import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
+import {
+  isHandshakeCompleteMessage,
+  HandshakeReadyMessage,
+  HandshakeCompleteMessage,
+} from "@breadboard-ai/shared-ui/iframe/messages.js";
 import { addNodeProxyServerConfig } from "./data/node-proxy-servers";
 import { provide } from "@lit/context";
 import { RecentBoardStore } from "./data/recent-boards";
@@ -102,7 +107,7 @@ import {
 import { sideBoardRuntime } from "@breadboard-ai/shared-ui/contexts/side-board-runtime.js";
 import { googleDriveClientContext } from "@breadboard-ai/shared-ui/contexts/google-drive-client-context.js";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
-import { OverflowAction } from "@breadboard-ai/shared-ui/types/types.js";
+import { IframeConfig, OverflowAction } from "@breadboard-ai/shared-ui/types/types.js";
 import { MAIN_BOARD_ID } from "@breadboard-ai/shared-ui/constants/constants.js";
 import { createA2Server } from "@breadboard-ai/a2";
 import { envFromSettings } from "./utils/env-from-settings";
@@ -204,6 +209,10 @@ if (ENVIRONMENT.googleDrive.publishPermissions.length === 0) {
 }
 
 const BOARD_AUTO_SAVE_TIMEOUT = 1_500;
+
+const IFRAME_ORIGINS: string[] = [
+  // Add valid origins here.
+];
 
 @customElement("bb-main")
 export class Main extends LitElement {
@@ -331,6 +340,13 @@ export class Main extends LitElement {
    */
   @state()
   accessor canRun = true;
+
+  /**
+   * If breadboard is iframed, contains config passed from parent iframe.
+   * Null otherwise.
+   */
+  @state()
+  accessor iframeConfig: IframeConfig | null = null;
 
   @property()
   accessor tab: Runtime.Types.Tab | null = null;
@@ -961,6 +977,15 @@ export class Main extends LitElement {
     window.addEventListener("pointerdown", this.#hideTooltipBound);
     window.addEventListener("keydown", this.#onKeyDownBound);
     window.addEventListener("bbrundownload", this.#downloadRunBound);
+        // Listen for message to determine whether parent iframe is iframing Breadboard.
+    window.addEventListener("message", this.#listenForHandshake);
+
+    // Because we do not yet know whether or which parent iframe environment is
+    // iframing Breadboard, send a postMessage to each possible origin to
+    // indicate Breadboard is ready to receive data from parent iframe.
+    IFRAME_ORIGINS.forEach((origin) => {
+      top?.postMessage({type: 'handshake_ready'} as HandshakeReadyMessage, origin);
+    }); 
   }
 
   disconnectedCallback(): void {
@@ -971,6 +996,17 @@ export class Main extends LitElement {
     window.removeEventListener("pointerdown", this.#hideTooltipBound);
     window.removeEventListener("keydown", this.#onKeyDownBound);
     window.removeEventListener("bbrundownload", this.#downloadRunBound);
+    window.removeEventListener("message", this.#listenForHandshake);
+  }
+
+  #listenForHandshake(evt: MessageEvent){
+    const message = evt.data;
+    if (
+      isHandshakeCompleteMessage(message as HandshakeCompleteMessage) &&
+      IFRAME_ORIGINS.includes(message.origin)
+    ) {
+      this.iframeConfig = {origin: message.origin};
+    }
   }
 
   #handleSecretEvent(event: RunSecretEvent, runner?: HarnessRunner) {
@@ -3401,6 +3437,7 @@ export class Main extends LitElement {
               .graphStoreUpdateId=${this.graphStoreUpdateId}
               .graphTopologyUpdateId=${this.graphTopologyUpdateId}
               .history=${this.#runtime.edit.getHistory(this.tab)}
+              .iframeConfig=${this.iframeConfig}
               .inputsFromLastRun=${inputsFromLastRun}
               .loader=${this.#runtime.board.getLoader()}
               .mainGraphId=${this.tab?.mainGraphId}
