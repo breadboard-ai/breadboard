@@ -39,7 +39,6 @@ export default async ({ mode }: UserConfig) => {
     worker: "src/worker.ts",
     sample: "./index.html",
     oauth: "./oauth/index.html",
-    bbrt: "./experimental/bbrt/index.html",
   };
 
   if (mode === "development") {
