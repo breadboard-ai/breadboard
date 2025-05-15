@@ -29,14 +29,10 @@ import {
   TopGraphRunResult,
 } from "../../types/types.js";
 import { classMap } from "lit/directives/class-map.js";
-import {
-  getFileId,
-  isDriveFile,
-} from "@breadboard-ai/google-drive-kit/board-server/operations.js";
 import { consume } from "@lit/context";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import { resolveImage } from "../../utils/image.js";
+import { loadImage } from "../../utils/image.js";
 
 const primaryColor = "#ffffff";
 const secondaryColor = "#7a7a7a";
@@ -230,7 +226,7 @@ export class AppPreview extends LitElement {
             } else {
               this.#splashImage.clear();
 
-              const imageData = await this.#loadImage(url);
+              const imageData = await loadImage(this.googleDriveClient!, url);
               if (imageData) {
                 this.#splashImage.set(url, imageData);
               }
@@ -259,26 +255,6 @@ export class AppPreview extends LitElement {
     } else {
       options.splashImage = false;
       this.#appTemplate.options = options;
-    }
-  }
-
-  async #loadImage(url: string): Promise<string> {
-    if (isDriveFile(url)) {
-      const imageData = await resolveImage(this.googleDriveClient!, url);
-      return imageData ?? "";
-    } else {
-      // TODO: This should go inside `resolveImage()` as well.
-      const response = await fetch(url);
-      const data = await response.blob();
-      return new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.addEventListener("loadend", () => {
-          const result = reader.result as string;
-
-          resolve(result);
-        });
-        reader.readAsDataURL(data);
-      });
     }
   }
 

@@ -395,6 +395,7 @@ async function bootstrap(args: BootstrapArguments = {}) {
       isDefautTheme: extractedTheme?.isDefaultTheme ?? false,
       templateAdditionalOptions:
         extractedTheme?.templateAdditionalOptionsChosen ?? null,
+      googleDriveClient,
     };
 
     const appView = new Elements.AppView(config, flow);
