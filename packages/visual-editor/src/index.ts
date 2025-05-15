@@ -1025,6 +1025,7 @@ export class Main extends LitElement {
       return;
     }
     this.#hideAllOverlays();
+    this.unsnackbar();
   }
 
   #hideAllOverlays() {

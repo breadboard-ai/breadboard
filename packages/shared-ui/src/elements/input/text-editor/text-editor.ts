@@ -829,7 +829,7 @@ export class TextEditor extends LitElement {
           this.#togglePlaceholder();
         }}
         id="editor"
-        .contenteditable=${!this.readOnly}
+        contenteditable=${!this.readOnly}
       ></span
       ><bb-fast-access-menu
         ${ref(this.#fastAccessRef)}

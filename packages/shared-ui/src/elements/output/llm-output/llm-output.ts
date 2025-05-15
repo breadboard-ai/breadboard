@@ -306,6 +306,7 @@ export class LLMOutput extends LitElement {
       border: none;
       width: 100%;
       overflow-x: auto;
+      height: 100svh;
       max-height: calc(100cqh - var(--bb-grid-size-11));
     }
 
