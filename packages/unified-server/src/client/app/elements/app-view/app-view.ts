@@ -10,7 +10,10 @@ import { provide } from "@lit/context";
 
 import * as ConnectionClient from "@breadboard-ai/connection-client";
 import * as BreadboardUIContext from "@breadboard-ai/shared-ui/contexts";
-import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
+import {
+  SIGN_IN_CONNECTION_ID,
+  SigninAdapter,
+} from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
 import { SettingsHelperImpl } from "../../utils/settings.js";
 import {
   GraphDescriptor,
@@ -289,7 +292,7 @@ export class AppView extends LitElement {
         this.dispatchEvent(new Event("reset"));
       });
 
-      appTemplate.addEventListener("bbinputenter", (evt: Event) => {
+      appTemplate.addEventListener("bbinputenter", async (evt: Event) => {
         evt.stopImmediatePropagation();
 
         if (!this.#runner) {
@@ -301,7 +304,23 @@ export class AppView extends LitElement {
 
         if ("secret" in data) {
           const name = inputEvent.id;
-          const value = data.secret;
+          let value: string;
+          if (name === `connection:${SIGN_IN_CONNECTION_ID}`) {
+            if (this.#signInAdapter.state !== "valid") {
+              const refreshed = await this.#signInAdapter.refresh();
+              if (refreshed?.state !== "valid") {
+                console.error("Unable to get valid Auth token");
+                value = "unable to get token";
+              } else {
+                value = refreshed.grant.access_token;
+              }
+            } else {
+              value = this.#signInAdapter.accessToken()!;
+            }
+          } else {
+            value = data.secret as string;
+          }
+
           data = { [name]: value };
         }
 
@@ -311,11 +330,9 @@ export class AppView extends LitElement {
           throw new Error("Can't send input, no runner");
         }
 
-        if (runner.running()) {
-          throw new Error("The runner is already running, cannot send input");
+        if (!runner.running()) {
+          runner.run(data);
         }
-
-        runner.run(data);
       });
 
       return html`${appTemplate}`;
