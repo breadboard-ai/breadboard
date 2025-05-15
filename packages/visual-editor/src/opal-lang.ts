@@ -23,6 +23,9 @@ export default {
     STATUS_SAVING_PROJECT: {
       str: "Saving opal",
     },
+    STATUS_CREATING_PROJECT: {
+      str: "Creating opal",
+    },
     STATUS_PROJECT_SAVED: {
       str: "Opal saved",
     },
@@ -64,6 +67,9 @@ export default {
     },
     QUERY_SAVE_PROJECT: {
       str: "The current Flow isn't saved - would you like to save first?",
+    },
+    LABEL_READONLY_PROJECT: {
+      str: "This opal is not editable. Please Remix it to make changes.",
     },
   },
   ProjectListing: {
