@@ -44,6 +44,7 @@ import { map } from "lit/directives/map.js";
 import { until } from "lit/directives/until.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { renderThumbnail } from "../../utils/image";
 
 @customElement("bb-app-theme-creator")
 export class AppThemeCreator extends LitElement {
@@ -68,7 +69,7 @@ export class AppThemeCreator extends LitElement {
   @consume({ context: sideBoardRuntime })
   accessor sideBoardRuntime!: SideBoardRuntime | undefined;
 
-  @consume({context: googleDriveClientContext })
+  @consume({ context: googleDriveClientContext })
   accessor googleDriveClient!: GoogleDriveClient | undefined;
 
   @state()
@@ -595,28 +596,16 @@ export class AppThemeCreator extends LitElement {
   }
 
   async #renderThumbnail(theme: GraphTheme) {
-    const thumbnail = theme.splashScreen?.storedData;
-    const url = thumbnail?.handle;
-    let data: string | undefined;
-    const drivePrefix = "drive:/";
-    const isOnDrive = url?.startsWith(drivePrefix) ?? false;
-    if (isOnDrive) {
-      const driveFileId = url!.substring(drivePrefix.length);
-      const response = await this.googleDriveClient!.getFileMedia(driveFileId);
-      const bytes = await response.bytes();
-      const base64 = bytesToBase64(bytes);
-      data = `data:${thumbnail?.mimeType};base64,${base64}`;
-    } else {
-      data = url;
-    }
-    // TODO(volodya): Show the generic placeholder while the image is being loaded.
-    return html`<img
-      src=${data ?? "/images/app/generic-flow.jpg"}
-      alt="Theme thumbnail"
-      class=${classMap({
-        default: !isOnDrive && (theme.isDefaultTheme ?? false),
-      })}
-    />`;
+    const url = theme.splashScreen?.storedData?.handle;
+    return await renderThumbnail(
+      url,
+      "/images/app/generic-flow.jpg",
+      this.googleDriveClient!,
+      {
+        default: !url?.startsWith("drive:") && (theme.isDefaultTheme ?? false),
+      },
+      "Theme thumbnail"
+    );
   }
 
   render() {
