@@ -798,16 +798,17 @@ export class UI extends LitElement {
                     Editor
                   </button>`
                 : nothing}
-
-              <button
-                ?disabled=${this.sideNavItem === "edit-history"}
-                @click=${() => {
-                  this.sideNavItem = "edit-history";
-                }}
-                aria-label="Edit History"
-              >
-                <span class="g-icon">history</span>
-              </button>
+              ${this.readOnly
+                ? nothing
+                : html`<button
+                    ?disabled=${this.sideNavItem === "edit-history"}
+                    @click=${() => {
+                      this.sideNavItem = "edit-history";
+                    }}
+                    aria-label="Edit History"
+                  >
+                    <span class="g-icon">history</span>
+                  </button>`}
 
               <button id="share" @click=${this.#onClickShareButton}>URL</button>
             </div>

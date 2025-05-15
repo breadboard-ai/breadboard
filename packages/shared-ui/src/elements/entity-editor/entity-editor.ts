@@ -411,6 +411,18 @@ export class EntityEditor extends SignalWatcher(LitElement) {
             var(--bb-font-family);
 
           &.port {
+            position: relative;
+
+            &.read-only::before {
+              content: "";
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              z-index: 10;
+            }
+
             &.boolean {
               & label {
                 display: flex;
@@ -606,6 +618,11 @@ export class EntityEditor extends SignalWatcher(LitElement) {
             min-height: var(--bb-grid-size-5);
             align-items: flex-start;
             flex-direction: column;
+
+            /** Pass through the readonly-status to the text-editor */
+            &.read-only::before {
+              display: none;
+            }
 
             &:not(.stretch) details {
               bb-text-editor {
@@ -1092,6 +1109,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
             id="node-title"
             name="node-title"
             .value=${node.title()}
+            ?disabled=${this.readOnly}
             @keydown=${(evt: KeyboardEvent) => {
               if (evt.key !== "Enter") {
                 return;
@@ -1134,6 +1152,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       .projectState=${this.projectState}
       .subGraphId=${graphId !== MAIN_BOARD_ID ? graphId : null}
       .supportsFastAccess=${fastAccess}
+      .readOnly=${this.readOnly}
       id=${port.name}
       name=${port.name}
       @keydown=${(evt: KeyboardEvent) => {
@@ -1330,6 +1349,8 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           </div>
         </div>`;
       }
+
+      classes["read-only"] = this.readOnly;
       return html`<div class=${classMap(classes)}>${value} ${controls}</div>`;
     };
 

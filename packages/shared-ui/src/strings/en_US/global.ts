@@ -110,6 +110,9 @@ export default {
   LABEL_MAIN_PROJECT: {
     str: "Main Flow...",
   },
+  LABEL_READONLY_PROJECT: {
+    str: "This Flow is not editable. Please Remix it to make changes.",
+  },
 
   // Statuses.
   STATUS_CREATING_PROJECT: {

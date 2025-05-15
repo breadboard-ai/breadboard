@@ -842,7 +842,7 @@ export class Board extends EventTarget {
         boardServer,
         type: TabType.URL,
         version: 1,
-        readOnly,
+        readOnly: !graphIsMine,
         creator: creator ?? undefined,
         history: await this.#loadLocalHistory(url),
         onHistoryChanged: (history) => this.#saveLocalHistory(url, history),

@@ -50,6 +50,9 @@ export class TextEditor extends LitElement {
   @property()
   accessor projectState: Project | null = null;
 
+  @property()
+  accessor readOnly = false;
+
   static styles = [
     ChicletStyles,
     css`
@@ -826,7 +829,7 @@ export class TextEditor extends LitElement {
           this.#togglePlaceholder();
         }}
         id="editor"
-        contenteditable="true"
+        .contenteditable=${!this.readOnly}
       ></span
       ><bb-fast-access-menu
         ${ref(this.#fastAccessRef)}

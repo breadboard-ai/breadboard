@@ -44,6 +44,7 @@ export class Snackbar extends LitElement {
         background: var(--bb-neutral-900);
         padding: var(--bb-grid-size-3) var(--bb-grid-size-6);
         width: 60svw;
+        max-width: 720px;
         z-index: 1800;
         scrollbar-width: none;
         overflow-x: scroll;
@@ -52,7 +53,7 @@ export class Snackbar extends LitElement {
       }
 
       :host([active]) {
-        transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+        transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1) 0.2s;
         opacity: 1;
         pointer-events: auto;
       }
@@ -184,7 +185,9 @@ export class Snackbar extends LitElement {
                 return html`<button
                   @click=${() => {
                     this.hide();
-                    this.dispatchEvent(new SnackbarActionEvent(action.value));
+                    this.dispatchEvent(
+                      new SnackbarActionEvent(action.action, action.value)
+                    );
                   }}
                 >
                   ${action.title}

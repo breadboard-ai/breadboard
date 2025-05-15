@@ -760,6 +760,21 @@ export class Main extends LitElement {
                 this.#setPageTitle(this.tab.graph.title);
               }
 
+              if (this.tab.readOnly) {
+                this.snackbar(
+                  Strings.from("LABEL_READONLY_PROJECT"),
+                  BreadboardUI.Types.SnackType.INFORMATION,
+                  [
+                    {
+                      title: "Remix",
+                      action: "remix",
+                      value: this.tab.graph.url,
+                    },
+                  ],
+                  true
+                );
+              }
+
               this.#runtime.select.refresh(
                 this.tab.id,
                 this.#runtime.util.createWorkspaceSelectionChangeId()
@@ -1590,9 +1605,10 @@ export class Main extends LitElement {
       return;
     }
 
-    const id = this.toast(
+    const id = this.snackbar(
       Strings.from("STATUS_DELETING_PROJECT"),
-      BreadboardUI.Events.ToastType.PENDING,
+      BreadboardUI.Types.SnackType.PENDING,
+      [],
       true
     );
 
@@ -1602,16 +1618,12 @@ export class Main extends LitElement {
     );
 
     if (result) {
-      this.toast(
-        Strings.from("STATUS_PROJECT_DELETED"),
-        BreadboardUI.Events.ToastType.INFORMATION,
-        false,
-        id
-      );
+      this.unsnackbar();
     } else {
-      this.toast(
+      this.snackbar(
         error || Strings.from("ERROR_GENERIC"),
-        BreadboardUI.Events.ToastType.ERROR,
+        BreadboardUI.Types.SnackType.ERROR,
+        [],
         false,
         id
       );
@@ -4273,8 +4285,25 @@ export class Main extends LitElement {
     const tooltip = html`<bb-tooltip ${ref(this.#tooltipRef)}></bb-tooltip>`;
     const snackbar = html`<bb-snackbar
       ${ref(this.#snackbarRef)}
-      @bbsnackbaraction=${(evt: BreadboardUI.Events.SnackbarActionEvent) => {
-        console.log(evt.value);
+      @bbsnackbaraction=${async (
+        evt: BreadboardUI.Events.SnackbarActionEvent
+      ) => {
+        switch (evt.action) {
+          case "remix": {
+            if (!evt.value) {
+              return;
+            }
+
+            const graphStore = this.#runtime.board.getGraphStore();
+            const addResult = graphStore.addByURL(evt.value, [], {});
+            const graph = (await graphStore.getLatest(addResult.mutable)).graph;
+
+            if (graph) {
+              await this.#attemptRemix(graph, { role: "user" });
+              this.showWelcomePanel = false;
+            }
+          }
+        }
       }}
     ></bb-snackbar>`;
     return [until(uiController), tooltip, toasts, snackbar];

@@ -47,7 +47,7 @@ const QUICK_ADD_ADJUSTMENT = -20;
 
 @customElement("bb-editor-controls")
 export class EditorControls extends LitElement {
-  @property()
+  @property({ reflect: true, type: Boolean })
   accessor readOnly = false;
 
   @property()
@@ -112,6 +112,13 @@ export class EditorControls extends LitElement {
 
       :host > * {
         pointer-events: auto;
+      }
+
+      :host([readonly]) {
+        #top-shelf,
+        bb-flowgen-editor-input {
+          display: none;
+        }
       }
 
       #default-add {

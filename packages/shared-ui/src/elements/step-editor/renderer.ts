@@ -183,36 +183,6 @@ export class Renderer extends LitElement {
       touch-action: none;
     }
 
-    :host([readonly])::after {
-      content: "";
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0);
-      top: 0;
-      left: 0;
-      z-index: 100;
-    }
-
-    :host([readonly])::before {
-      content: "Read Only";
-      display: flex;
-      align-items: center;
-      box-sizing: border-box;
-      position: absolute;
-      top: 10px;
-      left: 50%;
-      translate: -50% 0;
-      border-radius: var(--bb-grid-size-16);
-      height: var(--bb-grid-size-7);
-      border: 1px solid var(--bb-ui-200);
-      background: var(--bb-ui-100);
-      color: var(--bb-ui-800);
-      padding: 0 var(--bb-grid-size-3);
-      font: 400 var(--bb-label-small) / var(--bb-label-line-height-small)
-        var(--bb-font-family);
-    }
-
     :host([interactionmode="pan"]) {
       cursor: grab;
     }
@@ -888,7 +858,8 @@ export class Renderer extends LitElement {
     if (
       (changedProperties.has("graph") ||
         changedProperties.has("graphTopologyUpdateId") ||
-        changedProperties.has("allowEdgeAttachmentMove")) &&
+        changedProperties.has("allowEdgeAttachmentMove") ||
+        changedProperties.has("readOnly")) &&
       this.graph &&
       this.camera
     ) {
@@ -915,6 +886,7 @@ export class Renderer extends LitElement {
       mainGraph.nodes = this.graph.nodes();
       mainGraph.edges = this.graph.edges();
       mainGraph.rendererState = this.state;
+      mainGraph.readOnly = this.readOnly;
       if (this.showAssetsInGraph) {
         mainGraph.assets = this.graph.assets();
         mainGraph.assetEdges = this.graph.assetEdges();
@@ -1562,6 +1534,7 @@ export class Renderer extends LitElement {
         .mainGraphId=${this.mainGraphId}
         .showDefaultAdd=${showDefaultAdd}
         .showExperimentalComponents=${this.showExperimentalComponents}
+        .readOnly=${this.readOnly}
         @wheel=${(evt: WheelEvent) => {
           evt.stopImmediatePropagation();
         }}
