@@ -159,11 +159,23 @@ export class ProjectListing extends LitElement {
         }
 
         & #loading-message {
+          display: flex;
+          align-items: center;
+          justify-content: center;
           color: var(--bb-neutral-700);
           font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
             var(--bb-font-family);
           margin: var(--bb-grid-size-10) 0;
-          text-align: center;
+
+          &::before {
+            content: "";
+            display: block;
+            width: 20px;
+            height: 20px;
+            background: url(/images/progress-ui.svg) center center / 20px 20px
+              no-repeat;
+            margin-right: var(--bb-grid-size-2);
+          }
 
           & p {
             margin: 0 0 var(--bb-grid-size) 0;
@@ -263,6 +275,7 @@ export class ProjectListing extends LitElement {
         & #location-selector-container {
           display: flex;
           align-items: center;
+          justify-content: space-between;
 
           & #location-selector {
             margin: var(--bb-grid-size-5) 0;
@@ -645,28 +658,8 @@ export class ProjectListing extends LitElement {
       this.selectedLocation
     );
 
-    return html`
-      <div id="wrapper" ${ref(this.#wrapperRef)}>
-        <section id="hero">
-          <h1>
-            <span class="gradient"
-              >${Strings.from("LABEL_WELCOME_MESSAGE_A")}</span
-            >
-            ${Strings.from("LABEL_WELCOME_MESSAGE_B")}
-          </h1>
-          <bb-flowgen-homepage-panel></bb-flowgen-homepage-panel>
-        </section>
-
-        <div id="board-listing">
-          <div id="locations">
-            <!-- TODO(aomarks) According to mocks, the search button should be
-                 rendered lower down, next to "Sort by". But that whole section
-                 gets quite aggressively re-rendered on any filter change, which
-                 makes it difficult for the button to keep any state. We
-                 probably need a small refactor to get the desired layout. -->
-            <div id="location-selector-container">
-              ${this.showAdditionalSources
-                ? html`<select
+    const location = this.showAdditionalSources
+      ? html`<select
                       id="location-selector"
                       class="gallery-title"
                       @input=${(evt: Event) => {
@@ -724,11 +717,23 @@ export class ProjectListing extends LitElement {
                       ${Strings.from("LABEL_PROJECT_SERVER_SETTINGS")}
                     </button>
                     </div>`
-                : html`<h2 id="location-selector" class="gallery-title">
-                    ${this.#getCurrentStoreName(selected)}
-                  </h2>`}
-            </div>
-          </div>
+      : html`<h2 id="location-selector" class="gallery-title">
+          ${this.#getCurrentStoreName(selected)}
+        </h2>`;
+
+    return html`
+      <div id="wrapper" ${ref(this.#wrapperRef)}>
+        <section id="hero">
+          <h1>
+            <span class="gradient"
+              >${Strings.from("LABEL_WELCOME_MESSAGE_A")}</span
+            >
+            ${Strings.from("LABEL_WELCOME_MESSAGE_B")}
+          </h1>
+          <bb-flowgen-homepage-panel></bb-flowgen-homepage-panel>
+        </section>
+
+        <div id="board-listing">
           <div id="content">
             ${until(
               this.#boardServerContents.then(
@@ -818,18 +823,25 @@ export class ProjectListing extends LitElement {
                     `,
                   ];
 
+                  const buttons =
+                    myItems.length && !FORCE_NO_BOARDS
+                      ? html`
+                          <div id="buttons">
+                            <div id="create-new-button-container">
+                              ${this.#renderCreateNewButton()}
+                            </div>
+                          </div>
+                        `
+                      : nothing;
+
                   return permission === "granted"
                     ? [
+                        html`<div id="locations">
+                          <div id="location-selector-container">
+                            ${location} ${buttons}
+                          </div>
+                        </div>`,
                         boardListings,
-                        myItems.length && !FORCE_NO_BOARDS
-                          ? html`
-                              <div id="buttons">
-                                <div id="create-new-button-container">
-                                  ${this.#renderCreateNewButton()}
-                                </div>
-                              </div>
-                            `
-                          : nothing,
                       ]
                     : html`<div id="renew-access">
                         <span
