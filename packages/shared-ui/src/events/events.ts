@@ -1560,3 +1560,13 @@ export class BoardDeleteEvent extends Event {
     super(BoardDeleteEvent.eventName, { ...eventInit });
   }
 }
+
+/** Snackbar */
+
+export class SnackbarActionEvent extends Event {
+  static eventName = "bbsnackbaraction";
+
+  constructor(public readonly value: string) {
+    super(SnackbarActionEvent.eventName, { ...eventInit });
+  }
+}

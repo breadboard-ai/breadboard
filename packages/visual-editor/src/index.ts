@@ -113,7 +113,7 @@ import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 
 const STORAGE_PREFIX = "bb-main";
-const LOADING_TIMEOUT = 250;
+const LOADING_TIMEOUT = 1250;
 
 const TOS_KEY = "tos-status";
 enum TosStatus {
@@ -340,6 +340,7 @@ export class Main extends LitElement {
 
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
   #tooltipRef: Ref<BreadboardUI.Elements.Tooltip> = createRef();
+  #snackbarRef: Ref<BreadboardUI.Elements.Snackbar> = createRef();
   #boardId = 0;
   #boardPendingSave = false;
   #tabSaveId = new Map<
@@ -1538,12 +1539,12 @@ export class Main extends LitElement {
       return;
     }
 
-    let id: ReturnType<typeof this.toast> | undefined;
-
+    let id: BreadboardUI.Types.SnackbarUUID | undefined;
     if (ackUser) {
-      id = this.toast(
+      id = this.snackbar(
         ackUserMessage.start,
-        BreadboardUI.Events.ToastType.PENDING,
+        BreadboardUI.Types.SnackType.INFORMATION,
+        [],
         true
       );
     }
@@ -1559,9 +1560,10 @@ export class Main extends LitElement {
 
     if (!result || !url) {
       if (ackUser && id) {
-        this.toast(
+        this.snackbar(
           error || ackUserMessage.error,
-          BreadboardUI.Events.ToastType.ERROR,
+          BreadboardUI.Types.SnackType.ERROR,
+          [],
           false,
           id
         );
@@ -1574,17 +1576,9 @@ export class Main extends LitElement {
     this.#persistBoardServerAndLocation(boardServerName, location);
 
     this.#attemptBoardLoad(
-      new BreadboardUI.Events.StartEvent(url.href, undefined, creator)
+      new BreadboardUI.Events.StartEvent(url.href, undefined, creator),
+      id
     );
-
-    if (ackUser && id) {
-      this.toast(
-        ackUserMessage.end,
-        BreadboardUI.Events.ToastType.INFORMATION,
-        false,
-        id
-      );
-    }
   }
 
   async #attemptBoardDelete(
@@ -1766,6 +1760,34 @@ export class Main extends LitElement {
     this.requestUpdate();
 
     return id;
+  }
+
+  snackbar(
+    message: string,
+    type: BreadboardUI.Types.SnackType,
+    actions: BreadboardUI.Types.SnackbarAction[] = [],
+    persistent = false,
+    id = globalThis.crypto.randomUUID()
+  ) {
+    if (!this.#snackbarRef.value) {
+      return;
+    }
+
+    return this.#snackbarRef.value.show({
+      id,
+      message,
+      type,
+      persistent,
+      actions,
+    });
+  }
+
+  unsnackbar() {
+    if (!this.#snackbarRef.value) {
+      return;
+    }
+
+    this.#snackbarRef.value.hide();
   }
 
   async #getProxyURL(urlString: string): Promise<string | null> {
@@ -2010,14 +2032,18 @@ export class Main extends LitElement {
     });
   }
 
-  async #attemptBoardLoad(evt: BreadboardUI.Events.StartEvent) {
+  async #attemptBoardLoad(
+    evt: BreadboardUI.Events.StartEvent,
+    existingMessageId?: BreadboardUI.Types.SnackbarUUID
+  ) {
     if (evt.url) {
-      let id;
       const loadingTimeout = setTimeout(() => {
-        id = this.toast(
+        this.snackbar(
           Strings.from("STATUS_GENERIC_LOADING"),
-          BreadboardUI.Events.ToastType.PENDING,
-          true
+          BreadboardUI.Types.SnackType.PENDING,
+          [],
+          true,
+          existingMessageId
         );
       }, LOADING_TIMEOUT);
 
@@ -2032,7 +2058,7 @@ export class Main extends LitElement {
         evt.creator
       );
       clearTimeout(loadingTimeout);
-      this.untoast(id);
+      this.unsnackbar();
     } else if (evt.descriptor) {
       this.#runtime.board.createTabFromDescriptor(evt.descriptor);
     }
@@ -4245,7 +4271,13 @@ export class Main extends LitElement {
       });
 
     const tooltip = html`<bb-tooltip ${ref(this.#tooltipRef)}></bb-tooltip>`;
-    return [until(uiController), tooltip, toasts];
+    const snackbar = html`<bb-snackbar
+      ${ref(this.#snackbarRef)}
+      @bbsnackbaraction=${(evt: BreadboardUI.Events.SnackbarActionEvent) => {
+        console.log(evt.value);
+      }}
+    ></bb-snackbar>`;
+    return [until(uiController), tooltip, toasts, snackbar];
   }
 
   createTosDialog() {

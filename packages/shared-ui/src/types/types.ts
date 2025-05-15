@@ -610,3 +610,26 @@ export type EnumValue = {
   tag?: string; // Typically used for keyboard shortcuts.
   hidden?: boolean;
 };
+
+export enum SnackType {
+  NONE = "none",
+  INFORMATION = "information",
+  WARNING = "warning",
+  ERROR = "error",
+  PENDING = "pending",
+}
+
+export type SnackbarUUID = ReturnType<typeof globalThis.crypto.randomUUID>;
+
+export type SnackbarAction = {
+  title: string;
+  value: string;
+};
+
+export type SnackbarMessage = {
+  id: SnackbarUUID;
+  type: SnackType;
+  persistent: boolean;
+  message: string;
+  actions?: SnackbarAction[];
+};
