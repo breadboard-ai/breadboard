@@ -12,7 +12,10 @@ import { createRef, ref } from "lit/directives/ref.js";
 import type { GraphDescriptor } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
 import { sideBoardRuntime } from "../contexts/side-board-runtime.js";
-import { GraphBoardServerGeneratedBoardEvent } from "../events/events.js";
+import {
+  GraphBoardServerGeneratedBoardEvent,
+  UtteranceEvent,
+} from "../events/events.js";
 import { SideBoardRuntime } from "../sideboards/types.js";
 import type { ExpandingTextarea } from "../elements/input/expanding-textarea.js";
 import { icons } from "../styles/icons.js";
@@ -90,6 +93,7 @@ export class FlowgenHomepagePanel extends LitElement {
       #gradient-border-container {
         flex: 1;
         display: flex;
+        align-items: center;
         width: 100%;
         background: linear-gradient(0deg, #fdf7f8, #f7f9fe);
         border-radius: 50px;
@@ -101,6 +105,13 @@ export class FlowgenHomepagePanel extends LitElement {
       :host([highlighted]) #gradient-border-container {
         transition: box-shadow 200ms ease-in;
         box-shadow: 0 0 10px 4px rgb(255 0 0 / 20%);
+      }
+
+      bb-speech-to-text {
+        --button-size: var(--bb-grid-size-8);
+        --alpha-adjustment: 0;
+        --background: transparent;
+        margin-right: var(--bb-grid-size-2);
       }
 
       bb-expanding-textarea {
@@ -233,6 +244,18 @@ export class FlowgenHomepagePanel extends LitElement {
           .disabled=${isGenerating}
           @change=${this.#onInputChange}
         >
+          <bb-speech-to-text
+            slot="mic"
+            @bbutterance=${(evt: UtteranceEvent) => {
+              if (!this.#descriptionInput.value) {
+                return;
+              }
+
+              this.#descriptionInput.value.value = evt.parts
+                .map((part) => part.transcript)
+                .join("");
+            }}
+          ></bb-speech-to-text>
           <span
             slot="submit"
             class=${classMap({ "g-icon": true, spin: isGenerating })}

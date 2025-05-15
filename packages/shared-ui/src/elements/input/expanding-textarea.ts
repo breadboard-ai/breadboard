@@ -154,6 +154,7 @@ export class ExpandingTextarea extends LitElement {
   override render() {
     return html`
       <div id="outer-container">
+        <slot name="mic"></slot>
         <div id="inner-container">
           <textarea
             ${ref(this.#textarea)}

@@ -277,10 +277,15 @@ export class ProjectListing extends LitElement {
           align-items: center;
           justify-content: space-between;
 
-          & #location-selector {
-            margin: var(--bb-grid-size-5) 0;
-            padding: 0;
-            border: none;
+          & #location-selector-outer {
+            display: flex;
+            align-items: center;
+
+            & #location-selector {
+              margin: var(--bb-grid-size-5) 0;
+              padding: 0;
+              border: none;
+            }
           }
         }
 
@@ -659,64 +664,56 @@ export class ProjectListing extends LitElement {
     );
 
     const location = this.showAdditionalSources
-      ? html`<select
-                      id="location-selector"
-                      class="gallery-title"
-                      @input=${(evt: Event) => {
-                        if (!(evt.target instanceof HTMLSelectElement)) {
-                          return;
-                        }
+      ? html`<div id="location-selector-outer">
+          <select
+            id="location-selector"
+            class="gallery-title"
+            @input=${(evt: Event) => {
+              if (!(evt.target instanceof HTMLSelectElement)) {
+                return;
+              }
 
-                        const [boardServer, location] = this.#parseUrl(
-                          evt.target.value
-                        );
-                        this.selectedBoardServer = boardServer;
-                        this.selectedLocation = location;
+              const [boardServer, location] = this.#parseUrl(evt.target.value);
+              this.selectedBoardServer = boardServer;
+              this.selectedLocation = location;
 
-                        this.dispatchEvent(
-                          new GraphBoardServerSelectionChangeEvent(
-                            boardServer,
-                            location
-                          )
-                        );
-                      }}
-                    >
-                      ${map(this.boardServers, (boardServer) => {
-                        return html`${map(
-                          boardServer.items(),
-                          ([location, store]) => {
-                            const value = `${boardServer.name}::${store.url ?? location}`;
-                            const isSelectedOption = value === selected;
-                            return html`<option
-                              .selected=${isSelectedOption}
-                              .value=${value}
-                            >
-                              ${store.title}
-                            </option>`;
-                          }
-                        )}`;
-                      })}
-                    </select>
+              this.dispatchEvent(
+                new GraphBoardServerSelectionChangeEvent(boardServer, location)
+              );
+            }}
+          >
+            ${map(this.boardServers, (boardServer) => {
+              return html`${map(boardServer.items(), ([location, store]) => {
+                const value = `${boardServer.name}::${store.url ?? location}`;
+                const isSelectedOption = value === selected;
+                return html`<option
+                  .selected=${isSelectedOption}
+                  .value=${value}
+                >
+                  ${store.title}
+                </option>`;
+              })}`;
+            })}
+          </select>
 
-                    <button
-                      id="board-server-settings"
-                      @click=${(evt: PointerEvent) => {
-                        if (!(evt.target instanceof HTMLButtonElement)) {
-                          return;
-                        }
+          <button
+            id="board-server-settings"
+            @click=${(evt: PointerEvent) => {
+              if (!(evt.target instanceof HTMLButtonElement)) {
+                return;
+              }
 
-                        const bounds = evt.target.getBoundingClientRect();
-                        this.#overflowMenu.x = bounds.left;
-                        this.#overflowMenu.y =
-                          window.innerHeight -
-                          (bounds.top - OVERFLOW_MENU_CLEARANCE);
+              const bounds = evt.target.getBoundingClientRect();
+              this.#overflowMenu.x = bounds.left;
+              this.#overflowMenu.y =
+                window.innerHeight - (bounds.top - OVERFLOW_MENU_CLEARANCE);
 
-                        this.showBoardServerOverflowMenu = true;
-                      }}
-                    >
-                      ${Strings.from("LABEL_PROJECT_SERVER_SETTINGS")}
-                    </button>
-                    </div>`
+              this.showBoardServerOverflowMenu = true;
+            }}
+          >
+            ${Strings.from("LABEL_PROJECT_SERVER_SETTINGS")}
+          </button>
+        </div>`
       : html`<h2 id="location-selector" class="gallery-title">
           ${this.#getCurrentStoreName(selected)}
         </h2>`;
