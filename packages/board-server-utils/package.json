@@ -74,7 +74,6 @@
   "dependencies": {
     "@breadboard-ai/build": "0.12.2",
     "@breadboard-ai/data-store": "0.3.3",
-    "@google-labs/agent-kit": "^0.18.0",
     "@google-labs/breadboard": "^0.34.0",
     "@google-labs/breadboard-schema": "^1.14.0"
   }
