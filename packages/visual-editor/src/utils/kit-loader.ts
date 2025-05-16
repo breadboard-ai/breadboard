@@ -15,7 +15,6 @@ import {
 } from "@google-labs/breadboard/kits";
 
 import GoogleDriveKit from "@breadboard-ai/google-drive-kit/google-drive.kit.json" with { type: "json" };
-import PythonWasmKit from "@breadboard-ai/python-wasm";
 import AgentKit from "@google-labs/agent-kit/agent.kit.json" with { type: "json" };
 import Core from "@google-labs/core-kit";
 import GeminiKit from "@google-labs/gemini-kit";
@@ -37,7 +36,6 @@ export const loadKits = () => {
     asRuntimeKit(JSONKit),
     asRuntimeKit(TemplateKit),
     asRuntimeKit(GeminiKit),
-    asRuntimeKit(PythonWasmKit),
   ];
 
   const agentKit = kitFromGraphDescriptor(AgentKit as GraphDescriptor);

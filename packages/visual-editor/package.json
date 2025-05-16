@@ -76,7 +76,6 @@
       },
       "dependencies": [
         "typescript-files-and-deps",
-        "copy-pyoide-assets",
         "update-sandbox-runtime"
       ],
       "files": [
@@ -106,10 +105,6 @@
       "dependencies": [
         {
           "script": "update-sandbox-runtime",
-          "cascade": false
-        },
-        {
-          "script": "copy-pyoide-assets",
           "cascade": false
         }
       ]
@@ -152,16 +147,6 @@
       "files": [
         "vite.config.ts",
         ".env"
-      ]
-    },
-    "copy-pyoide-assets": {
-      "command": "tsx src/copy-pyodide-assets.ts",
-      "files": [
-        "src/copy-pyodide-assets.ts"
-      ],
-      "output": [
-        "public/python_stdlib.zip",
-        "public/pyodide*"
       ]
     },
     "update-sandbox-runtime": {
@@ -235,7 +220,6 @@
     "@breadboard-ai/idb-board-server": "1.19.4",
     "@breadboard-ai/jsandbox": "0.6.0",
     "@breadboard-ai/manifest": "0.10.0",
-    "@breadboard-ai/python-wasm": "0.1.15",
     "@breadboard-ai/shared-ui": "1.25.0",
     "@breadboard-ai/types": "0.7.0",
     "@codemirror/autocomplete": "^6.18.6",
