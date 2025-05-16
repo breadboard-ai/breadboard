@@ -24,6 +24,7 @@ import {
   type SigninAdapter,
 } from "../../utils/signin-adapter.js";
 import { type GoogleDriveSharePanel } from "../elements.js";
+import { findGoogleDriveAssetsInGraph } from "../google-drive/find-google-drive-assets-in-graph.js";
 import { loadDriveApi } from "../google-drive/google-apis.js";
 
 const Strings = StringsHelper.forSection("UIController");
@@ -432,8 +433,8 @@ export class SharePanel extends LitElement {
     if (publishPermissions.length === 0) {
       return undefined;
     }
-    const fileId = this.#getFileId();
-    if (!fileId) {
+    const graphFileId = this.#getGraphFileId();
+    if (!graphFileId) {
       return undefined;
     }
 
@@ -452,7 +453,7 @@ export class SharePanel extends LitElement {
     try {
       response = await drive.permissions.list({
         access_token: accessToken,
-        fileId,
+        fileId: graphFileId,
         fields: "*",
       });
     } catch (error) {
@@ -487,6 +488,10 @@ export class SharePanel extends LitElement {
         relevantPermissions.push(permission);
       }
     }
+    // TODO(aomarks) We aren't checking whether assets are published here, only
+    // the main graph. We should check those too, an probably have another state
+    // to represent this "partially published" situation clearly (see also
+    // b/415305356).
     const published = missingRequiredPermissions.size === 0;
     this.#publishState = {
       status: "written",
@@ -508,8 +513,8 @@ export class SharePanel extends LitElement {
     if (this.#publishState.published === true) {
       return;
     }
-    const fileId = this.#getFileId();
-    if (!fileId) {
+    const graphFileId = this.#getGraphFileId();
+    if (!graphFileId) {
       return;
     }
     const oldPublishState = this.#publishState;
@@ -523,19 +528,44 @@ export class SharePanel extends LitElement {
       return;
     }
 
-    const responses = await Promise.all(
+    const graphPublishResponsesPromise = Promise.all(
       publishPermissions.map((permission) =>
         drive.permissions.create({
           access_token: accessToken,
-          fileId,
+          fileId: graphFileId,
           resource: { ...permission, role: "reader" },
           sendNotificationEmail: false,
         })
       )
     );
-    const relevantPermissions = responses.map(
+
+    // TODO(aomarks) Note we aren't including these responses in
+    // relevantPermissions, so if the user decides to unpublish in the future,
+    // the assets will remain published. This is a little bit subtle to get
+    // right, because what if the asset was _already_ public before they added
+    // it to the graph? We wouldn't want to mess with those permissions. So, we
+    // may need to keep track in the BGL file of which permissions we actually
+    // needed to add.
+    const assetPromises = [];
+    for (const assetFileId of this.#getAssetFileIds()) {
+      for (const permission of publishPermissions) {
+        assetPromises.push(
+          drive.permissions.create({
+            access_token: accessToken,
+            fileId: assetFileId,
+            resource: { ...permission, role: "reader" },
+            sendNotificationEmail: false,
+          })
+        );
+      }
+    }
+    await Promise.all(assetPromises);
+
+    const graphPublishResponses = await graphPublishResponsesPromise;
+    const relevantPermissions = graphPublishResponses.map(
       (response) => JSON.parse(response.body) as GoogleDrivePermission
     );
+
     this.#publishState = {
       status: "written",
       published: true,
@@ -555,8 +585,8 @@ export class SharePanel extends LitElement {
     if (this.#publishState.published === false) {
       return;
     }
-    const fileId = this.#getFileId();
-    if (!fileId) {
+    const graphFileId = this.#getGraphFileId();
+    if (!graphFileId) {
       return;
     }
     const oldPublishState = this.#publishState;
@@ -574,7 +604,7 @@ export class SharePanel extends LitElement {
       oldPublishState.relevantPermissions.map((permission) =>
         drive.permissions.delete({
           access_token: accessToken,
-          fileId,
+          fileId: graphFileId,
           permissionId: permission.id,
         })
       )
@@ -603,7 +633,7 @@ export class SharePanel extends LitElement {
     return accessToken;
   }
 
-  #getFileId(): string | undefined {
+  #getGraphFileId(): string | undefined {
     const graphUrl = this.graph?.url;
     if (!graphUrl) {
       console.error("No graph URL");
@@ -615,11 +645,20 @@ export class SharePanel extends LitElement {
       );
       return undefined;
     }
-    const fileId = graphUrl.replace(/^drive:\/+/, "");
-    if (!fileId) {
-      console.error(`File id was empty`);
+    const graphFileId = graphUrl.replace(/^drive:\/*/, "");
+    if (!graphFileId) {
+      console.error(`Graph file ID was empty`);
     }
-    return fileId;
+    return graphFileId;
+  }
+
+  #getAssetFileIds(): string[] {
+    const graph = this.graph;
+    if (!graph) {
+      console.error("No graph");
+      return [];
+    }
+    return findGoogleDriveAssetsInGraph(graph);
   }
 
   #getPublishPermissions(): GoogleDrivePermission[] {
