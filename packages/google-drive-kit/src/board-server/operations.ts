@@ -5,11 +5,7 @@
  */
 
 import type { TokenVendor } from "@breadboard-ai/connection-client";
-import type {
-  Asset,
-  GraphTag,
-  InlineDataCapabilityPart,
-} from "@breadboard-ai/types";
+import type { Asset, GraphTag } from "@breadboard-ai/types";
 import {
   err,
   type GraphDescriptor,
@@ -90,10 +86,14 @@ class DriveOperations {
   readonly #publicApiKey?: string;
   readonly #featuredGalleryFolderId?: string;
 
+  /**
+   * @param refreshProjectListCallback will be called when project list may have to be updated.
+   */
   constructor(
     public readonly vendor: TokenVendor,
     public readonly username: string,
     public readonly url: URL,
+    private readonly refreshProjectListCallback: () => Promise<void>,
     userFolderName: string,
     publicApiKey?: string,
     featuredGalleryFolderId?: string
@@ -268,6 +268,9 @@ class DriveOperations {
     } catch (err) {
       console.warn(err);
       return { result: false, error: "Unable to save" };
+    } finally {
+      // The above update is a non-atomic operation so refresh after both success or fail.
+      await this.refreshProjectListCallback();
     }
   }
 
@@ -319,6 +322,9 @@ class DriveOperations {
     } catch (err) {
       console.warn(err);
       return { result: false, error: "Unable to create" };
+    } finally {
+      // The above update is a non-atomic operation so refresh after both success or fail.
+      await this.refreshProjectListCallback();
     }
   }
 
@@ -498,6 +504,8 @@ class DriveOperations {
     } catch (e) {
       console.warn(e);
       return err("Unable to delete");
+    } finally {
+      await this.refreshProjectListCallback();
     }
   }
 
