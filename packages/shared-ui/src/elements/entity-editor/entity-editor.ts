@@ -71,6 +71,10 @@ import { FlowGenConstraint } from "../../flow-gen/flow-generator";
 import { ConnectorView } from "../../connectors/types";
 import { SignalWatcher } from "@lit-labs/signals";
 import { icons } from "../../styles/icons";
+import { EmbedState } from "../../../../embed/dist/src/types/types";
+import { consume } from "@lit/context";
+import { embedderContext } from "../../contexts/embedder";
+import { embedState } from "@breadboard-ai/embed";
 const Strings = StringsHelper.forSection("Editor");
 
 // A type that is like a port (and fits InspectablePort), but could also be
@@ -115,6 +119,9 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
   @property({ reflect: true, type: Boolean })
   accessor autoFocus = false;
+
+  @consume({ context: embedderContext })
+  accessor embedState: EmbedState = embedState();
 
   @state()
   accessor values: InputValues | undefined;
@@ -1620,6 +1627,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     }
 
     return [
+      // html`Embedded ${this.embedState.showIterateOnPrompt}`,
       this.#renderSelectedItem(),
       html`<bb-fast-access-menu
           ${ref(this.#fastAccessRef)}
