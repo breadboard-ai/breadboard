@@ -11,7 +11,6 @@
     { "path": "packages/core-kit" },
     { "path": "packages/data-store" },
     { "path": "packages/discovery-types" },
-    { "path": "packages/example-board-server" },
     { "path": "packages/example-boards" },
     { "path": "packages/filesystem-board-server" },
     { "path": "packages/gemini-kit" },
