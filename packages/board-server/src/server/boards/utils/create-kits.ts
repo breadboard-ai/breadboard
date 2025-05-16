@@ -18,7 +18,6 @@ import {
 } from "@google-labs/breadboard/kits";
 
 import Core from "@google-labs/core-kit";
-import JSONKit from "@google-labs/json-kit";
 import TemplateKit from "@google-labs/template-kit";
 
 import GoogleDriveKit from "@breadboard-ai/google-drive-kit/google-drive.kit.json" with { type: "json" };
@@ -30,11 +29,7 @@ function registerLegacyKits(graphStore: MutableGraphStore) {
 }
 
 export const createKits = (overrides: Kit[] = []) => {
-  const kits = [
-    asRuntimeKit(Core),
-    asRuntimeKit(JSONKit),
-    asRuntimeKit(TemplateKit),
-  ];
+  const kits = [asRuntimeKit(Core), asRuntimeKit(TemplateKit)];
 
   const googleDriveKit = kitFromGraphDescriptor(
     GoogleDriveKit as GraphDescriptor
