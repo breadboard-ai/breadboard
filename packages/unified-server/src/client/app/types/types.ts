@@ -11,7 +11,7 @@ import {
 import type * as BreadboardUIContext from "@breadboard-ai/shared-ui/contexts";
 import type * as ConnectionClient from "@breadboard-ai/connection-client";
 import { HarnessRunner } from "@google-labs/breadboard/harness";
-import { type SettingsHelperImpl } from "../utils/settings.js";
+import { type SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
 import { TopGraphObserver } from "@breadboard-ai/shared-ui/utils/top-graph-observer";
 import {
   GraphDescriptor,

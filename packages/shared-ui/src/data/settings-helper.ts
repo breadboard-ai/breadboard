@@ -5,7 +5,7 @@
  */
 
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
+import { SettingsStore } from "./settings-store.js";
 
 export class SettingsHelperImpl implements BreadboardUI.Types.SettingsHelper {
   #store: SettingsStore;

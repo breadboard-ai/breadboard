@@ -14,7 +14,7 @@ import {
   SIGN_IN_CONNECTION_ID,
   SigninAdapter,
 } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
-import { SettingsHelperImpl } from "../../utils/settings.js";
+import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
 import {
   GraphDescriptor,
   InputValues,
