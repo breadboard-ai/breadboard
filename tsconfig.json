@@ -9,7 +9,6 @@
     { "path": "packages/connection-server" },
     { "path": "packages/core-kit" },
     { "path": "packages/data-store" },
-    { "path": "packages/discovery-types" },
     { "path": "packages/filesystem-board-server" },
     { "path": "packages/gemini-kit" },
     { "path": "packages/google-drive-kit" },
