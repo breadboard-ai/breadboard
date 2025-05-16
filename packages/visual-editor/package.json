@@ -219,7 +219,6 @@
     "@breadboard-ai/google-drive-kit": "0.6.0",
     "@breadboard-ai/idb-board-server": "1.19.4",
     "@breadboard-ai/jsandbox": "0.6.0",
-    "@breadboard-ai/manifest": "0.10.0",
     "@breadboard-ai/shared-ui": "1.25.0",
     "@breadboard-ai/types": "0.7.0",
     "@codemirror/autocomplete": "^6.18.6",
