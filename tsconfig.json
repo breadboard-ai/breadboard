@@ -9,7 +9,6 @@
     { "path": "packages/core-kit" },
     { "path": "packages/data-store" },
     { "path": "packages/filesystem-board-server" },
-    { "path": "packages/gemini-kit" },
     { "path": "packages/google-drive-kit" },
     { "path": "packages/idb-board-server" },
     { "path": "packages/json-kit" },

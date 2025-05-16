@@ -18,7 +18,6 @@ import {
 } from "@google-labs/breadboard/kits";
 
 import Core from "@google-labs/core-kit";
-import GeminiKit from "@google-labs/gemini-kit";
 import JSONKit from "@google-labs/json-kit";
 import TemplateKit from "@google-labs/template-kit";
 
@@ -35,7 +34,6 @@ export const createKits = (overrides: Kit[] = []) => {
     asRuntimeKit(Core),
     asRuntimeKit(JSONKit),
     asRuntimeKit(TemplateKit),
-    asRuntimeKit(GeminiKit),
   ];
 
   const googleDriveKit = kitFromGraphDescriptor(
