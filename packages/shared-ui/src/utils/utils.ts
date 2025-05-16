@@ -5,6 +5,7 @@
  */
 
 export { formatError } from "./format-error";
+export { getBoardIdFromUrl } from "./board-id";
 export { TopGraphObserver } from "./top-graph-observer/index";
 // export { getIsolatedNodeGraphDescriptor } from "./isolated-node-board.js";
 export { getModuleId } from "./module-id.js";

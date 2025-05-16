@@ -1573,3 +1573,18 @@ export class SnackbarActionEvent extends Event {
     super(SnackbarActionEvent.eventName, { ...eventInit });
   }
 }
+
+/** Events */
+
+export class IterateOnPromptEvent extends Event {
+  static eventName = "bbiterateonprompt";
+
+  constructor(
+    public readonly title: string,
+    public readonly promptTemplate: string,
+    public readonly boardId: string,
+    public readonly nodeId: string,
+  ) {
+    super(IterateOnPromptEvent.eventName, { ...eventInit });
+  }
+}
