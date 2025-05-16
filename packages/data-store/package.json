@@ -146,7 +146,7 @@
     "@typescript-eslint/parser": "^7.18.0",
     "@web/dev-server-esbuild": "^1.0.4",
     "@web/test-runner": "^0.20.1",
-    "ava": "^5.2.0",
+    "ava": "^6.3.0",
     "esbuild": "^0.25.2",
     "typescript": "^5.8.3"
   },
