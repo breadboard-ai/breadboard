@@ -13,7 +13,6 @@
     { "path": "packages/gemini-kit" },
     { "path": "packages/google-drive-kit" },
     { "path": "packages/idb-board-server" },
-    { "path": "packages/import" },
     { "path": "packages/json-kit" },
     { "path": "packages/manifest" },
     { "path": "packages/mod-playground" },
