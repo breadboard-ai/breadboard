@@ -634,3 +634,7 @@ export type SnackbarMessage = {
   message: string;
   actions?: SnackbarAction[];
 };
+
+export type IframeConfig = {
+  origin: string;
+};

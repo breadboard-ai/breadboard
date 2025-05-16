@@ -35,6 +35,7 @@ import { guard } from "lit/directives/guard.js";
 import {
   AppTemplateAdditionalOptionsAvailable,
   HighlightStateWithChangeId,
+  IframeConfig,
   RecentBoard,
   SETTINGS_TYPE,
   STATUS,
@@ -225,6 +226,9 @@ export class UI extends LitElement {
 
   @state()
   accessor #showEditHistory = false;
+
+  @state()
+  accessor iframeConfig: IframeConfig | null = null;
 
   @consume({ context: signinAdapterContext })
   @property({ attribute: false })
@@ -709,6 +713,7 @@ export class UI extends LitElement {
         .mainGraphId=${this.mainGraphId}
         .readOnly=${this.readOnly}
         .projectState=${this.projectState}
+        .iframeConfig=${this.iframeConfig}
       ></bb-entity-editor>`,
       html`<div
         id="history-activity-container"
