@@ -134,7 +134,7 @@
     "@web/dev-server-esbuild": "^1.0.4",
     "jsdom": "^26.0.0",
     "lit": "^3.3.0",
-    "markdown-it-github-alerts": "^0.3.1",
+    "markdown-it-github-alerts": "^1.0.0",
     "markdown-it-github-headings": "^2.0.1",
     "rollup-plugin-import-assert": "^3.0.1",
     "wireit": "^0.15.0-pre.2"
