@@ -58,7 +58,7 @@ import { addNodeProxyServerConfig } from "./data/node-proxy-servers";
 import { provide } from "@lit/context";
 import { RecentBoardStore } from "./data/recent-boards";
 import { SecretsHelper } from "./utils/secrets-helper";
-import { SettingsHelperImpl } from "./utils/settings-helper";
+import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
 import { styles as mainStyles } from "./index.styles.js";
 import * as Runtime from "./runtime/runtime.js";
 import {

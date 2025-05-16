@@ -26,7 +26,7 @@ import {
 } from "@google-labs/breadboard";
 import * as BreadboardUIContext from "@breadboard-ai/shared-ui/contexts";
 import * as ConnectionClient from "@breadboard-ai/connection-client";
-import { SettingsHelperImpl } from "./utils/settings.js";
+import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
 import { createRunConfig } from "./utils/run-config.js";
 import {
   RunConfig,
@@ -39,6 +39,7 @@ import { sandbox } from "./sandbox.js";
 import { TopGraphObserver } from "@breadboard-ai/shared-ui/utils/top-graph-observer";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
+import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 
 const primaryColor = getGlobalColor("--bb-ui-700");
 const secondaryColor = getGlobalColor("--bb-ui-400");
@@ -320,7 +321,9 @@ async function bootstrap(args: BootstrapArguments = {}) {
 
   async function initAppView() {
     const environment = await createEnvironment(args);
-    const settingsHelper = new SettingsHelperImpl();
+    const settings = SettingsStore.instance();
+    await settings.restore();
+    const settingsHelper = new SettingsHelperImpl(settings);
     const tokenVendor = await createTokenVendor(settingsHelper, environment);
     const signinAdapter = new SigninAdapter(
       tokenVendor,
@@ -351,6 +354,7 @@ async function bootstrap(args: BootstrapArguments = {}) {
           signinScreen.addEventListener("bbsignin", () => resolve())
         );
         signinScreen.remove();
+        window.location.reload();
       }
     }
 
