@@ -25,9 +25,7 @@
   "wireit": {
     "build": {
       "dependencies": [
-        "<workspaces>#<this>",
-        "!./packages/node-proxy-server/functions#<this>",
-        "!./packages/node-proxy-server#<this>"
+        "<workspaces>#<this>"
       ]
     },
     "test": {
@@ -38,8 +36,7 @@
     "lint": {
       "dependencies": [
         "<workspaces>#<this>",
-        "!./packages/jsandbox#<this>",
-        "!./packages/node-proxy-server#<this>"
+        "!./packages/jsandbox#<this>"
       ]
     },
     "ci:local": {
@@ -113,8 +110,7 @@
   },
   "workspaces": [
     "./core/*",
-    "./packages/*",
-    "./packages/node-proxy-server/functions"
+    "./packages/*"
   ],
   "optionalDependencies": {
     "@rollup/rollup-darwin-arm64": "^4.37.0",

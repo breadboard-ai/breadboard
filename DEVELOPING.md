@@ -37,7 +37,6 @@ are actively published _to_ npm.
 | [`@google-labs/discovery-types`](./packages/discovery-types)              | _Unpublished_                                                                                                                                               | Library which generates TypeScript declarations from the PaLM API Discovery Document                  |
 | [`@google-labs/node-nursery-web`](./packages/node-nursery-web)            | _Unpublished_                                                                                                                                               | A place for experimenting with board nodes that aren't yet ready for their own package (web specific) |
 | [`@google-labs/node-nursery`](./packages/node-nursery)                    | _Unpublished_                                                                                                                                               | A place for experimenting with board nodes that aren't yet ready for their own package (general)      |
-| [`@google-labs/node-proxy-server`](./packages/node-proxy-server)          | _Unpublished_                                                                                                                                               | Library that allows running nodes remotely                                                            |
 
 ## Building a package
 

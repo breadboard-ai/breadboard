@@ -21,7 +21,6 @@
     { "path": "packages/json-kit" },
     { "path": "packages/manifest" },
     { "path": "packages/mod-playground" },
-    { "path": "packages/node-proxy-server" },
     { "path": "packages/palm-kit" },
     { "path": "packages/schema" },
     { "path": "packages/shared-ui" },
