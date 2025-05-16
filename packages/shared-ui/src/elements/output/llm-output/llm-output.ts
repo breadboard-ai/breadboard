@@ -30,7 +30,6 @@ import { map } from "lit/directives/map.js";
 import { until } from "lit/directives/until.js";
 import { markdown } from "../../../directives/markdown.js";
 import { ToastEvent, ToastType } from "../../../events/events.js";
-import { appendToDocUsingDriveKit } from "../../google-drive/append-to-doc-using-drive-kit.js";
 import { tokenVendorContext } from "../../elements.js";
 import { consume } from "@lit/context";
 import type { TokenVendor } from "@breadboard-ai/connection-client";
@@ -858,31 +857,5 @@ export class LLMOutput extends LitElement {
           </div>`;
         })}`
       : html`<span class="value no-data">No data set</span>`;
-  }
-
-  async #onClickSaveToGoogleDriveButton() {
-    if (!this.value) {
-      console.error("Error saving to Google Drive: No value");
-      return;
-    }
-    if (!this.tokenVendor) {
-      console.error("Error saving to Google Drive: No token vendor");
-      return;
-    }
-    const { url } = await appendToDocUsingDriveKit(
-      this.value,
-      `Breadboard Demo (${new Date().toLocaleDateString("en-US")})`,
-      this.tokenVendor
-    );
-    this.dispatchEvent(
-      new ToastEvent(
-        // HACK: Toast messages are typed to only allow strings, but actually
-        // they just directly render the value, so a TemplateResult works too,
-        // letting us embed a link.
-        html`Content saved to
-          <a href=${url} target="_blank">Google Doc</a>` as unknown as string,
-        ToastType.INFORMATION
-      )
-    );
   }
 }
