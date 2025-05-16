@@ -15,7 +15,6 @@
     { "path": "packages/idb-board-server" },
     { "path": "packages/json-kit" },
     { "path": "packages/manifest" },
-    { "path": "packages/mod-playground" },
     { "path": "packages/palm-kit" },
     { "path": "packages/schema" },
     { "path": "packages/shared-ui" },
