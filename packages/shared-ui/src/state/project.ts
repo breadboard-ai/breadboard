@@ -349,7 +349,7 @@ class ReactiveProject implements ProjectInternal {
     this.#connectorInstances.clear();
 
     const { assets = {} } = mutable.graph;
-    // Special-case the thumnail and splash so they doesn't show up.
+    // Special-case the thumbnail and splash so they doesn't show up.
     delete assets[THUMBNAIL_KEY];
 
     const graphAssets = Object.entries(assets).map<[string, GraphAsset]>(

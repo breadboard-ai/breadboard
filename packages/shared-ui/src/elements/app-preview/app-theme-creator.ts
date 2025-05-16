@@ -596,14 +596,14 @@ export class AppThemeCreator extends LitElement {
   }
 
   async #renderThumbnail(theme: GraphTheme) {
-    const url = theme.splashScreen?.storedData?.handle;
+    // For default theme leave this empty so that the default icon will be shown.
+    const url = theme.isDefaultTheme
+      ? undefined
+      : theme.splashScreen?.storedData?.handle;
     return await renderThumbnail(
       url,
-      "/images/app/generic-flow.jpg",
       this.googleDriveClient!,
-      {
-        default: !url?.startsWith("drive:") && (theme.isDefaultTheme ?? false),
-      },
+      {},
       "Theme thumbnail"
     );
   }

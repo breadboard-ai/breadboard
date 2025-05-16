@@ -5,17 +5,18 @@ import { html } from "lit";
 import { ClassInfo, classMap } from "lit/directives/class-map.js";
 import { until } from "lit/directives/until.js";
 
+declare const MAIN_ICON: string; // VITE variable
+
 export async function renderThumbnail(
   thumbnailUrl: string | null | undefined,
-  defaultUrl: string,
   googleDriveClient: GoogleDriveClient,
   classes: ClassInfo,
   alt?: string
 ) {
   const renderTag = (src?: string | null) => {
     return html`<img
-      class=${classMap(classes)}
-      src=${src ?? defaultUrl}
+      class=${classMap({ ...classes, default: !src })}
+      src=${src ?? MAIN_ICON}
       alt=${alt}
     />`;
   };

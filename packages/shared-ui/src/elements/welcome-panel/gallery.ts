@@ -391,12 +391,9 @@ export class Gallery extends LitElement {
   }
 
   async #renderThumbnail(thumbnail: string | null | undefined) {
-    return await renderThumbnail(
-      thumbnail,
-      "/images/placeholder.svg",
-      this.googleDriveClient!,
-      { thumbnail: true }
-    );
+    return await renderThumbnail(thumbnail, this.googleDriveClient!, {
+      thumbnail: true,
+    });
   }
 
   #renderBoard([name, item]: [string, GraphProviderItem]) {
