@@ -677,90 +677,99 @@ export class LLMOutput extends LitElement {
               this.#outputLoaded();
               value = html`<div>Failed to retrieve stored data</div>`;
             } else {
-              const { mimeType } = part.storedData;
-              if (url.startsWith(".") && this.graphUrl) {
-                url = new URL(url, this.graphUrl).href;
-              }
-              const getData = async () => {
-                const response = await fetch(url);
-                return response.text();
-              };
-              if (mimeType.startsWith("image")) {
-                const imgData = new Promise((resolve) => {
-                  const image = new Image();
-                  image.setAttribute("alt", url);
-                  image.onload = () => {
-                    this.#outputLoaded();
-                    resolve(image);
-                  };
-                  image.onerror = () => {
-                    this.#outputLoaded();
-                    resolve(
-                      html`<span class="empty-text-part"
-                        >No image provided</span
-                      >`
-                    );
-                  };
-                  image.src = url;
-                });
-                value = html`${until(imgData)}`;
-              }
-              if (mimeType.startsWith("audio")) {
-                value = html`<audio
-                  @loadedmetadata=${() => {
-                    this.#outputLoaded();
-                  }}
-                  src="${url}"
-                  controls
-                />`;
-              }
-              if (mimeType.startsWith("video")) {
-                value = html`<video
-                  @loadedmetadata=${() => {
-                    this.#outputLoaded();
-                  }}
-                  src="${url}"
-                  controls
-                />`;
-              }
-              if (mimeType.startsWith("text")) {
+              if (url.startsWith("drive:/")) {
+                const fileId = url.replace(/^drive:\/+/, "");
                 this.#outputLoaded();
-                if (mimeType === "text/html") {
+
+                value = html`<bb-google-drive-file-viewer
+                  .fileId=${fileId}
+                ></bb-google-drive-file-viewer>`;
+              } else {
+                const { mimeType } = part.storedData;
+                if (url.startsWith(".") && this.graphUrl) {
+                  url = new URL(url, this.graphUrl).href;
+                }
+                const getData = async () => {
+                  const response = await fetch(url);
+                  return response.text();
+                };
+                if (mimeType.startsWith("image")) {
+                  const imgData = new Promise((resolve) => {
+                    const image = new Image();
+                    image.setAttribute("alt", url);
+                    image.onload = () => {
+                      this.#outputLoaded();
+                      resolve(image);
+                    };
+                    image.onerror = () => {
+                      this.#outputLoaded();
+                      resolve(
+                        html`<span class="empty-text-part"
+                          >No image provided</span
+                        >`
+                      );
+                    };
+                    image.src = url;
+                  });
+                  value = html`${until(imgData)}`;
+                }
+                if (mimeType.startsWith("audio")) {
+                  value = html`<audio
+                    @loadedmetadata=${() => {
+                      this.#outputLoaded();
+                    }}
+                    src="${url}"
+                    controls
+                  />`;
+                }
+                if (mimeType.startsWith("video")) {
+                  value = html`<video
+                    @loadedmetadata=${() => {
+                      this.#outputLoaded();
+                    }}
+                    src="${url}"
+                    controls
+                  />`;
+                }
+                if (mimeType.startsWith("text")) {
                   this.#outputLoaded();
-                  value = html`<iframe
-                    srcdoc="${until(getData())}"
-                    frameborder="0"
-                    class="html-view"
-                    sandbox="${SANDBOX_RESTRICTIONS}"
-                  ></iframe>`;
-                } else {
-                  // prettier-ignore
-                  value = html`<div class="plain-text">${until(getData())}</div>`;
+                  if (mimeType === "text/html") {
+                    this.#outputLoaded();
+                    value = html`<iframe
+                      srcdoc="${until(getData())}"
+                      frameborder="0"
+                      class="html-view"
+                      sandbox="${SANDBOX_RESTRICTIONS}"
+                    ></iframe>`;
+                  } else {
+                    // prettier-ignore
+                    value = html`<div class="plain-text">${until(getData())}</div>`;
+                  }
                 }
-              }
-              if (part.storedData.mimeType === "application/pdf") {
-                let partTask = this.#partTask.get(idx);
+                if (part.storedData.mimeType === "application/pdf") {
+                  let partTask = this.#partTask.get(idx);
 
-                if (!partTask) {
-                  partTask = this.#createPDFLoadTask(url);
-                  this.#partTask.set(idx, partTask);
-                  partTask.run();
+                  if (!partTask) {
+                    partTask = this.#createPDFLoadTask(url);
+                    this.#partTask.set(idx, partTask);
+                    partTask.run();
+                  }
+
+                  value = partTask.render({
+                    initial: () => html`Waiting to load PDF...`,
+                    pending: () => html`Loading PDF`,
+                    complete: (pdfData) => {
+                      return html`<bb-pdf-viewer
+                        @pdfinitialrender=${() => {
+                          this.#outputLoaded();
+                        }}
+                        .showControls=${this.showPDFControls}
+                        .data=${pdfData}
+                      ></bb-pdf-viewer>`;
+                    },
+                    error: () => html`Unable to load PDF`,
+                  });
                 }
-
-                value = partTask.render({
-                  initial: () => html`Waiting to load PDF...`,
-                  pending: () => html`Loading PDF`,
-                  complete: (pdfData) => {
-                    return html`<bb-pdf-viewer
-                      @pdfinitialrender=${() => {
-                        this.#outputLoaded();
-                      }}
-                      .showControls=${this.showPDFControls}
-                      .data=${pdfData}
-                    ></bb-pdf-viewer>`;
-                  },
-                  error: () => html`Unable to load PDF`,
-                });
               }
             }
           } else if (isFileDataCapabilityPart(part)) {
