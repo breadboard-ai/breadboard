@@ -30,16 +30,55 @@ declare global {
   }
 }
 
+const TOGGLE_DELTA = 250;
+
 @customElement("bb-speech-to-text")
 export class SpeechToText extends LitElement {
   @property({ type: Boolean })
   accessor disabled = false;
+
+  @property({ reflect: true, type: Boolean })
+  accessor active = false;
 
   static styles = [
     icons,
     css`
       :host {
         display: block;
+        position: relative;
+        --active-color: linear-gradient(
+          rgb(177, 207, 250) 0%,
+          rgb(198, 210, 243) 34%,
+          rgba(210, 212, 237, 0.4) 69%,
+          rgba(230, 217, 231, 0) 99%
+        );
+      }
+
+      :host([active]) button {
+        animation: pulse linear 1s infinite forwards;
+
+        &::before {
+          box-sizing: border-box;
+          content: "";
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+
+          border: 2px solid transparent;
+          border-radius: 50%;
+          background: var(
+              --active-color,
+              linear-gradient(var(--default-background), transparent)
+            )
+            border-box;
+          mask:
+            linear-gradient(#ff00ff 0 0) padding-box,
+            linear-gradient(#ff00ff 0 0);
+          mask-composite: exclude;
+          animation: rotate linear 0.5s infinite forwards;
+        }
       }
 
       #checking-permission {
@@ -89,6 +128,30 @@ export class SpeechToText extends LitElement {
       span:not(.final) {
         opacity: 0.7;
       }
+
+      @keyframes pulse {
+        0% {
+          opacity: 0.2;
+        }
+
+        50% {
+          opacity: 1;
+        }
+
+        100% {
+          opacity: 0.2;
+        }
+      }
+
+      @keyframes rotate {
+        from {
+          rotate: 0deg;
+        }
+
+        to {
+          rotate: 360deg;
+        }
+      }
     `,
   ];
 
@@ -99,6 +162,7 @@ export class SpeechToText extends LitElement {
       | (new () => SpeechRecognition)
       | undefined);
   #recognition: SpeechRecognition | null = null;
+  #activeStartTime = 0;
   #permissionTask = new Task(this, {
     task: async () => {
       const devices = await navigator.mediaDevices.enumerateDevices();
@@ -158,6 +222,8 @@ export class SpeechToText extends LitElement {
 
     this.#parts = [];
     this.#recognition.start();
+    this.active = true;
+    this.#activeStartTime = window.performance.now();
   }
 
   #stopTranscription() {
@@ -166,6 +232,7 @@ export class SpeechToText extends LitElement {
     }
 
     this.#recognition.stop();
+    this.active = false;
   }
 
   render() {
@@ -175,7 +242,9 @@ export class SpeechToText extends LitElement {
 
     return this.#permissionTask.render({
       pending: () => {
-        return html`<div id="checking-permission">Checking permission</div>`;
+        return html`<div id="checking-permission">
+          <span class="g-icon">pending</span>
+        </div>`;
       },
 
       complete: () => {
@@ -187,9 +256,33 @@ export class SpeechToText extends LitElement {
             }
 
             evt.target.setPointerCapture(evt.pointerId);
-            this.#startTranscription();
+
+            // Our approach here involves allowing the user to interact in one
+            // of two ways. Supposing they tap the button and release quickly.
+            // In this case we will not stop the transcription, but will go into
+            // more of a toggled mode, requiring them to press the button a
+            // second time.
+            //
+            // On the other hand, if they press and hold then when they release
+            // we will stop the transcription.
+            if (this.active) {
+              this.#stopTranscription();
+            } else {
+              this.#startTranscription();
+            }
           }}
           @pointerup=${() => {
+            if (
+              window.performance.now() - this.#activeStartTime <
+              TOGGLE_DELTA
+            ) {
+              return;
+            }
+
+            if (!this.active) {
+              return;
+            }
+
             this.#stopTranscription();
           }}
         >
@@ -204,7 +297,7 @@ export class SpeechToText extends LitElement {
             this.#requestPermission();
           }}
         >
-          Request Permission
+          <span class="g-icon">mic</span>
         </button>`;
       },
     });
