@@ -5,11 +5,7 @@
  */
 
 import type { TokenVendor } from "@breadboard-ai/connection-client";
-import type {
-  Asset,
-  GraphTag,
-  InlineDataCapabilityPart,
-} from "@breadboard-ai/types";
+import type { Asset, GraphTag } from "@breadboard-ai/types";
 import {
   err,
   type GraphDescriptor,
@@ -67,9 +63,18 @@ async function retryableFetch(
     if (retriesLeft <= 0) {
       return previousResponse;
     }
-    const response = await fetch(input, init);
-    if (!shouldRetry(response)) {
-      return response;
+    let response: Response | null = null;
+    try {
+      response = await fetch(input, init);
+      if (!shouldRetry(response)) {
+        return response;
+      }
+    } catch (e) {
+      // return "403 Forbiddn" response, as this is likely a CORS error
+      response = new Response(null, {
+        status: 403,
+        statusText: (e as Error).message,
+      });
     }
     return await new Promise((resolve) => {
       setTimeout(async () => {
@@ -331,7 +336,6 @@ class DriveOperations {
     const uploadResponse = await fetch(
       api.makeUploadRequest(undefined, data, mimeType)
     );
-    const parent = await parentPromise;
     const file: DriveFile = await uploadResponse.json();
     // TODO: Update to retryable.
     fetch(
