@@ -767,6 +767,13 @@ export class Template extends LitElement implements AppTemplate {
 
                   bb-speech-to-text {
                     --primary-color: var(--bb-neutral-0);
+                    --active-color: linear-gradient(
+                      oklch(
+                        from var(--primary-text-color) l c h /
+                          calc(alpha - 0.35)
+                      ),
+                      transparent
+                    );
                   }
 
                   & #continue {
