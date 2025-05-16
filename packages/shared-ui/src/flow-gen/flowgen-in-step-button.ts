@@ -10,7 +10,6 @@ import * as StringsHelper from "../strings/helper.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import type { GraphDescriptor } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
-import { sideBoardRuntime } from "../contexts/side-board-runtime.js";
 import {
   GraphReplaceEvent,
   HideTooltipEvent,
@@ -20,10 +19,13 @@ import {
 import { fabStyles } from "../styles/fab.js";
 import { floatingPanelStyles } from "../styles/floating-panel.js";
 import { multiLineInputStyles } from "../styles/multi-line-input.js";
-import { SideBoardRuntime } from "../sideboards/types.js";
 import { AppCatalystApiClient } from "./app-catalyst.js";
 import { FlowGenConstraint, FlowGenerator } from "./flow-generator.js";
 import { icons } from "../styles/icons.js";
+import {
+  type SigninAdapter,
+  signinAdapterContext,
+} from "../utils/signin-adapter.js";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -185,8 +187,8 @@ export class FlowgenInStepButton extends LitElement {
     `,
   ];
 
-  @consume({ context: sideBoardRuntime })
-  accessor sideBoardRuntime!: SideBoardRuntime | undefined;
+  @consume({ context: signinAdapterContext })
+  accessor signinAdapter: SigninAdapter | undefined = undefined;
 
   @property({ type: Object })
   accessor currentGraph: GraphDescriptor | undefined;
@@ -384,11 +386,11 @@ export class FlowgenInStepButton extends LitElement {
     intent: string,
     currentFlow: GraphDescriptor
   ): Promise<GraphDescriptor> {
-    if (!this.sideBoardRuntime) {
-      throw new Error("Internal error: No side board runtime was available.");
+    if (!this.signinAdapter) {
+      throw new Error(`No signinAdapter was configured`);
     }
     const generator = new FlowGenerator(
-      new AppCatalystApiClient(this.sideBoardRuntime)
+      new AppCatalystApiClient(this.signinAdapter)
     );
     const { flow } = await generator.oneShot({
       intent,

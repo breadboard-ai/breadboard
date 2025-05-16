@@ -4,13 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  GraphDescriptor,
-  InputValues,
-  OutputValues,
-} from "@breadboard-ai/types";
-import type { SideBoardRuntime } from "../sideboards/types.js";
-import AppCatalystChatBgl from "../sideboards/sideboards-bgl/app-catalyst-chat.bgl.json" with { type: "json" };
+import { type SigninAdapter } from "../utils/signin-adapter.js";
 
 export interface AppCatalystChatRequest {
   messages: AppCatalystContentChunk[];
@@ -19,7 +13,7 @@ export interface AppCatalystChatRequest {
   };
 }
 
-export interface AppCatalyistChatResponse {
+export interface AppCatalystChatResponse {
   messages: AppCatalystContentChunk[];
 }
 
@@ -29,33 +23,34 @@ export interface AppCatalystContentChunk {
 }
 
 export class AppCatalystApiClient {
-  #sideBoardRuntime: SideBoardRuntime;
+  readonly #signinAdapter: SigninAdapter;
+  readonly #apiBaseUrl: string;
 
-  constructor(sideBoardRuntime: SideBoardRuntime) {
-    this.#sideBoardRuntime = sideBoardRuntime;
+  constructor(
+    signinAdapter: SigninAdapter,
+    apiBaseUrl = "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/"
+  ) {
+    this.#signinAdapter = signinAdapter;
+    this.#apiBaseUrl = apiBaseUrl;
   }
 
   async chat(
     request: AppCatalystChatRequest
-  ): Promise<AppCatalyistChatResponse> {
-    const runner = await this.#sideBoardRuntime.createRunner({
-      ...(AppCatalystChatBgl as GraphDescriptor),
-    });
-    const inputs = { request } as object as InputValues;
-    const outputs = await new Promise<OutputValues[]>((resolve, reject) => {
-      const outputs: OutputValues[] = [];
-      runner.addEventListener("input", () => void runner.run(inputs));
-      runner.addEventListener("output", (event) =>
-        outputs.push(event.data.outputs)
-      );
-      runner.addEventListener("end", () => resolve(outputs));
-      runner.addEventListener("error", (event) => reject(event.data.error));
-      void runner.run();
-    });
-    if (outputs.length !== 1) {
-      throw new Error(`Expected 1 output, got ${JSON.stringify(outputs)}`);
+  ): Promise<AppCatalystChatResponse> {
+    const token = await this.#signinAdapter.refresh();
+    if (token?.state !== "valid") {
+      throw new Error(`Expected "valid" token, got "${token?.state}"`);
     }
-    return (outputs[0] as object as { response: AppCatalyistChatResponse })
-      .response;
+    const url = new URL("chatGenerateApp", this.#apiBaseUrl);
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${token.grant.access_token}`,
+      },
+      body: JSON.stringify(request),
+    });
+    const result = (await response.json()) as AppCatalystChatResponse;
+    return result;
   }
 }

@@ -11,12 +11,10 @@ import { outlineButtonWithIcon } from "../styles/outline-button-with-icon.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import type { GraphDescriptor } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
-import { sideBoardRuntime } from "../contexts/side-board-runtime.js";
 import {
   GraphBoardServerGeneratedBoardEvent,
   UtteranceEvent,
 } from "../events/events.js";
-import { SideBoardRuntime } from "../sideboards/types.js";
 import type { ExpandingTextarea } from "../elements/input/expanding-textarea.js";
 import { icons } from "../styles/icons.js";
 import "../elements/input/expanding-textarea.js";
@@ -24,6 +22,10 @@ import { FlowGenerator } from "./flow-generator.js";
 import { AppCatalystApiClient } from "./app-catalyst.js";
 import { classMap } from "lit/directives/class-map.js";
 import { spinAnimationStyles } from "../styles/spin-animation.js";
+import {
+  type SigninAdapter,
+  signinAdapterContext,
+} from "../utils/signin-adapter.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
@@ -147,8 +149,8 @@ export class FlowgenHomepagePanel extends LitElement {
     `,
   ];
 
-  @consume({ context: sideBoardRuntime })
-  accessor sideBoardRuntime!: SideBoardRuntime | undefined;
+  @consume({ context: signinAdapterContext })
+  accessor signinAdapter: SigninAdapter | undefined = undefined;
 
   @state()
   accessor #state: State = { status: "initial" };
@@ -289,11 +291,11 @@ export class FlowgenHomepagePanel extends LitElement {
   }
 
   async #generateBoard(intent: string): Promise<GraphDescriptor> {
-    if (!this.sideBoardRuntime) {
-      throw new Error("Internal error: No side board runtime was available.");
+    if (!this.signinAdapter) {
+      throw new Error(`No signinAdapter was configured`);
     }
     const generator = new FlowGenerator(
-      new AppCatalystApiClient(this.sideBoardRuntime)
+      new AppCatalystApiClient(this.signinAdapter)
     );
     const { flow } = await generator.oneShot({ intent });
     return flow;
