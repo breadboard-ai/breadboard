@@ -111,6 +111,12 @@ import { type GoogleDrivePermission } from "@breadboard-ai/shared-ui/contexts/en
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
+import {
+  EmbedHandler,
+  embedState,
+  EmbedState,
+  ToggleIterateOnPromptMessage,
+} from "@breadboard-ai/embed";
 
 const STORAGE_PREFIX = "bb-main";
 const LOADING_TIMEOUT = 1250;
@@ -159,6 +165,7 @@ export type MainArguments = {
    * system.
    */
   env?: FileSystemEntry[];
+  embedHandler?: EmbedHandler;
 };
 
 type BoardOverlowMenuConfiguration = {
@@ -305,6 +312,9 @@ export class Main extends LitElement {
   @provide({ context: sideBoardRuntime })
   accessor sideBoardRuntime!: SideBoardRuntime;
 
+  @provide({ context: BreadboardUI.Contexts.embedderContext })
+  accessor embedState!: EmbedState;
+
   @provide({ context: signinAdapterContext })
   accessor signinAdapter!: SigninAdapter;
 
@@ -408,6 +418,7 @@ export class Main extends LitElement {
   accessor graphStoreUpdateId: number = 0;
 
   #runtime!: Runtime.RuntimeInstance;
+  #embedHandler?: EmbedHandler;
 
   static styles = mainStyles;
   proxyFromUrl: string | undefined;
@@ -421,6 +432,7 @@ export class Main extends LitElement {
       !!config.tosHtml &&
       localStorage.getItem(TOS_KEY) !== TosStatus.ACCEPTED;
     this.#tosHtml = config.tosHtml;
+    this.#embedHandler = config.embedHandler;
 
     this.showExtendedSettings = config.showExtendedSettings ?? false;
 
@@ -968,6 +980,17 @@ export class Main extends LitElement {
     window.addEventListener("pointerdown", this.#hideTooltipBound);
     window.addEventListener("keydown", this.#onKeyDownBound);
     window.addEventListener("bbrundownload", this.#downloadRunBound);
+
+    if (this.#embedHandler) {
+      this.embedState = embedState();
+    }
+
+    this.#embedHandler?.subscribe(
+      "toggle_iterate_on_prompt",
+      async (message: ToggleIterateOnPromptMessage) => {
+        this.embedState.showIterateOnPrompt = message.on;
+      }
+    );
   }
 
   disconnectedCallback(): void {

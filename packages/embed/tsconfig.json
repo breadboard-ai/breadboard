@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "./dist",
+    "resolveJsonModule": true,
+    "esModuleInterop": true
+  },
+  "include": ["src/**/*", "tests/**/*"],
+  "exclude": ["bundled"],
+  "extends": "@google-labs/tsconfig/base.json"
+}

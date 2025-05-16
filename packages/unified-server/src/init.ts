@@ -16,6 +16,8 @@ const endpoint_url =
   import.meta.env.VITE_BACKEND_API_ENDPOINT ||
   "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeStep";
 
+import { Handler } from "@breadboard-ai/embed";
+
 bootstrap({
   connectionServerUrl: new URL("/connection/", window.location.href),
   requiresSignin: true,
@@ -33,6 +35,7 @@ bootstrap({
       data: toLLMContent({ endpoint_url }),
     },
   ],
+  embedHandler: window.self !== window.top ? new Handler() : undefined,
 });
 
 function toLLMContent(json: JsonSerializable): LLMContent[] {
