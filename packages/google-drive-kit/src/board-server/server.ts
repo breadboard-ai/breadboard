@@ -364,11 +364,7 @@ class GoogleDriveBoardServer
 
     const projectNames = new Set<string>();
     for (const project of this.#projects) {
-      let title = project.metadata.title ?? "Untitled Board";
-      if (projectNames.has(title) && project.url) {
-        const suffix = new URL(project.url).pathname.split("/").at(-1);
-        title = `${project.metadata.title ?? "Untitled Board"} [${suffix}]`;
-      }
+      const title = project.metadata.title ?? "Untitled";
 
       projectNames.add(title);
       projects.push([
