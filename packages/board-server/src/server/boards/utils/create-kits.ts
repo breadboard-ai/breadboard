@@ -13,13 +13,12 @@ import {
 } from "@google-labs/breadboard";
 
 import Core from "@google-labs/core-kit";
-import TemplateKit from "@google-labs/template-kit";
 
 export { registerLegacyKits };
 
 function registerLegacyKits(_graphStore: MutableGraphStore) {}
 
 export const createKits = (overrides: Kit[] = []) => {
-  const kits = [asRuntimeKit(Core), asRuntimeKit(TemplateKit)];
+  const kits = [asRuntimeKit(Core)];
   return addSandboxedRunModule(new NodeSandbox(), [...overrides, ...kits]);
 };

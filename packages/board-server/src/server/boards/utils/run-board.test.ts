@@ -9,7 +9,7 @@ import { deepStrictEqual, fail } from "assert";
 import { runBoard } from "./run-board.js";
 import type {
   GraphDescriptor,
-  Kit,
+  InputValues,
   OutputValues,
   ReanimationState,
 } from "@google-labs/breadboard";
@@ -21,15 +21,6 @@ import invokeWithBubblingInput from "../../../../test-data/boards/invoke-board-w
 import type { RemoteMessage } from "@google-labs/breadboard/remote";
 import type { RunDiagnosticsLevel } from "@google-labs/breadboard/harness";
 import type { RunBoardStateStore } from "../../types.js";
-
-const mockSecretsKit: Kit = {
-  url: import.meta.url,
-  handlers: {
-    secrets: async () => {
-      throw new Error("Secrets aren't implemented in tests.");
-    },
-  },
-};
 
 const assertResults = (
   results: RemoteMessage[],
@@ -168,6 +159,27 @@ const scriptedRun = async (
       writer,
       runStateStore,
       diagnostics,
+      kitOverrides: [
+        {
+          url: "",
+          handlers: {
+            // template-kit has been deleted, so this is a trivial test-only
+            // implementation of promptTemplate to avoid having to design some
+            // new test cases.
+            promptTemplate: async (inputs: InputValues) => {
+              const { template, ...values } = inputs as {
+                template: string;
+                [K: string]: string;
+              };
+              let prompt = template;
+              for (const [key, value] of Object.entries(values)) {
+                prompt = prompt.replaceAll(`{{${key}}}`, value);
+              }
+              return { prompt, text: prompt };
+            },
+          },
+        },
+      ],
     });
     assertResults(results, expected, index);
     next = getNext(results[results.length - 1]);
