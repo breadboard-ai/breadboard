@@ -30,7 +30,7 @@ server.use("/drive-proxy", makeDriveProxyMiddleware());
 ViteExpress.config({
   transformer: (html: string, req: Request) => {
     const board = req.res?.locals.loadedBoard;
-    const displayName = board?.displayName || "Not Found";
+    const displayName = board?.displayName || "Loading ...";
     return html.replace("{{displayName}}", escape(displayName));
   },
 });
