@@ -327,7 +327,7 @@ function toInlineReference(c: LLMContent) {
     return toInlineData(c);
   }
   const blobId = last.storedData.handle.split("/").slice(-1)[0];
-  const gcs_handle = "bb-blob-store/" + blobId;
+  const gcs_handle = "opal-blob-store-corp/" + blobId;
   return toInlineData(toLLMContentInline("text/gcs-path", btoa(gcs_handle)));
 }
 
