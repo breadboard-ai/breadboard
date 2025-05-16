@@ -364,6 +364,21 @@ class DriveOperations {
 
     const thumbnailFileId = await this.getThumbnailFileId(api, boardFileId);
 
+    if (!data) {
+      if (thumbnailFileId) {
+        // The user has switched to the default theme - delete the file.
+        retryableFetch(api.makeDeleteRequest(thumbnailFileId)) // No need to await.
+          .catch((e) => {
+            console.error(
+              "Failed to delete thumbnail file",
+              thumbnailFileId,
+              e
+            );
+          });
+      }
+      return undefined;
+    }
+
     // Start in parallel.
     const parentPromise = this.findOrCreateFolder();
 
@@ -508,7 +523,7 @@ function createAppProperties(
     title,
     description,
     tags: JSON.stringify(tags),
-    thumbnailUrl,
+    thumbnailUrl: thumbnailUrl ?? "", // undefined here means "do not update".
   };
 }
 
@@ -594,6 +609,9 @@ function getThumbnail(descriptor?: GraphDescriptor): {
   const presentation = descriptor?.metadata?.visual?.presentation;
   if (presentation && presentation.theme) {
     const theme = presentation.themes?.[presentation.theme];
+    if (theme?.isDefaultTheme) {
+      return {}; // MAIN_ICON - no need to persist it.
+    }
     const handle = theme?.splashScreen?.storedData.handle;
     if (isDriveFile(handle)) {
       return { data: handle };
