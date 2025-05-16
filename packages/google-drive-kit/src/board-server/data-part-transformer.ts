@@ -58,7 +58,7 @@ class GoogleDriveDataPartTransformer implements DataPartTransformer {
     } else {
       const driveFileUrl = await this.ops.saveDataPart(
         part.inlineData.data,
-        part.inlineData.mimeType,
+        part.inlineData.mimeType
       );
       return {
         storedData: {
@@ -99,6 +99,24 @@ class GoogleDriveDataPartTransformer implements DataPartTransformer {
         return converted.part;
       }
     } else {
+      const url = part.storedData.handle;
+      mimeType = part.storedData.mimeType;
+      if (url.startsWith("drive:")) {
+        // TODO: Dedupe this code with above.
+        const fileId = url.replace(/^drive:\/+/, "");
+
+        const path = `/board/boards/@foo/bar/assets/drive/${fileId}?mimeType=${mimeType}`;
+        const converting = await fetch(
+          await this.#createRequest(path, { part })
+        );
+        if (!converting.ok) return err(await converting.text());
+
+        const converted =
+          (await converting.json()) as Outcome<GoogleDriveToGeminiResponse>;
+        if (!ok(converted)) return converted;
+
+        return converted.part;
+      }
       mimeType = part.storedData.mimeType;
     }
     const msg = `Converting to FileData of type "${mimeType}" is not supported with Google Drive backend`;
