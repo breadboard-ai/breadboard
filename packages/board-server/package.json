@@ -64,9 +64,7 @@
       ],
       "dependencies": [
         "<dependencies>#build",
-        "../agent-kit#build",
         "../core-kit#build",
-        "../json-kit#build",
         "../template-kit#build"
       ]
     },

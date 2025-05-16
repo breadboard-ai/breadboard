@@ -23,13 +23,6 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
-      - name: Use python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: "pip"
-      - run: pip install packages/breadboard-python/breadboard_python
-      - run: pip install packages/breadboard-python/breadboard_colab
 
       - uses: google/wireit@setup-github-actions-caching/v2
         if: github.event_name != 'pull_request' # For PRs, caching is disabled to ensure a clean build

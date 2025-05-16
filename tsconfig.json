@@ -2,32 +2,19 @@
   "extends": "@google-labs/tsconfig/base.json",
   "files": [],
   "references": [
-    { "path": "packages/agent-kit" },
     { "path": "packages/board-server-management" },
     { "path": "packages/breadboard" },
-    { "path": "packages/composite-board" },
     { "path": "packages/connection-client" },
     { "path": "packages/connection-server" },
     { "path": "packages/core-kit" },
     { "path": "packages/data-store" },
-    { "path": "packages/discovery-types" },
-    { "path": "packages/example-board-server" },
-    { "path": "packages/example-boards" },
     { "path": "packages/filesystem-board-server" },
-    { "path": "packages/gemini-kit" },
     { "path": "packages/google-drive-kit" },
     { "path": "packages/idb-board-server" },
-    { "path": "packages/import" },
-    { "path": "packages/json-kit" },
-    { "path": "packages/manifest" },
-    { "path": "packages/mod-playground" },
-    { "path": "packages/node-proxy-server" },
-    { "path": "packages/palm-kit" },
     { "path": "packages/schema" },
     { "path": "packages/shared-ui" },
     { "path": "packages/template-kit" },
     { "path": "packages/types" },
-    { "path": "packages/visual-editor" },
-    { "path": "packages/website" }
+    { "path": "packages/visual-editor" }
   ]
 }

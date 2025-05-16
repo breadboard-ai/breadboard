@@ -49,24 +49,19 @@
     "coverage": "wireit",
     "lint": "wireit",
     "test-and-lint": "wireit",
-    "dev": "npm run test-and-lint --watch",
-    "generate-kit-manifest": "wireit",
-    "generate:js-components": "wireit",
-    "generate:graphs": "wireit"
+    "dev": "npm run test-and-lint --watch"
   },
   "wireit": {
     "build": {
       "dependencies": [
         "<dependencies>#<this>",
-        "build:tsc",
-        "generate-kit-manifest"
+        "build:tsc"
       ]
     },
     "build:tsc": {
       "command": "tsc --pretty",
       "dependencies": [
-        "<dependencies>#<this>",
-        "generate:js-components"
+        "<dependencies>#<this>"
       ],
       "files": [
         "src/",
@@ -79,7 +74,7 @@
       "clean": "if-file-deleted"
     },
     "test": {
-      "command": "node --test --test-reporter spec dist/test/*_test.js",
+      "command": "echo 'no tests'",
       "dependencies": [
         "build:tsc"
       ],
@@ -87,7 +82,7 @@
       "output": []
     },
     "test:only": {
-      "command": "node --test --test-only --enable-source-maps --test-reporter spec dist/test/*_test.js",
+      "command": "echo 'no tests'",
       "dependencies": [
         "build:tsc"
       ],
@@ -120,31 +115,6 @@
         "test",
         "lint"
       ]
-    },
-    "generate-kit-manifest": {
-      "command": "tsx src/generate-kit-manifest.ts",
-      "dependencies": [
-        "build:tsc"
-      ],
-      "files": [
-        "src/generate-kit-manifest.ts"
-      ],
-      "output": [
-        "google-drive.kit.json"
-      ]
-    },
-    "generate:js-components": {
-      "command": "build-code --tsconfig=tsconfig-code-build.json --out=src/generated/ src/js-components/*.ts",
-      "files": [
-        "src/**/*.ts",
-        "!src/generated/"
-      ],
-      "output": [
-        "src/generated/"
-      ],
-      "dependencies": [
-        "../build-code#build"
-      ]
     }
   },
   "dependencies": {
@@ -157,7 +127,6 @@
     "@types/gapi.client.drive-v3": "^0.0.5"
   },
   "devDependencies": {
-    "@breadboard-ai/build-code": "0.2.4",
     "@types/node": "^22.0.0",
     "eslint": "^8.57.1",
     "typescript": "^5.8.3",
