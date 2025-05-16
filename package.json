@@ -12,7 +12,6 @@
     "lint": "wireit",
     "ci": "npm ci",
     "s": "npm run dev -w packages/board-server --watch",
-    "d": "(cd packages/website && npm run dev) # Starts the docs website",
     "w": "(cd packages/visual-editor && npm run dev) # Starts the breadboard web UI",
     "check:format": "prettier --check --config .prettierrc packages/**/*.ts",
     "ci:local": "wireit",
