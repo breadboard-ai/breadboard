@@ -29,8 +29,7 @@
     "deploy": "npm run build:vite && firebase deploy",
     "build": "wireit",
     "build:vite": "wireit",
-    "build:tsc": "wireit",
-    "copy-bbrt-assets": "wireit"
+    "build:tsc": "wireit"
   },
   "wireit": {
     "build": {
@@ -78,11 +77,7 @@
       "dependencies": [
         "typescript-files-and-deps",
         "copy-pyoide-assets",
-        "update-sandbox-runtime",
-        {
-          "script": "copy-bbrt-assets",
-          "cascade": false
-        }
+        "update-sandbox-runtime"
       ],
       "files": [
         "vite.config.ts",
@@ -109,10 +104,6 @@
     },
     "prepare-assets:internal": {
       "dependencies": [
-        {
-          "script": "copy-bbrt-assets",
-          "cascade": false
-        },
         {
           "script": "update-sandbox-runtime",
           "cascade": false
@@ -161,15 +152,6 @@
       "files": [
         "vite.config.ts",
         ".env"
-      ]
-    },
-    "copy-bbrt-assets": {
-      "command": "tsx src/copy-bbrt-assets.ts",
-      "files": [
-        "src/copy-bbrt-assets.ts"
-      ],
-      "output": [
-        "public/bbrt/"
       ]
     },
     "copy-pyoide-assets": {
@@ -245,7 +227,6 @@
   },
   "dependencies": {
     "@breadboard-ai/a2": "0.4.0",
-    "@breadboard-ai/bbrt": "0.3.0",
     "@breadboard-ai/board-server-management": "1.21.0",
     "@breadboard-ai/board-server-utils": "0.1.10",
     "@breadboard-ai/build": "0.12.2",

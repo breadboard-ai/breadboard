@@ -3,5 +3,4 @@
 public/pyodide*
 public/python*
 public/sandbox.wasm
-public/bbrt*
 langs
