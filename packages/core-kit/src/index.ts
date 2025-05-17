@@ -21,7 +21,6 @@ import runJavascript from "./nodes/run-javascript.js";
 import runModule from "./nodes/run-module.js";
 import secrets from "./nodes/secrets.js";
 import service from "./nodes/service.js";
-import slot from "./nodes/slot.js";
 import { unnestNode } from "./nodes/unnest.js";
 
 export { cast, castNode } from "./nodes/cast.js";
@@ -133,23 +132,6 @@ export const Core = builder.build({
    * @returns - a `Node` object that represents the placed node.
    */
   reflect,
-
-  /**
-   * Places a `slot` node on the board.
-   *
-   * This node is used to provide a slot for another board to be placed into.
-   *
-   * This type of node is useful for situations where we wish to leave
-   * a place in the board where anyone could insert other boards.
-   *
-   * Programmers call it "dependency injection".
-   *
-   * See [`slot` node reference](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/docs/nodes.md#slot) for more information.
-   *
-   * @param config - optional configuration for the node.
-   * @returns - a `Node` object that represents the placed node.
-   */
-  slot,
 
   /**
    * Use this node to accumulate local state, like context in a prompt.
