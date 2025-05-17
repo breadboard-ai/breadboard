@@ -20,7 +20,6 @@ import runJavascript from "./nodes/run-javascript.js";
 import runModule from "./nodes/run-module.js";
 import secrets from "./nodes/secrets.js";
 import service from "./nodes/service.js";
-import { unnestNode } from "./nodes/unnest.js";
 
 export { cast, castNode } from "./nodes/cast.js";
 export { code } from "./nodes/code.js";
@@ -31,7 +30,6 @@ export { map, default as mapNode } from "./nodes/map.js";
 export { default as runJavascript } from "./nodes/run-javascript.js";
 export { default as runModule } from "./nodes/run-module.js";
 export { secret, default as secrets } from "./nodes/secrets.js";
-export { unnest, unnestNode } from "./nodes/unnest.js";
 
 const metadata = {
   title: "Core Kit",
@@ -176,7 +174,6 @@ export const Core = builder.build({
   deflate,
   inflate,
 
-  unnest: unnestNode,
   cast: castNode,
 
   service,
@@ -316,7 +313,6 @@ export type CoreKitType = {
     { result: unknown; [k: string]: unknown }
   >;
   secrets: NodeFactory<{ keys: string[] }, { [k: string]: string }>;
-  unnest: NodeFactoryFromDefinition<typeof unnestNode>;
   cast: NodeFactoryFromDefinition<typeof castNode>;
   // TODO: Other Core nodes.
 };
@@ -345,6 +341,5 @@ export const coreKit = await kit({
     runModule,
     secrets,
     service,
-    unnest: unnestNode,
   },
 });
