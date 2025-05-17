@@ -12,7 +12,6 @@ import importHandler from "./nodes/import.js";
 import include from "./nodes/include.js";
 import invoke from "./nodes/invoke.js";
 import map from "./nodes/map.js";
-import reduce from "./nodes/reduce.js";
 import reflect from "./nodes/reflect.js";
 import resolve from "./nodes/resolve.js";
 import runJavascript from "./nodes/run-javascript.js";
@@ -20,8 +19,6 @@ import runModule from "./nodes/run-module.js";
 import secrets from "./nodes/secrets.js";
 import service from "./nodes/service.js";
 
-export { code } from "./nodes/code.js";
-export type { CodeNode } from "./nodes/code.js";
 export { default as fetch } from "./nodes/fetch.js";
 export { default as invoke } from "./nodes/invoke.js";
 export { map, default as mapNode } from "./nodes/map.js";
@@ -157,7 +154,6 @@ export const Core = builder.build({
    * See #127 for more information.
    */
   map,
-  reduce,
   fetch,
   runJavascript,
   runModule,
@@ -185,13 +181,11 @@ export default Core;
  * This should transition to a codegen step, with typescript types constructed
  * from .describe() calls.
  */
-import { kit, NodeFactoryFromDefinition } from "@breadboard-ai/build";
+import { kit } from "@breadboard-ai/build";
 import {
   addKit,
-  NewInputValues as InputValues,
   NewNodeFactory as NodeFactory,
   NewNodeValue as NodeValue,
-  NewOutputValues as OutputValues,
 } from "@google-labs/breadboard";
 import deflate from "./nodes/deflate.js";
 import inflate from "./nodes/inflate.js";
@@ -260,35 +254,6 @@ export type CoreKitType = {
     },
     { list: NodeValue[] }
   >;
-  reduce: NodeFactory<
-    {
-      /**
-       * The list to iterate over.
-       */
-      list: unknown[];
-
-      /**
-       * The board to run for each element of the list.
-       */
-      board?: unknown;
-
-      /**
-       * The initial value for the accumulator.
-       */
-      accumulator?: unknown;
-    },
-    {
-      /**
-       * The current value of the accumulator.
-       */
-      accumulator: NodeValue;
-
-      /**
-       * The current item from the list.
-       */
-      item: NodeValue;
-    }
-  >;
   fetch: NodeFactory<
     { url: string },
     {
@@ -328,7 +293,6 @@ export const coreKit = await kit({
     inflate,
     invoke,
     map,
-    reduce,
     resolve,
     runJavascript,
     runModule,
