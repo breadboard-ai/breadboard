@@ -46,7 +46,7 @@ const stripCodeBlock = (code: string) =>
 // TODO: Clean this up, this feels like a util of some sort.
 type Environment = "node" | "browser" | "worker" | "serviceWorker";
 
-export type ScriptRunner = (args: {
+type ScriptRunner = (args: {
   code: string;
   functionName: string;
   args: string;
@@ -148,7 +148,7 @@ export type RunJavascriptOutputs = Record<string, unknown> & {
   result: unknown;
 };
 
-export type RunJavascriptInputs = InputValues & {
+type RunJavascriptInputs = InputValues & {
   code?: string;
   name?: string;
   raw?: boolean;
@@ -209,7 +209,7 @@ export function convertToNamedFunction({
 }
 
 const DEFAULT_FUNCTION_NAME = "run";
-export const runJavascriptHandler = async (
+const runJavascriptHandler = async (
   { code, name, raw }: RunJavascriptInputs,
   args: InputValues
 ) => {

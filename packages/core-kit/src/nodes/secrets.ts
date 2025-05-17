@@ -43,7 +43,7 @@ const requireNonEmpty = (key: string, value?: string | null) => {
   return value;
 };
 
-const secrets = defineNodeType({
+export default defineNodeType({
   name: "secrets",
   metadata: {
     title: "Secrets",
@@ -75,17 +75,3 @@ const secrets = defineNodeType({
     );
   },
 });
-export default secrets;
-
-/**
- * Create and configure a {@link secrets} node for one secret, and return the
- * corresponding output port.
- */
-export function secret(name: string) {
-  // TODO(aomarks) Should we replace the `secrets` node with a `secret` node
-  // that is monomorphic? Seems simpler.
-  return secrets({
-    $id: `${name}-secret`,
-    keys: [name],
-  }).unsafeOutput(name);
-}

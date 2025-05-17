@@ -21,7 +21,7 @@ import {
 import { getRunner, loadGraphFromPath } from "../utils.js";
 import { defineNodeType, object, unsafeSchema } from "@breadboard-ai/build";
 
-export type InvokeNodeInputs = InputValues & {
+type InvokeNodeInputs = InputValues & {
   $board?: string | BreadboardCapability | GraphDescriptor;
   $start?: NodeIdentifier;
   $stopAfter?: NodeIdentifier;
