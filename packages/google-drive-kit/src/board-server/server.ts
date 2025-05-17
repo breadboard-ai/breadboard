@@ -138,7 +138,9 @@ class GoogleDriveBoardServer
       vendor,
       user.username,
       configuration.url,
-      this.refreshProjectList.bind(this),
+      async () => {
+        await this.refreshProjectList();
+      },
       userFolderName,
       publicApiKey,
       featuredGalleryFolderId
