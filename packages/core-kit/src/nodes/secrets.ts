@@ -19,11 +19,6 @@ type SecretInputs = {
   keys: string[];
 };
 
-type SecretWorkerResponse = {
-  type: "secret";
-  data: string;
-};
-
 const getEnvironmentValue = (key: string) => {
   const env = environment();
   if (env === "node") {

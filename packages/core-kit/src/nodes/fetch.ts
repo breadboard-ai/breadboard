@@ -22,29 +22,6 @@ import {
 } from "@google-labs/breadboard";
 import { llmContentTransform } from "../llm-content-transform.js";
 
-// const serverSentEventTransform = () =>
-//   new TransformStream({
-//     transform(chunk, controller) {
-//       const text = chunk.toString();
-//       const lines = text.split("\n");
-//       for (const line of lines) {
-//         if (line.startsWith("data: ")) {
-//           const data = line.slice(6);
-//           let chunk;
-//           try {
-//             // Special case for OpenAI's API.
-//             if (data === "[DONE]") continue;
-//             chunk = JSON.parse(data);
-//           } catch (e) {
-//             // TODO: Handle this more gracefully.
-//             chunk = data;
-//           }
-//           controller.enqueue(chunk);
-//         }
-//       }
-//     },
-//   });
-
 const createBody = async (
   body: unknown,
   headers: Record<string, string | undefined>,

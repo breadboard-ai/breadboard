@@ -79,19 +79,3 @@ async function runModule(
 function error($error: string) {
   return { $error };
 }
-
-// async function runModuleAsBlob(code: string, inputs: InputValues) {
-//   const codeUrl = URL.createObjectURL(
-//     new Blob([code], { type: "application/javascript" })
-//   );
-//   try {
-//     const result = (
-//       await import(/* @vite-ignore */ /* webpackIgnore: true */ codeUrl)
-//     ).default(inputs);
-//     return result;
-//   } catch (e) {
-//     return error((e as Error).message);
-//   } finally {
-//     URL.revokeObjectURL(codeUrl);
-//   }
-// }
