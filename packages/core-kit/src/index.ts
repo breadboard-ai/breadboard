@@ -14,7 +14,6 @@ import importHandler from "./nodes/import.js";
 import include from "./nodes/include.js";
 import invoke from "./nodes/invoke.js";
 import map from "./nodes/map.js";
-import passthrough from "./nodes/passthrough.js";
 import reduce from "./nodes/reduce.js";
 import reflect from "./nodes/reflect.js";
 import resolve from "./nodes/resolve.js";
@@ -31,7 +30,6 @@ export type { CodeNode } from "./nodes/code.js";
 export { default as fetch } from "./nodes/fetch.js";
 export { default as invoke } from "./nodes/invoke.js";
 export { map, default as mapNode } from "./nodes/map.js";
-export { default as passthrough } from "./nodes/passthrough.js";
 export { default as runJavascript } from "./nodes/run-javascript.js";
 export { default as runModule } from "./nodes/run-module.js";
 export { secret, default as secrets } from "./nodes/secrets.js";
@@ -121,20 +119,6 @@ export const Core = builder.build({
    * @returns - a `Node` object that represents the placed node.
    */
   resolve,
-
-  /**
-   * Places the `passthrough` node on the board.
-   *
-   * A `passthrough` node is a node that simply passes its inputs to
-   * its outputs. Every computing machine needs a no-op node,
-   * and Breadboard library is no exception.
-   *
-   * See [`passthrough` node reference](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/docs/nodes.md#passthrough) for more information.
-   *
-   * @param config - optional configuration for the node.
-   * @returns - a `Node` object that represents the placed node.
-   */
-  passthrough,
 
   /**
    * Places a `reflect` node on the board.
@@ -247,7 +231,6 @@ import deflate from "./nodes/deflate.js";
 import inflate from "./nodes/inflate.js";
 
 export type CoreKitType = {
-  passthrough: NodeFactory<InputValues, OutputValues>;
   /**
    * Creates the `append` node, which can be used to accumulate local state,
    * like context in a prompt.
@@ -398,7 +381,6 @@ export const coreKit = await kit({
     inflate,
     invoke,
     map,
-    passthrough,
     reduce,
     resolve,
     runJavascript,
