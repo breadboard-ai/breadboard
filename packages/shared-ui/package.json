@@ -136,7 +136,6 @@
   },
   "dependencies": {
     "@breadboard-ai/a2": "0.4.0",
-    "@breadboard-ai/build": "0.12.2",
     "@breadboard-ai/connection-client": "0.2.0",
     "@breadboard-ai/data-store": "0.3.3",
     "@breadboard-ai/embedded-board-server": "0.1.0",

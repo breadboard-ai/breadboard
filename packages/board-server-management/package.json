@@ -73,7 +73,6 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@breadboard-ai/build": "0.12.2",
     "@breadboard-ai/connection-client": "0.2.0",
     "@breadboard-ai/filesystem-board-server": "1.21.0",
     "@breadboard-ai/google-drive-kit": "0.6.0",

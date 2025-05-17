@@ -214,7 +214,6 @@
     "@breadboard-ai/a2": "0.4.0",
     "@breadboard-ai/board-server-management": "1.21.0",
     "@breadboard-ai/board-server-utils": "0.1.10",
-    "@breadboard-ai/build": "0.12.2",
     "@breadboard-ai/data-store": "0.3.3",
     "@breadboard-ai/google-drive-kit": "0.6.0",
     "@breadboard-ai/idb-board-server": "1.19.4",
