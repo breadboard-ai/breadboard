@@ -138,6 +138,9 @@ class GoogleDriveBoardServer
       vendor,
       user.username,
       configuration.url,
+      async () => {
+        await this.refreshProjectList();
+      },
       userFolderName,
       publicApiKey,
       featuredGalleryFolderId
@@ -150,7 +153,7 @@ class GoogleDriveBoardServer
     this.extensions = configuration.extensions;
     this.capabilities = configuration.capabilities;
     this.#googleDriveClient = googleDriveClient;
-    this.projects = this.refreshProjects();
+    this.projects = this.listProjects();
   }
 
   #saving = new Map<string, SaveDebouncer>();
@@ -162,7 +165,7 @@ class GoogleDriveBoardServer
     this.#projects = await this.projects;
   }
 
-  async refreshProjects(): Promise<BoardServerProject[]> {
+  async listProjects(): Promise<BoardServerProject[]> {
     // Run two lists operations in parallel.
     const userGraphsPromise = this.ops.readGraphList();
     let featuredGraphs = await this.ops.readFeaturedGalleryGraphList();
@@ -226,6 +229,15 @@ class GoogleDriveBoardServer
     );
 
     return [...userProjects, ...galleryProjects];
+  }
+
+  /**
+   * Issues a query for the project list and resets the `projects` promise.
+   * The work is done asynchronously unless you await to its result.
+   */
+  refreshProjectList(): Promise<BoardServerProject[]> {
+    this.projects = this.listProjects();
+    return this.projects;
   }
 
   getAccess(_url: URL, _user: User): Promise<Permission> {
@@ -316,9 +328,6 @@ class GoogleDriveBoardServer
       parent,
       descriptor
     );
-    if (writing.result) {
-      this.projects = this.refreshProjects();
-    }
     return writing;
   }
 
@@ -328,8 +337,6 @@ class GoogleDriveBoardServer
     if (!ok(deleting)) {
       return { result: false, error: deleting.$error };
     }
-    this.projects = this.refreshProjects();
-
     return { result: true };
   }
 
