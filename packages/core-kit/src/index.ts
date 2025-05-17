@@ -15,7 +15,6 @@ import resolve from "./nodes/resolve.js";
 import runJavascript from "./nodes/run-javascript.js";
 import runModule from "./nodes/run-module.js";
 import secrets from "./nodes/secrets.js";
-import service from "./nodes/service.js";
 
 export { default as fetch } from "./nodes/fetch.js";
 export { default as invoke } from "./nodes/invoke.js";
@@ -116,8 +115,6 @@ export const Core = builder.build({
   runJavascript,
   runModule,
   secrets,
-
-  service,
 });
 
 export type Core = InstanceType<typeof Core>;
@@ -213,6 +210,5 @@ export const coreKit = await kit({
     runJavascript,
     runModule,
     secrets,
-    service,
   },
 });
