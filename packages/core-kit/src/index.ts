@@ -8,7 +8,6 @@ import { KitBuilder } from "@google-labs/breadboard/kits";
 
 import fetch from "./nodes/fetch.js";
 import invoke from "./nodes/invoke.js";
-import map from "./nodes/map.js";
 import resolve from "./nodes/resolve.js";
 import runJavascript from "./nodes/run-javascript.js";
 import runModule from "./nodes/run-module.js";
@@ -16,7 +15,6 @@ import secrets from "./nodes/secrets.js";
 
 export { default as fetch } from "./nodes/fetch.js";
 export { default as invoke } from "./nodes/invoke.js";
-export { map, default as mapNode } from "./nodes/map.js";
 export { default as runJavascript } from "./nodes/run-javascript.js";
 export { default as runModule } from "./nodes/run-module.js";
 export { secret, default as secrets } from "./nodes/secrets.js";
@@ -70,11 +68,6 @@ export const Core = builder.build({
    */
   resolve,
 
-  /**
-   * Work-in-progress implementation of the `map` node.
-   * See #127 for more information.
-   */
-  map,
   fetch,
   runJavascript,
   runModule,
@@ -165,7 +158,6 @@ export const coreKit = await kit({
   components: {
     fetch,
     invoke,
-    map,
     resolve,
     runJavascript,
     runModule,
