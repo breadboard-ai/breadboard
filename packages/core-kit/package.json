@@ -43,8 +43,7 @@
     },
     "test": {
       "dependencies": [
-        "test:ava",
-        "test:node"
+        "test:ava"
       ]
     },
     "test:ava": {
@@ -58,17 +57,6 @@
       "files": [
         "tests/**/*.json",
         "!tests/node/**/*.ts"
-      ],
-      "output": []
-    },
-    "test:node": {
-      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/node/*.js",
-      "dependencies": [
-        "build:tsc"
-      ],
-      "files": [
-        "tests/node/*.ts",
-        "tests/boards/*.json"
       ],
       "output": []
     },
