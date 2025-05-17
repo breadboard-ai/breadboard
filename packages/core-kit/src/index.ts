@@ -7,7 +7,6 @@
 import { KitBuilder } from "@google-labs/breadboard/kits";
 
 import append from "./nodes/append.js";
-import batch from "./nodes/batch.js";
 import { castNode } from "./nodes/cast.js";
 import fetch from "./nodes/fetch.js";
 import importHandler from "./nodes/import.js";
@@ -163,7 +162,6 @@ export const Core = builder.build({
    */
   map,
   reduce,
-  batch,
   fetch,
   runJavascript,
   runModule,
