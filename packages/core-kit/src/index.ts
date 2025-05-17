@@ -170,7 +170,6 @@ export const Core = builder.build({
   runJavascript,
   runModule,
   secrets,
-  curry,
 
   /**
    * Converts all inline data to stored data, saving memory.
@@ -208,7 +207,6 @@ import {
   NewNodeValue as NodeValue,
   NewOutputValues as OutputValues,
 } from "@google-labs/breadboard";
-import curry from "./nodes/curry.js";
 import deflate from "./nodes/deflate.js";
 import inflate from "./nodes/inflate.js";
 
@@ -305,20 +303,6 @@ export type CoreKitType = {
       item: NodeValue;
     }
   >;
-  /**
-   * Combines a board with some arguments to create a new board (aka currying).
-   * The arguments in that board will run as part of board invocation as if
-   * they were supplied as inputs.
-   */
-  curry: NodeFactory<
-    {
-      $board: unknown;
-      [key: string]: unknown;
-    },
-    {
-      board: unknown;
-    }
-  >;
   fetch: NodeFactory<
     { url: string },
     {
@@ -357,7 +341,6 @@ export const coreKit = await kit({
   ...metadata,
   components: {
     cast: castNode,
-    curry,
     deflate,
     fetch,
     inflate,
