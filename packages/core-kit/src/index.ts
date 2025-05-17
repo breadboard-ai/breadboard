@@ -144,15 +144,6 @@ export const Core = builder.build({
   runModule,
   secrets,
 
-  /**
-   * Converts all inline data to stored data, saving memory.
-   * Useful when working with multimodal content. Safely passes
-   * data through if it's already stored or no inline data is
-   * present.
-   */
-  deflate,
-  inflate,
-
   service,
 });
 
@@ -172,8 +163,6 @@ import {
   NewNodeFactory as NodeFactory,
   NewNodeValue as NodeValue,
 } from "@google-labs/breadboard";
-import deflate from "./nodes/deflate.js";
-import inflate from "./nodes/inflate.js";
 
 export type CoreKitType = {
   /**
@@ -273,9 +262,7 @@ export const core = addKit(Core) as unknown as CoreKitType;
 export const coreKit = await kit({
   ...metadata,
   components: {
-    deflate,
     fetch,
-    inflate,
     invoke,
     map,
     resolve,
