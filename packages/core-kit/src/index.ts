@@ -12,7 +12,6 @@ import importHandler from "./nodes/import.js";
 import include from "./nodes/include.js";
 import invoke from "./nodes/invoke.js";
 import map from "./nodes/map.js";
-import reflect from "./nodes/reflect.js";
 import resolve from "./nodes/resolve.js";
 import runJavascript from "./nodes/run-javascript.js";
 import runModule from "./nodes/run-module.js";
@@ -108,20 +107,6 @@ export const Core = builder.build({
    * @returns - a `Node` object that represents the placed node.
    */
   resolve,
-
-  /**
-   * Places a `reflect` node on the board.
-   *
-   * This node is used to reflect the board itself. It provides a JSON
-   * representation of the board as a `graph` output property. This can be
-   * used for studying the board's structure from inside the board.
-   *
-   * See [`reflect` node reference](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/docs/nodes.md#reflect) for more information.
-   *
-   * @param config - optional configuration for the node.
-   * @returns - a `Node` object that represents the placed node.
-   */
-  reflect,
 
   /**
    * Use this node to accumulate local state, like context in a prompt.
