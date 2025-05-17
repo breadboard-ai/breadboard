@@ -8,7 +8,7 @@ import test from "ava";
 import secrets from "../src/nodes/secrets.js";
 
 test("describer correctly responds to no inputs", async (t) => {
-  t.deepEqual(await secrets.describe(), {
+  t.deepEqual(await secrets.describe({}), {
     inputSchema: {
       type: "object",
       properties: {

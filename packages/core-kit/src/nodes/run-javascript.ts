@@ -4,15 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  defineNodeType,
-  object,
-  unsafeSchema,
-  unsafeType,
-} from "@breadboard-ai/build";
-import { JsonSerializable } from "@breadboard-ai/build/internal/type-system/type.js";
-import type { InputValues } from "@google-labs/breadboard";
-import { JSONSchema4 } from "json-schema";
+import type { InputValues, NodeHandlerObject } from "@google-labs/breadboard";
 
 const runner = (code: string, functionName: string, args: string) => {
   // The addition of `globalThis.__name = () => {}` is to ensure that
@@ -152,7 +144,7 @@ type RunJavascriptInputs = InputValues & {
   code?: string;
   name?: string;
   raw?: boolean;
-  schema?: JsonSerializable;
+  schema?: InputValues;
 };
 
 export function convertToNamedFunction({
@@ -209,10 +201,9 @@ export function convertToNamedFunction({
 }
 
 const DEFAULT_FUNCTION_NAME = "run";
-const runJavascriptHandler = async (
-  { code, name, raw }: RunJavascriptInputs,
-  args: InputValues
-) => {
+const runJavascriptHandler = async (inputs: InputValues) => {
+  // eslint-disable-next-line prefer-const
+  let { code, name, raw, ...args } = inputs as RunJavascriptInputs;
   if (!code) throw new Error("Running JavaScript requires `code` input");
   code = stripCodeBlock(code);
   name ??= DEFAULT_FUNCTION_NAME;
@@ -255,8 +246,7 @@ const runJavascriptHandler = async (
   }
 };
 
-export default defineNodeType({
-  name: "runJavascript",
+export default {
   metadata: {
     title: "Run Javascript",
     description: "Runs supplied `code` input as Javascript.",
@@ -264,81 +254,81 @@ export default defineNodeType({
       url: "https://breadboard-ai.github.io/breadboard/docs/kits/core/#the-runjavascript-component",
     },
   },
-  inputs: {
-    code: {
-      description: "The JavaScript code to run",
-      title: "Code",
-      behavior: ["config", "hint-code"],
-      format: "javascript",
-      type: "string",
-    },
-    name: {
-      title: "Function Name",
-      description:
-        'The name of the function to invoke in the supplied code. Default value is "run".',
-      type: "string",
-      behavior: ["config"],
-      default: "run",
-    },
-    schema: {
-      behavior: ["config", "ports-spec", "deprecated"],
-      description:
-        "Deprecated! Please use inputSchema/outputSchema instead. The schema of the output data.",
-      type: object({}, "unknown"),
-      optional: true,
-    },
-    inputSchema: {
-      title: "Input Schema",
-      description: "The schema of the input data, the function arguments.",
-      behavior: ["config", "ports-spec"],
-      type: object({}, "unknown"),
-      optional: true,
-    },
-    outputSchema: {
-      title: "Output Schema",
-      behavior: ["config", "ports-spec"],
-      description:
-        "The schema of the output data, the shape of the object of the function return value.",
-      type: object({}, "unknown"),
-      optional: true,
-    },
-    raw: {
-      title: "Raw Output",
-      behavior: ["config"],
-      description:
-        "Whether or not to return use the result of execution as raw output (true) or as a port called `result` (false). Default is false.",
-      type: "boolean",
-      default: false,
-    },
-    "*": {
-      type: "unknown",
-    },
-  },
-  outputs: {
-    "*": {
-      type: "unknown",
-    },
-  },
-  describe: ({ raw, inputSchema, ...rest }) => {
-    // "schema" is the deprecated name for "outputSchema", so fall back to that.
-    const outputSchema: JSONSchema4 | undefined =
-      rest.outputSchema ?? rest.schema;
+  describe: async () => {
     return {
-      inputs: inputSchema ? unsafeSchema(inputSchema) : { "*": "unknown" },
-      outputs: raw
-        ? outputSchema
-          ? unsafeSchema(outputSchema)
-          : { "*": "unknown" }
-        : {
-            result: {
-              title: "Result",
-              description: "The result of running the JavaScript code",
-              type: outputSchema?.properties?.result
-                ? unsafeType(outputSchema.properties.result)
-                : "unknown",
-            },
+      inputSchema: {
+        type: "object",
+        properties: {
+          code: {
+            type: "string",
+            title: "Code",
+            description: "The JavaScript code to run",
+            format: "javascript",
+            behavior: ["config", "hint-code"],
           },
+          inputSchema: {
+            type: "object",
+            properties: {},
+            required: [],
+            additionalProperties: true,
+            title: "Input Schema",
+            description:
+              "The schema of the input data, the function arguments.",
+            behavior: ["config", "ports-spec"],
+          },
+          name: {
+            type: "string",
+            title: "Function Name",
+            description:
+              'The name of the function to invoke in the supplied code. Default value is "run".',
+            default: "run",
+            behavior: ["config"],
+          },
+          outputSchema: {
+            type: "object",
+            properties: {},
+            required: [],
+            additionalProperties: true,
+            title: "Output Schema",
+            description:
+              "The schema of the output data, the shape of the object of the function return value.",
+            behavior: ["config", "ports-spec"],
+          },
+          raw: {
+            type: "boolean",
+            title: "Raw Output",
+            description:
+              "Whether or not to return use the result of execution as raw output (true) or as a port called `result` (false). Default is false.",
+            default: false as unknown as string,
+            behavior: ["config"],
+          },
+          schema: {
+            type: "object",
+            properties: {},
+            required: [],
+            additionalProperties: true,
+            title: "schema",
+            description:
+              "Deprecated! Please use inputSchema/outputSchema instead. The schema of the output data.",
+            behavior: ["config", "ports-spec", "deprecated"],
+          },
+        },
+        required: ["code"],
+        additionalProperties: true,
+      },
+      outputSchema: {
+        type: "object",
+        properties: {
+          result: {
+            type: ["array", "boolean", "null", "number", "object", "string"],
+            title: "Result",
+            description: "The result of running the JavaScript code",
+          },
+        },
+        required: [],
+        additionalProperties: true,
+      },
     };
   },
-  invoke: (config, args) => runJavascriptHandler(config, args),
-});
+  invoke: (inputs) => runJavascriptHandler(inputs),
+} satisfies NodeHandlerObject;

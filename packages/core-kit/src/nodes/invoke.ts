@@ -9,19 +9,14 @@ import type {
   NodeHandlerContext,
   BreadboardCapability,
   GraphDescriptor,
-  NodeDescriberContext,
   NodeIdentifier,
   GraphToRun,
+  NodeHandlerObject,
 } from "@google-labs/breadboard";
-import {
-  getGraphDescriptor,
-  inspect,
-  invokeGraph,
-} from "@google-labs/breadboard";
+import { getGraphDescriptor, invokeGraph } from "@google-labs/breadboard";
 import { getRunner, loadGraphFromPath } from "../utils.js";
-import { defineNodeType, object, unsafeSchema } from "@breadboard-ai/build";
 
-type InvokeNodeInputs = InputValues & {
+export type InvokeNodeInputs = InputValues & {
   $board?: string | BreadboardCapability | GraphDescriptor;
   $start?: NodeIdentifier;
   $stopAfter?: NodeIdentifier;
@@ -74,39 +69,7 @@ const getRunnableBoard = async (
   }
 };
 
-const describe = async (
-  inputs?: InvokeNodeInputs,
-  context?: NodeDescriberContext
-) => {
-  if (context?.base) {
-    let graphToRun: GraphToRun | undefined;
-    if (inputs) {
-      try {
-        graphToRun = (await getRunnableBoard(context, inputs)).board;
-      } catch {
-        // eat any exceptions.
-        // This is a describer, so it must always return some valid value.
-      }
-      if (graphToRun) {
-        const inspectableGraph = inspect(graphToRun.graph, {
-          kits: context.kits,
-          loader: context.loader,
-        });
-        const { inputSchema, outputSchema } =
-          await inspectableGraph.describe(inputs);
-        return {
-          inputs: unsafeSchema(inputSchema),
-          outputs: unsafeSchema(outputSchema),
-        };
-      }
-      return { inputs: { "*": {} }, outputs: { "*": {} } };
-    }
-  }
-  return { inputs: {}, outputs: {} };
-};
-
-export default defineNodeType({
-  name: "invoke",
+export default {
   metadata: {
     title: "Invoke",
     description:
@@ -115,42 +78,40 @@ export default defineNodeType({
       url: "https://breadboard-ai.github.io/breadboard/docs/kits/core/#the-invoke-component",
     },
   },
-  inputs: {
-    path: {
-      title: "path",
-      behavior: ["deprecated"],
-      description: "The path to the board to invoke.",
-      type: "string",
-      optional: true,
-    },
-    $board: {
-      title: "Board",
-      behavior: ["board", "config"],
-      description:
-        "The board to invoke. Can be a BoardCapability, a graph or a URL",
-      // TODO(aomarks) A better type.
-      type: object({}),
-      optional: true,
-    },
-    "*": {
-      type: "unknown",
-    },
+  describe: async () => {
+    return {
+      inputSchema: {
+        type: "object",
+        properties: {
+          $board: {
+            type: "object",
+            properties: {},
+            required: [],
+            additionalProperties: false,
+            title: "Board",
+            description:
+              "The board to invoke. Can be a BoardCapability, a graph or a URL",
+            behavior: ["board", "config"],
+          },
+          path: {
+            type: "string",
+            title: "path",
+            description: "The path to the board to invoke.",
+            behavior: ["deprecated"],
+          },
+        },
+        required: [],
+        additionalProperties: true,
+      },
+      outputSchema: {
+        type: "object",
+        properties: {},
+        required: [],
+        additionalProperties: true,
+      },
+    };
   },
-  outputs: {
-    "*": {
-      type: "unknown",
-    },
-  },
-  describe: async (staticInputs, dynamicInputs, context) => {
-    // TODO(aomarks) Cast here because the type system doesn't understand
-    // BreadboardCapability or GraphDescriptors yet.
-    const inputs = { ...staticInputs, ...dynamicInputs } as InvokeNodeInputs;
-    return describe(inputs, context);
-  },
-  invoke: async (staticInputs, dynamicInputs, context) => {
-    // TODO(aomarks) Cast here because the type system doesn't understand
-    // BreadboardCapability or GraphDescriptors yet.
-    const inputs = { ...staticInputs, ...dynamicInputs } as InvokeNodeInputs;
+  invoke: async (inputs, context) => {
     const { board, args, start, stopAfter } = await getRunnableBoard(
       context,
       inputs
@@ -173,4 +134,4 @@ export default defineNodeType({
 
     return await invokeGraph(board, args, invocationContext);
   },
-});
+} satisfies NodeHandlerObject;
