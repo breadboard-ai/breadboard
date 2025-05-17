@@ -7,8 +7,6 @@
 import { KitBuilder } from "@google-labs/breadboard/kits";
 
 import fetch from "./nodes/fetch.js";
-import importHandler from "./nodes/import.js";
-import include from "./nodes/include.js";
 import invoke from "./nodes/invoke.js";
 import map from "./nodes/map.js";
 import resolve from "./nodes/resolve.js";
@@ -33,40 +31,6 @@ const metadata = {
 const builder = new KitBuilder(metadata);
 
 export const Core = builder.build({
-  /**
-   * Places an `import` node on the board.
-   *
-   * Use this node to import other boards into the current board.
-   * Outputs `board` as a BoardCapability, which can be passed to e.g. `invoke`.
-   *
-   * The config param expects either `path` or `graph` as a string or
-   * `GraphDescriptor', respectively.
-   *
-   * @param config - optional configuration for the node.
-   * @returns - a `Node` object that represents the placed node.
-   */
-  import: importHandler,
-
-  /**
-   * Places an `include` node on the board.
-   *
-   * Use this node to include other boards into the current board.
-   *
-   * The `include` node acts as a sort of instant board-to-node converter: just
-   * give it the URL of a serialized board, and it will pretend as if that whole
-   * board is just one node.
-   *
-   * See [`include` node
-   * reference](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/docs/nodes.md#include)
-   * for more information.
-   *
-   * @param $ref - the URL of the board to include, or a graph or a
-   *   BreadboardCapability returned by e.g. lambda.
-   * @param config - optional configuration for the node.
-   * @returns - a `Node` object that represents the placed node.
-   */
-  include,
-
   /**
    * Places an `invoke` node on the board.
    *
@@ -138,10 +102,6 @@ export type CoreKitType = {
   /**
    * Creates an `invoke` node, which can be used invoke other boards within
    * the current board.
-   *
-   * See [`include` node
-   * reference](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/docs/nodes.md#include)
-   * for more information.
    *
    * Expects as input one of
    *  - `path`: A board to be loaded
