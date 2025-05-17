@@ -6,7 +6,6 @@
 
 import { KitBuilder } from "@google-labs/breadboard/kits";
 
-import append from "./nodes/append.js";
 import fetch from "./nodes/fetch.js";
 import importHandler from "./nodes/import.js";
 import include from "./nodes/include.js";
@@ -109,32 +108,6 @@ export const Core = builder.build({
   resolve,
 
   /**
-   * Use this node to accumulate local state, like context in a prompt.
-   *
-   * The node looks for property called `accumulator` in its input. All other
-   * properties are appended to this property, and returned as `accumulator`
-   * output property.
-   *
-   * The way the properties are appended depends on the type of the
-   * `accumulator` input property.
-   *
-   * If the `accumulator` property is "string-ey" (that is, it's a `string`,
-   * `number`, `boolean`, `bigint`, `null` or `undefined`), the properties will
-   * be appended as strings, formatted as
-   * `{{property_name}}: {{property_value}}` and joined with "`\n`".
-   *
-   * If the `accumulator` property is an array, the properties will be appended
-   * as array items, formatted as `{{property_name}}: {{property_value}}`.
-   *
-   * Otherwise, the `accumulator` property will be treated as an object and
-   * the properties will be added as properties on this object.
-   *
-   * See [`append` node reference](https://github.com/breadboard-ai/breadboard/blob/main/packages/core-kit/README.md) for more information.
-   *
-   */
-  append,
-
-  /**
    * Work-in-progress implementation of the `map` node.
    * See #127 for more information.
    */
@@ -165,35 +138,6 @@ import {
 } from "@google-labs/breadboard";
 
 export type CoreKitType = {
-  /**
-   * Creates the `append` node, which can be used to accumulate local state,
-   * like context in a prompt.
-   *
-   * The node looks for property called `accumulator` in its input. All other
-   * properties are appended to this property, and returned as `accumulator`
-   * output property.
-   *
-   * The way the properties are appended depends on the type of the
-   * `accumulator` input property.
-   *
-   * If the `accumulator` property is "string-ey" (that is, it's a `string`,
-   * `number`, `boolean`, `bigint`, `null` or `undefined`), the properties will
-   * be appended as strings, formatted as
-   * `{{property_name}}: {{property_value}}` and joined with "`\n`".
-   *
-   * If the `accumulator` property is an array, the properties will be appended
-   * as array items, formatted as `{{property_name}}: {{property_value}}`.
-   *
-   * Otherwise, the `accumulator` property will be treated as an object and
-   * the properties will be added as properties on this object.
-   *
-   * See [`append` node reference](https://github.com/breadboard-ai/breadboard/blob/main/packages/core-kit/README.md) for more information.
-   *
-   */
-  append: NodeFactory<
-    { accumulator: NodeValue; [key: string]: NodeValue },
-    { accumulator: NodeValue }
-  >;
   /**
    * Creates an `invoke` node, which can be used invoke other boards within
    * the current board.
