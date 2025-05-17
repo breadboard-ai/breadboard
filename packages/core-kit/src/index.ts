@@ -33,8 +33,6 @@ export { default as runJavascript } from "./nodes/run-javascript.js";
 export { default as runModule } from "./nodes/run-module.js";
 export { secret, default as secrets } from "./nodes/secrets.js";
 export { unnest, unnestNode } from "./nodes/unnest.js";
-import { storeDataNode } from "./nodes/storeData.js";
-import { retrieveDataNode } from "./nodes/retrieveData.js";
 
 const metadata = {
   title: "Core Kit",
@@ -184,9 +182,6 @@ export const Core = builder.build({
   cast: castNode,
 
   service,
-
-  storeData: storeDataNode,
-  retrieveData: retrieveDataNode,
 });
 
 export type Core = InstanceType<typeof Core>;
@@ -353,7 +348,5 @@ export const coreKit = await kit({
     secrets,
     service,
     unnest: unnestNode,
-    storeData: storeDataNode,
-    retrieveData: retrieveDataNode,
   },
 });
