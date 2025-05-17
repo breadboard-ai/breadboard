@@ -8,7 +8,6 @@ import { KitBuilder } from "@google-labs/breadboard/kits";
 
 import fetch from "./nodes/fetch.js";
 import invoke from "./nodes/invoke.js";
-import resolve from "./nodes/resolve.js";
 import runJavascript from "./nodes/run-javascript.js";
 import runModule from "./nodes/run-module.js";
 import secrets from "./nodes/secrets.js";
@@ -50,24 +49,6 @@ export const Core = builder.build({
    * @returns - a `Node` object that represents the placed node.
    */
   invoke,
-
-  /**
-   * Places a `resolve` node on the board.
-   *
-   * Use this node to resolve relative URLs to absolute URLs.
-   *
-   * `resolve` has one special input:
-   *  - `$base`: The base URL to use for resolution. If not provided, the URL of
-   *    the current graph is used by default.
-   *
-   * All other inputs will be resolved to absolute URLs and returned on output
-   * ports with the same names as the corresponding input.
-   *
-   * @param config - optional configuration for the node.
-   * @returns - a `Node` object that represents the placed node.
-   */
-  resolve,
-
   fetch,
   runJavascript,
   runModule,
@@ -114,14 +95,6 @@ export type CoreKitType = {
     },
     { [key: string]: unknown }
   >;
-  resolve: NodeFactory<{ [k: string]: string }, { [k: string]: string }>;
-  map: NodeFactory<
-    {
-      list: NodeValue[];
-      board?: NodeValue;
-    },
-    { list: NodeValue[] }
-  >;
   fetch: NodeFactory<
     { url: string },
     {
@@ -158,7 +131,6 @@ export const coreKit = await kit({
   components: {
     fetch,
     invoke,
-    resolve,
     runJavascript,
     runModule,
     secrets,
