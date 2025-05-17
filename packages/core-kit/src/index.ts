@@ -7,7 +7,6 @@
 import { KitBuilder } from "@google-labs/breadboard/kits";
 
 import append from "./nodes/append.js";
-import { castNode } from "./nodes/cast.js";
 import fetch from "./nodes/fetch.js";
 import importHandler from "./nodes/import.js";
 import include from "./nodes/include.js";
@@ -21,7 +20,6 @@ import runModule from "./nodes/run-module.js";
 import secrets from "./nodes/secrets.js";
 import service from "./nodes/service.js";
 
-export { cast, castNode } from "./nodes/cast.js";
 export { code } from "./nodes/code.js";
 export type { CodeNode } from "./nodes/code.js";
 export { default as fetch } from "./nodes/fetch.js";
@@ -174,8 +172,6 @@ export const Core = builder.build({
   deflate,
   inflate,
 
-  cast: castNode,
-
   service,
 });
 
@@ -313,8 +309,6 @@ export type CoreKitType = {
     { result: unknown; [k: string]: unknown }
   >;
   secrets: NodeFactory<{ keys: string[] }, { [k: string]: string }>;
-  cast: NodeFactoryFromDefinition<typeof castNode>;
-  // TODO: Other Core nodes.
 };
 
 /**
@@ -329,7 +323,6 @@ export const core = addKit(Core) as unknown as CoreKitType;
 export const coreKit = await kit({
   ...metadata,
   components: {
-    cast: castNode,
     deflate,
     fetch,
     inflate,
