@@ -64,8 +64,7 @@
       ],
       "dependencies": [
         "<dependencies>#build",
-        "../core-kit#build",
-        "../template-kit#build"
+        "../core-kit#build"
       ]
     },
     "build:esbuild": {
