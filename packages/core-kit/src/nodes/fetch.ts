@@ -5,15 +5,10 @@
  */
 
 import {
-  anyOf,
-  defineNodeType,
-  enumeration,
-  object,
-} from "@breadboard-ai/build";
-import { JsonSerializable } from "@breadboard-ai/build/internal/type-system/type.js";
-import {
   DataStore,
+  InputValues,
   NodeHandlerContext,
+  NodeHandlerObject,
   asBlob,
   inflateData,
   isDataCapability,
@@ -21,29 +16,6 @@ import {
   writablePathFromString,
 } from "@google-labs/breadboard";
 import { llmContentTransform } from "../llm-content-transform.js";
-
-// const serverSentEventTransform = () =>
-//   new TransformStream({
-//     transform(chunk, controller) {
-//       const text = chunk.toString();
-//       const lines = text.split("\n");
-//       for (const line of lines) {
-//         if (line.startsWith("data: ")) {
-//           const data = line.slice(6);
-//           let chunk;
-//           try {
-//             // Special case for OpenAI's API.
-//             if (data === "[DONE]") continue;
-//             chunk = JSON.parse(data);
-//           } catch (e) {
-//             // TODO: Handle this more gracefully.
-//             chunk = data;
-//           }
-//           controller.enqueue(chunk);
-//         }
-//       }
-//     },
-//   });
 
 const createBody = async (
   body: unknown,
@@ -54,7 +26,7 @@ const createBody = async (
   if (typeof body === "string") return body;
   const contentType = headers["Content-Type"];
   if (contentType === "multipart/form-data") {
-    const values = body as Record<string, JsonSerializable>;
+    const values = body as Record<string, InputValues>;
     // This is necessary to let fetch set its own content type.
     delete headers["Content-Type"];
     const formData = new FormData();
@@ -78,8 +50,7 @@ const createBody = async (
   return JSON.stringify(data);
 };
 
-export default defineNodeType({
-  name: "fetch",
+export default {
   metadata: {
     title: "Fetch",
     description:
@@ -88,91 +59,121 @@ export default defineNodeType({
       url: "https://breadboard-ai.github.io/breadboard/docs/kits/core/#the-fetch-component",
     },
   },
-  inputs: {
-    url: {
-      description: "The URL to fetch",
-      title: "URL",
-      type: "string",
-    },
-    method: {
-      title: "Method",
-      behavior: ["config"],
-      description: "The HTTP method to use",
-      type: enumeration("GET", "POST", "PUT", "DELETE"),
-      default: "GET",
-    },
-    headers: {
-      title: "Headers",
-      description: "Headers to send with the request",
-      type: object({}, "string"),
-      default: {},
-    },
-    body: {
-      title: "Body",
-      description: "The body of the request",
-      type: "unknown",
-      optional: true,
-    },
-    raw: {
-      title: "Raw",
-      behavior: ["config"],
-      description:
-        "Whether or not to return raw text (as opposed to parsing JSON)",
-      type: "boolean",
-      default: false,
-    },
-    stream: {
-      title: "Stream",
-      behavior: ["config"],
-      description: "Whether or not to return a stream",
-      type: enumeration("sse", "text", "json"),
-      optional: true,
-    },
-    redirect: {
-      title: "Redirect",
-      type: enumeration("follow", "error", "manual"),
-      default: "follow",
-    },
-    file: {
-      title: "File",
-      description: "The File System Path where the response will be saved",
-      type: "string",
-      optional: true,
-    },
-  },
-  outputs: {
-    response: {
-      title: "Response",
-      description: "The response from the fetch request",
-      type: "unknown",
-      primary: true,
-    },
-    status: {
-      title: "Status",
-      description: "The HTTP status code of the response",
-      type: "number",
-    },
-    statusText: {
-      title: "Status Text",
-      description: "The status text of the response",
-      type: "string",
-    },
-    contentType: {
-      title: "Content Type",
-      description: "The content type of the response",
-      type: anyOf("string", "null"),
-    },
-    responseHeaders: {
-      title: "Response Headers",
-      description: "The headers of the response",
-      type: object({}, "string"),
-    },
+  async describe() {
+    return {
+      inputSchema: {
+        type: "object",
+        properties: {
+          body: {
+            type: ["array", "boolean", "null", "number", "object", "string"],
+            title: "Body",
+            description: "The body of the request",
+          },
+          file: {
+            type: "string",
+            title: "File",
+            description:
+              "The File System Path where the response will be saved",
+          },
+          headers: {
+            type: "object",
+            properties: {},
+            required: [],
+            additionalProperties: { type: "string" },
+            title: "Headers",
+            description: "Headers to send with the request",
+            default: {} as string,
+          },
+          method: {
+            type: "string",
+            enum: ["GET", "POST", "PUT", "DELETE"],
+            title: "Method",
+            description: "The HTTP method to use",
+            default: "GET",
+            behavior: ["config"],
+          },
+          raw: {
+            type: "boolean",
+            title: "Raw",
+            description:
+              "Whether or not to return raw text (as opposed to parsing JSON)",
+            default: false as unknown as string,
+            behavior: ["config"],
+          },
+          redirect: {
+            type: "string",
+            enum: ["follow", "error", "manual"],
+            title: "Redirect",
+            default: "follow",
+          },
+          stream: {
+            type: "string",
+            enum: ["sse", "text", "json"],
+            title: "Stream",
+            description: "Whether or not to return a stream",
+            behavior: ["config"],
+          },
+          url: {
+            type: "string",
+            title: "URL",
+            description: "The URL to fetch",
+          },
+        },
+        required: ["url"],
+        additionalProperties: false,
+      },
+      outputSchema: {
+        type: "object",
+        properties: {
+          contentType: {
+            type: ["string", "null"],
+            title: "Content Type",
+            description: "The content type of the response",
+          },
+          response: {
+            type: ["array", "boolean", "null", "number", "object", "string"],
+            title: "Response",
+            description: "The response from the fetch request",
+          },
+          responseHeaders: {
+            type: "object",
+            properties: {},
+            required: [],
+            additionalProperties: { type: "string" },
+            title: "Response Headers",
+            description: "The headers of the response",
+          },
+          status: {
+            type: "number",
+            title: "Status",
+            description: "The HTTP status code of the response",
+          },
+          statusText: {
+            type: "string",
+            title: "Status Text",
+            description: "The status text of the response",
+          },
+        },
+        required: [],
+        additionalProperties: false,
+      },
+    };
   },
   invoke: async (
-    { url, method, body, headers, raw, stream, redirect, file },
-    _, // No dynamic inputs.
+    inputs: InputValues,
     { signal, store, fileSystem }: NodeHandlerContext
   ) => {
+    const { url, method, body, headers, raw, stream, redirect, file } =
+      inputs as {
+        url: string;
+        method: "GET" | "POST" | "PUT" | "DELETE";
+        headers: Record<string, string>;
+        body: unknown;
+        raw: boolean;
+        stream: "sse" | "text" | "json";
+        redirect: "follow" | "error" | "manual";
+        file: string;
+      };
     if (!url) throw new Error("Fetch requires `url` input");
     const init: RequestInit = {
       method,
@@ -285,4 +286,4 @@ export default defineNodeType({
       return { response, status, statusText, contentType, responseHeaders };
     }
   },
-});
+} satisfies NodeHandlerObject;
