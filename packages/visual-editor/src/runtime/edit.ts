@@ -1609,6 +1609,11 @@ export class Edit extends EventTarget {
     graphId: string,
     configuration: NodeConfiguration
   ): Promise<Outcome<void>> {
+    const shouldAutoname = !!this.settings
+      ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
+      .items.get("Show Experimental Components")?.value;
+    if (!shouldAutoname) return;
+
     const generatingAutonames = await this.#autoname.onNodeConfigurationUpdate(
       editableGraph,
       id,
@@ -1623,6 +1628,13 @@ export class Edit extends EventTarget {
     if ("notEnoughContext" in generatingAutonames) {
       console.log("Not enough context to autoname", id);
       return;
+    }
+
+    // Clip period at the end of the sentence that may occasionally crop up
+    // in LLM response.
+    const { description } = generatingAutonames;
+    if (description.endsWith(".")) {
+      generatingAutonames.description = description.slice(0, -1);
     }
 
     // TODO: Throttle in time
