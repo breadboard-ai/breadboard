@@ -20,6 +20,7 @@ import {
   NodeDescriptor,
   NodeIdentifier,
   ok,
+  Outcome,
   PortIdentifier,
 } from "@google-labs/breadboard";
 import {
@@ -1569,6 +1570,75 @@ export class Edit extends EventTarget {
     );
   }
 
+  /**
+   * Use this function to trigger autoname on a node. It will force over
+   * `userModified`.
+   */
+  async autonameNode(
+    tab: Tab | null,
+    id: string,
+    subGraphId: string | null = null
+  ) {
+    if (tab?.readOnly) {
+      return;
+    }
+
+    const editableGraph = this.getEditor(tab);
+
+    if (!editableGraph) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to find board to edit"));
+      return;
+    }
+
+    const inspectable = editableGraph.inspect(subGraphId);
+    const configuration = inspectable.nodeById(id)?.configuration();
+    if (!configuration) return;
+
+    const graphId = subGraphId || "";
+
+    return this.#autonameInternal(editableGraph, id, graphId, configuration);
+  }
+
+  async #autonameInternal(
+    editableGraph: EditableGraph,
+    id: NodeIdentifier,
+    graphId: string,
+    configuration: NodeConfiguration
+  ): Promise<Outcome<void>> {
+    const generatingAutonames = await this.#autoname.onNodeConfigurationUpdate(
+      editableGraph,
+      id,
+      graphId,
+      configuration
+    );
+    if (!ok(generatingAutonames)) {
+      console.warn("Autonaming error", generatingAutonames.$error);
+      return;
+    }
+
+    if ("notEnoughContext" in generatingAutonames) {
+      console.log("Not enough context to autoname", id);
+      return;
+    }
+
+    // TODO: Throttle in time
+    // TODO: Send event to notify UI that we're autonaming
+    // Add support for modalities
+
+    const applyingAutonames = await editableGraph.apply(
+      new BreadboardUI.Transforms.UpdateNode(
+        id,
+        graphId,
+        null,
+        generatingAutonames,
+        null
+      )
+    );
+    if (!applyingAutonames.success) {
+      console.warn("Failed to apply autoname", applyingAutonames.error);
+    }
+  }
+
   async changeNodeConfigurationPart(
     tab: Tab | null,
     id: string,
@@ -1608,38 +1678,12 @@ export class Edit extends EventTarget {
       return;
     }
 
-    const generatingAutonames = await this.#autoname.onNodeConfigurationUpdate(
+    return this.#autonameInternal(
       editableGraph,
       id,
       graphId,
-      configurationPart,
-      metadata
+      configurationPart
     );
-    if (!ok(generatingAutonames)) {
-      console.warn("Autonaming error", generatingAutonames.$error);
-      return;
-    }
-
-    if ("notEnoughContext" in generatingAutonames) {
-      console.log("Not enough context to autoname", id);
-      return;
-    }
-
-    // TODO: Throttle in time
-    // TODO: Send event to notify UI that we're autonaming
-
-    const applyingAutonames = await editableGraph.apply(
-      new BreadboardUI.Transforms.UpdateNode(
-        id,
-        graphId,
-        null,
-        generatingAutonames,
-        null
-      )
-    );
-    if (!applyingAutonames.success) {
-      console.warn("Failed to apply autoname", applyingAutonames.error);
-    }
   }
 
   async moveNodesToGraph(

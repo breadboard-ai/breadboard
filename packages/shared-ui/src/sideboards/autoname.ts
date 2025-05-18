@@ -14,7 +14,6 @@ import {
   LLMContent,
   NodeConfiguration,
   NodeIdentifier,
-  NodeMetadata,
 } from "@breadboard-ai/types";
 
 export { Autoname };
@@ -59,8 +58,7 @@ class Autoname {
     editor: EditableGraph,
     id: NodeIdentifier,
     graphId: GraphIdentifier,
-    configuration: NodeConfiguration,
-    metadata: NodeMetadata | null
+    configuration: NodeConfiguration
   ): Promise<Outcome<AutonameResult>> {
     const inspector = editor.inspect(graphId);
     const node = inspector.nodeById(id);
@@ -70,7 +68,6 @@ class Autoname {
       return err(msg);
     }
     const type = node.descriptor.type;
-    console.log("LET's EDIT", editor, id, graphId, configuration, metadata);
 
     const abortController = new AbortController();
     let graphChanged = false;
