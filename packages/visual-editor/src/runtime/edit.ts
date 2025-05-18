@@ -20,6 +20,7 @@ import {
   NodeDescriptor,
   NodeIdentifier,
   ok,
+  Outcome,
   PortIdentifier,
 } from "@google-labs/breadboard";
 import {
@@ -31,6 +32,7 @@ import {
   WorkspaceVisualState,
 } from "./types";
 import {
+  RuntimeBoardAutonameEvent,
   RuntimeBoardEditEvent,
   RuntimeBoardEnhanceEvent,
   RuntimeErrorEvent,
@@ -81,11 +83,12 @@ export class Edit extends EventTarget {
     public readonly settings: BreadboardUI.Types.SettingsStore | null
   ) {
     super();
-    const allGraphs = !!this.settings
-      ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
-      ?.items.get("Enable autonaming")?.value;
 
-    this.#autoname = new Autoname(sideboards, allGraphs);
+    this.#autoname = new Autoname(sideboards, {
+      statuschange: (status) => {
+        this.dispatchEvent(new RuntimeBoardAutonameEvent(status));
+      },
+    });
   }
 
   getEditor(tab: Tab | null): EditableGraph | null {
@@ -105,12 +108,6 @@ export class Edit extends EventTarget {
     }
     editor.addEventListener("graphchange", (evt) => {
       tab.graph = evt.graph;
-
-      this.#autoname.addTask(editor, evt).then((result) => {
-        if (!ok(result)) {
-          console.log("AUTONAMING ERROR", result.$error);
-        }
-      });
 
       this.dispatchEvent(
         new RuntimeBoardEditEvent(
@@ -1577,6 +1574,86 @@ export class Edit extends EventTarget {
     );
   }
 
+  /**
+   * Use this function to trigger autoname on a node. It will force over
+   * `userModified` and disregard any settings.
+   */
+  async autonameNode(
+    tab: Tab | null,
+    id: string,
+    subGraphId: string | null = null
+  ) {
+    if (tab?.readOnly) {
+      return;
+    }
+
+    const editableGraph = this.getEditor(tab);
+
+    if (!editableGraph) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to find board to edit"));
+      return;
+    }
+
+    const inspectable = editableGraph.inspect(subGraphId);
+    const configuration = inspectable.nodeById(id)?.configuration();
+    if (!configuration) return;
+
+    const graphId = subGraphId || "";
+
+    return this.#autonameInternal(editableGraph, id, graphId, configuration);
+  }
+
+  async #autonameInternal(
+    editableGraph: EditableGraph,
+    id: NodeIdentifier,
+    graphId: string,
+    configuration: NodeConfiguration
+  ): Promise<Outcome<void>> {
+    const shouldAutoname = !!this.settings
+      ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
+      .items.get("Show Experimental Components")?.value;
+    if (!shouldAutoname) return;
+
+    const generatingAutonames = await this.#autoname.onNodeConfigurationUpdate(
+      editableGraph,
+      id,
+      graphId,
+      configuration
+    );
+    if (!ok(generatingAutonames)) {
+      console.warn("Autonaming error", generatingAutonames.$error);
+      return;
+    }
+
+    if ("notEnoughContext" in generatingAutonames) {
+      console.log("Not enough context to autoname", id);
+      return;
+    }
+
+    // Clip period at the end of the sentence that may occasionally crop up
+    // in LLM response.
+    const { description } = generatingAutonames;
+    if (description.endsWith(".")) {
+      generatingAutonames.description = description.slice(0, -1);
+    }
+
+    // TODO: Throttle in time
+    // TODO: Add support for modalities
+
+    const applyingAutonames = await editableGraph.apply(
+      new BreadboardUI.Transforms.UpdateNode(
+        id,
+        graphId,
+        null,
+        generatingAutonames,
+        null
+      )
+    );
+    if (!applyingAutonames.success) {
+      console.warn("Failed to apply autoname", applyingAutonames.error);
+    }
+  }
+
   async changeNodeConfigurationPart(
     tab: Tab | null,
     id: string,
@@ -1605,7 +1682,22 @@ export class Edit extends EventTarget {
       ins
     );
 
-    return editableGraph.apply(updateNodeTransform);
+    const editing = await editableGraph.apply(updateNodeTransform);
+    if (!editing.success) {
+      console.warn("Failed to change node configuration", editing.error);
+      return;
+    }
+    if (updateNodeTransform.titleUserModified) {
+      // Don't autoname when title was modified by the user.
+      return;
+    }
+
+    return this.#autonameInternal(
+      editableGraph,
+      id,
+      graphId,
+      configurationPart
+    );
   }
 
   async moveNodesToGraph(

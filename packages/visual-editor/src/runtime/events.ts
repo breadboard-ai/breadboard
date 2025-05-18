@@ -21,6 +21,7 @@ import {
 } from "@google-labs/breadboard";
 import { ChatController } from "@breadboard-ai/shared-ui/state/chat-controller.js";
 import { BOARD_SAVE_STATUS } from "@breadboard-ai/shared-ui/types/types.js";
+import { AutonameStatus } from "@breadboard-ai/shared-ui/sideboards/autoname.js";
 
 const eventInit = {
   bubbles: true,
@@ -64,6 +65,14 @@ export class RuntimeBoardEnhanceEvent extends Event {
     public readonly configuration: NodeConfiguration
   ) {
     super(RuntimeBoardEnhanceEvent.eventName, { ...eventInit });
+  }
+}
+
+export class RuntimeBoardAutonameEvent extends Event {
+  static eventName = "runtimeboardautoname" as const;
+
+  constructor(public readonly status: AutonameStatus) {
+    super(RuntimeBoardAutonameEvent.eventName, { ...eventInit });
   }
 }
 

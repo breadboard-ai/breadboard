@@ -84,6 +84,9 @@ export class GraphNode extends Box implements DragConnectorReceiver {
   accessor nodeTitle = "";
 
   @property()
+  accessor nodeDescription = "";
+
+  @property()
   accessor isStart = false;
 
   @property({ reflect: true })
@@ -772,9 +775,13 @@ export class GraphNode extends Box implements DragConnectorReceiver {
                   case "object": {
                     classes.object = true;
                     if (port.value) {
-                      value = html`${unsafeHTML(
-                        `<p>${createTruncatedValue(port)}</p>`
-                      )}`;
+                      if (this.nodeDescription) {
+                        value = html`<p>${this.nodeDescription}</p>`;
+                      } else {
+                        value = html`${unsafeHTML(
+                          `<p>${createTruncatedValue(port)}</p>`
+                        )}`;
+                      }
 
                       chiclets.push(...createChiclets(port));
                     } else {

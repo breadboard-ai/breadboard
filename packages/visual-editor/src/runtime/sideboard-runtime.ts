@@ -31,6 +31,7 @@ import {
   err,
   NodeDescriberResult,
   envFromGraphDescriptor,
+  ErrorObject,
 } from "@google-labs/breadboard";
 import {
   createFileSystemBackend,
@@ -46,6 +47,7 @@ import type {
   SideBoardRuntimeTaskSpec,
 } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { BoardServerAwareDataStore } from "@breadboard-ai/board-server-management";
+import { formatError } from "@breadboard-ai/shared-ui/utils/format-error.js";
 
 export { createSideboardRuntimeProvider };
 
@@ -144,7 +146,7 @@ class SideboardRuntimeImpl
 
       return result;
     } catch (e) {
-      return err(`Task returned with error: ${(e as Error).message}`);
+      return err(`Task returned with error: ${formatError(e as ErrorObject)}`);
     } finally {
       this.#runningTaskCount--;
       if (this.#runningTaskCount === 0) {

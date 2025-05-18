@@ -136,6 +136,7 @@ export class Graph extends Box {
 
       graphNode.updating = node.type().currentMetadata().updating ?? false;
       graphNode.nodeTitle = node.title();
+      graphNode.nodeDescription = node.descriptor.metadata?.description || "";
 
       graphNode.isStart = node.isStart();
 

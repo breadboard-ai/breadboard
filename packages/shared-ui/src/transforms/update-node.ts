@@ -21,10 +21,12 @@ import { UpdateParameterMetadata } from "./update-parameter-metadata";
 export { UpdateNode };
 
 class UpdateNode implements EditTransform {
+  public titleUserModified = false;
+
   constructor(
     public readonly id: NodeIdentifier,
     public readonly graphId: GraphIdentifier,
-    public readonly configuration: NodeConfiguration,
+    public readonly configuration: NodeConfiguration | null,
     public readonly metadata: NodeMetadata | null,
     public readonly portsToAutowire: InPort[] | null
   ) {}
@@ -44,39 +46,45 @@ class UpdateNode implements EditTransform {
       return { success: false, error: `Unable to find node with id "${id}"` };
     }
 
-    const existingConfiguration =
-      inspectableNode?.descriptor.configuration ?? {};
-    const updatedConfiguration = structuredClone(existingConfiguration);
-    for (const [key, value] of Object.entries(configuration)) {
-      if (value === null || value === undefined) {
-        delete updatedConfiguration[key];
-        continue;
+    const edits: EditSpec[] = [];
+
+    if (configuration) {
+      const existingConfiguration =
+        inspectableNode?.descriptor.configuration ?? {};
+      const updatedConfiguration = structuredClone(existingConfiguration);
+      for (const [key, value] of Object.entries(configuration)) {
+        if (value === null || value === undefined) {
+          delete updatedConfiguration[key];
+          continue;
+        }
+
+        updatedConfiguration[key] = value;
       }
 
-      updatedConfiguration[key] = value;
-    }
-
-    const edits: EditSpec[] = [
-      {
+      edits.push({
         type: "changeconfiguration",
         id: id,
         configuration: updatedConfiguration,
         reset: true,
         graphId,
-      },
-    ];
+      });
+    }
 
     let titleChanged = false;
 
+    const existingMetadata = inspectableNode?.metadata() || {};
+    this.titleUserModified = !!existingMetadata.userModified;
     if (metadata) {
-      const existingMetadata = inspectableNode?.metadata() || {};
       titleChanged = !!(
         metadata.title && existingMetadata.title !== metadata.title
       );
+      if (titleChanged) {
+        this.titleUserModified = true;
+      }
       const newMetadata: NodeMetadata = {
-        userModified: titleChanged,
         ...existingMetadata,
         ...metadata,
+        userModified: titleChanged,
       };
 
       edits.push({
@@ -94,15 +102,14 @@ class UpdateNode implements EditTransform {
     );
     if (!editResult.success) return editResult;
 
-    if (!portsToAutowire) {
-      return { success: true };
+    if (portsToAutowire) {
+      const autowiring = await new AutoWireInPorts(
+        id,
+        graphId,
+        portsToAutowire
+      ).apply(context);
+      if (!autowiring.success) return autowiring;
     }
-    const autowiring = await new AutoWireInPorts(
-      id,
-      graphId,
-      portsToAutowire
-    ).apply(context);
-    if (!autowiring.success) return autowiring;
 
     const updatingParameterMetadata = await new UpdateParameterMetadata(
       graphId
