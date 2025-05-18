@@ -81,9 +81,7 @@ export class Edit extends EventTarget {
     public readonly settings: BreadboardUI.Types.SettingsStore | null
   ) {
     super();
-    const allGraphs = !!this.settings
-      ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
-      ?.items.get("Enable autonaming")?.value;
+    const allGraphs = true;
 
     this.#autoname = new Autoname(sideboards, allGraphs);
   }
@@ -105,12 +103,6 @@ export class Edit extends EventTarget {
     }
     editor.addEventListener("graphchange", (evt) => {
       tab.graph = evt.graph;
-
-      this.#autoname.addTask(editor, evt).then((result) => {
-        if (!ok(result)) {
-          console.log("AUTONAMING ERROR", result.$error);
-        }
-      });
 
       this.dispatchEvent(
         new RuntimeBoardEditEvent(
@@ -1605,7 +1597,19 @@ export class Edit extends EventTarget {
       ins
     );
 
-    return editableGraph.apply(updateNodeTransform);
+    const editing = await editableGraph.apply(updateNodeTransform);
+    if (editing.success) {
+      const autonaming = await this.#autoname.onNodeConfigurationUpdate(
+        editableGraph,
+        id,
+        graphId,
+        configurationPart,
+        metadata
+      );
+      if (!ok(autonaming)) {
+        console.log("Autonaming error", autonaming.$error);
+      }
+    }
   }
 
   async moveNodesToGraph(

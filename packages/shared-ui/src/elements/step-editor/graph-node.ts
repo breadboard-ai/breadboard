@@ -84,6 +84,9 @@ export class GraphNode extends Box implements DragConnectorReceiver {
   accessor nodeTitle = "";
 
   @property()
+  accessor nodeDescription = "";
+
+  @property()
   accessor isStart = false;
 
   @property({ reflect: true })
@@ -747,6 +750,10 @@ export class GraphNode extends Box implements DragConnectorReceiver {
   #renderPorts() {
     if (!this.#ports) {
       return nothing;
+    }
+
+    if (this.nodeDescription) {
+      return html`<p>${this.nodeDescription}</p>`;
     }
 
     const previewPorts = this.#ports.inputs.ports.filter(

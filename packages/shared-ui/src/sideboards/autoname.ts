@@ -21,6 +21,7 @@ import {
   GraphIdentifier,
   JsonSerializable,
   LLMContent,
+  NodeConfiguration,
   NodeIdentifier,
   NodeMetadata,
 } from "@breadboard-ai/types";
@@ -61,6 +62,28 @@ type PendingGraphNodes = {
   graph: GraphDescriptor;
   nodes: Set<NodeIdentifier>;
 };
+
+export type NodeConfigurationUpdate = {
+  nodeConfigurationUpdate: {
+    type: string;
+    configuration: NodeConfiguration;
+  };
+};
+
+export type AutonameArguments = NodeConfigurationUpdate;
+
+export type NotEnoughContextResult = {
+  notEnoughContext: true;
+};
+
+export type NodeConfigurationUpdateResult = {
+  title: string;
+  description: string;
+};
+
+export type AutonameResult =
+  | NotEnoughContextResult
+  | NodeConfigurationUpdateResult;
 
 class Autoname {
   #pending: Map<GraphIdentifier, PendingGraphNodes> = new Map();
@@ -109,13 +132,15 @@ class Autoname {
       return err(`Unable to get graph with graphId "${graphId}"`);
     }
     // Make a shallow copy.
-    const graph = { ...maybeGraph };
+    const graph = { ...maybeGraph, metadata: { ...maybeGraph.metadata } };
     // Remove subgraphs (only matters for mainGraph), so that the autonaming
     // sideboard doesn't have to reason about them.
     delete graph.graphs;
     // Remove modules and assets (for now).
     delete graph.modules;
     delete graph.assets;
+    // Remove themes
+    delete graph.metadata?.visual;
     // Account for deletions: filter out nodes that aren't in the graph.
     const aliveNodeSet = new Set(
       graph.nodes.map((descriptor) => descriptor.id)
@@ -203,6 +228,79 @@ class Autoname {
     if (!editing.success) {
       console.error("Editing failed", editing.error);
       return err(editing.error);
+    }
+  }
+
+  async onNodeConfigurationUpdate(
+    editor: EditableGraph,
+    id: NodeIdentifier,
+    graphId: GraphIdentifier,
+    configuration: NodeConfiguration,
+    metadata: NodeMetadata | null
+  ): Promise<Outcome<void>> {
+    const inspector = editor.inspect(graphId);
+    const node = inspector.nodeById(id);
+    if (!node) {
+      const msg = `Unable to find node with id: "${id}"`;
+      console.error(msg);
+      return err(msg);
+    }
+    const type = node.descriptor.type;
+    console.log("LET's EDIT", editor, id, graphId, configuration, metadata);
+
+    const abortController = new AbortController();
+    let graphChanged = false;
+    editor.addEventListener(
+      "graphchange",
+      () => {
+        graphChanged = true;
+        abortController.abort();
+      },
+      { once: true }
+    );
+
+    const outputs = await this.runtime.runTask({
+      graph: AutonameSideboard,
+      context: asLLMContent({
+        nodeConfigurationUpdate: { configuration, type },
+      } satisfies AutonameArguments),
+      url: editor.raw().url,
+      signal: abortController.signal,
+    });
+
+    if (graphChanged) {
+      // Graph changed in the middle of a task, throw away the results.
+      console.log("Autonaming results discarded due to graph change");
+      return;
+    }
+    if (!ok(outputs)) {
+      console.error("Autonaming error", outputs.$error);
+      return outputs;
+    }
+    const part = outputs.at(0)?.parts.at(0);
+    if (!(part && "json" in part)) {
+      return err(`Invalid sideboard output`);
+    }
+    const result = part.json as AutonameResult;
+    console.log("AUTONAMING RESULT", result);
+
+    if ("notEnoughContext" in result) {
+      console.log("Not enough context to autoname");
+      return;
+    }
+    const editing = await editor.edit(
+      [
+        {
+          type: "changemetadata",
+          metadata: result,
+          id,
+          graphId,
+        },
+      ],
+      AUTONAMING_LABEL
+    );
+    if (!editing.success) {
+      console.log("AUTONAMING FAILED", editing.error);
     }
   }
 
