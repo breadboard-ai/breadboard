@@ -465,6 +465,7 @@ export class Renderer extends LitElement {
   }
 
   #getGraphTitleByType(nodeType: string) {
+    // TODO: Move this logic to Runtime.Edit
     let title = "Untitled item";
     for (const graph of this.graphStore?.graphs() ?? []) {
       if (graph.url === nodeType && graph.title) {
@@ -473,7 +474,30 @@ export class Renderer extends LitElement {
       }
     }
 
+    // Friendly names logic. Optionally appends a number to the title so that
+    // the user can disambiguate between multiple steps of the same type.
+    let maxNumber = -1;
+    for (const node of this.graph?.nodes() || []) {
+      if (node.descriptor.type !== nodeType) continue;
+      const nodeFullTitle = node.descriptor.metadata?.title;
+      if (!nodeFullTitle) continue;
+      const { nodeTitle, number } = extractNumber(nodeFullTitle);
+      if (nodeTitle !== title) continue;
+      maxNumber = number;
+    }
+    if (maxNumber >= 0) {
+      return `${title} ${maxNumber + 1}`;
+    }
+
     return title;
+
+    function extractNumber(s: string): { nodeTitle: string; number: number } {
+      const match = / (\d+)$/.exec(s);
+      if (!match || !match[1]) return { nodeTitle: s, number: 0 };
+      const number = parseInt(match[1], 10);
+      const nodeTitle = s.substring(0, match.index);
+      return { number, nodeTitle };
+    }
   }
 
   #createNode(
