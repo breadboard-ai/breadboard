@@ -21,6 +21,8 @@ import { UpdateParameterMetadata } from "./update-parameter-metadata";
 export { UpdateNode };
 
 class UpdateNode implements EditTransform {
+  public titleUserModified = false;
+
   constructor(
     public readonly id: NodeIdentifier,
     public readonly graphId: GraphIdentifier,
@@ -70,15 +72,19 @@ class UpdateNode implements EditTransform {
 
     let titleChanged = false;
 
+    const existingMetadata = inspectableNode?.metadata() || {};
+    this.titleUserModified = !!existingMetadata.userModified;
     if (metadata) {
-      const existingMetadata = inspectableNode?.metadata() || {};
       titleChanged = !!(
         metadata.title && existingMetadata.title !== metadata.title
       );
+      if (titleChanged) {
+        this.titleUserModified = true;
+      }
       const newMetadata: NodeMetadata = {
-        userModified: titleChanged,
         ...existingMetadata,
         ...metadata,
+        userModified: titleChanged,
       };
 
       edits.push({

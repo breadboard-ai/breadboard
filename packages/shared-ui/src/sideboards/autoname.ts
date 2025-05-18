@@ -36,12 +36,19 @@ export type NodeConfigurationUpdateResult = {
   description: string;
 };
 
+export type AutonameStatus = "running" | "idle";
+
 export type AutonameResult =
   | NotEnoughContextResult
   | NodeConfigurationUpdateResult;
 
+export type AutonameCallbacks = {
+  statuschange: (status: AutonameStatus) => void;
+};
+
 class Autoname {
-  #running = false;
+  #pending: Set<object> = new Set();
+  #status: AutonameStatus = "idle";
 
   /**
    *
@@ -51,7 +58,7 @@ class Autoname {
    */
   constructor(
     public readonly runtime: SideBoardRuntime,
-    public readonly allGraphs: boolean
+    private readonly callbacks: AutonameCallbacks
   ) {}
 
   async onNodeConfigurationUpdate(
@@ -80,6 +87,14 @@ class Autoname {
       { once: true }
     );
 
+    const o = {};
+    this.#pending.add(o);
+    const oldStatus = this.#status;
+    this.#status = "running";
+    if (oldStatus !== this.#status) {
+      this.callbacks.statuschange(this.#status);
+    }
+
     const outputs = await this.runtime.runTask({
       graph: AutonameSideboard,
       context: asLLMContent({
@@ -88,6 +103,11 @@ class Autoname {
       url: editor.raw().url,
       signal: abortController.signal,
     });
+    this.#pending.delete(o);
+    if (this.#pending.size === 0) {
+      this.#status = "idle";
+      this.callbacks.statuschange(this.#status);
+    }
 
     if (graphChanged) {
       // Graph changed in the middle of a task, throw away the results.

@@ -643,6 +643,13 @@ export class Main extends LitElement {
         );
 
         this.#runtime.edit.addEventListener(
+          Runtime.Events.RuntimeBoardAutonameEvent.eventName,
+          (evt: Runtime.Events.RuntimeBoardAutonameEvent) => {
+            console.log("Autoname Status Change:", evt.status);
+          }
+        );
+
+        this.#runtime.edit.addEventListener(
           Runtime.Events.RuntimeBoardEditEvent.eventName,
           (_evt: Runtime.Events.RuntimeBoardEditEvent) => {
             this.requestUpdate();

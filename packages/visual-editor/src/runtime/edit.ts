@@ -32,6 +32,7 @@ import {
   WorkspaceVisualState,
 } from "./types";
 import {
+  RuntimeBoardAutonameEvent,
   RuntimeBoardEditEvent,
   RuntimeBoardEnhanceEvent,
   RuntimeErrorEvent,
@@ -82,9 +83,12 @@ export class Edit extends EventTarget {
     public readonly settings: BreadboardUI.Types.SettingsStore | null
   ) {
     super();
-    const allGraphs = true;
 
-    this.#autoname = new Autoname(sideboards, allGraphs);
+    this.#autoname = new Autoname(sideboards, {
+      statuschange: (status) => {
+        this.dispatchEvent(new RuntimeBoardAutonameEvent(status));
+      },
+    });
   }
 
   getEditor(tab: Tab | null): EditableGraph | null {
@@ -1572,7 +1576,7 @@ export class Edit extends EventTarget {
 
   /**
    * Use this function to trigger autoname on a node. It will force over
-   * `userModified`.
+   * `userModified` and disregard any settings.
    */
   async autonameNode(
     tab: Tab | null,
@@ -1622,8 +1626,7 @@ export class Edit extends EventTarget {
     }
 
     // TODO: Throttle in time
-    // TODO: Send event to notify UI that we're autonaming
-    // Add support for modalities
+    // TODO: Add support for modalities
 
     const applyingAutonames = await editableGraph.apply(
       new BreadboardUI.Transforms.UpdateNode(
@@ -1672,9 +1675,8 @@ export class Edit extends EventTarget {
       console.warn("Failed to change node configuration", editing.error);
       return;
     }
-
-    if (metadata?.userModified) {
-      // Don't autoname what's been modified by user.
+    if (updateNodeTransform.titleUserModified) {
+      // Don't autoname when title was modified by the user.
       return;
     }
 
