@@ -118,7 +118,6 @@
     }
   },
   "dependencies": {
-    "@breadboard-ai/build": "0.12.2",
     "@breadboard-ai/connection-client": "0.2.0",
     "@breadboard-ai/types": "0.7.0",
     "@google-labs/breadboard": "^0.34.0",

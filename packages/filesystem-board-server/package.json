@@ -82,7 +82,6 @@
     "vitest": "^3.1.1"
   },
   "dependencies": {
-    "@breadboard-ai/build": "0.12.2",
     "@breadboard-ai/data-store": "0.3.3",
     "@breadboard-ai/types": "0.7.0",
     "@google-labs/breadboard": "^0.34.0",
