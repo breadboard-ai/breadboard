@@ -121,7 +121,6 @@
     "@breadboard-ai/connection-client": "0.2.0",
     "@breadboard-ai/types": "0.7.0",
     "@google-labs/breadboard": "^0.34.0",
-    "@google-labs/core-kit": "^0.19.0",
     "@types/gapi.client.drive-v3": "^0.0.5"
   },
   "devDependencies": {

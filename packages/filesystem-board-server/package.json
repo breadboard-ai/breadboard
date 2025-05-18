@@ -78,13 +78,10 @@
     "typescript": "^5.8.3",
     "vite": "^6.2.7",
     "vite-plugin-full-reload": "^1.2.0",
-    "vite-plugin-watch-and-run": "^1.7.4",
-    "vitest": "^3.1.1"
+    "vite-plugin-watch-and-run": "^1.7.4"
   },
   "dependencies": {
-    "@breadboard-ai/data-store": "0.3.3",
     "@breadboard-ai/types": "0.7.0",
-    "@google-labs/breadboard": "^0.34.0",
-    "@google-labs/breadboard-schema": "^1.14.0"
+    "@google-labs/breadboard": "^0.34.0"
   }
 }
