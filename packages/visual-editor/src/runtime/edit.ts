@@ -1598,17 +1598,47 @@ export class Edit extends EventTarget {
     );
 
     const editing = await editableGraph.apply(updateNodeTransform);
-    if (editing.success) {
-      const autonaming = await this.#autoname.onNodeConfigurationUpdate(
-        editableGraph,
+    if (!editing.success) {
+      console.warn("Failed to change node configuration", editing.error);
+      return;
+    }
+
+    if (metadata?.userModified) {
+      // Don't autoname what's been modified by user.
+      return;
+    }
+
+    const generatingAutonames = await this.#autoname.onNodeConfigurationUpdate(
+      editableGraph,
+      id,
+      graphId,
+      configurationPart,
+      metadata
+    );
+    if (!ok(generatingAutonames)) {
+      console.warn("Autonaming error", generatingAutonames.$error);
+      return;
+    }
+
+    if ("notEnoughContext" in generatingAutonames) {
+      console.log("Not enough context to autoname", id);
+      return;
+    }
+
+    // TODO: Throttle in time
+    // TODO: Send event to notify UI that we're autonaming
+
+    const applyingAutonames = await editableGraph.apply(
+      new BreadboardUI.Transforms.UpdateNode(
         id,
         graphId,
-        configurationPart,
-        metadata
-      );
-      if (!ok(autonaming)) {
-        console.log("Autonaming error", autonaming.$error);
-      }
+        null,
+        generatingAutonames,
+        null
+      )
+    );
+    if (!applyingAutonames.success) {
+      console.warn("Failed to apply autoname", applyingAutonames.error);
     }
   }
 
