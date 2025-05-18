@@ -72,8 +72,6 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@breadboard-ai/data-store": "0.3.3",
-    "@google-labs/breadboard": "^0.34.0",
-    "@google-labs/breadboard-schema": "^1.14.0"
+    "@google-labs/breadboard": "^0.34.0"
   }
 }

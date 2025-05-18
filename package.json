@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "clean": "git clean -Xdf -e !.vscode/settings.json",
-    "update": "rimraf package-lock.json && npm i",
+    "update": "rm package-lock.json && npm i",
     "test": "wireit",
     "build": "wireit",
     "lint": "wireit",
@@ -100,8 +100,7 @@
     "ava": "^5.2.0",
     "eslint": "^8.57.1",
     "eslint-plugin-expect-type": "^0.6.2",
-    "npm-ci": "^0.0.2",
-    "rimraf": "^6.0.1",
+    "prettier": "^3.5.3",
     "rollup": "^4.39.0",
     "rollup-plugin-dts": "^6.2.1",
     "syncpack": "^13.0.3",
@@ -115,12 +114,6 @@
   "optionalDependencies": {
     "@rollup/rollup-darwin-arm64": "^4.37.0",
     "@rollup/rollup-linux-x64-gnu": "^4.40.2"
-  },
-  "dependencies": {
-    "express": "^4.21.2",
-    "json-schema": "^0.4.0",
-    "litegraph.js": "^0.7.18",
-    "prettier": "^3.5.3"
   },
   "repository": {
     "type": "git",
