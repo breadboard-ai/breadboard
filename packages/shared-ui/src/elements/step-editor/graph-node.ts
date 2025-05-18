@@ -752,10 +752,6 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       return nothing;
     }
 
-    if (this.nodeDescription) {
-      return html`<p>${this.nodeDescription}</p>`;
-    }
-
     const previewPorts = this.#ports.inputs.ports.filter(
       (port) =>
         isPreviewBehavior(port.schema) &&
@@ -779,9 +775,13 @@ export class GraphNode extends Box implements DragConnectorReceiver {
                   case "object": {
                     classes.object = true;
                     if (port.value) {
-                      value = html`${unsafeHTML(
-                        `<p>${createTruncatedValue(port)}</p>`
-                      )}`;
+                      if (this.nodeDescription) {
+                        value = html`<p>${this.nodeDescription}</p>`;
+                      } else {
+                        value = html`${unsafeHTML(
+                          `<p>${createTruncatedValue(port)}</p>`
+                        )}`;
+                      }
 
                       chiclets.push(...createChiclets(port));
                     } else {
