@@ -40,11 +40,15 @@ import {
   isStoredData,
   isTextCapabilityPart,
 } from "@google-labs/breadboard";
-import { map } from "lit/directives/map.js";
 import { until } from "lit/directives/until.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { renderThumbnail } from "../../utils/image";
+import {
+  generatePaletteFromColor,
+  generatePaletteFromImage,
+} from "@breadboard-ai/theme";
+import { guard } from "lit/directives/guard.js";
 
 @customElement("bb-app-theme-creator")
 export class AppThemeCreator extends LitElement {
@@ -257,7 +261,7 @@ export class AppThemeCreator extends LitElement {
                 object-fit: cover;
                 background: url(/images/progress-ui.svg) center center / 20px
                   20px no-repeat;
-                border-radius: var(--bb-grid-size-2) var(--bb-grid-size-2) 0 0;
+                border-radius: var(--bb-grid-size-2);
 
                 &.default {
                   object-fit: contain;
@@ -279,6 +283,10 @@ export class AppThemeCreator extends LitElement {
               }
             }
           }
+        }
+
+        & #theme-colors {
+          display: none;
         }
 
         & #theme-options,
@@ -435,8 +443,8 @@ export class AppThemeCreator extends LitElement {
   #generateDescriptionRef: Ref<HTMLTextAreaElement> = createRef();
   #containerRef: Ref<HTMLDivElement> = createRef();
 
-  #isValidAppTheme(theme: unknown): theme is AppThemeColors {
-    const maybeTheme = theme as AppThemeColors;
+  #isValidAppTheme(theme: unknown): theme is AppTheme {
+    const maybeTheme = theme as AppTheme;
     const primary = "primaryColor" in maybeTheme;
     const secondary = "secondaryColor" in maybeTheme;
     const background = "backgroundColor" in maybeTheme;
@@ -546,7 +554,17 @@ export class AppThemeCreator extends LitElement {
         throw new Error("Invalid color scheme generated");
       }
 
+      let theme = generatePaletteFromColor("#ffffff");
+      const img = new Image();
+      if (isInlineData(splashScreen)) {
+        img.src = `data:${splashScreen.inlineData.mimeType};base64,${splashScreen.inlineData.data}`;
+      } else {
+        img.src = splashScreen.storedData.handle;
+      }
+      theme = await generatePaletteFromImage(img);
+
       return {
+        ...theme,
         ...code,
         splashScreen,
       };
@@ -682,37 +700,10 @@ export class AppThemeCreator extends LitElement {
                     this.dispatchEvent(new ThemeChangeEvent(key));
                   }}
                 >
-                  ${until(this.#renderThumbnail(theme))}
-                  <span
-                    class="color"
-                    style=${styleMap({
-                      "--background": theme.themeColors?.primaryColor,
-                    })}
-                  ></span>
-                  <span
-                    class="color"
-                    style=${styleMap({
-                      "--background": theme.themeColors?.secondaryColor,
-                    })}
-                  ></span>
-                  <span
-                    class="color"
-                    style=${styleMap({
-                      "--background": theme.themeColors?.backgroundColor,
-                    })}
-                  ></span>
-                  <span
-                    class="color"
-                    style=${styleMap({
-                      "--background": theme.themeColors?.primaryTextColor,
-                    })}
-                  ></span>
-                  <span
-                    class="color"
-                    style=${styleMap({
-                      "--background": theme.themeColors?.textColor,
-                    })}
-                  ></span>
+                  ${guard(
+                    [theme.splashScreen],
+                    () => html`${until(this.#renderThumbnail(theme))}`
+                  )}
                 </button>
               </li>`;
             }
@@ -731,7 +722,7 @@ export class AppThemeCreator extends LitElement {
                   >
                   <input
                     id="primary"
-                    type="color"
+                    type="hidden"
                     ?disabled=${this._changed || this._generating}
                     .value=${theme.themeColors.primaryColor}
                     @input=${(evt: InputEvent) => {
@@ -761,7 +752,7 @@ export class AppThemeCreator extends LitElement {
                   >
                   <input
                     id="secondary"
-                    type="color"
+                    type="hidden"
                     ?disabled=${this._changed || this._generating}
                     .value=${theme.themeColors.secondaryColor}
                     @input=${(evt: InputEvent) => {
@@ -791,7 +782,7 @@ export class AppThemeCreator extends LitElement {
                   >
                   <input
                     id="background"
-                    type="color"
+                    type="hidden"
                     ?disabled=${this._changed || this._generating}
                     .value=${theme.themeColors.backgroundColor}
                     @input=${(evt: InputEvent) => {
@@ -821,7 +812,7 @@ export class AppThemeCreator extends LitElement {
                   >
                   <input
                     id="primary-text"
-                    type="color"
+                    type="hidden"
                     ?disabled=${this._changed || this._generating}
                     .value=${theme.themeColors.primaryTextColor}
                     @input=${(evt: InputEvent) => {
@@ -851,7 +842,7 @@ export class AppThemeCreator extends LitElement {
                   >
                   <input
                     id="text"
-                    type="color"
+                    type="hidden"
                     ?disabled=${this._changed || this._generating}
                     .value=${theme.themeColors.textColor}
                     @input=${(evt: InputEvent) => {
@@ -873,49 +864,7 @@ export class AppThemeCreator extends LitElement {
                 </div>`
             : nothing}
         </div>
-        ${this.themeOptions
-          ? html`<div id="theme-options">
-              ${map(Object.entries(this.themeOptions), ([id, value]) => {
-                const selectedValue =
-                  this.themes?.[this.theme ?? ""].templateAdditionalOptions?.[
-                    id
-                  ];
-                return html`<div>
-                  <label for=${id}>${value.title}</label
-                  ><select
-                    name="${id}"
-                    @input=${(evt: InputEvent) => {
-                      if (!(evt.target instanceof HTMLSelectElement)) {
-                        return;
-                      }
-
-                      theme.templateAdditionalOptions ??= {};
-                      theme.templateAdditionalOptions[id] = evt.target.value;
-
-                      this.#emitTheme();
-                    }}
-                  >
-                    ${map(Object.values(value.values), (item) => {
-                      return html`<option
-                        ?selected=${selectedValue === item.value}
-                        .value=${item.value}
-                      >
-                        ${item.title}
-                      </option>`;
-                    })}
-                  </select>
-                </div>`;
-              })}
-            </div>`
-          : nothing}
       </section>
     </section>`;
   }
-}
-
-function bytesToBase64(bytes: Uint8Array) {
-  const binString = Array.from(bytes, (byte) =>
-    String.fromCodePoint(byte),
-  ).join("");
-  return btoa(binString);
 }

@@ -352,8 +352,18 @@ export type ParameterMetadata = {
   usedIn: NodeIdentifier[];
 };
 
+export type AppPalette = {
+  primary: Record<number, string>;
+  secondary: Record<number, string>;
+  tertiary: Record<number, string>;
+  neutral: Record<number, string>;
+  neutralVariant: Record<number, string>;
+  error: Record<number, string>;
+};
+
 export type GraphTheme = {
   themeColors?: Record<string, string>;
+  palette?: AppPalette;
   template?: string;
   templateAdditionalOptions?: Record<string, string>;
   splashScreen?: StoredDataCapabilityPart;

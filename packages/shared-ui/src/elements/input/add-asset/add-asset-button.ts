@@ -11,6 +11,7 @@ import {
   AddAssetRequestEvent,
   OverflowMenuActionEvent,
 } from "../../../events/events";
+import { icons } from "../../../styles/icons";
 
 @customElement("bb-add-asset-button")
 export class AddAssetButton extends LitElement {
@@ -43,42 +44,54 @@ export class AddAssetButton extends LitElement {
   @state()
   accessor _assetType = "file";
 
-  static styles = css`
-    :host {
-      display: flex;
-      align-items: flex-end;
-    }
+  static styles = [
+    icons,
+    css`
+      :host {
+        display: flex;
+        align-items: flex-end;
+      }
 
-    #add-asset {
-      width: var(--button-size, 40px);
-      height: var(--button-size, 40px);
-      border: none;
-      background: oklch(
-          from var(--primary-text-color) l c h / calc(alpha - 0.75)
-        )
-        var(--bb-icon-add) center center / 20px 20px no-repeat;
-      flex: 0 0 auto;
-      border-radius: var(--button-border-radius, 50%);
-      transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
-      opacity: 0.5;
+      #add-asset {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: var(--button-size, 40px);
+        height: var(--button-size, 40px);
+        border: none;
+        background: var(--background-color, var(--bb-neutral-100));
+        color: var(--text-color, var(--bb-neutral-800));
+        flex: 0 0 auto;
+        border-radius: var(--button-border-radius, 50%);
+        transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+        opacity: 0.8;
 
-      &:not([disabled]) {
-        cursor: pointer;
+        * {
+          pointer-events: none;
+        }
 
-        &:focus,
-        &:hover {
-          opacity: 1;
+        &:not([disabled]) {
+          cursor: pointer;
+
+          &:focus,
+          &:hover {
+            opacity: 1;
+          }
         }
       }
-    }
 
-    bb-overflow-menu {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: min-content;
-    }
-  `;
+      bb-overflow-menu {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: min-content;
+        --border-color: var(--s-80);
+        --inner-border-color: var(--s-80);
+        --background-color: var(--s-90);
+        --text-color: var(--p-15);
+      }
+    `,
+  ];
 
   #overflowMenu: { x: number; y: number } = { x: 0, y: 0 };
 
@@ -167,7 +180,7 @@ export class AddAssetButton extends LitElement {
         }}
         id="add-asset"
       >
-        +
+        <span class="g-icon">add</span>
       </button>
       ${overflowMenu}`;
   }

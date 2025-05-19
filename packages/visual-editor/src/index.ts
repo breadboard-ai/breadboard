@@ -3816,9 +3816,26 @@ export class Main extends LitElement {
                   this.#runtime.edit.getEditor(this.tab)
                 );
 
+                const {
+                  primary,
+                  secondary,
+                  tertiary,
+                  error,
+                  neutral,
+                  neutralVariant,
+                } = evt.theme;
+
                 const graphTheme: GraphTheme = {
                   template: "basic",
                   templateAdditionalOptions: {},
+                  palette: {
+                    primary,
+                    secondary,
+                    tertiary,
+                    error,
+                    neutral,
+                    neutralVariant,
+                  },
                   themeColors: {
                     primaryColor: evt.theme.primaryColor,
                     secondaryColor: evt.theme.secondaryColor,
