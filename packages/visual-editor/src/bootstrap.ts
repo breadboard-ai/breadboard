@@ -16,6 +16,7 @@ import {
   NodeHandlerContext,
   Outcome,
 } from "@google-labs/breadboard";
+import type { EmbedHandler } from "@breadboard-ai/embed";
 
 export { bootstrap };
 
@@ -42,6 +43,10 @@ export type BootstrapArguments = {
    * system.
    */
   env?: FileSystemEntry[];
+  /**
+   * Provides a way to handle embedded versions of Breadboard.
+   */
+  embedHandler?: EmbedHandler;
 };
 
 function getUrlFromBoardServiceFlag(
@@ -107,6 +112,10 @@ function bootstrap(args: BootstrapArguments = {}) {
   const showExtendedSettings =
     globalThis.localStorage.getItem(esKey) === "true";
 
+  if (args.embedHandler) {
+    args.embedHandler.connect();
+  }
+
   async function init() {
     await StringsHelper.initFrom(LANGUAGE_PACK as LanguagePack);
 
@@ -131,6 +140,7 @@ function bootstrap(args: BootstrapArguments = {}) {
       graphStorePreloader: args?.graphStorePreloader,
       moduleInvocationFilter: args?.moduleInvocationFilter,
       env: args?.env,
+      embedHandler: args.embedHandler,
     };
 
     window.oncontextmenu = (evt) => evt.preventDefault();

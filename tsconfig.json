@@ -8,6 +8,7 @@
     { "path": "packages/connection-server" },
     { "path": "packages/core-kit" },
     { "path": "packages/data-store" },
+    { "path": "packages/embed" },
     { "path": "packages/filesystem-board-server" },
     { "path": "packages/google-drive-kit" },
     { "path": "packages/idb-board-server" },
