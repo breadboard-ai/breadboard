@@ -8,6 +8,7 @@ import type { TokenVendor } from "@breadboard-ai/connection-client";
 import type { Asset, GraphTag } from "@breadboard-ai/types";
 import {
   err,
+  ok,
   type GraphDescriptor,
   type Outcome,
 } from "@google-labs/breadboard";
@@ -17,6 +18,7 @@ import {
   type AppProperties,
   type DriveFile,
   type DriveFileQuery,
+  type GoogleApiAuthorization,
   type Properties,
 } from "./api.js";
 
@@ -70,7 +72,7 @@ async function retryableFetch(
         return response;
       }
     } catch (e) {
-      // return "403 Forbiddn" response, as this is likely a CORS error
+      // return "403 Forbidden" response, as this is likely a CORS error
       response = new Response(null, {
         status: 403,
         statusText: (e as Error).message,
@@ -134,24 +136,28 @@ class DriveOperations {
     }
   }
 
-  async readGraphList(): Promise<Outcome<GraphInfo[]>> {
-    const folderId = await this.findFolder();
-    if (!(typeof folderId === "string" && folderId)) {
-      return [];
-    }
-    const accessToken = await getAccessToken(this.vendor);
-    const query =
-      `"${folderId}" in parents` +
-      ` and (mimeType="${GRAPH_MIME_TYPE}"` +
-      `      or mimeType="${DEPRECATED_GRAPH_MIME_TYPE}")` +
-      ` and trashed=false`;
-
-    if (!folderId || !accessToken) {
-      throw new Error("No folder ID or access token");
-    }
-
+  async #readDriveFolder(
+    folderId: string,
+    auth: GoogleApiAuthorization
+  ): Promise<Outcome<GraphInfo[]>> {
+    // TODO(volodya): Deal with the deleted files.
+    // TODO(volodya): Defend against a duplicated values due to race conditions.
     try {
-      const api = new Files({ kind: "bearer", token: accessToken });
+      // Find out if we have a cached value and if so, add the search criteria.
+      const cache = await caches.open("DriveOperations");
+      const cacheKey = new URL(`http://opals/${folderId}`);
+      const cachedResponse = await cache.match(cacheKey);
+      const cachedLastModified = cachedResponse?.headers?.get("Last-Modified");
+      const query =
+        `"${folderId}" in parents` +
+        ` and (mimeType="${GRAPH_MIME_TYPE}"` +
+        `      or mimeType="${DEPRECATED_GRAPH_MIME_TYPE}")` +
+        ` and trashed=false` +
+        (cachedLastModified
+          ? `and modifiedTime > ${JSON.stringify(cachedLastModified)}`
+          : "");
+
+      const api = new Files(auth);
       const fileRequest = await retryableFetch(api.makeQueryRequest(query));
       const response: DriveFileQuery = await fileRequest.json();
 
@@ -161,12 +167,45 @@ class DriveOperations {
         return err(`Unable to get Drive folder contents. Likely an auth error`);
       }
 
-      const result = toGraphInfos(response.files);
+      const cachedList = (await cachedResponse?.json())?.files ?? [];
+      response.files.push(...cachedList);
+
+      const { result, lastModified } = toGraphInfos(response.files);
+      cache.put(
+        // no await.
+        cacheKey,
+        new Response(
+          JSON.stringify({
+            files: response.files,
+          }),
+          {
+            headers: {
+              "Last-Modified": lastModified ?? "",
+            },
+          }
+        )
+      );
       return result;
     } catch (e) {
       console.warn(e);
       return err((e as Error).message);
     }
+  }
+
+  async readGraphList(): Promise<Outcome<GraphInfo[]>> {
+    const folderId = await this.findFolder();
+    if (!(typeof folderId === "string" && folderId)) {
+      return [];
+    }
+    const accessToken = await getAccessToken(this.vendor);
+    if (!folderId || !accessToken) {
+      throw new Error("No folder ID or access token");
+    }
+
+    return this.#readDriveFolder(folderId, {
+      kind: "bearer",
+      token: accessToken,
+    });
   }
 
   async readFeaturedGalleryGraphList(): Promise<Outcome<GraphInfo[]>> {
@@ -184,16 +223,14 @@ class DriveOperations {
           " No public API key configured."
       );
     }
-    const query =
-      `"${folderId}" in parents` +
-      ` and (mimeType="${GRAPH_MIME_TYPE}"` +
-      `      or mimeType="${DEPRECATED_GRAPH_MIME_TYPE}")` +
-      ` and trashed=false`;
-    const api = new Files({ kind: "key", key: apiKey });
-    const fileRequest = await retryableFetch(api.makeQueryRequest(query));
-    const response = (await fileRequest.json()) as DriveFileQuery;
-
-    const results = toGraphInfos(response.files).map((graphInfo) => {
+    const graphInfos = await this.#readDriveFolder(folderId, {
+      kind: "key",
+      key: apiKey,
+    });
+    if (!ok(graphInfos)) {
+      return graphInfos;
+    }
+    const results = graphInfos.map((graphInfo) => {
       if (!graphInfo.tags.includes("featured")) {
         // The fact that a graph is in the featured folder alone determines
         // whether it is featured.
@@ -600,8 +637,15 @@ export function getFileId(driveUrl: string): string {
   return driveUrl;
 }
 
-function toGraphInfos(files: Array<DriveFile>): Array<GraphInfo> {
+function toGraphInfos(files: Array<DriveFile>): {
+  result: Array<GraphInfo>;
+  lastModified?: string;
+} {
+  let lastModified: string | undefined;
   const result = files.map((file: DriveFile) => {
+    if (file.modifiedTime && file.modifiedTime > (lastModified ?? "")) {
+      lastModified = file.modifiedTime;
+    }
     const appProperties = readAppProperties(file);
     return {
       id: file.id,
@@ -610,7 +654,7 @@ function toGraphInfos(files: Array<DriveFile>): Array<GraphInfo> {
       thumbnail: appProperties.thumbnailUrl,
     } satisfies GraphInfo;
   });
-  return result;
+  return { result, lastModified };
 }
 
 /**
