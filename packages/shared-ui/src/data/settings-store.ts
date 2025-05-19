@@ -259,6 +259,20 @@ export class SettingsStore implements BreadboardUI_Types.SettingsStore {
 
   private constructor() {}
 
+  async saveItem(
+    section: BreadboardUI_Types.SETTINGS_TYPE,
+    value: BreadboardUI_Types.SettingEntry["value"]
+  ) {
+    const settingsDb = await idb.openDB<SettingsDB>(
+      SETTINGS_NAME,
+      SETTINGS_VERSION
+    );
+    const tx = settingsDb.transaction(section, "readwrite");
+    tx.store.put(value);
+    await tx.done;
+    settingsDb.close();
+  }
+
   async save(settings: BreadboardUI_Types.Settings) {
     const settingsDb = await idb.openDB<SettingsDB>(
       SETTINGS_NAME,

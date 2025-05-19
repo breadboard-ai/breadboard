@@ -140,6 +140,7 @@ export const ToggleExperimentalComponentsCommand: KeyboardCommand = {
         "Show Experimental Components",
         newSetting
       );
+      settings.saveItem(BreadboardUI.Types.SETTINGS_TYPE.GENERAL, newSetting);
     }
   },
 };
