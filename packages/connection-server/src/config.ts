@@ -6,9 +6,24 @@
 
 import { readFile } from "node:fs/promises";
 
+// IMPORTANT: Keep in sync with
+// breadboard/packages/visual-editor/src/elements/connection/connection-common.ts
+export type GrantResponse =
+  | { error: string }
+  | {
+      error?: undefined;
+      access_token: string;
+      expires_in: number;
+      refresh_token: string;
+      picture?: string;
+      name?: string;
+      id?: string;
+    };
+
 export interface ServerConfig {
   connections: Map<string, ConnectionConfig>;
   allowedOrigins: string[];
+  validateResponse?: (response: GrantResponse) => Promise<GrantResponse>;
 }
 
 export interface ConnectionsConfigFile {

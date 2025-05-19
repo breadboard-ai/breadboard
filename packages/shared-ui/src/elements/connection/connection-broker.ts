@@ -77,18 +77,15 @@ export class ConnectionBroker extends HTMLElement {
       new URL(window.location.href).pathname
     );
     const response = await fetch(grantUrl, { credentials: "include" });
-    if (!response.ok) {
-      displayError("Connection service returned unexpected HTTP status.");
-      return;
-    }
+    ``;
     let grantResponse: GrantResponse;
     try {
       grantResponse = await response.json();
     } catch (e) {
-      displayError("Could not read JSON response from backend.");
-      return;
+      grantResponse = {
+        error: "Invalid response from connection server",
+      };
     }
-
     // Send the grant response back to the originating tab and close up shop.
     channel.postMessage(grantResponse);
     channel.close();
