@@ -213,6 +213,7 @@
     "@breadboard-ai/idb-board-server": "1.19.4",
     "@breadboard-ai/jsandbox": "0.6.0",
     "@breadboard-ai/shared-ui": "1.25.0",
+    "@breadboard-ai/theme": "0.0.1",
     "@breadboard-ai/types": "0.7.0",
     "@google-labs/breadboard": "^0.34.0",
     "@google-labs/core-kit": "^0.19.0",

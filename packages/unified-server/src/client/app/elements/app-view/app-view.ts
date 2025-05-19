@@ -43,7 +43,7 @@ import { googleDriveClientContext } from "@breadboard-ai/shared-ui/contexts/goog
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { loadImage } from "@breadboard-ai/shared-ui/utils/image.js";
 
-import { blobHandleToUrl } from "@breadboard-ai/shared-ui/elements/app-preview/app-preview.js";
+import { blobHandleToUrl } from "@breadboard-ai/shared-ui/utils/blob-handle-to-url.js";
 
 @customElement("app-view")
 export class AppView extends LitElement {

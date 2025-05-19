@@ -33,6 +33,8 @@ import { consume } from "@lit/context";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { loadImage } from "../../utils/image.js";
+import { blobHandleToUrl } from "../../utils/blob-handle-to-url.js";
+import { generatePaletteFromColor } from "@breadboard-ai/theme";
 
 const primaryColor = "#ffffff";
 const secondaryColor = "#7a7a7a";
@@ -136,7 +138,10 @@ export class AppPreview extends LitElement {
   </div>`;
 
   #createDefaultTheme(): AppTheme {
+    const palette = generatePaletteFromColor("#f82506");
+
     return {
+      ...palette,
       primaryColor: primaryColor,
       secondaryColor: secondaryColor,
       backgroundColor: backgroundColor,
@@ -345,10 +350,13 @@ export class AppPreview extends LitElement {
         ) {
           const { themes, theme } = this.graph.metadata.visual.presentation;
           if (themes[theme]) {
+            const appPalette =
+              themes[theme]?.palette ?? generatePaletteFromColor("#ffffff");
             const themeColors = themes[theme]?.themeColors ?? {};
 
             this.template = themes[theme].template ?? "basic";
             this.theme = {
+              ...appPalette,
               primaryColor: themeColors?.["primaryColor"] ?? primaryColor,
               secondaryColor: themeColors?.["secondaryColor"] ?? secondaryColor,
               backgroundColor:
@@ -371,6 +379,7 @@ export class AppPreview extends LitElement {
 
           if (theme) {
             this.theme = {
+              ...generatePaletteFromColor("#ffffff"),
               primaryColor: theme["primaryColor"] ?? primaryColor,
               secondaryColor: theme["secondaryColor"] ?? secondaryColor,
               backgroundColor: theme["backgroundColor"] ?? backgroundColor,
@@ -451,32 +460,4 @@ export class AppPreview extends LitElement {
       </div>
     `;
   }
-}
-
-/**
- * Blob handles usually look like "../../blobs/<UUID>". It's a bit unclear why
- * they are serialized with a very specific relative path and whether that's
- * always consistent, so let's be lenient and assume any URL with a blobs/ path
- * component is a blob.
- *
- * The reason why they are like this is because they're relative to graph URL.
- */
-const BLOB_HANDLE_PATTERN = /^[./]*blobs\/(.+)/;
-
-export function blobHandleToUrl(handle: string): URL | undefined {
-  const blobMatch = handle.match(BLOB_HANDLE_PATTERN);
-  if (blobMatch) {
-    const blobId = blobMatch[1];
-    if (blobId) {
-      return new URL(`/board/blobs/${blobId}`, window.location.href);
-    }
-  } else if (
-    handle.startsWith("data:") ||
-    handle.startsWith("http:") ||
-    handle.startsWith("https:") ||
-    handle.startsWith("drive:")
-  ) {
-    return new URL(handle);
-  }
-  return undefined;
 }

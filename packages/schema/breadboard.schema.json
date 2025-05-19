@@ -559,6 +559,9 @@
 						"type": "string"
 					}
 				},
+				"palette": {
+					"$ref": "#/definitions/AppPalette"
+				},
 				"template": {
 					"type": "string"
 				},
@@ -575,6 +578,56 @@
 					"type": "boolean"
 				}
 			},
+			"additionalProperties": false
+		},
+		"AppPalette": {
+			"type": "object",
+			"properties": {
+				"primary": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"secondary": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"tertiary": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"neutral": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"neutralVariant": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"error": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				}
+			},
+			"required": [
+				"primary",
+				"secondary",
+				"tertiary",
+				"neutral",
+				"neutralVariant",
+				"error"
+			],
 			"additionalProperties": false
 		},
 		"StoredDataCapabilityPart": {

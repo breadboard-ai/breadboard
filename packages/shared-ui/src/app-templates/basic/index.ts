@@ -63,6 +63,8 @@ import "../../elements/output/multi-output/multi-output.js";
 import { map } from "lit/directives/map.js";
 import { markdown } from "../../directives/markdown";
 import { maybeConvertToYouTube } from "../../utils/substitute-input";
+import { createThemeStyles } from "@breadboard-ai/theme";
+import { icons } from "../../styles/icons";
 
 const SIGN_IN_SECRET_KEY = `connection:${SIGN_IN_CONNECTION_ID}`;
 
@@ -176,6 +178,7 @@ export class Template extends LitElement implements AppTemplate {
   }
 
   static styles = [
+    icons,
     css`
       * {
         box-sizing: border-box;
@@ -202,18 +205,6 @@ export class Template extends LitElement implements AppTemplate {
         }
       }
 
-      @scope (.app-template.font-serif) {
-        :scope {
-          --font-family: serif;
-        }
-      }
-
-      @scope (.app-template.fontStyle-italic) {
-        :scope {
-          --font-style: italic;
-        }
-      }
-
       /** General styles */
 
       :host([hasrenderedsplash]) {
@@ -228,8 +219,8 @@ export class Template extends LitElement implements AppTemplate {
 
       @scope (.app-template) {
         :scope {
-          background: var(--background-color);
-          color: var(--text-color);
+          background: var(--s-90, var(--background-color));
+          color: var(--p-25, var(--text-color));
           display: flex;
           width: 100%;
           height: 100%;
@@ -332,7 +323,7 @@ export class Template extends LitElement implements AppTemplate {
               font: 500 var(--font-style, normal) var(--bb-title-large) /
                 var(--bb-title-line-height-large)
                 var(--font-family, var(--bb-font-family));
-              color: var(--primary-color, var(--bb-neutral-900));
+              color: var(--s-80, var(--bb-neutral-900));
               margin: 0 0 var(--bb-grid-size) 0;
             }
 
@@ -356,22 +347,22 @@ export class Template extends LitElement implements AppTemplate {
               flex: 1;
               background: var(--splash-image, var(--bb-logo)) center center /
                 var(--splash-fill, cover) no-repeat;
-              mask-image: linear-gradient(
-                to bottom,
-                rgba(255, 0, 255, 1) 0%,
-                rgba(255, 0, 255, 1) 70%,
-                rgba(255, 0, 255, 0.75) 80%,
-                rgba(255, 0, 255, 0.4) 90%,
-                rgba(255, 0, 255, 0) 100%
-              );
+              padding: var(--bb-grid-size-3);
+              background-clip: content-box;
+              border-radius: var(--bb-grid-size-5);
+              box-sizing: border-box;
+            }
+
+            &.default::before {
+              background-clip: initial;
             }
 
             & h1 {
               background: var(--background-color, none);
               border-radius: var(--bb-grid-size-2);
-              font: 400 var(--font-style) 32px / 42px var(--font-family);
-              color: var(--text-color, var(--bb-neutral-700));
-              margin: 0 0 var(--bb-grid-size-3);
+              font: 400 var(--font-style) 36px / 40px var(--font-family);
+              color: var(--p-25, var(--bb-neutral-700));
+              margin: var(--bb-grid-size-10) 0 var(--bb-grid-size-4) 0;
               flex: 0 0 auto;
               max-width: 80%;
               width: max-content;
@@ -380,9 +371,8 @@ export class Template extends LitElement implements AppTemplate {
 
             & p {
               flex: 0 0 auto;
-              font: 400 var(--font-style) var(--bb-body-large) /
-                var(--bb-body-line-height-large) var(--font-family);
-              color: var(--secondary-color, var(--bb-neutral-700));
+              font: 400 var(--font-style) 16px / 20px var(--font-family);
+              color: var(--p-25, var(--bb-neutral-700));
               margin: 0 0 var(--bb-grid-size-3);
 
               max-width: 65%;
@@ -396,7 +386,7 @@ export class Template extends LitElement implements AppTemplate {
             align-items: center;
             justify-content: space-between;
             height: 76px;
-            border-bottom: 1px solid var(--secondary-color, var(--bb-neutral-0));
+            border-bottom: 1px solid var(--s-70, var(--bb-neutral-0));
             padding: 0 var(--bb-grid-size-4);
             position: relative;
 
@@ -436,7 +426,7 @@ export class Template extends LitElement implements AppTemplate {
               width: 100%;
               max-width: 320px;
               height: 4px;
-              background: var(--secondary-color);
+              background: var(--p-70);
               border-radius: var(--bb-grid-size-16);
               position: relative;
 
@@ -448,7 +438,7 @@ export class Template extends LitElement implements AppTemplate {
                 width: calc(var(--percentage) * 100%);
                 max-width: 100%;
                 height: 4px;
-                background: var(--primary-color);
+                background: var(--p-40);
                 border-radius: var(--bb-grid-size-16);
                 transition: width 0.3s cubic-bezier(0, 0, 0.3, 1);
               }
@@ -459,26 +449,19 @@ export class Template extends LitElement implements AppTemplate {
               height: 20px;
               background: transparent;
               border: none;
-              font-size: 0;
+              font-size: 20px;
               opacity: 0.6;
               transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+              padding: 0;
+              color: var(--p-15, var(--bb-neutral-800));
 
               &#back {
-                background: var(--bb-icon-arrow-back) center center / 20px 20px
-                  no-repeat;
                 opacity: 0;
                 pointer-events: none;
               }
 
               &#share {
                 display: none;
-                background: var(--bb-icon-share) center center / 20px 20px
-                  no-repeat;
-              }
-
-              &#restart {
-                background: var(--bb-icon-replay) center center / 20px 20px
-                  no-repeat;
               }
 
               &:not([disabled]) {
@@ -545,7 +528,7 @@ export class Template extends LitElement implements AppTemplate {
                   margin: 0 0 var(--bb-grid-size-2) 0;
                   font: 400 var(--bb-title-large) /
                     var(--bb-title-line-height-large) var(--bb-font-family);
-                  color: var(--primary-color);
+                  color: var(--e-80);
                 }
 
                 & p {
@@ -590,7 +573,7 @@ export class Template extends LitElement implements AppTemplate {
                 font: 500 var(--font-style, normal) var(--bb-title-small) /
                   var(--bb-title-line-height-small)
                   var(--font-family, var(--bb-font-family));
-                color: var(--primary-color, var(--bb-neutral-900));
+                color: var(--s-80, var(--bb-neutral-900));
                 margin: 0 0 var(--bb-grid-size-2) 0;
               }
 
@@ -609,11 +592,10 @@ export class Template extends LitElement implements AppTemplate {
               width: calc(100% - var(--bb-grid-size-12));
               left: 50%;
               transform: translateX(-50%);
-              background: var(--default-progress, var(--bb-progress))
-                var(--primary-color) 16px center / 20px 20px no-repeat;
-              color: var(--primary-text-color);
+              background: var(--p-20);
+              color: var(--p-100);
               padding: var(--bb-grid-size-3) var(--bb-grid-size-4)
-                var(--bb-grid-size-3) var(--bb-grid-size-12);
+                var(--bb-grid-size-3) var(--bb-grid-size-3);
               border-radius: var(--bb-grid-size-3);
               z-index: 1;
               font: 400 var(--bb-title-medium) /
@@ -621,13 +603,20 @@ export class Template extends LitElement implements AppTemplate {
               opacity: 0;
               animation: fadeIn 0.6s cubic-bezier(0, 0, 0.3, 1) 0.6s forwards;
 
+              & .g-icon {
+                margin: var(--bb-grid-size-2);
+                animation: rotate 1s linear forwards infinite;
+
+                &::before {
+                  content: "progress_activity";
+                }
+              }
+
               &::after {
                 content: "Working";
                 flex: 0 0 auto;
                 margin-left: var(--bb-grid-size-3);
-                color: oklch(
-                  from var(--primary-text-color) l c h / calc(alpha - 0.4)
-                );
+                color: oklch(from var(--p-15) l c h / calc(alpha - 0.4));
               }
             }
           }
@@ -638,24 +627,23 @@ export class Template extends LitElement implements AppTemplate {
             display: flex;
             justify-content: center;
             position: relative;
-
-            background: var(--background-color, var(--bb-neutral-0));
+            background: transparent;
 
             & #sign-in,
             & #run {
-              min-width: 76px;
-              height: var(--bb-grid-size-10);
-              background: var(--primary-color, var(--bb-ui-50))
-                var(--start-icon, var(--bb-icon-generative)) 12px center / 16px
-                16px no-repeat;
-              color: var(--primary-text-color, var(--bb-ui-700));
-              border-radius: 20px;
-              border: 1px solid
-                var(--start-border, var(--primary-color, var(--bb-ui-100)));
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              width: 200px;
+              height: var(--bb-grid-size-12);
+              background: var(--p-15, var(--bb-ui-50));
+              color: var(--p-100, var(--bb-ui-700));
+              border-radius: var(--bb-grid-size-12);
               font: 400 var(--bb-label-large) /
                 var(--bb-label-line-height-large) var(--bb-font-family);
-              padding: 0 var(--bb-grid-size-5) 0 var(--bb-grid-size-9);
+              padding: 0;
               opacity: 0.85;
+              border: none;
 
               --transition-properties: opacity;
               transition: var(--transition);
@@ -673,15 +661,24 @@ export class Template extends LitElement implements AppTemplate {
                   opacity: 1;
                 }
               }
+
+              & .g-icon {
+                margin-right: var(--bb-grid-size-2);
+              }
             }
 
-            & #sign-in {
-              background-image: var(--bb-icon-login-inverted);
+            & #run .g-icon::before {
+              content: "spark";
+            }
+
+            & #sign-in .g-icon::before {
+              content: "login";
             }
 
             &.stopped {
               min-height: 100px;
               padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
+              background: transparent;
             }
 
             &.finished {
@@ -697,7 +694,7 @@ export class Template extends LitElement implements AppTemplate {
                   var(--bb-grid-size-4) var(--bb-grid-size-3);
                 transition: transform 0.6s cubic-bezier(0, 0, 0.3, 1);
                 transform: translateY(100%);
-                background: var(--input-background, var(--primary-color));
+                background: var(--s-95);
                 color: var(--primary-text-color);
                 width: 100%;
                 display: flex;
@@ -760,33 +757,31 @@ export class Template extends LitElement implements AppTemplate {
                   }
                 }
 
+                bb-add-asset-button {
+                  --background-color: var(--p-80);
+                  --text-color: var(--p-15);
+                }
+
                 & .controls {
                   margin-left: var(--bb-grid-size-2);
                   display: flex;
                   align-items: flex-end;
 
                   bb-speech-to-text {
-                    --primary-color: var(--bb-neutral-0);
-                    --active-color: linear-gradient(
-                      oklch(
-                        from var(--primary-text-color) l c h /
-                          calc(alpha - 0.35)
-                      ),
-                      transparent
-                    );
+                    --background: var(--p-80);
+                    --bb-icon-color: var(--p-15);
+                    --active-color: linear-gradient(var(--p-40), transparent);
                   }
 
                   & #continue {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
                     margin-left: var(--bb-grid-size-2);
-                    background: oklch(
-                        from var(--primary-text-color) l c h /
-                          calc(alpha - 0.75)
-                      )
-                      var(--bb-icon-send) center center / 20px 20px no-repeat;
-
+                    background: var(--p-80);
+                    color: var(--p-15);
                     width: 40px;
                     height: 40px;
-                    font-size: 0;
                     border: none;
                     border-radius: 50%;
 
@@ -795,12 +790,12 @@ export class Template extends LitElement implements AppTemplate {
 
                     &[disabled] {
                       cursor: auto;
-                      opacity: 0.5;
+                      opacity: 0.8;
                     }
 
                     &:not([disabled]) {
                       cursor: pointer;
-                      opacity: 0.5;
+                      opacity: 0.8;
 
                       &:hover,
                       &:focus {
@@ -867,11 +862,13 @@ export class Template extends LitElement implements AppTemplate {
         ></div>
       </div>
       <button
-        id="restart"
+        id="replay"
         @click=${() => {
           this.dispatchEvent(new StopEvent(true));
         }}
-      ></button>
+      >
+        <span class="g-icon">replay</span>
+      </button>
       ${showShare
         ? html`<button
             id="share"
@@ -882,7 +879,7 @@ export class Template extends LitElement implements AppTemplate {
               });
             }}
           >
-            Share
+            <span class="g-icon">share</span>
           </button>`
         : nothing}
       <div
@@ -943,6 +940,7 @@ export class Template extends LitElement implements AppTemplate {
 
       if (topGraphResult.currentNode?.descriptor.metadata?.title) {
         status = html`<div id="status">
+          <span class="g-icon"></span>
           ${topGraphResult.currentNode.descriptor.metadata.title}
         </div>`;
       }
@@ -1147,7 +1145,7 @@ export class Template extends LitElement implements AppTemplate {
                 continueRun(currentItem.id ?? "unknown");
               }}
             >
-              Continue
+              <span class="g-icon">send_spark</span>
             </button>
           </div>
         `;
@@ -1344,7 +1342,7 @@ export class Template extends LitElement implements AppTemplate {
                 continueRun(currentItem.id ?? "unknown");
               }}
             >
-              Continue
+              <span class="g-icon">send_spark</span>
             </button>
           </div>
         `;
@@ -1433,13 +1431,9 @@ export class Template extends LitElement implements AppTemplate {
       }
     }
 
-    const styles: Record<string, string> = {};
+    let styles: Record<string, string> = {};
     if (this.options.theme) {
-      styles["--primary-color"] = this.options.theme.primaryColor;
-      styles["--primary-text-color"] = this.options.theme.primaryTextColor;
-      styles["--secondary-color"] = this.options.theme.secondaryColor;
-      styles["--text-color"] = this.options.theme.textColor;
-      styles["--background-color"] = this.options.theme.backgroundColor;
+      styles = createThemeStyles(this.options.theme);
     }
 
     if (typeof this.options.splashImage === "string") {
@@ -1452,7 +1446,7 @@ export class Template extends LitElement implements AppTemplate {
         styles["--default-progress"] = "url(/images/progress-inverted.svg)";
         styles["--start-icon"] = "var(--bb-icon-generative-inverted)";
         styles["--input-background"] =
-          "oklch(from var(--primary-color) calc(l + 0.2) c h)";
+          "oklch(from var(--s-80) calc(l + 0.2) c h)";
       }
 
       styles["--splash-image"] = this.options.splashImage;
@@ -1477,6 +1471,7 @@ export class Template extends LitElement implements AppTemplate {
     const splashScreen = html`
       <div
         id="splash"
+        class=${classMap({ default: this.options.isDefaultTheme ?? false })}
         @animationend=${() => {
           this.hasRenderedSplash = true;
         }}
@@ -1544,7 +1539,7 @@ export class Template extends LitElement implements AppTemplate {
                   this.dispatchEvent(new RunEvent());
                 }}
               >
-                Start
+                <span class="g-icon"></span>Start
               </button>`
             : html`<button
                 id="sign-in"
@@ -1553,7 +1548,7 @@ export class Template extends LitElement implements AppTemplate {
                   this.dispatchEvent(new SignInRequestedEvent());
                 }}
               >
-                Sign In
+                <span class="g-icon"></span>Sign In
               </button>`}
         </div>
       </div>

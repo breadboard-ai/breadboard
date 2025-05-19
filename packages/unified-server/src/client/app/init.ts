@@ -18,12 +18,7 @@ import {
 import { AppViewConfig, BootstrapArguments } from "./types/types.js";
 
 import * as Elements from "./elements/elements.js";
-import {
-  createRunObserver,
-  GraphDescriptor,
-  isInlineData,
-  isStoredData,
-} from "@google-labs/breadboard";
+import { createRunObserver, GraphDescriptor } from "@google-labs/breadboard";
 import * as BreadboardUIContext from "@breadboard-ai/shared-ui/contexts";
 import * as ConnectionClient from "@breadboard-ai/connection-client";
 import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
@@ -33,13 +28,17 @@ import {
   createRunner as createBreadboardRunner,
 } from "@google-labs/breadboard/harness";
 import { getGlobalColor } from "./utils/color.js";
-import { LLMContent } from "@breadboard-ai/types";
 import { getRunStore } from "@breadboard-ai/data-store";
 import { sandbox } from "./sandbox.js";
 import { TopGraphObserver } from "@breadboard-ai/shared-ui/utils/top-graph-observer";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
 import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
+import {
+  generatePaletteFromImage,
+  generatePaletteFromColor,
+} from "@breadboard-ai/theme";
+import { blobHandleToUrl } from "@breadboard-ai/shared-ui/utils/blob-handle-to-url.js";
 
 const primaryColor = getGlobalColor("--bb-ui-700");
 const secondaryColor = getGlobalColor("--bb-ui-400");
@@ -205,6 +204,7 @@ async function createRunner(
 
 function createDefaultTheme(): AppTheme {
   return {
+    ...generatePaletteFromColor("#ffffff"),
     primaryColor: primaryColor,
     secondaryColor: secondaryColor,
     backgroundColor: backgroundColor,
@@ -219,20 +219,20 @@ function createDefaultTheme(): AppTheme {
   };
 }
 
-function extractThemeFromFlow(flow: GraphDescriptor | null): {
+async function extractThemeFromFlow(flow: GraphDescriptor | null): Promise<{
   theme: AppTheme;
   templateAdditionalOptionsChosen: Record<string, string>;
   title: string;
   description: string | null;
   isDefaultTheme: boolean;
-} | null {
+} | null> {
   const title = flow?.title ?? "Untitled App";
   const description: string | null = flow?.description ?? null;
 
   let isDefaultTheme = false;
   let templateAdditionalOptionsChosen: Record<string, string> = {};
 
-  const theme: AppTheme = createDefaultTheme();
+  let theme: AppTheme = createDefaultTheme();
 
   if (flow?.metadata?.visual?.presentation) {
     if (
@@ -241,6 +241,19 @@ function extractThemeFromFlow(flow: GraphDescriptor | null): {
     ) {
       const { theme: graphTheme, themes } = flow.metadata.visual.presentation;
       const appTheme = themes[graphTheme];
+      if (!appTheme.palette && appTheme.splashScreen?.storedData.handle) {
+        const url = blobHandleToUrl(appTheme.splashScreen.storedData.handle);
+        if (url) {
+          const img = new Image();
+          img.src = url.href;
+
+          const generatedTheme = await generatePaletteFromImage(img);
+          theme = { ...theme, ...generatedTheme };
+        }
+      } else if (appTheme.palette) {
+        theme = { ...theme, ...appTheme.palette };
+      }
+
       const themeColors = appTheme.themeColors;
       const splashScreen = appTheme.splashScreen;
       isDefaultTheme = appTheme.isDefaultTheme ?? false;
@@ -261,35 +274,6 @@ function extractThemeFromFlow(flow: GraphDescriptor | null): {
       if (appTheme.templateAdditionalOptions) {
         templateAdditionalOptionsChosen = {
           ...appTheme.templateAdditionalOptions,
-        };
-      }
-    } else {
-      const themeColors = flow.metadata.visual.presentation.themeColors;
-      const splashScreen = flow.assets?.["@@splash"];
-
-      if (themeColors) {
-        theme.primaryColor = themeColors["primaryColor"] ?? primaryColor;
-        theme.secondaryColor = themeColors["secondaryColor"] ?? secondaryColor;
-        theme.backgroundColor =
-          themeColors["backgroundColor"] ?? backgroundColor;
-        theme.textColor = themeColors["textColor"] ?? textColor;
-        theme.primaryTextColor =
-          themeColors["primaryTextColor"] ?? primaryTextColor;
-
-        if (splashScreen) {
-          const splashScreenData = splashScreen.data as LLMContent[];
-          if (splashScreenData.length && splashScreenData[0].parts.length) {
-            const splash = splashScreenData[0].parts[0];
-            if (isInlineData(splash) || isStoredData(splash)) {
-              theme.splashScreen = splash;
-            }
-          }
-        }
-      }
-
-      if (flow.metadata.visual.presentation.templateAdditionalOptions) {
-        templateAdditionalOptionsChosen = {
-          ...flow.metadata.visual.presentation.templateAdditionalOptions,
         };
       }
     }
@@ -384,7 +368,7 @@ async function bootstrap(args: BootstrapArguments = {}) {
     );
     const runner = await createRunner(runConfig, abortController);
 
-    const extractedTheme = extractThemeFromFlow(flow);
+    const extractedTheme = await extractThemeFromFlow(flow);
     const config: AppViewConfig = {
       flow,
       template,
