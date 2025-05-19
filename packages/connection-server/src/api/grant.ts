@@ -5,29 +5,25 @@
  */
 
 import type { IncomingMessage, ServerResponse } from "node:http";
-import type { ServerConfig } from "../config.js";
+import type { GrantResponse, ServerConfig } from "../config.js";
 import { badRequestJson, internalServerError, okJson } from "../responses.js";
 import { jwtDecode, type JwtPayload } from "jwt-decode";
 
-interface GrantRequest {
-  connection_id: string;
-  code: string;
-  redirect_path: string;
-}
-
-// IMPORTANT: Keep in sync with
-// breadboard/packages/visual-editor/src/elements/connection/connection-common.ts
-type GrantResponse =
+export type TokenEndpointGrantResponse =
   | { error: string }
   | {
       error?: undefined;
       access_token: string;
       expires_in: number;
       refresh_token: string;
-      picture?: string;
-      name?: string;
-      id?: string;
+      id_token: string;
     };
+
+interface GrantRequest {
+  connection_id: string;
+  code: string;
+  redirect_path: string;
+}
 
 /**
  * API which performs first-time authorization for a connection.
@@ -92,14 +88,24 @@ export async function grant(
     tokenResponse.expires_in >= 0
   ) {
     const { picture, name, id } = decodeIdToken(tokenResponse.id_token);
-    return okJson(res, {
+    const grantResponse: GrantResponse = {
       access_token: tokenResponse.access_token,
       expires_in: tokenResponse.expires_in,
       refresh_token: tokenResponse.refresh_token,
       picture,
       name,
       id,
-    } satisfies GrantResponse);
+    };
+    if (config.validateResponse) {
+      const checkedGrantResponse = await config.validateResponse(grantResponse);
+      if (checkedGrantResponse.error) {
+        return badRequestJson(res, {
+          error: checkedGrantResponse.error,
+        });
+      }
+      return okJson(res, checkedGrantResponse);
+    }
+    return okJson(res, grantResponse);
   }
 
   if (httpRes.status === 400) {
@@ -125,18 +131,6 @@ ${JSON.stringify(tokenResponse, null, 2)}`
     `Unexpected HTTP ${httpRes.status} status from grant token endpoint.`
   );
 }
-
-type TokenEndpointGrantResponse =
-  | {
-      access_token: string;
-      refresh_token?: string;
-      expires_in: number;
-      error?: undefined;
-      id_token?: string;
-    }
-  | {
-      error: string;
-    };
 
 /**
  * This is a gnarly workaround. When used within Express, the origin
