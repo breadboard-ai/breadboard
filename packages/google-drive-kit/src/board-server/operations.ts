@@ -171,20 +171,22 @@ class DriveOperations {
       response.files.push(...cachedList);
 
       const { result, lastModified } = toGraphInfos(response.files);
-      cache.put(
-        // no await.
-        cacheKey,
-        new Response(
-          JSON.stringify({
-            files: response.files,
-          }),
-          {
-            headers: {
-              "Last-Modified": lastModified ?? "",
-            },
-          }
-        )
-      );
+      if (response.files?.length > 0) {
+        cache.put(
+          // no await.
+          cacheKey,
+          new Response(
+            JSON.stringify({
+              files: response.files,
+            }),
+            {
+              headers: {
+                "Last-Modified": lastModified ?? "",
+              },
+            }
+          )
+        );
+      }
       return result;
     } catch (e) {
       console.warn(e);
