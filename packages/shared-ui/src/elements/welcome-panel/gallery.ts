@@ -59,6 +59,11 @@ export class Gallery extends LitElement {
           --items-per-column: 2;
         }
       }
+      @media (min-width: 0px) and (max-width: 480px) {
+        :host {
+          --items-per-column: 1;
+        }
+      }
 
       bb-overflow-menu {
         position: fixed;
