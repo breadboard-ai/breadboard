@@ -46,18 +46,6 @@ class GoogleDriveBoardServer
 {
   static PROTOCOL = PROTOCOL;
 
-  static async connect(folderId: string, vendor: TokenVendor) {
-    const folder = await DriveOperations.readFolder(folderId, vendor);
-    if (!folder) {
-      return null;
-    }
-
-    return {
-      title: folder.name || "Google Drive",
-      username: OWNER_USERNAME,
-    };
-  }
-
   static async from(
     url: string,
     title: string,
@@ -68,15 +56,6 @@ class GoogleDriveBoardServer
     publicApiKey?: string,
     featuredGalleryFolderId?: string
   ) {
-    const connection = await GoogleDriveBoardServer.connect(
-      new URL(url).hostname,
-      vendor
-    );
-
-    if (!connection) {
-      return null;
-    }
-
     try {
       const configuration = {
         url: new URL(url),

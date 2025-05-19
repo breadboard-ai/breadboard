@@ -171,10 +171,11 @@ export async function connectToBoardServer(
       }
 
       const url = new URL(location);
-      const response = await GoogleDriveBoardServer.connect(
-        url.hostname,
-        tokenVendor
-      );
+      const response = {
+        url: "drive:",
+        title: "Google Drive",
+        username: "board-builder",
+      };
       if (response) {
         await storeBoardServer(url, response.title, {
           apiKey: apiKey ?? "",
