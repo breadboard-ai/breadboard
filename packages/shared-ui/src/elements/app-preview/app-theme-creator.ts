@@ -560,6 +560,7 @@ export class AppThemeCreator extends LitElement {
         img.src = `data:${splashScreen.inlineData.mimeType};base64,${splashScreen.inlineData.data}`;
       } else {
         img.src = splashScreen.storedData.handle;
+        img.crossOrigin = "anonymous";
       }
       theme = await generatePaletteFromImage(img);
 

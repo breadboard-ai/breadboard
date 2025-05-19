@@ -672,6 +672,7 @@ export class Board extends EventTarget {
 
     const img = new Image();
     img.src = splashUrl.href;
+    img.crossOrigin = "anonymous";
     theme.palette = await generatePaletteFromImage(img);
   }
 
