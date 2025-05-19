@@ -15,6 +15,7 @@ export type DriveFile = {
   name: string;
   resourceKey: string;
   appProperties: Record<string, string>;
+  modifiedTime?: string;
 } & Properties;
 
 export type DriveFileQuery = {
@@ -83,17 +84,20 @@ class Files {
     const boundary = globalThis.crypto.randomUUID();
     const headers = this.#makeHeaders();
     headers.set("Content-Type", `multipart/related; boundary=${boundary}`);
-    const body = `--${boundary}\n` + [
-      ...parts.map((part) => {
-        const data =
-          typeof part.data === "string"
-            ? part.data
-            : JSON.stringify(part.data, null, 2);
+    const body =
+      `--${boundary}\n` +
+      [
+        ...parts.map((part) => {
+          const data =
+            typeof part.data === "string"
+              ? part.data
+              : JSON.stringify(part.data, null, 2);
 
-        return `Content-Type: ${part.contentType}\n\n${data}\n`;
-      }),
-      '',
-    ].join(`\n--${boundary}`) + `--`;
+          return `Content-Type: ${part.contentType}\n\n${data}\n`;
+        }),
+        "",
+      ].join(`\n--${boundary}`) +
+      `--`;
     return {
       headers,
       body,
@@ -110,7 +114,9 @@ class Files {
   makeQueryRequest(query: string): Request {
     return new Request(
       this.#makeUrl(
-        `drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,appProperties,properties)`
+        `drive/v3/files?q=${encodeURIComponent(query)}` +
+          `&fields=files(id,name,appProperties,properties,modifiedTime)` +
+          "&orderBy=modifiedTime desc"
       ),
       {
         method: "GET",
@@ -122,32 +128,30 @@ class Files {
   makeUpdateMetadataRequest(fileId: string, parent: string, metadata: unknown) {
     const headers = this.#makeHeaders();
     const url = `drive/v3/files/${fileId}?addParents=${parent}`;
-    return new Request(
-      this.#makeUrl(url),
-      {
-        method: "PATCH",
-        headers,
-        body: JSON.stringify(metadata),
-      }
-    );
+    return new Request(this.#makeUrl(url), {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify(metadata),
+    });
   }
 
-  makeUploadRequest(fileId: string|undefined, data: string, contentType: string) {
+  makeUploadRequest(
+    fileId: string | undefined,
+    data: string,
+    contentType: string
+  ) {
     const headers = this.#makeHeaders();
-    headers.append('Content-Type', contentType);
-    headers.append('X-Upload-Content-Type', contentType);
-    headers.append('X-Upload-Content-Length', `${data.length}`);
-    const url = fileId 
-      ? `upload/drive/v3/files/${fileId}?uploadType=media` 
+    headers.append("Content-Type", contentType);
+    headers.append("X-Upload-Content-Type", contentType);
+    headers.append("X-Upload-Content-Length", `${data.length}`);
+    const url = fileId
+      ? `upload/drive/v3/files/${fileId}?uploadType=media`
       : "upload/drive/v3/files?uploadType=media";
-    return new Request(
-      this.#makeUrl(url),
-      {
-        method: fileId ? "PATCH" : "POST",
-        headers,
-        body: b64toBlob(data),
-      }
-    );
+    return new Request(this.#makeUrl(url), {
+      method: fileId ? "PATCH" : "POST",
+      headers,
+      body: b64toBlob(data),
+    });
   }
 
   makeLoadRequest(file: string): Request {
