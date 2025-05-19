@@ -10,9 +10,6 @@
   "type": "module",
   "scripts": {
     "prepack": "npm run build",
-    "test": "wireit",
-    "test:ava": "wireit",
-    "test:browser": "wireit",
     "build": "wireit",
     "build:esbuild": "wireit",
     "build:tsc": "wireit",
@@ -63,24 +60,6 @@
       ],
       "clean": true
     },
-    "test": {
-      "dependencies": [
-        "test:ava"
-      ]
-    },
-    "test:ava": {
-      "command": "ava",
-      "env": {
-        "FORCE_COLOR": "1"
-      },
-      "dependencies": [
-        "build:tsc"
-      ],
-      "files": [
-        "tests/**/*.ts"
-      ],
-      "output": []
-    },
     "lint": {
       "command": "eslint . --ext .ts",
       "env": {
@@ -106,19 +85,6 @@
     "dist/*.js",
     "dist/*.js.map"
   ],
-  "ava": {
-    "timeout": "30s",
-    "files": [
-      "tests/**/*.test.ts"
-    ],
-    "workerThreads": false,
-    "typescript": {
-      "rewritePaths": {
-        "./": "dist/"
-      },
-      "compile": false
-    }
-  },
   "keywords": [],
   "author": "Google Labs Team",
   "license": "Apache-2.0",
@@ -127,16 +93,7 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/embed#readme",
   "devDependencies": {
-    "@ava/typescript": "^4.0.0",
-    "@esm-bundle/chai": "^4.3.4-fix.0",
     "@google-labs/tsconfig": "^0.0.1",
-    "@types/mocha": "^10.0.10",
-    "@types/node": "^22.0.0",
-    "@typescript-eslint/eslint-plugin": "^7.18.0",
-    "@typescript-eslint/parser": "^7.18.0",
-    "@web/dev-server-esbuild": "^1.0.4",
-    "@web/test-runner": "^0.20.1",
-    "ava": "^5.2.0",
     "esbuild": "^0.25.2",
     "typescript": "^5.8.3"
   },
