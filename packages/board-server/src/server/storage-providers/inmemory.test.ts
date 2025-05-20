@@ -42,7 +42,7 @@ suite("In-memory storage provider", () => {
       tags: [],
       thumbnail: "",
       graph: {
-        description: "",
+        description: "Add a description",
         edges: [],
         nodes: [],
         title: "Untitled Flow",
