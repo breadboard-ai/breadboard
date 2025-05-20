@@ -24,6 +24,8 @@ import {
 
 export { DriveOperations, PROTOCOL };
 
+import { truncateValueForUtf8 } from "./utils.js";
+
 const PROTOCOL = "drive:";
 
 const GOOGLE_DRIVE_FOLDER_MIME_TYPE = "application/vnd.google-apps.folder";
@@ -32,6 +34,8 @@ const DEPRECATED_GRAPH_MIME_TYPE = "application/json";
 
 /** Delay between GDrive API retries. */
 const RETRY_MS = 200;
+
+const MAX_APP_PROPERTY_LENGTH = 124;
 
 export type GraphInfo = {
   id: string;
@@ -574,12 +578,23 @@ function createAppProperties(
     description = "",
     metadata: { tags = [] } = {},
   } = descriptor;
-  return {
+  const result: StoredAppProperties = {
     title,
-    description,
+    description: description,
     tags: JSON.stringify(tags),
     thumbnailUrl: thumbnailUrl ?? "", // undefined here means "do not update".
   };
+
+  // Drive has limit of how long key+value can be in bytes in UTF8 wo we are truncating the values.
+  let key: keyof StoredAppProperties;
+  for (key in result) {
+    result[key] = truncateValueForUtf8(
+      key,
+      result[key]!,
+      MAX_APP_PROPERTY_LENGTH
+    );
+  }
+  return result;
 }
 
 function readAppProperties(
