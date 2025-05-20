@@ -338,8 +338,8 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           }
         }
 
-        #content {
-          padding: var(--bb-grid-size-3) var(--bb-grid-size-6);
+        bb-llm-output {
+          margin: var(--bb-grid-size-3) var(--bb-grid-size-6);
         }
       }
 
