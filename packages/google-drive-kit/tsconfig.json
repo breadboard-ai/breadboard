@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "rootDir": "src",
     "outDir": "dist",
     "tsBuildInfoFile": "dist/.tsbuildinfo",
     "target": "ES2022",
@@ -21,6 +20,6 @@
     "verbatimModuleSyntax": true,
     "useUnknownInCatchVariables": true
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*", "tests/**/*"],
   "exclude": []
 }

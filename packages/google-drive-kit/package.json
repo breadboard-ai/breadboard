@@ -14,24 +14,24 @@
     "url": "git+https://github.com/breadboard-ai/google-drive-kit.git"
   },
   "type": "module",
-  "main": "dist/index.js",
-  "typings": "dist/index.d.ts",
+  "main": "dist/src/index.js",
+  "typings": "dist/src/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
     },
     "./index.js": {
       "types": null,
       "default": null
     },
     "./internal/*.js": {
-      "types": "./dist/internal/*.d.ts",
+      "types": "./dist/src/internal/*.d.ts",
       "default": null
     },
     "./*.js": {
-      "types": "./dist/*.d.ts",
-      "default": "./dist/*.js"
+      "types": "./dist/src/*.d.ts",
+      "default": "./dist/src/*.js"
     },
     "./google-drive.kit.json": "./google-drive.kit.json"
   },
@@ -45,7 +45,6 @@
     "build": "wireit",
     "build:tsc": "wireit",
     "test": "wireit",
-    "test:only": "wireit",
     "coverage": "wireit",
     "lint": "wireit",
     "test-and-lint": "wireit",
@@ -64,7 +63,8 @@
         "<dependencies>#<this>"
       ],
       "files": [
-        "src/",
+        "src/**/*.ts",
+        "tests/**/*.ts",
         "tsconfig.json",
         "package.json"
       ],
@@ -74,19 +74,13 @@
       "clean": "if-file-deleted"
     },
     "test": {
-      "command": "echo 'no tests'",
+      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/**/*.js",
       "dependencies": [
         "build:tsc"
       ],
-      "files": [],
-      "output": []
-    },
-    "test:only": {
-      "command": "echo 'no tests'",
-      "dependencies": [
-        "build:tsc"
+      "files": [
+        "tests/**/*.ts"
       ],
-      "files": [],
       "output": []
     },
     "coverage": {
