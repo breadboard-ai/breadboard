@@ -149,6 +149,7 @@ type Color = {
   25?: string;
   50?: string;
   80?: string;
+  90?: string;
   95?: string;
   98?: string;
 };
@@ -221,7 +222,7 @@ function getPalettePrompt(colors: PaletteColors): string {
   - secondary color, light: ${colors.secondary?.[95]}
   - tertiary color, dark: ${colors.tertiary?.[25]}
   - tertiary color, light: ${colors.tertiary?.[80]}
-  - background color: ${colors.secondary?.[95]}
+  - background color: ${colors.secondary?.[90]}
   - error color: ${colors.error?.[50]}
   - neutral, dark: ${colors.neutral?.[25]}
   - neutral, light: ${colors.neutral?.[98]}
@@ -267,13 +268,12 @@ async function invoke({
   if (renderType != "Manual") {
     const palette = await getPaletteColors();
     if (!!palette?.primary) {
-      console.log("Material palette: ", palette);
       systemText += getPalettePrompt(palette);
     } else {
       const themeColors = await getThemeColors();
-      console.log("Legacy theme: ", themeColors);
       systemText += themeColorsPrompt(themeColors);
     }
+    console.log("SI :", systemText);
     const webPage = await callGenWebpage(
       systemText,
       [context],
