@@ -613,7 +613,7 @@ export class Template extends LitElement implements AppTemplate {
               }
 
               &::after {
-                content: "Working";
+                content: "";
                 flex: 0 0 auto;
                 margin-left: var(--bb-grid-size-3);
                 color: oklch(from var(--p-15) l c h / calc(alpha - 0.4));
