@@ -15,6 +15,7 @@ import type { BoardServerStore, ServerInfo } from "../store.js";
 import { GoogleStorageBlobStore } from "../blob-store.js";
 import { initializeDriveClient } from "../boards/assets-drive.js";
 import type { ServerConfig } from "../config.js";
+import type { access } from "fs";
 
 export { GcsAwareFetch };
 
@@ -116,6 +117,12 @@ async function prepareGcsData(
   bucketName: string,
   serverUrl: string
 ): Promise<InputValues> {
+  let accessToken = "";
+  if (data !== null && typeof data === "object" && "headers" in data) {
+    const headers = data.headers as Record<string, string>;
+    accessToken = headers?.Authorization || "";
+    accessToken = accessToken.replace("Bearer ", "");
+  }
   const blobStore = new GoogleStorageBlobStore(bucketName, serverUrl);
   const apiRequiresGcs: string[] = [
     "image_generation",
@@ -141,7 +148,7 @@ async function prepareGcsData(
   };
   body["output_gcs_config"] = gcsOutputConfig;
   console.log("Set output_gcs_config: ", gcsOutputConfig);
-  await convertToGcsReferences(body, blobStore, bucketName);
+  await convertToGcsReferences(body, blobStore, bucketName, accessToken);
   return data;
 }
 
@@ -211,7 +218,8 @@ const maybeGetExecutionInputs = (
 async function convertToGcsReferences(
   body: object,
   blobStore: GoogleStorageBlobStore,
-  bucketName: string
+  bucketName: string,
+  accessToken: string
 ) {
   console.log("Converting to GCS references");
   const executionInputs = maybeGetExecutionInputs(body);
@@ -222,21 +230,26 @@ async function convertToGcsReferences(
     const input = executionInputs[key] as StepContent;
     const newChunks: Chunk[] = [];
     for (const chunk of input.chunks) {
-      if (chunk.mimetype.startsWith("storedData")) {
+      if (chunk.mimetype.startsWith("storedData/")) {
+        const mimetype =
+          chunk.mimetype.replace("storedData/", "") || "image/png";
         const storedHandle = chunk.data;
         let blobId;
         if (storedHandle.startsWith("drive:/")) {
           const driveId = storedHandle.replace(/^drive:\/+/, "");
           console.log("Fetching Drive ID: ", driveId);
-          const arrayBuffer = await fetchDriveAssetAsBuffer(driveId);
+          const arrayBuffer = await fetchDriveAssetAsBuffer(
+            driveId,
+            accessToken
+          );
           // Store temporarily in GCS as file transfer mechanism.
-          blobId = blobStore.saveBuffer(arrayBuffer, chunk.mimetype);
+          blobId = await blobStore.saveBuffer(arrayBuffer, mimetype);
         } else {
           blobId = storedHandle.split("/").slice(-1)[0];
         }
         const gcsPath = `${bucketName}/${blobId}`;
         chunk.data = btoa(gcsPath);
-        chunk.mimetype = "text/gcs-path/";
+        chunk.mimetype = "text/gcs-path";
       }
       newChunks.push(chunk);
     }
@@ -247,8 +260,8 @@ async function convertToGcsReferences(
 }
 
 // Fetch media asset from long term  storage in Drive.
-async function fetchDriveAssetAsBuffer(driveId: string) {
-  const driveClient = initializeDriveClient("", "");
+async function fetchDriveAssetAsBuffer(driveId: string, accessToken: string) {
+  const driveClient = initializeDriveClient(accessToken, "");
   const gettingMedia = await driveClient.getFileMedia(driveId);
   const arrayBuffer = await gettingMedia.arrayBuffer();
   return Buffer.from(arrayBuffer);

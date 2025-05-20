@@ -325,7 +325,12 @@ function toInlineReference(c: LLMContent) {
   if (last == undefined || !("storedData" in last)) {
     return toInlineData(c);
   }
-  return toInlineData(toLLMContentInline("storedData", last.storedData.handle));
+  return toInlineData(
+    toLLMContentInline(
+      "storedData/" + last.storedData.mimeType,
+      last.storedData.handle
+    )
+  );
 }
 
 export function mergeContent(content: LLMContent[], role: string): LLMContent {
