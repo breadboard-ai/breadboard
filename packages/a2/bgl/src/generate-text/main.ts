@@ -205,7 +205,7 @@ class GenerateText {
           const nextTurn = new GeminiPrompt(inputs, { toolManager });
           const nextTurnResult = await nextTurn.invoke();
           if (!ok(nextTurnResult)) return nextTurnResult;
-          if (!nextTurn.calledTools) {
+          if (!nextTurn.calledTools && !nextTurn.calledCustomTools) {
             afterTools = nextTurnResult;
             break;
           }
