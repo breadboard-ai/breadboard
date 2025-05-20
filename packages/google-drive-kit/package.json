@@ -45,7 +45,6 @@
     "build": "wireit",
     "build:tsc": "wireit",
     "test": "wireit",
-    "test:only": "wireit",
     "coverage": "wireit",
     "lint": "wireit",
     "test-and-lint": "wireit",
@@ -64,7 +63,8 @@
         "<dependencies>#<this>"
       ],
       "files": [
-        "src/",
+        "src/**/*.ts",
+        "tests/**/*.ts",
         "tsconfig.json",
         "package.json"
       ],
@@ -74,19 +74,13 @@
       "clean": "if-file-deleted"
     },
     "test": {
-      "command": "echo 'no tests'",
+      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/**/*.js",
       "dependencies": [
         "build:tsc"
       ],
-      "files": [],
-      "output": []
-    },
-    "test:only": {
-      "command": "echo 'no tests'",
-      "dependencies": [
-        "build:tsc"
+      "files": [
+        "tests/**/*.ts"
       ],
-      "files": [],
       "output": []
     },
     "coverage": {

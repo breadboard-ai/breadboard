@@ -580,7 +580,7 @@ function createAppProperties(
   } = descriptor;
   const result: StoredAppProperties = {
     title,
-    description: description,
+    description,
     tags: JSON.stringify(tags),
     thumbnailUrl: thumbnailUrl ?? "", // undefined here means "do not update".
   };
