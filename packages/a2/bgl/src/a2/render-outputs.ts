@@ -132,6 +132,7 @@ type Presentation = {
 
 type Theme = {
   themeColors?: ThemeColors;
+  palette?: PaletteColors;
   template?: string;
   splashScreen?: StoredDataCapabilityPart;
 };
@@ -142,6 +143,23 @@ type ThemeColors = {
   backgroundColor?: string;
   textColor?: string;
   primaryTextColor?: string;
+};
+
+type Color = {
+  25?: string;
+  50?: string;
+  80?: string;
+  95?: string;
+  98?: string;
+};
+
+type PaletteColors = {
+  error?: Color;
+  neutral?: Color;
+  neutralVariant?: Color;
+  primary?: Color;
+  secondary?: Color;
+  tertiary?: Color;
 };
 
 function defaultThemeColors(): ThemeColors {
@@ -168,6 +186,20 @@ async function getThemeColors(): Promise<ThemeColors> {
   return { ...defaultThemeColors(), ...themeColors };
 }
 
+async function getPaletteColors(): Promise<PaletteColors | undefined> {
+  const readingMetadata = await read({ path: "/env/metadata" });
+  if (!ok(readingMetadata)) return;
+  const metadata = (readingMetadata.data?.at(0)?.parts?.at(0) as JSONPart)
+    ?.json as GraphMetadata;
+  if (!metadata) return;
+  const currentThemeId = metadata?.visual?.presentation?.theme;
+  if (!currentThemeId) return;
+  const palette =
+    metadata?.visual?.presentation?.themes?.[currentThemeId]?.palette;
+  if (!palette) return {};
+  return { ...palette };
+}
+
 function themeColorsPrompt(colors: ThemeColors): string {
   return `Unless otherwise specified, use the following theme colors:
 
@@ -178,6 +210,22 @@ function themeColorsPrompt(colors: ThemeColors): string {
 - primary text color: ${colors.primaryTextColor}
 
 `;
+}
+
+function getPalettePrompt(colors: PaletteColors): string {
+  return `Unless otherwise specified, use the following theme colors:
+  
+  - primary color, dark: ${colors.primary?.[25]}
+  - primary color, light: ${colors.primary?.[98]}
+  - secondary color, dark: ${colors.secondary?.[25]}
+  - secondary color, light: ${colors.secondary?.[95]}
+  - tertiary color, dark: ${colors.tertiary?.[25]}
+  - tertiary color, light: ${colors.tertiary?.[80]}
+  - background color: ${colors.secondary?.[95]}
+  - error color: ${colors.error?.[50]}
+  - neutral, dark: ${colors.neutral?.[25]}
+  - neutral, light: ${colors.neutral?.[98]}
+  `;
 }
 
 async function invoke({
@@ -217,7 +265,15 @@ async function invoke({
   console.log("Rendering with model: ", modelName);
   let out = context;
   if (renderType != "Manual") {
-    systemText += themeColorsPrompt(await getThemeColors());
+    const palette = await getPaletteColors();
+    if (!!palette?.primary) {
+      console.log("Material palette: ", palette);
+      systemText += getPalettePrompt(palette);
+    } else {
+      const themeColors = await getThemeColors();
+      console.log("Legacy theme: ", themeColors);
+      systemText += themeColorsPrompt(themeColors);
+    }
     const webPage = await callGenWebpage(
       systemText,
       [context],
