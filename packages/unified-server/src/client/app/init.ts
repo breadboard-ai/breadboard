@@ -249,7 +249,9 @@ async function extractThemeFromFlow(flow: GraphDescriptor | null): Promise<{
           img.crossOrigin = "anonymous";
 
           const generatedTheme = await generatePaletteFromImage(img);
-          theme = { ...theme, ...generatedTheme };
+          if (generatedTheme) {
+            theme = { ...theme, ...generatedTheme };
+          }
         }
       } else if (appTheme.palette) {
         theme = { ...theme, ...appTheme.palette };

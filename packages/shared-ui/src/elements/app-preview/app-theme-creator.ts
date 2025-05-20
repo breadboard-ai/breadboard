@@ -562,7 +562,10 @@ export class AppThemeCreator extends LitElement {
         img.src = splashScreen.storedData.handle;
         img.crossOrigin = "anonymous";
       }
-      theme = await generatePaletteFromImage(img);
+      const generatedTheme = await generatePaletteFromImage(img);
+      if (generatedTheme) {
+        theme = generatedTheme;
+      }
 
       return {
         ...theme,
