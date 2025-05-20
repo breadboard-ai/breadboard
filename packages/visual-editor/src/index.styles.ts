@@ -426,10 +426,24 @@ export const styles = css`
   .tab-title {
     font: 400 var(--bb-title-medium) / var(--bb-title-line-height-medium)
       var(--bb-font-family);
-    margin-bottom: 2px;
-    color: var(--bb-neutral-700);
-    white-space: nowrap;
+    padding: var(--bb-grid-size) var(--bb-grid-size);
+    border: 1px solid transparent;
+    border-radius: var(--bb-grid-size);
+    max-width: 320px;
+    min-width: 10%;
+    field-sizing: content;
+    color: var(--bb-neutral-800);
     margin-right: var(--bb-grid-size-2);
+    outline: none;
+    background: transparent;
+
+    &:hover {
+      border: 1px solid var(--bb-neutral-500);
+    }
+
+    &:focus {
+      border: 1px solid var(--bb-neutral-700);
+    }
   }
 
   .save-status {

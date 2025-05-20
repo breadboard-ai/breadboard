@@ -1627,6 +1627,26 @@ export class Main extends LitElement {
     );
   }
 
+  async #attemptBoardTitleUpdate(evt: Event) {
+    const target = evt.target;
+    if (!(target instanceof HTMLInputElement)) {
+      return;
+    }
+
+    if (!target.checkValidity()) {
+      target.reportValidity();
+      return;
+    }
+
+    if (target.value === this.tab?.graph.title) {
+      return;
+    }
+
+    target.disabled = true;
+
+    await this.#runtime.edit.updateBoardTitle(this.tab, target.value.trim());
+  }
+
   async #attemptBoardDelete(
     boardServerName: string,
     url: string,
@@ -3223,7 +3243,24 @@ export class Main extends LitElement {
 
               ${
                 this.tab
-                  ? html` <span class="tab-title">${this.tab.graph.title}</span>
+                  ? html` <input
+                        autocomplete="off"
+                        @blur=${async (evt: Event) => {
+                          await this.#attemptBoardTitleUpdate(evt);
+                        }}
+                        @keydown=${async (evt: KeyboardEvent) => {
+                          if (evt.key !== "Enter") {
+                            return;
+                          }
+
+                          await this.#attemptBoardTitleUpdate(evt);
+                        }}
+                        ?disabled=${!canSave}
+                        required
+                        type="text"
+                        class="tab-title"
+                        .value=${this.tab.graph.title}
+                      />
                       <span
                         class=${classMap({
                           "save-status": true,
