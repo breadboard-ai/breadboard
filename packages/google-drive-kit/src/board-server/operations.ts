@@ -38,6 +38,7 @@ export type GraphInfo = {
   title: string;
   tags: GraphTag[];
   thumbnail: string | undefined;
+  description: string;
 };
 
 /** Defines api.ts:AppProperties as stored in the drive file */
@@ -653,6 +654,7 @@ function toGraphInfos(files: Array<DriveFile>): {
       title: appProperties.title || file.name.replace(/(\.bgl)?\.json$/, ""),
       tags: appProperties.tags,
       thumbnail: appProperties.thumbnailUrl,
+      description: appProperties.description,
     } satisfies GraphInfo;
   });
   return { result, lastModified };

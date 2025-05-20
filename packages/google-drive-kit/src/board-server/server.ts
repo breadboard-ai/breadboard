@@ -24,8 +24,14 @@ import {
   type Kit,
   type Permission,
   type User,
+  type Username,
 } from "@google-labs/breadboard";
-import { DriveOperations, getFileId, PROTOCOL } from "./operations.js";
+import {
+  DriveOperations,
+  getFileId,
+  PROTOCOL,
+  type GraphInfo,
+} from "./operations.js";
 import { SaveDebouncer } from "./save-debouncer.js";
 import { SaveEvent } from "./events.js";
 import { type GoogleDriveClient } from "../google-drive-client.js";
@@ -177,37 +183,35 @@ class GoogleDriveBoardServer
       ],
     ]);
 
-    const userProjects = userGraphs.map(({ title, tags, id, thumbnail }) => {
-      return {
-        // TODO: This should just be new URL(id, this.url), but sadly, it will
-        // break existing instances of the Google Drive board server.
-        url: new URL(`${this.url}${this.url.pathname ? "" : "/"}${id}`),
-        metadata: {
-          owner: OWNER_USERNAME,
-          tags,
-          title,
-          thumbnail,
-          access: ownerAccess,
-        } satisfies EntityMetadata,
-      };
-    });
+    const userProjects = userGraphs.map((graphInfo) =>
+      this.#graphInfoToProject(graphInfo, OWNER_USERNAME, ownerAccess)
+    );
 
-    const galleryProjects = featuredGraphs.map(
-      ({ title, tags, thumbnail, id }) => {
-        return {
-          url: new URL(`${this.url}${this.url.pathname ? "" : "/"}${id}`),
-          metadata: {
-            owner: GALLERY_OWNER_USERNAME,
-            tags,
-            title,
-            access: galleryAccess,
-            thumbnail,
-          } satisfies EntityMetadata,
-        };
-      }
+    const galleryProjects = featuredGraphs.map((graphInfo) =>
+      this.#graphInfoToProject(graphInfo, GALLERY_OWNER_USERNAME, galleryAccess)
     );
 
     return [...userProjects, ...galleryProjects];
+  }
+
+  #graphInfoToProject(
+    graphInfo: GraphInfo,
+    owner: string,
+    access: Map<Username, Permission>
+  ) {
+    return {
+      // TODO: This should just be new URL(id, this.url), but sadly, it will
+      // break existing instances of the Google Drive board server.
+      url: new URL(`${this.url}${this.url.pathname ? "" : "/"}${graphInfo.id}`),
+      metadata: {
+        owner,
+        tags: graphInfo.tags,
+        title: graphInfo.title,
+        access,
+        thumbnail: graphInfo.thumbnail,
+        description: graphInfo.description,
+      } satisfies EntityMetadata,
+    };
   }
 
   /**
@@ -364,6 +368,7 @@ class GoogleDriveBoardServer
           tags: project.metadata?.tags,
           username: project.metadata.owner,
           thumbnail: project.metadata.thumbnail,
+          description: project.metadata.description,
         },
       ]);
     }
