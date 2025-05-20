@@ -5,6 +5,7 @@
  */
 import {
   InspectableGraph,
+  InspectableNode,
   isLLMContent,
   isLLMContentArray,
   isStoredData,
@@ -57,6 +58,7 @@ import { MAIN_BOARD_ID } from "../../constants/constants";
 import { Project } from "../../state";
 import {
   FastAccessSelectEvent,
+  IterateOnPromptEvent,
   NodePartialUpdateEvent,
   ToastEvent,
   ToastType,
@@ -71,10 +73,11 @@ import { FlowGenConstraint } from "../../flow-gen/flow-generator";
 import { ConnectorView } from "../../connectors/types";
 import { SignalWatcher } from "@lit-labs/signals";
 import { icons } from "../../styles/icons";
-import { EmbedState } from "../../../../embed/dist/src/types/types";
 import { consume } from "@lit/context";
 import { embedderContext } from "../../contexts/embedder";
-import { embedState } from "@breadboard-ai/embed";
+import { EmbedState, embedState } from "@breadboard-ai/embed";
+import { getBoardIdFromUrl } from "../../utils/board-id.js";
+import { text } from "stream/consumers";
 const Strings = StringsHelper.forSection("Editor");
 
 // A type that is like a port (and fits InspectablePort), but could also be
@@ -160,7 +163,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         }
 
         & input {
-          flex: 1 0 auto;
+          flex: 1 1 auto;
           font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
             var(--bb-font-family);
           background: transparent;
@@ -182,6 +185,34 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           height: 20px;
           flex: 0 0 auto;
           margin-right: var(--bb-grid-size);
+        }
+      }
+
+      #iterate-on-prompt {
+        height: var(--bb-grid-size-7);
+        white-space: nowrap;
+        padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-4);
+        border-radius: var(--bb-grid-size-16);
+        margin: 0 var(--bb-grid-size-2) 0 0;
+        background: var(--bb-neutral-0);
+        color: #004a77;
+        font: 500 var(--bb-title-small) / var(--bb-title-line-height-small)
+          var(--bb-font-family);
+        display: flex;
+        align-items: center;
+        border-radius: 100px;
+        border: none;
+        transition: background 0.2s cubic-bezier(0, 0, 0.3, 1);
+        cursor: pointer;
+        background: var(--bb-grid-size-3) center / 18px 18px no-repeat #c2e7ff;
+        &:hover,
+        &:focus {
+          background-color: #96d6ff;
+        }
+        &:disabled {
+          background-color: #efefef;
+          color: #1010104d;
+          cursor: default;
         }
       }
 
@@ -1132,6 +1163,9 @@ export class EntityEditor extends SignalWatcher(LitElement) {
               this.#submit(this.values);
             }}
           />
+          ${this.embedState?.showIterateOnPrompt ? 
+            this.#renderIterateOnPromptButton(nodeId, node.title(), node) : 
+            nothing}
         </h1>
         <div id="type"></div>
         <div id="content">
@@ -1143,6 +1177,30 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     });
 
     return html`${until(value, html`<div id="generic-status">Loading...</div>`)}`;
+  }
+
+  #renderIterateOnPromptButton(nodeId: NodeIdentifier, nodeTitle: string, node: InspectableNode) {
+    const url = new URL(this.graph?.raw().url ?? window.location.href);
+    const boardId = getBoardIdFromUrl(url);
+    if (!boardId) {
+      return nothing;
+    }
+    return html`
+      <button 
+        id="iterate-on-prompt"
+        @click=${async () => {
+          // Submit the changes to ensure the prompt is updated before it's sent.
+          await this.#submit(this.values);
+          const promptTemplate = await extractLlmTextPart(node);
+          if (!promptTemplate) {
+            return;
+          }
+          this.dispatchEvent(new IterateOnPromptEvent(
+            nodeTitle, promptTemplate, boardId!, nodeId
+          ));
+        }}>
+        Iterate on prompt
+      </button>`;
   }
 
   #renderTextEditorPort(
@@ -1627,7 +1685,6 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     }
 
     return [
-      // html`Embedded ${this.embedState.showIterateOnPrompt}`,
       this.#renderSelectedItem(),
       html`<bb-fast-access-menu
           ${ref(this.#fastAccessRef)}
@@ -1716,4 +1773,25 @@ function getLLMContentPortValue(
     role: "user",
     parts: [{ text: "" }],
   };
+}
+
+// Extract LLM text part if available; null otherwise.
+async function extractLlmTextPart(
+  node: InspectableNode): Promise<string | null> {
+  const ports = await node.ports();
+  const inputPorts = ports.inputs.ports;
+  const port = inputPorts.find(
+    (port) => 
+      isLLMContentBehavior(port.schema) && 
+      !port.schema.behavior?.includes("hint-advanced"));
+  if (!port || !isLLMContent(port.value)) {
+    return null;
+  }
+  const portValue = getLLMContentPortValue(port.value, port.schema);
+  const textPart = portValue.parts.find(
+    (part) => isTextCapabilityPart(part));
+  if (!textPart) {
+    return null;
+  }
+  return textPart.text;
 }

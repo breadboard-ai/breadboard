@@ -6,6 +6,7 @@
 
 import {
   BreadboardMessage,
+  EmbedderMessage,
   EmbedHandler,
   EmbedState,
   MessageCallback,
@@ -47,7 +48,7 @@ export class Handler implements EmbedHandler {
   async #onMessage(evt: MessageEvent) {
     this.#log(`[Embed handler received]: `, evt.data);
 
-    const message = evt.data as BreadboardMessage;
+    const message = evt.data as EmbedderMessage;
     const subscribers = this.#subscribers.get(message.type);
     if (!subscribers) {
       return;
@@ -76,8 +77,8 @@ export class Handler implements EmbedHandler {
   async subscribe<T extends MessageType>(
     type: T,
     callback: (
-      message: Extract<BreadboardMessage, { type: T }>
-    ) => Promise<BreadboardMessage | void>
+      message: Extract<EmbedderMessage, { type: T }>
+    ) => Promise<EmbedderMessage | void>
   ): Promise<void> {
     let subscribers = this.#subscribers.get(type);
     if (!subscribers) {
@@ -95,8 +96,8 @@ export class Handler implements EmbedHandler {
   async unsubscribe<T extends MessageType>(
     type: T,
     callback: (
-      message: Extract<BreadboardMessage, { type: T }>
-    ) => Promise<BreadboardMessage | void>
+      message: Extract<EmbedderMessage, { type: T }>
+    ) => Promise<EmbedderMessage | void>
   ) {
     const subscribers = this.#subscribers.get(type);
     if (!subscribers) {

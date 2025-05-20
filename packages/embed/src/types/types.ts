@@ -12,7 +12,6 @@
 /** A Message from Breadboard to parent iframe, sent via window.parent.postMessage */
 export type BreadboardMessage =
   | DebugMessage
-  | ToggleIterateOnPromptMessage
   | HandshakeReadyMessage
   | OauthRedirectMessage
   | BackClickedMessage
@@ -23,11 +22,6 @@ export type BreadboardMessage =
 /** Event for enabling debug. */
 export interface DebugMessage {
   type: "debug";
-  on: boolean;
-}
-
-export interface ToggleIterateOnPromptMessage {
-  type: "toggle_iterate_on_prompt";
   on: boolean;
 }
 
@@ -93,7 +87,13 @@ export interface IterateOnPromptMessage {
 }
 
 /** A message from parent iframe to Breadboard, sent via iframe.contentWindow.postMessage */
-export type IframeMessage = CreateNewBoardMessage | HandshakeCompleteMessage;
+export type EmbedderMessage = ToggleIterateOnPromptMessage | CreateNewBoardMessage | HandshakeCompleteMessage;
+
+/** Message to determine whether to display Iterate-on-prompt button. */
+export interface ToggleIterateOnPromptMessage {
+  type: "toggle_iterate_on_prompt";
+  on: boolean;
+}
 
 /** Message that creates a new Breadboard board. */
 export interface CreateNewBoardMessage {
@@ -114,15 +114,15 @@ export interface HandshakeCompleteMessage {
 
 /** Checks if a message is of type HandshakeCompleteMessage. */
 export function isHandshakeCompleteMessage(
-  message: IframeMessage
+  message: EmbedderMessage
 ): message is HandshakeCompleteMessage {
   return message.type === "handshake_complete";
 }
 
-export type MessageType = BreadboardMessage["type"];
+export type MessageType = EmbedderMessage["type"];
 export type MessageCallback = (
-  message: BreadboardMessage
-) => Promise<BreadboardMessage | undefined>;
+  message: EmbedderMessage
+) => Promise<EmbedderMessage | undefined>;
 
 export interface EmbedState {
   showIterateOnPrompt: boolean;
@@ -136,13 +136,13 @@ export interface EmbedHandler {
   subscribe<T extends MessageType>(
     type: T,
     callback: (
-      message: Extract<BreadboardMessage, { type: T }>
-    ) => Promise<BreadboardMessage | void>
+      message: Extract<EmbedderMessage, { type: T }>
+    ) => Promise<EmbedderMessage | void>
   ): Promise<void>;
   unsubscribe<T extends MessageType>(
     type: T,
     callback: (
-      message: Extract<BreadboardMessage, { type: T }>
-    ) => Promise<BreadboardMessage | void>
+      message: Extract<EmbedderMessage, { type: T }>
+    ) => Promise<EmbedderMessage | void>
   ): Promise<void>;
 }

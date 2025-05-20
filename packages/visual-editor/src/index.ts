@@ -94,6 +94,7 @@ import {
   ToggleExperimentalComponentsCommand,
   UngroupCommand,
 } from "./commands/commands";
+import { getBoardIdFromUrl } from "@breadboard-ai/shared-ui/utils/board-id.js";
 import {
   SIGN_IN_CONNECTION_ID,
   SigninAdapter,
@@ -112,11 +113,16 @@ import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-
 
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import {
+  CreateNewBoardMessage,
   EmbedHandler,
   embedState,
   EmbedState,
-  ToggleIterateOnPromptMessage,
+  IterateOnPromptMessage,
+  ToggleIterateOnPromptMessage
 } from "@breadboard-ai/embed";
+import { IterateOnPromptEvent } from "@breadboard-ai/shared-ui/events/events.js";
+import { AppCatalystApiClient } from "@breadboard-ai/shared-ui/flow-gen/app-catalyst.js";
+import { FlowGenerator } from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
 
 const STORAGE_PREFIX = "bb-main";
 const LOADING_TIMEOUT = 1250;
@@ -937,6 +943,10 @@ export class Main extends LitElement {
           this.environment,
           this.settingsHelper
         );
+        // Once we've determined the sign-in status, relay it to an embedder.
+        this.#embedHandler?.sendToEmbedder(
+          {type: "home_loaded", isSignedIn: signInAdapter.state === "valid"}
+        )
         if (signInAdapter.state === "signedout") {
           return;
         }
@@ -991,6 +1001,52 @@ export class Main extends LitElement {
         this.embedState.showIterateOnPrompt = message.on;
       }
     );
+    this.#embedHandler?.subscribe(
+      "create_new_board",
+      async (message: CreateNewBoardMessage) => {
+        void this.#generateBoard(message.prompt)
+          .then((graph) =>  this.#generateBoardSuccess(graph))
+          .catch((error) => console.error("Error generating board", error));
+      }
+    );
+    this.#embedHandler?.sendToEmbedder(
+      {type: "handshake_ready"});
+  }
+
+  async #generateBoard(intent: string): Promise<GraphDescriptor> {
+    const generator = new FlowGenerator(
+      new AppCatalystApiClient(this.signinAdapter)
+    );
+    const { flow } = await generator.oneShot({ intent });
+    return flow;
+  }
+
+  async #generateBoardSuccess(graph: GraphDescriptor) {
+    const boardServerName = this.selectedBoardServer;
+    const location = this.selectedLocation;
+    const fileName = `${globalThis.crypto.randomUUID()}.bgl.json`;
+
+    const boardData = await this.#attemptBoardSaveAs(
+      boardServerName,
+      location,
+      fileName,
+      graph,
+      true,
+      {
+        start: Strings.from("STATUS_CREATING_PROJECT"),
+        end: Strings.from("STATUS_PROJECT_CREATED"),
+        error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
+      },
+    );
+    if (!boardData) return;
+    const {url} = boardData;
+    const boardId = getBoardIdFromUrl(url);
+    if (boardId) {
+      this.#embedHandler?.sendToEmbedder({
+        type: 'board_id_created', 
+        id: boardId,
+      });
+    }
   }
 
   disconnectedCallback(): void {
@@ -1568,7 +1624,8 @@ export class Main extends LitElement {
     }
   }
 
-  async #attemptBoardSaveAs(
+
+  async #attemptBoardSaveAsAndNavigate(
     boardServerName: string,
     location: string,
     fileName: string,
@@ -1581,8 +1638,37 @@ export class Main extends LitElement {
     },
     creator: EditHistoryCreator
   ) {
-    if (this.#isSaving) {
+    const boardData = await this.#attemptBoardSaveAs(
+      boardServerName, 
+      location, 
+      fileName, 
+      graph,
+      ackUser,
+      ackUserMessage)
+    if (!boardData) {
       return;
+    }
+    const {id, url} = boardData;
+    this.#attemptBoardLoad(
+      new BreadboardUI.Events.StartEvent(url.href, undefined, creator),
+      id
+    );
+  }
+
+  async #attemptBoardSaveAs(
+    boardServerName: string,
+    location: string,
+    fileName: string,
+    graph: GraphDescriptor,
+    ackUser = true,
+    ackUserMessage = {
+      start: Strings.from("STATUS_SAVING_PROJECT"),
+      end: Strings.from("STATUS_PROJECT_SAVED"),
+      error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
+    },
+  ): Promise<{id: BreadboardUI.Types.SnackbarUUID | undefined, url: URL} | null> {
+    if (this.#isSaving) {
+      return null;
     }
 
     let id: BreadboardUI.Types.SnackbarUUID | undefined;
@@ -1615,16 +1701,12 @@ export class Main extends LitElement {
         );
       }
 
-      return;
+      return null;
     }
 
     this.#setBoardPendingSaveState(false);
     this.#persistBoardServerAndLocation(boardServerName, location);
-
-    this.#attemptBoardLoad(
-      new BreadboardUI.Events.StartEvent(url.href, undefined, creator),
-      id
-    );
+    return {id: id, url: url};
   }
 
   async #attemptBoardTitleUpdate(evt: Event) {
@@ -1706,7 +1788,7 @@ export class Main extends LitElement {
     const location = this.selectedLocation;
     const fileName = `${globalThis.crypto.randomUUID()}.bgl.json`;
 
-    await this.#attemptBoardSaveAs(
+    await this.#attemptBoardSaveAsAndNavigate(
       boardServerName,
       location,
       fileName,
@@ -4198,6 +4280,16 @@ export class Main extends LitElement {
                   this.tab?.id,
                   this.#runtime.util.createWorkspaceSelectionChangeId()
                 );
+              }}
+              @bbiterateonprompt=${(iterateOnPromptEvent: IterateOnPromptEvent) => {
+                  const message: IterateOnPromptMessage = {
+                    type: 'iterate_on_prompt',
+                    title: iterateOnPromptEvent.title,
+                    promptTemplate: iterateOnPromptEvent.promptTemplate,
+                    boardId: iterateOnPromptEvent.boardId,
+                    nodeId: iterateOnPromptEvent.nodeId,
+                  };
+                  this.#embedHandler?.sendToEmbedder(message);
               }}
             ></bb-ui-controller>
         ${

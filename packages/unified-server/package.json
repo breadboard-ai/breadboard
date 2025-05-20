@@ -131,7 +131,7 @@
   "repository": {
     "directory": "packages/unified-serer",
     "type": "git",
-    "url": "https://github.com/breadboard-ai/breadboard.git"
+    "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
   "files": [
     "dist/src"
@@ -185,5 +185,8 @@
     "google-auth-library": "^9.15.1",
     "vite": "^6.2.7",
     "vite-express": "^0.21.1"
+  },
+  "directories": {
+    "test": "tests"
   }
 }
