@@ -151,9 +151,8 @@ class GenerateText {
           responseMimeType: "application/json",
         };
       }
-
-      inputs.body.systemInstruction = systemInstruction;
     }
+    inputs.body.systemInstruction = systemInstruction;
     const prompt = new GeminiPrompt(inputs, { toolManager });
     const result = await prompt.invoke();
     if (!ok(result)) return result;
