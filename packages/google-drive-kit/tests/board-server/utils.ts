@@ -1,7 +1,7 @@
 import { describe, it } from "node:test";
 import { equal } from "node:assert";
 
-import { truncateValueForUtf8 } from "../../src/utils.js";
+import { truncateValueForUtf8 } from "../../src/board-server/utils.js";
 
 describe("truncateValueForUtf8", () => {
   it("truncates if needed", () => {
