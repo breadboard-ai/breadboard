@@ -75,7 +75,7 @@ const MODES: Mode[] = [
     id: "image-gen",
     type: "image-gen",
     url: "embed://a2/a2.bgl.json#module:image-generator",
-    title: "Imagen 3",
+    title: "Imagen 4",
     description: "Generates images from text",
     icon: "photo_spark",
   },
