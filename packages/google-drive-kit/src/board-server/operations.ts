@@ -196,19 +196,18 @@ class DriveOperations {
   }
 
   async readGraphList(): Promise<Outcome<GraphInfo[]>> {
-    const folderId = await this.findFolder();
-    if (!(typeof folderId === "string" && folderId)) {
-      return [];
+    const query =
+      ` (mimeType="${GRAPH_MIME_TYPE}"` +
+      `      or mimeType="${DEPRECATED_GRAPH_MIME_TYPE}")` +
+      ` and trashed=false`;
+    const token = await getAccessToken(this.vendor);
+    if (!token) {
+      throw new Error("No access token");
     }
-    const accessToken = await getAccessToken(this.vendor);
-    if (!folderId || !accessToken) {
-      throw new Error("No folder ID or access token");
-    }
-
-    return this.#readDriveFolder(folderId, {
-      kind: "bearer",
-      token: accessToken,
-    });
+    const api = new Files({ kind: "bearer", token });
+    const response = await retryableFetch(api.makeQueryRequest(query));
+    const result = (await response.json()) as DriveFileQuery;
+    return toGraphInfos(result.files).result;
   }
 
   async readFeaturedGalleryGraphList(): Promise<Outcome<GraphInfo[]>> {

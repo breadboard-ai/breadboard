@@ -27,6 +27,16 @@ export default css`
     }
   }
 
+  @keyframes rotate {
+    from {
+      rotate: 0deg;
+    }
+
+    to {
+      rotate: 360deg;
+    }
+  }
+
   @scope (.app-template) {
     :scope {
       --ease-out: cubic-bezier(0, 0, 0.3, 1);

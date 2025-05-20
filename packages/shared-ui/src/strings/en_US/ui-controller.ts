@@ -27,6 +27,12 @@ export default {
   LABEL_SECTION_NAV_CHAT: {
     str: "Chat",
   },
+  LABEL_SECTION_PREVIEW: {
+    str: "Preview",
+  },
+  LABEL_SECTION_CONSOLE: {
+    str: "Console",
+  },
   LABEL_SECTION_NAV_CONSOLE: {
     str: "Console",
   },

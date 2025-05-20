@@ -358,8 +358,9 @@ class GoogleDriveBoardServer
 
       projectNames.add(title);
       projects.push([
-        title,
+        project.url.href,
         {
+          title,
           url: project.url.href,
           mine: project.metadata.owner === this.user.username,
           readonly: false,

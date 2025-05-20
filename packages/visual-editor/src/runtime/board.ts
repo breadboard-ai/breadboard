@@ -46,6 +46,7 @@ import {
   ModuleIdentifier,
   NodeDescriptor,
 } from "@breadboard-ai/types";
+import { generatePaletteFromImage } from "@breadboard-ai/theme";
 import * as idb from "idb";
 import { BOARD_SAVE_STATUS } from "@breadboard-ai/shared-ui/types/types.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
@@ -635,6 +636,49 @@ export class Board extends EventTarget {
     this.dispatchEvent(new RuntimeTabChangeEvent());
   }
 
+  async #createAppPaletteIfNeeded(graph: GraphDescriptor) {
+    const themeId = graph.metadata?.visual?.presentation?.theme;
+    if (!themeId) {
+      return;
+    }
+
+    const theme = graph.metadata?.visual?.presentation?.themes?.[themeId];
+    if (!theme || !theme.splashScreen || theme.palette) {
+      return;
+    }
+
+    let splashUrl: URL | undefined = undefined;
+    const { handle } = theme.splashScreen.storedData;
+    const BLOB_HANDLE_PATTERN = /^[./]*blobs\/(.+)/;
+    const blobMatch = handle.match(BLOB_HANDLE_PATTERN);
+
+    if (blobMatch) {
+      const blobId = blobMatch[1];
+      if (blobId) {
+        splashUrl = new URL(`/board/blobs/${blobId}`, window.location.href);
+      }
+    } else if (
+      handle.startsWith("data:") ||
+      handle.startsWith("http:") ||
+      handle.startsWith("https:") ||
+      handle.startsWith("drive:")
+    ) {
+      splashUrl = new URL(handle);
+    }
+
+    if (!splashUrl) {
+      return;
+    }
+
+    const img = new Image();
+    img.src = splashUrl.href;
+    img.crossOrigin = "anonymous";
+    const generatedPalette = await generatePaletteFromImage(img);
+    if (generatedPalette) {
+      theme.palette = generatedPalette;
+    }
+  }
+
   /**
    * Here for now, but needs to be removed when all legacy theme information has
    * been handled.
@@ -819,6 +863,7 @@ export class Board extends EventTarget {
       }
 
       this.#migrateThemeInformationIfPresent(graph);
+      await this.#createAppPaletteIfNeeded(graph);
 
       // This is not elegant, since we actually load the graph by URL,
       // and we should know this mainGraphId by now.

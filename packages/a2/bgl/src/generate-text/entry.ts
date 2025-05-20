@@ -103,7 +103,7 @@ async function describe({
         },
         "p-chat": {
           type: "boolean",
-          title: "Refine based on user input",
+          title: "Review with user",
           behavior: ["config", "hint-preview", "hint-advanced"],
           icon: "chat",
           description:

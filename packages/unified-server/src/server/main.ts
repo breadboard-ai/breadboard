@@ -1,3 +1,9 @@
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import express, { type Request } from "express";
 import ViteExpress from "vite-express";
 
@@ -6,14 +12,22 @@ import * as boardServer from "@breadboard-ai/board-server";
 import { InputValues, NodeDescriptor } from "@breadboard-ai/types";
 
 import { makeDriveProxyMiddleware } from "./drive-proxy.js";
+import { allowListChecker } from "./allow-list-checker.js";
 
 const server = express();
+
+const { BACKEND_API_ENDPOINT } = process.env;
 
 const boardServerConfig = boardServer.createServerConfig({
   storageProvider: "firestore",
   proxyServerAllowFilter,
 });
-const connectionServerConfig = await connectionServer.createServerConfig();
+const connectionServerConfig = {
+  ...(await connectionServer.createServerConfig()),
+  validateResponse: allowListChecker(
+    BACKEND_API_ENDPOINT && new URL(BACKEND_API_ENDPOINT)
+  ),
+};
 
 boardServer.addMiddleware(server, boardServerConfig);
 server.use("/board", boardServer.createRouter(boardServerConfig));

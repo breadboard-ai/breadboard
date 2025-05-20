@@ -39,7 +39,7 @@ export class OverflowMenu extends LitElement {
         top: 20px;
         right: 20px;
         background: var(--background-color, var(--bb-neutral-0));
-        border: 1px solid var(--bb-neutral-300);
+        border: 1px solid var(--border-color, var(--bb-neutral-300));
         border-radius: var(--bb-grid-size-2);
         z-index: 2;
         box-shadow:
@@ -242,7 +242,8 @@ export class OverflowMenu extends LitElement {
       div {
         display: flex;
         align-items: center;
-        border-bottom: 1px solid var(--bb-neutral-100);
+        border-bottom: 1px solid
+          var(--inner-border-color, var(--bb-neutral-100));
       }
 
       div:last-of-type {

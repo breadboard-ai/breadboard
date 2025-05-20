@@ -4,6 +4,7 @@ import { asBase64 } from "@google-labs/breadboard";
 import { html } from "lit";
 import { ClassInfo, classMap } from "lit/directives/class-map.js";
 import { until } from "lit/directives/until.js";
+import { blobHandleToUrl } from "./blob-handle-to-url";
 
 declare const MAIN_ICON: string; // VITE variable
 
@@ -26,7 +27,13 @@ export async function renderThumbnail(
   }
 
   const resolvedImage = async (url: string) => {
-    const src = await resolveImage(googleDriveClient, url);
+    let src: string | undefined;
+    if (url.startsWith("drive:")) {
+      src = await resolveImage(googleDriveClient, url);
+    } else {
+      src = blobHandleToUrl(url)?.href;
+    }
+
     return renderTag(src);
   };
 

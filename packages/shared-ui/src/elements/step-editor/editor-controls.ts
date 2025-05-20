@@ -1043,24 +1043,24 @@ export class EditorControls extends LitElement {
                 hidden: true,
               },
               {
-                id: "text",
-                title: "Text",
-                icon: "edit_note",
-              },
-              {
                 id: "upload",
                 title: "Upload file",
                 icon: "upload",
               },
               {
                 id: "gdrive",
-                title: "Google Drive",
+                title: "My Drive",
                 icon: "drive",
               },
               {
                 id: "youtube",
                 title: "YouTube",
                 icon: "video_youtube",
+              },
+              {
+                id: "text",
+                title: "Build your own",
+                icon: "edit_note",
               },
               {
                 id: "drawing",

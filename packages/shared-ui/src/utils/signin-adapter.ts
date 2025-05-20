@@ -62,7 +62,8 @@ class SigninAdapter {
   constructor(
     tokenVendor?: TokenVendor,
     environment?: Environment,
-    settingsHelper?: SettingsHelper
+    settingsHelper?: SettingsHelper,
+    public readonly errorMessage?: string
   ) {
     if (!environment || !tokenVendor || !settingsHelper) {
       this.state = "invalid";
@@ -193,7 +194,14 @@ class SigninAdapter {
   ) {
     const now = Date.now();
     if (this.state === "invalid") {
-      await signinCallback(new SigninAdapter());
+      await signinCallback(
+        new SigninAdapter(
+          undefined,
+          undefined,
+          undefined,
+          "Sign in configuration error"
+        )
+      );
       return;
     }
     const nonce = this.#nonce;
@@ -218,13 +226,22 @@ class SigninAdapter {
     if (grantResponse.error !== undefined) {
       // TODO(aomarks) Show error info in the UI.
       console.error(grantResponse.error);
-      await signinCallback(new SigninAdapter());
+      await signinCallback(
+        new SigninAdapter(undefined, undefined, undefined, grantResponse.error)
+      );
       return;
     }
 
     const connection = await this.#getConnection();
     if (!connection) {
-      await signinCallback(new SigninAdapter());
+      await signinCallback(
+        new SigninAdapter(
+          undefined,
+          undefined,
+          undefined,
+          "Connection not found"
+        )
+      );
       return;
     }
 

@@ -23,6 +23,7 @@ import {
   InspectableAssetEdgeDirection,
 } from "@google-labs/breadboard";
 import {
+  AppPalette,
   AssetPath,
   AssetType,
   CommentNode,
@@ -528,6 +529,9 @@ export interface LanguagePack {
   WorkspaceOutline: LanguagePackEntry;
 }
 
+/**
+ * @deprecated Replaced with AppPalette
+ */
 export interface AppThemeColors {
   primaryColor: string;
   secondaryColor: string;
@@ -536,9 +540,10 @@ export interface AppThemeColors {
   primaryTextColor: string;
 }
 
-export type AppTheme = AppThemeColors & {
-  splashScreen?: InlineDataCapabilityPart | StoredDataCapabilityPart | null;
-};
+export type AppTheme = AppPalette &
+  AppThemeColors & {
+    splashScreen?: InlineDataCapabilityPart | StoredDataCapabilityPart | null;
+  };
 
 export interface AppTemplateAdditionalOption {
   values: Array<{ value: string; title: string }>;
@@ -556,7 +561,7 @@ export interface AppTemplateOptions {
   title?: string | null;
   description?: string | null;
   mode: "light" | "dark";
-  theme?: AppThemeColors;
+  theme?: AppPalette & AppThemeColors;
   isDefaultTheme?: boolean;
   splashImage: string | boolean;
   additionalOptions?: AppTemplateAdditionalOptionsChosen;
