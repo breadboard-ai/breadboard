@@ -30,6 +30,7 @@ export type Properties = {
 
 export type AppProperties = {
   title: string;
+  /** A truncated copy of the board description for listing. */
   description: string;
   tags: GraphTag[];
   thumbnailUrl?: string;
