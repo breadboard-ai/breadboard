@@ -63,6 +63,20 @@ function success(res: ServerResponse, fileUri: string, mimeType: string) {
   return true;
 }
 
+export function initializeDriveClient(
+  accessToken: string,
+  referrer?: string
+): GoogleDriveClient {
+  return new GoogleDriveClient({
+    apiBaseUrl: "https://www.googleapis.com",
+    proxyUrl:
+      "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/getOpalFile",
+    publicApiKey: process.env["VITE_GOOGLE_DRIVE_PUBLIC_API_KEY"] ?? "",
+    publicApiSpoofReferer: referrer,
+    getUserAccessToken: async () => accessToken,
+  });
+}
+
 async function handleAssetsDriveRequest(
   req: Request,
   res: Response
@@ -70,14 +84,10 @@ async function handleAssetsDriveRequest(
   const accessToken: string = res.locals.accessToken;
   const driveId = req.params["driveId"] ?? "";
   let mimeType = (req.query["mimeType"] as string) ?? "";
-  const googleDriveClient = new GoogleDriveClient({
-    apiBaseUrl: "https://www.googleapis.com",
-    proxyUrl:
-      "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/getOpalFile",
-    publicApiKey: process.env["VITE_GOOGLE_DRIVE_PUBLIC_API_KEY"] ?? "",
-    publicApiSpoofReferer: req.headers.referer,
-    getUserAccessToken: async () => accessToken,
-  });
+  const googleDriveClient = initializeDriveClient(
+    accessToken,
+    req.headers.referer
+  );
 
   const part = CavemanCache.instance().get(driveId);
   if (part) {
