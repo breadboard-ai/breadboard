@@ -31,25 +31,33 @@ const toneVals = [
 
 export async function generatePaletteFromImage(
   image: HTMLImageElement
-): Promise<AppPalette> {
+): Promise<AppPalette | null> {
   const generatedPalette: AppPalette = paletteFactory();
-  const theme = await themeFromImage(image);
-  const keys = Object.keys(theme.palettes) as Array<
-    keyof typeof theme.palettes
-  >;
+  try {
+    const theme = await themeFromImage(image);
+    const keys = Object.keys(theme.palettes) as Array<
+      keyof typeof theme.palettes
+    >;
 
-  for (const k of keys) {
-    const palette = TonalPalette.fromHueAndChroma(
-      theme.palettes[k].hue,
-      theme.palettes[k].chroma
-    );
+    for (const k of keys) {
+      const palette = TonalPalette.fromHueAndChroma(
+        theme.palettes[k].hue,
+        theme.palettes[k].chroma
+      );
 
-    for (const t of toneVals) {
-      generatedPalette[k][t] = hexFromArgb(palette.tone(t));
+      for (const t of toneVals) {
+        generatedPalette[k][t] = hexFromArgb(palette.tone(t));
+      }
     }
-  }
 
-  return generatedPalette;
+    return generatedPalette;
+  } catch (e) {
+    console.error(
+      "Unable to generate palette from image",
+      (e as Error).message
+    );
+    return null;
+  }
 }
 
 export function generatePaletteFromColor(color: string): AppPalette {
