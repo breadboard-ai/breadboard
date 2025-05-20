@@ -28,7 +28,7 @@ const llmContentConfig = (type: string) => ({
 
 const BLANK_GRAPH: GraphDescriptor = {
   title: "Untitled Flow",
-  description: "Add a description",
+  description: "",
   version: "0.0.1",
   nodes: [],
   edges: [],
@@ -36,7 +36,7 @@ const BLANK_GRAPH: GraphDescriptor = {
 
 const BLANK_LLM_CONTENT_GRAPH: GraphDescriptor = {
   title: "Untitled Flow",
-  description: "Add a description",
+  description: "",
   version: "0.0.1",
   nodes: [
     { type: "input", id: "input", configuration: llmContentConfig("input") },
