@@ -50,6 +50,7 @@ import { generatePaletteFromImage } from "@breadboard-ai/theme";
 import * as idb from "idb";
 import { BOARD_SAVE_STATUS } from "@breadboard-ai/shared-ui/types/types.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { loadImage } from "@breadboard-ai/shared-ui/utils/image";
 
 const documentStyles = getComputedStyle(document.documentElement);
 
@@ -660,18 +661,22 @@ export class Board extends EventTarget {
     } else if (
       handle.startsWith("data:") ||
       handle.startsWith("http:") ||
-      handle.startsWith("https:") ||
-      handle.startsWith("drive:")
+      handle.startsWith("https:")
     ) {
       splashUrl = new URL(handle);
+    } else if (handle.startsWith("drive:") && !this.googleDriveClient) {
+      return;
     }
 
     if (!splashUrl) {
       return;
     }
 
+    const imgUrl = await loadImage(this.googleDriveClient!, splashUrl.href);
+    if (!imgUrl) return;
+
     const img = new Image();
-    img.src = splashUrl.href;
+    img.src = imgUrl;
     img.crossOrigin = "anonymous";
     const generatedPalette = await generatePaletteFromImage(img);
     if (generatedPalette) {
