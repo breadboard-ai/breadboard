@@ -320,15 +320,12 @@ function toInlineData(c: LLMContent | LLMContent[]) {
   }
 }
 
-// TODO(askerryryan): Move this to the middleware.
 function toInlineReference(c: LLMContent) {
   const last = c.parts.at(-1);
   if (last == undefined || !("storedData" in last)) {
     return toInlineData(c);
   }
-  const blobId = last.storedData.handle.split("/").slice(-1)[0];
-  const gcs_handle = "opal-blob-store-corp/" + blobId;
-  return toInlineData(toLLMContentInline("text/gcs-path", btoa(gcs_handle)));
+  return toInlineData(toLLMContentInline("storedData", last.storedData.handle));
 }
 
 export function mergeContent(content: LLMContent[], role: string): LLMContent {
