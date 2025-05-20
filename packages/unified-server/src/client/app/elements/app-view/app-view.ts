@@ -50,10 +50,7 @@ export class AppView extends LitElement {
   static styles = css`
     :host {
       display: block;
-
-      /** Mobile for now */
-      max-width: 420px;
-      max-height: 920px;
+      container-type: size;
     }
 
     bb-connection-entry-signin {
