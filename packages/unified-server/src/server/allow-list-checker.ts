@@ -35,7 +35,7 @@ function allowListChecker(endpointUrl: URL | "" | undefined) {
     }
 
     return {
-      error: "Unfortunately, our product is not avaialble in your region",
+      error: "Unfortunately, our product is not available in your region",
     };
   };
 }
