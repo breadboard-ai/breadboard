@@ -776,7 +776,7 @@ export class UI extends LitElement {
                   this.sideNavItem = "app-view";
                 }}
               >
-                App view
+                ${Strings.from("LABEL_SECTION_PREVIEW")}
               </button>
               <button
                 ?disabled=${this.sideNavItem === "activity"}
@@ -784,7 +784,7 @@ export class UI extends LitElement {
                   this.sideNavItem = "activity";
                 }}
               >
-                Activity
+                ${Strings.from("LABEL_SECTION_CONSOLE")}
               </button>
             </div>
             <div id="side-nav-controls-right">
