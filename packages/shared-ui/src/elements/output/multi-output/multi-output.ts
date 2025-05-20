@@ -49,6 +49,7 @@ export class MultiOutput extends LitElement {
         --output-background-color: transparent;
         --output-lite-border-color: transparent;
         --output-lite-background-color: transparent;
+        --md-p-text-align: center;
         --md-p-font: 400 var(--bb-title-x-large) /
           var(--bb-title-line-height-xx-large) var(--bb-font-family);
         --md-color: var(--p-15, var(--bb-neutral-900));

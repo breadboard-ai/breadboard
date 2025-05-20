@@ -338,23 +338,34 @@ export class Template extends LitElement implements AppTemplate {
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            flex: 1;
             animation: fadeIn 1s cubic-bezier(0, 0, 0.3, 1);
+
+            #splash-content-container {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              width: 100%;
+            }
 
             &::before {
               content: "";
               width: var(--splash-width, 100%);
-              flex: 1;
               background: var(--splash-image, var(--bb-logo)) center center /
                 var(--splash-fill, cover) no-repeat;
               padding: var(--bb-grid-size-3);
               background-clip: content-box;
               border-radius: var(--bb-grid-size-5);
               box-sizing: border-box;
+              aspect-ratio: 17/20;
+              max-height: 45cqh;
             }
 
-            &.default::before {
-              background-clip: initial;
+            &.default {
+              flex: 1;
+              &::before {
+                max-width: 320px;
+                background-clip: initial;
+              }
             }
 
             & h1 {
@@ -602,6 +613,7 @@ export class Template extends LitElement implements AppTemplate {
                 var(--bb-title-line-height-medium) var(--bb-font-family);
               opacity: 0;
               animation: fadeIn 0.6s cubic-bezier(0, 0, 0.3, 1) 0.6s forwards;
+              max-width: 640px;
 
               & .g-icon {
                 margin: var(--bb-grid-size-2);
@@ -812,6 +824,61 @@ export class Template extends LitElement implements AppTemplate {
             }
           }
         }
+
+        @container (min-width: 820px) {
+          & #content {
+            justify-content: center;
+
+            & #controls {
+              & #progress-container {
+                & #progress {
+                  max-width: 800px;
+                }
+              }
+            }
+
+            & #input.stopped {
+              justify-content: flex-start;
+              padding-left: 0;
+            }
+
+            & #splash {
+              display: flex;
+              flex-direction: row;
+              flex: 1;
+
+              #splash-content-container {
+                height: 100%;
+                flex: 1;
+
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: flex-start;
+
+                margin-left: var(--bb-grid-size-10);
+              }
+
+              &::before {
+                height: 100%;
+                flex: 1;
+                max-height: calc(100cqh - var(--bb-grid-size-6));
+                aspect-ratio: initial;
+              }
+
+              &.default::before {
+                max-width: initial;
+                background-size: initial;
+              }
+
+              & h1,
+              & p {
+                width: auto;
+                text-align: left;
+              }
+            }
+          }
+        }
       }
 
       :host([showsharebutton]) {
@@ -840,7 +907,7 @@ export class Template extends LitElement implements AppTemplate {
       this.#nodesLeftToVisit.delete(topGraphResult.currentNode?.descriptor.id);
     }
 
-    const showShare = "share" in navigator;
+    const showShare = false && "share" in navigator;
     const percentage =
       this.#totalNodeCount > 0
         ? (this.#totalNodeCount - this.#nodesLeftToVisit.size) /
@@ -1476,81 +1543,85 @@ export class Template extends LitElement implements AppTemplate {
           this.hasRenderedSplash = true;
         }}
       >
-        <h1
-          ?contenteditable=${!this.readOnly}
-          @blur=${(evt: Event) => {
-            if (this.readOnly) {
-              return;
-            }
+        <section id="splash-content-container">
+          <h1
+            ?contenteditable=${!this.readOnly}
+            @blur=${(evt: Event) => {
+              if (this.readOnly) {
+                return;
+              }
 
-            if (
-              !(evt.target instanceof HTMLElement) ||
-              !evt.target.textContent
-            ) {
-              return;
-            }
-            const newTitle = evt.target.textContent.trim();
-            if (newTitle === this.options.title) {
-              return;
-            }
-            this.dispatchEvent(new BoardTitleUpdateEvent(newTitle));
-          }}
-        >
-          ${this.options.title}
-        </h1>
-        <p
-          ?contenteditable=${!this.readOnly}
-          @blur=${(evt: Event) => {
-            if (this.readOnly) {
-              return;
-            }
+              if (
+                !(evt.target instanceof HTMLElement) ||
+                !evt.target.textContent
+              ) {
+                return;
+              }
+              const newTitle = evt.target.textContent.trim();
+              if (newTitle === this.options.title) {
+                return;
+              }
+              this.dispatchEvent(new BoardTitleUpdateEvent(newTitle));
+            }}
+          >
+            ${this.options.title}
+          </h1>
+          <p
+            ?contenteditable=${!this.readOnly}
+            @blur=${(evt: Event) => {
+              if (this.readOnly) {
+                return;
+              }
 
-            if (this.readOnly) {
-              return;
-            }
+              if (this.readOnly) {
+                return;
+              }
 
-            if (
-              !(evt.target instanceof HTMLElement) ||
-              !evt.target.textContent
-            ) {
-              return;
-            }
+              if (
+                !(evt.target instanceof HTMLElement) ||
+                !evt.target.textContent
+              ) {
+                return;
+              }
 
-            const newDescription = evt.target.textContent.trim();
-            if (newDescription === this.options.description) {
-              return;
-            }
+              const newDescription = evt.target.textContent.trim();
+              if (newDescription === this.options.description) {
+                return;
+              }
 
-            this.dispatchEvent(new BoardDescriptionUpdateEvent(newDescription));
-          }}
-        >
-          ${this.options.description
-            ? html`${this.options.description}`
-            : nothing}
-        </p>
-      </div>
-      <div id="input" class="stopped">
-        <div>
-          ${this.state === "anonymous" || this.state === "valid"
-            ? html`<button
-                id="run"
-                ?disabled=${this.#totalNodeCount === 0}
-                @click=${() => {
-                  this.dispatchEvent(new RunEvent());
-                }}
-              >
-                <span class="g-icon"></span>Start
-              </button>`
-            : html`<button
-                id="sign-in"
-                ?disabled=${this.#totalNodeCount === 0}
-                @click=${() => {
-                  this.dispatchEvent(new SignInRequestedEvent());
-                }}
-              >
-                <span class="g-icon"></span>Sign In
-              </button>`}
-        </div>
+              this.dispatchEvent(
+                new BoardDescriptionUpdateEvent(newDescription)
+              );
+            }}
+          >
+            ${this.options.description
+              ? html`${this.options.description}`
+              : nothing}
+          </p>
+          <div id="input" class="stopped">
+            <div>
+              ${this.state === "anonymous" || this.state === "valid"
+                ? html`<button
+                    id="run"
+                    ?disabled=${this.#totalNodeCount === 0}
+                    @click=${() => {
+                      this.dispatchEvent(new RunEvent());
+                    }}
+                  >
+                    <span class="g-icon"></span>Start
+                  </button>`
+                : html`<button
+                    id="sign-in"
+                    ?disabled=${this.#totalNodeCount === 0}
+                    @click=${() => {
+                      this.dispatchEvent(new SignInRequestedEvent());
+                    }}
+                  >
+                    <span class="g-icon"></span>Sign In
+                  </button>`}
+            </div>
+          </div>
+        </section>
       </div>
     `;
 
