@@ -1190,10 +1190,12 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       return nothing;
     }
     // If tools are contained in prompt, iterate-on-prompt will be disabled.
-    const promptContainsTools = containsTools(node.currentPorts());
+    const promptcontainsToolsOrAssets = containsToolsOrAssets(
+      node.currentPorts()
+    );
     return html` <button
       id="iterate-on-prompt"
-      .disabled=${promptContainsTools}
+      .disabled=${promptcontainsToolsOrAssets}
       @click=${async () => {
         // Submit the changes to ensure the prompt is updated before it's sent.
         await this.#submit(this.values);
@@ -1830,15 +1832,15 @@ function isGenerativeNode(node: InspectableNode): boolean {
   return node.descriptor.type === "embed://a2/generate.bgl.json#module:main";
 }
 
-// Returns true if LLM text part of node contains tools or is absent.
-function containsTools(ports: InspectableNodePorts): boolean {
+// Returns true if LLM text part of node contains tools/assets or is absent.
+function containsToolsOrAssets(ports: InspectableNodePorts): boolean {
   const textPart = extractLlmTextPart(ports);
   if (!textPart) {
     return false;
   }
   const template = new Template(textPart!);
-  const tools = template.placeholders.filter(
-    (placeholder) => placeholder.type === "tool"
+  const tools = template.placeholders.filter((placeholder) =>
+    ["tool", "asset"].includes(placeholder.type)
   );
   return tools.length > 0;
 }
