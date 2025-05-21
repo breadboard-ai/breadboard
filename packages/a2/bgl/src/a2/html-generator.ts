@@ -59,11 +59,16 @@ async function callGenWebpage(
       } else if ("storedData" in part) {
         const key = `media_${i}`;
         inputParameters.push(key);
+        let handle = part.storedData.handle;
+        if (handle.startsWith("drive:/")) {
+          const driveId = handle.replace(/^drive:\/+/, "");
+          handle = `https://drive.google.com/file/d/${driveId}/preview`;
+        }
         executionInputs[key] = {
           chunks: [
             {
               mimetype: "url/" + part.storedData.mimeType,
-              data: btoa(unescape(encodeURIComponent(part.storedData.handle))),
+              data: btoa(unescape(encodeURIComponent(handle))),
             },
           ],
         };
