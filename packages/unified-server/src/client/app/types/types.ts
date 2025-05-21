@@ -52,4 +52,5 @@ export type BootstrapArguments = {
   boardServerUrl?: URL;
   connectionServerUrl?: URL;
   requiresSignin?: boolean;
+  boardService?: string;
 };

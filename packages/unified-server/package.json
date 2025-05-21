@@ -175,6 +175,7 @@
     "@breadboard-ai/connection-server": "0.5.1",
     "@breadboard-ai/data-store": "0.3.3",
     "@breadboard-ai/embed": "0.0.1",
+    "@breadboard-ai/google-drive-kit": "0.6.0",
     "@breadboard-ai/remote-board-server": "1.22.0",
     "@breadboard-ai/shared-ui": "1.25.0",
     "@breadboard-ai/types": "0.7.0",
