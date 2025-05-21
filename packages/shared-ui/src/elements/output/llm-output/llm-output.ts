@@ -96,11 +96,9 @@ export class LLMOutput extends LitElement {
     :host {
       display: block;
       position: relative;
-      border: var(--output-border-width, 2px) solid
-        var(--output-border-color, var(--bb-neutral-300));
-      border-radius: var(--output-border-radius, var(--bb-grid-size));
       margin-bottom: var(--bb-grid-size-2);
       background: var(--output-background-color, transparent);
+      border-radius: var(--output-border-radius, 0);
 
       --md-h1-font: 500 var(--bb-title-large) /
         var(--bb-title-line-height-large) var(--bb-font-family);
@@ -120,6 +118,10 @@ export class LLMOutput extends LitElement {
       --md-p-text-align: left;
       --md-color: var(--bb-neutral-900);
       --md-a-color: var(--primary-color, var(--bb-ui-700));
+
+      & .content {
+        border-radius: var(--output-border-radius, var(--bb-grid-size));
+      }
     }
 
     :host([clamped]) {
@@ -134,8 +136,17 @@ export class LLMOutput extends LitElement {
     }
 
     :host([lite]) {
-      border: 1px solid var(--output-lite-border-color, var(--bb-neutral-100));
-      background: var(--output-lite-background-color, var(--bb-neutral-0));
+      & .content {
+        background: var(--output-lite-background-color, var(--bb-neutral-0));
+
+        &:has(.html-view) {
+          border: none;
+          border-radius: 0;
+
+          --output-lite-border-color: transparent;
+          --output-border-radius: 0;
+        }
+      }
     }
 
     .loading {
@@ -163,7 +174,6 @@ export class LLMOutput extends LitElement {
       padding: var(--output-padding-y, 0) var(--output-padding-x, 0);
       overflow-y: auto;
       max-height: var(--bb-llm-output-content-max-height, unset);
-      max-width: 640px;
 
       &:last-of-type {
         margin-bottom: 0;
@@ -309,14 +319,10 @@ export class LLMOutput extends LitElement {
     }
 
     iframe.html-view {
-      border-radius: var(--output-border-radius);
-    }
-
-    iframe.html-view {
       border: none;
       width: 100%;
       overflow-x: auto;
-      height: 100svh;
+      height: var(--html-view-height, 100svh);
       max-height: calc(100cqh - var(--bb-grid-size-11));
     }
 

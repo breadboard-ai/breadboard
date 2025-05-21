@@ -603,6 +603,10 @@ export const styles = css`
     color: var(--bb-neutral-500);
   }
 
+  .output-port .value bb-llm-output {
+    --html-view-height: 500px;
+  }
+
   .output-port * {
     margin: var(--bb-grid-size) 0;
   }

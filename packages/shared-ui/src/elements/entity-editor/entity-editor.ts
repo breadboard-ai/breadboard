@@ -78,7 +78,7 @@ import { consume } from "@lit/context";
 import { embedderContext } from "../../contexts/embedder";
 import { EmbedState, embedState } from "@breadboard-ai/embed";
 import { getBoardIdFromUrl } from "../../utils/board-id.js";
-import { text } from "stream/consumers";
+
 const Strings = StringsHelper.forSection("Editor");
 
 // A type that is like a port (and fits InspectablePort), but could also be
@@ -1163,9 +1163,9 @@ export class EntityEditor extends SignalWatcher(LitElement) {
               this.#submit(this.values);
             }}
           />
-          ${this.embedState?.showIterateOnPrompt ? 
-            this.#renderIterateOnPromptButton(nodeId, node.title(), node) : 
-            nothing}
+          ${this.embedState?.showIterateOnPrompt
+            ? this.#renderIterateOnPromptButton(nodeId, node.title(), node)
+            : nothing}
         </h1>
         <div id="type"></div>
         <div id="content">
@@ -1179,7 +1179,11 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     return html`${until(value, html`<div id="generic-status">Loading...</div>`)}`;
   }
 
-  #renderIterateOnPromptButton(nodeId: NodeIdentifier, nodeTitle: string, node: InspectableNode) {
+  #renderIterateOnPromptButton(
+    nodeId: NodeIdentifier,
+    nodeTitle: string,
+    node: InspectableNode
+  ) {
     const url = new URL(this.graph?.raw().url ?? window.location.href);
     const boardId = getBoardIdFromUrl(url);
     if (!boardId || !isGenerativeNode(node)) {
@@ -1187,25 +1191,31 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     }
     // If tools are contained in prompt, iterate-on-prompt will be disabled.
     const promptContainsTools = containsTools(node.currentPorts());
-    return html`
-      <button 
-        id="iterate-on-prompt"
-        .disabled=${promptContainsTools}
-        @click=${async () => {
-          // Submit the changes to ensure the prompt is updated before it's sent.
-          await this.#submit(this.values);
-          const ports = await node.ports();
-          const promptTemplate = extractLlmTextPart(ports);
-          const modelId = extractModelId(ports);
-          if (!promptTemplate) {
-            return;
-          }
-          this.dispatchEvent(new IterateOnPromptEvent(
-            nodeTitle, promptTemplate, boardId!, nodeId, modelId
-          ));
-        }}>
-        Iterate on prompt
-      </button>`;
+    return html` <button
+      id="iterate-on-prompt"
+      .disabled=${promptContainsTools}
+      @click=${async () => {
+        // Submit the changes to ensure the prompt is updated before it's sent.
+        await this.#submit(this.values);
+        const ports = await node.ports();
+        const promptTemplate = extractLlmTextPart(ports);
+        const modelId = extractModelId(ports);
+        if (!promptTemplate) {
+          return;
+        }
+        this.dispatchEvent(
+          new IterateOnPromptEvent(
+            nodeTitle,
+            promptTemplate,
+            boardId!,
+            nodeId,
+            modelId
+          )
+        );
+      }}
+    >
+      Iterate on prompt
+    </button>`;
   }
 
   #renderTextEditorPort(
@@ -1781,19 +1791,18 @@ function getLLMContentPortValue(
 }
 
 // Extract LLM text part if available; null otherwise.
-function extractLlmTextPart(
-  ports: InspectableNodePorts): string | null {
+function extractLlmTextPart(ports: InspectableNodePorts): string | null {
   const inputPorts = ports.inputs.ports;
   const port = inputPorts.find(
-    (port) => 
-      isLLMContentBehavior(port.schema) && 
-      !port.schema.behavior?.includes("hint-advanced"));
+    (port) =>
+      isLLMContentBehavior(port.schema) &&
+      !port.schema.behavior?.includes("hint-advanced")
+  );
   if (!port || !isLLMContent(port.value)) {
     return null;
   }
   const portValue = getLLMContentPortValue(port.value, port.schema);
-  const textPart = portValue.parts.find(
-    (part) => isTextCapabilityPart(part));
+  const textPart = portValue.parts.find((part) => isTextCapabilityPart(part));
   if (!textPart) {
     return null;
   }
@@ -1802,40 +1811,34 @@ function extractLlmTextPart(
 
 // Extract selected model ID (e.g., 'text', 'text-2.0-flash') from node.
 // Returns null if not present.
-function extractModelId(
-  ports: InspectableNodePorts
-): string | null {
+function extractModelId(ports: InspectableNodePorts): string | null {
   const inputPorts = ports.inputs.ports;
   const port = inputPorts.find(
-    (port) => 
-      port.schema.type === "string" && port.schema.enum);
+    (port) => port.schema.type === "string" && port.schema.enum
+  );
   if (!port) {
     return null;
   }
   const currentValue = enumValue(
-    port.schema!.enum!.find(
-      (value) => enumValue(value).id == port.value
-    ) ?? port.schema!.enum![0]
+    port.schema!.enum!.find((value) => enumValue(value).id == port.value) ??
+      port.schema!.enum![0]
   );
   return currentValue?.id ?? null;
 }
 
-function isGenerativeNode(
-  node: InspectableNode
-): boolean {
+function isGenerativeNode(node: InspectableNode): boolean {
   return node.descriptor.type === "embed://a2/generate.bgl.json#module:main";
 }
 
 // Returns true if LLM text part of node contains tools or is absent.
-function containsTools(
-  ports: InspectableNodePorts
-): boolean {
+function containsTools(ports: InspectableNodePorts): boolean {
   const textPart = extractLlmTextPart(ports);
   if (!textPart) {
     return false;
   }
   const template = new Template(textPart!);
   const tools = template.placeholders.filter(
-    (placeholder) => placeholder.type === "tool");
+    (placeholder) => placeholder.type === "tool"
+  );
   return tools.length > 0;
 }
