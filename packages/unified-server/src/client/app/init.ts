@@ -366,6 +366,7 @@ async function bootstrap(args: BootstrapArguments = {}) {
     const runConfig = await createRunConfig(
       flow,
       args,
+      googleDriveClient,
       tokenVendor,
       abortController
     );
@@ -422,4 +423,5 @@ bootstrap({
   boardServerUrl: new URL("/board/", window.location.href),
   connectionServerUrl: new URL("/connection/", window.location.href),
   requiresSignin: true,
+  boardService: import.meta.env.VITE_BOARD_SERVICE,
 });

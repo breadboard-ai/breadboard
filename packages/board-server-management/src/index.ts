@@ -41,6 +41,58 @@ interface BoardServerListing extends idb.DBSchema {
   };
 }
 
+export async function createGoogleDriveBoardServer(
+  url: string,
+  title: string,
+  user: User,
+  tokenVendor?: TokenVendor,
+  googleDriveClient?: GoogleDriveClient
+) {
+  if (!googleDriveClient) {
+    console.error(
+      "The Google Drive board server could not be initialized because" +
+        " a GoogleDriveClient was not provided"
+    );
+    return null;
+  }
+  if (!tokenVendor) {
+    console.error(
+      "The Google Drive board server could not be initialized because" +
+        " a TokenVendor was not provided"
+    );
+    return null;
+  }
+  const googleDrivePublicApiKey = import.meta.env
+    .VITE_GOOGLE_DRIVE_PUBLIC_API_KEY;
+  if (!googleDrivePublicApiKey) {
+    console.warn(
+      "No value for VITE_GOOGLE_DRIVE_PUBLIC_API_KEY was configured." +
+        " We will not be able to read public files from Google Drive."
+    );
+  }
+  const googleDriveFeaturedGalleryFolderId = import.meta.env
+    .VITE_GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID;
+  if (!googleDrivePublicApiKey) {
+    console.warn(
+      "No value for VITE_GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID" +
+        " was configured. We will not be able to read the featured" +
+        " gallery from Google Drive."
+    );
+  }
+  const userFolderName =
+    import.meta.env.VITE_GOOGLE_DRIVE_USER_FOLDER_NAME || "Breadboard";
+  return GoogleDriveBoardServer.from(
+    url,
+    title,
+    user,
+    tokenVendor,
+    googleDriveClient,
+    userFolderName,
+    googleDrivePublicApiKey,
+    googleDriveFeaturedGalleryFolderId
+  );
+}
+
 export async function getBoardServers(
   tokenVendor?: TokenVendor,
   googleDriveClient?: GoogleDriveClient
@@ -65,48 +117,12 @@ export async function getBoardServers(
       }
 
       if (url.startsWith(GoogleDriveBoardServer.PROTOCOL)) {
-        if (!googleDriveClient) {
-          console.error(
-            "The Google Drive board server could not be initialized because" +
-              " a GoogleDriveClient was not provided"
-          );
-          return null;
-        }
-        if (!tokenVendor) {
-          console.error(
-            "The Google Drive board server could not be initialized because" +
-              " a TokenVendor was not provided"
-          );
-          return null;
-        }
-        const googleDrivePublicApiKey = import.meta.env
-          .VITE_GOOGLE_DRIVE_PUBLIC_API_KEY;
-        if (!googleDrivePublicApiKey) {
-          console.warn(
-            "No value for VITE_GOOGLE_DRIVE_PUBLIC_API_KEY was configured." +
-              " We will not be able to read public files from Google Drive."
-          );
-        }
-        const googleDriveFeaturedGalleryFolderId = import.meta.env
-          .VITE_GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID;
-        if (!googleDrivePublicApiKey) {
-          console.warn(
-            "No value for VITE_GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID" +
-              " was configured. We will not be able to read the featured" +
-              " gallery from Google Drive."
-          );
-        }
-        const userFolderName =
-          import.meta.env.VITE_GOOGLE_DRIVE_USER_FOLDER_NAME || "Breadboard";
-        return GoogleDriveBoardServer.from(
+        return createGoogleDriveBoardServer(
           url,
           title,
           user,
           tokenVendor,
-          googleDriveClient,
-          userFolderName,
-          googleDrivePublicApiKey,
-          googleDriveFeaturedGalleryFolderId
+          googleDriveClient
         );
       }
 
