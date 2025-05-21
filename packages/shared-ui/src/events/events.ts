@@ -1584,7 +1584,7 @@ export class IterateOnPromptEvent extends Event {
     public readonly promptTemplate: string,
     public readonly boardId: string,
     public readonly nodeId: string,
-    public readonly modelId: string | null,
+    public readonly modelId: string | null
   ) {
     super(IterateOnPromptEvent.eventName, { ...eventInit });
   }

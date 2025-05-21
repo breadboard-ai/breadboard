@@ -89,7 +89,10 @@ export interface IterateOnPromptMessage {
 }
 
 /** A message from parent iframe to Breadboard, sent via iframe.contentWindow.postMessage */
-export type EmbedderMessage = ToggleIterateOnPromptMessage | CreateNewBoardMessage | HandshakeCompleteMessage;
+export type EmbedderMessage =
+  | ToggleIterateOnPromptMessage
+  | CreateNewBoardMessage
+  | HandshakeCompleteMessage;
 
 /** Message to determine whether to display Iterate-on-prompt button. */
 export interface ToggleIterateOnPromptMessage {
