@@ -332,6 +332,7 @@ export class AddAssetModal extends LitElement {
         assetCollector = html`<input
           type="file"
           required
+          multiple
           accept=${this.allowedMimeTypes
             ? this.allowedMimeTypes
             : "image/*,audio/*,video/*,text/plain,application/pdf,text/csv"}
