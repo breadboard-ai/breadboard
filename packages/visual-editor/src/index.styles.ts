@@ -213,7 +213,7 @@ export const styles = css`
   }
 
   #tos-dialog {
-    max-width: 640px;
+    max-width: 800px;
     border-radius: var(--bb-grid-size-4);
     border: none;
     padding: 0;
@@ -244,10 +244,11 @@ export const styles = css`
     .tos-content {
       flex-grow: 1;
       overflow-y: auto;
-      max-height: 320px;
+      max-height: 440px;
       padding: var(--bb-grid-size-4) var(--bb-grid-size-6);
       font: 400 var(--bb-body-large) / var(--bb-body-line-height-large)
         var(--bb-font-family);
+      outline: none;
     }
 
     .controls {
