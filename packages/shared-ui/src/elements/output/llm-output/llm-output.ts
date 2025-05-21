@@ -16,6 +16,7 @@ import {
   isTextCapabilityPart,
 } from "@google-labs/breadboard";
 import {
+  HTMLTemplateResult,
   LitElement,
   PropertyValues,
   TemplateResult,
@@ -29,11 +30,9 @@ import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
 import { until } from "lit/directives/until.js";
 import { markdown } from "../../../directives/markdown.js";
-import { ToastEvent, ToastType } from "../../../events/events.js";
 import { tokenVendorContext } from "../../elements.js";
 import { consume } from "@lit/context";
 import type { TokenVendor } from "@breadboard-ai/connection-client";
-import "./export-toolbar.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { getGlobalColor } from "../../../utils/color.js";
 import {
@@ -45,6 +44,9 @@ import {
   isWatchUri,
 } from "../../../utils/youtube.js";
 import { Task } from "@lit/task";
+import { icons } from "../../../styles/icons.js";
+import { OverflowAction } from "../../../types/types.js";
+import { OverflowMenuActionEvent } from "../../../events/events.js";
 
 const PCM_AUDIO = "audio/l16;codec=pcm;rate=24000";
 const SANDBOX_RESTRICTIONS = "allow-scripts allow-forms";
@@ -78,319 +80,357 @@ export class LLMOutput extends LitElement {
   #partDataURLs = new Map<number, string>();
   #partTask = new Map<number, Task>();
 
-  static styles = css`
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-      }
+  static styles = [
+    icons,
+    css`
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
 
-      to {
-        opacity: 1;
-      }
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    :host {
-      display: block;
-      position: relative;
-      margin-bottom: var(--bb-grid-size-2);
-      background: var(--output-background-color, transparent);
-      border-radius: var(--output-border-radius, 0);
-
-      --md-h1-font: 500 var(--bb-title-large) /
-        var(--bb-title-line-height-large) var(--bb-font-family);
-      --md-h1-margin: var(--bb-grid-size-6) 0 var(--bb-grid-size-2) 0;
-
-      --md-h2-font: 500 var(--bb-title-medium) /
-        var(--bb-title-line-height-medium) var(--bb-font-family);
-      --md-h2-margin: var(--bb-grid-size-4) 0 var(--bb-grid-size-2) 0;
-
-      --md-h-font: 500 var(--bb-title-small) / var(--bb-title-line-height-small)
-        var(--bb-font-family);
-      --md-h-margin: var(--bb-grid-size-3) 0 var(--bb-grid-size-2) 0;
-
-      --md-p-font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
-        var(--bb-font-family);
-      --md-p-margin: 0 0 var(--bb-grid-size-2) 0;
-      --md-p-text-align: left;
-      --md-color: var(--bb-neutral-900);
-      --md-a-color: var(--primary-color, var(--bb-ui-700));
-
-      & .content {
-        border-radius: var(--output-border-radius, var(--bb-grid-size));
-      }
-    }
-
-    :host([clamped]) {
-      resize: vertical;
-      overflow: auto;
-      height: 200px;
-      min-height: var(--bb-grid-size-6);
-    }
-
-    :host(:not([clamped])) {
-      min-height: var(--output-min-height, 0);
-    }
-
-    :host([lite]) {
-      & .content {
-        background: var(--output-lite-background-color, var(--bb-neutral-0));
-
-        &:has(.html-view) {
-          border: none;
-          border-radius: 0;
-
-          --output-lite-border-color: transparent;
-          --output-border-radius: 0;
+        to {
+          opacity: 1;
         }
       }
-    }
 
-    .loading {
-      display: flex;
-      align-items: center;
-      height: 20px;
-      font: normal var(--bb-body-small) / var(--bb-body-line-height-small)
-        var(--bb-font-family);
-
-      &::before {
-        content: "";
-        width: 20px;
-        height: 20px;
-        background: url(/images/progress-ui.svg) center center / 20px 20px
-          no-repeat;
-        margin-right: var(--bb-grid-size-2);
-      }
-    }
-
-    .content {
-      display: block;
-      position: relative;
-      margin: 0 auto;
-      margin-bottom: var(--bb-grid-size-2);
-      padding: var(--output-padding-y, 0) var(--output-padding-x, 0);
-      overflow-y: auto;
-      max-height: var(--bb-llm-output-content-max-height, unset);
-
-      &:last-of-type {
-        margin-bottom: 0;
+      * {
+        box-sizing: border-box;
       }
 
-      & .value {
-        display: flex;
-        flex-direction: column;
+      :host {
+        display: block;
         position: relative;
+        margin-bottom: var(--bb-grid-size-2);
+        background: var(--output-background-color, transparent);
+        border-radius: var(--output-border-radius, 0);
 
-        margin: var(--output-value-margin-y, 0) var(--output-value-margin-x, 0);
-        font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
+        --md-h1-font: 500 var(--bb-title-large) /
+          var(--bb-title-line-height-large) var(--bb-font-family);
+        --md-h1-margin: var(--bb-grid-size-6) 0 var(--bb-grid-size-2) 0;
+
+        --md-h2-font: 500 var(--bb-title-medium) /
+          var(--bb-title-line-height-medium) var(--bb-font-family);
+        --md-h2-margin: var(--bb-grid-size-4) 0 var(--bb-grid-size-2) 0;
+
+        --md-h-font: 500 var(--bb-title-small) /
+          var(--bb-title-line-height-small) var(--bb-font-family);
+        --md-h-margin: var(--bb-grid-size-3) 0 var(--bb-grid-size-2) 0;
+
+        --md-p-font: 400 var(--bb-body-medium) /
+          var(--bb-body-line-height-medium) var(--bb-font-family);
+        --md-p-margin: 0 0 var(--bb-grid-size-2) 0;
+        --md-p-text-align: left;
+        --md-color: var(--bb-neutral-900);
+        --md-a-color: var(--primary-color, var(--bb-ui-700));
+
+        & .content {
+          border-radius: var(--output-border-radius, var(--bb-grid-size));
+        }
+      }
+
+      :host([clamped]) {
+        resize: vertical;
+        overflow: auto;
+        height: 200px;
+        min-height: var(--bb-grid-size-6);
+      }
+
+      :host(:not([clamped])) {
+        min-height: var(--output-min-height, 0);
+      }
+
+      :host([lite]) {
+        & .content {
+          background: var(--output-lite-background-color, var(--bb-neutral-0));
+
+          &:has(.html-view) {
+            border: none;
+            border-radius: 0;
+
+            --output-lite-border-color: transparent;
+            --output-border-radius: 0;
+          }
+        }
+      }
+
+      .loading {
+        display: flex;
+        align-items: center;
+        height: 20px;
+        font: normal var(--bb-body-small) / var(--bb-body-line-height-small)
           var(--bb-font-family);
-        color: var(--bb-neutral-900);
 
-        padding: var(--output-value-padding-y, 0)
-          var(--output-value-padding-x, 0);
+        &::before {
+          content: "";
+          width: 20px;
+          height: 20px;
+          background: url(/images/progress-ui.svg) center center / 20px 20px
+            no-repeat;
+          margin-right: var(--bb-grid-size-2);
+        }
+      }
 
-        white-space: normal;
-        border-radius: initial;
-        user-select: text;
+      .content {
+        display: block;
+        position: relative;
+        margin: 0 auto;
+        margin-bottom: var(--bb-grid-size-2);
+        padding: var(--output-padding-y, 0) var(--output-padding-x, 0);
+        overflow-y: auto;
+        max-height: var(--bb-llm-output-content-max-height, unset);
 
-        .no-data {
-          font: normal var(--bb-body-small) / var(--bb-body-line-height-small)
-            var(--bb-font-family-mono);
+        &:last-of-type {
+          margin-bottom: 0;
         }
 
-        &:has(> img),
-        &:has(> .copy-image-to-clipboard),
-        &:has(> video),
-        &:has(> audio) {
-          justify-content: center;
-          align-items: center;
+        & .value {
+          display: flex;
+          flex-direction: column;
+          position: relative;
+
+          margin: var(--output-value-margin-y, 0)
+            var(--output-value-margin-x, 0);
+          font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
+            var(--bb-font-family);
+          color: var(--bb-neutral-900);
+
           padding: var(--output-value-padding-y, 0)
             var(--output-value-padding-x, 0);
+
+          white-space: normal;
+          border-radius: initial;
+          user-select: text;
+
+          .no-data {
+            font: normal var(--bb-body-small) / var(--bb-body-line-height-small)
+              var(--bb-font-family-mono);
+          }
+
+          &:has(> img),
+          &:has(> .copy-image-to-clipboard),
+          &:has(> video),
+          &:has(> audio) {
+            justify-content: center;
+            align-items: center;
+            padding: var(--output-value-padding-y, 0)
+              var(--output-value-padding-x, 0);
+          }
+
+          &:has(> .html-view) {
+            padding: 0;
+            margin: 0;
+          }
+
+          & * {
+            margin: 0;
+          }
+
+          & img,
+          & video,
+          & audio {
+            width: 100%;
+            max-width: 360px;
+            min-width: 300px;
+          }
+
+          & img,
+          & video {
+            border-radius: var(--output-border-radius);
+          }
+
+          & pre {
+            font: normal var(--bb-body-small) / var(--bb-body-line-height-small)
+              var(--bb-font-family);
+          }
+
+          & iframe {
+            aspect-ratio: 16/9;
+            margin: 0;
+          }
+
+          & .empty-text-part {
+            color: var(--bb-neutral-900);
+            margin: 0;
+            padding: 0;
+            border-radius: var(--bb-grid-size-16);
+            font: normal italic var(--bb-body-small) /
+              var(--bb-body-line-height-small) var(--bb-font-family);
+          }
+
+          & ol {
+            margin-top: var(--bb-grid-size-2);
+
+            & li {
+              margin: var(--bb-grid-size-2);
+            }
+          }
+
+          & .overflow {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            padding: 0;
+            margin: 0;
+            border: none;
+            color: var(--bb-neutral-0);
+            background: var(--bb-neutral-700);
+            position: absolute;
+            bottom: calc(
+              var(--output-value-padding-y, 0) + var(--bb-grid-size-2)
+            );
+            right: calc(
+              var(--output-value-padding-x, 0) + var(--bb-grid-size-2)
+            );
+
+            & .g-icon {
+              pointer-events: none;
+            }
+
+            &:not([disabled]) {
+              cursor: pointer;
+            }
+          }
         }
 
-        &:has(> .html-view) {
-          padding: 0;
-          margin: 0;
-        }
-
-        & * {
-          margin: 0;
-        }
-
-        & img,
-        & video,
-        & audio {
-          width: 100%;
-          max-width: 360px;
-        }
-
-        & img,
-        & video {
-          border-radius: var(--output-border-radius);
-        }
-
-        & pre {
-          font: normal var(--bb-body-small) / var(--bb-body-line-height-small)
-            var(--bb-font-family);
-        }
-
-        & iframe {
-          aspect-ratio: 16/9;
-          margin: 0;
-        }
-
-        & .empty-text-part {
+        & .plain-text {
+          white-space: pre;
+          font: 500 var(--bb-body-small) / var(--bb-body-line-height-small)
+            var(--bb-font-family-mono);
           color: var(--bb-neutral-900);
-          margin: 0;
-          padding: 0;
-          border-radius: var(--bb-grid-size-16);
-          font: normal italic var(--bb-body-small) /
-            var(--bb-body-line-height-small) var(--bb-font-family);
         }
 
-        & ol {
-          margin-top: var(--bb-grid-size-2);
+        & .markdown {
+          line-height: 1.5;
+          overflow-x: auto;
+          color: var(--md-color);
 
-          & li {
-            margin: var(--bb-grid-size-2);
+          & a {
+            color: var(--md-a-color);
+          }
+
+          h1 {
+            font: var(--md-h1-font);
+            margin: var(--md-h1-margin);
+          }
+
+          & h2 {
+            font: var(--md-h2-font);
+            margin: var(--md-h2-margin);
+          }
+
+          & h3,
+          & h4,
+          & h5 {
+            font: var(--md-h-font);
+            margin: var(--md-h-margin);
+          }
+
+          & h1:first-of-type,
+          & h2:first-of-type,
+          & h3:first-of-type,
+          & h4:first-of-type,
+          & h5:first-of-type {
+            margin-top: 0;
+          }
+
+          & p {
+            font: var(--md-p-font);
+            margin: var(--md-p-margin);
+            text-align: var(--md-p-text-align);
+            white-space: pre-line;
+
+            & strong:only-child {
+              margin: var(--bb-grid-size-2) 0 0 0;
+            }
+
+            &:last-of-type {
+              margin-bottom: 0;
+            }
           }
         }
       }
 
-      & .plain-text {
-        white-space: pre;
-        font: 500 var(--bb-body-small) / var(--bb-body-line-height-small)
-          var(--bb-font-family-mono);
-        color: var(--bb-neutral-900);
-      }
-
-      & .markdown {
-        line-height: 1.5;
+      iframe.html-view {
+        border: none;
+        width: 100%;
         overflow-x: auto;
-        color: var(--md-color);
-
-        & a {
-          color: var(--md-a-color);
-        }
-
-        h1 {
-          font: var(--md-h1-font);
-          margin: var(--md-h1-margin);
-        }
-
-        & h2 {
-          font: var(--md-h2-font);
-          margin: var(--md-h2-margin);
-        }
-
-        & h3,
-        & h4,
-        & h5 {
-          font: var(--md-h-font);
-          margin: var(--md-h-margin);
-        }
-
-        & h1:first-of-type,
-        & h2:first-of-type,
-        & h3:first-of-type,
-        & h4:first-of-type,
-        & h5:first-of-type {
-          margin-top: 0;
-        }
-
-        & p {
-          font: var(--md-p-font);
-          margin: var(--md-p-margin);
-          text-align: var(--md-p-text-align);
-          white-space: pre-line;
-
-          & strong:only-child {
-            margin: var(--bb-grid-size-2) 0 0 0;
-          }
-
-          &:last-of-type {
-            margin-bottom: 0;
-          }
-        }
+        height: var(--html-view-height, 100svh);
+        max-height: calc(100cqh - var(--bb-grid-size-11));
       }
-    }
 
-    iframe.html-view {
-      border: none;
-      width: 100%;
-      overflow-x: auto;
-      height: var(--html-view-height, 100svh);
-      max-height: calc(100cqh - var(--bb-grid-size-11));
-    }
+      :host([lite]) .value {
+        margin: 0;
+      }
 
-    :host([lite]) .value {
-      margin: 0;
-    }
-
-    .play-audio {
-      background: var(--bb-neutral-0) var(--bb-icon-sound) 6px 3px / 16px 16px
-        no-repeat;
-      border-radius: 20px;
-      color: var(--bb-neutral-900);
-      border: 1px solid var(--bb-neutral-600);
-      height: 24px;
-      padding: 0 16px 0 28px;
-      cursor: pointer;
-      opacity: 0.5;
-    }
-
-    .play-audio:hover,
-    .play-audio:focus {
-      opacity: 1;
-    }
-
-    .copy-image-to-clipboard {
-      position: relative;
-
-      & button {
-        width: 32px;
-        height: 32px;
-        background: var(--background-color, var(--bb-neutral-0))
-          var(--bb-icon-copy-to-clipboard) center center / 20px 20px no-repeat;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        translate: -50% -50%;
-        border-radius: 50%;
+      .play-audio {
+        background: var(--bb-neutral-0) var(--bb-icon-sound) 6px 3px / 16px 16px
+          no-repeat;
+        border-radius: 20px;
+        color: var(--bb-neutral-900);
+        border: 1px solid var(--bb-neutral-600);
+        height: 24px;
+        padding: 0 16px 0 28px;
         cursor: pointer;
-        border: 1px solid var(--bb-neutral-300);
-        font-size: 0;
-        opacity: 0;
-        transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+        opacity: 0.5;
       }
 
-      &:hover button {
+      .play-audio:hover,
+      .play-audio:focus {
         opacity: 1;
       }
-    }
 
-    bb-export-toolbar {
-      display: none;
-      position: absolute;
-      top: -16px;
-      right: var(--export-x, 16px);
-      z-index: 1;
-      animation: fadeIn 0.15s cubic-bezier(0, 0, 0.3, 1);
-    }
+      .copy-image-to-clipboard {
+        position: relative;
 
-    bb-pdf-viewer {
-      aspect-ratio: 1/1;
-    }
+        & button {
+          width: 32px;
+          height: 32px;
+          background: var(--background-color, var(--bb-neutral-0))
+            var(--bb-icon-copy-to-clipboard) center center / 20px 20px no-repeat;
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          translate: -50% -50%;
+          border-radius: 50%;
+          cursor: pointer;
+          border: 1px solid var(--bb-neutral-300);
+          font-size: 0;
+          opacity: 0;
+          transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+        }
 
-    :host(:hover) {
-      bb-export-toolbar {
-        display: block;
+        &:hover button {
+          opacity: 1;
+        }
       }
-    }
-  `;
+
+      bb-export-toolbar {
+        display: none;
+        position: absolute;
+        top: -16px;
+        right: var(--export-x, 16px);
+        z-index: 1;
+        animation: fadeIn 0.15s cubic-bezier(0, 0, 0.3, 1);
+      }
+
+      bb-pdf-viewer {
+        aspect-ratio: 1/1;
+      }
+
+      :host(:hover) {
+        bb-export-toolbar {
+          display: block;
+        }
+      }
+
+      bb-overflow-menu {
+        position: absolute;
+        top: auto;
+        bottom: calc(var(--output-value-padding-y, 0) + var(--bb-grid-size-2));
+        right: calc(var(--output-value-padding-x, 0));
+      }
+    `,
+  ];
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -457,34 +497,104 @@ export class LLMOutput extends LitElement {
     return task;
   }
 
+  #renderOverflowMenu() {}
+
+  #overflowMenuConfiguration = {
+    idx: 0,
+    y: 0,
+  };
+
+  @property()
+  accessor showPartOverflowMenu = false;
+
   render() {
-    const canCopy = this.showExportControls && "ClipboardItem" in window;
     if (this.value && !isLLMContent(this.value)) {
       console.warn(`Unexpected value for LLM Output`, this.value);
       return nothing;
     }
 
+    let hasOverflowMenu = false;
+    let partOverflowMenu: HTMLTemplateResult | symbol = nothing;
+    if (this.showPartOverflowMenu && this.#overflowMenuConfiguration) {
+      const actions: OverflowAction[] = [
+        {
+          title: "Download",
+          name: "download",
+          icon: "download",
+        },
+      ];
+
+      partOverflowMenu = html`<bb-overflow-menu
+        id="user-overflow"
+        style=${styleMap({
+          bottom: `${this.#overflowMenuConfiguration.y}px`,
+        })}
+        .actions=${actions}
+        .disabled=${false}
+        @bboverflowmenudismissed=${() => {
+          this.showPartOverflowMenu = false;
+        }}
+        @bboverflowmenuaction=${async (actionEvt: OverflowMenuActionEvent) => {
+          this.showPartOverflowMenu = false;
+          actionEvt.stopImmediatePropagation();
+
+          switch (actionEvt.action) {
+            case "download": {
+              const data =
+                this.value?.parts[this.#overflowMenuConfiguration.idx];
+
+              let downloadSuffix;
+              let dataHref;
+              if (isInlineData(data)) {
+                downloadSuffix = data.inlineData.mimeType.split("/").at(-1);
+                let inlineData = data.inlineData.data;
+                if (data.inlineData.mimeType === "text/html") {
+                  inlineData = btoa(data.inlineData.data);
+                }
+                dataHref = `data:${data.inlineData.mimeType};base64,${inlineData}`;
+              } else if (isStoredData(data)) {
+                dataHref = data.storedData.handle;
+                if (dataHref.startsWith(".") && this.graphUrl) {
+                  dataHref = new URL(dataHref, this.graphUrl).href;
+                }
+                downloadSuffix = data.storedData.mimeType.split("/").at(-1);
+              }
+
+              if (!dataHref) {
+                return;
+              }
+
+              console.log(dataHref);
+
+              const download = document.createElement("a");
+              download.href = dataHref;
+              download.download = `file-download.${downloadSuffix}`;
+              download.click();
+              break;
+            }
+          }
+        }}
+      ></bb-overflow-menu>`;
+    }
     return this.value && this.value.parts.length
-      ? html` ${this.showExportControls
-          ? html`<bb-export-toolbar
-              .supported=${this.supportedExportControls}
-              .value=${this.value}
-              .graphUrl=${this.graphUrl}
-            ></bb-export-toolbar>`
-          : nothing}
-        ${map(this.value.parts, (part, idx) => {
+      ? html`${map(this.value.parts, (part, idx) => {
           let value: TemplateResult | symbol = nothing;
           if (isTextCapabilityPart(part)) {
             if (part.text === "") {
-              value = html`<span class="empty-text-part">
-                No value provided
-              </span>`;
+              if (this.value?.parts.length === 1) {
+                value = html`<span class="empty-text-part"
+                  >No value provided</span
+                >`;
+              } else {
+                return nothing;
+              }
             } else {
               value = html`${markdown(part.text)}`;
             }
 
             this.#outputLoaded();
           } else if (isInlineData(part)) {
+            hasOverflowMenu = true;
             const key = idx;
             let partDataURL: Promise<string> = Promise.resolve("No source");
             if (this.#partDataURLs.has(key)) {
@@ -520,68 +630,13 @@ export class LLMOutput extends LitElement {
                 }
 
                 return cache(html`
-                  ${canCopy
-                    ? html`<div class="copy-image-to-clipboard">
-                        <img
-                          @load=${() => {
-                            this.#outputLoaded();
-                          }}
-                          src="${url}"
-                          alt="LLM Image"
-                        />
-                        <button
-                          @click=${async () => {
-                            const image = new Image();
-                            image.crossOrigin = "anonymous"; // Ensure cross-origin compatibility
-                            image.src = url;
-
-                            image.onload = async () => {
-                              const canvas = document.createElement("canvas");
-                              canvas.width = image.width;
-                              canvas.height = image.height;
-                              const ctx = canvas.getContext("2d");
-                              if (ctx) {
-                                ctx.drawImage(image, 0, 0);
-                                const pngDataUrl =
-                                  canvas.toDataURL("image/png");
-                                const response = await fetch(pngDataUrl);
-                                const imageData = await response.blob();
-
-                                await navigator.clipboard.write([
-                                  new ClipboardItem({
-                                    "image/png": imageData,
-                                  }),
-                                ]);
-
-                                this.dispatchEvent(
-                                  new ToastEvent(
-                                    "Copied image to Clipboard",
-                                    ToastType.INFORMATION
-                                  )
-                                );
-                              }
-                            };
-
-                            image.onerror = () => {
-                              this.dispatchEvent(
-                                new ToastEvent(
-                                  "Failed to copy image to Clipboard",
-                                  ToastType.ERROR
-                                )
-                              );
-                            };
-                          }}
-                        >
-                          Copy image to clipboard
-                        </button>
-                      </div>`
-                    : html`<img
-                        @load=${() => {
-                          this.#outputLoaded();
-                        }}
-                        src="${url}"
-                        alt="LLM Image"
-                      />`}
+                  <img
+                    @load=${() => {
+                      this.#outputLoaded();
+                    }}
+                    src="${url}"
+                    alt="LLM Image"
+                  />
                 `);
               }
               if (part.inlineData.mimeType.startsWith("audio")) {
@@ -628,6 +683,7 @@ export class LLMOutput extends LitElement {
                 return cache(html`${until(audioHandler)}`);
               }
               if (part.inlineData.mimeType.startsWith("text/html")) {
+                hasOverflowMenu = true;
                 this.#outputLoaded();
                 return cache(
                   html`<iframe
@@ -639,6 +695,8 @@ export class LLMOutput extends LitElement {
                 );
               }
               if (part.inlineData.mimeType.startsWith("video")) {
+                hasOverflowMenu = true;
+
                 return cache(
                   html`<video
                     @load=${() => {
@@ -710,6 +768,7 @@ export class LLMOutput extends LitElement {
                   return response.text();
                 };
                 if (mimeType.startsWith("image")) {
+                  hasOverflowMenu = true;
                   const imgData = new Promise((resolve) => {
                     const image = new Image();
                     image.setAttribute("alt", url);
@@ -869,10 +928,32 @@ export class LLMOutput extends LitElement {
                 value: true,
                 markdown: isTextCapabilityPart(part),
               })}
-              >${value}</span
-            >
+              >${value}
+              ${hasOverflowMenu && this.showExportControls
+                ? html`<button
+                    class="overflow"
+                    @click=${(evt: Event) => {
+                      if (!(evt.target instanceof HTMLButtonElement)) {
+                        return;
+                      }
+
+                      const outerBounds = this.getBoundingClientRect();
+                      const buttonBounds = evt.target.getBoundingClientRect();
+                      const bottom = outerBounds.bottom - buttonBounds.bottom;
+
+                      this.#overflowMenuConfiguration.idx = idx;
+                      this.#overflowMenuConfiguration.y =
+                        bottom + buttonBounds.height;
+                      this.showPartOverflowMenu = true;
+                    }}
+                  >
+                    <span class="g-icon">more_vert</span>
+                  </button>`
+                : nothing}
+            </span>
           </div>`;
-        })}`
+        })}
+        ${partOverflowMenu}`
       : html`<span class="value no-data">No data set</span>`;
   }
 }
