@@ -125,6 +125,7 @@ class GoogleDriveBoardServer
       configuration.url,
       async () => {
         await this.refreshProjectList();
+        this.dispatchEvent(new Event("bbgraphboardserverrefresh"));
       },
       userFolderName,
       publicApiKey,

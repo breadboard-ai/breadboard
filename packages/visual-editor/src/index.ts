@@ -118,7 +118,7 @@ import {
   embedState,
   EmbedState,
   IterateOnPromptMessage,
-  ToggleIterateOnPromptMessage
+  ToggleIterateOnPromptMessage,
 } from "@breadboard-ai/embed";
 import { IterateOnPromptEvent } from "@breadboard-ai/shared-ui/events/events.js";
 import { AppCatalystApiClient } from "@breadboard-ai/shared-ui/flow-gen/app-catalyst.js";
@@ -944,9 +944,10 @@ export class Main extends LitElement {
           this.settingsHelper
         );
         // Once we've determined the sign-in status, relay it to an embedder.
-        this.#embedHandler?.sendToEmbedder(
-          {type: "home_loaded", isSignedIn: signInAdapter.state === "valid"}
-        )
+        this.#embedHandler?.sendToEmbedder({
+          type: "home_loaded",
+          isSignedIn: signInAdapter.state === "valid",
+        });
         if (signInAdapter.state === "signedout") {
           return;
         }
@@ -1005,12 +1006,11 @@ export class Main extends LitElement {
       "create_new_board",
       async (message: CreateNewBoardMessage) => {
         void this.#generateBoard(message.prompt)
-          .then((graph) =>  this.#generateBoardSuccess(graph))
+          .then((graph) => this.#generateBoardSuccess(graph))
           .catch((error) => console.error("Error generating board", error));
       }
     );
-    this.#embedHandler?.sendToEmbedder(
-      {type: "handshake_ready"});
+    this.#embedHandler?.sendToEmbedder({ type: "handshake_ready" });
   }
 
   async #generateBoard(intent: string): Promise<GraphDescriptor> {
@@ -1036,14 +1036,14 @@ export class Main extends LitElement {
         start: Strings.from("STATUS_CREATING_PROJECT"),
         end: Strings.from("STATUS_PROJECT_CREATED"),
         error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
-      },
+      }
     );
     if (!boardData) return;
-    const {url} = boardData;
+    const { url } = boardData;
     const boardId = getBoardIdFromUrl(url);
     if (boardId) {
       this.#embedHandler?.sendToEmbedder({
-        type: 'board_id_created', 
+        type: "board_id_created",
         id: boardId,
       });
     }
@@ -1624,7 +1624,6 @@ export class Main extends LitElement {
     }
   }
 
-
   async #attemptBoardSaveAsAndNavigate(
     boardServerName: string,
     location: string,
@@ -1639,16 +1638,17 @@ export class Main extends LitElement {
     creator: EditHistoryCreator
   ) {
     const boardData = await this.#attemptBoardSaveAs(
-      boardServerName, 
-      location, 
-      fileName, 
+      boardServerName,
+      location,
+      fileName,
       graph,
       ackUser,
-      ackUserMessage)
+      ackUserMessage
+    );
     if (!boardData) {
       return;
     }
-    const {id, url} = boardData;
+    const { id, url } = boardData;
     this.#attemptBoardLoad(
       new BreadboardUI.Events.StartEvent(url.href, undefined, creator),
       id
@@ -1665,8 +1665,11 @@ export class Main extends LitElement {
       start: Strings.from("STATUS_SAVING_PROJECT"),
       end: Strings.from("STATUS_PROJECT_SAVED"),
       error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
-    },
-  ): Promise<{id: BreadboardUI.Types.SnackbarUUID | undefined, url: URL} | null> {
+    }
+  ): Promise<{
+    id: BreadboardUI.Types.SnackbarUUID | undefined;
+    url: URL;
+  } | null> {
     if (this.#isSaving) {
       return null;
     }
@@ -1706,7 +1709,7 @@ export class Main extends LitElement {
 
     this.#setBoardPendingSaveState(false);
     this.#persistBoardServerAndLocation(boardServerName, location);
-    return {id: id, url: url};
+    return { id: id, url: url };
   }
 
   async #attemptBoardTitleUpdate(evt: Event) {
@@ -4281,16 +4284,18 @@ export class Main extends LitElement {
                   this.#runtime.util.createWorkspaceSelectionChangeId()
                 );
               }}
-              @bbiterateonprompt=${(iterateOnPromptEvent: IterateOnPromptEvent) => {
-                  const message: IterateOnPromptMessage = {
-                    type: 'iterate_on_prompt',
-                    title: iterateOnPromptEvent.title,
-                    promptTemplate: iterateOnPromptEvent.promptTemplate,
-                    boardId: iterateOnPromptEvent.boardId,
-                    nodeId: iterateOnPromptEvent.nodeId,
-                    modelId: iterateOnPromptEvent.modelId
-                  };
-                  this.#embedHandler?.sendToEmbedder(message);
+              @bbiterateonprompt=${(
+                iterateOnPromptEvent: IterateOnPromptEvent
+              ) => {
+                const message: IterateOnPromptMessage = {
+                  type: "iterate_on_prompt",
+                  title: iterateOnPromptEvent.title,
+                  promptTemplate: iterateOnPromptEvent.promptTemplate,
+                  boardId: iterateOnPromptEvent.boardId,
+                  nodeId: iterateOnPromptEvent.nodeId,
+                  modelId: iterateOnPromptEvent.modelId,
+                };
+                this.#embedHandler?.sendToEmbedder(message);
               }}
             ></bb-ui-controller>
         ${

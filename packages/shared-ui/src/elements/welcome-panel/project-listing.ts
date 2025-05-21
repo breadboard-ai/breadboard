@@ -447,6 +447,24 @@ export class ProjectListing extends LitElement {
 
     this.addEventListener("click", this.#hideBoardServerOverflowMenuBound);
 
+    for (const boardServer of this.boardServers) {
+      const closuredName = boardServer.name;
+      boardServer.addEventListener(
+        GraphBoardServerRefreshEvent.eventName,
+        () => {
+          // Listen to all, react only to the current.
+          if (closuredName == this.selectedBoardServer) {
+            this.dispatchEvent(
+              new GraphBoardServerRefreshEvent(
+                this.selectedBoardServer,
+                this.selectedLocation
+              )
+            );
+          }
+        }
+      );
+    }
+
     this.#attemptFocus = true;
 
     this.mode =

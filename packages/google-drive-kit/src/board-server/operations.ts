@@ -32,6 +32,9 @@ const GOOGLE_DRIVE_FOLDER_MIME_TYPE = "application/vnd.google-apps.folder";
 const GRAPH_MIME_TYPE = "application/vnd.breadboard.graph+json";
 const DEPRECATED_GRAPH_MIME_TYPE = "application/json";
 
+const MIME_TYPE_QUERY = `(mimeType="${GRAPH_MIME_TYPE}" or mimeType="${DEPRECATED_GRAPH_MIME_TYPE}")`;
+const BASE_QUERY = `${MIME_TYPE_QUERY} and trashed=false`;
+
 /** Delay between GDrive API retries. */
 const RETRY_MS = 200;
 
@@ -97,10 +100,117 @@ async function retryableFetch(
   return recursiveHelper(numRetries, new Response(null, { status: 500 }));
 }
 
+class DriveListCache {
+  constructor(
+    private readonly cacheKey: string,
+    private readonly query: string,
+    private readonly auth: () => Promise<Readonly<GoogleApiAuthorization>>
+  ) {}
+
+  async #getCacheAndValue() {
+    const cacheKey = new URL(`http://drive-list/${this.cacheKey}`);
+    const cache = await caches.open("DriveListCache");
+    const cachedResponse = await cache.match(cacheKey);
+
+    return { cache, cacheKey, cachedResponse };
+  }
+
+  async #put(options: {
+    cache: Cache;
+    cacheKey: URL;
+    value: DriveFile[];
+    lastModified: string;
+  }) {
+    options.cache.put(
+      options.cacheKey,
+      new Response(
+        JSON.stringify({
+          files: options.value,
+        }),
+        {
+          headers: {
+            "Last-Modified": options.lastModified,
+          },
+        }
+      )
+    );
+  }
+
+  async list(): Promise<Outcome<GraphInfo[]>> {
+    try {
+      // Find out if we have a cached value and if so, add the search criteria.
+
+      const { cache, cacheKey, cachedResponse } =
+        await this.#getCacheAndValue();
+      const cachedLastModified = cachedResponse?.headers?.get("Last-Modified");
+
+      let query = this.query;
+      if (cachedLastModified) {
+        query = `${query} and modifiedTime > ${JSON.stringify(cachedLastModified)}`;
+      }
+
+      const api = new Files(await this.auth());
+      const fileRequest = await retryableFetch(api.makeQueryRequest(query));
+      const response: DriveFileQuery = await fileRequest.json();
+
+      // TODO: This is likely due to an auth error.
+      if (!("files" in response)) {
+        console.warn(response);
+        return err(`Unable to get Drive folder contents. Likely an auth error`);
+      }
+
+      const updatedIds = new Set<string>(response.files.map((f) => f.id));
+      const cachedList: DriveFile[] =
+        (await cachedResponse?.json())?.files ?? [];
+      if (cachedList.length > 0) {
+        // Removing all the cached files that have been since updated.
+        const relevantList = cachedList.filter((f) => !updatedIds.has(f.id));
+        response.files.push(...relevantList);
+      }
+
+      const { result, lastModified } = toGraphInfos(response.files);
+      await this.#put({
+        cache,
+        cacheKey,
+        value: response.files,
+        lastModified: lastModified ?? "",
+      });
+      return result;
+    } catch (e) {
+      console.warn(e);
+      return err((e as Error).message);
+    }
+  }
+
+  async refresh() {
+    await this.list();
+  }
+
+  /** Returns true if the cache was in fact affected, and false in case of a no-op. */
+  async invalidateDeleted(id: string): Promise<boolean> {
+    const { cache, cacheKey, cachedResponse } = await this.#getCacheAndValue();
+    if (cachedResponse) {
+      const files: DriveFile[] = (await cachedResponse?.json())?.files;
+      const index = files?.findIndex((f) => f.id == id);
+      if (index >= 0) {
+        files.splice(index, 1);
+        // lastModified remains the same since this invalidation only concerns a single deleted file.
+        const lastModified =
+          cachedResponse?.headers?.get("Last-Modified") ?? "";
+        await this.#put({ cache, cacheKey, value: files, lastModified });
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
 class DriveOperations {
   readonly #userFolderName: string;
   readonly #publicApiKey?: string;
   readonly #featuredGalleryFolderId?: string;
+  readonly #userGraphsList: DriveListCache;
+  readonly #featuredGraphsList?: DriveListCache;
 
   /**
    * @param refreshProjectListCallback will be called when project list may have to be updated.
@@ -120,6 +230,34 @@ class DriveOperations {
     this.#userFolderName = userFolderName;
     this.#publicApiKey = publicApiKey;
     this.#featuredGalleryFolderId = featuredGalleryFolderId;
+
+    const getUserAuth = () => DriveOperations.getUserAuth(vendor);
+    this.#userGraphsList = new DriveListCache("user", BASE_QUERY, getUserAuth);
+
+    if (featuredGalleryFolderId && this.#publicApiKey) {
+      const getApiAuth = () =>
+        Promise.resolve({
+          kind: "key",
+          key: this.#publicApiKey!,
+        } satisfies GoogleApiAuthorization);
+      this.#featuredGraphsList = new DriveListCache(
+        "featured",
+        `"${featuredGalleryFolderId}" in parents and ${BASE_QUERY}`,
+        getApiAuth
+      );
+    }
+  }
+
+  static getUserAuth(vendor: TokenVendor): Promise<GoogleApiAuthorization> {
+    return getAccessToken(vendor).then((token) => {
+      if (!token) {
+        throw new Error("No access token");
+      }
+      return {
+        kind: "bearer",
+        token: token!,
+      };
+    });
   }
 
   static async readFolder(folderId: string, vendor: TokenVendor) {
@@ -141,98 +279,28 @@ class DriveOperations {
     }
   }
 
-  async #readDriveFolder(
-    folderId: string,
-    auth: GoogleApiAuthorization
-  ): Promise<Outcome<GraphInfo[]>> {
-    // TODO(volodya): Deal with the deleted files.
-    // TODO(volodya): Defend against a duplicated values due to race conditions.
-    try {
-      // Find out if we have a cached value and if so, add the search criteria.
-      const cache = await caches.open("DriveOperations");
-      const cacheKey = new URL(`http://opals/${folderId}`);
-      const cachedResponse = await cache.match(cacheKey);
-      const cachedLastModified = cachedResponse?.headers?.get("Last-Modified");
-      const query =
-        `"${folderId}" in parents` +
-        ` and (mimeType="${GRAPH_MIME_TYPE}"` +
-        `      or mimeType="${DEPRECATED_GRAPH_MIME_TYPE}")` +
-        ` and trashed=false` +
-        (cachedLastModified
-          ? `and modifiedTime > ${JSON.stringify(cachedLastModified)}`
-          : "");
-
-      const api = new Files(auth);
-      const fileRequest = await retryableFetch(api.makeQueryRequest(query));
-      const response: DriveFileQuery = await fileRequest.json();
-
-      // TODO: This is likely due to an auth error.
-      if (!("files" in response)) {
-        console.warn(response);
-        return err(`Unable to get Drive folder contents. Likely an auth error`);
-      }
-
-      const cachedList = (await cachedResponse?.json())?.files ?? [];
-      response.files.push(...cachedList);
-
-      const { result, lastModified } = toGraphInfos(response.files);
-      if (response.files?.length > 0) {
-        cache.put(
-          // no await.
-          cacheKey,
-          new Response(
-            JSON.stringify({
-              files: response.files,
-            }),
-            {
-              headers: {
-                "Last-Modified": lastModified ?? "",
-              },
-            }
-          )
-        );
-      }
-      return result;
-    } catch (e) {
-      console.warn(e);
-      return err((e as Error).message);
-    }
-  }
-
   async readGraphList(): Promise<Outcome<GraphInfo[]>> {
-    const query =
-      ` (mimeType="${GRAPH_MIME_TYPE}"` +
-      `      or mimeType="${DEPRECATED_GRAPH_MIME_TYPE}")` +
-      ` and trashed=false`;
-    const token = await getAccessToken(this.vendor);
-    if (!token) {
-      throw new Error("No access token");
-    }
-    const api = new Files({ kind: "bearer", token });
-    const response = await retryableFetch(api.makeQueryRequest(query));
-    const result = (await response.json()) as DriveFileQuery;
-    return toGraphInfos(result.files).result;
+    return await this.#userGraphsList.list();
   }
 
   async readFeaturedGalleryGraphList(): Promise<Outcome<GraphInfo[]>> {
-    const folderId = this.#featuredGalleryFolderId;
-    if (!folderId) {
+    if (!this.#featuredGalleryFolderId) {
       return err(
         "Could not read featured gallery from Google Drive:" +
           " No folder id configured."
       );
     }
-    const apiKey = this.#publicApiKey;
-    if (!apiKey) {
+    if (!this.#publicApiKey) {
       return err(
         "Could not read featured gallery from Google Drive:" +
           " No public API key configured."
       );
     }
-    const graphInfos = await this.#readDriveFolder(folderId, {
-      kind: "key",
-      key: apiKey,
-    });
+    console.assert(
+      this.#featuredGraphsList,
+      "featuredGalleryFolderId or publicApiKey is missing"
+    );
+    const graphInfos = await this.#featuredGraphsList!.list();
     if (!ok(graphInfos)) {
       return graphInfos;
     }
@@ -248,6 +316,7 @@ class DriveOperations {
   }
 
   async readSharedGraphList(): Promise<string[]> {
+    // NOTE: Since this is used only within debug panel, we don't employ the DriveListCache.
     const accessToken = await getAccessToken(this.vendor);
     if (!accessToken) {
       throw new Error("No folder ID or access token");
@@ -322,7 +391,7 @@ class DriveOperations {
       return { result: false, error: "Unable to save" };
     } finally {
       // The above update is a non-atomic operation so refresh after both success or fail.
-      await this.refreshProjectListCallback();
+      await this.#refreshUserList();
     }
   }
 
@@ -376,7 +445,7 @@ class DriveOperations {
       return { result: false, error: "Unable to create" };
     } finally {
       // The above update is a non-atomic operation so refresh after both success or fail.
-      await this.refreshProjectListCallback();
+      await this.#refreshUserList();
     }
   }
 
@@ -399,6 +468,12 @@ class DriveOperations {
       console.error("Failed to update image metadata", e);
     });
     return `${PROTOCOL}/${file.id}`;
+  }
+
+  async #refreshUserList() {
+    // In that order, awating.
+    await this.#userGraphsList.refresh();
+    await this.refreshProjectListCallback();
   }
 
   /** Also patches the asset with the url if a file got created.  */
@@ -547,16 +622,15 @@ class DriveOperations {
 
   async deleteGraph(url: URL): Promise<Outcome<void>> {
     const file = this.fileIdFromUrl(url);
-    const accessToken = await getAccessToken(this.vendor);
     try {
-      const api = new Files({ kind: "bearer", token: accessToken! });
+      const api = new Files(await DriveOperations.getUserAuth(this.vendor));
       await retryableFetch(api.makeDeleteRequest(file));
-      return;
+      await this.#userGraphsList.invalidateDeleted(file);
     } catch (e) {
       console.warn(e);
       return err("Unable to delete");
     } finally {
-      await this.refreshProjectListCallback();
+      await this.#refreshUserList();
     }
   }
 
