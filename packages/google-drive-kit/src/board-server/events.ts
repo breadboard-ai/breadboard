@@ -7,6 +7,7 @@
 import type {
   BoardServerSaveStatusChangeEvent,
   BoardServerSaveEventStatus,
+  BoardServerListRefreshed,
 } from "@google-labs/breadboard";
 
 const eventInit = {
@@ -25,5 +26,13 @@ export class SaveEvent
     public readonly url: string
   ) {
     super(SaveEvent.eventName, { ...eventInit });
+  }
+}
+
+export class RefreshEvent extends Event implements BoardServerListRefreshed {
+  static eventName = "boardlistrefreshed";
+
+  constructor() {
+    super(RefreshEvent.eventName, eventInit);
   }
 }

@@ -33,7 +33,7 @@ import {
   type GraphInfo,
 } from "./operations.js";
 import { SaveDebouncer } from "./save-debouncer.js";
-import { SaveEvent } from "./events.js";
+import { RefreshEvent, SaveEvent } from "./events.js";
 import { type GoogleDriveClient } from "../google-drive-client.js";
 import { GoogleDriveDataPartTransformer } from "./data-part-transformer.js";
 
@@ -125,7 +125,7 @@ class GoogleDriveBoardServer
       configuration.url,
       async () => {
         await this.refreshProjectList();
-        this.dispatchEvent(new Event("bbgraphboardserverrefresh"));
+        this.dispatchEvent(new RefreshEvent());
       },
       userFolderName,
       publicApiKey,

@@ -343,6 +343,9 @@ export type BoardServerSaveStatusChangeEvent = Event & {
   url: string;
 };
 
+/** List of boards has changed. */
+export type BoardServerListRefreshed = Event;
+
 export type BoardServerEventMap = {
   savestatuschange: BoardServerSaveStatusChangeEvent;
 };
