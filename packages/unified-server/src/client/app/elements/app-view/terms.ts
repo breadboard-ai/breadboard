@@ -33,6 +33,7 @@ export class TermsOfService extends LitElement {
 
       font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
         var(--bb-font-family);
+      width: 90%;
     }
 
     form {
