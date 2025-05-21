@@ -1,0 +1,96 @@
+{
+  "title": "Music Generator Workbench",
+  "description": "A blank board. Use it as a starting point for your creations.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "0b5b080b-ccae-4a62-9454-8253cd2b4b90",
+      "type": "file://bgl/music-generator.bgl.json#module:main",
+      "metadata": {
+        "title": "Make Music",
+        "visual": {
+          "x": 180,
+          "y": 0
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "text": {
+          "role": "user",
+          "parts": [
+            {
+              "text": " {{\"title\":\"Description\",\"path\":\"8494b2fa-d2e0-45b8-bbe3-b4521ed18f48\",\"type\":\"in\"}}"
+            }
+          ]
+        },
+        "voice": "Female (English)"
+      }
+    },
+    {
+      "id": "8494b2fa-d2e0-45b8-bbe3-b4521ed18f48",
+      "type": "embed://a2/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
+      "metadata": {
+        "title": "Description",
+        "visual": {
+          "x": -160,
+          "y": -100
+        },
+        "userModified": true
+      },
+      "configuration": {
+        "description": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Describe the music"
+            }
+          ]
+        },
+        "p-modality": "Any"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "8494b2fa-d2e0-45b8-bbe3-b4521ed18f48",
+      "to": "0b5b080b-ccae-4a62-9454-8253cd2b4b90",
+      "out": "context",
+      "in": "p-z-8494b2fa-d2e0-45b8-bbe3-b4521ed18f48"
+    }
+  ],
+  "metadata": {
+    "visual": {
+      "presentation": {
+        "themes": {
+          "2a26daf9-c222-40f6-a6c4-7dce09b6e31c": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "2a26daf9-c222-40f6-a6c4-7dce09b6e31c"
+      }
+    },
+    "parameters": {}
+  },
+  "assets": {
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxNDAuMzMiCiAgICAgICAgICAgICAgICAgICAgeT0iMTAwLjAwIgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI5OS42NyIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjM4LjMzIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgo8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI2MS42NyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iOTkuNjciCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIzOC4zMyIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzJlOGJlOCIgLz4KICAgICAgCiAgICA8L3N2Zz4="
+    }
+  }
+}
