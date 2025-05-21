@@ -427,7 +427,7 @@ export class LLMOutput extends LitElement {
         position: absolute;
         top: auto;
         bottom: calc(var(--output-value-padding-y, 0) + var(--bb-grid-size-2));
-        right: calc(var(--output-value-padding-x, 0));
+        right: calc(var(--output-value-padding-x, 0) + var(--bb-grid-size-2));
       }
     `,
   ];
@@ -943,7 +943,7 @@ export class LLMOutput extends LitElement {
 
                       this.#overflowMenuConfiguration.idx = idx;
                       this.#overflowMenuConfiguration.y =
-                        bottom + buttonBounds.height;
+                        bottom + buttonBounds.height + 4;
                       this.showPartOverflowMenu = true;
                     }}
                   >
