@@ -38,6 +38,7 @@ export class MultiOutput extends LitElement {
       font: 400 var(--font-style, normal) var(--bb-body-small) /
         var(--bb-body-line-height-small)
         var(--font-family, var(--bb-font-family));
+      max-width: 800px;
     }
 
     :host([showAsStatus]) {
