@@ -84,6 +84,8 @@ export interface IterateOnPromptMessage {
   boardId: string;
   /** The ID of the node in the Breadboard board. */
   nodeId: string;
+  /** The model title selected for the prompt. */
+  modelId: string | null;
 }
 
 /** A message from parent iframe to Breadboard, sent via iframe.contentWindow.postMessage */
