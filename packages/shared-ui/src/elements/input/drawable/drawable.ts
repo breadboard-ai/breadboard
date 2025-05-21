@@ -347,22 +347,37 @@ export class DrawableInput extends LitElement {
   }
 
   @property()
-  set url(url: URL | null) {
+  set url(url: URL | Promise<string | undefined> | null) {
     if (!url) {
       return;
     }
 
-    const img = new Image();
-    img.src = url.href;
-    img.onload = () => {
-      const ctx = this.#getCtx();
-      if (!ctx) {
-        console.log("Unable to render");
-        return;
-      }
+    const handleImage = (url: URL) => {
+      const img = new Image();
+      img.src = url.href;
+      img.onload = () => {
+        const ctx = this.#getCtx();
+        if (!ctx) {
+          console.log("Unable to render");
+          return;
+        }
 
-      ctx.drawImage(img, 0, 0, this.#bounds.width, this.#bounds.height);
+        ctx.drawImage(img, 0, 0, this.#bounds.width, this.#bounds.height);
+      };
     };
+
+    if (url instanceof URL) {
+      handleImage(url);
+    } else {
+      url.then((urlString: string | undefined) => {
+        if (!urlString) {
+          return;
+        }
+
+        const url = new URL(urlString);
+        handleImage(url);
+      });
+    }
   }
 
   get value(): string {
