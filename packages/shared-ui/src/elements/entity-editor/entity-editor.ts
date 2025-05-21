@@ -6,6 +6,7 @@
 import {
   InspectableGraph,
   InspectableNode,
+  InspectableNodePorts,
   isLLMContent,
   isLLMContentArray,
   isStoredData,
@@ -193,7 +194,6 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         white-space: nowrap;
         padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-4);
         border-radius: var(--bb-grid-size-16);
-        margin: 0 var(--bb-grid-size-2) 0 0;
         background: var(--bb-neutral-0);
         color: #004a77;
         font: 500 var(--bb-title-small) / var(--bb-title-line-height-small)
@@ -1182,21 +1182,26 @@ export class EntityEditor extends SignalWatcher(LitElement) {
   #renderIterateOnPromptButton(nodeId: NodeIdentifier, nodeTitle: string, node: InspectableNode) {
     const url = new URL(this.graph?.raw().url ?? window.location.href);
     const boardId = getBoardIdFromUrl(url);
-    if (!boardId) {
+    if (!boardId || !isGenerativeNode(node)) {
       return nothing;
     }
+    // If tools are contained in prompt, iterate-on-prompt will be disabled.
+    const promptContainsTools = containsTools(node.currentPorts());
     return html`
       <button 
         id="iterate-on-prompt"
+        .disabled=${promptContainsTools}
         @click=${async () => {
           // Submit the changes to ensure the prompt is updated before it's sent.
           await this.#submit(this.values);
-          const promptTemplate = await extractLlmTextPart(node);
+          const ports = await node.ports();
+          const promptTemplate = extractLlmTextPart(ports);
+          const modelId = extractModelId(ports);
           if (!promptTemplate) {
             return;
           }
           this.dispatchEvent(new IterateOnPromptEvent(
-            nodeTitle, promptTemplate, boardId!, nodeId
+            nodeTitle, promptTemplate, boardId!, nodeId, modelId
           ));
         }}>
         Iterate on prompt
@@ -1776,9 +1781,8 @@ function getLLMContentPortValue(
 }
 
 // Extract LLM text part if available; null otherwise.
-async function extractLlmTextPart(
-  node: InspectableNode): Promise<string | null> {
-  const ports = await node.ports();
+function extractLlmTextPart(
+  ports: InspectableNodePorts): string | null {
   const inputPorts = ports.inputs.ports;
   const port = inputPorts.find(
     (port) => 
@@ -1794,4 +1798,44 @@ async function extractLlmTextPart(
     return null;
   }
   return textPart.text;
+}
+
+// Extract selected model ID (e.g., 'text', 'text-2.0-flash') from node.
+// Returns null if not present.
+function extractModelId(
+  ports: InspectableNodePorts
+): string | null {
+  const inputPorts = ports.inputs.ports;
+  const port = inputPorts.find(
+    (port) => 
+      port.schema.type === "string" && port.schema.enum);
+  if (!port) {
+    return null;
+  }
+  const currentValue = enumValue(
+    port.schema!.enum!.find(
+      (value) => enumValue(value).id == port.value
+    ) ?? port.schema!.enum![0]
+  );
+  return currentValue?.id ?? null;
+}
+
+function isGenerativeNode(
+  node: InspectableNode
+): boolean {
+  return node.descriptor.type === "embed://a2/generate.bgl.json#module:main";
+}
+
+// Returns true if LLM text part of node contains tools or is absent.
+function containsTools(
+  ports: InspectableNodePorts
+): boolean {
+  const textPart = extractLlmTextPart(ports);
+  if (!textPart) {
+    return false;
+  }
+  const template = new Template(textPart!);
+  const tools = template.placeholders.filter(
+    (placeholder) => placeholder.type === "tool");
+  return tools.length > 0;
 }

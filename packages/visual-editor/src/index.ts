@@ -4288,6 +4288,7 @@ export class Main extends LitElement {
                     promptTemplate: iterateOnPromptEvent.promptTemplate,
                     boardId: iterateOnPromptEvent.boardId,
                     nodeId: iterateOnPromptEvent.nodeId,
+                    modelId: iterateOnPromptEvent.modelId
                   };
                   this.#embedHandler?.sendToEmbedder(message);
               }}
