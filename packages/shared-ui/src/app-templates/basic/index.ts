@@ -335,8 +335,8 @@ export class Template extends LitElement implements AppTemplate {
 
           & #splash {
             display: flex;
+            flex: 1;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
             animation: fadeIn 1s cubic-bezier(0, 0, 0.3, 1);
 
@@ -362,6 +362,8 @@ export class Template extends LitElement implements AppTemplate {
 
             &.default {
               flex: 1;
+              margin-top: 20%;
+
               &::before {
                 max-width: 320px;
                 background-clip: initial;
@@ -866,9 +868,13 @@ export class Template extends LitElement implements AppTemplate {
                 aspect-ratio: initial;
               }
 
-              &.default::before {
-                max-width: initial;
-                background-size: initial;
+              &.default {
+                margin-top: 0;
+
+                &::before {
+                  max-width: initial;
+                  background-size: initial;
+                }
               }
 
               & h1,
