@@ -201,7 +201,18 @@ class GenerateText {
         }
         let keepCallingGemini = true;
         let afterTools: GeminiPromptOutput | undefined = undefined;
+        let turnCount = 0;
         while (keepCallingGemini) {
+          if (
+            !this.sharedContext.useSequentialFunctionCalling ||
+            turnCount > 5
+          ) {
+            inputs.body.toolConfig = {
+              functionCallingConfig: {
+                mode: "NONE",
+              },
+            };
+          }
           const nextTurn = new GeminiPrompt(inputs, { toolManager });
           const nextTurnResult = await nextTurn.invoke();
           if (!ok(nextTurnResult)) return nextTurnResult;
@@ -213,6 +224,7 @@ class GenerateText {
             ...inputs.body.contents,
             ...nextTurnResult.all,
           ];
+          turnCount++;
         }
         if (!afterTools) {
           return err(`Invalid state: Somehow, "afterTools" is undefined.`);
