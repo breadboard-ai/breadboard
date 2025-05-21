@@ -10,7 +10,7 @@
         "title": "Generate Text",
         "visual": {
           "x": -180,
-          "y": -580
+          "y": -700
         },
         "userModified": false,
         "description": "Generates text based on the weather conditions for a given location. Uses the 'Get Weather' tool for weather information."
