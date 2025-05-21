@@ -66,13 +66,7 @@ function maybeUnwrapError(o: void | OutputValues): void | OutputValues {
 
   let { $error } = o;
 
-  if (
-    $error &&
-    typeof $error === "object" &&
-    "kind" in $error &&
-    $error.kind === "error" &&
-    "error" in $error
-  ) {
+  if ($error && typeof $error === "object" && "error" in $error) {
     const error = $error.error as { message: string };
     $error = error.message;
   }
