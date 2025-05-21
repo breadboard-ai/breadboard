@@ -158,10 +158,13 @@ export class LLMOutput extends LitElement {
     .content {
       display: block;
       position: relative;
+      margin: 0 auto;
       margin-bottom: var(--bb-grid-size-2);
       padding: var(--output-padding-y, 0) var(--output-padding-x, 0);
       overflow-y: auto;
       max-height: var(--bb-llm-output-content-max-height, unset);
+      max-width: 640px;
+
       &:last-of-type {
         margin-bottom: 0;
       }
@@ -236,6 +239,14 @@ export class LLMOutput extends LitElement {
           border-radius: var(--bb-grid-size-16);
           font: normal italic var(--bb-body-small) /
             var(--bb-body-line-height-small) var(--bb-font-family);
+        }
+
+        & ol {
+          margin-top: var(--bb-grid-size-2);
+
+          & li {
+            margin: var(--bb-grid-size-2);
+          }
         }
       }
 
