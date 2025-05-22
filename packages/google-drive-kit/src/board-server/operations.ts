@@ -35,6 +35,9 @@ const DEPRECATED_GRAPH_MIME_TYPE = "application/json";
 const MIME_TYPE_QUERY = `(mimeType="${GRAPH_MIME_TYPE}" or mimeType="${DEPRECATED_GRAPH_MIME_TYPE}")`;
 const BASE_QUERY = `${MIME_TYPE_QUERY} and trashed=false`;
 
+const PUBLIC_FOLDER_REFRESH_INTERVAL_MS = 60 * 1000; // 1 minute.
+
+
 const MAX_APP_PROPERTY_LENGTH = 124;
 
 export type GraphInfo = {
@@ -60,10 +63,10 @@ class DriveListCache {
     private readonly auth: () => Promise<Readonly<GoogleApiAuthorization>>
   ) {}
 
-  async #getCacheAndValue() {
+  async #getCacheAndValue(skipValue: boolean = false) {
     const cacheKey = new URL(`http://drive-list/${this.cacheKey}`);
     const cache = await caches.open("DriveListCache");
-    const cachedResponse = await cache.match(cacheKey);
+    const cachedResponse = skipValue ? undefined : await cache.match(cacheKey);
 
     return { cache, cacheKey, cachedResponse };
   }
@@ -73,7 +76,17 @@ class DriveListCache {
     cacheKey: URL;
     value: DriveFile[];
     lastModified: string;
+    /** if set override only the value that's not newer. */
+    crossCheckLastModified?: string|null;
   }) {
+    if (options.crossCheckLastModified) {
+      const response = await options.cache.match(this.cacheKey);
+      const currentLastModified = response?.headers?.get("Last-Modified");
+      if (currentLastModified && currentLastModified > options.crossCheckLastModified) {
+        // A newer value has been put in place in meanwhile, ignore this update.
+        return false;
+      }
+    }
     options.cache.put(
       options.cacheKey,
       new Response(
@@ -87,14 +100,15 @@ class DriveListCache {
         }
       )
     );
+    return true;
   }
 
-  async list(): Promise<Outcome<GraphInfo[]>> {
+  async #list(backgroundRefresh: boolean = false) {
     try {
       // Find out if we have a cached value and if so, add the search criteria.
 
       const { cache, cacheKey, cachedResponse } =
-        await this.#getCacheAndValue();
+        await this.#getCacheAndValue(backgroundRefresh);
       const cachedLastModified = cachedResponse?.headers?.get("Last-Modified");
 
       let query = this.query;
@@ -127,6 +141,7 @@ class DriveListCache {
         cacheKey,
         value: response.files,
         lastModified: lastModified ?? "",
+        crossCheckLastModified: backgroundRefresh ? cachedLastModified : undefined,
       });
       return result;
     } catch (e) {
@@ -135,8 +150,25 @@ class DriveListCache {
     }
   }
 
+  async list(): Promise<Outcome<GraphInfo[]>> {
+    return await this.#list();
+  }
+
   async refresh() {
-    await this.list();
+    await this.#list();
+  }
+
+  /** 
+   * Hard reloads the cache. 
+   * Never raises any errors. Doesn't buble up any events.
+   */
+  async refreshInBackground() {
+    try {
+      await this.#list(/*backgroundRefresh=*/true);
+    } catch (e) {
+      console.warn(`Exception while refreshing ${this.cacheKey} background`, e);
+      // And swallow it.
+    }
   }
 
   /** Returns true if the cache was in fact affected, and false in case of a no-op. */
@@ -198,7 +230,23 @@ class DriveOperations {
         `"${featuredGalleryFolderId}" in parents and ${BASE_QUERY}`,
         getApiAuth
       );
+
+      this.#setupBackgroundRefresh();
     }
+  }
+
+  #setupBackgroundRefresh() {
+    setTimeout(async () => {
+      try {
+        await this.#userGraphsList.refreshInBackground();
+        if (this.#featuredGalleryFolderId) {
+          await this.#featuredGraphsList!.refreshInBackground();
+        }
+      }
+      finally {
+        this.#setupBackgroundRefresh();
+      }
+    }, PUBLIC_FOLDER_REFRESH_INTERVAL_MS);
   }
 
   static getUserAuth(vendor: TokenVendor): Promise<GoogleApiAuthorization> {
