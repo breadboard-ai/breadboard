@@ -678,15 +678,31 @@ export class SharePanel extends LitElement {
  * Make a string from a permission object that can be used for Set membership.
  */
 function stringifyPermission(permission: GoogleDrivePermission) {
-  if (permission.type === "domain") {
-    return `domain:${permission.domain}`;
-  }
   if (permission.type === "user") {
     return `user:${permission.emailAddress}`;
   }
+  if (permission.type === "group") {
+    return `group:${permission.emailAddress}`;
+  }
+  if (permission.type === "domain") {
+    return `domain:${permission.domain}`;
+  }
+  if (permission.type === "anyone") {
+    return `anyone`;
+  }
   permission satisfies never;
-  throw new Error(
+  // Don't throw because Google Drive could add new permission types in the
+  // future, and that shouldnt be fatal. Instead return the unique ID of the
+  // permission (or something random if it doesn't have an ID), so that it will
+  // never be treated as equal to a different permission object (since by
+  // definition, we don't know what that would mean).
+  console.error(
     `Unexpected permission type "${(permission as GoogleDrivePermission).type}"`
+  );
+  return (
+    `error` +
+    `:${(permission as GoogleDrivePermission).type}` +
+    `:${(permission as GoogleDrivePermission).id || Math.random()}`
   );
 }
 
