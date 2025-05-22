@@ -4348,12 +4348,7 @@ export class Main extends LitElement {
                   }
 
                   const refreshed = await boardServer.refresh(evt.location);
-                  if (refreshed) {
-                    this.toast(
-                      Strings.from("STATUS_PROJECTS_REFRESHED"),
-                      BreadboardUI.Events.ToastType.INFORMATION
-                    );
-                  } else {
+                  if (!refreshed) {
                     this.toast(
                       Strings.from("ERROR_UNABLE_TO_REFRESH_PROJECTS"),
                       BreadboardUI.Events.ToastType.WARNING
