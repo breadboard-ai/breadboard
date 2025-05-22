@@ -57,10 +57,16 @@ async function main() {
   // 3) Find respective graph in `out` and identify themes.
   const files: { id: string; url: string }[] = [];
   for (const item of items) {
-    const graph = JSON.parse(
-      await readFile(`${OUT_DIR}/${item.name}`, "utf-8")
-    ) as GraphDescriptor;
-
+    let graph: GraphDescriptor;
+    try {
+      graph = JSON.parse(
+        await readFile(`${OUT_DIR}/${item.name}`, "utf-8")
+      ) as GraphDescriptor;
+    } catch (e) {
+      console.log(`Skipping "${item.name}"`);
+      continue;
+    }
+    console.log(`Processing "${item.name}"`);
     const presentation = graph.metadata?.visual?.presentation;
     if (!presentation) {
       throw new Error(`Unable to find presentation in "${item.name}"`);
