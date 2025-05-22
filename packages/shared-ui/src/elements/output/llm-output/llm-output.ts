@@ -549,7 +549,15 @@ export class LLMOutput extends LitElement {
                 downloadSuffix = data.inlineData.mimeType.split("/").at(-1);
                 let inlineData = data.inlineData.data;
                 if (data.inlineData.mimeType === "text/html") {
-                  inlineData = btoa(data.inlineData.data);
+                  const textEncoder = new TextEncoder();
+                  const bytes = textEncoder.encode(data.inlineData.data);
+
+                  let byteString = "";
+                  bytes.forEach(
+                    (byte) => (byteString += String.fromCharCode(byte))
+                  );
+
+                  inlineData = btoa(byteString);
                 }
                 dataHref = `data:${data.inlineData.mimeType};base64,${inlineData}`;
               } else if (isStoredData(data)) {
