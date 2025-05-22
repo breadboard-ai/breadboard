@@ -229,7 +229,6 @@ export class LLMOutput extends LitElement {
           & video,
           & audio {
             width: 100%;
-            max-width: 360px;
             min-width: 300px;
           }
 
@@ -513,7 +512,6 @@ export class LLMOutput extends LitElement {
       return nothing;
     }
 
-    let hasOverflowMenu = false;
     let partOverflowMenu: HTMLTemplateResult | symbol = nothing;
     if (this.showPartOverflowMenu && this.#overflowMenuConfiguration) {
       const actions: OverflowAction[] = [
@@ -572,8 +570,6 @@ export class LLMOutput extends LitElement {
                 return;
               }
 
-              console.log(dataHref);
-
               const download = document.createElement("a");
               download.href = dataHref;
               download.download = `file-download.${downloadSuffix}`;
@@ -586,6 +582,7 @@ export class LLMOutput extends LitElement {
     }
     return this.value && this.value.parts.length
       ? html`${map(this.value.parts, (part, idx) => {
+          let hasOverflowMenu = false;
           let value: TemplateResult | symbol = nothing;
           if (isTextCapabilityPart(part)) {
             if (part.text === "") {
@@ -703,8 +700,6 @@ export class LLMOutput extends LitElement {
                 );
               }
               if (part.inlineData.mimeType.startsWith("video")) {
-                hasOverflowMenu = true;
-
                 return cache(
                   html`<video
                     @load=${() => {
