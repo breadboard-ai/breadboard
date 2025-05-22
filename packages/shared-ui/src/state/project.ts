@@ -188,10 +188,18 @@ class ReactiveProject implements ProjectInternal {
 
   async persistBlobs(contents: LLMContent[]): Promise<LLMContent[]> {
     const urlString = this.#store.get(this.#mainGraphId)?.graph.url;
-    if (!urlString) return contents;
+    if (!urlString) {
+      console.warn("Can't persist blob without graph URL");
+      return contents;
+    }
 
     const server = this.#boardServerFinder(new URL(urlString));
-    if (!server || !server.dataPartTransformer) return contents;
+    if (!server || !server.dataPartTransformer) {
+      console.warn(
+        `Failed to persist blob: no server found for url "${urlString}"`
+      );
+      return contents;
+    }
 
     const url = new URL(urlString);
 
@@ -202,6 +210,7 @@ class ReactiveProject implements ProjectInternal {
       server.dataPartTransformer(url)
     );
     if (!ok(transformed)) {
+      console.warn(`Failed to persist a blob: "${transformed.$error}"`);
       return contents;
     }
 
