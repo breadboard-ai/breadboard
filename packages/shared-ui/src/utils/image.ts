@@ -14,11 +14,18 @@ export async function renderThumbnail(
   classes: ClassInfo,
   alt?: string
 ) {
-  const renderTag = (src?: string | null) => {
+  const renderTag = (src?: string | null, fade = false) => {
     return html`<img
-      class=${classMap({ ...classes, default: !src })}
+      class=${classMap({ ...classes, default: !src, hidden: fade })}
       src=${src ?? MAIN_ICON}
       alt=${alt}
+      @load=${(evt: Event) => {
+        if (!fade || !(evt.target instanceof HTMLImageElement)) {
+          return;
+        }
+
+        evt.target.classList.add("fade");
+      }}
     />`;
   };
 
@@ -34,7 +41,7 @@ export async function renderThumbnail(
       src = blobHandleToUrl(url)?.href;
     }
 
-    return renderTag(src);
+    return renderTag(src, true);
   };
 
   return until(resolvedImage(thumbnailUrl), renderTag());
