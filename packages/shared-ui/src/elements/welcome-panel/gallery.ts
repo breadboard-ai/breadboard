@@ -6,7 +6,7 @@
 
 import type { GraphProviderItem } from "@google-labs/breadboard";
 import { consume } from "@lit/context";
-import { css, html, HTMLTemplateResult, LitElement, nothing, svg } from "lit";
+import { css, html, HTMLTemplateResult, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { keyed } from "lit/directives/keyed.js";
@@ -29,6 +29,7 @@ import { until } from "lit/directives/until.js";
 import { renderThumbnail } from "../../utils/image.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { guard } from "lit/directives/guard.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
@@ -104,6 +105,14 @@ export class Gallery extends LitElement {
         border-bottom: var(--border);
         /* Matches the color of the placeholder background */
         background-color: #ebf5ff;
+
+        &.hidden {
+          opacity: 0;
+        }
+
+        &.fade {
+          animation: fadeIn 0.6s cubic-bezier(0.5, 0, 0.3, 1) forwards;
+        }
 
         &.default {
           background-color: var(--bb-neutral-0);
@@ -303,6 +312,16 @@ export class Gallery extends LitElement {
           }
         }
       }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+
+        to {
+          opacity: 1;
+        }
+      }
     `,
   ];
 
@@ -412,7 +431,12 @@ export class Gallery extends LitElement {
         @click=${(event: PointerEvent) => this.#onBoardClick(event, url)}
         @keydown=${(event: KeyboardEvent) => this.#onBoardKeydown(event, url)}
       >
-        ${keyed(thumbnail, until(this.#renderThumbnail(thumbnail)))}
+        ${keyed(
+          thumbnail,
+          html`${guard([thumbnail], () =>
+            until(this.#renderThumbnail(thumbnail))
+          )}`
+        )}
         <div class="details">
           <div class="creator">
             <span>
