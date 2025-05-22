@@ -1190,10 +1190,6 @@ export class Template extends LitElement implements AppTemplate {
         active = true;
         inputContents = html`
           <div class="user-input">
-            <p class="api-message">
-              When calling an API, the API provider's applicable privacy policy
-              and terms apply
-            </p>
             ${map(secretEvent.keys, (key) => {
               if (key.startsWith("connection:")) {
                 if (key === SIGN_IN_SECRET_KEY) {
@@ -1216,13 +1212,17 @@ export class Template extends LitElement implements AppTemplate {
                   .connectionId=${key.replace(/^connection:/, "")}
                 ></bb-connection-input>`;
               } else {
-                return html`<input
-                  name=${key}
-                  type="password"
-                  autocomplete="off"
-                  required
-                  .placeholder=${`Enter ${key}`}
-                />`;
+                return html`<p class="api-message">
+                    When calling an API, the API provider's applicable privacy
+                    policy and terms apply
+                  </p>
+                  <input
+                    name=${key}
+                    type="password"
+                    autocomplete="off"
+                    required
+                    .placeholder=${`Enter ${key}`}
+                  />`;
               }
             })}
           </div>
