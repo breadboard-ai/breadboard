@@ -889,11 +889,9 @@ export class LLMOutput extends LitElement {
 
               default: {
                 this.#outputLoaded();
-                if (
-                  part.fileData.mimeType.startsWith(
-                    "application/vnd.google-apps"
-                  )
-                ) {
+
+                // Attempt to match on Drive IDs.
+                if (/^(?!http)[a-zA-Z0-9_-]+$/.test(part.fileData.fileUri)) {
                   value = html`<bb-google-drive-file-viewer
                     .fileId=${part.fileData.fileUri}
                   ></bb-google-drive-file-viewer>`;
