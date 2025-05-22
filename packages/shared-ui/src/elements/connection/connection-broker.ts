@@ -4,16 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { EmbedHandler, Handler } from "@breadboard-ai/embed";
 import {
   GrantResponse,
   oauthTokenBroadcastChannelName,
   type OAuthStateParameter,
 } from "./connection-common.js";
+import { getEmbedderRedirectUri } from "../../utils/oauth-redirect.js";
 
 export class ConnectionBroker extends HTMLElement {
+  #embedHandler?: EmbedHandler;
+
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
+    this.#embedHandler = window.self !== window.top ? new Handler() : undefined;
   }
 
   async connectedCallback() {
@@ -22,6 +27,10 @@ export class ConnectionBroker extends HTMLElement {
       const p = document.createElement("p");
       p.textContent = `Error: ${message} Please close this window and try to sign in again.`;
       shadow.appendChild(p);
+      this.#embedHandler?.sendToEmbedder({
+        type: "oauth_redirect",
+        success: false,
+      });
     };
 
     // Unpack the state parameter.
@@ -60,6 +69,10 @@ export class ConnectionBroker extends HTMLElement {
       return;
     }
 
+    // If embedder has passed in a valid oauth redirect, use that instead.
+    const redirect_uri =
+      getEmbedderRedirectUri() ?? new URL(window.location.href).pathname;
+
     // Call the token grant API.
     if (!import.meta.env.VITE_CONNECTION_SERVER_URL) {
       displayError("Could not find a grant URL for this origin.");
@@ -72,12 +85,8 @@ export class ConnectionBroker extends HTMLElement {
     const grantUrl = new URL("grant", absoluteConnectionServerUrl);
     grantUrl.searchParams.set("connection_id", connectionId);
     grantUrl.searchParams.set("code", code);
-    grantUrl.searchParams.set(
-      "redirect_path",
-      new URL(window.location.href).pathname
-    );
+    grantUrl.searchParams.set("redirect_path", redirect_uri);
     const response = await fetch(grantUrl, { credentials: "include" });
-    ``;
     let grantResponse: GrantResponse;
     try {
       grantResponse = await response.json();
@@ -88,6 +97,10 @@ export class ConnectionBroker extends HTMLElement {
     }
     // Send the grant response back to the originating tab and close up shop.
     channel.postMessage(grantResponse);
+    this.#embedHandler?.sendToEmbedder({
+      type: "oauth_redirect",
+      success: true,
+    });
     channel.close();
     window.close();
   }
