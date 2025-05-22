@@ -81,7 +81,8 @@ class DriveListCache {
   }) {
     if (options.crossCheckLastModified) {
       const response = await options.cache.match(this.cacheKey);
-      if (response?.headers?.get("Last-Modified")! > options.crossCheckLastModified) {
+      const currentLastModified = response?.headers?.get("Last-Modified");
+      if (currentLastModified && currentLastModified > options.crossCheckLastModified) {
         // A newer value has been put in place in meanwhile, ignore this update.
         return false;
       }
