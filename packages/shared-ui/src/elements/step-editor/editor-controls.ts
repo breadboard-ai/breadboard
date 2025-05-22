@@ -1074,7 +1074,7 @@ export class EditorControls extends LitElement {
               id="add-drive-proxy"
               ${ref(this.#addDriveInputRef)}
               .connectionName=${SIGN_IN_CONNECTION_ID}
-              .ownedByMeOnly=${true}
+              .ownedByMeOnly=${false}
               @bb-input-change=${(evt: InputChangeEvent) => {
                 const driveFile = evt.value as {
                   preview: string;
