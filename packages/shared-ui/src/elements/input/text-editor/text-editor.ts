@@ -300,7 +300,7 @@ export class TextEditor extends LitElement {
         instance,
       });
       postamableText.textContent = Template.postamble();
-      titleText.textContent = title;
+      titleText.textContent = title.trim();
       titleText.classList.add("visible");
 
       label.appendChild(preambleText);

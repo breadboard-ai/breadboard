@@ -253,8 +253,11 @@ export class GoogleDriveFileId extends LitElement {
     }
     this.#destroyPicker();
 
-    const view = new this._pickerLib.DocsView(google.picker.ViewId.DOCS);
+    const view = new this._pickerLib.DocsView();
     view.setMimeTypes(MIME_TYPES);
+    view.setIncludeFolders(true);
+    view.setSelectFolderEnabled(false);
+
     if (this.ownedByMeOnly) {
       view.setOwnedByMe(true);
     }
