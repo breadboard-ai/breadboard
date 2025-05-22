@@ -24,7 +24,7 @@ import {
 
 export { DriveOperations, PROTOCOL };
 
-import { truncateValueForUtf8 } from "./utils.js";
+import { retryableFetch, truncateValueForUtf8 } from "./utils.js";
 
 const PROTOCOL = "drive:";
 
@@ -35,9 +35,8 @@ const DEPRECATED_GRAPH_MIME_TYPE = "application/json";
 const MIME_TYPE_QUERY = `(mimeType="${GRAPH_MIME_TYPE}" or mimeType="${DEPRECATED_GRAPH_MIME_TYPE}")`;
 const BASE_QUERY = `${MIME_TYPE_QUERY} and trashed=false`;
 
-/** Delay between GDrive API retries. */
-const RETRY_MS = 200;
 const PUBLIC_FOLDER_REFRESH_INTERVAL_MS = 60 * 1000; // 1 minute.
+
 
 const MAX_APP_PROPERTY_LENGTH = 124;
 
@@ -56,50 +55,6 @@ type StoredAppProperties = {
   tags: string;
   thumbnailUrl?: string;
 };
-
-/** Retries fetch() calls until status is not an internal server error. */
-async function retryableFetch(
-  input: string | Request,
-  init?: RequestInit,
-  numRetries = 3
-): Promise<Response> {
-  function shouldRetry(response: Response): boolean {
-    return 500 <= response.status && response.status <= 599;
-  }
-
-  async function recursiveHelper(
-    retriesLeft: number,
-    previousResponse: Response
-  ): Promise<Response> {
-    if (retriesLeft <= 0) {
-      return previousResponse;
-    }
-    let response: Response | null = null;
-    try {
-      response = await fetch(input, init);
-      if (!shouldRetry(response)) {
-        return response;
-      }
-    } catch (e) {
-      // return "403 Forbidden" response, as this is likely a CORS error
-      response = new Response(null, {
-        status: 403,
-        statusText: (e as Error).message,
-      });
-    }
-    return await new Promise((resolve) => {
-      setTimeout(async () => {
-        console.warn(
-          "Retrying GDrive API fetch because of response: ",
-          response
-        );
-        resolve(await recursiveHelper(retriesLeft - 1, response));
-      }, RETRY_MS);
-    });
-  }
-
-  return recursiveHelper(numRetries, new Response(null, { status: 500 }));
-}
 
 class DriveListCache {
   constructor(
