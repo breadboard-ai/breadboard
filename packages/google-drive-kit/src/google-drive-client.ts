@@ -7,6 +7,7 @@
 /// <reference types="@types/gapi.client.drive-v3" />
 
 import { type GoogleApiAuthorization } from "./board-server/api.js";
+import { retryableFetch } from "./board-server/utils.js";
 
 export interface GoogleDriveClientOptions {
   apiBaseUrl: string;
@@ -74,7 +75,7 @@ export class GoogleDriveClient {
         `Received 404 response for Google Drive file "${fileId}"` +
           ` using public fallback, trying domain proxy fallback.`
       );
-      const proxyResponse = await fetch(this.#proxyUrl, {
+      const proxyResponse = await retryableFetch(this.#proxyUrl, {
         method: "POST",
         body: JSON.stringify({
           fileId: fileId,
@@ -122,7 +123,7 @@ export class GoogleDriveClient {
     if (options?.fields?.length) {
       url.searchParams.set("fields", options.fields.join(","));
     }
-    return fetch(url, {
+    return retryableFetch(url, {
       headers: this.#makeHeaders(authorization),
       signal: options?.signal,
     });
@@ -158,7 +159,7 @@ export class GoogleDriveClient {
         `Received 404 response for Google Drive file "${fileId}"` +
           ` using public fallback, trying domain proxy fallback.`
       );
-      const proxyResponse = await fetch(this.#proxyUrl, {
+      const proxyResponse = await retryableFetch(this.#proxyUrl, {
         method: "POST",
         body: JSON.stringify({
           fileId: fileId,
@@ -204,7 +205,7 @@ export class GoogleDriveClient {
       authorization
     );
     url.searchParams.set("alt", "media");
-    return fetch(url, {
+    return retryableFetch(url, {
       headers: this.#makeHeaders(authorization),
       signal: options?.signal,
     });
@@ -237,7 +238,7 @@ export class GoogleDriveClient {
         `Received 404 response for Google Drive file "${fileId}"` +
           ` using public fallback, trying domain proxy fallback.`
       );
-      const proxyResponse = await fetch(this.#proxyUrl, {
+      const proxyResponse = await retryableFetch(this.#proxyUrl, {
         method: "POST",
         body: JSON.stringify({
           fileId: fileId,
@@ -278,7 +279,7 @@ export class GoogleDriveClient {
       authorization
     );
     url.searchParams.set("mimeType", options.mimeType);
-    return fetch(url, {
+    return retryableFetch(url, {
       headers: this.#makeHeaders(authorization),
       signal: options?.signal,
     });
