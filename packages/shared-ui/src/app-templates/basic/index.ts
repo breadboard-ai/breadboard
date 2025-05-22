@@ -542,7 +542,7 @@ export class Template extends LitElement implements AppTemplate {
                   margin: 0 0 var(--bb-grid-size-2) 0;
                   font: 400 var(--bb-title-large) /
                     var(--bb-title-line-height-large) var(--bb-font-family);
-                  color: var(--e-80);
+                  color: var(--e-30);
                 }
 
                 & p {
@@ -993,9 +993,23 @@ export class Template extends LitElement implements AppTemplate {
       // Attempt to find the most recent output. If there is one, show it
       // otherwise show any message that's coming from the edge.
       let lastOutput = null;
+      let showAsStatus = false;
       for (let i = topGraphResult.log.length - 1; i >= 0; i--) {
         const result = topGraphResult.log[i];
         if (result.type === "edge" && result.descriptor?.type === "output") {
+          const newest = topGraphResult.log.at(-1);
+          if (newest?.type === "edge" && newest.descriptor?.type === "input") {
+            const props = Object.values(newest.schema?.properties ?? {});
+            for (const prop of props) {
+              // TODO: Use a better way to determine that this is a User Input
+              // requiring a status flag.
+              if ("format" in prop) {
+                showAsStatus = true;
+                break;
+              }
+            }
+          }
+
           lastOutput = result;
           break;
         }
@@ -1004,7 +1018,7 @@ export class Template extends LitElement implements AppTemplate {
       // Render the output.
       if (lastOutput !== null) {
         activityContents = html`<bb-multi-output
-          .showAsStatus=${true}
+          .showAsStatus=${showAsStatus}
           .outputs=${lastOutput.value ?? null}
         ></bb-multi-output>`;
       }
