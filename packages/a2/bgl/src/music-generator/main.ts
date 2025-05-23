@@ -1,5 +1,5 @@
 /**
- * @fileoverview Generates audio (tts) output using supplied context.
+ * @fileoverview Generates music output using supplied context.
  */
 
 import gemini, {
@@ -124,9 +124,7 @@ async function invoke({
         joinContent(toText(itemInstruction), itemContext, false)
       );
       if (!combinedInstruction) {
-        return toLLMContent(
-          "Please provide the text to be converted to speech."
-        );
+        return toLLMContent("Please provide the music prompt.");
       }
       console.log("PROMPT: ", combinedInstruction);
       return callMusicGen(combinedInstruction);
@@ -159,7 +157,7 @@ async function describe({ inputs: { text } }: DescribeInputs) {
           behavior: ["llm-content", "config", "hint-preview"],
           title: "Text",
           description:
-            "Construct the inputs to be spoken with text-to-speech. Use @ to reference previous step outputs.",
+            "Construct the music generation prompt. Use @ to reference previous step outputs.",
           default: defaultLLMContent(),
         },
         ...template.schemas(),
