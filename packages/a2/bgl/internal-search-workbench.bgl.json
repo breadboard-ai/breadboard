@@ -21,7 +21,7 @@
           "role": "user",
           "parts": [
             {
-              "text": "Do research about Gemini API using {{\"type\":\"tool\",\"path\":\"embed://a2/tools.bgl.json#module:search-internal\",\"title\":\"Internal Search\"}}\nGive a summary of how to use it"
+              "text": "Do research about AI Flow using {{\"type\":\"tool\",\"path\":\"embed://a2/tools.bgl.json#module:search-internal\",\"title\":\"Internal Search\"}}\nGive a summary of what it is and how to use it"
             }
           ]
         },
