@@ -24,6 +24,7 @@ import saveOutputs from "../bgl/save-outputs.bgl.json" with { type: "json" };
 import tools from "../bgl/tools.bgl.json" with { type: "json" };
 import videoGenerator from "../bgl/video-generator.bgl.json" with { type: "json" };
 import musicGenerator from "../bgl/music-generator.bgl.json" with { type: "json" };
+import deepResearch from "../bgl/deep-research.bgl.json" with { type: "json" };
 
 export { createA2Server, isA2 };
 
@@ -51,6 +52,7 @@ function createA2Server(): BoardServer {
       ["tools", tools as GraphDescriptor],
       ["video-generator", videoGenerator as GraphDescriptor],
       ["music-generator", musicGenerator as GraphDescriptor],
+      ["deep-research", deepResearch as GraphDescriptor],
     ])
   );
 }

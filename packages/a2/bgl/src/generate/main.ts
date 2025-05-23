@@ -72,6 +72,15 @@ const MODES: Mode[] = [
     modelName: "gemini-2.0-flash",
   },
   {
+    id: "deep-research",
+    type: "deep-research",
+    url: "embed://a2/deep-research.bgl.json#module:main",
+    title: "Deep Research with Gemini 2.5 Flash",
+    description: "In-depth research on your topic",
+    icon: "spark",
+    modelName: "gemini-2.5-flash-preview-04-17",
+  },
+  {
     id: "image-gen",
     type: "image-gen",
     url: "embed://a2/a2.bgl.json#module:image-generator",
@@ -155,11 +164,18 @@ const portMapForward = new Map<ModeId, Map<string, string>>([
       [LIST_PORT, "z-list"],
     ]),
   ],
-  [MODES[4].id, new Map([[PROMPT_PORT, "instruction"]])],
+  [
+    MODES[4].id,
+    new Map([
+      [PROMPT_PORT, "query"],
+      [LIST_PORT, "z-list"],
+    ]),
+  ],
   [MODES[5].id, new Map([[PROMPT_PORT, "instruction"]])],
-  [MODES[6].id, new Map([[PROMPT_PORT, "text"]])],
-  [MODES[7].id, new Map([[PROMPT_PORT, "instruction"]])],
-  [MODES[8].id, new Map([[PROMPT_PORT, "text"]])],
+  [MODES[6].id, new Map([[PROMPT_PORT, "instruction"]])],
+  [MODES[7].id, new Map([[PROMPT_PORT, "text"]])],
+  [MODES[8].id, new Map([[PROMPT_PORT, "instruction"]])],
+  [MODES[9].id, new Map([[PROMPT_PORT, "text"]])],
 ]);
 
 const portMapReverse = new Map(
