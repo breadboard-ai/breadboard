@@ -194,9 +194,16 @@ class ReactiveProject implements ProjectInternal {
     }
 
     const server = this.#boardServerFinder(new URL(urlString));
-    if (!server || !server.dataPartTransformer) {
+    if (!server) {
       console.warn(
         `Failed to persist blob: no server found for url "${urlString}"`
+      );
+      return contents;
+    }
+
+    if (!server.dataPartTransformer) {
+      console.warn(
+        `Failed to persist blob: the server for url "${urlString} does not support dataPartTransformer`
       );
       return contents;
     }
