@@ -14,6 +14,13 @@ import { hasExpired } from "../blobs/file-info.js";
 import type { ServerResponse } from "node:http";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 
+type DriveError = {
+  error: {
+    code: number;
+    message: string;
+  };
+};
+
 type CavemanCacheEntry = {
   expirationTime: string;
   fileUri: string;
@@ -61,6 +68,15 @@ function success(res: ServerResponse, fileUri: string, mimeType: string) {
     })
   );
   return true;
+}
+
+function extractDriveError(s: string): DriveError | null {
+  const start = s.indexOf("{");
+  try {
+    return JSON.parse(s.substring(start));
+  } catch (e) {
+    return null;
+  }
 }
 
 export function initializeDriveClient(
@@ -148,6 +164,11 @@ async function handleAssetsDriveRequest(
     });
     success(res, uploading.fileUri!, mimeType);
   } catch (e) {
+    const error = extractDriveError((e as Error).message);
+    if (error) {
+      serverError(res, error.error.message);
+      return;
+    }
     serverError(
       res,
       `Unable to handle asset drive request: ${(e as Error).message}`
