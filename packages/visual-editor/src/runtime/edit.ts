@@ -13,7 +13,6 @@ import {
   EditSpec,
   GraphDescriptor,
   GraphLoader,
-  GraphProvider,
   isInlineData,
   isStoredData,
   Kit,
@@ -67,6 +66,7 @@ import {
 } from "@breadboard-ai/shared-ui/types/types.js";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { Autoname } from "@breadboard-ai/shared-ui/sideboards/autoname.js";
+import { StateManager } from "./state";
 
 function isModule(source: unknown): source is Module {
   return typeof source === "object" && source !== null && "code" in source;
@@ -78,7 +78,7 @@ export class Edit extends EventTarget {
   #autoname: Autoname;
 
   constructor(
-    public readonly providers: GraphProvider[],
+    public readonly state: StateManager,
     public readonly loader: GraphLoader,
     public readonly kits: Kit[],
     public readonly sandbox: Sandbox,
@@ -341,11 +341,26 @@ export class Edit extends EventTarget {
     return history.redo();
   }
 
-  async createTheme(
-    tab: Tab | null,
-    appTheme: AppTheme,
-    projectState: BreadboardUI.State.Project
-  ) {
+  async createTheme(tab: Tab | null, appTheme: AppTheme) {
+    const mainGraphId = tab?.mainGraphId;
+    if (!mainGraphId) {
+      console.warn(`Failed to create theme: no mainGraphId for tab`);
+      return;
+    }
+
+    const editableGraph = this.getEditor(tab);
+    if (!editableGraph) {
+      console.warn(`Failed to create theme: no editable graph`);
+      return;
+    }
+
+    const project = this.state.getOrCreate(mainGraphId, editableGraph);
+
+    if (!project) {
+      console.warn(`Failed to create theme: unable to create state`);
+      return;
+    }
+
     const { primary, secondary, tertiary, error, neutral, neutralVariant } =
       appTheme;
 
@@ -388,30 +403,14 @@ export class Edit extends EventTarget {
 
       // Convert inline data to stored asset.
       if (isInlineData(appTheme.splashScreen)) {
-        await projectState.organizer.addGraphAsset({
-          path: "@@splash",
-          metadata: { title: "Splash", type: "file" },
-          data,
-        });
-
-        const splashScreen =
-          projectState.graphAssets.get("@@splash")?.data[0]?.parts[0];
+        const persisted = await project.persistBlobs(data);
+        const splashScreen = persisted?.[0].parts[0];
         if (isStoredData(splashScreen)) {
           graphTheme.splashScreen = splashScreen;
         } else {
           console.warn("Unable to save splash screen", splashScreen);
         }
-
-        await projectState.organizer.removeGraphAsset("@@splash");
       }
-    }
-
-    const editableGraph = this.getEditor(tab);
-    if (!editableGraph) {
-      this.dispatchEvent(
-        new RuntimeErrorEvent("Unable to edit subboard; no active board")
-      );
-      return;
     }
 
     const metadata: GraphMetadata = editableGraph.raw().metadata ?? {};

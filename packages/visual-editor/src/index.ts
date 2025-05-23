@@ -3925,22 +3925,8 @@ export class Main extends LitElement {
               ) => {
                 await this.#runtime.edit.deleteTheme(this.tab, evt.themeId);
               }}
-              @bbthemecreate=${async (
-                evt: BreadboardUI.Events.ThemeCreateEvent
-              ) => {
-                const projectState = this.#runtime.state.getOrCreate(
-                  this.tab?.mainGraphId,
-                  this.#runtime.edit.getEditor(this.tab)
-                );
-                if (!projectState) {
-                  console.warn("Failed to create theme: no project state");
-                  return;
-                }
-                await this.#runtime.edit.createTheme(
-                  this.tab,
-                  evt.theme,
-                  projectState
-                );
+              @bbthemecreate=${(evt: BreadboardUI.Events.ThemeCreateEvent) => {
+                this.#runtime.edit.createTheme(this.tab, evt.theme);
               }}
               @bbnoderunrequest=${async (
                 evt: BreadboardUI.Events.NodeRunRequestEvent
