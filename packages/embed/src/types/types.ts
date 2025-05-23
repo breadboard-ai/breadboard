@@ -20,37 +20,37 @@ export type BreadboardMessage =
   | IterateOnPromptMessage;
 
 /** Event for enabling debug. */
-export interface DebugMessage {
+export declare interface DebugMessage {
   type: "debug";
   on: boolean;
 }
 
 /** Event when Breadboard has begun listening for messages from parent iframe. */
-export interface HandshakeReadyMessage {
+export declare interface HandshakeReadyMessage {
   type: "handshake_ready";
 }
 
 /** Event sent from /oauth. */
-export interface OauthRedirectMessage {
+export declare interface OauthRedirectMessage {
   type: "oauth_redirect";
   /** If true, the user successfully signed in. */
   success: boolean;
 }
 
 /** Event when the user clicks the back button in the view Breadboard page. */
-export interface BackClickedMessage {
+export declare interface BackClickedMessage {
   type: "back_clicked";
 }
 
 /** Event when the Breadboard homepage is loaded. */
-export interface HomeLoadedMessage {
+export declare interface HomeLoadedMessage {
   type: "home_loaded";
   /** If true, the "Sign in" button is not shown. */
   isSignedIn: boolean;
 }
 
 /** Event when a new breadboard has been created. */
-export interface BoardIdCreatedMessage {
+export declare interface BoardIdCreatedMessage {
   type: "board_id_created";
   /**
    * The id of the newly created Breadboard.
@@ -60,7 +60,7 @@ export interface BoardIdCreatedMessage {
 }
 
 /** Event when a new breadboard has been created. */
-export interface IterateOnPromptMessage {
+export declare interface IterateOnPromptMessage {
   type: "iterate_on_prompt";
   /** The title of the node in Breadboard. */
   title: string;
@@ -95,13 +95,13 @@ export type EmbedderMessage =
   | HandshakeCompleteMessage;
 
 /** Message to determine whether to display Iterate-on-prompt button. */
-export interface ToggleIterateOnPromptMessage {
+export declare interface ToggleIterateOnPromptMessage {
   type: "toggle_iterate_on_prompt";
   on: boolean;
 }
 
 /** Message that creates a new Breadboard board. */
-export interface CreateNewBoardMessage {
+export declare interface CreateNewBoardMessage {
   type: "create_new_board";
   /**
    * Natural language prompt for the new Breadboard.
@@ -111,7 +111,7 @@ export interface CreateNewBoardMessage {
 }
 
 /** Message that relays to Breadboard that it's in an parent iframe iframe. */
-export interface HandshakeCompleteMessage {
+export declare interface HandshakeCompleteMessage {
   type: "handshake_complete";
   // The top-level origin from parent iframe.
   origin: string;

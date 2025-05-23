@@ -94,7 +94,6 @@ import {
   ToggleExperimentalComponentsCommand,
   UngroupCommand,
 } from "./commands/commands";
-import { getBoardIdFromUrl } from "@breadboard-ai/shared-ui/utils/board-id.js";
 import {
   SIGN_IN_CONNECTION_ID,
   SigninAdapter,
@@ -1039,14 +1038,10 @@ export class Main extends LitElement {
       }
     );
     if (!boardData) return;
-    const { url } = boardData;
-    const boardId = getBoardIdFromUrl(url);
-    if (boardId) {
-      this.#embedHandler?.sendToEmbedder({
-        type: "board_id_created",
-        id: boardId,
-      });
-    }
+    this.#embedHandler?.sendToEmbedder({
+      type: "board_id_created",
+      id: boardData.url.href,
+    });
   }
 
   disconnectedCallback(): void {
