@@ -82,16 +82,21 @@ export async function loadImage(
     const imageData = await resolveImage(googleDriveClient, url);
     return imageData ?? "";
   } else if (url) {
-    const response = await fetch(url);
-    const data = await response.blob();
-    return new Promise<string>((resolve) => {
-      const reader = new FileReader();
-      reader.addEventListener("loadend", () => {
-        const result = reader.result as string;
+    try {
+      const response = await fetch(url);
+      const data = await response.blob();
+      return new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.addEventListener("loadend", () => {
+          const result = reader.result as string;
 
-        resolve(result);
+          resolve(result);
+        });
+        reader.readAsDataURL(data);
       });
-      reader.readAsDataURL(data);
-    });
+    } catch (e) {
+      console.warn("Unable to fetch image", e);
+      return "";
+    }
   }
 }
