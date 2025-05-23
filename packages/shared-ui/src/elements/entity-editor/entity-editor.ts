@@ -77,7 +77,7 @@ import { icons } from "../../styles/icons";
 import { consume } from "@lit/context";
 import { embedderContext } from "../../contexts/embedder";
 import { EmbedState, embedState } from "@breadboard-ai/embed";
-import { getBoardIdFromUrl } from "../../utils/board-id.js";
+import { getBoardUrlFromCurrentWindow } from "../../utils/board-id.js";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -1184,9 +1184,10 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     nodeTitle: string,
     node: InspectableNode
   ) {
-    const url = new URL(this.graph?.raw().url ?? window.location.href);
-    const boardId = getBoardIdFromUrl(url);
-    if (!boardId || !isGenerativeNode(node)) {
+    // Note that the board URL here may not be a HTTP/HTTPS URL - it could
+    // be a Drive URL of the form drive:/12345.
+    const boardUrl = this.graph?.raw().url ?? getBoardUrlFromCurrentWindow();
+    if (!boardUrl || !isGenerativeNode(node)) {
       return nothing;
     }
     // If tools are contained in prompt, iterate-on-prompt will be disabled.
@@ -1209,7 +1210,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           new IterateOnPromptEvent(
             nodeTitle,
             promptTemplate,
-            boardId!,
+            boardUrl!,
             nodeId,
             modelId
           )
