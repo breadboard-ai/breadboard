@@ -5,6 +5,7 @@
  */
 
 import {
+  asBase64,
   blankLLMContent,
   defaultModuleContent,
   EditableGraph,
@@ -13,6 +14,8 @@ import {
   GraphDescriptor,
   GraphLoader,
   GraphProvider,
+  isInlineData,
+  isStoredData,
   Kit,
   MoveToGraphTransform,
   MutableGraphStore,
@@ -45,6 +48,7 @@ import {
   GraphMetadata,
   GraphTag,
   GraphTheme,
+  LLMContent,
   Module,
   ModuleCode,
   ModuleIdentifier,
@@ -337,7 +341,71 @@ export class Edit extends EventTarget {
     return history.redo();
   }
 
-  async createTheme(tab: Tab | null, theme: GraphTheme) {
+  async createTheme(
+    tab: Tab | null,
+    appTheme: AppTheme,
+    projectState: BreadboardUI.State.Project
+  ) {
+    const { primary, secondary, tertiary, error, neutral, neutralVariant } =
+      appTheme;
+
+    const graphTheme: GraphTheme = {
+      template: "basic",
+      templateAdditionalOptions: {},
+      palette: {
+        primary,
+        secondary,
+        tertiary,
+        error,
+        neutral,
+        neutralVariant,
+      },
+      themeColors: {
+        primaryColor: appTheme.primaryColor,
+        secondaryColor: appTheme.secondaryColor,
+        backgroundColor: appTheme.backgroundColor,
+        primaryTextColor: appTheme.primaryTextColor,
+        textColor: appTheme.textColor,
+      },
+    };
+
+    // TODO: Show some status.
+    if (appTheme.splashScreen) {
+      if (isStoredData(appTheme.splashScreen)) {
+        // Fetch the stored data so that we can add to the graph.
+        const response = await fetch(appTheme.splashScreen.storedData.handle);
+        const imgBlob = await response.blob();
+        const data = await asBase64(imgBlob);
+        const mimeType = imgBlob.type;
+        appTheme.splashScreen = { inlineData: { data, mimeType } };
+      }
+      const data: LLMContent[] = [
+        {
+          role: "user",
+          parts: [appTheme.splashScreen],
+        },
+      ];
+
+      // Convert inline data to stored asset.
+      if (isInlineData(appTheme.splashScreen)) {
+        await projectState.organizer.addGraphAsset({
+          path: "@@splash",
+          metadata: { title: "Splash", type: "file" },
+          data,
+        });
+
+        const splashScreen =
+          projectState.graphAssets.get("@@splash")?.data[0]?.parts[0];
+        if (isStoredData(splashScreen)) {
+          graphTheme.splashScreen = splashScreen;
+        } else {
+          console.warn("Unable to save splash screen", splashScreen);
+        }
+
+        await projectState.organizer.removeGraphAsset("@@splash");
+      }
+    }
+
     const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
       this.dispatchEvent(
@@ -352,7 +420,7 @@ export class Edit extends EventTarget {
     metadata.visual.presentation.themes ??= {};
 
     const id = globalThis.crypto.randomUUID();
-    metadata.visual.presentation.themes[id] = theme;
+    metadata.visual.presentation.themes[id] = graphTheme;
     metadata.visual.presentation.theme = id;
 
     return editableGraph.edit(

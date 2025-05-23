@@ -22,7 +22,6 @@ import { map } from "lit/directives/map.js";
 import { customElement, property, state } from "lit/decorators.js";
 import { LitElement, html, HTMLTemplateResult, nothing } from "lit";
 import {
-  asBase64,
   createRunObserver,
   GraphDescriptor,
   BoardServer,
@@ -36,8 +35,6 @@ import {
   createEphemeralBlobStore,
   assetsFromGraphDescriptor,
   blank as breadboardBlank,
-  isInlineData,
-  isStoredData,
   EditHistoryCreator,
   envFromGraphDescriptor,
   FileSystem,
@@ -77,9 +74,7 @@ import { sandbox } from "./sandbox";
 import {
   AssetMetadata,
   GraphIdentifier,
-  GraphTheme,
   InputValues,
-  LLMContent,
   Module,
   ModuleIdentifier,
 } from "@breadboard-ai/types";
@@ -3937,80 +3932,15 @@ export class Main extends LitElement {
                   this.tab?.mainGraphId,
                   this.#runtime.edit.getEditor(this.tab)
                 );
-
-                const {
-                  primary,
-                  secondary,
-                  tertiary,
-                  error,
-                  neutral,
-                  neutralVariant,
-                } = evt.theme;
-
-                const graphTheme: GraphTheme = {
-                  template: "basic",
-                  templateAdditionalOptions: {},
-                  palette: {
-                    primary,
-                    secondary,
-                    tertiary,
-                    error,
-                    neutral,
-                    neutralVariant,
-                  },
-                  themeColors: {
-                    primaryColor: evt.theme.primaryColor,
-                    secondaryColor: evt.theme.secondaryColor,
-                    backgroundColor: evt.theme.backgroundColor,
-                    primaryTextColor: evt.theme.primaryTextColor,
-                    textColor: evt.theme.textColor,
-                  },
-                };
-
-                // TODO: Show some status.
-                if (evt.theme.splashScreen) {
-                  if (isStoredData(evt.theme.splashScreen)) {
-                    // Fetch the stored data so that we can add to the graph.
-                    const response = await fetch(
-                      evt.theme.splashScreen.storedData.handle
-                    );
-                    const imgBlob = await response.blob();
-                    const data = await asBase64(imgBlob);
-                    const mimeType = imgBlob.type;
-                    evt.theme.splashScreen = { inlineData: { data, mimeType } };
-                  }
-                  const data: LLMContent[] = [
-                    {
-                      role: "user",
-                      parts: [evt.theme.splashScreen],
-                    },
-                  ];
-
-                  // Convert inline data to stored asset.
-                  if (isInlineData(evt.theme.splashScreen)) {
-                    await projectState?.organizer.addGraphAsset({
-                      path: "@@splash",
-                      metadata: { title: "Splash", type: "file" },
-                      data,
-                    });
-
-                    const splashScreen =
-                      projectState?.graphAssets.get("@@splash")?.data[0]
-                        ?.parts[0];
-                    if (isStoredData(splashScreen)) {
-                      graphTheme.splashScreen = splashScreen;
-                    } else {
-                      console.warn(
-                        "Unable to save splash screen",
-                        splashScreen
-                      );
-                    }
-
-                    await projectState?.organizer.removeGraphAsset("@@splash");
-                  }
+                if (!projectState) {
+                  console.warn("Failed to create theme: no project state");
+                  return;
                 }
-
-                await this.#runtime.edit.createTheme(this.tab, graphTheme);
+                await this.#runtime.edit.createTheme(
+                  this.tab,
+                  evt.theme,
+                  projectState
+                );
               }}
               @bbnoderunrequest=${async (
                 evt: BreadboardUI.Events.NodeRunRequestEvent
