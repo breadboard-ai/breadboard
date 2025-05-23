@@ -999,15 +999,20 @@ export class Main extends LitElement {
     this.#embedHandler?.subscribe(
       "create_new_board",
       async (message: CreateNewBoardMessage) => {
-        void this.#generateBoard(message.prompt)
-          .then((graph) => this.#generateBoardSuccess(graph))
-          .catch((error) => console.error("Error generating board", error));
+        if (!message.prompt) {
+          // If no prompt provided, generate an empty board.
+          this.#generateBoardFromGraph(blank());
+        } else {
+          void this.#generateGraph(message.prompt)
+            .then((graph) => this.#generateBoardFromGraph(graph))
+            .catch((error) => console.error("Error generating board", error));
+        }
       }
     );
     this.#embedHandler?.sendToEmbedder({ type: "handshake_ready" });
   }
 
-  async #generateBoard(intent: string): Promise<GraphDescriptor> {
+  async #generateGraph(intent: string): Promise<GraphDescriptor> {
     const generator = new FlowGenerator(
       new AppCatalystApiClient(this.signinAdapter)
     );
@@ -1015,7 +1020,7 @@ export class Main extends LitElement {
     return flow;
   }
 
-  async #generateBoardSuccess(graph: GraphDescriptor) {
+  async #generateBoardFromGraph(graph: GraphDescriptor) {
     const boardServerName = this.selectedBoardServer;
     const location = this.selectedLocation;
     const fileName = `${globalThis.crypto.randomUUID()}.bgl.json`;
@@ -3303,6 +3308,7 @@ export class Main extends LitElement {
                 if (!this.tab) {
                   return;
                 }
+                this.#embedHandler?.sendToEmbedder({ type: "back_clicked" });
 
                 this.#runtime.board.closeTab(this.tab.id);
               }}
