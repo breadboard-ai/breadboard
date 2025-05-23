@@ -84,38 +84,46 @@ class GoogleDriveDataPartTransformer implements DataPartTransformer {
     if (isFileDataCapabilityPart(part)) {
       mimeType = part.fileData.mimeType;
       if (isGoogleDriveDocument(part)) {
-        const fileId = part.fileData.fileUri;
-        // TODO: Un-hardcode the path and get rid of the "@foo/bar".
-        const path = `/board/boards/@foo/bar/assets/drive/${fileId}`;
-        const converting = await fetch(
-          await this.#createRequest(path, { part })
-        );
-        if (!converting.ok) return err(await converting.text());
+        try {
+          const fileId = part.fileData.fileUri;
+          // TODO: Un-hardcode the path and get rid of the "@foo/bar".
+          const path = `/board/boards/@foo/bar/assets/drive/${fileId}`;
+          const converting = await fetch(
+            await this.#createRequest(path, { part })
+          );
+          if (!converting.ok) return err(await converting.text());
 
-        const converted =
-          (await converting.json()) as Outcome<GoogleDriveToGeminiResponse>;
-        if (!ok(converted)) return converted;
+          const converted =
+            (await converting.json()) as Outcome<GoogleDriveToGeminiResponse>;
+          if (!ok(converted)) return converted;
 
-        return converted.part;
+          return converted.part;
+        } catch (e) {
+          return err((e as Error).message);
+        }
       }
     } else {
       const url = part.storedData.handle;
       mimeType = part.storedData.mimeType;
       if (url.startsWith("drive:")) {
-        // TODO: Dedupe this code with above.
-        const fileId = url.replace(/^drive:\/+/, "");
+        try {
+          // TODO: Dedupe this code with above.
+          const fileId = url.replace(/^drive:\/+/, "");
 
-        const path = `/board/boards/@foo/bar/assets/drive/${fileId}?mimeType=${mimeType}`;
-        const converting = await fetch(
-          await this.#createRequest(path, { part })
-        );
-        if (!converting.ok) return err(await converting.text());
+          const path = `/board/boards/@foo/bar/assets/drive/${fileId}?mimeType=${mimeType}`;
+          const converting = await fetch(
+            await this.#createRequest(path, { part })
+          );
+          if (!converting.ok) return err(await converting.text());
 
-        const converted =
-          (await converting.json()) as Outcome<GoogleDriveToGeminiResponse>;
-        if (!ok(converted)) return converted;
+          const converted =
+            (await converting.json()) as Outcome<GoogleDriveToGeminiResponse>;
+          if (!ok(converted)) return converted;
 
-        return converted.part;
+          return converted.part;
+        } catch (e) {
+          return err((e as Error).message);
+        }
       }
       mimeType = part.storedData.mimeType;
     }
