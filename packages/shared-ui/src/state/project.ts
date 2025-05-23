@@ -186,7 +186,7 @@ class ReactiveProject implements ProjectInternal {
     }
   }
 
-  async persistBlobs(contents: LLMContent[]): Promise<LLMContent[]> {
+  async persistDataParts(contents: LLMContent[]): Promise<LLMContent[]> {
     const urlString = this.#store.get(this.#mainGraphId)?.graph.url;
     if (!urlString) {
       console.warn("Can't persist blob without graph URL");

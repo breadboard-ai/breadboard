@@ -383,7 +383,7 @@ export class Edit extends EventTarget {
 
     // TODO: Show some status.
     if (appTheme.splashScreen) {
-      const persisted = await project.persistBlobs([
+      const persisted = await project.persistDataParts([
         { parts: [appTheme.splashScreen] },
       ]);
       const splashScreen = persisted?.[0].parts[0];

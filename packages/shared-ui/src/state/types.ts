@@ -207,7 +207,7 @@ export type Project = {
   fastAccess: FastAccess;
   renderer: RendererState;
 
-  persistBlobs(contents: LLMContent[]): Promise<LLMContent[]>;
+  persistDataParts(contents: LLMContent[]): Promise<LLMContent[]>;
 };
 
 export type ProjectInternal = Project & {

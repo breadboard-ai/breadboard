@@ -42,7 +42,7 @@ class ReactiveOrganizer implements Organizer {
 
   async addGraphAsset(asset: GraphAssetDescriptor): Promise<Outcome<void>> {
     const { data: assetData, metadata, path } = asset;
-    const data = (await this.#project.persistBlobs(assetData)) as NodeValue;
+    const data = (await this.#project.persistDataParts(assetData)) as NodeValue;
     return this.#project.edit(
       [{ type: "addasset", path, data, metadata }],
       `Adding asset at path "${path}"`
@@ -66,7 +66,7 @@ class ReactiveOrganizer implements Organizer {
   ): Promise<Outcome<void>> {
     // TODO: Make work for subgraphs.
     const { sample: ephemeralSample } = metadata;
-    const sample = (await this.#project.persistBlobs(
+    const sample = (await this.#project.persistDataParts(
       ephemeralSample as LLMContent[]
     )) as NodeValue;
     const persistedMetadata: ParameterMetadata = { ...metadata, sample };
