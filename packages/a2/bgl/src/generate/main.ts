@@ -103,6 +103,14 @@ const MODES: Mode[] = [
     description: "Generates videos from text and images",
     icon: "videocam_auto",
   },
+  {
+    id: "music",
+    type: "music",
+    url: "embed://a2/music-generator.bgl.json#module:main",
+    title: "Lyria 2",
+    description: "Generates instrumental music from text",
+    icon: "audio_magic_eraser",
+  },
 ] as const;
 
 const DEFAULT_MODE = MODES[0];
@@ -151,6 +159,7 @@ const portMapForward = new Map<ModeId, Map<string, string>>([
   [MODES[5].id, new Map([[PROMPT_PORT, "instruction"]])],
   [MODES[6].id, new Map([[PROMPT_PORT, "text"]])],
   [MODES[7].id, new Map([[PROMPT_PORT, "instruction"]])],
+  [MODES[8].id, new Map([[PROMPT_PORT, "text"]])],
 ]);
 
 const portMapReverse = new Map(
