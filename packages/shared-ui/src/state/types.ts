@@ -206,6 +206,8 @@ export type Project = {
   organizer: Organizer;
   fastAccess: FastAccess;
   renderer: RendererState;
+
+  persistDataParts(contents: LLMContent[]): Promise<LLMContent[]>;
 };
 
 export type ProjectInternal = Project & {
@@ -213,7 +215,6 @@ export type ProjectInternal = Project & {
   runtime(): SideBoardRuntime;
   apply(transform: EditTransform): Promise<Outcome<void>>;
   edit(spec: EditSpec[], label: string): Promise<Outcome<void>>;
-  persistBlobs(contents: LLMContent[]): Promise<LLMContent[]>;
   findOutputPortId(
     graphId: GraphIdentifier,
     id: NodeIdentifier

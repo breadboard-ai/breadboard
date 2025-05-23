@@ -110,6 +110,8 @@ export async function create(config: RuntimeConfig): Promise<{
     config.proxy
   ).createSideboardRuntime();
 
+  const state = new StateManager(graphStore, sideboards, servers);
+
   const runtime = {
     board: new Board(
       [],
@@ -120,7 +122,7 @@ export async function create(config: RuntimeConfig): Promise<{
       config.googleDriveClient
     ),
     edit: new Edit(
-      [],
+      state,
       loader,
       kits,
       config.sandbox,
@@ -129,7 +131,7 @@ export async function create(config: RuntimeConfig): Promise<{
       config.settings
     ),
     run: new Run(graphStore, dataStore, config.runStore),
-    state: new StateManager(graphStore, sideboards, servers),
+    state,
     sideboards,
     select: new Select(),
     util: Util,

@@ -68,7 +68,7 @@ class GraphAssetImpl implements GraphAsset {
       await update;
 
       // Now persist blobs and update the asset data.
-      const persistedData = await this.project.persistBlobs(data);
+      const persistedData = await this.project.persistDataParts(data);
       update = this.project.apply(
         new UpdateAssetData(this.path, metadata, persistedData)
       );

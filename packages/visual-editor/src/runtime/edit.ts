@@ -12,7 +12,7 @@ import {
   EditSpec,
   GraphDescriptor,
   GraphLoader,
-  GraphProvider,
+  isStoredData,
   Kit,
   MoveToGraphTransform,
   MutableGraphStore,
@@ -63,6 +63,7 @@ import {
 } from "@breadboard-ai/shared-ui/types/types.js";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { Autoname } from "@breadboard-ai/shared-ui/sideboards/autoname.js";
+import { StateManager } from "./state";
 
 function isModule(source: unknown): source is Module {
   return typeof source === "object" && source !== null && "code" in source;
@@ -74,7 +75,7 @@ export class Edit extends EventTarget {
   #autoname: Autoname;
 
   constructor(
-    public readonly providers: GraphProvider[],
+    public readonly state: StateManager,
     public readonly loader: GraphLoader,
     public readonly kits: Kit[],
     public readonly sandbox: Sandbox,
@@ -337,13 +338,60 @@ export class Edit extends EventTarget {
     return history.redo();
   }
 
-  async createTheme(tab: Tab | null, theme: GraphTheme) {
+  async createTheme(tab: Tab | null, appTheme: AppTheme) {
+    const mainGraphId = tab?.mainGraphId;
+    if (!mainGraphId) {
+      console.warn(`Failed to create theme: no mainGraphId for tab`);
+      return;
+    }
+
     const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
-      this.dispatchEvent(
-        new RuntimeErrorEvent("Unable to edit subboard; no active board")
-      );
+      console.warn(`Failed to create theme: no editable graph`);
       return;
+    }
+
+    const project = this.state.getOrCreate(mainGraphId, editableGraph);
+
+    if (!project) {
+      console.warn(`Failed to create theme: unable to create state`);
+      return;
+    }
+
+    const { primary, secondary, tertiary, error, neutral, neutralVariant } =
+      appTheme;
+
+    const graphTheme: GraphTheme = {
+      template: "basic",
+      templateAdditionalOptions: {},
+      palette: {
+        primary,
+        secondary,
+        tertiary,
+        error,
+        neutral,
+        neutralVariant,
+      },
+      themeColors: {
+        primaryColor: appTheme.primaryColor,
+        secondaryColor: appTheme.secondaryColor,
+        backgroundColor: appTheme.backgroundColor,
+        primaryTextColor: appTheme.primaryTextColor,
+        textColor: appTheme.textColor,
+      },
+    };
+
+    // TODO: Show some status.
+    if (appTheme.splashScreen) {
+      const persisted = await project.persistDataParts([
+        { parts: [appTheme.splashScreen] },
+      ]);
+      const splashScreen = persisted?.[0].parts[0];
+      if (isStoredData(splashScreen)) {
+        graphTheme.splashScreen = splashScreen;
+      } else {
+        console.warn("Unable to save splash screen", splashScreen);
+      }
     }
 
     const metadata: GraphMetadata = editableGraph.raw().metadata ?? {};
@@ -352,7 +400,7 @@ export class Edit extends EventTarget {
     metadata.visual.presentation.themes ??= {};
 
     const id = globalThis.crypto.randomUUID();
-    metadata.visual.presentation.themes[id] = theme;
+    metadata.visual.presentation.themes[id] = graphTheme;
     metadata.visual.presentation.theme = id;
 
     return editableGraph.edit(
