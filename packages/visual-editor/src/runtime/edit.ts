@@ -5,7 +5,6 @@
  */
 
 import {
-  asBase64,
   blankLLMContent,
   defaultModuleContent,
   EditableGraph,
@@ -13,7 +12,6 @@ import {
   EditSpec,
   GraphDescriptor,
   GraphLoader,
-  isInlineData,
   isStoredData,
   Kit,
   MoveToGraphTransform,
@@ -47,7 +45,6 @@ import {
   GraphMetadata,
   GraphTag,
   GraphTheme,
-  LLMContent,
   Module,
   ModuleCode,
   ModuleIdentifier,
@@ -386,30 +383,14 @@ export class Edit extends EventTarget {
 
     // TODO: Show some status.
     if (appTheme.splashScreen) {
-      if (isStoredData(appTheme.splashScreen)) {
-        // Fetch the stored data so that we can add to the graph.
-        const response = await fetch(appTheme.splashScreen.storedData.handle);
-        const imgBlob = await response.blob();
-        const data = await asBase64(imgBlob);
-        const mimeType = imgBlob.type;
-        appTheme.splashScreen = { inlineData: { data, mimeType } };
-      }
-      const data: LLMContent[] = [
-        {
-          role: "user",
-          parts: [appTheme.splashScreen],
-        },
-      ];
-
-      // Convert inline data to stored asset.
-      if (isInlineData(appTheme.splashScreen)) {
-        const persisted = await project.persistBlobs(data);
-        const splashScreen = persisted?.[0].parts[0];
-        if (isStoredData(splashScreen)) {
-          graphTheme.splashScreen = splashScreen;
-        } else {
-          console.warn("Unable to save splash screen", splashScreen);
-        }
+      const persisted = await project.persistBlobs([
+        { parts: [appTheme.splashScreen] },
+      ]);
+      const splashScreen = persisted?.[0].parts[0];
+      if (isStoredData(splashScreen)) {
+        graphTheme.splashScreen = splashScreen;
+      } else {
+        console.warn("Unable to save splash screen", splashScreen);
       }
     }
 
