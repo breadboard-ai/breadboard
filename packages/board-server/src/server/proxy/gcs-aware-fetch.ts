@@ -130,6 +130,7 @@ async function prepareGcsData(
     "ai_image_tool",
     "tts",
     "generate_video",
+    "generate_music",
   ];
   if (data === null || typeof data !== "object" || !("body" in data)) {
     return data;
