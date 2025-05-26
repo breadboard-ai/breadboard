@@ -32,6 +32,7 @@ type Mode = {
   description: string;
   icon: string;
   modelName?: string;
+  promptPlaceholderText?: string;
 };
 
 const MODES: Mode[] = [
@@ -43,6 +44,8 @@ const MODES: Mode[] = [
     description: "For everyday tasks, plus more",
     icon: "text_analysis",
     modelName: "gemini-2.0-flash",
+    promptPlaceholderText:
+      "Type your prompt here. Use @ to include other content.",
   },
   {
     id: "text",
@@ -52,6 +55,8 @@ const MODES: Mode[] = [
     description: "Uses advanced reasoning",
     icon: "text_analysis",
     modelName: "gemini-2.5-flash-preview-04-17",
+    promptPlaceholderText:
+      "Type your prompt here. Use @ to include other content.",
   },
   {
     id: "text-2.5-pro",
@@ -61,6 +66,8 @@ const MODES: Mode[] = [
     description: "Best for complex tasks",
     icon: "text_analysis",
     modelName: "gemini-2.5-pro-preview-05-06",
+    promptPlaceholderText:
+      "Type your prompt here. Use @ to include other content.",
   },
   {
     id: "think",
@@ -70,6 +77,8 @@ const MODES: Mode[] = [
     description: "Plans and executes complex tasks",
     icon: "spark",
     modelName: "gemini-2.0-flash",
+    promptPlaceholderText:
+      "Type your goal here. Use @ to include other content.",
   },
   {
     id: "deep-research",
@@ -79,6 +88,8 @@ const MODES: Mode[] = [
     description: "In-depth research on your topic",
     icon: "spark",
     modelName: "gemini-2.5-flash-preview-04-17",
+    promptPlaceholderText:
+      "Type your research query here. Use @ to include other content.",
   },
   {
     id: "image-gen",
@@ -87,6 +98,8 @@ const MODES: Mode[] = [
     title: "Imagen 4",
     description: "Generates images from text",
     icon: "photo_spark",
+    promptPlaceholderText:
+      "Type your image prompt here. Use @ to include other content.",
   },
   {
     id: "image",
@@ -95,6 +108,8 @@ const MODES: Mode[] = [
     title: "Gemini 2.0 Flash: Image Generation",
     description: "Generates images from text and images",
     icon: "photo_spark",
+    promptPlaceholderText:
+      "Type your image prompt here. Use @ to include other content.",
   },
   {
     id: "audio",
@@ -103,6 +118,8 @@ const MODES: Mode[] = [
     title: "AudioLM",
     description: "Generates speech from text",
     icon: "audio_magic_eraser",
+    promptPlaceholderText:
+      "Type the text to speak here. Use @ to include other content.",
   },
   {
     id: "video",
@@ -111,6 +128,8 @@ const MODES: Mode[] = [
     title: "Veo 2",
     description: "Generates videos from text and images",
     icon: "videocam_auto",
+    promptPlaceholderText:
+      "Type your video prompt here. Use @ to include other content.",
   },
   {
     id: "music",
@@ -119,6 +138,8 @@ const MODES: Mode[] = [
     title: "Lyria 2",
     description: "Generates instrumental music from text",
     icon: "audio_magic_eraser",
+    promptPlaceholderText:
+      "Type your music prompt here. Use @ to include other content.",
   },
 ] as const;
 
