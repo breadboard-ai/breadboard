@@ -102,6 +102,18 @@ class Configurator {
       id: this.id,
       values,
     });
+    if (!ok(result)) return result;
+
+    // When there's an empty response, assume that there's no write stage
+    // defined for this connector.
+    if (
+      typeof result === "object" &&
+      result !== null &&
+      !Array.isArray(result) &&
+      Object.keys(result).length === 0
+    ) {
+      return values;
+    }
     return result;
   }
 }

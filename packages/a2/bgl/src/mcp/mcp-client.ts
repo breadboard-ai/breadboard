@@ -89,7 +89,10 @@ function sse<T extends JsonSerializable>(result: FileSystemReadResult) {
   return e.data;
 }
 
-function rpc<M extends MCPResponse>(result: FileSystemReadResult) {
+function rpc<M extends MCPResponse>(
+  result: FileSystemReadResult,
+  status: number
+) {
   const e = sse<JsonRpcResponse<M>>(result);
   if (!ok(e)) return e;
   return e.result;
@@ -108,173 +111,101 @@ class McpClient {
     return `/session/mcp/${this.connectorId}/stream`;
   }
 
-  #sessionIdPath(): FileSystemReadWritePath {
-    return `/session/mcp/${this.connectorId}/id`;
-  }
-
   #newId() {
     return ++this.#id;
   }
 
-  async connect(): Promise<Outcome<void>> {
-    if (this.#messageEndpoint) {
-      return err(`Already connected to "${this.#messageEndpoint}"`);
-    }
+  async call<T extends MCPResponse>(body: unknown): Promise<Outcome<T>> {
     const file = this.#path();
     const url = this.url;
 
-    const savedSession = json<SavedMessageEndpoint>(
-      await read({ path: this.#sessionIdPath() })
-    );
-    if (ok(savedSession)) {
-      console.log("EXISTING SESSION", savedSession);
-      this.#messageEndpoint = savedSession.endpoint;
-      return;
-    }
-
-    // Establish connection.
-    const connecting = await fetch({ url, file, stream: "sse" });
-    if (!ok(connecting)) return connecting;
-    // This is the connection path.
-    const path = connecting.response as FileSystemReadWritePath;
-
-    // Read the endpoint event
-    const connection = sse(await read({ path }));
-    if (!ok(connection)) return connection;
-
-    // do some crude URL munging.
-    const hostname = url.split("/").slice(0, -1).join("/");
-    const messageEndpoint = `${hostname}${connection}`;
-
     const id = this.#newId();
-
     // send initialize request
-    const initializing = await fetch({
-      url: messageEndpoint,
+    const calling = await fetch({
+      url,
+      file,
+      stream: "sse",
+
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Accept: "application/json,text/event-stream",
       },
 
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id,
-        method: "initialize",
-        params: {
-          protocolVersion: "2024-11-05",
-          clientInfo: {
-            name: "Breadboard",
-            version: "1.0.0",
-          },
-          capabilities: {
-            tools: {},
-          },
+      body: JSON.stringify(body),
+    });
+    if (!ok(calling)) return calling;
+    const path = calling.response as FileSystemReadWritePath;
+    const response = rpc<T>(await read({ path }), calling.status);
+    return response;
+  }
+
+  async connect(): Promise<Outcome<InitializeResponse>> {
+    const file = this.#path();
+    const url = this.url;
+
+    const id = this.#newId();
+    // send initialize request
+    const initializing = await this.call<InitializeResponse>({
+      jsonrpc: "2.0",
+      id,
+      method: "initialize",
+      params: {
+        protocolVersion: "2024-11-05",
+        clientInfo: {
+          name: "Breadboard",
+          version: "1.0.0",
         },
-      }),
+        capabilities: {
+          tools: {},
+        },
+      },
     });
     if (!ok(initializing)) return initializing;
 
-    const initializeResponse = rpc<InitializeResponse>(await read({ path }));
-    if (!ok(initializeResponse)) return initializeResponse;
-
-    const confirmInitialization = await fetch({
-      url: messageEndpoint,
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        method: "notifications/initialized",
-      }),
+    const confirmInitialization = await this.call({
+      jsonrpc: "2.0",
+      method: "notifications/initialized",
     });
-    if (!ok(confirmInitialization)) return confirmInitialization;
-
-    this.#messageEndpoint = messageEndpoint;
-    // Save message endpoint
-    const savingMessageEndpoint = await write({
-      path: this.#sessionIdPath(),
-      data: [
-        {
-          parts: [{ json: { endpoint: messageEndpoint } }],
-        },
-      ],
-    });
-    if (!ok(savingMessageEndpoint)) return savingMessageEndpoint;
+    return initializing;
   }
 
   async listTools(): Promise<Outcome<ListToolsTool[]>> {
-    if (!this.#messageEndpoint) {
-      return err(`The client wasn't initialized. Call "connect" first.`);
-    }
-    const url = this.#messageEndpoint;
+    const url = this.url;
     const id = this.#newId();
-    const path = this.#path();
+    const file = this.#path();
     // get list of tools
-    const askToListTools = await fetch({
-      url,
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id,
-        method: "tools/list",
-      }),
+    const askToListTools = await this.call<ListToolsResponse>({
+      jsonrpc: "2.0",
+      id,
+      method: "tools/list",
     });
     if (!ok(askToListTools)) return askToListTools;
-
-    const toolList = rpc<ListToolsResponse>(await read({ path }));
-    if (!ok(toolList)) return toolList;
-    return toolList.tools;
+    return askToListTools.tools;
   }
 
   async callTool(
     name: string,
     args: Record<string, JsonSerializable>
   ): Promise<Outcome<CallToolContent[]>> {
-    if (!this.#messageEndpoint) {
-      return err(`The client wasn't initialized. Call "connect" first.`);
-    }
-
-    const url = this.#messageEndpoint;
+    const url = this.url;
     const id = this.#newId();
-    const path = this.#path();
+    const file = this.#path();
 
     // Call tool
-    const askToCallTool = await fetch({
-      url,
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id,
-        method: "tools/call",
-        params: { name, arguments: args },
-      }),
+    const askToCallTool = await this.call<CallToolResponse>({
+      jsonrpc: "2.0",
+      id,
+      method: "tools/call",
+      params: { name, arguments: args },
     });
-    const readCallToolResults = rpc<CallToolResponse>(await read({ path }));
-    if (!ok(readCallToolResults)) return readCallToolResults;
-    return readCallToolResults.content;
+    if (!ok(askToCallTool)) return askToCallTool;
+    return askToCallTool.content;
   }
 
   async disconnect(): Promise<Outcome<void>> {
     const path = this.#path();
-
-    // Close the stream.
     const deleting = await write({ path, delete: true });
-    // Delete the saved session
-    const deletingSession = await write({
-      path: this.#sessionIdPath(),
-      delete: true,
-    });
     if (!ok(deleting)) return deleting;
-    if (!ok(deletingSession)) return deletingSession;
   }
 }

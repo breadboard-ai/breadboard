@@ -22,8 +22,7 @@ async function getClient(
   id: string,
   info: ConnectorInfo<Configuration>
 ): Promise<Outcome<McpClient>> {
-  // for now, wrap it to point at MCP proxy
-  const url = `http://127.0.0.1:6277/sse?transportType=sse&url=${encodeURIComponent(info.configuration.endpoint)}`;
+  const url = info.configuration.endpoint;
   const client = new McpClient(id, url);
   const connecting = await client.connect();
   if (!ok(connecting)) return connecting;
@@ -51,8 +50,8 @@ const { invoke, describe } = createTools<Configuration>({
   invoke: async (id, info, name, args) => {
     const client = await getClient(id, info);
     if (!ok(client)) return client;
-    const connecting = await client.connect();
-    if (!ok(connecting)) return connecting;
+    // const connecting = await client.connect();
+    // if (!ok(connecting)) return connecting;
     const invoking = await client.callTool(name, args);
     if (!ok(invoking)) return invoking;
     return { result: JSON.stringify(invoking) };
