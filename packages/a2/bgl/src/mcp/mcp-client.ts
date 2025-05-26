@@ -116,6 +116,166 @@ class McpClient {
     return ++this.#id;
   }
 
+  async connect(): Promise<Outcome<InitializeResponse>> {
+    const file = this.#path();
+    const url = this.url;
+
+    const id = this.#newId();
+    // send initialize request
+    const initializing = await fetch({
+      url,
+      file,
+      stream: "sse",
+
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json,text/event-stream",
+      },
+
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id,
+        method: "initialize",
+        params: {
+          protocolVersion: "2024-11-05",
+          clientInfo: {
+            name: "Breadboard",
+            version: "1.0.0",
+          },
+          capabilities: {
+            tools: {},
+          },
+        },
+      }),
+    });
+    if (!ok(initializing)) return initializing;
+    const initializingPath = initializing.response as FileSystemReadWritePath;
+    const initializeResponse = rpc<InitializeResponse>(
+      await read({ path: initializingPath })
+    );
+    if (!ok(initializeResponse)) return initializeResponse;
+
+    const confirmInitialization = await fetch({
+      url,
+      file,
+      stream: "sse",
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "text/event-stream,text/event-stream",
+      },
+
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        method: "notifications/initialized",
+      }),
+    });
+    if (!ok(confirmInitialization)) return confirmInitialization;
+
+    return initializeResponse;
+  }
+
+  async listTools(): Promise<Outcome<ListToolsTool[]>> {
+    const url = this.url;
+    const id = this.#newId();
+    const file = this.#path();
+    // get list of tools
+    const askToListTools = await fetch({
+      url,
+      file,
+      stream: "sse",
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json,text/event-stream",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id,
+        method: "tools/list",
+      }),
+    });
+    if (!ok(askToListTools)) return askToListTools;
+
+    const toolList = rpc<ListToolsResponse>(await read({ path: file }));
+    if (!ok(toolList)) return toolList;
+    return toolList.tools;
+  }
+
+  async callTool(
+    name: string,
+    args: Record<string, JsonSerializable>
+  ): Promise<Outcome<CallToolContent[]>> {
+    // if (!this.#messageEndpoint) {
+    //   return err(`The client wasn't initialized. Call "connect" first.`);
+    // }
+
+    const url = this.url;
+    const id = this.#newId();
+    const file = this.#path();
+
+    // Call tool
+    const askToCallTool = await fetch({
+      url,
+      file,
+      stream: "sse",
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json,text/event-stream",
+      },
+
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id,
+        method: "tools/call",
+        params: { name, arguments: args },
+      }),
+    });
+    const readCallToolResults = rpc<CallToolResponse>(
+      await read({ path: file })
+    );
+    if (!ok(readCallToolResults)) return readCallToolResults;
+    return readCallToolResults.content;
+  }
+
+  async disconnect(): Promise<Outcome<void>> {
+    const path = this.#path();
+
+    // Close the stream.
+    const deleting = await write({ path, delete: true });
+    // // Delete the saved session
+    // const deletingSession = await write({
+    //   path: this.#sessionIdPath(),
+    //   delete: true,
+    // });
+    if (!ok(deleting)) return deleting;
+    // if (!ok(deletingSession)) return deletingSession;
+  }
+}
+
+class McpClientSse {
+  #id: number = 0;
+  #messageEndpoint: string | null = null;
+
+  constructor(
+    public readonly connectorId: string,
+    public readonly url: string
+  ) {}
+
+  #path(): FileSystemReadWritePath {
+    return `/session/mcp/${this.connectorId}/stream`;
+  }
+
+  #sessionIdPath(): FileSystemReadWritePath {
+    return `/session/mcp/${this.connectorId}/id`;
+  }
+
+  #newId() {
+    return ++this.#id;
+  }
+
   async connect(): Promise<Outcome<void>> {
     if (this.#messageEndpoint) {
       return err(`Already connected to "${this.#messageEndpoint}"`);
@@ -133,7 +293,14 @@ class McpClient {
     }
 
     // Establish connection.
-    const connecting = await fetch({ url, file, stream: "sse" });
+    const connecting = await fetch({
+      url,
+      headers: {
+        Accept: "text/event-stream",
+      },
+      file,
+      stream: "sse",
+    });
     if (!ok(connecting)) return connecting;
     // This is the connection path.
     const path = connecting.response as FileSystemReadWritePath;
@@ -154,6 +321,7 @@ class McpClient {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Accept: "text/event-stream",
       },
 
       body: JSON.stringify({
@@ -177,11 +345,14 @@ class McpClient {
     const initializeResponse = rpc<InitializeResponse>(await read({ path }));
     if (!ok(initializeResponse)) return initializeResponse;
 
+    console.log("INITIALIZE RESPONSE", initializeResponse);
+
     const confirmInitialization = await fetch({
       url: messageEndpoint,
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Accept: "text/event-stream",
       },
 
       body: JSON.stringify({

@@ -2,8 +2,9 @@
  * @fileoverview Add a description for your module here.
  */
 
-import { err, ok } from "./a2/utils";
+import { err, ok, llm } from "./a2/utils";
 import { createConfigurator } from "./a2/connector-manager";
+import { McpClient } from "./mcp-client";
 
 import read from "@read";
 import write from "@write";
@@ -21,6 +22,18 @@ const { invoke, describe } = createConfigurator<McpConfiguration>({
   initialize: async () => {
     return { title: CONNECTOR_TITLE, configuration: {} };
   },
+  preview: async ({ id, configuration }) => {
+    const endpoint = configuration.endpoint;
+    if (!endpoint) return [llm``.asContent()];
+    const client = new McpClient(id, endpoint);
+    const info = await client.connect();
+    if (!ok(info)) {
+      return [llm`${endpoint}`.asContent()];
+    }
+    return [
+      llm`**${info.serverInfo.name}**\nMCP server at ${endpoint}`.asContent(),
+    ];
+  },
   read: async ({ id, configuration }) => {
     return {
       schema: {
@@ -29,7 +42,7 @@ const { invoke, describe } = createConfigurator<McpConfiguration>({
           endpoint: {
             type: "string",
             title: "URL",
-            description: "The URL of MCP Server SSE endpoint",
+            description: "The URL of the MCP Server's Streamable HTTP endpoint",
           },
         },
       },
