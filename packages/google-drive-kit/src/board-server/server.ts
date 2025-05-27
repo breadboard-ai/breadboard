@@ -273,7 +273,16 @@ class GoogleDriveBoardServer
   async load(url: URL): Promise<GraphDescriptor | null> {
     const fileId = getFileId(url.href);
     const response = await this.#googleDriveClient.getFileMedia(fileId);
-    return response.json();
+    if (response.status === 200) {
+      return response.json();
+    } else if (response.status === 404) {
+      return null;
+    } else {
+      throw new Error(
+        `Received ${response.status} error loading graph from Google Drive` +
+          ` with file id ${JSON.stringify(fileId)}: ${await response.text()}`
+      );
+    }
   }
 
   async save(
