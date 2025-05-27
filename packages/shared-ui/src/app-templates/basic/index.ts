@@ -524,6 +524,7 @@ export class Template extends LitElement implements AppTemplate {
               --multi-output-value-padding-x: 0;
               flex: 1 0 auto;
               margin: 0 auto;
+              max-width: 100%;
 
               animation: fadeIn 0.6s cubic-bezier(0, 0, 0.3, 1) forwards;
             }
