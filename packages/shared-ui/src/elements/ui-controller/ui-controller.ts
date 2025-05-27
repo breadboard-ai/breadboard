@@ -928,6 +928,7 @@ export class UI extends LitElement {
           "close",
           () => {
             picker.fileIds = [];
+            window.location.reload();
           },
           { once: true }
         );
