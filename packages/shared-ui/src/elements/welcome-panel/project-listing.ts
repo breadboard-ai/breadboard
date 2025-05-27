@@ -421,15 +421,22 @@ export class ProjectListing extends LitElement {
         border: none;
         padding: 6px 12px;
         transition: background 0.2s cubic-bezier(0, 0, 0.3, 1);
-        cursor: pointer;
 
         & > .g-icon {
           margin-right: 4px;
         }
 
-        &:hover,
-        &:focus {
-          background-color: #96d6ff;
+        &[disabled] {
+          opacity: 0.6;
+        }
+
+        &:not([disabled]) {
+          cursor: pointer;
+
+          &:hover,
+          &:focus {
+            background-color: #96d6ff;
+          }
         }
       }
     `,
