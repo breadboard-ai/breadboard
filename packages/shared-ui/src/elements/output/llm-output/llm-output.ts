@@ -228,6 +228,7 @@ export class LLMOutput extends LitElement {
           & audio {
             width: 100%;
             min-width: 300px;
+            max-width: 540px;
           }
 
           & img,
