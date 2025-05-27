@@ -34,7 +34,6 @@ import { tokenVendorContext } from "../../elements.js";
 import { consume } from "@lit/context";
 import type { TokenVendor } from "@breadboard-ai/connection-client";
 import { styleMap } from "lit/directives/style-map.js";
-import { getGlobalColor } from "../../../utils/color.js";
 import {
   convertShareUriToEmbedUri,
   convertWatchOrShortsUriToEmbedUri,
@@ -48,7 +47,6 @@ import { icons } from "../../../styles/icons.js";
 import { OverflowAction } from "../../../types/types.js";
 import { OverflowMenuActionEvent } from "../../../events/events.js";
 
-const PCM_AUDIO = "audio/l16;codec=pcm;rate=24000";
 const SANDBOX_RESTRICTIONS = "allow-scripts allow-forms";
 
 @customElement("bb-llm-output")
@@ -599,7 +597,6 @@ export class LLMOutput extends LitElement {
 
             this.#outputLoaded();
           } else if (isInlineData(part)) {
-            hasOverflowMenu = true;
             const key = idx;
             let partDataURL: Promise<string> = Promise.resolve("No source");
             if (this.#partDataURLs.has(key)) {
@@ -634,6 +631,7 @@ export class LLMOutput extends LitElement {
                   return html`No image provided`;
                 }
 
+                hasOverflowMenu = true;
                 return cache(html`
                   <img
                     @load=${() => {
@@ -645,47 +643,15 @@ export class LLMOutput extends LitElement {
                 `);
               }
               if (part.inlineData.mimeType.startsWith("audio")) {
-                const audioHandler = fetch(url)
-                  .then((r) => r.blob())
-                  .then((data) => {
-                    if (
-                      part.inlineData.mimeType.toLocaleLowerCase() === PCM_AUDIO
-                    ) {
-                      return new Blob([data], { type: PCM_AUDIO });
-                    }
-
-                    return data;
-                  })
-                  .then((audioFile) => {
-                    const colorLight =
-                      this.value?.role === "model"
-                        ? getGlobalColor("--bb-generative-400")
-                        : getGlobalColor("--bb-ui-400");
-                    const colorMid =
-                      this.value?.role === "model"
-                        ? getGlobalColor("--bb-generative-500")
-                        : getGlobalColor("--bb-ui-500");
-                    const colorDark =
-                      this.value?.role === "model"
-                        ? getGlobalColor("--bb-generative-600")
-                        : getGlobalColor("--bb-ui-600");
-
-                    this.#outputLoaded();
-                    return cache(
-                      html`<div class="play-audio-container">
-                        <bb-audio-handler
-                          .audioFile=${audioFile}
-                          .color=${colorLight}
-                          style=${styleMap({
-                            "--color-button": colorMid,
-                            "--color-button-active": colorDark,
-                          })}
-                        ></bb-audio-handler>
-                      </div>`
-                    );
-                  });
-
-                return cache(html`${until(audioHandler)}`);
+                return cache(
+                  html`<audio
+                    @loadedmetadata=${() => {
+                      this.#outputLoaded();
+                    }}
+                    src="${url}"
+                    controls
+                  />`
+                );
               }
               if (part.inlineData.mimeType.startsWith("text/html")) {
                 hasOverflowMenu = true;
