@@ -14,6 +14,7 @@ import {
   isLLMContent,
   isStoredData,
   isTextCapabilityPart,
+  Template,
 } from "@google-labs/breadboard";
 import {
   HTMLTemplateResult,
@@ -593,7 +594,9 @@ export class LLMOutput extends LitElement {
                 return nothing;
               }
             } else {
-              value = html`${markdown(part.text)}`;
+              // We may receive outputs with chiclets in so we must scrub those.
+              const tmpl = new Template(part.text);
+              value = html`${markdown(tmpl.preview)}`;
             }
 
             this.#outputLoaded();
