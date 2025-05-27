@@ -81,3 +81,19 @@ export async function retryableFetch(
 
   return recursiveHelper(numAttempts);
 }
+
+export function getSetsIntesection<T>(
+  set1: Set<T>,
+  set2: Set<T>
+): Set<T> {
+  if ("intersection" in set1) {
+    return (set1.intersection as Function)(set2) as Set<T>;
+  }
+  const result = new Set<T>();
+  for (const item of set1) {
+    if (set2.has(item)) {
+      result.add(item);
+    }
+  }
+  return result;
+}

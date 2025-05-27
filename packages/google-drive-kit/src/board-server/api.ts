@@ -36,6 +36,10 @@ export type AppProperties = {
   thumbnailUrl?: string;
 };
 
+const CHANGE_LIST_COMMON_PARAMS = [
+  "supportsAllDrives=true",
+];
+
 export type GoogleApiAuthorization =
   | { kind: "key"; key: string }
   | { kind: "bearer"; token: string };
@@ -198,6 +202,29 @@ class Files {
   makeDeleteRequest(file: string): Request {
     return new Request(this.#makeUrl(`drive/v3/files/${file}`), {
       method: "DELETE",
+      headers: this.#makeHeaders(),
+    });
+  }
+
+  makeChangeListRequest(startPageToken: string | null): Request {
+    const url = this.#makeUrl("drive/v3/changes?" +
+      CHANGE_LIST_COMMON_PARAMS.concat([
+        "pageSize=1000",
+        "includeRemoved=true",
+        "includeCorpusRemovals=true",
+        "includeItemsFromAllDrives=true",
+        "spaces=drive",
+        `pageToken=${startPageToken ?? "1"}`,
+      ]).join("&"));
+    return new Request(url, {
+      method: "GET",
+      headers: this.#makeHeaders(),
+    });
+  }
+
+  makeGetStartPageTokenRequest(): Request {
+    return new Request(this.#makeUrl("drive/v3/changes/startPageToken?" + CHANGE_LIST_COMMON_PARAMS.join('&')), {
+      method: "GET",
       headers: this.#makeHeaders(),
     });
   }
