@@ -86,7 +86,50 @@ export type ChatState = {
   statusDetail: string;
 };
 
-export type OrganizerStage = "free" | "busy";
+/**
+ * Represents the Model+Controller for the individual run of the graph.
+ * The name is so weird because there's already a `RunState` type in
+ * `@google-labs/breadboard`.
+ */
+export type ProjectRun = {
+  /**
+   * Console (fka Activity View)
+   */
+  console: Map<string, ConsoleEntry>;
+};
+
+/**
+ * Represents the Model+Controller for a single Console entry.
+ * Currently, each entry represents the output of a step when it's run.
+ */
+export type ConsoleEntry = {
+  title: string;
+  icon?: string;
+  work: Map<string, WorkItem>;
+  output: Map<string, LLMContent /* Particle */>;
+};
+
+/**
+ * Represents the Model+Controller for a single work item within the
+ * Console entry. Work items are a way for the steps to communicate what they
+ * are doing.
+ */
+export type WorkItem = {
+  title: string;
+  icon?: string;
+  /**
+   * When still working, the number of milliseconds that elapsed since
+   * the work item started
+   * When done, the number of milliseconds it took to do work
+   */
+  elapsedTime: number;
+  /**
+   * When `false`, indicates that this work item is still being worked on.
+   * When `true`, indicates that this work item is done.
+   */
+  finished: boolean;
+  product: Map<string, LLMContent /* Particle */>;
+};
 
 /**
  * Represents the Model+Controller for the Asset Organizer.
