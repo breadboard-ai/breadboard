@@ -322,6 +322,10 @@ export class Renderer extends LitElement {
   #handleNewAssets(evt: CreateNewAssetsEvent) {
     evt.stopImmediatePropagation();
 
+    if (this.readOnly) {
+      return;
+    }
+
     // Augment the added assets with the x & y coordinates of the
     // middle of the graph and dispatch the dropped assets event.
 
@@ -368,7 +372,8 @@ export class Renderer extends LitElement {
     if (
       !evt.dataTransfer ||
       !evt.dataTransfer.files ||
-      !evt.dataTransfer.files.length
+      !evt.dataTransfer.files.length ||
+      this.readOnly
     ) {
       return;
     }
