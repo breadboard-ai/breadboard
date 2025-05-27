@@ -150,9 +150,6 @@ export class GoogleDriveClient {
         key: this.#publicApiKey,
       });
     }
-    if (response.status === 200) {
-      return response;
-    }
 
     if (response.status === 404 && this.#proxyUrl) {
       console.log(
@@ -177,22 +174,36 @@ export class GoogleDriveClient {
         const metadata = JSON.parse(
           proxyResult.metadata
         ) as gapi.client.drive.File;
-        return responseFromBase64(
+        response = responseFromBase64(
           proxyResult.content,
           metadata.mimeType || "application/octet-stream"
         );
-      } else {
+      } else if (proxyResponse.status === 404) {
         console.log(
-          `Google Drive getFileMedia proxy ${response.status} error:`,
+          `Received 404 response for Google Drive file "${fileId}"` +
+            ` using domain proxy fallback. File is not accessible.`
+        );
+        response = proxyResponse;
+      } else if (proxyResponse.status === 500) {
+        // TODO(aomarks) Remove this case once the API starts returning 404
+        // errors instead of 500s when the file is not found.
+        console.log(
+          `Received ${proxyResponse.status} response for Google Drive file` +
+            ` "${fileId}" using domain proxy fallback. Assuming file is not` +
+            ` accessible.`
+        );
+        response = new Response(null, { status: 404 });
+      } else {
+        console.error(
+          `Received ${proxyResponse.status} response for Google Drive file` +
+            ` "${fileId}" using domain proxy fallback.`,
           await proxyResponse.text()
         );
+        response = proxyResponse;
       }
     }
 
-    throw new Error(
-      `Google Drive getFileMedia ${response.status} error: ` +
-        (await response.text())
-    );
+    return response;
   }
 
   #getFileMedia(
@@ -356,6 +367,6 @@ interface GetFileProxyResponse {
 function responseFromBase64(base64String: string, mimeType: string): Response {
   return new Response(
     Uint8Array.from(atob(base64String), (char) => char.charCodeAt(0)),
-    { headers: { "content-type": mimeType } }
+    { status: 200, headers: { "content-type": mimeType } }
   );
 }
