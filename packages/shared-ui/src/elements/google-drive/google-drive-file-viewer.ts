@@ -21,10 +21,22 @@ export class GoogleDriveFileViewer extends LitElement {
         display: flex;
         align-items: center;
         justify-content: center;
-        background: var(--bb-neutral-50);
-        padding: var(--bb-grid-size-3);
+        background: var(--drive-background, transparent);
+        padding: var(--drive-padding, 0);
         font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
           var(--bb-font-family);
+
+        width: 100%;
+        max-width: var(--drive-max-width, initial);
+        min-width: var(--drive-min-width, initial);
+      }
+
+      :host {
+        :has(.image-placeholder) {
+          background: var(--bb-neutral-50);
+          border-radius: var(--bb-grid-size);
+          padding: var(--bb-grid-size-3);
+        }
       }
 
       .loading {
@@ -33,9 +45,17 @@ export class GoogleDriveFileViewer extends LitElement {
           no-repeat;
       }
 
+      a {
+        display: flex;
+        flex: 1;
+        align-items: center;
+        justify-content: center;
+      }
+
       img {
-        max-width: 100%;
+        width: 100%;
         border-radius: var(--bb-grid-size);
+        max-width: 540px;
       }
 
       .image-placeholder {

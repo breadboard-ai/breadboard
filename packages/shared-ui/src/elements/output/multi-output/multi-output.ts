@@ -45,7 +45,7 @@ export class MultiOutput extends LitElement {
       & bb-llm-output {
         --output-value-padding-y: 0;
         --output-value-padding-x: 0;
-        --output-border-radius: 0;
+        --output-border-radius: var(--bb-grid-size);
         --output-border: transparent;
         --output-background-color: transparent;
         --output-lite-border-color: transparent;
@@ -54,6 +54,11 @@ export class MultiOutput extends LitElement {
         --md-p-font: 400 var(--bb-title-x-large) /
           var(--bb-title-line-height-xx-large) var(--bb-font-family);
         --md-color: var(--p-15, var(--bb-neutral-900));
+        --drive-padding: 0;
+        --drive-min-width: 300px;
+        --drive-max-width: 540px;
+        --drive-background: transparent;
+        --drive-background: none;
       }
     }
 
