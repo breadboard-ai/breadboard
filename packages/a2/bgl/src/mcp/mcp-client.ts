@@ -115,6 +115,20 @@ class McpClient {
     return ++this.#id;
   }
 
+  async notify(body: unknown): Promise<Outcome<void>> {
+    const url = this.url;
+    const notifying = await fetch({
+      url,
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json,text/event-stream",
+      },
+      body: JSON.stringify(body),
+    });
+    if (!notifying) return notifying;
+  }
+
   async call<T extends MCPResponse>(body: unknown): Promise<Outcome<T>> {
     const file = this.#path();
     const url = this.url;
@@ -163,7 +177,7 @@ class McpClient {
     });
     if (!ok(initializing)) return initializing;
 
-    const confirmInitialization = await this.call({
+    const confirmInitialization = await this.notify({
       jsonrpc: "2.0",
       method: "notifications/initialized",
     });
