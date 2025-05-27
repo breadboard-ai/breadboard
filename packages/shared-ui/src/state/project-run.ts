@@ -100,6 +100,7 @@ class ReactiveProjectRun implements ProjectRun {
   }
 
   #nodeStart(event: RunNodeStartEvent) {
+    console.debug("Project Run: Node Start", event);
     const pathLength = event.data.path.length;
 
     if (pathLength > 1) return;
@@ -110,16 +111,15 @@ class ReactiveProjectRun implements ProjectRun {
     const entry: ConsoleEntry = {
       title: node.metadata?.title || node.id,
       icon: node.metadata?.icon,
-      work: new Map(),
-      output: new Map(),
+      work: new SignalMap(),
+      output: new SignalMap(),
     };
     this.current = entry;
-
-    console.debug("Project Run: Node Start", entry);
     this.console.set(idFromPath(event.data.path), entry);
   }
 
   #nodeEnd(event: RunNodeEndEvent) {
+    console.debug("Project Run: Node End", event);
     const pathLength = event.data.path.length;
 
     if (pathLength > 1) {
@@ -130,16 +130,52 @@ class ReactiveProjectRun implements ProjectRun {
     }
 
     // TODO: Signal end of node
-    console.debug("Project Run: Node End", event);
   }
 
   #input(event: RunInputEvent) {
-    // TODO: Handle inputs
     console.debug("Project Run: Input", event);
+    const { bubbled, path } = event.data;
+
+    // The non-bubbled inputs are not supported: they aren't found in the
+    // new-style (A2-based) graphs.
+    if (!bubbled) return;
+
+    if (!this.current) {
+      console.warn(`No current node for input event`, event);
+      return;
+    }
+
+    // TODO: Handle inputs
+    this.current.work.set(idFromPath(path), {
+      title: "Input",
+      icon: "Icon",
+      elapsedTime: 0,
+      finished: true,
+      product: new SignalMap(),
+    });
   }
+
   #output(event: RunOutputEvent) {
-    // TODO: Handle outputs
     console.debug("Project Run: Output", event);
+    const { bubbled, path } = event.data;
+
+    // The non-bubbled outputs are not supported: they aren't found in the
+    // new-style (A2-based) graphs.
+    if (!bubbled) return;
+
+    if (!this.current) {
+      console.warn(`No current node for input event`, event);
+      return;
+    }
+
+    // TODO: Handle outputs
+    this.current.work.set(idFromPath(path), {
+      title: "Output",
+      icon: "Icon",
+      elapsedTime: 0,
+      finished: true,
+      product: new SignalMap(),
+    });
   }
 
   #error(event: RunErrorEvent) {
