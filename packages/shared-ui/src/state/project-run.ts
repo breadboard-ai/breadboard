@@ -5,7 +5,7 @@
  */
 
 import { SignalMap } from "signal-utils/map";
-import { ConsoleEntry, ProjectRun } from "./types";
+import { ConsoleEntry, ProjectRun, RunError } from "./types";
 import {
   HarnessRunner,
   RunErrorEvent,
@@ -17,24 +17,33 @@ import {
   RunOutputEvent,
 } from "@google-labs/breadboard/harness";
 import { signal } from "signal-utils";
+import { formatError } from "../utils/format-error";
 
 export { ReactiveProjectRun };
 
+function idFromPath(path: number[]): string {
+  return `e-${path.join("-")}`;
+}
+
 class ReactiveProjectRun implements ProjectRun {
   console: Map<string, ConsoleEntry> = new SignalMap();
+  errors: Map<string, RunError> = new SignalMap();
 
   @signal
   accessor status: "running" | "paused" | "stopped" = "stopped";
 
-  #connected = false;
+  /**
+   * Stores the path of the node that errored.
+   */
+  #errorPath: number[] | null = null;
 
-  connect(runner: HarnessRunner, signal?: AbortSignal) {
-    if (this.#connected) {
-      console.warn("ProjectRun is already connected, ignoring this call site");
-      return;
-    }
-    this.#connected = true;
+  /**
+   * Current (last) entry in console
+   */
+  @signal
+  accessor current: ConsoleEntry | null = null;
 
+  constructor(runner: HarnessRunner, signal?: AbortSignal) {
     if (signal) {
       signal.addEventListener("abort", this.#abort.bind(this));
     }
@@ -59,6 +68,13 @@ class ReactiveProjectRun implements ProjectRun {
     });
   }
 
+  #storeErrorPath(path: number[]) {
+    if (this.#errorPath && this.#errorPath.length > path.length) {
+      return;
+    }
+    this.#errorPath = path;
+  }
+
   #abort() {
     this.status = "stopped";
   }
@@ -68,7 +84,10 @@ class ReactiveProjectRun implements ProjectRun {
 
     if (pathLength > 0) return;
 
+    console.debug("Project Run: Graph Start");
     this.console.clear();
+    this.errors.clear();
+    this.current = null;
   }
 
   #graphEnd(event: RunGraphEndEvent) {
@@ -77,16 +96,55 @@ class ReactiveProjectRun implements ProjectRun {
     if (pathLength > 0) return;
 
     // TOOD: Do we need to do anything here?
+    console.debug("Project Run: Graph End");
   }
 
   #nodeStart(event: RunNodeStartEvent) {
     const pathLength = event.data.path.length;
 
-    if (pathLength)
+    if (pathLength > 1) return;
+
+    const { node } = event.data;
+
+    // create new instance of the ConsoleEntry
+    const entry: ConsoleEntry = {
+      title: node.metadata?.title || node.id,
+      icon: node.metadata?.icon,
+      work: new Map(),
+      output: new Map(),
+    };
+    this.current = entry;
+
+    console.debug("Project Run: Node Start", entry);
+    this.console.set(idFromPath(event.data.path), entry);
   }
 
-  #nodeEnd(event: RunNodeEndEvent) {}
-  #input(event: RunInputEvent) {}
-  #output(event: RunOutputEvent) {}
-  #error(event: RunErrorEvent) {}
+  #nodeEnd(event: RunNodeEndEvent) {
+    const pathLength = event.data.path.length;
+
+    if (pathLength > 1) {
+      if (event.data.outputs?.["$error"]) {
+        this.#storeErrorPath(event.data.path);
+      }
+      return;
+    }
+
+    // TODO: Signal end of node
+    console.debug("Project Run: Node End", event);
+  }
+
+  #input(event: RunInputEvent) {
+    // TODO: Handle inputs
+    console.debug("Project Run: Input", event);
+  }
+  #output(event: RunOutputEvent) {
+    // TODO: Handle outputs
+    console.debug("Project Run: Output", event);
+  }
+
+  #error(event: RunErrorEvent) {
+    const message = formatError(event.data.error);
+    const path = this.#errorPath || [];
+    this.errors.set(idFromPath(path), { message });
+  }
 }

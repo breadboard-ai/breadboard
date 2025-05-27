@@ -35,6 +35,7 @@ import {
   Organizer,
   Project,
   ProjectInternal,
+  ProjectRun,
   RendererState,
   Tool,
 } from "./types";
@@ -45,6 +46,9 @@ import { RendererStateImpl } from "./renderer";
 import { ConnectorStateImpl } from "./connectors";
 import { ConnectorType } from "../connectors/types";
 import { GraphAssetImpl } from "./graph-asset";
+import { signal } from "signal-utils";
+import { HarnessRunner } from "@google-labs/breadboard/harness";
+import { ReactiveProjectRun } from "./project-run";
 
 export { createProjectState, ReactiveProject };
 
@@ -92,6 +96,9 @@ class ReactiveProject implements ProjectInternal {
   #editable?: EditableGraph;
   #connectorInstances: Set<string> = new Set();
   #connectorMap: SignalMap<string, ConnectorType>;
+
+  @signal
+  accessor run: ProjectRun | null = null;
 
   readonly graphUrl: URL | null;
   readonly graphAssets: SignalMap<AssetPath, GraphAsset>;
@@ -152,6 +159,14 @@ class ReactiveProject implements ProjectInternal {
     this.#updateTools();
     this.#updateMyTools();
     this.#updateParameters();
+  }
+
+  connectHarnessRunner(
+    runner: HarnessRunner,
+    signal?: AbortSignal
+  ): Outcome<void> {
+    // Intentionally reset this property with a new instance.
+    this.run = new ReactiveProjectRun(runner, signal);
   }
 
   runtime(): SideBoardRuntime {

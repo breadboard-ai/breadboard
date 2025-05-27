@@ -21,6 +21,7 @@ import {
 } from "@google-labs/breadboard";
 import { SideBoardRuntime } from "../sideboards/types";
 import { ConnectorInstance, ConnectorType } from "../connectors/types";
+import { HarnessRunner } from "@google-labs/breadboard/harness";
 
 export type ChatStatus = "running" | "paused" | "stopped";
 
@@ -96,6 +97,10 @@ export type ProjectRun = {
    * Console (fka Activity View)
    */
   console: Map<string, ConsoleEntry>;
+  /**
+   * Any errors that might have occurred during a run.
+   */
+  errors: Map<string, RunError>;
 };
 
 /**
@@ -129,6 +134,10 @@ export type WorkItem = {
    */
   finished: boolean;
   product: Map<string, LLMContent /* Particle */>;
+};
+
+export type RunError = {
+  message: string;
 };
 
 /**
@@ -243,6 +252,7 @@ export type ConnectorState = {
  * Contains all the state for the project.
  */
 export type Project = {
+  run: ProjectRun | null;
   graphAssets: Map<AssetPath, GraphAsset>;
   parameters: Map<string, ParameterMetadata>;
   connectors: ConnectorState;
@@ -251,6 +261,10 @@ export type Project = {
   renderer: RendererState;
 
   persistDataParts(contents: LLMContent[]): Promise<LLMContent[]>;
+  connectHarnessRunner(
+    runner: HarnessRunner,
+    signal?: AbortSignal
+  ): Outcome<void>;
 };
 
 export type ProjectInternal = Project & {

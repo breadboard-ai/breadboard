@@ -40,6 +40,7 @@ import {
 import { RuntimeBoardRunEvent } from "./events";
 import { sandbox } from "../sandbox";
 import { BoardServerAwareDataStore } from "@breadboard-ai/board-server-management";
+import { StateManager } from "./state";
 
 export class Run extends EventTarget {
   #runs = new Map<
@@ -57,7 +58,8 @@ export class Run extends EventTarget {
   constructor(
     public readonly graphStore: MutableGraphStore,
     public readonly dataStore: BoardServerAwareDataStore,
-    public readonly runStore: RunStore
+    public readonly runStore: RunStore,
+    public readonly state: StateManager
   ) {
     super();
   }
@@ -228,6 +230,12 @@ export class Run extends EventTarget {
         new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
       );
     });
+    const project = this.state.getOrCreate(tab.mainGraphId);
+    if (!project) {
+      console.warn(`Unable to get project for graph: ${tab.mainGraphId}`);
+    } else {
+      project.connectHarnessRunner(harnessRunner, abortController.signal);
+    }
 
     if (history) {
       await runObserver.append(history);
