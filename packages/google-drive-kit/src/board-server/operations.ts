@@ -67,6 +67,12 @@ type DriveChange = {
   removed?: boolean;
 };
 
+type DriveChangesCacheState = {
+  startPageToken: string;
+  /** Date. */
+  lastFetched: string;
+};
+
 class DriveListCache {
   constructor(
     private readonly cacheKey: string,
@@ -292,75 +298,81 @@ class DriveOperations {
   }
 
   async #setupBackgroundRefresh() {
-    setTimeout(async () => {
-      try {
-        {
-          const startPageToken: string | null = localStorage.getItem(
-            CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY
-          );
-          if (!startPageToken) {
-            // No changes token yet - we capture one and invalidate all the caches.
-            const api = new Files(
-              await DriveOperations.getUserAuth(this.vendor)
-            );
-            const response = await retryableFetch(
-              api.makeGetStartPageTokenRequest()
-            );
-            if (!response.ok) {
-              console.error("Failed to get start page token", response);
-              // Will be retried next time.
-              throw new Error(
-                `Failed to get start page token: ${response.status} ${response.statusText}`
+    setTimeout(
+      async () => {
+        try {
+          {
+            const driveCacheState = getDriveCacheState();
+            if (!driveCacheState) {
+              // No changes token yet - we capture one and invalidate all the caches.
+              const api = new Files(
+                await DriveOperations.getUserAuth(this.vendor)
               );
+              const response = await retryableFetch(
+                api.makeGetStartPageTokenRequest()
+              );
+              if (!response.ok) {
+                console.error("Failed to get start page token", response);
+                // Will be retried next time.
+                throw new Error(
+                  `Failed to get start page token: ${response.status} ${response.statusText}`
+                );
+              }
+              const pageToken = (await response.json()).startPageToken;
+              if (!pageToken) {
+                // Will be retried next time.
+                console.error(
+                  "Response containing not startPageToken",
+                  response
+                );
+                throw new Error(`Response containing not startPageToken`);
+              }
+              if (stillHoldsState(driveCacheState)) {
+                setDriveCacheState({ startPageToken: pageToken });
+                // Our token is allocated for the next time, now we purge the caches.
+                await this.#userGraphsList.forceRefresh();
+                if (this.#featuredGalleryFolderId) {
+                  await this.#featuredGraphsList!.forceRefresh();
+                }
+              }
+              return; // All refreshed.
             }
-            const pageToken = (await response.json()).startPageToken;
-            if (!pageToken) {
-              // Will be retried next time.
-              console.error("Response containing not startPageToken", response);
-              throw new Error(`Response containing not startPageToken`);
-            }
-            localStorage.setItem(
-              CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY,
-              pageToken
-            );
-            // Our token is allocated for the next time, now we purge the caches.
-            await this.#userGraphsList.forceRefresh();
-            if (this.#featuredGalleryFolderId) {
-              await this.#featuredGraphsList!.forceRefresh();
-            }
-            return; // All refreshed.
           }
-        }
 
-        // If a start page token set - we continue reading from that point otherwise all changes.
-        const startPageToken: string | null = localStorage.getItem(
-          CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY
-        );
-        if (!startPageToken) {
-          // Normally this should not happen, but the user might have removed the localStorage's key.
-          return; // In finally we should initialize the token again.
-        }
-        const nextPageToken: string | null = startPageToken;
-        const [changes, newStartPageToken] =
-          await this.#fetchAllChanges(nextPageToken);
-
-        if (changes?.length > 0) {
-          await this.#userGraphsList.processChanges(changes);
-          if (this.#featuredGalleryFolderId) {
-            await this.#featuredGraphsList!.processChanges(changes);
+          // If a start page token set - we continue reading from that point otherwise all changes.
+          const driveCacheState = getDriveCacheState();
+          if (!driveCacheState) {
+            // Normally this should not happen, but the user might have removed the localStorage's key.
+            return; // In finally we should initialize the token again.
           }
-        }
-        if (newStartPageToken) {
-          // At last we update the new start page token so that the next time we continue from here.
-          localStorage.setItem(
-            CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY,
-            newStartPageToken
+          if (
+            Date.now() - Date.parse(driveCacheState.lastFetched) <
+            DRIVE_FETCH_CHANGES_INTERVAL_MS
+          ) {
+            return; // Too early, or might have been updated concurrently.
+          }
+          const [changes, newStartPageToken] = await this.#fetchAllChanges(
+            driveCacheState.startPageToken
           );
+
+          if (changes?.length > 0) {
+            await this.#userGraphsList.processChanges(changes);
+            if (this.#featuredGalleryFolderId) {
+              await this.#featuredGraphsList!.processChanges(changes);
+            }
+          }
+          if (newStartPageToken) {
+            // At last we update the new start page token so that the next time we continue from here.
+            if (stillHoldsState(driveCacheState)) {
+              setDriveCacheState({ startPageToken: newStartPageToken });
+            }
+          }
+        } finally {
+          await this.#setupBackgroundRefresh();
         }
-      } finally {
-        await this.#setupBackgroundRefresh();
-      }
-    }, DRIVE_FETCH_CHANGES_INTERVAL_MS);
+      },
+      Math.random() * DRIVE_FETCH_CHANGES_INTERVAL_MS + 1000
+    );
   }
 
   async #fetchAllChanges(
@@ -376,7 +388,7 @@ class DriveOperations {
       if (!response.ok) {
         console.error("Response not OK", response);
         // This may be due to an invalid token, so let's just trash it and retry.
-        localStorage.removeItem(CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY);
+        setDriveCacheState(null);
         throw new Error("Failed to fetch drive changes");
       }
       const data = await response.json();
@@ -937,4 +949,48 @@ function parseAssetData(asset: string): { data: string; contentType: string } {
   const contentType = asset.slice(colonIndex + 1, lastComma);
   const data = asset.slice(lastComma + 1);
   return { data, contentType };
+}
+
+function getDriveCacheState(): DriveChangesCacheState | null {
+  const state = localStorage.getItem(CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY);
+  if (!state) {
+    return null;
+  }
+  try {
+    const result = JSON.parse(state) as DriveChangesCacheState;
+    if (!result.startPageToken || !result.lastFetched) {
+      return null;
+    }
+    return result;
+  } catch (e) {
+    return null;
+  }
+}
+
+function setDriveCacheState(
+  state: Partial<DriveChangesCacheState> | null
+): void {
+  if (state) {
+    if (!state.startPageToken) {
+      throw new Error("DriveChangesCacheState must have a startPageToken set");
+    }
+    if (state.lastFetched === undefined) {
+      state.lastFetched = new Date().toISOString();
+    }
+    localStorage.setItem(
+      CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY,
+      JSON.stringify(state)
+    );
+  } else {
+    localStorage.removeItem(CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY);
+  }
+}
+
+function stillHoldsState(state: DriveChangesCacheState | null): boolean {
+  const current = getDriveCacheState();
+  if (!state && !current) {
+    return true;
+  }
+
+  return state?.lastFetched === current?.lastFetched;
 }
