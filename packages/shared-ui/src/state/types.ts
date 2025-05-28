@@ -110,7 +110,13 @@ export type ProjectRun = {
 export type ConsoleEntry = {
   title: string;
   icon?: string;
+  /**
+   * A list of work items: things that a step is doing.
+   */
   work: Map<string, WorkItem>;
+  /**
+   * The final output of the step.
+   */
   output: Map<string, LLMContent /* Particle */>;
 };
 
@@ -133,6 +139,10 @@ export type WorkItem = {
    * When `true`, indicates that this work item is done.
    */
   finished: boolean;
+  /**
+   * Similar to the `output` of the `ConsoleEntry`, represents the work product
+   * of this item.
+   */
   product: Map<string, LLMContent /* Particle */>;
 };
 
