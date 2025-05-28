@@ -657,6 +657,7 @@ export class UI extends LitElement {
         0
       );
     }
+
     const sideNavItem = [
       html`${guard(
         [
@@ -710,14 +711,23 @@ export class UI extends LitElement {
         .readOnly=${this.readOnly}
         .projectState=${this.projectState}
       ></bb-entity-editor>`,
-      html`<div
-        id="history-activity-container"
-        class=${classMap({
-          active: this.sideNavItem === "activity",
-        })}
-      >
-        ${this.#renderActivity()}
-      </div>`,
+      html`
+        ${showExperimentalComponents
+          ? html`<bb-console-view
+              class=${classMap({
+                active: this.sideNavItem === "activity",
+              })}
+              .run=${this.projectState?.run}
+            ></bb-console-view>`
+          : html`<div
+              id="history-activity-container"
+              class=${classMap({
+                active: this.sideNavItem === "activity",
+              })}
+            >
+              ${this.#renderActivity()}
+            </div>`}
+      `,
       html`<bb-edit-history-panel
         class=${classMap({
           active: this.sideNavItem === "edit-history",
