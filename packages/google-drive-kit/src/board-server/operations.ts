@@ -24,7 +24,11 @@ import {
 
 export { DriveOperations, PROTOCOL };
 
-import { getSetsIntesection, retryableFetch, truncateValueForUtf8 } from "./utils.js";
+import {
+  getSetsIntersection,
+  retryableFetch,
+  truncateValueForUtf8,
+} from "./utils.js";
 
 const PROTOCOL = "drive:";
 
@@ -35,10 +39,10 @@ const DEPRECATED_GRAPH_MIME_TYPE = "application/json";
 const MIME_TYPE_QUERY = `(mimeType="${GRAPH_MIME_TYPE}" or mimeType="${DEPRECATED_GRAPH_MIME_TYPE}")`;
 const BASE_QUERY = `${MIME_TYPE_QUERY} and trashed=false`;
 
-const CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY = "GoogleDriveService/Changes/StartPageToken";
+const CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY =
+  "GoogleDriveService/Changes/StartPageToken";
 
 const DRIVE_FETCH_CHANGES_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes.
-
 
 const MAX_APP_PROPERTY_LENGTH = 124;
 
@@ -61,7 +65,7 @@ type StoredAppProperties = {
 type DriveChange = {
   fieldId: string;
   removed?: boolean;
-}
+};
 
 class DriveListCache {
   constructor(
@@ -84,12 +88,15 @@ class DriveListCache {
     value: DriveFile[];
     lastModified: string;
     /** if set override only the value that's not newer. */
-    crossCheckLastModified?: string|null;
+    crossCheckLastModified?: string | null;
   }) {
     if (options.crossCheckLastModified) {
       const response = await options.cache.match(this.cacheKey);
       const currentLastModified = response?.headers?.get("Last-Modified");
-      if (currentLastModified && currentLastModified > options.crossCheckLastModified) {
+      if (
+        currentLastModified &&
+        currentLastModified > options.crossCheckLastModified
+      ) {
         // A newer value has been put in place in meanwhile, ignore this update.
         return false;
       }
@@ -168,13 +175,13 @@ class DriveListCache {
     await this.#list();
   }
 
-  /** 
-   * Hard reloads the cache. 
+  /**
+   * Hard reloads the cache.
    * Never raises any errors. Doesn't buble up any events.
    */
   async forceRefresh() {
     try {
-      await this.#list(/*forceInvalidate=*/true);
+      await this.#list(/*forceInvalidate=*/ true);
     } catch (e) {
       console.warn(`Exception while refreshing ${this.cacheKey} background`, e);
       // And swallow it.
@@ -188,11 +195,15 @@ class DriveListCache {
       const files: DriveFile[] = (await cachedResponse?.json())?.files;
       const fileIds = new Set(files.map((f) => f.id));
       // Collecting all unique changes, note that they don't have to point to the files in cache.
-      const allDeletedIds = new Set<string>(changes.filter((c) => c.removed).map((c) => c.fieldId));
-      const allUpdatedIds = new Set<string>(changes.filter((c) => !c.removed).map((c) => c.fieldId));
-      const deletedIds = getSetsIntesection(fileIds, allDeletedIds);
+      const allDeletedIds = new Set<string>(
+        changes.filter((c) => c.removed).map((c) => c.fieldId)
+      );
+      const allUpdatedIds = new Set<string>(
+        changes.filter((c) => !c.removed).map((c) => c.fieldId)
+      );
+      const deletedIds = getSetsIntersection(fileIds, allDeletedIds);
       // TODO(volodya): This may work smarter by also comparing the timestamp of change/cached item.
-      const updatedIds = getSetsIntesection(fileIds, allUpdatedIds);
+      const updatedIds = getSetsIntersection(fileIds, allUpdatedIds);
       if (deletedIds.size > 0) {
         for (const id of deletedIds) {
           const index = files?.findIndex((f) => f.id == id);
@@ -209,7 +220,7 @@ class DriveListCache {
         // We don't know what has actually changes so we just re-read the whole list.
         // But first, conservatively delete first so that any concurent read reads fresh data.
         await cache.delete(cacheKey);
-        await this.forceRefresh();  // This could be smarter what it re-reads, but probably not much faster.
+        await this.forceRefresh(); // This could be smarter what it re-reads, but probably not much faster.
       }
       return updatedIds.size > 0 || updatedIds.size > 0;
     }
@@ -284,15 +295,23 @@ class DriveOperations {
     setTimeout(async () => {
       try {
         {
-          let startPageToken: string | null = localStorage.getItem(CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY);
+          const startPageToken: string | null = localStorage.getItem(
+            CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY
+          );
           if (!startPageToken) {
             // No changes token yet - we capture one and invalidate all the caches.
-            const api = new Files(await DriveOperations.getUserAuth(this.vendor));
-            const response = await retryableFetch(api.makeGetStartPageTokenRequest());
+            const api = new Files(
+              await DriveOperations.getUserAuth(this.vendor)
+            );
+            const response = await retryableFetch(
+              api.makeGetStartPageTokenRequest()
+            );
             if (!response.ok) {
               console.error("Failed to get start page token", response);
               // Will be retried next time.
-              throw new Error(`Failed to get start page token: ${response.status} ${response.statusText}`);
+              throw new Error(
+                `Failed to get start page token: ${response.status} ${response.statusText}`
+              );
             }
             const pageToken = (await response.json()).startPageToken;
             if (!pageToken) {
@@ -300,7 +319,10 @@ class DriveOperations {
               console.error("Response containing not startPageToken", response);
               throw new Error(`Response containing not startPageToken`);
             }
-            localStorage.setItem(CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY, pageToken);
+            localStorage.setItem(
+              CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY,
+              pageToken
+            );
             // Our token is allocated for the next time, now we purge the caches.
             await this.#userGraphsList.forceRefresh();
             if (this.#featuredGalleryFolderId) {
@@ -311,13 +333,16 @@ class DriveOperations {
         }
 
         // If a start page token set - we continue reading from that point otherwise all changes.
-        let startPageToken: string | null = localStorage.getItem(CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY);
+        const startPageToken: string | null = localStorage.getItem(
+          CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY
+        );
         if (!startPageToken) {
-          // Normally this should not happen, but the user might have removed the localStorage's key. 
+          // Normally this should not happen, but the user might have removed the localStorage's key.
           return; // In finally we should initialize the token again.
         }
-        let nextPageToken: string | null = startPageToken;
-        const [changes, newStartPageToken] = await this.#fetchAllChanges(nextPageToken);
+        const nextPageToken: string | null = startPageToken;
+        const [changes, newStartPageToken] =
+          await this.#fetchAllChanges(nextPageToken);
 
         if (changes?.length > 0) {
           await this.#userGraphsList.processChanges(changes);
@@ -327,21 +352,27 @@ class DriveOperations {
         }
         if (newStartPageToken) {
           // At last we update the new start page token so that the next time we continue from here.
-          localStorage.setItem(CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY, newStartPageToken);
+          localStorage.setItem(
+            CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY,
+            newStartPageToken
+          );
         }
-      }
-      finally {
+      } finally {
         await this.#setupBackgroundRefresh();
       }
     }, DRIVE_FETCH_CHANGES_INTERVAL_MS);
   }
 
-  async #fetchAllChanges(pageToken: string): Promise<[Array<DriveChange>, string | undefined]> {
+  async #fetchAllChanges(
+    pageToken: string
+  ): Promise<[Array<DriveChange>, string | undefined]> {
     const api = new Files(await DriveOperations.getUserAuth(this.vendor));
     const changes: Array<DriveChange> = [];
     let newStartPageToken: string | undefined;
     do {
-      const response = await retryableFetch(api.makeChangeListRequest(pageToken));
+      const response = await retryableFetch(
+        api.makeChangeListRequest(pageToken)
+      );
       if (!response.ok) {
         console.error("Response not OK", response);
         // This may be due to an invalid token, so let's just trash it and retry.
