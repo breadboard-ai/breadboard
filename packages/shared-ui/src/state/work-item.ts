@@ -8,6 +8,7 @@ import { WorkItem } from "./types";
 import { signal } from "signal-utils";
 import {
   LLMContent,
+  NodeEndResponse,
   NodeTypeIdentifier,
   OutputValues,
 } from "@breadboard-ai/types";
@@ -31,6 +32,7 @@ class ReactiveWorkItem implements WorkItem {
     return this.type === "input" && this.end === null;
   }
 
+  schema?: Schema | undefined;
   product: Map<string, LLMContent> = new SignalMap();
 
   constructor(
@@ -47,13 +49,12 @@ class ReactiveWorkItem implements WorkItem {
   ): [string, ReactiveWorkItem] {
     const { path, node, inputArguments } = data;
     const { schema } = inputArguments;
-    console.log("FROM INPUT", schema);
     const id = idFromPath(path);
-    const { type } = node; // always "input"
-    return [
-      id,
-      new ReactiveWorkItem(type, "Input", "chat_mirror", start, true),
-    ];
+    const { type, metadata = {} } = node; // always "input"
+    const { title = "Input", icon = DEFAULT_INPUT_ICON } = metadata;
+    const item = new ReactiveWorkItem(type, title, icon, start, true);
+    item.schema = schema;
+    return [id, item];
   }
 
   static fromOutput(
@@ -75,17 +76,25 @@ class ReactiveWorkItem implements WorkItem {
     }
     return [id, item];
   }
+
+  static completeInput(item: WorkItem, data: NodeEndResponse) {
+    const { schema = {} } = item;
+    const { products } = toLLMContentArray(schema, data.outputs);
+    for (const [name, product] of Object.entries(products)) {
+      item.product.set(name, product);
+    }
+  }
 }
 
 function toLLMContentArray(
   schema: Schema,
-  outputs: OutputValues
+  values: OutputValues
 ): { products: Record<string, LLMContent>; chat: boolean } {
   let chat = false;
   if (!schema.properties) {
     // No schema, so let's just stringify and stuff outputs into json part.
     const products = Object.fromEntries(
-      Object.entries(outputs).map(([name, value]) => {
+      Object.entries(values).map(([name, value]) => {
         return [name, asJson(value)];
       })
     );
@@ -94,7 +103,7 @@ function toLLMContentArray(
 
   const products: Record<string, LLMContent> = {};
   for (const [name, propertySchema] of Object.entries(schema.properties)) {
-    const value = outputs[name];
+    const value = values[name];
     if (!value) {
       console.warn(
         `Schema specifies property "${name}", but it wasn't supplied`

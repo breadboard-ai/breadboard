@@ -166,7 +166,11 @@ class ReactiveProject implements ProjectInternal {
     signal?: AbortSignal
   ): Outcome<void> {
     // Intentionally reset this property with a new instance.
-    this.run = new ReactiveProjectRun(runner, signal);
+    this.run = new ReactiveProjectRun(
+      this.#store.inspect(this.#mainGraphId, ""),
+      runner,
+      signal
+    );
   }
 
   runtime(): SideBoardRuntime {

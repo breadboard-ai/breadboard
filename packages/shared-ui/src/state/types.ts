@@ -18,6 +18,7 @@ import {
   EditTransform,
   Outcome,
   PortIdentifier,
+  Schema,
 } from "@google-labs/breadboard";
 import { SideBoardRuntime } from "../sideboards/types";
 import { ConnectorInstance, ConnectorType } from "../connectors/types";
@@ -94,6 +95,11 @@ export type ChatState = {
  */
 export type ProjectRun = {
   /**
+   * Provides an estimate of entries that will be in console for this run.
+   * The estimate is updated when the run goes over it.
+   */
+  estimatedEntryCount: number;
+  /**
    * Console (fka Activity View)
    */
   console: Map<string, ConsoleEntry>;
@@ -153,6 +159,11 @@ export type WorkItem = {
    * of a chat interaction.
    */
   chat: boolean;
+  /**
+   * Schema representing the product, if available. This is useful when
+   * the WorkItem represents an input.
+   */
+  schema?: Schema;
   /**
    * Similar to the `output` of the `ConsoleEntry`, represents the work product
    * of this item.
