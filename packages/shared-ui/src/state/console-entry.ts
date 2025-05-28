@@ -63,7 +63,7 @@ class ReactiveConsoleEntry implements ConsoleEntry {
     // TODO: Handle inputs
     this.work.set(idFromPath(path), {
       title: "Input",
-      icon: "Icon",
+      icon: "chat_mirror",
       start: this.#pendingTimestamp || 0,
       end: null,
       product: new SignalMap(),
@@ -78,7 +78,7 @@ class ReactiveConsoleEntry implements ConsoleEntry {
 
     this.work.set(idFromPath(path), {
       title: "Output",
-      icon: "Icon",
+      icon: "responsive_layout",
       start: this.#pendingTimestamp || 0,
       end: null,
       product: new SignalMap(),

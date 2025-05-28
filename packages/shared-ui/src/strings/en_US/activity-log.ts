@@ -26,6 +26,9 @@ export default {
   COMMAND_CREATE_EXPORT: {
     str: "Create export",
   },
+  COMMAND_START: {
+    str: "Start",
+  },
 
   // Statuses.
   STATUS_GENERATING_EXPORT: {

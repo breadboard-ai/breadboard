@@ -101,6 +101,14 @@ export type ProjectRun = {
    * Any errors that might have occurred during a run.
    */
   errors: Map<string, RunError>;
+  /**
+   * The status of the run
+   */
+  status: "running" | "paused" | "stopped";
+  /**
+   * The current entry.
+   */
+  current: ConsoleEntry | null;
 };
 
 /**
