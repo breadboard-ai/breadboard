@@ -11,7 +11,7 @@ import { customElement, property } from "lit/decorators.js";
 import { ProjectRun } from "../../../state";
 import { repeat } from "lit/directives/repeat.js";
 import { classMap } from "lit/directives/class-map.js";
-import { RunEvent } from "../../../events/events";
+import { ResizeEvent, RunEvent } from "../../../events/events";
 import { icons } from "../../../styles/icons";
 import { SignalWatcher } from "@lit-labs/signals";
 
@@ -23,6 +23,10 @@ export class ConsoleView extends SignalWatcher(LitElement) {
   static styles = [
     icons,
     css`
+      * {
+        box-sizing: border-box;
+      }
+
       :host {
         display: flex;
         flex-direction: column;
@@ -81,6 +85,13 @@ export class ConsoleView extends SignalWatcher(LitElement) {
         flex: 1;
         overflow: auto;
         padding: var(--bb-grid-size-3) var(--bb-grid-size-4);
+
+        &::after {
+          content: "";
+          display: block;
+          height: calc(var(--input-clearance) + var(--bb-grid-size-6));
+          width: 100%;
+        }
 
         .output {
           position: relative;
@@ -173,6 +184,14 @@ export class ConsoleView extends SignalWatcher(LitElement) {
           }
         }
       }
+
+      bb-floating-input {
+        position: absolute;
+        left: 50%;
+        bottom: var(--bb-grid-size-6);
+        translate: -50% 0;
+        --container-margin: 0 var(--bb-grid-size-6);
+      }
     `,
   ];
 
@@ -207,6 +226,26 @@ export class ConsoleView extends SignalWatcher(LitElement) {
           )}
         </details>`
       : nothing;
+  }
+
+  #renderInput() {
+    if (!this.run) {
+      return nothing;
+    }
+
+    // Temporary while this is WIP.
+    if (this.run) {
+      return nothing;
+    }
+
+    return html`<bb-floating-input
+      @bbresize=${(evt: ResizeEvent) => {
+        this.style.setProperty(
+          "--input-clearance",
+          `${evt.contentRect.height}px`
+        );
+      }}
+    ></bb-floating-input>`;
   }
 
   #formatToSeconds(milliseconds: number) {
@@ -304,6 +343,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
       ></bb-header>`,
       this.run ? this.#renderRun() : this.#renderRunButton(),
       this.#renderError(),
+      this.#renderInput(),
     ];
   }
 }

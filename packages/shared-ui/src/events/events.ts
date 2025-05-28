@@ -1589,3 +1589,13 @@ export class IterateOnPromptEvent extends Event {
     super(IterateOnPromptEvent.eventName, { ...eventInit });
   }
 }
+
+/** Floating Input */
+
+export class ResizeEvent extends Event {
+  static eventName = "bbresize";
+
+  constructor(public readonly contentRect: DOMRect) {
+    super(ResizeEvent.eventName, { ...eventInit });
+  }
+}
