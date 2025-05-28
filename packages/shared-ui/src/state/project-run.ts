@@ -18,6 +18,7 @@ import {
 } from "@google-labs/breadboard/harness";
 import { signal } from "signal-utils";
 import { formatError } from "../utils/format-error";
+import { ReactiveConsoleEntry } from "./console-entry";
 
 export { ReactiveProjectRun };
 
@@ -41,7 +42,7 @@ class ReactiveProjectRun implements ProjectRun {
    * Current (last) entry in console
    */
   @signal
-  accessor current: ConsoleEntry | null = null;
+  accessor current: ReactiveConsoleEntry | null = null;
 
   constructor(runner: HarnessRunner, signal?: AbortSignal) {
     if (signal) {
@@ -96,26 +97,22 @@ class ReactiveProjectRun implements ProjectRun {
     if (pathLength > 0) return;
 
     // TOOD: Do we need to do anything here?
-    console.debug("Project Run: Graph End");
+    console.debug("Project Run: Graph End", this.console);
   }
 
   #nodeStart(event: RunNodeStartEvent) {
     console.debug("Project Run: Node Start", event);
-    const pathLength = event.data.path.length;
+    const { path } = event.data;
 
-    if (pathLength > 1) return;
-
-    const { node } = event.data;
+    if (path.length > 1) {
+      this.current?.onNodeStart(event.data);
+      return;
+    }
 
     // create new instance of the ConsoleEntry
-    const entry: ConsoleEntry = {
-      title: node.metadata?.title || node.id,
-      icon: node.metadata?.icon,
-      work: new SignalMap(),
-      output: new SignalMap(),
-    };
+    const entry = new ReactiveConsoleEntry(event.data);
     this.current = entry;
-    this.console.set(idFromPath(event.data.path), entry);
+    this.console.set(entry.id, entry);
   }
 
   #nodeEnd(event: RunNodeEndEvent) {
@@ -123,6 +120,7 @@ class ReactiveProjectRun implements ProjectRun {
     const pathLength = event.data.path.length;
 
     if (pathLength > 1) {
+      this.current?.onNodeEnd(event.data);
       if (event.data.outputs?.["$error"]) {
         this.#storeErrorPath(event.data.path);
       }
@@ -134,48 +132,20 @@ class ReactiveProjectRun implements ProjectRun {
 
   #input(event: RunInputEvent) {
     console.debug("Project Run: Input", event);
-    const { bubbled, path } = event.data;
-
-    // The non-bubbled inputs are not supported: they aren't found in the
-    // new-style (A2-based) graphs.
-    if (!bubbled) return;
-
     if (!this.current) {
       console.warn(`No current node for input event`, event);
       return;
     }
-
-    // TODO: Handle inputs
-    this.current.work.set(idFromPath(path), {
-      title: "Input",
-      icon: "Icon",
-      elapsedTime: 0,
-      finished: true,
-      product: new SignalMap(),
-    });
+    this.current.addInput(event.data);
   }
 
   #output(event: RunOutputEvent) {
     console.debug("Project Run: Output", event);
-    const { bubbled, path } = event.data;
-
-    // The non-bubbled outputs are not supported: they aren't found in the
-    // new-style (A2-based) graphs.
-    if (!bubbled) return;
-
     if (!this.current) {
       console.warn(`No current node for input event`, event);
       return;
     }
-
-    // TODO: Handle outputs
-    this.current.work.set(idFromPath(path), {
-      title: "Output",
-      icon: "Icon",
-      elapsedTime: 0,
-      finished: true,
-      product: new SignalMap(),
-    });
+    this.current.addOutput(event.data);
   }
 
   #error(event: RunErrorEvent) {

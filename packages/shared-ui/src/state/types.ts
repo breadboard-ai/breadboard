@@ -129,16 +129,13 @@ export type WorkItem = {
   title: string;
   icon?: string;
   /**
-   * When still working, the number of milliseconds that elapsed since
-   * the work item started
-   * When done, the number of milliseconds it took to do work
+   * Start time for the work item.
    */
-  elapsedTime: number;
+  start: number;
   /**
-   * When `false`, indicates that this work item is still being worked on.
-   * When `true`, indicates that this work item is done.
+   * End time for the work time (null if still in progress)
    */
-  finished: boolean;
+  end: number | null;
   /**
    * Similar to the `output` of the `ConsoleEntry`, represents the work product
    * of this item.
