@@ -130,7 +130,7 @@ export async function create(config: RuntimeConfig): Promise<{
       sideboards,
       config.settings
     ),
-    run: new Run(graphStore, dataStore, config.runStore),
+    run: new Run(graphStore, dataStore, config.runStore, state),
     state,
     sideboards,
     select: new Select(),

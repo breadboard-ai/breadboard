@@ -6,7 +6,7 @@
 
 import { err, ok, Outcome } from "@google-labs/breadboard";
 import { ConnectorType } from "../connectors/types";
-import { ConnectorState, OrganizerStage, ProjectInternal } from "./types";
+import { ConnectorState, ProjectInternal } from "./types";
 import { signal } from "signal-utils";
 import { Configurator } from "../connectors/configurator";
 import { CreateConnector } from "../transforms/create-connector";
@@ -15,7 +15,7 @@ export { ConnectorStateImpl };
 
 class ConnectorStateImpl implements ConnectorState {
   @signal
-  accessor stage: OrganizerStage = "free";
+  accessor stage: string = "free";
   #project: ProjectInternal;
 
   constructor(

@@ -21,6 +21,7 @@ import {
 } from "@google-labs/breadboard";
 import { SideBoardRuntime } from "../sideboards/types";
 import { ConnectorInstance, ConnectorType } from "../connectors/types";
+import { HarnessRunner } from "@google-labs/breadboard/harness";
 
 export type ChatStatus = "running" | "paused" | "stopped";
 
@@ -86,7 +87,65 @@ export type ChatState = {
   statusDetail: string;
 };
 
-export type OrganizerStage = "free" | "busy";
+/**
+ * Represents the Model+Controller for the individual run of the graph.
+ * The name is so weird because there's already a `RunState` type in
+ * `@google-labs/breadboard`.
+ */
+export type ProjectRun = {
+  /**
+   * Console (fka Activity View)
+   */
+  console: Map<string, ConsoleEntry>;
+  /**
+   * Any errors that might have occurred during a run.
+   */
+  errors: Map<string, RunError>;
+};
+
+/**
+ * Represents the Model+Controller for a single Console entry.
+ * Currently, each entry represents the output of a step when it's run.
+ */
+export type ConsoleEntry = {
+  title: string;
+  icon?: string;
+  /**
+   * A list of work items: things that a step is doing.
+   */
+  work: Map<string, WorkItem>;
+  /**
+   * The final output of the step.
+   */
+  output: Map<string, LLMContent /* Particle */>;
+};
+
+/**
+ * Represents the Model+Controller for a single work item within the
+ * Console entry. Work items are a way for the steps to communicate what they
+ * are doing.
+ */
+export type WorkItem = {
+  title: string;
+  icon?: string;
+  /**
+   * Start time for the work item.
+   */
+  start: number;
+  /**
+   * End time for the work time (null if still in progress)
+   */
+  end: number | null;
+  /**
+   * Similar to the `output` of the `ConsoleEntry`, represents the work product
+   * of this item.
+   */
+  product: Map<string, LLMContent /* Particle */>;
+};
+
+export type RunError = {
+  message: string;
+};
 
 /**
  * Represents the Model+Controller for the Asset Organizer.
@@ -200,6 +259,7 @@ export type ConnectorState = {
  * Contains all the state for the project.
  */
 export type Project = {
+  run: ProjectRun | null;
   graphAssets: Map<AssetPath, GraphAsset>;
   parameters: Map<string, ParameterMetadata>;
   connectors: ConnectorState;
@@ -208,6 +268,10 @@ export type Project = {
   renderer: RendererState;
 
   persistDataParts(contents: LLMContent[]): Promise<LLMContent[]>;
+  connectHarnessRunner(
+    runner: HarnessRunner,
+    signal?: AbortSignal
+  ): Outcome<void>;
 };
 
 export type ProjectInternal = Project & {
