@@ -7,7 +7,6 @@
 import { WorkItem } from "./types";
 import { signal } from "signal-utils";
 import {
-  InputValues,
   LLMContent,
   NodeEndResponse,
   NodeTypeIdentifier,
