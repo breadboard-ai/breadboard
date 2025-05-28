@@ -47,6 +47,9 @@ class ReactiveConsoleEntry implements ConsoleEntry {
       // will be non-bubbling.
       if (item) {
         item.end = data.timestamp;
+        if (type === "input") {
+          ReactiveWorkItem.completeInput(item, data);
+        }
       }
     }
   }
