@@ -230,6 +230,9 @@ export class Run extends EventTarget {
         new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
       );
     });
+
+    // This incantation connects harnessRunner to the project, populating
+    // `Project.run`.
     const project = this.state.getOrCreate(tab.mainGraphId);
     if (!project) {
       console.warn(`Unable to get project for graph: ${tab.mainGraphId}`);
