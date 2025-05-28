@@ -24,7 +24,11 @@ import {
 
 export { DriveOperations, PROTOCOL };
 
-import { retryableFetch, truncateValueForUtf8 } from "./utils.js";
+import {
+  getSetsIntersection,
+  retryableFetch,
+  truncateValueForUtf8,
+} from "./utils.js";
 
 const PROTOCOL = "drive:";
 
@@ -35,8 +39,10 @@ const DEPRECATED_GRAPH_MIME_TYPE = "application/json";
 const MIME_TYPE_QUERY = `(mimeType="${GRAPH_MIME_TYPE}" or mimeType="${DEPRECATED_GRAPH_MIME_TYPE}")`;
 const BASE_QUERY = `${MIME_TYPE_QUERY} and trashed=false`;
 
-const PUBLIC_FOLDER_REFRESH_INTERVAL_MS = 60 * 1000; // 1 minute.
+const CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY =
+  "GoogleDriveService/Changes/StartPageToken";
 
+const DRIVE_FETCH_CHANGES_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes.
 
 const MAX_APP_PROPERTY_LENGTH = 124;
 
@@ -54,6 +60,17 @@ type StoredAppProperties = {
   description: string;
   tags: string;
   thumbnailUrl?: string;
+};
+
+type DriveChange = {
+  fieldId: string;
+  removed?: boolean;
+};
+
+type DriveChangesCacheState = {
+  startPageToken: string;
+  /** Date. */
+  lastFetched: string;
 };
 
 class DriveListCache {
@@ -77,12 +94,15 @@ class DriveListCache {
     value: DriveFile[];
     lastModified: string;
     /** if set override only the value that's not newer. */
-    crossCheckLastModified?: string|null;
+    crossCheckLastModified?: string | null;
   }) {
     if (options.crossCheckLastModified) {
       const response = await options.cache.match(this.cacheKey);
       const currentLastModified = response?.headers?.get("Last-Modified");
-      if (currentLastModified && currentLastModified > options.crossCheckLastModified) {
+      if (
+        currentLastModified &&
+        currentLastModified > options.crossCheckLastModified
+      ) {
         // A newer value has been put in place in meanwhile, ignore this update.
         return false;
       }
@@ -103,12 +123,16 @@ class DriveListCache {
     return true;
   }
 
-  async #list(backgroundRefresh: boolean = false) {
+  async #list(forceInvalidate: boolean = false) {
     try {
       // Find out if we have a cached value and if so, add the search criteria.
 
       const { cache, cacheKey, cachedResponse } =
-        await this.#getCacheAndValue(backgroundRefresh);
+        await this.#getCacheAndValue(forceInvalidate);
+      if (forceInvalidate) {
+        // Conservatively delete the chacked value.
+        cache.delete(cacheKey);
+      }
       const cachedLastModified = cachedResponse?.headers?.get("Last-Modified");
 
       let query = this.query;
@@ -141,7 +165,6 @@ class DriveListCache {
         cacheKey,
         value: response.files,
         lastModified: lastModified ?? "",
-        crossCheckLastModified: backgroundRefresh ? cachedLastModified : undefined,
       });
       return result;
     } catch (e) {
@@ -158,17 +181,56 @@ class DriveListCache {
     await this.#list();
   }
 
-  /** 
-   * Hard reloads the cache. 
+  /**
+   * Hard reloads the cache.
    * Never raises any errors. Doesn't buble up any events.
    */
-  async refreshInBackground() {
+  async forceRefresh() {
     try {
-      await this.#list(/*backgroundRefresh=*/true);
+      await this.#list(/*forceInvalidate=*/ true);
     } catch (e) {
       console.warn(`Exception while refreshing ${this.cacheKey} background`, e);
       // And swallow it.
     }
+  }
+
+  async processChanges(changes: Array<DriveChange>) {
+    // Here we bulk-process all the changes in one go.
+    const { cache, cacheKey, cachedResponse } = await this.#getCacheAndValue();
+    if (cachedResponse) {
+      const files: DriveFile[] = (await cachedResponse?.json())?.files;
+      const fileIds = new Set(files.map((f) => f.id));
+      // Collecting all unique changes, note that they don't have to point to the files in cache.
+      const allDeletedIds = new Set<string>(
+        changes.filter((c) => c.removed).map((c) => c.fieldId)
+      );
+      const allUpdatedIds = new Set<string>(
+        changes.filter((c) => !c.removed).map((c) => c.fieldId)
+      );
+      const deletedIds = getSetsIntersection(fileIds, allDeletedIds);
+      // TODO(volodya): This may work smarter by also comparing the timestamp of change/cached item.
+      const updatedIds = getSetsIntersection(fileIds, allUpdatedIds);
+      if (deletedIds.size > 0) {
+        for (const id of deletedIds) {
+          const index = files?.findIndex((f) => f.id == id);
+          if (index >= 0) {
+            files.splice(index, 1);
+          }
+        }
+        // lastModified remains the same since this invalidation only concerns a single deleted file.
+        const lastModified =
+          cachedResponse?.headers?.get("Last-Modified") ?? "";
+        await this.#put({ cache, cacheKey, value: files, lastModified });
+      }
+      if (updatedIds.size > 0) {
+        // We don't know what has actually changes so we just re-read the whole list.
+        // But first, conservatively delete first so that any concurent read reads fresh data.
+        await cache.delete(cacheKey);
+        await this.forceRefresh(); // This could be smarter what it re-reads, but probably not much faster.
+      }
+      return updatedIds.size > 0 || updatedIds.size > 0;
+    }
+    return false;
   }
 
   /** Returns true if the cache was in fact affected, and false in case of a no-op. */
@@ -230,23 +292,116 @@ class DriveOperations {
         `"${featuredGalleryFolderId}" in parents and ${BASE_QUERY}`,
         getApiAuth
       );
-
-      this.#setupBackgroundRefresh();
     }
+
+    this.#setupBackgroundRefresh();
   }
 
-  #setupBackgroundRefresh() {
-    setTimeout(async () => {
-      try {
-        await this.#userGraphsList.refreshInBackground();
-        if (this.#featuredGalleryFolderId) {
-          await this.#featuredGraphsList!.refreshInBackground();
+  async #setupBackgroundRefresh() {
+    setTimeout(
+      async () => {
+        try {
+          {
+            const driveCacheState = getDriveCacheState();
+            if (!driveCacheState) {
+              // No changes token yet - we capture one and invalidate all the caches.
+              const api = new Files(
+                await DriveOperations.getUserAuth(this.vendor)
+              );
+              const response = await retryableFetch(
+                api.makeGetStartPageTokenRequest()
+              );
+              if (!response.ok) {
+                console.error("Failed to get start page token", response);
+                // Will be retried next time.
+                throw new Error(
+                  `Failed to get start page token: ${response.status} ${response.statusText}`
+                );
+              }
+              const pageToken = (await response.json()).startPageToken;
+              if (!pageToken) {
+                // Will be retried next time.
+                console.error(
+                  "Response containing not startPageToken",
+                  response
+                );
+                throw new Error(`Response containing not startPageToken`);
+              }
+              if (stillHoldsState(driveCacheState)) {
+                setDriveCacheState({ startPageToken: pageToken });
+                // Our token is allocated for the next time, now we purge the caches.
+                await this.#userGraphsList.forceRefresh();
+                if (this.#featuredGalleryFolderId) {
+                  await this.#featuredGraphsList!.forceRefresh();
+                }
+              }
+              return; // All refreshed.
+            }
+          }
+
+          // If a start page token set - we continue reading from that point otherwise all changes.
+          const driveCacheState = getDriveCacheState();
+          if (!driveCacheState) {
+            // Normally this should not happen, but the user might have removed the localStorage's key.
+            return; // In finally we should initialize the token again.
+          }
+          if (
+            Date.now() - Date.parse(driveCacheState.lastFetched) <
+            DRIVE_FETCH_CHANGES_INTERVAL_MS
+          ) {
+            return; // Too early, or might have been updated concurrently.
+          }
+          const [changes, newStartPageToken] = await this.#fetchAllChanges(
+            driveCacheState.startPageToken
+          );
+
+          if (changes?.length > 0) {
+            await this.#userGraphsList.processChanges(changes);
+            if (this.#featuredGalleryFolderId) {
+              await this.#featuredGraphsList!.processChanges(changes);
+            }
+          }
+          if (newStartPageToken) {
+            // At last we update the new start page token so that the next time we continue from here.
+            if (stillHoldsState(driveCacheState)) {
+              setDriveCacheState({ startPageToken: newStartPageToken });
+            }
+          }
+        } finally {
+          await this.#setupBackgroundRefresh();
         }
+      },
+      Math.random() * DRIVE_FETCH_CHANGES_INTERVAL_MS + 1000
+    );
+  }
+
+  async #fetchAllChanges(
+    pageToken: string
+  ): Promise<[Array<DriveChange>, string | undefined]> {
+    const api = new Files(await DriveOperations.getUserAuth(this.vendor));
+    const changes: Array<DriveChange> = [];
+    let newStartPageToken: string | undefined;
+    do {
+      const response = await retryableFetch(
+        api.makeChangeListRequest(pageToken)
+      );
+      if (!response.ok) {
+        console.error("Response not OK", response);
+        // This may be due to an invalid token, so let's just trash it and retry.
+        setDriveCacheState(null);
+        throw new Error("Failed to fetch drive changes");
       }
-      finally {
-        this.#setupBackgroundRefresh();
+      const data = await response.json();
+      pageToken = data.nextPageToken;
+      if (data.changes) {
+        changes.push(...data.changes);
       }
-    }, PUBLIC_FOLDER_REFRESH_INTERVAL_MS);
+      if (data.newStartPageToken) {
+        // Should be always present, but just in case it's safer not to override the last successful value.
+        newStartPageToken = data.newStartPageToken;
+      }
+    } while (pageToken);
+    return [changes, newStartPageToken];
   }
 
   static getUserAuth(vendor: TokenVendor): Promise<GoogleApiAuthorization> {
@@ -794,4 +949,48 @@ function parseAssetData(asset: string): { data: string; contentType: string } {
   const contentType = asset.slice(colonIndex + 1, lastComma);
   const data = asset.slice(lastComma + 1);
   return { data, contentType };
+}
+
+function getDriveCacheState(): DriveChangesCacheState | null {
+  const state = localStorage.getItem(CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY);
+  if (!state) {
+    return null;
+  }
+  try {
+    const result = JSON.parse(state) as DriveChangesCacheState;
+    if (!result.startPageToken || !result.lastFetched) {
+      return null;
+    }
+    return result;
+  } catch (e) {
+    return null;
+  }
+}
+
+function setDriveCacheState(
+  state: Partial<DriveChangesCacheState> | null
+): void {
+  if (state) {
+    if (!state.startPageToken) {
+      throw new Error("DriveChangesCacheState must have a startPageToken set");
+    }
+    if (state.lastFetched === undefined) {
+      state.lastFetched = new Date().toISOString();
+    }
+    localStorage.setItem(
+      CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY,
+      JSON.stringify(state)
+    );
+  } else {
+    localStorage.removeItem(CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY);
+  }
+}
+
+function stillHoldsState(state: DriveChangesCacheState | null): boolean {
+  const current = getDriveCacheState();
+  if (!state && !current) {
+    return true;
+  }
+
+  return state?.lastFetched === current?.lastFetched;
 }
