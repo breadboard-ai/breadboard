@@ -292,7 +292,7 @@ export class GoogleDrivePickerUnderlay extends LitElement {
 
       :host([mode="pick-shared-board"]) {
         top: var(--google-drive-picker-top);
-        height: calc(var(--google-drive-picker-height) - 50px);
+        height: calc(var(--google-drive-picker-height) - 30px);
         #container {
           min-width: var(--google-drive-picker-width);
           max-width: 600px;
@@ -325,6 +325,9 @@ export class GoogleDrivePickerOverlay extends LitElement {
   @property({ reflect: true })
   accessor mode: Mode = "pick-shared-board";
 
+  @property()
+  accessor #showNoDocumentsHelp = false;
+
   static styles = [
     css`
       :host {
@@ -333,6 +336,7 @@ export class GoogleDrivePickerOverlay extends LitElement {
         z-index: 1001;
         width: 100vw;
         height: 120px;
+        top: calc(var(--google-drive-picker-top) + 15px);
         left: 0;
         display: flex;
         justify-content: center;
@@ -362,18 +366,69 @@ export class GoogleDrivePickerOverlay extends LitElement {
         width: var(--google-drive-picker-width);
         height: 5px;
       }
+      #no-documents-container {
+        position: fixed;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+
+        #no-documents-link {
+          color: #797979;
+          font-size: 12px;
+          text-decoration: none;
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+
+        #no-documents-help {
+          width: 450px;
+          background: var(--bb-neutral-700);
+          color: var(--bb-neutral-100);
+          padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
+          border-radius: var(--bb-grid-size);
+          font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
+            var(--bb-font-family);
+          text-align: center;
+        }
+      }
 
       :host([mode="pick-shared-board"]) {
-        top: calc(var(--google-drive-picker-top) + 15px);
         #banner {
           min-width: var(--google-drive-picker-width);
           max-width: 600px;
         }
+        #no-documents-container {
+          top: calc(
+            var(--google-drive-picker-top) + var(--google-drive-picker-height) -
+              58px
+          );
+          width: 600px;
+          #no-documents-link {
+            text-align: center;
+          }
+          #no-documents-help {
+            margin: 30px auto 0 auto;
+          }
+        }
       }
+
       :host([mode="pick-shared-assets"]) {
-        top: calc(var(--google-drive-picker-top) + 15px);
         #banner {
           width: var(--google-drive-picker-width);
+        }
+        #no-documents-container {
+          top: calc(
+            var(--google-drive-picker-top) + var(--google-drive-picker-height) -
+              10px
+          );
+          width: var(--google-drive-picker-width);
+          #no-documents-link {
+            margin-left: 60px;
+          }
+          #no-documents-help {
+            margin: 30px 0 0 0;
+          }
         }
       }
     `,
@@ -388,6 +443,7 @@ export class GoogleDrivePickerOverlay extends LitElement {
             <p>To run it, choose it below and click <em>Select</em>.</p>
           </div>
           <div id="line-hider"></div>
+          ${this.#renderNoDocumentsHelp()}
         `;
       }
       case "pick-shared-assets": {
@@ -402,6 +458,7 @@ export class GoogleDrivePickerOverlay extends LitElement {
               click <em>Select</em>.
             </p>
           </div>
+          ${this.#renderNoDocumentsHelp()}
         `;
       }
       default: {
@@ -411,6 +468,49 @@ export class GoogleDrivePickerOverlay extends LitElement {
         return;
       }
     }
+  }
+
+  #renderNoDocumentsHelp() {
+    return html`
+      <div id="no-documents-container">
+        <a id="no-documents-link" href="#" @click=${this.#onClickNoDocuments}
+          >No documents?</a
+        >
+        ${this.#showNoDocumentsHelp
+          ? html`
+              <p id="no-documents-help">
+                ${this.#renderNoDocumentsHelpMessage()}
+              </p>
+            `
+          : nothing}
+      </div>
+    `;
+  }
+
+  #renderNoDocumentsHelpMessage() {
+    switch (this.mode) {
+      case "pick-shared-board": {
+        return `If you see "No documents" above, then either this
+                ${Strings.from("APP_NAME")} is not shared with you, or it has
+                been deleted. Please contact the author.`;
+      }
+      case "pick-shared-assets": {
+        return `If you see "No documents" above, then either the assets required
+                by this ${Strings.from("APP_NAME")} are not shared with you, or
+                they have been deleted. Please contact the author.`;
+      }
+      default: {
+        console.error(
+          `Unknown mode ${JSON.stringify(this.mode satisfies never)}`
+        );
+        return;
+      }
+    }
+  }
+
+  #onClickNoDocuments(event: Event) {
+    event.preventDefault();
+    this.#showNoDocumentsHelp = !this.#showNoDocumentsHelp;
   }
 }
 
