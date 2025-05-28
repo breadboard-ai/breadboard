@@ -25,12 +25,24 @@ type ReportInputs = {
    * The icon to use
    */
   icon?: string;
+  /**
+   * Whether or not this is part of interacting
+   * with the user
+   */
+  chat?: boolean;
 };
 
 export { report };
 
 async function report(inputs: ReportInputs): Promise<boolean> {
-  const { actor: title, category: description, name, details, icon } = inputs;
+  const {
+    actor: title,
+    category: description,
+    name,
+    details,
+    icon,
+    chat,
+  } = inputs;
 
   const detailsSchema: Schema =
     typeof details === "string"
@@ -47,6 +59,10 @@ async function report(inputs: ReportInputs): Promise<boolean> {
 
   if (icon) {
     detailsSchema.icon = icon;
+  }
+
+  if (chat) {
+    detailsSchema.behavior?.push("hint-chat-mode");
   }
 
   const schema: Schema = {

@@ -19,12 +19,9 @@ import {
 import { signal } from "signal-utils";
 import { formatError } from "../utils/format-error";
 import { ReactiveConsoleEntry } from "./console-entry";
+import { idFromPath } from "./common";
 
 export { ReactiveProjectRun };
-
-function idFromPath(path: number[]): string {
-  return `e-${path.join("-")}`;
-}
 
 class ReactiveProjectRun implements ProjectRun {
   console: Map<string, ConsoleEntry> = new SignalMap();
