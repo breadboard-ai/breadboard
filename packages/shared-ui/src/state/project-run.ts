@@ -20,6 +20,7 @@ import { signal } from "signal-utils";
 import { formatError } from "../utils/format-error";
 import { ReactiveConsoleEntry } from "./console-entry";
 import { idFromPath } from "./common";
+import { InspectableGraph } from "@google-labs/breadboard";
 
 export { ReactiveProjectRun };
 
@@ -41,7 +42,16 @@ class ReactiveProjectRun implements ProjectRun {
   @signal
   accessor current: ReactiveConsoleEntry | null = null;
 
-  constructor(runner: HarnessRunner, signal?: AbortSignal) {
+  @signal
+  get estimatedEntryCount() {
+    return Math.max(this.inspectable?.nodes().length || 0, this.console.size);
+  }
+
+  constructor(
+    public readonly inspectable: InspectableGraph | undefined,
+    runner: HarnessRunner,
+    signal?: AbortSignal
+  ) {
     if (signal) {
       signal.addEventListener("abort", this.#abort.bind(this));
     }

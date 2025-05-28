@@ -95,6 +95,11 @@ export type ChatState = {
  */
 export type ProjectRun = {
   /**
+   * Provides an estimate of entries that will be in console for this run.
+   * The estimate is updated when the run goes over it.
+   */
+  estimatedEntryCount: number;
+  /**
    * Console (fka Activity View)
    */
   console: Map<string, ConsoleEntry>;
