@@ -292,7 +292,7 @@ async function keepChatting(
       properties: {
         "a-product": {
           type: "object",
-          behavior: ["llm-content"],
+          behavior: ["llm-content", "hint-chat-mode"],
           title: "Draft",
         },
       },

@@ -105,6 +105,7 @@ async function invoke({
     name: "",
     details,
     icon: "input",
+    chat: true,
   });
   const title = toText(details);
   return { context: "nothing", toInput: toInput(title, modality) };

@@ -111,7 +111,9 @@ export type BehaviorSchema =
   | "hint-advanced"
   /**
    * Hints that the node is in a chat mode: it interacts with the user
-   * as part of its invocation
+   * as part of its invocation.
+   * When applied to a port, hints that this port participates in user
+   * interaction.
    */
   | "hint-chat-mode"
   /**

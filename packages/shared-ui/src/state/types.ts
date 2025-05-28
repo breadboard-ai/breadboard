@@ -145,6 +145,15 @@ export type WorkItem = {
    */
   end: number | null;
   /**
+   * If true, this work item currently awaiting user input.
+   */
+  awaitingUserInput: boolean;
+  /**
+   * If true, indicates that this work item was shown to the user as part
+   * of a chat interaction.
+   */
+  chat: boolean;
+  /**
    * Similar to the `output` of the `ConsoleEntry`, represents the work product
    * of this item.
    */

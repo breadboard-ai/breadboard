@@ -12,12 +12,10 @@ import {
 import { ConsoleEntry, WorkItem } from "./types";
 import { SignalMap } from "signal-utils/map";
 import { InputResponse, OutputResponse } from "@google-labs/breadboard";
+import { idFromPath } from "./common";
+import { ReactiveWorkItem } from "./work-item";
 
 export { ReactiveConsoleEntry };
-
-function idFromPath(path: number[]): string {
-  return `e-${path.join("-")}`;
-}
 
 class ReactiveConsoleEntry implements ConsoleEntry {
   title: string;
@@ -54,34 +52,24 @@ class ReactiveConsoleEntry implements ConsoleEntry {
   }
 
   addInput(data: InputResponse) {
-    const { bubbled, path } = data;
-
+    const { bubbled } = data;
     // The non-bubbled inputs are not supported: they aren't found in the
     // new-style (A2-based) graphs.
     if (!bubbled) return;
 
-    // TODO: Handle inputs
-    this.work.set(idFromPath(path), {
-      title: "Input",
-      icon: "chat_mirror",
-      start: this.#pendingTimestamp || 0,
-      end: null,
-      product: new SignalMap(),
-    });
+    this.work.set(
+      ...ReactiveWorkItem.fromInput(data, this.#pendingTimestamp || 0)
+    );
   }
 
   addOutput(data: OutputResponse) {
-    const { bubbled, path } = data;
+    const { bubbled } = data;
     // The non-bubbled outputs are not supported: they aren't found in the
     // new-style (A2-based) graphs.
     if (!bubbled) return;
 
-    this.work.set(idFromPath(path), {
-      title: "Output",
-      icon: "responsive_layout",
-      start: this.#pendingTimestamp || 0,
-      end: null,
-      product: new SignalMap(),
-    });
+    this.work.set(
+      ...ReactiveWorkItem.fromOutput(data, this.#pendingTimestamp || 0)
+    );
   }
 }
