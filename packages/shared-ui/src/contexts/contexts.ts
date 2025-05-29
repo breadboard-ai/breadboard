@@ -8,3 +8,4 @@ export { environmentContext, type Environment } from "./environment.js";
 export { tokenVendorContext } from "./token-vendor.js";
 export { settingsHelperContext } from "./settings-helper.js";
 export { embedderContext } from "./embedder.js";
+export { projectRunContext } from "./project-run.js";
