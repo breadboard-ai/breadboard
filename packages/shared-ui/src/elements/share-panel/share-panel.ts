@@ -661,7 +661,7 @@ export class SharePanel extends LitElement {
     return findGoogleDriveAssetsInGraph(graph);
   }
 
-  #getPublishPermissions(): GoogleDrivePermission[] {
+  #getPublishPermissions(): gapi.client.drive.Permission[] {
     if (!this.environment) {
       console.error(`No environment was provided`);
       return [];
@@ -670,27 +670,28 @@ export class SharePanel extends LitElement {
     if (permissions.length === 0) {
       console.error(`Environment contained no googleDrive.publishPermissions`);
     }
-    return permissions;
+    return permissions.map((permission) => ({ role: "reader", ...permission }));
   }
 }
 
 /**
  * Make a string from a permission object that can be used for Set membership.
  */
-function stringifyPermission(permission: GoogleDrivePermission) {
+export function stringifyPermission(
+  permission: gapi.client.drive.Permission
+): string {
   if (permission.type === "user") {
-    return `user:${permission.emailAddress}`;
+    return `user:${permission.emailAddress}:${permission.role}`;
   }
   if (permission.type === "group") {
-    return `group:${permission.emailAddress}`;
+    return `group:${permission.emailAddress}:${permission.role}`;
   }
   if (permission.type === "domain") {
-    return `domain:${permission.domain}`;
+    return `domain:${permission.domain}:${permission.role}`;
   }
   if (permission.type === "anyone") {
-    return `anyone`;
+    return `anyone:${permission.role}`;
   }
-  permission satisfies never;
   // Don't throw because Google Drive could add new permission types in the
   // future, and that shouldnt be fatal. Instead return the unique ID of the
   // permission (or something random if it doesn't have an ID), so that it will
@@ -702,7 +703,8 @@ function stringifyPermission(permission: GoogleDrivePermission) {
   return (
     `error` +
     `:${(permission as GoogleDrivePermission).type}` +
-    `:${(permission as GoogleDrivePermission).id || Math.random()}`
+    `:${(permission as GoogleDrivePermission).id || Math.random()}` +
+    `:${permission.role}`
   );
 }
 
