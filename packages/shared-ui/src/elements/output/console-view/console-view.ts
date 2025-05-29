@@ -316,9 +316,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
           classes[item.icon] = true;
         }
 
-        // TODO: Replace this with a flag.
-        const itemHasFinished =
-          [...item.work].every(([, item]) => item.end !== null) ?? true;
+        const itemHasFinished = item.completed;
         const isLastItem = idx + 1 === this.run?.estimatedEntryCount;
 
         return html`<details ?open=${!itemHasFinished || this.#openItems.has(itemId) || isLastItem}>

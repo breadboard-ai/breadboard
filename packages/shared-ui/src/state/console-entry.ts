@@ -14,6 +14,7 @@ import { SignalMap } from "signal-utils/map";
 import { InputResponse, OutputResponse, Schema } from "@google-labs/breadboard";
 import { idFromPath, toLLMContentArray } from "./common";
 import { ReactiveWorkItem } from "./work-item";
+import { signal } from "signal-utils";
 
 export { ReactiveConsoleEntry };
 
@@ -31,6 +32,9 @@ class ReactiveConsoleEntry implements ConsoleEntry {
   work: Map<string, WorkItem> = new SignalMap();
   output: Map<string, LLMContent> = new SignalMap();
   id: string;
+
+  @signal
+  accessor completed = false;
 
   #pendingTimestamp: number | null = null;
   #outputSchema: Schema | undefined;
@@ -74,6 +78,7 @@ class ReactiveConsoleEntry implements ConsoleEntry {
     for (const [name, product] of Object.entries(products)) {
       this.output.set(name, product);
     }
+    this.completed = true;
   }
 
   addInput(data: InputResponse, callbacks: AddInputCallbacks) {

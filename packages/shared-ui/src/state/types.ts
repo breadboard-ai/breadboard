@@ -137,6 +137,8 @@ export type ConsoleEntry = {
    * The final output of the step.
    */
   output: Map<string, LLMContent /* Particle */>;
+
+  completed: boolean;
 };
 
 /**
