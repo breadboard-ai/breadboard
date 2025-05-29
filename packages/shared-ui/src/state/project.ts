@@ -17,6 +17,7 @@ import {
   EditSpec,
   EditTransform,
   err,
+  FileSystem,
   GraphStoreEntry,
   MainGraphIdentifier,
   MutableGraphStore,
@@ -163,11 +164,13 @@ class ReactiveProject implements ProjectInternal {
 
   connectHarnessRunner(
     runner: HarnessRunner,
+    fileSystem: FileSystem,
     signal?: AbortSignal
   ): Outcome<void> {
     // Intentionally reset this property with a new instance.
     this.run = new ReactiveProjectRun(
       this.#store.inspect(this.#mainGraphId, ""),
+      fileSystem,
       runner,
       signal
     );

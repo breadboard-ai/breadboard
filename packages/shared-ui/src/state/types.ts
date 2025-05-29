@@ -16,6 +16,8 @@ import {
 import {
   EditSpec,
   EditTransform,
+  FileSystem,
+  FileSystemPath,
   Outcome,
   PortIdentifier,
   Schema,
@@ -94,6 +96,8 @@ export type ChatState = {
  * `@google-labs/breadboard`.
  */
 export type ProjectRun = {
+  /// THE MODEL BITS
+
   /**
    * Provides an estimate of entries that will be in console for this run.
    * The estimate is updated when the run goes over it.
@@ -120,6 +124,13 @@ export type ProjectRun = {
    * the user is not currently waiting on input.
    */
   input: UserInput | null;
+
+  /// THE CONTROLLER BITS
+
+  /**
+   * Reads content from a FileSystem path
+   */
+  readStream(path: FileSystemPath): Promise<Outcome<LLMContent>>;
 };
 
 /**
@@ -326,6 +337,7 @@ export type Project = {
   persistDataParts(contents: LLMContent[]): Promise<LLMContent[]>;
   connectHarnessRunner(
     runner: HarnessRunner,
+    fileSystem: FileSystem,
     signal?: AbortSignal
   ): Outcome<void>;
 };
