@@ -117,6 +117,12 @@ import {
 import { IterateOnPromptEvent } from "@breadboard-ai/shared-ui/events/events.js";
 import { AppCatalystApiClient } from "@breadboard-ai/shared-ui/flow-gen/app-catalyst.js";
 import { FlowGenerator } from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
+import {
+  extractDriveFileId,
+  findGoogleDriveAssetsInGraph,
+} from "@breadboard-ai/shared-ui/elements/google-drive/find-google-drive-assets-in-graph.js";
+import { stringifyPermission } from "@breadboard-ai/shared-ui/elements/share-panel/share-panel.js";
+import { type GoogleDriveAssetShareDialog } from "@breadboard-ai/shared-ui/elements/elements.js";
 
 const STORAGE_PREFIX = "bb-main";
 const LOADING_TIMEOUT = 1250;
@@ -3997,6 +4003,8 @@ export class Main extends LitElement {
                     });
                   })
                 );
+
+                this.#checkGoogleDriveAssetShareStatus();
               }}
               @bbedgeattachmentmove=${async (
                 evt: BreadboardUI.Events.EdgeAttachmentMoveEvent
@@ -4401,7 +4409,13 @@ export class Main extends LitElement {
         }
       }}
     ></bb-snackbar>`;
-    return [until(uiController), tooltip, toasts, snackbar];
+    return [
+      until(uiController),
+      tooltip,
+      toasts,
+      snackbar,
+      this.#renderGoogleDriveAssetShareDialog(),
+    ];
   }
 
   createTosDialog() {
@@ -4432,6 +4446,115 @@ export class Main extends LitElement {
         </div>
       </form>
     </dialog>`;
+  }
+
+  readonly #googleDriveAssetShareDialog =
+    createRef<GoogleDriveAssetShareDialog>();
+
+  #renderGoogleDriveAssetShareDialog() {
+    return html`
+      <bb-google-drive-asset-share-dialog
+        ${ref(this.#googleDriveAssetShareDialog)}
+      ></bb-google-drive-asset-share-dialog>
+    `;
+  }
+
+  /**
+   * Finds all assets in the graph, checks if their sharing permissions match
+   * that of the main graph, and prompts the user to fix them if needed.
+   */
+  async #checkGoogleDriveAssetShareStatus(): Promise<void> {
+    const graph = this.tab?.graph;
+    if (!graph) {
+      console.error(`No graph was found`);
+      return;
+    }
+    const driveAssetFileIds = findGoogleDriveAssetsInGraph(graph);
+    if (driveAssetFileIds.length === 0) {
+      return;
+    }
+    if (!graph.url) {
+      console.error(`Graph had no URL`);
+      return;
+    }
+    const graphFileId = extractDriveFileId(graph.url);
+    if (!graphFileId) {
+      return;
+    }
+    const { googleDriveClient } = this;
+    if (!googleDriveClient) {
+      console.error(`No googleDriveClient was provided`);
+      return;
+    }
+
+    // Retrieve all relevant permissions.
+    const rawAssetPermissionsPromise = Promise.all(
+      driveAssetFileIds.map(
+        async (assetFileId) =>
+          [
+            assetFileId,
+            await googleDriveClient.readPermissions(assetFileId),
+          ] as const
+      )
+    );
+    const processedGraphPermissions = (
+      await googleDriveClient.readPermissions(graphFileId)
+    )
+      .filter(
+        (permission) =>
+          // We're only concerned with how the graph is shared to others.
+          permission.role !== "owner"
+      )
+      .map((permission) => ({
+        ...permission,
+        // We only care about reading the file, so downgrade "writer",
+        // "commenter", and other roles to "reader" (note that all roles are
+        // supersets of of "reader", see
+        // https://developers.google.com/workspace/drive/api/guides/ref-roles).
+        role: "reader",
+      }));
+
+    // Look at each asset and determine whether it is missing any of the
+    // permissions that the graph has.
+    const assetToMissingPermissions = new Map<
+      string,
+      gapi.client.drive.Permission[]
+    >();
+    for (const [
+      assetFileId,
+      assetPermissions,
+    ] of await rawAssetPermissionsPromise) {
+      const missingPermissions = new Map(
+        processedGraphPermissions.map((graphPermission) => [
+          stringifyPermission(graphPermission),
+          graphPermission,
+        ])
+      );
+      for (const assetPermission of assetPermissions) {
+        missingPermissions.delete(
+          stringifyPermission({
+            ...assetPermission,
+            // See note above about "reader".
+            role: "reader",
+          })
+        );
+      }
+      if (missingPermissions.size > 0) {
+        assetToMissingPermissions.set(assetFileId, [
+          ...missingPermissions.values(),
+        ]);
+      }
+    }
+
+    // Prompt to sync the permissions.
+    if (assetToMissingPermissions.size > 0) {
+      const dialog = this.#googleDriveAssetShareDialog.value;
+      if (!dialog) {
+        console.error(`Asset permissions dialog was not rendered`);
+        return;
+      }
+      dialog.open(assetToMissingPermissions);
+    }
   }
 }
 
