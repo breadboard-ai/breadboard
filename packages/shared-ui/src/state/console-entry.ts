@@ -14,8 +14,17 @@ import { SignalMap } from "signal-utils/map";
 import { InputResponse, OutputResponse, Schema } from "@google-labs/breadboard";
 import { idFromPath, toLLMContentArray } from "./common";
 import { ReactiveWorkItem } from "./work-item";
+import { signal } from "signal-utils";
 
 export { ReactiveConsoleEntry };
+
+export type OnNodeEndCallbacks = {
+  completeInput: () => void;
+};
+
+export type AddInputCallbacks = {
+  itemCreated: (item: WorkItem) => void;
+};
 
 class ReactiveConsoleEntry implements ConsoleEntry {
   title: string;
@@ -23,6 +32,14 @@ class ReactiveConsoleEntry implements ConsoleEntry {
   work: Map<string, WorkItem> = new SignalMap();
   output: Map<string, LLMContent> = new SignalMap();
   id: string;
+
+  @signal
+  accessor completed = false;
+
+  @signal
+  get current() {
+    return Array.from(this.work.values()).at(-1) || null;
+  }
 
   #pendingTimestamp: number | null = null;
   #outputSchema: Schema | undefined;
@@ -44,7 +61,7 @@ class ReactiveConsoleEntry implements ConsoleEntry {
     }
   }
 
-  onNodeEnd(data: NodeEndResponse) {
+  onNodeEnd(data: NodeEndResponse, callbacks: OnNodeEndCallbacks) {
     const { type } = data.node;
     if (type === "input" || type === "output") {
       const item = this.work.get(idFromPath(data.path));
@@ -54,6 +71,7 @@ class ReactiveConsoleEntry implements ConsoleEntry {
         item.end = data.timestamp;
         if (type === "input") {
           ReactiveWorkItem.completeInput(item, data);
+          callbacks.completeInput();
         }
       }
     }
@@ -65,17 +83,23 @@ class ReactiveConsoleEntry implements ConsoleEntry {
     for (const [name, product] of Object.entries(products)) {
       this.output.set(name, product);
     }
+    this.completed = true;
   }
 
-  addInput(data: InputResponse) {
+  addInput(data: InputResponse, callbacks: AddInputCallbacks) {
     const { bubbled } = data;
     // The non-bubbled inputs are not supported: they aren't found in the
     // new-style (A2-based) graphs.
     if (!bubbled) return;
 
-    this.work.set(
-      ...ReactiveWorkItem.fromInput(data, this.#pendingTimestamp || 0)
+    const [id, item] = ReactiveWorkItem.fromInput(
+      data,
+      this.#pendingTimestamp || 0
     );
+
+    callbacks.itemCreated(item);
+
+    this.work.set(id, item);
   }
 
   addOutput(data: OutputResponse) {

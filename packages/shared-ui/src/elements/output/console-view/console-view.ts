@@ -278,31 +278,13 @@ export class ConsoleView extends SignalWatcher(LitElement) {
   }
 
   #renderInput() {
-    if (!this.run) {
+    const input = this.run?.input;
+    if (!input) {
       return nothing;
-    }
-
-    // TODO: Replace with a flag.
-    const awaitingUserInput = [...this.run.console].some(([, item]) =>
-      [...item.work].some(([, workItem]) => workItem.awaitingUserInput)
-    );
-
-    if (!awaitingUserInput || !this.run.current) {
-      return nothing;
-    }
-
-    const work = [...this.run.current.work].at(-1);
-    if (!work?.[1]) {
-      return;
-    }
-
-    const [, workItem] = work;
-    if (!workItem.schema) {
-      return;
     }
 
     return html`<bb-floating-input
-      .schema=${workItem.schema}
+      .schema=${input.schema}
       @bbresize=${(evt: ResizeEvent) => {
         this.style.setProperty(
           "--input-clearance",
@@ -334,9 +316,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
           classes[item.icon] = true;
         }
 
-        // TODO: Replace this with a flag.
-        const itemHasFinished =
-          [...item.work].every(([, item]) => item.end !== null) ?? true;
+        const itemHasFinished = item.completed;
         const isLastItem = idx + 1 === this.run?.estimatedEntryCount;
 
         return html`<details ?open=${!itemHasFinished || this.#openItems.has(itemId) || isLastItem}>

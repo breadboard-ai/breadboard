@@ -5,7 +5,7 @@
  */
 
 import { SignalMap } from "signal-utils/map";
-import { ConsoleEntry, ProjectRun, RunError } from "./types";
+import { ConsoleEntry, ProjectRun, RunError, UserInput } from "./types";
 import {
   HarnessRunner,
   RunErrorEvent,
@@ -47,6 +47,9 @@ class ReactiveProjectRun implements ProjectRun {
     return Math.max(this.inspectable?.nodes().length || 0, this.console.size);
   }
 
+  @signal
+  accessor input: UserInput | null = null;
+
   constructor(
     public readonly inspectable: InspectableGraph | undefined,
     runner: HarnessRunner,
@@ -63,6 +66,8 @@ class ReactiveProjectRun implements ProjectRun {
     });
     runner.addEventListener("end", () => {
       this.status = "stopped";
+      this.current = null;
+      this.input = null;
     });
     runner.addEventListener("nodestart", this.#nodeStart.bind(this));
     runner.addEventListener("nodeend", this.#nodeEnd.bind(this));
@@ -85,6 +90,8 @@ class ReactiveProjectRun implements ProjectRun {
 
   #abort() {
     this.status = "stopped";
+    this.current = null;
+    this.input = null;
   }
 
   #graphStart(event: RunGraphStartEvent) {
@@ -96,12 +103,15 @@ class ReactiveProjectRun implements ProjectRun {
     this.console.clear();
     this.errors.clear();
     this.current = null;
+    this.input = null; // can't be too cautious.
   }
 
   #graphEnd(event: RunGraphEndEvent) {
     const pathLength = event.data.path.length;
 
     if (pathLength > 0) return;
+
+    this.input = null; // clean up just in case.
 
     // TOOD: Do we need to do anything here?
     console.debug("Project Run: Graph End", this.console);
@@ -129,7 +139,11 @@ class ReactiveProjectRun implements ProjectRun {
     const pathLength = event.data.path.length;
 
     if (pathLength > 1) {
-      this.current?.onNodeEnd(event.data);
+      this.current?.onNodeEnd(event.data, {
+        completeInput: () => {
+          this.input = null;
+        },
+      });
       if (event.data.outputs?.["$error"]) {
         this.#storeErrorPath(event.data.path);
       }
@@ -145,7 +159,17 @@ class ReactiveProjectRun implements ProjectRun {
       console.warn(`No current node for input event`, event);
       return;
     }
-    this.current.addInput(event.data);
+    this.current.addInput(event.data, {
+      itemCreated: (item) => {
+        if (!item.schema) {
+          console.warn(`Schema unavailable for input, skipping`, event.data);
+          return;
+        }
+        this.input = {
+          schema: item.schema,
+        };
+      },
+    });
   }
 
   #output(event: RunOutputEvent) {
@@ -160,6 +184,7 @@ class ReactiveProjectRun implements ProjectRun {
   #error(event: RunErrorEvent) {
     const message = formatError(event.data.error);
     const path = this.#errorPath || [];
+    this.input = null;
     this.errors.set(idFromPath(path), { message });
   }
 }

@@ -115,6 +115,11 @@ export type ProjectRun = {
    * The current entry.
    */
   current: ConsoleEntry | null;
+  /**
+   * The input (if any) that the user is waiting on. If `null`,
+   * the user is not currently waiting on input.
+   */
+  input: UserInput | null;
 };
 
 /**
@@ -132,6 +137,16 @@ export type ConsoleEntry = {
    * The final output of the step.
    */
   output: Map<string, LLMContent /* Particle */>;
+
+  /**
+   * Starts out as `false` and is set to `true` when the entry is finalized.
+   */
+  completed: boolean;
+
+  /**
+   * A convenient pointer at the last work item.
+   */
+  current: WorkItem | null;
 };
 
 /**
@@ -171,8 +186,21 @@ export type WorkItem = {
   product: Map<string, LLMContent /* Particle */>;
 };
 
+/**
+ * Represents an error that occurred during a run.
+ */
 export type RunError = {
   message: string;
+};
+
+/**
+ * Represents user input request.
+ */
+export type UserInput = {
+  /**
+   * The schema of the current input request.
+   */
+  schema: Schema;
 };
 
 /**
