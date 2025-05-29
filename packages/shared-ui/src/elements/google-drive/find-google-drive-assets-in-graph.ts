@@ -48,6 +48,6 @@ export function findGoogleDriveAssetsInGraph(graph: GraphDescriptor): string[] {
   return [...fileIds];
 }
 
-function extractDriveFileId(str: string): string | null {
+export function extractDriveFileId(str: string): string | null {
   return str.match(/^drive:\/?(.+)/)?.[1] ?? null;
 }
