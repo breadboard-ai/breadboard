@@ -3,6 +3,9 @@
  */
 
 import output from "@output";
+import write from "@write";
+
+import { generateId, ok } from "./utils";
 
 type ReportInputs = {
   /**
@@ -33,6 +36,53 @@ type ReportInputs = {
 };
 
 export { report };
+
+const MIME_TYPE = "application/vnd.breadboard.report-stream";
+
+export type StreamableReporterOptions = {
+  title: string;
+  icon?: string;
+  description?: string;
+};
+
+class StreamableReporter {
+  public readonly path: FileSystemReadWritePath = `/run/reporter/stream/${generateId()}`;
+  #started = false;
+
+  constructor(public readonly options: StreamableReporterOptions) {}
+
+  async start() {
+    if (this.#started) return;
+    this.#started = true;
+
+    const schema: Schema = {
+      type: "object",
+      properties: {
+        reportStream: { ...this.options, behavior: ["llm-content"] },
+      },
+    };
+    const reportStream: LLMContent = {
+      parts: [{ fileData: { fileUri: this.path, mimeType: MIME_TYPE } }],
+    };
+    const starting = await this.report("start");
+    if (!ok(starting)) return starting;
+    return output({ schema, reportStream });
+  }
+
+  async report(json: JsonSerializable) {
+    if (!this.#started) {
+      console.log("StreamableReporter not started: call `start()` first");
+      return;
+    }
+    const data = [{ parts: [{ json }] }];
+    return write({ path: this.path, stream: true, data });
+  }
+
+  close() {
+    return write({ path: this.path, stream: true, done: true });
+    this.#started = false;
+  }
+}
 
 async function report(inputs: ReportInputs): Promise<boolean> {
   const {
