@@ -17,6 +17,14 @@ import { ReactiveWorkItem } from "./work-item";
 
 export { ReactiveConsoleEntry };
 
+export type OnNodeEndCallbacks = {
+  completeInput: () => void;
+};
+
+export type AddInputCallbacks = {
+  itemCreated: (item: WorkItem) => void;
+};
+
 class ReactiveConsoleEntry implements ConsoleEntry {
   title: string;
   icon?: string;
@@ -44,7 +52,7 @@ class ReactiveConsoleEntry implements ConsoleEntry {
     }
   }
 
-  onNodeEnd(data: NodeEndResponse) {
+  onNodeEnd(data: NodeEndResponse, callbacks: OnNodeEndCallbacks) {
     const { type } = data.node;
     if (type === "input" || type === "output") {
       const item = this.work.get(idFromPath(data.path));
@@ -54,6 +62,7 @@ class ReactiveConsoleEntry implements ConsoleEntry {
         item.end = data.timestamp;
         if (type === "input") {
           ReactiveWorkItem.completeInput(item, data);
+          callbacks.completeInput();
         }
       }
     }
@@ -67,15 +76,20 @@ class ReactiveConsoleEntry implements ConsoleEntry {
     }
   }
 
-  addInput(data: InputResponse) {
+  addInput(data: InputResponse, callbacks: AddInputCallbacks) {
     const { bubbled } = data;
     // The non-bubbled inputs are not supported: they aren't found in the
     // new-style (A2-based) graphs.
     if (!bubbled) return;
 
-    this.work.set(
-      ...ReactiveWorkItem.fromInput(data, this.#pendingTimestamp || 0)
+    const [id, item] = ReactiveWorkItem.fromInput(
+      data,
+      this.#pendingTimestamp || 0
     );
+
+    callbacks.itemCreated(item);
+
+    this.work.set(id, item);
   }
 
   addOutput(data: OutputResponse) {
