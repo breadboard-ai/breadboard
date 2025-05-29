@@ -13,13 +13,12 @@ import {
 } from "../../../events/events";
 import { icons } from "../../../styles/icons";
 
+const BUTTON_HEIGHT = 44;
+
 @customElement("bb-add-asset-button")
 export class AddAssetButton extends LitElement {
   @property({ type: Boolean })
   accessor disabled = false;
-
-  @property()
-  accessor useGlobalPosition = true;
 
   @property()
   accessor showGDrive = false;
@@ -50,6 +49,9 @@ export class AddAssetButton extends LitElement {
       :host {
         display: flex;
         align-items: flex-end;
+        position: relative;
+        width: var(--button-size, 40px);
+        height: var(--button-size, 40px);
       }
 
       #add-asset {
@@ -59,8 +61,8 @@ export class AddAssetButton extends LitElement {
         width: var(--button-size, 40px);
         height: var(--button-size, 40px);
         border: none;
-        background: var(--background-color, var(--bb-neutral-100));
-        color: var(--text-color, var(--bb-neutral-800));
+        background: var(--background-color, var(--n-90, var(--bb-neutral-200)));
+        color: var(--text-color, var(--p-70, var(--bb-neutral-800)));
         flex: 0 0 auto;
         border-radius: var(--button-border-radius, 50%);
         transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
@@ -81,7 +83,7 @@ export class AddAssetButton extends LitElement {
       }
 
       bb-overflow-menu {
-        position: fixed;
+        position: absolute;
         top: 0;
         left: 0;
         width: min-content;
@@ -133,9 +135,8 @@ export class AddAssetButton extends LitElement {
       }
 
       if (this.anchor === "above") {
-        this.#overflowMenu.y -= 40; // Button height.
-        this.#overflowMenu.y -= 10; // Clearance.
-        this.#overflowMenu.y -= Math.min(380, actions.length * 40); // Menu height.
+        this.#overflowMenu.y -= 12; // Clearance.
+        this.#overflowMenu.y -= actions.length * BUTTON_HEIGHT; // Menu height.
       }
 
       overflowMenu = html`<bb-overflow-menu
@@ -166,21 +167,14 @@ export class AddAssetButton extends LitElement {
             return;
           }
 
-          const bounds = evt.target.getBoundingClientRect();
-          if (this.useGlobalPosition) {
-            this.#overflowMenu.x = bounds.x;
-            this.#overflowMenu.y = bounds.bottom + 10;
-          } else {
-            this.#overflowMenu.x = this.offsetLeft + evt.target.offsetLeft;
-            this.#overflowMenu.y =
-              this.offsetTop + evt.target.offsetTop + bounds.height;
-          }
+          this.#overflowMenu.x = 0;
+          this.#overflowMenu.y = 0;
 
           this._showOverflowMenu = true;
         }}
         id="add-asset"
       >
-        <span class="g-icon">add</span>
+        <span class="g-icon">add_circle</span>
       </button>
       ${overflowMenu}`;
   }

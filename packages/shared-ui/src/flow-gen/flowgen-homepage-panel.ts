@@ -112,7 +112,13 @@ export class FlowgenHomepagePanel extends LitElement {
       bb-speech-to-text {
         --button-size: var(--bb-grid-size-8);
         --alpha-adjustment: 0;
-        --background: transparent;
+        --background-color: transparent;
+        --active-color: linear-gradient(
+          rgb(177, 207, 250) 0%,
+          rgb(198, 210, 243) 34%,
+          rgba(210, 212, 237, 0.4) 69%,
+          rgba(230, 217, 231, 0) 99%
+        );
         margin-right: var(--bb-grid-size-2);
       }
 

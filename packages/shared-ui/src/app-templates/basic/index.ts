@@ -715,6 +715,7 @@ export class Template extends LitElement implements AppTemplate {
                 color: var(--primary-text-color);
                 width: 100%;
                 display: flex;
+                align-items: flex-end;
 
                 min-height: 100px;
                 max-height: 385px;
@@ -785,8 +786,8 @@ export class Template extends LitElement implements AppTemplate {
                   align-items: flex-end;
 
                   bb-speech-to-text {
-                    --background: var(--p-80);
-                    --bb-icon-color: var(--p-15);
+                    --background-color: var(--p-80);
+                    --text-color: var(--p-15);
                     --active-color: linear-gradient(var(--p-40), transparent);
                   }
 
@@ -1339,7 +1340,6 @@ export class Template extends LitElement implements AppTemplate {
                 .anchor=${"above"}
                 .supportedActions=${supportedActions}
                 .allowedUploadMimeTypes=${allowedUploadMimeTypes}
-                .useGlobalPosition=${false}
                 .showGDrive=${this.showGDrive}
                 ?disabled=${disabled}
               ></bb-add-asset-button>`

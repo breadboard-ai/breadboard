@@ -47,15 +47,20 @@ export class SpeechToText extends LitElement {
         display: block;
         position: relative;
         --active-color: linear-gradient(
-          rgb(177, 207, 250) 0%,
-          rgb(198, 210, 243) 34%,
-          rgba(210, 212, 237, 0.4) 69%,
-          rgba(230, 217, 231, 0) 99%
+          var(--bb-neutral-100) 0%,
+          var(--bb-neutral-300) 34%,
+          var(--bb-neutral-700) 69%,
+          var(--bb-neutral-900) 99%
         );
       }
 
       :host([active]) button {
         animation: pulse linear 1s infinite forwards;
+
+        --default-background: var(
+          --background-color,
+          var(--n-90, var(--bb-neutral-200))
+        );
 
         &::before {
           box-sizing: border-box;
@@ -91,23 +96,16 @@ export class SpeechToText extends LitElement {
       }
 
       button {
-        --default-background: oklch(
-          from var(--primary-text-color, var(--bb-neutral-900)) l c h /
-            calc(alpha - 0.8)
-        );
-
         width: var(--button-size, 40px);
         height: var(--button-size, 40px);
-        color: var(--bb-icon-color, var(--bb-neutral-900));
-        background: var(--background, var(--default-background, transparent));
+        background: var(--background-color, var(--n-90, var(--bb-neutral-200)));
+        color: var(--text-color, var(--p-70, var(--bb-neutral-800)));
         font-size: 0;
         border: none;
         border-radius: 50%;
         padding: 0;
         margin: 0;
-
-        --transition-properties: opacity;
-        transition: var(--transition);
+        transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
 
         &[disabled] {
           cursor: auto;

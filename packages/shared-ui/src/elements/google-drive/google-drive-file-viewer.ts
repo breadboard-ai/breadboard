@@ -50,10 +50,13 @@ export class GoogleDriveFileViewer extends LitElement {
         flex: 1;
         align-items: center;
         justify-content: center;
+        height: 100%;
       }
 
       img {
         width: 100%;
+        height: 100%;
+        object-fit: cover;
         border-radius: var(--bb-grid-size);
         max-width: 540px;
       }

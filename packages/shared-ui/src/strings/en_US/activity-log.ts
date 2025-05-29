@@ -37,6 +37,9 @@ export default {
   STATUS_RETRIEVING_VALUES: {
     str: "Retrieving values...",
   },
+  STATUS_AWAITING_USER: {
+    str: "Waiting for user input",
+  },
 
   // Labels.
   LABEL_WAITING_MESSAGE: {
