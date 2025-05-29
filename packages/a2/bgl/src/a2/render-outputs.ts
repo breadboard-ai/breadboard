@@ -90,6 +90,10 @@ type InvokeInputs = {
   "b-render-model-name": string;
 };
 
+type InvokeOutputs = {
+  context: LLMContent[];
+}
+
 type DescribeInputs = {
   inputs: {
     text?: LLMContent;
@@ -235,7 +239,7 @@ async function invoke({
   "b-system-instruction": systemInstruction,
   "b-render-model-name": modelType,
   ...params
-}: InvokeInputs) {
+}: InvokeInputs): Promise<Outcome<InvokeOutputs>> {
   let { modelName } = getModel(modelType);
   const { renderType } = getMode(renderMode);
 
@@ -289,7 +293,7 @@ async function invoke({
     }
   }
   if (!ok(out)) return err(out);
-  return { context: out };
+  return { context: [out] };
 }
 
 function advancedSettings(renderMode: string): Record<string, unknown> {
