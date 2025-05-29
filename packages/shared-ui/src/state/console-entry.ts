@@ -11,8 +11,8 @@ import {
 } from "@breadboard-ai/types";
 import { ConsoleEntry, WorkItem } from "./types";
 import { SignalMap } from "signal-utils/map";
-import { InputResponse, OutputResponse } from "@google-labs/breadboard";
-import { idFromPath } from "./common";
+import { InputResponse, OutputResponse, Schema } from "@google-labs/breadboard";
+import { idFromPath, toLLMContentArray } from "./common";
 import { ReactiveWorkItem } from "./work-item";
 
 export { ReactiveConsoleEntry };
@@ -25,11 +25,16 @@ class ReactiveConsoleEntry implements ConsoleEntry {
   id: string;
 
   #pendingTimestamp: number | null = null;
+  #outputSchema: Schema | undefined;
 
-  constructor({ node, path }: NodeStartResponse) {
+  constructor(
+    { node, path }: NodeStartResponse,
+    outputSchema: Schema | undefined
+  ) {
     this.title = node.metadata?.title || node.id;
     this.icon = node.metadata?.icon;
     this.id = idFromPath(path);
+    this.#outputSchema = outputSchema;
   }
 
   onNodeStart(data: NodeStartResponse) {
@@ -51,6 +56,14 @@ class ReactiveConsoleEntry implements ConsoleEntry {
           ReactiveWorkItem.completeInput(item, data);
         }
       }
+    }
+  }
+
+  finalize(data: NodeEndResponse) {
+    const { outputs } = data;
+    const { products } = toLLMContentArray(this.#outputSchema || {}, outputs);
+    for (const [name, product] of Object.entries(products)) {
+      this.output.set(name, product);
     }
   }
 

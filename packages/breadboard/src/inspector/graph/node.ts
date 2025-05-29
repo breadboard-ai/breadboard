@@ -100,6 +100,14 @@ export class Node implements InspectableNode {
     return describeEntry.latest;
   }
 
+  currentDescribe(): NodeDescriberResult {
+    const describeEntry = this.#graph.describe.get(
+      this.descriptor.id,
+      this.#graphId
+    );
+    return describeEntry.current;
+  }
+
   currentPorts(
     inputValues?: InputValues,
     outputValues?: OutputValues

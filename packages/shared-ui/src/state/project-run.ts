@@ -116,8 +116,10 @@ class ReactiveProjectRun implements ProjectRun {
       return;
     }
 
-    // create new instance of the ConsoleEntry
-    const entry = new ReactiveConsoleEntry(event.data);
+    const schema = this.inspectable
+      ?.nodeById(event.data.node.id)
+      ?.currentDescribe().outputSchema;
+    const entry = new ReactiveConsoleEntry(event.data, schema);
     this.current = entry;
     this.console.set(entry.id, entry);
   }
@@ -134,7 +136,7 @@ class ReactiveProjectRun implements ProjectRun {
       return;
     }
 
-    // TODO: Signal end of node
+    this.current?.finalize(event.data);
   }
 
   #input(event: RunInputEvent) {
