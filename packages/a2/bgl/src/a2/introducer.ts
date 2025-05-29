@@ -11,7 +11,7 @@ import {
   type DescriberResultTransformer,
 } from "./common";
 
-export { Introducer, ArgumentNameGenerator };
+export { ArgumentNameGenerator };
 
 export type IntroPort = {
   $intro: boolean;
@@ -165,64 +165,5 @@ It takes a single argument.
 Come up with a one-sentence description of this argument based on the title/description,
 with the aim of using this description in a JSON Schema.
 `.asContent();
-  }
-}
-
-class Introducer {
-  constructor(
-    public readonly instruction: LLMContent,
-    public readonly toolManager?: ToolManager
-  ) {}
-
-  prompt(): LLMContent {
-    const tools = this.toolManager?.list() || [];
-    let toolInstruction = "You have no access to tools of any kind.";
-    if (tools.length > 0) {
-      toolInstruction = `You have access to the following tools:
-${tools.map((tool) => JSON.stringify(tool)).join("\n\n")}
-Make sure to mention your ability to call these particular tools in your abilities.
-`;
-    }
-    return toLLMContent(`You are a project manager for team of AI agents.
-Right now, your job is to summarize what one AI agent does.
-Given an agent prompt, you distill it to a brief summary of abilities.
-This summary will be used to decide when to invoke this agent.
-# AI Agent Prompt
-\`\`\`
-${toText(this.instruction)}
-${toolInstruction}
-\`\`\`
-Reply in JSON using the provided schema.
-`);
-  }
-
-  async invoke(): Promise<Outcome<DescriberResult>> {
-    const introducing = await new GeminiPrompt({
-      body: {
-        contents: [this.prompt()],
-        safetySettings: defaultSafetySettings(),
-        generationConfig: {
-          responseSchema: introductionSchema(),
-          responseMimeType: "application/json",
-        },
-      },
-    }).invoke();
-    if (!ok(introducing)) return introducing;
-    const intro = (introducing.last.parts.at(0) as JSONPart)
-      .json as Introduction;
-
-    return {
-      title: intro.title,
-      description: intro.abilities,
-      inputSchema: {
-        type: "object",
-        properties: {
-          context: {
-            type: "string",
-            description: intro.argument,
-          },
-        },
-      },
-    };
   }
 }
