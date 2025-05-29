@@ -809,11 +809,9 @@ export class LLMOutput extends LitElement {
                       sandbox="${SANDBOX_RESTRICTIONS}"
                     ></iframe>`;
                   } else {
-                    // prettier-ignore
                     this.#outputLoaded();
-                    value = html`<div class="plain-text">
-                      ${until(getData())}
-                    </div>`;
+                    // prettier-ignore
+                    value = html`<div class="plain-text">${until(getData())}</div>`;
                   }
                 }
                 if (part.storedData.mimeType === "application/pdf") {
