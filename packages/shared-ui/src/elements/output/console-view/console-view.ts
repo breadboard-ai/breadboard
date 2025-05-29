@@ -270,6 +270,8 @@ export class ConsoleView extends SignalWatcher(LitElement) {
           classes[item.icon] = true;
         }
 
+        console.log("OUTPUT", Array.from(item.output.entries()));
+
         return html`<details open>
           <summary class=${classMap(classes)}>${
             item.icon
