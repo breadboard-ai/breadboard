@@ -70,42 +70,46 @@ export class AssetShelf extends LitElement {
           }
         }
 
-        & .text,
         & .audio,
-        & .gdrive {
-          border: 1px solid var(--primary-color, var(--bb-neutral-300));
-        }
-
-        & .audio {
-          background: var(--bb-icon-mic)
-            var(--background-color, var(--bb-neutral-0)) center center / 20px
-            20px no-repeat;
-        }
-
-        & .text {
-          background: var(--bb-icon-text)
-            var(--background-color, var(--bb-neutral-0)) center center / 20px
-            20px no-repeat;
-        }
-
-        & .movie,
         & .csv,
+        & .text,
+        & .movie,
         & .pdf {
+          background: var(--p-10, var(--bb-neutral-700));
+        }
+
+        .scrim {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(
+            to bottom,
+            rgba(0, 0, 0, 0) 33%,
+            rgba(0, 0, 0, 0.8) 100%
+          );
           display: flex;
-          align-items: center;
-          justify-content: center;
-          color: var(--primary-color, var(--bb-neutral-300));
-          background: var(--background-color, var(--bb-neutral-0));
+          align-items: flex-end;
+          color: var(--p-100, var(--bb-neutral-0));
+
+          & .info {
+            white-space: nowrap;
+            width: 100%;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            height: 20px;
+            margin: var(--bb-grid-size-2) var(--bb-grid-size-2)
+              var(--bb-grid-size-2) 0;
+            border-radius: 0;
+            font: 400 var(--bb-title-medium) / 1 var(--bb-font-family);
+          }
 
           & .g-icon {
-            font-size: var(--bb-grid-size-11);
+            height: 20px;
+            width: 28px;
+            margin: var(--bb-grid-size-2);
           }
-        }
-
-        & .gdrive {
-          background: var(--bb-icon-google-drive-outline)
-            var(--background-color, var(--bb-neutral-0)) center center / 20px
-            20px no-repeat;
         }
 
         & .delete {
@@ -167,34 +171,42 @@ export class AssetShelf extends LitElement {
 
   render() {
     return html`${repeat(this.#assets, (asset) => {
+      let assetIcon = "upload";
+      let assetTypeLabel = "Upload";
       return asset.parts.map((part) => {
         let value: HTMLTemplateResult | symbol = nothing;
         if (isInlineData(part)) {
           if (part.inlineData.mimeType.startsWith("image")) {
+            assetIcon = "image";
+            assetTypeLabel = "Image";
             value = html`<img
               src="data:${part.inlineData.mimeType};base64,${part.inlineData
                 .data}"
             />`;
           } else if (part.inlineData.mimeType.startsWith("audio")) {
+            assetIcon = "mic";
+            assetTypeLabel = "Audio";
             value = html`<div class="audio"></div>`;
           } else if (part.inlineData.mimeType === "text/csv") {
-            value = html`<div class="csv">
-              <span class="g-icon">csv</span>
-            </div>`;
+            assetIcon = "csv";
+            assetTypeLabel = "CSV";
+            value = html`<div class="csv"></div>`;
           } else if (part.inlineData.mimeType.startsWith("text")) {
             value = html`<div class="text"></div>`;
           } else if (part.inlineData.mimeType.startsWith("video")) {
-            value = html`<div class="movie">
-              <span class="g-icon">movie</span>
-            </div>`;
+            assetIcon = "movie";
+            assetTypeLabel = "Movie";
+            value = html`<div class="movie"></div>`;
           } else if (part.inlineData.mimeType.includes("pdf")) {
-            value = html`<div class="pdf">
-              <span class="g-icon">drive_pdf</span>
-            </div>`;
+            assetIcon = "drive_pdf";
+            assetTypeLabel = "PDF";
+            value = html`<div class="pdf"></div>`;
           }
         } else if (isFileDataCapabilityPart(part)) {
           switch (part.fileData.mimeType) {
             case "video/mp4": {
+              assetIcon = "video_youtube";
+              assetTypeLabel = "YouTube";
               let uri: string | null = part.fileData.fileUri;
               if (isWatchUri(uri) || isShortsUri(uri)) {
                 uri = convertWatchOrShortsUriToEmbedUri(uri);
@@ -222,6 +234,8 @@ export class AssetShelf extends LitElement {
               if (
                 part.fileData.mimeType.startsWith("application/vnd.google-apps")
               ) {
+                assetIcon = "drive";
+                assetTypeLabel = "Document";
                 value = html`<bb-google-drive-file-viewer
                   .fileId=${part.fileData.fileUri}
                 ></bb-google-drive-file-viewer>`;
@@ -241,6 +255,10 @@ export class AssetShelf extends LitElement {
             <span class="g-icon">close</span>
           </button>
           ${value}
+          <span class="scrim">
+            <span class="g-icon">${assetIcon}</span>
+            <span class="info">${assetTypeLabel}</span>
+          </span>
         </div>`;
       });
     })}`;

@@ -322,6 +322,14 @@ export class FloatingInput extends LitElement {
     this.#allowedMimeTypes = null;
   }
 
+  protected firstUpdated(): void {
+    if (!this.textInput) {
+      return;
+    }
+
+    this.textInput.focus();
+  }
+
   render() {
     let inputContents: HTMLTemplateResult | symbol = nothing;
     if (this.schema) {
