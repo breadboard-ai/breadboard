@@ -842,6 +842,10 @@ export class LLMOutput extends LitElement {
             }
           } else if (isFileDataCapabilityPart(part)) {
             switch (part.fileData.mimeType) {
+              case "application/vnd.breadboard.report-stream": {
+                value = html`Stream`;
+                break;
+              }
               case "video/mp4": {
                 if (part.fileData.fileUri === "") {
                   value = html`<span class="empty-text-part">

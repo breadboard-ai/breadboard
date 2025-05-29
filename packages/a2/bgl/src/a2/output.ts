@@ -35,7 +35,7 @@ type ReportInputs = {
   chat?: boolean;
 };
 
-export { report };
+export { report, StreamableReporter };
 
 const MIME_TYPE = "application/vnd.breadboard.report-stream";
 
@@ -58,7 +58,11 @@ class StreamableReporter {
     const schema: Schema = {
       type: "object",
       properties: {
-        reportStream: { ...this.options, behavior: ["llm-content"] },
+        reportStream: {
+          ...this.options,
+          behavior: ["llm-content"],
+          type: "object",
+        },
       },
     };
     const reportStream: LLMContent = {
@@ -69,13 +73,17 @@ class StreamableReporter {
     return output({ schema, reportStream });
   }
 
-  async report(json: JsonSerializable) {
+  async reportLLMContent(llmContent: LLMContent) {
     if (!this.#started) {
       console.log("StreamableReporter not started: call `start()` first");
       return;
     }
-    const data = [{ parts: [{ json }] }];
+    const data = [llmContent];
     return write({ path: this.path, stream: true, data });
+  }
+
+  report(json: JsonSerializable) {
+    return this.reportLLMContent({ parts: [{ json }] });
   }
 
   close() {
