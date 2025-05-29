@@ -3,7 +3,7 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import type { LLMContent } from "@breadboard-ai/types";
+import type { DataPart, LLMContent } from "@breadboard-ai/types";
 import {
   isFileDataCapabilityPart,
   isFunctionCallCapabilityPart,
@@ -506,6 +506,30 @@ export class LLMOutput extends LitElement {
   @property()
   accessor showPartOverflowMenu = false;
 
+  #hasOverflowMenu(part: DataPart): boolean {
+    if (isInlineData(part)) {
+      if (
+        part.inlineData.mimeType.startsWith("image") &&
+        part.inlineData.data !== ""
+      ) {
+        return true;
+      }
+      if (part.inlineData.mimeType.startsWith("text/html")) {
+        return true;
+      }
+    } else if (isStoredData(part)) {
+      if (part.storedData.mimeType.startsWith("image")) {
+        return true;
+      }
+
+      if (part.storedData.mimeType.startsWith("text/html")) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   render() {
     if (this.value && !isLLMContent(this.value)) {
       console.warn(`Unexpected value for LLM Output`, this.value);
@@ -582,7 +606,6 @@ export class LLMOutput extends LitElement {
     }
     return this.value && this.value.parts.length
       ? html`${map(this.value.parts, (part, idx) => {
-          let hasOverflowMenu = false;
           let value: TemplateResult | symbol = nothing;
           if (isTextCapabilityPart(part)) {
             if (part.text === "") {
@@ -635,7 +658,6 @@ export class LLMOutput extends LitElement {
                   return html`No image provided`;
                 }
 
-                hasOverflowMenu = true;
                 return cache(html`
                   <img
                     @load=${() => {
@@ -658,7 +680,6 @@ export class LLMOutput extends LitElement {
                 );
               }
               if (part.inlineData.mimeType.startsWith("text/html")) {
-                hasOverflowMenu = true;
                 this.#outputLoaded();
                 return cache(
                   html`<iframe
@@ -741,7 +762,6 @@ export class LLMOutput extends LitElement {
                   return response.text();
                 };
                 if (mimeType.startsWith("image")) {
-                  hasOverflowMenu = true;
                   const imgData = new Promise((resolve) => {
                     const image = new Image();
                     image.setAttribute("alt", url);
@@ -780,7 +800,6 @@ export class LLMOutput extends LitElement {
                   />`;
                 }
                 if (mimeType.startsWith("text")) {
-                  this.#outputLoaded();
                   if (mimeType === "text/html") {
                     this.#outputLoaded();
                     value = html`<iframe
@@ -791,7 +810,10 @@ export class LLMOutput extends LitElement {
                     ></iframe>`;
                   } else {
                     // prettier-ignore
-                    value = html`<div class="plain-text">${until(getData())}</div>`;
+                    this.#outputLoaded();
+                    value = html`<div class="plain-text">
+                      ${until(getData())}
+                    </div>`;
                   }
                 }
                 if (part.storedData.mimeType === "application/pdf") {
@@ -893,6 +915,7 @@ export class LLMOutput extends LitElement {
           } else {
             value = html`Unrecognized part`;
           }
+
           return html`<div class="content">
             <span
               class=${classMap({
@@ -900,7 +923,7 @@ export class LLMOutput extends LitElement {
                 markdown: isTextCapabilityPart(part),
               })}
               >${value}
-              ${hasOverflowMenu && this.showExportControls
+              ${this.#hasOverflowMenu(part) && this.showExportControls
                 ? html`<button
                     class="overflow"
                     @click=${(evt: Event) => {
