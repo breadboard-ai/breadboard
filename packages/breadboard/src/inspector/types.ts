@@ -126,6 +126,13 @@ export type InspectableNode = {
    * `NodeDescriberFunction`.
    */
   describe(): Promise<NodeDescriberResult>;
+
+  /**
+   * Same as above, except synchronous. Will return the current value and not
+   * wait for the latest.
+   */
+  currentDescribe(): NodeDescriberResult;
+
   /**
    * Returns configuration of the node.
    * TODO: Use a friendlier to inspection return type.

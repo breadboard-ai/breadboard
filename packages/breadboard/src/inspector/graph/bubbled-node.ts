@@ -93,6 +93,14 @@ export class BubbledInspectableNode implements InspectableNode {
     return this.#actual.describe();
   }
 
+  currentDescribe(): NodeDescriberResult {
+    if (this.descriptor.type === "input") {
+      return describeInput({ inputs: this.#actual.configuration() });
+    }
+
+    return this.#actual.currentDescribe();
+  }
+
   #portsForInput(inputValues?: InputValues, outputValues?: OutputValues) {
     const described = describeInput({ inputs: inputValues });
 

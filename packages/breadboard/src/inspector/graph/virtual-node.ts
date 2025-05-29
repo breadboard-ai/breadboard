@@ -155,6 +155,10 @@ class VirtualNode implements InspectableNode {
     };
   }
 
+  currentDescribe(): NodeDescriberResult {
+    return { inputSchema: {}, outputSchema: {} };
+  }
+
   configuration(): NodeConfiguration {
     return this.descriptor.configuration || {};
   }
