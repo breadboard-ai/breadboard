@@ -27,6 +27,9 @@ export class AssetShelf extends LitElement {
   @property()
   accessor name: string = "asset-shelf";
 
+  @property({ reflect: true, type: Boolean })
+  accessor populated = false;
+
   static styles = [
     icons,
     css`
@@ -39,24 +42,31 @@ export class AssetShelf extends LitElement {
 
       .value {
         display: block;
-        height: 72px;
-        aspect-ratio: 16/9;
-        margin: var(--bb-grid-size-2) var(--bb-grid-size-2) 0 0;
+        width: 160px;
+        height: 120px;
+        aspect-ratio: 16/12;
+        margin: var(--bb-grid-size-4) var(--bb-grid-size-4) 0 0;
         position: relative;
         flex: 0 0 auto;
 
         & > *:not(button) {
+          display: block;
           object-fit: cover;
           width: 100%;
           height: 100%;
-          border-radius: var(--bb-grid-size-2);
+          border-radius: var(--bb-grid-size-4);
           box-sizing: border-box;
+          border: 4px solid var(--p-100, var(--bb-neutral-0));
+          box-shadow: 0px 0px 5.4px rgba(0, 0, 0, 0.25);
+          overflow: hidden;
           --icon-size: 32px;
 
           > * {
             display: block;
             height: 100%;
-            border-radius: var(--bb-grid-size-2);
+            width: 100%;
+            border-radius: var(--bb-grid-size-3);
+            object-fit: cover;
           }
         }
 
@@ -102,14 +112,14 @@ export class AssetShelf extends LitElement {
           position: absolute;
           top: calc(-1 * var(--bb-grid-size-2));
           right: calc(-1 * var(--bb-grid-size-2));
-          width: 20px;
-          height: 20px;
+          width: 40px;
+          height: 40px;
           border: none;
           border-radius: 50%;
           font-size: 0;
-          background: var(--secondary-color) var(--bb-icon-close) center
-            center / 20px 20px no-repeat;
+          background: var(--n-80, var(--bb-neutral-400));
           z-index: 1;
+          box-shadow: 0px 0px 5.4px rgba(0, 0, 0, 0.25);
 
           &:not([disabled]) {
             opacity: 1;
@@ -132,6 +142,7 @@ export class AssetShelf extends LitElement {
 
   addAsset(addedAsset: LLMContent) {
     this.#assets.push(addedAsset);
+    this.populated = this.#assets.length > 0;
     requestAnimationFrame(() => {
       this.requestUpdate();
     });
@@ -139,6 +150,7 @@ export class AssetShelf extends LitElement {
 
   removeAsset(removedAsset: LLMContent) {
     this.#assets = this.#assets.filter((asset) => asset !== removedAsset);
+    this.populated = this.#assets.length > 0;
     this.dispatchEvent(new Event("assetchanged"));
     requestAnimationFrame(() => {
       this.requestUpdate();
@@ -147,6 +159,7 @@ export class AssetShelf extends LitElement {
 
   clear() {
     this.#assets = [];
+    this.populated = false;
     requestAnimationFrame(() => {
       this.requestUpdate();
     });
@@ -225,7 +238,7 @@ export class AssetShelf extends LitElement {
               this.removeAsset(asset);
             }}
           >
-            Delete
+            <span class="g-icon">close</span>
           </button>
           ${value}
         </div>`;

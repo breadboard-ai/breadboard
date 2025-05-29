@@ -50,6 +50,12 @@ export class AddAssetModal extends LitElement {
       display: block;
       pointer-events: none;
       opacity: 0;
+
+      & #content {
+        display: block;
+        pointer-events: none;
+        opacity: 0;
+      }
     }
 
     #container {
@@ -59,10 +65,14 @@ export class AddAssetModal extends LitElement {
       pointer-events: auto;
       width: 100%;
       height: 100%;
-      background: oklch(
-        from var(--background-color, var(--bb-neutral-900)) l c h /
-          calc(alpha - 0.6)
-      );
+      background: transparent;
+      border: none;
+
+      &::backdrop {
+        background: oklch(
+          from var(--n-90, var(--bb-neutral-900)) l c h / calc(alpha * 0.1)
+        );
+      }
     }
 
     #content {
@@ -155,7 +165,7 @@ export class AddAssetModal extends LitElement {
   `;
 
   #inputRef: Ref<HTMLDivElement> = createRef();
-  #containerRef: Ref<HTMLDivElement> = createRef();
+  #containerRef: Ref<HTMLDialogElement> = createRef();
   #addDriveInputRef: Ref<GoogleDriveFileId> = createRef();
 
   async #processAndEmit() {
@@ -285,10 +295,18 @@ export class AddAssetModal extends LitElement {
   }
 
   protected updated(): void {
-    if (!this.#inputRef.value) {
-      return;
+    if (this.#inputRef.value) {
+      this.#inputRef.value.click();
     }
-    this.#inputRef.value.click();
+
+    if (
+      this.#containerRef.value &&
+      (this.assetType === "upload" ||
+        this.assetType === "drawable" ||
+        this.assetType === "youtube")
+    ) {
+      this.#containerRef.value.showModal();
+    }
   }
 
   protected willUpdate(changedProperties: PropertyValues): void {
@@ -362,6 +380,9 @@ export class AddAssetModal extends LitElement {
             .connectionName=${SIGN_IN_CONNECTION_ID}
             .autoTrigger=${true}
             .ownedByMeOnly=${true}
+            @bbinputcancel=${() => {
+              this.dispatchEvent(new OverlayDismissedEvent());
+            }}
             @bb-input-change=${() => {
               this.#processAndEmit();
             }}
@@ -374,7 +395,7 @@ export class AddAssetModal extends LitElement {
         break;
     }
 
-    return html`<div
+    return html`<dialog
       id="container"
       ${ref(this.#containerRef)}
       @pointerdown=${() => {
@@ -400,6 +421,6 @@ export class AddAssetModal extends LitElement {
         <h1>${title}</h1>
         ${assetCollector} ${assetDone}
       </div>
-    </div>`;
+    </dialog>`;
   }
 }

@@ -7,7 +7,11 @@
 import { LitElement, PropertyValues, css, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { type InputEnterEvent } from "../../events/events.js";
-import { InputChangeEvent, InputPlugin } from "../../plugins/input-plugin.js";
+import {
+  InputCancelEvent,
+  InputChangeEvent,
+  InputPlugin,
+} from "../../plugins/input-plugin.js";
 import "../connection/connection-input.js";
 import {
   loadDrivePicker,
@@ -278,6 +282,7 @@ export class GoogleDriveFileId extends LitElement {
     switch (result.action) {
       case "cancel": {
         this.#destroyPicker();
+        this.dispatchEvent(new InputCancelEvent());
         return;
       }
       case "picked": {

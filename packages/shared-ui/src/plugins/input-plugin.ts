@@ -66,8 +66,15 @@ export class InputChangeEvent extends Event {
   }
 }
 
+export class InputCancelEvent extends Event {
+  constructor() {
+    super("bbinputcancel", { bubbles: true, cancelable: true, composed: true });
+  }
+}
+
 declare global {
   interface HTMLElementEventMap {
     "bb-input-change": InputChangeEvent;
+    bbinputcancel: InputCancelEvent;
   }
 }
