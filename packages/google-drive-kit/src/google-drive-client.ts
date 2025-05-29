@@ -29,6 +29,10 @@ export interface ExportFileOptions extends BaseRequestOptions {
   mimeType: string;
 }
 
+export interface WritePermissionOptions extends BaseRequestOptions {
+  sendNotificationEmail: boolean;
+}
+
 export class GoogleDriveClient {
   readonly #apiBaseUrl: string;
   readonly #proxyUrl: string;
@@ -310,6 +314,49 @@ export class GoogleDriveClient {
     }
   }
 
+  async readPermissions(
+    fileId: string,
+    options?: BaseRequestOptions
+  ): Promise<gapi.client.drive.Permission[]> {
+    const file = await this.getFile(fileId, {
+      ...options,
+      fields: ["permissions"],
+    });
+    return file.permissions as gapi.client.drive.Permission[];
+  }
+
+  async writePermission(
+    fileId: string,
+    permission: gapi.client.drive.Permission,
+    options: WritePermissionOptions
+  ): Promise<gapi.client.drive.Permission[]> {
+    const authorization = {
+      kind: "bearer",
+      token: await this.#getUserAccessToken(),
+    } as const;
+    const url = this.#makeUrl(
+      `drive/v3/files/${encodeURIComponent(fileId)}/permissions`,
+      authorization
+    );
+    url.searchParams.set(
+      "sendNotificationEmail",
+      options.sendNotificationEmail ? "true" : "false"
+    );
+    const response = await retryableFetch(url, {
+      method: "POST",
+      body: JSON.stringify(permission),
+      headers: this.#makeHeaders(authorization),
+      signal: options?.signal,
+    });
+    if (!response.ok) {
+      throw new Error(
+        `Google Drive write permission ${response.status} error: ` +
+          (await response.text())
+      );
+    }
+    return (await response.json()) as gapi.client.drive.Permission[];
+  }
+
   #makeUrl(path: string, authorization: GoogleApiAuthorization): URL {
     const url = new URL(path, this.#apiBaseUrl);
     const authKind = authorization.kind;
@@ -369,4 +416,29 @@ function responseFromBase64(base64String: string, mimeType: string): Response {
     Uint8Array.from(atob(base64String), (char) => char.charCodeAt(0)),
     { status: 200, headers: { "content-type": mimeType } }
   );
+}
+
+/**
+ * Makes a copy of `permission` which only includes the fields from
+ * https://developers.google.com/workspace/drive/api/reference/rest/v3/permissions
+ * that are not annotated as "output only".
+ *
+ * This function is helpful for syncing permissions, where we read one
+ * permission and then write it to another, because the API will error if the
+ * permission includes any non-writable permissions.
+ */
+export function onlyWritablePermissionFields(
+  permission: gapi.client.drive.Permission
+): gapi.client.drive.Permission {
+  return {
+    type: permission.type,
+    emailAddress: permission.emailAddress,
+    role: permission.role,
+    allowFileDiscovery: permission.allowFileDiscovery,
+    domain: permission.domain,
+    expirationTime: permission.expirationTime,
+    view: permission.view,
+    pendingOwner: permission.pendingOwner,
+    inheritedPermissionsDisabled: permission.inheritedPermissionsDisabled,
+  };
 }
