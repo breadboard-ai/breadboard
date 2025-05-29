@@ -138,7 +138,15 @@ export type ConsoleEntry = {
    */
   output: Map<string, LLMContent /* Particle */>;
 
+  /**
+   * Starts out as `false` and is set to `true` when the entry is finalized.
+   */
   completed: boolean;
+
+  /**
+   * A convenient pointer at the last work item.
+   */
+  current: WorkItem | null;
 };
 
 /**

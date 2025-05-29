@@ -36,6 +36,11 @@ class ReactiveConsoleEntry implements ConsoleEntry {
   @signal
   accessor completed = false;
 
+  @signal
+  get current() {
+    return Array.from(this.work.values()).at(-1) || null;
+  }
+
   #pendingTimestamp: number | null = null;
   #outputSchema: Schema | undefined;
 
