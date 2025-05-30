@@ -1685,8 +1685,12 @@ export class Edit extends EventTarget {
       generatingAutonames.description = description.slice(0, -1);
     }
 
-    // for now, only edit titles.
-    const metadata: NodeMetadata = { title: generatingAutonames.title };
+    // For now, only edit titles and set `userModifed` so that the autoname
+    // only works once.
+    const metadata: NodeMetadata = {
+      title: generatingAutonames.title,
+      userModified: true,
+    };
 
     const applyingAutonames = await editableGraph.apply(
       new BreadboardUI.Transforms.UpdateNode(id, graphId, null, metadata, null)
