@@ -1657,11 +1657,6 @@ export class Edit extends EventTarget {
     graphId: string,
     configuration: NodeConfiguration
   ): Promise<Outcome<void>> {
-    const shouldAutoname = !!this.settings
-      ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
-      .items.get("Show Experimental Components")?.value;
-    if (!shouldAutoname) return;
-
     const generatingAutonames = await this.#autoname.onNodeConfigurationUpdate(
       editableGraph,
       id,
