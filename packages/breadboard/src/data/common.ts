@@ -25,7 +25,7 @@ import {
   DataPartTransformType,
   Outcome,
 } from "./types.js";
-import { ok } from "./file-system/utils.js";
+import { err, ok } from "./file-system/utils.js";
 
 // Helpers for handling DataCapability objects.
 
@@ -294,8 +294,10 @@ export async function transformDataParts(
           // convert persisent or ephemeral to inline
           transformedPart = await toInlineDataPart(part);
         } else if (to == "persistent" || to === "persistent-temporary") {
-          if (isEphemeral) {
-            // convert ephemeral to persistent
+          // convert ephemeral to persistent
+          // We always start by trying to inline the data and then persisting
+          // it.
+          try {
             const inline = await toInlineDataPart(part);
             const temporary = to === "persistent-temporary";
             const persisted = await transformer.persistPart(
@@ -305,6 +307,8 @@ export async function transformDataParts(
             );
             if (!ok(persisted)) return persisted;
             transformedPart = persisted;
+          } catch (e) {
+            return err((e as Error).message);
           }
         } else if (to === "file") {
           const file = await transformer.toFileData(graphUrl, part);

@@ -6,13 +6,7 @@
 import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { consume } from "@lit/context";
-import {
-  GraphDescriptor,
-  GraphTheme,
-  InputValues,
-  LLMContent,
-  OutputValues,
-} from "@breadboard-ai/types";
+import { GraphDescriptor, GraphTheme, LLMContent } from "@breadboard-ai/types";
 import GenerateAppTheme from "../../sideboards/sideboards-bgl/generate-app-theme.bgl.json" with { type: "json" };
 import MarkdownIt from "markdown-it";
 import {
@@ -39,6 +33,7 @@ import {
   isInlineData,
   isStoredData,
   isTextCapabilityPart,
+  ok,
 } from "@google-labs/breadboard";
 import { until } from "lit/directives/until.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context";
@@ -481,51 +476,37 @@ export class AppThemeCreator extends LitElement {
     if (!this.sideBoardRuntime) {
       throw new Error("Internal error: No side board runtime was available.");
     }
-    const runner = await this.sideBoardRuntime.createRunner(
+    const context: LLMContent[] = [
       {
-        ...(GenerateAppTheme as GraphDescriptor),
+        role: "user",
+        parts: [
+          {
+            text: `ULTRA IMPORTANT: The application's name is: "${appName}".`,
+          },
+        ],
       },
-      this.graph?.url
-    );
-    const inputs: InputValues & { context: LLMContent[] } = {
-      context: [
-        {
-          role: "user",
-          parts: [
-            {
-              text: `ULTRA IMPORTANT: The application's name is: "${appName}".`,
-            },
-          ],
-        },
-      ],
-    };
+    ];
 
     if (appDescription) {
-      inputs.context[0].parts.push({
+      context[0].parts.push({
         text: `The app does the following: "${appDescription}"`,
       });
     }
 
     if (additionalInformation) {
-      inputs.context[0].parts.push({ text: additionalInformation });
+      context[0].parts.push({ text: additionalInformation });
     }
 
-    const outputs = await new Promise<OutputValues[]>((resolve, reject) => {
-      const outputs: OutputValues[] = [];
-      runner.addEventListener("input", () => void runner.run(inputs));
-      runner.addEventListener("output", (event) =>
-        outputs.push(event.data.outputs)
-      );
-      runner.addEventListener("end", () => resolve(outputs));
-      runner.addEventListener("error", (event) => reject(event.data.error));
-      void runner.run();
+    const result = await this.sideBoardRuntime.runTask({
+      graph: GenerateAppTheme as GraphDescriptor,
+      url: this.graph?.url,
+      context,
     });
-
-    if (outputs.length !== 1) {
-      throw new Error(`Expected 1 output, got ${JSON.stringify(outputs)}`);
+    if (!ok(result)) {
+      throw new Error(result.$error);
     }
 
-    const [response] = outputs[0].context as LLMContent[];
+    const [response] = result;
 
     // The splash image.
     const [splashScreen, colorsRaw] = response.parts;

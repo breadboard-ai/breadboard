@@ -125,16 +125,18 @@ class SideboardRuntimeImpl
       context: task.context,
     } as InputValues;
     try {
-      const outputs = await new Promise<OutputValues[]>((resolve, reject) => {
-        const outputs: OutputValues[] = [];
-        runner.addEventListener("input", () => void runner.run(inputs));
-        runner.addEventListener("output", (event) =>
-          outputs.push(event.data.outputs)
-        );
-        runner.addEventListener("end", () => resolve(outputs));
-        runner.addEventListener("error", (event) => reject(event.data.error));
-        void runner.run();
-      });
+      const outputs = (
+        await new Promise<OutputValues[]>((resolve, reject) => {
+          const outputs: OutputValues[] = [];
+          runner.addEventListener("input", () => void runner.run(inputs));
+          runner.addEventListener("output", (event) =>
+            outputs.push(event.data.outputs)
+          );
+          runner.addEventListener("end", () => resolve(outputs));
+          runner.addEventListener("error", (event) => reject(event.data.error));
+          void runner.run();
+        })
+      ).filter((item) => "context" in item);
       if (outputs.length !== 1) {
         return err(`Expected 1 output, got ${JSON.stringify(outputs)}`);
       }
