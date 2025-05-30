@@ -341,6 +341,7 @@ class ReactiveProject implements ProjectInternal {
           description: entry.description,
           order: entry.order || Number.MAX_SAFE_INTEGER,
           icon: entry.icon,
+          tags: entry.tags,
         } satisfies Tool,
       ];
     }

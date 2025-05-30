@@ -20,6 +20,7 @@ export type ConfigureAssetsInputs = {
   VITE_ENABLE_TOS?: boolean;
   VITE_TOS_HTML_PATH?: string;
   VITE_FEEDBACK_LINK?: string;
+  VITE_ENVIRONMENT_NAME?: string;
 };
 
 export type ConfigureAssetOutputs = {
@@ -33,6 +34,7 @@ export type ConfigureAssetOutputs = {
   ENABLE_TOS: boolean;
   TOS_HTML: string;
   FEEDBACK_LINK: string;
+  ENVIRONMENT_NAME: string;
 };
 
 async function configureAssets(
@@ -49,6 +51,7 @@ async function configureAssets(
     VITE_ENABLE_TOS: ENABLE_TOS,
     VITE_TOS_HTML_PATH: TOS_HTML_PATH,
     VITE_FEEDBACK_LINK: FEEDBACK_LINK,
+    VITE_ENVIRONMENT_NAME: ENVIRONMENT_NAME,
   } = config;
 
   if (!LANGUAGE_PACK) {
@@ -92,6 +95,7 @@ async function configureAssets(
     ENABLE_TOS: ENABLE_TOS ?? false,
     TOS_HTML: JSON.stringify(tosHtml),
     FEEDBACK_LINK: JSON.stringify(FEEDBACK_LINK),
+    ENVIRONMENT_NAME: JSON.stringify(ENVIRONMENT_NAME),
   };
 }
 

@@ -138,6 +138,7 @@ export type MainArguments = {
   settings?: SettingsStore;
   proxy?: HarnessProxyConfig[];
   version?: string;
+  environmentName?: string;
   /**
    * The Git hash of the current commit.
    */
@@ -195,6 +196,7 @@ const generatedUrls = new Set<string>();
 const ENVIRONMENT: BreadboardUI.Contexts.Environment = {
   connectionServerUrl: undefined,
   connectionRedirectUrl: "/oauth/",
+  environmentName: "dev",
   plugins: {
     input: [
       BreadboardUI.Elements.googleDriveFileIdInputPlugin,
@@ -440,11 +442,14 @@ export class Main extends LitElement {
     this.#tosHtml = config.tosHtml;
     this.#embedHandler = config.embedHandler;
 
+    console.log(123123, config.environmentName);
+
     this.showExtendedSettings = config.showExtendedSettings ?? false;
 
     // This is a big hacky, since we're assigning a value to a constant object,
     // but okay here, because this constant is never re-assigned and is only
     // used by this instance.
+    ENVIRONMENT.environmentName = config.environmentName;
     ENVIRONMENT.connectionServerUrl =
       config.connectionServerUrl?.href ||
       import.meta.env.VITE_CONNECTION_SERVER_URL;
