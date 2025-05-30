@@ -56,7 +56,7 @@
     },
     {
       "id": "a2-5f1e8d70",
-      "type": "embed://a2/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+      "type": "embed://a2/generate.bgl.json#module:main",
       "metadata": {
         "title": "CSS Colors",
         "visual": {
@@ -69,7 +69,7 @@
         "userModified": false
       },
       "configuration": {
-        "description": {
+        "config$prompt": {
           "role": "user",
           "parts": [
             {
@@ -77,8 +77,9 @@
             }
           ]
         },
-        "p-chat": false,
-        "p-list": false
+        "config$ask-user": false,
+        "config$list": false,
+        "generation-mode": "text"
       }
     },
     {
@@ -102,9 +103,7 @@
               "items": {
                 "type": "object",
                 "examples": [],
-                "behavior": [
-                  "llm-content"
-                ]
+                "behavior": ["llm-content"]
               },
               "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]",
               "description": ""
