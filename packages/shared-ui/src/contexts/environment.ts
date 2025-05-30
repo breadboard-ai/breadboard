@@ -14,6 +14,7 @@ export type GoogleDrivePermission =
   | { id: string; type: "anyone" };
 
 export interface Environment {
+  environmentName: string | undefined;
   connectionServerUrl: string | undefined;
   connectionRedirectUrl: string;
   requiresSignin?: boolean;

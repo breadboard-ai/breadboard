@@ -264,6 +264,7 @@ export type Tool = {
   icon?: string;
   connectorInstance?: string;
   order?: number;
+  tags?: string[];
 };
 
 export type Component = {

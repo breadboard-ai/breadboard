@@ -238,10 +238,8 @@ export class TextEditor extends LitElement {
 
     selection.removeAllRanges();
     try {
-      console.log(this.#isRangeValid(this.#lastRange));
       selection.addRange(this.#lastRange);
     } catch (err) {
-      console.log(11111);
       console.log(err);
     }
   }

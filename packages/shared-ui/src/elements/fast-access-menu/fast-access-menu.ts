@@ -26,6 +26,8 @@ import {
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { getAssetType, getMimeType } from "../../utils/mime-type";
+import { consume } from "@lit/context";
+import { Environment, environmentContext } from "../../contexts/environment";
 
 @customElement("bb-fast-access-menu")
 export class FastAccessMenu extends SignalWatcher(LitElement) {
@@ -55,6 +57,9 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
   @property()
   accessor showParameters = false;
+
+  @consume({ context: environmentContext })
+  accessor environment!: Environment;
 
   static styles = css`
     * {
@@ -285,6 +290,25 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     let parameters = [...(this.state?.parameters.entries() || [])].map(
       ([id, value]) => ({ id, ...value })
     );
+
+    if (this.environment && this.environment.environmentName) {
+      tools = tools.filter((tool) => {
+        if (tool.tags === undefined) {
+          return true;
+        }
+
+        for (const tag of tool.tags) {
+          if (
+            tag.startsWith("environment") &&
+            tag !== `environment-${this.environment.environmentName}`
+          ) {
+            return false;
+          }
+        }
+
+        return true;
+      });
+    }
 
     if (this.filter) {
       const filterStr = this.filter;

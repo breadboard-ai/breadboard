@@ -133,6 +133,7 @@ async function createEnvironment(
   args: BootstrapArguments
 ): Promise<BreadboardUIContext.Environment> {
   return {
+    environmentName: ENVIRONMENT_NAME,
     connectionServerUrl: args.connectionServerUrl?.href,
     connectionRedirectUrl: "/oauth/",
     requiresSignin: args.requiresSignin,

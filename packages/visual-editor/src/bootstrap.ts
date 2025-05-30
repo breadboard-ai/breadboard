@@ -135,6 +135,7 @@ function bootstrap(args: BootstrapArguments = {}) {
       requiresSignin: args?.requiresSignin,
       enableTos: ENABLE_TOS,
       tosHtml: TOS_HTML,
+      environmentName: ENVIRONMENT_NAME,
       kits: args?.kits,
       showExtendedSettings,
       graphStorePreloader: args?.graphStorePreloader,

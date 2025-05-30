@@ -7,3 +7,4 @@ declare const GIT_HASH: string;
 declare const VITE_BOARD_SERVICE: string;
 declare const ENABLE_TOS: boolean;
 declare const TOS_HTML: string;
+declare const ENVIRONMENT_NAME: string;
