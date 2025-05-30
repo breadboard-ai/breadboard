@@ -22,8 +22,6 @@ export class StreamableLLMContent extends LitElement {
   render() {
     if (!this.run || !this.url) return nothing;
 
-    this.run.readStream(this.url);
-
     return html`Streamable LLM Content: ${this.url}`;
   }
 }
