@@ -515,6 +515,10 @@ export function idFromPath(path: number[]): string {
   return `e-${path.join("-")}`;
 }
 
+function isStreamingOutput(edge: EdgeLogEntry): boolean {
+  return !!edge.value && "reportStream" in edge.value;
+}
+
 /**
  * Places the output edge in the log, according to the following rules:
  * - Until first bubbling input, place output before the last node,
@@ -522,6 +526,8 @@ export function idFromPath(path: number[]): string {
  * - After first bubbling input, place output after the last node.
  */
 function placeOutputInLog(log: LogEntry[], edge: EdgeLogEntry): LogEntry[] {
+  // Remove streaming outputs from TGO. It doesn't support them anyway.
+  if (isStreamingOutput(edge)) return log;
   const last = log[log.length - 1];
   if (last?.type === "edge" && last.value) {
     return [...log, edge];
