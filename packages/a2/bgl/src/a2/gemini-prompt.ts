@@ -118,30 +118,35 @@ class GeminiPrompt {
   }
 
   async invoke(): Promise<Outcome<GeminiPromptOutput>> {
-    const reporter = new StreamableReporter({ title: "Call Gemini API" });
+    const reporter = new StreamableReporter({
+      title: `Calling ${this.inputs.model}`,
+      icon: "spark",
+    });
     try {
       this.calledTools = false;
       this.calledCustomTools = false;
       const { allowToolErrors, validator } = this.options;
-      const startingReporter = await reporter.start();
-      if (!ok(startingReporter)) return startingReporter;
-
+      await reporter.start();
+      await reporter.report(this.inputs.body as JsonSerializable);
       const invoking = await gemini(this.inputs);
-      if (!ok(invoking)) return invoking;
+      if (!ok(invoking)) return reporter.reportError(invoking);
       if ("context" in invoking) {
-        return err("Invalid output from Gemini -- must be candidates");
+        return reporter.reportError(
+          err("Invalid output from Gemini -- must be candidates")
+        );
       }
       const candidate = invoking.candidates.at(0);
       const content = candidate?.content;
-      if (!content) {
-        return err("No content from Gemini");
-      }
+      if (!content) return reporter.reportError(err("No content from Gemini"));
       if (!content.parts) {
-        return err(
-          `Gemini failed to generate result due to ${candidate.finishReason}`
+        return reporter.reportError(
+          err(
+            `Gemini failed to generate result due to ${candidate.finishReason}`
+          )
         );
       }
       reporter.reportLLMContent(content);
+      reporter.close();
       const results: LLMContent[][] = [];
       const errors: string[] = [];
       if (validator) {
@@ -226,6 +231,7 @@ class GeminiPrompt {
       console.log("gemini-prompt pushed mergeLastParts: ", result);
       return { all: result, last: result.at(-1)!, candidate };
     } finally {
+      // In case we exited early, close the reporter anyway.
       reporter.close();
     }
   }

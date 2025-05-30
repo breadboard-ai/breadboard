@@ -39,17 +39,11 @@ export { report, StreamableReporter };
 
 const MIME_TYPE = "application/vnd.breadboard.report-stream";
 
-export type StreamableReporterOptions = {
-  title: string;
-  icon?: string;
-  description?: string;
-};
-
 class StreamableReporter {
   public readonly path: FileSystemReadWritePath = `/run/reporter/stream/${generateId()}`;
   #started = false;
 
-  constructor(public readonly options: StreamableReporterOptions) {}
+  constructor(public readonly options: NodeMetadata) {}
 
   async start() {
     if (this.#started) return;
@@ -59,18 +53,18 @@ class StreamableReporter {
       type: "object",
       properties: {
         reportStream: {
-          ...this.options,
           behavior: ["llm-content"],
           type: "object",
         },
       },
     };
+    const $metadata = this.options;
     const reportStream: LLMContent = {
       parts: [{ fileData: { fileUri: this.path, mimeType: MIME_TYPE } }],
     };
     const starting = await this.report("start");
     if (!ok(starting)) return starting;
-    return output({ schema, reportStream });
+    return output({ schema, $metadata, reportStream });
   }
 
   async reportLLMContent(llmContent: LLMContent) {
@@ -86,7 +80,13 @@ class StreamableReporter {
     return this.reportLLMContent({ parts: [{ json }] });
   }
 
+  async reportError(error: { $error: string }) {
+    await this.report(error);
+    return error;
+  }
+
   close() {
+    if (!this.#started) return;
     return write({ path: this.path, stream: true, done: true });
     this.#started = false;
   }

@@ -148,7 +148,7 @@ class ReactiveProjectRun implements ProjectRun {
     const schema = this.inspectable
       ?.nodeById(event.data.node.id)
       ?.currentDescribe().outputSchema;
-    const entry = new ReactiveConsoleEntry(event.data, schema);
+    const entry = new ReactiveConsoleEntry(this.fileSystem, event.data, schema);
     this.current = entry;
     this.console.set(entry.id, entry);
   }
