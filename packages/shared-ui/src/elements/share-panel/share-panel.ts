@@ -243,8 +243,8 @@ export class SharePanel extends LitElement {
   #publishedSwitch = createRef<MdSwitch>();
   #googleDriveSharePanel = createRef<GoogleDriveSharePanel>();
 
-  override update(changes: PropertyValues<this>) {
-    super.update(changes);
+  override willUpdate(changes: PropertyValues<this>) {
+    super.willUpdate(changes);
     if (changes.has("graph")) {
       this.#publishState = { status: "initial" };
     }
