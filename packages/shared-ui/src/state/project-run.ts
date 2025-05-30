@@ -20,15 +20,7 @@ import { signal } from "signal-utils";
 import { formatError } from "../utils/format-error";
 import { ReactiveConsoleEntry } from "./console-entry";
 import { idFromPath } from "./common";
-import {
-  err,
-  FileSystem,
-  FileSystemPath,
-  InspectableGraph,
-  ok,
-  Outcome,
-} from "@google-labs/breadboard";
-import { LLMContent } from "@breadboard-ai/types";
+import { FileSystem, InspectableGraph } from "@google-labs/breadboard";
 
 export { ReactiveProjectRun };
 
@@ -88,16 +80,6 @@ class ReactiveProjectRun implements ProjectRun {
     runner.addEventListener("resume", () => {
       this.status = "running";
     });
-  }
-
-  async readStream(path: FileSystemPath): Promise<Outcome<LLMContent>> {
-    const reading = await this.fileSystem.read({ path });
-    if (!ok(reading)) return reading;
-
-    const result = reading.data?.at(0);
-    if (!result) return err(`No result read from stream`);
-    console.log("RESULT", result);
-    return result;
   }
 
   #storeErrorPath(path: number[]) {

@@ -62,7 +62,6 @@ export { Header } from "./output/header/header.js";
 export { ExportToolbar } from "./output/llm-output/export-toolbar.js";
 export { LLMOutputArray } from "./output/llm-output/llm-output-array.js";
 export { LLMOutput } from "./output/llm-output/llm-output.js";
-export { StreamableLLMContent } from "./output/llm-output/streamable-llm-content.js";
 export { MultiOutput } from "./output/multi-output/multi-output.js";
 export { PDFViewer } from "./output/pdf-viewer/pdf-viewer.js";
 export { OverflowMenu } from "./overflow-menu/overflow-menu.js";

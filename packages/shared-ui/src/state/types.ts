@@ -17,7 +17,6 @@ import {
   EditSpec,
   EditTransform,
   FileSystem,
-  FileSystemPath,
   Outcome,
   PortIdentifier,
   Schema,
@@ -124,13 +123,6 @@ export type ProjectRun = {
    * the user is not currently waiting on input.
    */
   input: UserInput | null;
-
-  /// THE CONTROLLER BITS
-
-  /**
-   * Reads content from a FileSystem path
-   */
-  readStream(path: FileSystemPath): Promise<Outcome<LLMContent>>;
 };
 
 /**
