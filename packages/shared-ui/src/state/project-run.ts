@@ -20,7 +20,7 @@ import { signal } from "signal-utils";
 import { formatError } from "../utils/format-error";
 import { ReactiveConsoleEntry } from "./console-entry";
 import { idFromPath } from "./common";
-import { InspectableGraph } from "@google-labs/breadboard";
+import { FileSystem, InspectableGraph } from "@google-labs/breadboard";
 
 export { ReactiveProjectRun };
 
@@ -51,7 +51,8 @@ class ReactiveProjectRun implements ProjectRun {
   accessor input: UserInput | null = null;
 
   constructor(
-    public readonly inspectable: InspectableGraph | undefined,
+    private readonly inspectable: InspectableGraph | undefined,
+    private readonly fileSystem: FileSystem,
     runner: HarnessRunner,
     signal?: AbortSignal
   ) {
@@ -129,7 +130,7 @@ class ReactiveProjectRun implements ProjectRun {
     const schema = this.inspectable
       ?.nodeById(event.data.node.id)
       ?.currentDescribe().outputSchema;
-    const entry = new ReactiveConsoleEntry(event.data, schema);
+    const entry = new ReactiveConsoleEntry(this.fileSystem, event.data, schema);
     this.current = entry;
     this.console.set(entry.id, entry);
   }

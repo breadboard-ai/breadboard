@@ -256,7 +256,11 @@ export class Run extends EventTarget {
     if (!project) {
       console.warn(`Unable to get project for graph: ${tab.mainGraphId}`);
     } else {
-      project.connectHarnessRunner(harnessRunner, abortController.signal);
+      project.connectHarnessRunner(
+        harnessRunner,
+        config.fileSystem!,
+        abortController.signal
+      );
     }
 
     if (history) {

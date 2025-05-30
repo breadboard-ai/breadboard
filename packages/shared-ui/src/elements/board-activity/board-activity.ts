@@ -646,6 +646,8 @@ export class BoardActivity extends LitElement {
                   | symbol = nothing;
                 switch (event.type) {
                   case "node": {
+                    // Don't render streaming outputs in this code.
+                    if (isStreamingOutput(event)) return;
                     const { node, end } = event;
                     const { type } = node.descriptor;
                     // `end` is null if the node is still running
@@ -867,4 +869,10 @@ export class BoardActivity extends LitElement {
 
     return [waitingMessage, events];
   }
+}
+
+function isStreamingOutput(event: InspectableRunNodeEvent) {
+  return (
+    event.node.descriptor.type === "output" && "reportStream" in event.inputs
+  );
 }

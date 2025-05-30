@@ -21,10 +21,13 @@ import { classMap } from "lit/directives/class-map.js";
 import { ResizeEvent, RunEvent } from "../../../events/events";
 import { icons } from "../../../styles/icons";
 import { SignalWatcher } from "@lit-labs/signals";
+import { provide } from "@lit/context";
+import { projectRunContext } from "../../../contexts/project-run.js";
 
 @customElement("bb-console-view")
 export class ConsoleView extends SignalWatcher(LitElement) {
   @property()
+  @provide({ context: projectRunContext })
   accessor run: ProjectRun | null = null;
 
   static styles = [

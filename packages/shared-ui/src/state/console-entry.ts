@@ -11,7 +11,12 @@ import {
 } from "@breadboard-ai/types";
 import { ConsoleEntry, WorkItem } from "./types";
 import { SignalMap } from "signal-utils/map";
-import { InputResponse, OutputResponse, Schema } from "@google-labs/breadboard";
+import {
+  FileSystem,
+  InputResponse,
+  OutputResponse,
+  Schema,
+} from "@google-labs/breadboard";
 import { idFromPath, toLLMContentArray } from "./common";
 import { ReactiveWorkItem } from "./work-item";
 import { signal } from "signal-utils";
@@ -45,6 +50,7 @@ class ReactiveConsoleEntry implements ConsoleEntry {
   #outputSchema: Schema | undefined;
 
   constructor(
+    private readonly fileSystem: FileSystem,
     { node, path }: NodeStartResponse,
     outputSchema: Schema | undefined
   ) {
@@ -109,7 +115,11 @@ class ReactiveConsoleEntry implements ConsoleEntry {
     if (!bubbled) return;
 
     this.work.set(
-      ...ReactiveWorkItem.fromOutput(data, this.#pendingTimestamp || 0)
+      ...ReactiveWorkItem.fromOutput(
+        this.fileSystem,
+        data,
+        this.#pendingTimestamp || 0
+      )
     );
   }
 }
