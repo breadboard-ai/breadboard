@@ -16,9 +16,12 @@ import {
 } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
 import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
 import {
+  err,
   GraphDescriptor,
   InputValues,
   isStoredData,
+  ok,
+  Outcome,
 } from "@google-labs/breadboard";
 import { AppTemplateOptions } from "@breadboard-ai/shared-ui/types/types.js";
 import { getThemeModeFromBackground } from "../../utils/color.js";
@@ -198,7 +201,22 @@ export class AppView extends LitElement {
       this.requestUpdate();
     });
 
-    harnessRunner.addEventListener("secret", (_evt: RunSecretEvent) => {
+    harnessRunner.addEventListener("secret", async (evt: RunSecretEvent) => {
+      const key = evt.data.keys.at(0);
+      const name = `connection:${SIGN_IN_CONNECTION_ID}`;
+      if (key !== name) {
+        console.warn(
+          `Invalid secret values. Only "${name}" is supported`,
+          evt.data.keys
+        );
+        return;
+      }
+      const token = await this.getAccessToken();
+      if (!ok(token)) {
+        console.warn(token.$error);
+        return;
+      }
+      this.#runner?.harnessRunner.run({ [name]: token });
       this.requestUpdate();
     });
 
@@ -229,6 +247,20 @@ export class AppView extends LitElement {
     harnessRunner.addEventListener("end", (_evt: RunEndEvent) => {
       this.requestUpdate();
     });
+  }
+
+  async getAccessToken(): Promise<Outcome<string>> {
+    if (this.#signInAdapter.state !== "valid") {
+      const refreshed = await this.#signInAdapter.refresh();
+      if (refreshed?.state !== "valid") {
+        console.error("Unable to get valid Auth token");
+        return err("unable to get token");
+      } else {
+        return refreshed.grant.access_token;
+      }
+    } else {
+      return this.#signInAdapter.accessToken()!;
+    }
   }
 
   render() {
@@ -299,28 +331,10 @@ export class AppView extends LitElement {
         }
 
         const inputEvent = evt as InputEnterEvent;
-        let data = inputEvent.data as InputValues;
+        const data = inputEvent.data as InputValues;
 
         if ("secret" in data) {
-          const name = inputEvent.id;
-          let value: string;
-          if (name === `connection:${SIGN_IN_CONNECTION_ID}`) {
-            if (this.#signInAdapter.state !== "valid") {
-              const refreshed = await this.#signInAdapter.refresh();
-              if (refreshed?.state !== "valid") {
-                console.error("Unable to get valid Auth token");
-                value = "unable to get token";
-              } else {
-                value = refreshed.grant.access_token;
-              }
-            } else {
-              value = this.#signInAdapter.accessToken()!;
-            }
-          } else {
-            value = data.secret as string;
-          }
-
-          data = { [name]: value };
+          console.warn("Unexpected secret input", data);
         }
 
         const runner = this.#runner.harnessRunner;
