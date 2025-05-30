@@ -46,7 +46,7 @@ const CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY =
 const DRIVE_IMAGE_CACHE_NAME = "GoogleDriveImages";
 const DRIVE_IMAGE_CACHE_KEY_PREFIX = "http://drive-image/";
 
-const DRIVE_FETCH_CHANGES_INTERVAL_MS = 10 * 1000; //2 * 60 * 1000; // 2 minutes.
+const DRIVE_FETCH_CHANGES_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes.
 
 const MAX_APP_PROPERTY_LENGTH = 124;
 
@@ -67,7 +67,7 @@ type StoredAppProperties = {
 };
 
 type DriveChange = {
-  fieldId: string;
+  fileId: string;
   removed?: boolean;
 };
 
@@ -91,13 +91,15 @@ class DriveLookupCache {
   }
 
   async processChanges(changes: Array<DriveChange>) {
-    const ids = changes.map((change) => change.fieldId);
+    const ids = changes.map((change) => change.fileId);
     const cache = await caches.open(this.cacheName);
     // Bulk remove in parallel.
-    await Promise.all(ids.map(id => {
-      const cacheKey = new URL(`${this.cacheKePrefix}${id}`);
-      return cache.delete(cacheKey);
-    }));
+    await Promise.all(
+      ids.map((id) => {
+        const cacheKey = new URL(`${this.cacheKePrefix}${id}`);
+        return cache.delete(cacheKey);
+      })
+    );
   }
 }
 
@@ -231,10 +233,10 @@ class DriveListCache {
       const fileIds = new Set(files.map((f) => f.id));
       // Collecting all unique changes, note that they don't have to point to the files in cache.
       const allDeletedIds = new Set<string>(
-        changes.filter((c) => c.removed).map((c) => c.fieldId)
+        changes.filter((c) => c.removed).map((c) => c.fileId)
       );
       const allUpdatedIds = new Set<string>(
-        changes.filter((c) => !c.removed).map((c) => c.fieldId)
+        changes.filter((c) => !c.removed).map((c) => c.fileId)
       );
       const deletedIds = getSetsIntersection(fileIds, allDeletedIds);
       // TODO(volodya): This may work smarter by also comparing the timestamp of change/cached item.
