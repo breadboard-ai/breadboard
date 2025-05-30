@@ -42,7 +42,11 @@ const BASE_QUERY = `${MIME_TYPE_QUERY} and trashed=false`;
 const CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY =
   "GoogleDriveService/Changes/StartPageToken";
 
-const DRIVE_FETCH_CHANGES_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes.
+// These must be in sync with image.ts:*
+const DRIVE_IMAGE_CACHE_NAME = "GoogleDriveImages";
+const DRIVE_IMAGE_CACHE_KEY_PREFIX = "http://drive-image/";
+
+const DRIVE_FETCH_CHANGES_INTERVAL_MS = 10 * 1000; //2 * 60 * 1000; // 2 minutes.
 
 const MAX_APP_PROPERTY_LENGTH = 124;
 
@@ -73,6 +77,31 @@ type DriveChangesCacheState = {
   lastFetched: string;
 };
 
+/** Responsible for cleaning lookup caches based on list of changes from drive. */
+class DriveLookupCache {
+  constructor(
+    private readonly cacheName: string,
+    private readonly cacheKePrefix: string
+  ) {}
+
+  async invalidateId(fileID: string) {
+    const cache = await caches.open(this.cacheName);
+    const cacheKey = new URL(`${this.cacheKePrefix}${fileID}`);
+    await cache.delete(cacheKey);
+  }
+
+  async processChanges(changes: Array<DriveChange>) {
+    const ids = changes.map((change) => change.fieldId);
+    const cache = await caches.open(this.cacheName);
+    // Bulk remove in parallel.
+    await Promise.all(ids.map(id => {
+      const cacheKey = new URL(`${this.cacheKePrefix}${id}`);
+      return cache.delete(cacheKey);
+    }));
+  }
+}
+
+/** Caches list of GraphInfo objects. */
 class DriveListCache {
   constructor(
     private readonly cacheKey: string,
@@ -258,6 +287,10 @@ class DriveOperations {
   readonly #featuredGalleryFolderId?: string;
   readonly #userGraphsList: DriveListCache;
   readonly #featuredGraphsList?: DriveListCache;
+  readonly #imageCache = new DriveLookupCache(
+    DRIVE_IMAGE_CACHE_NAME,
+    DRIVE_IMAGE_CACHE_KEY_PREFIX
+  );
 
   /**
    * @param refreshProjectListCallback will be called when project list may have to be updated.
@@ -334,6 +367,7 @@ class DriveOperations {
                 if (this.#featuredGalleryFolderId) {
                   await this.#featuredGraphsList!.forceRefresh();
                 }
+                // #imageCache relies solely on the drive.changes, no invalidation here needed.
               }
               return; // All refreshed.
             }
@@ -356,10 +390,15 @@ class DriveOperations {
           );
 
           if (changes?.length > 0) {
-            await this.#userGraphsList.processChanges(changes);
+            // Run processChanges() in parallel.
+            const promises = [
+              this.#userGraphsList.processChanges(changes),
+              this.#imageCache.processChanges(changes),
+            ];
             if (this.#featuredGalleryFolderId) {
-              await this.#featuredGraphsList!.processChanges(changes);
+              promises.push(this.#featuredGraphsList!.processChanges(changes));
             }
+            await Promise.all(promises);
           }
           if (newStartPageToken) {
             // At last we update the new start page token so that the next time we continue from here.
@@ -654,6 +693,7 @@ class DriveOperations {
 
     if (!data) {
       if (thumbnailFileId) {
+        this.#imageCache.invalidateId(thumbnailFileId);
         // The user has switched to the default theme - delete the file.
         retryableFetch(api.makeDeleteRequest(thumbnailFileId)) // No need to await.
           .catch((e) => {
@@ -692,6 +732,7 @@ class DriveOperations {
     ).catch((e) => {
       console.error("Failed to update image metadata", e);
     });
+    this.#imageCache.invalidateId(file.id);
 
     if (asset) {
       asset.data = thumbnailUrl;

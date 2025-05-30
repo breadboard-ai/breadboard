@@ -8,6 +8,10 @@ import { blobHandleToUrl } from "./blob-handle-to-url";
 
 declare const MAIN_ICON: string; // VITE variable
 
+// These must be in sync with drive-kit/operations.ts:*
+const DRIVE_IMAGE_CACHE_NAME = "GoogleDriveImages";
+const DRIVE_IMAGE_CACHE_KEY_PREFIX = "http://drive-image/";
+
 export async function renderThumbnail(
   thumbnailUrl: string | null | undefined,
   googleDriveClient: GoogleDriveClient,
@@ -60,10 +64,29 @@ export async function resolveImage(
   const drivePrefix = "drive:/";
   if (url?.startsWith(drivePrefix)) {
     const driveFileId = url!.substring(drivePrefix.length);
+    const cache = await caches.open(DRIVE_IMAGE_CACHE_NAME);
+    const cacheKey = `${DRIVE_IMAGE_CACHE_KEY_PREFIX}${driveFileId}`;
+    const cacheResponse = await cache.match(cacheKey);
+    if (cacheResponse) {
+      return await cacheResponse.text();
+    }
+    // Not cached - load.
     const response = await googleDriveClient.getFileMedia(driveFileId);
     const contentType = response.headers.get("content-type");
     const base64 = await asBase64(await response.blob());
     const result = `data:${contentType};base64,${base64}`;
+    // Cache the result.
+    // Invalidation of these entries is responsibility of the operations.ts:DriveLookupCache.
+    await cache.put(
+      cacheKey,
+      new Response(result, {
+        headers: {
+          "content-type": contentType ?? "",
+          "content-length": response.headers.get("content-length") ?? "",
+          "fetched-at": new Date().toISOString(),
+        },
+      })
+    );
     return result;
   } else {
     return url ?? undefined;
