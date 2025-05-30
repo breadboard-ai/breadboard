@@ -29,6 +29,7 @@ export class AddAssetButton extends LitElement {
     youtube: true,
     drawable: true,
     gdrive: true,
+    webcamVideo: true,
   };
 
   @property()
@@ -106,7 +107,7 @@ export class AddAssetButton extends LitElement {
         actions.push({
           icon: "upload",
           name: "upload",
-          title: "Upload from device",
+          title: "Upload from Device",
         });
       }
 
@@ -131,6 +132,14 @@ export class AddAssetButton extends LitElement {
           icon: "drawable",
           name: "drawable",
           title: "Add a Drawing",
+        });
+      }
+
+      if (this.supportedActions.webcamVideo) {
+        actions.push({
+          icon: "videocam",
+          name: "webcam-video",
+          title: "Add a Webcam Video",
         });
       }
 

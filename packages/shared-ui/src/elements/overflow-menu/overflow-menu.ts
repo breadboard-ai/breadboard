@@ -233,6 +233,10 @@ export class OverflowMenu extends LitElement {
           content: "call_split";
         }
 
+        &.videocam .g-icon::before {
+          content: "videocam";
+        }
+
         &.error .g-icon::before {
           content: "error";
           color: var(--bb-warning-600);

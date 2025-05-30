@@ -39,6 +39,7 @@ import { AssetShelf } from "../../elements/elements";
 import { SigninState } from "../../utils/signin-adapter";
 
 /** Included so the app can be standalone */
+import "../../elements/input/webcam/webcam-video.js";
 import "../../elements/input/add-asset/add-asset-button.js";
 import "../../elements/input/add-asset/add-asset-modal.js";
 import "../../elements/input/add-asset/asset-shelf.js";
