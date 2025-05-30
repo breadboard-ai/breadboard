@@ -101,6 +101,9 @@ class GoogleDriveDataPartTransformer implements DataPartTransformer {
         } catch (e) {
           return err((e as Error).message);
         }
+      } else if (mimeType === "video/mp4") {
+        // this is a YouTube video, pass it through
+        return part;
       }
     } else {
       const url = part.storedData.handle;
