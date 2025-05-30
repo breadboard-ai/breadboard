@@ -442,8 +442,6 @@ export class Main extends LitElement {
     this.#tosHtml = config.tosHtml;
     this.#embedHandler = config.embedHandler;
 
-    console.log(123123, config.environmentName);
-
     this.showExtendedSettings = config.showExtendedSettings ?? false;
 
     // This is a big hacky, since we're assigning a value to a constant object,
