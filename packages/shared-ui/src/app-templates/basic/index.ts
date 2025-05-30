@@ -55,7 +55,9 @@ import "../../elements/input/add-asset/add-asset-modal.js";
 import "../../elements/input/add-asset/asset-shelf.js";
 import "../../elements/input/speech-to-text/speech-to-text.js";
 import "../../elements/input/drawable/drawable.js";
+import "../../elements/input/floating-input/floating-input.js";
 
+import "../../elements/output/header/header.js";
 import "../../elements/output/llm-output/llm-output-array.js";
 import "../../elements/output/llm-output/export-toolbar.js";
 import "../../elements/output/llm-output/llm-output.js";
@@ -917,57 +919,15 @@ export class Template extends LitElement implements AppTemplate {
       this.#nodesLeftToVisit.delete(topGraphResult.currentNode?.descriptor.id);
     }
 
-    const showShare = false && "share" in navigator;
-    const percentage =
+    const progress =
       this.#totalNodeCount > 0
         ? (this.#totalNodeCount - this.#nodesLeftToVisit.size) /
           this.#totalNodeCount
         : 1;
-    return html`<div id="controls">
-      <button
-        id="back"
-        @click=${() => {
-          this.dispatchEvent(new StopEvent(true));
-        }}
-      >
-        Back
-      </button>
-      <div id="progress-container">
-        <div
-          id="progress"
-          style=${styleMap({ "--percentage": percentage.toFixed(2) })}
-        ></div>
-      </div>
-      <button
-        id="replay"
-        @click=${() => {
-          this.dispatchEvent(new StopEvent(true));
-        }}
-      >
-        <span class="g-icon">replay</span>
-      </button>
-      ${showShare
-        ? html`<button
-            id="share"
-            @click=${() => {
-              navigator.share({
-                url: this.appURL ?? window.location.href,
-                title: this.options.title ?? "Untitled App",
-              });
-            }}
-          >
-            <span class="g-icon">share</span>
-          </button>`
-        : nothing}
-      <div
-        id="older-data"
-        class=${classMap({
-          active: this.isInSelectionState && this.showingOlderResult,
-        })}
-      >
-        Viewing data from an earlier step. Newer data is available.
-      </div>
-    </div>`;
+    return html`<bb-header
+      .progress=${progress}
+      .replayActive=${true}
+    ></bb-header>`;
   }
 
   #renderActivity(topGraphResult: TopGraphRunResult) {
