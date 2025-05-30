@@ -22,32 +22,21 @@ import Mode from "../shared/styles/icons.js";
 import Animations from "../shared/styles/animations.js";
 
 import { classMap } from "lit/directives/class-map.js";
-import {
-  GraphDescriptor,
-  InspectableRun,
-  InspectableRunSecretEvent,
-  isLLMContent,
-  isTextCapabilityPart,
-} from "@google-labs/breadboard";
+import { GraphDescriptor, InspectableRun } from "@google-labs/breadboard";
 import { styleMap } from "lit/directives/style-map.js";
 import {
-  AddAssetEvent,
   AddAssetRequestEvent,
   BoardDescriptionUpdateEvent,
   BoardTitleUpdateEvent,
-  InputEnterEvent,
+  ResizeEvent,
   RunEvent,
   SignInRequestedEvent,
-  StopEvent,
-  UtteranceEvent,
 } from "../../events/events";
 import { repeat } from "lit/directives/repeat.js";
-import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { LLMContent, NodeValue, OutputValues } from "@breadboard-ai/types";
-import { isLLMContentArrayBehavior, isLLMContentBehavior } from "../../utils";
+import { createRef, Ref } from "lit/directives/ref.js";
 import { extractError } from "../shared/utils/utils";
 import { AssetShelf } from "../../elements/elements";
-import { SIGN_IN_CONNECTION_ID, SigninState } from "../../utils/signin-adapter";
+import { SigninState } from "../../utils/signin-adapter";
 
 /** Included so the app can be standalone */
 import "../../elements/input/add-asset/add-asset-button.js";
@@ -62,13 +51,9 @@ import "../../elements/output/llm-output/llm-output-array.js";
 import "../../elements/output/llm-output/export-toolbar.js";
 import "../../elements/output/llm-output/llm-output.js";
 import "../../elements/output/multi-output/multi-output.js";
-import { map } from "lit/directives/map.js";
 import { markdown } from "../../directives/markdown";
-import { maybeConvertToYouTube } from "../../utils/substitute-input";
 import { createThemeStyles } from "@breadboard-ai/theme";
 import { icons } from "../../styles/icons";
-
-const SIGN_IN_SECRET_KEY = `connection:${SIGN_IN_CONNECTION_ID}`;
 
 function keyFromGraphUrl(url: string) {
   return `cw-${url.replace(/\W/gi, "-")}`;
@@ -512,6 +497,14 @@ export class Template extends LitElement implements AppTemplate {
               content: "";
             }
 
+            &::after {
+              content: "";
+              display: block;
+              height: var(--input-clearance);
+              width: 100%;
+              flex: 0 0 auto;
+            }
+
             & bb-multi-output {
               --output-value-padding-x: var(--bb-grid-size-4);
               --output-value-padding-y: var(--bb-grid-size-4);
@@ -638,6 +631,14 @@ export class Template extends LitElement implements AppTemplate {
                 color: oklch(from var(--p-15) l c h / calc(alpha - 0.4));
               }
             }
+          }
+
+          & bb-floating-input {
+            position: absolute;
+            left: 50%;
+            bottom: var(--bb-grid-size-6);
+            translate: -50% 0;
+            --container-margin: 0 var(--bb-grid-size-6);
           }
 
           & #input {
@@ -1067,374 +1068,28 @@ export class Template extends LitElement implements AppTemplate {
     return html`<div id="activity">${activityContents}</div>`;
   }
 
-  #toLLMContentWithTextPart(text: string): NodeValue {
-    return { role: "user", parts: [{ text }] };
-  }
-
   #renderInput(topGraphResult: TopGraphRunResult) {
-    const placeholder = html`<div class="user-input">
-        <p>&nbsp;</p>
-      </div>
-
-      <div class="controls"></div>`;
-
-    const continueRun = (id: string) => {
-      if (!this.#inputRef.value) {
-        return;
-      }
-
-      const inputs = this.#inputRef.value.querySelectorAll<
-        HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-      >("input,select,textarea");
-      const assetShelf =
-        this.#inputRef.value.querySelector<AssetShelf>("bb-asset-shelf");
-      const inputValues: OutputValues = {};
-
-      let canProceed = true;
-      for (const input of inputs) {
-        if (!input.checkValidity()) {
-          input.reportValidity();
-          canProceed = false;
-        }
-
-        let value: string | LLMContent = input.value;
-        if (typeof value === "string") {
-          value = maybeConvertToYouTube(input.value);
-        }
-
-        if (typeof value === "string") {
-          if (input.dataset.type === "llm-content") {
-            inputValues[input.name] =
-              input.dataset.empty === "true"
-                ? { parts: [] }
-                : this.#toLLMContentWithTextPart(value);
-          } else if (input.dataset.type === "llm-content-array") {
-            inputValues[input.name] = [this.#toLLMContentWithTextPart(value)];
-          } else {
-            inputValues[input.name] = value;
-          }
-
-          value = "";
-        } else {
-          inputValues[input.name] = value as NodeValue;
-        }
-
-        if (assetShelf && assetShelf.value) {
-          const inputValue = inputValues[input.name];
-          if (isLLMContent(inputValue)) {
-            const parts = inputValue.parts;
-            for (const asset of assetShelf.value) {
-              parts.push(...asset.parts);
-            }
-          }
-
-          // Once we have the values, remove the items from the shelf.
-          assetShelf.clear();
-        }
-      }
-
-      if (!canProceed) {
-        return;
-      }
-
-      this.dispatchEvent(
-        new InputEnterEvent(id, inputValues, /* allowSavingIfSecret */ true)
-      );
-    };
-
-    let inputContents: HTMLTemplateResult | symbol = nothing;
-    let active = false;
     const currentItem = topGraphResult.log.at(-1);
-    if (currentItem?.type === "edge") {
-      const props = Object.entries(currentItem.schema?.properties ?? {});
-      if (this.run && this.run.events.at(-1)?.type === "secret") {
-        const secretEvent = this.run.events.at(-1) as InspectableRunSecretEvent;
+    if (
+      topGraphResult.status !== "paused" ||
+      currentItem?.type !== "edge" ||
+      !currentItem.schema
+    ) {
+      this.style.setProperty("--input-clearance", `0px`);
 
-        active = true;
-        inputContents = html`
-          <div class="user-input">
-            ${map(secretEvent.keys, (key) => {
-              if (key.startsWith("connection:")) {
-                if (key === SIGN_IN_SECRET_KEY) {
-                  // When the connection id is a sign in, we never bring up
-                  // the input dialog -- it is presumed to exist.
-                  // However, we still need to send an event so that AppView
-                  // catches it and interprets it
-                  this.dispatchEvent(
-                    new InputEnterEvent(
-                      SIGN_IN_SECRET_KEY,
-                      { secret: "" },
-                      /* allowSavingIfSecret */ true
-                    )
-                  );
-
-                  return nothing;
-                }
-                return html`<bb-connection-input
-                  id=${key}
-                  .connectionId=${key.replace(/^connection:/, "")}
-                ></bb-connection-input>`;
-              } else {
-                return html`<p class="api-message">
-                    When calling an API, the API provider's applicable privacy
-                    policy and terms apply
-                  </p>
-                  <input
-                    name=${key}
-                    type="password"
-                    autocomplete="off"
-                    required
-                    .placeholder=${`Enter ${key}`}
-                  />`;
-              }
-            })}
-          </div>
-          <div class="controls">
-            <button
-              id="continue"
-              @click=${() => {
-                continueRun(currentItem.id ?? "unknown");
-              }}
-            >
-              <span class="g-icon">send_spark</span>
-            </button>
-          </div>
-        `;
-      } else if (props.length > 0 && currentItem.descriptor?.type === "input") {
-        active = true;
-        const valueIsDefined = currentItem.value !== undefined;
-        const valueHasKeys =
-          typeof currentItem.value === "object" &&
-          Object.keys(currentItem.value).length > 0;
-        const valueIsNonEmptyArray =
-          Array.isArray(currentItem.value) && currentItem.value.length > 0;
-        const disabled =
-          valueIsDefined && (valueHasKeys || valueIsNonEmptyArray);
-
-        // We have to inspect the properties to determine what is allowed here,
-        // but it is theoretically possible for multiple properties to define
-        // different allowed values. For now we just roll through and pick out
-        // the first one and go with what it says.
-        let allowAddAssets = false;
-
-        // Setting this to null will allow all default types through.
-        let allowedUploadMimeTypes: string | null = null;
-        let textToSpeech = false;
-        let textInput = false;
-
-        const supportedActions = {
-          upload: false,
-          youtube: false,
-          drawable: false,
-          gdrive: false,
-        };
-
-        propSearch: for (const [, prop] of props) {
-          if (!prop.format) {
-            // Any.
-            allowAddAssets = true;
-            textToSpeech = true;
-            textInput = true;
-            supportedActions.upload = true;
-            supportedActions.youtube = true;
-            supportedActions.drawable = true;
-            supportedActions.gdrive = true;
-            continue;
-          }
-
-          switch (prop.format) {
-            case "upload": {
-              allowAddAssets = true;
-              supportedActions.upload = true;
-              break propSearch;
-            }
-
-            case "mic": {
-              allowAddAssets = true;
-              allowedUploadMimeTypes = "audio/*";
-              supportedActions.upload = true;
-              break propSearch;
-            }
-
-            case "videocam": {
-              allowAddAssets = true;
-              allowedUploadMimeTypes = "video/*";
-              supportedActions.upload = true;
-              supportedActions.youtube = true;
-              break propSearch;
-            }
-
-            case "image": {
-              allowAddAssets = true;
-              allowedUploadMimeTypes = "image/*";
-              supportedActions.upload = true;
-              break propSearch;
-            }
-
-            case "edit_note": {
-              allowAddAssets = true;
-              allowedUploadMimeTypes = "text/*";
-              supportedActions.upload = true;
-              textToSpeech = true;
-              textInput = true;
-              break propSearch;
-            }
-
-            default: {
-              // Any.
-              allowAddAssets = true;
-              textToSpeech = true;
-              textInput = true;
-              supportedActions.upload = true;
-              supportedActions.youtube = true;
-              supportedActions.drawable = true;
-              supportedActions.gdrive = true;
-              break propSearch;
-            }
-          }
-        }
-
-        inputContents = html`
-          ${allowAddAssets
-            ? html`<bb-add-asset-button
-                .anchor=${"above"}
-                .supportedActions=${supportedActions}
-                .allowedUploadMimeTypes=${allowedUploadMimeTypes}
-                .showGDrive=${this.showGDrive}
-                ?disabled=${disabled}
-              ></bb-add-asset-button>`
-            : nothing}
-          ${repeat(props, ([name, schema]) => {
-            const dataType = isLLMContentArrayBehavior(schema)
-              ? "llm-content-array"
-              : isLLMContentBehavior(schema)
-                ? "llm-content"
-                : "string";
-
-            const propValue = currentItem.value?.[name];
-            let inputValue = "";
-            if (isLLMContent(propValue)) {
-              for (const part of propValue.parts) {
-                if (isTextCapabilityPart(part)) {
-                  inputValue = part.text;
-                }
-              }
-            }
-            const hasAssetEntered =
-              this.#assetShelfRef?.value == undefined ||
-              this.#assetShelfRef?.value.value.length == 0;
-            return html`<div class="user-input">
-              <p>
-                ${schema.description ? html`${schema.description}` : nothing}
-              </p>
-
-              ${textInput
-                ? html`<textarea
-                    placeholder=${hasAssetEntered
-                      ? "Type or upload your response."
-                      : "Press Submit to continue"}
-                    name=${name}
-                    type="text"
-                    data-type=${dataType}
-                    .value=${inputValue}
-                    ?disabled=${disabled}
-                  ></textarea>`
-                : allowAddAssets
-                  ? html`<div class="no-text-input">
-                        ${hasAssetEntered
-                          ? "Upload your response."
-                          : "Press Submit to continue"}
-                      </div>
-                      <input
-                        type="hidden"
-                        data-type=${dataType}
-                        data-empty="true"
-                        name=${name}
-                      />`
-                  : nothing}
-              <bb-asset-shelf
-                @assetchanged=${() => {
-                  this.requestUpdate();
-                }}
-                ${ref(this.#assetShelfRef)}
-              ></bb-asset-shelf>
-            </div>`;
-          })}
-
-          <div class="controls">
-            ${textToSpeech
-              ? html`<bb-speech-to-text
-                  ?disabled=${disabled}
-                  @bbutterance=${(evt: UtteranceEvent) => {
-                    if (!this.#inputRef.value) {
-                      return;
-                    }
-
-                    const inputField =
-                      this.#inputRef.value.querySelector<HTMLTextAreaElement>(
-                        "textarea"
-                      );
-                    if (!inputField) {
-                      return;
-                    }
-
-                    inputField.value = evt.parts
-                      .map((part) => part.transcript)
-                      .join("");
-                  }}
-                ></bb-speech-to-text>`
-              : nothing}
-            <button
-              id="continue"
-              ?disabled=${disabled}
-              title="Submit"
-              @click=${() => {
-                continueRun(currentItem.id ?? "unknown");
-              }}
-            >
-              <span class="g-icon">send_spark</span>
-            </button>
-          </div>
-        `;
-      } else {
-        active = true;
-        inputContents = placeholder;
-      }
-    } else {
-      inputContents = placeholder;
+      return nothing;
     }
 
-    let status: "stopped" | "paused" | "running" | "finished" =
-      topGraphResult.status;
-
-    if (topGraphResult.status === "stopped" && topGraphResult.log.length > 0) {
-      status = "finished";
-    }
-
-    return html`<div
-      @transitionend=${() => {
-        if (!this.#inputRef.value || !active) {
-          return;
-        }
-
-        const input =
-          this.#inputRef.value.querySelector<HTMLInputElement>(
-            "input,textarea"
-          );
-        input?.focus();
+    const PADDING = 24;
+    return html`<bb-floating-input
+      .schema=${currentItem.schema}
+      @bbresize=${(evt: ResizeEvent) => {
+        this.style.setProperty(
+          "--input-clearance",
+          `${evt.contentRect.height + PADDING}px`
+        );
       }}
-      @keydown=${(evt: KeyboardEvent) => {
-        if (evt.key !== "Enter") {
-          return;
-        }
-
-        continueRun("unknown");
-      }}
-      id="input"
-      class=${classMap({ active, [status]: true })}
-    >
-      <div id="input-container" ${ref(this.#inputRef)}>${inputContents}</div>
-    </div>`;
+    ></bb-floating-input>`;
   }
 
   #totalNodeCount = 0;
@@ -1608,25 +1263,6 @@ export class Template extends LitElement implements AppTemplate {
       </div>
     `;
 
-    let addAssetModal: HTMLTemplateResult | symbol = nothing;
-    if (this.showAddAssetModal) {
-      addAssetModal = html`<bb-add-asset-modal
-        .assetType=${this.#addAssetType}
-        .allowedMimeTypes=${this.#allowedMimeTypes}
-        @bboverlaydismissed=${() => {
-          this.showAddAssetModal = false;
-        }}
-        @bbaddasset=${(evt: AddAssetEvent) => {
-          if (!this.#assetShelfRef.value) {
-            return;
-          }
-
-          this.showAddAssetModal = false;
-          this.#assetShelfRef.value.addAsset(evt.asset);
-        }}
-      ></bb-add-asset-modal>`;
-    }
-
     let content: HTMLTemplateResult | symbol = html`${(styles[
       "--splash-image"
     ] &&
@@ -1638,7 +1274,6 @@ export class Template extends LitElement implements AppTemplate {
           this.#renderControls(this.topGraphResult),
           this.#renderActivity(this.topGraphResult),
           this.#renderInput(this.topGraphResult),
-          addAssetModal,
         ]}`;
 
     if (this.isInSelectionState && this.topGraphResult.log.length === 0) {

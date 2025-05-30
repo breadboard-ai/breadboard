@@ -99,7 +99,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
         &::after {
           content: "";
           display: block;
-          height: calc(var(--input-clearance) + var(--bb-grid-size-6));
+          height: var(--input-clearance);
           width: 100%;
         }
 
@@ -283,15 +283,17 @@ export class ConsoleView extends SignalWatcher(LitElement) {
   #renderInput() {
     const input = this.run?.input;
     if (!input) {
+      this.style.setProperty("--input-clearance", `0px`);
       return nothing;
     }
 
+    const PADDING = 24;
     return html`<bb-floating-input
       .schema=${input.schema}
       @bbresize=${(evt: ResizeEvent) => {
         this.style.setProperty(
           "--input-clearance",
-          `${evt.contentRect.height}px`
+          `${evt.contentRect.height + PADDING}px`
         );
       }}
     ></bb-floating-input>`;

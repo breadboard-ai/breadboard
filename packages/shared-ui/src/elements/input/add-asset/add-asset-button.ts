@@ -62,7 +62,7 @@ export class AddAssetButton extends LitElement {
         height: var(--button-size, 40px);
         border: none;
         background: var(--background-color, var(--n-90, var(--bb-neutral-200)));
-        color: var(--text-color, var(--p-70, var(--bb-neutral-800)));
+        color: var(--text-color, var(--p-40, var(--bb-neutral-800)));
         flex: 0 0 auto;
         border-radius: var(--button-border-radius, 50%);
         transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
