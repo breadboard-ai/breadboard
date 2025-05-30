@@ -38,6 +38,7 @@ interface SupportedActions {
     youtube: boolean;
     drawable: boolean;
     gdrive: boolean;
+    webcamVideo: boolean;
   };
 }
 
@@ -179,6 +180,7 @@ export class FloatingInput extends LitElement {
         youtube: false,
         drawable: false,
         gdrive: false,
+        webcamVideo: false,
       },
     };
 
@@ -238,6 +240,7 @@ export class FloatingInput extends LitElement {
           supportedActions.actions.youtube = true;
           supportedActions.actions.drawable = true;
           supportedActions.actions.gdrive = true;
+          supportedActions.actions.webcamVideo = true;
           return supportedActions;
         }
       }
@@ -251,6 +254,7 @@ export class FloatingInput extends LitElement {
     supportedActions.actions.youtube = true;
     supportedActions.actions.drawable = true;
     supportedActions.actions.gdrive = true;
+    supportedActions.actions.webcamVideo = true;
 
     return supportedActions;
   }
