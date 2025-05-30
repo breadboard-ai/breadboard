@@ -46,11 +46,22 @@ export class SpeechToText extends LitElement {
       :host {
         display: block;
         position: relative;
+
         --active-color: linear-gradient(
-          var(--bb-neutral-100) 0%,
-          var(--bb-neutral-300) 34%,
-          var(--bb-neutral-700) 69%,
-          var(--bb-neutral-900) 99%
+          oklch(
+              from var(--p-50, var(--bb-neutral-600)) l c h / calc(alpha * 0.7)
+            )
+            0%,
+          oklch(
+              from var(--p-50, var(--bb-neutral-600)) l c h / calc(alpha * 0.44)
+            )
+            34%,
+          oklch(
+              from var(--p-50, var(--bb-neutral-600)) l c h / calc(alpha * 0.2)
+            )
+            69%,
+          oklch(from var(--p-50, var(--bb-neutral-600)) l c h / calc(alpha * 0))
+            99%
         );
       }
 
@@ -99,7 +110,7 @@ export class SpeechToText extends LitElement {
         width: var(--button-size, 40px);
         height: var(--button-size, 40px);
         background: var(--background-color, var(--n-90, var(--bb-neutral-200)));
-        color: var(--text-color, var(--p-70, var(--bb-neutral-800)));
+        color: var(--text-color, var(--p-40, var(--bb-neutral-800)));
         font-size: 0;
         border: none;
         border-radius: 50%;

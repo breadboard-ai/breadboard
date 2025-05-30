@@ -243,6 +243,15 @@ export class FloatingInput extends LitElement {
       }
     }
 
+    // Default to everything on.
+    supportedActions.allowAddAssets = true;
+    supportedActions.speechToText = true;
+    supportedActions.textInput = true;
+    supportedActions.actions.upload = true;
+    supportedActions.actions.youtube = true;
+    supportedActions.actions.drawable = true;
+    supportedActions.actions.gdrive = true;
+
     return supportedActions;
   }
 
