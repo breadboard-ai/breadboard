@@ -180,6 +180,8 @@ export class DrawableInput extends LitElement {
     canvas.height = height * dPR;
 
     this.#bounds = canvas.getBoundingClientRect();
+
+    ctx.scale(dPR, dPR);
     this.#fillCanvas();
 
     if (imageData !== null) {
@@ -195,8 +197,6 @@ export class DrawableInput extends LitElement {
         canvas.height
       );
     }
-
-    ctx.scale(dPR, dPR);
   });
 
   connectedCallback(): void {

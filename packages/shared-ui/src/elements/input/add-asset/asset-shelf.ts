@@ -108,7 +108,8 @@ export class AssetShelf extends LitElement {
           & .g-icon {
             height: 20px;
             width: 28px;
-            margin: var(--bb-grid-size-2);
+            margin: var(--bb-grid-size-2) var(--bb-grid-size-2) 10px
+              var(--bb-grid-size-2);
           }
         }
 

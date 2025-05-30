@@ -67,6 +67,7 @@ export class AddAssetModal extends LitElement {
       height: 100%;
       background: transparent;
       border: none;
+      outline: none;
 
       &::backdrop {
         background: oklch(
