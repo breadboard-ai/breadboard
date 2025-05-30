@@ -29,36 +29,44 @@
       }
     },
     {
-      "id": "a66428d1-4ccc-444a-82b2-2ab5de7aaff3",
-      "type": "file://bgl/video-generator.bgl.json#module:main",
+      "id": "3d1b9a2d-1b4e-4b62-8c5c-7481a822a7d7",
+      "type": "embed://a2/generate.bgl.json#module:main",
       "metadata": {
-        "title": "Make Video",
+        "title": "Generate",
         "visual": {
-          "x": -20,
+          "x": 0,
           "y": -160
         },
         "userModified": false
       },
       "configuration": {
-        "instruction": {
+        "b-system-instruction": {
           "role": "user",
           "parts": [
             {
-              "text": "1960s minimalist cartoon style"
+              "text": "You are working as part of an AI system, so no chit-chat and no explaining what you're doing and why.\nDO NOT start with \"Okay\", or \"Alright\" or any preambles. Just the output, please."
             }
           ]
         },
-        "p-aspect-ratio": "9:16",
-        "p-disable-prompt-rewrite": false
+        "config$ask-user": false,
+        "config$prompt": {
+          "role": "user",
+          "parts": [
+            {
+              "text": " {{\"title\":\"Ask User\",\"path\":\"a2-71c73c7a\",\"type\":\"in\"}}"
+            }
+          ]
+        },
+        "generation-mode": "video"
       }
     }
   ],
   "edges": [
     {
       "from": "a2-71c73c7a",
-      "to": "a66428d1-4ccc-444a-82b2-2ab5de7aaff3",
+      "to": "3d1b9a2d-1b4e-4b62-8c5c-7481a822a7d7",
       "out": "context",
-      "in": "context"
+      "in": "p-z-a2-71c73c7a"
     }
   ],
   "metadata": {
@@ -100,7 +108,7 @@
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI2My45NyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iOTkuNjciCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI3Mi4wNyIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzJlOGJlOCIgLz4KPHJlY3QgeD0iMTQwLjMzIgogICAgICAgICAgICAgICAgICAgIHk9IjYzLjk3IgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI5OS42NyIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjM4LjMzIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMmU4YmU4IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI2NS4xMyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iOTYuNDUiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI2OS43NCIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzJlOGJlOCIgLz4KPHJlY3QgeD0iMTQzLjU1IgogICAgICAgICAgICAgICAgICAgIHk9IjY1LjEzIgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI5Ni40NSIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjM3LjEwIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjNzc1N2Q5IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
     }
   }
 }

@@ -125,7 +125,7 @@ const MODES: Mode[] = [
     id: "video",
     type: "video",
     url: "embed://a2/video-generator.bgl.json#module:main",
-    title: "Veo 2",
+    title: "Veo",
     description: "Generates videos from text and images",
     icon: "videocam_auto",
     promptPlaceholderText:
