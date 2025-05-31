@@ -13,7 +13,7 @@ export function findGoogleDriveAssetsInGraph(graph: GraphDescriptor): string[] {
   if (graph.assets) {
     for (const asset of Object.values(graph.assets)) {
       // Cast needed because `data` is very broadly typed as `NodeValue`.
-      const firstPart = (asset.data as LLMContent[])[0]?.parts[0];
+      const firstPart = (asset.data as LLMContent[])[0]?.parts?.[0];
       if (firstPart) {
         if ("fileData" in firstPart && asset.metadata?.subType === "gdrive") {
           const fileId = firstPart.fileData?.fileUri;
@@ -22,7 +22,7 @@ export function findGoogleDriveAssetsInGraph(graph: GraphDescriptor): string[] {
           }
         }
         if ("storedData" in firstPart) {
-          const fileId = extractDriveFileId(firstPart.storedData.handle);
+          const fileId = extractDriveFileId(firstPart.storedData?.handle);
           if (fileId) {
             fileIds.add(fileId);
           }
