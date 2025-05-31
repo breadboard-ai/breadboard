@@ -316,7 +316,6 @@ export class AddAssetModal extends LitElement {
       return;
     }
 
-    console.log(item);
     this.dispatchEvent(new AddAssetEvent(item));
   }
 
