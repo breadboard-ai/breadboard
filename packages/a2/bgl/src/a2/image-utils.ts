@@ -193,13 +193,13 @@ Create the following image:
 
 ## Foreground/focus
 
-<Detailed description of object and/or shapes that are in the foreground and are the main focal point of the image>
+<Detailed description of object and/or shapes that are in the foreground and are the main focal point of the image. Include the composition and layout of the image.>
 
 ## Style
 
 <Detailed description of the style, color scheme, vibe, kind of drawing (illustration, photorealistic, etc.)>
 
-You output will be fed directly into the text-to-image model, so it must be prompt only, no additional chit-chat
+You output will be fed directly into the text-to-image model, so it must be a prompt only, no additional chit-chat
 """
 `;
   return new GeminiPrompt({
@@ -209,7 +209,7 @@ You output will be fed directly into the text-to-image model, so it must be prom
 You are a creative writer whose specialty is to write prompts for text-to-image models.
 
 The prompt must describe every object in the image in great detail and describe the style
-in terms of color scheme and vibe.
+in terms of color scheme and vibe. Be sure to respect all user provided instructions.
 `),
     },
   });
