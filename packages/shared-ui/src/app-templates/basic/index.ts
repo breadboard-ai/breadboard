@@ -3,6 +3,10 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
+
+import * as StringsHelper from "../../strings/helper.js";
+const Strings = StringsHelper.forSection("Global");
+
 import {
   LitElement,
   html,
@@ -217,6 +221,20 @@ export class Template extends LitElement implements AppTemplate {
           width: 100%;
           height: 100%;
           margin: 0;
+        }
+
+        & #disclaimer {
+          position: absolute;
+          left: 0;
+          bottom: 0px;
+          width: 100%;
+          margin: 0;
+          font: 500 10px / 1 var(--bb-font-family);
+          color: var(--n-50, var(--bb-neutral-800));
+          text-align: center;
+          padding: var(--bb-grid-size) var(--bb-grid-size) var(--bb-grid-size-2)
+            var(--bb-grid-size);
+          background: var(--s-90, var(--neutral-50, transparent));
         }
 
         & #content-warning {
@@ -523,8 +541,8 @@ export class Template extends LitElement implements AppTemplate {
               --multi-output-value-padding-x: 0;
               flex: 1 0 auto;
               margin: 0 auto;
-              max-width: 100%;
-
+              width: 100%;
+              max-width: 840px;
               animation: fadeIn 0.6s cubic-bezier(0, 0, 0.3, 1) forwards;
             }
 
@@ -1279,6 +1297,9 @@ export class Template extends LitElement implements AppTemplate {
           this.#renderControls(this.topGraphResult),
           this.#renderActivity(this.topGraphResult),
           this.#renderInput(this.topGraphResult),
+          this.showDisclaimer
+            ? html`<p id="disclaimer">${Strings.from("LABEL_DISCLAIMER")}</p>`
+            : nothing,
         ]}`;
 
     if (this.isInSelectionState && this.topGraphResult.log.length === 0) {
