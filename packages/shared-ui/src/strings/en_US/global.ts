@@ -113,6 +113,9 @@ export default {
   LABEL_READONLY_PROJECT: {
     str: "This Flow is not editable. Please Remix it to make changes.",
   },
+  LABEL_DISCLAIMER: {
+    str: "Breadboard can make mistakes, so double-check it",
+  },
 
   // Statuses.
   STATUS_CREATING_PROJECT: {

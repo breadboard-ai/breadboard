@@ -3,6 +3,10 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
+
+import * as StringsHelper from "../../../strings/helper.js";
+const Strings = StringsHelper.forSection("Global");
+
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property, query, state } from "lit/decorators.js";
 import {
@@ -47,6 +51,9 @@ export class FloatingInput extends LitElement {
   @property()
   accessor schema: Schema | null = null;
 
+  @property()
+  accessor showDisclaimer = false;
+
   @query("#asset-shelf")
   accessor assetShelf: AssetShelf | null = null;
 
@@ -81,6 +88,20 @@ export class FloatingInput extends LitElement {
         border-radius: var(--bb-grid-size-4);
         border: 1px solid var(--nv-50, var(--bb-neutral-500));
         background: var(--n-95, var(--bb-neutral-50));
+        position: relative;
+
+        & #disclaimer {
+          position: absolute;
+          left: 0;
+          bottom: -21px;
+          width: 100%;
+          margin: 0;
+          font: 500 10px / 1 var(--bb-font-family);
+          color: var(--n-50, var(--bb-neutral-800));
+          text-align: center;
+          padding: var(--bb-grid-size);
+          background: var(--s-90, var(--neutral-50, transparent));
+        }
 
         & bb-asset-shelf[populated] {
           margin-bottom: var(--bb-grid-size-4);
@@ -462,6 +483,9 @@ export class FloatingInput extends LitElement {
           id="asset-shelf"
         ></bb-asset-shelf>
         <section id="input-container">${inputContents}</section>
+        ${this.showDisclaimer
+          ? html`<p id="disclaimer">${Strings.from("LABEL_DISCLAIMER")}</p>`
+          : nothing}
       </section>`,
       addAssetModal,
     ];
