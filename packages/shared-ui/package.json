@@ -118,6 +118,7 @@
   "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/shared-ui#readme",
   "devDependencies": {
     "@google-labs/tsconfig": "^0.0.1",
+    "@types/gtag.js": "^0.0.20",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^22.0.0",
     "typescript": "^5.8.3",

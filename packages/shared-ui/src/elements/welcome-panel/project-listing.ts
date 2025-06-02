@@ -39,6 +39,7 @@ import {
 } from "../../contexts/environment.js";
 import { Task, TaskStatus } from "@lit/task";
 import { RecentBoard } from "../../types/types.js";
+import { ActionTracker } from "../../utils/action-tracker.js";
 
 const MODE_KEY = "bb-project-listing-mode";
 const OVERFLOW_MENU_CLEARANCE = 4;
@@ -1024,6 +1025,9 @@ export class ProjectListing extends LitElement {
     if (!(evt.target instanceof HTMLButtonElement)) {
       return;
     }
+
+    ActionTracker.createNew();
+
     evt.target.disabled = true;
     this.dispatchEvent(new GraphBoardServerBlankBoardEvent());
   }

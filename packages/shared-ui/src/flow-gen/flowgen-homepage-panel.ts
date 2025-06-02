@@ -26,6 +26,7 @@ import {
   type SigninAdapter,
   signinAdapterContext,
 } from "../utils/signin-adapter.js";
+import { ActionTracker } from "../utils/action-tracker.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
@@ -285,6 +286,9 @@ export class FlowgenHomepagePanel extends LitElement {
         this.#state = { status: "initial" };
         return;
       }
+
+      ActionTracker.flowGenCreate();
+
       this.#state = { status: "generating" };
       void this.#generateBoard(description)
         .then((graph) => this.#onGenerateComplete(graph))

@@ -59,6 +59,7 @@ import "../../elements/output/multi-output/multi-output.js";
 import { markdown } from "../../directives/markdown";
 import { createThemeStyles } from "@breadboard-ai/theme";
 import { icons } from "../../styles/icons";
+import { ActionTracker } from "../../utils/action-tracker.js";
 
 function keyFromGraphUrl(url: string) {
   return `cw-${url.replace(/\W/gi, "-")}`;
@@ -1266,6 +1267,7 @@ export class Template extends LitElement implements AppTemplate {
                     id="run"
                     ?disabled=${this.#totalNodeCount === 0}
                     @click=${() => {
+                      ActionTracker.runApp(this.graph?.url, "app_preview");
                       this.dispatchEvent(new RunEvent());
                     }}
                   >
