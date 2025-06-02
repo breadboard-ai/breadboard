@@ -820,6 +820,9 @@ class DriveOperations {
   }
 
   async deleteGraph(url: URL): Promise<Outcome<void>> {
+    // The value being deleted might not have been yet added to the cached list. So in order to
+    // avoid inconsistencies we first make sure the list is up to date, before removing it.
+    await this.#userGraphsList.refresh();
     const file = this.fileIdFromUrl(url);
     try {
       const api = new Files(await DriveOperations.getUserAuth(this.vendor));
