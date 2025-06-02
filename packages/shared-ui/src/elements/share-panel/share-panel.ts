@@ -439,6 +439,9 @@ export class SharePanel extends LitElement {
     }
 
     const oldPublishState = this.#publishState;
+    // This prevents Lit from throwing its warning about properties being
+    // updated while another action was in progress.
+    await Promise.resolve();
     this.#publishState = { status: "reading" };
     const [accessToken, drive] = await Promise.all([
       this.#getAccessToken(),

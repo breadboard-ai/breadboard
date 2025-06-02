@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as StringsHelper from "../../strings/helper.js";
+const Strings = StringsHelper.forSection("Global");
+
 import {
   LitElement,
   html,
@@ -164,6 +167,9 @@ export class Renderer extends LitElement {
   @state()
   accessor _boundsDirty = new Set<string>();
 
+  @state()
+  accessor showDisclaimer = false;
+
   static styles = css`
     * {
       box-sizing: border-box;
@@ -181,6 +187,7 @@ export class Renderer extends LitElement {
       height: 100%;
       outline: none;
       touch-action: none;
+      position: relative;
     }
 
     :host([interactionmode="pan"]) {
@@ -189,6 +196,21 @@ export class Renderer extends LitElement {
 
     :host([interactionmode="pan"][isdragpanning]) {
       cursor: grabbing;
+    }
+
+    #disclaimer {
+      position: absolute;
+      left: 0;
+      bottom: 8px;
+      width: 100%;
+      margin: 0;
+      font: 500 10px / 1 var(--bb-font-family);
+      color: var(--n-50, var(--bb-neutral-500));
+      text-align: center;
+      padding: var(--bb-grid-size);
+      background: var(--s-90, var(--neutral-50, transparent));
+      opacity: 0;
+      animation: fadeIn 0.6s cubic-bezier(0, 0, 0.3, 1) forwards;
     }
 
     #overlay {
@@ -222,6 +244,16 @@ export class Renderer extends LitElement {
       width: 100%;
       height: 100%;
       z-index: 3;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
     }
   `;
 
@@ -954,6 +986,9 @@ export class Renderer extends LitElement {
 
         this.#graphs.delete(graphId);
       }
+
+      // Update disclaimer.
+      this.showDisclaimer = this.graph.nodes().length !== 0;
     }
 
     if (
@@ -1597,6 +1632,9 @@ export class Renderer extends LitElement {
       ></div>`,
       selectionRectangle,
       this.dragConnector,
+      this.showDisclaimer
+        ? html`<p id="disclaimer">${Strings.from("LABEL_DISCLAIMER")}</p>`
+        : nothing,
     ];
   }
 }

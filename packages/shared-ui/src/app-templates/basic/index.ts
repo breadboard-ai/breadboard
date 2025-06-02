@@ -91,6 +91,9 @@ export class Template extends LitElement implements AppTemplate {
   accessor showGDrive = false;
 
   @property()
+  accessor showDisclaimer = false;
+
+  @property()
   accessor isInSelectionState = false;
 
   @property()
@@ -1084,6 +1087,7 @@ export class Template extends LitElement implements AppTemplate {
     const PADDING = 24;
     return html`<bb-floating-input
       .schema=${currentItem.schema}
+      .showDisclaimer=${this.showDisclaimer}
       @bbresize=${(evt: ResizeEvent) => {
         this.style.setProperty(
           "--input-clearance",

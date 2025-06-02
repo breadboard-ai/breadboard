@@ -276,6 +276,7 @@ export class AppView extends LitElement {
       const appTemplate = this.config.template;
       const run = runs[0] ?? null;
 
+      appTemplate.showDisclaimer = true;
       appTemplate.state = this.#signInAdapter.state;
       appTemplate.graph = this.flow;
       appTemplate.run = run;
