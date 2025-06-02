@@ -83,7 +83,6 @@ export class GoogleDriveDebugPanel extends LitElement {
     if (changes.has("tokenVendor")) {
       if (this.tokenVendor && this.googleDriveClient) {
         this.#googleDriveBoardServer = GoogleDriveBoardServer.from(
-          "drive:",
           "Google Drive",
           { username: "", apiKey: "", secrets: new Map() },
           this.tokenVendor,

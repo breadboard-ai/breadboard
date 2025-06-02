@@ -300,7 +300,6 @@ class DriveOperations {
   constructor(
     public readonly vendor: TokenVendor,
     public readonly username: string,
-    public readonly url: URL,
     private readonly refreshProjectListCallback: () => Promise<void>,
     userFolderName: string,
     publicApiKey?: string,
@@ -833,11 +832,8 @@ class DriveOperations {
     }
   }
 
-  fileIdFromUrl(url: URL) {
-    return url.href.replace(
-      `${this.url.href}${this.url.pathname ? "" : "/"}`,
-      ""
-    );
+  fileIdFromUrl(url: URL): string {
+    return url.href.split("/").at(-1)!;
   }
 }
 

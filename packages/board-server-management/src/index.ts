@@ -42,7 +42,6 @@ interface BoardServerListing extends idb.DBSchema {
 }
 
 export async function createGoogleDriveBoardServer(
-  url: string,
   title: string,
   user: User,
   tokenVendor?: TokenVendor,
@@ -82,7 +81,6 @@ export async function createGoogleDriveBoardServer(
   const userFolderName =
     import.meta.env.VITE_GOOGLE_DRIVE_USER_FOLDER_NAME || "Breadboard";
   return GoogleDriveBoardServer.from(
-    url,
     title,
     user,
     tokenVendor,
@@ -118,7 +116,6 @@ export async function getBoardServers(
 
       if (url.startsWith(GoogleDriveBoardServer.PROTOCOL)) {
         return createGoogleDriveBoardServer(
-          url,
           title,
           user,
           tokenVendor,
