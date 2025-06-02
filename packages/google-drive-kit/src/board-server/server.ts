@@ -53,7 +53,6 @@ class GoogleDriveBoardServer
   static PROTOCOL = PROTOCOL;
 
   static async from(
-    url: string,
     title: string,
     user: User,
     vendor: TokenVendor,
@@ -64,7 +63,7 @@ class GoogleDriveBoardServer
   ) {
     try {
       const configuration = {
-        url: new URL(url),
+        url: new URL(`${PROTOCOL}/`),
         projects: Promise.resolve([]),
         kits: [],
         users: [],
@@ -97,7 +96,7 @@ class GoogleDriveBoardServer
     }
   }
 
-  public readonly url: URL;
+  public readonly url = new URL(PROTOCOL);
   public readonly users: User[];
   public readonly secrets = new Map<string, string>();
   public readonly extensions: BoardServerExtension[] = [];
@@ -122,7 +121,6 @@ class GoogleDriveBoardServer
     this.ops = new DriveOperations(
       vendor,
       user.username,
-      configuration.url,
       async () => {
         await this.refreshProjectList();
         this.dispatchEvent(new RefreshEvent());
@@ -132,7 +130,6 @@ class GoogleDriveBoardServer
       featuredGalleryFolderId
     );
 
-    this.url = configuration.url;
     this.kits = configuration.kits;
     this.users = configuration.users;
     this.secrets = configuration.secrets;
@@ -233,12 +230,13 @@ class GoogleDriveBoardServer
   }
 
   canProvide(url: URL): false | GraphProviderCapabilities {
-    if (!url.href.startsWith(this.url.href)) {
+    if (!url.href.startsWith(PROTOCOL)) {
       return false;
     }
 
+    const fileId = getFileId(url.href);
     const project = this.#projects.find((project) => {
-      return url.pathname.startsWith(project.url.pathname);
+      return fileId === getFileId(project.url.href);
     });
 
     // We recognize it as something that can be loaded from this Board Server,

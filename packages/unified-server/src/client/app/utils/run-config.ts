@@ -55,7 +55,6 @@ export async function createRunConfig(
       secrets: new Map(),
     };
     const googleDriveBoardserver = await createGoogleDriveBoardServer(
-      "drive:/",
       "Google Drive Board Server",
       user,
       tokenVendor,
