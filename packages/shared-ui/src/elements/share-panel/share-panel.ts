@@ -26,6 +26,7 @@ import {
 import { type GoogleDriveSharePanel } from "../elements.js";
 import { findGoogleDriveAssetsInGraph } from "../google-drive/find-google-drive-assets-in-graph.js";
 import { loadDriveApi } from "../google-drive/google-apis.js";
+import { ActionTracker } from "../../utils/action-tracker.js";
 
 const Strings = StringsHelper.forSection("UIController");
 
@@ -396,6 +397,7 @@ export class SharePanel extends LitElement {
     }
     const selected = input.selected;
     if (selected) {
+      ActionTracker.publishApp(this.graph?.url);
       this.#publish();
     } else {
       this.#unpublish();

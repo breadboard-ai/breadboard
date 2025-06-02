@@ -22,6 +22,7 @@ import {
   type SigninAdapter,
   signinAdapterContext,
 } from "../utils/signin-adapter.js";
+import { ActionTracker } from "../utils/action-tracker.js";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -279,6 +280,9 @@ export class FlowgenEditorInput extends LitElement {
         return;
       }
       this.#state = { status: "generating" };
+
+      ActionTracker.flowGenEdit(this.currentGraph?.url);
+
       void this.#generateBoard(description)
         .then((graph) => this.#onGenerateComplete(graph))
         .catch((error) => this.#onGenerateError(error));

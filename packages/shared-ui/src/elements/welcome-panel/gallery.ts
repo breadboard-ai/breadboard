@@ -30,6 +30,7 @@ import { renderThumbnail } from "../../utils/image.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { guard } from "lit/directives/guard.js";
+import { ActionTracker } from "../../utils/action-tracker.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
@@ -606,6 +607,7 @@ export class Gallery extends LitElement {
   }
 
   #onBoardClick(_event: PointerEvent | KeyboardEvent, url: string) {
+    ActionTracker.openApp(url, this.forceCreatorToBeTeam ? "gallery" : "user");
     this.dispatchEvent(new GraphBoardServerLoadRequestEvent(url));
   }
 
@@ -616,6 +618,7 @@ export class Gallery extends LitElement {
   }
 
   #onRemixButtonClick(event: PointerEvent | KeyboardEvent, url: string) {
+    ActionTracker.remixApp(url, this.forceCreatorToBeTeam ? "gallery" : "user");
     event.stopPropagation();
     this.dispatchEvent(new GraphBoardServerRemixRequestEvent(url));
   }
