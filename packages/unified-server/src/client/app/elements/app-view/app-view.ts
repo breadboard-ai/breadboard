@@ -3,10 +3,11 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, nothing } from "lit";
 import { customElement } from "lit/decorators.js";
 import { AppViewConfig, Runner } from "../../types/types";
 import { provide } from "@lit/context";
+import { Task } from "@lit/task";
 
 import * as ConnectionClient from "@breadboard-ai/connection-client";
 import * as BreadboardUIContext from "@breadboard-ai/shared-ui/contexts";
@@ -25,11 +26,11 @@ import {
   Outcome,
 } from "@google-labs/breadboard";
 import {
+  AppTemplate,
   AppTemplateOptions,
   TopGraphRunResult,
 } from "@breadboard-ai/shared-ui/types/types.js";
 import { getThemeModeFromBackground } from "../../utils/color.js";
-import { until } from "lit/directives/until.js";
 import { TopGraphObserver } from "@breadboard-ai/shared-ui/utils/top-graph-observer";
 import { InputEnterEvent } from "../../events/events.js";
 import {
@@ -294,29 +295,17 @@ export class AppView extends LitElement {
     }
   }
 
-  render() {
-    if (!this.flow || !this.#runner) {
-      return html`404 not found`;
-    }
-
-    const run = this.#runner.runObserver.runs().then((runs) => {
-      if (!this.flow || !this.#runner) {
-        return html`404 not found`;
-      }
-
-      const appTemplate = this.config.template;
-      const run = runs[0] ?? null;
+  readonly #initializeAppTemplate = new Task(this, {
+    args: () => [this.config.template],
+    task: async ([appTemplate]): Promise<AppTemplate> => {
+      const run = this.#runner
+        ? (await this.#runner.runObserver.runs())[0]
+        : null;
 
       appTemplate.showDisclaimer = true;
-      appTemplate.state = this.#signInAdapter.state;
       appTemplate.graph = this.flow;
       appTemplate.run = run;
-      appTemplate.topGraphResult =
-        this.#overrideTopGraphRunResult ??
-        this.#runner.topGraphObserver.current() ??
-        TopGraphObserver.entryResult(this.flow);
-      appTemplate.eventPosition = run?.events.length ?? 0;
-      appTemplate.showGDrive = this.#signInAdapter.state === "valid";
+
       appTemplate.addEventListener("bbsigninrequested", async () => {
         const url = await this.#signInAdapter.getSigninUrl();
 
@@ -381,9 +370,27 @@ export class AppView extends LitElement {
         }
       });
 
-      return html`${appTemplate}`;
-    });
+      return appTemplate;
+    },
+  });
 
-    return html`${until(run)}`;
+  render() {
+    if (!this.flow || !this.#runner) {
+      return html`404 not found`;
+    }
+    return this.#initializeAppTemplate.render({
+      pending: () => nothing,
+      error: () => `An unexpected error occured`,
+      complete: (appTemplate) => {
+        appTemplate.state = this.#signInAdapter.state;
+        appTemplate.topGraphResult =
+          this.#overrideTopGraphRunResult ??
+          this.#runner?.topGraphObserver.current() ??
+          TopGraphObserver.entryResult(this.flow);
+        appTemplate.eventPosition = appTemplate.run?.events.length ?? 0;
+        appTemplate.showGDrive = this.#signInAdapter.state === "valid";
+        return appTemplate;
+      },
+    });
   }
 }
