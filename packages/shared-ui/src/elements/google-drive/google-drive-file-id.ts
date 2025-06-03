@@ -4,16 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, css, html } from "lit";
+import { LitElement, PropertyValues, css, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { type InputEnterEvent } from "../../events/events.js";
-import { InputChangeEvent, InputPlugin } from "../../plugins/input-plugin.js";
+import {
+  InputCancelEvent,
+  InputChangeEvent,
+  InputPlugin,
+} from "../../plugins/input-plugin.js";
 import "../connection/connection-input.js";
 import {
   loadDrivePicker,
   loadDriveApi,
   loadGapiClient,
 } from "./google-apis.js";
+import { createRef, ref, Ref } from "lit/directives/ref.js";
 
 type PickedValue = {
   // A special value recognized by the "GraphPortLabel": if present in an
@@ -125,7 +130,12 @@ export class GoogleDriveFileId extends LitElement {
   @property()
   accessor ownedByMeOnly = false;
 
+  @property()
+  accessor autoTrigger = false;
+
   #picker?: google.picker.Picker;
+  #autoTrigger = false;
+  #inputRef: Ref<HTMLButtonElement> = createRef();
 
   override async connectedCallback(): Promise<void> {
     super.connectedCallback();
@@ -144,6 +154,20 @@ export class GoogleDriveFileId extends LitElement {
     this.#onClickPickFiles();
   }
 
+  protected willUpdate(changedProperties: PropertyValues): void {
+    if (changedProperties.has("autoTrigger") && this.autoTrigger) {
+      this.#autoTrigger = true;
+      this.autoTrigger = false;
+    }
+  }
+
+  protected updated(): void {
+    if (this.#inputRef.value && this.#autoTrigger) {
+      this.#inputRef.value.click();
+      this.#autoTrigger = false;
+    }
+  }
+
   override render() {
     if (this._authorization === undefined) {
       return html`<bb-connection-input
@@ -158,7 +182,12 @@ export class GoogleDriveFileId extends LitElement {
       return html`<p>Working ...</p>`;
     }
     return html`
-      <button @click=${this.#onClickPickFiles}>Pick File</button>
+      <button
+        @click=${this.#onClickPickFiles}
+        ${this.#autoTrigger ? ref(this.#inputRef) : nothing}
+      >
+        Pick File
+      </button>
       ${this.value
         ? html`<input
             type="text"
@@ -228,8 +257,11 @@ export class GoogleDriveFileId extends LitElement {
     }
     this.#destroyPicker();
 
-    const view = new this._pickerLib.DocsView(google.picker.ViewId.DOCS);
+    const view = new this._pickerLib.DocsView();
     view.setMimeTypes(MIME_TYPES);
+    view.setIncludeFolders(true);
+    view.setSelectFolderEnabled(false);
+
     if (this.ownedByMeOnly) {
       view.setOwnedByMe(true);
     }
@@ -250,6 +282,7 @@ export class GoogleDriveFileId extends LitElement {
     switch (result.action) {
       case "cancel": {
         this.#destroyPicker();
+        this.dispatchEvent(new InputCancelEvent());
         return;
       }
       case "picked": {

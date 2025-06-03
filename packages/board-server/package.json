@@ -63,11 +63,7 @@
         "package.json"
       ],
       "dependencies": [
-        "<dependencies>#build",
-        "../agent-kit#build",
-        "../core-kit#build",
-        "../json-kit#build",
-        "../template-kit#build"
+        "<dependencies>#build"
       ]
     },
     "build:esbuild": {
@@ -140,8 +136,6 @@
     "@types/supertest": "^6.0.3",
     "@types/uuid": "^10.0.0",
     "esbuild": "^0.25.2",
-    "eslint": "^8.57.1",
-    "firebase-tools": "^14.1.0",
     "supertest": "^7.1.0",
     "typescript": "^5.8.3",
     "wireit": "^0.15.0-pre.2"
@@ -156,12 +150,12 @@
     "@google-cloud/secret-manager": "^6.0.1",
     "@google-cloud/storage": "^7.15.2",
     "@google-labs/breadboard": "^0.34.0",
-    "@lit/context": "^1.1.4",
+    "@google-labs/core-kit": "^0.19.0",
     "@types/express": "^5.0.1",
     "better-sqlite3": "^11.9.1",
     "cors": "^2.8.5",
     "express": "^4.21.2",
-    "lit": "^3.2.1",
+    "lit": "^3.3.0",
     "uuid": "^11.1.0"
   }
 }

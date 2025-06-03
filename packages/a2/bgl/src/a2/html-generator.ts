@@ -5,7 +5,14 @@
 import fetch from "@fetch";
 import secrets from "@secrets";
 
-import { err, ok, toLLMContent, toLLMContentInline, toText } from "./utils";
+import {
+  err,
+  ok,
+  toLLMContent,
+  toLLMContentInline,
+  toText,
+  decodeBase64,
+} from "./utils";
 import { executeStep } from "./step-executor";
 import type { ExecuteStepRequest, Content, ContentMap } from "./step-executor";
 import { report } from "./output";
@@ -13,16 +20,6 @@ import { report } from "./output";
 export { callGenWebpage };
 
 const OUTPUT_KEY = "rendered_outputs";
-
-function base64DecodeNonAsciiStandard(base64String: string) {
-  const byteString = atob(base64String);
-  let encodedString = "";
-  for (let i = 0; i < byteString.length; i++) {
-    encodedString +=
-      "%" + byteString.charCodeAt(i).toString(16).padStart(2, "0");
-  }
-  return decodeURIComponent(encodedString);
-}
 
 async function callGenWebpage(
   instruction: string,
@@ -62,11 +59,16 @@ async function callGenWebpage(
       } else if ("storedData" in part) {
         const key = `media_${i}`;
         inputParameters.push(key);
+        let handle = part.storedData.handle;
+        if (handle.startsWith("drive:/")) {
+          const driveId = handle.replace(/^drive:\/+/, "");
+          handle = `https://drive.google.com/file/d/${driveId}/preview`;
+        }
         executionInputs[key] = {
           chunks: [
             {
               mimetype: "url/" + part.storedData.mimeType,
-              data: btoa(unescape(encodeURIComponent(part.storedData.handle))),
+              data: btoa(unescape(encodeURIComponent(handle))),
             },
           ],
         };
@@ -118,7 +120,7 @@ async function callGenWebpage(
   }
   const mimetype = outputChunk.chunks[0].mimetype;
   const base64Data = outputChunk.chunks[0].data;
-  const data = base64DecodeNonAsciiStandard(base64Data);
+  const data = decodeBase64(base64Data);
   if (mimetype == "text/html") {
     returnVal = toLLMContentInline(mimetype, data);
   } else {

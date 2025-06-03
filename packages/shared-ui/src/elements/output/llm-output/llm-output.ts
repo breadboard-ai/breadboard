@@ -3,7 +3,7 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import type { LLMContent } from "@breadboard-ai/types";
+import type { DataPart, LLMContent } from "@breadboard-ai/types";
 import {
   isFileDataCapabilityPart,
   isFunctionCallCapabilityPart,
@@ -14,8 +14,10 @@ import {
   isLLMContent,
   isStoredData,
   isTextCapabilityPart,
+  Template,
 } from "@google-labs/breadboard";
 import {
+  HTMLTemplateResult,
   LitElement,
   PropertyValues,
   TemplateResult,
@@ -29,25 +31,23 @@ import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
 import { until } from "lit/directives/until.js";
 import { markdown } from "../../../directives/markdown.js";
-import { ToastEvent, ToastType } from "../../../events/events.js";
-import { appendToDocUsingDriveKit } from "../../google-drive/append-to-doc-using-drive-kit.js";
 import { tokenVendorContext } from "../../elements.js";
 import { consume } from "@lit/context";
 import type { TokenVendor } from "@breadboard-ai/connection-client";
-import "./export-toolbar.js";
 import { styleMap } from "lit/directives/style-map.js";
-import { getGlobalColor } from "../../../utils/color.js";
 import {
   convertShareUriToEmbedUri,
-  convertWatchUriToEmbedUri,
+  convertWatchOrShortsUriToEmbedUri,
   isEmbedUri,
   isShareUri,
+  isShortsUri,
   isWatchUri,
 } from "../../../utils/youtube.js";
-import { SIGN_IN_CONNECTION_ID } from "../../../utils/signin-adapter.js";
 import { Task } from "@lit/task";
+import { icons } from "../../../styles/icons.js";
+import { OverflowAction } from "../../../types/types.js";
+import { OverflowMenuActionEvent } from "../../../events/events.js";
 
-const PCM_AUDIO = "audio/l16;codec=pcm;rate=24000";
 const SANDBOX_RESTRICTIONS = "allow-scripts allow-forms";
 
 @customElement("bb-llm-output")
@@ -79,286 +79,357 @@ export class LLMOutput extends LitElement {
   #partDataURLs = new Map<number, string>();
   #partTask = new Map<number, Task>();
 
-  static styles = css`
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
+  static styles = [
+    icons,
+    css`
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+
+        to {
+          opacity: 1;
+        }
       }
 
-      to {
-        opacity: 1;
+      * {
+        box-sizing: border-box;
       }
-    }
 
-    * {
-      box-sizing: border-box;
-    }
+      :host {
+        display: block;
+        position: relative;
+        margin-bottom: var(--bb-grid-size-2);
+        background: var(--output-background-color, transparent);
+        border-radius: var(--output-border-radius, 0);
 
-    :host {
-      display: block;
-      position: relative;
-      border: var(--output-border-width, 2px) solid
-        var(--output-border-color, var(--bb-neutral-300));
-      border-radius: var(--output-border-radius, var(--bb-grid-size));
-      margin-bottom: var(--bb-grid-size-2);
-      background: var(--output-background-color, transparent);
-    }
+        --md-h1-font: 500 var(--bb-title-large) /
+          var(--bb-title-line-height-large) var(--bb-font-family);
+        --md-h1-margin: var(--bb-grid-size-6) 0 var(--bb-grid-size-2) 0;
 
-    :host([clamped]) {
-      resize: vertical;
-      overflow: auto;
-      height: 200px;
-      min-height: var(--bb-grid-size-6);
-    }
+        --md-h2-font: 500 var(--bb-title-medium) /
+          var(--bb-title-line-height-medium) var(--bb-font-family);
+        --md-h2-margin: var(--bb-grid-size-4) 0 var(--bb-grid-size-2) 0;
 
-    :host(:not([clamped])) {
-      min-height: var(--output-min-height, 0);
-    }
+        --md-h-font: 500 var(--bb-title-small) /
+          var(--bb-title-line-height-small) var(--bb-font-family);
+        --md-h-margin: var(--bb-grid-size-3) 0 var(--bb-grid-size-2) 0;
 
-    :host([lite]) {
-      border: 1px solid var(--output-lite-border-color, var(--bb-neutral-100));
-      background: var(--output-lite-background-color, var(--bb-neutral-0));
-    }
+        --md-p-font: 400 var(--bb-body-medium) /
+          var(--bb-body-line-height-medium) var(--bb-font-family);
+        --md-p-margin: 0 0 var(--bb-grid-size-2) 0;
+        --md-p-text-align: left;
+        --md-color: var(--bb-neutral-900);
+        --md-a-color: var(--primary-color, var(--bb-ui-700));
 
-    .loading {
-      display: flex;
-      align-items: center;
-      height: 20px;
-      font: normal var(--bb-body-small) / var(--bb-body-line-height-small)
-        var(--bb-font-family);
-
-      &::before {
-        content: "";
-        width: 20px;
-        height: 20px;
-        background: url(/images/progress-ui.svg) center center / 20px 20px
-          no-repeat;
-        margin-right: var(--bb-grid-size-2);
+        & .content {
+          border-radius: var(--output-border-radius, var(--bb-grid-size));
+        }
       }
-    }
 
-    .content {
-      display: block;
-      position: relative;
-      margin-bottom: var(--bb-grid-size-2);
-      padding: var(--output-padding-y, 0) var(--output-padding-x, 0);
-      overflow-y: auto;
-      max-height: var(--bb-llm-output-content-max-height, unset);
-    }
+      :host([clamped]) {
+        resize: vertical;
+        overflow: auto;
+        height: 200px;
+        min-height: var(--bb-grid-size-6);
+      }
 
-    .content:last-of-type {
-      margin-bottom: 0;
-    }
+      :host(:not([clamped])) {
+        min-height: var(--output-min-height, 0);
+      }
 
-    .value {
-      display: flex;
-      flex-direction: column;
-      position: relative;
+      :host([lite]) {
+        & .content {
+          background: var(--output-lite-background-color, var(--bb-neutral-0));
 
-      margin: var(--output-value-margin-y, 0) var(--output-value-margin-x, 0);
-      font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
-        var(--bb-font-family);
-      color: var(--bb-neutral-900);
+          &:has(.html-view) {
+            border: none;
+            border-radius: 0;
 
-      padding: var(--output-value-padding-y, 0) var(--output-value-padding-x, 0);
+            --output-lite-border-color: transparent;
+            --output-border-radius: 0;
+          }
+        }
+      }
 
-      white-space: normal;
-      border-radius: initial;
-      user-select: text;
-
-      &:has(> img),
-      &:has(> .copy-image-to-clipboard),
-      &:has(> video),
-      &:has(> audio) {
-        justify-content: center;
+      .loading {
+        display: flex;
         align-items: center;
-        padding: var(--output-value-padding-y, 0)
-          var(--output-value-padding-x, 0);
-      }
-
-      &:has(> .html-view) {
-        padding: 0;
-        margin: 0;
-      }
-
-      & pre {
+        height: 20px;
         font: normal var(--bb-body-small) / var(--bb-body-line-height-small)
           var(--bb-font-family);
+
+        &::before {
+          content: "";
+          width: 20px;
+          height: 20px;
+          background: url(/images/progress-ui.svg) center center / 20px 20px
+            no-repeat;
+          margin-right: var(--bb-grid-size-2);
+        }
       }
 
-      & iframe {
-        aspect-ratio: 16/9;
+      .content {
+        display: block;
+        position: relative;
+        margin: 0 auto;
+        margin-bottom: var(--bb-grid-size-2);
+        padding: var(--output-padding-y, 0) var(--output-padding-x, 0);
+        overflow-y: auto;
+        max-height: var(--bb-llm-output-content-max-height, unset);
+
+        &:last-of-type {
+          margin-bottom: 0;
+        }
+
+        & .value {
+          display: flex;
+          flex-direction: column;
+          position: relative;
+
+          margin: var(--output-value-margin-y, 0)
+            var(--output-value-margin-x, 0);
+          font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
+            var(--bb-font-family);
+          color: var(--bb-neutral-900);
+
+          padding: var(--output-value-padding-y, 0)
+            var(--output-value-padding-x, 0);
+
+          white-space: normal;
+          border-radius: initial;
+          user-select: text;
+
+          .no-data {
+            font: normal var(--bb-body-small) / var(--bb-body-line-height-small)
+              var(--bb-font-family-mono);
+          }
+
+          &:has(> img),
+          &:has(> .copy-image-to-clipboard),
+          &:has(> video),
+          &:has(> audio) {
+            justify-content: center;
+            align-items: center;
+            padding: var(--output-value-padding-y, 0)
+              var(--output-value-padding-x, 0);
+          }
+
+          &:has(> .html-view) {
+            padding: 0;
+            margin: 0;
+          }
+
+          & * {
+            margin: 0;
+          }
+
+          & img,
+          & video,
+          & audio {
+            width: 100%;
+            min-width: 300px;
+            max-width: 540px;
+          }
+
+          & img,
+          & video {
+            border-radius: var(--output-border-radius);
+          }
+
+          & pre {
+            font: normal var(--bb-body-small) / var(--bb-body-line-height-small)
+              var(--bb-font-family);
+          }
+
+          & iframe {
+            aspect-ratio: 16/9;
+            margin: 0;
+          }
+
+          & .empty-text-part {
+            color: var(--bb-neutral-900);
+            margin: 0;
+            padding: 0;
+            border-radius: var(--bb-grid-size-16);
+            font: normal italic var(--bb-body-small) /
+              var(--bb-body-line-height-small) var(--bb-font-family);
+          }
+
+          & ol {
+            margin-top: var(--bb-grid-size-2);
+
+            & li {
+              margin: var(--bb-grid-size-2);
+            }
+          }
+
+          & .overflow {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            padding: 0;
+            margin: 0;
+            border: none;
+            color: var(--bb-neutral-0);
+            background: var(--bb-neutral-700);
+            position: absolute;
+            bottom: calc(
+              var(--output-value-padding-y, 0) + var(--bb-grid-size-2)
+            );
+            right: calc(
+              var(--output-value-padding-x, 0) + var(--bb-grid-size-2)
+            );
+
+            & .g-icon {
+              pointer-events: none;
+            }
+
+            &:not([disabled]) {
+              cursor: pointer;
+            }
+          }
+        }
+
+        & .plain-text {
+          white-space: pre;
+          font: 500 var(--bb-body-small) / var(--bb-body-line-height-small)
+            var(--bb-font-family-mono);
+          color: var(--bb-neutral-900);
+        }
+
+        & .markdown {
+          line-height: 1.5;
+          overflow-x: auto;
+          color: var(--md-color);
+
+          & a {
+            color: var(--md-a-color);
+          }
+
+          h1 {
+            font: var(--md-h1-font);
+            margin: var(--md-h1-margin);
+          }
+
+          & h2 {
+            font: var(--md-h2-font);
+            margin: var(--md-h2-margin);
+          }
+
+          & h3,
+          & h4,
+          & h5 {
+            font: var(--md-h-font);
+            margin: var(--md-h-margin);
+          }
+
+          & h1:first-of-type,
+          & h2:first-of-type,
+          & h3:first-of-type,
+          & h4:first-of-type,
+          & h5:first-of-type {
+            margin-top: 0;
+          }
+
+          & p {
+            font: var(--md-p-font);
+            margin: var(--md-p-margin);
+            text-align: var(--md-p-text-align);
+            white-space: pre-line;
+
+            & strong:only-child {
+              margin: var(--bb-grid-size-2) 0 0 0;
+            }
+
+            &:last-of-type {
+              margin-bottom: 0;
+            }
+          }
+        }
+      }
+
+      iframe.html-view {
+        border: none;
+        width: 100%;
+        overflow-x: auto;
+        height: var(--html-view-height, 100svh);
+        max-height: calc(100cqh - var(--bb-grid-size-11));
+      }
+
+      :host([lite]) .value {
         margin: 0;
       }
 
-      & .empty-text-part {
+      .play-audio {
+        background: var(--bb-neutral-0) var(--bb-icon-sound) 6px 3px / 16px 16px
+          no-repeat;
+        border-radius: 20px;
         color: var(--bb-neutral-900);
-        margin: 0;
-        padding: 0;
-        border-radius: var(--bb-grid-size-16);
-        font: normal italic var(--bb-body-small) /
-          var(--bb-body-line-height-small) var(--bb-font-family);
-      }
-    }
-
-    .value img,
-    .value video,
-    .value audio {
-      width: 100%;
-      max-width: 360px;
-    }
-
-    .value img,
-    .value video,
-    iframe.html-view {
-      border-radius: var(--output-border-radius);
-    }
-
-    iframe.html-view {
-      border: none;
-      width: 100%;
-      overflow-x: auto;
-      height: 600px;
-    }
-
-    .value .plain-text {
-      white-space: pre;
-      font: 500 var(--bb-body-small) / var(--bb-body-line-height-small)
-        var(--bb-font-family-mono);
-      color: var(--bb-neutral-900);
-    }
-
-    .value.markdown {
-      line-height: 1.5;
-      overflow-x: auto;
-      color: var(--bb-neutral-900);
-
-      & a {
-        color: var(--primary-color, var(--bb-ui-700));
-      }
-    }
-
-    .value * {
-      margin: 0;
-    }
-
-    .value h1 {
-      font: 500 var(--bb-title-large) / var(--bb-title-line-height-large)
-        var(--bb-font-family);
-
-      margin: var(--bb-grid-size-6) 0 var(--bb-grid-size-2) 0;
-    }
-
-    .value h2 {
-      font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
-        var(--bb-font-family);
-
-      margin: var(--bb-grid-size-4) 0 var(--bb-grid-size-2) 0;
-    }
-
-    .value h3,
-    .value h4,
-    .value h5 {
-      font: 500 var(--bb-title-small) / var(--bb-title-line-height-small)
-        var(--bb-font-family);
-
-      margin: var(--bb-grid-size-3) 0 var(--bb-grid-size-2) 0;
-    }
-
-    .value p {
-      font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
-        var(--bb-font-family);
-
-      margin: 0 0 var(--bb-grid-size-2) 0;
-      white-space: pre-line;
-
-      & strong:only-child {
-        margin: var(--bb-grid-size-2) 0 0 0;
-      }
-    }
-
-    .value h1:first-of-type,
-    .value h2:first-of-type,
-    .value h3:first-of-type,
-    .value h4:first-of-type,
-    .value h5:first-of-type {
-      margin-top: 0;
-    }
-
-    .value p:last-of-type {
-      margin-bottom: 0;
-    }
-
-    .value.no-data {
-      font: normal var(--bb-body-small) / var(--bb-body-line-height-small)
-        var(--bb-font-family-mono);
-    }
-
-    :host([lite]) .value {
-      margin: 0;
-    }
-
-    .play-audio {
-      background: var(--bb-neutral-0) var(--bb-icon-sound) 6px 3px / 16px 16px
-        no-repeat;
-      border-radius: 20px;
-      color: var(--bb-neutral-900);
-      border: 1px solid var(--bb-neutral-600);
-      height: 24px;
-      padding: 0 16px 0 28px;
-      cursor: pointer;
-      opacity: 0.5;
-    }
-
-    .play-audio:hover,
-    .play-audio:focus {
-      opacity: 1;
-    }
-
-    .copy-image-to-clipboard {
-      position: relative;
-
-      & button {
-        width: 32px;
-        height: 32px;
-        background: var(--background-color, var(--bb-neutral-0))
-          var(--bb-icon-copy-to-clipboard) center center / 20px 20px no-repeat;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        translate: -50% -50%;
-        border-radius: 50%;
+        border: 1px solid var(--bb-neutral-600);
+        height: 24px;
+        padding: 0 16px 0 28px;
         cursor: pointer;
-        border: 1px solid var(--bb-neutral-300);
-        font-size: 0;
-        opacity: 0;
-        transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+        opacity: 0.5;
       }
 
-      &:hover button {
+      .play-audio:hover,
+      .play-audio:focus {
         opacity: 1;
       }
-    }
 
-    bb-export-toolbar {
-      display: none;
-      position: absolute;
-      top: -16px;
-      right: var(--export-x, 16px);
-      z-index: 1;
-      animation: fadeIn 0.15s cubic-bezier(0, 0, 0.3, 1);
-    }
+      .copy-image-to-clipboard {
+        position: relative;
 
-    bb-pdf-viewer {
-      aspect-ratio: 1/1;
-    }
+        & button {
+          width: 32px;
+          height: 32px;
+          background: var(--background-color, var(--bb-neutral-0))
+            var(--bb-icon-copy-to-clipboard) center center / 20px 20px no-repeat;
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          translate: -50% -50%;
+          border-radius: 50%;
+          cursor: pointer;
+          border: 1px solid var(--bb-neutral-300);
+          font-size: 0;
+          opacity: 0;
+          transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+        }
 
-    :host(:hover) {
-      bb-export-toolbar {
-        display: block;
+        &:hover button {
+          opacity: 1;
+        }
       }
-    }
-  `;
+
+      bb-export-toolbar {
+        display: none;
+        position: absolute;
+        top: -16px;
+        right: var(--export-x, 16px);
+        z-index: 1;
+        animation: fadeIn 0.15s cubic-bezier(0, 0, 0.3, 1);
+      }
+
+      bb-pdf-viewer {
+        aspect-ratio: 1/1;
+      }
+
+      :host(:hover) {
+        bb-export-toolbar {
+          display: block;
+        }
+      }
+
+      bb-overflow-menu {
+        position: absolute;
+        top: auto;
+        bottom: calc(var(--output-value-padding-y, 0) + var(--bb-grid-size-2));
+        right: calc(var(--output-value-padding-x, 0) + var(--bb-grid-size-2));
+      }
+    `,
+  ];
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -425,30 +496,130 @@ export class LLMOutput extends LitElement {
     return task;
   }
 
+  #renderOverflowMenu() {}
+
+  #overflowMenuConfiguration = {
+    idx: 0,
+    y: 0,
+  };
+
+  @property()
+  accessor showPartOverflowMenu = false;
+
+  #hasOverflowMenu(part: DataPart): boolean {
+    if (isInlineData(part)) {
+      if (
+        part.inlineData.mimeType.startsWith("image") &&
+        part.inlineData.data !== ""
+      ) {
+        return true;
+      }
+      if (part.inlineData.mimeType.startsWith("text/html")) {
+        return true;
+      }
+    } else if (isStoredData(part)) {
+      if (part.storedData.mimeType.startsWith("image")) {
+        return true;
+      }
+
+      if (part.storedData.mimeType.startsWith("text/html")) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   render() {
-    const canCopy = this.showExportControls && "ClipboardItem" in window;
     if (this.value && !isLLMContent(this.value)) {
       console.warn(`Unexpected value for LLM Output`, this.value);
       return nothing;
     }
 
+    let partOverflowMenu: HTMLTemplateResult | symbol = nothing;
+    if (this.showPartOverflowMenu && this.#overflowMenuConfiguration) {
+      const actions: OverflowAction[] = [
+        {
+          title: "Download",
+          name: "download",
+          icon: "download",
+        },
+      ];
+
+      partOverflowMenu = html`<bb-overflow-menu
+        id="user-overflow"
+        style=${styleMap({
+          bottom: `${this.#overflowMenuConfiguration.y}px`,
+        })}
+        .actions=${actions}
+        .disabled=${false}
+        @bboverflowmenudismissed=${() => {
+          this.showPartOverflowMenu = false;
+        }}
+        @bboverflowmenuaction=${async (actionEvt: OverflowMenuActionEvent) => {
+          this.showPartOverflowMenu = false;
+          actionEvt.stopImmediatePropagation();
+
+          switch (actionEvt.action) {
+            case "download": {
+              const data =
+                this.value?.parts[this.#overflowMenuConfiguration.idx];
+
+              let downloadSuffix;
+              let dataHref;
+              if (isInlineData(data)) {
+                downloadSuffix = data.inlineData.mimeType.split("/").at(-1);
+                let inlineData = data.inlineData.data;
+                if (data.inlineData.mimeType === "text/html") {
+                  const textEncoder = new TextEncoder();
+                  const bytes = textEncoder.encode(data.inlineData.data);
+
+                  let byteString = "";
+                  bytes.forEach(
+                    (byte) => (byteString += String.fromCharCode(byte))
+                  );
+
+                  inlineData = btoa(byteString);
+                }
+                dataHref = `data:${data.inlineData.mimeType};base64,${inlineData}`;
+              } else if (isStoredData(data)) {
+                dataHref = data.storedData.handle;
+                if (dataHref.startsWith(".") && this.graphUrl) {
+                  dataHref = new URL(dataHref, this.graphUrl).href;
+                }
+                downloadSuffix = data.storedData.mimeType.split("/").at(-1);
+              }
+
+              if (!dataHref) {
+                return;
+              }
+
+              const download = document.createElement("a");
+              download.href = dataHref;
+              download.download = `file-download.${downloadSuffix}`;
+              download.click();
+              break;
+            }
+          }
+        }}
+      ></bb-overflow-menu>`;
+    }
     return this.value && this.value.parts.length
-      ? html` ${this.showExportControls
-          ? html`<bb-export-toolbar
-              .supported=${this.supportedExportControls}
-              .value=${this.value}
-              .graphUrl=${this.graphUrl}
-            ></bb-export-toolbar>`
-          : nothing}
-        ${map(this.value.parts, (part, idx) => {
+      ? html`${map(this.value.parts, (part, idx) => {
           let value: TemplateResult | symbol = nothing;
           if (isTextCapabilityPart(part)) {
             if (part.text === "") {
-              value = html`<span class="empty-text-part">
-                No value provided
-              </span>`;
+              if (this.value?.parts.length === 1) {
+                value = html`<span class="empty-text-part"
+                  >No value provided</span
+                >`;
+              } else {
+                return nothing;
+              }
             } else {
-              value = html`${markdown(part.text)}`;
+              // We may receive outputs with chiclets in so we must scrub those.
+              const tmpl = new Template(part.text);
+              value = html`${markdown(tmpl.preview)}`;
             }
 
             this.#outputLoaded();
@@ -488,112 +659,25 @@ export class LLMOutput extends LitElement {
                 }
 
                 return cache(html`
-                  ${canCopy
-                    ? html`<div class="copy-image-to-clipboard">
-                        <img
-                          @load=${() => {
-                            this.#outputLoaded();
-                          }}
-                          src="${url}"
-                          alt="LLM Image"
-                        />
-                        <button
-                          @click=${async () => {
-                            const image = new Image();
-                            image.crossOrigin = "anonymous"; // Ensure cross-origin compatibility
-                            image.src = url;
-
-                            image.onload = async () => {
-                              const canvas = document.createElement("canvas");
-                              canvas.width = image.width;
-                              canvas.height = image.height;
-                              const ctx = canvas.getContext("2d");
-                              if (ctx) {
-                                ctx.drawImage(image, 0, 0);
-                                const pngDataUrl =
-                                  canvas.toDataURL("image/png");
-                                const response = await fetch(pngDataUrl);
-                                const imageData = await response.blob();
-
-                                await navigator.clipboard.write([
-                                  new ClipboardItem({
-                                    "image/png": imageData,
-                                  }),
-                                ]);
-
-                                this.dispatchEvent(
-                                  new ToastEvent(
-                                    "Copied image to Clipboard",
-                                    ToastType.INFORMATION
-                                  )
-                                );
-                              }
-                            };
-
-                            image.onerror = () => {
-                              this.dispatchEvent(
-                                new ToastEvent(
-                                  "Failed to copy image to Clipboard",
-                                  ToastType.ERROR
-                                )
-                              );
-                            };
-                          }}
-                        >
-                          Copy image to clipboard
-                        </button>
-                      </div>`
-                    : html`<img
-                        @load=${() => {
-                          this.#outputLoaded();
-                        }}
-                        src="${url}"
-                        alt="LLM Image"
-                      />`}
+                  <img
+                    @load=${() => {
+                      this.#outputLoaded();
+                    }}
+                    src="${url}"
+                    alt="LLM Image"
+                  />
                 `);
               }
               if (part.inlineData.mimeType.startsWith("audio")) {
-                const audioHandler = fetch(url)
-                  .then((r) => r.blob())
-                  .then((data) => {
-                    if (
-                      part.inlineData.mimeType.toLocaleLowerCase() === PCM_AUDIO
-                    ) {
-                      return new Blob([data], { type: PCM_AUDIO });
-                    }
-
-                    return data;
-                  })
-                  .then((audioFile) => {
-                    const colorLight =
-                      this.value?.role === "model"
-                        ? getGlobalColor("--bb-generative-400")
-                        : getGlobalColor("--bb-ui-400");
-                    const colorMid =
-                      this.value?.role === "model"
-                        ? getGlobalColor("--bb-generative-500")
-                        : getGlobalColor("--bb-ui-500");
-                    const colorDark =
-                      this.value?.role === "model"
-                        ? getGlobalColor("--bb-generative-600")
-                        : getGlobalColor("--bb-ui-600");
-
-                    this.#outputLoaded();
-                    return cache(
-                      html`<div class="play-audio-container">
-                        <bb-audio-handler
-                          .audioFile=${audioFile}
-                          .color=${colorLight}
-                          style=${styleMap({
-                            "--color-button": colorMid,
-                            "--color-button-active": colorDark,
-                          })}
-                        ></bb-audio-handler>
-                      </div>`
-                    );
-                  });
-
-                return cache(html`${until(audioHandler)}`);
+                return cache(
+                  html`<audio
+                    @loadedmetadata=${() => {
+                      this.#outputLoaded();
+                    }}
+                    src="${url}"
+                    controls
+                  />`
+                );
               }
               if (part.inlineData.mimeType.startsWith("text/html")) {
                 this.#outputLoaded();
@@ -661,90 +745,99 @@ export class LLMOutput extends LitElement {
               this.#outputLoaded();
               value = html`<div>Failed to retrieve stored data</div>`;
             } else {
-              const { mimeType } = part.storedData;
-              if (url.startsWith(".") && this.graphUrl) {
-                url = new URL(url, this.graphUrl).href;
-              }
-              const getData = async () => {
-                const response = await fetch(url);
-                return response.text();
-              };
-              if (mimeType.startsWith("image")) {
-                const imgData = new Promise((resolve) => {
-                  const image = new Image();
-                  image.setAttribute("alt", url);
-                  image.onload = () => {
-                    this.#outputLoaded();
-                    resolve(image);
-                  };
-                  image.onerror = () => {
-                    this.#outputLoaded();
-                    resolve(
-                      html`<span class="empty-text-part"
-                        >No image provided</span
-                      >`
-                    );
-                  };
-                  image.src = url;
-                });
-                value = html`${until(imgData)}`;
-              }
-              if (mimeType.startsWith("audio")) {
-                value = html`<audio
-                  @loadedmetadata=${() => {
-                    this.#outputLoaded();
-                  }}
-                  src="${url}"
-                  controls
-                />`;
-              }
-              if (mimeType.startsWith("video")) {
-                value = html`<video
-                  @loadedmetadata=${() => {
-                    this.#outputLoaded();
-                  }}
-                  src="${url}"
-                  controls
-                />`;
-              }
-              if (mimeType.startsWith("text")) {
+              if (url.startsWith("drive:/")) {
+                const fileId = url.replace(/^drive:\/+/, "");
                 this.#outputLoaded();
-                if (mimeType === "text/html") {
-                  this.#outputLoaded();
-                  value = html`<iframe
-                    srcdoc="${until(getData())}"
-                    frameborder="0"
-                    class="html-view"
-                    sandbox="${SANDBOX_RESTRICTIONS}"
-                  ></iframe>`;
-                } else {
-                  // prettier-ignore
-                  value = html`<div class="plain-text">${until(getData())}</div>`;
-                }
-              }
-              if (part.storedData.mimeType === "application/pdf") {
-                let partTask = this.#partTask.get(idx);
 
-                if (!partTask) {
-                  partTask = this.#createPDFLoadTask(url);
-                  this.#partTask.set(idx, partTask);
-                  partTask.run();
+                value = html`<bb-google-drive-file-viewer
+                  .fileId=${fileId}
+                ></bb-google-drive-file-viewer>`;
+              } else {
+                const { mimeType } = part.storedData;
+                if (url.startsWith(".") && this.graphUrl) {
+                  url = new URL(url, this.graphUrl).href;
                 }
+                const getData = async () => {
+                  const response = await fetch(url);
+                  return response.text();
+                };
+                if (mimeType.startsWith("image")) {
+                  const imgData = new Promise((resolve) => {
+                    const image = new Image();
+                    image.setAttribute("alt", url);
+                    image.onload = () => {
+                      this.#outputLoaded();
+                      resolve(image);
+                    };
+                    image.onerror = () => {
+                      this.#outputLoaded();
+                      resolve(
+                        html`<span class="empty-text-part"
+                          >No image provided</span
+                        >`
+                      );
+                    };
+                    image.src = url;
+                  });
+                  value = html`${until(imgData)}`;
+                }
+                if (mimeType.startsWith("audio")) {
+                  value = html`<audio
+                    @loadedmetadata=${() => {
+                      this.#outputLoaded();
+                    }}
+                    src="${url}"
+                    controls
+                  />`;
+                }
+                if (mimeType.startsWith("video")) {
+                  value = html`<video
+                    @loadedmetadata=${() => {
+                      this.#outputLoaded();
+                    }}
+                    src="${url}"
+                    controls
+                  />`;
+                }
+                if (mimeType.startsWith("text")) {
+                  if (mimeType === "text/html") {
+                    this.#outputLoaded();
+                    value = html`<iframe
+                      srcdoc="${until(getData())}"
+                      frameborder="0"
+                      class="html-view"
+                      sandbox="${SANDBOX_RESTRICTIONS}"
+                    ></iframe>`;
+                  } else {
+                    this.#outputLoaded();
+                    // prettier-ignore
+                    value = html`<div class="plain-text">${until(getData())}</div>`;
+                  }
+                }
+                if (part.storedData.mimeType === "application/pdf") {
+                  let partTask = this.#partTask.get(idx);
 
-                value = partTask.render({
-                  initial: () => html`Waiting to load PDF...`,
-                  pending: () => html`Loading PDF`,
-                  complete: (pdfData) => {
-                    return html`<bb-pdf-viewer
-                      @pdfinitialrender=${() => {
-                        this.#outputLoaded();
-                      }}
-                      .showControls=${this.showPDFControls}
-                      .data=${pdfData}
-                    ></bb-pdf-viewer>`;
-                  },
-                  error: () => html`Unable to load PDF`,
-                });
+                  if (!partTask) {
+                    partTask = this.#createPDFLoadTask(url);
+                    this.#partTask.set(idx, partTask);
+                    partTask.run();
+                  }
+
+                  value = partTask.render({
+                    initial: () => html`Waiting to load PDF...`,
+                    pending: () => html`Loading PDF`,
+                    complete: (pdfData) => {
+                      return html`<bb-pdf-viewer
+                        @pdfinitialrender=${() => {
+                          this.#outputLoaded();
+                        }}
+                        .showControls=${this.showPDFControls}
+                        .data=${pdfData}
+                      ></bb-pdf-viewer>`;
+                    },
+                    error: () => html`Unable to load PDF`,
+                  });
+                }
               }
             }
           } else if (isFileDataCapabilityPart(part)) {
@@ -756,8 +849,8 @@ export class LLMOutput extends LitElement {
                   </span>`;
                 } else {
                   let uri: string | null = part.fileData.fileUri;
-                  if (isWatchUri(uri)) {
-                    uri = convertWatchUriToEmbedUri(uri);
+                  if (isWatchUri(uri) || isShortsUri(uri)) {
+                    uri = convertWatchOrShortsUriToEmbedUri(uri);
                   } else if (isShareUri(uri)) {
                     uri = convertShareUriToEmbedUri(uri);
                   } else if (!isEmbedUri(uri)) {
@@ -786,15 +879,11 @@ export class LLMOutput extends LitElement {
 
               default: {
                 this.#outputLoaded();
-                if (
-                  part.fileData.mimeType.startsWith(
-                    "application/vnd.google-apps"
-                  )
-                ) {
+
+                // Attempt to match on Drive IDs.
+                if (/^(?!http)[a-zA-Z0-9_-]+$/.test(part.fileData.fileUri)) {
                   value = html`<bb-google-drive-file-viewer
-                    .fileUri=${part.fileData.fileUri}
-                    .mimeType=${part.fileData.mimeType}
-                    .connectionName=${SIGN_IN_CONNECTION_ID}
+                    .fileId=${part.fileData.fileUri}
                   ></bb-google-drive-file-viewer>`;
                   break;
                 }
@@ -824,42 +913,39 @@ export class LLMOutput extends LitElement {
           } else {
             value = html`Unrecognized part`;
           }
+
           return html`<div class="content">
             <span
               class=${classMap({
                 value: true,
                 markdown: isTextCapabilityPart(part),
               })}
-              >${value}</span
-            >
-          </div>`;
-        })}`
-      : html`<span class="value no-data">No data set</span>`;
-  }
+              >${value}
+              ${this.#hasOverflowMenu(part) && this.showExportControls
+                ? html`<button
+                    class="overflow"
+                    @click=${(evt: Event) => {
+                      if (!(evt.target instanceof HTMLButtonElement)) {
+                        return;
+                      }
 
-  async #onClickSaveToGoogleDriveButton() {
-    if (!this.value) {
-      console.error("Error saving to Google Drive: No value");
-      return;
-    }
-    if (!this.tokenVendor) {
-      console.error("Error saving to Google Drive: No token vendor");
-      return;
-    }
-    const { url } = await appendToDocUsingDriveKit(
-      this.value,
-      `Breadboard Demo (${new Date().toLocaleDateString("en-US")})`,
-      this.tokenVendor
-    );
-    this.dispatchEvent(
-      new ToastEvent(
-        // HACK: Toast messages are typed to only allow strings, but actually
-        // they just directly render the value, so a TemplateResult works too,
-        // letting us embed a link.
-        html`Content saved to
-          <a href=${url} target="_blank">Google Doc</a>` as unknown as string,
-        ToastType.INFORMATION
-      )
-    );
+                      const outerBounds = this.getBoundingClientRect();
+                      const buttonBounds = evt.target.getBoundingClientRect();
+                      const bottom = outerBounds.bottom - buttonBounds.bottom;
+
+                      this.#overflowMenuConfiguration.idx = idx;
+                      this.#overflowMenuConfiguration.y =
+                        bottom + buttonBounds.height + 4;
+                      this.showPartOverflowMenu = true;
+                    }}
+                  >
+                    <span class="g-icon">more_vert</span>
+                  </button>`
+                : nothing}
+            </span>
+          </div>`;
+        })}
+        ${partOverflowMenu}`
+      : html`<span class="value no-data">No data set</span>`;
   }
 }

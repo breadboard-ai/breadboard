@@ -16,11 +16,14 @@ import {
 import {
   EditSpec,
   EditTransform,
+  FileSystem,
   Outcome,
   PortIdentifier,
+  Schema,
 } from "@google-labs/breadboard";
 import { SideBoardRuntime } from "../sideboards/types";
 import { ConnectorInstance, ConnectorType } from "../connectors/types";
+import { HarnessRunner } from "@google-labs/breadboard/harness";
 
 export type ChatStatus = "running" | "paused" | "stopped";
 
@@ -86,7 +89,122 @@ export type ChatState = {
   statusDetail: string;
 };
 
-export type OrganizerStage = "free" | "busy";
+/**
+ * Represents the Model+Controller for the individual run of the graph.
+ * The name is so weird because there's already a `RunState` type in
+ * `@google-labs/breadboard`.
+ */
+export type ProjectRun = {
+  /// THE MODEL BITS
+
+  /**
+   * Provides an estimate of entries that will be in console for this run.
+   * The estimate is updated when the run goes over it.
+   */
+  estimatedEntryCount: number;
+  /**
+   * Console (fka Activity View)
+   */
+  console: Map<string, ConsoleEntry>;
+  /**
+   * Any errors that might have occurred during a run.
+   */
+  errors: Map<string, RunError>;
+  /**
+   * The status of the run
+   */
+  status: "running" | "paused" | "stopped";
+  /**
+   * The current entry.
+   */
+  current: ConsoleEntry | null;
+  /**
+   * The input (if any) that the user is waiting on. If `null`,
+   * the user is not currently waiting on input.
+   */
+  input: UserInput | null;
+};
+
+/**
+ * Represents the Model+Controller for a single Console entry.
+ * Currently, each entry represents the output of a step when it's run.
+ */
+export type ConsoleEntry = {
+  title: string;
+  icon?: string;
+  /**
+   * A list of work items: things that a step is doing.
+   */
+  work: Map<string, WorkItem>;
+  /**
+   * The final output of the step.
+   */
+  output: Map<string, LLMContent /* Particle */>;
+
+  /**
+   * Starts out as `false` and is set to `true` when the entry is finalized.
+   */
+  completed: boolean;
+
+  /**
+   * A convenient pointer at the last work item.
+   */
+  current: WorkItem | null;
+};
+
+/**
+ * Represents the Model+Controller for a single work item within the
+ * Console entry. Work items are a way for the steps to communicate what they
+ * are doing.
+ */
+export type WorkItem = {
+  title: string;
+  icon?: string;
+  /**
+   * Start time for the work item.
+   */
+  start: number;
+  /**
+   * End time for the work time (null if still in progress)
+   */
+  end: number | null;
+  /**
+   * If true, this work item currently awaiting user input.
+   */
+  awaitingUserInput: boolean;
+  /**
+   * If true, indicates that this work item was shown to the user as part
+   * of a chat interaction.
+   */
+  chat: boolean;
+  /**
+   * Schema representing the product, if available. This is useful when
+   * the WorkItem represents an input.
+   */
+  schema?: Schema;
+  /**
+   * Similar to the `output` of the `ConsoleEntry`, represents the work product
+   * of this item.
+   */
+  product: Map<string, LLMContent /* Particle */>;
+};
+
+/**
+ * Represents an error that occurred during a run.
+ */
+export type RunError = {
+  message: string;
+};
+
+/**
+ * Represents user input request.
+ */
+export type UserInput = {
+  /**
+   * The schema of the current input request.
+   */
+  schema: Schema;
+};
 
 /**
  * Represents the Model+Controller for the Asset Organizer.
@@ -146,6 +264,7 @@ export type Tool = {
   icon?: string;
   connectorInstance?: string;
   order?: number;
+  tags?: string[];
 };
 
 export type Component = {
@@ -200,12 +319,20 @@ export type ConnectorState = {
  * Contains all the state for the project.
  */
 export type Project = {
+  run: ProjectRun | null;
   graphAssets: Map<AssetPath, GraphAsset>;
   parameters: Map<string, ParameterMetadata>;
   connectors: ConnectorState;
   organizer: Organizer;
   fastAccess: FastAccess;
   renderer: RendererState;
+
+  persistDataParts(contents: LLMContent[]): Promise<LLMContent[]>;
+  connectHarnessRunner(
+    runner: HarnessRunner,
+    fileSystem: FileSystem,
+    signal?: AbortSignal
+  ): Outcome<void>;
 };
 
 export type ProjectInternal = Project & {
@@ -213,7 +340,6 @@ export type ProjectInternal = Project & {
   runtime(): SideBoardRuntime;
   apply(transform: EditTransform): Promise<Outcome<void>>;
   edit(spec: EditSpec[], label: string): Promise<Outcome<void>>;
-  persistBlobs(contents: LLMContent[]): Promise<LLMContent[]>;
   findOutputPortId(
     graphId: GraphIdentifier,
     id: NodeIdentifier

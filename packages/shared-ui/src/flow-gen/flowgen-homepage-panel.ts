@@ -11,9 +11,10 @@ import { outlineButtonWithIcon } from "../styles/outline-button-with-icon.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import type { GraphDescriptor } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
-import { sideBoardRuntime } from "../contexts/side-board-runtime.js";
-import { GraphBoardServerGeneratedBoardEvent } from "../events/events.js";
-import { SideBoardRuntime } from "../sideboards/types.js";
+import {
+  GraphBoardServerGeneratedBoardEvent,
+  UtteranceEvent,
+} from "../events/events.js";
 import type { ExpandingTextarea } from "../elements/input/expanding-textarea.js";
 import { icons } from "../styles/icons.js";
 import "../elements/input/expanding-textarea.js";
@@ -21,6 +22,11 @@ import { FlowGenerator } from "./flow-generator.js";
 import { AppCatalystApiClient } from "./app-catalyst.js";
 import { classMap } from "lit/directives/class-map.js";
 import { spinAnimationStyles } from "../styles/spin-animation.js";
+import {
+  type SigninAdapter,
+  signinAdapterContext,
+} from "../utils/signin-adapter.js";
+import { ActionTracker } from "../utils/action-tracker.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
@@ -90,6 +96,7 @@ export class FlowgenHomepagePanel extends LitElement {
       #gradient-border-container {
         flex: 1;
         display: flex;
+        align-items: center;
         width: 100%;
         background: linear-gradient(0deg, #fdf7f8, #f7f9fe);
         border-radius: 50px;
@@ -101,6 +108,19 @@ export class FlowgenHomepagePanel extends LitElement {
       :host([highlighted]) #gradient-border-container {
         transition: box-shadow 200ms ease-in;
         box-shadow: 0 0 10px 4px rgb(255 0 0 / 20%);
+      }
+
+      bb-speech-to-text {
+        --button-size: var(--bb-grid-size-8);
+        --alpha-adjustment: 0;
+        --background-color: transparent;
+        --active-color: linear-gradient(
+          rgb(177, 207, 250) 0%,
+          rgb(198, 210, 243) 34%,
+          rgba(210, 212, 237, 0.4) 69%,
+          rgba(230, 217, 231, 0) 99%
+        );
+        margin-right: var(--bb-grid-size-2);
       }
 
       bb-expanding-textarea {
@@ -136,8 +156,8 @@ export class FlowgenHomepagePanel extends LitElement {
     `,
   ];
 
-  @consume({ context: sideBoardRuntime })
-  accessor sideBoardRuntime!: SideBoardRuntime | undefined;
+  @consume({ context: signinAdapterContext })
+  accessor signinAdapter: SigninAdapter | undefined = undefined;
 
   @state()
   accessor #state: State = { status: "initial" };
@@ -233,6 +253,18 @@ export class FlowgenHomepagePanel extends LitElement {
           .disabled=${isGenerating}
           @change=${this.#onInputChange}
         >
+          <bb-speech-to-text
+            slot="mic"
+            @bbutterance=${(evt: UtteranceEvent) => {
+              if (!this.#descriptionInput.value) {
+                return;
+              }
+
+              this.#descriptionInput.value.value = evt.parts
+                .map((part) => part.transcript)
+                .join("");
+            }}
+          ></bb-speech-to-text>
           <span
             slot="submit"
             class=${classMap({ "g-icon": true, spin: isGenerating })}
@@ -254,6 +286,9 @@ export class FlowgenHomepagePanel extends LitElement {
         this.#state = { status: "initial" };
         return;
       }
+
+      ActionTracker.flowGenCreate();
+
       this.#state = { status: "generating" };
       void this.#generateBoard(description)
         .then((graph) => this.#onGenerateComplete(graph))
@@ -266,11 +301,11 @@ export class FlowgenHomepagePanel extends LitElement {
   }
 
   async #generateBoard(intent: string): Promise<GraphDescriptor> {
-    if (!this.sideBoardRuntime) {
-      throw new Error("Internal error: No side board runtime was available.");
+    if (!this.signinAdapter) {
+      throw new Error(`No signinAdapter was configured`);
     }
     const generator = new FlowGenerator(
-      new AppCatalystApiClient(this.sideBoardRuntime)
+      new AppCatalystApiClient(this.signinAdapter)
     );
     const { flow } = await generator.oneShot({ intent });
     return flow;

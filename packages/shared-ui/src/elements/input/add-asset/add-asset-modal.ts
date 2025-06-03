@@ -3,7 +3,14 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css, nothing, HTMLTemplateResult } from "lit";
+import {
+  LitElement,
+  html,
+  css,
+  nothing,
+  HTMLTemplateResult,
+  PropertyValues,
+} from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { AddAssetEvent, OverlayDismissedEvent } from "../../../events/events";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
@@ -11,6 +18,7 @@ import { InlineDataCapabilityPart, LLMContent } from "@breadboard-ai/types";
 import { DrawableInput } from "../drawable/drawable";
 import { SIGN_IN_CONNECTION_ID } from "../../../utils/signin-adapter";
 import { GoogleDriveFileId } from "../../google-drive/google-drive-file-id";
+import { WebcamVideoInput } from "../webcam/webcam-video";
 
 @customElement("bb-add-asset-modal")
 export class AddAssetModal extends LitElement {
@@ -19,6 +27,9 @@ export class AddAssetModal extends LitElement {
 
   @property()
   accessor allowedMimeTypes: string | null = null;
+
+  @property({ reflect: true, type: Boolean })
+  accessor visible = true;
 
   static styles = css`
     * {
@@ -36,6 +47,18 @@ export class AddAssetModal extends LitElement {
       pointer-events: none;
     }
 
+    :host(:not([visible])) {
+      display: block;
+      pointer-events: none;
+      opacity: 0;
+
+      & #content {
+        display: block;
+        pointer-events: none;
+        opacity: 0;
+      }
+    }
+
     #container {
       display: flex;
       align-items: center;
@@ -43,10 +66,15 @@ export class AddAssetModal extends LitElement {
       pointer-events: auto;
       width: 100%;
       height: 100%;
-      background: oklch(
-        from var(--background-color, var(--bb-neutral-900)) l c h /
-          calc(alpha - 0.6)
-      );
+      background: transparent;
+      border: none;
+      outline: none;
+
+      &::backdrop {
+        background: oklch(
+          from var(--n-90, var(--bb-neutral-900)) l c h / calc(alpha * 0.1)
+        );
+      }
     }
 
     #content {
@@ -74,7 +102,6 @@ export class AddAssetModal extends LitElement {
       & select {
         display: block;
         width: 100%;
-        min-width: 320px;
         border-radius: var(--bb-grid-size);
         background: var(--background-color, var(--bb-neutral-0));
         color: var(--text-color, var(--bb-neutral-900));
@@ -140,7 +167,7 @@ export class AddAssetModal extends LitElement {
   `;
 
   #inputRef: Ref<HTMLDivElement> = createRef();
-  #containerRef: Ref<HTMLDivElement> = createRef();
+  #containerRef: Ref<HTMLDialogElement> = createRef();
   #addDriveInputRef: Ref<GoogleDriveFileId> = createRef();
 
   async #processAndEmit() {
@@ -154,13 +181,17 @@ export class AddAssetModal extends LitElement {
       | HTMLTextAreaElement
       | DrawableInput
       | GoogleDriveFileId
-    >("input,select,textarea,bb-drawable-input,bb-google-drive-file-id");
+    >(
+      "input,select,textarea,bb-drawable-input,bb-webcam-video-input,bb-google-drive-file-id"
+    );
 
     let canSubmit = true;
     let item: LLMContent | null = null;
     for (const input of inputs) {
       const isPlatformInputField = !(
-        input instanceof DrawableInput || input instanceof GoogleDriveFileId
+        input instanceof DrawableInput ||
+        input instanceof GoogleDriveFileId ||
+        input instanceof WebcamVideoInput
       );
       if (isPlatformInputField && !input.checkValidity()) {
         input.reportValidity();
@@ -185,6 +216,25 @@ export class AddAssetModal extends LitElement {
 
         case "drawable": {
           if (!(input instanceof DrawableInput)) {
+            return;
+          }
+
+          item = {
+            role: "user",
+            parts: [
+              {
+                inlineData: {
+                  data: input.value as string,
+                  mimeType: input.type,
+                },
+              },
+            ],
+          };
+          break;
+        }
+
+        case "webcam-video": {
+          if (!(input instanceof WebcamVideoInput)) {
             return;
           }
 
@@ -270,11 +320,28 @@ export class AddAssetModal extends LitElement {
   }
 
   protected updated(): void {
-    if (!this.#inputRef.value) {
-      return;
+    if (this.#inputRef.value) {
+      this.#inputRef.value.click();
     }
 
-    this.#inputRef.value.click();
+    if (
+      this.#containerRef.value &&
+      (this.assetType === "upload" ||
+        this.assetType === "drawable" ||
+        this.assetType === "youtube" ||
+        this.assetType === "webcam-video")
+    ) {
+      this.#containerRef.value.showModal();
+    }
+  }
+
+  protected willUpdate(changedProperties: PropertyValues): void {
+    if (
+      changedProperties.has("assetType") &&
+      (this.assetType === "upload" || this.assetType === "gdrive")
+    ) {
+      this.visible = false;
+    }
   }
 
   render() {
@@ -300,7 +367,7 @@ export class AddAssetModal extends LitElement {
         assetCollector = html`<input
           type="url"
           placeholder="https://www.youtube.com/watch?v=<video>"
-          pattern="^https://www.youtube.com/(watch|embed).*"
+          pattern="^https://www.youtube.com/(watch|embed|shorts).*"
         />`;
         break;
 
@@ -309,11 +376,13 @@ export class AddAssetModal extends LitElement {
         assetCollector = html`<input
           type="file"
           required
+          multiple
           accept=${this.allowedMimeTypes
             ? this.allowedMimeTypes
             : "image/*,audio/*,video/*,text/plain,application/pdf,text/csv"}
           ${ref(this.#inputRef)}
           @change=${() => {
+            this.visible = true;
             this.#processAndEmit();
           }}
           @cancel=${() => {
@@ -324,8 +393,13 @@ export class AddAssetModal extends LitElement {
         break;
 
       case "drawable":
-        title = html`Add a drawing`;
+        title = html`Add a Drawing`;
         assetCollector = html`<bb-drawable-input></bb-drawable-input>`;
+        break;
+
+      case "webcam-video":
+        title = html`Add a Webcam Video`;
+        assetCollector = html`<bb-webcam-video-input></bb-webcam-video-input>`;
         break;
 
       case "gdrive":
@@ -335,6 +409,14 @@ export class AddAssetModal extends LitElement {
             id="add-drive-proxy"
             ${ref(this.#addDriveInputRef)}
             .connectionName=${SIGN_IN_CONNECTION_ID}
+            .autoTrigger=${true}
+            .ownedByMeOnly=${true}
+            @bbinputcancel=${() => {
+              this.dispatchEvent(new OverlayDismissedEvent());
+            }}
+            @bb-input-change=${() => {
+              this.#processAndEmit();
+            }}
           ></bb-google-drive-file-id>
         `;
         break;
@@ -344,7 +426,7 @@ export class AddAssetModal extends LitElement {
         break;
     }
 
-    return html`<div
+    return html`<dialog
       id="container"
       ${ref(this.#containerRef)}
       @pointerdown=${() => {
@@ -370,6 +452,6 @@ export class AddAssetModal extends LitElement {
         <h1>${title}</h1>
         ${assetCollector} ${assetDone}
       </div>
-    </div>`;
+    </dialog>`;
   }
 }

@@ -16,6 +16,7 @@ export type EntryInputs = {
   description: LLMContent;
   "p-chat": boolean;
   "p-list": boolean;
+  "p-sequential-fc": boolean;
   "b-system-instruction": LLMContent;
   "p-model-name": string;
   "config$ask-user"?: boolean;
@@ -33,6 +34,7 @@ async function invoke({
   context,
   "p-chat": chat,
   "p-list": makeList,
+  "p-sequential-fc": useSequentialFunctionCalling,
   "b-system-instruction": systemInstruction,
   "p-model-name": model = "",
   description,
@@ -47,6 +49,7 @@ async function invoke({
       id: Math.random().toString(36).substring(2, 5),
       chat,
       makeList,
+      useSequentialFunctionCalling,
       listPath: [],
       context,
       userInputs: [],
@@ -76,10 +79,17 @@ async function describe({
       "p-list": {
         type: "boolean",
         title: "Make a list",
-        behavior: ["config", "hint-preview"],
+        behavior: ["config", "hint-preview", "hint-advanced"],
         icon: "summarize",
         description:
           "When checked, this step will try to create a list as its output. Make sure that the prompt asks for a list of some sort",
+      },
+      "p-sequential-fc": {
+        type: "boolean",
+        title: "Allow multi-turn tool-calling",
+        behavior: ["config", "hint-advanced"],
+        description:
+          "When checked, the step may call tools multiple times across multiple turns",
       },
     };
   }
@@ -103,8 +113,8 @@ async function describe({
         },
         "p-chat": {
           type: "boolean",
-          title: "Refine based on user input",
-          behavior: ["config", "hint-preview"],
+          title: "Review with user",
+          behavior: ["config", "hint-preview", "hint-advanced"],
           icon: "chat",
           description:
             "When checked, this step will chat with the user, asking to review work, requesting additional information, etc.",

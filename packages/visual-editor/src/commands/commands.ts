@@ -31,13 +31,17 @@ export const DeleteCommand: KeyboardCommand = {
     tab,
     originalEvent,
   }: KeyboardCommandDeps): Promise<void> {
+    if (tab?.readOnly) {
+      return;
+    }
+
     if (!isFocusedOnGraphRenderer(originalEvent)) {
       return;
     }
 
     const editor = runtime.edit.getEditor(tab);
     if (!editor) {
-      throw new Error("Unable to edit graph");
+      throw new Error("Unable to edit");
     }
 
     if (
@@ -105,6 +109,43 @@ export const DeleteCommand: KeyboardCommand = {
       tab.id,
       runtime.util.createWorkspaceSelectionChangeId()
     );
+  },
+};
+
+let componentStatus = "Enabled";
+export const ToggleExperimentalComponentsCommand: KeyboardCommand = {
+  keys: ["Cmd+Shift+e", "Ctrl+Shift+e"],
+  alwaysNotify: true,
+  get messageComplete() {
+    return `Experimental Components ${componentStatus}`;
+  },
+
+  willHandle() {
+    return true;
+  },
+
+  async do({ settings }: KeyboardCommandDeps): Promise<void> {
+    if (!settings) {
+      return;
+    }
+
+    const setting = settings.getItem(
+      BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
+      "Show Experimental Components"
+    );
+
+    if (setting && typeof setting.value === "boolean") {
+      const newSetting = structuredClone(setting);
+      newSetting.value = !newSetting.value;
+      componentStatus = newSetting.value ? "Enabled" : "Disabled";
+
+      settings.setItem(
+        BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
+        "Show Experimental Components",
+        newSetting
+      );
+      settings.saveItem(BreadboardUI.Types.SETTINGS_TYPE.GENERAL, newSetting);
+    }
   },
 };
 
@@ -199,9 +240,13 @@ export const CutCommand: KeyboardCommand = {
       return;
     }
 
+    if (tab?.readOnly) {
+      return;
+    }
+
     const editor = runtime.edit.getEditor(tab);
     if (!editor) {
-      throw new Error("Unable to edit graph");
+      throw new Error("Unable to edit");
     }
 
     if (
@@ -246,6 +291,10 @@ export const GroupCommand: KeyboardCommand = {
     originalEvent,
   }: KeyboardCommandDeps): Promise<void> {
     if (!isFocusedOnGraphRenderer(originalEvent)) {
+      return;
+    }
+
+    if (tab?.readOnly) {
       return;
     }
 
@@ -304,6 +353,10 @@ export const UngroupCommand: KeyboardCommand = {
       return;
     }
 
+    if (tab?.readOnly) {
+      return;
+    }
+
     const editor = runtime.edit.getEditor(tab);
     if (!editor) {
       throw new Error("Unable to edit");
@@ -358,6 +411,10 @@ export const PasteCommand: KeyboardCommand = {
     selectionState,
     pointerLocation,
   }: KeyboardCommandDeps): Promise<void> {
+    if (tab?.readOnly) {
+      return;
+    }
+
     const result = await new ClipboardReader(
       tab?.graph.url,
       runtime.edit.graphStore

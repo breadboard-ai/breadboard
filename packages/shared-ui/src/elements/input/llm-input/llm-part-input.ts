@@ -17,6 +17,10 @@ import { TextEditor } from "../text-editor/text-editor";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { icons } from "../../../styles/icons.js";
 import { DrawableInput } from "../drawable/drawable";
+import { resolveImage } from "../../../utils/image";
+import { consume } from "@lit/context";
+import { googleDriveClientContext } from "../../../contexts/google-drive-client-context";
+import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 
 @customElement("bb-llm-part-input")
 export class LLMPartInput extends LitElement {
@@ -39,6 +43,9 @@ export class LLMPartInput extends LitElement {
 
   @property()
   accessor projectState: Project | null = null;
+
+  @consume({ context: googleDriveClientContext })
+  accessor googleDriveClient!: GoogleDriveClient | undefined;
 
   static styles = [
     icons,
@@ -210,6 +217,17 @@ export class LLMPartInput extends LitElement {
           .projectState=${this.projectState}
           .supportsFastAccess=${true}
           .value=${this.#dataPart.text.trim()}
+          @input=${() => {
+            if (
+              !this.#inputRef.value ||
+              !this.#dataPart ||
+              !isTextCapabilityPart(this.#dataPart)
+            ) {
+              return;
+            }
+
+            this.#dataPart.text = this.#inputRef.value.value;
+          }}
         ></bb-text-editor>
       </div>`;
     } else if (isFileDataCapabilityPart(this.#dataPart)) {
@@ -222,6 +240,17 @@ export class LLMPartInput extends LitElement {
             autocomplete="off"
             placeholder="https://youtube.com/watch?v=<video>"
             .value=${this.#dataPart.fileData.fileUri}
+            @input=${() => {
+              if (
+                !this.#inputRef.value ||
+                !this.#dataPart ||
+                !isFileDataCapabilityPart(this.#dataPart)
+              ) {
+                return;
+              }
+
+              this.#dataPart.fileData.fileUri = this.#inputRef.value.value;
+            }}
             @keydown=${(evt: KeyboardEvent) => {
               if (
                 evt.key !== "Enter" ||
@@ -265,11 +294,17 @@ export class LLMPartInput extends LitElement {
       (isStoredData(this.#dataPart) || isInlineData(this.#dataPart)) &&
       this.subType === "drawable"
     ) {
-      let url: URL | null = null;
+      let url: URL | Promise<string | undefined> | null = null;
       if (isStoredData(this.#dataPart)) {
         const handle = this.#dataPart.storedData.handle;
         if (handle.startsWith(".") && this.graphUrl) {
           url = new URL(handle, this.graphUrl);
+        } else if (handle.startsWith("drive:")) {
+          if (!this.googleDriveClient) {
+            url = new URL("about:blank");
+          } else {
+            url = resolveImage(this.googleDriveClient, handle);
+          }
         } else {
           url = new URL(handle);
         }
@@ -310,6 +345,18 @@ export class LLMPartInput extends LitElement {
           <bb-drawable-input
             ${ref(this.#inputRef)}
             .url=${url}
+            @input=${() => {
+              if (!this.#inputRef.value) {
+                return;
+              }
+
+              this.#dataPart = {
+                inlineData: {
+                  data: this.#inputRef.value.value,
+                  mimeType: this.#inputRef.value.type,
+                },
+              } satisfies InlineDataCapabilityPart;
+            }}
           ></bb-drawable-input>
         </div>
       </div>`;

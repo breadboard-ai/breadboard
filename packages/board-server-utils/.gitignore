@@ -1,4 +1,0 @@
-# pyodide assets that we copy into public/. We don't want to check these in
-# because they come from NPM.
-public/pyodide*
-public/python*

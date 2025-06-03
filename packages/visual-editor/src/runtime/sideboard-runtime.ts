@@ -31,6 +31,7 @@ import {
   err,
   NodeDescriberResult,
   envFromGraphDescriptor,
+  ErrorObject,
 } from "@google-labs/breadboard";
 import {
   createFileSystemBackend,
@@ -46,6 +47,7 @@ import type {
   SideBoardRuntimeTaskSpec,
 } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { BoardServerAwareDataStore } from "@breadboard-ai/board-server-management";
+import { formatError } from "@breadboard-ai/shared-ui/utils/format-error.js";
 
 export { createSideboardRuntimeProvider };
 
@@ -123,16 +125,18 @@ class SideboardRuntimeImpl
       context: task.context,
     } as InputValues;
     try {
-      const outputs = await new Promise<OutputValues[]>((resolve, reject) => {
-        const outputs: OutputValues[] = [];
-        runner.addEventListener("input", () => void runner.run(inputs));
-        runner.addEventListener("output", (event) =>
-          outputs.push(event.data.outputs)
-        );
-        runner.addEventListener("end", () => resolve(outputs));
-        runner.addEventListener("error", (event) => reject(event.data.error));
-        void runner.run();
-      });
+      const outputs = (
+        await new Promise<OutputValues[]>((resolve, reject) => {
+          const outputs: OutputValues[] = [];
+          runner.addEventListener("input", () => void runner.run(inputs));
+          runner.addEventListener("output", (event) =>
+            outputs.push(event.data.outputs)
+          );
+          runner.addEventListener("end", () => resolve(outputs));
+          runner.addEventListener("error", (event) => reject(event.data.error));
+          void runner.run();
+        })
+      ).filter((item) => "context" in item);
       if (outputs.length !== 1) {
         return err(`Expected 1 output, got ${JSON.stringify(outputs)}`);
       }
@@ -144,7 +148,7 @@ class SideboardRuntimeImpl
 
       return result;
     } catch (e) {
-      return err(`Task returned with error: ${(e as Error).message}`);
+      return err(`Task returned with error: ${formatError(e as ErrorObject)}`);
     } finally {
       this.#runningTaskCount--;
       if (this.#runningTaskCount === 0) {

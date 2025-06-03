@@ -15,7 +15,7 @@ import {
   isImperativeGraph,
   toDeclarativeGraph,
 } from "../../run/run-imperative-graph.js";
-import { DescribeResultCache } from "../run/describe-cache.js";
+import { DescribeResultCache } from "./describe-cache.js";
 import {
   InspectableDescriberResultCache,
   InspectableEdgeCache,
@@ -37,8 +37,9 @@ import { ModuleCache } from "./module.js";
 import { NodeCache } from "./node-cache.js";
 import { Node } from "./node.js";
 import { PortCache } from "./port-cache.js";
-import { NodeTypeDescriberManager } from "./describer-manager.js";
+import { NodeDescriberManager } from "./node-describer-manager.js";
 import { UpdateEvent } from "./event.js";
+import { GraphRepresentation } from "../../traversal/representation.js";
 
 export { MutableGraphImpl };
 
@@ -56,6 +57,7 @@ class MutableGraphImpl implements MutableGraph {
   describe!: InspectableDescriberResultCache;
   kits!: InspectableKitCache;
   ports!: InspectablePortCache;
+  representation!: GraphRepresentation;
 
   constructor(graph: GraphDescriptor, store: MutableGraphStore) {
     this.store = store;
@@ -100,6 +102,7 @@ class MutableGraphImpl implements MutableGraph {
       this.describe.update(affectedNodes);
       this.store.dispatchEvent(new UpdateEvent(this.id, "", "", []));
     }
+    this.representation = new GraphRepresentation(graph);
     this.graph = graph;
   }
 
@@ -119,6 +122,7 @@ class MutableGraphImpl implements MutableGraph {
     if (isImperativeGraph(graph)) {
       graph = toDeclarativeGraph(graph);
     }
+    this.representation = new GraphRepresentation(graph);
     this.graph = graph;
     this.nodes = new NodeCache((descriptor, graphId) => {
       const graph = graphId ? this.graphs.get(graphId) : this;
@@ -133,7 +137,7 @@ class MutableGraphImpl implements MutableGraph {
       (edge, graphId) => new Edge(this, edge, graphId)
     );
     this.modules = new ModuleCache();
-    this.describe = new DescribeResultCache(new NodeTypeDescriberManager(this));
+    this.describe = new DescribeResultCache(new NodeDescriberManager(this));
     this.kits = new KitCache(this);
     this.graphs = new GraphCache((id) => new Graph(id, this));
     this.ports = new PortCache();

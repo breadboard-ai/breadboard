@@ -16,22 +16,6 @@ updates:
       - dglazkov
       - aomarks
 
-  - package-ecosystem: "pip"
-    directory: "packages/breadboard-python/breadboard_python"
-    schedule:
-      interval: "daily"
-    reviewers:
-      - dglazkov
-      - aomarks
-
-  - package-ecosystem: "pip"
-    directory: "packages/breadboard-python/breadboard_colab"
-    schedule:
-      interval: "daily"
-    reviewers:
-      - dglazkov
-      - aomarks
-
   - package-ecosystem: "devcontainers"
     directory: ".devcontainer"
     schedule:

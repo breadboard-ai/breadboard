@@ -31,6 +31,18 @@ export class Entity extends LitElement {
   accessor cullable = false;
 
   @property()
+  set readOnly(readOnly: boolean) {
+    this.#readOnly = readOnly;
+    for (const entity of this.entities.values()) {
+      entity.readOnly = readOnly;
+    }
+  }
+  get readOnly() {
+    return this.#readOnly;
+  }
+  #readOnly = false;
+
+  @property()
   accessor transform = new DOMMatrix();
 
   /**

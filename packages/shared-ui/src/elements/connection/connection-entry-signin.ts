@@ -8,7 +8,7 @@ import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("Global");
 
 import { css, html, LitElement, nothing } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { customElement, property, state } from "lit/decorators.js";
 import { SigninAdapter } from "../../utils/signin-adapter";
 import { until } from "lit/directives/until.js";
 import { SignInEvent } from "../../events/events";
@@ -84,11 +84,22 @@ export class ConnectionEntrySignin extends LitElement {
           background-color: var(--bb-ui-600);
         }
       }
+
+      & p.error-message {
+        margin: 0;
+        padding-top: var(--bb-grid-size-6);
+        max-width: 200px;
+        color: red;
+        text-align: center;
+      }
     }
   `;
 
   @property()
   accessor adapter: SigninAdapter | null = null;
+
+  @state()
+  accessor errorMessage: string | null = null;
 
   render() {
     if (!this.adapter) {
@@ -112,6 +123,8 @@ export class ConnectionEntrySignin extends LitElement {
             // copy with a new state, including picture and name.
             if (adapter.state === "valid") {
               this.dispatchEvent(new SignInEvent());
+            } else if (adapter.errorMessage) {
+              this.errorMessage = adapter.errorMessage;
             }
           });
         }}
@@ -119,6 +132,15 @@ export class ConnectionEntrySignin extends LitElement {
         title="Sign into Google"
         >Sign into Google</a
       >
+      ${this.errorMessage
+        ? html`<p class="error-message">${this.errorMessage}</p>`
+        : nothing}
     </div>`;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    "bb-connection-entry-signin": ConnectionEntrySignin;
   }
 }

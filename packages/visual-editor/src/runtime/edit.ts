@@ -12,7 +12,7 @@ import {
   EditSpec,
   GraphDescriptor,
   GraphLoader,
-  GraphProvider,
+  isStoredData,
   Kit,
   MoveToGraphTransform,
   MutableGraphStore,
@@ -20,6 +20,7 @@ import {
   NodeDescriptor,
   NodeIdentifier,
   ok,
+  Outcome,
   PortIdentifier,
 } from "@google-labs/breadboard";
 import {
@@ -31,6 +32,7 @@ import {
   WorkspaceVisualState,
 } from "./types";
 import {
+  RuntimeBoardAutonameEvent,
   RuntimeBoardEditEvent,
   RuntimeBoardEnhanceEvent,
   RuntimeErrorEvent,
@@ -61,6 +63,7 @@ import {
 } from "@breadboard-ai/shared-ui/types/types.js";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { Autoname } from "@breadboard-ai/shared-ui/sideboards/autoname.js";
+import { StateManager } from "./state";
 
 function isModule(source: unknown): source is Module {
   return typeof source === "object" && source !== null && "code" in source;
@@ -72,7 +75,7 @@ export class Edit extends EventTarget {
   #autoname: Autoname;
 
   constructor(
-    public readonly providers: GraphProvider[],
+    public readonly state: StateManager,
     public readonly loader: GraphLoader,
     public readonly kits: Kit[],
     public readonly sandbox: Sandbox,
@@ -81,11 +84,12 @@ export class Edit extends EventTarget {
     public readonly settings: BreadboardUI.Types.SettingsStore | null
   ) {
     super();
-    const allGraphs = !!this.settings
-      ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
-      ?.items.get("Enable autonaming")?.value;
 
-    this.#autoname = new Autoname(sideboards, allGraphs);
+    this.#autoname = new Autoname(sideboards, {
+      statuschange: (status) => {
+        this.dispatchEvent(new RuntimeBoardAutonameEvent(status));
+      },
+    });
   }
 
   getEditor(tab: Tab | null): EditableGraph | null {
@@ -105,12 +109,6 @@ export class Edit extends EventTarget {
     }
     editor.addEventListener("graphchange", (evt) => {
       tab.graph = evt.graph;
-
-      this.#autoname.addTask(editor, evt).then((result) => {
-        if (!ok(result)) {
-          console.log("AUTONAMING ERROR", result.$error);
-        }
-      });
 
       this.dispatchEvent(
         new RuntimeBoardEditEvent(
@@ -340,13 +338,60 @@ export class Edit extends EventTarget {
     return history.redo();
   }
 
-  async createTheme(tab: Tab | null, theme: GraphTheme) {
+  async createTheme(tab: Tab | null, appTheme: AppTheme) {
+    const mainGraphId = tab?.mainGraphId;
+    if (!mainGraphId) {
+      console.warn(`Failed to create theme: no mainGraphId for tab`);
+      return;
+    }
+
     const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
-      this.dispatchEvent(
-        new RuntimeErrorEvent("Unable to edit subboard; no active board")
-      );
+      console.warn(`Failed to create theme: no editable graph`);
       return;
+    }
+
+    const project = this.state.getOrCreate(mainGraphId, editableGraph);
+
+    if (!project) {
+      console.warn(`Failed to create theme: unable to create state`);
+      return;
+    }
+
+    const { primary, secondary, tertiary, error, neutral, neutralVariant } =
+      appTheme;
+
+    const graphTheme: GraphTheme = {
+      template: "basic",
+      templateAdditionalOptions: {},
+      palette: {
+        primary,
+        secondary,
+        tertiary,
+        error,
+        neutral,
+        neutralVariant,
+      },
+      themeColors: {
+        primaryColor: appTheme.primaryColor,
+        secondaryColor: appTheme.secondaryColor,
+        backgroundColor: appTheme.backgroundColor,
+        primaryTextColor: appTheme.primaryTextColor,
+        textColor: appTheme.textColor,
+      },
+    };
+
+    // TODO: Show some status.
+    if (appTheme.splashScreen) {
+      const persisted = await project.persistDataParts([
+        { parts: [appTheme.splashScreen] },
+      ]);
+      const splashScreen = persisted?.[0].parts[0];
+      if (isStoredData(splashScreen)) {
+        graphTheme.splashScreen = splashScreen;
+      } else {
+        console.warn("Unable to save splash screen", splashScreen);
+      }
     }
 
     const metadata: GraphMetadata = editableGraph.raw().metadata ?? {};
@@ -355,7 +400,7 @@ export class Edit extends EventTarget {
     metadata.visual.presentation.themes ??= {};
 
     const id = globalThis.crypto.randomUUID();
-    metadata.visual.presentation.themes[id] = theme;
+    metadata.visual.presentation.themes[id] = graphTheme;
     metadata.visual.presentation.theme = id;
 
     return editableGraph.edit(
@@ -1577,6 +1622,79 @@ export class Edit extends EventTarget {
     );
   }
 
+  /**
+   * Use this function to trigger autoname on a node. It will force over
+   * `userModified` and disregard any settings.
+   */
+  async autonameNode(
+    tab: Tab | null,
+    id: string,
+    subGraphId: string | null = null
+  ) {
+    if (tab?.readOnly) {
+      return;
+    }
+
+    const editableGraph = this.getEditor(tab);
+
+    if (!editableGraph) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to find board to edit"));
+      return;
+    }
+
+    const inspectable = editableGraph.inspect(subGraphId);
+    const configuration = inspectable.nodeById(id)?.configuration();
+    if (!configuration) return;
+
+    const graphId = subGraphId || "";
+
+    return this.#autonameInternal(editableGraph, id, graphId, configuration);
+  }
+
+  async #autonameInternal(
+    editableGraph: EditableGraph,
+    id: NodeIdentifier,
+    graphId: string,
+    configuration: NodeConfiguration
+  ): Promise<Outcome<void>> {
+    const generatingAutonames = await this.#autoname.onNodeConfigurationUpdate(
+      editableGraph,
+      id,
+      graphId,
+      configuration
+    );
+    if (!ok(generatingAutonames)) {
+      console.warn("Autonaming error", generatingAutonames.$error);
+      return;
+    }
+
+    if ("notEnoughContext" in generatingAutonames) {
+      console.log("Not enough context to autoname", id);
+      return;
+    }
+
+    // Clip period at the end of the sentence that may occasionally crop up
+    // in LLM response.
+    const { description } = generatingAutonames;
+    if (description.endsWith(".")) {
+      generatingAutonames.description = description.slice(0, -1);
+    }
+
+    // For now, only edit titles and set `userModifed` so that the autoname
+    // only works once.
+    const metadata: NodeMetadata = {
+      title: generatingAutonames.title,
+      userModified: true,
+    };
+
+    const applyingAutonames = await editableGraph.apply(
+      new BreadboardUI.Transforms.UpdateNode(id, graphId, null, metadata, null)
+    );
+    if (!applyingAutonames.success) {
+      console.warn("Failed to apply autoname", applyingAutonames.error);
+    }
+  }
+
   async changeNodeConfigurationPart(
     tab: Tab | null,
     id: string,
@@ -1605,7 +1723,22 @@ export class Edit extends EventTarget {
       ins
     );
 
-    return editableGraph.apply(updateNodeTransform);
+    const editing = await editableGraph.apply(updateNodeTransform);
+    if (!editing.success) {
+      console.warn("Failed to change node configuration", editing.error);
+      return;
+    }
+    if (updateNodeTransform.titleUserModified) {
+      // Don't autoname when title was modified by the user.
+      return;
+    }
+
+    return this.#autonameInternal(
+      editableGraph,
+      id,
+      graphId,
+      configurationPart
+    );
   }
 
   async moveNodesToGraph(

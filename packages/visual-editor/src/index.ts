@@ -22,7 +22,6 @@ import { map } from "lit/directives/map.js";
 import { customElement, property, state } from "lit/decorators.js";
 import { LitElement, html, HTMLTemplateResult, nothing } from "lit";
 import {
-  asBase64,
   createRunObserver,
   GraphDescriptor,
   BoardServer,
@@ -36,8 +35,6 @@ import {
   createEphemeralBlobStore,
   assetsFromGraphDescriptor,
   blank as breadboardBlank,
-  isInlineData,
-  isStoredData,
   EditHistoryCreator,
   envFromGraphDescriptor,
   FileSystem,
@@ -58,7 +55,7 @@ import { addNodeProxyServerConfig } from "./data/node-proxy-servers";
 import { provide } from "@lit/context";
 import { RecentBoardStore } from "./data/recent-boards";
 import { SecretsHelper } from "./utils/secrets-helper";
-import { SettingsHelperImpl } from "./utils/settings-helper";
+import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
 import { styles as mainStyles } from "./index.styles.js";
 import * as Runtime from "./runtime/runtime.js";
 import {
@@ -77,9 +74,7 @@ import { sandbox } from "./sandbox";
 import {
   AssetMetadata,
   GraphIdentifier,
-  GraphTheme,
   InputValues,
-  LLMContent,
   Module,
   ModuleIdentifier,
 } from "@breadboard-ai/types";
@@ -91,24 +86,46 @@ import {
   GroupCommand,
   PasteCommand,
   SelectAllCommand,
+  ToggleExperimentalComponentsCommand,
   UngroupCommand,
 } from "./commands/commands";
 import {
+  SIGN_IN_CONNECTION_ID,
   SigninAdapter,
   signinAdapterContext,
 } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
 import { sideBoardRuntime } from "@breadboard-ai/shared-ui/contexts/side-board-runtime.js";
+import { googleDriveClientContext } from "@breadboard-ai/shared-ui/contexts/google-drive-client-context.js";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { OverflowAction } from "@breadboard-ai/shared-ui/types/types.js";
 import { MAIN_BOARD_ID } from "@breadboard-ai/shared-ui/constants/constants.js";
 import { createA2Server } from "@breadboard-ai/a2";
 import { envFromSettings } from "./utils/env-from-settings";
 import { getGoogleDriveBoardService } from "@breadboard-ai/board-server-management";
+import { type GoogleDrivePermission } from "@breadboard-ai/shared-ui/contexts/environment.js";
+import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
+import {
+  CreateNewBoardMessage,
+  EmbedHandler,
+  embedState,
+  EmbedState,
+  IterateOnPromptMessage,
+  ToggleIterateOnPromptMessage,
+} from "@breadboard-ai/embed";
+import { IterateOnPromptEvent } from "@breadboard-ai/shared-ui/events/events.js";
+import { AppCatalystApiClient } from "@breadboard-ai/shared-ui/flow-gen/app-catalyst.js";
+import { FlowGenerator } from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
+import {
+  extractDriveFileId,
+  findGoogleDriveAssetsInGraph,
+} from "@breadboard-ai/shared-ui/elements/google-drive/find-google-drive-assets-in-graph.js";
+import { stringifyPermission } from "@breadboard-ai/shared-ui/elements/share-panel/share-panel.js";
+import { type GoogleDriveAssetShareDialog } from "@breadboard-ai/shared-ui/elements/elements.js";
 
 const STORAGE_PREFIX = "bb-main";
-const LOADING_TIMEOUT = 250;
+const LOADING_TIMEOUT = 1250;
 
 const TOS_KEY = "tos-status";
 enum TosStatus {
@@ -121,6 +138,7 @@ export type MainArguments = {
   settings?: SettingsStore;
   proxy?: HarnessProxyConfig[];
   version?: string;
+  environmentName?: string;
   /**
    * The Git hash of the current commit.
    */
@@ -154,6 +172,7 @@ export type MainArguments = {
    * system.
    */
   env?: FileSystemEntry[];
+  embedHandler?: EmbedHandler;
 };
 
 type BoardOverlowMenuConfiguration = {
@@ -177,13 +196,27 @@ const generatedUrls = new Set<string>();
 const ENVIRONMENT: BreadboardUI.Contexts.Environment = {
   connectionServerUrl: undefined,
   connectionRedirectUrl: "/oauth/",
+  environmentName: "dev",
   plugins: {
     input: [
       BreadboardUI.Elements.googleDriveFileIdInputPlugin,
       BreadboardUI.Elements.googleDriveQueryInputPlugin,
     ],
   },
+  googleDrive: {
+    publishPermissions: JSON.parse(
+      import.meta.env.VITE_GOOGLE_DRIVE_PUBLISH_PERMISSIONS || `[]`
+    ) as GoogleDrivePermission[],
+    publicApiKey: import.meta.env.VITE_GOOGLE_DRIVE_PUBLIC_API_KEY ?? "",
+  },
 };
+
+if (ENVIRONMENT.googleDrive.publishPermissions.length === 0) {
+  console.warn(
+    "No googleDrive.publishPermissions were configured." +
+      " Publishing with Google Drive will not be supported."
+  );
+}
 
 const BOARD_AUTO_SAVE_TIMEOUT = 1_500;
 
@@ -287,8 +320,14 @@ export class Main extends LitElement {
   @provide({ context: sideBoardRuntime })
   accessor sideBoardRuntime!: SideBoardRuntime;
 
+  @provide({ context: BreadboardUI.Contexts.embedderContext })
+  accessor embedState!: EmbedState;
+
   @provide({ context: signinAdapterContext })
   accessor signinAdapter!: SigninAdapter;
+
+  @provide({ context: googleDriveClientContext })
+  accessor googleDriveClient: GoogleDriveClient | undefined;
 
   @state()
   accessor selectedBoardServer = "Browser Storage";
@@ -314,8 +353,12 @@ export class Main extends LitElement {
   @property()
   accessor tab: Runtime.Types.Tab | null = null;
 
+  @state()
+  accessor projectFilter: string | null = null;
+
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
   #tooltipRef: Ref<BreadboardUI.Elements.Tooltip> = createRef();
+  #snackbarRef: Ref<BreadboardUI.Elements.Snackbar> = createRef();
   #boardId = 0;
   #boardPendingSave = false;
   #tabSaveId = new Map<
@@ -383,6 +426,7 @@ export class Main extends LitElement {
   accessor graphStoreUpdateId: number = 0;
 
   #runtime!: Runtime.RuntimeInstance;
+  #embedHandler?: EmbedHandler;
 
   static styles = mainStyles;
   proxyFromUrl: string | undefined;
@@ -396,12 +440,14 @@ export class Main extends LitElement {
       !!config.tosHtml &&
       localStorage.getItem(TOS_KEY) !== TosStatus.ACCEPTED;
     this.#tosHtml = config.tosHtml;
+    this.#embedHandler = config.embedHandler;
 
     this.showExtendedSettings = config.showExtendedSettings ?? false;
 
     // This is a big hacky, since we're assigning a value to a constant object,
     // but okay here, because this constant is never re-assigned and is only
     // used by this instance.
+    ENVIRONMENT.environmentName = config.environmentName;
     ENVIRONMENT.connectionServerUrl =
       config.connectionServerUrl?.href ||
       import.meta.env.VITE_CONNECTION_SERVER_URL;
@@ -410,6 +456,21 @@ export class Main extends LitElement {
     // Due to https://github.com/lit/lit/issues/4675, context provider values
     // must be done in the constructor.
     this.environment = ENVIRONMENT;
+    this.googleDriveClient = new GoogleDriveClient({
+      apiBaseUrl: "https://www.googleapis.com",
+      proxyUrl:
+        "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/getOpalFile",
+      publicApiKey: ENVIRONMENT.googleDrive.publicApiKey,
+      getUserAccessToken: async () => {
+        const token = await this.signinAdapter.refresh();
+        if (token?.state === "valid") {
+          return token.grant.access_token;
+        }
+        throw new Error(
+          `User is unexpectedly signed out, or SigninAdapter is misconfigured`
+        );
+      },
+    });
 
     const boardServerLocation = globalThis.sessionStorage.getItem(
       `${STORAGE_PREFIX}-board-server`
@@ -519,6 +580,7 @@ export class Main extends LitElement {
             config.kits || [],
             config.moduleInvocationFilter
           ),
+          googleDriveClient: this.googleDriveClient,
         });
       })
       .then((runtime) => {
@@ -544,6 +606,12 @@ export class Main extends LitElement {
           this.environment,
           this.settingsHelper
         );
+        if (
+          this.signinAdapter.state === "invalid" ||
+          this.signinAdapter.state === "signedout"
+        ) {
+          return;
+        }
 
         this.#graphStore.addEventListener("update", (evt) => {
           const { mainGraphId } = evt;
@@ -592,6 +660,13 @@ export class Main extends LitElement {
           (evt: Runtime.Events.RuntimeVisualChangeEvent) => {
             this.#lastVisualChangeId = evt.visualChangeId;
             this.requestUpdate();
+          }
+        );
+
+        this.#runtime.edit.addEventListener(
+          Runtime.Events.RuntimeBoardAutonameEvent.eventName,
+          (evt: Runtime.Events.RuntimeBoardAutonameEvent) => {
+            console.log("Autoname Status Change:", evt.status);
           }
         );
 
@@ -711,6 +786,21 @@ export class Main extends LitElement {
 
               if (this.tab.graph.title) {
                 this.#setPageTitle(this.tab.graph.title);
+              }
+
+              if (this.tab.readOnly) {
+                this.snackbar(
+                  Strings.from("LABEL_READONLY_PROJECT"),
+                  BreadboardUI.Types.SnackType.INFORMATION,
+                  [
+                    {
+                      title: "Remix",
+                      action: "remix",
+                      value: this.tab.graph.url,
+                    },
+                  ],
+                  true
+                );
               }
 
               this.#runtime.select.refresh(
@@ -856,6 +946,11 @@ export class Main extends LitElement {
           this.environment,
           this.settingsHelper
         );
+        // Once we've determined the sign-in status, relay it to an embedder.
+        this.#embedHandler?.sendToEmbedder({
+          type: "home_loaded",
+          isSignedIn: signInAdapter.state === "valid",
+        });
         if (signInAdapter.state === "signedout") {
           return;
         }
@@ -899,6 +994,63 @@ export class Main extends LitElement {
     window.addEventListener("pointerdown", this.#hideTooltipBound);
     window.addEventListener("keydown", this.#onKeyDownBound);
     window.addEventListener("bbrundownload", this.#downloadRunBound);
+
+    if (this.#embedHandler) {
+      this.embedState = embedState();
+    }
+
+    this.#embedHandler?.subscribe(
+      "toggle_iterate_on_prompt",
+      async (message: ToggleIterateOnPromptMessage) => {
+        this.embedState.showIterateOnPrompt = message.on;
+      }
+    );
+    this.#embedHandler?.subscribe(
+      "create_new_board",
+      async (message: CreateNewBoardMessage) => {
+        if (!message.prompt) {
+          // If no prompt provided, generate an empty board.
+          this.#generateBoardFromGraph(blank());
+        } else {
+          void this.#generateGraph(message.prompt)
+            .then((graph) => this.#generateBoardFromGraph(graph))
+            .catch((error) => console.error("Error generating board", error));
+        }
+      }
+    );
+    this.#embedHandler?.sendToEmbedder({ type: "handshake_ready" });
+  }
+
+  async #generateGraph(intent: string): Promise<GraphDescriptor> {
+    const generator = new FlowGenerator(
+      new AppCatalystApiClient(this.signinAdapter)
+    );
+    const { flow } = await generator.oneShot({ intent });
+    return flow;
+  }
+
+  async #generateBoardFromGraph(graph: GraphDescriptor) {
+    const boardServerName = this.selectedBoardServer;
+    const location = this.selectedLocation;
+    const fileName = `${globalThis.crypto.randomUUID()}.bgl.json`;
+
+    const boardData = await this.#attemptBoardSaveAs(
+      boardServerName,
+      location,
+      fileName,
+      graph,
+      true,
+      {
+        start: Strings.from("STATUS_CREATING_PROJECT"),
+        end: Strings.from("STATUS_PROJECT_CREATED"),
+        error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
+      }
+    );
+    if (!boardData) return;
+    this.#embedHandler?.sendToEmbedder({
+      type: "board_id_created",
+      id: boardData.url.href,
+    });
   }
 
   disconnectedCallback(): void {
@@ -913,6 +1065,28 @@ export class Main extends LitElement {
 
   #handleSecretEvent(event: RunSecretEvent, runner?: HarnessRunner) {
     const { keys } = event.data;
+    const signInKey = `connection:${SIGN_IN_CONNECTION_ID}`;
+
+    // Check and see if we're being asked for a sign-in key
+    if (keys.at(0) === signInKey) {
+      // Yay, we can handle this ourselves.
+      const signInAdapter = new SigninAdapter(
+        this.tokenVendor,
+        this.environment,
+        this.settingsHelper
+      );
+      if (signInAdapter.state === "valid") {
+        runner?.run({ [signInKey]: signInAdapter.accessToken() });
+      } else {
+        signInAdapter.refresh().then((token) => {
+          if (!runner?.running()) {
+            runner?.run({ [signInKey]: token?.grant?.access_token });
+          }
+        });
+      }
+      return;
+    }
+
     if (this.#secretsHelper) {
       this.#secretsHelper.setKeys(keys);
       if (this.#secretsHelper.hasAllSecrets()) {
@@ -941,6 +1115,7 @@ export class Main extends LitElement {
       return;
     }
     this.#hideAllOverlays();
+    this.unsnackbar();
   }
 
   #hideAllOverlays() {
@@ -1029,6 +1204,10 @@ export class Main extends LitElement {
     [PasteCommand.keys, PasteCommand],
     [GroupCommand.keys, GroupCommand],
     [UngroupCommand.keys, UngroupCommand],
+    [
+      ToggleExperimentalComponentsCommand.keys,
+      ToggleExperimentalComponentsCommand,
+    ],
   ]);
 
   #handlingKey = false;
@@ -1074,6 +1253,7 @@ export class Main extends LitElement {
       tab: this.tab,
       originalEvent: evt,
       pointerLocation: this.#lastPointerPosition,
+      settings: this.#settings,
     } as const;
 
     for (const [keys, command] of this.#commands) {
@@ -1448,7 +1628,7 @@ export class Main extends LitElement {
     }
   }
 
-  async #attemptBoardSaveAs(
+  async #attemptBoardSaveAsAndNavigate(
     boardServerName: string,
     location: string,
     fileName: string,
@@ -1461,16 +1641,49 @@ export class Main extends LitElement {
     },
     creator: EditHistoryCreator
   ) {
-    if (this.#isSaving) {
+    const boardData = await this.#attemptBoardSaveAs(
+      boardServerName,
+      location,
+      fileName,
+      graph,
+      ackUser,
+      ackUserMessage
+    );
+    if (!boardData) {
       return;
     }
+    const { id, url } = boardData;
+    this.#attemptBoardLoad(
+      new BreadboardUI.Events.StartEvent(url.href, undefined, creator),
+      id
+    );
+  }
 
-    let id: ReturnType<typeof this.toast> | undefined;
+  async #attemptBoardSaveAs(
+    boardServerName: string,
+    location: string,
+    fileName: string,
+    graph: GraphDescriptor,
+    ackUser = true,
+    ackUserMessage = {
+      start: Strings.from("STATUS_SAVING_PROJECT"),
+      end: Strings.from("STATUS_PROJECT_SAVED"),
+      error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
+    }
+  ): Promise<{
+    id: BreadboardUI.Types.SnackbarUUID | undefined;
+    url: URL;
+  } | null> {
+    if (this.#isSaving) {
+      return null;
+    }
 
+    let id: BreadboardUI.Types.SnackbarUUID | undefined;
     if (ackUser) {
-      id = this.toast(
+      id = this.snackbar(
         ackUserMessage.start,
-        BreadboardUI.Events.ToastType.PENDING,
+        BreadboardUI.Types.SnackType.INFORMATION,
+        [],
         true
       );
     }
@@ -1486,32 +1699,41 @@ export class Main extends LitElement {
 
     if (!result || !url) {
       if (ackUser && id) {
-        this.toast(
+        this.snackbar(
           error || ackUserMessage.error,
-          BreadboardUI.Events.ToastType.ERROR,
+          BreadboardUI.Types.SnackType.ERROR,
+          [],
           false,
           id
         );
       }
 
-      return;
+      return null;
     }
 
     this.#setBoardPendingSaveState(false);
     this.#persistBoardServerAndLocation(boardServerName, location);
+    return { id: id, url: url };
+  }
 
-    this.#attemptBoardLoad(
-      new BreadboardUI.Events.StartEvent(url.href, undefined, creator)
-    );
-
-    if (ackUser && id) {
-      this.toast(
-        ackUserMessage.end,
-        BreadboardUI.Events.ToastType.INFORMATION,
-        false,
-        id
-      );
+  async #attemptBoardTitleUpdate(evt: Event) {
+    const target = evt.target;
+    if (!(target instanceof HTMLInputElement)) {
+      return;
     }
+
+    if (!target.checkValidity()) {
+      target.reportValidity();
+      return;
+    }
+
+    if (target.value === this.tab?.graph.title) {
+      return;
+    }
+
+    target.disabled = true;
+
+    await this.#runtime.edit.updateBoardTitle(this.tab, target.value.trim());
   }
 
   async #attemptBoardDelete(
@@ -1523,9 +1745,10 @@ export class Main extends LitElement {
       return;
     }
 
-    const id = this.toast(
+    const id = this.snackbar(
       Strings.from("STATUS_DELETING_PROJECT"),
-      BreadboardUI.Events.ToastType.PENDING,
+      BreadboardUI.Types.SnackType.PENDING,
+      [],
       true
     );
 
@@ -1535,16 +1758,12 @@ export class Main extends LitElement {
     );
 
     if (result) {
-      this.toast(
-        Strings.from("STATUS_PROJECT_DELETED"),
-        BreadboardUI.Events.ToastType.INFORMATION,
-        false,
-        id
-      );
+      this.unsnackbar();
     } else {
-      this.toast(
+      this.snackbar(
         error || Strings.from("ERROR_GENERIC"),
-        BreadboardUI.Events.ToastType.ERROR,
+        BreadboardUI.Types.SnackType.ERROR,
+        [],
         false,
         id
       );
@@ -1576,7 +1795,7 @@ export class Main extends LitElement {
     const location = this.selectedLocation;
     const fileName = `${globalThis.crypto.randomUUID()}.bgl.json`;
 
-    await this.#attemptBoardSaveAs(
+    await this.#attemptBoardSaveAsAndNavigate(
       boardServerName,
       location,
       fileName,
@@ -1616,8 +1835,8 @@ export class Main extends LitElement {
       this.#recentBoards.unshift(item);
     }
 
-    if (this.#recentBoards.length > 5) {
-      this.#recentBoards.length = 5;
+    if (this.#recentBoards.length > 50) {
+      this.#recentBoards.length = 50;
     }
 
     await this.#recentBoardStore.store(this.#recentBoards);
@@ -1693,6 +1912,34 @@ export class Main extends LitElement {
     this.requestUpdate();
 
     return id;
+  }
+
+  snackbar(
+    message: string,
+    type: BreadboardUI.Types.SnackType,
+    actions: BreadboardUI.Types.SnackbarAction[] = [],
+    persistent = false,
+    id = globalThis.crypto.randomUUID()
+  ) {
+    if (!this.#snackbarRef.value) {
+      return;
+    }
+
+    return this.#snackbarRef.value.show({
+      id,
+      message,
+      type,
+      persistent,
+      actions,
+    });
+  }
+
+  unsnackbar() {
+    if (!this.#snackbarRef.value) {
+      return;
+    }
+
+    this.#snackbarRef.value.hide();
   }
 
   async #getProxyURL(urlString: string): Promise<string | null> {
@@ -1937,14 +2184,18 @@ export class Main extends LitElement {
     });
   }
 
-  async #attemptBoardLoad(evt: BreadboardUI.Events.StartEvent) {
+  async #attemptBoardLoad(
+    evt: BreadboardUI.Events.StartEvent,
+    existingMessageId?: BreadboardUI.Types.SnackbarUUID
+  ) {
     if (evt.url) {
-      let id;
       const loadingTimeout = setTimeout(() => {
-        id = this.toast(
+        this.snackbar(
           Strings.from("STATUS_GENERIC_LOADING"),
-          BreadboardUI.Events.ToastType.PENDING,
-          true
+          BreadboardUI.Types.SnackType.PENDING,
+          [],
+          true,
+          existingMessageId
         );
       }, LOADING_TIMEOUT);
 
@@ -1959,7 +2210,7 @@ export class Main extends LitElement {
         evt.creator
       );
       clearTimeout(loadingTimeout);
-      this.untoast(id);
+      this.unsnackbar();
     } else if (evt.descriptor) {
       this.#runtime.board.createTabFromDescriptor(evt.descriptor);
     }
@@ -2189,17 +2440,22 @@ export class Main extends LitElement {
   }
 
   #createItemList(): OverflowAction[] {
-    const list: OverflowAction[] = Object.entries(
-      this.tab?.graph.modules ?? {}
-    ).map(([name, module]) => {
-      return {
-        name,
-        icon: module.metadata?.runnable ? "step" : "code",
-        title: module.metadata?.title ?? name,
-        secondaryAction: "delete",
-        disabled: this.#selectionState?.selectionState.modules.has(name),
-      };
-    });
+    const list: OverflowAction[] = Object.entries(this.tab?.graph.modules ?? {})
+      .map(([name, module]) => {
+        return {
+          name,
+          icon: module.metadata?.runnable ? "step" : "code",
+          title: module.metadata?.title ?? name,
+          secondaryAction: "delete",
+          disabled: this.#selectionState?.selectionState.modules.has(name),
+        };
+      })
+      .sort((a, b) => {
+        if (a.title.toLocaleLowerCase() > b.title.toLocaleLowerCase()) return 1;
+        if (a.title.toLocaleLowerCase() < b.title.toLocaleLowerCase())
+          return -1;
+        return 0;
+      });
 
     const hasNoGraphsSelected =
       this.#selectionState?.selectionState.graphs.size === 0;
@@ -2691,6 +2947,15 @@ export class Main extends LitElement {
             });
           }
 
+          if (FEEDBACK_LINK) {
+            actions.push({
+              title: Strings.from("COMMAND_SEND_FEEDBACK"),
+              name: "feedback",
+              icon: "flag",
+              value: tabId,
+            });
+          }
+
           boardOverflowMenu = html`<bb-overflow-menu
             id="board-overflow"
             style=${styleMap({
@@ -2706,9 +2971,6 @@ export class Main extends LitElement {
               actionEvt: BreadboardUI.Events.OverflowMenuActionEvent
             ) => {
               this.showBoardOverflowMenu = false;
-              const x = this.#boardOverflowMenuConfiguration?.x ?? 100;
-              const y = this.#boardOverflowMenuConfiguration?.y ?? 100;
-
               if (!actionEvt.value) {
                 this.toast(
                   Strings.from("ERROR_GENERIC"),
@@ -2729,8 +2991,14 @@ export class Main extends LitElement {
               }
 
               switch (actionEvt.action) {
-                case "edit-board-details": {
-                  this.#showBoardEditOverlay(tab, x, y, null, null);
+                case "edit": {
+                  this.#showBoardEditOverlay(
+                    tab,
+                    actionEvt.x,
+                    actionEvt.y,
+                    null,
+                    null
+                  );
                   break;
                 }
 
@@ -2905,6 +3173,14 @@ export class Main extends LitElement {
                   }
                   break;
                 }
+
+                case "feedback": {
+                  window.open(
+                    "https://goto.google.com/labs-opal-bug",
+                    "_blank"
+                  );
+                  break;
+                }
               }
             }}
           ></bb-overflow-menu>`;
@@ -3041,6 +3317,7 @@ export class Main extends LitElement {
                 if (!this.tab) {
                   return;
                 }
+                this.#embedHandler?.sendToEmbedder({ type: "back_clicked" });
 
                 this.#runtime.board.closeTab(this.tab.id);
               }}
@@ -3056,7 +3333,24 @@ export class Main extends LitElement {
 
               ${
                 this.tab
-                  ? html` <span class="tab-title">${this.tab.graph.title}</span>
+                  ? html` <input
+                        autocomplete="off"
+                        @blur=${async (evt: Event) => {
+                          await this.#attemptBoardTitleUpdate(evt);
+                        }}
+                        @keydown=${async (evt: KeyboardEvent) => {
+                          if (evt.key !== "Enter") {
+                            return;
+                          }
+
+                          await this.#attemptBoardTitleUpdate(evt);
+                        }}
+                        ?disabled=${!canSave}
+                        required
+                        type="text"
+                        class="tab-title"
+                        .value=${this.tab.graph.title}
+                      />
                       <span
                         class=${classMap({
                           "save-status": true,
@@ -3095,7 +3389,7 @@ export class Main extends LitElement {
                             ${selectedItem}
                           </button>`
                         : nothing}
-                      ${this.#runtime.board.canSave(this.tab.id)
+                      ${this.#runtime.board.isMine(this.tab.graph.url)
                         ? nothing
                         : html`<button
                             id="remix"
@@ -3198,6 +3492,22 @@ export class Main extends LitElement {
                   : nothing
               }
               ${
+                this.tab
+                  ? nothing
+                  : html`
+                      <bb-homepage-search-button
+                        .value=${this.projectFilter ?? ""}
+                        @input=${(
+                          evt: InputEvent & {
+                            target: BreadboardUI.Elements.HomepageSearchButton;
+                          }
+                        ) => {
+                          this.projectFilter = evt.target.value;
+                        }}
+                      ></bb-homepage-search-button>
+                    `
+              }
+              ${
                 signInAdapter.state === "valid" && signInAdapter.picture
                   ? html`<button
                       id="toggle-user-menu"
@@ -3235,40 +3545,41 @@ export class Main extends LitElement {
         <bb-ui-controller
               ${ref(this.#uiRef)}
               ?inert=${showingOverlay}
+              .boardId=${this.#boardId}
+              .boardServerKits=${this.tab?.boardServerKits ?? []}
+              .boardServers=${this.#boardServers}
+              .canRun=${this.canRun}
+              .chatController=${observers?.chatController}
+              .editor=${this.#runtime.edit.getEditor(this.tab)}
+              .fileSystem=${this.#fileSystem}
+              .graph=${this.tab?.graph ?? null}
+              .graphIsMine=${this.tab?.graphIsMine ?? false}
+              .graphStore=${this.#graphStore}
+              .graphStoreUpdateId=${this.graphStoreUpdateId}
+              .graphTopologyUpdateId=${this.graphTopologyUpdateId}
+              .history=${this.#runtime.edit.getHistory(this.tab)}
+              .inputsFromLastRun=${inputsFromLastRun}
+              .loader=${this.#runtime.board.getLoader()}
+              .mainGraphId=${this.tab?.mainGraphId}
+              .moduleId=${this.tab?.moduleId ?? null}
+              .organizer=${projectState?.organizer}
+              .projectState=${projectState}
+              .readOnly=${this.tab?.readOnly ?? true}
+              .recentBoards=${this.#recentBoards}
+              .runs=${runs ?? null}
               .runStore=${this.#runStore}
               .sandbox=${sandbox}
-              .fileSystem=${this.#fileSystem}
-              .graphStore=${this.#graphStore}
-              .mainGraphId=${this.tab?.mainGraphId}
-              .readOnly=${this.tab?.readOnly ?? true}
-              .graph=${this.tab?.graph ?? null}
-              .editor=${this.#runtime.edit.getEditor(this.tab)}
-              .subGraphId=${this.tab?.subGraphId ?? null}
-              .moduleId=${this.tab?.moduleId ?? null}
-              .runs=${runs ?? null}
-              .topGraphResult=${topGraphResult}
-              .boardServerKits=${this.tab?.boardServerKits ?? []}
-              .loader=${this.#runtime.board.getLoader()}
-              .status=${tabStatus}
-              .boardId=${this.#boardId}
-              .tabLoadStatus=${tabLoadStatus}
-              .settings=${this.#settings}
-              .boardServers=${this.#boardServers}
-              .history=${this.#runtime.edit.getHistory(this.tab)}
-              .version=${this.#version}
-              .recentBoards=${this.#recentBoards}
-              .inputsFromLastRun=${inputsFromLastRun}
-              .tabURLs=${tabURLs}
               .selectionState=${this.#selectionState}
-              .visualChangeId=${this.#lastVisualChangeId}
-              .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-              .graphStoreUpdateId=${this.graphStoreUpdateId}
+              .settings=${this.#settings}
               .showBoardReferenceMarkers=${this.showBoardReferenceMarkers}
-              .chatController=${observers?.chatController}
-              .projectState=${projectState}
-              .organizer=${projectState?.organizer}
               .signedIn=${signInAdapter.state === "valid"}
-              .canRun=${this.canRun}
+              .status=${tabStatus}
+              .subGraphId=${this.tab?.subGraphId ?? null}
+              .tabLoadStatus=${tabLoadStatus}
+              .tabURLs=${tabURLs}
+              .topGraphResult=${topGraphResult}
+              .version=${this.#version}
+              .visualChangeId=${this.#lastVisualChangeId}
               @bbrun=${async () => {
                 if (!this.canRun) return;
                 await this.#attemptBoardStart();
@@ -3624,70 +3935,8 @@ export class Main extends LitElement {
               ) => {
                 await this.#runtime.edit.deleteTheme(this.tab, evt.themeId);
               }}
-              @bbthemecreate=${async (
-                evt: BreadboardUI.Events.ThemeCreateEvent
-              ) => {
-                const projectState = this.#runtime.state.getOrCreate(
-                  this.tab?.mainGraphId,
-                  this.#runtime.edit.getEditor(this.tab)
-                );
-
-                const graphTheme: GraphTheme = {
-                  template: "basic",
-                  templateAdditionalOptions: {},
-                  themeColors: {
-                    primaryColor: evt.theme.primaryColor,
-                    secondaryColor: evt.theme.secondaryColor,
-                    backgroundColor: evt.theme.backgroundColor,
-                    primaryTextColor: evt.theme.primaryTextColor,
-                    textColor: evt.theme.textColor,
-                  },
-                };
-
-                // TODO: Show some status.
-                if (evt.theme.splashScreen) {
-                  if (isStoredData(evt.theme.splashScreen)) {
-                    // Fetch the stored data so that we can add to the graph.
-                    const response = await fetch(
-                      evt.theme.splashScreen.storedData.handle
-                    );
-                    const imgBlob = await response.blob();
-                    const data = await asBase64(imgBlob);
-                    const mimeType = imgBlob.type;
-                    evt.theme.splashScreen = { inlineData: { data, mimeType } };
-                  }
-                  const data: LLMContent[] = [
-                    {
-                      role: "user",
-                      parts: [evt.theme.splashScreen],
-                    },
-                  ];
-
-                  // Convert inline data to stored asset.
-                  if (isInlineData(evt.theme.splashScreen)) {
-                    await projectState?.organizer.addGraphAsset({
-                      path: "@@splash",
-                      metadata: { title: "Splash", type: "file" },
-                      data,
-                    });
-
-                    const splashScreen =
-                      projectState?.graphAssets.get("@@splash")?.data[0]
-                        ?.parts[0];
-                    if (isStoredData(splashScreen)) {
-                      graphTheme.splashScreen = splashScreen;
-                    } else {
-                      console.warn(
-                        "Unable to save splash screen",
-                        splashScreen
-                      );
-                    }
-
-                    await projectState?.organizer.removeGraphAsset("@@splash");
-                  }
-                }
-
-                await this.#runtime.edit.createTheme(this.tab, graphTheme);
+              @bbthemecreate=${(evt: BreadboardUI.Events.ThemeCreateEvent) => {
+                this.#runtime.edit.createTheme(this.tab, evt.theme);
               }}
               @bbnoderunrequest=${async (
                 evt: BreadboardUI.Events.NodeRunRequestEvent
@@ -3757,6 +4006,8 @@ export class Main extends LitElement {
                     });
                   })
                 );
+
+                this.#checkGoogleDriveAssetShareStatus();
               }}
               @bbedgeattachmentmove=${async (
                 evt: BreadboardUI.Events.EdgeAttachmentMoveEvent
@@ -3961,6 +4212,19 @@ export class Main extends LitElement {
                   this.#runtime.util.createWorkspaceSelectionChangeId()
                 );
               }}
+              @bbiterateonprompt=${(
+                iterateOnPromptEvent: IterateOnPromptEvent
+              ) => {
+                const message: IterateOnPromptMessage = {
+                  type: "iterate_on_prompt",
+                  title: iterateOnPromptEvent.title,
+                  promptTemplate: iterateOnPromptEvent.promptTemplate,
+                  boardId: iterateOnPromptEvent.boardId,
+                  nodeId: iterateOnPromptEvent.nodeId,
+                  modelId: iterateOnPromptEvent.modelId,
+                };
+                this.#embedHandler?.sendToEmbedder(message);
+              }}
             ></bb-ui-controller>
         ${
           this.showWelcomePanel
@@ -3973,6 +4237,7 @@ export class Main extends LitElement {
                 .boardServers=${this.#boardServers}
                 .boardServerNavState=${this.boardServerNavState}
                 .showAdditionalSources=${showAdditionalSources}
+                .filter=${this.projectFilter}
                 @bbboarddelete=${async (
                   evt: BreadboardUI.Events.BoardDeleteEvent
                 ) => {
@@ -4011,12 +4276,7 @@ export class Main extends LitElement {
                   }
 
                   const refreshed = await boardServer.refresh(evt.location);
-                  if (refreshed) {
-                    this.toast(
-                      Strings.from("STATUS_PROJECTS_REFRESHED"),
-                      BreadboardUI.Events.ToastType.INFORMATION
-                    );
-                  } else {
+                  if (!refreshed) {
                     this.toast(
                       Strings.from("ERROR_UNABLE_TO_REFRESH_PROJECTS"),
                       BreadboardUI.Events.ToastType.WARNING
@@ -4129,7 +4389,36 @@ export class Main extends LitElement {
       });
 
     const tooltip = html`<bb-tooltip ${ref(this.#tooltipRef)}></bb-tooltip>`;
-    return [until(uiController), tooltip, toasts];
+    const snackbar = html`<bb-snackbar
+      ${ref(this.#snackbarRef)}
+      @bbsnackbaraction=${async (
+        evt: BreadboardUI.Events.SnackbarActionEvent
+      ) => {
+        switch (evt.action) {
+          case "remix": {
+            if (!evt.value) {
+              return;
+            }
+
+            const graphStore = this.#runtime.board.getGraphStore();
+            const addResult = graphStore.addByURL(evt.value, [], {});
+            const graph = (await graphStore.getLatest(addResult.mutable)).graph;
+
+            if (graph) {
+              await this.#attemptRemix(graph, { role: "user" });
+              this.showWelcomePanel = false;
+            }
+          }
+        }
+      }}
+    ></bb-snackbar>`;
+    return [
+      until(uiController),
+      tooltip,
+      toasts,
+      snackbar,
+      this.#renderGoogleDriveAssetShareDialog(),
+    ];
   }
 
   createTosDialog() {
@@ -4146,11 +4435,9 @@ export class Main extends LitElement {
       })}
     >
       <form method="dialog">
-        <div>
-          <p class="heading">${tosTitle}</p>
-        </div>
+        <h1>${tosTitle}</h1>
         <div class="tos-content">${unsafeHTML(this.#tosHtml)}</div>
-        <div class="button-section">
+        <div class="controls">
           <button
             @click=${() => {
               this.showToS = false;
@@ -4162,6 +4449,115 @@ export class Main extends LitElement {
         </div>
       </form>
     </dialog>`;
+  }
+
+  readonly #googleDriveAssetShareDialog =
+    createRef<GoogleDriveAssetShareDialog>();
+
+  #renderGoogleDriveAssetShareDialog() {
+    return html`
+      <bb-google-drive-asset-share-dialog
+        ${ref(this.#googleDriveAssetShareDialog)}
+      ></bb-google-drive-asset-share-dialog>
+    `;
+  }
+
+  /**
+   * Finds all assets in the graph, checks if their sharing permissions match
+   * that of the main graph, and prompts the user to fix them if needed.
+   */
+  async #checkGoogleDriveAssetShareStatus(): Promise<void> {
+    const graph = this.tab?.graph;
+    if (!graph) {
+      console.error(`No graph was found`);
+      return;
+    }
+    const driveAssetFileIds = findGoogleDriveAssetsInGraph(graph);
+    if (driveAssetFileIds.length === 0) {
+      return;
+    }
+    if (!graph.url) {
+      console.error(`Graph had no URL`);
+      return;
+    }
+    const graphFileId = extractDriveFileId(graph.url);
+    if (!graphFileId) {
+      return;
+    }
+    const { googleDriveClient } = this;
+    if (!googleDriveClient) {
+      console.error(`No googleDriveClient was provided`);
+      return;
+    }
+
+    // Retrieve all relevant permissions.
+    const rawAssetPermissionsPromise = Promise.all(
+      driveAssetFileIds.map(
+        async (assetFileId) =>
+          [
+            assetFileId,
+            await googleDriveClient.readPermissions(assetFileId),
+          ] as const
+      )
+    );
+    const processedGraphPermissions = (
+      await googleDriveClient.readPermissions(graphFileId)
+    )
+      .filter(
+        (permission) =>
+          // We're only concerned with how the graph is shared to others.
+          permission.role !== "owner"
+      )
+      .map((permission) => ({
+        ...permission,
+        // We only care about reading the file, so downgrade "writer",
+        // "commenter", and other roles to "reader" (note that all roles are
+        // supersets of of "reader", see
+        // https://developers.google.com/workspace/drive/api/guides/ref-roles).
+        role: "reader",
+      }));
+
+    // Look at each asset and determine whether it is missing any of the
+    // permissions that the graph has.
+    const assetToMissingPermissions = new Map<
+      string,
+      gapi.client.drive.Permission[]
+    >();
+    for (const [
+      assetFileId,
+      assetPermissions,
+    ] of await rawAssetPermissionsPromise) {
+      const missingPermissions = new Map(
+        processedGraphPermissions.map((graphPermission) => [
+          stringifyPermission(graphPermission),
+          graphPermission,
+        ])
+      );
+      for (const assetPermission of assetPermissions) {
+        missingPermissions.delete(
+          stringifyPermission({
+            ...assetPermission,
+            // See note above about "reader".
+            role: "reader",
+          })
+        );
+      }
+      if (missingPermissions.size > 0) {
+        assetToMissingPermissions.set(assetFileId, [
+          ...missingPermissions.values(),
+        ]);
+      }
+    }
+
+    // Prompt to sync the permissions.
+    if (assetToMissingPermissions.size > 0) {
+      const dialog = this.#googleDriveAssetShareDialog.value;
+      if (!dialog) {
+        console.error(`Asset permissions dialog was not rendered`);
+        return;
+      }
+      dialog.open(assetToMissingPermissions);
+    }
   }
 }
 

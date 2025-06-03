@@ -18,6 +18,7 @@ import {
 } from "../elements/connection/connection-common";
 import { SETTINGS_TYPE, SettingsHelper } from "../types/types";
 import { createContext } from "@lit/context";
+import { getEmbedderRedirectUri } from "./oauth-redirect";
 
 export { SigninAdapter };
 
@@ -62,7 +63,8 @@ class SigninAdapter {
   constructor(
     tokenVendor?: TokenVendor,
     environment?: Environment,
-    settingsHelper?: SettingsHelper
+    settingsHelper?: SettingsHelper,
+    public readonly errorMessage?: string
   ) {
     if (!environment || !tokenVendor || !settingsHelper) {
       this.state = "invalid";
@@ -92,6 +94,14 @@ class SigninAdapter {
     this.picture = grant?.picture;
     this.id = grant?.id;
     this.name = grant?.name;
+  }
+
+  accessToken(): string | null {
+    if (this.state === "valid") {
+      const token = this.#tokenVendor?.getToken(SIGN_IN_CONNECTION_ID);
+      return token?.grant?.access_token || null;
+    }
+    return null;
   }
 
   async cachedPicture(): Promise<string | undefined> {
@@ -151,14 +161,17 @@ class SigninAdapter {
   async getSigninUrl(): Promise<string> {
     if (this.state !== "signedout") return "";
 
+    const connection = await this.#getConnection();
+    if (!connection) return "";
+
     let redirectUri = this.#environment?.connectionRedirectUrl;
     if (!redirectUri) return "";
 
     redirectUri = new URL(redirectUri, new URL(window.location.href).origin)
       .href;
 
-    const connection = await this.#getConnection();
-    if (!connection) return "";
+    // If embedder has passed in a valid oauth redirect, use that instead.
+    redirectUri = getEmbedderRedirectUri() ?? redirectUri;
 
     const authUrl = new URL(connection.authUrl);
     authUrl.searchParams.set("redirect_uri", redirectUri);
@@ -185,7 +198,14 @@ class SigninAdapter {
   ) {
     const now = Date.now();
     if (this.state === "invalid") {
-      await signinCallback(new SigninAdapter());
+      await signinCallback(
+        new SigninAdapter(
+          undefined,
+          undefined,
+          undefined,
+          "Sign in configuration error"
+        )
+      );
       return;
     }
     const nonce = this.#nonce;
@@ -210,13 +230,22 @@ class SigninAdapter {
     if (grantResponse.error !== undefined) {
       // TODO(aomarks) Show error info in the UI.
       console.error(grantResponse.error);
-      await signinCallback(new SigninAdapter());
+      await signinCallback(
+        new SigninAdapter(undefined, undefined, undefined, grantResponse.error)
+      );
       return;
     }
 
     const connection = await this.#getConnection();
     if (!connection) {
-      await signinCallback(new SigninAdapter());
+      await signinCallback(
+        new SigninAdapter(
+          undefined,
+          undefined,
+          undefined,
+          "Connection not found"
+        )
+      );
       return;
     }
 

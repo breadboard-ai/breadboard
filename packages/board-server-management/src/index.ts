@@ -19,6 +19,7 @@ import {
 
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 import { TokenVendor } from "@breadboard-ai/connection-client";
+import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 
 const BOARD_SERVER_LISTING_DB = "board-server";
 const BOARD_SERVER_LISTING_VERSION = 1;
@@ -40,8 +41,59 @@ interface BoardServerListing extends idb.DBSchema {
   };
 }
 
+export async function createGoogleDriveBoardServer(
+  title: string,
+  user: User,
+  tokenVendor?: TokenVendor,
+  googleDriveClient?: GoogleDriveClient
+) {
+  if (!googleDriveClient) {
+    console.error(
+      "The Google Drive board server could not be initialized because" +
+        " a GoogleDriveClient was not provided"
+    );
+    return null;
+  }
+  if (!tokenVendor) {
+    console.error(
+      "The Google Drive board server could not be initialized because" +
+        " a TokenVendor was not provided"
+    );
+    return null;
+  }
+  const googleDrivePublicApiKey = import.meta.env
+    .VITE_GOOGLE_DRIVE_PUBLIC_API_KEY;
+  if (!googleDrivePublicApiKey) {
+    console.warn(
+      "No value for VITE_GOOGLE_DRIVE_PUBLIC_API_KEY was configured." +
+        " We will not be able to read public files from Google Drive."
+    );
+  }
+  const googleDriveFeaturedGalleryFolderId = import.meta.env
+    .VITE_GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID;
+  if (!googleDrivePublicApiKey) {
+    console.warn(
+      "No value for VITE_GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID" +
+        " was configured. We will not be able to read the featured" +
+        " gallery from Google Drive."
+    );
+  }
+  const userFolderName =
+    import.meta.env.VITE_GOOGLE_DRIVE_USER_FOLDER_NAME || "Breadboard";
+  return GoogleDriveBoardServer.from(
+    title,
+    user,
+    tokenVendor,
+    googleDriveClient,
+    userFolderName,
+    googleDrivePublicApiKey,
+    googleDriveFeaturedGalleryFolderId
+  );
+}
+
 export async function getBoardServers(
-  tokenVendor?: TokenVendor
+  tokenVendor?: TokenVendor,
+  googleDriveClient?: GoogleDriveClient
 ): Promise<BoardServer[]> {
   const storeUrls = await readAllServers();
 
@@ -62,8 +114,13 @@ export async function getBoardServers(
         return FileSystemBoardServer.from(url, title, user, handle);
       }
 
-      if (url.startsWith(GoogleDriveBoardServer.PROTOCOL) && tokenVendor) {
-        return GoogleDriveBoardServer.from(url, title, user, tokenVendor);
+      if (url.startsWith(GoogleDriveBoardServer.PROTOCOL)) {
+        return createGoogleDriveBoardServer(
+          title,
+          user,
+          tokenVendor,
+          googleDriveClient
+        );
       }
 
       console.warn(`Unsupported store URL: ${url}`);
@@ -77,9 +134,10 @@ export async function getBoardServers(
 export async function connectToBoardServer(
   location?: string,
   apiKey?: string,
-  tokenVendor?: TokenVendor
+  tokenVendor?: TokenVendor,
+  googleDriveClient?: GoogleDriveClient
 ): Promise<{ title: string; url: string } | null> {
-  const existingServers = await getBoardServers(tokenVendor);
+  const existingServers = await getBoardServers(tokenVendor, googleDriveClient);
   if (location) {
     if (
       location.startsWith(RemoteBoardServer.PROTOCOL) ||
@@ -126,10 +184,11 @@ export async function connectToBoardServer(
       }
 
       const url = new URL(location);
-      const response = await GoogleDriveBoardServer.connect(
-        url.hostname,
-        tokenVendor
-      );
+      const response = {
+        url: "drive:",
+        title: "Google Drive",
+        username: "board-builder",
+      };
       if (response) {
         await storeBoardServer(url, response.title, {
           apiKey: apiKey ?? "",

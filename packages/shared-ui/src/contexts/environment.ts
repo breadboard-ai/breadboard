@@ -7,12 +7,23 @@
 import { createContext } from "@lit/context";
 import { InputPlugin } from "../plugins/input-plugin.js";
 
+export type GoogleDrivePermission =
+  | { id: string; type: "user"; emailAddress: string }
+  | { id: string; type: "group"; emailAddress: string }
+  | { id: string; type: "domain"; domain: string }
+  | { id: string; type: "anyone" };
+
 export interface Environment {
+  environmentName: string | undefined;
   connectionServerUrl: string | undefined;
   connectionRedirectUrl: string;
   requiresSignin?: boolean;
   plugins: {
     input: InputPlugin[];
+  };
+  googleDrive: {
+    publishPermissions: GoogleDrivePermission[];
+    publicApiKey: string;
   };
 }
 

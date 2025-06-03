@@ -221,6 +221,18 @@ class Template {
     return null;
   }
 
+  simpleSubstitute(callback: (param: ParamPart) => string): LLMContent {
+    const parts: DataPart[] = [];
+    for (const part of this.#parts) {
+      if ("type" in part) {
+        parts.push({ text: callback(part) });
+      } else {
+        parts.push(part);
+      }
+    }
+    return { parts }
+  }
+
   async substitute(
     params: Params,
     whenTool: ToolCallback

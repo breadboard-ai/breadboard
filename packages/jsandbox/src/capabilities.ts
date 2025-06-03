@@ -38,7 +38,7 @@ class Capabilities {
     const capability = installed?.capabilities.get(name);
     if (!installed || !capability) {
       throw new Error(
-        `Capability "${name}" is not avaialble for invocation "${invocationId}".`
+        `Capability "${name}" is not available for invocation "${invocationId}".`
       );
     }
     const parsedInputs = JSON.parse(inputs);

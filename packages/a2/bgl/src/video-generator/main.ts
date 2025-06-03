@@ -37,14 +37,42 @@ import {
   executeStep,
 } from "./a2/step-executor";
 
+type Model = {
+  id: string;
+  title: string;
+  description: string;
+  modelName: string;
+};
+
 const ASPECT_RATIOS = ["9:16", "16:9"];
 const OUTPUT_NAME = "generated_video";
+const MODELS: Model[] = [
+  {
+    id: "veo-3",
+    title: "Veo 3",
+    description: "State of the art video generation with audio",
+    modelName: "veo-3.0-generate-preview",
+  },
+  {
+    id: "veo-2",
+    title: "Veo 2",
+    description: "Faster video generation, no audio",
+    modelName: "veo-2.0-generate-001",
+  },
+];
+
+const modelMap = new Map(MODELS.map((model) => [model.id, model]));
+
+function getModel(modelId: string | undefined): Model {
+  return modelMap.get(modelId || "veo-3") || MODELS[0];
+}
 
 type VideoGeneratorInputs = {
   context: LLMContent[];
   instruction?: LLMContent;
   "p-disable-prompt-rewrite": boolean;
   "p-aspect-ratio": string;
+  "b-model-name": string;
 };
 
 type VideoGeneratorOutputs = {
@@ -57,7 +85,8 @@ async function callVideoGen(
   prompt: string,
   imageContent: LLMContent | undefined,
   disablePromptRewrite: boolean,
-  aspectRatio: string
+  aspectRatio: string,
+  modelName: string
 ): Promise<LLMContent> {
   const executionInputs: ContentMap = {};
   const encodedPrompt = btoa(unescape(encodeURIComponent(prompt)));
@@ -110,6 +139,7 @@ async function callVideoGen(
       output: OUTPUT_NAME,
       options: {
         disablePromptRewrite,
+        modelName,
       },
     },
     execution_inputs: executionInputs,
@@ -150,14 +180,17 @@ async function invoke({
   instruction,
   "p-disable-prompt-rewrite": disablePromptRewrite,
   "p-aspect-ratio": aspectRatio,
+  "b-model-name": modelId,
   ...params
 }: VideoGeneratorInputs): Promise<Outcome<VideoGeneratorOutputs>> {
+  let { modelName } = getModel(modelId);
   context ??= [];
   let instructionText = "";
   if (instruction) {
     instructionText = toText(instruction).trim();
   }
-  if (!aspectRatio) {
+  if (!aspectRatio || modelId == "veo-3") {
+    // Veo 3 currently crashes on aspect ration 9:16. This is a bug on Vertex.
     aspectRatio = "16:9";
   }
   // 2) Substitute variables and magic image reference.
@@ -204,14 +237,15 @@ async function invoke({
         return toLLMContent("A video instruction must be provided.");
       }
 
-      console.log("PROMPT: ", combinedInstruction);
+      console.log(`PROMPT(${modelName}): ${combinedInstruction}`);
 
       // 2) Call backend to generate video.
       const content = await callVideoGen(
         combinedInstruction,
         imageContext.at(0),
         disablePromptRewrite,
-        aspectRatio
+        aspectRatio,
+        modelName
       );
       return content;
     }
@@ -249,17 +283,24 @@ async function describe({ inputs: { instruction } }: DescribeInputs) {
         "p-disable-prompt-rewrite": {
           type: "boolean",
           title: "Disable prompt expansion",
-          behavior: ["config", "hint-preview"],
+          behavior: ["config", "hint-preview", "hint-advanced"],
           description:
             "By default, inputs and instructions can be automatically expanded into a higher quality video prompt. Check to disable this re-writing behavior.",
         },
         "p-aspect-ratio": {
           type: "string",
-          behavior: ["hint-text", "config"],
+          behavior: ["hint-text", "config", "hint-advanced"],
           title: "Aspect Ratio",
           enum: ASPECT_RATIOS,
           description: "The aspect ratio of the generated video",
           default: "1:1",
+        },
+        "b-model-name": {
+          type: "string",
+          enum: MODELS,
+          behavior: ["llm-content", "config", "hint-advanced"],
+          title: "Model Version",
+          description: "The Veo version to use",
         },
         ...template.schemas(),
       },

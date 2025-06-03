@@ -3,26 +3,15 @@
  */
 import { Template } from "./a2/template";
 import { ToolManager } from "./a2/tool-manager";
-import { GeminiPrompt } from "./a2/gemini-prompt";
-import { type GeminiSchema, type Tool } from "./a2/gemini";
 import { type Params } from "./a2/common";
-import { ok, err, toLLMContent, llm, generateId } from "./a2/utils";
-import { report } from "./a2/output";
-import { StructuredResponse } from "./a2/structured-response";
+import { ok, err, generateId } from "./a2/utils";
 import { ArgumentNameGenerator } from "./a2/introducer";
-import { plannerPrompt, getPlan } from "./planner-prompt";
 import { Runtime } from "./runtime";
 import { ParallelStrategist } from "./parallel-strategist";
 import { SequentialStrategist } from "./sequential-strategist";
 import { ThinkStrategist } from "./think-strategist";
 import { ConversationalThinkStrategist } from "./conversational-think-strategist";
-import {
-  type Task,
-  type Plan,
-  type Strategy,
-  type ExecuteStepFunction,
-  type Strategist,
-} from "./types";
+import { type Strategist } from "./types";
 import { fanOutContext } from "./a2/lists";
 import { readSettings } from "./a2/settings";
 
@@ -129,7 +118,7 @@ async function describe({ inputs: { plan } }: DescribeInputs) {
       "z-list": {
         type: "boolean",
         title: "Make a list",
-        behavior: ["config", "hint-preview"],
+        behavior: ["config", "hint-preview", "hint-advanced"],
         icon: "summarize",
         description:
           "When checked, this step will try to create a list as its output. Make sure that the prompt asks for a list of some sort",
@@ -160,7 +149,7 @@ async function describe({ inputs: { plan } }: DescribeInputs) {
 "${STRATEGISTS[1].name}" will build on previous work.
 "${STRATEGISTS[2].name}" will think after each step adjust the list if necessary`,
           type: "string",
-          behavior: ["config", "hint-preview"],
+          behavior: ["config", "hint-preview", "hint-advanced"],
           enum: STRATEGISTS.map((strategist) => strategist.name),
           icon: "joiner",
           default: STRATEGISTS[0].name,

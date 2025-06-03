@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { UUID } from "crypto";
+import { UUID } from "node:crypto";
 import {
   ConnectorConfiguration,
   ConnectorInstance,
@@ -73,7 +73,7 @@ class ConnectorInstanceImpl implements ConnectorInstance {
   get view() {
     const view = this.#view.value;
     if (!view) {
-      return err(`Connector "${this.id}" view not avaialable`);
+      return err(`Connector "${this.id}" view not available`);
     }
     return view;
   }

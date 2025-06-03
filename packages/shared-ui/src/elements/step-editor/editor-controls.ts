@@ -47,7 +47,7 @@ const QUICK_ADD_ADJUSTMENT = -20;
 
 @customElement("bb-editor-controls")
 export class EditorControls extends LitElement {
-  @property()
+  @property({ reflect: true, type: Boolean })
   accessor readOnly = false;
 
   @property()
@@ -112,6 +112,13 @@ export class EditorControls extends LitElement {
 
       :host > * {
         pointer-events: auto;
+      }
+
+      :host([readonly]) {
+        #top-shelf,
+        bb-flowgen-editor-input {
+          display: none;
+        }
       }
 
       #default-add {
@@ -1036,24 +1043,24 @@ export class EditorControls extends LitElement {
                 hidden: true,
               },
               {
-                id: "text",
-                title: "Text",
-                icon: "edit_note",
-              },
-              {
                 id: "upload",
                 title: "Upload file",
                 icon: "upload",
               },
               {
                 id: "gdrive",
-                title: "Google Drive",
+                title: "My Drive",
                 icon: "drive",
               },
               {
                 id: "youtube",
                 title: "YouTube",
                 icon: "video_youtube",
+              },
+              {
+                id: "text",
+                title: "Build your own",
+                icon: "edit_note",
               },
               {
                 id: "drawing",
@@ -1067,7 +1074,7 @@ export class EditorControls extends LitElement {
               id="add-drive-proxy"
               ${ref(this.#addDriveInputRef)}
               .connectionName=${SIGN_IN_CONNECTION_ID}
-              .ownedByMeOnly=${true}
+              .ownedByMeOnly=${false}
               @bb-input-change=${(evt: InputChangeEvent) => {
                 const driveFile = evt.value as {
                   preview: string;

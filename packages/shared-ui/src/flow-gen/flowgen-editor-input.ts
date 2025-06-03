@@ -10,9 +10,7 @@ import * as StringsHelper from "../strings/helper.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import type { GraphDescriptor } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
-import { sideBoardRuntime } from "../contexts/side-board-runtime.js";
-import { GraphReplaceEvent } from "../events/events.js";
-import { SideBoardRuntime } from "../sideboards/types.js";
+import { GraphReplaceEvent, UtteranceEvent } from "../events/events.js";
 import type { ExpandingTextarea } from "../elements/input/expanding-textarea.js";
 import { icons } from "../styles/icons.js";
 import "../elements/input/expanding-textarea.js";
@@ -20,6 +18,11 @@ import { FlowGenerator } from "./flow-generator.js";
 import { AppCatalystApiClient } from "./app-catalyst.js";
 import { classMap } from "lit/directives/class-map.js";
 import { spinAnimationStyles } from "../styles/spin-animation.js";
+import {
+  type SigninAdapter,
+  signinAdapterContext,
+} from "../utils/signin-adapter.js";
+import { ActionTracker } from "../utils/action-tracker.js";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -95,6 +98,7 @@ export class FlowgenEditorInput extends LitElement {
       #gradient-border-container {
         flex: 1;
         display: flex;
+        align-items: center;
         width: 100%;
         background: linear-gradient(0deg, #f4f0f3, #e8eef7);
         border-radius: 20px;
@@ -109,6 +113,19 @@ export class FlowgenEditorInput extends LitElement {
       :host([highlighted]) #gradient-border-container {
         transition: box-shadow 200ms ease-in;
         box-shadow: 0 0 10px 4px rgb(255 0 0 / 20%);
+      }
+
+      bb-speech-to-text {
+        --button-size: var(--bb-grid-size-8);
+        --alpha-adjustment: 0;
+        --background-color: transparent;
+        --active-color: linear-gradient(
+          rgb(177, 207, 250) 0%,
+          rgb(198, 210, 243) 34%,
+          rgba(210, 212, 237, 0.4) 69%,
+          rgba(230, 217, 231, 0) 99%
+        );
+        margin-right: var(--bb-grid-size-2);
       }
 
       bb-expanding-textarea {
@@ -148,8 +165,8 @@ export class FlowgenEditorInput extends LitElement {
     `,
   ];
 
-  @consume({ context: sideBoardRuntime })
-  accessor sideBoardRuntime!: SideBoardRuntime | undefined;
+  @consume({ context: signinAdapterContext })
+  accessor signinAdapter: SigninAdapter | undefined = undefined;
 
   @property({ type: Object })
   accessor currentGraph: GraphDescriptor | undefined;
@@ -229,6 +246,18 @@ export class FlowgenEditorInput extends LitElement {
           @focus=${this.#onInputFocus}
           @blur=${this.#onInputBlur}
         >
+          <bb-speech-to-text
+            slot="mic"
+            @bbutterance=${(evt: UtteranceEvent) => {
+              if (!this.#descriptionInput.value) {
+                return;
+              }
+
+              this.#descriptionInput.value.value = evt.parts
+                .map((part) => part.transcript)
+                .join("");
+            }}
+          ></bb-speech-to-text>
           <span
             slot="submit"
             class=${classMap({ "g-icon": true, spin: isGenerating })}
@@ -237,10 +266,6 @@ export class FlowgenEditorInput extends LitElement {
         </bb-expanding-textarea>
       </div>
     `;
-  }
-
-  get #originalIntent() {
-    return this.currentGraph?.metadata?.intent;
   }
 
   #onInputChange() {
@@ -255,6 +280,9 @@ export class FlowgenEditorInput extends LitElement {
         return;
       }
       this.#state = { status: "generating" };
+
+      ActionTracker.flowGenEdit(this.currentGraph?.url);
+
       void this.#generateBoard(description)
         .then((graph) => this.#onGenerateComplete(graph))
         .catch((error) => this.#onGenerateError(error));
@@ -266,12 +294,12 @@ export class FlowgenEditorInput extends LitElement {
   }
 
   async #generateBoard(intent: string): Promise<GraphDescriptor> {
-    if (!this.sideBoardRuntime) {
-      throw new Error("Internal error: No side board runtime was available.");
+    if (!this.signinAdapter) {
+      throw new Error(`No signinAdapter was configured`);
     }
     this.generating = true;
     const generator = new FlowGenerator(
-      new AppCatalystApiClient(this.sideBoardRuntime)
+      new AppCatalystApiClient(this.signinAdapter)
     );
     const { flow } = await generator.oneShot({
       intent,

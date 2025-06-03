@@ -10,18 +10,22 @@ import * as StringsHelper from "../strings/helper.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import type { GraphDescriptor } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
-import { sideBoardRuntime } from "../contexts/side-board-runtime.js";
 import {
   GraphReplaceEvent,
   HideTooltipEvent,
   ShowTooltipEvent,
+  UtteranceEvent,
 } from "../events/events.js";
 import { fabStyles } from "../styles/fab.js";
 import { floatingPanelStyles } from "../styles/floating-panel.js";
 import { multiLineInputStyles } from "../styles/multi-line-input.js";
-import { SideBoardRuntime } from "../sideboards/types.js";
 import { AppCatalystApiClient } from "./app-catalyst.js";
 import { FlowGenConstraint, FlowGenerator } from "./flow-generator.js";
+import { icons } from "../styles/icons.js";
+import {
+  type SigninAdapter,
+  signinAdapterContext,
+} from "../utils/signin-adapter.js";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -37,6 +41,7 @@ export class FlowgenInStepButton extends LitElement {
     fabStyles,
     floatingPanelStyles,
     multiLineInputStyles,
+    icons,
     css`
       :host {
         position: relative;
@@ -68,37 +73,101 @@ export class FlowgenInStepButton extends LitElement {
       #panel {
         position: absolute;
         right: 0;
-        width: 340px;
+        width: calc(100cqw - var(--bb-grid-size-16));
+        max-width: 320px;
+        border-radius: var(--bb-grid-size-8);
+        padding: var(--bb-grid-size-3);
+        background: linear-gradient(
+          to bottom,
+          #b1cffa 0%,
+          #c6d2f3 34%,
+          #d2d4ed 69%,
+          #e6d9e7 99%
+        );
       }
+
       :host([popoverPosition="above"]) #panel {
-        bottom: calc(36px + 8px);
+        bottom: var(--bb-grid-size-8);
         right: 50%;
         translate: 50% 0;
       }
+
       :host([popoverPosition="below"]) #panel {
-        top: calc(36px + 8px);
+        top: var(--bb-grid-size-7);
+        right: -22px;
       }
+
       #panel-top {
         display: flex;
         align-items: center;
+        border-radius: var(--bb-grid-size-5);
+        border: 1px solid transparent;
+        background: var(--bb-neutral-0);
+
+        bb-speech-to-text {
+          --button-size: var(--bb-grid-size-8);
+          --alpha-adjustment: 0;
+          --background-color: transparent;
+          --active-color: linear-gradient(
+            rgb(177, 207, 250) 0%,
+            rgb(198, 210, 243) 34%,
+            rgba(210, 212, 237, 0.4) 69%,
+            rgba(230, 217, 231, 0) 99%
+          );
+          margin-left: 2px;
+          margin-right: var(--bb-grid-size);
+        }
+
+        & textarea {
+          min-height: var(--bb-grid-size-9);
+          background: transparent;
+          border: none;
+          outline: none;
+          field-sizing: content;
+          box-sizing: border-box;
+          padding: var(--bb-grid-size-2) var(--bb-grid-size-2)
+            var(--bb-grid-size-2) 0;
+          font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
+            var(--bb-font-family);
+        }
+
+        &:focus-within {
+          border: 1px solid var(--bb-ui-500);
+        }
+
+        & #submit-button {
+          display: flex;
+          align-items: center;
+
+          box-shadow: none;
+          border: none;
+          margin: 0 8px;
+          padding: 0;
+          background-color: transparent;
+          color: var(--bb-ui-500);
+
+          & .g-icon::before {
+            content: "send_spark";
+          }
+        }
+
+        &:has(textarea:invalid) #submit-button .g-icon::before {
+          content: "pen_spark";
+        }
       }
 
       #description-input {
         flex: 1;
-        min-height: 48px;
       }
 
-      #submit-button {
-        width: 24px;
-        --bb-icon: var(--bb-add-icon-generative-inverted);
-        box-shadow: none;
-        background-color: var(--bb-ui-500);
-        margin-left: 8px;
-      }
+      .generating #panel-top #submit-button {
+        background: url(/images/progress-ui.svg) center center / 20px 20px
+          no-repeat;
+        cursor: pointer;
 
-      .generating #submit-button {
-        background-color: transparent;
-        --bb-icon: url(/images/progress-ui.svg);
+        & .g-icon {
+          opacity: 0;
+        }
       }
 
       #generating-spinner {
@@ -125,8 +194,8 @@ export class FlowgenInStepButton extends LitElement {
     `,
   ];
 
-  @consume({ context: sideBoardRuntime })
-  accessor sideBoardRuntime!: SideBoardRuntime | undefined;
+  @consume({ context: signinAdapterContext })
+  accessor signinAdapter: SigninAdapter | undefined = undefined;
 
   @property({ type: Object })
   accessor currentGraph: GraphDescriptor | undefined;
@@ -141,7 +210,7 @@ export class FlowgenInStepButton extends LitElement {
   accessor monochrome = false;
 
   @property({})
-  accessor label = Strings.from("COMMAND_DESCRIBE_EDIT");
+  accessor label = Strings.from("COMMAND_DESCRIBE_EDIT_FLOW");
 
   @state()
   accessor #state: State = { status: "closed" };
@@ -180,23 +249,33 @@ export class FlowgenInStepButton extends LitElement {
 
   #renderPanel() {
     return html`
-      <div id="panel" class="bb-floating-panel ${this.#state.status}">
+      <div id="panel" class="${this.#state.status}">
         <div id="panel-top">
+          <bb-speech-to-text
+            @bbutterance=${(evt: UtteranceEvent) => {
+              if (!this.#descriptionInput.value) {
+                return;
+              }
+
+              this.#descriptionInput.value.value = evt.parts
+                .map((part) => part.transcript)
+                .join("");
+            }}
+          ></bb-speech-to-text>
           <textarea
             id="description-input"
             class="bb-multi-line-input"
             type="text"
             .placeholder=${this.label}
+            required
             @keydown=${this.#onInputKeydown}
             ${ref(this.#descriptionInput)}
             ?disabled=${this.#state.status === "generating"}
           ></textarea>
 
-          <button
-            id="submit-button"
-            class="bb-fab"
-            @click=${this.#onClickSubmit}
-          ></button>
+          <button id="submit-button" @click=${this.#onClickSubmit}>
+            <span class="g-icon"></span>
+          </button>
         </div>
 
         ${this.#renderErrorIfNeeded()}
@@ -314,11 +393,11 @@ export class FlowgenInStepButton extends LitElement {
     intent: string,
     currentFlow: GraphDescriptor
   ): Promise<GraphDescriptor> {
-    if (!this.sideBoardRuntime) {
-      throw new Error("Internal error: No side board runtime was available.");
+    if (!this.signinAdapter) {
+      throw new Error(`No signinAdapter was configured`);
     }
     const generator = new FlowGenerator(
-      new AppCatalystApiClient(this.sideBoardRuntime)
+      new AppCatalystApiClient(this.signinAdapter)
     );
     const { flow } = await generator.oneShot({
       intent,

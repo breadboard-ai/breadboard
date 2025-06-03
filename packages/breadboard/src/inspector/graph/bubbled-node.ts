@@ -70,6 +70,10 @@ export class BubbledInspectableNode implements InspectableNode {
     return this.#actual.isExit();
   }
 
+  isStart(): boolean {
+    return this.#actual.isStart();
+  }
+
   type(): InspectableNodeType {
     return this.#actual.type();
   }
@@ -82,13 +86,19 @@ export class BubbledInspectableNode implements InspectableNode {
     return this.#actual.metadata();
   }
 
-  async describe(
-    inputs?: InputValues | undefined
-  ): Promise<NodeDescriberResult> {
+  async describe(): Promise<NodeDescriberResult> {
     if (this.descriptor.type === "input") {
-      return describeInput({ inputs });
+      return describeInput({ inputs: this.#actual.configuration() });
     }
-    return this.#actual.describe(inputs);
+    return this.#actual.describe();
+  }
+
+  currentDescribe(): NodeDescriberResult {
+    if (this.descriptor.type === "input") {
+      return describeInput({ inputs: this.#actual.configuration() });
+    }
+
+    return this.#actual.currentDescribe();
   }
 
   #portsForInput(inputValues?: InputValues, outputValues?: OutputValues) {

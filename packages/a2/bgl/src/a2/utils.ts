@@ -26,6 +26,7 @@ export {
   extractTextData,
   extractInlineData,
   extractMediaData,
+  decodeBase64,
 };
 
 export type NonPromise<T> = T extends Promise<unknown> ? never : T;
@@ -319,15 +320,17 @@ function toInlineData(c: LLMContent | LLMContent[]) {
   }
 }
 
-// TODO(askerryryan): Move this to the middleware.
 function toInlineReference(c: LLMContent) {
   const last = c.parts.at(-1);
   if (last == undefined || !("storedData" in last)) {
     return toInlineData(c);
   }
-  const blobId = last.storedData.handle.split("/").slice(-1)[0];
-  const gcs_handle = "bb-blob-store/" + blobId;
-  return toInlineData(toLLMContentInline("text/gcs-path", btoa(gcs_handle)));
+  return toInlineData(
+    toLLMContentInline(
+      "storedData/" + last.storedData.mimeType,
+      last.storedData.handle
+    )
+  );
 }
 
 export function mergeContent(content: LLMContent[], role: string): LLMContent {
@@ -345,4 +348,19 @@ export function mergeContent(content: LLMContent[], role: string): LLMContent {
 
 function generateId() {
   return Math.random().toString(36).substring(2, 5);
+}
+
+function decodeBase64(s: string): string {
+  const latin1 = atob(s);
+  try {
+    return decodeURIComponent(
+      latin1
+        .split("")
+        .map((c) => `%${c.charCodeAt(0).toString(16).padStart(2, "0")}`)
+        .join("")
+    );
+  } catch (error) {
+    console.error("Error decoding Base64 UTF-8 string:", error);
+    return latin1;
+  }
 }

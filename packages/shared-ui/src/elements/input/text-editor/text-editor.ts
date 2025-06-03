@@ -38,7 +38,7 @@ export class TextEditor extends LitElement {
     return "string";
   }
 
-  @property()
+  @property({ reflect: true, type: Boolean })
   accessor supportsFastAccess = true;
 
   @property()
@@ -49,6 +49,9 @@ export class TextEditor extends LitElement {
 
   @property()
   accessor projectState: Project | null = null;
+
+  @property()
+  accessor readOnly = false;
 
   static styles = [
     ChicletStyles,
@@ -70,7 +73,7 @@ export class TextEditor extends LitElement {
       #editor {
         outline: none;
         display: block;
-        white-space: pre-line;
+        white-space: break-spaces;
         height: var(--text-editor-height, auto);
         width: 100%;
         min-height: 100%;
@@ -93,6 +96,10 @@ export class TextEditor extends LitElement {
           top: var(--text-editor-padding-top, var(--bb-grid-size-2));
           left: var(--text-editor-padding-left, var(--bb-grid-size-2));
         }
+      }
+
+      :host([supportsFastAccess]) #editor.placeholder::before {
+        content: "Type your prompt here. Use @ to include other content.";
       }
 
       bb-fast-access-menu {
@@ -231,10 +238,8 @@ export class TextEditor extends LitElement {
 
     selection.removeAllRanges();
     try {
-      console.log(this.#isRangeValid(this.#lastRange));
       selection.addRange(this.#lastRange);
     } catch (err) {
-      console.log(11111);
       console.log(err);
     }
   }
@@ -293,7 +298,7 @@ export class TextEditor extends LitElement {
         instance,
       });
       postamableText.textContent = Template.postamble();
-      titleText.textContent = title;
+      titleText.textContent = title.trim();
       titleText.classList.add("visible");
 
       label.appendChild(preambleText);
@@ -678,18 +683,19 @@ export class TextEditor extends LitElement {
       return;
     }
 
-    this.#editorRef.value.focus({ preventScroll: true });
-
     const selection = this.#getCurrentSelection();
     if (!selection || !this.#editorRef.value.lastChild) {
       return;
     }
 
     const range = new Range();
-    range.selectNode(this.#editorRef.value.lastChild);
+    range.selectNodeContents(this.#editorRef.value);
     range.collapse(false);
     selection.removeAllRanges();
     selection.addRange(range);
+
+    this.#editorRef.value.scrollTop = this.#editorRef.value.scrollHeight;
+    this.#editorRef.value.focus();
   }
 
   #showFastAccess(bounds: DOMRect | undefined) {
@@ -821,7 +827,7 @@ export class TextEditor extends LitElement {
           this.#togglePlaceholder();
         }}
         id="editor"
-        contenteditable="true"
+        contenteditable=${!this.readOnly}
       ></span
       ><bb-fast-access-menu
         ${ref(this.#fastAccessRef)}

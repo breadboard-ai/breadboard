@@ -8,6 +8,7 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Utterance } from "../../../types/types";
 import { UtteranceEvent } from "../../../events/events";
+import { icons } from "../../../styles/icons";
 
 declare global {
   interface SpeechRecognition extends EventTarget {
@@ -29,59 +30,139 @@ declare global {
   }
 }
 
+const TOGGLE_DELTA = 250;
+
 @customElement("bb-speech-to-text")
 export class SpeechToText extends LitElement {
   @property({ type: Boolean })
   accessor disabled = false;
 
-  static styles = css`
-    :host {
-      display: block;
-    }
+  @property({ reflect: true, type: Boolean })
+  accessor active = false;
 
-    #checking-permission {
-      width: var(--button-size, 40px);
-      height: var(--button-size, 40px);
-      font-size: 0;
+  static styles = [
+    icons,
+    css`
+      :host {
+        display: block;
+        position: relative;
 
-      background: var(--bb-progress) center center / 20px 20px no-repeat;
-    }
-
-    button {
-      width: var(--button-size, 40px);
-      height: var(--button-size, 40px);
-      background: oklch(
-          from var(--primary-text-color) l c h / calc(alpha - 0.75)
-        )
-        var(--bb-icon-mic) center center / 20px 20px no-repeat;
-
-      font-size: 0;
-      border: none;
-      border-radius: 50%;
-
-      --transition-properties: opacity;
-      transition: var(--transition);
-
-      &[disabled] {
-        cursor: auto;
-        opacity: 0.5;
+        --active-color: linear-gradient(
+          oklch(
+              from var(--p-50, var(--bb-neutral-600)) l c h / calc(alpha * 0.7)
+            )
+            0%,
+          oklch(
+              from var(--p-50, var(--bb-neutral-600)) l c h / calc(alpha * 0.44)
+            )
+            34%,
+          oklch(
+              from var(--p-50, var(--bb-neutral-600)) l c h / calc(alpha * 0.2)
+            )
+            69%,
+          oklch(from var(--p-50, var(--bb-neutral-600)) l c h / calc(alpha * 0))
+            99%
+        );
       }
 
-      &:not([disabled]) {
-        cursor: pointer;
-        opacity: 0.5;
+      :host([active]) button {
+        animation: pulse linear 1s infinite forwards;
 
-        &:hover,
-        &:focus {
-          opacity: 1;
+        --default-background: var(
+          --background-color,
+          var(--n-90, var(--bb-neutral-200))
+        );
+
+        &::before {
+          box-sizing: border-box;
+          content: "";
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+
+          border: 2px solid transparent;
+          border-radius: 50%;
+          background: var(
+              --active-color,
+              linear-gradient(var(--default-background), transparent)
+            )
+            border-box;
+          mask:
+            linear-gradient(#ff00ff 0 0) padding-box,
+            linear-gradient(#ff00ff 0 0);
+          mask-composite: exclude;
+          animation: rotate linear 0.5s infinite forwards;
         }
       }
-    }
 
-    span:not(.final) {
-      opacity: 0.7;
-    }
-  `;
+      #checking-permission {
+        width: var(--button-size, 40px);
+        height: var(--button-size, 40px);
+        font-size: 0;
+
+        background: var(--bb-progress, url(/images/progress-ui.svg)) center
+          center / 20px 20px no-repeat;
+      }
+
+      button {
+        width: var(--button-size, 40px);
+        height: var(--button-size, 40px);
+        background: var(--background-color, var(--n-90, var(--bb-neutral-200)));
+        color: var(--text-color, var(--p-40, var(--bb-neutral-800)));
+        font-size: 0;
+        border: none;
+        border-radius: 50%;
+        padding: 0;
+        margin: 0;
+        transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+
+        &[disabled] {
+          cursor: auto;
+          opacity: 0.8;
+        }
+
+        &:not([disabled]) {
+          cursor: pointer;
+          opacity: 0.8;
+
+          &:hover,
+          &:focus {
+            opacity: 1;
+          }
+        }
+      }
+
+      span:not(.final) {
+        opacity: 0.7;
+      }
+
+      @keyframes pulse {
+        0% {
+          opacity: 0.2;
+        }
+
+        50% {
+          opacity: 1;
+        }
+
+        100% {
+          opacity: 0.2;
+        }
+      }
+
+      @keyframes rotate {
+        from {
+          rotate: 0deg;
+        }
+
+        to {
+          rotate: 360deg;
+        }
+      }
+    `,
+  ];
 
   #parts: Utterance[] = [];
   #speechRecognition =
@@ -90,6 +171,7 @@ export class SpeechToText extends LitElement {
       | (new () => SpeechRecognition)
       | undefined);
   #recognition: SpeechRecognition | null = null;
+  #activeStartTime = 0;
   #permissionTask = new Task(this, {
     task: async () => {
       const devices = await navigator.mediaDevices.enumerateDevices();
@@ -149,6 +231,8 @@ export class SpeechToText extends LitElement {
 
     this.#parts = [];
     this.#recognition.start();
+    this.active = true;
+    this.#activeStartTime = window.performance.now();
   }
 
   #stopTranscription() {
@@ -157,6 +241,7 @@ export class SpeechToText extends LitElement {
     }
 
     this.#recognition.stop();
+    this.active = false;
   }
 
   render() {
@@ -166,7 +251,9 @@ export class SpeechToText extends LitElement {
 
     return this.#permissionTask.render({
       pending: () => {
-        return html`<div id="checking-permission">Checking permission</div>`;
+        return html`<div id="checking-permission">
+          <span class="g-icon">pending</span>
+        </div>`;
       },
 
       complete: () => {
@@ -178,13 +265,37 @@ export class SpeechToText extends LitElement {
             }
 
             evt.target.setPointerCapture(evt.pointerId);
-            this.#startTranscription();
+
+            // Our approach here involves allowing the user to interact in one
+            // of two ways. Supposing they tap the button and release quickly.
+            // In this case we will not stop the transcription, but will go into
+            // more of a toggled mode, requiring them to press the button a
+            // second time.
+            //
+            // On the other hand, if they press and hold then when they release
+            // we will stop the transcription.
+            if (this.active) {
+              this.#stopTranscription();
+            } else {
+              this.#startTranscription();
+            }
           }}
           @pointerup=${() => {
+            if (
+              window.performance.now() - this.#activeStartTime <
+              TOGGLE_DELTA
+            ) {
+              return;
+            }
+
+            if (!this.active) {
+              return;
+            }
+
             this.#stopTranscription();
           }}
         >
-          Transcribe
+          <span class="g-icon">mic</span>
         </button>`;
       },
 
@@ -195,7 +306,7 @@ export class SpeechToText extends LitElement {
             this.#requestPermission();
           }}
         >
-          Request Permission
+          <span class="g-icon">mic</span>
         </button>`;
       },
     });

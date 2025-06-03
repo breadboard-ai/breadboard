@@ -3,6 +3,10 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
+
+import * as StringsHelper from "../../strings/helper.js";
+const Strings = StringsHelper.forSection("Global");
+
 import {
   LitElement,
   html,
@@ -22,47 +26,49 @@ import Mode from "../shared/styles/icons.js";
 import Animations from "../shared/styles/animations.js";
 
 import { classMap } from "lit/directives/class-map.js";
-import {
-  GraphDescriptor,
-  InspectableRun,
-  InspectableRunSecretEvent,
-  isLLMContent,
-  isTextCapabilityPart,
-} from "@google-labs/breadboard";
+import { GraphDescriptor, InspectableRun } from "@google-labs/breadboard";
 import { styleMap } from "lit/directives/style-map.js";
 import {
-  AddAssetEvent,
   AddAssetRequestEvent,
   BoardDescriptionUpdateEvent,
   BoardTitleUpdateEvent,
-  InputEnterEvent,
+  ResizeEvent,
   RunEvent,
   SignInRequestedEvent,
-  StopEvent,
-  UtteranceEvent,
 } from "../../events/events";
 import { repeat } from "lit/directives/repeat.js";
-import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { LLMContent, NodeValue, OutputValues } from "@breadboard-ai/types";
-import { isLLMContentArrayBehavior, isLLMContentBehavior } from "../../utils";
+import { createRef, Ref } from "lit/directives/ref.js";
 import { extractError } from "../shared/utils/utils";
 import { AssetShelf } from "../../elements/elements";
 import { SigninState } from "../../utils/signin-adapter";
 
 /** Included so the app can be standalone */
+import "../../elements/input/webcam/webcam-video.js";
 import "../../elements/input/add-asset/add-asset-button.js";
 import "../../elements/input/add-asset/add-asset-modal.js";
 import "../../elements/input/add-asset/asset-shelf.js";
 import "../../elements/input/speech-to-text/speech-to-text.js";
 import "../../elements/input/drawable/drawable.js";
+import "../../elements/input/floating-input/floating-input.js";
 
+import "../../elements/output/header/header.js";
 import "../../elements/output/llm-output/llm-output-array.js";
 import "../../elements/output/llm-output/export-toolbar.js";
 import "../../elements/output/llm-output/llm-output.js";
 import "../../elements/output/multi-output/multi-output.js";
-import { map } from "lit/directives/map.js";
 import { markdown } from "../../directives/markdown";
-import { maybeConvertToYouTube } from "../../utils/substitute-input";
+import { createThemeStyles } from "@breadboard-ai/theme";
+import { icons } from "../../styles/icons";
+import { ActionTracker } from "../../utils/action-tracker.js";
+import { buttonStyles } from "../../styles/button.js";
+import { findFinalOutputValues } from "../../utils/save-results.js";
+
+function keyFromGraphUrl(url: string) {
+  return `cw-${url.replace(/\W/gi, "-")}`;
+}
+
+// TODO(aomarks) Remove when functional.
+const ENABLE_SAVE_RESULTS = false;
 
 @customElement("app-basic")
 export class Template extends LitElement implements AppTemplate {
@@ -95,6 +101,9 @@ export class Template extends LitElement implements AppTemplate {
   accessor showGDrive = false;
 
   @property()
+  accessor showDisclaimer = false;
+
+  @property()
   accessor isInSelectionState = false;
 
   @property()
@@ -111,6 +120,39 @@ export class Template extends LitElement implements AppTemplate {
 
   @property()
   accessor readOnly = true;
+
+  @property()
+  set showContentWarning(showContentWarning: boolean) {
+    // Only accept an updated value if it's false or unset.
+    if (!showContentWarning || this.#showContentWarning === undefined) {
+      this.#showContentWarning = showContentWarning;
+    }
+
+    // If we have the graph's URL and we just got an updated value for the
+    // content warning, we will handle it. If the value was set to false then
+    // we store the fact that they've seen the warning and dismissed it.
+    //
+    // If it's set to true then we will take a look to the local storage and if
+    // the flag has been set then we don't show the content warning.
+    if (this.graph?.url) {
+      const key = keyFromGraphUrl(this.graph.url);
+      if (!showContentWarning) {
+        globalThis.localStorage.setItem(key, "true");
+      } else if (globalThis.localStorage.getItem(key) === "true") {
+        this.#showContentWarning = false;
+      }
+    }
+  }
+  get showContentWarning() {
+    if (this.graph?.url && typeof this.#showContentWarning === "undefined") {
+      const key = keyFromGraphUrl(this.graph.url);
+      if (globalThis.localStorage.getItem(key) === "true") {
+        this.#showContentWarning = false;
+      }
+    }
+    return this.#showContentWarning ?? true;
+  }
+  #showContentWarning: boolean | undefined = undefined;
 
   @state()
   accessor showAddAssetModal = false;
@@ -137,6 +179,8 @@ export class Template extends LitElement implements AppTemplate {
   }
 
   static styles = [
+    icons,
+    buttonStyles,
     css`
       * {
         box-sizing: border-box;
@@ -163,18 +207,6 @@ export class Template extends LitElement implements AppTemplate {
         }
       }
 
-      @scope (.app-template.font-serif) {
-        :scope {
-          --font-family: serif;
-        }
-      }
-
-      @scope (.app-template.fontStyle-italic) {
-        :scope {
-          --font-style: italic;
-        }
-      }
-
       /** General styles */
 
       :host([hasrenderedsplash]) {
@@ -189,12 +221,68 @@ export class Template extends LitElement implements AppTemplate {
 
       @scope (.app-template) {
         :scope {
-          background: var(--background-color);
-          color: var(--text-color);
-          display: flex;
+          background: var(--s-90, var(--background-color));
+          color: var(--p-25, var(--text-color));
+          display: grid;
+          grid-template-rows: minmax(0, 1fr) max-content;
           width: 100%;
           height: 100%;
           margin: 0;
+        }
+
+        & #disclaimer {
+          position: absolute;
+          left: 0;
+          bottom: 0px;
+          width: 100%;
+          margin: 0;
+          font: 500 10px / 1 var(--bb-font-family);
+          color: var(--n-50, var(--bb-neutral-800));
+          text-align: center;
+          padding: var(--bb-grid-size) var(--bb-grid-size) var(--bb-grid-size-2)
+            var(--bb-grid-size);
+          background: var(--s-90, var(--neutral-50, transparent));
+        }
+
+        & #content-warning {
+          border-top: 1px solid var(--bb-neutral-0);
+          display: flex;
+          justify-content: space-between;
+          background: var(--bb-neutral-100);
+          padding: var(--bb-grid-size-6) var(--bb-grid-size-3);
+          min-height: var(--bb-grid-size-11);
+          color: var(--bb-neutral-900);
+          font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+            var(--bb-font-family);
+
+          & .message {
+            margin-right: var(--bb-grid-size-16);
+
+            & a {
+              font-weight: 500;
+              color: var(--bb-ui-500);
+              text-decoration: none;
+            }
+          }
+
+          & .dismiss {
+            color: var(--bb-ui-600);
+            padding: 0;
+            margin: 0;
+            background: transparent;
+            border: none;
+            font: 500 var(--bb-body-small) / var(--bb-body-line-height-small)
+              var(--bb-font-family);
+
+            &:not([disabled]) {
+              cursor: pointer;
+
+              &:focus,
+              &:hover {
+                color: var(--bb-ui-600);
+              }
+            }
+          }
         }
 
         & #content {
@@ -252,7 +340,7 @@ export class Template extends LitElement implements AppTemplate {
               font: 500 var(--font-style, normal) var(--bb-title-large) /
                 var(--bb-title-line-height-large)
                 var(--font-family, var(--bb-font-family));
-              color: var(--primary-color, var(--bb-neutral-900));
+              color: var(--s-80, var(--bb-neutral-900));
               margin: 0 0 var(--bb-grid-size) 0;
             }
 
@@ -264,34 +352,47 @@ export class Template extends LitElement implements AppTemplate {
 
           & #splash {
             display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
             flex: 1;
+            flex-direction: column;
+            align-items: center;
             animation: fadeIn 1s cubic-bezier(0, 0, 0.3, 1);
+
+            #splash-content-container {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              width: 100%;
+            }
 
             &::before {
               content: "";
-              width: 100%;
+              width: var(--splash-width, 100%);
+              background: var(--splash-image, var(--bb-logo)) center center /
+                var(--splash-fill, cover) no-repeat;
+              padding: var(--bb-grid-size-3);
+              background-clip: content-box;
+              border-radius: var(--bb-grid-size-5);
+              box-sizing: border-box;
+              aspect-ratio: 17/20;
+              max-height: 45cqh;
+            }
+
+            &.default {
               flex: 1;
-              background: var(--splash-image, url(/images/app/generic-flow.jpg))
-                center center / cover no-repeat;
-              mask-image: linear-gradient(
-                to bottom,
-                rgba(255, 0, 255, 1) 0%,
-                rgba(255, 0, 255, 1) 70%,
-                rgba(255, 0, 255, 0.75) 80%,
-                rgba(255, 0, 255, 0.4) 90%,
-                rgba(255, 0, 255, 0) 100%
-              );
+              margin-top: 20%;
+
+              &::before {
+                max-width: 320px;
+                background-clip: initial;
+              }
             }
 
             & h1 {
               background: var(--background-color, none);
               border-radius: var(--bb-grid-size-2);
-              font: 500 var(--font-style) 32px / 42px var(--font-family);
-              color: var(--primary-color, var(--bb-neutral-700));
-              margin: 0 0 var(--bb-grid-size-3);
+              font: 400 var(--font-style) 36px / 40px var(--font-family);
+              color: var(--p-25, var(--bb-neutral-700));
+              margin: var(--bb-grid-size-10) 0 var(--bb-grid-size-4) 0;
               flex: 0 0 auto;
               max-width: 80%;
               width: max-content;
@@ -300,9 +401,8 @@ export class Template extends LitElement implements AppTemplate {
 
             & p {
               flex: 0 0 auto;
-              font: 400 var(--font-style) var(--bb-body-large) /
-                var(--bb-body-line-height-large) var(--font-family);
-              color: var(--secondary-color, var(--bb-neutral-700));
+              font: 400 var(--font-style) 16px / 20px var(--font-family);
+              color: var(--p-25, var(--bb-neutral-700));
               margin: 0 0 var(--bb-grid-size-3);
 
               max-width: 65%;
@@ -316,7 +416,7 @@ export class Template extends LitElement implements AppTemplate {
             align-items: center;
             justify-content: space-between;
             height: 76px;
-            border-bottom: 1px solid var(--secondary-color, var(--bb-neutral-0));
+            border-bottom: 1px solid var(--s-70, var(--bb-neutral-0));
             padding: 0 var(--bb-grid-size-4);
             position: relative;
 
@@ -356,7 +456,7 @@ export class Template extends LitElement implements AppTemplate {
               width: 100%;
               max-width: 320px;
               height: 4px;
-              background: var(--secondary-color);
+              background: var(--p-70);
               border-radius: var(--bb-grid-size-16);
               position: relative;
 
@@ -368,7 +468,7 @@ export class Template extends LitElement implements AppTemplate {
                 width: calc(var(--percentage) * 100%);
                 max-width: 100%;
                 height: 4px;
-                background: var(--primary-color);
+                background: var(--p-40);
                 border-radius: var(--bb-grid-size-16);
                 transition: width 0.3s cubic-bezier(0, 0, 0.3, 1);
               }
@@ -379,24 +479,19 @@ export class Template extends LitElement implements AppTemplate {
               height: 20px;
               background: transparent;
               border: none;
-              font-size: 0;
+              font-size: 20px;
               opacity: 0.6;
               transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+              padding: 0;
+              color: var(--p-15, var(--bb-neutral-800));
 
               &#back {
-                background: var(--bb-icon-arrow-back) center center / 20px 20px
-                  no-repeat;
+                opacity: 0;
+                pointer-events: none;
               }
 
               &#share {
                 display: none;
-                background: var(--bb-icon-share) center center / 20px 20px
-                  no-repeat;
-              }
-
-              &#restart {
-                background: var(--bb-icon-replay) center center / 20px 20px
-                  no-repeat;
               }
 
               &:not([disabled]) {
@@ -419,6 +514,7 @@ export class Template extends LitElement implements AppTemplate {
           & #activity {
             flex: 1;
             overflow: auto;
+            container-type: size;
 
             display: flex;
             flex-direction: column;
@@ -428,6 +524,14 @@ export class Template extends LitElement implements AppTemplate {
             &::before {
               flex: 1;
               content: "";
+            }
+
+            &::after {
+              content: "";
+              display: block;
+              height: var(--input-clearance);
+              width: 100%;
+              flex: 0 0 auto;
             }
 
             & bb-multi-output {
@@ -443,7 +547,9 @@ export class Template extends LitElement implements AppTemplate {
               --output-background-color: var(--bb-neutral-0);
               --multi-output-value-padding-x: 0;
               flex: 1 0 auto;
-
+              margin: 0 auto;
+              width: 100%;
+              max-width: 840px;
               animation: fadeIn 0.6s cubic-bezier(0, 0, 0.3, 1) forwards;
             }
 
@@ -462,7 +568,7 @@ export class Template extends LitElement implements AppTemplate {
                   margin: 0 0 var(--bb-grid-size-2) 0;
                   font: 400 var(--bb-title-large) /
                     var(--bb-title-line-height-large) var(--bb-font-family);
-                  color: var(--primary-color);
+                  color: var(--e-30);
                 }
 
                 & p {
@@ -507,7 +613,7 @@ export class Template extends LitElement implements AppTemplate {
                 font: 500 var(--font-style, normal) var(--bb-title-small) /
                   var(--bb-title-line-height-small)
                   var(--font-family, var(--bb-font-family));
-                color: var(--primary-color, var(--bb-neutral-900));
+                color: var(--s-80, var(--bb-neutral-900));
                 margin: 0 0 var(--bb-grid-size-2) 0;
               }
 
@@ -526,27 +632,42 @@ export class Template extends LitElement implements AppTemplate {
               width: calc(100% - var(--bb-grid-size-12));
               left: 50%;
               transform: translateX(-50%);
-              background: var(--bb-progress) var(--primary-color) 16px center /
-                20px 20px no-repeat;
-              color: var(--primary-text-color);
+              background: var(--p-20);
+              color: var(--p-100);
               padding: var(--bb-grid-size-3) var(--bb-grid-size-4)
-                var(--bb-grid-size-3) var(--bb-grid-size-12);
+                var(--bb-grid-size-3) var(--bb-grid-size-3);
               border-radius: var(--bb-grid-size-3);
               z-index: 1;
               font: 400 var(--bb-title-medium) /
                 var(--bb-title-line-height-medium) var(--bb-font-family);
               opacity: 0;
               animation: fadeIn 0.6s cubic-bezier(0, 0, 0.3, 1) 0.6s forwards;
+              max-width: 640px;
+
+              & .g-icon {
+                margin: var(--bb-grid-size-2);
+                animation: rotate 1s linear forwards infinite;
+
+                &::before {
+                  content: "progress_activity";
+                }
+              }
 
               &::after {
-                content: "Working";
+                content: "";
                 flex: 0 0 auto;
                 margin-left: var(--bb-grid-size-3);
-                color: oklch(
-                  from var(--primary-text-color) l c h / calc(alpha - 0.4)
-                );
+                color: oklch(from var(--p-15) l c h / calc(alpha - 0.4));
               }
             }
+          }
+
+          & bb-floating-input {
+            position: absolute;
+            left: 50%;
+            bottom: var(--bb-grid-size-6);
+            translate: -50% 0;
+            --container-margin: 0 var(--bb-grid-size-6);
           }
 
           & #input {
@@ -555,22 +676,23 @@ export class Template extends LitElement implements AppTemplate {
             display: flex;
             justify-content: center;
             position: relative;
-
-            background: var(--background-color, var(--bb-neutral-0));
+            background: transparent;
 
             & #sign-in,
             & #run {
-              min-width: 76px;
-              height: var(--bb-grid-size-10);
-              background: var(--primary-color, var(--bb-ui-50))
-                var(--bb-icon-generative) 12px center / 16px 16px no-repeat;
-              color: var(--primary-text-color, var(--bb-ui-700));
-              border-radius: 20px;
-              border: 1px solid var(--primary-color, var(--bb-ui-100));
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              width: 200px;
+              height: var(--bb-grid-size-12);
+              background: var(--p-15, var(--bb-ui-50));
+              color: var(--p-100, var(--bb-ui-700));
+              border-radius: var(--bb-grid-size-12);
               font: 400 var(--bb-label-large) /
                 var(--bb-label-line-height-large) var(--bb-font-family);
-              padding: 0 var(--bb-grid-size-5) 0 var(--bb-grid-size-9);
+              padding: 0;
               opacity: 0.85;
+              border: none;
 
               --transition-properties: opacity;
               transition: var(--transition);
@@ -588,15 +710,24 @@ export class Template extends LitElement implements AppTemplate {
                   opacity: 1;
                 }
               }
+
+              & .g-icon {
+                margin-right: var(--bb-grid-size-2);
+              }
             }
 
-            & #sign-in {
-              background-image: var(--bb-icon-login-inverted);
+            & #run .g-icon::before {
+              content: "spark";
+            }
+
+            & #sign-in .g-icon::before {
+              content: "login";
             }
 
             &.stopped {
               min-height: 100px;
               padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
+              background: transparent;
             }
 
             &.finished {
@@ -612,10 +743,11 @@ export class Template extends LitElement implements AppTemplate {
                   var(--bb-grid-size-4) var(--bb-grid-size-3);
                 transition: transform 0.6s cubic-bezier(0, 0, 0.3, 1);
                 transform: translateY(100%);
-                background: var(--primary-color);
+                background: var(--s-95);
                 color: var(--primary-text-color);
                 width: 100%;
                 display: flex;
+                align-items: flex-end;
 
                 min-height: 100px;
                 max-height: 385px;
@@ -675,22 +807,31 @@ export class Template extends LitElement implements AppTemplate {
                   }
                 }
 
+                bb-add-asset-button {
+                  --background-color: var(--p-80);
+                  --text-color: var(--p-15);
+                }
+
                 & .controls {
                   margin-left: var(--bb-grid-size-2);
                   display: flex;
                   align-items: flex-end;
 
-                  & #continue {
-                    margin-left: var(--bb-grid-size-2);
-                    background: oklch(
-                        from var(--primary-text-color) l c h /
-                          calc(alpha - 0.75)
-                      )
-                      var(--bb-icon-send) center center / 20px 20px no-repeat;
+                  bb-speech-to-text {
+                    --background-color: var(--p-80);
+                    --text-color: var(--p-15);
+                    --active-color: linear-gradient(var(--p-40), transparent);
+                  }
 
+                  & #continue {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin-left: var(--bb-grid-size-2);
+                    background: var(--p-80);
+                    color: var(--p-15);
                     width: 40px;
                     height: 40px;
-                    font-size: 0;
                     border: none;
                     border-radius: 50%;
 
@@ -699,12 +840,12 @@ export class Template extends LitElement implements AppTemplate {
 
                     &[disabled] {
                       cursor: auto;
-                      opacity: 0.5;
+                      opacity: 0.8;
                     }
 
                     &:not([disabled]) {
                       cursor: pointer;
-                      opacity: 0.5;
+                      opacity: 0.8;
 
                       &:hover,
                       &:focus {
@@ -717,6 +858,65 @@ export class Template extends LitElement implements AppTemplate {
 
               &.active.paused #input-container {
                 transform: translateY(0);
+              }
+            }
+          }
+        }
+
+        @container (min-width: 820px) {
+          & #content {
+            justify-content: center;
+
+            & #controls {
+              & #progress-container {
+                & #progress {
+                  max-width: 800px;
+                }
+              }
+            }
+
+            & #input.stopped {
+              justify-content: flex-start;
+              padding-left: 0;
+            }
+
+            & #splash {
+              display: flex;
+              flex-direction: row;
+              flex: 1;
+
+              #splash-content-container {
+                height: 100%;
+                flex: 1;
+
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: flex-start;
+
+                margin-left: var(--bb-grid-size-10);
+              }
+
+              &::before {
+                height: 100%;
+                flex: 1;
+                max-height: 100cqh;
+                aspect-ratio: initial;
+              }
+
+              &.default {
+                margin-top: 0;
+
+                &::before {
+                  max-width: initial;
+                  background-size: initial;
+                }
+              }
+
+              & h1,
+              & p {
+                width: auto;
+                text-align: left;
               }
             }
           }
@@ -735,6 +935,15 @@ export class Template extends LitElement implements AppTemplate {
           }
         }
       }
+
+      #save-results-button-container {
+        display: flex;
+        #save-results-button {
+          flex: 1;
+          margin: var(--bb-grid-size-4);
+          border-color: var(--bb-neutral-400);
+        }
+      }
     `,
     Mode,
     Animations,
@@ -749,55 +958,15 @@ export class Template extends LitElement implements AppTemplate {
       this.#nodesLeftToVisit.delete(topGraphResult.currentNode?.descriptor.id);
     }
 
-    const showShare = "share" in navigator;
-    const percentage =
+    const progress =
       this.#totalNodeCount > 0
         ? (this.#totalNodeCount - this.#nodesLeftToVisit.size) /
           this.#totalNodeCount
         : 1;
-    return html`<div id="controls">
-      <button
-        id="back"
-        @click=${() => {
-          this.dispatchEvent(new StopEvent(true));
-        }}
-      >
-        Back
-      </button>
-      <div id="progress-container">
-        <div
-          id="progress"
-          style=${styleMap({ "--percentage": percentage.toFixed(2) })}
-        ></div>
-      </div>
-      <button
-        id="restart"
-        @click=${() => {
-          this.dispatchEvent(new StopEvent(true));
-        }}
-      ></button>
-      ${showShare
-        ? html`<button
-            id="share"
-            @click=${() => {
-              navigator.share({
-                url: this.appURL ?? window.location.href,
-                title: this.options.title ?? "Untitled App",
-              });
-            }}
-          >
-            Share
-          </button>`
-        : nothing}
-      <div
-        id="older-data"
-        class=${classMap({
-          active: this.isInSelectionState && this.showingOlderResult,
-        })}
-      >
-        Viewing data from an earlier step. Newer data is available.
-      </div>
-    </div>`;
+    return html`<bb-header
+      .progress=${progress}
+      .replayActive=${true}
+    ></bb-header>`;
   }
 
   #renderActivity(topGraphResult: TopGraphRunResult) {
@@ -826,9 +995,23 @@ export class Template extends LitElement implements AppTemplate {
       // Attempt to find the most recent output. If there is one, show it
       // otherwise show any message that's coming from the edge.
       let lastOutput = null;
+      let showAsStatus = false;
       for (let i = topGraphResult.log.length - 1; i >= 0; i--) {
         const result = topGraphResult.log[i];
         if (result.type === "edge" && result.descriptor?.type === "output") {
+          const newest = topGraphResult.log.at(-1);
+          if (newest?.type === "edge" && newest.descriptor?.type === "input") {
+            const props = Object.values(newest.schema?.properties ?? {});
+            for (const prop of props) {
+              // TODO: Use a better way to determine that this is a User Input
+              // requiring a status flag.
+              if ("format" in prop) {
+                showAsStatus = true;
+                break;
+              }
+            }
+          }
+
           lastOutput = result;
           break;
         }
@@ -837,6 +1020,7 @@ export class Template extends LitElement implements AppTemplate {
       // Render the output.
       if (lastOutput !== null) {
         activityContents = html`<bb-multi-output
+          .showAsStatus=${showAsStatus}
           .outputs=${lastOutput.value ?? null}
         ></bb-multi-output>`;
       }
@@ -846,6 +1030,7 @@ export class Template extends LitElement implements AppTemplate {
 
       if (topGraphResult.currentNode?.descriptor.metadata?.title) {
         status = html`<div id="status">
+          <span class="g-icon"></span>
           ${topGraphResult.currentNode.descriptor.metadata.title}
         </div>`;
       }
@@ -921,363 +1106,71 @@ export class Template extends LitElement implements AppTemplate {
     return html`<div id="activity">${activityContents}</div>`;
   }
 
-  #toLLMContentWithTextPart(text: string): NodeValue {
-    return { role: "user", parts: [{ text }] };
+  #renderSaveResultsButton() {
+    if (!ENABLE_SAVE_RESULTS) {
+      return nothing;
+    }
+    if (
+      this.topGraphResult?.status !== "stopped" ||
+      !findFinalOutputValues(this.topGraphResult)
+    ) {
+      return nothing;
+    }
+    return html`
+      <div id="save-results-button-container">
+        <button
+          id="save-results-button"
+          class="bb-button-outlined"
+          @click=${this.#onClickSaveResults}
+        >
+          <span class="g-icon filled">file_save</span>
+          Save results
+        </button>
+      </div>
+    `;
+  }
+
+  #onClickSaveResults() {
+    if (!this.topGraphResult) {
+      console.error(`No top graph result`);
+      return;
+    }
+    const finalOutputValues = findFinalOutputValues(this.topGraphResult);
+    if (!finalOutputValues) {
+      return;
+    }
+    const graphUrl = this.graph?.url;
+    if (!graphUrl) {
+      console.error(`No graph url`);
+      return;
+    }
+    // TODO(aomarks) Actually save.
+    console.log("SAVING", JSON.stringify({ graphUrl, finalOutputValues }));
   }
 
   #renderInput(topGraphResult: TopGraphRunResult) {
-    const placeholder = html`<div class="user-input">
-        <p>&nbsp;</p>
-      </div>
-
-      <div class="controls"></div>`;
-
-    const continueRun = (id: string) => {
-      if (!this.#inputRef.value) {
-        return;
-      }
-
-      const inputs = this.#inputRef.value.querySelectorAll<
-        HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-      >("input,select,textarea");
-      const assetShelf =
-        this.#inputRef.value.querySelector<AssetShelf>("bb-asset-shelf");
-      const inputValues: OutputValues = {};
-
-      let canProceed = true;
-      for (const input of inputs) {
-        if (!input.checkValidity()) {
-          input.reportValidity();
-          canProceed = false;
-        }
-
-        let value: string | LLMContent = input.value;
-        if (typeof value === "string") {
-          value = maybeConvertToYouTube(input.value);
-        }
-
-        if (typeof value === "string") {
-          if (input.dataset.type === "llm-content") {
-            inputValues[input.name] =
-              input.dataset.empty === "true"
-                ? { parts: [] }
-                : this.#toLLMContentWithTextPart(value);
-          } else if (input.dataset.type === "llm-content-array") {
-            inputValues[input.name] = [this.#toLLMContentWithTextPart(value)];
-          } else {
-            inputValues[input.name] = value;
-          }
-
-          value = "";
-        } else {
-          inputValues[input.name] = value as NodeValue;
-        }
-
-        if (assetShelf && assetShelf.value) {
-          const inputValue = inputValues[input.name];
-          if (isLLMContent(inputValue)) {
-            const parts = inputValue.parts;
-            for (const asset of assetShelf.value) {
-              parts.push(...asset.parts);
-            }
-          }
-
-          // Once we have the values, remove the items from the shelf.
-          assetShelf.clear();
-        }
-      }
-
-      if (!canProceed) {
-        return;
-      }
-
-      this.dispatchEvent(
-        new InputEnterEvent(id, inputValues, /* allowSavingIfSecret */ true)
-      );
-    };
-
-    let inputContents: HTMLTemplateResult | symbol = nothing;
-    let active = false;
     const currentItem = topGraphResult.log.at(-1);
-    if (currentItem?.type === "edge") {
-      const props = Object.entries(currentItem.schema?.properties ?? {});
-      if (this.run && this.run.events.at(-1)?.type === "secret") {
-        const secretEvent = this.run.events.at(-1) as InspectableRunSecretEvent;
+    if (
+      topGraphResult.status !== "paused" ||
+      currentItem?.type !== "edge" ||
+      !currentItem.schema
+    ) {
+      this.style.setProperty("--input-clearance", `0px`);
 
-        active = true;
-        inputContents = html`
-          <div class="user-input">
-            <p class="api-message">
-              When calling an API, the API provider's applicable privacy policy
-              and terms apply
-            </p>
-            ${map(secretEvent.keys, (key) => {
-              if (key.startsWith("connection:")) {
-                return html`<bb-connection-input
-                  id=${key}
-                  .connectionId=${key.replace(/^connection:/, "")}
-                ></bb-connection-input>`;
-              } else {
-                return html`<input
-                  name=${key}
-                  type="password"
-                  autocomplete="off"
-                  required
-                  .placeholder=${`Enter ${key}`}
-                />`;
-              }
-            })}
-          </div>
-          <div class="controls">
-            <button
-              id="continue"
-              @click=${() => {
-                continueRun(currentItem.id ?? "unknown");
-              }}
-            >
-              Continue
-            </button>
-          </div>
-        `;
-      } else if (props.length > 0 && currentItem.descriptor?.type === "input") {
-        active = true;
-        const valueIsDefined = currentItem.value !== undefined;
-        const valueHasKeys =
-          typeof currentItem.value === "object" &&
-          Object.keys(currentItem.value).length > 0;
-        const valueIsNonEmptyArray =
-          Array.isArray(currentItem.value) && currentItem.value.length > 0;
-        const disabled =
-          valueIsDefined && (valueHasKeys || valueIsNonEmptyArray);
-
-        // We have to inspect the properties to determine what is allowed here,
-        // but it is theoretically possible for multiple properties to define
-        // different allowed values. For now we just roll through and pick out
-        // the first one and go with what it says.
-        let allowAddAssets = false;
-
-        // Setting this to null will allow all default types through.
-        let allowedUploadMimeTypes: string | null = null;
-        let textToSpeech = false;
-        let textInput = false;
-
-        const supportedActions = {
-          upload: false,
-          youtube: false,
-          drawable: false,
-          gdrive: false,
-        };
-
-        propSearch: for (const [, prop] of props) {
-          if (!prop.format) {
-            // Any.
-            allowAddAssets = true;
-            textToSpeech = true;
-            textInput = true;
-            supportedActions.upload = true;
-            supportedActions.youtube = true;
-            supportedActions.drawable = true;
-            supportedActions.gdrive = true;
-            continue;
-          }
-
-          switch (prop.format) {
-            case "upload": {
-              allowAddAssets = true;
-              supportedActions.upload = true;
-              break propSearch;
-            }
-
-            case "mic": {
-              allowAddAssets = true;
-              allowedUploadMimeTypes = "audio/*";
-              supportedActions.upload = true;
-              break propSearch;
-            }
-
-            case "videocam": {
-              allowAddAssets = true;
-              allowedUploadMimeTypes = "video/*";
-              supportedActions.upload = true;
-              supportedActions.youtube = true;
-              break propSearch;
-            }
-
-            case "image": {
-              allowAddAssets = true;
-              allowedUploadMimeTypes = "image/*";
-              supportedActions.upload = true;
-              break propSearch;
-            }
-
-            case "edit_note": {
-              allowAddAssets = true;
-              allowedUploadMimeTypes = "text/*";
-              supportedActions.upload = true;
-              textToSpeech = true;
-              textInput = true;
-              break propSearch;
-            }
-
-            default: {
-              // Any.
-              allowAddAssets = true;
-              textToSpeech = true;
-              textInput = true;
-              supportedActions.upload = true;
-              supportedActions.youtube = true;
-              supportedActions.drawable = true;
-              supportedActions.gdrive = true;
-              break propSearch;
-            }
-          }
-        }
-
-        inputContents = html`
-          ${allowAddAssets
-            ? html`<bb-add-asset-button
-                .anchor=${"above"}
-                .supportedActions=${supportedActions}
-                .allowedUploadMimeTypes=${allowedUploadMimeTypes}
-                .useGlobalPosition=${false}
-                .showGDrive=${this.showGDrive}
-                ?disabled=${disabled}
-              ></bb-add-asset-button>`
-            : nothing}
-          ${repeat(props, ([name, schema]) => {
-            const dataType = isLLMContentArrayBehavior(schema)
-              ? "llm-content-array"
-              : isLLMContentBehavior(schema)
-                ? "llm-content"
-                : "string";
-
-            const propValue = currentItem.value?.[name];
-            let inputValue = "";
-            if (isLLMContent(propValue)) {
-              for (const part of propValue.parts) {
-                if (isTextCapabilityPart(part)) {
-                  inputValue = part.text;
-                }
-              }
-            }
-            const hasAssetEntered =
-              this.#assetShelfRef?.value == undefined ||
-              this.#assetShelfRef?.value.value.length == 0;
-            return html`<div class="user-input">
-              <p>
-                ${schema.description ? html`${schema.description}` : nothing}
-              </p>
-
-              ${textInput
-                ? html`<textarea
-                    placeholder=${hasAssetEntered
-                      ? "Type or upload your response."
-                      : "Press Submit to continue"}
-                    name=${name}
-                    type="text"
-                    data-type=${dataType}
-                    .value=${inputValue}
-                    ?disabled=${disabled}
-                  ></textarea>`
-                : allowAddAssets
-                  ? html`<div class="no-text-input">
-                        ${hasAssetEntered
-                          ? "Upload your response."
-                          : "Press Submit to continue"}
-                      </div>
-                      <input
-                        type="hidden"
-                        data-type=${dataType}
-                        data-empty="true"
-                        name=${name}
-                      />`
-                  : nothing}
-              <bb-asset-shelf
-                @assetchanged=${() => {
-                  this.requestUpdate();
-                }}
-                ${ref(this.#assetShelfRef)}
-              ></bb-asset-shelf>
-            </div>`;
-          })}
-
-          <div class="controls">
-            ${textToSpeech
-              ? html`<bb-speech-to-text
-                  ?disabled=${disabled}
-                  @bbutterance=${(evt: UtteranceEvent) => {
-                    if (!this.#inputRef.value) {
-                      return;
-                    }
-
-                    const inputField =
-                      this.#inputRef.value.querySelector<HTMLTextAreaElement>(
-                        "textarea"
-                      );
-                    if (!inputField) {
-                      return;
-                    }
-
-                    inputField.value = evt.parts
-                      .map((part) => part.transcript)
-                      .join("");
-                  }}
-                ></bb-speech-to-text>`
-              : nothing}
-            <button
-              id="continue"
-              ?disabled=${disabled}
-              title="Submit"
-              @click=${() => {
-                continueRun(currentItem.id ?? "unknown");
-              }}
-            >
-              Continue
-            </button>
-          </div>
-        `;
-      } else {
-        active = true;
-        inputContents = placeholder;
-      }
-    } else {
-      inputContents = placeholder;
+      return nothing;
     }
 
-    let status: "stopped" | "paused" | "running" | "finished" =
-      topGraphResult.status;
-
-    if (topGraphResult.status === "stopped" && topGraphResult.log.length > 0) {
-      status = "finished";
-    }
-
-    return html`<div
-      @transitionend=${() => {
-        if (!this.#inputRef.value || !active) {
-          return;
-        }
-
-        const input =
-          this.#inputRef.value.querySelector<HTMLInputElement>(
-            "input,textarea"
-          );
-        input?.focus();
+    const PADDING = 24;
+    return html`<bb-floating-input
+      .schema=${currentItem.schema}
+      .showDisclaimer=${this.showDisclaimer}
+      @bbresize=${(evt: ResizeEvent) => {
+        this.style.setProperty(
+          "--input-clearance",
+          `${evt.contentRect.height + PADDING}px`
+        );
       }}
-      @keydown=${(evt: KeyboardEvent) => {
-        const isMac = navigator.platform.indexOf("Mac") === 0;
-        const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
-
-        if (!(evt.key === "Enter" && isCtrlCommand)) {
-          return;
-        }
-
-        continueRun("unknown");
-      }}
-      id="input"
-      class=${classMap({ active, [status]: true })}
-    >
-      <div id="input-container" ${ref(this.#inputRef)}>${inputContents}</div>
-    </div>`;
+    ></bb-floating-input>`;
   }
 
   #totalNodeCount = 0;
@@ -1324,16 +1217,24 @@ export class Template extends LitElement implements AppTemplate {
       }
     }
 
-    const styles: Record<string, string> = {};
+    let styles: Record<string, string> = {};
     if (this.options.theme) {
-      styles["--primary-color"] = this.options.theme.primaryColor;
-      styles["--primary-text-color"] = this.options.theme.primaryTextColor;
-      styles["--secondary-color"] = this.options.theme.secondaryColor;
-      styles["--text-color"] = this.options.theme.textColor;
-      styles["--background-color"] = this.options.theme.backgroundColor;
+      styles = createThemeStyles(this.options.theme);
     }
 
     if (typeof this.options.splashImage === "string") {
+      // Special-case the default theme based on the mime types.
+      // TODO: Replace this with a more robust check.
+      if (this.options.isDefaultTheme) {
+        styles["--splash-width"] = "50%";
+        styles["--splash-fill"] = "contain";
+        styles["--start-border"] = "var(--secondary-color)";
+        styles["--default-progress"] = "url(/images/progress-inverted.svg)";
+        styles["--start-icon"] = "var(--bb-icon-generative-inverted)";
+        styles["--input-background"] =
+          "oklch(from var(--s-80) calc(l + 0.2) c h)";
+      }
+
       styles["--splash-image"] = this.options.splashImage;
     }
 
@@ -1356,126 +1257,117 @@ export class Template extends LitElement implements AppTemplate {
     const splashScreen = html`
       <div
         id="splash"
+        class=${classMap({ default: this.options.isDefaultTheme ?? false })}
         @animationend=${() => {
           this.hasRenderedSplash = true;
         }}
       >
-        <h1
-          ?contenteditable=${!this.readOnly}
-          @blur=${(evt: Event) => {
-            if (this.readOnly) {
-              return;
-            }
+        <section id="splash-content-container">
+          <h1
+            ?contenteditable=${!this.readOnly}
+            @blur=${(evt: Event) => {
+              if (this.readOnly) {
+                return;
+              }
 
-            if (
-              !(evt.target instanceof HTMLElement) ||
-              !evt.target.textContent
-            ) {
-              return;
-            }
-            const newTitle = evt.target.textContent.trim();
-            if (newTitle === this.options.title) {
-              return;
-            }
-            this.dispatchEvent(new BoardTitleUpdateEvent(newTitle));
-          }}
-        >
-          ${this.options.title}
-        </h1>
-        <p
-          ?contenteditable=${!this.readOnly}
-          @blur=${(evt: Event) => {
-            if (this.readOnly) {
-              return;
-            }
+              if (
+                !(evt.target instanceof HTMLElement) ||
+                !evt.target.textContent
+              ) {
+                return;
+              }
+              const newTitle = evt.target.textContent.trim();
+              if (newTitle === this.options.title) {
+                return;
+              }
+              this.dispatchEvent(new BoardTitleUpdateEvent(newTitle));
+            }}
+          >
+            ${this.options.title}
+          </h1>
+          <p
+            ?contenteditable=${!this.readOnly}
+            @blur=${(evt: Event) => {
+              if (this.readOnly) {
+                return;
+              }
 
-            if (this.readOnly) {
-              return;
-            }
+              if (this.readOnly) {
+                return;
+              }
 
-            if (
-              !(evt.target instanceof HTMLElement) ||
-              !evt.target.textContent
-            ) {
-              return;
-            }
+              if (
+                !(evt.target instanceof HTMLElement) ||
+                !evt.target.textContent
+              ) {
+                return;
+              }
 
-            const newDescription = evt.target.textContent.trim();
-            if (newDescription === this.options.description) {
-              return;
-            }
+              const newDescription = evt.target.textContent.trim();
+              if (newDescription === this.options.description) {
+                return;
+              }
 
-            this.dispatchEvent(new BoardDescriptionUpdateEvent(newDescription));
-          }}
-        >
-          ${this.options.description
-            ? html`${this.options.description}`
-            : nothing}
-        </p>
-      </div>
-      <div id="input" class="stopped">
-        <div>
-          ${this.state === "anonymous" || this.state === "valid"
-            ? html`<button
-                id="run"
-                ?disabled=${this.#totalNodeCount === 0}
-                @click=${() => {
-                  this.dispatchEvent(new RunEvent());
-                }}
-              >
-                Start
-              </button>`
-            : html`<button
-                id="sign-in"
-                ?disabled=${this.#totalNodeCount === 0}
-                @click=${() => {
-                  this.dispatchEvent(new SignInRequestedEvent());
-                }}
-              >
-                Sign In
-              </button>`}
-        </div>
+              this.dispatchEvent(
+                new BoardDescriptionUpdateEvent(newDescription)
+              );
+            }}
+          >
+            ${this.options.description
+              ? html`${this.options.description}`
+              : nothing}
+          </p>
+          <div id="input" class="stopped">
+            <div>
+              ${this.state === "anonymous" || this.state === "valid"
+                ? html`<button
+                    id="run"
+                    ?disabled=${this.#totalNodeCount === 0}
+                    @click=${() => {
+                      ActionTracker.runApp(this.graph?.url, "app_preview");
+                      this.dispatchEvent(new RunEvent());
+                    }}
+                  >
+                    <span class="g-icon"></span>Start
+                  </button>`
+                : html`<button
+                    id="sign-in"
+                    ?disabled=${this.#totalNodeCount === 0}
+                    @click=${() => {
+                      this.dispatchEvent(new SignInRequestedEvent());
+                    }}
+                  >
+                    <span class="g-icon"></span>Sign In
+                  </button>`}
+            </div>
+          </div>
+        </section>
       </div>
     `;
 
-    let addAssetModal: HTMLTemplateResult | symbol = nothing;
-    if (this.showAddAssetModal) {
-      addAssetModal = html`<bb-add-asset-modal
-        .assetType=${this.#addAssetType}
-        .allowedMimeTypes=${this.#allowedMimeTypes}
-        @bboverlaydismissed=${() => {
-          this.showAddAssetModal = false;
-        }}
-        @bbaddasset=${(evt: AddAssetEvent) => {
-          if (!this.#assetShelfRef.value) {
-            return;
-          }
-
-          this.showAddAssetModal = false;
-          this.#assetShelfRef.value.addAsset(evt.asset);
-        }}
-      ></bb-add-asset-modal>`;
-    }
-
-    let content: HTMLTemplateResult | symbol = html`${(styles[
-      "--splash-image"
-    ] &&
-      this.topGraphResult.status === "stopped" &&
-      this.topGraphResult.log.length === 0) ||
-    this.#totalNodeCount === 0
-      ? splashScreen
-      : [
-          this.#renderControls(this.topGraphResult),
-          this.#renderActivity(this.topGraphResult),
-          this.#renderInput(this.topGraphResult),
-          addAssetModal,
-        ]}`;
-
+    let content: NonNullable<unknown>;
     if (this.isInSelectionState && this.topGraphResult.log.length === 0) {
       content = html`<div id="preview-step-not-run">
         <h1>No data available</h1>
         <p>This step has yet to run</p>
       </div>`;
+    } else if (
+      (styles["--splash-image"] &&
+        this.topGraphResult.status === "stopped" &&
+        this.topGraphResult.log.length === 0) ||
+      this.#totalNodeCount === 0
+    ) {
+      content = splashScreen;
+    } else {
+      content = [
+        this.#renderControls(this.topGraphResult),
+        this.#renderActivity(this.topGraphResult),
+        this.#renderSaveResultsButton(),
+        this.#renderInput(this.topGraphResult),
+        this.showDisclaimer
+          ? html`<p id="disclaimer">${Strings.from("LABEL_DISCLAIMER")}</p>`
+          : nothing,
+      ];
     }
 
     return html`<section
@@ -1488,6 +1380,26 @@ export class Template extends LitElement implements AppTemplate {
       }}
     >
       <div id="content">${content}</div>
+      ${this.showContentWarning
+        ? html`<div id="content-warning">
+            <div class="message">
+              This content was created by another person. It may be inaccurate
+              or unsafe.
+              <a href="https://support.google.com/legal/answer/3110420?hl=en"
+                >Report unsafe content</a
+              >
+              &middot; <a href="/policy/">Privacy & Terms</a>
+            </div>
+            <button
+              class="dismiss"
+              @click=${() => {
+                this.showContentWarning = false;
+              }}
+            >
+              Dismiss
+            </button>
+          </div>`
+        : nothing}
     </section>`;
   }
 }

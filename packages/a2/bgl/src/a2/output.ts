@@ -3,6 +3,9 @@
  */
 
 import output from "@output";
+import write from "@write";
+
+import { generateId, ok } from "./utils";
 
 type ReportInputs = {
   /**
@@ -25,12 +28,79 @@ type ReportInputs = {
    * The icon to use
    */
   icon?: string;
+  /**
+   * Whether or not this is part of interacting
+   * with the user
+   */
+  chat?: boolean;
 };
 
-export { report };
+export { report, StreamableReporter };
+
+const MIME_TYPE = "application/vnd.breadboard.report-stream";
+
+class StreamableReporter {
+  public readonly path: FileSystemReadWritePath = `/run/reporter/stream/${generateId()}`;
+  #started = false;
+
+  constructor(public readonly options: NodeMetadata) {}
+
+  async start() {
+    if (this.#started) return;
+    this.#started = true;
+
+    const schema: Schema = {
+      type: "object",
+      properties: {
+        reportStream: {
+          behavior: ["llm-content"],
+          type: "object",
+        },
+      },
+    };
+    const $metadata = this.options;
+    const reportStream: LLMContent = {
+      parts: [{ fileData: { fileUri: this.path, mimeType: MIME_TYPE } }],
+    };
+    const starting = await this.report("start");
+    if (!ok(starting)) return starting;
+    return output({ schema, $metadata, reportStream });
+  }
+
+  async reportLLMContent(llmContent: LLMContent) {
+    if (!this.#started) {
+      console.log("StreamableReporter not started: call `start()` first");
+      return;
+    }
+    const data = [llmContent];
+    return write({ path: this.path, stream: true, data });
+  }
+
+  report(json: JsonSerializable) {
+    return this.reportLLMContent({ parts: [{ json }] });
+  }
+
+  async reportError(error: { $error: string }) {
+    await this.report(error);
+    return error;
+  }
+
+  close() {
+    if (!this.#started) return;
+    return write({ path: this.path, stream: true, done: true });
+    this.#started = false;
+  }
+}
 
 async function report(inputs: ReportInputs): Promise<boolean> {
-  const { actor: title, category: description, name, details, icon } = inputs;
+  const {
+    actor: title,
+    category: description,
+    name,
+    details,
+    icon,
+    chat,
+  } = inputs;
 
   const detailsSchema: Schema =
     typeof details === "string"
@@ -47,6 +117,10 @@ async function report(inputs: ReportInputs): Promise<boolean> {
 
   if (icon) {
     detailsSchema.icon = icon;
+  }
+
+  if (chat) {
+    detailsSchema.behavior?.push("hint-chat-mode");
   }
 
   const schema: Schema = {

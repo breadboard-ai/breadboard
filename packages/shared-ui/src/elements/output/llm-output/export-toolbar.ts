@@ -19,7 +19,6 @@ import { renderMarkdownToHtmlString } from "../../../directives/markdown.js";
 import { ToastEvent, ToastType } from "../../../events/events.js";
 import { toolbarStyles } from "../../../styles/toolbar-styles.js";
 import { tokenVendorContext } from "../../elements.js";
-import { appendToDocUsingDriveKit } from "../../google-drive/append-to-doc-using-drive-kit.js";
 import { classMap } from "lit/directives/class-map.js";
 
 const CAN_COPY = "ClipboardItem" in window;
@@ -136,56 +135,9 @@ export class ExportToolbar extends LitElement {
   }
 
   async #clickDrive() {
-    if (!this.value) {
-      this.dispatchEvent(
-        new ToastEvent(
-          "Internal error saving to Google Drive: No value",
-          ToastType.ERROR
-        )
-      );
-      return;
-    }
-    if (!this.tokenVendor) {
-      this.dispatchEvent(
-        new ToastEvent(
-          "Internal error saving to Google Drive: No token vendor",
-          ToastType.ERROR
-        )
-      );
-      return;
-    }
-    if (this._savingToDrive) {
-      return;
-    }
-
-    this._savingToDrive = true;
-    try {
-      const { url } = await appendToDocUsingDriveKit(
-        this.value,
-        `Breadboard Demo (${new Date().toLocaleDateString("en-US")})`,
-        this.tokenVendor
-      );
-      this.dispatchEvent(
-        new ToastEvent(
-          // HACK: Toast messages are typed to only allow strings, but actually
-          // they just directly render the value, so a TemplateResult works too,
-          // letting us embed a link.
-          html`Saved to
-            <a href=${url} target="_blank">Google Doc</a>` as unknown as string,
-          ToastType.INFORMATION
-        )
-      );
-    } catch (error) {
-      this.dispatchEvent(
-        new ToastEvent(
-          typeof error === "object" && "message" in (error as Error)
-            ? (error as Error).message
-            : JSON.stringify(error),
-          ToastType.ERROR
-        )
-      );
-    }
-    this._savingToDrive = false;
+    this.dispatchEvent(
+      new ToastEvent("Saving to Google Drive is not supported", ToastType.ERROR)
+    );
   }
 }
 

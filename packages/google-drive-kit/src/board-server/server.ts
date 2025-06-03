@@ -14,6 +14,8 @@ import {
   type BoardServerExtension,
   type BoardServerProject,
   type ChangeNotificationCallback,
+  type DataPartTransformer,
+  type EntityMetadata,
   type GraphDescriptor,
   type GraphProviderCapabilities,
   type GraphProviderExtendedCapabilities,
@@ -22,12 +24,23 @@ import {
   type Kit,
   type Permission,
   type User,
+  type Username,
 } from "@google-labs/breadboard";
-import { DriveOperations, PROTOCOL } from "./operations.js";
+import {
+  DriveOperations,
+  getFileId,
+  PROTOCOL,
+  type GraphInfo,
+} from "./operations.js";
 import { SaveDebouncer } from "./save-debouncer.js";
-import { SaveEvent } from "./events.js";
+import { RefreshEvent, SaveEvent } from "./events.js";
+import { type GoogleDriveClient } from "../google-drive-client.js";
+import { GoogleDriveDataPartTransformer } from "./data-part-transformer.js";
 
 export { GoogleDriveBoardServer };
+
+const OWNER_USERNAME = "board-builder";
+const GALLERY_OWNER_USERNAME = "gallery-owner";
 
 // This whole package should probably be called
 // "@breadboard-ai/google-drive-board-server".
@@ -39,36 +52,18 @@ class GoogleDriveBoardServer
 {
   static PROTOCOL = PROTOCOL;
 
-  static async connect(folderId: string, vendor: TokenVendor) {
-    const folder = await DriveOperations.readFolder(folderId, vendor);
-    if (!folder) {
-      return null;
-    }
-
-    return {
-      title: folder.name || "Google Drive",
-      username: "board-builder",
-    };
-  }
-
   static async from(
-    url: string,
     title: string,
     user: User,
-    vendor: TokenVendor
+    vendor: TokenVendor,
+    googleDriveClient: GoogleDriveClient,
+    userFolderName: string,
+    publicApiKey?: string,
+    featuredGalleryFolderId?: string
   ) {
-    const connection = await GoogleDriveBoardServer.connect(
-      new URL(url).hostname,
-      vendor
-    );
-
-    if (!connection) {
-      return null;
-    }
-
     try {
       const configuration = {
-        url: new URL(url),
+        url: new URL(`${PROTOCOL}/`),
         projects: Promise.resolve([]),
         kits: [],
         users: [],
@@ -85,19 +80,29 @@ class GoogleDriveBoardServer
         },
       };
 
-      return new GoogleDriveBoardServer(title, configuration, user, vendor);
+      return new GoogleDriveBoardServer(
+        title,
+        configuration,
+        user,
+        vendor,
+        googleDriveClient,
+        userFolderName,
+        publicApiKey,
+        featuredGalleryFolderId
+      );
     } catch (err) {
       console.warn(err);
       return null;
     }
   }
 
-  public readonly url: URL;
+  public readonly url = new URL(PROTOCOL);
   public readonly users: User[];
   public readonly secrets = new Map<string, string>();
   public readonly extensions: BoardServerExtension[] = [];
   public readonly capabilities: BoardServerCapabilities;
   public readonly ops: DriveOperations;
+  readonly #googleDriveClient: GoogleDriveClient;
 
   projects: Promise<BoardServerProject[]>;
   kits: Kit[];
@@ -106,18 +111,32 @@ class GoogleDriveBoardServer
     public readonly name: string,
     public readonly configuration: BoardServerConfiguration,
     public readonly user: User,
-    public readonly vendor: TokenVendor
+    public readonly vendor: TokenVendor,
+    googleDriveClient: GoogleDriveClient,
+    userFolderName: string,
+    publicApiKey?: string,
+    featuredGalleryFolderId?: string
   ) {
     super();
-    this.ops = new DriveOperations(vendor, user.username, configuration.url);
+    this.ops = new DriveOperations(
+      vendor,
+      user.username,
+      async () => {
+        await this.refreshProjectList();
+        this.dispatchEvent(new RefreshEvent());
+      },
+      userFolderName,
+      publicApiKey,
+      featuredGalleryFolderId
+    );
 
-    this.url = configuration.url;
-    this.projects = this.refreshProjects();
     this.kits = configuration.kits;
     this.users = configuration.users;
     this.secrets = configuration.secrets;
     this.extensions = configuration.extensions;
     this.capabilities = configuration.capabilities;
+    this.#googleDriveClient = googleDriveClient;
+    this.projects = this.listProjects();
   }
 
   #saving = new Map<string, SaveDebouncer>();
@@ -129,35 +148,77 @@ class GoogleDriveBoardServer
     this.#projects = await this.projects;
   }
 
-  async refreshProjects(): Promise<BoardServerProject[]> {
-    const files = await this.ops.readGraphList();
-    if (!ok(files)) return [];
-    const canAccess = true;
-    const access = new Map([
+  async listProjects(): Promise<BoardServerProject[]> {
+    // Run two lists operations in parallel.
+    const userGraphsPromise = this.ops.readGraphList();
+    let featuredGraphs = await this.ops.readFeaturedGalleryGraphList();
+    const userGraphs = await userGraphsPromise;
+    if (!ok(userGraphs)) return [];
+    if (!ok(featuredGraphs)) {
+      console.warn(featuredGraphs.$error);
+      featuredGraphs = [];
+    }
+    const ownerAccess = new Map([
       [
         this.user.username,
         {
-          create: canAccess,
-          retrieve: canAccess,
-          update: canAccess,
-          delete: canAccess,
-        },
+          create: true,
+          retrieve: true,
+          update: true,
+          delete: true,
+        } satisfies Permission,
+      ],
+    ]);
+    const galleryAccess = new Map([
+      [
+        GALLERY_OWNER_USERNAME,
+        {
+          create: false,
+          retrieve: true,
+          update: false,
+          delete: false,
+        } satisfies Permission,
       ],
     ]);
 
-    const projects = files.map(({ title, tags, id }) => {
-      return {
-        url: new URL(`${this.url}/${id}`),
-        metadata: {
-          owner: "board-builder",
-          tags,
-          title,
-          access,
-        },
-      };
-    });
+    const userProjects = userGraphs.map((graphInfo) =>
+      this.#graphInfoToProject(graphInfo, OWNER_USERNAME, ownerAccess)
+    );
 
-    return projects;
+    const galleryProjects = featuredGraphs.map((graphInfo) =>
+      this.#graphInfoToProject(graphInfo, GALLERY_OWNER_USERNAME, galleryAccess)
+    );
+
+    return [...userProjects, ...galleryProjects];
+  }
+
+  #graphInfoToProject(
+    graphInfo: GraphInfo,
+    owner: string,
+    access: Map<Username, Permission>
+  ) {
+    return {
+      // TODO: This should just be new URL(id, this.url), but sadly, it will
+      // break existing instances of the Google Drive board server.
+      url: new URL(`${this.url}${this.url.pathname ? "" : "/"}${graphInfo.id}`),
+      metadata: {
+        owner,
+        tags: graphInfo.tags,
+        title: graphInfo.title,
+        access,
+        thumbnail: graphInfo.thumbnail,
+        description: graphInfo.description,
+      } satisfies EntityMetadata,
+    };
+  }
+
+  /**
+   * Issues a query for the project list and resets the `projects` promise.
+   * The work is done asynchronously unless you await to its result.
+   */
+  refreshProjectList(): Promise<BoardServerProject[]> {
+    this.projects = this.listProjects();
+    return this.projects;
   }
 
   getAccess(_url: URL, _user: User): Promise<Permission> {
@@ -169,12 +230,13 @@ class GoogleDriveBoardServer
   }
 
   canProvide(url: URL): false | GraphProviderCapabilities {
-    if (!url.href.startsWith(this.url.href)) {
+    if (!url.href.startsWith(PROTOCOL)) {
       return false;
     }
 
+    const fileId = getFileId(url.href);
     const project = this.#projects.find((project) => {
-      return url.pathname.startsWith(project.url.pathname);
+      return fileId === getFileId(project.url.href);
     });
 
     // We recognize it as something that can be loaded from this Board Server,
@@ -207,7 +269,18 @@ class GoogleDriveBoardServer
   }
 
   async load(url: URL): Promise<GraphDescriptor | null> {
-    return this.ops.readGraphFromDrive(url);
+    const fileId = getFileId(url.href);
+    const response = await this.#googleDriveClient.getFileMedia(fileId);
+    if (response.status === 200) {
+      return response.json();
+    } else if (response.status === 404) {
+      return null;
+    } else {
+      throw new Error(
+        `Received ${response.status} error loading graph from Google Drive` +
+          ` with file id ${JSON.stringify(fileId)}: ${await response.text()}`
+      );
+    }
   }
 
   async save(
@@ -246,9 +319,6 @@ class GoogleDriveBoardServer
       parent,
       descriptor
     );
-    if (writing.result) {
-      this.projects = this.refreshProjects();
-    }
     return writing;
   }
 
@@ -258,8 +328,6 @@ class GoogleDriveBoardServer
     if (!ok(deleting)) {
       return { result: false, error: deleting.$error };
     }
-    this.projects = this.refreshProjects();
-
     return { result: true };
   }
 
@@ -294,22 +362,21 @@ class GoogleDriveBoardServer
 
     const projectNames = new Set<string>();
     for (const project of this.#projects) {
-      let title = project.metadata.title ?? "Untitled Board";
-      if (projectNames.has(title) && project.url) {
-        const suffix = new URL(project.url).pathname.split("/").at(-1);
-        title = `${project.metadata.title ?? "Untitled Board"} [${suffix}]`;
-      }
+      const title = project.metadata.title ?? "Untitled";
 
       projectNames.add(title);
       projects.push([
-        title,
+        project.url.href,
         {
+          title,
           url: project.url.href,
           mine: project.metadata.owner === this.user.username,
           readonly: false,
           handle: null,
           tags: project.metadata?.tags,
           username: project.metadata.owner,
+          thumbnail: project.metadata.thumbnail,
+          description: project.metadata.description,
         },
       ]);
     }
@@ -324,12 +391,22 @@ class GoogleDriveBoardServer
     return items;
   }
 
+  dataPartTransformer(_graphUrl: URL): DataPartTransformer {
+    return new GoogleDriveDataPartTransformer(
+      this.#googleDriveClient,
+      this.ops
+    );
+  }
+
   startingURL(): URL | null {
     throw new Error("Method not implemented.");
   }
 
-  async canProxy(_url: URL): Promise<string | false> {
-    return false;
+  async canProxy(url: URL): Promise<string | false> {
+    if (!this.canProvide(url)) {
+      return false;
+    }
+    return new URL("/board/proxy", location.origin).href;
   }
 
   watch(_callback: ChangeNotificationCallback) {}

@@ -41,7 +41,10 @@ export async function create(config: RuntimeConfig): Promise<{
   util: typeof Util;
 }> {
   const kits = config.kits;
-  let servers = await getBoardServers(config.tokenVendor);
+  let servers = await getBoardServers(
+    config.tokenVendor,
+    config.googleDriveClient
+  );
 
   // First run - set everything up.
   if (servers.length === 0) {
@@ -55,7 +58,10 @@ export async function create(config: RuntimeConfig): Promise<{
       await migrateFileSystemProviders();
     }
 
-    servers = await getBoardServers();
+    servers = await getBoardServers(
+      config.tokenVendor,
+      config.googleDriveClient
+    );
   }
 
   // Add board servers that are built into
@@ -104,10 +110,19 @@ export async function create(config: RuntimeConfig): Promise<{
     config.proxy
   ).createSideboardRuntime();
 
+  const state = new StateManager(graphStore, sideboards, servers);
+
   const runtime = {
-    board: new Board([], loader, kits, boardServers, config.tokenVendor),
-    edit: new Edit(
+    board: new Board(
       [],
+      loader,
+      kits,
+      boardServers,
+      config.tokenVendor,
+      config.googleDriveClient
+    ),
+    edit: new Edit(
+      state,
       loader,
       kits,
       config.sandbox,
@@ -115,8 +130,8 @@ export async function create(config: RuntimeConfig): Promise<{
       sideboards,
       config.settings
     ),
-    run: new Run(graphStore, dataStore, config.runStore),
-    state: new StateManager(graphStore, sideboards, servers),
+    run: new Run(graphStore, dataStore, config.runStore, state),
+    state,
     sideboards,
     select: new Select(),
     util: Util,

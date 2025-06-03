@@ -12,6 +12,7 @@ import {
   InspectableRunSequenceEntry,
   invokeGraph,
   Kit,
+  MainGraphIdentifier,
   MutableGraphStore,
   NodeConfiguration,
   OutputValues,
@@ -40,11 +41,13 @@ import {
 import { RuntimeBoardRunEvent } from "./events";
 import { sandbox } from "../sandbox";
 import { BoardServerAwareDataStore } from "@breadboard-ai/board-server-management";
+import { StateManager } from "./state";
 
 export class Run extends EventTarget {
   #runs = new Map<
     TabId,
     {
+      mainGraphId: MainGraphIdentifier;
       harnessRunner?: HarnessRunner;
       topGraphObserver?: BreadboardUI.Utils.TopGraphObserver;
       chatController?: BreadboardUI.State.ChatController;
@@ -57,7 +60,8 @@ export class Run extends EventTarget {
   constructor(
     public readonly graphStore: MutableGraphStore,
     public readonly dataStore: BoardServerAwareDataStore,
-    public readonly runStore: RunStore
+    public readonly runStore: RunStore,
+    public readonly state: StateManager
   ) {
     super();
   }
@@ -69,6 +73,7 @@ export class Run extends EventTarget {
     runObserver?: InspectableRunObserver
   ) {
     this.#runs.set(tab.id, {
+      mainGraphId: tab.mainGraphId,
       topGraphObserver,
       runObserver,
       chatController,
@@ -79,6 +84,18 @@ export class Run extends EventTarget {
   async clearLastRun(tabId: TabId | null, urlToClear: string | undefined) {
     if (!tabId || !urlToClear) {
       return;
+    }
+
+    const run = this.#runs.get(tabId);
+    if (run) {
+      const project = this.state.getOrCreate(run.mainGraphId);
+      if (project) {
+        project.run = null;
+      }
+    } else {
+      console.warn(
+        `Failed to clear console: unable to find ran with Tab Id "${tabId}"`
+      );
     }
 
     this.#runs.delete(tabId);
@@ -141,7 +158,11 @@ export class Run extends EventTarget {
       graphStore: this.graphStore,
     };
 
-    const runner = this.#createBoardRunner(config, abortController);
+    const runner = this.#createBoardRunner(
+      tab.mainGraphId,
+      config,
+      abortController
+    );
     this.#runs.set(tabId, runner);
 
     const { harnessRunner, runObserver, topGraphObserver } = runner;
@@ -229,6 +250,19 @@ export class Run extends EventTarget {
       );
     });
 
+    // This incantation connects harnessRunner to the project, populating
+    // `Project.run`.
+    const project = this.state.getOrCreate(tab.mainGraphId);
+    if (!project) {
+      console.warn(`Unable to get project for graph: ${tab.mainGraphId}`);
+    } else {
+      project.connectHarnessRunner(
+        harnessRunner,
+        config.fileSystem!,
+        abortController.signal
+      );
+    }
+
     if (history) {
       await runObserver.append(history);
       topGraphObserver.startWith(history);
@@ -236,7 +270,11 @@ export class Run extends EventTarget {
     harnessRunner.run();
   }
 
-  #createBoardRunner(config: RunConfig, abortController: AbortController) {
+  #createBoardRunner(
+    mainGraphId: MainGraphIdentifier,
+    config: RunConfig,
+    abortController: AbortController
+  ) {
     const harnessRunner = createRunner(config);
     const runObserver = createRunObserver(this.graphStore, {
       logLevel: "debug",
@@ -260,6 +298,7 @@ export class Run extends EventTarget {
     );
 
     return {
+      mainGraphId,
       harnessRunner,
       topGraphObserver,
       runObserver,

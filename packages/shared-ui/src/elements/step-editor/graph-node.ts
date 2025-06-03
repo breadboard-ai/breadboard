@@ -20,8 +20,8 @@ import { classMap } from "lit/directives/class-map.js";
 import { toCSSMatrix } from "./utils/to-css-matrix";
 import { Box } from "./box";
 import {
+  AutoFocusEditorRequest,
   NodeBoundsUpdateRequestEvent,
-  NodeConfigurationRequestEvent,
   NodeSelectEvent,
   SelectionMoveEvent,
   SelectionTranslateEvent,
@@ -82,6 +82,12 @@ const rightArrow = html`${svg`
 export class GraphNode extends Box implements DragConnectorReceiver {
   @property()
   accessor nodeTitle = "";
+
+  @property()
+  accessor nodeDescription = "";
+
+  @property()
+  accessor isStart = false;
 
   @property({ reflect: true })
   accessor icon: string | null = null;
@@ -466,6 +472,17 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
             &:not([disabled]) {
               cursor: pointer;
+
+              &::before {
+                content: "";
+                width: 20px;
+                height: 20px;
+                position: absolute;
+                top: -5px;
+                left: -5px;
+                border-radius: 50%;
+                background: transparent;
+              }
             }
           }
         }
@@ -758,9 +775,13 @@ export class GraphNode extends Box implements DragConnectorReceiver {
                   case "object": {
                     classes.object = true;
                     if (port.value) {
-                      value = html`${unsafeHTML(
-                        `<p>${createTruncatedValue(port)}</p>`
-                      )}`;
+                      if (this.nodeDescription) {
+                        value = html`<p>${this.nodeDescription}</p>`;
+                      } else {
+                        value = html`${unsafeHTML(
+                          `<p>${createTruncatedValue(port)}</p>`
+                        )}`;
+                      }
 
                       chiclets.push(...createChiclets(port));
                     } else {
@@ -818,7 +839,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
     };
 
     let defaultAdd: HTMLTemplateResult | symbol = nothing;
-    if (this.showDefaultAdd) {
+    if (this.showDefaultAdd && !this.readOnly) {
       defaultAdd = html` ${rightArrow}
         <button
           id="default-add"
@@ -889,9 +910,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         style=${styleMap(styles)}
         ${ref(this.#containerRef)}
         @dblclick=${() => {
-          this.dispatchEvent(
-            new NodeConfigurationRequestEvent(this.nodeId, this.worldBounds)
-          );
+          this.dispatchEvent(new AutoFocusEditorRequest());
         }}
       >
         <header

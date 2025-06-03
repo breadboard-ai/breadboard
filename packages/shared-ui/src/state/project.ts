@@ -17,6 +17,7 @@ import {
   EditSpec,
   EditTransform,
   err,
+  FileSystem,
   GraphStoreEntry,
   MainGraphIdentifier,
   MutableGraphStore,
@@ -35,6 +36,7 @@ import {
   Organizer,
   Project,
   ProjectInternal,
+  ProjectRun,
   RendererState,
   Tool,
 } from "./types";
@@ -45,6 +47,9 @@ import { RendererStateImpl } from "./renderer";
 import { ConnectorStateImpl } from "./connectors";
 import { ConnectorType } from "../connectors/types";
 import { GraphAssetImpl } from "./graph-asset";
+import { signal } from "signal-utils";
+import { HarnessRunner } from "@google-labs/breadboard/harness";
+import { ReactiveProjectRun } from "./project-run";
 
 export { createProjectState, ReactiveProject };
 
@@ -92,6 +97,9 @@ class ReactiveProject implements ProjectInternal {
   #editable?: EditableGraph;
   #connectorInstances: Set<string> = new Set();
   #connectorMap: SignalMap<string, ConnectorType>;
+
+  @signal
+  accessor run: ProjectRun | null = null;
 
   readonly graphUrl: URL | null;
   readonly graphAssets: SignalMap<AssetPath, GraphAsset>;
@@ -154,6 +162,20 @@ class ReactiveProject implements ProjectInternal {
     this.#updateParameters();
   }
 
+  connectHarnessRunner(
+    runner: HarnessRunner,
+    fileSystem: FileSystem,
+    signal?: AbortSignal
+  ): Outcome<void> {
+    // Intentionally reset this property with a new instance.
+    this.run = new ReactiveProjectRun(
+      this.#store.inspect(this.#mainGraphId, ""),
+      fileSystem,
+      runner,
+      signal
+    );
+  }
+
   runtime(): SideBoardRuntime {
     return this.#runtime;
   }
@@ -186,12 +208,27 @@ class ReactiveProject implements ProjectInternal {
     }
   }
 
-  async persistBlobs(contents: LLMContent[]): Promise<LLMContent[]> {
+  async persistDataParts(contents: LLMContent[]): Promise<LLMContent[]> {
     const urlString = this.#store.get(this.#mainGraphId)?.graph.url;
-    if (!urlString) return contents;
+    if (!urlString) {
+      console.warn("Can't persist blob without graph URL");
+      return contents;
+    }
 
     const server = this.#boardServerFinder(new URL(urlString));
-    if (!server || !server.dataPartTransformer) return contents;
+    if (!server) {
+      console.warn(
+        `Failed to persist blob: no server found for url "${urlString}"`
+      );
+      return contents;
+    }
+
+    if (!server.dataPartTransformer) {
+      console.warn(
+        `Failed to persist blob: the server for url "${urlString} does not support dataPartTransformer`
+      );
+      return contents;
+    }
 
     const url = new URL(urlString);
 
@@ -202,6 +239,7 @@ class ReactiveProject implements ProjectInternal {
       server.dataPartTransformer(url)
     );
     if (!ok(transformed)) {
+      console.warn(`Failed to persist a blob: "${transformed.$error}"`);
       return contents;
     }
 
@@ -303,6 +341,7 @@ class ReactiveProject implements ProjectInternal {
           description: entry.description,
           order: entry.order || Number.MAX_SAFE_INTEGER,
           icon: entry.icon,
+          tags: entry.tags,
         } satisfies Tool,
       ];
     }
@@ -349,7 +388,7 @@ class ReactiveProject implements ProjectInternal {
     this.#connectorInstances.clear();
 
     const { assets = {} } = mutable.graph;
-    // Special-case the thumnail and splash so they doesn't show up.
+    // Special-case the thumbnail and splash so they doesn't show up.
     delete assets[THUMBNAIL_KEY];
 
     const graphAssets = Object.entries(assets).map<[string, GraphAsset]>(

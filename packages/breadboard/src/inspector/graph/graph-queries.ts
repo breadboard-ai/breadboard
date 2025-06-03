@@ -15,6 +15,12 @@ import {
   NodeIdentifier,
   NodeTypeIdentifier,
 } from "@breadboard-ai/types";
+import { isLLMContent, isLLMContentArray } from "../../data/common.js";
+import { err } from "../../data/file-system/utils.js";
+import { Outcome } from "../../data/types.js";
+import { baseURLFromString, SENTINEL_BASE_URL } from "../../loader/loader.js";
+import { graphUrlLike } from "../../utils/graph-url-like.js";
+import { Template, TemplatePart } from "../../utils/template.js";
 import {
   InspectableAsset,
   InspectableAssetEdge,
@@ -24,16 +30,10 @@ import {
   InspectableNodeType,
   MutableGraph,
 } from "../types.js";
-import { graphUrlLike } from "../../utils/graph-url-like.js";
-import { createGraphNodeType } from "./kits.js";
-import { VirtualNode } from "./virtual-node.js";
-import { Outcome } from "../../data/types.js";
-import { err } from "../../data/file-system/utils.js";
-import { baseURLFromString, SENTINEL_BASE_URL } from "../../loader/loader.js";
 import { getModuleId, isModule } from "../utils.js";
-import { Template, TemplatePart } from "../../utils/template.js";
-import { isLLMContent, isLLMContentArray } from "../../data/common.js";
 import { InspectableAssetImpl } from "./inspectable-asset.js";
+import { GraphNodeType } from "./graph-node-type.js";
+import { VirtualNode } from "./virtual-node.js";
 
 export { GraphQueries };
 
@@ -113,6 +113,11 @@ class GraphQueries {
       .filter((node) => node.isEntry());
   }
 
+  isStart(id: NodeIdentifier): boolean {
+    if (this.#graphId) return false;
+    return id === this.#mutable.representation.entries.at(0);
+  }
+
   nodeById(id: NodeIdentifier) {
     if (this.#graph().virtual) {
       return new VirtualNode({ id });
@@ -136,7 +141,7 @@ class GraphQueries {
     if (!graphUrlLike(id)) {
       return undefined;
     }
-    return createGraphNodeType(id, this.#mutable);
+    return new GraphNodeType(id, this.#mutable);
   }
 
   moduleExports(): Set<ModuleIdentifier> {

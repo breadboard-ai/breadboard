@@ -222,13 +222,13 @@ async function describe({ inputs: { instruction } }: DescribeInputs) {
         "p-disable-prompt-rewrite": {
           type: "boolean",
           title: "Disable prompt expansion",
-          behavior: ["config"],
+          behavior: ["config", "hint-advanced"],
           description:
             "By default, inputs and instructions will be automatically expanded into a high quality image prompt. Check to disable this re-writing behavior.",
         },
         "p-aspect-ratio": {
           type: "string",
-          behavior: ["hint-text", "config"],
+          behavior: ["hint-text", "config", "hint-advanced"],
           title: "Aspect Ratio",
           enum: ASPECT_RATIOS,
           description: "The aspect ratio of the generated image",

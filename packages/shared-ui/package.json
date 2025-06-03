@@ -24,6 +24,10 @@
       "default": "./dist/utils/top-graph-observer/index.js",
       "types": "./dist/utils/top-graph-observer/index.d.ts"
     },
+    "./utils/image": {
+      "default": "./dist/utils/image.js",
+      "types": "./dist/utils/image.d.ts"
+    },
     "./elements/connection/connection-broker.ts": {
       "default": "./dist/elements/connection/connection-broker.js",
       "types": "./dist/elements/connection/connection-broker.d.ts"
@@ -70,8 +74,7 @@
     "typescript-files-and-deps": {
       "dependencies": [
         "<dependencies>#build:tsc",
-        "../connection-client#build",
-        "../core-kit#build"
+        "../connection-client#build"
       ],
       "files": [
         "src/**/*.ts",
@@ -114,47 +117,36 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/shared-ui#readme",
   "devDependencies": {
-    "@ava/typescript": "^4.0.0",
-    "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
     "@google-labs/tsconfig": "^0.0.1",
+    "@types/gtag.js": "^0.0.20",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^22.0.0",
-    "@typescript-eslint/eslint-plugin": "^7.18.0",
-    "@typescript-eslint/parser": "^7.18.0",
-    "ava": "^5.2.0",
-    "dotenv": "^16.4.7",
-    "tsx": "^4.19.3",
     "typescript": "^5.8.3",
     "vite": "^6.2.7",
     "vite-plugin-full-reload": "^1.2.0",
-    "vite-plugin-watch-and-run": "^1.7.4",
-    "vitest": "^3.1.1"
+    "vite-plugin-watch-and-run": "^1.7.4"
   },
   "dependencies": {
-    "@breadboard-ai/build": "0.12.2",
+    "@breadboard-ai/a2": "0.4.0",
     "@breadboard-ai/connection-client": "0.2.0",
-    "@breadboard-ai/data-store": "0.3.3",
-    "@breadboard-ai/embedded-board-server": "0.1.0",
     "@breadboard-ai/google-drive-kit": "0.6.0",
     "@breadboard-ai/jsandbox": "0.6.0",
+    "@breadboard-ai/theme": "0.0.1",
     "@breadboard-ai/types": "0.7.0",
     "@codemirror/autocomplete": "^6.18.6",
     "@codemirror/commands": "^6.8.0",
     "@codemirror/lang-javascript": "^6.2.3",
     "@codemirror/lang-json": "^6.0.1",
     "@codemirror/language": "^6.11.0",
-    "@codemirror/lint": "^6.8.5",
     "@codemirror/search": "^6.5.10",
     "@codemirror/theme-one-dark": "^6.1.2",
     "@codemirror/view": "^6.36.4",
-    "@dagrejs/dagre": "^1.1.4",
     "@google-labs/breadboard": "^0.34.0",
     "@google-labs/breadboard-schema": "^1.14.0",
-    "@google-labs/core-kit": "^0.19.0",
     "@lit-labs/signals": "^0.1.2",
     "@lit/context": "^1.1.4",
     "@lit/task": "^1.0.2",
-    "@pixi/math-extras": "^7.4.3",
+    "@material/web": "^2.3.0",
     "@types/gapi": "^0.0.47",
     "@types/gapi.client.drive-v3": "^0.0.5",
     "@types/google.picker": "^0.0.50",
@@ -164,10 +156,10 @@
     "ajv": "^8.17.1",
     "codemirror": "^6.0.1",
     "idb": "^8.0.2",
-    "idb-keyval": "^6.2.1",
-    "lit": "^3.2.1",
+    "jszip": "^3.10.1",
+    "lit": "^3.3.0",
     "markdown-it": "^14.1.0",
-    "pixi.js": "^8.8.1",
+    "pdfjs-dist": "^5.2.133",
     "signal-polyfill": "^0.2.2",
     "signal-utils": "^0.21.1"
   }

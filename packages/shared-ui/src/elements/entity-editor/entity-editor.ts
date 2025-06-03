@@ -5,6 +5,8 @@
  */
 import {
   InspectableGraph,
+  InspectableNode,
+  InspectableNodePorts,
   isLLMContent,
   isLLMContentArray,
   isStoredData,
@@ -57,6 +59,7 @@ import { MAIN_BOARD_ID } from "../../constants/constants";
 import { Project } from "../../state";
 import {
   FastAccessSelectEvent,
+  IterateOnPromptEvent,
   NodePartialUpdateEvent,
   ToastEvent,
   ToastType,
@@ -71,6 +74,11 @@ import { FlowGenConstraint } from "../../flow-gen/flow-generator";
 import { ConnectorView } from "../../connectors/types";
 import { SignalWatcher } from "@lit-labs/signals";
 import { icons } from "../../styles/icons";
+import { consume } from "@lit/context";
+import { embedderContext } from "../../contexts/embedder";
+import { EmbedState, embedState } from "@breadboard-ai/embed";
+import { getBoardUrlFromCurrentWindow } from "../../utils/board-id.js";
+
 const Strings = StringsHelper.forSection("Editor");
 
 // A type that is like a port (and fits InspectablePort), but could also be
@@ -113,8 +121,11 @@ export class EntityEditor extends SignalWatcher(LitElement) {
   @property({ reflect: true, type: Boolean })
   accessor readOnly = false;
 
-  @property()
+  @property({ reflect: true, type: Boolean })
   accessor autoFocus = false;
+
+  @consume({ context: embedderContext })
+  accessor embedState: EmbedState = embedState();
 
   @state()
   accessor values: InputValues | undefined;
@@ -153,7 +164,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         }
 
         & input {
-          flex: 1 0 auto;
+          flex: 1 1 auto;
           font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
             var(--bb-font-family);
           background: transparent;
@@ -175,6 +186,33 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           height: 20px;
           flex: 0 0 auto;
           margin-right: var(--bb-grid-size);
+        }
+      }
+
+      #iterate-on-prompt {
+        height: var(--bb-grid-size-7);
+        white-space: nowrap;
+        padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-4);
+        border-radius: var(--bb-grid-size-16);
+        background: var(--bb-neutral-0);
+        color: #004a77;
+        font: 500 var(--bb-title-small) / var(--bb-title-line-height-small)
+          var(--bb-font-family);
+        display: flex;
+        align-items: center;
+        border-radius: 100px;
+        border: none;
+        transition: background 0.2s cubic-bezier(0, 0, 0.3, 1);
+        cursor: pointer;
+        background: var(--bb-grid-size-3) center / 18px 18px no-repeat #c2e7ff;
+        &:hover,
+        &:focus {
+          background-color: #96d6ff;
+        }
+        &:disabled {
+          background-color: #efefef;
+          color: #1010104d;
+          cursor: default;
         }
       }
 
@@ -330,6 +368,10 @@ export class EntityEditor extends SignalWatcher(LitElement) {
               no-repeat;
           }
         }
+
+        bb-llm-output {
+          margin: var(--bb-grid-size-3) var(--bb-grid-size-6);
+        }
       }
 
       #content {
@@ -357,8 +399,12 @@ export class EntityEditor extends SignalWatcher(LitElement) {
             user-select: none;
             height: var(--bb-grid-size-5);
 
-            & .g-icon::before {
-              content: "keyboard_arrow_down";
+            & .g-icon {
+              margin-right: var(--bb-grid-size-2);
+
+              &::before {
+                content: "keyboard_arrow_down";
+              }
             }
           }
 
@@ -366,11 +412,15 @@ export class EntityEditor extends SignalWatcher(LitElement) {
             display: none;
           }
 
-          &[open] summary {
-            margin-bottom: var(--bb-grid-size-3);
+          &[open] {
+            summary {
+              margin-bottom: var(--bb-grid-size-3);
 
-            & .g-icon::before {
-              content: "keyboard_arrow_up";
+              & .g-icon {
+                &::before {
+                  content: "keyboard_arrow_up";
+                }
+              }
             }
           }
 
@@ -380,6 +430,8 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           }
 
           bb-text-editor {
+            width: 100%;
+            height: 100%;
             --text-editor-padding-top: var(--bb-grid-size-2);
             --text-editor-padding-right: var(--bb-grid-size-3);
             --text-editor-padding-bottom: var(--bb-grid-size-2);
@@ -387,14 +439,217 @@ export class EntityEditor extends SignalWatcher(LitElement) {
             border-radius: var(--bb-grid-size-2);
             border: 1px solid var(--bb-neutral-300);
           }
+
+          & .port {
+            margin-bottom: var(--bb-grid-size-2);
+          }
         }
 
-        > div {
-          height: var(--bb-grid-size-5);
+        div {
           display: flex;
           align-items: center;
           font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
             var(--bb-font-family);
+
+          &.port {
+            position: relative;
+
+            &.read-only::before {
+              content: "";
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              z-index: 10;
+            }
+
+            &.boolean {
+              & label {
+                display: flex;
+                align-items: center;
+                padding-left: 0;
+
+                & .g-icon {
+                  margin-right: var(--bb-grid-size-2);
+
+                  &::before {
+                    content: "check_box_outline_blank";
+                  }
+                }
+
+                &:has(+ input:checked) .g-icon::before {
+                  content: "check_box";
+                }
+
+                &:focus {
+                  outline: none;
+
+                  &::before {
+                    border: 1px solid var(--bb-ui-700);
+                    outline: 1px solid var(--bb-ui-700);
+                  }
+                }
+              }
+
+              & input {
+                display: none;
+              }
+            }
+
+            label {
+              &:not(.slim) {
+                margin-right: var(--bb-grid-size-2);
+
+                &.icon::before {
+                  margin-right: var(--bb-grid-size-2);
+                }
+              }
+              display: inline-flex;
+              align-items: center;
+
+              &.icon {
+                &::before {
+                  content: "";
+                  width: 20px;
+                  height: 20px;
+                  background: red;
+                }
+
+                &.search::before {
+                  background: var(--bb-icon-search) center center / 20px 20px
+                    no-repeat;
+                }
+
+                &.map-search::before {
+                  background: var(--bb-icon-map-search) center center / 20px
+                    20px no-repeat;
+                }
+
+                &.globe-book::before {
+                  background: var(--bb-icon-globe-book) center center / 20px
+                    20px no-repeat;
+                }
+
+                &.language::before {
+                  background: var(--bb-icon-language) center center / 20px 20px
+                    no-repeat;
+                }
+
+                &.sunny::before {
+                  background: var(--bb-icon-sunny) center center / 20px 20px
+                    no-repeat;
+                }
+
+                &.generative::before {
+                  background: var(--bb-add-icon-generative) center center / 20px
+                    20px no-repeat;
+                }
+
+                &.generative-image::before {
+                  background: var(--bb-add-icon-generative-image) center
+                    center / 20px 20px no-repeat;
+                }
+
+                &.generative-image-edit::before {
+                  background: var(--bb-add-icon-generative-image-edit-auto)
+                    center center / 20px 20px no-repeat;
+                }
+
+                &.generative-text::before {
+                  background: var(--bb-add-icon-generative-text-analysis) center
+                    center / 20px 20px no-repeat;
+                }
+
+                &.generative-audio::before {
+                  background: var(--bb-add-icon-generative-audio) center
+                    center / 20px 20px no-repeat;
+                }
+
+                &.generative-video::before {
+                  background: var(--bb-add-icon-generative-videocam-auto) center
+                    center / 20px 20px no-repeat;
+                }
+
+                &.generative-code::before {
+                  background: var(--bb-add-icon-generative-code) center center /
+                    20px 20px no-repeat;
+                }
+
+                &.generative-search::before {
+                  background: var(--bb-add-icon-generative-search) center
+                    center / 20px 20px no-repeat;
+                }
+
+                &.combine-outputs::before {
+                  background: var(--bb-icon-table-rows) center center / 20px
+                    20px no-repeat;
+                }
+
+                &.display::before {
+                  background: var(--bb-icon-responsive-layout) center center /
+                    20px 20px no-repeat;
+                }
+
+                &.ask-user::before {
+                  background: var(--bb-icon-chat-mirror) center center / 20px
+                    20px no-repeat;
+                }
+
+                &.input::before {
+                  background: var(--bb-icon-input) center center / 20px 20px
+                    no-repeat;
+                }
+
+                &.output::before {
+                  background: var(--bb-icon-output) center center / 20px 20px
+                    no-repeat;
+                }
+
+                &.smart-toy::before {
+                  background: var(--bb-icon-smart-toy) center center / 20px 20px
+                    no-repeat;
+                }
+
+                &.laps::before {
+                  background: var(--bb-icon-laps) center center / 20px 20px
+                    no-repeat;
+                }
+
+                &.merge-type::before {
+                  background: var(--bb-icon-merge-type) center center / 20px
+                    20px no-repeat;
+                }
+
+                &.code-blocks::before {
+                  background: var(--bb-icon-code-blocks) center center / 20px
+                    20px no-repeat;
+                }
+
+                &.human::before {
+                  background: var(--bb-icon-human) center center / 20px 20px
+                    no-repeat;
+                }
+              }
+            }
+
+            input,
+            select,
+            textarea {
+              font: 400 var(--bb-label-medium) /
+                var(--bb-label-line-height-medium) var(--bb-font-family);
+              height: var(--bb-grid-size-5);
+              border: none;
+              margin: 0;
+              padding: 0 var(--bb-grid-size-2);
+            }
+
+            .item-select-container {
+              flex: 1 1 auto;
+              overflow: hidden;
+              margin-right: var(--bb-grid-size-2);
+            }
+          }
 
           &.object:has(details) {
             padding-right: 0;
@@ -404,6 +659,11 @@ export class EntityEditor extends SignalWatcher(LitElement) {
             min-height: var(--bb-grid-size-5);
             align-items: flex-start;
             flex-direction: column;
+
+            /** Pass through the readonly-status to the text-editor */
+            &.read-only::before {
+              display: none;
+            }
 
             &:not(.stretch) details {
               bb-text-editor {
@@ -417,12 +677,31 @@ export class EntityEditor extends SignalWatcher(LitElement) {
             }
 
             &:not(:last-of-type) {
-              border-bottom: 1px solid var(--bb-neutral-300);
               padding-bottom: var(--bb-grid-size-3);
             }
           }
 
-          &.stretch:has(+ :not(.stretch)) {
+          & bb-llm-output {
+            margin: var(--bb-grid-size-3) var(--bb-grid-size-6);
+            --output-lite-border-color: transparent;
+            --output-border-radius: var(--bb-grid-size);
+          }
+
+          & bb-llm-part-input {
+            &.fill {
+              width: 100%;
+              height: 100%;
+              overflow: auto;
+            }
+          }
+        }
+
+        > div {
+          &.port {
+            container-type: inline-size;
+          }
+
+          &.stretch:has(+ .port:not(.stretch)) {
             margin-bottom: var(--bb-grid-size-3);
             border-bottom: 1px solid var(--bb-neutral-300);
           }
@@ -449,200 +728,27 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
           &:not(.stretch) {
             padding: 0 var(--bb-grid-size-6);
+            flex: 0 0 auto;
 
             &:last-of-type {
               padding-bottom: var(--bb-grid-size-3);
             }
           }
 
-          &.boolean {
-            & label {
-              display: flex;
-              align-items: center;
-              padding-left: 0;
-
-              &::before {
-                content: "";
-                display: block;
-                width: 16px;
-                height: 16px;
-                border-radius: var(--bb-grid-size);
-                border: 1px solid var(--bb-neutral-600);
-                flex: 0 0 auto;
-                margin-right: var(--bb-grid-size-2);
-              }
-
-              &:has(+ input:checked)::before {
-                background: var(--bb-icon-check) center center / 20px 20px
-                  no-repeat;
-              }
-
-              &:focus {
-                outline: none;
-
-                &::before {
-                  border: 1px solid var(--bb-ui-700);
-                  outline: 1px solid var(--bb-ui-700);
-                }
-              }
-            }
-
-            & input {
-              display: none;
-            }
+          & bb-text-editor {
+            width: 100%;
+            height: 100%;
+            --text-editor-height: 100%;
+            --text-editor-padding-top: 0;
+            --text-editor-padding-right: var(--bb-grid-size-6);
+            --text-editor-padding-bottom: 0;
+            --text-editor-padding-left: var(--bb-grid-size-6);
           }
 
-          label {
-            &:not(.slim) {
-              margin-right: var(--bb-grid-size-2);
-
-              &.icon::before {
-                margin-right: var(--bb-grid-size-2);
-              }
+          &:has(bb-text-editor) {
+            &:not(:last-of-type) {
+              border-bottom: 1px solid var(--bb-neutral-300);
             }
-            display: inline-flex;
-            align-items: center;
-
-            &.icon {
-              &::before {
-                content: "";
-                width: 20px;
-                height: 20px;
-                background: red;
-              }
-
-              &.search::before {
-                background: var(--bb-icon-search) center center / 20px 20px
-                  no-repeat;
-              }
-
-              &.map-search::before {
-                background: var(--bb-icon-map-search) center center / 20px 20px
-                  no-repeat;
-              }
-
-              &.globe-book::before {
-                background: var(--bb-icon-globe-book) center center / 20px 20px
-                  no-repeat;
-              }
-
-              &.language::before {
-                background: var(--bb-icon-language) center center / 20px 20px
-                  no-repeat;
-              }
-
-              &.sunny::before {
-                background: var(--bb-icon-sunny) center center / 20px 20px
-                  no-repeat;
-              }
-
-              &.generative::before {
-                background: var(--bb-add-icon-generative) center center / 20px
-                  20px no-repeat;
-              }
-
-              &.generative-image::before {
-                background: var(--bb-add-icon-generative-image) center center /
-                  20px 20px no-repeat;
-              }
-
-              &.generative-image-edit::before {
-                background: var(--bb-add-icon-generative-image-edit-auto) center
-                  center / 20px 20px no-repeat;
-              }
-
-              &.generative-text::before {
-                background: var(--bb-add-icon-generative-text-analysis) center
-                  center / 20px 20px no-repeat;
-              }
-
-              &.generative-audio::before {
-                background: var(--bb-add-icon-generative-audio) center center /
-                  20px 20px no-repeat;
-              }
-
-              &.generative-video::before {
-                background: var(--bb-add-icon-generative-videocam-auto) center
-                  center / 20px 20px no-repeat;
-              }
-
-              &.generative-code::before {
-                background: var(--bb-add-icon-generative-code) center center /
-                  20px 20px no-repeat;
-              }
-
-              &.generative-search::before {
-                background: var(--bb-add-icon-generative-search) center center /
-                  20px 20px no-repeat;
-              }
-
-              &.combine-outputs::before {
-                background: var(--bb-icon-table-rows) center center / 20px 20px
-                  no-repeat;
-              }
-
-              &.display::before {
-                background: var(--bb-icon-responsive-layout) center center /
-                  20px 20px no-repeat;
-              }
-
-              &.ask-user::before {
-                background: var(--bb-icon-chat-mirror) center center / 20px 20px
-                  no-repeat;
-              }
-
-              &.input::before {
-                background: var(--bb-icon-input) center center / 20px 20px
-                  no-repeat;
-              }
-
-              &.output::before {
-                background: var(--bb-icon-output) center center / 20px 20px
-                  no-repeat;
-              }
-
-              &.smart-toy::before {
-                background: var(--bb-icon-smart-toy) center center / 20px 20px
-                  no-repeat;
-              }
-
-              &.laps::before {
-                background: var(--bb-icon-laps) center center / 20px 20px
-                  no-repeat;
-              }
-
-              &.merge-type::before {
-                background: var(--bb-icon-merge-type) center center / 20px 20px
-                  no-repeat;
-              }
-
-              &.code-blocks::before {
-                background: var(--bb-icon-code-blocks) center center / 20px 20px
-                  no-repeat;
-              }
-
-              &.human::before {
-                background: var(--bb-icon-human) center center / 20px 20px
-                  no-repeat;
-              }
-            }
-          }
-
-          input,
-          select,
-          textarea {
-            font: 400 var(--bb-label-medium) /
-              var(--bb-label-line-height-medium) var(--bb-font-family);
-            height: var(--bb-grid-size-5);
-            border: none;
-            margin: 0;
-            padding: 0 var(--bb-grid-size-2);
-          }
-
-          .item-select-container {
-            flex: 1 1 auto;
-            overflow: hidden;
-            margin-right: var(--bb-grid-size-2);
           }
 
           #controls-container {
@@ -690,30 +796,6 @@ export class EntityEditor extends SignalWatcher(LitElement) {
             }
           }
         }
-
-        & bb-text-editor {
-          width: 100%;
-          height: 100%;
-          --text-editor-height: 100%;
-          --text-editor-padding-top: 0;
-          --text-editor-padding-right: var(--bb-grid-size-6);
-          --text-editor-padding-bottom: 0;
-          --text-editor-padding-left: var(--bb-grid-size-6);
-        }
-
-        & bb-llm-output {
-          margin: var(--bb-grid-size-3) var(--bb-grid-size-6);
-          --output-lite-border-color: transparent;
-          --output-border-radius: var(--bb-grid-size);
-        }
-
-        & bb-llm-part-input {
-          &.fill {
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-          }
-        }
       }
 
       bb-fast-access-menu {
@@ -748,6 +830,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
   #fastAccessRef: Ref<FastAccessMenu> = createRef();
   #isUsingFastAccess = false;
   #onPointerDownBound = this.#onPointerDown.bind(this);
+  #advancedOpen = false;
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -1069,6 +1152,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
             id="node-title"
             name="node-title"
             .value=${node.title()}
+            ?disabled=${this.readOnly}
             @keydown=${(evt: KeyboardEvent) => {
               if (evt.key !== "Enter") {
                 return;
@@ -1079,6 +1163,9 @@ export class EntityEditor extends SignalWatcher(LitElement) {
               this.#submit(this.values);
             }}
           />
+          ${this.embedState?.showIterateOnPrompt
+            ? this.#renderIterateOnPromptButton(nodeId, node.title(), node)
+            : nothing}
         </h1>
         <div id="type"></div>
         <div id="content">
@@ -1092,11 +1179,54 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     return html`${until(value, html`<div id="generic-status">Loading...</div>`)}`;
   }
 
+  #renderIterateOnPromptButton(
+    nodeId: NodeIdentifier,
+    nodeTitle: string,
+    node: InspectableNode
+  ) {
+    // Note that the board URL here may not be a HTTP/HTTPS URL - it could
+    // be a Drive URL of the form drive:/12345.
+    const boardUrl = this.graph?.raw().url ?? getBoardUrlFromCurrentWindow();
+    if (!boardUrl || !isGenerativeNode(node)) {
+      return nothing;
+    }
+    // If tools are contained in prompt, iterate-on-prompt will be disabled.
+    const promptcontainsToolsOrAssets = containsToolsOrAssets(
+      node.currentPorts()
+    );
+    return html` <button
+      id="iterate-on-prompt"
+      .disabled=${promptcontainsToolsOrAssets}
+      @click=${async () => {
+        // Submit the changes to ensure the prompt is updated before it's sent.
+        await this.#submit(this.values);
+        const ports = await node.ports();
+        const promptTemplate = extractLlmTextPart(ports);
+        const modelId = extractModelId(ports);
+        if (!promptTemplate) {
+          return;
+        }
+        this.dispatchEvent(
+          new IterateOnPromptEvent(
+            nodeTitle,
+            promptTemplate,
+            boardUrl!,
+            nodeId,
+            modelId
+          )
+        );
+      }}
+    >
+      Iterate on prompt
+    </button>`;
+  }
+
   #renderTextEditorPort(
     port: PortLike,
     value: LLMContent | undefined,
     graphId: GraphIdentifier,
-    fastAccess: boolean
+    fastAccess: boolean,
+    isReferenced: boolean
   ) {
     const portValue = getLLMContentPortValue(value, port.schema);
     const textPart = portValue.parts.find((part) => isTextCapabilityPart(part));
@@ -1105,11 +1235,12 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     }
 
     return html`<bb-text-editor
-      ${ref(this.#editorRef)}
+      ${isReferenced ? ref(this.#editorRef) : nothing}
       .value=${textPart.text}
       .projectState=${this.projectState}
       .subGraphId=${graphId !== MAIN_BOARD_ID ? graphId : null}
       .supportsFastAccess=${fastAccess}
+      .readOnly=${this.readOnly}
       id=${port.name}
       name=${port.name}
       @keydown=${(evt: KeyboardEvent) => {
@@ -1132,7 +1263,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       inputPorts.findIndex((port) => isLLMContentBehavior(port.schema)) !== -1;
 
     const portRender = (port: PortLike) => {
-      const classes: Record<string, boolean> = {};
+      const classes: Record<string, boolean> = { port: true };
       let value:
         | HTMLTemplateResult
         | symbol
@@ -1144,6 +1275,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
             classes.object = true;
             classes.stretch = !advanced;
+            const isReferenced = !advanced;
 
             value = [
               advanced
@@ -1153,7 +1285,8 @@ export class EntityEditor extends SignalWatcher(LitElement) {
                 port,
                 isLLMContent(port.value) ? port.value : undefined,
                 graphId,
-                !advanced
+                !advanced,
+                isReferenced
               ),
             ];
           } else {
@@ -1177,12 +1310,14 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           if (isLLMContentArrayBehavior(port.schema)) {
             classes.stretch = true;
             classes.object = true;
+            classes.array = true;
             value = this.#renderTextEditorPort(
               port,
               isLLMContentArray(port.value)
                 ? (port.value.at(-1) as LLMContent)
                 : undefined,
               graphId,
+              true,
               true
             );
           }
@@ -1202,7 +1337,9 @@ export class EntityEditor extends SignalWatcher(LitElement) {
               class=${classMap({
                 slim: isControllerBehavior(port.schema),
               })}
-              >${!isControllerBehavior(port.schema) ? port.title : ""}</label
+              ><span class="g-icon"></span>${!isControllerBehavior(port.schema)
+                ? port.title
+                : ""}</label
             ><input
               type="checkbox"
               ?checked=${port.value === true}
@@ -1277,6 +1414,11 @@ export class EntityEditor extends SignalWatcher(LitElement) {
                     kind: "EDIT_STEP_CONFIG",
                     stepId: nodeId,
                   } satisfies FlowGenConstraint}
+                  @bbgraphreplace=${() => {
+                    // Ignore all edits to this point so that we don't issue
+                    // a submit and stomp the new values.
+                    this.#edited = false;
+                  }}
                 ></bb-flowgen-in-step-button>`
               : nothing}
             ${hasTextEditor
@@ -1300,6 +1442,8 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           </div>
         </div>`;
       }
+
+      classes["read-only"] = this.readOnly;
       return html`<div class=${classMap(classes)}>${value} ${controls}</div>`;
     };
 
@@ -1318,7 +1462,17 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     return [
       ...basicPorts.map(portRender),
       advancedPorts.length > 0
-        ? html`<details id="advanced-settings">
+        ? html`<details
+            id="advanced-settings"
+            ?open=${this.#advancedOpen}
+            @toggle=${(evt: Event) => {
+              if (!(evt.target instanceof HTMLDetailsElement)) {
+                return;
+              }
+
+              this.#advancedOpen = evt.target.open;
+            }}
+          >
             <summary><span class="g-icon"></span>Advanced settings</summary>
             ${[...advancedPorts.map(portRender)]}
           </details>`
@@ -1412,6 +1566,9 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
           this.#submit(this.values);
         }}
+        @input=${() => {
+          this.#edited = true;
+        }}
         .graphUrl=${graphUrl}
         .subType=${asset.subType}
         .projectState=${this.projectState}
@@ -1495,26 +1652,26 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     // Auto-save both when a different step is selected
     // and when the reactive change is triggered.
     if (
-      (changedProperties.has("selectionState") ||
+      (changedProperties.has("graphTopologyUpdateId") ||
+        changedProperties.has("selectionState") ||
         changedProperties.has("values")) &&
       this.#edited
     ) {
-      if (this.#edited) {
-        // Autosave.
-        this.#edited = false;
-        // Because this function is async, let's pass it the current values,
-        // so that when they are set to undefined later, we still have them.
-        this.#submit(this.values);
-      }
+      this.triggerSubmit();
+    }
+  }
 
-      // Reset the node value so that we don't receive incorrect port data.
-      this.values = undefined;
+  triggerSubmit() {
+    if (!this.#edited) {
+      return;
     }
 
-    if (changedProperties.has("autoFocus")) {
-      this.autoFocus = false;
-      this.focus();
-    }
+    // Autosave.
+    this.#edited = false;
+    this.#submit(this.values);
+
+    // Reset the node value so that we don't receive incorrect port data.
+    this.values = undefined;
   }
 
   focus() {
@@ -1634,4 +1791,57 @@ function getLLMContentPortValue(
     role: "user",
     parts: [{ text: "" }],
   };
+}
+
+// Extract LLM text part if available; null otherwise.
+function extractLlmTextPart(ports: InspectableNodePorts): string | null {
+  const inputPorts = ports.inputs.ports;
+  const port = inputPorts.find(
+    (port) =>
+      isLLMContentBehavior(port.schema) &&
+      !port.schema.behavior?.includes("hint-advanced")
+  );
+  if (!port || !isLLMContent(port.value)) {
+    return null;
+  }
+  const portValue = getLLMContentPortValue(port.value, port.schema);
+  const textPart = portValue.parts.find((part) => isTextCapabilityPart(part));
+  if (!textPart) {
+    return null;
+  }
+  return textPart.text;
+}
+
+// Extract selected model ID (e.g., 'text', 'text-2.0-flash') from node.
+// Returns null if not present.
+function extractModelId(ports: InspectableNodePorts): string | null {
+  const inputPorts = ports.inputs.ports;
+  const port = inputPorts.find(
+    (port) => port.schema.type === "string" && port.schema.enum
+  );
+  if (!port) {
+    return null;
+  }
+  const currentValue = enumValue(
+    port.schema!.enum!.find((value) => enumValue(value).id == port.value) ??
+      port.schema!.enum![0]
+  );
+  return currentValue?.id ?? null;
+}
+
+function isGenerativeNode(node: InspectableNode): boolean {
+  return node.descriptor.type === "embed://a2/generate.bgl.json#module:main";
+}
+
+// Returns true if LLM text part of node contains tools/assets or is absent.
+function containsToolsOrAssets(ports: InspectableNodePorts): boolean {
+  const textPart = extractLlmTextPart(ports);
+  if (!textPart) {
+    return false;
+  }
+  const template = new Template(textPart!);
+  const tools = template.placeholders.filter((placeholder) =>
+    ["tool", "asset"].includes(placeholder.type)
+  );
+  return tools.length > 0;
 }

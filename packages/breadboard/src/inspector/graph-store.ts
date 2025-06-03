@@ -17,7 +17,7 @@ import {
   Result,
 } from "../editor/types.js";
 import { createLoader } from "../loader/index.js";
-import { getGraphUrl, getGraphUrlComponents } from "../loader/loader.js";
+import { urlComponentsFromString } from "../loader/loader.js";
 import {
   GraphLoader,
   GraphLoaderContext,
@@ -35,6 +35,7 @@ import {
   GraphStoreArgs,
   GraphStoreEntry,
   GraphStoreEventTarget,
+  InspectableDescriberResultTypeCache,
   InspectableGraph,
   InspectableGraphOptions,
   MainGraphIdentifier,
@@ -45,8 +46,15 @@ import {
 } from "./types.js";
 import { filterEmptyValues } from "./utils.js";
 import { FileSystem, FileSystemEntry } from "../data/types.js";
+import { DescribeResultTypeCache } from "./graph/describe-type-cache.js";
+import { NodeTypeDescriberManager } from "./graph/node-type-describer-manager.js";
 
-export { contextFromMutableGraph, GraphStore, makeTerribleOptions };
+export {
+  contextFromMutableGraph,
+  contextFromMutableGraphStore,
+  GraphStore,
+  makeTerribleOptions,
+};
 
 function contextFromMutableGraph(mutable: MutableGraph): NodeHandlerContext {
   const store = mutable.store;
@@ -56,6 +64,17 @@ function contextFromMutableGraph(mutable: MutableGraph): NodeHandlerContext {
     sandbox: store.sandbox,
     graphStore: store,
     outerGraph: mutable.graph,
+  };
+}
+
+function contextFromMutableGraphStore(
+  store: MutableGraphStore
+): NodeHandlerContext {
+  return {
+    kits: [...store.kits],
+    loader: store.loader,
+    sandbox: store.sandbox,
+    graphStore: store,
   };
 }
 
@@ -116,12 +135,26 @@ class GraphStore
     new Map();
   #dependencies: Map<MainGraphIdentifier, Set<MainGraphIdentifier>> = new Map();
 
+  /**
+   * The cache of type describer results. These are currently
+   * entirely static: they are only loaded once and exist
+   * for the lifetime of the GraphStore. At the moment, this
+   * is ok, since the only graph that ever changes is the main
+   * graph, and we don't need its type. This will change
+   * probably, so we need to be on look out for when.
+   */
+  public readonly types: InspectableDescriberResultTypeCache;
+
   constructor(args: GraphStoreArgs) {
     super();
     this.kits = args.kits;
     this.sandbox = args.sandbox;
     this.loader = args.loader;
     this.fileSystem = args.fileSystem;
+    this.types = new DescribeResultTypeCache(
+      new NodeTypeDescriberManager(this)
+    );
+
     this.#legacyKits = this.#populateLegacyKits(args.kits);
   }
 
@@ -129,7 +162,7 @@ class GraphStore
     descriptor: GraphDescriptor,
     graphId: GraphIdentifier
   ): GraphStoreEntry | undefined {
-    const getting = this.getOrAdd(descriptor, false);
+    const getting = this.getOrAdd(descriptor);
     if (!getting.success) {
       return;
     }
@@ -315,7 +348,7 @@ class GraphStore
   }
 
   addByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier> {
-    const getting = this.getOrAdd(graph, true);
+    const getting = this.getOrAdd(graph);
     if (!getting.success) {
       return getting;
     }
@@ -323,7 +356,7 @@ class GraphStore
   }
 
   getByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier> {
-    const getting = this.getOrAdd(graph, false);
+    const getting = this.getOrAdd(graph);
     if (!getting.success) {
       return getting;
     }
@@ -334,7 +367,7 @@ class GraphStore
     graph: GraphDescriptor,
     options: EditableGraphOptions = {}
   ): EditableGraph | undefined {
-    const result = this.getOrAdd(graph, true);
+    const result = this.getOrAdd(graph);
     if (!result.success) {
       console.error(`Failed to edityByDescriptor: ${result.error}`);
       return undefined;
@@ -375,8 +408,9 @@ class GraphStore
     dependencies: MainGraphIdentifier[],
     context: GraphLoaderContext = {}
   ): AddResult {
-    const { mainGraphUrl, graphId, moduleId } = getGraphUrlComponents(
-      getGraphUrl(path, context)
+    const { mainGraphUrl, graphId, moduleId } = urlComponentsFromString(
+      path,
+      context
     );
     const id = this.#mainGraphIds.get(mainGraphUrl);
     if (id) {
@@ -426,7 +460,7 @@ class GraphStore
     });
   }
 
-  getOrAdd(graph: GraphDescriptor, sameCheck: boolean): Result<MutableGraph> {
+  getOrAdd(graph: GraphDescriptor): Result<MutableGraph> {
     let url = graph.url;
     let graphHash: number | null = null;
     if (!url) {
@@ -435,19 +469,12 @@ class GraphStore
     }
 
     // Find graph by URL.
-    const id = this.#mainGraphIds.get(url);
+    const { mainGraphUrl } = urlComponentsFromString(url);
+    const id = this.#mainGraphIds.get(mainGraphUrl);
     if (id) {
       const existing = this.#mutables.get(id)?.current();
       if (!existing) {
         return error(`Integrity error: main graph "${id}" not found in store.`);
-      }
-      const same =
-        !sameCheck ||
-        graphHash !== null ||
-        hash(existing.graph) === hash(graph);
-      if (!same) {
-        // When not the same, rebuild the graph on the MutableGraphImpl.
-        existing.rebuild(graph);
       }
       return { success: true, result: existing };
     } else {
@@ -460,19 +487,10 @@ class GraphStore
     }
   }
 
-  /**
-   * Creates a snapshot of a MutableGraph that is based on the
-   * GraphDescriptor instance.
-   *
-   * This is basically a constant -- calling `refresh` doesn't do anything,
-   * and `latest` is immediately resolved to the same value as `current`.
-   *
-   * @param graph
-   * @returns
-   */
   #snapshotFromGraphDescriptor(
     graph: GraphDescriptor
   ): SnapshotUpdater<MutableGraph> {
+    // Create a simple static snapshot
     const mutable = new MutableGraphImpl(graph, this);
     return new SnapshotUpdater({
       initial() {
@@ -543,7 +561,7 @@ function entryFromExport(
 ): (NodeHandlerMetadata & { updating: boolean }) | null {
   const graph = mutable.graph;
   const url = `${graph.url}${id}`;
-  const { current, updating } = mutable.describe.getByType(url);
+  const { current, updating } = mutable.store.types.get(url);
   const {
     title,
     description,

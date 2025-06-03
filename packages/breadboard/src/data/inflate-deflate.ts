@@ -77,6 +77,8 @@ export const inflateData = async (
             if (ok(transforming)) {
               const part = transforming.at(0)?.parts.at(0);
               if (part) return part;
+            } else {
+              throw new Error(transforming.$error);
             }
           }
         }

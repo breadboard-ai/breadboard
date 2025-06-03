@@ -13,7 +13,6 @@ import {
   GraphBoardServerAddEvent,
   GraphBoardServerBlankBoardEvent,
   GraphBoardServerDisconnectEvent,
-  GraphBoardServerLoadRequestEvent,
   GraphBoardServerRefreshEvent,
   GraphBoardServerRenewAccessRequestEvent,
   GraphBoardServerSelectionChangeEvent,
@@ -26,7 +25,6 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
 import "../../flow-gen/flowgen-homepage-panel.js";
 import "./homepage-search-button.js";
-import type { HomepageSearchButton } from "./homepage-search-button.js";
 import { icons } from "../../styles/icons.js";
 import "./gallery.js";
 import {
@@ -40,6 +38,8 @@ import {
   type Environment,
 } from "../../contexts/environment.js";
 import { Task, TaskStatus } from "@lit/task";
+import { RecentBoard } from "../../types/types.js";
+import { ActionTracker } from "../../utils/action-tracker.js";
 
 const MODE_KEY = "bb-project-listing-mode";
 const OVERFLOW_MENU_CLEARANCE = 4;
@@ -77,7 +77,10 @@ export class ProjectListing extends LitElement {
   @property()
   accessor selectedLocation = "Browser Storage";
 
-  @state()
+  @property()
+  accessor recentBoards: RecentBoard[] = [];
+
+  @property()
   accessor filter: string | null = null;
 
   @state()
@@ -92,12 +95,6 @@ export class ProjectListing extends LitElement {
 
   @state()
   accessor mode: "detailed" | "condensed" = "detailed";
-
-  @property()
-  accessor recentItemsKey: string | null = null;
-
-  @property()
-  accessor recencyType: "local" | "session" = "session";
 
   @consume({ context: environmentContext })
   accessor environment!: Environment;
@@ -163,11 +160,23 @@ export class ProjectListing extends LitElement {
         }
 
         & #loading-message {
+          display: flex;
+          align-items: center;
+          justify-content: center;
           color: var(--bb-neutral-700);
           font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
             var(--bb-font-family);
           margin: var(--bb-grid-size-10) 0;
-          text-align: center;
+
+          &::before {
+            content: "";
+            display: block;
+            width: 20px;
+            height: 20px;
+            background: url(/images/progress-ui.svg) center center / 20px 20px
+              no-repeat;
+            margin-right: var(--bb-grid-size-2);
+          }
 
           & p {
             margin: 0 0 var(--bb-grid-size) 0;
@@ -267,11 +276,17 @@ export class ProjectListing extends LitElement {
         & #location-selector-container {
           display: flex;
           align-items: center;
+          justify-content: space-between;
 
-          & #location-selector {
-            margin: var(--bb-grid-size-5) 0;
-            padding: 0;
-            border: none;
+          & #location-selector-outer {
+            display: flex;
+            align-items: center;
+
+            & #location-selector {
+              margin: var(--bb-grid-size-5) 0;
+              padding: 0;
+              border: none;
+            }
           }
         }
 
@@ -407,15 +422,22 @@ export class ProjectListing extends LitElement {
         border: none;
         padding: 6px 12px;
         transition: background 0.2s cubic-bezier(0, 0, 0.3, 1);
-        cursor: pointer;
 
         & > .g-icon {
           margin-right: 4px;
         }
 
-        &:hover,
-        &:focus {
-          background-color: #96d6ff;
+        &[disabled] {
+          opacity: 0.6;
+        }
+
+        &:not([disabled]) {
+          cursor: pointer;
+
+          &:hover,
+          &:focus {
+            background-color: #96d6ff;
+          }
         }
       }
     `,
@@ -427,12 +449,26 @@ export class ProjectListing extends LitElement {
     this.#hideBoardServerOverflowMenu.bind(this);
   #attemptFocus = false;
   #attemptScrollUpdate = false;
-  #recentItems: string[] = [];
 
   connectedCallback(): void {
     super.connectedCallback();
 
     this.addEventListener("click", this.#hideBoardServerOverflowMenuBound);
+
+    for (const boardServer of this.boardServers) {
+      const closuredName = boardServer.name;
+      boardServer.addEventListener("boardlistrefreshed", () => {
+        // Listen to all, react only to the current.
+        if (closuredName == this.selectedBoardServer) {
+          this.dispatchEvent(
+            new GraphBoardServerRefreshEvent(
+              this.selectedBoardServer,
+              this.selectedLocation
+            )
+          );
+        }
+      });
+    }
 
     this.#attemptFocus = true;
 
@@ -460,17 +496,6 @@ export class ProjectListing extends LitElement {
         }>
       | Map<PropertyKey, unknown>
   ): void {
-    if (
-      changedProperties.has("selectedLocation") ||
-      changedProperties.has("selectedBoardServer")
-    ) {
-      this.recentItemsKey = this.#createUrl(
-        this.selectedBoardServer,
-        this.selectedLocation
-      );
-      this.#restoreRecentItemsForKey(this.recentItemsKey);
-    }
-
     if (
       changedProperties.has("boardServerNavState") ||
       changedProperties.has("boardServers") ||
@@ -621,48 +646,6 @@ export class ProjectListing extends LitElement {
     });
   }
 
-  #restoreRecentItemsForKey(key: string | null) {
-    if (!key) {
-      return;
-    }
-
-    const store =
-      this.recencyType === "local"
-        ? globalThis.localStorage
-        : globalThis.sessionStorage;
-    try {
-      const data = store.getItem(`bb-project-listing-${key}`);
-      if (!data) {
-        return;
-      }
-      const items = JSON.parse(data);
-      if (
-        !Array.isArray(items) ||
-        !items.every((item) => typeof item === "string")
-      ) {
-        return;
-      }
-
-      this.#recentItems = items;
-    } catch (err) {
-      console.warn(err);
-      return;
-    }
-  }
-
-  #saveRecentItemsForKey(key: string | null) {
-    if (!key) {
-      return;
-    }
-
-    const items = JSON.stringify(this.#recentItems);
-    const store =
-      this.recencyType === "local"
-        ? globalThis.localStorage
-        : globalThis.sessionStorage;
-    store.setItem(`bb-project-listing-${key}`, items);
-  }
-
   #focusSearchField() {
     if (!this.#searchRef.value) {
       return;
@@ -680,22 +663,7 @@ export class ProjectListing extends LitElement {
   }
 
   #getCurrentStoreName(_url: string) {
-    // For now, simply return a fixed title string, like "Your flows",
-    // instead of getting the title from the server.
-    // TODO: Figure out what the right thing to do is here.
     return Strings.from("LABEL_TABLE_DESCRIPTION_YOUR_PROJECTS");
-
-    // for (const boardServer of this.boardServers) {
-    //   for (const [location, store] of boardServer.items()) {
-    //     const value = `${boardServer.name}::${store.url ?? location}`;
-
-    //     if (value === url) {
-    //       return store.title;
-    //     }
-    //   }
-    // }
-
-    // return "Unknown Store";
   }
 
   render() {
@@ -718,6 +686,61 @@ export class ProjectListing extends LitElement {
       this.selectedLocation
     );
 
+    const location = this.showAdditionalSources
+      ? html`<div id="location-selector-outer">
+          <select
+            id="location-selector"
+            class="gallery-title"
+            @input=${(evt: Event) => {
+              if (!(evt.target instanceof HTMLSelectElement)) {
+                return;
+              }
+
+              const [boardServer, location] = this.#parseUrl(evt.target.value);
+              this.selectedBoardServer = boardServer;
+              this.selectedLocation = location;
+
+              this.dispatchEvent(
+                new GraphBoardServerSelectionChangeEvent(boardServer, location)
+              );
+            }}
+          >
+            ${map(this.boardServers, (boardServer) => {
+              return html`${map(boardServer.items(), ([location, store]) => {
+                const value = `${boardServer.name}::${store.url ?? location}`;
+                const isSelectedOption = value === selected;
+                return html`<option
+                  .selected=${isSelectedOption}
+                  .value=${value}
+                >
+                  ${store.title}
+                </option>`;
+              })}`;
+            })}
+          </select>
+
+          <button
+            id="board-server-settings"
+            @click=${(evt: PointerEvent) => {
+              if (!(evt.target instanceof HTMLButtonElement)) {
+                return;
+              }
+
+              const bounds = evt.target.getBoundingClientRect();
+              this.#overflowMenu.x = bounds.left;
+              this.#overflowMenu.y =
+                window.innerHeight - (bounds.top - OVERFLOW_MENU_CLEARANCE);
+
+              this.showBoardServerOverflowMenu = true;
+            }}
+          >
+            ${Strings.from("LABEL_PROJECT_SERVER_SETTINGS")}
+          </button>
+        </div>`
+      : html`<h2 id="location-selector" class="gallery-title">
+          ${this.#getCurrentStoreName(selected)}
+        </h2>`;
+
     return html`
       <div id="wrapper" ${ref(this.#wrapperRef)}>
         <section id="hero">
@@ -731,108 +754,7 @@ export class ProjectListing extends LitElement {
         </section>
 
         <div id="board-listing">
-          <div id="locations">
-            <!-- TODO(aomarks) According to mocks, the search button should be
-                 rendered lower down, next to "Sort by". But that whole section
-                 gets quite aggressively re-rendered on any filter change, which
-                 makes it difficult for the button to keep any state. We
-                 probably need a small refactor to get the desired layout. -->
-            <bb-homepage-search-button
-              .value=${this.filter ?? ""}
-              @input=${(
-                evt: InputEvent & {
-                  target: HomepageSearchButton;
-                }
-              ) => {
-                this.filter = evt.target.value;
-              }}
-            ></bb-homepage-search-button>
-            <div id="location-selector-container">
-              ${this.showAdditionalSources
-                ? html`<select
-                      id="location-selector"
-                      class="gallery-title"
-                      @input=${(evt: Event) => {
-                        if (!(evt.target instanceof HTMLSelectElement)) {
-                          return;
-                        }
-
-                        const [boardServer, location] = this.#parseUrl(
-                          evt.target.value
-                        );
-                        this.selectedBoardServer = boardServer;
-                        this.selectedLocation = location;
-
-                        this.dispatchEvent(
-                          new GraphBoardServerSelectionChangeEvent(
-                            boardServer,
-                            location
-                          )
-                        );
-                      }}
-                    >
-                      ${map(this.boardServers, (boardServer) => {
-                        return html`${map(
-                          boardServer.items(),
-                          ([location, store]) => {
-                            const value = `${boardServer.name}::${store.url ?? location}`;
-                            const isSelectedOption = value === selected;
-                            return html`<option
-                              .selected=${isSelectedOption}
-                              .value=${value}
-                            >
-                              ${store.title}
-                            </option>`;
-                          }
-                        )}`;
-                      })}
-                    </select>
-
-                    <button
-                      id="board-server-settings"
-                      @click=${(evt: PointerEvent) => {
-                        if (!(evt.target instanceof HTMLButtonElement)) {
-                          return;
-                        }
-
-                        const bounds = evt.target.getBoundingClientRect();
-                        this.#overflowMenu.x = bounds.left;
-                        this.#overflowMenu.y =
-                          window.innerHeight -
-                          (bounds.top - OVERFLOW_MENU_CLEARANCE);
-
-                        this.showBoardServerOverflowMenu = true;
-                      }}
-                    >
-                      ${Strings.from("LABEL_PROJECT_SERVER_SETTINGS")}
-                    </button>
-                    </div>`
-                : html`<h2 id="location-selector" class="gallery-title">
-                    ${this.#getCurrentStoreName(selected)}
-                  </h2>`}
-            </div>
-          </div>
-          <div
-            id="content"
-            @bbgraphboardserverloadrequest=${({
-              url,
-            }: GraphBoardServerLoadRequestEvent) => {
-              // Track for future invocations.
-              if (this.#recentItems) {
-                const currentIndex = this.#recentItems.findIndex(
-                  (item) => item === url
-                );
-                if (currentIndex === -1) {
-                  this.#recentItems.unshift(url);
-                } else {
-                  const [item] = this.#recentItems.splice(currentIndex, 1);
-                  this.#recentItems.unshift(item);
-                }
-
-                this.#saveRecentItemsForKey(this.recentItemsKey);
-              }
-            }}
-          >
+          <div id="content">
             ${until(
               this.#boardServerContents.then(
                 (store) => {
@@ -853,8 +775,14 @@ export class ProjectListing extends LitElement {
                     )
                     .sort(([, dataA], [, dataB]) => {
                       // Sort by recency.
-                      const indexA = this.#recentItems.indexOf(dataA.url);
-                      const indexB = this.#recentItems.indexOf(dataB.url);
+                      const urlA = new URL(dataA.url);
+                      const urlB = new URL(dataB.url);
+                      const indexA = this.recentBoards.findIndex(
+                        (board) => board.url === urlA.pathname
+                      );
+                      const indexB = this.recentBoards.findIndex(
+                        (board) => board.url === urlB.pathname
+                      );
                       if (indexA !== -1 && indexB === -1) {
                         return -1;
                       }
@@ -909,23 +837,31 @@ export class ProjectListing extends LitElement {
                         <bb-gallery
                           .items=${sampleItems}
                           .pageSize=${/* Unlimited */ -1}
+                          forceCreatorToBeTeam
                         ></bb-gallery>
                       </div>
                     `,
                   ];
 
+                  const buttons =
+                    myItems.length && !FORCE_NO_BOARDS
+                      ? html`
+                          <div id="buttons">
+                            <div id="create-new-button-container">
+                              ${this.#renderCreateNewButton()}
+                            </div>
+                          </div>
+                        `
+                      : nothing;
+
                   return permission === "granted"
                     ? [
+                        html`<div id="locations">
+                          <div id="location-selector-container">
+                            ${location} ${buttons}
+                          </div>
+                        </div>`,
                         boardListings,
-                        myItems.length && !FORCE_NO_BOARDS
-                          ? html`
-                              <div id="buttons">
-                                <div id="create-new-button-container">
-                                  ${this.#renderCreateNewButton()}
-                                </div>
-                              </div>
-                            `
-                          : nothing,
                       ]
                     : html`<div id="renew-access">
                         <span
@@ -1089,6 +1025,9 @@ export class ProjectListing extends LitElement {
     if (!(evt.target instanceof HTMLButtonElement)) {
       return;
     }
+
+    ActionTracker.createNew();
+
     evt.target.disabled = true;
     this.dispatchEvent(new GraphBoardServerBlankBoardEvent());
   }

@@ -14,6 +14,10 @@ export type GenerateTextInputs = {
    */
   makeList: boolean;
   /**
+   * Whether (true) or not (false) to use sequential function-calling.
+   */
+  useSequentialFunctionCalling: boolean;
+  /**
    * The incoming conversation context.
    */
   context: LLMContent[];

@@ -71,17 +71,16 @@ import {
   createWorkspaceSelectionChangeId,
 } from "../../utils/workspace.js";
 import { icons } from "../../styles/icons.js";
-import {
-  type GoogleDriveSharePanel,
-  type GoogleDrivePicker,
-} from "../elements.js";
+import { type GoogleDrivePicker, EntityEditor } from "../elements.js";
 import { consume } from "@lit/context";
 import {
   type SigninAdapter,
   signinAdapterContext,
 } from "../../utils/signin-adapter.js";
 import { findGoogleDriveAssetsInGraph } from "../google-drive/find-google-drive-assets-in-graph.js";
-import { loadDriveApi } from "../google-drive/google-apis.js";
+import { SharePanel } from "../share-panel/share-panel.js";
+import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 
 const SIDE_ITEM_KEY = "bb-ui-controller-side-nav-item";
 
@@ -89,6 +88,9 @@ const SIDE_ITEM_KEY = "bb-ui-controller-side-nav-item";
 export class UI extends LitElement {
   @property()
   accessor graph: GraphDescriptor | null = null;
+
+  @property()
+  accessor graphIsMine = false;
 
   @property()
   accessor mainGraphId: MainGraphIdentifier | null = null;
@@ -222,24 +224,25 @@ export class UI extends LitElement {
   accessor showAssetOrganizer = false;
 
   @state()
-  accessor autoFocusEditor = false;
-
-  @state()
   accessor #showEditHistory = false;
 
   @consume({ context: signinAdapterContext })
   @property({ attribute: false })
   accessor signinAdapter: SigninAdapter | undefined = undefined;
 
-  #autoFocusEditorOnRender = false;
+  @consume({ context: googleDriveClientContext })
+  @property({ attribute: false })
+  accessor googleDriveClient: GoogleDriveClient | undefined;
+
   #sideNavItem:
     | "activity"
     | "capabilities"
     | "edit-history"
     | "editor"
     | "app-view" = "editor";
+  #entityEditorRef: Ref<EntityEditor> = createRef();
   #moduleEditorRef: Ref<ModuleEditor> = createRef();
-  #googleDriveSharePanelRef: Ref<GoogleDriveSharePanel> = createRef();
+  #sharePanelRef: Ref<SharePanel> = createRef();
   #googleDriveAssetAccessPickerRef: Ref<GoogleDrivePicker> = createRef();
 
   static styles = [icons, uiControllerStyles];
@@ -259,7 +262,6 @@ export class UI extends LitElement {
   }
 
   editorRender = 0;
-  #preventAutoSwitchToEditor = false;
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     if (changedProperties.has("graph")) {
       this.updateComplete.then(() => this.#checkGoogleDriveAssetsAreReadable());
@@ -286,11 +288,6 @@ export class UI extends LitElement {
       }
     }
 
-    if (changedProperties.has("autoFocusEditor")) {
-      this.#autoFocusEditorOnRender = true;
-      this.autoFocusEditor = false;
-    }
-
     let newSelectionCount = 0;
     if (this.selectionState) {
       newSelectionCount = [...this.selectionState.selectionState.graphs].reduce(
@@ -307,20 +304,25 @@ export class UI extends LitElement {
       );
     }
 
-    if (newSelectionCount > 0 && changedProperties.has("sideNavItem")) {
-      this.#preventAutoSwitchToEditor = true;
-    } else if (newSelectionCount === 0 && this.#preventAutoSwitchToEditor) {
-      this.#preventAutoSwitchToEditor = false;
+    // Switching away from the editor should trigger the submit so that the user
+    // doesn't lose any changes.
+    if (
+      changedProperties.get("sideNavItem") === "editor" &&
+      this.#entityEditorRef.value
+    ) {
+      this.#entityEditorRef.value.triggerSubmit();
     }
 
+    // Here we decide how to handle the changing sidenav items & selections.
+    // If there are no selections and we're in the editor switch out to the app
+    // view. Otherwise, if there's any change to the selection and the sidenav
+    // isn't set to the editor, switch to it.
     if (newSelectionCount === 0 && this.sideNavItem === "editor") {
       this.sideNavItem = "app-view";
-    }
-
-    if (
+    } else if (
       newSelectionCount > 0 &&
-      this.sideNavItem !== "editor" &&
-      !this.#preventAutoSwitchToEditor
+      changedProperties.has("selectionState") &&
+      this.sideNavItem !== "editor"
     ) {
       this.sideNavItem = "editor";
     }
@@ -554,6 +556,13 @@ export class UI extends LitElement {
           .readOnly=${this.readOnly}
           .showExperimentalComponents=${showExperimentalComponents}
           .topGraphResult=${this.topGraphResult}
+          @bbautofocuseditor=${() => {
+            if (!this.#entityEditorRef.value) {
+              return;
+            }
+
+            this.#entityEditorRef.value.focus();
+          }}
           @bbnodeconfigurationupdaterequest=${(
             evt: NodeConfigurationUpdateRequestEvent
           ) => {
@@ -562,7 +571,7 @@ export class UI extends LitElement {
             }
 
             this.sideNavItem = "editor";
-            this.autoFocusEditor = true;
+
             const newState = createEmptyWorkspaceSelectionState();
             const graphState = createEmptyGraphSelectionState();
             const graphId = evt.subGraphId ? evt.subGraphId : MAIN_BOARD_ID;
@@ -648,6 +657,7 @@ export class UI extends LitElement {
         0
       );
     }
+
     const sideNavItem = [
       html`${guard(
         [
@@ -679,6 +689,7 @@ export class UI extends LitElement {
             .boardServers=${this.boardServers}
             .status=${this.status}
             .history=${this.history}
+            .isMine=${this.graphIsMine}
             @bbthemeeditrequest=${(evt: ThemeEditRequestEvent) => {
               this.showThemeDesigner = true;
               this.#themeOptions = evt.themeOptions;
@@ -687,10 +698,10 @@ export class UI extends LitElement {
         }
       )}`,
       html`<bb-entity-editor
+        ${ref(this.#entityEditorRef)}
         class=${classMap({
           active: this.sideNavItem === "editor",
         })}
-        .autoFocus=${this.#autoFocusEditorOnRender}
         .graph=${graph}
         .graphTopologyUpdateId=${this.graphTopologyUpdateId}
         .graphStore=${this.graphStore}
@@ -700,14 +711,23 @@ export class UI extends LitElement {
         .readOnly=${this.readOnly}
         .projectState=${this.projectState}
       ></bb-entity-editor>`,
-      html`<div
-        id="history-activity-container"
-        class=${classMap({
-          active: this.sideNavItem === "activity",
-        })}
-      >
-        ${this.#renderActivity()}
-      </div>`,
+      html`
+        ${showExperimentalComponents
+          ? html`<bb-console-view
+              class=${classMap({
+                active: this.sideNavItem === "activity",
+              })}
+              .run=${this.projectState?.run}
+            ></bb-console-view>`
+          : html`<div
+              id="history-activity-container"
+              class=${classMap({
+                active: this.sideNavItem === "activity",
+              })}
+            >
+              ${this.#renderActivity()}
+            </div>`}
+      `,
       html`<bb-edit-history-panel
         class=${classMap({
           active: this.sideNavItem === "edit-history",
@@ -766,7 +786,7 @@ export class UI extends LitElement {
                   this.sideNavItem = "app-view";
                 }}
               >
-                App view
+                ${Strings.from("LABEL_SECTION_PREVIEW")}
               </button>
               <button
                 ?disabled=${this.sideNavItem === "activity"}
@@ -774,7 +794,7 @@ export class UI extends LitElement {
                   this.sideNavItem = "activity";
                 }}
               >
-                Activity
+                ${Strings.from("LABEL_SECTION_CONSOLE")}
               </button>
             </div>
             <div id="side-nav-controls-right">
@@ -788,16 +808,17 @@ export class UI extends LitElement {
                     Editor
                   </button>`
                 : nothing}
-
-              <button
-                ?disabled=${this.sideNavItem === "edit-history"}
-                @click=${() => {
-                  this.sideNavItem = "edit-history";
-                }}
-                aria-label="Edit History"
-              >
-                <span class="g-icon">history</span>
-              </button>
+              ${this.readOnly
+                ? nothing
+                : html`<button
+                    ?disabled=${this.sideNavItem === "edit-history"}
+                    @click=${() => {
+                      this.sideNavItem = "edit-history";
+                    }}
+                    aria-label="Edit History"
+                  >
+                    <span class="g-icon">history</span>
+                  </button>`}
 
               <button id="share" @click=${this.#onClickShareButton}>URL</button>
             </div>
@@ -815,11 +836,8 @@ export class UI extends LitElement {
           </section>`
         : html`<section id="content" class="welcome">${graphEditor}</section>`,
       html`
-        <bb-google-drive-share-panel
-          .graph=${this.graph}
-          ${ref(this.#googleDriveSharePanelRef)}
-        >
-        </bb-google-drive-share-panel>
+        <bb-share-panel .graph=${this.graph} ${ref(this.#sharePanelRef)}>
+        </bb-share-panel>
         <bb-google-drive-picker
           ${ref(this.#googleDriveAssetAccessPickerRef)},
           mode="pick-shared-assets"
@@ -886,7 +904,7 @@ export class UI extends LitElement {
   }
 
   openSharePanel() {
-    this.#googleDriveSharePanelRef?.value?.open();
+    this.#sharePanelRef?.value?.open();
   }
 
   async #checkGoogleDriveAssetsAreReadable() {
@@ -897,34 +915,17 @@ export class UI extends LitElement {
     if (driveAssetFileIds.length === 0) {
       return;
     }
-    const drive = await loadDriveApi();
-    const auth = await this.signinAdapter?.refresh();
-    if (auth?.state !== "valid") {
-      console.error(`Expected "valid" auth state, got "${auth?.state}"`);
+    const { googleDriveClient } = this;
+    if (!googleDriveClient) {
+      console.error(`No googleDriveClient was provided`);
       return;
     }
     const needsPicking: string[] = [];
     await Promise.all(
       driveAssetFileIds.map(async (fileId) => {
-        try {
-          await drive.files.get({
-            access_token: auth.grant.access_token,
-            fileId,
-          });
-        } catch (error) {
-          if (
-            typeof error === "object" &&
-            error !== null &&
-            "status" in error &&
-            error.status === 404
-          ) {
-            needsPicking.push(fileId);
-          } else {
-            console.error(
-              "Unhandled error checking drive asset readability:",
-              error
-            );
-          }
+        const readable = await googleDriveClient.isReadable(fileId);
+        if (!readable) {
+          needsPicking.push(fileId);
         }
       })
     );
@@ -937,6 +938,7 @@ export class UI extends LitElement {
           "close",
           () => {
             picker.fileIds = [];
+            window.location.reload();
           },
           { once: true }
         );

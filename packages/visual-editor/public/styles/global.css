@@ -546,6 +546,9 @@ body.hide-cursor {
   --bb-notify-800: #ad1457;
   --bb-notify-900: #880e4f;
 
+  --bb-snackbar-error: #ffecee;
+  --bb-snackbar-error-text: #60150f;
+
   --bb-warning-50: #fffcfc;
   --bb-warning-75: #ffcce4;
   --bb-warning-100: #ffcccc;

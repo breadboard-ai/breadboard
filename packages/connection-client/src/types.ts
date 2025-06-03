@@ -60,7 +60,7 @@ export interface SignedOutTokenResult {
 }
 
 // IMPORTANT: Keep in sync with
-// breadboard/packages/connection-server/src/api/grant.ts
+// breadboard/packages/connection-server/src/config.ts
 export type GrantResponse =
   | { error: string }
   | {

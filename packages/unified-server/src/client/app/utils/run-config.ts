@@ -27,11 +27,16 @@ import {
   createFileSystemBackend,
   getDataStore,
 } from "@breadboard-ai/data-store";
-import { BoardServerAwareDataStore } from "@breadboard-ai/board-server-management";
+import {
+  BoardServerAwareDataStore,
+  createGoogleDriveBoardServer,
+} from "@breadboard-ai/board-server-management";
+import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 
 export async function createRunConfig(
   graph: GraphDescriptor | null,
   serverConfig: BootstrapArguments,
+  googleDriveClient: GoogleDriveClient,
   tokenVendor: TokenVendor,
   abortController: AbortController
 ): Promise<RunConfig | null> {
@@ -40,20 +45,37 @@ export async function createRunConfig(
   }
 
   // 1) Load board servers. The App view only has two:
-  // - the unified server
+  // - the unified server or the drive server
   // - the A2 embedded server (which has the A2 framework and steps)
   const servers: BoardServer[] = [];
-  if (serverConfig.boardServerUrl) {
-    const user: User = { username: "", apiKey: "", secrets: new Map() };
-    const boardServer = await RemoteBoardServer.from(
-      serverConfig.boardServerUrl.href,
-      "Server",
+  if (serverConfig.boardService?.startsWith("drive:")) {
+    const user: User = {
+      username: "board-builder",
+      apiKey: "",
+      secrets: new Map(),
+    };
+    const googleDriveBoardserver = await createGoogleDriveBoardServer(
+      "Google Drive Board Server",
       user,
       tokenVendor,
-      /** autoLoadProjects */ false
+      googleDriveClient
     );
-    if (boardServer) {
-      servers.push(boardServer);
+    if (googleDriveBoardserver) {
+      servers.push(googleDriveBoardserver);
+    }
+  } else {
+    if (serverConfig.boardServerUrl) {
+      const user: User = { username: "", apiKey: "", secrets: new Map() };
+      const boardServer = await RemoteBoardServer.from(
+        serverConfig.boardServerUrl.href,
+        "Server",
+        user,
+        tokenVendor,
+        /** autoLoadProjects */ false
+      );
+      if (boardServer) {
+        servers.push(boardServer);
+      }
     }
   }
   servers.push(createA2Server());

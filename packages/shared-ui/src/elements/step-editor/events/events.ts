@@ -116,6 +116,14 @@ export class NodeConfigurationRequestEvent extends Event {
   }
 }
 
+export class AutoFocusEditorRequest extends Event {
+  static eventName = "bbautofocuseditor" as const;
+
+  constructor() {
+    super(AutoFocusEditorRequest.eventName, { ...eventInit });
+  }
+}
+
 export class HighlightEvent extends Event {
   static eventName = "bbhighlight" as const;
 

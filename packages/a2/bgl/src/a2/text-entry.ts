@@ -105,6 +105,7 @@ async function invoke({
     name: "",
     details,
     icon: "input",
+    chat: true,
   });
   const title = toText(details);
   return { context: "nothing", toInput: toInput(title, modality) };
@@ -133,7 +134,7 @@ async function describe({
         "p-modality": {
           type: "string",
           enum: combineModalities(MODALITY),
-          behavior: ["config", "hint-preview"],
+          behavior: ["config", "hint-preview", "hint-advanced"],
           icon,
           title: "Input type",
           description: "Set the type of input the user can provide",

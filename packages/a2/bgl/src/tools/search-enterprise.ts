@@ -137,7 +137,7 @@ async function describe({ asType, ...inputs }: DescribeInputs) {
 
     metadata: {
       icon: "web-search",
-      tags: ["quick-access", "tool", "component"],
+      tags: ["quick-access", "tool", "component", "environment-agentspace"],
       order: 2,
     },
   };

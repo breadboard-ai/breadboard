@@ -180,6 +180,8 @@ export class DrawableInput extends LitElement {
     canvas.height = height * dPR;
 
     this.#bounds = canvas.getBoundingClientRect();
+
+    ctx.scale(dPR, dPR);
     this.#fillCanvas();
 
     if (imageData !== null) {
@@ -195,8 +197,6 @@ export class DrawableInput extends LitElement {
         canvas.height
       );
     }
-
-    ctx.scale(dPR, dPR);
   });
 
   connectedCallback(): void {
@@ -250,6 +250,14 @@ export class DrawableInput extends LitElement {
 
   #onReset() {
     this.#fillCanvas();
+
+    this.dispatchEvent(
+      new InputEvent("input", {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+      })
+    );
   }
 
   #onPointerDown(evt: PointerEvent) {
@@ -328,25 +336,48 @@ export class DrawableInput extends LitElement {
     }
 
     ctx.closePath();
+
+    this.dispatchEvent(
+      new InputEvent("input", {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+      })
+    );
   }
 
   @property()
-  set url(url: URL | null) {
+  set url(url: URL | Promise<string | undefined> | null) {
     if (!url) {
       return;
     }
 
-    const img = new Image();
-    img.src = url.href;
-    img.onload = () => {
-      const ctx = this.#getCtx();
-      if (!ctx) {
-        console.log("Unable to render");
-        return;
-      }
+    const handleImage = (url: URL) => {
+      const img = new Image();
+      img.src = url.href;
+      img.onload = () => {
+        const ctx = this.#getCtx();
+        if (!ctx) {
+          console.log("Unable to render");
+          return;
+        }
 
-      ctx.drawImage(img, 0, 0, this.#bounds.width, this.#bounds.height);
+        ctx.drawImage(img, 0, 0, this.#bounds.width, this.#bounds.height);
+      };
     };
+
+    if (url instanceof URL) {
+      handleImage(url);
+    } else {
+      url.then((urlString: string | undefined) => {
+        if (!urlString) {
+          return;
+        }
+
+        const url = new URL(urlString);
+        handleImage(url);
+      });
+    }
   }
 
   get value(): string {

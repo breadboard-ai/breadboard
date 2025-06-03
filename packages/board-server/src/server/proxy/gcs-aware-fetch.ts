@@ -12,7 +12,10 @@ import {
   type OutputValues,
 } from "@google-labs/breadboard";
 import type { BoardServerStore, ServerInfo } from "../store.js";
+import { GoogleStorageBlobStore } from "../blob-store.js";
+import { initializeDriveClient } from "../boards/assets-drive.js";
 import type { ServerConfig } from "../config.js";
+import type { access } from "fs";
 
 export { GcsAwareFetch };
 
@@ -36,8 +39,12 @@ class GcsAwareFetch {
     this.serverInfo = store.getServerInfo();
   }
 
-  #processFetchInputs(bucketName: string, inputs: InputValues) {
-    return maybeAddGcsOutputConfig(inputs, bucketName);
+  #processFetchInputs(
+    bucketName: string,
+    serverUrl: string,
+    inputs: InputValues
+  ) {
+    return prepareGcsData(inputs, bucketName, serverUrl);
   }
 
   #procesFetchOutputs(serverUrl: string, outputs: OutputValues | void) {
@@ -64,12 +71,19 @@ class GcsAwareFetch {
           const serverUrl = this.serverConfig.serverUrl || serverInfo?.url;
           const storageBucket = this.serverConfig.storageBucket;
           if (!serverUrl || !storageBucket) {
+            console.log(
+              `No server URL (${serverUrl}) or storage bucket (${storageBucket}) found`
+            );
             // If no server URL found at all, just do the usual fetch handler.
             return callHandler(nestedFetch, inputs, context);
           }
 
           // Otherwise, process inputs ...
-          const updatedInputs = this.#processFetchInputs(storageBucket, inputs);
+          const updatedInputs = await this.#processFetchInputs(
+            storageBucket,
+            serverUrl,
+            inputs
+          );
 
           // ... call the nested fetch ...
           const outputs = await callHandler(
@@ -98,16 +112,25 @@ class GcsAwareFetch {
   }
 }
 
-function maybeAddGcsOutputConfig(
+async function prepareGcsData(
   data: InputValues,
-  bucketName: string
-): InputValues {
+  bucketName: string,
+  serverUrl: string
+): Promise<InputValues> {
+  let accessToken = "";
+  if (data !== null && typeof data === "object" && "headers" in data) {
+    const headers = data.headers as Record<string, string>;
+    accessToken = headers?.Authorization || "";
+    accessToken = accessToken.replace("Bearer ", "");
+  }
+  const blobStore = new GoogleStorageBlobStore(bucketName, serverUrl);
   const apiRequiresGcs: string[] = [
     "image_generation",
     "ai_image_editing",
     "ai_image_tool",
     "tts",
     "generate_video",
+    "generate_music",
   ];
   if (data === null || typeof data !== "object" || !("body" in data)) {
     return data;
@@ -125,6 +148,8 @@ function maybeAddGcsOutputConfig(
     bucket_name: bucketName,
   };
   body["output_gcs_config"] = gcsOutputConfig;
+  console.log("Set output_gcs_config: ", gcsOutputConfig);
+  await convertToGcsReferences(body, blobStore, bucketName, accessToken);
   return data;
 }
 
@@ -181,3 +206,64 @@ const maybeGetExecutionOutputs = (
   }
   return;
 };
+
+const maybeGetExecutionInputs = (
+  body: object
+): Record<string, unknown> | undefined => {
+  if ("execution_inputs" in body) {
+    const { execution_inputs } = body;
+    return execution_inputs as Record<string, StepContent>;
+  }
+};
+
+async function convertToGcsReferences(
+  body: object,
+  blobStore: GoogleStorageBlobStore,
+  bucketName: string,
+  accessToken: string
+) {
+  console.log("Converting to GCS references");
+  const executionInputs = maybeGetExecutionInputs(body);
+  if (!executionInputs) {
+    return;
+  }
+  for (const key of Object.keys(executionInputs)) {
+    const input = executionInputs[key] as StepContent;
+    const newChunks: Chunk[] = [];
+    for (const chunk of input.chunks) {
+      if (chunk.mimetype.startsWith("storedData/")) {
+        const mimetype =
+          chunk.mimetype.replace("storedData/", "") || "image/png";
+        const storedHandle = chunk.data;
+        let blobId;
+        if (storedHandle.startsWith("drive:/")) {
+          const driveId = storedHandle.replace(/^drive:\/+/, "");
+          console.log("Fetching Drive ID: ", driveId);
+          const arrayBuffer = await fetchDriveAssetAsBuffer(
+            driveId,
+            accessToken
+          );
+          // Store temporarily in GCS as file transfer mechanism.
+          blobId = await blobStore.saveBuffer(arrayBuffer, mimetype);
+        } else {
+          blobId = storedHandle.split("/").slice(-1)[0];
+        }
+        const gcsPath = `${bucketName}/${blobId}`;
+        chunk.data = btoa(gcsPath);
+        chunk.mimetype = "text/gcs-path";
+      }
+      newChunks.push(chunk);
+    }
+    executionInputs[key] = {
+      chunks: newChunks,
+    };
+  }
+}
+
+// Fetch media asset from long term  storage in Drive.
+async function fetchDriveAssetAsBuffer(driveId: string, accessToken: string) {
+  const driveClient = initializeDriveClient(accessToken, "");
+  const gettingMedia = await driveClient.getFileMedia(driveId);
+  const arrayBuffer = await gettingMedia.arrayBuffer();
+  return Buffer.from(arrayBuffer);
+}

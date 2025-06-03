@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as StringsHelper from "../../strings/helper.js";
+const Strings = StringsHelper.forSection("Global");
+
 import {
   LitElement,
   html,
@@ -164,6 +167,9 @@ export class Renderer extends LitElement {
   @state()
   accessor _boundsDirty = new Set<string>();
 
+  @state()
+  accessor showDisclaimer = false;
+
   static styles = css`
     * {
       box-sizing: border-box;
@@ -181,36 +187,7 @@ export class Renderer extends LitElement {
       height: 100%;
       outline: none;
       touch-action: none;
-    }
-
-    :host([readonly])::after {
-      content: "";
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0);
-      top: 0;
-      left: 0;
-      z-index: 100;
-    }
-
-    :host([readonly])::before {
-      content: "Read Only";
-      display: flex;
-      align-items: center;
-      box-sizing: border-box;
-      position: absolute;
-      top: 10px;
-      left: 50%;
-      translate: -50% 0;
-      border-radius: var(--bb-grid-size-16);
-      height: var(--bb-grid-size-7);
-      border: 1px solid var(--bb-ui-200);
-      background: var(--bb-ui-100);
-      color: var(--bb-ui-800);
-      padding: 0 var(--bb-grid-size-3);
-      font: 400 var(--bb-label-small) / var(--bb-label-line-height-small)
-        var(--bb-font-family);
+      position: relative;
     }
 
     :host([interactionmode="pan"]) {
@@ -219,6 +196,21 @@ export class Renderer extends LitElement {
 
     :host([interactionmode="pan"][isdragpanning]) {
       cursor: grabbing;
+    }
+
+    #disclaimer {
+      position: absolute;
+      left: 0;
+      bottom: 8px;
+      width: 100%;
+      margin: 0;
+      font: 500 10px / 1 var(--bb-font-family);
+      color: var(--n-50, var(--bb-neutral-500));
+      text-align: center;
+      padding: var(--bb-grid-size);
+      background: var(--s-90, var(--neutral-50, transparent));
+      opacity: 0;
+      animation: fadeIn 0.6s cubic-bezier(0, 0, 0.3, 1) forwards;
     }
 
     #overlay {
@@ -252,6 +244,16 @@ export class Renderer extends LitElement {
       width: 100%;
       height: 100%;
       z-index: 3;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
     }
   `;
 
@@ -352,6 +354,10 @@ export class Renderer extends LitElement {
   #handleNewAssets(evt: CreateNewAssetsEvent) {
     evt.stopImmediatePropagation();
 
+    if (this.readOnly) {
+      return;
+    }
+
     // Augment the added assets with the x & y coordinates of the
     // middle of the graph and dispatch the dropped assets event.
 
@@ -398,7 +404,8 @@ export class Renderer extends LitElement {
     if (
       !evt.dataTransfer ||
       !evt.dataTransfer.files ||
-      !evt.dataTransfer.files.length
+      !evt.dataTransfer.files.length ||
+      this.readOnly
     ) {
       return;
     }
@@ -495,6 +502,7 @@ export class Renderer extends LitElement {
   }
 
   #getGraphTitleByType(nodeType: string) {
+    // TODO: Move this logic to Runtime.Edit
     let title = "Untitled item";
     for (const graph of this.graphStore?.graphs() ?? []) {
       if (graph.url === nodeType && graph.title) {
@@ -503,7 +511,30 @@ export class Renderer extends LitElement {
       }
     }
 
+    // Friendly names logic. Optionally appends a number to the title so that
+    // the user can disambiguate between multiple steps of the same type.
+    let maxNumber = -1;
+    for (const node of this.graph?.nodes() || []) {
+      if (node.descriptor.type !== nodeType) continue;
+      const nodeFullTitle = node.descriptor.metadata?.title;
+      if (!nodeFullTitle) continue;
+      const { nodeTitle, number } = extractNumber(nodeFullTitle);
+      if (nodeTitle !== title) continue;
+      maxNumber = number;
+    }
+    if (maxNumber >= 0) {
+      return `${title} ${maxNumber + 1}`;
+    }
+
     return title;
+
+    function extractNumber(s: string): { nodeTitle: string; number: number } {
+      const match = / (\d+)$/.exec(s);
+      if (!match || !match[1]) return { nodeTitle: s, number: 0 };
+      const number = parseInt(match[1], 10);
+      const nodeTitle = s.substring(0, match.index);
+      return { number, nodeTitle };
+    }
   }
 
   #createNode(
@@ -888,7 +919,8 @@ export class Renderer extends LitElement {
     if (
       (changedProperties.has("graph") ||
         changedProperties.has("graphTopologyUpdateId") ||
-        changedProperties.has("allowEdgeAttachmentMove")) &&
+        changedProperties.has("allowEdgeAttachmentMove") ||
+        changedProperties.has("readOnly")) &&
       this.graph &&
       this.camera
     ) {
@@ -915,6 +947,7 @@ export class Renderer extends LitElement {
       mainGraph.nodes = this.graph.nodes();
       mainGraph.edges = this.graph.edges();
       mainGraph.rendererState = this.state;
+      mainGraph.readOnly = this.readOnly;
       if (this.showAssetsInGraph) {
         mainGraph.assets = this.graph.assets();
         mainGraph.assetEdges = this.graph.assetEdges();
@@ -953,6 +986,9 @@ export class Renderer extends LitElement {
 
         this.#graphs.delete(graphId);
       }
+
+      // Update disclaimer.
+      this.showDisclaimer = this.graph.nodes().length !== 0;
     }
 
     if (
@@ -1562,6 +1598,7 @@ export class Renderer extends LitElement {
         .mainGraphId=${this.mainGraphId}
         .showDefaultAdd=${showDefaultAdd}
         .showExperimentalComponents=${this.showExperimentalComponents}
+        .readOnly=${this.readOnly}
         @wheel=${(evt: WheelEvent) => {
           evt.stopImmediatePropagation();
         }}
@@ -1595,6 +1632,9 @@ export class Renderer extends LitElement {
       ></div>`,
       selectionRectangle,
       this.dragConnector,
+      this.showDisclaimer
+        ? html`<p id="disclaimer">${Strings.from("LABEL_DISCLAIMER")}</p>`
+        : nothing,
     ];
   }
 }

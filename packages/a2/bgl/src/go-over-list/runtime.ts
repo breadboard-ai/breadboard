@@ -3,12 +3,11 @@
  */
 
 import { ToolManager } from "./a2/tool-manager";
-import { StructuredResponse } from "./a2/structured-response";
-import { ok, err, toLLMContent } from "./a2/utils";
+import { defaultSystemInstruction } from "./system-instruction";
+import { ok, toLLMContent } from "./a2/utils";
 import { GeminiPrompt } from "./a2/gemini-prompt";
 import {
   type ExecuteStepFunction,
-  type Plan,
   type Task,
   type Strategist,
 } from "./types";
@@ -47,13 +46,11 @@ class Runtime {
 
   async #execute(item: Task): Promise<LLMContent | undefined> {
     const { toolManager, context, errors } = this;
-    let structuredResponse: StructuredResponse | undefined;
     const prompt = toLLMContent(item.task);
     let contents;
     let toolConfig = {};
     if (!toolManager.hasTools()) {
-      structuredResponse = new StructuredResponse(generateId(), false);
-      contents = structuredResponse.addPrompt(context, prompt);
+      contents = [ ... context, prompt];
     } else {
       toolConfig = {
         toolConfig: {
@@ -64,29 +61,42 @@ class Runtime {
       };
       contents = [...context, toLLMContent(item.task)];
     }
-    const executing = await new GeminiPrompt(
+    const geminiPrompt = new GeminiPrompt(
       {
         body: {
           contents,
           tools: toolManager.list(),
           ...toolConfig,
         },
-        systemInstruction: structuredResponse?.instruction(),
+        systemInstruction: defaultSystemInstruction(),
       },
       {
         toolManager,
         allowToolErrors: true,
-        validator: (content) => {
-          return structuredResponse?.parseContent(content);
-        },
       }
-    ).invoke();
+    );
+    const executing = await geminiPrompt.invoke();
     if (!ok(executing)) {
       errors.push(executing.$error);
       return;
     }
-    return structuredResponse
-      ? toLLMContent(structuredResponse.body, "model")
-      : executing.last;
+    // gross hack. TODO: Instead, teach GeminiPrompt to do compositional
+    // function calling.
+    if (geminiPrompt.calledTools) {
+      return grossHackTransformFunctionResponses(executing.last);
+    }
+    return executing.last;
   }
+}
+
+function grossHackTransformFunctionResponses(responses: LLMContent) {
+  const parts = responses.parts.map<DataPart>((part) => {
+    if ("functionResponse" in part) {
+      return {
+        text: JSON.stringify(part.functionResponse.response),
+      } as TextCapabilityPart;
+    }
+    return part;
+  });
+  return { parts, role: responses.role || "user" };
 }

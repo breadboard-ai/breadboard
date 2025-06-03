@@ -29,8 +29,7 @@
     "deploy": "npm run build:vite && firebase deploy",
     "build": "wireit",
     "build:vite": "wireit",
-    "build:tsc": "wireit",
-    "copy-bbrt-assets": "wireit"
+    "build:tsc": "wireit"
   },
   "wireit": {
     "build": {
@@ -77,12 +76,7 @@
       },
       "dependencies": [
         "typescript-files-and-deps",
-        "copy-pyoide-assets",
-        "update-sandbox-runtime",
-        {
-          "script": "copy-bbrt-assets",
-          "cascade": false
-        }
+        "update-sandbox-runtime"
       ],
       "files": [
         "vite.config.ts",
@@ -110,15 +104,7 @@
     "prepare-assets:internal": {
       "dependencies": [
         {
-          "script": "copy-bbrt-assets",
-          "cascade": false
-        },
-        {
           "script": "update-sandbox-runtime",
-          "cascade": false
-        },
-        {
-          "script": "copy-pyoide-assets",
           "cascade": false
         }
       ]
@@ -161,25 +147,6 @@
       "files": [
         "vite.config.ts",
         ".env"
-      ]
-    },
-    "copy-bbrt-assets": {
-      "command": "tsx src/copy-bbrt-assets.ts",
-      "files": [
-        "src/copy-bbrt-assets.ts"
-      ],
-      "output": [
-        "public/bbrt/"
-      ]
-    },
-    "copy-pyoide-assets": {
-      "command": "tsx src/copy-pyodide-assets.ts",
-      "files": [
-        "src/copy-pyodide-assets.ts"
-      ],
-      "output": [
-        "public/python_stdlib.zip",
-        "public/pyodide*"
       ]
     },
     "update-sandbox-runtime": {
@@ -227,59 +194,35 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor#readme",
   "devDependencies": {
-    "@ava/typescript": "^4.0.0",
-    "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
     "@google-labs/tsconfig": "^0.0.1",
-    "@types/markdown-it": "^14.1.2",
     "@types/node": "^22.0.0",
-    "@typescript-eslint/eslint-plugin": "^7.18.0",
-    "@typescript-eslint/parser": "^7.18.0",
-    "ava": "^5.2.0",
     "dotenv": "^16.4.7",
     "tsx": "^4.19.3",
     "typescript": "^5.8.3",
     "vite": "^6.2.7",
     "vite-plugin-full-reload": "^1.2.0",
-    "vite-plugin-watch-and-run": "^1.7.4",
-    "vitest": "^3.1.1"
+    "vite-plugin-watch-and-run": "^1.7.4"
   },
   "dependencies": {
     "@breadboard-ai/a2": "0.4.0",
-    "@breadboard-ai/bbrt": "0.3.0",
     "@breadboard-ai/board-server-management": "1.21.0",
     "@breadboard-ai/board-server-utils": "0.1.10",
-    "@breadboard-ai/build": "0.12.2",
     "@breadboard-ai/data-store": "0.3.3",
+    "@breadboard-ai/embed": "0.0.1",
     "@breadboard-ai/google-drive-kit": "0.6.0",
     "@breadboard-ai/idb-board-server": "1.19.4",
     "@breadboard-ai/jsandbox": "0.6.0",
-    "@breadboard-ai/manifest": "0.10.0",
-    "@breadboard-ai/python-wasm": "0.1.15",
     "@breadboard-ai/shared-ui": "1.25.0",
+    "@breadboard-ai/theme": "0.0.1",
     "@breadboard-ai/types": "0.7.0",
-    "@codemirror/autocomplete": "^6.18.6",
-    "@codemirror/commands": "^6.8.0",
-    "@codemirror/lang-javascript": "^6.2.3",
-    "@google-labs/agent-kit": "^0.18.0",
     "@google-labs/breadboard": "^0.34.0",
     "@google-labs/core-kit": "^0.19.0",
-    "@google-labs/gemini-kit": "^0.11.3",
-    "@google-labs/json-kit": "^0.3.17",
-    "@google-labs/template-kit": "^0.3.19",
     "@lit/context": "^1.1.4",
-    "@lit/task": "^1.0.2",
     "@types/gapi": "^0.0.47",
     "@types/gapi.client.drive-v3": "^0.0.5",
     "@types/google.picker": "^0.0.50",
-    "@types/jszip": "^3.4.1",
-    "ajv": "^8.17.1",
     "codemirror": "^6.0.1",
     "idb": "^8.0.2",
-    "idb-keyval": "^6.2.1",
-    "jszip": "^3.10.1",
-    "lit": "^3.2.1",
-    "markdown-it": "^14.1.0",
-    "pdfjs-dist": "^5.1.91",
-    "prettier": "^3.5.3"
+    "lit": "^3.3.0"
   }
 }

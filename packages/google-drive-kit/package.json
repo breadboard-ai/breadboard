@@ -14,24 +14,24 @@
     "url": "git+https://github.com/breadboard-ai/google-drive-kit.git"
   },
   "type": "module",
-  "main": "dist/index.js",
-  "typings": "dist/index.d.ts",
+  "main": "dist/src/index.js",
+  "typings": "dist/src/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
     },
     "./index.js": {
       "types": null,
       "default": null
     },
     "./internal/*.js": {
-      "types": "./dist/internal/*.d.ts",
+      "types": "./dist/src/internal/*.d.ts",
       "default": null
     },
     "./*.js": {
-      "types": "./dist/*.d.ts",
-      "default": "./dist/*.js"
+      "types": "./dist/src/*.d.ts",
+      "default": "./dist/src/*.js"
     },
     "./google-drive.kit.json": "./google-drive.kit.json"
   },
@@ -45,31 +45,26 @@
     "build": "wireit",
     "build:tsc": "wireit",
     "test": "wireit",
-    "test:only": "wireit",
     "coverage": "wireit",
     "lint": "wireit",
     "test-and-lint": "wireit",
-    "dev": "npm run test-and-lint --watch",
-    "generate-kit-manifest": "wireit",
-    "generate:js-components": "wireit",
-    "generate:graphs": "wireit"
+    "dev": "npm run test-and-lint --watch"
   },
   "wireit": {
     "build": {
       "dependencies": [
         "<dependencies>#<this>",
-        "build:tsc",
-        "generate-kit-manifest"
+        "build:tsc"
       ]
     },
     "build:tsc": {
       "command": "tsc --pretty",
       "dependencies": [
-        "<dependencies>#<this>",
-        "generate:js-components"
+        "<dependencies>#<this>"
       ],
       "files": [
-        "src/",
+        "src/**/*.ts",
+        "tests/**/*.ts",
         "tsconfig.json",
         "package.json"
       ],
@@ -79,19 +74,13 @@
       "clean": "if-file-deleted"
     },
     "test": {
-      "command": "node --test --test-reporter spec dist/test/*_test.js",
+      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/**/*.js",
       "dependencies": [
         "build:tsc"
       ],
-      "files": [],
-      "output": []
-    },
-    "test:only": {
-      "command": "node --test --test-only --enable-source-maps --test-reporter spec dist/test/*_test.js",
-      "dependencies": [
-        "build:tsc"
+      "files": [
+        "tests/**/*.ts"
       ],
-      "files": [],
       "output": []
     },
     "coverage": {
@@ -120,43 +109,15 @@
         "test",
         "lint"
       ]
-    },
-    "generate-kit-manifest": {
-      "command": "tsx src/generate-kit-manifest.ts",
-      "dependencies": [
-        "build:tsc"
-      ],
-      "files": [
-        "src/generate-kit-manifest.ts"
-      ],
-      "output": [
-        "google-drive.kit.json"
-      ]
-    },
-    "generate:js-components": {
-      "command": "build-code --tsconfig=tsconfig-code-build.json --out=src/generated/ src/js-components/*.ts",
-      "files": [
-        "src/**/*.ts",
-        "!src/generated/"
-      ],
-      "output": [
-        "src/generated/"
-      ],
-      "dependencies": [
-        "../build-code#build"
-      ]
     }
   },
   "dependencies": {
-    "@breadboard-ai/build": "0.12.2",
     "@breadboard-ai/connection-client": "0.2.0",
     "@breadboard-ai/types": "0.7.0",
     "@google-labs/breadboard": "^0.34.0",
-    "@google-labs/core-kit": "^0.19.0",
-    "@google-labs/template-kit": "^0.3.19"
+    "@types/gapi.client.drive-v3": "^0.0.5"
   },
   "devDependencies": {
-    "@breadboard-ai/build-code": "0.2.4",
     "@types/node": "^22.0.0",
     "eslint": "^8.57.1",
     "typescript": "^5.8.3",

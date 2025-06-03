@@ -10,12 +10,18 @@ import { provide } from "@lit/context";
 
 import * as ConnectionClient from "@breadboard-ai/connection-client";
 import * as BreadboardUIContext from "@breadboard-ai/shared-ui/contexts";
-import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
-import { SettingsHelperImpl } from "../../utils/settings.js";
 import {
+  SIGN_IN_CONNECTION_ID,
+  SigninAdapter,
+} from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
+import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
+import {
+  err,
   GraphDescriptor,
   InputValues,
   isStoredData,
+  ok,
+  Outcome,
 } from "@google-labs/breadboard";
 import { AppTemplateOptions } from "@breadboard-ai/shared-ui/types/types.js";
 import { getThemeModeFromBackground } from "../../utils/color.js";
@@ -36,16 +42,23 @@ import {
   RunSecretEvent,
   RunSkipEvent,
 } from "@google-labs/breadboard/harness";
+import { googleDriveClientContext } from "@breadboard-ai/shared-ui/contexts/google-drive-client-context.js";
+import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { loadImage } from "@breadboard-ai/shared-ui/utils/image.js";
+
+import { blobHandleToUrl } from "@breadboard-ai/shared-ui/utils/blob-handle-to-url.js";
 
 @customElement("app-view")
 export class AppView extends LitElement {
   static styles = css`
     :host {
       display: block;
+      container-type: size;
+    }
 
-      /** Mobile for now */
-      max-width: 420px;
-      max-height: 920px;
+    bb-connection-entry-signin {
+      width: 100%;
+      height: 100%;
     }
   `;
 
@@ -58,12 +71,16 @@ export class AppView extends LitElement {
   @provide({ context: BreadboardUIContext.settingsHelperContext })
   accessor settingsHelper: SettingsHelperImpl;
 
+  @provide({ context: googleDriveClientContext })
+  accessor googleDriveClient: GoogleDriveClient;
+
+  readonly flow: GraphDescriptor;
   #runner: Runner | null;
   #signInAdapter: SigninAdapter;
 
   constructor(
     private readonly config: AppViewConfig,
-    private readonly flow: GraphDescriptor | null
+    earlyLoadedFlow: GraphDescriptor | null
   ) {
     super();
 
@@ -71,11 +88,9 @@ export class AppView extends LitElement {
     this.tokenVendor = config.tokenVendor;
     this.settingsHelper = config.settingsHelper;
     this.#runner = config.runner;
-    this.#signInAdapter = new SigninAdapter(
-      this.tokenVendor,
-      this.environment,
-      this.settingsHelper
-    );
+    this.#signInAdapter = config.signinAdapter;
+    this.flow = earlyLoadedFlow ?? config.flow;
+    this.googleDriveClient = config.googleDriveClient;
 
     this.#setDocumentTitle();
     this.#applyThemeToTemplate();
@@ -108,6 +123,7 @@ export class AppView extends LitElement {
 
     if (this.config.theme?.splashScreen) {
       options.splashImage = true;
+      options.isDefaultTheme = this.config.isDefautTheme;
 
       // Set the options here, then attempt to load the splash screen image.
       this.config.template.options = options;
@@ -117,9 +133,9 @@ export class AppView extends LitElement {
         // Stored Data splash screen.
         Promise.resolve()
           .then(async () => {
-            let url = splashScreen.storedData.handle;
-            if (url.startsWith(".") && this.flow?.url) {
-              url = new URL(url, this.flow?.url).href;
+            const url = blobHandleToUrl(splashScreen.storedData.handle)?.href;
+            if (!url) {
+              return "";
             }
 
             const cachedSplashImage = this.#splashImage.get(url);
@@ -128,17 +144,11 @@ export class AppView extends LitElement {
             } else {
               this.#splashImage.clear();
 
-              const response = await fetch(url);
-              const data = await response.blob();
-              return new Promise<string>((resolve) => {
-                const reader = new FileReader();
-                reader.addEventListener("loadend", () => {
-                  const result = reader.result as string;
-                  this.#splashImage.set(url, result);
-                  resolve(result);
-                });
-                reader.readAsDataURL(data);
-              });
+              const imageData = await loadImage(this.googleDriveClient!, url);
+              if (imageData) {
+                this.#splashImage.set(url, imageData);
+              }
+              return imageData;
             }
           })
           .then((base64DataUrl) => {
@@ -191,7 +201,22 @@ export class AppView extends LitElement {
       this.requestUpdate();
     });
 
-    harnessRunner.addEventListener("secret", (_evt: RunSecretEvent) => {
+    harnessRunner.addEventListener("secret", async (evt: RunSecretEvent) => {
+      const key = evt.data.keys.at(0);
+      const name = `connection:${SIGN_IN_CONNECTION_ID}`;
+      if (key !== name) {
+        console.warn(
+          `Invalid secret values. Only "${name}" is supported`,
+          evt.data.keys
+        );
+        return;
+      }
+      const token = await this.getAccessToken();
+      if (!ok(token)) {
+        console.warn(token.$error);
+        return;
+      }
+      this.#runner?.harnessRunner.run({ [name]: token });
       this.requestUpdate();
     });
 
@@ -224,6 +249,20 @@ export class AppView extends LitElement {
     });
   }
 
+  async getAccessToken(): Promise<Outcome<string>> {
+    if (this.#signInAdapter.state !== "valid") {
+      const refreshed = await this.#signInAdapter.refresh();
+      if (refreshed?.state !== "valid") {
+        console.error("Unable to get valid Auth token");
+        return err("unable to get token");
+      } else {
+        return refreshed.grant.access_token;
+      }
+    } else {
+      return this.#signInAdapter.accessToken()!;
+    }
+  }
+
   render() {
     if (!this.flow || !this.#runner) {
       return html`404 not found`;
@@ -237,6 +276,7 @@ export class AppView extends LitElement {
       const appTemplate = this.config.template;
       const run = runs[0] ?? null;
 
+      appTemplate.showDisclaimer = true;
       appTemplate.state = this.#signInAdapter.state;
       appTemplate.graph = this.flow;
       appTemplate.run = run;
@@ -284,7 +324,7 @@ export class AppView extends LitElement {
         this.dispatchEvent(new Event("reset"));
       });
 
-      appTemplate.addEventListener("bbinputenter", (evt: Event) => {
+      appTemplate.addEventListener("bbinputenter", async (evt: Event) => {
         evt.stopImmediatePropagation();
 
         if (!this.#runner) {
@@ -292,12 +332,10 @@ export class AppView extends LitElement {
         }
 
         const inputEvent = evt as InputEnterEvent;
-        let data = inputEvent.data as InputValues;
+        const data = inputEvent.data as InputValues;
 
         if ("secret" in data) {
-          const name = inputEvent.id;
-          const value = data.secret;
-          data = { [name]: value };
+          console.warn("Unexpected secret input", data);
         }
 
         const runner = this.#runner.harnessRunner;
@@ -306,11 +344,9 @@ export class AppView extends LitElement {
           throw new Error("Can't send input, no runner");
         }
 
-        if (runner.running()) {
-          throw new Error("The runner is already running, cannot send input");
+        if (!runner.running()) {
+          runner.run(data);
         }
-
-        runner.run(data);
       });
 
       return html`${appTemplate}`;

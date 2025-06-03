@@ -489,6 +489,10 @@
 				"userModified": {
 					"type": "boolean",
 					"description": "If true, the title/description have been modified by the user."
+				},
+				"start": {
+					"type": "boolean",
+					"description": "If true, indicates that this node is marked as a starting node. This indicator is informative: it does not mean that the run starts with this node. Instead, when this node is both:  a) standalone (no ins/outs)  b) first among others with this flag Then, it will be chosen as a starting node."
 				}
 			},
 			"additionalProperties": false,
@@ -555,6 +559,9 @@
 						"type": "string"
 					}
 				},
+				"palette": {
+					"$ref": "#/definitions/AppPalette"
+				},
 				"template": {
 					"type": "string"
 				},
@@ -566,8 +573,61 @@
 				},
 				"splashScreen": {
 					"$ref": "#/definitions/StoredDataCapabilityPart"
+				},
+				"isDefaultTheme": {
+					"type": "boolean"
 				}
 			},
+			"additionalProperties": false
+		},
+		"AppPalette": {
+			"type": "object",
+			"properties": {
+				"primary": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"secondary": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"tertiary": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"neutral": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"neutralVariant": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"error": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				}
+			},
+			"required": [
+				"primary",
+				"secondary",
+				"tertiary",
+				"neutral",
+				"neutralVariant",
+				"error"
+			],
 			"additionalProperties": false
 		},
 		"StoredDataCapabilityPart": {

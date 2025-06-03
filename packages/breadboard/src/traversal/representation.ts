@@ -37,15 +37,52 @@ export class GraphRepresentation {
     return !this.heads.has(id) || this.heads.get(id)?.length === 0;
   }
 
-  #findEntries() {
-    if (this.start) {
-      const entry = this.nodes.has(this.start);
-      return entry ? [this.start] : [];
-    }
-    // Otherwise, fall back to computing entries based on edges.
-    return Array.from(this.nodes.keys()).filter((node) =>
+  #notInTails(id: NodeIdentifier) {
+    return !this.tails.has(id) || this.tails.get(id)?.length === 0;
+  }
+
+  #findEntries(): NodeIdentifier[] {
+    const entries = Array.from(this.nodes.keys()).filter((node) =>
       this.#notInHeads(node)
     );
+    // If entries is empty, return empty array
+    if (entries.length === 0) return [];
+
+    // Now, let's separate out all standalone steps and see if maybe we only
+    // have standalone nodes.
+    const standalone: NodeIdentifier[] = [];
+    const connected: NodeIdentifier[] = [];
+    let onlyStandalone = true;
+    entries.forEach((node) => {
+      if (this.#notInTails(node)) {
+        standalone.push(node);
+      } else {
+        onlyStandalone = false;
+        connected.push(node);
+      }
+    });
+
+    // If there are no standalone nodes, return all entries as usual.
+    if (standalone.length === 0) return entries;
+
+    // First, let's see if we can find the starting one
+    const start = standalone.find(
+      (node) => this.nodes.get(node)!.metadata?.start
+    );
+    // If there's a standalone start node, let's return.
+    if (start) return [start];
+
+    if (onlyStandalone) {
+      // This is the situation when we have a bunch of random nodes in graph
+      // and they are not connected, and there's no designated start node.
+
+      // Just return the first standalone node.
+      return [standalone.at(0)!];
+    } else {
+      // If there are both standalone and connected nodes, we just ignore
+      // all standalone nodes.
+      return connected;
+    }
   }
 
   constructor(descriptor: GraphDescriptor, start?: NodeIdentifier) {

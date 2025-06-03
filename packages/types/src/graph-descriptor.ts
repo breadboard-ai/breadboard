@@ -187,6 +187,15 @@ export type NodeMetadata = {
    * If true, the title/description have been modified by the user.
    */
   userModified?: boolean;
+  /**
+   * If true, indicates that this node is marked as a starting node.
+   * This indicator is informative: it does not mean that the run starts
+   * with this node. Instead, when this node is both:
+   *  a) standalone (no ins/outs)
+   *  b) first among others with this flag
+   * Then, it will be chosen as a starting node.
+   */
+  start?: boolean;
 };
 
 /**
@@ -343,11 +352,22 @@ export type ParameterMetadata = {
   usedIn: NodeIdentifier[];
 };
 
+export type AppPalette = {
+  primary: Record<number, string>;
+  secondary: Record<number, string>;
+  tertiary: Record<number, string>;
+  neutral: Record<number, string>;
+  neutralVariant: Record<number, string>;
+  error: Record<number, string>;
+};
+
 export type GraphTheme = {
   themeColors?: Record<string, string>;
+  palette?: AppPalette;
   template?: string;
   templateAdditionalOptions?: Record<string, string>;
   splashScreen?: StoredDataCapabilityPart;
+  isDefaultTheme?: boolean;
 };
 
 /**

@@ -11,14 +11,14 @@ import {
   AddAssetRequestEvent,
   OverflowMenuActionEvent,
 } from "../../../events/events";
+import { icons } from "../../../styles/icons";
+
+const BUTTON_HEIGHT = 44;
 
 @customElement("bb-add-asset-button")
 export class AddAssetButton extends LitElement {
   @property({ type: Boolean })
   accessor disabled = false;
-
-  @property()
-  accessor useGlobalPosition = true;
 
   @property()
   accessor showGDrive = false;
@@ -29,6 +29,7 @@ export class AddAssetButton extends LitElement {
     youtube: true,
     drawable: true,
     gdrive: true,
+    webcamVideo: true,
   };
 
   @property()
@@ -43,42 +44,57 @@ export class AddAssetButton extends LitElement {
   @state()
   accessor _assetType = "file";
 
-  static styles = css`
-    :host {
-      display: flex;
-      align-items: flex-end;
-    }
+  static styles = [
+    icons,
+    css`
+      :host {
+        display: flex;
+        align-items: flex-end;
+        position: relative;
+        width: var(--button-size, 40px);
+        height: var(--button-size, 40px);
+      }
 
-    #add-asset {
-      width: var(--button-size, 40px);
-      height: var(--button-size, 40px);
-      border: none;
-      background: oklch(
-          from var(--primary-text-color) l c h / calc(alpha - 0.75)
-        )
-        var(--bb-icon-add) center center / 20px 20px no-repeat;
-      flex: 0 0 auto;
-      border-radius: var(--button-border-radius, 50%);
-      transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
-      opacity: 0.5;
+      #add-asset {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: var(--button-size, 40px);
+        height: var(--button-size, 40px);
+        border: none;
+        background: var(--background-color, var(--n-90, var(--bb-neutral-200)));
+        color: var(--text-color, var(--p-40, var(--bb-neutral-800)));
+        flex: 0 0 auto;
+        border-radius: var(--button-border-radius, 50%);
+        transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+        opacity: 0.8;
 
-      &:not([disabled]) {
-        cursor: pointer;
+        * {
+          pointer-events: none;
+        }
 
-        &:focus,
-        &:hover {
-          opacity: 1;
+        &:not([disabled]) {
+          cursor: pointer;
+
+          &:focus,
+          &:hover {
+            opacity: 1;
+          }
         }
       }
-    }
 
-    bb-overflow-menu {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: min-content;
-    }
-  `;
+      bb-overflow-menu {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: min-content;
+        --border-color: var(--s-80);
+        --inner-border-color: var(--s-80);
+        --background-color: var(--s-90);
+        --text-color: var(--p-15);
+      }
+    `,
+  ];
 
   #overflowMenu: { x: number; y: number } = { x: 0, y: 0 };
 
@@ -91,7 +107,7 @@ export class AddAssetButton extends LitElement {
         actions.push({
           icon: "upload",
           name: "upload",
-          title: "Upload from device",
+          title: "Upload from Device",
         });
       }
 
@@ -103,6 +119,14 @@ export class AddAssetButton extends LitElement {
         });
       }
 
+      if (this.supportedActions.gdrive && this.showGDrive) {
+        actions.push({
+          icon: "gdrive",
+          title: "Add from Google Drive",
+          name: "gdrive",
+        });
+      }
+
       if (this.supportedActions.drawable) {
         actions.push({
           icon: "drawable",
@@ -111,18 +135,17 @@ export class AddAssetButton extends LitElement {
         });
       }
 
-      if (this.supportedActions.gdrive && this.showGDrive) {
+      if (this.supportedActions.webcamVideo) {
         actions.push({
-          icon: "gdrive",
-          title: "Google Drive",
-          name: "gdrive",
+          icon: "videocam",
+          name: "webcam-video",
+          title: "Add a Webcam Video",
         });
       }
 
       if (this.anchor === "above") {
-        this.#overflowMenu.y -= 40; // Button height.
-        this.#overflowMenu.y -= 10; // Clearance.
-        this.#overflowMenu.y -= Math.min(380, actions.length * 40); // Menu height.
+        this.#overflowMenu.y -= 12; // Clearance.
+        this.#overflowMenu.y -= actions.length * BUTTON_HEIGHT; // Menu height.
       }
 
       overflowMenu = html`<bb-overflow-menu
@@ -153,21 +176,14 @@ export class AddAssetButton extends LitElement {
             return;
           }
 
-          const bounds = evt.target.getBoundingClientRect();
-          if (this.useGlobalPosition) {
-            this.#overflowMenu.x = bounds.x;
-            this.#overflowMenu.y = bounds.bottom + 10;
-          } else {
-            this.#overflowMenu.x = this.offsetLeft + evt.target.offsetLeft;
-            this.#overflowMenu.y =
-              this.offsetTop + evt.target.offsetTop + bounds.height;
-          }
+          this.#overflowMenu.x = 0;
+          this.#overflowMenu.y = 0;
 
           this._showOverflowMenu = true;
         }}
         id="add-asset"
       >
-        +
+        <span class="g-icon">add_circle</span>
       </button>
       ${overflowMenu}`;
   }

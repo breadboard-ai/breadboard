@@ -13,6 +13,7 @@ import {
 } from "../../events/events.js";
 import { classMap } from "lit/directives/class-map.js";
 import { OverflowAction } from "../../types/types.js";
+import { icons } from "../../styles/icons.js";
 
 @customElement("bb-overflow-menu")
 export class OverflowMenu extends LitElement {
@@ -25,251 +26,269 @@ export class OverflowMenu extends LitElement {
   #onKeyDownBound = this.#onKeyDown.bind(this);
   #onPointerDownBound = this.#onPointerDown.bind(this);
 
-  static styles = css`
-    * {
-      box-sizing: border-box;
-    }
+  static styles = [
+    icons,
+    css`
+      * {
+        box-sizing: border-box;
+      }
 
-    :host {
-      display: grid;
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: var(--background-color, var(--bb-neutral-0));
-      border: 1px solid var(--bb-neutral-300);
-      border-radius: var(--bb-grid-size-2);
-      z-index: 2;
-      box-shadow:
-        0px 4px 8px 3px rgba(0, 0, 0, 0.05),
-        0px 1px 3px rgba(0, 0, 0, 0.1);
-      max-height: 380px;
-      scrollbar-width: none;
-      overflow-y: scroll;
-    }
+      :host {
+        display: grid;
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: var(--background-color, var(--bb-neutral-0));
+        border: 1px solid var(--border-color, var(--bb-neutral-300));
+        border-radius: var(--bb-grid-size-2);
+        z-index: 2;
+        box-shadow:
+          0px 4px 8px 3px rgba(0, 0, 0, 0.05),
+          0px 1px 3px rgba(0, 0, 0, 0.1);
+        max-height: 380px;
+        scrollbar-width: none;
+        overflow-y: scroll;
+      }
 
-    button {
-      font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
-        var(--bb-font-family);
-      padding: var(--bb-grid-size-3) var(--bb-grid-size-4) var(--bb-grid-size-3)
-        var(--bb-grid-size-11);
-      color: var(--text-color, var(--bb-neutral-900));
-      background: transparent var(--bb-icon-public) 12px center / 20px 20px
-        no-repeat;
-      border: none;
-      text-align: left;
-      cursor: pointer;
-      min-width: 130px;
-      width: 100%;
-      max-width: 300px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      opacity: 0.5;
-      cursor: auto;
+      button {
+        display: flex;
+        align-items: center;
 
-      &:not([disabled]) {
-        opacity: 1;
+        font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+          var(--bb-font-family);
+        padding: var(--bb-grid-size-3) var(--bb-grid-size-4)
+          var(--bb-grid-size-3) var(--bb-grid-size-3);
+        color: var(--text-color, var(--bb-neutral-900));
+        background: transparent;
+        border: none;
+        text-align: left;
         cursor: pointer;
+        min-width: 130px;
+        width: 100%;
+        max-width: 300px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        opacity: 0.5;
+        cursor: auto;
 
-        &:hover,
-        &:focus {
-          background-color: oklch(
-            from var(--text-color, var(--bb-neutral-900)) l c h /
-              calc(alpha - 0.9)
-          );
+        &:not([disabled]) {
+          opacity: 1;
+          cursor: pointer;
+
+          &:hover,
+          &:focus {
+            background-color: oklch(
+              from var(--text-color, var(--bb-neutral-900)) l c h /
+                calc(alpha - 0.9)
+            );
+          }
+        }
+
+        &:not(.secondary-action) .g-icon {
+          margin-right: var(--bb-grid-size-2);
+        }
+
+        &.flag .g-icon::before {
+          content: "flag";
+        }
+
+        &.share .g-icon::before {
+          content: "share";
+        }
+
+        &.copy .g-icon::before {
+          content: "content_copy";
+        }
+
+        &.download .g-icon::before {
+          content: "download";
+        }
+
+        &.save .g-icon::before {
+          content: "save";
+        }
+
+        &.save-as .g-icon::before {
+          content: "save";
+        }
+
+        &.settings .g-icon::before {
+          content: "settings";
+        }
+
+        &.delete .g-icon::before {
+          content: "delete";
+        }
+
+        &.preview .g-icon::before {
+          content: "preview";
+        }
+
+        &.edit .g-icon::before {
+          content: "edit";
+        }
+
+        &.fit .g-icon::before {
+          content: "fit_screen";
+        }
+
+        &.undo .g-icon::before {
+          content: "undo";
+        }
+
+        &.redo .g-icon::before {
+          content: "redo";
+        }
+
+        &.zoom-to-fit .g-icon::before {
+          content: "fit_screen";
+        }
+
+        &.reset-nodes .g-icon::before {
+          content: "replay";
+        }
+
+        &.edit-board-details .g-icon::before {
+          content: "data_info_alert";
+        }
+
+        &.board .g-icon::before {
+          content: "developer_board";
+        }
+
+        &.add-circle .g-icon::before {
+          content: "add_circle";
+        }
+
+        &.module .g-icon::before {
+          content: "extension";
+        }
+
+        &.module-ts .g-icon::before {
+          content: "extension";
+        }
+
+        &.duplicate .g-icon::before {
+          content: "tab_inactive";
+        }
+
+        &.quick-jump .g-icon::before {
+          content: "arrow_circle_right";
+        }
+
+        &.maximize .g-icon::before {
+          content: "expand_content";
+        }
+
+        &.minimize .g-icon::before {
+          content: "collapse_content";
+        }
+
+        &.checked .g-icon::before {
+          content: "check";
+        }
+
+        &.unchecked .g-icon::before {
+          content: "check";
+        }
+
+        &.logout .g-icon::before {
+          content: "logout";
+        }
+
+        &.upload .g-icon::before {
+          content: "upload";
+        }
+
+        &.content-add .g-icon::before {
+          content: "text_fields";
+        }
+
+        &.youtube .g-icon::before {
+          content: "video_youtube";
+        }
+
+        &.gdrive .g-icon::before {
+          content: "drive";
+        }
+
+        &.drawable .g-icon::before {
+          content: "draw";
+        }
+
+        &.flow .g-icon::before {
+          content: "flowchart";
+        }
+
+        &.step .g-icon::before {
+          content: "step";
+        }
+
+        &.code .g-icon::before {
+          content: "code";
+        }
+
+        &.remix .g-icon::before {
+          content: "call_split";
+        }
+
+        &.videocam .g-icon::before {
+          content: "videocam";
+        }
+
+        &.error .g-icon::before {
+          content: "error";
+          color: var(--bb-warning-600);
         }
       }
 
-      &.share {
-        background-image: var(--bb-icon-share);
+      div {
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid
+          var(--inner-border-color, var(--bb-neutral-100));
       }
 
-      &.copy {
-        background-image: var(--bb-icon-copy-to-clipboard);
+      div:last-of-type {
+        border-bottom: none;
       }
 
-      &.download {
-        background-image: var(--bb-icon-download);
+      .secondary-action {
+        flex: 0 0 auto;
+        width: 20px;
+        height: 20px;
+        margin: 0 var(--bb-grid-size);
+        background: transparent;
+        background-position: center center;
+        background-repeat: no-repeat;
+        padding: 0;
+        border: none;
+        min-width: 20px;
+        border-radius: var(--bb-grid-size);
       }
 
-      &.save {
-        background-image: var(--bb-icon-save);
+      div:first-of-type:not(.with-secondary-action) button {
+        border-radius: var(--bb-grid-size-2) var(--bb-grid-size-2) 0 0;
       }
 
-      &.save-as {
-        background-image: var(--bb-icon-save-as);
+      div:last-of-type:not(.with-secondary-action) button {
+        border-radius: 0 0 var(--bb-grid-size-2) var(--bb-grid-size-2);
       }
 
-      &.settings {
-        background-image: var(--bb-icon-settings);
+      div.with-secondary-action:first-of-type button:first-child {
+        border-radius: var(--bb-grid-size-2) 0 0 0;
       }
 
-      &.delete {
-        background-image: var(--bb-icon-delete);
+      div.with-secondary-action:last-of-type button:first-child {
+        border-radius: 0 0 0 var(--bb-grid-size-2);
       }
 
-      &.preview {
-        background-image: var(--bb-icon-preview);
+      div:only-child button {
+        border-radius: var(--bb-grid-size-2);
       }
-
-      &.edit {
-        background-image: var(--bb-icon-edit);
-      }
-
-      &.fit {
-        background-image: var(--bb-icon-fit);
-      }
-
-      &.undo {
-        background-image: var(--bb-icon-undo);
-      }
-
-      &.redo {
-        background-image: var(--bb-icon-redo);
-      }
-
-      &.zoom-to-fit {
-        background-image: var(--bb-icon-fit);
-      }
-
-      &.reset-nodes {
-        background-image: var(--bb-icon-reset-nodes);
-      }
-
-      &.edit-board-details {
-        background-image: var(--bb-icon-data-info-alert);
-      }
-
-      &.board {
-        background-image: var(--bb-icon-board);
-      }
-
-      &.add-circle {
-        background-image: var(--bb-icon-add-circle);
-      }
-
-      &.module {
-        background-image: var(--bb-icon-extension);
-      }
-
-      &.module-ts {
-        background-image: var(--bb-icon-extension-ts);
-      }
-
-      &.duplicate {
-        background-image: var(--bb-icon-duplicate);
-      }
-
-      &.quick-jump {
-        background-image: var(--bb-icon-quick-jump);
-      }
-
-      &.maximize {
-        background-image: var(--bb-icon-maximize);
-      }
-
-      &.minimize {
-        background-image: var(--bb-icon-minimize);
-      }
-
-      &.checked {
-        background-image: var(--bb-icon-check);
-      }
-
-      &.unchecked {
-        background-image: var(--bb-icon-check);
-      }
-
-      &.logout {
-        background-image: var(--bb-icon-logout);
-      }
-
-      &.upload {
-        background-image: var(--bb-icon-upload);
-      }
-
-      &.content-add {
-        background-image: var(--bb-icon-text);
-      }
-
-      &.youtube {
-        background-image: var(--bb-icon-youtube);
-      }
-
-      &.gdrive {
-        background-image: var(--bb-icon-google-drive-outline);
-      }
-
-      &.drawable {
-        background-image: var(--bb-icon-add-drawable);
-      }
-
-      &.flow {
-        background-image: var(--bb-icon-flowchart);
-      }
-
-      &.step {
-        background-image: var(--bb-icon-step);
-      }
-
-      &.code {
-        background-image: var(--bb-icon-code);
-      }
-
-      &.remix {
-        background-image: var(--bb-icon-remix);
-      }
-
-      &.error {
-        background-image: var(--bb-icon-error);
-        color: var(--bb-warning-600);
-      }
-    }
-
-    div {
-      display: flex;
-      align-items: center;
-      border-bottom: 1px solid var(--bb-neutral-100);
-    }
-
-    div:last-of-type {
-      border-bottom: none;
-    }
-
-    .secondary-action {
-      flex: 0 0 auto;
-      width: 20px;
-      height: 20px;
-      margin: 0 var(--bb-grid-size);
-      background: transparent;
-      background-position: center center;
-      background-repeat: no-repeat;
-      padding: 0;
-      border: none;
-      min-width: 20px;
-      border-radius: var(--bb-grid-size);
-    }
-
-    div:first-of-type:not(.with-secondary-action) button {
-      border-radius: var(--bb-grid-size-2) var(--bb-grid-size-2) 0 0;
-    }
-
-    div:last-of-type:not(.with-secondary-action) button {
-      border-radius: 0 0 var(--bb-grid-size-2) var(--bb-grid-size-2);
-    }
-
-    div.with-secondary-action:first-of-type button:first-child {
-      border-radius: var(--bb-grid-size-2) 0 0 0;
-    }
-
-    div.with-secondary-action:last-of-type button:first-child {
-      border-radius: 0 0 0 var(--bb-grid-size-2);
-    }
-
-    div:only-child button {
-      border-radius: var(--bb-grid-size-2);
-    }
-  `;
+    `,
+  ];
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -325,6 +344,7 @@ export class OverflowMenu extends LitElement {
           ?disabled=${(action.name !== "settings" && this.disabled) ||
           action.disabled}
         >
+          <span class="g-icon"></span>
           ${action.title}
         </button>
 
@@ -347,7 +367,9 @@ export class OverflowMenu extends LitElement {
                 "secondary-action": true,
                 [action.secondaryAction]: true,
               })}
-            ></button>`
+            >
+              <span class="g-icon"></span>
+            </button>`
           : nothing}
       </div>`;
     })}`;

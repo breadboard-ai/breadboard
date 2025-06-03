@@ -26,6 +26,9 @@ export default {
   COMMAND_CREATE_EXPORT: {
     str: "Create export",
   },
+  COMMAND_START: {
+    str: "Start",
+  },
 
   // Statuses.
   STATUS_GENERATING_EXPORT: {
@@ -33,6 +36,9 @@ export default {
   },
   STATUS_RETRIEVING_VALUES: {
     str: "Retrieving values...",
+  },
+  STATUS_AWAITING_USER: {
+    str: "Waiting for user input",
   },
 
   // Labels.

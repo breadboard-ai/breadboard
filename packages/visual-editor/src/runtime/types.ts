@@ -32,6 +32,7 @@ import { Sandbox } from "@breadboard-ai/jsandbox";
 import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import { HarnessProxyConfig } from "@google-labs/breadboard/harness";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
+import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 
 export enum TabType {
   URL,
@@ -48,6 +49,7 @@ export interface Tab {
   name: TabName;
   mainGraphId: MainGraphIdentifier;
   graph: GraphDescriptor;
+  graphIsMine: boolean;
   subGraphId: string | null;
   moduleId: ModuleIdentifier | null;
   version: number;
@@ -78,6 +80,7 @@ export interface RuntimeConfig {
   // as part of the environment.
   builtInBoardServers: BoardServer[];
   kits: Kit[];
+  googleDriveClient?: GoogleDriveClient;
 }
 
 export interface RuntimeConfigBoardServers {

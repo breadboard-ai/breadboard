@@ -54,6 +54,9 @@ export default {
   COMMAND_DELETE_PROJECT: {
     str: "Delete",
   },
+  COMMAND_SEND_FEEDBACK: {
+    str: "Send feedback",
+  },
   COMMAND_EXPORT_PROJECT: {
     str: "Export JSON",
   },
@@ -106,6 +109,12 @@ export default {
   },
   LABEL_MAIN_PROJECT: {
     str: "Main Flow...",
+  },
+  LABEL_READONLY_PROJECT: {
+    str: "This Flow is not editable. Please Remix it to make changes.",
+  },
+  LABEL_DISCLAIMER: {
+    str: "Breadboard can make mistakes, so double-check it",
   },
 
   // Statuses.

@@ -6,13 +6,7 @@
 import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { consume } from "@lit/context";
-import {
-  GraphDescriptor,
-  GraphTheme,
-  InputValues,
-  LLMContent,
-  OutputValues,
-} from "@breadboard-ai/types";
+import { GraphDescriptor, GraphTheme, LLMContent } from "@breadboard-ai/types";
 import GenerateAppTheme from "../../sideboards/sideboards-bgl/generate-app-theme.bgl.json" with { type: "json" };
 import MarkdownIt from "markdown-it";
 import {
@@ -39,8 +33,17 @@ import {
   isInlineData,
   isStoredData,
   isTextCapabilityPart,
+  ok,
 } from "@google-labs/breadboard";
-import { map } from "lit/directives/map.js";
+import { until } from "lit/directives/until.js";
+import { googleDriveClientContext } from "../../contexts/google-drive-client-context";
+import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { renderThumbnail } from "../../utils/image";
+import {
+  generatePaletteFromColor,
+  generatePaletteFromImage,
+} from "@breadboard-ai/theme";
+import { guard } from "lit/directives/guard.js";
 
 @customElement("bb-app-theme-creator")
 export class AppThemeCreator extends LitElement {
@@ -64,6 +67,9 @@ export class AppThemeCreator extends LitElement {
 
   @consume({ context: sideBoardRuntime })
   accessor sideBoardRuntime!: SideBoardRuntime | undefined;
+
+  @consume({ context: googleDriveClientContext })
+  accessor googleDriveClient!: GoogleDriveClient | undefined;
 
   @state()
   accessor _generating = false;
@@ -250,7 +256,11 @@ export class AppThemeCreator extends LitElement {
                 object-fit: cover;
                 background: url(/images/progress-ui.svg) center center / 20px
                   20px no-repeat;
-                border-radius: var(--bb-grid-size-2) var(--bb-grid-size-2) 0 0;
+                border-radius: var(--bb-grid-size-2);
+
+                &.default {
+                  object-fit: contain;
+                }
               }
 
               & .color {
@@ -268,6 +278,10 @@ export class AppThemeCreator extends LitElement {
               }
             }
           }
+        }
+
+        & #theme-colors {
+          display: none;
         }
 
         & #theme-options,
@@ -424,8 +438,8 @@ export class AppThemeCreator extends LitElement {
   #generateDescriptionRef: Ref<HTMLTextAreaElement> = createRef();
   #containerRef: Ref<HTMLDivElement> = createRef();
 
-  #isValidAppTheme(theme: unknown): theme is AppThemeColors {
-    const maybeTheme = theme as AppThemeColors;
+  #isValidAppTheme(theme: unknown): theme is AppTheme {
+    const maybeTheme = theme as AppTheme;
     const primary = "primaryColor" in maybeTheme;
     const secondary = "secondaryColor" in maybeTheme;
     const background = "backgroundColor" in maybeTheme;
@@ -462,51 +476,37 @@ export class AppThemeCreator extends LitElement {
     if (!this.sideBoardRuntime) {
       throw new Error("Internal error: No side board runtime was available.");
     }
-    const runner = await this.sideBoardRuntime.createRunner(
+    const context: LLMContent[] = [
       {
-        ...(GenerateAppTheme as GraphDescriptor),
+        role: "user",
+        parts: [
+          {
+            text: `ULTRA IMPORTANT: The application's name is: "${appName}".`,
+          },
+        ],
       },
-      this.graph?.url
-    );
-    const inputs: InputValues & { context: LLMContent[] } = {
-      context: [
-        {
-          role: "user",
-          parts: [
-            {
-              text: `ULTRA IMPORTANT: The application's name is: "${appName}".`,
-            },
-          ],
-        },
-      ],
-    };
+    ];
 
     if (appDescription) {
-      inputs.context[0].parts.push({
+      context[0].parts.push({
         text: `The app does the following: "${appDescription}"`,
       });
     }
 
     if (additionalInformation) {
-      inputs.context[0].parts.push({ text: additionalInformation });
+      context[0].parts.push({ text: additionalInformation });
     }
 
-    const outputs = await new Promise<OutputValues[]>((resolve, reject) => {
-      const outputs: OutputValues[] = [];
-      runner.addEventListener("input", () => void runner.run(inputs));
-      runner.addEventListener("output", (event) =>
-        outputs.push(event.data.outputs)
-      );
-      runner.addEventListener("end", () => resolve(outputs));
-      runner.addEventListener("error", (event) => reject(event.data.error));
-      void runner.run();
+    const result = await this.sideBoardRuntime.runTask({
+      graph: GenerateAppTheme as GraphDescriptor,
+      url: this.graph?.url,
+      context,
     });
-
-    if (outputs.length !== 1) {
-      throw new Error(`Expected 1 output, got ${JSON.stringify(outputs)}`);
+    if (!ok(result)) {
+      throw new Error(result.$error);
     }
 
-    const [response] = outputs[0].context as LLMContent[];
+    const [response] = result;
 
     // The splash image.
     const [splashScreen, colorsRaw] = response.parts;
@@ -535,7 +535,21 @@ export class AppThemeCreator extends LitElement {
         throw new Error("Invalid color scheme generated");
       }
 
+      let theme = generatePaletteFromColor("#ffffff");
+      const img = new Image();
+      if (isInlineData(splashScreen)) {
+        img.src = `data:${splashScreen.inlineData.mimeType};base64,${splashScreen.inlineData.data}`;
+      } else {
+        img.src = splashScreen.storedData.handle;
+        img.crossOrigin = "anonymous";
+      }
+      const generatedTheme = await generatePaletteFromImage(img);
+      if (generatedTheme) {
+        theme = generatedTheme;
+      }
+
       return {
+        ...theme,
         ...code,
         splashScreen,
       };
@@ -582,6 +596,19 @@ export class AppThemeCreator extends LitElement {
 
     const theme = this.themes[this.theme];
     this.dispatchEvent(new ThemeUpdateEvent(this.theme, theme));
+  }
+
+  async #renderThumbnail(theme: GraphTheme) {
+    // For default theme leave this empty so that the default icon will be shown.
+    const url = theme.isDefaultTheme
+      ? undefined
+      : theme.splashScreen?.storedData?.handle;
+    return await renderThumbnail(
+      url,
+      this.googleDriveClient!,
+      {},
+      "Theme thumbnail"
+    );
   }
 
   render() {
@@ -658,40 +685,10 @@ export class AppThemeCreator extends LitElement {
                     this.dispatchEvent(new ThemeChangeEvent(key));
                   }}
                 >
-                  <img
-                    src=${url ?? "/images/app/generic-flow.jpg"}
-                    alt="Theme thumbnail"
-                  />
-                  <span
-                    class="color"
-                    style=${styleMap({
-                      "--background": theme.themeColors?.primaryColor,
-                    })}
-                  ></span>
-                  <span
-                    class="color"
-                    style=${styleMap({
-                      "--background": theme.themeColors?.secondaryColor,
-                    })}
-                  ></span>
-                  <span
-                    class="color"
-                    style=${styleMap({
-                      "--background": theme.themeColors?.backgroundColor,
-                    })}
-                  ></span>
-                  <span
-                    class="color"
-                    style=${styleMap({
-                      "--background": theme.themeColors?.primaryTextColor,
-                    })}
-                  ></span>
-                  <span
-                    class="color"
-                    style=${styleMap({
-                      "--background": theme.themeColors?.textColor,
-                    })}
-                  ></span>
+                  ${guard(
+                    [theme.splashScreen],
+                    () => html`${until(this.#renderThumbnail(theme))}`
+                  )}
                 </button>
               </li>`;
             }
@@ -710,7 +707,7 @@ export class AppThemeCreator extends LitElement {
                   >
                   <input
                     id="primary"
-                    type="color"
+                    type="hidden"
                     ?disabled=${this._changed || this._generating}
                     .value=${theme.themeColors.primaryColor}
                     @input=${(evt: InputEvent) => {
@@ -740,7 +737,7 @@ export class AppThemeCreator extends LitElement {
                   >
                   <input
                     id="secondary"
-                    type="color"
+                    type="hidden"
                     ?disabled=${this._changed || this._generating}
                     .value=${theme.themeColors.secondaryColor}
                     @input=${(evt: InputEvent) => {
@@ -770,7 +767,7 @@ export class AppThemeCreator extends LitElement {
                   >
                   <input
                     id="background"
-                    type="color"
+                    type="hidden"
                     ?disabled=${this._changed || this._generating}
                     .value=${theme.themeColors.backgroundColor}
                     @input=${(evt: InputEvent) => {
@@ -800,7 +797,7 @@ export class AppThemeCreator extends LitElement {
                   >
                   <input
                     id="primary-text"
-                    type="color"
+                    type="hidden"
                     ?disabled=${this._changed || this._generating}
                     .value=${theme.themeColors.primaryTextColor}
                     @input=${(evt: InputEvent) => {
@@ -830,7 +827,7 @@ export class AppThemeCreator extends LitElement {
                   >
                   <input
                     id="text"
-                    type="color"
+                    type="hidden"
                     ?disabled=${this._changed || this._generating}
                     .value=${theme.themeColors.textColor}
                     @input=${(evt: InputEvent) => {
@@ -852,41 +849,6 @@ export class AppThemeCreator extends LitElement {
                 </div>`
             : nothing}
         </div>
-        ${this.themeOptions
-          ? html`<div id="theme-options">
-              ${map(Object.entries(this.themeOptions), ([id, value]) => {
-                const selectedValue =
-                  this.themes?.[this.theme ?? ""].templateAdditionalOptions?.[
-                    id
-                  ];
-                return html`<div>
-                  <label for=${id}>${value.title}</label
-                  ><select
-                    name="${id}"
-                    @input=${(evt: InputEvent) => {
-                      if (!(evt.target instanceof HTMLSelectElement)) {
-                        return;
-                      }
-
-                      theme.templateAdditionalOptions ??= {};
-                      theme.templateAdditionalOptions[id] = evt.target.value;
-
-                      this.#emitTheme();
-                    }}
-                  >
-                    ${map(Object.values(value.values), (item) => {
-                      return html`<option
-                        ?selected=${selectedValue === item.value}
-                        .value=${item.value}
-                      >
-                        ${item.title}
-                      </option>`;
-                    })}
-                  </select>
-                </div>`;
-              })}
-            </div>`
-          : nothing}
       </section>
     </section>`;
   }

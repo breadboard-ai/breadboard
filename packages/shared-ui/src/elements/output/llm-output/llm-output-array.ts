@@ -136,7 +136,6 @@ export class LLMOutputArray extends LitElement {
       return;
     }
 
-    // @ts-expect-error - TS doesn't know about findLastIndex
     this.selected = this.values.findLastIndex(
       (item: LLMContent | undefined) => item?.role !== "$metadata"
     );

@@ -187,15 +187,6 @@ export class SettingsStore implements BreadboardUI_Types.SettingsStore {
           },
         ],
         [
-          "Enable autonaming",
-          {
-            name: "Enable autonaming",
-            description:
-              "Toggles the WIP feature where the flows and steps are automatically named according to their purpose (reload for setting to take effect)",
-            value: false,
-          },
-        ],
-        [
           "Enable Custom Step Creation",
           {
             name: "Enable Custom Step Creation",
@@ -258,7 +249,29 @@ export class SettingsStore implements BreadboardUI_Types.SettingsStore {
     return this.#settings[section].items.get(name);
   }
 
+  setItem(
+    section: BreadboardUI_Types.SETTINGS_TYPE,
+    name: string,
+    value: BreadboardUI_Types.SettingEntry["value"]
+  ) {
+    return this.#settings[section].items.set(name, value);
+  }
+
   private constructor() {}
+
+  async saveItem(
+    section: BreadboardUI_Types.SETTINGS_TYPE,
+    value: BreadboardUI_Types.SettingEntry["value"]
+  ) {
+    const settingsDb = await idb.openDB<SettingsDB>(
+      SETTINGS_NAME,
+      SETTINGS_VERSION
+    );
+    const tx = settingsDb.transaction(section, "readwrite");
+    tx.store.put(value);
+    await tx.done;
+    settingsDb.close();
+  }
 
   async save(settings: BreadboardUI_Types.Settings) {
     const settingsDb = await idb.openDB<SettingsDB>(

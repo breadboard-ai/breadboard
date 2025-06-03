@@ -7,7 +7,7 @@ export { executeStep, executeTool };
 import fetch from "@fetch";
 import secrets from "@secrets";
 import read from "@read";
-import { ok, err } from "./utils";
+import { ok, err, decodeBase64 } from "./utils";
 
 const DEFAULT_BACKEND_ENDPOINT =
   "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeStep";
@@ -105,7 +105,7 @@ async function executeTool<
   if (!data) {
     return err(`Invalid response from "${api}" backend`);
   }
-  const jsonString = atob(data);
+  const jsonString = decodeBase64(data);
   try {
     return JSON.parse(jsonString) as T;
   } catch (e) {

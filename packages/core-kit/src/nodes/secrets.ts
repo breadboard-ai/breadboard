@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { array, defineNodeType } from "@breadboard-ai/build";
+import { NodeHandlerObject } from "@google-labs/breadboard";
 
 type Environment = "node" | "browser" | "worker";
 
@@ -17,11 +17,6 @@ const environment = (): Environment =>
 
 type SecretInputs = {
   keys: string[];
-};
-
-type SecretWorkerResponse = {
-  type: "secret";
-  data: string;
 };
 
 const getEnvironmentValue = (key: string) => {
@@ -48,8 +43,7 @@ const requireNonEmpty = (key: string, value?: string | null) => {
   return value;
 };
 
-const secrets = defineNodeType({
-  name: "secrets",
+export default {
   metadata: {
     title: "Secrets",
     description: "Retrieves secret values, such as API keys.",
@@ -57,40 +51,39 @@ const secrets = defineNodeType({
       url: "https://breadboard-ai.github.io/breadboard/docs/kits/core/#the-secrets-component",
     },
   },
-  inputs: {
-    keys: {
-      title: "Secrets",
-      description: "The array of secrets to retrieve from the node.",
-      type: array("string"),
-      behavior: ["config"],
-    },
+  describe: async (inputs) => {
+    return {
+      inputSchema: {
+        type: "object",
+        properties: {
+          keys: {
+            type: "array",
+            items: { type: "string" },
+            title: "Secrets",
+            description: "The array of secrets to retrieve from the node.",
+            behavior: ["config"],
+          },
+        },
+        required: ["keys"],
+        additionalProperties: false,
+      },
+      outputSchema: {
+        type: "object",
+        properties: Object.fromEntries(
+          ((inputs as SecretInputs).keys ?? []).map((key) => [
+            key,
+            { type: "string", title: key },
+          ])
+        ),
+        required: [],
+        additionalProperties: false,
+      },
+    };
   },
-  outputs: {
-    "*": {
-      type: "string",
-    },
-  },
-  describe: (inputs) => ({
-    outputs: inputs.keys ?? [],
-  }),
-  invoke: (inputs) => {
+  invoke: async (inputs) => {
     const { keys } = inputs as SecretInputs;
     return Object.fromEntries(
       keys.map((key) => [key, requireNonEmpty(key, getEnvironmentValue(key))])
     );
   },
-});
-export default secrets;
-
-/**
- * Create and configure a {@link secrets} node for one secret, and return the
- * corresponding output port.
- */
-export function secret(name: string) {
-  // TODO(aomarks) Should we replace the `secrets` node with a `secret` node
-  // that is monomorphic? Seems simpler.
-  return secrets({
-    $id: `${name}-secret`,
-    keys: [name],
-  }).unsafeOutput(name);
-}
+} satisfies NodeHandlerObject;

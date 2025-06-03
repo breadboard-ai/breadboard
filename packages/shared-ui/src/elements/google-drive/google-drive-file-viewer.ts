@@ -1,140 +1,160 @@
 /**
  * @license
- * Copyright 2024 Google LLC
+ * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, css, html } from "lit";
+import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { consume } from "@lit/context";
+import { Task } from "@lit/task";
+import { LitElement, type PropertyValues, css, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { type InputEnterEvent } from "../../events/events.js";
-import "../connection/connection-input.js";
-import { loadDriveApi, loadGapiClient } from "./google-apis.js";
-import { until } from "lit/directives/until.js";
+import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
+import { icons } from "../../styles/icons.js";
 
 @customElement("bb-google-drive-file-viewer")
 export class GoogleDriveFileViewer extends LitElement {
-  static styles = css`
-    :host {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--bb-neutral-50);
-      padding: var(--bb-grid-size-3);
-      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
-        var(--bb-font-family);
-    }
+  static styles = [
+    icons,
+    css`
+      :host {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--drive-background, transparent);
+        padding: var(--drive-padding, 0);
+        font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+          var(--bb-font-family);
 
-    .loading {
-      padding-left: var(--bb-grid-size-8);
-      background: url(/images/progress-neutral.svg) 0 center / 20px 20px
-        no-repeat;
-    }
+        width: 100%;
+        max-width: var(--drive-max-width, initial);
+        min-width: var(--drive-min-width, initial);
+      }
 
-    img {
-      max-width: 100%;
-      border-radius: var(--bb-grid-size);
-    }
-  `;
+      :host {
+        :has(.image-placeholder) {
+          background: var(--bb-neutral-50);
+          border-radius: var(--bb-grid-size);
+          padding: var(--bb-grid-size-3);
+        }
+      }
+
+      .loading {
+        padding-left: var(--bb-grid-size-8);
+        background: url(/images/progress-neutral.svg) 0 center / 20px 20px
+          no-repeat;
+      }
+
+      a {
+        display: flex;
+        flex: 1;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+      }
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: var(--bb-grid-size);
+        max-width: 540px;
+      }
+
+      .image-placeholder {
+        width: 100%;
+        aspect-ratio: 170/220;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+
+        .g-icon {
+          font-size: var(--icon-size, 160px);
+          color: var(--bb-neutral-200);
+        }
+      }
+    `,
+  ];
+
+  @property()
+  accessor fileId: string | null = null;
+
+  @consume({ context: googleDriveClientContext })
+  @property({ attribute: false })
+  accessor googleDriveClient: GoogleDriveClient | undefined;
 
   @state()
-  private accessor _authorization:
-    | { clientId: string; secret: string; expiresIn?: number }
-    | undefined = undefined;
+  accessor #imageFailedToLoad = false;
 
-  @property()
-  accessor fileUri: string | null = null;
+  readonly #loadTask = new Task(this, {
+    task: async ([googleDriveClient, fileId], { signal }) => {
+      if (!googleDriveClient || !fileId) {
+        return undefined;
+      }
+      try {
+        return await googleDriveClient.getFile(fileId, {
+          fields: ["name", "webViewLink", "thumbnailLink", "iconLink"],
+          signal,
+        });
+      } catch (e) {
+        console.error(e);
+        throw e;
+      }
+    },
+    args: () => [this.googleDriveClient, this.fileId],
+  });
 
-  @property()
-  accessor mimeType: string | null = null;
-
-  @property()
-  accessor connectionName = "$sign-in";
-
-  #picker?: google.picker.Picker;
-
-  override async connectedCallback(): Promise<void> {
-    super.connectedCallback();
+  override willUpdate(changes: PropertyValues<this>) {
+    if (changes.has("fileId")) {
+      this.#imageFailedToLoad = false;
+    }
   }
 
   override render() {
-    if (this._authorization === undefined) {
-      return html`<bb-connection-input
-        @bbinputenter=${this.#onToken}
-        connectionId=${this.connectionName}
-      ></bb-connection-input>`;
-    }
-
-    if (!this.fileUri) {
-      return html`No file set`;
-    }
-
-    const driveFile = loadGapiClient()
-      .then(() => {
-        if (!this._authorization) {
-          return;
+    return this.#loadTask.render({
+      pending: () =>
+        html`<div class="loading">Loading Google Drive file...</div>`,
+      error: () => `Error loading Google Drive file`,
+      complete: (file) => {
+        if (!file) {
+          return `Unable to find Google Drive document`;
         }
-        gapi.auth.setToken({
-          access_token: this._authorization.secret,
-          error: "",
-          expires_in: `${this._authorization.expiresIn ?? 3600}`,
-          state: "https://www.googleapis.com/auth/drive",
-        });
-      })
-      .then(() => {
-        return loadDriveApi();
-      })
-      .then((drive) => {
-        if (!this.fileUri) {
-          return null;
-        }
-
-        return drive.files.get({
-          fileId: this.fileUri,
-          fields: "*",
-        });
-      })
-      .then((item) => {
-        if (!item) {
-          return html`Unable to find Google Drive document`;
-        }
-
-        if (item.result.hasThumbnail) {
-          return html`<a href="${item.result.webViewLink}" target="_blank"
-            ><img
-              cross-origin
-              src=${item.result.thumbnailLink}
-              alt="${item.result.name ?? "Google Document"}"
-          /></a>`;
-        } else {
-          return html`<a href="${item.result.webViewLink}" target="_blank"
-            ><img
-              cross-origin
-              src=${item.result.iconLink}
-              alt="${item.result.name ?? "Google Document"}"
-          /></a>`;
-        }
-      });
-
-    return html`${until(
-      driveFile,
-      html`<div class="loading">Loading Google Drive file...</div>`
-    )}`;
+        const openUrl =
+          file.webViewLink ?? `https://drive.google.com/open?id=${file.id}`;
+        const imageUrl = file.thumbnailLink || file.iconLink;
+        return html`
+          <a href=${openUrl} target="_blank">
+            ${imageUrl && !this.#imageFailedToLoad
+              ? html`
+                  <img
+                    cross-origin
+                    src=${imageUrl}
+                    alt=${file.name ?? "Google Document"}
+                    @error=${this.#onImageError}
+                  />
+                `
+              : html`
+                  <div class="image-placeholder">
+                    <span class="g-icon">docs</span>
+                  </div>
+                `}
+          </a>
+        `;
+      },
+    });
   }
 
-  #onToken(event: InputEnterEvent) {
-    // Prevent ui-controller from receiving an unexpected bbinputenter event.
-    //
-    // TODO(aomarks) Let's not re-use bbinputenter here, we should instead use
-    // bbtokengranted, but there is a small bit of refactoring necessary for
-    // that to work.
-    event.stopImmediatePropagation();
-    const { clientId, secret, expiresIn } = event.data as {
-      clientId?: string;
-      secret?: string;
-      expiresIn?: number;
-    };
-    if (clientId && secret) {
-      this._authorization = { clientId, secret, expiresIn };
-    }
+  #onImageError() {
+    // We quite often get 429 Too Many Requests errors during development when
+    // rendering thumbnail images. Probably the Google Drive image service has a
+    // very low throttle threshold when the Referrer is localhost.
+    this.#imageFailedToLoad = true;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    "bb-google-drive-file-viewer": GoogleDriveFileViewer;
   }
 }

@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/// <reference types="vite/client" />
+
 import pkg from "../../../package.json" with { type: "json" };
 import * as StringsHelper from "@breadboard-ai/shared-ui/strings";
 import {
@@ -16,25 +18,27 @@ import {
 import { AppViewConfig, BootstrapArguments } from "./types/types.js";
 
 import * as Elements from "./elements/elements.js";
-import {
-  createRunObserver,
-  GraphDescriptor,
-  isInlineData,
-  isStoredData,
-} from "@google-labs/breadboard";
+import { createRunObserver, GraphDescriptor } from "@google-labs/breadboard";
 import * as BreadboardUIContext from "@breadboard-ai/shared-ui/contexts";
 import * as ConnectionClient from "@breadboard-ai/connection-client";
-import { SettingsHelperImpl } from "./utils/settings.js";
+import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
 import { createRunConfig } from "./utils/run-config.js";
 import {
   RunConfig,
   createRunner as createBreadboardRunner,
 } from "@google-labs/breadboard/harness";
 import { getGlobalColor } from "./utils/color.js";
-import { LLMContent } from "@breadboard-ai/types";
 import { getRunStore } from "@breadboard-ai/data-store";
 import { sandbox } from "./sandbox.js";
 import { TopGraphObserver } from "@breadboard-ai/shared-ui/utils/top-graph-observer";
+import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
+import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
+import {
+  generatePaletteFromImage,
+  generatePaletteFromColor,
+} from "@breadboard-ai/theme";
+import { blobHandleToUrl } from "@breadboard-ai/shared-ui/utils/blob-handle-to-url.js";
 
 const primaryColor = getGlobalColor("--bb-ui-700");
 const secondaryColor = getGlobalColor("--bb-ui-400");
@@ -42,9 +46,27 @@ const backgroundColor = getGlobalColor("--bb-neutral-0");
 const textColor = getGlobalColor("--bb-neutral-900");
 const primaryTextColor = getGlobalColor("--bb-neutral-0");
 
-async function fetchFlow() {
+const TOS_KEY = "tos-status";
+enum TosStatus {
+  ACCEPTED = "accepted",
+}
+
+async function fetchFlow(googleDriveClient: GoogleDriveClient) {
+  const url = new URL(window.location.href);
+
+  const decodedPathname = decodeURIComponent(
+    new URL(window.location.href).pathname
+  );
+  const googleDriveFileIdMatch = decodedPathname.match(/drive:\/(.+)/);
+  if (googleDriveFileIdMatch) {
+    const fileId = googleDriveFileIdMatch[1];
+    const file = await googleDriveClient.getFileMedia(fileId);
+    const graph = await file.json();
+    graph.url = `drive:/${fileId}`;
+    return graph;
+  }
+
   try {
-    const url = new URL(window.location.href);
     const matcher = /^\/app\/(.*?)\/(.*)$/;
     const matches = matcher.exec(url.pathname);
     if (!matches) {
@@ -111,11 +133,16 @@ async function createEnvironment(
   args: BootstrapArguments
 ): Promise<BreadboardUIContext.Environment> {
   return {
+    environmentName: ENVIRONMENT_NAME,
     connectionServerUrl: args.connectionServerUrl?.href,
     connectionRedirectUrl: "/oauth/",
     requiresSignin: args.requiresSignin,
     plugins: {
       input: [],
+    },
+    googleDrive: {
+      publishPermissions: [],
+      publicApiKey: "",
     },
   };
 }
@@ -178,6 +205,7 @@ async function createRunner(
 
 function createDefaultTheme(): AppTheme {
   return {
+    ...generatePaletteFromColor("#ffffff"),
     primaryColor: primaryColor,
     secondaryColor: secondaryColor,
     backgroundColor: backgroundColor,
@@ -192,20 +220,20 @@ function createDefaultTheme(): AppTheme {
   };
 }
 
-function extractThemeFromFlow(flow: GraphDescriptor | null): {
+async function extractThemeFromFlow(flow: GraphDescriptor | null): Promise<{
   theme: AppTheme;
   templateAdditionalOptionsChosen: Record<string, string>;
   title: string;
   description: string | null;
-} | null {
+  isDefaultTheme: boolean;
+} | null> {
   const title = flow?.title ?? "Untitled App";
   const description: string | null = flow?.description ?? null;
 
+  let isDefaultTheme = false;
   let templateAdditionalOptionsChosen: Record<string, string> = {};
 
-  const theme: AppTheme = createDefaultTheme();
-
-  console.log(flow);
+  let theme: AppTheme = createDefaultTheme();
 
   if (flow?.metadata?.visual?.presentation) {
     if (
@@ -214,8 +242,25 @@ function extractThemeFromFlow(flow: GraphDescriptor | null): {
     ) {
       const { theme: graphTheme, themes } = flow.metadata.visual.presentation;
       const appTheme = themes[graphTheme];
+      if (!appTheme.palette && appTheme.splashScreen?.storedData.handle) {
+        const url = blobHandleToUrl(appTheme.splashScreen.storedData.handle);
+        if (url) {
+          const img = new Image();
+          img.src = url.href;
+          img.crossOrigin = "anonymous";
+
+          const generatedTheme = await generatePaletteFromImage(img);
+          if (generatedTheme) {
+            theme = { ...theme, ...generatedTheme };
+          }
+        }
+      } else if (appTheme.palette) {
+        theme = { ...theme, ...appTheme.palette };
+      }
+
       const themeColors = appTheme.themeColors;
       const splashScreen = appTheme.splashScreen;
+      isDefaultTheme = appTheme.isDefaultTheme ?? false;
 
       if (themeColors) {
         theme.primaryColor = themeColors["primaryColor"] ?? primaryColor;
@@ -235,35 +280,6 @@ function extractThemeFromFlow(flow: GraphDescriptor | null): {
           ...appTheme.templateAdditionalOptions,
         };
       }
-    } else {
-      const themeColors = flow.metadata.visual.presentation.themeColors;
-      const splashScreen = flow.assets?.["@@splash"];
-
-      if (themeColors) {
-        theme.primaryColor = themeColors["primaryColor"] ?? primaryColor;
-        theme.secondaryColor = themeColors["secondaryColor"] ?? secondaryColor;
-        theme.backgroundColor =
-          themeColors["backgroundColor"] ?? backgroundColor;
-        theme.textColor = themeColors["textColor"] ?? textColor;
-        theme.primaryTextColor =
-          themeColors["primaryTextColor"] ?? primaryTextColor;
-
-        if (splashScreen) {
-          const splashScreenData = splashScreen.data as LLMContent[];
-          if (splashScreenData.length && splashScreenData[0].parts.length) {
-            const splash = splashScreenData[0].parts[0];
-            if (isInlineData(splash) || isStoredData(splash)) {
-              theme.splashScreen = splash;
-            }
-          }
-        }
-      }
-
-      if (flow.metadata.visual.presentation.templateAdditionalOptions) {
-        templateAdditionalOptionsChosen = {
-          ...flow.metadata.visual.presentation.templateAdditionalOptions,
-        };
-      }
     }
   }
 
@@ -272,6 +288,7 @@ function extractThemeFromFlow(flow: GraphDescriptor | null): {
     title,
     description,
     templateAdditionalOptionsChosen,
+    isDefaultTheme,
   };
 }
 
@@ -291,32 +308,87 @@ async function bootstrap(args: BootstrapArguments = {}) {
   await StringsHelper.initFrom(LANGUAGE_PACK as LanguagePack);
 
   async function initAppView() {
-    const flow = await fetchFlow();
-    const template = await fetchTemplate(flow);
     const environment = await createEnvironment(args);
-    const settingsHelper = new SettingsHelperImpl();
+    const settings = SettingsStore.instance();
+    await settings.restore();
+    const settingsHelper = new SettingsHelperImpl(settings);
     const tokenVendor = await createTokenVendor(settingsHelper, environment);
+    const signinAdapter = new SigninAdapter(
+      tokenVendor,
+      environment,
+      settingsHelper
+    );
+
+    // For Google Drive, we can't necessarily load the graph before the user has
+    // signed in.
+    const usingGoogleDrive = new URL(window.location.href).pathname.startsWith(
+      "/app/drive"
+    );
+    if (usingGoogleDrive) {
+      const token = await signinAdapter.refresh();
+      if (!token || token.state === "signedout") {
+        // Note our components assume Strings have been initialized before their
+        // modules execute, so it is only ever safe to import a component
+        // dynamically after the StringsHelper.initFrom promise has resolved.
+        await import(
+          "@breadboard-ai/shared-ui/elements/connection/connection-entry-signin.js"
+        );
+        const signinScreen = document.createElement(
+          "bb-connection-entry-signin"
+        );
+        signinScreen.adapter = signinAdapter;
+        document.body.appendChild(signinScreen);
+        await new Promise<void>((resolve) =>
+          signinScreen.addEventListener("bbsignin", () => resolve())
+        );
+        signinScreen.remove();
+        window.location.reload();
+      }
+    }
+
+    const googleDriveClient = new GoogleDriveClient({
+      apiBaseUrl: "https://www.googleapis.com",
+      proxyUrl:
+        "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/getOpalFile",
+      publicApiKey: import.meta.env.VITE_GOOGLE_DRIVE_PUBLIC_API_KEY ?? "",
+      getUserAccessToken: async () => {
+        const token = await signinAdapter.refresh();
+        if (token?.state === "valid") {
+          return token.grant.access_token;
+        }
+        throw new Error(
+          `User is unexpectedly signed out, or SigninAdapter is misconfigured`
+        );
+      },
+    });
+    const flow = await fetchFlow(googleDriveClient);
+    const template = await fetchTemplate(flow);
     const abortController = new AbortController();
     const runConfig = await createRunConfig(
       flow,
       args,
+      googleDriveClient,
       tokenVendor,
       abortController
     );
     const runner = await createRunner(runConfig, abortController);
 
-    const extractedTheme = extractThemeFromFlow(flow);
+    const extractedTheme = await extractThemeFromFlow(flow);
     const config: AppViewConfig = {
+      flow,
       template,
       environment,
       tokenVendor,
+      signinAdapter,
       settingsHelper,
       runner,
       theme: extractedTheme?.theme ?? null,
       title: extractedTheme?.title ?? null,
       description: extractedTheme?.description ?? null,
+      isDefautTheme: extractedTheme?.isDefaultTheme ?? false,
       templateAdditionalOptions:
         extractedTheme?.templateAdditionalOptionsChosen ?? null,
+      googleDriveClient,
     };
 
     const appView = new Elements.AppView(config, flow);
@@ -331,9 +403,20 @@ async function bootstrap(args: BootstrapArguments = {}) {
       await initAppView();
     });
   }
-
   console.log(`[App View: Version ${pkg.version}; Commit ${GIT_HASH}]`);
   await initAppView();
+
+  const hasAcceptedTos =
+    (localStorage.getItem(TOS_KEY) ?? false) === TosStatus.ACCEPTED;
+  if (ENABLE_TOS && !hasAcceptedTos) {
+    showTerms(TOS_HTML);
+  }
+}
+
+function showTerms(html: string) {
+  const terms = new Elements.TermsOfService();
+  terms.tosHtml = html;
+  document.body.appendChild(terms);
 }
 
 bootstrap({
@@ -341,4 +424,5 @@ bootstrap({
   boardServerUrl: new URL("/board/", window.location.href),
   connectionServerUrl: new URL("/connection/", window.location.href),
   requiresSignin: true,
+  boardService: import.meta.env.VITE_BOARD_SERVICE,
 });

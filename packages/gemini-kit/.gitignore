@@ -1,4 +1,0 @@
-# TODO(aomarks) We probably shouldn't check in these graphs, but it's useful
-# temporarily because it provides a good record of what changes in the BGL
-# serialization upon upgrading to the new API.
-# graphs/

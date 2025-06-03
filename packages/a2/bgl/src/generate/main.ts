@@ -32,35 +32,42 @@ type Mode = {
   description: string;
   icon: string;
   modelName?: string;
+  promptPlaceholderText?: string;
 };
 
 const MODES: Mode[] = [
   {
-    id: "text",
+    id: "text-2.0-flash",
     type: "text",
     url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
     title: "Gemini 2.0 Flash",
     description: "For everyday tasks, plus more",
     icon: "text_analysis",
     modelName: "gemini-2.0-flash",
+    promptPlaceholderText:
+      "Type your prompt here. Use @ to include other content.",
   },
   {
-    id: "text-2.5-flash",
+    id: "text",
     type: "text",
     url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
-    title: "Gemini 2.5 Flash [Experimental]",
+    title: "Gemini 2.5 Flash",
     description: "Uses advanced reasoning",
     icon: "text_analysis",
     modelName: "gemini-2.5-flash-preview-04-17",
+    promptPlaceholderText:
+      "Type your prompt here. Use @ to include other content.",
   },
   {
     id: "text-2.5-pro",
     type: "text",
     url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
-    title: "Gemini 2.5 Pro [Experimental]",
+    title: "Gemini 2.5 Pro",
     description: "Best for complex tasks",
     icon: "text_analysis",
-    modelName: "gemini-2.5-pro-preview-03-25",
+    modelName: "gemini-2.5-pro-preview-05-06",
+    promptPlaceholderText:
+      "Type your prompt here. Use @ to include other content.",
   },
   {
     id: "think",
@@ -70,14 +77,29 @@ const MODES: Mode[] = [
     description: "Plans and executes complex tasks",
     icon: "spark",
     modelName: "gemini-2.0-flash",
+    promptPlaceholderText:
+      "Type your goal here. Use @ to include other content.",
+  },
+  {
+    id: "deep-research",
+    type: "deep-research",
+    url: "embed://a2/deep-research.bgl.json#module:main",
+    title: "Deep Research with Gemini 2.5 Flash",
+    description: "In-depth research on your topic",
+    icon: "spark",
+    modelName: "gemini-2.5-flash-preview-04-17",
+    promptPlaceholderText:
+      "Type your research query here. Use @ to include other content.",
   },
   {
     id: "image-gen",
     type: "image-gen",
     url: "embed://a2/a2.bgl.json#module:image-generator",
-    title: "Imagen 3",
+    title: "Imagen 4",
     description: "Generates images from text",
     icon: "photo_spark",
+    promptPlaceholderText:
+      "Type your image prompt here. Use @ to include other content.",
   },
   {
     id: "image",
@@ -86,6 +108,8 @@ const MODES: Mode[] = [
     title: "Gemini 2.0 Flash: Image Generation",
     description: "Generates images from text and images",
     icon: "photo_spark",
+    promptPlaceholderText:
+      "Type your image prompt here. Use @ to include other content.",
   },
   {
     id: "audio",
@@ -94,14 +118,28 @@ const MODES: Mode[] = [
     title: "AudioLM",
     description: "Generates speech from text",
     icon: "audio_magic_eraser",
+    promptPlaceholderText:
+      "Type the text to speak here. Use @ to include other content.",
   },
   {
     id: "video",
     type: "video",
     url: "embed://a2/video-generator.bgl.json#module:main",
-    title: "Veo 2",
+    title: "Veo",
     description: "Generates videos from text and images",
     icon: "videocam_auto",
+    promptPlaceholderText:
+      "Type your video prompt here. Use @ to include other content.",
+  },
+  {
+    id: "music",
+    type: "music",
+    url: "embed://a2/music-generator.bgl.json#module:main",
+    title: "Lyria 2",
+    description: "Generates instrumental music from text",
+    icon: "audio_magic_eraser",
+    promptPlaceholderText:
+      "Type your music prompt here. Use @ to include other content.",
   },
 ] as const;
 
@@ -147,10 +185,18 @@ const portMapForward = new Map<ModeId, Map<string, string>>([
       [LIST_PORT, "z-list"],
     ]),
   ],
-  [MODES[4].id, new Map([[PROMPT_PORT, "instruction"]])],
+  [
+    MODES[4].id,
+    new Map([
+      [PROMPT_PORT, "query"],
+      [LIST_PORT, "z-list"],
+    ]),
+  ],
   [MODES[5].id, new Map([[PROMPT_PORT, "instruction"]])],
-  [MODES[6].id, new Map([[PROMPT_PORT, "text"]])],
-  [MODES[7].id, new Map([[PROMPT_PORT, "instruction"]])],
+  [MODES[6].id, new Map([[PROMPT_PORT, "instruction"]])],
+  [MODES[7].id, new Map([[PROMPT_PORT, "text"]])],
+  [MODES[8].id, new Map([[PROMPT_PORT, "instruction"]])],
+  [MODES[9].id, new Map([[PROMPT_PORT, "text"]])],
 ]);
 
 const portMapReverse = new Map(

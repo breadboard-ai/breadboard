@@ -1,0 +1,78 @@
+{
+  "title": "Generate Text Function-calling Workbench",
+  "description": "",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "3740bd42-4f06-4856-8629-6d14912b834f",
+      "type": "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+      "metadata": {
+        "title": "Generate Text",
+        "visual": {
+          "x": -180,
+          "y": -580
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "description": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Get as much data as possible from a web page using {{\"type\":\"tool\",\"path\":\"embed://a2/tools.bgl.json#module:get-webpage\",\"title\":\"Get Webpage\"}}:\n\nhttps://healthynibblesandbits.com/easiest-egg-fried-rice/\n"
+            }
+          ]
+        },
+        "p-chat": false,
+        "p-list": false,
+        "b-system-instruction": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "You are working as part of an AI system, so no chit-chat and no explaining what you're doing and why.\nDO NOT start with \"Okay\", or \"Alright\" or any preambles. Just the output, please."
+            }
+          ]
+        },
+        "p-sequential-fc": false
+      }
+    }
+  ],
+  "edges": [],
+  "metadata": {
+    "visual": {
+      "presentation": {
+        "themes": {
+          "39239b49-62d0-4182-b919-924c4db67941": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "39239b49-62d0-4182-b919-924c4db67941"
+      }
+    },
+    "userModified": true,
+    "tags": [],
+    "parameters": {}
+  },
+  "assets": {
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI1NS43NyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMjMwLjAwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iODguNDYiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CiAgICAgIAogICAgPC9zdmc+"
+    }
+  }
+}

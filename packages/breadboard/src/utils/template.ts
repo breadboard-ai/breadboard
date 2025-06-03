@@ -108,8 +108,6 @@ class Template {
   #renderableValue = "";
 
   constructor(public readonly raw: string) {
-    raw = raw.trim();
-
     this.#parsed = splitToParts(raw);
 
     this.#renderableValue = raw;

@@ -14,6 +14,7 @@ import { refresh } from "./api/refresh.js";
 import { loadConnections, type ServerConfig } from "./config.js";
 
 export type { ServerConfig };
+export type { GrantResponse } from "./config.js";
 
 /**
  * Create a ServerConfig from environment variables.

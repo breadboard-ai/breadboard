@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { GraphTag } from "@breadboard-ai/types";
+
 export { Files };
 
 export type DriveFile = {
@@ -13,115 +15,237 @@ export type DriveFile = {
   name: string;
   resourceKey: string;
   appProperties: Record<string, string>;
-};
+  modifiedTime?: string;
+} & Properties;
 
 export type DriveFileQuery = {
   files: DriveFile[];
 };
 
-export type AppProperties = {
-  appProperties: {
-    title: string;
-    description: string;
-    tags: string;
+export type Properties = {
+  properties: {
+    thumbnailUrl: string;
   };
 };
 
+export type AppProperties = {
+  title: string;
+  /** A truncated copy of the board description for listing. */
+  description: string;
+  tags: GraphTag[];
+  thumbnailUrl?: string;
+};
+
+const CHANGE_LIST_COMMON_PARAMS = [
+  "supportsAllDrives=true",
+];
+
+export type GoogleApiAuthorization =
+  | { kind: "key"; key: string }
+  | { kind: "bearer"; token: string };
+
 class Files {
-  readonly #accessToken: string;
+  readonly #authorization: GoogleApiAuthorization;
   readonly #baseUrl: string;
 
-  constructor(accessToken: string, baseUrl = "https://www.googleapis.com") {
-    this.#accessToken = accessToken;
+  constructor(
+    authorization: GoogleApiAuthorization,
+    baseUrl = "https://www.googleapis.com"
+  ) {
+    this.#authorization = authorization;
     this.#baseUrl = baseUrl;
   }
 
-  get #headers() {
-    return {
-      headers: {
-        Authorization: `Bearer ${this.#accessToken}`,
-      },
-    };
+  #makeUrl(pathAndParams: string): URL {
+    const url = new URL(pathAndParams, this.#baseUrl);
+    const authKind = this.#authorization.kind;
+    if (authKind === "bearer") {
+      // Nothing.
+    } else if (authKind === "key") {
+      url.searchParams.set("key", this.#authorization.key);
+    } else {
+      throw new Error(`Unhandled authorization kind`, authKind satisfies never);
+    }
+    return url;
   }
 
-  #multipartRequest(metadata: unknown, body: unknown) {
+  #makeHeaders(): Headers {
+    const headers = new Headers();
+    const authKind = this.#authorization.kind;
+    if (authKind === "bearer") {
+      headers.set("authorization", `Bearer ${this.#authorization.token}`);
+      // Nothing.
+    } else if (authKind === "key") {
+      // Nothing.
+    } else {
+      throw new Error(`Unhandled authorization kind`, authKind satisfies never);
+    }
+    return headers;
+  }
+
+  #multipartRequest(
+    parts: Array<{ contentType: string; data: object | string }>
+  ) {
     const boundary = globalThis.crypto.randomUUID();
-    const headers = new Headers({
-      Authorization: `Bearer ${this.#accessToken}`,
-      ["Content-Type"]: `multipart/related; boundary=${boundary}`,
-    });
+    const headers = this.#makeHeaders();
+    headers.set("Content-Type", `multipart/related; boundary=${boundary}`);
+    const body =
+      `--${boundary}\n` +
+      [
+        ...parts.map((part) => {
+          const data =
+            typeof part.data === "string"
+              ? part.data
+              : JSON.stringify(part.data, null, 2);
 
-    const multipartBody = `--${boundary}
-Content-Type: application/json; charset=UTF-8
-
-${JSON.stringify(metadata, null, 2)}
---${boundary}
-Content-Type: application/json; charset=UTF-8
-
-${JSON.stringify(body, null, 2)}
---${boundary}--`;
+          return `Content-Type: ${part.contentType}\n\n${data}\n`;
+        }),
+        "",
+      ].join(`\n--${boundary}`) +
+      `--`;
     return {
       headers,
-      body: multipartBody,
+      body,
     };
   }
 
   makeGetRequest(filename: string): Request {
-    return new Request(`${this.#baseUrl}/drive/v3/files/${filename}`, {
+    return new Request(this.#makeUrl(`drive/v3/files/${filename}`), {
       method: "GET",
-      ...this.#headers,
+      headers: this.#makeHeaders(),
     });
   }
 
   makeQueryRequest(query: string): Request {
     return new Request(
-      `${this.#baseUrl}/drive/v3/files?q=${encodeURIComponent(query)}&fields=*`,
+      this.#makeUrl(
+        `drive/v3/files?q=${encodeURIComponent(query)}` +
+          `&fields=files(id,name,appProperties,properties,modifiedTime)` +
+          "&orderBy=modifiedTime desc"
+      ),
       {
         method: "GET",
-        ...this.#headers,
+        headers: this.#makeHeaders(),
       }
     );
   }
 
+  makeUpdateMetadataRequest(fileId: string, parent: string, metadata: unknown) {
+    const headers = this.#makeHeaders();
+    const url = `drive/v3/files/${fileId}?addParents=${parent}`;
+    return new Request(this.#makeUrl(url), {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify(metadata),
+    });
+  }
+
+  makeUploadRequest(
+    fileId: string | undefined,
+    data: string,
+    contentType: string
+  ) {
+    const headers = this.#makeHeaders();
+    headers.append("Content-Type", contentType);
+    headers.append("X-Upload-Content-Type", contentType);
+    headers.append("X-Upload-Content-Length", `${data.length}`);
+    const url = fileId
+      ? `upload/drive/v3/files/${fileId}?uploadType=media`
+      : "upload/drive/v3/files?uploadType=media";
+    return new Request(this.#makeUrl(url), {
+      method: fileId ? "PATCH" : "POST",
+      headers,
+      body: b64toBlob(data),
+    });
+  }
+
   makeLoadRequest(file: string): Request {
-    return new Request(`${this.#baseUrl}/drive/v3/files/${file}?alt=media`, {
+    return new Request(this.#makeUrl(`drive/v3/files/${file}?alt=media`), {
       method: "GET",
-      ...this.#headers,
+      headers: this.#makeHeaders(),
     });
   }
 
   makeCreateRequest(body: unknown): Request {
-    return new Request(`${this.#baseUrl}/drive/v3/files`, {
+    return new Request(this.#makeUrl(`drive/v3/files`), {
       method: "POST",
-      ...this.#headers,
+      headers: this.#makeHeaders(),
       body: JSON.stringify(body),
     });
   }
 
-  makeMultipartCreateRequest(metadata: unknown, body: unknown): Request {
+  makeMultipartCreateRequest(
+    parts: Array<{ contentType: string; data: object | string }>
+  ): Request {
     return new Request(
-      `${this.#baseUrl}/upload/drive/v3/files?uploadType=multipart`,
+      this.#makeUrl(`upload/drive/v3/files?uploadType=multipart`),
       {
         method: "POST",
-        ...this.#multipartRequest(metadata, body),
+        ...this.#multipartRequest(parts),
       }
     );
   }
 
-  makePatchRequest(file: string, metadata: unknown, body: unknown): Request {
+  makePatchRequest(
+    file: string,
+    parts: Array<{ contentType: string; data: object | string }>
+  ): Request {
     return new Request(
-      `${this.#baseUrl}/upload/drive/v3/files/${file}?uploadType=multipart`,
+      this.#makeUrl(`upload/drive/v3/files/${file}?uploadType=multipart`),
       {
         method: "PATCH",
-        ...this.#multipartRequest(metadata, body),
+        ...this.#multipartRequest(parts),
       }
     );
   }
 
   makeDeleteRequest(file: string): Request {
-    return new Request(`${this.#baseUrl}/drive/v3/files/${file}`, {
+    return new Request(this.#makeUrl(`drive/v3/files/${file}`), {
       method: "DELETE",
-      ...this.#headers,
+      headers: this.#makeHeaders(),
     });
   }
+
+  makeChangeListRequest(startPageToken: string | null): Request {
+    const url = this.#makeUrl("drive/v3/changes?" +
+      CHANGE_LIST_COMMON_PARAMS.concat([
+        "pageSize=1000",
+        "includeRemoved=true",
+        "includeCorpusRemovals=true",
+        "includeItemsFromAllDrives=true",
+        "spaces=drive",
+        `pageToken=${startPageToken ?? "1"}`,
+      ]).join("&"));
+    return new Request(url, {
+      method: "GET",
+      headers: this.#makeHeaders(),
+    });
+  }
+
+  makeGetStartPageTokenRequest(): Request {
+    return new Request(this.#makeUrl("drive/v3/changes/startPageToken?" + CHANGE_LIST_COMMON_PARAMS.join('&')), {
+      method: "GET",
+      headers: this.#makeHeaders(),
+    });
+  }
+}
+
+function b64toBlob(b64Data: string, contentType='', sliceSize=512) {
+  const byteCharacters = atob(b64Data);
+  const byteArrays = [];
+
+  for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+    const slice = byteCharacters.slice(offset, offset + sliceSize);
+
+    const byteNumbers = new Array(slice.length);
+    for (let i = 0; i < slice.length; i++) {
+      byteNumbers[i] = slice.charCodeAt(i);
+    }
+
+    const byteArray = new Uint8Array(byteNumbers);
+    byteArrays.push(byteArray);
+  }
+    
+  const blob = new Blob(byteArrays, {type: contentType});
+  return blob;
 }

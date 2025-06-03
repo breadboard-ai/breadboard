@@ -23,6 +23,7 @@ import {
   InspectableAssetEdgeDirection,
 } from "@google-labs/breadboard";
 import {
+  AppPalette,
   AssetPath,
   AssetType,
   CommentNode,
@@ -528,6 +529,9 @@ export interface LanguagePack {
   WorkspaceOutline: LanguagePackEntry;
 }
 
+/**
+ * @deprecated Replaced with AppPalette
+ */
 export interface AppThemeColors {
   primaryColor: string;
   secondaryColor: string;
@@ -536,9 +540,10 @@ export interface AppThemeColors {
   primaryTextColor: string;
 }
 
-export type AppTheme = AppThemeColors & {
-  splashScreen?: InlineDataCapabilityPart | StoredDataCapabilityPart | null;
-};
+export type AppTheme = AppPalette &
+  AppThemeColors & {
+    splashScreen?: InlineDataCapabilityPart | StoredDataCapabilityPart | null;
+  };
 
 export interface AppTemplateAdditionalOption {
   values: Array<{ value: string; title: string }>;
@@ -556,7 +561,8 @@ export interface AppTemplateOptions {
   title?: string | null;
   description?: string | null;
   mode: "light" | "dark";
-  theme?: AppThemeColors;
+  theme?: AppPalette & AppThemeColors;
+  isDefaultTheme?: boolean;
   splashImage: string | boolean;
   additionalOptions?: AppTemplateAdditionalOptionsChosen;
 }
@@ -575,6 +581,8 @@ export interface AppTemplate extends LitElement {
   appURL: string | null;
   readOnly: boolean;
   showShareButton: boolean;
+  showContentWarning: boolean;
+  showDisclaimer: boolean;
 }
 
 export interface Utterance {
@@ -607,4 +615,28 @@ export type EnumValue = {
   description?: string;
   tag?: string; // Typically used for keyboard shortcuts.
   hidden?: boolean;
+};
+
+export enum SnackType {
+  NONE = "none",
+  INFORMATION = "information",
+  WARNING = "warning",
+  ERROR = "error",
+  PENDING = "pending",
+}
+
+export type SnackbarUUID = ReturnType<typeof globalThis.crypto.randomUUID>;
+
+export type SnackbarAction = {
+  title: string;
+  action: string;
+  value?: string;
+};
+
+export type SnackbarMessage = {
+  id: SnackbarUUID;
+  type: SnackType;
+  persistent: boolean;
+  message: string;
+  actions?: SnackbarAction[];
 };

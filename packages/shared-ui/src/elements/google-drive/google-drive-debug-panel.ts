@@ -9,6 +9,7 @@ import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 import { consume } from "@lit/context";
 import { css, html, LitElement, nothing, PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { createRef, ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
 import { tokenVendorContext } from "../../contexts/token-vendor.js";
 import {
@@ -20,11 +21,12 @@ import {
   loadDrivePicker,
   loadDriveShare,
 } from "./google-apis.js";
-import { createRef, ref } from "lit/directives/ref.js";
-
+import { Files } from "@breadboard-ai/google-drive-kit/board-server/api.js";
+import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { ok } from "@google-labs/breadboard";
-import { Files } from "@breadboard-ai/google-drive-kit/board-server/api.js";
+import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
+
 const Strings = BreadboardUI.Strings.forSection("Global");
 
 const ASSET_MIME_TYPES = [
@@ -65,6 +67,10 @@ export class GoogleDriveDebugPanel extends LitElement {
   @property({ attribute: false })
   accessor tokenVendor!: TokenVendor;
 
+  @consume({ context: googleDriveClientContext })
+  @property({ attribute: false })
+  accessor googleDriveClient: GoogleDriveClient | undefined;
+
   @state()
   accessor #googleDriveBoardServer: Promise<GoogleDriveBoardServer | null> | null =
     null;
@@ -75,12 +81,13 @@ export class GoogleDriveDebugPanel extends LitElement {
   override update(changes: PropertyValues<this>) {
     super.update(changes);
     if (changes.has("tokenVendor")) {
-      if (this.tokenVendor) {
+      if (this.tokenVendor && this.googleDriveClient) {
         this.#googleDriveBoardServer = GoogleDriveBoardServer.from(
-          "drive:",
           "Google Drive",
           { username: "", apiKey: "", secrets: new Map() },
-          this.tokenVendor
+          this.tokenVendor,
+          this.googleDriveClient,
+          import.meta.env.VITE_GOOGLE_DRIVE_USER_FOLDER_NAME || "Breadboard"
         );
       } else {
         this.#googleDriveBoardServer = null;
@@ -186,7 +193,7 @@ export class GoogleDriveDebugPanel extends LitElement {
     if (!server) {
       return nothing;
     }
-    const projects = await server.refreshProjects();
+    const projects = await server.listProjects();
     return projects.map((project) => {
       const fileId = project.url.href.replace(/^drive:\//, "");
       return html` <li>${this.#renderFileLink(fileId)}</li> `;
@@ -469,7 +476,7 @@ export class GoogleDriveDebugPanel extends LitElement {
     }
     const { access_token } = auth.grant;
     const files = new Files(
-      access_token,
+      { kind: "bearer", token: access_token },
       new URL("/drive-proxy", document.location.href).href
     );
     const request = files.makeGetRequest(fileId);

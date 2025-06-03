@@ -46,8 +46,11 @@ import {
   ModuleIdentifier,
   NodeDescriptor,
 } from "@breadboard-ai/types";
+import { generatePaletteFromImage } from "@breadboard-ai/theme";
 import * as idb from "idb";
 import { BOARD_SAVE_STATUS } from "@breadboard-ai/shared-ui/types/types.js";
+import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { loadImage } from "@breadboard-ai/shared-ui/utils/image";
 
 const documentStyles = getComputedStyle(document.documentElement);
 
@@ -89,7 +92,8 @@ export class Board extends EventTarget {
      * */
     private readonly boardServerKits: Kit[],
     private readonly boardServers: RuntimeConfigBoardServers,
-    private readonly tokenVendor?: TokenVendor
+    private readonly tokenVendor?: TokenVendor,
+    private readonly googleDriveClient?: GoogleDriveClient
   ) {
     super();
     boardServers.servers.forEach((server) => {
@@ -153,7 +157,8 @@ export class Board extends EventTarget {
     const boardServerInfo = await connectToBoardServer(
       location,
       apiKey,
-      this.tokenVendor
+      this.tokenVendor,
+      this.googleDriveClient
     );
     if (!boardServerInfo) {
       this.dispatchEvent(
@@ -166,7 +171,7 @@ export class Board extends EventTarget {
       return { success: false };
     } else {
       this.boardServers.servers = [
-        ...(await getBoardServers(this.tokenVendor)),
+        ...(await getBoardServers(this.tokenVendor, this.googleDriveClient)),
         ...this.boardServers.builtInBoardServers,
       ];
       this.boardServers.loader = createLoader(this.boardServers.servers);
@@ -195,7 +200,7 @@ export class Board extends EventTarget {
       return { success: false };
     }
     this.boardServers.servers = [
-      ...(await getBoardServers(this.tokenVendor)),
+      ...(await getBoardServers(this.tokenVendor, this.googleDriveClient)),
       ...this.boardServers.builtInBoardServers,
     ];
     this.boardServers.loader = createLoader(this.boardServers.servers);
@@ -562,6 +567,7 @@ export class Board extends EventTarget {
       name: descriptor.title ?? "Untitled board",
       mainGraphId: mainGraphId.result,
       graph: descriptor,
+      graphIsMine: true,
       subGraphId: null,
       boardServer: null,
       moduleId,
@@ -613,6 +619,7 @@ export class Board extends EventTarget {
       boardServerKits: this.boardServerKits,
       name: descriptor.title ?? "Untitled board",
       graph: descriptor,
+      graphIsMine: true,
       mainGraphId: mainGraphId.result,
       subGraphId: null,
       boardServer: null,
@@ -628,6 +635,53 @@ export class Board extends EventTarget {
     }
 
     this.dispatchEvent(new RuntimeTabChangeEvent());
+  }
+
+  async #createAppPaletteIfNeeded(graph: GraphDescriptor) {
+    const themeId = graph.metadata?.visual?.presentation?.theme;
+    if (!themeId) {
+      return;
+    }
+
+    const theme = graph.metadata?.visual?.presentation?.themes?.[themeId];
+    if (!theme || !theme.splashScreen || theme.palette) {
+      return;
+    }
+
+    let splashUrl: URL | undefined = undefined;
+    const { handle } = theme.splashScreen.storedData;
+    const BLOB_HANDLE_PATTERN = /^[./]*blobs\/(.+)/;
+    const blobMatch = handle.match(BLOB_HANDLE_PATTERN);
+
+    if (blobMatch) {
+      const blobId = blobMatch[1];
+      if (blobId) {
+        splashUrl = new URL(`/board/blobs/${blobId}`, window.location.href);
+      }
+    } else if (
+      handle.startsWith("data:") ||
+      handle.startsWith("http:") ||
+      handle.startsWith("https:")
+    ) {
+      splashUrl = new URL(handle);
+    } else if (handle.startsWith("drive:") && !this.googleDriveClient) {
+      return;
+    }
+
+    if (!splashUrl) {
+      return;
+    }
+
+    const imgUrl = await loadImage(this.googleDriveClient!, splashUrl.href);
+    if (!imgUrl) return;
+
+    const img = new Image();
+    img.src = imgUrl;
+    img.crossOrigin = "anonymous";
+    const generatedPalette = await generatePaletteFromImage(img);
+    if (generatedPalette) {
+      theme.palette = generatedPalette;
+    }
   }
 
   /**
@@ -654,8 +708,8 @@ export class Board extends EventTarget {
 
       const graphTheme: GraphTheme = {
         themeColors: {
-          primaryColor: "#246db5",
-          secondaryColor: "#5cadff",
+          primaryColor: "#1a1a1a",
+          secondaryColor: "#7a7a7a",
           backgroundColor: "#ffffff",
           textColor: "#1a1a1a",
           primaryTextColor: "#ffffff",
@@ -663,10 +717,11 @@ export class Board extends EventTarget {
         template: "basic",
         splashScreen: {
           storedData: {
-            handle: "/images/app/generic-flow.jpg",
-            mimeType: "image/jpeg",
+            handle: MAIN_ICON,
+            mimeType: "image/svg+xml",
           },
         },
+        isDefaultTheme: true,
       };
 
       const themeId = globalThis.crypto.randomUUID();
@@ -813,6 +868,7 @@ export class Board extends EventTarget {
       }
 
       this.#migrateThemeInformationIfPresent(graph);
+      await this.#createAppPaletteIfNeeded(graph);
 
       // This is not elegant, since we actually load the graph by URL,
       // and we should know this mainGraphId by now.
@@ -823,18 +879,20 @@ export class Board extends EventTarget {
       }
       // Always create a new tab.
       const id = globalThis.crypto.randomUUID();
+      const graphIsMine = this.isMine(graph.url);
       this.#tabs.set(id, {
         id,
         boardServerKits: kits,
         name: graph.title ?? "Untitled board",
         graph,
+        graphIsMine,
         mainGraphId: mainGraphId.result,
         subGraphId,
         moduleId,
         boardServer,
         type: TabType.URL,
         version: 1,
-        readOnly,
+        readOnly: !graphIsMine,
         creator: creator ?? undefined,
         history: await this.#loadLocalHistory(url),
         onHistoryChanged: (history) => this.#saveLocalHistory(url, history),
@@ -957,6 +1015,35 @@ export class Board extends EventTarget {
         }
 
         return item.mine && !item.readonly;
+      }
+    }
+
+    return false;
+  }
+
+  isMine(url: string | undefined): boolean {
+    if (!url) {
+      return false;
+    }
+
+    const boardUrl = new URL(url);
+    const boardServer = this.getBoardServerForURL(boardUrl);
+    if (!boardServer) {
+      return false;
+    }
+
+    const capabilities = boardServer.canProvide(boardUrl);
+    if (!capabilities || !capabilities.save) {
+      return false;
+    }
+
+    for (const store of boardServer.items().values()) {
+      for (const item of store.items.values()) {
+        if (item.url !== url && item.url.replace(USER_REGEX, "/") !== url) {
+          continue;
+        }
+
+        return item.mine;
       }
     }
 

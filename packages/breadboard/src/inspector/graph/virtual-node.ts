@@ -83,6 +83,10 @@ class VirtualNode implements InspectableNode {
     return false;
   }
 
+  isStart(): boolean {
+    return false;
+  }
+
   #ports(inputs?: InputValues, outputs?: InputValues): InspectableNodePorts {
     const { type, configuration } = this.descriptor;
     if (type === "output") {
@@ -149,6 +153,10 @@ class VirtualNode implements InspectableNode {
       inputSchema: {},
       outputSchema: {},
     };
+  }
+
+  currentDescribe(): NodeDescriberResult {
+    return { inputSchema: {}, outputSchema: {} };
   }
 
   configuration(): NodeConfiguration {

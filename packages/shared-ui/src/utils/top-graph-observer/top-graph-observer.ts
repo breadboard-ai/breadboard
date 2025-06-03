@@ -386,11 +386,7 @@ export class TopGraphObserver {
     }
 
     if (!event.data.bubbled) {
-      // @ts-expect-error - findLastIndex is not in the TS lib
-      const lastEdge = this.#log.findLast(
-        // @ts-expect-error - findLastIndex is not in the TS lib
-        (entry) => entry.type === "edge"
-      );
+      const lastEdge = this.#log.findLast((entry) => entry.type === "edge");
       if (lastEdge) {
         lastEdge.end = event.data.timestamp;
         lastEdge.descriptor = event.data.node;
@@ -413,7 +409,6 @@ export class TopGraphObserver {
       return;
     }
     if (this.#errorPath && this.#errorPath.length > 1) {
-      // @ts-expect-error - findLast is not in the TS lib
       const lastNode = this.#log.findLast((entry) => entry.type === "node");
       lastNode?.activity.push({
         type: "error",
@@ -515,6 +510,10 @@ export function idFromPath(path: number[]): string {
   return `e-${path.join("-")}`;
 }
 
+function isStreamingOutput(edge: EdgeLogEntry): boolean {
+  return !!edge.value && "reportStream" in edge.value;
+}
+
 /**
  * Places the output edge in the log, according to the following rules:
  * - Until first bubbling input, place output before the last node,
@@ -522,11 +521,12 @@ export function idFromPath(path: number[]): string {
  * - After first bubbling input, place output after the last node.
  */
 function placeOutputInLog(log: LogEntry[], edge: EdgeLogEntry): LogEntry[] {
+  // Remove streaming outputs from TGO. It doesn't support them anyway.
+  if (isStreamingOutput(edge)) return log;
   const last = log[log.length - 1];
   if (last?.type === "edge" && last.value) {
     return [...log, edge];
   }
-  // @ts-expect-error - findLastIndex is not in the TS lib
   const lastNode = log.findLastIndex((entry) => entry.type === "node");
   if (lastNode === -1) {
     return [...log, edge];
