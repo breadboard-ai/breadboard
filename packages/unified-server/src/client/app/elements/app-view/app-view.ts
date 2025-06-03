@@ -16,6 +16,7 @@ import {
 } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
 import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
 import {
+  BoardServer,
   err,
   GraphDescriptor,
   InputValues,
@@ -45,7 +46,7 @@ import {
 import { googleDriveClientContext } from "@breadboard-ai/shared-ui/contexts/google-drive-client-context.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { loadImage } from "@breadboard-ai/shared-ui/utils/image.js";
-
+import { boardServerContext } from "@breadboard-ai/shared-ui/contexts/board-server.js";
 import { blobHandleToUrl } from "@breadboard-ai/shared-ui/utils/blob-handle-to-url.js";
 
 @customElement("app-view")
@@ -74,6 +75,9 @@ export class AppView extends LitElement {
   @provide({ context: googleDriveClientContext })
   accessor googleDriveClient: GoogleDriveClient;
 
+  @provide({ context: boardServerContext })
+  accessor boardServer: BoardServer | undefined;
+
   readonly flow: GraphDescriptor;
   #runner: Runner | null;
   #signInAdapter: SigninAdapter;
@@ -91,6 +95,7 @@ export class AppView extends LitElement {
     this.#signInAdapter = config.signinAdapter;
     this.flow = earlyLoadedFlow ?? config.flow;
     this.googleDriveClient = config.googleDriveClient;
+    this.boardServer = config.boardServer;
 
     this.#setDocumentTitle();
     this.#applyThemeToTemplate();

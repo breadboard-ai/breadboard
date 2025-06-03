@@ -123,6 +123,7 @@ import {
 } from "@breadboard-ai/shared-ui/elements/google-drive/find-google-drive-assets-in-graph.js";
 import { stringifyPermission } from "@breadboard-ai/shared-ui/elements/share-panel/share-panel.js";
 import { type GoogleDriveAssetShareDialog } from "@breadboard-ai/shared-ui/elements/elements.js";
+import { boardServerContext } from "@breadboard-ai/shared-ui/contexts/board-server.js";
 
 const STORAGE_PREFIX = "bb-main";
 const LOADING_TIMEOUT = 1250;
@@ -328,6 +329,9 @@ export class Main extends LitElement {
 
   @provide({ context: googleDriveClientContext })
   accessor googleDriveClient: GoogleDriveClient | undefined;
+
+  @provide({ context: boardServerContext })
+  accessor boardServer: BoardServer | undefined;
 
   @state()
   accessor selectedBoardServer = "Browser Storage";
@@ -970,6 +974,7 @@ export class Main extends LitElement {
             hasMountedBoardServer = true;
             this.selectedBoardServer = server.name;
             this.selectedLocation = server.url.href;
+            this.boardServer = server;
             break;
           }
         }

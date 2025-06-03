@@ -39,6 +39,7 @@ import {
   generatePaletteFromColor,
 } from "@breadboard-ai/theme";
 import { blobHandleToUrl } from "@breadboard-ai/shared-ui/utils/blob-handle-to-url.js";
+import { BoardServerAwareDataStore } from "@breadboard-ai/board-server-management";
 
 const primaryColor = getGlobalColor("--bb-ui-700");
 const secondaryColor = getGlobalColor("--bb-ui-400");
@@ -373,6 +374,18 @@ async function bootstrap(args: BootstrapArguments = {}) {
     );
     const runner = await createRunner(runConfig, abortController);
 
+    if (!(runConfig?.store instanceof BoardServerAwareDataStore)) {
+      throw new Error(`Expected run config store to be board server aware`);
+    }
+    const boardServer = runConfig.store.boardServers.find(
+      (server) => server.url.href === args.boardService
+    );
+    if (!boardServer) {
+      throw new Error(
+        `Could not find a board server with URL ${args.boardService}`
+      );
+    }
+
     const extractedTheme = await extractThemeFromFlow(flow);
     const config: AppViewConfig = {
       flow,
@@ -389,6 +402,7 @@ async function bootstrap(args: BootstrapArguments = {}) {
       templateAdditionalOptions:
         extractedTheme?.templateAdditionalOptionsChosen ?? null,
       googleDriveClient,
+      boardServer,
     };
 
     const appView = new Elements.AppView(config, flow);

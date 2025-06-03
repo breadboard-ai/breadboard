@@ -14,6 +14,7 @@ import { HarnessRunner } from "@google-labs/breadboard/harness";
 import { type SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
 import { TopGraphObserver } from "@breadboard-ai/shared-ui/utils/top-graph-observer";
 import {
+  BoardServer,
   GraphDescriptor,
   InspectableRunObserver,
   Kit,
@@ -45,6 +46,7 @@ export interface AppViewConfig {
   description: string | null;
   templateAdditionalOptions: Record<string, string> | null;
   googleDriveClient: GoogleDriveClient;
+  boardServer: BoardServer;
 }
 
 export type BootstrapArguments = {
