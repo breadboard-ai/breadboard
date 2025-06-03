@@ -57,6 +57,13 @@ export class SharePanel extends LitElement {
           background-color: #fff;
           opacity: 50%;
         }
+
+        & #advisory {
+          color: var(--bb-neutral-700);
+          font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+            var(--bb-font-family);
+          margin: var(--bb-grid-size-3) 0 0 0;
+        }
       }
 
       header {
@@ -312,9 +319,17 @@ export class SharePanel extends LitElement {
           ${this.#renderPublishedSwitch()}
         </div>
 
-        ${this.#renderAppPanel()}
+        ${this.#renderAppPanel()} ${this.#renderAdvisory()}
       </dialog>
     `;
+  }
+
+  #renderAdvisory() {
+    return html`<p id="advisory">
+      Public links can be reshared and will reflect subsequent changes to the
+      Opal app. Share responsibly, unpublish anytime by clicking the 'share app'
+      button within this Opal app and change the publish toggle.
+    </p>`;
   }
 
   #renderPublishedSwitch() {
