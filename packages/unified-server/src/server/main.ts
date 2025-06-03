@@ -13,8 +13,11 @@ import { InputValues, NodeDescriptor } from "@breadboard-ai/types";
 
 import { makeDriveProxyMiddleware } from "./drive-proxy.js";
 import { allowListChecker } from "./allow-list-checker.js";
+import { getConfigFromSecretManager } from "./provide-config.js";
 
 const server = express();
+
+const clientConfig = await getConfigFromSecretManager();
 
 const { BACKEND_API_ENDPOINT } = process.env;
 
@@ -46,7 +49,9 @@ ViteExpress.config({
   transformer: (html: string, req: Request) => {
     const board = req.res?.locals.loadedBoard;
     const displayName = board?.displayName || "Loading ...";
-    return html.replace("{{displayName}}", escape(displayName));
+    return html
+      .replace("{{displayName}}", escape(displayName))
+      .replace("{{config}}", clientConfig);
   },
 });
 
