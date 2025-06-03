@@ -21,16 +21,23 @@ import { receiveConfig } from "./client/receive-config";
 
 const deploymentConfiguration = receiveConfig();
 
+declare global {
+  interface Window {
+    dataLayer: IArguments[];
+    gtag: (...args: IArguments[]) => void;
+  }
+}
+
 if (deploymentConfiguration?.MEASUREMENT_ID) {
   const id = deploymentConfiguration.MEASUREMENT_ID;
-  globalThis.dataLayer = globalThis.dataLayer || [];
-  globalThis.gtag = function () {
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function () {
     // eslint-disable-next-line prefer-rest-params
-    globalThis.dataLayer.push(arguments);
+    window.dataLayer.push(arguments);
   };
-  globalThis.gtag("js", new Date());
+  window.gtag("js", new Date());
   // IP anonymized per OOGA policy.
-  globalThis.gtag("config", id, { anonymize_ip: true });
+  window.gtag("config", id, { anonymize_ip: true });
 
   const tagManagerScript = document.createElement("script");
   tagManagerScript.src = `https://www.googletagmanager.com/gtag/js?id=${id}`;
