@@ -26,7 +26,11 @@ import Mode from "../shared/styles/icons.js";
 import Animations from "../shared/styles/animations.js";
 
 import { classMap } from "lit/directives/class-map.js";
-import { GraphDescriptor, InspectableRun } from "@google-labs/breadboard";
+import {
+  BoardServer,
+  GraphDescriptor,
+  InspectableRun,
+} from "@google-labs/breadboard";
 import { styleMap } from "lit/directives/style-map.js";
 import {
   AddAssetRequestEvent,
@@ -62,6 +66,9 @@ import { icons } from "../../styles/icons";
 import { ActionTracker } from "../../utils/action-tracker.js";
 import { buttonStyles } from "../../styles/button.js";
 import { findFinalOutputValues } from "../../utils/save-results.js";
+import { consume } from "@lit/context";
+import { boardServerContext } from "../../contexts/board-server.js";
+import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 
 function keyFromGraphUrl(url: string) {
   return `cw-${url.replace(/\W/gi, "-")}`;
@@ -153,6 +160,9 @@ export class Template extends LitElement implements AppTemplate {
     return this.#showContentWarning ?? true;
   }
   #showContentWarning: boolean | undefined = undefined;
+
+  @consume({ context: boardServerContext, subscribe: true })
+  accessor boardServer: BoardServer | undefined;
 
   @state()
   accessor showAddAssetModal = false;
@@ -1142,6 +1152,14 @@ export class Template extends LitElement implements AppTemplate {
     const graphUrl = this.graph?.url;
     if (!graphUrl) {
       console.error(`No graph url`);
+      return;
+    }
+    if (!this.boardServer) {
+      console.error(`No board server`);
+      return;
+    }
+    if (!(this.boardServer instanceof GoogleDriveBoardServer)) {
+      console.error(`Board server was not Google Drive`);
       return;
     }
     // TODO(aomarks) Actually save.
