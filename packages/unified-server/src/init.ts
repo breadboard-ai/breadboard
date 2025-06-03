@@ -21,6 +21,23 @@ import { receiveConfig } from "./client/receive-config";
 
 const deploymentConfiguration = receiveConfig();
 
+if (deploymentConfiguration?.MEASUREMENT_ID) {
+  const id = deploymentConfiguration.MEASUREMENT_ID;
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function () {
+    // eslint-disable-next-line prefer-rest-params
+    window.dataLayer.push(arguments);
+  };
+  gtag("js", new Date());
+  // IP anonymized per OOGA policy.
+  gtag("config", id, { anonymize_ip: true });
+
+  const tagManagerScript = document.createElement("script");
+  tagManagerScript.src = `https://www.googletagmanager.com/gtag/js?id=${id}`;
+  tagManagerScript.async = true;
+  document.body.appendChild(tagManagerScript);
+}
+
 bootstrap({
   deploymentConfiguration,
   connectionServerUrl: new URL("/connection/", window.location.href),
