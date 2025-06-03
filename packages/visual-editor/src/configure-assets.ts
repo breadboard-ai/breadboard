@@ -6,8 +6,25 @@
 
 import path from "path";
 import fs from "fs/promises";
+import { type Plugin } from "vite";
 
-export { configureAssets };
+export { configureAssets, policyContent };
+
+function policyContent(
+  policyPath = "./policy.html",
+  policyContent: string = "Not set"
+): Plugin {
+  return {
+    name: "policy-content",
+    transformIndexHtml(html, opts) {
+      if (opts.originalUrl !== policyPath) {
+        return html;
+      }
+
+      return policyContent;
+    },
+  };
+}
 
 export type ConfigureAssetsInputs = {
   VITE_LANGUAGE_PACK?: string;
@@ -19,6 +36,8 @@ export type ConfigureAssetsInputs = {
   VITE_BOARD_SERVICE?: string;
   VITE_ENABLE_TOS?: boolean;
   VITE_TOS_HTML_PATH?: string;
+  VITE_ENABLE_POLICY?: boolean;
+  VITE_POLICY_HTML_PATH?: string;
   VITE_FEEDBACK_LINK?: string;
   VITE_ENVIRONMENT_NAME?: string;
 };
@@ -33,6 +52,8 @@ export type ConfigureAssetOutputs = {
   BOARD_SERVICE: string;
   ENABLE_TOS: boolean;
   TOS_HTML: string;
+  ENABLE_POLICY: boolean;
+  POLICY_HTML: string;
   FEEDBACK_LINK: string;
   ENVIRONMENT_NAME: string;
 };
@@ -50,6 +71,8 @@ async function configureAssets(
     VITE_BOARD_SERVICE: BOARD_SERVICE,
     VITE_ENABLE_TOS: ENABLE_TOS,
     VITE_TOS_HTML_PATH: TOS_HTML_PATH,
+    VITE_ENABLE_POLICY: ENABLE_POLICY,
+    VITE_POLICY_HTML_PATH: POLICY_HTML_PATH,
     VITE_FEEDBACK_LINK: FEEDBACK_LINK,
     VITE_ENVIRONMENT_NAME: ENVIRONMENT_NAME,
   } = config;
@@ -84,6 +107,12 @@ async function configureAssets(
     tosHtml = await fs.readFile(tosHtmlPath, { encoding: "utf-8" });
   }
 
+  let policyHtml = undefined;
+  if (POLICY_HTML_PATH) {
+    const policyHtmlPath = path.join(root, POLICY_HTML_PATH);
+    policyHtml = await fs.readFile(policyHtmlPath, { encoding: "utf-8" });
+  }
+
   return {
     LANGUAGE_PACK: JSON.stringify(languagePack),
     ASSET_PACK: JSON.stringify(assetPack.styles),
@@ -94,6 +123,8 @@ async function configureAssets(
     BOARD_SERVICE: JSON.stringify(BOARD_SERVICE),
     ENABLE_TOS: ENABLE_TOS ?? false,
     TOS_HTML: JSON.stringify(tosHtml),
+    ENABLE_POLICY: ENABLE_POLICY ?? false,
+    POLICY_HTML: JSON.stringify(policyHtml),
     FEEDBACK_LINK: JSON.stringify(FEEDBACK_LINK),
     ENVIRONMENT_NAME: JSON.stringify(ENVIRONMENT_NAME),
   };
