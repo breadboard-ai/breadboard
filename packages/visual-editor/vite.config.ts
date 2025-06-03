@@ -45,6 +45,10 @@ export default async ({ mode }: UserConfig) => {
     entry["language"] = "./language.html";
   }
 
+  if (definedAssets.ENABLE_POLICY) {
+    entry["policy"] = "./policy/index.html";
+  }
+
   return {
     build: {
       lib: {

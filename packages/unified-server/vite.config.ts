@@ -4,7 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { configureAssets } from "@breadboard-ai/visual-editor/vite";
+import {
+  configureAssets,
+  policyContent,
+} from "@breadboard-ai/visual-editor/vite";
 import { tryGetGitHash } from "@breadboard-ai/visual-editor/build-info";
 import { config } from "dotenv";
 import { defineConfig, loadEnv, UserConfig } from "vite";
@@ -23,6 +26,16 @@ export default defineConfig(async ({ mode }): Promise<UserConfig> => {
 
   const define = { ...buildInfo, ...definedAssets };
 
+  const entry: Record<string, string> = {
+    index: "./index.html",
+    app: "./app/index.html",
+    oauth: "./oauth/index.html",
+  };
+
+  if (define.ENABLE_POLICY) {
+    entry["policy"] = "./policy/index.html";
+  }
+
   return {
     esbuild: {
       tsconfigRaw,
@@ -32,11 +45,7 @@ export default defineConfig(async ({ mode }): Promise<UserConfig> => {
       target: "esnext",
       outDir: "dist/client",
       lib: {
-        entry: {
-          index: "./index.html",
-          app: "./app/index.html",
-          oauth: "./oauth/index.html",
-        },
+        entry,
         formats: ["es"],
       },
     },
@@ -51,6 +60,7 @@ export default defineConfig(async ({ mode }): Promise<UserConfig> => {
         threshold: 1024,
         deleteOriginalAssets: false,
       }),
+      policyContent("/policy/", JSON.parse(define.POLICY_HTML)),
     ],
     server: {
       watch: {

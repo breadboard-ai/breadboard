@@ -33,7 +33,6 @@ const connectionServerConfig = {
 };
 
 boardServer.addMiddleware(server, boardServerConfig);
-server.use("/policy", express.static("langs/policy"));
 server.use("/board", boardServer.createRouter(boardServerConfig));
 
 server.use(
