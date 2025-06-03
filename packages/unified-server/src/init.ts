@@ -19,12 +19,10 @@ const endpoint_url =
 import { Handler } from "@breadboard-ai/embed";
 import { receiveConfig } from "./client/receive-config";
 
-const config = receiveConfig();
-
-// TODO: Start using this machinery.
-console.log("CONFIG", config);
+const deploymentConfiguration = receiveConfig();
 
 bootstrap({
+  deploymentConfiguration,
   connectionServerUrl: new URL("/connection/", window.location.href),
   requiresSignin: true,
   kits: [asRuntimeKit(Core)],
