@@ -23,14 +23,14 @@ const deploymentConfiguration = receiveConfig();
 
 if (deploymentConfiguration?.MEASUREMENT_ID) {
   const id = deploymentConfiguration.MEASUREMENT_ID;
-  window.dataLayer = window.dataLayer || [];
-  window.gtag = function () {
+  globalThis.dataLayer = globalThis.dataLayer || [];
+  globalThis.gtag = function () {
     // eslint-disable-next-line prefer-rest-params
-    window.dataLayer.push(arguments);
+    globalThis.dataLayer.push(arguments);
   };
-  gtag("js", new Date());
+  globalThis.gtag("js", new Date());
   // IP anonymized per OOGA policy.
-  gtag("config", id, { anonymize_ip: true });
+  globalThis.gtag("config", id, { anonymize_ip: true });
 
   const tagManagerScript = document.createElement("script");
   tagManagerScript.src = `https://www.googletagmanager.com/gtag/js?id=${id}`;
