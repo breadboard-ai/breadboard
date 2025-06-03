@@ -22,6 +22,7 @@ import { FirestoreStorageProvider } from "./server/storage-providers/firestore.j
 import type { AllowFilterFunction } from "@google-labs/breadboard/remote";
 
 export type { ServerConfig, StorageProvider };
+export { SecretsProvider } from "./server/proxy/secrets.js";
 
 const DEFAULT_PORT = 3000;
 const DEFAULT_HOST = "localhost";
