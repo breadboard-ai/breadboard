@@ -79,6 +79,11 @@ type DriveChangesCacheState = {
   lastFetched: string;
 };
 
+export type RunResults = {
+  graphUrl: string;
+  finalOutputValues: OutputValues;
+};
+
 /** Responsible for cleaning lookup caches based on list of changes from drive. */
 class DriveLookupCache {
   constructor(
@@ -647,10 +652,7 @@ class DriveOperations {
     }
   }
 
-  async writeRunResults(results: {
-    graphUrl: string;
-    finalOutputValues: OutputValues;
-  }): Promise<void> {
+  async writeRunResults(results: RunResults): Promise<{ id: string }> {
     const accessToken = await getAccessToken(this.vendor);
     if (!accessToken) {
       throw new Error(`No access token`);
@@ -685,7 +687,8 @@ class DriveOperations {
         data: results,
       },
     ]);
-    await retryableFetch(request);
+    const response = await retryableFetch(request);
+    return (await response.json()) as { id: string };
   }
 
   async saveDataPart(data: string, mimeType: string) {

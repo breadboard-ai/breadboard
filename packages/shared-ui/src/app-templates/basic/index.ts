@@ -1168,11 +1168,13 @@ export class Template extends LitElement implements AppTemplate {
     this.dispatchEvent(
       new ToastEvent(`Saving results to your Google Drive`, ToastType.PENDING)
     );
+    let resultsFileId: string;
     try {
-      await this.boardServer.ops.writeRunResults({
+      const result = await this.boardServer.ops.writeRunResults({
         graphUrl,
         finalOutputValues,
       });
+      resultsFileId = result.id;
     } catch (error) {
       console.log(error);
       this.dispatchEvent(
@@ -1183,8 +1185,14 @@ export class Template extends LitElement implements AppTemplate {
       );
       return;
     }
+    const shareUrl = new URL(
+      `/app/${encodeURIComponent(graphUrl)}`,
+      document.location.origin
+    );
+    shareUrl.searchParams.set("results", resultsFileId);
+    navigator.clipboard.writeText(shareUrl.href);
     this.dispatchEvent(
-      new ToastEvent(`Results saved your Google Drive`, ToastType.INFORMATION)
+      new ToastEvent(`Share link copied`, ToastType.INFORMATION)
     );
   }
 
