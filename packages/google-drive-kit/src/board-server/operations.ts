@@ -5,7 +5,7 @@
  */
 
 import type { TokenVendor } from "@breadboard-ai/connection-client";
-import type { Asset, GraphTag } from "@breadboard-ai/types";
+import type { Asset, GraphTag, OutputValues } from "@breadboard-ai/types";
 import {
   err,
   ok,
@@ -25,6 +25,7 @@ import {
 export { DriveOperations, PROTOCOL };
 
 import {
+  extractGoogleDriveFileId,
   getSetsIntersection,
   retryableFetch,
   truncateValueForUtf8,
@@ -35,6 +36,7 @@ const PROTOCOL = "drive:";
 const GOOGLE_DRIVE_FOLDER_MIME_TYPE = "application/vnd.google-apps.folder";
 const GRAPH_MIME_TYPE = "application/vnd.breadboard.graph+json";
 const DEPRECATED_GRAPH_MIME_TYPE = "application/json";
+const RUN_RESULTS_MIME_TYPE = "application/vnd.breadboard.run-results+json";
 
 const MIME_TYPE_QUERY = `(mimeType="${GRAPH_MIME_TYPE}" or mimeType="${DEPRECATED_GRAPH_MIME_TYPE}")`;
 const BASE_QUERY = `${MIME_TYPE_QUERY} and trashed=false`;
@@ -643,6 +645,47 @@ class DriveOperations {
       // The above update is a non-atomic operation so refresh after both success or fail.
       await this.#refreshUserList();
     }
+  }
+
+  async writeRunResults(results: {
+    graphUrl: string;
+    finalOutputValues: OutputValues;
+  }): Promise<void> {
+    const accessToken = await getAccessToken(this.vendor);
+    if (!accessToken) {
+      throw new Error(`No access token`);
+    }
+    // TODO(aomarks) It would be nice if this saved within a Results folder.
+    // Probably part of a larger organization scheme we should have for the
+    // Drive folder.
+    const parentFolderId = await this.findOrCreateFolder();
+    if (typeof parentFolderId !== "string" || !parentFolderId) {
+      throw new Error(`Unexpected parent folder result ${parentFolderId}`);
+    }
+    const api = new Files({ kind: "bearer", token: accessToken });
+    const graphFileId = extractGoogleDriveFileId(results.graphUrl);
+    const request = api.makeMultipartCreateRequest([
+      {
+        contentType: "application/json; charset=UTF-8",
+        data: {
+          name:
+            [`results`, graphFileId, crypto.randomUUID()].join("-") + ".json",
+          mimeType: RUN_RESULTS_MIME_TYPE,
+          parents: [parentFolderId],
+          // TODO(aomarks) Add an (app?) property that links to the graph file
+          // id so that we can list all results for a particular graph for the
+          // history view.
+        },
+      },
+      {
+        contentType: "application/json; charset=UTF-8",
+        // TODO(aomarks) Handle external content, either by inling or copying
+        // each non-Drive content to Drive. Remember to deal with HTML content,
+        // too, which can contain its own external content references.
+        data: results,
+      },
+    ]);
+    await retryableFetch(request);
   }
 
   async saveDataPart(data: string, mimeType: string) {
