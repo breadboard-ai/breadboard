@@ -8,12 +8,54 @@ import { SecretsProvider } from "@breadboard-ai/board-server";
 
 export { getConfigFromSecretManager };
 
-async function getConfigFromSecretManager(): Promise<string> {
+export type ServerDeploymentConfiguration = {
+  BACKEND_API_ENDPOINT?: string;
+};
+
+export type ClientDeploymentConfiguration = {
+  MEASUREMENT_ID?: string;
+};
+
+export type SecretValueFormat = {
+  client: ClientDeploymentConfiguration;
+  server: ServerDeploymentConfiguration;
+};
+
+export type DeploymentConfiguration = {
+  /**
+   * Stringified value of `ClientDeploymentConfiguration`.
+   */
+  client: string;
+  /**
+   * This is the server configuration.
+   */
+  server: ServerDeploymentConfiguration;
+};
+
+const DEFAULT_VALUE: DeploymentConfiguration = {
+  client: "",
+  server: {},
+} as const;
+
+async function getConfigFromSecretManager(): Promise<DeploymentConfiguration> {
   try {
-    const config = (await SecretsProvider.instance().getKey("CONFIG"))?.[1];
-    if (!config) return "";
-    return config.replaceAll("</script>", "\x3C/script>");
+    const secretValue = (
+      await SecretsProvider.instance().getKey("CONFIG")
+    )?.[1];
+    if (!secretValue) {
+      console.warn("Unable to read configuration from secret");
+      return DEFAULT_VALUE;
+    }
+
+    const config = JSON.parse(secretValue) as SecretValueFormat;
+
+    const client = JSON.stringify(config.client).replaceAll(
+      "</script>",
+      "\x3C/script>"
+    );
+    return { client, server: config.server };
   } catch (e) {
-    return "";
+    console.warn("Error parsing configuration", (e as Error).message);
+    return DEFAULT_VALUE;
   }
 }
