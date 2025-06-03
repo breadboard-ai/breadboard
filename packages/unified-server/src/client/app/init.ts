@@ -40,6 +40,7 @@ import {
 } from "@breadboard-ai/theme";
 import { blobHandleToUrl } from "@breadboard-ai/shared-ui/utils/blob-handle-to-url.js";
 import { BoardServerAwareDataStore } from "@breadboard-ai/board-server-management";
+import { type RunResults } from "@breadboard-ai/google-drive-kit/board-server/operations.js";
 
 const primaryColor = getGlobalColor("--bb-ui-700");
 const secondaryColor = getGlobalColor("--bb-ui-400");
@@ -362,6 +363,16 @@ async function bootstrap(args: BootstrapArguments = {}) {
         );
       },
     });
+
+    const runResultsPromise: Promise<RunResults | null> = (async () => {
+      const fileId = new URL(document.location.href).searchParams.get(
+        "results"
+      );
+      return fileId
+        ? (await googleDriveClient.getFileMedia(fileId)).json()
+        : null;
+    })();
+
     const flow = await fetchFlow(googleDriveClient);
     const template = await fetchTemplate(flow);
     const abortController = new AbortController();
@@ -403,6 +414,7 @@ async function bootstrap(args: BootstrapArguments = {}) {
         extractedTheme?.templateAdditionalOptionsChosen ?? null,
       googleDriveClient,
       boardServer,
+      runResults: await runResultsPromise,
     };
 
     const appView = new Elements.AppView(config, flow);

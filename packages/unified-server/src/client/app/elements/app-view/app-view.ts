@@ -24,7 +24,10 @@ import {
   ok,
   Outcome,
 } from "@google-labs/breadboard";
-import { AppTemplateOptions } from "@breadboard-ai/shared-ui/types/types.js";
+import {
+  AppTemplateOptions,
+  TopGraphRunResult,
+} from "@breadboard-ai/shared-ui/types/types.js";
 import { getThemeModeFromBackground } from "../../utils/color.js";
 import { until } from "lit/directives/until.js";
 import { TopGraphObserver } from "@breadboard-ai/shared-ui/utils/top-graph-observer";
@@ -81,6 +84,7 @@ export class AppView extends LitElement {
   readonly flow: GraphDescriptor;
   #runner: Runner | null;
   #signInAdapter: SigninAdapter;
+  #overrideTopGraphRunResult: TopGraphRunResult | null;
 
   constructor(
     private readonly config: AppViewConfig,
@@ -96,6 +100,28 @@ export class AppView extends LitElement {
     this.flow = earlyLoadedFlow ?? config.flow;
     this.googleDriveClient = config.googleDriveClient;
     this.boardServer = config.boardServer;
+    this.#overrideTopGraphRunResult = config.runResults
+      ? {
+          status: "stopped",
+          log: [
+            {
+              type: "edge",
+              value: config.runResults.finalOutputValues,
+              end: null,
+            },
+          ],
+          graph: null,
+          currentNode: null,
+          edgeValues: {
+            get: () => undefined,
+            current: null,
+          },
+          nodeInformation: {
+            getActivity: () => undefined,
+            canRunNode: () => false,
+          },
+        }
+      : null;
 
     this.#setDocumentTitle();
     this.#applyThemeToTemplate();
@@ -286,6 +312,7 @@ export class AppView extends LitElement {
       appTemplate.graph = this.flow;
       appTemplate.run = run;
       appTemplate.topGraphResult =
+        this.#overrideTopGraphRunResult ??
         this.#runner.topGraphObserver.current() ??
         TopGraphObserver.entryResult(this.flow);
       appTemplate.eventPosition = run?.events.length ?? 0;
