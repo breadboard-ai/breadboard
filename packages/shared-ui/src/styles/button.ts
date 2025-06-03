@@ -18,8 +18,16 @@ export const buttonStyles = css`
     transition:
       background 0.2s cubic-bezier(0, 0, 0.3, 1),
       color 0.2s cubic-bezier(0, 0, 0.3, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
     &[disabled] {
       opacity: 80%;
+    }
+
+    > .g-icon {
+      margin-right: var(--bb-grid-size-2);
     }
   }
 
