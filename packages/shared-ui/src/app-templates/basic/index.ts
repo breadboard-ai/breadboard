@@ -39,6 +39,8 @@ import {
   ResizeEvent,
   RunEvent,
   SignInRequestedEvent,
+  ToastEvent,
+  ToastType,
 } from "../../events/events";
 import { repeat } from "lit/directives/repeat.js";
 import { createRef, Ref } from "lit/directives/ref.js";
@@ -1126,6 +1128,7 @@ export class Template extends LitElement implements AppTemplate {
     ) {
       return nothing;
     }
+    // TODO(aomarks) Add share button.
     return html`
       <div id="save-results-button-container">
         <button
@@ -1140,7 +1143,7 @@ export class Template extends LitElement implements AppTemplate {
     `;
   }
 
-  #onClickSaveResults() {
+  async #onClickSaveResults() {
     if (!this.topGraphResult) {
       console.error(`No top graph result`);
       return;
@@ -1162,8 +1165,27 @@ export class Template extends LitElement implements AppTemplate {
       console.error(`Board server was not Google Drive`);
       return;
     }
-    // TODO(aomarks) Actually save.
-    console.log("SAVING", JSON.stringify({ graphUrl, finalOutputValues }));
+    this.dispatchEvent(
+      new ToastEvent(`Saving results to your Google Drive`, ToastType.PENDING)
+    );
+    try {
+      await this.boardServer.ops.writeRunResults({
+        graphUrl,
+        finalOutputValues,
+      });
+    } catch (error) {
+      console.log(error);
+      this.dispatchEvent(
+        new ToastEvent(
+          `Error saving results to your Google Drive`,
+          ToastType.ERROR
+        )
+      );
+      return;
+    }
+    this.dispatchEvent(
+      new ToastEvent(`Results saved your Google Drive`, ToastType.INFORMATION)
+    );
   }
 
   #renderInput(topGraphResult: TopGraphRunResult) {

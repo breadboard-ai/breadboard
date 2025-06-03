@@ -14,7 +14,6 @@ export const buttonStyles = css`
     border-radius: 100px;
     padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
     font-size: var(--bb-label-large);
-    cursor: pointer;
     transition:
       background 0.2s cubic-bezier(0, 0, 0.3, 1),
       color 0.2s cubic-bezier(0, 0, 0.3, 1);
@@ -23,7 +22,10 @@ export const buttonStyles = css`
     justify-content: center;
 
     &[disabled] {
-      opacity: 80%;
+      opacity: 75%;
+    }
+    &:not([disabled]) {
+      cursor: pointer;
     }
 
     > .g-icon {
