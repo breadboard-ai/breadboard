@@ -14,7 +14,7 @@ const url = 'http://localhost:5173';
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  testDir: './.',
+  testDir: "./.",
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -24,37 +24,38 @@ export default defineConfig({
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'html',
+  reporter: "html",
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL: url,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
-    testIdAttribute: 'id',
+    trace: "on-first-retry",
+    testIdAttribute: "id",
+    actionTimeout: 2000,
   },
 
   projects: [
     {
-      name: 'chrome',
-      use: { ...devices['Desktop Chrome'] },
+      name: "chrome",
+      use: { ...devices["Desktop Chrome"] },
     },
   ],
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    name: 'visual-editor',
-    cwd: '../visual-editor',
-    command: 'npm run dev',
+    name: "visual-editor",
+    cwd: "../visual-editor",
+    command: "npm run dev",
     url,
     reuseExistingServer: !process.env.CI,
-    stdout: 'ignore',
-    stderr: 'pipe',
+    stdout: "ignore",
+    stderr: "pipe",
     timeout: 5000,
     gracefulShutdown: {
-      signal: 'SIGTERM',
+      signal: "SIGTERM",
       timeout: 5000,
-    }
+    },
   },
 });

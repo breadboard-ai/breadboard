@@ -21,8 +21,7 @@ test("smoke test", async ({ harness }) => {
 /** Checking the main page headings are present.  */
 async function verifyMainPage(harness: BreadboardTestHarness) {
   await expect(harness.page).toHaveTitle(/Breadboard - Flows/);
-  const headings = await harness.page.getByRole("heading").allInnerTexts();
-  expect(headings.filter((h) => !!h)).toEqual([
+  expect(await harness.getHeadings()).toEqual([
     "Breadboards are mini AI apps anyone can build",
     "Your Flows",
     "Gallery",
@@ -31,10 +30,11 @@ async function verifyMainPage(harness: BreadboardTestHarness) {
 
 /** Checking for important interface buttons to be present. */
 async function verifyEditorButtons(harness: BreadboardTestHarness) {
-  const buttons = await harness.page.getByRole("button").allInnerTexts();
+  const buttons = await harness.getButtonsTexts();
   for (const expectedButton of [
     "App view",
     "Activity",
+    "Asset",
     "User Input",
     "Generate",
     "Display",
@@ -42,20 +42,10 @@ async function verifyEditorButtons(harness: BreadboardTestHarness) {
     "Zoom to fit",
     "Zoom in",
     "Zoom out",
+    "Start",
+    "history",
+    "Share",
   ]) {
     expect(buttons, expectedButton).toContain(expectedButton);
   }
-
-  // Ensuring weird "asset" button is present.
-  expect(
-    await harness.page.locator("css=button span.title").allInnerTexts()
-  ).toContain("Asset");
-  // Start button.
-  expect(await harness.page.getByTestId("run").innerText()).toEqual("Start");
-
-  // Icons - history and share.
-  expect(await harness.page.getByLabel("Edit History").innerText()).toEqual(
-    "history"
-  );
-  expect(await harness.page.getByText("URL").count()).toEqual(1); // Share button.
 }

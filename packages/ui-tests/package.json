@@ -15,7 +15,7 @@
     "playwright": "^1.52.0"
   },
   "scripts": {
-    "test": "npx playwright test",
+    "test": "npx playwright test --timeout=5000",
     "test-ide": "npx playwright test --ui",
     "debug": "npx playwright test --debug",
     "show-report": "npx playwright show-report"
