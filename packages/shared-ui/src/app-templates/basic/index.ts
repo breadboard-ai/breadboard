@@ -60,10 +60,15 @@ import { markdown } from "../../directives/markdown";
 import { createThemeStyles } from "@breadboard-ai/theme";
 import { icons } from "../../styles/icons";
 import { ActionTracker } from "../../utils/action-tracker.js";
+import { buttonStyles } from "../../styles/button.js";
+import { findFinalOutputValues } from "../../utils/save-results.js";
 
 function keyFromGraphUrl(url: string) {
   return `cw-${url.replace(/\W/gi, "-")}`;
 }
+
+// TODO(aomarks) Remove when functional.
+const ENABLE_SAVE_RESULTS = false;
 
 @customElement("app-basic")
 export class Template extends LitElement implements AppTemplate {
@@ -175,6 +180,7 @@ export class Template extends LitElement implements AppTemplate {
 
   static styles = [
     icons,
+    buttonStyles,
     css`
       * {
         box-sizing: border-box;
@@ -929,6 +935,15 @@ export class Template extends LitElement implements AppTemplate {
           }
         }
       }
+
+      #save-results-button-container {
+        display: flex;
+        #save-results-button {
+          flex: 1;
+          margin: var(--bb-grid-size-4);
+          border-color: var(--bb-neutral-400);
+        }
+      }
     `,
     Mode,
     Animations,
@@ -1089,6 +1104,48 @@ export class Template extends LitElement implements AppTemplate {
     }
 
     return html`<div id="activity">${activityContents}</div>`;
+  }
+
+  #renderSaveResultsButton() {
+    if (!ENABLE_SAVE_RESULTS) {
+      return nothing;
+    }
+    if (
+      this.topGraphResult?.status !== "stopped" ||
+      !findFinalOutputValues(this.topGraphResult)
+    ) {
+      return nothing;
+    }
+    return html`
+      <div id="save-results-button-container">
+        <button
+          id="save-results-button"
+          class="bb-button-outlined"
+          @click=${this.#onClickSaveResults}
+        >
+          <span class="g-icon filled">file_save</span>
+          Save results
+        </button>
+      </div>
+    `;
+  }
+
+  #onClickSaveResults() {
+    if (!this.topGraphResult) {
+      console.error(`No top graph result`);
+      return;
+    }
+    const finalOutputValues = findFinalOutputValues(this.topGraphResult);
+    if (!finalOutputValues) {
+      return;
+    }
+    const graphUrl = this.graph?.url;
+    if (!graphUrl) {
+      console.error(`No graph url`);
+      return;
+    }
+    // TODO(aomarks) Actually save.
+    console.log("SAVING", JSON.stringify({ graphUrl, finalOutputValues }));
   }
 
   #renderInput(topGraphResult: TopGraphRunResult) {
@@ -1305,6 +1362,7 @@ export class Template extends LitElement implements AppTemplate {
       content = [
         this.#renderControls(this.topGraphResult),
         this.#renderActivity(this.topGraphResult),
+        this.#renderSaveResultsButton(),
         this.#renderInput(this.topGraphResult),
         this.showDisclaimer
           ? html`<p id="disclaimer">${Strings.from("LABEL_DISCLAIMER")}</p>`
