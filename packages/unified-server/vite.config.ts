@@ -60,7 +60,10 @@ export default defineConfig(async ({ mode }): Promise<UserConfig> => {
         threshold: 1024,
         deleteOriginalAssets: false,
       }),
-      policyContent("/policy/", JSON.parse(define.POLICY_HTML)),
+      policyContent(
+        "/policy/",
+        define.POLICY_HTML ? JSON.parse(define.POLICY_HTML) : undefined
+      ),
     ],
     server: {
       watch: {
