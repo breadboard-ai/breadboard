@@ -63,6 +63,10 @@ export class SharePanel extends LitElement {
           font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
             var(--bb-font-family);
           margin: var(--bb-grid-size-3) 0 0 0;
+
+          a {
+            color: var(--bb-ui-600);
+          }
         }
       }
 
@@ -327,8 +331,11 @@ export class SharePanel extends LitElement {
   #renderAdvisory() {
     return html`<p id="advisory">
       Public links can be reshared and will reflect subsequent changes to the
-      Opal app. Share responsibly, unpublish anytime by clicking the 'share app'
-      button within this Opal app and change the publish toggle.
+      Opal app. Share
+      <a href="https://policies.google.com/terms/generative-ai/use-policy"
+        >responsibly</a
+      >, unpublish anytime by clicking the 'share app' button within this Opal
+      app and change the publish toggle.
     </p>`;
   }
 
