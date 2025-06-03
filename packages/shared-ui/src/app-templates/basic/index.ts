@@ -1288,27 +1288,28 @@ export class Template extends LitElement implements AppTemplate {
       </div>
     `;
 
-    let content: HTMLTemplateResult | symbol = html`${(styles[
-      "--splash-image"
-    ] &&
-      this.topGraphResult.status === "stopped" &&
-      this.topGraphResult.log.length === 0) ||
-    this.#totalNodeCount === 0
-      ? splashScreen
-      : [
-          this.#renderControls(this.topGraphResult),
-          this.#renderActivity(this.topGraphResult),
-          this.#renderInput(this.topGraphResult),
-          this.showDisclaimer
-            ? html`<p id="disclaimer">${Strings.from("LABEL_DISCLAIMER")}</p>`
-            : nothing,
-        ]}`;
-
+    let content: NonNullable<unknown>;
     if (this.isInSelectionState && this.topGraphResult.log.length === 0) {
       content = html`<div id="preview-step-not-run">
         <h1>No data available</h1>
         <p>This step has yet to run</p>
       </div>`;
+    } else if (
+      (styles["--splash-image"] &&
+        this.topGraphResult.status === "stopped" &&
+        this.topGraphResult.log.length === 0) ||
+      this.#totalNodeCount === 0
+    ) {
+      content = splashScreen;
+    } else {
+      content = [
+        this.#renderControls(this.topGraphResult),
+        this.#renderActivity(this.topGraphResult),
+        this.#renderInput(this.topGraphResult),
+        this.showDisclaimer
+          ? html`<p id="disclaimer">${Strings.from("LABEL_DISCLAIMER")}</p>`
+          : nothing,
+      ];
     }
 
     return html`<section
