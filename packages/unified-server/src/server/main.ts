@@ -17,9 +17,10 @@ import { getConfigFromSecretManager } from "./provide-config.js";
 
 const server = express();
 
-const clientConfig = await getConfigFromSecretManager();
-
-const { BACKEND_API_ENDPOINT } = process.env;
+const {
+  client: clientConfig,
+  server: { BACKEND_API_ENDPOINT },
+} = await getConfigFromSecretManager();
 
 const boardServerConfig = boardServer.createServerConfig({
   storageProvider: "firestore",

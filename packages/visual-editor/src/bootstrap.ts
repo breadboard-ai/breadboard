@@ -20,7 +20,16 @@ import type { EmbedHandler } from "@breadboard-ai/embed";
 
 export { bootstrap };
 
+/**
+ * Keep this value in sync with ClientDeploymentConfiguration
+ * packages/unified-server/src/server/provide-config.ts
+ */
+export type ClientDeploymentConfiguration = {
+  MEASUREMENT_ID?: string;
+};
+
 export type BootstrapArguments = {
+  deploymentConfiguration?: ClientDeploymentConfiguration;
   connectionServerUrl?: URL;
   requiresSignin?: boolean;
   defaultBoardService?: string;
