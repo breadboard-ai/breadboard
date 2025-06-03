@@ -117,13 +117,11 @@ import {
 import { IterateOnPromptEvent } from "@breadboard-ai/shared-ui/events/events.js";
 import { AppCatalystApiClient } from "@breadboard-ai/shared-ui/flow-gen/app-catalyst.js";
 import { FlowGenerator } from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
-import {
-  extractDriveFileId,
-  findGoogleDriveAssetsInGraph,
-} from "@breadboard-ai/shared-ui/elements/google-drive/find-google-drive-assets-in-graph.js";
+import { findGoogleDriveAssetsInGraph } from "@breadboard-ai/shared-ui/elements/google-drive/find-google-drive-assets-in-graph.js";
 import { stringifyPermission } from "@breadboard-ai/shared-ui/elements/share-panel/share-panel.js";
 import { type GoogleDriveAssetShareDialog } from "@breadboard-ai/shared-ui/elements/elements.js";
 import { boardServerContext } from "@breadboard-ai/shared-ui/contexts/board-server.js";
+import { extractGoogleDriveFileId } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
 
 const STORAGE_PREFIX = "bb-main";
 const LOADING_TIMEOUT = 1250;
@@ -4485,7 +4483,7 @@ export class Main extends LitElement {
       console.error(`Graph had no URL`);
       return;
     }
-    const graphFileId = extractDriveFileId(graph.url);
+    const graphFileId = extractGoogleDriveFileId(graph.url);
     if (!graphFileId) {
       return;
     }

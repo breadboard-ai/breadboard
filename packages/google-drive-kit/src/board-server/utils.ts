@@ -97,3 +97,7 @@ export function getSetsIntersection<T>(set1: Set<T>, set2: Set<T>): Set<T> {
   }
   return result;
 }
+
+export function extractGoogleDriveFileId(str: string): string | null {
+  return str.match(/^drive:\/?(.+)/)?.[1] ?? null;
+}

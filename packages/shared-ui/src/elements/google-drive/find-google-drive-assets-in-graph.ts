@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { extractGoogleDriveFileId } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
 import type { GraphDescriptor, LLMContent } from "@breadboard-ai/types";
 
 export function findGoogleDriveAssetsInGraph(graph: GraphDescriptor): string[] {
@@ -22,7 +23,7 @@ export function findGoogleDriveAssetsInGraph(graph: GraphDescriptor): string[] {
           }
         }
         if ("storedData" in firstPart) {
-          const fileId = extractDriveFileId(firstPart.storedData?.handle);
+          const fileId = extractGoogleDriveFileId(firstPart.storedData?.handle);
           if (fileId) {
             fileIds.add(fileId);
           }
@@ -37,7 +38,7 @@ export function findGoogleDriveAssetsInGraph(graph: GraphDescriptor): string[] {
     for (const theme of Object.values(themes)) {
       const splashHandle = theme.splashScreen?.storedData?.handle;
       if (splashHandle) {
-        const fileId = extractDriveFileId(splashHandle);
+        const fileId = extractGoogleDriveFileId(splashHandle);
         if (fileId) {
           fileIds.add(fileId);
         }
@@ -46,8 +47,4 @@ export function findGoogleDriveAssetsInGraph(graph: GraphDescriptor): string[] {
   }
 
   return [...fileIds];
-}
-
-export function extractDriveFileId(str: string): string | null {
-  return str.match(/^drive:\/?(.+)/)?.[1] ?? null;
 }
