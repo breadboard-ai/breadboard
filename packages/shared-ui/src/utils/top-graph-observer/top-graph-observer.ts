@@ -386,11 +386,7 @@ export class TopGraphObserver {
     }
 
     if (!event.data.bubbled) {
-      // @ts-expect-error - findLastIndex is not in the TS lib
-      const lastEdge = this.#log.findLast(
-        // @ts-expect-error - findLastIndex is not in the TS lib
-        (entry) => entry.type === "edge"
-      );
+      const lastEdge = this.#log.findLast((entry) => entry.type === "edge");
       if (lastEdge) {
         lastEdge.end = event.data.timestamp;
         lastEdge.descriptor = event.data.node;
@@ -413,7 +409,6 @@ export class TopGraphObserver {
       return;
     }
     if (this.#errorPath && this.#errorPath.length > 1) {
-      // @ts-expect-error - findLast is not in the TS lib
       const lastNode = this.#log.findLast((entry) => entry.type === "node");
       lastNode?.activity.push({
         type: "error",
@@ -532,7 +527,6 @@ function placeOutputInLog(log: LogEntry[], edge: EdgeLogEntry): LogEntry[] {
   if (last?.type === "edge" && last.value) {
     return [...log, edge];
   }
-  // @ts-expect-error - findLastIndex is not in the TS lib
   const lastNode = log.findLastIndex((entry) => entry.type === "node");
   if (lastNode === -1) {
     return [...log, edge];
