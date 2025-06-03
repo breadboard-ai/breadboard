@@ -1436,7 +1436,7 @@ export class Template extends LitElement implements AppTemplate {
               <a href="https://support.google.com/legal/answer/3110420?hl=en"
                 >Report unsafe content</a
               >
-              &middot; <a href="/policy/">Privacy & Terms</a>
+              &middot; <a href="/policy">Privacy & Terms</a>
             </div>
             <button
               class="dismiss"
