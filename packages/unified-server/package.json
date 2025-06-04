@@ -40,7 +40,8 @@
       "dependencies": [
         "copy-assets",
         "../shared-ui#build:tsc",
-        "../visual-editor#build:tsc"
+        "../visual-editor#build:tsc",
+        "build:tsc:client"
       ],
       "output": [
         "dist/client"
