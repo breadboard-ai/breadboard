@@ -17,6 +17,7 @@ export default {
   Global: {
     ...DefaultLangPack.Global,
     APP_NAME: "Opal",
+    PROVIDER_NAME: "Google",
     STATUS_GENERIC_RUN_STOPPED: {
       str: "Opal stopped",
     },
