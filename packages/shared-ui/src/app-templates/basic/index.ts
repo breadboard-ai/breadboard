@@ -81,6 +81,9 @@ function keyFromGraphUrl(url: string) {
   return `cw-${url.replace(/\W/gi, "-")}`;
 }
 
+// TODO(aomarks) Remove when functional.
+const ENABLE_SAVE_RESULTS = false;
+
 @customElement("app-basic")
 export class Template extends LitElement implements AppTemplate {
   @property({ type: Object })
@@ -1121,6 +1124,9 @@ export class Template extends LitElement implements AppTemplate {
   }
 
   #renderSaveResultsButton() {
+    if (!ENABLE_SAVE_RESULTS) {
+      return nothing;
+    }
     if (
       this.topGraphResult?.status !== "stopped" ||
       !findFinalOutputValues(this.topGraphResult)
