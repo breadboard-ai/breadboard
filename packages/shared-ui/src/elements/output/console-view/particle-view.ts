@@ -39,6 +39,10 @@ export class ParticleView extends SignalWatcher(LitElement) {
     if (mimeType === "application/json") {
       value = html`<bb-json-tree .json=${parsed}></bb-json-tree>`;
     } else if (mimeType == "application/vnd.breadboard.llm-content") {
+      // The mimeType here is a kludge. Instead, we should be sending
+      // a particle group that represents LLM Content and then convert them
+      // here to LLM Content to pass to `bb-llm-output`.
+      // And in the future, `bb-llm-content` is just a ParticleView.
       value = html`<bb-llm-output
         .lite=${true}
         .clamped=${false}
