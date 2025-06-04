@@ -30,7 +30,8 @@
     },
     "test": {
       "dependencies": [
-        "<workspaces>#<this>"
+        "<workspaces>#<this>",
+        "!./packages/ui-tests#<this>"
       ]
     },
     "lint": {
