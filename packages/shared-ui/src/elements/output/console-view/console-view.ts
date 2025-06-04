@@ -131,6 +131,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
 
           > * {
             max-width: 800px;
+            width: 100%;
 
             &:last-of-type {
               margin-bottom: 0;
@@ -315,16 +316,19 @@ export class ConsoleView extends SignalWatcher(LitElement) {
     }
 
     return html`<section id="console">
-      ${repeat(this.run.console.entries(), ([itemId, item], idx) => {
-        const classes: Record<string, boolean> = {};
-        if (item.icon) {
-          classes[item.icon] = true;
-        }
+      ${repeat(
+        this.run.console.entries(),
+        ([key]) => key,
+        ([itemId, item], idx) => {
+          const classes: Record<string, boolean> = {};
+          if (item.icon) {
+            classes[item.icon] = true;
+          }
 
-        const itemHasFinished = item.completed;
-        const isLastItem = idx + 1 === this.run?.estimatedEntryCount;
+          const itemHasFinished = item.completed;
+          const isLastItem = idx + 1 === this.run?.estimatedEntryCount;
 
-        return html`<details ?open=${!itemHasFinished || this.#openItems.has(itemId) || isLastItem}>
+          return html`<details ?open=${!itemHasFinished || this.#openItems.has(itemId) || isLastItem}>
           <summary @click=${(evt: Event) => {
             if (
               !(
@@ -355,100 +359,112 @@ export class ConsoleView extends SignalWatcher(LitElement) {
           </summary>
           ${
             item.work.size > 0
-              ? repeat(item.work.entries(), ([workItemId, workItem]) => {
-                  let duration: HTMLTemplateResult | symbol = nothing;
-                  if (workItem.end) {
-                    duration = html`${this.#formatToSeconds(
-                      workItem.end - workItem.start
-                    )}`;
-                  }
+              ? repeat(
+                  item.work.entries(),
+                  ([key]) => key,
+                  ([workItemId, workItem]) => {
+                    let duration: HTMLTemplateResult | symbol = nothing;
+                    if (workItem.end) {
+                      duration = html`${this.#formatToSeconds(
+                        workItem.end - workItem.start
+                      )}`;
+                    }
 
-                  const workItemClasses: Record<string, boolean> = {};
-                  if (workItem.icon) {
-                    workItemClasses[workItem.icon] = true;
-                  }
+                    const workItemClasses: Record<string, boolean> = {};
+                    if (workItem.icon) {
+                      workItemClasses[workItem.icon] = true;
+                    }
 
-                  return html` <details
-                    ?open=${workItem.awaitingUserInput ||
-                    this.#openWorkItems.has(workItemId)}
-                  >
-                    <summary
-                      @click=${(evt: Event) => {
-                        if (
-                          !(
-                            evt.target instanceof HTMLElement &&
-                            evt.target.parentElement instanceof
-                              HTMLDetailsElement
-                          )
-                        ) {
-                          return;
-                        }
-
-                        // This is at the point of clicking, which means that
-                        // immediately afterwards the state will change. That,
-                        // in turn, means that we delete from the set when the
-                        // item is open, and add it when the item is currently
-                        // closed.
-                        if (evt.target.parentElement.open) {
-                          this.#openWorkItems.delete(workItemId);
-                        } else {
-                          this.#openWorkItems.add(workItemId);
-                        }
-                      }}
-                      class=${classMap(workItemClasses)}
+                    return html` <details
+                      ?open=${workItem.awaitingUserInput ||
+                      this.#openWorkItems.has(workItemId)}
                     >
-                      ${workItem.icon
-                        ? html`<span class="g-icon step-icon"
-                            >${workItem.icon}</span
-                          >`
-                        : nothing}<span class="title"
-                        >${workItem.title}<span class="duration"
-                          >${duration}</span
-                        ></span
+                      <summary
+                        @click=${(evt: Event) => {
+                          if (
+                            !(
+                              evt.target instanceof HTMLElement &&
+                              evt.target.parentElement instanceof
+                                HTMLDetailsElement
+                            )
+                          ) {
+                            return;
+                          }
+
+                          // This is at the point of clicking, which means that
+                          // immediately afterwards the state will change. That,
+                          // in turn, means that we delete from the set when the
+                          // item is open, and add it when the item is currently
+                          // closed.
+                          if (evt.target.parentElement.open) {
+                            this.#openWorkItems.delete(workItemId);
+                          } else {
+                            this.#openWorkItems.add(workItemId);
+                          }
+                        }}
+                        class=${classMap(workItemClasses)}
                       >
+                        ${workItem.icon
+                          ? html`<span class="g-icon step-icon"
+                              >${workItem.icon}</span
+                            >`
+                          : nothing}<span class="title"
+                          >${workItem.title}<span class="duration"
+                            >${duration}</span
+                          ></span
+                        >
 
-                      <span class="g-icon details-status"></span>
-                    </summary>
+                        <span class="g-icon details-status"></span>
+                      </summary>
 
-                    ${workItem.awaitingUserInput
-                      ? html`<div class="awaiting-user">
-                          <span class="g-icon">progress_activity</span>
-                          ${Strings.from("STATUS_AWAITING_USER")}
-                        </div>`
-                      : workItem.product.size > 0
-                        ? html`<ul class="products">
-                            ${repeat(workItem.product, ([, product]) => {
-                              return html`<li class="output">
-                                <bb-llm-output
-                                  .lite=${true}
-                                  .clamped=${false}
-                                  .value=${product}
-                                ></bb-llm-output>
-                              </li>`;
-                            })}
-                          </ul>`
-                        : html`<div class="output">
-                            <p>
-                              There are no outputs for this step's work item
-                            </p>
-                          </div>`}
-                  </details>`;
-                })
+                      ${workItem.awaitingUserInput
+                        ? html`<div class="awaiting-user">
+                            <span class="g-icon">progress_activity</span>
+                            ${Strings.from("STATUS_AWAITING_USER")}
+                          </div>`
+                        : workItem.product.size > 0
+                          ? html`<ul class="products">
+                              ${repeat(
+                                workItem.product,
+                                ([key]) => key,
+                                ([, product]) => {
+                                  return html`<li class="output">
+                                    <bb-llm-output
+                                      .lite=${true}
+                                      .clamped=${false}
+                                      .value=${product}
+                                    ></bb-llm-output>
+                                  </li>`;
+                                }
+                              )}
+                            </ul>`
+                          : html`<div class="output">
+                              <p>
+                                There are no outputs for this step's work item
+                              </p>
+                            </div>`}
+                    </details>`;
+                  }
+                )
               : nothing
           }
 
           ${
             itemHasFinished
               ? item.output.size > 0
-                ? repeat(item.output.entries(), ([, item]) => {
-                    return html`<div class="output">
-                      <bb-llm-output
-                        .lite=${true}
-                        .clamped=${false}
-                        .value=${item}
-                      ></bb-llm-output>
-                    </div>`;
-                  })
+                ? repeat(
+                    item.output.entries(),
+                    ([key]) => key,
+                    ([, item]) => {
+                      return html`<div class="output">
+                        <bb-llm-output
+                          .lite=${true}
+                          .clamped=${false}
+                          .value=${item}
+                        ></bb-llm-output>
+                      </div>`;
+                    }
+                  )
                 : html`<div class="output">
                     <p>There are no outputs for this step</p>
                   </div>`
@@ -456,7 +472,8 @@ export class ConsoleView extends SignalWatcher(LitElement) {
           }
         </details>
       </details>`;
-      })}
+        }
+      )}
       ${this.run.errors.size > 0
         ? html`<details class="error">
             <summary>Errors</summary>
