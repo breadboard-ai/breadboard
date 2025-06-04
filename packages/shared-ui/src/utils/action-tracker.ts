@@ -12,33 +12,33 @@ export { ActionTracker };
 
 class ActionTracker {
   static openApp(url: string, source: "gallery" | "user") {
-    gtag?.("event", "app_open", { url, source });
+    globalThis.gtag?.("event", "app_open", { url, source });
   }
 
   static remixApp(url: string, source: "gallery" | "user" | "editor") {
-    gtag?.("event", "app_remix", { url, source });
+    globalThis.gtag?.("event", "app_remix", { url, source });
   }
 
   static createNew() {
-    gtag?.("event", "app_create_new");
+    globalThis.gtag?.("event", "app_create_new");
   }
 
   static flowGenCreate() {
-    gtag?.("event", "app_flowgen_create");
+    globalThis.gtag?.("event", "app_flowgen_create");
   }
 
   static flowGenEdit(url: string | undefined) {
-    gtag?.("event", "app_flowgen_edit", { url });
+    globalThis.gtag?.("event", "app_flowgen_edit", { url });
   }
 
   static runApp(
     url: string | undefined,
     source: "app_preview" | "app_view" | "console"
   ) {
-    gtag?.("event", "app_run", { url, source });
+    globalThis.gtag?.("event", "app_run", { url, source });
   }
 
   static publishApp(url: string | undefined) {
-    gtag?.("event", "app_publish", { url });
+    globalThis.gtag?.("event", "app_publish", { url });
   }
 }

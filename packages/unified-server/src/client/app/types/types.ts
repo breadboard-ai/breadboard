@@ -14,13 +14,15 @@ import { HarnessRunner } from "@google-labs/breadboard/harness";
 import { type SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
 import { TopGraphObserver } from "@breadboard-ai/shared-ui/utils/top-graph-observer";
 import {
+  BoardServer,
   GraphDescriptor,
   InspectableRunObserver,
   Kit,
   RunStore,
 } from "@google-labs/breadboard";
 import { type SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
-import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { type RunResults } from "@breadboard-ai/google-drive-kit/board-server/operations.js";
 
 export type Runner = {
   harnessRunner: HarnessRunner;
@@ -45,6 +47,8 @@ export interface AppViewConfig {
   description: string | null;
   templateAdditionalOptions: Record<string, string> | null;
   googleDriveClient: GoogleDriveClient;
+  boardServer: BoardServer;
+  runResults: RunResults | null;
 }
 
 export type BootstrapArguments = {

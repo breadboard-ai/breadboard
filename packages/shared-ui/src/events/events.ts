@@ -1599,3 +1599,9 @@ export class ResizeEvent extends Event {
     super(ResizeEvent.eventName, { ...eventInit });
   }
 }
+
+declare global {
+  interface HTMLElementEventMap {
+    bbtoast: ToastEvent;
+  }
+}

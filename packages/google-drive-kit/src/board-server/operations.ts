@@ -4,8 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/// <reference types="@types/gapi.client.drive-v3" />
+
 import type { TokenVendor } from "@breadboard-ai/connection-client";
-import type { Asset, GraphTag } from "@breadboard-ai/types";
+import type { Asset, GraphTag, OutputValues } from "@breadboard-ai/types";
 import {
   err,
   ok,
@@ -25,6 +27,7 @@ import {
 export { DriveOperations, PROTOCOL };
 
 import {
+  extractGoogleDriveFileId,
   getSetsIntersection,
   retryableFetch,
   truncateValueForUtf8,
@@ -35,6 +38,8 @@ const PROTOCOL = "drive:";
 const GOOGLE_DRIVE_FOLDER_MIME_TYPE = "application/vnd.google-apps.folder";
 const GRAPH_MIME_TYPE = "application/vnd.breadboard.graph+json";
 const DEPRECATED_GRAPH_MIME_TYPE = "application/json";
+const RUN_RESULTS_MIME_TYPE = "application/vnd.breadboard.run-results+json";
+const RUN_RESULTS_GRAPH_URL_APP_PROPERTY = "graphUrl";
 
 const MIME_TYPE_QUERY = `(mimeType="${GRAPH_MIME_TYPE}" or mimeType="${DEPRECATED_GRAPH_MIME_TYPE}")`;
 const BASE_QUERY = `${MIME_TYPE_QUERY} and trashed=false`;
@@ -75,6 +80,11 @@ type DriveChangesCacheState = {
   startPageToken: string;
   /** Date. */
   lastFetched: string;
+};
+
+export type RunResults = {
+  graphUrl: string;
+  finalOutputValues: OutputValues;
 };
 
 /** Responsible for cleaning lookup caches based on list of changes from drive. */
@@ -643,6 +653,71 @@ class DriveOperations {
       // The above update is a non-atomic operation so refresh after both success or fail.
       await this.#refreshUserList();
     }
+  }
+
+  async writeRunResults(results: RunResults): Promise<{ id: string }> {
+    const accessToken = await getAccessToken(this.vendor);
+    if (!accessToken) {
+      throw new Error(`No access token`);
+    }
+    // TODO(aomarks) It would be nice if this saved within a Results folder.
+    // Probably part of a larger organization scheme we should have for the
+    // Drive folder.
+    const parentFolderId = await this.findOrCreateFolder();
+    if (typeof parentFolderId !== "string" || !parentFolderId) {
+      throw new Error(`Unexpected parent folder result ${parentFolderId}`);
+    }
+    const api = new Files({ kind: "bearer", token: accessToken });
+    const graphFileId = extractGoogleDriveFileId(results.graphUrl);
+    const request = api.makeMultipartCreateRequest([
+      {
+        contentType: "application/json; charset=UTF-8",
+        data: {
+          name:
+            [`results`, graphFileId, crypto.randomUUID()].join("-") + ".json",
+          mimeType: RUN_RESULTS_MIME_TYPE,
+          parents: [parentFolderId],
+          appProperties: {
+            [RUN_RESULTS_GRAPH_URL_APP_PROPERTY]: results.graphUrl,
+          },
+        },
+      },
+      {
+        contentType: "application/json; charset=UTF-8",
+        // TODO(aomarks) Handle external content, either by inling or copying
+        // each non-Drive content to Drive. Remember to deal with HTML content,
+        // too, which can contain its own external content references.
+        data: results,
+      },
+    ]);
+    const response = await retryableFetch(request);
+    return (await response.json()) as { id: string };
+  }
+
+  async listRunResultsForGraph(
+    graphUrl: string
+  ): Promise<Array<{ id: string; createdTime: string }>> {
+    const token = await getAccessToken(this.vendor);
+    if (!token) {
+      throw new Error("No access token");
+    }
+    const api = new Files({ kind: "bearer", token });
+    const query = `
+      mimeType = ${quote(RUN_RESULTS_MIME_TYPE)}
+      and appProperties has {
+        key = ${quote(RUN_RESULTS_GRAPH_URL_APP_PROPERTY)}
+        and value = ${quote(graphUrl)}
+      }
+      and trashed = false
+    `;
+    const response = await retryableFetch(
+      api.makeQueryRequest(query, ["id", "createdTime"], "createdTime desc")
+    );
+    const result = (await response.json()) as gapi.client.drive.FileList;
+    return (result.files ?? []).map(({ id, createdTime }) => ({
+      id: id!,
+      createdTime: createdTime!,
+    }));
   }
 
   async saveDataPart(data: string, mimeType: string) {

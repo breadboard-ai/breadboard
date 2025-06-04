@@ -26,7 +26,11 @@ import Mode from "../shared/styles/icons.js";
 import Animations from "../shared/styles/animations.js";
 
 import { classMap } from "lit/directives/class-map.js";
-import { GraphDescriptor, InspectableRun } from "@google-labs/breadboard";
+import {
+  BoardServer,
+  GraphDescriptor,
+  InspectableRun,
+} from "@google-labs/breadboard";
 import { styleMap } from "lit/directives/style-map.js";
 import {
   AddAssetRequestEvent,
@@ -35,6 +39,8 @@ import {
   ResizeEvent,
   RunEvent,
   SignInRequestedEvent,
+  ToastEvent,
+  ToastType,
 } from "../../events/events";
 import { repeat } from "lit/directives/repeat.js";
 import { createRef, Ref } from "lit/directives/ref.js";
@@ -62,6 +68,9 @@ import { icons } from "../../styles/icons";
 import { ActionTracker } from "../../utils/action-tracker.js";
 import { buttonStyles } from "../../styles/button.js";
 import { findFinalOutputValues } from "../../utils/save-results.js";
+import { consume } from "@lit/context";
+import { boardServerContext } from "../../contexts/board-server.js";
+import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 
 function keyFromGraphUrl(url: string) {
   return `cw-${url.replace(/\W/gi, "-")}`;
@@ -153,6 +162,9 @@ export class Template extends LitElement implements AppTemplate {
     return this.#showContentWarning ?? true;
   }
   #showContentWarning: boolean | undefined = undefined;
+
+  @consume({ context: boardServerContext, subscribe: true })
+  accessor boardServer: BoardServer | undefined;
 
   @state()
   accessor showAddAssetModal = false;
@@ -1116,6 +1128,7 @@ export class Template extends LitElement implements AppTemplate {
     ) {
       return nothing;
     }
+    // TODO(aomarks) Add share button.
     return html`
       <div id="save-results-button-container">
         <button
@@ -1130,7 +1143,7 @@ export class Template extends LitElement implements AppTemplate {
     `;
   }
 
-  #onClickSaveResults() {
+  async #onClickSaveResults() {
     if (!this.topGraphResult) {
       console.error(`No top graph result`);
       return;
@@ -1144,8 +1157,43 @@ export class Template extends LitElement implements AppTemplate {
       console.error(`No graph url`);
       return;
     }
-    // TODO(aomarks) Actually save.
-    console.log("SAVING", JSON.stringify({ graphUrl, finalOutputValues }));
+    if (!this.boardServer) {
+      console.error(`No board server`);
+      return;
+    }
+    if (!(this.boardServer instanceof GoogleDriveBoardServer)) {
+      console.error(`Board server was not Google Drive`);
+      return;
+    }
+    this.dispatchEvent(
+      new ToastEvent(`Saving results to your Google Drive`, ToastType.PENDING)
+    );
+    let resultsFileId: string;
+    try {
+      const result = await this.boardServer.ops.writeRunResults({
+        graphUrl,
+        finalOutputValues,
+      });
+      resultsFileId = result.id;
+    } catch (error) {
+      console.log(error);
+      this.dispatchEvent(
+        new ToastEvent(
+          `Error saving results to your Google Drive`,
+          ToastType.ERROR
+        )
+      );
+      return;
+    }
+    const shareUrl = new URL(
+      `/app/${encodeURIComponent(graphUrl)}`,
+      document.location.origin
+    );
+    shareUrl.searchParams.set("results", resultsFileId);
+    navigator.clipboard.writeText(shareUrl.href);
+    this.dispatchEvent(
+      new ToastEvent(`Share link copied`, ToastType.INFORMATION)
+    );
   }
 
   #renderInput(topGraphResult: TopGraphRunResult) {
@@ -1388,7 +1436,7 @@ export class Template extends LitElement implements AppTemplate {
               <a href="https://support.google.com/legal/answer/3110420?hl=en"
                 >Report unsafe content</a
               >
-              &middot; <a href="/policy/">Privacy & Terms</a>
+              &middot; <a href="/policy">Privacy & Terms</a>
             </div>
             <button
               class="dismiss"

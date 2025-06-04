@@ -19,12 +19,34 @@ const endpoint_url =
 import { Handler } from "@breadboard-ai/embed";
 import { receiveConfig } from "./client/receive-config";
 
-const config = receiveConfig();
+const deploymentConfiguration = receiveConfig();
 
-// TODO: Start using this machinery.
-console.log("CONFIG", config);
+declare global {
+  interface Window {
+    dataLayer: IArguments[];
+    gtag: (...args: IArguments[]) => void;
+  }
+}
+
+if (deploymentConfiguration?.MEASUREMENT_ID) {
+  const id = deploymentConfiguration.MEASUREMENT_ID;
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function () {
+    // eslint-disable-next-line prefer-rest-params
+    window.dataLayer.push(arguments);
+  };
+  window.gtag("js", new Date());
+  // IP anonymized per OOGA policy.
+  window.gtag("config", id, { anonymize_ip: true });
+
+  const tagManagerScript = document.createElement("script");
+  tagManagerScript.src = `https://www.googletagmanager.com/gtag/js?id=${id}`;
+  tagManagerScript.async = true;
+  document.body.appendChild(tagManagerScript);
+}
 
 bootstrap({
+  deploymentConfiguration,
   connectionServerUrl: new URL("/connection/", window.location.href),
   requiresSignin: true,
   kits: [asRuntimeKit(Core)],

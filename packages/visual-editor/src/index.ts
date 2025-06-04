@@ -117,12 +117,11 @@ import {
 import { IterateOnPromptEvent } from "@breadboard-ai/shared-ui/events/events.js";
 import { AppCatalystApiClient } from "@breadboard-ai/shared-ui/flow-gen/app-catalyst.js";
 import { FlowGenerator } from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
-import {
-  extractDriveFileId,
-  findGoogleDriveAssetsInGraph,
-} from "@breadboard-ai/shared-ui/elements/google-drive/find-google-drive-assets-in-graph.js";
+import { findGoogleDriveAssetsInGraph } from "@breadboard-ai/shared-ui/elements/google-drive/find-google-drive-assets-in-graph.js";
 import { stringifyPermission } from "@breadboard-ai/shared-ui/elements/share-panel/share-panel.js";
 import { type GoogleDriveAssetShareDialog } from "@breadboard-ai/shared-ui/elements/elements.js";
+import { boardServerContext } from "@breadboard-ai/shared-ui/contexts/board-server.js";
+import { extractGoogleDriveFileId } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
 
 const STORAGE_PREFIX = "bb-main";
 const LOADING_TIMEOUT = 1250;
@@ -328,6 +327,9 @@ export class Main extends LitElement {
 
   @provide({ context: googleDriveClientContext })
   accessor googleDriveClient: GoogleDriveClient | undefined;
+
+  @provide({ context: boardServerContext })
+  accessor boardServer: BoardServer | undefined;
 
   @state()
   accessor selectedBoardServer = "Browser Storage";
@@ -970,6 +972,7 @@ export class Main extends LitElement {
             hasMountedBoardServer = true;
             this.selectedBoardServer = server.name;
             this.selectedLocation = server.url.href;
+            this.boardServer = server;
             break;
           }
         }
@@ -2856,23 +2859,10 @@ export class Main extends LitElement {
 
         let userOverflowMenu: HTMLTemplateResult | symbol = nothing;
         if (this.showUserOverflowMenu && this.#userOverflowMenuConfiguration) {
-          const actions: BreadboardUI.Types.OverflowAction[] = [
-            {
-              title: Strings.from("COMMAND_LOG_OUT"),
-              name: "logout",
-              icon: "logout",
-            },
-          ];
-
-          userOverflowMenu = html`<bb-overflow-menu
+          userOverflowMenu = html`<bb-account-switcher
             id="user-overflow"
-            style=${styleMap({
-              left: `${this.#userOverflowMenuConfiguration.x}px`,
-              top: `${this.#userOverflowMenuConfiguration.y}px`,
-            })}
-            .actions=${actions}
-            .disabled=${false}
-            @bboverflowmenudismissed=${() => {
+            .signInAdapter=${signInAdapter}
+            @bboverlaydismissed=${() => {
               this.showUserOverflowMenu = false;
             }}
             @bboverflowmenuaction=${async (
@@ -2887,7 +2877,7 @@ export class Main extends LitElement {
                 }
               }
             }}
-          ></bb-overflow-menu>`;
+          ></bb-account-switcher>`;
         }
 
         let boardOverflowMenu: HTMLTemplateResult | symbol = nothing;
@@ -4480,7 +4470,7 @@ export class Main extends LitElement {
       console.error(`Graph had no URL`);
       return;
     }
-    const graphFileId = extractDriveFileId(graph.url);
+    const graphFileId = extractGoogleDriveFileId(graph.url);
     if (!graphFileId) {
       return;
     }

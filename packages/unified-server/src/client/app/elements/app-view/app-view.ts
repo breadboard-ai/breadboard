@@ -3,10 +3,12 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, nothing } from "lit";
 import { customElement } from "lit/decorators.js";
 import { AppViewConfig, Runner } from "../../types/types";
 import { provide } from "@lit/context";
+import { Task } from "@lit/task";
+import { map } from "lit/directives/map.js";
 
 import * as ConnectionClient from "@breadboard-ai/connection-client";
 import * as BreadboardUIContext from "@breadboard-ai/shared-ui/contexts";
@@ -16,6 +18,7 @@ import {
 } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
 import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
 import {
+  BoardServer,
   err,
   GraphDescriptor,
   InputValues,
@@ -23,9 +26,12 @@ import {
   ok,
   Outcome,
 } from "@google-labs/breadboard";
-import { AppTemplateOptions } from "@breadboard-ai/shared-ui/types/types.js";
+import {
+  AppTemplate,
+  AppTemplateOptions,
+  TopGraphRunResult,
+} from "@breadboard-ai/shared-ui/types/types.js";
 import { getThemeModeFromBackground } from "../../utils/color.js";
-import { until } from "lit/directives/until.js";
 import { TopGraphObserver } from "@breadboard-ai/shared-ui/utils/top-graph-observer";
 import { InputEnterEvent } from "../../events/events.js";
 import {
@@ -45,8 +51,9 @@ import {
 import { googleDriveClientContext } from "@breadboard-ai/shared-ui/contexts/google-drive-client-context.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { loadImage } from "@breadboard-ai/shared-ui/utils/image.js";
-
+import { boardServerContext } from "@breadboard-ai/shared-ui/contexts/board-server.js";
 import { blobHandleToUrl } from "@breadboard-ai/shared-ui/utils/blob-handle-to-url.js";
+import * as BreadboardUI from "@breadboard-ai/shared-ui";
 
 @customElement("app-view")
 export class AppView extends LitElement {
@@ -74,9 +81,13 @@ export class AppView extends LitElement {
   @provide({ context: googleDriveClientContext })
   accessor googleDriveClient: GoogleDriveClient;
 
+  @provide({ context: boardServerContext })
+  accessor boardServer: BoardServer | undefined;
+
   readonly flow: GraphDescriptor;
   #runner: Runner | null;
   #signInAdapter: SigninAdapter;
+  #overrideTopGraphRunResult: TopGraphRunResult | null;
 
   constructor(
     private readonly config: AppViewConfig,
@@ -91,10 +102,58 @@ export class AppView extends LitElement {
     this.#signInAdapter = config.signinAdapter;
     this.flow = earlyLoadedFlow ?? config.flow;
     this.googleDriveClient = config.googleDriveClient;
+    this.boardServer = config.boardServer;
+    this.#overrideTopGraphRunResult = config.runResults
+      ? {
+          status: "stopped",
+          log: [
+            {
+              type: "edge",
+              value: config.runResults.finalOutputValues,
+              end: null,
+            },
+          ],
+          graph: null,
+          currentNode: null,
+          edgeValues: {
+            get: () => undefined,
+            current: null,
+          },
+          nodeInformation: {
+            getActivity: () => undefined,
+            canRunNode: () => false,
+          },
+        }
+      : null;
 
     this.#setDocumentTitle();
     this.#applyThemeToTemplate();
     this.#initializeListeners();
+  }
+
+  readonly #toasts = new Map<
+    string,
+    {
+      message: string;
+      type: BreadboardUI.Events.ToastType;
+      persistent: boolean;
+    }
+  >();
+
+  #toast(
+    message: string,
+    type: BreadboardUI.Events.ToastType,
+    persistent = false,
+    id = globalThis.crypto.randomUUID()
+  ) {
+    if (message.length > 77) {
+      message = message.slice(0, 74) + "...";
+    }
+
+    this.#toasts.set(id, { message, type, persistent });
+    this.requestUpdate();
+
+    return id;
   }
 
   #setDocumentTitle() {
@@ -263,28 +322,17 @@ export class AppView extends LitElement {
     }
   }
 
-  render() {
-    if (!this.flow || !this.#runner) {
-      return html`404 not found`;
-    }
-
-    const run = this.#runner.runObserver.runs().then((runs) => {
-      if (!this.flow || !this.#runner) {
-        return html`404 not found`;
-      }
-
-      const appTemplate = this.config.template;
-      const run = runs[0] ?? null;
+  readonly #initializeAppTemplate = new Task(this, {
+    args: () => [this.config.template],
+    task: async ([appTemplate]): Promise<AppTemplate> => {
+      const run = this.#runner
+        ? (await this.#runner.runObserver.runs())[0]
+        : null;
 
       appTemplate.showDisclaimer = true;
-      appTemplate.state = this.#signInAdapter.state;
       appTemplate.graph = this.flow;
       appTemplate.run = run;
-      appTemplate.topGraphResult =
-        this.#runner.topGraphObserver.current() ??
-        TopGraphObserver.entryResult(this.flow);
-      appTemplate.eventPosition = run?.events.length ?? 0;
-      appTemplate.showGDrive = this.#signInAdapter.state === "valid";
+
       appTemplate.addEventListener("bbsigninrequested", async () => {
         const url = await this.#signInAdapter.getSigninUrl();
 
@@ -349,9 +397,56 @@ export class AppView extends LitElement {
         }
       });
 
-      return html`${appTemplate}`;
-    });
+      appTemplate.addEventListener(
+        "bbtoast",
+        (toastEvent: BreadboardUI.Events.ToastEvent) =>
+          this.#toast(toastEvent.message, toastEvent.toastType)
+      );
 
-    return html`${until(run)}`;
+      return appTemplate;
+    },
+  });
+
+  render() {
+    return [this.#renderAppTemplate(), this.#renderToasts()];
+  }
+
+  #renderAppTemplate() {
+    if (!this.flow || !this.#runner) {
+      return html`404 not found`;
+    }
+    return this.#initializeAppTemplate.render({
+      pending: () => nothing,
+      error: () => `An unexpected error occured`,
+      complete: (appTemplate) => {
+        appTemplate.state = this.#signInAdapter.state;
+        appTemplate.topGraphResult =
+          this.#overrideTopGraphRunResult ??
+          this.#runner?.topGraphObserver.current() ??
+          TopGraphObserver.entryResult(this.flow);
+        appTemplate.eventPosition = appTemplate.run?.events.length ?? 0;
+        appTemplate.showGDrive = this.#signInAdapter.state === "valid";
+        return appTemplate;
+      },
+    });
+  }
+
+  #renderToasts() {
+    return map(
+      this.#toasts,
+      ([toastId, { message, type, persistent }], idx) => {
+        const offset = this.#toasts.size - idx - 1;
+        return html`<bb-toast
+          .toastId=${toastId}
+          .offset=${offset}
+          .message=${message}
+          .type=${type}
+          .timeout=${persistent ? 0 : nothing}
+          @bbtoastremoved=${(evt: BreadboardUI.Events.ToastRemovedEvent) => {
+            this.#toasts.delete(evt.toastId);
+          }}
+        ></bb-toast>`;
+      }
+    );
   }
 }
