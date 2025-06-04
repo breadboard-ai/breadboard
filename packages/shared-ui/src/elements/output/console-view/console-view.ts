@@ -131,6 +131,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
 
           > * {
             max-width: 800px;
+            width: 100%;
 
             &:last-of-type {
               margin-bottom: 0;
