@@ -19,6 +19,8 @@ export class ParticleView extends SignalWatcher(LitElement) {
   @property()
   accessor particle: Particle | null = null;
 
+  // In the future, this is likely its own element that operates on a particle.
+  // It is instantiated by ParticleView based on type = "update".
   #renderUpdateGroup(group: Map<string, Particle>): Outcome<TemplateResult> {
     const title = (group.get("title") as TextParticle).text;
     if (!title) {
