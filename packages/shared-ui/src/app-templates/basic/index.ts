@@ -30,6 +30,9 @@ import {
   BoardServer,
   GraphDescriptor,
   InspectableRun,
+  isLLMContentArray,
+  ok,
+  transformDataParts,
 } from "@google-labs/breadboard";
 import { styleMap } from "lit/directives/style-map.js";
 import {
@@ -71,6 +74,7 @@ import { findFinalOutputValues } from "../../utils/save-results.js";
 import { consume } from "@lit/context";
 import { boardServerContext } from "../../contexts/board-server.js";
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
+import { NodeValue } from "@breadboard-ai/types";
 
 function keyFromGraphUrl(url: string) {
   return `cw-${url.replace(/\W/gi, "-")}`;
@@ -1148,7 +1152,10 @@ export class Template extends LitElement implements AppTemplate {
       console.error(`No top graph result`);
       return;
     }
-    const finalOutputValues = findFinalOutputValues(this.topGraphResult);
+    // Clone because we are going to inline content below.
+    const finalOutputValues = structuredClone(
+      findFinalOutputValues(this.topGraphResult)
+    );
     if (!finalOutputValues) {
       return;
     }
@@ -1157,21 +1164,41 @@ export class Template extends LitElement implements AppTemplate {
       console.error(`No graph url`);
       return;
     }
-    if (!this.boardServer) {
+    const boardServer = this.boardServer;
+    if (!boardServer) {
       console.error(`No board server`);
       return;
     }
-    if (!(this.boardServer instanceof GoogleDriveBoardServer)) {
+    if (!(boardServer instanceof GoogleDriveBoardServer)) {
       console.error(`Board server was not Google Drive`);
       return;
     }
+
+    // Inline all content.
+    await Promise.all(
+      Object.entries(finalOutputValues).map(async ([key, value]) => {
+        if (isLLMContentArray(value)) {
+          const inlined = await transformDataParts(
+            new URL(graphUrl),
+            value,
+            "inline",
+            boardServer.dataPartTransformer(new URL(graphUrl))
+          );
+          if (ok(inlined)) {
+            finalOutputValues[key] = inlined as NodeValue;
+          } else {
+            console.error(`Error inlining results content for ${key}`, inlined);
+          }
+        }
+      })
+    );
 
     this.dispatchEvent(
       new ToastEvent(`Saving results to your Google Drive`, ToastType.PENDING)
     );
     let resultsFileId: string;
     try {
-      const result = await this.boardServer.ops.writeRunResults({
+      const result = await boardServer.ops.writeRunResults({
         graphUrl,
         finalOutputValues,
       });
@@ -1194,7 +1221,7 @@ export class Template extends LitElement implements AppTemplate {
       )
     );
     try {
-      await this.boardServer.ops.publishFile(resultsFileId);
+      await boardServer.ops.publishFile(resultsFileId);
     } catch (error) {
       console.log(error);
       this.dispatchEvent(

@@ -707,10 +707,6 @@ class DriveOperations {
    * external, or just certain domains/groups for internal).
    */
   async publishFile(fileId: string): Promise<gapi.client.drive.Permission[]> {
-    const accessToken = await getAccessToken(this.vendor);
-    if (!accessToken) {
-      throw new Error(`No access token`);
-    }
     return (
       await Promise.all(
         this.#publishPermissions.map((permission) =>
