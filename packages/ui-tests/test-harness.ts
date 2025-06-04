@@ -39,17 +39,15 @@ export class BreadboardTestHarness implements NodeHarness {
       ...(await this.page.locator("css=button span.title").allInnerTexts())
     );
     // Run button.
-    buttons.push(await this.page.getByTestId("run").innerText());
+    buttons.push(await this.page.locator("#click-run button#run").innerText());
     // Icons - history and share.
     buttons.push(await this.page.getByLabel("Edit History").innerText());
-    if ((await this.page.getByText("URL").count()) > 0) {
-      buttons.push("Share");
-    }
     return buttons;
   }
 
   async newFlow() {
     await this.page.getByText(/Create New/).click();
+    await this.page.waitForURL(/\?tab0=/);
   }
 
   async saveNodeEdit() {
@@ -117,7 +115,7 @@ export class BreadboardTestHarness implements NodeHarness {
     await this.page
       .getByRole("textbox", { name: "Type or upload your response." })
       .fill(response);
-    await this.page.getByRole("button", { name: "Continue" }).click();
+    await this.page.getByTestId("continue").click();
   }
 
   createRef(name: string): HarnessFunction {
