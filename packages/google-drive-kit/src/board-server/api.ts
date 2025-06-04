@@ -116,12 +116,22 @@ class Files {
     });
   }
 
-  makeQueryRequest(query: string): Request {
+  makeQueryRequest(
+    query: string,
+    fields: Array<keyof gapi.client.drive.File> = [
+      "id",
+      "name",
+      "appProperties",
+      "properties",
+      "modifiedTime",
+    ],
+    orderBy: `${keyof gapi.client.drive.File} ${"asc" | "desc"}` = "modifiedTime desc"
+  ): Request {
     return new Request(
       this.#makeUrl(
         `drive/v3/files?q=${encodeURIComponent(query)}` +
-          `&fields=files(id,name,appProperties,properties,modifiedTime)` +
-          "&orderBy=modifiedTime desc"
+          `&fields=files(${fields.join(",")})` +
+          `&orderBy=${orderBy}`
       ),
       {
         method: "GET",
