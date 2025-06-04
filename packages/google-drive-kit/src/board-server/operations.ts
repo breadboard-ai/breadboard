@@ -701,6 +701,29 @@ class DriveOperations {
     return (await response.json()) as { id: string };
   }
 
+  /**
+   * Publish the given Google Drive file ID according to this deployment's
+   * definition of what "publish permissions" are (e.g. fully public for
+   * external, or just certain domains/groups for internal).
+   */
+  async publishFile(fileId: string): Promise<gapi.client.drive.Permission[]> {
+    const accessToken = await getAccessToken(this.vendor);
+    if (!accessToken) {
+      throw new Error(`No access token`);
+    }
+    return (
+      await Promise.all(
+        this.#publishPermissions.map((permission) =>
+          this.#googleDriveClient.writePermission(
+            fileId,
+            { ...permission, role: "reader" },
+            { sendNotificationEmail: false }
+          )
+        )
+      )
+    ).flat();
+  }
+
   async listRunResultsForGraph(
     graphUrl: string
   ): Promise<Array<{ id: string; createdTime: string }>> {

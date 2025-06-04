@@ -1165,6 +1165,7 @@ export class Template extends LitElement implements AppTemplate {
       console.error(`Board server was not Google Drive`);
       return;
     }
+
     this.dispatchEvent(
       new ToastEvent(`Saving results to your Google Drive`, ToastType.PENDING)
     );
@@ -1185,6 +1186,26 @@ export class Template extends LitElement implements AppTemplate {
       );
       return;
     }
+
+    this.dispatchEvent(
+      new ToastEvent(
+        `Publishing results from your Google Drive`,
+        ToastType.PENDING
+      )
+    );
+    try {
+      await this.boardServer.ops.publishFile(resultsFileId);
+    } catch (error) {
+      console.log(error);
+      this.dispatchEvent(
+        new ToastEvent(
+          `Error publishing results from your Google Drive`,
+          ToastType.ERROR
+        )
+      );
+      return;
+    }
+
     const shareUrl = new URL(
       `/app/${encodeURIComponent(graphUrl)}`,
       document.location.origin
