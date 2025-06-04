@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Particle } from "@breadboard-ai/particles";
 import {
   AssetMetadata,
   AssetPath,
@@ -21,9 +22,9 @@ import {
   PortIdentifier,
   Schema,
 } from "@google-labs/breadboard";
-import { SideBoardRuntime } from "../sideboards/types";
-import { ConnectorInstance, ConnectorType } from "../connectors/types";
 import { HarnessRunner } from "@google-labs/breadboard/harness";
+import { ConnectorInstance, ConnectorType } from "../connectors/types";
+import { SideBoardRuntime } from "../sideboards/types";
 
 export type ChatStatus = "running" | "paused" | "stopped";
 
@@ -186,7 +187,7 @@ export type WorkItem = {
    * Similar to the `output` of the `ConsoleEntry`, represents the work product
    * of this item.
    */
-  product: Map<string, LLMContent /* Particle */>;
+  product: Map<string, LLMContent | Particle>;
 };
 
 /**
