@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+export { AccountSwitcher } from "./account/account.js";
 export { AddAssetButton } from "./input/add-asset/add-asset-button.js";
 export { AddAssetModal } from "./input/add-asset/add-asset-modal.js";
 export { AppPreview } from "./app-preview/app-preview.js";
