@@ -26,7 +26,7 @@ export type DataParticle = {
   mimeType: string;
 };
 
-type GroupParticle = {
+export type GroupParticle = {
   /**
    * The sub-particles that are part of this group.
    * The Map structure is key for reactive updates.

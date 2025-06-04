@@ -431,7 +431,9 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                                 ([, product]) => {
                                   if (isParticle(product)) {
                                     return html`<li class="output">
-                                      Particle detected!
+                                      <bb-particle-view
+                                        .particle=${product}
+                                      ></bb-particle-view>
                                     </li>`;
                                   }
                                   return html`<li class="output">
