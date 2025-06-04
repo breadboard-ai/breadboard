@@ -1,6 +1,6 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices } from "@playwright/test";
 
-const url = 'http://localhost:5173';
+const url = "http://localhost:5173";
 
 /**
  * Read environment variables from file.

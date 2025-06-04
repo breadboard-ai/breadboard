@@ -1,17 +1,17 @@
 import { Page, test as base } from "playwright/test";
 
-export const test = base.extend<{harness: BreadboardTestHarness}>({
+export const test = base.extend<{ harness: BreadboardTestHarness }>({
   harness: async ({ page }, use) => {
     await page.goto("/");
     await use(new BreadboardTestHarness(page));
-  }
+  },
 });
 
 type HarnessFunction = (harness: BreadboardTestHarness) => Promise<void>;
 
 interface NodeOptions {
   name?: string;
-  content?: string|Array<string|HarnessFunction>;
+  content?: string | Array<string | HarnessFunction>;
 }
 
 export interface NodeHarness {
