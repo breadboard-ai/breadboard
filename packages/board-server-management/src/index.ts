@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/// <reference types="@types/gapi.client.drive-v3" />
+
 import * as idb from "idb";
 import { IDBBoardServer } from "@breadboard-ai/idb-board-server";
 import { BoardServer, GraphDescriptor, User } from "@google-labs/breadboard";
@@ -61,7 +63,7 @@ export async function createGoogleDriveBoardServer(
     );
     return null;
   }
-  const googleDrivePublicApiKey = import.meta.env
+  const googleDrivePublicApiKey: string = import.meta.env
     .VITE_GOOGLE_DRIVE_PUBLIC_API_KEY;
   if (!googleDrivePublicApiKey) {
     console.warn(
@@ -69,7 +71,7 @@ export async function createGoogleDriveBoardServer(
         " We will not be able to read public files from Google Drive."
     );
   }
-  const googleDriveFeaturedGalleryFolderId = import.meta.env
+  const googleDriveFeaturedGalleryFolderId: string = import.meta.env
     .VITE_GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID;
   if (!googleDrivePublicApiKey) {
     console.warn(
@@ -78,13 +80,22 @@ export async function createGoogleDriveBoardServer(
         " gallery from Google Drive."
     );
   }
-  const userFolderName =
+  const googleDrivePublishPermissions: gapi.client.drive.Permission[] =
+    JSON.parse(import.meta.env.VITE_GOOGLE_DRIVE_PUBLISH_PERMISSIONS || "[]");
+  if (!googleDrivePublishPermissions) {
+    console.warn(
+      "No value for VITE_GOOGLE_DRIVE_PUBLISH_PERMISSIONS" +
+        " was configured. We will not be able to publish files to Google Drive"
+    );
+  }
+  const userFolderName: string =
     import.meta.env.VITE_GOOGLE_DRIVE_USER_FOLDER_NAME || "Breadboard";
   return GoogleDriveBoardServer.from(
     title,
     user,
     tokenVendor,
     googleDriveClient,
+    googleDrivePublishPermissions,
     userFolderName,
     googleDrivePublicApiKey,
     googleDriveFeaturedGalleryFolderId
