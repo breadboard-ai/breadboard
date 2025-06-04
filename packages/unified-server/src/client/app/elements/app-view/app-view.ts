@@ -8,6 +8,7 @@ import { customElement } from "lit/decorators.js";
 import { AppViewConfig, Runner } from "../../types/types";
 import { provide } from "@lit/context";
 import { Task } from "@lit/task";
+import { map } from "lit/directives/map.js";
 
 import * as ConnectionClient from "@breadboard-ai/connection-client";
 import * as BreadboardUIContext from "@breadboard-ai/shared-ui/contexts";
@@ -52,6 +53,7 @@ import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-
 import { loadImage } from "@breadboard-ai/shared-ui/utils/image.js";
 import { boardServerContext } from "@breadboard-ai/shared-ui/contexts/board-server.js";
 import { blobHandleToUrl } from "@breadboard-ai/shared-ui/utils/blob-handle-to-url.js";
+import * as BreadboardUI from "@breadboard-ai/shared-ui";
 
 @customElement("app-view")
 export class AppView extends LitElement {
@@ -127,6 +129,31 @@ export class AppView extends LitElement {
     this.#setDocumentTitle();
     this.#applyThemeToTemplate();
     this.#initializeListeners();
+  }
+
+  readonly #toasts = new Map<
+    string,
+    {
+      message: string;
+      type: BreadboardUI.Events.ToastType;
+      persistent: boolean;
+    }
+  >();
+
+  #toast(
+    message: string,
+    type: BreadboardUI.Events.ToastType,
+    persistent = false,
+    id = globalThis.crypto.randomUUID()
+  ) {
+    if (message.length > 77) {
+      message = message.slice(0, 74) + "...";
+    }
+
+    this.#toasts.set(id, { message, type, persistent });
+    this.requestUpdate();
+
+    return id;
   }
 
   #setDocumentTitle() {
@@ -370,11 +397,21 @@ export class AppView extends LitElement {
         }
       });
 
+      appTemplate.addEventListener(
+        "bbtoast",
+        (toastEvent: BreadboardUI.Events.ToastEvent) =>
+          this.#toast(toastEvent.message, toastEvent.toastType)
+      );
+
       return appTemplate;
     },
   });
 
   render() {
+    return [this.#renderAppTemplate(), this.#renderToasts()];
+  }
+
+  #renderAppTemplate() {
     if (!this.flow || !this.#runner) {
       return html`404 not found`;
     }
@@ -392,5 +429,24 @@ export class AppView extends LitElement {
         return appTemplate;
       },
     });
+  }
+
+  #renderToasts() {
+    return map(
+      this.#toasts,
+      ([toastId, { message, type, persistent }], idx) => {
+        const offset = this.#toasts.size - idx - 1;
+        return html`<bb-toast
+          .toastId=${toastId}
+          .offset=${offset}
+          .message=${message}
+          .type=${type}
+          .timeout=${persistent ? 0 : nothing}
+          @bbtoastremoved=${(evt: BreadboardUI.Events.ToastRemovedEvent) => {
+            this.#toasts.delete(evt.toastId);
+          }}
+        ></bb-toast>`;
+      }
+    );
   }
 }
