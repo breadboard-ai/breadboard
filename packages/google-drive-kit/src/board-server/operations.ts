@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/// <reference types="@types/gapi.client.drive-v3" />
+
 import type { TokenVendor } from "@breadboard-ai/connection-client";
 import type { Asset, GraphTag, OutputValues } from "@breadboard-ai/types";
 import {
@@ -37,6 +39,7 @@ const GOOGLE_DRIVE_FOLDER_MIME_TYPE = "application/vnd.google-apps.folder";
 const GRAPH_MIME_TYPE = "application/vnd.breadboard.graph+json";
 const DEPRECATED_GRAPH_MIME_TYPE = "application/json";
 const RUN_RESULTS_MIME_TYPE = "application/vnd.breadboard.run-results+json";
+const RUN_RESULTS_GRAPH_URL_APP_PROPERTY = "graphUrl";
 
 const MIME_TYPE_QUERY = `(mimeType="${GRAPH_MIME_TYPE}" or mimeType="${DEPRECATED_GRAPH_MIME_TYPE}")`;
 const BASE_QUERY = `${MIME_TYPE_QUERY} and trashed=false`;
@@ -674,9 +677,9 @@ class DriveOperations {
             [`results`, graphFileId, crypto.randomUUID()].join("-") + ".json",
           mimeType: RUN_RESULTS_MIME_TYPE,
           parents: [parentFolderId],
-          // TODO(aomarks) Add an (app?) property that links to the graph file
-          // id so that we can list all results for a particular graph for the
-          // history view.
+          appProperties: {
+            [RUN_RESULTS_GRAPH_URL_APP_PROPERTY]: results.graphUrl,
+          },
         },
       },
       {
@@ -689,6 +692,32 @@ class DriveOperations {
     ]);
     const response = await retryableFetch(request);
     return (await response.json()) as { id: string };
+  }
+
+  async listRunResultsForGraph(
+    graphUrl: string
+  ): Promise<Array<{ id: string; createdTime: string }>> {
+    const token = await getAccessToken(this.vendor);
+    if (!token) {
+      throw new Error("No access token");
+    }
+    const api = new Files({ kind: "bearer", token });
+    const query = `
+      mimeType = ${quote(RUN_RESULTS_MIME_TYPE)}
+      and appProperties has {
+        key = ${quote(RUN_RESULTS_GRAPH_URL_APP_PROPERTY)}
+        and value = ${quote(graphUrl)}
+      }
+      and trashed = false
+    `;
+    const response = await retryableFetch(
+      api.makeQueryRequest(query, ["id", "createdTime"], "createdTime desc")
+    );
+    const result = (await response.json()) as gapi.client.drive.FileList;
+    return (result.files ?? []).map(({ id, createdTime }) => ({
+      id: id!,
+      createdTime: createdTime!,
+    }));
   }
 
   async saveDataPart(data: string, mimeType: string) {
