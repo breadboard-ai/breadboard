@@ -107,6 +107,16 @@ export class AccountSwitcher extends LitElement {
             border: 1px solid var(--bb-neutral-300);
             background: var(--bb-neutral-100);
             margin-bottom: var(--bb-grid-size-6);
+            transition: background 0.2s cubic-bezier(0, 0, 0.3, 1);
+
+            &:not([disabled]) {
+              cursor: pointer;
+
+              &:hover,
+              &:focus {
+                background: var(--bb-neutral-200);
+              }
+            }
           }
 
           a {
