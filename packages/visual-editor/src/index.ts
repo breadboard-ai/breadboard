@@ -2859,23 +2859,10 @@ export class Main extends LitElement {
 
         let userOverflowMenu: HTMLTemplateResult | symbol = nothing;
         if (this.showUserOverflowMenu && this.#userOverflowMenuConfiguration) {
-          const actions: BreadboardUI.Types.OverflowAction[] = [
-            {
-              title: Strings.from("COMMAND_LOG_OUT"),
-              name: "logout",
-              icon: "logout",
-            },
-          ];
-
-          userOverflowMenu = html`<bb-overflow-menu
+          userOverflowMenu = html`<bb-account-switcher
             id="user-overflow"
-            style=${styleMap({
-              left: `${this.#userOverflowMenuConfiguration.x}px`,
-              top: `${this.#userOverflowMenuConfiguration.y}px`,
-            })}
-            .actions=${actions}
-            .disabled=${false}
-            @bboverflowmenudismissed=${() => {
+            .signInAdapter=${signInAdapter}
+            @bboverlaydismissed=${() => {
               this.showUserOverflowMenu = false;
             }}
             @bboverflowmenuaction=${async (
@@ -2890,7 +2877,7 @@ export class Main extends LitElement {
                 }
               }
             }}
-          ></bb-overflow-menu>`;
+          ></bb-account-switcher>`;
         }
 
         let boardOverflowMenu: HTMLTemplateResult | symbol = nothing;

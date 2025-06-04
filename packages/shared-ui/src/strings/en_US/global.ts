@@ -13,6 +13,9 @@ export default {
   SUB_APP_NAME: {
     str: "Flows",
   },
+  PROVIDER_NAME: {
+    str: "",
+  },
 
   // Commands.
   COMMAND_OPEN_PROJECT: {
