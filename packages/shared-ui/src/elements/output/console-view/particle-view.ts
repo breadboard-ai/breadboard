@@ -19,26 +19,34 @@ export class ParticleView extends SignalWatcher(LitElement) {
   @property()
   accessor particle: Particle | null = null;
 
-  #renderBody({
-    text,
-    mimeType = "text/markdown",
-  }: TextParticle): Outcome<TemplateResult | typeof nothing> {
+  #renderUpdateGroup(group: Map<string, Particle>): Outcome<TemplateResult> {
+    const title = (group.get("title") as TextParticle).text;
+    if (!title) {
+      return err(`No "title" found in "update" particle`);
+    }
+
+    const { text, mimeType } = group.get("body") as TextParticle;
+
     if (!text) {
       return err(`No "body" found in "update" particle`);
     }
     const parsed = parseJson(text);
     if (!parsed) return parsed;
 
+    let value;
     if (mimeType === "application/json") {
-      return html`<bb-json-tree .json=${parsed}></bb-json-tree>`;
+      value = html`<bb-json-tree .json=${parsed}></bb-json-tree>`;
     } else if (mimeType == "application/vnd.breadboard.llm-content") {
-      return html`<bb-llm-output
+      value = html`<bb-llm-output
         .lite=${true}
         .clamped=${false}
         .value=${parsed}
       ></bb-llm-output>`;
+    } else {
+      return err(`Unrecognized mimeType: "${mimeType}"`);
     }
-    return err(`Unrecognized mimeType: "${mimeType}"`);
+    return html`<div id="title">${title}</div>
+      <div id="body">${value}</div>`;
   }
 
   render() {
@@ -51,28 +59,20 @@ export class ParticleView extends SignalWatcher(LitElement) {
 
     // Ideally, this is somehow extensible, where `update` is used to
     // load a different Lit element maybe?
-    if (type !== "update" || !group) {
+    if (type === "update") {
+      const updateGroup = this.#renderUpdateGroup(group);
+      if (!ok(updateGroup)) {
+        console.warn(updateGroup.$error);
+        return nothing;
+      }
+
+      return updateGroup;
+    } else {
       // Here, we could have a graceful fallback and just try to render
       // "generic particle"
       console.warn("Unrecognized particle", this.particle);
       return nothing;
     }
-
-    // The `update` tells us that this group will contain a title and a body.
-    const title = (group.get("title") as TextParticle).text;
-    if (!title) {
-      console.warn(`No "title" found in "update" particle`);
-      return nothing;
-    }
-
-    const body = this.#renderBody(group.get("body") as TextParticle);
-    if (!ok(body)) {
-      console.warn(body.$error);
-      return nothing;
-    }
-
-    return html`<div id="title">${title}</div>
-      <div id="body">${body}</div>`;
   }
 }
 
