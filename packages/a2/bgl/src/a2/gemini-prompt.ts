@@ -127,7 +127,19 @@ class GeminiPrompt {
       this.calledCustomTools = false;
       const { allowToolErrors, validator } = this.options;
       await reporter.start();
-      await reporter.report(this.inputs.body as JsonSerializable);
+      await reporter.report({
+        type: "update",
+        group: [
+          ["title", { text: "Model Input" }],
+          [
+            "body",
+            {
+              text: JSON.stringify(this.inputs.body),
+              mimeType: "application/json",
+            },
+          ],
+        ],
+      });
       const invoking = await gemini(this.inputs);
       if (!ok(invoking)) return reporter.reportError(invoking);
       if ("context" in invoking) {
@@ -145,7 +157,19 @@ class GeminiPrompt {
           )
         );
       }
-      reporter.reportLLMContent(content);
+      reporter.report({
+        type: "update",
+        group: [
+          ["title", { text: "Model Response" }],
+          [
+            "body",
+            {
+              text: JSON.stringify(content),
+              mimeType: "application/vnd.breadboard.llm-content",
+            },
+          ],
+        ],
+      });
       reporter.close();
       const results: LLMContent[][] = [];
       const errors: string[] = [];

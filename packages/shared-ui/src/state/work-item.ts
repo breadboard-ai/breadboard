@@ -22,6 +22,7 @@ import {
   Schema,
 } from "@google-labs/breadboard";
 import { idFromPath, toJson, toLLMContentArray } from "./common";
+import { DataParticle, Particle, TextParticle } from "@breadboard-ai/particles";
 
 export { ReactiveWorkItem };
 
@@ -40,7 +41,7 @@ class ReactiveWorkItem implements WorkItem {
   }
 
   schema?: Schema | undefined;
-  product: Map<string, LLMContent> = new SignalMap();
+  product: Map<string, LLMContent | Particle> = new SignalMap();
 
   constructor(
     public readonly type: NodeTypeIdentifier,
@@ -111,13 +112,37 @@ class ReactiveWorkItem implements WorkItem {
   }
 }
 
+// This is a hack to mashall the data over the sandbox boundary.
+// TODO: Make this a series of updates, rather than snapshot-based.
+type SerializedParticle = TextParticle | DataParticle | SerializedGroupParticle;
+
+type SerializedGroupParticle = [key: string, value: SerializedParticle][];
+
+function toParticle(serialized: SerializedParticle): Particle {
+  return convert(serialized);
+
+  function convert(serialized: SerializedParticle): Particle {
+    if ("text" in serialized) return serialized;
+    if ("data" in serialized) return serialized;
+    if ("group" in serialized && Array.isArray(serialized.group)) {
+      const group = new Map<string, Particle>();
+      for (const [key, value] of serialized.group) {
+        group.set(key, convert(value));
+      }
+      return { ...serialized, group };
+    }
+    console.warn("Unrecognized serialized particle", serialized);
+    return { text: "Unrecognized serialized particle" };
+  }
+}
+
 class ParticleWorkItem implements WorkItem {
   @signal
   accessor end: number | null = null;
 
   readonly awaitingUserInput = false;
 
-  product: Map<string, LLMContent> = new SignalMap();
+  product: Map<string, LLMContent | Particle> = new SignalMap();
 
   constructor(
     public readonly type: NodeTypeIdentifier,
@@ -163,12 +188,12 @@ class ParticleWorkItem implements WorkItem {
       }
       // TODO: Keys should be supplied by the report provider.
       const key = `${this.product.size + 1}`;
-      const content = reading.data?.at(0);
-      if (!content) {
+      const particle = toJson(reading.data) as SerializedParticle;
+      if (!particle) {
         console.warn(`Invalid streamable report`, reading.data);
         continue;
       }
-      this.product.set(key, content);
+      this.product.set(key, toParticle(particle));
     }
   }
 }

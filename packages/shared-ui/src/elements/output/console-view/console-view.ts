@@ -23,6 +23,7 @@ import { icons } from "../../../styles/icons";
 import { SignalWatcher } from "@lit-labs/signals";
 import { provide } from "@lit/context";
 import { projectRunContext } from "../../../contexts/project-run.js";
+import { isParticle } from "@breadboard-ai/particles";
 
 @customElement("bb-console-view")
 export class ConsoleView extends SignalWatcher(LitElement) {
@@ -428,6 +429,13 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                                 workItem.product,
                                 ([key]) => key,
                                 ([, product]) => {
+                                  if (isParticle(product)) {
+                                    return html`<li class="output">
+                                      <bb-particle-view
+                                        .particle=${product}
+                                      ></bb-particle-view>
+                                    </li>`;
+                                  }
                                   return html`<li class="output">
                                     <bb-llm-output
                                       .lite=${true}
