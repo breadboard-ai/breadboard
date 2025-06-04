@@ -32,6 +32,7 @@ import {
   retryableFetch,
   truncateValueForUtf8,
 } from "./utils.js";
+import type { GoogleDriveClient } from "../google-drive-client.js";
 
 const PROTOCOL = "drive:";
 
@@ -303,6 +304,8 @@ class DriveOperations {
     DRIVE_IMAGE_CACHE_NAME,
     DRIVE_IMAGE_CACHE_KEY_PREFIX
   );
+  readonly #googleDriveClient: GoogleDriveClient;
+  readonly #publishPermissions: gapi.client.drive.Permission[];
 
   /**
    * @param refreshProjectListCallback will be called when project list may have to be updated.
@@ -312,6 +315,8 @@ class DriveOperations {
     public readonly username: string,
     private readonly refreshProjectListCallback: () => Promise<void>,
     userFolderName: string,
+    googleDriveClient: GoogleDriveClient,
+    publishPermissions: gapi.client.drive.Permission[],
     publicApiKey?: string,
     featuredGalleryFolderId?: string
   ) {
@@ -321,6 +326,8 @@ class DriveOperations {
     this.#userFolderName = userFolderName;
     this.#publicApiKey = publicApiKey;
     this.#featuredGalleryFolderId = featuredGalleryFolderId;
+    this.#googleDriveClient = googleDriveClient;
+    this.#publishPermissions = publishPermissions;
 
     const getUserAuth = () => DriveOperations.getUserAuth(vendor);
     this.#userGraphsList = new DriveListCache("user", BASE_QUERY, getUserAuth);
@@ -692,6 +699,29 @@ class DriveOperations {
     ]);
     const response = await retryableFetch(request);
     return (await response.json()) as { id: string };
+  }
+
+  /**
+   * Publish the given Google Drive file ID according to this deployment's
+   * definition of what "publish permissions" are (e.g. fully public for
+   * external, or just certain domains/groups for internal).
+   */
+  async publishFile(fileId: string): Promise<gapi.client.drive.Permission[]> {
+    const accessToken = await getAccessToken(this.vendor);
+    if (!accessToken) {
+      throw new Error(`No access token`);
+    }
+    return (
+      await Promise.all(
+        this.#publishPermissions.map((permission) =>
+          this.#googleDriveClient.writePermission(
+            fileId,
+            { ...permission, role: "reader" },
+            { sendNotificationEmail: false }
+          )
+        )
+      )
+    ).flat();
   }
 
   async listRunResultsForGraph(

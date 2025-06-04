@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/// <reference types="@types/gapi.client.drive-v3" />
+
 import type { TokenVendor } from "@breadboard-ai/connection-client";
 import {
   ok,
@@ -57,6 +59,7 @@ class GoogleDriveBoardServer
     user: User,
     vendor: TokenVendor,
     googleDriveClient: GoogleDriveClient,
+    publishPermissions: gapi.client.drive.Permission[],
     userFolderName: string,
     publicApiKey?: string,
     featuredGalleryFolderId?: string
@@ -86,6 +89,7 @@ class GoogleDriveBoardServer
         user,
         vendor,
         googleDriveClient,
+        publishPermissions,
         userFolderName,
         publicApiKey,
         featuredGalleryFolderId
@@ -113,6 +117,7 @@ class GoogleDriveBoardServer
     public readonly user: User,
     public readonly vendor: TokenVendor,
     googleDriveClient: GoogleDriveClient,
+    publishPermissions: gapi.client.drive.Permission[],
     userFolderName: string,
     publicApiKey?: string,
     featuredGalleryFolderId?: string
@@ -126,6 +131,8 @@ class GoogleDriveBoardServer
         this.dispatchEvent(new RefreshEvent());
       },
       userFolderName,
+      googleDriveClient,
+      publishPermissions,
       publicApiKey,
       featuredGalleryFolderId
     );
