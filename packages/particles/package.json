@@ -1,5 +1,5 @@
 {
-  "name": "@breaboard-ai/particles",
+  "name": "@breadboard-ai/particles",
   "version": "0.0.1",
   "description": "AI-first UI Toolkit",
   "main": "./dist/src/index.js",
