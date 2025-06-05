@@ -81,99 +81,104 @@ function extractDriveError(s: string): DriveError | null {
 
 export function initializeDriveClient(
   accessToken: string,
-  referrer?: string
+  referrer: string | undefined,
+  proxyUrl: string | undefined
 ): GoogleDriveClient {
   return new GoogleDriveClient({
     apiBaseUrl: "https://www.googleapis.com",
-    proxyUrl:
-      "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/getOpalFile",
+    proxyUrl,
     publicApiKey: process.env["VITE_GOOGLE_DRIVE_PUBLIC_API_KEY"] ?? "",
     publicApiSpoofReferer: referrer,
     getUserAccessToken: async () => accessToken,
   });
 }
 
-async function handleAssetsDriveRequest(
-  req: Request,
-  res: Response
-): Promise<void> {
-  const accessToken: string = res.locals.accessToken;
-  const driveId = req.params["driveId"] ?? "";
-  let mimeType = (req.query["mimeType"] as string) ?? "";
-  const googleDriveClient = initializeDriveClient(
-    accessToken,
-    req.headers.referer
-  );
+export function makeHandleAssetsDriveRequest({
+  googleDriveProxyUrl,
+}: {
+  googleDriveProxyUrl: string | undefined;
+}) {
+  return async function handleAssetsDriveRequest(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+    const accessToken: string = res.locals.accessToken;
+    const driveId = req.params["driveId"] ?? "";
+    let mimeType = (req.query["mimeType"] as string) ?? "";
+    const googleDriveClient = initializeDriveClient(
+      accessToken,
+      req.headers.referer,
+      googleDriveProxyUrl
+    );
 
-  const part = CavemanCache.instance().get(driveId);
-  if (part) {
-    success(res, part.fileUri, part.mimeType);
-    return;
-  }
+    const part = CavemanCache.instance().get(driveId);
+    if (part) {
+      success(res, part.fileUri, part.mimeType);
+      return;
+    }
 
-  try {
-    let arrayBuffer: ArrayBuffer;
+    try {
+      let arrayBuffer: ArrayBuffer;
 
-    if (mimeType) {
-      const gettingMedia = await googleDriveClient.getFileMedia(driveId);
-      if (!gettingMedia.ok) {
-        serverError(
-          res,
-          `Unable to handle asset of type "${mimeType}": ${await gettingMedia.text()}`
-        );
+      if (mimeType) {
+        const gettingMedia = await googleDriveClient.getFileMedia(driveId);
+        if (!gettingMedia.ok) {
+          serverError(
+            res,
+            `Unable to handle asset of type "${mimeType}": ${await gettingMedia.text()}`
+          );
+        }
+        arrayBuffer = await gettingMedia.arrayBuffer();
+      } else {
+        mimeType = "application/pdf";
+
+        const exporting = await googleDriveClient.exportFile(driveId, {
+          mimeType,
+        });
+        if (!exporting.ok) {
+          serverError(
+            res,
+            `Unable to handle asset drive request ${await exporting.text()}`
+          );
+          return;
+        }
+        arrayBuffer = await exporting.arrayBuffer();
       }
-      arrayBuffer = await gettingMedia.arrayBuffer();
-    } else {
-      mimeType = "application/pdf";
 
-      const exporting = await googleDriveClient.exportFile(driveId, {
+      // TODO: Handle this more memory-efficiently.
+      const buffer = Buffer.from(arrayBuffer);
+      const readable = Readable.from(buffer);
+
+      const fileApi = new GeminiFileApi();
+      const uploading = await fileApi.upload(
+        buffer.length,
         mimeType,
-      });
-      if (!exporting.ok) {
+        driveId,
+        readable
+      );
+      if (!ok(uploading)) {
         serverError(
           res,
-          `Unable to handle asset drive request ${await exporting.text()}`
+          `Unable to handle asset drive request: ${uploading.$error}`
         );
         return;
       }
-      arrayBuffer = await exporting.arrayBuffer();
-    }
-
-    // TODO: Handle this more memory-efficiently.
-    const buffer = Buffer.from(arrayBuffer);
-    const readable = Readable.from(buffer);
-
-    const fileApi = new GeminiFileApi();
-    const uploading = await fileApi.upload(
-      buffer.length,
-      mimeType,
-      driveId,
-      readable
-    );
-    if (!ok(uploading)) {
+      CavemanCache.instance().set(driveId, {
+        fileUri: uploading.fileUri!,
+        expirationTime: uploading.expirationTime!,
+        mimeType,
+      });
+      success(res, uploading.fileUri!, mimeType);
+    } catch (e) {
+      const error = extractDriveError((e as Error).message);
+      if (error) {
+        serverError(res, error.error.message);
+        return;
+      }
       serverError(
         res,
-        `Unable to handle asset drive request: ${uploading.$error}`
+        `Unable to handle asset drive request: ${(e as Error).message}`
       );
-      return;
     }
-    CavemanCache.instance().set(driveId, {
-      fileUri: uploading.fileUri!,
-      expirationTime: uploading.expirationTime!,
-      mimeType,
-    });
-    success(res, uploading.fileUri!, mimeType);
-  } catch (e) {
-    const error = extractDriveError((e as Error).message);
-    if (error) {
-      serverError(res, error.error.message);
-      return;
-    }
-    serverError(
-      res,
-      `Unable to handle asset drive request: ${(e as Error).message}`
-    );
-  }
+  };
 }
-
-export default handleAssetsDriveRequest;

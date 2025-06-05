@@ -41,6 +41,7 @@ import {
 import { blobHandleToUrl } from "@breadboard-ai/shared-ui/utils/blob-handle-to-url.js";
 import { BoardServerAwareDataStore } from "@breadboard-ai/board-server-management";
 import { type RunResults } from "@breadboard-ai/google-drive-kit/board-server/operations.js";
+import { discoverClientDeploymentConfiguration } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 
 const primaryColor = getGlobalColor("--bb-ui-700");
 const secondaryColor = getGlobalColor("--bb-ui-400");
@@ -310,6 +311,9 @@ async function bootstrap(args: BootstrapArguments = {}) {
   await StringsHelper.initFrom(LANGUAGE_PACK as LanguagePack);
 
   async function initAppView() {
+    const clientDeploymentConfiguration =
+      discoverClientDeploymentConfiguration();
+
     const environment = await createEnvironment(args);
     const settings = SettingsStore.instance();
     await settings.restore();
@@ -348,10 +352,24 @@ async function bootstrap(args: BootstrapArguments = {}) {
       }
     }
 
+    let googleDriveProxyUrl: string | undefined;
+    if (clientDeploymentConfiguration.ENABLE_GOOGLE_DRIVE_PROXY) {
+      if (clientDeploymentConfiguration.BACKEND_API_ENDPOINT) {
+        googleDriveProxyUrl = new URL(
+          "v1beta1/getOpalFile",
+          clientDeploymentConfiguration.BACKEND_API_ENDPOINT
+        ).href;
+      } else {
+        console.warn(
+          `ENABLE_GOOGLE_DRIVE_PROXY was true but BACKEND_API_ENDPOINT was missing.` +
+            ` Google Drive proxying will not be available.`
+        );
+      }
+    }
+
     const googleDriveClient = new GoogleDriveClient({
       apiBaseUrl: "https://www.googleapis.com",
-      proxyUrl:
-        "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/getOpalFile",
+      proxyUrl: googleDriveProxyUrl,
       publicApiKey: import.meta.env.VITE_GOOGLE_DRIVE_PUBLIC_API_KEY ?? "",
       getUserAccessToken: async () => {
         const token = await signinAdapter.refresh();
@@ -415,6 +433,7 @@ async function bootstrap(args: BootstrapArguments = {}) {
       googleDriveClient,
       boardServer,
       runResults: await runResultsPromise,
+      clientDeploymentConfiguration,
     };
 
     const appView = new Elements.AppView(config, flow);

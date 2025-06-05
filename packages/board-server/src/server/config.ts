@@ -23,4 +23,5 @@ export interface ServerConfig {
   serverUrl?: string;
   storageBucket?: string;
   proxyServerAllowFilter?: AllowFilterFunction;
+  googleDriveProxyUrl: string | undefined;
 }

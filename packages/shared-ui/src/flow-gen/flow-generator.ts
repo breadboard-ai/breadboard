@@ -19,6 +19,7 @@ import {
   isTextCapabilityPart,
   Template,
 } from "@google-labs/breadboard";
+import { createContext } from "@lit/context";
 
 export interface OneShotFlowGenRequest {
   intent: string;
@@ -38,6 +39,10 @@ export type EditStepFlowGenConstraint = {
   kind: "EDIT_STEP_CONFIG";
   stepId: string;
 };
+
+export const flowGeneratorContext = createContext<FlowGenerator | undefined>(
+  "FlowGenerator"
+);
 
 export class FlowGenerator {
   #appCatalystApiClient: AppCatalystApiClient;

@@ -116,7 +116,10 @@ import {
 } from "@breadboard-ai/embed";
 import { IterateOnPromptEvent } from "@breadboard-ai/shared-ui/events/events.js";
 import { AppCatalystApiClient } from "@breadboard-ai/shared-ui/flow-gen/app-catalyst.js";
-import { FlowGenerator } from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
+import {
+  FlowGenerator,
+  flowGeneratorContext,
+} from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
 import { findGoogleDriveAssetsInGraph } from "@breadboard-ai/shared-ui/elements/google-drive/find-google-drive-assets-in-graph.js";
 import { stringifyPermission } from "@breadboard-ai/shared-ui/elements/share-panel/share-panel.js";
 import { type GoogleDriveAssetShareDialog } from "@breadboard-ai/shared-ui/elements/elements.js";
@@ -315,6 +318,9 @@ export class Main extends LitElement {
   @provide({ context: clientDeploymentConfigurationContext })
   accessor clientDeploymentConfiguration: ClientDeploymentConfiguration;
 
+  @provide({ context: flowGeneratorContext })
+  accessor flowGenerator: FlowGenerator | undefined;
+
   @provide({ context: BreadboardUI.Contexts.environmentContext })
   accessor environment: BreadboardUI.Contexts.Environment;
 
@@ -467,10 +473,25 @@ export class Main extends LitElement {
     // must be done in the constructor.
     this.environment = ENVIRONMENT;
     this.clientDeploymentConfiguration = config.clientDeploymentConfiguration;
+
+    let googleDriveProxyUrl: string | undefined;
+    if (this.clientDeploymentConfiguration.ENABLE_GOOGLE_DRIVE_PROXY) {
+      if (this.clientDeploymentConfiguration.BACKEND_API_ENDPOINT) {
+        googleDriveProxyUrl = new URL(
+          "v1beta1/getOpalFile",
+          this.clientDeploymentConfiguration.BACKEND_API_ENDPOINT
+        ).href;
+      } else {
+        console.warn(
+          `ENABLE_GOOGLE_DRIVE_PROXY was true but BACKEND_API_ENDPOINT was missing.` +
+            ` Google Drive proxying will not be available.`
+        );
+      }
+    }
+
     this.googleDriveClient = new GoogleDriveClient({
       apiBaseUrl: "https://www.googleapis.com",
-      proxyUrl:
-        "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/getOpalFile",
+      proxyUrl: googleDriveProxyUrl,
       publicApiKey: ENVIRONMENT.googleDrive.publicApiKey,
       getUserAccessToken: async () => {
         const token = await this.signinAdapter.refresh();
@@ -623,6 +644,19 @@ export class Main extends LitElement {
           this.signinAdapter.state === "signedout"
         ) {
           return;
+        }
+
+        const backendApiEndpoint =
+          this.clientDeploymentConfiguration.BACKEND_API_ENDPOINT;
+        if (backendApiEndpoint) {
+          this.flowGenerator = new FlowGenerator(
+            new AppCatalystApiClient(this.signinAdapter, backendApiEndpoint)
+          );
+        } else {
+          console.warn(
+            `No BACKEND_API_ENDPOINT was configured so` +
+              ` FlowGenerator will not be available.`
+          );
         }
 
         this.#graphStore.addEventListener("update", (evt) => {
@@ -1036,10 +1070,10 @@ export class Main extends LitElement {
   }
 
   async #generateGraph(intent: string): Promise<GraphDescriptor> {
-    const generator = new FlowGenerator(
-      new AppCatalystApiClient(this.signinAdapter)
-    );
-    const { flow } = await generator.oneShot({ intent });
+    if (!this.flowGenerator) {
+      throw new Error(`No FlowGenerator was provided`);
+    }
+    const { flow } = await this.flowGenerator.oneShot({ intent });
     return flow;
   }
 

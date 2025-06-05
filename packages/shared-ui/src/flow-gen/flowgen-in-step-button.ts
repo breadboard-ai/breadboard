@@ -4,28 +4,27 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css, nothing } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
-import * as StringsHelper from "../strings/helper.js";
-import { createRef, ref } from "lit/directives/ref.js";
 import type { GraphDescriptor } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
+import { LitElement, css, html, nothing } from "lit";
+import { customElement, property, state } from "lit/decorators.js";
+import { createRef, ref } from "lit/directives/ref.js";
 import {
   GraphReplaceEvent,
   HideTooltipEvent,
   ShowTooltipEvent,
   UtteranceEvent,
 } from "../events/events.js";
+import * as StringsHelper from "../strings/helper.js";
 import { fabStyles } from "../styles/fab.js";
 import { floatingPanelStyles } from "../styles/floating-panel.js";
-import { multiLineInputStyles } from "../styles/multi-line-input.js";
-import { AppCatalystApiClient } from "./app-catalyst.js";
-import { FlowGenConstraint, FlowGenerator } from "./flow-generator.js";
 import { icons } from "../styles/icons.js";
+import { multiLineInputStyles } from "../styles/multi-line-input.js";
 import {
-  type SigninAdapter,
-  signinAdapterContext,
-} from "../utils/signin-adapter.js";
+  flowGeneratorContext,
+  type FlowGenConstraint,
+  type FlowGenerator,
+} from "./flow-generator.js";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -194,8 +193,8 @@ export class FlowgenInStepButton extends LitElement {
     `,
   ];
 
-  @consume({ context: signinAdapterContext })
-  accessor signinAdapter: SigninAdapter | undefined = undefined;
+  @consume({ context: flowGeneratorContext })
+  accessor flowGenerator: FlowGenerator | undefined = undefined;
 
   @property({ type: Object })
   accessor currentGraph: GraphDescriptor | undefined;
@@ -393,13 +392,10 @@ export class FlowgenInStepButton extends LitElement {
     intent: string,
     currentFlow: GraphDescriptor
   ): Promise<GraphDescriptor> {
-    if (!this.signinAdapter) {
-      throw new Error(`No signinAdapter was configured`);
+    if (!this.flowGenerator) {
+      throw new Error(`No FlowGenerator was provided`);
     }
-    const generator = new FlowGenerator(
-      new AppCatalystApiClient(this.signinAdapter)
-    );
-    const { flow } = await generator.oneShot({
+    const { flow } = await this.flowGenerator.oneShot({
       intent,
       context: { flow: currentFlow },
       constraint: this.constraint,

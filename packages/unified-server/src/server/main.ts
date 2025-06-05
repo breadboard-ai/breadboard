@@ -17,19 +17,34 @@ import { getConfigFromSecretManager } from "./provide-config.js";
 
 const server = express();
 
-const {
-  client: clientConfig,
-  server: { BACKEND_API_ENDPOINT },
-} = await getConfigFromSecretManager();
+const { client: clientConfig, server: serverConfig } =
+  await getConfigFromSecretManager();
+
+let googleDriveProxyUrl: string | undefined;
+if (serverConfig.ENABLE_GOOGLE_DRIVE_PROXY) {
+  if (serverConfig.BACKEND_API_ENDPOINT) {
+    googleDriveProxyUrl = new URL(
+      "v1beta1/getOpalFile",
+      serverConfig.BACKEND_API_ENDPOINT
+    ).href;
+  } else {
+    console.warn(
+      `ENABLE_GOOGLE_DRIVE_PROXY was true but BACKEND_API_ENDPOINT was missing.` +
+        ` Google Drive proxying will not be available.`
+    );
+  }
+}
 
 const boardServerConfig = boardServer.createServerConfig({
   storageProvider: "firestore",
   proxyServerAllowFilter,
+  googleDriveProxyUrl,
 });
 const connectionServerConfig = {
   ...(await connectionServer.createServerConfig()),
   validateResponse: allowListChecker(
-    BACKEND_API_ENDPOINT && new URL(BACKEND_API_ENDPOINT)
+    serverConfig.BACKEND_API_ENDPOINT &&
+      new URL(serverConfig.BACKEND_API_ENDPOINT)
   ),
 };
 
