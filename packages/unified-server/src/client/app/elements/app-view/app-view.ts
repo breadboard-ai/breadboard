@@ -55,8 +55,8 @@ import { boardServerContext } from "@breadboard-ai/shared-ui/contexts/board-serv
 import { blobHandleToUrl } from "@breadboard-ai/shared-ui/utils/blob-handle-to-url.js";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import {
+  type ClientDeploymentConfiguration,
   clientDeploymentConfigurationContext,
-  discoverClientDeploymentConfiguration,
 } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 
 @customElement("app-view")
@@ -77,8 +77,7 @@ export class AppView extends LitElement {
   accessor environment: BreadboardUIContext.Environment;
 
   @provide({ context: clientDeploymentConfigurationContext })
-  accessor clientDeploymentConfiguration =
-    discoverClientDeploymentConfiguration();
+  accessor clientDeploymentConfiguration: ClientDeploymentConfiguration;
 
   @provide({ context: BreadboardUIContext.tokenVendorContext })
   accessor tokenVendor: ConnectionClient.TokenVendor;
@@ -104,6 +103,7 @@ export class AppView extends LitElement {
     super();
 
     this.environment = config.environment;
+    this.clientDeploymentConfiguration = config.clientDeploymentConfiguration;
     this.tokenVendor = config.tokenVendor;
     this.settingsHelper = config.settingsHelper;
     this.#runner = config.runner;

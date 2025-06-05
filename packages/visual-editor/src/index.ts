@@ -473,10 +473,25 @@ export class Main extends LitElement {
     // must be done in the constructor.
     this.environment = ENVIRONMENT;
     this.clientDeploymentConfiguration = config.clientDeploymentConfiguration;
+
+    let googleDriveProxyUrl: string | undefined;
+    if (this.clientDeploymentConfiguration.ENABLE_GOOGLE_DRIVE_PROXY) {
+      if (this.clientDeploymentConfiguration.BACKEND_API_ENDPOINT) {
+        googleDriveProxyUrl = new URL(
+          "v1beta1/getOpalFile",
+          this.clientDeploymentConfiguration.BACKEND_API_ENDPOINT
+        ).href;
+      } else {
+        console.warn(
+          `ENABLE_GOOGLE_DRIVE_PROXY was true but BACKEND_API_ENDPOINT was missing.` +
+            ` Google Drive proxying will not be available.`
+        );
+      }
+    }
+
     this.googleDriveClient = new GoogleDriveClient({
       apiBaseUrl: "https://www.googleapis.com",
-      proxyUrl:
-        "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/getOpalFile",
+      proxyUrl: googleDriveProxyUrl,
       publicApiKey: ENVIRONMENT.googleDrive.publicApiKey,
       getUserAccessToken: async () => {
         const token = await this.signinAdapter.refresh();

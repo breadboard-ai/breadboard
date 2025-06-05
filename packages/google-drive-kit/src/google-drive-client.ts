@@ -11,7 +11,7 @@ import { retryableFetch } from "./board-server/utils.js";
 
 export interface GoogleDriveClientOptions {
   apiBaseUrl: string;
-  proxyUrl: string;
+  proxyUrl?: string;
   getUserAccessToken: () => Promise<string>;
   publicApiKey: string;
   publicApiSpoofReferer?: string;
@@ -35,7 +35,7 @@ export interface WritePermissionOptions extends BaseRequestOptions {
 
 export class GoogleDriveClient {
   readonly #apiBaseUrl: string;
-  readonly #proxyUrl: string;
+  readonly #proxyUrl?: string;
   readonly #getUserAccessToken: () => Promise<string>;
   readonly #publicApiKey: string;
   readonly #publicApiSpoofReferer?: string;
