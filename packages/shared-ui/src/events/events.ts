@@ -100,6 +100,30 @@ export class StopEvent extends Event {
   }
 }
 
+export class CloseEvent extends Event {
+  static eventName = "bbclose";
+
+  constructor() {
+    super(CloseEvent.eventName, { ...eventInit });
+  }
+}
+
+export class RemixEvent extends Event {
+  static eventName = "bbremix";
+
+  constructor() {
+    super(RemixEvent.eventName, { ...eventInit });
+  }
+}
+
+export class ShareRequestedEvent extends Event {
+  static eventName = "bbsharerequested";
+
+  constructor() {
+    super(ShareRequestedEvent.eventName, { ...eventInit });
+  }
+}
+
 export class ContinueEvent extends Event {
   static eventName = "bbcontinue";
 

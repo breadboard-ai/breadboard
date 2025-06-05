@@ -129,11 +129,15 @@ export class Snackbar extends LitElement {
     `,
   ];
 
-  show(message: SnackbarMessage) {
+  show(message: SnackbarMessage, replaceAll = false) {
     const existingMessage = this.#messages.findIndex(
       (msg) => msg.id === message.id
     );
     if (existingMessage === -1) {
+      if (replaceAll) {
+        this.#messages.length = 0;
+      }
+
       this.#messages.push(message);
     } else {
       this.#messages[existingMessage] = message;

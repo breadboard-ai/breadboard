@@ -12,10 +12,14 @@ export const styles = css`
   }
 
   :host {
-    --header-height: var(--bb-grid-size-11);
+    --header-height: var(--bb-grid-size-14);
     flex: 1 0 auto;
     display: grid;
     grid-template-rows: var(--header-height) auto;
+  }
+
+  bb-ve-header {
+    z-index: 1;
   }
 
   bb-toast {

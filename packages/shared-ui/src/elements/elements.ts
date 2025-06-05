@@ -93,6 +93,8 @@ export { ViewConnector } from "./asset-organizer/view-connector.js";
 export { WebcamInput } from "./input/webcam/webcam.js";
 export { WebcamVideoInput } from "./input/webcam/webcam-video.js";
 
+export { VEHeader } from "./shell/header.js";
+
 export { tokenVendorContext } from "../contexts/token-vendor.js";
 export { googleDriveFileIdInputPlugin } from "./google-drive/google-drive-file-id.js";
 export { googleDriveQueryInputPlugin } from "./google-drive/google-drive-query.js";

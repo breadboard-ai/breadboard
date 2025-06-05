@@ -1689,6 +1689,8 @@ export class Main extends LitElement {
         ackUserMessage.start,
         BreadboardUI.Types.SnackType.INFORMATION,
         [],
+        true,
+        globalThis.crypto.randomUUID(),
         true
       );
     }
@@ -1721,6 +1723,9 @@ export class Main extends LitElement {
     return { id: id, url: url };
   }
 
+  /**
+   * @deprecated
+   */
   async #attemptBoardTitleUpdate(evt: Event) {
     const target = evt.target;
     if (!(target instanceof HTMLInputElement)) {
@@ -1739,6 +1744,14 @@ export class Main extends LitElement {
     target.disabled = true;
 
     await this.#runtime.edit.updateBoardTitle(this.tab, target.value.trim());
+  }
+
+  async #attemptBoardTitleUpdateFromString(title: string) {
+    if (title === this.tab?.graph.title) {
+      return;
+    }
+
+    await this.#runtime.edit.updateBoardTitle(this.tab, title.trim());
   }
 
   async #attemptBoardDelete(
@@ -1924,19 +1937,23 @@ export class Main extends LitElement {
     type: BreadboardUI.Types.SnackType,
     actions: BreadboardUI.Types.SnackbarAction[] = [],
     persistent = false,
-    id = globalThis.crypto.randomUUID()
+    id = globalThis.crypto.randomUUID(),
+    replaceAll = false
   ) {
     if (!this.#snackbarRef.value) {
       return;
     }
 
-    return this.#snackbarRef.value.show({
-      id,
-      message,
-      type,
-      persistent,
-      actions,
-    });
+    return this.#snackbarRef.value.show(
+      {
+        id,
+        message,
+        type,
+        persistent,
+        actions,
+      },
+      replaceAll
+    );
   }
 
   unsnackbar() {
@@ -2769,6 +2786,11 @@ export class Main extends LitElement {
             BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
             "Show additional sources"
           )?.value ?? false;
+        const showExperimentalComponents =
+          this.#settings?.getItem(
+            BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
+            "Show Experimental Components"
+          )?.value ?? false;
 
         const canRunNode = this.#nodeConfiguratorData
           ? topGraphResult.nodeInformation.canRunNode(
@@ -3303,7 +3325,146 @@ export class Main extends LitElement {
           }
         }
 
-        const ui = html`<header>
+        const ui = html`
+          ${
+            showExperimentalComponents
+              ? html`<bb-ve-header
+                  .signInAdapter=${signInAdapter}
+                  .hasActiveTab=${this.tab !== null}
+                  .tabTitle=${this.tab?.graph?.title ?? null}
+                  .canSave=${canSave}
+                  .isMine=${this.#runtime.board.isMine(this.tab?.graph.url)}
+                  .saveStatus=${saveStatus}
+                  @bbboardtitleupdate=${async (
+                    evt: BreadboardUI.Events.BoardTitleUpdateEvent
+                  ) => {
+                    await this.#attemptBoardTitleUpdateFromString(evt.title);
+                  }}
+                  @bbremix=${async () => {
+                    if (!this.tab?.graph) {
+                      return;
+                    }
+
+                    await this.#attemptRemix(this.tab.graph, {
+                      role: "user",
+                    });
+                  }}
+                  @bbsignout=${async () => {
+                    await this.#attemptLogOut();
+                  }}
+                  @bbclose=${() => {
+                    if (!this.tab) {
+                      return;
+                    }
+                    this.#embedHandler?.sendToEmbedder({
+                      type: "back_clicked",
+                    });
+                    this.#runtime.board.closeTab(this.tab.id);
+                  }}
+                  @bbsharerequested=${() => {
+                    if (!this.#uiRef.value) {
+                      return;
+                    }
+
+                    this.#uiRef.value.openSharePanel();
+                  }}
+                  @input=${(evt: InputEvent) => {
+                    const inputs = evt.composedPath();
+                    const input = inputs.find(
+                      (el) =>
+                        el instanceof BreadboardUI.Elements.HomepageSearchButton
+                    );
+                    if (!input) {
+                      return;
+                    }
+
+                    this.projectFilter = input.value;
+                  }}
+                  @change=${async (evt: Event) => {
+                    const [select] = evt.composedPath();
+                    if (!(select instanceof BreadboardUI.Elements.ItemSelect)) {
+                      return;
+                    }
+
+                    switch (select.value) {
+                      case "edit-title-and-description": {
+                        if (!this.tab) {
+                          return;
+                        }
+
+                        this.#showBoardEditOverlay(
+                          this.tab,
+                          window.innerWidth - 200,
+                          80,
+                          null,
+                          null
+                        );
+                        break;
+                      }
+
+                      case "delete": {
+                        if (
+                          !this.tab ||
+                          !this.tab.graph ||
+                          !this.tab.graph.url
+                        ) {
+                          return;
+                        }
+
+                        const boardServer =
+                          this.#runtime.board.getBoardServerForURL(
+                            new URL(this.tab.graph.url)
+                          );
+                        if (!boardServer) {
+                          return;
+                        }
+
+                        await this.#attemptBoardDelete(
+                          boardServer.name,
+                          this.tab.graph.url,
+                          true
+                        );
+                        break;
+                      }
+
+                      case "duplicate": {
+                        if (!this.tab?.graph) {
+                          return;
+                        }
+
+                        await this.#attemptRemix(this.tab.graph, {
+                          role: "user",
+                        });
+
+                        break;
+                      }
+
+                      case "feedback": {
+                        if (!FEEDBACK_LINK) {
+                          return;
+                        }
+
+                        window.open(FEEDBACK_LINK, "_blank");
+                        break;
+                      }
+
+                      case "history": {
+                        if (!this.#uiRef.value) {
+                          return;
+                        }
+
+                        this.#uiRef.value.sideNavItem = "edit-history";
+                        break;
+                      }
+
+                      default: {
+                        console.log("Action:", select.value);
+                        break;
+                      }
+                    }
+                  }}
+                ></bb-ve-header>`
+              : html`<header>
           <div class="accept-tos" id="header-bar" data-active=${this.tab ? "true" : nothing} ?inert=${showingOverlay}>
             <div id="tab-info">
               <button id="logo" @click=${() => {
@@ -3533,7 +3694,8 @@ export class Main extends LitElement {
             </div>
           </div>
         </div>
-      </header>
+      </header>`
+          }
       <div id="content" ?inert=${showingOverlay}>
         <bb-ui-controller
               ${ref(this.#uiRef)}

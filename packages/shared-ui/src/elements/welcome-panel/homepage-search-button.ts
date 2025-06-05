@@ -9,6 +9,8 @@ import { customElement, property, state } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { icons } from "../../styles/icons.js";
+import { colorsLight } from "../../styles/host/colors-light.js";
+import { type } from "../../styles/host/type.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
@@ -16,11 +18,13 @@ const Strings = StringsHelper.forSection("ProjectListing");
 export class HomepageSearchButton extends LitElement {
   static styles = [
     icons,
+    colorsLight,
+    type,
     css`
       :host {
         display: inline-flex;
         align-items: center;
-        height: 30px;
+        height: var(--bb-grid-size-7);
       }
 
       button {
@@ -30,19 +34,26 @@ export class HomepageSearchButton extends LitElement {
         cursor: pointer;
         align-items: center;
         height: 100%;
+
         & > .g-icon {
           margin-right: 4px;
         }
       }
 
       input {
-        border: 1px solid currentColor;
+        border: 1px solid var(--ui-resting-text);
+        background: var(--ui-background);
         height: 100%;
-        border-radius: 100px;
-        padding: 10px 32px 10px 16px;
-        width: 230px;
-        font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
-          var(--bb-font-family);
+        border-radius: var(--bb-grid-size-16);
+        padding: 0 32px 0 var(--bb-grid-size-4);
+        width: 200px;
+        outline: none;
+        font-size: 12px;
+      }
+
+      #label {
+        font-size: 12px;
+        color: var(--ui-secondary-text);
       }
 
       #search-icon {
@@ -71,6 +82,7 @@ export class HomepageSearchButton extends LitElement {
           @focus=${this.#onInputFocus}
           @input=${this.#onInputInput}
           @blur=${this.#onInputBlur}
+          class="sans-flex round w-500"
         />
         <span class="g-icon" id="search-icon">search</span>
       `;
@@ -78,7 +90,7 @@ export class HomepageSearchButton extends LitElement {
       return html`
         <button @click=${this.#onButtonClick}>
           <span class="g-icon">search</span>
-          Search
+          <span id="label" class="sans-flex round w-500">Search</span>
         </button>
       `;
     }

@@ -37,7 +37,7 @@ export default {
     str: "Share App",
   },
   COMMAND_EDIT_PROJECT_INFORMATION: {
-    str: "Edit Details...",
+    str: "Edit title and description...",
   },
   COMMAND_COPY_PROJECT: {
     str: "Copy Flow",
@@ -77,6 +77,9 @@ export default {
   },
   COMMAND_NEW_ITEM: {
     str: "Add a new item...",
+  },
+  COMMAND_SHOW_VERSION_HISTORY: {
+    str: "Show version history",
   },
 
   // Labels.
