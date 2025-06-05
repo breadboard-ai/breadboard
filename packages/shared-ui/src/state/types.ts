@@ -18,6 +18,7 @@ import {
   EditSpec,
   EditTransform,
   FileSystem,
+  NodeHandlerMetadata,
   Outcome,
   PortIdentifier,
   Schema,
@@ -327,6 +328,16 @@ export type Project = {
   organizer: Organizer;
   fastAccess: FastAccess;
   renderer: RendererState;
+
+  /**
+   * Returns metadata for a given node. This function is sync, and it
+   * will return the current result, not the latest -- which is fine in most
+   * cases.
+   */
+  getMetadataForNode(
+    nodeId: NodeIdentifier,
+    graphId: GraphIdentifier
+  ): Outcome<NodeHandlerMetadata>;
 
   persistDataParts(contents: LLMContent[]): Promise<LLMContent[]>;
   connectHarnessRunner(
