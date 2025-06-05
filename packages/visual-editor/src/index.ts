@@ -122,6 +122,10 @@ import { stringifyPermission } from "@breadboard-ai/shared-ui/elements/share-pan
 import { type GoogleDriveAssetShareDialog } from "@breadboard-ai/shared-ui/elements/elements.js";
 import { boardServerContext } from "@breadboard-ai/shared-ui/contexts/board-server.js";
 import { extractGoogleDriveFileId } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
+import {
+  type ClientDeploymentConfiguration,
+  clientDeploymentConfigurationContext,
+} from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 
 const STORAGE_PREFIX = "bb-main";
 const LOADING_TIMEOUT = 1250;
@@ -172,6 +176,7 @@ export type MainArguments = {
    */
   env?: FileSystemEntry[];
   embedHandler?: EmbedHandler;
+  clientDeploymentConfiguration: ClientDeploymentConfiguration;
 };
 
 type BoardOverlowMenuConfiguration = {
@@ -306,6 +311,9 @@ export class Main extends LitElement {
 
   @state()
   accessor showToS = false;
+
+  @provide({ context: clientDeploymentConfigurationContext })
+  accessor clientDeploymentConfiguration: ClientDeploymentConfiguration;
 
   @provide({ context: BreadboardUI.Contexts.environmentContext })
   accessor environment: BreadboardUI.Contexts.Environment;
@@ -458,6 +466,7 @@ export class Main extends LitElement {
     // Due to https://github.com/lit/lit/issues/4675, context provider values
     // must be done in the constructor.
     this.environment = ENVIRONMENT;
+    this.clientDeploymentConfiguration = config.clientDeploymentConfiguration;
     this.googleDriveClient = new GoogleDriveClient({
       apiBaseUrl: "https://www.googleapis.com",
       proxyUrl:

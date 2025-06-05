@@ -17,9 +17,9 @@ const endpoint_url =
   "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeStep";
 
 import { Handler } from "@breadboard-ai/embed";
-import { receiveConfig } from "./client/receive-config";
+import { discoverClientDeploymentConfiguration } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 
-const deploymentConfiguration = receiveConfig();
+const deploymentConfiguration = discoverClientDeploymentConfiguration();
 
 declare global {
   interface Window {

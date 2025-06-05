@@ -17,19 +17,12 @@ import {
   Outcome,
 } from "@google-labs/breadboard";
 import type { EmbedHandler } from "@breadboard-ai/embed";
+import { type ClientDeploymentConfiguration } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 
 export { bootstrap };
 
-/**
- * Keep this value in sync with ClientDeploymentConfiguration
- * packages/unified-server/src/server/provide-config.ts
- */
-export type ClientDeploymentConfiguration = {
-  MEASUREMENT_ID?: string;
-};
-
 export type BootstrapArguments = {
-  deploymentConfiguration?: ClientDeploymentConfiguration;
+  deploymentConfiguration: ClientDeploymentConfiguration;
   connectionServerUrl?: URL;
   requiresSignin?: boolean;
   defaultBoardService?: string;
@@ -75,7 +68,7 @@ function getUrlFromBoardServiceFlag(
   return new URL(boardService);
 }
 
-function bootstrap(args: BootstrapArguments = {}) {
+function bootstrap(args: BootstrapArguments) {
   const icon = document.createElement("link");
   icon.rel = "icon";
   icon.type = "image/svg+xml";
@@ -151,6 +144,7 @@ function bootstrap(args: BootstrapArguments = {}) {
       moduleInvocationFilter: args?.moduleInvocationFilter,
       env: args?.env,
       embedHandler: args.embedHandler,
+      clientDeploymentConfiguration: args.deploymentConfiguration,
     };
 
     window.oncontextmenu = (evt) => evt.preventDefault();

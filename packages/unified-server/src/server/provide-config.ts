@@ -5,6 +5,7 @@
  */
 
 import { SecretsProvider } from "@breadboard-ai/board-server";
+import { type ClientDeploymentConfiguration } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 
 export { getConfigFromSecretManager };
 
@@ -16,18 +17,6 @@ export { getConfigFromSecretManager };
  */
 export type ServerDeploymentConfiguration = {
   BACKEND_API_ENDPOINT?: string;
-};
-
-/**
- * Client-specific variables of deployment configuration. These values
- * are going to be plumbed to the client. To add a new value:
- * 1. Add it as optional member here
- * 2. Add the same value here:
- *    `packages/visual-editor/src/bootstrap.ts`
- * 3. Consume it in `bootstrap`.
- */
-export type ClientDeploymentConfiguration = {
-  MEASUREMENT_ID?: string;
 };
 
 export type SecretValueFormat = {
