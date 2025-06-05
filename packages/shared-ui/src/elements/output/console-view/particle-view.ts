@@ -4,11 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
 import {
   GroupParticle,
   Particle,
@@ -16,31 +11,13 @@ import {
 } from "@breadboard-ai/particles";
 import { err, ok, Outcome } from "@google-labs/breadboard";
 import { html, SignalWatcher } from "@lit-labs/signals";
-import { LitElement, css, nothing, TemplateResult } from "lit";
+import { LitElement, nothing, TemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { icons } from "../../../styles/icons";
-import { details } from "./styles";
 
 @customElement("bb-particle-view")
 export class ParticleView extends SignalWatcher(LitElement) {
   @property()
   accessor particle: Particle | null = null;
-
-  static styles = [
-    icons,
-    details,
-    css`
-      * {
-        box-sizing: border-box;
-      }
-
-      :host {
-        display: block;
-      }
-    `,
-  ];
-
-  #openItems = new Set<string>();
 
   // In the future, this is likely its own element that operates on a particle.
   // It is instantiated by ParticleView based on type = "update".
@@ -74,36 +51,8 @@ export class ParticleView extends SignalWatcher(LitElement) {
     } else {
       return err(`Unrecognized mimeType: "${mimeType}"`);
     }
-
-    return html`<details id="title" ?open=${this.#openItems.has(title)}>
-      <summary
-        @click=${(evt: Event) => {
-          if (
-            !(
-              evt.target instanceof HTMLElement &&
-              evt.target.parentElement instanceof HTMLDetailsElement
-            )
-          ) {
-            return;
-          }
-
-          // This is at the point of clicking, which means that
-          // immediately afterwards the state will change. That,
-          // in turn, means that we delete from the set when the
-          // item is open, and add it when the item is currently
-          // closed.
-          if (evt.target.parentElement.open) {
-            this.#openItems.delete(title);
-          } else {
-            this.#openItems.add(title);
-          }
-        }}
-      >
-        <span class="g-icon step-icon">spark</span>
-        <span class="title">${title}</span>
-      </summary>
-      <div class="output" id="body">${value}</div>
-    </details>`;
+    return html`<div id="title">${title}</div>
+      <div id="body">${value}</div>`;
   }
 
   render() {
