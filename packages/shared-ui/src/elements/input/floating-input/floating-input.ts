@@ -98,6 +98,7 @@ export class FloatingInput extends LitElement {
         & .user-input {
           margin: 0 var(--bb-grid-size-2);
           flex: 1;
+          overflow: hidden;
 
           p {
             margin: 0 0 var(--bb-grid-size-2) 0;
