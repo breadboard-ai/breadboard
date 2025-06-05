@@ -405,6 +405,10 @@ export class VEHeader extends LitElement {
   }
 
   #renderShareButton() {
+    if (this.isMine) {
+      return nothing;
+    }
+
     return html`<button
       id="share"
       class="sans-flex round w-500"

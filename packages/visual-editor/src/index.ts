@@ -1751,6 +1751,7 @@ export class Main extends LitElement {
       return;
     }
 
+    this.#setPageTitle(title.trim());
     await this.#runtime.edit.updateBoardTitle(this.tab, title.trim());
   }
 
