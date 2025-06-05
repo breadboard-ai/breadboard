@@ -116,7 +116,10 @@ import {
 } from "@breadboard-ai/embed";
 import { IterateOnPromptEvent } from "@breadboard-ai/shared-ui/events/events.js";
 import { AppCatalystApiClient } from "@breadboard-ai/shared-ui/flow-gen/app-catalyst.js";
-import { FlowGenerator } from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
+import {
+  FlowGenerator,
+  flowGeneratorContext,
+} from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
 import { findGoogleDriveAssetsInGraph } from "@breadboard-ai/shared-ui/elements/google-drive/find-google-drive-assets-in-graph.js";
 import { stringifyPermission } from "@breadboard-ai/shared-ui/elements/share-panel/share-panel.js";
 import { type GoogleDriveAssetShareDialog } from "@breadboard-ai/shared-ui/elements/elements.js";
@@ -314,6 +317,9 @@ export class Main extends LitElement {
 
   @provide({ context: clientDeploymentConfigurationContext })
   accessor clientDeploymentConfiguration: ClientDeploymentConfiguration;
+
+  @provide({ context: flowGeneratorContext })
+  accessor flowGenerator: FlowGenerator | undefined;
 
   @provide({ context: BreadboardUI.Contexts.environmentContext })
   accessor environment: BreadboardUI.Contexts.Environment;
@@ -618,6 +624,10 @@ export class Main extends LitElement {
           this.environment,
           this.settingsHelper
         );
+        this.flowGenerator = new FlowGenerator(
+          new AppCatalystApiClient(this.signinAdapter)
+        );
+
         if (
           this.signinAdapter.state === "invalid" ||
           this.signinAdapter.state === "signedout"
@@ -1036,10 +1046,10 @@ export class Main extends LitElement {
   }
 
   async #generateGraph(intent: string): Promise<GraphDescriptor> {
-    const generator = new FlowGenerator(
-      new AppCatalystApiClient(this.signinAdapter)
-    );
-    const { flow } = await generator.oneShot({ intent });
+    if (!this.flowGenerator) {
+      throw new Error(`No FlowGenerator was provided`);
+    }
+    const { flow } = await this.flowGenerator.oneShot({ intent });
     return flow;
   }
 

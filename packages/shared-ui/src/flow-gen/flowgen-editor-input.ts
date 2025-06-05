@@ -14,14 +14,9 @@ import { GraphReplaceEvent, UtteranceEvent } from "../events/events.js";
 import type { ExpandingTextarea } from "../elements/input/expanding-textarea.js";
 import { icons } from "../styles/icons.js";
 import "../elements/input/expanding-textarea.js";
-import { FlowGenerator } from "./flow-generator.js";
-import { AppCatalystApiClient } from "./app-catalyst.js";
+import { type FlowGenerator, flowGeneratorContext } from "./flow-generator.js";
 import { classMap } from "lit/directives/class-map.js";
 import { spinAnimationStyles } from "../styles/spin-animation.js";
-import {
-  type SigninAdapter,
-  signinAdapterContext,
-} from "../utils/signin-adapter.js";
 import { ActionTracker } from "../utils/action-tracker.js";
 
 const Strings = StringsHelper.forSection("Editor");
@@ -165,8 +160,8 @@ export class FlowgenEditorInput extends LitElement {
     `,
   ];
 
-  @consume({ context: signinAdapterContext })
-  accessor signinAdapter: SigninAdapter | undefined = undefined;
+  @consume({ context: flowGeneratorContext })
+  accessor flowGenerator: FlowGenerator | undefined;
 
   @property({ type: Object })
   accessor currentGraph: GraphDescriptor | undefined;
@@ -294,14 +289,11 @@ export class FlowgenEditorInput extends LitElement {
   }
 
   async #generateBoard(intent: string): Promise<GraphDescriptor> {
-    if (!this.signinAdapter) {
-      throw new Error(`No signinAdapter was configured`);
+    if (!this.flowGenerator) {
+      throw new Error(`No FlowGenerator was provided`);
     }
     this.generating = true;
-    const generator = new FlowGenerator(
-      new AppCatalystApiClient(this.signinAdapter)
-    );
-    const { flow } = await generator.oneShot({
+    const { flow } = await this.flowGenerator.oneShot({
       intent,
       context: { flow: this.currentGraph },
     });
