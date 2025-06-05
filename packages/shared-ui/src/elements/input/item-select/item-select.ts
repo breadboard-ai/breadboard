@@ -8,8 +8,10 @@ import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { repeat } from "lit/directives/repeat.js";
-import { icons as MaterialIcons } from "../../../styles/icons";
+import { icons } from "../../../styles/icons";
 import { EnumValue } from "../../../types/types";
+import { colorsLight } from "../../../styles/host/colors-light";
+import { type } from "../../../styles/host/type";
 
 @customElement("bb-item-select")
 export class ItemSelect extends LitElement {
@@ -60,7 +62,9 @@ export class ItemSelect extends LitElement {
   }
 
   static styles = [
-    MaterialIcons,
+    icons,
+    colorsLight,
+    type,
     css`
       :host {
         display: block;
@@ -74,6 +78,8 @@ export class ItemSelect extends LitElement {
         --selected-item-font: normal var(--bb-label-medium) /
           var(--bb-label-line-height-medium) var(--bb-font-family);
         --selected-item-title-padding: 0;
+        --selected-item-padding-left: var(--bb-grid-size-3);
+        --selected-item-padding-right: var(--bb-grid-size-3);
       }
 
       :host([transparent]) {
@@ -99,12 +105,10 @@ export class ItemSelect extends LitElement {
       }
 
       button {
-        font: normal var(--bb-label-medium) / var(--bb-label-line-height-medium)
-          var(--bb-font-family);
-        height: var(--bb-grid-size-7);
+        font-size: 14px;
+        height: var(--bb-grid-size-11);
         border: none;
         background-color: transparent;
-        border-radius: var(--bb-grid-size);
         text-align: left;
         transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
         color: var(--bb-neutral-900);
@@ -136,7 +140,7 @@ export class ItemSelect extends LitElement {
           cursor: pointer;
 
           &.active {
-            background-color: var(--bb-neutral-50);
+            background-color: var(--n-95);
           }
         }
 
@@ -170,6 +174,8 @@ export class ItemSelect extends LitElement {
           max-width: 100%;
           height: var(--selected-item-height);
           border-radius: var(--selected-item-border-radius);
+          padding-left: var(--selected-item-padding-left);
+          padding-right: var(--selected-item-padding-right);
 
           & .title {
             font: var(--selected-item-font);
@@ -186,14 +192,14 @@ export class ItemSelect extends LitElement {
         position: fixed;
         left: var(--left);
         background: var(--bb-neutral-0);
-        padding: var(--bb-grid-size);
+        padding: 0;
         width: var(--menu-width);
         height: fit-content;
         margin: 0;
         border: none;
         overflow: auto;
         color: var(--bb-neutral-900);
-        border-radius: var(--bb-grid-size-2);
+        border-radius: var(--bb-grid-size-3);
         box-shadow: var(--bb-elevation-5);
 
         & .heading {
@@ -267,6 +273,9 @@ export class ItemSelect extends LitElement {
     const classes: Record<string, boolean> = {
       selected: true,
       icon: renderedValue.icon !== undefined,
+      round: true,
+      "w-500": true,
+      "sans-flex": true,
     };
 
     return html`<button
@@ -281,12 +290,13 @@ export class ItemSelect extends LitElement {
         ${ref(this.#toggleRef)}
       >
         ${renderedValue.icon
-          ? html`<span class="g-icon">${renderedValue.icon}</span>`
+          ? html`<span class="g-icon filled">${renderedValue.icon}</span>`
           : nothing}
-        <span class="title">${renderedValue.title}</span>
-
+        ${renderedValue.title
+          ? html`<span class="title">${renderedValue.title}</span>`
+          : nothing}
         ${this.showDownArrow
-          ? html`<span class="g-icon">arrow_drop_down</span>`
+          ? html`<span class="g-icon filled">arrow_drop_down</span>`
           : nothing}
       </button>
 
@@ -377,6 +387,9 @@ export class ItemSelect extends LitElement {
                 icon: value.icon !== undefined,
                 tag: value.tag !== undefined,
                 active: idx === this.#highlighted,
+                round: true,
+                "w-500": true,
+                "sans-flex": true,
               };
 
               return html`<li>
@@ -392,7 +405,7 @@ export class ItemSelect extends LitElement {
                   class=${classMap(classes)}
                 >
                   ${value.icon
-                    ? html`<span class="g-icon">${value.icon}</span>`
+                    ? html`<span class="g-icon filled">${value.icon}</span>`
                     : nothing}
                   <span>
                     <span class="title">${value.title}</span>

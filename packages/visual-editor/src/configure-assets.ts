@@ -31,6 +31,7 @@ export type ConfigureAssetsInputs = {
   VITE_ASSET_PACK?: string;
   VITE_FONT_FACE_MONO?: string;
   VITE_FONT_FACE?: string;
+  VITE_FONT_FACE_FLEX?: string;
   VITE_FONT_LINK?: string;
   /** Supported values are: "drive:" or "/board/". */
   VITE_BOARD_SERVICE?: string;
@@ -66,6 +67,7 @@ async function configureAssets(
     VITE_LANGUAGE_PACK: LANGUAGE_PACK,
     VITE_ASSET_PACK: ASSET_PACK,
     VITE_FONT_FACE: FONT_FACE,
+    VITE_FONT_FACE_FLEX: FONT_FACE_FLEX,
     VITE_FONT_FACE_MONO: FONT_FACE_MONO,
     VITE_FONT_LINK: FONT_LINK,
     VITE_BOARD_SERVICE: BOARD_SERVICE,
@@ -98,7 +100,8 @@ async function configureAssets(
     root,
     ASSET_PACK,
     FONT_FACE,
-    FONT_FACE_MONO
+    FONT_FACE_MONO,
+    FONT_FACE_FLEX
   );
 
   let tosHtml = "";
@@ -134,7 +137,8 @@ async function processAssetPack(
   root: string,
   src: string,
   fontFace?: string,
-  fontFaceMono?: string
+  fontFaceMono?: string,
+  fontFaceFlex?: string
 ) {
   const srcPath = path.join(root, src);
   const files = await fs.readdir(srcPath, { withFileTypes: true });
@@ -192,6 +196,10 @@ async function processAssetPack(
 
   if (fontFaceMono) {
     fonts.push(`--bb-font-family-mono: ${fontFaceMono}`);
+  }
+
+  if (fontFaceFlex) {
+    fonts.push(`--bb-font-family-flex: ${fontFaceFlex}`);
   }
 
   return {
