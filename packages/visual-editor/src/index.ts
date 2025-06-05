@@ -483,6 +483,7 @@ export class Main extends LitElement {
       if (boardServer && location) {
         this.selectedBoardServer = boardServer;
         this.selectedLocation = location;
+        this.boardServer = this.#findBoardServer();
       }
     }
 
@@ -754,6 +755,7 @@ export class Main extends LitElement {
             if (evt.connectedBoardServerName && evt.connectedBoardServerURL) {
               this.selectedBoardServer = evt.connectedBoardServerName;
               this.selectedLocation = evt.connectedBoardServerURL;
+              this.boardServer = this.#findBoardServer();
             }
 
             this.requestUpdate();
@@ -2049,6 +2051,7 @@ export class Main extends LitElement {
   #persistBoardServerAndLocation(boardServerName: string, location: string) {
     this.selectedBoardServer = boardServerName;
     this.selectedLocation = location;
+    this.boardServer = this.#findBoardServer();
 
     globalThis.sessionStorage.setItem(
       `${STORAGE_PREFIX}-board-server`,
@@ -4548,6 +4551,29 @@ export class Main extends LitElement {
       }
       dialog.open(assetToMissingPermissions);
     }
+  }
+
+  #findBoardServer(): BoardServer | undefined {
+    if (!this.#boardServers) {
+      return undefined;
+    }
+    if (this.selectedLocation) {
+      const byUrl = this.#boardServers.find(
+        (server) => server.url.href === this.selectedLocation
+      );
+      if (byUrl) {
+        return byUrl;
+      }
+    }
+    if (this.selectedBoardServer) {
+      const byName = this.#boardServers.find(
+        (server) => server.name === this.selectedBoardServer
+      );
+      if (byName) {
+        return byName;
+      }
+    }
+    return undefined;
   }
 }
 
