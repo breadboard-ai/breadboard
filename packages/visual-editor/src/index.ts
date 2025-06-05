@@ -624,15 +624,24 @@ export class Main extends LitElement {
           this.environment,
           this.settingsHelper
         );
-        this.flowGenerator = new FlowGenerator(
-          new AppCatalystApiClient(this.signinAdapter)
-        );
-
         if (
           this.signinAdapter.state === "invalid" ||
           this.signinAdapter.state === "signedout"
         ) {
           return;
+        }
+
+        const backendApiEndpoint =
+          this.clientDeploymentConfiguration.BACKEND_API_ENDPOINT;
+        if (backendApiEndpoint) {
+          this.flowGenerator = new FlowGenerator(
+            new AppCatalystApiClient(this.signinAdapter, backendApiEndpoint)
+          );
+        } else {
+          console.warn(
+            `No BACKEND_API_ENDPOINT was configured so` +
+              ` FlowGenerator will not be available.`
+          );
         }
 
         this.#graphStore.addEventListener("update", (evt) => {

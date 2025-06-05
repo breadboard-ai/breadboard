@@ -26,10 +26,7 @@ export class AppCatalystApiClient {
   readonly #signinAdapter: SigninAdapter;
   readonly #apiBaseUrl: string;
 
-  constructor(
-    signinAdapter: SigninAdapter,
-    apiBaseUrl = "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/"
-  ) {
+  constructor(signinAdapter: SigninAdapter, apiBaseUrl: string) {
     this.#signinAdapter = signinAdapter;
     this.#apiBaseUrl = apiBaseUrl;
   }
@@ -41,7 +38,7 @@ export class AppCatalystApiClient {
     if (token?.state !== "valid") {
       throw new Error(`Expected "valid" token, got "${token?.state}"`);
     }
-    const url = new URL("chatGenerateApp", this.#apiBaseUrl);
+    const url = new URL("v1beta1/chatGenerateApp", this.#apiBaseUrl);
     const response = await fetch(url, {
       method: "POST",
       headers: {

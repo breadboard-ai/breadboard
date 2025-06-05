@@ -8,6 +8,7 @@ import { createContext } from "@lit/context";
 
 export type ClientDeploymentConfiguration = {
   MEASUREMENT_ID?: string;
+  BACKEND_API_ENDPOINT?: string;
 };
 
 export const clientDeploymentConfigurationContext = createContext(
