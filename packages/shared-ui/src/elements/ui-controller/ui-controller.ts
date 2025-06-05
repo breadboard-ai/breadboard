@@ -694,6 +694,9 @@ export class UI extends LitElement {
               this.showThemeDesigner = true;
               this.#themeOptions = evt.themeOptions;
             }}
+            @bbsharerequested=${() => {
+              this.openSharePanel();
+            }}
           ></bb-app-preview>`;
         }
       )}`,
