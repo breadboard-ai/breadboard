@@ -81,11 +81,6 @@ function keyFromGraphUrl(url: string) {
   return `cw-${url.replace(/\W/gi, "-")}`;
 }
 
-// TODO(aomarks) Remove when launched.
-const ENABLE_SAVE_RESULTS = new URL(document.location.href).hash.includes(
-  "enableSaveResults"
-);
-
 @customElement("app-basic")
 export class Template extends LitElement implements AppTemplate {
   @property({ type: Object })
@@ -1126,9 +1121,6 @@ export class Template extends LitElement implements AppTemplate {
   }
 
   #renderSaveResultsButton() {
-    if (!ENABLE_SAVE_RESULTS) {
-      return nothing;
-    }
     if (
       this.topGraphResult?.status !== "stopped" ||
       !findFinalOutputValues(this.topGraphResult)
