@@ -3327,7 +3327,7 @@ export class Main extends LitElement {
 
         const ui = html`
           ${
-            showExperimentalComponents
+            !showExperimentalComponents
               ? html`<bb-ve-header
                   .signInAdapter=${signInAdapter}
                   .hasActiveTab=${this.tab !== null}
