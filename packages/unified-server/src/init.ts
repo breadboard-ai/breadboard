@@ -12,10 +12,6 @@ import Core from "@google-labs/core-kit";
 import { isA2 } from "@breadboard-ai/a2";
 import { JsonSerializable, LLMContent } from "@breadboard-ai/types";
 
-const endpoint_url =
-  import.meta.env.VITE_BACKEND_API_ENDPOINT ||
-  "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeStep";
-
 import { Handler } from "@breadboard-ai/embed";
 import { discoverClientDeploymentConfiguration } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 
@@ -27,6 +23,14 @@ declare global {
     gtag: (...args: IArguments[]) => void;
   }
 }
+
+if (!deploymentConfiguration.BACKEND_API_ENDPOINT) {
+  throw new Error(`No BACKEND_API_ENDPOINT was configured`);
+}
+const executeStepEndpoint: string = new URL(
+  "v1beta1/executeStep",
+  deploymentConfiguration.BACKEND_API_ENDPOINT
+).href;
 
 if (deploymentConfiguration?.MEASUREMENT_ID) {
   const id = deploymentConfiguration.MEASUREMENT_ID;
@@ -60,7 +64,7 @@ bootstrap({
   env: [
     {
       path: "/env/settings/backend",
-      data: toLLMContent({ endpoint_url }),
+      data: toLLMContent({ endpoint_url: executeStepEndpoint }),
     },
   ],
   embedHandler: window.self !== window.top ? new Handler() : undefined,
