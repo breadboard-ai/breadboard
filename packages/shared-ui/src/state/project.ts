@@ -21,6 +21,7 @@ import {
   GraphStoreEntry,
   MainGraphIdentifier,
   MutableGraphStore,
+  NodeHandlerMetadata,
   ok,
   Outcome,
   PortIdentifier,
@@ -244,6 +245,25 @@ class ReactiveProject implements ProjectInternal {
     }
 
     return transformed;
+  }
+
+  getMetadataForNode(
+    nodeId: NodeIdentifier,
+    graphId: GraphIdentifier
+  ): Outcome<NodeHandlerMetadata> {
+    const inspectable = this.#store.inspect(this.#mainGraphId, graphId);
+    if (!inspectable) {
+      return err(`Unable to inspect graph with "${this.#mainGraphId}"`);
+    }
+    const node = inspectable.nodeById(nodeId);
+    if (!node) {
+      return err(`Unable to find node with id "${nodeId}`);
+    }
+    const metadata = node.currentDescribe().metadata;
+    if (!metadata) {
+      return err(`Unable to find metadata for node with id "${nodeId}"`);
+    }
+    return metadata;
   }
 
   findOutputPortId(
