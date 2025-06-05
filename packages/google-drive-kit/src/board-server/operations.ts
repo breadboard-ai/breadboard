@@ -65,10 +65,10 @@ export type GraphInfo = {
 };
 
 /** Defines api.ts:AppProperties as stored in the drive file */
-type StoredAppProperties = {
-  title: string;
-  description: string;
-  tags: string;
+export type StoredProperties = {
+  title?: string;
+  description?: string;
+  tags?: string;
   thumbnailUrl?: string;
 };
 
@@ -172,7 +172,7 @@ class DriveListCache {
       const { cache, cacheKey, cachedResponse } =
         await this.#getCacheAndValue(forceInvalidate);
       if (forceInvalidate) {
-        // Conservatively delete the chacked value.
+        // Conservatively delete the cached value.
         cache.delete(cacheKey);
       }
       const cachedLastModified = cachedResponse?.headers?.get("Last-Modified");
@@ -555,7 +555,7 @@ class DriveOperations {
     // Since such requests are cheap and fast it's fine for now.
     // TODO(volodya): Pass the app properties and remove the need for this.
     const response = await retryableFetch(api.makeGetRequest(boardFileId));
-    const appProperties = readAppProperties(await response.json());
+    const appProperties = readProperties(await response.json());
     const url = appProperties.thumbnailUrl;
     return url ? getFileId(url) : undefined;
   }
@@ -583,11 +583,12 @@ class DriveOperations {
             contentType: "application/json; charset=UTF-8",
             data: {
               name,
-              appProperties: createAppProperties(
-                file,
-                descriptor,
-                thumbnailUrl
-              ),
+              properties: createProperties({
+                title: name,
+                description: descriptor.description ?? "",
+                thumbnailUrl,
+                tags: descriptor.metadata?.tags ?? [],
+              }),
               mimeType: GRAPH_MIME_TYPE,
             },
           },
@@ -634,11 +635,12 @@ class DriveOperations {
               name,
               mimeType: GRAPH_MIME_TYPE,
               parents: [parent],
-              appProperties: createAppProperties(
-                fileName,
-                descriptor,
-                thumbnailUrl
-              ),
+              properties: createProperties({
+                title: name,
+                description: descriptor.description ?? "",
+                thumbnailUrl,
+                tags: descriptor.metadata?.tags ?? [],
+              }),
             },
           },
           {
@@ -941,54 +943,52 @@ class DriveOperations {
   }
 }
 
-function createAppProperties(
-  filename: string,
-  descriptor: GraphDescriptor,
-  thumbnailUrl: string | undefined
-): StoredAppProperties {
-  const {
-    title = filename,
-    description = "",
-    metadata: { tags = [] } = {},
-  } = descriptor;
-  const result: StoredAppProperties = {
-    title,
-    description,
-    tags: JSON.stringify(tags),
-    thumbnailUrl: thumbnailUrl ?? "", // undefined here means "do not update".
+/** Creates StoredProperties */
+export function createProperties(properties: AppProperties): StoredProperties {
+  const result: StoredProperties = {
+    title: properties.title,
+    description: properties.description,
+    tags: JSON.stringify(properties.tags),
+    thumbnailUrl: properties.thumbnailUrl, // undefined here means "do not update".
   };
 
   // Drive has limit of how long key+value can be in bytes in UTF8 wo we are truncating the values.
-  let key: keyof StoredAppProperties;
+  let key: keyof StoredProperties;
   for (key in result) {
-    result[key] = truncateValueForUtf8(
-      key,
-      result[key]!,
-      MAX_APP_PROPERTY_LENGTH
-    );
+    if (result[key]) {
+      result[key] = truncateValueForUtf8(
+        key,
+        result[key]!,
+        MAX_APP_PROPERTY_LENGTH
+      );
+    }
   }
   return result;
 }
 
-function readAppProperties(
-  file: DriveFile
-): AppProperties & Properties["properties"] {
-  const {
-    appProperties: { title, description = "", tags, thumbnailUrl } = {},
-  } = file;
-  let parsedTags = [];
+/** Reads properties from the file, using both properties and appProperties (first priority). */
+export function readProperties(file: DriveFile): AppProperties {
+  const storedProperties: StoredProperties = {
+    title: file.properties?.thumbnailUrl || file.appProperties?.title,
+    description: file.appProperties?.description || "",
+    tags: file.appProperties?.tags || file.appProperties.tags,
+    thumbnailUrl:
+      file.properties?.thumbnailUrl || file.appProperties?.thumbnailUrl,
+  };
+
+  let tags: Array<GraphTag> = [];
   try {
-    parsedTags = tags ? JSON.parse(tags) : [];
-    if (!Array.isArray(parsedTags)) parsedTags = [];
+    tags = storedProperties.tags ? JSON.parse(storedProperties.tags) : [];
+    if (!Array.isArray(tags)) tags = [];
   } catch {
     // do nothing.
   }
 
   return {
-    title: title ?? "",
-    description,
-    tags: parsedTags,
-    thumbnailUrl: file.properties?.thumbnailUrl ?? thumbnailUrl,
+    title: storedProperties.title ?? "",
+    description: storedProperties.description ?? "",
+    tags,
+    thumbnailUrl: storedProperties.thumbnailUrl,
   };
 }
 
@@ -1036,7 +1036,7 @@ function toGraphInfos(files: Array<DriveFile>): {
     if (file.modifiedTime && file.modifiedTime > (lastModified ?? "")) {
       lastModified = file.modifiedTime;
     }
-    const appProperties = readAppProperties(file);
+    const appProperties = readProperties(file);
     return {
       id: file.id,
       title: appProperties.title || file.name.replace(/(\.bgl)?\.json$/, ""),

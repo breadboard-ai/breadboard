@@ -15,6 +15,7 @@ export type DriveFile = {
   name: string;
   resourceKey: string;
   appProperties: Record<string, string>;
+  properties: Record<string, string>;
   modifiedTime?: string;
 } & Properties;
 
@@ -24,7 +25,7 @@ export type DriveFileQuery = {
 
 export type Properties = {
   properties: {
-    thumbnailUrl: string;
+    thumbnailUrl?: string;
   };
 };
 
