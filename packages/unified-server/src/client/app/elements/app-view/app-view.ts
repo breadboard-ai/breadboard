@@ -54,6 +54,10 @@ import { loadImage } from "@breadboard-ai/shared-ui/utils/image.js";
 import { boardServerContext } from "@breadboard-ai/shared-ui/contexts/board-server.js";
 import { blobHandleToUrl } from "@breadboard-ai/shared-ui/utils/blob-handle-to-url.js";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import {
+  clientDeploymentConfigurationContext,
+  discoverClientDeploymentConfiguration,
+} from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 
 @customElement("app-view")
 export class AppView extends LitElement {
@@ -71,6 +75,10 @@ export class AppView extends LitElement {
 
   @provide({ context: BreadboardUIContext.environmentContext })
   accessor environment: BreadboardUIContext.Environment;
+
+  @provide({ context: clientDeploymentConfigurationContext })
+  accessor clientDeploymentConfiguration =
+    discoverClientDeploymentConfiguration();
 
   @provide({ context: BreadboardUIContext.tokenVendorContext })
   accessor tokenVendor: ConnectionClient.TokenVendor;
