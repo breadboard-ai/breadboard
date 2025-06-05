@@ -16,7 +16,7 @@ import post from "./post.js";
 import invokeBoard from "./invoke.js";
 import describeBoard from "./describe.js";
 import runBoard from "./run.js";
-import handleAssetsDriveRequest from "./assets-drive.js";
+import { makeHandleAssetsDriveRequest } from "./assets-drive.js";
 import { loadBoard, parseBoardId } from "./loader.js";
 
 export function serveBoardsAPI(serverConfig: ServerConfig): Router {
@@ -61,6 +61,10 @@ export function serveBoardsAPI(serverConfig: ServerConfig): Router {
     runBoard(serverConfig, req, res)
   );
   router.post("/@:user/:name/describe", loadBoard(), describeBoard);
+
+  const handleAssetsDriveRequest = makeHandleAssetsDriveRequest({
+    googleDriveProxyUrl: serverConfig.googleDriveProxyUrl,
+  });
 
   router.post(
     "/@:_user/:_name/assets/drive/:driveId",

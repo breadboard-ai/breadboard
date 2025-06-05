@@ -82,6 +82,7 @@ export function createRouter(config: ServerConfig): Router {
 export function createServerConfig(opts: {
   storageProvider: StorageProvider;
   proxyServerAllowFilter?: AllowFilterFunction;
+  googleDriveProxyUrl: string | undefined;
 }): ServerConfig {
   const {
     PORT = DEFAULT_PORT,
@@ -97,5 +98,6 @@ export function createServerConfig(opts: {
     serverUrl: SERVER_URL,
     storageBucket: STORAGE_BUCKET,
     proxyServerAllowFilter: opts?.proxyServerAllowFilter,
+    googleDriveProxyUrl: opts.googleDriveProxyUrl,
   };
 }

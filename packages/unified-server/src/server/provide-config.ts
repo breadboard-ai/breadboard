@@ -17,6 +17,7 @@ export { getConfigFromSecretManager };
  */
 export type ServerDeploymentConfiguration = {
   BACKEND_API_ENDPOINT?: string;
+  ENABLE_GOOGLE_DRIVE_PROXY?: boolean;
 };
 
 export type SecretValueFormat = {

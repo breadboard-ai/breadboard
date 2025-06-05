@@ -6,7 +6,10 @@
 
 import { createServer, createServerConfig } from "./server.js";
 
-const config = createServerConfig({ storageProvider: "firestore" });
+const config = createServerConfig({
+  storageProvider: "firestore",
+  googleDriveProxyUrl: undefined,
+});
 const server = createServer(config);
 
 server.listen(config.port);

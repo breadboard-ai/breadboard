@@ -14,7 +14,12 @@ suite("Board Server integration test", () => {
 
   before(async () => {
     process.env.STORAGE_BUCKET = "test-bucket";
-    server = createServer(createServerConfig({ storageProvider: "in-memory" }));
+    server = createServer(
+      createServerConfig({
+        storageProvider: "in-memory",
+        googleDriveProxyUrl: undefined,
+      })
+    );
     store = server.locals.store;
     await store.createUser(user.username, user.apiKey);
   });

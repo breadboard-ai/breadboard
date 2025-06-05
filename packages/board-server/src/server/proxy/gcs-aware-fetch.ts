@@ -15,7 +15,6 @@ import type { BoardServerStore, ServerInfo } from "../store.js";
 import { GoogleStorageBlobStore } from "../blob-store.js";
 import { initializeDriveClient } from "../boards/assets-drive.js";
 import type { ServerConfig } from "../config.js";
-import type { access } from "fs";
 
 export { GcsAwareFetch };
 
@@ -44,7 +43,12 @@ class GcsAwareFetch {
     serverUrl: string,
     inputs: InputValues
   ) {
-    return prepareGcsData(inputs, bucketName, serverUrl);
+    return prepareGcsData(
+      inputs,
+      bucketName,
+      serverUrl,
+      this.serverConfig.googleDriveProxyUrl
+    );
   }
 
   #procesFetchOutputs(serverUrl: string, outputs: OutputValues | void) {
@@ -115,7 +119,8 @@ class GcsAwareFetch {
 async function prepareGcsData(
   data: InputValues,
   bucketName: string,
-  serverUrl: string
+  serverUrl: string,
+  googleDriveProxyUrl: string | undefined
 ): Promise<InputValues> {
   let accessToken = "";
   if (data !== null && typeof data === "object" && "headers" in data) {
@@ -149,7 +154,13 @@ async function prepareGcsData(
   };
   body["output_gcs_config"] = gcsOutputConfig;
   console.log("Set output_gcs_config: ", gcsOutputConfig);
-  await convertToGcsReferences(body, blobStore, bucketName, accessToken);
+  await convertToGcsReferences(
+    body,
+    blobStore,
+    bucketName,
+    accessToken,
+    googleDriveProxyUrl
+  );
   return data;
 }
 
@@ -220,7 +231,8 @@ async function convertToGcsReferences(
   body: object,
   blobStore: GoogleStorageBlobStore,
   bucketName: string,
-  accessToken: string
+  accessToken: string,
+  googleDriveProxyUrl: string | undefined
 ) {
   console.log("Converting to GCS references");
   const executionInputs = maybeGetExecutionInputs(body);
@@ -241,7 +253,8 @@ async function convertToGcsReferences(
           console.log("Fetching Drive ID: ", driveId);
           const arrayBuffer = await fetchDriveAssetAsBuffer(
             driveId,
-            accessToken
+            accessToken,
+            googleDriveProxyUrl
           );
           // Store temporarily in GCS as file transfer mechanism.
           blobId = await blobStore.saveBuffer(arrayBuffer, mimetype);
@@ -261,8 +274,16 @@ async function convertToGcsReferences(
 }
 
 // Fetch media asset from long term  storage in Drive.
-async function fetchDriveAssetAsBuffer(driveId: string, accessToken: string) {
-  const driveClient = initializeDriveClient(accessToken, "");
+async function fetchDriveAssetAsBuffer(
+  driveId: string,
+  accessToken: string,
+  googleDriveProxyUrl: string | undefined
+) {
+  const driveClient = initializeDriveClient(
+    accessToken,
+    "",
+    googleDriveProxyUrl
+  );
   const gettingMedia = await driveClient.getFileMedia(driveId);
   const arrayBuffer = await gettingMedia.arrayBuffer();
   return Buffer.from(arrayBuffer);
