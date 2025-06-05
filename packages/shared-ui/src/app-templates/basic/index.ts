@@ -75,14 +75,16 @@ import { findFinalOutputValues } from "../../utils/save-results.js";
 import { consume } from "@lit/context";
 import { boardServerContext } from "../../contexts/board-server.js";
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
-import { LLMContent, NodeValue } from "@breadboard-ai/types";
+import { NodeValue } from "@breadboard-ai/types";
 
 function keyFromGraphUrl(url: string) {
   return `cw-${url.replace(/\W/gi, "-")}`;
 }
 
-// TODO(aomarks) Remove when functional.
-const ENABLE_SAVE_RESULTS = false;
+// TODO(aomarks) Remove when launched.
+const ENABLE_SAVE_RESULTS = new URL(document.location.href).hash.includes(
+  "enableSaveResults"
+);
 
 @customElement("app-basic")
 export class Template extends LitElement implements AppTemplate {
