@@ -426,6 +426,17 @@ async function bootstrap(args: BootstrapArguments = {}) {
       }
 
       evt.target.remove();
+
+      if (config.runResults) {
+        // Clear any saved results we might be displaying so that the user gets
+        // a totally fresh run when they click reset.
+        config.runResults = null;
+        const url = new URL(document.location.href);
+        if (url.searchParams.has("results")) {
+          url.searchParams.delete("results");
+          window.history.pushState({}, "", url);
+        }
+      }
       await initAppView();
     });
   }
