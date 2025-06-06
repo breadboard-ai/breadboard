@@ -33,7 +33,7 @@ function chicletHtml(
     subGraphId
   );
 
-  return `<label class="chiclet ${metadataTags ? metadataTags.join(" ") : ""} ${type} ${assetType} ${invalid ? "invalid" : ""}" contenteditable="false">${metadataIcon ? `<span class="g-icon" data-icon="${metadataIcon}"></span>` : ""}<span>${Template.preamble(part)}</span><span class="visible">${title}</span><span>${Template.postamble()}</span></label>`;
+  return `<label class="chiclet ${metadataTags ? metadataTags.join(" ") : ""} ${type} ${assetType} ${invalid ? "invalid" : ""}" contenteditable="false">${metadataIcon ? `<span class="g-icon filled round" data-icon="${metadataIcon}"></span>` : ""}<span>${Template.preamble(part)}</span><span class="visible">${title}</span><span>${Template.postamble()}</span></label>`;
 }
 
 @customElement("bb-text-editor")
@@ -311,8 +311,25 @@ export class TextEditor extends LitElement {
       }
       label.dataset.path = path;
 
+      const { icon: metadataIcon, tags: metadataTags } = expandChiclet(
+        { type: templatePartType, title: title.trim(), path, mimeType },
+        this.projectState,
+        this.subGraphId
+      );
+
+      if (metadataIcon) {
+        const iconSpan = document.createElement("span");
+        iconSpan.classList.add("g-icon", "filled", "round");
+        iconSpan.dataset["icon"] = metadataIcon;
+        label.appendChild(iconSpan);
+      }
+
+      if (metadataTags) {
+        metadataTags.forEach((tag) => label.classList.add(tag));
+      }
+
       preambleText.textContent = Template.preamble({
-        title,
+        title: title.trim(),
         path,
         type: templatePartType,
         mimeType,

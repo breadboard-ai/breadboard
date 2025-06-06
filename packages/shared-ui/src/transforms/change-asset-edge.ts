@@ -95,7 +95,7 @@ class ChangeAssetEdge implements EditTransform {
           path: this.edge.assetPath,
           type: "asset",
           mimeType: getMimeType(asset.data),
-        })}${asset.title}${Template.postamble()}`;
+        })}${asset.title.trim()}${Template.postamble()}`;
 
         targetPart.text += ` ${item} `;
         break;

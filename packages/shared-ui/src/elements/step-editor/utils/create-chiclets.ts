@@ -87,7 +87,10 @@ export function createChiclets(
           : ""} ${type} ${assetType} ${invalid ? "invalid" : ""}"
       >
         ${metadataIcon
-          ? html`<span class="g-icon" data-icon="${metadataIcon}"></span>`
+          ? html`<span
+              class="g-icon filled round"
+              data-icon="${metadataIcon}"
+            ></span>`
           : nothing}
         <span>${Template.preamble(part)}</span
         ><span class="visible">${title}</span

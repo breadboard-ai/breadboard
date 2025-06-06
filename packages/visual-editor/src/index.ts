@@ -4234,6 +4234,7 @@ export class Main extends LitElement {
               @bbassetedgechange=${async (
                 evt: BreadboardUI.Events.AssetEdgeChangeEvent
               ) => {
+                console.log(evt.changeType, evt.assetEdge, evt.subGraphId);
                 await this.#runtime.edit.changeAssetEdge(
                   this.tab,
                   evt.changeType,
