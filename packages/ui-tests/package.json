@@ -1,0 +1,23 @@
+{
+  "name": "ui-tests",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.52.0",
+    "@types/node": "^22.0.0"
+  },
+  "dependencies": {
+    "playwright": "^1.52.0"
+  },
+  "scripts": {
+    "test": "npx playwright test --timeout=5000",
+    "test-ide": "npx playwright test --ui",
+    "debug": "npx playwright test --debug",
+    "show-report": "npx playwright show-report"
+  }  
+}
