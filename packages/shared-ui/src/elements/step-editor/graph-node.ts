@@ -235,6 +235,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
       :host([selected]) #container,
       :host([selected]) #container #chat-adornment {
+        transition: outline 0.15s cubic-bezier(0, 0, 0.3, 1);
         outline: 3px solid var(--n-0);
       }
 
@@ -564,6 +565,11 @@ export class GraphNode extends Box implements DragConnectorReceiver {
             margin: 0 2px;
           }
 
+          & .used-in-step {
+            margin: var(--bb-grid-size-3) 0;
+            color: var(--n-0);
+          }
+
           & .chiclet {
             max-width: 100%;
           }
@@ -716,6 +722,16 @@ export class GraphNode extends Box implements DragConnectorReceiver {
                             : ""
                         )
                       );
+
+                      if (chiclets.length > 0) {
+                        chiclets.unshift(
+                          html`<h2
+                            class="used-in-step md-body-small w-500 sans-flex round"
+                          >
+                            Used in this step
+                          </h2>`
+                        );
+                      }
                     } else {
                       value = html`<p>Value not set</p>`;
                     }

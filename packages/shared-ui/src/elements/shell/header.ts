@@ -193,12 +193,14 @@ export class VEHeader extends LitElement {
         outline: none;
         background: transparent;
 
-        &:hover {
-          border: 1px solid var(--n-70);
-        }
+        &:not([disabled]) {
+          &:hover {
+            border: 1px solid var(--n-70);
+          }
 
-        &:focus {
-          border: 1px solid var(--n-50);
+          &:focus {
+            border: 1px solid var(--n-50);
+          }
         }
       }
 

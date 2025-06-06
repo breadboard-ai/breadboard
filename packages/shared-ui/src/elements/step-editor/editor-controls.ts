@@ -42,6 +42,7 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { SIGN_IN_CONNECTION_ID } from "../../utils/signin-adapter.js";
 import { InputChangeEvent } from "../../plugins/input-plugin.js";
 import { icons } from "../../styles/icons.js";
+import { iconSubstitute } from "../../utils/icon-substute.js";
 
 const QUICK_ADD_ADJUSTMENT = -20;
 
@@ -235,7 +236,6 @@ export class EditorControls extends LitElement {
 
           border-radius: var(--bb-grid-size-16);
           height: var(--bb-grid-size-10);
-          box-shadow: var(--bb-elevation-16-heavy);
           background: var(--bb-neutral-0);
           padding: 0;
 
@@ -256,16 +256,19 @@ export class EditorControls extends LitElement {
 
             &::before {
               content: "";
-              height: calc(100% + 4px);
+              height: calc(100% + -8px);
               position: absolute;
-              top: -2px;
+              top: 4px;
               left: -3px;
               translate: -0.5px 0;
-              border-left: 1px solid var(--bb-neutral-100);
+              border-left: 1px solid var(--n-90);
             }
           }
 
           & button {
+            display: flex;
+            align-items: center;
+            color: var(--n-0);
             margin-right: var(--bb-grid-size);
             background-color: var(--bb-neutral-0);
             transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
@@ -277,38 +280,13 @@ export class EditorControls extends LitElement {
               padding-left: var(--bb-grid-size-4);
             }
 
+            & .g-icon {
+              margin-right: var(--bb-grid-size-2);
+            }
+
             &:hover,
             &:focus {
               background-color: var(--bb-neutral-50);
-            }
-
-            &::before {
-              content: "";
-              width: 20px;
-              height: 20px;
-              margin-right: var(--bb-grid-size-2);
-              background: var(--bb-icon-board) center center / 20px 20px
-                no-repeat;
-            }
-
-            &.generative::before {
-              background-image: var(--bb-add-icon-generative);
-            }
-
-            &.input::before {
-              background-image: var(--bb-icon-input);
-            }
-
-            &.combine-outputs::before {
-              background-image: var(--bb-icon-table-rows);
-            }
-
-            &.display::before {
-              background-image: var(--bb-icon-responsive-layout);
-            }
-
-            &.ask-user::before {
-              background-image: var(--bb-icon-chat-mirror);
             }
           }
         }
@@ -869,7 +847,12 @@ export class EditorControls extends LitElement {
         ...generate,
         ...output,
       ].map((item) => {
-        const classes: Record<string, boolean> = {};
+        const classes: Record<string, boolean> = {
+          "sans-flex": true,
+          "w-500": true,
+          "md-body-small": true,
+          round: true,
+        };
         if (item.metadata.icon) {
           classes[item.metadata.icon] = true;
         }
@@ -888,6 +871,11 @@ export class EditorControls extends LitElement {
             evt.dataTransfer.setData(DATA_TYPE, item.id);
           }}
         >
+          ${item.metadata.icon
+            ? html`<span class="g-icon filled round"
+                >${iconSubstitute(item.metadata.icon)}</span
+              >`
+            : nothing}
           ${item.metadata.title ?? "Untitled"}
         </button>`;
       });
@@ -1038,8 +1026,8 @@ export class EditorControls extends LitElement {
             .values=${[
               {
                 id: "asset",
-                title: "Asset",
-                icon: "alternate_email",
+                title: "Add Assets",
+                icon: "add_box",
                 hidden: true,
               },
               {
