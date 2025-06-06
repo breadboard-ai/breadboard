@@ -28,6 +28,8 @@ import { AssetShelf } from "../add-asset/asset-shelf";
 import { maybeConvertToYouTube } from "../../../utils/substitute-input";
 import { LLMContent } from "@breadboard-ai/types";
 import { icons } from "../../../styles/icons";
+import { colorsLight } from "../../../styles/host/colors-light";
+import { type } from "../../../styles/host/type";
 
 interface SupportedActions {
   allowAddAssets: boolean;
@@ -62,6 +64,8 @@ export class FloatingInput extends LitElement {
 
   static styles = [
     icons,
+    colorsLight,
+    type,
     css`
       * {
         box-sizing: border-box;
@@ -116,6 +120,7 @@ export class FloatingInput extends LitElement {
             outline: none;
             width: 100%;
             scrollbar-width: none;
+            color: var(--p-15, var(--n-15, var(--bb-neutral-900)));
           }
         }
 
