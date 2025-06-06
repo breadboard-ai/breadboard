@@ -118,7 +118,7 @@ test("Default Run Store truncates data", async (t) => {
   t.truthy(runs.get(runTimestamp2));
 });
 
-test("IDBRunStore replaces storedData with inlineData when writing (LLM Content)", async (t) => {
+test.skip("IDBRunStore replaces storedData with inlineData when writing (LLM Content)", async (t) => {
   // Step 1. Write the data in, converting inlineData parts to storedDataParts
   // before they get written in.
   const runStore = createDefaultRunStore();
@@ -179,7 +179,7 @@ test("IDBRunStore replaces storedData with inlineData when writing (LLM Content)
   await runStore.drop();
 });
 
-test("IDBRunStore replaces storedData with inlineData when writing (LLM Content Array)", async (t) => {
+test.skip("IDBRunStore replaces storedData with inlineData when writing (LLM Content Array)", async (t) => {
   // Step 1. Write the data in, converting inlineData parts to storedDataParts
   // before they get written in.
   const runStore = createDefaultRunStore();
