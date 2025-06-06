@@ -194,7 +194,7 @@ export class HTTPClientTransport<Request, Response>
         },
       }) as PatchedReadableStream<Response>,
       writableRequests: new WritableStream<Request>({
-        async write(chunk, controller) {
+        async write(chunk) {
           if (!responseResolve) {
             throw new Error(
               "HTTPClientTransport supports only one write per stream instance."
@@ -205,7 +205,10 @@ export class HTTPClientTransport<Request, Response>
             body: JSON.stringify(chunk),
           });
           if (!response.ok) {
-            controller.error(new Error(`HTTP error: ${response.status}`));
+            const details = await response.text();
+            throw new Error(
+              `HTTP error: ${response.status}, details: ${details}`
+            );
           }
           responseResolve(
             response.body

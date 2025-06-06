@@ -192,8 +192,9 @@ export class ProxyClient {
     writer.close();
 
     const result = await reader.read();
-    if (result.done)
+    if (result.done) {
       throw new Error("Unexpected proxy failure: empty response.");
+    }
 
     const [type] = result.value;
     if (type === "proxy") {
