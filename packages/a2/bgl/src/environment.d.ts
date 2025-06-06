@@ -218,7 +218,10 @@ declare type StoredDataCapabilityPart = {
   storedData: {
     handle: DataStoreHandle;
     mimeType: string;
+    contentHash?: string;
+    contentLength?: number;
   };
+  data?: string;
 };
 
 declare type FileDataPart = {
