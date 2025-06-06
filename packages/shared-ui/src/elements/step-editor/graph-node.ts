@@ -407,7 +407,8 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         & #content {
           position: relative;
           background: var(--bb-neutral-0);
-          padding: var(--bb-grid-size-3) var(--bb-grid-size-4);
+          padding: var(--bb-grid-size-3) var(--bb-grid-size-4)
+            var(--bb-grid-size-4) var(--bb-grid-size-4);
           font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
             var(--bb-font-family);
           color: var(--bb-neutral-900);
@@ -447,6 +448,10 @@ export class GraphNode extends Box implements DragConnectorReceiver {
                 white-space: pre-line;
                 margin-bottom: var(--bb-grid-size-3);
                 overflow: hidden;
+
+                &:last-of-type {
+                  margin-bottom: 0;
+                }
 
                 /** 7 lines of text **/
                 max-height: 168px;
