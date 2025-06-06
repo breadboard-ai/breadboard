@@ -50,6 +50,17 @@ export function expandChiclet(
     case "tool": {
       const toolInfo = projectState?.fastAccess.tools.get(path);
       icon = toolInfo?.icon;
+      switch (icon) {
+        case "map-search": {
+          icon = "map_search";
+          break;
+        }
+
+        case "web-search": {
+          icon = "search";
+          break;
+        }
+      }
       break;
     }
 
@@ -68,6 +79,11 @@ export function expandChiclet(
 
       if (assetInfo?.metadata?.subType) {
         switch (assetInfo.metadata.subType) {
+          case "gdrive": {
+            icon = "drive";
+            break;
+          }
+
           case "drawable": {
             icon = "draw";
             break;
