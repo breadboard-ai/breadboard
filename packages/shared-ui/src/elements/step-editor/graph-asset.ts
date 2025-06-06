@@ -35,6 +35,8 @@ import { InspectableAsset, ok } from "@google-labs/breadboard";
 import { SignalWatcher } from "@lit-labs/signals";
 import { GraphAsset as GraphAssetState } from "../../state/types.js";
 import { icons } from "../../styles/icons.js";
+import { colorsLight } from "../../styles/host/colors-light.js";
+import { type } from "../../styles/host/type.js";
 
 const EDGE_STANDARD = getGlobalColor("--bb-neutral-400");
 
@@ -69,6 +71,9 @@ export class GraphAsset
   implements DragConnectorReceiver
 {
   @property()
+  accessor ownerGraph = "";
+
+  @property()
   accessor assetTitle = "";
 
   @property({ reflect: true })
@@ -96,6 +101,8 @@ export class GraphAsset
   accessor state: GraphAssetState | null = null;
 
   static styles = [
+    type,
+    colorsLight,
     icons,
     Box.styles,
     css`
@@ -119,25 +126,20 @@ export class GraphAsset
       }
 
       :host {
-        --background: var(--bb-inputs-50);
-        --border: var(--bb-neutral-500);
-        --header-border: var(--bb-inputs-300);
+        --background: var(--ui-asset);
       }
 
       :host([updating]) {
-        --background: var(--bb-neutral-100);
-        --border: var(--bb-neutral-600);
-        --header-border: var(--bb-neutral-300);
+        --background: var(--n-70);
       }
 
       :host([selected]) #container {
-        outline: 2px solid var(--border);
+        outline: 3px solid var(--n-0);
       }
 
       #container {
-        width: 260px;
+        width: 300px;
         border-radius: var(--bb-grid-size-3);
-        outline: 1px solid var(--border);
         color: var(--bb-neutral-900);
         position: relative;
 
@@ -146,7 +148,7 @@ export class GraphAsset
           top: 0px;
           left: 100%;
           width: 46px;
-          height: 36px;
+          height: 48px;
         }
 
         #default-add {
@@ -177,16 +179,16 @@ export class GraphAsset
         & header {
           display: flex;
           align-items: center;
+          justify-content: flex-start;
           background: var(--background);
-          height: var(--bb-grid-size-9);
+          height: var(--bb-grid-size-12);
           width: 100%;
-          padding: 0 var(--bb-grid-size-3);
+          padding: 0 var(--bb-grid-size-4);
           border-radius: var(--bb-grid-size-3) var(--bb-grid-size-3) 0 0;
           font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
             var(--bb-font-family);
           cursor: pointer;
           position: relative;
-          justify-content: center;
 
           & span:not(.g-icon) {
             text-overflow: ellipsis;
@@ -213,12 +215,25 @@ export class GraphAsset
             height: 10px;
             border: none;
             border-radius: 50%;
-            background: var(--border);
+            background: var(--n-100);
             right: -5px;
-            top: 18px;
+            top: 24px;
             translate: 0 -50%;
             font-size: 0;
             padding: 0;
+            outline: 2px solid var(--n-0);
+
+            &::after {
+              content: "";
+              position: absolute;
+              display: block;
+              width: 4px;
+              height: 4px;
+              border-radius: 50%;
+              background: var(--n-0);
+              left: 3px;
+              top: 3px;
+            }
 
             &:not([disabled]) {
               cursor: pointer;
@@ -240,7 +255,7 @@ export class GraphAsset
         & #content {
           position: relative;
           background: var(--bb-neutral-0);
-          padding: var(--bb-grid-size-2) var(--bb-grid-size-2);
+          padding: var(--bb-grid-size-3) var(--bb-grid-size-4);
           font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
             var(--bb-font-family);
           color: var(--bb-neutral-900);
@@ -250,6 +265,14 @@ export class GraphAsset
           max-height: 320px;
           overflow: hidden;
 
+          & #content-container {
+            height: 100%;
+            width: 100%;
+            padding: 0;
+            max-height: 296px;
+            overflow: hidden;
+          }
+
           & .loading {
             margin: 0;
           }
@@ -257,6 +280,7 @@ export class GraphAsset
           bb-llm-output {
             --output-lite-border-color: transparent;
             --output-border-radius: var(--bb-grid-size);
+            margin-bottom: 0;
           }
         }
       }
@@ -380,6 +404,10 @@ export class GraphAsset
     }
 
     let icon = "alternate_email";
+    if (this.asset?.type === "file") {
+      icon = "upload";
+    }
+
     if (this.asset?.subType) {
       switch (this.asset.subType) {
         case "youtube":
@@ -511,19 +539,21 @@ export class GraphAsset
           ${this.updating
             ? html`<p class="loading">Loading asset details...</p>`
             : nothing}
-          ${html`<bb-llm-output
-            @outputsloaded=${() => {
-              this.updating = false;
-            }}
-            .value=${this.#getPreviewValue()}
-            .clamped=${false}
-            .lite=${true}
-            .showPDFControls=${false}
-            .showModeToggle=${false}
-            .showEntrySelector=${false}
-            .showExportControls=${false}
-            .graphUrl=${this.graphUrl}
-          ></bb-llm-output>`}
+          ${html`<div id="content-container">
+            <bb-llm-output
+              @outputsloaded=${() => {
+                this.updating = false;
+              }}
+              .value=${this.#getPreviewValue()}
+              .clamped=${false}
+              .lite=${true}
+              .showPDFControls=${false}
+              .showModeToggle=${false}
+              .showEntrySelector=${false}
+              .showExportControls=${false}
+              .graphUrl=${this.graphUrl}
+            ></bb-llm-output>
+          </div>`}
         </div>
       </section>
 

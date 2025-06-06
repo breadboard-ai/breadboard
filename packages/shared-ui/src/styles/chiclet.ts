@@ -6,8 +6,10 @@
 
 import { css, CSSResultGroup } from "lit";
 import { colorsLight } from "./host/colors-light";
+import { type } from "./host/type";
 
 export const styles = [
+  type,
   colorsLight,
   css`
     .chiclet {
@@ -16,7 +18,7 @@ export const styles = [
       padding: 0 var(--bb-grid-size-2) 0;
       background: var(--bb-neutral-50);
       color: var(--bb-neutral-700);
-      border-radius: var(--bb-grid-size-16);
+      border-radius: var(--bb-grid-size-2);
       border: none;
       height: var(--bb-grid-size-5);
       caret-color: transparent;
@@ -60,17 +62,19 @@ export const styles = [
       }
 
       &.input {
-        background: var(--ui-get-input) 5px center / 16px 16px no-repeat;
+        background: var(--ui-get-input-secondary) 5px center / 16px 16px
+          no-repeat;
         color: var(--n-10);
       }
 
       &.generative {
-        background: var(--ui-generate) 5px center / 16px 16px no-repeat;
+        background: var(--ui-generate-secondary) 5px center / 16px 16px
+          no-repeat;
         color: var(--n-10);
       }
 
       &.asset {
-        background: var(--ui-asset) 5px center / 16px 16px no-repeat;
+        background: var(--ui-asset-secondary) 5px center / 16px 16px no-repeat;
         color: var(--n-10);
       }
 

@@ -82,7 +82,8 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { DATA_TYPE, MOVE_GRAPH_ID } from "./constants";
 import { AssetMetadata } from "@breadboard-ai/types";
 import { isCtrlCommand } from "../../utils/is-ctrl-command";
-import { RendererState } from "../../state";
+import { Project, RendererState } from "../../state";
+import { colorsLight } from "../../styles/host/colors-light.js";
 
 @customElement("bb-renderer")
 export class Renderer extends LitElement {
@@ -91,6 +92,9 @@ export class Renderer extends LitElement {
 
   @property({ reflect: true, type: Boolean })
   accessor readOnly = false;
+
+  @property()
+  accessor projectState: Project | null = null;
 
   @property()
   accessor topGraphResult: TopGraphRunResult | null = null;
@@ -170,92 +174,95 @@ export class Renderer extends LitElement {
   @state()
   accessor showDisclaimer = false;
 
-  static styles = css`
-    * {
-      box-sizing: border-box;
-    }
+  static styles = [
+    colorsLight,
+    css`
+      * {
+        box-sizing: border-box;
+      }
 
-    :host {
-      display: block;
-      background: var(--bb-neutral-50);
-      overflow: hidden;
-      transform: translate(0, 0);
-      contain: strict;
-      container-type: size;
-      user-select: none;
-      width: 100%;
-      height: 100%;
-      outline: none;
-      touch-action: none;
-      position: relative;
-    }
-
-    :host([interactionmode="pan"]) {
-      cursor: grab;
-    }
-
-    :host([interactionmode="pan"][isdragpanning]) {
-      cursor: grabbing;
-    }
-
-    #disclaimer {
-      position: absolute;
-      left: 0;
-      bottom: 8px;
-      width: 100%;
-      margin: 0;
-      font: 500 10px / 1 var(--bb-font-family);
-      color: var(--n-50, var(--bb-neutral-500));
-      text-align: center;
-      padding: var(--bb-grid-size);
-      background: var(--s-90, var(--neutral-50, transparent));
-      opacity: 0;
-      animation: fadeIn 0.6s cubic-bezier(0, 0, 0.3, 1) forwards;
-    }
-
-    #overlay {
-      display: none;
-      position: absolute;
-      border: 1px solid green;
-      width: calc(100% + calc(2 * var(--cull-padding)));
-      height: calc(100% + calc(2 * var(--cull-padding)));
-      top: calc(var(--cull-padding) * -1);
-      left: calc(var(--cull-padding) * -1);
-      pointer-events: none;
-
-      &.active {
+      :host {
         display: block;
+        background: var(--n-95);
+        overflow: hidden;
+        transform: translate(0, 0);
+        contain: strict;
+        container-type: size;
+        user-select: none;
+        width: 100%;
+        height: 100%;
+        outline: none;
+        touch-action: none;
+        position: relative;
       }
-    }
 
-    #selection {
-      display: block;
-      pointer-events: none;
-      position: absolute;
-      border: 1px solid var(--bb-neutral-500);
-      background: oklch(from var(--bb-neutral-900) l c h / 0.05);
-      z-index: 4;
-    }
+      :host([interactionmode="pan"]) {
+        cursor: grab;
+      }
 
-    bb-editor-controls {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 3;
-    }
+      :host([interactionmode="pan"][isdragpanning]) {
+        cursor: grabbing;
+      }
 
-    @keyframes fadeIn {
-      from {
+      #disclaimer {
+        position: absolute;
+        left: 0;
+        bottom: 8px;
+        width: 100%;
+        margin: 0;
+        font: 500 10px / 1 var(--bb-font-family);
+        color: var(--n-50, var(--bb-neutral-500));
+        text-align: center;
+        padding: var(--bb-grid-size);
+        background: var(--s-90, var(--neutral-50, transparent));
         opacity: 0;
+        animation: fadeIn 0.6s cubic-bezier(0, 0, 0.3, 1) forwards;
       }
 
-      to {
-        opacity: 1;
+      #overlay {
+        display: none;
+        position: absolute;
+        border: 1px solid green;
+        width: calc(100% + calc(2 * var(--cull-padding)));
+        height: calc(100% + calc(2 * var(--cull-padding)));
+        top: calc(var(--cull-padding) * -1);
+        left: calc(var(--cull-padding) * -1);
+        pointer-events: none;
+
+        &.active {
+          display: block;
+        }
       }
-    }
-  `;
+
+      #selection {
+        display: block;
+        pointer-events: none;
+        position: absolute;
+        border: 1px solid var(--bb-neutral-500);
+        background: oklch(from var(--bb-neutral-900) l c h / 0.05);
+        z-index: 4;
+      }
+
+      bb-editor-controls {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 3;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+
+        to {
+          opacity: 1;
+        }
+      }
+    `,
+  ];
 
   #editorControls: Ref<EditorControls> = createRef();
 
@@ -948,6 +955,7 @@ export class Renderer extends LitElement {
       mainGraph.edges = this.graph.edges();
       mainGraph.rendererState = this.state;
       mainGraph.readOnly = this.readOnly;
+      mainGraph.projectState = this.projectState;
       if (this.showAssetsInGraph) {
         mainGraph.assets = this.graph.assets();
         mainGraph.assetEdges = this.graph.assetEdges();
@@ -973,6 +981,8 @@ export class Renderer extends LitElement {
         subGraph.nodes = graph.nodes();
         subGraph.edges = graph.edges();
         subGraph.rendererState = this.state;
+        subGraph.readOnly = this.readOnly;
+        subGraph.projectState = this.projectState;
         subGraph.allowEdgeAttachmentMove = this.allowEdgeAttachmentMove;
         subGraph.resetTransform();
       }

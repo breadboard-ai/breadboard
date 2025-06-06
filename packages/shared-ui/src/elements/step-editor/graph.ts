@@ -134,6 +134,7 @@ export class Graph extends Box {
       const x = visual?.x ?? 0;
       const y = visual?.y ?? 0;
 
+      graphNode.ownerGraph = this.graphId;
       graphNode.updating = node.type().currentMetadata().updating ?? false;
       graphNode.nodeTitle = node.title();
       graphNode.nodeDescription = node.descriptor.metadata?.description || "";
@@ -349,6 +350,7 @@ export class Graph extends Box {
       graphAsset.assetTitle = asset.title;
       graphAsset.asset = asset;
       graphAsset.graphUrl = this.url;
+      graphAsset.ownerGraph = this.graphId;
       graphAsset.transform.e = x;
       graphAsset.transform.f = y;
 
