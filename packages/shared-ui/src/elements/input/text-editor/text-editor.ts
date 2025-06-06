@@ -3,7 +3,11 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { Template, TemplatePartType } from "@google-labs/breadboard";
+import {
+  Template,
+  TemplatePart,
+  TemplatePartType,
+} from "@google-labs/breadboard";
 import { css, html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
@@ -13,6 +17,24 @@ import { FastAccessMenu } from "../../elements";
 import { escapeHTMLEntities } from "../../../utils";
 import { styles as ChicletStyles } from "../../../styles/chiclet.js";
 import { getAssetType } from "../../../utils/mime-type";
+import { icons } from "../../../styles/icons";
+import { expandChiclet } from "../../../utils/expand-chiclet";
+
+function chicletHtml(
+  part: TemplatePart,
+  projectState: Project | null,
+  subGraphId: string | null
+) {
+  const { type, title, invalid, mimeType } = part;
+  const assetType = getAssetType(mimeType) ?? "";
+  const { icon: metadataIcon, tags: metadataTags } = expandChiclet(
+    part,
+    projectState,
+    subGraphId
+  );
+
+  return `<label class="chiclet ${metadataTags ? metadataTags.join(" ") : ""} ${type} ${assetType} ${invalid ? "invalid" : ""}" contenteditable="false">${metadataIcon ? `<span class="g-icon" data-icon="${metadataIcon}"></span>` : ""}<span>${Template.preamble(part)}</span><span class="visible">${title}</span><span>${Template.postamble()}</span></label>`;
+}
 
 @customElement("bb-text-editor")
 export class TextEditor extends LitElement {
@@ -21,9 +43,7 @@ export class TextEditor extends LitElement {
     const escapedValue = escapeHTMLEntities(value);
     const template = new Template(escapedValue);
     template.substitute((part) => {
-      const { type, title, invalid, mimeType } = part;
-      const assetType = getAssetType(mimeType) ?? "";
-      return `<label class="chiclet ${type} ${assetType} ${invalid ? "invalid" : ""}" contenteditable="false"><span>${Template.preamble(part)}</span><span class="visible">${title}</span><span>${Template.postamble()}</span></label>`;
+      return chicletHtml(part, this.projectState, this.subGraphId);
     });
     this.#value = template.raw;
     this.#renderableValue = template.renderable;
@@ -54,6 +74,7 @@ export class TextEditor extends LitElement {
   accessor readOnly = false;
 
   static styles = [
+    icons,
     ChicletStyles,
     css`
       * {
@@ -606,8 +627,7 @@ export class TextEditor extends LitElement {
     const escapedValue = escapeHTMLEntities(evt.clipboardData.getData("text"));
     const template = new Template(escapedValue);
     template.substitute((part) => {
-      const { type, title, invalid } = part;
-      return `<label class="chiclet ${type} ${invalid ? "invalid" : ""}" contenteditable="false"><span>${Template.preamble(part)}</span><span class="visible">${title}</span><span>${Template.postamble()}</span></label>`;
+      return chicletHtml(part, this.projectState, this.subGraphId);
     });
 
     const fragment = document.createDocumentFragment();

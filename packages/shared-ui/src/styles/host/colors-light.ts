@@ -36,7 +36,7 @@ export const colorsLight = css`
     --ui-get-input: #effe96;
     --ui-get-input-secondary: #f2ffa3;
     --ui-asset: #f6c9ad;
-    --ui-asset-secondary: #;
+    --ui-asset-secondary: #fceee9;
   }
 
   :host {
