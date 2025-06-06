@@ -5,13 +5,6 @@
  */
 
 import { HarnessRunResult } from "../harness/types.js";
-import {
-  isLLMContent,
-  isLLMContentArray,
-  isMetadataEntry,
-  isStoredData,
-  toInlineDataPart,
-} from "./common.js";
 import { RunStore, RunTimestamp, RunURL } from "./types.js";
 
 export class DefaultRunStore implements RunStore {
@@ -34,36 +27,9 @@ export class DefaultRunStore implements RunStore {
   }
 
   async write(url: RunURL, timestamp: RunTimestamp, result: HarnessRunResult) {
-    const graphUrl = getGraphUrl(url);
     const store = this.#runs.get(url);
     if (!store) {
       throw new Error("Unable to find the store");
-    }
-
-    // Before storing any inputs, check if they are using StoredDataParts.
-    // If so inflate them back to inlineData before storage.
-    if (result.type === "nodeend" && result.data.node.type === "input") {
-      for (const output of Object.values(result.data.outputs)) {
-        if (!isLLMContent(output) && !isLLMContentArray(output)) {
-          continue;
-        }
-
-        const outputs = isLLMContent(output) ? [output] : output;
-        for (const output of outputs) {
-          if (isMetadataEntry(output)) {
-            continue;
-          }
-
-          for (let i = 0; i < output.parts.length; i++) {
-            const part = output.parts[i];
-            if (!isStoredData(part)) {
-              continue;
-            }
-
-            output.parts[i] = await toInlineDataPart(part, graphUrl);
-          }
-        }
-      }
     }
 
     const run = store.get(timestamp);
@@ -115,13 +81,5 @@ export class DefaultRunStore implements RunStore {
     }
 
     return this.#runs.get(url)!;
-  }
-}
-
-function getGraphUrl(url: RunURL): URL | undefined {
-  try {
-    return new URL(url);
-  } catch (e) {
-    return;
   }
 }
