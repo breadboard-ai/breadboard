@@ -43,7 +43,9 @@ export class ParticleView extends SignalWatcher(LitElement) {
       return err(`No "title" found in "update" particle`);
     }
 
-    const { text, mimeType } = group.get("body") as TextParticle;
+    const { text, mimeType = "text/markdown" } = group.get(
+      "body"
+    ) as TextParticle;
 
     if (!text) {
       return err(`No "body" found in "update" particle`);
@@ -64,6 +66,8 @@ export class ParticleView extends SignalWatcher(LitElement) {
         .clamped=${false}
         .value=${parsed}
       ></bb-llm-output>`;
+    } else if (mimeType?.startsWith("text/")) {
+      value = html`${text}`;
     } else {
       return err(`Unrecognized mimeType: "${mimeType}"`);
     }

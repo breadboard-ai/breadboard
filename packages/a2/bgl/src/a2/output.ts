@@ -81,7 +81,13 @@ class StreamableReporter {
   }
 
   async reportError(error: { $error: string }) {
-    await this.report(error);
+    await this.report({
+      type: "update",
+      group: [
+        ["title", { text: "Error" }],
+        ["body", { text: error.$error }],
+      ],
+    });
     return error;
   }
 
