@@ -38,7 +38,7 @@ export class ParticleView extends SignalWatcher(LitElement) {
   // In the future, this is likely its own element that operates on a particle.
   // It is instantiated by ParticleView based on type = "update".
   #renderUpdateGroup(group: Map<string, Particle>): Outcome<TemplateResult> {
-    const title = (group.get("title") as TextParticle).text;
+    const title = (group.get("title") as TextParticle)?.text;
     if (!title) {
       return err(`No "title" found in "update" particle`);
     }
@@ -52,6 +52,8 @@ export class ParticleView extends SignalWatcher(LitElement) {
     }
     const parsed = parseJson(text);
     if (!parsed) return parsed;
+
+    const icon = (group.get("icon") as TextParticle)?.text || "info";
 
     let value;
     if (mimeType === "application/json") {
@@ -72,8 +74,6 @@ export class ParticleView extends SignalWatcher(LitElement) {
       return err(`Unrecognized mimeType: "${mimeType}"`);
     }
 
-    // TODO: Allow the particle to set the icon.
-    const icon = "spark";
     return html` <div class="output" data-label=${title}>
       ${icon ? html`<span class="g-icon filled round">${icon}</span>` : nothing}
       ${value}

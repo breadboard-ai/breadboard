@@ -311,7 +311,7 @@ async function callAPI(
   try {
     const conformedBody = conformBody(body);
     await reporter.start();
-    await reporter.sendUpdate("Model Input", conformedBody);
+    await reporter.sendUpdate("Model Input", conformedBody, "upload");
 
     let $error: string = "Unknown error";
     while (retries) {
@@ -341,16 +341,20 @@ async function callAPI(
         const outputs = result.response as GeminiAPIOutputs;
         const candidate = outputs.candidates?.at(0);
         if (!candidate) {
-          await reporter.sendUpdate("Model Response", outputs);
+          await reporter.sendUpdate("Model Response", outputs, "warning");
           return reporter.sendError(
             err("Unable to get a good response from Gemini")
           );
         }
         if ("content" in candidate) {
-          await reporter.sendUpdate("Model Response", candidate.content);
+          await reporter.sendUpdate(
+            "Model Response",
+            candidate.content,
+            "download"
+          );
           return outputs;
         }
-        await reporter.sendUpdate("Model response", outputs);
+        await reporter.sendUpdate("Model response", outputs, "warning");
         if (candidate.finishReason === "IMAGE_SAFETY") {
           return reporter.sendError(
             err(

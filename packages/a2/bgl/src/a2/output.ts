@@ -80,7 +80,7 @@ class StreamableReporter {
     return this.reportLLMContent({ parts: [{ json }] });
   }
 
-  sendUpdate(title: string, body: unknown | undefined) {
+  sendUpdate(title: string, body: unknown | undefined, icon?: string) {
     let bodyParticle;
     if (body && typeof body == "object" && "parts" in body) {
       bodyParticle = {
@@ -93,13 +93,14 @@ class StreamableReporter {
         mimeType: "application/json",
       };
     }
-    return this.report({
-      type: "update",
-      group: [
-        ["title", { text: title }],
-        ["body", bodyParticle],
-      ],
-    });
+    const group = [
+      ["title", { text: title }],
+      ["body", bodyParticle],
+    ];
+    if (icon) {
+      group.push(["icon", { text: icon }]);
+    }
+    return this.report({ type: "update", group });
   }
 
   async sendError(error: { $error: string }) {
@@ -108,6 +109,7 @@ class StreamableReporter {
       group: [
         ["title", { text: "Error" }],
         ["body", { text: error.$error }],
+        ["icon", { text: "warning" }],
       ],
     });
     return error;
