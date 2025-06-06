@@ -116,6 +116,7 @@ export class FloatingInput extends LitElement {
             outline: none;
             width: 100%;
             scrollbar-width: none;
+            color: var(--p-15, var(--n-15, var(--bb-neutral-900)));
           }
         }
 
