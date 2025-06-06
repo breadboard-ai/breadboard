@@ -72,6 +72,9 @@ export default {
     LABEL_READONLY_PROJECT: {
       str: "This opal is not editable. Please Remix it to make changes.",
     },
+    LABEL_DISCLAIMER: {
+      str: "Opal can make mistakes, so double-check it",
+    },
   },
   ProjectListing: {
     ...DefaultLangPack.ProjectListing,
