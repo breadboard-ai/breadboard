@@ -61,6 +61,7 @@ export const styles = [
         }
       }
 
+      &.core,
       &.input {
         background: var(--ui-get-input-secondary) 5px center / 16px 16px
           no-repeat;
