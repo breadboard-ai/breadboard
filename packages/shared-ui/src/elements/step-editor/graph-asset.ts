@@ -185,8 +185,8 @@ export class GraphAsset
           width: 100%;
           padding: 0 var(--bb-grid-size-4);
           border-radius: var(--bb-grid-size-3) var(--bb-grid-size-3) 0 0;
-          font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
-            var(--bb-font-family);
+          font-size: 16px;
+          line-height: 24px;
           cursor: pointer;
           position: relative;
 
@@ -429,6 +429,7 @@ export class GraphAsset
         ${ref(this.#containerRef)}
       >
         <header
+          class="sans-flex round w-500"
           @click=${(evt: Event) => {
             evt.stopImmediatePropagation();
           }}
@@ -505,7 +506,7 @@ export class GraphAsset
             );
           }}
         >
-          <span class="g-icon">${icon}</span>
+          <span class="g-icon filled round">${icon}</span>
           <span>${this.assetTitle}</span>
           ${defaultAdd}
           <button

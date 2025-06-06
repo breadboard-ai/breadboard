@@ -81,6 +81,7 @@ import { findGoogleDriveAssetsInGraph } from "../google-drive/find-google-drive-
 import { SharePanel } from "../share-panel/share-panel.js";
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
+import { effects } from "../../styles/host/effects.js";
 
 const SIDE_ITEM_KEY = "bb-ui-controller-side-nav-item";
 
@@ -245,7 +246,7 @@ export class UI extends LitElement {
   #sharePanelRef: Ref<SharePanel> = createRef();
   #googleDriveAssetAccessPickerRef: Ref<GoogleDrivePicker> = createRef();
 
-  static styles = [icons, uiControllerStyles];
+  static styles = [icons, effects, uiControllerStyles];
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -781,7 +782,7 @@ export class UI extends LitElement {
           </bb-edit-history-overlay>
           ${graphEditor} ${themeEditor}
         </div>
-        <div id="side-nav" slot="slot-1">
+        <div id="side-nav" class="side-shadow" slot="slot-1">
           <div id="side-nav-controls">
             <div id="side-nav-controls-left">
               <button

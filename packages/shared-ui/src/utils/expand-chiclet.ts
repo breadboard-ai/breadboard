@@ -6,15 +6,16 @@
 
 import { ok, TemplatePart } from "@google-labs/breadboard";
 import { Project } from "../state";
+import { iconSubstitute } from "./icon-substute";
 
 export function expandChiclet(
   part: TemplatePart,
   projectState: Project | null,
   subGraphId: string | null
-): { tags?: string[]; icon?: string } {
+): { tags?: string[]; icon?: string | null } {
   const { type, path } = part;
 
-  let icon: string | undefined;
+  let icon: string | null | undefined;
   let tags: string[] | undefined;
 
   if (!projectState) {
@@ -29,19 +30,7 @@ export function expandChiclet(
       );
 
       if (ok(outcome)) {
-        icon = outcome.icon ?? "";
-        switch (icon) {
-          case "ask-user": {
-            icon = "chat_mirror";
-            break;
-          }
-
-          case "generative": {
-            icon = "spark";
-            break;
-          }
-        }
-
+        icon = iconSubstitute(outcome.icon);
         tags = outcome.tags ?? [];
       }
       break;
@@ -49,18 +38,7 @@ export function expandChiclet(
 
     case "tool": {
       const toolInfo = projectState?.fastAccess.tools.get(path);
-      icon = toolInfo?.icon;
-      switch (icon) {
-        case "map-search": {
-          icon = "map_search";
-          break;
-        }
-
-        case "web-search": {
-          icon = "search";
-          break;
-        }
-      }
+      icon = iconSubstitute(toolInfo?.icon);
       break;
     }
 
@@ -69,31 +47,11 @@ export function expandChiclet(
 
       const assetInfo = projectState?.fastAccess.graphAssets.get(path);
       if (assetInfo?.metadata?.type) {
-        switch (assetInfo.metadata.type) {
-          case "file": {
-            icon = "upload";
-            break;
-          }
-        }
+        icon = iconSubstitute(assetInfo.metadata.type);
       }
 
       if (assetInfo?.metadata?.subType) {
-        switch (assetInfo.metadata.subType) {
-          case "gdrive": {
-            icon = "drive";
-            break;
-          }
-
-          case "drawable": {
-            icon = "draw";
-            break;
-          }
-
-          case "youtube": {
-            icon = "video_youtube";
-            break;
-          }
-        }
+        icon = iconSubstitute(assetInfo.metadata.subType);
       }
     }
   }

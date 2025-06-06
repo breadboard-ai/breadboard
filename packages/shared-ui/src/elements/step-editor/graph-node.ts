@@ -55,6 +55,7 @@ import {
 } from "../../styles/host/colors-light.js";
 import { type } from "../../styles/host/type.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
+import { iconSubstitute } from "../../utils/icon-substute.js";
 
 const EDGE_STANDARD = neutral.n80;
 const EDGE_SELECTED = custom.c100;
@@ -800,7 +801,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         <svg id="edge" version="1.1"
           width="300" height="40" viewBox="0 0 300 40"
           xmlns="http://www.w3.org/2000/svg">
-          <path d="M 130 4 L 130 4 L 130 36"
+          <path d="M 150 4 L 150 4 L 150 36"
             stroke=${this.selected ? EDGE_SELECTED : EDGE_STANDARD}
             stroke-width="2" fill="none" stroke-linecap="round" />
 
@@ -837,23 +838,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       ];
     }
 
-    let renderableIcon = this.icon;
-    switch (renderableIcon) {
-      case "ask-user": {
-        renderableIcon = "chat_mirror";
-        break;
-      }
-
-      case "display": {
-        renderableIcon = "responsive_layout";
-        break;
-      }
-
-      case "generative": {
-        renderableIcon = "spark";
-        break;
-      }
-    }
+    const renderableIcon = iconSubstitute(this.icon);
 
     return html`<section
         id="container"

@@ -78,6 +78,9 @@ import { consume } from "@lit/context";
 import { embedderContext } from "../../contexts/embedder";
 import { EmbedState, embedState } from "@breadboard-ai/embed";
 import { getBoardUrlFromCurrentWindow } from "../../utils/board-id.js";
+import { colorsLight } from "../../styles/host/colors-light";
+import { type } from "../../styles/host/type";
+import { iconSubstitute } from "../../utils/icon-substute";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -132,6 +135,8 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
   static styles = [
     icons,
+    colorsLight,
+    type,
     css`
       :host {
         display: block;
@@ -154,6 +159,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         border-bottom: 1px solid var(--bb-neutral-300);
         font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
           var(--bb-font-family);
+        flex: 0 0 auto;
 
         & span {
           flex: 1 0 auto;
@@ -161,31 +167,28 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           overflow: hidden;
           text-overflow: ellipsis;
           width: calc(100% - var(--bb-grid-size-7));
+
+          &.g-icon {
+            width: 20px;
+            height: 20px;
+            flex: 0 0 auto;
+          }
         }
 
         & input {
           flex: 1 1 auto;
-          font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
-            var(--bb-font-family);
           background: transparent;
           padding: var(--bb-grid-size) var(--bb-grid-size);
           border: 1px solid transparent;
           border-radius: var(--bb-grid-size);
           max-width: 100%;
           min-width: 20%;
+          outline: none;
 
           &:hover,
           &:focus {
             border: 1px solid var(--outer-border);
           }
-        }
-
-        &::before {
-          content: "";
-          width: 20px;
-          height: 20px;
-          flex: 0 0 auto;
-          margin-right: var(--bb-grid-size);
         }
       }
 
@@ -228,145 +231,43 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
       .node {
         & h1 {
-          --outer-border: var(--bb-ui-300);
-          background: var(--bb-ui-100);
+          --outer-border: var(--n-80);
+          background: var(--n-90);
         }
 
         &.module {
           & h1 {
-            --outer-border: var(--bb-neutral-200);
-            background: var(--bb-neutral-50);
+            --outer-border: oklch(from var(--ui-generate) calc(l - 0.2) c h);
+            background: var(--ui-generate);
           }
         }
 
-        &.generative,
-        &.generative-image,
-        &.generative-image-edit,
-        &.generative-text,
-        &.generative-audio,
-        &.generative-video,
-        &.generative-code,
-        &.generative-search {
+        &.generative {
           & h1 {
-            --outer-border: var(--bb-generative-200);
-            background: var(--bb-generative-50);
+            --outer-border: oklch(from var(--ui-generate) calc(l - 0.2) c h);
+            background: var(--ui-generate);
           }
         }
 
-        &.input,
-        &.output,
-        &.core,
-        &.combine-outputs {
+        &.ask-user {
           & h1 {
-            --outer-border: var(--bb-input-200);
-            background: var(--bb-input-50);
+            --outer-border: oklch(from var(--ui-get-input) calc(l - 0.2) c h);
+            background: var(--ui-get-input);
           }
         }
 
-        &.search h1::before {
-          background: var(--bb-icon-search) center center / 20px 20px no-repeat;
-        }
-
-        &.map-search h1::before {
-          background: var(--bb-icon-map-search) center center / 20px 20px
-            no-repeat;
-        }
-
-        &.globe-book h1::before {
-          background: var(--bb-icon-globe-book) center center / 20px 20px
-            no-repeat;
-        }
-
-        &.language h1::before {
-          background: var(--bb-icon-language) center center / 20px 20px
-            no-repeat;
-        }
-
-        &.sunny h1::before {
-          background: var(--bb-icon-sunny) center center / 20px 20px no-repeat;
-        }
-
-        &.generative h1::before {
-          background: var(--bb-add-icon-generative) center center / 20px 20px
-            no-repeat;
-        }
-
-        &.generative-image h1::before {
-          background: var(--bb-add-icon-generative-image) center center / 20px
-            20px no-repeat;
-        }
-
-        &.generative-image-edit h1::before {
-          background: var(--bb-add-icon-generative-image-edit-auto) center
-            center / 20px 20px no-repeat;
-        }
-
-        &.generative-text h1::before {
-          background: var(--bb-add-icon-generative-text-analysis) center
-            center / 20px 20px no-repeat;
-        }
-
-        &.generative-audio h1::before {
-          background: var(--bb-add-icon-generative-audio) center center / 20px
-            20px no-repeat;
-        }
-
-        &.generative-video h1::before {
-          background: var(--bb-add-icon-generative-videocam-auto) center
-            center / 20px 20px no-repeat;
-        }
-
-        &.generative-code h1::before {
-          background: var(--bb-add-icon-generative-code) center center / 20px
-            20px no-repeat;
-        }
-
-        &.generative-search h1::before {
-          background: var(--bb-add-icon-generative-search) center center / 20px
-            20px no-repeat;
-        }
-
-        &.combine-outputs h1::before {
-          background: var(--bb-icon-table-rows) center center / 20px 20px
-            no-repeat;
-        }
-
-        &.display h1::before {
-          background: var(--bb-icon-responsive-layout) center center / 20px 20px
-            no-repeat;
-        }
-        &.ask-user h1::before {
-          background: var(--bb-icon-chat-mirror) center center / 20px 20px
-            no-repeat;
-        }
-
-        &.input h1::before {
-          background: var(--bb-icon-input) center center / 20px 20px no-repeat;
-        }
-
-        &.output h1::before {
-          background: var(--bb-icon-output) center center / 20px 20px no-repeat;
-        }
-
-        &.smart-toy h1::before {
-          background: var(--bb-icon-smart-toy) center center / 20px 20px
-            no-repeat;
-        }
-
-        &.laps h1::before {
-          background: var(--bb-icon-laps) center center / 20px 20px no-repeat;
+        &.display {
+          & h1 {
+            --outer-border: oklch(from var(--ui-display) calc(l - 0.2) c h);
+            background: var(--ui-display);
+          }
         }
       }
 
       .asset {
         & h1 {
-          --outer-border: var(--bb-inputs-100);
-          background: var(--bb-inputs-50);
-
-          &::before {
-            background: var(--bb-icon-alternate-email) center center / 20px 20px
-              no-repeat;
-          }
+          --outer-border: oklch(from var(--ui-asset) calc(l - 0.2) c h);
+          background: var(--ui-asset);
         }
 
         bb-llm-output {
@@ -1147,10 +1048,16 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
       return html`<div class=${classMap(classes)}>
         <h1 id="title">
+          ${metadata.icon
+            ? html`<span class="g-icon filled round"
+                >${iconSubstitute(metadata.icon)}</span
+              >`
+            : nothing}
           <input
             autocomplete="off"
             id="node-title"
             name="node-title"
+            class="sans-flex round w-500 md-title-medium"
             .value=${node.title()}
             ?disabled=${this.readOnly}
             @keydown=${(evt: KeyboardEvent) => {
@@ -1370,9 +1277,11 @@ export class EntityEditor extends SignalWatcher(LitElement) {
               classes.slim = isControllerBehavior(port.schema);
             }
 
-            value = html`<label for=${port.name} class=${classMap(classes)}
-                >${!isControllerBehavior(port.schema) ? port.title : ""}</label
-              >
+            value = html`${!isControllerBehavior(port.schema)
+                ? html`<label for=${port.name} class=${classMap(classes)}
+                    >${port.title}</label
+                  >`
+                : ""}
               <div class="item-select-container">
                 <bb-item-select
                   @change=${this.#reactiveChange(port)}
@@ -1559,6 +1468,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       const dataPart = itemData?.parts[0] ?? null;
       const isDrawable = isStoredData(dataPart) && asset.subType === "drawable";
       const skipOutput = isTextCapabilityPart(dataPart) || isDrawable;
+      console.log(asset);
 
       const partEditor = html`<bb-llm-part-input
         class=${classMap({ fill: skipOutput })}
@@ -1601,12 +1511,24 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       value = [input, output];
     }
 
+    let icon: string | undefined | null = "alternate_email";
+    if (asset.type) {
+      icon = iconSubstitute(asset.type);
+    }
+    if (asset.subType) {
+      icon = iconSubstitute(asset.subType);
+    }
+
     return html`<div class=${classMap({ asset: true })}>
       <h1 id="title">
+        ${icon
+          ? html`<span class="g-icon filled round">${icon}</span>`
+          : nothing}
         <input
           autocomplete="off"
           id="node-title"
           name="node-title"
+          class="sans-flex w-500 round md-title-medium"
           .value=${asset.title}
         />
       </h1>
