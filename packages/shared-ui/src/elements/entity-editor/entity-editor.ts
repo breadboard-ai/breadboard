@@ -1234,11 +1234,14 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       return html`Invalid value`;
     }
 
+    // Note that projectState and subGraphId must be set before value since
+    // value depends on the projectState & subGraphId to expand on chiclet
+    // metadata.
     return html`<bb-text-editor
       ${isReferenced ? ref(this.#editorRef) : nothing}
-      .value=${textPart.text}
       .projectState=${this.projectState}
       .subGraphId=${graphId !== MAIN_BOARD_ID ? graphId : null}
+      .value=${textPart.text}
       .supportsFastAccess=${fastAccess}
       .readOnly=${this.readOnly}
       id=${port.name}
