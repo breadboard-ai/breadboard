@@ -488,7 +488,9 @@ export class SharePanel extends LitElement {
         typeof error === "object" &&
         error !== null &&
         "status" in error &&
-        error.status === 404
+        typeof error.status === "number" &&
+        error.status >= 400 &&
+        error.status <= 499
       ) {
         // We can't access permissions. This must mean we don't have write
         // access to the file. But, we got this far, so the graph must at least
