@@ -18,6 +18,8 @@ import { type FlowGenerator, flowGeneratorContext } from "./flow-generator.js";
 import { classMap } from "lit/directives/class-map.js";
 import { spinAnimationStyles } from "../styles/spin-animation.js";
 import { ActionTracker } from "../utils/action-tracker.js";
+import { colorsLight } from "../styles/host/colors-light.js";
+import { type } from "../styles/host/type.js";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -30,6 +32,8 @@ type State =
 export class FlowgenEditorInput extends LitElement {
   static styles = [
     icons,
+    colorsLight,
+    type,
     spinAnimationStyles,
     css`
       * {
@@ -44,16 +48,7 @@ export class FlowgenEditorInput extends LitElement {
         max-width: 500px;
         margin: 0 var(--bb-grid-size-2);
 
-        --color-transition: color 100ms;
-        --input-color: #24369c92;
-        --placeholder-color: #919bcd;
-        --icon-color: #b6c2ff;
-      }
-      :host([focused]),
-      :host([generating]) {
-        --input-color: #24379c;
-        --placeholder-color: #919bcd;
-        --icon-color: #0c57d0;
+        --placeholder-color: var(--n-70);
       }
 
       #dismiss-button {
@@ -95,19 +90,9 @@ export class FlowgenEditorInput extends LitElement {
         display: flex;
         align-items: center;
         width: 100%;
-        background: linear-gradient(0deg, #f4f0f3, #e8eef7);
-        border-radius: 20px;
-        padding: 10px;
-        transition: box-shadow 1s ease-out;
-      }
-      :host([focused]) #gradient-border-container,
-      :host([generating]) #gradient-border-container {
-        transition: box-shadow 150ms ease-in;
-        box-shadow: 0 0 10px 1px rgb(0 0 0 / 15%);
-      }
-      :host([highlighted]) #gradient-border-container {
-        transition: box-shadow 200ms ease-in;
-        box-shadow: 0 0 10px 4px rgb(255 0 0 / 20%);
+        background: var(--ui-custom-o-10);
+        border-radius: var(--bb-grid-size-16);
+        padding: 12px;
       }
 
       bb-speech-to-text {
@@ -126,36 +111,23 @@ export class FlowgenEditorInput extends LitElement {
       bb-expanding-textarea {
         flex: 1;
         width: 100%;
-        color: var(--input-color);
+        color: var(--n-0);
         transition: var(--color-transition);
-        background: #fff;
+        background: var(--n-100);
         border: none;
-        border-radius: 12px;
+        border-radius: var(--bb-grid-size-16);
         padding: var(--bb-grid-size-3) var(--bb-grid-size-4);
         --min-lines: 1;
         --max-lines: 4;
         font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
           var(--bb-font-family);
         line-height: 20px;
-        caret-color: var(--input-color);
+        caret-color: var(--n-0);
 
         &::part(textarea)::placeholder {
           color: var(--placeholder-color);
           transition: var(--color-transition);
         }
-
-        > [slot~="submit"] {
-          color: var(--icon-color);
-          transition: var(--color-transition);
-        }
-      }
-
-      .g-icon {
-        font-variation-settings:
-          "FILL" 0,
-          "wght" 600,
-          "GRAD" 0,
-          "opsz" 48;
       }
     `,
   ];
@@ -255,8 +227,13 @@ export class FlowgenEditorInput extends LitElement {
           ></bb-speech-to-text>
           <span
             slot="submit"
-            class=${classMap({ "g-icon": true, spin: isGenerating })}
-            >${isGenerating ? "progress_activity" : "pen_spark"}</span
+            class=${classMap({
+              "g-icon": true,
+              filled: true,
+              round: true,
+              spin: isGenerating,
+            })}
+            >${isGenerating ? "progress_activity" : "send"}</span
           >
         </bb-expanding-textarea>
       </div>

@@ -8,6 +8,8 @@ import { LitElement, css, html, type PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { icons } from "../../styles/icons.js";
+import { colorsLight } from "../../styles/host/colors-light.js";
+import { type } from "../../styles/host/type.js";
 
 /**
  * TODO(aomarks) Replace with some proper HTML, but that requires switching to a
@@ -51,6 +53,8 @@ export class ExpandingTextarea extends LitElement {
 
   static override styles = [
     icons,
+    colorsLight,
+    type,
     css`
       :host {
         --min-lines: 3;
@@ -121,13 +125,13 @@ export class ExpandingTextarea extends LitElement {
         background: none;
         border: none;
         cursor: pointer;
-        color: var(--submit-button-color, inherit);
+        color: var(--n-60);
         padding: 4px;
         display: flex;
         margin: -4px;
       }
       #submit:hover {
-        filter: brightness(125%);
+        color: var(--n-30);
       }
       ::slotted(.g-icon) {
         font-size: 22px !important;
@@ -159,6 +163,7 @@ export class ExpandingTextarea extends LitElement {
           <textarea
             ${ref(this.#textarea)}
             part="textarea"
+            class="sans-flex w-500 round"
             .value=${this.value}
             .placeholder=${this.tabCompletesPlaceholder
               ? this.placeholder + TEMPORARY_TAB_ICON_TEXT
