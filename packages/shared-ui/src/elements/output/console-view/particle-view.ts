@@ -11,13 +11,29 @@ import {
 } from "@breadboard-ai/particles";
 import { err, ok, Outcome } from "@google-labs/breadboard";
 import { html, SignalWatcher } from "@lit-labs/signals";
-import { LitElement, nothing, TemplateResult } from "lit";
+import { css, LitElement, nothing, TemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { icons } from "../../../styles/icons";
+import { sharedStyles } from "./shared-styles";
+import { colorsLight } from "../../../styles/host/colors-light";
+import { type } from "../../../styles/host/type";
 
 @customElement("bb-particle-view")
 export class ParticleView extends SignalWatcher(LitElement) {
   @property()
   accessor particle: Particle | null = null;
+
+  static styles = [
+    icons,
+    sharedStyles,
+    colorsLight,
+    type,
+    css`
+      :host {
+        display: block;
+      }
+    `,
+  ];
 
   // In the future, this is likely its own element that operates on a particle.
   // It is instantiated by ParticleView based on type = "update".
@@ -51,8 +67,13 @@ export class ParticleView extends SignalWatcher(LitElement) {
     } else {
       return err(`Unrecognized mimeType: "${mimeType}"`);
     }
-    return html`<div id="title">${title}</div>
-      <div id="body">${value}</div>`;
+
+    // TODO: Allow the particle to set the icon.
+    const icon = "spark";
+    return html` <div class="output" data-label=${title}>
+      ${icon ? html`<span class="g-icon filled round">${icon}</span>` : nothing}
+      ${value}
+    </div>`;
   }
 
   render() {
