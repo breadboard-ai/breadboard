@@ -24,6 +24,7 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { provide } from "@lit/context";
 import { projectRunContext } from "../../../contexts/project-run.js";
 import { isParticle } from "@breadboard-ai/particles";
+import { sharedStyles } from "./shared-styles.js";
 
 @customElement("bb-console-view")
 export class ConsoleView extends SignalWatcher(LitElement) {
@@ -33,6 +34,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
 
   static styles = [
     icons,
+    sharedStyles,
     css`
       * {
         box-sizing: border-box;
@@ -114,41 +116,6 @@ export class ConsoleView extends SignalWatcher(LitElement) {
           & .g-icon {
             margin-right: var(--bb-grid-size-2);
             animation: rotate 1s linear forwards infinite;
-          }
-        }
-
-        .output {
-          position: relative;
-          margin-top: var(--bb-grid-size-7);
-          border-radius: var(--bb-grid-size-2);
-          padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
-          border: 1px solid var(--bb-neutral-200);
-          color: var(--bb-neutral-900);
-          font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
-            var(--bb-font-family);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-
-          > * {
-            max-width: 800px;
-            width: 100%;
-
-            &:last-of-type {
-              margin-bottom: 0;
-            }
-          }
-
-          &::before {
-            content: "Output:";
-            position: absolute;
-            left: var(--bb-grid-size-3);
-            top: calc(var(--bb-grid-size-5) * -1);
-            color: var(--bb-neutral-500);
-          }
-
-          & p {
-            margin: 0;
           }
         }
 
@@ -430,13 +397,16 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                                 ([key]) => key,
                                 ([, product]) => {
                                   if (isParticle(product)) {
-                                    return html`<li class="output">
+                                    return html`<li>
                                       <bb-particle-view
                                         .particle=${product}
                                       ></bb-particle-view>
                                     </li>`;
                                   }
-                                  return html`<li class="output">
+                                  return html`<li
+                                    class="output"
+                                    data-label="Output:"
+                                  >
                                     <bb-llm-output
                                       .lite=${true}
                                       .clamped=${false}
@@ -446,7 +416,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                                 }
                               )}
                             </ul>`
-                          : html`<div class="output">
+                          : html`<div class="output" data-label="Output:">
                               <p>
                                 There are no outputs for this step's work item
                               </p>
@@ -464,7 +434,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                     item.output.entries(),
                     ([key]) => key,
                     ([, item]) => {
-                      return html`<div class="output">
+                      return html`<div class="output" data-label="Output:">
                         <bb-llm-output
                           .lite=${true}
                           .clamped=${false}
@@ -473,7 +443,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                       </div>`;
                     }
                   )
-                : html`<div class="output">
+                : html`<div class="output" data-label="Output:">
                     <p>There are no outputs for this step</p>
                   </div>`
               : nothing
