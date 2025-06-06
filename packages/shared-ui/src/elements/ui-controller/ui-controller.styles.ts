@@ -595,7 +595,6 @@ export const styles = css`
     justify-content: space-between;
     position: relative;
     z-index: 2;
-    border-left: 1px solid var(--bb-neutral-300);
 
     & #side-nav-controls {
       display: flex;
