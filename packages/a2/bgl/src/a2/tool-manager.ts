@@ -17,7 +17,6 @@ import {
   type Tool,
 } from "./gemini";
 import { ConnectorManager } from "./connector-manager";
-import { StreamableReporter } from "./output";
 
 export type ToolHandle = {
   title?: string;
@@ -264,27 +263,19 @@ class ToolManager {
         const { args, name } = part.functionCall;
         const handle = this.tools.get(name);
         if (handle) {
-          const reporter = new StreamableReporter({
-            title: `Calling tool ${handle.title || handle.tool.name}`,
-          });
-          try {
-            await reporter.start();
-            if (handle.invoke) {
-              await handle.invoke(args as Record<string, unknown>);
+          if (handle.invoke) {
+            await handle.invoke(args as Record<string, unknown>);
+          } else {
+            const { url, passContext, connector } = handle;
+            if (connector) {
+              await connector.invokeTool(
+                name,
+                args as Record<string, unknown>,
+                callTool
+              );
             } else {
-              const { url, passContext, connector } = handle;
-              if (connector) {
-                await connector.invokeTool(
-                  name,
-                  args as Record<string, unknown>,
-                  callTool
-                );
-              } else {
-                await callTool(url, part.functionCall.args, passContext, name);
-              }
+              await callTool(url, part.functionCall.args, passContext, name);
             }
-          } finally {
-            reporter.close();
           }
         }
       }
