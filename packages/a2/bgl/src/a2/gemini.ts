@@ -311,19 +311,7 @@ async function callAPI(
   try {
     const conformedBody = conformBody(body);
     await reporter.start();
-    await reporter.report({
-      type: "update",
-      group: [
-        ["title", { text: "Model Input" }],
-        [
-          "body",
-          {
-            text: JSON.stringify(conformedBody),
-            mimeType: "application/json",
-          },
-        ],
-      ],
-    });
+    await reporter.sendUpdate("Model Input", conformedBody);
 
     let $error: string = "Unknown error";
     while (retries) {
@@ -341,41 +329,30 @@ async function callAPI(
         // along with the `$error`. Let's handle that here.
         const { status, $error: errObject } = result as FetchErrorResponse;
         if (!status) {
-          if (errObject) return reporter.reportError(err(errObject));
+          if (errObject) return reporter.sendError(err(errObject));
           // This is not an error response, presume fatal error.
-          return reporter.reportError({ $error });
+          return reporter.sendError({ $error });
         }
         $error = maybeExtractError(errObject);
         if (NO_RETRY_CODES.includes(status)) {
-          return reporter.reportError({ $error });
+          return reporter.sendError({ $error });
         }
       } else {
         const outputs = result.response as GeminiAPIOutputs;
         const candidate = outputs.candidates?.at(0);
         if (!candidate) {
-          return reporter.reportError(
+          await reporter.sendUpdate("Model Response", outputs);
+          return reporter.sendError(
             err("Unable to get a good response from Gemini")
           );
         }
         if ("content" in candidate) {
-          reporter.report({
-            type: "update",
-            group: [
-              ["title", { text: "Model Response" }],
-              [
-                "body",
-                {
-                  text: JSON.stringify(candidate.content),
-                  mimeType: "application/vnd.breadboard.llm-content",
-                },
-              ],
-            ],
-          });
-
+          await reporter.sendUpdate("Model Response", candidate.content);
           return outputs;
         }
+        await reporter.sendUpdate("Model response", outputs);
         if (candidate.finishReason === "IMAGE_SAFETY") {
-          return reporter.reportError(
+          return reporter.sendError(
             err(
               "The response candidate content was flagged for image safety reasons."
             )
@@ -384,7 +361,7 @@ async function callAPI(
       }
       retries--;
     }
-    return reporter.reportError({ $error });
+    return reporter.sendError({ $error });
   } finally {
     reporter.close();
   }
