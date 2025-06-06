@@ -217,7 +217,10 @@ async function invoke({
     }
     return { context: [...(context || []), response] };
   }
-  return { context: [...(context || []), toLLMContent(research.join("\n\n"))] };
+  const results = research.map((r) => JSON.parse(r)["results"]);
+  return {
+    context: [...(context || []), toLLMContent(results.join("\n\n\n"))],
+  };
 }
 
 type DescribeInputs = {
