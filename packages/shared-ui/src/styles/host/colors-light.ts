@@ -45,8 +45,12 @@ export const steps = {
 export const colorsLight = css`
   :host {
     --ui-custom-o-100: ${unsafeCSS(custom.c100)};
-    --ui-custom-o-10: oklch(from var(--ui-o-100) l c h / calc(alpha * 0.1));
-    --ui-custom-o-5: oklch(from var(--ui-o-100) l c h / calc(alpha * 0.05));
+    --ui-custom-o-10: oklch(
+      from var(--ui-custom-o-100) l c h / calc(alpha * 0.1)
+    );
+    --ui-custom-o-5: oklch(
+      from var(--ui-custom-o-100) l c h / calc(alpha * 0.05)
+    );
   }
 
   :host {
