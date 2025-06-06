@@ -46,16 +46,22 @@ import { styles as ChicletStyles } from "../../styles/chiclet.js";
 import { toGridSize } from "./utils/to-grid-size";
 import { DragConnectorReceiver } from "../../types/types";
 import { DragConnectorStartEvent } from "../../events/events";
-import { getGlobalColor } from "../../utils/color.js";
 import { createChiclets } from "./utils/create-chiclets.js";
 import { icons } from "../../styles/icons.js";
+import {
+  colorsLight,
+  neutral,
+  custom,
+} from "../../styles/host/colors-light.js";
+import { type } from "../../styles/host/type.js";
+import { MAIN_BOARD_ID } from "../../constants/constants.js";
 
-const EDGE_STANDARD = getGlobalColor("--bb-neutral-400");
-const EDGE_SELECTED = getGlobalColor("--bb-ui-500");
+const EDGE_STANDARD = neutral.n80;
+const EDGE_SELECTED = custom.c100;
 
 const arrowWidth = 46;
-const arrowHeight = 36;
-const arrowSize = 8;
+const arrowHeight = 48;
+const arrowSize = 4;
 const rightArrow = html`${svg`
   <svg id="right-arrow" version="1.1"
       width="${arrowWidth}" height=${arrowHeight}
@@ -80,6 +86,9 @@ const rightArrow = html`${svg`
 
 @customElement("bb-graph-node")
 export class GraphNode extends Box implements DragConnectorReceiver {
+  @property()
+  accessor ownerGraph = "";
+
   @property()
   accessor nodeTitle = "";
 
@@ -136,6 +145,8 @@ export class GraphNode extends Box implements DragConnectorReceiver {
   }
 
   static styles = [
+    type,
+    colorsLight,
     icons,
     Box.styles,
     ChicletStyles,
@@ -176,15 +187,11 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       }
 
       :host {
-        --background: var(--bb-ui-100);
-        --border: var(--bb-neutral-500);
-        --header-border: var(--bb-ui-300);
+        --background: var(--n-70);
       }
 
       :host([updating]) {
-        --background: var(--bb-neutral-100);
-        --border: var(--bb-neutral-500);
-        --header-border: var(--bb-neutral-300);
+        --background: var(--n-90);
 
         & #content {
           min-height: 120px;
@@ -202,120 +209,23 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       :host([icon="generative-search"]),
       :host([icon="generative"]),
       :host([icon="laps"]) {
-        --background: var(--bb-generative-100);
-        --border: var(--bb-neutral-500);
-        --header-border: var(--bb-generative-300);
+        --background: var(--ui-generate);
       }
 
       :host(.module) {
-        --background: var(--bb-module-100);
-        --border: var(--bb-neutral-500);
-        --header-border: var(--bb-module-300);
+        --background: var(--ui-generate);
       }
 
       :host(.input),
       :host(.output),
       :host(.core),
       :host([icon="input"]),
-      :host([icon="output"]),
-      :host([icon="combine-outputs"]) {
-        --background: var(--bb-input-50);
-        --border: var(--bb-neutral-500);
-        --header-border: var(--bb-input-300);
+      :host([icon="ask-user"]) {
+        --background: var(--ui-get-input);
       }
 
-      :host([icon="search"]) #container header::before {
-        background: var(--bb-icon-search) center center / 20px 20px no-repeat;
-      }
-
-      :host([icon="map-search"]) #container header::before {
-        background: var(--bb-icon-map-search) center center / 20px 20px
-          no-repeat;
-      }
-
-      :host([icon="globe-book"]) #container header::before {
-        background: var(--bb-icon-globe-book) center center / 20px 20px
-          no-repeat;
-      }
-
-      :host([icon="language"]) #container header::before {
-        background: var(--bb-icon-language) center center / 20px 20px no-repeat;
-      }
-
-      :host([icon="sunny"]) #container header::before {
-        background: var(--bb-icon-sunny) center center / 20px 20px no-repeat;
-      }
-
-      :host([icon="generative"]) #container header::before,
-      :host([icon="spark"]) #container header::before {
-        background: var(--bb-add-icon-generative) center center / 20px 20px
-          no-repeat;
-      }
-
-      :host([icon="photo_spark"]) #container header::before {
-        background: var(--bb-add-icon-generative-image) center center / 20px
-          20px no-repeat;
-      }
-
-      :host([icon="generative-image-edit"]) #container header::before {
-        background: var(--bb-add-icon-generative-image-edit-auto) center
-          center / 20px 20px no-repeat;
-      }
-
-      :host([icon="text_analysis"]) #container header::before {
-        background: var(--bb-add-icon-generative-text-analysis) center center /
-          20px 20px no-repeat;
-      }
-
-      :host([icon="audio_magic_eraser"]) #container header::before {
-        background: var(--bb-add-icon-generative-audio) center center / 20px
-          20px no-repeat;
-      }
-
-      :host([icon="videocam_auto"]) #container header::before {
-        background: var(--bb-add-icon-generative-videocam-auto) center center /
-          20px 20px no-repeat;
-      }
-
-      :host([icon="generative-code"]) #container header::before {
-        background: var(--bb-add-icon-generative-code) center center / 20px 20px
-          no-repeat;
-      }
-
-      :host([icon="generative-search"]) #container header::before {
-        background: var(--bb-add-icon-generative-search) center center / 20px
-          20px no-repeat;
-      }
-
-      :host([icon="combine-outputs"]) #container header::before {
-        background: var(--bb-icon-table-rows) center center / 20px 20px
-          no-repeat;
-      }
-
-      :host([icon="display"]) #container header::before {
-        background: var(--bb-icon-responsive-layout) center center / 20px 20px
-          no-repeat;
-      }
-
-      :host([icon="ask-user"]) #container header::before {
-        background: var(--bb-icon-chat-mirror) center center / 20px 20px
-          no-repeat;
-      }
-
-      :host([icon="input"]) #container header::before {
-        background: var(--bb-icon-input) center center / 20px 20px no-repeat;
-      }
-
-      :host([icon="output"]) #container header::before {
-        background: var(--bb-icon-output) center center / 20px 20px no-repeat;
-      }
-
-      :host([icon="smart-toy"]) #container header::before {
-        background: var(--bb-icon-smart-toy) center center / 20px 20px no-repeat;
-      }
-
-      :host([icon="laps"]) #container header::before {
-        background: var(--bb-icon-laps) center center / 20px 20px no-repeat;
+      :host([icon="display"]) {
+        --background: var(--ui-display);
       }
 
       :host(:not([updating]):not([icon])) #container header::before {
@@ -324,7 +234,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
       :host([selected]) #container,
       :host([selected]) #container #chat-adornment {
-        outline: 2px solid var(--bb-ui-500);
+        outline: 3px solid var(--n-0);
       }
 
       :host(:not([updating])[highlighted][highlighttype="model"]) #container {
@@ -340,9 +250,9 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       }
 
       #container {
-        width: 260px;
+        width: 300px;
         border-radius: var(--bb-grid-size-3);
-        outline: 1px solid var(--border);
+        outline: 2px solid transparent;
         color: var(--bb-neutral-900);
         position: relative;
         cursor: pointer;
@@ -365,14 +275,11 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           top: calc(100% + var(--bb-grid-size-10));
           width: 100%;
           border-radius: var(--bb-grid-size-3);
-          outline: 1px solid var(--border);
           color: var(--bb-neutral-900);
           cursor: pointer;
 
           header {
-            --background: var(--bb-input-50);
-            --border: var(--bb-neutral-500);
-            --header-border: var(--bb-input-300);
+            --background: var(--ui-get-input);
 
             &::before {
               display: none;
@@ -384,7 +291,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           }
 
           #content {
-            text-align: center;
+            text-align: left;
             pointer-events: none;
           }
         }
@@ -399,7 +306,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
         #default-add {
           position: absolute;
-          top: 18px;
+          top: 24px;
           left: 100%;
           transform: translateX(48px) translateY(-50%);
           z-index: 4;
@@ -425,15 +332,15 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         & header {
           display: flex;
           align-items: center;
+          justify-content: flex-start;
           background: var(--background);
-          height: var(--bb-grid-size-9);
+          height: var(--bb-grid-size-12);
           width: 100%;
-          padding: 0 var(--bb-grid-size-3);
+          padding: 0 var(--bb-grid-size-4);
           border-radius: var(--bb-grid-size-3) var(--bb-grid-size-3) 0 0;
-          font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
-            var(--bb-font-family);
+          font-size: 16px;
+          line-height: 24px;
           position: relative;
-          justify-content: center;
 
           & span {
             text-overflow: ellipsis;
@@ -441,13 +348,10 @@ export class GraphNode extends Box implements DragConnectorReceiver {
             white-space: nowrap;
           }
 
-          &::before {
+          & .g-icon {
             flex: 0 0 auto;
-            content: "";
             width: 20px;
             height: 20px;
-            background: url(/images/progress.svg) center center / 20px 20px
-              no-repeat;
             margin-right: var(--bb-grid-size-2);
           }
 
@@ -463,12 +367,25 @@ export class GraphNode extends Box implements DragConnectorReceiver {
             height: 10px;
             border: none;
             border-radius: 50%;
-            background: var(--border);
+            background: var(--n-100);
             right: -5px;
-            top: 18px;
+            top: 24px;
             translate: 0 -50%;
             font-size: 0;
             padding: 0;
+            outline: 2px solid var(--n-0);
+
+            &::after {
+              content: "";
+              position: absolute;
+              display: block;
+              width: 4px;
+              height: 4px;
+              border-radius: 50%;
+              background: var(--n-0);
+              left: 3px;
+              top: 3px;
+            }
 
             &:not([disabled]) {
               cursor: pointer;
@@ -490,7 +407,8 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         & #content {
           position: relative;
           background: var(--bb-neutral-0);
-          padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
+          padding: var(--bb-grid-size-3) var(--bb-grid-size-4)
+            var(--bb-grid-size-4) var(--bb-grid-size-4);
           font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
             var(--bb-font-family);
           color: var(--bb-neutral-900);
@@ -509,6 +427,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           #ports {
             display: flex;
             flex-direction: column;
+            align-items: flex-start;
 
             > * {
               line-height: var(--bb-grid-size-6);
@@ -530,6 +449,10 @@ export class GraphNode extends Box implements DragConnectorReceiver {
                 margin-bottom: var(--bb-grid-size-3);
                 overflow: hidden;
 
+                &:last-of-type {
+                  margin-bottom: 0;
+                }
+
                 /** 7 lines of text **/
                 max-height: 168px;
                 align-items: flex-start;
@@ -543,7 +466,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
                 & .missing {
                   width: 100%;
                   white-space: normal;
-                  color: var(--bb-boards-600);
+                  color: var(--n-50);
 
                   & span {
                     display: inline-flex;
@@ -634,7 +557,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         }
 
         & #chiclets {
-          text-align: center;
+          text-align: left;
 
           & > * {
             margin: 0 2px;
@@ -783,7 +706,15 @@ export class GraphNode extends Box implements DragConnectorReceiver {
                         )}`;
                       }
 
-                      chiclets.push(...createChiclets(port));
+                      chiclets.push(
+                        ...createChiclets(
+                          port,
+                          this.projectState,
+                          this.ownerGraph !== MAIN_BOARD_ID
+                            ? this.ownerGraph
+                            : ""
+                        )
+                      );
                     } else {
                       value = html`<p>Value not set</p>`;
                     }
@@ -824,8 +755,8 @@ export class GraphNode extends Box implements DragConnectorReceiver {
                 return html`<div class=${classMap(classes)}>${value}</div>`;
               })
             : html`<div class="port object">
-                <div class="missing">
-                  <p>(Empty step)</p>
+                <div class="missing md-body-small">
+                  <p>Select to edit in editor</p>
                 </div>
               </div>`
           : html`<div class=${classMap({ port: true })}>Tap to configure</div>`}
@@ -867,41 +798,61 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       chatAdornment = [
         html`${svg`
         <svg id="edge" version="1.1"
-          width="260" height="40" viewBox="0 0 260 40"
+          width="300" height="40" viewBox="0 0 300 40"
           xmlns="http://www.w3.org/2000/svg">
           <path d="M 130 4 L 130 4 L 130 36"
             stroke=${this.selected ? EDGE_SELECTED : EDGE_STANDARD}
             stroke-width="2" fill="none" stroke-linecap="round" />
 
-          <line x1="130"
+          <line x1="150"
             y1="4"
-            x2=${130 - arrowSize}
+            x2=${150 - arrowSize}
             y2=${4 + arrowSize}
             stroke=${this.selected ? EDGE_SELECTED : EDGE_STANDARD} stroke-width="2" stroke-linecap="round" />
 
-          <line x1="130"
+          <line x1="150"
             y1="4"
-            x2=${130 + arrowSize}
+            x2=${150 + arrowSize}
             y2=${4 + arrowSize}
             stroke=${this.selected ? EDGE_SELECTED : EDGE_STANDARD} stroke-width="2" stroke-linecap="round" />
 
-          <line x1="130"
+          <line x1="150"
             y1="36"
-            x2=${130 - arrowSize}
+            x2=${150 - arrowSize}
             y2=${36 - arrowSize}
             stroke=${this.selected ? EDGE_SELECTED : EDGE_STANDARD} stroke-width="2" stroke-linecap="round" />
 
-          <line x1="130"
+          <line x1="150"
             y1="36"
-            x2=${130 + arrowSize}
+            x2=${150 + arrowSize}
             y2=${36 - arrowSize}
             stroke=${this.selected ? EDGE_SELECTED : EDGE_STANDARD} stroke-width="2" stroke-linecap="round" />
         </svg>`}`,
         html`<div id="chat-adornment" ${ref(this.#adornmentRef)}>
-          <header><span class="g-icon">3p</span>User input</header>
+          <header class="sans-flex round w-500">
+            <span class="g-icon filled">chat_mirror</span>User input
+          </header>
           <div id="content">(${this.nodeTitle} chats with the user)</div>
         </div>`,
       ];
+    }
+
+    let renderableIcon = this.icon;
+    switch (renderableIcon) {
+      case "ask-user": {
+        renderableIcon = "chat_mirror";
+        break;
+      }
+
+      case "display": {
+        renderableIcon = "responsive_layout";
+        break;
+      }
+
+      case "generative": {
+        renderableIcon = "spark";
+        break;
+      }
     }
 
     return html`<section
@@ -914,6 +865,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         }}
       >
         <header
+          class="sans-flex w-500 round"
           @click=${(evt: Event) => {
             evt.stopImmediatePropagation();
           }}
@@ -1016,6 +968,9 @@ export class GraphNode extends Box implements DragConnectorReceiver {
             );
           }}
         >
+          ${renderableIcon
+            ? html`<span class="g-icon filled round">${renderableIcon}</span>`
+            : nothing}
           <span>${this.nodeTitle}</span>
           ${this.hasMainPort
             ? html` ${defaultAdd}

@@ -15,10 +15,14 @@ import {
 } from "@google-labs/breadboard";
 import { escapeHTMLEntities } from "../../../utils";
 import { getAssetType } from "../../../utils/mime-type";
-import { html, HTMLTemplateResult } from "lit";
+import { html, HTMLTemplateResult, nothing } from "lit";
+import { expandChiclet } from "../../../utils/expand-chiclet";
+import { Project } from "../../../state";
 
 export function createChiclets(
-  port: InspectablePort | null
+  port: InspectablePort | null,
+  projectState: Project | null = null,
+  subGraphId: string
 ): HTMLTemplateResult[] {
   if (!port) {
     return [];
@@ -70,10 +74,21 @@ export function createChiclets(
     const { type, title, invalid, mimeType } = part;
     const assetType = getAssetType(mimeType) ?? "";
 
+    const { icon: metadataIcon, tags: metadataTags } = expandChiclet(
+      part,
+      projectState,
+      subGraphId
+    );
+
     chiclets.push(
       html`<label
-        class="chiclet ${type} ${assetType} ${invalid ? "invalid" : ""}"
+        class="chiclet ${metadataTags
+          ? metadataTags.join(" ")
+          : ""} ${type} ${assetType} ${invalid ? "invalid" : ""}"
       >
+        ${metadataIcon
+          ? html`<span class="g-icon" data-icon="${metadataIcon}"></span>`
+          : nothing}
         <span>${Template.preamble(part)}</span
         ><span class="visible">${title}</span
         ><span>${Template.postamble()}</span></label

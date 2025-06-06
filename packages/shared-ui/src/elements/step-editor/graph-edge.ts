@@ -24,6 +24,7 @@ import { clamp } from "./utils/clamp";
 import { Entity } from "./entity";
 import { calculatePointsOnCubicBezierCurve } from "./utils/cubic-bezier";
 import { icons } from "../../styles/icons";
+import { neutral, custom } from "../../styles/host/colors-light";
 
 interface Connection {
   n1: DOMPoint;
@@ -33,8 +34,8 @@ interface Connection {
   distance: number;
 }
 
-const EDGE_STANDARD = getGlobalColor("--bb-neutral-400");
-const EDGE_SELECTED = getGlobalColor("--bb-ui-500");
+const EDGE_STANDARD = neutral.n80;
+const EDGE_SELECTED = custom.c100;
 
 // Value is no longer on the wire, because it was consumed by the receiving
 // component. Constant wires never reach this state.
@@ -48,8 +49,8 @@ const EDGE_USER = getGlobalColor("--bb-joiner-600");
 const EDGE_MODEL = getGlobalColor("--bb-generative-600");
 
 const EDGE_CLEARANCE = 0;
-const HALF_HEADER_HEIGHT = 18;
-const ARROW_SIZE = 8;
+const HALF_HEADER_HEIGHT = 24;
+const ARROW_SIZE = 4;
 
 type NodeBoundPoints = {
   n1t: DOMPoint;
@@ -117,12 +118,7 @@ export class GraphEdge extends Box {
 
       .g-icon {
         font-size: 12px;
-        font-variation-settings:
-          "FILL" 0,
-          "GRAD" 0,
-          "ROND" 100,
-          "wght" 500;
-        color: var(--bb-neutral-0);
+        color: var(--n-0);
       }
     `,
   ];

@@ -54,13 +54,27 @@ export function expandChiclet(
     }
 
     case "asset": {
+      icon = "alternate_email";
+
       const assetInfo = projectState?.fastAccess.graphAssets.get(path);
-      icon = assetInfo?.metadata?.type;
+      if (assetInfo?.metadata?.type) {
+        switch (assetInfo.metadata.type) {
+          case "file": {
+            icon = "upload";
+            break;
+          }
+        }
+      }
 
       if (assetInfo?.metadata?.subType) {
-        switch (assetInfo?.metadata?.subType) {
+        switch (assetInfo.metadata.subType) {
           case "drawable": {
             icon = "draw";
+            break;
+          }
+
+          case "youtube": {
+            icon = "video_youtube";
             break;
           }
         }

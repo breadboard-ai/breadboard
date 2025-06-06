@@ -544,6 +544,7 @@ export class UI extends LitElement {
       () => {
         return html`<bb-renderer
           .boardServerKits=${this.boardServerKits}
+          .projectState=${this.projectState}
           .graph=${graph}
           .graphTopologyUpdateId=${this.graphTopologyUpdateId}
           .graphStore=${this.graphStore}

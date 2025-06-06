@@ -47,14 +47,16 @@ export const icons = css`
       "FILL" 0,
       "wght" 300,
       "GRAD" 0,
-      "opsz" 48;
+      "opsz" 48,
+      "ROND" 100;
 
     &.filled {
       font-variation-settings:
         "FILL" 1,
         "wght" 300,
         "GRAD" 0,
-        "opsz" 48;
+        "opsz" 48,
+        "ROND" 100;
     }
   }
 `;
