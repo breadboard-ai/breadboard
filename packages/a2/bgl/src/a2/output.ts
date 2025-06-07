@@ -82,7 +82,11 @@ class StreamableReporter {
 
   sendUpdate(title: string, body: unknown | undefined, icon?: string) {
     let bodyParticle;
-    if (body && typeof body == "object" && "parts" in body) {
+    if (!body) {
+      bodyParticle = { text: "Empty content" };
+    } else if (typeof body === "string") {
+      bodyParticle = { text: body };
+    } else if (typeof body === "object" && "parts" in body) {
       bodyParticle = {
         text: JSON.stringify(body),
         mimeType: "application/vnd.breadboard.llm-content",
@@ -100,7 +104,7 @@ class StreamableReporter {
     if (icon) {
       group.push(["icon", { text: icon }]);
     }
-    return this.report({ type: "update", group });
+    return this.report({ type: "update", group } as JsonSerializable);
   }
 
   async sendError(error: { $error: string }) {

@@ -17,6 +17,8 @@ import { icons } from "../../../styles/icons";
 import { sharedStyles } from "./shared-styles";
 import { colorsLight } from "../../../styles/host/colors-light";
 import { type } from "../../../styles/host/type";
+import { markdown } from "../../../directives/markdown";
+import { LLMContent } from "@breadboard-ai/types";
 
 @customElement("bb-particle-view")
 export class ParticleView extends SignalWatcher(LitElement) {
@@ -50,15 +52,17 @@ export class ParticleView extends SignalWatcher(LitElement) {
     if (!text) {
       return err(`No "body" found in "update" particle`);
     }
-    const parsed = parseJson(text);
-    if (!parsed) return parsed;
 
     const icon = (group.get("icon") as TextParticle)?.text || "info";
 
     let value;
     if (mimeType === "application/json") {
+      const parsed = parseJson(text);
+      if (!parsed) return parsed;
       value = html`<bb-json-tree .json=${parsed}></bb-json-tree>`;
     } else if (mimeType == "application/vnd.breadboard.llm-content") {
+      const parsed = parseJson(text);
+      if (!parsed) return parsed;
       // The mimeType here is a kludge. Instead, we should be sending
       // a particle group that represents LLM Content and then convert them
       // here to LLM Content to pass to `bb-llm-output`.
@@ -69,7 +73,11 @@ export class ParticleView extends SignalWatcher(LitElement) {
         .value=${parsed}
       ></bb-llm-output>`;
     } else if (mimeType?.startsWith("text/")) {
-      value = html`${text}`;
+      value = html`<bb-llm-output
+        .lite=${true}
+        .clamped=${false}
+        .value=${{ parts: [{ text }] }}
+      ></bb-llm-output>`;
     } else {
       return err(`Unrecognized mimeType: "${mimeType}"`);
     }
