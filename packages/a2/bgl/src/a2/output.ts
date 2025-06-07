@@ -80,8 +80,42 @@ class StreamableReporter {
     return this.reportLLMContent({ parts: [{ json }] });
   }
 
-  async reportError(error: { $error: string }) {
-    await this.report(error);
+  sendUpdate(title: string, body: unknown | undefined, icon?: string) {
+    let bodyParticle;
+    if (!body) {
+      bodyParticle = { text: "Empty content" };
+    } else if (typeof body === "string") {
+      bodyParticle = { text: body };
+    } else if (typeof body === "object" && "parts" in body) {
+      bodyParticle = {
+        text: JSON.stringify(body),
+        mimeType: "application/vnd.breadboard.llm-content",
+      };
+    } else {
+      bodyParticle = {
+        text: JSON.stringify(body),
+        mimeType: "application/json",
+      };
+    }
+    const group = [
+      ["title", { text: title }],
+      ["body", bodyParticle],
+    ];
+    if (icon) {
+      group.push(["icon", { text: icon }]);
+    }
+    return this.report({ type: "update", group } as JsonSerializable);
+  }
+
+  async sendError(error: { $error: string }) {
+    await this.report({
+      type: "update",
+      group: [
+        ["title", { text: "Error" }],
+        ["body", { text: error.$error }],
+        ["icon", { text: "warning" }],
+      ],
+    });
     return error;
   }
 

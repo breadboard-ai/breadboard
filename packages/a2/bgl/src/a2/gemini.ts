@@ -4,7 +4,7 @@
 
 import fetch from "@fetch";
 import secrets from "@secrets";
-import output from "@output";
+import { StreamableReporter } from "./output";
 
 import { ok, err, isLLMContentArray } from "./utils";
 import { flattenContext } from "./lists";
@@ -303,48 +303,72 @@ async function callAPI(
   $metadata?: Metadata
 ): Promise<Outcome<GeminiAPIOutputs>> {
   const accessToken = await getAccessToken();
-  let $error: string = "Unknown error";
-  while (retries) {
-    const result = await fetch({
-      $metadata,
-      url: endpointURL(model),
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: conformBody(body),
-    });
-    if (!ok(result)) {
-      // Fetch is a bit weird, because it returns various props
-      // along with the `$error`. Let's handle that here.
-      const { status, $error: errObject } = result as FetchErrorResponse;
-      if (!status) {
-        if (errObject) return { $error: errObject };
-        // This is not an error response, presume fatal error.
-        return { $error };
+  const reporter = new StreamableReporter({
+    title: `Calling ${model}`,
+    icon: "spark",
+  });
+
+  try {
+    const conformedBody = conformBody(body);
+    await reporter.start();
+    await reporter.sendUpdate("Model Input", conformedBody, "upload");
+
+    let $error: string = "Unknown error";
+    while (retries) {
+      const result = await fetch({
+        $metadata,
+        url: endpointURL(model),
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: conformedBody,
+      });
+      if (!ok(result)) {
+        // Fetch is a bit weird, because it returns various props
+        // along with the `$error`. Let's handle that here.
+        const { status, $error: errObject } = result as FetchErrorResponse;
+        if (!status) {
+          if (errObject) return reporter.sendError(err(errObject));
+          // This is not an error response, presume fatal error.
+          return reporter.sendError({ $error });
+        }
+        $error = maybeExtractError(errObject);
+        if (NO_RETRY_CODES.includes(status)) {
+          return reporter.sendError({ $error });
+        }
+      } else {
+        const outputs = result.response as GeminiAPIOutputs;
+        const candidate = outputs.candidates?.at(0);
+        if (!candidate) {
+          await reporter.sendUpdate("Model Response", outputs, "warning");
+          return reporter.sendError(
+            err("Unable to get a good response from Gemini")
+          );
+        }
+        if ("content" in candidate) {
+          await reporter.sendUpdate(
+            "Model Response",
+            candidate.content,
+            "download"
+          );
+          return outputs;
+        }
+        await reporter.sendUpdate("Model response", outputs, "warning");
+        if (candidate.finishReason === "IMAGE_SAFETY") {
+          return reporter.sendError(
+            err(
+              "The response candidate content was flagged for image safety reasons."
+            )
+          );
+        }
       }
-      $error = maybeExtractError(errObject);
-      if (NO_RETRY_CODES.includes(status)) {
-        return { $error };
-      }
-    } else {
-      const outputs = result.response as GeminiAPIOutputs;
-      const candidate = outputs.candidates?.at(0);
-      if (!candidate) {
-        return err("Unable to get a good response from Gemini");
-      }
-      if ("content" in candidate) {
-        return outputs;
-      }
-      if (candidate.finishReason === "IMAGE_SAFETY") {
-        return err(
-          "The response candidate content was flagged for image safety reasons."
-        );
-      }
+      retries--;
     }
-    retries--;
+    return reporter.sendError({ $error });
+  } finally {
+    reporter.close();
   }
-  return { $error };
 }
 
 function maybeExtractError(e: string): string {

@@ -6,6 +6,7 @@ import { ToolManager } from "./a2/tool-manager";
 import { GeminiPrompt } from "./a2/gemini-prompt";
 import { ok, err, toText } from "./a2/utils";
 import { executeTool } from "./a2/step-executor";
+import { StreamableReporter } from "./a2/output";
 
 import secrets from "@secrets";
 import fetch from "@fetch";
@@ -38,7 +39,10 @@ export type CustomSearchEngineResponse = {
   }[];
 };
 
-async function generateSummary(query: string): Promise<Outcome<string>> {
+async function generateSummary(
+  query: string,
+  reporter: StreamableReporter
+): Promise<Outcome<string>> {
   const toolManager = new ToolManager();
   toolManager.addSearch();
   const result = await new GeminiPrompt(
@@ -63,6 +67,7 @@ async function generateSummary(query: string): Promise<Outcome<string>> {
   if (chunks.length) {
     results += `\n## References:\n${chunks.join("\n")}\n`;
   }
+  await reporter.sendUpdate("Search Summary", results, "text_analysis");
   return `\n## Summary\n${results}`;
 }
 
@@ -79,7 +84,9 @@ ${item.snippet}
 `;
 }
 
-function formatBackendSearchResults(results: SearchBackendOutput[]|string): string {
+function formatBackendSearchResults(
+  results: SearchBackendOutput[] | string
+): string {
   if (typeof results === "string") {
     return results;
   }
@@ -97,28 +104,43 @@ ${result.webpage_text_content}
 `;
 }
 
-async function getSearchLinks(query: string): Promise<Outcome<string>> {
+async function getSearchLinks(
+  query: string,
+  reporter: StreamableReporter
+): Promise<Outcome<string>> {
   const results = await executeTool<SearchBackendOutput[]>("google_search", {
     query,
   });
   if (!ok(results)) return results;
-  return formatBackendSearchResults(results);
+  const formattedResults = formatBackendSearchResults(results);
+  await reporter.sendUpdate("Search Links", formattedResults, "link");
+  return formattedResults;
 }
 
 async function invoke({
   query,
 }: SearchWebInputs): Promise<Outcome<SearchWebOutputs>> {
-  const [summary, links] = await Promise.all([
-    generateSummary(query),
-    getSearchLinks(query),
-  ]);
-  if (!ok(summary)) {
-    return summary;
+  const reporter = new StreamableReporter({
+    title: "Searching Web",
+    icon: "search",
+  });
+  try {
+    await reporter.start();
+    await reporter.sendUpdate("Search term", query, "search");
+    const [summary, links] = await Promise.all([
+      generateSummary(query, reporter),
+      getSearchLinks(query, reporter),
+    ]);
+    if (!ok(summary)) {
+      return summary;
+    }
+    if (!ok(links)) {
+      return links;
+    }
+    return { results: `Query: ${query}\n${summary}\n${links}` };
+  } finally {
+    reporter.close();
   }
-  if (!ok(links)) {
-    return links;
-  }
-  return { results: `Query: ${query}\n${summary}\n${links}` };
 }
 
 async function describe() {

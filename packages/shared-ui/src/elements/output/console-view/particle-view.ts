@@ -17,6 +17,8 @@ import { icons } from "../../../styles/icons";
 import { sharedStyles } from "./shared-styles";
 import { colorsLight } from "../../../styles/host/colors-light";
 import { type } from "../../../styles/host/type";
+import { markdown } from "../../../directives/markdown";
+import { LLMContent } from "@breadboard-ai/types";
 
 @customElement("bb-particle-view")
 export class ParticleView extends SignalWatcher(LitElement) {
@@ -38,23 +40,29 @@ export class ParticleView extends SignalWatcher(LitElement) {
   // In the future, this is likely its own element that operates on a particle.
   // It is instantiated by ParticleView based on type = "update".
   #renderUpdateGroup(group: Map<string, Particle>): Outcome<TemplateResult> {
-    const title = (group.get("title") as TextParticle).text;
+    const title = (group.get("title") as TextParticle)?.text;
     if (!title) {
       return err(`No "title" found in "update" particle`);
     }
 
-    const { text, mimeType } = group.get("body") as TextParticle;
+    const { text, mimeType = "text/markdown" } = group.get(
+      "body"
+    ) as TextParticle;
 
     if (!text) {
       return err(`No "body" found in "update" particle`);
     }
-    const parsed = parseJson(text);
-    if (!parsed) return parsed;
+
+    const icon = (group.get("icon") as TextParticle)?.text || "info";
 
     let value;
     if (mimeType === "application/json") {
+      const parsed = parseJson(text);
+      if (!parsed) return parsed;
       value = html`<bb-json-tree .json=${parsed}></bb-json-tree>`;
     } else if (mimeType == "application/vnd.breadboard.llm-content") {
+      const parsed = parseJson(text);
+      if (!parsed) return parsed;
       // The mimeType here is a kludge. Instead, we should be sending
       // a particle group that represents LLM Content and then convert them
       // here to LLM Content to pass to `bb-llm-output`.
@@ -64,12 +72,16 @@ export class ParticleView extends SignalWatcher(LitElement) {
         .clamped=${false}
         .value=${parsed}
       ></bb-llm-output>`;
+    } else if (mimeType?.startsWith("text/")) {
+      value = html`<bb-llm-output
+        .lite=${true}
+        .clamped=${false}
+        .value=${{ parts: [{ text }] }}
+      ></bb-llm-output>`;
     } else {
       return err(`Unrecognized mimeType: "${mimeType}"`);
     }
 
-    // TODO: Allow the particle to set the icon.
-    const icon = "spark";
     return html` <div class="output" data-label=${title}>
       ${icon ? html`<span class="g-icon filled round">${icon}</span>` : nothing}
       ${value}
