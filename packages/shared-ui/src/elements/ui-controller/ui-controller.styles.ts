@@ -670,7 +670,7 @@ export const styles = [
       }
 
       & #side-nav-content {
-        height: calc(100% - var(--bb-grid-size-11));
+        height: calc(100% - var(--bb-grid-size-14));
 
         & bb-entity-editor {
           position: relative;
