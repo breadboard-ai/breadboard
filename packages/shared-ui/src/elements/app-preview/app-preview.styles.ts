@@ -132,7 +132,7 @@ export const styles = [
         padding: var(--bb-grid-size-3) 12% var(--bb-grid-size-4) 12%;
         width: 100%;
         background: var(--s-90);
-        border-top: 1px solid var(--s-70);
+        border-top: 1px solid var(--s-70, var(--bb-neutral-400));
 
         & #share-app {
           margin-right: var(--bb-grid-size-3);
