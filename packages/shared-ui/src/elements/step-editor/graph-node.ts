@@ -55,7 +55,7 @@ import {
 } from "../../styles/host/colors-light.js";
 import { type } from "../../styles/host/type.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
-import { iconSubstitute } from "../../utils/icon-substute.js";
+import { iconSubstitute } from "../../utils/icon-substitute.js";
 
 const EDGE_STANDARD = neutral.n80;
 const EDGE_SELECTED = custom.c100;

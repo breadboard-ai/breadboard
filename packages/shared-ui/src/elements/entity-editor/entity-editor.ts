@@ -80,7 +80,7 @@ import { EmbedState, embedState } from "@breadboard-ai/embed";
 import { getBoardUrlFromCurrentWindow } from "../../utils/board-id.js";
 import { colorsLight } from "../../styles/host/colors-light";
 import { type } from "../../styles/host/type";
-import { iconSubstitute } from "../../utils/icon-substute";
+import { iconSubstitute } from "../../utils/icon-substitute";
 
 const Strings = StringsHelper.forSection("Editor");
 

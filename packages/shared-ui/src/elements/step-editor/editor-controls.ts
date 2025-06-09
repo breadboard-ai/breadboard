@@ -42,7 +42,7 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { SIGN_IN_CONNECTION_ID } from "../../utils/signin-adapter.js";
 import { InputChangeEvent } from "../../plugins/input-plugin.js";
 import { icons } from "../../styles/icons.js";
-import { iconSubstitute } from "../../utils/icon-substute.js";
+import { iconSubstitute } from "../../utils/icon-substitute.js";
 
 const QUICK_ADD_ADJUSTMENT = -20;
 

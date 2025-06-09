@@ -6,7 +6,7 @@
 
 import { ok, TemplatePart } from "@google-labs/breadboard";
 import { Project } from "../state";
-import { iconSubstitute } from "./icon-substute";
+import { iconSubstitute } from "./icon-substitute";
 
 export function expandChiclet(
   part: TemplatePart,
