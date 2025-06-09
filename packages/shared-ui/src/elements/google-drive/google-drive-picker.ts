@@ -13,6 +13,7 @@ import {
   signinAdapterContext,
 } from "../../utils/signin-adapter.js";
 import { loadDrivePicker } from "./google-apis.js";
+import { GoogleDrivePickerCloseEvent } from "../../events/events.js";
 
 const Strings = BreadboardUI.Strings.forSection("Global");
 
@@ -200,7 +201,7 @@ export class GoogleDrivePicker extends LitElement {
               `Google Drive file is now readable: ${JSON.stringify(result)}`
             );
           }
-          this.dispatchEvent(new Event("close"));
+          this.dispatchEvent(new GoogleDrivePickerCloseEvent(result));
         } else if (result.action !== "loaded") {
           console.error(`Unhandled picker callback action:`, result.action);
         }

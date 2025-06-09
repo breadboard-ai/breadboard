@@ -101,6 +101,15 @@ export class GoogleDriveClient {
           proxyResult.metadata
         ) as gapi.client.drive.File;
         return metadata;
+      } else if (proxyResponse.status === 500) {
+        // TODO(aomarks) Remove this case once the API starts returning 404
+        // errors instead of 500s when the file is not found.
+        console.log(
+          `Received ${proxyResponse.status} response for Google Drive file` +
+            ` "${fileId}" using domain proxy fallback. Assuming file is not` +
+            ` accessible.`
+        );
+        response = new Response(null, { status: 404 });
       } else {
         console.log(
           `Google Drive getFile proxy ${response.status} error:`,

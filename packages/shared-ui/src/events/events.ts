@@ -1643,8 +1643,19 @@ export class ResizeEvent extends Event {
   }
 }
 
+export class GoogleDrivePickerCloseEvent extends Event {
+  static eventName = "bbgoogledrivepickerclose";
+  readonly result: google.picker.ResponseObject;
+
+  constructor(result: google.picker.ResponseObject) {
+    super(GoogleDrivePickerCloseEvent.eventName, { ...eventInit });
+    this.result = result;
+  }
+}
+
 declare global {
   interface HTMLElementEventMap {
     bbtoast: ToastEvent;
+    bbgoogledrivepickerclose: GoogleDrivePickerCloseEvent;
   }
 }
