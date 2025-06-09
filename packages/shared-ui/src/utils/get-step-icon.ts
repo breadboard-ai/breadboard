@@ -11,9 +11,10 @@ export { getStepIcon };
 
 function getStepIcon(
   defaultIcon: string | undefined,
-  ports: InspectableNodePorts
+  ports: InspectableNodePorts | undefined
 ) {
   let icon = defaultIcon ?? null;
+  if (!ports) return icon;
   for (const port of ports.inputs.ports) {
     if (isControllerBehavior(port.schema) && port.schema.enum) {
       const selectedControllerType = port.schema.enum.find((v) => {

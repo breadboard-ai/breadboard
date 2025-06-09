@@ -7,6 +7,7 @@
 import {
   LLMContent,
   NodeEndResponse,
+  NodeMetadata,
   NodeStartResponse,
 } from "@breadboard-ai/types";
 import { ConsoleEntry, WorkItem } from "./types";
@@ -34,6 +35,7 @@ export type AddInputCallbacks = {
 class ReactiveConsoleEntry implements ConsoleEntry {
   title: string;
   icon?: string;
+  tags?: string[];
   work: Map<string, WorkItem> = new SignalMap();
   output: Map<string, LLMContent> = new SignalMap();
   id: string;
@@ -51,12 +53,19 @@ class ReactiveConsoleEntry implements ConsoleEntry {
 
   constructor(
     private readonly fileSystem: FileSystem,
-    { node, path }: NodeStartResponse,
+    { title, icon, tags }: NodeMetadata,
+    path: number[],
     outputSchema: Schema | undefined
   ) {
-    this.title = node.metadata?.title || node.id;
-    this.icon = node.metadata?.icon;
+    if (!title) {
+      console.warn(
+        'Title was not supplied for console entry, using "Untitled step"'
+      );
+    }
+    this.title = title || "Untitled step";
+    this.icon = icon;
     this.id = idFromPath(path);
+    this.tags = tags;
     this.#outputSchema = outputSchema;
   }
 

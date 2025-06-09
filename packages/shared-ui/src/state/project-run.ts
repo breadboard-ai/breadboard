@@ -21,6 +21,7 @@ import { formatError } from "../utils/format-error";
 import { ReactiveConsoleEntry } from "./console-entry";
 import { idFromPath } from "./common";
 import { FileSystem, InspectableGraph } from "@google-labs/breadboard";
+import { getStepIcon } from "../utils/get-step-icon";
 
 export { ReactiveProjectRun };
 
@@ -127,10 +128,18 @@ class ReactiveProjectRun implements ProjectRun {
       return;
     }
 
-    const schema = this.inspectable
-      ?.nodeById(event.data.node.id)
-      ?.currentDescribe().outputSchema;
-    const entry = new ReactiveConsoleEntry(this.fileSystem, event.data, schema);
+    const node = this.inspectable?.nodeById(event.data.node.id);
+    const currentMetadata = node?.type()?.currentMetadata();
+    const { icon: defaultIcon, tags } = currentMetadata || {};
+    const icon = getStepIcon(defaultIcon, node?.currentPorts()) || undefined;
+    const title = node?.title();
+    const outputSchema = node?.currentDescribe()?.outputSchema;
+    const entry = new ReactiveConsoleEntry(
+      this.fileSystem,
+      { title, icon, tags },
+      event.data.path,
+      outputSchema
+    );
     this.current = entry;
     this.console.set(entry.id, entry);
   }
