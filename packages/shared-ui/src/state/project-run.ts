@@ -129,8 +129,8 @@ class ReactiveProjectRun implements ProjectRun {
     }
 
     const node = this.inspectable?.nodeById(event.data.node.id);
-    const currentMetadata = node?.type()?.currentMetadata();
-    const { icon: defaultIcon, tags } = currentMetadata || {};
+    const metadata = node?.currentDescribe()?.metadata || {};
+    const { icon: defaultIcon, tags } = metadata;
     const icon = getStepIcon(defaultIcon, node?.currentPorts()) || undefined;
     const title = node?.title();
     const outputSchema = node?.currentDescribe()?.outputSchema;
