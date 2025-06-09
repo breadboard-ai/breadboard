@@ -148,6 +148,17 @@ export class BoardDescriptionUpdateEvent extends Event {
   }
 }
 
+export class BoardBasicInfoUpdateEvent extends Event {
+  static eventName = "bbboardbasicinfoupdate";
+
+  constructor(
+    public readonly boardTitle: string,
+    public readonly boardDescription: string
+  ) {
+    super(BoardBasicInfoUpdateEvent.eventName, { ...eventInit });
+  }
+}
+
 export class BoardInfoUpdateEvent extends Event {
   static eventName = "bbboardinfoupdate";
 
@@ -323,6 +334,14 @@ export class RedoEvent extends Event {
 
   constructor() {
     super(RedoEvent.eventName, { ...eventInit });
+  }
+}
+
+export class ModalDismissedEvent extends Event {
+  static eventName = "bbmodaldismissed";
+
+  constructor(public readonly withSave = false) {
+    super(ModalDismissedEvent.eventName, { ...eventInit });
   }
 }
 

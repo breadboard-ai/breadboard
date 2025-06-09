@@ -300,6 +300,9 @@ export class Main extends LitElement {
   } | null = null;
 
   @state()
+  accessor #showBoardEditModal = false;
+
+  @state()
   accessor showSettingsOverlay = false;
 
   @state()
@@ -1168,6 +1171,7 @@ export class Main extends LitElement {
 
   #hideAllOverlays() {
     this.boardEditOverlayInfo = null;
+    this.#showBoardEditModal = false;
     this.showSettingsOverlay = false;
     this.showBoardServerAddOverlay = false;
     this.showNodeConfigurator = false;
@@ -1786,7 +1790,11 @@ export class Main extends LitElement {
 
     target.disabled = true;
 
-    await this.#runtime.edit.updateBoardTitle(this.tab, target.value.trim());
+    await this.#runtime.edit.updateBoardTitleAndDescription(
+      this.tab,
+      target.value.trim(),
+      null
+    );
   }
 
   async #attemptBoardTitleUpdateFromString(title: string) {
@@ -1795,7 +1803,24 @@ export class Main extends LitElement {
     }
 
     this.#setPageTitle(title.trim());
-    await this.#runtime.edit.updateBoardTitle(this.tab, title.trim());
+    await this.#runtime.edit.updateBoardTitleAndDescription(
+      this.tab,
+      title.trim(),
+      null
+    );
+  }
+
+  async #attempBoardTitleAndDescriptionUpdate(
+    title: string,
+    description: string
+  ) {
+    this.#setPageTitle(title.trim());
+
+    await this.#runtime.edit.updateBoardTitleAndDescription(
+      this.tab,
+      title,
+      description
+    );
   }
 
   async #attemptBoardDelete(
@@ -2577,6 +2602,7 @@ export class Main extends LitElement {
     const showingOverlay =
       this.showToS ||
       this.boardEditOverlayInfo !== null ||
+      this.#showBoardEditModal ||
       this.showSettingsOverlay ||
       this.showFirstRun ||
       this.showBoardServerAddOverlay ||
@@ -3051,13 +3077,7 @@ export class Main extends LitElement {
 
               switch (actionEvt.action) {
                 case "edit": {
-                  this.#showBoardEditOverlay(
-                    tab,
-                    actionEvt.x,
-                    actionEvt.y,
-                    null,
-                    null
-                  );
+                  this.#showBoardEditModal = true;
                   break;
                 }
 
@@ -4009,13 +4029,18 @@ export class Main extends LitElement {
               @bbboardtitleupdate=${async (
                 evt: BreadboardUI.Events.BoardTitleUpdateEvent
               ) => {
-                await this.#runtime.edit.updateBoardTitle(this.tab, evt.title);
+                await this.#runtime.edit.updateBoardTitleAndDescription(
+                  this.tab,
+                  evt.title,
+                  null
+                );
               }}
               @bbboarddescriptionupdate=${async (
                 evt: BreadboardUI.Events.BoardDescriptionUpdateEvent
               ) => {
-                await this.#runtime.edit.updateBoardDescription(
+                await this.#runtime.edit.updateBoardTitleAndDescription(
                   this.tab,
+                  null,
                   evt.description
                 );
               }}
@@ -4585,6 +4610,7 @@ export class Main extends LitElement {
           boardOverflowMenu,
           userOverflowMenu,
           boardItemsOverflowMenu,
+          this.#showBoardEditModal ? this.#createBoardEditModal() : nothing,
         ];
       });
 
@@ -4619,6 +4645,24 @@ export class Main extends LitElement {
       snackbar,
       this.#renderGoogleDriveAssetShareDialog(),
     ];
+  }
+
+  #createBoardEditModal() {
+    return html`<bb-edit-board-modal
+      .boardTitle=${this.tab?.graph.title ?? null}
+      .boardDescription=${this.tab?.graph.description ?? null}
+      @bbmodaldismissed=${() => {
+        this.#showBoardEditModal = false;
+      }}
+      @bbboardbasicinfoupdate=${(
+        evt: BreadboardUI.Events.BoardBasicInfoUpdateEvent
+      ) => {
+        this.#attempBoardTitleAndDescriptionUpdate(
+          evt.boardTitle,
+          evt.boardDescription
+        );
+      }}
+    ></bb-edit-board-modal>`;
   }
 
   createTosDialog() {
