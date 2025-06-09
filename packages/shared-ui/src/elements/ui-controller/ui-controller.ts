@@ -946,10 +946,17 @@ export class UI extends LitElement {
         picker.fileIds = needsPicking;
         picker.open();
         picker.addEventListener(
-          "close",
-          () => {
+          "bbgoogledrivepickerclose",
+          ({ result }) => {
             picker.fileIds = [];
-            window.location.reload();
+            if (result.action === "picked") {
+              // Reload so that any assets that might have failed to load while
+              // the dialog was open will try again. It would be much better if
+              // we tracked this and could signal those affected components to
+              // re-render, but our infrastructure doesn't make that very easy
+              // currently.
+              window.location.reload();
+            }
           },
           { once: true }
         );
