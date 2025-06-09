@@ -604,10 +604,10 @@ export const styles = [
         display: flex;
         align-items: center;
         justify-content: center;
-        background: var(--s-80, var(--bb-neutral-0));
+        background: var(--s-90, var(--bb-neutral-0));
 
         height: var(--bb-grid-size-14);
-        border-bottom: 1px solid var(--s-70, var(--bb-neutral-300));
+        border-bottom: 1px solid var(--s-80, var(--bb-neutral-300));
 
         > div {
           display: flex;
@@ -632,7 +632,7 @@ export const styles = [
 
           &[disabled] {
             cursor: auto;
-            background: var(--s-90, var(--bb-neutral-100));
+            background: var(--s-95, var(--bb-neutral-100));
             border-radius: var(--bb-grid-size-16);
           }
 
