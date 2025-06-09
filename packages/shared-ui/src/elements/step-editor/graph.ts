@@ -157,7 +157,7 @@ export class Graph extends Box {
           false;
         graphNode.updating = ports.updating ?? false;
         graphNode.ports = ports;
-        graphNode.icon = getStepIcon(metadata.icon, ports);
+        graphNode.icon = getStepIcon(metadata.icon, ports) || null;
 
         if (metadata.tags) {
           for (const tag of metadata.tags ?? []) {

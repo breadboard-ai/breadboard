@@ -6,15 +6,16 @@
 
 import { InspectableNodePorts } from "@google-labs/breadboard";
 import { isControllerBehavior } from "./behaviors";
+import { iconSubstitute } from "./icon-substute";
 
 export { getStepIcon };
 
 function getStepIcon(
   defaultIcon: string | undefined,
   ports: InspectableNodePorts | undefined
-) {
-  let icon = defaultIcon ?? null;
-  if (!ports) return icon;
+): string | undefined {
+  let icon = iconSubstitute(defaultIcon);
+  if (!ports) return icon || undefined;
   for (const port of ports.inputs.ports) {
     if (isControllerBehavior(port.schema) && port.schema.enum) {
       const selectedControllerType = port.schema.enum.find((v) => {
@@ -40,5 +41,5 @@ function getStepIcon(
       break;
     }
   }
-  return icon;
+  return icon || undefined;
 }
