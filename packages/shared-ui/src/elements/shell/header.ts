@@ -374,8 +374,11 @@ export class VEHeader extends LitElement {
     return html`<section>
       <h1 id="app-title" class="sans-flex round w-500">
         ${Strings.from("APP_NAME")}
-        ${Strings.from("PROVIDER_NAME")
-          ? html`<span class="sans" id="experiment">Experiment</span>`
+        ${Strings.from("PROVIDER_NAME") !== "PROVIDER_NAME" &&
+        Strings.from("PROVIDER_NAME") !== ""
+          ? html`<span class="sans" id="experiment"
+              >Experiment ${Strings.from("PROVIDER_NAME")}</span
+            >`
           : nothing}
       </h1>
       <div id="right">
