@@ -51,6 +51,7 @@ export const colorsLight = css`
     --ui-custom-o-5: oklch(
       from var(--ui-custom-o-100) l c h / calc(alpha * 0.05)
     );
+    --ui-scrim: rgba(0, 0, 0, 0.6);
   }
 
   :host {
