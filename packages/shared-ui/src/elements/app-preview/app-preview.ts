@@ -37,11 +37,7 @@ import { googleDriveClientContext } from "../../contexts/google-drive-client-con
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { loadImage } from "../../utils/image.js";
 import { blobHandleToUrl } from "../../utils/blob-handle-to-url.js";
-import {
-  createThemeStyles,
-  generatePaletteFromColor,
-} from "@breadboard-ai/theme";
-import { styleMap } from "lit/directives/style-map.js";
+import { generatePaletteFromColor } from "@breadboard-ai/theme";
 
 const primaryColor = "#ffffff";
 const secondaryColor = "#7a7a7a";
@@ -439,20 +435,6 @@ export class AppPreview extends LitElement {
       this.#appTemplate.showContentWarning = !this.isMine;
     }
 
-    let styles: Record<string, string> = {};
-    if (
-      this.graph?.metadata?.visual?.presentation?.theme &&
-      this.graph?.metadata?.visual?.presentation?.themes
-    ) {
-      const { themes, theme } = this.graph.metadata.visual.presentation;
-      if (themes[theme]) {
-        const appPalette = themes[theme].palette;
-        if (appPalette) {
-          styles = createThemeStyles(appPalette);
-        }
-      }
-    }
-
     return html`
       <div id="container">
         <div
@@ -462,7 +444,7 @@ export class AppPreview extends LitElement {
           ${this.#template}
         </div>
         ${this.isMine
-          ? html`<div id="theme-edit" style=${styleMap(styles)}>
+          ? html`<div id="theme-edit">
               <button
                 id="share-app"
                 ?disabled=${this.#loadingTemplate}

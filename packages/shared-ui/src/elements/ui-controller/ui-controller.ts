@@ -82,6 +82,9 @@ import { SharePanel } from "../share-panel/share-panel.js";
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { effects } from "../../styles/host/effects.js";
+import { GraphTheme } from "@breadboard-ai/types";
+import { createThemeStyles } from "@breadboard-ai/theme";
+import { styleMap } from "lit/directives/style-map.js";
 
 const SIDE_ITEM_KEY = "bb-ui-controller-side-nav-item";
 
@@ -635,13 +638,24 @@ export class UI extends LitElement {
       ></bb-module-editor>`;
     }
 
+    let theme: string;
+    let themes: Record<string, GraphTheme>;
     let themeHash = 0;
+    let themeStyles: Record<string, string> = {};
     if (
       this.graph?.metadata?.visual?.presentation?.themes &&
       this.graph?.metadata?.visual?.presentation?.theme
     ) {
-      const { theme, themes } = this.graph.metadata.visual.presentation;
+      theme = this.graph.metadata.visual.presentation.theme;
+      themes = this.graph.metadata.visual.presentation.themes;
       themeHash = hash(themes[theme]);
+
+      if (themes[theme]) {
+        const appPalette = themes[theme].palette;
+        if (appPalette) {
+          themeStyles = createThemeStyles(appPalette);
+        }
+      }
     }
 
     let selectionCount = 0;
@@ -782,10 +796,16 @@ export class UI extends LitElement {
           </bb-edit-history-overlay>
           ${graphEditor} ${themeEditor}
         </div>
-        <div id="side-nav" class="side-shadow" slot="slot-1">
+        <div
+          id="side-nav"
+          class="side-shadow"
+          slot="slot-1"
+          style=${styleMap(themeStyles)}
+        >
           <div id="side-nav-controls">
             <div id="side-nav-controls-left">
               <button
+                class="sans-flex w-500 round"
                 ?disabled=${this.sideNavItem === "app-view"}
                 @click=${() => {
                   this.sideNavItem = "app-view";
@@ -794,6 +814,7 @@ export class UI extends LitElement {
                 ${Strings.from("LABEL_SECTION_PREVIEW")}
               </button>
               <button
+                class="sans-flex w-500 round"
                 ?disabled=${this.sideNavItem === "activity"}
                 @click=${() => {
                   this.sideNavItem = "activity";
@@ -801,18 +822,20 @@ export class UI extends LitElement {
               >
                 ${Strings.from("LABEL_SECTION_CONSOLE")}
               </button>
-            </div>
-            <div id="side-nav-controls-right">
-              ${selectionCount > 0
-                ? html`<button
-                    ?disabled=${this.sideNavItem === "editor"}
-                    @click=${() => {
-                      this.sideNavItem = "editor";
-                    }}
-                  >
-                    Editor
-                  </button>`
-                : nothing}
+              <button
+                ?disabled=${this.sideNavItem === "editor"}
+                class=${classMap({
+                  "sans-flex": true,
+                  "w-500": true,
+                  round: true,
+                  invisible: selectionCount === 0,
+                })}
+                @click=${() => {
+                  this.sideNavItem = "editor";
+                }}
+              >
+                Editor
+              </button>
             </div>
           </div>
           <div id="side-nav-content">${sideNavItem}</div>
