@@ -22,6 +22,8 @@ import { type FlowGenerator, flowGeneratorContext } from "./flow-generator.js";
 import { classMap } from "lit/directives/class-map.js";
 import { spinAnimationStyles } from "../styles/spin-animation.js";
 import { ActionTracker } from "../utils/action-tracker.js";
+import { colorsLight } from "../styles/host/colors-light.js";
+import { type } from "../styles/host/type.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
@@ -45,6 +47,8 @@ export class FlowgenHomepagePanel extends LitElement {
     outlineButtonWithIcon,
     icons,
     spinAnimationStyles,
+    colorsLight,
+    type,
     css`
       :host {
         display: flex;
@@ -70,14 +74,14 @@ export class FlowgenHomepagePanel extends LitElement {
 
       p {
         word-break: break-all;
+        color: var(--n-0);
+        margin: var(--bb-grid-size-2) 0;
       }
 
       #feedback {
-        font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
-          var(--bb-font-family);
-        color: var(--bb-neutral-200);
+        color: var(--n-0);
         transition: var(--color-transition);
-        background: var(--bb-neutral-800);
+        background: var(--n-10);
         border-radius: var(--bb-grid-size-2);
         padding-left: var(--bb-grid-size-5);
         padding-right: var(--bb-grid-size-5);
@@ -187,10 +191,12 @@ export class FlowgenHomepagePanel extends LitElement {
 
   override render() {
     const errorFeedback = html` <div id="feedback">
-      <p>${this.#renderFeedback()}</p>
+      <p class="sans-flex md-body-medium">${this.#renderFeedback()}</p>
       <button id="dismiss-button" @click=${this.#onClearError}>&#215</button>
     </div>`;
-    const statusFeedback = html`<p>${this.#renderFeedback()}</p>`;
+    const statusFeedback = html`<p class="sans-flex md-body-medium">
+      ${this.#renderFeedback()}
+    </p>`;
     return [
       this.#state.status === "error" ? errorFeedback : statusFeedback,
       this.#renderInput(),

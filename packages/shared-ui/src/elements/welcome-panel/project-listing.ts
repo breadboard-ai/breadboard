@@ -40,6 +40,8 @@ import {
 import { Task, TaskStatus } from "@lit/task";
 import { RecentBoard } from "../../types/types.js";
 import { ActionTracker } from "../../utils/action-tracker.js";
+import { colorsLight } from "../../styles/host/colors-light.js";
+import { type } from "../../styles/host/type.js";
 
 const MODE_KEY = "bb-project-listing-mode";
 const OVERFLOW_MENU_CLEARANCE = 4;
@@ -105,6 +107,8 @@ export class ProjectListing extends LitElement {
 
   static styles = [
     icons,
+    colorsLight,
+    type,
     css`
       * {
         box-sizing: border-box;
@@ -124,34 +128,20 @@ export class ProjectListing extends LitElement {
         min-height: 100%;
 
         & #hero {
-          padding: 0 16px 28px 16px;
+          padding: 0 var(--bb-grid-size-16);
           display: flex;
           flex-direction: column;
           align-items: center;
 
           & h1 {
-            font: 400 var(--bb-title-xx-large) /
-              var(--bb-title-line-height-xx-large) var(--bb-font-family);
-            padding: 0;
-            margin: 76px 0 0 0;
+            margin: var(--bb-grid-size-9) 0 0 0;
             text-align: center;
-
-            & .gradient {
-              background: linear-gradient(
-                0deg,
-                #217bfe,
-                #078efb,
-                #a190ff,
-                #bd99fe
-              );
-              background-clip: text;
-              -webkit-text-fill-color: transparent;
-            }
+            max-width: 560px;
           }
 
           & bb-flowgen-homepage-panel {
             width: 100%;
-            max-width: 976px;
+            max-width: 960px;
           }
         }
 
@@ -744,7 +734,7 @@ export class ProjectListing extends LitElement {
     return html`
       <div id="wrapper" ${ref(this.#wrapperRef)}>
         <section id="hero">
-          <h1>
+          <h1 class="sans-flex w-500 round md-headline-large">
             <span class="gradient"
               >${Strings.from("LABEL_WELCOME_MESSAGE_A")}</span
             >

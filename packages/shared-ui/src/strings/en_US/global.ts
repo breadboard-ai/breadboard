@@ -14,7 +14,7 @@ export default {
     str: "Flows",
   },
   PROVIDER_NAME: {
-    str: "Google",
+    str: "",
   },
 
   // Commands.
