@@ -62,6 +62,7 @@ export { LLMInputChatDebug } from "./input/llm-input/llm-input-chat-debug.js";
 export { LLMOutput } from "./output/llm-output/llm-output.js";
 export { LLMOutputArray } from "./output/llm-output/llm-output-array.js";
 export { LLMPartInput } from "./input/llm-input/llm-part-input.js";
+export { Modal } from "./shell/modal.js";
 export { ModuleEditor } from "./module-editor/module-editor.js";
 export { ModuleRibbonMenu } from "./module-editor/ribbon.js";
 export { MultiOutput } from "./output/multi-output/multi-output.js";
