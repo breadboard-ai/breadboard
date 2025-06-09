@@ -40,7 +40,7 @@ export const styles = [
 
       width: 100%;
       height: 100%;
-      background: var(--bb-neutral-0);
+      background: var(--s-80, var(--bb-neutral-0));
       position: relative;
       container-type: size;
 
@@ -186,7 +186,7 @@ export const styles = [
         font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
           var(--bb-font-family);
         position: relative;
-        background: var(--background-color, var(--bb-neutral-0));
+        background: var(--s-80, var(--bb-neutral-0));
 
         & .loading {
           display: flex;
