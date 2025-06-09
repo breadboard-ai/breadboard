@@ -70,6 +70,7 @@ export { NodeConfigurationOverlay } from "./overlay/node-configurator.js";
 export { OpenBoardOverlay } from "./overlay/open-board.js";
 export { OverflowMenu } from "./overflow-menu/overflow-menu.js";
 export { Overlay } from "./overlay/overlay.js";
+export { ParticleUpdate } from "./output/console-view/particles/update.js";
 export { ParticleView } from "./output/console-view/particle-view.js";
 export { PDFViewer } from "./output/pdf-viewer/pdf-viewer.js";
 export { ProjectListing } from "./welcome-panel/project-listing.js";
