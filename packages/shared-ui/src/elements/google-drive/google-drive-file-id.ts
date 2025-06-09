@@ -19,6 +19,7 @@ import {
   loadGapiClient,
 } from "./google-apis.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
+import { getTopLevelOrigin } from "../../utils/embed-helpers.js";
 
 type PickedValue = {
   // A special value recognized by the "GraphPortLabel": if present in an
@@ -269,6 +270,7 @@ export class GoogleDriveFileId extends LitElement {
 
     // See https://developers.google.com/drive/picker/reference
     this.#picker = new this._pickerLib.PickerBuilder()
+      .setOrigin(getTopLevelOrigin())
       .addView(view)
       .setAppId(this._authorization.clientId)
       .setOAuthToken(this._authorization.secret)

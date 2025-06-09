@@ -14,6 +14,7 @@ import {
 } from "../../utils/signin-adapter.js";
 import { loadDrivePicker } from "./google-apis.js";
 import { GoogleDrivePickerCloseEvent } from "../../events/events.js";
+import { getTopLevelOrigin } from "../../utils/embed-helpers.js";
 
 const Strings = BreadboardUI.Strings.forSection("Global");
 
@@ -97,6 +98,7 @@ export class GoogleDrivePicker extends LitElement {
 
     // https://developers.google.com/drive/picker/reference
     const picker = new pickerLib.PickerBuilder()
+      .setOrigin(getTopLevelOrigin())
       .addView(view)
       .setAppId(auth.grant.client_id)
       .setOAuthToken(auth.grant.access_token)
@@ -185,6 +187,7 @@ export class GoogleDrivePicker extends LitElement {
     underlay.mode = overlay.mode = "pick-shared-assets";
 
     const picker = new pickerLib.PickerBuilder()
+      .setOrigin(getTopLevelOrigin())
       .addView(view)
       .setAppId(auth.grant.client_id)
       .setOAuthToken(auth.grant.access_token)

@@ -10,7 +10,7 @@ import {
   oauthTokenBroadcastChannelName,
   type OAuthStateParameter,
 } from "./connection-common.js";
-import { getEmbedderRedirectUri } from "../../utils/oauth-redirect.js";
+import { getEmbedderRedirectUri } from "../../utils/embed-helpers.js";
 
 export class ConnectionBroker extends HTMLElement {
   #embedHandler?: EmbedHandler;

@@ -18,7 +18,7 @@ import {
 } from "../elements/connection/connection-common";
 import { SETTINGS_TYPE, SettingsHelper } from "../types/types";
 import { createContext } from "@lit/context";
-import { getEmbedderRedirectUri } from "./oauth-redirect";
+import { getEmbedderRedirectUri } from "./embed-helpers";
 
 export { SigninAdapter };
 

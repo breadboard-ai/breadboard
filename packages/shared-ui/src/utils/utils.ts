@@ -6,7 +6,7 @@
 
 export { formatError } from "./format-error";
 export { getBoardUrlFromCurrentWindow } from "./board-id";
-export { getEmbedderRedirectUri } from "./oauth-redirect";
+export { getEmbedderRedirectUri } from "./embed-helpers";
 export { TopGraphObserver } from "./top-graph-observer/index";
 // export { getIsolatedNodeGraphDescriptor } from "./isolated-node-board.js";
 export { getModuleId } from "./module-id.js";

@@ -26,6 +26,7 @@ import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-d
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { ok } from "@google-labs/breadboard";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
+import { getTopLevelOrigin } from "../../utils/embed-helpers.js";
 
 const Strings = BreadboardUI.Strings.forSection("Global");
 
@@ -242,6 +243,7 @@ export class GoogleDriveDebugPanel extends LitElement {
     view.setSelectFolderEnabled(true);
     // See https://developers.google.com/drive/picker/reference
     const picker = new pickerLib.PickerBuilder()
+      .setOrigin(getTopLevelOrigin())
       .addView(view)
       .setAppId(auth.grant.client_id)
       .setOAuthToken(auth.grant.access_token)
@@ -280,6 +282,7 @@ export class GoogleDriveDebugPanel extends LitElement {
 
     // https://developers.google.com/drive/picker/reference
     const picker = new pickerLib.PickerBuilder()
+      .setOrigin(getTopLevelOrigin())
       .addView(view)
       .setAppId(auth.grant.client_id)
       .setOAuthToken(auth.grant.access_token)
@@ -412,6 +415,7 @@ export class GoogleDriveDebugPanel extends LitElement {
 
     // https://developers.google.com/drive/picker/reference
     const picker = new pickerLib.PickerBuilder()
+      .setOrigin(getTopLevelOrigin())
       .addView(view)
       .setAppId(auth.grant.client_id)
       .setSelectableMimeTypes(ASSET_MIME_TYPES)
