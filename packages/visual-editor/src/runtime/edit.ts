@@ -1003,25 +1003,23 @@ export class Edit extends EventTarget {
     );
   }
 
-  async updateBoardTitle(tab: Tab | null, title: string) {
+  async updateBoardTitleAndDescription(
+    tab: Tab | null,
+    title: string | null,
+    description: string | null
+  ) {
     if (!tab) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to find tab"));
       return null;
     }
 
-    tab.graph.title = title;
-    tab.graph.metadata ??= {};
-    tab.graph.metadata.userModified = true;
-    this.dispatchEvent(new RuntimeBoardEditEvent(null, [], false));
-  }
-
-  async updateBoardDescription(tab: Tab | null, description: string) {
-    if (!tab) {
-      this.dispatchEvent(new RuntimeErrorEvent("Unable to find tab"));
-      return null;
+    if (title !== null) {
+      tab.graph.title = title;
+    }
+    if (description !== null) {
+      tab.graph.description = description;
     }
 
-    tab.graph.description = description;
     tab.graph.metadata ??= {};
     tab.graph.metadata.userModified = true;
     this.dispatchEvent(new RuntimeBoardEditEvent(null, [], false));

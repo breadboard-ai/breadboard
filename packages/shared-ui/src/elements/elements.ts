@@ -33,6 +33,7 @@ export { ConsoleView } from "./output/console-view/console-view.js";
 export { DragDockOverlay } from "./overlay/drag-dock-overlay.js";
 export { DrawableInput } from "./input/drawable/drawable.js";
 export { EditConnector } from "./asset-organizer/edit-connector.js";
+export { EditBoardModal } from "./shell/edit-board.js";
 export { EditorControls } from "./step-editor/editor-controls.js";
 export { EntityEditor } from "./entity-editor/entity-editor.js";
 export { EventDetails } from "./event-details/event-details.js";
