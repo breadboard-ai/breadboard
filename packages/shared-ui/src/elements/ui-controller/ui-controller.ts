@@ -731,21 +731,12 @@ export class UI extends LitElement {
         .projectState=${this.projectState}
       ></bb-entity-editor>`,
       html`
-        ${showExperimentalComponents
-          ? html`<bb-console-view
-              class=${classMap({
-                active: this.sideNavItem === "activity",
-              })}
-              .run=${this.projectState?.run}
-            ></bb-console-view>`
-          : html`<div
-              id="history-activity-container"
-              class=${classMap({
-                active: this.sideNavItem === "activity",
-              })}
-            >
-              ${this.#renderActivity()}
-            </div>`}
+        <bb-console-view
+          class=${classMap({
+            active: this.sideNavItem === "activity",
+          })}
+          .run=${this.projectState?.run}
+        ></bb-console-view>
       `,
       html`<bb-edit-history-panel
         class=${classMap({
