@@ -604,11 +604,14 @@ export const styles = [
         display: flex;
         align-items: center;
         justify-content: center;
-        background: var(--s-90, var(--bb-neutral-0));
         flex: 0 0 auto;
 
         height: var(--bb-grid-size-14);
-        border-bottom: 1px solid var(--s-80, var(--bb-neutral-300));
+
+        &.showing-preview {
+          background: var(--s-90, var(--bb-neutral-0));
+          border-bottom: 1px solid var(--s-80, var(--bb-neutral-300));
+        }
 
         > div {
           display: flex;

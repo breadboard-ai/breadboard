@@ -802,7 +802,12 @@ export class UI extends LitElement {
           slot="slot-1"
           style=${styleMap(themeStyles)}
         >
-          <div id="side-nav-controls">
+          <div
+            id="side-nav-controls"
+            class=${classMap({
+              "showing-preview": this.sideNavItem === "app-view",
+            })}
+          >
             <div id="side-nav-controls-left">
               <button
                 class="sans-flex w-500 round"

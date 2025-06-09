@@ -25,6 +25,8 @@ import { provide } from "@lit/context";
 import { projectRunContext } from "../../../contexts/project-run.js";
 import { isParticle } from "@breadboard-ai/particles";
 import { sharedStyles } from "./shared-styles.js";
+import { colorsLight } from "../../../styles/host/colors-light.js";
+import { type } from "../../../styles/host/type.js";
 
 @customElement("bb-console-view")
 export class ConsoleView extends SignalWatcher(LitElement) {
@@ -35,6 +37,8 @@ export class ConsoleView extends SignalWatcher(LitElement) {
   static styles = [
     icons,
     sharedStyles,
+    colorsLight,
+    type,
     css`
       * {
         box-sizing: border-box;
@@ -70,9 +74,9 @@ export class ConsoleView extends SignalWatcher(LitElement) {
           background: var(--primary-color, var(--bb-ui-50))
             var(--start-icon, var(--bb-icon-generative)) 12px center / 16px 16px
             no-repeat;
-          color: var(--bb-neutral-700);
+          color: var(--n-40, var(--bb-neutral-700));
           border-radius: var(--bb-grid-size-16);
-          border: 1px solid var(--bb-neutral-500);
+          border: 1px solid var(--n-60, var(--bb-neutral-500));
           font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
             var(--bb-font-family);
           padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-2);
@@ -129,16 +133,10 @@ export class ConsoleView extends SignalWatcher(LitElement) {
             border-radius: var(--bb-grid-size-3);
             list-style: none;
             padding: 0 var(--bb-grid-size-3);
-            background: var(--bb-neutral-50);
-            color: var(--bb-neutral-900);
-            font: 500 var(--bb-label-medium) /
-              var(--bb-label-line-height-medium) var(--bb-font-family);
+            background: var(--n-90, var(--bb-neutral-50));
+            font-size: 12px;
+            color: var(--n-0, var(--bb-neutral-900));
             cursor: pointer;
-
-            &.input,
-            &.chat_mirror {
-              background: var(--bb-ui-100);
-            }
 
             > * {
               pointer-events: none;
@@ -197,10 +195,29 @@ export class ConsoleView extends SignalWatcher(LitElement) {
 
         & > details {
           & > summary {
-            font: 500 var(--bb-label-large) / var(--bb-label-line-height-large)
-              var(--bb-font-family);
             height: var(--bb-grid-size-12);
-            background: var(--bb-neutral-200);
+            background: var(--n-90, var(--bb-neutral-200));
+
+            &.chat_mirror {
+              background: var(--ui-get-input);
+            }
+
+            &.responsive_layout {
+              background: var(--ui-display);
+            }
+
+            &.spark,
+            &.photo_spark,
+            &.audio_magic_eraser,
+            &.text_analysis,
+            &.generative-image-edit,
+            &.generative-code,
+            &.videocam_auto,
+            &.generative-search,
+            &.generative,
+            &.laps {
+              background: var(--ui-generate);
+            }
           }
         }
       }
@@ -288,9 +305,20 @@ export class ConsoleView extends SignalWatcher(LitElement) {
         this.run.console.entries(),
         ([key]) => key,
         ([itemId, item], idx) => {
-          const classes: Record<string, boolean> = {};
+          const classes: Record<string, boolean> = {
+            "sans-flex": true,
+            "w-500": true,
+            round: true,
+            "md-title-medium": true,
+          };
           if (item.icon) {
             classes[item.icon] = true;
+          }
+
+          if (item.tags) {
+            for (const tag of item.tags) {
+              classes[tag] = true;
+            }
           }
 
           const itemHasFinished = item.completed;
