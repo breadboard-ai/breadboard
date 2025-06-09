@@ -6,7 +6,7 @@
 
 import { InspectableNodePorts } from "@google-labs/breadboard";
 import { isControllerBehavior } from "./behaviors";
-import { iconSubstitute } from "./icon-substute";
+import { iconSubstitute } from "./icon-substitute";
 
 export { getStepIcon };
 
