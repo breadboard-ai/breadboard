@@ -317,6 +317,10 @@ export class ConsoleView extends SignalWatcher(LitElement) {
 
           if (item.tags) {
             for (const tag of item.tags) {
+              if (tag === "output") {
+                continue;
+              }
+
               classes[tag] = true;
             }
           }
