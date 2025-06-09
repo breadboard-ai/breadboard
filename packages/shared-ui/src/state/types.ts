@@ -134,6 +134,7 @@ export type ProjectRun = {
 export type ConsoleEntry = {
   title: string;
   icon?: string;
+  tags?: string[];
   /**
    * A list of work items: things that a step is doing.
    */
