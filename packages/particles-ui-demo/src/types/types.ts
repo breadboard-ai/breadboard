@@ -31,3 +31,10 @@ export type SerializedGroupParticle = [
   key: string,
   value: SerializedParticle,
 ][];
+
+export type Channel = {
+  requestAddItem(): void;
+  requestUpdateField(parentId: string, id: string, value: string): void;
+  requestUpdateDone(id: string, value: boolean): void;
+  requestDelete(itemId: string): void;
+};
