@@ -22,7 +22,7 @@ export { FileSystemDataPartTransformer };
 class FileSystemDataPartTransformer implements DataPartTransformer {
   async persistPart(
     _graphUrl: URL,
-    part: InlineDataCapabilityPart
+    part: InlineDataCapabilityPart | StoredDataCapabilityPart
   ): Promise<Outcome<StoredDataCapabilityPart>> {
     const temporaryBlobStoreURL = import.meta.env.VITE_TEMPORARY_BLOB_STORE_URL;
     if (!temporaryBlobStoreURL) {
