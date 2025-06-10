@@ -26,6 +26,10 @@ export class ParticleView extends SignalWatcher(LitElement) {
       return html`<bb-particle-update
         .particle=${this.particle}
       ></bb-particle-update>`;
+    } else if (type === "links") {
+      return html`<bb-particle-links
+        .particle=${this.particle}
+      ></bb-particle-links>`;
     } else {
       // Here, we could have a graceful fallback and just try to render
       // "generic particle"
