@@ -74,4 +74,16 @@ describe("create/readProperties", () => {
       thumbnailUrl: undefined,
     });
   });
+
+  it("handles missing containers", () => {
+    delete file.properties;
+    delete file.appProperties;
+    const props = readProperties(file);
+    deepEqual(props, {
+      title: "",
+      description: "",
+      tags: [],
+      thumbnailUrl: undefined,
+    });
+  });
 });
