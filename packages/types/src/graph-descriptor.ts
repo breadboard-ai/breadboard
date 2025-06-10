@@ -463,6 +463,51 @@ export type GraphMetadata = {
    * See https://github.com/breadboard-ai/breadboard/wiki/Parameters-Design
    */
   parameters?: Record<string, ParameterMetadata>;
+
+  /**
+   * Data related to the sharing/publishing state of this graph.
+   */
+  sharing?:
+    | {
+        /**
+         * If a graph has the "editable" sharing role, then it is the original
+         * graph created by the author. This is the graph where edits happen.
+         * Editable graphs are not typically accessed directly by consumers.
+         */
+        role: "editable";
+
+        shareable: {
+          /** URL of the shareable copy of this graph. */
+          graphUrl: string;
+
+          /**
+           * Version identifier (e.g. Google Drive file revision id) to track
+           * which version of the editable graph the shareable copy is currently
+           * reflecting.
+           */
+          lastPushedRevision: string;
+        };
+      }
+    | {
+        /**
+         * If a graph has the "shareable" sharing role, then it is a copy of
+         * some original "editable" graph. This graph is not edited directly,
+         * instead it receives updates from the "editable" graph only when the
+         * author chooses to push them.
+         */
+        role: "shareable";
+
+        editable: {
+          /**
+           * URL of the editable version of this graph. Note in most cases the
+           * user accessing a shareable graph will not have access to the
+           * editable version, but if they do (e.g. if it is the author
+           * themselves), then having this information allows us to link back to
+           * the editable version.
+           */
+          graphUrl: string;
+        };
+      };
 };
 
 /**
