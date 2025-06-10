@@ -75,6 +75,7 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "@lit-labs/signals": "^0.1.2",
     "signal-utils": "^0.21.1"
   }
 }
