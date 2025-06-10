@@ -32,7 +32,6 @@ const STRATEGISTS: Strategist[] = [
   new ParallelStrategist(),
   new SequentialStrategist(),
   new ThinkStrategist(),
-  new ConversationalThinkStrategist(),
 ];
 
 function findStrategist(name?: string): Strategist | undefined {
