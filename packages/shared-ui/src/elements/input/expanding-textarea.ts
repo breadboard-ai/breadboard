@@ -64,11 +64,13 @@ export class ExpandingTextarea extends LitElement {
         border-radius: 0.5lh;
         overflow-y: hidden;
       }
+
       #outer-container {
         display: flex;
         align-items: center;
         --line-height: 1lh;
       }
+
       #inner-container {
         flex: 1;
         display: flex;
@@ -76,6 +78,7 @@ export class ExpandingTextarea extends LitElement {
         align-items: center;
         position: relative;
       }
+
       textarea,
       #measure {
         line-height: var(--line-height);
@@ -85,6 +88,7 @@ export class ExpandingTextarea extends LitElement {
         word-break: normal;
         white-space: normal;
       }
+
       textarea {
         flex: 1;
         color: inherit;
@@ -98,9 +102,11 @@ export class ExpandingTextarea extends LitElement {
         overflow-y: auto;
         scrollbar-color: #e1e1e1 transparent;
       }
+
       textarea:focus-visible {
         outline: none;
       }
+
       #measure {
         visibility: hidden;
         color: magenta;
@@ -115,12 +121,14 @@ export class ExpandingTextarea extends LitElement {
         margin-right: 2px;
         white-space: pre-wrap;
       }
+
       #measure::after {
         /* Unlike our <textarea>, our measurement <div> won't claim height for
          trailing newlines. We can work around this by appending a zero-width
          space. */
         content: "\u200B";
       }
+
       #submit {
         background: none;
         border: none;
@@ -128,13 +136,17 @@ export class ExpandingTextarea extends LitElement {
         color: var(--n-60);
         padding: 4px;
         display: flex;
+        align-items: center;
+        justify-content: center;
         margin: -4px;
       }
+
       #submit:hover {
         color: var(--n-30);
       }
+
       ::slotted(.g-icon) {
-        font-size: 22px !important;
+        font-size: 22px;
       }
     `,
   ];

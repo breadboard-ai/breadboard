@@ -31,6 +31,8 @@ import { googleDriveClientContext } from "../../contexts/google-drive-client-con
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { guard } from "lit/directives/guard.js";
 import { ActionTracker } from "../../utils/action-tracker.js";
+import { colorsLight } from "../../styles/host/colors-light.js";
+import { type } from "../../styles/host/type.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
@@ -38,11 +40,13 @@ const Strings = StringsHelper.forSection("ProjectListing");
 export class Gallery extends LitElement {
   static readonly styles = [
     icons,
+    colorsLight,
+    type,
     css`
       :host {
         --border: 1px solid var(--bb-neutral-300);
-        --column-gap: var(--bb-grid-size-6);
-        --row-gap: var(--bb-grid-size-4);
+        --column-gap: var(--bb-grid-size-8);
+        --row-gap: var(--bb-grid-size-6);
         --thumbnail-height: 175px;
         --details-min-height: 108px;
         --profile-pic-size: 20px;
@@ -82,30 +86,143 @@ export class Gallery extends LitElement {
       }
 
       .board {
-        border: var(--border);
+        position: relative;
         background: var(--bb-neutral-0);
         outline: 1px solid transparent;
-        border-radius: var(--bb-grid-size-2);
+        border-radius: var(--bb-grid-size-4);
         cursor: pointer;
         overflow: hidden;
         display: flex;
         flex-direction: column;
         padding: 0;
         text-align: left;
+        aspect-ratio: 35/39;
+
+        &::before {
+          content: "";
+          position: absolute;
+          pointer-events: none;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          z-index: 1;
+
+          background:
+            linear-gradient(0deg, rgba(0, 0, 0, 0) 70%, rgba(0, 0, 0, 0.4) 95%),
+            linear-gradient(
+              200deg,
+              rgba(0, 0, 0, 0) 20%,
+              rgba(0, 0, 0, 0.8) 70%
+            );
+        }
+
+        &::after {
+          box-sizing: border-box;
+          content: "";
+          position: absolute;
+          pointer-events: none;
+          top: 3px;
+          left: 3px;
+          width: calc(100% - 6px);
+          height: calc(100% - 6px);
+          z-index: 2;
+          border-radius: calc(var(--bb-grid-size-4) - 3px);
+          outline: 7px solid var(--n-0);
+          opacity: 0;
+          transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+        }
 
         &:hover:not(:has(button:hover)),
         &:focus:not(:has(button:focus)) {
-          outline: 1px solid var(--bb-neutral-400);
+          &::after {
+            opacity: 1;
+          }
+        }
+
+        .remix-button {
+          position: absolute;
+          top: var(--bb-grid-size-6);
+          left: var(--bb-grid-size-6);
+          height: var(--bb-grid-size-8);
+          background: var(--n-0);
+          color: var(--n-100);
+          border-radius: var(--bb-grid-size-16);
+          z-index: 10;
+          display: flex;
+          align-items: center;
+          padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-3);
+          border: none;
+
+          & .g-icon {
+            margin-right: var(--bb-grid-size-2);
+          }
+
+          &:not([disabled]) {
+            cursor: pointer;
+
+            &:focus,
+            &:hover {
+              background: var(--n-10);
+            }
+          }
+        }
+
+        .overflow-menu {
+          position: absolute;
+          top: var(--bb-grid-size-6);
+          right: var(--bb-grid-size-4);
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          padding: 0;
+          border: none;
+          background: transparent;
+          color: var(--n-100);
+          z-index: 10;
+
+          > * {
+            pointer-events: none;
+          }
+
+          &:not([disabled]) {
+            cursor: pointer;
+          }
+        }
+
+        .info {
+          position: absolute;
+          bottom: var(--bb-grid-size-5);
+          left: var(--bb-grid-size-6);
+          z-index: 10;
+          color: var(--n-100);
+          width: calc(100% - var(--bb-grid-size-10));
+
+          & .title {
+            margin: 0;
+            max-height: 72px;
+            overflow: hidden;
+            margin-bottom: var(--bb-grid-size-2);
+          }
+
+          & .description {
+            margin: 0;
+            max-height: 60px;
+
+            /* Line-based truncation with ellipsis */
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: var(--max-description-lines);
+            overflow: hidden;
+          }
         }
       }
 
       .thumbnail {
-        height: var(--thumbnail-height);
+        height: 100%;
         width: 100%;
         object-fit: cover;
-        border-bottom: var(--border);
-        /* Matches the color of the placeholder background */
-        background-color: #ebf5ff;
+        background-color: var(--n-0);
 
         &.hidden {
           opacity: 0;
@@ -134,6 +251,7 @@ export class Gallery extends LitElement {
       .creator {
         display: flex;
         justify-content: space-between;
+        margin-bottom: var(--bb-grid-size-2);
 
         > span {
           display: flex;
@@ -142,87 +260,26 @@ export class Gallery extends LitElement {
 
         .pic {
           display: inline-flex;
+
           .signed-in {
             width: var(--profile-pic-size);
             height: var(--profile-pic-size);
             border-radius: 50%;
           }
+
           .g-icon {
-            color: #0a89f1;
+            color: var(--n-100);
             border-radius: 50%;
-            background: #000;
+            background: var(--n-0);
             font-size: var(--profile-pic-size);
           }
         }
+
         .name {
-          color: #444746;
-          font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
-            var(--bb-font-family);
+          color: var(--n-100);
           margin: 0 0 0 8px;
           display: inline-flex;
           align-items: center;
-        }
-
-        .overflow-menu {
-          width: 20px;
-          height: 20px;
-          border-radius: 50%;
-          background: var(--bb-neutral-0);
-          padding: 0;
-          border: none;
-          transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
-
-          > * {
-            pointer-events: none;
-          }
-
-          &:not([disabled]) {
-            cursor: pointer;
-
-            &:hover,
-            &:focus {
-              background-color: var(--bb-neutral-50);
-            }
-          }
-        }
-      }
-
-      .title {
-        margin: var(--bb-grid-size-2) 0 0 0;
-        color: #1f1f1f;
-        font: 500 var(--bb-title-small) / var(--bb-title-line-height-small)
-          var(--bb-font-family);
-      }
-
-      .description {
-        margin: var(--bb-grid-size-2) 0 0 0;
-        color: #444746;
-        font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
-          var(--bb-font-family);
-
-        /* Line-based truncation with ellipsis */
-        display: -webkit-box;
-        -webkit-box-orient: vertical;
-        -webkit-line-clamp: var(--max-description-lines);
-        overflow: hidden;
-      }
-
-      .button-container {
-        margin-top: auto;
-        align-self: flex-end;
-        .remix-button {
-          padding: 6px 16px;
-          background: transparent;
-          margin: var(--bb-grid-size-2) calc(var(--bb-grid-size) * -1) 0 0;
-          font: 500 var(--bb-body-medium) / var(--bb-body-line-height-medium)
-            var(--bb-font-family);
-          color: #575b5f;
-          border: 1px solid var(--bb-neutral-400);
-          border-radius: 8px;
-          cursor: pointer;
-          &:hover {
-            outline: 1px solid var(--bb-neutral-400);
-          }
         }
       }
 
@@ -335,10 +392,10 @@ export class Gallery extends LitElement {
   accessor googleDriveClient!: GoogleDriveClient | undefined;
 
   @property({ attribute: false })
-  accessor items: [string, GraphProviderItem][] | undefined = undefined;
+  accessor items: [string, GraphProviderItem][] | null = null;
 
   @property({ attribute: false })
-  accessor recentItems: string[] | undefined = undefined;
+  accessor recentItems: string[] | null = null;
 
   @property({ type: Number })
   accessor page = 0;
@@ -438,58 +495,62 @@ export class Gallery extends LitElement {
             until(this.#renderThumbnail(thumbnail))
           )}`
         )}
-        <div class="details">
-          <div class="creator">
-            <span>
-              <span class="pic">${this.#renderCreatorImage(item)}</span>
-              <span class="name">by ${this.#renderCreatorName(item)}</span>
-            </span>
-            ${mine
-              ? html`<button
-                  class="overflow-menu"
-                  @click=${(evt: Event) => {
-                    evt.preventDefault();
-                    evt.stopImmediatePropagation();
+        ${mine
+          ? html`<button
+              class="overflow-menu"
+              @click=${(evt: Event) => {
+                evt.preventDefault();
+                evt.stopImmediatePropagation();
 
-                    if (!(evt.target instanceof HTMLButtonElement)) {
-                      return;
-                    }
+                if (!(evt.target instanceof HTMLButtonElement)) {
+                  return;
+                }
 
-                    const bounds = evt.target.getBoundingClientRect();
-                    let x = bounds.x;
-                    if (x + 144 > window.innerWidth) {
-                      x = window.innerWidth - 144;
-                    }
+                const bounds = evt.target.getBoundingClientRect();
+                let x = bounds.x;
+                if (x + 144 > window.innerWidth) {
+                  x = window.innerWidth - 144;
+                }
 
-                    this.#overflowMenuConfig = {
-                      x,
-                      y: bounds.bottom,
-                      value: url,
-                    };
-                    this.showOverflowMenu = true;
-                  }}
-                >
-                  <span class="g-icon">more_vert</span>
-                </button>`
-              : nothing}
-          </div>
-          <h4 class="title">${title ?? name}</h4>
-          <p class="description">${description ?? "No description"}</p>
+                this.#overflowMenuConfig = {
+                  x,
+                  y: bounds.bottom,
+                  value: url,
+                };
+                this.showOverflowMenu = true;
+              }}
+            >
+              <span class="g-icon filled-heavy w-500 round">more_vert</span>
+            </button>`
+          : html`
+              <button
+                class="remix-button sans-flex w-500 round md-body-small"
+                @click=${(event: PointerEvent) =>
+                  this.#onRemixButtonClick(event, url)}
+                @keydown=${(event: KeyboardEvent) =>
+                  this.#onRemixButtonKeydown(event, url)}
+              >
+                <span class="g-icon filled round">gesture</span>
+                ${Strings.from("COMMAND_REMIX")}
+              </button>
+            `}
+        <div class="info">
           ${mine
             ? nothing
-            : html`
-                <div class="button-container">
-                  <button
-                    class="remix-button"
-                    @click=${(event: PointerEvent) =>
-                      this.#onRemixButtonClick(event, url)}
-                    @keydown=${(event: KeyboardEvent) =>
-                      this.#onRemixButtonKeydown(event, url)}
+            : html` <div class="creator">
+                <span>
+                  <span class="pic">${this.#renderCreatorImage(item)}</span>
+                  <span class="name md-title-small sans-flex round w-400"
+                    >${this.#renderCreatorName(item)}</span
                   >
-                    ${Strings.from("COMMAND_REMIX")}
-                  </button>
-                </div>
-              `}
+                </span>
+              </div>`}
+          <h4 class="title sans-flex round w-500 md-headline-medium">
+            ${title ?? name}
+          </h4>
+          <p class="description sans-flex round w-400 md-body-medium">
+            ${description ?? "No description"}
+          </p>
         </div>
       </div>
     `;

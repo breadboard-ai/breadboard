@@ -117,6 +117,26 @@ export class ProjectListing extends LitElement {
       :host {
         display: block;
         background: var(--bb-neutral-0);
+        --items-per-column: 4;
+        --column-gap: var(--bb-grid-size-8);
+        --row-gap: var(--bb-grid-size-6);
+      }
+
+      @media (min-width: 800px) and (max-width: 1080px) {
+        :host {
+          --items-per-column: 3;
+        }
+      }
+
+      @media (min-width: 480px) and (max-width: 800px) {
+        :host {
+          --items-per-column: 2;
+        }
+      }
+      @media (min-width: 0px) and (max-width: 480px) {
+        :host {
+          --items-per-column: 1;
+        }
       }
 
       #wrapper {
@@ -174,16 +194,47 @@ export class ProjectListing extends LitElement {
         }
 
         & #no-projects-panel {
-          background: #f8fafd;
-          border-radius: var(--bb-grid-size-6);
-          padding: 34px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          p {
-            color: var(--bb-neutral-700);
-            font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
-              var(--bb-font-family);
+          display: grid;
+          display: grid;
+          grid-template-columns: repeat(var(--items-per-column), 1fr);
+          grid-auto-rows: auto;
+          column-gap: var(--column-gap);
+          row-gap: var(--row-gap);
+
+          & #create-new-button {
+            border: none;
+            background: var(--ui-custom-o-5);
+            border-radius: var(--bb-grid-size-4);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 184px;
+            color: var(--n-0);
+            transition: background 0.2s cubic-bezier(0, 0, 0.3, 1);
+
+            & .g-icon {
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              color: var(--n-70);
+              font-size: 30px;
+              width: 48px;
+              height: 48px;
+              background: var(--n-100);
+              border-radius: 50%;
+              margin-bottom: var(--bb-grid-size-4);
+              font-weight: 500;
+            }
+
+            &:not([disabled]) {
+              cursor: pointer;
+
+              &:hover,
+              &:focus {
+                background: var(--ui-custom-o-10);
+              }
+            }
           }
         }
 
@@ -193,6 +244,31 @@ export class ProjectListing extends LitElement {
           display: flex;
           align-items: center;
           justify-content: space-between;
+
+          & #create-new-button-inline {
+            display: flex;
+            align-items: center;
+            color: var(--n-100);
+            border-radius: var(--bb-grid-size-16);
+            border: none;
+            background: var(--n-0);
+            height: var(--bb-grid-size-10);
+            padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-3);
+
+            & .g-icon {
+              color: var(--n-100);
+              margin-right: var(--bb-grid-size-2);
+            }
+
+            &:not([disabled]) {
+              cursor: pointer;
+
+              &:focus,
+              &:hover {
+                background: var(--n-10);
+              }
+            }
+          }
 
           & #mode-container {
             display: flex;
@@ -273,7 +349,7 @@ export class ProjectListing extends LitElement {
             align-items: center;
 
             & #location-selector {
-              margin: var(--bb-grid-size-5) 0;
+              margin: 0 0 var(--bb-grid-size-6) 0;
               padding: 0;
               border: none;
             }
@@ -296,17 +372,13 @@ export class ProjectListing extends LitElement {
 
           & .gallery-wrapper {
             order: 1;
+            margin-top: var(--bb-grid-size-8);
+
+            & .gallery-title {
+              margin: 0 0 var(--bb-grid-size-6) 0;
+            }
           }
         }
-      }
-
-      .gallery-title {
-        font: 400 var(--bb-title-large) / var(--bb-title-line-height-large)
-          var(--bb-font-family);
-      }
-      .gallery-description {
-        font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
-          var(--bb-font-family);
       }
 
       #board-server-settings {
@@ -391,44 +463,6 @@ export class ProjectListing extends LitElement {
         text-align: right;
         margin-top: -32px;
         padding: 0 var(--bb-grid-size-3);
-      }
-
-      .g-icon {
-        font-variation-settings:
-          "FILL" 0,
-          "wght" 600,
-          "GRAD" 0,
-          "opsz" 48;
-      }
-
-      #create-new-button {
-        color: #004a77;
-        background-color: #c2e7ff;
-        font: 500 var(--bb-title-small) / var(--bb-title-line-height-small)
-          var(--bb-font-family);
-        display: flex;
-        align-items: center;
-        border-radius: 100px;
-        border: none;
-        padding: 6px 12px;
-        transition: background 0.2s cubic-bezier(0, 0, 0.3, 1);
-
-        & > .g-icon {
-          margin-right: 4px;
-        }
-
-        &[disabled] {
-          opacity: 0.6;
-        }
-
-        &:not([disabled]) {
-          cursor: pointer;
-
-          &:hover,
-          &:focus {
-            background-color: #96d6ff;
-          }
-        }
       }
     `,
   ];
@@ -680,7 +714,7 @@ export class ProjectListing extends LitElement {
       ? html`<div id="location-selector-outer">
           <select
             id="location-selector"
-            class="gallery-title"
+            class="gallery-title md-headline-small sans-flex w-400 round"
             @input=${(evt: Event) => {
               if (!(evt.target instanceof HTMLSelectElement)) {
                 return;
@@ -727,7 +761,10 @@ export class ProjectListing extends LitElement {
             ${Strings.from("LABEL_PROJECT_SERVER_SETTINGS")}
           </button>
         </div>`
-      : html`<h2 id="location-selector" class="gallery-title">
+      : html`<h2
+          id="location-selector"
+          class="gallery-title md-headline-small sans-flex w-400 round"
+        >
           ${this.#getCurrentStoreName(selected)}
         </h2>`;
 
@@ -812,18 +849,23 @@ export class ProjectListing extends LitElement {
                         `
                       : html`
                           <div id="no-projects-panel">
-                            <p>${Strings.from("LABEL_NO_PROJECTS_FOUND")}</p>
-                            ${this.#renderCreateNewButton()}
+                            <button
+                              id="create-new-button"
+                              class="md-title-small sans-flex w-400 round"
+                              @click=${this.#clickNewProjectButton}
+                            >
+                              <span class="g-icon">add</span>
+                              ${Strings.from("COMMAND_NEW_PROJECT")}
+                            </button>
                           </div>
                         `,
                     html`
                       <div class="gallery-wrapper">
-                        <h2 class="gallery-title">
+                        <h2
+                          class="gallery-title md-headline-small sans-flex w-400 round"
+                        >
                           ${Strings.from("LABEL_SAMPLE_GALLERY_TITLE")}
                         </h2>
-                        <p class="gallery-description">
-                          ${Strings.from("LABEL_SAMPLE_GALLERY_DESCRIPTION")}
-                        </p>
                         <bb-gallery
                           .items=${sampleItems}
                           .pageSize=${/* Unlimited */ -1}
@@ -838,7 +880,14 @@ export class ProjectListing extends LitElement {
                       ? html`
                           <div id="buttons">
                             <div id="create-new-button-container">
-                              ${this.#renderCreateNewButton()}
+                              <button
+                                id="create-new-button-inline"
+                                class="md-title-small sans-flex w-400 round"
+                                @click=${this.#clickNewProjectButton}
+                              >
+                                <span class="g-icon">add</span>
+                                ${Strings.from("COMMAND_NEW_PROJECT")}
+                              </button>
                             </div>
                           </div>
                         `
@@ -999,15 +1048,6 @@ export class ProjectListing extends LitElement {
       ${SHOW_GOOGLE_DRIVE_DEBUG_PANEL
         ? html`<bb-google-drive-debug-panel></bb-google-drive-debug-panel>`
         : nothing}
-    `;
-  }
-
-  #renderCreateNewButton() {
-    return html`
-      <button id="create-new-button" @click=${this.#clickNewProjectButton}>
-        <span class="g-icon">add</span>
-        ${Strings.from("COMMAND_NEW_PROJECT")}
-      </button>
     `;
   }
 
