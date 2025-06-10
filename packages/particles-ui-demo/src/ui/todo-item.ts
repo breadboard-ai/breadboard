@@ -31,7 +31,7 @@ export class TodoItemView extends SignalWatcher(LitElement) {
           & input[type="text"],
           & input[type="date"],
           & textarea {
-            border: none;
+            border: 1px solid transparent;
             text-decoration: line-through;
           }
         }
@@ -83,7 +83,6 @@ export class TodoItemView extends SignalWatcher(LitElement) {
   `;
 
   render() {
-    console.log("Render");
     if (!this.item) {
       return nothing;
     }
