@@ -20,6 +20,7 @@
     },
     "build": {
       "dependencies": [
+        "<dependencies>#build",
         "build:tsc"
       ]
     },
