@@ -8,6 +8,7 @@ import { customElement, property } from "lit/decorators.js";
 import { TodoItem, TodoItems } from "../types/types.js";
 import { SignalWatcher, html } from "@lit-labs/signals";
 import { repeat } from "lit/directives/repeat.js";
+import { Item } from "../state/item.js";
 
 import "./todo-item.js";
 
@@ -38,10 +39,9 @@ export class TodoListView extends SignalWatcher(LitElement) {
   #renderCreateButton() {
     return html`<button
       @click=${() => {
-        this.items?.set(globalThis.crypto.randomUUID(), {
-          title: "",
-          done: false,
-        });
+        const item = new Item("");
+        item.done = false;
+        this.items?.set(globalThis.crypto.randomUUID(), item);
       }}
     >
       Create new
@@ -65,55 +65,59 @@ export class TodoListView extends SignalWatcher(LitElement) {
 
     return [
       this.#renderHeader(),
-      html`${repeat(this.items, ([id, item]) => {
-        return html`<todo-item
-          @input=${(evt: Event) => {
-            const target = evt
-              .composedPath()
-              .find((el) => el instanceof HTMLElement && el.dataset.behavior);
-            if (!(target instanceof HTMLInputElement)) {
-              return;
-            }
-
-            switch (target.dataset.behavior) {
-              case "editable": {
-                const item = this.items?.get(id);
-                const field = target.id as keyof TodoItem;
-                if (!item) {
-                  return;
-                }
-
-                Reflect.set(item, field, target.value);
-                return;
-              }
-            }
-          }}
-          @click=${(evt: Event) => {
-            const target = evt
-              .composedPath()
-              .find((el) => el instanceof HTMLElement && el.dataset.behavior);
-            if (!(target instanceof HTMLElement)) {
-              return;
-            }
-
-            switch (target.dataset.behavior) {
-              case "delete": {
-                this.items?.delete(id);
+      html`${repeat(
+        this.items,
+        (id) => id,
+        ([id, item]) => {
+          return html`<todo-item
+            @input=${(evt: Event) => {
+              const target = evt
+                .composedPath()
+                .find((el) => el instanceof HTMLElement && el.dataset.behavior);
+              if (!(target instanceof HTMLInputElement)) {
                 return;
               }
 
-              case "done": {
-                const item = this.items?.get(id);
-                if (!item) {
+              switch (target.dataset.behavior) {
+                case "editable": {
+                  const item = this.items?.get(id);
+                  const field = target.id as keyof TodoItem;
+                  if (!item) {
+                    return;
+                  }
+
+                  Reflect.set(item, field, target.value);
                   return;
                 }
-                item.done = !item.done;
               }
-            }
-          }}
-          .item=${item}
-        ></todo-item>`;
-      })}`,
+            }}
+            @click=${(evt: Event) => {
+              const target = evt
+                .composedPath()
+                .find((el) => el instanceof HTMLElement && el.dataset.behavior);
+              if (!(target instanceof HTMLElement)) {
+                return;
+              }
+
+              switch (target.dataset.behavior) {
+                case "delete": {
+                  this.items?.delete(id);
+                  return;
+                }
+
+                case "done": {
+                  const item = this.items?.get(id);
+                  if (!item) {
+                    return;
+                  }
+                  item.done = !item.done;
+                }
+              }
+            }}
+            .item=${item}
+          ></todo-item>`;
+        }
+      )}`,
     ];
   }
 }
