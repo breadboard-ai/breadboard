@@ -100,9 +100,6 @@ export class ParticleUpdate extends SignalWatcher(LitElement) {
       return nothing;
     }
 
-    // In the future, this is likely its own element that operates on a
-    // particle.
-    // It is instantiated by ParticleView based on type = "update".
     return html` <div class="output" data-label=${this.#title}>
       <span class="g-icon filled round">${this.#icon}</span>
       ${body}
