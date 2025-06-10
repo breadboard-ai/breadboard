@@ -20,7 +20,6 @@
     },
     "build": {
       "dependencies": [
-        "<dependencies>#build",
         "build:tsc"
       ]
     },
@@ -29,6 +28,9 @@
       "env": {
         "FORCE_COLOR": "1"
       },
+      "dependencies": [
+        "<dependencies>#build"
+      ],
       "files": [
         "src/**/*.ts",
         "tests/**/*.ts",
