@@ -7,11 +7,12 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { TodoItem } from "../types/types.js";
 import { classMap } from "lit/directives/class-map.js";
+import { SignalWatcher } from "@lit-labs/signals";
 
 @customElement("todo-item")
-export class TodoItemView extends LitElement {
+export class TodoItemView extends SignalWatcher(LitElement) {
   @property()
-  accessor todo: TodoItem | null = null;
+  accessor item: TodoItem | null = null;
 
   static styles = css`
     :host {
@@ -20,33 +21,109 @@ export class TodoItemView extends LitElement {
 
     section {
       display: grid;
-      grid-template-columns: 1fr 20px;
-      column-gap: 20px;
+      grid-template-columns: 1fr 32px 32px;
+      column-gap: 16px;
+      justify-content: center;
+
+      &.done {
+        opacity: 0.4;
+        > form {
+          & input[type="text"],
+          & input[type="date"],
+          & textarea {
+            border: none;
+            text-decoration: line-through;
+          }
+        }
+      }
+
+      > form {
+        display: grid;
+        row-gap: 8px;
+
+        & input[type="text"],
+        & input[type="date"],
+        & textarea {
+          font:
+            400 12px / 24px "Helvetica Neue",
+            Helvetica,
+            Arial,
+            sans-serif;
+          padding: 8px;
+          border: 1px solid #eee;
+          border-radius: 12px;
+
+          &:focus {
+            border: 1px solid #aaa;
+          }
+        }
+
+        & input[type="text"] {
+          font-size: 24px;
+        }
+
+        & textarea {
+          resize: none;
+          field-sizing: content;
+        }
+      }
+
+      & button {
+        width: 20px;
+        height: 20px;
+        padding: 0;
+        margin: 0;
+        background: none;
+        border: none;
+        font-size: 24px;
+
+        cursor: pointer;
+      }
     }
   `;
 
   render() {
-    if (!this.todo) {
+    if (!this.item) {
       return nothing;
     }
 
-    return html`<div>
-      <section>
-        ${this.todo.done ? html`<s></s>` : nothing}
-        <h1 class=${classMap({ done: this.todo.done })}>${this.todo.title}</h1>
-        ${this.todo.description
-          ? html`<h2>${this.todo.description}</h2>`
-          : nothing}
-        ${this.todo.description ? html`<p>${this.todo.dueDate}</p>` : nothing}
-        ${this.todo.done ? html`</s>` : nothing}
-      </section>
-      <button
-        @click=${() => {
-          // TODO.
+    return html`
+      <section
+        class=${classMap({ done: this.item.done })}
+        @focusout=${() => {
+          console.log("Focus out");
         }}
       >
-        Del
-      </button>
-    </div>`;
+        <form>
+          <input
+            id="title"
+            type="text"
+            data-behavior="editable"
+            class=${classMap({ done: this.item.done })}
+            ?disabled=${this.item.done}
+            .value=${this.item.title}
+            .placeholder=${"Enter a value"}
+          />
+          <textarea
+            id="description"
+            data-behavior="editable"
+            ?disabled=${this.item.done}
+            .value=${this.item.description ?? ""}
+            .placeholder=${"Enter a value (optional)"}
+          ></textarea>
+          <div>
+            <input
+              type="date"
+              id="dueDate"
+              data-behavior="editable"
+              ?disabled=${this.item.done}
+              .value=${this.item.dueDate}
+            />
+          </div>
+        </form>
+        <button data-behavior="done">✔️</button>
+        <button data-behavior="delete">🗑️</button>
+      </section>
+    `;
   }
 }

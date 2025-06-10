@@ -5,5 +5,9 @@
  */
 
 import { TodoListView } from "./ui/todo-list.js";
+import { List } from "./state/list.js";
 
-document.body.appendChild(new TodoListView());
+const todoList = new TodoListView();
+todoList.items = new List().items;
+
+document.body.appendChild(todoList);
