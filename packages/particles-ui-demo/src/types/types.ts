@@ -11,4 +11,5 @@ export interface TodoItem {
   dueDate?: Date;
 }
 
-export type TodoItems = TodoItem[];
+export type TodoItemListTitle = string;
+export type TodoItems = Map<TodoItemListTitle, TodoItem>;
