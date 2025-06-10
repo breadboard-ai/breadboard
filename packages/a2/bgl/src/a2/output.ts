@@ -35,6 +35,11 @@ type ReportInputs = {
   chat?: boolean;
 };
 
+export type Link = {
+  uri: string;
+  title: string;
+};
+
 export { report, StreamableReporter };
 
 const MIME_TYPE = "application/vnd.breadboard.report-stream";
@@ -78,6 +83,24 @@ class StreamableReporter {
 
   report(json: JsonSerializable) {
     return this.reportLLMContent({ parts: [{ json }] });
+  }
+
+  sendLinks(title: string, links: Link[], icon?: string) {
+    let linksParticle = {
+      text: JSON.stringify(links),
+      mimeType: "application/json",
+    };
+    const group = [
+      ["title", { text: title }],
+      ["links", {
+      text: JSON.stringify(links),
+      mimeType: "application/json",
+    }],
+    ];
+    if (icon) {
+      group.push(["icon", { text: icon }]);
+    }
+    return this.report({ type: "links", group });
   }
 
   sendUpdate(title: string, body: unknown | undefined, icon?: string) {

@@ -59,6 +59,13 @@ async function generateSummary(
     return result;
   }
   let results = toText(result.last);
+  await reporter.sendUpdate("Search Summary", results, "text_analysis");
+  const links = result.candidate?.groundingMetadata?.groundingChunks?.map(
+    (chunk) => chunk.web
+  );
+  if (links) {
+    await reporter.sendLinks("References", links, "link");
+  }
   const chunks =
     result.candidate?.groundingMetadata?.groundingChunks?.map((chunk) => {
       const { title, uri } = chunk.web;
@@ -67,7 +74,6 @@ async function generateSummary(
   if (chunks.length) {
     results += `\n## References:\n${chunks.join("\n")}\n`;
   }
-  await reporter.sendUpdate("Search Summary", results, "text_analysis");
   return `\n## Summary\n${results}`;
 }
 
