@@ -65,7 +65,7 @@ const MODES: Mode[] = [
     title: "Gemini 2.5 Pro",
     description: "Best for complex tasks",
     icon: "text_analysis",
-    modelName: "gemini-2.5-pro-preview-05-06",
+    modelName: "gemini-2.5-pro-preview-06-05",
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
   },
