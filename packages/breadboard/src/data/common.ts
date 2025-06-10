@@ -291,7 +291,7 @@ export async function transformDataParts(
             transformedPart = ephemeral;
           }
         } else if (to === "inline") {
-          // convert persisent or ephemeral to inline
+          // convert persistent or ephemeral to inline
           transformedPart = await toInlineDataPart(part);
         } else if (to == "persistent" || to === "persistent-temporary") {
           // convert ephemeral to persistent

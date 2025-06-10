@@ -44,7 +44,7 @@ class GoogleDriveDataPartTransformer implements DataPartTransformer {
 
   async persistPart(
     _graphUrl: URL,
-    part: InlineDataCapabilityPart,
+    part: InlineDataCapabilityPart | StoredDataCapabilityPart,
     temporary: boolean
   ): Promise<Outcome<StoredDataCapabilityPart>> {
     if (temporary) {
@@ -56,16 +56,8 @@ class GoogleDriveDataPartTransformer implements DataPartTransformer {
       console.debug(msg);
       return err(msg);
     } else {
-      const driveFileUrl = await this.ops.saveDataPart(
-        part.inlineData.data,
-        part.inlineData.mimeType
-      );
-      return {
-        storedData: {
-          handle: driveFileUrl,
-          mimeType: part.inlineData.mimeType,
-        },
-      };
+      const result = await this.ops.saveDataPart(part);
+      return result;
     }
   }
 
