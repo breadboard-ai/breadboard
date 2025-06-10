@@ -4,10 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { TodoListView } from "./ui/todo-list.js";
-import { List } from "./state/list.js";
+import { Receiver } from "./receiver.js";
+import { UiReceiver } from "./ui/ui-receiver.js";
+import { Generator } from "./generator.js";
 
-const todoList = new TodoListView();
-todoList.items = new List().items;
+const generator = new Generator();
+const receiver = new Receiver(generator);
+generator.connect(receiver);
 
-document.body.appendChild(todoList);
+const uiReceiver = new UiReceiver();
+uiReceiver.receiver = receiver;
+
+document.body.appendChild(uiReceiver);

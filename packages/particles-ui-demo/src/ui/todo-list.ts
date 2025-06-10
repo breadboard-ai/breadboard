@@ -5,10 +5,9 @@
  */
 import { LitElement, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { TodoItem, TodoItems } from "../types/types.js";
+import { Channel, TodoItems } from "../types/types.js";
 import { SignalWatcher, html } from "@lit-labs/signals";
 import { repeat } from "lit/directives/repeat.js";
-import { Item } from "../state/item.js";
 
 import "./todo-item.js";
 
@@ -16,6 +15,9 @@ import "./todo-item.js";
 export class TodoListView extends SignalWatcher(LitElement) {
   @property()
   accessor items: TodoItems | null = null;
+
+  @property()
+  accessor channel: Channel | null = null;
 
   static styles = css`
     :host {
@@ -39,9 +41,7 @@ export class TodoListView extends SignalWatcher(LitElement) {
   #renderCreateButton() {
     return html`<button
       @click=${() => {
-        const item = new Item("");
-        item.done = false;
-        this.items?.set(globalThis.crypto.randomUUID(), item);
+        this.channel?.requestAddItem();
       }}
     >
       Create new
@@ -80,13 +80,7 @@ export class TodoListView extends SignalWatcher(LitElement) {
 
               switch (target.dataset.behavior) {
                 case "editable": {
-                  const item = this.items?.get(id);
-                  const field = target.id as keyof TodoItem;
-                  if (!item) {
-                    return;
-                  }
-
-                  Reflect.set(item, field, target.value);
+                  this.channel?.requestUpdateField(id, target.id, target.value);
                   return;
                 }
               }
@@ -101,7 +95,7 @@ export class TodoListView extends SignalWatcher(LitElement) {
 
               switch (target.dataset.behavior) {
                 case "delete": {
-                  this.items?.delete(id);
+                  this.channel?.requestDelete(id);
                   return;
                 }
 
@@ -110,7 +104,7 @@ export class TodoListView extends SignalWatcher(LitElement) {
                   if (!item) {
                     return;
                   }
-                  item.done = !item.done;
+                  this.channel?.requestUpdateDone(id, !item.done);
                 }
               }
             }}
