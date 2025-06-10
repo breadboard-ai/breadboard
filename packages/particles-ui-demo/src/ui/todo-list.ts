@@ -3,10 +3,10 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css } from "lit";
+import { LitElement, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { TodoItem, TodoItems } from "../types/types.js";
-import { SignalWatcher } from "@lit-labs/signals";
+import { SignalWatcher, html } from "@lit-labs/signals";
 import { repeat } from "lit/directives/repeat.js";
 
 import "./todo-item.js";
@@ -104,10 +104,10 @@ export class TodoListView extends SignalWatcher(LitElement) {
 
               case "done": {
                 const item = this.items?.get(id);
-                if (item) {
-                  item.done = !item.done;
+                if (!item) {
+                  return;
                 }
-                return;
+                item.done = !item.done;
               }
             }
           }}

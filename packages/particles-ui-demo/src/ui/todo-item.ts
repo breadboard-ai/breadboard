@@ -3,11 +3,11 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css, nothing } from "lit";
+import { LitElement, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { TodoItem } from "../types/types.js";
 import { classMap } from "lit/directives/class-map.js";
-import { SignalWatcher } from "@lit-labs/signals";
+import { SignalWatcher, html } from "@lit-labs/signals";
 
 @customElement("todo-item")
 export class TodoItemView extends SignalWatcher(LitElement) {
@@ -83,17 +83,13 @@ export class TodoItemView extends SignalWatcher(LitElement) {
   `;
 
   render() {
+    console.log("Render");
     if (!this.item) {
       return nothing;
     }
 
     return html`
-      <section
-        class=${classMap({ done: this.item.done })}
-        @focusout=${() => {
-          console.log("Focus out");
-        }}
-      >
+      <section class=${classMap({ done: this.item.done })}>
         <form>
           <input
             id="title"
