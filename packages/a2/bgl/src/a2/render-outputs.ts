@@ -48,7 +48,7 @@ const MODELS: Model[] = [
     id: "gemini-pro",
     title: "Gemini 2.5 Pro",
     description: "Best for coding complex or interactive displays",
-    modelName: "gemini-2.5-pro-preview-05-06",
+    modelName: "gemini-2.5-pro-preview-06-05",
   },
 ];
 
@@ -92,7 +92,7 @@ type InvokeInputs = {
 
 type InvokeOutputs = {
   context: LLMContent[];
-}
+};
 
 type DescribeInputs = {
   inputs: {
