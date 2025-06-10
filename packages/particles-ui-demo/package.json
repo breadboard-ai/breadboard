@@ -28,6 +28,9 @@
       "env": {
         "FORCE_COLOR": "1"
       },
+      "dependencies": [
+        "<dependencies>#build"
+      ],
       "files": [
         "src/**/*.ts",
         "tests/**/*.ts",
@@ -76,6 +79,7 @@
   },
   "dependencies": {
     "@lit-labs/signals": "^0.1.2",
+    "@breadboard-ai/particles": "0.0.1",
     "signal-utils": "^0.21.1"
   }
 }

@@ -131,7 +131,7 @@
     "@breadboard-ai/connection-client": "0.2.0",
     "@breadboard-ai/google-drive-kit": "0.6.0",
     "@breadboard-ai/jsandbox": "0.6.0",
-    "@breadboard-ai/particles": "^0.0.1",
+    "@breadboard-ai/particles": "0.0.1",
     "@breadboard-ai/theme": "0.0.1",
     "@breadboard-ai/types": "0.7.0",
     "@codemirror/autocomplete": "^6.18.6",
