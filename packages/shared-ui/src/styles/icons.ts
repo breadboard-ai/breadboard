@@ -58,5 +58,14 @@ export const icons = css`
         "opsz" 48,
         "ROND" 100;
     }
+
+    &.filled-heavy {
+      font-variation-settings:
+        "FILL" 1,
+        "wght" 700,
+        "GRAD" 0,
+        "opsz" 48,
+        "ROND" 100;
+    }
   }
 `;

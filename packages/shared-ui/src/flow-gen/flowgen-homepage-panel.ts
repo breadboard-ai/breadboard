@@ -97,16 +97,10 @@ export class FlowgenHomepagePanel extends LitElement {
         display: flex;
         align-items: center;
         width: 100%;
-        background: linear-gradient(0deg, #fdf7f8, #f7f9fe);
-        border-radius: 50px;
-        padding: 10px;
-        margin: 20px 0 0 0;
-        transition: box-shadow 1s ease-out;
-      }
-
-      :host([highlighted]) #gradient-border-container {
-        transition: box-shadow 200ms ease-in;
-        box-shadow: 0 0 10px 4px rgb(255 0 0 / 20%);
+        background: var(--ui-custom-o-10);
+        border-radius: var(--bb-grid-size-16);
+        padding: var(--bb-grid-size-3);
+        margin: var(--bb-grid-size-5) 0 0 0;
       }
 
       bb-speech-to-text {
@@ -126,7 +120,7 @@ export class FlowgenHomepagePanel extends LitElement {
         flex: 1;
         width: 100%;
         background: #fff;
-        color: var(--bb-neutral-900);
+        color: var(--n-0, var(--bb-neutral-900));
         border: none;
         border-radius: 40px;
         padding: 0.5lh 1lh;
@@ -140,17 +134,17 @@ export class FlowgenHomepagePanel extends LitElement {
         &::part(textarea)::placeholder {
           color: var(--bb-neutral-500);
         }
-        > [slot~="submit"] {
-          color: #3271ea;
-        }
-      }
 
-      .g-icon {
-        font-variation-settings:
-          "FILL" 0,
-          "wght" 600,
-          "GRAD" 0,
-          "opsz" 48;
+        > [slot~="submit"] {
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          color: var(--n-70);
+          font-size: 30px;
+          width: 40px;
+          height: 40px;
+          margin-left: var(--bb-grid-size-4);
+        }
       }
     `,
   ];
@@ -268,8 +262,12 @@ export class FlowgenHomepagePanel extends LitElement {
           ></bb-speech-to-text>
           <span
             slot="submit"
-            class=${classMap({ "g-icon": true, spin: isGenerating })}
-            >${isGenerating ? "progress_activity" : "spark"}</span
+            class=${classMap({
+              "g-icon": true,
+              filled: true,
+              spin: isGenerating,
+            })}
+            >${isGenerating ? "progress_activity" : "send"}</span
           >
         </bb-expanding-textarea>
       </div>
