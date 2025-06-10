@@ -35,7 +35,7 @@ class RemotePartTransformer implements DataPartTransformer {
 
   async persistPart(
     graphUrl: URL,
-    part: InlineDataCapabilityPart
+    part: InlineDataCapabilityPart | StoredDataCapabilityPart
   ): Promise<Outcome<StoredDataCapabilityPart>> {
     try {
       const response = await fetch(
