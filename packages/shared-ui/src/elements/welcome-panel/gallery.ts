@@ -49,7 +49,7 @@ export class Gallery extends LitElement {
         --row-gap: var(--bb-grid-size-6);
         --thumbnail-height: 175px;
         --details-min-height: 108px;
-        --profile-pic-size: 20px;
+        --profile-pic-size: 28px;
         --max-description-lines: 3;
         --items-per-column: 4;
       }
@@ -153,6 +153,7 @@ export class Gallery extends LitElement {
           align-items: center;
           padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-3);
           border: none;
+          transition: box-shadow 0.2s cubic-bezier(0, 0, 0.3, 1);
 
           & .g-icon {
             margin-right: var(--bb-grid-size-2);
@@ -163,7 +164,9 @@ export class Gallery extends LitElement {
 
             &:focus,
             &:hover {
-              background: var(--n-10);
+              box-shadow:
+                0px 1px 2px rgba(0, 0, 0, 0.3),
+                0px 2px 6px 2px rgba(0, 0, 0, 0.15);
             }
           }
         }
@@ -268,10 +271,15 @@ export class Gallery extends LitElement {
           }
 
           .g-icon {
+            width: var(--profile-pic-size);
+            height: var(--profile-pic-size);
             color: var(--n-100);
             border-radius: 50%;
             background: var(--n-0);
-            font-size: var(--profile-pic-size);
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
           }
         }
 
