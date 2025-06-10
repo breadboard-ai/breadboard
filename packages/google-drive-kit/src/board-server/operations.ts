@@ -969,9 +969,10 @@ export function createProperties(properties: AppProperties): StoredProperties {
 /** Reads properties from the file, using both properties and appProperties (first priority). */
 export function readProperties(file: DriveFile): AppProperties {
   const storedProperties: StoredProperties = {
-    title: file.properties?.thumbnailUrl || file.appProperties?.title,
-    description: file.appProperties?.description || "",
-    tags: file.appProperties?.tags || file.appProperties.tags,
+    title: file.properties?.title || file.appProperties?.title,
+    description:
+      file.properties.description || file.appProperties?.description || "",
+    tags: file.properties?.tags || file.appProperties.tags,
     thumbnailUrl:
       file.properties?.thumbnailUrl || file.appProperties?.thumbnailUrl,
   };
@@ -980,7 +981,8 @@ export function readProperties(file: DriveFile): AppProperties {
   try {
     tags = storedProperties.tags ? JSON.parse(storedProperties.tags) : [];
     if (!Array.isArray(tags)) tags = [];
-  } catch {
+  } catch (e) {
+    console.info("Exception when parsing DriveFile.tags", e);
     // do nothing.
   }
 
