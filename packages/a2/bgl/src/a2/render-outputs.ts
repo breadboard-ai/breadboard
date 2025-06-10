@@ -42,7 +42,7 @@ const MODELS: Model[] = [
     id: "gemini-flash",
     title: "Gemini 2.5 Flash",
     description: "Best for coding simple, static displays",
-    modelName: "gemini-2.5-flash",
+    modelName: "gemini-2.5-flash-preview-05-20",
   },
   {
     id: "gemini-pro",
