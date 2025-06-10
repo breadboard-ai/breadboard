@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { TodoItems } from "../types/types.js";
+import { TodoItems, TodoList } from "../types/types.js";
 import { SignalMap } from "signal-utils/map";
 
 export { List };
 
-class List {
+class List implements TodoList {
   items: TodoItems = new SignalMap();
 }
