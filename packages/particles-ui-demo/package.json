@@ -77,7 +77,7 @@
   },
   "dependencies": {
     "@lit-labs/signals": "^0.1.2",
-    "@breadboard-ai/particles": "^0.0.1",
+    "@breadboard-ai/particles": "0.0.1",
     "signal-utils": "^0.21.1"
   }
 }
