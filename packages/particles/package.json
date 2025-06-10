@@ -68,8 +68,5 @@
   "devDependencies": {
     "@google-labs/tsconfig": "^0.0.1",
     "typescript": "^5.8.3"
-  },
-  "dependencies": {
-    "@breadboard-ai/particles": "^0.0.1"
   }
 }
