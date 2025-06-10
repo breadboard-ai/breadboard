@@ -971,8 +971,8 @@ export function readProperties(file: DriveFile): AppProperties {
   const storedProperties: StoredProperties = {
     title: file.properties?.title || file.appProperties?.title,
     description:
-      file.properties.description || file.appProperties?.description || "",
-    tags: file.properties?.tags || file.appProperties.tags,
+      file.properties?.description || file.appProperties?.description || "",
+    tags: file.properties?.tags || file.appProperties?.tags,
     thumbnailUrl:
       file.properties?.thumbnailUrl || file.appProperties?.thumbnailUrl,
   };
