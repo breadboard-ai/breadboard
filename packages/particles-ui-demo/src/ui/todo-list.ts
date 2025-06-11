@@ -39,13 +39,7 @@ export class TodoListView extends SignalWatcher(LitElement) {
   `;
 
   #renderCreateButton() {
-    return html`<button
-      @click=${() => {
-        this.channel?.requestAddItem();
-      }}
-    >
-      Create new
-    </button>`;
+    return html`<button data-behavior="add">Create new</button>`;
   }
 
   #renderHeader() {
@@ -69,47 +63,7 @@ export class TodoListView extends SignalWatcher(LitElement) {
         this.items,
         (id) => id,
         ([id, item]) => {
-          return html`<todo-item
-            @input=${(evt: Event) => {
-              const target = evt
-                .composedPath()
-                .find((el) => el instanceof HTMLElement && el.dataset.behavior);
-              if (!(target instanceof HTMLInputElement)) {
-                return;
-              }
-
-              switch (target.dataset.behavior) {
-                case "editable": {
-                  this.channel?.requestUpdateField(id, target.id, target.value);
-                  return;
-                }
-              }
-            }}
-            @click=${(evt: Event) => {
-              const target = evt
-                .composedPath()
-                .find((el) => el instanceof HTMLElement && el.dataset.behavior);
-              if (!(target instanceof HTMLElement)) {
-                return;
-              }
-
-              switch (target.dataset.behavior) {
-                case "delete": {
-                  this.channel?.requestDelete(id);
-                  return;
-                }
-
-                case "done": {
-                  const item = this.items?.get(id);
-                  if (!item) {
-                    return;
-                  }
-                  this.channel?.requestUpdateDone(id, !item.done);
-                }
-              }
-            }}
-            .item=${item}
-          ></todo-item>`;
+          return html`<todo-item data-id=${id} .item=${item}></todo-item>`;
         }
       )}`,
     ];
