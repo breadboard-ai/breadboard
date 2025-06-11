@@ -153,7 +153,16 @@ export class Gallery extends LitElement {
           align-items: center;
           padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-3);
           border: none;
-          transition: box-shadow 0.2s cubic-bezier(0, 0, 0.3, 1);
+          transition:
+            box-shadow 0.2s cubic-bezier(0, 0, 0.3, 1),
+            opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+          opacity: 0;
+          pointer-events: none;
+
+          &.persistent {
+            opacity: 1;
+            pointer-events: auto;
+          }
 
           & .g-icon {
             margin-right: var(--bb-grid-size-2);
@@ -168,6 +177,13 @@ export class Gallery extends LitElement {
                 0px 1px 2px rgba(0, 0, 0, 0.3),
                 0px 2px 6px 2px rgba(0, 0, 0, 0.15);
             }
+          }
+        }
+
+        &:hover {
+          & .remix-button {
+            opacity: 1;
+            pointer-events: auto;
           }
         }
 
@@ -503,45 +519,49 @@ export class Gallery extends LitElement {
             until(this.#renderThumbnail(thumbnail))
           )}`
         )}
-        ${mine
-          ? html`<button
-              class="overflow-menu"
-              @click=${(evt: Event) => {
-                evt.preventDefault();
-                evt.stopImmediatePropagation();
+        <button
+          class="overflow-menu"
+          @click=${(evt: Event) => {
+            evt.preventDefault();
+            evt.stopImmediatePropagation();
 
-                if (!(evt.target instanceof HTMLButtonElement)) {
-                  return;
-                }
+            if (!(evt.target instanceof HTMLButtonElement)) {
+              return;
+            }
 
-                const bounds = evt.target.getBoundingClientRect();
-                let x = bounds.x;
-                if (x + 144 > window.innerWidth) {
-                  x = window.innerWidth - 144;
-                }
+            const bounds = evt.target.getBoundingClientRect();
+            let x = bounds.x;
+            if (x + 144 > window.innerWidth) {
+              x = window.innerWidth - 144;
+            }
 
-                this.#overflowMenuConfig = {
-                  x,
-                  y: bounds.bottom,
-                  value: url,
-                };
-                this.showOverflowMenu = true;
-              }}
-            >
-              <span class="g-icon filled-heavy w-500 round">more_vert</span>
-            </button>`
-          : html`
-              <button
-                class="remix-button sans-flex w-500 round md-body-small"
-                @click=${(event: PointerEvent) =>
-                  this.#onRemixButtonClick(event, url)}
-                @keydown=${(event: KeyboardEvent) =>
-                  this.#onRemixButtonKeydown(event, url)}
-              >
-                <span class="g-icon filled round">gesture</span>
-                ${Strings.from("COMMAND_REMIX")}
-              </button>
-            `}
+            this.#overflowMenuConfig = {
+              x,
+              y: bounds.bottom,
+              value: url,
+            };
+            this.showOverflowMenu = true;
+          }}
+        >
+          <span class="g-icon filled-heavy w-500 round">more_vert</span>
+        </button>
+        <button
+          class=${classMap({
+            "remix-button": true,
+            "sans-flex": true,
+            "w-500": true,
+            round: true,
+            "md-body-small": true,
+            persistent: !mine,
+          })}
+          @click=${(event: PointerEvent) =>
+            this.#onRemixButtonClick(event, url)}
+          @keydown=${(event: KeyboardEvent) =>
+            this.#onRemixButtonKeydown(event, url)}
+        >
+          <span class="g-icon filled round">gesture</span>
+          ${Strings.from("COMMAND_REMIX")}
+        </button>
         <div class="info">
           ${mine
             ? nothing
