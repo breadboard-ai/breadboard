@@ -7,7 +7,13 @@
 /// <reference types="@types/gapi.client.drive-v3" />
 
 import type { TokenVendor } from "@breadboard-ai/connection-client";
-import type { Asset, GraphTag, OutputValues } from "@breadboard-ai/types";
+import type {
+  Asset,
+  GraphTag,
+  InlineDataCapabilityPart,
+  OutputValues,
+  StoredDataCapabilityPart,
+} from "@breadboard-ai/types";
 import {
   err,
   ok,
@@ -748,14 +754,39 @@ class DriveOperations {
     }));
   }
 
-  async saveDataPart(data: string, mimeType: string) {
+  async saveDataPart(
+    part: InlineDataCapabilityPart | StoredDataCapabilityPart
+  ): Promise<StoredDataCapabilityPart> {
     const accessToken = await getAccessToken(this.vendor);
     const api = new Files({ kind: "bearer", token: accessToken! });
     // Start in parallel.
     const parentPromise = this.findOrCreateFolder();
     // TODO: Update to retryable.
+    let fileId: string | undefined;
+    let data: string | undefined;
+    let mimeType: string;
+    if ("storedData" in part) {
+      fileId = part.storedData?.handle;
+      // TODO(volodya): Add a check if data actually needs to be updated.
+      data = part.data;
+      if (!data) {
+        // The data has been neither loaded nor updated - no-op.
+        if (!fileId) {
+          // Except when it has never been saved before.
+          throw new Error(
+            `Internal error: Draft data part doesn't have any data: ${JSON.stringify(part)}`
+          );
+        }
+        return part;
+      }
+      mimeType = part.storedData.mimeType;
+    } else {
+      fileId = undefined;
+      data = part.inlineData.data;
+      mimeType = part.inlineData.mimeType;
+    }
     const uploadResponse = await fetch(
-      api.makeUploadRequest(undefined, data, mimeType)
+      api.makeUploadRequest(fileId, data, mimeType)
     );
     const file: DriveFile = await uploadResponse.json();
     // TODO: Update to retryable.
@@ -766,7 +797,22 @@ class DriveOperations {
     ).catch((e) => {
       console.error("Failed to update image metadata", e);
     });
-    return `${PROTOCOL}/${file.id}`;
+    const handle = `${PROTOCOL}/${file.id}`;
+    let result: StoredDataCapabilityPart;
+    if ("inlineData" in part) {
+      result = {
+        storedData: {
+          handle,
+          mimeType: part.inlineData.mimeType,
+        },
+      };
+    } else {
+      result = part;
+      result.storedData.handle = handle;
+    }
+    result.storedData.contentLength = data?.length;
+    // TODO(volodya): Populate contentHash.
+    return result;
   }
 
   async #refreshUserList() {
