@@ -68,7 +68,6 @@ export class UiReceiver extends SignalWatcher(LitElement) {
       }}
       @click=${(evt: Event) => {
         const { target, id } = extractPathAndBehavior<HTMLInputElement>(evt);
-        console.log(target, id);
         if (!target) {
           return;
         }
