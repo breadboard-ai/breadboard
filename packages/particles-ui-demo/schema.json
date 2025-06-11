@@ -1,0 +1,49 @@
+{
+  "type": "object",
+  "properties": {
+    "list": {
+      "type": "array",
+      "presentation": ["list"],
+      "behaviors": ["editable"],
+      "items": {
+        "type": "object",
+        "presentation": ["columns:2"],
+        "properties": {
+          "column-1": {
+            "type": "object",
+            "presentation": ["card"],
+            "properties": {
+              "title": {
+                "type": "string",
+                "title": "Title",
+                "behaviors": ["editable"],
+                "presentation": ["hero"]
+              },
+              "description": {
+                "type": "string",
+                "behaviors": ["editable"]
+              },
+              "dueDate": {
+                "type": "string",
+                "format": "date",
+                "behaviors": ["editable"]
+              }
+            }
+          },
+          "column-2": {
+            "type": "object",
+            "presentation": ["has-delete"],
+            "properties": {
+              "done": {
+                "type": "boolean",
+                "behaviors": ["editable"]
+              }
+            }
+          },
+          "required": ["title", "done"]
+        }
+      }
+    }
+  },
+  "required": ["list"]
+}
