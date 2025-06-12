@@ -715,17 +715,15 @@ class DriveOperations {
    * external, or just certain domains/groups for internal).
    */
   async publishFile(fileId: string): Promise<gapi.client.drive.Permission[]> {
-    return (
-      await Promise.all(
-        this.#publishPermissions.map((permission) =>
-          this.#googleDriveClient.writePermission(
-            fileId,
-            { ...permission, role: "reader" },
-            { sendNotificationEmail: false }
-          )
+    return await Promise.all(
+      this.#publishPermissions.map((permission) =>
+        this.#googleDriveClient.writePermission(
+          fileId,
+          { ...permission, role: "reader" },
+          { sendNotificationEmail: false }
         )
       )
-    ).flat();
+    );
   }
 
   async listRunResultsForGraph(

@@ -13,7 +13,8 @@ export const buttonStyles = css`
     color: var(--bb-neutral-700);
     border-radius: 100px;
     padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
-    font-size: var(--bb-label-large);
+    font: 500 var(--bb-label-large) / var(--bb-label-line-height-large)
+      var(--bb-font-family);
     transition:
       background 0.2s cubic-bezier(0, 0, 0.3, 1),
       color 0.2s cubic-bezier(0, 0, 0.3, 1);
