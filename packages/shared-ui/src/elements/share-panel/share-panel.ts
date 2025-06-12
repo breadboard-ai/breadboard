@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { type GraphDescriptor } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
 import "@material/web/switch/switch.js";
@@ -17,6 +18,7 @@ import {
   type Environment,
   type GoogleDrivePermission,
 } from "../../contexts/environment.js";
+import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { ToastEvent, ToastType } from "../../events/events.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { icons } from "../../styles/icons.js";
@@ -38,7 +40,7 @@ type PublishState =
       status: "written";
       published: true;
       writable: true;
-      relevantPermissions: GoogleDrivePermission[];
+      relevantPermissions: gapi.client.drive.Permission[];
     }
   | {
       status: "written";
@@ -258,6 +260,9 @@ export class SharePanel extends LitElement {
   @consume({ context: signinAdapterContext })
   @property({ attribute: false })
   accessor signinAdapter: SigninAdapter | undefined = undefined;
+
+  @consume({ context: googleDriveClientContext })
+  accessor googleDriveClient: GoogleDriveClient | undefined;
 
   @property({ attribute: false })
   accessor graph: GraphDescriptor | undefined;
@@ -493,58 +498,26 @@ export class SharePanel extends LitElement {
     if (!graphFileId) {
       return undefined;
     }
+    if (!this.googleDriveClient) {
+      console.error(`No google drive client provided`);
+      return undefined;
+    }
 
-    const oldPublishState = this.#publishState;
     // This prevents Lit from throwing its warning about properties being
     // updated while another action was in progress.
     await Promise.resolve();
     this.#publishState = { status: "loading" };
-    const [accessToken, drive] = await Promise.all([
-      this.#getAccessToken(),
-      loadDriveApi(),
-    ]);
-    if (!accessToken) {
-      this.#publishState = oldPublishState;
-      return;
-    }
 
-    let response;
-    try {
-      response = await drive.permissions.list({
-        access_token: accessToken,
-        fileId: graphFileId,
-        fields: "*",
-      });
-    } catch (error) {
-      if (
-        typeof error === "object" &&
-        error !== null &&
-        "status" in error &&
-        typeof error.status === "number" &&
-        error.status >= 400 &&
-        error.status <= 499
-      ) {
-        // We can't access permissions. This must mean we don't have write
-        // access to the file. But, we got this far, so the graph must at least
-        // be visible to us. Let's assume we're viewing somebody else's graph,
-        // which means we're published but not writable.
-        this.#publishState = {
-          status: "written",
-          published: true,
-          writable: false,
-        };
-        return;
-      }
-      throw error;
-    }
-    const result = JSON.parse(response.body) as {
-      permissions: GoogleDrivePermission[];
-    };
+    const fileMetadata = await this.googleDriveClient.getFileMetadata(
+      graphFileId,
+      { fields: ["permissions", "owners"] }
+    );
+
     const missingRequiredPermissions = new Set(
       publishPermissions.map(stringifyPermission)
     );
     const relevantPermissions = [];
-    for (const permission of result.permissions) {
+    for (const permission of fileMetadata.permissions ?? []) {
       if (missingRequiredPermissions.delete(stringifyPermission(permission))) {
         relevantPermissions.push(permission);
       }
@@ -553,11 +526,20 @@ export class SharePanel extends LitElement {
     // the main graph. We should check those too, an probably have another state
     // to represent this "partially published" situation clearly (see also
     // b/415305356).
-    const published = missingRequiredPermissions.size === 0;
+    const published =
+      // If we couldn't read permissions, then assume it is published (because
+      // that means we are not the owner, yet we are here looking at the file,
+      // so it must be either published or granularly shared).
+      fileMetadata.permissions === undefined
+        ? true
+        : missingRequiredPermissions.size === 0;
+    const currentUserIsOwner =
+      fileMetadata.owners.find((owner) => owner.me) !== undefined;
+
     this.#publishState = {
       status: "written",
       published,
-      writable: true,
+      writable: currentUserIsOwner,
       relevantPermissions,
     };
   }
@@ -666,7 +648,7 @@ export class SharePanel extends LitElement {
         drive.permissions.delete({
           access_token: accessToken,
           fileId: graphFileId,
-          permissionId: permission.id,
+          permissionId: permission.id!,
         })
       )
     );

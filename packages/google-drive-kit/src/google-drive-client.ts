@@ -56,14 +56,18 @@ export class GoogleDriveClient {
     fileId: string,
     options?: T
   ): Promise<{
-    [K in keyof gapi.client.drive.File as K extends (
+    [K in keyof Required<gapi.client.drive.File> as K extends (
       T["fields"] extends Array<keyof gapi.client.drive.File>
         ? T["fields"][number]
         : // The default properties that are returned when fields is not set.
           "id" | "kind" | "name" | "mimeType"
     )
       ? K
-      : never]-?: gapi.client.drive.File[K];
+      : never]: K extends "permissions"
+      ? // Permissions (and probably some other fields!) can be undefined even when
+        // requested, if they are not readable.
+        gapi.client.drive.File[K]
+      : Exclude<gapi.client.drive.File[K], undefined>;
   }> {
     let response = await this.#getFile(fileId, options, {
       kind: "bearer",
@@ -335,11 +339,13 @@ export class GoogleDriveClient {
     options?: BaseRequestOptions
   ): Promise<gapi.client.drive.Permission[]> {
     return (
-      await this.getFileMetadata(fileId, {
-        ...options,
-        fields: ["permissions"],
-      })
-    ).permissions;
+      (
+        await this.getFileMetadata(fileId, {
+          ...options,
+          fields: ["permissions"],
+        })
+      ).permissions ?? []
+    );
   }
 
   async writePermission(
