@@ -38,25 +38,22 @@ const Strings = StringsHelper.forSection("UIController");
 type PublishState =
   | { status: "initial" }
   | { status: "loading" }
+  | { status: "unmodifiable" }
   | {
-      status: "written";
+      status: "modifiable";
       published: true;
-      writable: true;
-      relevantPermissions: gapi.client.drive.Permission[];
+      publishedPermissions: gapi.client.drive.Permission[];
+      granularlyShared: boolean;
     }
   | {
-      status: "written";
+      status: "modifiable";
       published: false;
-      writable: true;
+      granularlyShared: boolean;
     }
   | {
-      status: "written";
+      status: "updating";
       published: boolean;
-      writable: false;
-    }
-  | {
-      status: "writing";
-      published: boolean;
+      granularlyShared: boolean;
     };
 
 @customElement("bb-share-panel")
@@ -134,6 +131,13 @@ export class SharePanel extends LitElement {
           color: var(--bb-ui-600);
           vertical-align: middle;
           margin-right: var(--bb-grid-size-2);
+        }
+      }
+
+      #unmodifiable {
+        margin: auto 0 auto 0;
+        #app-link {
+          margin: 0;
         }
       }
 
@@ -247,6 +251,9 @@ export class SharePanel extends LitElement {
     if (changes.has("graph")) {
       this.#publishState = { status: "initial" };
     }
+    if (this.#status === "open" && this.#publishState.status === "initial") {
+      this.#readPublishedState();
+    }
   }
 
   override render() {
@@ -266,9 +273,6 @@ export class SharePanel extends LitElement {
   override updated() {
     if (this.#status === "open") {
       this.#dialog.value?.showModal();
-      if (this.#publishState.status === "initial") {
-        this.#readPublishedState();
-      }
     } else if (this.#status === "granular") {
       this.#googleDriveSharePanel.value?.open();
     }
@@ -298,11 +302,24 @@ export class SharePanel extends LitElement {
           </button>
         </header>
 
-        ${this.#publishState.status === "loading"
-          ? this.#renderLoading()
-          : this.#renderLoaded()}
+        ${this.#renderModalContents()}
       </dialog>
     `;
+  }
+
+  #renderModalContents() {
+    const { status } = this.#publishState;
+    if (status === "initial") {
+      return nothing;
+    }
+    if (status === "loading") {
+      return this.#renderLoading();
+    }
+    if (status === "modifiable" || status === "updating") {
+      return this.#renderModifiableModalContents();
+    }
+    status satisfies "unmodifiable";
+    return this.#renderUnmodifiableModalContents();
   }
 
   #renderLoading() {
@@ -314,64 +331,36 @@ export class SharePanel extends LitElement {
     `;
   }
 
-  #renderLoaded() {
+  get #isShared(): boolean | undefined {
+    const state = this.#publishState;
+    const { status } = state;
+    if (status === "initial" || status === "loading") {
+      return undefined;
+    }
+    if (status === "unmodifiable") {
+      // If we're unmodifiable, then we're not the owner. And if we're not the
+      // owner, and yet here we are, then it must be shared with us one way or
+      // the other.
+      return true;
+    }
+    return state.published || state.granularlyShared;
+  }
+
+  #renderModifiableModalContents() {
     return [
       html`
         <div id="permissions">
           Publish your ${APP_NAME} ${this.#renderPublishedSwitch()}
         </div>
       `,
-      this.#renderAppLink(),
+      this.#isShared ? this.#renderAppLink() : nothing,
       this.#renderGranularSharingLink(),
       this.#renderAdvisory(),
     ];
   }
 
-  #renderGranularSharingLink() {
-    return html`
-      <a
-        id="granular-sharing-link"
-        href=""
-        @click=${this.#onClickViewPermissions}
-      >
-        View Share Permissions
-      </a>
-    `;
-  }
-
-  #renderAdvisory() {
-    return html`<p id="advisory">
-      Public links can be reshared and will reflect subsequent changes to the
-      ${APP_NAME} app. Share
-      <a
-        href="https://policies.google.com/terms/generative-ai/use-policy"
-        target="_blank"
-        >responsibly</a
-      >, unpublish anytime by clicking the 'share app' button within this
-      ${APP_NAME} app and change the publish toggle.
-    </p>`;
-  }
-
-  #renderPublishedSwitch() {
-    const status = this.#publishState.status;
-    if (status !== "written" && status !== "writing") {
-      return nothing;
-    }
-    const published = this.#publishState.published;
-    const writable = status === "written" && this.#publishState.writable;
-    return html`
-      <div id="published-switch-container">
-        <md-switch
-          ${ref(this.#publishedSwitch)}
-          ?selected=${published}
-          ?disabled=${!writable}
-          @change=${this.#onPublishedSwitchChange}
-        ></md-switch>
-        <label for="publishedSwitch">
-          ${published ? "Published" : "Private"}
-        </label>
-      </div>
-    `;
+  #renderUnmodifiableModalContents() {
+    return html`<div id="unmodifiable">${this.#renderAppLink()}</div>`;
   }
 
   #renderAppLink() {
@@ -380,28 +369,69 @@ export class SharePanel extends LitElement {
       console.error("No app url");
       return nothing;
     }
-    const published =
-      this.#publishState.status === "written" && this.#publishState.published;
-    if (!published) {
-      return nothing;
-    }
     return html`
       <div id="app-link">
         <input
           id="app-link-text"
           type="text"
-          value=${published ? appUrl : ""}
+          value=${appUrl}
           @click=${this.#onClickLinkText}
         />
         <button
           id="app-link-copy-button"
           class="bb-button-outlined"
           @click=${this.#onClickCopyLinkButton}
-          ?disabled=${!published}
         >
           <span class="g-icon">link</span>
           Copy link
         </button>
+      </div>
+    `;
+  }
+
+  #renderGranularSharingLink() {
+    return html`
+      <a
+        id="granular-sharing-link"
+        href=""
+        @click=${this.#onClickViewSharePermissions}
+      >
+        View Share Permissions
+      </a>
+    `;
+  }
+
+  #renderAdvisory() {
+    return html`
+      <p id="advisory">
+        Public links can be reshared and will reflect subsequent changes to the
+        ${APP_NAME} app. Share
+        <a
+          href="https://policies.google.com/terms/generative-ai/use-policy"
+          target="_blank"
+          >responsibly</a
+        >, unpublish anytime by clicking the 'share app' button within this
+        ${APP_NAME} app and change the publish toggle.
+      </p>
+    `;
+  }
+
+  #renderPublishedSwitch() {
+    const { status } = this.#publishState;
+    const published =
+      (status === "modifiable" || status === "updating") &&
+      this.#publishState.published;
+    return html`
+      <div id="published-switch-container">
+        <md-switch
+          ${ref(this.#publishedSwitch)}
+          ?selected=${published}
+          ?disabled=${status === "updating"}
+          @change=${this.#onPublishedSwitchChange}
+        ></md-switch>
+        <label for="publishedSwitch">
+          ${published ? "Published" : "Private"}
+        </label>
       </div>
     `;
   }
@@ -416,7 +446,7 @@ export class SharePanel extends LitElement {
     `;
   }
 
-  #onClickViewPermissions(event: MouseEvent) {
+  #onClickViewSharePermissions(event: MouseEvent) {
     event.preventDefault();
     this.#status = "granular";
   }
@@ -455,11 +485,10 @@ export class SharePanel extends LitElement {
     );
   }
 
-  #makeAppUrl(): string | undefined {
+  #makeAppUrl(): string {
     const graphUrl = this.graph?.url;
     if (!graphUrl) {
-      console.error("No graph URL");
-      return undefined;
+      throw new Error("No graph URL");
     }
     return new URL(`/app/${encodeURIComponent(graphUrl)}`, window.location.href)
       .href;
@@ -473,12 +502,9 @@ export class SharePanel extends LitElement {
   }
 
   async #readPublishedState(): Promise<void> {
-    const publishPermissions = this.#getPublishPermissions();
-    if (publishPermissions.length === 0) {
-      return undefined;
-    }
     const graphFileId = this.#getGraphFileId();
     if (!graphFileId) {
+      console.error(`No graph file id`);
       return undefined;
     }
     if (!this.googleDriveClient) {
@@ -486,70 +512,78 @@ export class SharePanel extends LitElement {
       return undefined;
     }
 
-    // This prevents Lit from throwing its warning about properties being
-    // updated while another action was in progress.
-    await Promise.resolve();
     this.#publishState = { status: "loading" };
 
     const fileMetadata = await this.googleDriveClient.getFileMetadata(
       graphFileId,
-      { fields: ["permissions", "owners"] }
+      { fields: ["owners", "permissions"] }
     );
 
-    const missingRequiredPermissions = new Set(
-      publishPermissions.map(stringifyPermission)
-    );
-    const relevantPermissions = [];
-    for (const permission of fileMetadata.permissions ?? []) {
-      if (missingRequiredPermissions.delete(stringifyPermission(permission))) {
-        relevantPermissions.push(permission);
-      }
-    }
-    // TODO(aomarks) We aren't checking whether assets are published here, only
-    // the main graph. We should check those too, an probably have another state
-    // to represent this "partially published" situation clearly (see also
-    // b/415305356).
-    const published =
-      // If we couldn't read permissions, then assume it is published (because
-      // that means we are not the owner, yet we are here looking at the file,
-      // so it must be either published or granularly shared).
-      fileMetadata.permissions === undefined
-        ? true
-        : missingRequiredPermissions.size === 0;
     const currentUserIsOwner =
       fileMetadata.owners.find((owner) => owner.me) !== undefined;
+    if (!currentUserIsOwner) {
+      this.#publishState = { status: "unmodifiable" };
+      return;
+    }
+
+    const actualPermissions = fileMetadata.permissions ?? [];
+    const missingPublishPermissions = new Set(
+      this.#getRequiredPublishPermissions().map(stringifyPermission)
+    );
+    const actualPublishPermissions = [];
+    const actualNonPublishPermissions = [];
+    for (const permission of actualPermissions) {
+      if (missingPublishPermissions.delete(stringifyPermission(permission))) {
+        actualPublishPermissions.push(permission);
+      } else {
+        actualNonPublishPermissions.push(permission);
+      }
+    }
 
     this.#publishState = {
-      status: "written",
-      published,
-      writable: currentUserIsOwner,
-      relevantPermissions,
+      status: "modifiable",
+      published: missingPublishPermissions.size === 0,
+      publishedPermissions: actualPublishPermissions,
+      granularlyShared:
+        // We're granularly shared if there is any permission that is neither
+        // one of the special publish permissions, nor the owner (since there
+        // will always an owner).
+        actualNonPublishPermissions.find(
+          (permission) => permission.role !== "owner"
+        ) !== undefined,
     };
   }
 
   async #publish() {
-    const publishPermissions = this.#getPublishPermissions();
+    const publishPermissions = this.#getRequiredPublishPermissions();
     if (publishPermissions.length === 0) {
       return undefined;
     }
-    if (this.#publishState.status !== "written") {
-      console.error('Expected published status to be "written"');
+    if (this.#publishState.status !== "modifiable") {
+      console.error('Expected published status to be "modifiable"');
       return;
     }
-    if (this.#publishState.published === true) {
+    if (this.#publishState.published) {
+      // Already published!
       return;
     }
     const graphFileId = this.#getGraphFileId();
     if (!graphFileId) {
+      console.error(`No graph file id`);
       return;
     }
     const oldPublishState = this.#publishState;
-    this.#publishState = { status: "writing", published: true };
+    this.#publishState = {
+      status: "updating",
+      published: true,
+      granularlyShared: oldPublishState.granularlyShared,
+    };
     const [accessToken, drive] = await Promise.all([
       this.#getAccessToken(),
       loadDriveApi(),
     ]);
     if (!accessToken) {
+      console.error("No access token");
       this.#publishState = oldPublishState;
       return;
     }
@@ -593,41 +627,45 @@ export class SharePanel extends LitElement {
     );
 
     this.#publishState = {
-      status: "written",
+      status: "modifiable",
       published: true,
-      writable: true,
-      relevantPermissions,
+      publishedPermissions: relevantPermissions,
+      granularlyShared: oldPublishState.granularlyShared,
     };
   }
 
   async #unpublish() {
-    if (
-      this.#publishState.status !== "written" ||
-      !this.#publishState.writable
-    ) {
-      console.error('Expected published status to be "written" and "writable"');
+    if (this.#publishState.status !== "modifiable") {
+      console.error('Expected published status to be "modifiable"');
       return;
     }
-    if (this.#publishState.published === false) {
+    if (!this.#publishState.published) {
+      // Already unpublished!
       return;
     }
     const graphFileId = this.#getGraphFileId();
     if (!graphFileId) {
+      console.error(`No graph file id`);
       return;
     }
     const oldPublishState = this.#publishState;
-    this.#publishState = { status: "writing", published: false };
+    this.#publishState = {
+      status: "updating",
+      published: false,
+      granularlyShared: oldPublishState.granularlyShared,
+    };
     const [accessToken, drive] = await Promise.all([
       this.#getAccessToken(),
       loadDriveApi(),
     ]);
     if (!accessToken) {
+      console.error("No access token");
       this.#publishState = oldPublishState;
       return;
     }
 
     await Promise.all(
-      oldPublishState.relevantPermissions.map((permission) =>
+      oldPublishState.publishedPermissions.map((permission) =>
         drive.permissions.delete({
           access_token: accessToken,
           fileId: graphFileId,
@@ -636,9 +674,9 @@ export class SharePanel extends LitElement {
       )
     );
     this.#publishState = {
-      status: "written",
+      status: "modifiable",
       published: false,
-      writable: true,
+      granularlyShared: oldPublishState.granularlyShared,
     };
   }
 
@@ -687,7 +725,7 @@ export class SharePanel extends LitElement {
     return findGoogleDriveAssetsInGraph(graph);
   }
 
-  #getPublishPermissions(): gapi.client.drive.Permission[] {
+  #getRequiredPublishPermissions(): gapi.client.drive.Permission[] {
     if (!this.environment) {
       console.error(`No environment was provided`);
       return [];
