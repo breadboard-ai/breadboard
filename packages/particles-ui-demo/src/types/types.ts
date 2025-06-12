@@ -32,11 +32,28 @@ export type SerializedGroupParticle = [
   value: SerializedParticle,
 ][];
 
-export type Channel = {
-  requestAddItem(): void;
-  requestUpdateField(parentId: string, id: string, value: string): void;
-  requestUpdateDone(id: string, value: boolean): void;
-  requestDelete(itemId: string): void;
+/**
+ * The Receiver side of the channel, a proxy that represents the Generator.
+ */
+export type GeneratorProxy = {
+  requestAddItem(): Promise<void>;
+  requestUpdateField(
+    parentId: string,
+    id: string,
+    value: string
+  ): Promise<void>;
+  requestUpdateDone(id: string, value: boolean): Promise<void>;
+  requestDelete(itemId: string): Promise<void>;
+};
+
+/**
+ * The Generator side of the channel, a proxy that represents the Receiver.
+ */
+export type ReceiverProxy = {
+  addItem(): Promise<void>;
+  updateField(parentId: string, id: string, value: string): Promise<void>;
+  updateDone(id: string, value: boolean): Promise<void>;
+  deleteItem(itemId: string): Promise<void>;
 };
 
 export enum Orientation {
