@@ -63,10 +63,10 @@ export class GoogleDriveClient {
           "id" | "kind" | "name" | "mimeType"
     )
       ? K
-      : never]: K extends "permissions"
-      ? // Permissions (and probably some other fields!) can be undefined even when
-        // requested, if they are not readable.
-        gapi.client.drive.File[K]
+      : // Some properties can be undefined even when requested (either because
+        // they are absent or because we don't have permission to read them).
+        never]: K extends "permissions" | "properties" | "appProperties"
+      ? gapi.client.drive.File[K]
       : Exclude<gapi.client.drive.File[K], undefined>;
   }> {
     let response = await this.#getFile(fileId, options, {
@@ -352,7 +352,7 @@ export class GoogleDriveClient {
     fileId: string,
     permission: gapi.client.drive.Permission,
     options: WritePermissionOptions
-  ): Promise<gapi.client.drive.Permission[]> {
+  ): Promise<gapi.client.drive.Permission> {
     const authorization = {
       kind: "bearer",
       token: await this.#getUserAccessToken(),
@@ -367,7 +367,7 @@ export class GoogleDriveClient {
     );
     const response = await retryableFetch(url, {
       method: "POST",
-      body: JSON.stringify(permission),
+      body: JSON.stringify(onlyWritablePermissionFields(permission)),
       headers: this.#makeHeaders(authorization),
       signal: options?.signal,
     });
@@ -377,7 +377,7 @@ export class GoogleDriveClient {
           (await response.text())
       );
     }
-    return (await response.json()) as gapi.client.drive.Permission[];
+    return (await response.json()) as gapi.client.drive.Permission;
   }
 
   #makeUrl(path: string, authorization: GoogleApiAuthorization): URL {
