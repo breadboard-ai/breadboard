@@ -318,10 +318,11 @@ export class SharePanel extends LitElement {
   }
 
   #renderModal() {
+    const title = this.graph?.title;
     return html`
       <dialog ${ref(this.#dialog)} @close=${this.close}>
         <header>
-          <h2>Share</h2>
+          <h2>Share ${title ? `“${title}”` : ""}</h2>
           <button
             id="closeButton"
             class="g-icon"
@@ -358,7 +359,7 @@ export class SharePanel extends LitElement {
           href=""
           @click=${this.#onClickViewPermissions}
         >
-          View permissions
+          View share permissions
         </a>
         ${this.#renderPublishedSwitch()}
       </div>
