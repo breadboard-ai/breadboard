@@ -5,7 +5,7 @@
  */
 import { LitElement, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { Channel, TodoItems } from "../types/types.js";
+import { GeneratorProxy, TodoItems } from "../types/types.js";
 import { SignalWatcher, html } from "@lit-labs/signals";
 import { repeat } from "lit/directives/repeat.js";
 
@@ -17,7 +17,7 @@ export class TodoListView extends SignalWatcher(LitElement) {
   accessor items: TodoItems | null = null;
 
   @property()
-  accessor channel: Channel | null = null;
+  accessor channel: GeneratorProxy | null = null;
 
   static styles = css`
     :host {
