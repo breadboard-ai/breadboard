@@ -5,9 +5,9 @@
  */
 import { LitElement, html, css, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { Orientation } from "../types/types";
+import { Orientation } from "../../types/types";
 import { repeat } from "lit/directives/repeat.js";
-import { styles, defaultStyles } from "./styles/default";
+import { styles, defaultStyles } from "../styles/default";
 import { classMap } from "lit/directives/class-map.js";
 
 @customElement("ui-card")
@@ -15,7 +15,7 @@ export class Card extends LitElement {
   @property({ reflect: true, type: String })
   accessor orientation: Orientation = Orientation.VERTICAL;
 
-  @property()
+  @property({ reflect: true, type: Array })
   accessor segments: Array<string | number> = [1];
 
   @property({ reflect: true, type: Boolean })
@@ -75,7 +75,7 @@ export class Card extends LitElement {
 
   render() {
     return html`<section
-      class=${classMap(this.disabled ? defaultStyles.extras.disabled : {})}
+      class=${classMap(this.disabled ? defaultStyles.modifiers.disabled : {})}
     >
       ${repeat(this.segments, () => {
         return html`<slot></slot>`;

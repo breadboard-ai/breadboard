@@ -20,26 +20,28 @@ export const layout = css`
   }
 
   ${unsafeCSS(
-    new Array(17)
+    new Array(33)
       .fill(0)
-      .map((_, idx) => {
+      .map((_, index) => {
+        const idx = index - 16;
+        const lbl = idx < 0 ? `n${Math.abs(idx)}` : idx.toString();
         return `
-        .layout-p-${idx} { padding: ${idx * grid}px; }
-        .layout-pt-${idx} { padding-top: ${idx * grid}px; }
-        .layout-pr-${idx} { padding-right: ${idx * grid}px; }
-        .layout-pb-${idx} { padding-bottom: ${idx * grid}px; }
-        .layout-pl-${idx} { padding-left: ${idx * grid}px; }
+        .layout-p-${lbl} { padding: ${idx * grid}px; }
+        .layout-pt-${lbl} { padding-top: ${idx * grid}px; }
+        .layout-pr-${lbl} { padding-right: ${idx * grid}px; }
+        .layout-pb-${lbl} { padding-bottom: ${idx * grid}px; }
+        .layout-pl-${lbl} { padding-left: ${idx * grid}px; }
 
-        .layout-m-${idx} { margin: ${idx * grid}px; }
-        .layout-mt-${idx} { margin-top: ${idx * grid}px; }
-        .layout-mr-${idx} { margin-right: ${idx * grid}px; }
-        .layout-mb-${idx} { margin-bottom: ${idx * grid}px; }
-        .layout-ml-${idx} { margin-left: ${idx * grid}px; }
+        .layout-m-${lbl} { margin: ${idx * grid}px; }
+        .layout-mt-${lbl} { margin-top: ${idx * grid}px; }
+        .layout-mr-${lbl} { margin-right: ${idx * grid}px; }
+        .layout-mb-${lbl} { margin-bottom: ${idx * grid}px; }
+        .layout-ml-${lbl} { margin-left: ${idx * grid}px; }
 
-        .layout-t-${idx} { top: ${idx * grid}px; }
-        .layout-r-${idx} { right: ${idx * grid}px; }
-        .layout-b-${idx} { bottom: ${idx * grid}px; }
-        .layout-l-${idx} { left: ${idx * grid}px; }`;
+        .layout-t-${lbl} { top: ${idx * grid}px; }
+        .layout-r-${lbl} { right: ${idx * grid}px; }
+        .layout-b-${lbl} { bottom: ${idx * grid}px; }
+        .layout-l-${lbl} { left: ${idx * grid}px; }`;
       })
       .join("\n")
   )}
