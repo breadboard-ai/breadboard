@@ -5,20 +5,22 @@
  */
 
 import { css, CSSResultGroup, unsafeCSS } from "lit";
+import { grid } from "./shared";
 
 export const border = css`
   ${unsafeCSS(
-    new Array(13)
+    new Array(25)
       .fill(0)
       .map((_, idx) => {
         return `
-        .border-width-${idx} { border-width: ${idx}px; }
-        .outline-width-${idx} { outline-width: ${idx}px; }`;
+        .border-bw-${idx} { border-width: ${idx}px; }
+        .border-ow-${idx} { outline-width: ${idx}px; }
+        .border-br-${idx} { border-radius: ${idx * grid}px; }`;
       })
       .join("\n")
   )}
 
-  .border-style-solid {
+  .border-bs-s {
     border-style: solid;
   }
 ` as CSSResultGroup;

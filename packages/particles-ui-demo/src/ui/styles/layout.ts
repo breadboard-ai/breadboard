@@ -5,8 +5,7 @@
  */
 
 import { css, CSSResultGroup, unsafeCSS } from "lit";
-
-export const grid = 4;
+import { grid } from "./shared";
 
 export const layout = css`
   :host {
@@ -25,59 +24,57 @@ export const layout = css`
       .fill(0)
       .map((_, idx) => {
         return `
-        .border-radius-${idx} { border-radius: ${idx * grid}px; }
+        .layout-p-${idx} { padding: ${idx * grid}px; }
+        .layout-pt-${idx} { padding-top: ${idx * grid}px; }
+        .layout-pr-${idx} { padding-right: ${idx * grid}px; }
+        .layout-pb-${idx} { padding-bottom: ${idx * grid}px; }
+        .layout-pl-${idx} { padding-left: ${idx * grid}px; }
 
-        .padding-${idx} { padding: ${idx * grid}px; }
-        .padding-top-${idx} { padding-top: ${idx * grid}px; }
-        .padding-right-${idx} { padding-right: ${idx * grid}px; }
-        .padding-bottom-${idx} { padding-bottom: ${idx * grid}px; }
-        .padding-left-${idx} { padding-left: ${idx * grid}px; }
+        .layout-m-${idx} { margin: ${idx * grid}px; }
+        .layout-mt-${idx} { margin-top: ${idx * grid}px; }
+        .layout-mr-${idx} { margin-right: ${idx * grid}px; }
+        .layout-mb-${idx} { margin-bottom: ${idx * grid}px; }
+        .layout-ml-${idx} { margin-left: ${idx * grid}px; }
 
-        .margin-${idx} { margin: ${idx * grid}px; }
-        .margin-top-${idx} { margin-top: ${idx * grid}px; }
-        .margin-right-${idx} { margin-right: ${idx * grid}px; }
-        .margin-bottom-${idx} { margin-bottom: ${idx * grid}px; }
-        .margin-left-${idx} { margin-left: ${idx * grid}px; }
-
-        .top-${idx} { top: ${idx * grid}px; }
-        .right-${idx} { right: ${idx * grid}px; }
-        .bottom-${idx} { bottom: ${idx * grid}px; }
-        .left-${idx} { left: ${idx * grid}px; }`;
+        .layout-t-${idx} { top: ${idx * grid}px; }
+        .layout-r-${idx} { right: ${idx * grid}px; }
+        .layout-b-${idx} { bottom: ${idx * grid}px; }
+        .layout-l-${idx} { left: ${idx * grid}px; }`;
       })
       .join("\n")
   )}
 
-  .position-absolute {
+  .layout-pos-a {
     position: absolute;
   }
 
-  .position-relative {
+  .layout-pos-rel {
     position: relative;
   }
 
-  .flex-vertical {
+  .layout-flx-vert {
     display: flex;
     flex-direction: column;
   }
 
-  .flex-horizontal {
+  .layout-flx-hor {
     display: flex;
-    flex-direction: horizontal;
+    flex-direction: row;
   }
 
-  .space-evenly {
+  .layout-sp-ev {
     justify-content: space-evenly;
   }
 
-  .resize-none {
+  .layout-r-none {
     resize: none;
   }
 
-  .field-sizing-content {
+  .layout-fs-c {
     field-sizing: content;
   }
 
-  .cover {
+  .layout-el-cv {
     width: 100%;
     height: 100%;
     object-fit: cover;

@@ -22,86 +22,87 @@ export const styles: CSSResultGroup = [
 ];
 
 const input = {
-  "sans-flex": true,
-  "padding-3": true,
-  "margin-bottom-1": true,
-  "border-radius-3": true,
-  "border-width-1": true,
-  "border-color-n-70": true,
-  "border-style-solid": true,
+  "typography-f-sf": true,
+  "layout-p-3": true,
+  "layout-mb-1": true,
+  "border-br-3": true,
+  "border-bw-1": true,
+  "border-bc-n70": true,
+  "border-bs-s": true,
 };
 const textarea = {
   ...input,
-  "resize-none": true,
-  "field-sizing-content": true,
+  "layout-r-none": true,
+  "layout-fs-c": true,
 };
 
 const button = {
-  "sans-flex": true,
-  "w-500": true,
-  "padding-top-3": true,
-  "padding-bottom-3": true,
-  "padding-left-5": true,
-  "padding-right-5": true,
-  "margin-bottom-1": true,
-  "border-radius-16": true,
-  "resize-none": true,
-  "border-width-0": true,
-  "border-color-n-70": true,
-  "border-style-solid": true,
-  "field-sizing-content": true,
-  "background-color-n-0": true,
-  "color-n-100": true,
-  "behavior-hover": true,
+  "typography-f-sf": true,
+  "typography-w-500": true,
+  "layout-pt-3": true,
+  "layout-pb-3": true,
+  "layout-pl-5": true,
+  "layout-pr-5": true,
+  "layout-mb-1": true,
+  "border-br-16": true,
+  "layout-r-none": true,
+  "border-bw-0": true,
+  "border-c-n70": true,
+  "border-bs-s": true,
+  "layout-fs-c": true,
+  "color-bgc-n0": true,
+  "color-c-n100": true,
+  "behavior-ho-80": true,
 };
 
 const heading = {
-  "sans-flex": true,
-  "w-500": true,
-  "margin-top-0": true,
-  "margin-bottom-2": true,
+  "typography-f-sf": true,
+  "typography-w-500": true,
+  "layout-mt-0": true,
+  "layout-mb-2": true,
 };
 
 const h1 = {
   ...heading,
-  "title-large": true,
+  "typography-sz-tl": true,
 };
 
 const h2 = {
   ...heading,
-  "title-medium": true,
+  "typography-sz-tm": true,
 };
 
 const h3 = {
   ...heading,
-  "title-small": true,
+  "typography-sz-ts": true,
 };
 
 const body = {
-  "sans-flex": true,
-  "w-400": true,
-  "margin-top-0": true,
-  "margin-bottom-2": true,
-  "body-medium": true,
+  "typography-f-s": true,
+  "typography-w-400": true,
+  "layout-mt-0": true,
+  "layout-mb-2": true,
+  "typography-sz-bm": true,
 };
 
 const hero = {
-  "w-500": true,
-  "title-large": true,
+  "typography-w-500": true,
+  "typography-sz-tl": true,
 };
 
 const headline = {
-  "w-400": true,
-  "display-large": true,
-  "left-3": true,
-  "bottom-3": true,
-  "color-n-100": true,
-  "margin-bottom-0": true,
-  "position-absolute": true,
+  "typography-f-c": true,
+  "typography-w-100": true,
+  "typography-sz-dl": true,
+  "layout-l-3": true,
+  "layout-b-3": true,
+  "color-c-n100": true,
+  "layout-mb-0": true,
+  "layout-pos-a": true,
 };
 
 const disabled = {
-  "opacity-70": true,
+  "opacity-el-70": true,
 };
 
 export const defaultStyles = {

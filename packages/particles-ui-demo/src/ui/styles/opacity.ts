@@ -11,7 +11,7 @@ export const opacity = css`
     new Array(21)
       .fill(0)
       .map((_, idx) => {
-        return `.opacity-${idx * 5} { opacity: ${idx / 20}; }`;
+        return `.opacity-el-${idx * 5} { opacity: ${idx / 20}; }`;
       })
       .join("\n")
   )}
