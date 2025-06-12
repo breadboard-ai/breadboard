@@ -92,7 +92,7 @@ export class GoogleDriveAssetShareDialog extends LitElement {
       try {
         files = await Promise.all(
           permissions.map(([fileId]) =>
-            googleDriveClient.getFile(fileId, {
+            googleDriveClient.getFileMetadata(fileId, {
               fields: ["id", "name"],
               signal,
             })

@@ -22,7 +22,7 @@ export interface BaseRequestOptions {
 }
 
 export interface ReadFileOptions extends BaseRequestOptions {
-  fields?: string[];
+  fields?: Array<keyof gapi.client.drive.File>;
 }
 
 export interface ExportFileOptions extends BaseRequestOptions {
@@ -52,10 +52,19 @@ export class GoogleDriveClient {
     return this.#getUserAccessToken();
   }
 
-  async getFile(
+  async getFileMetadata<const T extends ReadFileOptions>(
     fileId: string,
-    options?: ReadFileOptions
-  ): Promise<gapi.client.drive.File> {
+    options?: T
+  ): Promise<{
+    [K in keyof gapi.client.drive.File as K extends (
+      T["fields"] extends Array<keyof gapi.client.drive.File>
+        ? T["fields"][number]
+        : // The default properties that are returned when fields is not set.
+          "id" | "kind" | "name" | "mimeType"
+    )
+      ? K
+      : never]-?: gapi.client.drive.File[K];
+  }> {
     let response = await this.#getFile(fileId, options, {
       kind: "bearer",
       token: await this.#getUserAccessToken(),
@@ -97,9 +106,7 @@ export class GoogleDriveClient {
       if (proxyResponse.status === 200) {
         const proxyResult =
           (await proxyResponse.json()) as GetFileProxyResponse;
-        const metadata = JSON.parse(
-          proxyResult.metadata
-        ) as gapi.client.drive.File;
+        const metadata = JSON.parse(proxyResult.metadata);
         return metadata;
       } else if (proxyResponse.status === 500) {
         // TODO(aomarks) Remove this case once the API starts returning 404
@@ -314,7 +321,7 @@ export class GoogleDriveClient {
     options?: BaseRequestOptions
   ): Promise<boolean> {
     try {
-      await this.getFile(fileId, options);
+      await this.getFileMetadata(fileId, options);
       return true;
     } catch {
       // TODO(aomarks) We should be a little more discerning here. Only a 404
@@ -327,11 +334,12 @@ export class GoogleDriveClient {
     fileId: string,
     options?: BaseRequestOptions
   ): Promise<gapi.client.drive.Permission[]> {
-    const file = await this.getFile(fileId, {
-      ...options,
-      fields: ["permissions"],
-    });
-    return file.permissions as gapi.client.drive.Permission[];
+    return (
+      await this.getFileMetadata(fileId, {
+        ...options,
+        fields: ["permissions"],
+      })
+    ).permissions;
   }
 
   async writePermission(
