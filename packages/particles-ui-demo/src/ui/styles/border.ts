@@ -9,11 +9,16 @@ import { grid } from "./shared";
 
 export const border = css`
   ${unsafeCSS(
-    new Array(25)
+    new Array(17)
       .fill(0)
       .map((_, idx) => {
         return `
         .border-bw-${idx} { border-width: ${idx}px; }
+        .border-btw-${idx} { border-top-width: ${idx}px; }
+        .border-bbw-${idx} { border-bottom-width: ${idx}px; }
+        .border-blw-${idx} { border-left-width: ${idx}px; }
+        .border-brw-${idx} { border-right-width: ${idx}px; }
+
         .border-ow-${idx} { outline-width: ${idx}px; }
         .border-br-${idx} { border-radius: ${idx * grid}px; }`;
       })
