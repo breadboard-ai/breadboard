@@ -11,6 +11,7 @@ import { type MdSwitch } from "@material/web/switch/switch.js";
 import { css, html, LitElement, nothing, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
+import animations from "../../app-templates/shared/styles/animations.js";
 import {
   environmentContext,
   type Environment,
@@ -19,6 +20,7 @@ import {
 import { ToastEvent, ToastType } from "../../events/events.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { icons } from "../../styles/icons.js";
+import { ActionTracker } from "../../utils/action-tracker.js";
 import {
   signinAdapterContext,
   type SigninAdapter,
@@ -26,13 +28,12 @@ import {
 import { type GoogleDriveSharePanel } from "../elements.js";
 import { findGoogleDriveAssetsInGraph } from "../google-drive/find-google-drive-assets-in-graph.js";
 import { loadDriveApi } from "../google-drive/google-apis.js";
-import { ActionTracker } from "../../utils/action-tracker.js";
 
 const Strings = StringsHelper.forSection("UIController");
 
 type PublishState =
   | { status: "initial" }
-  | { status: "reading" }
+  | { status: "loading" }
   | {
       status: "written";
       published: true;
@@ -58,6 +59,7 @@ type PublishState =
 export class SharePanel extends LitElement {
   static styles = [
     icons,
+    animations,
     css`
       :host {
         display: contents;
@@ -72,7 +74,9 @@ export class SharePanel extends LitElement {
         font-family: var(--bb-font-family);
         padding: var(--bb-grid-size-5);
         width: 420px;
-        min-height: 240px;
+        min-height: 270px;
+        display: flex;
+        flex-direction: column;
 
         /* Match the backdrop of the Google Drive sharing panel, whose style we
            don't (easily) control, and which will replace our own dialog if the
@@ -112,6 +116,23 @@ export class SharePanel extends LitElement {
         font-size: 24px;
       }
 
+      #loading {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
+          var(--bb-font-family);
+        /* Slight vertical centering adjustment because of header. */
+        margin-top: -24px;
+        .g-icon {
+          animation: rotate 1s linear infinite;
+          color: var(--bb-ui-600);
+          vertical-align: middle;
+          margin-right: var(--bb-grid-size-2);
+        }
+      }
+
       #helpText {
         font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
           var(--bb-font-family);
@@ -131,12 +152,6 @@ export class SharePanel extends LitElement {
         &:hover {
           text-decoration: underline;
         }
-      }
-      #loading {
-        display: inline-block;
-        font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
-          var(--bb-font-family);
-        margin: 0;
       }
       #publishedSwitchContainer {
         display: flex;
@@ -248,7 +263,7 @@ export class SharePanel extends LitElement {
   accessor graph: GraphDescriptor | undefined;
 
   @state()
-  accessor #status: "closed" | "open" | "drive-share" = "closed";
+  accessor #status: "closed" | "open" | "granular" = "closed";
 
   @state()
   accessor #publishState: PublishState = { status: "initial" };
@@ -268,9 +283,9 @@ export class SharePanel extends LitElement {
     if (this.#status === "closed") {
       return nothing;
     } else if (this.#status === "open") {
-      return this.#renderOpen();
-    } else if (this.#status === "drive-share") {
-      return this.#renderDriveShare();
+      return this.#renderModal();
+    } else if (this.#status === "granular") {
+      return this.#renderGranularSharingModal();
     }
     console.error(
       `Unknown status ${JSON.stringify(this.#status satisfies never)}`
@@ -284,7 +299,7 @@ export class SharePanel extends LitElement {
       if (this.#publishState.status === "initial") {
         this.#readPublishedState();
       }
-    } else if (this.#status === "drive-share") {
+    } else if (this.#status === "granular") {
       this.#googleDriveSharePanel.value?.open();
     }
   }
@@ -297,7 +312,7 @@ export class SharePanel extends LitElement {
     this.#status = "closed";
   }
 
-  #renderOpen() {
+  #renderModal() {
     return html`
       <dialog ${ref(this.#dialog)} @close=${this.close}>
         <header>
@@ -312,21 +327,38 @@ export class SharePanel extends LitElement {
           </button>
         </header>
 
-        <p id="helpText">Please publish to access share link</p>
-
-        <div id="permissions">
-          <a
-            id="viewPermissionsButton"
-            href=""
-            @click=${this.#onClickViewPermissions}
-          >
-            View permissions
-          </a>
-          ${this.#renderPublishedSwitch()}
-        </div>
-
-        ${this.#renderAppPanel()} ${this.#renderAdvisory()}
+        ${this.#publishState.status === "loading"
+          ? this.#renderLoading()
+          : this.#renderLoaded()}
       </dialog>
+    `;
+  }
+
+  #renderLoading() {
+    return html`
+      <div id="loading">
+        <span class="g-icon">progress_activity</span>
+        Loading ...
+      </div>
+    `;
+  }
+
+  #renderLoaded() {
+    return html`
+      <p id="helpText">Please publish to access share link</p>
+
+      <div id="permissions">
+        <a
+          id="viewPermissionsButton"
+          href=""
+          @click=${this.#onClickViewPermissions}
+        >
+          View permissions
+        </a>
+        ${this.#renderPublishedSwitch()}
+      </div>
+
+      ${this.#renderAppPanel()} ${this.#renderAdvisory()}
     `;
   }
 
@@ -343,11 +375,9 @@ export class SharePanel extends LitElement {
 
   #renderPublishedSwitch() {
     const status = this.#publishState.status;
-    if (status === "initial" || status === "reading") {
-      return html`<p id="loading">Loading ...</p>`;
+    if (status !== "written" && status !== "writing") {
+      return nothing;
     }
-
-    status satisfies "written" | "writing";
     const published = this.#publishState.published;
     const writable = status === "written" && this.#publishState.writable;
     return html`
@@ -398,7 +428,7 @@ export class SharePanel extends LitElement {
     `;
   }
 
-  #renderDriveShare() {
+  #renderGranularSharingModal() {
     return html`
       <bb-google-drive-share-panel
         ${ref(this.#googleDriveSharePanel)}
@@ -410,7 +440,7 @@ export class SharePanel extends LitElement {
 
   #onClickViewPermissions(event: MouseEvent) {
     event.preventDefault();
-    this.#status = "drive-share";
+    this.#status = "granular";
   }
 
   #onPublishedSwitchChange() {
@@ -468,7 +498,7 @@ export class SharePanel extends LitElement {
     // This prevents Lit from throwing its warning about properties being
     // updated while another action was in progress.
     await Promise.resolve();
-    this.#publishState = { status: "reading" };
+    this.#publishState = { status: "loading" };
     const [accessToken, drive] = await Promise.all([
       this.#getAccessToken(),
       loadDriveApi(),
