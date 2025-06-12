@@ -40,15 +40,15 @@ type State =
   | { status: "closed" }
   | { status: "opening" }
   | { status: "loading" }
-  | { status: "unmodifiable" }
+  | { status: "readonly" }
   | {
-      status: "modifiable";
+      status: "writable";
       published: true;
       publishedPermissions: gapi.client.drive.Permission[];
       granularlyShared: boolean;
     }
   | {
-      status: "modifiable";
+      status: "writable";
       published: false;
       granularlyShared: boolean;
     }
@@ -312,11 +312,11 @@ export class SharePanel extends LitElement {
     if (status === "loading") {
       return this.#renderLoading();
     }
-    if (status === "modifiable" || status === "updating") {
+    if (status === "writable" || status === "updating") {
       return this.#renderModifiableModalContents();
     }
-    if (status === "unmodifiable") {
-      return this.#renderUnmodifiableModalContents();
+    if (status === "readonly") {
+      return this.#renderReadonlyModalContents();
     }
   }
 
@@ -332,13 +332,13 @@ export class SharePanel extends LitElement {
   get #isShared(): boolean | undefined {
     const state = this.#state;
     const { status } = state;
-    if (status === "unmodifiable") {
+    if (status === "readonly") {
       // If we're unmodifiable, then we're not the owner. And if we're not the
       // owner, and yet here we are, then it must be shared with us one way or
       // the other.
       return true;
     }
-    if (status === "modifiable" || status === "updating") {
+    if (status === "writable" || status === "updating") {
       return state.published || state.granularlyShared;
     }
     return false;
@@ -357,8 +357,8 @@ export class SharePanel extends LitElement {
     ];
   }
 
-  #renderUnmodifiableModalContents() {
-    return html`<div id="unmodifiable">${this.#renderAppLink()}</div>`;
+  #renderReadonlyModalContents() {
+    return html`<div id="readonly">${this.#renderAppLink()}</div>`;
   }
 
   #renderAppLink() {
@@ -417,8 +417,7 @@ export class SharePanel extends LitElement {
   #renderPublishedSwitch() {
     const { status } = this.#state;
     const published =
-      (status === "modifiable" || status === "updating") &&
-      this.#state.published;
+      (status === "writable" || status === "updating") && this.#state.published;
     return html`
       <div id="published-switch-container">
         <md-switch
@@ -566,7 +565,7 @@ export class SharePanel extends LitElement {
     const currentUserIsOwner =
       fileMetadata.owners.find((owner) => owner.me) !== undefined;
     if (!currentUserIsOwner) {
-      this.#state = { status: "unmodifiable" };
+      this.#state = { status: "readonly" };
       return;
     }
 
@@ -585,7 +584,7 @@ export class SharePanel extends LitElement {
     }
 
     this.#state = {
-      status: "modifiable",
+      status: "writable",
       published: missingPublishPermissions.size === 0,
       publishedPermissions: actualPublishPermissions,
       granularlyShared:
@@ -603,8 +602,8 @@ export class SharePanel extends LitElement {
     if (publishPermissions.length === 0) {
       return undefined;
     }
-    if (this.#state.status !== "modifiable") {
-      console.error('Expected published status to be "modifiable"');
+    if (this.#state.status !== "writable") {
+      console.error('Expected published status to be "writable"');
       return;
     }
     if (this.#state.published) {
@@ -675,7 +674,7 @@ export class SharePanel extends LitElement {
     );
 
     this.#state = {
-      status: "modifiable",
+      status: "writable",
       published: true,
       publishedPermissions: relevantPermissions,
       granularlyShared: oldState.granularlyShared,
@@ -683,8 +682,8 @@ export class SharePanel extends LitElement {
   }
 
   async #unpublish() {
-    if (this.#state.status !== "modifiable") {
-      console.error('Expected published status to be "modifiable"');
+    if (this.#state.status !== "writable") {
+      console.error('Expected published status to be "writable"');
       return;
     }
     if (!this.#state.published) {
@@ -722,7 +721,7 @@ export class SharePanel extends LitElement {
       )
     );
     this.#state = {
-      status: "modifiable",
+      status: "writable",
       published: false,
       granularlyShared: oldState.granularlyShared,
     };
