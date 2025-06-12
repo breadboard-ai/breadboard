@@ -7,7 +7,7 @@ import { LitElement, html, css, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Orientation } from "../../types/types";
 import { repeat } from "lit/directives/repeat.js";
-import { styles, defaultStyles } from "../styles/default";
+import { styles, theme } from "../styles/default";
 import { classMap } from "lit/directives/class-map.js";
 
 @customElement("ui-card")
@@ -75,7 +75,7 @@ export class Card extends LitElement {
 
   render() {
     return html`<section
-      class=${classMap(this.disabled ? defaultStyles.modifiers.disabled : {})}
+      class=${classMap(this.disabled ? theme.modifiers.disabled : {})}
     >
       ${repeat(this.segments, () => {
         return html`<slot></slot>`;
