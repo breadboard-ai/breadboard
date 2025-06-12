@@ -93,8 +93,8 @@ export class GoogleDriveFileViewer extends LitElement {
         return undefined;
       }
       try {
-        return await googleDriveClient.getFile(fileId, {
-          fields: ["name", "webViewLink", "thumbnailLink", "iconLink"],
+        return await googleDriveClient.getFileMetadata(fileId, {
+          fields: ["id", "name", "webViewLink", "thumbnailLink", "iconLink"],
           signal,
         });
       } catch (e) {
