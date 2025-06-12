@@ -271,10 +271,10 @@ export class SharePanel extends LitElement {
   }
 
   override updated() {
-    if (this.#state.status === "opening") {
-      this.#dialog.value?.showModal();
-    } else if (this.#state.status === "granular") {
+    if (this.#state.status === "granular") {
       this.#googleDriveSharePanel.value?.open();
+    } else if (this.#state.status !== "closed") {
+      this.#dialog.value?.showModal();
     }
   }
 
