@@ -125,7 +125,7 @@ const horizontal = {
   "layout-flx-hor": true,
 };
 
-export const defaultStyles = {
+export const theme = {
   elements: {
     input,
     textarea,
@@ -164,3 +164,5 @@ export const defaultStyles = {
     },
   },
 };
+
+export type UITheme = typeof theme;
