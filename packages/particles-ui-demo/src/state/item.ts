@@ -25,4 +25,12 @@ class Item implements TodoItem {
   constructor(title: string) {
     this.title = title;
   }
+
+  static from(item: TodoItem): Item {
+    const newItem = new Item(item.title);
+    newItem.done = !!item.done;
+    newItem.description = item.description;
+    newItem.dueDate = item.dueDate;
+    return newItem;
+  }
 }
