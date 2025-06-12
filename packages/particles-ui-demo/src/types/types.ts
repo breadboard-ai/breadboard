@@ -32,6 +32,36 @@ export type SerializedGroupParticle = [
   value: SerializedParticle,
 ][];
 
+export type SerializedTodoList = {
+  items: [id: TodoItemListTitle, item: TodoItem][];
+};
+
+export type SuipUpdateCreate = {
+  create: {
+    path: string[];
+    item: TodoItem;
+  };
+};
+
+export type SuipUpdateChange = {
+  change: {
+    path: string[];
+    value: string;
+  };
+};
+
+export type SuipUpdateRemove = {
+  remove: {
+    path: string[];
+  };
+};
+
+export type SuipUpdate = SuipUpdateCreate | SuipUpdateChange | SuipUpdateRemove;
+
+export type Channel = {
+  update(update: SuipUpdate): Promise<void>;
+};
+
 /**
  * The Receiver side of the channel, a proxy that represents the Generator.
  */
