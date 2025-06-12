@@ -643,23 +643,27 @@ export class SharePanel extends LitElement {
       )
     );
 
-    // TODO(aomarks) Note we aren't including these responses in
-    // relevantPermissions, so if the user decides to unpublish in the future,
-    // the assets will remain published. This is a little bit subtle to get
-    // right, because what if the asset was _already_ public before they added
-    // it to the graph? We wouldn't want to mess with those permissions. So, we
-    // may need to keep track in the BGL file of which permissions we actually
-    // needed to add.
+    if (!this.googleDriveClient) {
+      console.error(`No google drive client provided`);
+      return;
+    }
     const assetPromises = [];
     for (const assetFileId of this.#getAssetFileIds()) {
       for (const permission of publishPermissions) {
         assetPromises.push(
-          drive.permissions.create({
-            access_token: accessToken,
-            fileId: assetFileId,
-            resource: { ...permission, role: "reader" },
-            sendNotificationEmail: false,
-          })
+          this.googleDriveClient
+            .getFileMetadata(assetFileId, { fields: ["capabilities"] })
+            .then(({ capabilities: { canShare } }) => {
+              if (canShare) {
+                // TODO(aomarks) Show a warning if some assets can't be shared.
+                drive.permissions.create({
+                  access_token: accessToken,
+                  fileId: assetFileId,
+                  resource: { ...permission, role: "reader" },
+                  sendNotificationEmail: false,
+                });
+              }
+            })
         );
       }
     }
