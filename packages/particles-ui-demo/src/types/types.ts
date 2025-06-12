@@ -38,3 +38,8 @@ export type Channel = {
   requestUpdateDone(id: string, value: boolean): void;
   requestDelete(itemId: string): void;
 };
+
+export enum Orientation {
+  HORIZONTAL = "horizontal",
+  VERTICAL = "vertical",
+}
