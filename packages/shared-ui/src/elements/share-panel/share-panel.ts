@@ -30,7 +30,9 @@ import {
 import { type GoogleDriveSharePanel } from "../elements.js";
 import { findGoogleDriveAssetsInGraph } from "../google-drive/find-google-drive-assets-in-graph.js";
 import { loadDriveApi } from "../google-drive/google-apis.js";
+import { buttonStyles } from "../../styles/button.js";
 
+const APP_NAME = StringsHelper.forSection("Global").from("APP_NAME");
 const Strings = StringsHelper.forSection("UIController");
 
 type PublishState =
@@ -61,6 +63,7 @@ type PublishState =
 export class SharePanel extends LitElement {
   static styles = [
     icons,
+    buttonStyles,
     animations,
     css`
       :host {
@@ -68,15 +71,15 @@ export class SharePanel extends LitElement {
       }
 
       dialog {
-        border-radius: var(--bb-grid-size-2);
+        border-radius: var(--bb-grid-size-4);
         border: none;
         box-shadow:
           0px 4px 8px 3px rgba(0, 0, 0, 0.15),
           0px 1px 3px 0px rgba(0, 0, 0, 0.3);
         font-family: var(--bb-font-family);
         padding: var(--bb-grid-size-5);
-        width: 420px;
-        min-height: 270px;
+        width: 500px;
+        min-height: 196px;
         display: flex;
         flex-direction: column;
 
@@ -92,7 +95,7 @@ export class SharePanel extends LitElement {
           color: var(--bb-neutral-700);
           font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
             var(--bb-font-family);
-          margin: var(--bb-grid-size-3) 0 0 0;
+          margin: var(--bb-grid-size-6) 0 0 0;
 
           a {
             color: var(--bb-ui-600);
@@ -103,14 +106,13 @@ export class SharePanel extends LitElement {
       header {
         display: flex;
         justify-content: space-between;
-        margin-bottom: var(--bb-grid-size-4);
       }
       h2 {
         font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
           var(--bb-font-family);
-        margin-top: 0;
+        margin: 0;
       }
-      #closeButton {
+      #close-button {
         background: none;
         border: none;
         cursor: pointer;
@@ -135,27 +137,26 @@ export class SharePanel extends LitElement {
         }
       }
 
-      #helpText {
-        font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
-          var(--bb-font-family);
-      }
-
       #permissions {
         display: flex;
         justify-content: space-between;
-        margin-top: var(--bb-grid-size-4);
+        margin-top: var(--bb-grid-size-8);
         min-height: 24px;
-      }
-      #viewPermissionsButton {
-        text-decoration: none;
-        color: inherit;
-        font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+        font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
           var(--bb-font-family);
+      }
+      #granular-sharing-link {
+        text-decoration: none;
+        color: var(--ui-custom-o-100);
+        font: 500 var(--bb-label-large) / var(--bb-label-line-height-large)
+          var(--bb-font-family);
+        margin: var(--bb-grid-size-6) 0 0 0;
+
         &:hover {
           text-decoration: underline;
         }
       }
-      #publishedSwitchContainer {
+      #published-switch-container {
         display: flex;
         align-items: center;
         md-switch {
@@ -163,8 +164,8 @@ export class SharePanel extends LitElement {
           --md-switch-track-height: 24px;
           --md-switch-selected-handle-width: 20px;
           --md-switch-selected-handle-height: 20px;
-          --md-sys-color-primary: var(--bb-ui-500);
-          --md-sys-color-primary-container: var(--bb-ui-50);
+          --md-sys-color-primary: var(--bb-neutral-900);
+          --md-sys-color-primary-container: var(--bb-neutral-50);
           --md-sys-color-surface: var(--bb-neutral-400);
           --md-sys-color-surface-container-highest: var(--bb-neutral-50);
           --md-sys-color-outline: var(--bb-neutral-600);
@@ -176,69 +177,33 @@ export class SharePanel extends LitElement {
           display: inline-block;
           width: 4.5em;
           margin: 0 var(--bb-grid-size) 0 var(--bb-grid-size-2);
-          font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
+          font: 500 var(--bb-label-large) / var(--bb-label-line-height-large)
             var(--bb-font-family);
           text-align: center;
+          color: var(--bb-neutral-500);
         }
       }
 
-      #appPanel {
-        background: var(--bb-neutral-10);
-        border-radius: var(--bb-grid-size-3);
-        padding: var(--bb-grid-size-3) var(--bb-grid-size-4);
+      #app-link {
         display: flex;
-        flex-direction: row;
-        align-items: center;
-        margin-top: var(--bb-grid-size-3);
-        #appIcon {
-          box-sizing: border-box;
-          height: 60px;
-          width: 60px;
-          background-color: #2f6bb2;
-          border: 1.5px solid #586069;
-          border-radius: var(--bb-grid-size-3);
-        }
-        #titleAndCreator {
-          margin-left: var(--bb-grid-size-4);
-          #title {
-            color: var(--bb-neutral-900);
-            font: 500 var(--bb-title-small) / var(--bb-title-line-height-small)
-              var(--bb-font-family);
-            margin: 0;
-          }
-          #creator {
-            font: 400 var(--bb-label-medium) /
-              var(--bb-label-line-height-medium) var(--bb-font-family);
-            margin: var(--bb-grid-size) 0 0 0;
-            color: var(--bb-neutral-600);
-          }
-        }
-        #copyLinkButton {
-          margin-left: auto;
-          padding: 6px 12px;
-          background: none;
-          display: flex;
-          align-items: center;
-          border: 1px solid var(--bb-neutral-700);
-          border-radius: 20px;
-          font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+        margin: var(--bb-grid-size-7) 0 0 0;
+
+        #app-link-text {
+          flex: 1;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          border: 1px solid var(--bb-neutral-100);
+          padding: 0 var(--bb-grid-size-3);
+          border-radius: var(--bb-grid-size-2);
+          font: 500 var(--bb-body-large) / var(--bb-body-line-height-large)
             var(--bb-font-family);
-          color: var(--bb-neutral-700);
-          cursor: pointer;
+        }
 
-          &[disabled] {
-            opacity: 50%;
-            cursor: wait;
-          }
-
-          &:hover:not([disabled]) {
-            background: var(--bb-neutral-50);
-          }
-
-          .g-icon {
-            margin-right: var(--bb-grid-size);
-            color: var(--bb-neutral-700);
-          }
+        #app-link-copy-button {
+          margin-left: var(--bb-grid-size-8);
+          border-color: var(--bb-neutral-100);
+          font-weight: 500;
         }
       }
 
@@ -318,12 +283,13 @@ export class SharePanel extends LitElement {
   }
 
   #renderModal() {
+    const title = this.graph?.title;
     return html`
       <dialog ${ref(this.#dialog)} @close=${this.close}>
         <header>
-          <h2>Share</h2>
+          <h2>Share ${title ? `“${title}”` : ""}</h2>
           <button
-            id="closeButton"
+            id="close-button"
             class="g-icon"
             aria-label="Close"
             @click=${this.close}
@@ -349,32 +315,40 @@ export class SharePanel extends LitElement {
   }
 
   #renderLoaded() {
+    return [
+      html`
+        <div id="permissions">
+          Publish your ${APP_NAME} ${this.#renderPublishedSwitch()}
+        </div>
+      `,
+      this.#renderAppLink(),
+      this.#renderGranularSharingLink(),
+      this.#renderAdvisory(),
+    ];
+  }
+
+  #renderGranularSharingLink() {
     return html`
-      <p id="helpText">Please publish to access share link</p>
-
-      <div id="permissions">
-        <a
-          id="viewPermissionsButton"
-          href=""
-          @click=${this.#onClickViewPermissions}
-        >
-          View permissions
-        </a>
-        ${this.#renderPublishedSwitch()}
-      </div>
-
-      ${this.#renderAppPanel()} ${this.#renderAdvisory()}
+      <a
+        id="granular-sharing-link"
+        href=""
+        @click=${this.#onClickViewPermissions}
+      >
+        View Share Permissions
+      </a>
     `;
   }
 
   #renderAdvisory() {
     return html`<p id="advisory">
       Public links can be reshared and will reflect subsequent changes to the
-      Opal app. Share
-      <a href="https://policies.google.com/terms/generative-ai/use-policy"
+      ${APP_NAME} app. Share
+      <a
+        href="https://policies.google.com/terms/generative-ai/use-policy"
+        target="_blank"
         >responsibly</a
-      >, unpublish anytime by clicking the 'share app' button within this Opal
-      app and change the publish toggle.
+      >, unpublish anytime by clicking the 'share app' button within this
+      ${APP_NAME} app and change the publish toggle.
     </p>`;
   }
 
@@ -386,7 +360,7 @@ export class SharePanel extends LitElement {
     const published = this.#publishState.published;
     const writable = status === "written" && this.#publishState.writable;
     return html`
-      <div id="publishedSwitchContainer">
+      <div id="published-switch-container">
         <md-switch
           ${ref(this.#publishedSwitch)}
           ?selected=${published}
@@ -400,36 +374,35 @@ export class SharePanel extends LitElement {
     `;
   }
 
-  #renderAppPanel() {
-    return html`
-      <div id="appPanel">
-        <div id="appIcon"></div>
-        <div id="titleAndCreator">
-          <h3 id="title">${this.graph?.title}</h3>
-          <p id="creator">By ${this.signinAdapter?.name ?? "Unknown User"}</p>
-        </div>
-        ${this.#renderCopyLinkButton()}
-      </div>
-    `;
-  }
-
-  #renderCopyLinkButton() {
-    const { status } = this.#publishState;
+  #renderAppLink() {
+    const appUrl = this.#makeAppUrl();
+    if (!appUrl) {
+      console.error("No app url");
+      return nothing;
+    }
     const published =
-      (status === "written" || status === "writing") &&
-      this.#publishState.published;
+      this.#publishState.status === "written" && this.#publishState.published;
     if (!published) {
       return nothing;
     }
     return html`
-      <button
-        id="copyLinkButton"
-        ?disabled=${status === "writing"}
-        @click=${this.#onClickCopyLinkButton}
-      >
-        <span class="g-icon">link</span>
-        Copy link
-      </button>
+      <div id="app-link">
+        <input
+          id="app-link-text"
+          type="text"
+          value=${published ? appUrl : ""}
+          @click=${this.#onClickLinkText}
+        />
+        <button
+          id="app-link-copy-button"
+          class="bb-button-outlined"
+          @click=${this.#onClickCopyLinkButton}
+          ?disabled=${!published}
+        >
+          <span class="g-icon">link</span>
+          Copy link
+        </button>
+      </div>
     `;
   }
 
@@ -463,23 +436,33 @@ export class SharePanel extends LitElement {
     }
   }
 
+  async #onClickLinkText(event: MouseEvent & { target: HTMLInputElement }) {
+    event.target.select();
+  }
+
   async #onClickCopyLinkButton() {
-    const graphUrl = this.graph?.url;
-    if (!graphUrl) {
-      console.error("No graph URL");
+    const appUrl = this.#makeAppUrl();
+    if (!appUrl) {
+      console.error("No app url");
       return nothing;
     }
-    const appUrl = new URL(
-      `/app/${encodeURIComponent(graphUrl)}`,
-      window.location.href
-    );
-    await navigator.clipboard.writeText(appUrl.href);
+    await navigator.clipboard.writeText(appUrl);
     this.dispatchEvent(
       new ToastEvent(
         Strings.from("STATUS_COPIED_TO_CLIPBOARD"),
         ToastType.INFORMATION
       )
     );
+  }
+
+  #makeAppUrl(): string | undefined {
+    const graphUrl = this.graph?.url;
+    if (!graphUrl) {
+      console.error("No graph URL");
+      return undefined;
+    }
+    return new URL(`/app/${encodeURIComponent(graphUrl)}`, window.location.href)
+      .href;
   }
 
   #onGoogleDriveSharePanelClose() {
