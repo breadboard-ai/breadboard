@@ -343,7 +343,9 @@ export class SharePanel extends LitElement {
     return html`<p id="advisory">
       Public links can be reshared and will reflect subsequent changes to the
       ${APP_NAME} app. Share
-      <a href="https://policies.google.com/terms/generative-ai/use-policy"
+      <a
+        href="https://policies.google.com/terms/generative-ai/use-policy"
+        target="_blank"
         >responsibly</a
       >, unpublish anytime by clicking the 'share app' button within this
       ${APP_NAME} app and change the publish toggle.
