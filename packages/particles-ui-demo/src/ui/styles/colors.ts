@@ -41,7 +41,7 @@ export const colors = css`
   ${unsafeCSS(
     Object.entries(neutral)
       .map(([key, val]) => {
-        return `.border-color-${key[0]}-${key.slice(1)} { border-color: ${val}; }`;
+        return `.color-bc-${key} { border-color: ${val}; }`;
       })
       .join("\n")
   )}
@@ -49,7 +49,7 @@ export const colors = css`
   ${unsafeCSS(
     Object.entries(neutral)
       .map(([key, val]) => {
-        return `.background-color-${key[0]}-${key.slice(1)} { background-color: ${val}; }`;
+        return `.color-bgc-${key} { background-color: ${val}; }`;
       })
       .join("\n")
   )}
@@ -57,7 +57,7 @@ export const colors = css`
   ${unsafeCSS(
     Object.entries(neutral)
       .map(([key, val]) => {
-        return `.color-${key[0]}-${key.slice(1)} { color: ${val}; }`;
+        return `.color-c-${key} { color: ${val}; }`;
       })
       .join("\n")
   )}

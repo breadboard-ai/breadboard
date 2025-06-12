@@ -4,17 +4,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { css, CSSResultGroup } from "lit";
+import { css, CSSResultGroup, unsafeCSS } from "lit";
 
-export const behavior = css`
-  .behavior-hover:not([disabled]) {
+const opacityBehavior = unsafeCSS(`
+  &:not([disabled]) {
     cursor: pointer;
-    opacity: 0.8;
-    transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+    opacity: var(--opacity, 0);
+    transition: opacity var(--speed, 0.2s) cubic-bezier(0, 0, 0.3, 1);
 
     &:hover,
     &:focus {
       opacity: 1;
     }
+  }`);
+
+export const behavior = css`
+  .behavior-ho-80 {
+    --opacity: 0.8;
+    ${opacityBehavior}
   }
 }` as CSSResultGroup;

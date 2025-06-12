@@ -40,14 +40,14 @@ export class Cards extends LitElement {
   ];
 
   render() {
-    return html` <ui-card class="border-radius-4">
-        <div class="position-relative">
-          <img src="images/img.jpg" class="cover border-radius-4" />
+    return html` <ui-card class="border-br-4">
+        <div class="layout-pos-rel">
+          <img src="images/img.jpg" class="layout-el-cv border-br-4" />
           <h1 class=${classMap(
             merge(defaultStyles.elements.h1, defaultStyles.extras.headline)
           )}>Meow</h1>
         </div>
-        <div class="padding-3 flex-vertical">
+        <div class="layout-p-3 layout-flx-vert">
           <input
             id="title"
             class=${classMap(merge(defaultStyles.elements.input, defaultStyles.extras.hero))}
@@ -69,9 +69,9 @@ export class Cards extends LitElement {
       <ui-card
         .segments=${[1, "min-content"]}
         .orientation=${Orientation.HORIZONTAL}
-        class="border-radius-4"
+        class="border-br-4"
       >
-        <div class="padding-3 flex-vertical">
+        <div class="layout-p-3 layout-flx-vert">
           <input
             id="title"
             class=${classMap(defaultStyles.elements.input)}
@@ -89,10 +89,10 @@ export class Cards extends LitElement {
             type="date"
           />
         </div>
-        <div class="padding-top-3 padding-right-3 padding-bottom-3 flex-vertical">
-          <div class="flex-horizontal space-evenly">
+        <div class="layout-pt-3 layout-pr-3 layout-pb-3 layout-flx-vert">
+          <div class="layout-flx-hor layout-sp-ev">
             <button
-              class=${classMap(merge(defaultStyles.elements.button, { "margin-right-2": true }))}
+              class=${classMap(merge(defaultStyles.elements.button, { "layout-mr-2": true }))}
             >
               Done
             </button>
@@ -104,9 +104,9 @@ export class Cards extends LitElement {
       <ui-card
         .segments=${[1, 2]}
         .orientation=${Orientation.HORIZONTAL}
-        class="border-radius-4"
-        ><img src="images/img.jpg" class="cover border-radius-4" /></div>
-        <div class="padding-3">
+        class="border-br-4"
+        ><img src="images/img.jpg" class="cover border-br-4" /></div>
+        <div class="layout-p-3">
           <h1 class=${classMap(defaultStyles.elements.h1)}>Title</h1>
           <p class=${classMap(defaultStyles.elements.body)}>
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin vitae
@@ -118,18 +118,18 @@ export class Cards extends LitElement {
       >
 
       <ui-card
-        class="border-radius-4"
+        class="border-br-4"
         .disabled=${true}
         .orientation=${Orientation.VERTICAL}
         .segments=${[1, "fit-content"]}
         >
-        <div class="position-relative">
-          <img src="images/img.jpg" class="cover border-radius-4" />
+        <div class="layout-pos-rel">
+          <img src="images/img.jpg" class="layout-el-cv border-br-4" />
           <h1 class=${classMap(
             merge(defaultStyles.elements.h1, defaultStyles.extras.headline)
           )}>Meow</h1>
         </div>
-        <div class="padding-3">
+        <div class="layout-p-3">
           <h1 class=${classMap(defaultStyles.elements.h1)}>This is a cat in space</h1>
           <p class=${classMap(defaultStyles.elements.body)}>
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin vitae
