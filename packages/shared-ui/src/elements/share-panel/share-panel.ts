@@ -30,6 +30,30 @@ import { ActionTracker } from "../../utils/action-tracker.js";
 
 const Strings = StringsHelper.forSection("UIController");
 
+type PublishState =
+  | { status: "initial" }
+  | { status: "reading" }
+  | {
+      status: "written";
+      published: true;
+      writable: true;
+      relevantPermissions: GoogleDrivePermission[];
+    }
+  | {
+      status: "written";
+      published: false;
+      writable: true;
+    }
+  | {
+      status: "written";
+      published: boolean;
+      writable: false;
+    }
+  | {
+      status: "writing";
+      published: boolean;
+    };
+
 @customElement("bb-share-panel")
 export class SharePanel extends LitElement {
   static styles = [
@@ -227,29 +251,7 @@ export class SharePanel extends LitElement {
   accessor #status: "closed" | "open" | "drive-share" = "closed";
 
   @state()
-  accessor #publishState:
-    | { status: "initial" }
-    | { status: "reading" }
-    | {
-        status: "written";
-        published: true;
-        writable: true;
-        relevantPermissions: GoogleDrivePermission[];
-      }
-    | {
-        status: "written";
-        published: false;
-        writable: true;
-      }
-    | {
-        status: "written";
-        published: boolean;
-        writable: false;
-      }
-    | {
-        status: "writing";
-        published: boolean;
-      } = { status: "initial" };
+  accessor #publishState: PublishState = { status: "initial" };
 
   #dialog = createRef<HTMLDialogElement>();
   #publishedSwitch = createRef<MdSwitch>();
