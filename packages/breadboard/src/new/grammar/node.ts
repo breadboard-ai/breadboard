@@ -36,7 +36,6 @@ import { BuilderScope } from "./scope.js";
 import { Value, isValue } from "./value.js";
 import { isLambda } from "./board.js";
 
-// eslint-disable-next-line @typescript-eslint/ban-types
 const serializeFunction = (name: string, handlerFn: Function) => {
   let code = handlerFn.toString();
 

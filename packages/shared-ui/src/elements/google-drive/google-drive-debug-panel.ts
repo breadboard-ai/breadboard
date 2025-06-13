@@ -370,7 +370,6 @@ export class GoogleDriveDebugPanel extends LitElement {
     });
     const getResult = JSON.parse(getResponse.body) as {
       capabilities: { canShare: boolean };
-      // eslint-disable-next-line @typescript-eslint/ban-types
       permissions: {};
     };
     if (!getResult.capabilities.canShare) {
