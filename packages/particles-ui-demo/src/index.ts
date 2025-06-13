@@ -10,6 +10,7 @@ import { List } from "./state/list.js";
 import { Item } from "./state/item.js";
 import { TodoItem } from "./types/types.js";
 import { GeneratorProxyImpl } from "./generator-proxy.js";
+import { generate } from "./gemini.js";
 
 const list = new List();
 list.presentation.behaviors.push("editable");
@@ -74,3 +75,6 @@ uiReceiver.theme = theme;
 uiReceiver.colors = theme.colors;
 
 document.body.appendChild(uiReceiver);
+
+const s = await generate(`Tell me about particles`);
+console.log(s);
