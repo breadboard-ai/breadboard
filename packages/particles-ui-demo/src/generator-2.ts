@@ -30,7 +30,8 @@ class Generator implements ReceiverProxy {
   }
 
   async addItem(): Promise<void> {
-    const item: TodoItem = { title: "", done: false };
+    // TODO: Remove this and add presentation info.
+    const item: TodoItem = { title: "", done: false } as TodoItem;
     const id = globalThis.crypto.randomUUID();
     this.#model.items.set(globalThis.crypto.randomUUID(), item);
 
@@ -77,7 +78,8 @@ class Store {
   static LOCAL_STORAGE_KEY = "TODO_LIST";
 
   private static fromSerialized(s: string | null): TodoList {
-    const blank = { items: new Map() };
+    // TODO: Remove this and add presentation info.
+    const blank = { items: new Map() } as TodoList;
     if (!s) {
       return blank;
     }
@@ -85,7 +87,7 @@ class Store {
       const json = JSON.parse(s) as SerializedTodoList;
       return {
         items: new Map(json.items!),
-      };
+      } as TodoList; // TODO: Remove this and add presentation info.
     } catch (e) {
       console.warn("Unable to parse/process list, returning blank", e);
       return blank;

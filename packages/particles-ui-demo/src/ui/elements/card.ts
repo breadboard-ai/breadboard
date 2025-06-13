@@ -5,18 +5,26 @@
  */
 import { LitElement, html, css, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { Orientation } from "../../types/types";
+import { ElementType, Orientation, Segment } from "../../types/types";
 import { repeat } from "lit/directives/repeat.js";
 import { styles, theme } from "../styles/default";
 import { classMap } from "lit/directives/class-map.js";
+import { SignalWatcher } from "@lit-labs/signals";
 
 @customElement("ui-card")
-export class Card extends LitElement {
+export class Card extends SignalWatcher(LitElement) {
   @property({ reflect: true, type: String })
   accessor orientation: Orientation = Orientation.VERTICAL;
 
-  @property({ reflect: true, type: Array })
-  accessor segments: Array<string | number> = [1];
+  @property()
+  accessor segments: Segment[] = [
+    {
+      weight: 1,
+      fields: {},
+      orientation: Orientation.VERTICAL,
+      type: ElementType.CARD,
+    },
+  ];
 
   @property({ reflect: true, type: Boolean })
   accessor disabled = false;
@@ -36,7 +44,6 @@ export class Card extends LitElement {
       section {
         display: grid;
         overflow: hidden;
-        background: var(--n-100);
       }
 
       :host([orientation="horizontal"]) section {
@@ -62,7 +69,9 @@ export class Card extends LitElement {
     this.style.setProperty(
       "--template",
       this.segments
-        .map((r) => `${typeof r === "number" ? `${r}fr` : r}`)
+        .map(
+          (r) => `${typeof r.weight === "number" ? `${r.weight}fr` : r.weight}`
+        )
         .join(" ")
     );
   }
@@ -77,8 +86,8 @@ export class Card extends LitElement {
     return html`<section
       class=${classMap(this.disabled ? theme.modifiers.disabled : {})}
     >
-      ${repeat(this.segments, () => {
-        return html`<slot></slot>`;
+      ${repeat(this.segments, (_, idx) => {
+        return html` <slot name=${`slot-${idx}`}></slot> `;
       })}
     </section>`;
   }

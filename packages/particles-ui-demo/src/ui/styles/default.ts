@@ -24,7 +24,6 @@ export const styles: CSSResultGroup = [
 const input = {
   "typography-f-sf": true,
   "layout-p-3": true,
-  "layout-mb-1": true,
   "border-br-3": true,
   "border-bw-1": true,
   "border-bc-n70": true,
@@ -102,15 +101,18 @@ const headline = {
 };
 
 const disabled = {
-  "opacity-el-70": true,
+  "opacity-el-50": true,
 };
 
 const card = {
   "border-br-4": true,
+  "color-bgc-n100": true,
 };
 
 const heroImage = {
   "border-br-4": true,
+  "layout-el-cv": true,
+  "layout-p-n3": true,
 };
 
 const cover = {
@@ -119,10 +121,12 @@ const cover = {
 
 const vertical = {
   "layout-flx-vert": true,
+  "layout-g-2": true,
 };
 
 const horizontal = {
   "layout-flx-hor": true,
+  "layout-g-2": true,
 };
 
 export const theme = {
