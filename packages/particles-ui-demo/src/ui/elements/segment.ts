@@ -94,6 +94,7 @@ export class UISegment extends SignalWatcher(LitElement) {
           class=${classMap(
             merge(
               theme.elements.input,
+              theme.elements.p,
               field.modifiers?.includes("hero") ? theme.modifiers.hero : {}
             )
           )}
@@ -122,6 +123,7 @@ export class UISegment extends SignalWatcher(LitElement) {
           class=${classMap(
             merge(
               theme.elements.textarea,
+              theme.elements.p,
               field.modifiers?.includes("hero") ? theme.modifiers.hero : {}
             )
           )}

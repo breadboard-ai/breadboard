@@ -4,15 +4,30 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { UiReceiver } from "./ui/ui-receiver.js";
-import { Generator } from "./generator.js";
-import { List } from "./state/list.js";
 import { Item } from "./state/item.js";
+import { List } from "./state/list.js";
 import { TodoItem } from "./types/types.js";
+import "./ui/elements/button.js";
+import "./ui/elements/card.js";
+import "./ui/elements/hero-image.js";
+import "./ui/elements/list.js";
+import "./ui/elements/segment.js";
+import { UiReceiver } from "./ui/ui-receiver.js";
+
+const run = document.querySelector("#run");
+const src = document.querySelector("#source");
+const output = document.querySelector("#output");
+
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { Generator } from "./generator.js";
 import { GeneratorProxyImpl } from "./generator-proxy.js";
 
 const list = new List();
-list.presentation.behaviors.push("editable");
 
 const generator = new Generator({
   async update(update) {
@@ -67,10 +82,23 @@ const generatorProxy = new GeneratorProxyImpl({
 
 const { theme } = await import("./ui/theme/default.js");
 
-const uiReceiver = new UiReceiver();
-uiReceiver.list = list;
-uiReceiver.channel = generatorProxy;
-uiReceiver.theme = theme;
-uiReceiver.colors = theme.colors;
+run?.addEventListener("click", () => {
+  const code = src?.textContent;
+  if (!code) {
+    return;
+  }
 
-document.body.appendChild(uiReceiver);
+  const val = eval(`${code}; invoke()`);
+  const list = new List();
+  const i = Item.from(val);
+  list.items.set(globalThis.crypto.randomUUID(), i);
+
+  const uiReceiver = new UiReceiver();
+  uiReceiver.list = list;
+  uiReceiver.channel = generatorProxy;
+  uiReceiver.theme = theme;
+  uiReceiver.colors = theme.colors;
+
+  output!.innerHTML = "";
+  output!.appendChild(uiReceiver);
+});
