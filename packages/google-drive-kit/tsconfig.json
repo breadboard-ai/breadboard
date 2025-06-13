@@ -6,7 +6,7 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "types": ["node"],
-    "lib": ["ES2022", "DOM"],
+    "lib": ["ES2024", "DOM"],
     "incremental": true,
     "declaration": true,
     "sourceMap": true,

@@ -5,16 +5,18 @@
  */
 
 import type { GraphDescriptor } from "@breadboard-ai/types";
-import {
-  err,
-  type BoardServerSaveEventStatus,
-  type Outcome,
-} from "@google-labs/breadboard";
+import { err, type Outcome } from "@google-labs/breadboard";
 import type { DriveOperations } from "./operations.js";
 
 export { SaveDebouncer };
 
-export type SaveStatus = BoardServerSaveEventStatus;
+type SaveDebouncerState =
+  | { status: "idle" }
+  | { status: "debouncing"; url: URL }
+  | { status: "queued"; previousSaved: Promise<void> }
+  | { status: "saving"; saved: Promise<void> };
+
+export type SaveStatus = SaveDebouncerState["status"];
 
 export type DebouncerCallbacks = {
   savestatuschange: (status: SaveStatus, url: string) => void;
@@ -25,7 +27,7 @@ const DEFAULT_DEBOUNCE_DELAY = 1_500;
 class SaveDebouncer {
   #timer: NodeJS.Timeout | number | null = null;
   #latest: GraphDescriptor | null = null;
-  #status: SaveStatus = "idle";
+  #state: SaveDebouncerState = { status: "idle" };
   #saveOperationInProgress = false;
 
   constructor(
@@ -35,12 +37,28 @@ class SaveDebouncer {
   ) {}
 
   get status() {
-    return this.#status;
+    return this.#state.status;
   }
 
-  #setStatus(status: SaveStatus, url: URL) {
-    this.#status = status;
-    this.callbacks.savestatuschange(status, url.href);
+  #setState(state: SaveDebouncerState, url: URL) {
+    this.#state = state;
+    this.callbacks.savestatuschange(state.status, url.href);
+  }
+
+  async flush(): Promise<void> {
+    while (this.#state.status !== "idle") {
+      const state = this.#state;
+      if (state.status === "saving") {
+        await state.saved;
+      } else if (state.status === "queued") {
+        await state.previousSaved;
+      } else if (state.status === "debouncing") {
+        this.cancelPendingSave();
+        this.save(state.url, this.#latest!, true);
+      } else {
+        state satisfies never;
+      }
+    }
   }
 
   cancelPendingSave() {
@@ -52,11 +70,14 @@ class SaveDebouncer {
   save(url: URL, descriptor: GraphDescriptor, userInitiated: boolean) {
     this.#latest = structuredClone(descriptor);
     this.cancelPendingSave();
-    if (this.#saveOperationInProgress) {
+    if (this.#state.status === "saving") {
       console.log(
         "Drive Save: Already saving. Queued latest data to save after."
       );
-      this.#setStatus("queued", url);
+      this.#setState(
+        { status: "queued", previousSaved: this.#state.saved },
+        url
+      );
       return;
     }
     if (userInitiated) {
@@ -68,7 +89,7 @@ class SaveDebouncer {
 
   #debounce(url: URL) {
     console.log(`Drive Save: Setting debounce timer for ${this.delay} ms`);
-    this.#setStatus("debouncing", url);
+    this.#setState({ status: "debouncing", url }, url);
     this.#timer = setTimeout(() => {
       this.#timer = null;
       this.#startSaveOperation(url);
@@ -80,7 +101,8 @@ class SaveDebouncer {
       return err(`Drive Save: Save operation started unexpectedly`);
     }
     this.#saveOperationInProgress = true;
-    this.#setStatus("saving", url);
+    const { promise, resolve } = Promise.withResolvers<void>();
+    this.#setState({ status: "saving", saved: promise }, url);
     const descriptor = this.#latest;
     this.#latest = null;
     console.log("Drive Save: Performing actual save to drive");
@@ -91,7 +113,8 @@ class SaveDebouncer {
     if (!writing.result) {
       console.warn(`Drive Save: save failed: ${writing.error}`);
       // TODO: Introduce error status and learn to recover from errors.
-      this.#setStatus("idle", url);
+      this.#setState({ status: "idle" }, url);
+      resolve();
       return err(writing.error!);
     }
     if (this.#latest !== null) {
@@ -101,7 +124,8 @@ class SaveDebouncer {
       this.#debounce(url);
     } else {
       console.log("Drive Save: save finished successfully");
-      this.#setStatus("idle", url);
+      this.#setState({ status: "idle" }, url);
     }
+    resolve();
   }
 }
