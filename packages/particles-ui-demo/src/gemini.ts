@@ -5,7 +5,7 @@
  */
 
 import { GoogleGenAI } from "@google/genai";
-import systemInstruction from "./prompts/si.md";
+import systemInstruction from "./prompts/si";
 import toolkitTypes from "./types/types?raw";
 
 const GEMINI_KEY = "GEMINI_KEY";

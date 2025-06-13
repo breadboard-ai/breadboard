@@ -5,63 +5,7 @@
  */
 
 import type { DataParticle, TextParticle } from "@breadboard-ai/particles";
-
-export enum Orientation {
-  HORIZONTAL = "horizontal",
-  VERTICAL = "vertical",
-}
-
-/**
- * Available element types
- * - card -- renders a card. A card can be used to present any item of content
- *           that is logically grouped together.
- * - list -
- */
-export enum ElementType {
-  CARD = "card",
-  LIST = "list",
-}
-
-export enum SegmentType {
-  BLOCK = "block",
-  LIST = "list",
-}
-
-export type Behavior = "editable" | "delete";
-export type Modifier = "hero";
-
-export interface Field {
-  as: "text" | "longstring" | "number" | "date" | "behavior" | "image";
-  behaviors?: Behavior[];
-  modifiers?: Modifier[];
-  title?: string;
-  src?: string;
-  icon?: string;
-}
-
-type Segmentable = Exclude<keyof TodoItem, "presentation">;
-type Behavioral = Exclude<Behavior, "editable">;
-type Static = "static";
-
-export interface Segment {
-  weight: number | "min-content" | "max-content";
-  fields: Partial<{ [K in Segmentable | Behavioral | Static]: Field }>;
-  orientation: Orientation;
-  type: SegmentType;
-}
-
-export type Presentation =
-  | {
-      type: ElementType.LIST;
-      orientation: Orientation;
-      behaviors: Behavior[];
-    }
-  | {
-      type: ElementType.CARD;
-      orientation: Orientation;
-      segments: Segment[];
-      behaviors: Behavior[];
-    };
+import { Presentation } from "./particles";
 
 export interface TodoItem {
   title: string;

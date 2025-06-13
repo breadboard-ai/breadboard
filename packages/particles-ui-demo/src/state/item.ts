@@ -9,9 +9,10 @@ import {
   Orientation,
   Presentation,
   SegmentType,
-  TodoItem,
-} from "../types/types.js";
+} from "../types/particles.js";
+
 import { signal } from "signal-utils";
+import { TodoItem } from "../types/types.js";
 
 export { Item };
 
