@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Receiver } from "./receiver.js";
 import { UiReceiver } from "./ui/ui-receiver.js";
 import { Generator } from "./generator.js";
 import { List } from "./state/list.js";
@@ -64,9 +63,8 @@ const generatorProxy = new GeneratorProxyImpl({
   },
 });
 
-const receiver = new Receiver(generatorProxy, list);
-
 const uiReceiver = new UiReceiver();
-uiReceiver.receiver = receiver;
+uiReceiver.list = list;
+uiReceiver.channel = generatorProxy;
 
 document.body.appendChild(uiReceiver);

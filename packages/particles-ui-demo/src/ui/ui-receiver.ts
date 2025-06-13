@@ -7,9 +7,8 @@
 import { SignalWatcher } from "@lit-labs/signals";
 import { css, html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { Receiver } from "../receiver";
 import { styles, theme } from "./styles/default.js";
-import { ElementType } from "../types/types";
+import { ElementType, GeneratorProxy, TodoList } from "../types/types";
 
 import "./elements/list.js";
 
@@ -52,7 +51,10 @@ function extractBehavior(evt: Event): string | undefined {
 @customElement("ui-receiver")
 export class UiReceiver extends SignalWatcher(LitElement) {
   @property()
-  accessor receiver: Receiver | null = null;
+  accessor channel: GeneratorProxy | null = null;
+
+  @property()
+  accessor list: TodoList | null = null;
 
   static styles = [
     styles,
@@ -70,7 +72,7 @@ export class UiReceiver extends SignalWatcher(LitElement) {
       return;
     }
 
-    this.receiver?.channel.requestUpdateField(id, target.id, target.value);
+    this.channel?.requestUpdateField(id, target.id, target.value);
   }
 
   #onClick(evt: Event) {
@@ -82,7 +84,7 @@ export class UiReceiver extends SignalWatcher(LitElement) {
 
     switch (behavior) {
       case "add": {
-        this.receiver?.channel?.requestAddItem();
+        this.channel?.requestAddItem();
         break;
       }
 
@@ -91,7 +93,7 @@ export class UiReceiver extends SignalWatcher(LitElement) {
           break;
         }
 
-        this.receiver?.channel?.requestDelete(id);
+        this.channel?.requestDelete(id);
         break;
       }
 
@@ -100,24 +102,24 @@ export class UiReceiver extends SignalWatcher(LitElement) {
           break;
         }
 
-        const item = this.receiver?.list.items?.get(id);
+        const item = this.list?.items?.get(id);
         if (!item) {
           break;
         }
-        this.receiver?.channel?.requestUpdateField(id, "done", !item.done);
+        this.channel?.requestUpdateField(id, "done", !item.done);
         break;
       }
     }
   }
 
   render() {
-    switch (this.receiver?.list.presentation.type) {
+    switch (this.list?.presentation.type) {
       case ElementType.LIST: {
         return html` <ui-list
           @input=${this.#onInput}
           @click=${this.#onClick}
           .theme=${theme}
-          .list=${this.receiver?.list}
+          .list=${this.list}
         ></ui-list>`;
       }
     }
