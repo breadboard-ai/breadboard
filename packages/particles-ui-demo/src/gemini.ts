@@ -5,12 +5,12 @@
  */
 
 import { GoogleGenAI } from "@google/genai";
-import systemInstruction from "./prompts/si";
-import toolkitTypes from "./types/types?raw";
+import codeGenSi from "./prompts/codegen-si";
+import specGenSi from "./prompts/specgen-si";
 
 const GEMINI_KEY = "GEMINI_KEY";
 
-export { generate, createParticles };
+export { generate, createParticles, createSpec };
 
 async function generate(
   prompt: string,
@@ -36,12 +36,9 @@ async function generate(
 }
 
 async function createParticles(prompt: string): Promise<string> {
-  return generate(
-    `
-  ${toolkitTypes}
+  return generate(prompt, codeGenSi);
+}
 
-  Task:
-  ${prompt}`,
-    systemInstruction
-  );
+async function createSpec(prompt: string): Promise<string> {
+  return generate(prompt, specGenSi);
 }

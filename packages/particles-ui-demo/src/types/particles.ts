@@ -63,7 +63,7 @@ export interface Segment {
 }
 
 /**
- * The root elements of the UI.
+ * The Presentation information of the item
  */
 export type Presentation =
   | {
@@ -77,3 +77,10 @@ export type Presentation =
       segments: Segment[];
       behaviors: Behavior[];
     };
+
+/**
+ * The item. Contains both item's data and its presentation information.
+ */
+export type Item = Record<string, unknown> & {
+  presentation: Presentation;
+};

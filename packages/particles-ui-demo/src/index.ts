@@ -10,7 +10,7 @@ import { List } from "./state/list.js";
 import { Item } from "./state/item.js";
 import { TodoItem } from "./types/types.js";
 import { GeneratorProxyImpl } from "./generator-proxy.js";
-import { createParticles } from "./gemini.js";
+import { createParticles, createSpec } from "./gemini.js";
 
 // const list = new List();
 // list.presentation.behaviors.push("editable");
@@ -76,14 +76,20 @@ import { createParticles } from "./gemini.js";
 
 // document.body.appendChild(uiReceiver);
 
-const s = await createParticles(`Write UI an item in a TODO list.
+// const s = await createParticles(`Write UI an item in a TODO list.
 
-The item must have the following fields:
-title, description, dueDate, done, picture
+// The item must have the following fields:
+// title, description, dueDate, done, picture
 
-the picture must be to the left of the title
+// the picture must be to the left of the title
 
-The item must include presentation information to convey the following:
-- The done field must be positioned to the right of the other fields
-- The layout of the item`);
-console.log(s);
+// The item must include presentation information to convey the following:
+// - The done field must be positioned to the right of the other fields
+// - The layout of the item`);
+const spec = await createSpec(
+  `Write UI for an item in a TODO list with pictures`
+);
+console.log("SPEC", spec);
+
+const code = await createParticles(spec);
+console.log("CODE", code);
