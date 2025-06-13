@@ -238,8 +238,8 @@ class DriveListCache {
     return await this.#list();
   }
 
-  async refresh() {
-    await this.#list();
+  async refresh(forceInvalidate = false) {
+    await this.#list(forceInvalidate);
   }
 
   /**
@@ -624,7 +624,7 @@ class DriveOperations {
       return { result: false, error: "Unable to save" };
     } finally {
       // The above update is a non-atomic operation so refresh after both success or fail.
-      await this.#refreshUserList();
+      await this.refreshUserList();
     }
   }
 
@@ -679,7 +679,7 @@ class DriveOperations {
       return { result: false, error: "Unable to create" };
     } finally {
       // The above update is a non-atomic operation so refresh after both success or fail.
-      await this.#refreshUserList();
+      await this.refreshUserList();
     }
   }
 
@@ -826,9 +826,9 @@ class DriveOperations {
     return result;
   }
 
-  async #refreshUserList() {
+  async refreshUserList(forceInvalidate = false) {
     // In that order, awating.
-    await this.#userGraphsList.refresh();
+    await this.#userGraphsList.refresh(forceInvalidate);
     await this.refreshProjectListCallback();
   }
 
@@ -991,7 +991,7 @@ class DriveOperations {
       console.warn(e);
       return err("Unable to delete");
     } finally {
-      await this.#refreshUserList();
+      await this.refreshUserList();
     }
   }
 

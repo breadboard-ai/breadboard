@@ -1087,6 +1087,13 @@ export class SharePanel extends LitElement {
       },
     });
 
+    // TODO(aomarks) This shouldn't be necessary, but if we don't do this, the
+    // copy will appear on the user's gallery page until the browser's site data
+    // is cleared because of our Drive caching infrastructure. This is a quick
+    // hack in lieu of understanding how to make the caching infrastructure
+    // handle this case better.
+    await this.boardServer.ops.refreshUserList(true);
+
     console.debug(
       `[Sharing] Made a new shareable graph copy "${shareableCopyFileId}"` +
         ` at version "${updateMainResult.version}".`
