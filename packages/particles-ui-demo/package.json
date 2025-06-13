@@ -82,6 +82,7 @@
     "@google/genai": "^1.5.0",
     "@lit-labs/signals": "^0.1.2",
     "@modelcontextprotocol/sdk": "^1.12.3",
+    "@vavt/vite-plugin-import-markdown": "^1.0.1",
     "signal-utils": "^0.21.1"
   }
 }

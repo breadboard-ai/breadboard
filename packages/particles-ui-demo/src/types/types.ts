@@ -11,6 +11,12 @@ export enum Orientation {
   VERTICAL = "vertical",
 }
 
+/**
+ * Available element types
+ * - card -- renders a card. A card can be used to present any item of content
+ *           that is logically grouped together.
+ * - list -
+ */
 export enum ElementType {
   CARD = "card",
   LIST = "list",

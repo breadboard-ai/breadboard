@@ -10,7 +10,7 @@ import { List } from "./state/list.js";
 import { Item } from "./state/item.js";
 import { TodoItem } from "./types/types.js";
 import { GeneratorProxyImpl } from "./generator-proxy.js";
-import { generate } from "./gemini.js";
+import { createParticles } from "./gemini.js";
 
 const list = new List();
 list.presentation.behaviors.push("editable");
@@ -76,5 +76,13 @@ uiReceiver.colors = theme.colors;
 
 document.body.appendChild(uiReceiver);
 
-const s = await generate(`Tell me about particles`);
+const s =
+  await createParticles(`Write UI as a JSON object for an item in a TODO list.
+
+The item must have the following fields:
+title, description, dueDate, and done
+
+The item must include presentation information to convey the following:
+- The done field must be positioned to the right of the other fields
+- The layout of the item`);
 console.log(s);
