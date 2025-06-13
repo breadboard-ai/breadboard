@@ -8,6 +8,7 @@ import {
   ElementType,
   Orientation,
   Presentation,
+  SegmentType,
   TodoItem,
 } from "../types/types.js";
 import { signal } from "signal-utils";
@@ -23,7 +24,7 @@ function createPresentation(): Presentation {
     segments: [
       {
         weight: 1.4,
-        type: ElementType.CARD,
+        type: SegmentType.BLOCK,
         fields: {
           static: {
             as: "image",
@@ -34,7 +35,7 @@ function createPresentation(): Presentation {
       },
       {
         weight: vertical ? "max-content" : 3,
-        type: ElementType.LIST,
+        type: SegmentType.LIST,
         fields: {
           title: {
             title: "Your todo",
@@ -57,7 +58,7 @@ function createPresentation(): Presentation {
       },
       {
         weight: "max-content",
-        type: ElementType.LIST,
+        type: SegmentType.LIST,
         fields: {
           delete: { title: "Delete", as: "behavior", icon: "delete" },
           done: { title: "Done", as: "behavior", icon: "check" },

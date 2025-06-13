@@ -3,32 +3,19 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css, PropertyValues } from "lit";
+import { LitElement, html, css, PropertyValues, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { ElementType, Orientation, Segment } from "../../types/types";
+import { Orientation, Segment, SegmentType } from "../../types/types";
 import { repeat } from "lit/directives/repeat.js";
-import { styles, theme } from "../styles/default";
 import { classMap } from "lit/directives/class-map.js";
 import { SignalWatcher } from "@lit-labs/signals";
+import { styles } from "../styles/index";
+import { consume } from "@lit/context";
+import { themeContext } from "../context/theme";
+import { UITheme } from "../theme/default";
 
 @customElement("ui-card")
 export class UICard extends SignalWatcher(LitElement) {
-  @property({ reflect: true, type: String })
-  accessor orientation: Orientation = Orientation.VERTICAL;
-
-  @property()
-  accessor segments: Segment[] = [
-    {
-      weight: 1,
-      fields: {},
-      orientation: Orientation.VERTICAL,
-      type: ElementType.CARD,
-    },
-  ];
-
-  @property({ reflect: true, type: Boolean })
-  accessor disabled = false;
-
   static styles = [
     styles,
     css`
@@ -65,6 +52,25 @@ export class UICard extends SignalWatcher(LitElement) {
     `,
   ];
 
+  @property({ reflect: true, type: String })
+  accessor orientation: Orientation = Orientation.VERTICAL;
+
+  @property()
+  accessor segments: Segment[] = [
+    {
+      weight: 1,
+      fields: {},
+      orientation: Orientation.VERTICAL,
+      type: SegmentType.BLOCK,
+    },
+  ];
+
+  @property({ reflect: true, type: Boolean })
+  accessor disabled = false;
+
+  @consume({ context: themeContext })
+  accessor theme: UITheme | undefined;
+
   #setTemplate() {
     this.style.setProperty(
       "--template",
@@ -83,8 +89,12 @@ export class UICard extends SignalWatcher(LitElement) {
   }
 
   render() {
+    if (!this.theme) {
+      return nothing;
+    }
+
     return html`<section
-      class=${classMap(this.disabled ? theme.modifiers.disabled : {})}
+      class=${classMap(this.disabled ? this.theme.modifiers.disabled : {})}
     >
       ${repeat(this.segments, (_, idx) => {
         return html` <slot name=${`slot-${idx}`}></slot> `;

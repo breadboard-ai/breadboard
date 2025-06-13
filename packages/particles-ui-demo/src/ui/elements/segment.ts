@@ -6,17 +6,17 @@
 import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { styles, UITheme } from "../styles/default";
 import { repeat } from "lit/directives/repeat.js";
 import { classMap } from "lit/directives/class-map.js";
 import { merge } from "../styles/utils";
 import { Field } from "../../types/types";
+import { styles } from "../styles";
+import { consume } from "@lit/context";
+import { themeContext } from "../context/theme";
+import { UITheme } from "../theme/default";
 
 @customElement("ui-segment")
 export class UISegment extends SignalWatcher(LitElement) {
-  @property()
-  accessor theme: UITheme | null = null;
-
   @property()
   accessor fields: Record<string, Field> | null = null;
 
@@ -25,6 +25,9 @@ export class UISegment extends SignalWatcher(LitElement) {
 
   @property({ reflect: true, type: Boolean })
   accessor disabled = false;
+
+  @consume({ context: themeContext })
+  accessor theme: UITheme | undefined;
 
   static styles = [
     styles,
@@ -142,7 +145,7 @@ export class UISegment extends SignalWatcher(LitElement) {
   }
 
   render() {
-    if (!this.fields || !this.theme || !this.values) {
+    if (!this.fields || !this.values || !this.theme) {
       return nothing;
     }
 

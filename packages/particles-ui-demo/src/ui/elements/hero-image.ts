@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { LitElement, html, css } from "lit";
+import { styles } from "../styles";
 import { customElement } from "lit/decorators.js";
-import { styles } from "../styles/default.js";
 
 @customElement("ui-hero-image")
 export class UIHeroImage extends LitElement {

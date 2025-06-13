@@ -6,16 +6,10 @@
 import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { styles } from "../styles/default";
+import { styles } from "../styles/index";
 
 @customElement("ui-button")
 export class UIButton extends SignalWatcher(LitElement) {
-  @property({ attribute: true })
-  accessor role: string | null = "button";
-
-  @property()
-  accessor icon: string | null = null;
-
   static styles = [
     styles,
     css`
@@ -38,6 +32,12 @@ export class UIButton extends SignalWatcher(LitElement) {
       }
     `,
   ];
+
+  @property({ attribute: true })
+  accessor role: string | null = "button";
+
+  @property()
+  accessor icon: string | null = null;
 
   render() {
     return html`<div

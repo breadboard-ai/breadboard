@@ -5,16 +5,20 @@
  */
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { type UITheme, styles } from "../styles/default.js";
 import {
   ElementType,
   Orientation,
+  SegmentType,
   TodoItem,
   TodoList,
 } from "../../types/types.js";
 import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
 import { SignalWatcher } from "@lit-labs/signals";
+import { styles } from "../styles/index.js";
+import { consume } from "@lit/context";
+import { themeContext } from "../context/theme.js";
+import { UITheme } from "../theme/default.js";
 
 import "./button.js";
 import "./card.js";
@@ -24,10 +28,10 @@ import "./segment.js";
 @customElement("ui-list")
 export class UIList extends SignalWatcher(LitElement) {
   @property()
-  accessor theme: UITheme | null = null;
-
-  @property()
   accessor list: TodoList | null = null;
+
+  @consume({ context: themeContext })
+  accessor theme: UITheme | undefined;
 
   static styles = [
     styles,
@@ -55,7 +59,7 @@ export class UIList extends SignalWatcher(LitElement) {
   ];
 
   render() {
-    if (!this.theme || !this.list) {
+    if (!this.list || !this.theme) {
       return nothing;
     }
 
@@ -63,10 +67,10 @@ export class UIList extends SignalWatcher(LitElement) {
     const theme = this.theme;
 
     return html`${this.list.presentation.behaviors.includes("editable")
-        ? html`<div class=${classMap(theme.layouts.verticalPadded)}>
+        ? html`<div class=${classMap(this.theme.layouts.verticalPadded)}>
             <div class=${classMap(this.theme.layouts.horizontal)}>
               <ui-button
-                class=${classMap(theme.elements.button)}
+                class=${classMap(this.theme.elements.button)}
                 data-behavior="add"
                 .icon=${"add"}
               >
@@ -91,13 +95,13 @@ export class UIList extends SignalWatcher(LitElement) {
                     ${repeat(item.presentation.segments, (segment, idx) => {
                       let classes = {};
                       if (segment.orientation === Orientation.VERTICAL) {
-                        if (segment.type === ElementType.CARD) {
+                        if (segment.type === SegmentType.BLOCK) {
                           classes = { ...theme.layouts.vertical };
                         } else {
                           classes = { ...theme.layouts.verticalPadded };
                         }
                       } else {
-                        if (segment.type === ElementType.CARD) {
+                        if (segment.type === SegmentType.BLOCK) {
                           classes = { ...theme.layouts.horizontal };
                         } else {
                           classes = { ...theme.layouts.horizontalPadded };
