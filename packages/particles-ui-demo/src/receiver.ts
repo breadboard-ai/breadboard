@@ -5,14 +5,13 @@
  */
 
 import { List } from "./state/list";
-import { GeneratorProxy, TodoList } from "./types/types";
+import { GeneratorProxy } from "./types/types";
 
 export { Receiver };
 
 class Receiver {
-  list: TodoList;
-
-  constructor(public readonly channel: GeneratorProxy) {
-    this.list = new List();
-  }
+  constructor(
+    public readonly channel: GeneratorProxy,
+    public readonly list: List
+  ) {}
 }
