@@ -5,7 +5,7 @@
  */
 
 import {
-  Channel,
+  UpdateChannel,
   ReceiverProxy,
   SerializedTodoList,
   SuipUpdate,
@@ -18,7 +18,7 @@ export { Generator };
 class Generator implements ReceiverProxy {
   #model: TodoList;
 
-  constructor(private readonly channel: Channel) {
+  constructor(private readonly channel: UpdateChannel) {
     this.#model = Store.get();
     for (const [id, item] of this.#model.items) {
       this.update({ create: { path: [id], item } });

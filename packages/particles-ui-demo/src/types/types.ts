@@ -100,7 +100,17 @@ export type SuipUpdateRemove = {
 
 export type SuipUpdate = SuipUpdateCreate | SuipUpdateChange | SuipUpdateRemove;
 
-export type Channel = {
+export type SuipEvent = {
+  type: string;
+  path: string[];
+  value?: string;
+};
+
+export type EventChannel = {
+  dispatch(event: SuipEvent): Promise<void>;
+};
+
+export type UpdateChannel = {
   update(update: SuipUpdate): Promise<void>;
 };
 
