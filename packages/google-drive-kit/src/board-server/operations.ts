@@ -48,8 +48,21 @@ const DEPRECATED_GRAPH_MIME_TYPE = "application/json";
 const RUN_RESULTS_MIME_TYPE = "application/vnd.breadboard.run-results+json";
 const RUN_RESULTS_GRAPH_URL_APP_PROPERTY = "graphUrl";
 
+// Properties related to sharing graphs.
+export const IS_SHAREABLE_COPY_PROPERTY = "isShareableCopy";
+export const LATEST_SHARED_VERSION_PROPERTY = "latestSharedVersion";
+export const MAIN_TO_SHAREABLE_COPY_PROPERTY = "mainToShareableCopy";
+export const SHAREABLE_COPY_TO_MAIN_PROPERTY = "shareableCopyToMain";
+
 const MIME_TYPE_QUERY = `(mimeType="${GRAPH_MIME_TYPE}" or mimeType="${DEPRECATED_GRAPH_MIME_TYPE}")`;
-const BASE_QUERY = `${MIME_TYPE_QUERY} and trashed=false`;
+const BASE_QUERY = `
+  ${MIME_TYPE_QUERY}
+  and trashed=false
+  and not properties has {
+    key = ${quote(IS_SHAREABLE_COPY_PROPERTY)}
+    and value = "true"
+  }
+`;
 
 const CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY =
   "GoogleDriveService/Changes/StartPageToken";
