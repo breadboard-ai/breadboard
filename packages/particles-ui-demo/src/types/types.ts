@@ -6,6 +6,11 @@
 
 import type { DataParticle, TextParticle } from "@breadboard-ai/particles";
 
+export enum Orientation {
+  HORIZONTAL = "horizontal",
+  VERTICAL = "vertical",
+}
+
 export enum ElementType {
   CARD = "card",
   LIST = "list",
@@ -141,8 +146,3 @@ export type ReceiverProxy = {
   updateField(parentId: string, id: string, value: string): Promise<void>;
   deleteItem(itemId: string): Promise<void>;
 };
-
-export enum Orientation {
-  HORIZONTAL = "horizontal",
-  VERTICAL = "vertical",
-}

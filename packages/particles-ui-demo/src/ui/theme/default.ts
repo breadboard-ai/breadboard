@@ -191,6 +191,13 @@ const h3 = {
   "typography-sz-ts": true,
 };
 
+const p = {
+  "typography-f-s": true,
+  "typography-w-400": true,
+  "layout-m-0": true,
+  "typography-sz-bm": true,
+};
+
 const body = {
   "typography-f-s": true,
   "typography-w-400": true,
@@ -253,6 +260,7 @@ export const theme = {
     h2,
     h3,
     body,
+    p,
   },
   components: {
     card,

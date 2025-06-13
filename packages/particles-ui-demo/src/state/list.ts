@@ -20,6 +20,6 @@ class List implements TodoList {
   presentation: Presentation = {
     type: ElementType.LIST,
     orientation: Orientation.VERTICAL,
-    behaviors: ["editable"],
+    behaviors: [],
   };
 }
