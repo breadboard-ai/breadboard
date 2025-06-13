@@ -9,7 +9,7 @@ import { customElement, property } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
 import { classMap } from "lit/directives/class-map.js";
 import { merge } from "../styles/utils";
-import { Field } from "../../types/types";
+import { Field } from "../../types/particles";
 import { styles } from "../styles";
 import { consume } from "@lit/context";
 import { themeContext } from "../context/theme";
