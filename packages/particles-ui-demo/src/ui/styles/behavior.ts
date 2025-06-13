@@ -30,4 +30,16 @@ export const behavior = css`
       })
       .join("\n")
   )}
+
+  .behavior-o-s {
+    overflow: scroll;
+  }
+
+  .behavior-o-a {
+    overflow: auto;
+  }
+
+  .behavior-o-h {
+    overflow: hidden;
+  }
 }` as CSSResultGroup;
