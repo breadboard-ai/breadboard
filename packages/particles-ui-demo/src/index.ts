@@ -28,6 +28,7 @@ const generator = new Generator({
       } = update.change;
       const item = list.items.get(parentId);
       if (!item) {
+        console.warn("Trying to modify unknown item", parentId, "field", id);
         return;
       }
       const field = id as keyof TodoItem;

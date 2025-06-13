@@ -33,7 +33,7 @@ class Generator implements ReceiverProxy {
     // TODO: Remove this and add presentation info.
     const item: TodoItem = { title: "", done: false } as TodoItem;
     const id = globalThis.crypto.randomUUID();
-    this.#model.items.set(globalThis.crypto.randomUUID(), item);
+    this.#model.items.set(id, item);
 
     Store.set(this.#model);
     return this.update({ create: { path: [id], item } });
@@ -47,6 +47,7 @@ class Generator implements ReceiverProxy {
     const item = this.#model.items.get(parentId);
     const field = id as keyof TodoItem;
     if (!item) {
+      console.warn(`Trying to update field "${id}" on unknown item`, parentId);
       return;
     }
 
