@@ -104,7 +104,7 @@ export class UiReceiver extends SignalWatcher(LitElement) {
         if (!item) {
           break;
         }
-        this.receiver?.channel?.requestUpdateDone(id, !item.done);
+        this.receiver?.channel?.requestUpdateField(id, "done", !item.done);
         break;
       }
     }

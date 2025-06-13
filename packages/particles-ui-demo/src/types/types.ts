@@ -88,7 +88,7 @@ export type SuipUpdateCreate = {
 export type SuipUpdateChange = {
   change: {
     path: string[];
-    value: string;
+    value: string | boolean;
   };
 };
 
@@ -122,9 +122,8 @@ export type GeneratorProxy = {
   requestUpdateField(
     parentId: string,
     id: string,
-    value: string
+    value: string | boolean
   ): Promise<void>;
-  requestUpdateDone(id: string, value: boolean): Promise<void>;
   requestDelete(itemId: string): Promise<void>;
 };
 
@@ -134,7 +133,6 @@ export type GeneratorProxy = {
 export type ReceiverProxy = {
   addItem(): Promise<void>;
   updateField(parentId: string, id: string, value: string): Promise<void>;
-  updateDone(id: string, value: boolean): Promise<void>;
   deleteItem(itemId: string): Promise<void>;
 };
 

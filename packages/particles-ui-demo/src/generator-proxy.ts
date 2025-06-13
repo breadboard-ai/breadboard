@@ -26,14 +26,6 @@ class GeneratorProxyImpl implements GeneratorProxy {
     return this.channel.dispatch({
       type: "updatefield",
       path: [parentId, id],
-      value,
-    });
-  }
-
-  requestUpdateDone(id: string, value: boolean): Promise<void> {
-    return this.channel.dispatch({
-      type: "updatefield",
-      path: [id, "done"],
       value: JSON.stringify(value),
     });
   }

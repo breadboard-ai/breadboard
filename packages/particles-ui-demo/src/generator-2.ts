@@ -42,7 +42,7 @@ class Generator implements ReceiverProxy {
   async updateField(
     parentId: string,
     id: string,
-    value: string
+    value: string | boolean
   ): Promise<void> {
     const item = this.#model.items.get(parentId);
     const field = id as keyof TodoItem;
@@ -53,18 +53,6 @@ class Generator implements ReceiverProxy {
     Reflect.set(item, field, value);
     Store.set(this.#model);
     return this.update({ change: { path: [parentId, id], value } });
-  }
-
-  async updateDone(id: string, value: boolean): Promise<void> {
-    const item = this.#model.items.get(id);
-    if (!item) {
-      return;
-    }
-    item.done = value;
-    Store.set(this.#model);
-    return this.update({
-      change: { path: [id, "done"], value: JSON.stringify(value) },
-    });
   }
 
   async deleteItem(itemId: string): Promise<void> {

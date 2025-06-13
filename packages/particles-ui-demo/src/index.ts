@@ -7,14 +7,12 @@
 import { Receiver } from "./receiver.js";
 import { UiReceiver } from "./ui/ui-receiver.js";
 import { Generator } from "./generator-2.js";
-import { List } from "./ui/elements/list.js";
-import { List as ListState } from "./state/list.js";
-import { theme } from "./ui/styles/default.js";
+import { List } from "./state/list.js";
 import { Item } from "./state/item.js";
 import { TodoItem } from "./types/types.js";
 import { GeneratorProxyImpl } from "./generator-proxy.js";
 
-const list = new ListState();
+const list = new List();
 
 const generator = new Generator({
   async update(update) {
@@ -33,15 +31,9 @@ const generator = new Generator({
       if (!item) {
         return;
       }
-      // ghastly hack!!
-      // TODO: Teach Particles about value types, like "boolean".
-      if (id === "done") {
-        item.done = value === "true";
-      } else {
-        const field = id as keyof TodoItem;
+      const field = id as keyof TodoItem;
 
-        Reflect.set(item, field, value);
-      }
+      Reflect.set(item, field, value);
     } else if ("remove" in update) {
       const {
         path: [id],
@@ -52,7 +44,7 @@ const generator = new Generator({
 });
 
 const generatorProxy = new GeneratorProxyImpl({
-  dispatch: async (event) => {
+  async dispatch(event) {
     const { type, path, value } = event;
     if (type === "additem") {
       generator.addItem();
@@ -62,13 +54,7 @@ const generatorProxy = new GeneratorProxyImpl({
         console.log(`Value is empty for ${parentId}.${id}`);
         return;
       }
-      // ghastly hack!!
-      // TODO: Teach Particles about value types, like "boolean".
-      if (value === "done") {
-        generator.updateDone(parentId, JSON.parse(value));
-      } else {
-        generator.updateField(parentId, id, value);
-      }
+      generator.updateField(parentId, id, JSON.parse(value));
     } else if (type === "delete") {
       const [id] = path;
       generator.deleteItem(id);
@@ -84,12 +70,3 @@ const uiReceiver = new UiReceiver();
 uiReceiver.receiver = receiver;
 
 document.body.appendChild(uiReceiver);
-
-const params = new URLSearchParams(window.location.search);
-
-if (params.get("cards")) {
-  const styles = theme;
-  const cards = new List();
-  cards.theme = styles;
-  document.body.appendChild(cards);
-}
