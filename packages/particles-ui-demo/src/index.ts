@@ -6,7 +6,7 @@
 
 import { Receiver } from "./receiver.js";
 import { UiReceiver } from "./ui/ui-receiver.js";
-import { Generator } from "./generator-2.js";
+import { Generator } from "./generator.js";
 import { List } from "./state/list.js";
 import { Item } from "./state/item.js";
 import { TodoItem } from "./types/types.js";
