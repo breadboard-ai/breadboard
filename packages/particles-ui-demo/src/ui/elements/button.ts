@@ -14,7 +14,8 @@ export class UIButton extends SignalWatcher(LitElement) {
     styles,
     css`
       :host {
-        display: block;
+        display: flex;
+        align-items: center;
         position: relative;
       }
 
@@ -49,7 +50,9 @@ export class UIButton extends SignalWatcher(LitElement) {
       }}
     >
       ${this.icon
-        ? html`<span class="g-icon layout-mr-2">${this.icon}</span>`
+        ? html`<span class="g-icon filled round layout-mr-2"
+            >${this.icon}</span
+          >`
         : nothing}
       <slot></slot>
     </div>`;

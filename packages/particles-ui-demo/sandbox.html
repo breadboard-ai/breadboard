@@ -71,7 +71,19 @@ function invoke() {
       behaviors: ["editable", "delete"],
       segments: [
         {
-          weight: 3,
+          weight: 1,
+          orientation: "vertical",
+          type: "block",
+          fields: {
+            picture: {
+              as: "image",
+              src: "https://picsum.photos/200",
+              title: "Picture",
+            },
+          },
+        },
+        {
+          weight: 1,
           orientation: "vertical",
           type: "list",
           fields: {
@@ -90,9 +102,9 @@ function invoke() {
           },
         },
         {
-          weight: 1,
+          weight: "min-content",
           orientation: "vertical",
-          type: "list",
+          type: "block",
           fields: {
             done: {
               as: "behavior",

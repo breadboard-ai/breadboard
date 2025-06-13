@@ -15,7 +15,7 @@ import "./ui/elements/segment.js";
 import { UiReceiver } from "./ui/ui-receiver.js";
 
 const run = document.querySelector("#run");
-const src = document.querySelector("#source");
+const src = document.querySelector<HTMLTextAreaElement>("#source");
 const output = document.querySelector("#output");
 
 /**
@@ -83,12 +83,13 @@ const generatorProxy = new GeneratorProxyImpl({
 const { theme } = await import("./ui/theme/default.js");
 
 run?.addEventListener("click", () => {
-  const code = src?.textContent;
+  const code = src?.value;
   if (!code) {
     return;
   }
 
   const val = eval(`${code}; invoke()`);
+  console.log(code);
   const list = new List();
   const i = Item.from(val);
   list.items.set(globalThis.crypto.randomUUID(), i);

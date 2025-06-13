@@ -13,6 +13,7 @@ export default async () => {
   const entry: Record<string, string> = {
     index: "./index.html",
     sandbox: "./sandbox.html",
+    demo: "./demo.html",
   };
   return {
     build: {

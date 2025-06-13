@@ -47,7 +47,7 @@ export const layout = css`
   )}
 
   ${unsafeCSS(
-    new Array(9)
+    new Array(25)
       .fill(0)
       .map((_, idx) => {
         return `
@@ -56,6 +56,15 @@ export const layout = css`
       .join("\n")
   )}
 
+  ${unsafeCSS(
+    new Array(8)
+      .fill(0)
+      .map((_, idx) => {
+        return `
+        .layout-grd-col${idx + 1} { grid-template-columns: ${"1fr ".repeat(idx + 1).trim()}; }`;
+      })
+      .join("\n")
+  )}
 
   .layout-pos-a {
     position: absolute;
@@ -63,6 +72,10 @@ export const layout = css`
 
   .layout-pos-rel {
     position: relative;
+  }
+
+  .layout-grd {
+    display: grid;
   }
 
   .layout-flx-vert {
@@ -75,6 +88,10 @@ export const layout = css`
     flex-direction: row;
   }
 
+  .layout-al-c {
+    align-items: center;
+  }
+
   .layout-sp-ev {
     justify-content: space-evenly;
   }
@@ -85,6 +102,22 @@ export const layout = css`
 
   .layout-fs-c {
     field-sizing: content;
+  }
+
+  .layout-fs-n {
+    field-sizing: none;
+  }
+
+  .layout-flx-0 {
+    flex: 0 0 auto;
+  }
+
+  .layout-flx-1 {
+    flex: 1 0 auto;
+  }
+
+  .layout-c-s {
+    contain: strict;
   }
 
   .layout-el-cv {
