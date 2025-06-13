@@ -5,12 +5,16 @@
  */
 
 import { SignalWatcher } from "@lit-labs/signals";
-import { css, html, LitElement } from "lit";
+import { css, html, HTMLTemplateResult, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { styles, theme } from "./styles/default.js";
+import { styles } from "./styles/index.js";
 import { ElementType, GeneratorProxy, TodoList } from "../types/types";
+import { themeContext } from "./context/theme.js";
+import { provide } from "@lit/context";
+import { UITheme } from "./theme/default.js";
 
 import "./elements/list.js";
+import { styleMap } from "lit/directives/style-map.js";
 
 function extractId(evt: Event): string | undefined {
   const item = evt
@@ -55,6 +59,12 @@ export class UiReceiver extends SignalWatcher(LitElement) {
 
   @property()
   accessor list: TodoList | null = null;
+
+  @property()
+  accessor colors: Record<string, string> | null = null;
+
+  @provide({ context: themeContext })
+  accessor theme: UITheme | undefined;
 
   static styles = [
     styles,
@@ -113,15 +123,24 @@ export class UiReceiver extends SignalWatcher(LitElement) {
   }
 
   render() {
+    if (!this.theme) {
+      return nothing;
+    }
+
+    let renderable: HTMLTemplateResult | symbol = nothing;
     switch (this.list?.presentation.type) {
       case ElementType.LIST: {
-        return html` <ui-list
+        renderable = html`<ui-list
           @input=${this.#onInput}
           @click=${this.#onClick}
-          .theme=${theme}
           .list=${this.list}
         ></ui-list>`;
+        break;
       }
     }
+
+    return html`<div style=${styleMap(this.colors ? this.colors : {})}>
+      ${renderable}
+    </div>`;
   }
 }

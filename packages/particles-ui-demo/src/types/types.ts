@@ -11,6 +11,11 @@ export enum ElementType {
   LIST = "list",
 }
 
+export enum SegmentType {
+  BLOCK = "block",
+  LIST = "list",
+}
+
 export type Behavior = "editable" | "delete";
 export type Modifier = "hero";
 
@@ -20,6 +25,7 @@ export interface Field {
   modifiers?: Modifier[];
   title?: string;
   src?: string;
+  icon?: string;
 }
 
 type Segmentable = Exclude<keyof TodoItem, "presentation">;
@@ -30,7 +36,7 @@ export interface Segment {
   weight: number | "min-content" | "max-content";
   fields: Partial<{ [K in Segmentable | Behavioral | Static]: Field }>;
   orientation: Orientation;
-  type: ElementType;
+  type: SegmentType;
 }
 
 export type Presentation =

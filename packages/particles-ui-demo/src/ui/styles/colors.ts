@@ -4,61 +4,46 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { css, CSSResultGroup, unsafeCSS } from "lit";
+import { css, CSSResultArray, CSSResultGroup, unsafeCSS } from "lit";
+import { PaletteKey, PaletteKeyVals, shades } from "../../types/colors";
+import { toProp } from "./utils";
 
-export const neutral = {
-  n100: "#ffffff",
-  n99: "#fcfcfc",
-  n98: "#f9f9f9",
-  n95: "#f1f1f1",
-  n90: "#e2e2e2",
-  n80: "#c6c6c6",
-  n70: "#ababab",
-  n60: "#919191",
-  n50: "#777777",
-  n40: "#5e5e5e",
-  n35: "#525252",
-  n30: "#474747",
-  n25: "#3b3b3b",
-  n20: "#303030",
-  n15: "#262626",
-  n10: "#1b1b1b",
-  n5: "#111111",
-  n0: "#000000",
-};
-
-export const colors = css`
-  :host {
+const color = <C extends PaletteKeyVals>(src: PaletteKey<C>) =>
+  css`
     ${unsafeCSS(
-      Object.entries(neutral)
-        .map(([key, val]) => {
-          return `--${key[0]}-${key.slice(1)}: ${val};`;
+      src
+        .map((key) => {
+          return `.color-bc-${key} { border-color: var(${toProp(key)}); }`;
         })
         .join("\n")
     )}
-  }
+
+    ${unsafeCSS(
+      src
+        .map((key) => {
+          return `.color-bgc-${key} { background-color: var(${toProp(key)}); }`;
+        })
+        .join("\n")
+    )}
 
   ${unsafeCSS(
-    Object.entries(neutral)
-      .map(([key, val]) => {
-        return `.color-bc-${key} { border-color: ${val}; }`;
-      })
-      .join("\n")
-  )}
+      src
+        .map((key) => {
+          return `.color-c-${key} { color: var(${toProp(key)}); }`;
+        })
+        .join("\n")
+    )}
+  ` as CSSResultGroup;
 
-  ${unsafeCSS(
-    Object.entries(neutral)
-      .map(([key, val]) => {
-        return `.color-bgc-${key} { background-color: ${val}; }`;
-      })
-      .join("\n")
-  )}
+const keyFactory = <K extends PaletteKeyVals>(prefix: K) => {
+  return shades.map((v) => `${prefix}${v}`) as PaletteKey<K>;
+};
 
-  ${unsafeCSS(
-    Object.entries(neutral)
-      .map(([key, val]) => {
-        return `.color-c-${key} { color: ${val}; }`;
-      })
-      .join("\n")
-  )}
-` as CSSResultGroup;
+export const colors = [
+  color(keyFactory("p")),
+  color(keyFactory("s")),
+  color(keyFactory("t")),
+  color(keyFactory("n")),
+  color(keyFactory("nv")),
+  color(keyFactory("e")),
+] as CSSResultArray;

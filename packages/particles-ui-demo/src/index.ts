@@ -64,8 +64,12 @@ const generatorProxy = new GeneratorProxyImpl({
   },
 });
 
+const { theme } = await import("./ui/theme/default.js");
+
 const uiReceiver = new UiReceiver();
 uiReceiver.list = list;
 uiReceiver.channel = generatorProxy;
+uiReceiver.theme = theme;
+uiReceiver.colors = theme.colors;
 
 document.body.appendChild(uiReceiver);

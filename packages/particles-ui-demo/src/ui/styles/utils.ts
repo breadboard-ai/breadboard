@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { ColorPalettes } from "../../types/colors";
+
 export function merge(...classes: Array<Record<string, boolean>>) {
   const styles: Record<string, boolean> = {};
   for (const clazz of classes) {
@@ -22,4 +24,26 @@ export function merge(...classes: Array<Record<string, boolean>>) {
   }
 
   return styles;
+}
+
+export function createThemeStyles(
+  palettes: ColorPalettes
+): Record<string, string> {
+  const styles: Record<string, string> = {};
+  for (const palette of Object.values(palettes)) {
+    for (const [key, val] of Object.entries(palette)) {
+      const prop = toProp(key);
+      styles[prop] = val;
+    }
+  }
+
+  return styles;
+}
+
+export function toProp(key: string) {
+  if (key.startsWith("nv")) {
+    return `--nv-${key.slice(2)}`;
+  }
+
+  return `--${key[0]}-${key.slice(1)}`;
 }
