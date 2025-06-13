@@ -290,6 +290,14 @@ class GoogleDriveBoardServer
     }
   }
 
+  async flushSaveQueue(url: string): Promise<void> {
+    const debouncer = this.#saving.get(url);
+    if (!debouncer) {
+      return;
+    }
+    await debouncer.flush();
+  }
+
   async save(
     url: URL,
     descriptor: GraphDescriptor,

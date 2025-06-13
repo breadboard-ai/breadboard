@@ -723,17 +723,34 @@ export class SharePanel extends LitElement {
   }
 
   async #readPublishedState(): Promise<void> {
+    const graphUrl = this.graph?.url;
+    if (!graphUrl) {
+      console.error(`No graph url`);
+      return;
+    }
     const thisFileId = this.#getGraphFileId();
     if (!thisFileId) {
       console.error(`No file id`);
-      return undefined;
+      return;
     }
     if (!this.googleDriveClient) {
       console.error(`No google drive client provided`);
-      return undefined;
+      return;
+    }
+    if (!this.boardServer) {
+      console.error(`No board server provided`);
+      return;
+    }
+    if (!(this.boardServer instanceof GoogleDriveBoardServer)) {
+      console.error(`Provided board server was not Google Drive`);
+      return;
     }
 
     this.#state = { status: "loading" };
+
+    // Ensure any pending changes are saved so that our Drive operations will be
+    // synchronized with those changes.
+    await this.boardServer.flushSaveQueue(graphUrl);
 
     const thisFileMetadata = await this.googleDriveClient.getFileMetadata(
       thisFileId,
