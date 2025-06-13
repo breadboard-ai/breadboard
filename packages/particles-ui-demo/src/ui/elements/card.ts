@@ -5,7 +5,7 @@
  */
 import { LitElement, html, css, PropertyValues, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { Orientation, Segment, SegmentType } from "../../types/types";
+import { Orientation, Segment, SegmentType } from "../../types/particles";
 import { repeat } from "lit/directives/repeat.js";
 import { classMap } from "lit/directives/class-map.js";
 import { SignalWatcher } from "@lit-labs/signals";

@@ -5,13 +5,7 @@
  */
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import {
-  ElementType,
-  Orientation,
-  SegmentType,
-  TodoItem,
-  TodoList,
-} from "../../types/types.js";
+import { TodoItem, TodoList } from "../../types/types.js";
 import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
 import { SignalWatcher } from "@lit-labs/signals";
@@ -24,6 +18,11 @@ import "./button.js";
 import "./card.js";
 import "./hero-image.js";
 import "./segment.js";
+import {
+  ElementType,
+  Orientation,
+  SegmentType,
+} from "../../types/particles.js";
 
 @customElement("ui-list")
 export class UIList extends SignalWatcher(LitElement) {

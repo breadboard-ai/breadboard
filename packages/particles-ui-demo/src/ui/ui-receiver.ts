@@ -8,13 +8,14 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { css, html, HTMLTemplateResult, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { styles } from "./styles/index.js";
-import { ElementType, GeneratorProxy, TodoList } from "../types/types";
+import { GeneratorProxy, TodoList } from "../types/types";
 import { themeContext } from "./context/theme.js";
 import { provide } from "@lit/context";
 import { UITheme } from "./theme/default.js";
 
 import "./elements/list.js";
 import { styleMap } from "lit/directives/style-map.js";
+import { ElementType } from "../types/particles.js";
 
 function extractId(evt: Event): string | undefined {
   const item = evt

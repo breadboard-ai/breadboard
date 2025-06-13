@@ -4,13 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  ElementType,
-  Orientation,
-  Presentation,
-  TodoItems,
-  TodoList,
-} from "../types/types.js";
+import { ElementType, Orientation, Presentation } from "../types/particles.js";
+import { TodoItems, TodoList } from "../types/types.js";
 import { SignalMap } from "signal-utils/map";
 
 export { List };
