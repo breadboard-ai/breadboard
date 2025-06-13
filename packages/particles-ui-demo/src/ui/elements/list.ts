@@ -8,22 +8,21 @@ import { customElement, property } from "lit/decorators.js";
 import { type UITheme, styles } from "../styles/default.js";
 import {
   ElementType,
-  Field,
   Orientation,
-  Segment,
   TodoItem,
   TodoList,
 } from "../../types/types.js";
 import { classMap } from "lit/directives/class-map.js";
-import { merge } from "../styles/utils.js";
 import { repeat } from "lit/directives/repeat.js";
 import { SignalWatcher } from "@lit-labs/signals";
 
+import "./button.js";
 import "./card.js";
 import "./hero-image.js";
+import "./segment.js";
 
 @customElement("ui-list")
-export class List extends SignalWatcher(LitElement) {
+export class UIList extends SignalWatcher(LitElement) {
   @property()
   accessor theme: UITheme | null = null;
 
@@ -55,146 +54,6 @@ export class List extends SignalWatcher(LitElement) {
     `,
   ];
 
-  #renderBehavior(theme: UITheme, fieldName: string, field: Field) {
-    return html`<button
-      class=${classMap(theme.elements.button)}
-      data-behavior=${fieldName}
-    >
-      ${field.title ?? "Action"}
-    </button>`;
-  }
-
-  #renderField(
-    theme: UITheme,
-    item: TodoItem,
-    fieldName: string,
-    field: Field
-  ) {
-    const value = item[fieldName as keyof TodoItem];
-
-    switch (field.as) {
-      case "image": {
-        if (!field.src) {
-          return html`Unable to render image - no source provided.`;
-        }
-
-        return html`<ui-hero-image
-          class=${classMap(theme.components.heroImage)}
-        >
-          <img
-            src=${field.src}
-            slot="hero"
-            class=${classMap(theme.modifiers.cover)}
-            alt=${field.title}
-          />
-          ${field.title
-            ? html`<h1
-                slot="headline"
-                class=${classMap(
-                  merge(theme.elements.h1, theme.modifiers.headline)
-                )}
-              >
-                ${field.title}
-              </h1>`
-            : nothing}
-        </ui-hero-image>`;
-      }
-
-      case "date":
-      case "text": {
-        if (field.behaviors?.includes("editable")) {
-          return html`<input
-            .id=${fieldName}
-            .name=${fieldName}
-            .value=${value}
-            .placeholder=${field.title ?? "Enter a value"}
-            ?disabled=${item.done}
-            type=${field.as}
-            class=${classMap(
-              merge(
-                theme.elements.input,
-                field.modifiers?.includes("hero") ? theme.modifiers.hero : {}
-              )
-            )}
-          />`;
-        }
-        return html`<p
-          class=${classMap(
-            merge(
-              theme.elements.input,
-              field.modifiers?.includes("hero") ? theme.modifiers.hero : {}
-            )
-          )}
-        >
-          ${value}
-        </p>`;
-      }
-
-      case "longstring": {
-        if (field.behaviors?.includes("editable")) {
-          return html`<textarea
-            .id=${fieldName}
-            .name=${fieldName}
-            .value=${value ?? ""}
-            .placeholder=${field.title ?? "Enter a value"}
-            ?disabled=${item.done}
-            class=${classMap(
-              merge(
-                theme.elements.textarea,
-                field.modifiers?.includes("hero") ? theme.modifiers.hero : {}
-              )
-            )}
-          ></textarea>`;
-        }
-        return html`<p
-          class=${classMap(
-            merge(
-              theme.elements.textarea,
-              field.modifiers?.includes("hero") ? theme.modifiers.hero : {}
-            )
-          )}
-        >
-          ${value}
-        </p>`;
-      }
-
-      default:
-        if (field.as === "behavior") {
-          return this.#renderBehavior(theme, fieldName, field);
-        }
-
-        return html`Unknown field`;
-    }
-  }
-
-  #renderSegment(item: TodoItem, segment: Segment, idx: number) {
-    if (!this.theme || !this.list) {
-      return nothing;
-    }
-
-    const theme = this.theme;
-    let classes = {};
-    if (segment.orientation === Orientation.VERTICAL) {
-      if (segment.type === ElementType.CARD) {
-        classes = { ...theme.layouts.vertical };
-      } else {
-        classes = { ...theme.layouts.verticalPadded };
-      }
-    } else {
-      if (segment.type === ElementType.CARD) {
-        classes = { ...theme.layouts.horizontal };
-      } else {
-        classes = { ...theme.layouts.horizontalPadded };
-      }
-    }
-
-    return html`<div class=${classMap(classes)} slot=${`slot-${idx}`}>
-      ${repeat(Object.entries(segment.fields), ([field, presentation]) => {
-        return this.#renderField(theme, item, field, presentation);
-      })}
-    </div>`;
-  }
-
   render() {
     if (!this.theme || !this.list) {
       return nothing;
@@ -206,12 +65,13 @@ export class List extends SignalWatcher(LitElement) {
     return html`${this.list.presentation.behaviors.includes("editable")
         ? html`<div class=${classMap(theme.layouts.verticalPadded)}>
             <div class=${classMap(this.theme.layouts.horizontal)}>
-              <button
+              <ui-button
                 class=${classMap(theme.elements.button)}
                 data-behavior="add"
+                .icon=${"add"}
               >
                 Add
-              </button>
+              </ui-button>
             </div>
           </div>`
         : nothing}
@@ -229,7 +89,40 @@ export class List extends SignalWatcher(LitElement) {
                     .disabled=${item.done}
                   >
                     ${repeat(item.presentation.segments, (segment, idx) => {
-                      return this.#renderSegment(item, segment, idx);
+                      let classes = {};
+                      if (segment.orientation === Orientation.VERTICAL) {
+                        if (segment.type === ElementType.CARD) {
+                          classes = { ...theme.layouts.vertical };
+                        } else {
+                          classes = { ...theme.layouts.verticalPadded };
+                        }
+                      } else {
+                        if (segment.type === ElementType.CARD) {
+                          classes = { ...theme.layouts.horizontal };
+                        } else {
+                          classes = { ...theme.layouts.horizontalPadded };
+                        }
+                      }
+
+                      const values: Record<string, unknown> = {};
+                      for (const fieldName of Object.keys(segment.fields)) {
+                        const key = fieldName as keyof TodoItem;
+                        const value = item[key];
+                        if (typeof value === "undefined") {
+                          continue;
+                        }
+
+                        values[key] = value;
+                      }
+
+                      return html`<ui-segment
+                        class=${classMap(classes)}
+                        slot=${`slot-${idx}`}
+                        .theme=${theme}
+                        .fields=${segment.fields}
+                        .values=${values}
+                        .disabled=${item.done}
+                      ></ui-segment>`;
                     })}
                   </ui-card>`;
                 }

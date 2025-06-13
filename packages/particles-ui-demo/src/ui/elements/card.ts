@@ -12,7 +12,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { SignalWatcher } from "@lit-labs/signals";
 
 @customElement("ui-card")
-export class Card extends SignalWatcher(LitElement) {
+export class UICard extends SignalWatcher(LitElement) {
   @property({ reflect: true, type: String })
   accessor orientation: Orientation = Orientation.VERTICAL;
 

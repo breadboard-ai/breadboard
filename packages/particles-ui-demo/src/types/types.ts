@@ -20,6 +20,7 @@ export interface Field {
   modifiers?: Modifier[];
   title?: string;
   src?: string;
+  icon?: string;
 }
 
 type Segmentable = Exclude<keyof TodoItem, "presentation">;

@@ -59,8 +59,8 @@ function createPresentation(): Presentation {
         weight: "max-content",
         type: ElementType.LIST,
         fields: {
-          delete: { title: "Delete", as: "behavior" },
-          done: { title: "Done", as: "behavior" },
+          delete: { title: "Delete", as: "behavior", icon: "delete" },
+          done: { title: "Done", as: "behavior", icon: "check" },
         },
         orientation: vertical ? Orientation.HORIZONTAL : Orientation.VERTICAL,
       },

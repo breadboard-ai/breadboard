@@ -4,13 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { CSSResultGroup } from "lit";
+
 import { behavior } from "./behavior";
 import { border } from "./border";
 import { colors } from "./colors";
-import { CSSResultGroup } from "lit";
 import { layout } from "./layout";
 import { type } from "./type";
 import { opacity } from "./opacity";
+import { icons } from "./icons";
 
 export const styles: CSSResultGroup = [
   border,
@@ -19,12 +21,16 @@ export const styles: CSSResultGroup = [
   layout,
   type,
   opacity,
+  icons,
 ];
 
 const input = {
   "typography-f-sf": true,
-  "layout-p-3": true,
-  "border-br-3": true,
+  "layout-pl-4": true,
+  "layout-pr-4": true,
+  "layout-pt-2": true,
+  "layout-pb-2": true,
+  "border-br-6": true,
   "border-bw-1": true,
   "border-bc-n70": true,
   "border-bs-s": true,
@@ -44,11 +50,9 @@ const button = {
   "layout-pr-5": true,
   "layout-mb-1": true,
   "border-br-16": true,
-  "layout-r-none": true,
   "border-bw-0": true,
   "border-c-n70": true,
   "border-bs-s": true,
-  "layout-fs-c": true,
   "color-bgc-n0": true,
   "color-c-n100": true,
   "behavior-ho-80": true,
