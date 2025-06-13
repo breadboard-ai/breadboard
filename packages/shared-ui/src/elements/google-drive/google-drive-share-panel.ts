@@ -79,12 +79,23 @@ export class GoogleDriveSharePanel extends LitElement {
     globalShareClient.setItemIds(fileIds);
     globalShareClient.setOAuthToken(auth.grant.access_token);
 
+    let observer: MutationObserver | undefined = undefined;
+    const keydownListenerAborter = new AbortController();
+
+    const cleanupAndClose = () => {
+      observer?.disconnect();
+      keydownListenerAborter.abort();
+      this.#status = "closed";
+      globalShareClientLocked = false;
+      this.dispatchEvent(new Event("close"));
+    };
+
     // Weirdly, there is no API for getting the dialog element, or for finding
     // out when the user closes it. Upon opening, a bunch of DOM gets added to
     // document.body. Upon closing, that DOM stays there forever, but becomes
     // hidden. So, as a hack, we can use a MutationObserver to notice these
     // things happening.
-    const observer = new MutationObserver(() => {
+    observer = new MutationObserver(() => {
       const dialog = document.body.querySelector(
         `[guidedhelpid="drive_share_dialog"]`
       );
@@ -93,10 +104,7 @@ export class GoogleDriveSharePanel extends LitElement {
         if (this.#status === "opening" && ariaHidden !== "true") {
           this.#status = "open";
         } else if (this.#status === "open" && ariaHidden === "true") {
-          this.#status = "closed";
-          globalShareClientLocked = false;
-          observer.disconnect();
-          this.dispatchEvent(new Event("close"));
+          cleanupAndClose();
         }
       }
     });
@@ -105,6 +113,23 @@ export class GoogleDriveSharePanel extends LitElement {
       attributes: true,
       subtree: true,
     });
+
+    window.addEventListener(
+      "keydown",
+      ({ key }) => {
+        if (key === "Escape" && this.#status === "opening") {
+          // This handles an edge case where the user presses Escape before the
+          // ShareClient has finished loading, which means the MutationObserver
+          // logic below won't fire.
+          cleanupAndClose();
+        }
+      },
+      {
+        // Capture so that we see this event before the ShareClient.
+        capture: true,
+        signal: keydownListenerAborter.signal,
+      }
+    );
 
     globalShareClient.showSettingsDialog();
   }
