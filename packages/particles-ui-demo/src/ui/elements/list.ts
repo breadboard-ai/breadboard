@@ -6,17 +6,29 @@
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { type UITheme, styles } from "../styles/default.js";
-import { Orientation } from "../../types/types.js";
+import {
+  ElementType,
+  Field,
+  Orientation,
+  Segment,
+  TodoItem,
+  TodoList,
+} from "../../types/types.js";
 import { classMap } from "lit/directives/class-map.js";
 import { merge } from "../styles/utils.js";
+import { repeat } from "lit/directives/repeat.js";
+import { SignalWatcher } from "@lit-labs/signals";
 
 import "./card.js";
 import "./hero-image.js";
 
 @customElement("ui-list")
-export class List extends LitElement {
+export class List extends SignalWatcher(LitElement) {
   @property()
   accessor theme: UITheme | null = null;
+
+  @property()
+  accessor list: TodoList | null = null;
 
   static styles = [
     styles,
@@ -33,7 +45,7 @@ export class List extends LitElement {
         margin-bottom: var(--g-16);
       }
 
-      ui-card {
+      #items > * {
         margin-bottom: var(--g-5);
 
         &:last-of-type {
@@ -43,183 +55,188 @@ export class List extends LitElement {
     `,
   ];
 
-  render() {
-    if (!this.theme) {
+  #renderBehavior(theme: UITheme, fieldName: string, field: Field) {
+    return html`<button
+      class=${classMap(theme.elements.button)}
+      data-behavior=${fieldName}
+    >
+      ${field.title ?? "Action"}
+    </button>`;
+  }
+
+  #renderField(
+    theme: UITheme,
+    item: TodoItem,
+    fieldName: string,
+    field: Field
+  ) {
+    const value = item[fieldName as keyof TodoItem];
+
+    switch (field.as) {
+      case "image": {
+        if (!field.src) {
+          return html`Unable to render image - no source provided.`;
+        }
+
+        return html`<ui-hero-image
+          class=${classMap(theme.components.heroImage)}
+        >
+          <img
+            src=${field.src}
+            slot="hero"
+            class=${classMap(theme.modifiers.cover)}
+            alt=${field.title}
+          />
+          ${field.title
+            ? html`<h1
+                slot="headline"
+                class=${classMap(
+                  merge(theme.elements.h1, theme.modifiers.headline)
+                )}
+              >
+                ${field.title}
+              </h1>`
+            : nothing}
+        </ui-hero-image>`;
+      }
+
+      case "date":
+      case "text": {
+        if (field.behaviors?.includes("editable")) {
+          return html`<input
+            .id=${fieldName}
+            .name=${fieldName}
+            .value=${value}
+            .placeholder=${field.title ?? "Enter a value"}
+            ?disabled=${item.done}
+            type=${field.as}
+            class=${classMap(
+              merge(
+                theme.elements.input,
+                field.modifiers?.includes("hero") ? theme.modifiers.hero : {}
+              )
+            )}
+          />`;
+        }
+        return html`<p
+          class=${classMap(
+            merge(
+              theme.elements.input,
+              field.modifiers?.includes("hero") ? theme.modifiers.hero : {}
+            )
+          )}
+        >
+          ${value}
+        </p>`;
+      }
+
+      case "longstring": {
+        if (field.behaviors?.includes("editable")) {
+          return html`<textarea
+            .id=${fieldName}
+            .name=${fieldName}
+            .value=${value ?? ""}
+            .placeholder=${field.title ?? "Enter a value"}
+            ?disabled=${item.done}
+            class=${classMap(
+              merge(
+                theme.elements.textarea,
+                field.modifiers?.includes("hero") ? theme.modifiers.hero : {}
+              )
+            )}
+          ></textarea>`;
+        }
+        return html`<p
+          class=${classMap(
+            merge(
+              theme.elements.textarea,
+              field.modifiers?.includes("hero") ? theme.modifiers.hero : {}
+            )
+          )}
+        >
+          ${value}
+        </p>`;
+      }
+
+      default:
+        if (field.as === "behavior") {
+          return this.#renderBehavior(theme, fieldName, field);
+        }
+
+        return html`Unknown field`;
+    }
+  }
+
+  #renderSegment(item: TodoItem, segment: Segment, idx: number) {
+    if (!this.theme || !this.list) {
       return nothing;
     }
 
-    return html` <ui-card class=${classMap(this.theme.components.card)}>
-        <ui-hero-image class=${classMap(this.theme.components.heroImage)}>
-          <img
-            src="images/img.jpg"
-            slot="hero"
-            class=${classMap(this.theme.modifiers.cover)}
-          />
-          <h1
-            slot="headline"
-            class=${classMap(
-              merge(this.theme.elements.h1, this.theme.modifiers.headline)
-            )}
-          >
-            Meow
-          </h1>
-        </ui-hero-image>
-        <div class=${classMap(this.theme.layouts.verticalPadded)}>
-          <input
-            id="title"
-            class=${classMap(
-              merge(this.theme.elements.input, this.theme.modifiers.hero)
-            )}
-            type="text"
-            .value=${"Title"}
-          />
-          <textarea
-            id="description"
-            class=${classMap(this.theme.elements.textarea)}
-            .value=${"Description"}
-          ></textarea>
-          <input
-            id="dueDate"
-            class=${classMap(this.theme.elements.input)}
-            type="date"
-          /></div
-      ></ui-card>
+    const theme = this.theme;
+    let classes = {};
+    if (segment.orientation === Orientation.VERTICAL) {
+      if (segment.type === ElementType.CARD) {
+        classes = { ...theme.layouts.vertical };
+      } else {
+        classes = { ...theme.layouts.verticalPadded };
+      }
+    } else {
+      if (segment.type === ElementType.CARD) {
+        classes = { ...theme.layouts.horizontal };
+      } else {
+        classes = { ...theme.layouts.horizontalPadded };
+      }
+    }
 
-      <ui-card
-        class=${classMap(this.theme.components.card)}
-        .segments=${[1, "min-content"]}
-        .orientation=${Orientation.VERTICAL}
-      >
-        <div class=${classMap(this.theme.layouts.verticalPadded)}>
-          <input
-            id="title"
-            class=${classMap(this.theme.elements.input)}
-            type="text"
-            .value=${"Title"}
-          />
-          <textarea
-            id="description"
-            class=${classMap(this.theme.elements.textarea)}
-            .value=${"Description"}
-          ></textarea>
-          <input
-            id="dueDate"
-            class=${classMap(this.theme.elements.input)}
-            type="date"
-          />
-        </div>
-        <div
-          class=${classMap(
-            merge(
-              this.theme.layouts.verticalPadded,
-              this.theme.modifiers.borderTop
-            )
-          )}
-        >
-          <div class=${classMap(this.theme.layouts.horizontal)}>
-            <button
-              class=${classMap(
-                merge(this.theme.elements.button, { "layout-mr-2": true })
-              )}
-            >
-              Done
-            </button>
-            <button class=${classMap(this.theme.elements.button)}>
-              Remove
-            </button>
-          </div>
-        </div>
-      </ui-card>
+    return html`<div class=${classMap(classes)} slot=${`slot-${idx}`}>
+      ${repeat(Object.entries(segment.fields), ([field, presentation]) => {
+        return this.#renderField(theme, item, field, presentation);
+      })}
+    </div>`;
+  }
 
-      <ui-card
-        class=${classMap(this.theme.components.card)}
-        .disabled=${true}
-        .segments=${[1, 2]}
-        .orientation=${Orientation.HORIZONTAL}
-      >
-        <ui-hero-image class=${classMap(this.theme.components.heroImage)}>
-          <img
-            src="images/img.jpg"
-            slot="hero"
-            class=${classMap(this.theme.modifiers.cover)}
-          />
-        </ui-hero-image>
+  render() {
+    if (!this.theme || !this.list) {
+      return nothing;
+    }
 
-        <div class=${classMap(this.theme.layouts.verticalPadded)}>
-          <h1 class=${classMap(this.theme.elements.h1)}>Title</h1>
-          <p class=${classMap(this.theme.elements.body)}>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin vitae
-            tempus dolor. Praesent pretium risus sit amet ultricies tristique.
-            Pellentesque sed euismod leo, vel facilisis tellus. Nunc quam nisi,
-            condimentum eu accumsan at, rhoncus at sapien.
-          </p>
-        </div></ui-card
-      >
+    const items = this.list.items;
+    const theme = this.theme;
 
-      <ui-card
-        class=${classMap(this.theme.components.card)}
-        .orientation=${Orientation.VERTICAL}
-        .segments=${[1, "fit-content", "fit-content"]}
-      >
-        <ui-hero-image class=${classMap(this.theme.components.heroImage)}>
-          <img
-            src="images/img.jpg"
-            slot="hero"
-            class=${classMap(this.theme.modifiers.cover)}
-          />
-          <h1
-            slot="headline"
-            class=${classMap(
-              merge(this.theme.elements.h1, this.theme.modifiers.headline)
-            )}
-          >
-            Meow
-          </h1>
-        </ui-hero-image>
-        <div class=${classMap(this.theme.layouts.verticalPadded)}>
-          <h1 class=${classMap(this.theme.elements.h1)}>
-            This is a cat in space
-          </h1>
-          <p class=${classMap(this.theme.elements.body)}>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin vitae
-            tempus dolor. Praesent pretium risus sit amet ultricies tristique.
-            Pellentesque sed euismod leo, vel facilisis tellus. Nunc quam nisi,
-            condimentum eu accumsan at, rhoncus at sapien.
-          </p>
-          <input
-            id="title"
-            class=${classMap(this.theme.elements.input)}
-            type="text"
-            .value=${"Title"}
-          />
-          <textarea
-            id="description"
-            class=${classMap(this.theme.elements.textarea)}
-            .value=${"Description"}
-          ></textarea>
-          <input
-            id="dueDate"
-            class=${classMap(this.theme.elements.input)}
-            type="date"
-          />
-        </div>
-        <div
-          class=${classMap(
-            merge(
-              this.theme.layouts.horizontalPadded,
-              this.theme.modifiers.borderTop
-            )
-          )}
-        >
-          <button
-            class=${classMap(
-              merge(this.theme.elements.button, { "layout-mr-2": true })
-            )}
-          >
-            Done
-          </button>
-          <button class=${classMap(this.theme.elements.button)}>Remove</button>
-        </div>
-      </ui-card>`;
+    return html`${this.list.presentation.behaviors.includes("editable")
+        ? html`<div class=${classMap(theme.layouts.verticalPadded)}>
+            <div class=${classMap(this.theme.layouts.horizontal)}>
+              <button
+                class=${classMap(theme.elements.button)}
+                data-behavior="add"
+              >
+                Add
+              </button>
+            </div>
+          </div>`
+        : nothing}
+      <section id="items">
+        ${items.size === 0
+          ? html`<div>No items</div>`
+          : repeat(items, ([id, item]) => {
+              switch (item.presentation.type) {
+                case ElementType.CARD: {
+                  return html`<ui-card
+                    class=${classMap(theme.components.card)}
+                    data-id=${id}
+                    .segments=${item.presentation.segments}
+                    .orientation=${item.presentation.orientation}
+                    .disabled=${item.done}
+                  >
+                    ${repeat(item.presentation.segments, (segment, idx) => {
+                      return this.#renderSegment(item, segment, idx);
+                    })}
+                  </ui-card>`;
+                }
+              }
+
+              return html`Unknown`;
+            })}
+      </section>`;
   }
 }

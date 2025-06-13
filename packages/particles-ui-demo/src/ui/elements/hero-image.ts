@@ -14,6 +14,7 @@ export class HeroImage extends LitElement {
     css`
       :host {
         display: block;
+        overflow: hidden;
       }
 
       section {

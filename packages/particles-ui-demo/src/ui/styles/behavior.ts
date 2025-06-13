@@ -19,8 +19,15 @@ const opacityBehavior = unsafeCSS(`
   }`);
 
 export const behavior = css`
-  .behavior-ho-80 {
-    --opacity: 0.8;
-    ${opacityBehavior}
-  }
+  ${unsafeCSS(
+    new Array(21)
+      .fill(0)
+      .map((_, idx) => {
+        return `.behavior-ho-${idx * 5} {
+          --opacity: ${idx / 20};
+          ${opacityBehavior}
+        }`;
+      })
+      .join("\n")
+  )}
 }` as CSSResultGroup;

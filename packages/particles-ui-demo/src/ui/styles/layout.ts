@@ -46,6 +46,17 @@ export const layout = css`
       .join("\n")
   )}
 
+  ${unsafeCSS(
+    new Array(9)
+      .fill(0)
+      .map((_, idx) => {
+        return `
+        .layout-g-${idx} { gap: ${idx * grid}px; }`;
+      })
+      .join("\n")
+  )}
+
+
   .layout-pos-a {
     position: absolute;
   }
