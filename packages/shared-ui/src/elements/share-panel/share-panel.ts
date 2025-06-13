@@ -4,6 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
+import {
+  IS_SHAREABLE_COPY_PROPERTY,
+  LATEST_SHARED_VERSION_PROPERTY,
+  MAIN_TO_SHAREABLE_COPY_PROPERTY,
+  SHAREABLE_COPY_TO_MAIN_PROPERTY,
+} from "@breadboard-ai/google-drive-kit/board-server/operations.js";
 import { extractGoogleDriveFileId } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { type GraphDescriptor } from "@breadboard-ai/types";
@@ -34,14 +41,9 @@ import {
 import { type GoogleDriveSharePanel } from "../elements.js";
 import { findGoogleDriveAssetsInGraph } from "../google-drive/find-google-drive-assets-in-graph.js";
 import { loadDriveApi } from "../google-drive/google-apis.js";
-import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 
 const APP_NAME = StringsHelper.forSection("Global").from("APP_NAME");
 const Strings = StringsHelper.forSection("UIController");
-
-const SHAREABLE_COPY_TO_MAIN = "shareableCopyToMain";
-const MAIN_TO_SHAREABLE_COPY = "mainToShareableCopy";
-const LATEST_SHARED_VERSION = "latestSharedVersion";
 
 type State =
   | { status: "closed" }
@@ -486,7 +488,7 @@ export class SharePanel extends LitElement {
         fileId: oldState.shareableFile.id,
         resource: {
           properties: {
-            [LATEST_SHARED_VERSION]: oldState.latestVersion,
+            [LATEST_SHARED_VERSION_PROPERTY]: oldState.latestVersion,
           },
         },
       }),
@@ -739,7 +741,8 @@ export class SharePanel extends LitElement {
     );
 
     const thisFileIsAShareableCopy =
-      thisFileMetadata.properties?.[SHAREABLE_COPY_TO_MAIN] !== undefined;
+      thisFileMetadata.properties?.[SHAREABLE_COPY_TO_MAIN_PROPERTY] !==
+      undefined;
     if (thisFileIsAShareableCopy) {
       this.#state = {
         status: "readonly",
@@ -749,7 +752,7 @@ export class SharePanel extends LitElement {
     }
 
     const shareableCopyFileId =
-      thisFileMetadata.properties?.[MAIN_TO_SHAREABLE_COPY];
+      thisFileMetadata.properties?.[MAIN_TO_SHAREABLE_COPY_PROPERTY];
 
     if (!thisFileMetadata.ownedByMe) {
       this.#state = {
@@ -805,7 +808,9 @@ export class SharePanel extends LitElement {
         id: shareableCopyFileId,
         stale:
           thisFileMetadata.version !==
-          shareableCopyFileMetadata.properties?.[LATEST_SHARED_VERSION],
+          shareableCopyFileMetadata.properties?.[
+            LATEST_SHARED_VERSION_PROPERTY
+          ],
         permissions: shareableCopyFileMetadata.permissions ?? [],
       },
       latestVersion: thisFileMetadata.version,
@@ -1060,7 +1065,7 @@ export class SharePanel extends LitElement {
       fileId: mainFileId,
       resource: {
         properties: {
-          [MAIN_TO_SHAREABLE_COPY]: shareableCopyFileId,
+          [MAIN_TO_SHAREABLE_COPY_PROPERTY]: shareableCopyFileId,
         },
       },
       fields: "version",
@@ -1075,8 +1080,9 @@ export class SharePanel extends LitElement {
       fileId: shareableCopyFileId,
       resource: {
         properties: {
-          [SHAREABLE_COPY_TO_MAIN]: mainFileId,
-          [LATEST_SHARED_VERSION]: updateMainResult.version,
+          [SHAREABLE_COPY_TO_MAIN_PROPERTY]: mainFileId,
+          [LATEST_SHARED_VERSION_PROPERTY]: updateMainResult.version,
+          [IS_SHAREABLE_COPY_PROPERTY]: "true",
         },
       },
     });
