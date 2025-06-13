@@ -4,48 +4,102 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Receiver } from "./receiver.js";
-import { Item } from "./state/item.js";
-import { GeneratorProxy, TodoItem } from "./types/types.js";
+import {
+  UpdateChannel,
+  ReceiverProxy,
+  SerializedTodoList,
+  SuipUpdate,
+  TodoItem,
+  TodoList,
+} from "./types/types";
 
 export { Generator };
 
-class Generator implements GeneratorProxy {
-  #receiver: Receiver | undefined;
+class Generator implements ReceiverProxy {
+  #model: TodoList;
 
-  connect(receiver: Receiver) {
-    this.#receiver = receiver;
+  constructor(private readonly channel: UpdateChannel) {
+    this.#model = Store.get();
+    for (const [id, item] of this.#model.items) {
+      this.update({ create: { path: [id], item } });
+    }
   }
 
-  async requestUpdateField(
+  update(update: SuipUpdate) {
+    return this.channel.update(update);
+  }
+
+  async addItem(): Promise<void> {
+    // TODO: Remove this and add presentation info.
+    const item: TodoItem = { title: "", done: false } as TodoItem;
+    const id = globalThis.crypto.randomUUID();
+    this.#model.items.set(id, item);
+
+    Store.set(this.#model);
+    return this.update({ create: { path: [id], item } });
+  }
+
+  async updateField(
     parentId: string,
     id: string,
-    value: string
+    value: string | boolean
   ): Promise<void> {
-    const item = this.#receiver?.list.items?.get(parentId);
+    const item = this.#model.items.get(parentId);
     const field = id as keyof TodoItem;
     if (!item) {
+      console.warn(`Trying to update field "${id}" on unknown item`, parentId);
       return;
     }
 
     Reflect.set(item, field, value);
+    Store.set(this.#model);
+    return this.update({ change: { path: [parentId, id], value } });
   }
 
-  async requestUpdateDone(id: string, value: boolean): Promise<void> {
-    const item = this.#receiver?.list.items?.get(id);
-    if (!item) {
-      return;
+  async deleteItem(itemId: string): Promise<void> {
+    this.#model.items.delete(itemId);
+    Store.set(this.#model);
+    return this.update({ remove: { path: [itemId] } });
+  }
+}
+
+class Store {
+  static LOCAL_STORAGE_KEY = "TODO_LIST";
+
+  private static fromSerialized(s: string | null): TodoList {
+    // TODO: Remove this and add presentation info.
+    const blank = { items: new Map() } as TodoList;
+    if (!s) {
+      return blank;
     }
-    item.done = value;
+    try {
+      const json = JSON.parse(s) as SerializedTodoList;
+      return {
+        items: new Map(json.items!),
+      } as TodoList; // TODO: Remove this and add presentation info.
+    } catch (e) {
+      console.warn("Unable to parse/process list, returning blank", e);
+      return blank;
+    }
   }
 
-  async requestAddItem(): Promise<void> {
-    const item = new Item("");
-    item.done = false;
-    this.#receiver?.list.items?.set(globalThis.crypto.randomUUID(), item);
+  private static toSerialized(list: TodoList): string {
+    const serialized: SerializedTodoList = {
+      items: [...list.items.entries()],
+    };
+    return JSON.stringify(serialized);
   }
 
-  async requestDelete(itemId: string): Promise<void> {
-    this.#receiver?.list.items.delete(itemId);
+  static get(): TodoList {
+    const list = Store.fromSerialized(
+      localStorage.getItem(Store.LOCAL_STORAGE_KEY)
+    );
+    console.log("GET", list);
+    return list;
+  }
+
+  static set(list: TodoList) {
+    localStorage.setItem(Store.LOCAL_STORAGE_KEY, Store.toSerialized(list));
+    console.log("SET", list);
   }
 }

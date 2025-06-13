@@ -4,25 +4,36 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GeneratorProxy } from "./types/types";
+import { EventChannel, GeneratorProxy } from "./types/types";
 
 export { GeneratorProxyImpl };
 
 class GeneratorProxyImpl implements GeneratorProxy {
+  constructor(private readonly channel: EventChannel) {}
+
   requestAddItem(): Promise<void> {
-    throw new Error("Method not implemented.");
+    return this.channel.dispatch({
+      type: "additem",
+      path: [],
+    });
   }
+
   requestUpdateField(
-    _parentId: string,
-    _id: string,
-    _value: string
+    parentId: string,
+    id: string,
+    value: string
   ): Promise<void> {
-    throw new Error("Method not implemented.");
+    return this.channel.dispatch({
+      type: "updatefield",
+      path: [parentId, id],
+      value: JSON.stringify(value),
+    });
   }
-  requestUpdateDone(_id: string, _value: boolean): Promise<void> {
-    throw new Error("Method not implemented.");
-  }
-  requestDelete(_itemId: string): Promise<void> {
-    throw new Error("Method not implemented.");
+
+  requestDelete(itemId: string): Promise<void> {
+    return this.channel.dispatch({
+      type: "delete",
+      path: [itemId],
+    });
   }
 }
