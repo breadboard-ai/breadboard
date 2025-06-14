@@ -92,6 +92,10 @@ export const layout = css`
     align-items: center;
   }
 
+  .layout-sp-c {
+    justify-content: center;
+  }
+
   .layout-sp-ev {
     justify-content: space-evenly;
   }
