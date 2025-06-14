@@ -116,6 +116,10 @@ export const list = {
   "layout-mb-4": true,
 };
 
+export const listItems = {
+  "border-br-4": true,
+};
+
 export const heroImage = {
   "border-br-4": true,
   "layout-el-cv": true,

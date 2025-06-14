@@ -134,6 +134,7 @@ export class UiReceiver extends SignalWatcher(LitElement) {
           @input=${this.#onInput}
           @click=${this.#onClick}
           .list=${this.list}
+          .orientation=${this.list?.presentation.orientation}
         ></ui-list>`;
         break;
       }

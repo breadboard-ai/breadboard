@@ -173,7 +173,7 @@ export class GoalDemo extends LitElement {
       }
 
       // TODO: Make this selectable.
-      const { theme } = await import("./ui/theme/default/light.js");
+      const { theme } = await import("./ui/theme/default/dark.js");
       const uiReceiver = new UiReceiver();
       uiReceiver.list = list;
       uiReceiver.theme = theme;
