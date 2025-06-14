@@ -12,7 +12,7 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { styles } from "../styles/index";
 import { consume } from "@lit/context";
 import { themeContext } from "../context/theme";
-import { UITheme } from "../theme/default";
+import { UITheme } from "../theme/theme";
 
 @customElement("ui-card")
 export class UICard extends SignalWatcher(LitElement) {

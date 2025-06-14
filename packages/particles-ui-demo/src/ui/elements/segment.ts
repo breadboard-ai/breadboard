@@ -13,7 +13,7 @@ import { Field, Orientation } from "../../types/particles";
 import { styles } from "../styles";
 import { consume } from "@lit/context";
 import { themeContext } from "../context/theme";
-import { UITheme } from "../theme/default";
+import { UITheme } from "../theme/theme";
 
 @customElement("ui-segment")
 export class UISegment extends SignalWatcher(LitElement) {

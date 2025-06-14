@@ -12,7 +12,7 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { styles } from "../styles/index.js";
 import { consume } from "@lit/context";
 import { themeContext } from "../context/theme.js";
-import { UITheme } from "../theme/default.js";
+import { UITheme } from "../theme/theme.js";
 import { merge } from "../styles/utils.js";
 
 import "./button.js";
@@ -37,10 +37,6 @@ export class UIList extends SignalWatcher(LitElement) {
 
       :host {
         display: block;
-        background: var(--n-95);
-        padding: var(--g-4);
-        border-radius: calc(var(--g-4) + var(--g-4));
-        margin-bottom: var(--g-16);
       }
 
       #items > * {
@@ -61,7 +57,8 @@ export class UIList extends SignalWatcher(LitElement) {
     const items = this.list.items;
     const theme = this.theme;
 
-    return html`${this.list.presentation.behaviors.includes("editable")
+    return html`<section class=${classMap(this.theme.components.list)}>
+      ${this.list.presentation.behaviors.includes("editable")
         ? html`<div class=${classMap(this.theme.layouts.verticalPadded)}>
             <div class=${classMap(this.theme.layouts.horizontal)}>
               <ui-button
@@ -91,15 +88,19 @@ export class UIList extends SignalWatcher(LitElement) {
                       let classes = {};
                       if (segment.orientation === "vertical") {
                         if (segment.type === "media") {
-                          classes = { ...theme.layouts.vertical };
+                          classes = { ...theme.components.segmentVertical };
                         } else {
-                          classes = { ...theme.layouts.verticalPadded };
+                          classes = {
+                            ...theme.components.segmentVerticalPadded,
+                          };
                         }
                       } else {
                         if (segment.type === "media") {
-                          classes = { ...theme.layouts.horizontal };
+                          classes = { ...theme.components.segmentHorizontal };
                         } else {
-                          classes = { ...theme.layouts.horizontalPadded };
+                          classes = {
+                            ...theme.components.segmentHorizontalPadded,
+                          };
                         }
                       }
 
@@ -132,6 +133,7 @@ export class UIList extends SignalWatcher(LitElement) {
 
               return html`Unexpected input information`;
             })}
-      </section>`;
+      </section>
+    </section>`;
   }
 }

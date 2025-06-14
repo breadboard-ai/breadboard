@@ -9,7 +9,7 @@ import { grid } from "./shared";
 
 export const border = css`
   ${unsafeCSS(
-    new Array(17)
+    new Array(25)
       .fill(0)
       .map((_, idx) => {
         return `
@@ -24,6 +24,10 @@ export const border = css`
       })
       .join("\n")
   )}
+
+  .border-br-50pc {
+    border-radius: 50%;
+  }
 
   .border-bs-s {
     border-style: solid;

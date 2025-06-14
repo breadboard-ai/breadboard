@@ -80,7 +80,7 @@ const generatorProxy = new GeneratorProxyImpl({
   },
 });
 
-const { theme } = await import("./ui/theme/default.js");
+const { theme } = await import("./ui/theme/default/light.js");
 
 run?.addEventListener("click", () => {
   const code = src?.value;
@@ -98,7 +98,7 @@ run?.addEventListener("click", () => {
   uiReceiver.list = list;
   uiReceiver.channel = generatorProxy;
   uiReceiver.theme = theme;
-  uiReceiver.colors = theme.colors;
+  uiReceiver.additionalStyles = theme.additionalStyles;
 
   output!.innerHTML = "";
   output!.appendChild(uiReceiver);

@@ -26,14 +26,10 @@ export class UIHeroImage extends LitElement {
         height: 100%;
       }
 
-      ::slotted(img),
-      ::slotted(video) {
-        max-height: 400px;
-      }
-
       :host([containerorientation="vertical"]) {
         ::slotted(img) {
           aspect-ratio: 16/9;
+          max-height: 400px;
         }
       }
 

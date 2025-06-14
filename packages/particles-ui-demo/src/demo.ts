@@ -7,7 +7,7 @@
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, query, state } from "lit/decorators.js";
 import { styles } from "./ui/styles";
-import { UITheme } from "./ui/theme/default.js";
+import type { UITheme } from "./ui/theme/theme.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { merge } from "./ui/styles/utils";
@@ -31,7 +31,7 @@ export class GoalDemo extends LitElement {
   accessor theme: UITheme | null = null;
 
   @property()
-  accessor colors: Record<string, string> | null = null;
+  accessor additionalStyles: Record<string, string> | null = null;
 
   @query("#spec")
   accessor #spec: HTMLTextAreaElement | null = null;
@@ -172,10 +172,12 @@ export class GoalDemo extends LitElement {
         list.items.set(globalThis.crypto.randomUUID(), i);
       }
 
+      // TODO: Make this selectable.
+      const { theme } = await import("./ui/theme/default/light.js");
       const uiReceiver = new UiReceiver();
       uiReceiver.list = list;
       uiReceiver.theme = theme;
-      uiReceiver.colors = theme.colors;
+      uiReceiver.additionalStyles = theme.additionalStyles;
 
       this.#output.textContent = "";
       this.#output.appendChild(uiReceiver);
@@ -202,7 +204,7 @@ export class GoalDemo extends LitElement {
     const working = this.#processingSpec || this.#processingGoal;
 
     return html`<section
-      style=${styleMap(this.colors ? this.colors : {})}
+      style=${styleMap(this.additionalStyles ? this.additionalStyles : {})}
       class="color-bgc-n100 typography-f-s layout-el-cv behavior-o-a"
     >
       <div class="layout-p-16 layout-flx-vert layout-el-cv">
@@ -358,8 +360,8 @@ export class GoalDemo extends LitElement {
   }
 }
 
-const { theme } = await import("./ui/theme/default.js");
+const { theme } = await import("./ui/theme/default/light.js");
 const demo = new GoalDemo();
 demo.theme = theme;
-demo.colors = theme.colors;
+demo.additionalStyles = theme.additionalStyles;
 document.body.appendChild(demo);
