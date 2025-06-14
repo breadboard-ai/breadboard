@@ -163,6 +163,10 @@ export class GoalDemo extends LitElement {
           const i = Item.from(item);
           list.items.set(globalThis.crypto.randomUUID(), i);
         }
+
+        if ("presentation" in data) {
+          list.presentation = { ...data.presentation };
+        }
       } else {
         const i = Item.from(data);
         list.items.set(globalThis.crypto.randomUUID(), i);

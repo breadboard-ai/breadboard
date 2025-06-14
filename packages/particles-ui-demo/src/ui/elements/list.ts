@@ -119,7 +119,7 @@ export class UIList extends SignalWatcher(LitElement) {
                           merge(classes, { "layout-al-fs": true })
                         )}
                         slot=${`slot-${idx}`}
-                        .orientation=${segment.orientation}
+                        .containerOrientation=${item.presentation.orientation}
                         .theme=${theme}
                         .fields=${segment.fields}
                         .values=${values}

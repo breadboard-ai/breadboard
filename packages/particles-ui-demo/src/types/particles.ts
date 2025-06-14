@@ -64,6 +64,9 @@ export interface Field {
    * All fields must have a title.
    */
   title: string;
+  /**
+   * All as="image" fields must include a src property.
+   */
   src?: string;
   /**
    * If the field is a behavior try to suggest an appropriate icon.
