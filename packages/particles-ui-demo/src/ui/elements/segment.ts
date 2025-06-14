@@ -9,7 +9,7 @@ import { customElement, property } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
 import { classMap } from "lit/directives/class-map.js";
 import { merge } from "../styles/utils";
-import { Field } from "../../types/particles";
+import { Field, Orientation } from "../../types/particles";
 import { styles } from "../styles";
 import { consume } from "@lit/context";
 import { themeContext } from "../context/theme";
@@ -22,6 +22,9 @@ export class UISegment extends SignalWatcher(LitElement) {
 
   @property()
   accessor values: Record<string, unknown> | null = null;
+
+  @property()
+  accessor orientation: Orientation = "vertical";
 
   @property({ reflect: true, type: Boolean })
   accessor disabled = false;
@@ -52,6 +55,7 @@ export class UISegment extends SignalWatcher(LitElement) {
 
         return html`<ui-hero-image
           class=${classMap(theme.components.heroImage)}
+          .containerOrientation=${this.orientation}
         >
           <img
             src=${field.src}

@@ -5,10 +5,14 @@
  */
 import { LitElement, html, css } from "lit";
 import { styles } from "../styles";
-import { customElement } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
+import { Orientation } from "../../types/particles";
 
 @customElement("ui-hero-image")
 export class UIHeroImage extends LitElement {
+  @property({ reflect: true, type: String })
+  accessor containerOrientation: Orientation | null = null;
+
   static styles = [
     styles,
     css`
@@ -20,6 +24,19 @@ export class UIHeroImage extends LitElement {
       section {
         display: grid;
         height: 100%;
+      }
+
+      ::slotted(img),
+      ::slotted(video) {
+        max-height: 400px;
+      }
+
+      :host([containerorientation="vertical"])::slotted(img) {
+        aspect-ratio: 16/9;
+      }
+
+      :host([containerorientation="horizontal"])::slotted(img) {
+        aspect-ratio: 1/1;
       }
     `,
   ];

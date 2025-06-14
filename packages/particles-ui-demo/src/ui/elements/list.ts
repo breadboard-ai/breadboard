@@ -13,17 +13,12 @@ import { styles } from "../styles/index.js";
 import { consume } from "@lit/context";
 import { themeContext } from "../context/theme.js";
 import { UITheme } from "../theme/default.js";
+import { merge } from "../styles/utils.js";
 
 import "./button.js";
 import "./card.js";
 import "./hero-image.js";
 import "./segment.js";
-import {
-  ElementType,
-  Orientation,
-  SegmentType,
-} from "../../types/particles.js";
-import { merge } from "../styles/utils.js";
 
 @customElement("ui-list")
 export class UIList extends SignalWatcher(LitElement) {
@@ -84,7 +79,7 @@ export class UIList extends SignalWatcher(LitElement) {
           ? html`<div>No items</div>`
           : repeat(items, ([id, item]) => {
               switch (item.presentation.type) {
-                case ElementType.CARD: {
+                case "card": {
                   return html`<ui-card
                     class=${classMap(theme.components.card)}
                     data-id=${id}
@@ -94,14 +89,14 @@ export class UIList extends SignalWatcher(LitElement) {
                   >
                     ${repeat(item.presentation.segments, (segment, idx) => {
                       let classes = {};
-                      if (segment.orientation === Orientation.VERTICAL) {
-                        if (segment.type === SegmentType.BLOCK) {
+                      if (segment.orientation === "vertical") {
+                        if (segment.type === "media") {
                           classes = { ...theme.layouts.vertical };
                         } else {
                           classes = { ...theme.layouts.verticalPadded };
                         }
                       } else {
-                        if (segment.type === SegmentType.BLOCK) {
+                        if (segment.type === "media") {
                           classes = { ...theme.layouts.horizontal };
                         } else {
                           classes = { ...theme.layouts.horizontalPadded };
@@ -124,6 +119,7 @@ export class UIList extends SignalWatcher(LitElement) {
                           merge(classes, { "layout-al-fs": true })
                         )}
                         slot=${`slot-${idx}`}
+                        .orientation=${segment.orientation}
                         .theme=${theme}
                         .fields=${segment.fields}
                         .values=${values}

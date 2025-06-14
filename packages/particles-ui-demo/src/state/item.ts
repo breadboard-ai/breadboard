@@ -4,12 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  ElementType,
-  Orientation,
-  Presentation,
-  SegmentType,
-} from "../types/particles.js";
+import { Presentation } from "../types/particles.js";
 
 import { signal } from "signal-utils";
 import { TodoItem } from "../types/types.js";
@@ -21,11 +16,11 @@ function createPresentation(): Presentation {
   const vertical = params.get("vertical");
 
   return {
-    type: ElementType.CARD,
+    type: "card",
     segments: [
       {
         weight: 1.4,
-        type: SegmentType.BLOCK,
+        type: "block",
         fields: {
           static: {
             as: "image",
@@ -33,11 +28,11 @@ function createPresentation(): Presentation {
             src: Math.random() > 0.5 ? "images/doggo.jpg" : "images/catto.jpg",
           },
         },
-        orientation: Orientation.VERTICAL,
+        orientation: "vertical",
       },
       {
         weight: vertical ? "max-content" : 3,
-        type: SegmentType.LIST,
+        type: "list",
         fields: {
           title: {
             title: "Your todo",
@@ -56,19 +51,19 @@ function createPresentation(): Presentation {
             as: "date",
           },
         },
-        orientation: Orientation.VERTICAL,
+        orientation: "vertical",
       },
       {
         weight: "max-content",
-        type: SegmentType.LIST,
+        type: "list",
         fields: {
           delete: { title: "Delete", as: "behavior", icon: "delete" },
           done: { title: "Done", as: "behavior", icon: "check" },
         },
-        orientation: vertical ? Orientation.HORIZONTAL : Orientation.VERTICAL,
+        orientation: vertical ? "horizontal" : "vertical",
       },
     ],
-    orientation: vertical ? Orientation.VERTICAL : Orientation.HORIZONTAL,
+    orientation: vertical ? "vertical" : "horizontal",
     behaviors: ["editable"],
   };
 }

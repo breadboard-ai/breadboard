@@ -5,7 +5,7 @@
  */
 import { LitElement, html, css, PropertyValues, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { Orientation, Segment, SegmentType } from "../../types/particles";
+import { Orientation, Segment } from "../../types/particles";
 import { repeat } from "lit/directives/repeat.js";
 import { classMap } from "lit/directives/class-map.js";
 import { SignalWatcher } from "@lit-labs/signals";
@@ -35,24 +35,26 @@ export class UICard extends SignalWatcher(LitElement) {
 
       :host([orientation="horizontal"]) section {
         grid-template-columns: var(--template, 1fr);
+        grid-template-rows: min-content;
       }
 
       :host([orientation="vertical"]) section {
         grid-template-rows: var(--template, 1fr);
+        grid-template-rows: min-content;
       }
     `,
   ];
 
   @property({ reflect: true, type: String })
-  accessor orientation: Orientation = Orientation.VERTICAL;
+  accessor orientation: Orientation = "vertical";
 
   @property()
   accessor segments: Segment[] = [
     {
       weight: 1,
       fields: {},
-      orientation: Orientation.VERTICAL,
-      type: SegmentType.BLOCK,
+      orientation: "vertical",
+      type: "block",
     },
   ];
 

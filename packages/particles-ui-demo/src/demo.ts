@@ -18,6 +18,13 @@ import { List } from "./state/list";
 import { Item } from "./state/item";
 import { UiReceiver } from "./ui/ui-receiver";
 
+function isCtrlCommand(evt: PointerEvent | KeyboardEvent | WheelEvent) {
+  const isMac = navigator.platform.indexOf("Mac") === 0;
+  return isMac ? evt.metaKey : evt.ctrlKey;
+}
+
+const SPEC_KEY = "particle-demo-spec";
+
 @customElement("goal-demo")
 export class GoalDemo extends LitElement {
   @property()
@@ -97,6 +104,15 @@ export class GoalDemo extends LitElement {
     `,
   ];
 
+  #lastSpec: string | null = null;
+  connectedCallback(): void {
+    super.connectedCallback();
+    const lastSpec = localStorage.getItem(SPEC_KEY);
+    if (lastSpec !== null) {
+      this.#lastSpec = lastSpec;
+    }
+  }
+
   async #processGoal() {
     if (
       !this.#goal ||
@@ -108,7 +124,8 @@ export class GoalDemo extends LitElement {
     }
 
     this.#processingGoal = true;
-    this.#spec.value = await createSpec(this.#goal.value);
+    this.#persistSpec(await createSpec(this.#goal.value));
+    this.#spec.value = this.#lastSpec ?? "";
     this.#processingGoal = false;
   }
 
@@ -132,10 +149,24 @@ export class GoalDemo extends LitElement {
       .replace(/```$/gim, "");
 
     try {
-      const data = eval(`${code};invoke()`);
       const list = new List();
-      const i = Item.from(data);
-      list.items.set(globalThis.crypto.randomUUID(), i);
+
+      let data = eval(`${code};invoke()`);
+      if (Array.isArray(data)) {
+        data = data[0];
+      }
+
+      console.log("DATA", data);
+
+      if ("items" in data) {
+        for (const item of data.items) {
+          const i = Item.from(item);
+          list.items.set(globalThis.crypto.randomUUID(), i);
+        }
+      } else {
+        const i = Item.from(data);
+        list.items.set(globalThis.crypto.randomUUID(), i);
+      }
 
       const uiReceiver = new UiReceiver();
       uiReceiver.list = list;
@@ -152,6 +183,11 @@ export class GoalDemo extends LitElement {
     }
 
     this.#processingSpec = false;
+  }
+
+  #persistSpec(spec: string) {
+    this.#lastSpec = spec;
+    localStorage.setItem(SPEC_KEY, spec);
   }
 
   render() {
@@ -191,6 +227,14 @@ export class GoalDemo extends LitElement {
               name="spec"
               id="spec"
               ?disabled=${working}
+              .value=${this.#lastSpec ?? ""}
+              @input=${(evt: InputEvent) => {
+                if (!(evt.target instanceof HTMLTextAreaElement)) {
+                  return;
+                }
+
+                this.#persistSpec(evt.target.value);
+              }}
               class=${classMap(
                 merge(this.theme.elements.textarea, {
                   "layout-fs-n": true,
@@ -204,6 +248,11 @@ export class GoalDemo extends LitElement {
                   "layout-pr-3": true,
                 })
               )}
+              @keydown=${async (evt: KeyboardEvent) => {
+                if (evt.key === "Enter" && isCtrlCommand(evt)) {
+                  await this.#processSpec();
+                }
+              }}
             ></textarea>
             <div
               class=${classMap({
@@ -254,7 +303,8 @@ export class GoalDemo extends LitElement {
               name="goal"
               type="text"
               id="goal"
-              .value=${'Write UI for a single editable item in an editable TODO list. The item must have a picture, title, description, due date and a "Delete" action.'}
+              autofocus
+              .value=${'Write UI for a list of editable items in an editable TODO list. Each item in the list must have a picture, title, description, due date and a "Delete" action.'}
               ?disabled=${working}
               class=${classMap(
                 merge(this.theme.elements.input, {

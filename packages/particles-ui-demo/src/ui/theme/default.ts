@@ -236,7 +236,6 @@ const card = {
 const heroImage = {
   "border-br-4": true,
   "layout-el-cv": true,
-  "layout-p-n3": true,
 };
 
 const cover = {
