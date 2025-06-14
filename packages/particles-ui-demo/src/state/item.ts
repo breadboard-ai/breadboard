@@ -29,6 +29,7 @@ function createPresentation(): Presentation {
         fields: {
           static: {
             as: "image",
+            title: "Image",
             src: Math.random() > 0.5 ? "images/doggo.jpg" : "images/catto.jpg",
           },
         },

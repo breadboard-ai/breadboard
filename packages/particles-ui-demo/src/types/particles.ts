@@ -44,8 +44,7 @@ export type Behavior = "editable" | "delete";
 /**
  * When modifier "hero" is specified, the item is meant to stand out among its
  * peers. Useful for emphasizing a key item within a block or list. If used on
- * an image you must ensure that the item has a vertical orientation or that the
- * image has a significant amount of weight.
+ * an image you must ensure that the item has a vertical orientation.
  */
 export type Modifier = "hero";
 
@@ -58,15 +57,25 @@ export interface Field {
    * is rendered with the appopriate controls.
    */
   as: "text" | "longtext" | "number" | "date" | "behavior" | "image";
+  /**
+   * Used to determine what the user can do. If the user is able to edit the
+   * field content you must allow them to do so with the appropriate behavior.
+   */
   behaviors?: Behavior[];
   /**
    * Adjusts the behavior of the field. If the field is rendered as="image" and
    * it is a significant part of the content, add the appropriate modifier.
    */
   modifiers?: Modifier[];
-  title?: string;
+  /**
+   * All fields must have a title.
+   */
+  title: string;
   src?: string;
-  icon?: string;
+  /**
+   * If the field is a behavior try to suggest an appropriate icon.
+   */
+  icon?: "delete" | "add" | "check";
 }
 
 type Segmentable = string;
@@ -76,7 +85,9 @@ type Static = "static";
 /**
  * A segment is a part of a card or a list. You use it to break up the
  * information into meaningful chunks. If there is a key piece of information
- * (particularly images) they should be placed in the first segment.
+ * (particularly images) they should be placed in the first segment. Wherever
+ * possible you should group fields together and keep the number of
+ * segments to an absolute minimum.
  */
 export interface Segment {
   /**
