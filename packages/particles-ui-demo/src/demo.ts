@@ -13,6 +13,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { merge } from "./ui/styles/utils";
 
 import "./ui/elements/button.js";
+import { createParticles, createSpec } from "./gemini";
 
 @customElement("goal-demo")
 export class GoalDemo extends LitElement {
@@ -32,7 +33,10 @@ export class GoalDemo extends LitElement {
   accessor #output: HTMLElement | null = null;
 
   @state()
-  accessor #working = false;
+  accessor #processingGoal = false;
+
+  @state()
+  accessor #processingSpec = false;
 
   static styles = [
     styles,
@@ -45,7 +49,7 @@ export class GoalDemo extends LitElement {
         display: grid;
         width: 100svw;
         height: 100svh;
-        max-width: 1280px;
+        max-width: 1600px;
         margin: 0 auto;
         overflow: auto;
       }
@@ -53,31 +57,41 @@ export class GoalDemo extends LitElement {
   ];
 
   async #processGoal() {
-    if (!this.#goal || !this.#spec) {
+    if (
+      !this.#goal ||
+      !this.#spec ||
+      this.#processingGoal ||
+      this.#processingSpec
+    ) {
       return;
     }
 
-    // TODO: Process goal.
-    this.#working = true;
-    this.#spec.value = this.#goal.value;
-    this.#working = false;
+    this.#processingGoal = true;
+    this.#spec.value = await createSpec(this.#goal.value);
+    this.#processingGoal = false;
   }
 
   async #processSpec() {
-    if (!this.#spec || !this.#output) {
+    if (
+      !this.#spec ||
+      !this.#output ||
+      this.#processingGoal ||
+      this.#processingSpec
+    ) {
       return;
     }
 
-    // TODO: Process spec.
-    this.#working = true;
-    this.#output.textContent = "(Processed Spec)";
-    this.#working = false;
+    this.#processingSpec = true;
+    this.#output.textContent = await createParticles(this.#spec.value);
+    this.#processingSpec = false;
   }
 
   render() {
     if (!this.theme) {
       return nothing;
     }
+
+    const working = this.#processingSpec || this.#processingGoal;
 
     return html`<section
       style=${styleMap(this.colors ? this.colors : {})}
@@ -105,7 +119,7 @@ export class GoalDemo extends LitElement {
             <textarea
               name="spec"
               id="spec"
-              ?disabled=${this.#working}
+              ?disabled=${working}
               class=${classMap(
                 merge(this.theme.elements.textarea, {
                   "layout-fs-n": true,
@@ -136,8 +150,12 @@ export class GoalDemo extends LitElement {
                   })
                 )}
                 .icon=${"sync_alt"}
-                ?disabled=${this.#working}
+                .showSpinnerWhenDisabled=${this.#processingSpec}
+                ?disabled=${working}
                 @click=${async () => {
+                  if (working) {
+                    return;
+                  }
                   await this.#processSpec();
                 }}
               >
@@ -155,16 +173,19 @@ export class GoalDemo extends LitElement {
                   "color-bc-n90": true,
                   "behavior-o-a": true,
                   "layout-c-s": true,
+                  "typography-f-c": true,
                 })
               )}
+              style=${styleMap({ "white-space": "pre" })}
             ></div>
           </div>
-          <div id="input" class="layout-flx-hor layout-flx-0">
+          <div id="input" class="layout-flx-hor layout-sp-c">
             <input
               name="goal"
               type="text"
               id="goal"
-              ?disabled=${this.#working}
+              .value=${"Write UI for an item in a TODO list with pictures"}
+              ?disabled=${working}
               class=${classMap(
                 merge(this.theme.elements.input, {
                   "typography-sz-bl": true,
@@ -180,6 +201,7 @@ export class GoalDemo extends LitElement {
                   "layout-mr-3": true,
                 })
               )}
+              style=${styleMap({ "max-width": "800px" })}
               autocomplete="off"
               placeholder="What is your goal?"
               @keydown=${async (evt: KeyboardEvent) => {
@@ -197,7 +219,8 @@ export class GoalDemo extends LitElement {
                 })
               )}
               .icon=${"send"}
-              ?disabled=${this.#working}
+              .showSpinnerWhenDisabled=${this.#processingGoal}
+              ?disabled=${working}
               @click=${async () => {
                 await this.#processGoal();
               }}

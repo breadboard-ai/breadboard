@@ -31,6 +31,20 @@ export class UIButton extends SignalWatcher(LitElement) {
         border: none;
         outline: none;
       }
+
+      :host([disabled][showspinnerwhendisabled]) .g-icon {
+        animation: rotate 1s linear infinite;
+      }
+
+      @keyframes rotate {
+        from {
+          rotate: 0deg;
+        }
+
+        to {
+          rotate: 360deg;
+        }
+      }
     `,
   ];
 
@@ -39,6 +53,12 @@ export class UIButton extends SignalWatcher(LitElement) {
 
   @property()
   accessor icon: string | null = null;
+
+  @property({ attribute: true, reflect: true, type: Boolean })
+  accessor disabled = false;
+
+  @property({ reflect: true, type: Boolean })
+  accessor showSpinnerWhenDisabled = false;
 
   render() {
     return html`<div
@@ -51,7 +71,9 @@ export class UIButton extends SignalWatcher(LitElement) {
     >
       ${this.icon
         ? html`<span class="g-icon filled round layout-mr-2"
-            >${this.icon}</span
+            >${this.disabled && this.showSpinnerWhenDisabled
+              ? "progress_activity"
+              : this.icon}</span
           >`
         : nothing}
       <slot></slot>
