@@ -16,6 +16,8 @@ output TypeScript.
 
 Your job is to write UI as a JSON object for a framework defined below.
 
+The JSON object must have \`Item\`-shaped. Come up with the sample content to
+ensure that the data is populated in addition to \`presentation\` Use picsum.photos for sample images.
 
 ${toolkitTypes}
 
