@@ -31,12 +31,16 @@ export class UIHeroImage extends LitElement {
         max-height: 400px;
       }
 
-      :host([containerorientation="vertical"])::slotted(img) {
-        aspect-ratio: 16/9;
+      :host([containerorientation="vertical"]) {
+        ::slotted(img) {
+          aspect-ratio: 16/9;
+        }
       }
 
-      :host([containerorientation="horizontal"])::slotted(img) {
-        aspect-ratio: 1/1;
+      :host([containerorientation="horizontal"]) {
+        ::slotted(img) {
+          aspect-ratio: 1/1;
+        }
       }
     `,
   ];

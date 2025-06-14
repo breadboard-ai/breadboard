@@ -24,7 +24,7 @@ export class UISegment extends SignalWatcher(LitElement) {
   accessor values: Record<string, unknown> | null = null;
 
   @property()
-  accessor orientation: Orientation = "vertical";
+  accessor containerOrientation: Orientation = "vertical";
 
   @property({ reflect: true, type: Boolean })
   accessor disabled = false;
@@ -55,7 +55,7 @@ export class UISegment extends SignalWatcher(LitElement) {
 
         return html`<ui-hero-image
           class=${classMap(theme.components.heroImage)}
-          .containerOrientation=${this.orientation}
+          .containerOrientation=${this.containerOrientation}
         >
           <img
             src=${field.src}
@@ -67,7 +67,13 @@ export class UISegment extends SignalWatcher(LitElement) {
             ? html`<h1
                 slot="headline"
                 class=${classMap(
-                  merge(theme.elements.h1, theme.modifiers.headline)
+                  merge(
+                    theme.elements.h1,
+                    theme.modifiers.headline,
+                    this.containerOrientation === "horizontal"
+                      ? theme.elements.h3
+                      : {}
+                  )
                 )}
               >
                 ${field.title}
@@ -97,7 +103,6 @@ export class UISegment extends SignalWatcher(LitElement) {
         return html`<p
           class=${classMap(
             merge(
-              theme.elements.input,
               theme.elements.p,
               field.modifiers?.includes("hero") ? theme.modifiers.hero : {}
             )
@@ -126,7 +131,6 @@ export class UISegment extends SignalWatcher(LitElement) {
         return html`<p
           class=${classMap(
             merge(
-              theme.elements.textarea,
               theme.elements.p,
               field.modifiers?.includes("hero") ? theme.modifiers.hero : {}
             )

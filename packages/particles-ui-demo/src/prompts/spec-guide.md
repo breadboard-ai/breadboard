@@ -116,10 +116,23 @@ An item is the top-level entity. It contains the data to be displayed and the
     - The item is a card that has vertical orientation.
     - It has one segment.
     - This segment is a block, has a vertical orientation, and contains
-      - a "title" field that is "text" with the title "Title".
+      - a "title" field that is "text" with the title "Title" and a "hero"
+        modifier.
       - a "description" field that is "longtext" with the title "Description".
 
-2.  **A Card with an Image and Editable Text:**
+2.  **A Card with an Image and non-editable Text:**
+
+    - What does it represent: an informational item with an image and some text.
+    - The item is a card that has horizontal orientation.
+    - It has two segments.
+    - The first segment has a vertical orientation, and contains:
+      - an "image" field with a "src" attribute.
+    - The second segment has a vertical orientation
+      - a "text" field that acts a headline and which is "text" with the "hero"
+        modifier.
+      - a "longtext" field which describes the content in more detail.
+
+3.  **A Card with an Image and Editable Text:**
 
     - What does it represent: UI for editing picture caption.
     - The item is a card that has vertical orientation.
@@ -129,7 +142,7 @@ An item is the top-level entity. It contains the data to be displayed and the
       - a "text" field that is "text" with the title "Caption" and "editable"
         behavior.
 
-3.  **A Card with Two Segments, Last one containing a Delete Button:**
+4.  **A Card with Two Segments, Last one containing a Delete Button:**
 
     - What does it represent: a user profile.
     - The item is a card that has horizontal orientation.
