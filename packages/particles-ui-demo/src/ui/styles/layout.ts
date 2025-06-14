@@ -138,4 +138,8 @@ export const layout = css`
     object-fit: cover;
     margin: 0;
   }
+
+  .layout-ar-sq {
+    aspect-ratio: 1 / 1;
+  }
 ` as CSSResultGroup;

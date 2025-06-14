@@ -5,6 +5,6 @@
  */
 
 import { createContext } from "@lit/context";
-import { UITheme } from "../theme/default";
+import { UITheme } from "../theme/theme";
 
 export const themeContext = createContext<UITheme | undefined>("UITheme");

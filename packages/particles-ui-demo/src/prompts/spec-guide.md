@@ -120,9 +120,10 @@ An item is the top-level entity. It contains the data to be displayed and the
         modifier.
       - a "description" field that is "longtext" with the title "Description".
 
-2.  **A Card with an Image and non-editable Text:**
+2.  **A Card with an Image and non-editable Title and Description:**
 
-    - What does it represent: an informational item with an image and some text.
+    - What does it represent: an informational item with an image, title and
+      some text.
     - The item is a card that has horizontal orientation.
     - It has two segments.
     - The first segment has a vertical orientation, and contains:
@@ -138,7 +139,8 @@ An item is the top-level entity. It contains the data to be displayed and the
     - The item is a card that has vertical orientation.
     - It has one segment.
     - This segment has a vertical orientation, and contains:
-      - an "image" field that is an "image" with a "hero" modifier.
+      - an "image" field that is an "image" with a "src" attribute and a "hero"
+        modifier. The image's "title" is that of the item.
       - a "text" field that is "text" with the title "Caption" and "editable"
         behavior.
 
@@ -155,6 +157,18 @@ An item is the top-level entity. It contains the data to be displayed and the
       horizontal orientation, and contains a "delete" field that is "text" with
       the title "Delete", the icon "delete", and the behavior "delete".
 
+5.  **A Card with Image and Description:**
+
+    - What does it represent: an info card with a short response.
+    - Great for: quick facts about someone, a place or thing.
+    - The item is a card that has horizontal orientation.
+    - It has two equally-weighted segments.
+    - The first segment has a weight of 1, has a vertical orientation, and
+      contains:
+      - a "description" field that is a "longtext" with the modifier of "hero".
+    - The second segment has a weight of 1 and contains:
+      - an "image" field with a "src" attribute.
+
 **Key Considerations for Specs:**
 
 - Specify what the element represents.
@@ -168,6 +182,5 @@ An item is the top-level entity. It contains the data to be displayed and the
 - Behavior segments must be in a list segment.
 - Images require a lot of space, so be sure to weight them accordingly. If there
   is a lot of information overall, use a vertical layout.
-- When providing a list it is incredibly important that you use the correct type
-  values for enums, in particular their case. You must always match the correct
-  type structures.
+- If you set an image to be a "hero" you must always provide a meaningful title,
+  which is the item's title.

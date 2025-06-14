@@ -11,7 +11,7 @@ import { styles } from "./styles/index.js";
 import { GeneratorProxy, TodoList } from "../types/types";
 import { themeContext } from "./context/theme.js";
 import { provide } from "@lit/context";
-import { UITheme } from "./theme/default.js";
+import type { UITheme } from "./theme/theme.js";
 
 import "./elements/list.js";
 import { styleMap } from "lit/directives/style-map.js";
@@ -61,7 +61,7 @@ export class UiReceiver extends SignalWatcher(LitElement) {
   accessor list: TodoList | null = null;
 
   @property()
-  accessor colors: Record<string, string> | null = null;
+  accessor additionalStyles: Record<string, string> | null = null;
 
   @provide({ context: themeContext })
   accessor theme: UITheme | undefined;
@@ -139,7 +139,9 @@ export class UiReceiver extends SignalWatcher(LitElement) {
       }
     }
 
-    return html`<div style=${styleMap(this.colors ? this.colors : {})}>
+    return html`<div
+      style=${styleMap(this.additionalStyles ? this.additionalStyles : {})}
+    >
       ${renderable}
     </div>`;
   }

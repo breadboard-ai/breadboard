@@ -15,8 +15,6 @@ export const type = css`
   .typography-f-s {
     font-family: var(--font-family, var(--default-font-family));
     font-optical-sizing: auto;
-    font-style: normal;
-    font-weight: 400;
     font-variation-settings:
       "slnt" 0,
       "wdth" 100,
@@ -26,8 +24,6 @@ export const type = css`
   .typography-f-sf {
     font-family: var(--font-family-flex, var(--default-font-family));
     font-optical-sizing: auto;
-    font-style: normal;
-    font-weight: 400;
     font-variation-settings:
       "slnt" 0,
       "wdth" 100,
@@ -37,8 +33,6 @@ export const type = css`
   .typography-f-c {
     font-family: var(--font-family-mono, var(--default-font-family));
     font-optical-sizing: auto;
-    font-weight: 400;
-    font-style: normal;
     font-variation-settings:
       "slnt" 0,
       "wdth" 100,
@@ -51,6 +45,14 @@ export const type = css`
       "wdth" 100,
       "GRAD" 0,
       "ROND" 100;
+  }
+
+  .typography-fs-n {
+    font-style: normal;
+  }
+
+  .typography-fs-i {
+    font-style: italic;
   }
 
   .typography-sz-ls {
