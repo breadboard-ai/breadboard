@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ElementType, Orientation, Presentation } from "../types/particles.js";
+import { Presentation } from "../types/particles.js";
 import { TodoItems, TodoList } from "../types/types.js";
 import { SignalMap } from "signal-utils/map";
 
@@ -13,8 +13,8 @@ export { List };
 class List implements TodoList {
   items: TodoItems = new SignalMap();
   presentation: Presentation = {
-    type: ElementType.LIST,
-    orientation: Orientation.VERTICAL,
+    type: "list",
+    orientation: "vertical",
     behaviors: [],
   };
 }

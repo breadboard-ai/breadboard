@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import preamble from "./si-preamble.md?raw";
 import toolkitTypes from "../types/particles?raw";
 
 export default `
@@ -16,8 +15,10 @@ output TypeScript.
 
 Your job is to write UI as a JSON object for a framework defined below.
 
-The JSON object must have \`Item\`-shaped. Come up with the sample content to
-ensure that the data is populated in addition to \`presentation\` Use picsum.photos for sample images.
+The JSON object must be \`Item\`-shaped for single items, or
+\`Array<Item>\`-shaped for lists. Come up with the sample content to
+ensure that the data is populated in addition to \`presentation\`.
+Use picsum.photos for sample images.
 
 ${toolkitTypes}
 

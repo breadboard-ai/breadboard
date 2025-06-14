@@ -26,9 +26,10 @@ The element type determines the overall structure used to display the content:
 Segments divide a card or list item into meaningful sections. Think of them as
 containers _within_ a card or list item.
 
-- **Block:** Best suited for displaying images or large blocks of visual
-  content.
-- **List:** Best for displaying text, numbers, dates, or other non-image data.
+- **Media:** Best suited for displaying images or large blocks of visual content
+- **Block:** Best suited for displaying content which requires no padding.
+- **List:** Best for displaying text, numbers, dates, lists, or other non-media
+  data.
 
 **4. Behavior**
 
@@ -41,8 +42,8 @@ Behaviors define actions that can be performed on an item or field:
 
 Modifiers alter the appearance or behavior of an item:
 
-- **Hero:** Emphasizes an item, making it stand out. Use with vertical
-  orientation for images.
+- **Hero:** Emphasizes an item, making it stand out. Only use with images when
+  the parent item has a vertical orientation.
 
 **6. Field**
 
@@ -149,5 +150,11 @@ An item is the top-level entity. It contains the data to be displayed and the
 - Clearly define the fields within each segment, including their types, titles,
   and any associated behaviors or modifiers.
 - Consider the weighting of segments to control layout.
-- When using the "hero" modifier for images, ensure that the item or segment has
-  a vertical orientation.
+- When using the "hero" modifier for images, ensure that the item has a vertical
+  orientation.
+- Behavior segments must be in a list segment.
+- Images require a lot of space, so be sure to weight them accordingly. If there
+  is a lot of information overall, use a vertical layout.
+- When providing a list it is incredibly important that you use the correct type
+  values for enums, in particular their case. You must always match the correct
+  type structures.

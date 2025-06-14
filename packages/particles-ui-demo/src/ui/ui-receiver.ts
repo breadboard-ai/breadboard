@@ -15,7 +15,6 @@ import { UITheme } from "./theme/default.js";
 
 import "./elements/list.js";
 import { styleMap } from "lit/directives/style-map.js";
-import { ElementType } from "../types/particles.js";
 
 function extractId(evt: Event): string | undefined {
   const item = evt
@@ -130,7 +129,7 @@ export class UiReceiver extends SignalWatcher(LitElement) {
 
     let renderable: HTMLTemplateResult | symbol = nothing;
     switch (this.list?.presentation.type) {
-      case ElementType.LIST: {
+      case "list": {
         renderable = html`<ui-list
           @input=${this.#onInput}
           @click=${this.#onClick}

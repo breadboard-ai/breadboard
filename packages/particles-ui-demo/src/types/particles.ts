@@ -2,10 +2,7 @@
  * Specifies orientation of the layout: horizontal lays out items as columns,
  * vertical lays out items as rows.
  */
-export enum Orientation {
-  HORIZONTAL = "horizontal",
-  VERTICAL = "vertical",
-}
+export type Orientation = "horizontal" | "vertical";
 
 /**
  * Available element types:
@@ -18,21 +15,17 @@ export enum Orientation {
  * When including these you must use the value on the right hand side of the
  * enum
  */
-export enum ElementType {
-  CARD = "card",
-  LIST = "list",
-}
+export type ElementType = "card" | "list";
 
 /**
  * Type of the segment within an item. For pictures use a block type, but for
  * anything else use a list type.
+ *
+ * - media -- The segment contains a single image or video.
+ * - block -- The item doesn't require any spacing or padding.
+ * - list -- A default padded list of items. If in doubt, use this.
  */
-export enum SegmentType {
-  /** Best used with images */
-  BLOCK = "block",
-  /** Best used with any non-image content */
-  LIST = "list",
-}
+export type SegmentType = "media" | "block" | "list";
 
 /**
  * Defines the behavior associated with the item. When the item is "editable",
@@ -109,7 +102,10 @@ export interface Segment {
  */
 export type Presentation =
   | {
-      type: ElementType.LIST;
+      /**
+       * Matches the 'list' ElementType above.
+       */
+      type: "list";
       /**
        * By default render a list with vertical orientation.Only
        * use a horizontal orientation when the content is a carousel.
@@ -121,7 +117,10 @@ export type Presentation =
       behaviors: Behavior[];
     }
   | {
-      type: ElementType.CARD;
+      /**
+       * Matches the 'card' ElementType above.
+       */
+      type: "card";
       /**
        * By default render a card with horizontal orientation. Only
        * use a vertical orientation when there are a lot of segments.
