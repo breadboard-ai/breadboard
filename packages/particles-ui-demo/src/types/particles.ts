@@ -144,6 +144,7 @@ export type Presentation =
 
 /**
  * The item. Contains both item's data and its presentation information.
+ * The data properties  must match the names in `fields` property.
  */
 export type Item = Record<string, unknown> & {
   presentation: Presentation;

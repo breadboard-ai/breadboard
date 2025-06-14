@@ -14,6 +14,7 @@ export default async () => {
     index: "./index.html",
     sandbox: "./sandbox.html",
     demo: "./demo.html",
+    workbench: "./workbench.html",
   };
   return {
     build: {

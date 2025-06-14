@@ -142,8 +142,11 @@ export class GoalDemo extends LitElement {
       uiReceiver.theme = theme;
       uiReceiver.colors = theme.colors;
 
-      this.#output.innerHTML = `<pre>${code}</pre><hr/>`;
+      this.#output.textContent = "";
       this.#output.appendChild(uiReceiver);
+      const pre = document.createElement("pre");
+      pre.textContent = code;
+      this.#output.appendChild(pre);
     } catch (err) {
       console.warn(err);
     }
