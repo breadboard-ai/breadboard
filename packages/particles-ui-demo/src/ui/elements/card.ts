@@ -40,15 +40,6 @@ export class UICard extends SignalWatcher(LitElement) {
       :host([orientation="vertical"]) section {
         grid-template-rows: var(--template, 1fr);
       }
-
-      ::slotted(*) {
-        box-sizing: border-box;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        margin: 0;
-        overflow: hidden;
-      }
     `,
   ];
 

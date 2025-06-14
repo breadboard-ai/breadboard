@@ -84,6 +84,10 @@ export class GoalDemo extends LitElement {
       return;
     }
 
+    if (this.#spec.value.trim() === "") {
+      return;
+    }
+
     this.#processingSpec = true;
     const code = (await createParticles(this.#spec.value))
       .replace(/^```javascript/gim, "")
@@ -131,7 +135,10 @@ export class GoalDemo extends LitElement {
         >
           Particle UI Demo
         </h1>
-        <section id="main" class="layout-flx-vert layout-g-20 layout-flx-1">
+        <section
+          id="main"
+          class="layout-flx-vert layout-al-n layout-g-20 layout-flx-1"
+        >
           <div
             id="outputs"
             class="layout-grd layout-grd-col3 layout-g-8 layout-flx-1"
@@ -199,7 +206,6 @@ export class GoalDemo extends LitElement {
                   "typography-f-c": true,
                 })
               )}
-              style=${styleMap({ "white-space": "pre" })}
             ></div>
           </div>
           <div id="input" class="layout-flx-hor layout-sp-c">

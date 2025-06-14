@@ -59,7 +59,7 @@ export class UISegment extends SignalWatcher(LitElement) {
             class=${classMap(theme.modifiers.cover)}
             alt=${field.title}
           />
-          ${field.title
+          ${field.title && field.modifiers?.includes("hero")
             ? html`<h1
                 slot="headline"
                 class=${classMap(
@@ -103,7 +103,7 @@ export class UISegment extends SignalWatcher(LitElement) {
         </p>`;
       }
 
-      case "longstring": {
+      case "longtext": {
         if (field.behaviors?.includes("editable")) {
           return html`<textarea
             .id=${fieldName}
@@ -154,7 +154,7 @@ export class UISegment extends SignalWatcher(LitElement) {
     const values = this.values;
     const theme = this.theme;
 
-    return html`${repeat(Object.entries(this.fields), ([fieldName, field]) => {
+    return html` ${repeat(Object.entries(this.fields), ([fieldName, field]) => {
       const value = values[fieldName];
       return this.#renderField(fieldName, field, value, theme);
     })}`;

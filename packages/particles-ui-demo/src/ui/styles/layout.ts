@@ -88,6 +88,14 @@ export const layout = css`
     flex-direction: row;
   }
 
+  .layout-al-fs {
+    align-items: flex-start;
+  }
+
+  .layout-as-n {
+    align-self: normal;
+  }
+
   .layout-al-c {
     align-items: center;
   }
