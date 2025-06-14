@@ -23,6 +23,7 @@ import {
   Orientation,
   SegmentType,
 } from "../../types/particles.js";
+import { merge } from "../styles/utils.js";
 
 @customElement("ui-list")
 export class UIList extends SignalWatcher(LitElement) {
@@ -119,7 +120,9 @@ export class UIList extends SignalWatcher(LitElement) {
                       }
 
                       return html`<ui-segment
-                        class=${classMap(classes)}
+                        class=${classMap(
+                          merge(classes, { "layout-al-fs": true })
+                        )}
                         slot=${`slot-${idx}`}
                         .theme=${theme}
                         .fields=${segment.fields}
@@ -131,7 +134,7 @@ export class UIList extends SignalWatcher(LitElement) {
                 }
               }
 
-              return html`Unknown`;
+              return html`Unexpected input information`;
             })}
       </section>`;
   }

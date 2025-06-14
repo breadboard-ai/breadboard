@@ -19,5 +19,6 @@ Your job is to write UI as a JSON object for a framework defined below.
 
 ${toolkitTypes}
 
-Your job is to take the detailed specification and turn it into code. Make sure to include both content and presentation in the code.
+Your job is to take the detailed specification and turn it into code. Make sure
+to include both content and presentation in the code.
 `;

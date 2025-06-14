@@ -47,7 +47,7 @@ function createPresentation(): Presentation {
           description: {
             title: "Describe the thing (optional)",
             behaviors: ["editable"],
-            as: "longstring",
+            as: "longtext",
           },
           dueDate: {
             title: "When is this due?",
