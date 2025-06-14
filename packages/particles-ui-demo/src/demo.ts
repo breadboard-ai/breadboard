@@ -14,6 +14,9 @@ import { merge } from "./ui/styles/utils";
 
 import "./ui/elements/button.js";
 import { createParticles, createSpec } from "./gemini";
+import { List } from "./state/list";
+import { Item } from "./state/item";
+import { UiReceiver } from "./ui/ui-receiver";
 
 @customElement("goal-demo")
 export class GoalDemo extends LitElement {
@@ -82,7 +85,27 @@ export class GoalDemo extends LitElement {
     }
 
     this.#processingSpec = true;
-    this.#output.textContent = await createParticles(this.#spec.value);
+    const code = (await createParticles(this.#spec.value))
+      .replace(/^```javascript/gim, "")
+      .replace(/```$/gim, "");
+
+    try {
+      const data = eval(`${code};invoke()`);
+      const list = new List();
+      const i = Item.from(data);
+      list.items.set(globalThis.crypto.randomUUID(), i);
+
+      const uiReceiver = new UiReceiver();
+      uiReceiver.list = list;
+      uiReceiver.theme = theme;
+      uiReceiver.colors = theme.colors;
+
+      this.#output.innerHTML = `<pre>${code}</pre><hr/>`;
+      this.#output.appendChild(uiReceiver);
+    } catch (err) {
+      console.warn(err);
+    }
+
     this.#processingSpec = false;
   }
 
