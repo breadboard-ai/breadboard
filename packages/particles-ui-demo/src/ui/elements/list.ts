@@ -19,11 +19,15 @@ import "./button.js";
 import "./card.js";
 import "./hero-image.js";
 import "./segment.js";
+import { Orientation } from "../../types/particles.js";
 
 @customElement("ui-list")
 export class UIList extends SignalWatcher(LitElement) {
   @property()
   accessor list: TodoList | null = null;
+
+  @property({ reflect: true, type: String })
+  accessor orientation: Orientation = "vertical";
 
   @consume({ context: themeContext })
   accessor theme: UITheme | undefined;
@@ -39,11 +43,60 @@ export class UIList extends SignalWatcher(LitElement) {
         display: block;
       }
 
-      #items > * {
-        margin-bottom: var(--g-5);
+      #items {
+        overflow: auto;
+        scrollbar-width: none;
+      }
 
-        &:last-of-type {
-          margin-bottom: 0;
+      :host([orientation="vertical"]) {
+        #items {
+          display: flex;
+          flex-direction: column;
+          & > * {
+            margin-bottom: var(--g-5);
+
+            &:last-of-type {
+              margin-bottom: 0;
+            }
+          }
+        }
+      }
+
+      :host([orientation="horizontal"]) {
+        #items {
+          display: flex;
+          flex-direction: row;
+
+          & > * {
+            max-width: 100%;
+            flex: 0 0 auto;
+            margin-right: var(--g-5);
+
+            &:last-of-type {
+              margin-right: 0;
+            }
+          }
+
+          &:has(> :nth-child(2)) {
+            mask-image: linear-gradient(
+              to right,
+              rgba(255, 0, 255, 0) 0%,
+              rgba(255, 0, 255, 0.9) 12px,
+              rgba(255, 0, 255, 1) 16px,
+              rgba(255, 0, 255, 1) calc(100% - 16px),
+              rgba(255, 0, 255, 0) 100%
+            );
+
+            margin-left: -16px;
+            margin-right: -16px;
+
+            padding-left: 16px;
+            padding-right: 16px;
+
+            & > * {
+              max-width: 80%;
+            }
+          }
         }
       }
     `,
@@ -57,7 +110,10 @@ export class UIList extends SignalWatcher(LitElement) {
     const items = this.list.items;
     const theme = this.theme;
 
-    return html`<section class=${classMap(this.theme.components.list)}>
+    return html`<section
+      id="list"
+      class=${classMap(this.theme.components.list)}
+    >
       ${this.list.presentation.behaviors.includes("editable")
         ? html`<div class=${classMap(this.theme.layouts.verticalPadded)}>
             <div class=${classMap(this.theme.layouts.horizontal)}>
@@ -71,7 +127,7 @@ export class UIList extends SignalWatcher(LitElement) {
             </div>
           </div>`
         : nothing}
-      <section id="items">
+      <section id="items" class=${classMap(this.theme.components.listItems)}>
         ${items.size === 0
           ? html`<div>No items</div>`
           : repeat(items, ([id, item]) => {

@@ -22,6 +22,7 @@ import {
   horizontal,
   input,
   list,
+  listItems,
   p,
   segmentHorizontal,
   segmentHorizontalPadded,
@@ -178,6 +179,7 @@ export const theme: UITheme = {
     list: merge(list, {
       "color-bgc-s10": true,
     }),
+    listItems,
     segmentVertical,
     segmentVerticalPadded,
     segmentHorizontal,
