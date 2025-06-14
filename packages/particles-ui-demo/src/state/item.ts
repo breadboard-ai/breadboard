@@ -98,7 +98,7 @@ class Item implements TodoItem {
     newItem.done = !!item.done;
     newItem.description = item.description;
     newItem.dueDate = item.dueDate;
-    newItem.presentation = item.presentation;
+    newItem.presentation = item.presentation || createPresentation();
     return newItem;
   }
 }
