@@ -56,6 +56,44 @@ export class GoalDemo extends LitElement {
         margin: 0 auto;
         overflow: auto;
       }
+
+      #outputs {
+        position: relative;
+
+        &::before {
+          content: "Spec";
+          text-transform: uppercase;
+          font-size: 11px;
+          font-family: var(--font-family-mono);
+          background: var(--n-98);
+          color: var(--n-60);
+          position: absolute;
+          top: -32px;
+          left: 10px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          padding: 0 var(--g-5);
+          border-radius: var(--g-1);
+        }
+
+        &::after {
+          content: "Output";
+          text-transform: uppercase;
+          font-size: 11px;
+          font-family: var(--font-family-mono);
+          background: var(--n-98);
+          color: var(--n-60);
+          position: absolute;
+          top: -32px;
+          left: calc(53% + 32px);
+          height: 24px;
+          display: flex;
+          align-items: center;
+          padding: 0 var(--g-5);
+          border-radius: var(--g-1);
+        }
+      }
     `,
   ];
 
@@ -141,7 +179,7 @@ export class GoalDemo extends LitElement {
         >
           <div
             id="outputs"
-            class="layout-grd layout-grd-col3 layout-g-8 layout-flx-1"
+            class="layout-grd layout-grd-col3 layout-g-8 layout-flx-1 layout-mt-6"
             style=${styleMap({
               "grid-template-columns": "1fr min-content 1fr",
             })}

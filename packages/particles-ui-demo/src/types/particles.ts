@@ -130,7 +130,9 @@ export type Presentation =
       /**
        * Used to logically separate areas of a card into their own space.
        * Behaviors should always go into their own segment, and that segment
-       * should always be the final one in the list.
+       * should always be the final one in the list. Wherever possible you
+       * should group fields together and keep the number of segments to an
+       * absolute minimum.
        */
       segments: Segment[];
       /**
