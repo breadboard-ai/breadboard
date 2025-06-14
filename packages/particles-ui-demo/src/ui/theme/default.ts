@@ -143,7 +143,7 @@ const input = {
   "layout-pb-2": true,
   "border-br-6": true,
   "border-bw-1": true,
-  "border-bc-n80": true,
+  "color-bc-n70": true,
   "border-bs-s": true,
   "layout-as-n": true,
 };

@@ -213,7 +213,7 @@ export class GoalDemo extends LitElement {
               name="goal"
               type="text"
               id="goal"
-              .value=${"Write UI for an item in a TODO list with pictures"}
+              .value=${'Write UI for a single editable item in an editable TODO list. The item must have a picture, title, description, due date and a "Delete" action.'}
               ?disabled=${working}
               class=${classMap(
                 merge(this.theme.elements.input, {
