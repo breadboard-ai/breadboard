@@ -8,7 +8,7 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { css, html, HTMLTemplateResult, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { styles } from "./styles/index.js";
-import { GeneratorProxy, TodoList } from "../types/types";
+import { GeneratorProxy, ItemList } from "../types/types";
 import { themeContext } from "./context/theme.js";
 import { provide } from "@lit/context";
 import type { UITheme } from "./theme/theme.js";
@@ -58,7 +58,7 @@ export class UiReceiver extends SignalWatcher(LitElement) {
   accessor channel: GeneratorProxy | null = null;
 
   @property()
-  accessor list: TodoList | null = null;
+  accessor list: ItemList | null = null;
 
   @property()
   accessor additionalStyles: Record<string, string> | null = null;
@@ -116,7 +116,8 @@ export class UiReceiver extends SignalWatcher(LitElement) {
         if (!item) {
           break;
         }
-        this.channel?.requestUpdateField(id, "done", !item.done);
+        const done = !!item.data?.["done"];
+        this.channel?.requestUpdateField(id, "done", !done);
         break;
       }
     }

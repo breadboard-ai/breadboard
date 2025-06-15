@@ -5,7 +5,6 @@
  */
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { TodoItem, TodoList } from "../../types/types.js";
 import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
 import { SignalWatcher } from "@lit-labs/signals";
@@ -20,11 +19,12 @@ import "./card.js";
 import "./hero-image.js";
 import "./segment.js";
 import { Orientation } from "../../types/particles.js";
+import { ItemList } from "../../types/types.js";
 
 @customElement("ui-list")
 export class UIList extends SignalWatcher(LitElement) {
   @property()
-  accessor list: TodoList | null = null;
+  accessor list: ItemList | null = null;
 
   @property({ reflect: true, type: String })
   accessor orientation: Orientation = "vertical";
@@ -133,12 +133,13 @@ export class UIList extends SignalWatcher(LitElement) {
           : repeat(items, ([id, item]) => {
               switch (item.presentation.type) {
                 case "card": {
+                  const done = !!item.data?.["done"];
                   return html`<ui-card
                     class=${classMap(theme.components.card)}
                     data-id=${id}
                     .segments=${item.presentation.segments}
                     .orientation=${item.presentation.orientation}
-                    .disabled=${item.done}
+                    .disabled=${done}
                   >
                     ${repeat(item.presentation.segments, (segment, idx) => {
                       let classes = {};
@@ -162,8 +163,8 @@ export class UIList extends SignalWatcher(LitElement) {
 
                       const values: Record<string, unknown> = {};
                       for (const fieldName of Object.keys(segment.fields)) {
-                        const key = fieldName as keyof TodoItem;
-                        const value = item[key];
+                        const key = fieldName;
+                        const value = item.data?.[key];
                         if (typeof value === "undefined") {
                           continue;
                         }
@@ -180,7 +181,7 @@ export class UIList extends SignalWatcher(LitElement) {
                         .theme=${theme}
                         .fields=${segment.fields}
                         .values=${values}
-                        .disabled=${item.done}
+                        .disabled=${done}
                       ></ui-segment>`;
                     })}
                   </ui-card>`;

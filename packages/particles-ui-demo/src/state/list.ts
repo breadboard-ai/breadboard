@@ -5,13 +5,13 @@
  */
 
 import { Presentation } from "../types/particles.js";
-import { TodoItems, TodoList } from "../types/types.js";
+import { ItemList, ItemState } from "../types/types.js";
 import { SignalMap } from "signal-utils/map";
 
 export { List };
 
-class List implements TodoList {
-  items: TodoItems = new SignalMap();
+class List implements ItemList {
+  items = new SignalMap<string, ItemState>();
   presentation: Presentation = {
     type: "list",
     orientation: "vertical",

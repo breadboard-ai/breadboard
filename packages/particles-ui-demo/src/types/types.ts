@@ -7,21 +7,19 @@
 import type { DataParticle, TextParticle } from "@breadboard-ai/particles";
 import { Presentation } from "./particles";
 
-export interface TodoItem {
-  title: string;
-  done: boolean;
-  description?: string;
-  dueDate?: Date;
-  presentation: Presentation;
-}
+export type ItemData = Record<string, string | boolean | Date>;
 
-export type TodoList = {
-  items: TodoItems;
+export type ItemState = {
+  data: ItemData | undefined;
+  presentation: Presentation;
+};
+
+export type ItemList = {
+  items: Map<string, ItemState>;
   presentation: Presentation;
 };
 
 export type TodoItemListTitle = string;
-export type TodoItems = Map<TodoItemListTitle, TodoItem>;
 
 // This is a hack for simplicity.
 // TODO: Make this a series of updates, rather than snapshot-based.
@@ -36,13 +34,13 @@ export type SerializedGroupParticle = [
 ][];
 
 export type SerializedTodoList = {
-  items: [id: TodoItemListTitle, item: TodoItem][];
+  items: [id: TodoItemListTitle, item: ItemList][];
 };
 
 export type SuipUpdateCreate = {
   create: {
     path: string[];
-    item: TodoItem;
+    item: ItemState;
   };
 };
 
