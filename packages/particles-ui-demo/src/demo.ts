@@ -211,6 +211,11 @@ export class GoalDemo extends LitElement {
           "./ui/theme/default/dark.js"
         );
         theme = loadedTheme;
+      } else if (params.get("alternative")) {
+        const { theme: loadedTheme } = await import(
+          "./ui/theme/alternative/dark.js"
+        );
+        theme = loadedTheme;
       } else {
         const { theme: loadedTheme } = await import(
           "./ui/theme/default/light.js"

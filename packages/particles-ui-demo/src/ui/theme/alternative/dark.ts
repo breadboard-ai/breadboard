@@ -5,7 +5,7 @@
  */
 
 import { ColorPalettes } from "../../../types/colors";
-import { createThemeStyles } from "../../styles/utils";
+import { createThemeStyles, merge } from "../../styles/utils";
 import { UITheme } from "../theme";
 
 export const input = {
@@ -94,10 +94,10 @@ export const hero = {
 export const headline = {
   "typography-f-sf": true,
   "typography-fs-i": true,
-  "typography-w-500": true,
-  "typography-sz-dl": true,
-  "layout-r-3": true,
-  "layout-b-3": true,
+  "typography-w-200": true,
+  "typography-sz-dm": true,
+  "layout-l-5": true,
+  "layout-b-5": true,
   "color-c-n100": true,
   "layout-mb-0": true,
   "layout-pos-a": true,
@@ -108,7 +108,6 @@ export const disabled = {
 };
 
 export const card = {
-  "border-br-24": true,
   "color-bgc-s80": true,
 };
 
@@ -136,6 +135,10 @@ export const vertical = {
 export const horizontal = {
   "layout-flx-hor": true,
   "layout-g-2": true,
+};
+
+export const listItems = {
+  "border-br-1": true,
 };
 
 export const segmentVertical = {
@@ -289,21 +292,78 @@ const palette: ColorPalettes = {
   },
 } as ColorPalettes;
 
+// export const theme: UITheme = {
+//   elements: {
+//     input,
+//     textarea,
+//     button,
+//     h1,
+//     h2,
+//     h3,
+//     body,
+//     p,
+//   },
+//   components: {
+//     card,
+//     heroImage,
+//     list,
+//     segmentVertical,
+//     segmentVerticalPadded,
+//     segmentHorizontal,
+//     segmentHorizontalPadded,
+//   },
+//   layouts: {
+//     vertical,
+//     verticalPadded: {
+//       ...vertical,
+//       "layout-p-3": true,
+//     },
+//     horizontal,
+//     horizontalPadded: {
+//       ...horizontal,
+//       "layout-p-3": true,
+//     },
+//   },
+//   modifiers: {
+//     hero,
+//     headline,
+//     disabled,
+//     cover,
+//     borderTop: {
+//       "border-bw-0": true,
+//       "border-btw-1": true,
+//       "color-bc-n90": true,
+//       "border-bs-s": true,
+//     },
+//   },
+//   additionalStyles: {
+//     ...createThemeStyles(palette),
+//     "--font-family": '"IBM Plex Serif"',
+//     "--font-family-flex": '"IBM Plex Serif"',
+//     "--font-family-code": '"IBM Plex Serif"',
+//   },
+// };
+
 export const theme: UITheme = {
   elements: {
-    input,
-    textarea,
-    button,
-    h1,
-    h2,
-    h3,
-    body,
-    p,
+    input: merge(input, { "color-c-n100": true, "color-bgc-s30": true }),
+    textarea: merge(textarea, { "color-c-n100": true, "color-bgc-s30": true }),
+    button: merge(button, { "color-c-n100": true, "color-bgc-p40": true }),
+    h1: merge(h1, { "color-c-n100": true }),
+    h2: merge(h2, { "color-c-n100": true }),
+    h3: merge(h3, { "color-c-n100": true }),
+    body: merge(body, { "color-c-n100": true }),
+    p: merge(p, { "color-c-n100": true }),
   },
   components: {
-    card,
+    card: merge(card, {
+      "color-bgc-s20": true,
+    }),
     heroImage,
-    list,
+    list: merge(list, {
+      "color-bgc-s10": true,
+    }),
+    listItems,
     segmentVertical,
     segmentVerticalPadded,
     segmentHorizontal,
@@ -333,6 +393,7 @@ export const theme: UITheme = {
       "border-bs-s": true,
     },
   },
+
   additionalStyles: {
     ...createThemeStyles(palette),
     "--font-family": '"IBM Plex Serif"',
