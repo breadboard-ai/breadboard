@@ -7,7 +7,7 @@
 import { Presentation } from "../types/particles.js";
 
 import { signal } from "signal-utils";
-import { TodoItem } from "../types/types.js";
+import { ItemData, ItemState } from "../types/types.js";
 
 export { Item };
 
@@ -68,32 +68,19 @@ function createPresentation(): Presentation {
   };
 }
 
-class Item implements TodoItem {
+class Item implements ItemState {
   @signal
-  accessor title: string;
-
-  @signal
-  accessor done: boolean = false;
-
-  @signal
-  accessor description: string | undefined = undefined;
-
-  @signal
-  accessor dueDate: Date | undefined = undefined;
+  accessor data: ItemData | undefined = undefined;
 
   @signal
   accessor presentation: Presentation = createPresentation();
 
-  constructor(title: string) {
-    this.title = title;
-  }
-
-  static from(item: TodoItem): Item {
-    const newItem = new Item(item.title);
-    newItem.done = !!item.done;
-    newItem.description = item.description;
-    newItem.dueDate = item.dueDate;
-    newItem.presentation = item.presentation || createPresentation();
+  static from(item: ItemData & { presentation: Presentation }): ItemState {
+    const newItem = new Item();
+    const { presentation, ...data } = item;
+    console.log("ITEM", item);
+    newItem.presentation = presentation || createPresentation();
+    newItem.data = data;
     return newItem;
   }
 }
