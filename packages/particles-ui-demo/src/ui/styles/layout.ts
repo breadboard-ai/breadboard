@@ -88,6 +88,10 @@ export const layout = css`
     flex-direction: row;
   }
 
+  .layout-fw-w {
+    flex-wrap: wrap;
+  }
+
   .layout-al-fs {
     align-items: flex-start;
   }

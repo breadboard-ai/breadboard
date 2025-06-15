@@ -126,9 +126,10 @@ An item is the top-level entity. It contains the data to be displayed and the
       some text.
     - The item is a card that has horizontal orientation.
     - It has two segments.
-    - The first segment has a vertical orientation, and contains:
+    - The first segment has a weight of 1.5 and vertical orientation, and
+      contains:
       - an "image" field with a "src" attribute.
-    - The second segment has a vertical orientation
+    - The second segment has a weight of 3 and vertical orientation
       - a "text" field that acts a headline and which is "text" with the "hero"
         modifier.
       - a "longtext" field which describes the content in more detail.
@@ -138,7 +139,7 @@ An item is the top-level entity. It contains the data to be displayed and the
     - What does it represent: UI for editing picture caption.
     - The item is a card that has vertical orientation.
     - It has one segment.
-    - This segment has a vertical orientation, and contains:
+    - This segment has a weight of 1 and vertical orientation, and it contains:
       - an "image" field that is an "image" with a "src" attribute and a "hero"
         modifier. The image's "title" is that of the item.
       - a "text" field that is "text" with the title "Caption" and "editable"

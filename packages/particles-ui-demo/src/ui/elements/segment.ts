@@ -140,6 +140,35 @@ export class UISegment extends SignalWatcher(LitElement) {
         </p>`;
       }
 
+      case "number": {
+        if (field.behaviors?.includes("editable")) {
+          return html`<input
+            .id=${fieldName}
+            .name=${fieldName}
+            .value=${value ?? ""}
+            .placeholder=${field.title ?? "Enter a value"}
+            .type="number"
+            ?disabled=${this.disabled}
+            class=${classMap(
+              merge(
+                theme.elements.input,
+                field.modifiers?.includes("hero") ? theme.modifiers.hero : {}
+              )
+            )}
+          />`;
+        }
+        return html`<p
+          class=${classMap(
+            merge(
+              theme.elements.p,
+              field.modifiers?.includes("hero") ? theme.modifiers.hero : {}
+            )
+          )}
+        >
+          ${value}
+        </p>`;
+      }
+
       case "behavior":
         return html`<ui-button
           class=${classMap(theme.elements.button)}

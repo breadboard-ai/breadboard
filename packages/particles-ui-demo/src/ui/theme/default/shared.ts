@@ -136,6 +136,7 @@ export const vertical = {
 
 export const horizontal = {
   "layout-flx-hor": true,
+  "layout-fw-w": true,
   "layout-g-2": true,
 };
 
