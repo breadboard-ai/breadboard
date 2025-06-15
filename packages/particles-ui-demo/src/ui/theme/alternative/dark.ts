@@ -134,6 +134,7 @@ export const vertical = {
 
 export const horizontal = {
   "layout-flx-hor": true,
+  "layout-fw-w": true,
   "layout-g-2": true,
 };
 
@@ -291,58 +292,6 @@ const palette: ColorPalettes = {
     e0: "#000000",
   },
 } as ColorPalettes;
-
-// export const theme: UITheme = {
-//   elements: {
-//     input,
-//     textarea,
-//     button,
-//     h1,
-//     h2,
-//     h3,
-//     body,
-//     p,
-//   },
-//   components: {
-//     card,
-//     heroImage,
-//     list,
-//     segmentVertical,
-//     segmentVerticalPadded,
-//     segmentHorizontal,
-//     segmentHorizontalPadded,
-//   },
-//   layouts: {
-//     vertical,
-//     verticalPadded: {
-//       ...vertical,
-//       "layout-p-3": true,
-//     },
-//     horizontal,
-//     horizontalPadded: {
-//       ...horizontal,
-//       "layout-p-3": true,
-//     },
-//   },
-//   modifiers: {
-//     hero,
-//     headline,
-//     disabled,
-//     cover,
-//     borderTop: {
-//       "border-bw-0": true,
-//       "border-btw-1": true,
-//       "color-bc-n90": true,
-//       "border-bs-s": true,
-//     },
-//   },
-//   additionalStyles: {
-//     ...createThemeStyles(palette),
-//     "--font-family": '"IBM Plex Serif"',
-//     "--font-family-flex": '"IBM Plex Serif"',
-//     "--font-family-code": '"IBM Plex Serif"',
-//   },
-// };
 
 export const theme: UITheme = {
   elements: {
