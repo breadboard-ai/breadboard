@@ -23,7 +23,10 @@ function isCtrlCommand(evt: PointerEvent | KeyboardEvent | WheelEvent) {
   return isMac ? evt.metaKey : evt.ctrlKey;
 }
 
+const GOAL_KEY = "particle-demo-goal";
 const SPEC_KEY = "particle-demo-spec";
+const DEFAULT_GOAL =
+  'Write UI for a list of editable items in an editable TODO list. Each item in the list must have a picture, title, description, due date and a "Delete" action.';
 
 @customElement("goal-demo")
 export class GoalDemo extends LitElement {
@@ -67,6 +70,29 @@ export class GoalDemo extends LitElement {
       #outputs {
         position: relative;
 
+        details {
+          border-radius: var(--g-3);
+          background: var(--n-98);
+          width: 100%;
+          overflow: scroll;
+          color: var(--n-40);
+
+          & pre {
+            padding: var(--g-2);
+            font-size: 12px;
+            margin: 0;
+          }
+
+          & summary {
+            cursor: pointer;
+            user-select: none;
+            padding: var(--g-3);
+            font-size: 12px;
+            background: var(--n-95);
+            border-radius: var(--g-3);
+          }
+        }
+
         &::before {
           content: "Spec";
           text-transform: uppercase;
@@ -105,11 +131,16 @@ export class GoalDemo extends LitElement {
   ];
 
   #lastSpec: string | null = null;
+  #lastGoal: string | null = null;
   connectedCallback(): void {
     super.connectedCallback();
     const lastSpec = localStorage.getItem(SPEC_KEY);
     if (lastSpec !== null) {
       this.#lastSpec = lastSpec;
+    }
+    const lastGoal = localStorage.getItem(GOAL_KEY);
+    if (lastGoal !== null) {
+      this.#lastGoal = lastGoal;
     }
   }
 
@@ -193,9 +224,14 @@ export class GoalDemo extends LitElement {
 
       this.#output.textContent = "";
       this.#output.appendChild(uiReceiver);
+      const details = document.createElement("details");
+      const summary = document.createElement("summary");
+      summary.textContent = "Spec output";
+      details.appendChild(summary);
       const pre = document.createElement("pre");
       pre.textContent = code;
-      this.#output.appendChild(pre);
+      details.appendChild(pre);
+      this.#output.appendChild(details);
     } catch (err) {
       console.warn(err);
     }
@@ -206,6 +242,11 @@ export class GoalDemo extends LitElement {
   #persistSpec(spec: string) {
     this.#lastSpec = spec;
     localStorage.setItem(SPEC_KEY, spec);
+  }
+
+  #persistGoal(goal: string) {
+    this.#lastGoal = goal;
+    localStorage.setItem(GOAL_KEY, goal);
   }
 
   render() {
@@ -219,7 +260,7 @@ export class GoalDemo extends LitElement {
       style=${styleMap(this.additionalStyles ? this.additionalStyles : {})}
       class="color-bgc-n100 typography-f-s layout-el-cv behavior-o-a"
     >
-      <div class="layout-p-16 layout-flx-vert layout-el-cv">
+      <div class="layout-p-8 layout-flx-vert layout-el-cv">
         <h1
           class=${classMap(
             merge(this.theme.elements.h1, {
@@ -232,7 +273,7 @@ export class GoalDemo extends LitElement {
         </h1>
         <section
           id="main"
-          class="layout-flx-vert layout-al-n layout-g-20 layout-flx-1"
+          class="layout-flx-vert layout-al-n layout-g-14 layout-flx-1"
         >
           <div
             id="outputs"
@@ -322,7 +363,7 @@ export class GoalDemo extends LitElement {
               type="text"
               id="goal"
               autofocus
-              .value=${'Write UI for a list of editable items in an editable TODO list. Each item in the list must have a picture, title, description, due date and a "Delete" action.'}
+              .value=${this.#lastGoal ?? DEFAULT_GOAL}
               ?disabled=${working}
               class=${classMap(
                 merge(this.theme.elements.input, {
@@ -341,11 +382,18 @@ export class GoalDemo extends LitElement {
               )}
               style=${styleMap({ "max-width": "800px" })}
               autocomplete="off"
-              placeholder="What is your goal?"
+              placeholder="What would you like to create?"
               @keydown=${async (evt: KeyboardEvent) => {
                 if (evt.key === "Enter") {
                   await this.#processGoal();
                 }
+              }}
+              @input=${(evt: InputEvent) => {
+                if (!(evt.target instanceof HTMLInputElement)) {
+                  return;
+                }
+
+                this.#persistGoal(evt.target.value);
               }}
             />
             <ui-button
