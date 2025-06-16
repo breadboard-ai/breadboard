@@ -980,6 +980,8 @@ export class Template extends LitElement implements AppTemplate {
     return html`<bb-header
       .progress=${progress}
       .replayActive=${true}
+      .menuActive=${true}
+      .appTitle=${this.graph?.title}
     ></bb-header>`;
   }
 

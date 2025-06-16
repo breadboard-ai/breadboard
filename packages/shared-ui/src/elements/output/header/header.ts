@@ -3,11 +3,17 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css } from "lit";
-import { customElement, property } from "lit/decorators.js";
+
+import * as StringsHelper from "../../../strings/helper.js";
+const Strings = StringsHelper.forSection("Global");
+
+import { LitElement, html, css, nothing } from "lit";
+import { customElement, property, query } from "lit/decorators.js";
 import { icons } from "../../../styles/icons";
 import { styleMap } from "lit/directives/style-map.js";
-import { StopEvent } from "../../../events/events";
+import { ShareRequestedEvent, StopEvent } from "../../../events/events";
+import { SideNav } from "./side-nav";
+import { type } from "../../../styles/host/type";
 
 @customElement("bb-header")
 export class Header extends LitElement {
@@ -20,8 +26,18 @@ export class Header extends LitElement {
   @property()
   accessor replayActive = false;
 
+  @property()
+  accessor appTitle: string | null = null;
+
+  @property()
+  accessor appURL: string | null = null;
+
+  @query("#side-nav")
+  accessor #sideNav: SideNav | null = null;
+
   static styles = [
     icons,
+    type,
     css`
       :host {
         display: flex;
@@ -32,6 +48,8 @@ export class Header extends LitElement {
         padding: 0 var(--bb-grid-size-4);
         position: relative;
         flex: 0 0 auto;
+        z-index: 1;
+        color: var(--p-40, var(--bb-neutral-900));
       }
 
       #menu,
@@ -87,6 +105,50 @@ export class Header extends LitElement {
           }
         }
       }
+
+      ul {
+        padding: 0;
+        margin: 0;
+        list-style: none;
+
+        li {
+          height: var(--bb-grid-size-13);
+          display: flex;
+          align-items: center;
+          margin-right: var(--bb-grid-size-6);
+
+          .g-icon {
+            margin-right: var(--bb-grid-size-2);
+          }
+        }
+
+        button,
+        a {
+          background: transparent;
+          border: none;
+          display: flex;
+          align-items: center;
+          height: var(--bb-grid-size-10);
+          text-decoration: none;
+          color: var(--p-40, var(--bb-neutral-800));
+          transition: color 0.2s cubic-bezier(0, 0, 0.3, 1);
+          padding-left: var(--bb-grid-size-6);
+
+          &:hover,
+          &:focus {
+            cursor: pointer;
+            color: var(--p-20, var(--bb-neutral-900));
+          }
+
+          > * {
+            pointer-events: none;
+          }
+
+          .open-in-new {
+            margin-left: var(--bb-grid-size-2);
+          }
+        }
+      }
     `,
   ];
 
@@ -95,7 +157,11 @@ export class Header extends LitElement {
         id="menu"
         ?disabled=${!this.menuActive}
         @click=${() => {
-          // TODO
+          if (!this.#sideNav) {
+            return;
+          }
+
+          this.#sideNav.active = true;
         }}
       >
         <span class="g-icon">menu</span>
@@ -116,6 +182,60 @@ export class Header extends LitElement {
         }}
       >
         <span class="g-icon">replay</span>
-      </button>`;
+      </button>
+      <bb-sidenav
+        id="side-nav"
+        @bboverlaydismissed=${() => {
+          if (!this.#sideNav) {
+            return;
+          }
+
+          this.#sideNav.active = false;
+        }}
+        >${this.appTitle
+          ? html`<h1 class="md-headline-small sans-flex round" slot="title">
+              ${this.appTitle}
+            </h1>`
+          : nothing}
+
+        <ul slot="top">
+          <li>
+            <button
+              class="w-400 round md-title-medium"
+              @click=${() => {
+                if (!this.#sideNav) {
+                  return;
+                }
+
+                this.#sideNav.active = false;
+                this.dispatchEvent(new ShareRequestedEvent());
+              }}
+            >
+              <span class="g-icon filled round">link</span>Share
+            </button>
+          </li>
+        </ul>
+
+        <ul slot="bottom">
+          <li>
+            <a href="/policy" class="w-400 round md-title-medium"
+              ><span class="g-icon filled round w-500">shield_person</span
+              >Privacy & Terms<span
+                class="g-icon filled round w-500 open-in-new"
+                >open_in_new</span
+              ></a
+            >
+          </li>
+          <li>
+            <a href="/" class="w-400 round md-title-medium"
+              ><span class="g-icon filled round w-500">gallery_thumbnail</span
+              >View more ${Strings.from("APP_NAME")} apps<span
+                class="g-icon filled round w-500 open-in-new"
+                >open_in_new</span
+              ></a
+            >
+          </li>
+        </ul>
+      </bb-sidenav>`;
   }
 }
