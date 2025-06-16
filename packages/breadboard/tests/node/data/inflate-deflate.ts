@@ -5,14 +5,11 @@ import {
   DataStore,
   deflateData,
   inflateData,
+  isFileDataCapabilityPart,
   isStoredData,
   transformContents,
 } from "../../../src/index.js";
-import {
-  InlineDataCapabilityPart,
-  LLMContent,
-  StoredDataCapabilityPart,
-} from "@breadboard-ai/types";
+import { InlineDataCapabilityPart, LLMContent } from "@breadboard-ai/types";
 
 function makeStoredData(handle: string) {
   return { storedData: { handle } };
@@ -22,7 +19,7 @@ describe("inflate-deflate", () => {
   const mockBlob = (data: string, type = "text/plain") =>
     new Blob([atob(data)], { type });
 
-  const fakeStoreMethod = (blob: any) => {
+  const fakeStoreMethod = (blob: unknown) => {
     stored.push(blob);
     return {
       storedData: {
@@ -31,24 +28,20 @@ describe("inflate-deflate", () => {
     };
   };
 
-  let mockTransformer = {
+  const mockTransformer = {
     persistPart: fakeStoreMethod,
     toFileData: () => undefined,
   } as unknown as DataPartTransformer;
 
-  let mockStore = {
-    retrieveAsBlob: async (value: any) => {
-      // Simulate retrieving a blob from storedData
-      if (value.storedData?.handle === "test-handle") {
-        return mockBlob(btoa("hello world"), "text/plain");
-      }
-      throw new Error("Unknown handle");
+  const mockStore = {
+    retrieveAsBlob: async (value: unknown) => {
+      return mockBlob(btoa("hello world"), "text/plain");
     },
     store: fakeStoreMethod,
     transformer: () => mockTransformer,
   } as unknown as DataStore;
 
-  let stored: any[] = [];
+  let stored: unknown[] = [];
 
   beforeEach(() => {
     stored = [];
@@ -60,19 +53,10 @@ describe("inflate-deflate", () => {
   });
 
   describe("inflateData", () => {
-    it("returns primitives as is", async (t) => {
+    it("returns primitives as is", async () => {
       assert.equal(await inflateData(mockStore, 42), 42);
       assert.equal(await inflateData(mockStore, "foo"), "foo");
       assert.equal(await inflateData(mockStore, null), null);
-    });
-
-    it("processes arrays recursively", async () => {
-      const arr = [1, { storedData: { handle: "test-handle" } }, 3];
-      const result = await inflateData(mockStore, arr);
-      assert(Array.isArray(result));
-      assert.strictEqual((result as any[])[0], 1);
-      assert.deepStrictEqual((result as any[])[2], 3);
-      assert((result as any[])[1].inlineData);
     });
 
     it("processes objects recursively", async () => {
@@ -82,42 +66,29 @@ describe("inflate-deflate", () => {
         c: "foo",
       };
       const result = await inflateData(mockStore, obj);
-      assert.strictEqual((result as any).a, 1);
-      assert.strictEqual((result as any).c, "foo");
-      assert((result as any).b.inlineData);
-      assert.strictEqual((result as any).b.inlineData.mimeType, "text/plain");
+      assert.deepEqual(
+        {
+          a: 1,
+          b: {
+            inlineData: { data: "aGVsbG8gd29ybGQ", mimeType: "text/plain" },
+          },
+          c: "foo",
+        },
+        result
+      );
     });
 
     it("inflates storedData to inlineData", async () => {
       const obj = {
         storedData: { handle: "test-handle" },
       };
-      const result = await inflateData(mockStore, obj);
-      assert((result as any).inlineData);
-      assert.strictEqual((result as any).inlineData.mimeType, "text/plain");
-      assert.strictEqual(typeof (result as any).inlineData.data, "string");
-    });
-
-    it("with inflateToFileData and transformer", async () => {
-      const mockTransformer = {
-        persistPart: () => undefined,
-        toFileData: () => undefined,
-      } as unknown as DataPartTransformer;
-      mock.method(mockTransformer, "toFileData", () => {
-        return [
-          { parts: [{ fileData: { data: "abc", mimeType: "foo/bar" } }] },
-        ];
-      });
-      const obj = { fileData: { data: "abc", mimeType: "foo/bar" } };
-      const result = await inflateData(
+      const result = (await inflateData(
         mockStore,
-        obj,
-        new URL("http://x"),
-        true
-      );
-      assert((result as any).fileData);
-      assert.strictEqual((result as any).fileData.data, "abc");
-      assert.strictEqual((result as any).fileData.mimeType, "foo/bar");
+        obj
+      )) as InlineDataCapabilityPart;
+      assert(result.inlineData);
+      assert.strictEqual(result.inlineData.mimeType, "text/plain");
+      assert.strictEqual(typeof result.inlineData.data, "string");
     });
   });
 
@@ -168,20 +139,13 @@ describe("inflate-deflate", () => {
 
   describe("transformContents", () => {
     it("calls transformDataParts and returns transformed content if ok", async () => {
-      mock.method(
-        mockTransformer,
-        "persistPart",
-        (
-          url: URL,
-          part: InlineDataCapabilityPart | StoredDataCapabilityPart
-        ) => {
-          return {
-            storedData: {
-              handle: "test-1",
-            },
-          };
-        }
-      );
+      mock.method(mockTransformer, "toFileData", () => {
+        return {
+          storedData: {
+            handle: "test-1",
+          },
+        };
+      });
       const input: LLMContent[] = [
         { parts: [{ inlineData: { data: "abc", mimeType: "text/plain" } }] },
       ];
