@@ -105,9 +105,7 @@ export async function create(config: RuntimeConfig): Promise<{
   const sideboards = createSideboardRuntimeProvider(
     graphStoreArgs,
     servers,
-    config.tokenVendor,
-    config.settings,
-    config.proxy
+    config
   ).createSideboardRuntime();
 
   const state = new StateManager(graphStore, sideboards, servers);

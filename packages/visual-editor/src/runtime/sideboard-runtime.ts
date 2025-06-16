@@ -17,7 +17,7 @@ import {
   RunConfig,
   RunnerErrorEvent,
 } from "@google-labs/breadboard/harness";
-import { SideboardRuntimeProvider } from "./types";
+import { RuntimeConfig, SideboardRuntimeProvider } from "./types";
 import {
   assetsFromGraphDescriptor,
   BoardServer,
@@ -60,18 +60,17 @@ const EVENT_DICT = {
 function createSideboardRuntimeProvider(
   args: GraphStoreArgs,
   servers: BoardServer[],
-  tokenVendor: TokenVendor,
-  settings: SettingsStore,
-  proxy?: HarnessProxyConfig[]
+  config: RuntimeConfig
 ): SideboardRuntimeProvider {
   return {
     createSideboardRuntime() {
       return new SideboardRuntimeImpl(
         args,
         servers,
-        tokenVendor!,
-        settings,
-        proxy
+        config.tokenVendor!,
+        config.settings,
+        config.proxy,
+        config.fileSystem
       );
     },
   };
@@ -93,7 +92,8 @@ class SideboardRuntimeImpl
     private readonly servers: BoardServer[],
     public readonly tokenVendor: TokenVendor,
     public readonly settings: SettingsStore,
-    private readonly proxy?: HarnessProxyConfig[]
+    private readonly proxy: HarnessProxyConfig[] | undefined,
+    fileSystem: FileSystem | undefined
   ) {
     super();
     this.#dataStore = new BoardServerAwareDataStore(
@@ -103,7 +103,7 @@ class SideboardRuntimeImpl
     );
     this.#dataStore.createGroup("sideboard");
     this.#fileSystem = createFileSystem({
-      env: [],
+      env: fileSystem?.env() || [],
       local: createFileSystemBackend(createEphemeralBlobStore()),
     });
     this.#graphStore = createGraphStore({
