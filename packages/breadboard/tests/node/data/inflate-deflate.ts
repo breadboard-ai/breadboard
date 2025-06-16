@@ -7,9 +7,14 @@ import {
   inflateData,
   isFileDataCapabilityPart,
   isStoredData,
+  purgeStoredDataInMemoryValues,
   transformContents,
 } from "../../../src/index.js";
-import { InlineDataCapabilityPart, LLMContent } from "@breadboard-ai/types";
+import {
+  GraphDescriptor,
+  InlineDataCapabilityPart,
+  LLMContent,
+} from "@breadboard-ai/types";
 
 function makeStoredData(handle: string) {
   return { storedData: { handle } };
@@ -156,6 +161,29 @@ describe("inflate-deflate", () => {
         new URL("http://test.com")
       )) as LLMContent[];
       assert(isStoredData(result[0].parts[0]));
+    });
+  });
+
+  describe("purgeStoredDataInMemoryValues", () => {
+    it("purges", async () => {
+      const obj = {
+        val: {
+          storedData: {
+            handle: "456",
+          },
+          data: 123,
+        },
+      };
+      const result = await purgeStoredDataInMemoryValues(
+        obj as unknown as GraphDescriptor
+      );
+      assert.deepStrictEqual(result, {
+        val: {
+          storedData: {
+            handle: "456",
+          },
+        },
+      });
     });
   });
 });
