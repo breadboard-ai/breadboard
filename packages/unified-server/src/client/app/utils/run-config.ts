@@ -13,6 +13,7 @@ import {
   createGraphStore,
   createLoader,
   envFromGraphDescriptor,
+  FileSystemEntry,
   GraphDescriptor,
   User,
 } from "@google-labs/breadboard";
@@ -32,13 +33,15 @@ import {
   createGoogleDriveBoardServer,
 } from "@breadboard-ai/board-server-management";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { ClientDeploymentConfiguration } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 
 export async function createRunConfig(
   graph: GraphDescriptor | null,
   serverConfig: BootstrapArguments,
   googleDriveClient: GoogleDriveClient,
   tokenVendor: TokenVendor,
-  abortController: AbortController
+  abortController: AbortController,
+  deploymentConfiguration: ClientDeploymentConfiguration
 ): Promise<RunConfig | null> {
   if (!graph || !graph.url) {
     return null;
@@ -93,7 +96,7 @@ export async function createRunConfig(
 
   // 4) Create the file system
   const fileSystem = createFileSystem({
-    env: [],
+    env: envFromDeploymentConfiguration(deploymentConfiguration),
     local: createFileSystemBackend(createEphemeralBlobStore()),
   });
 
@@ -146,4 +149,25 @@ export async function createRunConfig(
       assets: assetsFromGraphDescriptor(graph),
     }),
   };
+}
+
+function envFromDeploymentConfiguration(
+  deploymentConfiguration: ClientDeploymentConfiguration
+): FileSystemEntry[] {
+  if (!deploymentConfiguration.BACKEND_API_ENDPOINT) {
+    throw new Error(`No BACKEND_API_ENDPOINT was configured`);
+  }
+  const executeStepEndpoint: string = new URL(
+    "v1beta1/executeStep",
+    deploymentConfiguration.BACKEND_API_ENDPOINT
+  ).href;
+
+  // TODO: Deduplicate this code.
+  // Keep this in sync with `packages/unified-server/src/init.ts`
+  return [
+    {
+      path: "/env/settings/backend",
+      data: [{ parts: [{ json: { endpoint_url: executeStepEndpoint } }] }],
+    },
+  ];
 }
