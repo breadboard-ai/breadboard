@@ -35,9 +35,8 @@ import { classMap } from "lit/directives/class-map.js";
 import { consume } from "@lit/context";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import { loadImage } from "../../utils/image.js";
-import { blobHandleToUrl } from "../../utils/blob-handle-to-url.js";
 import { generatePaletteFromColor } from "@breadboard-ai/theme";
+import { loadPart } from "../../utils/data-parts.js";
 
 const primaryColor = "#ffffff";
 const secondaryColor = "#7a7a7a";
@@ -159,7 +158,6 @@ export class AppPreview extends LitElement {
     };
   }
 
-  #splashImage = new Map<string, string>();
   #applyThemeToTemplate() {
     if (!this.#appTemplate) {
       return;
@@ -223,23 +221,7 @@ export class AppPreview extends LitElement {
               return;
             }
 
-            const url = blobHandleToUrl(splashScreen.storedData.handle)?.href;
-            if (!url) {
-              return "";
-            }
-
-            const cachedSplashImage = this.#splashImage.get(url);
-            if (cachedSplashImage) {
-              return cachedSplashImage;
-            } else {
-              this.#splashImage.clear();
-
-              const imageData = await loadImage(this.googleDriveClient!, url);
-              if (imageData) {
-                this.#splashImage.set(url, imageData);
-              }
-              return imageData;
-            }
+            return loadPart(this.googleDriveClient!, splashScreen);
           })
           .then((base64DataUrl) => {
             if (!this.#appTemplate) {
