@@ -14,9 +14,7 @@ import {
 
 export { ok, err, readFromStart, noStreams };
 
-export type NonPromise<T> = T extends Promise<unknown> ? never : T;
-
-function ok<T>(o: Outcome<NonPromise<T>>): o is NonPromise<T> {
+function ok<T>(o: Outcome<Awaited<T>>): o is Awaited<T> {
   return !(o && typeof o === "object" && "$error" in o);
 }
 
