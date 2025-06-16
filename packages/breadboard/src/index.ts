@@ -136,6 +136,7 @@ export {
   toStoredDataPart,
   transformBlobs,
   transformDataParts,
+  purgeStoredDataInMemoryValues,
 } from "./data/index.js";
 export type * from "./data/types.js";
 

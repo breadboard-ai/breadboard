@@ -17,6 +17,7 @@ import type {
 import {
   err,
   ok,
+  purgeStoredDataInMemoryValues,
   type GraphDescriptor,
   type Outcome,
 } from "@google-labs/breadboard";
@@ -583,6 +584,7 @@ class DriveOperations {
     url: URL,
     descriptor: GraphDescriptor
   ): Promise<{ result: boolean; error?: string }> {
+    await purgeStoredDataInMemoryValues(descriptor);
     const file = this.fileIdFromUrl(url);
     const name = getFileTitle(descriptor);
     const accessToken = await getAccessToken(this.vendor);

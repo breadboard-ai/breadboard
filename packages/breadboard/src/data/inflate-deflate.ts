@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InlineDataCapabilityPart, LLMContent } from "@breadboard-ai/types";
+import {
+  GraphDescriptor,
+  InlineDataCapabilityPart,
+  LLMContent,
+} from "@breadboard-ai/types";
 import {
   asBase64,
   asBlob,
@@ -21,6 +25,8 @@ import {
   SerializedDataStoreGroup,
 } from "./types.js";
 import { ok } from "./file-system/utils.js";
+
+// TODO(volodya): Refactor all functions here to use `visitGraphNodes`.
 
 export { transformContents };
 
@@ -144,6 +150,10 @@ export const inflateData = async (
  */
 export const deflateData = async (store: DataStore, data: unknown) => {
   const descender = async (value: unknown): Promise<unknown> => {
+    if (isStoredData(value) && value.storedData.handle) {
+      // Deleting stored value, for sanity, checking if the handle is assigned.
+      delete value.data;
+    }
     if (isInlineData(value)) {
       const { mimeType, data } = value.inlineData;
       const blob = await fetch(`data:${mimeType};base64,${data}`).then((r) =>
@@ -217,4 +227,59 @@ export const remapData = async (
 
   const result = await descender(o);
   return result;
+};
+
+/** Deletes all .data value from StoredDataCapabilityPart. */
+export const purgeStoredDataInMemoryValues = async (graph: GraphDescriptor) => {
+  return visitGraphNodes(graph, (node: unknown) => {
+    if (isStoredData(node)) {
+      if (node.data && node.storedData.handle) {
+        delete node.data;
+      }
+    }
+    return node;
+  });
+};
+
+/**
+ * Generic walking mechanism for graphs (Visitor pattern).
+ * It applies elementMapper to nodes in parallel while walking down level by level (BFS).
+ * This method is using similar process to walking through the graph like `descender()` above, with the 2 differences:
+ *   1. Processing the data in parallel vs 1 by 1.
+ *   2. Decouples the walking logic from the actual domain specific transformation logic.
+ */
+export const visitGraphNodes = async (
+  graph: unknown,
+  nodeMapper: (data: unknown) => unknown
+): Promise<unknown> => {
+  const bfsWalker = async (value: unknown): Promise<unknown> => {
+    value = nodeMapper(value); // Apply the walker before, then apply every element of it as well.
+    if (Array.isArray(value)) {
+      const promises = value.map((element: unknown): Promise<unknown> => {
+        const mappedElement = nodeMapper(element);
+        return bfsWalker(mappedElement);
+      });
+      return await Promise.all(promises);
+    }
+    if (typeof value === "object" && value !== null) {
+      // Apply to the whole object and then to every key.
+      const v = nodeMapper(value) as Record<string, unknown>;
+      const promises: Array<Promise<[string, unknown]>> = [];
+      for (const key in value) {
+        const mappedValue = nodeMapper(v[key]);
+        const promise = bfsWalker(mappedValue);
+        promises.push(promise.then((value) => [key, value]));
+      }
+      const resolvedValues = await Promise.all(promises);
+      const result: Record<string, unknown> = {};
+      for (const [key, mappedValue] of resolvedValues) {
+        result[key] = mappedValue;
+      }
+      return result;
+    }
+    const mappedValue = await nodeMapper(value);
+    return mappedValue;
+  };
+
+  return bfsWalker(graph);
 };

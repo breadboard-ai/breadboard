@@ -19,6 +19,7 @@ export {
   deflateData,
   inflateData,
   transformContents,
+  purgeStoredDataInMemoryValues,
 } from "./inflate-deflate.js";
 
 export {
