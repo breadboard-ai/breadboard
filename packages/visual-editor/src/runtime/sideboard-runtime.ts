@@ -209,7 +209,7 @@ class SideboardRuntimeImpl
       graphStore: this.#graphStore,
       fileSystem: this.#fileSystem.createRunFileSystem({
         graphUrl: url,
-        env: envFromGraphDescriptor([], graph),
+        env: envFromGraphDescriptor(this.#fileSystem.env(), graph),
         assets: assetsFromGraphDescriptor(graph),
       }),
       interactiveSecrets: true,
