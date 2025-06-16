@@ -61,6 +61,7 @@ bootstrap({
       return err(`This module is not allowed to run in this configuration`);
     }
   },
+  // Keep this in sync with `packages/unified-server/src/client/app/utils/run-config.ts`
   env: [
     {
       path: "/env/settings/backend",

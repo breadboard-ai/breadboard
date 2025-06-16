@@ -54,6 +54,13 @@ enum TosStatus {
   ACCEPTED = "accepted",
 }
 
+declare global {
+  interface Window {
+    dataLayer: IArguments[];
+    gtag: (...args: IArguments[]) => void;
+  }
+}
+
 async function fetchFlow(googleDriveClient: GoogleDriveClient) {
   const url = new URL(window.location.href);
 
@@ -325,6 +332,23 @@ async function bootstrap(args: BootstrapArguments = {}) {
       settingsHelper
     );
 
+    if (clientDeploymentConfiguration.MEASUREMENT_ID) {
+      const id = clientDeploymentConfiguration.MEASUREMENT_ID;
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = function () {
+        // eslint-disable-next-line prefer-rest-params
+        window.dataLayer.push(arguments);
+      };
+      window.gtag("js", new Date());
+      // IP anonymized per OOGA policy.
+      window.gtag("config", id, { anonymize_ip: true });
+
+      const tagManagerScript = document.createElement("script");
+      tagManagerScript.src = `https://www.googletagmanager.com/gtag/js?id=${id}`;
+      tagManagerScript.async = true;
+      document.body.appendChild(tagManagerScript);
+    }
+
     // For Google Drive, we can't necessarily load the graph before the user has
     // signed in.
     const usingGoogleDrive = new URL(window.location.href).pathname.startsWith(
@@ -399,7 +423,8 @@ async function bootstrap(args: BootstrapArguments = {}) {
       args,
       googleDriveClient,
       tokenVendor,
-      abortController
+      abortController,
+      clientDeploymentConfiguration
     );
     const runner = await createRunner(runConfig, abortController);
 
