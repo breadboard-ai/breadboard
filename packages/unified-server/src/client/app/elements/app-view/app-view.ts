@@ -29,6 +29,7 @@ import {
 import {
   AppTemplate,
   AppTemplateOptions,
+  SnackType,
   TopGraphRunResult,
 } from "@breadboard-ai/shared-ui/types/types.js";
 import { getThemeModeFromBackground } from "../../utils/color.js";
@@ -58,6 +59,7 @@ import {
   type ClientDeploymentConfiguration,
   clientDeploymentConfigurationContext,
 } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
+import { createRef, ref, Ref } from "lit/directives/ref.js";
 
 @customElement("app-view")
 export class AppView extends LitElement {
@@ -95,6 +97,7 @@ export class AppView extends LitElement {
   #runner: Runner | null;
   #signInAdapter: SigninAdapter;
   #overrideTopGraphRunResult: TopGraphRunResult | null;
+  #snackbarRef: Ref<BreadboardUI.Elements.Snackbar> = createRef();
 
   constructor(
     private readonly config: AppViewConfig,
@@ -162,6 +165,30 @@ export class AppView extends LitElement {
     this.requestUpdate();
 
     return id;
+  }
+
+  #snackbar(
+    message: string,
+    type: BreadboardUI.Types.SnackType,
+    actions: BreadboardUI.Types.SnackbarAction[] = [],
+    persistent = false,
+    id = globalThis.crypto.randomUUID(),
+    replaceAll = false
+  ) {
+    if (!this.#snackbarRef.value) {
+      return;
+    }
+
+    return this.#snackbarRef.value.show(
+      {
+        id,
+        message,
+        type,
+        persistent,
+        actions,
+      },
+      replaceAll
+    );
   }
 
   #setDocumentTitle() {
@@ -358,6 +385,11 @@ export class AppView extends LitElement {
         window.open(url, "_blank");
       });
 
+      appTemplate.addEventListener("bbsharerequested", async () => {
+        await navigator.clipboard.writeText(window.location.href);
+        this.#snackbar("Copied URL to clipboard", SnackType.INFORMATION);
+      });
+
       appTemplate.addEventListener("bbrun", async (evt: Event) => {
         evt.stopImmediatePropagation();
 
@@ -416,7 +448,11 @@ export class AppView extends LitElement {
   });
 
   render() {
-    return [this.#renderAppTemplate(), this.#renderToasts()];
+    return [
+      this.#renderAppTemplate(),
+      this.#renderToasts(),
+      this.#renderSnackbar(),
+    ];
   }
 
   #renderAppTemplate() {
@@ -456,5 +492,9 @@ export class AppView extends LitElement {
         ></bb-toast>`;
       }
     );
+  }
+
+  #renderSnackbar() {
+    return html`<bb-snackbar ${ref(this.#snackbarRef)}></bb-snackbar>`;
   }
 }

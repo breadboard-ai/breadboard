@@ -82,6 +82,7 @@ export { SaveAsOverlay } from "./overlay/save-as.js";
 export { SchemaEditor } from "./input/schema-editor/schema-editor.js";
 export { SettingsEditOverlay } from "./overlay/settings-edit.js";
 export { SharePanel } from "./share-panel/share-panel.js";
+export { SideNav } from "./output/header/side-nav.js";
 export { SlideBoardSelector } from "./input/board-selector/slide-board-selector.js";
 export { Snackbar } from "./toast/snackbar.js";
 export { SpeechToText } from "./input/speech-to-text/speech-to-text.js";
