@@ -145,7 +145,7 @@ export async function createRunConfig(
     graphStore: graphStore,
     fileSystem: fileSystem.createRunFileSystem({
       graphUrl: graph.url!,
-      env: envFromGraphDescriptor([], graph),
+      env: envFromGraphDescriptor(fileSystem.env(), graph),
       assets: assetsFromGraphDescriptor(graph),
     }),
   };
