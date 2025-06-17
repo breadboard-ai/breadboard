@@ -137,6 +137,17 @@ declare module "@invoke" {
   export default function invoke(inputs: InvokeInputs): Promise<InvokeOutputs>;
 }
 
+declare module "@input" {
+  export type InputInputs = {
+    $metadata?: NodeMetadata;
+    schema?: Schema;
+  } & Record<string, unknown>;
+
+  export type InputOutputs = Record<string, unknown>;
+
+  export default function input(inputs: InputInputs): Promise<InputOutputs>;
+}
+
 declare module "@output" {
   export type OutputInputs = {
     $metadata?: NodeMetadata;

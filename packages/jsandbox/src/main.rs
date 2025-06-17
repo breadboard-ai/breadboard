@@ -114,6 +114,7 @@ pub async fn run_module(
         "fetch",
         "invoke",
         "secrets",
+        "input",
         "output",
         "describe",
         "query",

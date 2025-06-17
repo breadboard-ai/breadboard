@@ -1,0 +1,88 @@
+{
+  "title": "Bubbled Input Workbench",
+  "description": "",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "metadata": {
+        "title": "Input"
+      }
+    },
+    {
+      "id": "run-module",
+      "type": "runModule",
+      "configuration": {
+        "$module": "main"
+      },
+      "metadata": {
+        "title": "Bubbled Input Workbench"
+      }
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "metadata": {
+        "title": "Output"
+      }
+    }
+  ],
+  "main": "main",
+  "edges": [
+    {
+      "from": "input",
+      "to": "run-module",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "run-module",
+      "to": "output",
+      "out": "*",
+      "in": ""
+    }
+  ],
+  "metadata": {
+    "visual": {
+      "presentation": {
+        "themes": {
+          "39239b49-62d0-4182-b919-924c4db67941": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "39239b49-62d0-4182-b919-924c4db67941"
+      }
+    },
+    "userModified": true,
+    "tags": [],
+    "parameters": {}
+  },
+  "modules": {
+    "main": {
+      "code": "/**\n * @fileoverview Add a description for your module here.\n */\nimport input from \"@input\";\nexport { invoke as default, describe };\nasync function invoke({ context }) {\n    const result = await input({\n        schema: {\n            type: \"object\",\n            properties: {\n                name: {\n                    type: \"string\",\n                    title: \"Name\",\n                    description: \"Name\",\n                },\n                location: {\n                    type: \"object\",\n                    behavior: [\"llm-content\"],\n                    title: \"Location\",\n                },\n            },\n        },\n    });\n    console.log(\"RESULT\", result);\n    return { context };\n}\nasync function describe() {\n    return {\n        inputSchema: {\n            type: \"object\",\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context out\",\n                },\n            },\n        },\n    };\n}\n",
+      "metadata": {
+        "title": "main",
+        "source": {
+          "code": "/**\n * @fileoverview Add a description for your module here.\n */\n\nimport input from \"@input\";\n\nexport { invoke as default, describe };\n\nasync function invoke({ context }: { context: LLMContent[] }) {\n  const result = await input({\n    schema: {\n      type: \"object\",\n      properties: {\n        name: {\n          type: \"string\",\n          title: \"Name\",\n          description: \"Name\",\n        },\n        location: {\n          type: \"object\",\n          behavior: [\"llm-content\"],\n          title: \"Location\",\n        },\n      },\n    },\n  });\n  console.log(\"RESULT\", result);\n  return { context };\n}\n\nasync function describe() {\n  return {\n    inputSchema: {\n      type: \"object\",\n    } satisfies Schema,\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context out\",\n        },\n      },\n    } satisfies Schema,\n  };\n}\n",
+          "language": "typescript"
+        },
+        "description": "Add a description for your module here.",
+        "runnable": true
+      }
+    }
+  }
+}

@@ -12,6 +12,7 @@ export {
   fetch,
   secrets,
   invoke,
+  input,
   output,
   describe,
   query,
@@ -108,6 +109,10 @@ async function secrets(invocationId: UUID, inputs: string) {
 
 async function invoke(invocationId: UUID, inputs: string) {
   return Capabilities.instance().invoke(invocationId, "invoke", inputs);
+}
+
+async function input(invocationId: UUID, inputs: string) {
+  return Capabilities.instance().invoke(invocationId, "input", inputs);
 }
 
 async function output(invocationId: UUID, inputs: string) {

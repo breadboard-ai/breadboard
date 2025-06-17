@@ -9,8 +9,8 @@
       "metadata": {
         "title": "Combine Outputs",
         "visual": {
-          "x": -140,
-          "y": 0
+          "x": -240,
+          "y": 80
         },
         "userModified": false
       },
@@ -107,7 +107,13 @@
       ],
       "metadata": {
         "title": "Google Drive",
-        "type": "connector"
+        "type": "connector",
+        "description": "",
+        "subType": "",
+        "visual": {
+          "x": -80,
+          "y": -640
+        }
       }
     },
     "@@thumbnail": {
@@ -115,7 +121,7 @@
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI3OS40NiIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTA2Ljc5IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNDEuMDciCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyMGEyMDIiIC8+CjxyZWN0IHg9IjEzMy4yMSIKICAgICAgICAgICAgICAgICAgICB5PSI3OS40NiIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTA2Ljc5IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNDEuMDciCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyMGEyMDIiIC8+CiAgICAgIAogICAgPC9zdmc+"
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI5Ni41MiIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iOTAuNjEiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIzNC44NSIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KPHJlY3QgeD0iMTQ5LjM5IgogICAgICAgICAgICAgICAgICAgIHk9IjY4LjY0IgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI5MC42MSIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjM0Ljg1IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMjBhMjAyIiAvPgogICAgICAKICAgIDwvc3ZnPg=="
     }
   }
 }
