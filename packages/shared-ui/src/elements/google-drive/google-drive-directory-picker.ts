@@ -12,6 +12,7 @@ import {
 } from "../../events/events.js";
 import "../connection/connection-input.js";
 import { loadDrivePicker } from "./google-apis.js";
+import { getTopLevelOrigin } from "../../utils/embed-helpers.js";
 
 @customElement("bb-google-drive-directory-picker")
 export class GoogleDriveDirectoryPicker extends LitElement {
@@ -114,6 +115,7 @@ export class GoogleDriveDirectoryPicker extends LitElement {
     this.#destroyPicker();
     // See https://developers.google.com/drive/picker/reference
     this.#picker = new this._pickerLib.PickerBuilder()
+      .setOrigin(getTopLevelOrigin())
       .setAppId(this._authorization.clientId)
       .setOAuthToken(this._authorization.secret)
       .setCallback(this.#pickerCallback.bind(this))

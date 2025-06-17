@@ -10,6 +10,7 @@ import type { InputPlugin } from "../../plugins/input-plugin.js";
 import { type InputEnterEvent } from "../../events/events.js";
 import "../connection/connection-input.js";
 import { loadDrivePicker } from "./google-apis.js";
+import { getTopLevelOrigin } from "../../utils/embed-helpers.js";
 
 export const googleDriveQueryInputPlugin: InputPlugin = {
   instantiate: {
@@ -153,6 +154,7 @@ export class GoogleDriveQuery extends LitElement {
     this.#destroyPicker();
     // See https://developers.google.com/drive/picker/reference
     this.#picker = new this._pickerLib.PickerBuilder()
+      .setOrigin(getTopLevelOrigin())
       .setAppId(this._authorization.clientId)
       .setOAuthToken(this._authorization.secret)
       .setCallback(this.#pickerCallback.bind(this))
