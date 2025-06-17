@@ -253,80 +253,104 @@ export async function toStoredDataPart(
   };
 }
 
+async function transformPart(
+  graphUrl: URL,
+  part: DataPart,
+  to: DataPartTransformType,
+  transformer: DataPartTransformer
+): Promise<Outcome<DataPart>> {
+  if ("inlineData" in part) {
+    if (to === "ephemeral") {
+      // convert inline to ephemeral
+      const blob = await asBlob(part);
+      return transformer.addEphemeralBlob(blob);
+    } else if (to === "persistent" || to === "persistent-temporary") {
+      const temporary = to === "persistent-temporary";
+      // convert inline to persistent
+      return await transformer.persistPart(graphUrl, part, temporary);
+    }
+  } else if ("storedData" in part) {
+    const isEphemeral = part.storedData.handle.startsWith("blob:");
+    if (to === "ephemeral") {
+      if (!isEphemeral) {
+        // convert persistent to ephemeral
+        return transformer.persistentToEphemeral(part);
+      }
+    } else if (to === "inline") {
+      // convert persistent or ephemeral to inline
+      return await toInlineDataPart(part);
+    } else if (to == "persistent" || to === "persistent-temporary") {
+      // convert ephemeral to persistent
+      // We always start by trying to inline the data and then persisting
+      // it.
+      try {
+        const inline = await toInlineDataPart(part);
+        const temporary = to === "persistent-temporary";
+        return await transformer.persistPart(graphUrl, inline, temporary);
+      } catch (e) {
+        return err((e as Error).message);
+      }
+    } else if (to === "file") {
+      return transformer.toFileData(graphUrl, part);
+    }
+  } else if ("fileData" in part) {
+    if (to === "file") {
+      return transformer.toFileData(graphUrl, part);
+    }
+  }
+  // Return original part.
+  return part;
+}
+
+/**
+ * Applies the mapper to the given values in parallel.
+ * Returns outcome if any of the mapper has failed or the result array of mapped values.
+ */
+async function parallelApply<T>(
+  values: Array<T>,
+  mapper: (v: T) => Promise<Outcome<T>>
+): Promise<Outcome<Array<T>>> {
+  const results: Array<Outcome<Awaited<T>>> = await Promise.all(
+    values.map(async (value) => {
+      const mappedValue: Outcome<T> = await mapper(value);
+      return mappedValue;
+    })
+  );
+  // Check if any of the results is an error and if so - return it.
+  for (const result of results) {
+    if (!ok(result)) {
+      return result;
+    }
+  }
+  // Otherwise all are T.
+  return results.map((result) => result as T);
+}
+
+async function transformContent(
+  graphUrl: URL,
+  content: LLMContent,
+  to: DataPartTransformType,
+  transformer: DataPartTransformer
+): Promise<Outcome<LLMContent>> {
+  const role = content.role || "user";
+  const parts = await parallelApply<DataPart>(content.parts, (part) =>
+    transformPart(graphUrl, part, to, transformer)
+  );
+  if (!ok(parts)) {
+    return parts;
+  }
+  return { parts, role };
+}
+
 export async function transformDataParts(
   graphUrl: URL,
   contents: LLMContent[],
   to: DataPartTransformType,
   transformer: DataPartTransformer
 ): Promise<Outcome<LLMContent[]>> {
-  const transformed: LLMContent[] = [];
-  for (const content of contents) {
-    const role = content.role || "user";
-    const parts: DataPart[] = [];
-    for (const part of content.parts) {
-      let transformedPart = part;
-      if ("inlineData" in part) {
-        if (to === "ephemeral") {
-          // convert inline to ephemeral
-          const blob = await asBlob(part);
-          transformedPart = transformer.addEphemeralBlob(blob);
-        } else if (to === "persistent" || to === "persistent-temporary") {
-          const temporary = to === "persistent-temporary";
-          // convert inline to persistent
-          const persisted = await transformer.persistPart(
-            graphUrl,
-            part,
-            temporary
-          );
-          if (!ok(persisted)) return persisted;
-          transformedPart = persisted;
-        }
-      } else if ("storedData" in part) {
-        const isEphemeral = part.storedData.handle.startsWith("blob:");
-        if (to === "ephemeral") {
-          if (!isEphemeral) {
-            // convert persistent to ephemeral
-            const ephemeral = await transformer.persistentToEphemeral(part);
-            if (!ok(ephemeral)) return ephemeral;
-            transformedPart = ephemeral;
-          }
-        } else if (to === "inline") {
-          // convert persistent or ephemeral to inline
-          transformedPart = await toInlineDataPart(part);
-        } else if (to == "persistent" || to === "persistent-temporary") {
-          // convert ephemeral to persistent
-          // We always start by trying to inline the data and then persisting
-          // it.
-          try {
-            const inline = await toInlineDataPart(part);
-            const temporary = to === "persistent-temporary";
-            const persisted = await transformer.persistPart(
-              graphUrl,
-              inline,
-              temporary
-            );
-            if (!ok(persisted)) return persisted;
-            transformedPart = persisted;
-          } catch (e) {
-            return err((e as Error).message);
-          }
-        } else if (to === "file") {
-          const file = await transformer.toFileData(graphUrl, part);
-          if (!ok(file)) return file;
-          transformedPart = file;
-        }
-      } else if ("fileData" in part) {
-        if (to === "file") {
-          const file = await transformer.toFileData(graphUrl, part);
-          if (!ok(file)) return file;
-          transformedPart = file;
-        }
-      }
-      parts.push(transformedPart);
-    }
-    transformed.push({ parts, role });
-  }
-  return transformed;
+  return parallelApply<LLMContent>(contents, (content) =>
+    transformContent(graphUrl, content, to, transformer)
+  );
 }
 
 export function convertStoredPartsToAbsoluteUrls(
