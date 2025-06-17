@@ -12,8 +12,14 @@ import {
   OutputValues,
   Schema,
 } from "../types.js";
-import { bubbleUpOutputsIfNeeded } from "../bubble.js";
-import { LLMContent, NodeDescriptor, NodeMetadata } from "@breadboard-ai/types";
+import { bubbleUpInputsIfNeeded, bubbleUpOutputsIfNeeded } from "../bubble.js";
+import {
+  GraphInlineMetadata,
+  LLMContent,
+  NodeDescriptor,
+  NodeMetadata,
+  TraversalResult,
+} from "@breadboard-ai/types";
 import { CapabilitiesManager } from "./types.js";
 import { invokeDescriber } from "./invoke-describer.js";
 import { FileSystemHandlerFactory } from "./file-system-handler-factory.js";
@@ -72,6 +78,35 @@ function maybeUnwrapError(o: void | OutputValues): void | OutputValues {
   }
 
   return { ...o, $error };
+}
+
+function createInputHandler(context: NodeHandlerContext) {
+  return (async (allInputs: InputValues, invocationPath: number[]) => {
+    const { schema, $metadata, inputs } = allInputs;
+    const graphMetadata: GraphInlineMetadata = {};
+    const descriptor: NodeDescriptor = {
+      id: "input-from-run-module",
+      type: "input",
+      configuration: {
+        schema: {
+          ...(schema as Schema),
+          behavior: ["bubble"],
+        } satisfies Schema,
+      },
+    };
+    if ($metadata) {
+      descriptor.metadata = $metadata as NodeMetadata;
+    }
+    const result = { inputs } as unknown as TraversalResult;
+    await bubbleUpInputsIfNeeded(
+      graphMetadata,
+      context,
+      descriptor,
+      result,
+      invocationPath
+    );
+    return result.outputs;
+  }) as Capability;
 }
 
 function createOutputHandler(context: NodeHandlerContext) {
@@ -227,6 +262,7 @@ class CapabilitiesManagerImpl implements CapabilitiesManager {
           fetch: getHandler("fetch", this.context),
           secrets: getHandler("secrets", this.context),
           invoke: getHandler("invoke", this.context),
+          input: createInputHandler(this.context),
           output: createOutputHandler(this.context),
           describe: createDescribeHandler(this.context),
           query: fs.query(),
@@ -255,6 +291,7 @@ class CapabilitiesManagerImpl implements CapabilitiesManager {
         "fetch",
         "secrets",
         "invoke",
+        "input",
         "output",
         "describe",
         "query",

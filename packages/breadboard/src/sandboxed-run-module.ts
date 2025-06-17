@@ -160,7 +160,7 @@ function addSandboxedRunModule(
                   },
                   outputSchema: result.outputSchema,
                 };
-              } catch (e) {
+              } catch {
                 // swallow the error. It's okay that some modules don't have
                 // custom describers.
               }

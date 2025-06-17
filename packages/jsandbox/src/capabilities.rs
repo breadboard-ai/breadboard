@@ -15,6 +15,7 @@ impl ModuleDef for CapabilitiesModule {
         decl.declare("fetch")?;
         decl.declare("secrets")?;
         decl.declare("invoke")?;
+        decl.declare("input")?;
         decl.declare("output")?;
         decl.declare("describe")?;
         decl.declare("query")?;
@@ -38,6 +39,10 @@ impl ModuleDef for CapabilitiesModule {
         exports.export(
             "invoke",
             Function::new(ctx.clone(), Async(invoke_value))?.with_name("invoke")?,
+        )?;
+        exports.export(
+            "input",
+            Function::new(ctx.clone(), Async(input_value))?.with_name("input")?,
         )?;
         exports.export(
             "output",
@@ -102,6 +107,7 @@ macro_rules! create_value_function {
 create_value_function!(fetch_value, fetch);
 create_value_function!(secrets_value, secrets);
 create_value_function!(invoke_value, invoke);
+create_value_function!(input_value, input);
 create_value_function!(output_value, output);
 create_value_function!(describe_value, describe);
 create_value_function!(query_value, query);
@@ -114,6 +120,7 @@ extern "C" {
     async fn fetch(invocation_id: String, inputs: String) -> JsValue;
     async fn secrets(invocation_id: String, inputs: String) -> JsValue;
     async fn invoke(invocation_id: String, inputs: String) -> JsValue;
+    async fn input(invocation_id: String, inputs: String) -> JsValue;
     async fn output(invocation_id: String, inputs: String) -> JsValue;
     async fn describe(invocation_id: String, inputs: String) -> JsValue;
     async fn query(invocation_id: String, inputs: String) -> JsValue;
