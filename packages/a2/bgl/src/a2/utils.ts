@@ -29,7 +29,9 @@ export {
   decodeBase64,
 };
 
-function ok<T>(o: Outcome<Awaited<T>>): o is Awaited<T> {
+export type NonPromise<T> = T extends Promise<unknown> ? never : T;
+
+function ok<T>(o: Outcome<NonPromise<T>>): o is NonPromise<T> {
   return !(o && typeof o === "object" && "$error" in o);
 }
 
