@@ -82,21 +82,22 @@ function maybeUnwrapError(o: void | OutputValues): void | OutputValues {
 
 function createInputHandler(context: NodeHandlerContext) {
   return (async (allInputs: InputValues, invocationPath: number[]) => {
-    const schema = allInputs.schema as Schema;
+    const { schema, $metadata, inputs } = allInputs;
     const graphMetadata: GraphInlineMetadata = {};
     const descriptor: NodeDescriptor = {
       id: "input-from-run-module",
       type: "input",
       configuration: {
         schema: {
-          ...schema,
+          ...(schema as Schema),
           behavior: ["bubble"],
         } satisfies Schema,
       },
     };
-    const result = {
-      inputs: allInputs,
-    } as unknown as TraversalResult;
+    if ($metadata) {
+      descriptor.metadata = $metadata as NodeMetadata;
+    }
+    const result = { inputs } as unknown as TraversalResult;
     await bubbleUpInputsIfNeeded(
       graphMetadata,
       context,
