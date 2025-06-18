@@ -28,7 +28,6 @@ import {
   type DriveFile,
   type DriveFileQuery,
   type GoogleApiAuthorization,
-  type Properties,
 } from "./api.js";
 
 export { DriveOperations, PROTOCOL };
@@ -63,6 +62,15 @@ const BASE_QUERY = `
     key = ${quote(IS_SHAREABLE_COPY_PROPERTY)}
     and value = "true"
   }
+`;
+// For featured gallery, we don't need to check whether it's shareable copy
+// just show everything there is, since we likely will actually need to do the
+// opposite: only show items that are shareable copies.
+// TODO: Once all gallery items all have shareable copy metadata, switch to
+// only show items that are shareable copies.
+const BASE_FEATURED_QUERY = `
+  ${MIME_TYPE_QUERY}
+  and trashed=false
 `;
 
 const CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY =
@@ -136,11 +144,19 @@ class DriveLookupCache {
 
 /** Caches list of GraphInfo objects. */
 class DriveListCache {
+  #forceRefreshOnce: boolean;
+
   constructor(
     private readonly cacheKey: string,
     private readonly query: string,
     private readonly auth: () => Promise<Readonly<GoogleApiAuthorization>>
-  ) {}
+  ) {
+    // This is a hack to work around the problem where we don't track removals
+    // of items from gallery.
+    this.#forceRefreshOnce = !!new URLSearchParams(window.location.search).get(
+      "force-refresh"
+    );
+  }
 
   async #getCacheAndValue(skipValue: boolean = false) {
     const cacheKey = new URL(`http://drive-list/${this.cacheKey}`);
@@ -186,6 +202,10 @@ class DriveListCache {
   }
 
   async #list(forceInvalidate: boolean = false) {
+    if (this.#forceRefreshOnce) {
+      forceInvalidate = true;
+      this.#forceRefreshOnce = false;
+    }
     try {
       // Find out if we have a cached value and if so, add the search criteria.
 
@@ -360,7 +380,7 @@ class DriveOperations {
         } satisfies GoogleApiAuthorization);
       this.#featuredGraphsList = new DriveListCache(
         "featured",
-        `"${featuredGalleryFolderId}" in parents and ${BASE_QUERY}`,
+        `"${featuredGalleryFolderId}" in parents and ${BASE_FEATURED_QUERY}`,
         getApiAuth
       );
     }
@@ -1166,7 +1186,7 @@ function getDriveCacheState(): DriveChangesCacheState | null {
       return null;
     }
     return result;
-  } catch (e) {
+  } catch {
     return null;
   }
 }
