@@ -82,7 +82,7 @@ function maybeUnwrapError(o: void | OutputValues): void | OutputValues {
 
 function createInputHandler(context: NodeHandlerContext) {
   return (async (allInputs: InputValues, invocationPath: number[]) => {
-    const { schema, $metadata, inputs } = allInputs;
+    const { schema, $metadata } = allInputs;
     const graphMetadata: GraphInlineMetadata = {};
     const descriptor: NodeDescriptor = {
       id: "input-from-run-module",
@@ -97,7 +97,7 @@ function createInputHandler(context: NodeHandlerContext) {
     if ($metadata) {
       descriptor.metadata = $metadata as NodeMetadata;
     }
-    const result = { inputs } as unknown as TraversalResult;
+    const result = { inputs: { schema } } as unknown as TraversalResult;
     await bubbleUpInputsIfNeeded(
       graphMetadata,
       context,

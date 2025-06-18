@@ -25,7 +25,7 @@ async function invoke({ context }: { context: LLMContent[] }) {
     },
   });
   console.log("RESULT", result);
-  return { context };
+  return result;
 }
 
 async function describe() {
