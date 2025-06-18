@@ -144,11 +144,19 @@ class DriveLookupCache {
 
 /** Caches list of GraphInfo objects. */
 class DriveListCache {
+  #forceRefreshOnce: boolean;
+
   constructor(
     private readonly cacheKey: string,
     private readonly query: string,
     private readonly auth: () => Promise<Readonly<GoogleApiAuthorization>>
-  ) {}
+  ) {
+    // This is a hack to work around the problem where we don't track removals
+    // of items from gallery.
+    this.#forceRefreshOnce = !!new URLSearchParams(window.location.search).get(
+      "force-refresh"
+    );
+  }
 
   async #getCacheAndValue(skipValue: boolean = false) {
     const cacheKey = new URL(`http://drive-list/${this.cacheKey}`);
@@ -194,6 +202,10 @@ class DriveListCache {
   }
 
   async #list(forceInvalidate: boolean = false) {
+    if (this.#forceRefreshOnce) {
+      forceInvalidate = true;
+      this.#forceRefreshOnce = false;
+    }
     try {
       // Find out if we have a cached value and if so, add the search criteria.
 
