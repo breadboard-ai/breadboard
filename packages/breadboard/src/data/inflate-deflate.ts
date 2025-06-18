@@ -26,6 +26,8 @@ import {
 } from "./types.js";
 import { ok } from "./file-system/utils.js";
 
+// TODO(volodya): Refactor all functions here to use `visitGraphNodes`.
+
 export { transformContents };
 
 async function transformContents(
@@ -65,7 +67,7 @@ export const inflateData = async (
   graphUrl?: URL,
   inflateToFileData?: boolean
 ) => {
-  return visitGraphNodes(data, async (value) => {
+  const descender = async (value: unknown): Promise<unknown> => {
     if (isFileDataCapabilityPart(value)) {
       if (inflateToFileData && store.transformer && graphUrl) {
         if (inflateToFileData && store.transformer && graphUrl) {
@@ -116,8 +118,26 @@ export const inflateData = async (
       const mimeType = blob.type;
       return { inlineData: { data, mimeType } };
     }
+    if (Array.isArray(value)) {
+      const result = [];
+      for (const item of value) {
+        result.push(await descender(item));
+      }
+      return result;
+    }
+    if (typeof value === "object" && value !== null) {
+      const v = value as Record<string, unknown>;
+      const result: Record<string, unknown> = {};
+      for (const key in value) {
+        result[key] = await descender(v[key]);
+      }
+      return result;
+    }
     return value;
-  });
+  };
+
+  const result = await descender(data);
+  return result;
 };
 
 /**
@@ -129,7 +149,7 @@ export const inflateData = async (
  * replaced with `StoredDataCapabilityPart`
  */
 export const deflateData = async (store: DataStore, data: unknown) => {
-  return visitGraphNodes(data, async (value) => {
+  const descender = async (value: unknown): Promise<unknown> => {
     if (isStoredData(value) && value.storedData.handle) {
       // Deleting stored value, for sanity, checking if the handle is assigned.
       delete value.data;
@@ -141,8 +161,26 @@ export const deflateData = async (store: DataStore, data: unknown) => {
       );
       return await store.store(blob);
     }
+    if (Array.isArray(value)) {
+      const result = [];
+      for (const item of value) {
+        result.push(await descender(item));
+      }
+      return result;
+    }
+    if (typeof value === "object" && value !== null) {
+      const v = value as Record<string, unknown>;
+      const result: Record<string, unknown> = {};
+      for (const key in value) {
+        result[key] = await descender(v[key]);
+      }
+      return result;
+    }
     return value;
-  });
+  };
+
+  const result = await descender(data);
+  return result;
 };
 
 /**
@@ -159,7 +197,7 @@ export const remapData = async (
     const { handle } = item;
     handleMap.set(handle, item);
   }
-  return visitGraphNodes(o, async (value) => {
+  const descender = async (value: unknown): Promise<unknown> => {
     if (isStoredData(value)) {
       const { handle } = value.storedData;
       const serialized = handleMap.get(handle);
@@ -169,8 +207,26 @@ export const remapData = async (
       const blob = await asBlob(serialized);
       return store.store(blob);
     }
+    if (Array.isArray(value)) {
+      const result = [];
+      for (const item of value) {
+        result.push(await descender(item));
+      }
+      return result;
+    }
+    if (typeof value === "object" && value !== null) {
+      const v = value as Record<string, unknown>;
+      const result: Record<string, unknown> = {};
+      for (const key in value) {
+        result[key] = await descender(v[key]);
+      }
+      return result;
+    }
     return value;
-  });
+  };
+
+  const result = await descender(o);
+  return result;
 };
 
 /** Deletes all .data value from StoredDataCapabilityPart. */
@@ -197,7 +253,7 @@ export const visitGraphNodes = async (
   nodeMapper: (data: unknown) => unknown
 ): Promise<unknown> => {
   const bfsWalker = async (value: unknown): Promise<unknown> => {
-    value = await nodeMapper(value); // Apply the walker before, then apply every element of it as well.
+    value = nodeMapper(value); // Apply the walker before, then apply every element of it as well.
     if (Array.isArray(value)) {
       const promises = value.map((element: unknown): Promise<unknown> => {
         const mappedElement = nodeMapper(element);
@@ -207,7 +263,7 @@ export const visitGraphNodes = async (
     }
     if (typeof value === "object" && value !== null) {
       // Apply to the whole object and then to every key.
-      const v = (await nodeMapper(value)) as Record<string, unknown>;
+      const v = nodeMapper(value) as Record<string, unknown>;
       const promises: Array<Promise<[string, unknown]>> = [];
       for (const key in value) {
         const mappedValue = nodeMapper(v[key]);
