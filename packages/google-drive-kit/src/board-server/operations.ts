@@ -28,7 +28,6 @@ import {
   type DriveFile,
   type DriveFileQuery,
   type GoogleApiAuthorization,
-  type Properties,
 } from "./api.js";
 
 export { DriveOperations, PROTOCOL };
@@ -63,6 +62,15 @@ const BASE_QUERY = `
     key = ${quote(IS_SHAREABLE_COPY_PROPERTY)}
     and value = "true"
   }
+`;
+// For featured gallery, we don't need to check whether it's shareable copy
+// just show everything there is, since we likely will actually need to do the
+// opposite: only show items that are shareable copies.
+// TODO: Once all gallery items all have shareable copy metadata, switch to
+// only show items that are shareable copies.
+const BASE_FEATURED_QUERY = `
+  ${MIME_TYPE_QUERY}
+  and trashed=false
 `;
 
 const CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY =
@@ -360,7 +368,7 @@ class DriveOperations {
         } satisfies GoogleApiAuthorization);
       this.#featuredGraphsList = new DriveListCache(
         "featured",
-        `"${featuredGalleryFolderId}" in parents and ${BASE_QUERY}`,
+        `"${featuredGalleryFolderId}" in parents and ${BASE_FEATURED_QUERY}`,
         getApiAuth
       );
     }
@@ -1166,7 +1174,7 @@ function getDriveCacheState(): DriveChangesCacheState | null {
       return null;
     }
     return result;
-  } catch (e) {
+  } catch {
     return null;
   }
 }
