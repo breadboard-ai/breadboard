@@ -4,45 +4,18 @@
   "version": "0.0.1",
   "nodes": [
     {
-      "id": "input",
-      "type": "input",
+      "id": "25f56e75-f768-4966-81de-c075d73dfa63",
+      "type": "#module:main",
       "metadata": {
-        "title": "Input"
-      }
-    },
-    {
-      "id": "run-module",
-      "type": "runModule",
-      "configuration": {
-        "$module": "main"
-      },
-      "metadata": {
-        "title": "Bubbled Input Workbench"
-      }
-    },
-    {
-      "id": "output",
-      "type": "output",
-      "metadata": {
-        "title": "Output"
+        "title": "Untitled item",
+        "visual": {
+          "x": -20,
+          "y": -180
+        }
       }
     }
   ],
-  "main": "main",
-  "edges": [
-    {
-      "from": "input",
-      "to": "run-module",
-      "out": "*",
-      "in": ""
-    },
-    {
-      "from": "run-module",
-      "to": "output",
-      "out": "*",
-      "in": ""
-    }
-  ],
+  "edges": [],
   "metadata": {
     "visual": {
       "presentation": {
@@ -73,16 +46,25 @@
   },
   "modules": {
     "main": {
-      "code": "/**\n * @fileoverview Add a description for your module here.\n */\nimport input from \"@input\";\nexport { invoke as default, describe };\nasync function invoke({ context }) {\n    const result = await input({\n        schema: {\n            type: \"object\",\n            properties: {\n                name: {\n                    type: \"string\",\n                    title: \"Name\",\n                    description: \"Name\",\n                },\n                location: {\n                    type: \"object\",\n                    behavior: [\"llm-content\"],\n                    title: \"Location\",\n                },\n            },\n        },\n    });\n    console.log(\"RESULT\", result);\n    return { context };\n}\nasync function describe() {\n    return {\n        inputSchema: {\n            type: \"object\",\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context out\",\n                },\n            },\n        },\n    };\n}\n",
+      "code": "/**\n * @fileoverview Add a description for your module here.\n */\nimport input from \"@input\";\nexport { invoke as default, describe };\nasync function invoke({ context }) {\n    const result = await input({\n        schema: {\n            type: \"object\",\n            properties: {\n                name: {\n                    type: \"string\",\n                    title: \"Name\",\n                    description: \"Name\",\n                },\n                location: {\n                    type: \"object\",\n                    behavior: [\"llm-content\"],\n                    title: \"Location\",\n                },\n            },\n        },\n    });\n    console.log(\"RESULT\", result);\n    return result;\n}\nasync function describe() {\n    return {\n        inputSchema: {\n            type: \"object\",\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context out\",\n                },\n            },\n        },\n    };\n}\n",
       "metadata": {
         "title": "main",
         "source": {
-          "code": "/**\n * @fileoverview Add a description for your module here.\n */\n\nimport input from \"@input\";\n\nexport { invoke as default, describe };\n\nasync function invoke({ context }: { context: LLMContent[] }) {\n  const result = await input({\n    schema: {\n      type: \"object\",\n      properties: {\n        name: {\n          type: \"string\",\n          title: \"Name\",\n          description: \"Name\",\n        },\n        location: {\n          type: \"object\",\n          behavior: [\"llm-content\"],\n          title: \"Location\",\n        },\n      },\n    },\n  });\n  console.log(\"RESULT\", result);\n  return { context };\n}\n\nasync function describe() {\n  return {\n    inputSchema: {\n      type: \"object\",\n    } satisfies Schema,\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context out\",\n        },\n      },\n    } satisfies Schema,\n  };\n}\n",
+          "code": "/**\n * @fileoverview Add a description for your module here.\n */\n\nimport input from \"@input\";\n\nexport { invoke as default, describe };\n\nasync function invoke({ context }: { context: LLMContent[] }) {\n  const result = await input({\n    schema: {\n      type: \"object\",\n      properties: {\n        name: {\n          type: \"string\",\n          title: \"Name\",\n          description: \"Name\",\n        },\n        location: {\n          type: \"object\",\n          behavior: [\"llm-content\"],\n          title: \"Location\",\n        },\n      },\n    },\n  });\n  console.log(\"RESULT\", result);\n  return result;\n}\n\nasync function describe() {\n  return {\n    inputSchema: {\n      type: \"object\",\n    } satisfies Schema,\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context out\",\n        },\n      },\n    } satisfies Schema,\n  };\n}\n",
           "language": "typescript"
         },
         "description": "Add a description for your module here.",
         "runnable": true
       }
+    }
+  },
+  "assets": {
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI1NS43NyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMjMwLjAwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iODguNDYiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyZThiZTgiIC8+CiAgICAgIAogICAgPC9zdmc+"
     }
   }
 }
