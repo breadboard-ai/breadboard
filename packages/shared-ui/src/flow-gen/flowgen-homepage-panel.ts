@@ -61,7 +61,7 @@ export class FlowgenHomepagePanel extends LitElement {
       #dismiss-button {
         background: none;
         border: none;
-        color: var(--bb-neutral-200);
+        color: var(--n-0);
         font-size: 1.2rem;
         cursor: pointer;
         padding: 0;
@@ -76,12 +76,17 @@ export class FlowgenHomepagePanel extends LitElement {
         word-break: break-all;
         color: var(--n-0);
         margin: var(--bb-grid-size-2) 0;
+
+        & .error {
+          word-break: auto-phrase;
+          color: var(--e-30);
+        }
       }
 
       #feedback {
         color: var(--n-0);
         transition: var(--color-transition);
-        background: var(--n-10);
+        background: var(--n-100);
         border-radius: var(--bb-grid-size-2);
         padding-left: var(--bb-grid-size-5);
         padding-right: var(--bb-grid-size-5);
@@ -90,6 +95,7 @@ export class FlowgenHomepagePanel extends LitElement {
         align-items: center;
         justify-content: space-between;
         margin-top: var(--bb-grid-size-4);
+        text-align: center;
       }
 
       #gradient-border-container {
@@ -141,8 +147,8 @@ export class FlowgenHomepagePanel extends LitElement {
           justify-content: flex-end;
           color: var(--n-70);
           font-size: 30px;
-          width: 40px;
-          height: 40px;
+          width: 30px;
+          height: 30px;
           margin-left: var(--bb-grid-size-4);
         }
       }
@@ -186,7 +192,9 @@ export class FlowgenHomepagePanel extends LitElement {
   override render() {
     const errorFeedback = html` <div id="feedback">
       <p class="sans-flex md-body-medium">${this.#renderFeedback()}</p>
-      <button id="dismiss-button" @click=${this.#onClearError}>&#215</button>
+      <button id="dismiss-button" @click=${this.#onClearError}>
+        <span class="g-icon filled round">close</span>
+      </button>
     </div>`;
     const statusFeedback = html`<p class="sans-flex md-body-medium">
       ${this.#renderFeedback()}

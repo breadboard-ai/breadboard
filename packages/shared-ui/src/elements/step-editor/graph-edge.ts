@@ -24,7 +24,7 @@ import { clamp } from "./utils/clamp";
 import { Entity } from "./entity";
 import { calculatePointsOnCubicBezierCurve } from "./utils/cubic-bezier";
 import { icons } from "../../styles/icons";
-import { neutral, custom } from "../../styles/host/colors-light";
+import { palette, custom } from "../../styles/host/colors-light";
 
 interface Connection {
   n1: DOMPoint;
@@ -34,7 +34,7 @@ interface Connection {
   distance: number;
 }
 
-const EDGE_STANDARD = neutral.n80;
+const EDGE_STANDARD = palette.neutral.n80;
 const EDGE_SELECTED = custom.c100;
 
 // Value is no longer on the wire, because it was consumed by the receiving

@@ -1779,6 +1779,7 @@ export class Main extends LitElement {
       return;
     }
 
+    console.log("attemptBoardTitleUpdate");
     if (!target.checkValidity()) {
       target.reportValidity();
       return;
@@ -1797,24 +1798,14 @@ export class Main extends LitElement {
     );
   }
 
-  async #attemptBoardTitleUpdateFromString(title: string) {
-    if (title === this.tab?.graph.title) {
-      return;
-    }
-
-    this.#setPageTitle(title.trim());
-    await this.#runtime.edit.updateBoardTitleAndDescription(
-      this.tab,
-      title.trim(),
-      null
-    );
-  }
-
-  async #attempBoardTitleAndDescriptionUpdate(
-    title: string,
-    description: string
+  async #attemptBoardTitleAndDescriptionUpdate(
+    title: string | null,
+    description: string | null
   ) {
-    this.#setPageTitle(title.trim());
+    console.log("attemptBoardTitleAndDescriptionUpdate");
+    if (title) {
+      this.#setPageTitle(title.trim());
+    }
 
     await this.#runtime.edit.updateBoardTitleAndDescription(
       this.tab,
@@ -3402,7 +3393,10 @@ export class Main extends LitElement {
                   @bbboardtitleupdate=${async (
                     evt: BreadboardUI.Events.BoardTitleUpdateEvent
                   ) => {
-                    await this.#attemptBoardTitleUpdateFromString(evt.title);
+                    await this.#attemptBoardTitleAndDescriptionUpdate(
+                      evt.title,
+                      null
+                    );
                   }}
                   @bbremix=${async () => {
                     if (!this.tab?.graph) {
@@ -4029,8 +4023,7 @@ export class Main extends LitElement {
               @bbboardtitleupdate=${async (
                 evt: BreadboardUI.Events.BoardTitleUpdateEvent
               ) => {
-                await this.#runtime.edit.updateBoardTitleAndDescription(
-                  this.tab,
+                await this.#attemptBoardTitleAndDescriptionUpdate(
                   evt.title,
                   null
                 );
@@ -4657,7 +4650,7 @@ export class Main extends LitElement {
       @bbboardbasicinfoupdate=${(
         evt: BreadboardUI.Events.BoardBasicInfoUpdateEvent
       ) => {
-        this.#attempBoardTitleAndDescriptionUpdate(
+        this.#attemptBoardTitleAndDescriptionUpdate(
           evt.boardTitle,
           evt.boardDescription
         );

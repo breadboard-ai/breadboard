@@ -27,6 +27,7 @@ import { isParticle } from "@breadboard-ai/particles";
 import { sharedStyles } from "./shared-styles.js";
 import { colorsLight } from "../../../styles/host/colors-light.js";
 import { type } from "../../../styles/host/type.js";
+import { iconSubstitute } from "../../../utils/icon-substitute.js";
 
 @customElement("bb-console-view")
 export class ConsoleView extends SignalWatcher(LitElement) {
@@ -370,9 +371,11 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                       )}`;
                     }
 
+                    const icon = iconSubstitute(workItem.icon);
+
                     const workItemClasses: Record<string, boolean> = {};
-                    if (workItem.icon) {
-                      workItemClasses[workItem.icon] = true;
+                    if (icon) {
+                      workItemClasses[icon] = true;
                     }
 
                     return html` <details
@@ -404,10 +407,8 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                         }}
                         class=${classMap(workItemClasses)}
                       >
-                        ${workItem.icon
-                          ? html`<span class="g-icon step-icon"
-                              >${workItem.icon}</span
-                            >`
+                        ${icon
+                          ? html`<span class="g-icon step-icon">${icon}</span>`
                           : nothing}<span class="title"
                           >${workItem.title}<span class="duration"
                             >${duration}</span
