@@ -814,6 +814,30 @@ export class TextEditor extends LitElement {
           const isMac = navigator.platform.indexOf("Mac") === 0;
           const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
 
+          if (evt.key === "Tab") {
+            evt.preventDefault();
+
+            const range = this.#getCurrentRange();
+            if (
+              range &&
+              range.endOffset - range.startOffset === 0 &&
+              !evt.shiftKey
+            ) {
+              const tabNode = document.createTextNode("\t");
+              range.insertNode(tabNode);
+              range.setStartAfter(tabNode);
+              range.setEndAfter(tabNode);
+
+              const selection = this.#getCurrentSelection();
+              if (!selection) {
+                return;
+              }
+              selection.removeAllRanges();
+              selection.addRange(range);
+            }
+            return;
+          }
+
           if ((evt.key === "c" || evt.key === "x") && isCtrlCommand) {
             evt.preventDefault();
 
