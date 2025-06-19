@@ -77,7 +77,7 @@ export class Header extends LitElement {
 
       #progress-container {
         flex: 1 1 auto;
-        margin: 0 var(--bb-grid-size-2);
+        margin: 0 var(--bb-grid-size-6);
         height: 100%;
         display: flex;
         align-items: center;
@@ -87,7 +87,8 @@ export class Header extends LitElement {
           width: 100%;
           max-width: 320px;
           height: 4px;
-          background: var(--p-70, var(--bb-neutral-200));
+          background: var(--n-100, var(--bb-neutral-200));
+          outline: 1px solid var(--n-100);
           border-radius: var(--bb-grid-size-16);
           position: relative;
 
