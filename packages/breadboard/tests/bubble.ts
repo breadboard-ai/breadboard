@@ -10,159 +10,93 @@ import {
   createBubbleHandler,
   createErrorMessage,
 } from "../src/bubble.js";
-import { GraphDescriptor, NodeHandlerContext } from "../src/types.js";
+import {
+  GraphDescriptor,
+  InputValues,
+  NodeHandlerContext,
+  Schema,
+} from "../src/types.js";
 
 test("InputSchemaReader works as expected", async (t) => {
   {
-    const requester = new InputSchemaReader(
+    const reader = new InputSchemaReader(
+      { foo: "foo" },
+      {
+        schema: {
+          properties: {
+            foo: { type: "string" },
+          },
+        } satisfies Schema,
+      } satisfies InputValues,
+      []
+    );
+    const result = await reader.read(async () => {
+      t.fail();
+      return {};
+    });
+    t.deepEqual(result, { foo: "foo" });
+  }
+  {
+    const reader = new InputSchemaReader(
+      { foo: "foo", bar: "bar" },
+      {
+        schema: {
+          properties: {
+            foo: { type: "string" },
+          },
+        } satisfies Schema,
+      } satisfies InputValues,
+      []
+    );
+    const result = await reader.read(async () => {
+      t.fail();
+      return {};
+    });
+    t.deepEqual(result, { foo: "foo", bar: "bar" });
+  }
+  {
+    const reader = new InputSchemaReader(
+      { bar: "bar" },
+      {
+        schema: {
+          properties: {
+            foo: { type: "string" },
+          },
+        } satisfies Schema,
+      } satisfies InputValues,
+      []
+    );
+    const result = await reader.read(async () => {
+      return { foo: "qux" };
+    });
+    t.deepEqual(result, { foo: "qux", bar: "bar" });
+  }
+  {
+    const reader = new InputSchemaReader({ foo: "foo" }, {}, []);
+    const result = await reader.read(async () => {
+      t.fail();
+      return {};
+    });
+    t.deepEqual(result, { foo: "foo" });
+  }
+  {
+    const reader = new InputSchemaReader(
       {},
       {
         schema: {
-          type: "object",
           properties: {
-            a: { type: "string" },
-            b: { type: "number" },
+            foo: { type: "string" },
           },
-          required: ["a"],
-        },
-      },
+        } satisfies Schema,
+      } satisfies InputValues,
       []
     );
-    const inputs: unknown[] = [];
-    const result = await requester.read(async (name, schema, required) => {
-      inputs.push({ name, schema, required });
-      return name;
+    let called = false;
+    await reader.read(async () => {
+      called = true;
+      return {};
     });
-    t.deepEqual(inputs, [
-      { name: "a", schema: { type: "string" }, required: true },
-      { name: "b", schema: { type: "number" }, required: false },
-    ]);
-    t.deepEqual(result, { a: "a", b: "b" });
-  }
-  {
-    const requester = new InputSchemaReader({}, {}, []);
-    const inputs: unknown[] = [];
-    const result = await requester.read(async (name, schema, required) => {
-      inputs.push({ name, schema, required });
-      return name;
-    });
-    t.deepEqual(inputs, []);
-    t.deepEqual(result, {});
-  }
-  {
-    const requester = new InputSchemaReader({}, { schema: {} }, []);
-    const inputs: unknown[] = [];
-    const result = await requester.read(async (name, schema, required) => {
-      inputs.push({ name, schema, required });
-      return name;
-    });
-    t.deepEqual(inputs, []);
-    t.deepEqual(result, {});
-  }
-  {
-    const requester = new InputSchemaReader(
-      {},
-      {
-        schema: {
-          type: "object",
-          properties: {
-            a: { type: "string" },
-            b: { type: "number" },
-          },
-        },
-      },
-      []
-    );
-    const inputs: unknown[] = [];
-    const result = await requester.read(async (name, schema, required) => {
-      inputs.push({ name, schema, required });
-      return name;
-    });
-    t.deepEqual(inputs, [
-      { name: "a", schema: { type: "string" }, required: false },
-      { name: "b", schema: { type: "number" }, required: false },
-    ]);
-    t.deepEqual(result, { a: "a", b: "b" });
-  }
-});
-
-test("InputSchemaReader correctly handles existing outputs", async (t) => {
-  {
-    const requester = new InputSchemaReader(
-      { a: "existingA" },
-      {
-        schema: {
-          type: "object",
-          properties: {
-            a: { type: "string" },
-            b: { type: "number" },
-          },
-        },
-      },
-      []
-    );
-    const inputs: unknown[] = [];
-    const result = await requester.read(async (name, schema, required) => {
-      inputs.push({ name, schema, required });
-      return name;
-    });
-    t.deepEqual(inputs, [
-      { name: "b", schema: { type: "number" }, required: false },
-    ]);
-    t.deepEqual(result, { a: "existingA", b: "b" });
-  }
-  {
-    const requester = new InputSchemaReader(
-      { a: "existingA", c: "existingC" },
-      {
-        schema: {
-          type: "object",
-          properties: {
-            a: { type: "string" },
-            b: { type: "number" },
-          },
-          required: ["a"],
-        },
-      },
-      []
-    );
-    const inputs: unknown[] = [];
-    const result = await requester.read(async (name, schema, required) => {
-      inputs.push({ name, schema, required });
-      return name;
-    });
-    t.deepEqual(inputs, [
-      { name: "b", schema: { type: "number" }, required: false },
-    ]);
-    t.deepEqual(result, { a: "existingA", b: "b", c: "existingC" });
-  }
-  {
-    const requester = new InputSchemaReader(
-      { a: "existingA", c: "existingC" },
-      {},
-      []
-    );
-    const inputs: unknown[] = [];
-    const result = await requester.read(async (name, schema, required) => {
-      inputs.push({ name, schema, required });
-      return name;
-    });
-    t.deepEqual(inputs, []);
-    t.deepEqual(result, { a: "existingA", c: "existingC" });
-  }
-  {
-    const requester = new InputSchemaReader(
-      { a: "existingA", c: "existingC" },
-      { schema: {} },
-      []
-    );
-    const inputs: unknown[] = [];
-    const result = await requester.read(async (name, schema, required) => {
-      inputs.push({ name, schema, required });
-      return name;
-    });
-    t.deepEqual(inputs, []);
-    t.deepEqual(result, { a: "existingA", c: "existingC" });
+    t.true(called);
   }
 });
 
@@ -191,18 +125,40 @@ test("createBubbleHandler works as expected", async (t) => {
   {
     const handler = createBubbleHandler({}, {}, descriptor, []);
     await t.throwsAsync(
-      handler("foo", { type: "string" }, true, []),
+      handler(
+        {
+          properties: {
+            foo: { type: "string" },
+          },
+          required: ["foo"],
+        },
+        []
+      ),
       undefined,
       'Missing required input "foo".'
     );
     await t.throwsAsync(
-      handler("foo", { type: "string" }, false, []),
+      handler(
+        {
+          properties: {
+            foo: { type: "string" },
+          },
+        },
+        []
+      ),
       undefined,
       'Missing input "foo".'
     );
     t.deepEqual(
-      await handler("foo", { type: "string", default: "bar" }, false, []),
-      "bar"
+      await handler(
+        {
+          properties: {
+            foo: { type: "string", default: "bar" },
+          },
+        },
+        []
+      ),
+      { foo: "bar" }
     );
   }
   {
@@ -215,7 +171,10 @@ test("createBubbleHandler works as expected", async (t) => {
       []
     );
     await t.throwsAsync(
-      handler("foo", { type: "string" }, true, []),
+      handler(
+        { properties: { foo: { type: "string" } }, required: ["foo"] },
+        []
+      ),
       undefined,
       'Missing required input "foo" for board "Foo".'
     );
@@ -224,14 +183,20 @@ test("createBubbleHandler works as expected", async (t) => {
     const handler = createBubbleHandler(
       {},
       {
-        requestInput: async () => "bar",
+        requestInput: async () => ({ foo: "bar" }),
       } satisfies NodeHandlerContext,
       descriptor,
       []
     );
-    t.deepEqual(await handler("foo", { type: "string" }, false, []), "bar");
+    t.deepEqual(
+      await handler({ properties: { foo: { type: "string" } } }, []),
+      { foo: "bar" }
+    );
     await t.throwsAsync(
-      handler("foo", { type: "string" }, true, []),
+      handler(
+        { properties: { foo: { type: "string" } }, required: ["foo"] },
+        []
+      ),
       undefined,
       'Missing required input "foo".'
     );
@@ -239,25 +204,34 @@ test("createBubbleHandler works as expected", async (t) => {
   {
     const handler = createBubbleHandler({}, {}, descriptor, []);
     t.deepEqual(
-      await handler("foo", { type: "string", default: "bar" }, false, []),
-      "bar"
-    );
-    t.deepEqual(
-      await handler("foo", { type: "boolean", default: "false" }, false, []),
-      false
-    );
-    t.deepEqual(
-      await handler("foo", { type: "array", default: "[]" }, false, []),
-      []
-    );
-    t.deepEqual(
       await handler(
-        "foo",
-        { type: "object", default: '{ "foo": "bar" }' },
-        false,
+        { properties: { foo: { type: "string", default: "bar" } } },
         []
       ),
       { foo: "bar" }
+    );
+    t.deepEqual(
+      await handler(
+        { properties: { foo: { type: "boolean", default: "false" } } },
+        []
+      ),
+      { foo: false }
+    );
+    t.deepEqual(
+      await handler(
+        { properties: { foo: { type: "array", default: "[]" } } },
+        []
+      ),
+      { foo: [] }
+    );
+    t.deepEqual(
+      await handler(
+        {
+          properties: { foo: { type: "object", default: '{ "foo": "bar" }' } },
+        },
+        []
+      ),
+      { foo: { foo: "bar" } }
     );
   }
 });

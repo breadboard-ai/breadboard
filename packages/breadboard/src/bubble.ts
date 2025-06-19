@@ -18,13 +18,14 @@ import type {
 import type { NodeHandlerContext, RunArguments, Schema } from "./types.js";
 
 export const createErrorMessage = (
-  inputName: string,
+  inputName: string | string[],
   metadata: GraphInlineMetadata = {},
   required: boolean
 ): string => {
   const boardTitle = metadata.title ?? metadata?.url;
+  const inputNames = typeof inputName === "string" ? [inputName] : inputName;
   const requiredText = required ? "required " : "";
-  return `Missing ${requiredText}input "${inputName}"${
+  return `Missing ${requiredText}input ${inputNames.map((name) => `"${name}"`).join(", ")}${
     boardTitle ? ` for board "${boardTitle}".` : "."
   }`;
 };
@@ -63,39 +64,63 @@ export const createBubbleHandler = (
   descriptor: NodeDescriptor,
   state: RunState
 ) => {
-  return (async (name, schema, required, path) => {
-    if (required) {
-      throw new Error(createErrorMessage(name, metadata, required));
-    }
-    if (schema.default !== undefined) {
-      if ("type" in schema && schema.type !== "string") {
-        return JSON.parse(schema.default);
+  return (async (propertiesSchema, path) => {
+    const entries = Object.entries(propertiesSchema.properties || {});
+    const defaultOutputs: OutputValues = {};
+    const propertiesToRequest: [string, Schema][] = [];
+    // Pre-process the entries and prepare to request input.
+    for (const [name, schema] of entries) {
+      const required = propertiesSchema.required?.includes(name) ?? false;
+
+      if (required) {
+        throw new Error(createErrorMessage(name, metadata, required));
       }
-      return schema.default;
+      if (schema.default !== undefined) {
+        if ("type" in schema && schema.type !== "string") {
+          defaultOutputs[name] = JSON.parse(schema.default);
+        } else {
+          defaultOutputs[name] = schema.default;
+        }
+        continue;
+      }
+      propertiesToRequest.push([name, schema]);
     }
-    const value = await context.requestInput?.(
-      name,
-      schema,
+    // Exit early if we already have all properties.
+    if (propertiesToRequest.length === 0) {
+      return defaultOutputs;
+    }
+    // Request properties that did not have default values.
+    const inputRequestSchema: Schema = {
+      properties: Object.fromEntries(propertiesToRequest),
+    };
+    const outputs = await context.requestInput?.(
+      inputRequestSchema,
       descriptor,
       path,
       state
     );
+    // If the run was aborted, let's bail
     if (context?.signal?.aborted) {
       throw context.signal.throwIfAborted();
     }
-    if (value === undefined) {
-      throw new Error(createErrorMessage(name, metadata, required));
+    // Finally, let's make sure we have all values and if not, throw an error.
+    if (!outputs || Object.keys(outputs).length === 0) {
+      throw new Error(
+        createErrorMessage(
+          propertiesToRequest.map(([name]) => name),
+          metadata,
+          false
+        )
+      );
     }
-    return value;
+    return { ...defaultOutputs, ...outputs };
   }) satisfies InputSchemaHandler;
 };
 
 export type InputSchemaHandler = (
-  name: string,
   schema: Schema,
-  required: boolean,
   path: number[]
-) => Promise<NodeValue>;
+) => Promise<OutputValues>;
 
 export class InputSchemaReader {
   #currentOutputs: OutputValues;
@@ -119,23 +144,18 @@ export class InputSchemaReader {
 
     if (!schema.properties) return this.#currentOutputs;
 
-    const entries = Object.entries(schema.properties);
-
-    const newOutputs: OutputValues = {};
-    for (const [name, property] of entries) {
+    const unfulfilled = structuredClone(schema);
+    for (const name of Object.keys(schema.properties)) {
       if (name in this.#currentOutputs) {
-        newOutputs[name] = this.#currentOutputs[name];
-        continue;
+        delete unfulfilled.properties?.[name];
       }
-      const required = schema.required?.includes(name) ?? false;
-      const value = await handler(name, property, required, this.#path);
-      newOutputs[name] = value;
     }
 
-    return {
-      ...this.#currentOutputs,
-      ...newOutputs,
-    };
+    const willAsk = Object.keys(unfulfilled.properties || {}).length > 0;
+
+    const newOutputs = willAsk ? await handler(unfulfilled, this.#path) : {};
+
+    return { ...this.#currentOutputs, ...newOutputs };
   }
 }
 
@@ -152,16 +172,27 @@ export class RequestedInputsManager {
   createHandler(
     next: (result: RunResult) => Promise<void>,
     result: TraversalResult
-  ) {
+  ): NodeHandlerContext["requestInput"] {
     return async (
-      name: string,
       schema: Schema,
       node: NodeDescriptor,
       path: number[],
       state: RunState
     ) => {
-      const cachedValue = this.#cache.get(name);
-      if (cachedValue !== undefined) return cachedValue;
+      // Retrieve all cached values
+      const propertiesToRequest = Object.entries(schema.properties || {});
+      const cachedValues: OutputValues = {};
+      const uncachedProperties = propertiesToRequest.filter(([name]) => {
+        const cachedValue = this.#cache.get(name);
+        if (cachedValue !== undefined) {
+          cachedValues[name] = cachedValue;
+          return false;
+        }
+        return true;
+      });
+      // Early return when all properties are cached
+      if (uncachedProperties.length === 0) return cachedValues;
+
       const configuration = node.configuration?.schema
         ? {
             configuration: { schema: node.configuration.schema },
@@ -172,32 +203,50 @@ export class RequestedInputsManager {
         ...result,
         descriptor,
         inputs: {
-          schema: { type: "object", properties: { [name]: schema } },
+          schema: {
+            type: "object",
+            properties: Object.fromEntries(uncachedProperties),
+          } satisfies Schema,
         },
       };
       await next(new InputStageResult(requestInputResult, state, -1, path));
       const outputs = requestInputResult.outputs;
-      let value = outputs && outputs[name];
-      if (value === undefined) {
-        value = await this.#context.requestInput?.(
-          name,
-          schema,
+      const requestedProperties = schema.properties || {};
+      const remainingProperties = outputs
+        ? Object.fromEntries(
+            Object.entries(requestedProperties).filter(([name]) => {
+              return !(name in outputs);
+            })
+          )
+        : requestedProperties;
+      if (Object.keys(remainingProperties).length === 0) {
+        return outputs;
+      }
+      // Bubble up: request outer context to request input
+      const bubbledOutputs: OutputValues =
+        (await this.#context.requestInput?.(
+          { properties: remainingProperties },
           descriptor,
           path,
           state
-        );
+        )) || {};
+      // Cache all non-transient properties.
+      for (const [name, propertySchema] of uncachedProperties) {
+        if (!isTransient(propertySchema)) {
+          const value = bubbledOutputs[name];
+          if (value) {
+            this.#cache.set(name, bubbledOutputs[name]);
+          }
+        }
       }
-      if (!isTransient(schema)) {
-        this.#cache.set(name, value);
-      }
-      return value;
+      return { ...outputs, ...bubbledOutputs };
     };
   }
 }
 
-const isTransient = (schema: Schema): boolean => {
+function isTransient(schema: Schema): boolean {
   return schema.behavior?.includes("transient") ?? false;
-};
+}
 
 export const bubbleUpOutputsIfNeeded = async (
   outputs: OutputValues,
