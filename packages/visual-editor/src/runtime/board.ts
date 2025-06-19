@@ -109,6 +109,8 @@ export class Board extends EventTarget {
     });
   }
 
+  currentURL: URL | null = null;
+
   #canParse(url: string, base?: string) {
     // TypeScript assumes that if `canParse` does not exist, then URL is
     // `never`. However, in older browsers that's not true. We therefore take a
@@ -260,7 +262,6 @@ export class Board extends EventTarget {
   createURLFromTabs() {
     const params = new URLSearchParams();
     let t = 0;
-    let activeTab = 0;
 
     // To identify the top-level origin when embedded, we persist the
     // redirect URI param into the new board URL.
@@ -274,10 +275,6 @@ export class Board extends EventTarget {
         continue;
       }
 
-      if (tab.id === this.#currentTabId) {
-        activeTab = t;
-      }
-
       if (tab.moduleId) {
         params.set(`subitem-i-id${t}`, tab.moduleId);
       }
@@ -288,8 +285,6 @@ export class Board extends EventTarget {
 
       params.set(`tab${t++}`, tab.graph.url);
     }
-
-    params.set(`activeTab`, activeTab.toString());
 
     const url = new URL(window.location.href);
     url.search = params.toString();
@@ -302,7 +297,7 @@ export class Board extends EventTarget {
       .map((tab) => tab.graph.url as string);
   }
 
-  async createTabsFromURL(url: URL) {
+  getBoardURL(url: URL): string | undefined {
     const params = new URLSearchParams(url.search);
 
     let t = 0;
@@ -320,15 +315,32 @@ export class Board extends EventTarget {
         return 0;
       });
 
-    let activeTab: number | null = null;
-    const activeTabParam = params.get("activeTab");
-    if (activeTabParam) {
-      activeTab = Number.parseInt(activeTabParam);
-      if (Number.isNaN(activeTab)) {
-        activeTab = null;
-      }
+    return tabs[0]?.[1];
+  }
+
+  async createTabsFromURL(url: URL, closeAllTabs = false) {
+    if (closeAllTabs) {
+      this.closeAllTabs();
     }
 
+    const params = new URLSearchParams(url.search);
+
+    let t = 0;
+    const board = params.get("board");
+    if (board) {
+      params.set(`tab${t++}`, board);
+      params.delete("board");
+    }
+
+    const tabs = [...params]
+      .filter((param) => param[0].startsWith("tab"))
+      .sort(([idA], [idB]) => {
+        if (idA > idB) return 1;
+        if (idA < idB) return -1;
+        return 0;
+      });
+
+    const activeTab = 0;
     let activeTabId: TabId | null = null;
     if (tabs.length > 0) {
       for (let t = 0; t < tabs.length; t++) {
@@ -778,6 +790,7 @@ export class Board extends EventTarget {
     subGraphId: GraphIdentifier | null = null,
     creator: EditHistoryCreator | null = null
   ): Promise<void> {
+    const urlAtTimeOfCall = this.currentURL?.href ?? null;
     const url = this.#makeRelativeToCurrentBoard(boardUrl, currentUrl);
     if (!url) {
       return;
@@ -886,7 +899,13 @@ export class Board extends EventTarget {
       if (!mainGraphId.success) {
         throw new Error(`Unable to add graph: ${mainGraphId.error}`);
       }
-      // Always create a new tab.
+
+      // Before creating the tab ensure that the tab's URL still matches the one
+      // we want to have open.
+      if (urlAtTimeOfCall !== this.currentURL?.href) {
+        return;
+      }
+
       const id = globalThis.crypto.randomUUID();
       const graphIsMine = this.isMine(graph.url);
       this.#tabs.set(id, {
@@ -956,6 +975,14 @@ export class Board extends EventTarget {
     tab.moduleId = moduleId;
 
     this.dispatchEvent(new RuntimeWorkspaceItemChangeEvent());
+  }
+
+  closeAllTabs() {
+    const tabList = [...this.#tabs.keys()];
+    for (let t = 0; t < tabList.length; t++) {
+      this.#tabs.delete(tabList[t]);
+      this.dispatchEvent(new RuntimeTabCloseEvent(tabList[t]));
+    }
   }
 
   closeTab(id: TabId) {
