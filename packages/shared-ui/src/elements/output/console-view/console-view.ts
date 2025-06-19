@@ -51,6 +51,10 @@ export class ConsoleView extends SignalWatcher(LitElement) {
         height: 100%;
       }
 
+      bb-header {
+        border-top: 1px solid var(--s-90, var(--bb-neutral-100));
+      }
+
       #no-console {
         display: flex;
         flex-direction: column;

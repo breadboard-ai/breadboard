@@ -167,31 +167,33 @@ export class EditorControls extends LitElement {
         }
 
         & button {
-          font-size: 0;
-          background: var(--bb-neutral-0) var(--bb-icon-fit) center center /
-            20px 20px no-repeat;
+          background: var(--bb-neutral-0) center center / 20px 20px no-repeat;
           width: var(--bb-grid-size-7);
           height: var(--bb-grid-size-7);
           padding: 0;
           border: none;
           transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
           border-radius: var(--bb-grid-size);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          & .g-icon {
+            pointer-events: none;
+          }
 
           &#zoom-to-fit {
             height: var(--bb-grid-size-10);
-            background-image: var(--bb-icon-fit);
             margin-bottom: var(--bb-grid-size);
             border-radius: var(--bb-grid-size-12) var(--bb-grid-size-12)
               var(--bb-grid-size) var(--bb-grid-size);
           }
 
           &#zoom-in {
-            background-image: var(--bb-icon-add);
             margin-top: var(--bb-grid-size);
           }
 
           &#zoom-out {
-            background-image: var(--bb-icon-remove);
             border-radius: var(--bb-grid-size) var(--bb-grid-size)
               var(--bb-grid-size-12) var(--bb-grid-size-12);
           }
@@ -1165,7 +1167,7 @@ export class EditorControls extends LitElement {
           this.dispatchEvent(new ZoomToFitEvent(animate));
         }}
       >
-        Zoom to fit
+        <span class="g-icon filled round">fit_screen</span>
       </button>
 
       <button
@@ -1191,7 +1193,7 @@ export class EditorControls extends LitElement {
           this.dispatchEvent(new ZoomInEvent(animate));
         }}
       >
-        Zoom in
+        <span class="g-icon filled round">add</span>
       </button>
 
       <button
@@ -1217,7 +1219,7 @@ export class EditorControls extends LitElement {
           this.dispatchEvent(new ZoomOutEvent(animate));
         }}
       >
-        Zoom out
+        <span class="g-icon filled round">remove</span>
       </button>
     </div>`;
 
