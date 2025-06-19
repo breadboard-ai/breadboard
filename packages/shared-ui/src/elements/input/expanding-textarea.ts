@@ -91,6 +91,7 @@ export class ExpandingTextarea extends LitElement {
 
       textarea {
         flex: 1;
+        padding: 0;
         color: inherit;
         background: transparent;
         height: min(
@@ -170,7 +171,6 @@ export class ExpandingTextarea extends LitElement {
   override render() {
     return html`
       <div id="outer-container">
-        <slot name="mic"></slot>
         <div id="inner-container">
           <textarea
             ${ref(this.#textarea)}
@@ -186,6 +186,7 @@ export class ExpandingTextarea extends LitElement {
           ></textarea>
           <div id="measure" ${ref(this.#measure)}></div>
         </div>
+        <slot name="mic"></slot>
         <button id="submit" aria-label="Submit" @click=${this.#submit}>
           <slot name="submit">
             <span class="g-icon">spark</span>
