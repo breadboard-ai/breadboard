@@ -721,13 +721,21 @@ export interface NodeHandlerContext {
   readonly loader?: GraphLoader;
   readonly outerGraph?: GraphDescriptor;
   readonly probe?: Probe;
+  /**
+   * Allows a step to request inputs mid-run (aka "bubbling inputs")
+   *
+   * @param schema - the schema of an object describing requested properties
+   * @param node - information about the node that requested properties
+   * @param path - path to the node that requested properties
+   * @param state - the curren run state
+   * @returns
+   */
   readonly requestInput?: (
-    name: string,
     schema: Schema,
     node: NodeDescriptor,
     path: number[],
     state: RunState
-  ) => Promise<NodeValue>;
+  ) => Promise<OutputValues | undefined>;
   /**
    * Provide output directly to the user. This will bypass the normal output
    * flow and will not be passed as outputs.

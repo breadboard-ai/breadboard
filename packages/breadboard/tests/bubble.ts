@@ -183,7 +183,7 @@ test("createBubbleHandler works as expected", async (t) => {
     const handler = createBubbleHandler(
       {},
       {
-        requestInput: async () => "bar",
+        requestInput: async () => ({ foo: "bar" }),
       } satisfies NodeHandlerContext,
       descriptor,
       []
