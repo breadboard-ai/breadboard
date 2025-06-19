@@ -159,11 +159,6 @@ export class Gallery extends LitElement {
           opacity: 0;
           pointer-events: none;
 
-          &.persistent {
-            opacity: 1;
-            pointer-events: auto;
-          }
-
           & .g-icon {
             margin-right: var(--bb-grid-size-2);
           }
@@ -457,6 +452,12 @@ export class Gallery extends LitElement {
           icon: "delete",
           value: this.#overflowMenuConfig.value,
         },
+        {
+          title: Strings.from("COMMAND_DUPLICATE"),
+          name: "duplicate",
+          icon: "duplicate",
+          value: this.#overflowMenuConfig.value,
+        },
       ];
 
       boardOverflowMenu = html`<bb-overflow-menu
@@ -480,6 +481,15 @@ export class Gallery extends LitElement {
             case "delete": {
               this.dispatchEvent(
                 new BoardDeleteEvent(this.#overflowMenuConfig.value)
+              );
+              break;
+            }
+
+            case "duplicate": {
+              console.log(this.#overflowMenuConfig.value);
+              this.#onRemixButtonClick(
+                actionEvt,
+                this.#overflowMenuConfig.value
               );
               break;
             }
@@ -519,49 +529,50 @@ export class Gallery extends LitElement {
             until(this.#renderThumbnail(thumbnail))
           )}`
         )}
-        <button
-          class="overflow-menu"
-          @click=${(evt: Event) => {
-            evt.preventDefault();
-            evt.stopImmediatePropagation();
+        ${mine
+          ? html`<button
+              class="overflow-menu"
+              @click=${(evt: Event) => {
+                evt.preventDefault();
+                evt.stopImmediatePropagation();
 
-            if (!(evt.target instanceof HTMLButtonElement)) {
-              return;
-            }
+                if (!(evt.target instanceof HTMLButtonElement)) {
+                  return;
+                }
 
-            const bounds = evt.target.getBoundingClientRect();
-            let x = bounds.x;
-            if (x + 144 > window.innerWidth) {
-              x = window.innerWidth - 144;
-            }
+                const bounds = evt.target.getBoundingClientRect();
+                let x = bounds.x;
+                if (x + 144 > window.innerWidth) {
+                  x = window.innerWidth - 144;
+                }
 
-            this.#overflowMenuConfig = {
-              x,
-              y: bounds.bottom,
-              value: url,
-            };
-            this.showOverflowMenu = true;
-          }}
-        >
-          <span class="g-icon filled-heavy w-500 round">more_vert</span>
-        </button>
-        <button
-          class=${classMap({
-            "remix-button": true,
-            "sans-flex": true,
-            "w-500": true,
-            round: true,
-            "md-body-small": true,
-            persistent: !mine,
-          })}
-          @click=${(event: PointerEvent) =>
-            this.#onRemixButtonClick(event, url)}
-          @keydown=${(event: KeyboardEvent) =>
-            this.#onRemixButtonKeydown(event, url)}
-        >
-          <span class="g-icon filled round">gesture</span>
-          ${Strings.from("COMMAND_REMIX")}
-        </button>
+                this.#overflowMenuConfig = {
+                  x,
+                  y: bounds.bottom,
+                  value: url,
+                };
+                this.showOverflowMenu = true;
+              }}
+            >
+              <span class="g-icon filled-heavy w-500 round">more_vert</span>
+            </button>`
+          : html` <button
+              class=${classMap({
+                "remix-button": true,
+                "sans-flex": true,
+                "w-500": true,
+                round: true,
+                "md-body-small": true,
+                persistent: !mine,
+              })}
+              @click=${(event: PointerEvent) =>
+                this.#onRemixButtonClick(event, url)}
+              @keydown=${(event: KeyboardEvent) =>
+                this.#onRemixButtonKeydown(event, url)}
+            >
+              <span class="g-icon filled round">gesture</span>
+              ${Strings.from("COMMAND_REMIX")}
+            </button>`}
         <div class="info">
           ${mine
             ? nothing
@@ -706,7 +717,10 @@ export class Gallery extends LitElement {
     }
   }
 
-  #onRemixButtonClick(event: PointerEvent | KeyboardEvent, url: string) {
+  #onRemixButtonClick(
+    event: PointerEvent | KeyboardEvent | OverflowMenuActionEvent,
+    url: string
+  ) {
     ActionTracker.remixApp(url, this.forceCreatorToBeTeam ? "gallery" : "user");
     event.stopPropagation();
     this.dispatchEvent(new GraphBoardServerRemixRequestEvent(url));

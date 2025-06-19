@@ -35,6 +35,9 @@ export default {
   COMMAND_REMIX: {
     str: "Remix",
   },
+  COMMAND_DUPLICATE: {
+    str: "Duplicate",
+  },
   COMMAND_DELETE: {
     str: "Delete",
   },
