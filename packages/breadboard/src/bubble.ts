@@ -65,7 +65,9 @@ export const createBubbleHandler = (
 ) => {
   return (async (propertiesSchema, path) => {
     const entries = Object.entries(propertiesSchema.properties || {});
-    const outputs: OutputValues = {};
+    const defaultOutputs: OutputValues = {};
+    const propertiesToRequest: [string, Schema][] = [];
+    // Pre-process the entries and prepare to request input.
     for (const [name, schema] of entries) {
       const required = propertiesSchema.required?.includes(name) ?? false;
 
@@ -74,12 +76,17 @@ export const createBubbleHandler = (
       }
       if (schema.default !== undefined) {
         if ("type" in schema && schema.type !== "string") {
-          outputs[name] = JSON.parse(schema.default);
+          defaultOutputs[name] = JSON.parse(schema.default);
         } else {
-          outputs[name] = schema.default;
+          defaultOutputs[name] = schema.default;
         }
         continue;
       }
+      propertiesToRequest.push([name, schema]);
+    }
+    // Request properties that did not have default values.
+    const outputs: OutputValues = {};
+    for (const [name, schema] of propertiesToRequest) {
       const value = await context.requestInput?.(
         name,
         schema,
@@ -91,11 +98,11 @@ export const createBubbleHandler = (
         throw context.signal.throwIfAborted();
       }
       if (value === undefined) {
-        throw new Error(createErrorMessage(name, metadata, required));
+        throw new Error(createErrorMessage(name, metadata, false));
       }
       outputs[name] = value;
     }
-    return outputs;
+    return { ...defaultOutputs, ...outputs };
   }) satisfies InputSchemaHandler;
 };
 
