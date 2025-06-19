@@ -50,13 +50,13 @@ import { createChiclets } from "./utils/create-chiclets.js";
 import { icons } from "../../styles/icons.js";
 import {
   colorsLight,
-  neutral,
+  palette,
   custom,
 } from "../../styles/host/colors-light.js";
 import { type } from "../../styles/host/type.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
 
-const EDGE_STANDARD = neutral.n80;
+const EDGE_STANDARD = palette.neutral.n80;
 const EDGE_SELECTED = custom.c100;
 
 const arrowWidth = 46;
