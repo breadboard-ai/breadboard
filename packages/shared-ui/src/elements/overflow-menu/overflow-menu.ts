@@ -170,7 +170,7 @@ export class OverflowMenu extends LitElement {
         }
 
         &.duplicate .g-icon::before {
-          content: "tab_inactive";
+          content: "file_copy";
         }
 
         &.quick-jump .g-icon::before {
@@ -344,7 +344,7 @@ export class OverflowMenu extends LitElement {
           ?disabled=${(action.name !== "settings" && this.disabled) ||
           action.disabled}
         >
-          <span class="g-icon"></span>
+          <span class="g-icon filled round"></span>
           ${action.title}
         </button>
 
