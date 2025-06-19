@@ -110,7 +110,7 @@ export class FlowgenHomepagePanel extends LitElement {
       }
 
       bb-speech-to-text {
-        --button-size: var(--bb-grid-size-8);
+        --button-size: var(--bb-grid-size-9);
         --alpha-adjustment: 0;
         --background-color: transparent;
         --active-color: linear-gradient(
@@ -119,7 +119,7 @@ export class FlowgenHomepagePanel extends LitElement {
           rgba(210, 212, 237, 0.4) 69%,
           rgba(230, 217, 231, 0) 99%
         );
-        margin-right: var(--bb-grid-size-2);
+        margin-left: var(--bb-grid-size-4);
       }
 
       bb-expanding-textarea {

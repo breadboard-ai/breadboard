@@ -105,7 +105,7 @@ export class FlowgenEditorInput extends LitElement {
           rgba(210, 212, 237, 0.4) 69%,
           rgba(230, 217, 231, 0) 99%
         );
-        margin-right: var(--bb-grid-size-2);
+        margin: 0 var(--bb-grid-size-2);
       }
 
       bb-expanding-textarea {
@@ -116,13 +116,23 @@ export class FlowgenEditorInput extends LitElement {
         background: var(--n-100);
         border: none;
         border-radius: var(--bb-grid-size-16);
-        padding: var(--bb-grid-size-3) var(--bb-grid-size-4);
+        padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
         --min-lines: 1;
         --max-lines: 4;
         font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
           var(--bb-font-family);
-        line-height: 20px;
+        line-height: 1lh;
         caret-color: var(--n-0);
+
+        > [slot~="submit"] {
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          color: var(--n-70);
+          font-size: 30px;
+          width: 30px;
+          height: 30px;
+        }
 
         &::part(textarea)::placeholder {
           color: var(--placeholder-color);

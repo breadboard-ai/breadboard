@@ -46,6 +46,8 @@ export class SpeechToText extends LitElement {
       :host {
         display: block;
         position: relative;
+        width: var(--button-size, 40px);
+        height: var(--button-size, 40px);
 
         --active-color: linear-gradient(
           oklch(
@@ -110,13 +112,17 @@ export class SpeechToText extends LitElement {
         width: var(--button-size, 40px);
         height: var(--button-size, 40px);
         background: var(--background-color, var(--n-90, var(--bb-neutral-200)));
-        color: var(--text-color, var(--p-40, var(--bb-neutral-800)));
+        color: var(--text-color, var(--n-0, var(--bb-neutral-800)));
         font-size: 0;
         border: none;
         border-radius: 50%;
         padding: 0;
         margin: 0;
         transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+
+        & .g-icon {
+          font-size: 30px;
+        }
 
         &[disabled] {
           cursor: auto;
@@ -252,7 +258,7 @@ export class SpeechToText extends LitElement {
     return this.#permissionTask.render({
       pending: () => {
         return html`<div id="checking-permission">
-          <span class="g-icon">pending</span>
+          <span class="g-icon filled round">pending</span>
         </div>`;
       },
 
@@ -295,7 +301,7 @@ export class SpeechToText extends LitElement {
             this.#stopTranscription();
           }}
         >
-          <span class="g-icon">mic</span>
+          <span class="g-icon filled round">mic</span>
         </button>`;
       },
 
@@ -306,7 +312,7 @@ export class SpeechToText extends LitElement {
             this.#requestPermission();
           }}
         >
-          <span class="g-icon">mic</span>
+          <span class="g-icon filled round">mic</span>
         </button>`;
       },
     });
