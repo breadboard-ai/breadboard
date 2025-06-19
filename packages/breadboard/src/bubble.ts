@@ -63,39 +63,46 @@ export const createBubbleHandler = (
   descriptor: NodeDescriptor,
   state: RunState
 ) => {
-  return (async (name, schema, required, path) => {
-    if (required) {
-      throw new Error(createErrorMessage(name, metadata, required));
-    }
-    if (schema.default !== undefined) {
-      if ("type" in schema && schema.type !== "string") {
-        return JSON.parse(schema.default);
+  return (async (propertiesSchema, path) => {
+    const entries = Object.entries(propertiesSchema.properties || {});
+    const outputs: OutputValues = {};
+    for (const [name, schema] of entries) {
+      const required = propertiesSchema.required?.includes(name) ?? false;
+
+      if (required) {
+        throw new Error(createErrorMessage(name, metadata, required));
       }
-      return schema.default;
+      if (schema.default !== undefined) {
+        if ("type" in schema && schema.type !== "string") {
+          outputs[name] = JSON.parse(schema.default);
+        } else {
+          outputs[name] = schema.default;
+        }
+        continue;
+      }
+      const value = await context.requestInput?.(
+        name,
+        schema,
+        descriptor,
+        path,
+        state
+      );
+      if (context?.signal?.aborted) {
+        throw context.signal.throwIfAborted();
+      }
+      if (value === undefined) {
+        throw new Error(createErrorMessage(name, metadata, required));
+      }
+      outputs[name] = value;
     }
-    const value = await context.requestInput?.(
-      name,
-      schema,
-      descriptor,
-      path,
-      state
-    );
-    if (context?.signal?.aborted) {
-      throw context.signal.throwIfAborted();
-    }
-    if (value === undefined) {
-      throw new Error(createErrorMessage(name, metadata, required));
-    }
-    return value;
+    return outputs;
   }) satisfies InputSchemaHandler;
 };
 
 export type InputSchemaHandler = (
-  name: string,
   schema: Schema,
-  required: boolean,
   path: number[]
-) => Promise<NodeValue>;
+) => Promise<OutputValues>;
 
 export class InputSchemaReader {
   #currentOutputs: OutputValues;
@@ -119,23 +126,18 @@ export class InputSchemaReader {
 
     if (!schema.properties) return this.#currentOutputs;
 
-    const entries = Object.entries(schema.properties);
-
-    const newOutputs: OutputValues = {};
-    for (const [name, property] of entries) {
+    const unfulfilled = structuredClone(schema);
+    for (const name of Object.keys(schema.properties)) {
       if (name in this.#currentOutputs) {
-        newOutputs[name] = this.#currentOutputs[name];
-        continue;
+        delete unfulfilled.properties?.[name];
       }
-      const required = schema.required?.includes(name) ?? false;
-      const value = await handler(name, property, required, this.#path);
-      newOutputs[name] = value;
     }
 
-    return {
-      ...this.#currentOutputs,
-      ...newOutputs,
-    };
+    const willAsk = Object.keys(unfulfilled.properties || {}).length > 0;
+
+    const newOutputs = willAsk ? await handler(unfulfilled, this.#path) : {};
+
+    return { ...this.#currentOutputs, ...newOutputs };
   }
 }
 
