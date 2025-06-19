@@ -5,6 +5,7 @@
  */
 
 import { createGraphStore, createLoader, Kit } from "@google-labs/breadboard";
+import { Router } from "./router.js";
 import { Board } from "./board.js";
 import { Run } from "./run.js";
 import { Edit } from "./edit.js";
@@ -31,6 +32,7 @@ import { createSideboardRuntimeProvider } from "./sideboard-runtime.js";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 
 export async function create(config: RuntimeConfig): Promise<{
+  router: Router;
   board: Board;
   run: Run;
   edit: Edit;
@@ -111,6 +113,7 @@ export async function create(config: RuntimeConfig): Promise<{
   const state = new StateManager(graphStore, sideboards, servers);
 
   const runtime = {
+    router: new Router(),
     board: new Board(
       [],
       loader,

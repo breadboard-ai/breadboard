@@ -15,6 +15,7 @@ import {
 } from "./types";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import {
+  EditHistoryCreator,
   InspectableRunObserver,
   NodeConfiguration,
   NodeIdentifier,
@@ -165,6 +166,18 @@ export class RuntimeBoardRunEvent extends Event {
     public readonly abortController: AbortController
   ) {
     super(RuntimeBoardRunEvent.eventName, { ...eventInit });
+  }
+}
+
+export class RuntimeURLChangeEvent extends Event {
+  static eventName = "runtimeurlchange" as const;
+
+  constructor(
+    public readonly url: URL,
+    public readonly id?: TabId,
+    public readonly creator?: EditHistoryCreator
+  ) {
+    super(RuntimeURLChangeEvent.eventName, { ...eventInit });
   }
 }
 

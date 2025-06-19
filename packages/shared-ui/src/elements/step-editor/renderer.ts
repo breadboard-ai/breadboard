@@ -214,7 +214,7 @@ export class Renderer extends LitElement {
         color: var(--n-50, var(--bb-neutral-500));
         text-align: center;
         padding: var(--bb-grid-size);
-        background: var(--s-90, var(--neutral-50, transparent));
+        background: transparent;
         opacity: 0;
         animation: fadeIn 0.6s cubic-bezier(0, 0, 0.3, 1) forwards;
       }

@@ -830,7 +830,6 @@ export class Main extends LitElement {
                 this.tab.graph.url &&
                 this.tab.type === Runtime.Types.TabType.URL
               ) {
-                this.#updatePageURL();
                 await this.#trackRecentBoard(this.tab.graph.url);
               }
 
@@ -867,7 +866,6 @@ export class Main extends LitElement {
         this.#runtime.board.addEventListener(
           Runtime.Events.RuntimeModuleChangeEvent.eventName,
           () => {
-            this.#updatePageURL();
             this.requestUpdate();
           }
         );
@@ -875,7 +873,6 @@ export class Main extends LitElement {
         this.#runtime.board.addEventListener(
           Runtime.Events.RuntimeWorkspaceItemChangeEvent.eventName,
           () => {
-            this.#updatePageURL();
             this.requestUpdate();
           }
         );
@@ -886,7 +883,6 @@ export class Main extends LitElement {
             stopCurrentRunIfActive(evt.tabId);
 
             await this.#confirmSaveWithUserFirstIfNeeded();
-            this.#updatePageURL();
             this.requestUpdate();
           }
         );
@@ -982,7 +978,59 @@ export class Main extends LitElement {
           }
         );
 
-        return this.#runtime.board.createTabsFromURL(currentUrl);
+        this.#runtime.router.addEventListener(
+          Runtime.Events.RuntimeURLChangeEvent.eventName,
+          async (evt: Runtime.Events.RuntimeURLChangeEvent) => {
+            this.#runtime.board.currentURL = evt.url;
+
+            // Close tab, go to the home page.
+            if (evt.url.search === "") {
+              if (this.tab) {
+                this.#runtime.board.closeTab(this.tab.id);
+                return;
+              }
+
+              // This does a round-trip to clear out any tabs, after which it
+              // will dispatch an event which will cause the welcome page to be
+              // shown.
+              this.#runtime.board.createTabsFromURL(currentUrl);
+            } else {
+              // Load the tab.
+              const boardUrl = this.#runtime.board.getBoardURL(evt.url);
+              if (!boardUrl) {
+                return;
+              }
+
+              if (evt.url) {
+                const loadingTimeout = setTimeout(() => {
+                  this.snackbar(
+                    Strings.from("STATUS_GENERIC_LOADING"),
+                    BreadboardUI.Types.SnackType.PENDING,
+                    [],
+                    true,
+                    evt.id
+                  );
+                }, LOADING_TIMEOUT);
+
+                this.showWelcomePanel = false;
+                await this.#runtime.board.createTabFromURL(
+                  boardUrl,
+                  undefined,
+                  undefined,
+                  undefined,
+                  undefined,
+                  undefined,
+                  undefined,
+                  evt.creator
+                );
+                clearTimeout(loadingTimeout);
+                this.unsnackbar();
+              }
+            }
+          }
+        );
+
+        return this.#runtime.router.init();
       })
       .then(async () => {
         if (!config.boardServerUrl) {
@@ -1208,12 +1256,6 @@ export class Main extends LitElement {
     }
 
     this.#tooltipRef.value.visible = false;
-  }
-
-  #updatePageURL() {
-    const url = this.#runtime.board.createURLFromTabs();
-    const decodedUrl = decodeURIComponent(url.href);
-    window.history.replaceState(null, "", decodedUrl);
   }
 
   #setBoardPendingSaveState(boardPendingSave: boolean) {
@@ -1705,10 +1747,7 @@ export class Main extends LitElement {
       return;
     }
     const { id, url } = boardData;
-    this.#attemptBoardLoad(
-      new BreadboardUI.Events.StartEvent(url.href, undefined, creator),
-      id
-    );
+    this.#runtime.router.go(url.href, id, creator);
   }
 
   async #attemptBoardSaveAs(
@@ -2265,38 +2304,6 @@ export class Main extends LitElement {
         );
       }
     });
-  }
-
-  async #attemptBoardLoad(
-    evt: BreadboardUI.Events.StartEvent,
-    existingMessageId?: BreadboardUI.Types.SnackbarUUID
-  ) {
-    if (evt.url) {
-      const loadingTimeout = setTimeout(() => {
-        this.snackbar(
-          Strings.from("STATUS_GENERIC_LOADING"),
-          BreadboardUI.Types.SnackType.PENDING,
-          [],
-          true,
-          existingMessageId
-        );
-      }, LOADING_TIMEOUT);
-
-      await this.#runtime.board.createTabFromURL(
-        evt.url,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        evt.creator
-      );
-      clearTimeout(loadingTimeout);
-      this.unsnackbar();
-    } else if (evt.descriptor) {
-      this.#runtime.board.createTabFromDescriptor(evt.descriptor);
-    }
   }
 
   async #attemptNodeRun(id: string, stopAfter = true) {
@@ -3417,7 +3424,7 @@ export class Main extends LitElement {
                     this.#embedHandler?.sendToEmbedder({
                       type: "back_clicked",
                     });
-                    this.#runtime.board.closeTab(this.tab.id);
+                    this.#runtime.router.go(null);
                   }}
                   @bbsharerequested=${() => {
                     if (!this.#uiRef.value) {
@@ -3849,9 +3856,7 @@ export class Main extends LitElement {
               @bbgraphboardserverloadrequest=${async (
                 evt: BreadboardUI.Events.GraphBoardServerLoadRequestEvent
               ) => {
-                this.#attemptBoardLoad(
-                  new BreadboardUI.Events.StartEvent(evt.url)
-                );
+                this.#runtime.router.go(evt.url);
               }}
               @bbworkspaceselectionmove=${async (
                 evt: BreadboardUI.Events.WorkspaceSelectionMoveEvent
@@ -3972,7 +3977,10 @@ export class Main extends LitElement {
                 );
               }}
               @bbstart=${(evt: BreadboardUI.Events.StartEvent) => {
-                this.#attemptBoardLoad(evt);
+                if (!evt.url) {
+                  return;
+                }
+                this.#runtime.router.go(evt.url);
               }}
               @bboverflowmenuaction=${async (
                 evt: BreadboardUI.Events.OverflowMenuActionEvent
@@ -4529,10 +4537,7 @@ export class Main extends LitElement {
                 @bbgraphboardserverloadrequest=${async (
                   evt: BreadboardUI.Events.GraphBoardServerLoadRequestEvent
                 ) => {
-                  this.showWelcomePanel = false;
-                  this.#attemptBoardLoad(
-                    new BreadboardUI.Events.StartEvent(evt.url)
-                  );
+                  this.#runtime.router.go(evt.url);
                 }}
                 @bbgraphboardserverremixrequest=${async (
                   evt: BreadboardUI.Events.GraphBoardServerRemixRequestEvent
