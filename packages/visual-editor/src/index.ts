@@ -821,7 +821,6 @@ export class Main extends LitElement {
                 this.#runtime.run.create(
                   this.tab,
                   evt.topGraphObserver,
-                  evt.chatController,
                   evt.runObserver
                 );
               }
@@ -1713,7 +1712,7 @@ export class Main extends LitElement {
           id
         );
       }
-    } catch (err) {
+    } catch {
       this.#tabSaveStatus.set(
         tabToSave.id,
         BreadboardUI.Types.BOARD_SAVE_STATUS.ERROR
@@ -2103,7 +2102,7 @@ export class Main extends LitElement {
       if (!capabilities || !capabilities.save) {
         return;
       }
-    } catch (err) {
+    } catch {
       // Likely an error with the URL.
       return;
     }
@@ -3181,7 +3180,7 @@ export class Main extends LitElement {
                       if (baseName) {
                         fileName = baseName[0];
                       }
-                    } catch (err) {
+                    } catch {
                       // Ignore errors - this is best-effort to get the file name from the URL.
                     }
                   }
@@ -3242,7 +3241,7 @@ export class Main extends LitElement {
                       Strings.from("STATUS_APP_PREVIEW_URL_COPIED"),
                       BreadboardUI.Events.ToastType.INFORMATION
                     );
-                  } catch (err) {
+                  } catch {
                     this.toast(
                       Strings.from("ERROR_GENERIC"),
                       BreadboardUI.Events.ToastType.ERROR
@@ -3769,7 +3768,6 @@ export class Main extends LitElement {
               .boardServerKits=${this.tab?.boardServerKits ?? []}
               .boardServers=${this.#boardServers}
               .canRun=${this.canRun}
-              .chatController=${observers?.chatController}
               .editor=${this.#runtime.edit.getEditor(this.tab)}
               .fileSystem=${this.#fileSystem}
               .graph=${this.tab?.graph ?? null}

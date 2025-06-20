@@ -11,7 +11,6 @@ import {
   GraphIdentifier,
   LLMContent,
   NodeIdentifier,
-  NodeValue,
   ParameterMetadata,
 } from "@breadboard-ai/types";
 import {
@@ -27,78 +26,12 @@ import { HarnessRunner } from "@google-labs/breadboard/harness";
 import { ConnectorInstance, ConnectorType } from "../connectors/types";
 import { SideBoardRuntime } from "../sideboards/types";
 
-export type ChatStatus = "running" | "paused" | "stopped";
-
-export type ChatUserTurnState = {
-  role: "user";
-  content: ChatContent[];
-};
-
-export type ChatTextContent = {
-  title: string;
-  format?: "text" | "markdown";
-  text: string;
-};
-
-export type ChatLLMContent = {
-  title: string;
-  context: LLMContent[];
-};
-
-export type ChatObjectContent = {
-  title: string;
-  object: NodeValue;
-};
-
-export type ChatError = {
-  title: string;
-  error: string;
-};
-
-export type ChatContent =
-  | ChatTextContent
-  | ChatLLMContent
-  | ChatObjectContent
-  | ChatError;
-
-/**
- * Represents the system entry in the chat conversation between the
- * user and the system (Breadboard).
- * Typically, the role = "model", but here, we're defining it more broadly
- * so we'll name it "system."
- */
-export type ChatSystemTurnState = {
-  role: "system";
-  /**
-   * The icon representing the participant.
-   */
-  icon?: string;
-  /**
-   * The friendly name of the participant.
-   */
-  name?: string;
-  /**
-   * The content of the turn. May contain multiple messages.
-   */
-  content: ChatContent[];
-};
-
-export type ChatConversationState = ChatUserTurnState | ChatSystemTurnState;
-
-export type ChatState = {
-  conversation: ChatConversationState[];
-  status: ChatStatus;
-  statusDetail: string;
-};
-
 /**
  * Represents the Model+Controller for the individual run of the graph.
  * The name is so weird because there's already a `RunState` type in
  * `@google-labs/breadboard`.
  */
 export type ProjectRun = {
-  /// THE MODEL BITS
-
   /**
    * Provides an estimate of entries that will be in console for this run.
    * The estimate is updated when the run goes over it.
