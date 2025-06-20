@@ -30,7 +30,6 @@ import {
   asBase64,
   BoardServer,
   GraphDescriptor,
-  InspectableRun,
   isLLMContentArray,
   ok,
   transformDataParts,
@@ -92,9 +91,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     mode: "light",
     splashImage: false,
   };
-
-  @property({ reflect: false })
-  accessor run: InspectableRun | null = null;
 
   @consume({ context: projectRunContext, subscribe: true })
   accessor projectRun: ProjectRun | null = null;

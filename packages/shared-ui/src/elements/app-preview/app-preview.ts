@@ -412,7 +412,6 @@ export class AppPreview extends LitElement {
   render() {
     if (this.#appTemplate) {
       this.#appTemplate.graph = this.graph;
-      this.#appTemplate.run = this.run;
       this.#appTemplate.topGraphResult = this.topGraphResult;
       this.#appTemplate.eventPosition = this.eventPosition;
       this.#appTemplate.showGDrive = this.showGDrive;
