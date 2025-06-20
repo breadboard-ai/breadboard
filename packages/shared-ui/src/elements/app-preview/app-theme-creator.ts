@@ -535,7 +535,7 @@ export class AppThemeCreator extends LitElement {
         throw new Error("Invalid color scheme generated");
       }
 
-      let theme = generatePaletteFromColor("#ffffff");
+      let theme = generatePaletteFromColor("#330072");
       const img = new Image();
       if (isInlineData(splashScreen)) {
         img.src = `data:${splashScreen.inlineData.mimeType};base64,${splashScreen.inlineData.data}`;

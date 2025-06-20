@@ -336,7 +336,7 @@ export class AppPreview extends LitElement {
           const { themes, theme } = this.graph.metadata.visual.presentation;
           if (themes[theme]) {
             const appPalette =
-              themes[theme]?.palette ?? generatePaletteFromColor("#ffffff");
+              themes[theme]?.palette ?? generatePaletteFromColor("#330072");
             const themeColors = themes[theme]?.themeColors ?? {};
 
             this.template = themes[theme].template ?? "basic";
