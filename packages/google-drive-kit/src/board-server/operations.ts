@@ -471,6 +471,8 @@ class DriveOperations {
             if (this.#featuredGraphsList) {
               await this.#featuredGraphsList!.forceRefresh();
             }
+            // Forcefully refreshed the caches - give the heads up to the UI layer.
+            await this.refreshProjectListCallback();
             // #imageCache relies solely on the drive.changes, no invalidation here needed.
           }
           return; // All refreshed.
@@ -509,8 +511,11 @@ class DriveOperations {
           (accumulator, value) => accumulator.concat(value),
           []
         );
+        if (affectedFileIds.length > 0) {
+          await this.refreshProjectListCallback();
+        }
         console.info(
-          `Drive Cache: Received ${changes.length} changes affecting ${affectedFileIds.length} file` +
+          `Drive Cache: Received ${changes.length} changes affecting ${affectedFileIds.length} files. ` +
             `${nextRefreshMsg}. Affected files:`,
           affectedFileIDLists
         );
