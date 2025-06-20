@@ -22,10 +22,13 @@ import { ReactiveConsoleEntry } from "./console-entry";
 import { idFromPath } from "./common";
 import { FileSystem, InspectableGraph } from "@google-labs/breadboard";
 import { getStepIcon } from "../utils/get-step-icon";
+import { ReactiveApp } from "./app";
+import { ReactiveAppScreen } from "./app-screen";
 
 export { ReactiveProjectRun };
 
 class ReactiveProjectRun implements ProjectRun {
+  app: ReactiveApp = new ReactiveApp();
   console: Map<string, ConsoleEntry> = new SignalMap();
   errors: Map<string, RunError> = new SignalMap();
 
@@ -137,11 +140,19 @@ class ReactiveProjectRun implements ProjectRun {
     const entry = new ReactiveConsoleEntry(
       this.fileSystem,
       { title, icon, tags },
-      event.data.path,
+      path,
       outputSchema
     );
     this.current = entry;
     this.console.set(entry.id, entry);
+
+    // This looks like duplication with the console logic above,
+    // but it's a hedge toward the future where screens and console entries
+    // might go out of sync.
+    // See https://github.com/breadboard-ai/breadboard/wiki/Screens
+    const screen = new ReactiveAppScreen(path, outputSchema);
+    this.app.current = screen;
+    this.app.screens.set(screen.id, screen);
   }
 
   #nodeEnd(event: RunNodeEndEvent) {
@@ -161,6 +172,7 @@ class ReactiveProjectRun implements ProjectRun {
     }
 
     this.current?.finalize(event.data);
+    this.app.current?.finalize(event.data);
   }
 
   #input(event: RunInputEvent) {

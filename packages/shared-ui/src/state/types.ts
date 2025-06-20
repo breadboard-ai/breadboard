@@ -33,6 +33,10 @@ import { SideBoardRuntime } from "../sideboards/types";
  */
 export type ProjectRun = {
   /**
+   * Represents the App state during the run.
+   */
+  app: App;
+  /**
    * Provides an estimate of entries that will be in console for this run.
    * The estimate is updated when the run goes over it.
    */
@@ -54,10 +58,42 @@ export type ProjectRun = {
    */
   current: ConsoleEntry | null;
   /**
-   * The input (if any) that the user is waiting on. If `null`,
-   * the user is not currently waiting on input.
+   * The user input (if any) that the run is waiting on. If `null`,
+   * the run is not currently waiting on user input.
    */
   input: UserInput | null;
+};
+
+/**
+ * Represents the App state during the run.
+ * Designed so that the App View can be built from this state
+ */
+export type App = {
+  /**
+   * A sequences of screens that is produced during the run.
+   */
+  screens: Map<string, AppScreen>;
+  /**
+   * The current screen.
+   */
+  current: AppScreen | null;
+};
+
+/**
+ * Represents the state of a single App Screen
+ */
+export type AppScreen = {
+  /**
+   * When "interactive", indicates that this screen is still being created
+   * or is asking user for input.
+   * When "complete", indicates that this screen is finalized and is now
+   * a historical artifact of the run.
+   */
+  status: "interactive" | "complete";
+  /**
+   * The output for this screen
+   */
+  output: Map<string, LLMContent /* Particle */>;
 };
 
 /**
