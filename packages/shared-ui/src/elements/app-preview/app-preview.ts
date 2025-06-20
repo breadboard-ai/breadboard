@@ -364,7 +364,7 @@ export class AppPreview extends LitElement {
 
           if (theme) {
             this.theme = {
-              ...generatePaletteFromColor("#ffffff"),
+              ...generatePaletteFromColor("#330072"),
               primaryColor: theme["primaryColor"] ?? primaryColor,
               secondaryColor: theme["secondaryColor"] ?? secondaryColor,
               backgroundColor: theme["backgroundColor"] ?? backgroundColor,
