@@ -98,6 +98,17 @@ export function getSetsIntersection<T>(set1: Set<T>, set2: Set<T>): Set<T> {
   return result;
 }
 
+export function getSetsUnion<T>(set1: Set<T>, set2: Set<T>): Set<T> {
+  if ("union" in set1) {
+    return (set1.union as (set: Set<T>) => Set<T>)(set2) as Set<T>;
+  }
+  const result = new Set<T>(set1);
+  for (const item of set2) {
+    result.add(item);
+  }
+  return result;
+}
+
 export function extractGoogleDriveFileId(str: string): string | null {
   return str.match(/^drive:\/?(.+)/)?.[1] ?? null;
 }
