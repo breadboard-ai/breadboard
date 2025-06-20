@@ -84,7 +84,11 @@ export class AddAssetModal extends LitElement {
 
       #content {
         background: var(--background-color, var(--bb-neutral-0));
-        border: 1px solid var(--bb-neutral-300);
+        border: none;
+        box-shadow:
+          0px 8px 12px 6px rgba(0, 0, 0, 0.05),
+          0px 4px 4px rgba(0, 0, 0, 0.1);
+
         border-radius: var(--bb-grid-size-3);
         display: flex;
         flex-direction: column;
@@ -160,6 +164,10 @@ export class AddAssetModal extends LitElement {
           border: none;
           margin-right: var(--bb-grid-size-4);
           height: var(--bb-grid-size-10);
+
+          &:not([disabled]) {
+            cursor: pointer;
+          }
         }
 
         & #submit {

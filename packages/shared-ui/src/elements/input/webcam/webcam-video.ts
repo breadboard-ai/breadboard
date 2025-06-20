@@ -22,6 +22,9 @@ export class WebcamVideoInput extends LitElement {
   accessor #capturing = false;
 
   @state()
+  accessor #starting = false;
+
+  @state()
   accessor #value: string | null = null;
 
   static styles = [
@@ -37,6 +40,15 @@ export class WebcamVideoInput extends LitElement {
         );
         aspect-ratio: 4/3;
         outline: 1px solid var(--bb-outline, var(--default-bb-outline));
+        position: relative;
+      }
+
+      .progress {
+        position: absolute;
+        top: calc(50% - 10px);
+        left: calc(50% - 10px);
+        color: var(--n-0);
+        animation: rotate linear 1s infinite forwards;
       }
 
       section {
@@ -87,6 +99,7 @@ export class WebcamVideoInput extends LitElement {
 
       canvas,
       video {
+        aspect-ratio: 4/3;
         display: block;
         width: 100%;
       }
@@ -102,6 +115,16 @@ export class WebcamVideoInput extends LitElement {
 
         100% {
           opacity: 0.2;
+        }
+      }
+
+      @keyframes rotate {
+        0% {
+          rotate: 0deg;
+        }
+
+        100% {
+          rotate: 360deg;
         }
       }
     `,
@@ -149,10 +172,12 @@ export class WebcamVideoInput extends LitElement {
   }
 
   async #startStream() {
+    this.#starting = true;
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: true,
       video: true,
     });
+    this.#starting = false;
 
     this.#stream = stream;
 
@@ -277,33 +302,38 @@ export class WebcamVideoInput extends LitElement {
       ></video>`;
     }
 
-    return html`<section>
-      ${renderable}
-      <div id="controls">
-        ${this.#recorder
-          ? html`<button
-              id="stop"
-              @click=${() => {
-                this.stop();
-              }}
-            >
-              <span class="g-icon">stop_circle</span>
-            </button>`
-          : this.#showRecordButton
+    return html` ${this.#starting
+        ? html`<span class="g-icon progress filled round"
+            >progress_activity</span
+          >`
+        : nothing}
+      <section>
+        ${renderable}
+        <div id="controls">
+          ${this.#recorder
             ? html`<button
-                @click=${(evt: Event) => {
-                  if (!(evt.target instanceof HTMLButtonElement)) {
-                    return;
-                  }
-
-                  evt.target.disabled = true;
-                  this.record();
+                id="stop"
+                @click=${() => {
+                  this.stop();
                 }}
               >
-                <span class="g-icon">radio_button_checked</span>
+                <span class="g-icon filled round">stop_circle</span>
               </button>`
-            : nothing}
-      </div>
-    </section>`;
+            : this.#showRecordButton
+              ? html`<button
+                  @click=${(evt: Event) => {
+                    if (!(evt.target instanceof HTMLButtonElement)) {
+                      return;
+                    }
+
+                    evt.target.disabled = true;
+                    this.record();
+                  }}
+                >
+                  <span class="g-icon filled round">radio_button_checked</span>
+                </button>`
+              : nothing}
+        </div>
+      </section>`;
   }
 }
