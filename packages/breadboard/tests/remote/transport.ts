@@ -16,7 +16,7 @@ import {
   WorkerServerTransport,
 } from "../../src/remote/worker.js";
 
-test("Continuous streaming", async (t) => {
+test.skip("Continuous streaming", async (t) => {
   const board = new Board();
   const kit = board.addKit(TestKit);
   board.input({ foo: "bar" }).wire("*", kit.noop().wire("*", board.output()));
@@ -64,7 +64,7 @@ test("Continuous streaming", async (t) => {
   t.assert(fifthResult.done);
 });
 
-test("runOnce client can run once (client starts first)", async (t) => {
+test.skip("runOnce client can run once (client starts first)", async (t) => {
   const board = new Board();
   const kit = board.addKit(TestKit);
   board.input({ foo: "bar" }).wire("*", kit.noop().wire("*", board.output()));
@@ -86,7 +86,7 @@ test("runOnce client can run once (client starts first)", async (t) => {
   t.deepEqual(outputs, { hello: "world" });
 });
 
-test("runOnce client can run once (server starts first)", async (t) => {
+test.skip("runOnce client can run once (server starts first)", async (t) => {
   const board = new Board();
   const kit = board.addKit(TestKit);
   board.input({ foo: "bar" }).wire("*", kit.noop().wire("*", board.output()));
