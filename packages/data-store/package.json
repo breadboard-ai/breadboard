@@ -137,7 +137,7 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/data-store#readme",
   "devDependencies": {
-    "@ava/typescript": "^4.0.0",
+    "@ava/typescript": "6.0.0",
     "@esm-bundle/chai": "^4.3.4-fix.0",
     "@google-labs/tsconfig": "^0.0.1",
     "@types/mocha": "^10.0.10",

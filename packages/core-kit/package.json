@@ -105,7 +105,7 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/core-kit#readme",
   "devDependencies": {
-    "@ava/typescript": "^4.0.0",
+    "@ava/typescript": "6.0.0",
     "@google-labs/tsconfig": "^0.0.1",
     "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^8.34.0",
