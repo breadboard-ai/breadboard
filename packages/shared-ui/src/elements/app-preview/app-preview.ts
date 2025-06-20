@@ -32,11 +32,13 @@ import {
   TopGraphRunResult,
 } from "../../types/types.js";
 import { classMap } from "lit/directives/class-map.js";
-import { consume } from "@lit/context";
+import { consume, provide } from "@lit/context";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { generatePaletteFromColor } from "@breadboard-ai/theme";
 import { loadPart } from "../../utils/data-parts.js";
+import { projectRunContext } from "../../contexts/project-run.js";
+import { ProjectRun } from "../../state/types.js";
 
 const primaryColor = "#ffffff";
 const secondaryColor = "#7a7a7a";
@@ -64,7 +66,7 @@ function getThemeModeFromBackground(hexColor: string): "light" | "dark" {
 
     const luma = r * 0.299 + g * 0.587 + b * 0.114;
     return luma > 128 ? "light" : "dark";
-  } catch (err) {
+  } catch {
     return "light";
   }
 }
@@ -85,6 +87,10 @@ export class AppPreview extends LitElement {
 
   @property({ reflect: false })
   accessor run: InspectableRun | null = null;
+
+  @property({ reflect: false })
+  @provide({ context: projectRunContext })
+  accessor projectRun: ProjectRun | null = null;
 
   @property()
   accessor eventPosition = 0;

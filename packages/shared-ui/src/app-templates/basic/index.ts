@@ -76,6 +76,8 @@ import { consume } from "@lit/context";
 import { boardServerContext } from "../../contexts/board-server.js";
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 import { NodeValue } from "@breadboard-ai/types";
+import { projectRunContext } from "../../contexts/project-run.js";
+import { ProjectRun } from "../../state/types.js";
 
 function keyFromGraphUrl(url: string) {
   return `cw-${url.replace(/\W/gi, "-")}`;
@@ -92,6 +94,9 @@ export class Template extends LitElement implements AppTemplate {
 
   @property({ reflect: false })
   accessor run: InspectableRun | null = null;
+
+  @consume({ context: projectRunContext, subscribe: true })
+  accessor projectRun: ProjectRun | null = null;
 
   @property()
   accessor graph: GraphDescriptor | null = null;

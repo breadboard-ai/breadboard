@@ -608,6 +608,7 @@ export class UI extends LitElement {
             .graph=${this.graph}
             .themeHash=${themeHash}
             .run=${run}
+            .projectRun=${this.projectState?.run}
             .eventPosition=${eventPosition}
             .topGraphResult=${this.topGraphResult}
             .showGDrive=${this.signedIn}
