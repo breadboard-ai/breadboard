@@ -35,6 +35,7 @@ export { DriveOperations, PROTOCOL };
 import {
   extractGoogleDriveFileId,
   getSetsIntersection,
+  getSetsUnion,
   retryableFetch,
   truncateValueForUtf8,
 } from "./utils.js";
@@ -116,6 +117,28 @@ export type RunResults = {
   finalOutputValues: OutputValues;
 };
 
+function getNextFetchChangesDelay() {
+  // -[0..15%] variability reduces the chance separate refreshes would step on each other.
+  const variability = 0.15 * DRIVE_FETCH_CHANGES_INTERVAL_MS;
+  return Math.round(
+    Math.min(
+      DRIVE_FETCH_CHANGES_INTERVAL_MS, // Ensure not higher than the interval
+      Math.max(0, DRIVE_FETCH_CHANGES_INTERVAL_MS - variability) + // Protect against negative.
+        Math.random() * variability
+    )
+  );
+}
+
+function getElapsedMsSinceLastCacheRefresh(
+  cacheState: DriveChangesCacheState
+): number {
+  return Date.now() - Date.parse(cacheState.lastFetched);
+}
+
+function formatDelay(delay: number): string {
+  return `${Math.round(delay / 1000)}s`;
+}
+
 /** Responsible for cleaning lookup caches based on list of changes from drive. */
 class DriveLookupCache {
   constructor(
@@ -129,16 +152,18 @@ class DriveLookupCache {
     await cache.delete(cacheKey);
   }
 
-  async processChanges(changes: Array<DriveChange>) {
+  /** Returns drive file IDs that were purged. */
+  async processChanges(changes: Array<DriveChange>): Promise<Array<string>> {
     const ids = changes.map((change) => change.fileId);
     const cache = await caches.open(this.cacheName);
     // Bulk remove in parallel.
-    await Promise.all(
+    const deletedIds = await Promise.all(
       ids.map((id) => {
         const cacheKey = new URL(`${this.cacheKePrefix}${id}`);
-        return cache.delete(cacheKey);
+        return cache.delete(cacheKey).then((deleted) => (deleted ? id : null));
       })
     );
+    return deletedIds.filter((id) => !!id) as string[];
   }
 }
 
@@ -276,7 +301,8 @@ class DriveListCache {
     }
   }
 
-  async processChanges(changes: Array<DriveChange>) {
+  /** Returns drive file IDs that were purged. */
+  async processChanges(changes: Array<DriveChange>): Promise<Array<string>> {
     // Here we bulk-process all the changes in one go.
     const { cache, cacheKey, cachedResponse } = await this.#getCacheAndValue();
     if (cachedResponse) {
@@ -306,13 +332,13 @@ class DriveListCache {
       }
       if (updatedIds.size > 0) {
         // We don't know what has actually changes so we just re-read the whole list.
-        // But first, conservatively delete first so that any concurent read reads fresh data.
+        // But first, conservatively delete first so that any concurrent read reads fresh data.
         await cache.delete(cacheKey);
         await this.forceRefresh(); // This could be smarter what it re-reads, but probably not much faster.
       }
-      return updatedIds.size > 0 || updatedIds.size > 0;
+      return Array.from(getSetsUnion(updatedIds, deletedIds));
     }
-    return false;
+    return [];
   }
 
   /** Returns true if the cache was in fact affected, and false in case of a no-op. */
@@ -389,87 +415,122 @@ class DriveOperations {
   }
 
   async #setupBackgroundRefresh() {
-    setTimeout(
-      async () => {
-        try {
-          {
-            const driveCacheState = getDriveCacheState();
-            if (!driveCacheState) {
-              // No changes token yet - we capture one and invalidate all the caches.
-              const api = new Files(
-                await DriveOperations.getUserAuth(this.vendor)
-              );
-              const response = await retryableFetch(
-                api.makeGetStartPageTokenRequest()
-              );
-              if (!response.ok) {
-                console.error("Failed to get start page token", response);
-                // Will be retried next time.
-                throw new Error(
-                  `Failed to get start page token: ${response.status} ${response.statusText}`
-                );
-              }
-              const pageToken = (await response.json()).startPageToken;
-              if (!pageToken) {
-                // Will be retried next time.
-                console.error(
-                  "Response containing not startPageToken",
-                  response
-                );
-                throw new Error(`Response containing not startPageToken`);
-              }
-              if (stillHoldsState(driveCacheState)) {
-                setDriveCacheState({ startPageToken: pageToken });
-                // Our token is allocated for the next time, now we purge the caches.
-                await this.#userGraphsList.forceRefresh();
-                if (this.#featuredGalleryFolderId) {
-                  await this.#featuredGraphsList!.forceRefresh();
-                }
-                // #imageCache relies solely on the drive.changes, no invalidation here needed.
-              }
-              return; // All refreshed.
-            }
-          }
-
-          // If a start page token set - we continue reading from that point otherwise all changes.
-          const driveCacheState = getDriveCacheState();
-          if (!driveCacheState) {
-            // Normally this should not happen, but the user might have removed the localStorage's key.
-            return; // In finally we should initialize the token again.
-          }
-          if (
-            Date.now() - Date.parse(driveCacheState.lastFetched) <
-            DRIVE_FETCH_CHANGES_INTERVAL_MS
-          ) {
-            return; // Too early, or might have been updated concurrently.
-          }
-          const [changes, newStartPageToken] = await this.#fetchAllChanges(
-            driveCacheState.startPageToken
-          );
-
-          if (changes?.length > 0) {
-            // Run processChanges() in parallel.
-            const promises = [
-              this.#userGraphsList.processChanges(changes),
-              this.#imageCache.processChanges(changes),
-            ];
-            if (this.#featuredGalleryFolderId) {
-              promises.push(this.#featuredGraphsList!.processChanges(changes));
-            }
-            await Promise.all(promises);
-          }
-          if (newStartPageToken) {
-            // At last we update the new start page token so that the next time we continue from here.
-            if (stillHoldsState(driveCacheState)) {
-              setDriveCacheState({ startPageToken: newStartPageToken });
-            }
-          }
-        } finally {
-          await this.#setupBackgroundRefresh();
-        }
-      },
-      Math.random() * DRIVE_FETCH_CHANGES_INTERVAL_MS + 1000
+    // Initial delay is offset by how much time has already passed since the last refresh.
+    let initialDelay = getNextFetchChangesDelay();
+    const cacheState = getDriveCacheState();
+    if (cacheState) {
+      // Protect against negative.
+      initialDelay = Math.max(
+        1,
+        initialDelay - getElapsedMsSinceLastCacheRefresh(cacheState)
+      );
+    }
+    console.info(
+      `Drive Cache: Scheduling update in ${formatDelay(initialDelay)}`
     );
+    await this.#scheduleBackgroundRefresh(initialDelay);
+  }
+
+  async #scheduleBackgroundRefresh(delay: number) {
+    setTimeout(async () => {
+      await this.#doBackgroundRefresh();
+    }, delay);
+  }
+
+  async #doBackgroundRefresh() {
+    const nextRefreshDelay = getNextFetchChangesDelay();
+    const nextRefreshMsg = `Next try in ${formatDelay(nextRefreshDelay)}`;
+    // The callback maintains internal consistency even if multiple callbacks come at once,
+    // but does its best at avoiding that so that unnecessary requests not get issued to Drive.
+    try {
+      {
+        const driveCacheState = getDriveCacheState();
+        if (!driveCacheState) {
+          // No changes token yet - we capture one and invalidate all the caches.
+          const api = new Files(await DriveOperations.getUserAuth(this.vendor));
+          const response = await retryableFetch(
+            api.makeGetStartPageTokenRequest()
+          );
+          if (!response.ok) {
+            console.error("Failed to get start page token", response);
+            // Will be retried next time.
+            throw new Error(
+              `Failed to get start page token: ${response.status} ${response.statusText}`
+            );
+          }
+          const pageToken = (await response.json()).startPageToken;
+          if (!pageToken) {
+            // Will be retried next time.
+            console.error("Response containing not startPageToken", response);
+            throw new Error(`Response containing not startPageToken`);
+          }
+          if (stillHoldsState(driveCacheState)) {
+            setDriveCacheState({ startPageToken: pageToken });
+            // Our token is allocated for the next time, now we purge the caches.
+            await this.#userGraphsList.forceRefresh();
+            if (this.#featuredGraphsList) {
+              await this.#featuredGraphsList!.forceRefresh();
+            }
+            // #imageCache relies solely on the drive.changes, no invalidation here needed.
+          }
+          return; // All refreshed.
+        }
+      }
+
+      // If a start page token set - we continue reading from that point otherwise all changes.
+      const driveCacheState = getDriveCacheState();
+      if (!driveCacheState) {
+        // Normally this should not happen, but the user might have removed the localStorage's key.
+        return; // In finally we should initialize the token again.
+      }
+      if (
+        getElapsedMsSinceLastCacheRefresh(driveCacheState) <
+        DRIVE_FETCH_CHANGES_INTERVAL_MS
+      ) {
+        return; // Too early, or might have been updated concurrently.
+      }
+      const [changes, newStartPageToken] = await this.#fetchAllChanges(
+        driveCacheState.startPageToken
+      );
+
+      if (changes?.length > 0) {
+        // Run processChanges() in parallel.
+        const affectedIdsPromises: Array<Promise<Array<string>>> = [
+          this.#userGraphsList.processChanges(changes),
+          this.#imageCache.processChanges(changes),
+        ];
+        if (this.#featuredGraphsList) {
+          affectedIdsPromises.push(
+            this.#featuredGraphsList.processChanges(changes)
+          );
+        }
+        const affectedFileIDLists = await Promise.all(affectedIdsPromises);
+        const affectedFileIds = affectedFileIDLists.reduce(
+          (accumulator, value) => accumulator.concat(value),
+          []
+        );
+        console.info(
+          `Drive Cache: Received ${changes.length} changes affecting ${affectedFileIds.length} file` +
+            `${nextRefreshMsg}. Affected files:`,
+          affectedFileIDLists
+        );
+      } else {
+        console.info(`Drive Cache: No changes. ${nextRefreshMsg}`);
+      }
+      if (newStartPageToken) {
+        // At last we update the new start page token so that the next time we continue from here.
+        if (stillHoldsState(driveCacheState)) {
+          setDriveCacheState({ startPageToken: newStartPageToken });
+        }
+      }
+    } catch (e) {
+      console.warn(
+        `Drive Cache: Exception during refresh. ${nextRefreshMsg}`,
+        e
+      );
+    } finally {
+      await this.#scheduleBackgroundRefresh(nextRefreshDelay);
+    }
   }
 
   async #fetchAllChanges(
