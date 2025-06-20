@@ -31,7 +31,7 @@ export const sharedStyles = [
         }
       }
 
-      & .g-icon {
+      & .g-icon:not(.inline) {
         position: absolute;
         left: var(--bb-grid-size-3);
         top: calc(-4px - var(--bb-grid-size-5));
