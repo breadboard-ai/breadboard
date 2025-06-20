@@ -16,9 +16,9 @@ import { customElement, property } from "lit/decorators.js";
 import { signal } from "signal-utils";
 
 import { icons } from "../../../../styles/icons";
-import { sharedStyles } from "./../shared-styles";
 import { colorsLight } from "../../../../styles/host/colors-light";
 import { type } from "../../../../styles/host/type";
+import { sharedStyles } from "../shared-styles";
 
 type Link = {
   uri: string;
@@ -66,10 +66,11 @@ export class ParticleLinks extends SignalWatcher(LitElement) {
     return html`<ul>
       ${value.map((link) => {
         return html`<li>
-          <a href="${link.uri}"
+          <a href=${link.uri} class="sans-flex w-500 round md-body-small"
             ><img
               src="https://www.google.com/s2/favicons?domain=${link.title}&sz=48"
-            /><span>${link.title}</span></a
+            /><span>${link.title}</span
+            ><span class="g-icon inline filled round">open_in_new</span></a
           >
         </li>`;
       })}
@@ -84,6 +85,37 @@ export class ParticleLinks extends SignalWatcher(LitElement) {
     css`
       :host {
         display: block;
+      }
+
+      ul {
+        list-style: none;
+        padding: var(--bb-grid-size-2);
+        margin: 0;
+
+        & li {
+          display: flex;
+          align-items: center;
+          margin-bottom: var(--bb-grid-size-2);
+
+          a {
+            color: var(--n-0);
+            display: flex;
+            align-items: center;
+          }
+
+          & .g-icon {
+            margin-left: var(--bb-grid-size-2);
+          }
+
+          img {
+            width: 20px;
+            height: 20px;
+            object-fit: cover;
+            border-radius: 50%;
+            margin-right: var(--bb-grid-size-2);
+            border: 1px solid var(--n-90);
+          }
+        }
       }
     `,
   ];
