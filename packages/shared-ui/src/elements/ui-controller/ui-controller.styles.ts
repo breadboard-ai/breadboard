@@ -852,15 +852,6 @@ export const styles = [
       padding: var(--bb-grid-size-2);
     }
 
-    bb-chat {
-      height: 100%;
-    }
-
-    bb-board-activity.collapsed {
-      overflow: hidden;
-      height: 0;
-    }
-
     bb-event-details {
       background: var(--bb-neutral-0);
       position: absolute;
