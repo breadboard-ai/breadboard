@@ -143,12 +143,12 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard#readme",
   "devDependencies": {
-    "@ava/typescript": "^4.0.0",
+    "@ava/typescript": "6.0.0",
     "@google-labs/tsconfig": "^0.0.1",
     "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^8.34.0",
     "@typescript-eslint/parser": "^8.34.0",
-    "ava": "^5.2.0",
+    "ava": "6.4.0",
     "jsonschema": "^1.5.0",
     "typescript": "^5.8.3"
   },

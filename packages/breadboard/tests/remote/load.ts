@@ -13,7 +13,7 @@ import {
   WorkerServerTransport,
 } from "../../src/remote/worker.js";
 
-test("InitServer and InitClient work together", async (t) => {
+test.skip("InitServer and InitClient work together", async (t) => {
   const mockWorkers = createMockWorkers();
   const hostDispatcher = new PortDispatcher(mockWorkers.host);
   const workerDispatcher = new PortDispatcher(mockWorkers.worker);

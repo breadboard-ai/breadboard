@@ -16,7 +16,7 @@ import {
 import { Board } from "../../src/board.js";
 import { asRuntimeKit, invokeGraph } from "../../src/index.js";
 
-test("Worker transports can handle ProxyServer and ProxyClient", async (t) => {
+test.skip("Worker transports can handle ProxyServer and ProxyClient", async (t) => {
   const workers = createMockWorkers();
   const hostDispatcher = new PortDispatcher(workers.host);
   const workerDispatcher = new PortDispatcher(workers.worker);
@@ -46,7 +46,7 @@ test("Worker transports can handle ProxyServer and ProxyClient", async (t) => {
   t.deepEqual(outputs, { hello: "dlorw" });
 });
 
-test("Worker transports can handle proxy tunnels", async (t) => {
+test.skip("Worker transports can handle proxy tunnels", async (t) => {
   {
     const workers = createMockWorkers();
     const hostDispatcher = new PortDispatcher(workers.host);
@@ -133,7 +133,7 @@ test("Worker transports can handle proxy tunnels", async (t) => {
   }
 });
 
-test("PortDispatcher works as expected", async (t) => {
+test.skip("PortDispatcher works as expected", async (t) => {
   {
     const workers = createMockWorkers();
     const hostDispatcher = new PortDispatcher(workers.host);

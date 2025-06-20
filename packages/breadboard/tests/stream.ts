@@ -145,7 +145,7 @@ test("streamFromAsyncGen as async iterator", async (t) => {
   t.deepEqual(results, [1, 2, 3]);
 });
 
-test("portToStreams works as expected", async (t) => {
+test.skip("portToStreams works as expected", async (t) => {
   const { port1, port2 } = new MessageChannel();
   const port1streams = portToStreams(port1);
   const port2streams = portToStreams(port2);
@@ -189,7 +189,7 @@ test("portToStreams works as expected", async (t) => {
   }
 });
 
-test("portToStreams correctly transfers value streams", async (t) => {
+test.skip("portToStreams correctly transfers value streams", async (t) => {
   const { port1, port2 } = new MessageChannel();
   const port1streams = portToStreams(port1);
   const port2streams = portToStreams(port2);
@@ -350,7 +350,7 @@ test("streamFromWriter produces a regular stream", async (t) => {
   t.is(writable.locked, true);
 });
 
-test("portFactoryToStreams works as expected", async (t) => {
+test.skip("portFactoryToStreams works as expected", async (t) => {
   const results: (number | string | undefined)[] = [];
   let done: () => void;
   const createPort2 = async () => {

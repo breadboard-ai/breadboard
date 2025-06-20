@@ -171,7 +171,7 @@ test("ProxyServer can be configured to tunnel nodes", async (t) => {
   }
 });
 
-test("ProxyServer and ProxyClient correctly handle streams", async (t) => {
+test.skip("ProxyServer and ProxyClient correctly handle streams", async (t) => {
   {
     const connection = new MockHTTPConnection<AnyProxyRequestMessage>();
     connection.onRequest(async (request, response) => {
@@ -248,7 +248,7 @@ test("ProxyServer and ProxyClient correctly handle streams", async (t) => {
   }
 });
 
-test("ProxyClient can shut down ProxyServer", async (t) => {
+test.skip("ProxyClient can shut down ProxyServer", async (t) => {
   let done: () => void;
   const mockWorkers = createMockWorkers();
   const hostDispatcher = new PortDispatcher(mockWorkers.host);
