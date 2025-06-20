@@ -3,6 +3,7 @@
  */
 
 import type { ToolHandle } from "./a2/tool-manager";
+import type { FunctionDeclaration } from "./a2/gemini";
 
 export type ChatTool = {
   readonly name: string;
@@ -40,7 +41,8 @@ class ChatToolImpl implements ChatTool {
     return {
       name: this.name,
       description: this.description,
-    };
+      parameters: { type: "object" },
+    } as FunctionDeclaration;
   }
 
   handle(): ToolHandle {
