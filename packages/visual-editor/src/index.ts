@@ -129,6 +129,7 @@ import {
   type ClientDeploymentConfiguration,
   clientDeploymentConfigurationContext,
 } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
+import { Admin } from "./admin";
 
 const STORAGE_PREFIX = "bb-main";
 const LOADING_TIMEOUT = 1250;
@@ -507,6 +508,8 @@ export class Main extends LitElement {
       },
     });
 
+    const admin = new Admin(config, ENVIRONMENT, this.googleDriveClient);
+
     const boardServerLocation = globalThis.sessionStorage.getItem(
       `${STORAGE_PREFIX}-board-server`
     );
@@ -527,6 +530,7 @@ export class Main extends LitElement {
     this.#proxy = config.proxy || [];
     if (this.#settings) {
       this.settingsHelper = new SettingsHelperImpl(this.#settings);
+      admin.settingsHelper = this.settingsHelper;
       this.tokenVendor = createTokenVendor(
         {
           get: (conectionId: string) => {
@@ -621,6 +625,7 @@ export class Main extends LitElement {
       })
       .then((runtime) => {
         this.#runtime = runtime;
+        admin.runtime = runtime;
         this.#graphStore = runtime.board.getGraphStore();
         this.#boardServers = runtime.board.getBoardServers() || [];
 

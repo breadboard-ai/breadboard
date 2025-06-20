@@ -152,6 +152,10 @@ class DriveLookupCache {
     await cache.delete(cacheKey);
   }
 
+  async invalidateAllItems() {
+    await caches.delete(this.cacheName);
+  }
+
   /** Returns drive file IDs that were purged. */
   async processChanges(changes: Array<DriveChange>): Promise<Array<string>> {
     const ids = changes.map((change) => change.fileId);
@@ -431,15 +435,34 @@ class DriveOperations {
     await this.#scheduleBackgroundRefresh(initialDelay);
   }
 
+  /** Reads list of changes from Google Drive and updates caches. */
+  async updateCachesOneTime() {
+    return this.#doBackgroundRefresh({ oneOffMode: true });
+  }
+
+  /** Invalidates all the caches. */
+  async forceRefreshCaches() {
+    const promises = [
+      this.#userGraphsList.forceRefresh(),
+      this.#imageCache.invalidateAllItems(),
+    ];
+    if (this.#featuredGraphsList) {
+      promises.push(this.#featuredGraphsList!.forceRefresh());
+    }
+    return Promise.all(promises);
+  }
+
   async #scheduleBackgroundRefresh(delay: number) {
     setTimeout(async () => {
       await this.#doBackgroundRefresh();
     }, delay);
   }
 
-  async #doBackgroundRefresh() {
+  async #doBackgroundRefresh(options?: { oneOffMode?: boolean }) {
     const nextRefreshDelay = getNextFetchChangesDelay();
-    const nextRefreshMsg = `Next try in ${formatDelay(nextRefreshDelay)}`;
+    const nextRefreshMsg = options?.oneOffMode
+      ? ""
+      : `Next try in ${formatDelay(nextRefreshDelay)}`;
     // The callback maintains internal consistency even if multiple callbacks come at once,
     // but does its best at avoiding that so that unnecessary requests not get issued to Drive.
     try {
@@ -486,8 +509,9 @@ class DriveOperations {
         return; // In finally we should initialize the token again.
       }
       if (
+        !options?.oneOffMode &&
         getElapsedMsSinceLastCacheRefresh(driveCacheState) <
-        DRIVE_FETCH_CHANGES_INTERVAL_MS
+          DRIVE_FETCH_CHANGES_INTERVAL_MS
       ) {
         return; // Too early, or might have been updated concurrently.
       }
@@ -534,7 +558,9 @@ class DriveOperations {
         e
       );
     } finally {
-      await this.#scheduleBackgroundRefresh(nextRefreshDelay);
+      if (!options?.oneOffMode) {
+        await this.#scheduleBackgroundRefresh(nextRefreshDelay);
+      }
     }
   }
 
