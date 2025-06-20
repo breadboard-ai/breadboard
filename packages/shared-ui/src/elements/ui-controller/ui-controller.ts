@@ -61,7 +61,6 @@ import {
 } from "../../constants/constants.js";
 import { classMap } from "lit/directives/class-map.js";
 import { Sandbox } from "@breadboard-ai/jsandbox";
-import { ChatController } from "../../state/chat-controller.js";
 import { Project } from "../../state/types.js";
 import "../../edit-history/edit-history-panel.js";
 import "../../edit-history/edit-history-overlay.js";
@@ -195,9 +194,6 @@ export class UI extends LitElement {
 
   @property()
   accessor showBoardReferenceMarkers = false;
-
-  @property()
-  accessor chatController: ChatController | null = null;
 
   @property({ reflect: true, type: Boolean })
   accessor showThemeDesigner = false;

@@ -20,7 +20,6 @@ import {
   NodeConfiguration,
   NodeIdentifier,
 } from "@google-labs/breadboard";
-import { ChatController } from "@breadboard-ai/shared-ui/state/chat-controller.js";
 import { BOARD_SAVE_STATUS } from "@breadboard-ai/shared-ui/types/types.js";
 import { AutonameStatus } from "@breadboard-ai/shared-ui/sideboards/autoname.js";
 
@@ -105,8 +104,7 @@ export class RuntimeTabChangeEvent extends Event {
 
   constructor(
     public readonly topGraphObserver?: BreadboardUI.Utils.TopGraphObserver,
-    public readonly runObserver?: InspectableRunObserver,
-    public readonly chatController?: ChatController
+    public readonly runObserver?: InspectableRunObserver
   ) {
     super(RuntimeTabChangeEvent.eventName, { ...eventInit });
   }

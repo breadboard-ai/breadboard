@@ -126,7 +126,7 @@ export class Board extends EventTarget {
     try {
       new UrlCtor(url, base);
       return true;
-    } catch (err) {
+    } catch {
       return false;
     }
   }
@@ -144,7 +144,7 @@ export class Board extends EventTarget {
           const base = new URL(currentUrl);
           const newUrl = new URL(boardUrl, base);
           return newUrl.href;
-        } catch (e) {
+        } catch {
           console.warn("Unable to parse URL from current board: ", currentUrl);
         }
       }
@@ -600,13 +600,9 @@ export class Board extends EventTarget {
       readOnly,
     });
 
-    // No chat controller when loading from run.
-    // TODO: Implement loading chat history here.
-    const chatController = undefined;
-
     this.#currentTabId = id;
     this.dispatchEvent(
-      new RuntimeTabChangeEvent(topGraphObserver, runObserver, chatController)
+      new RuntimeTabChangeEvent(topGraphObserver, runObserver)
     );
   }
 
