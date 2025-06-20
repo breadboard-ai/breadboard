@@ -8,6 +8,7 @@ import { LitElement, css, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { ref } from "lit/directives/ref.js";
 import { icons } from "../../../styles/icons";
+import { colorsLight } from "../../../styles/host/colors-light";
 
 @customElement("bb-webcam-video-input")
 export class WebcamVideoInput extends LitElement {
@@ -24,6 +25,7 @@ export class WebcamVideoInput extends LitElement {
   accessor #value: string | null = null;
 
   static styles = [
+    colorsLight,
     icons,
     css`
       :host {
@@ -33,57 +35,53 @@ export class WebcamVideoInput extends LitElement {
           --bb-input-background-color,
           var(--default-bb-input-background-color)
         );
-        border-radius: var(--bb-grid-size-2);
         aspect-ratio: 4/3;
         outline: 1px solid var(--bb-outline, var(--default-bb-outline));
       }
 
       section {
         display: grid;
-        grid-template-rows: 1fr var(--bb-grid-size-8);
+        grid-template-rows: 1fr 0;
         align-items: center;
-        row-gap: var(--bb-grid-size-2);
 
         & #controls {
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          position: relative;
         }
       }
 
       button {
+        width: 32px;
+        height: 32px;
         display: flex;
         align-items: center;
-        height: var(--bb-grid-size-8);
+        justify-content: center;
         border-radius: var(--bb-grid-size-16);
-        background: var(--n-90, var(--bb-neutral-100)) 8px center / 20px 20px
+        background: var(--n-0, var(--bb-neutral-100)) 8px center / 20px 20px
           no-repeat;
-        color: var(--n-40, var(--bb-neutral-800));
-        font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
-          var(--bb-font-family);
+        color: var(--n-100, var(--bb-neutral-800));
         transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
         border: none;
-        padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-2);
         border: none;
-        opacity: 0.6;
         transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+        position: absolute;
+        top: -16px;
+        left: calc(50% - 16px);
+        padding: 0;
 
         > .g-icon {
           pointer-events: none;
-          margin-right: var(--bb-grid-size-2);
+          font-size: 24px;
         }
 
         &:not([disabled]) {
           cursor: pointer;
-
-          &:hover,
-          &:focus {
-            opacity: 1;
-          }
         }
 
         &#stop {
-          animation: pulse linear 1s infinite forwards;
+          > .g-icon {
+            color: red;
+            animation: pulse linear 1s infinite forwards;
+          }
         }
       }
 
@@ -91,7 +89,6 @@ export class WebcamVideoInput extends LitElement {
       video {
         display: block;
         width: 100%;
-        border-radius: var(--bb-grid-size-2);
       }
 
       @keyframes pulse {
@@ -290,7 +287,7 @@ export class WebcamVideoInput extends LitElement {
                 this.stop();
               }}
             >
-              <span class="g-icon">stop_circle</span>Stop
+              <span class="g-icon">stop_circle</span>
             </button>`
           : this.#showRecordButton
             ? html`<button
@@ -303,7 +300,7 @@ export class WebcamVideoInput extends LitElement {
                   this.record();
                 }}
               >
-                <span class="g-icon">radio_button_checked</span> Record
+                <span class="g-icon">radio_button_checked</span>
               </button>`
             : nothing}
       </div>
