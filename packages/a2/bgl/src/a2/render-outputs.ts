@@ -42,13 +42,19 @@ const MODELS: Model[] = [
     id: "gemini-flash",
     title: "Gemini 2.5 Flash",
     description: "Best for coding simple, static displays",
-    modelName: "gemini-2.5-flash-preview-05-20",
+    modelName: "gemini-2.5-flash",
+  },
+  {
+    id: "gemini-flash-lite",
+    title: "Gemini 2.5 Flash Lite",
+    description: "Best for simple speedy displays",
+    modelName: "gemini-2.5-flash-lite-preview-06-17",
   },
   {
     id: "gemini-pro",
     title: "Gemini 2.5 Pro",
     description: "Best for coding complex or interactive displays",
-    modelName: "gemini-2.5-pro-preview-06-05",
+    modelName: "gemini-2.5-pro",
   },
 ];
 
@@ -262,7 +268,7 @@ async function invoke({
   );
   // If the step uses one of the deprecated modes that encodes model, trust this.
   if (renderMode == FLASH_MODE) {
-    modelName = "gemini-2.5-flash-preview-04-17";
+    modelName = "gemini-2.5-flash";
   } else if (renderMode == PRO_MODE) {
     modelName = "gemini-2.5-pro-preview-05-06";
   }
