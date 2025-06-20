@@ -183,6 +183,7 @@ class ReactiveProjectRun implements ProjectRun {
     }
     this.current.addInput(event.data, {
       itemCreated: (item) => {
+        this.app.current?.markAsInput();
         if (!item.schema) {
           console.warn(`Schema unavailable for input, skipping`, event.data);
           return;

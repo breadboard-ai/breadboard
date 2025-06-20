@@ -91,6 +91,14 @@ export type AppScreen = {
    */
   status: "interactive" | "complete";
   /**
+   * The "progress" screen only shows the output to the user, either final
+   * or intermediate results.
+   * The "input" screen shows the output to the user and requests input
+   * from the user.
+   * See https://github.com/breadboard-ai/breadboard/wiki/Screens for details.
+   */
+  type: "progress" | "input";
+  /**
    * The output for this screen
    */
   output: Map<string, LLMContent /* Particle */>;

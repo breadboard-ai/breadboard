@@ -19,6 +19,9 @@ class ReactiveAppScreen implements AppScreen {
   @signal
   accessor status: "interactive" | "complete" = "interactive";
 
+  @signal
+  accessor type: "progress" | "input" = "progress";
+
   output: Map<string, LLMContent> = new SignalMap();
 
   #outputSchema: Schema | undefined;
@@ -26,6 +29,13 @@ class ReactiveAppScreen implements AppScreen {
   constructor(path: number[], outputSchema: Schema | undefined) {
     this.#outputSchema = outputSchema;
     this.id = idFromPath(path);
+  }
+
+  /**
+   * Marks this screen as "input" screen.
+   */
+  markAsInput(): void {
+    this.type = "input";
   }
 
   finalize(data: NodeEndResponse) {
