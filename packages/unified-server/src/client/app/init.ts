@@ -215,7 +215,7 @@ async function createRunner(
 
 function createDefaultTheme(): AppTheme {
   return {
-    ...generatePaletteFromColor("#ffffff"),
+    ...generatePaletteFromColor("#330072"),
     primaryColor: primaryColor,
     secondaryColor: secondaryColor,
     backgroundColor: backgroundColor,
