@@ -740,7 +740,7 @@ export class Board extends EventTarget {
         },
         template: "basic",
         isDefaultTheme: true,
-        palette: generatePaletteFromColor("#ffffff"),
+        palette: generatePaletteFromColor("#330072"),
       };
 
       const themeId = globalThis.crypto.randomUUID();
