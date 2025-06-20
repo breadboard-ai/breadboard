@@ -29,10 +29,6 @@ export const styles = [
       height: 100%;
     }
 
-    bb-chat {
-      height: 100%;
-    }
-
     #container {
       display: flex;
       flex-direction: column;
