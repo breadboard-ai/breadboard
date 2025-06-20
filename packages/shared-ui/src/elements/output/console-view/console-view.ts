@@ -176,9 +176,21 @@ export class ConsoleView extends SignalWatcher(LitElement) {
               &.step-icon {
                 margin-right: var(--bb-grid-size-2);
               }
+            }
 
+            &:not(.empty):not(.active) .g-icon {
               &.details-status::before {
                 content: "keyboard_arrow_up";
+              }
+            }
+
+            &.active .g-icon {
+              &.details-status {
+                animation: rotate 1s linear forwards infinite;
+
+                &::before {
+                  content: "progress_activity";
+                }
               }
             }
           }
@@ -186,7 +198,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
           &[open] > summary {
             margin-bottom: var(--bb-grid-size-3);
 
-            & .g-icon.details-status::before {
+            &:not(.empty):not(.active) .g-icon.details-status::before {
               content: "keyboard_arrow_down";
             }
           }
@@ -315,6 +327,10 @@ export class ConsoleView extends SignalWatcher(LitElement) {
             "w-500": true,
             round: true,
             "md-title-medium": true,
+            empty:
+              (!item.completed && item.work.size === 0) ||
+              (item.completed && item.output.size === 0),
+            active: !item.completed,
           };
           if (item.icon) {
             classes[item.icon] = true;
@@ -330,10 +346,9 @@ export class ConsoleView extends SignalWatcher(LitElement) {
             }
           }
 
-          const itemHasFinished = item.completed;
           const isLastItem = idx + 1 === this.run?.estimatedEntryCount;
 
-          return html`<details ?open=${!itemHasFinished || this.#openItems.has(itemId) || isLastItem}>
+          return html`<details ?open=${!item.completed || this.#openItems.has(itemId) || isLastItem}>
           <summary @click=${(evt: Event) => {
             if (
               !(
@@ -465,7 +480,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
           }
 
           ${
-            itemHasFinished
+            item.completed
               ? item.output.size > 0
                 ? repeat(
                     item.output.entries(),
