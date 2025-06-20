@@ -46,7 +46,10 @@ import {
   ModuleIdentifier,
   NodeDescriptor,
 } from "@breadboard-ai/types";
-import { generatePaletteFromImage } from "@breadboard-ai/theme";
+import {
+  generatePaletteFromColor,
+  generatePaletteFromImage,
+} from "@breadboard-ai/theme";
 import * as idb from "idb";
 import { BOARD_SAVE_STATUS } from "@breadboard-ai/shared-ui/types/types.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
@@ -736,13 +739,8 @@ export class Board extends EventTarget {
           primaryTextColor: "#ffffff",
         },
         template: "basic",
-        splashScreen: {
-          storedData: {
-            handle: MAIN_ICON,
-            mimeType: "image/svg+xml",
-          },
-        },
         isDefaultTheme: true,
+        palette: generatePaletteFromColor("#ffffff"),
       };
 
       const themeId = globalThis.crypto.randomUUID();

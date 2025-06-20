@@ -398,6 +398,7 @@ export class Template extends LitElement implements AppTemplate {
               &::before {
                 max-width: 320px;
                 background-clip: initial;
+                background-size: contain;
               }
             }
 
