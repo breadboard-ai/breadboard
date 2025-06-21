@@ -366,13 +366,8 @@ export class AppView extends LitElement {
   readonly #initializeAppTemplate = new Task(this, {
     args: () => [this.config.template],
     task: async ([appTemplate]): Promise<AppTemplate> => {
-      const run = this.#runner
-        ? (await this.#runner.runObserver.runs())[0]
-        : null;
-
       appTemplate.showDisclaimer = true;
       appTemplate.graph = this.flow;
-      appTemplate.run = run;
 
       appTemplate.addEventListener("bbsigninrequested", async () => {
         const url = await this.#signInAdapter.getSigninUrl();
@@ -474,7 +469,6 @@ export class AppView extends LitElement {
           this.#overrideTopGraphRunResult ??
           this.#runner?.topGraphObserver.current() ??
           TopGraphObserver.entryResult(this.flow);
-        appTemplate.eventPosition = appTemplate.run?.events.length ?? 0;
         appTemplate.showGDrive = this.#signInAdapter.state === "valid";
         return appTemplate;
       },

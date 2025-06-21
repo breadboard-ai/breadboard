@@ -102,15 +102,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   accessor topGraphResult: TopGraphRunResult | null = null;
 
   @property()
-  accessor appURL: string | null = null;
-
-  @property()
-  accessor eventPosition = 0;
-
-  @property()
-  accessor pendingSplashScreen = false;
-
-  @property()
   accessor showGDrive = false;
 
   @property()
@@ -118,9 +109,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
   @property()
   accessor isInSelectionState = false;
-
-  @property()
-  accessor showingOlderResult = false;
 
   @property()
   accessor state: SigninState = "anonymous";

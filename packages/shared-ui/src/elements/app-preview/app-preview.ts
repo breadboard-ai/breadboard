@@ -12,7 +12,6 @@ import { LitElement, PropertyValues, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
   BoardServer,
-  InspectableRun,
   InspectableRunEvent,
   isInlineData,
   isStoredData,
@@ -86,23 +85,14 @@ export class AppPreview extends LitElement {
   accessor templates = [{ title: "Basic", value: "basic" }];
 
   @property({ reflect: false })
-  accessor run: InspectableRun | null = null;
-
-  @property({ reflect: false })
   @provide({ context: projectRunContext })
   accessor projectRun: ProjectRun | null = null;
-
-  @property()
-  accessor eventPosition = 0;
 
   @property()
   accessor isMine = false;
 
   @property()
   accessor isInSelectionState = false;
-
-  @property()
-  accessor showingOlderResult = false;
 
   @property()
   accessor topGraphResult: TopGraphRunResult | null = null;
@@ -264,26 +254,6 @@ export class AppPreview extends LitElement {
     }
   }
 
-  async #deriveAppURL() {
-    if (!this.graph?.url) {
-      return;
-    }
-
-    for (const server of this.boardServers) {
-      const graphUrl = new URL(this.graph.url);
-      const capabilities = server.canProvide(graphUrl);
-      if (!capabilities) {
-        continue;
-      }
-
-      if (server.extendedCapabilities().preview) {
-        return server.preview(graphUrl);
-      }
-    }
-
-    return null;
-  }
-
   protected willUpdate(changedProperties: PropertyValues): void {
     if (changedProperties.has("template")) {
       if (changedProperties.get("template") !== this.template) {
@@ -294,17 +264,13 @@ export class AppPreview extends LitElement {
         this.#loadingTemplate = true;
 
         const themeHash = this.themeHash;
-        Promise.all([
-          this.#loadAppTemplate(this.template),
-          this.#deriveAppURL(),
-        ]).then(([{ Template }, appURL]) => {
+        this.#loadAppTemplate(this.template).then(({ Template }) => {
           // A newer theme has arrived - bail.
           if (themeHash !== this.themeHash) {
             return;
           }
 
           this.#appTemplate = new Template();
-          this.#appTemplate.appURL = appURL?.href ?? null;
           this.#template = html`${this.#appTemplate}`;
 
           this.#applyThemeToTemplate();
@@ -413,10 +379,8 @@ export class AppPreview extends LitElement {
     if (this.#appTemplate) {
       this.#appTemplate.graph = this.graph;
       this.#appTemplate.topGraphResult = this.topGraphResult;
-      this.#appTemplate.eventPosition = this.eventPosition;
       this.#appTemplate.showGDrive = this.showGDrive;
       this.#appTemplate.isInSelectionState = this.isInSelectionState;
-      this.#appTemplate.showingOlderResult = this.showingOlderResult;
       this.#appTemplate.readOnly = false;
       this.#appTemplate.showShareButton = false;
       this.#appTemplate.showContentWarning = !this.isMine;
