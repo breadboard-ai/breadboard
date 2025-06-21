@@ -970,7 +970,53 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     ></bb-header>`;
   }
 
-  #renderActivity(topGraphResult: TopGraphRunResult) {
+  #renderActivity() {
+    if (!this.run) return nothing;
+
+    let activityContents:
+      | HTMLTemplateResult
+      | Array<HTMLTemplateResult | symbol>
+      | symbol = nothing;
+    let status: HTMLTemplateResult | symbol = nothing;
+
+    const errors = this.run.errors;
+    if (errors.size > 0) {
+      activityContents = html`
+        ${Array.from(errors.values()).map((error) => {
+          return html`<details class="error">
+            <summary>
+              <h1>We are sorry, but there was a problem with this flow.</h1>
+              <p>Tap for more details</p>
+            </summary>
+            <div>
+              <p>${error.message}</p>
+            </div>
+          </details>`;
+        })};
+      `;
+    } else {
+      const current = this.run.app.current;
+      if (!current) return nothing;
+
+      if (this.run.status === "running") {
+        status = html`<div id="status">
+          <span class="g-icon"></span>
+          ${this.run.app.current?.title}
+        </div>`;
+      }
+
+      if (current.last) {
+        activityContents = html`<bb-multi-output
+          .showAsStatus=${current.type === "input"}
+          .outputs=${current.last.output}
+        ></bb-multi-output>`;
+      }
+    }
+
+    return html`<div id="activity">${[activityContents, status]}</div>`;
+  }
+
+  #renderActivityOld(topGraphResult: TopGraphRunResult) {
     let activityContents:
       | HTMLTemplateResult
       | Array<HTMLTemplateResult | symbol>
@@ -1453,7 +1499,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     } else {
       content = [
         this.#renderControls(this.topGraphResult),
-        this.#renderActivity(this.topGraphResult),
+        this.#renderActivity(),
         this.#renderSaveResultsButton(),
         this.#renderInput(),
         this.showDisclaimer
