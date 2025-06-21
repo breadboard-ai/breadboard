@@ -93,7 +93,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   };
 
   @consume({ context: projectRunContext, subscribe: true })
-  accessor projectRun: ProjectRun | null = null;
+  accessor run: ProjectRun | null = null;
 
   @property()
   accessor graph: GraphDescriptor | null = null;
@@ -1251,7 +1251,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   }
 
   #renderInput() {
-    const input = this.projectRun?.input;
+    const input = this.run?.input;
     if (!input) {
       this.style.setProperty("--input-clearance", `0px`);
 
