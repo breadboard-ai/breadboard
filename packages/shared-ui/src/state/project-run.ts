@@ -26,6 +26,7 @@ import {
   FileSystem,
   InspectableGraph,
   Outcome,
+  OutputValues,
 } from "@google-labs/breadboard";
 import { getStepIcon } from "../utils/get-step-icon";
 import { ReactiveApp } from "./app";
@@ -111,6 +112,13 @@ class ReactiveProjectRun implements ProjectRun {
 
   @signal
   accessor input: UserInput | null = null;
+
+  @signal
+  get finalOutput(): OutputValues | null {
+    if (this.status !== "stopped") return null;
+
+    return this.app.current?.last?.output || null;
+  }
 
   private constructor(
     private readonly inspectable: InspectableGraph | undefined,

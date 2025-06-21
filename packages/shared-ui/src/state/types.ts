@@ -73,6 +73,10 @@ export type ProjectRun = {
    * the run is not currently waiting on user input.
    */
   input: UserInput | null;
+  /**
+   * Final output values. When the run is still ongoing, will be `null`.
+   */
+  finalOutput: OutputValues | null;
 };
 
 /**

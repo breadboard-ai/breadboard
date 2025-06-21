@@ -59,7 +59,6 @@ import { createThemeStyles } from "@breadboard-ai/theme";
 import { icons } from "../../styles/icons";
 import { ActionTracker } from "../../utils/action-tracker.js";
 import { buttonStyles } from "../../styles/button.js";
-import { findFinalOutputValues } from "../../utils/save-results.js";
 import { consume } from "@lit/context";
 import { boardServerContext } from "../../contexts/board-server.js";
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
@@ -1000,10 +999,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   }
 
   #renderSaveResultsButton() {
-    if (
-      this.topGraphResult?.status !== "stopped" ||
-      !findFinalOutputValues(this.topGraphResult)
-    ) {
+    if (!this.run?.finalOutput) {
       return nothing;
     }
     // TODO(aomarks) Add share button.
@@ -1027,9 +1023,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       return;
     }
     // Clone because we are going to inline content below.
-    const finalOutputValues = structuredClone(
-      findFinalOutputValues(this.topGraphResult)
-    );
+    const finalOutputValues = structuredClone(this.run?.finalOutput);
     if (!finalOutputValues) {
       return;
     }
