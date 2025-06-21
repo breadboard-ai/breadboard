@@ -22,6 +22,7 @@ import {
   createRunObserver,
   GraphDescriptor,
   ok,
+  Outcome,
 } from "@google-labs/breadboard";
 import * as BreadboardUIContext from "@breadboard-ai/shared-ui/contexts";
 import * as ConnectionClient from "@breadboard-ai/connection-client";
@@ -46,7 +47,11 @@ import { blobHandleToUrl } from "@breadboard-ai/shared-ui/utils/blob-handle-to-u
 import { BoardServerAwareDataStore } from "@breadboard-ai/board-server-management";
 import { type RunResults } from "@breadboard-ai/google-drive-kit/board-server/operations.js";
 import { discoverClientDeploymentConfiguration } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
-import { createProjectRunState } from "@breadboard-ai/shared-ui/state/project-run.js";
+import {
+  createProjectRunState,
+  createProjectRunStateFromFinalOutput,
+} from "@breadboard-ai/shared-ui/state/project-run.js";
+import { ProjectRun } from "@breadboard-ai/shared-ui/state/types.js";
 
 const primaryColor = getGlobalColor("--bb-ui-700");
 const secondaryColor = getGlobalColor("--bb-ui-400");
@@ -436,10 +441,6 @@ async function bootstrap(args: BootstrapArguments = {}) {
     if (!(runConfig?.store instanceof BoardServerAwareDataStore)) {
       throw new Error(`Expected run config store to be board server aware`);
     }
-    const projectRun = createProjectRunState(runConfig, runner!.harnessRunner);
-    if (!ok(projectRun)) {
-      throw new Error(projectRun.$error);
-    }
     const boardServer = runConfig.store.boardServers.find(
       (server) => server.url.href === args.boardService
     );
@@ -447,6 +448,20 @@ async function bootstrap(args: BootstrapArguments = {}) {
       throw new Error(
         `Could not find a board server with URL ${args.boardService}`
       );
+    }
+
+    let runResults = await runResultsPromise;
+    let projectRun: Outcome<ProjectRun>;
+    if (runResults) {
+      projectRun = createProjectRunStateFromFinalOutput(
+        runConfig,
+        runResults.finalOutputValues
+      );
+    } else {
+      projectRun = createProjectRunState(runConfig, runner!.harnessRunner);
+    }
+    if (!ok(projectRun)) {
+      throw new Error(projectRun.$error);
     }
 
     const extractedTheme = await extractThemeFromFlow(flow);
@@ -467,7 +482,6 @@ async function bootstrap(args: BootstrapArguments = {}) {
       googleDriveClient,
       projectRun,
       boardServer,
-      runResults: await runResultsPromise,
       clientDeploymentConfiguration,
     };
 
@@ -481,10 +495,10 @@ async function bootstrap(args: BootstrapArguments = {}) {
 
       evt.target.remove();
 
-      if (config.runResults) {
+      if (runResults) {
         // Clear any saved results we might be displaying so that the user gets
         // a totally fresh run when they click reset.
-        config.runResults = null;
+        runResults = null;
         const url = new URL(document.location.href);
         if (url.searchParams.has("results")) {
           url.searchParams.delete("results");

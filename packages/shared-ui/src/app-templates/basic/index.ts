@@ -9,11 +9,7 @@ const Strings = StringsHelper.forSection("Global");
 
 import { LitElement, html, css, nothing, HTMLTemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import {
-  AppTemplate,
-  AppTemplateOptions,
-  TopGraphRunResult,
-} from "../../types/types";
+import { AppTemplate, AppTemplateOptions } from "../../types/types";
 import Mode from "../shared/styles/icons.js";
 import Animations from "../shared/styles/animations.js";
 
@@ -85,9 +81,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
   @property()
   accessor graph: GraphDescriptor | null = null;
-
-  @property()
-  accessor topGraphResult: TopGraphRunResult | null = null;
 
   @property()
   accessor showGDrive = false;
@@ -1018,12 +1011,12 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   }
 
   async #onClickSaveResults() {
-    if (!this.topGraphResult) {
-      console.error(`No top graph result`);
+    if (!this.run) {
+      console.error(`No project run`);
       return;
     }
     // Clone because we are going to inline content below.
-    const finalOutputValues = structuredClone(this.run?.finalOutput);
+    const finalOutputValues = structuredClone(this.run.finalOutput);
     if (!finalOutputValues) {
       return;
     }

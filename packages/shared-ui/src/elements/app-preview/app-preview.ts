@@ -375,7 +375,6 @@ export class AppPreview extends LitElement {
   render() {
     if (this.#appTemplate) {
       this.#appTemplate.graph = this.graph;
-      this.#appTemplate.topGraphResult = this.topGraphResult;
       this.#appTemplate.showGDrive = this.showGDrive;
       this.#appTemplate.readOnly = false;
       this.#appTemplate.showShareButton = false;
