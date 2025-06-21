@@ -12,6 +12,11 @@ import { ReactiveAppScreen } from "./app-screen";
 export { ReactiveApp };
 
 class ReactiveApp implements App {
+  @signal
+  get state() {
+    return this.screens.size > 0 ? "screen" : "splash";
+  }
+
   screens: Map<string, AppScreen> = new SignalMap();
 
   @signal

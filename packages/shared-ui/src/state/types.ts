@@ -81,6 +81,12 @@ export type ProjectRun = {
  */
 export type App = {
   /**
+   * Current state of the app. Can be one of the following:
+   * - "splash" -- the app is showing a splash screen
+   * - "screen" -- the app is showing a screen
+   */
+  state: "splash" | "screen";
+  /**
    * A sequences of screens that is produced during the run.
    */
   screens: Map<string, AppScreen>;
@@ -340,6 +346,11 @@ export type Project = {
   organizer: Organizer;
   fastAccess: FastAccess;
   renderer: RendererState;
+
+  /**
+   * Resets the current run.
+   */
+  resetRun(): void;
 
   /**
    * Returns metadata for a given node. This function is sync, and it

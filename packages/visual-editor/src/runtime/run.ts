@@ -87,7 +87,7 @@ export class Run extends EventTarget {
     if (run) {
       const project = this.state.getOrCreate(run.mainGraphId);
       if (project) {
-        project.run = null;
+        project.resetRun();
       }
     } else {
       console.warn(

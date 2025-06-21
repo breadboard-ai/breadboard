@@ -1480,11 +1480,8 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     `;
 
     let content: NonNullable<unknown>;
-    if (
-      (this.topGraphResult.status === "stopped" &&
-        this.topGraphResult.log.length === 0) ||
-      this.#totalNodeCount === 0
-    ) {
+    const appState = this.run?.app.state || "splash";
+    if (appState === "splash") {
       content = splashScreen;
     } else {
       content = [

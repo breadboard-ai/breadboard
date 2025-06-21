@@ -164,6 +164,10 @@ class ReactiveProject implements ProjectInternal {
     this.run = ReactiveProjectRun.createInert(this.#inspectable());
   }
 
+  resetRun(): void {
+    this.run = ReactiveProjectRun.createInert(this.#inspectable());
+  }
+
   #inspectable() {
     return this.#store.inspect(this.#mainGraphId, "");
   }
