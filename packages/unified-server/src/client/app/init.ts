@@ -18,7 +18,11 @@ import {
 import { AppViewConfig, BootstrapArguments } from "./types/types.js";
 
 import * as Elements from "./elements/elements.js";
-import { createRunObserver, GraphDescriptor } from "@google-labs/breadboard";
+import {
+  createRunObserver,
+  GraphDescriptor,
+  ok,
+} from "@google-labs/breadboard";
 import * as BreadboardUIContext from "@breadboard-ai/shared-ui/contexts";
 import * as ConnectionClient from "@breadboard-ai/connection-client";
 import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
@@ -42,6 +46,7 @@ import { blobHandleToUrl } from "@breadboard-ai/shared-ui/utils/blob-handle-to-u
 import { BoardServerAwareDataStore } from "@breadboard-ai/board-server-management";
 import { type RunResults } from "@breadboard-ai/google-drive-kit/board-server/operations.js";
 import { discoverClientDeploymentConfiguration } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
+import { createProjectRunState } from "@breadboard-ai/shared-ui/state/project-run.js";
 
 const primaryColor = getGlobalColor("--bb-ui-700");
 const secondaryColor = getGlobalColor("--bb-ui-400");
@@ -92,7 +97,7 @@ async function fetchFlow(googleDriveClient: GoogleDriveClient) {
     const flow = (await response.json()) as GraphDescriptor;
     flow.url = new URL(fetchPath, window.location.href).href;
     return flow;
-  } catch (err) {
+  } catch {
     return null;
   }
 }
@@ -431,6 +436,10 @@ async function bootstrap(args: BootstrapArguments = {}) {
     if (!(runConfig?.store instanceof BoardServerAwareDataStore)) {
       throw new Error(`Expected run config store to be board server aware`);
     }
+    const projectRun = createProjectRunState(runConfig, runner!.harnessRunner);
+    if (!ok(projectRun)) {
+      throw new Error(projectRun.$error);
+    }
     const boardServer = runConfig.store.boardServers.find(
       (server) => server.url.href === args.boardService
     );
@@ -456,6 +465,7 @@ async function bootstrap(args: BootstrapArguments = {}) {
       templateAdditionalOptions:
         extractedTheme?.templateAdditionalOptionsChosen ?? null,
       googleDriveClient,
+      projectRun,
       boardServer,
       runResults: await runResultsPromise,
       clientDeploymentConfiguration,

@@ -60,6 +60,8 @@ import {
   clientDeploymentConfigurationContext,
 } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
+import { projectRunContext } from "@breadboard-ai/shared-ui/contexts";
+import { ProjectRun } from "@breadboard-ai/shared-ui/state/types.js";
 
 @customElement("app-view")
 export class AppView extends LitElement {
@@ -93,6 +95,9 @@ export class AppView extends LitElement {
   @provide({ context: boardServerContext })
   accessor boardServer: BoardServer | undefined;
 
+  @provide({ context: projectRunContext })
+  accessor projectRun: ProjectRun | null = null;
+
   readonly flow: GraphDescriptor;
   #runner: Runner | null;
   #signInAdapter: SigninAdapter;
@@ -114,6 +119,7 @@ export class AppView extends LitElement {
     this.flow = earlyLoadedFlow ?? config.flow;
     this.googleDriveClient = config.googleDriveClient;
     this.boardServer = config.boardServer;
+    this.projectRun = config.projectRun;
     this.#overrideTopGraphRunResult = config.runResults
       ? {
           status: "stopped",
@@ -360,13 +366,8 @@ export class AppView extends LitElement {
   readonly #initializeAppTemplate = new Task(this, {
     args: () => [this.config.template],
     task: async ([appTemplate]): Promise<AppTemplate> => {
-      const run = this.#runner
-        ? (await this.#runner.runObserver.runs())[0]
-        : null;
-
       appTemplate.showDisclaimer = true;
       appTemplate.graph = this.flow;
-      appTemplate.run = run;
 
       appTemplate.addEventListener("bbsigninrequested", async () => {
         const url = await this.#signInAdapter.getSigninUrl();
@@ -468,7 +469,6 @@ export class AppView extends LitElement {
           this.#overrideTopGraphRunResult ??
           this.#runner?.topGraphObserver.current() ??
           TopGraphObserver.entryResult(this.flow);
-        appTemplate.eventPosition = appTemplate.run?.events.length ?? 0;
         appTemplate.showGDrive = this.#signInAdapter.state === "valid";
         return appTemplate;
       },

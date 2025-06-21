@@ -12,7 +12,6 @@ import { LitElement, PropertyValues, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
   BoardServer,
-  InspectableRun,
   InspectableRunEvent,
   isInlineData,
   isStoredData,
@@ -32,11 +31,13 @@ import {
   TopGraphRunResult,
 } from "../../types/types.js";
 import { classMap } from "lit/directives/class-map.js";
-import { consume } from "@lit/context";
+import { consume, provide } from "@lit/context";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { generatePaletteFromColor } from "@breadboard-ai/theme";
 import { loadPart } from "../../utils/data-parts.js";
+import { projectRunContext } from "../../contexts/project-run.js";
+import { ProjectRun } from "../../state/types.js";
 
 const primaryColor = "#ffffff";
 const secondaryColor = "#7a7a7a";
@@ -64,7 +65,7 @@ function getThemeModeFromBackground(hexColor: string): "light" | "dark" {
 
     const luma = r * 0.299 + g * 0.587 + b * 0.114;
     return luma > 128 ? "light" : "dark";
-  } catch (err) {
+  } catch {
     return "light";
   }
 }
@@ -84,19 +85,14 @@ export class AppPreview extends LitElement {
   accessor templates = [{ title: "Basic", value: "basic" }];
 
   @property({ reflect: false })
-  accessor run: InspectableRun | null = null;
-
-  @property()
-  accessor eventPosition = 0;
+  @provide({ context: projectRunContext })
+  accessor projectRun: ProjectRun | null = null;
 
   @property()
   accessor isMine = false;
 
   @property()
   accessor isInSelectionState = false;
-
-  @property()
-  accessor showingOlderResult = false;
 
   @property()
   accessor topGraphResult: TopGraphRunResult | null = null;
@@ -258,26 +254,6 @@ export class AppPreview extends LitElement {
     }
   }
 
-  async #deriveAppURL() {
-    if (!this.graph?.url) {
-      return;
-    }
-
-    for (const server of this.boardServers) {
-      const graphUrl = new URL(this.graph.url);
-      const capabilities = server.canProvide(graphUrl);
-      if (!capabilities) {
-        continue;
-      }
-
-      if (server.extendedCapabilities().preview) {
-        return server.preview(graphUrl);
-      }
-    }
-
-    return null;
-  }
-
   protected willUpdate(changedProperties: PropertyValues): void {
     if (changedProperties.has("template")) {
       if (changedProperties.get("template") !== this.template) {
@@ -288,17 +264,13 @@ export class AppPreview extends LitElement {
         this.#loadingTemplate = true;
 
         const themeHash = this.themeHash;
-        Promise.all([
-          this.#loadAppTemplate(this.template),
-          this.#deriveAppURL(),
-        ]).then(([{ Template }, appURL]) => {
+        this.#loadAppTemplate(this.template).then(({ Template }) => {
           // A newer theme has arrived - bail.
           if (themeHash !== this.themeHash) {
             return;
           }
 
           this.#appTemplate = new Template();
-          this.#appTemplate.appURL = appURL?.href ?? null;
           this.#template = html`${this.#appTemplate}`;
 
           this.#applyThemeToTemplate();
@@ -406,12 +378,9 @@ export class AppPreview extends LitElement {
   render() {
     if (this.#appTemplate) {
       this.#appTemplate.graph = this.graph;
-      this.#appTemplate.run = this.run;
       this.#appTemplate.topGraphResult = this.topGraphResult;
-      this.#appTemplate.eventPosition = this.eventPosition;
       this.#appTemplate.showGDrive = this.showGDrive;
       this.#appTemplate.isInSelectionState = this.isInSelectionState;
-      this.#appTemplate.showingOlderResult = this.showingOlderResult;
       this.#appTemplate.readOnly = false;
       this.#appTemplate.showShareButton = false;
       this.#appTemplate.showContentWarning = !this.isMine;

@@ -8,6 +8,7 @@ import { SignalMap } from "signal-utils/map";
 import { ConsoleEntry, ProjectRun, RunError, UserInput } from "./types";
 import {
   HarnessRunner,
+  RunConfig,
   RunErrorEvent,
   RunGraphEndEvent,
   RunGraphStartEvent,
@@ -20,12 +21,53 @@ import { signal } from "signal-utils";
 import { formatError } from "../utils/format-error";
 import { ReactiveConsoleEntry } from "./console-entry";
 import { idFromPath } from "./common";
-import { FileSystem, InspectableGraph } from "@google-labs/breadboard";
+import {
+  err,
+  FileSystem,
+  InspectableGraph,
+  Outcome,
+} from "@google-labs/breadboard";
 import { getStepIcon } from "../utils/get-step-icon";
+import { ReactiveApp } from "./app";
+import { ReactiveAppScreen } from "./app-screen";
 
-export { ReactiveProjectRun };
+export { ReactiveProjectRun, createProjectRunState };
+
+function createProjectRunState(
+  runConfig: RunConfig,
+  harnessRunner: HarnessRunner
+): Outcome<ProjectRun> {
+  const { fileSystem, graphStore, runner: graph, signal } = runConfig;
+  if (!fileSystem) {
+    return error(`File system wasn't initialized`);
+  }
+  if (!graph) {
+    return error(`Graph wasn't specified`);
+  }
+  if (!graphStore) {
+    return error(`Graph store wasn't supplied`);
+  }
+
+  const gettingMainGraph = graphStore.getByDescriptor(graph);
+  if (!gettingMainGraph?.success) {
+    return error(`Can't to find graph in graph store`);
+  }
+  const inspectable = graphStore.inspect(gettingMainGraph.result, "");
+  if (!inspectable) {
+    return error(`Can't instantiate inspectable graph`);
+  }
+
+  return new ReactiveProjectRun(inspectable, fileSystem, harnessRunner, signal);
+
+  function error(msg: string) {
+    const full = `Unable to create project run state: ${msg}`;
+    console.error(full);
+    return err(full);
+  }
+}
 
 class ReactiveProjectRun implements ProjectRun {
+  app: ReactiveApp = new ReactiveApp();
   console: Map<string, ConsoleEntry> = new SignalMap();
   errors: Map<string, RunError> = new SignalMap();
 
@@ -137,11 +179,19 @@ class ReactiveProjectRun implements ProjectRun {
     const entry = new ReactiveConsoleEntry(
       this.fileSystem,
       { title, icon, tags },
-      event.data.path,
+      path,
       outputSchema
     );
     this.current = entry;
     this.console.set(entry.id, entry);
+
+    // This looks like duplication with the console logic above,
+    // but it's a hedge toward the future where screens and console entries
+    // might go out of sync.
+    // See https://github.com/breadboard-ai/breadboard/wiki/Screens
+    const screen = new ReactiveAppScreen(path, outputSchema);
+    this.app.current = screen;
+    this.app.screens.set(screen.id, screen);
   }
 
   #nodeEnd(event: RunNodeEndEvent) {
@@ -161,6 +211,7 @@ class ReactiveProjectRun implements ProjectRun {
     }
 
     this.current?.finalize(event.data);
+    this.app.current?.finalize(event.data);
   }
 
   #input(event: RunInputEvent) {
@@ -171,6 +222,7 @@ class ReactiveProjectRun implements ProjectRun {
     }
     this.current.addInput(event.data, {
       itemCreated: (item) => {
+        this.app.current?.markAsInput();
         if (!item.schema) {
           console.warn(`Schema unavailable for input, skipping`, event.data);
           return;

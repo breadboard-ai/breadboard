@@ -607,12 +607,10 @@ export class UI extends LitElement {
             })}
             .graph=${this.graph}
             .themeHash=${themeHash}
-            .run=${run}
-            .eventPosition=${eventPosition}
+            .projectRun=${this.projectState?.run}
             .topGraphResult=${this.topGraphResult}
             .showGDrive=${this.signedIn}
             .isInSelectionState=${false}
-            .showingOlderResult=${false}
             .settings=${this.settings}
             .boardServers=${this.boardServers}
             .status=${this.status}

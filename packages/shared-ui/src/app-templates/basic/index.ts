@@ -30,7 +30,6 @@ import {
   asBase64,
   BoardServer,
   GraphDescriptor,
-  InspectableRun,
   isLLMContentArray,
   ok,
   transformDataParts,
@@ -76,13 +75,16 @@ import { consume } from "@lit/context";
 import { boardServerContext } from "../../contexts/board-server.js";
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 import { NodeValue } from "@breadboard-ai/types";
+import { projectRunContext } from "../../contexts/project-run.js";
+import { ProjectRun } from "../../state/types.js";
+import { SignalWatcher } from "@lit-labs/signals";
 
 function keyFromGraphUrl(url: string) {
   return `cw-${url.replace(/\W/gi, "-")}`;
 }
 
 @customElement("app-basic")
-export class Template extends LitElement implements AppTemplate {
+export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   @property({ type: Object })
   accessor options: AppTemplateOptions = {
     title: "Untitled App",
@@ -90,23 +92,14 @@ export class Template extends LitElement implements AppTemplate {
     splashImage: false,
   };
 
-  @property({ reflect: false })
-  accessor run: InspectableRun | null = null;
+  @consume({ context: projectRunContext, subscribe: true })
+  accessor run: ProjectRun | null = null;
 
   @property()
   accessor graph: GraphDescriptor | null = null;
 
   @property()
   accessor topGraphResult: TopGraphRunResult | null = null;
-
-  @property()
-  accessor appURL: string | null = null;
-
-  @property()
-  accessor eventPosition = 0;
-
-  @property()
-  accessor pendingSplashScreen = false;
 
   @property()
   accessor showGDrive = false;
@@ -116,9 +109,6 @@ export class Template extends LitElement implements AppTemplate {
 
   @property()
   accessor isInSelectionState = false;
-
-  @property()
-  accessor showingOlderResult = false;
 
   @property()
   accessor state: SigninState = "anonymous";
@@ -1260,13 +1250,9 @@ export class Template extends LitElement implements AppTemplate {
     );
   }
 
-  #renderInput(topGraphResult: TopGraphRunResult) {
-    const currentItem = topGraphResult.log.at(-1);
-    if (
-      topGraphResult.status !== "paused" ||
-      currentItem?.type !== "edge" ||
-      !currentItem.schema
-    ) {
+  #renderInput() {
+    const input = this.run?.input;
+    if (!input) {
       this.style.setProperty("--input-clearance", `0px`);
 
       return nothing;
@@ -1274,7 +1260,7 @@ export class Template extends LitElement implements AppTemplate {
 
     const PADDING = 24;
     return html`<bb-floating-input
-      .schema=${currentItem.schema}
+      .schema=${input.schema}
       .showDisclaimer=${this.showDisclaimer}
       @bbresize=${(evt: ResizeEvent) => {
         this.style.setProperty(
@@ -1475,7 +1461,7 @@ export class Template extends LitElement implements AppTemplate {
         this.#renderControls(this.topGraphResult),
         this.#renderActivity(this.topGraphResult),
         this.#renderSaveResultsButton(),
-        this.#renderInput(this.topGraphResult),
+        this.#renderInput(),
         this.showDisclaimer
           ? html`<p id="disclaimer">${Strings.from("LABEL_DISCLAIMER")}</p>`
           : nothing,

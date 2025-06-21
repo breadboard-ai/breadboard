@@ -21,8 +21,6 @@ import { classMap } from "lit/directives/class-map.js";
 import { ResizeEvent, RunEvent } from "../../../events/events";
 import { icons } from "../../../styles/icons";
 import { SignalWatcher } from "@lit-labs/signals";
-import { provide } from "@lit/context";
-import { projectRunContext } from "../../../contexts/project-run.js";
 import { isParticle } from "@breadboard-ai/particles";
 import { sharedStyles } from "./shared-styles.js";
 import { colorsLight } from "../../../styles/host/colors-light.js";
@@ -32,7 +30,6 @@ import { iconSubstitute } from "../../../utils/icon-substitute.js";
 @customElement("bb-console-view")
 export class ConsoleView extends SignalWatcher(LitElement) {
   @property()
-  @provide({ context: projectRunContext })
   accessor run: ProjectRun | null = null;
 
   static styles = [

@@ -19,7 +19,6 @@ import {
   InspectableNodePorts,
   PortIdentifier,
   NodeHandlerMetadata,
-  InspectableRun,
   InspectableAssetEdgeDirection,
 } from "@google-labs/breadboard";
 import {
@@ -570,15 +569,11 @@ export interface AppTemplateOptions {
 export interface AppTemplate extends LitElement {
   state: SigninState | null;
   options: AppTemplateOptions;
-  run: InspectableRun | null;
   graph: GraphDescriptor | null;
   topGraphResult: TopGraphRunResult | null;
-  eventPosition: number;
   additionalOptions: AppTemplateAdditionalOptionsAvailable;
   showGDrive: boolean;
   isInSelectionState: boolean;
-  showingOlderResult: boolean;
-  appURL: string | null;
   readOnly: boolean;
   showShareButton: boolean;
   showContentWarning: boolean;
