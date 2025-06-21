@@ -49,6 +49,10 @@ export type ProjectRun = {
    */
   progress: number;
   /**
+   * Answers whether the project is runnable in its current state.
+   */
+  runnable: boolean;
+  /**
    * Console (fka Activity View)
    */
   console: Map<string, ConsoleEntry>;
@@ -329,7 +333,7 @@ export type ConnectorState = {
  * Contains all the state for the project.
  */
 export type Project = {
-  run: ProjectRun | null;
+  run: ProjectRun;
   graphAssets: Map<AssetPath, GraphAsset>;
   parameters: Map<string, ParameterMetadata>;
   connectors: ConnectorState;

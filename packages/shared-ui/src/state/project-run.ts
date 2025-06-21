@@ -57,7 +57,12 @@ function createProjectRunState(
     return error(`Can't instantiate inspectable graph`);
   }
 
-  return new ReactiveProjectRun(inspectable, fileSystem, harnessRunner, signal);
+  return ReactiveProjectRun.create(
+    inspectable,
+    fileSystem,
+    harnessRunner,
+    signal
+  );
 
   function error(msg: string) {
     const full = `Unable to create project run state: ${msg}`;
@@ -100,14 +105,20 @@ class ReactiveProjectRun implements ProjectRun {
   }
 
   @signal
+  get runnable() {
+    return this.estimatedEntryCount !== 0;
+  }
+
+  @signal
   accessor input: UserInput | null = null;
 
-  constructor(
+  private constructor(
     private readonly inspectable: InspectableGraph | undefined,
-    private readonly fileSystem: FileSystem,
-    runner: HarnessRunner,
+    private readonly fileSystem?: FileSystem,
+    runner?: HarnessRunner,
     signal?: AbortSignal
   ) {
+    if (!runner) return;
     if (signal) {
       signal.addEventListener("abort", this.#abort.bind(this));
     }
@@ -262,5 +273,23 @@ class ReactiveProjectRun implements ProjectRun {
     const path = this.#errorPath || [];
     this.input = null;
     this.errors.set(idFromPath(path), { message });
+  }
+
+  /**
+   * Creates an inert (incapable of running) instance of a ProjectRun.
+   * This instance is useful for representing and inspecting the run that
+   * hasn't yet started.
+   */
+  static createInert(inspectable: InspectableGraph | undefined) {
+    return new ReactiveProjectRun(inspectable);
+  }
+
+  static create(
+    inspectable: InspectableGraph | undefined,
+    fileSystem: FileSystem,
+    runner: HarnessRunner,
+    signal?: AbortSignal
+  ) {
+    return new ReactiveProjectRun(inspectable, fileSystem, runner, signal);
   }
 }

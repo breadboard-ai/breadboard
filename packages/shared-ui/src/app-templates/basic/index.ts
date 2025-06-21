@@ -1456,7 +1456,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
               ${this.state === "anonymous" || this.state === "valid"
                 ? html`<button
                     id="run"
-                    ?disabled=${this.#totalNodeCount === 0}
+                    ?disabled=${!this.run?.runnable}
                     @click=${() => {
                       ActionTracker.runApp(this.graph?.url, "app_preview");
                       this.dispatchEvent(new RunEvent());
@@ -1466,7 +1466,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
                   </button>`
                 : html`<button
                     id="sign-in"
-                    ?disabled=${this.#totalNodeCount === 0}
+                    ?disabled=${!this.run?.runnable}
                     @click=${() => {
                       this.dispatchEvent(new SignInRequestedEvent());
                     }}
