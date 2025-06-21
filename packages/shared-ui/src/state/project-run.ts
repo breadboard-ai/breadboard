@@ -91,6 +91,15 @@ class ReactiveProjectRun implements ProjectRun {
   }
 
   @signal
+  get progress() {
+    if (this.estimatedEntryCount === 0) {
+      return 0;
+    }
+
+    return this.console.size / this.estimatedEntryCount;
+  }
+
+  @signal
   accessor input: UserInput | null = null;
 
   constructor(

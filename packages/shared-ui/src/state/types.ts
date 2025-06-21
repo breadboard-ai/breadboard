@@ -42,6 +42,12 @@ export type ProjectRun = {
    */
   estimatedEntryCount: number;
   /**
+   * Provides a number between 0 and 1 indicating current progress of the run.
+   * 0 - just started
+   * 1 - completely done
+   */
+  progress: number;
+  /**
    * Console (fka Activity View)
    */
   console: Map<string, ConsoleEntry>;

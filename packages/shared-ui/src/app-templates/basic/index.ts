@@ -962,14 +962,8 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     if (topGraphResult.currentNode?.descriptor.id) {
       this.#nodesLeftToVisit.delete(topGraphResult.currentNode?.descriptor.id);
     }
-
-    const progress =
-      this.#totalNodeCount > 0
-        ? (this.#totalNodeCount - this.#nodesLeftToVisit.size) /
-          this.#totalNodeCount
-        : 1;
     return html`<bb-header
-      .progress=${progress}
+      .progress=${this.run?.progress}
       .replayActive=${true}
       .menuActive=${true}
       .appTitle=${this.graph?.title}
