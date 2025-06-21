@@ -7,14 +7,7 @@
 import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("Global");
 
-import {
-  LitElement,
-  html,
-  css,
-  PropertyValues,
-  nothing,
-  HTMLTemplateResult,
-} from "lit";
+import { LitElement, html, css, nothing, HTMLTemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
   AppTemplate,
@@ -955,10 +948,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   #splashRef: Ref<HTMLDivElement> = createRef();
   #assetShelfRef: Ref<AssetShelf> = createRef();
 
-  #renderControls(topGraphResult: TopGraphRunResult) {
-    if (topGraphResult.currentNode?.descriptor.id) {
-      this.#nodesLeftToVisit.delete(topGraphResult.currentNode?.descriptor.id);
-    }
+  #renderControls() {
     return html`<bb-header
       .progress=${this.run?.progress}
       .replayActive=${true}
@@ -1308,32 +1298,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     ></bb-floating-input>`;
   }
 
-  #totalNodeCount = 0;
-  #nodesLeftToVisit = new Set<string>();
-  protected willUpdate(changedProperties: PropertyValues): void {
-    if (changedProperties.has("topGraphResult")) {
-      if (
-        this.graph &&
-        this.topGraphResult &&
-        (this.topGraphResult.log.length === 0 || this.#totalNodeCount === 0)
-      ) {
-        this.#nodesLeftToVisit = new Set(
-          this.graph.nodes.map((node) => node.id)
-        );
-
-        this.#totalNodeCount = this.#nodesLeftToVisit.size;
-
-        for (const item of this.topGraphResult.log) {
-          if (item.type !== "node") {
-            continue;
-          }
-
-          this.#nodesLeftToVisit.delete(item.descriptor.id);
-        }
-      }
-    }
-  }
-
   render() {
     const classes: Record<string, boolean> = {
       "app-template": true,
@@ -1485,7 +1449,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       content = splashScreen;
     } else {
       content = [
-        this.#renderControls(this.topGraphResult),
+        this.#renderControls(),
         this.#renderActivity(),
         this.#renderSaveResultsButton(),
         this.#renderInput(),
