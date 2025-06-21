@@ -91,6 +91,15 @@ class ReactiveProjectRun implements ProjectRun {
   }
 
   @signal
+  get progress() {
+    if (this.estimatedEntryCount === 0) {
+      return 0;
+    }
+
+    return this.console.size / this.estimatedEntryCount;
+  }
+
+  @signal
   accessor input: UserInput | null = null;
 
   constructor(
@@ -189,7 +198,7 @@ class ReactiveProjectRun implements ProjectRun {
     // but it's a hedge toward the future where screens and console entries
     // might go out of sync.
     // See https://github.com/breadboard-ai/breadboard/wiki/Screens
-    const screen = new ReactiveAppScreen(path, outputSchema);
+    const screen = new ReactiveAppScreen(title || "", path, outputSchema);
     this.app.current = screen;
     this.app.screens.set(screen.id, screen);
   }
@@ -237,10 +246,15 @@ class ReactiveProjectRun implements ProjectRun {
   #output(event: RunOutputEvent) {
     console.debug("Project Run: Output", event);
     if (!this.current) {
-      console.warn(`No current node for input event`, event);
+      console.warn(`No current console entry for output event`, event);
       return;
     }
     this.current.addOutput(event.data);
+    if (!this.app.current) {
+      console.warn(`No current screen for output event`, event);
+      return;
+    }
+    this.app.current.addOutput(event.data);
   }
 
   #error(event: RunErrorEvent) {

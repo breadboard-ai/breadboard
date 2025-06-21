@@ -11,6 +11,7 @@ import {
   GraphIdentifier,
   LLMContent,
   NodeIdentifier,
+  OutputValues,
   ParameterMetadata,
 } from "@breadboard-ai/types";
 import {
@@ -41,6 +42,12 @@ export type ProjectRun = {
    * The estimate is updated when the run goes over it.
    */
   estimatedEntryCount: number;
+  /**
+   * Provides a number between 0 and 1 indicating current progress of the run.
+   * 0 - just started
+   * 1 - completely done
+   */
+  progress: number;
   /**
    * Console (fka Activity View)
    */
@@ -84,6 +91,10 @@ export type App = {
  */
 export type AppScreen = {
   /**
+   * The title of the screen
+   */
+  title: string;
+  /**
    * When "interactive", indicates that this screen is still being created
    * or is asking user for input.
    * When "complete", indicates that this screen is finalized and is now
@@ -99,9 +110,28 @@ export type AppScreen = {
    */
   type: "progress" | "input";
   /**
-   * The output for this screen
+   * The outputs for this screen
    */
-  output: Map<string, LLMContent /* Particle */>;
+  outputs: Map<string, AppScreenOutput>;
+  /**
+   * The last output for the screen
+   */
+  last: AppScreenOutput | null;
+};
+
+/**
+ * Represents an output on a screen. There may be more than one output,
+ * like multiple bubbling outputs from the step, as well as the final output.
+ */
+export type AppScreenOutput = {
+  /**
+   * The Schema of the output values.
+   */
+  schema: Schema | undefined;
+  /**
+   * The output values.
+   */
+  output: OutputValues;
 };
 
 /**

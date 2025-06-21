@@ -962,21 +962,61 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     if (topGraphResult.currentNode?.descriptor.id) {
       this.#nodesLeftToVisit.delete(topGraphResult.currentNode?.descriptor.id);
     }
-
-    const progress =
-      this.#totalNodeCount > 0
-        ? (this.#totalNodeCount - this.#nodesLeftToVisit.size) /
-          this.#totalNodeCount
-        : 1;
     return html`<bb-header
-      .progress=${progress}
+      .progress=${this.run?.progress}
       .replayActive=${true}
       .menuActive=${true}
       .appTitle=${this.graph?.title}
     ></bb-header>`;
   }
 
-  #renderActivity(topGraphResult: TopGraphRunResult) {
+  #renderActivity() {
+    if (!this.run) return nothing;
+
+    let activityContents:
+      | HTMLTemplateResult
+      | Array<HTMLTemplateResult | symbol>
+      | symbol = nothing;
+    let status: HTMLTemplateResult | symbol = nothing;
+
+    const errors = this.run.errors;
+    if (errors.size > 0) {
+      activityContents = html`
+        ${Array.from(errors.values()).map((error) => {
+          return html`<details class="error">
+            <summary>
+              <h1>We are sorry, but there was a problem with this flow.</h1>
+              <p>Tap for more details</p>
+            </summary>
+            <div>
+              <p>${error.message}</p>
+            </div>
+          </details>`;
+        })};
+      `;
+    } else {
+      const current = this.run.app.current;
+      if (!current) return nothing;
+
+      if (this.run.status === "running") {
+        status = html`<div id="status">
+          <span class="g-icon"></span>
+          ${this.run.app.current?.title}
+        </div>`;
+      }
+
+      if (current.last) {
+        activityContents = html`<bb-multi-output
+          .showAsStatus=${current.type === "input"}
+          .outputs=${current.last.output}
+        ></bb-multi-output>`;
+      }
+    }
+
+    return html`<div id="activity">${[activityContents, status]}</div>`;
+  }
+
+  #renderActivityOld(topGraphResult: TopGraphRunResult) {
     let activityContents:
       | HTMLTemplateResult
       | Array<HTMLTemplateResult | symbol>
@@ -1320,19 +1360,18 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       styles = createThemeStyles(this.options.theme);
     }
 
+    // Special-case the default theme based on the mime types.
+    // TODO: Replace this with a more robust check.
+    if (this.options.isDefaultTheme) {
+      styles["--splash-width"] = "50%";
+      styles["--splash-fill"] = "contain";
+      styles["--start-border"] = "var(--secondary-color)";
+      styles["--default-progress"] = "url(/images/progress-inverted.svg)";
+      styles["--start-icon"] = "var(--bb-icon-generative-inverted)";
+      styles["--input-background"] =
+        "oklch(from var(--s-80) calc(l + 0.2) c h)";
+    }
     if (typeof this.options.splashImage === "string") {
-      // Special-case the default theme based on the mime types.
-      // TODO: Replace this with a more robust check.
-      if (this.options.isDefaultTheme) {
-        styles["--splash-width"] = "50%";
-        styles["--splash-fill"] = "contain";
-        styles["--start-border"] = "var(--secondary-color)";
-        styles["--default-progress"] = "url(/images/progress-inverted.svg)";
-        styles["--start-icon"] = "var(--bb-icon-generative-inverted)";
-        styles["--input-background"] =
-          "oklch(from var(--s-80) calc(l + 0.2) c h)";
-      }
-
       styles["--splash-image"] = this.options.splashImage;
     }
 
@@ -1450,8 +1489,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         <p>This step has yet to run</p>
       </div>`;
     } else if (
-      (styles["--splash-image"] &&
-        this.topGraphResult.status === "stopped" &&
+      (this.topGraphResult.status === "stopped" &&
         this.topGraphResult.log.length === 0) ||
       this.#totalNodeCount === 0
     ) {
@@ -1459,7 +1497,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     } else {
       content = [
         this.#renderControls(this.topGraphResult),
-        this.#renderActivity(this.topGraphResult),
+        this.#renderActivity(),
         this.#renderSaveResultsButton(),
         this.#renderInput(),
         this.showDisclaimer

@@ -516,19 +516,11 @@ export class ConsoleView extends SignalWatcher(LitElement) {
     </section>`;
   }
 
-  #calculateProgress() {
-    if (!this.run || this.run.estimatedEntryCount === 0) {
-      return 0;
-    }
-
-    return this.run.console.size / this.run.estimatedEntryCount;
-  }
-
   render() {
     return [
       html`<bb-header
         .replayActive=${this.run !== null}
-        .progress=${this.#calculateProgress()}
+        .progress=${this.run?.progress}
       ></bb-header>`,
       this.run ? this.#renderRun() : this.#renderRunButton(),
       this.#renderInput(),

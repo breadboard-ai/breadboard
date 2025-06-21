@@ -7,7 +7,7 @@
 import { FileDataPart, JSONPart, LLMContent } from "@breadboard-ai/types";
 import { OutputValues, Schema } from "@google-labs/breadboard";
 
-export { toLLMContentArray, idFromPath, toJson };
+export { isParticleMode, toLLMContentArray, idFromPath, toJson };
 
 const REPORT_STREAM_MIME_TYPE = "application/vnd.breadboard.report-stream";
 
@@ -19,6 +19,19 @@ export type Products = {
 
 function idFromPath(path: number[]): string {
   return `e-${path.join("-")}`;
+}
+
+function isParticleMode(schema: Schema, values: OutputValues) {
+  const firstProperty = Object.entries(schema.properties || {}).at(0);
+  if (!firstProperty) return false;
+  const [name, propertySchema] = firstProperty;
+  if (!propertySchema?.behavior?.includes("llm-content")) {
+    return false;
+  }
+  const value = values[name] as LLMContent;
+  if (!value) return false;
+  const part = getFirstFileDataPart(value);
+  return part?.fileData.mimeType === REPORT_STREAM_MIME_TYPE;
 }
 
 function toLLMContentArray(schema: Schema, values: OutputValues): Products {
@@ -90,19 +103,18 @@ function toLLMContentArray(schema: Schema, values: OutputValues): Products {
   function asJson(value: unknown): LLMContent {
     return { parts: [{ json: JSON.stringify(value, null, 2) }] };
   }
-
-  function getFirstFileDataPart(content: LLMContent): FileDataPart | null {
-    try {
-      const first = content.parts.at(0);
-      if (!first || !("fileData" in first)) return null;
-      return first;
-    } catch (e) {
-      console.warn(`This is likely not LLMContent`, content);
-    }
-    return null;
-  }
 }
 
+function getFirstFileDataPart(content: LLMContent): FileDataPart | null {
+  try {
+    const first = content.parts.at(0);
+    if (!first || !("fileData" in first)) return null;
+    return first;
+  } catch {
+    console.warn(`This is likely not LLMContent`, content);
+  }
+  return null;
+}
 function toJson(content: LLMContent[] | undefined): unknown | undefined {
   return (content?.at(0)?.parts.at(0) as JSONPart)?.json;
 }
