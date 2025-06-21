@@ -12,7 +12,6 @@ import { customElement, property, state } from "lit/decorators.js";
 import {
   AppTemplate,
   AppTemplateOptions,
-  EdgeLogEntry,
   TopGraphRunResult,
 } from "../../types/types";
 import Mode from "../shared/styles/icons.js";
@@ -38,9 +37,7 @@ import {
   ToastEvent,
   ToastType,
 } from "../../events/events";
-import { repeat } from "lit/directives/repeat.js";
 import { createRef, Ref } from "lit/directives/ref.js";
-import { extractError } from "../shared/utils/utils";
 import { AssetShelf } from "../../elements/elements";
 import { SigninState } from "../../utils/signin-adapter";
 
@@ -58,7 +55,6 @@ import "../../elements/output/llm-output/llm-output-array.js";
 import "../../elements/output/llm-output/export-toolbar.js";
 import "../../elements/output/llm-output/llm-output.js";
 import "../../elements/output/multi-output/multi-output.js";
-import { markdown } from "../../directives/markdown";
 import { createThemeStyles } from "@breadboard-ai/theme";
 import { icons } from "../../styles/icons";
 import { ActionTracker } from "../../utils/action-tracker.js";
@@ -1003,143 +999,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     return html`<div id="activity">${[activityContents, status]}</div>`;
   }
 
-  #renderActivityOld(topGraphResult: TopGraphRunResult) {
-    let activityContents:
-      | HTMLTemplateResult
-      | Array<HTMLTemplateResult | symbol>
-      | symbol = nothing;
-
-    const currentItem = topGraphResult.log.at(-1);
-    if (currentItem?.type === "error") {
-      activityContents = html`
-        <details class="error">
-          <summary>
-            <h1>We are sorry, but there was a problem with this flow.</h1>
-            <p>Tap for more details</p>
-          </summary>
-          <div>
-            <p>${extractError(currentItem.error)}</p>
-          </div>
-        </details>
-      `;
-    } else if (
-      currentItem?.type === "edge" &&
-      topGraphResult.status === "paused"
-    ) {
-      // Attempt to find the most recent output. If there is one, show it
-      // otherwise show any message that's coming from the edge.
-      let lastOutput = null;
-      let showAsStatus = false;
-      for (let i = topGraphResult.log.length - 1; i >= 0; i--) {
-        const result = topGraphResult.log[i];
-        if (result.type === "edge" && result.descriptor?.type === "output") {
-          const newest = topGraphResult.log.at(-1);
-          if (newest?.type === "edge" && newest.descriptor?.type === "input") {
-            const props = Object.values(newest.schema?.properties ?? {});
-            for (const prop of props) {
-              // TODO: Use a better way to determine that this is a User Input
-              // requiring a status flag.
-              if ("format" in prop) {
-                showAsStatus = true;
-                break;
-              }
-            }
-          }
-
-          lastOutput = result;
-          break;
-        }
-      }
-
-      // Render the output.
-      if (lastOutput !== null) {
-        activityContents = html`<bb-multi-output
-          .showAsStatus=${showAsStatus}
-          .outputs=${lastOutput.value ?? null}
-        ></bb-multi-output>`;
-      }
-    } else if (topGraphResult.status === "running") {
-      let status: HTMLTemplateResult | symbol = nothing;
-      let bubbledValue: HTMLTemplateResult | symbol = nothing;
-
-      if (topGraphResult.currentNode?.descriptor.metadata?.title) {
-        status = html`<div id="status">
-          <span class="g-icon"></span>
-          ${topGraphResult.currentNode.descriptor.metadata.title}
-        </div>`;
-      }
-
-      let idx = 0;
-      let lastOutput: EdgeLogEntry | null = null;
-      for (let i = topGraphResult.log.length - 1; i >= 0; i--) {
-        const result = topGraphResult.log[i];
-        if (result.type === "edge" && result.value && result.schema) {
-          lastOutput = result;
-          idx = i;
-          break;
-        }
-      }
-
-      if (lastOutput !== null && lastOutput.schema && lastOutput.value) {
-        bubbledValue = html`${repeat(
-          Object.entries(lastOutput.schema.properties ?? {}),
-          () => idx,
-          ([name, property]) => {
-            if (!lastOutput.value) {
-              return nothing;
-            }
-
-            if (property.type !== "string" && property.format !== "markdown") {
-              return nothing;
-            }
-
-            const value = lastOutput.value[name];
-            if (typeof value !== "string") {
-              return nothing;
-            }
-
-            const classes: Record<string, boolean> = {};
-            if (property.title) {
-              classes[
-                property.title.toLocaleLowerCase().replace(/\W/gim, "-")
-              ] = true;
-            }
-
-            if (property.icon) {
-              classes[property.icon.toLocaleLowerCase().replace(/\W/gim, "-")] =
-                true;
-            }
-
-            return html`<div class=${classMap(classes)}>
-              <h1>${property.title}</h1>
-              ${markdown(value)}
-            </div> `;
-          }
-        )}`;
-      }
-
-      activityContents = [bubbledValue, status];
-    } else {
-      // Find the last item.
-      let lastOutput = null;
-      for (let i = topGraphResult.log.length - 1; i >= 0; i--) {
-        const result = topGraphResult.log[i];
-        if (result.type === "edge" && result.value) {
-          lastOutput = result;
-          break;
-        }
-      }
-
-      if (lastOutput !== null) {
-        activityContents = html`<bb-multi-output
-          .outputs=${lastOutput.value ?? null}
-        ></bb-multi-output>`;
-      }
-    }
-
-    return html`<div id="activity">${activityContents}</div>`;
-  }
-
   #renderSaveResultsButton() {
     if (
       this.topGraphResult?.status !== "stopped" ||
@@ -1304,7 +1163,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       [this.options.mode]: true,
     };
 
-    if (!this.topGraphResult) {
+    if (!this.run) {
       return nothing;
     }
 
@@ -1340,7 +1199,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       typeof this.options.splashImage === "boolean" &&
       this.options.splashImage
     ) {
-      if (!this.topGraphResult || this.topGraphResult.status === "stopped") {
+      if (!this.run || this.run.status === "stopped") {
         return html`<section
           class=${classMap(classes)}
           style=${styleMap(styles)}
@@ -1420,7 +1279,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
               ${this.state === "anonymous" || this.state === "valid"
                 ? html`<button
                     id="run"
-                    ?disabled=${!this.run?.runnable}
+                    ?disabled=${!this.run.runnable}
                     @click=${() => {
                       ActionTracker.runApp(this.graph?.url, "app_preview");
                       this.dispatchEvent(new RunEvent());
@@ -1430,7 +1289,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
                   </button>`
                 : html`<button
                     id="sign-in"
-                    ?disabled=${!this.run?.runnable}
+                    ?disabled=${!this.run.runnable}
                     @click=${() => {
                       this.dispatchEvent(new SignInRequestedEvent());
                     }}
@@ -1444,8 +1303,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     `;
 
     let content: NonNullable<unknown>;
-    const appState = this.run?.app.state || "splash";
-    if (appState === "splash") {
+    if (this.run.app.state === "splash") {
       content = splashScreen;
     } else {
       content = [
