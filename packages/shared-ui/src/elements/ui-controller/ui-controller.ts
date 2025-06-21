@@ -610,7 +610,6 @@ export class UI extends LitElement {
             .projectRun=${this.projectState?.run}
             .topGraphResult=${this.topGraphResult}
             .showGDrive=${this.signedIn}
-            .isInSelectionState=${false}
             .settings=${this.settings}
             .boardServers=${this.boardServers}
             .status=${this.status}

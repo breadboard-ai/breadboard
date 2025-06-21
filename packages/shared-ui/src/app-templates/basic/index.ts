@@ -108,9 +108,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   accessor showDisclaimer = false;
 
   @property()
-  accessor isInSelectionState = false;
-
-  @property()
   accessor state: SigninState = "anonymous";
 
   @property({ reflect: true, type: Boolean })
@@ -1483,12 +1480,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     `;
 
     let content: NonNullable<unknown>;
-    if (this.isInSelectionState && this.topGraphResult.log.length === 0) {
-      content = html`<div id="preview-step-not-run">
-        <h1>No data available</h1>
-        <p>This step has yet to run</p>
-      </div>`;
-    } else if (
+    if (
       (this.topGraphResult.status === "stopped" &&
         this.topGraphResult.log.length === 0) ||
       this.#totalNodeCount === 0
