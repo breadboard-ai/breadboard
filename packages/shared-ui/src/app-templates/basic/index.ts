@@ -1360,19 +1360,18 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       styles = createThemeStyles(this.options.theme);
     }
 
+    // Special-case the default theme based on the mime types.
+    // TODO: Replace this with a more robust check.
+    if (this.options.isDefaultTheme) {
+      styles["--splash-width"] = "50%";
+      styles["--splash-fill"] = "contain";
+      styles["--start-border"] = "var(--secondary-color)";
+      styles["--default-progress"] = "url(/images/progress-inverted.svg)";
+      styles["--start-icon"] = "var(--bb-icon-generative-inverted)";
+      styles["--input-background"] =
+        "oklch(from var(--s-80) calc(l + 0.2) c h)";
+    }
     if (typeof this.options.splashImage === "string") {
-      // Special-case the default theme based on the mime types.
-      // TODO: Replace this with a more robust check.
-      if (this.options.isDefaultTheme) {
-        styles["--splash-width"] = "50%";
-        styles["--splash-fill"] = "contain";
-        styles["--start-border"] = "var(--secondary-color)";
-        styles["--default-progress"] = "url(/images/progress-inverted.svg)";
-        styles["--start-icon"] = "var(--bb-icon-generative-inverted)";
-        styles["--input-background"] =
-          "oklch(from var(--s-80) calc(l + 0.2) c h)";
-      }
-
       styles["--splash-image"] = this.options.splashImage;
     }
 
@@ -1490,8 +1489,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         <p>This step has yet to run</p>
       </div>`;
     } else if (
-      (styles["--splash-image"] &&
-        this.topGraphResult.status === "stopped" &&
+      (this.topGraphResult.status === "stopped" &&
         this.topGraphResult.log.length === 0) ||
       this.#totalNodeCount === 0
     ) {
