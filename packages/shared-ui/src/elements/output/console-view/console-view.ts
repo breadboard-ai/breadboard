@@ -522,7 +522,9 @@ export class ConsoleView extends SignalWatcher(LitElement) {
         .replayActive=${this.run !== null}
         .progress=${this.run?.progress}
       ></bb-header>`,
-      this.run ? this.#renderRun() : this.#renderRunButton(),
+      this.run?.status !== "stopped"
+        ? this.#renderRun()
+        : this.#renderRunButton(),
       this.#renderInput(),
     ];
   }
