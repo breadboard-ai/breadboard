@@ -52,7 +52,7 @@ class ReactiveConsoleEntry implements ConsoleEntry {
   #outputSchema: Schema | undefined;
 
   constructor(
-    private readonly fileSystem: FileSystem,
+    private readonly fileSystem: FileSystem | undefined,
     { title, icon, tags }: NodeMetadata,
     path: number[],
     outputSchema: Schema | undefined

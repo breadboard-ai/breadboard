@@ -92,9 +92,6 @@ export class AppPreview extends LitElement {
   accessor isMine = false;
 
   @property()
-  accessor isInSelectionState = false;
-
-  @property()
   accessor topGraphResult: TopGraphRunResult | null = null;
 
   @property()
@@ -378,9 +375,7 @@ export class AppPreview extends LitElement {
   render() {
     if (this.#appTemplate) {
       this.#appTemplate.graph = this.graph;
-      this.#appTemplate.topGraphResult = this.topGraphResult;
       this.#appTemplate.showGDrive = this.showGDrive;
-      this.#appTemplate.isInSelectionState = this.isInSelectionState;
       this.#appTemplate.readOnly = false;
       this.#appTemplate.showShareButton = false;
       this.#appTemplate.showContentWarning = !this.isMine;

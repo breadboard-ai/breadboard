@@ -30,10 +30,8 @@ import {
   AppTemplate,
   AppTemplateOptions,
   SnackType,
-  TopGraphRunResult,
 } from "@breadboard-ai/shared-ui/types/types.js";
 import { getThemeModeFromBackground } from "../../utils/color.js";
-import { TopGraphObserver } from "@breadboard-ai/shared-ui/utils/top-graph-observer";
 import { InputEnterEvent } from "../../events/events.js";
 import {
   RunEndEvent,
@@ -101,7 +99,6 @@ export class AppView extends LitElement {
   readonly flow: GraphDescriptor;
   #runner: Runner | null;
   #signInAdapter: SigninAdapter;
-  #overrideTopGraphRunResult: TopGraphRunResult | null;
   #snackbarRef: Ref<BreadboardUI.Elements.Snackbar> = createRef();
 
   constructor(
@@ -120,29 +117,6 @@ export class AppView extends LitElement {
     this.googleDriveClient = config.googleDriveClient;
     this.boardServer = config.boardServer;
     this.projectRun = config.projectRun;
-    this.#overrideTopGraphRunResult = config.runResults
-      ? {
-          status: "stopped",
-          log: [
-            {
-              type: "edge",
-              value: config.runResults.finalOutputValues,
-              end: null,
-            },
-          ],
-          graph: null,
-          currentNode: null,
-          edgeValues: {
-            get: () => undefined,
-            current: null,
-          },
-          nodeInformation: {
-            getActivity: () => undefined,
-            canRunNode: () => false,
-          },
-        }
-      : null;
-
     this.#setDocumentTitle();
     this.#applyThemeToTemplate();
     this.#initializeListeners();
@@ -465,10 +439,6 @@ export class AppView extends LitElement {
       error: () => `An unexpected error occured`,
       complete: (appTemplate) => {
         appTemplate.state = this.#signInAdapter.state;
-        appTemplate.topGraphResult =
-          this.#overrideTopGraphRunResult ??
-          this.#runner?.topGraphObserver.current() ??
-          TopGraphObserver.entryResult(this.flow);
         appTemplate.showGDrive = this.#signInAdapter.state === "valid";
         return appTemplate;
       },

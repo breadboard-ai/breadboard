@@ -49,6 +49,10 @@ export type ProjectRun = {
    */
   progress: number;
   /**
+   * Answers whether the project is runnable in its current state.
+   */
+  runnable: boolean;
+  /**
    * Console (fka Activity View)
    */
   console: Map<string, ConsoleEntry>;
@@ -69,6 +73,10 @@ export type ProjectRun = {
    * the run is not currently waiting on user input.
    */
   input: UserInput | null;
+  /**
+   * Final output values. When the run is still ongoing, will be `null`.
+   */
+  finalOutput: OutputValues | null;
 };
 
 /**
@@ -76,6 +84,12 @@ export type ProjectRun = {
  * Designed so that the App View can be built from this state
  */
 export type App = {
+  /**
+   * Current state of the app. Can be one of the following:
+   * - "splash" -- the app is showing a splash screen
+   * - "screen" -- the app is showing a screen
+   */
+  state: "splash" | "screen";
   /**
    * A sequences of screens that is produced during the run.
    */
@@ -329,13 +343,18 @@ export type ConnectorState = {
  * Contains all the state for the project.
  */
 export type Project = {
-  run: ProjectRun | null;
+  run: ProjectRun;
   graphAssets: Map<AssetPath, GraphAsset>;
   parameters: Map<string, ParameterMetadata>;
   connectors: ConnectorState;
   organizer: Organizer;
   fastAccess: FastAccess;
   renderer: RendererState;
+
+  /**
+   * Resets the current run.
+   */
+  resetRun(): void;
 
   /**
    * Returns metadata for a given node. This function is sync, and it

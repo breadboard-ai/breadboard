@@ -66,7 +66,7 @@ class ReactiveWorkItem implements WorkItem {
   }
 
   static fromOutput(
-    fileSystem: FileSystem,
+    fileSystem: FileSystem | undefined,
     data: OutputResponse,
     start: number
   ): [string, ReactiveWorkItem] {
@@ -84,21 +84,27 @@ class ReactiveWorkItem implements WorkItem {
     );
     let item: ReactiveWorkItem;
     if (particleMode) {
-      const part = Object.values(products).at(0)!.parts.at(0) as FileDataPart;
-      item = new ParticleWorkItem(
-        type,
-        title,
-        icon,
-        start,
-        chat,
-        fileSystem,
-        part
-      );
-    } else {
-      item = new ReactiveWorkItem(type, title, icon, start, chat);
-      for (const [name, product] of Object.entries(products)) {
-        item.product.set(name, product);
+      if (!fileSystem) {
+        console.warn(
+          "Particle emitted, but no file system was provided, ignoring"
+        );
+      } else {
+        const part = Object.values(products).at(0)!.parts.at(0) as FileDataPart;
+        item = new ParticleWorkItem(
+          type,
+          title,
+          icon,
+          start,
+          chat,
+          fileSystem,
+          part
+        );
+        return [id, item];
       }
+    }
+    item = new ReactiveWorkItem(type, title, icon, start, chat);
+    for (const [name, product] of Object.entries(products)) {
+      item.product.set(name, product);
     }
     return [id, item];
   }

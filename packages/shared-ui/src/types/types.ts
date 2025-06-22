@@ -570,10 +570,8 @@ export interface AppTemplate extends LitElement {
   state: SigninState | null;
   options: AppTemplateOptions;
   graph: GraphDescriptor | null;
-  topGraphResult: TopGraphRunResult | null;
   additionalOptions: AppTemplateAdditionalOptionsAvailable;
   showGDrive: boolean;
-  isInSelectionState: boolean;
   readOnly: boolean;
   showShareButton: boolean;
   showContentWarning: boolean;

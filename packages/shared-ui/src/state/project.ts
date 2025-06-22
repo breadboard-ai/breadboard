@@ -100,7 +100,7 @@ class ReactiveProject implements ProjectInternal {
   #connectorMap: SignalMap<string, ConnectorType>;
 
   @signal
-  accessor run: ProjectRun | null = null;
+  accessor run: ProjectRun;
 
   readonly graphUrl: URL | null;
   readonly graphAssets: SignalMap<AssetPath, GraphAsset>;
@@ -161,6 +161,15 @@ class ReactiveProject implements ProjectInternal {
     this.#updateTools();
     this.#updateMyTools();
     this.#updateParameters();
+    this.run = ReactiveProjectRun.createInert(this.#inspectable());
+  }
+
+  resetRun(): void {
+    this.run = ReactiveProjectRun.createInert(this.#inspectable());
+  }
+
+  #inspectable() {
+    return this.#store.inspect(this.#mainGraphId, "");
   }
 
   connectHarnessRunner(
@@ -169,8 +178,8 @@ class ReactiveProject implements ProjectInternal {
     signal?: AbortSignal
   ): Outcome<void> {
     // Intentionally reset this property with a new instance.
-    this.run = new ReactiveProjectRun(
-      this.#store.inspect(this.#mainGraphId, ""),
+    this.run = ReactiveProjectRun.create(
+      this.#inspectable(),
       fileSystem,
       runner,
       signal

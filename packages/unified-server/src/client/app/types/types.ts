@@ -22,7 +22,6 @@ import {
 } from "@google-labs/breadboard";
 import { type SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import { type RunResults } from "@breadboard-ai/google-drive-kit/board-server/operations.js";
 import { ClientDeploymentConfiguration } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 import { ProjectRun } from "@breadboard-ai/shared-ui/state/types.js";
 
@@ -51,7 +50,6 @@ export interface AppViewConfig {
   googleDriveClient: GoogleDriveClient;
   projectRun: ProjectRun;
   boardServer: BoardServer;
-  runResults: RunResults | null;
   clientDeploymentConfiguration: ClientDeploymentConfiguration;
 }
 
