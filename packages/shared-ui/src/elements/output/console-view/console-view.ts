@@ -6,14 +6,7 @@
 import * as StringsHelper from "../../../strings/helper.js";
 const Strings = StringsHelper.forSection("ActivityLog");
 
-import {
-  LitElement,
-  html,
-  css,
-  nothing,
-  HTMLTemplateResult,
-  PropertyValues,
-} from "lit";
+import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { ProjectRun } from "../../../state";
 import { repeat } from "lit/directives/repeat.js";
@@ -310,7 +303,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
   }
 
   #renderRun() {
-    if (!this.run) {
+    if (!this.run?.runnable) {
       return nothing;
     }
 
@@ -380,13 +373,6 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                   item.work.entries(),
                   ([key]) => key,
                   ([workItemId, workItem]) => {
-                    let duration: HTMLTemplateResult | symbol = nothing;
-                    if (workItem.end) {
-                      duration = html`${this.#formatToSeconds(
-                        workItem.end - workItem.start
-                      )}`;
-                    }
-
                     const icon = iconSubstitute(workItem.icon);
 
                     const workItemClasses: Record<string, boolean> = {};
@@ -427,7 +413,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                           ? html`<span class="g-icon step-icon">${icon}</span>`
                           : nothing}<span class="title"
                           >${workItem.title}<span class="duration"
-                            >${duration}</span
+                            >${this.#formatToSeconds(workItem.elapsed)}</span
                           ></span
                         >
 
@@ -519,10 +505,10 @@ export class ConsoleView extends SignalWatcher(LitElement) {
   render() {
     return [
       html`<bb-header
-        .replayActive=${this.run !== null}
+        .replayActive=${this.run?.consoleState === "entries"}
         .progress=${this.run?.progress}
       ></bb-header>`,
-      this.run?.status !== "stopped"
+      this.run?.consoleState === "entries"
         ? this.#renderRun()
         : this.#renderRunButton(),
       this.#renderInput(),

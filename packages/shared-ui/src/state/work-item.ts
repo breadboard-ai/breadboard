@@ -12,6 +12,7 @@ import {
   NodeEndResponse,
   NodeTypeIdentifier,
 } from "@breadboard-ai/types";
+import { Signal } from "signal-polyfill";
 import { SignalMap } from "signal-utils/map";
 import {
   FileSystem,
@@ -31,9 +32,19 @@ const DEFAULT_OUTPUT_TITLE = "Output";
 
 const DEFAULT_INPUT_ICON = "chat_mirror";
 
+const now = new Signal.State(performance.now());
+
+setInterval(() => now.set(performance.now()), 500);
+
 class ReactiveWorkItem implements WorkItem {
   @signal
   accessor end: number | null = null;
+
+  @signal
+  get elapsed(): number {
+    const end = this.end ?? now.get();
+    return end - this.start;
+  }
 
   @signal
   get awaitingUserInput() {
@@ -146,6 +157,12 @@ class ParticleWorkItem implements WorkItem {
   @signal
   accessor end: number | null = null;
 
+  @signal
+  get elapsed(): number {
+    const end = this.end ?? now.get();
+    return end - this.start;
+  }
+
   readonly awaitingUserInput = false;
 
   product: Map<string, LLMContent | Particle> = new SignalMap();
@@ -189,7 +206,7 @@ class ParticleWorkItem implements WorkItem {
       }
       if ("done" in reading && reading.done) {
         // We're done, yay!
-        this.end = globalThis.performance.now();
+        this.end = performance.now();
         return;
       }
       // TODO: Keys should be supplied by the report provider.

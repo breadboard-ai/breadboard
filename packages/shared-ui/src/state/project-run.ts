@@ -148,6 +148,11 @@ class ReactiveProjectRun implements ProjectRun {
   }
 
   @signal
+  get consoleState() {
+    return this.console.size > 0 ? "entries" : "start";
+  }
+
+  @signal
   get runnable() {
     return this.estimatedEntryCount !== 0;
   }
