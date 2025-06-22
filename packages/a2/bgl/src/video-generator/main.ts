@@ -71,7 +71,7 @@ type VideoGeneratorInputs = {
   context: LLMContent[];
   instruction?: LLMContent;
   "p-disable-prompt-rewrite": boolean;
-  "p-aspect-ratio": string;
+  "p-video-aspect-ratio": string;
   "b-model-name": string;
 };
 
@@ -179,7 +179,7 @@ async function invoke({
   context,
   instruction,
   "p-disable-prompt-rewrite": disablePromptRewrite,
-  "p-aspect-ratio": aspectRatio,
+  "p-video-aspect-ratio": aspectRatio,
   "b-model-name": modelId,
   ...params
 }: VideoGeneratorInputs): Promise<Outcome<VideoGeneratorOutputs>> {
