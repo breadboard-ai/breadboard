@@ -56,6 +56,14 @@ export type ProjectRun = {
    * Console (fka Activity View)
    */
   console: Map<string, ConsoleEntry>;
+  // TODO: Move this under console. It should be similar to App: holds entries,
+  // rather than being a map.
+  /**
+   * The state of the console. The values are:
+   * - "start" -- at the start screen
+   * - "entries" -- showing entries
+   */
+  consoleState: "start" | "entries";
   /**
    * Any errors that might have occurred during a run.
    */
@@ -192,6 +200,10 @@ export type WorkItem = {
    * End time for the work time (null if still in progress)
    */
   end: number | null;
+  /**
+   * How long this item has been running so far (in milliseconds)
+   */
+  elapsed: number;
   /**
    * If true, this work item currently awaiting user input.
    */
