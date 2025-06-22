@@ -6,7 +6,6 @@
 
 import { SignalMap } from "signal-utils/map";
 import {
-  AppScreen,
   AppScreenOutput,
   ConsoleEntry,
   ProjectRun,
@@ -71,14 +70,11 @@ function createProjectRunStateFromFinalOutput(
     output,
     schema: {},
   };
-  const current: AppScreen = {
-    title: "",
-    status: "complete",
-    last,
-    outputs: new Map([["output", last]]),
-    type: "progress",
-  };
+  const current = new ReactiveAppScreen("", [], undefined);
+  current.outputs.set("final", last);
   run.app.screens.set("final", current);
+  run.app.current = current;
+
   return run;
 }
 
