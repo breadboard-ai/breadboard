@@ -64,3 +64,46 @@ export type BehaviorHint = string;
 export type Particle = TextParticle | DataParticle | GroupParticle;
 
 export type ParticleIdentifier = string;
+
+/**
+ * The basics of Semantic UI Protocol (SUIP)
+ */
+
+export type SerializedParticle =
+  | TextParticle
+  | DataParticle
+  | SerializedGroupParticle;
+
+export type SerializedGroupParticle = [
+  key: string,
+  value: SerializedParticle,
+][];
+
+export type ParticleAppendOperation = {
+  op: "append";
+  path: string[];
+  particle: SerializedParticle;
+};
+
+export type ParticleInsertOperation = {
+  op: "insert";
+  path: string[];
+  particle: SerializedParticle;
+};
+
+export type ParticleRemoveOperation = {
+  op: "remove";
+  path: string[];
+};
+
+export type ParticleReplaceOperation = {
+  op: "replace";
+  path: string[];
+  particle: SerializedParticle;
+};
+
+export type ParticleOperation =
+  | ParticleAppendOperation
+  | ParticleInsertOperation
+  | ParticleRemoveOperation
+  | ParticleReplaceOperation;

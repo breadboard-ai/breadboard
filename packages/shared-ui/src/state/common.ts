@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DataParticle, Particle, TextParticle } from "@breadboard-ai/particles";
+import {
+  Particle,
+  SerializedParticle,
+  toParticle,
+} from "@breadboard-ai/particles";
 import { FileDataPart, JSONPart, LLMContent } from "@breadboard-ai/types";
 import {
   FileSystem,
@@ -130,30 +134,6 @@ function getFirstFileDataPart(content: LLMContent): FileDataPart | null {
 }
 function toJson(content: LLMContent[] | undefined): unknown | undefined {
   return (content?.at(0)?.parts.at(0) as JSONPart)?.json;
-}
-
-// This is a hack to mashall the data over the sandbox boundary.
-// TODO: Make this a series of updates, rather than snapshot-based.
-type SerializedParticle = TextParticle | DataParticle | SerializedGroupParticle;
-
-type SerializedGroupParticle = [key: string, value: SerializedParticle][];
-
-function toParticle(serialized: SerializedParticle): Particle {
-  return convert(serialized);
-
-  function convert(serialized: SerializedParticle): Particle {
-    if ("text" in serialized) return serialized;
-    if ("data" in serialized) return serialized;
-    if ("group" in serialized && Array.isArray(serialized.group)) {
-      const group = new Map<string, Particle>();
-      for (const [key, value] of serialized.group) {
-        group.set(key, convert(value));
-      }
-      return { ...serialized, group };
-    }
-    console.warn("Unrecognized serialized particle", serialized);
-    return { text: "Unrecognized serialized particle" };
-  }
 }
 
 class ParticleReaderIterator implements AsyncIterator<Particle> {
