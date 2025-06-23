@@ -261,6 +261,11 @@ export class RemoteBoardServer
     return this.save(url, descriptor);
   }
 
+  async deepCopy(_url: URL, graph: GraphDescriptor): Promise<GraphDescriptor> {
+    // For firebase this should be enough.
+    return graph;
+  }
+
   async delete(url: URL): Promise<{ result: boolean; error?: string }> {
     if (!this.canProvide(url)) {
       return { result: false };

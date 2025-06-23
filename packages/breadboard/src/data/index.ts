@@ -20,6 +20,7 @@ export {
   inflateData,
   transformContents,
   purgeStoredDataInMemoryValues,
+  visitGraphNodes,
 } from "./inflate-deflate.js";
 
 export {

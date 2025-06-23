@@ -10,9 +10,11 @@ import {
   type BoardServerEventTarget,
   type BoardServerProject,
   type ChangeNotificationCallback,
+  type DataPartTransformer,
   type GraphDescriptor,
   type GraphProviderCapabilities,
   type GraphProviderExtendedCapabilities,
+  type GraphProviderPreloadHandler,
   type GraphProviderStore,
   type Permission,
   type User,
@@ -88,6 +90,15 @@ export class BoardServerProvider
     this.#path = path;
     this.#loader = loader;
   }
+  deepCopy(_url: URL, graph: GraphDescriptor): Promise<GraphDescriptor> {
+    return Promise.resolve(graph);
+  }
+  canProxy?: ((url: URL) => Promise<string | false>) | undefined;
+  renewAccess?: (() => Promise<void>) | undefined;
+  preload?:
+    | ((preloader: GraphProviderPreloadHandler) => Promise<void>)
+    | undefined;
+  dataPartTransformer?: ((graphUrl: URL) => DataPartTransformer) | undefined;
 
   // TODO this doesn't do anything now that we're passing in server URL
   async #initialize(): Promise<void> {

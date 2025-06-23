@@ -169,6 +169,10 @@ export class FileSystemBoardServer
     this.extensions = configuration.extensions;
     this.capabilities = configuration.capabilities;
   }
+  deepCopy(_url: URL, graph: GraphDescriptor): Promise<GraphDescriptor> {
+    return Promise.resolve(graph);
+  }
+  canProxy?: ((url: URL) => Promise<string | false>) | undefined;
 
   // This is a workaround for items() being sync. Since we expect ready() to be
   // awaited we know #projects will be populated by the time items() is called.

@@ -18,6 +18,8 @@ import {
   Permission,
   User,
   GraphProviderItem,
+  DataPartTransformer,
+  GraphProviderPreloadHandler,
 } from "@google-labs/breadboard";
 
 import * as idb from "idb";
@@ -235,6 +237,15 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
     this.extensions = configuration.extensions;
     this.capabilities = configuration.capabilities;
   }
+  deepCopy(_url: URL, graph: GraphDescriptor): Promise<GraphDescriptor> {
+    return Promise.resolve(graph);
+  }
+  canProxy?: ((url: URL) => Promise<string | false>) | undefined;
+  renewAccess?: (() => Promise<void>) | undefined;
+  preload?:
+    | ((preloader: GraphProviderPreloadHandler) => Promise<void>)
+    | undefined;
+  dataPartTransformer?: ((graphUrl: URL) => DataPartTransformer) | undefined;
 
   // This is a workaround for items() being sync. Since we expect ready() to be
   // awaited we know #projects will be populated by the time items() is called.

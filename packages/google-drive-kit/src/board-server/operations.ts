@@ -771,6 +771,44 @@ class DriveOperations {
     }
   }
 
+  async copyDriveFile(
+    data: StoredDataCapabilityPart
+  ): Promise<Outcome<StoredDataCapabilityPart>> {
+    const sourceHandle = data.storedData.handle;
+    if (!sourceHandle.startsWith(PROTOCOL)) {
+      return data;
+    }
+    const fileId = getFileId(sourceHandle);
+    let response = await this.#googleDriveClient.copy(fileId);
+    const result: StoredDataCapabilityPart = {
+      storedData: {
+        handle: "",
+        mimeType: data.storedData.mimeType,
+        contentHash: data.storedData.contentHash,
+        contentLength: data.storedData.contentLength,
+      },
+    };
+    if (!response.ok) {
+      return err(response.statusText);
+    }
+    // This file wasn't possible to copy directly hence now the contend needs to be uploaded.
+    if (!response.url.endsWith("/copy")) {
+      const accessToken = await getAccessToken(this.vendor);
+      const api = new Files({ kind: "bearer", token: accessToken! });
+      response = await retryableFetch(
+        api.makeUploadRequest(
+          undefined,
+          await response.blob(),
+          data.storedData.mimeType
+        )
+      );
+    }
+    const copiedFile = (await response.json()) as DriveFile;
+    result.storedData.handle = `${PROTOCOL}/${copiedFile.id}`;
+    result.data = data.data;
+    return result;
+  }
+
   async writeRunResults(results: RunResults): Promise<{ id: string }> {
     const accessToken = await getAccessToken(this.vendor);
     if (!accessToken) {

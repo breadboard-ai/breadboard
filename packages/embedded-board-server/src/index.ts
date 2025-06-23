@@ -11,6 +11,7 @@ import {
   BoardServerExtension,
   BoardServerProject,
   ChangeNotificationCallback,
+  DataPartTransformer,
   err,
   GraphDescriptor,
   GraphProviderCapabilities,
@@ -97,6 +98,12 @@ class EmbeddedBoardServer
       ],
     ]);
   }
+  deepCopy(_url: URL, graph: GraphDescriptor): Promise<GraphDescriptor> {
+    return Promise.resolve(graph);
+  }
+  canProxy?: ((url: URL) => Promise<string | false>) | undefined;
+  renewAccess?: (() => Promise<void>) | undefined;
+  dataPartTransformer?: ((graphUrl: URL) => DataPartTransformer) | undefined;
 
   #makeBoardUrl(id: string) {
     return `${EMBEDDED_SERVER_PREFIX}${this.urlPrefix}/${id}.bgl.json`;

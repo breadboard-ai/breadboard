@@ -18,6 +18,7 @@ import {
   transformDataParts,
 } from "./common.js";
 import {
+  DataDeflator,
   DataInflator,
   DataPartTransformType,
   DataStore,
@@ -128,7 +129,7 @@ export const inflateData = async (
  * @returns -- a new object with all `InlineDataCapabilityPart`
  * replaced with `StoredDataCapabilityPart`
  */
-export const deflateData = async (store: DataStore, data: unknown) => {
+export const deflateData = async (deflator: DataDeflator, data: unknown) => {
   return visitGraphNodes(data, async (value) => {
     if (isStoredData(value) && value.storedData.handle) {
       // Deleting stored value, for sanity, checking if the handle is assigned.
@@ -139,7 +140,7 @@ export const deflateData = async (store: DataStore, data: unknown) => {
       const blob = await fetch(`data:${mimeType};base64,${data}`).then((r) =>
         r.blob()
       );
-      return await store.store(blob);
+      return await deflator.store(blob);
     }
     return value;
   });

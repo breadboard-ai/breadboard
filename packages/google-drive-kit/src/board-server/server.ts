@@ -8,6 +8,7 @@
 
 import type { TokenVendor } from "@breadboard-ai/connection-client";
 import {
+  isStoredData,
   ok,
   type BoardServer,
   type BoardServerCapabilities,
@@ -38,6 +39,7 @@ import { SaveDebouncer } from "./save-debouncer.js";
 import { RefreshEvent, SaveEvent } from "./events.js";
 import { type GoogleDriveClient } from "../google-drive-client.js";
 import { GoogleDriveDataPartTransformer } from "./data-part-transformer.js";
+import { visitGraphNodes } from "@google-labs/breadboard/data";
 
 export { GoogleDriveBoardServer };
 
@@ -335,6 +337,19 @@ class GoogleDriveBoardServer
       descriptor
     );
     return writing;
+  }
+
+  async deepCopy(_url: URL, graph: GraphDescriptor): Promise<GraphDescriptor> {
+    return (await visitGraphNodes(graph, async (data) => {
+      if (isStoredData(data)) {
+        const copied = await this.ops.copyDriveFile(data);
+        if (!ok(copied)) {
+          throw new Error(copied.$error);
+        }
+        return copied;
+      }
+      return data;
+    })) as GraphDescriptor;
   }
 
   async delete(url: URL): Promise<{ result: boolean; error?: string }> {

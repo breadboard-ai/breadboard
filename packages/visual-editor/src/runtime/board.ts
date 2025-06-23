@@ -1161,6 +1161,10 @@ export class Board extends EventTarget {
     }
 
     let url = new URL(urlString);
+
+    // Replace pointers with inline data so that copies get created when saving.
+    graph = await this.#deepCopyGraph(boardServer, graph, url);
+
     const response = await boardServer.create(url, graph);
     if (response.url) {
       url = new URL(response.url);
@@ -1308,6 +1312,14 @@ export class Board extends EventTarget {
         },
       }
     );
+  }
+
+  async #deepCopyGraph(
+    boardServer: BoardServer,
+    graph: GraphDescriptor,
+    graphUrl: URL
+  ): Promise<GraphDescriptor> {
+    return boardServer.deepCopy(graphUrl, graph);
   }
 }
 
