@@ -49,7 +49,16 @@ export interface Field {
    * The rendering type of the content field. Used to ensure that the element
    * is rendered with the appopriate controls.
    */
-  as: "text" | "longtext" | "number" | "date" | "behavior" | "image";
+  as:
+    | "text"
+    | "longtext"
+    | "number"
+    | "date"
+    | "behavior"
+    | "image"
+    | "video"
+    | "audio"
+    | "markdown";
   /**
    * Used to determine what the user can do. If the user is able to edit the
    * field content you must allow them to do so with the appropriate behavior.

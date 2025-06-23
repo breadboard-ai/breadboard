@@ -136,6 +136,10 @@ export const layout = css`
     contain: strict;
   }
 
+  .layout-w-100 {
+    width: 100%;
+  }
+
   .layout-el-cv {
     width: 100%;
     height: 100%;

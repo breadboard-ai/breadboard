@@ -259,17 +259,22 @@ export class AddAssetModal extends LitElement {
             return;
           }
 
-          item = {
-            role: "user",
-            parts: [
-              {
-                inlineData: {
-                  data: input.value as string,
-                  mimeType: input.type,
+          try {
+            item = {
+              role: "user",
+              parts: [
+                {
+                  inlineData: {
+                    data: input.value as string,
+                    mimeType: input.type,
+                  },
                 },
-              },
-            ],
-          };
+              ],
+            };
+          } catch (err) {
+            // The user hasn't recorded anything.
+            console.warn(err);
+          }
           break;
         }
 
@@ -404,6 +409,7 @@ export class AddAssetModal extends LitElement {
             class="md-body-large sans-flex w-400"
             placeholder="https://www.youtube.com/watch?v=<video>"
             pattern="^https://www.youtube.com/(watch|embed|shorts).*"
+            autocomplete="off"
           />
         </div>`;
         break;
