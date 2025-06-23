@@ -37,6 +37,11 @@ import { createRef, Ref } from "lit/directives/ref.js";
 import { AssetShelf } from "../../elements/elements";
 import { SigninState } from "../../utils/signin-adapter";
 
+import "./particles/card.js";
+import "./particles/image.js";
+import "./particles/list.js";
+import "./particles/segment.js";
+
 /** Included so the app can be standalone */
 import "../../elements/input/webcam/webcam-video.js";
 import "../../elements/input/add-asset/add-asset-button.js";
@@ -55,13 +60,17 @@ import { createThemeStyles } from "@breadboard-ai/theme";
 import { icons } from "../../styles/icons";
 import { ActionTracker } from "../../utils/action-tracker.js";
 import { buttonStyles } from "../../styles/button.js";
-import { consume } from "@lit/context";
+import { consume, provide } from "@lit/context";
 import { boardServerContext } from "../../contexts/board-server.js";
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 import { NodeValue } from "@breadboard-ai/types";
 import { projectRunContext } from "../../contexts/project-run.js";
 import { ProjectRun } from "../../state/types.js";
 import { SignalWatcher } from "@lit-labs/signals";
+import { themeContext } from "../shared/contexts/theme.js";
+import { UITheme } from "../shared/theme/theme.js";
+import { theme as uiTheme } from "./theme/light.js";
+import { appScreenToParticles } from "../shared/utils/app-screen-to-particles.js";
 
 function keyFromGraphUrl(url: string) {
   return `cw-${url.replace(/\W/gi, "-")}`;
@@ -75,6 +84,9 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     mode: "light",
     splashImage: false,
   };
+
+  @provide({ context: themeContext })
+  accessor theme: UITheme = uiTheme;
 
   @consume({ context: projectRunContext, subscribe: true })
   accessor run: ProjectRun | null = null;
@@ -178,7 +190,20 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
       @scope (.app-template) {
         :scope {
-          --font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+          --font-family: var(
+            --bb-font-family,
+            "Helvetica Neue",
+            Helvetica,
+            Arial,
+            sans-serif
+          );
+          --font-family-flex: var(
+            --bb-font-family-flex,
+            "Helvetica Neue",
+            Helvetica,
+            Arial,
+            sans-serif
+          );
           --font-style: normal;
 
           /**
@@ -517,6 +542,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
               flex: 0 0 auto;
             }
 
+            & ui-basic-list,
             & bb-multi-output {
               --output-value-padding-x: var(--bb-grid-size-4);
               --output-value-padding-y: var(--bb-grid-size-4);
@@ -981,10 +1007,19 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       }
 
       if (current.last) {
-        activityContents = html`<bb-multi-output
-          .showAsStatus=${current.type === "input"}
-          .outputs=${current.last.output}
-        ></bb-multi-output>`;
+        if (new URLSearchParams(location.search).get("particles")) {
+          const list = appScreenToParticles(current.last);
+          activityContents = html` <ui-basic-list
+            class=${classMap(this.theme.components.list)}
+            .list=${list}
+            .orientation=${list?.presentation.orientation}
+          ></ui-basic-list>`;
+        } else {
+          activityContents = html`<bb-multi-output
+            .showAsStatus=${current.type === "input"}
+            .outputs=${current.last.output}
+          ></bb-multi-output>`;
+        }
       }
     }
 

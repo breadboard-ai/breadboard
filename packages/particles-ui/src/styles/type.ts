@@ -47,6 +47,14 @@ export const type = css`
       "ROND" 100;
   }
 
+  .typography-ta-s {
+    text-align: start;
+  }
+
+  .typography-ta-c {
+    text-align: center;
+  }
+
   .typography-fs-n {
     font-style: normal;
   }
@@ -133,7 +141,7 @@ export const type = css`
   /** Weights **/
 
   ${unsafeCSS(
-    new Array(10)
+    new Array(9)
       .fill(0)
       .map((_, idx) => {
         const weight = (idx + 1) * 100;
