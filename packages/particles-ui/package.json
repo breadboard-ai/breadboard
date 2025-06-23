@@ -95,7 +95,7 @@
   "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/particles-ui#readme",
   "devDependencies": {
     "@google-labs/tsconfig": "^0.0.1",
-    "esbuild": "^0.25.2",
+    "esbuild": "^0.25.5",
     "typescript": "^5.8.3"
   },
   "engines": {
