@@ -161,15 +161,11 @@ class ReactiveProject implements ProjectInternal {
     this.#updateTools();
     this.#updateMyTools();
     this.#updateParameters();
-    this.run = ReactiveProjectRun.createInert(this.#inspectable());
+    this.run = ReactiveProjectRun.createInert(this.#mainGraphId, this.#store);
   }
 
   resetRun(): void {
-    this.run = ReactiveProjectRun.createInert(this.#inspectable());
-  }
-
-  #inspectable() {
-    return this.#store.inspect(this.#mainGraphId, "");
+    this.run = ReactiveProjectRun.createInert(this.#mainGraphId, this.#store);
   }
 
   connectHarnessRunner(
@@ -179,7 +175,8 @@ class ReactiveProject implements ProjectInternal {
   ): Outcome<void> {
     // Intentionally reset this property with a new instance.
     this.run = ReactiveProjectRun.create(
-      this.#inspectable(),
+      this.#mainGraphId,
+      this.#store,
       fileSystem,
       runner,
       signal
