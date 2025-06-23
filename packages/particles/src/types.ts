@@ -84,19 +84,35 @@ export type JsonRpcNotification<Method extends string, Params> = {
   params: Params;
 };
 
-export type ParticleAppendOperation = JsonRpcNotification<
-  "suip/ops/append",
+/**
+ * Append, Insert, or Replace operation:
+ * - when the `path` and `id` match an existing particle, the existing particle
+ *   will be replaced with provided particle.
+ * - when the `path` and `id` do not match a particle and `before` isn't
+ *   specified, the new particle will be appended.
+ * - when the `path` and `id` do not match a particle and `before` matches id of
+ *   an existing peer particle, new particle will be appended before the it.
+ */
+export type ParticleUpsertOperation = JsonRpcNotification<
+  "suip/ops/upsert",
   {
-    path: string[];
+    /**
+     * Path to the parent of the newly added particle.
+     */
+    path: ParticleIdentifier[];
+    /**
+     * The id of the particle to add.
+     */
+    id: ParticleIdentifier;
+    /**
+     * The particle to add.
+     */
     particle: SerializedParticle;
-  }
->;
-
-export type ParticleInsertOperation = JsonRpcNotification<
-  "suip/ops/insert",
-  {
-    path: string[];
-    particle: SerializedParticle;
+    /**
+     * The peer particle id before which to insert the new particle.
+     * If not specified or null, the particle will be appended at the end.
+     */
+    before?: ParticleIdentifier | null;
   }
 >;
 
@@ -107,16 +123,6 @@ export type ParticleRemoveOperation = JsonRpcNotification<
   }
 >;
 
-export type ParticleReplaceOperation = JsonRpcNotification<
-  "suip/ops/replace",
-  {
-    path: string[];
-    particle: SerializedParticle;
-  }
->;
-
 export type ParticleOperation =
-  | ParticleAppendOperation
-  | ParticleInsertOperation
-  | ParticleRemoveOperation
-  | ParticleReplaceOperation;
+  | ParticleUpsertOperation
+  | ParticleRemoveOperation;

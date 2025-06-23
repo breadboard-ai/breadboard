@@ -18,20 +18,19 @@ export type ParticleFactory = {
 };
 
 class ParticleTree {
-  public readonly tree: GroupParticle;
+  public readonly root: GroupParticle;
 
   constructor(private readonly factory: ParticleFactory) {
-    this.tree = factory.create({ group: [] }) as GroupParticle;
+    this.root = factory.create({ group: [] }) as GroupParticle;
   }
 
   apply(op: ParticleOperation) {
-    if (op.method === "suip/ops/append") {
-      const { path, particle } = op.params;
-      const newId = path.pop();
+    if (op.method === "suip/ops/upsert") {
+      const { path, particle, id: newId } = op.params;
       if (!newId) {
         throw new Error(`Path is empty, unable to apply.`);
       }
-      let destination: GroupParticle = this.tree;
+      let destination: GroupParticle = this.root;
       // Navigate down the tree using path.
       while (path.length > 0) {
         const id = path.shift()!;
