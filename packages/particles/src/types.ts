@@ -74,10 +74,9 @@ export type SerializedParticle =
   | DataParticle
   | SerializedGroupParticle;
 
-export type SerializedGroupParticle = [
-  key: string,
-  value: SerializedParticle,
-][];
+export type SerializedGroupParticle = {
+  group: [key: string, value: SerializedParticle][];
+};
 
 export type JsonRpcNotification<Method extends string, Params> = {
   jsonrpc: "2.0";

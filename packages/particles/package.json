@@ -10,6 +10,7 @@
     "prepack": "npm run build",
     "build": "wireit",
     "build:tsc": "wireit",
+    "test": "wireit",
     "lint": "wireit"
   },
   "wireit": {
@@ -47,6 +48,14 @@
         ".eslintrc",
         "../../.eslintrc.json"
       ],
+      "output": []
+    },
+    "test": {
+      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/*.js",
+      "dependencies": [
+        "build"
+      ],
+      "files": [],
       "output": []
     }
   },
