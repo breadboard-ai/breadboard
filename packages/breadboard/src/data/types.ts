@@ -49,34 +49,39 @@ export type Chunk = {
   data: string;
 };
 
-export type DataStore = DataInflator & {
-  createGroup(groupId: string): void;
-  drop(): Promise<void>;
-  has(groupId: string): boolean;
-  releaseAll(): void;
-  releaseGroup(group: string): void;
-  replaceDataParts(key: string, result: HarnessRunResult): Promise<void>;
-  serializeGroup(
-    group: string,
-    storeId?: string
-  ): Promise<SerializedDataStoreGroup | null>;
+export type DataDeflator = {
   store(blob: Blob, storeId?: string): Promise<StoredDataCapabilityPart>;
-  /**
-   * Store a value for later use.
-   *
-   * @param key -- the key to store the value under
-   * @param value -- the value to store, including null
-   * @param schema -- the schema of the data to store
-   * @param scope -- the scope to store the data in
-   */
-  storeData(
-    key: string,
-    value: object | null,
-    schema: Schema,
-    scope: DataStoreScope
-  ): Promise<StoreDataResult>;
-  retrieveData(key: string): Promise<RetrieveDataResult>;
 };
+
+export type DataStore = DataInflator &
+  DataDeflator & {
+    createGroup(groupId: string): void;
+    drop(): Promise<void>;
+    has(groupId: string): boolean;
+    releaseAll(): void;
+    releaseGroup(group: string): void;
+    replaceDataParts(key: string, result: HarnessRunResult): Promise<void>;
+    serializeGroup(
+      group: string,
+      storeId?: string
+    ): Promise<SerializedDataStoreGroup | null>;
+
+    /**
+     * Store a value for later use.
+     *
+     * @param key -- the key to store the value under
+     * @param value -- the value to store, including null
+     * @param schema -- the schema of the data to store
+     * @param scope -- the scope to store the data in
+     */
+    storeData(
+      key: string,
+      value: object | null,
+      schema: Schema,
+      scope: DataStoreScope
+    ): Promise<StoreDataResult>;
+    retrieveData(key: string): Promise<RetrieveDataResult>;
+  };
 
 export type StateStore = {
   load(key?: string): Promise<ReanimationState | undefined>;

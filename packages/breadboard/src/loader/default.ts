@@ -137,6 +137,10 @@ export class DefaultBoardServer
     throw new Error("Save not implemented for DefaultGraphProvider");
   }
 
+  async deepCopy(url: URL, graph: GraphDescriptor): Promise<GraphDescriptor> {
+    throw new Error("Deep copy isn't DefaultGraphProvider");
+  }
+
   async delete(_url: URL): Promise<{ result: boolean; error?: string }> {
     throw new Error("Delete not implemented for DefaultGraphProvider");
   }

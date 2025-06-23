@@ -153,20 +153,23 @@ class Files {
 
   makeUploadRequest(
     fileId: string | undefined,
-    data: string,
+    data: string | Blob,
     contentType: string
   ) {
+    const isBlob = typeof data !== "string";
+    const length = isBlob ? data.size : data.length;
+    const body = isBlob ? data : b64toBlob(data);
     const headers = this.#makeHeaders();
     headers.append("Content-Type", contentType);
     headers.append("X-Upload-Content-Type", contentType);
-    headers.append("X-Upload-Content-Length", `${data.length}`);
+    headers.append("X-Upload-Content-Length", `${length}`);
     const url = fileId
       ? `upload/drive/v3/files/${fileId}?uploadType=media`
       : "upload/drive/v3/files?uploadType=media";
     return new Request(this.#makeUrl(url), {
       method: fileId ? "PATCH" : "POST",
       headers,
-      body: b64toBlob(data),
+      body,
     });
   }
 
@@ -210,6 +213,13 @@ class Files {
     );
   }
 
+  makeCopyRequest(fileId: string): Request {
+    return new Request(this.#makeUrl(`drive/v3/files/${fileId}/copy`), {
+      method: "POST",
+      headers: this.#makeHeaders(),
+    });
+  }
+
   makeDeleteRequest(file: string): Request {
     return new Request(this.#makeUrl(`drive/v3/files/${file}`), {
       method: "DELETE",
@@ -218,15 +228,17 @@ class Files {
   }
 
   makeChangeListRequest(startPageToken: string | null): Request {
-    const url = this.#makeUrl("drive/v3/changes?" +
-      CHANGE_LIST_COMMON_PARAMS.concat([
-        "pageSize=1000",
-        "includeRemoved=true",
-        "includeCorpusRemovals=true",
-        "includeItemsFromAllDrives=true",
-        "spaces=drive",
-        `pageToken=${startPageToken ?? "1"}`,
-      ]).join("&"));
+    const url = this.#makeUrl(
+      "drive/v3/changes?" +
+        CHANGE_LIST_COMMON_PARAMS.concat([
+          "pageSize=1000",
+          "includeRemoved=true",
+          "includeCorpusRemovals=true",
+          "includeItemsFromAllDrives=true",
+          "spaces=drive",
+          `pageToken=${startPageToken ?? "1"}`,
+        ]).join("&")
+    );
     return new Request(url, {
       method: "GET",
       headers: this.#makeHeaders(),
@@ -234,10 +246,15 @@ class Files {
   }
 
   makeGetStartPageTokenRequest(): Request {
-    return new Request(this.#makeUrl("drive/v3/changes/startPageToken?" + CHANGE_LIST_COMMON_PARAMS.join('&')), {
-      method: "GET",
-      headers: this.#makeHeaders(),
-    });
+    return new Request(
+      this.#makeUrl(
+        "drive/v3/changes/startPageToken?" + CHANGE_LIST_COMMON_PARAMS.join("&")
+      ),
+      {
+        method: "GET",
+        headers: this.#makeHeaders(),
+      }
+    );
   }
 }
 

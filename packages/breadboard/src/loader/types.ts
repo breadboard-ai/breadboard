@@ -163,6 +163,7 @@ export type GraphProvider = {
    * @param url -- the URL to delete
    * @returns -- the result of deleting, with an error if saving failed.
    */
+  deepCopy(url: URL, graph: GraphDescriptor): Promise<GraphDescriptor>;
   delete: (url: URL) => Promise<{ result: boolean; error?: string }>;
   /**
    * Connects to a given location if the Provider supports it.
