@@ -16,7 +16,9 @@ export class Admin {
     public readonly env: Contexts.Environment,
     public readonly gDriveClient: GoogleDriveClient
   ) {
-    (window as unknown as Record<string, unknown>)["o"] = this;
+    if ((window.location.hash?.includes("owner-tools"))) {
+      (window as unknown as Record<string, unknown>)["o"] = this;
+    }
   }
 
   settingsHelper?: Types.SettingsHelper;
