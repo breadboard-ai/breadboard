@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ColorPalettes } from "../../../types/colors";
-import { createThemeStyles, merge } from "../../styles/utils";
+import * as ParticlesUI from "@breadboard-ai/particles-ui";
 import { UITheme } from "../theme";
 import {
   body,
@@ -32,7 +31,7 @@ import {
   vertical,
 } from "./shared";
 
-const palette: ColorPalettes = {
+const palette: ParticlesUI.Colors.ColorPalettes = {
   neutral: {
     n100: "#ffffff",
     n99: "#fcfcfc",
@@ -158,18 +157,18 @@ const palette: ColorPalettes = {
     e5: "#2d0001",
     e0: "#000000",
   },
-} as ColorPalettes;
+} as ParticlesUI.Colors.ColorPalettes;
 
 export const theme: UITheme = {
   elements: {
-    input: merge(input, { "color-c-n5": true }),
-    textarea: merge(textarea, { "color-c-n5": true }),
-    button: merge(button, { "color-c-n100": true }),
-    h1: merge(h1, { "color-c-n5": true }),
-    h2: merge(h2, { "color-c-n5": true }),
-    h3: merge(h3, { "color-c-n5": true }),
-    body: merge(body, { "color-c-n5": true }),
-    p: merge(p, { "color-c-n5": true }),
+    input: ParticlesUI.Utils.merge(input, { "color-c-n5": true }),
+    textarea: ParticlesUI.Utils.merge(textarea, { "color-c-n5": true }),
+    button: ParticlesUI.Utils.merge(button, { "color-c-n100": true }),
+    h1: ParticlesUI.Utils.merge(h1, { "color-c-n5": true }),
+    h2: ParticlesUI.Utils.merge(h2, { "color-c-n5": true }),
+    h3: ParticlesUI.Utils.merge(h3, { "color-c-n5": true }),
+    body: ParticlesUI.Utils.merge(body, { "color-c-n5": true }),
+    p: ParticlesUI.Utils.merge(p, { "color-c-n5": true }),
   },
   components: {
     card,
@@ -206,7 +205,6 @@ export const theme: UITheme = {
     },
   },
   additionalStyles: {
-    ...createThemeStyles(palette),
-    // "--font-family": '"Playfair Design"',
+    ...ParticlesUI.Utils.createThemeStyles(palette),
   },
 };

@@ -8,23 +8,22 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
 import { classMap } from "lit/directives/class-map.js";
-import { merge } from "../styles/utils";
-import { Field, Orientation } from "../../types/particles";
-import { styles } from "../styles";
 import { consume } from "@lit/context";
 import { themeContext } from "../context/theme";
 import { UITheme } from "../theme/theme";
 
+import * as ParticlesUI from "@breadboard-ai/particles-ui";
+
 @customElement("ui-segment")
 export class UISegment extends SignalWatcher(LitElement) {
   @property()
-  accessor fields: Record<string, Field> | null = null;
+  accessor fields: Record<string, ParticlesUI.Particles.Field> | null = null;
 
   @property()
   accessor values: Record<string, unknown> | null = null;
 
   @property()
-  accessor containerOrientation: Orientation = "vertical";
+  accessor containerOrientation: ParticlesUI.Particles.Orientation = "vertical";
 
   @property({ reflect: true, type: Boolean })
   accessor disabled = false;
@@ -33,7 +32,7 @@ export class UISegment extends SignalWatcher(LitElement) {
   accessor theme: UITheme | undefined;
 
   static styles = [
-    styles,
+    ParticlesUI.Styles.all,
     css`
       :host {
         display: block;
@@ -43,7 +42,7 @@ export class UISegment extends SignalWatcher(LitElement) {
 
   #renderField(
     fieldName: string,
-    field: Field,
+    field: ParticlesUI.Particles.Field,
     value: unknown,
     theme: UITheme
   ) {
@@ -67,7 +66,7 @@ export class UISegment extends SignalWatcher(LitElement) {
             ? html`<h1
                 slot="headline"
                 class=${classMap(
-                  merge(
+                  ParticlesUI.Utils.merge(
                     theme.elements.h1,
                     theme.modifiers.headline,
                     this.containerOrientation === "horizontal"
@@ -93,7 +92,7 @@ export class UISegment extends SignalWatcher(LitElement) {
             ?disabled=${this.disabled}
             type=${field.as}
             class=${classMap(
-              merge(
+              ParticlesUI.Utils.merge(
                 theme.elements.input,
                 field.modifiers?.includes("hero") ? theme.modifiers.hero : {}
               )
@@ -102,7 +101,7 @@ export class UISegment extends SignalWatcher(LitElement) {
         }
         return html`<p
           class=${classMap(
-            merge(
+            ParticlesUI.Utils.merge(
               theme.elements.p,
               field.modifiers?.includes("hero") ? theme.modifiers.hero : {}
             )
@@ -121,7 +120,7 @@ export class UISegment extends SignalWatcher(LitElement) {
             .placeholder=${field.title ?? "Enter a value"}
             ?disabled=${this.disabled}
             class=${classMap(
-              merge(
+              ParticlesUI.Utils.merge(
                 theme.elements.textarea,
                 field.modifiers?.includes("hero") ? theme.modifiers.hero : {}
               )
@@ -130,7 +129,7 @@ export class UISegment extends SignalWatcher(LitElement) {
         }
         return html`<p
           class=${classMap(
-            merge(
+            ParticlesUI.Utils.merge(
               theme.elements.p,
               field.modifiers?.includes("hero") ? theme.modifiers.hero : {}
             )
@@ -150,7 +149,7 @@ export class UISegment extends SignalWatcher(LitElement) {
             .type="number"
             ?disabled=${this.disabled}
             class=${classMap(
-              merge(
+              ParticlesUI.Utils.merge(
                 theme.elements.input,
                 field.modifiers?.includes("hero") ? theme.modifiers.hero : {}
               )
@@ -159,7 +158,7 @@ export class UISegment extends SignalWatcher(LitElement) {
         }
         return html`<p
           class=${classMap(
-            merge(
+            ParticlesUI.Utils.merge(
               theme.elements.p,
               field.modifiers?.includes("hero") ? theme.modifiers.hero : {}
             )

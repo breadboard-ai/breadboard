@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ColorPalettes } from "../../../types/colors";
-import { createThemeStyles, merge } from "../../styles/utils";
+import * as ParticlesUI from "@breadboard-ai/particles-ui";
 import { UITheme } from "../theme";
 
 export const input = {
@@ -165,7 +164,7 @@ export const segmentHorizontalPadded = {
   ...{ "layout-p-3": true },
 };
 
-const palette: ColorPalettes = {
+const palette: ParticlesUI.Colors.ColorPalettes = {
   neutral: {
     n100: "#ffffff",
     n99: "#fcfcfc",
@@ -291,25 +290,34 @@ const palette: ColorPalettes = {
     e5: "#2d0001",
     e0: "#000000",
   },
-} as ColorPalettes;
+} as ParticlesUI.Colors.ColorPalettes;
 
 export const theme: UITheme = {
   elements: {
-    input: merge(input, { "color-c-n100": true, "color-bgc-s30": true }),
-    textarea: merge(textarea, { "color-c-n100": true, "color-bgc-s30": true }),
-    button: merge(button, { "color-c-n100": true, "color-bgc-p40": true }),
-    h1: merge(h1, { "color-c-n100": true }),
-    h2: merge(h2, { "color-c-n100": true }),
-    h3: merge(h3, { "color-c-n100": true }),
-    body: merge(body, { "color-c-n100": true }),
-    p: merge(p, { "color-c-n100": true }),
+    input: ParticlesUI.Utils.merge(input, {
+      "color-c-n100": true,
+      "color-bgc-s30": true,
+    }),
+    textarea: ParticlesUI.Utils.merge(textarea, {
+      "color-c-n100": true,
+      "color-bgc-s30": true,
+    }),
+    button: ParticlesUI.Utils.merge(button, {
+      "color-c-n100": true,
+      "color-bgc-p40": true,
+    }),
+    h1: ParticlesUI.Utils.merge(h1, { "color-c-n100": true }),
+    h2: ParticlesUI.Utils.merge(h2, { "color-c-n100": true }),
+    h3: ParticlesUI.Utils.merge(h3, { "color-c-n100": true }),
+    body: ParticlesUI.Utils.merge(body, { "color-c-n100": true }),
+    p: ParticlesUI.Utils.merge(p, { "color-c-n100": true }),
   },
   components: {
-    card: merge(card, {
+    card: ParticlesUI.Utils.merge(card, {
       "color-bgc-s20": true,
     }),
     heroImage,
-    list: merge(list, {
+    list: ParticlesUI.Utils.merge(list, {
       "color-bgc-s10": true,
     }),
     listItems,
@@ -344,7 +352,7 @@ export const theme: UITheme = {
   },
 
   additionalStyles: {
-    ...createThemeStyles(palette),
+    ...ParticlesUI.Utils.createThemeStyles(palette),
     "--font-family": '"IBM Plex Serif"',
     "--font-family-flex": '"IBM Plex Serif"',
     "--font-family-code": '"IBM Plex Serif"',

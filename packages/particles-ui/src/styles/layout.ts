@@ -5,7 +5,7 @@
  */
 
 import { css, CSSResultGroup, unsafeCSS } from "lit";
-import { grid } from "./shared";
+import { grid } from "./shared.js";
 
 export const layout = css`
   :host {

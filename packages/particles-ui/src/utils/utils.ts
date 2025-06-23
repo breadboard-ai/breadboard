@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ColorPalettes } from "../../types/colors";
+import { ColorPalettes } from "../types/colors.js";
 
 export function merge(...classes: Array<Record<string, boolean>>) {
   const styles: Record<string, boolean> = {};

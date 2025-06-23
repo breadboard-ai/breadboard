@@ -8,32 +8,29 @@ import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
 import { SignalWatcher } from "@lit-labs/signals";
-import { styles } from "../styles/index.js";
 import { consume } from "@lit/context";
 import { themeContext } from "../context/theme.js";
 import { UITheme } from "../theme/theme.js";
-import { merge } from "../styles/utils.js";
+import * as ParticlesUI from "@breadboard-ai/particles-ui";
 
 import "./button.js";
 import "./card.js";
 import "./hero-image.js";
 import "./segment.js";
-import { Orientation } from "../../types/particles.js";
-import { ItemList } from "../../types/types.js";
 
 @customElement("ui-list")
 export class UIList extends SignalWatcher(LitElement) {
   @property()
-  accessor list: ItemList | null = null;
+  accessor list: ParticlesUI.Types.ItemList | null = null;
 
   @property({ reflect: true, type: String })
-  accessor orientation: Orientation = "vertical";
+  accessor orientation: ParticlesUI.Particles.Orientation = "vertical";
 
   @consume({ context: themeContext })
   accessor theme: UITheme | undefined;
 
   static styles = [
-    styles,
+    ParticlesUI.Styles.all,
     css`
       * {
         box-sizing: border-box;
@@ -174,7 +171,9 @@ export class UIList extends SignalWatcher(LitElement) {
 
                       return html`<ui-segment
                         class=${classMap(
-                          merge(classes, { "layout-al-fs": true })
+                          ParticlesUI.Utils.merge(classes, {
+                            "layout-al-fs": true,
+                          })
                         )}
                         slot=${`slot-${idx}`}
                         .containerOrientation=${item.presentation.orientation}
