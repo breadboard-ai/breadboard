@@ -78,7 +78,7 @@
     "typescript": "^5.8.3",
     "vite": "^6.2.7",
     "vite-plugin-full-reload": "^1.2.0",
-    "vite-plugin-watch-and-run": "^1.7.4"
+    "vite-plugin-watch-and-run": "^1.7.5"
   },
   "dependencies": {
     "@breadboard-ai/types": "0.7.0",
