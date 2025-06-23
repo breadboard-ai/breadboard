@@ -1,23 +1,22 @@
 {
-  "name": "@breadboard-ai/particles-ui-demo",
-  "private": true,
+  "name": "@breadboard-ai/particles-ui",
   "version": "0.0.1",
-  "description": "AI-first UI Toolkit Demo",
+  "description": "Particle UI",
   "main": "./dist/src/index.js",
-  "exports": "./dist/src/index.js",
+  "exports": {
+    ".": "./dist/src/index.js",
+    "./particles": "./dist/src/types/particles.d.ts"
+  },
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
     "prepack": "npm run build",
     "build": "wireit",
+    "build:esbuild": "wireit",
     "build:tsc": "wireit",
-    "lint": "wireit",
-    "dev": "wireit"
+    "lint": "wireit"
   },
   "wireit": {
-    "dev": {
-      "command": "vite dev"
-    },
     "build": {
       "dependencies": [
         "build:tsc"
@@ -25,12 +24,12 @@
     },
     "build:tsc": {
       "command": "tsc -b --pretty",
+      "dependencies": [
+        "<dependencies>#<this>"
+      ],
       "env": {
         "FORCE_COLOR": "1"
       },
-      "dependencies": [
-        "<dependencies>#build"
-      ],
       "files": [
         "src/**/*.ts",
         "tests/**/*.ts",
@@ -42,6 +41,25 @@
         "!dist/**/*.min.js{,.map}"
       ],
       "clean": "if-file-deleted"
+    },
+    "build:esbuild": {
+      "command": "esbuild tests/**/*.browser.test.ts --bundle --outdir=bundled --target=esnext --format=esm --external:node*",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [
+        "src/**/*.ts",
+        "tests/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ],
+      "output": [
+        "bundled"
+      ],
+      "clean": true
     },
     "lint": {
       "command": "eslint . --ext .ts",
@@ -59,12 +77,14 @@
     }
   },
   "repository": {
-    "directory": "packages/particles-ui-demo",
+    "directory": "packages/particles-ui",
     "type": "git",
-    "url": "https://github.com/breadboard-ai/breadboard.git"
+    "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
   "files": [
-    "dist/src"
+    "dist/src",
+    "dist/*.js",
+    "dist/*.js.map"
   ],
   "keywords": [],
   "author": "Google Labs Team",
@@ -72,18 +92,18 @@
   "bugs": {
     "url": "https://github.com/breadboard-ai/breadboard/issues"
   },
-  "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/particles-ui-demo#readme",
+  "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/particles-ui#readme",
   "devDependencies": {
     "@google-labs/tsconfig": "^0.0.1",
+    "esbuild": "^0.25.2",
     "typescript": "^5.8.3"
   },
+  "engines": {
+    "node": ">=20.14.0"
+  },
   "dependencies": {
-    "@breadboard-ai/particles": "0.0.1",
-    "@breadboard-ai/particles-ui": "0.0.1",
-    "@google/genai": "^1.5.0",
-    "@lit-labs/signals": "^0.1.2",
-    "@modelcontextprotocol/sdk": "^1.12.3",
-    "@vavt/vite-plugin-import-markdown": "^1.0.1",
-    "signal-utils": "^0.21.1"
+    "@breadboard-ai/types": "0.7.0",
+    "@google-labs/breadboard": "^0.34.0",
+    "@material/material-color-utilities": "^0.3.0"
   }
 }

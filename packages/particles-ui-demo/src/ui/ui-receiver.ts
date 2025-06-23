@@ -7,8 +7,7 @@
 import { SignalWatcher } from "@lit-labs/signals";
 import { css, html, HTMLTemplateResult, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { styles } from "./styles/index.js";
-import { GeneratorProxy, ItemList } from "../types/types";
+import * as ParticlesUI from "@breadboard-ai/particles-ui";
 import { themeContext } from "./context/theme.js";
 import { provide } from "@lit/context";
 import type { UITheme } from "./theme/theme.js";
@@ -55,10 +54,10 @@ function extractBehavior(evt: Event): string | undefined {
 @customElement("ui-receiver")
 export class UiReceiver extends SignalWatcher(LitElement) {
   @property()
-  accessor channel: GeneratorProxy | null = null;
+  accessor channel: ParticlesUI.Types.GeneratorProxy | null = null;
 
   @property()
-  accessor list: ItemList | null = null;
+  accessor list: ParticlesUI.Types.ItemList | null = null;
 
   @property()
   accessor additionalStyles: Record<string, string> | null = null;
@@ -67,7 +66,7 @@ export class UiReceiver extends SignalWatcher(LitElement) {
   accessor theme: UITheme | undefined;
 
   static styles = [
-    styles,
+    ParticlesUI.Styles.all,
     css`
       :host {
         display: block;

@@ -4,17 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { LitElement, html, css } from "lit";
-import { styles } from "../styles";
 import { customElement, property } from "lit/decorators.js";
-import { Orientation } from "../../types/particles";
+import * as ParticlesUI from "@breadboard-ai/particles-ui";
 
 @customElement("ui-hero-image")
 export class UIHeroImage extends LitElement {
   @property({ reflect: true, type: String })
-  accessor containerOrientation: Orientation | null = null;
+  accessor containerOrientation: ParticlesUI.Particles.Orientation | null =
+    null;
 
   static styles = [
-    styles,
+    ParticlesUI.Styles.all,
     css`
       :host {
         display: block;

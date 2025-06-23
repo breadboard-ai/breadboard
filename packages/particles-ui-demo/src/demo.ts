@@ -6,11 +6,11 @@
 
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, query, state } from "lit/decorators.js";
-import { styles } from "./ui/styles";
 import type { UITheme } from "./ui/theme/theme.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { classMap } from "lit/directives/class-map.js";
-import { merge } from "./ui/styles/utils";
+
+import * as ParticlesUI from "@breadboard-ai/particles-ui";
 
 import "./ui/elements/button.js";
 import { createParticles, createSpec } from "./gemini";
@@ -52,7 +52,7 @@ export class GoalDemo extends LitElement {
   accessor #processingSpec = false;
 
   static styles = [
-    styles,
+    ParticlesUI.Styles.all,
     css`
       * {
         box-sizing: border-box;
@@ -268,7 +268,7 @@ export class GoalDemo extends LitElement {
       <div class="layout-p-8 layout-flx-vert layout-el-cv">
         <h1
           class=${classMap(
-            merge(this.theme.elements.h1, {
+            ParticlesUI.Utils.merge(this.theme.elements.h1, {
               "typography-sz-ds": true,
               "layout-mb-6": true,
             })
@@ -300,7 +300,7 @@ export class GoalDemo extends LitElement {
                 this.#persistSpec(evt.target.value);
               }}
               class=${classMap(
-                merge(this.theme.elements.textarea, {
+                ParticlesUI.Utils.merge(this.theme.elements.textarea, {
                   "layout-fs-n": true,
                   "border-br-2": true,
                   "border-bw-0": true,
@@ -326,7 +326,7 @@ export class GoalDemo extends LitElement {
             >
               <ui-button
                 class=${classMap(
-                  merge(theme.elements.button, {
+                  ParticlesUI.Utils.merge(theme.elements.button, {
                     "layout-pl-6": true,
                     "layout-pr-4": true,
                     "layout-al-c": true,
@@ -348,7 +348,7 @@ export class GoalDemo extends LitElement {
             <div
               id="output"
               class=${classMap(
-                merge(this.theme.elements.p, {
+                ParticlesUI.Utils.merge(this.theme.elements.p, {
                   "layout-fs-n": true,
                   "layout-p-3": true,
                   "border-br-2": true,
@@ -371,7 +371,7 @@ export class GoalDemo extends LitElement {
               .value=${this.#lastGoal ?? DEFAULT_GOAL}
               ?disabled=${working}
               class=${classMap(
-                merge(this.theme.elements.input, {
+                ParticlesUI.Utils.merge(this.theme.elements.input, {
                   "typography-sz-bl": true,
                   "border-bw-2": true,
                   "border-br-12": true,
@@ -403,7 +403,7 @@ export class GoalDemo extends LitElement {
             />
             <ui-button
               class=${classMap(
-                merge(theme.elements.button, {
+                ParticlesUI.Utils.merge(theme.elements.button, {
                   "layout-pl-6": true,
                   "layout-pr-6": true,
                   "layout-al-c": true,

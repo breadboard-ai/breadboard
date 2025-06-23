@@ -6,12 +6,12 @@
 import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { styles } from "../styles/index";
+import * as ParticlesUI from "@breadboard-ai/particles-ui";
 
 @customElement("ui-button")
 export class UIButton extends SignalWatcher(LitElement) {
   static styles = [
-    styles,
+    ParticlesUI.Styles.all,
     css`
       :host {
         display: flex;

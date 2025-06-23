@@ -8,7 +8,7 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "inlineSources": false,
-    "lib": ["ES2022", "DOM"],
+    "lib": ["ES2022", "DOM", "ES2023", "ES2024"],
     "module": "NodeNext",
     "target": "ES2022",
     "isolatedModules": true,

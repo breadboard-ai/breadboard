@@ -5,14 +5,14 @@
  */
 
 import { css, CSSResultArray, CSSResultGroup, unsafeCSS } from "lit";
-import { PaletteKey, PaletteKeyVals, shades } from "../../types/colors";
-import { toProp } from "./utils";
+import { PaletteKey, PaletteKeyVals, shades } from "../types/colors.js";
+import { toProp } from "../utils/utils.js";
 
 const color = <C extends PaletteKeyVals>(src: PaletteKey<C>) =>
   css`
     ${unsafeCSS(
       src
-        .map((key) => {
+        .map((key: string) => {
           return `.color-bc-${key} { border-color: var(${toProp(key)}); }`;
         })
         .join("\n")
@@ -20,7 +20,7 @@ const color = <C extends PaletteKeyVals>(src: PaletteKey<C>) =>
 
     ${unsafeCSS(
       src
-        .map((key) => {
+        .map((key: string) => {
           return `.color-bgc-${key} { background-color: var(${toProp(key)}); }`;
         })
         .join("\n")
@@ -28,7 +28,7 @@ const color = <C extends PaletteKeyVals>(src: PaletteKey<C>) =>
 
   ${unsafeCSS(
       src
-        .map((key) => {
+        .map((key: string) => {
           return `.color-c-${key} { color: var(${toProp(key)}); }`;
         })
         .join("\n")

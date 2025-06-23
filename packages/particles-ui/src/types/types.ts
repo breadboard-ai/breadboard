@@ -5,7 +5,7 @@
  */
 
 import type { DataParticle, TextParticle } from "@breadboard-ai/particles";
-import { Presentation } from "./particles";
+import { type Presentation } from "./particles.js";
 
 export type ItemData = Record<string, string | boolean | Date>;
 

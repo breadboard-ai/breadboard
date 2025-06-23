@@ -5,19 +5,18 @@
  */
 import { LitElement, html, css, PropertyValues, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { Orientation, Segment } from "../../types/particles";
 import { repeat } from "lit/directives/repeat.js";
 import { classMap } from "lit/directives/class-map.js";
 import { SignalWatcher } from "@lit-labs/signals";
-import { styles } from "../styles/index";
 import { consume } from "@lit/context";
 import { themeContext } from "../context/theme";
 import { UITheme } from "../theme/theme";
+import * as ParticlesUI from "@breadboard-ai/particles-ui";
 
 @customElement("ui-card")
 export class UICard extends SignalWatcher(LitElement) {
   static styles = [
-    styles,
+    ParticlesUI.Styles.all,
     css`
       * {
         box-sizing: border-box;
@@ -46,10 +45,10 @@ export class UICard extends SignalWatcher(LitElement) {
   ];
 
   @property({ reflect: true, type: String })
-  accessor orientation: Orientation = "vertical";
+  accessor orientation: ParticlesUI.Particles.Orientation = "vertical";
 
   @property()
-  accessor segments: Segment[] = [
+  accessor segments: ParticlesUI.Particles.Segment[] = [
     {
       weight: 1,
       fields: {},
