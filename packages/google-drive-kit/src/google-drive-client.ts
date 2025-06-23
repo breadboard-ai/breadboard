@@ -386,7 +386,7 @@ export class GoogleDriveClient {
       kind: "bearer",
       token: await this.#getUserAccessToken(),
     } as const;
-    let response = await this.#copy(fileId, authorization);
+    const response = await this.#copy(fileId, authorization);
     if (response.status === 404) {
       // Note it is not possible to suppress the 404 error that will appear in
       // the console, so this log statement and the similar ones throughout this
