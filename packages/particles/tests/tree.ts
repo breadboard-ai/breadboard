@@ -10,7 +10,7 @@ import { toParticle } from "../src/utils.js";
 import { deepStrictEqual, equal, throws } from "node:assert";
 
 describe("ParticleTree", () => {
-  it("Applies append operations", () => {
+  it("Applies upsert operations", () => {
     const tree = new ParticleTree({
       create(particle) {
         return toParticle(particle);
@@ -49,5 +49,21 @@ describe("ParticleTree", () => {
       params: { path: ["c"], id: "d", particle: { text: "baz" } },
     });
     equal(tree.root.group.size, 3);
+
+    tree.apply({
+      jsonrpc: "2.0",
+      method: "suip/ops/upsert",
+      params: { path: [], id: "a", particle: { text: "baz" } },
+    });
+    equal(tree.root.group.size, 3);
+    deepStrictEqual(tree.root.group.get("a"), { text: "baz" });
+
+    tree.apply({
+      jsonrpc: "2.0",
+      method: "suip/ops/upsert",
+      params: { path: [], id: "f", particle: { text: "qux" }, before: "a" },
+    });
+    equal(tree.root.group.size, 4);
+    deepStrictEqual([...tree.root.group.keys()], ["f", "a", "b", "d"]);
   });
 });

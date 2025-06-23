@@ -7,6 +7,7 @@
 import {
   GroupParticle,
   Particle,
+  ParticleIdentifier,
   ParticleOperation,
   SerializedParticle,
 } from "./types.js";
@@ -26,7 +27,7 @@ class ParticleTree {
 
   apply(op: ParticleOperation) {
     if (op.method === "suip/ops/upsert") {
-      const { path, particle, id: newId } = op.params;
+      const { path, particle, id: newId, before } = op.params;
       if (!newId) {
         throw new Error(`Path is empty, unable to apply.`);
       }
@@ -50,8 +51,25 @@ class ParticleTree {
         destination.group.set(id, next);
         destination = next;
       }
-      // Append the particle
-      destination.group.set(newId, this.factory.create(particle));
+      if (!before) {
+        // Append the particle
+        destination.group.set(newId, this.factory.create(particle));
+      } else {
+        // Insert the particle. Need to rebuild the map to do this.
+        const group = new Map<ParticleIdentifier, Particle>();
+        let inserted = false;
+        for (const [oldId, oldParticle] of destination.group.entries()) {
+          if (oldId === before) {
+            group.set(newId, this.factory.create(particle));
+            inserted = true;
+          }
+          group.set(oldId, oldParticle);
+        }
+        if (!inserted) {
+          throw new Error(`Particle "${before}" does not exist.`);
+        }
+        destination.group = group;
+      }
     } else {
       throw new Error(`Operation "${op.method}" is not supported`);
     }
