@@ -2642,6 +2642,8 @@ export class Main extends LitElement {
             "Enable Custom Step Creation"
           )?.value ?? false;
 
+        const feedbackLink = this.clientDeploymentConfiguration.FEEDBACK_LINK;
+
         let tabStatus = BreadboardUI.Types.STATUS.STOPPED;
         if (this.tab) {
           tabStatus =
@@ -3029,7 +3031,7 @@ export class Main extends LitElement {
             });
           }
 
-          if (FEEDBACK_LINK) {
+          if (feedbackLink) {
             actions.push({
               title: Strings.from("COMMAND_SEND_FEEDBACK"),
               name: "feedback",
@@ -3504,11 +3506,11 @@ export class Main extends LitElement {
                       }
 
                       case "feedback": {
-                        if (!FEEDBACK_LINK) {
+                        if (!feedbackLink) {
                           return;
                         }
 
-                        window.open(FEEDBACK_LINK, "_blank");
+                        window.open(feedbackLink, "_blank");
                         break;
                       }
 

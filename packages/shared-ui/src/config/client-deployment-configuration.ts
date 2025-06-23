@@ -10,6 +10,7 @@ export type ClientDeploymentConfiguration = {
   MEASUREMENT_ID?: string;
   BACKEND_API_ENDPOINT?: string;
   ENABLE_GOOGLE_DRIVE_PROXY?: boolean;
+  FEEDBACK_LINK?: string;
 };
 
 export const clientDeploymentConfigurationContext = createContext(
