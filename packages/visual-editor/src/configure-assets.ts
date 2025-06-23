@@ -39,7 +39,6 @@ export type ConfigureAssetsInputs = {
   VITE_TOS_HTML_PATH?: string;
   VITE_ENABLE_POLICY?: boolean;
   VITE_POLICY_HTML_PATH?: string;
-  VITE_FEEDBACK_LINK?: string;
   VITE_ENVIRONMENT_NAME?: string;
 };
 
@@ -55,7 +54,6 @@ export type ConfigureAssetOutputs = {
   TOS_HTML: string;
   ENABLE_POLICY: boolean;
   POLICY_HTML: string;
-  FEEDBACK_LINK: string;
   ENVIRONMENT_NAME: string;
 };
 
@@ -75,7 +73,6 @@ async function configureAssets(
     VITE_TOS_HTML_PATH: TOS_HTML_PATH,
     VITE_ENABLE_POLICY: ENABLE_POLICY,
     VITE_POLICY_HTML_PATH: POLICY_HTML_PATH,
-    VITE_FEEDBACK_LINK: FEEDBACK_LINK,
     VITE_ENVIRONMENT_NAME: ENVIRONMENT_NAME,
   } = config;
 
@@ -92,7 +89,7 @@ async function configureAssets(
   let languagePack;
   try {
     languagePack = (await import(languagePackUrl)).default;
-  } catch (err) {
+  } catch {
     throw new Error("Unable to import language pack");
   }
 
@@ -128,7 +125,6 @@ async function configureAssets(
     TOS_HTML: JSON.stringify(tosHtml),
     ENABLE_POLICY: ENABLE_POLICY ?? false,
     POLICY_HTML: JSON.stringify(policyHtml),
-    FEEDBACK_LINK: JSON.stringify(FEEDBACK_LINK),
     ENVIRONMENT_NAME: JSON.stringify(ENVIRONMENT_NAME),
   };
 }
