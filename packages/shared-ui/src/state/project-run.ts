@@ -31,6 +31,8 @@ import {
   err,
   FileSystem,
   InspectableGraph,
+  MainGraphIdentifier,
+  MutableGraphStore,
   Outcome,
   OutputValues,
 } from "@google-labs/breadboard";
@@ -60,12 +62,10 @@ function createProjectRunStateFromFinalOutput(
   if (!gettingMainGraph?.success) {
     return error(`Can't to find graph in graph store`);
   }
-  const inspectable = graphStore.inspect(gettingMainGraph.result, "");
-  if (!inspectable) {
-    return error(`Can't instantiate inspectable graph`);
-  }
-
-  const run = ReactiveProjectRun.createInert(inspectable);
+  const run = ReactiveProjectRun.createInert(
+    gettingMainGraph.result,
+    graphStore
+  );
   const last: AppScreenOutput = {
     output,
     schema: {},
@@ -97,13 +97,9 @@ function createProjectRunState(
   if (!gettingMainGraph?.success) {
     return error(`Can't to find graph in graph store`);
   }
-  const inspectable = graphStore.inspect(gettingMainGraph.result, "");
-  if (!inspectable) {
-    return error(`Can't instantiate inspectable graph`);
-  }
-
   return ReactiveProjectRun.create(
-    inspectable,
+    gettingMainGraph.result,
+    graphStore,
     fileSystem,
     harnessRunner,
     signal
@@ -135,7 +131,7 @@ class ReactiveProjectRun implements ProjectRun {
 
   @signal
   get estimatedEntryCount() {
-    return Math.max(this.inspectable?.nodes().length || 0, this.console.size);
+    return Math.max(this.#inspectable?.nodes().length || 0, this.console.size);
   }
 
   @signal
@@ -154,11 +150,14 @@ class ReactiveProjectRun implements ProjectRun {
 
   @signal
   get runnable() {
-    return this.estimatedEntryCount !== 0;
+    return this.#inspectable?.nodes().length !== 0;
   }
 
   @signal
   accessor input: UserInput | null = null;
+
+  @signal
+  accessor #inspectable: InspectableGraph | undefined;
 
   @signal
   get finalOutput(): OutputValues | null {
@@ -168,7 +167,8 @@ class ReactiveProjectRun implements ProjectRun {
   }
 
   private constructor(
-    private readonly inspectable: InspectableGraph | undefined,
+    private readonly mainGraphId: MainGraphIdentifier,
+    private readonly graphStore?: MutableGraphStore,
     private readonly fileSystem?: FileSystem,
     runner?: HarnessRunner,
     signal?: AbortSignal
@@ -197,6 +197,16 @@ class ReactiveProjectRun implements ProjectRun {
     runner.addEventListener("error", this.#error.bind(this));
     runner.addEventListener("resume", () => {
       this.status = "running";
+    });
+
+    if (!graphStore) return;
+
+    this.#inspectable = this.graphStore?.inspect(this.mainGraphId, "");
+
+    graphStore.addEventListener("update", (e) => {
+      if (e.mainGraphId === this.mainGraphId) {
+        this.#inspectable = this.graphStore?.inspect(this.mainGraphId, "");
+      }
     });
   }
 
@@ -245,7 +255,7 @@ class ReactiveProjectRun implements ProjectRun {
       return;
     }
 
-    const node = this.inspectable?.nodeById(event.data.node.id);
+    const node = this.#inspectable?.nodeById(event.data.node.id);
     const metadata = node?.currentDescribe()?.metadata || {};
     const { icon: defaultIcon, tags } = metadata;
     const icon = getStepIcon(defaultIcon, node?.currentPorts()) || undefined;
@@ -335,16 +345,26 @@ class ReactiveProjectRun implements ProjectRun {
    * This instance is useful for representing and inspecting the run that
    * hasn't yet started.
    */
-  static createInert(inspectable: InspectableGraph | undefined) {
-    return new ReactiveProjectRun(inspectable);
+  static createInert(
+    mainGraphId: MainGraphIdentifier,
+    graphStore: MutableGraphStore
+  ) {
+    return new ReactiveProjectRun(mainGraphId, graphStore);
   }
 
   static create(
-    inspectable: InspectableGraph | undefined,
+    mainGraphId: MainGraphIdentifier,
+    graphStore: MutableGraphStore,
     fileSystem: FileSystem,
     runner: HarnessRunner,
     signal?: AbortSignal
   ) {
-    return new ReactiveProjectRun(inspectable, fileSystem, runner, signal);
+    return new ReactiveProjectRun(
+      mainGraphId,
+      graphStore,
+      fileSystem,
+      runner,
+      signal
+    );
   }
 }
