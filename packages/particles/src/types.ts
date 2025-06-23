@@ -64,3 +64,59 @@ export type BehaviorHint = string;
 export type Particle = TextParticle | DataParticle | GroupParticle;
 
 export type ParticleIdentifier = string;
+
+/**
+ * The basics of Semantic UI Protocol (SUIP)
+ */
+
+export type SerializedParticle =
+  | TextParticle
+  | DataParticle
+  | SerializedGroupParticle;
+
+export type SerializedGroupParticle = {
+  group: [key: string, value: SerializedParticle][];
+};
+
+export type JsonRpcNotification<Method extends string, Params> = {
+  jsonrpc: "2.0";
+  method: Method;
+  params: Params;
+};
+
+export type ParticleAppendOperation = JsonRpcNotification<
+  "suip/ops/append",
+  {
+    path: string[];
+    particle: SerializedParticle;
+  }
+>;
+
+export type ParticleInsertOperation = JsonRpcNotification<
+  "suip/ops/insert",
+  {
+    path: string[];
+    particle: SerializedParticle;
+  }
+>;
+
+export type ParticleRemoveOperation = JsonRpcNotification<
+  "suip/ops/remove",
+  {
+    path: string[];
+  }
+>;
+
+export type ParticleReplaceOperation = JsonRpcNotification<
+  "suip/ops/replace",
+  {
+    path: string[];
+    particle: SerializedParticle;
+  }
+>;
+
+export type ParticleOperation =
+  | ParticleAppendOperation
+  | ParticleInsertOperation
+  | ParticleRemoveOperation
+  | ParticleReplaceOperation;
