@@ -63,6 +63,7 @@ class ParticleTree {
             group.set(newId, this.factory.create(particle));
             inserted = true;
           }
+          if (inserted && oldId === newId) continue;
           group.set(oldId, oldParticle);
         }
         if (!inserted) {

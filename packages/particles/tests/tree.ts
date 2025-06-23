@@ -65,5 +65,14 @@ describe("ParticleTree", () => {
     });
     equal(tree.root.group.size, 4);
     deepStrictEqual([...tree.root.group.keys()], ["f", "a", "b", "d"]);
+
+    tree.apply({
+      jsonrpc: "2.0",
+      method: "suip/ops/upsert",
+      params: { path: [], id: "a", particle: { text: "zub" }, before: "f" },
+    });
+    equal(tree.root.group.size, 4);
+    deepStrictEqual([...tree.root.group.keys()], ["a", "f", "b", "d"]);
+    deepStrictEqual(tree.root.group.get("a"), { text: "zub" });
   });
 });
