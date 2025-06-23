@@ -79,28 +79,42 @@ export type SerializedGroupParticle = [
   value: SerializedParticle,
 ][];
 
-export type ParticleAppendOperation = {
-  op: "append";
-  path: string[];
-  particle: SerializedParticle;
+export type JsonRpcNotification<Method extends string, Params> = {
+  jsonrpc: "2.0";
+  method: Method;
+  params: Params;
 };
 
-export type ParticleInsertOperation = {
-  op: "insert";
-  path: string[];
-  particle: SerializedParticle;
-};
+export type ParticleAppendOperation = JsonRpcNotification<
+  "suip/ops/append",
+  {
+    path: string[];
+    particle: SerializedParticle;
+  }
+>;
 
-export type ParticleRemoveOperation = {
-  op: "remove";
-  path: string[];
-};
+export type ParticleInsertOperation = JsonRpcNotification<
+  "suip/ops/insert",
+  {
+    path: string[];
+    particle: SerializedParticle;
+  }
+>;
 
-export type ParticleReplaceOperation = {
-  op: "replace";
-  path: string[];
-  particle: SerializedParticle;
-};
+export type ParticleRemoveOperation = JsonRpcNotification<
+  "suip/ops/remove",
+  {
+    path: string[];
+  }
+>;
+
+export type ParticleReplaceOperation = JsonRpcNotification<
+  "suip/ops/replace",
+  {
+    path: string[];
+    particle: SerializedParticle;
+  }
+>;
 
 export type ParticleOperation =
   | ParticleAppendOperation
