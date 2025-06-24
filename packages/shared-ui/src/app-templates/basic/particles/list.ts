@@ -135,7 +135,10 @@ export class UIBasicList extends SignalWatcher(LitElement) {
                       let classes = {};
                       if (segment.orientation === "vertical") {
                         if (segment.type === "media") {
-                          classes = { ...theme.components.segmentVertical };
+                          classes = ParticlesUI.Utils.merge(
+                            theme.components.segmentVertical,
+                            theme.components.media
+                          );
                         } else {
                           classes = {
                             ...theme.components.segmentVerticalPadded,
@@ -143,7 +146,10 @@ export class UIBasicList extends SignalWatcher(LitElement) {
                         }
                       } else {
                         if (segment.type === "media") {
-                          classes = { ...theme.components.segmentHorizontal };
+                          classes = ParticlesUI.Utils.merge(
+                            theme.components.segmentHorizontal,
+                            theme.components.media
+                          );
                         } else {
                           classes = {
                             ...theme.components.segmentHorizontalPadded,

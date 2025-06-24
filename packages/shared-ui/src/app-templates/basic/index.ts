@@ -33,8 +33,6 @@ import {
   ToastEvent,
   ToastType,
 } from "../../events/events";
-import { createRef, Ref } from "lit/directives/ref.js";
-import { AssetShelf } from "../../elements/elements";
 import { SigninState } from "../../utils/signin-adapter";
 
 import "./particles/card.js";
@@ -71,6 +69,7 @@ import { themeContext } from "../shared/contexts/theme.js";
 import { UITheme } from "../shared/theme/theme.js";
 import { theme as uiTheme } from "./theme/light.js";
 import { appScreenToParticles } from "../shared/utils/app-screen-to-particles.js";
+import { type } from "../../styles/host/type.js";
 
 function keyFromGraphUrl(url: string) {
   return `cw-${url.replace(/\W/gi, "-")}`;
@@ -175,6 +174,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   static styles = [
     icons,
     buttonStyles,
+    type,
     css`
       * {
         box-sizing: border-box;
@@ -203,6 +203,12 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
             Helvetica,
             Arial,
             sans-serif
+          );
+          --font-family-mono: var(
+            --bb-font-family-mono,
+            "Courier New",
+            Courier,
+            monospace
           );
           --font-style: normal;
 
@@ -397,8 +403,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
             & h1 {
               background: var(--background-color, none);
-              border-radius: var(--bb-grid-size-2);
-              font: 400 var(--font-style) 36px / 40px var(--font-family);
               color: var(--p-25, var(--bb-neutral-700));
               margin: var(--bb-grid-size-10) 0 var(--bb-grid-size-4) 0;
               flex: 0 0 auto;
@@ -958,17 +962,13 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     Animations,
   ];
 
-  #inputRef: Ref<HTMLDivElement> = createRef();
-  #splashRef: Ref<HTMLDivElement> = createRef();
-  #assetShelfRef: Ref<AssetShelf> = createRef();
-
   #renderControls() {
-    return html`<bb-header
+    return html`<bb-app-header
       .progress=${this.run?.progress}
       .replayActive=${true}
       .menuActive=${true}
       .appTitle=${this.graph?.title}
-    ></bb-header>`;
+    ></bb-app-header>`;
   }
 
   #renderActivity() {
@@ -1243,6 +1243,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       >
         <section id="splash-content-container">
           <h1
+            class="w-500 round sans-flex md-display-small"
             ?contenteditable=${!this.readOnly}
             @blur=${(evt: Event) => {
               if (this.readOnly) {
@@ -1266,6 +1267,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
           </h1>
           <p
             ?contenteditable=${!this.readOnly}
+            class="w-500 round sans-flex md-title-medium"
             @blur=${(evt: Event) => {
               if (this.readOnly) {
                 return;

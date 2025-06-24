@@ -174,6 +174,60 @@ export class UIBasicSegment extends SignalWatcher(LitElement) {
         ></audio>`;
       }
 
+      case "file": {
+        if (!field.src) {
+          return html`Unable to render file - no source provided.`;
+        }
+
+        return html`<a
+          class=${classMap(
+            ParticlesUI.Utils.merge(
+              theme.elements.a,
+              field.modifiers?.includes("hero") ? theme.modifiers.hero : {}
+            )
+          )}
+          href=${field.src}
+          >Your file</a
+        >`;
+      }
+
+      case "googledrive": {
+        if (!field.src) {
+          return html`Unable to render file - no source provided.`;
+        }
+
+        return html`<a
+          class=${classMap(
+            ParticlesUI.Utils.merge(
+              theme.elements.a,
+              field.modifiers?.includes("hero") ? theme.modifiers.hero : {}
+            )
+          )}
+          href=${`https://drive.google.com/open?id=${field.src}`}
+          target="_blank"
+          >Google Drive File<span class="g-icon filled round layout-ml-2"
+            >open_in_new</span
+          ></a
+        >`;
+      }
+
+      case "pre": {
+        if (!field.src) {
+          return html`Unable to render content - no source provided.`;
+        }
+
+        return html`<pre
+          class=${classMap(
+            ParticlesUI.Utils.merge(
+              theme.elements.pre,
+              field.modifiers?.includes("hero") ? theme.modifiers.hero : {}
+            )
+          )}
+        >
+${value ?? field.src}</pre
+        >`;
+      }
+
       case "date":
       case "text": {
         if (field.behaviors?.includes("editable")) {
@@ -194,7 +248,14 @@ export class UIBasicSegment extends SignalWatcher(LitElement) {
         }
 
         return html`<section>
-          ${markdown(value as string, theme.markdown)}
+          ${markdown(
+            value as string,
+            ParticlesUI.Utils.appendToAll(
+              theme.markdown,
+              ["ol", "ul", "li"],
+              field.modifiers?.includes("hero") ? theme.modifiers.hero : {}
+            )
+          )}
         </section>`;
       }
 

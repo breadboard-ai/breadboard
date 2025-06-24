@@ -50,15 +50,17 @@ export interface Field {
    * is rendered with the appopriate controls.
    */
   as:
-    | "text"
+    | "audio"
+    | "behavior"
+    | "date"
+    | "googledrive"
+    | "file"
+    | "image"
     | "longtext"
     | "number"
-    | "date"
-    | "behavior"
-    | "image"
-    | "video"
-    | "audio"
-    | "markdown";
+    | "text"
+    | "pre"
+    | "video";
   /**
    * Used to determine what the user can do. If the user is able to edit the
    * field content you must allow them to do so with the appropriate behavior.

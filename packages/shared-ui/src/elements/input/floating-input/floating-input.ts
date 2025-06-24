@@ -139,6 +139,10 @@ export class FloatingInput extends LitElement {
             border-radius: 50%;
             color: var(--p-100, var(--bb-neutral-0));
             margin-left: var(--bb-grid-size-2);
+
+            &:not([disabled]) {
+              cursor: pointer;
+            }
           }
         }
       }
@@ -391,6 +395,7 @@ export class FloatingInput extends LitElement {
                   data-type=${dataType}
                   @keydown=${(evt: KeyboardEvent) => {
                     if (evt.key === "Enter" && !evt.shiftKey) {
+                      evt.preventDefault();
                       this.#continueRun();
                       return;
                     }

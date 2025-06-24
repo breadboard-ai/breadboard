@@ -15,7 +15,7 @@ import { ShareRequestedEvent, StopEvent } from "../../../events/events";
 import { SideNav } from "./side-nav";
 import { type } from "../../../styles/host/type";
 
-@customElement("bb-header")
+@customElement("bb-app-header")
 export class Header extends LitElement {
   @property()
   accessor progress = 0; /** 0 -> 1 */
@@ -48,7 +48,7 @@ export class Header extends LitElement {
         padding: 0 var(--bb-grid-size-4);
         position: relative;
         flex: 0 0 auto;
-        z-index: 1;
+        z-index: 2;
         color: var(--p-40, var(--bb-neutral-900));
       }
 
