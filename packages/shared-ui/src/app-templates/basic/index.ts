@@ -1037,28 +1037,21 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       }
 
       if (current.last) {
-        if (new URLSearchParams(location.search).get("particles")) {
-          const htmlOutput = isHTMLOutput(current.last);
-          if (htmlOutput !== null) {
-            activityContents = html`<iframe
-              srcdoc=${htmlOutput}
-              frameborder="0"
-              class="html-view"
-              sandbox="allow-scripts allow-forms"
-            ></iframe>`;
-          } else {
-            const list = appScreenToParticles(current.last);
-            activityContents = html` <ui-basic-list
-              class=${classMap(this.theme.components.list)}
-              .list=${list}
-              .orientation=${list?.presentation.orientation}
-            ></ui-basic-list>`;
-          }
+        const htmlOutput = isHTMLOutput(current.last);
+        if (htmlOutput !== null) {
+          activityContents = html`<iframe
+            srcdoc=${htmlOutput}
+            frameborder="0"
+            class="html-view"
+            sandbox="allow-scripts allow-forms"
+          ></iframe>`;
         } else {
-          activityContents = html`<bb-multi-output
-            .showAsStatus=${current.type === "input"}
-            .outputs=${current.last.output}
-          ></bb-multi-output>`;
+          const list = appScreenToParticles(current.last);
+          activityContents = html` <ui-basic-list
+            class=${classMap(this.theme.components.list)}
+            .list=${list}
+            .orientation=${list?.presentation.orientation}
+          ></ui-basic-list>`;
         }
       }
     }
