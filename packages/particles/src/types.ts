@@ -75,6 +75,7 @@ export type SerializedParticle =
   | SerializedGroupParticle;
 
 export type SerializedGroupParticle = {
+  type?: ParticleIdentifier;
   group: [key: string, value: SerializedParticle][];
 };
 
@@ -119,7 +120,7 @@ export type ParticleUpsertOperation = JsonRpcNotification<
 export type ParticleRemoveOperation = JsonRpcNotification<
   "suip/ops/remove",
   {
-    path: string[];
+    path: ParticleIdentifier[];
   }
 >;
 

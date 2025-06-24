@@ -44,9 +44,134 @@ export { report, StreamableReporter };
 
 const MIME_TYPE = "application/vnd.breadboard.report-stream";
 
+export type Hints = {
+  /**
+   * Provides presentation hints. If not specified, the group particle doesn't
+   * have an opinion about its type (think "generic grouping").
+   * If specified, can be used to identify semantics. For example, can be used
+   * to bind to the right UI element.
+   */
+  presentation?: PresentationHint[];
+  /**
+   * Provides behavior hints. If not specified, the group particle is just
+   * static content. Otherwise, the group particle has event listeners
+   * (behaviors) attached to it.
+   */
+  behaviors?: BehaviorHint[];
+};
+
+export type TextParticle = {
+  /**
+   * Content of the particle.
+   */
+  text: string;
+  /**
+   * The type of the content. If omitted, "text/markdown" is assumed.
+   */
+  mimeType?: string;
+} & Hints;
+
+export type DataParticle = {
+  /**
+   * A URL that points to the data.
+   */
+  data: string;
+  /**
+   * The type of the data.
+   */
+  mimeType: string;
+} & Hints;
+
+export type GroupParticle = {
+  /**
+   * The sub-particles that are part of this group.
+   * The Map structure is key for reactive updates.
+   */
+  group: Map<ParticleIdentifier, Particle>;
+  /**
+   * The type of a group. Allows the particle to be bound to a particular
+   * UI element. Optional. If not specified, the group particle doesn't have
+   * an opinion about its type (think "generic grouping").
+   * If specified, can be used to identify semantics. For example, can be used
+   * to bind to the right custom element.
+   */
+  type?: string;
+} & Hints;
+
+export type PresentationHint = string;
+export type BehaviorHint = string;
+
+export type Particle = TextParticle | DataParticle | GroupParticle;
+
+export type ParticleIdentifier = string;
+
+/**
+ * The basics of Semantic UI Protocol (SUIP)
+ */
+
+export type SerializedParticle =
+  | TextParticle
+  | DataParticle
+  | SerializedGroupParticle;
+
+export type SerializedGroupParticle = {
+  type?: ParticleIdentifier;
+  group: [key: string, value: SerializedParticle][];
+};
+
+export type JsonRpcNotification<Method extends string, Params> = {
+  jsonrpc: "2.0";
+  method: Method;
+  params: Params;
+};
+
+/**
+ * Append, Insert, or Replace operation:
+ * - when the `path` and `id` match an existing particle, the existing particle
+ *   will be replaced with provided particle.
+ * - when the `path` and `id` do not match a particle and `before` isn't
+ *   specified, the new particle will be appended.
+ * - when the `path` and `id` do not match a particle and `before` matches id of
+ *   an existing peer particle, new particle will be appended before the it.
+ */
+export type ParticleUpsertOperation = JsonRpcNotification<
+  "suip/ops/upsert",
+  {
+    /**
+     * Path to the parent of the newly added particle.
+     */
+    path: ParticleIdentifier[];
+    /**
+     * The id of the particle to add.
+     */
+    id: ParticleIdentifier;
+    /**
+     * The particle to add.
+     */
+    particle: SerializedParticle;
+    /**
+     * The peer particle id before which to insert the new particle.
+     * If not specified or null, the particle will be appended at the end.
+     */
+    before?: ParticleIdentifier | null;
+  }
+>;
+
+export type ParticleRemoveOperation = JsonRpcNotification<
+  "suip/ops/remove",
+  {
+    path: string[];
+  }
+>;
+
+export type ParticleOperation =
+  | ParticleUpsertOperation
+  | ParticleRemoveOperation;
+
 class StreamableReporter {
   public readonly path: FileSystemReadWritePath = `/run/reporter/stream/${generateId()}`;
   #started = false;
+  #id = 0;
 
   constructor(public readonly options: NodeMetadata) {}
 
@@ -85,22 +210,41 @@ class StreamableReporter {
     return this.reportLLMContent({ parts: [{ json }] });
   }
 
+  #sendOperation(op: ParticleOperation) {
+    return this.report(op);
+  }
+
+  #sendUpsert(params: ParticleUpsertOperation["params"]) {
+    return this.#sendOperation({
+      jsonrpc: "2.0",
+      method: "suip/ops/upsert",
+      params,
+    });
+  }
+
   sendLinks(title: string, links: Link[], icon?: string) {
     let linksParticle = {
       text: JSON.stringify(links),
       mimeType: "application/json",
     };
-    const group = [
+    const group: SerializedGroupParticle["group"] = [
       ["title", { text: title }],
-      ["links", {
-      text: JSON.stringify(links),
-      mimeType: "application/json",
-    }],
+      [
+        "links",
+        {
+          text: JSON.stringify(links),
+          mimeType: "application/json",
+        },
+      ],
     ];
     if (icon) {
       group.push(["icon", { text: icon }]);
     }
-    return this.report({ type: "links", group });
+    return this.#sendUpsert({
+      path: ["console"],
+      id: `${this.#id++}`,
+      particle: { type: "links", group },
+    });
   }
 
   sendUpdate(title: string, body: unknown | undefined, icon?: string) {
@@ -120,24 +264,32 @@ class StreamableReporter {
         mimeType: "application/json",
       };
     }
-    const group = [
+    const group: SerializedGroupParticle["group"] = [
       ["title", { text: title }],
       ["body", bodyParticle],
     ];
     if (icon) {
       group.push(["icon", { text: icon }]);
     }
-    return this.report({ type: "update", group } as JsonSerializable);
+    return this.#sendUpsert({
+      path: ["console"],
+      id: `${this.#id++}`,
+      particle: { type: "update", group },
+    });
   }
 
   async sendError(error: { $error: string }) {
-    await this.report({
-      type: "update",
-      group: [
-        ["title", { text: "Error" }],
-        ["body", { text: error.$error }],
-        ["icon", { text: "warning" }],
-      ],
+    await this.#sendUpsert({
+      path: ["console"],
+      id: `${this.#id}`,
+      particle: {
+        type: "update",
+        group: [
+          ["title", { text: "Error" }],
+          ["body", { text: error.$error }],
+          ["icon", { text: "warning" }],
+        ],
+      },
     });
     return error;
   }

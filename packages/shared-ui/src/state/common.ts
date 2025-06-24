@@ -6,7 +6,7 @@
 
 import {
   Particle,
-  SerializedParticle,
+  ParticleOperation,
   toParticle,
 } from "@breadboard-ai/particles";
 import { FileDataPart, JSONPart, LLMContent } from "@breadboard-ai/types";
@@ -182,7 +182,12 @@ class ParticleReaderIterator implements AsyncIterator<Particle> {
     if ("done" in reading && reading.done) {
       return this.#end();
     }
-    const particle = toJson(reading.data) as SerializedParticle;
+    const operation = toJson(reading.data) as ParticleOperation;
+    if (operation.method !== "suip/ops/upsert") {
+      throw new Error(`SUIP Method "${operation.method} is not supported`);
+    }
+    // TODO: Implement handling paths.
+    const particle = operation.params.particle;
     if (!particle) {
       const msg = `Invalid streamable report`;
       console.warn(msg, reading.data);
