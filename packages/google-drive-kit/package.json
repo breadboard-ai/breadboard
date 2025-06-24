@@ -118,7 +118,7 @@
     "@types/gapi.client.drive-v3": "^0.0.5"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
+    "@types/node": "^24.0.4",
     "eslint": "^8.57.1",
     "typescript": "^5.8.3",
     "wireit": "^0.15.0-pre.2"

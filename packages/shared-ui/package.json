@@ -120,7 +120,7 @@
     "@google-labs/tsconfig": "^0.0.1",
     "@types/gtag.js": "^0.0.20",
     "@types/markdown-it": "^14.1.2",
-    "@types/node": "^22.0.0",
+    "@types/node": "^24.0.4",
     "typescript": "^5.8.3",
     "vite": "^6.2.7",
     "vite-plugin-full-reload": "^1.2.0",
