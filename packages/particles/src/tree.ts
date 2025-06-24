@@ -34,7 +34,7 @@ class ParticleTree {
       let destination: GroupParticle = this.root;
       // Navigate down the tree using path.
       while (path.length > 0) {
-        const id = path.shift()!;
+        const id = path.at(0)!;
         const next = destination.group.get(id);
         if (!next) {
           break;
@@ -43,13 +43,15 @@ class ParticleTree {
           throw new Error(`Destination particle is not a group`);
         }
         destination = next;
+        path.shift();
       }
       // Create missing parts of the path.
       while (path.length > 0) {
-        const id = path.shift()!;
+        const id = path.at(0)!;
         const next = this.factory.create({ group: [] }) as GroupParticle;
         destination.group.set(id, next);
         destination = next;
+        path.shift();
       }
       if (!before) {
         // Append the particle
