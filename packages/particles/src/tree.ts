@@ -7,6 +7,7 @@
 import {
   GroupParticle,
   Particle,
+  ParticleIdentifier,
   ParticleOperation,
   SerializedParticle,
 } from "./types.js";
@@ -18,23 +19,22 @@ export type ParticleFactory = {
 };
 
 class ParticleTree {
-  public readonly tree: GroupParticle;
+  public readonly root: GroupParticle;
 
   constructor(private readonly factory: ParticleFactory) {
-    this.tree = factory.create({ group: [] }) as GroupParticle;
+    this.root = factory.create({ group: [] }) as GroupParticle;
   }
 
   apply(op: ParticleOperation) {
-    if (op.method === "suip/ops/append") {
-      const { path, particle } = op.params;
-      const newId = path.pop();
+    if (op.method === "suip/ops/upsert") {
+      const { path, particle, id: newId, before } = op.params;
       if (!newId) {
         throw new Error(`Path is empty, unable to apply.`);
       }
-      let destination: GroupParticle = this.tree;
+      let destination: GroupParticle = this.root;
       // Navigate down the tree using path.
       while (path.length > 0) {
-        const id = path.shift()!;
+        const id = path.at(0)!;
         const next = destination.group.get(id);
         if (!next) {
           break;
@@ -43,16 +43,36 @@ class ParticleTree {
           throw new Error(`Destination particle is not a group`);
         }
         destination = next;
+        path.shift();
       }
       // Create missing parts of the path.
       while (path.length > 0) {
-        const id = path.shift()!;
+        const id = path.at(0)!;
         const next = this.factory.create({ group: [] }) as GroupParticle;
         destination.group.set(id, next);
         destination = next;
+        path.shift();
       }
-      // Append the particle
-      destination.group.set(newId, this.factory.create(particle));
+      if (!before) {
+        // Append the particle
+        destination.group.set(newId, this.factory.create(particle));
+      } else {
+        // Insert the particle. Need to rebuild the map to do this.
+        const group = new Map<ParticleIdentifier, Particle>();
+        let inserted = false;
+        for (const [oldId, oldParticle] of destination.group.entries()) {
+          if (oldId === before) {
+            group.set(newId, this.factory.create(particle));
+            inserted = true;
+          }
+          if (inserted && oldId === newId) continue;
+          group.set(oldId, oldParticle);
+        }
+        if (!inserted) {
+          throw new Error(`Particle "${before}" does not exist.`);
+        }
+        destination.group = group;
+      }
     } else {
       throw new Error(`Operation "${op.method}" is not supported`);
     }
