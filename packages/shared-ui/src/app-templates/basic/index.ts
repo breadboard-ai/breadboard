@@ -18,6 +18,7 @@ import {
   asBase64,
   BoardServer,
   GraphDescriptor,
+  isInlineData,
   isLLMContentArray,
   ok,
   transformDataParts,
@@ -63,13 +64,37 @@ import { boardServerContext } from "../../contexts/board-server.js";
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 import { NodeValue } from "@breadboard-ai/types";
 import { projectRunContext } from "../../contexts/project-run.js";
-import { ProjectRun } from "../../state/types.js";
+import { AppScreenOutput, ProjectRun } from "../../state/types.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { themeContext } from "../shared/contexts/theme.js";
 import { UITheme } from "../shared/theme/theme.js";
 import { theme as uiTheme } from "./theme/light.js";
 import { appScreenToParticles } from "../shared/utils/app-screen-to-particles.js";
 import { type } from "../../styles/host/type.js";
+
+function isHTMLOutput(screen: AppScreenOutput): string | null {
+  const outputs = Object.values(screen.output);
+  const singleOutput = outputs.length === 1;
+  if (!singleOutput) {
+    return null;
+  }
+
+  const maybeOutputArray = outputs[0];
+  if (isLLMContentArray(maybeOutputArray) && maybeOutputArray.length === 1) {
+    const output = maybeOutputArray[0];
+    if (output.parts.length === 1) {
+      const firstPart = output.parts[0];
+      if (
+        isInlineData(firstPart) &&
+        firstPart.inlineData.mimeType === "text/html"
+      ) {
+        return firstPart.inlineData.data;
+      }
+    }
+  }
+
+  return null;
+}
 
 function keyFromGraphUrl(url: string) {
   return `cw-${url.replace(/\W/gi, "-")}`;
@@ -566,6 +591,11 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
               animation: fadeIn 0.6s cubic-bezier(0, 0, 0.3, 1) forwards;
             }
 
+            & .html-view {
+              width: 100%;
+              height: 100cqh;
+            }
+
             & .error {
               flex: 1 0 auto;
               display: flex;
@@ -1008,12 +1038,22 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
       if (current.last) {
         if (new URLSearchParams(location.search).get("particles")) {
-          const list = appScreenToParticles(current.last);
-          activityContents = html` <ui-basic-list
-            class=${classMap(this.theme.components.list)}
-            .list=${list}
-            .orientation=${list?.presentation.orientation}
-          ></ui-basic-list>`;
+          const htmlOutput = isHTMLOutput(current.last);
+          if (htmlOutput !== null) {
+            activityContents = html`<iframe
+              srcdoc=${htmlOutput}
+              frameborder="0"
+              class="html-view"
+              sandbox="allow-scripts allow-forms"
+            ></iframe>`;
+          } else {
+            const list = appScreenToParticles(current.last);
+            activityContents = html` <ui-basic-list
+              class=${classMap(this.theme.components.list)}
+              .list=${list}
+              .orientation=${list?.presentation.orientation}
+            ></ui-basic-list>`;
+          }
         } else {
           activityContents = html`<bb-multi-output
             .showAsStatus=${current.type === "input"}

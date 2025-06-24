@@ -19,7 +19,6 @@ import { DrawableInput } from "../drawable/drawable";
 import { SIGN_IN_CONNECTION_ID } from "../../../utils/signin-adapter";
 import { GoogleDriveFileId } from "../../google-drive/google-drive-file-id";
 import { WebcamVideoInput } from "../webcam/webcam-video";
-import { colorsLight } from "../../../styles/host/colors-light";
 import { type } from "../../../styles/host/type";
 
 @customElement("bb-add-asset-modal")
@@ -35,7 +34,6 @@ export class AddAssetModal extends LitElement {
 
   static styles = [
     type,
-    colorsLight,
     css`
       * {
         box-sizing: border-box;

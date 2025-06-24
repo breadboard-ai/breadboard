@@ -147,7 +147,7 @@ export const image = {
 };
 
 export const iframe = {
-  "border-br-5": true,
+  "behavior-sw-n": true,
 };
 
 export const video = {

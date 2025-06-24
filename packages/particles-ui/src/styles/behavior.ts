@@ -42,4 +42,8 @@ export const behavior = css`
   .behavior-o-h {
     overflow: hidden;
   }
+
+  .behavior-sw-n {
+    scrollbar-width: none;
+  }
 }` as CSSResultGroup;

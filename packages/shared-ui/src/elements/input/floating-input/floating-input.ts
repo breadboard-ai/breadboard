@@ -28,7 +28,6 @@ import { AssetShelf } from "../add-asset/asset-shelf";
 import { maybeConvertToYouTube } from "../../../utils/substitute-input";
 import { LLMContent } from "@breadboard-ai/types";
 import { icons } from "../../../styles/icons";
-import { colorsLight } from "../../../styles/host/colors-light";
 import { type } from "../../../styles/host/type";
 
 interface SupportedActions {
@@ -64,7 +63,6 @@ export class FloatingInput extends LitElement {
 
   static styles = [
     icons,
-    colorsLight,
     type,
     css`
       * {
