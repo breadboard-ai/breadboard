@@ -202,7 +202,8 @@ export function appScreenToParticles(
 
   const items = new Map<string, ParticlesUI.Types.ItemState>();
   for (const [name, outputData] of Object.entries(appScreenOutput.output)) {
-    const behaviors = appScreenOutput.schema?.properties?.[name].behavior ?? [];
+    const behaviors =
+      appScreenOutput.schema?.properties?.[name]?.behavior ?? [];
 
     if (isLLMContent(outputData)) {
       appendToItems(outputData, items, behaviors);
