@@ -48,7 +48,7 @@ export class UIBasicSegment extends SignalWatcher(LitElement) {
         display: block;
       }
 
-      iframe {
+      iframe:not([srcdoc]) {
         width: 100%;
         aspect-ratio: 16/9;
       }
@@ -247,7 +247,7 @@ ${value ?? field.src}</pre
           />`;
         }
 
-        return html`<section>
+        return html`<section class="layout-w-100">
           ${markdown(
             value as string,
             ParticlesUI.Utils.appendToAll(
