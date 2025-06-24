@@ -65,12 +65,30 @@ export const h3 = {
   "typography-sz-ts": true,
 };
 
+export const a = {
+  "typography-f-sf": true,
+  "typography-fs-n": true,
+  "typography-w-500": true,
+  "layout-as-n": true,
+  "layout-dis-iflx": true,
+  "layout-al-c": true,
+};
+
 export const p = {
   "typography-f-s": true,
   "typography-fs-n": true,
   "typography-w-400": true,
   "layout-m-0": true,
   "typography-sz-bm": true,
+  "layout-as-n": true,
+};
+
+export const pre = {
+  "typography-f-c": true,
+  "typography-fs-n": true,
+  "typography-w-400": true,
+  "typography-sz-bm": true,
+  "typography-ws-p": true,
   "layout-as-n": true,
 };
 
@@ -117,6 +135,11 @@ export const list = {
 };
 
 export const listItems = {};
+export const media = {
+  "layout-w-70": true,
+  "layout-js-c": true,
+  "layout-p-3": true,
+};
 
 export const image = {
   "border-br-5": true,
@@ -141,12 +164,12 @@ export const cover = {
 };
 
 export const vertical = {
-  "layout-flx-vert": true,
+  "layout-dsp-flexvert": true,
   "layout-g-2": true,
 };
 
 export const horizontal = {
-  "layout-flx-hor": true,
+  "layout-dsp-flexhor": true,
   "layout-fw-w": true,
   "layout-g-2": true,
 };

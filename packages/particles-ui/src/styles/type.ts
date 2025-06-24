@@ -138,6 +138,10 @@ export const type = css`
     line-height: 64px;
   }
 
+  .typography-ws-p {
+    white-space: pre-line;
+  }
+
   /** Weights **/
 
   ${unsafeCSS(

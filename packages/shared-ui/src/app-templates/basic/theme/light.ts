@@ -7,6 +7,7 @@
 import * as ParticlesUI from "@breadboard-ai/particles-ui";
 import { UITheme } from "../../shared/theme/theme.js";
 import {
+  a,
   audio,
   body,
   button,
@@ -24,7 +25,9 @@ import {
   input,
   list,
   listItems,
+  media,
   p,
+  pre,
   segmentHorizontal,
   segmentHorizontalPadded,
   segmentVertical,
@@ -34,6 +37,7 @@ import {
   video,
 } from "./shared.js";
 
+const aEx = ParticlesUI.Utils.merge(a, { "color-c-n5": true });
 const inputEx = ParticlesUI.Utils.merge(input, { "color-c-n5": true });
 const textareaEx = ParticlesUI.Utils.merge(textarea, { "color-c-n5": true });
 const buttonEx = ParticlesUI.Utils.merge(button, { "color-c-n100": true });
@@ -42,10 +46,12 @@ const h2Ex = ParticlesUI.Utils.merge(h2, { "color-c-n5": true });
 const h3Ex = ParticlesUI.Utils.merge(h3, { "color-c-n5": true });
 const bodyEx = ParticlesUI.Utils.merge(body, { "color-c-n5": true });
 const pEx = ParticlesUI.Utils.merge(p, { "color-c-n35": true });
+const preEx = ParticlesUI.Utils.merge(pre, { "color-c-n35": true });
 
 export const theme: UITheme = {
   elements: {
     audio,
+    a: aEx,
     input: inputEx,
     textarea: textareaEx,
     button: buttonEx,
@@ -54,6 +60,7 @@ export const theme: UITheme = {
     h3: h3Ex,
     body: bodyEx,
     p: pEx,
+    pre: preEx,
     iframe,
     video,
   },
@@ -62,6 +69,7 @@ export const theme: UITheme = {
     image,
     list,
     listItems,
+    media,
     segmentVertical,
     segmentVerticalPadded,
     segmentHorizontal,
@@ -102,7 +110,7 @@ export const theme: UITheme = {
     ul: [],
     ol: [],
     li: [],
-    a: [],
+    a: [...Object.keys(aEx)],
     strong: [],
     em: [],
   },

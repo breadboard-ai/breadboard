@@ -74,16 +74,20 @@ export const layout = css`
     position: relative;
   }
 
-  .layout-grd {
+  .layout-dsp-grid {
     display: grid;
   }
 
-  .layout-flx-vert {
+  .layout-dis-iflx {
+    display: inline-flex;
+  }
+
+  .layout-dsp-flexvert {
     display: flex;
     flex-direction: column;
   }
 
-  .layout-flx-hor {
+  .layout-dsp-flexhor {
     display: flex;
     flex-direction: row;
   }
@@ -96,12 +100,16 @@ export const layout = css`
     align-items: flex-start;
   }
 
+  .layout-al-c {
+    align-items: center;
+  }
+
   .layout-as-n {
     align-self: normal;
   }
 
-  .layout-al-c {
-    align-items: center;
+  .layout-js-c {
+    justify-self: center;
   }
 
   .layout-sp-c {
@@ -136,9 +144,17 @@ export const layout = css`
     contain: strict;
   }
 
-  .layout-w-100 {
-    width: 100%;
-  }
+  /** Widths **/
+
+  ${unsafeCSS(
+    new Array(10)
+      .fill(0)
+      .map((_, idx) => {
+        const weight = (idx + 1) * 10;
+        return `.layout-w-${weight} { width: ${weight}%; }`;
+      })
+      .join("\n")
+  )}
 
   .layout-el-cv {
     width: 100%;
