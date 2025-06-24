@@ -1004,7 +1004,7 @@ class DriveOperations {
 
     const thumbnailFileId = await this.getThumbnailFileId(api, boardFileId);
 
-    if (!data) {
+    if (!data || isUrl(data)) {
       if (thumbnailFileId) {
         this.#imageCache.invalidateId(thumbnailFileId);
         // The user has switched to the default theme - delete the file.
@@ -1017,7 +1017,7 @@ class DriveOperations {
             );
           });
       }
-      return undefined;
+      return data;
     }
 
     // Start in parallel.
@@ -1275,7 +1275,7 @@ function getThumbnail(descriptor?: GraphDescriptor): {
       return {}; // MAIN_ICON - no need to persist it.
     }
     const handle = theme?.splashScreen?.storedData.handle;
-    if (isDriveFile(handle)) {
+    if (isDriveFile(handle) || isUrl(handle)) {
       return { data: handle };
     }
   }
@@ -1347,4 +1347,8 @@ function stillHoldsState(state: DriveChangesCacheState | null): boolean {
   }
 
   return state?.lastFetched === current?.lastFetched;
+}
+
+function isUrl(s: string | null | undefined) {
+  return !!s && (s.startsWith("http://") || s.startsWith("https://"));
 }
