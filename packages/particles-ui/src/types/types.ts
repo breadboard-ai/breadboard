@@ -19,16 +19,3 @@ export type ItemList = {
 };
 
 export type TodoItemListTitle = string;
-
-/**
- * The Receiver side of the channel, a proxy that represents the Generator.
- */
-export type GeneratorProxy = {
-  requestAddItem(): Promise<void>;
-  requestUpdateField(
-    parentId: string,
-    id: string,
-    value: string | boolean
-  ): Promise<void>;
-  requestDelete(itemId: string): Promise<void>;
-};

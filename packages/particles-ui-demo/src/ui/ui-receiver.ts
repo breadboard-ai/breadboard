@@ -15,6 +15,19 @@ import type { UITheme } from "./theme/theme.js";
 import "./elements/list.js";
 import { styleMap } from "lit/directives/style-map.js";
 
+/**
+ * The Receiver side of the channel, a proxy that represents the Generator.
+ */
+export type GeneratorProxy = {
+  requestAddItem(): Promise<void>;
+  requestUpdateField(
+    parentId: string,
+    id: string,
+    value: string | boolean
+  ): Promise<void>;
+  requestDelete(itemId: string): Promise<void>;
+};
+
 function extractId(evt: Event): string | undefined {
   const item = evt
     .composedPath()
@@ -54,7 +67,7 @@ function extractBehavior(evt: Event): string | undefined {
 @customElement("ui-receiver")
 export class UiReceiver extends SignalWatcher(LitElement) {
   @property()
-  accessor channel: ParticlesUI.Types.GeneratorProxy | null = null;
+  accessor channel: GeneratorProxy | null = null;
 
   @property()
   accessor list: ParticlesUI.Types.ItemList | null = null;
