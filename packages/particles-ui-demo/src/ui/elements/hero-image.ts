@@ -6,12 +6,12 @@
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import * as ParticlesUI from "@breadboard-ai/particles-ui";
+import { Orientation } from "@breadboard-ai/particles";
 
 @customElement("ui-hero-image")
 export class UIHeroImage extends LitElement {
   @property({ reflect: true, type: String })
-  accessor containerOrientation: ParticlesUI.Particles.Orientation | null =
-    null;
+  accessor containerOrientation: Orientation | null = null;
 
   static styles = [
     ParticlesUI.Styles.all,

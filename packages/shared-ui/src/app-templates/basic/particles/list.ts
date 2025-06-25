@@ -16,6 +16,7 @@ import { themeContext } from "../../shared/contexts/theme.js";
 import "./card.js";
 import "./image.js";
 import "./segment.js";
+import { Orientation } from "@breadboard-ai/particles";
 
 @customElement("ui-basic-list")
 export class UIBasicList extends SignalWatcher(LitElement) {
@@ -23,7 +24,7 @@ export class UIBasicList extends SignalWatcher(LitElement) {
   accessor list: ParticlesUI.Types.ItemList | null = null;
 
   @property({ reflect: true, type: String })
-  accessor orientation: ParticlesUI.Particles.Orientation = "vertical";
+  accessor orientation: Orientation = "vertical";
 
   @consume({ context: themeContext })
   accessor theme: UITheme | undefined;

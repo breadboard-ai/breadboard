@@ -8,5 +8,4 @@ export * as Styles from "./styles/index.js";
 export * as Utils from "./utils/utils.js";
 
 export type * as Colors from "./types/colors.js";
-export type * as Particles from "./types/particles.js";
 export type * as Types from "./types/types.js";

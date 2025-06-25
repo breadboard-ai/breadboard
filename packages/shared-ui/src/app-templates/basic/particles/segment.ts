@@ -23,17 +23,18 @@ import {
 } from "../../../utils/youtube.js";
 import { until } from "lit/directives/until.js";
 import { markdown } from "../../../directives/markdown.js";
+import { Field, Orientation } from "@breadboard-ai/particles";
 
 @customElement("ui-basic-segment")
 export class UIBasicSegment extends SignalWatcher(LitElement) {
   @property()
-  accessor fields: Record<string, ParticlesUI.Particles.Field> | null = null;
+  accessor fields: Record<string, Field> | null = null;
 
   @property()
   accessor values: Record<string, unknown> | null = null;
 
   @property()
-  accessor containerOrientation: ParticlesUI.Particles.Orientation = "vertical";
+  accessor containerOrientation: Orientation = "vertical";
 
   @property({ reflect: true, type: Boolean })
   accessor disabled = false;
@@ -67,7 +68,7 @@ export class UIBasicSegment extends SignalWatcher(LitElement) {
 
   #renderField(
     fieldName: string,
-    field: ParticlesUI.Particles.Field,
+    field: Field,
     value: unknown,
     theme: UITheme
   ) {
