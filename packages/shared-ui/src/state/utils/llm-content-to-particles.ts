@@ -21,7 +21,7 @@ function llmContentToParticles(content?: LLMContent): Outcome<GroupParticle> {
         case "inlineData" in part: {
           // InlineDataCapabilityPart
           const { mimeType, data } = part.inlineData;
-          return { data, mimeType };
+          return { data: `data:${mimeType};base64,${data}`, mimeType };
         }
         case "storedData" in part: {
           // StoredDataCapabilityPart
