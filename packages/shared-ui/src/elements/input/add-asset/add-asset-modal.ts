@@ -470,6 +470,13 @@ export class AddAssetModal extends LitElement {
       @pointerdown=${() => {
         this.dispatchEvent(new OverlayDismissedEvent());
       }}
+      @keydown=${(evt: KeyboardEvent) => {
+        if (evt.key !== "Escape") {
+          return;
+        }
+        evt.preventDefault();
+        this.dispatchEvent(new OverlayDismissedEvent());
+      }}
     >
       <div
         id="content"
