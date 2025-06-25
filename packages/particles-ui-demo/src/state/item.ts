@@ -4,13 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Particles, Types } from "@breadboard-ai/particles-ui";
+import type { Presentation } from "@breadboard-ai/particles";
+import type { Types } from "@breadboard-ai/particles-ui";
 
 import { signal } from "signal-utils";
 
 export { Item };
 
-function createPresentation(): Particles.Presentation {
+function createPresentation(): Presentation {
   const params = new URLSearchParams(window.location.search);
   const vertical = params.get("vertical");
 
@@ -72,10 +73,10 @@ class Item implements Types.ItemState {
   accessor data: Types.ItemData | undefined = undefined;
 
   @signal
-  accessor presentation: Particles.Presentation = createPresentation();
+  accessor presentation: Presentation = createPresentation();
 
   static from(
-    item: Types.ItemData & { presentation: Particles.Presentation }
+    item: Types.ItemData & { presentation: Presentation }
   ): Types.ItemState {
     const newItem = new Item();
     const { presentation, ...data } = item;

@@ -12,6 +12,7 @@ import { consume } from "@lit/context";
 import { type UITheme } from "../../shared/theme/theme.js";
 import * as ParticlesUI from "@breadboard-ai/particles-ui";
 import { themeContext } from "../../shared/contexts/theme.js";
+import { Orientation, Segment } from "@breadboard-ai/particles";
 
 @customElement("ui-basic-card")
 export class UIBasicCard extends SignalWatcher(LitElement) {
@@ -45,10 +46,10 @@ export class UIBasicCard extends SignalWatcher(LitElement) {
   ];
 
   @property({ reflect: true, type: String })
-  accessor orientation: ParticlesUI.Particles.Orientation = "vertical";
+  accessor orientation: Orientation = "vertical";
 
   @property()
-  accessor segments: ParticlesUI.Particles.Segment[] = [
+  accessor segments: Segment[] = [
     {
       weight: 1,
       fields: {},

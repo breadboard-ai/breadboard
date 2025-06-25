@@ -15,8 +15,7 @@ import {
   isStoredData,
 } from "@google-labs/breadboard";
 import { isTextCapabilityPart } from "@google-labs/breadboard";
-import { BehaviorHint } from "@breadboard-ai/particles";
-import { Field } from "@breadboard-ai/particles-ui/particles";
+import { BehaviorHint, Presentation, Field } from "@breadboard-ai/particles";
 
 function as(mimeType: string, isStored = false): Field["as"] {
   const mimePrefix = mimeType.split("/").at(0);
@@ -52,7 +51,7 @@ function base64toUTF8(str: string) {
 function llmContentPartPresentation(
   part: DataPart,
   behaviors: BehaviorHint[]
-): ParticlesUI.Particles.Presentation {
+): Presentation {
   if (isTextCapabilityPart(part)) {
     return {
       behaviors: [],
@@ -160,7 +159,7 @@ function llmContentPartPresentation(
     }
   }
 
-  return {} as ParticlesUI.Particles.Presentation;
+  return {} as Presentation;
 }
 
 function appendToItems(
