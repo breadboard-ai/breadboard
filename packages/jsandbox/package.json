@@ -119,7 +119,7 @@
   "devDependencies": {
     "@breadboard-ai/types": "0.7.0",
     "@google-labs/tsconfig": "^0.0.1",
-    "@types/node": "^22.0.0",
+    "@types/node": "^24.0.4",
     "eslint": "^8.57.1",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3",

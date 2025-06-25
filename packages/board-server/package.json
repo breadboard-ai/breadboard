@@ -132,7 +132,7 @@
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",
     "@types/cors": "^2.8.19",
-    "@types/node": "^22.0.0",
+    "@types/node": "^24.0.4",
     "@types/supertest": "^6.0.3",
     "@types/uuid": "^10.0.0",
     "esbuild": "^0.25.5",
