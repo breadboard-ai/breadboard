@@ -2663,51 +2663,6 @@ export class Main extends LitElement {
             BreadboardUI.Types.BOARD_LOAD_STATUS.LOADING;
         }
 
-        let boardOverlay: HTMLTemplateResult | symbol = nothing;
-        if (this.boardEditOverlayInfo) {
-          const location = {
-            x: this.boardEditOverlayInfo.x ?? 160,
-            y: this.boardEditOverlayInfo.y ?? 100,
-            addHorizontalClickClearance: true,
-          };
-
-          boardOverlay = html`<bb-board-details-overlay
-            .tabId=${this.boardEditOverlayInfo.tabId}
-            .boardTitle=${this.boardEditOverlayInfo.title}
-            .boardVersion=${this.boardEditOverlayInfo.version}
-            .boardDescription=${this.boardEditOverlayInfo.description}
-            .boardPublished=${this.boardEditOverlayInfo.published}
-            .boardPrivate=${this.boardEditOverlayInfo.private}
-            .boardIsTool=${this.boardEditOverlayInfo.isTool}
-            .boardIsComponent=${this.boardEditOverlayInfo.isComponent}
-            .boardExported=${this.boardEditOverlayInfo.exported}
-            .subGraphId=${this.boardEditOverlayInfo.subGraphId}
-            .moduleId=${this.boardEditOverlayInfo.moduleId}
-            .location=${location}
-            @bboverlaydismissed=${() => {
-              this.boardEditOverlayInfo = null;
-            }}
-            @bbboardinfoupdate=${async (
-              evt: BreadboardUI.Events.BoardInfoUpdateEvent
-            ) => {
-              await this.#handleBoardInfoUpdate(evt);
-              if (evt.exported !== null) {
-                if (evt.subGraphId) {
-                  await this.#attemptToggleExport(
-                    evt.subGraphId,
-                    "declarative"
-                  );
-                } else if (evt.moduleId) {
-                  await this.#attemptToggleExport(evt.moduleId, "imperative");
-                }
-              }
-
-              this.boardEditOverlayInfo = null;
-              this.requestUpdate();
-            }}
-          ></bb-board-details-overlay>`;
-        }
-
         let settingsOverlay: HTMLTemplateResult | symbol = nothing;
         if (this.showSettingsOverlay) {
           settingsOverlay = html`<bb-settings-edit-overlay
@@ -3463,13 +3418,7 @@ export class Main extends LitElement {
                           return;
                         }
 
-                        this.#showBoardEditOverlay(
-                          this.tab,
-                          window.innerWidth - 200,
-                          80,
-                          null,
-                          null
-                        );
+                        this.#showBoardEditModal = true;
                         break;
                       }
 
@@ -3991,17 +3940,6 @@ export class Main extends LitElement {
                 evt: BreadboardUI.Events.OverflowMenuActionEvent
               ) => {
                 switch (evt.action) {
-                  case "edit-board-details": {
-                    this.#showBoardEditOverlay(
-                      this.tab,
-                      evt.x ?? null,
-                      evt.y ?? null,
-                      evt.value,
-                      null
-                    );
-                    break;
-                  }
-
                   case "edit-module-details": {
                     this.#showBoardEditOverlay(
                       this.tab,
@@ -4603,7 +4541,6 @@ export class Main extends LitElement {
         return [
           this.showToS ? this.createTosDialog() : nothing,
           ui,
-          boardOverlay,
           settingsOverlay,
           firstRunOverlay,
           showNewWorkspaceItemOverlay,

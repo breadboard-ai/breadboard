@@ -49,6 +49,8 @@ export class AccountSwitcher extends LitElement {
           border-radius: 50%;
           border: none;
           background: transparent;
+          width: 20px;
+          height: 20px;
 
           &:not([disabled]) {
             cursor: pointer;
@@ -156,6 +158,14 @@ export class AccountSwitcher extends LitElement {
           return;
         }
 
+        this.#close();
+      }}
+      @keydown=${(evt: KeyboardEvent) => {
+        if (evt.key !== "Escape") {
+          return;
+        }
+
+        evt.preventDefault();
         this.#close();
       }}
       ${ref((el?: Element) => {

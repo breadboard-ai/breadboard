@@ -184,6 +184,13 @@ export class Modal extends LitElement {
 
         this.#close();
       }}
+      @keydown=${(evt: KeyboardEvent) => {
+        if (evt.key !== "Escape") {
+          return;
+        }
+        evt.preventDefault();
+        this.#close();
+      }}
       ${ref((el?: Element) => {
         if (!el) {
           return;
