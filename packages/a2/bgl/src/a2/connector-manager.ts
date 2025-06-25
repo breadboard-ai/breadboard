@@ -297,7 +297,7 @@ type ConnectorManagerState = {
 };
 
 class ConnectorManager {
-  constructor(public readonly part: ConnectorConfig) {}
+  constructor(public readonly part: ConnectorConfig | ConnectorInfo) {}
 
   #state: ConnectorManagerState | null = null;
 
@@ -308,15 +308,29 @@ class ConnectorManager {
     return state.info.url;
   }
 
-  async #getState(): Promise<Outcome<ConnectorManagerState>> {
+  async #getConnectorInfo(): Promise<Outcome<ConnectorInfo>> {
+    if ("url" in this.part) {
+      return this.part;
+    }
     const path: FileSystemPath = `/assets/${this.part.path}`;
-
-    if (this.#state) return this.#state;
 
     const reading = await read({ path });
     if (!ok(reading)) return reading;
 
-    const info = getConnectorInfo(reading.data);
+    return getConnectorInfo(reading.data);
+  }
+
+  #getConnectorId(): Outcome<string> {
+    if ("url" in this.part) {
+      return this.part.url;
+    }
+    return getConnectorId(this.part);
+  }
+
+  async #getState(): Promise<Outcome<ConnectorManagerState>> {
+    if (this.#state) return this.#state;
+
+    const info = await this.#getConnectorInfo();
     if (!ok(info)) return info;
 
     const describing = await describeConnector({ url: info.url });
@@ -332,7 +346,7 @@ class ConnectorManager {
     const url = getExportUrl(tag, state.describeOutputs);
     if (!ok(url)) return url;
 
-    const id = getConnectorId(this.part);
+    const id = this.#getConnectorId();
     if (!ok(id)) return id;
 
     return { $board: url, id, info: state.info };

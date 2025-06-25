@@ -13,6 +13,7 @@ type Inputs = {
   id: string;
   info?: { configuration?: ConnectorConfiguration };
   method: "canSave" | "save";
+  title?: string;
   context?: LLMContent[];
 };
 
@@ -28,6 +29,7 @@ async function invoke({
   method,
   id: connectorId,
   context,
+  title,
   info,
 }: Inputs): Promise<Outcome<Outputs>> {
   const mimeType = info?.configuration?.file?.mimeType;
@@ -40,7 +42,7 @@ async function invoke({
     const gettingCollector = await getCollector(
       token,
       connectorId,
-      "Untitled Document",
+      title ?? "Untitled Document",
       info?.configuration?.file?.id
     );
     if (!ok(gettingCollector)) return gettingCollector;

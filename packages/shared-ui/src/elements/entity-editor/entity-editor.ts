@@ -256,7 +256,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           }
         }
 
-        &.display {
+        &.output {
           & h1 {
             --outer-border: oklch(from var(--ui-display) calc(l - 0.2) c h);
             background: var(--ui-display);
@@ -487,7 +487,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
                     20px no-repeat;
                 }
 
-                &.display::before {
+                &.output::before {
                   background: var(--bb-icon-responsive-layout) center center /
                     20px 20px no-repeat;
                 }
@@ -1302,8 +1302,8 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           value = html`<label
             class=${classMap({ slim: isControllerBehavior(port.schema) })}
             >${!isControllerBehavior(port.schema) ? html`${port.title}: ` : ""}
-            ${port.value ?? "Value not set"}</label
-          >`;
+            <input type="text" name=${port.name} .value=${port.value ?? ""}
+          /></label>`;
           break;
         }
 
@@ -1705,7 +1705,7 @@ function getLLMContentPortValue(
     if (defaultValue) {
       try {
         return JSON.parse(defaultValue);
-      } catch (e) {
+      } catch {
         // eat the error, just fall through
       }
     }
