@@ -39,10 +39,10 @@ const EDGE_SELECTED = custom.c100;
 
 // Value is no longer on the wire, because it was consumed by the receiving
 // component. Constant wires never reach this state.
-const EDGE_CONSUMED = getGlobalColor("--bb-input-600");
+const EDGE_CONSUMED = palette.neutral.n0;
 
 // Value is on the wire, but hasn't been consumed by receiving component yet.
-const EDGE_STORED = getGlobalColor("--bb-human-600");
+const EDGE_STORED = palette.neutral.n80;
 
 // Value is on the wire, but hasn't been consumed by receiving component yet.
 const EDGE_USER = getGlobalColor("--bb-joiner-600");
@@ -51,6 +51,7 @@ const EDGE_MODEL = getGlobalColor("--bb-generative-600");
 const EDGE_CLEARANCE = 0;
 const HALF_HEADER_HEIGHT = 24;
 const ARROW_SIZE = 4;
+const STORED_MARKER_RADIUS = 64;
 
 type NodeBoundPoints = {
   n1t: DOMPoint;
@@ -63,11 +64,20 @@ type NodeBoundPoints = {
   n2l: DOMPoint;
 };
 
+type StepPoints = {
+  start: DOMPoint;
+  end: DOMPoint;
+  cpA: DOMPoint;
+  cpB: DOMPoint;
+  cp1: DOMPoint;
+  cp2: DOMPoint;
+};
+
 const CONNECTION_POINT_RADIUS = 8;
 
 @customElement("bb-graph-edge")
 export class GraphEdge extends Box {
-  @property()
+  @property({ reflect: true, type: String })
   accessor status: "consumed" | "initial" | "stored" | null = null;
 
   @property({ reflect: true, type: Boolean })
@@ -91,12 +101,16 @@ export class GraphEdge extends Box {
         outline: 2px solid blue;
       }
 
-      :host([selected]) {
+      :host([status="stored"]) {
         z-index: 2;
       }
 
-      :host([selected][showedgepointselectors]) {
+      :host([selected]) {
         z-index: 3;
+      }
+
+      :host([selected][showedgepointselectors]) {
+        z-index: 4;
       }
 
       svg {
@@ -471,7 +485,7 @@ export class GraphEdge extends Box {
     return (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
   }
 
-  #createStepsFromConnectionPoints(connectionPoints: Connection) {
+  #createStepsFromConnectionPoints(connectionPoints: Connection): StepPoints {
     const n1adjust = new DOMPoint();
     const n2adjust = new DOMPoint();
     const c1adjust = new DOMPoint();
@@ -525,14 +539,73 @@ export class GraphEdge extends Box {
     };
   }
 
-  #createSVGStepsFromConnectionPoints(connectionPoints: Connection) {
-    const steps = this.#createStepsFromConnectionPoints(connectionPoints);
+  #createSVGStepsFromConnectionPoints(steps: StepPoints) {
     return [
       `M ${steps.start.x} ${steps.start.y}`,
       `L ${steps.cpA.x} ${steps.cpA.y}`,
       `C ${steps.cp1.x} ${steps.cp1.y}, ${steps.cp2.x} ${steps.cp2.y}, ${steps.cpB.x} ${steps.cpB.y}`,
       `L ${steps.end.x} ${steps.end.y}`,
     ];
+  }
+
+  #createAnimationFromConnectionPoints(
+    connectionPoints: Connection,
+    steps: StepPoints
+  ) {
+    const location = new DOMPoint(steps.start.x, steps.start.y);
+    const animationStart = new DOMPoint(steps.start.x, steps.start.y);
+    const animationEnd = new DOMPoint(steps.end.x, steps.end.y);
+
+    const startAdjust = new DOMPoint();
+    const endAdjust = new DOMPoint();
+    switch (connectionPoints.from) {
+      case "Left": {
+        startAdjust.x = STORED_MARKER_RADIUS;
+        break;
+      }
+      case "Top": {
+        startAdjust.y = STORED_MARKER_RADIUS;
+        break;
+      }
+      case "Right": {
+        startAdjust.x = -STORED_MARKER_RADIUS;
+        break;
+      }
+      case "Bottom": {
+        startAdjust.y = -STORED_MARKER_RADIUS;
+        break;
+      }
+    }
+
+    switch (connectionPoints.to) {
+      case "Left": {
+        endAdjust.x = STORED_MARKER_RADIUS;
+        break;
+      }
+      case "Top": {
+        endAdjust.y = STORED_MARKER_RADIUS;
+        break;
+      }
+      case "Right": {
+        endAdjust.x = -STORED_MARKER_RADIUS;
+        break;
+      }
+      case "Bottom": {
+        endAdjust.y = -STORED_MARKER_RADIUS;
+        break;
+      }
+    }
+
+    return {
+      location,
+      steps: [
+        `M ${startAdjust.x} ${startAdjust.y}`,
+        `L 0 0`,
+        `C ${steps.cp1.x - animationStart.x} ${steps.cp1.y - animationStart.y}, ${steps.cp2.x - animationStart.x} ${steps.cp2.y - animationStart.y}, ${steps.cpB.x - animationStart.x} ${steps.cpB.y - animationStart.y}`,
+        `L ${steps.end.x - animationStart.x} ${steps.end.y - animationStart.y}`,
+        `L ${animationEnd.x - animationStart.x + endAdjust.x} ${animationEnd.y - animationStart.y + endAdjust.y}`,
+      ],
+    };
   }
 
   #createRotationFromConnectionPoints(connectionPoints: Connection) {
@@ -598,7 +671,12 @@ export class GraphEdge extends Box {
     }
 
     const rotation = this.#createRotationFromConnectionPoints(connectionPoints);
-    const steps = this.#createSVGStepsFromConnectionPoints(connectionPoints);
+    const stepPoints = this.#createStepsFromConnectionPoints(connectionPoints);
+    const steps = this.#createSVGStepsFromConnectionPoints(stepPoints);
+    const animation = this.#createAnimationFromConnectionPoints(
+      connectionPoints,
+      stepPoints
+    );
     const arrowSize = ARROW_SIZE;
 
     let edgeColor;
@@ -716,6 +794,34 @@ export class GraphEdge extends Box {
           <svg id="edge" ${ref(this.#edgeRef)} version="1.1"
                width=${this.bounds.width} height=${this.bounds.height} viewBox="0 0 ${this.bounds.width} ${this.bounds.height}"
                xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <radialGradient id="line-gradient">
+                    <stop offset="0%" stop-color="#000000" />
+                    <stop offset="100%" stop-color="#00000000" />
+                  </radialGradient>
+
+                  <mask id="line-gradient-mask">
+                    <path
+                      fill="none"
+                      stroke="#fff"
+                      d=${steps.join(" ")}
+                      stroke-width="1.5"
+                    />
+                    <line x1=${connectionPoints.n2.x}
+                          y1=${connectionPoints.n2.y}
+                          x2=${connectionPoints.n2.x - arrowSize}
+                          y2=${connectionPoints.n2.y - arrowSize}
+                          transform=${`rotate(${rotation}, ${connectionPoints.n2.x}, ${connectionPoints.n2.y})`}
+                          stroke="#fff" stroke-width="2" stroke-linecap="round" />
+
+                    <line x1=${connectionPoints.n2.x} y1=${connectionPoints.n2.y}
+                          x2=${connectionPoints.n2.x - arrowSize}
+                          y2=${connectionPoints.n2.y + arrowSize}
+                          transform=${`rotate(${rotation}, ${connectionPoints.n2.x}, ${connectionPoints.n2.y})`}
+                          stroke="#fff" stroke-width="2" stroke-linecap="round" />
+                  </mask>
+                </defs>
+
                 <path d=${steps.join(" ")}
                   stroke=${this.selected ? EDGE_SELECTED : edgeColor}
                   stroke-width="2" fill="none" stroke-linecap="round" stroke-dasharray=${dashArray} />
@@ -736,6 +842,31 @@ export class GraphEdge extends Box {
                 y2=${connectionPoints.n2.y + arrowSize}
                 transform=${`rotate(${rotation}, ${connectionPoints.n2.x}, ${connectionPoints.n2.y})`}
                 stroke=${this.selected ? EDGE_SELECTED : edgeColor} stroke-width="2" stroke-linecap="round" />
+
+                ${
+                  this.status === "stored"
+                    ? svg`<g mask="url(#line-gradient-mask)">
+                        <circle cx=${animation.location.x} cy=${animation.location.y} r=${STORED_MARKER_RADIUS} fill="url(#line-gradient)">
+                          <animateMotion
+                            dur="1.5s"
+                            repeatCount="indefinite"
+                            path=${animation.steps.join(" ")}
+                          ></animateMotion>
+                        </circle>
+
+                        <circle cx=${animation.location.x} cy=${animation.location.y} r=${STORED_MARKER_RADIUS} fill="url(#line-gradient)">
+                          <animateMotion
+                            begin="0.75s"
+                            dur="1.5s"
+                            fill="remove"
+                            repeatCount="indefinite"
+                            path=${animation.steps.join(" ")}
+                          ></animateMotion>
+                        </circle>
+                      </g>`
+                    : nothing
+                }
+
 
                 ${
                   this.carriesList
