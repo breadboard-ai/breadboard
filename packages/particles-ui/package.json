@@ -102,6 +102,7 @@
     "node": ">=20.14.0"
   },
   "dependencies": {
+    "@breadboard-ai/particles": "^0.0.1",
     "@breadboard-ai/types": "0.7.0",
     "@google-labs/breadboard": "^0.34.0",
     "@material/material-color-utilities": "^0.3.0"
