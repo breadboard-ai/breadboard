@@ -6,12 +6,18 @@
 
 export type Hints = {
   /**
-   * Provides presentation hints. If not specified, the group particle doesn't
-   * have an opinion about its type (think "generic grouping").
-   * If specified, can be used to identify semantics. For example, can be used
-   * to bind to the right UI element.
+   * Provides presentation information. If not specified or `null`, the
+   * generator of the particle doesn't have an opinion about its presentation.
+   *
+   * When specified as `string`, can be used to provide hints for presentation.
+   * This is useful when the generator of particles and the receiver of the
+   * particle can use this string as an identifier for particular presentation
+   * that will be used for this particle.
+   *
+   * When specified as `Presentation`, fully describes the presentation
+   * of the particle.
    */
-  presentation?: PresentationHint[];
+  presentation?: Presentation | string | null;
   /**
    * Provides behavior hints. If not specified, the group particle is just
    * static content. Otherwise, the group particle has event listeners
@@ -58,7 +64,6 @@ export type GroupParticle = {
   type?: string;
 } & Hints;
 
-export type PresentationHint = string;
 export type BehaviorHint = string;
 
 export type Particle = TextParticle | DataParticle | GroupParticle;
