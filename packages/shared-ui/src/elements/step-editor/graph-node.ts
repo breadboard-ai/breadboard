@@ -176,7 +176,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         width: 100%;
         height: 100%;
         outline: var(--bb-grid-size-2) solid
-          oklch(from var(--bb-ui-600) l c h / 0.25);
+          oklch(from var(--p-30) l c h / calc(alpha * 0.25));
         border-radius: var(--bb-grid-size-3);
         z-index: 0;
       }
@@ -259,6 +259,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         color: var(--bb-neutral-900);
         position: relative;
         cursor: pointer;
+        border: 1px solid var(--n-90);
 
         #edge {
           position: absolute;
