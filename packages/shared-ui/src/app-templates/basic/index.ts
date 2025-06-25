@@ -96,10 +96,6 @@ function isHTMLOutput(screen: AppScreenOutput): string | null {
   return null;
 }
 
-function keyFromGraphUrl(url: string) {
-  return `cw-${url.replace(/\W/gi, "-")}`;
-}
-
 @customElement("app-basic")
 export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   @property({ type: Object })
@@ -137,37 +133,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   accessor readOnly = true;
 
   @property()
-  set showContentWarning(showContentWarning: boolean) {
-    // Only accept an updated value if it's false or unset.
-    if (!showContentWarning || this.#showContentWarning === undefined) {
-      this.#showContentWarning = showContentWarning;
-    }
-
-    // If we have the graph's URL and we just got an updated value for the
-    // content warning, we will handle it. If the value was set to false then
-    // we store the fact that they've seen the warning and dismissed it.
-    //
-    // If it's set to true then we will take a look to the local storage and if
-    // the flag has been set then we don't show the content warning.
-    if (this.graph?.url) {
-      const key = keyFromGraphUrl(this.graph.url);
-      if (!showContentWarning) {
-        globalThis.localStorage.setItem(key, "true");
-      } else if (globalThis.localStorage.getItem(key) === "true") {
-        this.#showContentWarning = false;
-      }
-    }
-  }
-  get showContentWarning() {
-    if (this.graph?.url && typeof this.#showContentWarning === "undefined") {
-      const key = keyFromGraphUrl(this.graph.url);
-      if (globalThis.localStorage.getItem(key) === "true") {
-        this.#showContentWarning = false;
-      }
-    }
-    return this.#showContentWarning ?? true;
-  }
-  #showContentWarning: boolean | undefined = undefined;
+  accessor showContentWarning = false;
 
   @consume({ context: boardServerContext, subscribe: true })
   accessor boardServer: BoardServer | undefined;
