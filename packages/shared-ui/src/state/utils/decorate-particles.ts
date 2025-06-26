@@ -70,7 +70,6 @@ function dataParticlePresentation(particle: DataParticle): Presentation {
           src: {
             title: "Generated Item",
             as: asType,
-            src: particle.data,
           },
         },
         orientation: "vertical",
