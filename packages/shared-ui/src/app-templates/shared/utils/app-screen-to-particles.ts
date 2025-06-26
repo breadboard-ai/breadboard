@@ -22,18 +22,18 @@ function as(mimeType: string, isStored = false): Field["as"] {
 
   switch (mimePrefix) {
     case "audio":
-      return "audio";
+      return "particle-ui-audio";
     case "video":
-      return "video";
+      return "particle-ui-video";
     case "image":
-      return "image";
+      return "particle-ui-image";
     case "text":
       if (mimeType === "text/plain") {
-        return "pre";
+        return "particle-ui-code";
       }
-      return isStored ? "file" : "text";
+      return isStored ? "particle-ui-file" : "particle-ui-text";
     default:
-      return "file";
+      return "particle-ui-file";
   }
 }
 
@@ -64,7 +64,7 @@ function llmContentPartPresentation(
             text: {
               title: "Text part",
               modifiers: behaviors.includes("hint-chat-mode") ? ["hero"] : [],
-              as: "text",
+              as: "particle-ui-text",
             },
           },
           orientation: "vertical",
@@ -85,7 +85,6 @@ function llmContentPartPresentation(
             src: {
               title: "Generated Item",
               as: asType,
-              src: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`,
             },
           },
           orientation: "vertical",
@@ -105,7 +104,6 @@ function llmContentPartPresentation(
             src: {
               title: "Generated Item",
               as: as(part.storedData.mimeType, true),
-              src: part.storedData.handle,
             },
           },
           orientation: "vertical",
@@ -125,8 +123,7 @@ function llmContentPartPresentation(
             fields: {
               src: {
                 title: "Generated Image",
-                as: "video",
-                src: part.fileData.fileUri,
+                as: "particle-ui-video",
               },
             },
             orientation: "vertical",
@@ -147,8 +144,7 @@ function llmContentPartPresentation(
             fields: {
               src: {
                 title: "Google Drive File",
-                as: "googledrive",
-                src: part.fileData.fileUri,
+                as: "particle-ui-google-drive",
               },
             },
             orientation: "vertical",
@@ -177,7 +173,9 @@ function appendToItems(
       if (data.inlineData.mimeType === "text/plain") {
         data = { src: base64toUTF8(data.inlineData.data) };
       } else {
-        data = { src: data.inlineData.data };
+        data = {
+          src: `data:${data.inlineData.mimeType};base64,${data.inlineData.data}`,
+        };
       }
     }
 
@@ -212,8 +210,6 @@ export function appScreenToParticles(
       }
     }
   }
-
-  console.log(appScreenOutput, items);
 
   return {
     items,

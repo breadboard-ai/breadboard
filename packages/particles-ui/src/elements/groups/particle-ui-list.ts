@@ -9,19 +9,20 @@ import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
-import { type UITheme } from "../../shared/theme/theme.js";
-import * as ParticlesUI from "@breadboard-ai/particles-ui";
-import { themeContext } from "../../shared/contexts/theme.js";
+import { themeContext } from "../../context/theme.js";
+import * as Styles from "../../styles/index.js";
 
-import "./card.js";
-import "./image.js";
-import "./segment.js";
+import "./particle-ui-card.js";
+import "../viewers/particle-ui-image.js";
+import "./particle-ui-segment.js";
 import { Orientation } from "@breadboard-ai/particles";
+import { ItemData, ItemList, UITheme } from "../../types/types.js";
+import { merge } from "../../utils/utils.js";
 
-@customElement("ui-basic-list")
-export class UIBasicList extends SignalWatcher(LitElement) {
+@customElement("particle-ui-list")
+export class ParticleUIList extends SignalWatcher(LitElement) {
   @property()
-  accessor list: ParticlesUI.Types.ItemList | null = null;
+  accessor list: ItemList | null = null;
 
   @property({ reflect: true, type: String })
   accessor orientation: Orientation = "vertical";
@@ -30,7 +31,7 @@ export class UIBasicList extends SignalWatcher(LitElement) {
   accessor theme: UITheme | undefined;
 
   static styles = [
-    ParticlesUI.Styles.all,
+    Styles.all,
     css`
       * {
         box-sizing: border-box;
@@ -101,15 +102,12 @@ export class UIBasicList extends SignalWatcher(LitElement) {
     const items = this.list.items;
     const theme = this.theme;
 
-    return html`<section
-      id="list"
-      class=${classMap(this.theme.components.list)}
-    >
+    return html`<section id="list" class=${classMap(theme.groups.list)}>
       ${this.list.presentation.behaviors.includes("editable")
-        ? html`<div class=${classMap(this.theme.layouts.verticalPadded)}>
-            <div class=${classMap(this.theme.layouts.horizontal)}>
+        ? html`<div class=${classMap(theme.layouts.verticalPadded)}>
+            <div class=${classMap(theme.layouts.horizontal)}>
               <ui-button
-                class=${classMap(this.theme.elements.button)}
+                class=${classMap(theme.elements.button)}
                 data-behavior="add"
                 .icon=${"add"}
               >
@@ -118,15 +116,15 @@ export class UIBasicList extends SignalWatcher(LitElement) {
             </div>
           </div>`
         : nothing}
-      <section id="items" class=${classMap(this.theme.components.listItems)}>
+      <section id="items" class=${classMap(theme.groups.listItems)}>
         ${items.size === 0
           ? html`<div>No items</div>`
           : repeat(items, ([id, item]) => {
               switch (item.presentation.type) {
                 case "card": {
                   const done = !!item.data?.["done"];
-                  return html`<ui-basic-card
-                    class=${classMap(theme.components.card)}
+                  return html`<particle-ui-card
+                    class=${classMap(theme.groups.card)}
                     data-id=${id}
                     .segments=${item.presentation.segments}
                     .orientation=${item.presentation.orientation}
@@ -136,29 +134,29 @@ export class UIBasicList extends SignalWatcher(LitElement) {
                       let classes = {};
                       if (segment.orientation === "vertical") {
                         if (segment.type === "media") {
-                          classes = ParticlesUI.Utils.merge(
-                            theme.components.segmentVertical,
-                            theme.components.media
+                          classes = merge(
+                            theme.groups.segmentVertical,
+                            theme.modifiers.media
                           );
                         } else {
                           classes = {
-                            ...theme.components.segmentVerticalPadded,
+                            ...theme.groups.segmentVerticalPadded,
                           };
                         }
                       } else {
                         if (segment.type === "media") {
-                          classes = ParticlesUI.Utils.merge(
-                            theme.components.segmentHorizontal,
-                            theme.components.media
+                          classes = merge(
+                            theme.groups.segmentHorizontal,
+                            theme.modifiers.media
                           );
                         } else {
                           classes = {
-                            ...theme.components.segmentHorizontalPadded,
+                            ...theme.groups.segmentHorizontalPadded,
                           };
                         }
                       }
 
-                      const values: Record<string, unknown> = {};
+                      const values: Record<string, ItemData[string]> = {};
                       for (const fieldName of Object.keys(segment.fields)) {
                         const key = fieldName;
                         const value = item.data?.[key];
@@ -169,9 +167,9 @@ export class UIBasicList extends SignalWatcher(LitElement) {
                         values[key] = value;
                       }
 
-                      return html`<ui-basic-segment
+                      return html`<particle-ui-segment
                         class=${classMap(
-                          ParticlesUI.Utils.merge(classes, {
+                          merge(classes, {
                             "layout-al-fs": true,
                           })
                         )}
@@ -181,9 +179,9 @@ export class UIBasicList extends SignalWatcher(LitElement) {
                         .fields=${segment.fields}
                         .values=${values}
                         .disabled=${done}
-                      ></ui-basic-segment>`;
+                      ></particle-ui-segment>`;
                     })}
-                  </ui-basic-card>`;
+                  </particle-ui-card>`;
                 }
               }
 

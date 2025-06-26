@@ -5,6 +5,6 @@
  */
 
 import { createContext } from "@lit/context";
-import { UITheme } from "../theme/theme";
+import { type UITheme } from "../types/types.js";
 
 export const themeContext = createContext<UITheme | undefined>("UITheme");

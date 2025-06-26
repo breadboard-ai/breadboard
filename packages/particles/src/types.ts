@@ -177,6 +177,38 @@ export type Behavior = "editable" | "delete";
 export type Modifier = "hero";
 
 /**
+ * The supported tags to use within the `as` property of a Field.
+ */
+export type SupportedTags =
+  /** Represents audio data */
+  | "particle-ui-audio"
+  /** Represents behavioral buttons like "add", "create", "delete", "edit" */
+  | "particle-ui-button"
+  /** Represents code */
+  | "particle-ui-code"
+  /** Represents dates and times */
+  | "particle-ui-date"
+  /** Represents files */
+  | "particle-ui-file"
+  /** Represents Google Drive documents, spreadsheets, and presentations */
+  | "particle-ui-google-drive"
+  /** Represents Images */
+  | "particle-ui-image"
+  /** Represents Numbers */
+  | "particle-ui-number"
+  /** Represents single lines of text */
+  | "particle-ui-text"
+  /** Represents longer forms of text like descriptions */
+  | "particle-ui-long-text"
+  /** Represents Videos */
+  | "particle-ui-video"
+  /** Custom elements that don't fit the above types. */
+  | string;
+
+/** Specifies the name of the field in a segment */
+export type FieldName = string;
+
+/**
  * Specifies a content field for a given segment.
  */
 export interface Field {
@@ -184,18 +216,7 @@ export interface Field {
    * The rendering type of the content field. Used to ensure that the element
    * is rendered with the appopriate controls.
    */
-  as:
-    | "audio"
-    | "behavior"
-    | "date"
-    | "googledrive"
-    | "file"
-    | "image"
-    | "longtext"
-    | "number"
-    | "text"
-    | "pre"
-    | "video";
+  as: SupportedTags;
   /**
    * Used to determine what the user can do. If the user is able to edit the
    * field content you must allow them to do so with the appropriate behavior.
@@ -220,10 +241,6 @@ export interface Field {
   icon?: "delete" | "add" | "check";
 }
 
-type Segmentable = string;
-type Behavioral = Exclude<Behavior, "editable">;
-type Static = "static";
-
 /**
  * A segment is a part of a card or a list. You use it to break up the
  * information into meaningful chunks. If there is a key piece of information
@@ -241,7 +258,7 @@ export interface Segment {
    * always use "min-content" to create enough space for the items.
    */
   weight: number | "min-content" | "max-content";
-  fields: Partial<{ [K in Segmentable | Behavioral | Static]: Field }>;
+  fields: Record<string, Field>;
   orientation: Orientation;
   type: SegmentType;
 }

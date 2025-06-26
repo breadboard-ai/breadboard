@@ -92,7 +92,7 @@ function textParticlePresentation(): Presentation {
           text: {
             title: "Text part",
             modifiers: [],
-            as: "text",
+            as: "particle-ui-text",
           },
         },
         orientation: "vertical",
@@ -107,17 +107,17 @@ function as(mimeType: string, isStored = false): Field["as"] {
 
   switch (mimePrefix) {
     case "audio":
-      return "audio";
+      return "particle-ui-audio";
     case "video":
-      return "video";
+      return "particle-ui-video";
     case "image":
-      return "image";
+      return "particle-ui-image";
     case "text":
       if (mimeType === "text/plain") {
-        return "pre";
+        return "particle-ui-code";
       }
-      return isStored ? "file" : "text";
+      return isStored ? "particle-ui-file" : "particle-ui-text";
     default:
-      return "file";
+      return "particle-ui-file";
   }
 }

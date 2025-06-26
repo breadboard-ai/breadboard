@@ -36,10 +36,7 @@ import {
 } from "../../events/events";
 import { SigninState } from "../../utils/signin-adapter";
 
-import "./particles/card.js";
-import "./particles/image.js";
-import "./particles/list.js";
-import "./particles/segment.js";
+import * as ParticlesUI from "@breadboard-ai/particles-ui";
 
 /** Included so the app can be standalone */
 import "../../elements/input/webcam/webcam-video.js";
@@ -51,10 +48,7 @@ import "../../elements/input/drawable/drawable.js";
 import "../../elements/input/floating-input/floating-input.js";
 
 import "../../elements/output/header/header.js";
-import "../../elements/output/llm-output/llm-output-array.js";
-import "../../elements/output/llm-output/export-toolbar.js";
-import "../../elements/output/llm-output/llm-output.js";
-import "../../elements/output/multi-output/multi-output.js";
+
 import { createThemeStyles } from "@breadboard-ai/theme";
 import { icons } from "../../styles/icons";
 import { ActionTracker } from "../../utils/action-tracker.js";
@@ -66,8 +60,6 @@ import { NodeValue } from "@breadboard-ai/types";
 import { projectRunContext } from "../../contexts/project-run.js";
 import { AppScreenOutput, ProjectRun } from "../../state/types.js";
 import { SignalWatcher } from "@lit-labs/signals";
-import { themeContext } from "../shared/contexts/theme.js";
-import { UITheme } from "../shared/theme/theme.js";
 import { theme as uiTheme } from "./theme/light.js";
 import { appScreenToParticles } from "../shared/utils/app-screen-to-particles.js";
 import { type } from "../../styles/host/type.js";
@@ -105,8 +97,8 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     splashImage: false,
   };
 
-  @provide({ context: themeContext })
-  accessor theme: UITheme = uiTheme;
+  @provide({ context: ParticlesUI.Context.themeContext })
+  accessor theme: ParticlesUI.Types.UITheme = uiTheme;
 
   @consume({ context: projectRunContext, subscribe: true })
   accessor run: ProjectRun | null = null;
@@ -537,7 +529,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
               flex: 0 0 auto;
             }
 
-            & ui-basic-list,
+            & particle-ui-list,
             & bb-multi-output {
               --output-value-padding-x: var(--bb-grid-size-4);
               --output-value-padding-y: var(--bb-grid-size-4);
@@ -1013,11 +1005,11 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
           ></iframe>`;
         } else {
           const list = appScreenToParticles(current.last);
-          activityContents = html` <ui-basic-list
-            class=${classMap(this.theme.components.list)}
+          activityContents = html` <particle-ui-list
+            class=${classMap(this.theme.groups.list)}
             .list=${list}
             .orientation=${list?.presentation.orientation}
-          ></ui-basic-list>`;
+          ></particle-ui-list>`;
         }
       }
     }
