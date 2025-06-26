@@ -25,7 +25,7 @@ export type ItemList = {
 
 export type TodoItemListTitle = string;
 
-export interface ParticleUIElement extends HTMLElement {
+export interface ParticleViewer extends HTMLElement {
   fieldName: FieldName | null;
   field: Field | null;
   value: ItemData[string] | null; // TODO: Migrate this to a Particle.

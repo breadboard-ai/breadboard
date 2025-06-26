@@ -10,14 +10,14 @@ export { ParticleUIList } from "./groups/particle-ui-list.js";
 export { ParticleUISegment } from "./groups/particle-ui-segment.js";
 
 /** Viewers */
-export { ParticleUIAudio } from "./viewers/particle-ui-audio.js";
-export { ParticleUIButton } from "./viewers/particle-ui-button.js";
-export { ParticleUICode } from "./viewers/particle-ui-code.js";
-export { ParticleUIDate } from "./viewers/particle-ui-date.js";
-export { ParticleUIFile } from "./viewers/particle-ui-file.js";
-export { ParticleUIGoogleDrive } from "./viewers/particle-ui-google-drive.js";
-export { ParticleUIImage } from "./viewers/particle-ui-image.js";
-export { ParticleUILongText } from "./viewers/particle-ui-long-text.js";
-export { ParticleUINumber } from "./viewers/particle-ui-number.js";
-export { ParticleUIText } from "./viewers/particle-ui-text.js";
-export { ParticleUIVideo } from "./viewers/particle-ui-video.js";
+export { ParticleViewerAudio } from "./viewers/particle-viewer-audio.js";
+export { ParticleViewerButton } from "./viewers/particle-viewer-button.js";
+export { ParticleViewerCode } from "./viewers/particle-viewer-code.js";
+export { ParticleViewerDate } from "./viewers/particle-viewer-date.js";
+export { ParticleViewerFile } from "./viewers/particle-viewer-file.js";
+export { ParticleViewerGoogleDrive } from "./viewers/particle-viewer-google-drive.js";
+export { ParticleViewerImage } from "./viewers/particle-viewer-image.js";
+export { ParticleViewerLongText } from "./viewers/particle-viewer-long-text.js";
+export { ParticleViewerNumber } from "./viewers/particle-viewer-number.js";
+export { ParticleViewerText } from "./viewers/particle-viewer-text.js";
+export { ParticleViewerVideo } from "./viewers/particle-viewer-video.js";

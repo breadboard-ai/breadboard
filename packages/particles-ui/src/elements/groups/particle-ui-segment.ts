@@ -11,7 +11,7 @@ import { consume } from "@lit/context";
 import { themeContext } from "../../context/theme.js";
 
 import { Field, Orientation } from "@breadboard-ai/particles";
-import { ItemData, ParticleUIElement, UITheme } from "../../types/types.js";
+import { ItemData, ParticleViewer, UITheme } from "../../types/types.js";
 import * as Styles from "../../styles/index.js";
 
 @customElement("particle-ui-segment")
@@ -51,8 +51,7 @@ export class ParticleUISegment extends SignalWatcher(LitElement) {
       return html`Unknown field type: ${field.as}`;
     }
 
-    const element: ParticleUIElement =
-      new ElementConstructor() as ParticleUIElement;
+    const element: ParticleViewer = new ElementConstructor() as ParticleViewer;
     if (theme.viewers[field.as]) {
       element.className = Object.keys(theme.viewers[field.as]).join(" ");
     } else {

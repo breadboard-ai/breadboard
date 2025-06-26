@@ -9,13 +9,13 @@ import { Field, FieldName, Orientation } from "@breadboard-ai/particles";
 import { classMap } from "lit/directives/class-map.js";
 import { consume } from "@lit/context";
 import { themeContext } from "../../context/theme.js";
-import { ItemData, ParticleUIElement, UITheme } from "../../types/types.js";
+import { ItemData, ParticleViewer, UITheme } from "../../types/types.js";
 import * as Styles from "../../styles/index.js";
 import { appendToAll, merge } from "../../utils/utils.js";
 import { markdown } from "../../directives/markdown.js";
 
-@customElement("particle-ui-date")
-export class ParticleUIDate extends LitElement implements ParticleUIElement {
+@customElement("particle-viewer-number")
+export class ParticleViewerNumber extends LitElement implements ParticleViewer {
   @property({ reflect: true, type: String })
   accessor containerOrientation: Orientation | null = null;
 
@@ -57,7 +57,7 @@ export class ParticleUIDate extends LitElement implements ParticleUIElement {
         .name=${this.fieldName}
         .value=${this.value}
         .placeholder=${this.field.title ?? "Enter a value"}
-        type="date"
+        type="number"
         class=${classMap(
           merge(
             this.theme.elements.input,
@@ -71,7 +71,7 @@ export class ParticleUIDate extends LitElement implements ParticleUIElement {
 
     return html`<section class="layout-w-100">
       ${markdown(
-        this.value as string,
+        this.value.toString(),
         appendToAll(
           this.theme.markdown,
           ["ol", "ul", "li"],

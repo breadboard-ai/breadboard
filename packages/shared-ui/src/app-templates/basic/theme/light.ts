@@ -97,10 +97,10 @@ export const theme: ParticlesUI.Types.UITheme = {
     segmentHorizontalPadded,
   },
   viewers: {
-    "particle-ui-image": ParticleUIImage,
-    "particle-ui-audio": ParticleUIAudio,
-    "particle-ui-video": ParticleUIVideo,
-    "particle-ui-text": ParticleUIText,
+    "particle-viewer-image": ParticleUIImage,
+    "particle-viewer-audio": ParticleUIAudio,
+    "particle-viewer-video": ParticleUIVideo,
+    "particle-viewer-text": ParticleUIText,
   },
   markdown: {
     p: [...Object.keys(pLight), "layout-mb-2"],

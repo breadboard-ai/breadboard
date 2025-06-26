@@ -13,7 +13,7 @@ import { themeContext } from "../../context/theme.js";
 import * as Styles from "../../styles/index.js";
 
 import "./particle-ui-card.js";
-import "../viewers/particle-ui-image.js";
+import "../viewers/particle-viewer-image.js";
 import "./particle-ui-segment.js";
 import { Orientation } from "@breadboard-ai/particles";
 import { ItemData, ItemList, UITheme } from "../../types/types.js";

@@ -8,13 +8,13 @@ import { customElement, property } from "lit/decorators.js";
 import { Field, FieldName, Orientation } from "@breadboard-ai/particles";
 import { classMap } from "lit/directives/class-map.js";
 import { consume } from "@lit/context";
-import { until } from "lit/directives/until.js";
 import { themeContext } from "../../context/theme.js";
 import * as Styles from "../../styles/index.js";
-import { ItemData, ParticleUIElement, UITheme } from "../../types/types.js";
+import { ItemData, ParticleViewer, UITheme } from "../../types/types.js";
+import { merge } from "../../utils/utils.js";
 
-@customElement("particle-ui-audio")
-export class ParticleUIAudio extends LitElement implements ParticleUIElement {
+@customElement("particle-viewer-code")
+export class ParticleViewerCode extends LitElement implements ParticleViewer {
   @property({ reflect: true, type: String })
   accessor containerOrientation: Orientation | null = null;
 
@@ -45,39 +45,22 @@ export class ParticleUIAudio extends LitElement implements ParticleUIElement {
     `,
   ];
 
-  #blobUrls: string[] = [];
-
-  disconnectedCallback(): void {
-    super.disconnectedCallback();
-
-    for (const url of this.#blobUrls) {
-      URL.revokeObjectURL(url);
-    }
-  }
-
   render() {
     if (!this.value || !this.field || !this.theme) {
       return nothing;
     }
 
-    if (typeof this.value !== "string") {
-      return html`Unable to render audio: URL is not valid`;
-    }
-
-    const audioUrl = fetch(this.value)
-      .then((res) => res.blob())
-      .then((blob) => {
-        const blobUrl = URL.createObjectURL(blob);
-        this.#blobUrls.push(blobUrl);
-        return blobUrl;
-      });
-
-    return html`<section class="layout-pos-rel">
-      <audio
-        class=${classMap(this.theme.elements.audio)}
-        src=${until(audioUrl)}
-        controls
-      ></audio>
-    </section>`;
+    return html`<pre
+      class=${classMap(
+        merge(
+          this.theme.elements.pre,
+          this.field.modifiers?.includes("hero")
+            ? this.theme.modifiers.hero
+            : {}
+        )
+      )}
+    >
+      ${this.value}</pre
+    >`;
   }
 }

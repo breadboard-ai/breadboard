@@ -10,11 +10,11 @@ import { classMap } from "lit/directives/class-map.js";
 import { consume } from "@lit/context";
 import { themeContext } from "../../context/theme.js";
 import * as Styles from "../../styles/index.js";
-import { ItemData, ParticleUIElement, UITheme } from "../../types/types.js";
+import { ItemData, ParticleViewer, UITheme } from "../../types/types.js";
 import { merge } from "../../utils/utils.js";
 
-@customElement("particle-ui-button")
-export class ParticleUIButton extends LitElement implements ParticleUIElement {
+@customElement("particle-viewer-button")
+export class ParticleViewerButton extends LitElement implements ParticleViewer {
   @property({ reflect: true, type: String })
   accessor containerOrientation: Orientation | null = null;
 

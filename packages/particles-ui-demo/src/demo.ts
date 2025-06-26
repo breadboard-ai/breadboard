@@ -323,7 +323,7 @@ export class GoalDemo extends LitElement {
                 "layout-al-c": true,
               })}
             >
-              <particle-ui-button
+              <particle-viewer-button
                 class=${classMap({
                   "layout-al-c": true,
                   "typography-s-bs": true,
@@ -339,7 +339,7 @@ export class GoalDemo extends LitElement {
                   await this.#processSpec();
                 }}
               >
-              </particle-ui-button>
+              </particle-viewer-button>
             </div>
             <div
               id="output"
@@ -397,7 +397,7 @@ export class GoalDemo extends LitElement {
                 this.#persistGoal(evt.target.value);
               }}
             />
-            <particle-ui-button
+            <particle-viewer-button
               class=${classMap({
                 "layout-pl-3": true,
                 "layout-pr-6": true,
@@ -410,7 +410,7 @@ export class GoalDemo extends LitElement {
                 await this.#processGoal();
               }}
             >
-            </particle-ui-button>
+            </particle-viewer-button>
           </div>
         </section>
       </div>
