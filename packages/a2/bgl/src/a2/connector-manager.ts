@@ -296,6 +296,10 @@ type ConnectorManagerState = {
   describeOutputs: DescribeOutputs;
 };
 
+type NodeDescriptor = {
+  id: string;
+};
+
 class ConnectorManager {
   constructor(public readonly part: ConnectorConfig | ConnectorInfo) {}
 
@@ -320,9 +324,14 @@ class ConnectorManager {
     return getConnectorInfo(reading.data);
   }
 
-  #getConnectorId(): Outcome<string> {
+  async #getConnectorId(): Promise<Outcome<string>> {
     if ("url" in this.part) {
-      return this.part.url;
+      const reading = await read({ path: "/env/descriptor" });
+      if (!ok(reading)) return reading;
+
+      const descriptor = getNodeDescriptor(reading.data);
+      if (!ok(descriptor)) return descriptor;
+      return descriptor.id;
     }
     return getConnectorId(this.part);
   }
@@ -346,7 +355,7 @@ class ConnectorManager {
     const url = getExportUrl(tag, state.describeOutputs);
     if (!ok(url)) return url;
 
-    const id = this.#getConnectorId();
+    const id = await this.#getConnectorId();
     if (!ok(id)) return id;
 
     return { $board: url, id, info: state.info };
@@ -478,4 +487,13 @@ function getConnectorInfo(
   if (!part) return err(`Invalid asset structure`);
   if (!("json" in part)) return err(`Invalid connector info structure`);
   return part.json as ConnectorInfo;
+}
+
+function getNodeDescriptor(
+  data: LLMContent[] | undefined
+): Outcome<NodeDescriptor> {
+  const part = data?.at(-1)?.parts.at(0);
+  if (!part) return err(`Invalid asset structure`);
+  if (!("json" in part)) return err(`Invalid file structure`);
+  return part.json as NodeDescriptor;
 }
