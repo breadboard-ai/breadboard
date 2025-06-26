@@ -181,27 +181,27 @@ export type Modifier = "hero";
  */
 export type SupportedTags =
   /** Represents audio data */
-  | "particle-ui-audio"
+  | "particle-viewer-audio"
   /** Represents behavioral buttons like "add", "create", "delete", "edit" */
-  | "particle-ui-button"
+  | "particle-viewer-button"
   /** Represents code */
-  | "particle-ui-code"
+  | "particle-viewer-code"
   /** Represents dates and times */
-  | "particle-ui-date"
+  | "particle-viewer-date"
   /** Represents files */
-  | "particle-ui-file"
+  | "particle-viewer-file"
   /** Represents Google Drive documents, spreadsheets, and presentations */
-  | "particle-ui-google-drive"
+  | "particle-viewer-google-drive"
   /** Represents Images */
-  | "particle-ui-image"
+  | "particle-viewer-image"
   /** Represents Numbers */
-  | "particle-ui-number"
+  | "particle-viewer-number"
   /** Represents single lines of text */
-  | "particle-ui-text"
+  | "particle-viewer-text"
   /** Represents longer forms of text like descriptions */
-  | "particle-ui-long-text"
+  | "particle-viewer-long-text"
   /** Represents Videos */
-  | "particle-ui-video"
+  | "particle-viewer-video"
   /** Custom elements that don't fit the above types. */
   | string;
 

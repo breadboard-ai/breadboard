@@ -9,12 +9,12 @@ import { Field, FieldName, Orientation } from "@breadboard-ai/particles";
 import { classMap } from "lit/directives/class-map.js";
 import { consume } from "@lit/context";
 import { themeContext } from "../../context/theme.js";
+import { ItemData, ParticleViewer, UITheme } from "../../types/types.js";
 import * as Styles from "../../styles/index.js";
-import { ItemData, ParticleUIElement, UITheme } from "../../types/types.js";
 import { merge } from "../../utils/utils.js";
 
-@customElement("particle-ui-code")
-export class ParticleUICode extends LitElement implements ParticleUIElement {
+@customElement("particle-viewer-image")
+export class ParticleViewerImage extends LitElement implements ParticleViewer {
   @property({ reflect: true, type: String })
   accessor containerOrientation: Orientation | null = null;
 
@@ -50,17 +50,28 @@ export class ParticleUICode extends LitElement implements ParticleUIElement {
       return nothing;
     }
 
-    return html`<pre
-      class=${classMap(
-        merge(
-          this.theme.elements.pre,
-          this.field.modifiers?.includes("hero")
-            ? this.theme.modifiers.hero
-            : {}
-        )
-      )}
-    >
-      ${this.value}</pre
-    >`;
+    return html`<section class="layout-pos-rel">
+      <img
+        src=${this.value}
+        class=${classMap(this.theme.modifiers.cover)}
+        alt=${this.field.title}
+      />
+      ${this.field.title && this.field.modifiers?.includes("hero")
+        ? html`<h1
+            slot="headline"
+            class=${classMap(
+              merge(
+                this.theme.elements.h1,
+                this.theme.modifiers.headline,
+                this.containerOrientation === "horizontal"
+                  ? this.theme.elements.h3
+                  : {}
+              )
+            )}
+          >
+            ${this.field.title}
+          </h1>`
+        : nothing}
+    </section>`;
   }
 }

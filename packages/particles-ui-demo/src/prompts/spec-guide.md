@@ -51,18 +51,18 @@ Fields represent individual pieces of data within a segment that need to be
 rendered. They contain the following properties:
 
 - **as:** The rendering type of the field
-  - **particle-ui-audio:** Represents audio data.
-  - **particle-ui-button:** Represents behavioral buttons like "add", "create",
-    "delete", "edit".
-  - **particle-ui-code:** A piece of code.
-  - **particle-ui-date:** A date value.
-  - **particle-ui-file:** A downloadable file.
-  - **particle-ui-google-drive:** A reference to a Google Drive file.
-  - **particle-ui-image:** An image.
-  - **particle-ui-number:** A numerical value, e.g., time or distance.
-  - **particle-ui-text:** A single line of text, e.g., a title.
-  - **particle-ui-long-text:** Multiple lines of text, e.g. a description.
-  - **particle-ui-video:**
+  - **particle-viewer-audio:** Represents audio data.
+  - **particle-viewer-button:** Represents behavioral buttons like "add",
+    "create", "delete", "edit".
+  - **particle-viewer-code:** A piece of code.
+  - **particle-viewer-date:** A date value.
+  - **particle-viewer-file:** A downloadable file.
+  - **particle-viewer-google-drive:** A reference to a Google Drive file.
+  - **particle-viewer-image:** An image.
+  - **particle-viewer-number:** A numerical value, e.g., time or distance.
+  - **particle-viewer-text:** A single line of text, e.g., a title.
+  - **particle-viewer-long-text:** Multiple lines of text, e.g. a description.
+  - **particle-viewer-video:**
 - **modifiers:** Visual adjustments or enhancements to the field (e.g., "hero").
 - **title:** A label for the field.
 - **icon:** (For behaviors) An icon to represent the action ("delete", "add",
@@ -124,9 +124,9 @@ An item is the top-level entity. It contains the data to be displayed and the
     - The item is a card that has vertical orientation.
     - It has one segment.
     - This segment is a block, has a vertical orientation, and contains
-      - a "title" field that is "particle-ui-text" with the title "Title" and a
-        "hero" modifier.
-      - a "description" field that is "particle-ui-long-text" with the title
+      - a "title" field that is "particle-viewer-text" with the title "Title"
+        and a "hero" modifier.
+      - a "description" field that is "particle-viewer-long-text" with the title
         "Description".
 
 2.  **A Card with an Image and non-editable Title and Description:**
@@ -137,11 +137,11 @@ An item is the top-level entity. It contains the data to be displayed and the
     - It has two segments.
     - The first segment has a weight of 1.5 and vertical orientation, and
       contains:
-      - an "particle-ui-image" image field.
+      - an "particle-viewer-image" image field.
     - The second segment has a weight of 3 and vertical orientation
-      - a text field that acts a headline and which is "particle-ui-text" with
-        the "hero" modifier.
-      - a "particle-ui-long-text" field which describes the content in more
+      - a text field that acts a headline and which is "particle-viewer-text"
+        with the "hero" modifier.
+      - a "particle-viewer-long-text" field which describes the content in more
         detail.
 
 3.  **A Card with an Image and Editable Text:**
@@ -150,10 +150,10 @@ An item is the top-level entity. It contains the data to be displayed and the
     - The item is a card that has vertical orientation.
     - It has one segment.
     - This segment has a weight of 1 and vertical orientation, and it contains:
-      - an "image" field that is a "particle-ui-image" with a "hero" modifier.
-        The image's "title" is that of the item.
-      - a "text" field that is "particle-ui-text" with the title "Caption" and
-        "editable" behavior.
+      - an "image" field that is a "particle-viewer-image" with a "hero"
+        modifier. The image's "title" is that of the item.
+      - a "text" field that is "particle-viewer-text" with the title "Caption"
+        and "editable" behavior.
 
 4.  **A Card with Two Segments, Last one containing a Delete Button:**
 
@@ -162,12 +162,12 @@ An item is the top-level entity. It contains the data to be displayed and the
     - It has two segments.
     - The first segment is a block, has a weight of 3, has a horizontal
       orientation, and contains:
-      - a "name" field that is a "particle-ui-text" with the title "Name".
-      - an "age" field that is a "particle-ui-number" with the title "Age".
+      - a "name" field that is a "particle-viewer-text" with the title "Name".
+      - an "age" field that is a "particle-viewer-number" with the title "Age".
     - The second segment is a block, has a weight of "min-content", has a
       horizontal orientation, and contains a "delete" field that is "text" with
       the title "Delete", the icon "delete", and the behavior "delete" rendered
-      as "particle-ui-button".
+      as "particle-viewer-button".
 
 5.  **A Card with Image and Description:**
 
@@ -177,10 +177,10 @@ An item is the top-level entity. It contains the data to be displayed and the
     - It has two equally-weighted segments.
     - The first segment has a weight of 1, has a vertical orientation, and
       contains:
-      - a "description" field that is a "particle-ui-long-text" with the
+      - a "description" field that is a "particle-viewer-long-text" with the
         modifier of "hero".
     - The second segment has a weight of 1 and contains:
-      - an "image" fiel that is a "particle-ui-image".
+      - an "image" fiel that is a "particle-viewer-image".
 
 **Key Considerations for Specs:**
 

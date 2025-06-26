@@ -22,18 +22,18 @@ function as(mimeType: string, isStored = false): Field["as"] {
 
   switch (mimePrefix) {
     case "audio":
-      return "particle-ui-audio";
+      return "particle-viewer-audio";
     case "video":
-      return "particle-ui-video";
+      return "particle-viewer-video";
     case "image":
-      return "particle-ui-image";
+      return "particle-viewer-image";
     case "text":
       if (mimeType === "text/plain") {
-        return "particle-ui-code";
+        return "particle-viewer-code";
       }
-      return isStored ? "particle-ui-file" : "particle-ui-text";
+      return isStored ? "particle-viewer-file" : "particle-viewer-text";
     default:
-      return "particle-ui-file";
+      return "particle-viewer-file";
   }
 }
 
@@ -64,7 +64,7 @@ function llmContentPartPresentation(
             text: {
               title: "Text part",
               modifiers: behaviors.includes("hint-chat-mode") ? ["hero"] : [],
-              as: "particle-ui-text",
+              as: "particle-viewer-text",
             },
           },
           orientation: "vertical",
@@ -123,7 +123,7 @@ function llmContentPartPresentation(
             fields: {
               src: {
                 title: "Generated Image",
-                as: "particle-ui-video",
+                as: "particle-viewer-video",
               },
             },
             orientation: "vertical",
@@ -144,7 +144,7 @@ function llmContentPartPresentation(
             fields: {
               src: {
                 title: "Google Drive File",
-                as: "particle-ui-google-drive",
+                as: "particle-viewer-google-drive",
               },
             },
             orientation: "vertical",

@@ -9,13 +9,16 @@ import { Field, FieldName, Orientation } from "@breadboard-ai/particles";
 import { classMap } from "lit/directives/class-map.js";
 import { consume } from "@lit/context";
 import { themeContext } from "../../context/theme.js";
-import { ItemData, ParticleUIElement, UITheme } from "../../types/types.js";
+import { ItemData, ParticleViewer, UITheme } from "../../types/types.js";
 import * as Styles from "../../styles/index.js";
 import { appendToAll, merge } from "../../utils/utils.js";
 import { markdown } from "../../directives/markdown.js";
 
-@customElement("particle-ui-number")
-export class ParticleUINumber extends LitElement implements ParticleUIElement {
+@customElement("particle-viewer-long-text")
+export class ParticleViewerLongText
+  extends LitElement
+  implements ParticleViewer
+{
   @property({ reflect: true, type: String })
   accessor containerOrientation: Orientation | null = null;
 
@@ -52,26 +55,25 @@ export class ParticleUINumber extends LitElement implements ParticleUIElement {
     }
 
     if (this.field.behaviors?.includes("editable")) {
-      return html`<input
+      return html`<textarea
         .id=${this.fieldName}
         .name=${this.fieldName}
-        .value=${this.value}
+        .value=${this.value ?? ""}
         .placeholder=${this.field.title ?? "Enter a value"}
-        type="number"
         class=${classMap(
           merge(
-            this.theme.elements.input,
+            this.theme.elements.textarea,
             this.field.modifiers?.includes("hero")
               ? this.theme.modifiers.hero
               : {}
           )
         )}
-      />`;
+      ></textarea>`;
     }
 
     return html`<section class="layout-w-100">
       ${markdown(
-        this.value.toString(),
+        this.value as string,
         appendToAll(
           this.theme.markdown,
           ["ol", "ul", "li"],
