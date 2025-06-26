@@ -4,8 +4,7 @@
   "description": "Particle UI",
   "main": "./dist/src/index.js",
   "exports": {
-    ".": "./dist/src/index.js",
-    "./particles": "./dist/src/types/particles.d.ts"
+    ".": "./dist/src/index.js"
   },
   "types": "dist/src/index.d.ts",
   "type": "module",

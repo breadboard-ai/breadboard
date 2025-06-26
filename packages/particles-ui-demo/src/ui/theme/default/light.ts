@@ -5,9 +5,11 @@
  */
 
 import * as ParticlesUI from "@breadboard-ai/particles-ui";
-import { UITheme } from "../theme";
 import {
+  a,
+  audio,
   body,
+  borderTop,
   button,
   card,
   cover,
@@ -17,19 +19,26 @@ import {
   h3,
   headline,
   hero,
-  heroImage,
   horizontal,
+  iframe,
   input,
   list,
   listItems,
+  media,
   p,
+  ParticleUIAudio,
+  ParticleUIImage,
+  ParticleUIText,
+  ParticleUIVideo,
+  pre,
   segmentHorizontal,
   segmentHorizontalPadded,
   segmentVertical,
   segmentVerticalPadded,
   textarea,
   vertical,
-} from "./shared";
+  video,
+} from "./shared.js";
 
 const palette: ParticlesUI.Colors.ColorPalettes = {
   neutral: {
@@ -159,26 +168,32 @@ const palette: ParticlesUI.Colors.ColorPalettes = {
   },
 } as ParticlesUI.Colors.ColorPalettes;
 
-export const theme: UITheme = {
+const aLight = ParticlesUI.Utils.merge(a, { "color-c-n5": true });
+const inputLight = ParticlesUI.Utils.merge(input, { "color-c-n5": true });
+const textareaLight = ParticlesUI.Utils.merge(textarea, { "color-c-n5": true });
+const buttonLight = ParticlesUI.Utils.merge(button, { "color-c-n100": true });
+const h1Light = ParticlesUI.Utils.merge(h1, { "color-c-n5": true });
+const h2Light = ParticlesUI.Utils.merge(h2, { "color-c-n5": true });
+const h3Light = ParticlesUI.Utils.merge(h3, { "color-c-n5": true });
+const bodyLight = ParticlesUI.Utils.merge(body, { "color-c-n5": true });
+const pLight = ParticlesUI.Utils.merge(p, { "color-c-n35": true });
+const preLight = ParticlesUI.Utils.merge(pre, { "color-c-n35": true });
+
+export const theme: ParticlesUI.Types.UITheme = {
   elements: {
-    input: ParticlesUI.Utils.merge(input, { "color-c-n5": true }),
-    textarea: ParticlesUI.Utils.merge(textarea, { "color-c-n5": true }),
-    button: ParticlesUI.Utils.merge(button, { "color-c-n100": true }),
-    h1: ParticlesUI.Utils.merge(h1, { "color-c-n5": true }),
-    h2: ParticlesUI.Utils.merge(h2, { "color-c-n5": true }),
-    h3: ParticlesUI.Utils.merge(h3, { "color-c-n5": true }),
-    body: ParticlesUI.Utils.merge(body, { "color-c-n5": true }),
-    p: ParticlesUI.Utils.merge(p, { "color-c-n5": true }),
-  },
-  components: {
-    card,
-    heroImage,
-    list,
-    listItems,
-    segmentVertical,
-    segmentVerticalPadded,
-    segmentHorizontal,
-    segmentHorizontalPadded,
+    a: aLight,
+    audio,
+    body: bodyLight,
+    button: buttonLight,
+    h1: h1Light,
+    h2: h2Light,
+    h3: h3Light,
+    iframe,
+    input: inputLight,
+    p: pLight,
+    pre: preLight,
+    textarea: textareaLight,
+    video,
   },
   layouts: {
     vertical,
@@ -197,12 +212,42 @@ export const theme: UITheme = {
     headline,
     disabled,
     cover,
-    borderTop: {
-      "border-bw-0": true,
-      "border-btw-1": true,
-      "color-bc-n90": true,
-      "border-bs-s": true,
-    },
+    borderTop,
+    media,
+  },
+  groups: {
+    card,
+    list,
+    listItems,
+    segmentVertical,
+    segmentVerticalPadded,
+    segmentHorizontal,
+    segmentHorizontalPadded,
+  },
+  viewers: {
+    "particle-ui-audio": ParticleUIAudio,
+    "particle-ui-button": {},
+    "particle-ui-date": {},
+    "particle-ui-image": ParticleUIImage,
+    "particle-ui-long-text": {},
+    "particle-ui-number": {},
+    "particle-ui-text": ParticleUIText,
+    "particle-ui-video": ParticleUIVideo,
+  },
+  markdown: {
+    p: [...Object.keys(pLight), "layout-mb-2"],
+    h1: [...Object.keys(h1Light), "layout-mb-2"],
+    h2: [...Object.keys(h2Light), "layout-mb-2"],
+    h3: [...Object.keys(h3Light), "layout-mb-2"],
+    h4: [],
+    h5: [],
+    h6: [],
+    ul: [],
+    ol: [],
+    li: [],
+    a: [...Object.keys(aLight)],
+    strong: [],
+    em: [],
   },
   additionalStyles: {
     ...ParticlesUI.Utils.createThemeStyles(palette),

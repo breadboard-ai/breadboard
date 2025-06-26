@@ -71,7 +71,7 @@ export class ParticleUINumber extends LitElement implements ParticleUIElement {
 
     return html`<section class="layout-w-100">
       ${markdown(
-        this.value as string,
+        this.value.toString(),
         appendToAll(
           this.theme.markdown,
           ["ol", "ul", "li"],

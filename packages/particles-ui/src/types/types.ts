@@ -87,4 +87,5 @@ export type UITheme = {
     strong: string[];
     em: string[];
   };
+  additionalStyles?: Record<string, string>;
 };

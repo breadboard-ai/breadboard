@@ -47,20 +47,24 @@ Modifiers alter the appearance or behavior of an item:
 
 **6. Field**
 
-Fields represent individual pieces of data within a segment.
+Fields represent individual pieces of data within a segment that need to be
+rendered. They contain the following properties:
 
-- The rendering type of the field:
-  - **text:** A single line of text.
-  - **longtext:** Multiple lines of text.
-  - **number:** A numerical value.
-  - **date:** A date value.
-  - **behavior:** A UI element that triggers an action (e.g., a button).
-  - **image:** An image.
-- **behaviors:** Actions that the user can perform on the field (e.g. "delete",
-  when `as` is set to "behavior").
+- **as:** The rendering type of the field
+  - **particle-ui-audio:** Represents audio data.
+  - **particle-ui-button:** Represents behavioral buttons like "add", "create",
+    "delete", "edit".
+  - **particle-ui-code:** A piece of code.
+  - **particle-ui-date:** A date value.
+  - **particle-ui-file:** A downloadable file.
+  - **particle-ui-google-drive:** A reference to a Google Drive file.
+  - **particle-ui-image:** An image.
+  - **particle-ui-number:** A numerical value, e.g., time or distance.
+  - **particle-ui-text:** A single line of text, e.g., a title.
+  - **particle-ui-long-text:** Multiple lines of text, e.g. a description.
+  - **particle-ui-video:**
 - **modifiers:** Visual adjustments or enhancements to the field (e.g., "hero").
 - **title:** A label for the field.
-- **src:** (For images) The URL of the image.
 - **icon:** (For behaviors) An icon to represent the action ("delete", "add",
   "check").
 
@@ -77,7 +81,11 @@ fields and has properties that control its layout and appearance.
     requires. Always use this for vertical layouts or segments containing
     "behavior" fields.
   - **max-content:** The segment takes up as much space as available.
-- **fields:** A collection of `Field` objects.
+- **fields:** A collection of `Field` objects. The property name for each Field
+  must relate to a property available on the item itself, i.e., if the field to
+  be rendered is called `fooBar` there must be a `fooBar` on the item, and the
+  key in the fields object must also be called `fooBar` since the name is how
+  the two are connected in the UI rendering code.
 - **orientation:** The orientation of the content within the segment (horizontal
   or vertical).
 - **type:** The segment type (block or list).
@@ -116,9 +124,10 @@ An item is the top-level entity. It contains the data to be displayed and the
     - The item is a card that has vertical orientation.
     - It has one segment.
     - This segment is a block, has a vertical orientation, and contains
-      - a "title" field that is "text" with the title "Title" and a "hero"
-        modifier.
-      - a "description" field that is "longtext" with the title "Description".
+      - a "title" field that is "particle-ui-text" with the title "Title" and a
+        "hero" modifier.
+      - a "description" field that is "particle-ui-long-text" with the title
+        "Description".
 
 2.  **A Card with an Image and non-editable Title and Description:**
 
@@ -128,11 +137,12 @@ An item is the top-level entity. It contains the data to be displayed and the
     - It has two segments.
     - The first segment has a weight of 1.5 and vertical orientation, and
       contains:
-      - an "image" field with a "src" attribute.
+      - an "particle-ui-image" image field.
     - The second segment has a weight of 3 and vertical orientation
-      - a "text" field that acts a headline and which is "text" with the "hero"
-        modifier.
-      - a "longtext" field which describes the content in more detail.
+      - a text field that acts a headline and which is "particle-ui-text" with
+        the "hero" modifier.
+      - a "particle-ui-long-text" field which describes the content in more
+        detail.
 
 3.  **A Card with an Image and Editable Text:**
 
@@ -140,10 +150,10 @@ An item is the top-level entity. It contains the data to be displayed and the
     - The item is a card that has vertical orientation.
     - It has one segment.
     - This segment has a weight of 1 and vertical orientation, and it contains:
-      - an "image" field that is an "image" with a "src" attribute and a "hero"
-        modifier. The image's "title" is that of the item.
-      - a "text" field that is "text" with the title "Caption" and "editable"
-        behavior.
+      - an "image" field that is a "particle-ui-image" with a "hero" modifier.
+        The image's "title" is that of the item.
+      - a "text" field that is "particle-ui-text" with the title "Caption" and
+        "editable" behavior.
 
 4.  **A Card with Two Segments, Last one containing a Delete Button:**
 
@@ -152,11 +162,12 @@ An item is the top-level entity. It contains the data to be displayed and the
     - It has two segments.
     - The first segment is a block, has a weight of 3, has a horizontal
       orientation, and contains:
-      - a "name" field that is a "text" with the title "Name".
-      - an "age" field that is a "number" with the title "Age".
+      - a "name" field that is a "particle-ui-text" with the title "Name".
+      - an "age" field that is a "particle-ui-number" with the title "Age".
     - The second segment is a block, has a weight of "min-content", has a
       horizontal orientation, and contains a "delete" field that is "text" with
-      the title "Delete", the icon "delete", and the behavior "delete".
+      the title "Delete", the icon "delete", and the behavior "delete" rendered
+      as "particle-ui-button".
 
 5.  **A Card with Image and Description:**
 
@@ -166,9 +177,10 @@ An item is the top-level entity. It contains the data to be displayed and the
     - It has two equally-weighted segments.
     - The first segment has a weight of 1, has a vertical orientation, and
       contains:
-      - a "description" field that is a "longtext" with the modifier of "hero".
+      - a "description" field that is a "particle-ui-long-text" with the
+        modifier of "hero".
     - The second segment has a weight of 1 and contains:
-      - an "image" field with a "src" attribute.
+      - an "image" fiel that is a "particle-ui-image".
 
 **Key Considerations for Specs:**
 

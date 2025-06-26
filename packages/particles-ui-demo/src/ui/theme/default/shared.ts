@@ -4,6 +4,64 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+export const a = {
+  "typography-f-sf": true,
+  "typography-fs-n": true,
+  "typography-w-500": true,
+  "layout-as-n": true,
+  "layout-dis-iflx": true,
+  "layout-al-c": true,
+};
+
+export const audio = {
+  "layout-w-100": true,
+};
+
+export const iframe = {
+  "behavior-sw-n": true,
+};
+
+export const pre = {
+  "typography-f-c": true,
+  "typography-fs-n": true,
+  "typography-w-400": true,
+  "typography-sz-bm": true,
+  "typography-ws-p": true,
+  "layout-as-n": true,
+};
+
+export const video = {
+  "layout-el-cv": true,
+};
+
+export const ParticleUIImage = {
+  "border-br-5": true,
+  "layout-el-cv": true,
+};
+
+export const ParticleUIAudio = {
+  "layout-w-100": true,
+};
+
+export const ParticleUIVideo = {
+  "border-br-5": true,
+  "layout-el-cv": true,
+};
+
+export const ParticleUIText = {};
+
+export const borderTop = {
+  "border-bw-0": true,
+  "border-btw-1": true,
+  "color-bc-n90": true,
+  "border-bs-s": true,
+};
+
+export const media = {
+  "layout-w-100": true,
+  "layout-js-c": true,
+};
+
 export const input = {
   "typography-f-sf": true,
   "typography-fs-n": true,
@@ -22,17 +80,18 @@ export const textarea = {
   ...input,
   "layout-r-none": true,
   "layout-fs-c": true,
+  "layout-dsp-block": true,
 };
 
 export const button = {
   "typography-f-sf": true,
   "typography-fs-n": true,
   "typography-w-500": true,
+  "layout-dsp-iflex": true,
   "layout-pt-3": true,
   "layout-pb-3": true,
   "layout-pl-5": true,
   "layout-pr-5": true,
-  "layout-mb-1": true,
   "border-br-16": true,
   "border-bw-0": true,
   "border-c-n70": true,
@@ -107,6 +166,7 @@ export const disabled = {
 export const card = {
   "border-br-4": true,
   "color-bgc-n100": true,
+  "layout-w-100": true,
 };
 
 export const list = {
@@ -130,12 +190,12 @@ export const cover = {
 };
 
 export const vertical = {
-  "layout-flx-vert": true,
+  "layout-dsp-flexvert": true,
   "layout-g-2": true,
 };
 
 export const horizontal = {
-  "layout-flx-hor": true,
+  "layout-dsp-flexhor": true,
   "layout-fw-w": true,
   "layout-g-2": true,
 };

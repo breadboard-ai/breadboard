@@ -10,9 +10,6 @@ import { customElement, property } from "lit/decorators.js";
 import * as ParticlesUI from "@breadboard-ai/particles-ui";
 import { themeContext } from "./context/theme.js";
 import { provide } from "@lit/context";
-import type { UITheme } from "./theme/theme.js";
-
-import "./elements/list.js";
 import { styleMap } from "lit/directives/style-map.js";
 
 /**
@@ -76,7 +73,7 @@ export class UiReceiver extends SignalWatcher(LitElement) {
   accessor additionalStyles: Record<string, string> | null = null;
 
   @provide({ context: themeContext })
-  accessor theme: UITheme | undefined;
+  accessor theme: ParticlesUI.Types.UITheme | undefined;
 
   static styles = [
     ParticlesUI.Styles.all,
@@ -143,12 +140,12 @@ export class UiReceiver extends SignalWatcher(LitElement) {
     let renderable: HTMLTemplateResult | symbol = nothing;
     switch (this.list?.presentation.type) {
       case "list": {
-        renderable = html`<ui-list
+        renderable = html`<particle-ui-list
           @input=${this.#onInput}
           @click=${this.#onClick}
           .list=${this.list}
           .orientation=${this.list?.presentation.orientation}
-        ></ui-list>`;
+        ></particle-ui-list>`;
         break;
       }
     }

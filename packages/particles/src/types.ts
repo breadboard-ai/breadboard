@@ -232,10 +232,6 @@ export interface Field {
    */
   title: string;
   /**
-   * All as="image" fields must include a src property.
-   */
-  src?: string;
-  /**
    * If the field is a behavior try to suggest an appropriate icon.
    */
   icon?: "delete" | "add" | "check";

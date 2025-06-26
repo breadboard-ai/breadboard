@@ -27,7 +27,7 @@ export class ParticleUIButton extends LitElement implements ParticleUIElement {
   @property()
   accessor field: Field | null = null;
 
-  @property()
+  @property({ reflect: true, type: Boolean })
   accessor disabled = false;
 
   @consume({ context: themeContext })
@@ -44,20 +44,15 @@ export class ParticleUIButton extends LitElement implements ParticleUIElement {
       }
 
       div {
-        display: flex;
-        align-items: center;
-        width: min-content;
-        pointer-events: none;
-        white-space: nowrap;
-        background: inherit;
-        color: inherit;
-        font: inherit;
-        border: none;
-        outline: none;
+        > * {
+          pointer-events: none;
+        }
       }
 
-      :host([disabled][showspinnerwhendisabled]) .g-icon {
-        animation: rotate 1s linear infinite;
+      :host([disabled]) {
+        & .g-icon {
+          animation: rotate 1s linear infinite;
+        }
       }
 
       @keyframes rotate {
@@ -73,7 +68,7 @@ export class ParticleUIButton extends LitElement implements ParticleUIElement {
   ];
 
   render() {
-    if (!this.value || !this.field || !this.theme) {
+    if (this.value === null || this.field === null || !this.theme) {
       return nothing;
     }
 
@@ -87,6 +82,7 @@ export class ParticleUIButton extends LitElement implements ParticleUIElement {
           this.click();
         }
       }}
+      ?disabled=${this.disabled}
       class=${classMap(
         merge(
           this.theme.elements.button,
@@ -97,7 +93,13 @@ export class ParticleUIButton extends LitElement implements ParticleUIElement {
       )}
     >
       ${this.field.icon
-        ? html`<span class="g-icon filled round layout-mr-2"
+        ? html`<span
+            class=${classMap({
+              "g-icon": true,
+              filled: true,
+              round: true,
+              "layout-mr-2": !!this.field.title,
+            })}
             >${this.disabled ? "progress_activity" : this.field.icon}</span
           >`
         : nothing}
