@@ -32,6 +32,7 @@ export function iconSubstitute(
     case "youtube":
       return "video_youtube";
     case "display":
+    case "output":
       return "responsive_layout";
     default:
       return src;

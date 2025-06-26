@@ -5,7 +5,6 @@
  */
 
 import * as ParticlesUI from "@breadboard-ai/particles-ui";
-import { UITheme } from "../../shared/theme/theme.js";
 import {
   a,
   audio,
@@ -19,13 +18,12 @@ import {
   h3,
   headline,
   hero,
-  image,
+  ParticleUIImage,
   iframe,
   horizontal,
   input,
   list,
   listItems,
-  media,
   p,
   pre,
   segmentHorizontal,
@@ -35,45 +33,39 @@ import {
   textarea,
   vertical,
   video,
+  ParticleUIAudio,
+  ParticleUIVideo,
+  borderTop,
+  media,
+  ParticleUIText,
 } from "./shared.js";
 
-const aEx = ParticlesUI.Utils.merge(a, { "color-c-n5": true });
-const inputEx = ParticlesUI.Utils.merge(input, { "color-c-n5": true });
-const textareaEx = ParticlesUI.Utils.merge(textarea, { "color-c-n5": true });
-const buttonEx = ParticlesUI.Utils.merge(button, { "color-c-n100": true });
-const h1Ex = ParticlesUI.Utils.merge(h1, { "color-c-n5": true });
-const h2Ex = ParticlesUI.Utils.merge(h2, { "color-c-n5": true });
-const h3Ex = ParticlesUI.Utils.merge(h3, { "color-c-n5": true });
-const bodyEx = ParticlesUI.Utils.merge(body, { "color-c-n5": true });
-const pEx = ParticlesUI.Utils.merge(p, { "color-c-n35": true });
-const preEx = ParticlesUI.Utils.merge(pre, { "color-c-n35": true });
+const aLight = ParticlesUI.Utils.merge(a, { "color-c-n5": true });
+const inputLight = ParticlesUI.Utils.merge(input, { "color-c-n5": true });
+const textareaLight = ParticlesUI.Utils.merge(textarea, { "color-c-n5": true });
+const buttonLight = ParticlesUI.Utils.merge(button, { "color-c-n100": true });
+const h1Light = ParticlesUI.Utils.merge(h1, { "color-c-n5": true });
+const h2Light = ParticlesUI.Utils.merge(h2, { "color-c-n5": true });
+const h3Light = ParticlesUI.Utils.merge(h3, { "color-c-n5": true });
+const bodyLight = ParticlesUI.Utils.merge(body, { "color-c-n5": true });
+const pLight = ParticlesUI.Utils.merge(p, { "color-c-n35": true });
+const preLight = ParticlesUI.Utils.merge(pre, { "color-c-n35": true });
 
-export const theme: UITheme = {
+export const theme: ParticlesUI.Types.UITheme = {
   elements: {
+    a: aLight,
     audio,
-    a: aEx,
-    input: inputEx,
-    textarea: textareaEx,
-    button: buttonEx,
-    h1: h1Ex,
-    h2: h2Ex,
-    h3: h3Ex,
-    body: bodyEx,
-    p: pEx,
-    pre: preEx,
+    body: bodyLight,
+    button: buttonLight,
+    h1: h1Light,
+    h2: h2Light,
+    h3: h3Light,
     iframe,
+    input: inputLight,
+    p: pLight,
+    pre: preLight,
+    textarea: textareaLight,
     video,
-  },
-  components: {
-    card,
-    image,
-    list,
-    listItems,
-    media,
-    segmentVertical,
-    segmentVerticalPadded,
-    segmentHorizontal,
-    segmentHorizontalPadded,
   },
   layouts: {
     vertical,
@@ -92,25 +84,36 @@ export const theme: UITheme = {
     headline,
     disabled,
     cover,
-    borderTop: {
-      "border-bw-0": true,
-      "border-btw-1": true,
-      "color-bc-n90": true,
-      "border-bs-s": true,
-    },
+    borderTop,
+    media,
+  },
+  groups: {
+    card,
+    list,
+    listItems,
+    segmentVertical,
+    segmentVerticalPadded,
+    segmentHorizontal,
+    segmentHorizontalPadded,
+  },
+  viewers: {
+    "particle-ui-image": ParticleUIImage,
+    "particle-ui-audio": ParticleUIAudio,
+    "particle-ui-video": ParticleUIVideo,
+    "particle-ui-text": ParticleUIText,
   },
   markdown: {
-    p: [...Object.keys(pEx), "layout-mb-2"],
-    h1: [...Object.keys(h1Ex), "layout-mb-2"],
-    h2: [...Object.keys(h2Ex), "layout-mb-2"],
-    h3: [...Object.keys(h3Ex), "layout-mb-2"],
+    p: [...Object.keys(pLight), "layout-mb-2"],
+    h1: [...Object.keys(h1Light), "layout-mb-2"],
+    h2: [...Object.keys(h2Light), "layout-mb-2"],
+    h3: [...Object.keys(h3Light), "layout-mb-2"],
     h4: [],
     h5: [],
     h6: [],
     ul: [],
     ol: [],
     li: [],
-    a: [...Object.keys(aEx)],
+    a: [...Object.keys(aLight)],
     strong: [],
     em: [],
   },

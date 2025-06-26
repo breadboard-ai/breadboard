@@ -5,6 +5,8 @@
  */
 
 import { createContext } from "@lit/context";
-import { UITheme } from "../theme/theme";
+import * as ParticlesUI from "@breadboard-ai/particles-ui";
 
-export const themeContext = createContext<UITheme | undefined>("UITheme");
+export const themeContext = createContext<
+  ParticlesUI.Types.UITheme | undefined
+>("UITheme");

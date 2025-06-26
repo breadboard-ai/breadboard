@@ -3,7 +3,10 @@
   "version": "0.0.1",
   "description": "AI-first UI Toolkit",
   "main": "./dist/src/index.js",
-  "exports": "./dist/src/index.js",
+  "exports": {
+    ".": "./dist/src/index.js",
+    "./particles": "./dist/src/types.d.ts"
+  },
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {

@@ -9,15 +9,15 @@ import { repeat } from "lit/directives/repeat.js";
 import { classMap } from "lit/directives/class-map.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
-import { type UITheme } from "../../shared/theme/theme.js";
-import * as ParticlesUI from "@breadboard-ai/particles-ui";
-import { themeContext } from "../../shared/contexts/theme.js";
+import * as Styles from "../../styles/index.js";
 import { Orientation, Segment } from "@breadboard-ai/particles";
+import { themeContext } from "../../context/theme.js";
+import { UITheme } from "../../types/types.js";
 
-@customElement("ui-basic-card")
-export class UIBasicCard extends SignalWatcher(LitElement) {
+@customElement("particle-ui-card")
+export class ParticleUICard extends SignalWatcher(LitElement) {
   static styles = [
-    ParticlesUI.Styles.all,
+    Styles.all,
     css`
       * {
         box-sizing: border-box;

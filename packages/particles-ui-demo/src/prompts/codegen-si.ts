@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import toolkitTypes from "@breadboard-ai/particles-ui/particles?raw";
+import toolkitTypes from "@breadboard-ai/particles/particles?raw";
 
 export default `
 You are a skilled web developer. Your output is always a single, self-contained

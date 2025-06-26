@@ -74,11 +74,15 @@ export const layout = css`
     position: relative;
   }
 
+  .layout-dsp-block {
+    display: block;
+  }
+
   .layout-dsp-grid {
     display: grid;
   }
 
-  .layout-dis-iflx {
+  .layout-dsp-iflex {
     display: inline-flex;
   }
 

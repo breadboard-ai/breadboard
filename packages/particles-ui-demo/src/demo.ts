@@ -6,13 +6,12 @@
 
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, query, state } from "lit/decorators.js";
-import type { UITheme } from "./ui/theme/theme.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { classMap } from "lit/directives/class-map.js";
+import { provide } from "@lit/context";
 
 import * as ParticlesUI from "@breadboard-ai/particles-ui";
 
-import "./ui/elements/button.js";
 import { createParticles, createSpec } from "./gemini";
 import { List } from "./state/list";
 import { Item } from "./state/item";
@@ -30,8 +29,8 @@ const DEFAULT_GOAL =
 
 @customElement("goal-demo")
 export class GoalDemo extends LitElement {
-  @property()
-  accessor theme: UITheme | null = null;
+  @provide({ context: ParticlesUI.Context.themeContext })
+  accessor theme: ParticlesUI.Types.UITheme | undefined;
 
   @property()
   accessor additionalStyles: Record<string, string> | null = null;
@@ -204,28 +203,28 @@ export class GoalDemo extends LitElement {
       }
 
       // TODO: Make this selectable.
-      let theme;
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("dark")) {
-        const { theme: loadedTheme } = await import(
-          "./ui/theme/default/dark.js"
-        );
-        theme = loadedTheme;
-      } else if (params.get("alternative")) {
-        const { theme: loadedTheme } = await import(
-          "./ui/theme/alternative/dark.js"
-        );
-        theme = loadedTheme;
-      } else {
-        const { theme: loadedTheme } = await import(
-          "./ui/theme/default/light.js"
-        );
-        theme = loadedTheme;
-      }
+      // let theme:ParticlesUI.Types. UITheme;
+      // const params = new URLSearchParams(window.location.search);
+      // if (params.get("dark")) {
+      //   const { theme: loadedTheme } = await import(
+      //     "./ui/theme/default/dark.js"
+      //   );
+      //   theme = loadedTheme;
+      // } else if (params.get("alternative")) {
+      //   const { theme: loadedTheme } = await import(
+      //     "./ui/theme/alternative/dark.js"
+      //   );
+      //   theme = loadedTheme;
+      // } else {
+      const { theme: loadedTheme } = await import(
+        "./ui/theme/default/light.js"
+      );
+      const theme = loadedTheme;
+      // }
       const uiReceiver = new UiReceiver();
       uiReceiver.list = list;
       uiReceiver.theme = theme;
-      uiReceiver.additionalStyles = theme.additionalStyles;
+      uiReceiver.additionalStyles = {}; //theme.additionalStyles;
 
       this.#output.textContent = "";
       this.#output.appendChild(uiReceiver);
@@ -265,7 +264,7 @@ export class GoalDemo extends LitElement {
       style=${styleMap(this.additionalStyles ? this.additionalStyles : {})}
       class="color-bgc-n100 typography-f-s layout-el-cv behavior-o-a"
     >
-      <div class="layout-p-8 layout-flx-vert layout-el-cv">
+      <div class="layout-p-8 layout-dsp-flexvert layout-el-cv">
         <h1
           class=${classMap(
             ParticlesUI.Utils.merge(this.theme.elements.h1, {
@@ -278,11 +277,11 @@ export class GoalDemo extends LitElement {
         </h1>
         <section
           id="main"
-          class="layout-flx-vert layout-al-n layout-g-14 layout-flx-1"
+          class="layout-dsp-flexvert layout-al-n layout-g-14 layout-flx-1"
         >
           <div
             id="outputs"
-            class="layout-grd layout-grd-col3 layout-g-8 layout-flx-1 layout-mt-6"
+            class="layout-dsp-grid layout-grd-col3 layout-g-8 layout-flx-1 layout-mt-6"
             style=${styleMap({
               "grid-template-columns": "1fr min-content 1fr",
             })}
@@ -320,20 +319,17 @@ export class GoalDemo extends LitElement {
             ></textarea>
             <div
               class=${classMap({
-                "layout-flx-hor": true,
+                "layout-dsp-flexhor": true,
                 "layout-al-c": true,
               })}
             >
-              <ui-button
-                class=${classMap(
-                  ParticlesUI.Utils.merge(theme.elements.button, {
-                    "layout-pl-6": true,
-                    "layout-pr-4": true,
-                    "layout-al-c": true,
-                    "typography-s-bs": true,
-                  })
-                )}
-                .icon=${"sync_alt"}
+              <particle-ui-button
+                class=${classMap({
+                  "layout-al-c": true,
+                  "typography-s-bs": true,
+                })}
+                .value=${""}
+                .field=${{ title: "", icon: "sync_alt", as: "" }}
                 .showSpinnerWhenDisabled=${this.#processingSpec}
                 ?disabled=${working}
                 @click=${async () => {
@@ -343,7 +339,7 @@ export class GoalDemo extends LitElement {
                   await this.#processSpec();
                 }}
               >
-              </ui-button>
+              </particle-ui-button>
             </div>
             <div
               id="output"
@@ -362,7 +358,7 @@ export class GoalDemo extends LitElement {
               )}
             ></div>
           </div>
-          <div id="input" class="layout-flx-hor layout-sp-c">
+          <div id="input" class="layout-dsp-flexhor layout-sp-c">
             <input
               name="goal"
               type="text"
@@ -401,23 +397,20 @@ export class GoalDemo extends LitElement {
                 this.#persistGoal(evt.target.value);
               }}
             />
-            <ui-button
-              class=${classMap(
-                ParticlesUI.Utils.merge(theme.elements.button, {
-                  "layout-pl-6": true,
-                  "layout-pr-6": true,
-                  "layout-al-c": true,
-                })
-              )}
-              .icon=${"send"}
-              .showSpinnerWhenDisabled=${this.#processingGoal}
+            <particle-ui-button
+              class=${classMap({
+                "layout-pl-3": true,
+                "layout-pr-6": true,
+                "layout-al-c": true,
+              })}
+              .value=${"Send"}
+              .field=${{ title: "Send", icon: "send", as: "" }}
               ?disabled=${working}
               @click=${async () => {
                 await this.#processGoal();
               }}
             >
-              Send
-            </ui-button>
+            </particle-ui-button>
           </div>
         </section>
       </div>
@@ -428,5 +421,5 @@ export class GoalDemo extends LitElement {
 const { theme } = await import("./ui/theme/default/light.js");
 const demo = new GoalDemo();
 demo.theme = theme;
-demo.additionalStyles = theme.additionalStyles;
+demo.additionalStyles = theme.additionalStyles ?? null;
 document.body.appendChild(demo);
