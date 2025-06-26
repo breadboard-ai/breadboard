@@ -4,131 +4,70 @@
   "version": "0.0.1",
   "nodes": [
     {
-      "id": "a2-4fee0499",
-      "type": "file://bgl/a2.bgl.json#module:combine-outputs",
+      "id": "591ffd39-74bd-4f98-b3ac-a0b10ca4da6b",
+      "type": "embed://a2/generate.bgl.json#module:main",
       "metadata": {
+        "title": "Generate poem",
         "visual": {
-          "x": 165.7678584838286,
-          "y": -1367.3324700472876,
-          "collapsed": "expanded",
-          "outputHeight": 44
+          "x": -160,
+          "y": -140
         },
-        "title": "Time of Day",
-        "logLevel": "info",
-        "userModified": false
+        "userModified": true
       },
       "configuration": {
-        "text": {
-          "role": "user",
-          "parts": [
-            {
-              "text": "你好，世界!"
-            }
-          ]
-        }
-      }
-    },
-    {
-      "id": "8469df91-7949-4f85-b5d8-74e4b643c7e5",
-      "type": "file://bgl/a2.bgl.json#module:combine-outputs",
-      "metadata": {
-        "visual": {
-          "x": 165.7678584838286,
-          "y": -1547.3324700472883,
-          "collapsed": "expanded",
-          "outputHeight": 64
-        },
-        "title": "Name",
-        "logLevel": "info"
-      },
-      "configuration": {
-        "text": {
-          "role": "user",
-          "parts": [
-            {
-              "text": "Bob"
-            }
-          ]
-        }
-      }
-    },
-    {
-      "id": "3fff96f5-cfdc-4119-8c8c-134609caffa8",
-      "type": "file://bgl/a2.bgl.json#module:combine-outputs",
-      "metadata": {
-        "visual": {
-          "x": 165.7678584838286,
-          "y": -1167.3324700472865,
-          "collapsed": "expanded",
-          "outputHeight": 64
-        },
-        "title": "Info",
-        "logLevel": "info",
-        "userModified": false
-      },
-      "configuration": {
-        "text": {
-          "role": "user",
-          "parts": [
-            {
-              "text": "City,Temperature (°C),Condition,Wind Speed (km/h),Humidity (%)\nLondon,12,Cloudy,15,75\nNew York,18,Partly Cloudy,10,60\nTokyo,22,Sunny,8,55\nSydney,15,Rain,25,80\nCairo,28,Sunny,5,40"
-            }
-          ]
-        }
-      }
-    },
-    {
-      "id": "fd1c928c-3d6a-4ced-92d6-5a8028e13d42",
-      "type": "embed://a2/a2.bgl.json#module:render-outputs",
-      "metadata": {
-        "title": "Display",
-        "visual": {
-          "x": 545.7678584838283,
-          "y": -1367.3324700472865
-        },
-        "userModified": false
-      },
-      "configuration": {
-        "text": {
-          "role": "user",
-          "parts": [
-            {
-              "text": "{{\"type\":\"in\",\"path\":\"8469df91-7949-4f85-b5d8-74e4b643c7e5\",\"title\":\"Name\"}} {{\"type\":\"in\",\"path\":\"a2-4fee0499\",\"title\":\"Time of Day\"}} {{\"type\":\"in\",\"path\":\"3fff96f5-cfdc-4119-8c8c-134609caffa8\",\"title\":\"Info\"}}\nUse lots of emoji"
-            }
-          ]
-        },
         "b-system-instruction": {
           "role": "user",
           "parts": [
             {
-              "text": ""
+              "text": "You are working as part of an AI system, so no chit-chat and no explaining what you're doing and why.\nDO NOT start with \"Okay\", or \"Alright\" or any preambles. Just the output, please."
             }
           ]
         },
-        "p-render-mode": "Webpage with auto-layout by 2.5 Flash",
-        "b-model-foo": "flash",
-        "b-model-name": "flash"
+        "config$ask-user": false,
+        "config$list": false,
+        "config$prompt": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Generate a poem about space exploration"
+            }
+          ]
+        },
+        "generation-mode": "text-2.0-flash",
+        "p-sequential-fc": false
+      }
+    },
+    {
+      "id": "a84112b1-52b0-4ece-8328-eb65ecb044ae",
+      "type": "embed://a2/a2.bgl.json#module:render-outputs",
+      "metadata": {
+        "title": "Output",
+        "visual": {
+          "x": 60,
+          "y": 40
+        },
+        "userModified": false
+      },
+      "configuration": {
+        "text": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "{{\"title\":\"Generate poem\",\"path\":\"591ffd39-74bd-4f98-b3ac-a0b10ca4da6b\",\"type\":\"in\"}}"
+            }
+          ]
+        },
+        "p-render-mode": "google-doc",
+        "b-google-doc-title": "Poems"
       }
     }
   ],
   "edges": [
     {
-      "from": "8469df91-7949-4f85-b5d8-74e4b643c7e5",
-      "to": "fd1c928c-3d6a-4ced-92d6-5a8028e13d42",
+      "from": "591ffd39-74bd-4f98-b3ac-a0b10ca4da6b",
+      "to": "a84112b1-52b0-4ece-8328-eb65ecb044ae",
       "out": "context",
-      "in": "p-z-8469df91-7949-4f85-b5d8-74e4b643c7e5"
-    },
-    {
-      "from": "a2-4fee0499",
-      "to": "fd1c928c-3d6a-4ced-92d6-5a8028e13d42",
-      "out": "context",
-      "in": "p-z-a2-4fee0499"
-    },
-    {
-      "from": "3fff96f5-cfdc-4119-8c8c-134609caffa8",
-      "to": "fd1c928c-3d6a-4ced-92d6-5a8028e13d42",
-      "out": "context",
-      "in": "p-z-3fff96f5-cfdc-4119-8c8c-134609caffa8"
+      "in": "p-z-591ffd39-74bd-4f98-b3ac-a0b10ca4da6b"
     }
   ],
   "metadata": {
@@ -164,7 +103,7 @@
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxOS4xMiIKICAgICAgICAgICAgICAgICAgICB5PSI2OS41NiIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iODYuMDMiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI0Ny42NSIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KPHJlY3QgeD0iMTkuMTIiCiAgICAgICAgICAgICAgICAgICAgeT0iMTAuMDAiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9Ijg2LjAzIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNTQuMjYiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyMGEyMDIiIC8+CjxyZWN0IHg9IjE5LjEyIgogICAgICAgICAgICAgICAgICAgIHk9IjEzNS43NCIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iODYuMDMiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI1NC4yNiIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KPHJlY3QgeD0iMTQ0Ljg1IgogICAgICAgICAgICAgICAgICAgIHk9IjY5LjU2IgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI4Ni4wMyIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjMzLjA5IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMmU4YmU4IiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSIzMi45MiIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTI0LjU4IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNDcuOTIiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CjxyZWN0IHg9IjExNS40MiIKICAgICAgICAgICAgICAgICAgICB5PSIxMTkuMTciCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjEyNC41OCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjQ3LjkyIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMjBhMjAyIiAvPgogICAgICAKICAgIDwvc3ZnPg=="
     }
   }
 }

@@ -12,10 +12,12 @@ import { RunResult } from "../run.js";
 import type { GraphToRun, NodeHandlerContext, RunArguments } from "../types.js";
 import type {
   InputValues,
+  JsonSerializable,
   OutputValues,
   TraversalResult,
 } from "@breadboard-ai/types";
 import { ParameterManager } from "./parameter-manager.js";
+import { FileSystemEntry } from "../data/types.js";
 
 type ResultSupplier = (result: RunResult) => Promise<void>;
 
@@ -57,6 +59,32 @@ export class NodeInvoker {
     return inputs;
   }
 
+  #updateEnvDescriptor(
+    result: TraversalResult,
+    context: NodeHandlerContext
+  ): FileSystemEntry[] {
+    const currentEnv = context.fileSystem?.env() || [];
+
+    return [
+      ...currentEnv,
+      {
+        path: `/env/descriptor`,
+        data: [{ parts: [{ json: result.descriptor as JsonSerializable }] }],
+      },
+    ];
+  }
+
+  #updateStepInfo(result: TraversalResult, context: NodeHandlerContext) {
+    const fileSystem = context.fileSystem?.createModuleFileSystem({
+      graphUrl: this.#graph.graph.url!,
+      env: this.#updateEnvDescriptor(result, context),
+    });
+    return {
+      ...context,
+      fileSystem,
+    };
+  }
+
   async invokeNode(result: TraversalResult, invocationPath: number[]) {
     const { descriptor } = result;
     const inputs = this.#adjustInputs(result);
@@ -77,7 +105,7 @@ export class NodeInvoker {
     });
 
     // Request parameters, if needed.
-    const newContext = await this.#params.requestParameters(
+    let newContext = await this.#params.requestParameters(
       {
         ...this.#context,
         descriptor,
@@ -101,6 +129,11 @@ export class NodeInvoker {
       invocationPath,
       result
     );
+
+    // only for top-level steps, update env with the current step
+    if (invocationPath.length === 1) {
+      newContext = this.#updateStepInfo(result, newContext);
+    }
 
     outputs = (await callHandler(
       handler,
