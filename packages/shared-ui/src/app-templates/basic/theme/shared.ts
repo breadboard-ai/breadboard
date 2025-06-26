@@ -219,4 +219,6 @@ export const ParticleUIVideo = {
   "layout-el-cv": true,
 };
 
-export const ParticleUIText = {};
+export const ParticleUIText = {
+  "layout-w-100": true,
+};

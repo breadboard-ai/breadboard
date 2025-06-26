@@ -15,6 +15,8 @@ import { ShareRequestedEvent, StopEvent } from "../../../events/events";
 import { SideNav } from "./side-nav";
 import { type } from "../../../styles/host/type";
 
+import "./side-nav.js";
+
 @customElement("bb-app-header")
 export class Header extends LitElement {
   @property()
