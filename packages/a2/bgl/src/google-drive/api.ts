@@ -23,6 +23,8 @@ export {
   getPresentation,
   updatePresentation,
   createPermission,
+  updateSpreadsheetValues,
+  appendSpreadsheetValues,
 };
 
 // These are various Google Drive-specific types.
@@ -624,7 +626,7 @@ export type SlidesRequest =
   | { updateTextStyle: SlidesUpdateTextStyleRequest };
 
 export type SpreadsheetValueRange = {
-  range: string;
+  range?: string;
   majorDimension?: "ROWS" | "COLUMNS";
   values: unknown[][];
 };
@@ -639,6 +641,8 @@ export type SpreadsheetValuesUpdate = {
     | "FORMULA";
   responseDateTimeRenderOption?: "SERIAL_NUMBER" | "FORMATTED_STRING";
 };
+
+export type SpreadsheetValuesAppend = SpreadsheetValueRange;
 
 const connectionId = "connection:$sign-in";
 
@@ -837,7 +841,7 @@ async function updatePresentation(
   );
 }
 
-async function updateSpreadsheet(
+async function updateSpreadsheetValues(
   token: string,
   id: string,
   body: SpreadsheetValuesUpdate,
@@ -856,6 +860,31 @@ async function updateSpreadsheet(
     metadata,
     token,
     `https://sheets.googleapis.com/v4/spreadsheets/${id}/values:batchUpdate`,
+    "POST",
+    body
+  );
+}
+
+async function appendSpreadsheetValues(
+  token: string,
+  id: string,
+  range: string,
+  body: SpreadsheetValuesAppend,
+  metadata: Metadata
+) {
+  if (!token) {
+    return err("Authentication token is required.");
+  }
+  if (!id) {
+    return err("Please supply the id of the spreadsheet to update.");
+  }
+  if (!body) {
+    return err("Please supply the body of the spreadsheet update request.");
+  }
+  return api(
+    metadata,
+    token,
+    `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${range}:append?valueInputOption=USER_ENTERED`,
     "POST",
     body
   );
