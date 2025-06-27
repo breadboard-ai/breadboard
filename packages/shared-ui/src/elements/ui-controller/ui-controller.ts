@@ -645,6 +645,7 @@ export class UI extends LitElement {
             active: this.sideNavItem === "activity",
           })}
           .run=${this.projectState?.run}
+          .themeStyles=${themeStyles}
         ></bb-console-view>
       `,
       html`<bb-edit-history-panel
