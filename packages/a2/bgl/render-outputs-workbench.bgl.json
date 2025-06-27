@@ -4,72 +4,31 @@
   "version": "0.0.1",
   "nodes": [
     {
-      "id": "591ffd39-74bd-4f98-b3ac-a0b10ca4da6b",
-      "type": "embed://a2/generate.bgl.json#module:main",
-      "metadata": {
-        "title": "Generate poem",
-        "visual": {
-          "x": -160,
-          "y": -140
-        },
-        "userModified": true
-      },
-      "configuration": {
-        "b-system-instruction": {
-          "role": "user",
-          "parts": [
-            {
-              "text": "You are working as part of an AI system, so no chit-chat and no explaining what you're doing and why.\nDO NOT start with \"Okay\", or \"Alright\" or any preambles. Just the output, please."
-            }
-          ]
-        },
-        "config$ask-user": false,
-        "config$list": false,
-        "config$prompt": {
-          "role": "user",
-          "parts": [
-            {
-              "text": "Generate a poem about space exploration"
-            }
-          ]
-        },
-        "generation-mode": "text-2.0-flash",
-        "p-sequential-fc": false
-      }
-    },
-    {
       "id": "a84112b1-52b0-4ece-8328-eb65ecb044ae",
       "type": "embed://a2/a2.bgl.json#module:render-outputs",
       "metadata": {
-        "title": "Output",
+        "title": "Summarize Research",
         "visual": {
           "x": 60,
           "y": 40
         },
-        "userModified": false
+        "userModified": true
       },
       "configuration": {
         "text": {
           "role": "user",
           "parts": [
             {
-              "text": "{{\"title\":\"Generate poem\",\"path\":\"591ffd39-74bd-4f98-b3ac-a0b10ca4da6b\",\"type\":\"in\"}}"
+              "text": "## **`The Neurocognitive Benefits of Unstructured Visual Attention: Enhanced Alpha Wave Synchrony and Stress Reduction Through Ceiling Gazing`**\n\n**`Authors:`**\n\n* `Dr. Evelyn Reed, PhD, Department of Cognitive Neuroscience, Stanford University`  \n* `Dr. Julian Croft, MD, PhD, Center for Stress and Anxiety Research, University of California, Berkeley`  \n* `Chen, L., MS, Bioengineering and Informatics Lab, Massachusetts Institute of Technology`  \n* `Dr. Samuel Harris, PhD, Department of Psychology, Yale University`\n\n**`Abstract:`**\n\n**`Background:`** `The contemporary digital environment exposes individuals to unprecedented levels of cognitive load and sensory stimulation, contributing to rising rates of stress and attentional fatigue. While mindfulness and meditation have been established as effective countermeasures, their accessibility and adoption remain limited. This study investigates the neurophysiological and psychological effects of a simple, unstructured activity: staring at the ceiling.`\n\n**`Methods:`** `We recruited 64 healthy adult participants (32 female, 32 male; mean age 28.4 years) and randomly assigned them to either a ceiling-gazing group (n=32) or a control group (n=32) that engaged in unstructured smartphone use. Each group participated in a 15-minute session. We measured electroencephalographic (EEG) activity, heart rate variability (HRV), and salivary cortisol levels before and after the intervention. Participants also completed the Perceived Stress Scale (PSS) and the State-Trait Anxiety Inventory (STAI-S).`\n\n**`Results:`** `The ceiling-gazing group exhibited a statistically significant increase in alpha wave power (p&lt;0.001) and synchrony across the occipital and parietal lobes, indicative of a state of restful alertness. This group also showed a significant increase in HRV (p&lt;0.01) and a decrease in salivary cortisol levels (p&lt;0.05). In contrast, the control group showed a slight increase in cortisol and a decrease in HRV. Psychologically, the ceiling-gazing group reported a significant reduction in perceived stress (PSS scores decreased by an average of 25%, p&lt;0.001) and state anxiety (STAI-S scores decreased by an average of 20%, p&lt;0.01).`\n\n**`Conclusion:`** `Our findings suggest that the simple act of staring at a ceiling, a form of unstructured visual attention, can induce a state of profound relaxation and mental clarity. This is evidenced by significant, positive changes in both physiological and psychological markers of stress and cognitive load. Ceiling gazing may represent a readily accessible and highly effective tool for mental recuperation in an overstimulated world. Further research is warranted to explore the long-term benefits and clinical applications of this practice.`\n\n---\n\n### **`1. Introduction`**\n\n`The 21st-century human brain is in a near-constant state of engagement. The proliferation of digital devices and the demands of a hyper-connected society have led to a well-documented increase in cognitive overload, attentional deficits, and stress-related disorders (Levitin, 2014). The relentless stream of information and notifications creates a \"digital fog\" that can impair executive function, creativity, and overall well-being.`\n\n`In response, various contemplative practices, such as mindfulness meditation and yoga, have gained empirical support for their ability to mitigate the negative effects of modern life (Goyal et al., 2014). These practices often involve focused attention on the breath or bodily sensations, effectively training the brain to disengage from external and internal distractions. However, the perceived difficulty, time commitment, and cultural barriers associated with these practices can limit their widespread adoption.`\n\n`+1`\n\n`An almost universally accessible, yet scientifically unexamined, behavior is the act of simply staring at a blank or minimally detailed surface, such as a ceiling. Anecdotally, this behavior is often associated with daydreaming, contemplation, and mental \"idling.\" We hypothesize that this seemingly passive activity may, in fact, represent a powerful and innate mechanism for cognitive reset and stress reduction.`\n\n`This study, therefore, aims to provide the first empirical investigation into the neurocognitive and physiological benefits of \"ceiling gazing.\" We posit that by reducing visual and cognitive input to a minimum, this activity allows the brain to enter a state of restful alertness, characterized by increased alpha wave activity, which is known to be associated with reduced stress and enhanced creativity (Kounios &amp;amp; Beeman, 2014). We further hypothesize that this will be accompanied by physiological markers of relaxation, such as increased heart rate variability and decreased cortisol levels, as well as self-reported reductions in stress and anxiety.`\n\n### **`2. Methods`**\n\n**`2.1. Participants`**\n\n`Sixty-four healthy adult volunteers were recruited from the university and local communities. Participants were screened for any history of neurological or psychiatric disorders and were not currently taking any psychoactive medications. Informed consent was obtained from all participants prior to the study. The study was approved by the Institutional Review Board of Stanford University.`\n\n**`2.2. Experimental Design`**\n\n`Participants were randomly assigned to one of two conditions:`\n\n* **`Ceiling-Gazing Group (n=32):`** `Participants were instructed to lie comfortably on a recliner in a quiet, dimly lit room and to gaze at the plain, white ceiling for 15 minutes. They were told to let their minds wander freely but to keep their eyes open and directed towards the ceiling.`  \n* **`Control Group (n=32):`** `Participants were seated in the same room and instructed to use their smartphones for 15 minutes for typical, non-work-related activities (e.g., social media, Browse news).`\n\n**`2.3. Data Acquisition`**\n\n* **`Electroencephalography (EEG):`** `A 64-channel EEG system was used to record brain activity before and during the 15-minute intervention. Data was analyzed for changes in power in the alpha frequency band (8-12 Hz).`  \n* **`Heart Rate Variability (HRV):`** `A three-lead electrocardiogram (ECG) was used to measure heart rate. The root mean square of successive differences (RMSSD) was calculated as a measure of HRV.`  \n* **`Salivary Cortisol:`** `Saliva samples were collected before and 20 minutes after the intervention to measure levels of the stress hormone cortisol.`  \n* **`Psychological Measures:`** `The Perceived Stress Scale (PSS) and the State-Trait Anxiety Inventory (STAI-S) were administered before and after the intervention.`\n\n**`2.4. Statistical Analysis`**\n\n`A two-way mixed ANOVA was used to analyze the data, with time (pre-intervention, post-intervention) as the within-subjects factor and group (ceiling-gazing, control) as the between-subjects factor. Post-hoc t-tests were used to compare individual group means where significant interactions were found.`\n\n### **`3. Results`**\n\n**`3.1. EEG Analysis`**\n\n`The ceiling-gazing group showed a significant increase in alpha wave power from pre- to post-intervention, particularly in the occipital and parietal regions (F(1,62)=28.4,p&lt;0.001). The control group showed no significant change in alpha power.`\n\n| `Group` | `Pre-Intervention Alpha Power (µV²)` | `Post-Intervention Alpha Power (µV²)` | `% Change` |\n| :---- | :---- | :---- | :---- |\n| `Ceiling-Gazing` | `12.3 (± 2.1)` | `18.9 (± 3.4)` | `+53.7%` |\n| `Control` | `12.8 (± 2.5)` | `12.5 (± 2.3)` | `-2.3%` |\n\n`Export to Sheets`\n\n*`Table 1: Mean Alpha Wave Power Before and After Intervention`*\n\n**`3.2. Physiological Measures`**\n\n`A significant interaction effect was found for HRV (F(1,62)=14.7,p&lt;0.01). The ceiling-gazing group showed a significant increase in RMSSD, while the control group showed a slight decrease. For salivary cortisol, a significant interaction was also observed (F(1,62)=9.8,p&lt;0.05), with the ceiling-gazing group exhibiting a decrease and the control group a slight increase.`\n\n| `Group` | `Pre-Intervention Cortisol (nmol/L)` | `Post-Intervention Cortisol (nmol/L)` | `% Change` |\n| :---- | :---- | :---- | :---- |\n| `Ceiling-Gazing` | `15.2 (± 3.8)` | `11.8 (± 3.1)` | `-22.4%` |\n| `Control` | `14.9 (± 4.1)` | `15.6 (± 4.3)` | `+4.7%` |\n\n`Export to Sheets`\n\n*`Table 2: Mean Salivary Cortisol Levels Before and After Intervention`*\n\n**`3.3. Psychological Measures`**\n\n`The ceiling-gazing group reported a significant decrease in perceived stress on the PSS (t(31)=8.2,p&lt;0.001) and state anxiety on the STAI-S (t(31)=6.9,p&lt;0.01). The control group reported no significant changes in these measures.`\n\n### **`4. Discussion`**\n\n`The results of this study provide compelling evidence for the neurocognitive and physiological benefits of ceiling gazing. The significant increase in alpha wave activity in the ceiling-gazing group is particularly noteworthy. Alpha waves are traditionally associated with a state of wakeful rest and are thought to play a role in filtering out irrelevant sensory information, thus allowing for mental relaxation and creative thought. The observed increase in alpha power suggests that by disengaging from the visually and cognitively demanding environment of a smartphone, participants in the ceiling-gazing group allowed their brains to enter a restorative state.`\n\n`The corresponding physiological changes—increased HRV and decreased cortisol—further support the conclusion that ceiling gazing induces a state of relaxation. HRV is a robust indicator of autonomic nervous system balance, with higher HRV indicating greater parasympathetic (rest-and-digest) activity. The decrease in cortisol, a primary stress hormone, provides further evidence of a reduction in the physiological stress response.`\n\n`From a psychological perspective, the self-reported decreases in stress and anxiety are consistent with the physiological findings. It appears that the unstructured nature of ceiling gazing allows for a form of \"mental decluttering,\" where thoughts can arise and dissipate without the pressure to direct them in a specific way. This may be a key difference from more structured contemplative practices that require focused attention.`\n\n**`4.1. Proposed Neurological Mechanism`**\n\n`We propose that ceiling gazing promotes activity in the brain's default mode network (DMN), a system of interconnected brain regions that is most active when the mind is at rest and not focused on the external world. The DMN is involved in self-referential thought, future planning, and memory consolidation. By providing a minimally stimulating visual field, ceiling gazing may allow for optimal engagement of the DMN, facilitating a process of cognitive and emotional integration.`\n\n**`4.2. Limitations and Future Directions`**\n\n`This study has several limitations. The duration of the intervention was short, and the long-term effects of regular ceiling gazing are unknown. The participant pool was also limited to healthy young adults. Future research should investigate the effects of this practice in different populations, including individuals with clinical anxiety or attention disorders. Additionally, a more active control group, such as one engaged in a structured but non-digital task, could help to further elucidate the specific benefits of unstructured visual attention.`\n\n### **`5. Conclusion`**\n\n`In an era defined by information overload and digital distraction, the simple act of staring at the ceiling may be a surprisingly powerful tool for mental well-being. Our findings demonstrate that this accessible and effortless activity can lead to significant reductions in stress, both physiologically and psychologically, and can promote a state of restful alertness in the brain. Ceiling gazing represents a promising area for further research and may offer a valuable, low-barrier intervention for improving mental health in the modern world.`\n"
             }
           ]
         },
-        "p-render-mode": "google-doc",
-        "b-google-doc-title": "Poems"
+        "p-render-mode": "google-slides",
+        "b-google-doc-title": "On Gazing at Ceilings"
       }
     }
   ],
-  "edges": [
-    {
-      "from": "591ffd39-74bd-4f98-b3ac-a0b10ca4da6b",
-      "to": "a84112b1-52b0-4ece-8328-eb65ecb044ae",
-      "out": "context",
-      "in": "p-z-591ffd39-74bd-4f98-b3ac-a0b10ca4da6b"
-    }
-  ],
+  "edges": [],
   "metadata": {
     "visual": {
       "presentation": {
@@ -103,7 +62,7 @@
         "title": "Thumbnail",
         "type": "file"
       },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSIzMi45MiIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMTI0LjU4IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNDcuOTIiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiM3NzU3ZDkiIC8+CjxyZWN0IHg9IjExNS40MiIKICAgICAgICAgICAgICAgICAgICB5PSIxMTkuMTciCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjEyNC41OCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjQ3LjkyIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMjBhMjAyIiAvPgogICAgICAKICAgIDwvc3ZnPg=="
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI1NS43NyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iMjMwLjAwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iODguNDYiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyMGEyMDIiIC8+CiAgICAgIAogICAgPC9zdmc+"
     }
   }
 }

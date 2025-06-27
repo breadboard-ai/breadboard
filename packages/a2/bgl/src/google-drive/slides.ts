@@ -18,11 +18,14 @@ import type {
   ListToken,
   HeadingToken,
   ListItemToken,
+  SimpleSlide,
 } from "./types";
 import { unescape } from "./unescape";
 import { marked } from "./marked";
 
-export { SlideBuilder, slidesToRequests };
+export { SlideBuilder, SimpleSlideBuilder, slidesToRequests, SLIDES_MIME_TYPE };
+
+const SLIDES_MIME_TYPE = "application/vnd.google-apps.presentation";
 
 // Slide Structure:
 // - Slide contains optional title, bodies, and text
@@ -74,7 +77,6 @@ class SlideBuilder {
   constructor(startIndex: number = 0, objectId?: string) {
     this.#startIndex = startIndex;
     this.#objectToDelete = objectId;
-    this.#newSlide();
   }
 
   addMarkdown(markdown: string) {
@@ -216,7 +218,7 @@ class SlideBuilder {
         images.push(this.#addImage(token));
         return;
       }
-      const { type, text: t } = token;
+      const { type, raw: t } = token;
       const length = t.length;
       text += unescape(t);
       const range = { start: current, end: current + length };
@@ -244,14 +246,11 @@ class SlideBuilder {
     if (!slide) return;
     const hasText = !!slide.body?.at(0)?.text?.text;
     const hasImages = !!slide.body?.at(0)?.text?.images?.length;
-    if (slide.subtitle && !hasText) {
+    if (!hasText) {
       slide.layout = "TITLE";
-    } else if (hasText) {
+    } else {
       slide.layout = "TITLE_AND_BODY";
       delete slide.subtitle;
-    } else if (!hasImages) {
-      slide.layout = "MAIN_POINT";
-      slide.body = [];
     }
     this.#depthAdjustment = 0;
   }
@@ -260,7 +259,7 @@ class SlideBuilder {
     this.#finalizeSlide();
     this.#slides.push({
       objectId: `Slide-${this.#startIndex + this.#slides.length}`,
-      layout: "BLANK",
+      layout: "TITLE_AND_BODY",
       body: [],
     });
   }
@@ -346,6 +345,60 @@ function slidesToRequests(
     });
   });
   return requests;
+}
+
+class SimpleSlideBuilder {
+  #slides: Slide[] = [];
+  #images: ImageToken[] = [];
+
+  readonly #startIndex: number;
+  readonly #objectToDelete: string | undefined;
+  #depthAdjustment: number = 0;
+
+  constructor(startIndex: number = 0, objectId?: string) {
+    this.#startIndex = startIndex;
+    this.#objectToDelete = objectId;
+  }
+
+  addSlide(s: SimpleSlide) {
+    const slide: Slide = {
+      objectId: `Slide-${this.#startIndex + this.#slides.length}`,
+      layout: "BLANK",
+      body: [],
+    };
+    this.#slides.push(slide);
+    slide.title = simpleText(s.title);
+    if (s.subtitle) {
+      slide.subtitle = simpleText(s.subtitle);
+    }
+    if (s.body) {
+      slide.body = [{ text: simpleText(s.body) }];
+    }
+    const hasText = !!slide.body?.at(0)?.text?.text;
+    if (!hasText) {
+      slide.layout = "TITLE";
+    } else {
+      slide.layout = "TITLE_AND_BODY";
+      delete slide.subtitle;
+    }
+
+    function simpleText(text: string) {
+      return { text, styles: [], lists: [] };
+    }
+  }
+
+  build(imageUrls: string[]) {
+    console.log("SLIDES", this.#slides);
+    const requests = slidesToRequests(this.#slides, imageUrls);
+    if (this.#objectToDelete) {
+      requests.unshift({
+        deleteObject: {
+          objectId: this.#objectToDelete,
+        },
+      });
+    }
+    return requests;
+  }
 }
 
 function getTextStyle(style: SlideStyle): {

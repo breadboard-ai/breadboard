@@ -25,9 +25,11 @@ const MANUAL_MODE = "Manual layout";
 const FLASH_MODE = "Webpage with auto-layout by 2.5 Flash";
 const PRO_MODE = "Webpage with auto-layout by 2.5 Pro";
 
+type RenderType = "Manual" | "HTML" | "GoogleDoc" | "GoogleSlides";
+
 type Mode = {
   id: string;
-  renderType: string;
+  renderType: RenderType;
   title: string;
   description: string;
   icon: string;
@@ -82,6 +84,13 @@ const MODES: Mode[] = [
     title: "Save to Google Doc",
     icon: "docs",
     description: "Save content to a Google Document",
+  },
+  {
+    id: "google-slides",
+    renderType: "GoogleSlides",
+    title: "Save to Google Slides",
+    icon: "drive_presentation",
+    description: "Save content as a Google Drive Presentation",
   },
 ] as const;
 
@@ -252,13 +261,14 @@ function getPalettePrompt(colors: PaletteColors): string {
   `;
 }
 
-async function saveToGoogleDoc(
+async function saveToGoogleDrive(
   content: LLMContent,
+  mimeType: string,
   title: string | undefined
 ): Promise<Outcome<void>> {
   const manager = new ConnectorManager({
     url: "embed://a2/google-drive.bgl.json",
-    configuration: {},
+    configuration: { file: { mimeType } },
   });
   const saving = await manager.save([content], { title });
   if (!ok(saving)) return saving;
@@ -330,7 +340,20 @@ async function invoke({
       return { context: [out] };
     }
     case "GoogleDoc": {
-      const saving = await saveToGoogleDoc(out, googleDocTitle);
+      const saving = await saveToGoogleDrive(
+        out,
+        "application/vnd.google-apps.document",
+        googleDocTitle
+      );
+      if (!ok(saving)) return saving;
+      return { context: [out] };
+    }
+    case "GoogleSlides": {
+      const saving = await saveToGoogleDrive(
+        out,
+        "application/vnd.google-apps.presentation",
+        googleDocTitle
+      );
       if (!ok(saving)) return saving;
       return { context: [out] };
     }
@@ -338,7 +361,7 @@ async function invoke({
   return { context: [out] };
 }
 
-function advancedSettings(renderType: string): Record<string, Schema> {
+function advancedSettings(renderType: RenderType): Record<string, Schema> {
   switch (renderType) {
     case "HTML":
       return {
@@ -363,7 +386,18 @@ function advancedSettings(renderType: string): Record<string, Schema> {
           behavior: ["config", "hint-advanced"],
           title: "Google Doc Title",
           description:
-            "The title of a Google Document that content will be saved to",
+            "The title of the Google Drive Document that content will be saved to",
+        },
+      };
+    }
+    case "GoogleSlides": {
+      return {
+        "b-google-doc-title": {
+          type: "string",
+          behavior: ["config", "hint-advanced"],
+          title: "Google Presentation Title",
+          description:
+            "The title of a Google Drive Presentation that content will be saved to",
         },
       };
     }

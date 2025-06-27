@@ -21,22 +21,6 @@ type FunctionResponsePart = {
   };
 };
 
-function textToJson(content: LLMContent): LLMContent {
-  return {
-    ...content,
-    parts: content.parts.map((part) => {
-      if ("text" in part) {
-        try {
-          return { json: JSON.parse(part.text) };
-        } catch (e) {
-          // fall through.
-        }
-      }
-      return part;
-    }),
-  };
-}
-
 function mergeLastParts(contexts: LLMContent[][]): LLMContent {
   const parts: DataPart[] = [];
   for (const context of contexts) {
@@ -204,14 +188,10 @@ class GeminiPrompt {
         `Calling tools generated the following errors: ${errors.join(",")}`
       );
     }
-    const isJSON =
-      this.inputs.body.generationConfig?.responseMimeType == "application/json";
-    console.log("gemini-prompt before : ", content);
-    const result = isJSON ? [textToJson(content)] : [content];
+    const result = [content];
     if (results.length) {
       result.push(mergeLastParts(results));
     }
-    console.log("gemini-prompt pushed mergeLastParts: ", result);
     return { all: result, last: result.at(-1)!, candidate };
   }
 }

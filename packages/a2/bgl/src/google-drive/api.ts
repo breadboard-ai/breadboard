@@ -783,7 +783,7 @@ async function createPresentation(
   token: string,
   title: string,
   metadata: Metadata
-): Promise<Outcome<{ presentationId: string }>> {
+): Promise<Outcome<SlidesPresentation>> {
   if (!token) {
     return err("Authentication token is required.");
   }

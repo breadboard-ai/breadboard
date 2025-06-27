@@ -7,3 +7,13 @@ export type ConnectorConfiguration = {
     mimeType: string;
   };
 };
+
+export type SimpleSlide = {
+  title: string;
+  subtitle?: string;
+  body?: string;
+};
+
+export type SimplePresentation = {
+  slides: SimpleSlide[];
+};
