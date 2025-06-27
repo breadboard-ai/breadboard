@@ -375,12 +375,13 @@ class SimpleSlideBuilder {
       slide.body = [{ text: simpleText(s.body) }];
     }
     const hasText = !!slide.body?.at(0)?.text?.text;
-    if (slide.subtitle && !hasText) {
+    if (!hasText) {
       slide.layout = "TITLE";
-    } else if (hasText) {
+    } else {
       slide.layout = "TITLE_AND_BODY";
       delete slide.subtitle;
     }
+
     function simpleText(text: string) {
       return { text, styles: [], lists: [] };
     }

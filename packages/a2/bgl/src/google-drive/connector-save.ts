@@ -14,6 +14,7 @@ import {
   updateDoc,
   updatePresentation,
   getPresentation,
+  createPresentation,
 } from "./api";
 import type { ConnectorConfiguration } from "./types";
 
@@ -60,7 +61,7 @@ async function invoke({
         );
         if (!ok(gettingCollector)) return gettingCollector;
         const { id, end } = gettingCollector;
-        const requests = await contextToRequests(context, end);
+        const requests = await contextToRequests(context, end!);
         const updating = await updateDoc(
           token,
           id,
@@ -81,10 +82,10 @@ async function invoke({
           info?.configuration?.file?.id
         );
         if (!ok(gettingCollector)) return gettingCollector;
-        const { id, end } = gettingCollector;
+        const { id, end, last } = gettingCollector;
         const result = await inferSlideStructure(context);
         if (!ok(result)) return result;
-        const slideBuilder = new SimpleSlideBuilder(end);
+        const slideBuilder = new SimpleSlideBuilder(end, last);
         for (const slide of result.slides) {
           slideBuilder.addSlide(slide);
         }
@@ -109,7 +110,8 @@ async function invoke({
 
 type CollectorData = {
   id: string;
-  end: number;
+  end?: number;
+  last?: string;
 };
 
 /**
@@ -143,14 +145,31 @@ async function getCollector(
             "google-drive-connector": fileKey,
           },
         },
-        { title: "Create new doc to which to append" }
+        { title: "Create new file to which to append" }
       );
       if (!ok(createdFile)) return createdFile;
-
-      return {
-        id: createdFile.id,
-        end: 1,
-      };
+      if (mimeType === DOC_MIME_TYPE) {
+        return {
+          id: createdFile.id,
+          end: 1,
+        };
+      } else if (mimeType === SLIDES_MIME_TYPE) {
+        const gettingPresenation = await getPresentation(
+          token,
+          createdFile.id,
+          {
+            title: "Reading presentation",
+          }
+        );
+        if (!ok(gettingPresenation)) return gettingPresenation;
+        return {
+          id: gettingPresenation.presentationId!,
+          end: 1,
+          last: gettingPresenation.slides?.at(-1)?.objectId || undefined,
+        };
+      } else {
+        return err(`Unknown mimeType: ${mimeType}`);
+      }
     }
     id = file.id;
   } else {
