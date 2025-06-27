@@ -151,7 +151,7 @@
     "@material/web": "^2.3.0",
     "@types/gapi": "^0.0.47",
     "@types/gapi.client.drive-v3": "^0.0.5",
-    "@types/google.picker": "^0.0.50",
+    "@types/google.picker": "^0.0.51",
     "@typescript/vfs": "^1.6.1",
     "@valtown/codemirror-continue": "^2.3.1",
     "@valtown/codemirror-ts": "^2.3.1",
