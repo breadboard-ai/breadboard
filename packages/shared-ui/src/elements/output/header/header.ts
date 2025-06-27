@@ -22,6 +22,9 @@ export class Header extends LitElement {
   @property()
   accessor progress = 0; /** 0 -> 1 */
 
+  @property({ reflect: true, type: Boolean })
+  accessor neutral = false;
+
   @property()
   accessor menuActive = false;
 
@@ -52,6 +55,11 @@ export class Header extends LitElement {
         flex: 0 0 auto;
         z-index: 2;
         color: var(--p-40, var(--bb-neutral-900));
+      }
+
+      :host([neutral]) {
+        border-top: 1px solid var(--n-95);
+        border-bottom: 1px solid var(--n-90);
       }
 
       #menu,
@@ -107,6 +115,10 @@ export class Header extends LitElement {
             transition: width 0.3s cubic-bezier(0, 0, 0.3, 1);
           }
         }
+      }
+
+      :host([neutral]) #progress-container > #progress {
+        background: var(--s-80, var(--bb-neutral-200));
       }
 
       ul {

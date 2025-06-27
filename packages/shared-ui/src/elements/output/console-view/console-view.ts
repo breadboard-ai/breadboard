@@ -19,11 +19,15 @@ import { sharedStyles } from "./shared-styles.js";
 import { colorsLight } from "../../../styles/host/colors-light.js";
 import { type } from "../../../styles/host/type.js";
 import { iconSubstitute } from "../../../utils/icon-substitute.js";
+import { styleMap } from "lit/directives/style-map.js";
 
 @customElement("bb-console-view")
 export class ConsoleView extends SignalWatcher(LitElement) {
   @property()
   accessor run: ProjectRun | null = null;
+
+  @property()
+  accessor themeStyles: Record<string, string> | null = null;
 
   static styles = [
     icons,
@@ -505,15 +509,18 @@ export class ConsoleView extends SignalWatcher(LitElement) {
   }
 
   render() {
-    return [
-      html`<bb-header
-        .replayActive=${this.run?.consoleState === "entries"}
-        .progress=${this.run?.progress}
-      ></bb-header>`,
-      this.run?.consoleState === "entries"
-        ? this.#renderRun()
-        : this.#renderRunButton(),
-      this.#renderInput(),
-    ];
+    return html`<section style=${styleMap(this.themeStyles ?? {})}>
+      ${[
+        html`<bb-app-header
+          .neutral=${true}
+          .replayActive=${this.run?.consoleState === "entries"}
+          .progress=${this.run?.progress}
+        ></bb-app-header>`,
+        this.run?.consoleState === "entries"
+          ? this.#renderRun()
+          : this.#renderRunButton(),
+        this.#renderInput(),
+      ]}
+    </section>`;
   }
 }
