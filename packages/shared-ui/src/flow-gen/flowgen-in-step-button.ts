@@ -25,6 +25,7 @@ import {
   type FlowGenConstraint,
   type FlowGenerator,
 } from "./flow-generator.js";
+import { colorsLight } from "../styles/host/colors-light.js";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -41,6 +42,7 @@ export class FlowgenInStepButton extends LitElement {
     floatingPanelStyles,
     multiLineInputStyles,
     icons,
+    colorsLight,
     css`
       :host {
         position: relative;
@@ -76,13 +78,7 @@ export class FlowgenInStepButton extends LitElement {
         max-width: 320px;
         border-radius: var(--bb-grid-size-8);
         padding: var(--bb-grid-size-3);
-        background: linear-gradient(
-          to bottom,
-          #b1cffa 0%,
-          #c6d2f3 34%,
-          #d2d4ed 69%,
-          #e6d9e7 99%
-        );
+        background: var(--ui-flowgen-step);
       }
 
       :host([popoverPosition="above"]) #panel {
@@ -131,7 +127,7 @@ export class FlowgenInStepButton extends LitElement {
         }
 
         &:focus-within {
-          border: 1px solid var(--bb-ui-500);
+          outline: 1px solid var(--ui-custom-o-100);
         }
 
         & #submit-button {

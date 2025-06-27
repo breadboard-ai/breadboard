@@ -180,6 +180,7 @@ export const colorsLight = css`
       from var(--ui-custom-o-100) l c h / calc(alpha * 0.05)
     );
     --ui-scrim: rgba(0, 0, 0, 0.6);
+    --ui-flowgen-step: #e2e1f1;
   }
 
   :host {
