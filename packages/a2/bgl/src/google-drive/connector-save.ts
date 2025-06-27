@@ -13,6 +13,7 @@ import {
   getDoc,
   updateDoc,
   updatePresentation,
+  getPresentation,
 } from "./api";
 import type { ConnectorConfiguration } from "./types";
 
@@ -80,10 +81,10 @@ async function invoke({
           info?.configuration?.file?.id
         );
         if (!ok(gettingCollector)) return gettingCollector;
-        const { id } = gettingCollector;
+        const { id, end } = gettingCollector;
         const result = await inferSlideStructure(context);
         if (!ok(result)) return result;
-        const slideBuilder = new SimpleSlideBuilder();
+        const slideBuilder = new SimpleSlideBuilder(end);
         for (const slide of result.slides) {
           slideBuilder.addSlide(slide);
         }
@@ -124,10 +125,10 @@ async function getCollector(
 ): Promise<Outcome<CollectorData>> {
   let id;
   if (!fileId) {
-    const connectorPrefix = mimeType === DOC_MIME_TYPE ? "doc" : "slides";
+    const fileKey = `${mimeType === DOC_MIME_TYPE ? "doc" : "slides"}${connectorId}`;
     const findFile = await query(
       token,
-      `appProperties has { key = 'google-drive-connector' and value = '${connectorPrefix}${connectorId}' } and trashed = false`,
+      `appProperties has { key = 'google-drive-connector' and value = '${fileKey}' } and trashed = false`,
       { title: "Find the doc to append to" }
     );
     if (!ok(findFile)) return findFile;
@@ -139,7 +140,7 @@ async function getCollector(
           name: title,
           mimeType,
           appProperties: {
-            "google-drive-connector": connectorId,
+            "google-drive-connector": fileKey,
           },
         },
         { title: "Create new doc to which to append" }
@@ -168,9 +169,15 @@ async function getCollector(
         1
       ) - 1;
     return { id, end };
-  } else {
-    return { id, end: 0 };
+  } else if (mimeType === SLIDES_MIME_TYPE) {
+    const gettingPresentation = await getPresentation(token, id, {
+      title: "Get current doc contents",
+    });
+    if (!ok(gettingPresentation)) return gettingPresentation;
+    const end = gettingPresentation.slides?.length || 0;
+    return { id, end };
   }
+  return err(`Unknown mimeType: ${mimeType}`);
 }
 
 async function describe() {

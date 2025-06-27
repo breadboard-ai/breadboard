@@ -267,6 +267,22 @@ type GeminiError = {
   };
 };
 
+function textToJson(content: LLMContent): LLMContent {
+  return {
+    ...content,
+    parts: content.parts.map((part) => {
+      if ("text" in part) {
+        try {
+          return { json: JSON.parse(part.text) };
+        } catch (e) {
+          // fall through.
+        }
+      }
+      return part;
+    }),
+  };
+}
+
 /**
  * Modifies the body to remove any
  * Breadboard-specific extensions to LLM Content
@@ -347,7 +363,10 @@ async function callAPI(
             err("Unable to get a good response from Gemini")
           );
         }
-        if ("content" in candidate) {
+        if ("content" in candidate && candidate.content) {
+          if (body.generationConfig?.responseMimeType === "application/json") {
+            candidate.content = textToJson(candidate.content);
+          }
           await reporter.sendUpdate(
             "Model Response",
             candidate.content,

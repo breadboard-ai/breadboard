@@ -209,7 +209,9 @@ export class ConsoleView extends SignalWatcher(LitElement) {
               background: var(--ui-get-input);
             }
 
-            &.responsive_layout {
+            &.responsive_layout,
+            &.drive_presentation,
+            &.docs {
               background: var(--ui-display);
             }
 
