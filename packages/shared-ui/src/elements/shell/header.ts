@@ -11,7 +11,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import { colorsLight } from "../../styles/host/colors-light";
 import { type } from "../../styles/host/type";
 import { SigninAdapter } from "../../utils/signin-adapter.js";
-import { BOARD_SAVE_STATUS } from "../../types/types.js";
+import { BOARD_SAVE_STATUS, EnumValue } from "../../types/types.js";
 import { icons } from "../../styles/icons.js";
 import {
   BoardTitleUpdateEvent,
@@ -291,49 +291,50 @@ export class VEHeader extends LitElement {
   }
 
   #renderItemSelect() {
-    if (!this.isMine) {
-      return;
-    }
-
-    const values = [
+    const options: EnumValue[] = [
       {
         id: "more",
         title: "",
         icon: "more_vert",
         hidden: true,
       },
-      {
-        id: "edit-title-and-description",
-        title: Strings.from("COMMAND_EDIT_PROJECT_INFORMATION"),
-        icon: "edit",
-      },
-      {
-        id: "delete",
-        title: Strings.from("COMMAND_DELETE_PROJECT"),
-        icon: "delete",
-      },
-      {
-        id: "duplicate",
-        title: Strings.from("COMMAND_COPY_PROJECT"),
-        icon: "file_copy",
-      },
-      {
-        id: "history",
-        title: Strings.from("COMMAND_SHOW_VERSION_HISTORY"),
-        icon: "history",
-      },
-      {
-        id: "feedback",
-        title: Strings.from("COMMAND_SEND_FEEDBACK"),
-        icon: "flag",
-      },
     ];
+    if (this.isMine) {
+      options.push(
+        {
+          id: "edit-title-and-description",
+          title: Strings.from("COMMAND_EDIT_PROJECT_INFORMATION"),
+          icon: "edit",
+        },
+        {
+          id: "delete",
+          title: Strings.from("COMMAND_DELETE_PROJECT"),
+          icon: "delete",
+        },
+        {
+          id: "duplicate",
+          title: Strings.from("COMMAND_COPY_PROJECT"),
+          icon: "file_copy",
+        },
+        {
+          id: "history",
+          title: Strings.from("COMMAND_SHOW_VERSION_HISTORY"),
+          icon: "history",
+        }
+      );
+    }
+
+    options.push({
+      id: "feedback",
+      title: Strings.from("COMMAND_SEND_FEEDBACK"),
+      icon: "flag",
+    });
 
     return html`<bb-item-select
       .showDownArrow=${false}
       .freezeValue=${0}
       .transparent=${true}
-      .values=${values}
+      .values=${options}
     ></bb-item-select>`;
   }
 
@@ -381,7 +382,7 @@ export class VEHeader extends LitElement {
       </h1>
       <div id="right">
         <bb-homepage-search-button></bb-homepage-search-button>
-        ${this.#renderUser()}
+        ${[this.#renderItemSelect(), this.#renderUser()]}
       </div>
     </section>`;
   }
