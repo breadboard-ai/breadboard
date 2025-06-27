@@ -246,14 +246,11 @@ class SlideBuilder {
     if (!slide) return;
     const hasText = !!slide.body?.at(0)?.text?.text;
     const hasImages = !!slide.body?.at(0)?.text?.images?.length;
-    if (slide.subtitle && !hasText) {
+    if (!hasText) {
       slide.layout = "TITLE";
-    } else if (hasText) {
+    } else {
       slide.layout = "TITLE_AND_BODY";
       delete slide.subtitle;
-    } else if (!hasImages) {
-      slide.layout = "MAIN_POINT";
-      slide.body = [];
     }
     this.#depthAdjustment = 0;
   }
@@ -262,7 +259,7 @@ class SlideBuilder {
     this.#finalizeSlide();
     this.#slides.push({
       objectId: `Slide-${this.#startIndex + this.#slides.length}`,
-      layout: "BLANK",
+      layout: "TITLE_AND_BODY",
       body: [],
     });
   }
