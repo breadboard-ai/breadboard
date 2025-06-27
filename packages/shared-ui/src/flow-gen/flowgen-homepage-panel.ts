@@ -141,6 +141,10 @@ export class FlowgenHomepagePanel extends LitElement {
           color: var(--bb-neutral-500);
         }
 
+        &:focus-within {
+          outline: 1px solid var(--ui-custom-o-100);
+        }
+
         > [slot~="submit"] {
           display: flex;
           align-items: center;

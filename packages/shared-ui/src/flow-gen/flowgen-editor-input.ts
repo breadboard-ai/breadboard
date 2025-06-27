@@ -124,6 +124,10 @@ export class FlowgenEditorInput extends LitElement {
         line-height: 1lh;
         caret-color: var(--n-0);
 
+        &:focus-within {
+          outline: 1px solid var(--ui-custom-o-100);
+        }
+
         > [slot~="submit"] {
           display: flex;
           align-items: center;
