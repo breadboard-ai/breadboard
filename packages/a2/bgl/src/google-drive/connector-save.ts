@@ -5,6 +5,7 @@ import { type DescribeOutputs } from "@describe";
 import { toText, ok, err } from "./a2/utils";
 import { contextToRequests, DOC_MIME_TYPE } from "./docs";
 import { SLIDES_MIME_TYPE, SimpleSlideBuilder } from "./slides";
+import { SHEETS_MIME_TYPE } from "./sheets";
 import { inferSlideStructure } from "./slides-schema";
 import {
   connect,
@@ -44,7 +45,10 @@ async function invoke({
   info,
 }: Inputs): Promise<Outcome<Outputs>> {
   const mimeType = info?.configuration?.file?.mimeType || DOC_MIME_TYPE;
-  const canSave = mimeType === DOC_MIME_TYPE || mimeType === SLIDES_MIME_TYPE;
+  const canSave =
+    mimeType === DOC_MIME_TYPE ||
+    mimeType === SLIDES_MIME_TYPE ||
+    mimeType === SHEETS_MIME_TYPE;
   if (method === "save") {
     if (!canSave) {
       return err(`Unable to save files of type "${mimeType}"`);
@@ -100,6 +104,10 @@ async function invoke({
         if (!ok(updating)) return updating;
         return { context: context || [] };
         break;
+      }
+      case SHEETS_MIME_TYPE: {
+        console.log("SAVING TO SHEETS");
+        return { context: context || [] };
       }
     }
   } else if (method == "canSave") {

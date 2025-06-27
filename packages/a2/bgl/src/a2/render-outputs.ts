@@ -25,7 +25,12 @@ const MANUAL_MODE = "Manual layout";
 const FLASH_MODE = "Webpage with auto-layout by 2.5 Flash";
 const PRO_MODE = "Webpage with auto-layout by 2.5 Pro";
 
-type RenderType = "Manual" | "HTML" | "GoogleDoc" | "GoogleSlides";
+type RenderType =
+  | "Manual"
+  | "HTML"
+  | "GoogleDoc"
+  | "GoogleSlides"
+  | "GoogleSheets";
 
 type Mode = {
   id: string;
@@ -81,7 +86,7 @@ const MODES: Mode[] = [
   {
     id: "google-doc",
     renderType: "GoogleDoc",
-    title: "Save to Google Doc",
+    title: "Save to Google Docs",
     icon: "docs",
     description: "Save content to a Google Document",
   },
@@ -91,6 +96,13 @@ const MODES: Mode[] = [
     title: "Save to Google Slides",
     icon: "drive_presentation",
     description: "Save content as a Google Drive Presentation",
+  },
+  {
+    id: "google-sheets",
+    renderType: "GoogleSheets",
+    title: "Save to Google Sheets",
+    icon: "sheets",
+    description: "Save content as a Google Drive Spreadsheet",
   },
 ] as const;
 
@@ -357,6 +369,15 @@ async function invoke({
       if (!ok(saving)) return saving;
       return { context: [out] };
     }
+    case "GoogleSheets": {
+      const saving = await saveToGoogleDrive(
+        out,
+        "application/vnd.google-apps.spreadsheet",
+        googleDocTitle
+      );
+      if (!ok(saving)) return saving;
+      return { context: [out] };
+    }
   }
   return { context: [out] };
 }
@@ -398,6 +419,17 @@ function advancedSettings(renderType: RenderType): Record<string, Schema> {
           title: "Google Presentation Title",
           description:
             "The title of a Google Drive Presentation that content will be saved to",
+        },
+      };
+    }
+    case "GoogleSheets": {
+      return {
+        "b-google-doc-title": {
+          type: "string",
+          behavior: ["config", "hint-advanced"],
+          title: "Google Spreadsheet Title",
+          description:
+            "The title of a Google Drive Spreadsheet that content will be saved to",
         },
       };
     }
