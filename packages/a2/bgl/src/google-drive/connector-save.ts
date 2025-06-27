@@ -5,7 +5,9 @@ import { type DescribeOutputs } from "@describe";
 import { toText, ok, err } from "./a2/utils";
 import { contextToRequests, DOC_MIME_TYPE } from "./docs";
 import { SLIDES_MIME_TYPE, SimpleSlideBuilder } from "./slides";
+import { SHEETS_MIME_TYPE } from "./sheets";
 import { inferSlideStructure } from "./slides-schema";
+import { inferSheetValues } from "./sheets";
 import {
   connect,
   query,
@@ -15,6 +17,7 @@ import {
   updatePresentation,
   getPresentation,
   createPresentation,
+  appendSpreadsheetValues,
 } from "./api";
 import type { ConnectorConfiguration } from "./types";
 
@@ -44,7 +47,10 @@ async function invoke({
   info,
 }: Inputs): Promise<Outcome<Outputs>> {
   const mimeType = info?.configuration?.file?.mimeType || DOC_MIME_TYPE;
-  const canSave = mimeType === DOC_MIME_TYPE || mimeType === SLIDES_MIME_TYPE;
+  const canSave =
+    mimeType === DOC_MIME_TYPE ||
+    mimeType === SLIDES_MIME_TYPE ||
+    mimeType === SHEETS_MIME_TYPE;
   if (method === "save") {
     if (!canSave) {
       return err(`Unable to save files of type "${mimeType}"`);
@@ -70,21 +76,21 @@ async function invoke({
         );
         if (!ok(updating)) return updating;
         return { context: context || [] };
-        break;
       }
       case SLIDES_MIME_TYPE: {
-        // TODO: Run these in parallel. They are both slow.
-        const gettingCollector = await getCollector(
-          token,
-          connectorId,
-          title ?? "Untitled Presentation",
-          SLIDES_MIME_TYPE,
-          info?.configuration?.file?.id
-        );
+        const [gettingCollector, result] = await Promise.all([
+          getCollector(
+            token,
+            connectorId,
+            title ?? "Untitled Presentation",
+            SLIDES_MIME_TYPE,
+            info?.configuration?.file?.id
+          ),
+          inferSlideStructure(context),
+        ]);
         if (!ok(gettingCollector)) return gettingCollector;
-        const { id, end, last } = gettingCollector;
-        const result = await inferSlideStructure(context);
         if (!ok(result)) return result;
+        const { id, end, last } = gettingCollector;
         const slideBuilder = new SimpleSlideBuilder(end, last);
         for (const slide of result.slides) {
           slideBuilder.addSlide(slide);
@@ -99,7 +105,33 @@ async function invoke({
         );
         if (!ok(updating)) return updating;
         return { context: context || [] };
-        break;
+      }
+      case SHEETS_MIME_TYPE: {
+        const [gettingCollector, result] = await Promise.all([
+          getCollector(
+            token,
+            connectorId,
+            title ?? "Untitled Spreadsheet",
+            SHEETS_MIME_TYPE,
+            info?.configuration?.file?.id
+          ),
+          inferSheetValues(context),
+        ]);
+        if (!ok(gettingCollector)) return gettingCollector;
+        if (!ok(result)) return result;
+        const { id, end, last } = gettingCollector;
+        console.log("VALUES", result);
+        const appending = await appendSpreadsheetValues(
+          token,
+          id,
+          "Sheet1",
+          { values: result },
+          {
+            title: "Append to Google Presentation",
+          }
+        );
+        if (!ok(appending)) return appending;
+        return { context: context || [] };
       }
     }
   } else if (method == "canSave") {
@@ -127,7 +159,7 @@ async function getCollector(
 ): Promise<Outcome<CollectorData>> {
   let id;
   if (!fileId) {
-    const fileKey = `${mimeType === DOC_MIME_TYPE ? "doc" : "slides"}${connectorId}`;
+    const fileKey = `${getTypeKey(mimeType)}${connectorId}`;
     const findFile = await query(
       token,
       `appProperties has { key = 'google-drive-connector' and value = '${fileKey}' } and trashed = false`,
@@ -167,6 +199,8 @@ async function getCollector(
           end: 1,
           last: gettingPresenation.slides?.at(-1)?.objectId || undefined,
         };
+      } else if (mimeType === SHEETS_MIME_TYPE) {
+        return { id: createdFile.id, end: 1 };
       } else {
         return err(`Unknown mimeType: ${mimeType}`);
       }
@@ -195,8 +229,17 @@ async function getCollector(
     if (!ok(gettingPresentation)) return gettingPresentation;
     const end = gettingPresentation.slides?.length || 0;
     return { id, end };
+  } else if (mimeType === SHEETS_MIME_TYPE) {
+    return { id, end: 1 };
   }
   return err(`Unknown mimeType: ${mimeType}`);
+
+  function getTypeKey(mimeType: string) {
+    if (mimeType === DOC_MIME_TYPE) return "doc";
+    if (mimeType === SHEETS_MIME_TYPE) return "sheet";
+    if (mimeType === SLIDES_MIME_TYPE) return "slides";
+    return "";
+  }
 }
 
 async function describe() {

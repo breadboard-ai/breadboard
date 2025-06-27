@@ -17,3 +17,7 @@ export type SimpleSlide = {
 export type SimplePresentation = {
   slides: SimpleSlide[];
 };
+
+export type SheetValues = {
+  spreadsheet_values: unknown[][];
+};

@@ -49,7 +49,7 @@ async function inferSlideStructure(
     body: {
       contents,
       systemInstruction:
-        llm`Your job is to generate a slide deck from the input provide.
+        llm`Your job is to generate a slide deck from the provided input.
 Make sure that the deck represents the key information from the content.
 Keep each slide body text short so that the audience doesn't have to read long sheets of text on each slide.
 If necessary, break down the deck into sections using title slides`.asContent(),

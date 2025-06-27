@@ -23,6 +23,8 @@ export {
   getPresentation,
   updatePresentation,
   createPermission,
+  updateSpreadsheetValues,
+  appendSpreadsheetValues,
 };
 
 // These are various Google Drive-specific types.
@@ -623,6 +625,25 @@ export type SlidesRequest =
   | { createImage: SlidesCreateImageRequest }
   | { updateTextStyle: SlidesUpdateTextStyleRequest };
 
+export type SpreadsheetValueRange = {
+  range?: string;
+  majorDimension?: "ROWS" | "COLUMNS";
+  values: unknown[][];
+};
+
+export type SpreadsheetValuesUpdate = {
+  valueInputOption?: "RAW" | "USER_ENTERED";
+  data: SpreadsheetValueRange[];
+  includeValuesInResponse?: boolean;
+  responseValueRenderOption?:
+    | "FORMATTED_VALUE"
+    | "UNFORMATTED_VALUE"
+    | "FORMULA";
+  responseDateTimeRenderOption?: "SERIAL_NUMBER" | "FORMATTED_STRING";
+};
+
+export type SpreadsheetValuesAppend = SpreadsheetValueRange;
+
 const connectionId = "connection:$sign-in";
 
 export type Metadata = {
@@ -815,6 +836,55 @@ async function updatePresentation(
     metadata,
     token,
     `https://slides.googleapis.com/v1/presentations/${id}:batchUpdate`,
+    "POST",
+    body
+  );
+}
+
+async function updateSpreadsheetValues(
+  token: string,
+  id: string,
+  body: SpreadsheetValuesUpdate,
+  metadata: Metadata
+) {
+  if (!token) {
+    return err("Authentication token is required.");
+  }
+  if (!id) {
+    return err("Please supply the id of the spreadsheet to update.");
+  }
+  if (!body) {
+    return err("Please supply the body of the spreadsheet update request.");
+  }
+  return api(
+    metadata,
+    token,
+    `https://sheets.googleapis.com/v4/spreadsheets/${id}/values:batchUpdate`,
+    "POST",
+    body
+  );
+}
+
+async function appendSpreadsheetValues(
+  token: string,
+  id: string,
+  range: string,
+  body: SpreadsheetValuesAppend,
+  metadata: Metadata
+) {
+  if (!token) {
+    return err("Authentication token is required.");
+  }
+  if (!id) {
+    return err("Please supply the id of the spreadsheet to update.");
+  }
+  if (!body) {
+    return err("Please supply the body of the spreadsheet update request.");
+  }
+  return api(
+    metadata,
+    token,
+    `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${range}:append?valueInputOption=USER_ENTERED`,
     "POST",
     body
   );
