@@ -71,6 +71,7 @@ export type GeminiSchema = {
   maxItems?: string;
   minItems?: string;
   properties?: Record<string, GeminiSchema>;
+  anyOf?: Schema[];
   required?: string[];
   items?: GeminiSchema;
 };
