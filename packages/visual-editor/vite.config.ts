@@ -36,7 +36,6 @@ export default async ({ mode }: UserConfig) => {
   const define = { ...buildInfo, ...definedAssets };
 
   const entry: Record<string, string> = {
-    worker: "src/worker.ts",
     sample: "./index.html",
     oauth: "./oauth/index.html",
   };

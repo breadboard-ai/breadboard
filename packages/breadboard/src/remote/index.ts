@@ -11,7 +11,6 @@ export {
   WorkerClientTransport,
 } from "./worker.js";
 export { ProxyServer, ProxyClient } from "./proxy.js";
-export { RunServer, RunClient } from "./run.js";
 export { InitServer, InitClient } from "./init.js";
 export { defineConfig, hasOrigin, type ProxyServerConfig } from "./config.js";
 export type * from "./types.js";

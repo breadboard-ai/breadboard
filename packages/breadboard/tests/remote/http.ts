@@ -11,10 +11,6 @@ import {
   HTTPServerTransport,
   parseWithStreamsTransform,
 } from "../../src/remote/http.js";
-import { RunServer } from "../../src/remote/run.js";
-import { AnyRunRequestMessage } from "../../src/remote/types.js";
-import { Board } from "../../src/board.js";
-import { TestKit } from "../helpers/_test-kit.js";
 import { MockHTTPConnection } from "../helpers/_test-transport.js";
 import { StreamCapability, isStreamCapability } from "../../src/stream.js";
 import { NodeValue } from "../../src/types.js";
@@ -88,32 +84,6 @@ test("HTTPServerTransport does the basics", async (t) => {
   t.true(doneValue.done);
   await writer.write(["input", { node: { type: "input" } }]);
   await writer.close();
-});
-
-test("RunServer can use HTTPServerTransport", async (t) => {
-  const board = new Board();
-  const kit = board.addKit(TestKit);
-  board.input({ foo: "bar" }).wire("*", kit.noop().wire("*", board.output()));
-
-  const request = {
-    body: ["run", {}] as AnyRunRequestMessage,
-  };
-  const response = {
-    header() {
-      return;
-    },
-    write: (response: unknown) => {
-      const data = JSON.parse((response as string).slice(6));
-      t.like(data, ["input", { node: { type: "input" } }]);
-      return true;
-    },
-    end: () => {
-      t.pass();
-    },
-  };
-  const transport = new HTTPServerTransport(request, response);
-  const server = new RunServer(transport);
-  await server.serve(board);
 });
 
 test("MockHTTPConnection works as advertised", async (t) => {
