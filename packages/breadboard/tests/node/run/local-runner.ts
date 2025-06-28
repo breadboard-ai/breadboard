@@ -249,17 +249,9 @@ describe("LocalRunner", async () => {
     });
     let observed = false;
     runner.addObserver({
-      runs() {
-        throw new Error("Not implemented");
-      },
-      load() {
-        throw new Error("Not implemented");
-      },
       async observe() {
         observed = true;
       },
-      async append() {},
-      async replay() {},
     });
     const result = await runner.run();
     ok(observed);
@@ -274,17 +266,9 @@ describe("LocalRunner", async () => {
       kits: [testKit],
     });
     runner.addObserver({
-      runs() {
-        throw new Error("Not implemented");
-      },
-      load() {
-        throw new Error("Not implemented");
-      },
       observe() {
         throw new Error("I'm an observer that throws an error");
       },
-      async append() {},
-      async replay() {},
     });
     const result = await runner.run();
     ok(!result);

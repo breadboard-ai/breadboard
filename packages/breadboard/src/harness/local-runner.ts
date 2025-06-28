@@ -5,6 +5,7 @@
  */
 
 import type {
+  HarnessObserver,
   HarnessRunner,
   HarnessRunResult,
   RunConfig,
@@ -28,7 +29,6 @@ import {
   StartEvent,
   NextEvent,
 } from "./events.js";
-import { InspectableRunObserver } from "../inspector/types.js";
 import { timestamp } from "../timestamp.js";
 
 export class LocalRunner
@@ -36,7 +36,7 @@ export class LocalRunner
   implements HarnessRunner
 {
   #config: RunConfig;
-  #observers: InspectableRunObserver[] = [];
+  #observers: HarnessObserver[] = [];
   #run: ReturnType<typeof run> | null = null;
   #pendingResult: HarnessRunResult | null = null;
   #inRun = false;
@@ -53,7 +53,7 @@ export class LocalRunner
     this.#config = config;
   }
 
-  addObserver(observer: InspectableRunObserver): void {
+  addObserver(observer: HarnessObserver): void {
     this.#observers.push(observer);
   }
 

@@ -13,10 +13,7 @@ import type {
   TraversalResult,
 } from "@breadboard-ai/types";
 import type { DataStore, FileSystem } from "../data/types.js";
-import {
-  InspectableRunObserver,
-  MutableGraphStore,
-} from "../inspector/types.js";
+import { MutableGraphStore } from "../inspector/types.js";
 import type { GraphLoader } from "../loader/types.js";
 import type { NodeProxyConfig } from "../remote/config.js";
 import type {
@@ -329,8 +326,13 @@ export type RunNodeEndEvent = Event & {
 
 export type RunEventTarget = TypedEventTarget<RunEventMap>;
 
+export type HarnessObserver = {
+  observe(result: HarnessRunResult): Promise<void>;
+  resume?(): void;
+};
+
 export type HarnessRunner = TypedEventTargetType<RunEventMap> & {
-  addObserver(observer: InspectableRunObserver): void;
+  addObserver(observer: HarnessObserver): void;
 
   /**
    * Check if the runner is running or not.
