@@ -7,6 +7,6 @@
 import type {
   TypedEventTarget,
   TypedEventTargetType,
-} from "@breadboard-ai/utils";
+} from "@breadboard-ai/types";
 
 export { TypedEventTarget, TypedEventTargetType };
