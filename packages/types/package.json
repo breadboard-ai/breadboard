@@ -3,8 +3,16 @@
   "version": "0.7.0",
   "description": "TypeScript type definitions for Breadboard.",
   "main": "./dist/src/index.js",
-  "exports": "./dist/src/index.js",
-  "types": "dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "default": "./dist/src/index.js",
+      "types": "./dist/src/index.d.ts"
+    },
+    "./*.js": {
+      "types": "./dist/src/*.d.ts",
+      "default": "./dist/src/*.js"
+    }
+  },
   "type": "module",
   "scripts": {
     "prepack": "npm run build",

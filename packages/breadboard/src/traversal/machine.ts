@@ -8,11 +8,12 @@ import type {
   GraphDescriptor,
   TraversalResult,
   NodeIdentifier,
+  GraphRepresentation,
 } from "@breadboard-ai/types";
 import { TraversalMachineIterator } from "./iterator.js";
-import { GraphRepresentation } from "./representation.js";
 import { MachineResult } from "./result.js";
 import { MachineEdgeState } from "./state.js";
+import { GraphRepresentationImpl } from "./representation.js";
 
 export class TraversalMachine implements AsyncIterable<TraversalResult> {
   graph: GraphRepresentation;
@@ -23,7 +24,7 @@ export class TraversalMachine implements AsyncIterable<TraversalResult> {
     result?: TraversalResult,
     start?: NodeIdentifier
   ) {
-    this.graph = new GraphRepresentation(descriptor, start);
+    this.graph = new GraphRepresentationImpl(descriptor, start);
     this.previousResult = result;
   }
 

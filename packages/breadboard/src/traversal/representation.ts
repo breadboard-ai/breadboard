@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { GraphRepresentation } from "@breadboard-ai/types";
 import type {
   Edge,
   GraphDescriptor,
@@ -11,7 +12,7 @@ import type {
   NodeIdentifier,
 } from "../types.js";
 
-export class GraphRepresentation {
+export class GraphRepresentationImpl implements GraphRepresentation {
   start?: NodeIdentifier;
   /**
    * Tails: a map of all outgoing edges, keyed by node id.
@@ -91,12 +92,14 @@ export class GraphRepresentation {
     }
     this.tails = descriptor.edges.reduce((acc, edge) => {
       const from = edge.from;
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
       acc.has(from) ? acc.get(from)?.push(edge) : acc.set(from, [edge]);
       return acc;
     }, new Map());
 
     this.heads = descriptor.edges.reduce((acc, edge) => {
       const to = edge.to;
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
       acc.has(to) ? acc.get(to)?.push(edge) : acc.set(to, [edge]);
       return acc;
     }, new Map());
