@@ -159,7 +159,7 @@
   "dependencies": {
     "@breadboard-ai/jsandbox": "0.6.0",
     "@breadboard-ai/types": "0.7.0",
-    "@breadboard-ai/utils": "^0.0.1",
+    "@breadboard-ai/utils": "0.0.1",
     "@google-labs/breadboard-schema": "^1.14.0",
     "json-schema": "^0.4.0",
     "signal-utils": "^0.21.1"

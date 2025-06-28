@@ -83,10 +83,10 @@
     "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^8.35.0",
     "@typescript-eslint/parser": "^8.34.1",
-    "ava": "^5.2.0",
+    "ava": "6.4.0",
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@breadboard-ai/types": "^0.7.0"
+    "@breadboard-ai/types": "0.7.0"
   }
 }
