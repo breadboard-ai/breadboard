@@ -13,8 +13,6 @@ export type * from "./types.js";
 
 export { run } from "./run.js";
 
-export { type KitConfig } from "./kits.js";
-
 export { createSecretAskingKit } from "./secrets.js";
 
 export const createRunner = (config: RunConfig): HarnessRunner => {

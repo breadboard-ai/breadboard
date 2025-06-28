@@ -14,7 +14,6 @@ export { ProxyServer, ProxyClient } from "./proxy.js";
 export { InitServer, InitClient } from "./init.js";
 export { defineConfig, hasOrigin, type ProxyServerConfig } from "./config.js";
 export type * from "./types.js";
-export type * from "./config.js";
 export type * from "./http.js";
 export { handleRunGraphRequest } from "./run-graph-server.js";
 export { chunkRepairTransform } from "./chunk-repair.js";

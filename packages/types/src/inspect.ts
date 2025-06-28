@@ -6,6 +6,7 @@
 
 import {
   DataStore,
+  FileSystem,
   Outcome,
   RunStore,
   SerializedDataStoreGroup,

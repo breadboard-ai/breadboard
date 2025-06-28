@@ -4,10 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Edge, TraversalResult } from "@breadboard-ai/types";
+import type {
+  Edge,
+  GraphRepresentation,
+  TraversalResult,
+} from "@breadboard-ai/types";
 import type { ErrorCapability } from "../types.js";
 import { Traversal } from "./index.js";
-import { GraphRepresentation } from "./representation.js";
 import { MachineResult } from "./result.js";
 
 export class TraversalMachineIterator

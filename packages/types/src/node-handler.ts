@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DataStore } from "./data.js";
+import { DataStore, FileSystem } from "./data.js";
 import {
   Capability,
   GraphDescriptor,
