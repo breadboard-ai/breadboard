@@ -18,9 +18,9 @@ import {
   scanTunnelValue,
   atob,
   btoa,
-} from "../../src/remote/tunnel.js";
-import { callHandler } from "../../src/handler.js";
-import { NodeHandlers } from "../../src/types.js";
+} from "../../../src/remote/tunnel.js";
+import { callHandler } from "../../../src/handler.js";
+import { NodeHandlers } from "@breadboard-ai/types";
 
 test("atob and btoa polyfills work", (t) => {
   t.is(atob("aGVsbG8gd29ybGQ="), "hello world");

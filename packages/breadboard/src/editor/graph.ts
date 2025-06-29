@@ -4,54 +4,56 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor, GraphIdentifier, NodeIdentifier } from "../types.js";
-import {
-  SingleEditResult,
-  EditableGraph,
-  EditableGraphOptions,
-  RejectionReason,
-  EditSpec,
-  EditResult,
-  EditOperation,
-  EditOperationContext,
-  EditResultLogEntry,
-  EditHistory,
-  EditTransform,
-  EditTransformResult,
-  EditOperationConductor,
-  AffectedNode,
-  EditHistoryCreator,
-} from "./types.js";
-import { ChangeEvent, ChangeRejectEvent } from "./events.js";
-import { AddEdge } from "./operations/add-edge.js";
-import { AddNode } from "./operations/add-node.js";
-import { AddModule } from "./operations/add-module.js";
-import { RemoveNode } from "./operations/remove-node.js";
-import { RemoveEdge } from "./operations/remove-edge.js";
-import { RemoveModule } from "./operations/remove-module.js";
-import { ChangeEdge } from "./operations/change-edge.js";
-import { ChangeConfiguration } from "./operations/change-configuration.js";
-import { ChangeMetadata } from "./operations/change-metadata.js";
-import { ChangeGraphMetadata } from "./operations/change-graph-metadata.js";
-import { ChangeModule } from "./operations/change-module.js";
-import { GraphEditHistory } from "./history.js";
-import { ModuleIdentifier } from "@breadboard-ai/types";
 import {
   isImperativeGraph,
   toDeclarativeGraph,
   toImperativeGraph,
-} from "../run/run-imperative-graph.js";
-import { AddGraph } from "./operations/add-graph.js";
-import { RemoveGraph } from "./operations/remove-graph.js";
+} from "@breadboard-ai/runtime/legacy.js";
+import type {
+  AffectedNode,
+  EditableGraph,
+  EditableGraphOptions,
+  EditHistory,
+  EditHistoryCreator,
+  EditOperation,
+  EditOperationConductor,
+  EditOperationContext,
+  EditResult,
+  EditResultLogEntry,
+  EditSpec,
+  EditTransform,
+  EditTransformResult,
+  GraphDescriptor,
+  GraphIdentifier,
+  MutableGraph,
+  NodeIdentifier,
+  RejectionReason,
+  SingleEditResult,
+} from "@breadboard-ai/types";
+import { ModuleIdentifier } from "@breadboard-ai/types";
 import { MutableGraphImpl } from "../inspector/graph/mutable-graph.js";
-import { MutableGraph } from "../inspector/types.js";
-import { ToggleExport } from "./operations/toggle-export.js";
-import { AddAsset } from "./operations/add-asset.js";
-import { RemoveAsset } from "./operations/remove-asset.js";
-import { ChangeAssetMetadata } from "./operations/change-asset-metadata.js";
-import { ReplaceGraph } from "./operations/replace-graph.js";
-import { ChangeEdgeMetadata } from "./operations/change-edge-metadata.js";
 import { PromiseQueue } from "../utils/promise-queue.js";
+import { ChangeEvent, ChangeRejectEvent } from "./events.js";
+import { GraphEditHistory } from "./history.js";
+import { AddAsset } from "./operations/add-asset.js";
+import { AddEdge } from "./operations/add-edge.js";
+import { AddGraph } from "./operations/add-graph.js";
+import { AddModule } from "./operations/add-module.js";
+import { AddNode } from "./operations/add-node.js";
+import { ChangeAssetMetadata } from "./operations/change-asset-metadata.js";
+import { ChangeConfiguration } from "./operations/change-configuration.js";
+import { ChangeEdgeMetadata } from "./operations/change-edge-metadata.js";
+import { ChangeEdge } from "./operations/change-edge.js";
+import { ChangeGraphMetadata } from "./operations/change-graph-metadata.js";
+import { ChangeMetadata } from "./operations/change-metadata.js";
+import { ChangeModule } from "./operations/change-module.js";
+import { RemoveAsset } from "./operations/remove-asset.js";
+import { RemoveEdge } from "./operations/remove-edge.js";
+import { RemoveGraph } from "./operations/remove-graph.js";
+import { RemoveModule } from "./operations/remove-module.js";
+import { RemoveNode } from "./operations/remove-node.js";
+import { ReplaceGraph } from "./operations/replace-graph.js";
+import { ToggleExport } from "./operations/toggle-export.js";
 
 const validImperativeEdits: EditSpec["type"][] = [
   "addmodule",

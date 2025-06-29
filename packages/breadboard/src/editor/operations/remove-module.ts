@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
+import type {
   EditOperation,
   EditOperationContext,
   EditSpec,
+  InspectableGraph,
+  ModuleIdentifier,
   SingleEditResult,
-} from "../types.js";
-import { InspectableGraph } from "../../inspector/types.js";
-import { ModuleIdentifier } from "@breadboard-ai/types";
+} from "@breadboard-ai/types";
 
 export class RemoveModule implements EditOperation {
   async can(

@@ -4,12 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
-import {
+import type {
   EditOperationContext,
   EditTransform,
   EditTransformResult,
-} from "../types.js";
+  GraphIdentifier,
+  NodeIdentifier,
+} from "@breadboard-ai/types";
 import { errorNoInspect } from "../operations/error.js";
 
 export { ConfigureSidewireTransform };

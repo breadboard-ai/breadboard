@@ -4,16 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LLMContent } from "@breadboard-ai/types";
-import {
+import type {
   FileSystemFile,
   FileSystemPath,
   FileSystemQueryEntry,
   FileSystemReadResult,
   FileSystemWriteResult,
+  LLMContent,
   Outcome,
-} from "../types.js";
-import { err } from "./utils.js";
+} from "@breadboard-ai/types";
+import { err } from "@breadboard-ai/utils";
 
 export { ReadableStreamFile };
 

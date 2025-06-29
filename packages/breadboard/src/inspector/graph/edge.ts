@@ -4,16 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { EdgeMetadata } from "@breadboard-ai/types";
-import { Edge as EdgeDescriptor, GraphIdentifier } from "../../types.js";
-import {
+import type {
+  Edge as EdgeDescriptor,
+  EdgeMetadata,
+  GraphIdentifier,
   InspectableEdge,
-  InspectableEdgeType,
   InspectablePort,
   MutableGraph,
   ValidateResult,
-} from "../types.js";
-
+} from "@breadboard-ai/types";
+import { InspectableEdgeType } from "@breadboard-ai/types";
 export { Edge };
 
 /**

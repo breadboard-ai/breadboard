@@ -10,10 +10,10 @@ import {
   HTTPClientTransport,
   HTTPServerTransport,
   parseWithStreamsTransform,
-} from "../../src/remote/http.js";
+} from "../../../src/remote/http.js";
 import { MockHTTPConnection } from "../helpers/_test-transport.js";
-import { StreamCapability, isStreamCapability } from "../../src/stream.js";
-import { NodeValue } from "../../src/types.js";
+import { StreamCapability, isStreamCapability } from "../../../src/stream.js";
+import { NodeValue } from "@breadboard-ai/types";
 
 test("parseWithStreamsTransform works as expected", async (t) => {
   const transform = parseWithStreamsTransform();

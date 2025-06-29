@@ -4,16 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
-import {
+import type {
   EditOperation,
   EditOperationContext,
   EditSpec,
+  GraphIdentifier,
+  InspectableGraph,
+  NodeIdentifier,
   SingleEditResult,
-} from "../types.js";
-import { InspectableGraph } from "../../inspector/types.js";
-import { errorNoInspect } from "./error.js";
+} from "@breadboard-ai/types";
 import { GraphDescriptorHandle } from "../../inspector/graph/graph-descriptor-handle.js";
+import { errorNoInspect } from "./error.js";
 
 export class RemoveNode implements EditOperation {
   async can(

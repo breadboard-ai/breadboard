@@ -4,22 +4,43 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessRunResult, SecretResult } from "../../harness/types.js";
 import type {
   EdgeResponse,
+  ErrorResponse,
+  EventIdentifier,
   GraphEndProbeData,
   GraphStartProbeData,
-  NodeEndResponse,
-  NodeStartResponse,
-  TraversalResult,
-} from "@breadboard-ai/types";
-import {
-  ErrorResponse,
+  HarnessRunResult,
   InputResponse,
+  InspectableRunEdge,
+  InspectableRunErrorEvent,
+  InspectableRunEvent,
+  InspectableRunNodeEvent,
+  InspectableRunSecretEvent,
+  MutableGraphStore,
   NodeConfiguration,
   NodeDescriptor,
+  NodeEndResponse,
+  NodeStartResponse,
   OutputResponse,
-} from "../../types.js";
+  PathRegistryEntry,
+  ReanimationState,
+  RunObserverLogLevel,
+  RunObserverOptions,
+  RunSerializationOptions,
+  SecretResult,
+  SerializedDataStoreGroup,
+  TimelineEntry,
+  TraversalResult,
+} from "@breadboard-ai/types";
+import { LifecycleManager } from "@breadboard-ai/runtime/legacy.js";
+import {
+  entryIdFromEventId,
+  eventIdFromEntryId,
+  eventsAsHarnessRunResults,
+  idFromPath,
+  pathFromId,
+} from "./conversions.js";
 import {
   ERROR_PATH,
   PathRegistry,
@@ -28,30 +49,6 @@ import {
 } from "./path-registry.js";
 import { RunNodeEvent } from "./run-node-event.js";
 import { RunSerializer, SequenceEntry } from "./serializer.js";
-import {
-  EventIdentifier,
-  InspectableRunEdge,
-  InspectableRunErrorEvent,
-  InspectableRunEvent,
-  InspectableRunNodeEvent,
-  InspectableRunSecretEvent,
-  MutableGraphStore,
-  PathRegistryEntry,
-  RunObserverLogLevel,
-  RunObserverOptions,
-  RunSerializationOptions,
-  TimelineEntry,
-} from "../types.js";
-import { SerializedDataStoreGroup } from "../../data/types.js";
-import {
-  entryIdFromEventId,
-  eventIdFromEntryId,
-  eventsAsHarnessRunResults,
-  idFromPath,
-  pathFromId,
-} from "./conversions.js";
-import { ReanimationState } from "../../run/types.js";
-import { LifecycleManager } from "../../run/lifecycle.js";
 
 const shouldSkipEvent = (
   options: RunObserverOptions,

@@ -4,21 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { describerResultToNodeHandlerMetadata } from "../../graph-based-node-handler.js";
-import { getGraphHandlerFromMutableGraph } from "../../handler.js";
 import {
+  describerResultToNodeHandlerMetadata,
+  getGraphHandlerFromMutableGraph,
+} from "@breadboard-ai/runtime/legacy.js";
+import type {
+  InspectableNodePorts,
+  InspectableNodeType,
+  MutableGraph,
   NodeConfiguration,
   NodeDescriberResult,
   NodeDescriberWires,
   NodeHandler,
   NodeHandlerMetadata,
   NodeHandlerObject,
-} from "../../types.js";
-import {
-  InspectableNodePorts,
-  InspectableNodeType,
-  MutableGraph,
-} from "../types.js";
+} from "@breadboard-ai/types";
 import { portsFromHandler } from "./ports.js";
 
 export { GraphNodeType };
@@ -42,7 +42,7 @@ class GraphNodeType implements InspectableNodeType {
     if (!example) return;
     try {
       return JSON.parse(example) as NodeConfiguration;
-    } catch (e) {
+    } catch {
       // eat the error.
     }
   }

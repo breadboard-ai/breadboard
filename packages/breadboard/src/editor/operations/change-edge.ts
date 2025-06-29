@@ -4,21 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InspectableGraph } from "../../inspector/types.js";
-import {
+import type {
   EditOperation,
   EditOperationContext,
   EditSpec,
   EditableEdgeSpec,
+  GraphIdentifier,
+  InspectableGraph,
   SingleEditResult,
-} from "../types.js";
-import { RemoveEdge } from "./remove-edge.js";
-import { AddEdge } from "./add-edge.js";
-import { edgesEqual, findEdgeIndex } from "../edge.js";
+} from "@breadboard-ai/types";
 import { fixUpStarEdge } from "../../inspector/graph/edge.js";
-import { GraphIdentifier } from "@breadboard-ai/types";
-import { errorNoInspect } from "./error.js";
 import { GraphDescriptorHandle } from "../../inspector/graph/graph-descriptor-handle.js";
+import { edgesEqual, findEdgeIndex } from "../edge.js";
+import { AddEdge } from "./add-edge.js";
+import { errorNoInspect } from "./error.js";
+import { RemoveEdge } from "./remove-edge.js";
 
 export class ChangeEdge implements EditOperation {
   async can(

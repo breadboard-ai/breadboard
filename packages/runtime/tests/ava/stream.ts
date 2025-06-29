@@ -16,7 +16,7 @@ import {
   streamFromWriter,
   streamsToAsyncIterable,
   stringifyWithStreams,
-} from "../src/stream.js";
+} from "../../src/stream.js";
 
 test("stringifyWithStreams works as expected", async (t) => {
   {

@@ -5,19 +5,15 @@
  */
 
 import {
+  GraphRepresentationImpl,
+  isImperativeGraph,
+  toDeclarativeGraph,
+} from "@breadboard-ai/runtime/legacy.js";
+import type {
+  AffectedNode,
   GraphDescriptor,
   GraphIdentifier,
   GraphRepresentation,
-  KitDescriptor,
-  ModuleIdentifier,
-} from "@breadboard-ai/types";
-import { AffectedNode } from "../../editor/types.js";
-import {
-  isImperativeGraph,
-  toDeclarativeGraph,
-} from "../../run/run-imperative-graph.js";
-import { DescribeResultCache } from "./describe-cache.js";
-import {
   InspectableDescriberResultCache,
   InspectableEdgeCache,
   InspectableGraphCache,
@@ -25,22 +21,24 @@ import {
   InspectableModuleCache,
   InspectableNodeCache,
   InspectablePortCache,
+  KitDescriptor,
   MainGraphIdentifier,
+  ModuleIdentifier,
   MutableGraph,
   MutableGraphStore,
-} from "../types.js";
+} from "@breadboard-ai/types";
+import { DescribeResultCache } from "./describe-cache.js";
 import { EdgeCache } from "./edge-cache.js";
 import { Edge } from "./edge.js";
+import { UpdateEvent } from "./event.js";
 import { GraphCache } from "./graph-cache.js";
 import { Graph } from "./graph.js";
 import { KitCache } from "./kits.js";
 import { ModuleCache } from "./module.js";
 import { NodeCache } from "./node-cache.js";
+import { NodeDescriberManager } from "./node-describer-manager.js";
 import { Node } from "./node.js";
 import { PortCache } from "./port-cache.js";
-import { NodeDescriberManager } from "./node-describer-manager.js";
-import { UpdateEvent } from "./event.js";
-import { GraphRepresentationImpl } from "../../traversal/representation.js";
 
 export { MutableGraphImpl };
 

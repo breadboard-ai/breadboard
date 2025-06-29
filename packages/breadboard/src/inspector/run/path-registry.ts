@@ -4,18 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { timestamp } from "../../timestamp.js";
-import { GraphIdentifier, OutputValues } from "../../types.js";
-import {
+import type {
+  GraphIdentifier,
   InspectableGraph,
   InspectableRunEdge,
   InspectableRunErrorEvent,
   InspectableRunEvent,
   InspectableRunNodeEvent,
   MainGraphIdentifier,
+  OutputValues,
   PathRegistryEntry,
   SequenceView,
-} from "../types.js";
+} from "@breadboard-ai/types";
+import { timestamp } from "../../timestamp.js";
 import { idFromPath } from "./conversions.js";
 
 export const SECRET_PATH = [-2];

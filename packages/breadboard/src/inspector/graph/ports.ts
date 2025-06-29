@@ -4,29 +4,27 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { analyzeIsJsonSubSchema } from "@google-labs/breadboard-schema/subschema.js";
-import { JSONSchema4 } from "json-schema";
-import {
+import type {
   BehaviorSchema,
-  InputValues,
-  NodeConfiguration,
-  NodeDescriberResult,
-  NodeHandler,
-  NodeTypeIdentifier,
-  OutputValues,
-  Schema,
-} from "../../types.js";
-import { DEFAULT_SCHEMA, EdgeType } from "./schemas.js";
-import {
   CanConnectAnalysis,
+  InputValues,
   InspectableEdge,
   InspectableNode,
   InspectableNodePorts,
   InspectablePort,
   InspectablePortList,
   InspectablePortType,
-  PortStatus,
-} from "../types.js";
+  NodeConfiguration,
+  NodeDescriberResult,
+  NodeHandler,
+  NodeTypeIdentifier,
+  OutputValues,
+  Schema,
+} from "@breadboard-ai/types";
+import { PortStatus } from "@breadboard-ai/types";
+import { analyzeIsJsonSubSchema } from "@google-labs/breadboard-schema/subschema.js";
+import { JSONSchema4 } from "json-schema";
+import { DEFAULT_SCHEMA, EdgeType } from "./schemas.js";
 
 export { describerResultToPorts };
 

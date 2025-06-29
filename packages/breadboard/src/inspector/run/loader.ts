@@ -4,16 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { remapData } from "../../data/inflate-deflate.js";
-import { DataStore, SerializedDataStoreGroup } from "../../data/types.js";
-import { HarnessRunResult } from "../../harness/types.js";
-import {
+import { remapData } from "@breadboard-ai/runtime/legacy.js";
+import type {
+  DataStore,
+  HarnessRunResult,
   InspectableRunLoadResult,
   MutableGraphStore,
+  SerializedDataStoreGroup,
   SerializedRun,
   SerializedRunLoadingOptions,
   TimelineEntry,
-} from "../types.js";
+} from "@breadboard-ai/types";
 import { PastRun } from "./past-run.js";
 import { replaceSecrets } from "./serializer.js";
 

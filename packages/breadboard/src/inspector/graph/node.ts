@@ -4,23 +4,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphIdentifier, NodeMetadata } from "@breadboard-ai/types";
-import {
+import type {
+  GraphIdentifier,
   InputValues,
-  NodeConfiguration,
-  NodeDescriberResult,
-  NodeDescriptor,
-  OutputValues,
-} from "../../types.js";
-import { describerResultToPorts } from "./ports.js";
-import {
   InspectableEdge,
   InspectableNode,
   InspectableNodePorts,
   InspectableNodeType,
   MutableGraph,
-} from "../types.js";
+  NodeConfiguration,
+  NodeDescriberResult,
+  NodeDescriptor,
+  NodeMetadata,
+  OutputValues,
+} from "@breadboard-ai/types";
 import { GraphQueries } from "./graph-queries.js";
+import { describerResultToPorts } from "./ports.js";
 
 export class Node implements InspectableNode {
   descriptor: NodeDescriptor;

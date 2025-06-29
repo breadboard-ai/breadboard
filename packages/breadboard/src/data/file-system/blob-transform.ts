@@ -4,9 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DataPart, LLMContent } from "@breadboard-ai/types";
-import { FileSystemBlobTransform, FileSystemPath, Outcome } from "../types.js";
-import { ok } from "./utils.js";
+import type {
+  DataPart,
+  FileSystemBlobTransform,
+  FileSystemPath,
+  LLMContent,
+  Outcome,
+} from "@breadboard-ai/types";
+import { ok } from "@breadboard-ai/utils";
 
 export { transformBlobs };
 

@@ -4,8 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Asset, AssetPath, AssetType, LLMContent } from "@breadboard-ai/types";
-import { InspectableAsset } from "../types.js";
+import type {
+  Asset,
+  AssetPath,
+  AssetType,
+  InspectableAsset,
+  LLMContent,
+} from "@breadboard-ai/types";
 
 export { InspectableAssetImpl };
 

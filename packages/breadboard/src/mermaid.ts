@@ -13,7 +13,7 @@ import type {
   GraphDescriptor,
   NodeDescriptor,
   SubGraphs,
-} from "./types.js";
+} from "@breadboard-ai/types";
 
 const template = (edges: string, direction: string) => {
   return `%%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%

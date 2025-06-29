@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LLMContent } from "@breadboard-ai/types";
-import {
+import type { LLMContent } from "@breadboard-ai/types";
+import type {
   FileSystem,
   FileSystemFile,
   FileSystemPath,
@@ -25,14 +25,15 @@ import {
   CreateRunFileSystemArgs,
   CreateModuleFileSystemArgs,
   FileSystemWriteStreamArguments,
-} from "../types.js";
+} from "@breadboard-ai/types";
 import { Path, writablePathFromString } from "./path.js";
-import { err, noStreams, ok } from "./utils.js";
+import { noStreams } from "./utils.js";
 import { PersistentFile } from "./persistent-file.js";
 import { InMemoryBlobStore } from "./in-memory-blob-store.js";
 import { transformBlobs } from "./blob-transform.js";
-import { baseURLFromString } from "../../loader/loader.js";
+import { baseURLFromString } from "@breadboard-ai/loader";
 import { ReadableStreamFile } from "./readable-stream-file.js";
+import { err, ok } from "@breadboard-ai/utils";
 
 export { FileSystemImpl, Path, createFileSystem, writablePathFromString };
 
@@ -656,7 +657,7 @@ function getMainGraphUrl(url: string | undefined): string {
 
   try {
     return baseURLFromString(url)?.href || "";
-  } catch (e) {
+  } catch {
     return "";
   }
 }

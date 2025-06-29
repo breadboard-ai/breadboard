@@ -4,15 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphDescriptor } from "../types.js";
 import type {
   EditHistory,
   EditHistoryController,
   EditHistoryCreator,
   EditHistoryEntry,
-} from "./types.js";
-import { SignalArray } from "signal-utils/array";
+  GraphDescriptor,
+} from "@breadboard-ai/types";
 import { signal } from "signal-utils";
+import { SignalArray } from "signal-utils/array";
 
 export class GraphEditHistory implements EditHistory {
   readonly #controller: EditHistoryController;

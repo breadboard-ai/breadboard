@@ -4,17 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LLMContent } from "@breadboard-ai/types";
-import {
-  PersistentBackend,
+import type {
   FileSystemFile,
   FileSystemPath,
   FileSystemQueryEntry,
   FileSystemReadResult,
   FileSystemWriteResult,
+  LLMContent,
   Outcome,
-} from "../types.js";
-import { noStreams, ok, readFromStart } from "./utils.js";
+  PersistentBackend,
+} from "@breadboard-ai/types";
+import { ok } from "@breadboard-ai/utils";
+import { noStreams, readFromStart } from "./utils.js";
 
 export { PersistentFile };
 

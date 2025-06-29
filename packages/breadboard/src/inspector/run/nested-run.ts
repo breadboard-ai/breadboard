@@ -4,16 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessRunResult } from "../../harness/types.js";
 import type {
   EventIdentifier,
+  HarnessRunResult,
   InspectableRun,
   InspectableRunEvent,
   InspectableRunInputs,
   InspectableRunNodeEvent,
   MainGraphIdentifier,
   PathRegistryEntry,
-} from "../types.js";
+} from "@breadboard-ai/types";
 import {
   entryIdFromEventId,
   eventsAsHarnessRunResults,

@@ -24,5 +24,9 @@ export {
   baseURLFromContext,
   resolveGraph,
   getGraphUrl,
+  baseURLFromString,
+  urlComponentsFromString,
 } from "./loader.js";
 export { resolveGraphUrls } from "./resolve-graph-urls.js";
+
+export { loadWithFetch } from "./default.js";

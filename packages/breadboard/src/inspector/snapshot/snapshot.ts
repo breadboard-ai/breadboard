@@ -4,17 +4,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphIdentifier } from "@breadboard-ai/types";
-import { InspectableGraph, MutableGraph } from "../types.js";
+import type {
+  GraphIdentifier,
+  InspectableGraph,
+  MutableGraph,
+} from "@breadboard-ai/types";
 import { ChangeMaker } from "./change-maker.js";
-import {
+import { FreshEvent, StaleEvent } from "./events.js";
+import type {
   InspectableMainGraphSnapshot,
   InspectableSnapshot,
   SnapshotChangeSpec,
   SnapshotEventTarget,
   SnapshotPendingUpdate,
 } from "./types.js";
-import { FreshEvent, StaleEvent } from "./events.js";
 
 export { Snapshot };
 

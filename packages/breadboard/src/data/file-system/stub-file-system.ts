@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
+import type {
   FileSystem,
   FileSystemEntry,
   FileSystemQueryResult,
   FileSystemReadResult,
   FileSystemWriteResult,
   Outcome,
-} from "../types.js";
+} from "@breadboard-ai/types";
 
 export { StubFileSystem };
 

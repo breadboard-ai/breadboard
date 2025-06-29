@@ -4,16 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphEndProbeData } from "@breadboard-ai/types";
-import { HarnessRunResult } from "../../harness/types.js";
-import { asyncGen } from "../../utils/async-gen.js";
-import {
+import type {
+  GraphEndProbeData,
   GraphstartTimelineEntry,
+  HarnessRunResult,
   InspectableGraph,
   MutableGraphStore,
   NodestartTimelineEntry,
   TimelineEntry,
-} from "../types.js";
+} from "@breadboard-ai/types";
+import { asyncGen } from "@breadboard-ai/utils";
 
 export { Replay };
 

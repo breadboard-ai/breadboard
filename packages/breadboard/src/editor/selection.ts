@@ -4,9 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Edge, NodeIdentifier } from "@breadboard-ai/types";
-import { EditableGraphSelectionResult } from "./types.js";
-import { InspectableGraph } from "../inspector/types.js";
+import type {
+  Edge,
+  EditableGraphSelectionResult,
+  InspectableGraph,
+  NodeIdentifier,
+} from "@breadboard-ai/types";
 
 export { computeSelection };
 

@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphIdentifier } from "@breadboard-ai/types";
-import { SingleEditResult } from "../types.js";
+import type { GraphIdentifier, SingleEditResult } from "@breadboard-ai/types";
 
 export { error, errorNoInspect };
 

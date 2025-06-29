@@ -4,23 +4,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ok } from "../data/file-system/utils.js";
-import { GraphDescriberManager } from "../inspector/graph/graph-describer-manager.js";
-import { MutableGraphImpl } from "../inspector/graph/mutable-graph.js";
-import { MutableGraphStore } from "../inspector/types.js";
-import { loadWithFetch } from "../loader/default.js";
-import { invokeGraph } from "../run/invoke-graph.js";
-import {
+import { loadWithFetch } from "@breadboard-ai/loader";
+import { invokeGraph } from "@breadboard-ai/runtime/legacy.js";
+import type {
   GraphDescriptor,
   InputValues,
   Kit,
+  MutableGraphStore,
   NodeDescriberContext,
   NodeDescriberResult,
   NodeHandlerContext,
   NodeHandlerMetadata,
   NodeHandlerObject,
   Schema,
-} from "../types.js";
+} from "@breadboard-ai/types";
+import { ok } from "@breadboard-ai/utils";
+import { GraphDescriberManager } from "../inspector/graph/graph-describer-manager.js";
+import { MutableGraphImpl } from "../inspector/graph/mutable-graph.js";
 import { asRuntimeKit } from "./ctors.js";
 
 export { registerKitGraphs };

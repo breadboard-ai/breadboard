@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor } from "@breadboard-ai/types";
-import { EditableEdgeSpec } from "./types.js";
+import type { EditableEdgeSpec, GraphDescriptor } from "@breadboard-ai/types";
 
 export const findEdgeIndex = (
   graph: GraphDescriptor,

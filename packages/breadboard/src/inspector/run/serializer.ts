@@ -4,27 +4,27 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
+import type {
+  ErrorResponse,
   GraphDescriptor,
-  NodeDescriptor,
-  NodeValue,
   GraphEndProbeData,
-  NodeEndResponse,
-} from "@breadboard-ai/types";
-import {
-  TimelineEntry,
-  RunSerializationOptions,
-  SerializedRun,
-  SerializedRunSecretReplacer,
-  PathRegistryEntry,
+  InputResponse,
+  InspectableRunErrorEvent,
   InspectableRunNodeEvent,
   InspectableRunSecretEvent,
-  InspectableRunErrorEvent,
   MainGraphIdentifier,
-} from "../types.js";
-import { ErrorResponse, InputResponse, OutputResponse } from "../../types.js";
-import { SecretResult } from "../../harness/types.js";
-import { SerializedDataStoreGroup } from "../../data/types.js";
+  NodeDescriptor,
+  NodeEndResponse,
+  NodeValue,
+  OutputResponse,
+  PathRegistryEntry,
+  RunSerializationOptions,
+  SecretResult,
+  SerializedDataStoreGroup,
+  SerializedRun,
+  SerializedRunSecretReplacer,
+  TimelineEntry,
+} from "@breadboard-ai/types";
 import { idFromPath } from "./conversions.js";
 
 export type SequenceEntry = [type: TimelineEntry[0], entry: PathRegistryEntry];

@@ -4,33 +4,30 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
+import type {
+  AddEdgeSpec,
+  AddModuleSpec,
+  AddNodeSpec,
+  ChangeGraphMetadataSpec,
   Edge,
   GraphIdentifier,
   GraphInlineMetadata,
   GraphMetadata,
+  InspectableNodePorts,
   KitDescriptor,
   ModuleCode,
   ModuleIdentifier,
   ModuleMetadata,
   NodeConfiguration,
   NodeDescriptor,
+  NodeHandlerMetadata,
   NodeIdentifier,
   NodeMetadata,
+  NodePortChanges,
   NodeTypeIdentifier,
-} from "@breadboard-ai/types";
-import { NodeHandlerMetadata } from "../../types.js";
-import {
   TypedEventTarget,
   TypedEventTargetType,
-} from "../../utils/typed-event-target.js";
-import {
-  AddEdgeSpec,
-  AddModuleSpec,
-  AddNodeSpec,
-  ChangeGraphMetadataSpec,
-} from "../../editor/types.js";
-import { InspectableNodePorts, NodePortChanges } from "../types.js";
+} from "@breadboard-ai/types";
 
 export type SnapshotEventMap = {
   stale: SnapshotStaleEvent;

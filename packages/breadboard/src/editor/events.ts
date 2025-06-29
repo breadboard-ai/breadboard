@@ -4,15 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor, GraphIdentifier, NodeIdentifier } from "../types.js";
-import {
+import type {
   AffectedNode,
   ChangeEventType,
   ErrorRejection,
   GraphChangeEvent,
   GraphChangeRejectEvent,
+  GraphDescriptor,
+  GraphIdentifier,
   NoChangeRejection,
-} from "./types.js";
+  NodeIdentifier,
+} from "@breadboard-ai/types";
 
 /**
  * This event is dispatched whenever the graph changes due to edits.

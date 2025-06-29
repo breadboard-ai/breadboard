@@ -4,21 +4,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
+import type {
   Edge,
   GraphDescriptor,
   GraphIdentifier,
   GraphInlineMetadata,
   GraphMetadata,
+  InspectableModule,
   Module,
   ModuleIdentifier,
   NodeDescriptor,
   NodeIdentifier,
+  NodePortChanges,
 } from "@breadboard-ai/types";
-import { SnapshotAddGraphSpec, SnapshotChangeSpec } from "./types.js";
-import { hash } from "../../utils/hash.js";
-import { InspectableModule, NodePortChanges } from "../types.js";
 import { timestamp } from "../../timestamp.js";
+import { hash } from "../../utils/hash.js";
+import type { SnapshotAddGraphSpec, SnapshotChangeSpec } from "./types.js";
 
 export { ChangeMaker };
 

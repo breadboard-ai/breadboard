@@ -4,15 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DataStore, RunTimestamp, RunURL } from "../../data/types.js";
-import { HarnessRunResult } from "../../harness/types.js";
-import {
-  GraphDescriptor,
-  NodeConfiguration,
-  NodeIdentifier,
-} from "../../types.js";
-import {
+import type {
+  DataStore,
   EventIdentifier,
+  GraphDescriptor,
+  HarnessRunResult,
   InspectableRun,
   InspectableRunEdge,
   InspectableRunEvent,
@@ -22,11 +18,15 @@ import {
   InspectableRunObserver,
   InspectableRunSequenceEntry,
   MutableGraphStore,
+  NodeConfiguration,
+  NodeIdentifier,
   RunObserverOptions,
   RunSerializationOptions,
+  RunTimestamp,
+  RunURL,
   SerializedRun,
   SerializedRunLoadingOptions,
-} from "../types.js";
+} from "@breadboard-ai/types";
 import { eventsAsHarnessRunResults } from "./conversions.js";
 import { EventManager } from "./event-manager.js";
 import { RunLoader } from "./loader.js";

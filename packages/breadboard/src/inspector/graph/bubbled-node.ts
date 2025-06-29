@@ -4,24 +4,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { EdgeType, describeInput } from "./schemas.js";
-import { collectPorts } from "./ports.js";
-import { filterBySchema } from "../../schema.js";
-import {
+import type {
+  InputValues,
   InspectableEdge,
   InspectableNode,
   InspectableNodePorts,
   InspectableNodeType,
   InspectablePortList,
-} from "../types.js";
-import {
-  InputValues,
   NodeConfiguration,
   NodeDescriberResult,
   NodeDescriptor,
+  NodeMetadata,
   OutputValues,
-} from "../../types.js";
-import { NodeMetadata } from "@breadboard-ai/types";
+} from "@breadboard-ai/types";
+import { filterBySchema } from "../../schema.js";
+import { collectPorts } from "./ports.js";
+import { EdgeType, describeInput } from "./schemas.js";
 
 /**
  * This is a special kind of an `InspectableNode`, representing a bubbled

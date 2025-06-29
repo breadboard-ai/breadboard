@@ -4,9 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ok } from "../../data/file-system/utils.js";
-import { NodeDescriberExport, NodeDescriberResult } from "../../types.js";
-import { GraphDescriberFactory, MutableGraph } from "../types.js";
+import {
+  GraphDescriberFactory,
+  MutableGraph,
+  NodeDescriberExport,
+  NodeDescriberResult,
+} from "@breadboard-ai/types";
+import { ok } from "@breadboard-ai/utils";
 
 export { ExportsDescriber };
 

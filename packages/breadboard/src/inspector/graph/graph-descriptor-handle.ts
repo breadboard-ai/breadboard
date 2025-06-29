@@ -5,15 +5,15 @@
  */
 
 import {
+  isImperativeGraph,
+  toDeclarativeGraph,
+} from "@breadboard-ai/runtime/legacy.js";
+import type {
   GraphDescriptor,
   GraphIdentifier,
   ModuleIdentifier,
+  Result,
 } from "@breadboard-ai/types";
-import {
-  isImperativeGraph,
-  toDeclarativeGraph,
-} from "../../run/run-imperative-graph.js";
-import { Result } from "../../editor/types.js";
 
 export { GraphDescriptorHandle };
 
