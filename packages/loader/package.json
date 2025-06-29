@@ -1,7 +1,7 @@
 {
-  "name": "@breadboard-ai/runtime",
+  "name": "@breadboard-ai/loader",
   "version": "0.0.1",
-  "description": "The Breadboard runtime",
+  "description": "General loader machinery",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -64,7 +64,7 @@
     }
   },
   "repository": {
-    "directory": "packages/runtime",
+    "directory": "packages/loader",
     "type": "git",
     "url": "https://github.com/breadboard-ai/breadboard.git"
   },
@@ -87,8 +87,6 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@breadboard-ai/loader": "^0.0.1",
-    "@breadboard-ai/types": "0.7.0",
-    "@breadboard-ai/utils": "0.0.1"
+    "@breadboard-ai/types": "0.7.0"
   }
 }

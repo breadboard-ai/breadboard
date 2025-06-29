@@ -19,4 +19,10 @@ export const createLoader = (
   return new Loader(servers);
 };
 
-export { SENTINEL_BASE_URL, baseURLFromContext } from "./loader.js";
+export {
+  SENTINEL_BASE_URL,
+  baseURLFromContext,
+  resolveGraph,
+  getGraphUrl,
+} from "./loader.js";
+export { resolveGraphUrls } from "./resolve-graph-urls.js";
