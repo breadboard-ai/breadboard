@@ -11,6 +11,7 @@ import { EditSpec } from "@google-labs/breadboard";
 import { MAIN_BOARD_ID } from "../runtime/util";
 import { inspectableAssetEdgeToString } from "@breadboard-ai/shared-ui/utils/workspace.js";
 import { ClipboardReader } from "../utils/clipboard-reader";
+import { Tab } from "../runtime/types";
 
 function isFocusedOnGraphRenderer(evt: Event) {
   return evt
@@ -21,8 +22,8 @@ function isFocusedOnGraphRenderer(evt: Event) {
 export const DeleteCommand: KeyboardCommand = {
   keys: ["Delete", "Backspace"],
 
-  willHandle(evt: Event) {
-    return isFocusedOnGraphRenderer(evt);
+  willHandle(tab: Tab | null, evt: Event) {
+    return tab !== null && isFocusedOnGraphRenderer(evt);
   },
 
   async do({
@@ -152,8 +153,8 @@ export const ToggleExperimentalComponentsCommand: KeyboardCommand = {
 export const SelectAllCommand: KeyboardCommand = {
   keys: ["Cmd+a", "Ctrl+a"],
 
-  willHandle(evt: Event) {
-    return isFocusedOnGraphRenderer(evt);
+  willHandle(tab: Tab | null, evt: Event) {
+    return tab !== null && isFocusedOnGraphRenderer(evt);
   },
 
   async do({
@@ -186,8 +187,8 @@ export const CopyCommand: KeyboardCommand = {
   messageType: BreadboardUI.Events.ToastType.INFORMATION,
   alwaysNotify: true,
 
-  willHandle(evt: Event) {
-    return isFocusedOnGraphRenderer(evt);
+  willHandle(tab: Tab | null, evt: Event) {
+    return tab !== null && isFocusedOnGraphRenderer(evt);
   },
 
   async do({
@@ -226,8 +227,8 @@ export const CopyCommand: KeyboardCommand = {
 export const CutCommand: KeyboardCommand = {
   keys: ["Cmd+x", "Ctrl+x"],
 
-  willHandle(evt: Event) {
-    return isFocusedOnGraphRenderer(evt);
+  willHandle(tab: Tab | null, evt: Event) {
+    return tab !== null && isFocusedOnGraphRenderer(evt);
   },
 
   async do({
@@ -280,8 +281,8 @@ export const CutCommand: KeyboardCommand = {
 export const GroupCommand: KeyboardCommand = {
   keys: ["Cmd+g", "Ctrl+g"],
 
-  willHandle(evt: Event) {
-    return isFocusedOnGraphRenderer(evt);
+  willHandle(tab: Tab | null, evt: Event) {
+    return tab !== null && isFocusedOnGraphRenderer(evt);
   },
 
   async do({
@@ -339,8 +340,8 @@ export const GroupCommand: KeyboardCommand = {
 export const UngroupCommand: KeyboardCommand = {
   keys: ["Cmd+Shift+g", "Ctrl+Shift+g"],
 
-  willHandle(evt: Event) {
-    return isFocusedOnGraphRenderer(evt);
+  willHandle(tab: Tab | null, evt: Event) {
+    return tab !== null && isFocusedOnGraphRenderer(evt);
   },
 
   async do({
@@ -401,8 +402,8 @@ export const UngroupCommand: KeyboardCommand = {
 export const PasteCommand: KeyboardCommand = {
   keys: ["Cmd+v", "Ctrl+v"],
 
-  willHandle() {
-    return true;
+  willHandle(tab: Tab | null) {
+    return tab !== null;
   },
 
   async do({

@@ -21,7 +21,7 @@ export interface KeyboardCommandDeps {
 export interface KeyboardCommand {
   keys: string[];
   do(deps: Partial<KeyboardCommandDeps>): Promise<void>;
-  willHandle(evt: Event): boolean;
+  willHandle(tab: Tab | null, evt: Event): boolean;
   alwaysNotify?: boolean;
   messagePending?: string;
   messageError?: string;

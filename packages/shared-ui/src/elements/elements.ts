@@ -52,6 +52,7 @@ export { GoogleDriveServerPicker } from "./google-drive/google-drive-server-pick
 export { GoogleDriveSharePanel } from "./google-drive/google-drive-share-panel.js";
 export { Header } from "./output/header/header.js";
 export { HomepageSearchButton } from "./welcome-panel/homepage-search-button.js";
+export { ItemModal } from "./shell/item.js";
 export { ItemSelect } from "./input/item-select/item-select.js";
 export { JSONTree } from "./json-tree/json-tree.js";
 export { LLMInput } from "./input/llm-input/llm-input.js";

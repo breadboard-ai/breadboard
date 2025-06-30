@@ -1,5 +1,5 @@
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import { MainArguments } from ".";
+import { MainArguments } from "./types/types.js";
 
 import { Contexts, Types } from "@breadboard-ai/shared-ui";
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
@@ -16,7 +16,7 @@ export class Admin {
     public readonly env: Contexts.Environment,
     public readonly gDriveClient: GoogleDriveClient
   ) {
-    if ((window.location.hash?.includes("owner-tools"))) {
+    if (window.location.hash?.includes("owner-tools")) {
       (window as unknown as Record<string, unknown>)["o"] = this;
     }
   }
