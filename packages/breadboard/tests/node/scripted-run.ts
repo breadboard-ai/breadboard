@@ -4,10 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
+import type {
   GraphDescriptor,
   InputValues,
   OutputValues,
+  ReanimationState,
 } from "@breadboard-ai/types";
 import { deepStrictEqual, fail } from "assert";
 import {
@@ -17,8 +18,7 @@ import {
   RunArguments,
   runGraph,
 } from "../../src/index.js";
-import { ReanimationState } from "../../src/run/types.js";
-import { loadRunnerState } from "../../src/serialization.js";
+import { loadRunnerState } from "@breadboard-ai/runtime/legacy.js";
 import { testKit } from "./test-kit.js";
 
 const BGL_DIR = new URL("../../../tests/bgl/test.bgl.json", import.meta.url)

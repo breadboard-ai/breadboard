@@ -14,7 +14,7 @@ import {
   ReanimationState,
   type InspectableRun,
 } from "@google-labs/breadboard";
-import { RunConfig } from "@google-labs/breadboard/harness";
+import { RunConfig } from "@breadboard-ai/types";
 import { Result, RunNodeConfig } from "./types";
 
 export { getRunNodeConfig };

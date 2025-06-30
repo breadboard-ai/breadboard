@@ -7,7 +7,6 @@
 import {
   addSandboxedRunModule,
   assetsFromGraphDescriptor,
-  BoardServer,
   createEphemeralBlobStore,
   createFileSystem,
   createGraphStore,
@@ -15,9 +14,13 @@ import {
   envFromGraphDescriptor,
   FileSystemEntry,
   GraphDescriptor,
-  User,
 } from "@google-labs/breadboard";
-import { HarnessProxyConfig, RunConfig } from "@google-labs/breadboard/harness";
+import type {
+  BoardServer,
+  User,
+  RunConfig,
+  HarnessProxyConfig,
+} from "@breadboard-ai/types";
 import { RemoteBoardServer } from "@breadboard-ai/remote-board-server";
 import { TokenVendor } from "@breadboard-ai/connection-client";
 import { BootstrapArguments } from "../types/types";

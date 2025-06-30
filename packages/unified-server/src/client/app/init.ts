@@ -28,10 +28,8 @@ import * as BreadboardUIContext from "@breadboard-ai/shared-ui/contexts";
 import * as ConnectionClient from "@breadboard-ai/connection-client";
 import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
 import { createRunConfig } from "./utils/run-config.js";
-import {
-  RunConfig,
-  createRunner as createBreadboardRunner,
-} from "@google-labs/breadboard/harness";
+import { createRunner as createBreadboardRunner } from "@breadboard-ai/runtime";
+import type { RunConfig } from "@breadboard-ai/types";
 import { getGlobalColor } from "./utils/color.js";
 import { getRunStore } from "@breadboard-ai/data-store";
 import { sandbox } from "./sandbox.js";

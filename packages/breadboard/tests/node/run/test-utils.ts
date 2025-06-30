@@ -4,18 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor } from "@breadboard-ai/types";
-import { HarnessRunner } from "../../../src/harness/types.js";
-import { fail } from "assert";
-import {
+import { handleRunGraphRequest } from "@breadboard-ai/runtime/legacy.js";
+import type {
+  GraphDescriptor,
+  HarnessRunner,
   RemoteMessage,
   RemoteRunRequestBody,
   ServerRunConfig,
-} from "../../../src/remote/types.js";
-import { testKit } from "../test-kit.js";
+} from "@breadboard-ai/types";
+import { fail } from "assert";
 import { createDefaultDataStore, createLoader } from "../../../src/index.js";
-import { handleRunGraphRequest } from "../../../src/remote/run-graph-server.js";
 import { makeTestGraphStore } from "../../helpers/_graph-store.js";
+import { testKit } from "../test-kit.js";
 
 export type EventLogEntry = [name: string, data: unknown];
 

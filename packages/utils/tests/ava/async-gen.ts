@@ -5,7 +5,7 @@
  */
 
 import test from "ava";
-import { asyncGen } from "../../src/utils/async-gen.js";
+import { asyncGen } from "../../src/async-gen.js";
 
 test("asyncGen basics work", async (t) => {
   const results = [];

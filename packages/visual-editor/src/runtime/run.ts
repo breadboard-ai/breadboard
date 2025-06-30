@@ -6,7 +6,6 @@
 
 import {
   createRunObserver,
-  GraphLoader,
   InputValues,
   InspectableRunObserver,
   InspectableRunSequenceEntry,
@@ -19,10 +18,8 @@ import {
   RunArguments,
   RunStore,
 } from "@google-labs/breadboard";
-import { Result, Tab, TabId } from "./types";
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import {
-  createRunner,
+  GraphLoader,
   HarnessRunner,
   RunConfig,
   RunEndEvent,
@@ -37,7 +34,10 @@ import {
   RunOutputEvent,
   RunSecretEvent,
   RunSkipEvent,
-} from "@google-labs/breadboard/harness";
+} from "@breadboard-ai/types";
+import { Result, Tab, TabId } from "./types";
+import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import { createRunner } from "@breadboard-ai/runtime";
 import { RuntimeBoardRunEvent } from "./events";
 import { sandbox } from "../sandbox";
 import { BoardServerAwareDataStore } from "@breadboard-ai/board-server-management";

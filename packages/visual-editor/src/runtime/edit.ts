@@ -11,7 +11,6 @@ import {
   EditHistoryCreator,
   EditSpec,
   GraphDescriptor,
-  GraphLoader,
   isStoredData,
   Kit,
   MoveToGraphTransform,
@@ -23,6 +22,7 @@ import {
   Outcome,
   PortIdentifier,
 } from "@google-labs/breadboard";
+import { GraphLoader } from "@breadboard-ai/types";
 import {
   EnhanceSideboard,
   Tab,

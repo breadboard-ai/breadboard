@@ -9,18 +9,17 @@ import {
   InputValues,
   LLMContent,
   OutputValues,
+  BoardServer,
 } from "@breadboard-ai/types";
-import {
-  createRunner,
+import type {
   HarnessProxyConfig,
   HarnessRunner,
   RunConfig,
-  RunnerErrorEvent,
-} from "@google-labs/breadboard/harness";
+} from "@breadboard-ai/types";
+import { createRunner, RunnerErrorEvent } from "@breadboard-ai/runtime";
 import { RuntimeConfig, SideboardRuntimeProvider } from "./types";
 import {
   assetsFromGraphDescriptor,
-  BoardServer,
   createEphemeralBlobStore,
   createFileSystem,
   createGraphStore,

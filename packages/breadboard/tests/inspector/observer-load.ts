@@ -4,21 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import test, { ExecutionContext } from "ava";
-import { readFile } from "fs/promises";
-import { join } from "path";
-import {
-  InspectableRun,
-  InspectableRunEvent,
-  InspectableRunObserver,
-} from "../../src/inspector/types.js";
-import { createRunObserver } from "../../src/index.js";
-import { HarnessRunResult } from "../../src/harness/types.js";
-import { replaceSecrets } from "../../src/inspector/run/serializer.js";
 import {
   createDefaultDataStore,
   createDefaultRunStore,
-} from "../../src/data/index.js";
+} from "@breadboard-ai/runtime/legacy.js";
+import type {
+  HarnessRunResult,
+  InspectableRun,
+  InspectableRunEvent,
+  InspectableRunObserver,
+} from "@breadboard-ai/types";
+import test, { ExecutionContext } from "ava";
+import { readFile } from "fs/promises";
+import { join } from "path";
+import { createRunObserver } from "../../src/index.js";
+import { replaceSecrets } from "../../src/inspector/run/serializer.js";
 import { makeTestGraphStore } from "../helpers/_graph-store.js";
 
 const BASE_PATH = new URL(

@@ -12,8 +12,8 @@ import {
   isLLMContent,
   isStoredData,
 } from "../../src/index.js";
-import { HarnessRunResult } from "../../src/harness/types.js";
-import { isLLMContentArray } from "../../src/data/common.js";
+import type { HarnessRunResult } from "@breadboard-ai/types";
+import { isLLMContentArray } from "@breadboard-ai/utils";
 import type { StoredDataCapabilityPart } from "@breadboard-ai/types";
 
 const inputResult: HarnessRunResult = {

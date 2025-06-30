@@ -5,7 +5,8 @@
  */
 
 import { getDataStore } from "@breadboard-ai/data-store";
-import { run, type HarnessRunResult } from "@google-labs/breadboard/harness";
+import type { HarnessRunResult } from "@breadboard-ai/types";
+import { run } from "@breadboard-ai/runtime/legacy.js";
 import { createKits, registerLegacyKits } from "./create-kits.js";
 import {
   createGraphStore,

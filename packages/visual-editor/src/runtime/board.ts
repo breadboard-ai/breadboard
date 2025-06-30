@@ -5,16 +5,10 @@
  */
 
 import {
-  BoardServer,
-  BoardServerExtension,
-  BoardServerExtensionNamespace,
-  BoardServerSaveEventStatus,
   createLoader,
   EditHistoryCreator,
   EditHistoryEntry,
   GraphDescriptor,
-  GraphLoader,
-  GraphProvider,
   InspectableGraph,
   InspectableRunObserver,
   isLLMContentArray,
@@ -22,6 +16,14 @@ import {
   Kit,
   MutableGraphStore,
 } from "@google-labs/breadboard";
+import type {
+  BoardServer,
+  BoardServerExtension,
+  BoardServerExtensionNamespace,
+  BoardServerSaveEventStatus,
+  GraphLoader,
+  GraphProvider,
+} from "@breadboard-ai/types";
 import { RuntimeConfigBoardServers, Tab, TabId, TabType } from "./types";
 import {
   RuntimeHostAPIEvent,

@@ -9,13 +9,14 @@ import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
-import {
+import type {
   HarnessProxyConfig,
-  type HarnessRunner,
+  HarnessRunner,
   RunConfig,
   RunErrorEvent,
   RunSecretEvent,
-} from "@google-labs/breadboard/harness";
+  BoardServer,
+} from "@breadboard-ai/types";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
 import { map } from "lit/directives/map.js";
@@ -24,7 +25,6 @@ import { LitElement, html, HTMLTemplateResult, nothing } from "lit";
 import {
   createRunObserver,
   GraphDescriptor,
-  BoardServer,
   InspectableRun,
   InspectableRunSequenceEntry,
   NodeConfiguration,

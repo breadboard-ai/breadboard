@@ -4,26 +4,26 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  blank,
+import type {
   BoardServerEventTarget,
   DataPartTransformer,
   NodeIdentifier,
-  type BoardServer,
-  type BoardServerCapabilities,
-  type BoardServerConfiguration,
-  type BoardServerExtension,
-  type BoardServerProject,
-  type ChangeNotificationCallback,
-  type GraphDescriptor,
-  type GraphProviderCapabilities,
-  type GraphProviderExtendedCapabilities,
-  type GraphProviderItem,
-  type GraphProviderStore,
-  type Kit,
-  type Permission,
-  type User,
-} from "@google-labs/breadboard";
+  BoardServer,
+  BoardServerCapabilities,
+  BoardServerConfiguration,
+  BoardServerExtension,
+  BoardServerProject,
+  ChangeNotificationCallback,
+  GraphDescriptor,
+  GraphProviderCapabilities,
+  GraphProviderExtendedCapabilities,
+  GraphProviderItem,
+  GraphProviderStore,
+  Kit,
+  Permission,
+  User,
+} from "@breadboard-ai/types";
+import { blank } from "@google-labs/breadboard";
 import { ConnectionArgs, RemoteConnector } from "./types";
 import { createRequest, getSigninToken } from "./utils";
 import { TokenVendor } from "@breadboard-ai/connection-client";

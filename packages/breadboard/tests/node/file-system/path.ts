@@ -7,7 +7,7 @@
 import { describe, it } from "node:test";
 import { Path } from "../../../src/data/file-system/path.js";
 import { ok } from "assert";
-import { FileSystemPath, Outcome } from "../../../src/data/types.js";
+import type { FileSystemPath, Outcome } from "@breadboard-ai/types";
 
 function pathify(s: string): FileSystemPath {
   return s as FileSystemPath;

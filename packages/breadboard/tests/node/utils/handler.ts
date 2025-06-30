@@ -5,13 +5,13 @@
  */
 
 import test, { describe } from "node:test";
-import { getGraphHandler } from "../../../src/handler.js";
+import { getGraphHandler } from "@breadboard-ai/runtime/legacy.js";
 import { deepStrictEqual, ok } from "node:assert";
 import { GraphDescriptor } from "@breadboard-ai/types";
 import simple from "../../bgl/simple.bgl.json" with { type: "json" };
 import { NodeDescriberResult, NodeDescriberWires } from "../../../src/types.js";
 import { makeTestGraphStore } from "../../helpers/_graph-store.js";
-import { GraphLoader, MutableGraphStore } from "../../../src/index.js";
+import type { GraphLoader, MutableGraphStore } from "@breadboard-ai/types";
 
 describe("getGraphHandler", () => {
   test("returns undefined for non-URL-like type", async () => {

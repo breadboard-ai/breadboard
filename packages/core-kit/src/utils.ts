@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { GraphLoaderResult } from "@breadboard-ai/types";
 import {
-  GraphLoaderResult,
   NodeHandlerContext,
   Throttler,
   getGraphDescriptor,

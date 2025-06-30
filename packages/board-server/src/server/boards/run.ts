@@ -5,9 +5,7 @@
  */
 
 import type { Request, Response } from "express";
-
-import type { RemoteMessage } from "@google-labs/breadboard/remote";
-
+import type { RemoteMessage } from "@breadboard-ai/types";
 import type { ServerConfig } from "../config.js";
 import { secretsKit } from "../proxy/secrets.js";
 import { asPath } from "../store.js";

@@ -6,13 +6,12 @@
 
 import type {
   DataPart,
+  HarnessRunResult,
   InlineDataCapabilityPart,
   LLMContent,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
-
 import { Storage, type FileMetadata } from "@google-cloud/storage";
-import type { BlobStore, BlobStoreGetResult, Result } from "./types.js";
 import {
   err,
   ok,
@@ -24,10 +23,10 @@ import {
   type SerializedDataStoreGroup,
   type StoreDataResult,
 } from "@google-labs/breadboard";
-import type { HarnessRunResult } from "@google-labs/breadboard/harness";
 import { Readable } from "node:stream";
+import type { BlobStore, BlobStoreGetResult, Result } from "./types.js";
 
-export { GoogleStorageBlobStore, isUUID, BlobDataStore };
+export { BlobDataStore, GoogleStorageBlobStore, isUUID };
 
 export type FileAPIMetadata = {
   fileUri?: string;

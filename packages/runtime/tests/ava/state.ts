@@ -6,7 +6,7 @@
 
 import test from "ava";
 
-import { MachineEdgeState } from "../src/traversal/state.js";
+import { MachineEdgeState } from "../../src/traversal/state.js";
 
 test("MachineEdgeState correctly manages queues", (t) => {
   const state = new MachineEdgeState();

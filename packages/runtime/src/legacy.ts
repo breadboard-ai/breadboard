@@ -20,6 +20,7 @@ export {
   callHandler,
   getGraphHandlerFromMutableGraph,
   getHandler,
+  getGraphHandler,
 } from "./handler.js";
 export { invokeGraph } from "./run/invoke-graph.js";
 export { runGraph } from "./run/run-graph.js";
@@ -59,3 +60,19 @@ export {
   blankImperative,
   defaultModuleContent,
 } from "./run/run-imperative-graph.js";
+export { LocalRunner } from "./harness/local-runner.js";
+export { RemoteRunner } from "./harness/remote-runner.js";
+export { loadRunnerState } from "./serialization.js";
+export { handleRunGraphRequest } from "./remote/run-graph-server.js";
+
+export {
+  ProxyServer,
+  HTTPServerTransport,
+  type ProxyServerConfig,
+} from "./remote/index.js";
+export type { ServerResponse } from "./remote/http.js";
+export { visitGraphNodes } from "./data/index.js";
+export { run } from "./harness/index.js";
+export type { AllowFilterFunction } from "./remote/config.js";
+export { hasOrigin } from "./remote/index.js";
+export { chunkRepairTransform } from "./remote/chunk-repair.js";

@@ -6,8 +6,8 @@
 
 import test from "ava";
 
-import { MachineResult } from "../src/traversal/result.js";
-import { MachineEdgeState } from "../src/traversal/state.js";
+import { MachineResult } from "../../src/traversal/result.js";
+import { MachineEdgeState } from "../../src/traversal/state.js";
 
 test("MachineResult#skip", (t) => {
   {

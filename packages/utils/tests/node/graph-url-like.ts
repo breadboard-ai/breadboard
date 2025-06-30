@@ -6,7 +6,7 @@
 
 import { ok } from "node:assert";
 import test, { describe } from "node:test";
-import { graphUrlLike } from "../../../src/utils/graph-url-like.js";
+import { graphUrlLike } from "../../src/graph-url-like.js";
 
 describe("graph url-like", () => {
   test("Recognizes strings of distinct URL-like structure", () => {

@@ -4,18 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type {
+  GraphDescriptor,
+  InputValues,
+  NodeHandlerContext,
+  Schema,
+} from "@breadboard-ai/types";
 import test from "ava";
 import {
   InputSchemaReader,
   createBubbleHandler,
   createErrorMessage,
-} from "../src/bubble.js";
-import {
-  GraphDescriptor,
-  InputValues,
-  NodeHandlerContext,
-  Schema,
-} from "../src/types.js";
+} from "../../src/bubble.js";
 
 test("InputSchemaReader works as expected", async (t) => {
   {

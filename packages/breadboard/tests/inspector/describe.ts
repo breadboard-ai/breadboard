@@ -6,7 +6,7 @@
 
 import test from "ava";
 
-import { createLoader } from "../../src/loader/index.js";
+import { createLoader } from "@breadboard-ai/loader";
 import { GraphDescriptor, Schema } from "../../src/types.js";
 import { inspector } from "../helpers/_inspector.js";
 

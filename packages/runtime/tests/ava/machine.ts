@@ -6,18 +6,16 @@
 
 import test from "ava";
 
-import { readFile, readdir } from "fs/promises";
-
-import { TraversalMachine } from "../src/index.js";
-
-import {
+import type {
   ErrorCapability,
   GraphDescriptor,
   InputValues,
+  NodeIdentifier,
   OutputValues,
-} from "../src/types.js";
-import { MachineResult } from "../src/traversal/result.js";
-import { NodeIdentifier } from "@breadboard-ai/types";
+} from "@breadboard-ai/types";
+import { readFile, readdir } from "fs/promises";
+import { TraversalMachine } from "../../src/traversal/machine.js";
+import { MachineResult } from "../../src/traversal/result.js";
 
 const IN_DIR = "./tests/data/";
 

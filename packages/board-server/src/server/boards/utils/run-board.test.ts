@@ -4,23 +4,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import test, { describe } from "node:test";
-import { deepStrictEqual, fail } from "assert";
-import { runBoard } from "./run-board.js";
 import type {
   GraphDescriptor,
   InputValues,
   OutputValues,
   ReanimationState,
-} from "@google-labs/breadboard";
-
-import simpleBoard from "../../../../test-data/boards/simple.bgl.json" with { type: "json" };
+  RemoteMessage,
+  RunDiagnosticsLevel,
+} from "@breadboard-ai/types";
+import { deepStrictEqual, fail } from "assert";
+import test, { describe } from "node:test";
+import invokeWithBubblingInput from "../../../../test-data/boards/invoke-board-with-bubbling-input.bgl.json" with { type: "json" };
 import multipleInputsBoard from "../../../../test-data/boards/many-inputs.bgl.json" with { type: "json" };
 import manyOutputsBoard from "../../../../test-data/boards/many-outputs.bgl.json" with { type: "json" };
-import invokeWithBubblingInput from "../../../../test-data/boards/invoke-board-with-bubbling-input.bgl.json" with { type: "json" };
-import type { RemoteMessage } from "@google-labs/breadboard/remote";
-import type { RunDiagnosticsLevel } from "@google-labs/breadboard/harness";
+import simpleBoard from "../../../../test-data/boards/simple.bgl.json" with { type: "json" };
 import type { RunBoardStateStore } from "../../types.js";
+import { runBoard } from "./run-board.js";
 
 const assertResults = (
   results: RemoteMessage[],

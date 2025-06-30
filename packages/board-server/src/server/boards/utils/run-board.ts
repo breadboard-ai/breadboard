@@ -11,7 +11,7 @@ import {
   StubFileSystem,
   type ReanimationState,
 } from "@google-labs/breadboard";
-import { handleRunGraphRequest } from "@google-labs/breadboard/remote";
+import { handleRunGraphRequest } from "@breadboard-ai/runtime/legacy.js";
 import type { RunBoardArguments } from "../../types.js";
 import { BoardServerProvider } from "./board-server-provider.js";
 import { createKits, registerLegacyKits } from "./create-kits.js";
