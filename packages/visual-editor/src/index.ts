@@ -20,7 +20,7 @@ import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
 import { map } from "lit/directives/map.js";
 import { customElement, property, state } from "lit/decorators.js";
-import { LitElement, html, HTMLTemplateResult, nothing } from "lit";
+import { LitElement, html, nothing } from "lit";
 import {
   createRunObserver,
   GraphDescriptor,
@@ -1999,59 +1999,7 @@ export class Main extends LitElement {
             BreadboardUI.Types.STATUS.STOPPED;
         }
 
-        let showNewWorkspaceItemOverlay: HTMLTemplateResult | symbol = nothing;
-        if (this.#showNewWorkspaceItemOverlay) {
-          showNewWorkspaceItemOverlay = html`<bb-new-workspace-item-overlay
-            @bbworkspaceitemcreate=${async (
-              evt: BreadboardUI.Events.WorkspaceItemCreateEvent
-            ) => {
-              this.#showNewWorkspaceItemOverlay = false;
-
-              await this.#runtime.edit.createWorkspaceItem(
-                this.tab,
-                evt.itemType,
-                evt.title,
-                this.#settings
-              );
-            }}
-            @bboverlaydismissed=${() => {
-              this.#showNewWorkspaceItemOverlay = false;
-            }}
-          ></bb-new-workspace-item-overlay>`;
-        }
-
-        let boardServerAddOverlay: HTMLTemplateResult | symbol = nothing;
-        if (this.#showBoardServerAddOverlay) {
-          boardServerAddOverlay = html`<bb-board-server-overlay
-            .showGoogleDrive=${true}
-            .boardServers=${this.#boardServers}
-            @bboverlaydismissed=${() => {
-              this.#showBoardServerAddOverlay = false;
-            }}
-            @bbgraphboardserverconnectrequest=${async (
-              evt: BreadboardUI.Events.GraphBoardServerConnectRequestEvent
-            ) => {
-              const result = await this.#runtime.board.connect(
-                evt.location,
-                evt.apiKey
-              );
-
-              if (result.error) {
-                this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
-              }
-
-              if (!result.success) {
-                return;
-              }
-
-              // Trigger a re-render.
-              this.#showBoardServerAddOverlay = false;
-            }}
-          ></bb-board-server-overlay>`;
-        }
-
-        const ui = html`
-          ${this.#renderHeader()}
+        const ui = html`${this.#renderHeader()}
         <div id="content" ?inert=${showingOverlay}>
           <bb-canvas-controller
                 ${ref(this.#canvasControllerRef)}
@@ -2769,15 +2717,6 @@ export class Main extends LitElement {
           }
           </div>
         </div>`;
-        const tabModules = Object.entries(this.tab?.graph.modules ?? {});
-
-        // For standard, non-imperative graphs prepend the main board ID
-        if (!this.tab?.graph.main) {
-          tabModules.unshift([
-            BreadboardUI.Constants.MAIN_BOARD_ID,
-            { code: "" },
-          ]);
-        }
 
         if (
           signinAdapter.state !== "anonymous" &&
@@ -2792,10 +2731,14 @@ export class Main extends LitElement {
         }
 
         return [
-          this.#showToS ? this.createTosDialog() : nothing,
           ui,
-          showNewWorkspaceItemOverlay,
-          boardServerAddOverlay,
+          this.#showToS ? this.createTosDialog() : nothing,
+          this.#showNewWorkspaceItemOverlay
+            ? this.#createNewWorkspaceItemOverlay()
+            : nothing,
+          this.#showBoardServerAddOverlay
+            ? this.#createBoardServerAddOverlay()
+            : nothing,
           this.#showBoardEditModal ? this.#createBoardEditModal() : nothing,
           this.#showItemModal ? this.#createItemModal() : nothing,
         ];
@@ -2808,6 +2751,55 @@ export class Main extends LitElement {
       this.#renderSnackbar(),
       this.#renderGoogleDriveAssetShareDialog(),
     ];
+  }
+
+  #createNewWorkspaceItemOverlay() {
+    return html`<bb-new-workspace-item-overlay
+      @bbworkspaceitemcreate=${async (
+        evt: BreadboardUI.Events.WorkspaceItemCreateEvent
+      ) => {
+        this.#showNewWorkspaceItemOverlay = false;
+
+        await this.#runtime.edit.createWorkspaceItem(
+          this.tab,
+          evt.itemType,
+          evt.title,
+          this.#settings
+        );
+      }}
+      @bboverlaydismissed=${() => {
+        this.#showNewWorkspaceItemOverlay = false;
+      }}
+    ></bb-new-workspace-item-overlay>`;
+  }
+
+  #createBoardServerAddOverlay() {
+    return html`<bb-board-server-overlay
+      .showGoogleDrive=${true}
+      .boardServers=${this.#boardServers}
+      @bboverlaydismissed=${() => {
+        this.#showBoardServerAddOverlay = false;
+      }}
+      @bbgraphboardserverconnectrequest=${async (
+        evt: BreadboardUI.Events.GraphBoardServerConnectRequestEvent
+      ) => {
+        const result = await this.#runtime.board.connect(
+          evt.location,
+          evt.apiKey
+        );
+
+        if (result.error) {
+          this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
+        }
+
+        if (!result.success) {
+          return;
+        }
+
+        // Trigger a re-render.
+        this.#showBoardServerAddOverlay = false;
+      }}
+    ></bb-board-server-overlay>`;
   }
 
   #createBoardEditModal() {
