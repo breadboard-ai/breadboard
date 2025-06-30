@@ -4,13 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { loadWithFetch } from "@breadboard-ai/loader";
 import { invokeGraph } from "@breadboard-ai/runtime/legacy.js";
 import type {
   GraphDescriptor,
   InputValues,
   Kit,
-  MutableGraphStore,
   NodeDescriberContext,
   NodeDescriberResult,
   NodeHandlerContext,
@@ -21,9 +19,6 @@ import type {
 import { ok } from "@breadboard-ai/utils";
 import { GraphDescriberManager } from "../inspector/graph/graph-describer-manager.js";
 import { MutableGraphImpl } from "../inspector/graph/mutable-graph.js";
-import { asRuntimeKit } from "./ctors.js";
-
-export { registerKitGraphs };
 
 const setBaseURL = (base: URL, key: string, graph: GraphDescriptor) => {
   if (graph.edges && graph.nodes) {
@@ -115,86 +110,3 @@ export const kitFromGraphDescriptor = (
     handlers: createHandlersFromManifest(new URL(url), graph),
   };
 };
-
-function isGraphDescriptor(obj: unknown): obj is GraphDescriptor {
-  if (typeof obj !== "object" || obj === null) return false;
-  const graph = obj as GraphDescriptor;
-  return (
-    typeof graph.title === "string" &&
-    typeof graph.description === "string" &&
-    typeof graph.version === "string" &&
-    typeof graph.graphs === "object" &&
-    Array.isArray(graph.exports)
-  );
-}
-
-/**
- * Loads a kit from a URL.
- *
- * @param url -- a URL to a kit manifest or an npm URL.
- */
-export const load = async (url: URL): Promise<Kit> => {
-  if (url.protocol === "https:" || url.protocol === "http:") {
-    if (url.pathname.endsWith(".kit.json")) {
-      const maybeManifest = await loadWithFetch(url);
-      if (isGraphDescriptor(maybeManifest)) {
-        const kit = kitFromGraphDescriptor(maybeManifest);
-        if (!kit) {
-          throw new Error(`Unable to import kit from "${url}"`);
-        }
-        return kit;
-      }
-    } else {
-      // Assume that this is a URL to a JS file.
-      const module = await import(
-        /* @vite-ignore */
-        /* webpackIgnore: true */
-        url.href
-      );
-      if (module.default == undefined) {
-        throw new Error(`Module ${url} does not have a default export.`);
-      }
-
-      const moduleKeys = Object.getOwnPropertyNames(module.default.prototype);
-
-      if (
-        moduleKeys.includes("constructor") == false ||
-        moduleKeys.includes("handlers") == false
-      ) {
-        throw new Error(
-          `Module default export '${url}' does not look like a Kit (either no constructor or no handler).`
-        );
-      }
-      return asRuntimeKit(module.default);
-    }
-  } else if (url.protocol === "file:") {
-    throw new Error("File protocol is not yet supported");
-  }
-  throw new Error(`Unable to load kit from "${url}"`);
-};
-
-/**
- * A helper function for registering old-style graph kits that are
- * created using `kitFromGraphDescriptor`.
- *
- * Call it to ensure that the graphs, representing the node handlers
- * for these kits are in the graph store, so that the graph store doesn't
- * attempt to load them (their URLs are just URIs).
- *
- * @param legacyKitGraphs -- loosely, Agent Kit and Google Drive Kit
- * @param graphStore
- */
-function registerKitGraphs(
-  legacyKitGraphs: GraphDescriptor[],
-  graphStore: MutableGraphStore
-): void {
-  for (const project of legacyKitGraphs) {
-    if (!project.graphs) continue;
-    for (const [key, graph] of Object.entries(project.graphs)) {
-      graphStore.addByDescriptor({
-        ...graph,
-        url: `${project.url}?graph=${key}`,
-      });
-    }
-  }
-}

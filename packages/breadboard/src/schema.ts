@@ -6,9 +6,9 @@
 
 import type { InputValues, Schema } from "./types.js";
 
-export type SchemaProperties = Record<string, Schema>;
+type SchemaProperties = Record<string, Schema>;
 
-export type SchemaType =
+type SchemaType =
   | "null"
   | "boolean"
   | "object"
@@ -107,7 +107,7 @@ export class SchemaBuilder {
  * Provides a way to manually handle schema merging.
  * Currently only invoked to handle the `additionalProperties` property.
  */
-export type ReducerFunction = (result: Schema, schema: Schema) => void;
+type ReducerFunction = (result: Schema, schema: Schema) => void;
 
 /**
  * Combines multiple schemas into a single schema. This is lossy, since
@@ -186,21 +186,4 @@ export const filterBySchema = <T extends Record<string, unknown>>(
   return Object.fromEntries(
     Object.entries(values).filter(([name]) => names.includes(name))
   ) as T;
-};
-
-export const filterProperties = (
-  schema: Schema,
-  filterFunction: (property: Schema) => boolean
-): Schema => {
-  const entries = Object.entries(schema.properties || {});
-  if (entries.length == 0) {
-    return schema;
-  }
-  const result = structuredClone(schema);
-  result.properties = Object.fromEntries(
-    entries.filter(([, schema]) => {
-      return filterFunction(schema);
-    })
-  );
-  return result;
 };

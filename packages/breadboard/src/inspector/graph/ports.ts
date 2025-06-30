@@ -32,7 +32,7 @@ const title = (schema: Schema, key: string) => {
   return schema.properties?.[key]?.title || key;
 };
 
-export const computePortStatus = (
+const computePortStatus = (
   wired: boolean,
   expected: boolean,
   required: boolean,
@@ -239,7 +239,7 @@ export class PortType implements InspectablePortType {
   }
 }
 
-export const collectPortsForType = (
+const collectPortsForType = (
   schema: Schema,
   kind: "input" | "output"
 ): InspectablePort[] => {
@@ -271,7 +271,7 @@ export const collectPortsForType = (
 /**
  * CAUTION: Side-effectey. Will remove side-wire ports from `inputs`.
  */
-export function filterSidePorts(inputs: InspectablePortList) {
+function filterSidePorts(inputs: InspectablePortList) {
   const sidePorts: InspectablePort[] = [];
   const inputPorts = inputs.ports.filter((port) => {
     if (port.kind === "side") {
