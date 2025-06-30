@@ -28,35 +28,7 @@ export { combineSchemas, SchemaBuilder } from "./schema.js";
 // New Syntax:
 export type * from "@breadboard-ai/utils";
 export { asyncGen, Template } from "@breadboard-ai/utils";
-export { base } from "./new/grammar/base.js";
-export {
-  board,
-  code,
-  // TODO Alias for easier migration to the new name. Remove in a future breaking change.
-  board as recipe,
-} from "./new/grammar/board.js";
-export { addKit } from "./new/grammar/kits.js";
-export type {
-  NodeProxy as __NodeProxy,
-  ProjectBackToOutputValues as __ProjectBackToOutputValues,
-  InputsForGraphDeclaration,
-  InputsForHandler,
-  InputsMaybeAsValues,
-  Lambda,
-  InputValues as NewInputValuesWithNodeFactory,
-  NodeFactory as NewNodeFactory,
-  OutputsForGraphDeclaration,
-  OutputsMaybeAsValues,
-  OutputValuesOrUnknown,
-  AbstractValue as V,
-} from "./new/grammar/types.js";
-export type {
-  AbstractNode,
-  InputValues as NewInputValues,
-  NodeValue as NewNodeValue,
-  OutputValues as NewOutputValues,
-  Serializeable,
-} from "./new/runner/types.js";
+
 export { hash } from "./utils/hash.js";
 export { relativePath } from "./utils/relative-path.js";
 export { SemanticVersioning, type SemVer } from "./utils/semver.js";
