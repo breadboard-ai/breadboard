@@ -266,7 +266,6 @@ export class Board extends EventTarget {
 
   createURLFromTabs() {
     const params = new URLSearchParams();
-    let t = 0;
 
     // To identify the top-level origin when embedded, we persist the
     // redirect URI param into the new board URL.
@@ -280,15 +279,8 @@ export class Board extends EventTarget {
         continue;
       }
 
-      if (tab.moduleId) {
-        params.set(`subitem-i-id${t}`, tab.moduleId);
-      }
-
-      if (tab.subGraphId) {
-        params.set(`subitem-d-id${t}`, tab.subGraphId);
-      }
-
-      params.set(`tab${t++}`, tab.graph.url);
+      params.set(`project`, tab.graph.url);
+      break;
     }
 
     const url = new URL(window.location.href);
@@ -313,7 +305,7 @@ export class Board extends EventTarget {
     }
 
     const tabs = [...params]
-      .filter((param) => param[0].startsWith("tab"))
+      .filter((param) => param[0].startsWith("flow"))
       .sort(([idA], [idB]) => {
         if (idA > idB) return 1;
         if (idA < idB) return -1;
@@ -337,55 +329,23 @@ export class Board extends EventTarget {
       params.delete("board");
     }
 
-    const tabs = [...params]
-      .filter((param) => param[0].startsWith("tab"))
-      .sort(([idA], [idB]) => {
-        if (idA > idB) return 1;
-        if (idA < idB) return -1;
-        return 0;
-      });
+    const tab = params.get("tab0");
+    if (tab) {
+      params.set(`flow`, tab);
+      params.delete("tab0");
+    }
 
-    const activeTab = 0;
-    let activeTabId: TabId | null = null;
-    if (tabs.length > 0) {
-      for (let t = 0; t < tabs.length; t++) {
-        const [, tab] = tabs[t];
-        if (tab.startsWith("run://") || tab.startsWith("descriptor://")) {
-          continue;
-        }
-
-        let moduleId: ModuleIdentifier | null = null;
-        const moduleIdParam = params.get(`subitem-i-id${t}`);
-        if (moduleIdParam) {
-          moduleId = moduleIdParam;
-        }
-
-        let subGraphId: GraphIdentifier | null = null;
-        const subGraphIdParam = params.get(`subitem-d-id${t}`);
-        if (subGraphIdParam) {
-          subGraphId = subGraphIdParam;
-        }
-
-        await this.createTabFromURL(
-          tab,
-          url.href,
-          true,
-          false,
-          false,
-          moduleId,
-          subGraphId
-        );
-
-        // Capture the current tab ID so we can restore it after creating all
-        // the tabs again.
-        if (t === activeTab) {
-          activeTabId = this.#currentTabId;
-        }
-      }
-
-      if (activeTabId && this.#currentTabId !== activeTabId) {
-        this.#currentTabId = activeTabId;
-      }
+    const flow = params.get("flow");
+    if (flow) {
+      await this.createTabFromURL(
+        flow,
+        url.href,
+        true,
+        false,
+        false,
+        null,
+        null
+      );
     }
 
     this.dispatchEvent(new RuntimeTabChangeEvent());
