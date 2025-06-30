@@ -21,11 +21,9 @@ export {
 } from "@breadboard-ai/runtime/legacy.js";
 export { Board } from "./board.js";
 export { asRuntimeKit } from "./kits/ctors.js";
-export { toMermaid } from "./mermaid.js";
 export { Node } from "./node.js";
 export { combineSchemas, SchemaBuilder } from "./schema.js";
 
-// New Syntax:
 export type * from "@breadboard-ai/utils";
 export { asyncGen, Template } from "@breadboard-ai/utils";
 

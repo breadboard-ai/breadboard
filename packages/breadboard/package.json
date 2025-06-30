@@ -21,8 +21,7 @@
     "test:node": "wireit",
     "build": "wireit",
     "build:tsc": "wireit",
-    "lint": "wireit",
-    "merm": "wireit"
+    "lint": "wireit"
   },
   "wireit": {
     "build": {
@@ -95,19 +94,6 @@
         "../../.eslintrc.json"
       ],
       "output": []
-    },
-    "merm": {
-      "command": "node scripts/make-graphs.js",
-      "dependencies": [
-        "build:tsc"
-      ],
-      "files": [
-        "scripts/make-graphs.js",
-        "tests/data/**/*.json"
-      ],
-      "output": [
-        "docs/graphs/**/*.md"
-      ]
     }
   },
   "repository": {
