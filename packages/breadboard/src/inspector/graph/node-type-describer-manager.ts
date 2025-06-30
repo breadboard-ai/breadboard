@@ -19,7 +19,7 @@ import type {
 import {
   assetsFromGraphDescriptor,
   envFromGraphDescriptor,
-} from "../../data/file-system/assets.js";
+} from "../../file-system/assets.js";
 import { contextFromMutableGraphStore } from "../graph-store.js";
 import { UpdateEvent } from "./event.js";
 import { emptyResult, NodeDescriberManager } from "./node-describer-manager.js";

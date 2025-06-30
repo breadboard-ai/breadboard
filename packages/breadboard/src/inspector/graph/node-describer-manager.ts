@@ -25,7 +25,7 @@ import type {
 import {
   assetsFromGraphDescriptor,
   envFromGraphDescriptor,
-} from "../../data/file-system/assets.js";
+} from "../../file-system/assets.js";
 import { SchemaDiffer } from "../../utils/schema-differ.js";
 import { contextFromMutableGraph } from "../graph-store.js";
 import { UpdateEvent } from "./event.js";

@@ -97,15 +97,15 @@ export {
 export {
   assetsFromGraphDescriptor,
   envFromGraphDescriptor,
-} from "./data/file-system/assets.js";
+} from "./file-system/assets.js";
 
-export { createEphemeralBlobStore } from "./data/file-system/ephemeral-blob-store.js";
-export { writablePathFromString } from "./data/file-system/path.js";
+export { createEphemeralBlobStore } from "./file-system/ephemeral-blob-store.js";
+export { writablePathFromString } from "./file-system/path.js";
 
-export { createFileSystem } from "./data/file-system/index.js";
-export { transformBlobs } from "./data/file-system/blob-transform.js";
+export { createFileSystem } from "./file-system/index.js";
+export { transformBlobs } from "./file-system/blob-transform.js";
 
-export { StubFileSystem } from "./data/file-system/stub-file-system.js";
+export { StubFileSystem } from "./file-system/stub-file-system.js";
 export {
   createDefaultDataStore,
   createDefaultRunStore,
