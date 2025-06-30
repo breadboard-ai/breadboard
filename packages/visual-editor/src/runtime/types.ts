@@ -4,13 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
+import type {
   BoardServer,
+  GraphLoader,
+  HarnessProxyConfig,
+} from "@breadboard-ai/types";
+import {
   EditHistoryCreator,
   EditHistoryEntry,
   FileSystem,
   GraphDescriptor,
-  GraphLoader,
   Kit,
   MainGraphIdentifier,
   MutableGraphStore,
@@ -30,7 +33,6 @@ import {
 } from "@breadboard-ai/types";
 import { Sandbox } from "@breadboard-ai/jsandbox";
 import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
-import { HarnessProxyConfig } from "@google-labs/breadboard/harness";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 

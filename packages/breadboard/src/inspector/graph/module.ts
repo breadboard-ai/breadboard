@@ -4,18 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  type Module as ModuleType,
+import type {
   GraphDescriptor,
-  ModuleCode,
-  ModuleIdentifier,
-  ModuleMetadata,
-} from "@breadboard-ai/types";
-import {
   InspectableModule,
   InspectableModuleCache,
   InspectableModules,
-} from "../types.js";
+  ModuleCode,
+  ModuleIdentifier,
+  ModuleMetadata,
+  Module as ModuleType,
+} from "@breadboard-ai/types";
 
 class Module implements InspectableModule {
   #code: ModuleCode | undefined;

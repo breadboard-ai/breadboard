@@ -18,7 +18,7 @@ import {
   type GraphProviderStore,
   type Permission,
   type User,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
 
 import type { BoardServerStore } from "../../store.js";
 import type { BoardServerLoadFunction } from "../../types.js";

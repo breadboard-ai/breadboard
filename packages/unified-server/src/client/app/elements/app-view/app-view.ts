@@ -19,13 +19,11 @@ import {
 import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
 import {
   BoardServer,
-  err,
   GraphDescriptor,
   InputValues,
-  isStoredData,
-  ok,
   Outcome,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
+import { ok, err, isStoredData } from "@breadboard-ai/utils";
 import {
   AppTemplate,
   AppTemplateOptions,
@@ -46,7 +44,7 @@ import {
   RunOutputEvent,
   RunSecretEvent,
   RunSkipEvent,
-} from "@google-labs/breadboard/harness";
+} from "@breadboard-ai/types";
 import { googleDriveClientContext } from "@breadboard-ai/shared-ui/contexts/google-drive-client-context.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { loadImage } from "@breadboard-ai/shared-ui/utils/image.js";

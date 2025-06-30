@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptorHandle } from "../../inspector/graph/graph-descriptor-handle.js";
-import {
+import type {
   EditOperation,
   EditOperationContext,
   EditSpec,
   SingleEditResult,
-} from "../types.js";
+} from "@breadboard-ai/types";
+import { GraphDescriptorHandle } from "../../inspector/graph/graph-descriptor-handle.js";
 
 export class ChangeGraphMetadata implements EditOperation {
   async do(

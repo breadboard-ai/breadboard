@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessRunner, RunEventMap } from "@google-labs/breadboard/harness";
+import { HarnessRunner, RunEventMap } from "@breadboard-ai/types";
 import {
   MoveToSelection,
   Tab,

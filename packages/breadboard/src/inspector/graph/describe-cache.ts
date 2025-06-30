@@ -4,19 +4,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
-import {
+import type {
+  AffectedNode,
   DescribeResultCacheArgs,
+  GraphIdentifier,
   InspectableDescriberResultCache,
   InspectableDescriberResultCacheEntry,
-} from "../types.js";
-import { AffectedNode } from "../../editor/types.js";
+  NodeDescriberResult,
+  NodeIdentifier,
+} from "@breadboard-ai/types";
 import { hash } from "../../utils/hash.js";
 import {
   SnapshotUpdater,
   SnapshotUpdaterArgs,
 } from "../../utils/snapshot-updater.js";
-import { NodeDescriberResult } from "../../types.js";
 
 export { DescribeResultCache };
 

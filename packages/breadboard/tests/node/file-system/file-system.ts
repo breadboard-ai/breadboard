@@ -6,7 +6,7 @@
 
 import { describe, it } from "node:test";
 import { deepStrictEqual, ok } from "node:assert";
-import { FileSystemReadWritePath } from "../../../src/data/types.js";
+import type { FileSystemReadWritePath } from "@breadboard-ai/types";
 import {
   bad,
   good,

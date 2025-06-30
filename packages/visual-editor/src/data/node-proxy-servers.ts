@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessProxyConfig, RunConfig } from "@google-labs/breadboard/harness";
+import type { HarnessProxyConfig, RunConfig } from "@breadboard-ai/types";
 import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 

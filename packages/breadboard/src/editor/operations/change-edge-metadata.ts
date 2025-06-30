@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptorHandle } from "../../inspector/graph/graph-descriptor-handle.js";
-import { findEdgeIndex } from "../edge.js";
-import {
+import type {
   EditOperation,
   EditOperationContext,
   EditSpec,
   SingleEditResult,
-} from "../types.js";
+} from "@breadboard-ai/types";
+import { GraphDescriptorHandle } from "../../inspector/graph/graph-descriptor-handle.js";
+import { findEdgeIndex } from "../edge.js";
 import { error } from "./error.js";
 
 export { ChangeEdgeMetadata };

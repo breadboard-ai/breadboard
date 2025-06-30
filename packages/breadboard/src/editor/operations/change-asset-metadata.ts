@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { AssetMetadata } from "@breadboard-ai/types";
-import {
+import type {
+  AssetMetadata,
   EditOperation,
   EditOperationContext,
   EditSpec,
   SingleEditResult,
-} from "../types.js";
+} from "@breadboard-ai/types";
 
 export { ChangeAssetMetadata };
 

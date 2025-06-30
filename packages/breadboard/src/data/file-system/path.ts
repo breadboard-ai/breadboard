@@ -4,8 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { FileSystemPath, FileSystemReadWritePath, Outcome } from "../types.js";
-import { err, ok } from "./utils.js";
+import type {
+  FileSystemPath,
+  FileSystemReadWritePath,
+  Outcome,
+} from "@breadboard-ai/types";
+import { err, ok } from "@breadboard-ai/utils";
 
 export { Path };
 

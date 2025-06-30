@@ -39,12 +39,33 @@
       "clean": "if-file-deleted"
     },
     "test": {
-      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/*.js",
+      "dependencies": [
+        "test:ava",
+        "test:node"
+      ]
+    },
+    "test:ava": {
+      "command": "ava",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
       "dependencies": [
         "build:tsc"
       ],
       "files": [
-        "tests/**/*.ts"
+        "tests/ava/**/*.json",
+        "!tests/node/**/*.ts"
+      ],
+      "output": []
+    },
+    "test:node": {
+      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/node/*.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [
+        "tests/node/**/*.ts",
+        "tests/bgl/*.bgl.json"
       ],
       "output": []
     },
@@ -71,6 +92,19 @@
   "files": [
     "dist/src"
   ],
+  "ava": {
+    "timeout": "30s",
+    "files": [
+      "tests/ava/**/*.ts"
+    ],
+    "workerThreads": false,
+    "typescript": {
+      "rewritePaths": {
+        "./": "dist/"
+      },
+      "compile": false
+    }
+  },
   "keywords": [],
   "author": "Google Labs Team",
   "license": "Apache-2.0",

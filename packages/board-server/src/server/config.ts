@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { AllowFilterFunction } from "@google-labs/breadboard/remote";
+import type { AllowFilterFunction } from "@breadboard-ai/runtime/legacy.js";
 
 export type StorageProvider = "firestore" | "in-memory";
 

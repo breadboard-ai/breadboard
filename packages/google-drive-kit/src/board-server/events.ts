@@ -8,7 +8,7 @@ import type {
   BoardServerSaveStatusChangeEvent,
   BoardServerSaveEventStatus,
   BoardServerListRefreshed,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
 
 const eventInit = {
   bubbles: true,

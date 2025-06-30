@@ -4,16 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
+import type {
   EditOperation,
   EditOperationContext,
   EditSpec,
   EditableNodeSpec,
+  InspectableGraph,
   SingleEditResult,
-} from "../types.js";
-import { InspectableGraph } from "../../inspector/types.js";
-import { errorNoInspect } from "./error.js";
+} from "@breadboard-ai/types";
 import { GraphDescriptorHandle } from "../../inspector/graph/graph-descriptor-handle.js";
+import { errorNoInspect } from "./error.js";
 
 export class AddNode implements EditOperation {
   async can(

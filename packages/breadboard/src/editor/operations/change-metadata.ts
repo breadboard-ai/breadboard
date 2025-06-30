@@ -4,14 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeIdentifier, NodeMetadata } from "@breadboard-ai/types";
-import {
+import type {
   EditOperation,
   EditOperationContext,
   EditSpec,
+  InspectableGraph,
+  NodeIdentifier,
+  NodeMetadata,
   SingleEditResult,
-} from "../types.js";
-import { InspectableGraph } from "../../inspector/types.js";
+} from "@breadboard-ai/types";
 import { errorNoInspect } from "./error.js";
 
 export class ChangeMetadata implements EditOperation {

@@ -4,21 +4,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { HarnessRunResult } from "../../harness/types.js";
-import type { InputValues, NodeIdentifier, OutputValues } from "../../types.js";
 import type {
   EventIdentifier,
+  HarnessRunResult,
+  InputValues,
   InspectableGraph,
   InspectableNode,
   InspectableRun,
   InspectableRunNodeEvent,
+  NodeDescriptor,
+  NodeIdentifier,
+  OutputValues,
   PathRegistryEntry,
-} from "../types.js";
-import { NestedRun } from "./nested-run.js";
+  TraversalResult,
+} from "@breadboard-ai/types";
 import { BubbledInspectableNode } from "../graph/bubbled-node.js";
-import { eventIdFromEntryId, idFromPath } from "./conversions.js";
-import type { NodeDescriptor, TraversalResult } from "@breadboard-ai/types";
 import { VirtualNode } from "../graph/virtual-node.js";
+import { eventIdFromEntryId, idFromPath } from "./conversions.js";
+import { NestedRun } from "./nested-run.js";
 
 export class RunNodeEvent implements InspectableRunNodeEvent {
   type: "node";

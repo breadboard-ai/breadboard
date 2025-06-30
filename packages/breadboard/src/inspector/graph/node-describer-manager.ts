@@ -4,30 +4,30 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { createLoader } from "@breadboard-ai/loader";
 import {
+  getHandler,
+  invokeMainDescriber,
+} from "@breadboard-ai/runtime/legacy.js";
+import type {
+  DescribeResultCacheArgs,
   GraphIdentifier,
-  NodeIdentifier,
-  NodeTypeIdentifier,
-} from "@breadboard-ai/types";
-import { envFromGraphDescriptor } from "../../data/file-system/assets.js";
-import { assetsFromGraphDescriptor } from "../../data/index.js";
-import { getHandler } from "../../handler.js";
-import { createLoader } from "../../loader/index.js";
-import { invokeMainDescriber } from "../../sandbox/invoke-describer.js";
-import {
+  InspectableEdge,
+  MutableGraph,
   NodeDescriberContext,
   NodeDescriberFunction,
   NodeDescriberResult,
   NodeHandler,
-} from "../../types.js";
+  NodeIdentifier,
+  NodeTypeDescriberOptions,
+  NodeTypeIdentifier,
+} from "@breadboard-ai/types";
+import {
+  assetsFromGraphDescriptor,
+  envFromGraphDescriptor,
+} from "../../data/file-system/assets.js";
 import { SchemaDiffer } from "../../utils/schema-differ.js";
 import { contextFromMutableGraph } from "../graph-store.js";
-import {
-  DescribeResultCacheArgs,
-  InspectableEdge,
-  MutableGraph,
-  NodeTypeDescriberOptions,
-} from "../types.js";
 import { UpdateEvent } from "./event.js";
 import { GraphDescriptorHandle } from "./graph-descriptor-handle.js";
 import {
@@ -37,7 +37,7 @@ import {
   EdgeType,
 } from "./schemas.js";
 
-export { NodeDescriberManager, emptyResult };
+export { emptyResult, NodeDescriberManager };
 
 function emptyResult(): NodeDescriberResult {
   return {

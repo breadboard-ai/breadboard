@@ -4,26 +4,26 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type * as ConnectionClient from "@breadboard-ai/connection-client";
+import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { ClientDeploymentConfiguration } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
+import type * as BreadboardUIContext from "@breadboard-ai/shared-ui/contexts";
+import type { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
+import { ProjectRun } from "@breadboard-ai/shared-ui/state/types.js";
 import {
   AppTheme,
   type AppTemplate,
 } from "@breadboard-ai/shared-ui/types/types.js";
-import type * as BreadboardUIContext from "@breadboard-ai/shared-ui/contexts";
-import type * as ConnectionClient from "@breadboard-ai/connection-client";
-import { HarnessRunner } from "@google-labs/breadboard/harness";
-import { type SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
+import { type SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
 import { TopGraphObserver } from "@breadboard-ai/shared-ui/utils/top-graph-observer";
-import {
+import type {
   BoardServer,
   GraphDescriptor,
+  HarnessRunner,
   InspectableRunObserver,
   Kit,
   RunStore,
-} from "@google-labs/breadboard";
-import { type SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
-import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import { ClientDeploymentConfiguration } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
-import { ProjectRun } from "@breadboard-ai/shared-ui/state/types.js";
+} from "@breadboard-ai/types";
 
 export type Runner = {
   harnessRunner: HarnessRunner;

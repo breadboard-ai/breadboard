@@ -4,35 +4,37 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
+import { baseURLFromString, SENTINEL_BASE_URL } from "@breadboard-ai/loader";
+import type {
   AssetPath,
   GraphDescriptor,
   GraphIdentifier,
   ImportIdentifier,
-  LLMContent,
-  ModuleIdentifier,
-  NodeConfiguration,
-  NodeIdentifier,
-  NodeTypeIdentifier,
-} from "@breadboard-ai/types";
-import { isLLMContent, isLLMContentArray } from "../../data/common.js";
-import { err } from "../../data/file-system/utils.js";
-import { Outcome } from "../../data/types.js";
-import { baseURLFromString, SENTINEL_BASE_URL } from "../../loader/loader.js";
-import { graphUrlLike } from "../../utils/graph-url-like.js";
-import { Template, TemplatePart } from "../../utils/template.js";
-import {
   InspectableAsset,
   InspectableAssetEdge,
   InspectableEdge,
   InspectableGraph,
   InspectableNode,
   InspectableNodeType,
+  LLMContent,
+  ModuleIdentifier,
   MutableGraph,
-} from "../types.js";
+  NodeConfiguration,
+  NodeIdentifier,
+  NodeTypeIdentifier,
+  Outcome,
+} from "@breadboard-ai/types";
+import {
+  err,
+  graphUrlLike,
+  isLLMContent,
+  isLLMContentArray,
+  Template,
+  TemplatePart,
+} from "@breadboard-ai/utils";
 import { getModuleId, isModule } from "../utils.js";
-import { InspectableAssetImpl } from "./inspectable-asset.js";
 import { GraphNodeType } from "./graph-node-type.js";
+import { InspectableAssetImpl } from "./inspectable-asset.js";
 import { VirtualNode } from "./virtual-node.js";
 
 export { GraphQueries };

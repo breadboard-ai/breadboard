@@ -4,20 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InlineDataCapabilityPart, LLMContent } from "@breadboard-ai/types";
-import { FileSystemImpl } from "../../src/data/file-system/index.js";
-import {
+import type {
   FileSystemEntry,
   FileSystemPath,
   FileSystemQueryResult,
-  PersistentBackend,
-  Outcome,
   FileSystemReadResult,
-} from "../../src/data/types.js";
+  InlineDataCapabilityPart,
+  LLMContent,
+  Outcome,
+  PersistentBackend,
+} from "@breadboard-ai/types";
+import { err } from "@breadboard-ai/utils";
 import { deepStrictEqual, fail, ok } from "node:assert";
-import { err } from "../../src/data/file-system/utils.js";
+import { FileSystemImpl } from "../../src/data/file-system/index.js";
 
-export { good, bad, makeFs, makeCx, inline, makeDataCx, justPaths, last };
+export { bad, good, inline, justPaths, last, makeCx, makeDataCx, makeFs };
 
 function bad<T>(o: Outcome<T>) {
   ok(o && typeof o === "object" && "$error" in o, "outcome must be an error");

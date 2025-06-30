@@ -4,23 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LLMContent } from "@breadboard-ai/types";
-import {
+import type {
   FileSystemPath,
   FileSystemReadResult,
   FileSystemWriteResult,
-  Outcome,
-} from "../types.js";
+  LLMContent,
+} from "@breadboard-ai/types";
+import { err } from "@breadboard-ai/utils";
 
-export { ok, err, readFromStart, noStreams };
-
-function ok<T>(o: Outcome<Awaited<T>>): o is Awaited<T> {
-  return !(o && typeof o === "object" && "$error" in o);
-}
-
-function err($error: string) {
-  return { $error };
-}
+export { noStreams, readFromStart };
 
 function readFromStart(
   path: FileSystemPath,

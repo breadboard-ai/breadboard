@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ModuleIdentifier } from "@breadboard-ai/types";
-import { InspectableGraph } from "../../inspector/types.js";
-import {
+import type {
   EditOperation,
   EditOperationContext,
   EditSpec,
+  InspectableGraph,
+  ModuleIdentifier,
   SingleEditResult,
-} from "../types.js";
+} from "@breadboard-ai/types";
 
 export class ChangeModule implements EditOperation {
   async can(

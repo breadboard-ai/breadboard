@@ -7,8 +7,8 @@
 import { GraphDescriptor } from "@breadboard-ai/types";
 import { deepStrictEqual, ok } from "node:assert";
 import test, { describe } from "node:test";
-import { LocalRunner } from "../../../src/harness/local-runner.js";
-import { createLoader } from "../../../src/loader/index.js";
+import { LocalRunner } from "@breadboard-ai/runtime/legacy.js";
+import { createLoader } from "@breadboard-ai/loader";
 import { OutputResponse } from "../../../src/types.js";
 import { testKit } from "../test-kit.js";
 import {

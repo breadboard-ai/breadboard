@@ -5,7 +5,7 @@
  */
 
 import { DataPart, LLMContent } from "@breadboard-ai/types";
-import { chunkRepairTransform } from "@google-labs/breadboard/remote";
+import { chunkRepairTransform } from "@breadboard-ai/runtime/legacy.js";
 
 export { llmContentTransform };
 

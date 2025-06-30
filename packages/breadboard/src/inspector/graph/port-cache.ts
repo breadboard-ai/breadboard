@@ -4,12 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
-import {
+import type {
+  GraphIdentifier,
   InspectableNodePorts,
   InspectablePortList,
+  NodeIdentifier,
   NodePortChanges,
-} from "../types.js";
+} from "@breadboard-ai/types";
 
 export { PortCache };
 

@@ -4,15 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LLMContent } from "@breadboard-ai/types";
-import {
+import type {
   GraphDescriptor,
+  HarnessRunner,
   NodeDescriberResult,
   Outcome,
   TypedEventTarget,
   TypedEventTargetType,
-} from "@google-labs/breadboard";
-import { HarnessRunner } from "@google-labs/breadboard/harness";
+} from "@breadboard-ai/types";
+import { LLMContent } from "@breadboard-ai/types";
 
 /**
  * A way to run a board from anywhere in the UI at any time, without assuming

@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeIdentifier } from "@breadboard-ai/types";
-import {
+import type {
   EditOperation,
   EditOperationContext,
   EditSpec,
+  InspectableGraph,
+  NodeIdentifier,
   SingleEditResult,
-} from "../types.js";
-import { InspectableGraph } from "../../inspector/types.js";
+} from "@breadboard-ai/types";
 import { errorNoInspect } from "./error.js";
 
 export class ChangeConfiguration implements EditOperation {

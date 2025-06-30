@@ -7,7 +7,7 @@
 import test, { describe } from "node:test";
 
 import { deepStrictEqual, ok } from "node:assert";
-import { RemoteRunner } from "../../../src/harness/remote-runner.js";
+import { RemoteRunner } from "@breadboard-ai/runtime/legacy.js";
 import { GraphDescriptor, OutputResponse } from "../../../src/index.js";
 import {
   EventLogEntry,

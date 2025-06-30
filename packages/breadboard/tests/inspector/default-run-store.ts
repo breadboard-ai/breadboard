@@ -13,7 +13,7 @@ import {
   isLLMContentArray,
   toStoredDataPart,
 } from "../../src/index.js";
-import { HarnessRunResult } from "../../src/harness/types.js";
+import type { HarnessRunResult } from "@breadboard-ai/types";
 import { results as inlineDataRunResults } from "./inline-data-run.js";
 import { results as inlineDataArrayRunResults } from "./inline-data-run-array.js";
 

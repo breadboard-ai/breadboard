@@ -4,26 +4,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { InputValues } from "@breadboard-ai/types";
+import { SandboxedModule, Telemetry } from "@breadboard-ai/jsandbox";
+import {
+  CapabilitiesManagerImpl,
+  inflateData,
+} from "@breadboard-ai/runtime/legacy.js";
 import type {
+  InputValues,
+  Kit,
+  MutableGraph,
   NodeDescriberContext,
   NodeDescriberResult,
-  NodeHandlerObject,
-  Schema,
-  Kit,
   NodeHandlerContext,
-} from "./types.js";
-
-import {
-  type Sandbox,
-  SandboxedModule,
-  Telemetry,
-} from "@breadboard-ai/jsandbox";
-import { inflateData } from "./data/inflate-deflate.js";
-import { MutableGraph } from "./inspector/types.js";
-import { CapabilitiesManagerImpl } from "./sandbox/capabilities-manager.js";
-import { ok } from "./data/file-system/utils.js";
-import { Outcome } from "./data/types.js";
+  NodeHandlerObject,
+  Outcome,
+  Sandbox,
+  Schema,
+} from "@breadboard-ai/types";
+import { ok } from "@breadboard-ai/utils";
 
 export { addSandboxedRunModule };
 

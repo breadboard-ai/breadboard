@@ -5,11 +5,12 @@
  */
 
 import {
-  GraphIdentifier,
   Edge as EdgeDescriptor,
   GraphDescriptor,
+  GraphIdentifier,
+  InspectableEdge,
+  InspectableEdgeCache,
 } from "@breadboard-ai/types";
-import { InspectableEdge, InspectableEdgeCache } from "../types.js";
 import { Edge, unfixUpStarEdge } from "./edge.js";
 
 type EdgeFactory = (

@@ -8,7 +8,7 @@
 
 import test from "ava";
 
-import { createLoader } from "../../src/loader/index.js";
+import { createLoader } from "@breadboard-ai/loader";
 import { inspector } from "../helpers/_inspector.js";
 
 const BASE_URL = new URL("../../../tests/inspector/data/", import.meta.url);

@@ -4,14 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
+import type {
   GraphDescriptor,
   GraphIdentifier,
+  InspectableNode,
+  InspectableNodeCache,
   NodeDescriptor,
   NodeIdentifier,
   NodeTypeIdentifier,
 } from "@breadboard-ai/types";
-import { InspectableNode, InspectableNodeCache } from "../types.js";
 import { Node } from "./node.js";
 
 type NodeFactory = (

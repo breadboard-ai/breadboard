@@ -6,18 +6,16 @@
 
 import type {
   InputValues,
-  NodeConfiguration,
-  NodeDescriptor,
-  NodeMetadata,
-  OutputValues,
-} from "@breadboard-ai/types";
-import type { NodeDescriberResult } from "../../types.js";
-import type {
   InspectableEdge,
   InspectableNode,
   InspectableNodePorts,
   InspectableNodeType,
-} from "../types.js";
+  NodeConfiguration,
+  NodeDescriberResult,
+  NodeDescriptor,
+  NodeMetadata,
+  OutputValues,
+} from "@breadboard-ai/types";
 import { describerResultToPorts } from "./ports.js";
 import { describeInput, describeOutput } from "./schemas.js";
 

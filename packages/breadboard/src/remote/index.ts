@@ -1,19 +1,15 @@
 /**
  * @license
- * Copyright 2023 Google LLC
+ * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { HTTPServerTransport, HTTPClientTransport } from "./http.js";
+// A plumb-through stub to avoid API breakage.
+// TODO: Change the API to get directly from the right package.
+
 export {
-  PortDispatcher,
-  WorkerServerTransport,
-  WorkerClientTransport,
-} from "./worker.js";
-export { ProxyServer, ProxyClient } from "./proxy.js";
-export { InitServer, InitClient } from "./init.js";
-export { defineConfig, hasOrigin, type ProxyServerConfig } from "./config.js";
-export type * from "./types.js";
-export type * from "./http.js";
-export { handleRunGraphRequest } from "./run-graph-server.js";
-export { chunkRepairTransform } from "./chunk-repair.js";
+  ProxyServer,
+  HTTPServerTransport,
+  type ProxyServerConfig,
+  type ServerResponse,
+} from "@breadboard-ai/runtime/legacy.js";

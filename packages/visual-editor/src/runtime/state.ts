@@ -6,9 +6,8 @@
 
 import { State } from "@breadboard-ai/shared-ui";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
-
+import { BoardServer } from "@breadboard-ai/types";
 import {
-  BoardServer,
   EditableGraph,
   MainGraphIdentifier,
   MutableGraphStore,

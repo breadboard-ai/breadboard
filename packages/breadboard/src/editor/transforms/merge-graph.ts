@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphIdentifier } from "@breadboard-ai/types";
-import {
+import type {
   EditOperationContext,
   EditTransform,
   EditTransformResult,
-} from "../types.js";
-import { MoveToGraphTransform } from "./move-to-graph.js";
+  GraphIdentifier,
+} from "@breadboard-ai/types";
 import { GraphDescriptorHandle } from "../../inspector/graph/graph-descriptor-handle.js";
+import { MoveToGraphTransform } from "./move-to-graph.js";
 
 export { MergeGraphTransform };
 

@@ -7,7 +7,8 @@
 import { SecretManagerServiceClient } from "@google-cloud/secret-manager";
 import type { Kit } from "@google-labs/breadboard";
 import type { SecretInputs } from "../types.js";
-import { hasOrigin, type TunnelSpec } from "@google-labs/breadboard/remote";
+import type { TunnelSpec } from "@breadboard-ai/types";
+import { hasOrigin } from "@breadboard-ai/runtime/legacy.js";
 import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
 import { readFile } from "fs/promises";

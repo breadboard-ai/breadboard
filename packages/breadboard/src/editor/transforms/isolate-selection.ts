@@ -4,15 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
-import {
+import type {
   EditOperationContext,
   EditTransform,
   EditTransformResult,
+  GraphIdentifier,
+  NodeIdentifier,
   RemoveEdgeSpec,
-} from "../types.js";
-import { computeSelection } from "../selection.js";
+} from "@breadboard-ai/types";
 import { errorNoInspect } from "../operations/error.js";
+import { computeSelection } from "../selection.js";
 
 export { IsolateSelectionTransform };
 

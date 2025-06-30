@@ -4,13 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphIdentifier, ModuleIdentifier } from "@breadboard-ai/types";
-import {
+import type {
   EditOperation,
   EditOperationContext,
   EditSpec,
+  GraphIdentifier,
+  ModuleIdentifier,
   SingleEditResult,
-} from "../types.js";
+} from "@breadboard-ai/types";
 
 export class ToggleExport implements EditOperation {
   async do(

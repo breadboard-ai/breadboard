@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
+import type {
   EditOperation,
   EditOperationContext,
   EditSpec,
   SingleEditResult,
-} from "../types.js";
+} from "@breadboard-ai/types";
 
 export class ReplaceGraph implements EditOperation {
   async do(

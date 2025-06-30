@@ -5,36 +5,38 @@
  */
 
 import {
+  CapabilitiesManagerImpl,
+  invokeDescriber,
+  invokeGraph,
+  invokeMainDescriber,
+  ParameterManager,
+} from "@breadboard-ai/runtime/legacy.js";
+import type {
+  GraphDescriber,
   GraphIdentifier,
   InputValues,
+  InspectableNode,
   ModuleIdentifier,
+  MutableGraph,
   NodeTypeIdentifier,
+  Outcome,
 } from "@breadboard-ai/types";
-import { GraphDescriber, InspectableNode, MutableGraph } from "../types.js";
-import { GraphDescriptorHandle } from "./graph-descriptor-handle.js";
+import {
+  emptyDescriberResult,
+  err,
+  filterEmptyValues,
+  ok,
+} from "@breadboard-ai/utils";
+import { combineSchemas, removeProperty } from "../../schema.js";
 import {
   NodeDescriberContext,
   NodeDescriberResult,
   Schema,
 } from "../../types.js";
-import { describeInput, describeOutput } from "./schemas.js";
-import { combineSchemas, removeProperty } from "../../schema.js";
-import { invokeGraph } from "../../run/invoke-graph.js";
-import { ParameterManager } from "../../run/parameter-manager.js";
-import { Outcome } from "../../data/types.js";
-import { err, ok } from "../../data/file-system/utils.js";
+import { getModuleId, isModule } from "../utils.js";
 import { ExportsDescriber } from "./exports-describer.js";
-import {
-  emptyDescriberResult,
-  filterEmptyValues,
-  getModuleId,
-  isModule,
-} from "../utils.js";
-import {
-  invokeDescriber,
-  invokeMainDescriber,
-} from "../../sandbox/invoke-describer.js";
-import { CapabilitiesManagerImpl } from "../../sandbox/capabilities-manager.js";
+import { GraphDescriptorHandle } from "./graph-descriptor-handle.js";
+import { describeInput, describeOutput } from "./schemas.js";
 
 export { GraphDescriberManager };
 

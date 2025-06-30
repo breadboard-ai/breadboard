@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
+import type {
   EphemeralBlobHandle,
   EphemeralBlobStore,
   PersistentBlobHandle,
-} from "../types.js";
+} from "@breadboard-ai/types";
 
 export { createEphemeralBlobStore };
 

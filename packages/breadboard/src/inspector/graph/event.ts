@@ -4,8 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
-import { GraphStoreUpdateEvent, MainGraphIdentifier } from "../types.js";
+import {
+  GraphIdentifier,
+  GraphStoreUpdateEvent,
+  MainGraphIdentifier,
+  NodeIdentifier,
+} from "@breadboard-ai/types";
 
 export { UpdateEvent };
 

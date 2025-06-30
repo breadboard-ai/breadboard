@@ -6,27 +6,28 @@
 
 export type * from "./types.js";
 
+export {
+  callHandler,
+  clone,
+  isStreamCapability,
+  MachineResult,
+  patchReadableStream,
+  RunResult,
+  StreamCapability,
+  streamFromAsyncGen,
+  TraversalMachine,
+  type PatchedReadableStream,
+  type StreamCapabilityType,
+} from "@breadboard-ai/runtime/legacy.js";
 export { Board } from "./board.js";
-export { callHandler } from "./handler.js";
 export { asRuntimeKit } from "./kits/ctors.js";
 export { toMermaid } from "./mermaid.js";
 export { Node } from "./node.js";
-export { RunResult } from "./run.js";
-export { traversalResultFromStack } from "./run/lifecycle.js";
 export { combineSchemas, SchemaBuilder } from "./schema.js";
-export {
-  clone,
-  isStreamCapability,
-  patchReadableStream,
-  StreamCapability,
-  streamFromAsyncGen,
-  type PatchedReadableStream,
-  type StreamCapabilityType,
-} from "./stream.js";
-export { TraversalMachine } from "./traversal/machine.js";
-export { MachineResult } from "./traversal/result.js";
 
 // New Syntax:
+export type * from "@breadboard-ai/utils";
+export { asyncGen, Template } from "@breadboard-ai/utils";
 export { base } from "./new/grammar/base.js";
 export {
   board,
@@ -56,14 +57,10 @@ export type {
   OutputValues as NewOutputValues,
   Serializeable,
 } from "./new/runner/types.js";
-export { asyncGen } from "./utils/async-gen.js";
 export { hash } from "./utils/hash.js";
 export { relativePath } from "./utils/relative-path.js";
 export { SemanticVersioning, type SemVer } from "./utils/semver.js";
-export type * from "./utils/template.js";
-export { Template } from "./utils/template.js";
 export { Throttler } from "./utils/throttler.js";
-export type * from "./utils/typed-event-target.js";
 
 /**
  * Helpers for handling BreadboardCapability.
@@ -73,50 +70,41 @@ export {
   isGraphDescriptorCapability,
   isResolvedURLBoardCapability,
   isUnresolvedPathBoardCapability,
-} from "./capability.js";
+} from "@breadboard-ai/runtime/legacy.js";
 
 /**
  * The Inspector API.
  */
+export { PortStatus } from "@breadboard-ai/types";
+export * from "@breadboard-ai/types/inspect.js";
 export {
   createGraphStore,
   createRunObserver,
   inspect,
 } from "./inspector/index.js";
-export * from "./inspector/types.js";
-export { PortStatus } from "./inspector/types.js";
 
 /**
  * The Editor API.
  */
+export type * from "@breadboard-ai/types/edit.js";
 export { blank, blankLLMContent } from "./editor/index.js";
-export type * from "./editor/types.js";
 
 /**
  * The Loader API
  */
-export { createLoader, baseURLFromContext } from "./loader/index.js";
-export type * from "./loader/types.js";
+export type * from "@breadboard-ai/loader";
+export { baseURLFromContext, createLoader } from "@breadboard-ai/loader";
 
 export { formatGraphDescriptor } from "./formatter.js";
 
 /**
  * DataCapability helpers.
  */
+export type * from "@breadboard-ai/types/data.js";
 export {
   asBase64,
   asBlob,
-  assetsFromGraphDescriptor,
-  envFromGraphDescriptor,
   convertStoredPartsToAbsoluteUrls,
-  createDefaultDataStore,
-  createDefaultRunStore,
-  createEphemeralBlobStore,
-  createFileSystem,
-  writablePathFromString,
-  deflateData,
-  inflateData,
-  transformContents,
   isDataCapability,
   isFileDataCapabilityPart,
   isFunctionCallCapabilityPart,
@@ -131,24 +119,43 @@ export {
   isSerializedData,
   isStoredData,
   isTextCapabilityPart,
-  StubFileSystem,
   toInlineDataPart,
   toStoredDataPart,
-  transformBlobs,
   transformDataParts,
-  purgeStoredDataInMemoryValues,
-} from "./data/index.js";
-export type * from "./data/types.js";
+} from "@breadboard-ai/utils";
 
-export { err, ok } from "./data/file-system/utils.js";
+export {
+  assetsFromGraphDescriptor,
+  envFromGraphDescriptor,
+} from "./data/file-system/assets.js";
+
+export { createEphemeralBlobStore } from "./data/file-system/ephemeral-blob-store.js";
+export { writablePathFromString } from "./data/file-system/path.js";
+
+export { createFileSystem } from "./data/file-system/index.js";
+export { transformBlobs } from "./data/file-system/blob-transform.js";
+
+export { StubFileSystem } from "./data/file-system/stub-file-system.js";
+export {
+  createDefaultDataStore,
+  createDefaultRunStore,
+  deflateData,
+  inflateData,
+  purgeStoredDataInMemoryValues,
+  transformContents,
+} from "@breadboard-ai/runtime/legacy.js";
+
+export { err, ok } from "@breadboard-ai/utils";
 
 /**
  * Managed Run State API
  */
-export { createRunStateManager } from "./run/index.js";
-export { invokeGraph } from "./run/invoke-graph.js";
-export { runGraph } from "./run/run-graph.js";
-export type * from "./run/types.js";
+export {
+  createRunStateManager,
+  invokeGraph,
+  runGraph,
+} from "@breadboard-ai/runtime/legacy.js";
+export type * from "@breadboard-ai/types/run.js";
 
 /**
  * Conversion helpers
@@ -158,7 +165,7 @@ export { sequenceEntryToHarnessRunResult } from "./inspector/run/conversions.js"
 export {
   blankImperative,
   defaultModuleContent,
-} from "./run/run-imperative-graph.js";
+} from "@breadboard-ai/runtime/legacy.js";
 export { addSandboxedRunModule } from "./sandboxed-run-module.js";
 
 export { ConfigureSidewireTransform } from "./editor/transforms/configure-sidewire.js";
@@ -167,3 +174,5 @@ export { MergeGraphTransform } from "./editor/transforms/merge-graph.js";
 export { MoveToGraphTransform } from "./editor/transforms/move-to-graph.js";
 export { MoveToNewGraphTransform } from "./editor/transforms/move-to-new-graph.js";
 export { SidewireToNewGraphTransform } from "./editor/transforms/sidewire-to-new-graph.js";
+
+export type * from "@breadboard-ai/types/loader.js";

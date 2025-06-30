@@ -6,16 +6,14 @@
 
 import type {
   GraphDescriptor,
+  InlineDataCapabilityPart,
   InputValues,
   Kit,
+  LLMContent,
   Outcome,
   ReanimationState,
-} from "@google-labs/breadboard";
-import type { RunDiagnosticsLevel } from "@google-labs/breadboard/harness";
-import type { RemoteMessageWriter } from "@google-labs/breadboard/remote";
-import type {
-  InlineDataCapabilityPart,
-  LLMContent,
+  RemoteMessageWriter,
+  RunDiagnosticsLevel,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
 

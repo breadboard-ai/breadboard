@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor } from "@breadboard-ai/types";
-import {
+import type {
+  GraphDescriptor,
+  HarnessRunResult,
   InspectableRunNodeEvent,
   InspectableRunSequenceEntry,
-} from "../types.js";
-import { HarnessRunResult } from "../../harness/types.js";
+} from "@breadboard-ai/types";
 
 export { eventsAsHarnessRunResults, sequenceEntryToHarnessRunResult };
 

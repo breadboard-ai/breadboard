@@ -9,6 +9,7 @@ export type * from "./edit.js";
 export type * from "./graph-descriptor.js";
 export type * from "./harness.js";
 export type * from "./inspect.js";
+export { InspectableEdgeType, PortStatus } from "./inspect.js";
 export type * from "./llm-content.js";
 export type * from "./loader.js";
 export type * from "./node-handler.js";

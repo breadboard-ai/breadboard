@@ -4,9 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor, JsonSerializable } from "@breadboard-ai/types";
-import { FileSystemEntry } from "../types.js";
-import { isLLMContentArray } from "../common.js";
+import type {
+  FileSystemEntry,
+  GraphDescriptor,
+  JsonSerializable,
+} from "@breadboard-ai/types";
+import { isLLMContentArray } from "@breadboard-ai/utils";
 
 export { assetsFromGraphDescriptor, envFromGraphDescriptor };
 

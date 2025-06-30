@@ -4,12 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor, GraphIdentifier } from "@breadboard-ai/types";
 import {
+  GraphDescriptor,
+  GraphIdentifier,
   InspectableGraph,
   InspectableGraphCache,
   InspectableSubgraphs,
-} from "../types.js";
+} from "@breadboard-ai/types";
 
 export { GraphCache };
 

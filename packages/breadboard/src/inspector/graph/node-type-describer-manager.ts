@@ -4,22 +4,26 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor, NodeTypeIdentifier } from "@breadboard-ai/types";
-import { envFromGraphDescriptor } from "../../data/file-system/assets.js";
-import { assetsFromGraphDescriptor } from "../../data/index.js";
-import { getHandler } from "../../handler.js";
-import { createLoader, SENTINEL_BASE_URL } from "../../loader/index.js";
-import {
+import { createLoader, SENTINEL_BASE_URL } from "@breadboard-ai/loader";
+import { getHandler } from "@breadboard-ai/runtime/legacy.js";
+import type {
+  DescribeResultTypeCacheArgs,
+  GraphDescriptor,
+  MutableGraphStore,
   NodeDescriberContext,
   NodeDescriberFunction,
   NodeDescriberResult,
   NodeHandler,
-} from "../../types.js";
+  NodeTypeIdentifier,
+} from "@breadboard-ai/types";
+import {
+  assetsFromGraphDescriptor,
+  envFromGraphDescriptor,
+} from "../../data/file-system/assets.js";
 import { contextFromMutableGraphStore } from "../graph-store.js";
-import { DescribeResultTypeCacheArgs, MutableGraphStore } from "../types.js";
 import { UpdateEvent } from "./event.js";
-import { describeInput, describeOutput } from "./schemas.js";
 import { emptyResult, NodeDescriberManager } from "./node-describer-manager.js";
+import { describeInput, describeOutput } from "./schemas.js";
 
 export { NodeTypeDescriberManager };
 

@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphTag } from "@breadboard-ai/types";
-import { GraphDescriptor, Schema } from "../types.js";
+import type { GraphDescriptor, GraphTag, Schema } from "@breadboard-ai/types";
 
 const llmContentConfig = (type: string) => ({
   schema: {

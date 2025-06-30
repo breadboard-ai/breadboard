@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { toInlineDataPart, toStoredDataPart } from "../common.js";
-import {
+import type {
   FileSystemBlobStore,
   FileSystemBlobTransform,
   FileSystemPath,
   Outcome,
-} from "../types.js";
+} from "@breadboard-ai/types";
+import { toInlineDataPart, toStoredDataPart } from "@breadboard-ai/utils";
 
 export { InMemoryBlobStore };
 

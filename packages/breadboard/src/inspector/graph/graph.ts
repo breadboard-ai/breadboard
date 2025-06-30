@@ -4,24 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
+import type {
   AssetPath,
+  Edge,
+  GraphDescriptor,
   GraphIdentifier,
   GraphMetadata,
   ImportIdentifier,
   InputValues,
-  ModuleIdentifier,
-} from "@breadboard-ai/types";
-import { Outcome } from "../../data/types.js";
-import {
-  Edge,
-  GraphDescriptor,
-  NodeDescriberContext,
-  NodeDescriberResult,
-  NodeIdentifier,
-  NodeTypeIdentifier,
-} from "../../types.js";
-import {
   InspectableAsset,
   InspectableAssetEdge,
   InspectableEdge,
@@ -30,11 +20,17 @@ import {
   InspectableNode,
   InspectableNodeType,
   InspectableSubgraphs,
+  ModuleIdentifier,
   MutableGraph,
-} from "../types.js";
+  NodeDescriberContext,
+  NodeDescriberResult,
+  NodeIdentifier,
+  NodeTypeIdentifier,
+  Outcome,
+} from "@breadboard-ai/types";
+import { ok } from "@breadboard-ai/utils";
 import { GraphDescriberManager } from "./graph-describer-manager.js";
 import { GraphQueries } from "./graph-queries.js";
-import { ok } from "../../data/file-system/utils.js";
 
 export { Graph };
 

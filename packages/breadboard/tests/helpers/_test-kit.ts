@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { StreamCapability } from "@breadboard-ai/runtime/legacy.js";
 import { KitBuilder } from "../../src/kits/index.js";
-import { StreamCapability } from "../../src/stream.js";
-import {
+import type {
   BreadboardCapability,
   GraphDescriptor,
   GraphDescriptorBoardCapability,
@@ -239,15 +239,15 @@ export const MirrorUniverseKit = new KitBuilder({
 /**
  * Board grammar versions of the above, with types.
  */
+import { getGraphDescriptor } from "@breadboard-ai/runtime/legacy.js";
 import {
   addKit,
-  NewNodeValue,
+  invokeGraph,
   NewInputValues,
+  NewNodeValue,
   NewOutputValues,
   NewNodeFactory as NodeFactory,
-  invokeGraph,
 } from "../../src/index.js";
-import { getGraphDescriptor } from "../../src/capability.js";
 
 export const testKit = addKit(TestKit) as unknown as {
   noop: NodeFactory<NewInputValues, NewOutputValues>;
