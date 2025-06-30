@@ -865,6 +865,8 @@ export class Edit extends EventTarget {
     if (tab.moduleId === moduleId) {
       tab.moduleId = null;
     }
+
+    return result;
   }
 
   changeModuleLanguage(
@@ -930,7 +932,7 @@ export class Edit extends EventTarget {
     this.editModule(tab, moduleId, newModule.code, newModule.metadata);
   }
 
-  editModule(
+  async editModule(
     tab: Tab | null,
     moduleId: ModuleIdentifier,
     moduleCode: ModuleCode,
@@ -946,7 +948,7 @@ export class Edit extends EventTarget {
       return null;
     }
 
-    editableGraph.edit(
+    return editableGraph.edit(
       [
         {
           type: "changemodule",
@@ -1457,7 +1459,7 @@ export class Edit extends EventTarget {
     );
   }
 
-  updateNodeMetadata(
+  async updateNodeMetadata(
     tab: Tab | null,
     id: NodeIdentifier,
     metadata: NodeDescriptor["metadata"],
@@ -1483,7 +1485,7 @@ export class Edit extends EventTarget {
       ...metadata,
     };
 
-    editableGraph.edit(
+    return editableGraph.edit(
       [{ type: "changemetadata", id, metadata: newMetadata, graphId }],
       `Change metadata for "${id}"`
     );

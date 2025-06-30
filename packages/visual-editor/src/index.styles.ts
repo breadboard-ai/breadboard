@@ -530,7 +530,8 @@ export const styles = css`
 
   #user-overflow,
   #board-overflow,
-  #board-items-overflow {
+  #board-items-overflow,
+  bb-new-workspace-item-overlay {
     position: fixed;
     right: auto;
     bottom: auto;

@@ -349,7 +349,6 @@ export class ProjectListing extends LitElement {
             align-items: center;
 
             & #location-selector {
-              margin: 0 0 var(--bb-grid-size-6) 0;
               padding: 0;
               border: none;
             }
@@ -875,23 +874,22 @@ export class ProjectListing extends LitElement {
                     `,
                   ];
 
-                  const buttons =
-                    myItems.length && !FORCE_NO_BOARDS
-                      ? html`
-                          <div id="buttons">
-                            <div id="create-new-button-container">
-                              <button
-                                id="create-new-button-inline"
-                                class="md-title-small sans-flex w-400 round"
-                                @click=${this.#clickNewProjectButton}
-                              >
-                                <span class="g-icon">add</span>
-                                ${Strings.from("COMMAND_NEW_PROJECT")}
-                              </button>
-                            </div>
-                          </div>
-                        `
-                      : nothing;
+                  const buttons = html`
+                    <div id="buttons">
+                      ${myItems.length && !FORCE_NO_BOARDS
+                        ? html`<div id="create-new-button-container">
+                            <button
+                              id="create-new-button-inline"
+                              class="md-title-small sans-flex w-400 round"
+                              @click=${this.#clickNewProjectButton}
+                            >
+                              <span class="g-icon">add</span>
+                              ${Strings.from("COMMAND_NEW_PROJECT")}
+                            </button>
+                          </div>`
+                        : nothing}
+                    </div>
+                  `;
 
                   return permission === "granted"
                     ? [

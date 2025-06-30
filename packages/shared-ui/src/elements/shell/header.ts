@@ -39,6 +39,9 @@ export class VEHeader extends LitElement {
   accessor isMine = false;
 
   @property()
+  accessor showExperimentalComponents = false;
+
+  @property()
   accessor saveStatus: BOARD_SAVE_STATUS | null = null;
 
   @state()
@@ -322,6 +325,14 @@ export class VEHeader extends LitElement {
           icon: "history",
         }
       );
+    }
+
+    if (this.hasActiveTab && this.showExperimentalComponents) {
+      options.push({
+        id: "jump-to-item",
+        title: "Jump to Item",
+        icon: "jump_to_element",
+      });
     }
 
     options.push({
