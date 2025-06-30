@@ -327,7 +327,7 @@ export class VEHeader extends LitElement {
       );
     }
 
-    if (this.showExperimentalComponents) {
+    if (this.hasActiveTab && this.showExperimentalComponents) {
       options.push({
         id: "jump-to-item",
         title: "Jump to Item",

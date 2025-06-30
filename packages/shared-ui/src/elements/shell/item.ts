@@ -171,7 +171,7 @@ export class ItemModal extends LitElement {
         <button
           id="create-new"
           @click=${() => {
-            this.dispatchEvent(new OverflowMenuActionEvent("create-new"));
+            this.dispatchEvent(new OverflowMenuActionEvent("new-item"));
           }}
         >
           <span class="g-icon filled round">add_circle</span>
