@@ -5,7 +5,7 @@
  */
 
 import { describe, it } from "node:test";
-import { Path } from "../../../src/data/file-system/path.js";
+import { Path } from "../../../src/file-system/path.js";
 import { ok } from "assert";
 import type { FileSystemPath, Outcome } from "@breadboard-ai/types";
 

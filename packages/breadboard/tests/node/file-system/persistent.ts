@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 /**
  * @license
  * Copyright 2024 Google LLC
@@ -5,7 +6,7 @@
  */
 
 import { afterEach, beforeEach, describe, it } from "node:test";
-import { FileSystemImpl } from "../../../src/data/file-system/index.js";
+import { FileSystemImpl } from "../../../src/file-system/index.js";
 import { deepStrictEqual } from "node:assert";
 
 import { bad, good, justPaths, makeCx, makeFs } from "../test-file-system.js";

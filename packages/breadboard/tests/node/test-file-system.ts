@@ -16,7 +16,7 @@ import type {
 } from "@breadboard-ai/types";
 import { err } from "@breadboard-ai/utils";
 import { deepStrictEqual, fail, ok } from "node:assert";
-import { FileSystemImpl } from "../../src/data/file-system/index.js";
+import { FileSystemImpl } from "../../src/file-system/index.js";
 
 export { bad, good, inline, justPaths, last, makeCx, makeDataCx, makeFs };
 

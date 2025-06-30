@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 /**
  * @license
  * Copyright 2024 Google LLC
@@ -6,7 +7,7 @@
 
 import { describe, it } from "node:test";
 import { good, makeDataCx } from "../test-file-system.js";
-import { transformBlobs } from "../../../src/data/file-system/blob-transform.js";
+import { transformBlobs } from "../../../src/file-system/blob-transform.js";
 import { deepStrictEqual } from "node:assert";
 import { InlineDataCapabilityPart } from "@breadboard-ai/types";
 

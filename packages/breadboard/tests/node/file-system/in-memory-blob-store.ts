@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 /**
  * @license
  * Copyright 2024 Google LLC
@@ -5,7 +6,7 @@
  */
 
 import { describe, it } from "node:test";
-import { InMemoryBlobStore } from "../../../src/data/file-system/in-memory-blob-store.js";
+import { InMemoryBlobStore } from "../../../src/file-system/in-memory-blob-store.js";
 import { good, inline } from "../test-file-system.js";
 import { deepStrictEqual, ok } from "node:assert";
 
