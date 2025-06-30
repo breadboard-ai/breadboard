@@ -43,7 +43,7 @@ import {
   WorkspaceSelectionStateWithChangeId,
   WorkspaceVisualChangeId,
 } from "../../types/types.js";
-import { styles as uiControllerStyles } from "./ui-controller.styles.js";
+import { styles as canvasControllerStyles } from "./canvas-controller.styles.js";
 import { ModuleEditor } from "../module-editor/module-editor.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import {
@@ -85,10 +85,10 @@ import { GraphTheme } from "@breadboard-ai/types";
 import { createThemeStyles } from "@breadboard-ai/theme";
 import { styleMap } from "lit/directives/style-map.js";
 
-const SIDE_ITEM_KEY = "bb-ui-controller-side-nav-item";
+const SIDE_ITEM_KEY = "bb-canvas-controller-side-nav-item";
 
-@customElement("bb-ui-controller")
-export class UI extends LitElement {
+@customElement("bb-canvas-controller")
+export class CanvasController extends LitElement {
   @property()
   accessor graph: GraphDescriptor | null = null;
 
@@ -245,7 +245,7 @@ export class UI extends LitElement {
   #sharePanelRef: Ref<SharePanel> = createRef();
   #googleDriveAssetAccessPickerRef: Ref<GoogleDrivePicker> = createRef();
 
-  static styles = [icons, effects, uiControllerStyles];
+  static styles = [icons, effects, canvasControllerStyles];
 
   connectedCallback(): void {
     super.connectedCallback();

@@ -11,7 +11,6 @@ const Strings = BreadboardUI.Strings.forSection("Global");
 
 import type {
   HarnessProxyConfig,
-  HarnessRunner,
   RunConfig,
   RunErrorEvent,
   RunSecretEvent,
@@ -77,8 +76,10 @@ import {
   DeleteCommand,
   GroupCommand,
   PasteCommand,
+  RedoCommand,
   SelectAllCommand,
   ToggleExperimentalComponentsCommand,
+  UndoCommand,
   UngroupCommand,
 } from "./commands/commands";
 import {
@@ -194,23 +195,6 @@ export class Main extends LitElement {
   accessor #showNewWorkspaceItemOverlay = false;
 
   @state()
-  accessor boardEditOverlayInfo: {
-    tabId: TabId;
-    title: string;
-    version: string;
-    description: string;
-    published: boolean | null;
-    private: boolean;
-    exported: boolean;
-    isTool: boolean | null;
-    isComponent: boolean | null;
-    subGraphId: string | null;
-    moduleId: string | null;
-    x: number | null;
-    y: number | null;
-  } | null = null;
-
-  @state()
   accessor #showBoardEditModal = false;
 
   @state()
@@ -253,9 +237,13 @@ export class Main extends LitElement {
   @state()
   accessor #projectFilter: string | null = null;
 
-  #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
-  #tooltipRef: Ref<BreadboardUI.Elements.Tooltip> = createRef();
-  #snackbarRef: Ref<BreadboardUI.Elements.Snackbar> = createRef();
+  readonly #googleDriveAssetShareDialogRef: Ref<GoogleDriveAssetShareDialog> =
+    createRef<GoogleDriveAssetShareDialog>();
+  readonly #canvasControllerRef: Ref<BreadboardUI.Elements.CanvasController> =
+    createRef();
+  readonly #tooltipRef: Ref<BreadboardUI.Elements.Tooltip> = createRef();
+  readonly #snackbarRef: Ref<BreadboardUI.Elements.Snackbar> = createRef();
+
   #boardId = 0;
   #tabSaveId = new Map<
     TabId,
@@ -267,14 +255,10 @@ export class Main extends LitElement {
   #boardServers: BoardServer[];
   #settings: SettingsStore | null;
   #secretsHelper: SecretsHelper | null = null;
-  /**
-   * Optional proxy configuration for the board.
-   * This is used to provide additional proxied nodes.
-   */
   #proxy: HarnessProxyConfig[];
   #onShowTooltipBound = this.#onShowTooltip.bind(this);
   #hideTooltipBound = this.#hideTooltip.bind(this);
-  #onKeyDownBound = this.#onKeyDown.bind(this);
+  #onKeyboardShortCut = this.#onKeyboardShortcut.bind(this);
   #version = "dev";
   #gitCommitHash = "dev";
   #recentBoardStore = RecentBoardStore.instance();
@@ -287,6 +271,9 @@ export class Main extends LitElement {
   #lastVisualChangeId: WorkspaceVisualChangeId | null = null;
   #lastPointerPosition = { x: 0, y: 0 };
   #tosHtml?: string;
+  #runtime!: Runtime.RuntimeInstance;
+  #embedHandler?: EmbedHandler;
+  #initialize: Promise<void>;
 
   /**
    * Monotonically increases whenever the graph topology of a graph in the
@@ -318,14 +305,16 @@ export class Main extends LitElement {
   @state()
   accessor graphStoreUpdateId: number = 0;
 
-  #runtime!: Runtime.RuntimeInstance;
-  #embedHandler?: EmbedHandler;
-
   static styles = mainStyles;
 
-  #initialize: Promise<void>;
   constructor(config: MainArguments) {
     super();
+
+    this.#version = config.version || "dev";
+    this.#gitCommitHash = config.gitCommitHash || "unknown";
+    this.#boardServers = [];
+    this.#settings = config.settings ?? null;
+    this.#proxy = config.proxy || [];
 
     this.#showToS =
       !!config.enableTos &&
@@ -379,38 +368,6 @@ export class Main extends LitElement {
     });
 
     const admin = new Admin(config, ENVIRONMENT, this.googleDriveClient);
-
-    this.#version = config.version || "dev";
-    this.#gitCommitHash = config.gitCommitHash || "unknown";
-    this.#boardServers = [];
-    this.#settings = config.settings ?? null;
-    this.#proxy = config.proxy || [];
-    if (this.#settings) {
-      this.settingsHelper = new SettingsHelperImpl(this.#settings);
-      admin.settingsHelper = this.settingsHelper;
-      this.tokenVendor = createTokenVendor(
-        {
-          get: (conectionId: string) => {
-            return this.settingsHelper.get(
-              BreadboardUI.Types.SETTINGS_TYPE.CONNECTIONS,
-              conectionId
-            )?.value as string;
-          },
-          set: async (connectionId: string, grant: string) => {
-            await this.settingsHelper.set(
-              BreadboardUI.Types.SETTINGS_TYPE.CONNECTIONS,
-              connectionId,
-              {
-                name: connectionId,
-                value: grant,
-              }
-            );
-          },
-        },
-        ENVIRONMENT
-      );
-    }
-
     const currentUrl = new URL(window.location.href);
 
     // Initialization order:
@@ -423,6 +380,32 @@ export class Main extends LitElement {
     this.#initialize = this.#recentBoardStore
       .restore()
       .then((boards) => {
+        if (this.#settings) {
+          this.settingsHelper = new SettingsHelperImpl(this.#settings);
+          admin.settingsHelper = this.settingsHelper;
+          this.tokenVendor = createTokenVendor(
+            {
+              get: (conectionId: string) => {
+                return this.settingsHelper.get(
+                  BreadboardUI.Types.SETTINGS_TYPE.CONNECTIONS,
+                  conectionId
+                )?.value as string;
+              },
+              set: async (connectionId: string, grant: string) => {
+                await this.settingsHelper.set(
+                  BreadboardUI.Types.SETTINGS_TYPE.CONNECTIONS,
+                  connectionId,
+                  {
+                    name: connectionId,
+                    value: grant,
+                  }
+                );
+              },
+            },
+            ENVIRONMENT
+          );
+        }
+
         this.#recentBoards = boards;
         return this.#settings?.restore();
       })
@@ -558,7 +541,6 @@ export class Main extends LitElement {
             this.#attemptBoardSave(
               this.tab,
               Strings.from("STATUS_SAVING_PROJECT"),
-              false,
               false,
               BOARD_AUTO_SAVE_TIMEOUT
             );
@@ -786,10 +768,58 @@ export class Main extends LitElement {
               }
 
               case "secret": {
-                this.#handleSecretEvent(
-                  evt.runEvt as RunSecretEvent,
-                  evt.harnessRunner
-                );
+                const event = evt.runEvt as RunSecretEvent;
+                const runner = evt.harnessRunner;
+                const { keys } = event.data;
+                const signInKey = `connection:${SIGN_IN_CONNECTION_ID}`;
+
+                // Check and see if we're being asked for a sign-in key
+                if (keys.at(0) === signInKey) {
+                  // Yay, we can handle this ourselves.
+                  const signInAdapter = new SigninAdapter(
+                    this.tokenVendor,
+                    this.environment,
+                    this.settingsHelper
+                  );
+                  if (signInAdapter.state === "valid") {
+                    runner?.run({ [signInKey]: signInAdapter.accessToken() });
+                  } else {
+                    signInAdapter.refresh().then((token) => {
+                      if (!runner?.running()) {
+                        runner?.run({
+                          [signInKey]: token?.grant?.access_token,
+                        });
+                      }
+                    });
+                  }
+                  return;
+                }
+
+                if (this.#secretsHelper) {
+                  this.#secretsHelper.setKeys(keys);
+                  if (this.#secretsHelper.hasAllSecrets()) {
+                    runner?.run(this.#secretsHelper.getSecrets());
+                  } else {
+                    const result = SecretsHelper.allKeysAreKnown(
+                      this.#settings!,
+                      keys
+                    );
+                    if (result) {
+                      runner?.run(result);
+                    }
+                  }
+                } else {
+                  const result = SecretsHelper.allKeysAreKnown(
+                    this.#settings!,
+                    keys
+                  );
+                  if (result) {
+                    runner?.run(result);
+                  } else {
+                    this.#secretsHelper = new SecretsHelper(this.#settings!);
+                    this.#secretsHelper.setKeys(keys);
+                  }
+                }
               }
             }
           }
@@ -908,7 +938,7 @@ export class Main extends LitElement {
     window.addEventListener("bbshowtooltip", this.#onShowTooltipBound);
     window.addEventListener("bbhidetooltip", this.#hideTooltipBound);
     window.addEventListener("pointerdown", this.#hideTooltipBound);
-    window.addEventListener("keydown", this.#onKeyDownBound);
+    window.addEventListener("keydown", this.#onKeyboardShortCut);
 
     if (this.#embedHandler) {
       this.embedState = embedState();
@@ -934,6 +964,15 @@ export class Main extends LitElement {
       }
     );
     this.#embedHandler?.sendToEmbedder({ type: "handshake_ready" });
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+
+    window.removeEventListener("bbshowtooltip", this.#onShowTooltipBound);
+    window.removeEventListener("bbhidetooltip", this.#hideTooltipBound);
+    window.removeEventListener("pointerdown", this.#hideTooltipBound);
+    window.removeEventListener("keydown", this.#onKeyboardShortCut);
   }
 
   async #generateGraph(intent: string): Promise<GraphDescriptor> {
@@ -968,60 +1007,6 @@ export class Main extends LitElement {
     });
   }
 
-  disconnectedCallback(): void {
-    super.disconnectedCallback();
-
-    window.removeEventListener("bbshowtooltip", this.#onShowTooltipBound);
-    window.removeEventListener("bbhidetooltip", this.#hideTooltipBound);
-    window.removeEventListener("pointerdown", this.#hideTooltipBound);
-    window.removeEventListener("keydown", this.#onKeyDownBound);
-  }
-
-  #handleSecretEvent(event: RunSecretEvent, runner?: HarnessRunner) {
-    const { keys } = event.data;
-    const signInKey = `connection:${SIGN_IN_CONNECTION_ID}`;
-
-    // Check and see if we're being asked for a sign-in key
-    if (keys.at(0) === signInKey) {
-      // Yay, we can handle this ourselves.
-      const signInAdapter = new SigninAdapter(
-        this.tokenVendor,
-        this.environment,
-        this.settingsHelper
-      );
-      if (signInAdapter.state === "valid") {
-        runner?.run({ [signInKey]: signInAdapter.accessToken() });
-      } else {
-        signInAdapter.refresh().then((token) => {
-          if (!runner?.running()) {
-            runner?.run({ [signInKey]: token?.grant?.access_token });
-          }
-        });
-      }
-      return;
-    }
-
-    if (this.#secretsHelper) {
-      this.#secretsHelper.setKeys(keys);
-      if (this.#secretsHelper.hasAllSecrets()) {
-        runner?.run(this.#secretsHelper.getSecrets());
-      } else {
-        const result = SecretsHelper.allKeysAreKnown(this.#settings!, keys);
-        if (result) {
-          runner?.run(result);
-        }
-      }
-    } else {
-      const result = SecretsHelper.allKeysAreKnown(this.#settings!, keys);
-      if (result) {
-        runner?.run(result);
-      } else {
-        this.#secretsHelper = new SecretsHelper(this.#settings!);
-        this.#secretsHelper.setKeys(keys);
-      }
-    }
-  }
-
   #maybeShowWelcomePanel() {
     this.#showWelcomePanel = this.tab === null;
 
@@ -1033,7 +1018,6 @@ export class Main extends LitElement {
   }
 
   #hideAllOverlays() {
-    this.boardEditOverlayInfo = null;
     this.#showBoardEditModal = false;
     this.#showItemModal = false;
     this.#showSettingsOverlay = false;
@@ -1097,11 +1081,29 @@ export class Main extends LitElement {
       ToggleExperimentalComponentsCommand.keys,
       ToggleExperimentalComponentsCommand,
     ],
+    [UndoCommand.keys, UndoCommand],
+    [RedoCommand.keys, RedoCommand],
   ]);
 
-  #handlingKey = false;
-  async #onKeyDown(evt: KeyboardEvent) {
-    if (this.#handlingKey) {
+  #handlingShortcut = false;
+  async #onKeyboardShortcut(evt: KeyboardEvent) {
+    if (this.#handlingShortcut) {
+      return;
+    }
+
+    const isCtrlCommand = BreadboardUI.Utils.isCtrlCommand(evt);
+
+    // Special-case the Save because it's not entirely handled by the runtime
+    // yet. When it is we should be able to just call it for the save action and
+    // remove the attemptBoardSave call.
+    if (evt.key === "s" && isCtrlCommand) {
+      evt.preventDefault();
+      this.#handlingShortcut = true;
+      await this.#attemptBoardSave(
+        this.tab,
+        Strings.from("STATUS_PROJECT_SAVED")
+      );
+      this.#handlingShortcut = false;
       return;
     }
 
@@ -1113,15 +1115,10 @@ export class Main extends LitElement {
       return;
     }
 
-    const isMac = navigator.platform.indexOf("Mac") === 0;
-    const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
-
     let key = evt.key;
-
     if (key === "Meta" || key === "Ctrl" || key === "Shift") {
       return;
     }
-
     if (evt.shiftKey) {
       key = `Shift+${key}`;
     }
@@ -1146,7 +1143,7 @@ export class Main extends LitElement {
         evt.preventDefault();
         evt.stopImmediatePropagation();
 
-        this.#handlingKey = true;
+        this.#handlingShortcut = true;
 
         // Toast.
         let toastId;
@@ -1197,32 +1194,8 @@ export class Main extends LitElement {
           }
         }
 
-        this.#handlingKey = false;
+        this.#handlingShortcut = false;
       }
-    }
-
-    if (evt.key === "s" && isCtrlCommand) {
-      evt.preventDefault();
-      this.#attemptBoardSave(this.tab, Strings.from("STATUS_PROJECT_SAVED"));
-      return;
-    }
-
-    if (evt.key === "z" && isCtrlCommand) {
-      const isFocusedOnRenderer = evt
-        .composedPath()
-        .find((target) => target instanceof BreadboardUI.Elements.Renderer);
-
-      if (!isFocusedOnRenderer) {
-        return;
-      }
-
-      if (evt.shiftKey) {
-        this.#runtime.edit.redo(this.tab);
-        return;
-      }
-
-      this.#runtime.edit.undo(this.tab);
-      return;
     }
   }
 
@@ -1311,7 +1284,6 @@ export class Main extends LitElement {
     tabToSave = this.tab,
     message = Strings.from("STATUS_PROJECT_SAVED"),
     ackUser = true,
-    _showSaveAsIfNeeded = true,
     timeout = 0
   ) {
     if (!tabToSave) {
@@ -1983,39 +1955,27 @@ export class Main extends LitElement {
     return this.#runtime.edit.toggleExport(this.tab, id, type);
   }
 
-  render() {
-    const signInAdapter = new BreadboardUI.Utils.SigninAdapter(
-      this.tokenVendor,
-      this.environment,
-      this.settingsHelper
-    );
-
-    const toasts = html`${map(
-      this.toasts,
-      ([toastId, { message, type, persistent }], idx) => {
-        const offset = this.toasts.size - idx - 1;
-        return html`<bb-toast
-          .toastId=${toastId}
-          .offset=${offset}
-          .message=${message}
-          .type=${type}
-          .timeout=${persistent ? 0 : nothing}
-          @bbtoastremoved=${(evt: BreadboardUI.Events.ToastRemovedEvent) => {
-            this.toasts.delete(evt.toastId);
-          }}
-        ></bb-toast>`;
-      }
-    )}`;
-
-    const showingOverlay =
+  #isShowingOverlay(): boolean {
+    return (
       this.#showToS ||
-      this.boardEditOverlayInfo !== null ||
       this.#showBoardEditModal ||
       this.#showItemModal ||
       this.#showSettingsOverlay ||
       this.#showBoardServerAddOverlay ||
-      this.#showNewWorkspaceItemOverlay;
+      this.#showNewWorkspaceItemOverlay
+    );
+  }
 
+  render() {
+    const signinAdapter =
+      this.signinAdapter ??
+      new BreadboardUI.Utils.SigninAdapter(
+        this.tokenVendor,
+        this.environment,
+        this.settingsHelper
+      );
+
+    const showingOverlay = this.#isShowingOverlay();
     const uiController = this.#initialize
       .then(() => {
         const observers = this.#runtime?.run.getObservers(this.tab?.id ?? null);
@@ -2026,6 +1986,12 @@ export class Main extends LitElement {
         return [];
       })
       .then((runs: InspectableRun[]) => {
+        const showExperimentalComponents =
+          this.#settings?.getItem(
+            BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
+            "Show Experimental Components"
+          )?.value ?? false;
+
         const observers = this.#runtime?.run.getObservers(this.tab?.id ?? null);
         const topGraphResult =
           observers?.topGraphObserver?.current() ??
@@ -2037,54 +2003,11 @@ export class Main extends LitElement {
         const inputsFromLastRun = runs[1]?.inputs() ?? null;
         const tabURLs = this.#runtime.board.getTabURLs();
 
-        const feedbackLink = this.clientDeploymentConfiguration.FEEDBACK_LINK;
-
         let tabStatus = BreadboardUI.Types.STATUS.STOPPED;
         if (this.tab) {
           tabStatus =
             this.#tabBoardStatus.get(this.tab.id) ??
             BreadboardUI.Types.STATUS.STOPPED;
-        }
-
-        let tabLoadStatus = BreadboardUI.Types.BOARD_LOAD_STATUS.LOADING;
-        if (this.tab) {
-          tabLoadStatus =
-            this.#tabLoadStatus.get(this.tab.id) ??
-            BreadboardUI.Types.BOARD_LOAD_STATUS.LOADING;
-        }
-
-        let settingsOverlay: HTMLTemplateResult | symbol = nothing;
-        if (this.#showSettingsOverlay) {
-          settingsOverlay = html`<bb-settings-edit-overlay
-            class="settings"
-            .settings=${this.#settings?.values || null}
-            @bbsettingsupdate=${async (
-              evt: BreadboardUI.Events.SettingsUpdateEvent
-            ) => {
-              if (!this.#settings) {
-                return;
-              }
-
-              try {
-                await this.#settings.save(evt.settings);
-                this.toast(
-                  Strings.from("STATUS_SAVED_SETTINGS"),
-                  BreadboardUI.Events.ToastType.INFORMATION
-                );
-              } catch (err) {
-                console.warn(err);
-                this.toast(
-                  Strings.from("ERROR_SAVE_SETTINGS"),
-                  BreadboardUI.Events.ToastType.ERROR
-                );
-              }
-
-              this.requestUpdate();
-            }}
-            @bboverlaydismissed=${() => {
-              this.#showSettingsOverlay = false;
-            }}
-          ></bb-settings-edit-overlay>`;
         }
 
         let showNewWorkspaceItemOverlay: HTMLTemplateResult | symbol = nothing;
@@ -2138,161 +2061,11 @@ export class Main extends LitElement {
           ></bb-board-server-overlay>`;
         }
 
-        const showExperimentalComponents =
-          this.#settings?.getItem(
-            BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
-            "Show Experimental Components"
-          )?.value ?? false;
-
-        const canSave = this.tab
-          ? this.#runtime.board.canSave(this.tab.id) && !this.tab.readOnly
-          : false;
-        const saveStatus = this.tab
-          ? (this.#tabSaveStatus.get(this.tab.id) ?? "saved")
-          : BreadboardUI.Types.BOARD_SAVE_STATUS.ERROR;
-
         const ui = html`
-          <bb-ve-header
-            .signInAdapter=${signInAdapter}
-            .hasActiveTab=${this.tab !== null}
-            .tabTitle=${this.tab?.graph?.title ?? null}
-            .canSave=${canSave}
-            .isMine=${this.#runtime.board.isMine(this.tab?.graph.url)}
-            .saveStatus=${saveStatus}
-            .showExperimentalComponents=${showExperimentalComponents}
-            @bbboardtitleupdate=${async (
-              evt: BreadboardUI.Events.BoardTitleUpdateEvent
-            ) => {
-              await this.#attemptBoardTitleAndDescriptionUpdate(
-                evt.title,
-                null
-              );
-            }}
-            @bbremix=${async () => {
-              if (!this.tab?.graph) {
-                return;
-              }
-
-              await this.#attemptRemix(this.tab.graph, {
-                role: "user",
-              });
-            }}
-            @bbsignout=${async () => {
-              await this.#attemptLogOut();
-            }}
-            @bbclose=${() => {
-              if (!this.tab) {
-                return;
-              }
-              this.#embedHandler?.sendToEmbedder({
-                type: "back_clicked",
-              });
-              this.#runtime.router.go(null);
-            }}
-            @bbsharerequested=${() => {
-              if (!this.#uiRef.value) {
-                return;
-              }
-
-              this.#uiRef.value.openSharePanel();
-            }}
-            @input=${(evt: InputEvent) => {
-              const inputs = evt.composedPath();
-              const input = inputs.find(
-                (el) => el instanceof BreadboardUI.Elements.HomepageSearchButton
-              );
-              if (!input) {
-                return;
-              }
-
-              this.#projectFilter = input.value;
-            }}
-            @change=${async (evt: Event) => {
-              const [select] = evt.composedPath();
-              if (!(select instanceof BreadboardUI.Elements.ItemSelect)) {
-                return;
-              }
-
-              switch (select.value) {
-                case "edit-title-and-description": {
-                  if (!this.tab) {
-                    return;
-                  }
-
-                  this.#showBoardEditModal = true;
-                  break;
-                }
-
-                case "jump-to-item": {
-                  if (!this.tab) {
-                    return;
-                  }
-
-                  this.#showItemModal = true;
-                  break;
-                }
-
-                case "delete": {
-                  if (!this.tab || !this.tab.graph || !this.tab.graph.url) {
-                    return;
-                  }
-
-                  const boardServer = this.#runtime.board.getBoardServerForURL(
-                    new URL(this.tab.graph.url)
-                  );
-                  if (!boardServer) {
-                    return;
-                  }
-
-                  await this.#attemptBoardDelete(
-                    boardServer.name,
-                    this.tab.graph.url,
-                    true
-                  );
-                  break;
-                }
-
-                case "duplicate": {
-                  if (!this.tab?.graph) {
-                    return;
-                  }
-
-                  await this.#attemptRemix(this.tab.graph, {
-                    role: "user",
-                  });
-
-                  break;
-                }
-
-                case "feedback": {
-                  if (!feedbackLink) {
-                    return;
-                  }
-
-                  window.open(feedbackLink, "_blank");
-                  break;
-                }
-
-                case "history": {
-                  if (!this.#uiRef.value) {
-                    return;
-                  }
-
-                  this.#uiRef.value.sideNavItem = "edit-history";
-                  break;
-                }
-
-                default: {
-                  console.log("Action:", select.value);
-                  break;
-                }
-              }
-            }}
-          >
-      </bb-ve-header>
+          ${this.#renderHeader()}
       <div id="content" ?inert=${showingOverlay}>
-        <bb-ui-controller
-              ${ref(this.#uiRef)}
+        <bb-canvas-controller
+              ${ref(this.#canvasControllerRef)}
               ?inert=${showingOverlay}
               .boardId=${this.#boardId}
               .boardServerKits=${this.tab?.boardServerKits ?? []}
@@ -2319,10 +2092,9 @@ export class Main extends LitElement {
               .sandbox=${sandbox}
               .selectionState=${this.#selectionState}
               .settings=${this.#settings}
-              .signedIn=${signInAdapter.state === "valid"}
+              .signedIn=${signinAdapter.state === "valid"}
               .status=${tabStatus}
               .subGraphId=${this.tab?.subGraphId ?? null}
-              .tabLoadStatus=${tabLoadStatus}
               .tabURLs=${tabURLs}
               .topGraphResult=${topGraphResult}
               .version=${this.#version}
@@ -2888,7 +2660,7 @@ export class Main extends LitElement {
                 };
                 this.#embedHandler?.sendToEmbedder(message);
               }}
-            ></bb-ui-controller>
+            ></bb-canvas-controller>
         ${
           this.#showWelcomePanel
             ? html`<bb-project-listing
@@ -3007,11 +2779,11 @@ export class Main extends LitElement {
         }
 
         if (
-          signInAdapter.state !== "anonymous" &&
-          signInAdapter.state !== "valid"
+          signinAdapter.state !== "anonymous" &&
+          signinAdapter.state !== "valid"
         ) {
           return html`<bb-connection-entry-signin
-            .adapter=${signInAdapter}
+            .adapter=${signinAdapter}
             @bbsignin=${async () => {
               window.location.reload();
             }}
@@ -3021,7 +2793,6 @@ export class Main extends LitElement {
         return [
           this.#showToS ? this.createTosDialog() : nothing,
           ui,
-          settingsOverlay,
           showNewWorkspaceItemOverlay,
           boardServerAddOverlay,
           this.#showBoardEditModal ? this.#createBoardEditModal() : nothing,
@@ -3029,35 +2800,11 @@ export class Main extends LitElement {
         ];
       });
 
-    const tooltip = html`<bb-tooltip ${ref(this.#tooltipRef)}></bb-tooltip>`;
-    const snackbar = html`<bb-snackbar
-      ${ref(this.#snackbarRef)}
-      @bbsnackbaraction=${async (
-        evt: BreadboardUI.Events.SnackbarActionEvent
-      ) => {
-        switch (evt.action) {
-          case "remix": {
-            if (!evt.value) {
-              return;
-            }
-
-            const graphStore = this.#runtime.board.getGraphStore();
-            const addResult = graphStore.addByURL(evt.value, [], {});
-            const graph = (await graphStore.getLatest(addResult.mutable)).graph;
-
-            if (graph) {
-              await this.#attemptRemix(graph, { role: "user" });
-              this.#showWelcomePanel = false;
-            }
-          }
-        }
-      }}
-    ></bb-snackbar>`;
     return [
       until(uiController),
-      tooltip,
-      toasts,
-      snackbar,
+      this.#renderTooltip(),
+      this.#renderToasts(),
+      this.#renderSnackbar(),
       this.#renderGoogleDriveAssetShareDialog(),
     ];
   }
@@ -3151,15 +2898,215 @@ export class Main extends LitElement {
     </dialog>`;
   }
 
-  readonly #googleDriveAssetShareDialog =
-    createRef<GoogleDriveAssetShareDialog>();
-
   #renderGoogleDriveAssetShareDialog() {
     return html`
       <bb-google-drive-asset-share-dialog
-        ${ref(this.#googleDriveAssetShareDialog)}
+        ${ref(this.#googleDriveAssetShareDialogRef)}
       ></bb-google-drive-asset-share-dialog>
     `;
+  }
+
+  #renderTooltip() {
+    return html`<bb-tooltip ${ref(this.#tooltipRef)}></bb-tooltip>`;
+  }
+
+  #renderToasts() {
+    return html`${map(
+      this.toasts,
+      ([toastId, { message, type, persistent }], idx) => {
+        const offset = this.toasts.size - idx - 1;
+        return html`<bb-toast
+          .toastId=${toastId}
+          .offset=${offset}
+          .message=${message}
+          .type=${type}
+          .timeout=${persistent ? 0 : nothing}
+          @bbtoastremoved=${(evt: BreadboardUI.Events.ToastRemovedEvent) => {
+            this.toasts.delete(evt.toastId);
+          }}
+        ></bb-toast>`;
+      }
+    )}`;
+  }
+
+  #renderSnackbar() {
+    return html`<bb-snackbar
+      ${ref(this.#snackbarRef)}
+      @bbsnackbaraction=${async (
+        evt: BreadboardUI.Events.SnackbarActionEvent
+      ) => {
+        switch (evt.action) {
+          case "remix": {
+            if (!evt.value) {
+              return;
+            }
+
+            const graphStore = this.#runtime.board.getGraphStore();
+            const addResult = graphStore.addByURL(evt.value, [], {});
+            const graph = (await graphStore.getLatest(addResult.mutable)).graph;
+
+            if (graph) {
+              await this.#attemptRemix(graph, { role: "user" });
+              this.#showWelcomePanel = false;
+            }
+          }
+        }
+      }}
+    ></bb-snackbar>`;
+  }
+
+  #renderHeader() {
+    const showExperimentalComponents =
+      this.#settings?.getItem(
+        BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
+        "Show Experimental Components"
+      )?.value ?? false;
+
+    const signinAdapter = this.signinAdapter ?? null;
+    const feedbackLink = this.clientDeploymentConfiguration.FEEDBACK_LINK;
+
+    const canSave = this.tab
+      ? this.#runtime.board.canSave(this.tab.id) && !this.tab.readOnly
+      : false;
+    const saveStatus = this.tab
+      ? (this.#tabSaveStatus.get(this.tab.id) ?? "saved")
+      : BreadboardUI.Types.BOARD_SAVE_STATUS.ERROR;
+
+    return html`<bb-ve-header
+      .signInAdapter=${signinAdapter}
+      .hasActiveTab=${this.tab !== null}
+      .tabTitle=${this.tab?.graph?.title ?? null}
+      .canSave=${canSave}
+      .isMine=${this.#runtime.board.isMine(this.tab?.graph.url)}
+      .saveStatus=${saveStatus}
+      .showExperimentalComponents=${showExperimentalComponents}
+      @bbboardtitleupdate=${async (
+        evt: BreadboardUI.Events.BoardTitleUpdateEvent
+      ) => {
+        await this.#attemptBoardTitleAndDescriptionUpdate(evt.title, null);
+      }}
+      @bbremix=${async () => {
+        if (!this.tab?.graph) {
+          return;
+        }
+
+        await this.#attemptRemix(this.tab.graph, {
+          role: "user",
+        });
+      }}
+      @bbsignout=${async () => {
+        await this.#attemptLogOut();
+      }}
+      @bbclose=${() => {
+        if (!this.tab) {
+          return;
+        }
+        this.#embedHandler?.sendToEmbedder({
+          type: "back_clicked",
+        });
+        this.#runtime.router.go(null);
+      }}
+      @bbsharerequested=${() => {
+        if (!this.#canvasControllerRef.value) {
+          return;
+        }
+
+        this.#canvasControllerRef.value.openSharePanel();
+      }}
+      @input=${(evt: InputEvent) => {
+        const inputs = evt.composedPath();
+        const input = inputs.find(
+          (el) => el instanceof BreadboardUI.Elements.HomepageSearchButton
+        );
+        if (!input) {
+          return;
+        }
+
+        this.#projectFilter = input.value;
+      }}
+      @change=${async (evt: Event) => {
+        const [select] = evt.composedPath();
+        if (!(select instanceof BreadboardUI.Elements.ItemSelect)) {
+          return;
+        }
+
+        switch (select.value) {
+          case "edit-title-and-description": {
+            if (!this.tab) {
+              return;
+            }
+
+            this.#showBoardEditModal = true;
+            break;
+          }
+
+          case "jump-to-item": {
+            if (!this.tab) {
+              return;
+            }
+
+            this.#showItemModal = true;
+            break;
+          }
+
+          case "delete": {
+            if (!this.tab || !this.tab.graph || !this.tab.graph.url) {
+              return;
+            }
+
+            const boardServer = this.#runtime.board.getBoardServerForURL(
+              new URL(this.tab.graph.url)
+            );
+            if (!boardServer) {
+              return;
+            }
+
+            await this.#attemptBoardDelete(
+              boardServer.name,
+              this.tab.graph.url,
+              true
+            );
+            break;
+          }
+
+          case "duplicate": {
+            if (!this.tab?.graph) {
+              return;
+            }
+
+            await this.#attemptRemix(this.tab.graph, {
+              role: "user",
+            });
+
+            break;
+          }
+
+          case "feedback": {
+            if (!feedbackLink) {
+              return;
+            }
+
+            window.open(feedbackLink, "_blank");
+            break;
+          }
+
+          case "history": {
+            if (!this.#canvasControllerRef.value) {
+              return;
+            }
+
+            this.#canvasControllerRef.value.sideNavItem = "edit-history";
+            break;
+          }
+
+          default: {
+            console.log("Action:", select.value);
+            break;
+          }
+        }
+      }}
+    >
+    </bb-ve-header>`;
   }
 
   /**
@@ -3251,7 +3198,7 @@ export class Main extends LitElement {
 
     // Prompt to sync the permissions.
     if (assetToMissingPermissions.size > 0) {
-      const dialog = this.#googleDriveAssetShareDialog.value;
+      const dialog = this.#googleDriveAssetShareDialogRef.value;
       if (!dialog) {
         console.error(`Asset permissions dialog was not rendered`);
         return;

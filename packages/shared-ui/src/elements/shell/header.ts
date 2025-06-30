@@ -24,7 +24,7 @@ import {
 @customElement("bb-ve-header")
 export class VEHeader extends LitElement {
   @property()
-  accessor signInAdapter: SigninAdapter | null = null;
+  accessor signinAdapter: SigninAdapter | null = null;
 
   @property()
   accessor hasActiveTab = false;
@@ -437,9 +437,9 @@ export class VEHeader extends LitElement {
 
   #renderUser() {
     if (
-      !this.signInAdapter ||
-      this.signInAdapter.state !== "valid" ||
-      !this.signInAdapter.picture
+      !this.signinAdapter ||
+      this.signinAdapter.state !== "valid" ||
+      !this.signinAdapter.picture
     ) {
       return nothing;
     }
@@ -453,8 +453,8 @@ export class VEHeader extends LitElement {
         <img
           id="user-pic"
           crossorigin
-          .src=${this.signInAdapter.picture}
-          alt=${this.signInAdapter.name ?? "No name"}
+          .src=${this.signinAdapter.picture}
+          alt=${this.signinAdapter.name ?? "No name"}
         />
       </button>
       ${this.#renderAccountSwitcher()}`;
@@ -467,7 +467,7 @@ export class VEHeader extends LitElement {
 
     return html`<bb-account-switcher
       id="user-overflow"
-      .signInAdapter=${this.signInAdapter}
+      .signInAdapter=${this.signinAdapter}
       @bboverlaydismissed=${() => {
         this.#showAccountSwitcher = false;
       }}

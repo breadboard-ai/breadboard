@@ -19,6 +19,7 @@ export { BoardActivityOverlay } from "./overlay/board-activity.js";
 export { BoardDetailsOverlay } from "./overlay/board-details.js";
 export { BoardSelector } from "./input/board-selector/board-selector.js";
 export { BoardServerOverlay } from "./overlay/provider.js";
+export { CanvasController } from "./canvas-controller/canvas-controller.js";
 export { CodeEditor } from "./input/code-editor/code-editor.js";
 export { CommentOverlay } from "./overlay/comment.js";
 export { ComponentSelectorOverlay } from "./component-selector/component-selector-overlay.js";
@@ -90,7 +91,6 @@ export { StreamlinedSchemaEditor } from "./input/schema-editor/streamlined-schem
 export { TextEditor } from "./input/text-editor/text-editor.js";
 export { Toast } from "./toast/toast.js";
 export { Tooltip } from "./tooltip/tooltip.js";
-export { UI } from "./ui-controller/ui-controller.js";
 export { UserInput } from "./input/user-input.js";
 export { ViewConnector } from "./asset-organizer/view-connector.js";
 export { WebcamInput } from "./input/webcam/webcam.js";
