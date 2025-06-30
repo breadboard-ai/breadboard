@@ -240,36 +240,4 @@ export const MirrorUniverseKit = new KitBuilder({
  * Board grammar versions of the above, with types.
  */
 import { getGraphDescriptor } from "@breadboard-ai/runtime/legacy.js";
-import {
-  addKit,
-  invokeGraph,
-  NewInputValues,
-  NewNodeValue,
-  NewOutputValues,
-  NewNodeFactory as NodeFactory,
-} from "../../src/index.js";
-
-export const testKit = addKit(TestKit) as unknown as {
-  noop: NodeFactory<NewInputValues, NewOutputValues>;
-  test: NodeFactory<NewInputValues, NewOutputValues>;
-  reverser: NodeFactory<{ [key: string]: string }, { [key: string]: string }>;
-  streamer: NodeFactory<
-    Record<string, never>,
-    { stream: ReadableStream<string> }
-  >;
-  runJavascript: NodeFactory<
-    {
-      code: string;
-      name: string;
-      raw: boolean;
-      [key: string]: NewNodeValue;
-    },
-    { result: unknown; [k: string]: unknown }
-  >;
-};
-
-// This will create a kit only when called, so we can test scoping.
-export const makeMirrorUniverseKit = () =>
-  addKit(MirrorUniverseKit) as unknown as {
-    reverser: NodeFactory<{ [key: string]: string }, { [key: string]: string }>;
-  };
+import { invokeGraph } from "../../src/index.js";
