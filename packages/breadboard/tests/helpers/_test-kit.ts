@@ -216,27 +216,6 @@ export const TestKit = new KitBuilder({
 });
 
 /**
- * This kit is used to test proxying and provides a different behavior than
- * the reverser in TestKit.
- */
-export const MirrorUniverseKit = new KitBuilder({
-  url: "mirror-universe-kit",
-}).build({
-  /**
-   * Unlike the reverser in TestKit, it orders letters alphabetically.
-   * @param inputs InputValues
-   */
-  reverser: async (inputs) => {
-    return Object.fromEntries(
-      Object.entries(inputs).map(([key, value]) => [
-        key,
-        (inputs[key] = [...(value as string)].sort().join("")),
-      ])
-    );
-  },
-});
-
-/**
  * Board grammar versions of the above, with types.
  */
 import { getGraphDescriptor } from "@breadboard-ai/runtime/legacy.js";

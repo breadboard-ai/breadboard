@@ -102,7 +102,7 @@ const createBuiltInInspectableKit = (): InspectableKit => {
   };
 };
 
-export const collectKits = (
+const collectKits = (
   mutable: MutableGraph,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   graph: GraphDescriptor

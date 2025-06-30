@@ -16,7 +16,7 @@ import {
   NodeHandlers,
 } from "../types.js";
 
-export type KitBuilderOptions = KitDescriptor & {
+type KitBuilderOptions = KitDescriptor & {
   namespacePrefix?: string;
 };
 

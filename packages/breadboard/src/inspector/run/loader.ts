@@ -7,7 +7,6 @@
 import { remapData } from "@breadboard-ai/runtime/legacy.js";
 import type {
   DataStore,
-  HarnessRunResult,
   InspectableRunLoadResult,
   MutableGraphStore,
   SerializedDataStoreGroup,
@@ -17,19 +16,6 @@ import type {
 } from "@breadboard-ai/types";
 import { PastRun } from "./past-run.js";
 import { replaceSecrets } from "./serializer.js";
-
-export const errorResult = (error: string): HarnessRunResult => {
-  return {
-    type: "error",
-    data: {
-      error,
-      timestamp: Date.now(),
-    },
-    reply: async () => {
-      // Do nothing
-    },
-  };
-};
 
 export class RunLoader {
   #graphStore: MutableGraphStore;

@@ -18,7 +18,7 @@ import type {
 } from "./types.js";
 import { IdVendor } from "./id.js";
 
-export type PartialEdge = {
+type PartialEdge = {
   out?: string;
   in?: string;
   optional?: boolean;

@@ -33,7 +33,7 @@ export { addSandboxedRunModule };
  * allows tuning capabilities for each invoked module, including module
  * invocation itself.
  */
-export type RunModuleInvocationFilter = (
+type RunModuleInvocationFilter = (
   context: NodeHandlerContext
 ) => Outcome<void>;
 

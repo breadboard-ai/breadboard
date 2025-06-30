@@ -42,7 +42,7 @@ export { GraphQueries };
 /**
  * Performs an action based on the supplied template part
  */
-export type TemplatePartScanner = (part: TemplatePart) => void;
+type TemplatePartScanner = (part: TemplatePart) => void;
 
 function scanConfiguration(
   config: NodeConfiguration,

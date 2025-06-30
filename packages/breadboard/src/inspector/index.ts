@@ -4,10 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export {
-  createDefaultDataStore,
-  createDefaultRunStore,
-} from "@breadboard-ai/runtime/legacy.js";
 import type {
   GraphDescriptor,
   GraphStoreArgs,
@@ -40,8 +36,6 @@ export const createRunObserver = (
 ): InspectableRunObserver => {
   return new RunObserver(store, options || {});
 };
-
-export { Run } from "./run/run.js";
 
 export function createGraphStore(args: GraphStoreArgs): MutableGraphStore {
   return new GraphStore(args);
