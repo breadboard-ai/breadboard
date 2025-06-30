@@ -26,7 +26,7 @@ import type {
   CreateModuleFileSystemArgs,
   FileSystemWriteStreamArguments,
 } from "@breadboard-ai/types";
-import { Path, writablePathFromString } from "./path.js";
+import { Path } from "./path.js";
 import { noStreams } from "./utils.js";
 import { PersistentFile } from "./persistent-file.js";
 import { InMemoryBlobStore } from "./in-memory-blob-store.js";
@@ -35,7 +35,7 @@ import { baseURLFromString } from "@breadboard-ai/loader";
 import { ReadableStreamFile } from "./readable-stream-file.js";
 import { err, ok } from "@breadboard-ai/utils";
 
-export { FileSystemImpl, Path, createFileSystem, writablePathFromString };
+export { FileSystemImpl, createFileSystem };
 
 function createFileSystem(
   args: Omit<
