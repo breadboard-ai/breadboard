@@ -629,17 +629,7 @@ export class Main extends LitElement {
                 this.#runtime.util.createWorkspaceSelectionChangeId()
               );
             } else {
-              // Clear the tab parameters.
-              const pageUrl = new URL(window.location.href);
-              const tabs = [...pageUrl.searchParams].filter(([id]) =>
-                id.startsWith("tab")
-              );
-
-              for (const [id] of tabs) {
-                pageUrl.searchParams.delete(id);
-              }
-
-              window.history.replaceState(null, "", pageUrl);
+              this.#runtime.router.clearFlowParameters();
               this.#setPageTitle(null);
             }
           }
@@ -1476,7 +1466,6 @@ export class Main extends LitElement {
     title: string | null,
     description: string | null
   ) {
-    console.log("attemptBoardTitleAndDescriptionUpdate");
     if (title) {
       this.#setPageTitle(title.trim());
     }
@@ -2622,7 +2611,6 @@ export class Main extends LitElement {
                   );
                 }}
                 @bbnodeupdate=${(evt: BreadboardUI.Events.NodeUpdateEvent) => {
-                  console.log("bbnodeupdate");
                   this.#runtime.edit.changeNodeConfiguration(
                     this.tab,
                     evt.id,

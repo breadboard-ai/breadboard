@@ -12,6 +12,27 @@ export class Router extends EventTarget {
   constructor() {
     super();
 
+    let replacedTabs = false;
+    const urlWithTab = new URL(window.location.href);
+    for (const [param, value] of urlWithTab.searchParams) {
+      if (param === "tab0") {
+        urlWithTab.searchParams.set("flow", value);
+        urlWithTab.searchParams.delete("tab0");
+        replacedTabs = true;
+        continue;
+      }
+
+      if (param.startsWith("tab")) {
+        urlWithTab.searchParams.delete(param);
+        replacedTabs = true;
+      }
+    }
+
+    if (replacedTabs) {
+      const url = decodeURIComponent(urlWithTab.href);
+      window.history.replaceState(null, "", url);
+    }
+
     window.addEventListener("popstate", () => {
       this.#emit();
     });
@@ -28,7 +49,7 @@ export class Router extends EventTarget {
 
     if (new URL(url).origin !== window.location.origin) {
       const newURL = new URL(window.location.origin);
-      newURL.searchParams.set("tab0", url);
+      newURL.searchParams.set("flow", url);
       url = newURL.href;
     }
 
@@ -40,6 +61,19 @@ export class Router extends EventTarget {
 
   init() {
     this.#emit();
+  }
+
+  clearFlowParameters() {
+    const pageUrl = new URL(window.location.href);
+    const tabs = [...pageUrl.searchParams].filter(
+      ([id]) => id.startsWith("tab") || id.startsWith("flow")
+    );
+
+    for (const [id] of tabs) {
+      pageUrl.searchParams.delete(id);
+    }
+
+    window.history.replaceState(null, "", pageUrl);
   }
 
   #emit(id?: TabId, creator?: EditHistoryCreator) {
