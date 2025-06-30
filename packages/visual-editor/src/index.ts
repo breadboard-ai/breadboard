@@ -2063,678 +2063,88 @@ export class Main extends LitElement {
 
         const ui = html`
           ${this.#renderHeader()}
-      <div id="content" ?inert=${showingOverlay}>
-        <bb-canvas-controller
-              ${ref(this.#canvasControllerRef)}
-              ?inert=${showingOverlay}
-              .boardId=${this.#boardId}
-              .boardServerKits=${this.tab?.boardServerKits ?? []}
-              .boardServers=${this.#boardServers}
-              .canRun=${this.#canRun}
-              .editor=${this.#runtime.edit.getEditor(this.tab)}
-              .fileSystem=${this.#fileSystem}
-              .graph=${this.tab?.graph ?? null}
-              .graphIsMine=${this.tab?.graphIsMine ?? false}
-              .graphStore=${this.#graphStore}
-              .graphStoreUpdateId=${this.graphStoreUpdateId}
-              .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-              .history=${this.#runtime.edit.getHistory(this.tab)}
-              .inputsFromLastRun=${inputsFromLastRun}
-              .loader=${this.#runtime.board.getLoader()}
-              .mainGraphId=${this.tab?.mainGraphId}
-              .moduleId=${this.tab?.moduleId ?? null}
-              .organizer=${projectState?.organizer}
-              .projectState=${projectState}
-              .readOnly=${this.tab?.readOnly ?? true}
-              .recentBoards=${this.#recentBoards}
-              .runs=${runs ?? null}
-              .runStore=${this.#runStore}
-              .sandbox=${sandbox}
-              .selectionState=${this.#selectionState}
-              .settings=${this.#settings}
-              .signedIn=${signinAdapter.state === "valid"}
-              .status=${tabStatus}
-              .subGraphId=${this.tab?.subGraphId ?? null}
-              .tabURLs=${tabURLs}
-              .topGraphResult=${topGraphResult}
-              .version=${this.#version}
-              .visualChangeId=${this.#lastVisualChangeId}
-              @bbrun=${async () => {
-                if (!this.#canRun) return;
-                await this.#attemptBoardStart();
-              }}
-              @bbstop=${(evt: BreadboardUI.Events.StopEvent) => {
-                this.#attemptBoardStop(evt.clearLastRun);
-              }}
-              @bbinputenter=${async (
-                event: BreadboardUI.Events.InputEnterEvent
-              ) => {
-                if (!this.#settings || !this.tab) {
-                  return;
-                }
+        <div id="content" ?inert=${showingOverlay}>
+          <bb-canvas-controller
+                ${ref(this.#canvasControllerRef)}
+                ?inert=${showingOverlay}
+                .boardId=${this.#boardId}
+                .boardServerKits=${this.tab?.boardServerKits ?? []}
+                .boardServers=${this.#boardServers}
+                .canRun=${this.#canRun}
+                .editor=${this.#runtime.edit.getEditor(this.tab)}
+                .fileSystem=${this.#fileSystem}
+                .graph=${this.tab?.graph ?? null}
+                .graphIsMine=${this.tab?.graphIsMine ?? false}
+                .graphStore=${this.#graphStore}
+                .graphStoreUpdateId=${this.graphStoreUpdateId}
+                .graphTopologyUpdateId=${this.graphTopologyUpdateId}
+                .history=${this.#runtime.edit.getHistory(this.tab)}
+                .inputsFromLastRun=${inputsFromLastRun}
+                .loader=${this.#runtime.board.getLoader()}
+                .mainGraphId=${this.tab?.mainGraphId}
+                .moduleId=${this.tab?.moduleId ?? null}
+                .organizer=${projectState?.organizer}
+                .projectState=${projectState}
+                .readOnly=${this.tab?.readOnly ?? true}
+                .recentBoards=${this.#recentBoards}
+                .runs=${runs ?? null}
+                .runStore=${this.#runStore}
+                .sandbox=${sandbox}
+                .selectionState=${this.#selectionState}
+                .settings=${this.#settings}
+                .signedIn=${signinAdapter.state === "valid"}
+                .status=${tabStatus}
+                .subGraphId=${this.tab?.subGraphId ?? null}
+                .tabURLs=${tabURLs}
+                .topGraphResult=${topGraphResult}
+                .version=${this.#version}
+                .visualChangeId=${this.#lastVisualChangeId}
+                @bbrun=${async () => {
+                  if (!this.#canRun) return;
+                  await this.#attemptBoardStart();
+                }}
+                @bbstop=${(evt: BreadboardUI.Events.StopEvent) => {
+                  this.#attemptBoardStop(evt.clearLastRun);
+                }}
+                @bbinputenter=${async (
+                  event: BreadboardUI.Events.InputEnterEvent
+                ) => {
+                  if (!this.#settings || !this.tab) {
+                    return;
+                  }
 
-                const isSecret = "secret" in event.data;
-                const runner = this.#runtime.run.getRunner(this.tab.id);
-                if (!runner) {
-                  throw new Error("Can't send input, no runner");
-                }
-                if (isSecret) {
-                  if (this.#secretsHelper) {
-                    this.#secretsHelper.receiveSecrets(event);
-                    if (
-                      this.#secretsHelper.hasAllSecrets() &&
-                      !runner?.running()
-                    ) {
-                      const secrets = this.#secretsHelper.getSecrets();
-                      this.#secretsHelper = null;
-                      runner?.run(secrets);
+                  const isSecret = "secret" in event.data;
+                  const runner = this.#runtime.run.getRunner(this.tab.id);
+                  if (!runner) {
+                    throw new Error("Can't send input, no runner");
+                  }
+                  if (isSecret) {
+                    if (this.#secretsHelper) {
+                      this.#secretsHelper.receiveSecrets(event);
+                      if (
+                        this.#secretsHelper.hasAllSecrets() &&
+                        !runner?.running()
+                      ) {
+                        const secrets = this.#secretsHelper.getSecrets();
+                        this.#secretsHelper = null;
+                        runner?.run(secrets);
+                      }
+                    } else {
+                      // This is the case when the "secret" event hasn't yet
+                      // been received.
+                      // Likely, this is a side effect of how the
+                      // activity-log is built: it relies on the run observer
+                      // for the events list, and the run observer updates the
+                      // list of run events before the run API dispatches
+                      // the "secret" event.
+                      this.#secretsHelper = new SecretsHelper(this.#settings!);
+                      this.#secretsHelper.receiveSecrets(event);
                     }
                   } else {
-                    // This is the case when the "secret" event hasn't yet
-                    // been received.
-                    // Likely, this is a side effect of how the
-                    // activity-log is built: it relies on the run observer
-                    // for the events list, and the run observer updates the
-                    // list of run events before the run API dispatches
-                    // the "secret" event.
-                    this.#secretsHelper = new SecretsHelper(this.#settings!);
-                    this.#secretsHelper.receiveSecrets(event);
-                  }
-                } else {
-                  const data = event.data as InputValues;
-                  if (!runner.running()) {
-                    runner.run(data);
-                  }
-                }
-              }}
-              @bbgraphboardserverloadrequest=${async (
-                evt: BreadboardUI.Events.GraphBoardServerLoadRequestEvent
-              ) => {
-                this.#runtime.router.go(evt.url);
-              }}
-              @bbworkspaceselectionmove=${async (
-                evt: BreadboardUI.Events.WorkspaceSelectionMoveEvent
-              ) => {
-                if (!this.tab) {
-                  return;
-                }
-
-                await this.#runtime.edit.moveToNewGraph(
-                  this.tab,
-                  evt.selections,
-                  evt.targetGraphId,
-                  evt.delta
-                );
-              }}
-              @bbnodecreatereference=${async (
-                evt: BreadboardUI.Events.NodeCreateReferenceEvent
-              ) => {
-                if (!this.tab) {
-                  return;
-                }
-
-                await this.#runtime.edit.createReference(
-                  this.tab,
-                  evt.graphId,
-                  evt.nodeId,
-                  evt.portId,
-                  evt.value
-                );
-              }}
-              @bbeditorpositionchange=${(
-                evt: BreadboardUI.Events.EditorPointerPositionChangeEvent
-              ) => {
-                this.#lastPointerPosition.x = evt.x;
-                this.#lastPointerPosition.y = evt.y;
-              }}
-              @bbworkspaceselectionstate=${(
-                evt: BreadboardUI.Events.WorkspaceSelectionStateEvent
-              ) => {
-                if (!this.tab) {
-                  return;
-                }
-
-                this.#runtime.select.processSelections(
-                  this.tab.id,
-                  evt.selectionChangeId,
-                  evt.selections,
-                  evt.replaceExistingSelections,
-                  evt.moveToSelection
-                );
-              }}
-              @bbworkspacevisualupdate=${(
-                evt: BreadboardUI.Events.WorkspaceVisualUpdateEvent
-              ) => {
-                if (!this.tab) {
-                  return;
-                }
-
-                this.#runtime.edit.processVisualChanges(
-                  this.tab,
-                  evt.visualChangeId,
-                  evt.visualState
-                );
-              }}
-              @bbworkspaceitemvisualupdate=${(
-                evt: BreadboardUI.Events.WorkspaceItemVisualUpdateEvent
-              ) => {
-                if (!this.tab) {
-                  return;
-                }
-
-                this.#runtime.edit.processVisualChange(
-                  this.tab,
-                  evt.visualChangeId,
-                  evt.graphId,
-                  evt.visual
-                );
-              }}
-              @bbinteraction=${() => {
-                this.#clearBoardSave();
-              }}
-              @bbnodepartialupdate=${async (
-                evt: BreadboardUI.Events.NodePartialUpdateEvent
-              ) => {
-                if (!this.tab) {
-                  this.toast(
-                    Strings.from("ERROR_GENERIC"),
-                    BreadboardUI.Events.ToastType.ERROR
-                  );
-                  return;
-                }
-
-                await this.#runtime.edit.changeNodeConfigurationPart(
-                  this.tab,
-                  evt.id,
-                  evt.configuration,
-                  evt.subGraphId,
-                  evt.metadata,
-                  evt.ins
-                );
-              }}
-              @bbworkspacenewitemcreaterequest=${() => {
-                this.#showNewWorkspaceItemOverlay = true;
-              }}
-              @bbboarditemcopy=${(
-                evt: BreadboardUI.Events.BoardItemCopyEvent
-              ) => {
-                this.#runtime.edit.copyBoardItem(
-                  this.tab,
-                  evt.itemType,
-                  evt.id,
-                  evt.title
-                );
-              }}
-              @bbstart=${(evt: BreadboardUI.Events.StartEvent) => {
-                if (!evt.url) {
-                  return;
-                }
-                this.#runtime.router.go(evt.url);
-              }}
-              @dragover=${(evt: DragEvent) => {
-                evt.preventDefault();
-              }}
-              @drop=${(evt: DragEvent) => {
-                evt.preventDefault();
-                this.#attemptLoad(evt);
-              }}
-              @bbinputerror=${(evt: BreadboardUI.Events.InputErrorEvent) => {
-                this.toast(evt.detail, BreadboardUI.Events.ToastType.ERROR);
-                return;
-              }}
-              @bbboardtitleupdate=${async (
-                evt: BreadboardUI.Events.BoardTitleUpdateEvent
-              ) => {
-                await this.#attemptBoardTitleAndDescriptionUpdate(
-                  evt.title,
-                  null
-                );
-              }}
-              @bbboarddescriptionupdate=${async (
-                evt: BreadboardUI.Events.BoardDescriptionUpdateEvent
-              ) => {
-                await this.#runtime.edit.updateBoardTitleAndDescription(
-                  this.tab,
-                  null,
-                  evt.description
-                );
-              }}
-              @bbboardinfoupdate=${async (
-                evt: BreadboardUI.Events.BoardInfoUpdateEvent
-              ) => {
-                await this.#handleBoardInfoUpdate(evt);
-                if (evt.exported !== null) {
-                  if (evt.subGraphId) {
-                    await this.#attemptToggleExport(
-                      evt.subGraphId,
-                      "declarative"
-                    );
-                  } else if (evt.moduleId) {
-                    await this.#attemptToggleExport(evt.moduleId, "imperative");
-                  }
-                }
-                this.requestUpdate();
-              }}
-              @bbgraphboardserverblankboard=${() => {
-                this.#attemptBoardCreate(blank(), { role: "user" });
-              }}
-              @bbsubgraphcreate=${async (
-                evt: BreadboardUI.Events.SubGraphCreateEvent
-              ) => {
-                const result = await this.#runtime.edit.createSubGraph(
-                  this.tab,
-                  evt.subGraphTitle
-                );
-                if (!result) {
-                  this.toast(
-                    Strings.from("ERROR_GENERIC"),
-                    BreadboardUI.Events.ToastType.ERROR
-                  );
-                  return;
-                }
-
-                if (!this.tab) {
-                  return;
-                }
-                this.tab.subGraphId = result;
-                this.requestUpdate();
-              }}
-              @bbsubgraphdelete=${async (
-                evt: BreadboardUI.Events.SubGraphDeleteEvent
-              ) => {
-                await this.#runtime.edit.deleteSubGraph(
-                  this.tab,
-                  evt.subGraphId
-                );
-                if (!this.tab) {
-                  return;
-                }
-
-                this.#runtime.select.deselectAll(
-                  this.tab.id,
-                  this.#runtime.util.createWorkspaceSelectionChangeId()
-                );
-              }}
-              @bbmodulechangelanguage=${(
-                evt: BreadboardUI.Events.ModuleChangeLanguageEvent
-              ) => {
-                if (!this.tab) {
-                  return;
-                }
-
-                this.#runtime.edit.changeModuleLanguage(
-                  this.tab,
-                  evt.moduleId,
-                  evt.moduleLanguage
-                );
-              }}
-              @bbmodulecreate=${(
-                evt: BreadboardUI.Events.ModuleCreateEvent
-              ) => {
-                this.#attemptModuleCreate(evt.moduleId);
-              }}
-              @bbmoduledelete=${async (
-                evt: BreadboardUI.Events.ModuleDeleteEvent
-              ) => {
-                if (!this.tab) {
-                  return;
-                }
-
-                await this.#runtime.edit.deleteModule(this.tab, evt.moduleId);
-              }}
-              @bbmoduleedit=${async (
-                evt: BreadboardUI.Events.ModuleEditEvent
-              ) => {
-                return this.#runtime.edit.editModule(
-                  this.tab,
-                  evt.moduleId,
-                  evt.code,
-                  evt.metadata
-                );
-              }}
-              @bbtoggleexport=${async (
-                evt: BreadboardUI.Events.ToggleExportEvent
-              ) => {
-                await this.#attemptToggleExport(evt.exportId, evt.exportType);
-              }}
-              @bbthemechange=${async (
-                evt: BreadboardUI.Events.ThemeChangeEvent
-              ) => {
-                await this.#runtime.edit.changeTheme(this.tab, evt.theme);
-              }}
-              @bbthemeupdate=${async (
-                evt: BreadboardUI.Events.ThemeUpdateEvent
-              ) => {
-                await this.#runtime.edit.updateTheme(
-                  this.tab,
-                  evt.themeId,
-                  evt.theme
-                );
-              }}
-              @bbthemedelete=${async (
-                evt: BreadboardUI.Events.ThemeUpdateEvent
-              ) => {
-                await this.#runtime.edit.deleteTheme(this.tab, evt.themeId);
-              }}
-              @bbthemecreate=${(evt: BreadboardUI.Events.ThemeCreateEvent) => {
-                this.#runtime.edit.createTheme(this.tab, evt.theme);
-              }}
-              @bbnoderunrequest=${async (
-                evt: BreadboardUI.Events.NodeRunRequestEvent
-              ) => {
-                await this.#attemptNodeRun(evt.id);
-              }}
-              @bbmovenodes=${async (
-                evt: BreadboardUI.Events.MoveNodesEvent
-              ) => {
-                const { destinationGraphId } = evt;
-                for (const [sourceGraphId, nodes] of evt.sourceNodes) {
-                  await this.#runtime.edit.moveNodesToGraph(
-                    this.tab,
-                    nodes,
-                    sourceGraphId === MAIN_BOARD_ID ? "" : sourceGraphId,
-                    destinationGraphId === MAIN_BOARD_ID
-                      ? ""
-                      : destinationGraphId,
-                    evt.positionDelta
-                  );
-                }
-
-                if (!this.tab) {
-                  return;
-                }
-
-                // Clear all selections.
-                this.#runtime.select.processSelections(
-                  this.tab.id,
-                  this.#runtime.util.createWorkspaceSelectionChangeId(),
-                  null,
-                  true
-                );
-              }}
-              @bbdroppedassets=${async (
-                evt: BreadboardUI.Events.DroppedAssetsEvent
-              ) => {
-                const projectState = this.#runtime.state.getOrCreate(
-                  this.tab?.mainGraphId,
-                  this.#runtime.edit.getEditor(this.tab)
-                );
-
-                if (!projectState) {
-                  this.toast(
-                    "Unable to add",
-                    BreadboardUI.Events.ToastType.ERROR
-                  );
-                  return;
-                }
-
-                await Promise.all(
-                  evt.assets.map((asset) => {
-                    const metadata: AssetMetadata = {
-                      title: asset.name,
-                      type: asset.type,
-                      visual: asset.visual,
-                    };
-
-                    if (asset.subType) {
-                      metadata.subType = asset.subType;
+                    const data = event.data as InputValues;
+                    if (!runner.running()) {
+                      runner.run(data);
                     }
-
-                    return projectState?.organizer.addGraphAsset({
-                      path: asset.path,
-                      metadata,
-                      data: [asset.data],
-                    });
-                  })
-                );
-
-                this.#checkGoogleDriveAssetShareStatus();
-              }}
-              @bbedgeattachmentmove=${async (
-                evt: BreadboardUI.Events.EdgeAttachmentMoveEvent
-              ) => {
-                const { graphId } = evt;
-                await this.#runtime.edit.changeEdgeAttachmentPoint(
-                  this.tab,
-                  graphId === MAIN_BOARD_ID ? "" : graphId,
-                  evt.edge,
-                  evt.which,
-                  evt.attachmentPoint
-                );
-              }}
-              @bbedgechange=${async (
-                evt: BreadboardUI.Events.EdgeChangeEvent
-              ) => {
-                await this.#runtime.edit.changeEdge(
-                  this.tab,
-                  evt.changeType,
-                  evt.from,
-                  evt.to,
-                  evt.subGraphId
-                );
-              }}
-              @bbassetedgechange=${async (
-                evt: BreadboardUI.Events.AssetEdgeChangeEvent
-              ) => {
-                await this.#runtime.edit.changeAssetEdge(
-                  this.tab,
-                  evt.changeType,
-                  evt.assetEdge,
-                  evt.subGraphId
-                );
-              }}
-              @bbnodemetadataupdate=${async (
-                evt: BreadboardUI.Events.NodeMetadataUpdateEvent
-              ) => {
-                await this.#runtime.edit.updateNodeMetadata(
-                  this.tab,
-                  evt.id,
-                  evt.metadata,
-                  evt.subGraphId
-                );
-              }}
-              @bbmultiedit=${async (
-                evt: BreadboardUI.Events.MultiEditEvent
-              ) => {
-                if (!this.tab) {
-                  return;
-                }
-
-                await this.#runtime.edit.multiEdit(
-                  this.tab,
-                  evt.edits,
-                  evt.description
-                );
-
-                const additions: string[] = evt.edits
-                  .map((edit) =>
-                    edit.type === "addnode" ? edit.node.id : null
-                  )
-                  .filter((item) => item !== null);
-                if (additions.length === 0) {
-                  return;
-                }
-
-                this.#runtime.select.selectNodes(
-                  this.tab.id,
-                  this.#runtime.select.generateId(),
-                  evt.subGraphId ?? BreadboardUI.Constants.MAIN_BOARD_ID,
-                  additions
-                );
-              }}
-              @bbaddnodewithedge=${async (
-                evt: BreadboardUI.Events.AddNodeWithEdgeEvent
-              ) => {
-                if (!this.tab) {
-                  return;
-                }
-
-                await this.#runtime.edit.addNodeWithEdge(
-                  this.tab,
-                  evt.node,
-                  evt.edge,
-                  evt.subGraphId
-                );
-
-                this.#runtime.select.selectNodes(
-                  this.tab.id,
-                  this.#runtime.select.generateId(),
-                  evt.subGraphId ?? BreadboardUI.Constants.MAIN_BOARD_ID,
-                  [evt.node.id]
-                );
-              }}
-              @bbnodecreate=${async (
-                evt: BreadboardUI.Events.NodeCreateEvent
-              ) => {
-                await this.#runtime.edit.createNode(
-                  this.tab,
-                  evt.id,
-                  evt.nodeType,
-                  evt.configuration,
-                  evt.metadata,
-                  evt.subGraphId,
-                  evt.options
-                );
-
-                if (!this.tab) {
-                  return;
-                }
-
-                this.#runtime.select.selectNode(
-                  this.tab.id,
-                  this.#runtime.select.generateId(),
-                  evt.subGraphId ?? BreadboardUI.Constants.MAIN_BOARD_ID,
-                  evt.id
-                );
-              }}
-              @bbgraphreplace=${async (
-                evt: BreadboardUI.Events.GraphReplaceEvent
-              ) => {
-                await this.#runtime.edit.replaceGraph(
-                  this.tab,
-                  evt.replacement,
-                  evt.creator
-                );
-              }}
-              @bbnodeupdate=${(evt: BreadboardUI.Events.NodeUpdateEvent) => {
-                console.log("bbnodeupdate");
-                this.#runtime.edit.changeNodeConfiguration(
-                  this.tab,
-                  evt.id,
-                  evt.configuration,
-                  evt.subGraphId
-                );
-              }}
-              @bbnodedelete=${(evt: BreadboardUI.Events.NodeDeleteEvent) => {
-                this.#runtime.edit.deleteNode(this.tab, evt.id, evt.subGraphId);
-              }}
-              @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
-                this.toast(toastEvent.message, toastEvent.toastType);
-              }}
-              @bbnodetyperetrievalerror=${() => {
-                this.toast(
-                  Strings.from("ERROR_UNABLE_TO_RETRIEVE_TYPE_INFO"),
-                  BreadboardUI.Events.ToastType.ERROR
-                );
-              }}
-              @bboutlinemodechange=${() => {
-                if (!this.tab) {
-                  return;
-                }
-
-                this.#runtime.select.deselectAll(
-                  this.tab?.id,
-                  this.#runtime.util.createWorkspaceSelectionChangeId()
-                );
-              }}
-              @bbiterateonprompt=${(
-                iterateOnPromptEvent: IterateOnPromptEvent
-              ) => {
-                const message: IterateOnPromptMessage = {
-                  type: "iterate_on_prompt",
-                  title: iterateOnPromptEvent.title,
-                  promptTemplate: iterateOnPromptEvent.promptTemplate,
-                  boardId: iterateOnPromptEvent.boardId,
-                  nodeId: iterateOnPromptEvent.nodeId,
-                  modelId: iterateOnPromptEvent.modelId,
-                };
-                this.#embedHandler?.sendToEmbedder(message);
-              }}
-            ></bb-canvas-controller>
-        ${
-          this.#showWelcomePanel
-            ? html`<bb-project-listing
-                .version=${this.#version}
-                .gitCommitHash=${this.#gitCommitHash}
-                .recentBoards=${this.#recentBoards}
-                .selectedBoardServer=${this.#selectedBoardServer}
-                .selectedLocation=${this.#selectedLocation}
-                .boardServers=${this.#boardServers}
-                .showAdditionalSources=${showExperimentalComponents}
-                .filter=${this.#projectFilter}
-                @bbboarddelete=${async (
-                  evt: BreadboardUI.Events.BoardDeleteEvent
-                ) => {
-                  const boardServer = this.#runtime.board.getBoardServerForURL(
-                    new URL(evt.url)
-                  );
-                  if (!boardServer) {
-                    return;
-                  }
-
-                  await this.#attemptBoardDelete(
-                    boardServer.name,
-                    evt.url,
-                    false
-                  );
-                }}
-                @bbgraphboardserverblankboard=${() => {
-                  this.#attemptBoardCreate(blank(), { role: "user" });
-                }}
-                @bbgraphboardservergeneratedboard=${(
-                  evt: BreadboardUI.Events.GraphBoardServerGeneratedBoardEvent
-                ) => {
-                  this.#attemptBoardCreate(evt.graph, evt.creator);
-                }}
-                @bbgraphboardserveradd=${() => {
-                  this.#showBoardServerAddOverlay = true;
-                }}
-                @bbgraphboardserverrefresh=${async (
-                  evt: BreadboardUI.Events.GraphBoardServerRefreshEvent
-                ) => {
-                  const boardServer = this.#runtime.board.getBoardServerByName(
-                    evt.boardServerName
-                  );
-                  if (!boardServer) {
-                    return;
-                  }
-
-                  const refreshed = await boardServer.refresh(evt.location);
-                  if (!refreshed) {
-                    this.toast(
-                      Strings.from("ERROR_UNABLE_TO_REFRESH_PROJECTS"),
-                      BreadboardUI.Events.ToastType.WARNING
-                    );
-                  }
-                }}
-                @bbgraphboardserverdisconnect=${async (
-                  evt: BreadboardUI.Events.GraphBoardServerDisconnectEvent
-                ) => {
-                  await this.#runtime.board.disconnect(evt.location);
-                }}
-                @bbgraphboardserverrenewaccesssrequest=${async (
-                  evt: BreadboardUI.Events.GraphBoardServerRenewAccessRequestEvent
-                ) => {
-                  const boardServer = this.#runtime.board.getBoardServerByName(
-                    evt.boardServerName
-                  );
-
-                  if (!boardServer) {
-                    return;
-                  }
-
-                  if (boardServer.renewAccess) {
-                    await boardServer.renewAccess();
                   }
                 }}
                 @bbgraphboardserverloadrequest=${async (
@@ -2742,32 +2152,635 @@ export class Main extends LitElement {
                 ) => {
                   this.#runtime.router.go(evt.url);
                 }}
-                @bbgraphboardserverremixrequest=${async (
-                  evt: BreadboardUI.Events.GraphBoardServerRemixRequestEvent
+                @bbworkspaceselectionmove=${async (
+                  evt: BreadboardUI.Events.WorkspaceSelectionMoveEvent
                 ) => {
-                  const graphStore = this.#runtime.board.getGraphStore();
-                  const addResult = graphStore.addByURL(evt.url, [], {});
-                  const graph = (await graphStore.getLatest(addResult.mutable))
-                    .graph;
-                  if (graph) {
-                    await this.#attemptRemix(graph, { role: "user" });
-                    this.#showWelcomePanel = false;
+                  if (!this.tab) {
+                    return;
                   }
-                }}
-                @bbgraphboardserverdeleterequest=${async (
-                  evt: BreadboardUI.Events.GraphBoardServerDeleteRequestEvent
-                ) => {
-                  await this.#attemptBoardDelete(
-                    evt.boardServerName,
-                    evt.url,
-                    evt.isActive
+
+                  await this.#runtime.edit.moveToNewGraph(
+                    this.tab,
+                    evt.selections,
+                    evt.targetGraphId,
+                    evt.delta
                   );
                 }}
-              ></bb-project-listing>`
-            : nothing
-        }
+                @bbnodecreatereference=${async (
+                  evt: BreadboardUI.Events.NodeCreateReferenceEvent
+                ) => {
+                  if (!this.tab) {
+                    return;
+                  }
+
+                  await this.#runtime.edit.createReference(
+                    this.tab,
+                    evt.graphId,
+                    evt.nodeId,
+                    evt.portId,
+                    evt.value
+                  );
+                }}
+                @bbeditorpositionchange=${(
+                  evt: BreadboardUI.Events.EditorPointerPositionChangeEvent
+                ) => {
+                  this.#lastPointerPosition.x = evt.x;
+                  this.#lastPointerPosition.y = evt.y;
+                }}
+                @bbworkspaceselectionstate=${(
+                  evt: BreadboardUI.Events.WorkspaceSelectionStateEvent
+                ) => {
+                  if (!this.tab) {
+                    return;
+                  }
+
+                  this.#runtime.select.processSelections(
+                    this.tab.id,
+                    evt.selectionChangeId,
+                    evt.selections,
+                    evt.replaceExistingSelections,
+                    evt.moveToSelection
+                  );
+                }}
+                @bbworkspacevisualupdate=${(
+                  evt: BreadboardUI.Events.WorkspaceVisualUpdateEvent
+                ) => {
+                  if (!this.tab) {
+                    return;
+                  }
+
+                  this.#runtime.edit.processVisualChanges(
+                    this.tab,
+                    evt.visualChangeId,
+                    evt.visualState
+                  );
+                }}
+                @bbworkspaceitemvisualupdate=${(
+                  evt: BreadboardUI.Events.WorkspaceItemVisualUpdateEvent
+                ) => {
+                  if (!this.tab) {
+                    return;
+                  }
+
+                  this.#runtime.edit.processVisualChange(
+                    this.tab,
+                    evt.visualChangeId,
+                    evt.graphId,
+                    evt.visual
+                  );
+                }}
+                @bbinteraction=${() => {
+                  this.#clearBoardSave();
+                }}
+                @bbnodepartialupdate=${async (
+                  evt: BreadboardUI.Events.NodePartialUpdateEvent
+                ) => {
+                  if (!this.tab) {
+                    this.toast(
+                      Strings.from("ERROR_GENERIC"),
+                      BreadboardUI.Events.ToastType.ERROR
+                    );
+                    return;
+                  }
+
+                  await this.#runtime.edit.changeNodeConfigurationPart(
+                    this.tab,
+                    evt.id,
+                    evt.configuration,
+                    evt.subGraphId,
+                    evt.metadata,
+                    evt.ins
+                  );
+                }}
+                @bbworkspacenewitemcreaterequest=${() => {
+                  this.#showNewWorkspaceItemOverlay = true;
+                }}
+                @bbboarditemcopy=${(
+                  evt: BreadboardUI.Events.BoardItemCopyEvent
+                ) => {
+                  this.#runtime.edit.copyBoardItem(
+                    this.tab,
+                    evt.itemType,
+                    evt.id,
+                    evt.title
+                  );
+                }}
+                @bbstart=${(evt: BreadboardUI.Events.StartEvent) => {
+                  if (!evt.url) {
+                    return;
+                  }
+                  this.#runtime.router.go(evt.url);
+                }}
+                @dragover=${(evt: DragEvent) => {
+                  evt.preventDefault();
+                }}
+                @drop=${(evt: DragEvent) => {
+                  evt.preventDefault();
+                  this.#attemptLoad(evt);
+                }}
+                @bbinputerror=${(evt: BreadboardUI.Events.InputErrorEvent) => {
+                  this.toast(evt.detail, BreadboardUI.Events.ToastType.ERROR);
+                  return;
+                }}
+                @bbboardtitleupdate=${async (
+                  evt: BreadboardUI.Events.BoardTitleUpdateEvent
+                ) => {
+                  await this.#attemptBoardTitleAndDescriptionUpdate(
+                    evt.title,
+                    null
+                  );
+                }}
+                @bbboarddescriptionupdate=${async (
+                  evt: BreadboardUI.Events.BoardDescriptionUpdateEvent
+                ) => {
+                  await this.#runtime.edit.updateBoardTitleAndDescription(
+                    this.tab,
+                    null,
+                    evt.description
+                  );
+                }}
+                @bbboardinfoupdate=${async (
+                  evt: BreadboardUI.Events.BoardInfoUpdateEvent
+                ) => {
+                  await this.#handleBoardInfoUpdate(evt);
+                  if (evt.exported !== null) {
+                    if (evt.subGraphId) {
+                      await this.#attemptToggleExport(
+                        evt.subGraphId,
+                        "declarative"
+                      );
+                    } else if (evt.moduleId) {
+                      await this.#attemptToggleExport(
+                        evt.moduleId,
+                        "imperative"
+                      );
+                    }
+                  }
+                  this.requestUpdate();
+                }}
+                @bbgraphboardserverblankboard=${() => {
+                  this.#attemptBoardCreate(blank(), { role: "user" });
+                }}
+                @bbsubgraphcreate=${async (
+                  evt: BreadboardUI.Events.SubGraphCreateEvent
+                ) => {
+                  const result = await this.#runtime.edit.createSubGraph(
+                    this.tab,
+                    evt.subGraphTitle
+                  );
+                  if (!result) {
+                    this.toast(
+                      Strings.from("ERROR_GENERIC"),
+                      BreadboardUI.Events.ToastType.ERROR
+                    );
+                    return;
+                  }
+
+                  if (!this.tab) {
+                    return;
+                  }
+                  this.tab.subGraphId = result;
+                  this.requestUpdate();
+                }}
+                @bbsubgraphdelete=${async (
+                  evt: BreadboardUI.Events.SubGraphDeleteEvent
+                ) => {
+                  await this.#runtime.edit.deleteSubGraph(
+                    this.tab,
+                    evt.subGraphId
+                  );
+                  if (!this.tab) {
+                    return;
+                  }
+
+                  this.#runtime.select.deselectAll(
+                    this.tab.id,
+                    this.#runtime.util.createWorkspaceSelectionChangeId()
+                  );
+                }}
+                @bbmodulechangelanguage=${(
+                  evt: BreadboardUI.Events.ModuleChangeLanguageEvent
+                ) => {
+                  if (!this.tab) {
+                    return;
+                  }
+
+                  this.#runtime.edit.changeModuleLanguage(
+                    this.tab,
+                    evt.moduleId,
+                    evt.moduleLanguage
+                  );
+                }}
+                @bbmodulecreate=${(
+                  evt: BreadboardUI.Events.ModuleCreateEvent
+                ) => {
+                  this.#attemptModuleCreate(evt.moduleId);
+                }}
+                @bbmoduledelete=${async (
+                  evt: BreadboardUI.Events.ModuleDeleteEvent
+                ) => {
+                  if (!this.tab) {
+                    return;
+                  }
+
+                  await this.#runtime.edit.deleteModule(this.tab, evt.moduleId);
+                }}
+                @bbmoduleedit=${async (
+                  evt: BreadboardUI.Events.ModuleEditEvent
+                ) => {
+                  return this.#runtime.edit.editModule(
+                    this.tab,
+                    evt.moduleId,
+                    evt.code,
+                    evt.metadata
+                  );
+                }}
+                @bbtoggleexport=${async (
+                  evt: BreadboardUI.Events.ToggleExportEvent
+                ) => {
+                  await this.#attemptToggleExport(evt.exportId, evt.exportType);
+                }}
+                @bbthemechange=${async (
+                  evt: BreadboardUI.Events.ThemeChangeEvent
+                ) => {
+                  await this.#runtime.edit.changeTheme(this.tab, evt.theme);
+                }}
+                @bbthemeupdate=${async (
+                  evt: BreadboardUI.Events.ThemeUpdateEvent
+                ) => {
+                  await this.#runtime.edit.updateTheme(
+                    this.tab,
+                    evt.themeId,
+                    evt.theme
+                  );
+                }}
+                @bbthemedelete=${async (
+                  evt: BreadboardUI.Events.ThemeUpdateEvent
+                ) => {
+                  await this.#runtime.edit.deleteTheme(this.tab, evt.themeId);
+                }}
+                @bbthemecreate=${(
+                  evt: BreadboardUI.Events.ThemeCreateEvent
+                ) => {
+                  this.#runtime.edit.createTheme(this.tab, evt.theme);
+                }}
+                @bbnoderunrequest=${async (
+                  evt: BreadboardUI.Events.NodeRunRequestEvent
+                ) => {
+                  await this.#attemptNodeRun(evt.id);
+                }}
+                @bbmovenodes=${async (
+                  evt: BreadboardUI.Events.MoveNodesEvent
+                ) => {
+                  const { destinationGraphId } = evt;
+                  for (const [sourceGraphId, nodes] of evt.sourceNodes) {
+                    await this.#runtime.edit.moveNodesToGraph(
+                      this.tab,
+                      nodes,
+                      sourceGraphId === MAIN_BOARD_ID ? "" : sourceGraphId,
+                      destinationGraphId === MAIN_BOARD_ID
+                        ? ""
+                        : destinationGraphId,
+                      evt.positionDelta
+                    );
+                  }
+
+                  if (!this.tab) {
+                    return;
+                  }
+
+                  // Clear all selections.
+                  this.#runtime.select.processSelections(
+                    this.tab.id,
+                    this.#runtime.util.createWorkspaceSelectionChangeId(),
+                    null,
+                    true
+                  );
+                }}
+                @bbdroppedassets=${async (
+                  evt: BreadboardUI.Events.DroppedAssetsEvent
+                ) => {
+                  const projectState = this.#runtime.state.getOrCreate(
+                    this.tab?.mainGraphId,
+                    this.#runtime.edit.getEditor(this.tab)
+                  );
+
+                  if (!projectState) {
+                    this.toast(
+                      "Unable to add",
+                      BreadboardUI.Events.ToastType.ERROR
+                    );
+                    return;
+                  }
+
+                  await Promise.all(
+                    evt.assets.map((asset) => {
+                      const metadata: AssetMetadata = {
+                        title: asset.name,
+                        type: asset.type,
+                        visual: asset.visual,
+                      };
+
+                      if (asset.subType) {
+                        metadata.subType = asset.subType;
+                      }
+
+                      return projectState?.organizer.addGraphAsset({
+                        path: asset.path,
+                        metadata,
+                        data: [asset.data],
+                      });
+                    })
+                  );
+
+                  this.#checkGoogleDriveAssetShareStatus();
+                }}
+                @bbedgeattachmentmove=${async (
+                  evt: BreadboardUI.Events.EdgeAttachmentMoveEvent
+                ) => {
+                  const { graphId } = evt;
+                  await this.#runtime.edit.changeEdgeAttachmentPoint(
+                    this.tab,
+                    graphId === MAIN_BOARD_ID ? "" : graphId,
+                    evt.edge,
+                    evt.which,
+                    evt.attachmentPoint
+                  );
+                }}
+                @bbedgechange=${async (
+                  evt: BreadboardUI.Events.EdgeChangeEvent
+                ) => {
+                  await this.#runtime.edit.changeEdge(
+                    this.tab,
+                    evt.changeType,
+                    evt.from,
+                    evt.to,
+                    evt.subGraphId
+                  );
+                }}
+                @bbassetedgechange=${async (
+                  evt: BreadboardUI.Events.AssetEdgeChangeEvent
+                ) => {
+                  await this.#runtime.edit.changeAssetEdge(
+                    this.tab,
+                    evt.changeType,
+                    evt.assetEdge,
+                    evt.subGraphId
+                  );
+                }}
+                @bbnodemetadataupdate=${async (
+                  evt: BreadboardUI.Events.NodeMetadataUpdateEvent
+                ) => {
+                  await this.#runtime.edit.updateNodeMetadata(
+                    this.tab,
+                    evt.id,
+                    evt.metadata,
+                    evt.subGraphId
+                  );
+                }}
+                @bbmultiedit=${async (
+                  evt: BreadboardUI.Events.MultiEditEvent
+                ) => {
+                  if (!this.tab) {
+                    return;
+                  }
+
+                  await this.#runtime.edit.multiEdit(
+                    this.tab,
+                    evt.edits,
+                    evt.description
+                  );
+
+                  const additions: string[] = evt.edits
+                    .map((edit) =>
+                      edit.type === "addnode" ? edit.node.id : null
+                    )
+                    .filter((item) => item !== null);
+                  if (additions.length === 0) {
+                    return;
+                  }
+
+                  this.#runtime.select.selectNodes(
+                    this.tab.id,
+                    this.#runtime.select.generateId(),
+                    evt.subGraphId ?? BreadboardUI.Constants.MAIN_BOARD_ID,
+                    additions
+                  );
+                }}
+                @bbaddnodewithedge=${async (
+                  evt: BreadboardUI.Events.AddNodeWithEdgeEvent
+                ) => {
+                  if (!this.tab) {
+                    return;
+                  }
+
+                  await this.#runtime.edit.addNodeWithEdge(
+                    this.tab,
+                    evt.node,
+                    evt.edge,
+                    evt.subGraphId
+                  );
+
+                  this.#runtime.select.selectNodes(
+                    this.tab.id,
+                    this.#runtime.select.generateId(),
+                    evt.subGraphId ?? BreadboardUI.Constants.MAIN_BOARD_ID,
+                    [evt.node.id]
+                  );
+                }}
+                @bbnodecreate=${async (
+                  evt: BreadboardUI.Events.NodeCreateEvent
+                ) => {
+                  await this.#runtime.edit.createNode(
+                    this.tab,
+                    evt.id,
+                    evt.nodeType,
+                    evt.configuration,
+                    evt.metadata,
+                    evt.subGraphId,
+                    evt.options
+                  );
+
+                  if (!this.tab) {
+                    return;
+                  }
+
+                  this.#runtime.select.selectNode(
+                    this.tab.id,
+                    this.#runtime.select.generateId(),
+                    evt.subGraphId ?? BreadboardUI.Constants.MAIN_BOARD_ID,
+                    evt.id
+                  );
+                }}
+                @bbgraphreplace=${async (
+                  evt: BreadboardUI.Events.GraphReplaceEvent
+                ) => {
+                  await this.#runtime.edit.replaceGraph(
+                    this.tab,
+                    evt.replacement,
+                    evt.creator
+                  );
+                }}
+                @bbnodeupdate=${(evt: BreadboardUI.Events.NodeUpdateEvent) => {
+                  console.log("bbnodeupdate");
+                  this.#runtime.edit.changeNodeConfiguration(
+                    this.tab,
+                    evt.id,
+                    evt.configuration,
+                    evt.subGraphId
+                  );
+                }}
+                @bbnodedelete=${(evt: BreadboardUI.Events.NodeDeleteEvent) => {
+                  this.#runtime.edit.deleteNode(
+                    this.tab,
+                    evt.id,
+                    evt.subGraphId
+                  );
+                }}
+                @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
+                  this.toast(toastEvent.message, toastEvent.toastType);
+                }}
+                @bbnodetyperetrievalerror=${() => {
+                  this.toast(
+                    Strings.from("ERROR_UNABLE_TO_RETRIEVE_TYPE_INFO"),
+                    BreadboardUI.Events.ToastType.ERROR
+                  );
+                }}
+                @bboutlinemodechange=${() => {
+                  if (!this.tab) {
+                    return;
+                  }
+
+                  this.#runtime.select.deselectAll(
+                    this.tab?.id,
+                    this.#runtime.util.createWorkspaceSelectionChangeId()
+                  );
+                }}
+                @bbiterateonprompt=${(
+                  iterateOnPromptEvent: IterateOnPromptEvent
+                ) => {
+                  const message: IterateOnPromptMessage = {
+                    type: "iterate_on_prompt",
+                    title: iterateOnPromptEvent.title,
+                    promptTemplate: iterateOnPromptEvent.promptTemplate,
+                    boardId: iterateOnPromptEvent.boardId,
+                    nodeId: iterateOnPromptEvent.nodeId,
+                    modelId: iterateOnPromptEvent.modelId,
+                  };
+                  this.#embedHandler?.sendToEmbedder(message);
+                }}
+              ></bb-canvas-controller>
+          ${
+            this.#showWelcomePanel
+              ? html`<bb-project-listing
+                  .version=${this.#version}
+                  .gitCommitHash=${this.#gitCommitHash}
+                  .recentBoards=${this.#recentBoards}
+                  .selectedBoardServer=${this.#selectedBoardServer}
+                  .selectedLocation=${this.#selectedLocation}
+                  .boardServers=${this.#boardServers}
+                  .showAdditionalSources=${showExperimentalComponents}
+                  .filter=${this.#projectFilter}
+                  @bbboarddelete=${async (
+                    evt: BreadboardUI.Events.BoardDeleteEvent
+                  ) => {
+                    const boardServer =
+                      this.#runtime.board.getBoardServerForURL(
+                        new URL(evt.url)
+                      );
+                    if (!boardServer) {
+                      return;
+                    }
+
+                    await this.#attemptBoardDelete(
+                      boardServer.name,
+                      evt.url,
+                      false
+                    );
+                  }}
+                  @bbgraphboardserverblankboard=${() => {
+                    this.#attemptBoardCreate(blank(), { role: "user" });
+                  }}
+                  @bbgraphboardservergeneratedboard=${(
+                    evt: BreadboardUI.Events.GraphBoardServerGeneratedBoardEvent
+                  ) => {
+                    this.#attemptBoardCreate(evt.graph, evt.creator);
+                  }}
+                  @bbgraphboardserveradd=${() => {
+                    this.#showBoardServerAddOverlay = true;
+                  }}
+                  @bbgraphboardserverrefresh=${async (
+                    evt: BreadboardUI.Events.GraphBoardServerRefreshEvent
+                  ) => {
+                    const boardServer =
+                      this.#runtime.board.getBoardServerByName(
+                        evt.boardServerName
+                      );
+                    if (!boardServer) {
+                      return;
+                    }
+
+                    const refreshed = await boardServer.refresh(evt.location);
+                    if (!refreshed) {
+                      this.toast(
+                        Strings.from("ERROR_UNABLE_TO_REFRESH_PROJECTS"),
+                        BreadboardUI.Events.ToastType.WARNING
+                      );
+                    }
+                  }}
+                  @bbgraphboardserverdisconnect=${async (
+                    evt: BreadboardUI.Events.GraphBoardServerDisconnectEvent
+                  ) => {
+                    await this.#runtime.board.disconnect(evt.location);
+                  }}
+                  @bbgraphboardserverrenewaccesssrequest=${async (
+                    evt: BreadboardUI.Events.GraphBoardServerRenewAccessRequestEvent
+                  ) => {
+                    const boardServer =
+                      this.#runtime.board.getBoardServerByName(
+                        evt.boardServerName
+                      );
+
+                    if (!boardServer) {
+                      return;
+                    }
+
+                    if (boardServer.renewAccess) {
+                      await boardServer.renewAccess();
+                    }
+                  }}
+                  @bbgraphboardserverloadrequest=${async (
+                    evt: BreadboardUI.Events.GraphBoardServerLoadRequestEvent
+                  ) => {
+                    this.#runtime.router.go(evt.url);
+                  }}
+                  @bbgraphboardserverremixrequest=${async (
+                    evt: BreadboardUI.Events.GraphBoardServerRemixRequestEvent
+                  ) => {
+                    const graphStore = this.#runtime.board.getGraphStore();
+                    const addResult = graphStore.addByURL(evt.url, [], {});
+                    const graph = (
+                      await graphStore.getLatest(addResult.mutable)
+                    ).graph;
+                    if (graph) {
+                      await this.#attemptRemix(graph, { role: "user" });
+                      this.#showWelcomePanel = false;
+                    }
+                  }}
+                  @bbgraphboardserverdeleterequest=${async (
+                    evt: BreadboardUI.Events.GraphBoardServerDeleteRequestEvent
+                  ) => {
+                    await this.#attemptBoardDelete(
+                      evt.boardServerName,
+                      evt.url,
+                      evt.isActive
+                    );
+                  }}
+                ></bb-project-listing>`
+              : nothing
+          }
           </div>
-      </div>`;
+        </div>`;
         const tabModules = Object.entries(this.tab?.graph.modules ?? {});
 
         // For standard, non-imperative graphs prepend the main board ID
@@ -2964,7 +2977,6 @@ export class Main extends LitElement {
 
     const signinAdapter = this.signinAdapter ?? null;
     const feedbackLink = this.clientDeploymentConfiguration.FEEDBACK_LINK;
-
     const canSave = this.tab
       ? this.#runtime.board.canSave(this.tab.id) && !this.tab.readOnly
       : false;
@@ -2973,7 +2985,7 @@ export class Main extends LitElement {
       : BreadboardUI.Types.BOARD_SAVE_STATUS.ERROR;
 
     return html`<bb-ve-header
-      .signInAdapter=${signinAdapter}
+      .signinAdapter=${signinAdapter}
       .hasActiveTab=${this.tab !== null}
       .tabTitle=${this.tab?.graph?.title ?? null}
       .canSave=${canSave}
