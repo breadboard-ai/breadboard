@@ -219,7 +219,7 @@ export class BoardActivity extends LitElement {
                 >
                 ${this.showExtendedInfo
                   ? html`<button
-                      class="details m-icon"
+                      class="details g-icon"
                       data-message-id=${event.id}
                     >
                       data_info_alert
@@ -715,7 +715,7 @@ export class BoardActivity extends LitElement {
                                   >
                                   ${this.showExtendedInfo
                                     ? html` <button
-                                          class="run-component m-icon filled"
+                                          class="run-component g-icon filled"
                                           @click=${() => {
                                             this.dispatchEvent(
                                               new RunIsolatedNodeEvent(
@@ -728,7 +728,7 @@ export class BoardActivity extends LitElement {
                                           play_arrow
                                         </button>
                                         <button
-                                          class="details m-icon"
+                                          class="details g-icon"
                                           data-message-id=${event.id}
                                         >
                                           data_info_alert
