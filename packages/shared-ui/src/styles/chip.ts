@@ -38,8 +38,7 @@ export const chipStyles = css`
       filter: brightness(97%);
     }
 
-    & > .g-icon,
-    & > .m-icon {
+    & > .g-icon {
       font-size: 1.6667em;
     }
     & > :nth-child(2) {

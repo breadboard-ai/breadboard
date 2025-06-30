@@ -7,24 +7,17 @@
 import { css } from "lit";
 
 /**
- * CSS classes for Material Icons and Google Symbols.
+ * CSS classes for Google Symbols.
  *
  * Usage:
  *
  * ```html
- * <span class="m-icon">play_arrow</span>
  * <span class="g-icon">pen_spark</span>
  * ```
  */
 export const icons = css`
-  .m-icon {
-    font-family: "Material Symbols Outlined";
-  }
   .g-icon {
     font-family: "Google Symbols";
-  }
-  .m-icon,
-  .g-icon {
     font-weight: normal;
     font-style: normal;
     font-display: optional;
