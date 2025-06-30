@@ -19,6 +19,38 @@ function isFocusedOnGraphRenderer(evt: Event) {
     .some((target) => target instanceof BreadboardUI.Elements.Renderer);
 }
 
+export const UndoCommand: KeyboardCommand = {
+  keys: ["Cmd+z", "Ctrl+z"],
+
+  willHandle(tab: Tab | null, evt: Event) {
+    return tab !== null && isFocusedOnGraphRenderer(evt);
+  },
+
+  async do({ runtime, tab }: KeyboardCommandDeps): Promise<void> {
+    if (tab?.readOnly || !tab?.graphIsMine) {
+      return;
+    }
+
+    runtime.edit.undo(tab);
+  },
+};
+
+export const RedoCommand: KeyboardCommand = {
+  keys: ["Cmd+Shift+z", "Ctrl+Shift+z"],
+
+  willHandle(tab: Tab | null, evt: Event) {
+    return tab !== null && isFocusedOnGraphRenderer(evt);
+  },
+
+  async do({ runtime, tab }: KeyboardCommandDeps): Promise<void> {
+    if (tab?.readOnly || !tab?.graphIsMine) {
+      return;
+    }
+
+    runtime.edit.redo(tab);
+  },
+};
+
 export const DeleteCommand: KeyboardCommand = {
   keys: ["Delete", "Backspace"],
 
