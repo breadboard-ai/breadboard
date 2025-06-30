@@ -114,7 +114,7 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@breadboard-ai/runtime": "^0.0.1",
+    "@breadboard-ai/runtime": "0.0.1",
     "@breadboard-ai/types": "0.7.0",
     "@google-labs/breadboard": "^0.34.0"
   }

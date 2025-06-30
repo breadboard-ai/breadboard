@@ -88,6 +88,6 @@
   },
   "dependencies": {
     "@breadboard-ai/types": "0.7.0",
-    "@breadboard-ai/utils": "^0.0.1"
+    "@breadboard-ai/utils": "0.0.1"
   }
 }
