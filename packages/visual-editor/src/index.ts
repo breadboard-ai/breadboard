@@ -231,34 +231,16 @@ const BOARD_AUTO_SAVE_TIMEOUT = 1_500;
 @customElement("bb-main")
 export class Main extends LitElement {
   @state()
-  accessor graph: GraphDescriptor | null = null;
-
-  @property()
-  accessor subGraphId: string | null = null;
+  accessor #showBoardServerAddOverlay = false;
 
   @state()
-  accessor showNav = false;
+  accessor #showWelcomePanel = false;
 
   @state()
-  accessor showBoardServerAddOverlay = false;
+  accessor #showNewWorkspaceItemOverlay = false;
 
   @state()
-  accessor showHistory = false;
-
-  @state()
-  accessor showFirstRun = false;
-
-  @state()
-  accessor showWelcomePanel = false;
-
-  @state()
-  accessor showBoardReferenceMarkers = false;
-
-  @state()
-  accessor showNewWorkspaceItemOverlay = false;
-
-  @state()
-  accessor showExtendedSettings = false;
+  accessor #showExtendedSettings = false;
 
   @state()
   accessor showBoardOverflowMenu = false;
@@ -273,10 +255,6 @@ export class Main extends LitElement {
   #nodeConfiguratorData: BreadboardUI.Types.NodePortConfiguration | null = null;
   #nodeConfiguratorRef: Ref<BreadboardUI.Elements.NodeConfigurationOverlay> =
     createRef();
-
-  @state()
-  accessor showCommentEditor = false;
-  #commentValueData: BreadboardUI.Types.CommentConfiguration | null = null;
 
   @state()
   accessor showBoardItemsOverflowMenu = false;
@@ -304,7 +282,7 @@ export class Main extends LitElement {
   accessor #showBoardEditModal = false;
 
   @state()
-  accessor showSettingsOverlay = false;
+  accessor #showSettingsOverlay = false;
 
   @state()
   accessor toasts = new Map<
@@ -317,7 +295,7 @@ export class Main extends LitElement {
   >();
 
   @state()
-  accessor showToS = false;
+  accessor #showToS = false;
 
   @provide({ context: clientDeploymentConfigurationContext })
   accessor clientDeploymentConfiguration: ClientDeploymentConfiguration;
@@ -354,12 +332,6 @@ export class Main extends LitElement {
 
   @state()
   accessor selectedLocation = "Browser Storage";
-
-  @state()
-  accessor previewOverlayURL: URL | null = null;
-
-  @state()
-  accessor boardServerNavState: string | null = null;
 
   /**
    * Indicates whether or not the UI can currently run a flow or not.
@@ -449,20 +421,19 @@ export class Main extends LitElement {
   #embedHandler?: EmbedHandler;
 
   static styles = mainStyles;
-  proxyFromUrl: string | undefined;
 
   #initialize: Promise<void>;
   constructor(config: MainArguments) {
     super();
 
-    this.showToS =
+    this.#showToS =
       !!config.enableTos &&
       !!config.tosHtml &&
       localStorage.getItem(TOS_KEY) !== TosStatus.ACCEPTED;
     this.#tosHtml = config.tosHtml;
     this.#embedHandler = config.embedHandler;
 
-    this.showExtendedSettings = config.showExtendedSettings ?? false;
+    this.#showExtendedSettings = config.showExtendedSettings ?? false;
 
     // This is a big hacky, since we're assigning a value to a constant object,
     // but okay here, because this constant is never re-assigned and is only
@@ -555,18 +526,6 @@ export class Main extends LitElement {
     }
 
     const currentUrl = new URL(window.location.href);
-    const firstRunFromUrl = currentUrl.searchParams.get("firstrun");
-
-    if (firstRunFromUrl && firstRunFromUrl === "true") {
-      this.showFirstRun = true;
-    }
-
-    const proxyFromUrl = currentUrl.searchParams.get("python_proxy");
-    if (proxyFromUrl) {
-      console.log("Setting python_proxy: %s", proxyFromUrl);
-      this.proxyFromUrl = proxyFromUrl;
-    }
-
     const stopCurrentRunIfActive = (tabId: TabId | null) => {
       if (!tabId) {
         return;
@@ -800,7 +759,7 @@ export class Main extends LitElement {
         this.#runtime.board.addEventListener(
           Runtime.Events.RuntimeBoardServerChangeEvent.eventName,
           (evt: Runtime.Events.RuntimeBoardServerChangeEvent) => {
-            this.showBoardServerAddOverlay = false;
+            this.#showBoardServerAddOverlay = false;
             this.#boardServers = runtime.board.getBoardServers() || [];
 
             if (evt.connectedBoardServerName && evt.connectedBoardServerURL) {
@@ -1016,7 +975,7 @@ export class Main extends LitElement {
                   );
                 }, LOADING_TIMEOUT);
 
-                this.showWelcomePanel = false;
+                this.#showWelcomePanel = false;
                 await this.#runtime.board.createTabFromURL(
                   boardUrl,
                   undefined,
@@ -1212,9 +1171,9 @@ export class Main extends LitElement {
   }
 
   #maybeShowWelcomePanel() {
-    this.showWelcomePanel = this.tab === null;
+    this.#showWelcomePanel = this.tab === null;
 
-    if (!this.showWelcomePanel) {
+    if (!this.#showWelcomePanel) {
       return;
     }
     this.#hideAllOverlays();
@@ -1224,10 +1183,9 @@ export class Main extends LitElement {
   #hideAllOverlays() {
     this.boardEditOverlayInfo = null;
     this.#showBoardEditModal = false;
-    this.showSettingsOverlay = false;
-    this.showBoardServerAddOverlay = false;
+    this.#showSettingsOverlay = false;
+    this.#showBoardServerAddOverlay = false;
     this.showNodeConfigurator = false;
-    this.showCommentEditor = false;
   }
 
   #onShowTooltip(evt: Event) {
@@ -1580,7 +1538,7 @@ export class Main extends LitElement {
           interactiveSecrets: true,
         },
         this.#settings,
-        this.proxyFromUrl,
+        undefined /* no longer used */,
         await this.#getProxyURL(url)
       )
     );
@@ -1898,8 +1856,6 @@ export class Main extends LitElement {
       this.#runtime.board.closeTab(this.tab.id);
       this.#removeRecentUrl(url);
     }
-
-    this.boardServerNavState = globalThis.crypto.randomUUID();
   }
 
   async #attemptRemix(graph: GraphDescriptor, creator: EditHistoryCreator) {
@@ -1997,16 +1953,6 @@ export class Main extends LitElement {
       pageUrl.searchParams.delete(id);
     }
 
-    window.history.replaceState(null, "", pageUrl);
-  }
-
-  #setUrlParam(param: string, value: string | null) {
-    const pageUrl = new URL(window.location.href);
-    if (value === null) {
-      pageUrl.searchParams.delete(param);
-    } else {
-      pageUrl.searchParams.set(param, value);
-    }
     window.history.replaceState(null, "", pageUrl);
   }
 
@@ -2357,7 +2303,7 @@ export class Main extends LitElement {
           ...config,
         },
         this.#settings,
-        this.proxyFromUrl,
+        undefined /* no longer used */,
         await this.#getProxyURL(this.tab?.graph.url)
       ),
       history
@@ -2388,28 +2334,6 @@ export class Main extends LitElement {
     }
 
     this.#runtime.edit.createModule(this.tab, moduleId, newModule);
-  }
-
-  #attemptParamCreate(evt: BreadboardUI.Events.ParamCreateEvent) {
-    if (!this.tab) {
-      return;
-    }
-
-    return this.#runtime.edit.createParam(
-      this.tab,
-      evt.graphId,
-      evt.path,
-      evt.title,
-      evt.description
-    );
-  }
-
-  #attemptParamDelete(evt: BreadboardUI.Events.ParamDeleteEvent) {
-    if (!this.tab) {
-      return;
-    }
-
-    return this.#runtime.edit.deleteParam(this.tab, evt.graphId, evt.path);
   }
 
   async #attemptToggleExport(
@@ -2602,15 +2526,13 @@ export class Main extends LitElement {
     )}`;
 
     const showingOverlay =
-      this.showToS ||
+      this.#showToS ||
       this.boardEditOverlayInfo !== null ||
       this.#showBoardEditModal ||
-      this.showSettingsOverlay ||
-      this.showFirstRun ||
-      this.showBoardServerAddOverlay ||
+      this.#showSettingsOverlay ||
+      this.#showBoardServerAddOverlay ||
       this.showNodeConfigurator ||
-      this.showCommentEditor ||
-      this.showNewWorkspaceItemOverlay ||
+      this.#showNewWorkspaceItemOverlay ||
       this.showBoardOverflowMenu ||
       this.showUserOverflowMenu ||
       this.showBoardItemsOverflowMenu;
@@ -2635,11 +2557,6 @@ export class Main extends LitElement {
         );
         const inputsFromLastRun = runs[1]?.inputs() ?? null;
         const tabURLs = this.#runtime.board.getTabURLs();
-        const offerConfigurationEnhancements =
-          this.#settings?.getItem(
-            BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
-            "Offer Configuration Enhancements"
-          )?.value ?? false;
 
         const showCustomStepEditing =
           this.#settings?.getItem(
@@ -2664,7 +2581,7 @@ export class Main extends LitElement {
         }
 
         let settingsOverlay: HTMLTemplateResult | symbol = nothing;
-        if (this.showSettingsOverlay) {
+        if (this.#showSettingsOverlay) {
           settingsOverlay = html`<bb-settings-edit-overlay
             class="settings"
             .settings=${this.#settings?.values || null}
@@ -2692,18 +2609,18 @@ export class Main extends LitElement {
               this.requestUpdate();
             }}
             @bboverlaydismissed=${() => {
-              this.showSettingsOverlay = false;
+              this.#showSettingsOverlay = false;
             }}
           ></bb-settings-edit-overlay>`;
         }
 
         let showNewWorkspaceItemOverlay: HTMLTemplateResult | symbol = nothing;
-        if (this.showNewWorkspaceItemOverlay) {
+        if (this.#showNewWorkspaceItemOverlay) {
           showNewWorkspaceItemOverlay = html`<bb-new-workspace-item-overlay
             @bbworkspaceitemcreate=${async (
               evt: BreadboardUI.Events.WorkspaceItemCreateEvent
             ) => {
-              this.showNewWorkspaceItemOverlay = false;
+              this.#showNewWorkspaceItemOverlay = false;
 
               await this.#runtime.edit.createWorkspaceItem(
                 this.tab,
@@ -2713,80 +2630,18 @@ export class Main extends LitElement {
               );
             }}
             @bboverlaydismissed=${() => {
-              this.showNewWorkspaceItemOverlay = false;
+              this.#showNewWorkspaceItemOverlay = false;
             }}
           ></bb-new-workspace-item-overlay>`;
         }
 
-        let firstRunOverlay: HTMLTemplateResult | symbol = nothing;
-        if (this.showFirstRun) {
-          const currentUrl = new URL(window.location.href);
-          const boardServerUrl = currentUrl.searchParams.get("boardserver");
-
-          firstRunOverlay = html`<bb-first-run-overlay
-            class="settings"
-            .settings=${this.#settings?.values || null}
-            .boardServerUrl=${boardServerUrl}
-            .boardServers=${this.#boardServers}
-            @bbgraphboardserverconnectrequest=${async (
-              evt: BreadboardUI.Events.GraphBoardServerConnectRequestEvent
-            ) => {
-              const result = await this.#runtime.board.connect(
-                evt.location,
-                evt.apiKey
-              );
-
-              if (result.error) {
-                this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
-              }
-
-              if (!result.success) {
-                return;
-              }
-
-              this.showBoardServerAddOverlay = false;
-            }}
-            @bbsettingsupdate=${async (
-              evt: BreadboardUI.Events.SettingsUpdateEvent
-            ) => {
-              if (!this.#settings) {
-                return;
-              }
-
-              try {
-                await this.#settings.save(evt.settings);
-                this.toast(
-                  `Welcome to ${Strings.from("APP_NAME")}!`,
-                  BreadboardUI.Events.ToastType.INFORMATION
-                );
-              } catch (err) {
-                console.warn(err);
-                this.toast(
-                  Strings.from("ERROR_SAVE_SETTINGS"),
-                  BreadboardUI.Events.ToastType.ERROR
-                );
-              }
-
-              this.#setUrlParam("firstrun", null);
-              this.#setUrlParam("boardserver", null);
-              this.showFirstRun = false;
-              this.requestUpdate();
-            }}
-            @bboverlaydismissed=${() => {
-              this.#setUrlParam("firstrun", null);
-              this.#setUrlParam("boardserver", null);
-              this.showFirstRun = false;
-            }}
-          ></bb-first-run-overlay>`;
-        }
-
         let boardServerAddOverlay: HTMLTemplateResult | symbol = nothing;
-        if (this.showBoardServerAddOverlay) {
+        if (this.#showBoardServerAddOverlay) {
           boardServerAddOverlay = html`<bb-board-server-overlay
             .showGoogleDrive=${true}
             .boardServers=${this.#boardServers}
             @bboverlaydismissed=${() => {
-              this.showBoardServerAddOverlay = false;
+              this.#showBoardServerAddOverlay = false;
             }}
             @bbgraphboardserverconnectrequest=${async (
               evt: BreadboardUI.Events.GraphBoardServerConnectRequestEvent
@@ -2805,7 +2660,7 @@ export class Main extends LitElement {
               }
 
               // Trigger a re-render.
-              this.showBoardServerAddOverlay = false;
+              this.#showBoardServerAddOverlay = false;
             }}
           ></bb-board-server-overlay>`;
         }
@@ -2815,101 +2670,12 @@ export class Main extends LitElement {
             BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
             "Show additional sources"
           )?.value ?? false;
+
         const showExperimentalComponents =
           this.#settings?.getItem(
             BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
             "Show Experimental Components"
           )?.value ?? false;
-
-        const canRunNode = this.#nodeConfiguratorData
-          ? topGraphResult.nodeInformation.canRunNode(
-              this.#nodeConfiguratorData.id
-            )
-          : false;
-
-        const run = runs?.[0] ?? null;
-        const events = run?.events ?? [];
-        const runEventsForNode = events.filter((evt) => {
-          return (
-            evt.type === "node" &&
-            evt.node.descriptor.id === this.#nodeConfiguratorData?.id &&
-            evt.end !== null
-          );
-        });
-
-        const nodeConfiguratorOverlay = html`<bb-focus-editor
-          ${ref(this.#nodeConfiguratorRef)}
-          .canRunNode=${canRunNode}
-          .configuration=${this.#nodeConfiguratorData}
-          .graph=${this.tab?.graph}
-          .runEventsForNode=${runEventsForNode}
-          .boardServers=${this.#boardServers}
-          .showTypes=${false}
-          .offerConfigurationEnhancements=${offerConfigurationEnhancements}
-          .projectState=${projectState}
-          .readOnly=${this.tab?.readOnly}
-          .active=${this.showNodeConfigurator}
-          @bboverlaydismissed=${() => {
-            this.#nodeConfiguratorData = null;
-            this.showNodeConfigurator = false;
-          }}
-          @bbnodepartialupdate=${async (
-            evt: BreadboardUI.Events.NodePartialUpdateEvent
-          ) => {
-            if (!this.tab) {
-              this.toast(
-                Strings.from("ERROR_NO_PROJECT"),
-                BreadboardUI.Events.ToastType.ERROR
-              );
-              return;
-            }
-
-            await this.#runtime.edit.changeNodeConfigurationPart(
-              this.tab,
-              evt.id,
-              evt.configuration,
-              evt.subGraphId,
-              evt.metadata,
-              evt.ins
-            );
-          }}
-          @bbrunisolatednode=${async (
-            evt: BreadboardUI.Events.RunIsolatedNodeEvent
-          ) => {
-            await this.#attemptNodeRun(evt.id);
-          }}
-          @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
-            this.toast(toastEvent.message, toastEvent.toastType);
-          }}
-          @bbparamcreate=${(evt: BreadboardUI.Events.ParamCreateEvent) => {
-            return this.#attemptParamCreate(evt);
-          }}
-        >
-        </bb-focus-editor>`;
-
-        let commentOverlay: HTMLTemplateResult | symbol = nothing;
-        if (this.showCommentEditor) {
-          commentOverlay = html`<bb-comment-overlay
-            .commentValue=${this.#commentValueData}
-            @bbcommentupdate=${(
-              evt: BreadboardUI.Events.CommentUpdateEvent
-            ) => {
-              this.#commentValueData = null;
-              this.showCommentEditor = false;
-
-              this.#runtime.edit.changeComment(
-                this.tab,
-                evt.id,
-                evt.text,
-                evt.subGraphId
-              );
-            }}
-            @bboverlaydismissed=${() => {
-              this.#commentValueData = null;
-              this.showCommentEditor = false;
-            }}
-          ></bb-comment-overlay>`;
-        }
 
         let userOverflowMenu: HTMLTemplateResult | symbol = nothing;
         if (this.showUserOverflowMenu && this.#userOverflowMenuConfiguration) {
@@ -2941,6 +2707,8 @@ export class Main extends LitElement {
         ) {
           const tabId = this.#boardOverflowMenuConfiguration.tabId;
           const actions: BreadboardUI.Types.OverflowAction[] = [];
+
+          console.log("Showing preview");
 
           if (this.#runtime.board.canSave(tabId)) {
             actions.push({
@@ -3280,7 +3048,7 @@ export class Main extends LitElement {
               evt.stopImmediatePropagation();
 
               if (evt.action === "new-item") {
-                this.showNewWorkspaceItemOverlay = true;
+                this.#showNewWorkspaceItemOverlay = true;
                 return;
               }
 
@@ -3497,7 +3265,7 @@ export class Main extends LitElement {
               }}
                   ?disabled=${this.tab === null}>
                 ${
-                  this.showWelcomePanel
+                  this.#showWelcomePanel
                     ? html`<span class="product-name"
                         >${Strings.from("APP_NAME")}</span
                       >`
@@ -3639,9 +3407,9 @@ export class Main extends LitElement {
                   : nothing
               }
               ${
-                this.showExtendedSettings
+                this.#showExtendedSettings
                   ? html`<button
-                      class=${classMap({ active: this.showSettingsOverlay })}
+                      class=${classMap({ active: this.#showSettingsOverlay })}
                       id="toggle-settings"
                       @pointerover=${(evt: PointerEvent) => {
                         this.dispatchEvent(
@@ -3658,7 +3426,7 @@ export class Main extends LitElement {
                         );
                       }}
                       @click=${() => {
-                        this.showSettingsOverlay = true;
+                        this.#showSettingsOverlay = true;
                       }}
                     >
                       Settings
@@ -3745,7 +3513,6 @@ export class Main extends LitElement {
               .sandbox=${sandbox}
               .selectionState=${this.#selectionState}
               .settings=${this.#settings}
-              .showBoardReferenceMarkers=${this.showBoardReferenceMarkers}
               .signedIn=${signInAdapter.state === "valid"}
               .status=${tabStatus}
               .subGraphId=${this.tab?.subGraphId ?? null}
@@ -3801,11 +3568,6 @@ export class Main extends LitElement {
                     runner.run(data);
                   }
                 }
-              }}
-              @bbparamdelete=${async (
-                evt: BreadboardUI.Events.ParamDeleteEvent
-              ) => {
-                await this.#attemptParamDelete(evt);
               }}
               @bbgraphboardserverloadrequest=${async (
                 evt: BreadboardUI.Events.GraphBoardServerLoadRequestEvent
@@ -3918,7 +3680,7 @@ export class Main extends LitElement {
                 );
               }}
               @bbworkspacenewitemcreaterequest=${() => {
-                this.showNewWorkspaceItemOverlay = true;
+                this.#showNewWorkspaceItemOverlay = true;
               }}
               @bbboarditemcopy=${(
                 evt: BreadboardUI.Events.BoardItemCopyEvent
@@ -4320,22 +4082,6 @@ export class Main extends LitElement {
 
                 await this.#setNodeDataForConfiguration(configuration, null);
               }}
-              @bbcommenteditrequest=${(
-                evt: BreadboardUI.Events.CommentEditRequestEvent
-              ) => {
-                this.showCommentEditor = true;
-                const value = this.#runtime.edit.getGraphComment(
-                  this.tab,
-                  evt.id,
-                  evt.subGraphId
-                );
-                this.#commentValueData = {
-                  x: evt.x,
-                  y: evt.y,
-                  value,
-                  subGraphId: evt.subGraphId,
-                };
-              }}
               @bbnodeactivityselected=${(
                 evt: BreadboardUI.Events.NodeActivitySelectedEvent
               ) => {
@@ -4396,7 +4142,7 @@ export class Main extends LitElement {
               }}
             ></bb-ui-controller>
         ${
-          this.showWelcomePanel
+          this.#showWelcomePanel
             ? html`<bb-project-listing
                 .version=${this.#version}
                 .gitCommitHash=${this.#gitCommitHash}
@@ -4404,7 +4150,6 @@ export class Main extends LitElement {
                 .selectedBoardServer=${this.selectedBoardServer}
                 .selectedLocation=${this.selectedLocation}
                 .boardServers=${this.#boardServers}
-                .boardServerNavState=${this.boardServerNavState}
                 .showAdditionalSources=${showAdditionalSources}
                 .filter=${this.projectFilter}
                 @bbboarddelete=${async (
@@ -4432,7 +4177,7 @@ export class Main extends LitElement {
                   this.#attemptBoardCreate(evt.graph, evt.creator);
                 }}
                 @bbgraphboardserveradd=${() => {
-                  this.showBoardServerAddOverlay = true;
+                  this.#showBoardServerAddOverlay = true;
                 }}
                 @bbgraphboardserverrefresh=${async (
                   evt: BreadboardUI.Events.GraphBoardServerRefreshEvent
@@ -4451,14 +4196,11 @@ export class Main extends LitElement {
                       BreadboardUI.Events.ToastType.WARNING
                     );
                   }
-
-                  this.boardServerNavState = globalThis.crypto.randomUUID();
                 }}
                 @bbgraphboardserverdisconnect=${async (
                   evt: BreadboardUI.Events.GraphBoardServerDisconnectEvent
                 ) => {
                   await this.#runtime.board.disconnect(evt.location);
-                  this.boardServerNavState = globalThis.crypto.randomUUID();
                 }}
                 @bbgraphboardserverrenewaccesssrequest=${async (
                   evt: BreadboardUI.Events.GraphBoardServerRenewAccessRequestEvent
@@ -4474,8 +4216,6 @@ export class Main extends LitElement {
                   if (boardServer.renewAccess) {
                     await boardServer.renewAccess();
                   }
-
-                  this.boardServerNavState = globalThis.crypto.randomUUID();
                 }}
                 @bbgraphboardserverloadrequest=${async (
                   evt: BreadboardUI.Events.GraphBoardServerLoadRequestEvent
@@ -4491,7 +4231,7 @@ export class Main extends LitElement {
                     .graph;
                   if (graph) {
                     await this.#attemptRemix(graph, { role: "user" });
-                    this.showWelcomePanel = false;
+                    this.#showWelcomePanel = false;
                   }
                 }}
                 @bbgraphboardserverdeleterequest=${async (
@@ -4539,14 +4279,11 @@ export class Main extends LitElement {
         }
 
         return [
-          this.showToS ? this.createTosDialog() : nothing,
+          this.#showToS ? this.createTosDialog() : nothing,
           ui,
           settingsOverlay,
-          firstRunOverlay,
           showNewWorkspaceItemOverlay,
           boardServerAddOverlay,
-          nodeConfiguratorOverlay,
-          commentOverlay,
           boardOverflowMenu,
           userOverflowMenu,
           boardItemsOverflowMenu,
@@ -4572,7 +4309,7 @@ export class Main extends LitElement {
 
             if (graph) {
               await this.#attemptRemix(graph, { role: "user" });
-              this.showWelcomePanel = false;
+              this.#showWelcomePanel = false;
             }
           }
         }
@@ -4610,7 +4347,7 @@ export class Main extends LitElement {
     return html`<dialog
       id="tos-dialog"
       ${ref((el: Element | undefined) => {
-        if (el && this.showToS && el.isConnected) {
+        if (el && this.#showToS && el.isConnected) {
           const dialog = el as HTMLDialogElement;
           if (!dialog.open) {
             dialog.showModal();
@@ -4624,7 +4361,7 @@ export class Main extends LitElement {
         <div class="controls">
           <button
             @click=${() => {
-              this.showToS = false;
+              this.#showToS = false;
               localStorage.setItem(TOS_KEY, TosStatus.ACCEPTED);
             }}
           >
