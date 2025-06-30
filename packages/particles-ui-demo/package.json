@@ -83,7 +83,7 @@
   "dependencies": {
     "@breadboard-ai/particles": "0.0.1",
     "@breadboard-ai/particles-ui": "0.0.1",
-    "@google/genai": "^1.6.0",
+    "@google/genai": "^1.7.0",
     "@lit-labs/signals": "^0.1.2",
     "@lit/context": "^1.1.4",
     "@modelcontextprotocol/sdk": "^1.13.1",
