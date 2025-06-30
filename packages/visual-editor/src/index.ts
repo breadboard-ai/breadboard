@@ -2732,7 +2732,7 @@ export class Main extends LitElement {
 
         return [
           ui,
-          this.#showToS ? this.createTosDialog() : nothing,
+          this.#showToS ? this.#createTosDialog() : nothing,
           this.#showNewWorkspaceItemOverlay
             ? this.#createNewWorkspaceItemOverlay()
             : nothing,
@@ -2861,7 +2861,7 @@ export class Main extends LitElement {
     ></bb-item-modal>`;
   }
 
-  createTosDialog() {
+  #createTosDialog() {
     const tosTitle = Strings.from("TOS_TITLE");
     return html`<dialog
       id="tos-dialog"
