@@ -576,6 +576,7 @@ export interface AppTemplate extends LitElement {
   showShareButton: boolean;
   showContentWarning: boolean;
   showDisclaimer: boolean;
+  isEmpty: boolean;
 }
 
 export interface Utterance {

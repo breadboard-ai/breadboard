@@ -79,6 +79,7 @@ import { effects } from "../../styles/host/effects.js";
 import { GraphTheme } from "@breadboard-ai/types";
 import { createThemeStyles } from "@breadboard-ai/theme";
 import { styleMap } from "lit/directives/style-map.js";
+import { emptyStyles } from "../../styles/host/colors-empty.js";
 
 const SIDE_ITEM_KEY = "bb-canvas-controller-side-nav-item";
 
@@ -371,6 +372,8 @@ export class CanvasController extends LitElement {
     const showAssetsInGraph = true;
 
     const graph = this.editor?.inspect("") || null;
+    const graphIsEmpty = (graph?.nodes() ?? []).length === 0;
+
     let capabilities: false | GraphProviderCapabilities = false;
     for (const boardServer of this.boardServers) {
       if (!this.graph || !this.graph.url) {
@@ -547,6 +550,7 @@ export class CanvasController extends LitElement {
         [
           run,
           eventPosition,
+          graphIsEmpty,
           this.graph,
           this.topGraphResult,
           this.signedIn,
@@ -571,6 +575,7 @@ export class CanvasController extends LitElement {
             .status=${this.status}
             .history=${this.history}
             .isMine=${this.graphIsMine}
+            .graphIsEmpty=${graphIsEmpty}
             @bbthemeeditrequest=${(evt: ThemeEditRequestEvent) => {
               this.showThemeDesigner = true;
               this.#themeOptions = evt.themeOptions;
@@ -657,7 +662,7 @@ export class CanvasController extends LitElement {
           id="side-nav"
           class="side-shadow"
           slot="slot-1"
-          style=${styleMap(themeStyles)}
+          style=${styleMap(graphIsEmpty ? emptyStyles : themeStyles)}
         >
           <div
             id="side-nav-controls"

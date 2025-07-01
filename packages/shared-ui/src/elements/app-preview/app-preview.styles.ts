@@ -130,6 +130,10 @@ export const styles = [
         background: var(--s-90);
         border-top: 1px solid var(--s-70, var(--bb-neutral-400));
 
+        &.empty {
+          border-top: 1px solid var(--n-90, var(--bb-neutral-400));
+        }
+
         & #share-app {
           margin-right: var(--bb-grid-size-3);
         }
@@ -156,6 +160,10 @@ export const styles = [
 
           & .g-icon {
             margin-right: var(--bb-grid-size-2);
+          }
+
+          &[disabled] {
+            opacity: 0.4;
           }
 
           &:not([disabled]) {

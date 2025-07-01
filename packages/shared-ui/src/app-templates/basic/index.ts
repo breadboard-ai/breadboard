@@ -63,6 +63,7 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { theme as uiTheme } from "./theme/light.js";
 import { appScreenToParticles } from "../shared/utils/app-screen-to-particles.js";
 import { type } from "../../styles/host/type.js";
+import { emptyStyles } from "../../styles/host/colors-empty.js";
 
 function isHTMLOutput(screen: AppScreenOutput): string | null {
   const outputs = Object.values(screen.output);
@@ -108,6 +109,9 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
   @property()
   accessor showGDrive = false;
+
+  @property()
+  accessor isEmpty = false;
 
   @property()
   accessor showDisclaimer = false;
@@ -294,7 +298,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
           &::before {
             content: "";
-            width: 100svw;
+            width: 100cqw;
           }
 
           &:has(.loading) {
@@ -307,7 +311,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 100svw;
+            width: 100cqw;
             height: 100svh;
 
             & .loading-message {
@@ -552,6 +556,12 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
             & .html-view {
               width: 100%;
               height: 100cqh;
+            }
+
+            & .empty-state {
+              flex: 1;
+              color: var(--n-50);
+              text-align: center;
             }
 
             & .error {
@@ -1017,6 +1027,14 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     return html`<div id="activity">${[activityContents, status]}</div>`;
   }
 
+  #renderEmptyState() {
+    return html`<div id="activity">
+      <p class="sans-flex round filled md-title-medium empty-state">
+        ${Strings.from("LABEL_EMPTY")}
+      </p>
+    </div>`;
+  }
+
   #renderSaveResultsButton() {
     if (!this.run?.finalOutput) {
       return nothing;
@@ -1190,7 +1208,9 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     let styles: Record<string, string> = {};
     if (this.options.theme) {
-      styles = createThemeStyles(this.options.theme);
+      styles = this.isEmpty
+        ? emptyStyles
+        : createThemeStyles(this.options.theme);
     }
 
     // Special-case the default theme based on the mime types.
@@ -1317,8 +1337,13 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       </div>
     `;
 
-    let content: NonNullable<unknown>;
-    if (this.run.app.state === "splash") {
+    let content:
+      | HTMLTemplateResult
+      | Array<HTMLTemplateResult | symbol>
+      | symbol = nothing;
+    if (this.isEmpty) {
+      content = [this.#renderControls(), this.#renderEmptyState()];
+    } else if (this.run.app.state === "splash") {
       content = splashScreen;
     } else {
       content = [

@@ -122,6 +122,9 @@ export default {
   LABEL_DISCLAIMER: {
     str: "Breadboard can make mistakes, so double-check it",
   },
+  LABEL_EMPTY: {
+    str: "Your app will appear here once it's built",
+  },
 
   // Statuses.
   STATUS_CREATING_PROJECT: {
