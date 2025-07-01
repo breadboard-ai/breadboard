@@ -85,6 +85,8 @@ function llmContentPartPresentation(
             src: {
               title: "Generated Item",
               as: asType,
+              behaviors:
+                asType === "particle-viewer-image" ? ["clone", "download"] : [],
             },
           },
           orientation: "vertical",
@@ -93,6 +95,7 @@ function llmContentPartPresentation(
       orientation: "vertical",
     };
   } else if (isStoredData(part)) {
+    const asType = as(part.storedData.mimeType, true);
     return {
       behaviors: [],
       type: "card",
@@ -103,7 +106,9 @@ function llmContentPartPresentation(
           fields: {
             src: {
               title: "Generated Item",
-              as: as(part.storedData.mimeType, true),
+              as: asType,
+              behaviors:
+                asType === "particle-viewer-image" ? ["clone", "download"] : [],
             },
           },
           orientation: "vertical",

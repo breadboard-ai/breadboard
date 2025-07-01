@@ -195,6 +195,9 @@ export const theme: ParticlesUI.Types.UITheme = {
     textarea: textareaLight,
     video,
   },
+  extras: {
+    icon: {},
+  },
   layouts: {
     vertical,
     verticalPadded: {
@@ -214,6 +217,12 @@ export const theme: ParticlesUI.Types.UITheme = {
     cover,
     borderTop,
     media,
+  },
+  behaviors: {
+    clone: {},
+    delete: {},
+    download: {},
+    editable: {},
   },
   groups: {
     card,

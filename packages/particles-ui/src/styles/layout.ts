@@ -20,10 +20,10 @@ export const layout = css`
   }
 
   ${unsafeCSS(
-    new Array(33)
+    new Array(49)
       .fill(0)
       .map((_, index) => {
-        const idx = index - 16;
+        const idx = index - 24;
         const lbl = idx < 0 ? `n${Math.abs(idx)}` : idx.toString();
         return `
         .layout-p-${lbl} { padding: ${idx * grid}px; }
@@ -156,6 +156,38 @@ export const layout = css`
       .map((_, idx) => {
         const weight = (idx + 1) * 10;
         return `.layout-w-${weight} { width: ${weight}%; }`;
+      })
+      .join("\n")
+  )}
+
+  ${unsafeCSS(
+    new Array(16)
+      .fill(0)
+      .map((_, idx) => {
+        const weight = idx * grid;
+        return `.layout-wp-${idx} { width: ${weight}px; }`;
+      })
+      .join("\n")
+  )}
+
+  /** Heights **/
+
+  ${unsafeCSS(
+    new Array(10)
+      .fill(0)
+      .map((_, idx) => {
+        const height = (idx + 1) * 10;
+        return `.layout-h-${height} { height: ${height}%; }`;
+      })
+      .join("\n")
+  )}
+
+  ${unsafeCSS(
+    new Array(16)
+      .fill(0)
+      .map((_, idx) => {
+        const height = idx * grid;
+        return `.layout-hp-${idx} { height: ${height}px; }`;
       })
       .join("\n")
   )}

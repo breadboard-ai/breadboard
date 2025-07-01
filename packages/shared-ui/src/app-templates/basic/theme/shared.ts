@@ -116,6 +116,44 @@ export const video = {
   "layout-el-cv": true,
 };
 
+/** Extras */
+export const icon = {
+  "g-icon": true,
+  filled: true,
+  round: true,
+  "typography-w-500": true,
+};
+
+/** Behaviors */
+
+export const clone = {
+  "layout-pos-a": true,
+  "color-bgc-n0": true,
+  "color-c-n100": true,
+  "border-br-4": true,
+  "border-bw-0": true,
+  "typography-sz-hs": true,
+  "layout-b-5": true,
+  "layout-r-5": true,
+  "layout-wp-10": true,
+  "layout-hp-10": true,
+  "behavior-ho-100": true,
+};
+
+export const download = {
+  "layout-pos-a": true,
+  "color-bgc-n0": true,
+  "color-c-n100": true,
+  "border-br-4": true,
+  "border-bw-0": true,
+  "typography-sz-hs": true,
+  "layout-b-5": true,
+  "layout-r-20": true,
+  "layout-wp-10": true,
+  "layout-hp-10": true,
+  "behavior-ho-100": true,
+};
+
 /** Layouts */
 
 export const vertical = {

@@ -94,12 +94,11 @@ export class ParticleViewerButton extends LitElement implements ParticleViewer {
     >
       ${this.field.icon
         ? html`<span
-            class=${classMap({
-              "g-icon": true,
-              filled: true,
-              round: true,
-              "layout-mr-2": !!this.field.title,
-            })}
+            class=${classMap(
+              merge(this.theme.extras.icon, {
+                "layout-mr-2": !!this.field.title,
+              })
+            )}
             >${this.disabled ? "progress_activity" : this.field.icon}</span
           >`
         : nothing}

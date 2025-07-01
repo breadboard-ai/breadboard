@@ -38,6 +38,9 @@ import {
   borderTop,
   media,
   ParticleUIText,
+  icon,
+  clone,
+  download,
 } from "./shared.js";
 
 const aLight = ParticlesUI.Utils.merge(a, { "color-c-n5": true });
@@ -66,6 +69,15 @@ export const theme: ParticlesUI.Types.UITheme = {
     pre: preLight,
     textarea: textareaLight,
     video,
+  },
+  extras: {
+    icon,
+  },
+  behaviors: {
+    clone,
+    delete: {},
+    download,
+    editable: {},
   },
   layouts: {
     vertical,
