@@ -16,7 +16,7 @@ import { type } from "../../styles/host/type.js";
  * contenteditable approach. Since we need chips too, let's actually embed (or
  * merge with) bb-text-editor, which already does contenteditable very well.
  */
-const TEMPORARY_TAB_ICON_TEXT = " <Tab>";
+const TEMPORARY_TAB_ICON_TEXT = " ⇥";
 
 /**
  * A text input which grows to fit its content.
