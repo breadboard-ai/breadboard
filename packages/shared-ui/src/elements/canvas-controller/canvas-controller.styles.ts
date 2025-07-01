@@ -611,6 +611,14 @@ export const styles = [
         &.showing-preview {
           background: var(--s-90, var(--bb-neutral-0));
           border-bottom: 1px solid var(--s-80, var(--bb-neutral-300));
+
+          & button {
+            color: var(--p-15, var(--bb-neutral-900));
+
+            &[disabled] {
+              background: var(--s-95, var(--bb-neutral-100));
+            }
+          }
         }
 
         > div {
@@ -624,7 +632,7 @@ export const styles = [
 
           font-size: 12px;
           background: none;
-          color: var(--p-15, var(--bb-neutral-900));
+          color: var(--n-15, var(--bb-neutral-900));
           height: 32px;
           border: none;
           margin: 0 var(--bb-grid-size-2);
@@ -636,7 +644,7 @@ export const styles = [
 
           &[disabled] {
             cursor: auto;
-            background: var(--s-95, var(--bb-neutral-100));
+            background: var(--n-95, var(--bb-neutral-100));
             border-radius: var(--bb-grid-size-16);
           }
 

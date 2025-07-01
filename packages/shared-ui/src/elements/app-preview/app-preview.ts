@@ -118,6 +118,9 @@ export class AppPreview extends LitElement {
   @property({ reflect: true })
   accessor status = STATUS.RUNNING;
 
+  @property()
+  accessor graphIsEmpty = false;
+
   @state()
   accessor _originalTheme: AppTheme | null = null;
 
@@ -379,6 +382,7 @@ export class AppPreview extends LitElement {
       this.#appTemplate.readOnly = false;
       this.#appTemplate.showShareButton = false;
       this.#appTemplate.showContentWarning = !this.isMine;
+      this.#appTemplate.isEmpty = this.graphIsEmpty;
     }
 
     return html`
@@ -390,10 +394,13 @@ export class AppPreview extends LitElement {
           ${this.#template}
         </div>
         ${this.isMine
-          ? html`<div id="theme-edit">
+          ? html`<div
+              id="theme-edit"
+              class=${classMap({ empty: this.graphIsEmpty })}
+            >
               <button
                 id="share-app"
-                ?disabled=${this.#loadingTemplate}
+                ?disabled=${this.#loadingTemplate || this.graphIsEmpty}
                 @click=${() => {
                   this.dispatchEvent(new ShareRequestedEvent());
                 }}
@@ -402,7 +409,7 @@ export class AppPreview extends LitElement {
               </button>
               <button
                 id="designer"
-                ?disabled=${this.#loadingTemplate}
+                ?disabled=${this.#loadingTemplate || this.graphIsEmpty}
                 @click=${() => {
                   this.dispatchEvent(
                     new ThemeEditRequestEvent(
