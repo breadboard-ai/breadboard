@@ -1003,8 +1003,8 @@ export class EditorControls extends LitElement {
               },
               {
                 id: "text",
-                title: "Build your own",
-                icon: "edit_note",
+                title: "Text",
+                icon: "text_fields",
               },
               {
                 id: "drawing",

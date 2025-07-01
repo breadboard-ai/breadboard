@@ -91,7 +91,7 @@ export class LLMPartInput extends LitElement {
 
       #text-input {
         display: grid;
-        grid-template-rows: var(--bb-grid-size-15) minmax(0, 1fr);
+        grid-template-rows: minmax(0, 1fr);
         height: 100%;
         width: 100%;
 
@@ -187,35 +187,10 @@ export class LLMPartInput extends LitElement {
   render() {
     if (isTextCapabilityPart(this.#dataPart)) {
       return html`<div id="text-input">
-        <div id="apply-control">
-          <button
-            class="apply"
-            ?disabled=${this.locked}
-            @click=${() => {
-              if (!this.#inputRef.value) {
-                return;
-              }
-
-              if (!isTextCapabilityPart(this.#dataPart)) {
-                return;
-              }
-
-              this.#dataPart.text = this.#inputRef.value.value;
-
-              this.locked = true;
-              this.dispatchEvent(new SubmitEvent("submit"));
-            }}
-          >
-            <span class="g-icon"
-              >${this.locked ? "progress_activity" : "check"}</span
-            >
-            Apply
-          </button>
-        </div>
         <bb-text-editor
           ${ref(this.#inputRef)}
           .projectState=${this.projectState}
-          .supportsFastAccess=${true}
+          .supportsFastAccess=${false}
           .value=${this.#dataPart.text.trim()}
           @input=${() => {
             if (

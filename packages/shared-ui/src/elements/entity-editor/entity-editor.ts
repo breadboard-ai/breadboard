@@ -1468,7 +1468,6 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       const dataPart = itemData?.parts[0] ?? null;
       const isDrawable = isStoredData(dataPart) && asset.subType === "drawable";
       const skipOutput = isTextCapabilityPart(dataPart) || isDrawable;
-      console.log(asset);
 
       const partEditor = html`<bb-llm-part-input
         class=${classMap({ fill: skipOutput })}
