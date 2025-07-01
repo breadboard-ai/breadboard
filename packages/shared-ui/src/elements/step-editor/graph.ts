@@ -605,17 +605,6 @@ export class Graph extends Box {
 
   expandSelections() {
     for (const entity of this.entities.values()) {
-      if (entity instanceof GraphAsset) {
-        if (entity.selected && Array.isArray(this.#assetEdges)) {
-          const assetEdges = this.#assetEdges.filter(
-            (edge) => edge.assetPath === entity.assetPath
-          );
-
-          // TODO: Enable default add for Assets.
-          entity.showDefaultAdd = false && assetEdges.length === 0;
-        }
-      }
-
       if (entity instanceof GraphNode) {
         if (entity.selected) {
           const nodeEdges = this.#edges.filter(
@@ -624,11 +613,7 @@ export class Graph extends Box {
               edge.to.descriptor.id === entity.nodeId
           );
 
-          let isConnectedOut = false;
           for (const edge of nodeEdges) {
-            if (edge.from.descriptor.id === entity.nodeId) {
-              isConnectedOut = true;
-            }
             const graphEdge = this.entities.get(inspectableEdgeToString(edge));
             if (!graphEdge) {
               continue;
@@ -636,10 +621,6 @@ export class Graph extends Box {
 
             graphEdge.selected = true;
           }
-
-          entity.showDefaultAdd = !isConnectedOut;
-        } else {
-          entity.showDefaultAdd = false;
         }
       }
     }
