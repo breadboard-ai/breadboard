@@ -264,30 +264,6 @@ export class Board extends EventTarget {
     return this.#tabs.get(tab) ?? null;
   }
 
-  createURLFromTabs() {
-    const params = new URLSearchParams();
-
-    // To identify the top-level origin when embedded, we persist the
-    // redirect URI param into the new board URL.
-    const previousParams = new URLSearchParams(window.location.search);
-    if (previousParams.has(REDIRECT_PARAM)) {
-      params.set(REDIRECT_PARAM, previousParams.get(REDIRECT_PARAM)!);
-    }
-
-    for (const tab of this.#tabs.values()) {
-      if (tab.type !== TabType.URL || !tab.graph.url) {
-        continue;
-      }
-
-      params.set(`project`, tab.graph.url);
-      break;
-    }
-
-    const url = new URL(window.location.href);
-    url.search = params.toString();
-    return url;
-  }
-
   getTabURLs(): string[] {
     return [...this.#tabs.values()]
       .filter((tab) => tab.graph.url !== undefined)
