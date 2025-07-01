@@ -41,9 +41,68 @@ export class ParticleViewerImage extends LitElement implements ParticleViewer {
       section {
         display: grid;
         height: 100%;
+        position: relative;
       }
     `,
   ];
+
+  #download() {
+    if (typeof this.value !== "string") {
+      return;
+    }
+
+    const anchor = document.createElement("a");
+    anchor.href = this.value;
+    anchor.download = this.field?.title ?? "Download";
+    anchor.click();
+  }
+
+  /**
+   * In order to work with Chrome we have to ensure we have a PNG, so what we
+   * have to do is load the image, pop it in a canvas and get a Blob back from
+   * it to populate the clipboard successfully. That way, even if we get a JPEG
+   * we can convert it over to PNG.
+   */
+  async #copyToClipboard() {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      if (typeof this.value !== "string") {
+        reject("Value not string");
+        return;
+      }
+
+      const innerImage = new Image();
+      innerImage.src = this.value;
+      innerImage.onload = () => resolve(innerImage);
+      innerImage.onerror = () => reject("Unable to load image");
+    });
+
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      throw new Error("Unable to create canvas context");
+    }
+
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    ctx.drawImage(img, 0, 0);
+
+    const clipboardData = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((blob: Blob | null) => {
+        if (blob) {
+          resolve(blob);
+          return;
+        }
+
+        reject("Failed to create blob");
+      }, "image/png");
+    });
+
+    await navigator.clipboard.write([
+      new ClipboardItem({
+        "image/png": clipboardData,
+      }),
+    ]);
+  }
 
   render() {
     if (!this.value || !this.field || !this.theme) {
@@ -56,6 +115,24 @@ export class ParticleViewerImage extends LitElement implements ParticleViewer {
         class=${classMap(this.theme.modifiers.cover)}
         alt=${this.field.title}
       />
+      ${this.field.behaviors?.includes("clone")
+        ? html` <button
+            id="clone"
+            class=${classMap(this.theme.behaviors.clone)}
+            @click=${async () => await this.#copyToClipboard()}
+          >
+            <span class=${classMap(this.theme.extras.icon)}>content_copy</span>
+          </button>`
+        : nothing}
+      ${this.field.behaviors?.includes("download")
+        ? html` <button
+            id="download"
+            class=${classMap(this.theme.behaviors.download)}
+            @click=${() => this.#download()}
+          >
+            <span class=${classMap(this.theme.extras.icon)}>download</span>
+          </button>`
+        : nothing}
       ${this.field.title && this.field.modifiers?.includes("hero")
         ? html`<h1
             slot="headline"

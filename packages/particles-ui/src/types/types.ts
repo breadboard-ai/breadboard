@@ -58,6 +58,9 @@ export type UITheme = {
     textarea: Record<string, boolean>;
     video: Record<string, boolean>;
   };
+  extras: {
+    icon: Record<string, boolean>;
+  };
   layouts: {
     vertical: Record<string, boolean>;
     verticalPadded: Record<string, boolean>;
@@ -71,6 +74,12 @@ export type UITheme = {
     cover: Record<string, boolean>;
     borderTop: Record<string, boolean>;
     media: Record<string, boolean>;
+  };
+  behaviors: {
+    clone: Record<string, boolean>;
+    delete: Record<string, boolean>;
+    editable: Record<string, boolean>;
+    download: Record<string, boolean>;
   };
   markdown: {
     p: string[];

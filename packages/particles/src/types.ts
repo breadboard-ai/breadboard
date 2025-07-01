@@ -163,11 +163,13 @@ export type ElementType = "card" | "list";
 export type SegmentType = "media" | "block" | "list";
 
 /**
- * Defines the behavior associated with the item. When the item is "editable",
- * the user can edit its contents. When the item marked as "delete", it can be
- * deleted.
+ * Defines the behavior associated with the item. When the item is:
+ *  - editable -- The user can edit its contents.
+ *  - delete -- The user can delete the item.
+ *  - clone -- The user can copy the item, by copying to clipboard.
+ *  - download -- The user can download the item.
  */
-export type Behavior = "editable" | "delete";
+export type Behavior = "editable" | "delete" | "clone" | "download";
 
 /**
  * When modifier "hero" is specified, the item is meant to stand out among its
