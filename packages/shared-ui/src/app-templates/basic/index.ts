@@ -1273,9 +1273,8 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
               }
               this.dispatchEvent(new BoardTitleUpdateEvent(newTitle));
             }}
-          >
-            ${this.options.title}
-          </h1>
+            .innerHTML=${this.options.title}
+          ></h1>
           <p
             ?contenteditable=${!this.readOnly}
             class="w-500 round sans-flex md-title-medium"
@@ -1304,11 +1303,8 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
                 new BoardDescriptionUpdateEvent(newDescription)
               );
             }}
-          >
-            ${this.options.description
-              ? html`${this.options.description}`
-              : nothing}
-          </p>
+            .innerHTML=${this.options.description ?? ""}
+          ></p>
           <div id="input" class="stopped">
             <div>
               ${this.state === "anonymous" || this.state === "valid"
