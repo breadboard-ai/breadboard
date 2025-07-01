@@ -12,15 +12,12 @@ import {
   EditHistory,
   EditableGraph,
   GraphDescriptor,
-  GraphLoader,
   GraphProviderCapabilities,
   InspectableRun,
   InspectableRunEvent,
-  InspectableRunInputs,
   Kit,
   MainGraphIdentifier,
   MutableGraphStore,
-  RunStore,
   hash,
 } from "@google-labs/breadboard";
 import {
@@ -35,7 +32,6 @@ import { guard } from "lit/directives/guard.js";
 import {
   AppTemplateAdditionalOptionsAvailable,
   HighlightStateWithChangeId,
-  RecentBoard,
   SETTINGS_TYPE,
   STATUS,
   SettingsStore,
@@ -60,7 +56,6 @@ import {
   MAIN_BOARD_ID,
 } from "../../constants/constants.js";
 import { classMap } from "lit/directives/class-map.js";
-import { Sandbox } from "@breadboard-ai/jsandbox";
 import { Project } from "../../state/types.js";
 import "../../edit-history/edit-history-panel.js";
 import "../../edit-history/edit-history-overlay.js";
@@ -90,28 +85,61 @@ const SIDE_ITEM_KEY = "bb-canvas-controller-side-nav-item";
 @customElement("bb-canvas-controller")
 export class CanvasController extends LitElement {
   @property()
+  accessor boardServerKits: Kit[] = [];
+
+  @property()
+  accessor boardServers: BoardServer[] = [];
+
+  /**
+   * Indicates whether or not the UI can currently run a flow or not.
+   * This is useful in situations where we're doing some work on the
+   * board and want to prevent the user from triggering the start
+   * of the flow.
+   */
+  @property()
+  accessor canRun = true;
+
+  @property()
+  accessor editor: EditableGraph | null = null;
+
+  @property()
   accessor graph: GraphDescriptor | null = null;
 
   @property()
   accessor graphIsMine = false;
 
   @property()
-  accessor mainGraphId: MainGraphIdentifier | null = null;
+  accessor graphStore: MutableGraphStore | null = null;
 
   @property()
-  accessor editor: EditableGraph | null = null;
+  accessor graphStoreUpdateId: number = 0;
+
+  @property()
+  accessor graphTopologyUpdateId: number = 0;
+
+  @state()
+  accessor history: EditHistory | null = null;
+
+  @property()
+  accessor mainGraphId: MainGraphIdentifier | null = null;
+
+  @state()
+  accessor projectState: Project | null = null;
+
+  @property()
+  accessor readOnly = true;
 
   @property()
   accessor runs: InspectableRun[] | null = null;
 
   @property()
-  accessor inputsFromLastRun: InspectableRunInputs | null = null;
+  accessor selectionState: WorkspaceSelectionStateWithChangeId | null = null;
 
   @property()
-  accessor boardServerKits: Kit[] = [];
+  accessor settings: SettingsStore | null = null;
 
   @property()
-  accessor loader: GraphLoader | null = null;
+  accessor signedIn = false;
 
   @property({ reflect: true })
   accessor status = STATUS.RUNNING;
@@ -120,42 +148,13 @@ export class CanvasController extends LitElement {
   accessor topGraphResult: TopGraphRunResult | null = null;
 
   @property()
-  accessor runStore: RunStore | null = null;
+  accessor visualChangeId: WorkspaceVisualChangeId | null = null;
 
-  @property()
-  accessor sandbox: Sandbox | null = null;
-
-  @property()
-  accessor fileSystem: FileSystem | null = null;
-
-  @property({ reflect: true })
-  accessor failedToLoad = false;
-
-  @property()
-  accessor readOnly = true;
-
-  @property()
-  accessor version = "dev";
-
-  @property()
-  accessor recentBoards: RecentBoard[] = [];
-
-  @property()
-  accessor settings: SettingsStore | null = null;
-
-  @property()
-  accessor boardServers: BoardServer[] = [];
-
-  @property()
-  accessor tabURLs: string[] = [];
+  @property({ reflect: true, type: Boolean })
+  accessor showThemeDesigner = false;
+  #themeOptions: AppTemplateAdditionalOptionsAvailable | null = null;
 
   @state()
-  accessor history: EditHistory | null = null;
-
-  @property()
-  accessor mode = "tree" as const;
-
-  @property()
   set sideNavItem(
     item: "activity" | "capabilities" | "edit-history" | "editor" | "app-view"
   ) {
@@ -174,51 +173,11 @@ export class CanvasController extends LitElement {
     return this.#sideNavItem;
   }
 
-  @property()
-  accessor selectionState: WorkspaceSelectionStateWithChangeId | null = null;
-
-  @property()
-  accessor highlightState: HighlightStateWithChangeId | null = null;
-
-  @property()
-  accessor visualChangeId: WorkspaceVisualChangeId | null = null;
-
-  @property()
-  accessor graphStore: MutableGraphStore | null = null;
-
-  @property()
-  accessor graphTopologyUpdateId: number = 0;
-
-  @property()
-  accessor graphStoreUpdateId: number = 0;
-
-  @property()
-  accessor showBoardReferenceMarkers = false;
-
-  @property({ reflect: true, type: Boolean })
-  accessor showThemeDesigner = false;
-  #themeOptions: AppTemplateAdditionalOptionsAvailable | null = null;
-
-  /**
-   * Indicates whether or not the UI can currently run a flow or not.
-   * This is useful in situations where we're doing some work on the
-   * board and want to prevent the user from triggering the start
-   * of the flow.
-   */
   @state()
-  accessor canRun = true;
+  accessor highlightState: HighlightStateWithChangeId | null = null;
 
   @state()
   accessor debugEvent: InspectableRunEvent | null = null;
-
-  @state()
-  accessor popoutExpanded = false;
-
-  @state()
-  accessor projectState: Project | null = null;
-
-  @state()
-  accessor signedIn = false;
 
   @state()
   accessor showAssetOrganizer = false;
@@ -439,13 +398,10 @@ export class CanvasController extends LitElement {
         this.topGraphResult,
         this.history,
         this.editorRender,
-        this.mode,
         this.selectionState,
         this.highlightState,
         this.visualChangeId,
         this.graphTopologyUpdateId,
-        this.showBoardReferenceMarkers,
-        this.popoutExpanded,
         collapseNodesByDefault,
         hideSubboardSelectorWhenEmpty,
         showNodeShortcuts,
