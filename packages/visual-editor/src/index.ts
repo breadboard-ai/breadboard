@@ -250,6 +250,8 @@ export class Main extends LitElement {
     createRef();
   readonly #tooltipRef: Ref<BreadboardUI.Elements.Tooltip> = createRef();
   readonly #snackbarRef: Ref<BreadboardUI.Elements.Snackbar> = createRef();
+  readonly #feedbackPanel: Ref<BreadboardUI.Elements.FeedbackPanel> =
+    createRef();
 
   #tabSaveId = new Map<
     TabId,
@@ -2737,6 +2739,7 @@ export class Main extends LitElement {
       this.#renderToasts(),
       this.#renderSnackbar(),
       this.#renderGoogleDriveAssetShareDialog(),
+      this.#renderFeedbackPanel(),
     ];
   }
 
@@ -2886,6 +2889,12 @@ export class Main extends LitElement {
     `;
   }
 
+  #renderFeedbackPanel() {
+    return html`
+      <bb-feedback-panel ${ref(this.#feedbackPanel)}></bb-feedback-panel>
+    `;
+  }
+
   #renderTooltip() {
     return html`<bb-tooltip ${ref(this.#tooltipRef)}></bb-tooltip>`;
   }
@@ -2943,7 +2952,6 @@ export class Main extends LitElement {
       )?.value ?? false;
 
     const signinAdapter = this.signinAdapter ?? null;
-    const feedbackLink = this.clientDeploymentConfiguration.FEEDBACK_LINK;
     const canSave = this.tab
       ? this.#runtime.board.canSave(this.tab.id) && !this.tab.readOnly
       : false;
@@ -3061,11 +3069,19 @@ export class Main extends LitElement {
           }
 
           case "feedback": {
-            if (!feedbackLink) {
-              return;
+            if (this.clientDeploymentConfiguration.ENABLE_GOOGLE_FEEDBACK) {
+              if (this.#feedbackPanel.value) {
+                this.#feedbackPanel.value.open();
+              } else {
+                console.error(`Feedback panel was not rendered!`);
+              }
+            } else {
+              const feedbackLink =
+                this.clientDeploymentConfiguration.FEEDBACK_LINK;
+              if (feedbackLink) {
+                window.open(feedbackLink, "_blank");
+              }
             }
-
-            window.open(feedbackLink, "_blank");
             break;
           }
 
