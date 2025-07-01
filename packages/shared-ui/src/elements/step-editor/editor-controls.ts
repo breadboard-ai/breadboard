@@ -67,9 +67,6 @@ export class EditorControls extends LitElement {
   accessor mainGraphId: MainGraphIdentifier | null = null;
 
   @property()
-  accessor showDefaultAdd = false;
-
-  @property()
   accessor showExperimentalComponents = false;
 
   @state()
@@ -119,29 +116,6 @@ export class EditorControls extends LitElement {
         #top-shelf,
         bb-flowgen-editor-input {
           display: none;
-        }
-      }
-
-      #default-add {
-        position: fixed;
-        top: 100px;
-        left: 50%;
-        translate: -50% 0;
-        z-index: 4;
-        border: 1px solid var(--bb-neutral-300);
-        color: var(--bb-neutral-600);
-        font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
-          var(--bb-font-family);
-        border-radius: var(--bb-grid-size-16);
-        background: transparent var(--bb-icon-library-add) 8px center / 20px
-          20px no-repeat;
-        padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-8);
-        transition: border 0.2s cubic-bezier(0, 0, 0.3, 1);
-        height: var(--bb-grid-size-7);
-        cursor: pointer;
-
-        &:hover {
-          border: 1px solid var(--bb-neutral-500);
         }
       }
 
@@ -579,6 +553,7 @@ export class EditorControls extends LitElement {
     try {
       this.#addDriveInputRef.value.triggerFlow();
     } catch (err) {
+      console.warn(err);
       this.dispatchEvent(
         new ToastEvent("Unable to load Google Drive", ToastType.ERROR)
       );
@@ -780,27 +755,6 @@ export class EditorControls extends LitElement {
   render() {
     if (!this.graph) {
       return nothing;
-    }
-
-    let defaultAdd: HTMLTemplateResult | symbol = nothing;
-    if (this.showDefaultAdd) {
-      defaultAdd = html`<button
-        id="default-add"
-        @click=${async (evt: PointerEvent) => {
-          await this.#storeReady;
-          this.#componentLibraryConfiguration = {
-            x: evt.clientX - 165,
-            y: 80,
-            freeDrop: false,
-            id: null,
-            subGraphId: null,
-            portId: null,
-          };
-          this.showComponentLibrary = true;
-        }}
-      >
-        ${Strings.from("LABEL_ADD_ITEM")}
-      </button>`;
     }
 
     let componentLibrary: HTMLTemplateResult | symbol = nothing;
@@ -1290,13 +1244,6 @@ export class EditorControls extends LitElement {
       </div>`;
     }
 
-    return [
-      topShelf,
-      shelf,
-      graphControls,
-      defaultAdd,
-      componentLibrary,
-      componentPicker,
-    ];
+    return [topShelf, shelf, graphControls, componentLibrary, componentPicker];
   }
 }
