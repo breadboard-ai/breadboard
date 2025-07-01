@@ -244,7 +244,6 @@ export class Main extends LitElement {
   readonly #tooltipRef: Ref<BreadboardUI.Elements.Tooltip> = createRef();
   readonly #snackbarRef: Ref<BreadboardUI.Elements.Snackbar> = createRef();
 
-  #boardId = 0;
   #tabSaveId = new Map<
     TabId,
     ReturnType<typeof globalThis.crypto.randomUUID>
@@ -1989,8 +1988,6 @@ export class Main extends LitElement {
           this.tab?.mainGraphId,
           this.#runtime.edit.getEditor(this.tab)
         );
-        const inputsFromLastRun = runs[1]?.inputs() ?? null;
-        const tabURLs = this.#runtime.board.getTabURLs();
 
         let tabStatus = BreadboardUI.Types.STATUS.STOPPED;
         if (this.tab) {
@@ -2004,37 +2001,25 @@ export class Main extends LitElement {
           <bb-canvas-controller
                 ${ref(this.#canvasControllerRef)}
                 ?inert=${showingOverlay}
-                .boardId=${this.#boardId}
                 .boardServerKits=${this.tab?.boardServerKits ?? []}
                 .boardServers=${this.#boardServers}
                 .canRun=${this.#canRun}
                 .editor=${this.#runtime.edit.getEditor(this.tab)}
-                .fileSystem=${this.#fileSystem}
                 .graph=${this.tab?.graph ?? null}
                 .graphIsMine=${this.tab?.graphIsMine ?? false}
                 .graphStore=${this.#graphStore}
                 .graphStoreUpdateId=${this.graphStoreUpdateId}
                 .graphTopologyUpdateId=${this.graphTopologyUpdateId}
                 .history=${this.#runtime.edit.getHistory(this.tab)}
-                .inputsFromLastRun=${inputsFromLastRun}
-                .loader=${this.#runtime.board.getLoader()}
                 .mainGraphId=${this.tab?.mainGraphId}
-                .moduleId=${this.tab?.moduleId ?? null}
-                .organizer=${projectState?.organizer}
                 .projectState=${projectState}
                 .readOnly=${this.tab?.readOnly ?? true}
-                .recentBoards=${this.#recentBoards}
                 .runs=${runs ?? null}
-                .runStore=${this.#runStore}
-                .sandbox=${sandbox}
                 .selectionState=${this.#selectionState}
                 .settings=${this.#settings}
                 .signedIn=${signinAdapter.state === "valid"}
                 .status=${tabStatus}
-                .subGraphId=${this.tab?.subGraphId ?? null}
-                .tabURLs=${tabURLs}
                 .topGraphResult=${topGraphResult}
-                .version=${this.#version}
                 .visualChangeId=${this.#lastVisualChangeId}
                 @bbrun=${async () => {
                   if (!this.#canRun) return;

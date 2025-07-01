@@ -56,7 +56,6 @@ import * as idb from "idb";
 import { BOARD_SAVE_STATUS } from "@breadboard-ai/shared-ui/types/types.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { loadImage } from "@breadboard-ai/shared-ui/utils/image";
-import { REDIRECT_PARAM } from "@breadboard-ai/shared-ui/utils/embed-helpers.js";
 
 const documentStyles = getComputedStyle(document.documentElement);
 
@@ -262,30 +261,6 @@ export class Board extends EventTarget {
 
   getTabById(tab: TabId): Tab | null {
     return this.#tabs.get(tab) ?? null;
-  }
-
-  createURLFromTabs() {
-    const params = new URLSearchParams();
-
-    // To identify the top-level origin when embedded, we persist the
-    // redirect URI param into the new board URL.
-    const previousParams = new URLSearchParams(window.location.search);
-    if (previousParams.has(REDIRECT_PARAM)) {
-      params.set(REDIRECT_PARAM, previousParams.get(REDIRECT_PARAM)!);
-    }
-
-    for (const tab of this.#tabs.values()) {
-      if (tab.type !== TabType.URL || !tab.graph.url) {
-        continue;
-      }
-
-      params.set(`project`, tab.graph.url);
-      break;
-    }
-
-    const url = new URL(window.location.href);
-    url.search = params.toString();
-    return url;
   }
 
   getTabURLs(): string[] {
