@@ -9,6 +9,7 @@ import {
   MoveToSelection,
   Tab,
   TabId,
+  VisualEditorMode,
   WorkspaceSelectionChangeId,
   WorkspaceSelectionState,
   WorkspaceVisualChangeId,
@@ -172,7 +173,7 @@ export class RuntimeURLChangeEvent extends Event {
 
   constructor(
     public readonly url: URL,
-    public readonly mode: BreadboardUI.Types.VisualEditorMode,
+    public readonly mode: VisualEditorMode,
     public readonly id?: TabId,
     public readonly creator?: EditHistoryCreator
   ) {

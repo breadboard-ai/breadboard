@@ -77,6 +77,7 @@ export class VEHeader extends LitElement {
         border-bottom: 1px solid var(--n-90);
         padding: 0 var(--bb-grid-size-5);
         overflow: hidden;
+        position: relative;
 
         & #left {
           display: flex;
@@ -89,6 +90,10 @@ export class VEHeader extends LitElement {
           display: flex;
           gap: var(--bb-grid-size);
           height: var(--bb-grid-size-8);
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          translate: -50% -50%;
           border: none;
           background: none;
 
@@ -135,6 +140,7 @@ export class VEHeader extends LitElement {
             line-height: 1;
             color: var(--ui-secondary-text);
             margin: 0 0 0 var(--bb-grid-size-6);
+            min-width: 45px;
           }
 
           & #toggle-user-menu {

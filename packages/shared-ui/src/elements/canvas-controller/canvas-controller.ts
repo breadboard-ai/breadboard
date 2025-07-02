@@ -18,7 +18,6 @@ import {
   Kit,
   MainGraphIdentifier,
   MutableGraphStore,
-  hash,
 } from "@google-labs/breadboard";
 import {
   HTMLTemplateResult,
@@ -129,6 +128,9 @@ export class CanvasController extends LitElement {
 
   @property()
   accessor readOnly = true;
+
+  @property()
+  accessor themeHash = 0;
 
   @property()
   accessor runs: InspectableRun[] | null = null;
@@ -511,7 +513,6 @@ export class CanvasController extends LitElement {
 
     let theme: string;
     let themes: Record<string, GraphTheme>;
-    let themeHash = 0;
     let themeStyles: Record<string, string> = {};
     if (
       this.graph?.metadata?.visual?.presentation?.themes &&
@@ -519,7 +520,6 @@ export class CanvasController extends LitElement {
     ) {
       theme = this.graph.metadata.visual.presentation.theme;
       themes = this.graph.metadata.visual.presentation.themes;
-      themeHash = hash(themes[theme]);
 
       if (themes[theme]) {
         const appPalette = themes[theme].palette;
@@ -555,7 +555,7 @@ export class CanvasController extends LitElement {
           this.topGraphResult,
           this.signedIn,
           this.selectionState,
-          themeHash,
+          this.themeHash,
           selectionCount,
           this.boardServers,
           this.sideNavItem,
@@ -566,7 +566,7 @@ export class CanvasController extends LitElement {
               active: this.sideNavItem === "app-view",
             })}
             .graph=${this.graph}
-            .themeHash=${themeHash}
+            .themeHash=${this.themeHash}
             .projectRun=${this.projectState?.run}
             .topGraphResult=${this.topGraphResult}
             .showGDrive=${this.signedIn}
@@ -634,7 +634,7 @@ export class CanvasController extends LitElement {
     if (this.showThemeDesigner) {
       themeEditor = html`<bb-app-theme-creator
         .graph=${this.graph}
-        .themeHash=${themeHash}
+        .themeHash=${this.themeHash}
         .themeOptions=${this.#themeOptions}
         @pointerdown=${(evt: PointerEvent) => {
           evt.stopImmediatePropagation();

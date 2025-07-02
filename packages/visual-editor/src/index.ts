@@ -37,6 +37,7 @@ import {
   envFromGraphDescriptor,
   FileSystem,
   addSandboxedRunModule,
+  hash,
 } from "@google-labs/breadboard";
 import {
   createFileSystemBackend,
@@ -619,7 +620,7 @@ export class Main extends LitElement {
                 this.#setPageTitle(this.tab.graph.title);
               }
 
-              if (this.tab.readOnly) {
+              if (this.tab.readOnly && this.#mode === "canvas") {
                 this.snackbar(
                   Strings.from("LABEL_READONLY_PROJECT"),
                   BreadboardUI.Types.SnackType.INFORMATION,
@@ -2015,6 +2016,19 @@ export class Main extends LitElement {
             BreadboardUI.Types.STATUS.STOPPED;
         }
 
+        let themeHash = 0;
+        if (
+          this.tab?.graph?.metadata?.visual?.presentation?.themes &&
+          this.tab?.graph?.metadata?.visual?.presentation?.theme
+        ) {
+          const theme = this.tab.graph.metadata.visual.presentation.theme;
+          const themes = this.tab.graph.metadata.visual.presentation.themes;
+
+          if (themes[theme]) {
+            themeHash = hash(themes[theme]);
+          }
+        }
+
         const ui = html`${this.#renderHeader()}
         <div id="content" ?inert=${showingOverlay}
           @bbrun=${async () => {
@@ -2083,6 +2097,7 @@ export class Main extends LitElement {
             .settings=${this.#settings}
             .signedIn=${signinAdapter.state === "valid"}
             .status=${tabStatus}
+            .themeHash=${themeHash}
             .topGraphResult=${topGraphResult}
             .visualChangeId=${this.#lastVisualChangeId}
             @bbgraphboardserverloadrequest=${async (
@@ -2600,6 +2615,7 @@ export class Main extends LitElement {
             .isMine=${this.tab?.graphIsMine ?? false}
             .graphIsEmpty=${(this.tab?.graph.nodes ?? []).length === 0}
             .showThemeEditing=${false}
+            .themeHash=${themeHash}
             .readOnly=${true}>
           </bb-app-controller>
 
