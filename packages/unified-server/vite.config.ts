@@ -28,7 +28,6 @@ export default defineConfig(async ({ mode }): Promise<UserConfig> => {
 
   const entry: Record<string, string> = {
     index: "./index.html",
-    app: "./app/index.html",
     oauth: "./oauth/index.html",
   };
 
