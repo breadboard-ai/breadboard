@@ -17,7 +17,7 @@ import {
   isStoredData,
 } from "@google-labs/breadboard";
 
-import { styles as appPreviewStyles } from "./app-preview.styles.js";
+import { styles as appPreviewStyles } from "./app-controller.styles.js";
 import {
   ShareRequestedEvent,
   ThemeEditRequestEvent,
@@ -38,6 +38,7 @@ import { generatePaletteFromColor } from "@breadboard-ai/theme";
 import { loadPart } from "../../utils/data-parts.js";
 import { projectRunContext } from "../../contexts/project-run.js";
 import { ProjectRun } from "../../state/types.js";
+import { SignalWatcher } from "@lit-labs/signals";
 
 const primaryColor = "#ffffff";
 const secondaryColor = "#7a7a7a";
@@ -70,8 +71,8 @@ function getThemeModeFromBackground(hexColor: string): "light" | "dark" {
   }
 }
 
-@customElement("bb-app-preview")
-export class AppPreview extends LitElement {
+@customElement("bb-app-controller")
+export class AppController extends SignalWatcher(LitElement) {
   @property({ reflect: false })
   accessor graph: GraphDescriptor | null = null;
 
@@ -79,14 +80,16 @@ export class AppPreview extends LitElement {
   accessor showGDrive = false;
 
   @property()
+  accessor readOnly = false;
+
+  @property()
+  accessor showThemeEditing = false;
+
+  @property()
   accessor template = "basic";
 
   @property()
   accessor templates = [{ title: "Basic", value: "basic" }];
-
-  @property({ reflect: false })
-  @provide({ context: projectRunContext })
-  accessor projectRun: ProjectRun | null = null;
 
   @property()
   accessor isMine = false;
@@ -126,6 +129,10 @@ export class AppPreview extends LitElement {
 
   @consume({ context: googleDriveClientContext })
   accessor googleDriveClient!: GoogleDriveClient | undefined;
+
+  @property({ reflect: false })
+  @provide({ context: projectRunContext })
+  accessor projectRun: ProjectRun | null = null;
 
   static styles = appPreviewStyles;
 
@@ -379,7 +386,7 @@ export class AppPreview extends LitElement {
     if (this.#appTemplate) {
       this.#appTemplate.graph = this.graph;
       this.#appTemplate.showGDrive = this.showGDrive;
-      this.#appTemplate.readOnly = false;
+      this.#appTemplate.readOnly = this.readOnly;
       this.#appTemplate.showShareButton = false;
       this.#appTemplate.showContentWarning = !this.isMine;
       this.#appTemplate.isEmpty = this.graphIsEmpty;
@@ -393,7 +400,7 @@ export class AppPreview extends LitElement {
         >
           ${this.#template}
         </div>
-        ${this.isMine
+        ${this.isMine && this.showThemeEditing
           ? html`<div
               id="theme-edit"
               class=${classMap({ empty: this.graphIsEmpty })}

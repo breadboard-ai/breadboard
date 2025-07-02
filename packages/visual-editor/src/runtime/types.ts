@@ -159,3 +159,5 @@ export type MoveToSelection = "immediate" | "animated" | false;
 export type SideboardRuntimeProvider = {
   createSideboardRuntime(): SideBoardRuntime;
 };
+
+export type VisualEditorMode = "app" | "canvas";

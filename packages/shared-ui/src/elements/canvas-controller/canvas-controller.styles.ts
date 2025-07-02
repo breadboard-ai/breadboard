@@ -436,7 +436,7 @@ export const styles = [
         }
       }
 
-      & bb-app-preview {
+      & bb-app-controller {
         position: relative;
         width: 100%;
         height: 100%;
@@ -908,7 +908,7 @@ export const styles = [
 
     bb-capabilities-selector,
     #history-activity-container,
-    bb-app-preview,
+    bb-app-controller,
     bb-entity-editor {
       display: none;
 

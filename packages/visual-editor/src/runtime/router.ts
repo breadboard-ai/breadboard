@@ -6,30 +6,36 @@
 
 import { EditHistoryCreator } from "@google-labs/breadboard";
 import { RuntimeURLChangeEvent } from "./events";
-import { TabId } from "./types";
+import { TabId, VisualEditorMode } from "./types";
 
 export class Router extends EventTarget {
   constructor() {
     super();
 
-    let replacedTabs = false;
-    const urlWithTab = new URL(window.location.href);
-    for (const [param, value] of urlWithTab.searchParams) {
+    let replaceParams = false;
+    const urlWithParams = new URL(window.location.href);
+    for (const [param, value] of urlWithParams.searchParams) {
       if (param === "tab0") {
-        urlWithTab.searchParams.set("flow", value);
-        urlWithTab.searchParams.delete("tab0");
-        replacedTabs = true;
+        urlWithParams.searchParams.set("flow", value);
+        urlWithParams.searchParams.delete("tab0");
+        replaceParams = true;
         continue;
       }
 
       if (param.startsWith("tab")) {
-        urlWithTab.searchParams.delete(param);
-        replacedTabs = true;
+        urlWithParams.searchParams.delete(param);
+        replaceParams = true;
       }
     }
 
-    if (replacedTabs) {
-      const url = decodeURIComponent(urlWithTab.href);
+    if (!urlWithParams.searchParams.has("mode")) {
+      // Default mode is canvas.
+      urlWithParams.searchParams.set("mode", "canvas");
+      replaceParams = true;
+    }
+
+    if (replaceParams) {
+      const url = decodeURIComponent(urlWithParams.href);
       window.history.replaceState(null, "", url);
     }
 
@@ -38,22 +44,41 @@ export class Router extends EventTarget {
     });
   }
 
-  go(url: string | null, id?: TabId, creator?: EditHistoryCreator) {
-    if (url === window.location.href) {
-      return;
-    }
-
+  go(
+    url: string | null,
+    mode: VisualEditorMode,
+    id?: TabId,
+    creator?: EditHistoryCreator
+  ) {
+    // Any invalid or null URLs should redirect to the origin.
     if (!url || !URL.canParse(url)) {
       url = window.location.origin;
     }
 
-    if (new URL(url).origin !== window.location.origin) {
+    // If the URL passed doesn't match the Visual Editor origin we assume that
+    // it is a thing to be loaded so we stack it on as a URL parameter.
+    let urlWithMode = new URL(url);
+    if (urlWithMode.origin !== window.location.origin) {
       const newURL = new URL(window.location.origin);
       newURL.searchParams.set("flow", url);
       url = newURL.href;
+      urlWithMode = new URL(url);
     }
 
-    // Ensure that the URL doesn't contain escaped characters for board URLs.
+    // If, however, the constructed URL & mode match the current then we can
+    // assume a noop here and early exit.
+    if (
+      url === window.location.href &&
+      urlWithMode.searchParams.get("mode") === mode
+    ) {
+      return;
+    }
+
+    // Next ensure that the provided mode is represented in the URL.
+    urlWithMode.searchParams.set("mode", mode);
+    url = urlWithMode.href;
+
+    // And finally ensure that the URL doesn't contain escaped characters.
     url = decodeURIComponent(url);
     window.history.pushState(null, "", url);
     this.#emit(id, creator);
@@ -77,8 +102,20 @@ export class Router extends EventTarget {
   }
 
   #emit(id?: TabId, creator?: EditHistoryCreator) {
+    let mode: VisualEditorMode = "canvas";
+    const urlWithParams = new URL(window.location.href);
+    const urlMode = urlWithParams.searchParams.get("mode");
+    if (urlMode && (urlMode === "app" || urlMode === "canvas")) {
+      mode = urlMode;
+    }
+
     this.dispatchEvent(
-      new RuntimeURLChangeEvent(new URL(window.location.href), id, creator)
+      new RuntimeURLChangeEvent(
+        new URL(window.location.href),
+        mode,
+        id,
+        creator
+      )
     );
   }
 }

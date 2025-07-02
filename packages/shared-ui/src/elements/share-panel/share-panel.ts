@@ -708,7 +708,7 @@ export class SharePanel extends LitElement {
       state.shareableFile
     ) {
       return new URL(
-        `/app/drive:/${encodeURIComponent(state.shareableFile.id)}`,
+        `/?flow=drive:/${encodeURIComponent(state.shareableFile.id)}&mode=app`,
         window.location.href
       ).href;
     }

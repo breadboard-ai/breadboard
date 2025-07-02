@@ -173,6 +173,9 @@ function toProp(key: string) {
 export const colorsLight = css`
   :host {
     --ui-custom-o-100: ${unsafeCSS(custom.c100)};
+    --ui-custom-o-25: oklch(
+      from var(--ui-custom-o-100) l c h / calc(alpha * 0.25)
+    );
     --ui-custom-o-20: oklch(
       from var(--ui-custom-o-100) l c h / calc(alpha * 0.2)
     );

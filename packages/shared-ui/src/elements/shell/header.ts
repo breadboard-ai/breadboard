@@ -16,10 +16,12 @@ import { icons } from "../../styles/icons.js";
 import {
   BoardTitleUpdateEvent,
   CloseEvent,
+  ModeToggleEvent,
   RemixEvent,
   ShareRequestedEvent,
   SignOutEvent,
 } from "../../events/events.js";
+import { classMap } from "lit/directives/class-map.js";
 
 @customElement("bb-ve-header")
 export class VEHeader extends LitElement {
@@ -43,6 +45,9 @@ export class VEHeader extends LitElement {
 
   @property()
   accessor saveStatus: BOARD_SAVE_STATUS | null = null;
+
+  @property()
+  accessor mode: "app" | "canvas" = "canvas";
 
   @state()
   accessor #showAccountSwitcher = false;
@@ -72,10 +77,51 @@ export class VEHeader extends LitElement {
         border-bottom: 1px solid var(--n-90);
         padding: 0 var(--bb-grid-size-5);
         overflow: hidden;
+        position: relative;
 
         & #left {
           display: flex;
           align-items: center;
+        }
+
+        & #mode-toggle {
+          padding: 0;
+          margin: 0;
+          display: flex;
+          gap: var(--bb-grid-size);
+          height: var(--bb-grid-size-8);
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          translate: -50% -50%;
+          border: none;
+          background: none;
+
+          & #app,
+          & #canvas {
+            display: flex;
+            align-items: center;
+            padding: 0 var(--bb-grid-size-3);
+            background: var(--n-90);
+            cursor: pointer;
+            height: var(--bb-grid-size-8);
+            border: none;
+
+            &.selected {
+              background: var(--ui-custom-o-25);
+              cursor: auto;
+            }
+          }
+
+          & #app {
+            border-radius: var(--bb-grid-size-16) var(--bb-grid-size-5)
+              var(--bb-grid-size-5) var(--bb-grid-size-16);
+          }
+
+          & #canvas {
+            border-radius: var(--bb-grid-size-5) var(--bb-grid-size-16)
+              var(--bb-grid-size-16) var(--bb-grid-size-5);
+          }
         }
 
         & #right {
@@ -94,6 +140,7 @@ export class VEHeader extends LitElement {
             line-height: 1;
             color: var(--ui-secondary-text);
             margin: 0 0 0 var(--bb-grid-size-6);
+            min-width: 45px;
           }
 
           & #toggle-user-menu {
@@ -281,6 +328,7 @@ export class VEHeader extends LitElement {
           .value=${this.tabTitle}
         />
       </div>
+      ${this.#renderModeToggle()}
       <div id="right">
         ${[
           this.#renderShareButton(),
@@ -291,6 +339,41 @@ export class VEHeader extends LitElement {
         ]}
       </div>
     </section>`;
+  }
+
+  #renderModeToggle() {
+    return html`<span
+      id="mode-toggle"
+    >
+      <button
+        id="app"
+        @click=${() => {
+          this.dispatchEvent(new ModeToggleEvent("app"));
+        }}
+        class=${classMap({
+          "sans-flex": true,
+          round: true,
+          "w-500": true,
+          "md-body-small": true,
+          selected: this.mode === "app",
+        })}
+        >App</button
+      >
+      <button
+        id="canvas"
+        @click=${() => {
+          this.dispatchEvent(new ModeToggleEvent("canvas"));
+        }}
+        class=${classMap({
+          "sans-flex": true,
+          round: true,
+          "w-500": true,
+          "md-body-small": true,
+          selected: this.mode === "canvas",
+        })}
+        >Canvas</button
+      >
+    </button>`;
   }
 
   #renderItemSelect() {
