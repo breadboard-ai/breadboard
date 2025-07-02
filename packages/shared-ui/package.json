@@ -122,7 +122,7 @@
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^22.0.0",
     "typescript": "^5.8.3",
-    "vite": "^6.2.7",
+    "vite": "^7.0.0",
     "vite-plugin-full-reload": "^1.2.0",
     "vite-plugin-watch-and-run": "^1.7.5"
   },
