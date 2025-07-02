@@ -46,8 +46,6 @@ import {
   CommandsSetSwitchEvent,
   NodeConfigurationUpdateRequestEvent,
   ThemeEditRequestEvent,
-  ToastEvent,
-  ToastType,
   WorkspaceSelectionStateEvent,
 } from "../../events/events.js";
 import {
@@ -82,6 +80,8 @@ import { styleMap } from "lit/directives/style-map.js";
 import { emptyStyles } from "../../styles/host/colors-empty.js";
 
 const SIDE_ITEM_KEY = "bb-canvas-controller-side-nav-item";
+
+import "./empty-state.js";
 
 @customElement("bb-canvas-controller")
 export class CanvasController extends LitElement {
@@ -656,7 +656,8 @@ export class CanvasController extends LitElement {
         <div id="graph-container" slot="slot-0">
           <bb-edit-history-overlay .history=${this.history}>
           </bb-edit-history-overlay>
-          ${graphEditor} ${themeEditor}
+          ${graphIsEmpty ? this.#renderEmptyState() : nothing} ${graphEditor}
+          ${themeEditor}
         </div>
         <div
           id="side-nav"
@@ -743,46 +744,8 @@ export class CanvasController extends LitElement {
     );
   }
 
-  #onClickToggleEditHistory() {
-    this.#showEditHistory = !this.#showEditHistory;
-  }
-
-  #onClickCloseEditHistory() {
-    this.#showEditHistory = false;
-  }
-
-  #renderEditHistory() {
-    return html`
-      <bb-edit-history-panel
-        class=${classMap({
-          active: this.sideNavItem === "activity",
-        })}
-        .history=${this.history}
-      ></bb-edit-history-panel>
-    `;
-  }
-
-  async #onClickShareButton() {
-    const graphUrl = this.graph?.url ? new URL(this.graph.url) : null;
-    if (!graphUrl) {
-      return;
-    }
-    if (graphUrl.protocol === "drive:") {
-      this.openSharePanel();
-      return;
-    }
-
-    const appUrl = await this.#deriveAppURL();
-    if (!appUrl) {
-      return;
-    }
-    await navigator.clipboard.writeText(appUrl.href);
-    this.dispatchEvent(
-      new ToastEvent(
-        Strings.from("STATUS_COPIED_TO_CLIPBOARD"),
-        ToastType.INFORMATION
-      )
-    );
+  #renderEmptyState() {
+    return html`<bb-empty-state></bb-empty-state>`;
   }
 
   openSharePanel() {
