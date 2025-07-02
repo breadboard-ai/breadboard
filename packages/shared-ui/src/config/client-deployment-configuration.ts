@@ -11,11 +11,14 @@ export type ClientDeploymentConfiguration = {
   BACKEND_API_ENDPOINT?: string;
   ENABLE_GOOGLE_DRIVE_PROXY?: boolean;
   FEEDBACK_LINK?: string;
+  ENABLE_GOOGLE_FEEDBACK?: boolean;
+  GOOGLE_FEEDBACK_PRODUCT_ID?: string;
+  GOOGLE_FEEDBACK_BUCKET?: string;
 };
 
-export const clientDeploymentConfigurationContext = createContext(
-  "ClientDeploymentConfiguration"
-);
+export const clientDeploymentConfigurationContext = createContext<
+  ClientDeploymentConfiguration | undefined
+>("ClientDeploymentConfiguration");
 
 export function discoverClientDeploymentConfiguration(): ClientDeploymentConfiguration {
   // Fish out the configuration from DOM, which the server is responsible for

@@ -123,6 +123,10 @@ import {
 } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 import { Admin } from "./admin";
 import { MainArguments, TosStatus } from "./types/types";
+import {
+  type BuildInfo,
+  buildInfoContext,
+} from "@breadboard-ai/shared-ui/contexts/build-info.js";
 
 const LOADING_TIMEOUT = 1250;
 const TOS_KEY = "tos-status";
@@ -185,6 +189,9 @@ export class Main extends LitElement {
   @provide({ context: boardServerContext })
   accessor boardServer: BoardServer | undefined;
 
+  @provide({ context: buildInfoContext })
+  accessor buildInfo: BuildInfo;
+
   @state()
   accessor #showBoardServerAddOverlay = false;
 
@@ -243,6 +250,8 @@ export class Main extends LitElement {
     createRef();
   readonly #tooltipRef: Ref<BreadboardUI.Elements.Tooltip> = createRef();
   readonly #snackbarRef: Ref<BreadboardUI.Elements.Snackbar> = createRef();
+  readonly #feedbackPanel: Ref<BreadboardUI.Elements.FeedbackPanel> =
+    createRef();
 
   #tabSaveId = new Map<
     TabId,
@@ -258,8 +267,6 @@ export class Main extends LitElement {
   #onShowTooltipBound = this.#onShowTooltip.bind(this);
   #hideTooltipBound = this.#hideTooltip.bind(this);
   #onKeyboardShortCut = this.#onKeyboardShortcut.bind(this);
-  #version = "dev";
-  #gitCommitHash = "dev";
   #recentBoardStore = RecentBoardStore.instance();
   #recentBoards: BreadboardUI.Types.RecentBoard[] = [];
   #isSaving = false;
@@ -309,8 +316,7 @@ export class Main extends LitElement {
   constructor(config: MainArguments) {
     super();
 
-    this.#version = config.version || "dev";
-    this.#gitCommitHash = config.gitCommitHash || "unknown";
+    this.buildInfo = config.buildInfo;
     this.#boardServers = [];
     this.#settings = config.settings ?? null;
     this.#proxy = config.proxy || [];
@@ -2594,8 +2600,6 @@ export class Main extends LitElement {
           ${
             this.#showWelcomePanel
               ? html`<bb-project-listing
-                  .version=${this.#version}
-                  .gitCommitHash=${this.#gitCommitHash}
                   .recentBoards=${this.#recentBoards}
                   .selectedBoardServer=${this.#selectedBoardServer}
                   .selectedLocation=${this.#selectedLocation}
@@ -2735,6 +2739,7 @@ export class Main extends LitElement {
       this.#renderToasts(),
       this.#renderSnackbar(),
       this.#renderGoogleDriveAssetShareDialog(),
+      this.#renderFeedbackPanel(),
     ];
   }
 
@@ -2884,6 +2889,12 @@ export class Main extends LitElement {
     `;
   }
 
+  #renderFeedbackPanel() {
+    return html`
+      <bb-feedback-panel ${ref(this.#feedbackPanel)}></bb-feedback-panel>
+    `;
+  }
+
   #renderTooltip() {
     return html`<bb-tooltip ${ref(this.#tooltipRef)}></bb-tooltip>`;
   }
@@ -2941,7 +2952,6 @@ export class Main extends LitElement {
       )?.value ?? false;
 
     const signinAdapter = this.signinAdapter ?? null;
-    const feedbackLink = this.clientDeploymentConfiguration.FEEDBACK_LINK;
     const canSave = this.tab
       ? this.#runtime.board.canSave(this.tab.id) && !this.tab.readOnly
       : false;
@@ -3059,11 +3069,19 @@ export class Main extends LitElement {
           }
 
           case "feedback": {
-            if (!feedbackLink) {
-              return;
+            if (this.clientDeploymentConfiguration.ENABLE_GOOGLE_FEEDBACK) {
+              if (this.#feedbackPanel.value) {
+                this.#feedbackPanel.value.open();
+              } else {
+                console.error(`Feedback panel was not rendered!`);
+              }
+            } else {
+              const feedbackLink =
+                this.clientDeploymentConfiguration.FEEDBACK_LINK;
+              if (feedbackLink) {
+                window.open(feedbackLink, "_blank");
+              }
             }
-
-            window.open(feedbackLink, "_blank");
             break;
           }
 

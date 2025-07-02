@@ -38,6 +38,7 @@ export { EntityEditor } from "./entity-editor/entity-editor.js";
 export { EventDetails } from "./event-details/event-details.js";
 export { ExportToolbar } from "./output/llm-output/export-toolbar.js";
 export { FastAccessMenu } from "./fast-access-menu/fast-access-menu.js";
+export { FeedbackPanel } from "./feedback/feedback-panel.js";
 export { FirstRunOverlay } from "./overlay/first-run.js";
 export { FloatingInput } from "./input/floating-input/floating-input.js";
 export { FlowgenEditorInput } from "../flow-gen/flowgen-editor-input.js";

@@ -42,6 +42,7 @@ import { RecentBoard } from "../../types/types.js";
 import { ActionTracker } from "../../utils/action-tracker.js";
 import { colorsLight } from "../../styles/host/colors-light.js";
 import { type } from "../../styles/host/type.js";
+import { type BuildInfo, buildInfoContext } from "../../contexts/build-info.js";
 
 const MODE_KEY = "bb-project-listing-mode";
 const OVERFLOW_MENU_CLEARANCE = 4;
@@ -66,12 +67,6 @@ export class ProjectListing extends LitElement {
 
   @property()
   accessor url: string | null = null;
-
-  @property()
-  accessor version = "dev";
-
-  @property()
-  accessor gitCommitHash = "unknown";
 
   @property()
   accessor selectedBoardServer = "Browser Storage";
@@ -100,6 +95,9 @@ export class ProjectListing extends LitElement {
 
   @consume({ context: environmentContext })
   accessor environment!: Environment;
+
+  @consume({ context: buildInfoContext })
+  accessor buildInfo: BuildInfo | undefined;
 
   #selectedIndex = 0;
 
@@ -1042,7 +1040,11 @@ export class ProjectListing extends LitElement {
           </div>`
         : nothing}
 
-      <div id="app-version">${this.version} (${this.gitCommitHash})</div>
+      <div id="app-version">
+        ${this.buildInfo
+          ? `${this.buildInfo.packageJsonVersion} (${this.buildInfo.gitCommitHash})`
+          : `Unknown version`}
+      </div>
       ${SHOW_GOOGLE_DRIVE_DEBUG_PANEL
         ? html`<bb-google-drive-debug-panel></bb-google-drive-debug-panel>`
         : nothing}

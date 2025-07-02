@@ -7,6 +7,7 @@
 import { EmbedHandler } from "@breadboard-ai/embed";
 import type * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { ClientDeploymentConfiguration } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
+import { type BuildInfo } from "@breadboard-ai/shared-ui/contexts/build-info.js";
 import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import {
   BoardServer,
@@ -53,12 +54,8 @@ export type MainArguments = {
   providers?: BoardServer[]; // Deprecated.
   settings?: SettingsStore;
   proxy?: HarnessProxyConfig[];
-  version?: string;
   environmentName?: string;
-  /**
-   * The Git hash of the current commit.
-   */
-  gitCommitHash?: string;
+  buildInfo: BuildInfo;
   languagePack?: string;
   /**
    * The URL of the board server with which this editor instance
