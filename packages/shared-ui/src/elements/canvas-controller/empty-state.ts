@@ -100,7 +100,7 @@ export class EmptyState extends LitElement {
         Add a step to get started <img src="/images/arrow-up.png" />
       </div>
       <div id="headline" class="sans-flex round w-500">
-        Let&apos;s build your Opal
+        Let&apos;s build your app
       </div>
       <div id="bottom" class="message edu-sa-beginner">
         ... or type what you want to build <img src="/images/arrow-down.png" />
