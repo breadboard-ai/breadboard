@@ -11,7 +11,7 @@ export default {
     str: "Breadboard",
   },
   SUB_APP_NAME: {
-    str: "Flows",
+    str: "Dev",
   },
   PROVIDER_NAME: {
     str: "",
