@@ -123,6 +123,10 @@ import {
 } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 import { Admin } from "./admin";
 import { MainArguments, TosStatus } from "./types/types";
+import {
+  type BuildInfo,
+  buildInfoContext,
+} from "@breadboard-ai/shared-ui/contexts/build-info.js";
 
 const LOADING_TIMEOUT = 1250;
 const TOS_KEY = "tos-status";
@@ -184,6 +188,9 @@ export class Main extends LitElement {
 
   @provide({ context: boardServerContext })
   accessor boardServer: BoardServer | undefined;
+
+  @provide({ context: buildInfoContext })
+  accessor buildInfo: BuildInfo;
 
   @state()
   accessor #showBoardServerAddOverlay = false;
@@ -258,8 +265,6 @@ export class Main extends LitElement {
   #onShowTooltipBound = this.#onShowTooltip.bind(this);
   #hideTooltipBound = this.#hideTooltip.bind(this);
   #onKeyboardShortCut = this.#onKeyboardShortcut.bind(this);
-  #version = "dev";
-  #gitCommitHash = "dev";
   #recentBoardStore = RecentBoardStore.instance();
   #recentBoards: BreadboardUI.Types.RecentBoard[] = [];
   #isSaving = false;
@@ -309,8 +314,7 @@ export class Main extends LitElement {
   constructor(config: MainArguments) {
     super();
 
-    this.#version = config.version || "dev";
-    this.#gitCommitHash = config.gitCommitHash || "unknown";
+    this.buildInfo = config.buildInfo;
     this.#boardServers = [];
     this.#settings = config.settings ?? null;
     this.#proxy = config.proxy || [];
@@ -2594,8 +2598,6 @@ export class Main extends LitElement {
           ${
             this.#showWelcomePanel
               ? html`<bb-project-listing
-                  .version=${this.#version}
-                  .gitCommitHash=${this.#gitCommitHash}
                   .recentBoards=${this.#recentBoards}
                   .selectedBoardServer=${this.#selectedBoardServer}
                   .selectedLocation=${this.#selectedLocation}

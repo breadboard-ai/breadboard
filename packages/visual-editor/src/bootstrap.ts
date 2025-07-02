@@ -65,8 +65,10 @@ function bootstrap(args: BootstrapArguments) {
 
     const config: MainArguments = {
       settings: SettingsStore.instance(),
-      version: pkg.version,
-      gitCommitHash: GIT_HASH,
+      buildInfo: {
+        packageJsonVersion: pkg.version,
+        gitCommitHash: GIT_HASH,
+      },
       boardServerUrl: getUrlFromBoardServiceFlag(
         BOARD_SERVICE || args.defaultBoardService
       ),
