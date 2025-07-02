@@ -156,11 +156,6 @@ export class ProjectListing extends LitElement {
             text-align: center;
             max-width: 560px;
           }
-
-          & bb-flowgen-homepage-panel {
-            width: 100%;
-            max-width: 960px;
-          }
         }
 
         & #board-listing {
@@ -769,12 +764,10 @@ export class ProjectListing extends LitElement {
       <div id="wrapper" ${ref(this.#wrapperRef)}>
         <section id="hero">
           <h1 class="sans-flex w-500 round md-headline-large">
-            <span class="gradient"
-              >${Strings.from("LABEL_WELCOME_MESSAGE_A")}</span
-            >
-            ${Strings.from("LABEL_WELCOME_MESSAGE_B")}
+            ${Strings.from("LABEL_WELCOME_MESSAGE_A")}${Strings.from(
+              "LABEL_WELCOME_MESSAGE_B"
+            )}
           </h1>
-          <bb-flowgen-homepage-panel></bb-flowgen-homepage-panel>
         </section>
 
         <div id="board-listing">
