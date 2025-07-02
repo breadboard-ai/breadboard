@@ -17,6 +17,7 @@ export default {
   Global: {
     ...DefaultLangPack.Global,
     APP_NAME: "Opal",
+    SUB_APP_NAME: "Experiment",
     PROVIDER_NAME: "Google",
     STATUS_GENERIC_RUN_STOPPED: {
       str: "Opal stopped",
@@ -31,46 +32,46 @@ export default {
       str: "Opal saved",
     },
     STATUS_PROJECT_CONFIGURATION_SAVED: {
-      str: "Opal and configuration saved",
+      str: "Opal app and configuration saved",
     },
     STATUS_PROJECT_DELETED: {
-      str: "Opal deleted",
+      str: "Opal app deleted",
     },
     STATUS_PROJECTS_REFRESHED: {
-      str: "Opals refreshed",
+      str: "Opal apps refreshed",
     },
     STATUS_PROJECT_CONTENTS_COPIED: {
-      str: "Opal contents copied to clipboard",
+      str: "Opal app contents copied to clipboard",
     },
     STATUS_PROJECT_URL_COPIED: {
-      str: "Opal URL copied to clipboard",
+      str: "Opal app URL copied to clipboard",
     },
     ERROR_UNABLE_TO_CREATE_PROJECT: {
-      str: "Unable to create an opal",
+      str: "Unable to create an Opal app",
     },
     ERROR_UNABLE_TO_LOAD_PROJECT: {
-      str: "Unable to load opal",
+      str: "Unable to load Opal app",
     },
     ERROR_NO_PROJECT: {
-      str: "Unable to edit; no opal found",
+      str: "Unable to edit; no Opal app found",
     },
     ERROR_UNABLE_TO_REFRESH_PROJECTS: {
-      str: "Unable to refresh opals",
+      str: "Unable to refresh Opal apps",
     },
     TITLE_CREATE_PROJECT: {
-      str: "Create new opal",
+      str: "Create new Opal app",
     },
     STATUS_DELETING_PROJECT: {
-      str: "Deleting opal",
+      str: "Deleting Opal app",
     },
     TITLE_UNTITLED_PROJECT: {
-      str: "Untitled Opal",
+      str: "Untitled Opal app",
     },
     QUERY_SAVE_PROJECT: {
       str: "The current Flow isn't saved - would you like to save first?",
     },
     LABEL_READONLY_PROJECT: {
-      str: "This opal is not editable. Please Remix it to make changes.",
+      str: "This Opal app is not editable. Please Remix it to make changes.",
     },
     LABEL_DISCLAIMER: {
       str: "Opal can make mistakes, so double-check it",
@@ -79,16 +80,16 @@ export default {
   ProjectListing: {
     ...DefaultLangPack.ProjectListing,
     LABEL_WELCOME_MESSAGE_A: {
-      str: "Opals",
+      str: "Opal apps",
     },
     LABEL_TEAM_NAME: {
       str: "Opals Team",
     },
     LABEL_TABLE_DESCRIPTION_YOUR_PROJECTS: {
-      str: "Your opals",
+      str: "Your Opal apps",
     },
     LABEL_NO_PROJECTS_FOUND: {
-      str: "No opals found",
+      str: "No Opal apps found",
     },
     LABEL_SEARCH_BOARDS: {
       str: "Search opals",
