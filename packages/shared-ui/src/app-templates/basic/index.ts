@@ -356,6 +356,8 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
             flex-direction: column;
             align-items: center;
             animation: fadeIn 1s cubic-bezier(0, 0, 0.3, 1);
+            overflow: scroll;
+            scrollbar-width: none;
 
             #splash-content-container {
               display: flex;
@@ -373,16 +375,17 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
               background-clip: content-box;
               border-radius: var(--bb-grid-size-5);
               box-sizing: border-box;
-              aspect-ratio: 17/20;
-              max-height: 45cqh;
+              flex: 1;
+              max-height: calc(45cqh - 54px);
             }
 
             &.default {
               flex: 1;
-              margin-top: 20%;
+              padding-top: 10%;
 
               &::before {
-                max-width: 320px;
+                flex: 1;
+                max-width: 220px;
                 background-clip: initial;
                 background-size: contain;
               }
@@ -1340,7 +1343,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     if (this.isEmpty) {
       content = [this.#renderControls(), this.#renderEmptyState()];
     } else if (this.run.app.state === "splash") {
-      content = splashScreen;
+      content = [this.#renderControls(), splashScreen];
     } else {
       content = [
         this.#renderControls(),
