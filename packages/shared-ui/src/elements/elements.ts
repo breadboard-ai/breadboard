@@ -7,8 +7,8 @@
 export { AccountSwitcher } from "./account/account.js";
 export { AddAssetButton } from "./input/add-asset/add-asset-button.js";
 export { AddAssetModal } from "./input/add-asset/add-asset-modal.js";
-export { AppPreview } from "./app-preview/app-preview.js";
-export { AppThemeCreator } from "./app-preview/app-theme-creator.js";
+export { AppController } from "./app-controller/app-controller.js";
+export { AppThemeCreator } from "./app-controller/app-theme-creator.js";
 export { ArrayEditor } from "./input/array/array-editor.js";
 export { AssetOrganizer } from "./asset-organizer/asset-organizer.js";
 export { AssetShelf } from "./input/add-asset/asset-shelf.js";

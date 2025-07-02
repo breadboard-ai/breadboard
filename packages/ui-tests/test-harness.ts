@@ -94,7 +94,7 @@ export class BreadboardTestHarness implements NodeHarness {
   async run() {
     if (
       (
-        await this.page.locator("bb-app-preview").getAttribute("class")
+        await this.page.locator("bb-app-controller").getAttribute("class")
       )?.indexOf("active") ??
       0 < 0
     ) {

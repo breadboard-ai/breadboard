@@ -561,7 +561,7 @@ export class CanvasController extends LitElement {
           this.sideNavItem,
         ],
         () => {
-          return html`<bb-app-preview
+          return html`<bb-app-controller
             class=${classMap({
               active: this.sideNavItem === "app-view",
             })}
@@ -576,6 +576,7 @@ export class CanvasController extends LitElement {
             .history=${this.history}
             .isMine=${this.graphIsMine}
             .graphIsEmpty=${graphIsEmpty}
+            .showThemeEditing=${true}
             @bbthemeeditrequest=${(evt: ThemeEditRequestEvent) => {
               this.showThemeDesigner = true;
               this.#themeOptions = evt.themeOptions;
@@ -583,7 +584,7 @@ export class CanvasController extends LitElement {
             @bbsharerequested=${() => {
               this.openSharePanel();
             }}
-          ></bb-app-preview>`;
+          ></bb-app-controller>`;
         }
       )}`,
       html`<bb-entity-editor

@@ -538,6 +538,22 @@ export const styles = css`
     z-index: 20;
   }
 
+  bb-app-controller {
+    position: absolute;
+    height: 100%;
+    width: 100svw;
+    left: 0;
+    top: 0;
+    overflow: hidden;
+    pointer-events: none;
+    opacity: 0;
+
+    &.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
+
   bb-project-listing {
     position: absolute;
     height: 100%;
