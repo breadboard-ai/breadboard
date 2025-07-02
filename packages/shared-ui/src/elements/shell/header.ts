@@ -101,24 +101,31 @@ export class VEHeader extends LitElement {
           & #canvas {
             display: flex;
             align-items: center;
-            padding: 0 var(--bb-grid-size-3);
+
             background: var(--n-90);
             cursor: pointer;
             height: var(--bb-grid-size-8);
             border: none;
+            transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
 
+            &:not([disabled]):hover,
             &.selected {
               background: var(--ui-custom-o-25);
+            }
+
+            &.selected {
               cursor: auto;
             }
           }
 
           & #app {
+            padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-4);
             border-radius: var(--bb-grid-size-16) var(--bb-grid-size-5)
               var(--bb-grid-size-5) var(--bb-grid-size-16);
           }
 
           & #canvas {
+            padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-3);
             border-radius: var(--bb-grid-size-5) var(--bb-grid-size-16)
               var(--bb-grid-size-16) var(--bb-grid-size-5);
           }

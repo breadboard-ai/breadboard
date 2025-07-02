@@ -11,7 +11,7 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, query } from "lit/decorators.js";
 import { icons } from "../../../styles/icons";
 import { styleMap } from "lit/directives/style-map.js";
-import { ShareRequestedEvent, StopEvent } from "../../../events/events";
+import { StopEvent } from "../../../events/events";
 import { SideNav } from "./side-nav";
 import { type } from "../../../styles/host/type";
 
@@ -48,7 +48,7 @@ export class Header extends LitElement {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        height: 76px;
+        height: 54px;
         border-bottom: 1px solid var(--s-70, var(--bb-neutral-100));
         padding: 0 var(--bb-grid-size-4);
         position: relative;
@@ -108,6 +108,7 @@ export class Header extends LitElement {
             top: 0px;
             left: 0px;
             width: calc(var(--progress) * 100%);
+            min-width: 4px;
             max-width: 100%;
             height: 4px;
             background: var(--p-40, var(--bb-neutral-600));
@@ -212,24 +213,6 @@ export class Header extends LitElement {
               ${this.appTitle}
             </h1>`
           : nothing}
-
-        <ul slot="top">
-          <li>
-            <button
-              class="w-400 round md-title-medium"
-              @click=${() => {
-                if (!this.#sideNav) {
-                  return;
-                }
-
-                this.#sideNav.active = false;
-                this.dispatchEvent(new ShareRequestedEvent());
-              }}
-            >
-              <span class="g-icon filled round">link</span>Share
-            </button>
-          </li>
-        </ul>
 
         <ul slot="bottom">
           <li>
