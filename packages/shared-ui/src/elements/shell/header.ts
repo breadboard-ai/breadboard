@@ -21,6 +21,7 @@ import {
   ShareRequestedEvent,
   SignOutEvent,
 } from "../../events/events.js";
+import { classMap } from "lit/directives/class-map.js";
 
 @customElement("bb-ve-header")
 export class VEHeader extends LitElement {
@@ -80,6 +81,42 @@ export class VEHeader extends LitElement {
         & #left {
           display: flex;
           align-items: center;
+        }
+
+        & #mode-toggle {
+          padding: 0;
+          margin: 0;
+          display: flex;
+          gap: var(--bb-grid-size);
+          height: var(--bb-grid-size-8);
+          border: none;
+          background: none;
+
+          & #app,
+          & #canvas {
+            display: flex;
+            align-items: center;
+            padding: 0 var(--bb-grid-size-3);
+            background: var(--n-90);
+            cursor: pointer;
+            height: var(--bb-grid-size-8);
+            border: none;
+
+            &.selected {
+              background: var(--ui-custom-o-25);
+              cursor: auto;
+            }
+          }
+
+          & #app {
+            border-radius: var(--bb-grid-size-16) var(--bb-grid-size-5)
+              var(--bb-grid-size-5) var(--bb-grid-size-16);
+          }
+
+          & #canvas {
+            border-radius: var(--bb-grid-size-5) var(--bb-grid-size-16)
+              var(--bb-grid-size-16) var(--bb-grid-size-5);
+          }
         }
 
         & #right {
@@ -299,15 +336,37 @@ export class VEHeader extends LitElement {
   }
 
   #renderModeToggle() {
-    return html`<button
-      @click=${() => {
-        this.dispatchEvent(
-          new ModeToggleEvent(this.mode === "app" ? "canvas" : "app")
-        );
-      }}
+    return html`<span
+      id="mode-toggle"
     >
-      <span>App</span>
-      <span>Canvas</span>
+      <button
+        id="app"
+        @click=${() => {
+          this.dispatchEvent(new ModeToggleEvent("app"));
+        }}
+        class=${classMap({
+          "sans-flex": true,
+          round: true,
+          "w-500": true,
+          "md-body-small": true,
+          selected: this.mode === "app",
+        })}
+        >App</button
+      >
+      <button
+        id="canvas"
+        @click=${() => {
+          this.dispatchEvent(new ModeToggleEvent("canvas"));
+        }}
+        class=${classMap({
+          "sans-flex": true,
+          round: true,
+          "w-500": true,
+          "md-body-small": true,
+          selected: this.mode === "canvas",
+        })}
+        >Canvas</button
+      >
     </button>`;
   }
 
