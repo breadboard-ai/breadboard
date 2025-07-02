@@ -60,6 +60,13 @@ server.use("/app/@:user/:name", boardServer.middlewares.loadBoard());
 
 server.use("/drive-proxy", makeDriveProxyMiddleware());
 
+server.use("/app", (req, res) => {
+  // Redirect the old standalone app view to the new unified view with the app
+  // tab opened.
+  const graphId = req.path.replace(/^\//, "");
+  res.redirect(301, `/?flow=${encodeURIComponent(graphId)}&mode=app`);
+});
+
 ViteExpress.config({
   transformer: (html: string, req: Request) => {
     const board = req.res?.locals.loadedBoard;
