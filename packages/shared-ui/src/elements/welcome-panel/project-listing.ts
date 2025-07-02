@@ -764,9 +764,8 @@ export class ProjectListing extends LitElement {
       <div id="wrapper" ${ref(this.#wrapperRef)}>
         <section id="hero">
           <h1 class="sans-flex w-500 round md-headline-large">
-            ${Strings.from("LABEL_WELCOME_MESSAGE_A")}${Strings.from(
-              "LABEL_WELCOME_MESSAGE_B"
-            )}
+            ${Strings.from("LABEL_WELCOME_MESSAGE_A")}
+            ${Strings.from("LABEL_WELCOME_MESSAGE_B")}
           </h1>
         </section>
 
