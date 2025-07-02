@@ -172,6 +172,7 @@ export class RuntimeURLChangeEvent extends Event {
 
   constructor(
     public readonly url: URL,
+    public readonly mode: BreadboardUI.Types.VisualEditorMode,
     public readonly id?: TabId,
     public readonly creator?: EditHistoryCreator
   ) {

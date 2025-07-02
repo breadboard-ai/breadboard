@@ -1653,6 +1653,16 @@ export class GoogleDrivePickerCloseEvent extends Event {
   }
 }
 
+/** Mode selection */
+
+export class ModeToggleEvent extends Event {
+  static eventName = "bbmodetoggle";
+
+  constructor(public readonly mode: "app" | "canvas") {
+    super(ModeToggleEvent.eventName, { ...eventInit });
+  }
+}
+
 declare global {
   interface HTMLElementEventMap {
     bbtoast: ToastEvent;

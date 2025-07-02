@@ -16,6 +16,7 @@ import { icons } from "../../styles/icons.js";
 import {
   BoardTitleUpdateEvent,
   CloseEvent,
+  ModeToggleEvent,
   RemixEvent,
   ShareRequestedEvent,
   SignOutEvent,
@@ -43,6 +44,9 @@ export class VEHeader extends LitElement {
 
   @property()
   accessor saveStatus: BOARD_SAVE_STATUS | null = null;
+
+  @property()
+  accessor mode: "app" | "canvas" = "canvas";
 
   @state()
   accessor #showAccountSwitcher = false;
@@ -281,6 +285,7 @@ export class VEHeader extends LitElement {
           .value=${this.tabTitle}
         />
       </div>
+      ${this.#renderModeToggle()}
       <div id="right">
         ${[
           this.#renderShareButton(),
@@ -291,6 +296,19 @@ export class VEHeader extends LitElement {
         ]}
       </div>
     </section>`;
+  }
+
+  #renderModeToggle() {
+    return html`<button
+      @click=${() => {
+        this.dispatchEvent(
+          new ModeToggleEvent(this.mode === "app" ? "canvas" : "app")
+        );
+      }}
+    >
+      <span>App</span>
+      <span>Canvas</span>
+    </button>`;
   }
 
   #renderItemSelect() {

@@ -52,6 +52,7 @@ import { styles as mainStyles } from "./index.styles.js";
 import * as Runtime from "./runtime/runtime.js";
 import {
   TabId,
+  VisualEditorMode,
   WorkspaceSelectionStateWithChangeId,
   WorkspaceVisualChangeId,
 } from "./runtime/types";
@@ -191,6 +192,9 @@ export class Main extends LitElement {
 
   @provide({ context: buildInfoContext })
   accessor buildInfo: BuildInfo;
+
+  @state()
+  accessor #mode: VisualEditorMode = "canvas";
 
   @state()
   accessor #showBoardServerAddOverlay = false;
@@ -825,8 +829,16 @@ export class Main extends LitElement {
           async (evt: Runtime.Events.RuntimeURLChangeEvent) => {
             this.#runtime.board.currentURL = evt.url;
 
+            if (evt.mode) {
+              this.#mode = evt.mode;
+              console.log(this.#mode);
+            }
+
+            const urlWithoutMode = new URL(evt.url);
+            urlWithoutMode.searchParams.delete("mode");
+
             // Close tab, go to the home page.
-            if (evt.url.search === "") {
+            if (urlWithoutMode.search === "") {
               if (this.tab) {
                 this.#runtime.board.closeTab(this.tab.id);
                 return;
@@ -838,12 +850,13 @@ export class Main extends LitElement {
               this.#runtime.board.createTabsFromURL(currentUrl);
             } else {
               // Load the tab.
-              const boardUrl = this.#runtime.board.getBoardURL(evt.url);
-              if (!boardUrl) {
+              const boardUrl = this.#runtime.board.getBoardURL(urlWithoutMode);
+              if (!boardUrl || boardUrl === this.tab?.graph.url) {
+                console.log("No reload needed");
                 return;
               }
 
-              if (evt.url) {
+              if (urlWithoutMode) {
                 const loadingTimeout = setTimeout(() => {
                   this.snackbar(
                     Strings.from("STATUS_GENERIC_LOADING"),
@@ -1407,7 +1420,7 @@ export class Main extends LitElement {
       return;
     }
     const { id, url } = boardData;
-    this.#runtime.router.go(url.href, id, creator);
+    this.#runtime.router.go(url.href, this.#mode, id, creator);
   }
 
   async #attemptBoardSaveAs(
@@ -2078,7 +2091,7 @@ export class Main extends LitElement {
                 @bbgraphboardserverloadrequest=${async (
                   evt: BreadboardUI.Events.GraphBoardServerLoadRequestEvent
                 ) => {
-                  this.#runtime.router.go(evt.url);
+                  this.#runtime.router.go(evt.url, this.#mode);
                 }}
                 @bbworkspaceselectionmove=${async (
                   evt: BreadboardUI.Events.WorkspaceSelectionMoveEvent
@@ -2197,7 +2210,7 @@ export class Main extends LitElement {
                   if (!evt.url) {
                     return;
                   }
-                  this.#runtime.router.go(evt.url);
+                  this.#runtime.router.go(evt.url, this.#mode);
                 }}
                 @dragover=${(evt: DragEvent) => {
                   evt.preventDefault();
@@ -2677,7 +2690,7 @@ export class Main extends LitElement {
                   @bbgraphboardserverloadrequest=${async (
                     evt: BreadboardUI.Events.GraphBoardServerLoadRequestEvent
                   ) => {
-                    this.#runtime.router.go(evt.url);
+                    this.#runtime.router.go(evt.url, this.#mode);
                   }}
                   @bbgraphboardserverremixrequest=${async (
                     evt: BreadboardUI.Events.GraphBoardServerRemixRequestEvent
@@ -2967,6 +2980,10 @@ export class Main extends LitElement {
       .isMine=${this.#runtime.board.isMine(this.tab?.graph.url)}
       .saveStatus=${saveStatus}
       .showExperimentalComponents=${showExperimentalComponents}
+      .mode=${this.#mode}
+      @bbmodetoggle=${(evt: BreadboardUI.Events.ModeToggleEvent) => {
+        this.#runtime.router.go(window.location.href, evt.mode);
+      }}
       @bbboardtitleupdate=${async (
         evt: BreadboardUI.Events.BoardTitleUpdateEvent
       ) => {
@@ -2991,7 +3008,7 @@ export class Main extends LitElement {
         this.#embedHandler?.sendToEmbedder({
           type: "back_clicked",
         });
-        this.#runtime.router.go(null);
+        this.#runtime.router.go(null, this.#mode);
       }}
       @bbsharerequested=${() => {
         if (!this.#canvasControllerRef.value) {

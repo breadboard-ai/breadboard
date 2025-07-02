@@ -685,3 +685,5 @@ export type ColorPalettes = {
   tertiary: CreatePalette<"t">;
   error: CreatePalette<"e">;
 };
+
+export type VisualEditorMode = "app" | "canvas";
