@@ -1569,7 +1569,7 @@ export class Main extends LitElement {
   }
 
   #setPageTitle(title: string | null) {
-    const suffix = `${Strings.from("APP_NAME")} - ${Strings.from("SUB_APP_NAME")}`;
+    const suffix = `${Strings.from("APP_NAME")} [${Strings.from("SUB_APP_NAME")}]`;
     if (title) {
       window.document.title = `${title} - ${suffix}`;
       return;
