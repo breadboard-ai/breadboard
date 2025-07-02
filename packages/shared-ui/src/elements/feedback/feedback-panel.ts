@@ -67,8 +67,10 @@ export class FeedbackPanel extends LitElement {
         /* These styles make the loading dialog look very similar to the
            Feedback component which will shortly take its place, and whose
            styles we don't control. */
+        box-sizing: border-box;
         width: 412px;
         height: 100vh;
+        max-height: none;
         margin: 0 0 0 auto;
         border: none;
         border-radius: 8px 0 0 8px;
@@ -82,10 +84,15 @@ export class FeedbackPanel extends LitElement {
         justify-content: center;
         font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
           var(--bb-font-family);
+
         .g-icon {
           animation: spin 1s linear infinite;
           color: var(--bb-ui-600);
           margin-right: var(--bb-grid-size-2);
+        }
+
+        &::backdrop {
+          background: rgba(128, 134, 139, 0.5);
         }
       }
     `,
