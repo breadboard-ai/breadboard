@@ -52,7 +52,6 @@ export {
 export { GraphRepresentationImpl } from "./traversal/representation.js";
 // Move to `utils` package
 export {
-  clone,
   isStreamCapability,
   patchReadableStream,
   StreamCapability,

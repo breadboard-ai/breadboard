@@ -6,16 +6,7 @@
 
 export type * from "./types.js";
 
-export {
-  callHandler,
-  clone,
-  isStreamCapability,
-  patchReadableStream,
-  StreamCapability,
-  streamFromAsyncGen,
-  type PatchedReadableStream,
-  type StreamCapabilityType,
-} from "@breadboard-ai/runtime/legacy.js";
+export { callHandler } from "@breadboard-ai/runtime/legacy.js";
 export { Board } from "./board.js";
 export { asRuntimeKit } from "./kits/ctors.js";
 export { Node } from "./node.js";
