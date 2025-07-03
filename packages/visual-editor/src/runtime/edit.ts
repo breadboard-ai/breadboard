@@ -351,7 +351,10 @@ export class Edit extends EventTarget {
       return;
     }
 
-    const project = this.state.getOrCreate(mainGraphId, editableGraph);
+    const project = this.state.getOrCreateProjectState(
+      mainGraphId,
+      editableGraph
+    );
 
     if (!project) {
       console.warn(`Failed to create theme: unable to create state`);
