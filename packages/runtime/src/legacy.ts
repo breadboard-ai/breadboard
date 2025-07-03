@@ -94,9 +94,7 @@ export type { ServerResponse } from "./remote/http.js";
 export { visitGraphNodes } from "./data/index.js";
 // Used by `board-server` as part of remote run API.
 export { run } from "./harness/index.js";
-// Move to `types` package.
-export type { AllowFilterFunction } from "./remote/config.js";
-// Used by `board-server` as part of proxy API.
+// Move to `utils` package.
 export { hasOrigin } from "./remote/index.js";
 // Move to `utils` package.
 export { chunkRepairTransform } from "./remote/chunk-repair.js";
