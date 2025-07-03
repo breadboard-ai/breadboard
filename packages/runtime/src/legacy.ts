@@ -72,5 +72,3 @@ export { visitGraphNodes } from "./data/index.js";
 export { run } from "./harness/index.js";
 // Move to `utils` package.
 export { hasOrigin } from "./remote/index.js";
-// Move to `utils` package.
-export { chunkRepairTransform } from "./remote/chunk-repair.js";
