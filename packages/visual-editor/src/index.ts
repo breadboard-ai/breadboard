@@ -183,8 +183,9 @@ export class Main extends LitElement {
   @provide({ context: BreadboardUI.Contexts.embedderContext })
   accessor embedState!: EmbedState;
 
+  @property()
   @provide({ context: signinAdapterContext })
-  accessor signinAdapter!: SigninAdapter;
+  accessor signinAdapter: SigninAdapter | undefined;
 
   @provide({ context: googleDriveClientContext })
   accessor googleDriveClient: GoogleDriveClient | undefined;
@@ -368,6 +369,9 @@ export class Main extends LitElement {
       proxyUrl: googleDriveProxyUrl,
       publicApiKey: ENVIRONMENT.googleDrive.publicApiKey,
       getUserAccessToken: async () => {
+        if (!this.signinAdapter) {
+          throw new Error(`SigninAdapter is misconfigured`);
+        }
         const token = await this.signinAdapter.refresh();
         if (token?.state === "valid") {
           return token.grant.access_token;
@@ -463,11 +467,7 @@ export class Main extends LitElement {
           this.#canRun = false;
         });
 
-        this.signinAdapter = new BreadboardUI.Utils.SigninAdapter(
-          this.tokenVendor,
-          this.environment,
-          this.settingsHelper
-        );
+        this.signinAdapter = this.#createSigninAdapter();
         if (
           this.signinAdapter.state === "invalid" ||
           this.signinAdapter.state === "signedout"
@@ -1016,6 +1016,14 @@ export class Main extends LitElement {
     });
   }
 
+  #createSigninAdapter() {
+    return new BreadboardUI.Utils.SigninAdapter(
+      this.tokenVendor,
+      this.environment,
+      this.settingsHelper
+    );
+  }
+
   #maybeShowWelcomePanel() {
     this.#showWelcomePanel = this.tab === null;
 
@@ -1209,18 +1217,21 @@ export class Main extends LitElement {
   }
 
   async #attemptLogOut() {
-    const signInAdapter = new SigninAdapter(
-      this.tokenVendor,
-      this.environment,
-      this.settingsHelper
-    );
+    const signinAdapter = this.signinAdapter;
+    if (!signinAdapter) {
+      return;
+    }
 
-    await signInAdapter.signout(() => {
+    await signinAdapter.signout(() => {
       this.toast(
         Strings.from("STATUS_LOGGED_OUT"),
         BreadboardUI.Events.ToastType.INFORMATION
       );
     });
+
+    // Recreating the signin adapter here will trigger a re-render with the
+    // updated state, which will cause us to show the sign-in dialog.
+    this.signinAdapter = this.#createSigninAdapter();
   }
 
   async #attemptBoardStart() {
@@ -1975,13 +1986,22 @@ export class Main extends LitElement {
   }
 
   render() {
-    const signinAdapter =
-      this.signinAdapter ??
-      new BreadboardUI.Utils.SigninAdapter(
-        this.tokenVendor,
-        this.environment,
-        this.settingsHelper
-      );
+    const signinAdapter = this.signinAdapter;
+    if (!signinAdapter) {
+      return nothing;
+    }
+
+    if (
+      !signinAdapter ||
+      (signinAdapter.state !== "anonymous" && signinAdapter.state !== "valid")
+    ) {
+      return html`<bb-connection-entry-signin
+        .adapter=${signinAdapter}
+        @bbsignin=${async () => {
+          window.location.reload();
+        }}
+      ></bb-connection-entry-signin>`;
+    }
 
     const showingOverlay = this.#isShowingOverlay();
     const uiController = this.#initialize
@@ -2728,18 +2748,6 @@ export class Main extends LitElement {
           }
           </div>
         </div>`;
-
-        if (
-          signinAdapter.state !== "anonymous" &&
-          signinAdapter.state !== "valid"
-        ) {
-          return html`<bb-connection-entry-signin
-            .adapter=${signinAdapter}
-            @bbsignin=${async () => {
-              window.location.reload();
-            }}
-          ></bb-connection-entry-signin>`;
-        }
 
         return [
           ui,
