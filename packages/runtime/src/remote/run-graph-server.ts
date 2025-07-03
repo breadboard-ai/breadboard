@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { inflateData } from "@breadboard-ai/data";
 import {
   OutputValues,
   ServerRunConfig,
   ServerRunRequest,
 } from "@breadboard-ai/types";
-import { inflateData } from "../data/inflate-deflate.js";
 import { run } from "../harness/run.js";
 import { createRunStateManager } from "../run/index.js";
 import { timestamp } from "../timestamp.js";

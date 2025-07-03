@@ -7,15 +7,15 @@
 import test from "ava";
 
 import {
-  createDefaultRunStore,
   isInlineData,
   isLLMContent,
   isLLMContentArray,
   toStoredDataPart,
-} from "../../src/index.js";
+} from "../../breadboard/src/index.js";
 import type { HarnessRunResult } from "@breadboard-ai/types";
-import { results as inlineDataRunResults } from "./inline-data-run.js";
-import { results as inlineDataArrayRunResults } from "./inline-data-run-array.js";
+import { results as inlineDataRunResults } from "../../breadboard/tests/inspector/inline-data-run.js";
+import { results as inlineDataArrayRunResults } from "../../breadboard/tests/inspector/inline-data-run-array.js";
+import { createDefaultRunStore } from "@breadboard-ai/data";
 
 const url = "http://www.example.com";
 

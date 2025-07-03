@@ -1,5 +1,5 @@
 {
-  "name": "@google-labs/data",
+  "name": "@breadboard-ai/data",
   "version": "0.0.1",
   "description": "Handles data transformation for Breadboard",
   "main": "./dist/src/index.js",
@@ -65,15 +65,16 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
-    "@ava/typescript": "^4.0.0",
+    "@ava/typescript": "6.0.0",
     "@google-labs/tsconfig": "^0.0.1",
-    "@types/node": "^18.16.3",
-    "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^7.0.0",
-    "ava": "^5.2.0",
-    "typescript": "^5.0.4"
+    "@types/node": "^22.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.35.0",
+    "@typescript-eslint/parser": "^8.34.1",
+    "ava": "6.4.0",
+    "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@breadboard-ai/types": "^0.7.0"
+    "@breadboard-ai/types": "0.7.0",
+    "@breadboard-ai/utils": "0.0.1"
   }
 }

@@ -7,16 +7,6 @@
 // An export for legacy runtime APIs: things that we need exposed
 // but really don't want to in the long run
 
-// Move to `data` package
-export { createDefaultDataStore, createDefaultRunStore } from "./data/index.js";
-// Move to `data` package
-export {
-  remapData,
-  deflateData,
-  inflateData,
-  purgeStoredDataInMemoryValues,
-  transformContents,
-} from "./data/inflate-deflate.js";
 // Move to `invoke` (or something) package.
 export { describerResultToNodeHandlerMetadata } from "./graph-based-node-handler.js";
 // Move to `invoke` (or something) package.
@@ -66,8 +56,6 @@ export {
 } from "./remote/index.js";
 // Used by `board-server` as part of proxy API.
 export type { ServerResponse } from "./remote/http.js";
-// Move to `data` package
-export { visitGraphNodes } from "./data/index.js";
 // Used by `board-server` as part of remote run API.
 export { run } from "./harness/index.js";
 // Move to `utils` package.

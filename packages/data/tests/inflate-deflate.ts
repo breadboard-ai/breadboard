@@ -1,15 +1,13 @@
 import { describe, it, mock, beforeEach } from "node:test";
 import assert from "node:assert";
+import { DataPartTransformer, DataStore } from "@breadboard-ai/types";
+import { InlineDataCapabilityPart, LLMContent } from "@breadboard-ai/types";
 import {
-  DataPartTransformer,
-  DataStore,
   deflateData,
   inflateData,
-  isFileDataCapabilityPart,
-  isStoredData,
   transformContents,
-} from "../../../src/index.js";
-import { InlineDataCapabilityPart, LLMContent } from "@breadboard-ai/types";
+} from "../src/inflate-deflate.js";
+import { isStoredData } from "@breadboard-ai/utils";
 
 function makeStoredData(handle: string) {
   return { storedData: { handle } };
@@ -34,7 +32,7 @@ describe("inflate-deflate", () => {
   } as unknown as DataPartTransformer;
 
   const mockStore = {
-    retrieveAsBlob: async (value: unknown) => {
+    retrieveAsBlob: async () => {
       return mockBlob(btoa("hello world"), "text/plain");
     },
     store: fakeStoreMethod,
