@@ -12,7 +12,11 @@ import type {
   RunArguments,
   TraversalResult,
 } from "@breadboard-ai/types";
-import { asyncGen } from "@breadboard-ai/utils";
+import {
+  asyncGen,
+  isImperativeGraph,
+  toDeclarativeGraph,
+} from "@breadboard-ai/utils";
 import { bubbleUpInputsIfNeeded, bubbleUpOutputsIfNeeded } from "../bubble.js";
 import { resolveBoardCapabilities } from "../capability.js";
 import { InputStageResult, OutputStageResult } from "../run.js";
@@ -20,10 +24,6 @@ import { cloneState } from "../serialization.js";
 import { timestamp } from "../timestamp.js";
 import { TraversalMachine } from "../traversal/machine.js";
 import { NodeInvoker } from "./node-invoker.js";
-import {
-  isImperativeGraph,
-  toDeclarativeGraph,
-} from "./run-imperative-graph.js";
 
 /**
  * Runs a graph in "run" mode. See
