@@ -50,8 +50,6 @@ export {
 } from "./sandbox/invoke-describer.js";
 // Leave as is?
 export { GraphRepresentationImpl } from "./traversal/representation.js";
-// Remove export from `breadboard`'
-export { RunResult } from "./run.js";
 // Move to `utils` package
 export {
   clone,
@@ -62,10 +60,6 @@ export {
   type PatchedReadableStream,
   type StreamCapabilityType,
 } from "./stream.js";
-// Remove export from `breadboard`
-export { TraversalMachine } from "./traversal/machine.js";
-// Remove export from `breadboard`
-export { MachineResult } from "./traversal/result.js";
 // Move to `loader` package
 export {
   getGraphDescriptor,

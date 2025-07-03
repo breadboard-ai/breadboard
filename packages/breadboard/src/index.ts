@@ -10,12 +10,9 @@ export {
   callHandler,
   clone,
   isStreamCapability,
-  MachineResult,
   patchReadableStream,
-  RunResult,
   StreamCapability,
   streamFromAsyncGen,
-  TraversalMachine,
   type PatchedReadableStream,
   type StreamCapabilityType,
 } from "@breadboard-ai/runtime/legacy.js";
