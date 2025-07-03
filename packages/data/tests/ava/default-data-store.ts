@@ -10,13 +10,13 @@ import type {
   HarnessRunResult,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
+import { createDefaultDataStore } from "../../src/index.js";
 import {
   isInlineData,
   isLLMContent,
   isLLMContentArray,
   isStoredData,
-} from "@breadboard-ai/utils";
-import { createDefaultDataStore } from "../../src/index.js";
+} from "../../src/common.js";
 
 const inputResult: HarnessRunResult = {
   type: "nodeend",

@@ -75,7 +75,7 @@ export {
   toInlineDataPart,
   toStoredDataPart,
   transformDataParts,
-} from "@breadboard-ai/utils";
+} from "@breadboard-ai/data";
 
 export {
   assetsFromGraphDescriptor,

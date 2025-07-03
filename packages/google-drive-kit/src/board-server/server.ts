@@ -7,8 +7,8 @@
 /// <reference types="@types/gapi.client.drive-v3" />
 
 import type { TokenVendor } from "@breadboard-ai/connection-client";
-import { isStoredData, ok } from "@breadboard-ai/utils";
-
+import { ok } from "@breadboard-ai/utils";
+import { isStoredData } from "@breadboard-ai/data";
 import {
   type BoardServer,
   type BoardServerCapabilities,

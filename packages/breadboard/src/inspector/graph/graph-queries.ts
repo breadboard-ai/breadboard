@@ -27,11 +27,10 @@ import type {
 import {
   err,
   graphUrlLike,
-  isLLMContent,
-  isLLMContentArray,
   Template,
   TemplatePart,
 } from "@breadboard-ai/utils";
+import { isLLMContent, isLLMContentArray } from "@breadboard-ai/data";
 import { getModuleId, isModule } from "../utils.js";
 import { GraphNodeType } from "./graph-node-type.js";
 import { InspectableAssetImpl } from "./inspectable-asset.js";
