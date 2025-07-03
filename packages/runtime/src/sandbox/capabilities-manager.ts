@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { transformContents } from "@breadboard-ai/data";
 import { Capability, CapabilitySpec } from "@breadboard-ai/jsandbox";
 import { baseURLFromContext } from "@breadboard-ai/loader";
 import {
@@ -20,7 +21,6 @@ import {
 } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 import { bubbleUpInputsIfNeeded, bubbleUpOutputsIfNeeded } from "../bubble.js";
-import { transformContents } from "../data/inflate-deflate.js";
 import { FileSystemHandlerFactory } from "./file-system-handler-factory.js";
 import { invokeDescriber } from "./invoke-describer.js";
 import { CapabilitiesManager } from "./types.js";

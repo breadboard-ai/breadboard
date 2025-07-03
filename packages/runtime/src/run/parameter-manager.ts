@@ -22,7 +22,7 @@ import {
   isLLMContent,
   isLLMContentArray,
   isTextCapabilityPart,
-} from "@breadboard-ai/utils";
+} from "@breadboard-ai/data";
 import { Template, TemplatePart } from "@breadboard-ai/utils";
 
 export { ParameterManager };

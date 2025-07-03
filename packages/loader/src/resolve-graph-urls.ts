@@ -5,12 +5,8 @@
  */
 
 import { GraphDescriptor, GraphToRun, LLMContent } from "@breadboard-ai/types";
-import {
-  graphUrlLike,
-  isLLMContent,
-  isLLMContentArray,
-  Template,
-} from "@breadboard-ai/utils";
+import { Template, graphUrlLike } from "@breadboard-ai/utils";
+import { isLLMContent, isLLMContentArray } from "@breadboard-ai/data";
 
 export { resolveGraphUrls };
 

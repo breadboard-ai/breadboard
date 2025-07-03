@@ -4,9 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { callHandler, handlersFromKits } from "../handler.js";
-import { streamsToAsyncIterable } from "../stream.js";
+import { inflateData } from "@breadboard-ai/data";
 import type {
+  AnyProxyRequestMessage,
+  AnyProxyResponseMessage,
   ErrorResponse,
   InputValues,
   Kit,
@@ -15,14 +16,13 @@ import type {
   NodeHandlers,
   NodeIdentifier,
   OutputValues,
-  AnyProxyRequestMessage,
-  AnyProxyResponseMessage,
 } from "@breadboard-ai/types";
-import { NodeProxyConfig, NodeProxySpec, ProxyServerConfig } from "./config.js";
-import { ClientTransport, ServerTransport } from "./types.js";
-import { createTunnelKit, readConfig } from "./tunnel.js";
+import { callHandler, handlersFromKits } from "../handler.js";
+import { streamsToAsyncIterable } from "../stream.js";
 import { timestamp } from "../timestamp.js";
-import { inflateData } from "../data/inflate-deflate.js";
+import { NodeProxyConfig, NodeProxySpec, ProxyServerConfig } from "./config.js";
+import { createTunnelKit, readConfig } from "./tunnel.js";
+import { ClientTransport, ServerTransport } from "./types.js";
 
 type ProxyServerTransport = ServerTransport<
   AnyProxyRequestMessage,

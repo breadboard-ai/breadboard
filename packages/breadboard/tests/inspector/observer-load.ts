@@ -7,7 +7,7 @@
 import {
   createDefaultDataStore,
   createDefaultRunStore,
-} from "@breadboard-ai/runtime/legacy.js";
+} from "@breadboard-ai/data";
 import type {
   HarnessRunResult,
   InspectableRun,

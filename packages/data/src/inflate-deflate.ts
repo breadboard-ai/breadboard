@@ -21,9 +21,9 @@ import {
   isFileDataCapabilityPart,
   isInlineData,
   isStoredData,
-  ok,
   transformDataParts,
-} from "@breadboard-ai/utils";
+} from "./common.js";
+import { ok } from "@breadboard-ai/utils";
 
 export { transformContents };
 

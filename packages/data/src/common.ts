@@ -25,7 +25,7 @@ import {
   DataPartTransformType,
   Outcome,
 } from "@breadboard-ai/types";
-import { err, ok } from "./outcome.js";
+import { err, ok } from "@breadboard-ai/utils";
 
 // Helpers for handling DataCapability objects.
 

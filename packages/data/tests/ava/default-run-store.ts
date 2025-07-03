@@ -6,16 +6,16 @@
 
 import test from "ava";
 
+import type { HarnessRunResult } from "@breadboard-ai/types";
+import { results as inlineDataRunResults } from "../node/inline-data-run.js";
+import { results as inlineDataArrayRunResults } from "../node/inline-data-run-array.js";
+import { createDefaultRunStore } from "@breadboard-ai/data";
 import {
-  createDefaultRunStore,
   isInlineData,
   isLLMContent,
   isLLMContentArray,
   toStoredDataPart,
-} from "../../src/index.js";
-import type { HarnessRunResult } from "@breadboard-ai/types";
-import { results as inlineDataRunResults } from "./inline-data-run.js";
-import { results as inlineDataArrayRunResults } from "./inline-data-run-array.js";
+} from "../../src/common.js";
 
 const url = "http://www.example.com";
 

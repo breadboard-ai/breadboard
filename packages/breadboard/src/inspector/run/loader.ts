@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { remapData } from "@breadboard-ai/runtime/legacy.js";
+import { remapData } from "@breadboard-ai/data";
 import type {
   DataStore,
   InspectableRunLoadResult,

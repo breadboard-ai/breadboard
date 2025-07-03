@@ -4,11 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { inflateData } from "@breadboard-ai/data";
 import { SandboxedModule, Telemetry } from "@breadboard-ai/jsandbox";
-import {
-  CapabilitiesManagerImpl,
-  inflateData,
-} from "@breadboard-ai/runtime/legacy.js";
+import { CapabilitiesManagerImpl } from "@breadboard-ai/runtime/legacy.js";
 import type {
   InputValues,
   Kit,
@@ -33,9 +31,7 @@ export { addSandboxedRunModule };
  * allows tuning capabilities for each invoked module, including module
  * invocation itself.
  */
-type RunModuleInvocationFilter = (
-  context: NodeHandlerContext
-) => Outcome<void>;
+type RunModuleInvocationFilter = (context: NodeHandlerContext) => Outcome<void>;
 
 function findHandler(handlerName: string, kits?: Kit[]) {
   const handler = kits

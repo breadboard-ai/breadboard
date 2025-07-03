@@ -18,15 +18,15 @@ import {
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
 import {
-  asBase64,
-  retrieveAsBlob as genericRetrieveAsBlob,
   isInlineData,
   isLLMContent,
   isLLMContentArray,
   isMetadataEntry,
   isStoredData,
   toStoredDataPart,
-} from "@breadboard-ai/utils";
+  retrieveAsBlob as genericRetrieveAsBlob,
+  asBase64,
+} from "./common.js";
 
 export type GroupID = string;
 export type NodeTimeStamp = string;

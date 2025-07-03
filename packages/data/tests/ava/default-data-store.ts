@@ -6,15 +6,17 @@
 
 import test from "ava";
 
+import type {
+  HarnessRunResult,
+  StoredDataCapabilityPart,
+} from "@breadboard-ai/types";
+import { createDefaultDataStore } from "../../src/index.js";
 import {
-  createDefaultDataStore,
   isInlineData,
   isLLMContent,
+  isLLMContentArray,
   isStoredData,
-} from "../../src/index.js";
-import type { HarnessRunResult } from "@breadboard-ai/types";
-import { isLLMContentArray } from "@breadboard-ai/utils";
-import type { StoredDataCapabilityPart } from "@breadboard-ai/types";
+} from "../../src/common.js";
 
 const inputResult: HarnessRunResult = {
   type: "nodeend",

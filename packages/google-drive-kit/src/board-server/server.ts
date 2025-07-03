@@ -7,8 +7,8 @@
 /// <reference types="@types/gapi.client.drive-v3" />
 
 import type { TokenVendor } from "@breadboard-ai/connection-client";
-import { isStoredData, ok } from "@breadboard-ai/utils";
-
+import { ok } from "@breadboard-ai/utils";
+import { isStoredData } from "@breadboard-ai/data";
 import {
   type BoardServer,
   type BoardServerCapabilities,
@@ -39,7 +39,7 @@ import { SaveDebouncer } from "./save-debouncer.js";
 import { RefreshEvent, SaveEvent } from "./events.js";
 import { type GoogleDriveClient } from "../google-drive-client.js";
 import { GoogleDriveDataPartTransformer } from "./data-part-transformer.js";
-import { visitGraphNodes } from "@breadboard-ai/runtime/legacy.js";
+import { visitGraphNodes } from "@breadboard-ai/data";
 
 export { GoogleDriveBoardServer };
 

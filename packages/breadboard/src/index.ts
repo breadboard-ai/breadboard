@@ -75,7 +75,7 @@ export {
   toInlineDataPart,
   toStoredDataPart,
   transformDataParts,
-} from "@breadboard-ai/utils";
+} from "@breadboard-ai/data";
 
 export {
   assetsFromGraphDescriptor,
@@ -96,7 +96,7 @@ export {
   inflateData,
   purgeStoredDataInMemoryValues,
   transformContents,
-} from "@breadboard-ai/runtime/legacy.js";
+} from "@breadboard-ai/data";
 
 export { err, ok } from "@breadboard-ai/utils";
 
