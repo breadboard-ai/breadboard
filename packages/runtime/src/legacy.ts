@@ -17,7 +17,7 @@ export {
   purgeStoredDataInMemoryValues,
   transformContents,
 } from "./data/inflate-deflate.js";
-// Move to `breadboard` package
+// Move to `invoke` (or something) package.
 export { describerResultToNodeHandlerMetadata } from "./graph-based-node-handler.js";
 // Move to `invoke` (or something) package.
 export {
@@ -44,8 +44,8 @@ export {
 } from "./sandbox/invoke-describer.js";
 // Leave as is?
 export { GraphRepresentationImpl } from "./traversal/representation.js";
-// Move to `utils` package
-export { isStreamCapability, StreamCapability } from "./stream.js";
+// Move runtime tests to `runtime` package.
+export { StreamCapability } from "./stream.js";
 // Move to `loader` package
 export { getGraphDescriptor } from "./capability.js";
 // Move runtime tests to `runtime` package.
