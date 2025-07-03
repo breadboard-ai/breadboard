@@ -1,0 +1,79 @@
+{
+  "name": "@google-labs/data",
+  "version": "0.0.1",
+  "description": "Handles data transformation for Breadboard",
+  "main": "./dist/src/index.js",
+  "exports": "./dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "prepack": "npm run build",
+    "test": "wireit",
+    "build": "wireit",
+    "lint": "wireit"
+  },
+  "repository": {
+    "directory": "packages/blank",
+    "type": "git",
+    "url": "https://github.com/breadboard-ai/breadboard.git"
+  },
+  "files": [
+    "dist/src"
+  ],
+  "wireit": {
+    "build": {
+      "dependencies": [
+        "build:tsc"
+      ]
+    },
+    "build:tsc": {
+      "command": "tsc -b --pretty",
+      "dependencies": [
+        "<dependencies>#build"
+      ],
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "files": [
+        "src/**/*.ts",
+        "tests/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ],
+      "output": [
+        "dist/",
+        "!dist/**/*.min.js{,.map}"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "test": {
+      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/*.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [
+        "tests/**/*.ts"
+      ],
+      "output": []
+    }
+  },
+  "keywords": [],
+  "author": "Google Labs Team",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/breadboard-ai/breadboard/issues"
+  },
+  "homepage": "https://github.com/breadboard-ai/breadboard#readme",
+  "devDependencies": {
+    "@ava/typescript": "^4.0.0",
+    "@google-labs/tsconfig": "^0.0.1",
+    "@types/node": "^18.16.3",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "ava": "^5.2.0",
+    "typescript": "^5.0.4"
+  },
+  "dependencies": {
+    "@breadboard-ai/types": "^0.7.0"
+  }
+}
