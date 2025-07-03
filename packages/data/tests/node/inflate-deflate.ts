@@ -6,7 +6,7 @@ import {
   deflateData,
   inflateData,
   transformContents,
-} from "../src/inflate-deflate.js";
+} from "../../src/inflate-deflate.js";
 import { isStoredData } from "@breadboard-ai/utils";
 
 function makeStoredData(handle: string) {

@@ -16,7 +16,7 @@ import {
   isLLMContentArray,
   isStoredData,
 } from "@breadboard-ai/utils";
-import { createDefaultDataStore } from "../src/index.js";
+import { createDefaultDataStore } from "../../src/index.js";
 
 const inputResult: HarnessRunResult = {
   type: "nodeend",

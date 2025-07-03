@@ -11,10 +11,10 @@ import {
   isLLMContent,
   isLLMContentArray,
   toStoredDataPart,
-} from "../../breadboard/src/index.js";
+} from "@breadboard-ai/utils";
 import type { HarnessRunResult } from "@breadboard-ai/types";
-import { results as inlineDataRunResults } from "../../breadboard/tests/inspector/inline-data-run.js";
-import { results as inlineDataArrayRunResults } from "../../breadboard/tests/inspector/inline-data-run-array.js";
+import { results as inlineDataRunResults } from "../node/inline-data-run.js";
+import { results as inlineDataArrayRunResults } from "../node/inline-data-run-array.js";
 import { createDefaultRunStore } from "@breadboard-ai/data";
 
 const url = "http://www.example.com";
