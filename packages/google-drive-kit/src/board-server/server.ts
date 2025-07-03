@@ -39,7 +39,7 @@ import { SaveDebouncer } from "./save-debouncer.js";
 import { RefreshEvent, SaveEvent } from "./events.js";
 import { type GoogleDriveClient } from "../google-drive-client.js";
 import { GoogleDriveDataPartTransformer } from "./data-part-transformer.js";
-import { visitGraphNodes } from "@breadboard-ai/runtime/legacy.js";
+import { visitGraphNodes } from "@breadboard-ai/data";
 
 export { GoogleDriveBoardServer };
 
