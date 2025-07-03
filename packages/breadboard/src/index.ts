@@ -23,12 +23,7 @@ export { Throttler } from "./utils/throttler.js";
 /**
  * Helpers for handling BreadboardCapability.
  */
-export {
-  getGraphDescriptor,
-  isGraphDescriptorCapability,
-  isResolvedURLBoardCapability,
-  isUnresolvedPathBoardCapability,
-} from "@breadboard-ai/runtime/legacy.js";
+export { getGraphDescriptor } from "@breadboard-ai/runtime/legacy.js";
 
 /**
  * The Inspector API.

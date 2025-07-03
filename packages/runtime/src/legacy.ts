@@ -51,21 +51,9 @@ export {
 // Leave as is?
 export { GraphRepresentationImpl } from "./traversal/representation.js";
 // Move to `utils` package
-export {
-  isStreamCapability,
-  patchReadableStream,
-  StreamCapability,
-  streamFromAsyncGen,
-  type PatchedReadableStream,
-  type StreamCapabilityType,
-} from "./stream.js";
+export { isStreamCapability, StreamCapability } from "./stream.js";
 // Move to `loader` package
-export {
-  getGraphDescriptor,
-  isGraphDescriptorCapability,
-  isResolvedURLBoardCapability,
-  isUnresolvedPathBoardCapability,
-} from "./capability.js";
+export { getGraphDescriptor } from "./capability.js";
 // Move runtime tests to `runtime` package.
 export { createRunStateManager } from "./run/index.js";
 // Move to `utils` package
