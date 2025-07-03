@@ -11,3 +11,4 @@ export * from "./stubs.js";
 export * from "./template.js";
 export * from "./graph-url-like.js";
 export * from "./llm-content-checks.js";
+export * from "./run-imperative-graph.js";

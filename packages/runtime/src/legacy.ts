@@ -35,12 +35,6 @@ export { runGraph } from "./run/run-graph.js";
 export { LifecycleManager } from "./run/lifecycle.js";
 // Move `GraphDescriberManager` to `runtime` package
 export { ParameterManager } from "./run/parameter-manager.js";
-// Move to `utils` package
-export {
-  isImperativeGraph,
-  toImperativeGraph,
-  toDeclarativeGraph,
-} from "./run/run-imperative-graph.js";
 // Move `GraphDescriberManager` to `runtime` package
 export { CapabilitiesManagerImpl } from "./sandbox/capabilities-manager.js";
 // Move `GraphDescriberManager` to `runtime` package
@@ -56,11 +50,6 @@ export { isStreamCapability, StreamCapability } from "./stream.js";
 export { getGraphDescriptor } from "./capability.js";
 // Move runtime tests to `runtime` package.
 export { createRunStateManager } from "./run/index.js";
-// Move to `utils` package
-export {
-  blankImperative,
-  defaultModuleContent,
-} from "./run/run-imperative-graph.js";
 // Move runtime tests to `runtime` package.
 export { LocalRunner } from "./harness/local-runner.js";
 // Move runtime tests to `runtime` package.

@@ -115,10 +115,7 @@ export type * from "@breadboard-ai/types/run.js";
  */
 export { sequenceEntryToHarnessRunResult } from "./inspector/run/conversions.js";
 
-export {
-  blankImperative,
-  defaultModuleContent,
-} from "@breadboard-ai/runtime/legacy.js";
+export { blankImperative, defaultModuleContent } from "@breadboard-ai/utils";
 export { addSandboxedRunModule } from "./sandboxed-run-module.js";
 
 export { ConfigureSidewireTransform } from "./editor/transforms/configure-sidewire.js";

@@ -4,10 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  isImperativeGraph,
-  toDeclarativeGraph,
-} from "@breadboard-ai/runtime/legacy.js";
+import { isImperativeGraph, toDeclarativeGraph } from "@breadboard-ai/utils";
 import type {
   GraphDescriptor,
   GraphIdentifier,
