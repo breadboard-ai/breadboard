@@ -4,11 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  isImperativeGraph,
-  toDeclarativeGraph,
-  toImperativeGraph,
-} from "@breadboard-ai/runtime/legacy.js";
 import type {
   AffectedNode,
   EditableGraph,
@@ -31,6 +26,11 @@ import type {
   SingleEditResult,
 } from "@breadboard-ai/types";
 import { ModuleIdentifier } from "@breadboard-ai/types";
+import {
+  isImperativeGraph,
+  toDeclarativeGraph,
+  toImperativeGraph,
+} from "@breadboard-ai/utils";
 import { MutableGraphImpl } from "../inspector/graph/mutable-graph.js";
 import { PromiseQueue } from "../utils/promise-queue.js";
 import { ChangeEvent, ChangeRejectEvent } from "./events.js";

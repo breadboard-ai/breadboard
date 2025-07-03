@@ -5,10 +5,9 @@
  */
 
 import {
+  AllowFilterFunction,
   DataStore,
-  InputValues,
   Kit,
-  NodeDescriptor,
   NodeTypeIdentifier,
 } from "@breadboard-ai/types";
 
@@ -94,11 +93,6 @@ export type TunnelSpec = {
 };
 
 export type NodeProxyConfig = (NodeTypeIdentifier | NodeProxySpec)[];
-
-export type AllowFilterFunction = (
-  node: NodeDescriptor,
-  inputs: InputValues
-) => boolean;
 
 export type ProxyServerConfig = {
   /**

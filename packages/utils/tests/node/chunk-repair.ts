@@ -5,8 +5,8 @@
  */
 
 import test, { describe } from "node:test";
-import { chunkRepairTransform } from "../../../src/remote/chunk-repair.js";
 import { deepStrictEqual } from "node:assert";
+import { chunkRepairTransform } from "../../src/chunk-repair.js";
 
 const repair = async (incoming: string[], repaired: string[]) => {
   const log: string[] = [];

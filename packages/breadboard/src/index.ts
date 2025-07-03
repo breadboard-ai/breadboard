@@ -6,19 +6,7 @@
 
 export type * from "./types.js";
 
-export {
-  callHandler,
-  clone,
-  isStreamCapability,
-  MachineResult,
-  patchReadableStream,
-  RunResult,
-  StreamCapability,
-  streamFromAsyncGen,
-  TraversalMachine,
-  type PatchedReadableStream,
-  type StreamCapabilityType,
-} from "@breadboard-ai/runtime/legacy.js";
+export { callHandler } from "@breadboard-ai/runtime/legacy.js";
 export { Board } from "./board.js";
 export { asRuntimeKit } from "./kits/ctors.js";
 export { Node } from "./node.js";
@@ -35,12 +23,7 @@ export { Throttler } from "./utils/throttler.js";
 /**
  * Helpers for handling BreadboardCapability.
  */
-export {
-  getGraphDescriptor,
-  isGraphDescriptorCapability,
-  isResolvedURLBoardCapability,
-  isUnresolvedPathBoardCapability,
-} from "@breadboard-ai/runtime/legacy.js";
+export { getGraphDescriptor } from "@breadboard-ai/runtime/legacy.js";
 
 /**
  * The Inspector API.
@@ -132,10 +115,7 @@ export type * from "@breadboard-ai/types/run.js";
  */
 export { sequenceEntryToHarnessRunResult } from "./inspector/run/conversions.js";
 
-export {
-  blankImperative,
-  defaultModuleContent,
-} from "@breadboard-ai/runtime/legacy.js";
+export { blankImperative, defaultModuleContent } from "@breadboard-ai/utils";
 export { addSandboxedRunModule } from "./sandboxed-run-module.js";
 
 export { ConfigureSidewireTransform } from "./editor/transforms/configure-sidewire.js";

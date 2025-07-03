@@ -5,7 +5,7 @@
  */
 
 import { DataPart, LLMContent } from "@breadboard-ai/types";
-import { chunkRepairTransform } from "@breadboard-ai/runtime/legacy.js";
+import { chunkRepairTransform } from "@breadboard-ai/utils";
 
 export { llmContentTransform };
 
@@ -17,7 +17,7 @@ function makePart(stream: Omit<StreamType, "sse">, chunk: string): DataPart {
   } else {
     try {
       return { json: JSON.parse(chunk) };
-    } catch (e) {
+    } catch {
       return { text: chunk };
     }
   }
@@ -106,7 +106,7 @@ function sseTransform() {
       event.data = dataLines.join("\n");
       try {
         event.data = JSON.parse(event.data);
-      } catch (e) {
+      } catch {
         // eat the error, do nothing.
       }
 

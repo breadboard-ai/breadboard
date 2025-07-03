@@ -6,16 +6,17 @@
 
 import { SENTINEL_BASE_URL, baseURLFromContext } from "@breadboard-ai/loader";
 import type { GraphDescriptor } from "@breadboard-ai/types";
-import test from "ava";
+import { deepStrictEqual } from "node:assert";
+import { describe } from "node:test";
 
-test("relativeBasePath is relative to invoking board", (t) => {
-  t.is(
+describe("relativeBasePath is relative to invoking board", () => {
+  deepStrictEqual(
     baseURLFromContext({
       board: { url: "http://bar" } as GraphDescriptor,
     }).href,
     "http://bar/"
   );
-  t.is(
+  deepStrictEqual(
     baseURLFromContext({
       board: {} as GraphDescriptor,
       base: new URL("http://baz"),
@@ -24,8 +25,8 @@ test("relativeBasePath is relative to invoking board", (t) => {
   );
 });
 
-test("relativeBasePath falls back to explicit option", (t) => {
-  t.deepEqual(
+describe("relativeBasePath falls back to explicit option", () => {
+  deepStrictEqual(
     baseURLFromContext({
       board: { url: "file:///bar/foo" } as GraphDescriptor,
       base: new URL("http://baz"),
@@ -34,6 +35,6 @@ test("relativeBasePath falls back to explicit option", (t) => {
   );
 });
 
-test("relativeBasePath falls back to SENTINEL_BASE_URL", (t) => {
-  t.is(baseURLFromContext({}).href, SENTINEL_BASE_URL.href);
+describe("relativeBasePath falls back to SENTINEL_BASE_URL", () => {
+  deepStrictEqual(baseURLFromContext({}).href, SENTINEL_BASE_URL.href);
 });

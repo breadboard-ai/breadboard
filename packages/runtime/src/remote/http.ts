@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { chunkRepairTransform } from "@breadboard-ai/utils";
 import {
   PatchedReadableStream,
   parseWithStreams,
   patchReadableStream,
   stringifyWithStreams,
 } from "../stream.js";
-import { chunkRepairTransform } from "./chunk-repair.js";
 import {
   ClientBidirectionalStream,
   ClientTransport,

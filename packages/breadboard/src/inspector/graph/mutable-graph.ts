@@ -4,11 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  GraphRepresentationImpl,
-  isImperativeGraph,
-  toDeclarativeGraph,
-} from "@breadboard-ai/runtime/legacy.js";
+import { GraphRepresentationImpl } from "@breadboard-ai/runtime/legacy.js";
 import type {
   AffectedNode,
   GraphDescriptor,
@@ -27,6 +23,7 @@ import type {
   MutableGraph,
   MutableGraphStore,
 } from "@breadboard-ai/types";
+import { isImperativeGraph, toDeclarativeGraph } from "@breadboard-ai/utils";
 import { DescribeResultCache } from "./describe-cache.js";
 import { EdgeCache } from "./edge-cache.js";
 import { Edge } from "./edge.js";

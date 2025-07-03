@@ -19,7 +19,7 @@ import { type BoardServerStore } from "./server/store.js";
 import { loadBoard } from "./server/boards/loader.js";
 import { InMemoryStorageProvider } from "./server/storage-providers/inmemory.js";
 import { FirestoreStorageProvider } from "./server/storage-providers/firestore.js";
-import type { AllowFilterFunction } from "@breadboard-ai/runtime/legacy.js";
+import type { AllowFilterFunction } from "@breadboard-ai/types";
 
 export type { ServerConfig, StorageProvider };
 export { SecretsProvider } from "./server/proxy/secrets.js";
