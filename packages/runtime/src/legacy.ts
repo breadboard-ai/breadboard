@@ -17,17 +17,17 @@ export {
   purgeStoredDataInMemoryValues,
   transformContents,
 } from "./data/inflate-deflate.js";
-// Move to `breadboard package
+// Move to `breadboard` package
 export { describerResultToNodeHandlerMetadata } from "./graph-based-node-handler.js";
-// Not sure
+// Move to `invoke` (or something) package.
 export {
   callHandler,
   getGraphHandlerFromMutableGraph,
   getHandler,
   getGraphHandler,
 } from "./handler.js";
-// Not sure
-// Somehow remove `kitFromGraphDescriptor` from `breadboard` package
+// Move to `invoke` (or something) package.
+// Move `kitFromGraphDescriptor` from `breadboard` package there, too
 export { invokeGraph } from "./run/invoke-graph.js";
 // Move runtime tests to here (`runtime` package).
 export { runGraph } from "./run/run-graph.js";
