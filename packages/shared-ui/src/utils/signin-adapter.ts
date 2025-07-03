@@ -124,6 +124,7 @@ class SigninAdapter {
         const blobURL = URL.createObjectURL(await picture.blob());
         return blobURL;
       } catch (e) {
+        console.warn(e);
         SigninAdapter.#cachedPicture = null;
       }
     }
