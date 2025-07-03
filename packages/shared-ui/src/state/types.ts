@@ -353,12 +353,13 @@ export type ConnectorState = {
 };
 
 export type UIOverlays =
-  | "WelcomePanel"
   | "BoardEditModal"
   | "ItemModal"
   | "BoardServerAddOverlay"
   | "NewWorkspaceItemOverlay"
   | "TOS";
+
+export type UILoadState = "Home" | "Loading" | "Loaded" | "Error";
 
 export type UI = {
   mode: VisualEditorMode;
@@ -372,6 +373,7 @@ export type UI = {
    * of the flow.
    */
   canRunMain: boolean;
+  loadState: UILoadState;
   projectFilter: string | null;
   show: Set<UIOverlays>;
   toasts: Map<

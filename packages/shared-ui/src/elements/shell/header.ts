@@ -22,6 +22,7 @@ import {
   SignOutEvent,
 } from "../../events/events.js";
 import { classMap } from "lit/directives/class-map.js";
+import { UILoadState } from "../../state/types.js";
 
 @customElement("bb-ve-header")
 export class VEHeader extends LitElement {
@@ -42,6 +43,9 @@ export class VEHeader extends LitElement {
 
   @property()
   accessor showExperimentalComponents = false;
+
+  @property()
+  accessor loadState: UILoadState | null = null;
 
   @property()
   accessor saveStatus: BOARD_SAVE_STATUS | null = null;
@@ -481,10 +485,12 @@ export class VEHeader extends LitElement {
           ? html`<span class="sans" id="experiment">Experiment</span>`
           : nothing}
       </h1>
-      <div id="right">
-        <bb-homepage-search-button></bb-homepage-search-button>
-        ${[this.#renderItemSelect(), this.#renderUser()]}
-      </div>
+      ${this.loadState !== "Error" && this.loadState !== "Loading"
+        ? html`<div id="right">
+            <bb-homepage-search-button></bb-homepage-search-button>
+            ${[this.#renderItemSelect(), this.#renderUser()]}
+          </div>`
+        : nothing}
     </section>`;
   }
 
