@@ -9,6 +9,7 @@ const Strings = StringsHelper.forSection("Global");
 
 import { css, html, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { ActionTracker } from "../../utils/action-tracker.js";
 import { SigninAdapter } from "../../utils/signin-adapter";
 import { until } from "lit/directives/until.js";
 import { SignInEvent } from "../../events/events";
@@ -101,6 +102,12 @@ export class ConnectionEntrySignin extends LitElement {
   @state()
   accessor errorMessage: string | null = null;
 
+  override updated() {
+    if (this.adapter?.state === "signedout") {
+      ActionTracker.signInPageView();
+    }
+  }
+
   render() {
     if (!this.adapter) {
       return nothing;
@@ -122,6 +129,7 @@ export class ConnectionEntrySignin extends LitElement {
             // The adapter is immutable, this callback will always return a new
             // copy with a new state, including picture and name.
             if (adapter.state === "valid") {
+              ActionTracker.signInSuccess();
               this.dispatchEvent(new SignInEvent());
             } else if (adapter.errorMessage) {
               this.errorMessage = adapter.errorMessage;
