@@ -19,6 +19,7 @@ export { StateManager };
  * Holds various important bits of UI state
  */
 class StateManager {
+  #ui: State.UI | null = null;
   #map: Map<MainGraphIdentifier, State.Project> = new Map();
   #store: MutableGraphStore;
   #runtime: SideBoardRuntime;
@@ -43,7 +44,15 @@ class StateManager {
     return null;
   }
 
-  getOrCreate(
+  getOrCreateUIState() {
+    if (!this.#ui) {
+      this.#ui = State.createUIState();
+    }
+
+    return this.#ui;
+  }
+
+  getOrCreateProjectState(
     mainGraphId?: MainGraphIdentifier,
     editable?: EditableGraph | null
   ): State.Project | null {

@@ -26,6 +26,8 @@ import {
 import { HarnessRunner } from "@google-labs/breadboard/harness";
 import { ConnectorInstance, ConnectorType } from "../connectors/types";
 import { SideBoardRuntime } from "../sideboards/types";
+import { VisualEditorMode } from "../types/types";
+import { ToastType } from "../events/events";
 
 /**
  * Represents the Model+Controller for the individual run of the graph.
@@ -348,6 +350,38 @@ export type ConnectorState = {
    * Cancel any pending work.
    */
   cancel(): Promise<void>;
+};
+
+export type UIOverlays =
+  | "WelcomePanel"
+  | "BoardEditModal"
+  | "ItemModal"
+  | "BoardServerAddOverlay"
+  | "NewWorkspaceItemOverlay"
+  | "TOS";
+
+export type UI = {
+  mode: VisualEditorMode;
+  boardServer: string;
+  boardLocation: string;
+
+  /**
+   * Indicates whether or not the UI can currently run a flow or not.
+   * This is useful in situations where we're doing some work on the
+   * board and want to prevent the user from triggering the start
+   * of the flow.
+   */
+  canRunMain: boolean;
+  projectFilter: string | null;
+  show: Set<UIOverlays>;
+  toasts: Map<
+    string,
+    {
+      message: string;
+      type: ToastType;
+      persistent: boolean;
+    }
+  >;
 };
 
 /**
