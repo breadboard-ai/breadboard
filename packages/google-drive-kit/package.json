@@ -113,7 +113,7 @@
   },
   "dependencies": {
     "@breadboard-ai/connection-client": "0.2.0",
-    "@breadboard-ai/data": "^0.0.1",
+    "@breadboard-ai/data": "0.0.1",
     "@breadboard-ai/types": "0.7.0",
     "@google-labs/breadboard": "^0.34.0",
     "@types/gapi.client.drive-v3": "^0.0.5"

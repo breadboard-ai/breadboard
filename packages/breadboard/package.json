@@ -141,7 +141,7 @@
     "node": ">=20.14.0"
   },
   "dependencies": {
-    "@breadboard-ai/data": "^0.0.1",
+    "@breadboard-ai/data": "0.0.1",
     "@breadboard-ai/jsandbox": "0.6.0",
     "@breadboard-ai/loader": "0.0.1",
     "@breadboard-ai/runtime": "0.0.1",
