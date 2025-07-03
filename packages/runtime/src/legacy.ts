@@ -7,7 +7,9 @@
 // An export for legacy runtime APIs: things that we need exposed
 // but really don't want to in the long run
 
+// Move to `data` package
 export { createDefaultDataStore, createDefaultRunStore } from "./data/index.js";
+// Move to `data` package
 export {
   remapData,
   deflateData,
@@ -15,29 +17,42 @@ export {
   purgeStoredDataInMemoryValues,
   transformContents,
 } from "./data/inflate-deflate.js";
+// Move to `breadboard package
 export { describerResultToNodeHandlerMetadata } from "./graph-based-node-handler.js";
+// Not sure
 export {
   callHandler,
   getGraphHandlerFromMutableGraph,
   getHandler,
   getGraphHandler,
 } from "./handler.js";
+// Not sure
+// Somehow remove `kitFromGraphDescriptor` from `breadboard` package
 export { invokeGraph } from "./run/invoke-graph.js";
+// Move runtime tests to here (`runtime` package).
 export { runGraph } from "./run/run-graph.js";
+// Run state probably needs to be its own package
 export { LifecycleManager } from "./run/lifecycle.js";
+// Move `GraphDescriberManager` to `runtime` package
 export { ParameterManager } from "./run/parameter-manager.js";
+// Move to `utils` package
 export {
   isImperativeGraph,
   toImperativeGraph,
   toDeclarativeGraph,
 } from "./run/run-imperative-graph.js";
+// Move `GraphDescriberManager` to `runtime` package
 export { CapabilitiesManagerImpl } from "./sandbox/capabilities-manager.js";
+// Move `GraphDescriberManager` to `runtime` package
 export {
   invokeDescriber,
   invokeMainDescriber,
 } from "./sandbox/invoke-describer.js";
+// Leave as is?
 export { GraphRepresentationImpl } from "./traversal/representation.js";
+// Remove export from `breadboard`'
 export { RunResult } from "./run.js";
+// Move to `utils` package
 export {
   clone,
   isStreamCapability,
@@ -47,32 +62,47 @@ export {
   type PatchedReadableStream,
   type StreamCapabilityType,
 } from "./stream.js";
+// Remove export from `breadboard`
 export { TraversalMachine } from "./traversal/machine.js";
+// Remove export from `breadboard`
 export { MachineResult } from "./traversal/result.js";
+// Move to `loader` package
 export {
   getGraphDescriptor,
   isGraphDescriptorCapability,
   isResolvedURLBoardCapability,
   isUnresolvedPathBoardCapability,
 } from "./capability.js";
+// Move runtime tests to `runtime` package.
 export { createRunStateManager } from "./run/index.js";
+// Move to `utils` package
 export {
   blankImperative,
   defaultModuleContent,
 } from "./run/run-imperative-graph.js";
+// Move runtime tests to `runtime` package.
 export { LocalRunner } from "./harness/local-runner.js";
+// Move runtime tests to `runtime` package.
 export { RemoteRunner } from "./harness/remote-runner.js";
+// Move runtime tests to `runtime` package.
 export { loadRunnerState } from "./serialization.js";
+// Used by `board-server` as part of remote run API.
 export { handleRunGraphRequest } from "./remote/run-graph-server.js";
-
+// Used by `board-server` as part of proxy API.
 export {
   ProxyServer,
   HTTPServerTransport,
   type ProxyServerConfig,
 } from "./remote/index.js";
+// Used by `board-server` as part of proxy API.
 export type { ServerResponse } from "./remote/http.js";
+// Move to `data` package
 export { visitGraphNodes } from "./data/index.js";
+// Used by `board-server` as part of remote run API.
 export { run } from "./harness/index.js";
+// Move to `types` package.
 export type { AllowFilterFunction } from "./remote/config.js";
+// Used by `board-server` as part of proxy API.
 export { hasOrigin } from "./remote/index.js";
+// Move to `utils` package.
 export { chunkRepairTransform } from "./remote/chunk-repair.js";
