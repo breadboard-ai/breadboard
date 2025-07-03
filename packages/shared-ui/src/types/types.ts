@@ -73,6 +73,7 @@ export enum STATUS {
 }
 
 export enum BOARD_LOAD_STATUS {
+  PENDING = "pending",
   LOADING = "loading",
   LOADED = "loaded",
   ERROR = "error",

@@ -391,14 +391,10 @@ export class CanvasController extends LitElement {
 
     const canUndo = this.history?.canUndo() ?? false;
     const canRedo = this.history?.canRedo() ?? false;
-    const run = this.runs?.[0] ?? null;
-    const events = run?.events ?? [];
-    const eventPosition = events.length - 1;
 
     const graphEditor = guard(
       [
         graph,
-        run,
         this.boardServerKits,
         this.topGraphResult,
         this.history,
@@ -505,7 +501,6 @@ export class CanvasController extends LitElement {
         .modules=${graph.modules() ?? {}}
         .readOnly=${this.readOnly}
         .renderId=${crypto.randomUUID()}
-        .run=${run}
         .topGraphResult=${this.topGraphResult}
         .graphStore=${this.graphStore}
       ></bb-module-editor>`;
@@ -548,8 +543,6 @@ export class CanvasController extends LitElement {
     const sideNavItem = [
       html`${guard(
         [
-          run,
-          eventPosition,
           graphIsEmpty,
           this.graph,
           this.topGraphResult,

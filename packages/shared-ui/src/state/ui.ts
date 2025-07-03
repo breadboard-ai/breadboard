@@ -9,7 +9,7 @@ import { VisualEditorMode } from "../types/types";
 import { SignalSet } from "signal-utils/set";
 import { SignalMap } from "signal-utils/map";
 import { ToastType } from "../events/events";
-import { UI, UIOverlays } from "./types";
+import { UI, UIOverlays, UILoadState } from "./types";
 
 export { createUIState };
 
@@ -35,6 +35,9 @@ class ReactiveUIState implements UI {
    */
   @signal
   accessor canRunMain = true;
+
+  @signal
+  accessor loadState: UILoadState = "Home";
 
   @signal
   accessor projectFilter: string | null = null;
