@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { formatRunError } from "../harness/error.js";
-import { timestamp } from "../timestamp.js";
 import type {
   EdgeResponse,
   End,
@@ -21,6 +19,8 @@ import type {
   RunDiagnosticsLevel,
   SkipProbeMessage,
 } from "@breadboard-ai/types";
+import { timestamp } from "@breadboard-ai/utils";
+import { formatRunError } from "../harness/error.js";
 
 function omit<T extends RemoteMessage[1]>(message: T, ...keys: (keyof T)[]): T {
   const copy = { ...message };

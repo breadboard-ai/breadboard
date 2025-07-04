@@ -20,9 +20,8 @@ import {
   InspectableRunObserver,
   Schema,
 } from "@breadboard-ai/types";
-import { chunkRepairTransform } from "@breadboard-ai/utils";
+import { chunkRepairTransform, timestamp } from "@breadboard-ai/utils";
 import { serverStreamEventDecoder } from "../remote/http.js";
-import { timestamp } from "../timestamp.js";
 import {
   EndEvent,
   GraphEndEvent,

@@ -13,7 +13,13 @@ export { Node } from "./node.js";
 export { combineSchemas, SchemaBuilder } from "@breadboard-ai/utils";
 
 export type * from "@breadboard-ai/utils";
-export { asyncGen, Template } from "@breadboard-ai/utils";
+export {
+  asyncGen,
+  Template,
+  hash,
+  Throttler,
+  relativePath,
+} from "@breadboard-ai/utils";
 
 /**
  * Helpers for handling BreadboardCapability.
@@ -42,8 +48,6 @@ export { blank, blankLLMContent } from "./editor/index.js";
  */
 export type * from "@breadboard-ai/loader";
 export { baseURLFromContext, createLoader } from "@breadboard-ai/loader";
-
-export { formatGraphDescriptor } from "./formatter.js";
 
 /**
  * DataCapability helpers.

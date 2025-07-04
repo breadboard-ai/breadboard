@@ -13,8 +13,8 @@ import type {
   RunState,
   TraversalResult,
 } from "@breadboard-ai/types";
+import { timestamp } from "@breadboard-ai/utils";
 import { loadRunnerState, saveRunnerState } from "./serialization.js";
-import { timestamp } from "./timestamp.js";
 
 export class RunResult implements BreadboardRunResult {
   #type: RunResultType;

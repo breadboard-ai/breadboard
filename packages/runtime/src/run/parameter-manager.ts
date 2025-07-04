@@ -5,6 +5,11 @@
  */
 
 import {
+  isLLMContent,
+  isLLMContentArray,
+  isTextCapabilityPart,
+} from "@breadboard-ai/data";
+import {
   FileSystem,
   FileSystemEntry,
   FileSystemPath,
@@ -17,13 +22,8 @@ import {
   Schema,
   TraversalResult,
 } from "@breadboard-ai/types";
+import { Template, TemplatePart, timestamp } from "@breadboard-ai/utils";
 import { bubbleUpInputsIfNeeded } from "../bubble.js";
-import {
-  isLLMContent,
-  isLLMContentArray,
-  isTextCapabilityPart,
-} from "@breadboard-ai/data";
-import { Template, TemplatePart } from "@breadboard-ai/utils";
 
 export { ParameterManager };
 
@@ -251,8 +251,4 @@ function virtualGraph(): GraphDescriptor {
     edges: [],
     virtual: true,
   };
-}
-
-function timestamp() {
-  return globalThis.performance.now();
 }

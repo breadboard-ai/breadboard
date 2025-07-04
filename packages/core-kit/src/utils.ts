@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphLoaderResult } from "@breadboard-ai/types";
-import {
+import { getGraphDescriptor } from "@breadboard-ai/loader";
+import type {
+  GraphLoaderResult,
   NodeHandlerContext,
-  Throttler,
-  getGraphDescriptor,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
+import { Throttler } from "@breadboard-ai/utils";
 
 export const loadGraphFromPath = async (
   path: string,
