@@ -374,14 +374,6 @@ export class InputRequestedEvent extends Event {
   }
 }
 
-export class InputErrorEvent extends Event {
-  static eventName = "bbinputerror";
-
-  constructor(public readonly detail: string) {
-    super(InputErrorEvent.eventName, { ...eventInit });
-  }
-}
-
 export class PersistToggleEvent extends Event {
   static eventName = "bbpersisttoggle";
 
@@ -694,26 +686,6 @@ export class GraphBoardServerSelectionChangeEvent extends Event {
 /**
  * Graph Management - UI
  */
-
-export class BoardItemCopyEvent extends Event {
-  static eventName = "bbboarditemcopy";
-
-  constructor(
-    public readonly id: GraphIdentifier | ModuleIdentifier,
-    public readonly itemType: "graph" | "module",
-    public readonly title: string
-  ) {
-    super(BoardItemCopyEvent.eventName, { ...eventInit });
-  }
-}
-
-export class OutlineModeChangeEvent extends Event {
-  static eventName = "bboutlinemodechange";
-
-  constructor(public readonly mode: "list" | "tree") {
-    super(OutlineModeChangeEvent.eventName, { ...eventInit });
-  }
-}
 
 export class CommentUpdateEvent extends Event {
   static eventName = "bbcommentupdate";
