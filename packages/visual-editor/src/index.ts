@@ -61,19 +61,7 @@ import {
   Module,
   ModuleIdentifier,
 } from "@breadboard-ai/types";
-import { KeyboardCommand, KeyboardCommandDeps } from "./commands/types";
-import {
-  CopyCommand,
-  CutCommand,
-  DeleteCommand,
-  GroupCommand,
-  PasteCommand,
-  RedoCommand,
-  SelectAllCommand,
-  ToggleExperimentalComponentsCommand,
-  UndoCommand,
-  UngroupCommand,
-} from "./commands/commands";
+import { KeyboardCommandDeps } from "./commands/types";
 import {
   SIGN_IN_CONNECTION_ID,
   SigninAdapter,
@@ -121,58 +109,8 @@ import {
 } from "@breadboard-ai/shared-ui/contexts/build-info.js";
 import { classMap } from "lit/directives/class-map.js";
 import { SignalWatcher } from "@lit-labs/signals";
-import * as EventRoutes from "./event-routing/event-routing";
-import { EventRoute } from "./event-routing/types";
-
-const eventRoutes = new Map<
-  keyof BreadboardUI.Events.StateEventDetailMap,
-  EventRoute<keyof BreadboardUI.Events.StateEventDetailMap>
->([
-  /** Host */
-  [EventRoutes.Host.ModeRoute.event, EventRoutes.Host.ModeRoute],
-  [
-    EventRoutes.Host.SelectionStateChangeRoute.event,
-    EventRoutes.Host.SelectionStateChangeRoute,
-  ],
-
-  /** Board */
-  [EventRoutes.Board.InputRoute.event, EventRoutes.Board.InputRoute],
-  [EventRoutes.Board.LoadRoute.event, EventRoutes.Board.LoadRoute],
-  [EventRoutes.Board.RenameRoute.event, EventRoutes.Board.RenameRoute],
-  [EventRoutes.Board.RunRoute.event, EventRoutes.Board.RunRoute],
-  [EventRoutes.Board.StopRoute.event, EventRoutes.Board.StopRoute],
-
-  /** Node */
-  [EventRoutes.Node.ChangeRoute.event, EventRoutes.Node.ChangeRoute],
-  [EventRoutes.Node.MultiChangeRoute.event, EventRoutes.Node.MultiChangeRoute],
-  [EventRoutes.Node.ChangeEdgeRoute.event, EventRoutes.Node.ChangeEdgeRoute],
-  [
-    EventRoutes.Node.ChangeEdgeAttachmentPointRoute.event,
-    EventRoutes.Node.ChangeEdgeAttachmentPointRoute,
-  ],
-
-  /** Theme */
-  [EventRoutes.Theme.ChangeRoute.event, EventRoutes.Theme.ChangeRoute],
-  [EventRoutes.Theme.CreateRoute.event, EventRoutes.Theme.CreateRoute],
-  [EventRoutes.Theme.DeleteRoute.event, EventRoutes.Theme.DeleteRoute],
-  [EventRoutes.Theme.UpdateRoute.event, EventRoutes.Theme.UpdateRoute],
-]);
-
-const keyboardCommands = new Map<string[], KeyboardCommand>([
-  [DeleteCommand.keys, DeleteCommand],
-  [SelectAllCommand.keys, SelectAllCommand],
-  [CopyCommand.keys, CopyCommand],
-  [CutCommand.keys, CutCommand],
-  [PasteCommand.keys, PasteCommand],
-  [GroupCommand.keys, GroupCommand],
-  [UngroupCommand.keys, UngroupCommand],
-  [
-    ToggleExperimentalComponentsCommand.keys,
-    ToggleExperimentalComponentsCommand,
-  ],
-  [UndoCommand.keys, UndoCommand],
-  [RedoCommand.keys, RedoCommand],
-]);
+import { eventRoutes } from "./event-routing/event-routing";
+import { keyboardCommands } from "./commands/commands";
 
 type RenderValues = {
   canSave: boolean;
@@ -261,7 +199,7 @@ export class Main extends SignalWatcher(LitElement) {
     createRef();
   readonly #tooltipRef: Ref<BreadboardUI.Elements.Tooltip> = createRef();
   readonly #snackbarRef: Ref<BreadboardUI.Elements.Snackbar> = createRef();
-  readonly #feedbackPanel: Ref<BreadboardUI.Elements.FeedbackPanel> =
+  readonly #feedbackPanelRef: Ref<BreadboardUI.Elements.FeedbackPanel> =
     createRef();
 
   #tabSaveId = new Map<
@@ -1903,6 +1841,15 @@ export class Main extends SignalWatcher(LitElement) {
       ]}
     </div>`;
 
+    /**
+     * bbevent is the container for most of the actions triggered within the UI.
+     * It is something of a shapeshifting event, where the `eventType` property
+     * indicates which precise event it is. We do it this way because otherwise
+     * we end up with a vast array of named event listeners on the elements here
+     * and maintenance becomes tricky.
+     *
+     * @see BreadboardUI.Events.StateEventDetailMap for the list of all events.
+     */
     return html`<div
       id="container"
       @bbevent=${async (
@@ -1910,6 +1857,7 @@ export class Main extends SignalWatcher(LitElement) {
           keyof BreadboardUI.Events.StateEventDetailMap
         >
       ) => {
+        // Locate the specific handler based on the event type.
         const eventRoute = eventRoutes.get(evt.detail.eventType);
         if (!eventRoute) {
           console.warn(`No event handler for "${evt.detail.eventType}"`);
@@ -1920,6 +1868,10 @@ export class Main extends SignalWatcher(LitElement) {
           this.#secretsHelper = new SecretsHelper(this.#settings!);
         }
 
+        // Pass the handler everything it may need in order to function. Usually
+        // the most important of these are the runtime, originalEvent (which
+        // contains the data needed) and the tab so that the runtime can locate
+        // the appropriate editor etc.
         const shouldRender = await eventRoute.do({
           originalEvent: evt,
           // TODO: Determine if this is needed.
@@ -1931,6 +1883,8 @@ export class Main extends SignalWatcher(LitElement) {
           uiState: this.#uiState,
         });
 
+        // Some legacy actions require an update after running, so if the event
+        // handler returns with a true, schedule an update.
         if (shouldRender) {
           requestAnimationFrame(() => {
             this.requestUpdate();
@@ -2464,7 +2418,7 @@ export class Main extends SignalWatcher(LitElement) {
 
   #renderFeedbackPanel() {
     return html`
-      <bb-feedback-panel ${ref(this.#feedbackPanel)}></bb-feedback-panel>
+      <bb-feedback-panel ${ref(this.#feedbackPanelRef)}></bb-feedback-panel>
     `;
   }
 
@@ -2629,8 +2583,8 @@ export class Main extends SignalWatcher(LitElement) {
 
           case "feedback": {
             if (this.clientDeploymentConfiguration.ENABLE_GOOGLE_FEEDBACK) {
-              if (this.#feedbackPanel.value) {
-                this.#feedbackPanel.value.open();
+              if (this.#feedbackPanelRef.value) {
+                this.#feedbackPanelRef.value.open();
               } else {
                 console.error(`Feedback panel was not rendered!`);
               }
