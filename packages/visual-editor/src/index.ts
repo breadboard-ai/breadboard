@@ -150,6 +150,12 @@ const eventRoutes = new Map<
     EventRoutes.Node.ChangeEdgeAttachmentPointRoute.event,
     EventRoutes.Node.ChangeEdgeAttachmentPointRoute,
   ],
+
+  /** Theme */
+  [EventRoutes.Theme.ChangeRoute.event, EventRoutes.Theme.ChangeRoute],
+  [EventRoutes.Theme.CreateRoute.event, EventRoutes.Theme.CreateRoute],
+  [EventRoutes.Theme.DeleteRoute.event, EventRoutes.Theme.DeleteRoute],
+  [EventRoutes.Theme.UpdateRoute.event, EventRoutes.Theme.UpdateRoute],
 ]);
 
 const keyboardCommands = new Map<string[], KeyboardCommand>([
@@ -1931,6 +1937,16 @@ export class Main extends SignalWatcher(LitElement) {
           });
         }
       }}
+      @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
+        this.toast(toastEvent.message, toastEvent.toastType);
+      }}
+      @dragover=${(evt: DragEvent) => {
+        evt.preventDefault();
+      }}
+      @drop=${(evt: DragEvent) => {
+        evt.preventDefault();
+        this.#attemptLoad(evt);
+      }}
     >
       ${[
         this.#renderHeader(renderValues),
@@ -2113,13 +2129,6 @@ export class Main extends SignalWatcher(LitElement) {
       @bbworkspacenewitemcreaterequest=${() => {
         this.#uiState.show.add("NewWorkspaceItemOverlay");
       }}
-      @dragover=${(evt: DragEvent) => {
-        evt.preventDefault();
-      }}
-      @drop=${(evt: DragEvent) => {
-        evt.preventDefault();
-        this.#attemptLoad(evt);
-      }}
       @bbboardinfoupdate=${async (
         evt: BreadboardUI.Events.BoardInfoUpdateEvent
       ) => {
@@ -2203,18 +2212,6 @@ export class Main extends SignalWatcher(LitElement) {
       }}
       @bbtoggleexport=${async (evt: BreadboardUI.Events.ToggleExportEvent) => {
         await this.#attemptToggleExport(evt.exportId, evt.exportType);
-      }}
-      @bbthemechange=${async (evt: BreadboardUI.Events.ThemeChangeEvent) => {
-        await this.#runtime.edit.changeTheme(this.#tab, evt.theme);
-      }}
-      @bbthemeupdate=${async (evt: BreadboardUI.Events.ThemeUpdateEvent) => {
-        await this.#runtime.edit.updateTheme(this.#tab, evt.themeId, evt.theme);
-      }}
-      @bbthemedelete=${async (evt: BreadboardUI.Events.ThemeUpdateEvent) => {
-        await this.#runtime.edit.deleteTheme(this.#tab, evt.themeId);
-      }}
-      @bbthemecreate=${async (evt: BreadboardUI.Events.ThemeCreateEvent) => {
-        await this.#runtime.edit.createTheme(this.#tab, evt.theme);
       }}
       @bbmovenodes=${async (evt: BreadboardUI.Events.MoveNodesEvent) => {
         const { destinationGraphId } = evt;
@@ -2311,15 +2308,6 @@ export class Main extends SignalWatcher(LitElement) {
           this.#tab,
           evt.replacement,
           evt.creator
-        );
-      }}
-      @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
-        this.toast(toastEvent.message, toastEvent.toastType);
-      }}
-      @bbnodetyperetrievalerror=${() => {
-        this.toast(
-          Strings.from("ERROR_UNABLE_TO_RETRIEVE_TYPE_INFO"),
-          BreadboardUI.Events.ToastType.ERROR
         );
       }}
       @bbiterateonprompt=${(iterateOnPromptEvent: IterateOnPromptEvent) => {

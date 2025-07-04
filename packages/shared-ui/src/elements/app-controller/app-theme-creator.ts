@@ -8,18 +8,13 @@ import { customElement, property, state } from "lit/decorators.js";
 import { consume } from "@lit/context";
 import { GraphDescriptor, GraphTheme, LLMContent } from "@breadboard-ai/types";
 import GenerateAppTheme from "../../sideboards/sideboards-bgl/generate-app-theme.bgl.json" with { type: "json" };
-import MarkdownIt from "markdown-it";
 import {
   AppTemplateAdditionalOptionsAvailable,
   AppTheme,
-  AppThemeColors,
 } from "../../types/types.js";
 import {
   OverlayDismissedEvent,
-  ThemeChangeEvent,
-  ThemeCreateEvent,
-  ThemeDeleteEvent,
-  ThemeUpdateEvent,
+  StateEvent,
   ToastEvent,
   ToastType,
 } from "../../events/events.js";
@@ -29,12 +24,7 @@ import { styleMap } from "lit/directives/style-map.js";
 import { sideBoardRuntime } from "../../contexts/side-board-runtime.js";
 import { SideBoardRuntime } from "../../sideboards/types.js";
 import { classMap } from "lit/directives/class-map.js";
-import {
-  isInlineData,
-  isStoredData,
-  isTextCapabilityPart,
-  ok,
-} from "@google-labs/breadboard";
+import { isInlineData, isStoredData, ok } from "@google-labs/breadboard";
 import { until } from "lit/directives/until.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
@@ -509,32 +499,13 @@ export class AppThemeCreator extends LitElement {
     const [response] = result;
 
     // The splash image.
-    const [splashScreen, colorsRaw] = response.parts;
-    console.log(splashScreen, colorsRaw);
+    const [splashScreen] = response.parts;
 
-    if (
-      !(isInlineData(splashScreen) || isStoredData(splashScreen)) ||
-      !isTextCapabilityPart(colorsRaw)
-    ) {
+    if (!(isInlineData(splashScreen) || isStoredData(splashScreen))) {
       throw new Error("Invalid model response");
     }
 
-    const codeRaw = MarkdownIt()
-      .renderInline(colorsRaw.text, {})
-      .replace(/&quot;/gim, '"')
-      .replace(/\n/gim, "");
-
-    const matches = /.*?({.*?})/gim.exec(codeRaw);
-    if (!matches) {
-      throw new Error("Invalid color scheme generated");
-    }
-
     try {
-      const code = JSON.parse(matches[1]) as AppThemeColors;
-      if (!this.#isValidAppTheme(code)) {
-        throw new Error("Invalid color scheme generated");
-      }
-
       let theme = generatePaletteFromColor("#330072");
       const img = new Image();
       if (isInlineData(splashScreen)) {
@@ -550,10 +521,16 @@ export class AppThemeCreator extends LitElement {
 
       return {
         ...theme,
-        ...code,
+        primaryColor: "",
+        secondaryColor: "",
+        textColor: "",
+        tertiary: "",
+        primaryTextColor: "",
+        backgroundColor: "",
         splashScreen,
       };
     } catch (err) {
+      console.warn(err);
       throw new Error("Invalid color scheme generated");
     }
   }
@@ -570,7 +547,9 @@ export class AppThemeCreator extends LitElement {
         this.graph?.description ?? undefined,
         this.#generateDescriptionRef.value?.value
       );
-      this.dispatchEvent(new ThemeCreateEvent(newTheme));
+      this.dispatchEvent(
+        new StateEvent({ eventType: "theme.create", theme: newTheme })
+      );
     } catch (err) {
       console.warn(err);
       let errMessage = "Error";
@@ -595,7 +574,9 @@ export class AppThemeCreator extends LitElement {
     }
 
     const theme = this.themes[this.theme];
-    this.dispatchEvent(new ThemeUpdateEvent(this.theme, theme));
+    this.dispatchEvent(
+      new StateEvent({ eventType: "theme.update", id: this.theme, theme })
+    );
   }
 
   async #renderThumbnail(theme: GraphTheme) {
@@ -658,7 +639,9 @@ export class AppThemeCreator extends LitElement {
                 return;
               }
 
-              this.dispatchEvent(new ThemeDeleteEvent(this.theme));
+              this.dispatchEvent(
+                new StateEvent({ eventType: "theme.delete", id: this.theme })
+              );
             }}
           >
             Delete theme
@@ -668,8 +651,8 @@ export class AppThemeCreator extends LitElement {
         <menu>
           ${repeat(
             Object.entries(this.themes),
-            ([key]) => key,
-            ([key, theme]) => {
+            ([id]) => id,
+            ([id, theme]) => {
               let url = theme.splashScreen?.storedData.handle;
               if (url && url.startsWith(".") && this.graph?.url) {
                 url = new URL(url, this.graph?.url).href;
@@ -678,11 +661,13 @@ export class AppThemeCreator extends LitElement {
               return html`<li>
                 <button
                   ?disabled=${this._changed || this._generating}
-                  class=${classMap({ selected: key === this.theme })}
-                  ${this.theme === key ? ref(this.#selectedThemeRef) : nothing}
+                  class=${classMap({ selected: id === this.theme })}
+                  ${this.theme === id ? ref(this.#selectedThemeRef) : nothing}
                   @click=${() => {
                     this._changed = true;
-                    this.dispatchEvent(new ThemeChangeEvent(key));
+                    this.dispatchEvent(
+                      new StateEvent({ eventType: "theme.change", id })
+                    );
                   }}
                 >
                   ${guard(

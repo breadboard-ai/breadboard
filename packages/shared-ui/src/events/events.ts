@@ -8,7 +8,6 @@ import type {
   Edge,
   GraphIdentifier,
   GraphMetadata,
-  GraphTheme,
   LLMContent,
   ModuleCode,
   ModuleIdentifier,
@@ -27,7 +26,6 @@ import type {
 } from "@google-labs/breadboard";
 import type {
   AppTemplateAdditionalOptionsAvailable,
-  AppTheme,
   AssetEdge,
   Command,
   NewAsset,
@@ -1215,41 +1213,6 @@ export class SignOutEvent extends Event {
  * Themes
  */
 
-export class ThemeChangeEvent extends Event {
-  static eventName = "bbthemechange";
-
-  constructor(public readonly theme: string) {
-    super(ThemeChangeEvent.eventName, { ...eventInit });
-  }
-}
-
-export class ThemeCreateEvent extends Event {
-  static eventName = "bbthemecreate";
-
-  constructor(public readonly theme: AppTheme) {
-    super(ThemeCreateEvent.eventName, { ...eventInit });
-  }
-}
-
-export class ThemeDeleteEvent extends Event {
-  static eventName = "bbthemedelete";
-
-  constructor(public readonly themeId: string) {
-    super(ThemeDeleteEvent.eventName, { ...eventInit });
-  }
-}
-
-export class ThemeUpdateEvent extends Event {
-  static eventName = "bbthemeupdate";
-
-  constructor(
-    public readonly themeId: string,
-    public readonly theme: GraphTheme
-  ) {
-    super(ThemeUpdateEvent.eventName, { ...eventInit });
-  }
-}
-
 export class ThemeEditRequestEvent extends Event {
   static eventName = "bbthemeeditrequest";
 
@@ -1387,6 +1350,7 @@ export class GoogleDrivePickerCloseEvent extends Event {
 import type * as Board from "./board/board.js";
 import type * as Host from "./host/host.js";
 import type * as Node from "./node/node.js";
+import type * as Theme from "./theme/theme.js";
 
 export type StateEventDetailMap = {
   "board.input": Board.Input;
@@ -1402,6 +1366,11 @@ export type StateEventDetailMap = {
   "node.multichange": Node.MultiChange;
   "node.changeedge": Node.ChangeEdge;
   "node.changeedgeattachmentpoint": Node.ChangeEdgeAttachmentPoint;
+
+  "theme.create": Theme.Create;
+  "theme.change": Theme.Change;
+  "theme.delete": Theme.Delete;
+  "theme.update": Theme.Update;
 };
 
 export class StateEvent<
