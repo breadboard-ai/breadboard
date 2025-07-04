@@ -15,15 +15,12 @@ import type {
   ModuleLanguage,
   ModuleMetadata,
   NodeIdentifier,
-  NodeMetadata,
   NodeValue,
 } from "@breadboard-ai/types";
 import type {
   EditHistoryCreator,
-  EditSpec,
   GraphDescriptor,
   InspectablePort,
-  NodeConfiguration,
   NodeDescriptor,
   PortIdentifier,
   Schema,
@@ -765,47 +762,6 @@ export class NodeDeleteReferenceEvent extends Event {
   }
 }
 
-export class NodeCreateEvent extends Event {
-  static eventName = "bbnodecreate";
-
-  constructor(
-    public readonly id: string,
-    public readonly nodeType: string,
-    public readonly subGraphId: string | null = null,
-    public readonly configuration: NodeConfiguration | null = null,
-    public readonly metadata: NodeMetadata | null = null,
-    public readonly options: {
-      sourceId: NodeIdentifier;
-      portId: PortIdentifier;
-    } | null = null
-  ) {
-    super(NodeCreateEvent.eventName, { ...eventInit });
-  }
-}
-
-export class NodeDeleteEvent extends Event {
-  static eventName = "bbnodedelete";
-
-  constructor(
-    public readonly id: string,
-    public readonly subGraphId: string | null = null
-  ) {
-    super(NodeDeleteEvent.eventName, { ...eventInit });
-  }
-}
-
-export class NodeUpdateEvent extends Event {
-  static eventName = "bbnodeupdate";
-
-  constructor(
-    public readonly id: string,
-    public readonly subGraphId: string | null = null,
-    public readonly configuration: NodeConfiguration
-  ) {
-    super(NodeUpdateEvent.eventName, { ...eventInit });
-  }
-}
-
 export class BoardChosenEvent extends Event {
   static eventName = "bbboardchosen";
 
@@ -898,17 +854,6 @@ export class AssetEdgeChangeEvent extends Event {
     public readonly subGraphId: string | null = null
   ) {
     super(AssetEdgeChangeEvent.eventName, { ...eventInit });
-  }
-}
-
-export class MultiEditEvent extends Event {
-  static eventName = "bbmultiedit";
-  constructor(
-    public readonly edits: EditSpec[],
-    public readonly description: string,
-    public readonly subGraphId: string | null = null
-  ) {
-    super(MultiEditEvent.eventName, { ...eventInit });
   }
 }
 
@@ -1558,6 +1503,7 @@ export type StateEventDetailMap = {
   "host.selectionstatechange": Host.SelectionStateChange;
 
   "node.change": Node.Change;
+  "node.multichange": Node.MultiChange;
 };
 
 export class StateEvent<
