@@ -26,8 +26,6 @@ import {
 import { styleMap } from "lit/directives/style-map.js";
 import {
   AddAssetRequestEvent,
-  BoardDescriptionUpdateEvent,
-  BoardTitleUpdateEvent,
   ResizeEvent,
   SignInRequestedEvent,
   StateEvent,
@@ -1274,7 +1272,13 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
               if (newTitle === this.options.title) {
                 return;
               }
-              this.dispatchEvent(new BoardTitleUpdateEvent(newTitle));
+              this.dispatchEvent(
+                new StateEvent({
+                  eventType: "board.rename",
+                  title: newTitle,
+                  description: null,
+                })
+              );
             }}
             .innerHTML=${this.options.title}
           ></h1>
@@ -1303,7 +1307,11 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
               }
 
               this.dispatchEvent(
-                new BoardDescriptionUpdateEvent(newDescription)
+                new StateEvent({
+                  eventType: "board.rename",
+                  title: null,
+                  description: newDescription,
+                })
               );
             }}
             .innerHTML=${this.options.description ?? ""}

@@ -89,33 +89,6 @@ export class ContinueEvent extends Event {
   }
 }
 
-export class BoardTitleUpdateEvent extends Event {
-  static eventName = "bbboardtitleupdate";
-
-  constructor(public readonly title: string) {
-    super(BoardTitleUpdateEvent.eventName, { ...eventInit });
-  }
-}
-
-export class BoardDescriptionUpdateEvent extends Event {
-  static eventName = "bbboarddescriptionupdate";
-
-  constructor(public readonly description: string) {
-    super(BoardDescriptionUpdateEvent.eventName, { ...eventInit });
-  }
-}
-
-export class BoardBasicInfoUpdateEvent extends Event {
-  static eventName = "bbboardbasicinfoupdate";
-
-  constructor(
-    public readonly boardTitle: string,
-    public readonly boardDescription: string
-  ) {
-    super(BoardBasicInfoUpdateEvent.eventName, { ...eventInit });
-  }
-}
-
 export class BoardInfoUpdateEvent extends Event {
   static eventName = "bbboardinfoupdate";
 
@@ -1466,10 +1439,11 @@ import type * as Host from "./host/host.js";
 import type * as Node from "./node/node.js";
 
 export type StateEventDetailMap = {
+  "board.input": Board.Input;
   "board.load": Board.Load;
+  "board.rename": Board.Rename;
   "board.run": Board.Run;
   "board.stop": Board.Stop;
-  "board.input": Board.Input;
 
   "host.modetoggle": Host.ModeToggle;
   "host.selectionstatechange": Host.SelectionStateChange;

@@ -136,10 +136,11 @@ const eventRoutes = new Map<
   ],
 
   /** Board */
-  [EventRoutes.Board.RunRoute.event, EventRoutes.Board.RunRoute],
-  [EventRoutes.Board.LoadRoute.event, EventRoutes.Board.LoadRoute],
-  [EventRoutes.Board.StopRoute.event, EventRoutes.Board.StopRoute],
   [EventRoutes.Board.InputRoute.event, EventRoutes.Board.InputRoute],
+  [EventRoutes.Board.LoadRoute.event, EventRoutes.Board.LoadRoute],
+  [EventRoutes.Board.RenameRoute.event, EventRoutes.Board.RenameRoute],
+  [EventRoutes.Board.RunRoute.event, EventRoutes.Board.RunRoute],
+  [EventRoutes.Board.StopRoute.event, EventRoutes.Board.StopRoute],
 
   /** Node */
   [EventRoutes.Node.ChangeRoute.event, EventRoutes.Node.ChangeRoute],
@@ -2114,25 +2115,6 @@ export class Main extends SignalWatcher(LitElement) {
         evt.preventDefault();
         this.#attemptLoad(evt);
       }}
-      @bbboardtitleupdate=${async (
-        evt: BreadboardUI.Events.BoardTitleUpdateEvent
-      ) => {
-        this.#runtime.shell.setPageTitle(evt.title);
-        await this.#runtime.edit.updateBoardTitleAndDescription(
-          this.#tab,
-          evt.title,
-          null
-        );
-      }}
-      @bbboarddescriptionupdate=${async (
-        evt: BreadboardUI.Events.BoardDescriptionUpdateEvent
-      ) => {
-        await this.#runtime.edit.updateBoardTitleAndDescription(
-          this.#tab,
-          null,
-          evt.description
-        );
-      }}
       @bbboardinfoupdate=${async (
         evt: BreadboardUI.Events.BoardInfoUpdateEvent
       ) => {
@@ -2446,16 +2428,6 @@ export class Main extends SignalWatcher(LitElement) {
       @bbmodaldismissed=${() => {
         this.#uiState.show.delete("BoardEditModal");
       }}
-      @bbboardbasicinfoupdate=${async (
-        evt: BreadboardUI.Events.BoardBasicInfoUpdateEvent
-      ) => {
-        this.#runtime.shell.setPageTitle(evt.boardTitle);
-        await this.#runtime.edit.updateBoardTitleAndDescription(
-          this.#tab,
-          evt.boardTitle,
-          evt.boardDescription
-        );
-      }}
     ></bb-edit-board-modal>`;
   }
 
@@ -2607,16 +2579,6 @@ export class Main extends SignalWatcher(LitElement) {
       .saveStatus=${renderValues.saveStatus}
       .showExperimentalComponents=${renderValues.showExperimentalComponents}
       .mode=${this.#uiState.mode}
-      @bbboardtitleupdate=${async (
-        evt: BreadboardUI.Events.BoardTitleUpdateEvent
-      ) => {
-        this.#runtime.shell.setPageTitle(evt.title);
-        await this.#runtime.edit.updateBoardTitleAndDescription(
-          this.#tab,
-          evt.title,
-          null
-        );
-      }}
       @bbremix=${async () => {
         if (!this.#tab?.graph) {
           return;
