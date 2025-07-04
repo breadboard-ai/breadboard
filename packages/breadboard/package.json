@@ -8,8 +8,7 @@
   "main": "./dist/src/index.js",
   "exports": {
     ".": "./dist/src/index.js",
-    "./kits": "./dist/src/kits/index.js",
-    "./data": "./dist/src/data/index.js"
+    "./kits": "./dist/src/kits/index.js"
   },
   "types": "dist/src/index.d.ts",
   "type": "module",
