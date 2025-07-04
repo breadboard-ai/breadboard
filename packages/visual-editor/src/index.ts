@@ -143,6 +143,7 @@ const eventRoutes = new Map<
 
   /** Node */
   [EventRoutes.Node.ChangeRoute.event, EventRoutes.Node.ChangeRoute],
+  [EventRoutes.Node.MultiChangeRoute.event, EventRoutes.Node.MultiChangeRoute],
 ]);
 
 type RenderValues = {
@@ -2358,31 +2359,6 @@ export class Main extends SignalWatcher(LitElement) {
           evt.subGraphId
         );
       }}
-      @bbmultiedit=${async (evt: BreadboardUI.Events.MultiEditEvent) => {
-        if (!this.#tab) {
-          return;
-        }
-
-        await this.#runtime.edit.multiEdit(
-          this.#tab,
-          evt.edits,
-          evt.description
-        );
-
-        const additions: string[] = evt.edits
-          .map((edit) => (edit.type === "addnode" ? edit.node.id : null))
-          .filter((item) => item !== null);
-        if (additions.length === 0) {
-          return;
-        }
-
-        this.#runtime.select.selectNodes(
-          this.#tab.id,
-          this.#runtime.select.generateId(),
-          evt.subGraphId ?? BreadboardUI.Constants.MAIN_BOARD_ID,
-          additions
-        );
-      }}
       @bbaddnodewithedge=${async (
         evt: BreadboardUI.Events.AddNodeWithEdgeEvent
       ) => {
@@ -2404,45 +2380,12 @@ export class Main extends SignalWatcher(LitElement) {
           [evt.node.id]
         );
       }}
-      @bbnodecreate=${async (evt: BreadboardUI.Events.NodeCreateEvent) => {
-        await this.#runtime.edit.createNode(
-          this.#tab,
-          evt.id,
-          evt.nodeType,
-          evt.configuration,
-          evt.metadata,
-          evt.subGraphId,
-          evt.options
-        );
-
-        if (!this.#tab) {
-          return;
-        }
-
-        this.#runtime.select.selectNode(
-          this.#tab.id,
-          this.#runtime.select.generateId(),
-          evt.subGraphId ?? BreadboardUI.Constants.MAIN_BOARD_ID,
-          evt.id
-        );
-      }}
       @bbgraphreplace=${async (evt: BreadboardUI.Events.GraphReplaceEvent) => {
         await this.#runtime.edit.replaceGraph(
           this.#tab,
           evt.replacement,
           evt.creator
         );
-      }}
-      @bbnodeupdate=${(evt: BreadboardUI.Events.NodeUpdateEvent) => {
-        this.#runtime.edit.changeNodeConfiguration(
-          this.#tab,
-          evt.id,
-          evt.configuration,
-          evt.subGraphId
-        );
-      }}
-      @bbnodedelete=${(evt: BreadboardUI.Events.NodeDeleteEvent) => {
-        this.#runtime.edit.deleteNode(this.#tab, evt.id, evt.subGraphId);
       }}
       @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
         this.toast(toastEvent.message, toastEvent.toastType);

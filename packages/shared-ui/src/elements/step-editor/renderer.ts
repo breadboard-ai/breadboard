@@ -62,7 +62,6 @@ import {
   DragConnectorStartEvent,
   EditorPointerPositionChangeEvent,
   AddNodeWithEdgeEvent,
-  MultiEditEvent,
   NodeConfigurationUpdateRequestEvent,
   ZoomToFitEvent,
   MoveNodesEvent,
@@ -634,16 +633,18 @@ export class Renderer extends LitElement {
       );
     } else {
       this.dispatchEvent(
-        new MultiEditEvent(
-          [
+        new StateEvent({
+          eventType: "node.multichange",
+          description: `Add step: ${title}`,
+          subGraphId: null,
+          edits: [
             {
               type: "addnode",
               graphId: targetGraphId === MAIN_BOARD_ID ? "" : targetGraphId,
               node,
             },
           ],
-          `Add step: ${title}`
-        )
+        })
       );
     }
   }
@@ -1406,7 +1407,14 @@ export class Renderer extends LitElement {
       }
     }
 
-    this.dispatchEvent(new MultiEditEvent(edits, "Update selection position"));
+    this.dispatchEvent(
+      new StateEvent({
+        eventType: "node.multichange",
+        description: "Update selection position",
+        edits,
+        subGraphId: null,
+      })
+    );
   }
 
   #updateSelectionFromGraph(graph: Graph, createNewSelection = false) {
