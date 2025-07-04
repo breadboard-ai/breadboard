@@ -60,15 +60,15 @@ export class SecretsHelper {
     return null;
   }
 
-  receiveSecrets(event: BreadboardUI.Events.InputEnterEvent) {
+  receiveSecrets(event: BreadboardUI.Events.StateEvent<"board.input">) {
     const shouldSaveSecrets =
-      (event.allowSavingIfSecret &&
+      (event.detail.allowSavingIfSecret &&
         this.#settings
           .getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
           .items.get("Save Secrets")?.value) ||
       false;
-    const name = event.id;
-    const value = event.data.secret as string;
+    const name = event.detail.id;
+    const value = event.detail.data.secret as string;
 
     this.#receivedSecrets[name] = value;
 
@@ -78,8 +78,8 @@ export class SecretsHelper {
 
     const secrets = this.#getStoredSecrets();
     let shouldSave = false;
-    if (secrets.has(event.id)) {
-      const secret = secrets.get(event.id);
+    if (secrets.has(event.detail.id)) {
+      const secret = secrets.get(event.detail.id);
       if (secret && secret.value !== value) {
         secret.value = value;
         shouldSave = true;

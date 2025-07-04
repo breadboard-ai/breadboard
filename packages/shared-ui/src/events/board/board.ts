@@ -19,3 +19,10 @@ export interface Stop {
   readonly eventType: `${Namespace}.stop`;
   readonly clearLastRun: boolean;
 }
+
+export interface Input {
+  readonly eventType: `${Namespace}.input`;
+  readonly id: string;
+  readonly data: Record<string, unknown>;
+  readonly allowSavingIfSecret: boolean;
+}

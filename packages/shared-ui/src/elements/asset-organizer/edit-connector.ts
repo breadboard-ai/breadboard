@@ -17,7 +17,7 @@ import {
   isLLMContentBehavior,
 } from "../../utils/behaviors";
 import { UserInput } from "../input/user-input";
-import { InputEnterEvent } from "../../events/events";
+import { StateEvent } from "../../events/events";
 
 @customElement("bb-edit-connector")
 export class EditConnector extends SignalWatcher(LitElement) {
@@ -108,7 +108,12 @@ export class EditConnector extends SignalWatcher(LitElement) {
 
         if (evt.key === "Enter" && isCtrlCommand) {
           this.dispatchEvent(
-            new InputEnterEvent("connector", this.value, false)
+            new StateEvent({
+              eventType: "board.input",
+              id: "connector",
+              data: this.value,
+              allowSavingIfSecret: false,
+            })
           );
         }
       }}

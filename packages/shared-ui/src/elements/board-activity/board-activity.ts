@@ -33,7 +33,6 @@ import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import {
-  InputEnterEvent,
   InputRequestedEvent,
   RunIsolatedNodeEvent,
   StateEvent,
@@ -312,11 +311,12 @@ export class BoardActivity extends LitElement {
 
         // Dispatch an event for each secret received.
         this.dispatchEvent(
-          new InputEnterEvent(
-            key,
-            { secret: value },
-            /* allowSavingIfSecret */ true
-          )
+          new StateEvent({
+            eventType: "board.input",
+            id: key,
+            data: { secret: value },
+            allowSavingIfSecret: true,
+          })
         );
       }
     };
@@ -368,7 +368,12 @@ export class BoardActivity extends LitElement {
 
     if (!schema.properties || Object.keys(schema.properties).length === 0) {
       this.dispatchEvent(
-        new InputEnterEvent(descriptor.id, {}, /* allowSavingIfSecret */ true)
+        new StateEvent({
+          eventType: "board.input",
+          id: descriptor.id,
+          data: {},
+          allowSavingIfSecret: true,
+        })
       );
     }
 
@@ -428,11 +433,12 @@ export class BoardActivity extends LitElement {
       }
 
       this.dispatchEvent(
-        new InputEnterEvent(
-          descriptor.id,
-          outputs,
-          /* allowSavingIfSecret */ true
-        )
+        new StateEvent({
+          eventType: "board.input",
+          id: descriptor.id,
+          data: outputs,
+          allowSavingIfSecret: true,
+        })
       );
     };
 

@@ -994,7 +994,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
               <p>${error.message}</p>
             </div>
           </details>`;
-        })};
+        })}
       `;
     } else {
       const current = this.run.app.current;

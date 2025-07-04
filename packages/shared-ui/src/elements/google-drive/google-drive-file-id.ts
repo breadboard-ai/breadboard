@@ -6,7 +6,6 @@
 
 import { LitElement, PropertyValues, css, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { type InputEnterEvent } from "../../events/events.js";
 import {
   InputCancelEvent,
   InputChangeEvent,
@@ -20,6 +19,7 @@ import {
 } from "./google-apis.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { getTopLevelOrigin } from "../../utils/embed-helpers.js";
+import { StateEvent } from "../../events/events.js";
 
 type PickedValue = {
   // A special value recognized by the "GraphPortLabel": if present in an
@@ -172,7 +172,7 @@ export class GoogleDriveFileId extends LitElement {
   override render() {
     if (this._authorization === undefined) {
       return html`<bb-connection-input
-        @bbinputenter=${this.#onToken}
+        @bbevent=${this.#onToken}
         connectionId=${this.connectionName}
       ></bb-connection-input>`;
     }
@@ -201,14 +201,18 @@ export class GoogleDriveFileId extends LitElement {
     `;
   }
 
-  #onToken(event: InputEnterEvent) {
-    // Prevent ui-controller from receiving an unexpected bbinputenter event.
+  #onToken(event: StateEvent<"board.input">) {
+    if (event.detail.eventType !== "board.input") {
+      console.error(event);
+      throw new Error("Unexpected token event");
+    }
+    // Prevent ui-controller from receiving an unexpected bbevent event.
     //
-    // TODO(aomarks) Let's not re-use bbinputenter here, we should instead use
+    // TODO(aomarks) Let's not re-use bbevent here, we should instead use
     // bbtokengranted, but there is a small bit of refactoring necessary for
     // that to work.
     event.stopImmediatePropagation();
-    const { clientId, secret } = event.data as {
+    const { clientId, secret } = event.detail.data as {
       clientId?: string;
       secret?: string;
     };

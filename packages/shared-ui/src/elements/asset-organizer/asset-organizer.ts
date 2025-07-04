@@ -23,11 +23,11 @@ import { classMap } from "lit/directives/class-map.js";
 import { OverflowAction } from "../../types/types.js";
 import {
   HideTooltipEvent,
-  InputEnterEvent,
   OverflowMenuActionEvent,
   OverlayDismissedEvent,
   ParamDeleteEvent,
   ShowTooltipEvent,
+  StateEvent,
   ToastEvent,
   ToastType,
 } from "../../events/events.js";
@@ -1178,7 +1178,10 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                       ? assetType === "connector"
                         ? html`<bb-edit-connector
                             ${ref(this.#contentInputRef)}
-                            @bbinputenter=${(evt: InputEnterEvent) => {
+                            @bbevent=${(evt: StateEvent<"board.input">) => {
+                              if (evt.detail.eventType !== "board.input") {
+                                return;
+                              }
                               evt.stopImmediatePropagation();
 
                               const path = this.selectedItem?.path;
@@ -1188,7 +1191,10 @@ export class AssetOrganizer extends SignalWatcher(LitElement) {
                                 .get(path)
                                 ?.connector?.commitEdits(
                                   undefined,
-                                  evt.data as Record<string, JsonSerializable>
+                                  evt.detail.data as Record<
+                                    string,
+                                    JsonSerializable
+                                  >
                                 )
                                 .then((result) => {
                                   this.editAssetContent = null;

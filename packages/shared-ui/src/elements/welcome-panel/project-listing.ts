@@ -16,7 +16,7 @@ import {
   GraphBoardServerRefreshEvent,
   GraphBoardServerRenewAccessRequestEvent,
   GraphBoardServerSelectionChangeEvent,
-  InputEnterEvent,
+  StateEvent,
 } from "../../events/events";
 import { map } from "lit/directives/map.js";
 import { until } from "lit/directives/until.js";
@@ -949,15 +949,16 @@ export class ProjectListing extends LitElement {
                                 expiresIn,
                               }: HTMLElementEventMap["bbtokengranted"]) => {
                                 this.dispatchEvent(
-                                  new InputEnterEvent(
-                                    this.id,
-                                    {
+                                  new StateEvent({
+                                    eventType: "board.input",
+                                    id: this.id,
+                                    data: {
                                       clientId: gdriveConnectionID,
                                       secret: token,
                                       expiresIn,
                                     },
-                                    false
-                                  )
+                                    allowSavingIfSecret: false,
+                                  })
                                 );
                               }}
                             ></bb-connection-signin>

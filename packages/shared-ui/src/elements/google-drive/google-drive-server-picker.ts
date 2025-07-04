@@ -6,10 +6,7 @@
 
 import { html, LitElement, nothing, css } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import {
-  GoogleDriveFolderPickedEvent,
-  InputEnterEvent,
-} from "../../events/events";
+import { GoogleDriveFolderPickedEvent, StateEvent } from "../../events/events";
 import { Task } from "@lit/task";
 
 const DRIVE_CONNECTION_ID = "$sign-in";
@@ -48,10 +45,15 @@ export class GoogleDriveServerPicker extends LitElement {
         @bbconnectionsignedout=${() => {
           this.accessToken = null;
         }}
-        @bbinputenter=${(evt: InputEnterEvent) => {
+        @bbevent=${(evt: StateEvent<"board.input">) => {
+          if (evt.detail.eventType !== "board.input") {
+            console.error(event);
+            throw new Error("Unexpected token event");
+          }
+
           const {
             data: { clientId, secret },
-          } = evt;
+          } = evt.detail;
           if (clientId && secret) {
             this.accessToken = secret as string;
           }
