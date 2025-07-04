@@ -9,8 +9,8 @@ import { customElement, property, query, state } from "lit/decorators.js";
 import {
   AddAssetEvent,
   AddAssetRequestEvent,
-  InputEnterEvent,
   ResizeEvent,
+  StateEvent,
   UtteranceEvent,
 } from "../../../events/events";
 import {
@@ -330,11 +330,12 @@ export class FloatingInput extends LitElement {
     }
 
     this.dispatchEvent(
-      new InputEnterEvent(
-        "unknown",
-        inputValues,
-        /* allowSavingIfSecret */ true
-      )
+      new StateEvent({
+        eventType: "board.input",
+        id: "unknown",
+        data: inputValues,
+        allowSavingIfSecret: true,
+      })
     );
   }
 

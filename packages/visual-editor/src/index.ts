@@ -58,7 +58,6 @@ import { sandbox } from "./sandbox";
 import {
   AssetMetadata,
   GraphIdentifier,
-  InputValues,
   Module,
   ModuleIdentifier,
 } from "@breadboard-ai/types";
@@ -124,6 +123,24 @@ import { classMap } from "lit/directives/class-map.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import * as EventRoutes from "./event-routing/event-routing";
 import { EventRoute } from "./event-routing/types";
+
+const eventRoutes = new Map<
+  keyof BreadboardUI.Events.StateEventDetailMap,
+  EventRoute<keyof BreadboardUI.Events.StateEventDetailMap>
+>([
+  /** Host */
+  [EventRoutes.Host.ModeRoute.event, EventRoutes.Host.ModeRoute],
+  [
+    EventRoutes.Host.SelectionStateChangeRoute.event,
+    EventRoutes.Host.SelectionStateChangeRoute,
+  ],
+
+  /** Board */
+  [EventRoutes.Board.RunRoute.event, EventRoutes.Board.RunRoute],
+  [EventRoutes.Board.LoadRoute.event, EventRoutes.Board.LoadRoute],
+  [EventRoutes.Board.StopRoute.event, EventRoutes.Board.StopRoute],
+  [EventRoutes.Board.InputRoute.event, EventRoutes.Board.InputRoute],
+]);
 
 type RenderValues = {
   canSave: boolean;
@@ -1885,42 +1902,6 @@ export class Main extends SignalWatcher(LitElement) {
     const content = html`<div
       id="content"
       ?inert=${renderValues.showingOverlay}
-      @bbinputenter=${async (event: BreadboardUI.Events.InputEnterEvent) => {
-        if (!this.#settings || !this.#tab) {
-          return;
-        }
-
-        const isSecret = "secret" in event.data;
-        const runner = this.#runtime.run.getRunner(this.#tab.id);
-        if (!runner) {
-          throw new Error("Can't send input, no runner");
-        }
-        if (isSecret) {
-          if (this.#secretsHelper) {
-            this.#secretsHelper.receiveSecrets(event);
-            if (this.#secretsHelper.hasAllSecrets() && !runner?.running()) {
-              const secrets = this.#secretsHelper.getSecrets();
-              this.#secretsHelper = null;
-              runner?.run(secrets);
-            }
-          } else {
-            // This is the case when the "secret" event hasn't yet
-            // been received.
-            // Likely, this is a side effect of how the
-            // activity-log is built: it relies on the run observer
-            // for the events list, and the run observer updates the
-            // list of run events before the run API dispatches
-            // the "secret" event.
-            this.#secretsHelper = new SecretsHelper(this.#settings!);
-            this.#secretsHelper.receiveSecrets(event);
-          }
-        } else {
-          const data = event.data as InputValues;
-          if (!runner.running()) {
-            runner.run(data);
-          }
-        }
-      }}
     >
       ${[
         this.#renderCanvasController(renderValues),
@@ -1928,20 +1909,6 @@ export class Main extends SignalWatcher(LitElement) {
         this.#renderWelcomePanel(renderValues),
       ]}
     </div>`;
-
-    const eventRoutes = new Map<
-      keyof BreadboardUI.Events.StateEventDetailMap,
-      EventRoute<keyof BreadboardUI.Events.StateEventDetailMap>
-    >([
-      [EventRoutes.Host.ModeRoute.event, EventRoutes.Host.ModeRoute],
-      [
-        EventRoutes.Host.SelectionStateChangeRoute.event,
-        EventRoutes.Host.SelectionStateChangeRoute,
-      ],
-      [EventRoutes.Board.RunRoute.event, EventRoutes.Board.RunRoute],
-      [EventRoutes.Board.LoadRoute.event, EventRoutes.Board.LoadRoute],
-      [EventRoutes.Board.StopRoute.event, EventRoutes.Board.StopRoute],
-    ]);
 
     return html`<div
       id="container"
@@ -1956,12 +1923,17 @@ export class Main extends SignalWatcher(LitElement) {
           return;
         }
 
+        if (!this.#secretsHelper) {
+          this.#secretsHelper = new SecretsHelper(this.#settings!);
+        }
+
         const shouldRender = await eventRoute.do({
           originalEvent: evt,
           // TODO: Determine if this is needed.
           proxy: this.#proxy,
           runtime: this.#runtime,
           settings: this.#settings,
+          secretsHelper: this.#secretsHelper,
           tab: this.#tab,
           uiState: this.#uiState,
         });

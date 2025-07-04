@@ -10,6 +10,7 @@ import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import {
   assetsFromGraphDescriptor,
   envFromGraphDescriptor,
+  InputValues,
 } from "@google-labs/breadboard";
 import { addNodeProxyServerConfig } from "../../data/node-proxy-servers";
 
@@ -100,5 +101,35 @@ export const StopRoute: EventRoute<"board.stop"> = {
     }
 
     return true;
+  },
+};
+
+export const InputRoute: EventRoute<"board.input"> = {
+  event: "board.input",
+
+  async do({ tab, runtime, settings, secretsHelper, originalEvent }) {
+    if (!settings || !tab) {
+      return false;
+    }
+
+    const isSecret = "secret" in originalEvent.detail.data;
+    const runner = runtime.run.getRunner(tab.id);
+    if (!runner) {
+      throw new Error("Can't send input, no runner");
+    }
+    if (isSecret) {
+      secretsHelper.receiveSecrets(originalEvent);
+      if (secretsHelper.hasAllSecrets() && !runner?.running()) {
+        const secrets = secretsHelper.getSecrets();
+        runner?.run(secrets);
+      }
+    } else {
+      const data = originalEvent.detail.data as InputValues;
+      if (!runner.running()) {
+        runner.run(data);
+      }
+    }
+
+    return false;
   },
 };

@@ -12,7 +12,6 @@ import {
   environmentContext,
   type Environment,
 } from "../../contexts/environment.js";
-import { InputEnterEvent } from "../../events/events.js";
 import {
   fetchAvailableConnections,
   type Connection,
@@ -23,6 +22,7 @@ import {
   type ExpiredTokenResult,
   TokenVendor,
 } from "@breadboard-ai/connection-client";
+import { StateEvent } from "../../events/events.js";
 
 /**
  * Input element for handling secrets provided by OAuth connections.
@@ -145,14 +145,16 @@ export class ConnectionInput extends LitElement {
 
   #broadcastSecret(secret: string, clientId: string, expiresIn?: number) {
     this.dispatchEvent(
-      new InputEnterEvent(
-        this.id,
-        { clientId, secret, expiresIn },
+      new StateEvent({
+        eventType: "board.input",
+        id: this.id,
+        data: { clientId, secret, expiresIn },
+
         // Disable allowSavingIfSecret so that it does not get saved to the
         // regular secrets section, because we're managing this secret in a
         // special way using the connections system.
-        false
-      )
+        allowSavingIfSecret: false,
+      })
     );
   }
 }

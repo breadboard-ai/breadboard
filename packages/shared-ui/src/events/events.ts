@@ -61,40 +61,6 @@ export enum ToastType {
  * Board Management
  */
 
-// export class StartEvent extends Event {
-//   static eventName = "bbstart";
-
-//   constructor(
-//     public readonly url: string | null = null,
-//     public readonly descriptor: GraphDescriptor | null = null,
-//     public readonly creator: EditHistoryCreator | null = null
-//   ) {
-//     super(StartEvent.eventName, { ...eventInit });
-
-//     if (url && descriptor) {
-//       throw new Error(
-//         "You must provide either a URL or descriptor, but not both"
-//       );
-//     }
-//   }
-// }
-
-// export class RunEvent extends Event {
-//   static eventName = "bbrun";
-
-//   constructor() {
-//     super(RunEvent.eventName, { ...eventInit });
-//   }
-// }
-
-// export class StopEvent extends Event {
-//   static eventName = "bbstop";
-
-//   constructor(public readonly clearLastRun = false) {
-//     super(StopEvent.eventName, { ...eventInit });
-//   }
-// }
-
 export class CloseEvent extends Event {
   static eventName = "bbclose";
 
@@ -409,18 +375,6 @@ export class InputRequestedEvent extends Event {
 
   constructor() {
     super(InputRequestedEvent.eventName, { ...eventInit });
-  }
-}
-
-export class InputEnterEvent extends Event {
-  static eventName = "bbinputenter";
-
-  constructor(
-    public readonly id: string,
-    public readonly data: Record<string, unknown>,
-    public readonly allowSavingIfSecret: boolean
-  ) {
-    super(InputEnterEvent.eventName, { ...eventInit });
   }
 }
 
@@ -1613,6 +1567,7 @@ export type StateEventDetailMap = {
   "board.load": Board.Load;
   "board.run": Board.Run;
   "board.stop": Board.Stop;
+  "board.input": Board.Input;
 
   "host.modetoggle": Host.ModeToggle;
   "host.selectionstatechange": Host.SelectionStateChange;
