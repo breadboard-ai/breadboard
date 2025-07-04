@@ -7,9 +7,7 @@
 export type * from "./types.js";
 
 export { callHandler } from "@breadboard-ai/runtime/legacy.js";
-export { Board } from "./board.js";
 export { asRuntimeKit } from "./kits/ctors.js";
-export { Node } from "./node.js";
 export { combineSchemas, SchemaBuilder } from "@breadboard-ai/utils";
 
 export type * from "@breadboard-ai/utils";
