@@ -18,7 +18,7 @@ import {
   toDeclarativeGraph,
 } from "@breadboard-ai/utils";
 import { bubbleUpInputsIfNeeded, bubbleUpOutputsIfNeeded } from "../bubble.js";
-import { resolveBoardCapabilities } from "../capability.js";
+import { resolveBoardCapabilities } from "@breadboard-ai/loader";
 import { InputStageResult, OutputStageResult } from "../run.js";
 import { cloneState } from "../serialization.js";
 import { timestamp } from "../timestamp.js";

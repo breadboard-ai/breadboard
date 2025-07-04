@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import {
+  resolveBoardCapabilitiesInInputs,
+  resolveGraph,
+  SENTINEL_BASE_URL,
+} from "@breadboard-ai/loader";
 import type {
   GraphToRun,
   InputValues,
@@ -15,9 +20,7 @@ import type {
 } from "@breadboard-ai/types";
 import { FileSystemEntry } from "@breadboard-ai/types";
 import { createOutputProvider, RequestedInputsManager } from "../bubble.js";
-import { resolveBoardCapabilitiesInInputs } from "../capability.js";
 import { callHandler, getHandler } from "../handler.js";
-import { resolveGraph, SENTINEL_BASE_URL } from "@breadboard-ai/loader";
 import { RunResult } from "../run.js";
 import { ParameterManager } from "./parameter-manager.js";
 

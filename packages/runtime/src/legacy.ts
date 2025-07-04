@@ -36,8 +36,6 @@ export {
 export { GraphRepresentationImpl } from "./traversal/representation.js";
 // Move runtime tests to `runtime` package.
 export { StreamCapability } from "./stream.js";
-// Move to `loader` package
-export { getGraphDescriptor } from "./capability.js";
 // Move runtime tests to `runtime` package.
 export { createRunStateManager } from "./run/index.js";
 // Move runtime tests to `runtime` package.

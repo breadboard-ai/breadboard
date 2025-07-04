@@ -218,5 +218,5 @@ export const TestKit = new KitBuilder({
 /**
  * Board grammar versions of the above, with types.
  */
-import { getGraphDescriptor } from "@breadboard-ai/runtime/legacy.js";
+import { getGraphDescriptor } from "@breadboard-ai/loader";
 import { invokeGraph } from "../../src/index.js";
