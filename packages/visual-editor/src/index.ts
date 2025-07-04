@@ -1841,6 +1841,15 @@ export class Main extends SignalWatcher(LitElement) {
       ]}
     </div>`;
 
+    /**
+     * bbevent is the container for most of the actions triggered within the UI.
+     * It is something of a shapeshifting event, where the `eventType` property
+     * indicates which precise event it is. We do it this way because otherwise
+     * we end up with a vast array of named event listeners on the elements here
+     * and maintenance becomes tricky.
+     *
+     * @see BreadboardUI.Events.StateEventDetailMap for the list of all events.
+     */
     return html`<div
       id="container"
       @bbevent=${async (
@@ -1848,6 +1857,7 @@ export class Main extends SignalWatcher(LitElement) {
           keyof BreadboardUI.Events.StateEventDetailMap
         >
       ) => {
+        // Locate the specific handler based on the event type.
         const eventRoute = eventRoutes.get(evt.detail.eventType);
         if (!eventRoute) {
           console.warn(`No event handler for "${evt.detail.eventType}"`);
@@ -1858,6 +1868,10 @@ export class Main extends SignalWatcher(LitElement) {
           this.#secretsHelper = new SecretsHelper(this.#settings!);
         }
 
+        // Pass the handler everything it may need in order to function. Usually
+        // the most important of these are the runtime, originalEvent (which
+        // contains the data needed) and the tab so that the runtime can locate
+        // the appropriate editor etc.
         const shouldRender = await eventRoute.do({
           originalEvent: evt,
           // TODO: Determine if this is needed.
@@ -1869,6 +1883,8 @@ export class Main extends SignalWatcher(LitElement) {
           uiState: this.#uiState,
         });
 
+        // Some legacy actions require an update after running, so if the event
+        // handler returns with a true, schedule an update.
         if (shouldRender) {
           requestAnimationFrame(() => {
             this.requestUpdate();
