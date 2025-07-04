@@ -5,10 +5,7 @@
  */
 
 import { describe, it } from "node:test";
-import {
-  type SchemaDiff,
-  SchemaDiffer,
-} from "../../../src/utils/schema-differ.js";
+import { type SchemaDiff, SchemaDiffer } from "../../src/schema-differ.js";
 import { deepStrictEqual } from "node:assert";
 
 function diff(schemaDiff: SchemaDiff): SchemaDiff {

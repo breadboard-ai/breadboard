@@ -28,11 +28,11 @@ import type {
 import { ModuleIdentifier } from "@breadboard-ai/types";
 import {
   isImperativeGraph,
+  PromiseQueue,
   toDeclarativeGraph,
   toImperativeGraph,
 } from "@breadboard-ai/utils";
 import { MutableGraphImpl } from "../inspector/graph/mutable-graph.js";
-import { PromiseQueue } from "../utils/promise-queue.js";
 import { ChangeEvent, ChangeRejectEvent } from "./events.js";
 import { GraphEditHistory } from "./history.js";
 import { AddAsset } from "./operations/add-asset.js";

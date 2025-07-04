@@ -5,7 +5,7 @@
  */
 
 import test from "ava";
-import { type SemVer, SemanticVersioning } from "../../src/utils/semver.js";
+import { type SemVer, SemanticVersioning } from "../../src/semver.js";
 
 test("SemanticVersioning throws with invalid values", async (t) => {
   t.throws(() => new SemanticVersioning("value" as unknown as SemVer));

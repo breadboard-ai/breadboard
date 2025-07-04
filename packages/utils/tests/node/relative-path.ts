@@ -6,7 +6,7 @@
 
 import { deepStrictEqual } from "node:assert";
 import { describe, it } from "node:test";
-import { relativePath } from "../../../src/utils/relative-path.js";
+import { relativePath } from "../../src/relative-path.js";
 
 function yes(fromString: string, toString: string, relativeExpected?: string) {
   const from = new URL(fromString);

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeValue } from "../types.js";
+import { NodeValue } from "@breadboard-ai/types";
 
 /**
  * A function that computes a hash for a node value.

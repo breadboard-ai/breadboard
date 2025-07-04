@@ -34,10 +34,13 @@ import type {
   Result,
   Sandbox,
 } from "@breadboard-ai/types";
-import { filterEmptyValues, graphUrlLike } from "@breadboard-ai/utils";
+import {
+  filterEmptyValues,
+  graphUrlLike,
+  hash,
+  SnapshotUpdater,
+} from "@breadboard-ai/utils";
 import { Graph as GraphEditor } from "../editor/graph.js";
-import { hash } from "../utils/hash.js";
-import { SnapshotUpdater } from "../utils/snapshot-updater.js";
 import { DescribeResultTypeCache } from "./graph/describe-type-cache.js";
 import { UpdateEvent } from "./graph/event.js";
 import { createBuiltInKit } from "./graph/kits.js";

@@ -5,7 +5,7 @@
  */
 
 import { describe, it } from "node:test";
-import { PromiseQueue } from "../../../src/utils/promise-queue.js";
+import { PromiseQueue } from "../../src/promise-queue.js";
 import {
   deepStrictEqual,
   doesNotReject,

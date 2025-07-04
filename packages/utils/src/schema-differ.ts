@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Schema } from "../types.js";
+import { Schema } from "@breadboard-ai/types";
 
 export { SchemaDiffer };
 
