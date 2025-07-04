@@ -824,19 +824,6 @@ export class MoveNodesEvent extends Event {
   }
 }
 
-export class EdgeAttachmentMoveEvent extends Event {
-  static eventName = "bbedgeattachmentmove" as const;
-
-  constructor(
-    public readonly graphId: GraphIdentifier,
-    public readonly edge: Edge,
-    public readonly which: "from" | "to",
-    public readonly attachmentPoint: EdgeAttachmentPoint
-  ) {
-    super(EdgeAttachmentMoveEvent.eventName, { ...eventInit });
-  }
-}
-
 export class DroppedAssetsEvent extends Event {
   static eventName = "bbdroppedassets" as const;
   constructor(public readonly assets: NewAsset[]) {
@@ -1450,6 +1437,7 @@ export type StateEventDetailMap = {
 
   "node.change": Node.Change;
   "node.multichange": Node.MultiChange;
+  "node.changeedgeattachment": Node.ChangeEdgeAttachment;
 };
 
 export class StateEvent<

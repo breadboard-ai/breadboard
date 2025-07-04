@@ -65,7 +65,6 @@ import {
   NodeConfigurationUpdateRequestEvent,
   ZoomToFitEvent,
   MoveNodesEvent,
-  EdgeAttachmentMoveEvent,
   DroppedAssetsEvent,
   ZoomInEvent,
   ZoomOutEvent,
@@ -1588,12 +1587,13 @@ export class Renderer extends LitElement {
               evt: GraphEdgeAttachmentMoveEvent
             ) => {
               this.dispatchEvent(
-                new EdgeAttachmentMoveEvent(
+                new StateEvent({
+                  eventType: "node.changeedgeattachment",
                   graphId,
-                  evt.edge,
-                  evt.which,
-                  evt.value
-                )
+                  edge: evt.edge,
+                  which: evt.which,
+                  attachmentPoint: evt.value,
+                })
               );
             }}
             @bbnodeboundsupdaterequest=${() => {
