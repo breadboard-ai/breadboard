@@ -11,11 +11,11 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, query } from "lit/decorators.js";
 import { icons } from "../../../styles/icons";
 import { styleMap } from "lit/directives/style-map.js";
-import { StopEvent } from "../../../events/events";
 import { SideNav } from "./side-nav";
 import { type } from "../../../styles/host/type";
 
 import "./side-nav.js";
+import { StateEvent } from "../../../events/events.js";
 
 @customElement("bb-app-header")
 export class Header extends LitElement {
@@ -194,7 +194,12 @@ export class Header extends LitElement {
         id="replay"
         ?disabled=${!this.replayActive}
         @click=${() => {
-          this.dispatchEvent(new StopEvent(true));
+          this.dispatchEvent(
+            new StateEvent({
+              eventType: "board.stop",
+              clearLastRun: true,
+            })
+          );
         }}
       >
         <span class="g-icon">replay</span>

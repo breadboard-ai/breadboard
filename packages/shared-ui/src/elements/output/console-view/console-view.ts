@@ -272,7 +272,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
       <button
         id="run"
         @click=${() => {
-          this.dispatchEvent(new StateEvent({ eventType: "boardrun" }));
+          this.dispatchEvent(new StateEvent({ eventType: "board.run" }));
         }}
       >
         <span class="g-icon">spark</span>${Strings.from("COMMAND_START")}

@@ -360,7 +360,7 @@ export class VEHeader extends LitElement {
         id="app"
         @click=${() => {
           this.dispatchEvent(
-            new StateEvent({ eventType: "modetoggle", mode: "app" })
+            new StateEvent({ eventType: "host.modetoggle", mode: "app" })
           );
         }}
         class=${classMap({
@@ -376,7 +376,7 @@ export class VEHeader extends LitElement {
         id="canvas"
         @click=${() => {
           this.dispatchEvent(
-            new StateEvent({ eventType: "modetoggle", mode: "canvas" })
+            new StateEvent({ eventType: "host.modetoggle", mode: "canvas" })
           );
         }}
         class=${classMap({

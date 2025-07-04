@@ -41,10 +41,7 @@ import type {
   TopGraphEdgeInfo,
   UserOutputValues,
   Utterance,
-  WorkspaceSelectionChangeId,
-  WorkspaceSelectionState,
   WorkspaceVisualChangeId,
-  VisualEditorMode,
 } from "../types/types.js";
 
 const eventInit = {
@@ -52,8 +49,6 @@ const eventInit = {
   cancelable: true,
   composed: true,
 };
-
-type MoveToSelection = "immediate" | "animated" | false;
 
 export enum ToastType {
   INFORMATION = "information",
@@ -92,13 +87,13 @@ export enum ToastType {
 //   }
 // }
 
-export class StopEvent extends Event {
-  static eventName = "bbstop";
+// export class StopEvent extends Event {
+//   static eventName = "bbstop";
 
-  constructor(public readonly clearLastRun = false) {
-    super(StopEvent.eventName, { ...eventInit });
-  }
-}
+//   constructor(public readonly clearLastRun = false) {
+//     super(StopEvent.eventName, { ...eventInit });
+//   }
+// }
 
 export class CloseEvent extends Event {
   static eventName = "bbclose";
@@ -1611,37 +1606,16 @@ export class GoogleDrivePickerCloseEvent extends Event {
   }
 }
 
-/** Boards */
-
-interface BoardLoad {
-  readonly eventType: "boardload";
-  readonly url: string;
-}
-
-interface BoardRun {
-  readonly eventType: "boardrun";
-}
-
-/** Mode selection */
-
-interface ModeToggle {
-  readonly eventType: "modetoggle";
-  readonly mode: VisualEditorMode;
-}
-
-interface SelectionStateChange {
-  readonly eventType: "selectionstatechange";
-  readonly selectionChangeId: WorkspaceSelectionChangeId;
-  readonly selections: WorkspaceSelectionState | null;
-  readonly replaceExistingSelections: boolean;
-  readonly moveToSelection: MoveToSelection;
-}
+import type * as Board from "./board/board.js";
+import type * as Host from "./host/host.js";
 
 export type StateEventDetailMap = {
-  boardload: BoardLoad;
-  boardrun: BoardRun;
-  modetoggle: ModeToggle;
-  selectionstatechange: SelectionStateChange;
+  "board.load": Board.Load;
+  "board.run": Board.Run;
+  "board.stop": Board.Stop;
+
+  "host.modetoggle": Host.ModeToggle;
+  "host.selectionstatechange": Host.SelectionStateChange;
 };
 
 export class StateEvent<

@@ -37,7 +37,6 @@ import {
   InputRequestedEvent,
   RunIsolatedNodeEvent,
   StateEvent,
-  StopEvent,
 } from "../../events/events.js";
 import { map } from "lit/directives/map.js";
 import { styleMap } from "lit/directives/style-map.js";
@@ -610,7 +609,9 @@ export class BoardActivity extends LitElement {
               <button
                 id="run"
                 @click=${() => {
-                  this.dispatchEvent(new StateEvent({ eventType: "boardrun" }));
+                  this.dispatchEvent(
+                    new StateEvent({ eventType: "board.run" })
+                  );
                 }}
               >
                 <span class="g-icon">spark</span>Start
@@ -625,7 +626,12 @@ export class BoardActivity extends LitElement {
               <button
                 id="restart"
                 @click=${() => {
-                  this.dispatchEvent(new StopEvent(true));
+                  this.dispatchEvent(
+                    new StateEvent({
+                      eventType: "board.stop",
+                      clearLastRun: true,
+                    })
+                  );
                 }}
               >
                 <span class="g-icon">replay</span>Restart

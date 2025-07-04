@@ -708,7 +708,7 @@ export class Gallery extends LitElement {
 
   #onBoardClick(_event: PointerEvent | KeyboardEvent, url: string) {
     ActionTracker.openApp(url, this.forceCreatorToBeTeam ? "gallery" : "user");
-    this.dispatchEvent(new StateEvent({ eventType: "boardload", url }));
+    this.dispatchEvent(new StateEvent({ eventType: "board.load", url }));
   }
 
   #onBoardKeydown(event: KeyboardEvent, url: string) {

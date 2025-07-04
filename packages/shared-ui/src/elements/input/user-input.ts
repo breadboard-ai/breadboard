@@ -858,7 +858,7 @@ export class UserInput extends LitElement {
                                 this.dispatchEvent(new HideTooltipEvent());
                                 this.dispatchEvent(
                                   new StateEvent({
-                                    eventType: "selectionstatechange",
+                                    eventType: "host.selectionstatechange",
                                     selectionChangeId: changeId,
                                     selections,
                                     replaceExistingSelections: true,

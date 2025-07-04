@@ -31,7 +31,6 @@ import {
   ModuleEditEvent,
   OverflowMenuActionEvent,
   StateEvent,
-  StopEvent,
   ToastEvent,
   ToastType,
 } from "../../events/events";
@@ -961,10 +960,15 @@ export class ModuleEditor extends LitElement {
                     @click=${() => {
                       if (this.topGraphResult?.status === "stopped") {
                         this.dispatchEvent(
-                          new StateEvent({ eventType: "boardrun" })
+                          new StateEvent({ eventType: "board.run" })
                         );
                       } else {
-                        this.dispatchEvent(new StopEvent());
+                        this.dispatchEvent(
+                          new StateEvent({
+                            eventType: "board.stop",
+                            clearLastRun: true,
+                          })
+                        );
                       }
                     }}
                   >
