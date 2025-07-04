@@ -54,3 +54,21 @@ export const MultiChangeRoute: EventRoute<"node.multichange"> = {
     return false;
   },
 };
+
+export const ChangeEdgeAttachmentPointRoute: EventRoute<"node.changeedgeattachment"> =
+  {
+    event: "node.changeedgeattachment",
+
+    async do({ runtime, tab, originalEvent }) {
+      const { graphId } = originalEvent.detail;
+      await runtime.edit.changeEdgeAttachmentPoint(
+        tab,
+        graphId === BreadboardUI.Constants.MAIN_BOARD_ID ? "" : graphId,
+        originalEvent.detail.edge,
+        originalEvent.detail.which,
+        originalEvent.detail.attachmentPoint
+      );
+
+      return false;
+    },
+  };

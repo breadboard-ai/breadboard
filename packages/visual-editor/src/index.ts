@@ -145,6 +145,26 @@ const eventRoutes = new Map<
   /** Node */
   [EventRoutes.Node.ChangeRoute.event, EventRoutes.Node.ChangeRoute],
   [EventRoutes.Node.MultiChangeRoute.event, EventRoutes.Node.MultiChangeRoute],
+  [
+    EventRoutes.Node.ChangeEdgeAttachmentPointRoute.event,
+    EventRoutes.Node.ChangeEdgeAttachmentPointRoute,
+  ],
+]);
+
+const keyboardCommands = new Map<string[], KeyboardCommand>([
+  [DeleteCommand.keys, DeleteCommand],
+  [SelectAllCommand.keys, SelectAllCommand],
+  [CopyCommand.keys, CopyCommand],
+  [CutCommand.keys, CutCommand],
+  [PasteCommand.keys, PasteCommand],
+  [GroupCommand.keys, GroupCommand],
+  [UngroupCommand.keys, UngroupCommand],
+  [
+    ToggleExperimentalComponentsCommand.keys,
+    ToggleExperimentalComponentsCommand,
+  ],
+  [UndoCommand.keys, UndoCommand],
+  [RedoCommand.keys, RedoCommand],
 ]);
 
 type RenderValues = {
@@ -1067,22 +1087,6 @@ export class Main extends SignalWatcher(LitElement) {
     );
   }
 
-  #commands: Map<string[], KeyboardCommand> = new Map([
-    [DeleteCommand.keys, DeleteCommand],
-    [SelectAllCommand.keys, SelectAllCommand],
-    [CopyCommand.keys, CopyCommand],
-    [CutCommand.keys, CutCommand],
-    [PasteCommand.keys, PasteCommand],
-    [GroupCommand.keys, GroupCommand],
-    [UngroupCommand.keys, UngroupCommand],
-    [
-      ToggleExperimentalComponentsCommand.keys,
-      ToggleExperimentalComponentsCommand,
-    ],
-    [UndoCommand.keys, UndoCommand],
-    [RedoCommand.keys, RedoCommand],
-  ]);
-
   #handlingShortcut = false;
   async #onKeyboardShortcut(evt: KeyboardEvent) {
     if (this.#handlingShortcut) {
@@ -1136,7 +1140,7 @@ export class Main extends SignalWatcher(LitElement) {
       settings: this.#settings,
     } as const;
 
-    for (const [keys, command] of this.#commands) {
+    for (const [keys, command] of keyboardCommands) {
       if (keys.includes(key) && command.willHandle(this.#tab, evt)) {
         evt.preventDefault();
         evt.stopImmediatePropagation();
@@ -2269,18 +2273,6 @@ export class Main extends SignalWatcher(LitElement) {
         );
 
         this.#checkGoogleDriveAssetShareStatus();
-      }}
-      @bbedgeattachmentmove=${async (
-        evt: BreadboardUI.Events.EdgeAttachmentMoveEvent
-      ) => {
-        const { graphId } = evt;
-        await this.#runtime.edit.changeEdgeAttachmentPoint(
-          this.#tab,
-          graphId === MAIN_BOARD_ID ? "" : graphId,
-          evt.edge,
-          evt.which,
-          evt.attachmentPoint
-        );
       }}
       @bbedgechange=${async (evt: BreadboardUI.Events.EdgeChangeEvent) => {
         await this.#runtime.edit.changeEdge(

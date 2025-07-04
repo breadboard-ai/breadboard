@@ -5,10 +5,13 @@
  */
 
 import {
+  Edge,
   EditSpec,
+  GraphIdentifier,
   NodeConfiguration,
   NodeMetadata,
 } from "@breadboard-ai/types";
+import { EdgeAttachmentPoint } from "../../types/types";
 
 type Namespace = "node";
 
@@ -26,4 +29,12 @@ export interface MultiChange {
   readonly edits: EditSpec[];
   readonly description: string;
   readonly subGraphId: string | null;
+}
+
+export interface ChangeEdgeAttachment {
+  readonly eventType: `${Namespace}.changeedgeattachment`;
+  readonly graphId: GraphIdentifier;
+  readonly edge: Edge;
+  readonly which: "from" | "to";
+  readonly attachmentPoint: EdgeAttachmentPoint;
 }
