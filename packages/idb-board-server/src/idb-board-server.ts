@@ -29,7 +29,7 @@ import {
   IDBProjectStoreProject as IDBBoardServerProject,
   LocalStoreData,
 } from "./types/idb-types.js";
-import { kitFromGraphDescriptor } from "@google-labs/breadboard/kits";
+import { kitFromGraphDescriptor } from "@google-labs/breadboard/legacy.js";
 
 const loadedExtensions: BoardServerExtension[] = [];
 
@@ -425,7 +425,7 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
     try {
       const db = await createLocalStoreDBIfNeeded(this.url.href);
       db.delete("projects", IDBKeyRange.only(url.href));
-    } catch (err) {
+    } catch {
       return { result: false, error: "Unable to locate project to delete" };
     }
 

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { KitBuilder } from "@google-labs/breadboard/kits";
+import { KitBuilder } from "@google-labs/breadboard/legacy.js";
 
 import fetch from "./nodes/fetch.js";
 import invoke from "./nodes/invoke.js";
