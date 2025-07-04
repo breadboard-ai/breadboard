@@ -12,7 +12,7 @@ import {
   type ServerResponse as ProxyServerResponse,
   HTTPServerTransport,
   type ProxyServerConfig,
-} from "@google-labs/breadboard/remote";
+} from "@breadboard-ai/runtime/legacy.js";
 import { asRuntimeKit, type DataStore } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
 import { getDataStore } from "@breadboard-ai/data-store";

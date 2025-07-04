@@ -9,7 +9,6 @@
   "exports": {
     ".": "./dist/src/index.js",
     "./kits": "./dist/src/kits/index.js",
-    "./remote": "./dist/src/remote/index.js",
     "./harness": "./dist/src/harness/index.js",
     "./data": "./dist/src/data/index.js"
   },
