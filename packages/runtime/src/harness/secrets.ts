@@ -15,8 +15,8 @@ import {
   RunConfig,
   SecretResult,
 } from "@breadboard-ai/types";
+import { timestamp } from "@breadboard-ai/utils";
 import { callHandler } from "../handler.js";
-import { timestamp } from "../timestamp.js";
 
 /**
  * Get all secret handlers from the given kits.

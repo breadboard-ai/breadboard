@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { createDefaultDataStore } from "@breadboard-ai/data";
 import type { ProbeMessage } from "@breadboard-ai/types";
 import {
   BreadboardRunResult,
@@ -14,13 +15,11 @@ import {
   LastNode,
   RunConfig,
 } from "@breadboard-ai/types";
-import { asyncGen } from "@breadboard-ai/utils";
+import { asyncGen, timestamp } from "@breadboard-ai/utils";
 import { runGraph } from "../run/run-graph.js";
-import { timestamp } from "../timestamp.js";
 import { Diagnostics } from "./diagnostics.js";
 import { extractError } from "./error.js";
 import { baseURL } from "./url.js";
-import { createDefaultDataStore } from "@breadboard-ai/data";
 
 const fromProbe = <Probe extends ProbeMessage>(probe: Probe) => {
   const data = structuredClone(probe.data);

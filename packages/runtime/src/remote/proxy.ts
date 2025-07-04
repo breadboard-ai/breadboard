@@ -17,9 +17,9 @@ import type {
   NodeIdentifier,
   OutputValues,
 } from "@breadboard-ai/types";
+import { timestamp } from "@breadboard-ai/utils";
 import { callHandler, handlersFromKits } from "../handler.js";
 import { streamsToAsyncIterable } from "../stream.js";
-import { timestamp } from "../timestamp.js";
 import { NodeProxyConfig, NodeProxySpec, ProxyServerConfig } from "./config.js";
 import { createTunnelKit, readConfig } from "./tunnel.js";
 import { ClientTransport, ServerTransport } from "./types.js";

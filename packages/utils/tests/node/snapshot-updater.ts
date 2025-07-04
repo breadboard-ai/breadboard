@@ -5,7 +5,7 @@
  */
 
 import { describe, it } from "node:test";
-import { SnapshotUpdater } from "../../../src/utils/snapshot-updater.js";
+import { SnapshotUpdater } from "../../src/snapshot-updater.js";
 import { deepStrictEqual, rejects } from "node:assert";
 
 describe("SnapshotUpdater", async () => {

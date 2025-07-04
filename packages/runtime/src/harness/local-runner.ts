@@ -29,8 +29,7 @@ import {
   StartEvent,
 } from "./events.js";
 import { run } from "./run.js";
-
-export const timestamp = () => globalThis.performance.now();
+import { timestamp } from "@breadboard-ai/utils";
 
 export class LocalRunner
   extends (EventTarget as RunEventTarget)

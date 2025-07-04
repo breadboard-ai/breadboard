@@ -13,11 +13,11 @@ import type {
   NodeDescriberResult,
   NodeIdentifier,
 } from "@breadboard-ai/types";
-import { hash } from "../../utils/hash.js";
 import {
+  hash,
   SnapshotUpdater,
   SnapshotUpdaterArgs,
-} from "../../utils/snapshot-updater.js";
+} from "@breadboard-ai/utils";
 
 export { DescribeResultCache };
 

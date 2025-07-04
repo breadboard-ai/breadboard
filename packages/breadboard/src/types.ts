@@ -4,19 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  Edge,
-  GraphDescriptor,
-  InputValues,
-  Kit,
-  NodeDescriptor,
-  NodeHandlers,
-  NodeIdentifier,
-  NodeTypeIdentifier,
-  NodeValue,
-  OutputValues,
-} from "@breadboard-ai/types";
-
 export type {
   Capability,
   CommentNode,
@@ -25,6 +12,7 @@ export type {
   GraphIdentifier,
   GraphInlineMetadata,
   InputIdentifier,
+  InputResponse,
   InputValues,
   KitDescriptor,
   KitReference,
@@ -34,11 +22,10 @@ export type {
   NodeTypeIdentifier,
   NodeValue,
   OutputIdentifier,
+  OutputResponse,
   OutputValues,
   SubGraphs,
 } from "@breadboard-ai/types";
-
-export type { InputResponse, OutputResponse } from "@breadboard-ai/types";
+export type * from "@breadboard-ai/types/legacy.js";
 export type * from "@breadboard-ai/types/node-handler.js";
 export type * from "@breadboard-ai/types/schema.js";
-export type * from "@breadboard-ai/types/legacy.js";

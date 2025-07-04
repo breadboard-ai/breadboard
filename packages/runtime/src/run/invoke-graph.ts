@@ -4,13 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { timestamp } from "../timestamp.js";
-import type { GraphToRun, RunArguments } from "@breadboard-ai/types";
 import type {
+  GraphToRun,
   InputValues,
   OutputValues,
+  RunArguments,
   TraversalResult,
 } from "@breadboard-ai/types";
+import { timestamp } from "@breadboard-ai/utils";
 import { runGraph } from "./run-graph.js";
 
 /**

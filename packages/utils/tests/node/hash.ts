@@ -5,7 +5,7 @@
  */
 
 import test, { describe } from "node:test";
-import { hash } from "../../../src/utils/hash.js";
+import { hash } from "../../src/hash.js";
 import { deepStrictEqual } from "node:assert";
 
 describe("hash", () => {

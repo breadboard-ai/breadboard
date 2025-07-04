@@ -16,7 +16,7 @@ import type {
   PathRegistryEntry,
   SequenceView,
 } from "@breadboard-ai/types";
-import { timestamp } from "../../timestamp.js";
+import { timestamp } from "@breadboard-ai/utils";
 import { idFromPath } from "./conversions.js";
 
 export const SECRET_PATH = [-2];

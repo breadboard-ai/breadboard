@@ -11,7 +11,7 @@ import {
   NodeDescriberResult,
   NodeTypeIdentifier,
 } from "@breadboard-ai/types";
-import { SnapshotUpdater } from "../../utils/snapshot-updater.js";
+import { SnapshotUpdater } from "@breadboard-ai/utils";
 
 export { DescribeResultTypeCache };
 

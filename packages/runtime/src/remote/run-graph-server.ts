@@ -10,9 +10,9 @@ import {
   ServerRunConfig,
   ServerRunRequest,
 } from "@breadboard-ai/types";
+import { timestamp } from "@breadboard-ai/utils";
 import { run } from "../harness/run.js";
 import { createRunStateManager } from "../run/index.js";
-import { timestamp } from "../timestamp.js";
 import { DiagnosticsFilter } from "./diagnostics-filter.js";
 
 export const handleRunGraphRequest = async (
