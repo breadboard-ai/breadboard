@@ -64,13 +64,13 @@ import {
   AddNodeWithEdgeEvent,
   MultiEditEvent,
   NodeConfigurationUpdateRequestEvent,
-  WorkspaceSelectionStateEvent,
   ZoomToFitEvent,
   MoveNodesEvent,
   EdgeAttachmentMoveEvent,
   DroppedAssetsEvent,
   ZoomInEvent,
   ZoomOutEvent,
+  StateEvent,
 } from "../../events/events";
 import { styleMap } from "lit/directives/style-map.js";
 import { Entity } from "./entity";
@@ -1422,12 +1422,13 @@ export class Renderer extends LitElement {
     const selectionChangeId = createWorkspaceSelectionChangeId();
 
     this.dispatchEvent(
-      new WorkspaceSelectionStateEvent(
+      new StateEvent({
+        eventType: "selectionstatechange",
         selectionChangeId,
-        newState,
-        !this.#isAdditiveSelection,
-        /** animated **/ false
-      )
+        selections: newState,
+        replaceExistingSelections: !this.#isAdditiveSelection,
+        moveToSelection: false,
+      })
     );
   }
 

@@ -70,7 +70,6 @@ export { ModuleRibbonMenu } from "./module-editor/ribbon.js";
 export { MultiOutput } from "./output/multi-output/multi-output.js";
 export { NewWorkspaceItemOverlay } from "./overlay/new-workspace-item.js";
 export { NodeConfigurationOverlay } from "./overlay/node-configurator.js";
-export { OpenBoardOverlay } from "./overlay/open-board.js";
 export { OverflowMenu } from "./overflow-menu/overflow-menu.js";
 export { Overlay } from "./overlay/overlay.js";
 export { ParticleUpdate } from "./output/console-view/particles/update.js";

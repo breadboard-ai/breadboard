@@ -14,9 +14,9 @@ import { createRef, ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
 import {
   BoardDeleteEvent,
-  GraphBoardServerLoadRequestEvent,
   GraphBoardServerRemixRequestEvent,
   OverflowMenuActionEvent,
+  StateEvent,
 } from "../../events/events.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { icons } from "../../styles/icons.js";
@@ -708,7 +708,7 @@ export class Gallery extends LitElement {
 
   #onBoardClick(_event: PointerEvent | KeyboardEvent, url: string) {
     ActionTracker.openApp(url, this.forceCreatorToBeTeam ? "gallery" : "user");
-    this.dispatchEvent(new GraphBoardServerLoadRequestEvent(url));
+    this.dispatchEvent(new StateEvent({ eventType: "boardload", url }));
   }
 
   #onBoardKeydown(event: KeyboardEvent, url: string) {

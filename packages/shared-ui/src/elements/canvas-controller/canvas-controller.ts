@@ -44,8 +44,8 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import {
   CommandsSetSwitchEvent,
   NodeConfigurationUpdateRequestEvent,
+  StateEvent,
   ThemeEditRequestEvent,
-  WorkspaceSelectionStateEvent,
 } from "../../events/events.js";
 import {
   COMMAND_SET_GRAPH_EDITOR,
@@ -468,12 +468,13 @@ export class CanvasController extends LitElement {
             }
 
             this.dispatchEvent(
-              new WorkspaceSelectionStateEvent(
+              new StateEvent({
+                eventType: "selectionstatechange",
                 selectionChangeId,
-                newState,
-                /** replaceExistingSelection */ true,
-                /** animated **/ false
-              )
+                selections: newState,
+                replaceExistingSelections: true,
+                moveToSelection: false,
+              })
             );
           }}
           @bbshowassetorganizer=${() => {

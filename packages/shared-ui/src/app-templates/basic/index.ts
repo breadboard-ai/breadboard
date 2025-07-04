@@ -29,8 +29,8 @@ import {
   BoardDescriptionUpdateEvent,
   BoardTitleUpdateEvent,
   ResizeEvent,
-  RunEvent,
   SignInRequestedEvent,
+  StateEvent,
   ToastEvent,
   ToastType,
 } from "../../events/events";
@@ -1316,7 +1316,9 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
                     ?disabled=${!this.run.runnable}
                     @click=${() => {
                       ActionTracker.runApp(this.graph?.url, "app_preview");
-                      this.dispatchEvent(new RunEvent());
+                      this.dispatchEvent(
+                        new StateEvent({ eventType: "boardrun" })
+                      );
                     }}
                   >
                     <span class="g-icon"></span>Start

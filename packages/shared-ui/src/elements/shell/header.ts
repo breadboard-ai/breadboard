@@ -16,10 +16,10 @@ import { icons } from "../../styles/icons.js";
 import {
   BoardTitleUpdateEvent,
   CloseEvent,
-  ModeToggleEvent,
   RemixEvent,
   ShareRequestedEvent,
   SignOutEvent,
+  StateEvent,
 } from "../../events/events.js";
 import { classMap } from "lit/directives/class-map.js";
 import { UILoadState } from "../../state/types.js";
@@ -359,7 +359,9 @@ export class VEHeader extends LitElement {
       <button
         id="app"
         @click=${() => {
-          this.dispatchEvent(new ModeToggleEvent("app"));
+          this.dispatchEvent(
+            new StateEvent({ eventType: "modetoggle", mode: "app" })
+          );
         }}
         class=${classMap({
           "sans-flex": true,
@@ -373,7 +375,9 @@ export class VEHeader extends LitElement {
       <button
         id="canvas"
         @click=${() => {
-          this.dispatchEvent(new ModeToggleEvent("canvas"));
+          this.dispatchEvent(
+            new StateEvent({ eventType: "modetoggle", mode: "canvas" })
+          );
         }}
         class=${classMap({
           "sans-flex": true,

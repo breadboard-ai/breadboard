@@ -11,7 +11,6 @@ const Strings = BreadboardUI.Strings.forSection("Global");
 
 import type {
   HarnessProxyConfig,
-  RunConfig,
   RunErrorEvent,
   RunSecretEvent,
   BoardServer,
@@ -23,16 +22,13 @@ import { LitElement, html, nothing } from "lit";
 import {
   createRunObserver,
   GraphDescriptor,
-  InspectableRunSequenceEntry,
   SerializedRun,
   MutableGraphStore,
   defaultModuleContent,
   createFileSystem,
   createEphemeralBlobStore,
-  assetsFromGraphDescriptor,
   blank as breadboardBlank,
   EditHistoryCreator,
-  envFromGraphDescriptor,
   FileSystem,
   addSandboxedRunModule,
   hash,
@@ -42,7 +38,6 @@ import {
   getRunStore,
 } from "@breadboard-ai/data-store";
 import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
-import { addNodeProxyServerConfig } from "./data/node-proxy-servers";
 import { provide } from "@lit/context";
 import { RecentBoardStore } from "./data/recent-boards";
 import { SecretsHelper } from "./utils/secrets-helper";
@@ -54,7 +49,6 @@ import {
   WorkspaceSelectionStateWithChangeId,
   WorkspaceVisualChangeId,
 } from "./runtime/types";
-import { getRunNodeConfig } from "./utils/run-node";
 import {
   createTokenVendor,
   TokenVendor,
@@ -128,6 +122,13 @@ import {
 } from "@breadboard-ai/shared-ui/contexts/build-info.js";
 import { classMap } from "lit/directives/class-map.js";
 import { SignalWatcher } from "@lit-labs/signals";
+import {
+  BoardLoadRoute,
+  BoardRunRoute,
+  ModeRoute,
+  SelectionStateChangeRoute,
+} from "./event-routing/event-routing";
+import { EventRoute } from "./event-routing/types";
 
 type RenderValues = {
   canSave: boolean;
@@ -1195,41 +1196,6 @@ export class Main extends SignalWatcher(LitElement) {
     this.signinAdapter = this.#createSigninAdapter();
   }
 
-  async #attemptBoardStart() {
-    const url = this.#tab?.graph?.url;
-    if (!url) {
-      return;
-    }
-
-    const graph = this.#tab?.graph;
-
-    this.#runtime.edit.sideboards.discardTasks();
-
-    this.#runBoard(
-      addNodeProxyServerConfig(
-        this.#proxy,
-        {
-          url,
-          runner: graph,
-          diagnostics: true,
-          kits: [], // The kits are added by the runtime.
-          loader: this.#runtime.board.getLoader(),
-          graphStore: this.#graphStore,
-          fileSystem: this.#fileSystem.createRunFileSystem({
-            graphUrl: url,
-            env: envFromGraphDescriptor(this.#fileSystem.env(), graph),
-            assets: assetsFromGraphDescriptor(graph),
-          }),
-          inputs: BreadboardUI.Data.inputsFromSettings(this.#settings),
-          interactiveSecrets: true,
-        },
-        this.#settings,
-        undefined /* no longer used */,
-        await this.#getProxyURL(url)
-      )
-    );
-  }
-
   async #attemptBoardStop(clearLastRun = false) {
     const tabId = this.#tab?.id ?? null;
     const abortController = this.#runtime.run.getAbortSignal(tabId);
@@ -1588,15 +1554,6 @@ export class Main extends SignalWatcher(LitElement) {
     await this.#recentBoardStore.store(this.#recentBoards);
   }
 
-  async #runBoard(config: RunConfig, history?: InspectableRunSequenceEntry[]) {
-    if (!this.#tab) {
-      console.error("Unable to run board, no active tab");
-      return;
-    }
-
-    this.#runtime.run.runBoard(this.#tab, config, history);
-  }
-
   untoast(id: string | undefined) {
     if (!id) {
       return;
@@ -1650,17 +1607,6 @@ export class Main extends SignalWatcher(LitElement) {
     }
 
     this.#snackbarRef.value.hide();
-  }
-
-  async #getProxyURL(urlString: string): Promise<string | null> {
-    const url = new URL(urlString, window.location.href);
-    for (const boardServer of this.#boardServers) {
-      const proxyURL = await boardServer.canProxy?.(url);
-      if (proxyURL) {
-        return proxyURL;
-      }
-    }
-    return null;
   }
 
   async #handleBoardInfoUpdate(evt: BreadboardUI.Events.BoardInfoUpdateEvent) {
@@ -1843,60 +1789,6 @@ export class Main extends SignalWatcher(LitElement) {
     });
   }
 
-  async #attemptNodeRun(id: string, stopAfter = true) {
-    if (!this.#tab) {
-      console.warn(
-        "NodeRunRequestEvent dispatched, but no current tab is present. Likely a bug somewhere."
-      );
-      return;
-    }
-    const firstRun = (
-      await this.#runtime.run.getObservers(this.#tab.id)?.runObserver?.runs()
-    )?.at(0);
-
-    const nodeConfig = this.#runtime.edit
-      .getEditor(this.#tab)
-      ?.inspect("")
-      ?.nodeById(id)
-      ?.configuration();
-
-    const configResult = await getRunNodeConfig(id, nodeConfig, firstRun);
-    if (!configResult.success) {
-      return;
-    }
-    const { config, history } = configResult.result;
-    if (!stopAfter && config) {
-      delete config.stopAfter;
-    }
-
-    if (!this.#tab?.graph?.url) {
-      return;
-    }
-
-    const graph = this.#tab?.graph;
-
-    this.#runBoard(
-      addNodeProxyServerConfig(
-        this.#proxy,
-        {
-          url: this.#tab.graph.url!,
-          runner: graph,
-          diagnostics: true,
-          kits: [], // The kits are added by the runtime.
-          loader: this.#runtime.board.getLoader(),
-          inputs: BreadboardUI.Data.inputsFromSettings(this.#settings),
-          interactiveSecrets: true,
-          graphStore: this.#graphStore,
-          ...config,
-        },
-        this.#settings,
-        undefined /* no longer used */,
-        await this.#getProxyURL(this.#tab?.graph.url)
-      ),
-      history
-    );
-  }
-
   #attemptModuleCreate(moduleId: ModuleIdentifier) {
     if (!this.#tab) {
       return;
@@ -2020,10 +1912,6 @@ export class Main extends SignalWatcher(LitElement) {
     const content = html`<div
       id="content"
       ?inert=${renderValues.showingOverlay}
-      @bbrun=${async () => {
-        if (!this.#uiState.canRunMain) return;
-        await this.#attemptBoardStart();
-      }}
       @bbstop=${(evt: BreadboardUI.Events.StopEvent) => {
         this.#attemptBoardStop(evt.clearLastRun);
       }}
@@ -2071,27 +1959,66 @@ export class Main extends SignalWatcher(LitElement) {
       ]}
     </div>`;
 
-    return [
-      this.#renderHeader(renderValues),
-      content,
-      this.#uiState.show.has("TOS") ? this.#renderTosDialog() : nothing,
-      this.#uiState.show.has("NewWorkspaceItemOverlay")
-        ? this.#renderNewWorkspaceItemOverlay()
-        : nothing,
+    const eventRoutes = new Map<
+      keyof BreadboardUI.Events.StateEventDetailMap,
+      EventRoute<keyof BreadboardUI.Events.StateEventDetailMap>
+    >([
+      [ModeRoute.event, ModeRoute],
+      [BoardRunRoute.event, BoardRunRoute],
+      [BoardLoadRoute.event, BoardLoadRoute],
+      [SelectionStateChangeRoute.event, SelectionStateChangeRoute],
+    ]);
 
-      this.#uiState.show.has("BoardServerAddOverlay")
-        ? this.#renderBoardServerAddOverlay()
-        : nothing,
-      this.#uiState.show.has("BoardEditModal")
-        ? this.#renderBoardEditModal()
-        : nothing,
-      this.#uiState.show.has("ItemModal") ? this.#renderItemModal() : nothing,
-      this.#renderTooltip(),
-      this.#renderToasts(),
-      this.#renderSnackbar(),
-      this.#renderGoogleDriveAssetShareDialog(),
-      this.#renderFeedbackPanel(),
-    ];
+    return html`<div
+      id="container"
+      @bbevent=${async (
+        evt: BreadboardUI.Events.StateEvent<
+          keyof BreadboardUI.Events.StateEventDetailMap
+        >
+      ) => {
+        const eventRoute = eventRoutes.get(evt.detail.eventType);
+        if (!eventRoute) {
+          console.warn(`No event handler for "${evt.detail.eventType}"`);
+          return;
+        }
+
+        const shouldRender = await eventRoute.do({
+          originalEvent: evt,
+          // TODO: Determine if this is needed.
+          proxy: this.#proxy,
+          runtime: this.#runtime,
+          settings: this.#settings,
+          tab: this.#tab,
+          uiState: this.#uiState,
+        });
+
+        if (shouldRender) {
+          this.requestUpdate();
+        }
+      }}
+    >
+      ${[
+        this.#renderHeader(renderValues),
+        content,
+        this.#uiState.show.has("TOS") ? this.#renderTosDialog() : nothing,
+        this.#uiState.show.has("NewWorkspaceItemOverlay")
+          ? this.#renderNewWorkspaceItemOverlay()
+          : nothing,
+
+        this.#uiState.show.has("BoardServerAddOverlay")
+          ? this.#renderBoardServerAddOverlay()
+          : nothing,
+        this.#uiState.show.has("BoardEditModal")
+          ? this.#renderBoardEditModal()
+          : nothing,
+        this.#uiState.show.has("ItemModal") ? this.#renderItemModal() : nothing,
+        this.#renderTooltip(),
+        this.#renderToasts(),
+        this.#renderSnackbar(),
+        this.#renderGoogleDriveAssetShareDialog(),
+        this.#renderFeedbackPanel(),
+      ]}
+    </div>`;
   }
 
   #renderWelcomePanel(renderValues: RenderValues) {
@@ -2164,11 +2091,6 @@ export class Main extends SignalWatcher(LitElement) {
         if (boardServer.renewAccess) {
           await boardServer.renewAccess();
         }
-      }}
-      @bbgraphboardserverloadrequest=${async (
-        evt: BreadboardUI.Events.GraphBoardServerLoadRequestEvent
-      ) => {
-        this.#runtime.router.go(evt.url, this.#uiState.mode);
       }}
       @bbgraphboardserverremixrequest=${async (
         evt: BreadboardUI.Events.GraphBoardServerRemixRequestEvent
@@ -2244,73 +2166,11 @@ export class Main extends SignalWatcher(LitElement) {
       .themeHash=${renderValues.themeHash}
       .topGraphResult=${renderValues.topGraphResult}
       .visualChangeId=${this.#lastVisualChangeId}
-      @bbgraphboardserverloadrequest=${async (
-        evt: BreadboardUI.Events.GraphBoardServerLoadRequestEvent
-      ) => {
-        this.#runtime.router.go(evt.url, this.#uiState.mode);
-      }}
-      @bbworkspaceselectionmove=${async (
-        evt: BreadboardUI.Events.WorkspaceSelectionMoveEvent
-      ) => {
-        if (!this.#tab) {
-          return;
-        }
-
-        await this.#runtime.edit.moveToNewGraph(
-          this.#tab,
-          evt.selections,
-          evt.targetGraphId,
-          evt.delta
-        );
-      }}
-      @bbnodecreatereference=${async (
-        evt: BreadboardUI.Events.NodeCreateReferenceEvent
-      ) => {
-        if (!this.#tab) {
-          return;
-        }
-
-        await this.#runtime.edit.createReference(
-          this.#tab,
-          evt.graphId,
-          evt.nodeId,
-          evt.portId,
-          evt.value
-        );
-      }}
       @bbeditorpositionchange=${(
         evt: BreadboardUI.Events.EditorPointerPositionChangeEvent
       ) => {
         this.#lastPointerPosition.x = evt.x;
         this.#lastPointerPosition.y = evt.y;
-      }}
-      @bbworkspaceselectionstate=${(
-        evt: BreadboardUI.Events.WorkspaceSelectionStateEvent
-      ) => {
-        if (!this.#tab) {
-          return;
-        }
-
-        this.#runtime.select.processSelections(
-          this.#tab.id,
-          evt.selectionChangeId,
-          evt.selections,
-          evt.replaceExistingSelections,
-          evt.moveToSelection
-        );
-      }}
-      @bbworkspacevisualupdate=${(
-        evt: BreadboardUI.Events.WorkspaceVisualUpdateEvent
-      ) => {
-        if (!this.#tab) {
-          return;
-        }
-
-        this.#runtime.edit.processVisualChanges(
-          this.#tab,
-          evt.visualChangeId,
-          evt.visualState
-        );
       }}
       @bbworkspaceitemvisualupdate=${(
         evt: BreadboardUI.Events.WorkspaceItemVisualUpdateEvent
@@ -2359,12 +2219,6 @@ export class Main extends SignalWatcher(LitElement) {
           evt.id,
           evt.title
         );
-      }}
-      @bbstart=${(evt: BreadboardUI.Events.StartEvent) => {
-        if (!evt.url) {
-          return;
-        }
-        this.#runtime.router.go(evt.url, this.#uiState.mode);
       }}
       @dragover=${(evt: DragEvent) => {
         evt.preventDefault();
@@ -2486,11 +2340,6 @@ export class Main extends SignalWatcher(LitElement) {
       }}
       @bbthemecreate=${(evt: BreadboardUI.Events.ThemeCreateEvent) => {
         this.#runtime.edit.createTheme(this.#tab, evt.theme);
-      }}
-      @bbnoderunrequest=${async (
-        evt: BreadboardUI.Events.NodeRunRequestEvent
-      ) => {
-        await this.#attemptNodeRun(evt.id);
       }}
       @bbmovenodes=${async (evt: BreadboardUI.Events.MoveNodesEvent) => {
         const { destinationGraphId } = evt;
@@ -2926,9 +2775,6 @@ export class Main extends SignalWatcher(LitElement) {
       .saveStatus=${renderValues.saveStatus}
       .showExperimentalComponents=${renderValues.showExperimentalComponents}
       .mode=${this.#uiState.mode}
-      @bbmodetoggle=${(evt: BreadboardUI.Events.ModeToggleEvent) => {
-        this.#runtime.router.go(window.location.href, evt.mode);
-      }}
       @bbboardtitleupdate=${async (
         evt: BreadboardUI.Events.BoardTitleUpdateEvent
       ) => {
