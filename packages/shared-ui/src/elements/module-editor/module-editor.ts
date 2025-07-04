@@ -30,7 +30,7 @@ import {
   CommandsAvailableEvent,
   ModuleEditEvent,
   OverflowMenuActionEvent,
-  RunEvent,
+  StateEvent,
   StopEvent,
   ToastEvent,
   ToastType,
@@ -960,7 +960,9 @@ export class ModuleEditor extends LitElement {
                     id="run"
                     @click=${() => {
                       if (this.topGraphResult?.status === "stopped") {
-                        this.dispatchEvent(new RunEvent());
+                        this.dispatchEvent(
+                          new StateEvent({ eventType: "boardrun" })
+                        );
                       } else {
                         this.dispatchEvent(new StopEvent());
                       }

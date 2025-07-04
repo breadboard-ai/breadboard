@@ -35,8 +35,8 @@ import { Ref, createRef, ref } from "lit/directives/ref.js";
 import {
   InputEnterEvent,
   InputRequestedEvent,
-  RunEvent,
   RunIsolatedNodeEvent,
+  StateEvent,
   StopEvent,
 } from "../../events/events.js";
 import { map } from "lit/directives/map.js";
@@ -610,7 +610,7 @@ export class BoardActivity extends LitElement {
               <button
                 id="run"
                 @click=${() => {
-                  this.dispatchEvent(new RunEvent());
+                  this.dispatchEvent(new StateEvent({ eventType: "boardrun" }));
                 }}
               >
                 <span class="g-icon">spark</span>Start

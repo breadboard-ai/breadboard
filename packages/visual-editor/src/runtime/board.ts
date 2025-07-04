@@ -90,15 +90,15 @@ export class Board extends EventTarget {
 
   constructor(
     /** @deprecated */
-    private readonly providers: GraphProvider[],
-    private readonly loader: GraphLoader,
+    public readonly providers: GraphProvider[],
+    public readonly loader: GraphLoader,
     /**
      * Extra Kits, supplied by the board server.
      * */
-    private readonly boardServerKits: Kit[],
-    private readonly boardServers: RuntimeConfigBoardServers,
-    private readonly tokenVendor?: TokenVendor,
-    private readonly googleDriveClient?: GoogleDriveClient
+    public readonly boardServerKits: Kit[],
+    public readonly boardServers: RuntimeConfigBoardServers,
+    public readonly tokenVendor?: TokenVendor,
+    public readonly googleDriveClient?: GoogleDriveClient
   ) {
     super();
     boardServers.servers.forEach((server) => {

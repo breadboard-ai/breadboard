@@ -11,7 +11,7 @@ import { customElement, property } from "lit/decorators.js";
 import { ProjectRun } from "../../../state";
 import { repeat } from "lit/directives/repeat.js";
 import { classMap } from "lit/directives/class-map.js";
-import { ResizeEvent, RunEvent } from "../../../events/events";
+import { ResizeEvent, StateEvent } from "../../../events/events";
 import { icons } from "../../../styles/icons";
 import { SignalWatcher } from "@lit-labs/signals";
 import { isParticle } from "@breadboard-ai/particles";
@@ -272,7 +272,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
       <button
         id="run"
         @click=${() => {
-          this.dispatchEvent(new RunEvent());
+          this.dispatchEvent(new StateEvent({ eventType: "boardrun" }));
         }}
       >
         <span class="g-icon">spark</span>${Strings.from("COMMAND_START")}

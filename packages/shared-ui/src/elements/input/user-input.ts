@@ -31,8 +31,8 @@ import {
   HideTooltipEvent,
   ModuleCreateEvent,
   ShowTooltipEvent,
+  StateEvent,
   UserOutputEvent,
-  WorkspaceSelectionStateEvent,
 } from "../../events/events";
 import { Project } from "../../state";
 import { UserInputConfiguration, UserOutputValues } from "../../types/types";
@@ -857,11 +857,13 @@ export class UserInput extends LitElement {
                                   Utils.Workspace.createWorkspaceSelectionChangeId();
                                 this.dispatchEvent(new HideTooltipEvent());
                                 this.dispatchEvent(
-                                  new WorkspaceSelectionStateEvent(
-                                    changeId,
+                                  new StateEvent({
+                                    eventType: "selectionstatechange",
+                                    selectionChangeId: changeId,
                                     selections,
-                                    true
-                                  )
+                                    replaceExistingSelections: true,
+                                    moveToSelection: false,
+                                  })
                                 );
                               }}
                             >

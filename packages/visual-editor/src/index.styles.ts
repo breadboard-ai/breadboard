@@ -14,7 +14,12 @@ export const styles = css`
   :host {
     --header-height: var(--bb-grid-size-14);
     flex: 1 0 auto;
+    display: flex;
+  }
+
+  #container {
     display: grid;
+    flex: 1 0 auto;
     grid-template-rows: var(--header-height) auto;
   }
 

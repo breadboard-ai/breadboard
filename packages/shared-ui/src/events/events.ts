@@ -44,7 +44,7 @@ import type {
   WorkspaceSelectionChangeId,
   WorkspaceSelectionState,
   WorkspaceVisualChangeId,
-  WorkspaceVisualState,
+  VisualEditorMode,
 } from "../types/types.js";
 
 const eventInit = {
@@ -66,31 +66,31 @@ export enum ToastType {
  * Board Management
  */
 
-export class StartEvent extends Event {
-  static eventName = "bbstart";
+// export class StartEvent extends Event {
+//   static eventName = "bbstart";
 
-  constructor(
-    public readonly url: string | null = null,
-    public readonly descriptor: GraphDescriptor | null = null,
-    public readonly creator: EditHistoryCreator | null = null
-  ) {
-    super(StartEvent.eventName, { ...eventInit });
+//   constructor(
+//     public readonly url: string | null = null,
+//     public readonly descriptor: GraphDescriptor | null = null,
+//     public readonly creator: EditHistoryCreator | null = null
+//   ) {
+//     super(StartEvent.eventName, { ...eventInit });
 
-    if (url && descriptor) {
-      throw new Error(
-        "You must provide either a URL or descriptor, but not both"
-      );
-    }
-  }
-}
+//     if (url && descriptor) {
+//       throw new Error(
+//         "You must provide either a URL or descriptor, but not both"
+//       );
+//     }
+//   }
+// }
 
-export class RunEvent extends Event {
-  static eventName = "bbrun";
+// export class RunEvent extends Event {
+//   static eventName = "bbrun";
 
-  constructor() {
-    super(RunEvent.eventName, { ...eventInit });
-  }
-}
+//   constructor() {
+//     super(RunEvent.eventName, { ...eventInit });
+//   }
+// }
 
 export class StopEvent extends Event {
   static eventName = "bbstop";
@@ -461,39 +461,18 @@ export class KitNodeChosenEvent extends Event {
  * Workspace management
  */
 
-export class WorkspaceSelectionMoveEvent extends Event {
-  static eventName = "bbworkspaceselectionmove";
-  constructor(
-    public readonly selections: WorkspaceSelectionState,
-    public readonly targetGraphId: GraphIdentifier | null,
-    public readonly delta: { x: number; y: number }
-  ) {
-    super(WorkspaceSelectionMoveEvent.eventName, { ...eventInit });
-  }
-}
+// export class WorkspaceSelectionStateEvent extends Event {
+//   static eventName = "bbworkspaceselectionstate";
 
-export class WorkspaceVisualUpdateEvent extends Event {
-  static eventName = "bbworkspacevisualupdate";
-  constructor(
-    public readonly visualChangeId: WorkspaceVisualChangeId,
-    public readonly visualState: WorkspaceVisualState
-  ) {
-    super(WorkspaceVisualUpdateEvent.eventName, { ...eventInit });
-  }
-}
-
-export class WorkspaceSelectionStateEvent extends Event {
-  static eventName = "bbworkspaceselectionstate";
-
-  constructor(
-    public readonly selectionChangeId: WorkspaceSelectionChangeId,
-    public readonly selections: WorkspaceSelectionState | null,
-    public readonly replaceExistingSelections = true,
-    public readonly moveToSelection: MoveToSelection = false
-  ) {
-    super(WorkspaceSelectionStateEvent.eventName, { ...eventInit });
-  }
-}
+//   constructor(
+//     public readonly selectionChangeId: WorkspaceSelectionChangeId,
+//     public readonly selections: WorkspaceSelectionState | null,
+//     public readonly replaceExistingSelections = true,
+//     public readonly moveToSelection: MoveToSelection = false
+//   ) {
+//     super(WorkspaceSelectionStateEvent.eventName, { ...eventInit });
+//   }
+// }
 
 export class WorkspaceNewItemCreateRequestEvent extends Event {
   static eventName = "bbworkspacenewitemcreaterequest";
@@ -683,14 +662,6 @@ export class GraphBoardServerRemixRequestEvent extends Event {
   }
 }
 
-export class GraphBoardServerLoadRequestEvent extends Event {
-  static eventName = "bbgraphboardserverloadrequest";
-
-  constructor(public readonly url: string) {
-    super(GraphBoardServerLoadRequestEvent.eventName, { ...eventInit });
-  }
-}
-
 export class GraphBoardServerRenewAccessRequestEvent extends Event {
   static eventName = "bbgraphboardserverrenewaccesssrequest";
 
@@ -831,19 +802,6 @@ export class UserOutputEvent extends Event {
 
   constructor(public readonly values: UserOutputValues) {
     super(UserOutputEvent.eventName, { ...eventInit });
-  }
-}
-
-export class NodeCreateReferenceEvent extends Event {
-  static eventName = "bbnodecreatereference";
-
-  constructor(
-    public readonly graphId: GraphIdentifier,
-    public readonly nodeId: NodeIdentifier,
-    public readonly portId: PortIdentifier,
-    public readonly value: string
-  ) {
-    super(NodeCreateReferenceEvent.eventName, { ...eventInit });
   }
 }
 
@@ -1653,13 +1611,46 @@ export class GoogleDrivePickerCloseEvent extends Event {
   }
 }
 
+/** Boards */
+
+interface BoardLoad {
+  readonly eventType: "boardload";
+  readonly url: string;
+}
+
+interface BoardRun {
+  readonly eventType: "boardrun";
+}
+
 /** Mode selection */
 
-export class ModeToggleEvent extends Event {
-  static eventName = "bbmodetoggle";
+interface ModeToggle {
+  readonly eventType: "modetoggle";
+  readonly mode: VisualEditorMode;
+}
 
-  constructor(public readonly mode: "app" | "canvas") {
-    super(ModeToggleEvent.eventName, { ...eventInit });
+interface SelectionStateChange {
+  readonly eventType: "selectionstatechange";
+  readonly selectionChangeId: WorkspaceSelectionChangeId;
+  readonly selections: WorkspaceSelectionState | null;
+  readonly replaceExistingSelections: boolean;
+  readonly moveToSelection: MoveToSelection;
+}
+
+export type StateEventDetailMap = {
+  boardload: BoardLoad;
+  boardrun: BoardRun;
+  modetoggle: ModeToggle;
+  selectionstatechange: SelectionStateChange;
+};
+
+export class StateEvent<
+  T extends keyof StateEventDetailMap,
+> extends CustomEvent<StateEventDetailMap[T]> {
+  static eventName = "bbevent";
+
+  constructor(readonly payload: StateEventDetailMap[T]) {
+    super(StateEvent.eventName, { detail: payload, ...eventInit });
   }
 }
 
