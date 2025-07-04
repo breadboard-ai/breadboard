@@ -4,7 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { StoredDataCapabilityPart } from "@breadboard-ai/types";
+import {
+  HarnessRunResult,
+  StoredDataCapabilityPart,
+} from "@breadboard-ai/types";
 import {
   BoardServer,
   DataPartTransformer,
@@ -15,7 +18,6 @@ import {
   SerializedDataStoreGroup,
   StoreDataResult,
 } from "@google-labs/breadboard";
-import { HarnessRunResult } from "@google-labs/breadboard/harness";
 
 export { BoardServerAwareDataStore };
 

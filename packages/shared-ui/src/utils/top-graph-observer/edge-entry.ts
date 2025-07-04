@@ -10,10 +10,7 @@ import type {
   OutputValues,
   Schema,
 } from "@google-labs/breadboard";
-import type {
-  RunOutputEvent,
-  RunInputEvent,
-} from "@google-labs/breadboard/harness";
+import type { RunOutputEvent, RunInputEvent } from "@breadboard-ai/types";
 import { idFromPath } from "./top-graph-observer";
 import type { EdgeLogEntry } from "../../types/types";
 

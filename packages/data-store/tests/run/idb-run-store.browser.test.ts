@@ -7,16 +7,16 @@
 import { expect } from "@esm-bundle/chai";
 import { IDBRunStore } from "../../src/run/idb-run-store.js";
 
-import { results as simpleRunResults } from "./simple-run.js";
-import { results as inlineDataRunResults } from "./inline-data-run.js";
-import { results as inlineDataArrayRunResults } from "./inline-data-run-array.js";
+import { HarnessRunResult } from "@breadboard-ai/types";
 import {
   isInlineData,
   isLLMContent,
   isLLMContentArray,
   toStoredDataPart,
 } from "@google-labs/breadboard";
-import { HarnessRunResult } from "@google-labs/breadboard/harness";
+import { results as inlineDataArrayRunResults } from "./inline-data-run-array.js";
+import { results as inlineDataRunResults } from "./inline-data-run.js";
+import { results as simpleRunResults } from "./simple-run.js";
 
 const url = "http://www.example.com";
 

@@ -5,7 +5,7 @@
  */
 
 import { StreamCapability } from "@breadboard-ai/runtime/legacy.js";
-import { KitBuilder } from "../../src/kits/index.js";
+import { KitBuilder } from "../../src/legacy/index.js";
 import type {
   BreadboardCapability,
   GraphDescriptor,

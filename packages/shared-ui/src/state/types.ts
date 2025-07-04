@@ -9,6 +9,7 @@ import {
   AssetMetadata,
   AssetPath,
   GraphIdentifier,
+  HarnessRunner,
   LLMContent,
   NodeIdentifier,
   OutputValues,
@@ -23,11 +24,10 @@ import {
   PortIdentifier,
   Schema,
 } from "@google-labs/breadboard";
-import { HarnessRunner } from "@google-labs/breadboard/harness";
 import { ConnectorInstance, ConnectorType } from "../connectors/types";
+import { ToastType } from "../events/events";
 import { SideBoardRuntime } from "../sideboards/types";
 import { VisualEditorMode } from "../types/types";
-import { ToastType } from "../events/events";
 
 /**
  * Represents the Model+Controller for the individual run of the graph.

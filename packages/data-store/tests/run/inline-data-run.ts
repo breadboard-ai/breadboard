@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessRunResult } from "@google-labs/breadboard/harness";
+import { HarnessRunResult } from "@breadboard-ai/types";
 
 export const results: HarnessRunResult[] = [
   {

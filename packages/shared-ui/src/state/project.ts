@@ -4,9 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { isA2 } from "@breadboard-ai/a2";
 import {
   AssetPath,
   GraphIdentifier,
+  HarnessRunner,
   LLMContent,
   NodeIdentifier,
   ParameterMetadata,
@@ -27,8 +29,16 @@ import {
   PortIdentifier,
   transformDataParts,
 } from "@google-labs/breadboard";
+import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
+import { ConnectorType } from "../connectors/types";
+import { SideBoardRuntime } from "../sideboards/types";
+import { ConnectorStateImpl } from "./connectors";
+import { ReactiveFastAccess } from "./fast-access";
+import { GraphAssetImpl } from "./graph-asset";
 import { ReactiveOrganizer } from "./organizer";
+import { ReactiveProjectRun } from "./project-run";
+import { RendererStateImpl } from "./renderer";
 import {
   Component,
   ConnectorState,
@@ -41,16 +51,6 @@ import {
   RendererState,
   Tool,
 } from "./types";
-import { ReactiveFastAccess } from "./fast-access";
-import { SideBoardRuntime } from "../sideboards/types";
-import { isA2 } from "@breadboard-ai/a2";
-import { RendererStateImpl } from "./renderer";
-import { ConnectorStateImpl } from "./connectors";
-import { ConnectorType } from "../connectors/types";
-import { GraphAssetImpl } from "./graph-asset";
-import { signal } from "signal-utils";
-import { HarnessRunner } from "@google-labs/breadboard/harness";
-import { ReactiveProjectRun } from "./project-run";
 
 export { createProjectState, ReactiveProject };
 

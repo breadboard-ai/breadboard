@@ -4,14 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { SignalMap } from "signal-utils/map";
-import {
-  AppScreenOutput,
-  ConsoleEntry,
-  ProjectRun,
-  RunError,
-  UserInput,
-} from "./types";
 import {
   HarnessRunner,
   RunConfig,
@@ -22,11 +14,7 @@ import {
   RunNodeEndEvent,
   RunNodeStartEvent,
   RunOutputEvent,
-} from "@google-labs/breadboard/harness";
-import { signal } from "signal-utils";
-import { formatError } from "../utils/format-error";
-import { ReactiveConsoleEntry } from "./console-entry";
-import { idFromPath } from "./common";
+} from "@breadboard-ai/types";
 import {
   err,
   FileSystem,
@@ -36,14 +24,26 @@ import {
   Outcome,
   OutputValues,
 } from "@google-labs/breadboard";
+import { signal } from "signal-utils";
+import { SignalMap } from "signal-utils/map";
+import { formatError } from "../utils/format-error";
 import { getStepIcon } from "../utils/get-step-icon";
 import { ReactiveApp } from "./app";
 import { ReactiveAppScreen } from "./app-screen";
+import { idFromPath } from "./common";
+import { ReactiveConsoleEntry } from "./console-entry";
+import {
+  AppScreenOutput,
+  ConsoleEntry,
+  ProjectRun,
+  RunError,
+  UserInput,
+} from "./types";
 
 export {
-  ReactiveProjectRun,
   createProjectRunState,
   createProjectRunStateFromFinalOutput,
+  ReactiveProjectRun,
 };
 
 function createProjectRunStateFromFinalOutput(
