@@ -1423,7 +1423,7 @@ export class Renderer extends LitElement {
 
     this.dispatchEvent(
       new StateEvent({
-        eventType: "selectionstatechange",
+        eventType: "host.selectionstatechange",
         selectionChangeId,
         selections: newState,
         replaceExistingSelections: !this.#isAdditiveSelection,

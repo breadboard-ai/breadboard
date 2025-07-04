@@ -1317,7 +1317,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
                     @click=${() => {
                       ActionTracker.runApp(this.graph?.url, "app_preview");
                       this.dispatchEvent(
-                        new StateEvent({ eventType: "boardrun" })
+                        new StateEvent({ eventType: "board.run" })
                       );
                     }}
                   >

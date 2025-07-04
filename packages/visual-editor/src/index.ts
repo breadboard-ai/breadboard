@@ -122,12 +122,7 @@ import {
 } from "@breadboard-ai/shared-ui/contexts/build-info.js";
 import { classMap } from "lit/directives/class-map.js";
 import { SignalWatcher } from "@lit-labs/signals";
-import {
-  BoardLoadRoute,
-  BoardRunRoute,
-  ModeRoute,
-  SelectionStateChangeRoute,
-} from "./event-routing/event-routing";
+import * as EventRoutes from "./event-routing/event-routing";
 import { EventRoute } from "./event-routing/types";
 
 type RenderValues = {
@@ -1196,28 +1191,6 @@ export class Main extends SignalWatcher(LitElement) {
     this.signinAdapter = this.#createSigninAdapter();
   }
 
-  async #attemptBoardStop(clearLastRun = false) {
-    const tabId = this.#tab?.id ?? null;
-    const abortController = this.#runtime.run.getAbortSignal(tabId);
-    if (!abortController) {
-      return;
-    }
-
-    abortController.abort(Strings.from("STATUS_GENERIC_RUN_STOPPED"));
-    const runner = this.#runtime.run.getRunner(tabId);
-    if (runner?.running()) {
-      await runner?.run();
-    }
-
-    if (clearLastRun) {
-      await this.#runtime.run.clearLastRun(tabId, this.#tab?.graph.url);
-    }
-
-    requestAnimationFrame(() => {
-      this.requestUpdate();
-    });
-  }
-
   async #clearBoardSave() {
     if (!this.#tab) {
       return;
@@ -1912,9 +1885,6 @@ export class Main extends SignalWatcher(LitElement) {
     const content = html`<div
       id="content"
       ?inert=${renderValues.showingOverlay}
-      @bbstop=${(evt: BreadboardUI.Events.StopEvent) => {
-        this.#attemptBoardStop(evt.clearLastRun);
-      }}
       @bbinputenter=${async (event: BreadboardUI.Events.InputEnterEvent) => {
         if (!this.#settings || !this.#tab) {
           return;
@@ -1963,10 +1933,14 @@ export class Main extends SignalWatcher(LitElement) {
       keyof BreadboardUI.Events.StateEventDetailMap,
       EventRoute<keyof BreadboardUI.Events.StateEventDetailMap>
     >([
-      [ModeRoute.event, ModeRoute],
-      [BoardRunRoute.event, BoardRunRoute],
-      [BoardLoadRoute.event, BoardLoadRoute],
-      [SelectionStateChangeRoute.event, SelectionStateChangeRoute],
+      [EventRoutes.Host.ModeRoute.event, EventRoutes.Host.ModeRoute],
+      [
+        EventRoutes.Host.SelectionStateChangeRoute.event,
+        EventRoutes.Host.SelectionStateChangeRoute,
+      ],
+      [EventRoutes.Board.RunRoute.event, EventRoutes.Board.RunRoute],
+      [EventRoutes.Board.LoadRoute.event, EventRoutes.Board.LoadRoute],
+      [EventRoutes.Board.StopRoute.event, EventRoutes.Board.StopRoute],
     ]);
 
     return html`<div
@@ -1993,7 +1967,9 @@ export class Main extends SignalWatcher(LitElement) {
         });
 
         if (shouldRender) {
-          this.requestUpdate();
+          requestAnimationFrame(() => {
+            this.requestUpdate();
+          });
         }
       }}
     >
