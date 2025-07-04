@@ -4,46 +4,44 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  NodeIdentifier,
-  sequenceEntryToHarnessRunResult,
-  type GraphDescriptor,
-  type InspectableRun,
-  type InspectableRunObserver,
-  type InspectableRunSequenceEntry,
-  type OutputValues,
-  type Schema,
-} from "@google-labs/breadboard";
 import type {
+  GraphDescriptor,
   HarnessRunner,
-  RunGraphStartEvent,
-  RunGraphEndEvent,
-  RunNodeStartEvent,
-  RunNodeEndEvent,
-  RunInputEvent,
-  RunOutputEvent,
-  RunErrorEvent,
   HarnessRunResult,
-} from "@google-labs/breadboard/harness";
+  InspectableRun,
+  InspectableRunObserver,
+  InspectableRunSequenceEntry,
+  NodeIdentifier,
+  OutputValues,
+  RunErrorEvent,
+  RunGraphEndEvent,
+  RunGraphStartEvent,
+  RunInputEvent,
+  RunNodeEndEvent,
+  RunNodeStartEvent,
+  RunOutputEvent,
+  Schema,
+} from "@breadboard-ai/types";
+import { sequenceEntryToHarnessRunResult } from "@google-labs/breadboard";
 import type {
-  LogEntry,
-  EdgeLogEntry,
   ComponentActivityItem,
-  TopGraphRunResult,
+  EdgeLogEntry,
+  LogEntry,
   NodeLogEntry,
   TopGraphObserverRunStatus,
+  TopGraphRunResult,
 } from "../../types/types";
 import { formatError } from "../format-error";
 import {
-  EdgeEntry,
-  InputEdge,
   BubbledInputEdge,
   BubbledOutputEdge,
+  EdgeEntry,
+  InputEdge,
 } from "./edge-entry";
 import { EdgeValueStore } from "./edge-value-store";
 import { EndNodeEntry, NodeEntry, UserNodeEntry } from "./node-entry";
-import { RunDetails } from "./run-details";
 import { NodeInformation } from "./node-information";
+import { RunDetails } from "./run-details";
 
 /**
  * A lightweight rewrite of the `InspectableRunObserver` that

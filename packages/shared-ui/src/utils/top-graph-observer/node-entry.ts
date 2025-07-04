@@ -5,20 +5,18 @@
  */
 
 import type {
+  InputValues,
   NodeDescriptor,
   OutputValues,
-  InputValues,
-} from "@google-labs/breadboard";
-import type {
   RunInputEvent,
-  RunOutputEvent,
   RunNodeStartEvent,
-} from "@google-labs/breadboard/harness";
+  RunOutputEvent,
+} from "@breadboard-ai/types";
+import type { ComponentActivityItem, NodeLogEntry } from "../../types/types";
 import { idFromPath } from "./top-graph-observer";
-import type { NodeLogEntry, ComponentActivityItem } from "../../types/types";
 
 // List the exports here to make them visible at a glance.
-export { NodeEntry, UserNodeEntry, EndNodeEntry };
+export { EndNodeEntry, NodeEntry, UserNodeEntry };
 
 class NodeEntry implements NodeLogEntry {
   type: "node";
