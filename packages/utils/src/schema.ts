@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { InputValues, Schema } from "./types.js";
+import type { InputValues, Schema } from "@breadboard-ai/types";
 
 type SchemaProperties = Record<string, Schema>;
 

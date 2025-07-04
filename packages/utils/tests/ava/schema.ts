@@ -6,7 +6,7 @@
 
 import test from "ava";
 
-import { SchemaBuilder, getSchemaType } from "../src/schema.js";
+import { SchemaBuilder, getSchemaType } from "../../src/schema.js";
 
 test("getSchemaType returns the correct type for a value", (t) => {
   t.is(getSchemaType(null), "null");

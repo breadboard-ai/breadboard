@@ -17,7 +17,7 @@ import type {
   NodeMetadata,
   OutputValues,
 } from "@breadboard-ai/types";
-import { filterBySchema } from "../../schema.js";
+import { filterBySchema } from "@breadboard-ai/utils";
 import { collectPorts } from "./ports.js";
 import { EdgeType, describeInput } from "./schemas.js";
 

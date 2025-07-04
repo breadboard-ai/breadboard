@@ -22,12 +22,13 @@ import type {
   Outcome,
 } from "@breadboard-ai/types";
 import {
+  combineSchemas,
   emptyDescriberResult,
   err,
   filterEmptyValues,
   ok,
+  removeProperty,
 } from "@breadboard-ai/utils";
-import { combineSchemas, removeProperty } from "../../schema.js";
 import {
   NodeDescriberContext,
   NodeDescriberResult,

@@ -12,3 +12,4 @@ export * from "./template.js";
 export * from "./graph-url-like.js";
 export * from "./run-imperative-graph.js";
 export * from "./chunk-repair.js";
+export * from "./schema.js";
