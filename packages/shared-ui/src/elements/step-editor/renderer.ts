@@ -1588,7 +1588,7 @@ export class Renderer extends LitElement {
             ) => {
               this.dispatchEvent(
                 new StateEvent({
-                  eventType: "node.changeedgeattachment",
+                  eventType: "node.changeedgeattachmentpoint",
                   graphId,
                   edge: evt.edge,
                   which: evt.which,

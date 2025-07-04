@@ -145,6 +145,7 @@ const eventRoutes = new Map<
   /** Node */
   [EventRoutes.Node.ChangeRoute.event, EventRoutes.Node.ChangeRoute],
   [EventRoutes.Node.MultiChangeRoute.event, EventRoutes.Node.MultiChangeRoute],
+  [EventRoutes.Node.ChangeEdgeRoute.event, EventRoutes.Node.ChangeEdgeRoute],
   [
     EventRoutes.Node.ChangeEdgeAttachmentPointRoute.event,
     EventRoutes.Node.ChangeEdgeAttachmentPointRoute,
@@ -2212,8 +2213,8 @@ export class Main extends SignalWatcher(LitElement) {
       @bbthemedelete=${async (evt: BreadboardUI.Events.ThemeUpdateEvent) => {
         await this.#runtime.edit.deleteTheme(this.#tab, evt.themeId);
       }}
-      @bbthemecreate=${(evt: BreadboardUI.Events.ThemeCreateEvent) => {
-        this.#runtime.edit.createTheme(this.#tab, evt.theme);
+      @bbthemecreate=${async (evt: BreadboardUI.Events.ThemeCreateEvent) => {
+        await this.#runtime.edit.createTheme(this.#tab, evt.theme);
       }}
       @bbmovenodes=${async (evt: BreadboardUI.Events.MoveNodesEvent) => {
         const { destinationGraphId } = evt;
@@ -2274,15 +2275,6 @@ export class Main extends SignalWatcher(LitElement) {
 
         this.#checkGoogleDriveAssetShareStatus();
       }}
-      @bbedgechange=${async (evt: BreadboardUI.Events.EdgeChangeEvent) => {
-        await this.#runtime.edit.changeEdge(
-          this.#tab,
-          evt.changeType,
-          evt.from,
-          evt.to,
-          evt.subGraphId
-        );
-      }}
       @bbassetedgechange=${async (
         evt: BreadboardUI.Events.AssetEdgeChangeEvent
       ) => {
@@ -2290,16 +2282,6 @@ export class Main extends SignalWatcher(LitElement) {
           this.#tab,
           evt.changeType,
           evt.assetEdge,
-          evt.subGraphId
-        );
-      }}
-      @bbnodemetadataupdate=${async (
-        evt: BreadboardUI.Events.NodeMetadataUpdateEvent
-      ) => {
-        await this.#runtime.edit.updateNodeMetadata(
-          this.#tab,
-          evt.id,
-          evt.metadata,
           evt.subGraphId
         );
       }}
@@ -2338,16 +2320,6 @@ export class Main extends SignalWatcher(LitElement) {
         this.toast(
           Strings.from("ERROR_UNABLE_TO_RETRIEVE_TYPE_INFO"),
           BreadboardUI.Events.ToastType.ERROR
-        );
-      }}
-      @bboutlinemodechange=${() => {
-        if (!this.#tab) {
-          return;
-        }
-
-        this.#runtime.select.deselectAll(
-          this.#tab?.id,
-          this.#runtime.util.createWorkspaceSelectionChangeId()
         );
       }}
       @bbiterateonprompt=${(iterateOnPromptEvent: IterateOnPromptEvent) => {
