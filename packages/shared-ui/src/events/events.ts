@@ -27,7 +27,6 @@ import type {
   NodeDescriptor,
   PortIdentifier,
   Schema,
-  TemplatePart,
 } from "@google-labs/breadboard";
 import type {
   AppTemplateAdditionalOptionsAvailable,
@@ -807,21 +806,6 @@ export class NodeUpdateEvent extends Event {
   }
 }
 
-export class NodePartialUpdateEvent extends Event {
-  static eventName = "bbnodepartialupdate";
-
-  constructor(
-    public readonly id: string,
-    public readonly subGraphId: string | null = null,
-    public readonly configuration: NodeConfiguration,
-    public readonly metadata: NodeMetadata | null = null,
-    public readonly debugging = false,
-    public readonly ins: TemplatePart[] | null = null
-  ) {
-    super(NodePartialUpdateEvent.eventName, { ...eventInit });
-  }
-}
-
 export class BoardChosenEvent extends Event {
   static eventName = "bbboardchosen";
 
@@ -1562,6 +1546,7 @@ export class GoogleDrivePickerCloseEvent extends Event {
 
 import type * as Board from "./board/board.js";
 import type * as Host from "./host/host.js";
+import type * as Node from "./node/node.js";
 
 export type StateEventDetailMap = {
   "board.load": Board.Load;
@@ -1571,6 +1556,8 @@ export type StateEventDetailMap = {
 
   "host.modetoggle": Host.ModeToggle;
   "host.selectionstatechange": Host.SelectionStateChange;
+
+  "node.change": Node.Change;
 };
 
 export class StateEvent<

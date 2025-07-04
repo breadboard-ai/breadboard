@@ -60,7 +60,7 @@ import { Project } from "../../state";
 import {
   FastAccessSelectEvent,
   IterateOnPromptEvent,
-  NodePartialUpdateEvent,
+  StateEvent,
   ToastEvent,
   ToastType,
 } from "../../events/events";
@@ -912,14 +912,14 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     const configuration = { ...node.configuration(), ...values };
 
     this.dispatchEvent(
-      new NodePartialUpdateEvent(
-        nodeId,
-        graphId !== MAIN_BOARD_ID ? graphId : null,
-        configuration,
+      new StateEvent({
+        eventType: "node.change",
+        id: nodeId,
+        subGraphId: graphId !== MAIN_BOARD_ID ? graphId : null,
+        configurationPart: configuration,
         metadata,
-        false,
-        ins
-      )
+        ins,
+      })
     );
   }
 

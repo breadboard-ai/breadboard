@@ -140,6 +140,9 @@ const eventRoutes = new Map<
   [EventRoutes.Board.LoadRoute.event, EventRoutes.Board.LoadRoute],
   [EventRoutes.Board.StopRoute.event, EventRoutes.Board.StopRoute],
   [EventRoutes.Board.InputRoute.event, EventRoutes.Board.InputRoute],
+
+  /** Node */
+  [EventRoutes.Node.ChangeRoute.event, EventRoutes.Node.ChangeRoute],
 ]);
 
 type RenderValues = {
@@ -2120,42 +2123,8 @@ export class Main extends SignalWatcher(LitElement) {
         this.#lastPointerPosition.x = evt.x;
         this.#lastPointerPosition.y = evt.y;
       }}
-      @bbworkspaceitemvisualupdate=${(
-        evt: BreadboardUI.Events.WorkspaceItemVisualUpdateEvent
-      ) => {
-        if (!this.#tab) {
-          return;
-        }
-
-        this.#runtime.edit.processVisualChange(
-          this.#tab,
-          evt.visualChangeId,
-          evt.graphId,
-          evt.visual
-        );
-      }}
       @bbinteraction=${() => {
         this.#clearBoardSave();
-      }}
-      @bbnodepartialupdate=${async (
-        evt: BreadboardUI.Events.NodePartialUpdateEvent
-      ) => {
-        if (!this.#tab) {
-          this.toast(
-            Strings.from("ERROR_GENERIC"),
-            BreadboardUI.Events.ToastType.ERROR
-          );
-          return;
-        }
-
-        await this.#runtime.edit.changeNodeConfigurationPart(
-          this.#tab,
-          evt.id,
-          evt.configuration,
-          evt.subGraphId,
-          evt.metadata,
-          evt.ins
-        );
       }}
       @bbworkspacenewitemcreaterequest=${() => {
         this.#uiState.show.add("NewWorkspaceItemOverlay");
