@@ -31,7 +31,6 @@ import type {
   AssetEdge,
   Command,
   NewAsset,
-  EdgeAttachmentPoint,
   EdgeData,
   Settings,
   TopGraphEdgeInfo,
@@ -754,42 +753,6 @@ export class NodeConfigurationUpdateRequestEvent extends Event {
   }
 }
 
-export class NodeMetadataUpdateEvent extends Event {
-  static eventName = "bbnodemetadataupdate";
-
-  constructor(
-    public readonly id: string,
-    public readonly subGraphId: string | null = null,
-    public readonly metadata: NodeDescriptor["metadata"]
-  ) {
-    super(NodeMetadataUpdateEvent.eventName, { ...eventInit });
-  }
-}
-
-export class NodeTypeRetrievalErrorEvent extends Event {
-  static eventName = "bbnodetyperetrievalerror";
-
-  constructor(
-    public readonly id: string,
-    public readonly subGraphId: string | null = null
-  ) {
-    super(NodeTypeRetrievalErrorEvent.eventName, { ...eventInit });
-  }
-}
-
-export class EdgeChangeEvent extends Event {
-  static eventName = "bbedgechange";
-
-  constructor(
-    public readonly changeType: "add" | "remove" | "move",
-    public readonly from: Edge,
-    public readonly to?: Edge,
-    public readonly subGraphId: string | null = null
-  ) {
-    super(EdgeChangeEvent.eventName, { ...eventInit });
-  }
-}
-
 export class AssetEdgeChangeEvent extends Event {
   static eventName = "bbassetedgechange";
 
@@ -1437,7 +1400,8 @@ export type StateEventDetailMap = {
 
   "node.change": Node.Change;
   "node.multichange": Node.MultiChange;
-  "node.changeedgeattachment": Node.ChangeEdgeAttachment;
+  "node.changeedge": Node.ChangeEdge;
+  "node.changeedgeattachmentpoint": Node.ChangeEdgeAttachmentPoint;
 };
 
 export class StateEvent<

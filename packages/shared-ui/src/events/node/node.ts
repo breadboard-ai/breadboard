@@ -31,8 +31,16 @@ export interface MultiChange {
   readonly subGraphId: string | null;
 }
 
-export interface ChangeEdgeAttachment {
-  readonly eventType: `${Namespace}.changeedgeattachment`;
+export interface ChangeEdge {
+  readonly eventType: `${Namespace}.changeedge`;
+  readonly changeType: "add" | "remove" | "move";
+  readonly from: Edge;
+  readonly to?: Edge;
+  readonly subGraphId: string | null;
+}
+
+export interface ChangeEdgeAttachmentPoint {
+  readonly eventType: `${Namespace}.changeedgeattachmentpoint`;
   readonly graphId: GraphIdentifier;
   readonly edge: Edge;
   readonly which: "from" | "to";

@@ -55,9 +55,25 @@ export const MultiChangeRoute: EventRoute<"node.multichange"> = {
   },
 };
 
-export const ChangeEdgeAttachmentPointRoute: EventRoute<"node.changeedgeattachment"> =
+export const ChangeEdgeRoute: EventRoute<"node.changeedge"> = {
+  event: "node.changeedge",
+
+  async do({ runtime, tab, originalEvent }) {
+    await runtime.edit.changeEdge(
+      tab,
+      originalEvent.detail.changeType,
+      originalEvent.detail.from,
+      originalEvent.detail.to,
+      originalEvent.detail.subGraphId
+    );
+
+    return false;
+  },
+};
+
+export const ChangeEdgeAttachmentPointRoute: EventRoute<"node.changeedgeattachmentpoint"> =
   {
-    event: "node.changeedgeattachment",
+    event: "node.changeedgeattachmentpoint",
 
     async do({ runtime, tab, originalEvent }) {
       const { graphId } = originalEvent.detail;

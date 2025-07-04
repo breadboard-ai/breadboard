@@ -15,7 +15,7 @@ import {
 import {
   AssetEdgeChangeEvent,
   DragConnectorCancelledEvent,
-  EdgeChangeEvent,
+  StateEvent,
   ToastEvent,
   ToastType,
 } from "../../events/events";
@@ -177,12 +177,13 @@ export class DragConnector extends LitElement {
           };
 
           this.dispatchEvent(
-            new EdgeChangeEvent(
-              "add",
+            new StateEvent({
+              eventType: "node.changeedge",
+              changeType: "add",
               from,
-              undefined,
-              graphId === MAIN_BOARD_ID ? null : graphId
-            )
+              to: undefined,
+              subGraphId: graphId === MAIN_BOARD_ID ? null : graphId,
+            })
           );
         } else if (this.connectorType === "asset" && this.assetPath) {
           const assetEdge: AssetEdge = {
