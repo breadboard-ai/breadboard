@@ -13,7 +13,7 @@ const config: RcFile = {
   versionGroups: [
     {
       label: "Ignore local dependencies as they are managed by changesets",
-      dependencies: ["@google-labs/**"],
+      dependencies: ["@google-labs/**", "@breadboard-ai/**"],
       isIgnored: true,
     },
   ],
