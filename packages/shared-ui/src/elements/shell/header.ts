@@ -14,7 +14,6 @@ import { SigninAdapter } from "../../utils/signin-adapter.js";
 import { BOARD_SAVE_STATUS, EnumValue } from "../../types/types.js";
 import { icons } from "../../styles/icons.js";
 import {
-  BoardTitleUpdateEvent,
   CloseEvent,
   RemixEvent,
   ShareRequestedEvent,
@@ -304,7 +303,13 @@ export class VEHeader extends LitElement {
       return;
     }
 
-    this.dispatchEvent(new BoardTitleUpdateEvent(target.value));
+    this.dispatchEvent(
+      new StateEvent({
+        eventType: "board.rename",
+        title: target.value,
+        description: null,
+      })
+    );
   }
 
   #renderTabControls() {

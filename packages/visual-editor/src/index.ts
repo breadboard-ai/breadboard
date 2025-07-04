@@ -136,10 +136,11 @@ const eventRoutes = new Map<
   ],
 
   /** Board */
-  [EventRoutes.Board.RunRoute.event, EventRoutes.Board.RunRoute],
-  [EventRoutes.Board.LoadRoute.event, EventRoutes.Board.LoadRoute],
-  [EventRoutes.Board.StopRoute.event, EventRoutes.Board.StopRoute],
   [EventRoutes.Board.InputRoute.event, EventRoutes.Board.InputRoute],
+  [EventRoutes.Board.LoadRoute.event, EventRoutes.Board.LoadRoute],
+  [EventRoutes.Board.RenameRoute.event, EventRoutes.Board.RenameRoute],
+  [EventRoutes.Board.RunRoute.event, EventRoutes.Board.RunRoute],
+  [EventRoutes.Board.StopRoute.event, EventRoutes.Board.StopRoute],
 
   /** Node */
   [EventRoutes.Node.ChangeRoute.event, EventRoutes.Node.ChangeRoute],
@@ -415,6 +416,8 @@ export class Main extends SignalWatcher(LitElement) {
             config.moduleInvocationFilter
           ),
           googleDriveClient: this.googleDriveClient,
+          appName: Strings.from("APP_NAME"),
+          appSubName: Strings.from("SUB_APP_NAME"),
         });
       })
       .then((runtime) => {
@@ -594,7 +597,7 @@ export class Main extends SignalWatcher(LitElement) {
               }
 
               if (this.#tab.graph.title) {
-                this.#setPageTitle(this.#tab.graph.title);
+                this.#runtime.shell.setPageTitle(this.#tab.graph.title);
               }
 
               if (this.#tab.readOnly && this.#uiState.mode === "canvas") {
@@ -619,7 +622,7 @@ export class Main extends SignalWatcher(LitElement) {
               );
             } else {
               this.#runtime.router.clearFlowParameters();
-              this.#setPageTitle(null);
+              this.#runtime.shell.setPageTitle(null);
             }
           }
         );
@@ -1414,21 +1417,6 @@ export class Main extends SignalWatcher(LitElement) {
     return { id: id, url: url };
   }
 
-  async #attemptBoardTitleAndDescriptionUpdate(
-    title: string | null,
-    description: string | null
-  ) {
-    if (title) {
-      this.#setPageTitle(title.trim());
-    }
-
-    await this.#runtime.edit.updateBoardTitleAndDescription(
-      this.#tab,
-      title,
-      description
-    );
-  }
-
   async #attemptBoardDelete(
     boardServerName: string,
     url: string,
@@ -1499,16 +1487,6 @@ export class Main extends SignalWatcher(LitElement) {
       },
       creator
     );
-  }
-
-  #setPageTitle(title: string | null) {
-    const suffix = `${Strings.from("APP_NAME")} [${Strings.from("SUB_APP_NAME")}]`;
-    if (title) {
-      window.document.title = `${title} - ${suffix}`;
-      return;
-    }
-
-    window.document.title = suffix;
   }
 
   async #trackRecentBoard(url: string) {
@@ -2130,38 +2108,12 @@ export class Main extends SignalWatcher(LitElement) {
       @bbworkspacenewitemcreaterequest=${() => {
         this.#uiState.show.add("NewWorkspaceItemOverlay");
       }}
-      @bbboarditemcopy=${(evt: BreadboardUI.Events.BoardItemCopyEvent) => {
-        this.#runtime.edit.copyBoardItem(
-          this.#tab,
-          evt.itemType,
-          evt.id,
-          evt.title
-        );
-      }}
       @dragover=${(evt: DragEvent) => {
         evt.preventDefault();
       }}
       @drop=${(evt: DragEvent) => {
         evt.preventDefault();
         this.#attemptLoad(evt);
-      }}
-      @bbinputerror=${(evt: BreadboardUI.Events.InputErrorEvent) => {
-        this.toast(evt.detail, BreadboardUI.Events.ToastType.ERROR);
-        return;
-      }}
-      @bbboardtitleupdate=${async (
-        evt: BreadboardUI.Events.BoardTitleUpdateEvent
-      ) => {
-        await this.#attemptBoardTitleAndDescriptionUpdate(evt.title, null);
-      }}
-      @bbboarddescriptionupdate=${async (
-        evt: BreadboardUI.Events.BoardDescriptionUpdateEvent
-      ) => {
-        await this.#runtime.edit.updateBoardTitleAndDescription(
-          this.#tab,
-          null,
-          evt.description
-        );
       }}
       @bbboardinfoupdate=${async (
         evt: BreadboardUI.Events.BoardInfoUpdateEvent
@@ -2476,14 +2428,6 @@ export class Main extends SignalWatcher(LitElement) {
       @bbmodaldismissed=${() => {
         this.#uiState.show.delete("BoardEditModal");
       }}
-      @bbboardbasicinfoupdate=${(
-        evt: BreadboardUI.Events.BoardBasicInfoUpdateEvent
-      ) => {
-        this.#attemptBoardTitleAndDescriptionUpdate(
-          evt.boardTitle,
-          evt.boardDescription
-        );
-      }}
     ></bb-edit-board-modal>`;
   }
 
@@ -2635,11 +2579,6 @@ export class Main extends SignalWatcher(LitElement) {
       .saveStatus=${renderValues.saveStatus}
       .showExperimentalComponents=${renderValues.showExperimentalComponents}
       .mode=${this.#uiState.mode}
-      @bbboardtitleupdate=${async (
-        evt: BreadboardUI.Events.BoardTitleUpdateEvent
-      ) => {
-        await this.#attemptBoardTitleAndDescriptionUpdate(evt.title, null);
-      }}
       @bbremix=${async () => {
         if (!this.#tab?.graph) {
           return;

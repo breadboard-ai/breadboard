@@ -133,3 +133,17 @@ export const InputRoute: EventRoute<"board.input"> = {
     return false;
   },
 };
+
+export const RenameRoute: EventRoute<"board.rename"> = {
+  event: "board.rename",
+
+  async do({ tab, runtime, originalEvent }) {
+    runtime.shell.setPageTitle(originalEvent.detail.title);
+    await runtime.edit.updateBoardTitleAndDescription(
+      tab,
+      originalEvent.detail.title,
+      originalEvent.detail.description
+    );
+    return false;
+  },
+};

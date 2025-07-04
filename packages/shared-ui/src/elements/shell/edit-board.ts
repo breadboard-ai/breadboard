@@ -7,10 +7,7 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, query } from "lit/decorators.js";
 import { colorsLight } from "../../styles/host/colors-light";
 import { type } from "../../styles/host/type";
-import {
-  BoardBasicInfoUpdateEvent,
-  ModalDismissedEvent,
-} from "../../events/events";
+import { ModalDismissedEvent, StateEvent } from "../../events/events";
 
 @customElement("bb-edit-board-modal")
 export class EditBoardModal extends LitElement {
@@ -85,7 +82,11 @@ export class EditBoardModal extends LitElement {
         }
 
         this.dispatchEvent(
-          new BoardBasicInfoUpdateEvent(title.value, description.value)
+          new StateEvent({
+            eventType: "board.rename",
+            title: title.value,
+            description: description.value,
+          })
         );
       }}
     >

@@ -30,8 +30,10 @@ import { StateManager } from "./state.js";
 import { getDataStore } from "@breadboard-ai/data-store";
 import { createSideboardRuntimeProvider } from "./sideboard-runtime.js";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
+import { Shell } from "./shell.js";
 
 export async function create(config: RuntimeConfig): Promise<{
+  shell: Shell;
   router: Router;
   board: Board;
   run: Run;
@@ -137,6 +139,7 @@ export async function create(config: RuntimeConfig): Promise<{
     select: new Select(),
     util: Util,
     kits,
+    shell: new Shell(config.appName, config.appSubName),
   } as const;
 
   return runtime;

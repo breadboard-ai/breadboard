@@ -26,3 +26,9 @@ export interface Input {
   readonly data: Record<string, unknown>;
   readonly allowSavingIfSecret: boolean;
 }
+
+export interface Rename {
+  readonly eventType: `${Namespace}.rename`;
+  readonly title: string | null;
+  readonly description: string | null;
+}
