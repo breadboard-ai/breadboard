@@ -30,3 +30,9 @@ export {
 export { resolveGraphUrls } from "./resolve-graph-urls.js";
 
 export { loadWithFetch } from "./default.js";
+
+export {
+  resolveBoardCapabilitiesInInputs,
+  resolveBoardCapabilities,
+  getGraphDescriptor,
+} from "./capability.js";

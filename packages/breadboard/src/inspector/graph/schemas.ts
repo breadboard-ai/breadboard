@@ -11,7 +11,7 @@ import type {
   Schema,
 } from "@breadboard-ai/types";
 import { InspectableEdgeType } from "@breadboard-ai/types";
-import { SchemaBuilder, combineSchemas } from "../../schema.js";
+import { SchemaBuilder, combineSchemas } from "@breadboard-ai/utils";
 
 export enum EdgeType {
   In,

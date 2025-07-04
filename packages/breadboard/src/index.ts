@@ -10,7 +10,7 @@ export { callHandler } from "@breadboard-ai/runtime/legacy.js";
 export { Board } from "./board.js";
 export { asRuntimeKit } from "./kits/ctors.js";
 export { Node } from "./node.js";
-export { combineSchemas, SchemaBuilder } from "./schema.js";
+export { combineSchemas, SchemaBuilder } from "@breadboard-ai/utils";
 
 export type * from "@breadboard-ai/utils";
 export { asyncGen, Template } from "@breadboard-ai/utils";
@@ -23,7 +23,7 @@ export { Throttler } from "./utils/throttler.js";
 /**
  * Helpers for handling BreadboardCapability.
  */
-export { getGraphDescriptor } from "@breadboard-ai/runtime/legacy.js";
+export { getGraphDescriptor } from "@breadboard-ai/loader";
 
 /**
  * The Inspector API.

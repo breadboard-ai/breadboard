@@ -18,21 +18,20 @@ import type {
   InspectableNode,
   ModuleIdentifier,
   MutableGraph,
+  NodeDescriberContext,
+  NodeDescriberResult,
   NodeTypeIdentifier,
   Outcome,
+  Schema,
 } from "@breadboard-ai/types";
 import {
+  combineSchemas,
   emptyDescriberResult,
   err,
   filterEmptyValues,
   ok,
+  removeProperty,
 } from "@breadboard-ai/utils";
-import { combineSchemas, removeProperty } from "../../schema.js";
-import {
-  NodeDescriberContext,
-  NodeDescriberResult,
-  Schema,
-} from "../../types.js";
 import { getModuleId, isModule } from "../utils.js";
 import { ExportsDescriber } from "./exports-describer.js";
 import { GraphDescriptorHandle } from "./graph-descriptor-handle.js";

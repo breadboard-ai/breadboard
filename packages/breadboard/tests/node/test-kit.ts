@@ -4,10 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  getGraphDescriptor,
-  invokeGraph,
-} from "@breadboard-ai/runtime/legacy.js";
+import { getGraphDescriptor } from "@breadboard-ai/loader";
+import { invokeGraph } from "@breadboard-ai/runtime/legacy.js";
 import { InputValues, Kit, OutputValues } from "@breadboard-ai/types";
 
 // A simplest possible re-implementation of some nodes to be used in tests
