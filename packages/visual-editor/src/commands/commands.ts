@@ -19,7 +19,7 @@ function isFocusedOnGraphRenderer(evt: Event) {
     .some((target) => target instanceof BreadboardUI.Elements.Renderer);
 }
 
-export const UndoCommand: KeyboardCommand = {
+const UndoCommand: KeyboardCommand = {
   keys: ["Cmd+z", "Ctrl+z"],
 
   willHandle(tab: Tab | null, evt: Event) {
@@ -35,7 +35,7 @@ export const UndoCommand: KeyboardCommand = {
   },
 };
 
-export const RedoCommand: KeyboardCommand = {
+const RedoCommand: KeyboardCommand = {
   keys: ["Cmd+Shift+z", "Ctrl+Shift+z"],
 
   willHandle(tab: Tab | null, evt: Event) {
@@ -51,7 +51,7 @@ export const RedoCommand: KeyboardCommand = {
   },
 };
 
-export const DeleteCommand: KeyboardCommand = {
+const DeleteCommand: KeyboardCommand = {
   keys: ["Delete", "Backspace"],
 
   willHandle(tab: Tab | null, evt: Event) {
@@ -149,7 +149,7 @@ export const DeleteCommand: KeyboardCommand = {
 };
 
 let componentStatus = "Enabled";
-export const ToggleExperimentalComponentsCommand: KeyboardCommand = {
+const ToggleExperimentalComponentsCommand: KeyboardCommand = {
   keys: ["Cmd+Shift+e", "Ctrl+Shift+e"],
   alwaysNotify: true,
   get messageComplete() {
@@ -185,7 +185,7 @@ export const ToggleExperimentalComponentsCommand: KeyboardCommand = {
   },
 };
 
-export const SelectAllCommand: KeyboardCommand = {
+const SelectAllCommand: KeyboardCommand = {
   keys: ["Cmd+a", "Ctrl+a"],
 
   willHandle(tab: Tab | null, evt: Event) {
@@ -215,7 +215,7 @@ export const SelectAllCommand: KeyboardCommand = {
   },
 };
 
-export const CopyCommand: KeyboardCommand = {
+const CopyCommand: KeyboardCommand = {
   keys: ["Cmd+c", "Ctrl+c"],
   messagePending: "Copying to clipboard",
   messageComplete: "Copied to clipboard",
@@ -259,7 +259,7 @@ export const CopyCommand: KeyboardCommand = {
   },
 };
 
-export const CutCommand: KeyboardCommand = {
+const CutCommand: KeyboardCommand = {
   keys: ["Cmd+x", "Ctrl+x"],
 
   willHandle(tab: Tab | null, evt: Event) {
@@ -313,7 +313,7 @@ export const CutCommand: KeyboardCommand = {
   },
 };
 
-export const GroupCommand: KeyboardCommand = {
+const GroupCommand: KeyboardCommand = {
   keys: ["Cmd+g", "Ctrl+g"],
 
   willHandle(tab: Tab | null, evt: Event) {
@@ -372,7 +372,7 @@ export const GroupCommand: KeyboardCommand = {
   },
 };
 
-export const UngroupCommand: KeyboardCommand = {
+const UngroupCommand: KeyboardCommand = {
   keys: ["Cmd+Shift+g", "Ctrl+Shift+g"],
 
   willHandle(tab: Tab | null, evt: Event) {
@@ -434,7 +434,7 @@ export const UngroupCommand: KeyboardCommand = {
   },
 };
 
-export const PasteCommand: KeyboardCommand = {
+const PasteCommand: KeyboardCommand = {
   keys: ["Cmd+v", "Ctrl+v"],
 
   willHandle(tab: Tab | null) {
@@ -535,3 +535,19 @@ export const PasteCommand: KeyboardCommand = {
     }
   },
 };
+
+export const keyboardCommands = new Map<string[], KeyboardCommand>([
+  [DeleteCommand.keys, DeleteCommand],
+  [SelectAllCommand.keys, SelectAllCommand],
+  [CopyCommand.keys, CopyCommand],
+  [CutCommand.keys, CutCommand],
+  [PasteCommand.keys, PasteCommand],
+  [GroupCommand.keys, GroupCommand],
+  [UngroupCommand.keys, UngroupCommand],
+  [
+    ToggleExperimentalComponentsCommand.keys,
+    ToggleExperimentalComponentsCommand,
+  ],
+  [UndoCommand.keys, UndoCommand],
+  [RedoCommand.keys, RedoCommand],
+]);

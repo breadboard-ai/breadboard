@@ -61,19 +61,7 @@ import {
   Module,
   ModuleIdentifier,
 } from "@breadboard-ai/types";
-import { KeyboardCommand, KeyboardCommandDeps } from "./commands/types";
-import {
-  CopyCommand,
-  CutCommand,
-  DeleteCommand,
-  GroupCommand,
-  PasteCommand,
-  RedoCommand,
-  SelectAllCommand,
-  ToggleExperimentalComponentsCommand,
-  UndoCommand,
-  UngroupCommand,
-} from "./commands/commands";
+import { KeyboardCommandDeps } from "./commands/types";
 import {
   SIGN_IN_CONNECTION_ID,
   SigninAdapter,
@@ -121,58 +109,8 @@ import {
 } from "@breadboard-ai/shared-ui/contexts/build-info.js";
 import { classMap } from "lit/directives/class-map.js";
 import { SignalWatcher } from "@lit-labs/signals";
-import * as EventRoutes from "./event-routing/event-routing";
-import { EventRoute } from "./event-routing/types";
-
-const eventRoutes = new Map<
-  keyof BreadboardUI.Events.StateEventDetailMap,
-  EventRoute<keyof BreadboardUI.Events.StateEventDetailMap>
->([
-  /** Host */
-  [EventRoutes.Host.ModeRoute.event, EventRoutes.Host.ModeRoute],
-  [
-    EventRoutes.Host.SelectionStateChangeRoute.event,
-    EventRoutes.Host.SelectionStateChangeRoute,
-  ],
-
-  /** Board */
-  [EventRoutes.Board.InputRoute.event, EventRoutes.Board.InputRoute],
-  [EventRoutes.Board.LoadRoute.event, EventRoutes.Board.LoadRoute],
-  [EventRoutes.Board.RenameRoute.event, EventRoutes.Board.RenameRoute],
-  [EventRoutes.Board.RunRoute.event, EventRoutes.Board.RunRoute],
-  [EventRoutes.Board.StopRoute.event, EventRoutes.Board.StopRoute],
-
-  /** Node */
-  [EventRoutes.Node.ChangeRoute.event, EventRoutes.Node.ChangeRoute],
-  [EventRoutes.Node.MultiChangeRoute.event, EventRoutes.Node.MultiChangeRoute],
-  [EventRoutes.Node.ChangeEdgeRoute.event, EventRoutes.Node.ChangeEdgeRoute],
-  [
-    EventRoutes.Node.ChangeEdgeAttachmentPointRoute.event,
-    EventRoutes.Node.ChangeEdgeAttachmentPointRoute,
-  ],
-
-  /** Theme */
-  [EventRoutes.Theme.ChangeRoute.event, EventRoutes.Theme.ChangeRoute],
-  [EventRoutes.Theme.CreateRoute.event, EventRoutes.Theme.CreateRoute],
-  [EventRoutes.Theme.DeleteRoute.event, EventRoutes.Theme.DeleteRoute],
-  [EventRoutes.Theme.UpdateRoute.event, EventRoutes.Theme.UpdateRoute],
-]);
-
-const keyboardCommands = new Map<string[], KeyboardCommand>([
-  [DeleteCommand.keys, DeleteCommand],
-  [SelectAllCommand.keys, SelectAllCommand],
-  [CopyCommand.keys, CopyCommand],
-  [CutCommand.keys, CutCommand],
-  [PasteCommand.keys, PasteCommand],
-  [GroupCommand.keys, GroupCommand],
-  [UngroupCommand.keys, UngroupCommand],
-  [
-    ToggleExperimentalComponentsCommand.keys,
-    ToggleExperimentalComponentsCommand,
-  ],
-  [UndoCommand.keys, UndoCommand],
-  [RedoCommand.keys, RedoCommand],
-]);
+import { eventRoutes } from "./event-routing/event-routing";
+import { keyboardCommands } from "./commands/commands";
 
 type RenderValues = {
   canSave: boolean;
@@ -261,7 +199,7 @@ export class Main extends SignalWatcher(LitElement) {
     createRef();
   readonly #tooltipRef: Ref<BreadboardUI.Elements.Tooltip> = createRef();
   readonly #snackbarRef: Ref<BreadboardUI.Elements.Snackbar> = createRef();
-  readonly #feedbackPanel: Ref<BreadboardUI.Elements.FeedbackPanel> =
+  readonly #feedbackPanelRef: Ref<BreadboardUI.Elements.FeedbackPanel> =
     createRef();
 
   #tabSaveId = new Map<
@@ -2464,7 +2402,7 @@ export class Main extends SignalWatcher(LitElement) {
 
   #renderFeedbackPanel() {
     return html`
-      <bb-feedback-panel ${ref(this.#feedbackPanel)}></bb-feedback-panel>
+      <bb-feedback-panel ${ref(this.#feedbackPanelRef)}></bb-feedback-panel>
     `;
   }
 
@@ -2629,8 +2567,8 @@ export class Main extends SignalWatcher(LitElement) {
 
           case "feedback": {
             if (this.clientDeploymentConfiguration.ENABLE_GOOGLE_FEEDBACK) {
-              if (this.#feedbackPanel.value) {
-                this.#feedbackPanel.value.open();
+              if (this.#feedbackPanelRef.value) {
+                this.#feedbackPanelRef.value.open();
               } else {
                 console.error(`Feedback panel was not rendered!`);
               }
