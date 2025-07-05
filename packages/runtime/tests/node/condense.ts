@@ -7,7 +7,7 @@
 import type { GraphDescriptor } from "@breadboard-ai/types";
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
-import { condense } from "../../src/static/condenser.js";
+import { condense } from "../../src/static/condense.js";
 
 describe("condense function", () => {
   describe("basic functionality", () => {
@@ -75,7 +75,7 @@ describe("condense function", () => {
       // Should have condensed node instead of a and b
       assert.equal(result.nodes?.length, 2);
       assert.ok(result.nodes?.some((node) => node.id === "c"));
-      assert.ok(result.nodes?.some((node) => node.id === "condensed_0"));
+      assert.ok(result.nodes?.some((node) => node.id === "scc_0"));
 
       // Should have subgraph
       assert.ok(result.graphs);
@@ -108,7 +108,7 @@ describe("condense function", () => {
 
       // Should have one condensed node
       assert.equal(result.nodes?.length, 1);
-      assert.equal(result.nodes?.[0].id, "condensed_0");
+      assert.equal(result.nodes?.[0].id, "scc_0");
       assert.equal(result.nodes?.[0].type, "#scc_0");
 
       // Should have subgraph with all original nodes
@@ -133,7 +133,7 @@ describe("condense function", () => {
 
       // Should condense the self-loop
       assert.equal(result.nodes?.length, 2);
-      assert.ok(result.nodes?.some((node) => node.id === "condensed_0"));
+      assert.ok(result.nodes?.some((node) => node.id === "scc_0"));
       assert.ok(result.nodes?.some((node) => node.id === "b"));
 
       // Should have subgraph
@@ -167,8 +167,8 @@ describe("condense function", () => {
 
       // Should have 3 nodes: 2 condensed + e
       assert.equal(result.nodes?.length, 3);
-      assert.ok(result.nodes?.some((node) => node.id === "condensed_0"));
-      assert.ok(result.nodes?.some((node) => node.id === "condensed_1"));
+      assert.ok(result.nodes?.some((node) => node.id === "scc_0"));
+      assert.ok(result.nodes?.some((node) => node.id === "scc_0"));
       assert.ok(result.nodes?.some((node) => node.id === "e"));
 
       // Should have 2 subgraphs
@@ -199,16 +199,16 @@ describe("condense function", () => {
       // Should have 3 nodes: start, condensed, end
       assert.equal(result.nodes?.length, 3);
       assert.ok(result.nodes?.some((node) => node.id === "start"));
-      assert.ok(result.nodes?.some((node) => node.id === "condensed_0"));
+      assert.ok(result.nodes?.some((node) => node.id === "scc_0"));
       assert.ok(result.nodes?.some((node) => node.id === "end"));
 
       // Should have proper edge connections
       const edges = result.edges || [];
       assert.ok(
-        edges.some((edge) => edge.from === "start" && edge.to === "condensed_0")
+        edges.some((edge) => edge.from === "start" && edge.to === "scc_0")
       );
       assert.ok(
-        edges.some((edge) => edge.from === "condensed_0" && edge.to === "end")
+        edges.some((edge) => edge.from === "scc_0" && edge.to === "end")
       );
     });
   });
@@ -233,7 +233,7 @@ describe("condense function", () => {
       // Check that external edge metadata is preserved
       const externalEdge = result.edges?.find((edge) => edge.to === "c");
       assert.ok(externalEdge);
-      assert.equal(externalEdge.from, "condensed_0");
+      assert.equal(externalEdge.from, "scc_0");
       assert.equal(externalEdge.out, "data");
       assert.equal(externalEdge.in, "final");
     });
@@ -254,7 +254,7 @@ describe("condense function", () => {
 
       // Should successfully condense with port information
       assert.equal(result.nodes?.length, 1);
-      assert.equal(result.nodes?.[0].id, "condensed_0");
+      assert.equal(result.nodes?.[0].id, "scc_0");
 
       // Check that subgraph preserves port names
       const subgraph = result.graphs?.["scc_0"];
@@ -441,7 +441,7 @@ describe("condense function", () => {
       assert.ok(subgraph);
 
       // Verify that the condensed node type points to the subgraph
-      const condensedNode = result.nodes?.find((n) => n.id === "condensed_0");
+      const condensedNode = result.nodes?.find((n) => n.id === "scc_0");
       assert.ok(condensedNode);
       assert.equal(condensedNode.type, "#scc_0");
 
@@ -676,12 +676,10 @@ describe("condense function", () => {
       assert.equal(result.version, "1.0.0");
 
       // Condensed node should have descriptive metadata
-      const condensedNode = result.nodes?.find(
-        (node) => node.id === "condensed_0"
-      );
+      const condensedNode = result.nodes?.find((node) => node.id === "scc_0");
       assert.ok(condensedNode);
       assert.ok(condensedNode.metadata);
-      assert.equal(condensedNode.metadata.title, "Condensed SCC 0");
+      assert.equal(condensedNode.metadata.title, 'Subgraph "scc_0"');
     });
 
     it("should preserve node metadata in subgraphs", () => {
@@ -742,7 +740,7 @@ describe("condense function", () => {
 
       // Should have condensed first component but left second unchanged
       assert.equal(result.nodes?.length, 3); // condensed_0, c, d
-      assert.ok(result.nodes?.some((node) => node.id === "condensed_0"));
+      assert.ok(result.nodes?.some((node) => node.id === "scc_0"));
       assert.ok(result.nodes?.some((node) => node.id === "c"));
       assert.ok(result.nodes?.some((node) => node.id === "d"));
     });
