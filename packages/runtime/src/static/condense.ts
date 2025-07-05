@@ -138,14 +138,6 @@ function createCondensedGraph(
     graphs: { ...(graph.graphs || {}) },
   };
 
-  // Create map from node ID to SCC index
-  const nodeToSccMap = new Map<string, number>();
-  sccs.forEach((scc, index) => {
-    scc.forEach((nodeId) => {
-      nodeToSccMap.set(nodeId, index);
-    });
-  });
-
   // Process each SCC
   sccs.forEach((scc, sccIndex) => {
     const subgraphId = `scc_${sccIndex}`;
