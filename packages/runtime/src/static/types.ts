@@ -8,7 +8,6 @@ import {
   InputValues,
   NodeDescriptor,
   NodeIdentifier,
-  NodeValue,
   Outcome,
   OutputValues,
   PortIdentifier,

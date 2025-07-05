@@ -5,21 +5,21 @@
  */
 
 import {
-  NodeDescriptor,
   GraphDescriptor,
   InputValues,
-  OutputValues,
+  NodeDescriptor,
   NodeIdentifier,
-  PortIdentifier,
   NodeValue,
   Outcome,
+  OutputValues,
+  PortIdentifier,
 } from "@breadboard-ai/types";
 import {
+  ExecutionNodeInfo,
   ExecutionPlan,
   NodeLogic,
-  PlanNodeInfo,
   NodeState,
-  ExecutionNodeInfo,
+  PlanNodeInfo,
 } from "./types.js";
 
 export { Executor };
@@ -54,7 +54,37 @@ class NodeStateController {
    * "skipped" state.
    */
   beforeInvoking(cache: ResultCache): void {
-    throw new Error("Not yet implemented");
+    // Check if we already have cached results for this node
+    if (cache.has(this.info.id)) {
+      this.state = "cached";
+      return;
+    }
+
+    // If no upstream dependencies, node is ready to execute
+    if (this.info.upstream.length === 0) {
+      this.state = "ready";
+      return;
+    }
+
+    // Check if all upstream dependencies are satisfied
+    for (const dependency of this.info.upstream) {
+      const upstreamNode = dependency.from;
+      const upstreamCache = cache.get(upstreamNode.id);
+
+      // Find the corresponding output port from the upstream node
+      const outputPort = upstreamNode.downstream.find(
+        (dep) => dep.to.id === this.info.id
+      )?.out;
+
+      // If we can't find the output port or no cache exists, we can't proceed
+      if (!outputPort || !upstreamCache || !upstreamCache.has(outputPort)) {
+        this.state = "waiting";
+        return;
+      }
+    }
+
+    // All dependencies are met, node is ready to execute
+    this.state = "ready";
   }
   /**
    * Lifecycle method, called after the NodeLogic has been invoked.
@@ -62,7 +92,11 @@ class NodeStateController {
    * to "succeeded" state
    */
   afterInvoking(failed: boolean): void {
-    throw new Error("Not yet implemented");
+    if (failed) {
+      this.state = "failed";
+    } else {
+      this.state = "succeeded";
+    }
   }
 }
 
@@ -71,44 +105,228 @@ class NodeStateController {
  * incorporating a caching layer to facilitate interactive workflows.
  */
 class Executor {
-  constructor(public readonly plan: ExecutionPlan) {}
+  private cache: ResultCache = new Map();
+  private nodeControllers: Map<NodeIdentifier, NodeStateController> = new Map();
+  private nodeLogic?: NodeLogic;
+
+  constructor(
+    public readonly plan: ExecutionPlan,
+    public readonly graph: GraphDescriptor,
+    nodeLogic?: NodeLogic
+  ) {
+    this.nodeLogic = nodeLogic;
+    this.initializeNodeControllers();
+  }
+
+  private initializeNodeControllers(): void {
+    for (const stage of this.plan.stages) {
+      if (stage.type === "static") {
+        for (const nodeInfo of stage.nodes) {
+          const nodeDescriptor = this.graph.nodes.find(
+            (n) => n.id === nodeInfo.id
+          );
+          if (nodeDescriptor) {
+            this.nodeControllers.set(
+              nodeInfo.id,
+              new NodeStateController(nodeDescriptor, nodeInfo)
+            );
+          }
+        }
+      } else if (stage.type === "vm") {
+        const nodeDescriptor = this.graph.nodes.find(
+          (n) => n.id === stage.node.id
+        );
+        if (nodeDescriptor) {
+          this.nodeControllers.set(
+            stage.node.id,
+            new NodeStateController(nodeDescriptor, stage.node)
+          );
+        }
+      }
+    }
+  }
+
+  private gatherInputsForNode(nodeId: NodeIdentifier): InputValues {
+    const controller = this.nodeControllers.get(nodeId);
+    if (!controller) {
+      return {};
+    }
+
+    const inputs: InputValues = {};
+    for (const dependency of controller.info.upstream) {
+      const upstreamCache = this.cache.get(dependency.from.id);
+
+      // Find the corresponding output port from the upstream node
+      const outputPort = dependency.from.downstream.find(
+        (dep) => dep.to.id === nodeId
+      )?.out;
+
+      if (outputPort && upstreamCache && upstreamCache.has(outputPort)) {
+        inputs[dependency.in] = upstreamCache.get(outputPort);
+      }
+    }
+    return inputs;
+  }
+
+  private storeOutputsForNode(
+    nodeId: NodeIdentifier,
+    outputs: OutputValues
+  ): void {
+    if (!this.cache.has(nodeId)) {
+      this.cache.set(nodeId, new Map());
+    }
+    const nodeCache = this.cache.get(nodeId)!;
+    for (const [port, value] of Object.entries(outputs)) {
+      nodeCache.set(port, value);
+    }
+  }
 
   /**
    * Triggers the execution of a single node.
    * The command will fail if the node's dependencies are not met (i.e., their outputs are not in the cache or successfully run in the current session).
    */
   async runNode(id: NodeIdentifier): Promise<Outcome<OutputValues>> {
-    throw new Error("Not yet implemented");
+    if (!this.nodeLogic) {
+      return { $error: "No NodeLogic provided to executor" };
+    }
+
+    const controller = this.nodeControllers.get(id);
+    if (!controller) {
+      return { $error: `Node with id '${id}' not found in execution plan` };
+    }
+
+    // Check if node is ready to execute
+    controller.beforeInvoking(this.cache);
+
+    if (controller.state === "cached") {
+      const cachedResults = this.cache.get(id);
+      if (cachedResults) {
+        const outputs: OutputValues = {};
+        for (const [port, value] of cachedResults.entries()) {
+          outputs[port] = value;
+        }
+        return outputs;
+      }
+    }
+
+    if (controller.state !== "ready") {
+      return {
+        $error: `Node '${id}' is not ready for execution. State: ${controller.state}`,
+      };
+    }
+
+    // Gather inputs from dependencies
+    const inputs = this.gatherInputsForNode(id);
+
+    // Execute the node
+    controller.state = "running";
+    try {
+      const result = await this.nodeLogic.invoke(controller.node, inputs);
+
+      if ("$error" in result) {
+        controller.afterInvoking(true);
+        return result;
+      }
+
+      // Store outputs in cache
+      this.storeOutputsForNode(id, result);
+      controller.afterInvoking(false);
+
+      return result;
+    } catch (error) {
+      controller.afterInvoking(true);
+      return { $error: error instanceof Error ? error.message : String(error) };
+    }
   }
 
   /**
    * Clears the results cache for the specified node.
    */
   clearResultsForNode(id: NodeIdentifier): void {
-    throw new Error("Not yet implemented");
+    this.cache.delete(id);
+    const controller = this.nodeControllers.get(id);
+    if (controller) {
+      controller.state = "waiting";
+    }
   }
 
   /**
    * Clears the results cache
    */
   clearResults(): void {
-    throw new Error("Not yet implemented");
+    this.cache.clear();
+    for (const controller of this.nodeControllers.values()) {
+      controller.state = "waiting";
+    }
   }
 
   /**
    * Initiates a graph run using the data currently in the results cache.
+   * The run must proceed in stages defined by the ExecutionPlan. Each stage
+   * denotes nodes that can run in parallel and each stage must be completed
+   * in sequence.
    * Only nodes whose state is not Succeeded or Cached will be executed.
-   * The system will automatically find all Ready nodes based on the cache
-   * and begin execution from there.
+   * The system will scan through the stages, find the Ready nodes based on
+   * their availability in the cache and begin execution from there.
    */
   async run(): Promise<Outcome<void>> {
-    throw new Error("Not yet implemented");
+    if (!this.nodeLogic) {
+      return { $error: "No NodeLogic provided to executor" };
+    }
+
+    for (const stage of this.plan.stages) {
+      if (stage.type === "static") {
+        // Execute all nodes in this stage in parallel
+        const promises: Promise<Outcome<OutputValues>>[] = [];
+        const nodeIds: NodeIdentifier[] = [];
+
+        for (const nodeInfo of stage.nodes) {
+          const controller = this.nodeControllers.get(nodeInfo.id);
+          if (!controller) continue;
+
+          // Check if node needs to be executed
+          controller.beforeInvoking(this.cache);
+
+          if (controller.state === "ready") {
+            nodeIds.push(nodeInfo.id);
+            promises.push(this.runNode(nodeInfo.id));
+          }
+        }
+
+        // Wait for all nodes in this stage to complete
+        const results = await Promise.all(promises);
+
+        // Check for errors
+        for (let i = 0; i < results.length; i++) {
+          const result = results[i];
+          if ("$error" in result) {
+            return {
+              $error: `Error in node '${nodeIds[i]}': ${result.$error}`,
+            };
+          }
+        }
+      } else if (stage.type === "vm") {
+        // Handle VM stage (subgraph execution)
+        const result = await this.runNode(stage.node.id);
+        if ("$error" in result) {
+          return {
+            $error: `Error in VM node '${stage.node.id}': ${result.$error}`,
+          };
+        }
+      }
+    }
+
+    return undefined;
   }
 
   /**
    * Returns the current state of nodes.
    */
   status(): ExecutionNodeInfo[] {
-    throw new Error("Not yet implemented");
+    const result: ExecutionNodeInfo[] = [];
+    for (const [id, controller] of this.nodeControllers.entries()) {
+      result.push({ id, state: controller.state });
+    }
+    return result;
   }
 }
