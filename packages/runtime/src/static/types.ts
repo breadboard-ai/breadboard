@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeIdentifier, OutputValues } from "@breadboard-ai/types";
+import { NodeIdentifier, PortIdentifier } from "@breadboard-ai/types";
 
 /**
  * The result of generating a staged execution plan from a condensed
@@ -27,7 +27,30 @@ export type StaticStage = {
   /**
    * A group of nodes that can be executed in parallel.
    */
-  nodes: NodeIdentifier[];
+  nodes: PlanNodeInfo[];
+};
+
+export type Dependency = { from: PlanNodeInfo; in: PortIdentifier };
+export type Dependent = { to: PlanNodeInfo; out: PortIdentifier };
+
+/**
+ * Represents detailed information that was computed during creating of a
+ * stage.
+ */
+export type PlanNodeInfo = {
+  /**
+   * The id of the node
+   */
+  id: NodeIdentifier;
+  /**
+   * The nodes and ports in next stage(s) that depend on this node.
+   */
+  downstream: Dependent[];
+  /**
+   * The nodes and ports in the previous stage(s) that are dependencies for
+   * this node.
+   */
+  upstream: Dependency[];
 };
 
 /**
@@ -43,27 +66,7 @@ export type VmStage = {
    * A node within the graph that refers to a subgraph (the type of this node
    * will be "#<id of subgraph>"") that contains an SCC.
    */
-  node: NodeIdentifier;
+  node: PlanNodeInfo;
 };
 
 export type PlanStage = StaticStage | VmStage;
-
-export type NodeState =
-  // The node is currently waiting for dependencies to complete (default)
-  | "waiting"
-  // All dependencies have been satisfied, ready to run
-  | "ready"
-  // The node is currently running
-  | "running"
-  // The node ran successfully and the outputs have been passed on
-  | "succeeded"
-  // The node was skipped because the dependencies produced one or more
-  // empty outputs
-  | "skipped"
-  // Node failed to run
-  | "failed";
-
-export type NodeController = {
-  state: NodeState;
-  run(): Promise<OutputValues>;
-};

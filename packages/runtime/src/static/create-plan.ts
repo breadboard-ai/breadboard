@@ -5,7 +5,7 @@
  */
 
 import { GraphDescriptor } from "@breadboard-ai/types";
-import { ExecutionPlan, PlanStage } from "./types.js";
+import { ExecutionPlan, PlanStage, PlanNodeInfo } from "./types.js";
 
 export { createPlan };
 
@@ -16,90 +16,116 @@ export { createPlan };
  * that has a "folded" tag.
  */
 function createPlan(graph: GraphDescriptor): ExecutionPlan {
-  if (!graph.nodes || graph.nodes.length === 0) {
+  const { nodes, edges } = graph;
+  
+  if (!nodes || nodes.length === 0) {
     return { stages: [] };
   }
 
+  const nodeMap = new Map(nodes.map(node => [node.id, node]));
+  const inDegree = new Map<string, number>();
+  const outEdges = new Map<string, Array<{ to: string; out?: string; in?: string }>>();
+  const inEdges = new Map<string, Array<{ from: string; out?: string; in?: string }>>();
+
+  nodes.forEach(node => {
+    inDegree.set(node.id, 0);
+    outEdges.set(node.id, []);
+    inEdges.set(node.id, []);
+  });
+
+  if (edges) {
+    edges.forEach(edge => {
+      const currentDegree = inDegree.get(edge.to) || 0;
+      inDegree.set(edge.to, currentDegree + 1);
+      
+      const fromEdges = outEdges.get(edge.from) || [];
+      fromEdges.push({ to: edge.to, out: edge.out, in: edge.in });
+      outEdges.set(edge.from, fromEdges);
+      
+      const toEdges = inEdges.get(edge.to) || [];
+      toEdges.push({ from: edge.from, out: edge.out, in: edge.in });
+      inEdges.set(edge.to, toEdges);
+    });
+  }
+
   const stages: PlanStage[] = [];
-  const visited = new Set<string>();
-  const dependencies = new Map<string, Set<string>>();
-  const reverseDependencies = new Map<string, Set<string>>();
+  const queue = nodes.filter(node => inDegree.get(node.id) === 0);
+  const processed = new Set<string>();
 
-  // Build dependency graph
-  for (const node of graph.nodes) {
-    dependencies.set(node.id, new Set());
-    reverseDependencies.set(node.id, new Set());
-  }
+  while (queue.length > 0) {
+    const stageNodes: PlanNodeInfo[] = [];
+    const nextQueue: typeof queue = [];
 
-  for (const edge of graph.edges || []) {
-    const fromNode = edge.from;
-    const toNode = edge.to;
+    while (queue.length > 0) {
+      const node = queue.shift()!;
+      
+      if (processed.has(node.id)) continue;
+      processed.add(node.id);
 
-    if (dependencies.has(toNode) && reverseDependencies.has(fromNode)) {
-      dependencies.get(toNode)!.add(fromNode);
-      reverseDependencies.get(fromNode)!.add(toNode);
-    }
-  }
+      const downstream = (outEdges.get(node.id) || []).map(edge => ({
+        to: createPlanNodeInfo(edge.to, outEdges, inEdges),
+        out: edge.out || ""
+      }));
 
-  // Create execution stages using topological sort
-  while (visited.size < graph.nodes.length) {
-    const readyNodes: string[] = [];
+      const upstream = (inEdges.get(node.id) || []).map(edge => ({
+        from: createPlanNodeInfo(edge.from, outEdges, inEdges),
+        in: edge.in || ""
+      }));
 
-    // Find nodes with no unvisited dependencies
-    for (const node of graph.nodes) {
-      if (visited.has(node.id)) continue;
+      const planNodeInfo: PlanNodeInfo = {
+        id: node.id,
+        downstream,
+        upstream
+      };
 
-      const nodeDeps = dependencies.get(node.id) || new Set();
-      const unvisitedDeps = Array.from(nodeDeps).filter(
-        (dep) => !visited.has(dep)
-      );
-
-      if (unvisitedDeps.length === 0) {
-        readyNodes.push(node.id);
-      }
-    }
-
-    if (readyNodes.length === 0) {
-      // This shouldn't happen in a condensed graph (no cycles)
-      throw new Error(
-        "Cannot create execution plan: graph contains cycles or unresolvable dependencies"
-      );
-    }
-
-    // Separate regular nodes from VM nodes (folded SCCs)
-    const regularNodes: string[] = [];
-    const vmNodes: string[] = [];
-
-    for (const nodeId of readyNodes) {
-      const node = graph.nodes.find((n) => n.id === nodeId);
-      if (node?.metadata?.tags?.includes("folded")) {
-        vmNodes.push(nodeId);
+      if (node.metadata?.tags?.includes("folded")) {
+        stages.push({
+          type: "vm",
+          node: planNodeInfo
+        });
       } else {
-        regularNodes.push(nodeId);
+        stageNodes.push(planNodeInfo);
       }
+
+      (outEdges.get(node.id) || []).forEach(edge => {
+        const targetDegree = inDegree.get(edge.to) || 0;
+        if (targetDegree > 0) {
+          inDegree.set(edge.to, targetDegree - 1);
+          if (targetDegree === 1) {
+            const targetNode = nodeMap.get(edge.to);
+            if (targetNode) nextQueue.push(targetNode);
+          }
+        }
+      });
     }
 
-    // Create stages for regular nodes (can be executed in parallel)
-    if (regularNodes.length > 0) {
+    if (stageNodes.length > 0) {
       stages.push({
         type: "static",
-        nodes: regularNodes,
+        nodes: stageNodes
       });
     }
 
-    // Create individual VM stages (must be executed sequentially)
-    for (const vmNodeId of vmNodes) {
-      stages.push({
-        type: "vm",
-        node: vmNodeId,
-      });
-    }
-
-    // Mark all ready nodes as visited
-    for (const nodeId of readyNodes) {
-      visited.add(nodeId);
-    }
+    queue.push(...nextQueue);
   }
 
   return { stages };
+}
+
+function createPlanNodeInfo(nodeId: string, outEdges: Map<string, Array<{ to: string; out?: string; in?: string }>>, inEdges: Map<string, Array<{ from: string; out?: string; in?: string }>>): PlanNodeInfo {
+  const downstream = (outEdges.get(nodeId) || []).map(edge => ({
+    to: { id: edge.to, downstream: [], upstream: [] } as PlanNodeInfo,
+    out: edge.out || ""
+  }));
+
+  const upstream = (inEdges.get(nodeId) || []).map(edge => ({
+    from: { id: edge.from, downstream: [], upstream: [] } as PlanNodeInfo,
+    in: edge.in || ""
+  }));
+
+  return {
+    id: nodeId,
+    downstream,
+    upstream
+  };
 }
