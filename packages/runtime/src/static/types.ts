@@ -4,7 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeIdentifier, PortIdentifier } from "@breadboard-ai/types";
+import {
+  InputValues,
+  NodeDescriptor,
+  NodeIdentifier,
+  NodeValue,
+  Outcome,
+  OutputValues,
+  PortIdentifier,
+} from "@breadboard-ai/types";
 
 /**
  * The result of generating a staged execution plan from a condensed
@@ -70,3 +78,39 @@ export type VmStage = {
 };
 
 export type PlanStage = StaticStage | VmStage;
+
+/**
+ * Encapsulates the logic of the node, consuming inputs and producing outputs.
+ * The distinction between “static” and “vm” execution is handled by this type.
+ * The inputs are all port values of the dependencies.
+ */
+export type NodeLogic = {
+  invoke(
+    node: NodeDescriptor,
+    inputs: InputValues
+  ): Promise<Outcome<OutputValues>>;
+};
+
+/**
+ * Possible states of a node while in Executor.
+ */
+export type NodeState =
+  // Node is awaiting dependencies
+  | "waiting"
+  // Node dependencies met, queued for execution
+  | "ready"
+  // Node logic is being invoked
+  | "running"
+  // Node logic invocation completed successfully, outputs written to the cache.
+  | "succeeded"
+  // The node's valid output already exists in the cache; execution is skipped.
+  | "cached"
+  // Node invocation is bypassed (usually due to conditional routing)
+  | "skipped"
+  // Node logic produced an error
+  | "failed";
+
+export type ExecutionNodeInfo = {
+  id: NodeIdentifier;
+  state: NodeState;
+};
