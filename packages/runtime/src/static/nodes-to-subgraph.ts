@@ -55,7 +55,6 @@ function nodesToSubgraph(
   graph.nodes =
     graph.nodes?.filter((node) => !nodeGroup.includes(node.id)) || [];
   graph.nodes.push(replacementNode);
-  console.log("GRAPH NODES", graph.nodes);
 
   // Update edges to point to/from condensed node
   updateEdgeForFoldedNode(graph, nodeGroup, replacementNodeId);
