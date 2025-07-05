@@ -43,11 +43,12 @@ function nodesToSubgraph(
   graph.graphs[subgraphId] = subgraph;
 
   const replacementNodeId = subgraphId;
-  const replacementNode = {
+  const replacementNode: NodeDescriptor = {
     id: replacementNodeId,
     type: `#${subgraphId}`,
     metadata: {
       title: `Subgraph "${subgraphId}"`,
+      tags: ["folded"],
     },
   };
 
