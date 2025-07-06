@@ -8,6 +8,7 @@ import {
   InputValues,
   NodeDescriptor,
   NodeIdentifier,
+  NodeValue,
   Outcome,
   OutputValues,
   PortIdentifier,
@@ -48,7 +49,7 @@ export type PlanNodeInfo = {
   /**
    * The id of the node
    */
-  id: NodeIdentifier;
+  node: NodeDescriptor;
   /**
    * The nodes and ports in next stage(s) that depend on this node.
    */
@@ -112,4 +113,14 @@ export type NodeState =
 export type ExecutionNodeInfo = {
   id: NodeIdentifier;
   state: NodeState;
+};
+
+export type ResultCache = Map<NodeIdentifier, Map<PortIdentifier, NodeValue>>;
+
+/**
+ * A task, produced by the orchestrator.
+ */
+export type Task = {
+  node: NodeDescriptor;
+  inputs: InputValues;
 };

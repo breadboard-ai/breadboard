@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor } from "@breadboard-ai/types";
+import {
+  GraphDescriptor,
+  NodeDescriptor,
+  NodeIdentifier,
+} from "@breadboard-ai/types";
 import { ExecutionPlan, PlanStage, PlanNodeInfo } from "./types.js";
 
 export { createPlan };
@@ -17,31 +21,37 @@ export { createPlan };
  */
 function createPlan(graph: GraphDescriptor): ExecutionPlan {
   const { nodes, edges } = graph;
-  
+
   if (!nodes || nodes.length === 0) {
     return { stages: [] };
   }
 
-  const nodeMap = new Map(nodes.map(node => [node.id, node]));
+  const nodeMap = new Map(nodes.map((node) => [node.id, node]));
   const inDegree = new Map<string, number>();
-  const outEdges = new Map<string, Array<{ to: string; out?: string; in?: string }>>();
-  const inEdges = new Map<string, Array<{ from: string; out?: string; in?: string }>>();
+  const outEdges = new Map<
+    string,
+    Array<{ to: string; out?: string; in?: string }>
+  >();
+  const inEdges = new Map<
+    string,
+    Array<{ from: string; out?: string; in?: string }>
+  >();
 
-  nodes.forEach(node => {
+  nodes.forEach((node) => {
     inDegree.set(node.id, 0);
     outEdges.set(node.id, []);
     inEdges.set(node.id, []);
   });
 
   if (edges) {
-    edges.forEach(edge => {
+    edges.forEach((edge) => {
       const currentDegree = inDegree.get(edge.to) || 0;
       inDegree.set(edge.to, currentDegree + 1);
-      
+
       const fromEdges = outEdges.get(edge.from) || [];
       fromEdges.push({ to: edge.to, out: edge.out, in: edge.in });
       outEdges.set(edge.from, fromEdges);
-      
+
       const toEdges = inEdges.get(edge.to) || [];
       toEdges.push({ from: edge.from, out: edge.out, in: edge.in });
       inEdges.set(edge.to, toEdges);
@@ -49,7 +59,7 @@ function createPlan(graph: GraphDescriptor): ExecutionPlan {
   }
 
   const stages: PlanStage[] = [];
-  const queue = nodes.filter(node => inDegree.get(node.id) === 0);
+  const queue = nodes.filter((node) => inDegree.get(node.id) === 0);
   const processed = new Set<string>();
 
   while (queue.length > 0) {
@@ -58,36 +68,36 @@ function createPlan(graph: GraphDescriptor): ExecutionPlan {
 
     while (queue.length > 0) {
       const node = queue.shift()!;
-      
+
       if (processed.has(node.id)) continue;
       processed.add(node.id);
 
-      const downstream = (outEdges.get(node.id) || []).map(edge => ({
-        to: createPlanNodeInfo(edge.to, outEdges, inEdges),
-        out: edge.out || ""
+      const downstream = (outEdges.get(node.id) || []).map((edge) => ({
+        to: createPlanNodeInfo(nodeMap, edge.to, outEdges, inEdges),
+        out: edge.out || "",
       }));
 
-      const upstream = (inEdges.get(node.id) || []).map(edge => ({
-        from: createPlanNodeInfo(edge.from, outEdges, inEdges),
-        in: edge.in || ""
+      const upstream = (inEdges.get(node.id) || []).map((edge) => ({
+        from: createPlanNodeInfo(nodeMap, edge.from, outEdges, inEdges),
+        in: edge.in || "",
       }));
 
       const planNodeInfo: PlanNodeInfo = {
-        id: node.id,
+        node: nodeMap.get(node.id)!,
         downstream,
-        upstream
+        upstream,
       };
 
       if (node.metadata?.tags?.includes("folded")) {
         stages.push({
           type: "vm",
-          node: planNodeInfo
+          node: planNodeInfo,
         });
       } else {
         stageNodes.push(planNodeInfo);
       }
 
-      (outEdges.get(node.id) || []).forEach(edge => {
+      (outEdges.get(node.id) || []).forEach((edge) => {
         const targetDegree = inDegree.get(edge.to) || 0;
         if (targetDegree > 0) {
           inDegree.set(edge.to, targetDegree - 1);
@@ -102,7 +112,7 @@ function createPlan(graph: GraphDescriptor): ExecutionPlan {
     if (stageNodes.length > 0) {
       stages.push({
         type: "static",
-        nodes: stageNodes
+        nodes: stageNodes,
       });
     }
 
@@ -112,20 +122,25 @@ function createPlan(graph: GraphDescriptor): ExecutionPlan {
   return { stages };
 }
 
-function createPlanNodeInfo(nodeId: string, outEdges: Map<string, Array<{ to: string; out?: string; in?: string }>>, inEdges: Map<string, Array<{ from: string; out?: string; in?: string }>>): PlanNodeInfo {
-  const downstream = (outEdges.get(nodeId) || []).map(edge => ({
-    to: { id: edge.to, downstream: [], upstream: [] } as PlanNodeInfo,
-    out: edge.out || ""
+function createPlanNodeInfo(
+  nodeMap: Map<NodeIdentifier, NodeDescriptor>,
+  nodeId: string,
+  outEdges: Map<string, { to: string; out?: string; in?: string }[]>,
+  inEdges: Map<string, { from: string; out?: string; in?: string }[]>
+): PlanNodeInfo {
+  const downstream = (outEdges.get(nodeId) || []).map((edge) => ({
+    to: { node: nodeMap.get(edge.to)!, downstream: [], upstream: [] },
+    out: edge.out || "",
   }));
 
-  const upstream = (inEdges.get(nodeId) || []).map(edge => ({
-    from: { id: edge.from, downstream: [], upstream: [] } as PlanNodeInfo,
-    in: edge.in || ""
+  const upstream = (inEdges.get(nodeId) || []).map((edge) => ({
+    from: { node: nodeMap.get(edge.from)!, downstream: [], upstream: [] },
+    in: edge.in || "",
   }));
 
   return {
-    id: nodeId,
+    node: nodeMap.get(nodeId)!,
     downstream,
-    upstream
+    upstream,
   };
 }
