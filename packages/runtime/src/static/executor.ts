@@ -14,6 +14,7 @@ import {
   OutputValues,
   PortIdentifier,
 } from "@breadboard-ai/types";
+import { err, ok } from "@breadboard-ai/utils";
 import {
   ExecutionNodeInfo,
   ExecutionPlan,
@@ -91,12 +92,8 @@ class NodeStateController {
    * If invocation failed, transition to "failed" state. Otherwise, transition
    * to "succeeded" state
    */
-  afterInvoking(failed: boolean): void {
-    if (failed) {
-      this.state = "failed";
-    } else {
-      this.state = "succeeded";
-    }
+  afterInvoking(success: boolean): void {
+    this.state = success ? "succeeded" : "failed";
   }
 }
 
@@ -105,20 +102,16 @@ class NodeStateController {
  * incorporating a caching layer to facilitate interactive workflows.
  */
 class Executor {
-  private cache: ResultCache = new Map();
-  private nodeControllers: Map<NodeIdentifier, NodeStateController> = new Map();
-  private nodeLogic?: NodeLogic;
+  public readonly cache: ResultCache = new Map();
+  public readonly controllers: Map<NodeIdentifier, NodeStateController> =
+    new Map();
 
   constructor(
     public readonly plan: ExecutionPlan,
     public readonly graph: GraphDescriptor,
-    nodeLogic?: NodeLogic
+    public readonly nodeLogic: NodeLogic
   ) {
-    this.nodeLogic = nodeLogic;
-    this.initializeNodeControllers();
-  }
-
-  private initializeNodeControllers(): void {
+    // Initialize controllers
     for (const stage of this.plan.stages) {
       if (stage.type === "static") {
         for (const nodeInfo of stage.nodes) {
@@ -126,7 +119,7 @@ class Executor {
             (n) => n.id === nodeInfo.id
           );
           if (nodeDescriptor) {
-            this.nodeControllers.set(
+            this.controllers.set(
               nodeInfo.id,
               new NodeStateController(nodeDescriptor, nodeInfo)
             );
@@ -137,7 +130,7 @@ class Executor {
           (n) => n.id === stage.node.id
         );
         if (nodeDescriptor) {
-          this.nodeControllers.set(
+          this.controllers.set(
             stage.node.id,
             new NodeStateController(nodeDescriptor, stage.node)
           );
@@ -146,8 +139,8 @@ class Executor {
     }
   }
 
-  private gatherInputsForNode(nodeId: NodeIdentifier): InputValues {
-    const controller = this.nodeControllers.get(nodeId);
+  #gatherInputsForNode(nodeId: NodeIdentifier): InputValues {
+    const controller = this.controllers.get(nodeId);
     if (!controller) {
       return {};
     }
@@ -168,10 +161,7 @@ class Executor {
     return inputs;
   }
 
-  private storeOutputsForNode(
-    nodeId: NodeIdentifier,
-    outputs: OutputValues
-  ): void {
+  #storeOutputsForNode(nodeId: NodeIdentifier, outputs: OutputValues): void {
     if (!this.cache.has(nodeId)) {
       this.cache.set(nodeId, new Map());
     }
@@ -186,13 +176,9 @@ class Executor {
    * The command will fail if the node's dependencies are not met (i.e., their outputs are not in the cache or successfully run in the current session).
    */
   async runNode(id: NodeIdentifier): Promise<Outcome<OutputValues>> {
-    if (!this.nodeLogic) {
-      return { $error: "No NodeLogic provided to executor" };
-    }
-
-    const controller = this.nodeControllers.get(id);
+    const controller = this.controllers.get(id);
     if (!controller) {
-      return { $error: `Node with id '${id}' not found in execution plan` };
+      return err(`Node with id '${id}' not found in execution plan`);
     }
 
     // Check if node is ready to execute
@@ -210,32 +196,32 @@ class Executor {
     }
 
     if (controller.state !== "ready") {
-      return {
-        $error: `Node '${id}' is not ready for execution. State: ${controller.state}`,
-      };
+      return err(
+        `Node '${id}' is not ready for execution. State: ${controller.state}`
+      );
     }
 
     // Gather inputs from dependencies
-    const inputs = this.gatherInputsForNode(id);
+    const inputs = this.#gatherInputsForNode(id);
 
     // Execute the node
     controller.state = "running";
     try {
       const result = await this.nodeLogic.invoke(controller.node, inputs);
 
-      if ("$error" in result) {
-        controller.afterInvoking(true);
+      if (!ok(result)) {
+        controller.afterInvoking(false);
         return result;
       }
 
       // Store outputs in cache
-      this.storeOutputsForNode(id, result);
-      controller.afterInvoking(false);
+      this.#storeOutputsForNode(id, result);
+      controller.afterInvoking(true);
 
       return result;
     } catch (error) {
-      controller.afterInvoking(true);
-      return { $error: error instanceof Error ? error.message : String(error) };
+      controller.afterInvoking(false);
+      return err(error instanceof Error ? error.message : `${error}`);
     }
   }
 
@@ -244,7 +230,7 @@ class Executor {
    */
   clearResultsForNode(id: NodeIdentifier): void {
     this.cache.delete(id);
-    const controller = this.nodeControllers.get(id);
+    const controller = this.controllers.get(id);
     if (controller) {
       controller.state = "waiting";
     }
@@ -255,7 +241,7 @@ class Executor {
    */
   clearResults(): void {
     this.cache.clear();
-    for (const controller of this.nodeControllers.values()) {
+    for (const controller of this.controllers.values()) {
       controller.state = "waiting";
     }
   }
@@ -270,10 +256,6 @@ class Executor {
    * their availability in the cache and begin execution from there.
    */
   async run(): Promise<Outcome<void>> {
-    if (!this.nodeLogic) {
-      return { $error: "No NodeLogic provided to executor" };
-    }
-
     for (const stage of this.plan.stages) {
       if (stage.type === "static") {
         // Execute all nodes in this stage in parallel
@@ -281,7 +263,7 @@ class Executor {
         const nodeIds: NodeIdentifier[] = [];
 
         for (const nodeInfo of stage.nodes) {
-          const controller = this.nodeControllers.get(nodeInfo.id);
+          const controller = this.controllers.get(nodeInfo.id);
           if (!controller) continue;
 
           // Check if node needs to be executed
@@ -299,20 +281,12 @@ class Executor {
         // Check for errors
         for (let i = 0; i < results.length; i++) {
           const result = results[i];
-          if ("$error" in result) {
-            return {
-              $error: `Error in node '${nodeIds[i]}': ${result.$error}`,
-            };
-          }
+          if (!ok(result)) return result;
         }
       } else if (stage.type === "vm") {
         // Handle VM stage (subgraph execution)
         const result = await this.runNode(stage.node.id);
-        if ("$error" in result) {
-          return {
-            $error: `Error in VM node '${stage.node.id}': ${result.$error}`,
-          };
-        }
+        if (!ok(result)) return result;
       }
     }
 
@@ -324,7 +298,9 @@ class Executor {
    */
   status(): ExecutionNodeInfo[] {
     const result: ExecutionNodeInfo[] = [];
-    for (const [id, controller] of this.nodeControllers.entries()) {
+    for (const [id, controller] of this.controllers.entries()) {
+      // Update state, because it could become stale during the execution.
+      controller.beforeInvoking(this.cache);
       result.push({ id, state: controller.state });
     }
     return result;

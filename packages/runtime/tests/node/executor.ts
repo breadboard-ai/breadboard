@@ -149,9 +149,9 @@ describe("Executor", () => {
 
       assert.equal(status.length, 2);
       assert.equal(status[0].id, "a");
-      assert.equal(status[0].state, "waiting");
+      assert.equal(status[0].state, "ready");
       assert.equal(status[1].id, "b");
-      assert.equal(status[1].state, "waiting");
+      assert.equal(status[1].state, "ready");
     });
 
     it("should initialize node controllers for VM stages", () => {
@@ -174,7 +174,7 @@ describe("Executor", () => {
 
       assert.equal(status.length, 1);
       assert.equal(status[0].id, "vm_node");
-      assert.equal(status[0].state, "waiting");
+      assert.equal(status[0].state, "ready");
     });
 
     it("should handle empty plan", () => {
@@ -204,13 +204,13 @@ describe("Executor", () => {
 
       // Pre-populate cache
       executor.clearResults();
-      executor["cache"].set("test", new Map([["output", "cached_value"]]));
+      executor.cache.set("test", new Map([["output", "cached_value"]]));
 
       // Get node controller and call beforeInvoking
-      const controller = executor["nodeControllers"].get("test");
+      const controller = executor.controllers.get("test");
       assert.ok(controller);
 
-      controller.beforeInvoking(executor["cache"]);
+      controller.beforeInvoking(executor.cache);
       assert.equal(controller.state, "cached");
     });
 
@@ -228,12 +228,12 @@ describe("Executor", () => {
       const executor = new Executor(plan, graph, nodeLogic);
 
       // Pre-populate cache with upstream dependency
-      executor["cache"].set("a", new Map([["data", "upstream_value"]]));
+      executor.cache.set("a", new Map([["data", "upstream_value"]]));
 
-      const controller = executor["nodeControllers"].get("b");
+      const controller = executor.controllers.get("b");
       assert.ok(controller);
 
-      controller.beforeInvoking(executor["cache"]);
+      controller.beforeInvoking(executor.cache);
       assert.equal(controller.state, "ready");
     });
 
@@ -250,10 +250,10 @@ describe("Executor", () => {
 
       const executor = new Executor(plan, graph, nodeLogic);
 
-      const controller = executor["nodeControllers"].get("b");
+      const controller = executor.controllers.get("b");
       assert.ok(controller);
 
-      controller.beforeInvoking(executor["cache"]);
+      controller.beforeInvoking(executor.cache);
       assert.equal(controller.state, "waiting");
     });
   });
@@ -270,10 +270,10 @@ describe("Executor", () => {
       const nodeLogic = new MockNodeLogic();
 
       const executor = new Executor(plan, graph, nodeLogic);
-      const controller = executor["nodeControllers"].get("test");
+      const controller = executor.controllers.get("test");
       assert.ok(controller);
 
-      controller.afterInvoking(false);
+      controller.afterInvoking(true);
       assert.equal(controller.state, "succeeded");
     });
 
@@ -288,33 +288,15 @@ describe("Executor", () => {
       const nodeLogic = new MockNodeLogic();
 
       const executor = new Executor(plan, graph, nodeLogic);
-      const controller = executor["nodeControllers"].get("test");
+      const controller = executor.controllers.get("test");
       assert.ok(controller);
 
-      controller.afterInvoking(true);
+      controller.afterInvoking(false);
       assert.equal(controller.state, "failed");
     });
   });
 
   describe("runNode", () => {
-    it("should return error when no NodeLogic is provided", async () => {
-      const graph: GraphDescriptor = {
-        nodes: [{ id: "test", type: "input" }],
-        edges: [],
-      };
-      const plan: ExecutionPlan = createTestPlan([
-        { id: "test", upstream: [], downstream: [] },
-      ]);
-
-      const executor = new Executor(plan, graph);
-      const result = await executor.runNode("test");
-
-      assert.ok(result !== undefined && "$error" in result);
-      if (result !== undefined && "$error" in result) {
-        assert.equal(result.$error, "No NodeLogic provided to executor");
-      }
-    });
-
     it("should return error for unknown node", async () => {
       const graph: GraphDescriptor = {
         nodes: [{ id: "test", type: "input" }],
@@ -348,7 +330,7 @@ describe("Executor", () => {
       const executor = new Executor(plan, graph, nodeLogic);
 
       // Pre-populate cache
-      executor["cache"].set("test", new Map([["output", "cached_value"]]));
+      executor.cache.set("test", new Map([["output", "cached_value"]]));
 
       const result = await executor.runNode("test");
 
@@ -471,7 +453,7 @@ describe("Executor", () => {
 
       nodeLogic.setMockBehavior("test", async () => {
         // Check state during execution
-        const controller = executor["nodeControllers"].get("test");
+        const controller = executor.controllers.get("test");
         assert.equal(controller!.state, "running");
         return { result: "success" };
       });
@@ -479,30 +461,12 @@ describe("Executor", () => {
       const executor = new Executor(plan, graph, nodeLogic);
       await executor.runNode("test");
 
-      const controller = executor["nodeControllers"].get("test");
+      const controller = executor.controllers.get("test");
       assert.equal(controller!.state, "succeeded");
     });
   });
 
   describe("run", () => {
-    it("should return error when no NodeLogic is provided", async () => {
-      const graph: GraphDescriptor = {
-        nodes: [{ id: "test", type: "input" }],
-        edges: [],
-      };
-      const plan: ExecutionPlan = createTestPlan([
-        { id: "test", upstream: [], downstream: [] },
-      ]);
-
-      const executor = new Executor(plan, graph);
-      const result = await executor.run();
-
-      assert.ok(result !== undefined && "$error" in result);
-      if (result !== undefined && "$error" in result) {
-        assert.equal(result.$error, "No NodeLogic provided to executor");
-      }
-    });
-
     it("should execute all nodes in parallel stage", async () => {
       const graph: GraphDescriptor = {
         nodes: [
@@ -630,7 +594,7 @@ describe("Executor", () => {
 
       assert.ok(result !== undefined && "$error" in result);
       if (result !== undefined && "$error" in result) {
-        assert.ok(result.$error.includes("Error in node 'test': Node failed"));
+        assert.ok(result.$error.includes("Node failed"));
       }
     });
 
@@ -680,19 +644,19 @@ describe("Executor", () => {
       const executor = new Executor(plan, graph, nodeLogic);
 
       // Populate cache
-      executor["cache"].set("a", new Map([["output", "value_a"]]));
-      executor["cache"].set("b", new Map([["output", "value_b"]]));
+      executor.cache.set("a", new Map([["output", "value_a"]]));
+      executor.cache.set("b", new Map([["output", "value_b"]]));
 
       // Mark as succeeded
-      executor["nodeControllers"].get("a")!.state = "succeeded";
-      executor["nodeControllers"].get("b")!.state = "succeeded";
+      executor.controllers.get("a")!.state = "succeeded";
+      executor.controllers.get("b")!.state = "succeeded";
 
       executor.clearResultsForNode("a");
 
-      assert.ok(!executor["cache"].has("a"));
-      assert.ok(executor["cache"].has("b"));
-      assert.equal(executor["nodeControllers"].get("a")!.state, "waiting");
-      assert.equal(executor["nodeControllers"].get("b")!.state, "succeeded");
+      assert.ok(!executor.cache.has("a"));
+      assert.ok(executor.cache.has("b"));
+      assert.equal(executor.controllers.get("a")!.state, "waiting");
+      assert.equal(executor.controllers.get("b")!.state, "succeeded");
     });
 
     it("should clear all results", () => {
@@ -712,18 +676,18 @@ describe("Executor", () => {
       const executor = new Executor(plan, graph, nodeLogic);
 
       // Populate cache
-      executor["cache"].set("a", new Map([["output", "value_a"]]));
-      executor["cache"].set("b", new Map([["output", "value_b"]]));
+      executor.cache.set("a", new Map([["output", "value_a"]]));
+      executor.cache.set("b", new Map([["output", "value_b"]]));
 
       // Mark as succeeded
-      executor["nodeControllers"].get("a")!.state = "succeeded";
-      executor["nodeControllers"].get("b")!.state = "succeeded";
+      executor.controllers.get("a")!.state = "succeeded";
+      executor.controllers.get("b")!.state = "succeeded";
 
       executor.clearResults();
 
-      assert.equal(executor["cache"].size, 0);
-      assert.equal(executor["nodeControllers"].get("a")!.state, "waiting");
-      assert.equal(executor["nodeControllers"].get("b")!.state, "waiting");
+      assert.equal(executor.cache.size, 0);
+      assert.equal(executor.controllers.get("a")!.state, "waiting");
+      assert.equal(executor.controllers.get("b")!.state, "waiting");
     });
   });
 
@@ -746,11 +710,6 @@ describe("Executor", () => {
 
       const executor = new Executor(plan, graph, nodeLogic);
 
-      // Modify some states
-      executor["nodeControllers"].get("a")!.state = "succeeded";
-      executor["nodeControllers"].get("b")!.state = "running";
-      executor["nodeControllers"].get("c")!.state = "waiting";
-
       const status = executor.status();
 
       assert.equal(status.length, 3);
@@ -759,9 +718,9 @@ describe("Executor", () => {
       const bStatus = status.find((s) => s.id === "b");
       const cStatus = status.find((s) => s.id === "c");
 
-      assert.equal(aStatus?.state, "succeeded");
-      assert.equal(bStatus?.state, "running");
-      assert.equal(cStatus?.state, "waiting");
+      assert.equal(aStatus?.state, "ready");
+      assert.equal(bStatus?.state, "ready");
+      assert.equal(cStatus?.state, "ready");
     });
 
     it("should return empty array for empty plan", () => {
@@ -910,7 +869,7 @@ describe("Executor", () => {
       const executor = new Executor(plan, graph, nodeLogic);
 
       // Mark first node as failed so second node can't run
-      executor["nodeControllers"].get("a")!.state = "failed";
+      executor.controllers.get("a")!.state = "failed";
 
       const result = await executor.run();
 
