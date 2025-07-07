@@ -9,7 +9,6 @@ import {
   EditHistoryCreator,
   EditHistoryEntry,
   GraphDescriptor,
-  InspectableGraph,
   InspectableRunObserver,
   isLLMContentArray,
   isStoredData,
@@ -34,6 +33,7 @@ import {
   RuntimeBoardServerChangeEvent,
   RuntimeWorkspaceItemChangeEvent,
   RuntimeBoardSaveStatusChangeEvent,
+  RuntimeToastEvent,
 } from "./events";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import {
@@ -46,7 +46,6 @@ import {
   GraphIdentifier,
   GraphTheme,
   ModuleIdentifier,
-  NodeDescriptor,
 } from "@breadboard-ai/types";
 import {
   generatePaletteFromColor,
@@ -105,9 +104,17 @@ export class Board extends EventTarget {
       if (server.capabilities.events) {
         // install event listeners
         server.addEventListener("savestatuschange", ({ url, status }) => {
-          this.dispatchEvent(
-            new RuntimeBoardSaveStatusChangeEvent(toSaveStatus(status), url)
-          );
+          if (!this.#currentTabId) {
+            return;
+          }
+
+          const currentTab = this.#tabs.get(this.#currentTabId);
+          if (!currentTab || currentTab.graph?.url !== url) {
+            return;
+          }
+
+          this.#tabSaveStatus.set(this.#currentTabId, toSaveStatus(status));
+          this.dispatchEvent(new RuntimeBoardSaveStatusChangeEvent());
         });
       }
     });
@@ -338,162 +345,6 @@ export class Board extends EventTarget {
     return [...new Uint8Array(digest)]
       .map((v) => v.toString(16).padStart(2, "0"))
       .join("");
-  }
-
-  async #toSVGPreview(descriptor: GraphDescriptor): Promise<string | null> {
-    const PADDING = 10;
-    const PREVIEW_WIDTH = 250 - 2 * PADDING;
-    const PREVIEW_HEIGHT = 200 - 2 * PADDING;
-    const NODE_WIDTH = 260;
-    const NODE_ASSUMED_HEIGHT = 100;
-
-    const graphStore = this.getGraphStore();
-
-    let minX = Number.POSITIVE_INFINITY;
-    let minY = Number.POSITIVE_INFINITY;
-    let maxX = Number.NEGATIVE_INFINITY;
-    let maxY = Number.NEGATIVE_INFINITY;
-
-    const updateDimensions = (node: NodeDescriptor) => {
-      if (!node.metadata?.visual) {
-        return;
-      }
-
-      const visual = node.metadata?.visual as {
-        x: number;
-        y: number;
-        outputHeight: number;
-      };
-      minX = Math.min(minX, visual.x);
-      minY = Math.min(minY, visual.y);
-      maxX = Math.max(maxX, visual.x + NODE_WIDTH);
-      maxY = Math.max(
-        maxY,
-        visual.y + NODE_ASSUMED_HEIGHT + (visual.outputHeight ?? 0)
-      );
-    };
-
-    // Main Graph.
-    for (const node of descriptor.nodes) {
-      updateDimensions(node);
-    }
-
-    // Sub Graphs.
-    for (const graph of Object.values(descriptor.graphs ?? {})) {
-      for (const node of graph.nodes) {
-        updateDimensions(node);
-      }
-    }
-
-    if (
-      !Number.isFinite(minX) ||
-      !Number.isFinite(minY) ||
-      !Number.isFinite(maxX) ||
-      !Number.isFinite(maxY)
-    ) {
-      return null;
-    }
-
-    const width = maxX - minX;
-    const height = maxY - minY;
-
-    const ratio = Math.min(PREVIEW_WIDTH / width, PREVIEW_HEIGHT / height);
-
-    const paddingX = (PREVIEW_WIDTH - width * ratio) * 0.5;
-    const paddingY = (PREVIEW_HEIGHT - height * ratio) * 0.5;
-
-    const renderNode = (
-      node: NodeDescriptor,
-      inspectableGraph: InspectableGraph | null = null
-    ) => {
-      if (!node.metadata?.visual) {
-        return "";
-      }
-
-      const visual = node.metadata?.visual as {
-        x: number;
-        y: number;
-        outputHeight: number;
-      };
-
-      const x = PADDING + paddingX + (visual.x - minX) * ratio;
-      const y = PADDING + paddingY + (visual.y - minY) * ratio;
-      const w = NODE_WIDTH * ratio;
-      const h = (NODE_ASSUMED_HEIGHT + (visual.outputHeight ?? 0)) * ratio;
-
-      let c = 0;
-      if (inspectableGraph) {
-        const inspectableNode = inspectableGraph.nodeById(node.id);
-        const icon =
-          inspectableNode?.type().currentMetadata().icon ??
-          inspectableNode?.type().type() ??
-          null;
-
-        switch (icon) {
-          case "text":
-          case "combine-outputs":
-          case "input":
-          case "output": {
-            c = getGlobalColor("--bb-input-600");
-            break;
-          }
-
-          case "generative":
-          case "generative-image":
-          case "generative-text":
-          case "generative-audio":
-          case "generative-code": {
-            c = getGlobalColor("--bb-generative-600");
-            break;
-          }
-
-          default: {
-            c = getGlobalColor("--bb-ui-600");
-            break;
-          }
-        }
-      }
-
-      return `<rect x="${x.toFixed(2)}"
-                    y="${y.toFixed(2)}"
-                    width="${w.toFixed(2)}"
-                    height="${h.toFixed(2)}"
-                    rx="3.5"
-                    fill="white"
-                    stroke="#${c.toString(16).padStart(6, "0")}" />`;
-    };
-
-    let inspectableGraph: InspectableGraph | null = null;
-    const mainGraphIdResult = graphStore.getByDescriptor(descriptor);
-    const boardSvg = `<svg width="250" height="200" viewBox="0 0 250 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-    ${descriptor.nodes
-      .map((node) => {
-        if (mainGraphIdResult.success) {
-          inspectableGraph =
-            graphStore.inspect(mainGraphIdResult.result, "") ?? null;
-        }
-
-        return renderNode(node, inspectableGraph);
-      })
-      .join("\n")}
-      ${Object.entries(descriptor.graphs ?? {})
-        .map(([id, graph]) => {
-          inspectableGraph = null;
-          if (mainGraphIdResult.success) {
-            inspectableGraph =
-              graphStore.inspect(mainGraphIdResult.result, id) ?? null;
-          }
-
-          return graph.nodes
-            .map((node) => {
-              return renderNode(node, inspectableGraph);
-            })
-            .join("\n");
-        })
-        .join("\n")}
-    </svg>`;
-
-    return `data:image/svg+xml;base64,${btoa(boardSvg)}`;
   }
 
   async createTabFromRun(
@@ -1040,44 +891,156 @@ export class Board extends EventTarget {
     return boardServer.capabilities.preview;
   }
 
-  async save(id: TabId | null, userInitiated: boolean) {
+  #tabSaveId = new Map<
+    TabId,
+    ReturnType<typeof globalThis.crypto.randomUUID>
+  >();
+  #tabSaveStatus = new Map<TabId, BreadboardUI.Types.BOARD_SAVE_STATUS>();
+
+  saveStatus(id: TabId) {
+    return this.#tabSaveStatus.get(id);
+  }
+
+  clearSaveStatus(id: TabId) {
+    this.#tabSaveStatus.delete(id);
+  }
+
+  clearPendingBoardSave(id: TabId) {
+    this.#tabSaveId.delete(id);
+  }
+
+  async save(
+    id: TabId | null,
+    timeout: number,
+    messages: { start: string; end: string } | null
+  ) {
+    const noSave = { result: false, error: "Unable to save" };
+
     if (!id) {
-      return { result: false, error: "Unable to save" };
+      return noSave;
     }
 
     const tab = this.#tabs.get(id);
-    if (!tab) {
-      return { result: false, error: "Unable to save" };
+    if (!tab || tab.readOnly) {
+      return noSave;
     }
 
     if (!tab.graph || !tab.graph.url) {
-      return { result: false, error: "Unable to save" };
+      return noSave;
     }
 
-    const boardUrl = new URL(tab.graph.url);
-    const boardServer = this.getBoardServerForURL(boardUrl);
-    if (!boardServer) {
-      return { result: false, error: "Unable to save" };
+    const userInitiated = timeout !== 0;
+    const boardServerAutosaves = !!tab?.boardServer?.capabilities.autosave;
+    const useBoardServerEvents = !!tab?.boardServer?.capabilities.events;
+
+    if (timeout !== 0 && !boardServerAutosaves) {
+      const saveId = globalThis.crypto.randomUUID();
+      this.#tabSaveId.set(tab.id, saveId);
+      await new Promise((r) => setTimeout(r, timeout));
+
+      // Check the tab still exists.
+      if (!this.tabs.has(tab.id)) {
+        return noSave;
+      }
+
+      // If the stored save ID has changed then the user has made a newer change
+      // and there is another save pending; therefore, ignore this request.
+      const storedSaveId = this.#tabSaveId.get(tab.id);
+      if (!storedSaveId || storedSaveId !== saveId) {
+        return noSave;
+      }
+
+      this.#tabSaveId.delete(tab.id);
     }
 
-    const capabilities = boardServer.canProvide(boardUrl);
-    if (!capabilities || !capabilities.save) {
-      return { result: false, error: "Unable to save" };
+    const saveStatus = this.#tabSaveStatus.get(tab.id);
+    if (
+      (saveStatus &&
+        saveStatus === BreadboardUI.Types.BOARD_SAVE_STATUS.SAVING) ||
+      !this.canSave(tab.id)
+    ) {
+      return noSave;
     }
 
-    const preview = await this.#toSVGPreview(tab.graph);
-    if (preview) {
+    let toastId;
+    if (messages) {
+      toastId = globalThis.crypto.randomUUID();
+      this.dispatchEvent(
+        new RuntimeToastEvent(
+          toastId,
+          BreadboardUI.Events.ToastType.PENDING,
+          messages.start,
+          true
+        )
+      );
+    }
+
+    if (!useBoardServerEvents) {
+      this.#tabSaveStatus.set(
+        tab.id,
+        BreadboardUI.Types.BOARD_SAVE_STATUS.SAVING
+      );
+
+      this.dispatchEvent(new RuntimeBoardSaveStatusChangeEvent());
+    }
+
+    try {
+      // Remove the legacy SVG thumbnail.
       tab.graph.assets ??= {};
-      tab.graph.assets["@@thumbnail"] = {
-        metadata: {
-          title: "Thumbnail",
-          type: "file",
-        },
-        data: preview,
-      };
+      delete tab.graph.assets["@@thumbnail"];
+
+      const boardUrl = new URL(tab.graph.url);
+      const boardServer = this.getBoardServerForURL(boardUrl);
+      if (!boardServer) {
+        return noSave;
+      }
+
+      const capabilities = boardServer.canProvide(boardUrl);
+      if (!capabilities || !capabilities.save) {
+        return noSave;
+      }
+
+      const result = await boardServer.save(boardUrl, tab.graph, userInitiated);
+
+      if (toastId && messages) {
+        this.dispatchEvent(
+          new RuntimeToastEvent(
+            toastId,
+            BreadboardUI.Events.ToastType.INFORMATION,
+            messages.end,
+            false
+          )
+        );
+      }
+
+      if (!useBoardServerEvents) {
+        this.#tabSaveStatus.set(
+          tab.id,
+          BreadboardUI.Types.BOARD_SAVE_STATUS.SAVED
+        );
+        this.dispatchEvent(new RuntimeBoardSaveStatusChangeEvent());
+        return result;
+      }
+
+      if (!result) {
+        this.#tabSaveStatus.set(
+          tab.id,
+          BreadboardUI.Types.BOARD_SAVE_STATUS.ERROR
+        );
+        this.dispatchEvent(new RuntimeBoardSaveStatusChangeEvent());
+        return result;
+      }
+
+      return result;
+    } catch {
+      this.#tabSaveStatus.set(
+        tab.id,
+        BreadboardUI.Types.BOARD_SAVE_STATUS.ERROR
+      );
+      this.dispatchEvent(new RuntimeBoardSaveStatusChangeEvent());
     }
 
-    return boardServer.save(boardUrl, tab.graph, userInitiated);
+    return noSave;
   }
 
   async saveAs(

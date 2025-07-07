@@ -202,12 +202,7 @@ export class Main extends SignalWatcher(LitElement) {
   readonly #feedbackPanelRef: Ref<BreadboardUI.Elements.FeedbackPanel> =
     createRef();
 
-  #tabSaveId = new Map<
-    TabId,
-    ReturnType<typeof globalThis.crypto.randomUUID>
-  >();
-  #tabSaveStatus = new Map<TabId, BreadboardUI.Types.BOARD_SAVE_STATUS>();
-  #tabBoardStatus = new Map<TabId, BreadboardUI.Types.STATUS>();
+  #boardRunStatus = new Map<TabId, BreadboardUI.Types.STATUS>();
   #boardServers: BoardServer[];
   #settings: SettingsStore | null;
   #secretsHelper: SecretsHelper | null = null;
@@ -449,6 +444,13 @@ export class Main extends SignalWatcher(LitElement) {
           this.graphTopologyUpdateId++;
         });
 
+        this.#runtime.board.addEventListener(
+          Runtime.Events.RuntimeToastEvent.eventName,
+          (evt: Runtime.Events.RuntimeToastEvent) => {
+            this.toast(evt.message, evt.toastType, evt.persistent, evt.toastId);
+          }
+        );
+
         this.#runtime.select.addEventListener(
           Runtime.Events.RuntimeSelectionChangeEvent.eventName,
           (evt: Runtime.Events.RuntimeSelectionChangeEvent) => {
@@ -479,29 +481,11 @@ export class Main extends SignalWatcher(LitElement) {
 
         this.#runtime.edit.addEventListener(
           Runtime.Events.RuntimeBoardEditEvent.eventName,
-          (_evt: Runtime.Events.RuntimeBoardEditEvent) => {
-            this.requestUpdate();
-
-            const shouldAutoSave = this.#settings?.getItem(
-              BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
-              "Auto Save Boards"
-            ) ?? { value: false };
-
-            if (!shouldAutoSave.value) {
-              if (this.#tab) {
-                this.#tabSaveStatus.set(
-                  this.#tab.id,
-                  BreadboardUI.Types.BOARD_SAVE_STATUS.UNSAVED
-                );
-              }
-              return;
-            }
-
-            this.#attemptBoardSave(
-              this.#tab,
-              Strings.from("STATUS_SAVING_PROJECT"),
-              false,
-              BOARD_AUTO_SAVE_TIMEOUT
+          () => {
+            this.#runtime.board.save(
+              this.#tab?.id ?? null,
+              BOARD_AUTO_SAVE_TIMEOUT,
+              null
             );
           }
         );
@@ -618,13 +602,13 @@ export class Main extends SignalWatcher(LitElement) {
             }
 
             if (
-              this.#tabBoardStatus.get(evt.tabId) ===
+              this.#boardRunStatus.get(evt.tabId) ===
               BreadboardUI.Types.STATUS.STOPPED
             ) {
               return;
             }
 
-            this.#tabBoardStatus.set(
+            this.#boardRunStatus.set(
               evt.tabId,
               BreadboardUI.Types.STATUS.STOPPED
             );
@@ -635,13 +619,7 @@ export class Main extends SignalWatcher(LitElement) {
 
         this.#runtime.board.addEventListener(
           Runtime.Events.RuntimeBoardSaveStatusChangeEvent.eventName,
-          ({
-            status,
-            url,
-          }: Runtime.Events.RuntimeBoardSaveStatusChangeEvent) => {
-            if (!this.#tab || this.#tab.graph.url !== url) return;
-
-            this.#tabSaveStatus.set(this.#tab.id, status);
+          () => {
             this.requestUpdate();
           }
         );
@@ -670,7 +648,7 @@ export class Main extends SignalWatcher(LitElement) {
               }
 
               case "start": {
-                this.#tabBoardStatus.set(
+                this.#boardRunStatus.set(
                   evt.tabId,
                   BreadboardUI.Types.STATUS.RUNNING
                 );
@@ -678,7 +656,7 @@ export class Main extends SignalWatcher(LitElement) {
               }
 
               case "end": {
-                this.#tabBoardStatus.set(
+                this.#boardRunStatus.set(
                   evt.tabId,
                   BreadboardUI.Types.STATUS.STOPPED
                 );
@@ -691,7 +669,7 @@ export class Main extends SignalWatcher(LitElement) {
                   BreadboardUI.Utils.formatError(runEvt.data.error),
                   BreadboardUI.Events.ToastType.ERROR
                 );
-                this.#tabBoardStatus.set(
+                this.#boardRunStatus.set(
                   evt.tabId,
                   BreadboardUI.Types.STATUS.STOPPED
                 );
@@ -699,7 +677,7 @@ export class Main extends SignalWatcher(LitElement) {
               }
 
               case "resume": {
-                this.#tabBoardStatus.set(
+                this.#boardRunStatus.set(
                   evt.tabId,
                   BreadboardUI.Types.STATUS.RUNNING
                 );
@@ -707,7 +685,7 @@ export class Main extends SignalWatcher(LitElement) {
               }
 
               case "pause": {
-                this.#tabBoardStatus.set(
+                this.#boardRunStatus.set(
                   evt.tabId,
                   BreadboardUI.Types.STATUS.PAUSED
                 );
@@ -1038,22 +1016,6 @@ export class Main extends SignalWatcher(LitElement) {
       return;
     }
 
-    const isCtrlCommand = BreadboardUI.Utils.isCtrlCommand(evt);
-
-    // Special-case the Save because it's not entirely handled by the runtime
-    // yet. When it is we should be able to just call it for the save action and
-    // remove the attemptBoardSave call.
-    if (evt.key === "s" && isCtrlCommand) {
-      evt.preventDefault();
-      this.#handlingShortcut = true;
-      await this.#attemptBoardSave(
-        this.#tab,
-        Strings.from("STATUS_PROJECT_SAVED")
-      );
-      this.#handlingShortcut = false;
-      return;
-    }
-
     // Check if there's an input preference before actioning any main keyboard
     // command.
     if (
@@ -1083,6 +1045,7 @@ export class Main extends SignalWatcher(LitElement) {
       originalEvent: evt,
       pointerLocation: this.#lastPointerPosition,
       settings: this.#settings,
+      strings: Strings,
     } as const;
 
     for (const [keys, command] of keyboardCommands) {
@@ -1162,123 +1125,6 @@ export class Main extends SignalWatcher(LitElement) {
     // Recreating the signin adapter here will trigger a re-render with the
     // updated state, which will cause us to show the sign-in dialog.
     this.signinAdapter = this.#createSigninAdapter();
-  }
-
-  async #clearBoardSave() {
-    if (!this.#tab) {
-      return;
-    }
-
-    const tabToSave = this.#tab;
-    this.#tabSaveId.delete(tabToSave.id);
-  }
-
-  async #attemptBoardSave(
-    tabToSave = this.#tab,
-    message = Strings.from("STATUS_PROJECT_SAVED"),
-    ackUser = true,
-    timeout = 0
-  ) {
-    if (!tabToSave) {
-      return;
-    }
-
-    if (tabToSave.readOnly) {
-      return;
-    }
-
-    const userInitiated = !timeout;
-    const boardServerAutosaves =
-      !!this.#tab?.boardServer?.capabilities.autosave;
-    const useBoardServerEvents = !!this.#tab?.boardServer?.capabilities.events;
-
-    if (timeout !== 0 && !boardServerAutosaves) {
-      const saveId = globalThis.crypto.randomUUID();
-      this.#tabSaveId.set(tabToSave.id, saveId);
-      await new Promise((r) => setTimeout(r, timeout));
-
-      // Check the tab still exists.
-      if (!this.#runtime.board.tabs.has(tabToSave.id)) {
-        return;
-      }
-
-      // If the stored save ID has changed then the user has made a newer change
-      // and there is another save pending; therefore, ignore this request.
-      const storedSaveId = this.#tabSaveId.get(tabToSave.id);
-      if (!storedSaveId || storedSaveId !== saveId) {
-        return;
-      }
-
-      this.#tabSaveId.delete(tabToSave.id);
-    }
-
-    const saveStatus = this.#tabSaveStatus.get(tabToSave.id);
-    if (
-      saveStatus &&
-      saveStatus === BreadboardUI.Types.BOARD_SAVE_STATUS.SAVING
-    ) {
-      return;
-    }
-
-    if (!this.#runtime.board.canSave(tabToSave.id)) {
-      return;
-    }
-
-    let id;
-    if (ackUser) {
-      id = this.toast(
-        Strings.from("STATUS_SAVING_PROJECT"),
-        BreadboardUI.Events.ToastType.PENDING,
-        true
-      );
-    }
-
-    if (!useBoardServerEvents) {
-      this.#tabSaveStatus.set(
-        tabToSave.id,
-        BreadboardUI.Types.BOARD_SAVE_STATUS.SAVING
-      );
-      this.requestUpdate();
-    }
-
-    try {
-      const { result } = await this.#runtime.board.save(
-        tabToSave.id,
-        userInitiated
-      );
-
-      if (!useBoardServerEvents) {
-        this.#tabSaveStatus.set(
-          tabToSave.id,
-          BreadboardUI.Types.BOARD_SAVE_STATUS.SAVED
-        );
-        this.requestUpdate();
-      }
-
-      if (!result) {
-        this.#tabSaveStatus.set(
-          tabToSave.id,
-          BreadboardUI.Types.BOARD_SAVE_STATUS.ERROR
-        );
-        this.requestUpdate();
-        return;
-      }
-
-      if (ackUser && id) {
-        this.toast(
-          message,
-          BreadboardUI.Events.ToastType.INFORMATION,
-          false,
-          id
-        );
-      }
-    } catch {
-      this.#tabSaveStatus.set(
-        tabToSave.id,
-        BreadboardUI.Types.BOARD_SAVE_STATUS.ERROR
-      );
-      this.requestUpdate();
-    }
   }
 
   async #attemptBoardSaveAsAndNavigate(
@@ -1756,7 +1602,7 @@ export class Main extends SignalWatcher(LitElement) {
     let tabStatus = BreadboardUI.Types.STATUS.STOPPED;
     if (this.#tab) {
       tabStatus =
-        this.#tabBoardStatus.get(this.#tab.id) ??
+        this.#boardRunStatus.get(this.#tab.id) ??
         BreadboardUI.Types.STATUS.STOPPED;
     }
 
@@ -1789,7 +1635,7 @@ export class Main extends SignalWatcher(LitElement) {
       : false;
 
     const saveStatus = this.#tab
-      ? (this.#tabSaveStatus.get(this.#tab.id) ??
+      ? (this.#runtime.board.saveStatus(this.#tab.id) ??
         BreadboardUI.Types.BOARD_SAVE_STATUS.SAVED)
       : BreadboardUI.Types.BOARD_SAVE_STATUS.ERROR;
 
@@ -2078,7 +1924,11 @@ export class Main extends SignalWatcher(LitElement) {
         this.#lastPointerPosition.y = evt.y;
       }}
       @bbinteraction=${() => {
-        this.#clearBoardSave();
+        if (!this.#tab) {
+          return;
+        }
+
+        this.#runtime.board.clearPendingBoardSave(this.#tab.id);
       }}
       @bbworkspacenewitemcreaterequest=${() => {
         this.#uiState.show.add("NewWorkspaceItemOverlay");

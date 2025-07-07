@@ -16,6 +16,7 @@ export interface KeyboardCommandDeps {
   originalEvent: KeyboardEvent;
   pointerLocation: { x: number; y: number };
   settings: SettingsStore | null;
+  strings: ReturnType<typeof BreadboardUI.Strings.forSection>;
 }
 
 export interface KeyboardCommand {
