@@ -10,20 +10,19 @@ import {
   Outcome,
   OutputValues,
 } from "@breadboard-ai/types";
+import { err } from "@breadboard-ai/utils";
 import {
   ExecutionPlan,
-  NodeState,
   OrchestratorProgress,
   OrchestratorState,
   PlanNodeInfo,
   Task,
 } from "./types.js";
-import { err } from "@breadboard-ai/utils";
 
 export { Orchestrator };
 
 /**
- * The Orchestrator acts as the central state machine running graphs.
+ * The Orchestrator acts as the state machine for running a graph.
  * Its primary responsibilities are:
  *
  * 1.  Lifecycle Management: Starting, resetting, and managing the overall
@@ -69,15 +68,6 @@ class Orchestrator {
       return err((e as Error).message);
     }
     this.#currentStage = 0;
-  }
-
-  #getNodeState(id: NodeIdentifier): NodeState {
-    const node = this.#state.get(id);
-    if (!node) {
-      console.warn(`While retrieving node state, node "${id}" was not found`);
-      return "failed";
-    }
-    return node.state;
   }
 
   /**
@@ -178,6 +168,7 @@ class Orchestrator {
           state.inputs = inputs;
         }
       });
+      this.#currentStage = nextStageIndex;
 
       // Propagate outputs from the current stage as inputs for the next stage.
       return "advanced";
