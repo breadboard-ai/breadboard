@@ -203,3 +203,33 @@ export const RemixRoute: EventRoute<"board.remix"> = {
     return false;
   },
 };
+
+export const DeleteRoute: EventRoute<"board.delete"> = {
+  event: "board.delete",
+
+  async do(deps) {
+    const { tab, runtime, originalEvent } = deps;
+    const boardServer = runtime.board.getBoardServerForURL(
+      new URL(originalEvent.detail.url)
+    );
+    if (!boardServer) {
+      return false;
+    }
+
+    if (!confirm(originalEvent.detail.messages.query)) {
+      return false;
+    }
+
+    await runtime.board.delete(
+      boardServer.name,
+      originalEvent.detail.url,
+      originalEvent.detail.messages
+    );
+
+    if (tab) {
+      runtime.select.deselectAll(tab.id, runtime.select.generateId());
+    }
+
+    return false;
+  },
+};

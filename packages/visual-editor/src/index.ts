@@ -1116,48 +1116,6 @@ export class Main extends SignalWatcher(LitElement) {
     }
   }
 
-  async #attemptBoardDelete(
-    boardServerName: string,
-    url: string,
-    isActive: boolean
-  ) {
-    if (!confirm(Strings.from("QUERY_DELETE_PROJECT"))) {
-      return;
-    }
-
-    const id = this.snackbar(
-      Strings.from("STATUS_DELETING_PROJECT"),
-      BreadboardUI.Types.SnackType.PENDING,
-      [],
-      true
-    );
-
-    const { result, error } = await this.#runtime.board.delete(
-      boardServerName,
-      url
-    );
-
-    if (result) {
-      this.unsnackbar();
-    } else {
-      this.snackbar(
-        error || Strings.from("ERROR_GENERIC"),
-        BreadboardUI.Types.SnackType.ERROR,
-        [],
-        false,
-        id
-      );
-    }
-
-    if (this.#tab && isActive) {
-      this.#runtime.select.deselectAll(
-        this.#tab.id,
-        this.#runtime.select.generateId()
-      );
-      this.#runtime.board.closeTab(this.#tab.id);
-    }
-  }
-
   untoast(id: string | undefined) {
     if (!id) {
       return;
@@ -1631,16 +1589,6 @@ export class Main extends SignalWatcher(LitElement) {
       .boardServers=${this.#boardServers}
       .showAdditionalSources=${renderValues.showExperimentalComponents}
       .filter=${this.#uiState.projectFilter}
-      @bbboarddelete=${async (evt: BreadboardUI.Events.BoardDeleteEvent) => {
-        const boardServer = this.#runtime.board.getBoardServerForURL(
-          new URL(evt.url)
-        );
-        if (!boardServer) {
-          return;
-        }
-
-        await this.#attemptBoardDelete(boardServer.name, evt.url, false);
-      }}
       @bbgraphboardserveradd=${() => {
         this.#uiState.show.add("BoardServerAddOverlay");
       }}
@@ -1681,15 +1629,6 @@ export class Main extends SignalWatcher(LitElement) {
         if (boardServer.renewAccess) {
           await boardServer.renewAccess();
         }
-      }}
-      @bbgraphboardserverdeleterequest=${async (
-        evt: BreadboardUI.Events.GraphBoardServerDeleteRequestEvent
-      ) => {
-        await this.#attemptBoardDelete(
-          evt.boardServerName,
-          evt.url,
-          evt.isActive
-        );
       }}
     ></bb-project-listing>`;
   }
@@ -2115,6 +2054,31 @@ export class Main extends SignalWatcher(LitElement) {
     }
   }
 
+  async #invokeDeleteEventRouteWith(url: string) {
+    const deleteRoute = eventRoutes.get("board.delete");
+    console.log(deleteRoute);
+    const refresh = await deleteRoute?.do(
+      this.#collectEventRouteDeps(
+        new BreadboardUI.Events.StateEvent({
+          eventType: "board.delete",
+          messages: {
+            query: Strings.from("QUERY_DELETE_PROJECT"),
+            start: Strings.from("STATUS_DELETING_PROJECT"),
+            end: Strings.from("STATUS_PROJECT_DELETED"),
+            error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
+          },
+          url,
+        })
+      )
+    );
+
+    if (refresh) {
+      requestAnimationFrame(() => {
+        this.requestUpdate();
+      });
+    }
+  }
+
   #renderSnackbar() {
     return html`<bb-snackbar
       ${ref(this.#snackbarRef)}
@@ -2220,22 +2184,11 @@ export class Main extends SignalWatcher(LitElement) {
           }
 
           case "delete": {
-            if (!this.#tab || !this.#tab.graph || !this.#tab.graph.url) {
+            if (!this.#tab?.graph || !this.#tab.graph.url) {
               return;
             }
 
-            const boardServer = this.#runtime.board.getBoardServerForURL(
-              new URL(this.#tab.graph.url)
-            );
-            if (!boardServer) {
-              return;
-            }
-
-            await this.#attemptBoardDelete(
-              boardServer.name,
-              this.#tab.graph.url,
-              true
-            );
+            this.#invokeDeleteEventRouteWith(this.#tab.graph.url);
             break;
           }
 
@@ -2247,7 +2200,7 @@ export class Main extends SignalWatcher(LitElement) {
             this.#invokeRemixEventRouteWith(this.#tab.graph.url, {
               start: Strings.from("STATUS_GENERIC_WORKING"),
               end: Strings.from("STATUS_PROJECT_CREATED"),
-              error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
+              error: Strings.from("ERROR_GENERIC"),
             });
             break;
           }
