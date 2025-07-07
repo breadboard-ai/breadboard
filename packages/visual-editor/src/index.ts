@@ -2056,7 +2056,6 @@ export class Main extends SignalWatcher(LitElement) {
 
   async #invokeDeleteEventRouteWith(url: string) {
     const deleteRoute = eventRoutes.get("board.delete");
-    console.log(deleteRoute);
     const refresh = await deleteRoute?.do(
       this.#collectEventRouteDeps(
         new BreadboardUI.Events.StateEvent({
