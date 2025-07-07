@@ -5,7 +5,7 @@
  */
 
 import { Edge, GraphDescriptor } from "@breadboard-ai/types";
-import { ExecutionPlan, PlanNodeInfo } from "./types.js";
+import { OrchestrationPlan, PlanNodeInfo } from "./types.js";
 
 export { createPlan };
 
@@ -15,7 +15,7 @@ export { createPlan };
  * strongly connected component is represented with a single node
  * that has a "folded" tag.
  */
-function createPlan(graph: GraphDescriptor): ExecutionPlan {
+function createPlan(graph: GraphDescriptor): OrchestrationPlan {
   const { nodes, edges } = graph;
 
   if (!nodes || nodes.length === 0) {

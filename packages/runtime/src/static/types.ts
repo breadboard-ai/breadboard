@@ -8,9 +8,6 @@ import {
   Edge,
   InputValues,
   NodeDescriptor,
-  NodeIdentifier,
-  Outcome,
-  OutputValues,
   PortIdentifier,
 } from "@breadboard-ai/types";
 
@@ -18,7 +15,7 @@ import {
  * The result of generating a staged execution plan from a condensed
  * GraphDescriptor (no cycles) using topological sort.
  */
-export type ExecutionPlan = {
+export type OrchestrationPlan = {
   /**
    * An array of stages in the execution plan.
    * Each stage is a group of nodes that can be executed in parallel.
@@ -49,18 +46,6 @@ export type PlanNodeInfo = {
 };
 
 /**
- * Encapsulates the logic of the node, consuming inputs and producing outputs.
- * The distinction between “static” and “vm” execution is handled by this type.
- * The inputs are all port values of the dependencies.
- */
-export type NodeLogic = {
-  invoke(
-    node: NodeDescriptor,
-    inputs: InputValues
-  ): Promise<Outcome<OutputValues>>;
-};
-
-/**
  * Possible states of a node while in Executor.
  */
 export type NodeState =
@@ -74,16 +59,6 @@ export type NodeState =
   | "skipped"
   // Node logic produced an error
   | "failed";
-
-export type OrchestratorNodeInfo = {
-  readonly plan: PlanNodeInfo;
-  readonly stage: number;
-  state: NodeState;
-  inputs: InputValues | null;
-  outputs: OutputValues | null;
-};
-
-export type OrchestratorState = Map<NodeIdentifier, OrchestratorNodeInfo>;
 
 export type OrchestratorProgress =
   /**
@@ -105,4 +80,9 @@ export type OrchestratorProgress =
 export type Task = {
   node: NodeDescriptor;
   inputs: InputValues;
+};
+
+export type OrchestrationNodeInfo = {
+  state: NodeState;
+  node: NodeDescriptor;
 };

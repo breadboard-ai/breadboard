@@ -10,16 +10,27 @@ import {
   Outcome,
   OutputValues,
 } from "@breadboard-ai/types";
-import { err } from "@breadboard-ai/utils";
+import { err, ok } from "@breadboard-ai/utils";
 import {
-  ExecutionPlan,
+  OrchestrationPlan,
+  NodeState,
   OrchestratorProgress,
-  OrchestratorState,
   PlanNodeInfo,
   Task,
+  OrchestrationNodeInfo,
 } from "./types.js";
 
 export { Orchestrator };
+
+type NodeInternalState = {
+  readonly plan: PlanNodeInfo;
+  readonly stage: number;
+  state: NodeState;
+  inputs: InputValues | null;
+  outputs: OutputValues | null;
+};
+
+type OrchestratorState = Map<NodeIdentifier, NodeInternalState>;
 
 /**
  * The Orchestrator acts as the state machine for running a graph.
@@ -41,7 +52,7 @@ class Orchestrator {
   readonly #state: OrchestratorState = new Map();
   #currentStage: number = 0;
 
-  constructor(public readonly plan: ExecutionPlan) {
+  constructor(public readonly plan: OrchestrationPlan) {
     this.reset();
   }
 
@@ -68,6 +79,19 @@ class Orchestrator {
       return err((e as Error).message);
     }
     this.#currentStage = 0;
+  }
+
+  /**
+   * Provides a way to inspect the current state of nodes as they are being
+   * orchestrated.
+   * @returns a map representing current state of all nodes
+   */
+  state(): Map<NodeIdentifier, OrchestrationNodeInfo> {
+    return new Map(
+      Array.from(this.#state.entries()).map(([id, internal]) => {
+        return [id, { node: internal.plan.node, state: internal.state }];
+      })
+    );
   }
 
   /**
@@ -200,6 +224,17 @@ class Orchestrator {
     } else {
       state.state = "succeeded";
     }
-    return this.#tryAdvancingStage();
+    let progress;
+    for (;;) {
+      progress = this.#tryAdvancingStage();
+      if (!ok(progress)) return progress;
+      if (progress === "finished") return progress;
+
+      const hasWork = this.currentTasks();
+      if (!ok(hasWork)) return hasWork;
+
+      if (hasWork.length > 0) break;
+    }
+    return progress;
   }
 }
