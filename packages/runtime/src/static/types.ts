@@ -5,10 +5,10 @@
  */
 
 import {
+  Edge,
   InputValues,
   NodeDescriptor,
   NodeIdentifier,
-  NodeValue,
   Outcome,
   OutputValues,
   PortIdentifier,
@@ -21,24 +21,11 @@ import {
 export type ExecutionPlan = {
   /**
    * An array of stages in the execution plan.
+   * Each stage is a group of nodes that can be executed in parallel.
    */
-  stages: PlanStage[];
+  stages: PlanNodeInfo[][];
 };
 
-/**
- * Represents a static stage in the execution plan: a group of nodes that can
- * be executed in parallel. It is called "static", because the nodes to run
- * in this stage are statically determined.
- */
-export type StaticStage = {
-  type: "static";
-  /**
-   * A group of nodes that can be executed in parallel.
-   */
-  nodes: PlanNodeInfo[];
-};
-
-export type Dependency = { from: PlanNodeInfo; in: PortIdentifier };
 export type Dependent = { to: PlanNodeInfo; out: PortIdentifier };
 
 /**
@@ -53,31 +40,13 @@ export type PlanNodeInfo = {
   /**
    * The nodes and ports in next stage(s) that depend on this node.
    */
-  downstream: Dependent[];
+  downstream: Edge[];
   /**
    * The nodes and ports in the previous stage(s) that are dependencies for
    * this node.
    */
-  upstream: Dependency[];
+  upstream: Edge[];
 };
-
-/**
- * Represents a "virtual machine" stage in the execution plan: a node in the
- * graph that points into a strongly connected component (SCC) within the
- * graph. The SCC is represented by a subgraph.
- * Running this stage requires a virtual machine to run, since the SCC contains
- * cycles and its execution is non-deterministic.
- */
-export type VmStage = {
-  type: "vm";
-  /**
-   * A node within the graph that refers to a subgraph (the type of this node
-   * will be "#<id of subgraph>"") that contains an SCC.
-   */
-  node: PlanNodeInfo;
-};
-
-export type PlanStage = StaticStage | VmStage;
 
 /**
  * Encapsulates the logic of the node, consuming inputs and producing outputs.
@@ -99,23 +68,36 @@ export type NodeState =
   | "waiting"
   // Node dependencies met, queued for execution
   | "ready"
-  // Node logic is being invoked
-  | "running"
   // Node logic invocation completed successfully, outputs written to the cache.
   | "succeeded"
-  // The node's valid output already exists in the cache; execution is skipped.
-  | "cached"
   // Node invocation is bypassed (usually due to conditional routing)
   | "skipped"
   // Node logic produced an error
   | "failed";
 
-export type ExecutionNodeInfo = {
-  id: NodeIdentifier;
+export type OrchestratorNodeInfo = {
+  readonly plan: PlanNodeInfo;
+  readonly stage: number;
   state: NodeState;
+  inputs: InputValues | null;
+  outputs: OutputValues | null;
 };
 
-export type ResultCache = Map<NodeIdentifier, Map<PortIdentifier, NodeValue>>;
+export type OrchestratorState = Map<NodeIdentifier, OrchestratorNodeInfo>;
+
+export type OrchestratorProgress =
+  /**
+   * The orchestrator is at a stage, and there are still tasks to be completed.
+   */
+  | "working"
+  /**
+   * The orchestrator finished going through all stages
+   */
+  | "finished"
+  /**
+   * The orchestrator just advanced to the next stage
+   */
+  | "advanced";
 
 /**
  * A task, produced by the orchestrator.

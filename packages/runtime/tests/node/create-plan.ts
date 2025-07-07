@@ -31,11 +31,9 @@ describe("createPlan function", () => {
       const result = createPlan(graph);
 
       assert.equal(result.stages.length, 1);
-      assert.equal(result.stages[0].type, "static");
-      if (result.stages[0].type === "static") {
-        assert.equal(result.stages[0].nodes.length, 1);
-        assert.equal(result.stages[0].nodes[0].node.id, "a");
-      }
+
+      assert.equal(result.stages[0].length, 1);
+      assert.equal(result.stages[0][0].node.id, "a");
     });
 
     it("should handle multiple nodes with no edges", () => {
@@ -50,14 +48,11 @@ describe("createPlan function", () => {
       const result = createPlan(graph);
 
       assert.equal(result.stages.length, 1);
-      assert.equal(result.stages[0].type, "static");
-      if (result.stages[0].type === "static") {
-        assert.equal(result.stages[0].nodes.length, 3);
-        const nodeIds = result.stages[0].nodes.map((n) => n.node.id);
-        assert.ok(nodeIds.includes("a"));
-        assert.ok(nodeIds.includes("b"));
-        assert.ok(nodeIds.includes("c"));
-      }
+      assert.equal(result.stages[0].length, 3);
+      const nodeIds = result.stages[0].map((n) => n.node.id);
+      assert.ok(nodeIds.includes("a"));
+      assert.ok(nodeIds.includes("b"));
+      assert.ok(nodeIds.includes("c"));
     });
   });
 
@@ -79,25 +74,16 @@ describe("createPlan function", () => {
       assert.equal(result.stages.length, 3);
 
       // Stage 1: node a
-      assert.equal(result.stages[0].type, "static");
-      if (result.stages[0].type === "static") {
-        assert.equal(result.stages[0].nodes.length, 1);
-        assert.equal(result.stages[0].nodes[0].node.id, "a");
-      }
+      assert.equal(result.stages[0].length, 1);
+      assert.equal(result.stages[0][0].node.id, "a");
 
       // Stage 2: node b
-      assert.equal(result.stages[1].type, "static");
-      if (result.stages[1].type === "static") {
-        assert.equal(result.stages[1].nodes.length, 1);
-        assert.equal(result.stages[1].nodes[0].node.id, "b");
-      }
+      assert.equal(result.stages[1].length, 1);
+      assert.equal(result.stages[1][0].node.id, "b");
 
       // Stage 3: node c
-      assert.equal(result.stages[2].type, "static");
-      if (result.stages[2].type === "static") {
-        assert.equal(result.stages[2].nodes.length, 1);
-        assert.equal(result.stages[2].nodes[0].node.id, "c");
-      }
+      assert.equal(result.stages[2].length, 1);
+      assert.equal(result.stages[2][0].node.id, "c");
     });
 
     it("should handle longer linear chains", () => {
@@ -123,11 +109,8 @@ describe("createPlan function", () => {
       // Each stage should have one node in sequence
       const expectedNodes = ["n1", "n2", "n3", "n4", "n5"];
       result.stages.forEach((stage, index) => {
-        assert.equal(stage.type, "static");
-        if (stage.type === "static") {
-          assert.equal(stage.nodes.length, 1);
-          assert.equal(stage.nodes[0].node.id, expectedNodes[index]);
-        }
+        assert.equal(stage.length, 1);
+        assert.equal(stage[0].node.id, expectedNodes[index]);
       });
     });
   });
@@ -153,27 +136,18 @@ describe("createPlan function", () => {
       assert.equal(result.stages.length, 3);
 
       // Stage 1: start node
-      assert.equal(result.stages[0].type, "static");
-      if (result.stages[0].type === "static") {
-        assert.equal(result.stages[0].nodes.length, 1);
-        assert.equal(result.stages[0].nodes[0].node.id, "start");
-      }
+      assert.equal(result.stages[0].length, 1);
+      assert.equal(result.stages[0][0].node.id, "start");
 
       // Stage 2: parallel branches
-      assert.equal(result.stages[1].type, "static");
-      if (result.stages[1].type === "static") {
-        assert.equal(result.stages[1].nodes.length, 2);
-        const nodeIds = result.stages[1].nodes.map((n) => n.node.id);
-        assert.ok(nodeIds.includes("branch1"));
-        assert.ok(nodeIds.includes("branch2"));
-      }
+      assert.equal(result.stages[1].length, 2);
+      const nodeIds = result.stages[1].map((n) => n.node.id);
+      assert.ok(nodeIds.includes("branch1"));
+      assert.ok(nodeIds.includes("branch2"));
 
       // Stage 3: end node
-      assert.equal(result.stages[2].type, "static");
-      if (result.stages[2].type === "static") {
-        assert.equal(result.stages[2].nodes.length, 1);
-        assert.equal(result.stages[2].nodes[0].node.id, "end");
-      }
+      assert.equal(result.stages[2].length, 1);
+      assert.equal(result.stages[2][0].node.id, "end");
     });
 
     it("should handle multiple parallel branches", () => {
@@ -202,15 +176,12 @@ describe("createPlan function", () => {
       assert.equal(result.stages.length, 3);
 
       // Check parallel processing stage
-      assert.equal(result.stages[1].type, "static");
-      if (result.stages[1].type === "static") {
-        assert.equal(result.stages[1].nodes.length, 4);
-        const nodeIds = result.stages[1].nodes.map((n) => n.node.id);
-        assert.ok(nodeIds.includes("p1"));
-        assert.ok(nodeIds.includes("p2"));
-        assert.ok(nodeIds.includes("p3"));
-        assert.ok(nodeIds.includes("p4"));
-      }
+      assert.equal(result.stages[1].length, 4);
+      const nodeIds = result.stages[1].map((n) => n.node.id);
+      assert.ok(nodeIds.includes("p1"));
+      assert.ok(nodeIds.includes("p2"));
+      assert.ok(nodeIds.includes("p3"));
+      assert.ok(nodeIds.includes("p4"));
     });
   });
 
@@ -235,13 +206,10 @@ describe("createPlan function", () => {
       assert.equal(result.stages.length, 3);
 
       // Verify parallel processing happens in middle stage
-      assert.equal(result.stages[1].type, "static");
-      if (result.stages[1].type === "static") {
-        assert.equal(result.stages[1].nodes.length, 2);
-        const nodeIds = result.stages[1].nodes.map((n) => n.node.id);
-        assert.ok(nodeIds.includes("left"));
-        assert.ok(nodeIds.includes("right"));
-      }
+      assert.equal(result.stages[1].length, 2);
+      const nodeIds = result.stages[1].map((n) => n.node.id);
+      assert.ok(nodeIds.includes("left"));
+      assert.ok(nodeIds.includes("right"));
     });
 
     it("should handle complex multi-stage graphs", () => {
@@ -271,87 +239,8 @@ describe("createPlan function", () => {
       assert.equal(result.stages.length, 5);
 
       // Check that each stage has the right number of nodes
-      const stageSizes = result.stages.map((stage) =>
-        stage.type === "static" ? stage.nodes.length : 1
-      );
+      const stageSizes = result.stages.map((stage) => stage.length);
       assert.deepEqual(stageSizes, [1, 2, 1, 2, 1]);
-    });
-  });
-
-  describe("vm stages (strongly connected components)", () => {
-    it("should create vm stage for node with folded tag", () => {
-      const graph: GraphDescriptor = {
-        nodes: [
-          { id: "input", type: "input" },
-          { id: "scc_0", type: "subgraph", metadata: { tags: ["folded"] } },
-          { id: "output", type: "output" },
-        ],
-        edges: [
-          { from: "input", to: "scc_0", out: "data", in: "input" },
-          { from: "scc_0", to: "output", out: "result", in: "final" },
-        ],
-      };
-      const result = createPlan(graph);
-
-      assert.equal(result.stages.length, 3);
-
-      // Check that middle stage is a vm stage
-      assert.equal(result.stages[1].type, "vm");
-      if (result.stages[1].type === "vm") {
-        assert.equal(result.stages[1].node.node.id, "scc_0");
-      }
-    });
-
-    it("should handle multiple vm stages", () => {
-      const graph: GraphDescriptor = {
-        nodes: [
-          { id: "input", type: "input" },
-          { id: "scc_0", type: "subgraph", metadata: { tags: ["folded"] } },
-          { id: "scc_1", type: "subgraph", metadata: { tags: ["folded"] } },
-          { id: "output", type: "output" },
-        ],
-        edges: [
-          { from: "input", to: "scc_0", out: "data", in: "input1" },
-          { from: "input", to: "scc_1", out: "data", in: "input2" },
-          { from: "scc_0", to: "output", out: "result1", in: "merge1" },
-          { from: "scc_1", to: "output", out: "result2", in: "merge2" },
-        ],
-      };
-      const result = createPlan(graph);
-
-      // VM stages should run in parallel, so they create separate stages
-      assert.equal(result.stages.length, 4);
-
-      // Check that we have input, two vm stages, and output
-      assert.equal(result.stages[0].type, "static");
-      assert.equal(result.stages[1].type, "vm");
-      assert.equal(result.stages[2].type, "vm");
-      assert.equal(result.stages[3].type, "static");
-    });
-
-    it("should handle mixed static and vm stages", () => {
-      const graph: GraphDescriptor = {
-        nodes: [
-          { id: "input", type: "input" },
-          { id: "process", type: "process" },
-          { id: "scc_0", type: "subgraph", metadata: { tags: ["folded"] } },
-          { id: "output", type: "output" },
-        ],
-        edges: [
-          { from: "input", to: "process", out: "data", in: "input1" },
-          { from: "process", to: "scc_0", out: "processed", in: "input2" },
-          { from: "scc_0", to: "output", out: "result", in: "final" },
-        ],
-      };
-      const result = createPlan(graph);
-
-      assert.equal(result.stages.length, 4);
-
-      // Check stage types
-      assert.equal(result.stages[0].type, "static");
-      assert.equal(result.stages[1].type, "static");
-      assert.equal(result.stages[2].type, "vm");
-      assert.equal(result.stages[3].type, "static");
     });
   });
 
@@ -371,13 +260,10 @@ describe("createPlan function", () => {
       const result = createPlan(graph);
 
       const stage0 = result.stages[0];
-      if (stage0.type === "static") {
-        const nodeA = stage0.nodes[0];
-        assert.equal(nodeA.node.id, "a");
-        assert.equal(nodeA.downstream.length, 1);
-        assert.equal(nodeA.downstream[0].to.node.id, "b");
-        assert.equal(nodeA.downstream[0].out, "data");
-      }
+      const nodeA = stage0[0];
+      assert.equal(nodeA.node.id, "a");
+      assert.equal(nodeA.downstream.length, 1);
+      assert.equal(nodeA.downstream[0].out, "data");
     });
 
     it("should populate upstream dependencies", () => {
@@ -395,13 +281,10 @@ describe("createPlan function", () => {
       const result = createPlan(graph);
 
       const stage1 = result.stages[1];
-      if (stage1.type === "static") {
-        const nodeB = stage1.nodes[0];
-        assert.equal(nodeB.node.id, "b");
-        assert.equal(nodeB.upstream.length, 1);
-        assert.equal(nodeB.upstream[0].from.node.id, "a");
-        assert.equal(nodeB.upstream[0].in, "input");
-      }
+      const nodeB = stage1[0];
+      assert.equal(nodeB.node.id, "b");
+      assert.equal(nodeB.upstream.length, 1);
+      assert.equal(nodeB.upstream[0].in, "input");
     });
 
     it("should handle nodes with multiple dependencies", () => {
@@ -423,12 +306,10 @@ describe("createPlan function", () => {
       const result = createPlan(graph);
 
       const stage1 = result.stages[1];
-      if (stage1.type === "static") {
-        const nodeC = stage1.nodes[0];
-        assert.equal(nodeC.node.id, "c");
-        assert.equal(nodeC.upstream.length, 2);
-        assert.equal(nodeC.downstream.length, 2);
-      }
+      const nodeC = stage1[0];
+      assert.equal(nodeC.node.id, "c");
+      assert.equal(nodeC.upstream.length, 2);
+      assert.equal(nodeC.downstream.length, 2);
     });
   });
 
@@ -444,10 +325,7 @@ describe("createPlan function", () => {
       const result = createPlan(graph);
 
       assert.equal(result.stages.length, 1);
-      assert.equal(result.stages[0].type, "static");
-      if (result.stages[0].type === "static") {
-        assert.equal(result.stages[0].nodes.length, 2);
-      }
+      assert.equal(result.stages[0].length, 2);
     });
 
     it("should handle graphs with undefined edges", () => {
@@ -461,10 +339,7 @@ describe("createPlan function", () => {
       const result = createPlan(graph);
 
       assert.equal(result.stages.length, 1);
-      assert.equal(result.stages[0].type, "static");
-      if (result.stages[0].type === "static") {
-        assert.equal(result.stages[0].nodes.length, 2);
-      }
+      assert.equal(result.stages[0].length, 2);
     });
 
     it("should handle disconnected components", () => {
@@ -485,19 +360,17 @@ describe("createPlan function", () => {
       assert.equal(result.stages.length, 2);
 
       // First stage should have both starting nodes
-      assert.equal(result.stages[0].type, "static");
-      if (result.stages[0].type === "static") {
-        assert.equal(result.stages[0].nodes.length, 2);
-        const nodeIds = result.stages[0].nodes.map((n) => n.node.id);
+      {
+        assert.equal(result.stages[0].length, 2);
+        const nodeIds = result.stages[0].map((n) => n.node.id);
         assert.ok(nodeIds.includes("a"));
         assert.ok(nodeIds.includes("c"));
       }
 
       // Second stage should have both ending nodes
-      assert.equal(result.stages[1].type, "static");
-      if (result.stages[1].type === "static") {
-        assert.equal(result.stages[1].nodes.length, 2);
-        const nodeIds = result.stages[1].nodes.map((n) => n.node.id);
+      {
+        assert.equal(result.stages[1].length, 2);
+        const nodeIds = result.stages[1].map((n) => n.node.id);
         assert.ok(nodeIds.includes("b"));
         assert.ok(nodeIds.includes("d"));
       }
@@ -518,39 +391,12 @@ describe("createPlan function", () => {
       const result = createPlan(graph);
 
       const stage0 = result.stages[0];
-      if (stage0.type === "static") {
-        const llmNode = stage0.nodes[0];
-        assert.equal(llmNode.downstream[0].out, "completion");
-      }
+      const llmNode = stage0[0];
+      assert.equal(llmNode.downstream[0].out, "completion");
 
       const stage1 = result.stages[1];
-      if (stage1.type === "static") {
-        const transformNode = stage1.nodes[0];
-        assert.equal(transformNode.upstream[0].in, "text");
-      }
-    });
-
-    it("should handle edges with missing port information", () => {
-      const graph: GraphDescriptor = {
-        nodes: [
-          { id: "a", type: "input" },
-          { id: "b", type: "output" },
-        ],
-        edges: [{ from: "a", to: "b" }],
-      };
-      const result = createPlan(graph);
-
-      const stage0 = result.stages[0];
-      if (stage0.type === "static") {
-        const nodeA = stage0.nodes[0];
-        assert.equal(nodeA.downstream[0].out, "");
-      }
-
-      const stage1 = result.stages[1];
-      if (stage1.type === "static") {
-        const nodeB = stage1.nodes[0];
-        assert.equal(nodeB.upstream[0].in, "");
-      }
+      const transformNode = stage1[0];
+      assert.equal(transformNode.upstream[0].in, "text");
     });
   });
 });
