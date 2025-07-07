@@ -129,9 +129,6 @@ export class GoogleDriveFileId extends LitElement {
   accessor connectionName = "$sign-in";
 
   @property()
-  accessor ownedByMeOnly = false;
-
-  @property()
   accessor autoTrigger = false;
 
   #picker?: google.picker.Picker;
@@ -262,24 +259,29 @@ export class GoogleDriveFileId extends LitElement {
     }
     this.#destroyPicker();
 
-    const view = new this._pickerLib.DocsView();
-    view.setMimeTypes(MIME_TYPES);
-    view.setIncludeFolders(true);
-    view.setSelectFolderEnabled(false);
+    const myFilesView = new this._pickerLib.DocsView();
+    myFilesView.setMimeTypes(MIME_TYPES);
+    myFilesView.setIncludeFolders(true);
+    myFilesView.setSelectFolderEnabled(false);
+    myFilesView.setOwnedByMe(true);
+    myFilesView.setMode(google.picker.DocsViewMode.GRID);
 
-    if (this.ownedByMeOnly) {
-      view.setOwnedByMe(true);
-    }
-    view.setMode(google.picker.DocsViewMode.LIST);
+    const sharedFilesView = new this._pickerLib.DocsView();
+    sharedFilesView.setMimeTypes(MIME_TYPES);
+    sharedFilesView.setIncludeFolders(true);
+    sharedFilesView.setSelectFolderEnabled(false);
+    sharedFilesView.setOwnedByMe(false);
+    sharedFilesView.setMode(google.picker.DocsViewMode.GRID);
 
     // See https://developers.google.com/drive/picker/reference
     this.#picker = new this._pickerLib.PickerBuilder()
       .setOrigin(getTopLevelOrigin())
-      .addView(view)
+      .addView(myFilesView)
+      .addView(sharedFilesView)
       .setAppId(this._authorization.clientId)
       .setOAuthToken(this._authorization.secret)
       .setCallback(this.#pickerCallback.bind(this))
-      .enableFeature(google.picker.Feature.NAV_HIDDEN)
+      // .enableFeature(google.picker.Feature.NAV_HIDDEN)
       .build();
     this.#picker.setVisible(true);
   }

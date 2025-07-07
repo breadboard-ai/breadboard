@@ -448,7 +448,6 @@ export class AddAssetModal extends LitElement {
             ${ref(this.#addDriveInputRef)}
             .connectionName=${SIGN_IN_CONNECTION_ID}
             .autoTrigger=${true}
-            .ownedByMeOnly=${true}
             @bbinputcancel=${() => {
               this.dispatchEvent(new OverlayDismissedEvent());
             }}
