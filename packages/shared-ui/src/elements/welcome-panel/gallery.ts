@@ -14,7 +14,6 @@ import { createRef, ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
 import {
   BoardDeleteEvent,
-  GraphBoardServerRemixRequestEvent,
   OverflowMenuActionEvent,
   StateEvent,
 } from "../../events/events.js";
@@ -34,6 +33,7 @@ import { ActionTracker } from "../../utils/action-tracker.js";
 import { colorsLight } from "../../styles/host/colors-light.js";
 import { type } from "../../styles/host/type.js";
 
+const GlobalStrings = StringsHelper.forSection("Global");
 const Strings = StringsHelper.forSection("ProjectListing");
 
 @customElement("bb-gallery")
@@ -723,7 +723,17 @@ export class Gallery extends LitElement {
   ) {
     ActionTracker.remixApp(url, this.forceCreatorToBeTeam ? "gallery" : "user");
     event.stopPropagation();
-    this.dispatchEvent(new GraphBoardServerRemixRequestEvent(url));
+    this.dispatchEvent(
+      new StateEvent({
+        eventType: "board.remix",
+        messages: {
+          start: GlobalStrings.from("STATUS_REMIXING_PROJECT"),
+          end: GlobalStrings.from("STATUS_PROJECT_CREATED"),
+          error: GlobalStrings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
+        },
+        url,
+      })
+    );
   }
 
   #onRemixButtonKeydown(event: KeyboardEvent, url: string) {

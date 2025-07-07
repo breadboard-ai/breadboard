@@ -62,14 +62,6 @@ export class CloseEvent extends Event {
   }
 }
 
-export class RemixEvent extends Event {
-  static eventName = "bbremix";
-
-  constructor() {
-    super(RemixEvent.eventName, { ...eventInit });
-  }
-}
-
 export class ShareRequestedEvent extends Event {
   static eventName = "bbsharerequested";
 
@@ -561,14 +553,6 @@ export class GraphBoardServerDeleteRequestEvent extends Event {
   }
 }
 
-export class GraphBoardServerRemixRequestEvent extends Event {
-  static eventName = "bbgraphboardserverremixrequest";
-
-  constructor(public readonly url: string) {
-    super(GraphBoardServerRemixRequestEvent.eventName, { ...eventInit });
-  }
-}
-
 export class GraphBoardServerRenewAccessRequestEvent extends Event {
   static eventName = "bbgraphboardserverrenewaccesssrequest";
 
@@ -596,17 +580,6 @@ export class GraphBoardServerBlankBoardEvent extends Event {
 
   constructor() {
     super(GraphBoardServerBlankBoardEvent.eventName, { ...eventInit });
-  }
-}
-
-export class GraphBoardServerGeneratedBoardEvent extends Event {
-  static eventName = "bbgraphboardservergeneratedboard";
-
-  constructor(
-    public readonly graph: GraphDescriptor,
-    public readonly creator: EditHistoryCreator
-  ) {
-    super(GraphBoardServerGeneratedBoardEvent.eventName, { ...eventInit });
   }
 }
 
@@ -1353,8 +1326,10 @@ import type * as Node from "./node/node.js";
 import type * as Theme from "./theme/theme.js";
 
 export type StateEventDetailMap = {
+  "board.create": Board.Create;
   "board.input": Board.Input;
   "board.load": Board.Load;
+  "board.remix": Board.Remix;
   "board.rename": Board.Rename;
   "board.run": Board.Run;
   "board.stop": Board.Stop;

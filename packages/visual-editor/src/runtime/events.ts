@@ -51,6 +51,21 @@ export class RuntimeToastEvent extends Event {
   }
 }
 
+export class RuntimeSnackbarEvent extends Event {
+  static eventName = "runtimesnackbar" as const;
+
+  constructor(
+    public readonly snackbarId = globalThis.crypto.randomUUID(),
+    public readonly message: string,
+    public readonly snackType: BreadboardUI.Types.SnackType,
+    public readonly actions: BreadboardUI.Types.SnackbarAction[] = [],
+    public readonly persistent = false,
+    public readonly replaceAll = false
+  ) {
+    super(RuntimeSnackbarEvent.eventName, { ...eventInit });
+  }
+}
+
 export class RuntimeBoardLoadErrorEvent extends Event {
   static eventName = "runtimeboardloaderror" as const;
 

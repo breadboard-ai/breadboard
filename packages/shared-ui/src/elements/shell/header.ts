@@ -15,7 +15,6 @@ import { BOARD_SAVE_STATUS, EnumValue } from "../../types/types.js";
 import { icons } from "../../styles/icons.js";
 import {
   CloseEvent,
-  RemixEvent,
   ShareRequestedEvent,
   SignOutEvent,
   StateEvent,
@@ -33,6 +32,9 @@ export class VEHeader extends LitElement {
 
   @property()
   accessor tabTitle: string | null = null;
+
+  @property()
+  accessor url: string | null = null;
 
   @property()
   accessor canSave = false;
@@ -516,8 +518,22 @@ export class VEHeader extends LitElement {
           return;
         }
 
+        if (!this.url) {
+          return;
+        }
+
         evt.target.disabled = true;
-        this.dispatchEvent(new RemixEvent());
+        this.dispatchEvent(
+          new StateEvent({
+            eventType: "board.remix",
+            url: this.url,
+            messages: {
+              start: Strings.from("STATUS_REMIXING_PROJECT"),
+              end: Strings.from("STATUS_PROJECT_CREATED"),
+              error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
+            },
+          })
+        );
       }}
     >
       <span class="g-icon">gesture</span>Remix

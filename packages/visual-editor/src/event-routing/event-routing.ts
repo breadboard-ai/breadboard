@@ -21,8 +21,10 @@ export const eventRoutes = new Map<
   [Host.SelectionStateChangeRoute.event, Host.SelectionStateChangeRoute],
 
   /** Board */
+  [Board.CreateRoute.event, Board.CreateRoute],
   [Board.InputRoute.event, Board.InputRoute],
   [Board.LoadRoute.event, Board.LoadRoute],
+  [Board.RemixRoute.event, Board.RemixRoute],
   [Board.RenameRoute.event, Board.RenameRoute],
   [Board.RunRoute.event, Board.RunRoute],
   [Board.StopRoute.event, Board.StopRoute],

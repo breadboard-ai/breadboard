@@ -11,10 +11,7 @@ import { outlineButtonWithIcon } from "../styles/outline-button-with-icon.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import type { GraphDescriptor } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
-import {
-  GraphBoardServerGeneratedBoardEvent,
-  UtteranceEvent,
-} from "../events/events.js";
+import { StateEvent, UtteranceEvent } from "../events/events.js";
 import type { ExpandingTextarea } from "../elements/input/expanding-textarea.js";
 import { icons } from "../styles/icons.js";
 import "../elements/input/expanding-textarea.js";
@@ -26,6 +23,7 @@ import { colorsLight } from "../styles/host/colors-light.js";
 import { type } from "../styles/host/type.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
+const GlobalStrings = StringsHelper.forSection("Global");
 
 type State =
   | { status: "initial" }
@@ -323,8 +321,20 @@ export class FlowgenHomepagePanel extends LitElement {
     if (this.#state.status !== "generating") {
       return;
     }
+
     this.dispatchEvent(
-      new GraphBoardServerGeneratedBoardEvent(graph, { role: "assistant" })
+      new StateEvent({
+        eventType: "board.create",
+        editHistoryCreator: {
+          role: "assistant",
+        },
+        graph,
+        messages: {
+          start: GlobalStrings.from("STATUS_CREATING_PROJECT"),
+          end: GlobalStrings.from("STATUS_PROJECT_CREATED"),
+          error: GlobalStrings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
+        },
+      })
     );
   }
 

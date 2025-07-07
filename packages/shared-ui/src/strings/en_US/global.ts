@@ -127,6 +127,9 @@ export default {
   },
 
   // Statuses.
+  STATUS_REMIXING_PROJECT: {
+    str: "Remixing...",
+  },
   STATUS_CREATING_PROJECT: {
     str: "Creating Flow",
   },
