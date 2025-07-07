@@ -21,8 +21,8 @@ import {
   NodeConfiguration,
   NodeIdentifier,
 } from "@google-labs/breadboard";
-import { BOARD_SAVE_STATUS } from "@breadboard-ai/shared-ui/types/types.js";
 import { AutonameStatus } from "@breadboard-ai/shared-ui/sideboards/autoname.js";
+import { ToastType } from "@breadboard-ai/shared-ui/events/events.js";
 
 const eventInit = {
   bubbles: true,
@@ -31,13 +31,23 @@ const eventInit = {
 };
 
 export class RuntimeBoardSaveStatusChangeEvent extends Event {
-  static eventName = "runtimeboardsavestatuschange";
+  static eventName = "runtimeboardsavestatuschange" as const;
+
+  constructor() {
+    super(RuntimeBoardSaveStatusChangeEvent.eventName, { ...eventInit });
+  }
+}
+
+export class RuntimeToastEvent extends Event {
+  static eventName = "runtimetoast" as const;
 
   constructor(
-    public readonly status: BOARD_SAVE_STATUS,
-    public readonly url: string
+    public readonly toastId: ReturnType<typeof globalThis.crypto.randomUUID>,
+    public readonly toastType: ToastType,
+    public readonly message: string,
+    public readonly persistent = false
   ) {
-    super(RuntimeBoardSaveStatusChangeEvent.eventName, { ...eventInit });
+    super(RuntimeToastEvent.eventName, { ...eventInit });
   }
 }
 

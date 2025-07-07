@@ -19,6 +19,25 @@ function isFocusedOnGraphRenderer(evt: Event) {
     .some((target) => target instanceof BreadboardUI.Elements.Renderer);
 }
 
+const SaveCommand: KeyboardCommand = {
+  keys: ["Cmd+s", "Ctrl+s"],
+
+  willHandle(tab: Tab | null) {
+    return tab !== null;
+  },
+
+  async do({ runtime, tab, strings }: KeyboardCommandDeps): Promise<void> {
+    if (tab?.readOnly || !tab?.graphIsMine) {
+      return;
+    }
+
+    await runtime.board.save(tab?.id ?? null, 0, {
+      start: strings.from("STATUS_SAVING_PROJECT"),
+      end: strings.from("STATUS_PROJECT_SAVED"),
+    });
+  },
+};
+
 const UndoCommand: KeyboardCommand = {
   keys: ["Cmd+z", "Ctrl+z"],
 
@@ -537,6 +556,7 @@ const PasteCommand: KeyboardCommand = {
 };
 
 export const keyboardCommands = new Map<string[], KeyboardCommand>([
+  [SaveCommand.keys, SaveCommand],
   [DeleteCommand.keys, DeleteCommand],
   [SelectAllCommand.keys, SelectAllCommand],
   [CopyCommand.keys, CopyCommand],
