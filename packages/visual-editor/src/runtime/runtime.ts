@@ -112,6 +112,8 @@ export async function create(config: RuntimeConfig): Promise<{
     config
   ).createSideboardRuntime();
 
+  const recentBoards = await config.recentBoardStore.restore();
+
   const state = new StateManager(graphStore, sideboards, servers);
 
   const runtime = {
@@ -121,6 +123,8 @@ export async function create(config: RuntimeConfig): Promise<{
       loader,
       kits,
       boardServers,
+      config.recentBoardStore,
+      recentBoards,
       config.tokenVendor,
       config.googleDriveClient
     ),

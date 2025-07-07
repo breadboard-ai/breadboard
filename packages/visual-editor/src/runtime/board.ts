@@ -55,6 +55,7 @@ import * as idb from "idb";
 import { BOARD_SAVE_STATUS } from "@breadboard-ai/shared-ui/types/types.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { loadImage } from "@breadboard-ai/shared-ui/utils/image";
+import { RecentBoardStore } from "../data/recent-boards";
 
 const documentStyles = getComputedStyle(document.documentElement);
 
@@ -96,6 +97,8 @@ export class Board extends EventTarget {
      * */
     public readonly boardServerKits: Kit[],
     public readonly boardServers: RuntimeConfigBoardServers,
+    public readonly recentBoardStore: RecentBoardStore,
+    protected recentBoards: BreadboardUI.Types.RecentBoard[],
     public readonly tokenVendor?: TokenVendor,
     public readonly googleDriveClient?: GoogleDriveClient
   ) {
@@ -121,6 +124,52 @@ export class Board extends EventTarget {
   }
 
   currentURL: URL | null = null;
+
+  getRecentBoards(): readonly BreadboardUI.Types.RecentBoard[] {
+    return this.recentBoards;
+  }
+
+  async #trackRecentBoard(url?: string) {
+    if (!this.currentTab || !url) {
+      return;
+    }
+
+    url = url.replace(window.location.origin, "");
+    const currentIndex = this.recentBoards.findIndex(
+      (board) => board.url === url
+    );
+    if (currentIndex === -1) {
+      this.recentBoards.unshift({
+        title: this.currentTab.graph.title ?? "Untitled",
+        url,
+      });
+    } else {
+      const [item] = this.recentBoards.splice(currentIndex, 1);
+      if (this.currentTab.graph.title) {
+        item.title = this.currentTab.graph.title;
+      }
+      this.recentBoards.unshift(item);
+    }
+
+    if (this.recentBoards.length > 50) {
+      this.recentBoards.length = 50;
+    }
+
+    await this.recentBoardStore.store(this.recentBoards);
+  }
+
+  async #removeRecentUrl(url: string) {
+    url = url.replace(window.location.origin, "");
+    const count = this.recentBoards.length;
+
+    this.recentBoards = this.recentBoards.filter((board) => board.url !== url);
+
+    if (count === this.recentBoards.length) {
+      return;
+    }
+
+    await this.recentBoardStore.store(this.recentBoards);
+  }
 
   #canParse(url: string, base?: string) {
     // TypeScript assumes that if `canParse` does not exist, then URL is
@@ -722,6 +771,7 @@ export class Board extends EventTarget {
         return;
       }
 
+      await this.#trackRecentBoard(graph.url);
       this.dispatchEvent(new RuntimeTabChangeEvent());
     } catch (err) {
       console.warn(err);
@@ -1135,6 +1185,7 @@ export class Board extends EventTarget {
       return fail;
     }
 
+    await this.#removeRecentUrl(url);
     return await boardServer.delete(new URL(url));
   }
 
