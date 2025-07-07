@@ -122,6 +122,71 @@ class Orchestrator {
     }
   }
 
+  #propagateSkip(state: NodeInternalState): Outcome<void> {
+    const targets = new Set<NodeIdentifier>();
+    try {
+      // First, propagate the "skipped" state downstream, collecting targets
+      markDownstreamSkipped(this.#state, state, targets);
+      // Now, let's propagate the "skipped" state upstream from all collected
+      // targets.
+      targets.forEach((id) => {
+        const target = this.#state.get(id);
+        if (!target) {
+          throw new Error(
+            "While trying to propagate skip upstream, failed to retrieve target state"
+          );
+        }
+        markUpstreamSkipped(this.#state, target);
+      });
+    } catch (e) {
+      return err((e as Error).message);
+    }
+
+    function markDownstreamSkipped(
+      orchestratorState: OrchestratorState,
+      state: NodeInternalState,
+      visited: Set<NodeIdentifier>
+    ) {
+      const downstream = state.plan.downstream;
+      downstream.forEach((dep) => {
+        const id = dep.to;
+        if (visited.has(id)) return;
+        const target = orchestratorState.get(id);
+        if (!target) {
+          throw new Error(
+            `While trying to propagate skip downstream, failed to retrieve target state`
+          );
+        }
+        target.state = "skipped";
+        visited.add(id);
+        markDownstreamSkipped(orchestratorState, target, visited);
+      });
+    }
+
+    function markUpstreamSkipped(
+      orchestratorState: OrchestratorState,
+      state: NodeInternalState,
+      visited: Set<NodeIdentifier> = new Set()
+    ) {
+      const upstream = state.plan.upstream;
+      upstream.forEach((dep) => {
+        const id = dep.from;
+        if (visited.has(id)) return;
+        const source = orchestratorState.get(id);
+        if (!source) {
+          throw new Error(
+            `While trying to propagate skip upstream, failed to retrieve source state`
+          );
+        }
+        if (source.state === "waiting" || source.state === "ready") {
+          source.state = "skipped";
+        }
+        visited.add(id);
+        markUpstreamSkipped(orchestratorState, source, visited);
+      });
+    }
+  }
+
   #tryAdvancingStage(): Outcome<OrchestratorProgress> {
     // Check to see if all other nodes at this stage have been invoked
     // (the state will be set to something other than "ready")
@@ -187,6 +252,8 @@ class Orchestrator {
           // Either we were already skipped upstream or Some inputs were
           // missing, so we're going to mark this node as Skipped.
           state.state = "skipped";
+          const propagating = this.#propagateSkip(state);
+          if (!ok(propagating)) return propagating;
         } else {
           state.state = "ready";
           state.inputs = inputs;
@@ -221,6 +288,8 @@ class Orchestrator {
     state.outputs = outputs;
     if ("$error" in outputs) {
       state.state = "failed";
+      const propagating = this.#propagateSkip(state);
+      if (!ok(propagating)) return propagating;
     } else {
       state.state = "succeeded";
     }

@@ -145,24 +145,11 @@ describe("Orchestrator", () => {
         const progress = orchestrator.provideOutputs("input", {
           left: "left-audio",
         });
-        deepStrictEqual(progress, "advanced");
-        assertTasks(orchestrator.currentTasks(), ["left-channel"]);
-        assertState(diamond, orchestrator.state(), [
-          ["input", "succeeded"],
-          ["left-channel", "ready"],
-          ["right-channel", "skipped"],
-          ["mixer", "waiting"],
-        ]);
-      }
-      {
-        const progress = orchestrator.provideOutputs("left-channel", {
-          processed: "processed-left-audio",
-        });
         deepStrictEqual(progress, "finished");
         assertTasks(orchestrator.currentTasks(), []);
         assertState(diamond, orchestrator.state(), [
           ["input", "succeeded"],
-          ["left-channel", "succeeded"],
+          ["left-channel", "skipped"],
           ["right-channel", "skipped"],
           ["mixer", "skipped"],
         ]);
@@ -193,13 +180,17 @@ describe("Orchestrator", () => {
       {
         const progress = orchestrator.provideOutputs("input", {
           left: "left-audio",
+          right: "right-audio",
         });
         deepStrictEqual(progress, "advanced");
-        assertTasks(orchestrator.currentTasks(), ["left-channel"]);
+        assertTasks(orchestrator.currentTasks(), [
+          "left-channel",
+          "right-channel",
+        ]);
         assertState(diamond, orchestrator.state(), [
           ["input", "succeeded"],
           ["left-channel", "ready"],
-          ["right-channel", "skipped"],
+          ["right-channel", "ready"],
           ["mixer", "waiting"],
         ]);
       }
@@ -232,7 +223,7 @@ describe("Orchestrator", () => {
           ["left-path", "ready"],
           ["right-path", "skipped"],
           ["treasure", "waiting"],
-          ["dragon", "waiting"],
+          ["dragon", "skipped"],
         ]);
       }
       {
