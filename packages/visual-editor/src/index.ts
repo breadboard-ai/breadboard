@@ -1171,56 +1171,7 @@ export class Main extends SignalWatcher(LitElement) {
     this.#snackbarRef.value.hide();
   }
 
-  async #handleBoardInfoUpdate(evt: BreadboardUI.Events.BoardInfoUpdateEvent) {
-    if (!evt.tabId) {
-      this.toast(
-        Strings.from("ERROR_GENERIC"),
-        BreadboardUI.Events.ToastType.ERROR
-      );
-      return;
-    }
-
-    const tab = this.#runtime.board.getTabById(evt.tabId as TabId);
-    if (!tab) {
-      this.toast(
-        Strings.from("ERROR_NO_PROJECT"),
-        BreadboardUI.Events.ToastType.ERROR
-      );
-      return;
-    }
-
-    if (evt.subGraphId) {
-      await this.#runtime.edit.updateSubBoardInfo(
-        tab,
-        evt.subGraphId,
-        evt.title,
-        evt.version,
-        evt.description,
-        evt.status as "published" | "draft",
-        evt.isTool,
-        evt.isComponent
-      );
-    } else if (evt.moduleId) {
-      await this.#runtime.edit.updateModuleInfo(
-        tab,
-        evt.moduleId,
-        evt.title,
-        evt.description
-      );
-    } else {
-      this.#runtime.edit.updateBoardInfo(
-        tab,
-        evt.title,
-        evt.version,
-        evt.description,
-        evt.status,
-        evt.isTool,
-        evt.isComponent
-      );
-    }
-  }
-
-  #attemptLoad(evt: DragEvent) {
+  #attemptImportFromDrop(evt: DragEvent) {
     if (
       !evt.dataTransfer ||
       !evt.dataTransfer.files ||
@@ -1550,7 +1501,7 @@ export class Main extends SignalWatcher(LitElement) {
       }}
       @drop=${(evt: DragEvent) => {
         evt.preventDefault();
-        this.#attemptLoad(evt);
+        this.#attemptImportFromDrop(evt);
       }}
     >
       ${[
@@ -1700,19 +1651,6 @@ export class Main extends SignalWatcher(LitElement) {
       }}
       @bbworkspacenewitemcreaterequest=${() => {
         this.#uiState.show.add("NewWorkspaceItemOverlay");
-      }}
-      @bbboardinfoupdate=${async (
-        evt: BreadboardUI.Events.BoardInfoUpdateEvent
-      ) => {
-        await this.#handleBoardInfoUpdate(evt);
-        if (evt.exported !== null) {
-          if (evt.subGraphId) {
-            await this.#attemptToggleExport(evt.subGraphId, "declarative");
-          } else if (evt.moduleId) {
-            await this.#attemptToggleExport(evt.moduleId, "imperative");
-          }
-        }
-        this.requestUpdate();
       }}
       @bbsubgraphcreate=${async (
         evt: BreadboardUI.Events.SubGraphCreateEvent
