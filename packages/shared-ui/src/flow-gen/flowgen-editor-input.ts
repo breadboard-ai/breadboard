@@ -10,7 +10,11 @@ import * as StringsHelper from "../strings/helper.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import type { GraphDescriptor } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
-import { GraphReplaceEvent, UtteranceEvent } from "../events/events.js";
+import {
+  GraphReplaceEvent,
+  StateEvent,
+  UtteranceEvent,
+} from "../events/events.js";
 import type { ExpandingTextarea } from "../elements/input/expanding-textarea.js";
 import { icons } from "../styles/icons.js";
 import "../elements/input/expanding-textarea.js";
@@ -269,9 +273,14 @@ export class FlowgenEditorInput extends LitElement {
 
       ActionTracker.flowGenEdit(this.currentGraph?.url);
 
+      this.dispatchEvent(new StateEvent({ eventType: "host.lock" }));
+
       void this.#generateBoard(description)
         .then((graph) => this.#onGenerateComplete(graph))
-        .catch((error) => this.#onGenerateError(error));
+        .catch((error) => this.#onGenerateError(error))
+        .finally(() => {
+          this.dispatchEvent(new StateEvent({ eventType: "host.unlock" }));
+        });
     }
   }
 

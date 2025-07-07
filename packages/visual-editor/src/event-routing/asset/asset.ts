@@ -9,7 +9,8 @@ import { EventRoute } from "../types";
 export const ChangeEdgeRoute: EventRoute<"asset.changeedge"> = {
   event: "asset.changeedge",
 
-  async do({ runtime, tab, originalEvent }) {
+  async do({ runtime, tab, originalEvent, uiState }) {
+    uiState.blockingAction = true;
     await runtime.edit.changeAssetEdge(
       tab,
       originalEvent.detail.changeType,
@@ -17,6 +18,7 @@ export const ChangeEdgeRoute: EventRoute<"asset.changeedge"> = {
       originalEvent.detail.subGraphId
     );
 
+    uiState.blockingAction = false;
     return false;
   },
 };

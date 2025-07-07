@@ -36,6 +36,13 @@ class ReactiveUIState implements UI {
   @signal
   accessor canRunMain = true;
 
+  /**
+   * Indicates that the UI is currently undertaking an action and that the user
+   * should be prevented from interacting while that takes place.
+   */
+  @signal
+  accessor blockingAction = false;
+
   @signal
   accessor loadState: UILoadState = "Home";
 

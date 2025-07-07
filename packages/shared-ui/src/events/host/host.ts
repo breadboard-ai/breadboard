@@ -39,3 +39,11 @@ export interface SelectionStateChange {
   readonly replaceExistingSelections: boolean;
   readonly moveToSelection: MoveToSelection;
 }
+
+export interface Lock {
+  readonly eventType: `${Namespace}.lock`;
+}
+
+export interface Unlock {
+  readonly eventType: `${Namespace}.unlock`;
+}

@@ -34,3 +34,21 @@ export const SelectionStateChangeRoute: EventRoute<"host.selectionstatechange"> 
       return false;
     },
   };
+
+export const LockRoute: EventRoute<"host.lock"> = {
+  event: "host.lock",
+
+  async do({ uiState }) {
+    uiState.blockingAction = true;
+    return false;
+  },
+};
+
+export const UnlockRoute: EventRoute<"host.unlock"> = {
+  event: "host.unlock",
+
+  async do({ uiState }) {
+    uiState.blockingAction = false;
+    return false;
+  },
+};
