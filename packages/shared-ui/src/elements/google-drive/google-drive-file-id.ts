@@ -35,16 +35,6 @@ type PickerMetadata = {
   docName?: string;
 };
 
-const MIME_TYPES = [
-  "application/vnd.google-apps.document",
-  "application/vnd.google-apps.file",
-  "application/vnd.google-apps.presentation",
-  "application/vnd.google-apps.spreadsheet",
-  "application/vnd.google-apps.map",
-  "application/vnd.google-apps.photo",
-  "application/vnd.google-apps.drawing",
-].join(",");
-
 export const googleDriveFileIdInputPlugin: InputPlugin = {
   instantiate: {
     customElementName: "bb-google-drive-file-id",
@@ -260,14 +250,12 @@ export class GoogleDriveFileId extends LitElement {
     this.#destroyPicker();
 
     const myFilesView = new this._pickerLib.DocsView();
-    myFilesView.setMimeTypes(MIME_TYPES);
     myFilesView.setIncludeFolders(true);
     myFilesView.setSelectFolderEnabled(false);
     myFilesView.setOwnedByMe(true);
     myFilesView.setMode(google.picker.DocsViewMode.GRID);
 
     const sharedFilesView = new this._pickerLib.DocsView();
-    sharedFilesView.setMimeTypes(MIME_TYPES);
     sharedFilesView.setIncludeFolders(true);
     sharedFilesView.setSelectFolderEnabled(false);
     sharedFilesView.setOwnedByMe(false);
