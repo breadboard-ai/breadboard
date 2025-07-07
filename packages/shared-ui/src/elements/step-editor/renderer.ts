@@ -61,7 +61,6 @@ import {
 import {
   DragConnectorStartEvent,
   EditorPointerPositionChangeEvent,
-  AddNodeWithEdgeEvent,
   NodeConfigurationUpdateRequestEvent,
   ZoomToFitEvent,
   MoveNodesEvent,
@@ -624,11 +623,12 @@ export class Renderer extends LitElement {
       };
 
       this.dispatchEvent(
-        new AddNodeWithEdgeEvent(
-          node,
+        new StateEvent({
+          eventType: "node.addwithedge",
           edge,
-          targetGraphId === MAIN_BOARD_ID ? null : targetGraphId
-        )
+          node,
+          subGraphId: targetGraphId === MAIN_BOARD_ID ? null : targetGraphId,
+        })
       );
     } else {
       this.dispatchEvent(

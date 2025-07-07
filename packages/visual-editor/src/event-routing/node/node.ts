@@ -7,6 +7,32 @@
 import { EventRoute } from "../types";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 
+export const AddWithEdgeRoute: EventRoute<"node.addwithedge"> = {
+  event: "node.addwithedge",
+
+  async do({ runtime, tab, originalEvent }) {
+    if (!tab) {
+      return false;
+    }
+
+    await runtime.edit.addNodeWithEdge(
+      tab,
+      originalEvent.detail.node,
+      originalEvent.detail.edge,
+      originalEvent.detail.subGraphId
+    );
+
+    runtime.select.selectNodes(
+      tab.id,
+      runtime.select.generateId(),
+      originalEvent.detail.subGraphId ?? BreadboardUI.Constants.MAIN_BOARD_ID,
+      [originalEvent.detail.node.id]
+    );
+
+    return false;
+  },
+};
+
 export const ChangeRoute: EventRoute<"node.change"> = {
   event: "node.change",
 

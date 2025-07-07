@@ -1949,27 +1949,6 @@ export class Main extends SignalWatcher(LitElement) {
 
         this.#checkGoogleDriveAssetShareStatus();
       }}
-      @bbaddnodewithedge=${async (
-        evt: BreadboardUI.Events.AddNodeWithEdgeEvent
-      ) => {
-        if (!this.#tab) {
-          return;
-        }
-
-        await this.#runtime.edit.addNodeWithEdge(
-          this.#tab,
-          evt.node,
-          evt.edge,
-          evt.subGraphId
-        );
-
-        this.#runtime.select.selectNodes(
-          this.#tab.id,
-          this.#runtime.select.generateId(),
-          evt.subGraphId ?? BreadboardUI.Constants.MAIN_BOARD_ID,
-          [evt.node.id]
-        );
-      }}
       @bbgraphreplace=${async (evt: BreadboardUI.Events.GraphReplaceEvent) => {
         await this.#runtime.edit.replaceGraph(
           this.#tab,
