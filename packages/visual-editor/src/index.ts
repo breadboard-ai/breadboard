@@ -1085,7 +1085,9 @@ export class Main extends SignalWatcher(LitElement) {
 
         // Perform the command.
         try {
+          this.#uiState.blockingAction = true;
           await command.do(deps);
+          this.#uiState.blockingAction = false;
 
           // Replace the toast.
           if (toastId) {
@@ -1445,7 +1447,7 @@ export class Main extends SignalWatcher(LitElement) {
 
     const content = html`<div
       id="content"
-      ?inert=${renderValues.showingOverlay}
+      ?inert=${renderValues.showingOverlay || this.#uiState.blockingAction}
     >
       ${[
         this.#renderCanvasController(renderValues),
@@ -1974,6 +1976,7 @@ export class Main extends SignalWatcher(LitElement) {
       error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
     }
   ) {
+    this.#uiState.blockingAction = true;
     const remixRoute = eventRoutes.get("board.remix");
     const refresh = await remixRoute?.do(
       this.#collectEventRouteDeps(
@@ -1984,6 +1987,7 @@ export class Main extends SignalWatcher(LitElement) {
         })
       )
     );
+    this.#uiState.blockingAction = false;
 
     if (refresh) {
       requestAnimationFrame(() => {
@@ -1993,6 +1997,7 @@ export class Main extends SignalWatcher(LitElement) {
   }
 
   async #invokeDeleteEventRouteWith(url: string) {
+    this.#uiState.blockingAction = true;
     const deleteRoute = eventRoutes.get("board.delete");
     const refresh = await deleteRoute?.do(
       this.#collectEventRouteDeps(
@@ -2008,6 +2013,7 @@ export class Main extends SignalWatcher(LitElement) {
         })
       )
     );
+    this.#uiState.blockingAction = false;
 
     if (refresh) {
       requestAnimationFrame(() => {

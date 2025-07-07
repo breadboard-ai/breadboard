@@ -137,13 +137,15 @@ export const InputRoute: EventRoute<"board.input"> = {
 export const RenameRoute: EventRoute<"board.rename"> = {
   event: "board.rename",
 
-  async do({ tab, runtime, originalEvent }) {
+  async do({ tab, runtime, originalEvent, uiState }) {
+    uiState.blockingAction = true;
     runtime.shell.setPageTitle(originalEvent.detail.title);
     await runtime.edit.updateBoardTitleAndDescription(
       tab,
       originalEvent.detail.title,
       originalEvent.detail.description
     );
+    uiState.blockingAction = false;
     return false;
   },
 };
@@ -156,6 +158,7 @@ export const CreateRoute: EventRoute<"board.create"> = {
     const location = uiState.boardLocation;
     const fileName = globalThis.crypto.randomUUID();
 
+    uiState.blockingAction = true;
     const result = await runtime.board.saveAs(
       boardServerName,
       location,
@@ -164,6 +167,7 @@ export const CreateRoute: EventRoute<"board.create"> = {
       true,
       originalEvent.detail.messages
     );
+    uiState.blockingAction = false;
 
     if (!result?.url) {
       return false;
@@ -208,7 +212,7 @@ export const DeleteRoute: EventRoute<"board.delete"> = {
   event: "board.delete",
 
   async do(deps) {
-    const { tab, runtime, originalEvent } = deps;
+    const { tab, runtime, originalEvent, uiState } = deps;
     const boardServer = runtime.board.getBoardServerForURL(
       new URL(originalEvent.detail.url)
     );
@@ -220,11 +224,13 @@ export const DeleteRoute: EventRoute<"board.delete"> = {
       return false;
     }
 
+    uiState.blockingAction = true;
     await runtime.board.delete(
       boardServer.name,
       originalEvent.detail.url,
       originalEvent.detail.messages
     );
+    uiState.blockingAction = false;
 
     if (tab) {
       runtime.select.deselectAll(tab.id, runtime.select.generateId());

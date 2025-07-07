@@ -384,6 +384,7 @@ export type UI = {
       persistent: boolean;
     }
   >;
+  blockingAction: boolean;
 };
 
 /**

@@ -67,6 +67,8 @@ export type StateEventDetailMap = {
 
   "host.modetoggle": Host.ModeToggle;
   "host.selectionstatechange": Host.SelectionStateChange;
+  "host.lock": Host.Lock;
+  "host.unlock": Host.Unlock;
 
   "node.addwithedge": Node.AddWithEdge;
   "node.change": Node.Change;
