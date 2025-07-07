@@ -35,6 +35,7 @@ import { Sandbox } from "@breadboard-ai/jsandbox";
 import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { RecentBoardStore } from "../data/recent-boards";
 
 export enum TabType {
   URL,
@@ -85,6 +86,7 @@ export interface RuntimeConfig {
   googleDriveClient?: GoogleDriveClient;
   appName: string;
   appSubName: string;
+  recentBoardStore: RecentBoardStore;
 }
 
 export interface RuntimeConfigBoardServers {

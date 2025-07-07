@@ -209,7 +209,6 @@ export class Main extends SignalWatcher(LitElement) {
   #hideTooltipBound = this.#hideTooltip.bind(this);
   #onKeyboardShortCut = this.#onKeyboardShortcut.bind(this);
   #recentBoardStore = RecentBoardStore.instance();
-  #recentBoards: BreadboardUI.Types.RecentBoard[] = [];
   #graphStore!: MutableGraphStore;
   #runStore = getRunStore();
   #fileSystem!: FileSystem;
@@ -319,44 +318,43 @@ export class Main extends SignalWatcher(LitElement) {
     //  4. Runtime.
     //
     // Note: the runtime loads the kits and the initializes the board servers.
-    this.#recentBoardStore
-      .restore()
-      .then((boards) => {
-        if (this.#settings) {
-          this.settingsHelper = new SettingsHelperImpl(this.#settings);
-          admin.settingsHelper = this.settingsHelper;
-          this.tokenVendor = createTokenVendor(
-            {
-              get: (conectionId: string) => {
-                return this.settingsHelper.get(
-                  BreadboardUI.Types.SETTINGS_TYPE.CONNECTIONS,
-                  conectionId
-                )?.value as string;
-              },
-              set: async (connectionId: string, grant: string) => {
-                await this.settingsHelper.set(
-                  BreadboardUI.Types.SETTINGS_TYPE.CONNECTIONS,
-                  connectionId,
-                  {
-                    name: connectionId,
-                    value: grant,
-                  }
-                );
-              },
-            },
-            ENVIRONMENT
-          );
-        }
+    let settingsRestore = Promise.resolve();
+    if (this.#settings) {
+      this.settingsHelper = new SettingsHelperImpl(this.#settings);
+      admin.settingsHelper = this.settingsHelper;
+      this.tokenVendor = createTokenVendor(
+        {
+          get: (conectionId: string) => {
+            return this.settingsHelper.get(
+              BreadboardUI.Types.SETTINGS_TYPE.CONNECTIONS,
+              conectionId
+            )?.value as string;
+          },
+          set: async (connectionId: string, grant: string) => {
+            await this.settingsHelper.set(
+              BreadboardUI.Types.SETTINGS_TYPE.CONNECTIONS,
+              connectionId,
+              {
+                name: connectionId,
+                value: grant,
+              }
+            );
+          },
+        },
+        ENVIRONMENT
+      );
 
-        this.#recentBoards = boards;
-        return this.#settings?.restore();
-      })
+      settingsRestore = this.#settings?.restore();
+    }
+
+    settingsRestore
       .then(() => {
         this.#fileSystem = createFileSystem({
           env: [...envFromSettings(this.#settings), ...(config.env || [])],
           local: createFileSystemBackend(createEphemeralBlobStore()),
         });
         return Runtime.create({
+          recentBoardStore: this.#recentBoardStore,
           graphStore: this.#graphStore,
           runStore: this.#runStore,
           experiments: {},
@@ -547,13 +545,6 @@ export class Main extends SignalWatcher(LitElement) {
                   evt.topGraphObserver,
                   evt.runObserver
                 );
-              }
-
-              if (
-                this.#tab.graph.url &&
-                this.#tab.type === Runtime.Types.TabType.URL
-              ) {
-                await this.#trackRecentBoard(this.#tab.graph.url);
               }
 
               if (this.#tab.graph.title) {
@@ -1164,45 +1155,7 @@ export class Main extends SignalWatcher(LitElement) {
         this.#runtime.select.generateId()
       );
       this.#runtime.board.closeTab(this.#tab.id);
-      this.#removeRecentUrl(url);
     }
-  }
-
-  async #trackRecentBoard(url: string) {
-    url = url.replace(window.location.origin, "");
-    const currentIndex = this.#recentBoards.findIndex(
-      (board) => board.url === url
-    );
-    if (currentIndex === -1) {
-      this.#recentBoards.unshift({
-        title: this.#tab?.graph.title ?? Strings.from("TITLE_UNTITLED_PROJECT"),
-        url,
-      });
-    } else {
-      const [item] = this.#recentBoards.splice(currentIndex, 1);
-      this.#recentBoards.unshift(item);
-    }
-
-    if (this.#recentBoards.length > 50) {
-      this.#recentBoards.length = 50;
-    }
-
-    await this.#recentBoardStore.store(this.#recentBoards);
-  }
-
-  async #removeRecentUrl(url: string) {
-    url = url.replace(window.location.origin, "");
-    const count = this.#recentBoards.length;
-
-    this.#recentBoards = this.#recentBoards.filter(
-      (board) => board.url !== url
-    );
-
-    if (count === this.#recentBoards.length) {
-      return;
-    }
-
-    await this.#recentBoardStore.store(this.#recentBoards);
   }
 
   untoast(id: string | undefined) {
@@ -1672,7 +1625,7 @@ export class Main extends SignalWatcher(LitElement) {
     }
 
     return html`<bb-project-listing
-      .recentBoards=${this.#recentBoards}
+      .recentBoards=${this.#runtime.board.getRecentBoards()}
       .selectedBoardServer=${this.#uiState.boardServer}
       .selectedLocation=${this.#uiState.boardLocation}
       .boardServers=${this.#boardServers}
@@ -2013,7 +1966,6 @@ export class Main extends SignalWatcher(LitElement) {
           return;
         }
 
-        // Trigger a re-render.
         this.#uiState.show.delete("BoardServerAddOverlay");
       }}
     ></bb-board-server-overlay>`;

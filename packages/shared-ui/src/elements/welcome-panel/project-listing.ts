@@ -792,14 +792,13 @@ export class ProjectListing extends LitElement {
                     )
                     .sort(([, dataA], [, dataB]) => {
                       // Sort by recency.
-                      const urlA = new URL(dataA.url);
-                      const urlB = new URL(dataB.url);
                       const indexA = this.recentBoards.findIndex(
-                        (board) => board.url === urlA.pathname
+                        (board) => board.url === dataA.url
                       );
                       const indexB = this.recentBoards.findIndex(
-                        (board) => board.url === urlB.pathname
+                        (board) => board.url === dataB.url
                       );
+
                       if (indexA !== -1 && indexB === -1) {
                         return -1;
                       }
@@ -823,10 +822,22 @@ export class ProjectListing extends LitElement {
 
                       return 0;
                     });
+
                   const myItems = allItems.filter(([, item]) => item.mine);
-                  const sampleItems = allItems.filter(([, item]) =>
-                    (item.tags ?? []).includes("featured")
-                  );
+                  const sampleItems = allItems
+                    .filter(([, item]) =>
+                      (item.tags ?? []).includes("featured")
+                    )
+                    .sort(([, dataA], [, dataB]) => {
+                      if (dataA.title && !dataB.title) return -1;
+                      if (!dataA.title && dataB.title) return 1;
+                      if (dataA.title && dataB.title) {
+                        if (dataA.title < dataB.title) return -1;
+                        if (dataA.title > dataB.title) return 1;
+                        return 0;
+                      }
+                      return 0;
+                    });
                   const boardListings = [
                     myItems.length && !FORCE_NO_BOARDS
                       ? html`
