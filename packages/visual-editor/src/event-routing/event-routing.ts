@@ -9,6 +9,7 @@ import { EventRoute } from "./types.js";
 
 import * as Host from "./host/host.js";
 import * as Board from "./board/board.js";
+import * as Asset from "./asset/asset.js";
 import * as Node from "./node/node.js";
 import * as Theme from "./theme/theme.js";
 
@@ -37,6 +38,9 @@ export const eventRoutes = new Map<
     Node.ChangeEdgeAttachmentPointRoute.event,
     Node.ChangeEdgeAttachmentPointRoute,
   ],
+
+  /** Asset */
+  [Asset.ChangeEdgeRoute.event, Asset.ChangeEdgeRoute],
 
   /** Theme */
   [Theme.ChangeRoute.event, Theme.ChangeRoute],

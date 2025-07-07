@@ -13,7 +13,6 @@ import {
   NodeIdentifier,
 } from "@breadboard-ai/types";
 import {
-  AssetEdgeChangeEvent,
   DragConnectorCancelledEvent,
   StateEvent,
   ToastEvent,
@@ -193,11 +192,12 @@ export class DragConnector extends LitElement {
           };
 
           this.dispatchEvent(
-            new AssetEdgeChangeEvent(
-              "add",
+            new StateEvent({
+              eventType: "asset.changeedge",
               assetEdge,
-              graphId === MAIN_BOARD_ID ? null : graphId
-            )
+              changeType: "add",
+              subGraphId: graphId === MAIN_BOARD_ID ? null : graphId,
+            })
           );
         }
         break;

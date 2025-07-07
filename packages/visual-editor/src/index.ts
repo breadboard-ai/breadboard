@@ -1949,16 +1949,6 @@ export class Main extends SignalWatcher(LitElement) {
 
         this.#checkGoogleDriveAssetShareStatus();
       }}
-      @bbassetedgechange=${async (
-        evt: BreadboardUI.Events.AssetEdgeChangeEvent
-      ) => {
-        await this.#runtime.edit.changeAssetEdge(
-          this.#tab,
-          evt.changeType,
-          evt.assetEdge,
-          evt.subGraphId
-        );
-      }}
       @bbaddnodewithedge=${async (
         evt: BreadboardUI.Events.AddNodeWithEdgeEvent
       ) => {

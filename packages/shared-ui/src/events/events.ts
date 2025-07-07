@@ -26,7 +26,6 @@ import type {
 } from "@google-labs/breadboard";
 import type {
   AppTemplateAdditionalOptionsAvailable,
-  AssetEdge,
   Command,
   NewAsset,
   EdgeData,
@@ -724,18 +723,6 @@ export class NodeConfigurationUpdateRequestEvent extends Event {
   }
 }
 
-export class AssetEdgeChangeEvent extends Event {
-  static eventName = "bbassetedgechange";
-
-  constructor(
-    public readonly changeType: "add" | "remove",
-    public readonly assetEdge: AssetEdge,
-    public readonly subGraphId: string | null = null
-  ) {
-    super(AssetEdgeChangeEvent.eventName, { ...eventInit });
-  }
-}
-
 export class AddNodeWithEdgeEvent extends Event {
   static eventName = "bbaddnodewithedge";
   constructor(
@@ -1323,6 +1310,7 @@ export class GoogleDrivePickerCloseEvent extends Event {
 import type * as Board from "./board/board.js";
 import type * as Host from "./host/host.js";
 import type * as Node from "./node/node.js";
+import type * as Asset from "./asset/asset.js";
 import type * as Theme from "./theme/theme.js";
 
 export type StateEventDetailMap = {
@@ -1341,6 +1329,8 @@ export type StateEventDetailMap = {
   "node.multichange": Node.MultiChange;
   "node.changeedge": Node.ChangeEdge;
   "node.changeedgeattachmentpoint": Node.ChangeEdgeAttachmentPoint;
+
+  "asset.changeedge": Asset.ChangeEdge;
 
   "theme.create": Theme.Create;
   "theme.change": Theme.Change;
