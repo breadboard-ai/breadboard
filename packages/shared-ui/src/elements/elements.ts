@@ -16,7 +16,6 @@ export { AudioHandler } from "./input/audio/audio-handler.js";
 export { AudioInput } from "./input/audio/audio.js";
 export { BoardActivity } from "./board-activity/board-activity.js";
 export { BoardActivityOverlay } from "./overlay/board-activity.js";
-export { BoardDetailsOverlay } from "./overlay/board-details.js";
 export { BoardSelector } from "./input/board-selector/board-selector.js";
 export { BoardServerOverlay } from "./overlay/provider.js";
 export { CanvasController } from "./canvas-controller/canvas-controller.js";

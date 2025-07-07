@@ -122,25 +122,6 @@ export class ContinueEvent extends Event {
   }
 }
 
-export class BoardInfoUpdateEvent extends Event {
-  static eventName = "bbboardinfoupdate";
-
-  constructor(
-    public readonly tabId: string | null,
-    public readonly title: string,
-    public readonly version: string,
-    public readonly description: string,
-    public readonly status: "published" | "draft" | "private" | null = null,
-    public readonly isTool: boolean | null = null,
-    public readonly isComponent: boolean | null = null,
-    public readonly subGraphId: string | null = null,
-    public readonly moduleId: string | null = null,
-    public readonly exported: boolean | null = null
-  ) {
-    super(BoardInfoUpdateEvent.eventName, { ...eventInit });
-  }
-}
-
 /**
  * Run Management
  */
