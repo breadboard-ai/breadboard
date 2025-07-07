@@ -5,7 +5,6 @@
  */
 
 import type {
-  Edge,
   GraphIdentifier,
   GraphMetadata,
   LLMContent,
@@ -20,7 +19,6 @@ import type {
   EditHistoryCreator,
   GraphDescriptor,
   InspectablePort,
-  NodeDescriptor,
   PortIdentifier,
   Schema,
 } from "@google-labs/breadboard";
@@ -48,6 +46,52 @@ export enum ToastType {
   ERROR = "error",
   PENDING = "pending",
 }
+
+/** State Event System */
+
+import type * as Board from "./board/board.js";
+import type * as Host from "./host/host.js";
+import type * as Node from "./node/node.js";
+import type * as Asset from "./asset/asset.js";
+import type * as Theme from "./theme/theme.js";
+
+export type StateEventDetailMap = {
+  "board.create": Board.Create;
+  "board.input": Board.Input;
+  "board.load": Board.Load;
+  "board.remix": Board.Remix;
+  "board.rename": Board.Rename;
+  "board.run": Board.Run;
+  "board.stop": Board.Stop;
+
+  "host.modetoggle": Host.ModeToggle;
+  "host.selectionstatechange": Host.SelectionStateChange;
+
+  "node.addwithedge": Node.AddWithEdge;
+  "node.change": Node.Change;
+  "node.multichange": Node.MultiChange;
+  "node.changeedge": Node.ChangeEdge;
+  "node.changeedgeattachmentpoint": Node.ChangeEdgeAttachmentPoint;
+
+  "asset.changeedge": Asset.ChangeEdge;
+
+  "theme.create": Theme.Create;
+  "theme.change": Theme.Change;
+  "theme.delete": Theme.Delete;
+  "theme.update": Theme.Update;
+};
+
+export class StateEvent<
+  T extends keyof StateEventDetailMap,
+> extends CustomEvent<StateEventDetailMap[T]> {
+  static eventName = "bbevent";
+
+  constructor(readonly payload: StateEventDetailMap[T]) {
+    super(StateEvent.eventName, { detail: payload, ...eventInit });
+  }
+}
+
+/** Legacy Event System */
 
 /**
  * Board Management
@@ -723,17 +767,6 @@ export class NodeConfigurationUpdateRequestEvent extends Event {
   }
 }
 
-export class AddNodeWithEdgeEvent extends Event {
-  static eventName = "bbaddnodewithedge";
-  constructor(
-    public readonly node: NodeDescriptor,
-    public readonly edge: Edge,
-    public readonly subGraphId: string | null = null
-  ) {
-    super(AddNodeWithEdgeEvent.eventName, { ...eventInit });
-  }
-}
-
 export class MoveNodesEvent extends Event {
   static eventName = "bbmovenodes" as const;
   constructor(
@@ -1304,47 +1337,6 @@ export class GoogleDrivePickerCloseEvent extends Event {
   constructor(result: google.picker.ResponseObject) {
     super(GoogleDrivePickerCloseEvent.eventName, { ...eventInit });
     this.result = result;
-  }
-}
-
-import type * as Board from "./board/board.js";
-import type * as Host from "./host/host.js";
-import type * as Node from "./node/node.js";
-import type * as Asset from "./asset/asset.js";
-import type * as Theme from "./theme/theme.js";
-
-export type StateEventDetailMap = {
-  "board.create": Board.Create;
-  "board.input": Board.Input;
-  "board.load": Board.Load;
-  "board.remix": Board.Remix;
-  "board.rename": Board.Rename;
-  "board.run": Board.Run;
-  "board.stop": Board.Stop;
-
-  "host.modetoggle": Host.ModeToggle;
-  "host.selectionstatechange": Host.SelectionStateChange;
-
-  "node.change": Node.Change;
-  "node.multichange": Node.MultiChange;
-  "node.changeedge": Node.ChangeEdge;
-  "node.changeedgeattachmentpoint": Node.ChangeEdgeAttachmentPoint;
-
-  "asset.changeedge": Asset.ChangeEdge;
-
-  "theme.create": Theme.Create;
-  "theme.change": Theme.Change;
-  "theme.delete": Theme.Delete;
-  "theme.update": Theme.Update;
-};
-
-export class StateEvent<
-  T extends keyof StateEventDetailMap,
-> extends CustomEvent<StateEventDetailMap[T]> {
-  static eventName = "bbevent";
-
-  constructor(readonly payload: StateEventDetailMap[T]) {
-    super(StateEvent.eventName, { detail: payload, ...eventInit });
   }
 }
 

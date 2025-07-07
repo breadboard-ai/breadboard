@@ -9,11 +9,19 @@ import {
   EditSpec,
   GraphIdentifier,
   NodeConfiguration,
+  NodeDescriptor,
   NodeMetadata,
 } from "@breadboard-ai/types";
 import { EdgeAttachmentPoint } from "../../types/types";
 
 type Namespace = "node";
+
+export interface AddWithEdge {
+  readonly eventType: `${Namespace}.addwithedge`;
+  readonly node: NodeDescriptor;
+  readonly edge: Edge;
+  readonly subGraphId: string | null;
+}
 
 export interface Change {
   readonly eventType: `${Namespace}.change`;
