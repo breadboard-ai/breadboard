@@ -23,6 +23,7 @@ export const eventRoutes = new Map<
 
   /** Board */
   [Board.CreateRoute.event, Board.CreateRoute],
+  [Board.DeleteRoute.event, Board.DeleteRoute],
   [Board.InputRoute.event, Board.InputRoute],
   [Board.LoadRoute.event, Board.LoadRoute],
   [Board.RemixRoute.event, Board.RemixRoute],

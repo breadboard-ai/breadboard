@@ -29,6 +29,17 @@ export interface Remix {
   };
 }
 
+export interface Delete {
+  readonly eventType: `${Namespace}.delete`;
+  readonly url: string;
+  readonly messages: {
+    query: string;
+    start: string;
+    end: string;
+    error: string;
+  };
+}
+
 export interface Load {
   readonly eventType: `${Namespace}.load`;
   readonly url: string;

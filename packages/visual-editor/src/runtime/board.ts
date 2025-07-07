@@ -1178,15 +1178,48 @@ export class Board extends EventTarget {
     return { ...response, url };
   }
 
-  async delete(providerName: string, url: string) {
+  async delete(
+    providerName: string,
+    url: string,
+    messages: { start: string; end: string; error: string }
+  ) {
+    const snackbarId = globalThis.crypto.randomUUID();
+    this.dispatchEvent(
+      new RuntimeSnackbarEvent(
+        snackbarId,
+        messages.start,
+        BreadboardUI.Types.SnackType.PENDING,
+        [],
+        true,
+        true
+      )
+    );
+
     const fail = { result: false, error: "Unable to delete" };
     const boardServer = this.getBoardServerByName(providerName);
     if (!boardServer) {
       return fail;
     }
 
+    const result = await boardServer.delete(new URL(url));
+
     await this.#removeRecentUrl(url);
-    return await boardServer.delete(new URL(url));
+    if (this.#currentTabId) {
+      this.closeTab(this.#currentTabId);
+    }
+
+    this.dispatchEvent(
+      new RuntimeSnackbarEvent(
+        snackbarId,
+        messages.end,
+        BreadboardUI.Types.SnackType.INFORMATION,
+        [],
+        true,
+        true
+      )
+    );
+
+    return result;
   }
 
   async extensionAction<T extends BoardServerExtensionNamespace>(

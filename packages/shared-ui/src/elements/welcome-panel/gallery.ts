@@ -12,11 +12,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { keyed } from "lit/directives/keyed.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
-import {
-  BoardDeleteEvent,
-  OverflowMenuActionEvent,
-  StateEvent,
-} from "../../events/events.js";
+import { OverflowMenuActionEvent, StateEvent } from "../../events/events.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { icons } from "../../styles/icons.js";
 import { OverflowAction } from "../../types/types.js";
@@ -480,13 +476,21 @@ export class Gallery extends LitElement {
           switch (actionEvt.action) {
             case "delete": {
               this.dispatchEvent(
-                new BoardDeleteEvent(this.#overflowMenuConfig.value)
+                new StateEvent({
+                  eventType: "board.delete",
+                  url: this.#overflowMenuConfig.value,
+                  messages: {
+                    query: GlobalStrings.from("QUERY_DELETE_PROJECT"),
+                    start: GlobalStrings.from("STATUS_DELETING_PROJECT"),
+                    end: GlobalStrings.from("STATUS_PROJECT_DELETED"),
+                    error: GlobalStrings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
+                  },
+                })
               );
               break;
             }
 
             case "duplicate": {
-              console.log(this.#overflowMenuConfig.value);
               this.#onRemixButtonClick(
                 actionEvt,
                 this.#overflowMenuConfig.value

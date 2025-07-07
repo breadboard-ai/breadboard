@@ -57,6 +57,7 @@ import type * as Theme from "./theme/theme.js";
 
 export type StateEventDetailMap = {
   "board.create": Board.Create;
+  "board.delete": Board.Delete;
   "board.input": Board.Input;
   "board.load": Board.Load;
   "board.remix": Board.Remix;
@@ -581,18 +582,6 @@ export class GraphBoardServerConnectRequestEvent extends Event {
     public readonly apiKey?: string
   ) {
     super(GraphBoardServerConnectRequestEvent.eventName, { ...eventInit });
-  }
-}
-
-export class GraphBoardServerDeleteRequestEvent extends Event {
-  static eventName = "bbgraphboardserverdeleterequest";
-
-  constructor(
-    public readonly boardServerName: string,
-    public readonly url: string,
-    public readonly isActive: boolean
-  ) {
-    super(GraphBoardServerDeleteRequestEvent.eventName, { ...eventInit });
   }
 }
 
@@ -1278,16 +1267,6 @@ export class ParamDeleteEvent extends Event {
     public readonly path: string
   ) {
     super(ParamDeleteEvent.eventName, { ...eventInit });
-  }
-}
-
-/** Board */
-
-export class BoardDeleteEvent extends Event {
-  static eventName = "bbboarddelete";
-
-  constructor(public readonly url: string) {
-    super(BoardDeleteEvent.eventName, { ...eventInit });
   }
 }
 
