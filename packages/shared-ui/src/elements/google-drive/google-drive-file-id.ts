@@ -35,6 +35,45 @@ type PickerMetadata = {
   docName?: string;
 };
 
+const ALLOWED_MIME_TYPES = [
+  "application/vnd.google-apps.document",
+  "application/vnd.google-apps.file",
+  "application/vnd.google-apps.presentation",
+  "application/vnd.google-apps.spreadsheet",
+  "application/vnd.google-apps.map",
+  "application/vnd.google-apps.photo",
+  "application/vnd.google-apps.drawing",
+
+  // https://ai.google.dev/gemini-api/docs/document-processing
+  "application/pdf",
+
+  // https://ai.google.dev/gemini-api/docs/image-understanding
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+
+  // https://ai.google.dev/gemini-api/docs/video-understanding
+  "video/mp4",
+  "video/mpeg",
+  "video/mov",
+  "video/avi",
+  "video/x-flv",
+  "video/mpg",
+  "video/webm",
+  "video/wmv",
+  "video/3gpp",
+
+  // https://ai.google.dev/gemini-api/docs/audio
+  "audio/wav",
+  "audio/mp3",
+  "audio/aiff",
+  "audio/aac",
+  "audio/ogg",
+  "audio/flac",
+].join(",");
+
 export const googleDriveFileIdInputPlugin: InputPlugin = {
   instantiate: {
     customElementName: "bb-google-drive-file-id",
@@ -250,12 +289,14 @@ export class GoogleDriveFileId extends LitElement {
     this.#destroyPicker();
 
     const myFilesView = new this._pickerLib.DocsView();
+    myFilesView.setMimeTypes(ALLOWED_MIME_TYPES);
     myFilesView.setIncludeFolders(true);
     myFilesView.setSelectFolderEnabled(false);
     myFilesView.setOwnedByMe(true);
     myFilesView.setMode(google.picker.DocsViewMode.GRID);
 
     const sharedFilesView = new this._pickerLib.DocsView();
+    sharedFilesView.setMimeTypes(ALLOWED_MIME_TYPES);
     sharedFilesView.setIncludeFolders(true);
     sharedFilesView.setSelectFolderEnabled(false);
     sharedFilesView.setOwnedByMe(false);
