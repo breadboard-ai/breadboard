@@ -6,12 +6,12 @@
 
 import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("ProjectListing");
+const GlobalStrings = StringsHelper.forSection("Global");
 
 import { LitElement, html, css, nothing, PropertyValueMap } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
   GraphBoardServerAddEvent,
-  GraphBoardServerBlankBoardEvent,
   GraphBoardServerDisconnectEvent,
   GraphBoardServerRefreshEvent,
   GraphBoardServerRenewAccessRequestEvent,
@@ -43,6 +43,7 @@ import { ActionTracker } from "../../utils/action-tracker.js";
 import { colorsLight } from "../../styles/host/colors-light.js";
 import { type } from "../../styles/host/type.js";
 import { type BuildInfo, buildInfoContext } from "../../contexts/build-info.js";
+import { blankBoard } from "../../utils/blank-board.js";
 
 const MODE_KEY = "bb-project-listing-mode";
 const OVERFLOW_MENU_CLEARANCE = 4;
@@ -1052,6 +1053,17 @@ export class ProjectListing extends LitElement {
     ActionTracker.createNew();
 
     evt.target.disabled = true;
-    this.dispatchEvent(new GraphBoardServerBlankBoardEvent());
+    this.dispatchEvent(
+      new StateEvent({
+        eventType: "board.create",
+        editHistoryCreator: { role: "user" },
+        graph: blankBoard(),
+        messages: {
+          start: GlobalStrings.from("STATUS_CREATING_PROJECT"),
+          end: GlobalStrings.from("STATUS_PROJECT_CREATED"),
+          error: GlobalStrings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
+        },
+      })
+    );
   }
 }

@@ -147,3 +147,59 @@ export const RenameRoute: EventRoute<"board.rename"> = {
     return false;
   },
 };
+
+export const CreateRoute: EventRoute<"board.create"> = {
+  event: "board.create",
+
+  async do({ tab, runtime, uiState, originalEvent }) {
+    const boardServerName = uiState.boardServer;
+    const location = uiState.boardLocation;
+    const fileName = globalThis.crypto.randomUUID();
+
+    const result = await runtime.board.saveAs(
+      boardServerName,
+      location,
+      fileName,
+      originalEvent.detail.graph,
+      true,
+      originalEvent.detail.messages
+    );
+
+    if (!result?.url) {
+      return false;
+    }
+
+    runtime.router.go(
+      result.url.href,
+      uiState.mode,
+      tab?.id,
+      originalEvent.detail.editHistoryCreator
+    );
+
+    return false;
+  },
+};
+
+export const RemixRoute: EventRoute<"board.remix"> = {
+  event: "board.remix",
+
+  async do(deps) {
+    const { runtime, originalEvent } = deps;
+    const graphStore = runtime.board.getGraphStore();
+    const addResult = graphStore.addByURL(originalEvent.detail.url, [], {});
+    const graph = (await graphStore.getLatest(addResult.mutable)).graph;
+    graph.title = `${graph.title ?? "Untitled"} Remix`;
+
+    await CreateRoute.do({
+      ...deps,
+      originalEvent: new BreadboardUI.Events.StateEvent({
+        eventType: "board.create",
+        editHistoryCreator: { role: "user" },
+        graph,
+        messages: originalEvent.detail.messages,
+      }),
+    });
+
+    return false;
+  },
+};

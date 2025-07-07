@@ -33,7 +33,7 @@ import {
   RuntimeBoardServerChangeEvent,
   RuntimeWorkspaceItemChangeEvent,
   RuntimeBoardSaveStatusChangeEvent,
-  RuntimeToastEvent,
+  RuntimeSnackbarEvent,
 } from "./events";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import {
@@ -962,14 +962,16 @@ export class Board extends EventTarget {
       return noSave;
     }
 
-    let toastId;
+    let snackbarId;
     if (messages) {
-      toastId = globalThis.crypto.randomUUID();
+      snackbarId = globalThis.crypto.randomUUID();
       this.dispatchEvent(
-        new RuntimeToastEvent(
-          toastId,
-          BreadboardUI.Events.ToastType.PENDING,
+        new RuntimeSnackbarEvent(
+          snackbarId,
           messages.start,
+          BreadboardUI.Types.SnackType.PENDING,
+          [],
+          true,
           true
         )
       );
@@ -1002,13 +1004,15 @@ export class Board extends EventTarget {
 
       const result = await boardServer.save(boardUrl, tab.graph, userInitiated);
 
-      if (toastId && messages) {
+      if (snackbarId && messages) {
         this.dispatchEvent(
-          new RuntimeToastEvent(
-            toastId,
-            BreadboardUI.Events.ToastType.INFORMATION,
+          new RuntimeSnackbarEvent(
+            snackbarId,
             messages.end,
-            false
+            BreadboardUI.Types.SnackType.INFORMATION,
+            [],
+            false,
+            true
           )
         );
       }
@@ -1043,20 +1047,70 @@ export class Board extends EventTarget {
     return noSave;
   }
 
+  #isSavingAs = false;
   async saveAs(
     boardServerName: string,
     location: string,
     fileName: string,
-    graph: GraphDescriptor
+    graph: GraphDescriptor,
+    ackUser = true,
+    ackUserMessage: { start: string; end: string; error: string }
   ) {
+    if (this.#isSavingAs) {
+      return null;
+    }
+
+    this.#isSavingAs = true;
+
+    let snackbarId;
+    if (ackUser) {
+      snackbarId = globalThis.crypto.randomUUID();
+      this.dispatchEvent(
+        new RuntimeSnackbarEvent(
+          snackbarId,
+          ackUserMessage.start,
+          BreadboardUI.Types.SnackType.INFORMATION,
+          [],
+          true,
+          true
+        )
+      );
+    }
+
     const fail = { result: false, error: "Unable to save", url: undefined };
     const boardServer = this.getBoardServerByName(boardServerName);
     if (!boardServer) {
+      this.#isSavingAs = false;
+      if (snackbarId) {
+        this.dispatchEvent(
+          new RuntimeSnackbarEvent(
+            snackbarId,
+            ackUserMessage.error,
+            BreadboardUI.Types.SnackType.ERROR,
+            [],
+            true,
+            true
+          )
+        );
+      }
       return fail;
     }
 
     const urlString = await boardServer.createURL(location, fileName);
     if (!urlString) {
+      this.#isSavingAs = false;
+      if (snackbarId) {
+        this.dispatchEvent(
+          new RuntimeSnackbarEvent(
+            snackbarId,
+            ackUserMessage.error,
+            BreadboardUI.Types.SnackType.ERROR,
+            [],
+            true,
+            true
+          )
+        );
+      }
       return fail;
     }
 
@@ -1070,6 +1124,7 @@ export class Board extends EventTarget {
       url = new URL(response.url);
     }
 
+    this.#isSavingAs = false;
     return { ...response, url };
   }
 

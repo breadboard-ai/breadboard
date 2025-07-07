@@ -4,7 +4,30 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { EditHistoryCreator, GraphDescriptor } from "@breadboard-ai/types";
+
 type Namespace = "board";
+
+export interface Create {
+  readonly eventType: `${Namespace}.create`;
+  readonly graph: GraphDescriptor;
+  readonly editHistoryCreator: EditHistoryCreator;
+  readonly messages: {
+    start: string;
+    end: string;
+    error: string;
+  };
+}
+
+export interface Remix {
+  readonly eventType: `${Namespace}.remix`;
+  readonly url: string;
+  readonly messages: {
+    start: string;
+    end: string;
+    error: string;
+  };
+}
 
 export interface Load {
   readonly eventType: `${Namespace}.load`;

@@ -27,8 +27,6 @@ import {
   defaultModuleContent,
   createFileSystem,
   createEphemeralBlobStore,
-  blank as breadboardBlank,
-  EditHistoryCreator,
   FileSystem,
   addSandboxedRunModule,
   hash,
@@ -212,7 +210,6 @@ export class Main extends SignalWatcher(LitElement) {
   #onKeyboardShortCut = this.#onKeyboardShortcut.bind(this);
   #recentBoardStore = RecentBoardStore.instance();
   #recentBoards: BreadboardUI.Types.RecentBoard[] = [];
-  #isSaving = false;
   #graphStore!: MutableGraphStore;
   #runStore = getRunStore();
   #fileSystem!: FileSystem;
@@ -448,6 +445,20 @@ export class Main extends SignalWatcher(LitElement) {
           Runtime.Events.RuntimeToastEvent.eventName,
           (evt: Runtime.Events.RuntimeToastEvent) => {
             this.toast(evt.message, evt.toastType, evt.persistent, evt.toastId);
+          }
+        );
+
+        this.#runtime.board.addEventListener(
+          Runtime.Events.RuntimeSnackbarEvent.eventName,
+          (evt: Runtime.Events.RuntimeSnackbarEvent) => {
+            this.snackbar(
+              evt.message,
+              evt.snackType,
+              evt.actions,
+              evt.persistent,
+              evt.snackbarId,
+              evt.replaceAll
+            );
           }
         );
 
@@ -787,7 +798,8 @@ export class Main extends SignalWatcher(LitElement) {
                     BreadboardUI.Types.SnackType.PENDING,
                     [],
                     true,
-                    evt.id
+                    evt.id,
+                    true
                   );
                 }, LOADING_TIMEOUT);
 
@@ -887,7 +899,7 @@ export class Main extends SignalWatcher(LitElement) {
       async (message: CreateNewBoardMessage) => {
         if (!message.prompt) {
           // If no prompt provided, generate an empty board.
-          this.#generateBoardFromGraph(blank());
+          this.#generateBoardFromGraph(BreadboardUI.Utils.blankBoard());
         } else {
           void this.#generateGraph(message.prompt)
             .then((graph) => this.#generateBoardFromGraph(graph))
@@ -920,7 +932,7 @@ export class Main extends SignalWatcher(LitElement) {
     const location = this.#uiState.boardLocation;
     const fileName = `${globalThis.crypto.randomUUID()}.bgl.json`;
 
-    const boardData = await this.#attemptBoardSaveAs(
+    const saveResult = await this.#runtime.board.saveAs(
       boardServerName,
       location,
       fileName,
@@ -932,10 +944,14 @@ export class Main extends SignalWatcher(LitElement) {
         error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
       }
     );
-    if (!boardData) return;
+
+    if (!saveResult || !saveResult.result || !saveResult.url) {
+      return;
+    }
+
     this.#embedHandler?.sendToEmbedder({
       type: "board_id_created",
-      id: boardData.url.href,
+      id: saveResult.url.href,
     });
   }
 
@@ -1109,109 +1125,6 @@ export class Main extends SignalWatcher(LitElement) {
     }
   }
 
-  async #attemptLogOut() {
-    const signinAdapter = this.signinAdapter;
-    if (!signinAdapter) {
-      return;
-    }
-
-    await signinAdapter.signout(() => {
-      this.toast(
-        Strings.from("STATUS_LOGGED_OUT"),
-        BreadboardUI.Events.ToastType.INFORMATION
-      );
-    });
-
-    // Recreating the signin adapter here will trigger a re-render with the
-    // updated state, which will cause us to show the sign-in dialog.
-    this.signinAdapter = this.#createSigninAdapter();
-  }
-
-  async #attemptBoardSaveAsAndNavigate(
-    boardServerName: string,
-    location: string,
-    fileName: string,
-    graph: GraphDescriptor,
-    ackUser = true,
-    ackUserMessage = {
-      start: Strings.from("STATUS_SAVING_PROJECT"),
-      end: Strings.from("STATUS_PROJECT_SAVED"),
-      error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
-    },
-    creator: EditHistoryCreator
-  ) {
-    const boardData = await this.#attemptBoardSaveAs(
-      boardServerName,
-      location,
-      fileName,
-      graph,
-      ackUser,
-      ackUserMessage
-    );
-    if (!boardData) {
-      return;
-    }
-    const { id, url } = boardData;
-    this.#runtime.router.go(url.href, this.#uiState.mode, id, creator);
-  }
-
-  async #attemptBoardSaveAs(
-    boardServerName: string,
-    location: string,
-    fileName: string,
-    graph: GraphDescriptor,
-    ackUser = true,
-    ackUserMessage = {
-      start: Strings.from("STATUS_SAVING_PROJECT"),
-      end: Strings.from("STATUS_PROJECT_SAVED"),
-      error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
-    }
-  ): Promise<{
-    id: BreadboardUI.Types.SnackbarUUID | undefined;
-    url: URL;
-  } | null> {
-    if (this.#isSaving) {
-      return null;
-    }
-
-    let id: BreadboardUI.Types.SnackbarUUID | undefined;
-    if (ackUser) {
-      id = this.snackbar(
-        ackUserMessage.start,
-        BreadboardUI.Types.SnackType.INFORMATION,
-        [],
-        true,
-        globalThis.crypto.randomUUID(),
-        true
-      );
-    }
-
-    this.#isSaving = true;
-    const { result, error, url } = await this.#runtime.board.saveAs(
-      boardServerName,
-      location,
-      fileName,
-      graph
-    );
-    this.#isSaving = false;
-
-    if (!result || !url) {
-      if (ackUser && id) {
-        this.snackbar(
-          error || ackUserMessage.error,
-          BreadboardUI.Types.SnackType.ERROR,
-          [],
-          false,
-          id
-        );
-      }
-
-      return null;
-    }
-
-    return { id: id, url: url };
-  }
-
   async #attemptBoardDelete(
     boardServerName: string,
     url: string,
@@ -1253,35 +1166,6 @@ export class Main extends SignalWatcher(LitElement) {
       this.#runtime.board.closeTab(this.#tab.id);
       this.#removeRecentUrl(url);
     }
-  }
-
-  async #attemptRemix(graph: GraphDescriptor, creator: EditHistoryCreator) {
-    const remixedGraph = { ...graph, title: `${graph.title} Remix` };
-
-    return this.#attemptBoardCreate(remixedGraph, creator);
-  }
-
-  async #attemptBoardCreate(
-    graph: GraphDescriptor,
-    creator: EditHistoryCreator
-  ) {
-    const boardServerName = this.#uiState.boardServer;
-    const location = this.#uiState.boardLocation;
-    const fileName = `${globalThis.crypto.randomUUID()}.bgl.json`;
-
-    await this.#attemptBoardSaveAsAndNavigate(
-      boardServerName,
-      location,
-      fileName,
-      graph,
-      true,
-      {
-        start: Strings.from("STATUS_CREATING_PROJECT"),
-        end: Strings.from("STATUS_PROJECT_CREATED"),
-        error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
-      },
-      creator
-    );
   }
 
   async #trackRecentBoard(url: string) {
@@ -1656,6 +1540,27 @@ export class Main extends SignalWatcher(LitElement) {
     } satisfies RenderValues;
   }
 
+  #collectEventRouteDeps(
+    evt: BreadboardUI.Events.StateEvent<
+      keyof BreadboardUI.Events.StateEventDetailMap
+    >
+  ) {
+    if (!this.#secretsHelper) {
+      this.#secretsHelper = new SecretsHelper(this.#settings!);
+    }
+
+    return {
+      originalEvent: evt,
+      // TODO: Determine if this is needed.
+      proxy: this.#proxy,
+      runtime: this.#runtime,
+      settings: this.#settings,
+      secretsHelper: this.#secretsHelper,
+      tab: this.#tab,
+      uiState: this.#uiState,
+    };
+  }
+
   render() {
     if (!this.signinAdapter) {
       return nothing;
@@ -1710,24 +1615,13 @@ export class Main extends SignalWatcher(LitElement) {
           return;
         }
 
-        if (!this.#secretsHelper) {
-          this.#secretsHelper = new SecretsHelper(this.#settings!);
-        }
-
         // Pass the handler everything it may need in order to function. Usually
         // the most important of these are the runtime, originalEvent (which
         // contains the data needed) and the tab so that the runtime can locate
         // the appropriate editor etc.
-        const shouldRender = await eventRoute.do({
-          originalEvent: evt,
-          // TODO: Determine if this is needed.
-          proxy: this.#proxy,
-          runtime: this.#runtime,
-          settings: this.#settings,
-          secretsHelper: this.#secretsHelper,
-          tab: this.#tab,
-          uiState: this.#uiState,
-        });
+        const shouldRender = await eventRoute.do(
+          this.#collectEventRouteDeps(evt)
+        );
 
         // Some legacy actions require an update after running, so if the event
         // handler returns with a true, schedule an update.
@@ -1794,14 +1688,6 @@ export class Main extends SignalWatcher(LitElement) {
 
         await this.#attemptBoardDelete(boardServer.name, evt.url, false);
       }}
-      @bbgraphboardserverblankboard=${() => {
-        this.#attemptBoardCreate(blank(), { role: "user" });
-      }}
-      @bbgraphboardservergeneratedboard=${(
-        evt: BreadboardUI.Events.GraphBoardServerGeneratedBoardEvent
-      ) => {
-        this.#attemptBoardCreate(evt.graph, evt.creator);
-      }}
       @bbgraphboardserveradd=${() => {
         this.#uiState.show.add("BoardServerAddOverlay");
       }}
@@ -1841,16 +1727,6 @@ export class Main extends SignalWatcher(LitElement) {
 
         if (boardServer.renewAccess) {
           await boardServer.renewAccess();
-        }
-      }}
-      @bbgraphboardserverremixrequest=${async (
-        evt: BreadboardUI.Events.GraphBoardServerRemixRequestEvent
-      ) => {
-        const graphStore = this.#runtime.board.getGraphStore();
-        const addResult = graphStore.addByURL(evt.url, [], {});
-        const graph = (await graphStore.getLatest(addResult.mutable)).graph;
-        if (graph) {
-          await this.#attemptRemix(graph, { role: "user" });
         }
       }}
       @bbgraphboardserverdeleterequest=${async (
@@ -1945,9 +1821,6 @@ export class Main extends SignalWatcher(LitElement) {
           }
         }
         this.requestUpdate();
-      }}
-      @bbgraphboardserverblankboard=${() => {
-        this.#attemptBoardCreate(blank(), { role: "user" });
       }}
       @bbsubgraphcreate=${async (
         evt: BreadboardUI.Events.SubGraphCreateEvent
@@ -2295,6 +2168,32 @@ export class Main extends SignalWatcher(LitElement) {
     )}`;
   }
 
+  async #invokeRemixEventRouteWith(
+    url: string,
+    messages = {
+      start: Strings.from("STATUS_REMIXING_PROJECT"),
+      end: Strings.from("STATUS_PROJECT_CREATED"),
+      error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
+    }
+  ) {
+    const remixRoute = eventRoutes.get("board.remix");
+    const refresh = await remixRoute?.do(
+      this.#collectEventRouteDeps(
+        new BreadboardUI.Events.StateEvent({
+          eventType: "board.remix",
+          messages,
+          url,
+        })
+      )
+    );
+
+    if (refresh) {
+      requestAnimationFrame(() => {
+        this.requestUpdate();
+      });
+    }
+  }
+
   #renderSnackbar() {
     return html`<bb-snackbar
       ${ref(this.#snackbarRef)}
@@ -2307,13 +2206,7 @@ export class Main extends SignalWatcher(LitElement) {
               return;
             }
 
-            const graphStore = this.#runtime.board.getGraphStore();
-            const addResult = graphStore.addByURL(evt.value, [], {});
-            const graph = (await graphStore.getLatest(addResult.mutable)).graph;
-
-            if (graph) {
-              await this.#attemptRemix(graph, { role: "user" });
-            }
+            this.#invokeRemixEventRouteWith(evt.value);
           }
         }
       }}
@@ -2329,23 +2222,29 @@ export class Main extends SignalWatcher(LitElement) {
       .signinAdapter=${this.signinAdapter}
       .hasActiveTab=${this.#tab !== null}
       .tabTitle=${this.#tab?.graph?.title ?? null}
+      .url=${this.#tab?.graph?.url ?? null}
       .loadState=${this.#uiState.loadState}
       .canSave=${renderValues.canSave}
       .isMine=${this.#runtime.board.isMine(this.#tab?.graph.url)}
       .saveStatus=${renderValues.saveStatus}
       .showExperimentalComponents=${renderValues.showExperimentalComponents}
       .mode=${this.#uiState.mode}
-      @bbremix=${async () => {
-        if (!this.#tab?.graph) {
+      @bbsignout=${async () => {
+        const signinAdapter = this.signinAdapter;
+        if (!signinAdapter) {
           return;
         }
 
-        await this.#attemptRemix(this.#tab.graph, {
-          role: "user",
+        await signinAdapter.signout(() => {
+          this.toast(
+            Strings.from("STATUS_LOGGED_OUT"),
+            BreadboardUI.Events.ToastType.INFORMATION
+          );
         });
-      }}
-      @bbsignout=${async () => {
-        await this.#attemptLogOut();
+
+        // Recreating the signin adapter here will trigger a re-render with the
+        // updated state, which will cause us to show the sign-in dialog.
+        this.signinAdapter = this.#createSigninAdapter();
       }}
       @bbclose=${() => {
         if (!this.#tab) {
@@ -2420,14 +2319,15 @@ export class Main extends SignalWatcher(LitElement) {
           }
 
           case "duplicate": {
-            if (!this.#tab?.graph) {
+            if (!this.#tab?.graph || !this.#tab.graph.url) {
               return;
             }
 
-            await this.#attemptRemix(this.#tab.graph, {
-              role: "user",
+            this.#invokeRemixEventRouteWith(this.#tab.graph.url, {
+              start: Strings.from("STATUS_GENERIC_WORKING"),
+              end: Strings.from("STATUS_PROJECT_CREATED"),
+              error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
             });
-
             break;
           }
 
@@ -2570,10 +2470,4 @@ declare global {
   interface HTMLElementTagNameMap {
     "bb-main": Main;
   }
-}
-
-function blank() {
-  const blankBoard = breadboardBlank();
-  const title = Strings.from("TITLE_UNTITLED_PROJECT") || blankBoard.title;
-  return { ...breadboardBlank(), title };
 }
