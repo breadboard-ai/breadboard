@@ -49,7 +49,7 @@ export class FlowgenEditorInput extends LitElement {
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        max-width: 500px;
+        max-width: 540px;
         margin: 0 var(--bb-grid-size-2);
 
         --placeholder-color: var(--n-70);
