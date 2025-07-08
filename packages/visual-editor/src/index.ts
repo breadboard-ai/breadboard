@@ -109,6 +109,8 @@ import { classMap } from "lit/directives/class-map.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { eventRoutes } from "./event-routing/event-routing";
 import { keyboardCommands } from "./commands/commands";
+import { ReactiveAppScreen } from "@breadboard-ai/shared-ui/state/app-screen.js";
+import { type AppScreenOutput } from "@breadboard-ai/shared-ui/state/types.js";
 
 type RenderValues = {
   canSave: boolean;
@@ -803,7 +805,8 @@ export class Main extends SignalWatcher(LitElement) {
                   undefined,
                   undefined,
                   undefined,
-                  evt.creator
+                  evt.creator,
+                  evt.resultsFileId
                 );
                 clearTimeout(loadingTimeout);
                 this.unsnackbar();
@@ -1371,6 +1374,17 @@ export class Main extends SignalWatcher(LitElement) {
       this.#tab?.mainGraphId,
       this.#runtime.edit.getEditor(this.#tab)
     );
+
+    if (projectState && this.#tab?.finalOutputValues) {
+      const current = new ReactiveAppScreen("", [], undefined);
+      const last: AppScreenOutput = {
+        output: this.#tab.finalOutputValues,
+        schema: {},
+      };
+      current.outputs.set("final", last);
+      projectState.run.app.current = current;
+      projectState.run.app.screens.set("final", current);
+    }
 
     const showExperimentalComponents: boolean = this.#settings
       ? (this.#settings

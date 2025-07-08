@@ -22,6 +22,7 @@ import type {
   BoardServerSaveEventStatus,
   GraphLoader,
   GraphProvider,
+  OutputValues,
 } from "@breadboard-ai/types";
 import { RuntimeConfigBoardServers, Tab, TabId, TabType } from "./types";
 import {
@@ -56,6 +57,7 @@ import { BOARD_SAVE_STATUS } from "@breadboard-ai/shared-ui/types/types.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { loadImage } from "@breadboard-ai/shared-ui/utils/image";
 import { RecentBoardStore } from "../data/recent-boards";
+import { type RunResults } from "@breadboard-ai/google-drive-kit/board-server/operations.js";
 
 const documentStyles = getComputedStyle(document.documentElement);
 
@@ -619,7 +621,8 @@ export class Board extends EventTarget {
     dispatchTabChangeEvent = true,
     moduleId: ModuleIdentifier | null = null,
     subGraphId: GraphIdentifier | null = null,
-    creator: EditHistoryCreator | null = null
+    creator: EditHistoryCreator | null = null,
+    resultsFileId?: string
   ): Promise<void> {
     const urlAtTimeOfCall = this.currentURL?.href ?? null;
     const url = this.#makeRelativeToCurrentBoard(boardUrl, currentUrl);
@@ -692,7 +695,8 @@ export class Board extends EventTarget {
             dispatchTabChangeEvent,
             moduleId,
             subGraphId,
-            creator
+            creator,
+            resultsFileId
           );
         } else {
           this.dispatchEvent(new RuntimeErrorEvent("Unable to load board"));
@@ -737,6 +741,20 @@ export class Board extends EventTarget {
         return;
       }
 
+      let finalOutputValues: OutputValues | undefined;
+      if (resultsFileId) {
+        if (this.googleDriveClient) {
+          const response =
+            await this.googleDriveClient.getFileMedia(resultsFileId);
+          const runResults = (await response.json()) as RunResults;
+          finalOutputValues = runResults.finalOutputValues;
+        } else {
+          console.error(
+            `No GoogleDriveClient provided. Can not fetch results.`
+          );
+        }
+      }
+
       const id = globalThis.crypto.randomUUID();
       const graphIsMine = this.isMine(graph.url);
       this.#tabs.set(id, {
@@ -755,6 +773,7 @@ export class Board extends EventTarget {
         creator: creator ?? undefined,
         history: await this.#loadLocalHistory(url),
         onHistoryChanged: (history) => this.#saveLocalHistory(url, history),
+        finalOutputValues,
       });
 
       // If there's a current tab, close it.

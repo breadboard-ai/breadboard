@@ -8,6 +8,7 @@ import type {
   BoardServer,
   GraphLoader,
   HarnessProxyConfig,
+  OutputValues,
 } from "@breadboard-ai/types";
 import {
   EditHistoryCreator,
@@ -67,6 +68,7 @@ export interface Tab {
   creator?: EditHistoryCreator;
   history?: EditHistoryEntry[];
   onHistoryChanged?: (history: readonly EditHistoryEntry[]) => void;
+  finalOutputValues?: OutputValues;
 }
 
 export interface RuntimeConfig {

@@ -84,6 +84,21 @@ export const StopRoute: EventRoute<"board.stop"> = {
       return false;
     }
 
+    if (tab.finalOutputValues) {
+      // Special case. We are displaying a fixed final result screen.
+      tab.finalOutputValues = undefined;
+      const url = new URL(document.URL);
+      if (url.searchParams.has("results")) {
+        url.searchParams.delete("results");
+        history.pushState(null, "", url);
+      }
+      const projectState = runtime.run.state.getOrCreateProjectState(
+        tab.mainGraphId
+      );
+      projectState?.resetRun();
+      return true;
+    }
+
     const tabId = tab?.id ?? null;
     const abortController = runtime.run.getAbortSignal(tabId);
     if (!abortController) {
