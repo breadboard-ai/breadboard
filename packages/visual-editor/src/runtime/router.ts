@@ -108,13 +108,16 @@ export class Router extends EventTarget {
     if (urlMode && (urlMode === "app" || urlMode === "canvas")) {
       mode = urlMode;
     }
+    const resultsFileId =
+      urlWithParams.searchParams.get("results") ?? undefined;
 
     this.dispatchEvent(
       new RuntimeURLChangeEvent(
         new URL(window.location.href),
         mode,
         id,
-        creator
+        creator,
+        resultsFileId
       )
     );
   }

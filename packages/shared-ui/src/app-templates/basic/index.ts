@@ -1157,10 +1157,9 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       return;
     }
 
-    const shareUrl = new URL(
-      `/app/${encodeURIComponent(graphUrl)}`,
-      document.location.origin
-    );
+    const shareUrl = new URL(`/`, document.location.origin);
+    shareUrl.searchParams.set("flow", graphUrl);
+    shareUrl.searchParams.set("mode", "app");
     shareUrl.searchParams.set("results", resultsFileId);
     navigator.clipboard.writeText(shareUrl.href);
     this.dispatchEvent(

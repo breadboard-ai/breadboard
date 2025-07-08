@@ -200,7 +200,8 @@ export class RuntimeURLChangeEvent extends Event {
     public readonly url: URL,
     public readonly mode: VisualEditorMode,
     public readonly id?: TabId,
-    public readonly creator?: EditHistoryCreator
+    public readonly creator?: EditHistoryCreator,
+    public readonly resultsFileId?: string
   ) {
     super(RuntimeURLChangeEvent.eventName, { ...eventInit });
   }
