@@ -11,7 +11,7 @@ import { describe, it } from "node:test";
 import { createPlan } from "../../src/static/create-plan.js";
 import { Orchestrator } from "../../src/static/orchestrator.js";
 import {
-  NodeState,
+  NodeOrchestratorState,
   OrchestrationNodeInfo,
   Task,
 } from "../../src/static/types.js";
@@ -54,7 +54,7 @@ const routerPlan = createPlan(router);
 function assertState(
   graph: GraphDescriptor,
   state: Map<NodeIdentifier, OrchestrationNodeInfo>,
-  expected: [id: NodeIdentifier, state: NodeState][]
+  expected: [id: NodeIdentifier, state: NodeOrchestratorState][]
 ) {
   const nodeMap = new Map(graph.nodes.map((node) => [node.id, node]));
   deepStrictEqual(
