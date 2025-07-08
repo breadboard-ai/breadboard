@@ -11,7 +11,20 @@ import { runLocally } from "./local.js";
 import { configureSecretAsking } from "./secrets.js";
 import { asyncGen } from "@breadboard-ai/utils";
 
-const configureKits = async (config: RunConfig): Promise<Kit[]> => {
+export { run, configureKits };
+
+async function configureKits(
+  config: RunConfig,
+  next: (data: HarnessRunResult) => Promise<void>
+): Promise<Kit[]> {
+  return configureSecretAsking(
+    config.interactiveSecrets,
+    await configureProxy(config),
+    next
+  );
+}
+
+async function configureProxy(config: RunConfig): Promise<Kit[]> {
   // If a proxy is configured, add the proxy kit to the list of kits.
   if (!config.proxy) return config.kits;
   const kits: Kit[] = [];
@@ -41,16 +54,12 @@ const configureKits = async (config: RunConfig): Promise<Kit[]> => {
     }
   }
   return [...kits, ...config.kits];
-};
+}
 
-export async function* run(config: RunConfig) {
+async function* run(config: RunConfig) {
   if (!config.remote) {
     yield* asyncGen<HarnessRunResult>(async (next) => {
-      const kits = configureSecretAsking(
-        config.interactiveSecrets,
-        await configureKits(config),
-        next
-      );
+      const kits = await configureKits(config, next);
 
       for await (const data of runLocally(config, kits)) {
         await next(data);
