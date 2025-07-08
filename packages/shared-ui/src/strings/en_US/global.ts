@@ -60,6 +60,9 @@ export default {
   COMMAND_SEND_FEEDBACK: {
     str: "Send feedback",
   },
+  COMMAND_JOIN_CHAT: {
+    str: "Google Labs Discord",
+  },
   COMMAND_EXPORT_PROJECT: {
     str: "Export JSON",
   },
