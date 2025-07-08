@@ -615,6 +615,7 @@ export const styles = [
           & button {
             color: var(--p-15, var(--bb-neutral-900));
 
+            &:hover,
             &[disabled] {
               background: var(--s-95, var(--bb-neutral-100));
             }
@@ -629,7 +630,7 @@ export const styles = [
         & button {
           display: flex;
           align-items: center;
-
+          border-radius: var(--bb-grid-size-16);
           font-size: 12px;
           background: none;
           color: var(--n-15, var(--bb-neutral-900));
@@ -642,10 +643,13 @@ export const styles = [
           white-space: nowrap;
           transition: background 0.2s cubic-bezier(0, 0, 0.3, 1);
 
+          &:hover,
+          &[disabled] {
+            background: var(--n-95, var(--bb-neutral-100));
+          }
+
           &[disabled] {
             cursor: auto;
-            background: var(--n-95, var(--bb-neutral-100));
-            border-radius: var(--bb-grid-size-16);
           }
 
           &.invisible {
