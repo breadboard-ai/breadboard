@@ -347,7 +347,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
             border-radius: 50%;
             background: var(--n-100);
             right: -5px;
-            top: 24px;
+            top: 23px;
             translate: 0 -50%;
             font-size: 0;
             padding: 0;
