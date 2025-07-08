@@ -31,7 +31,7 @@ function allowListChecker(endpointUrl: URL | "" | undefined) {
         return grant;
       }
     } catch (e) {
-      return { error: "Unable to verify product availablilty for the user" };
+      return { error: "Unable to verify product availability for the user" };
     }
 
     return {
