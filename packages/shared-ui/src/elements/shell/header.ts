@@ -202,6 +202,7 @@ export class VEHeader extends LitElement {
             }
           }
 
+          & #publish,
           & #remix {
             display: none;
             align-items: center;
@@ -317,6 +318,7 @@ export class VEHeader extends LitElement {
       }
 
       @media (min-width: 830px) {
+        section #right #publish,
         section #right #remix {
           display: flex;
         }
@@ -386,7 +388,7 @@ export class VEHeader extends LitElement {
       ${this.#renderModeToggle()}
       <div id="right">
         ${[
-          this.#renderShareButton(),
+          this.#renderSharePublishButton(),
           this.#renderRemixButton(),
           this.#renderSaveStatusLabel(),
           this.#renderItemSelect(),
@@ -588,9 +590,17 @@ export class VEHeader extends LitElement {
     </button>`;
   }
 
-  #renderShareButton() {
+  #renderSharePublishButton() {
     if (this.isMine) {
-      return nothing;
+      return html`<button
+        id="publish"
+        class="sans-flex round w-500"
+        @click=${() => {
+          this.dispatchEvent(new ShareRequestedEvent());
+        }}
+      >
+        <span class="g-icon">publish</span>Publish
+      </button>`;
     }
 
     return html`<button

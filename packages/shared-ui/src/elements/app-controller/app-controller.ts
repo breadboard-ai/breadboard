@@ -8,7 +8,7 @@ import { GraphDescriptor, LLMContent } from "@breadboard-ai/types";
 import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("AppPreview");
 
-import { LitElement, PropertyValues, html, nothing } from "lit";
+import { LitElement, PropertyValues, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
   BoardServer,
@@ -18,10 +18,6 @@ import {
 } from "@google-labs/breadboard";
 
 import { styles as appPreviewStyles } from "./app-controller.styles.js";
-import {
-  ShareRequestedEvent,
-  ThemeEditRequestEvent,
-} from "../../events/events.js";
 import {
   AppTemplate,
   AppTemplateOptions,
@@ -81,9 +77,6 @@ export class AppController extends SignalWatcher(LitElement) {
 
   @property()
   accessor readOnly = false;
-
-  @property()
-  accessor showThemeEditing = false;
 
   @property()
   accessor template = "basic";
@@ -400,35 +393,6 @@ export class AppController extends SignalWatcher(LitElement) {
         >
           ${this.#template}
         </div>
-        ${this.isMine && this.showThemeEditing
-          ? html`<div
-              id="theme-edit"
-              class=${classMap({ empty: this.graphIsEmpty })}
-            >
-              <button
-                id="share-app"
-                ?disabled=${this.#loadingTemplate || this.graphIsEmpty}
-                @click=${() => {
-                  this.dispatchEvent(new ShareRequestedEvent());
-                }}
-              >
-                <span class="g-icon filled">link</span>Share app
-              </button>
-              <button
-                id="designer"
-                ?disabled=${this.#loadingTemplate || this.graphIsEmpty}
-                @click=${() => {
-                  this.dispatchEvent(
-                    new ThemeEditRequestEvent(
-                      this.#appTemplate?.additionalOptions ?? null
-                    )
-                  );
-                }}
-              >
-                <span class="g-icon filled">palette</span>Edit Theme
-              </button>
-            </div>`
-          : nothing}
       </div>
     `;
   }

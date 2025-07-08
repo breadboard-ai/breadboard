@@ -601,7 +601,7 @@ export class AppThemeCreator extends LitElement {
     const theme = this.themes[this.theme];
     return html`<section id="container" ${ref(this.#containerRef)}>
       <h1>
-        <span>Designer</span>
+        <span>Theme</span>
         <button
           id="close"
           @click=${() => {

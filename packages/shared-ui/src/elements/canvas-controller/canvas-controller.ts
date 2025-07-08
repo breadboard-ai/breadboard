@@ -699,6 +699,14 @@ export class CanvasController extends LitElement {
               >
                 Editor
               </button>
+              <button
+                @click=${() => {
+                  this.sideNavItem = "app-view";
+                  this.showThemeDesigner = true;
+                }}
+              >
+                Theme
+              </button>
             </div>
           </div>
           <div id="side-nav-content">${sideNavItem}</div>
