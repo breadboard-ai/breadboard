@@ -485,6 +485,12 @@ export class VEHeader extends LitElement {
       icon: "flag",
     });
 
+    options.push({
+      id: "chat",
+      title: Strings.from("COMMAND_JOIN_CHAT"),
+      icon: "open_in_new",
+    });
+
     return html`<bb-item-select
       .showDownArrow=${false}
       .freezeValue=${0}

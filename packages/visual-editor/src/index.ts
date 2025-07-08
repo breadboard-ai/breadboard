@@ -2165,6 +2165,11 @@ export class Main extends SignalWatcher(LitElement) {
             break;
           }
 
+          case "chat": {
+            window.open("https://discord.com/invite/googlelabs", "_blank");
+            break;
+          }
+
           case "history": {
             if (!this.#canvasControllerRef.value) {
               return;
