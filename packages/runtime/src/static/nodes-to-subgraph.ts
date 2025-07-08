@@ -91,7 +91,7 @@ function createSubgraph(
 
   // Create input node for capturing incoming edges
   const inputNode: NodeDescriptor = {
-    id: "input",
+    id: `input_${subgraphId}`,
     type: "input",
     metadata: {
       title: "Subgraph Input",
@@ -101,7 +101,7 @@ function createSubgraph(
 
   // Create output node for capturing outgoing edges
   const outputNode: NodeDescriptor = {
-    id: "output",
+    id: `output_${subgraphId}`,
     type: "output",
     metadata: {
       title: "Subgraph Output",
@@ -115,7 +115,7 @@ function createSubgraph(
   // Add edges from input node to group entry points
   incomingEdges.forEach((edge) => {
     subgraphEdges.push({
-      from: "input",
+      from: `input_${subgraphId}`,
       to: edge.to,
       in: edge.in,
       out: edge.in || "out",
@@ -126,7 +126,7 @@ function createSubgraph(
   outgoingEdges.forEach((edge) => {
     subgraphEdges.push({
       from: edge.from,
-      to: "output",
+      to: `output_${subgraphId}`,
       in: edge.out || "in",
       out: edge.out,
     });

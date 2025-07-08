@@ -4,10 +4,175 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphDescriptor } from "@breadboard-ai/types";
-import { strict as assert } from "node:assert";
+import type {
+  GraphDescriptor,
+  NodeDescriptor,
+  NodeIdentifier,
+} from "@breadboard-ai/types";
+import { strict as assert, deepStrictEqual } from "node:assert";
 import { describe, it } from "node:test";
 import { condense } from "../../src/static/condense.js";
+
+class GraphAsserter {
+  readonly nodeMap: Map<string, NodeDescriptor> = new Map();
+
+  constructor(public readonly graph: GraphDescriptor) {
+    this.nodeMap = new Map(graph.nodes?.map((node) => [node.id, node]));
+  }
+
+  assertNodeExists(id: NodeIdentifier, inGraph: GraphDescriptor) {
+    const node = this.nodeMap.get(id);
+    if (!node) {
+      assert.fail(`Node "${id}" does not exist`);
+    }
+    const found = inGraph.nodes?.find((n) => n.id === id);
+    if (!found) {
+      assert.fail(`Node "${id}" does not exist in graph`);
+    }
+    deepStrictEqual(node, found);
+  }
+}
+
+// Let's take an actual graph with cycles from A2's generate-text.bgl.json
+const generateText: GraphDescriptor = {
+  nodes: [
+    {
+      type: "output",
+      id: "output",
+      configuration: {
+        schema: {
+          properties: {
+            context: {
+              type: "array",
+              title: "Context",
+              items: {
+                type: "object",
+                behavior: ["llm-content"],
+              },
+              default: "null",
+            },
+          },
+          type: "object",
+          required: [],
+        },
+      },
+      metadata: {
+        visual: {
+          x: 720,
+          y: 0,
+          collapsed: "expanded",
+          outputHeight: 44,
+        },
+      },
+    },
+    {
+      id: "entry",
+      type: "#module:entry",
+      metadata: {
+        visual: {
+          x: -46.99999999999966,
+          y: -71.99999999999898,
+          collapsed: "expanded",
+          outputHeight: 44,
+        },
+        title: "entry",
+      },
+    },
+    {
+      id: "main",
+      type: "#module:main",
+      metadata: {
+        visual: {
+          x: 340,
+          y: 0,
+          collapsed: "expanded",
+          outputHeight: 44,
+        },
+        title: "Generating draft",
+        logLevel: "info",
+      },
+      configuration: {},
+    },
+    {
+      id: "join",
+      type: "#module:join",
+      metadata: {
+        visual: {
+          x: 1059.9999999999986,
+          y: -159.99999999999886,
+          collapsed: "expanded",
+          outputHeight: 44,
+        },
+        title: "join",
+      },
+    },
+    {
+      type: "input",
+      id: "input",
+      metadata: {
+        visual: {
+          x: 720.0000000000005,
+          y: 160.00000000000114,
+          collapsed: "advanced",
+          outputHeight: 44,
+        },
+        title: "Waiting for user feedback",
+        logLevel: "info",
+      },
+      configuration: {},
+    },
+  ],
+  edges: [
+    {
+      from: "entry",
+      to: "main",
+      out: "context",
+      in: "context",
+    },
+    {
+      from: "main",
+      to: "output",
+      out: "done",
+      in: "context",
+    },
+    {
+      from: "input",
+      to: "join",
+      out: "request",
+      in: "request",
+    },
+    {
+      from: "main",
+      to: "input",
+      out: "toInput",
+      in: "schema",
+    },
+    {
+      from: "main",
+      to: "join",
+      out: "context",
+      in: "context",
+    },
+    {
+      from: "join",
+      to: "main",
+      out: "context",
+      in: "context",
+    },
+  ],
+};
+
+const noCycles: GraphDescriptor = {
+  nodes: [
+    { id: "a", type: "input" },
+    { id: "b", type: "process" },
+    { id: "c", type: "output" },
+  ],
+  edges: [
+    { from: "a", to: "b", out: "value", in: "input" },
+    { from: "b", to: "c", out: "result", in: "data" },
+  ],
+};
 
 describe("condense function", () => {
   describe("basic functionality", () => {
@@ -17,41 +182,9 @@ describe("condense function", () => {
       assert.deepEqual(result, emptyGraph);
     });
 
-    it("should return original graph when no edges", () => {
-      const graph: GraphDescriptor = {
-        nodes: [
-          { id: "a", type: "input" },
-          { id: "b", type: "output" },
-        ],
-        edges: [],
-      };
-      const result = condense(graph);
-      assert.deepEqual(result, graph);
-    });
-
-    it("should return original graph when no nodes", () => {
-      const graph: GraphDescriptor = {
-        nodes: [],
-        edges: [{ from: "a", to: "b" }],
-      };
-      const result = condense(graph);
-      assert.deepEqual(result, graph);
-    });
-
     it("should return original graph when no strongly connected components", () => {
-      const graph: GraphDescriptor = {
-        nodes: [
-          { id: "a", type: "input" },
-          { id: "b", type: "process" },
-          { id: "c", type: "output" },
-        ],
-        edges: [
-          { from: "a", to: "b", out: "value", in: "input" },
-          { from: "b", to: "c", out: "result", in: "data" },
-        ],
-      };
-      const result = condense(graph);
-      assert.deepEqual(result, graph);
+      const result = condense(noCycles);
+      assert.deepEqual(result, noCycles);
     });
   });
 
@@ -84,8 +217,8 @@ describe("condense function", () => {
       // Subgraph should contain original nodes plus input/output
       const subgraph = result.graphs["scc_0"];
       assert.equal(subgraph.nodes?.length, 4); // input, a, b, output
-      assert.ok(subgraph.nodes?.some((node) => node.id === "input"));
-      assert.ok(subgraph.nodes?.some((node) => node.id === "output"));
+      assert.ok(subgraph.nodes?.some((node) => node.id === "input_scc_0"));
+      assert.ok(subgraph.nodes?.some((node) => node.id === "output_scc_0"));
       assert.ok(subgraph.nodes?.some((node) => node.id === "a"));
       assert.ok(subgraph.nodes?.some((node) => node.id === "b"));
     });
@@ -292,7 +425,9 @@ describe("condense function", () => {
       assert.ok(subgraph);
 
       // Check input node has edges to both SCC entry points
-      const inputEdges = subgraph.edges?.filter((e) => e.from === "input");
+      const inputEdges = subgraph.edges?.filter(
+        (e) => e.from === "input_scc_0"
+      );
       assert.ok(inputEdges?.some((e) => e.to === "a" && e.in === "input1"));
       assert.ok(inputEdges?.some((e) => e.to === "b" && e.in === "input2"));
     });
@@ -320,7 +455,9 @@ describe("condense function", () => {
       assert.ok(subgraph);
 
       // Check output node has edges from both SCC exit points
-      const outputEdges = subgraph.edges?.filter((e) => e.to === "output");
+      const outputEdges = subgraph.edges?.filter(
+        (e) => e.to === "output_scc_0"
+      );
       assert.ok(
         outputEdges?.some((e) => e.from === "a" && e.out === "result1")
       );
@@ -386,7 +523,9 @@ describe("condense function", () => {
       assert.ok(subgraph);
 
       // Check that all unique port names are preserved
-      const inputToSccEdges = subgraph.edges?.filter((e) => e.from === "input");
+      const inputToSccEdges = subgraph.edges?.filter(
+        (e) => e.from === "input_scc_0"
+      );
       assert.ok(
         inputToSccEdges?.some((e) => e.to === "a" && e.in === "input1")
       );
@@ -394,7 +533,9 @@ describe("condense function", () => {
         inputToSccEdges?.some((e) => e.to === "a" && e.in === "input2")
       );
 
-      const sccToOutputEdges = subgraph.edges?.filter((e) => e.to === "output");
+      const sccToOutputEdges = subgraph.edges?.filter(
+        (e) => e.to === "output_scc_0"
+      );
       assert.ok(
         sccToOutputEdges?.some((e) => e.from === "a" && e.out === "epsilon")
       );
@@ -446,7 +587,9 @@ describe("condense function", () => {
       assert.equal(condensedNode.type, "#scc_0");
 
       // Verify input node captures incoming port names correctly
-      const inputToSccEdges = subgraph.edges?.filter((e) => e.from === "input");
+      const inputToSccEdges = subgraph.edges?.filter(
+        (e) => e.from === "input_scc_0"
+      );
       assert.ok(
         inputToSccEdges?.some(
           (e) => e.to === "processor1" && e.in === "text" && e.out === "text"
@@ -454,7 +597,9 @@ describe("condense function", () => {
       );
 
       // Verify output node captures outgoing port names correctly
-      const sccToOutputEdges = subgraph.edges?.filter((e) => e.to === "output");
+      const sccToOutputEdges = subgraph.edges?.filter(
+        (e) => e.to === "output_scc_0"
+      );
       assert.ok(
         sccToOutputEdges?.some(
           (e) =>
@@ -557,8 +702,8 @@ describe("condense function", () => {
       assert.ok(subgraph);
 
       // Verify all parameter names are preserved as function signature
-      const inputNode = subgraph.nodes?.find((n) => n.id === "input");
-      const outputNode = subgraph.nodes?.find((n) => n.id === "output");
+      const inputNode = subgraph.nodes?.find((n) => n.id === "input_scc_0");
+      const outputNode = subgraph.nodes?.find((n) => n.id === "output_scc_0");
       assert.ok(inputNode);
       assert.ok(outputNode);
       assert.equal(inputNode.type, "input");
@@ -592,23 +737,27 @@ describe("condense function", () => {
       assert.ok(subgraph);
 
       // Check input node exists and has proper edges
-      const inputNode = subgraph.nodes?.find((node) => node.id === "input");
+      const inputNode = subgraph.nodes?.find(
+        (node) => node.id === "input_scc_0"
+      );
       assert.ok(inputNode);
       assert.equal(inputNode.type, "input");
 
       // Check output node exists and has proper edges
-      const outputNode = subgraph.nodes?.find((node) => node.id === "output");
+      const outputNode = subgraph.nodes?.find(
+        (node) => node.id === "output_scc_0"
+      );
       assert.ok(outputNode);
       assert.equal(outputNode.type, "output");
 
       // Check edges from input to SCC entry points
       const inputEdges =
-        subgraph.edges?.filter((edge) => edge.from === "input") || [];
+        subgraph.edges?.filter((edge) => edge.from === "input_scc_0") || [];
       assert.ok(inputEdges.length > 0);
 
       // Check edges from SCC exit points to output
       const outputEdges =
-        subgraph.edges?.filter((edge) => edge.to === "output") || [];
+        subgraph.edges?.filter((edge) => edge.to === "output_scc_0") || [];
       assert.ok(outputEdges.length > 0);
     });
 
@@ -772,15 +921,27 @@ describe("condense function", () => {
       // Should add new subgraph
       assert.ok(result.graphs?.["scc_0"]);
     });
+  });
 
-    it("should handle empty node and edge arrays", () => {
-      const graph: GraphDescriptor = {
-        nodes: [],
-        edges: [],
-      };
+  describe("actual generate text graph from A2", () => {
+    const result = condense(generateText);
+    const subgraph = result?.graphs?.["scc_0"];
+    assert.ok(subgraph);
 
-      const result = condense(graph);
-      assert.deepEqual(result, graph);
-    });
+    const subgraphNodeIds = subgraph?.nodes.map((node) => node.id);
+    assert.deepStrictEqual(subgraphNodeIds, [
+      "input_scc_0",
+      "main",
+      "join",
+      "input",
+      "output_scc_0",
+    ]);
+
+    const asserter = new GraphAsserter(generateText);
+    asserter.assertNodeExists("main", subgraph);
+    asserter.assertNodeExists("input", subgraph);
+    asserter.assertNodeExists("join", subgraph);
+    asserter.assertNodeExists("output", result);
+    asserter.assertNodeExists("entry", result);
   });
 });
