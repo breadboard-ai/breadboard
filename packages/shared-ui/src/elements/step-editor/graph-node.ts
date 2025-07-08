@@ -439,6 +439,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
                   /** Create space for chiclet borders */
                   padding: 1px;
                   width: 100%;
+                  white-space: normal;
                 }
 
                 & .missing {
