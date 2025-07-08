@@ -2166,7 +2166,7 @@ export class Main extends SignalWatcher(LitElement) {
           }
 
           case "chat": {
-            window.open("https://discord.com/invite/googlelabs", "_blank");
+            window.open("https://discord.gg/googlelabs", "_blank");
             break;
           }
 
