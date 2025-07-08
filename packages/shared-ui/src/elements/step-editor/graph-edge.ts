@@ -24,7 +24,7 @@ import { clamp } from "./utils/clamp";
 import { Entity } from "./entity";
 import { calculatePointsOnCubicBezierCurve } from "./utils/cubic-bezier";
 import { icons } from "../../styles/icons";
-import { palette, custom } from "../../styles/host/colors-light";
+import { palette } from "../../styles/host/colors-light";
 
 interface Connection {
   n1: DOMPoint;
@@ -35,11 +35,11 @@ interface Connection {
 }
 
 const EDGE_STANDARD = palette.neutral.n80;
-const EDGE_SELECTED = custom.c100;
+const EDGE_SELECTED = palette.neutral.n0;
 
 // Value is no longer on the wire, because it was consumed by the receiving
 // component. Constant wires never reach this state.
-const EDGE_CONSUMED = palette.neutral.n0;
+const EDGE_CONSUMED = palette.neutral.n50;
 
 // Value is on the wire, but hasn't been consumed by receiving component yet.
 const EDGE_STORED = palette.neutral.n80;
