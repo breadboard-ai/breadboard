@@ -6,7 +6,7 @@
 import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("Global");
 
-import { LitElement, html, css, nothing } from "lit";
+import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { colorsLight } from "../../styles/host/colors-light";
 import { type } from "../../styles/host/type";
@@ -53,6 +53,9 @@ export class VEHeader extends LitElement {
 
   @property()
   accessor mode: "app" | "canvas" = "canvas";
+
+  @property()
+  accessor status: "Draft" | "Published" = "Draft";
 
   @state()
   accessor #showAccountSwitcher = false;
@@ -200,7 +203,7 @@ export class VEHeader extends LitElement {
           }
 
           & #remix {
-            display: flex;
+            display: none;
             align-items: center;
             background: var(--n-0);
             border: none;
@@ -243,7 +246,6 @@ export class VEHeader extends LitElement {
 
       #tab-title {
         font-size: 16px;
-
         padding: var(--bb-grid-size) var(--bb-grid-size);
         border: 1px solid transparent;
         border-radius: var(--bb-grid-size);
@@ -267,13 +269,29 @@ export class VEHeader extends LitElement {
       }
 
       #experiment {
+        display: none;
         font-size: 11px;
         line-height: 1;
         padding: var(--bb-grid-size) var(--bb-grid-size-3);
         border-radius: var(--bb-grid-size-16);
         border: 1px solid var(--n-0);
-        margin-left: var(--bb-grid-size-3);
         text-transform: uppercase;
+      }
+
+      #status {
+        display: none;
+        align-items: center;
+        font-size: 10px;
+        margin-left: var(--bb-grid-size-3);
+        color: var(--n-10);
+
+        & .g-icon {
+          margin-right: var(--bb-grid-size);
+        }
+      }
+
+      #app-title #experiment {
+        margin-left: var(--bb-grid-size-2);
       }
 
       #back-button {
@@ -289,6 +307,24 @@ export class VEHeader extends LitElement {
           &:hover {
             translate: -3px 0;
           }
+        }
+      }
+
+      @media (min-width: 820px) {
+        #experiment {
+          display: block;
+        }
+      }
+
+      @media (min-width: 830px) {
+        section #right #remix {
+          display: flex;
+        }
+      }
+
+      @media (min-width: 980px) {
+        #status {
+          display: flex;
         }
       }
     `,
@@ -345,6 +381,7 @@ export class VEHeader extends LitElement {
           id="tab-title"
           .value=${this.tabTitle}
         />
+        ${this.#renderExperimentalLabel()} ${this.#renderStatusLabel()}
       </div>
       ${this.#renderModeToggle()}
       <div id="right">
@@ -487,14 +524,25 @@ export class VEHeader extends LitElement {
     >`;
   }
 
+  #renderExperimentalLabel() {
+    return html`${Strings.from("PROVIDER_NAME") !== "PROVIDER_NAME" &&
+    Strings.from("PROVIDER_NAME") !== ""
+      ? html`<span class="sans" id="experiment">Experiment</span>`
+      : nothing}`;
+  }
+
+  #renderStatusLabel() {
+    return html`<span class="sans" id="status"
+      >${this.status === "Published"
+        ? html`<span class="g-icon w-400">cloud_done</span>`
+        : nothing}${this.status}</span
+    >`;
+  }
+
   #renderDefaultControls() {
     return html`<section>
       <h1 id="app-title" class="sans-flex round w-500">
-        ${Strings.from("APP_NAME")}
-        ${Strings.from("PROVIDER_NAME") !== "PROVIDER_NAME" &&
-        Strings.from("PROVIDER_NAME") !== ""
-          ? html`<span class="sans" id="experiment">Experiment</span>`
-          : nothing}
+        ${Strings.from("APP_NAME")} ${this.#renderExperimentalLabel()}
       </h1>
       ${this.loadState !== "Error" && this.loadState !== "Loading"
         ? html`<div id="right">
@@ -598,6 +646,14 @@ export class VEHeader extends LitElement {
         this.dispatchEvent(new SignOutEvent());
       }}
     ></bb-account-switcher>`;
+  }
+
+  protected willUpdate(changedProperties: PropertyValues): void {
+    // If the user has opened a file that isn't theirs it must be Published, so
+    // we update the status as such.
+    if (changedProperties.has("isMine")) {
+      this.status = this.isMine ? "Draft" : "Published";
+    }
   }
 
   render() {
