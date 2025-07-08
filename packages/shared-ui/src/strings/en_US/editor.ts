@@ -41,6 +41,9 @@ export default {
   COMMAND_DESCRIBE_EDIT: {
     str: "Describe an edit",
   },
+  COMMAND_DESCRIBE_FRESH_FLOW: {
+    str: "Describe what you want to build",
+  },
   COMMAND_DESCRIBE_EDIT_FLOW: {
     str: "Suggest an edit",
   },
