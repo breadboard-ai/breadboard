@@ -165,6 +165,9 @@ export class FlowgenEditorInput extends LitElement {
   @property({ type: Boolean, reflect: true })
   accessor generating = false;
 
+  @property({ type: Boolean, reflect: true })
+  accessor hasEmptyGraph = false;
+
   @property({ reflect: true, type: Boolean })
   accessor highlighted = false;
 
@@ -226,7 +229,9 @@ export class FlowgenEditorInput extends LitElement {
         <bb-expanding-textarea
           ${ref(this.#descriptionInput)}
           .disabled=${isGenerating}
-          .placeholder=${Strings.from("COMMAND_DESCRIBE_EDIT_FLOW")}
+          .placeholder=${this.hasEmptyGraph
+            ? Strings.from("COMMAND_DESCRIBE_FRESH_FLOW")
+            : Strings.from("COMMAND_DESCRIBE_EDIT_FLOW")}
           @change=${this.#onInputChange}
           @focus=${this.#onInputFocus}
           @blur=${this.#onInputBlur}

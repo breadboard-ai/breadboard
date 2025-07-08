@@ -1086,6 +1086,7 @@ export class EditorControls extends LitElement {
 
     const shelf = html`<div id="shelf">
       <bb-flowgen-editor-input
+        .hasEmptyGraph=${this.graph.raw().nodes.length === 0}
         .currentGraph=${this.graph.raw()}
         @pointerdown=${(evt: PointerEvent) => {
           // <bb-renderer> listens for pointerdown and retains focus so that
