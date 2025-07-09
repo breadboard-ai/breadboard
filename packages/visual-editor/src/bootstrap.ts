@@ -72,11 +72,8 @@ function bootstrap(args: BootstrapArguments) {
       boardServerUrl: getUrlFromBoardServiceFlag(
         BOARD_SERVICE || args.defaultBoardService
       ),
-      connectionServerUrl: args?.connectionServerUrl,
-      requiresSignin: args?.requiresSignin,
       enableTos: ENABLE_TOS,
       tosHtml: TOS_HTML,
-      environmentName: ENVIRONMENT_NAME,
       kits: args?.kits,
       graphStorePreloader: args?.graphStorePreloader,
       moduleInvocationFilter: args?.moduleInvocationFilter,
