@@ -46,6 +46,7 @@ export const styles = [
           pointer-events: none;
           font-size: 16px;
           margin-right: var(--bb-grid-size);
+          flex: 0 0 auto;
 
           &::after {
             content: attr(data-icon);
