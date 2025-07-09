@@ -105,11 +105,17 @@ function createProjectRunState(
     signal
   );
 }
+
 function error(msg: string) {
   const full = `Unable to create project run state: ${msg}`;
   console.error(full);
   return err(full);
 }
+
+function topLevel(path: number[]) {
+  return idFromPath(path.toSpliced(1));
+}
+
 class ReactiveProjectRun implements ProjectRun {
   app: ReactiveApp = new ReactiveApp();
   console: Map<string, ConsoleEntry> = new SignalMap();
@@ -124,10 +130,10 @@ class ReactiveProjectRun implements ProjectRun {
   #errorPath: number[] | null = null;
 
   /**
-   * Current (last) entry in console
+   * Currently active (unfinished) entries in console.
    */
   @signal
-  accessor current: ReactiveConsoleEntry | null = null;
+  accessor current: Map<string, ReactiveConsoleEntry> | null = null;
 
   @signal
   get estimatedEntryCount() {
@@ -251,7 +257,7 @@ class ReactiveProjectRun implements ProjectRun {
     const { path } = event.data;
 
     if (path.length > 1) {
-      this.current?.onNodeStart(event.data);
+      this.current?.get(topLevel(path))?.onNodeStart(event.data);
       return;
     }
 
@@ -267,7 +273,8 @@ class ReactiveProjectRun implements ProjectRun {
       path,
       outputSchema
     );
-    this.current = entry;
+    this.current ??= new SignalMap();
+    this.current.set(topLevel(path), entry);
     this.console.set(entry.id, entry);
 
     // This looks like duplication with the console logic above,
@@ -281,10 +288,11 @@ class ReactiveProjectRun implements ProjectRun {
 
   #nodeEnd(event: RunNodeEndEvent) {
     console.debug("Project Run: Node End", event);
-    const pathLength = event.data.path.length;
+    const { path } = event.data;
+    const pathLength = path.length;
 
     if (pathLength > 1) {
-      this.current?.onNodeEnd(event.data, {
+      this.current?.get(topLevel(path))?.onNodeEnd(event.data, {
         completeInput: () => {
           this.input = null;
         },
@@ -295,17 +303,18 @@ class ReactiveProjectRun implements ProjectRun {
       return;
     }
 
-    this.current?.finalize(event.data);
+    this.current?.get(topLevel(path))?.finalize(event.data);
     this.app.current?.finalize(event.data);
   }
 
   #input(event: RunInputEvent) {
+    const { path } = event.data;
     console.debug("Project Run: Input", event);
     if (!this.current) {
       console.warn(`No current node for input event`, event);
       return;
     }
-    this.current.addInput(event.data, {
+    this.current.get(topLevel(path))?.addInput(event.data, {
       itemCreated: (item) => {
         this.app.current?.markAsInput();
         if (!item.schema) {
@@ -320,12 +329,13 @@ class ReactiveProjectRun implements ProjectRun {
   }
 
   #output(event: RunOutputEvent) {
+    const { path } = event.data;
     console.debug("Project Run: Output", event);
     if (!this.current) {
       console.warn(`No current console entry for output event`, event);
       return;
     }
-    this.current.addOutput(event.data);
+    this.current.get(topLevel(path))?.addOutput(event.data);
     if (!this.app.current) {
       console.warn(`No current screen for output event`, event);
       return;
