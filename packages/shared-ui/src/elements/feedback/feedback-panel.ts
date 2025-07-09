@@ -4,14 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { type ClientDeploymentConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
 import { consume } from "@lit/context";
 import { css, html, LitElement, nothing } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
-import {
-  type ClientDeploymentConfiguration,
-  clientDeploymentConfigurationContext,
-} from "../../config/client-deployment-configuration.js";
+import { clientDeploymentConfigurationContext } from "../../config/client-deployment-configuration.js";
 import { type BuildInfo, buildInfoContext } from "../../contexts/build-info.js";
 import { icons } from "../../styles/icons.js";
 import { spinAnimationStyles } from "../../styles/spin-animation.js";

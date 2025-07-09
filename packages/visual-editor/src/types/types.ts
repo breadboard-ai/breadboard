@@ -6,7 +6,7 @@
 
 import { EmbedHandler } from "@breadboard-ai/embed";
 import type * as BreadboardUI from "@breadboard-ai/shared-ui";
-import { ClientDeploymentConfiguration } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
+import { type ClientDeploymentConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
 import { type BuildInfo } from "@breadboard-ai/shared-ui/contexts/build-info.js";
 import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import {
