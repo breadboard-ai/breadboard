@@ -111,7 +111,7 @@ function proxyServerAllowFilter(
 function parseUrl(s: string): URL | undefined {
   try {
     return new URL(s);
-  } catch (e) {
+  } catch {
     return;
   }
 }

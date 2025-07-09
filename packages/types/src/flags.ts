@@ -6,8 +6,11 @@
 
 /**
  * The list of run-time flags currently available in Breadboard.
- * Use this type To add a new flag or remove an existing flag.
+ * Use this type to add a new flag or remove an existing flag.
  * The flag must be boolean. The default value is `false`.
+ * When changing flags, also make changes in
+ * packages/unified-server/src/server/provide-config.ts, where
+ * default values are set.
  *
  * Add a comment to explain what the flag does.
  */
@@ -16,7 +19,7 @@ export type RuntimeFlags = {
    * Use the next-gen, planner-based runtime (PlanRuntime),
    * instead of the current, VM-based runtime (LocalRunner).
    */
-  usePlanRunner?: boolean;
+  usePlanRunner: boolean;
 };
 
 /**

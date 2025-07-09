@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { RuntimeFlags } from "@breadboard-ai/types";
 import { createContext } from "@lit/context";
 
 export type ClientDeploymentConfiguration = {
@@ -14,6 +15,7 @@ export type ClientDeploymentConfiguration = {
   ENABLE_GOOGLE_FEEDBACK?: boolean;
   GOOGLE_FEEDBACK_PRODUCT_ID?: string;
   GOOGLE_FEEDBACK_BUCKET?: string;
+  flags?: Partial<RuntimeFlags>;
 };
 
 export const clientDeploymentConfigurationContext = createContext<

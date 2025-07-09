@@ -6,6 +6,7 @@
 
 import { SecretsProvider } from "@breadboard-ai/board-server";
 import { type ClientDeploymentConfiguration } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
+import { RuntimeFlags } from "@breadboard-ai/types";
 
 export { getConfigFromSecretManager };
 
@@ -23,6 +24,17 @@ export type ServerDeploymentConfiguration = {
 export type SecretValueFormat = {
   client: ClientDeploymentConfiguration;
   server: ServerDeploymentConfiguration;
+};
+
+/**
+ * These are the default values for runtime flags, necessary
+ * for type-checking and ensuring that we have all the runtime flags
+ * accounted for.
+ * When adding a new flag, set the default value to false.
+ * Also add it in packages/types/src/flags.ts
+ */
+const DEFAULT_FLAG_VALUES: RuntimeFlags = {
+  usePlanRunner: false,
 };
 
 export type DeploymentConfiguration = {
@@ -53,7 +65,12 @@ async function getConfigFromSecretManager(): Promise<DeploymentConfiguration> {
 
     const config = JSON.parse(secretValue) as SecretValueFormat;
 
-    const client = JSON.stringify(config.client).replaceAll(
+    const clientConfig = {
+      ...config.client,
+      flags: { ...DEFAULT_FLAG_VALUES, ...config.client?.flags },
+    };
+
+    const client = JSON.stringify(clientConfig).replaceAll(
       "</script>",
       "\x3C/script>"
     );
