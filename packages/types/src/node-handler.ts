@@ -5,6 +5,7 @@
  */
 
 import { DataStore, FileSystem } from "./data.js";
+import { RuntimeFlagManager } from "./flags.js";
 import {
   Capability,
   GraphDescriptor,
@@ -384,6 +385,10 @@ export interface NodeHandlerContext {
    * The file system, provided as module capability.
    */
   fileSystem?: FileSystem;
+  /**
+   * A way to see and manage runtime flags.
+   */
+  flags?: RuntimeFlagManager;
 }
 
 export type RunArguments = NodeHandlerContext & {

@@ -5,6 +5,7 @@ import { Contexts, Types } from "@breadboard-ai/shared-ui";
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 
 import { RuntimeInstance } from "./runtime/runtime.js";
+import { RuntimeFlagManager } from "@breadboard-ai/types";
 
 /**
  * An interface for owners functionality - a command center console for executing operations which
@@ -24,6 +25,7 @@ export class Admin {
   settingsHelper?: Types.SettingsHelper;
   driveBoardServer?: GoogleDriveBoardServer;
   runtime!: RuntimeInstance;
+  flags!: RuntimeFlagManager;
 
   help() {
     return {

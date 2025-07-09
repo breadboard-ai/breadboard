@@ -5,6 +5,7 @@
  */
 
 import { DataStore, FileSystem } from "./data.js";
+import { RuntimeFlagManager } from "./flags.js";
 import {
   GraphDescriptor,
   InputValues,
@@ -221,6 +222,10 @@ export type RunConfig = {
    * The file system, provided as module capability.
    */
   fileSystem?: FileSystem;
+  /**
+   * A way to see and manage runtime flags.
+   */
+  flags?: RuntimeFlagManager;
   /**
    * The state from which to resume the run.
    */
