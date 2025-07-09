@@ -28,20 +28,20 @@ export type RuntimeFlagManager = {
   /**
    * Gets current flags as provided by the environment.
    */
-  env(): RuntimeFlags;
+  env(): Readonly<RuntimeFlags>;
   /**
    * Gets the list of flags that are currently overriden
    * locally.
    */
-  overrides(): Partial<RuntimeFlags>;
+  overrides(): Promise<Partial<Readonly<RuntimeFlags>>>;
   /**
    * Override the flag value locally. Setting the flag to the
    * same value as the one provided by the environment,
    *
    */
-  override(flag: keyof RuntimeFlags, value: boolean): void;
+  override(flag: keyof RuntimeFlags, value: boolean): Promise<void>;
   /**
    * Clear local override.
    */
-  clearOverride(flag: keyof RuntimeFlags): void;
+  clearOverride(flag: keyof RuntimeFlags): Promise<void>;
 };

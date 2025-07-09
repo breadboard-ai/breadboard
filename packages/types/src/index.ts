@@ -21,3 +21,4 @@ export type * from "./schema.js";
 export type * from "./traversal.js";
 export type * from "./typed-event-target.js";
 export type * from "./uuid.js";
+export type * from "./flags.js";
