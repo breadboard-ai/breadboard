@@ -90,6 +90,7 @@ export class VEHeader extends LitElement {
         & #left {
           display: flex;
           align-items: center;
+          padding-right: 160px;
         }
 
         & #mode-toggle {
@@ -100,7 +101,7 @@ export class VEHeader extends LitElement {
           height: var(--bb-grid-size-8);
           position: absolute;
           top: 50%;
-          left: 50%;
+          left: max(340px, 50svw);
           translate: -50% -50%;
           border: none;
           background: none;
@@ -250,7 +251,7 @@ export class VEHeader extends LitElement {
         padding: var(--bb-grid-size) var(--bb-grid-size);
         border: 1px solid transparent;
         border-radius: var(--bb-grid-size);
-        max-width: 320px;
+        max-width: 200px;
         min-width: 10%;
         field-sizing: content;
         color: var(--p-0);

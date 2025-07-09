@@ -636,18 +636,10 @@ export class Main extends SignalWatcher(LitElement) {
             }
 
             switch (evt.runEvt.type) {
-              case "next": {
-                // Noop.
-                break;
-              }
-
+              case "next":
+              case "graphstart":
               case "skip": {
-                // Noop.
-                break;
-              }
-
-              case "graphstart": {
-                // Noop.
+                // Noops.
                 break;
               }
 
