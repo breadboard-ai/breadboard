@@ -5,21 +5,28 @@
  */
 
 import { analyzeIsJsonSubSchema } from "@google-labs/breadboard-schema/subschema.js";
-import { consume } from "@lit/context";
 import { Task } from "@lit/task";
 import type { JSONSchema4 } from "json-schema";
 import { html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import {
-  type Environment,
-  environmentContext,
-} from "../../contexts/environment.js";
 import type {
   InputChangeEvent,
   InputPlugin,
   InputWidget,
 } from "../../plugins/input-plugin.js";
 import { Schema } from "@google-labs/breadboard";
+import {
+  googleDriveFileIdInputPlugin,
+  googleDriveQueryInputPlugin,
+} from "../elements.js";
+
+// TODO(aomarks) delegating-input is still used in a couple places, but I think
+// it might never be used in practice, since it was only ever hard-coded to use
+// these two Google Drive plugins.
+const INPUT_PLUGINS = [
+  googleDriveFileIdInputPlugin,
+  googleDriveQueryInputPlugin,
+];
 
 /**
  * An input widget which doesn't render anything directly, but instead matches
@@ -47,20 +54,17 @@ export class DelegatingInput
     this.#value = value;
   }
 
-  @consume({ context: environmentContext })
-  private accessor _environment!: Environment;
-
   /**
    * This first task chooses the best plugin and instantiates the inner widget
    * element.
    */
   #widgetIgnoringValue = new Task(this, {
-    args: () => [this.schema, this._environment] as const,
-    task: ([schema, environment], { signal }) => {
-      if (!schema || !environment) {
+    args: () => [this.schema] as const,
+    task: ([schema], { signal }) => {
+      if (!schema) {
         return undefined;
       }
-      const plugin = chooseBestPlugin(schema, environment);
+      const plugin = chooseBestPlugin(schema);
       if (!plugin) {
         throw new Error(
           `<bb-delegating-input> could not find an input widget capable of ` +
@@ -129,13 +133,13 @@ declare global {
   }
 }
 
-function chooseBestPlugin(schema: JSONSchema4, environment: Environment) {
+function chooseBestPlugin(schema: JSONSchema4) {
   const behavior = schema.behavior?.at(0);
   // TODO(aomarks) Performance of this search could be improved by
   // partitioning by the top-level "type" field. But note we have to account
   // for schema compositions like `{ anyOf: { ... } }`, so it's not so
   // simple.
-  for (const plugin of environment.plugins.input) {
+  for (const plugin of INPUT_PLUGINS) {
     const pluginSchema = plugin.match.schema as Schema;
     if (
       behavior &&

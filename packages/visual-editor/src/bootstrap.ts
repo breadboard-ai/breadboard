@@ -9,6 +9,7 @@ import * as StringsHelper from "@breadboard-ai/shared-ui/strings";
 import { BootstrapArguments, MainArguments } from "./types/types.js";
 import { LanguagePack } from "@breadboard-ai/shared-ui/types/types.js";
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
+import { type GoogleDrivePermission } from "@breadboard-ai/shared-ui/contexts/environment.js";
 
 export { bootstrap };
 
@@ -72,18 +73,35 @@ function bootstrap(args: BootstrapArguments) {
       boardServerUrl: getUrlFromBoardServiceFlag(
         BOARD_SERVICE || args.defaultBoardService
       ),
-      connectionServerUrl: args?.connectionServerUrl,
-      requiresSignin: args?.requiresSignin,
       enableTos: ENABLE_TOS,
       tosHtml: TOS_HTML,
-      environmentName: ENVIRONMENT_NAME,
-      kits: args?.kits,
-      graphStorePreloader: args?.graphStorePreloader,
-      moduleInvocationFilter: args?.moduleInvocationFilter,
-      env: args?.env,
+      kits: args.kits,
+      graphStorePreloader: args.graphStorePreloader,
+      moduleInvocationFilter: args.moduleInvocationFilter,
+      env: args.env,
       embedHandler: args.embedHandler,
       clientDeploymentConfiguration: args.deploymentConfiguration,
+      environment: {
+        connectionServerUrl:
+          args.connectionServerUrl?.href ||
+          import.meta.env.VITE_CONNECTION_SERVER_URL,
+        connectionRedirectUrl: "/oauth/",
+        environmentName: ENVIRONMENT_NAME,
+        requiresSignin: args.requiresSignin,
+        googleDrive: {
+          publishPermissions: JSON.parse(
+            import.meta.env.VITE_GOOGLE_DRIVE_PUBLISH_PERMISSIONS || `[]`
+          ) as GoogleDrivePermission[],
+          publicApiKey: import.meta.env.VITE_GOOGLE_DRIVE_PUBLIC_API_KEY ?? "",
+        },
+      },
     };
+    if (config.environment.googleDrive.publishPermissions.length === 0) {
+      console.warn(
+        "No googleDrive.publishPermissions were configured." +
+          " Publishing with Google Drive will not be supported."
+      );
+    }
 
     window.oncontextmenu = (evt) => evt.preventDefault();
 
