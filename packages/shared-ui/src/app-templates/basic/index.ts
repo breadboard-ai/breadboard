@@ -228,29 +228,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
           ? html`<button
               id="save-results-button"
               class="sans-flex w-500 round md-body-medium"
-              @click=${async (evt: Event) => {
-                if (
-                  !(evt.target instanceof HTMLButtonElement) ||
-                  !this.resultsUrl
-                ) {
-                  return;
-                }
-
-                await navigator.clipboard.writeText(
-                  decodeURIComponent(this.resultsUrl)
-                );
-
-                this.dispatchEvent(
-                  new SnackbarEvent(
-                    globalThis.crypto.randomUUID(),
-                    `Share link copied to clipboard`,
-                    SnackType.INFORMATION,
-                    [],
-                    false,
-                    true
-                  )
-                );
-              }}
+              @click=${this.#onClickCopyShareUrl}
             >
               <span class="g-icon filled round">content_copy</span>
               Copy share URL
@@ -265,6 +243,25 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
             </button>`}
       </div>
     `;
+  }
+
+  async #onClickCopyShareUrl(evt: Event) {
+    if (!(evt.target instanceof HTMLButtonElement) || !this.resultsUrl) {
+      return;
+    }
+
+    await navigator.clipboard.writeText(decodeURIComponent(this.resultsUrl));
+
+    this.dispatchEvent(
+      new SnackbarEvent(
+        globalThis.crypto.randomUUID(),
+        `Share link copied to clipboard`,
+        SnackType.INFORMATION,
+        [],
+        false,
+        true
+      )
+    );
   }
 
   async #onClickSaveResults(evt: Event) {
