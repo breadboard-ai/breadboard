@@ -21,9 +21,9 @@ import { Diagnostics } from "./diagnostics.js";
 import { extractError } from "./error.js";
 import { baseURL } from "./url.js";
 
-export { graphToRunFromConfig, runLocally, fromRunnerResult };
+export { graphToRunFromConfig, runLocally, fromRunnerResult, fromProbe };
 
-const fromProbe = <Probe extends ProbeMessage>(probe: Probe) => {
+function fromProbe<Probe extends ProbeMessage>(probe: Probe) {
   const data = structuredClone(probe.data);
   return {
     type: probe.type,
@@ -33,7 +33,7 @@ const fromProbe = <Probe extends ProbeMessage>(probe: Probe) => {
       // Do nothing
     },
   } as HarnessRunResult;
-};
+}
 
 function fromRunnerResult<Result extends BreadboardRunResult>(result: Result) {
   const { type, node, timestamp, invocationId } = result;

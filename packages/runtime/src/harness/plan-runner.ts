@@ -2,11 +2,12 @@ import {
   GraphDescriptor,
   HarnessRunResult,
   NodeHandlerContext,
+  Probe,
   RunConfig,
   TraversalResult,
 } from "@breadboard-ai/types";
 import { configureKits } from "./run.js";
-import { fromRunnerResult, graphToRunFromConfig } from "./local.js";
+import { fromProbe, fromRunnerResult, graphToRunFromConfig } from "./local.js";
 import { resolveGraph, resolveGraphUrls } from "@breadboard-ai/loader";
 import {
   asyncGen,
@@ -74,7 +75,7 @@ class InternalRunStateController {
     // This is probably wrong, dig in later.
     return {
       descriptor: task.node,
-      inputs: task.inputs,
+      inputs: { ...task.node.configuration, ...task.inputs },
       missingInputs: [],
       current: { from: "", to: "" },
       opportunities: [],
@@ -93,6 +94,16 @@ class InternalRunStateController {
 
   async run() {
     const state = await this.state;
+    this.callback({
+      type: "graphstart",
+      data: {
+        graph: state.graph,
+        graphId: "",
+        path: [],
+        timestamp: timestamp(),
+      },
+      reply: async () => {},
+    });
     let finished = false;
     for (;;) {
       if (finished) break;
@@ -105,25 +116,54 @@ class InternalRunStateController {
 
       await Promise.all(
         tasks.map(async (task) => {
+          const path = this.path();
+          this.callback({
+            type: "nodestart",
+            data: {
+              node: task.node,
+              inputs: task.inputs,
+              path,
+              timestamp: timestamp(),
+            },
+            reply: async () => {},
+          });
           const invoker = new NodeInvoker(
             state.context,
             { graph: state.graph },
             async (result) => this.callback(fromRunnerResult(result))
           );
-          const outputs = await invoker.invokeNode(
-            this.fromTask(task),
-            this.path()
-          );
+          const outputs = await invoker.invokeNode(this.fromTask(task), path);
           const progress = state.orchestrator.provideOutputs(
             task.node.id,
             outputs
           );
+          this.callback({
+            type: "nodeend",
+            data: {
+              node: task.node,
+              inputs: task.inputs,
+              outputs,
+              path,
+              newOpportunities: [],
+              timestamp: timestamp(),
+            },
+            reply: async () => {},
+          });
           if (progress === "finished") {
             finished = true;
           }
         })
       );
     }
+
+    this.callback({
+      type: "graphend",
+      data: {
+        path: [],
+        timestamp: timestamp(),
+      },
+      reply: async () => {},
+    });
   }
 
   async initialize(
@@ -141,7 +181,11 @@ class InternalRunStateController {
     const { loader, store, fileSystem, base, signal, state, graphStore } =
       this.config;
 
-    const probe = undefined;
+    const probe: Probe = {
+      async report(message) {
+        next(fromProbe(message));
+      },
+    };
 
     const context: NodeHandlerContext = {
       probe,
