@@ -251,6 +251,9 @@ export class Main extends SignalWatcher(LitElement) {
   @state()
   accessor graphStoreUpdateId: number = 0;
 
+  @state()
+  accessor #ready = false;
+
   static styles = mainStyles;
 
   constructor(args: MainArguments) {
@@ -279,6 +282,7 @@ export class Main extends SignalWatcher(LitElement) {
 
     this.#init(args).then(() => {
       console.log(`[${Strings.from("APP_NAME")} Visual Editor Initialized]`);
+      this.#ready = true;
     });
   }
 
@@ -1430,6 +1434,10 @@ export class Main extends SignalWatcher(LitElement) {
   }
 
   render() {
+    if (!this.#ready) {
+      return nothing;
+    }
+
     if (!this.signinAdapter) {
       return nothing;
     }
