@@ -9,8 +9,8 @@
  * Use this type to add a new flag or remove an existing flag.
  * The flag must be boolean. The default value is `false`.
  * When changing flags, also make changes in
- * packages/unified-server/src/server/provide-config.ts, where
- * default values are set.
+ * packages/shared-ui/src/config/client-deployment-configuration.ts,
+ * where default values are set.
  *
  * Add a comment to explain what the flag does.
  */

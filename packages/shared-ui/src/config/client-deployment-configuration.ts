@@ -15,8 +15,28 @@ export type ClientDeploymentConfiguration = {
   ENABLE_GOOGLE_FEEDBACK?: boolean;
   GOOGLE_FEEDBACK_PRODUCT_ID?: string;
   GOOGLE_FEEDBACK_BUCKET?: string;
-  flags?: Partial<RuntimeFlags>;
+  flags: RuntimeFlags;
 };
+
+/**
+ * These are the default values for runtime flags, necessary
+ * for type-checking and ensuring that we have all the runtime flags
+ * accounted for.
+ * When adding a new flag, set the default value to false.
+ * Also add it in packages/types/src/flags.ts
+ */
+const DEFAULT_FLAG_VALUES: RuntimeFlags = {
+  usePlanRunner: false,
+};
+
+export function populateFlags(
+  config: Partial<ClientDeploymentConfiguration>
+): ClientDeploymentConfiguration {
+  return {
+    ...config,
+    flags: { ...DEFAULT_FLAG_VALUES, ...config?.flags },
+  };
+}
 
 export const clientDeploymentConfigurationContext = createContext<
   ClientDeploymentConfiguration | undefined
@@ -31,12 +51,12 @@ export function discoverClientDeploymentConfiguration(): ClientDeploymentConfigu
     console.warn(
       "Failed to discover deployment config: DOM element not found."
     );
-    return {};
+    return populateFlags({});
   }
   try {
-    return JSON.parse(text);
+    return populateFlags(JSON.parse(text));
   } catch (e) {
     console.warn("Failed to discover deployment config:", (e as Error).message);
-    return {};
+    return populateFlags({});
   }
 }

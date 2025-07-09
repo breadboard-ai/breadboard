@@ -33,6 +33,7 @@ import {
 } from "@google-labs/breadboard";
 import {
   createFileSystemBackend,
+  createFlagManager,
   getRunStore,
 } from "@breadboard-ai/data-store";
 import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
@@ -418,6 +419,7 @@ export class Main extends SignalWatcher(LitElement) {
       googleDriveClient: this.googleDriveClient,
       appName: Strings.from("APP_NAME"),
       appSubName: Strings.from("SUB_APP_NAME"),
+      flags: createFlagManager(this.clientDeploymentConfiguration.flags),
     });
 
     this.#uiState = this.#runtime.state.getOrCreateUIState();

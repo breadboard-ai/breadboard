@@ -34,10 +34,11 @@ import {
   RunOutputEvent,
   RunSecretEvent,
   RunSkipEvent,
+  RuntimeFlagManager,
 } from "@breadboard-ai/types";
 import { Result, Tab, TabId } from "./types";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import { createRunner } from "@breadboard-ai/runtime";
+import { createPlanRunner, createRunner } from "@breadboard-ai/runtime";
 import { RuntimeBoardRunEvent } from "./events";
 import { sandbox } from "../sandbox";
 import { BoardServerAwareDataStore } from "@breadboard-ai/board-server-management";
@@ -60,7 +61,8 @@ export class Run extends EventTarget {
     public readonly graphStore: MutableGraphStore,
     public readonly dataStore: BoardServerAwareDataStore,
     public readonly runStore: RunStore,
-    public readonly state: StateManager
+    public readonly state: StateManager,
+    public readonly flags: RuntimeFlagManager
   ) {
     super();
   }
@@ -155,8 +157,11 @@ export class Run extends EventTarget {
       graphStore: this.graphStore,
     };
 
+    const usePlanRunner = (await this.flags.flags()).usePlanRunner;
+
     const runner = this.#createBoardRunner(
       tab.mainGraphId,
+      usePlanRunner,
       config,
       abortController
     );
@@ -269,10 +274,13 @@ export class Run extends EventTarget {
 
   #createBoardRunner(
     mainGraphId: MainGraphIdentifier,
+    usePlanRunner: boolean,
     config: RunConfig,
     abortController: AbortController
   ) {
-    const harnessRunner = createRunner(config);
+    const harnessRunner = usePlanRunner
+      ? createPlanRunner(config)
+      : createRunner(config);
     const runObserver = createRunObserver(this.graphStore, {
       logLevel: "debug",
       dataStore: this.dataStore,

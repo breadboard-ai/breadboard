@@ -9,6 +9,7 @@ import type {
   GraphLoader,
   HarnessProxyConfig,
   OutputValues,
+  RuntimeFlagManager,
 } from "@breadboard-ai/types";
 import {
   EditHistoryCreator,
@@ -89,6 +90,7 @@ export interface RuntimeConfig {
   appName: string;
   appSubName: string;
   recentBoardStore: RecentBoardStore;
+  flags: RuntimeFlagManager;
 }
 
 export interface RuntimeConfigBoardServers {
