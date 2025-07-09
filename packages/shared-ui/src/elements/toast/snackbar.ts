@@ -9,6 +9,9 @@ import { SnackbarMessage, SnackType } from "../../types/types";
 import { repeat } from "lit/directives/repeat.js";
 import { icons } from "../../styles/icons";
 import { SnackbarActionEvent } from "../../events/events";
+import { colorsLight } from "../../styles/host/colors-light";
+import { type } from "../../styles/host/type";
+import { classMap } from "lit/directives/class-map.js";
 
 const DEFAULT_TIMEOUT = 8000;
 
@@ -28,6 +31,8 @@ export class Snackbar extends LitElement {
 
   static styles = [
     icons,
+    colorsLight,
+    type,
     css`
       :host {
         --text-color: var(--bb-neutral-0);
@@ -67,6 +72,10 @@ export class Snackbar extends LitElement {
         flex: 0 0 auto;
         color: var(--text-color);
         margin-right: var(--bb-grid-size-4);
+
+        &.rotate {
+          animation: 1s linear 0s infinite normal forwards running rotate;
+        }
       }
 
       #messages {
@@ -126,6 +135,16 @@ export class Snackbar extends LitElement {
           }
         }
       }
+
+      @keyframes rotate {
+        from {
+          rotate: 0deg;
+        }
+
+        to {
+          rotate: 360deg;
+        }
+      }
     `,
   ];
 
@@ -163,6 +182,7 @@ export class Snackbar extends LitElement {
   }
 
   render() {
+    let rotate = false;
     let icon = "";
     for (let i = this.#messages.length - 1; i >= 0; i--) {
       if (
@@ -173,10 +193,24 @@ export class Snackbar extends LitElement {
       }
 
       icon = this.#messages[i].type;
+      if (this.#messages[i].type === SnackType.PENDING) {
+        icon = "progress_activity";
+        rotate = true;
+      }
       break;
     }
 
-    return html` ${icon ? html`<span class="g-icon">${icon}</span>` : nothing}
+    return html` ${icon
+        ? html`<span
+            class=${classMap({
+              "g-icon": true,
+              round: true,
+              filled: true,
+              rotate,
+            })}
+            >${icon}</span
+          >`
+        : nothing}
       <div id="messages">
         ${repeat(
           this.#messages,

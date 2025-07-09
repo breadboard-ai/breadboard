@@ -1509,6 +1509,19 @@ export class Main extends SignalWatcher(LitElement) {
           });
         }
       }}
+      @bbsnackbar=${(snackbarEvent: BreadboardUI.Events.SnackbarEvent) => {
+        this.snackbar(
+          snackbarEvent.message,
+          snackbarEvent.snackType,
+          snackbarEvent.actions,
+          snackbarEvent.persistent,
+          snackbarEvent.snackbarId,
+          snackbarEvent.replaceAll
+        );
+      }}
+      @bbunsnackbar=${() => {
+        this.unsnackbar();
+      }}
       @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
         this.toast(toastEvent.message, toastEvent.toastType);
       }}
