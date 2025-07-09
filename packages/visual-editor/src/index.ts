@@ -129,12 +129,6 @@ const ENVIRONMENT: BreadboardUI.Contexts.Environment = {
   connectionServerUrl: undefined,
   connectionRedirectUrl: "/oauth/",
   environmentName: "dev",
-  plugins: {
-    input: [
-      BreadboardUI.Elements.googleDriveFileIdInputPlugin,
-      BreadboardUI.Elements.googleDriveQueryInputPlugin,
-    ],
-  },
   googleDrive: {
     publishPermissions: JSON.parse(
       import.meta.env.VITE_GOOGLE_DRIVE_PUBLISH_PERMISSIONS || `[]`
