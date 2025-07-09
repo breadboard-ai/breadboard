@@ -13,7 +13,7 @@ import {
 import { err, ok } from "@breadboard-ai/utils";
 import {
   OrchestrationPlan,
-  NodeState,
+  NodeOrchestratorState,
   OrchestratorProgress,
   PlanNodeInfo,
   Task,
@@ -25,7 +25,7 @@ export { Orchestrator };
 type NodeInternalState = {
   readonly plan: PlanNodeInfo;
   readonly stage: number;
-  state: NodeState;
+  state: NodeOrchestratorState;
   inputs: InputValues | null;
   outputs: OutputValues | null;
 };
@@ -38,15 +38,17 @@ type OrchestratorState = Map<NodeIdentifier, NodeInternalState>;
  *
  * 1.  Lifecycle Management: Starting, resetting, and managing the overall
  * progress of a run from beginning to end.
- * 2.  Task Coordination: Determining which tasks are ready to be executed
+ * 2.  Task Coordination: Determining which nodes are ready to be invoked
  * based on dependencies.
  * 3.  State Persistence: Receiving results of node invocation and persisting
  * the state workflow.
  * 4.  Inspection and Debugging: Providing methods to observe the current state
  * of a run, inspect cached results, and control execution flow.
  *
- * It decouples the "what to run" (the planning) from the
- * "how to run it" (the node's execution environment)
+ * It breaks down the process into three distinct parts:
+ * - the planning -- determining the static sequence of a run
+ * - the orchestration -- managing execution results that can be dynamic
+ * - actual node invocation
  */
 class Orchestrator {
   readonly #state: OrchestratorState = new Map();

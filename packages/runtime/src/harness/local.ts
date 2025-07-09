@@ -21,7 +21,9 @@ import { Diagnostics } from "./diagnostics.js";
 import { extractError } from "./error.js";
 import { baseURL } from "./url.js";
 
-const fromProbe = <Probe extends ProbeMessage>(probe: Probe) => {
+export { graphToRunFromConfig, runLocally, fromRunnerResult, fromProbe };
+
+function fromProbe<Probe extends ProbeMessage>(probe: Probe) {
   const data = structuredClone(probe.data);
   return {
     type: probe.type,
@@ -31,11 +33,9 @@ const fromProbe = <Probe extends ProbeMessage>(probe: Probe) => {
       // Do nothing
     },
   } as HarnessRunResult;
-};
+}
 
-const fromRunnerResult = <Result extends BreadboardRunResult>(
-  result: Result
-) => {
+function fromRunnerResult<Result extends BreadboardRunResult>(result: Result) {
   const { type, node, timestamp, invocationId } = result;
   const bubbled = invocationId == -1;
 
@@ -59,7 +59,7 @@ const fromRunnerResult = <Result extends BreadboardRunResult>(
     } as HarnessRunResult;
   }
   throw new Error(`Unknown result type "${type}".`);
-};
+}
 
 const endResult = (last: LastNode | undefined) => {
   return {
@@ -106,7 +106,10 @@ const maybeSaveResult = (result: BreadboardRunResult, last?: LastNode) => {
   return last;
 };
 
-const load = async (config: RunConfig): Promise<GraphToRun> => {
+async function graphToRunFromConfig(config: RunConfig): Promise<GraphToRun> {
+  if (config.runner) {
+    return { graph: config.runner };
+  }
   const base = baseURL(config);
   const loader = config.loader; // || createLoader();
   if (!loader) {
@@ -121,13 +124,11 @@ const load = async (config: RunConfig): Promise<GraphToRun> => {
     );
   }
   return loadResult;
-};
+}
 
-export async function* runLocally(config: RunConfig, kits: Kit[]) {
+async function* runLocally(config: RunConfig, kits: Kit[]) {
   yield* asyncGen<HarnessRunResult>(async (next) => {
-    const graphToRun: GraphToRun = config.runner
-      ? { graph: config.runner }
-      : await load(config);
+    const graphToRun: GraphToRun = await graphToRunFromConfig(config);
     const loader = config.loader; // || createLoader();
     const store = config.store || createDefaultDataStore();
     const fileSystem = config.fileSystem;

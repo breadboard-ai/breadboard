@@ -12,13 +12,13 @@ import {
 } from "@breadboard-ai/types";
 
 /**
- * The result of generating a staged execution plan from a condensed
+ * The result of generating a staged plan from a condensed
  * GraphDescriptor (no cycles) using topological sort.
  */
 export type OrchestrationPlan = {
   /**
-   * An array of stages in the execution plan.
-   * Each stage is a group of nodes that can be executed in parallel.
+   * An array of stages in the plan.
+   * Each stage is a group of nodes that can be invoked in parallel.
    */
   stages: PlanNodeInfo[][];
 };
@@ -46,12 +46,12 @@ export type PlanNodeInfo = {
 };
 
 /**
- * Possible states of a node while in Executor.
+ * Possible states of a node while in the Orchestrator.
  */
-export type NodeState =
+export type NodeOrchestratorState =
   // Node is awaiting dependencies
   | "waiting"
-  // Node dependencies met, queued for execution
+  // Node dependencies met, queued for invocation
   | "ready"
   // Node logic invocation completed successfully, outputs written to the cache.
   | "succeeded"
@@ -83,6 +83,6 @@ export type Task = {
 };
 
 export type OrchestrationNodeInfo = {
-  state: NodeState;
+  state: NodeOrchestratorState;
   node: NodeDescriptor;
 };
