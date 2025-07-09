@@ -75,9 +75,9 @@ export type ProjectRun = {
    */
   status: "running" | "paused" | "stopped";
   /**
-   * The current entry.
+   * The current (unifinished) entries in the console
    */
-  current: ConsoleEntry | null;
+  current: Map<string, ConsoleEntry> | null;
   /**
    * The user input (if any) that the run is waiting on. If `null`,
    * the run is not currently waiting on user input.
