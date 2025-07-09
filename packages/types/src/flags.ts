@@ -35,6 +35,11 @@ export type RuntimeFlagManager = {
    */
   overrides(): Promise<Partial<Readonly<RuntimeFlags>>>;
   /**
+   * Current values of runtime flags, combining flags provided by
+   * the environment and overrides.
+   */
+  flags(): Promise<Readonly<RuntimeFlags>>;
+  /**
    * Override the flag value locally. Setting the flag to the
    * same value as the one provided by the environment,
    *

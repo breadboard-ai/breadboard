@@ -27,6 +27,11 @@ class IdbFlagManager implements RuntimeFlagManager {
     this.#db = this.#initialize();
   }
 
+  async flags(): Promise<Readonly<RuntimeFlags>> {
+    const overrides = await this.overrides();
+    return { ...this.env(), ...overrides };
+  }
+
   async #initialize() {
     return openDB<FlagOverrides>(FLAGS_DB, 1, {
       upgrade(db) {
