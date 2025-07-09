@@ -75,10 +75,10 @@ function bootstrap(args: BootstrapArguments) {
       ),
       enableTos: ENABLE_TOS,
       tosHtml: TOS_HTML,
-      kits: args?.kits,
-      graphStorePreloader: args?.graphStorePreloader,
-      moduleInvocationFilter: args?.moduleInvocationFilter,
-      env: args?.env,
+      kits: args.kits,
+      graphStorePreloader: args.graphStorePreloader,
+      moduleInvocationFilter: args.moduleInvocationFilter,
+      env: args.env,
       embedHandler: args.embedHandler,
       clientDeploymentConfiguration: args.deploymentConfiguration,
       environment: {
@@ -87,7 +87,7 @@ function bootstrap(args: BootstrapArguments) {
           import.meta.env.VITE_CONNECTION_SERVER_URL,
         connectionRedirectUrl: "/oauth/",
         environmentName: ENVIRONMENT_NAME,
-        requiresSignin: args?.requiresSignin,
+        requiresSignin: args.requiresSignin,
         googleDrive: {
           publishPermissions: JSON.parse(
             import.meta.env.VITE_GOOGLE_DRIVE_PUBLISH_PERMISSIONS || `[]`
