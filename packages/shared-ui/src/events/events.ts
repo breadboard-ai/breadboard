@@ -32,6 +32,8 @@ import type {
   UserOutputValues,
   Utterance,
   WorkspaceVisualChangeId,
+  SnackType,
+  SnackbarAction,
 } from "../types/types.js";
 
 const eventInit = {
@@ -304,6 +306,29 @@ export class SettingsUpdateEvent extends Event {
 
   constructor(public readonly settings: Settings) {
     super(SettingsUpdateEvent.eventName, { ...eventInit });
+  }
+}
+
+export class SnackbarEvent extends Event {
+  static eventName = "bbsnackbar" as const;
+
+  constructor(
+    public readonly snackbarId = globalThis.crypto.randomUUID(),
+    public readonly message: string,
+    public readonly snackType: SnackType,
+    public readonly actions: SnackbarAction[] = [],
+    public readonly persistent = false,
+    public readonly replaceAll = false
+  ) {
+    super(SnackbarEvent.eventName, { ...eventInit });
+  }
+}
+
+export class UnsnackbarEvent extends Event {
+  static eventName = "bbunsnackbar";
+
+  constructor() {
+    super(UnsnackbarEvent.eventName, { ...eventInit });
   }
 }
 
