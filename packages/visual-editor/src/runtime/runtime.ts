@@ -31,6 +31,7 @@ import { getDataStore } from "@breadboard-ai/data-store";
 import { createSideboardRuntimeProvider } from "./sideboard-runtime.js";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { Shell } from "./shell.js";
+import { RuntimeFlagManager } from "@breadboard-ai/types";
 
 export async function create(config: RuntimeConfig): Promise<{
   shell: Shell;
@@ -42,6 +43,7 @@ export async function create(config: RuntimeConfig): Promise<{
   select: Select;
   sideboards: SideBoardRuntime;
   state: StateManager;
+  flags: RuntimeFlagManager;
   util: typeof Util;
 }> {
   const kits = config.kits;
@@ -116,6 +118,8 @@ export async function create(config: RuntimeConfig): Promise<{
 
   const state = new StateManager(graphStore, sideboards, servers);
 
+  const flags = config.flags;
+
   const runtime = {
     router: new Router(),
     board: new Board(
@@ -137,13 +141,14 @@ export async function create(config: RuntimeConfig): Promise<{
       sideboards,
       config.settings
     ),
-    run: new Run(graphStore, dataStore, config.runStore, state, config.flags),
+    run: new Run(graphStore, dataStore, config.runStore, state, flags),
     state,
     sideboards,
     select: new Select(),
     util: Util,
     kits,
     shell: new Shell(config.appName, config.appSubName),
+    flags,
   } as const;
 
   return runtime;

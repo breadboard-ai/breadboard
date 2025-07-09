@@ -436,6 +436,7 @@ export class Main extends SignalWatcher(LitElement) {
 
     const admin = new Admin(args, ENVIRONMENT, this.googleDriveClient);
     admin.runtime = this.#runtime;
+
     admin.settingsHelper = this.settingsHelper;
 
     this.#graphStore = this.#runtime.board.getGraphStore();
