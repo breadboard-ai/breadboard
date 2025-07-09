@@ -73,7 +73,6 @@ import { MAIN_BOARD_ID } from "@breadboard-ai/shared-ui/constants/constants.js";
 import { createA2Server } from "@breadboard-ai/a2";
 import { envFromSettings } from "./utils/env-from-settings";
 import { getGoogleDriveBoardService } from "@breadboard-ai/board-server-management";
-import { type GoogleDrivePermission } from "@breadboard-ai/shared-ui/contexts/environment.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
@@ -125,25 +124,6 @@ type RenderValues = {
 
 const LOADING_TIMEOUT = 1250;
 const TOS_KEY = "tos-status";
-const ENVIRONMENT: BreadboardUI.Contexts.Environment = {
-  connectionServerUrl: undefined,
-  connectionRedirectUrl: "/oauth/",
-  environmentName: "dev",
-  googleDrive: {
-    publishPermissions: JSON.parse(
-      import.meta.env.VITE_GOOGLE_DRIVE_PUBLISH_PERMISSIONS || `[]`
-    ) as GoogleDrivePermission[],
-    publicApiKey: import.meta.env.VITE_GOOGLE_DRIVE_PUBLIC_API_KEY ?? "",
-  },
-};
-
-if (ENVIRONMENT.googleDrive.publishPermissions.length === 0) {
-  console.warn(
-    "No googleDrive.publishPermissions were configured." +
-      " Publishing with Google Drive will not be supported."
-  );
-}
-
 const BOARD_AUTO_SAVE_TIMEOUT = 1_500;
 
 @customElement("bb-main")
@@ -259,19 +239,7 @@ export class Main extends SignalWatcher(LitElement) {
     this.#proxy = args.proxy || [];
     this.#tosHtml = args.tosHtml;
     this.#embedHandler = args.embedHandler;
-
-    // This is a big hacky, since we're assigning a value to a constant object,
-    // but okay here, because this constant is never re-assigned and is only
-    // used by this instance.
-    ENVIRONMENT.environmentName = args.environmentName;
-    ENVIRONMENT.connectionServerUrl =
-      args.connectionServerUrl?.href ||
-      import.meta.env.VITE_CONNECTION_SERVER_URL;
-    ENVIRONMENT.requiresSignin = args.requiresSignin;
-
-    // Due to https://github.com/lit/lit/issues/4675, context provider values
-    // must be done in the constructor.
-    this.environment = ENVIRONMENT;
+    this.environment = args.environment;
     this.clientDeploymentConfiguration = args.clientDeploymentConfiguration;
 
     this.#init(args).then(() => {
@@ -342,7 +310,7 @@ export class Main extends SignalWatcher(LitElement) {
     this.googleDriveClient = new GoogleDriveClient({
       apiBaseUrl: "https://www.googleapis.com",
       proxyUrl: googleDriveProxyUrl,
-      publicApiKey: ENVIRONMENT.googleDrive.publicApiKey,
+      publicApiKey: this.environment.googleDrive.publicApiKey,
       getUserAccessToken: async () => {
         if (!this.signinAdapter) {
           throw new Error(`SigninAdapter is misconfigured`);
@@ -379,7 +347,7 @@ export class Main extends SignalWatcher(LitElement) {
             );
           },
         },
-        ENVIRONMENT
+        this.environment
       );
 
       settingsRestore = this.#settings?.restore();
@@ -427,7 +395,7 @@ export class Main extends SignalWatcher(LitElement) {
     }
     this.#addRuntimeEventHandlers();
 
-    const admin = new Admin(args, ENVIRONMENT, this.googleDriveClient);
+    const admin = new Admin(args, this.environment, this.googleDriveClient);
     admin.runtime = this.#runtime;
 
     admin.settingsHelper = this.settingsHelper;

@@ -4,18 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { EmbedHandler } from "@breadboard-ai/embed";
-import { type ClientDeploymentConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
-import { type BuildInfo } from "@breadboard-ai/shared-ui/contexts/build-info.js";
-import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
-import {
+import type { EmbedHandler } from "@breadboard-ai/embed";
+import type { Environment } from "@breadboard-ai/shared-ui/contexts";
+import type { BuildInfo } from "@breadboard-ai/shared-ui/contexts/build-info.js";
+import type { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
+import type {
+  FileSystemEntry,
   HarnessProxyConfig,
   Kit,
   MutableGraphStore,
   NodeHandlerContext,
   Outcome,
-  FileSystemEntry,
 } from "@breadboard-ai/types";
+import type { ClientDeploymentConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
 
 export type BootstrapArguments = {
   deploymentConfiguration: ClientDeploymentConfiguration;
@@ -71,6 +72,7 @@ export type MainArguments = {
   env?: FileSystemEntry[];
   embedHandler?: EmbedHandler;
   clientDeploymentConfiguration: ClientDeploymentConfiguration;
+  environment: Environment;
 };
 
 export enum TosStatus {
