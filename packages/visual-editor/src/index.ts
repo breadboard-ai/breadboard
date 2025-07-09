@@ -96,10 +96,9 @@ import { stringifyPermission } from "@breadboard-ai/shared-ui/elements/share-pan
 import { type GoogleDriveAssetShareDialog } from "@breadboard-ai/shared-ui/elements/elements.js";
 import { boardServerContext } from "@breadboard-ai/shared-ui/contexts/board-server.js";
 import { extractGoogleDriveFileId } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
-import {
-  type ClientDeploymentConfiguration,
-  clientDeploymentConfigurationContext,
-} from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
+import { clientDeploymentConfigurationContext } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
+import { type ClientDeploymentConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
+
 import { Admin } from "./admin";
 import { MainArguments, TosStatus } from "./types/types";
 import {

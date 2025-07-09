@@ -87,7 +87,7 @@
       "dependencies": [
         "../board-server#build:tsc",
         "../connection-server#build:tsc",
-        "../shared-ui#build:tsc"
+        "../types#build:tsc"
       ]
     },
     "serve": {

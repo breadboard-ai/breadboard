@@ -4,19 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { RuntimeFlags } from "@breadboard-ai/types";
+import { type RuntimeFlags } from "@breadboard-ai/types";
+import { type ClientDeploymentConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
 import { createContext } from "@lit/context";
-
-export type ClientDeploymentConfiguration = {
-  MEASUREMENT_ID?: string;
-  BACKEND_API_ENDPOINT?: string;
-  ENABLE_GOOGLE_DRIVE_PROXY?: boolean;
-  FEEDBACK_LINK?: string;
-  ENABLE_GOOGLE_FEEDBACK?: boolean;
-  GOOGLE_FEEDBACK_PRODUCT_ID?: string;
-  GOOGLE_FEEDBACK_BUCKET?: string;
-  flags: RuntimeFlags;
-};
 
 /**
  * These are the default values for runtime flags, necessary
