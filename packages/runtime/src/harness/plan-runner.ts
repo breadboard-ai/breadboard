@@ -164,6 +164,14 @@ class InternalRunStateController {
       },
       reply: async () => {},
     });
+
+    this.callback({
+      type: "end",
+      data: {
+        timestamp: timestamp(),
+      },
+      reply: async () => {},
+    });
   }
 
   async initialize(
