@@ -30,7 +30,7 @@ function getUrlFromBoardServiceFlag(
   return new URL(boardService);
 }
 
-function bootstrap(args: BootstrapArguments) {
+async function bootstrap(bootstrapArgs: BootstrapArguments) {
   const icon = document.createElement("link");
   icon.rel = "icon";
   icon.type = "image/svg+xml";
@@ -52,67 +52,63 @@ function bootstrap(args: BootstrapArguments) {
   fontPack.textContent = FONT_PACK;
   document.head.appendChild(fontPack);
 
-  if (args.embedHandler) {
-    args.embedHandler.connect();
+  if (bootstrapArgs.embedHandler) {
+    bootstrapArgs.embedHandler.connect();
   }
 
-  async function init() {
-    await StringsHelper.initFrom(LANGUAGE_PACK as LanguagePack);
+  await StringsHelper.initFrom(LANGUAGE_PACK as LanguagePack);
 
-    const { Main } = await import("./index.js");
-    const { SettingsStore } = await import(
-      "@breadboard-ai/shared-ui/data/settings-store.js"
-    );
+  const { Main } = await import("./index.js");
+  const { SettingsStore } = await import(
+    "@breadboard-ai/shared-ui/data/settings-store.js"
+  );
 
-    const config: MainArguments = {
-      settings: SettingsStore.instance(),
-      buildInfo: {
-        packageJsonVersion: pkg.version,
-        gitCommitHash: GIT_HASH,
+  const mainArgs: MainArguments = {
+    settings: SettingsStore.instance(),
+    buildInfo: {
+      packageJsonVersion: pkg.version,
+      gitCommitHash: GIT_HASH,
+    },
+    boardServerUrl: getUrlFromBoardServiceFlag(
+      BOARD_SERVICE || bootstrapArgs.defaultBoardService
+    ),
+    enableTos: ENABLE_TOS,
+    tosHtml: TOS_HTML,
+    kits: bootstrapArgs.kits,
+    graphStorePreloader: bootstrapArgs.graphStorePreloader,
+    moduleInvocationFilter: bootstrapArgs.moduleInvocationFilter,
+    env: bootstrapArgs.env,
+    embedHandler: bootstrapArgs.embedHandler,
+    clientDeploymentConfiguration: bootstrapArgs.deploymentConfiguration,
+    environment: {
+      connectionServerUrl:
+        bootstrapArgs.connectionServerUrl?.href ||
+        import.meta.env.VITE_CONNECTION_SERVER_URL,
+      connectionRedirectUrl: "/oauth/",
+      environmentName: ENVIRONMENT_NAME,
+      requiresSignin: bootstrapArgs.requiresSignin,
+      googleDrive: {
+        publishPermissions: JSON.parse(
+          import.meta.env.VITE_GOOGLE_DRIVE_PUBLISH_PERMISSIONS || `[]`
+        ) as GoogleDrivePermission[],
+        publicApiKey: import.meta.env.VITE_GOOGLE_DRIVE_PUBLIC_API_KEY ?? "",
       },
-      boardServerUrl: getUrlFromBoardServiceFlag(
-        BOARD_SERVICE || args.defaultBoardService
-      ),
-      enableTos: ENABLE_TOS,
-      tosHtml: TOS_HTML,
-      kits: args.kits,
-      graphStorePreloader: args.graphStorePreloader,
-      moduleInvocationFilter: args.moduleInvocationFilter,
-      env: args.env,
-      embedHandler: args.embedHandler,
-      clientDeploymentConfiguration: args.deploymentConfiguration,
-      environment: {
-        connectionServerUrl:
-          args.connectionServerUrl?.href ||
-          import.meta.env.VITE_CONNECTION_SERVER_URL,
-        connectionRedirectUrl: "/oauth/",
-        environmentName: ENVIRONMENT_NAME,
-        requiresSignin: args.requiresSignin,
-        googleDrive: {
-          publishPermissions: JSON.parse(
-            import.meta.env.VITE_GOOGLE_DRIVE_PUBLISH_PERMISSIONS || `[]`
-          ) as GoogleDrivePermission[],
-          publicApiKey: import.meta.env.VITE_GOOGLE_DRIVE_PUBLIC_API_KEY ?? "",
-        },
-      },
-    };
-    if (config.environment.googleDrive.publishPermissions.length === 0) {
-      console.warn(
-        "No googleDrive.publishPermissions were configured." +
-          " Publishing with Google Drive will not be supported."
-      );
-    }
-
-    window.oncontextmenu = (evt) => evt.preventDefault();
-
-    const main = new Main(config);
-    document.body.appendChild(main);
-
-    const Strings = StringsHelper.forSection("Global");
-    console.log(
-      `[${Strings.from("APP_NAME")} Visual Editor: Version ${pkg.version}; Commit ${GIT_HASH}]`
+    },
+  };
+  if (mainArgs.environment.googleDrive.publishPermissions.length === 0) {
+    console.warn(
+      "No googleDrive.publishPermissions were configured." +
+        " Publishing with Google Drive will not be supported."
     );
   }
 
-  init();
+  window.oncontextmenu = (evt) => evt.preventDefault();
+
+  const main = new Main(mainArgs);
+  document.body.appendChild(main);
+
+  const Strings = StringsHelper.forSection("Global");
+  console.log(
+    `[${Strings.from("APP_NAME")} Visual Editor: Version ${pkg.version}; Commit ${GIT_HASH}]`
+  );
 }
