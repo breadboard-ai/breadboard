@@ -1205,6 +1205,12 @@ export class Renderer extends LitElement {
     );
 
     targetMatrix
+      // We adjust up here because the controls at the top of the view are
+      // slightly smaller than the controls at the bottom. So this small
+      // adjustment means that when we zoom to fit it looks a little neater.
+      .translateSelf(0, 28)
+
+      // Now do the rest of the calculations.
       .translateSelf(
         bounds.x - (this.#boundsForInteraction.width - bounds.width) * 0.5,
         bounds.y - (this.#boundsForInteraction.height - bounds.height) * 0.5
