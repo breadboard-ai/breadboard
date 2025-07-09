@@ -64,16 +64,19 @@ export class Header extends LitElement {
 
       #menu,
       #replay {
-        width: 20px;
-        height: 20px;
+        width: 30px;
+        height: 30px;
         background: transparent;
         border: none;
-        font-size: 20px;
         opacity: 0.6;
         transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
         padding: 0;
-        color: var(--p-15, var(--bb-neutral-800));
+        color: var(--n-0);
         border-radius: 50%;
+
+        & .g-icon {
+          font-size: 30px;
+        }
 
         &:not([disabled]) {
           cursor: pointer;
