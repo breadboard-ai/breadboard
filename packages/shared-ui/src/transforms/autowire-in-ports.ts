@@ -15,6 +15,7 @@ import {
   NodeIdentifier,
   PortStatus,
 } from "@google-labs/breadboard";
+import { willCreateCycle } from "@breadboard-ai/utils";
 import { transformConfiguration } from "./transform-all-nodes";
 
 export { AutoWireInPorts };
@@ -93,11 +94,11 @@ class AutoWireInPorts implements EditTransform {
     const edits: EditSpec[] = [];
 
     diff.toInsert.forEach((edge) => {
-      edits.push({
-        type: "addedge",
-        edge,
-        graphId,
-      });
+      if (willCreateCycle(edge, inspectableGraph.raw())) {
+        invalidReferences.push(edge.from);
+        return;
+      }
+      edits.push({ type: "addedge", edge, graphId });
     });
 
     if (!this.updateOnly) {

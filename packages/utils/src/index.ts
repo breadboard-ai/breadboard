@@ -22,3 +22,4 @@ export * from "./snapshot-updater.js";
 export * from "./throttler.js";
 export * from "./formatter.js";
 export * from "./timestamp.js";
+export * from "./cycle-detection.js";

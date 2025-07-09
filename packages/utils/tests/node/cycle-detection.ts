@@ -7,7 +7,7 @@
 import type { Edge, GraphDescriptor } from "@breadboard-ai/types";
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
-import { willCreateCycle } from "../../src/static/cycle-detection.js";
+import { willCreateCycle } from "../../src/cycle-detection.js";
 
 describe("willCreateCycle function", () => {
   describe("basic functionality", () => {

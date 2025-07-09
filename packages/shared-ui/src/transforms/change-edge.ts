@@ -15,6 +15,7 @@ import {
   InspectableNode,
   Template,
 } from "@google-labs/breadboard";
+import { willCreateCycle } from "@breadboard-ai/utils";
 import { MarkInPortsInvalid } from "./mark-in-ports-invalid";
 import { transformConfiguration } from "./transform-all-nodes";
 
@@ -42,6 +43,13 @@ class ChangeEdge implements EditTransform {
         success: false,
         error: `Unable to inspect graph with id "${graphId}"`,
       };
+
+    if (willCreateCycle(from, inspectableGraph.raw())) {
+      return {
+        success: false,
+        error: `Unable to add edge: adding it will create a cycle.`,
+      };
+    }
 
     const source = inspectableGraph.nodeById(this.from.from);
     if (!source) {
