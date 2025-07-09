@@ -430,7 +430,7 @@ class DriveOperations {
       );
     }
     console.info(
-      `Drive Cache: Scheduling update in ${formatDelay(initialDelay)}`
+      `[Drive Cache] Scheduling update in ${formatDelay(initialDelay)}`
     );
     await this.#scheduleBackgroundRefresh(initialDelay);
   }
@@ -539,7 +539,7 @@ class DriveOperations {
           await this.refreshProjectListCallback();
         }
         console.info(
-          `Drive Cache: Received ${changes.length} changes affecting ${affectedFileIds.length} files. ` +
+          `[Drive Cache] Received ${changes.length} changes affecting ${affectedFileIds.length} files. ` +
             `${nextRefreshMsg}. Affected files:`,
           affectedFileIDLists
         );
@@ -554,7 +554,7 @@ class DriveOperations {
       }
     } catch (e) {
       console.warn(
-        `Drive Cache: Exception during refresh. ${nextRefreshMsg}`,
+        `[Drive Cache] Exception during refresh. ${nextRefreshMsg}`,
         e
       );
     } finally {
@@ -786,7 +786,7 @@ class DriveOperations {
       const file: DriveFile = await response.json();
       const updatedUrl = `${PROTOCOL}/${file.id}`;
 
-      console.log("Google Drive: Created new board", updatedUrl);
+      console.log("[Google Drive] Created new board", updatedUrl);
       return { result: true, url: updatedUrl };
     } catch (err) {
       console.warn(err);
@@ -1088,13 +1088,13 @@ class DriveOperations {
       if (files.length > 0) {
         if (files.length > 1) {
           console.warn(
-            "Google Drive: Multiple candidate root folders found," +
+            "[Google Drive] Multiple candidate root folders found," +
               " picking the first one arbitrarily:",
             files
           );
         }
         const id = files[0]!.id;
-        console.log("Google Drive: Found existing root folder", id);
+        console.log("[Google Drive] Found existing root folder", id);
         this.#cachedFolderId = id;
         return id;
       }
@@ -1122,7 +1122,7 @@ class DriveOperations {
       const { id } = (await (await retryableFetch(createRequest)).json()) as {
         id: string;
       };
-      console.log("Google Drive: Created new root folder", id);
+      console.log("[Google Drive] Created new root folder", id);
       this.#cachedFolderId = id;
       return id;
     } catch (e) {

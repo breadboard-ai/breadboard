@@ -253,613 +253,33 @@ export class Main extends SignalWatcher(LitElement) {
 
   static styles = mainStyles;
 
-  constructor(config: MainArguments) {
+  constructor(args: MainArguments) {
     super();
 
-    this.buildInfo = config.buildInfo;
+    this.buildInfo = args.buildInfo;
     this.#boardServers = [];
-    this.#settings = config.settings ?? null;
-    this.#proxy = config.proxy || [];
-    this.#tosHtml = config.tosHtml;
-    this.#embedHandler = config.embedHandler;
+    this.#settings = args.settings ?? null;
+    this.#proxy = args.proxy || [];
+    this.#tosHtml = args.tosHtml;
+    this.#embedHandler = args.embedHandler;
 
     // This is a big hacky, since we're assigning a value to a constant object,
     // but okay here, because this constant is never re-assigned and is only
     // used by this instance.
-    ENVIRONMENT.environmentName = config.environmentName;
+    ENVIRONMENT.environmentName = args.environmentName;
     ENVIRONMENT.connectionServerUrl =
-      config.connectionServerUrl?.href ||
+      args.connectionServerUrl?.href ||
       import.meta.env.VITE_CONNECTION_SERVER_URL;
-    ENVIRONMENT.requiresSignin = config.requiresSignin;
+    ENVIRONMENT.requiresSignin = args.requiresSignin;
 
     // Due to https://github.com/lit/lit/issues/4675, context provider values
     // must be done in the constructor.
     this.environment = ENVIRONMENT;
-    this.clientDeploymentConfiguration = config.clientDeploymentConfiguration;
+    this.clientDeploymentConfiguration = args.clientDeploymentConfiguration;
 
-    let googleDriveProxyUrl: string | undefined;
-    if (this.clientDeploymentConfiguration.ENABLE_GOOGLE_DRIVE_PROXY) {
-      if (this.clientDeploymentConfiguration.BACKEND_API_ENDPOINT) {
-        googleDriveProxyUrl = new URL(
-          "v1beta1/getOpalFile",
-          this.clientDeploymentConfiguration.BACKEND_API_ENDPOINT
-        ).href;
-      } else {
-        console.warn(
-          `ENABLE_GOOGLE_DRIVE_PROXY was true but BACKEND_API_ENDPOINT was missing.` +
-            ` Google Drive proxying will not be available.`
-        );
-      }
-    }
-
-    this.googleDriveClient = new GoogleDriveClient({
-      apiBaseUrl: "https://www.googleapis.com",
-      proxyUrl: googleDriveProxyUrl,
-      publicApiKey: ENVIRONMENT.googleDrive.publicApiKey,
-      getUserAccessToken: async () => {
-        if (!this.signinAdapter) {
-          throw new Error(`SigninAdapter is misconfigured`);
-        }
-        const token = await this.signinAdapter.refresh();
-        if (token?.state === "valid") {
-          return token.grant.access_token;
-        }
-        throw new Error(
-          `User is unexpectedly signed out, or SigninAdapter is misconfigured`
-        );
-      },
+    this.#init(args).then(() => {
+      console.log(`[${Strings.from("APP_NAME")} Visual Editor Initialized]`);
     });
-
-    const admin = new Admin(config, ENVIRONMENT, this.googleDriveClient);
-    const currentUrl = new URL(window.location.href);
-
-    // Initialization order:
-    //  1. Language support.
-    //  2. Recent boards.
-    //  3. Settings.
-    //  4. Runtime.
-    //
-    // Note: the runtime loads the kits and the initializes the board servers.
-    let settingsRestore = Promise.resolve();
-    if (this.#settings) {
-      this.settingsHelper = new SettingsHelperImpl(this.#settings);
-      admin.settingsHelper = this.settingsHelper;
-      this.tokenVendor = createTokenVendor(
-        {
-          get: (conectionId: string) => {
-            return this.settingsHelper.get(
-              BreadboardUI.Types.SETTINGS_TYPE.CONNECTIONS,
-              conectionId
-            )?.value as string;
-          },
-          set: async (connectionId: string, grant: string) => {
-            await this.settingsHelper.set(
-              BreadboardUI.Types.SETTINGS_TYPE.CONNECTIONS,
-              connectionId,
-              {
-                name: connectionId,
-                value: grant,
-              }
-            );
-          },
-        },
-        ENVIRONMENT
-      );
-
-      settingsRestore = this.#settings?.restore();
-    }
-
-    settingsRestore
-      .then(() => {
-        this.#fileSystem = createFileSystem({
-          env: [...envFromSettings(this.#settings), ...(config.env || [])],
-          local: createFileSystemBackend(createEphemeralBlobStore()),
-        });
-        return Runtime.create({
-          recentBoardStore: this.#recentBoardStore,
-          graphStore: this.#graphStore,
-          runStore: this.#runStore,
-          experiments: {},
-          environment: this.environment,
-          tokenVendor: this.tokenVendor,
-          sandbox,
-          settings: this.#settings!,
-          proxy: this.#proxy,
-          fileSystem: this.#fileSystem,
-          builtInBoardServers: [createA2Server()],
-          kits: addSandboxedRunModule(
-            sandbox,
-            config.kits || [],
-            config.moduleInvocationFilter
-          ),
-          googleDriveClient: this.googleDriveClient,
-          appName: Strings.from("APP_NAME"),
-          appSubName: Strings.from("SUB_APP_NAME"),
-        });
-      })
-      .then((runtime) => {
-        this.#runtime = runtime;
-        this.#uiState = runtime.state.getOrCreateUIState();
-        const showTos =
-          !!config.enableTos &&
-          !!config.tosHtml &&
-          localStorage.getItem(TOS_KEY) !== TosStatus.ACCEPTED;
-        if (showTos) {
-          this.#uiState.show.add("TOS");
-        } else {
-          this.#uiState.show.delete("TOS");
-        }
-
-        admin.runtime = runtime;
-        this.#graphStore = runtime.board.getGraphStore();
-        this.#boardServers = runtime.board.getBoardServers() || [];
-
-        this.sideBoardRuntime = runtime.sideboards;
-
-        // This is currently used only for legacy graph kits (Agent,
-        // Google Drive).
-        config.graphStorePreloader?.(this.#graphStore);
-
-        this.sideBoardRuntime.addEventListener("empty", () => {
-          this.#uiState.canRunMain = true;
-        });
-        this.sideBoardRuntime.addEventListener("running", () => {
-          this.#uiState.canRunMain = false;
-        });
-
-        this.signinAdapter = this.#createSigninAdapter();
-        if (
-          this.signinAdapter.state === "invalid" ||
-          this.signinAdapter.state === "signedout"
-        ) {
-          return;
-        }
-
-        const backendApiEndpoint =
-          this.clientDeploymentConfiguration.BACKEND_API_ENDPOINT;
-        if (backendApiEndpoint) {
-          this.flowGenerator = new FlowGenerator(
-            new AppCatalystApiClient(this.signinAdapter, backendApiEndpoint)
-          );
-        } else {
-          console.warn(
-            `No BACKEND_API_ENDPOINT was configured so` +
-              ` FlowGenerator will not be available.`
-          );
-        }
-
-        this.#graphStore.addEventListener("update", (evt) => {
-          const { mainGraphId } = evt;
-          const current = this.#tab?.mainGraphId;
-          this.graphStoreUpdateId++;
-          if (
-            !current ||
-            (mainGraphId !== current && !evt.affectedGraphs.includes(current))
-          ) {
-            return;
-          }
-          this.graphTopologyUpdateId++;
-        });
-
-        this.#runtime.board.addEventListener(
-          Runtime.Events.RuntimeToastEvent.eventName,
-          (evt: Runtime.Events.RuntimeToastEvent) => {
-            this.toast(evt.message, evt.toastType, evt.persistent, evt.toastId);
-          }
-        );
-
-        this.#runtime.board.addEventListener(
-          Runtime.Events.RuntimeSnackbarEvent.eventName,
-          (evt: Runtime.Events.RuntimeSnackbarEvent) => {
-            this.snackbar(
-              evt.message,
-              evt.snackType,
-              evt.actions,
-              evt.persistent,
-              evt.snackbarId,
-              evt.replaceAll
-            );
-          }
-        );
-
-        this.#runtime.select.addEventListener(
-          Runtime.Events.RuntimeSelectionChangeEvent.eventName,
-          (evt: Runtime.Events.RuntimeSelectionChangeEvent) => {
-            this.#selectionState = {
-              selectionChangeId: evt.selectionChangeId,
-              selectionState: evt.selectionState,
-              moveToSelection: evt.moveToSelection,
-            };
-
-            this.requestUpdate();
-          }
-        );
-
-        this.#runtime.edit.addEventListener(
-          Runtime.Events.RuntimeVisualChangeEvent.eventName,
-          (evt: Runtime.Events.RuntimeVisualChangeEvent) => {
-            this.#lastVisualChangeId = evt.visualChangeId;
-            this.requestUpdate();
-          }
-        );
-
-        this.#runtime.edit.addEventListener(
-          Runtime.Events.RuntimeBoardAutonameEvent.eventName,
-          (evt: Runtime.Events.RuntimeBoardAutonameEvent) => {
-            console.log("Autoname Status Change:", evt.status);
-          }
-        );
-
-        this.#runtime.edit.addEventListener(
-          Runtime.Events.RuntimeBoardEditEvent.eventName,
-          () => {
-            this.#runtime.board.save(
-              this.#tab?.id ?? null,
-              BOARD_AUTO_SAVE_TIMEOUT,
-              null
-            );
-          }
-        );
-
-        this.#runtime.edit.addEventListener(
-          Runtime.Events.RuntimeErrorEvent.eventName,
-          (evt: Runtime.Events.RuntimeErrorEvent) => {
-            // Wait a frame so we don't end up accidentally spamming the render.
-            requestAnimationFrame(() => {
-              this.toast(evt.message, BreadboardUI.Events.ToastType.ERROR);
-            });
-          }
-        );
-
-        this.#runtime.board.addEventListener(
-          Runtime.Events.RuntimeBoardLoadErrorEvent.eventName,
-          () => {
-            if (this.#tab) {
-              this.#uiState.loadState = "Error";
-            }
-
-            this.toast(
-              Strings.from("ERROR_UNABLE_TO_LOAD_PROJECT"),
-              BreadboardUI.Events.ToastType.ERROR
-            );
-          }
-        );
-
-        this.#runtime.board.addEventListener(
-          Runtime.Events.RuntimeErrorEvent.eventName,
-          (evt: Runtime.Events.RuntimeErrorEvent) => {
-            this.toast(evt.message, BreadboardUI.Events.ToastType.ERROR);
-          }
-        );
-
-        this.#runtime.board.addEventListener(
-          Runtime.Events.RuntimeTabChangeEvent.eventName,
-          async (evt: Runtime.Events.RuntimeTabChangeEvent) => {
-            this.#tab = this.#runtime.board.currentTab;
-            this.#maybeShowWelcomePanel();
-
-            if (this.#tab) {
-              // If there is a TGO in the tab change event, honor it and populate a
-              // run with it before switching to the tab proper.
-              if (evt.topGraphObserver) {
-                this.#runtime.run.create(
-                  this.#tab,
-                  evt.topGraphObserver,
-                  evt.runObserver
-                );
-              }
-
-              if (this.#tab.graph.title) {
-                this.#runtime.shell.setPageTitle(this.#tab.graph.title);
-              }
-
-              if (this.#tab.readOnly && this.#uiState.mode === "canvas") {
-                this.snackbar(
-                  Strings.from("LABEL_READONLY_PROJECT"),
-                  BreadboardUI.Types.SnackType.INFORMATION,
-                  [
-                    {
-                      title: "Remix",
-                      action: "remix",
-                      value: this.#tab.graph.url,
-                    },
-                  ],
-                  true
-                );
-              }
-
-              this.#uiState.loadState = "Loaded";
-              this.#runtime.select.refresh(
-                this.#tab.id,
-                this.#runtime.util.createWorkspaceSelectionChangeId()
-              );
-            } else {
-              this.#runtime.router.clearFlowParameters();
-              this.#runtime.shell.setPageTitle(null);
-            }
-          }
-        );
-
-        this.#runtime.board.addEventListener(
-          Runtime.Events.RuntimeModuleChangeEvent.eventName,
-          () => {
-            this.requestUpdate();
-          }
-        );
-
-        this.#runtime.board.addEventListener(
-          Runtime.Events.RuntimeWorkspaceItemChangeEvent.eventName,
-          () => {
-            this.requestUpdate();
-          }
-        );
-
-        this.#runtime.board.addEventListener(
-          Runtime.Events.RuntimeTabCloseEvent.eventName,
-          async (evt: Runtime.Events.RuntimeTabCloseEvent) => {
-            if (!evt.tabId) {
-              return;
-            }
-
-            if (this.#tab?.id !== evt.tabId) {
-              return;
-            }
-
-            if (
-              this.#boardRunStatus.get(evt.tabId) ===
-              BreadboardUI.Types.STATUS.STOPPED
-            ) {
-              return;
-            }
-
-            this.#boardRunStatus.set(
-              evt.tabId,
-              BreadboardUI.Types.STATUS.STOPPED
-            );
-            this.#runtime.run.getAbortSignal(evt.tabId)?.abort();
-            this.requestUpdate();
-          }
-        );
-
-        this.#runtime.board.addEventListener(
-          Runtime.Events.RuntimeBoardSaveStatusChangeEvent.eventName,
-          () => {
-            this.requestUpdate();
-          }
-        );
-
-        this.#runtime.run.addEventListener(
-          Runtime.Events.RuntimeBoardRunEvent.eventName,
-          (evt: Runtime.Events.RuntimeBoardRunEvent) => {
-            if (this.#tab && evt.tabId === this.#tab.id) {
-              this.requestUpdate();
-            }
-
-            switch (evt.runEvt.type) {
-              case "next":
-              case "graphstart":
-              case "skip": {
-                // Noops.
-                break;
-              }
-
-              case "start": {
-                this.#boardRunStatus.set(
-                  evt.tabId,
-                  BreadboardUI.Types.STATUS.RUNNING
-                );
-                break;
-              }
-
-              case "end": {
-                this.#boardRunStatus.set(
-                  evt.tabId,
-                  BreadboardUI.Types.STATUS.STOPPED
-                );
-                break;
-              }
-
-              case "error": {
-                const runEvt = evt.runEvt as RunErrorEvent;
-                this.toast(
-                  BreadboardUI.Utils.formatError(runEvt.data.error),
-                  BreadboardUI.Events.ToastType.ERROR
-                );
-                this.#boardRunStatus.set(
-                  evt.tabId,
-                  BreadboardUI.Types.STATUS.STOPPED
-                );
-                break;
-              }
-
-              case "resume": {
-                this.#boardRunStatus.set(
-                  evt.tabId,
-                  BreadboardUI.Types.STATUS.RUNNING
-                );
-                break;
-              }
-
-              case "pause": {
-                this.#boardRunStatus.set(
-                  evt.tabId,
-                  BreadboardUI.Types.STATUS.PAUSED
-                );
-                break;
-              }
-
-              case "secret": {
-                const event = evt.runEvt as RunSecretEvent;
-                const runner = evt.harnessRunner;
-                const { keys } = event.data;
-                const signInKey = `connection:${SIGN_IN_CONNECTION_ID}`;
-
-                // Check and see if we're being asked for a sign-in key
-                if (keys.at(0) === signInKey) {
-                  // Yay, we can handle this ourselves.
-                  const signInAdapter = new SigninAdapter(
-                    this.tokenVendor,
-                    this.environment,
-                    this.settingsHelper
-                  );
-                  if (signInAdapter.state === "valid") {
-                    runner?.run({ [signInKey]: signInAdapter.accessToken() });
-                  } else {
-                    signInAdapter.refresh().then((token) => {
-                      if (!runner?.running()) {
-                        runner?.run({
-                          [signInKey]: token?.grant?.access_token,
-                        });
-                      }
-                    });
-                  }
-                  return;
-                }
-
-                if (this.#secretsHelper) {
-                  this.#secretsHelper.setKeys(keys);
-                  if (this.#secretsHelper.hasAllSecrets()) {
-                    runner?.run(this.#secretsHelper.getSecrets());
-                  } else {
-                    const result = SecretsHelper.allKeysAreKnown(
-                      this.#settings!,
-                      keys
-                    );
-                    if (result) {
-                      runner?.run(result);
-                    }
-                  }
-                } else {
-                  const result = SecretsHelper.allKeysAreKnown(
-                    this.#settings!,
-                    keys
-                  );
-                  if (result) {
-                    runner?.run(result);
-                  } else {
-                    this.#secretsHelper = new SecretsHelper(this.#settings!);
-                    this.#secretsHelper.setKeys(keys);
-                  }
-                }
-              }
-            }
-          }
-        );
-
-        this.#runtime.router.addEventListener(
-          Runtime.Events.RuntimeURLChangeEvent.eventName,
-          async (evt: Runtime.Events.RuntimeURLChangeEvent) => {
-            this.#runtime.board.currentURL = evt.url;
-
-            if (evt.mode) {
-              this.#uiState.mode = evt.mode;
-            }
-
-            const urlWithoutMode = new URL(evt.url);
-            urlWithoutMode.searchParams.delete("mode");
-
-            // Close tab, go to the home page.
-            if (urlWithoutMode.search === "") {
-              if (this.#tab) {
-                this.#runtime.board.closeTab(this.#tab.id);
-                return;
-              }
-
-              // This does a round-trip to clear out any tabs, after which it
-              // will dispatch an event which will cause the welcome page to be
-              // shown.
-              this.#runtime.board.createTabsFromURL(currentUrl);
-            } else {
-              // Load the tab.
-              const boardUrl = this.#runtime.board.getBoardURL(urlWithoutMode);
-              if (!boardUrl || boardUrl === this.#tab?.graph.url) {
-                return;
-              }
-
-              if (urlWithoutMode) {
-                const loadingTimeout = setTimeout(() => {
-                  this.snackbar(
-                    Strings.from("STATUS_GENERIC_LOADING"),
-                    BreadboardUI.Types.SnackType.PENDING,
-                    [],
-                    true,
-                    evt.id,
-                    true
-                  );
-                }, LOADING_TIMEOUT);
-
-                this.#uiState.loadState = "Loading";
-                await this.#runtime.board.createTabFromURL(
-                  boardUrl,
-                  undefined,
-                  undefined,
-                  undefined,
-                  undefined,
-                  undefined,
-                  undefined,
-                  evt.creator,
-                  evt.resultsFileId
-                );
-                clearTimeout(loadingTimeout);
-                this.unsnackbar();
-              }
-            }
-          }
-        );
-
-        return this.#runtime.router.init();
-      })
-      .then(async () => {
-        if (!config.boardServerUrl) {
-          return;
-        }
-
-        // Check if we're signed in and return early if not: we're just
-        // showing a sign-in screen, no need to continue with initialization.
-        const signInAdapter = new SigninAdapter(
-          this.tokenVendor,
-          this.environment,
-          this.settingsHelper
-        );
-        // Once we've determined the sign-in status, relay it to an embedder.
-        this.#embedHandler?.sendToEmbedder({
-          type: "home_loaded",
-          isSignedIn: signInAdapter.state === "valid",
-        });
-        if (signInAdapter.state === "signedout") {
-          return;
-        }
-
-        if (
-          config.boardServerUrl.protocol === GoogleDriveBoardServer.PROTOCOL
-        ) {
-          const gdrive = await getGoogleDriveBoardService();
-          if (gdrive) {
-            config.boardServerUrl = new URL(gdrive.url);
-          }
-        }
-
-        let hasMountedBoardServer = false;
-        for (const server of this.#boardServers) {
-          if (server.url.href === config.boardServerUrl.href) {
-            hasMountedBoardServer = true;
-            this.#uiState.boardServer = server.name;
-            this.#uiState.boardLocation = server.url.href;
-            this.boardServer = server;
-            break;
-          }
-        }
-
-        if (!hasMountedBoardServer) {
-          console.log(`Mounting server "${config.boardServerUrl.href}" ...`);
-          return this.#runtime.board.connect(config.boardServerUrl.href);
-        }
-      })
-      .then((connecting) => {
-        if (connecting?.success) {
-          console.log(`Connected to server`);
-        }
-      });
   }
 
   connectedCallback(): void {
@@ -903,6 +323,584 @@ export class Main extends SignalWatcher(LitElement) {
     window.removeEventListener("bbhidetooltip", this.#hideTooltipBound);
     window.removeEventListener("pointerdown", this.#hideTooltipBound);
     window.removeEventListener("keydown", this.#onKeyboardShortCut);
+  }
+
+  async #init(args: MainArguments) {
+    let googleDriveProxyUrl: string | undefined;
+    if (this.clientDeploymentConfiguration.ENABLE_GOOGLE_DRIVE_PROXY) {
+      if (this.clientDeploymentConfiguration.BACKEND_API_ENDPOINT) {
+        googleDriveProxyUrl = new URL(
+          "v1beta1/getOpalFile",
+          this.clientDeploymentConfiguration.BACKEND_API_ENDPOINT
+        ).href;
+      } else {
+        console.warn(
+          `ENABLE_GOOGLE_DRIVE_PROXY was true but BACKEND_API_ENDPOINT was missing.` +
+            ` Google Drive proxying will not be available.`
+        );
+      }
+    }
+
+    this.googleDriveClient = new GoogleDriveClient({
+      apiBaseUrl: "https://www.googleapis.com",
+      proxyUrl: googleDriveProxyUrl,
+      publicApiKey: ENVIRONMENT.googleDrive.publicApiKey,
+      getUserAccessToken: async () => {
+        if (!this.signinAdapter) {
+          throw new Error(`SigninAdapter is misconfigured`);
+        }
+        const token = await this.signinAdapter.refresh();
+        if (token?.state === "valid") {
+          return token.grant.access_token;
+        }
+        throw new Error(
+          `User is unexpectedly signed out, or SigninAdapter is misconfigured`
+        );
+      },
+    });
+
+    let settingsRestore = Promise.resolve();
+    if (this.#settings) {
+      this.settingsHelper = new SettingsHelperImpl(this.#settings);
+      this.tokenVendor = createTokenVendor(
+        {
+          get: (conectionId: string) => {
+            return this.settingsHelper.get(
+              BreadboardUI.Types.SETTINGS_TYPE.CONNECTIONS,
+              conectionId
+            )?.value as string;
+          },
+          set: async (connectionId: string, grant: string) => {
+            await this.settingsHelper.set(
+              BreadboardUI.Types.SETTINGS_TYPE.CONNECTIONS,
+              connectionId,
+              {
+                name: connectionId,
+                value: grant,
+              }
+            );
+          },
+        },
+        ENVIRONMENT
+      );
+
+      settingsRestore = this.#settings?.restore();
+    }
+
+    await settingsRestore;
+
+    this.#fileSystem = createFileSystem({
+      env: [...envFromSettings(this.#settings), ...(args.env || [])],
+      local: createFileSystemBackend(createEphemeralBlobStore()),
+    });
+
+    this.#runtime = await Runtime.create({
+      recentBoardStore: this.#recentBoardStore,
+      graphStore: this.#graphStore,
+      runStore: this.#runStore,
+      experiments: {},
+      environment: this.environment,
+      tokenVendor: this.tokenVendor,
+      sandbox,
+      settings: this.#settings!,
+      proxy: this.#proxy,
+      fileSystem: this.#fileSystem,
+      builtInBoardServers: [createA2Server()],
+      kits: addSandboxedRunModule(
+        sandbox,
+        args.kits || [],
+        args.moduleInvocationFilter
+      ),
+      googleDriveClient: this.googleDriveClient,
+      appName: Strings.from("APP_NAME"),
+      appSubName: Strings.from("SUB_APP_NAME"),
+    });
+
+    this.#uiState = this.#runtime.state.getOrCreateUIState();
+    const showTos =
+      !!args.enableTos &&
+      !!args.tosHtml &&
+      localStorage.getItem(TOS_KEY) !== TosStatus.ACCEPTED;
+    if (showTos) {
+      this.#uiState.show.add("TOS");
+    } else {
+      this.#uiState.show.delete("TOS");
+    }
+    this.#addRuntimeEventHandlers();
+
+    const admin = new Admin(args, ENVIRONMENT, this.googleDriveClient);
+    admin.runtime = this.#runtime;
+    admin.settingsHelper = this.settingsHelper;
+
+    this.#graphStore = this.#runtime.board.getGraphStore();
+    this.#boardServers = this.#runtime.board.getBoardServers() || [];
+    this.sideBoardRuntime = this.#runtime.sideboards;
+
+    // This is currently used only for legacy graph kits (Agent,
+    // Google Drive).
+    args.graphStorePreloader?.(this.#graphStore);
+
+    this.sideBoardRuntime.addEventListener("empty", () => {
+      this.#uiState.canRunMain = true;
+    });
+    this.sideBoardRuntime.addEventListener("running", () => {
+      this.#uiState.canRunMain = false;
+    });
+
+    this.signinAdapter = this.#createSigninAdapter();
+    if (
+      this.signinAdapter.state === "invalid" ||
+      this.signinAdapter.state === "signedout"
+    ) {
+      return;
+    }
+
+    const backendApiEndpoint =
+      this.clientDeploymentConfiguration.BACKEND_API_ENDPOINT;
+    if (backendApiEndpoint) {
+      this.flowGenerator = new FlowGenerator(
+        new AppCatalystApiClient(this.signinAdapter, backendApiEndpoint)
+      );
+    } else {
+      console.warn(
+        `No BACKEND_API_ENDPOINT was configured so` +
+          ` FlowGenerator will not be available.`
+      );
+    }
+
+    this.#graphStore.addEventListener("update", (evt) => {
+      const { mainGraphId } = evt;
+      const current = this.#tab?.mainGraphId;
+      this.graphStoreUpdateId++;
+      if (
+        !current ||
+        (mainGraphId !== current && !evt.affectedGraphs.includes(current))
+      ) {
+        return;
+      }
+      this.graphTopologyUpdateId++;
+    });
+
+    await this.#runtime.router.init();
+    if (!args.boardServerUrl) {
+      return;
+    }
+
+    // Check if we're signed in and return early if not: we're just
+    // showing a sign-in screen, no need to continue with initialization.
+    const signInAdapter = new SigninAdapter(
+      this.tokenVendor,
+      this.environment,
+      this.settingsHelper
+    );
+    // Once we've determined the sign-in status, relay it to an embedder.
+    this.#embedHandler?.sendToEmbedder({
+      type: "home_loaded",
+      isSignedIn: signInAdapter.state === "valid",
+    });
+    if (signInAdapter.state === "signedout") {
+      return;
+    }
+
+    if (args.boardServerUrl.protocol === GoogleDriveBoardServer.PROTOCOL) {
+      const gdrive = await getGoogleDriveBoardService();
+      if (gdrive) {
+        args.boardServerUrl = new URL(gdrive.url);
+      }
+    }
+
+    let hasMountedBoardServer = false;
+    for (const server of this.#boardServers) {
+      if (server.url.href === args.boardServerUrl.href) {
+        hasMountedBoardServer = true;
+        this.#uiState.boardServer = server.name;
+        this.#uiState.boardLocation = server.url.href;
+        this.boardServer = server;
+        break;
+      }
+    }
+
+    if (!hasMountedBoardServer) {
+      console.log(`Mounting server "${args.boardServerUrl.href}" ...`);
+      const connecting = await this.#runtime.board.connect(
+        args.boardServerUrl.href
+      );
+      if (connecting?.success) {
+        console.log(`Connected to server`);
+      }
+    }
+  }
+
+  #addRuntimeEventHandlers() {
+    if (!this.#runtime) {
+      console.error("No runtime found");
+      return;
+    }
+
+    const currentUrl = new URL(window.location.href);
+
+    this.#runtime.board.addEventListener(
+      Runtime.Events.RuntimeToastEvent.eventName,
+      (evt: Runtime.Events.RuntimeToastEvent) => {
+        this.toast(evt.message, evt.toastType, evt.persistent, evt.toastId);
+      }
+    );
+
+    this.#runtime.board.addEventListener(
+      Runtime.Events.RuntimeSnackbarEvent.eventName,
+      (evt: Runtime.Events.RuntimeSnackbarEvent) => {
+        this.snackbar(
+          evt.message,
+          evt.snackType,
+          evt.actions,
+          evt.persistent,
+          evt.snackbarId,
+          evt.replaceAll
+        );
+      }
+    );
+
+    this.#runtime.select.addEventListener(
+      Runtime.Events.RuntimeSelectionChangeEvent.eventName,
+      (evt: Runtime.Events.RuntimeSelectionChangeEvent) => {
+        this.#selectionState = {
+          selectionChangeId: evt.selectionChangeId,
+          selectionState: evt.selectionState,
+          moveToSelection: evt.moveToSelection,
+        };
+
+        this.requestUpdate();
+      }
+    );
+
+    this.#runtime.edit.addEventListener(
+      Runtime.Events.RuntimeVisualChangeEvent.eventName,
+      (evt: Runtime.Events.RuntimeVisualChangeEvent) => {
+        this.#lastVisualChangeId = evt.visualChangeId;
+        this.requestUpdate();
+      }
+    );
+
+    this.#runtime.edit.addEventListener(
+      Runtime.Events.RuntimeBoardAutonameEvent.eventName,
+      (evt: Runtime.Events.RuntimeBoardAutonameEvent) => {
+        console.log("Autoname Status Change:", evt.status);
+      }
+    );
+
+    this.#runtime.edit.addEventListener(
+      Runtime.Events.RuntimeBoardEditEvent.eventName,
+      () => {
+        this.#runtime.board.save(
+          this.#tab?.id ?? null,
+          BOARD_AUTO_SAVE_TIMEOUT,
+          null
+        );
+      }
+    );
+
+    this.#runtime.edit.addEventListener(
+      Runtime.Events.RuntimeErrorEvent.eventName,
+      (evt: Runtime.Events.RuntimeErrorEvent) => {
+        // Wait a frame so we don't end up accidentally spamming the render.
+        requestAnimationFrame(() => {
+          this.toast(evt.message, BreadboardUI.Events.ToastType.ERROR);
+        });
+      }
+    );
+
+    this.#runtime.board.addEventListener(
+      Runtime.Events.RuntimeBoardLoadErrorEvent.eventName,
+      () => {
+        if (this.#tab) {
+          this.#uiState.loadState = "Error";
+        }
+
+        this.toast(
+          Strings.from("ERROR_UNABLE_TO_LOAD_PROJECT"),
+          BreadboardUI.Events.ToastType.ERROR
+        );
+      }
+    );
+
+    this.#runtime.board.addEventListener(
+      Runtime.Events.RuntimeErrorEvent.eventName,
+      (evt: Runtime.Events.RuntimeErrorEvent) => {
+        this.toast(evt.message, BreadboardUI.Events.ToastType.ERROR);
+      }
+    );
+
+    this.#runtime.board.addEventListener(
+      Runtime.Events.RuntimeTabChangeEvent.eventName,
+      async (evt: Runtime.Events.RuntimeTabChangeEvent) => {
+        this.#tab = this.#runtime.board.currentTab;
+        this.#maybeShowWelcomePanel();
+
+        if (this.#tab) {
+          // If there is a TGO in the tab change event, honor it and populate a
+          // run with it before switching to the tab proper.
+          if (evt.topGraphObserver) {
+            this.#runtime.run.create(
+              this.#tab,
+              evt.topGraphObserver,
+              evt.runObserver
+            );
+          }
+
+          if (this.#tab.graph.title) {
+            this.#runtime.shell.setPageTitle(this.#tab.graph.title);
+          }
+
+          if (this.#tab.readOnly && this.#uiState.mode === "canvas") {
+            this.snackbar(
+              Strings.from("LABEL_READONLY_PROJECT"),
+              BreadboardUI.Types.SnackType.INFORMATION,
+              [
+                {
+                  title: "Remix",
+                  action: "remix",
+                  value: this.#tab.graph.url,
+                },
+              ],
+              true
+            );
+          }
+
+          this.#uiState.loadState = "Loaded";
+          this.#runtime.select.refresh(
+            this.#tab.id,
+            this.#runtime.util.createWorkspaceSelectionChangeId()
+          );
+        } else {
+          this.#runtime.router.clearFlowParameters();
+          this.#runtime.shell.setPageTitle(null);
+        }
+      }
+    );
+
+    this.#runtime.board.addEventListener(
+      Runtime.Events.RuntimeModuleChangeEvent.eventName,
+      () => {
+        this.requestUpdate();
+      }
+    );
+
+    this.#runtime.board.addEventListener(
+      Runtime.Events.RuntimeWorkspaceItemChangeEvent.eventName,
+      () => {
+        this.requestUpdate();
+      }
+    );
+
+    this.#runtime.board.addEventListener(
+      Runtime.Events.RuntimeTabCloseEvent.eventName,
+      async (evt: Runtime.Events.RuntimeTabCloseEvent) => {
+        if (!evt.tabId) {
+          return;
+        }
+
+        if (this.#tab?.id !== evt.tabId) {
+          return;
+        }
+
+        if (
+          this.#boardRunStatus.get(evt.tabId) ===
+          BreadboardUI.Types.STATUS.STOPPED
+        ) {
+          return;
+        }
+
+        this.#boardRunStatus.set(evt.tabId, BreadboardUI.Types.STATUS.STOPPED);
+        this.#runtime.run.getAbortSignal(evt.tabId)?.abort();
+        this.requestUpdate();
+      }
+    );
+
+    this.#runtime.board.addEventListener(
+      Runtime.Events.RuntimeBoardSaveStatusChangeEvent.eventName,
+      () => {
+        this.requestUpdate();
+      }
+    );
+
+    this.#runtime.run.addEventListener(
+      Runtime.Events.RuntimeBoardRunEvent.eventName,
+      (evt: Runtime.Events.RuntimeBoardRunEvent) => {
+        if (this.#tab && evt.tabId === this.#tab.id) {
+          this.requestUpdate();
+        }
+
+        switch (evt.runEvt.type) {
+          case "next":
+          case "graphstart":
+          case "skip": {
+            // Noops.
+            break;
+          }
+
+          case "start": {
+            this.#boardRunStatus.set(
+              evt.tabId,
+              BreadboardUI.Types.STATUS.RUNNING
+            );
+            break;
+          }
+
+          case "end": {
+            this.#boardRunStatus.set(
+              evt.tabId,
+              BreadboardUI.Types.STATUS.STOPPED
+            );
+            break;
+          }
+
+          case "error": {
+            const runEvt = evt.runEvt as RunErrorEvent;
+            this.toast(
+              BreadboardUI.Utils.formatError(runEvt.data.error),
+              BreadboardUI.Events.ToastType.ERROR
+            );
+            this.#boardRunStatus.set(
+              evt.tabId,
+              BreadboardUI.Types.STATUS.STOPPED
+            );
+            break;
+          }
+
+          case "resume": {
+            this.#boardRunStatus.set(
+              evt.tabId,
+              BreadboardUI.Types.STATUS.RUNNING
+            );
+            break;
+          }
+
+          case "pause": {
+            this.#boardRunStatus.set(
+              evt.tabId,
+              BreadboardUI.Types.STATUS.PAUSED
+            );
+            break;
+          }
+
+          case "secret": {
+            const event = evt.runEvt as RunSecretEvent;
+            const runner = evt.harnessRunner;
+            const { keys } = event.data;
+            const signInKey = `connection:${SIGN_IN_CONNECTION_ID}`;
+
+            // Check and see if we're being asked for a sign-in key
+            if (keys.at(0) === signInKey) {
+              // Yay, we can handle this ourselves.
+              const signInAdapter = new SigninAdapter(
+                this.tokenVendor,
+                this.environment,
+                this.settingsHelper
+              );
+              if (signInAdapter.state === "valid") {
+                runner?.run({ [signInKey]: signInAdapter.accessToken() });
+              } else {
+                signInAdapter.refresh().then((token) => {
+                  if (!runner?.running()) {
+                    runner?.run({
+                      [signInKey]: token?.grant?.access_token,
+                    });
+                  }
+                });
+              }
+              return;
+            }
+
+            if (this.#secretsHelper) {
+              this.#secretsHelper.setKeys(keys);
+              if (this.#secretsHelper.hasAllSecrets()) {
+                runner?.run(this.#secretsHelper.getSecrets());
+              } else {
+                const result = SecretsHelper.allKeysAreKnown(
+                  this.#settings!,
+                  keys
+                );
+                if (result) {
+                  runner?.run(result);
+                }
+              }
+            } else {
+              const result = SecretsHelper.allKeysAreKnown(
+                this.#settings!,
+                keys
+              );
+              if (result) {
+                runner?.run(result);
+              } else {
+                this.#secretsHelper = new SecretsHelper(this.#settings!);
+                this.#secretsHelper.setKeys(keys);
+              }
+            }
+          }
+        }
+      }
+    );
+
+    this.#runtime.router.addEventListener(
+      Runtime.Events.RuntimeURLChangeEvent.eventName,
+      async (evt: Runtime.Events.RuntimeURLChangeEvent) => {
+        this.#runtime.board.currentURL = evt.url;
+
+        if (evt.mode) {
+          this.#uiState.mode = evt.mode;
+        }
+
+        const urlWithoutMode = new URL(evt.url);
+        urlWithoutMode.searchParams.delete("mode");
+
+        // Close tab, go to the home page.
+        if (urlWithoutMode.search === "") {
+          if (this.#tab) {
+            this.#runtime.board.closeTab(this.#tab.id);
+            return;
+          }
+
+          // This does a round-trip to clear out any tabs, after which it
+          // will dispatch an event which will cause the welcome page to be
+          // shown.
+          this.#runtime.board.createTabsFromURL(currentUrl);
+        } else {
+          // Load the tab.
+          const boardUrl = this.#runtime.board.getBoardURL(urlWithoutMode);
+          if (!boardUrl || boardUrl === this.#tab?.graph.url) {
+            return;
+          }
+
+          if (urlWithoutMode) {
+            const loadingTimeout = setTimeout(() => {
+              this.snackbar(
+                Strings.from("STATUS_GENERIC_LOADING"),
+                BreadboardUI.Types.SnackType.PENDING,
+                [],
+                true,
+                evt.id,
+                true
+              );
+            }, LOADING_TIMEOUT);
+
+            this.#uiState.loadState = "Loading";
+            await this.#runtime.board.createTabFromURL(
+              boardUrl,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              evt.creator,
+              evt.resultsFileId
+            );
+            clearTimeout(loadingTimeout);
+            this.unsnackbar();
+          }
+        }
+      }
+    );
   }
 
   async #generateGraph(intent: string): Promise<GraphDescriptor> {
