@@ -17,11 +17,16 @@ export interface AppCatalystChatResponse {
   messages: AppCatalystContentChunk[];
 }
 
-export interface CheckAppAccessResponse {
-  canAccess: boolean;
-  hasAcceptedTos: boolean;
-  termsOfServiceVersion: number;
-}
+export type CheckAppAccessResponse =
+  | {
+      canAccess: false;
+      accessStatus: string;
+      termsOfService?: {
+        version: number;
+        terms: string;
+      };
+    }
+  | { canAccess: true; accessStatus: string };
 
 export interface AppCatalystContentChunk {
   mimetype: "text/plain" | "text/breadboard";
@@ -57,7 +62,7 @@ export class AppCatalystApiClient {
     return result;
   }
 
-  async checkTos(tosVersion: number = 0): Promise<boolean> {
+  async checkTos(): Promise<CheckAppAccessResponse> {
     const token = await this.#signinAdapter.refresh();
     if (token?.state !== "valid") {
       throw new Error(`Expected "valid" token, got "${token?.state}"`);
@@ -70,24 +75,24 @@ export class AppCatalystApiClient {
           },
         })
       ).json()) as CheckAppAccessResponse;
-      if (
-        result.hasAcceptedTos &&
-        result.termsOfServiceVersion === tosVersion
-      ) {
-        return true;
-      }
-    } catch (e) {
-      return false;
-    }
 
-    return false;
+      // TODO: Remove this override.
+      if (result.accessStatus !== "ACCESS_STATUS_OK") {
+        result.canAccess = false;
+      }
+      return result;
+    } catch (e) {
+      console.warn("[API Client]", e);
+      return { canAccess: false, accessStatus: "Unable to check" };
+    }
   }
 
-  async acceptTos(tosVersion: number = 0): Promise<void> {
+  async acceptTos(tosVersion: number = 1, acceptTos = false): Promise<void> {
     const token = await this.#signinAdapter.refresh();
     if (token?.state !== "valid") {
       throw new Error(`Expected "valid" token, got "${token?.state}"`);
     }
+
     const url = new URL("v1beta1/acceptToS", this.#apiBaseUrl);
     const response = await fetch(url, {
       method: "POST",
@@ -97,8 +102,10 @@ export class AppCatalystApiClient {
       },
       body: JSON.stringify({
         termsOfServiceVersion: tosVersion,
+        acceptTos,
       }),
     });
+
     if (!response.ok) {
       throw new Error(`Failed to accept TOS: ${response.statusText}`);
     }
