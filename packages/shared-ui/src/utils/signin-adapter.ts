@@ -64,8 +64,7 @@ class SigninAdapter {
   constructor(
     tokenVendor: TokenVendor,
     environment: Environment,
-    settingsHelper: SettingsHelper,
-    public readonly errorMessage?: string
+    settingsHelper: SettingsHelper
   ) {
     this.#tokenVendor = tokenVendor;
     this.#environment = environment;
