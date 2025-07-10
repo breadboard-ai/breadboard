@@ -63,7 +63,7 @@ export class GoogleDriveSharePanel extends LitElement {
       console.error("Global ShareClient was locked");
       return;
     }
-    const auth = await this.signinAdapter?.refresh();
+    const auth = await this.signinAdapter?.token();
     if (auth?.state !== "valid") {
       console.error(`Expected "valid" auth state, got: ${auth?.state}`);
       return;

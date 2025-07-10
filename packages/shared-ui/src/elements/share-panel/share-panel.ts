@@ -1015,7 +1015,7 @@ export class SharePanel extends LitElement {
       console.error(`No signinAdapter was provided`);
       return "";
     }
-    const auth = await this.signinAdapter.refresh();
+    const auth = await this.signinAdapter.token();
     if (auth?.state !== "valid") {
       console.error(`Expected valid auth, got "${auth?.state}"`);
       return "";

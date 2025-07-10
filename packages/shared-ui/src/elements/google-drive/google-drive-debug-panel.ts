@@ -233,7 +233,7 @@ export class GoogleDriveDebugPanel extends LitElement {
   }
 
   async #openPickerForAnyFile() {
-    const auth = await this.signinAdapter?.refresh();
+    const auth = await this.signinAdapter?.token();
     if (auth?.state !== "valid") {
       return;
     }
@@ -262,7 +262,7 @@ export class GoogleDriveDebugPanel extends LitElement {
     if (!fileId) {
       return;
     }
-    const auth = await this.signinAdapter?.refresh();
+    const auth = await this.signinAdapter?.token();
     if (auth?.state !== "valid") {
       return;
     }
@@ -360,7 +360,7 @@ export class GoogleDriveDebugPanel extends LitElement {
     if (!fileId || !emailAddress) {
       return;
     }
-    const auth = await this.signinAdapter?.refresh();
+    const auth = await this.signinAdapter?.token();
     if (auth?.state !== "valid") {
       return;
     }
@@ -395,7 +395,7 @@ export class GoogleDriveDebugPanel extends LitElement {
   }
 
   async #openPickerToUploadAsset() {
-    const auth = await this.signinAdapter?.refresh();
+    const auth = await this.signinAdapter?.token();
     if (auth?.state !== "valid") {
       return;
     }
@@ -438,7 +438,7 @@ export class GoogleDriveDebugPanel extends LitElement {
       return;
     }
     const driveShare = await loadDriveShare();
-    const auth = await this.signinAdapter?.refresh();
+    const auth = await this.signinAdapter?.token();
     if (auth?.state !== "valid") {
       return;
     }
@@ -456,7 +456,7 @@ export class GoogleDriveDebugPanel extends LitElement {
     }
 
     const drive = await loadDriveApi();
-    const auth = await this.signinAdapter?.refresh();
+    const auth = await this.signinAdapter?.token();
     if (auth?.state !== "valid") {
       return;
     }
@@ -474,7 +474,7 @@ export class GoogleDriveDebugPanel extends LitElement {
     if (!fileId) {
       return;
     }
-    const auth = await this.signinAdapter?.refresh();
+    const auth = await this.signinAdapter?.token();
     if (auth?.state !== "valid") {
       return;
     }

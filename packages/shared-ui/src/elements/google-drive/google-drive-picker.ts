@@ -81,7 +81,7 @@ export class GoogleDrivePicker extends LitElement {
       );
     }
     const pickerLib = await loadDrivePicker();
-    const auth = await this.signinAdapter?.refresh();
+    const auth = await this.signinAdapter?.token();
     if (auth?.state !== "valid") {
       console.error(`Expected "valid" auth state, got "${auth?.state}"`);
       return;
@@ -172,7 +172,7 @@ export class GoogleDrivePicker extends LitElement {
       return;
     }
     const pickerLib = await loadDrivePicker();
-    const auth = await this.signinAdapter?.refresh();
+    const auth = await this.signinAdapter?.token();
     if (auth?.state !== "valid") {
       console.error(`Expected "valid" auth state, got "${auth?.state}"`);
       return;

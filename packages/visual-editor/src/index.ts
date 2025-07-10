@@ -314,7 +314,7 @@ export class Main extends SignalWatcher(LitElement) {
       proxyUrl: googleDriveProxyUrl,
       publicApiKey: this.environment.googleDrive.publicApiKey,
       getUserAccessToken: async () => {
-        const token = await this.signinAdapter.refresh();
+        const token = await this.signinAdapter.token();
         if (token?.state === "valid") {
           return token.grant.access_token;
         }
@@ -743,7 +743,7 @@ export class Main extends SignalWatcher(LitElement) {
 
             // Check and see if we're being asked for a sign-in key
             if (keys.at(0) === signInKey) {
-              this.signinAdapter.refresh().then((token) => {
+              this.signinAdapter.token().then((token) => {
                 if (!runner?.running()) {
                   runner?.run({
                     [signInKey]:

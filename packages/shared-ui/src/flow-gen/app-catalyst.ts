@@ -45,7 +45,7 @@ export class AppCatalystApiClient {
   async chat(
     request: AppCatalystChatRequest
   ): Promise<AppCatalystChatResponse> {
-    const token = await this.#signinAdapter.refresh();
+    const token = await this.#signinAdapter.token();
     if (token?.state !== "valid") {
       throw new Error(`Expected "valid" token, got "${token?.state}"`);
     }
@@ -63,7 +63,7 @@ export class AppCatalystApiClient {
   }
 
   async checkTos(): Promise<CheckAppAccessResponse> {
-    const token = await this.#signinAdapter.refresh();
+    const token = await this.#signinAdapter.token();
     if (token?.state !== "valid") {
       throw new Error(`Expected "valid" token, got "${token?.state}"`);
     }
@@ -88,7 +88,7 @@ export class AppCatalystApiClient {
   }
 
   async acceptTos(tosVersion: number = 1, acceptTos = false): Promise<void> {
-    const token = await this.#signinAdapter.refresh();
+    const token = await this.#signinAdapter.token();
     if (token?.state !== "valid") {
       throw new Error(`Expected "valid" token, got "${token?.state}"`);
     }

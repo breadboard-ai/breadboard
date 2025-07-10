@@ -93,7 +93,7 @@ class SigninAdapter {
   async cachedPicture(): Promise<string | undefined> {
     if (SigninAdapter.#cachedPicture === undefined && this.picture) {
       try {
-        const token = await this.refresh();
+        const token = await this.token();
         if (token.state === "signedout") {
           SigninAdapter.#cachedPicture = null;
           return;
@@ -121,7 +121,7 @@ class SigninAdapter {
    * Gets you a token, refreshing automatically if needed, unless the user is
    * signed out.
    */
-  async refresh(): Promise<ValidTokenResult | SignedOutTokenResult> {
+  async token(): Promise<ValidTokenResult | SignedOutTokenResult> {
     const token = this.#tokenVendor.getToken(SIGN_IN_CONNECTION_ID);
     if (token.state === "expired") {
       return token.refresh();
