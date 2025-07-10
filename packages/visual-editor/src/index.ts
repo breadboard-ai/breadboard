@@ -410,10 +410,7 @@ export class Main extends SignalWatcher(LitElement) {
     });
 
     this.signinAdapter = this.#createSigninAdapter();
-    if (
-      this.signinAdapter.state === "invalid" ||
-      this.signinAdapter.state === "signedout"
-    ) {
+    if (this.signinAdapter.state === "signedout") {
       return;
     }
 
@@ -454,7 +451,7 @@ export class Main extends SignalWatcher(LitElement) {
     // Once we've determined the sign-in status, relay it to an embedder.
     this.#embedHandler?.sendToEmbedder({
       type: "home_loaded",
-      isSignedIn: this.signinAdapter.state === "valid",
+      isSignedIn: this.signinAdapter.state === "signedin",
     });
 
     if (args.boardServerUrl.protocol === GoogleDriveBoardServer.PROTOCOL) {
@@ -752,13 +749,16 @@ export class Main extends SignalWatcher(LitElement) {
                 this.environment,
                 this.settingsHelper
               );
-              if (signInAdapter.state === "valid") {
+              if (signInAdapter.state === "signedin") {
                 runner?.run({ [signInKey]: signInAdapter.accessToken() });
               } else {
                 signInAdapter.refresh().then((token) => {
                   if (!runner?.running()) {
                     runner?.run({
-                      [signInKey]: token?.grant?.access_token,
+                      [signInKey]:
+                        token.state === "valid"
+                          ? token.grant.access_token
+                          : undefined,
                     });
                   }
                 });
@@ -1403,11 +1403,7 @@ export class Main extends SignalWatcher(LitElement) {
       return nothing;
     }
 
-    if (
-      !this.signinAdapter ||
-      (this.signinAdapter.state !== "anonymous" &&
-        this.signinAdapter.state !== "valid")
-    ) {
+    if (!this.signinAdapter || this.signinAdapter.state === "signedout") {
       return html`<bb-connection-entry-signin
         .adapter=${this.signinAdapter}
         @bbsignin=${async () => {
@@ -1584,7 +1580,7 @@ export class Main extends SignalWatcher(LitElement) {
       .graph=${this.#tab?.graph ?? null}
       .projectRun=${renderValues.projectState?.run}
       .topGraphResult=${renderValues.topGraphResult}
-      .showGDrive=${this.signinAdapter.state === "valid"}
+      .showGDrive=${this.signinAdapter.state === "signedin"}
       .settings=${this.#settings}
       .boardServers=${this.#boardServers}
       .status=${renderValues.tabStatus}
@@ -1621,7 +1617,7 @@ export class Main extends SignalWatcher(LitElement) {
       .readOnly=${this.#tab?.readOnly ?? true}
       .selectionState=${this.#selectionState}
       .settings=${this.#settings}
-      .signedIn=${this.signinAdapter.state === "valid"}
+      .signedIn=${this.signinAdapter.state === "signedin"}
       .status=${renderValues.tabStatus}
       .themeHash=${renderValues.themeHash}
       .topGraphResult=${renderValues.topGraphResult}

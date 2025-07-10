@@ -630,7 +630,7 @@ export class VEHeader extends LitElement {
   #renderUser() {
     if (
       !this.signinAdapter ||
-      this.signinAdapter.state !== "valid" ||
+      this.signinAdapter.state !== "signedin" ||
       !this.signinAdapter.picture
     ) {
       return nothing;

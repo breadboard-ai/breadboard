@@ -568,7 +568,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
           ></p>
           <div id="input" class="stopped">
             <div>
-              ${this.state === "anonymous" || this.state === "valid"
+              ${this.state === "anonymous" || this.state === "signedin"
                 ? html`<button
                     id="run"
                     ?disabled=${!this.run.runnable}

@@ -30,9 +30,9 @@ export const SIGN_IN_CONNECTION_ID = "$sign-in";
  * - "anonymous" -- the runtime is not configured to use the sign in.
  * - "signedout" -- the user is not yet signed in or has signed out, but the
  *                  runtime is configured to use sign in.
- * - "valid" -- the user is currently signed in.
+ * - "signedin" -- the user is currently signed in.
  */
-export type SigninState = "signedout" | "valid" | "anonymous";
+export type SigninState = "signedout" | "signedin" | "anonymous";
 
 export const signinAdapterContext = createContext<SigninAdapter | undefined>(
   "SigninAdapter"
@@ -80,14 +80,14 @@ class SigninAdapter {
     }
     const { grant } = token;
 
-    this.state = "valid";
+    this.state = "signedin";
     this.picture = grant?.picture;
     this.id = grant?.id;
     this.name = grant?.name;
   }
 
   accessToken(): string | null {
-    if (this.state === "valid") {
+    if (this.state === "signedin") {
       const token = this.#tokenVendor.getToken(SIGN_IN_CONNECTION_ID);
       if (token?.state === "valid") {
         return token.grant.access_token;
