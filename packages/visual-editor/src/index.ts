@@ -126,7 +126,6 @@ type RenderValues = {
 };
 
 const LOADING_TIMEOUT = 1250;
-const TOS_KEY = "tos-status";
 const BOARD_AUTO_SAVE_TIMEOUT = 1_500;
 
 @customElement("bb-main")
@@ -1394,7 +1393,7 @@ export class Main extends SignalWatcher(LitElement) {
       return;
     }
 
-    if (!this.#tosStatus || !this.#tosStatus.canAccess) {
+    if (this.#tosStatus && !this.#tosStatus.canAccess) {
       this.#uiState.show.add("TOS");
     } else {
       this.#uiState.show.delete("TOS");
