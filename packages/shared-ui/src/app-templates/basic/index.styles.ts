@@ -812,6 +812,7 @@ export const styles: CSSResultGroup = [
         border-color: var(--bb-neutral-400);
         transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
         opacity: 0.7;
+        color: var(--n-0);
 
         &: [disabled] {
           opacity: 0.5;

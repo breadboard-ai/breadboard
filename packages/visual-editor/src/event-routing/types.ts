@@ -8,7 +8,6 @@ import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import { RuntimeInstance } from "../runtime/runtime";
 import { Tab } from "../runtime/types";
 import type * as BreadboardUI from "@breadboard-ai/shared-ui";
-import { HarnessProxyConfig } from "@breadboard-ai/types";
 import { SecretsHelper } from "../utils/secrets-helper";
 
 type StateCustomEvent<K extends keyof BreadboardUI.Events.StateEventDetailMap> =
@@ -18,7 +17,6 @@ export interface EventRouteDeps<
   K extends keyof BreadboardUI.Events.StateEventDetailMap,
 > {
   originalEvent: StateCustomEvent<K>;
-  proxy: HarnessProxyConfig[];
   runtime: RuntimeInstance;
   secretsHelper: SecretsHelper;
   settings: SettingsStore | null;

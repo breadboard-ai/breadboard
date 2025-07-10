@@ -17,7 +17,7 @@ import { addNodeProxyServerConfig } from "../../data/node-proxy-servers";
 export const RunRoute: EventRoute<"board.run"> = {
   event: "board.run",
 
-  async do({ tab, proxy, runtime, settings }) {
+  async do({ tab, runtime, settings }) {
     const url = tab?.graph?.url;
     if (!url || !tab || !settings) {
       return false;
@@ -38,7 +38,7 @@ export const RunRoute: EventRoute<"board.run"> = {
     }
 
     const runConfig = addNodeProxyServerConfig(
-      proxy,
+      [] /* no longer used */,
       {
         url,
         runner: graph,
