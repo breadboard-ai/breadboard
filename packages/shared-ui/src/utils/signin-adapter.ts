@@ -81,15 +81,15 @@ class SigninAdapter {
     const { grant } = token;
 
     this.state = "signedin";
-    this.picture = grant?.picture;
-    this.id = grant?.id;
-    this.name = grant?.name;
+    this.picture = grant.picture;
+    this.id = grant.id;
+    this.name = grant.name;
   }
 
   accessToken(): string | null {
     if (this.state === "signedin") {
       const token = this.#tokenVendor.getToken(SIGN_IN_CONNECTION_ID);
-      if (token?.state === "valid") {
+      if (token.state === "valid") {
         return token.grant.access_token;
       }
     }
@@ -125,7 +125,7 @@ class SigninAdapter {
 
   async refresh() {
     const token = this.#tokenVendor.getToken(SIGN_IN_CONNECTION_ID);
-    if (token?.state === "expired") {
+    if (token.state === "expired") {
       return token.refresh();
     }
     return token;
@@ -142,7 +142,7 @@ class SigninAdapter {
       return;
     }
     const list = (await httpRes.json()) as ListConnectionsResponse;
-    const connection = list.connections?.find(
+    const connection = list.connections.find(
       (connection) => connection.id == SIGN_IN_CONNECTION_ID
     );
     if (!connection) {
