@@ -61,7 +61,6 @@ export type GrantResponse =
       error?: undefined;
       access_token: string;
       expires_in: number;
-      refresh_token: string;
       picture?: string;
       name?: string;
       id?: string;
@@ -71,7 +70,11 @@ export interface TokenGrant {
   client_id: string;
   access_token: string;
   expires_in: number;
-  refresh_token: string;
+  /**
+   * @deprecated since July 2025 in favor of HttpOnly cookie. Should only be
+   * used to detect when an upgrade to the new cookie is required.
+   */
+  refresh_token?: string;
   issue_time: number;
   picture?: string;
   name?: string;
@@ -90,7 +93,6 @@ export type RefreshResponse =
 // breadboard/packages/connection-server/src/api/refresh.ts
 export interface RefreshRequest {
   connection_id: string;
-  refresh_token: string;
 }
 
 // IMPORTANT: Keep in sync with

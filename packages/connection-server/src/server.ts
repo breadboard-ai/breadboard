@@ -12,6 +12,7 @@ import { grant } from "./api/grant.js";
 import { list } from "./api/list.js";
 import { refresh } from "./api/refresh.js";
 import { loadConnections, type ServerConfig } from "./config.js";
+import cookieParser from "cookie-parser";
 
 export type { ServerConfig };
 export type { GrantResponse } from "./config.js";
@@ -50,6 +51,8 @@ export function createServer(config: ServerConfig): Express {
       origin: config.allowedOrigins,
     })
   );
+
+  server.use(cookieParser());
 
   // TODO: #3172 - Common error handling
 

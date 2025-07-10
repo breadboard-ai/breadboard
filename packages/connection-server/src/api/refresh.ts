@@ -4,9 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { IncomingMessage, ServerResponse } from "node:http";
+import type { ServerResponse } from "node:http";
 import type { ServerConfig } from "../config.js";
 import { badRequestJson, internalServerError, okJson } from "../responses.js";
+import type { Request } from "express";
+import { oAuthRefreshTokenCookieId } from "./cookies.js";
 
 // IMPORTANT: Keep in sync with
 // breadboard/packages/visual-editor/src/elements/connection/connection-input.ts
@@ -27,7 +29,7 @@ type RefreshResponse =
  * API which gets a new authorization token for when an earlier one has expired.
  */
 export async function refresh(
-  req: IncomingMessage,
+  req: Request,
   res: ServerResponse,
   config: ServerConfig
 ): Promise<void> {
@@ -37,8 +39,11 @@ export async function refresh(
   if (!params.connection_id) {
     return badRequestJson(res, { error: "missing connection_id" });
   }
-  if (!params.refresh_token) {
-    return badRequestJson(res, { error: "missing refresh_token" });
+  const refreshToken = req.cookies[oAuthRefreshTokenCookieId];
+  if (!refreshToken) {
+    return badRequestJson(res, {
+      error: `missing ${oAuthRefreshTokenCookieId} cookie`,
+    });
   }
 
   const connectionConfig = config.connections.get(params.connection_id);
@@ -50,7 +55,7 @@ export async function refresh(
 
   const tokenUrl = new URL(connectionConfig.oauth.token_uri);
   tokenUrl.searchParams.set("grant_type", "refresh_token");
-  tokenUrl.searchParams.set("refresh_token", params.refresh_token);
+  tokenUrl.searchParams.set("refresh_token", refreshToken);
   tokenUrl.searchParams.set("client_id", connectionConfig.oauth.client_id);
   tokenUrl.searchParams.set(
     "client_secret",
