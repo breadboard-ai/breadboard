@@ -178,18 +178,13 @@ class SigninAdapter {
 
   async signIn(): Promise<{ ok: true } | { ok: false; error: string }> {
     const now = Date.now();
-    const nonce = this.#nonce;
-    // Reset the nonce in case the user signs out and signs back in again, since
-    // we don't want to ever mix up different requests.
-    setTimeout(
-      // TODO(aomarks) This shouldn't be necessary, what's up?
-      () => (this.#nonce = crypto.randomUUID()),
-      500
-    );
     // The OAuth broker page will know to broadcast the token on this unique
     // channel because it also knows the nonce (since we pack that in the OAuth
     // "state" parameter).
-    const channelName = oauthTokenBroadcastChannelName(nonce);
+    const channelName = oauthTokenBroadcastChannelName(this.#nonce);
+    // Reset the nonce in case the user signs out and signs back in again, since
+    // we don't want to ever mix up different requests.
+    this.#nonce = crypto.randomUUID();
     const channel = new BroadcastChannel(channelName);
     const grantResponse = await new Promise<GrantResponse>((resolve) => {
       channel.addEventListener("message", (m) => resolve(m.data), {
