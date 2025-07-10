@@ -259,6 +259,12 @@ export class VEHeader extends LitElement {
         outline: none;
         background: transparent;
 
+        &[disabled] {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
         &:not([disabled]) {
           &:hover {
             border: 1px solid var(--n-70);
