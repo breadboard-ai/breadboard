@@ -98,12 +98,11 @@ export async function grant(
     };
     if (config.validateResponse) {
       const checkedGrantResponse = await config.validateResponse(grantResponse);
-      if (checkedGrantResponse.error) {
+      if (!checkedGrantResponse.ok) {
         return badRequestJson(res, {
           error: checkedGrantResponse.error,
         });
       }
-      return okJson(res, checkedGrantResponse);
     }
     return okJson(res, grantResponse);
   }

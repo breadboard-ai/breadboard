@@ -23,7 +23,9 @@ export type GrantResponse =
 export interface ServerConfig {
   connections: Map<string, ConnectionConfig>;
   allowedOrigins: string[];
-  validateResponse?: (response: GrantResponse) => Promise<GrantResponse>;
+  validateResponse?: (
+    response: GrantResponse
+  ) => Promise<{ ok: true } | { ok: false; error: string }>;
 }
 
 export interface ConnectionsConfigFile {
