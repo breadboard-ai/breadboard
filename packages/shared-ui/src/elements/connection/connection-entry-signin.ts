@@ -120,22 +120,7 @@ export class ConnectionEntrySignin extends LitElement {
       <h1>Welcome to ${Strings.from("APP_NAME")}</h1>
       <a
         .href=${until(this.adapter.getSigninUrl())}
-        @click=${() => {
-          if (!this.adapter) {
-            return;
-          }
-
-          this.adapter.whenSignedIn(async (adapter) => {
-            // The adapter is immutable, this callback will always return a new
-            // copy with a new state, including picture and name.
-            if (adapter.state === "valid") {
-              ActionTracker.signInSuccess();
-              this.dispatchEvent(new SignInEvent());
-            } else if (adapter.errorMessage) {
-              this.errorMessage = adapter.errorMessage;
-            }
-          });
-        }}
+        @click=${this.#onClickSignin}
         target="_blank"
         title="Sign into Google"
         >Sign into Google</a
@@ -144,6 +129,19 @@ export class ConnectionEntrySignin extends LitElement {
         ? html`<p class="error-message">${this.errorMessage}</p>`
         : nothing}
     </div>`;
+  }
+
+  async #onClickSignin() {
+    if (!this.adapter) {
+      return;
+    }
+    const result = await this.adapter.signIn();
+    if (result.ok) {
+      ActionTracker.signInSuccess();
+      this.dispatchEvent(new SignInEvent());
+    } else {
+      this.errorMessage = result.error;
+    }
   }
 }
 

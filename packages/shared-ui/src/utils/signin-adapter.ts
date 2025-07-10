@@ -186,28 +186,10 @@ class SigninAdapter {
     return authUrl.href;
   }
 
-  /**
-   * Handles the part of the process after
-   * the sign-in: storing the connection in
-   * the settings, and calling the callback.
-   * Note, it always returns a new copy of
-   * the SigninAdapter, which will contain
-   * the picture and name.
-   */
-  async whenSignedIn(
-    signinCallback: (adapter: SigninAdapter) => Promise<void>
-  ) {
+  async signIn(): Promise<{ ok: true } | { ok: false; error: string }> {
     const now = Date.now();
     if (this.state === "invalid") {
-      await signinCallback(
-        new SigninAdapter(
-          undefined,
-          undefined,
-          undefined,
-          "Sign in configuration error"
-        )
-      );
-      return;
+      return { ok: false, error: "Sign in configuration error" };
     }
     const nonce = this.#nonce;
     // Reset the nonce in case the user signs out and signs back in again, since
@@ -231,23 +213,12 @@ class SigninAdapter {
     if (grantResponse.error !== undefined) {
       // TODO(aomarks) Show error info in the UI.
       console.error(grantResponse.error);
-      await signinCallback(
-        new SigninAdapter(undefined, undefined, undefined, grantResponse.error)
-      );
-      return;
+      return { ok: false, error: grantResponse.error };
     }
 
     const connection = await this.#getConnection();
     if (!connection) {
-      await signinCallback(
-        new SigninAdapter(
-          undefined,
-          undefined,
-          undefined,
-          "Connection not found"
-        )
-      );
-      return;
+      return { ok: false, error: "Connection not found" };
     }
 
     const settingsValue: TokenGrant = {
@@ -264,13 +235,7 @@ class SigninAdapter {
       name: connection.id,
       value: JSON.stringify(settingsValue),
     });
-    await signinCallback(
-      new SigninAdapter(
-        this.#tokenVendor,
-        this.#environment,
-        this.#settingsHelper
-      )
-    );
+    return { ok: true };
   }
 
   async signout(signoutCallback: () => void) {
