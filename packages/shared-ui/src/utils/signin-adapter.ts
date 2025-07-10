@@ -53,7 +53,10 @@ class SigninAdapter {
 
   #nonce = crypto.randomUUID();
 
-  readonly state: SigninState;
+  #state: SigninState;
+  get state() {
+    return this.#state;
+  }
   readonly picture?: string;
   readonly id?: string;
   readonly name?: string;
@@ -69,18 +72,18 @@ class SigninAdapter {
     this.#settingsHelper = settingsHelper;
 
     if (!environment.requiresSignin) {
-      this.state = "anonymous";
+      this.#state = "anonymous";
       return;
     }
     const token = tokenVendor.getToken(SIGN_IN_CONNECTION_ID);
     const { state } = token;
     if (state === "signedout") {
-      this.state = "signedout";
+      this.#state = "signedout";
       return;
     }
     const { grant } = token;
 
-    this.state = "signedin";
+    this.#state = "signedin";
     this.picture = grant.picture;
     this.id = grant.id;
     this.name = grant.name;
@@ -227,12 +230,12 @@ class SigninAdapter {
     return { ok: true };
   }
 
-  async signout(signoutCallback: () => void) {
+  async signOut(): Promise<void> {
     const connection = await this.#getConnection();
     if (!connection) {
       return;
     }
     await this.#settingsHelper.delete(SETTINGS_TYPE.CONNECTIONS, connection.id);
-    signoutCallback();
+    this.#state = "signedout";
   }
 }

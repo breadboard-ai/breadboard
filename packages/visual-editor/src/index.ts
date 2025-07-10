@@ -2076,16 +2076,12 @@ export class Main extends SignalWatcher(LitElement) {
           return;
         }
 
-        await signinAdapter.signout(() => {
-          this.toast(
-            Strings.from("STATUS_LOGGED_OUT"),
-            BreadboardUI.Events.ToastType.INFORMATION
-          );
-        });
-
-        // Recreating the signin adapter here will trigger a re-render with the
-        // updated state, which will cause us to show the sign-in dialog.
-        this.signinAdapter = this.#createSigninAdapter();
+        await signinAdapter.signOut();
+        this.toast(
+          Strings.from("STATUS_LOGGED_OUT"),
+          BreadboardUI.Events.ToastType.INFORMATION
+        );
+        this.requestUpdate();
       }}
       @bbclose=${() => {
         if (!this.#tab) {
