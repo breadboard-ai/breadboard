@@ -32,6 +32,12 @@ type NodeInternalState = {
 
 type OrchestratorState = Map<NodeIdentifier, NodeInternalState>;
 
+const TERMINAL_STATES: ReadonlySet<NodeOrchestratorState> = new Set([
+  "succeeded",
+  "failed",
+  "skipped",
+]);
+
 /**
  * The Orchestrator acts as the state machine for running a graph.
  * Its primary responsibilities are:
@@ -88,7 +94,7 @@ class Orchestrator {
    * orchestrated.
    * @returns a map representing current state of all nodes
    */
-  state(): Map<NodeIdentifier, OrchestrationNodeInfo> {
+  state(): ReadonlyMap<NodeIdentifier, OrchestrationNodeInfo> {
     return new Map(
       Array.from(this.#state.entries()).map(([id, internal]) => {
         return [id, { node: internal.plan.node, state: internal.state }];
@@ -125,67 +131,54 @@ class Orchestrator {
   }
 
   #propagateSkip(state: NodeInternalState): Outcome<void> {
-    const targets = new Set<NodeIdentifier>();
     try {
-      // First, propagate the "skipped" state downstream, collecting targets
-      markDownstreamSkipped(this.#state, state, targets);
-      // Now, let's propagate the "skipped" state upstream from all collected
-      // targets.
-      targets.forEach((id) => {
-        const target = this.#state.get(id);
-        if (!target) {
-          throw new Error(
-            "While trying to propagate skip upstream, failed to retrieve target state"
-          );
-        }
-        markUpstreamSkipped(this.#state, target);
-      });
+      // First, propagate the "skipped" state downstream to all descendants.
+      const queue: NodeInternalState[] = [state];
+      const visited: Set<NodeIdentifier> = new Set();
+      while (queue.length > 0) {
+        const current = queue.shift()!;
+        current.plan.downstream.forEach((dep) => {
+          const id = dep.to;
+          if (visited.has(id)) return;
+          const target = this.#state.get(id);
+          if (!target) {
+            throw new Error(
+              `While trying to propagate skip downstream, failed to retrieve target state`
+            );
+          }
+          if (!TERMINAL_STATES.has(target.state)) {
+            queue.push(target);
+            target.state = "skipped";
+          }
+          visited.add(id);
+        });
+      }
+      // Then, propagate the "skipped" state through the graph, until we
+      // reach quiescence.
+      let changed = true;
+      while (changed) {
+        changed = false;
+        this.#state.forEach((state) => {
+          if (TERMINAL_STATES.has(state.state)) return;
+          if (state.plan.downstream.length === 0) return;
+
+          const allTerminal = state.plan.downstream.every((dep) => {
+            const target = this.#state.get(dep.to);
+            if (!target) {
+              throw new Error(
+                `While trying to settle state, failed to retrieve target state`
+              );
+            }
+            return TERMINAL_STATES.has(target.state);
+          });
+          if (allTerminal) {
+            state.state = "skipped";
+            changed = true;
+          }
+        });
+      }
     } catch (e) {
       return err((e as Error).message);
-    }
-
-    function markDownstreamSkipped(
-      orchestratorState: OrchestratorState,
-      state: NodeInternalState,
-      visited: Set<NodeIdentifier>
-    ) {
-      const downstream = state.plan.downstream;
-      downstream.forEach((dep) => {
-        const id = dep.to;
-        if (visited.has(id)) return;
-        const target = orchestratorState.get(id);
-        if (!target) {
-          throw new Error(
-            `While trying to propagate skip downstream, failed to retrieve target state`
-          );
-        }
-        target.state = "skipped";
-        visited.add(id);
-        markDownstreamSkipped(orchestratorState, target, visited);
-      });
-    }
-
-    function markUpstreamSkipped(
-      orchestratorState: OrchestratorState,
-      state: NodeInternalState,
-      visited: Set<NodeIdentifier> = new Set()
-    ) {
-      const upstream = state.plan.upstream;
-      upstream.forEach((dep) => {
-        const id = dep.from;
-        if (visited.has(id)) return;
-        const source = orchestratorState.get(id);
-        if (!source) {
-          throw new Error(
-            `While trying to propagate skip upstream, failed to retrieve source state`
-          );
-        }
-        if (source.state === "waiting" || source.state === "ready") {
-          source.state = "skipped";
-        }
-        visited.add(id);
-        markUpstreamSkipped(orchestratorState, source, visited);
-      });
     }
   }
 

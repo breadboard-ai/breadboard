@@ -4,12 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  Edge,
-  InputValues,
-  NodeDescriptor,
-  PortIdentifier,
-} from "@breadboard-ai/types";
+import { Edge, InputValues, NodeDescriptor } from "@breadboard-ai/types";
 
 /**
  * The result of generating a staged plan from a condensed
@@ -22,8 +17,6 @@ export type OrchestrationPlan = {
    */
   stages: PlanNodeInfo[][];
 };
-
-export type Dependent = { to: PlanNodeInfo; out: PortIdentifier };
 
 /**
  * Represents detailed information that was computed during creating of a
