@@ -140,6 +140,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     css`
       :host {
         display: block;
+        background: var(--n-100);
       }
 
       #invalid-item,

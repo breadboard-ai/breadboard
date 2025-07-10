@@ -599,6 +599,7 @@ export const styles = [
       justify-content: space-between;
       position: relative;
       z-index: 2;
+      background: var(--n-100);
 
       & #side-nav-controls {
         display: flex;
