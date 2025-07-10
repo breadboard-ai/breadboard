@@ -85,10 +85,6 @@ class SigninAdapter {
       return;
     }
     const { grant } = token;
-    if (!grant) {
-      this.state = "invalid";
-      return;
-    }
 
     this.state = "valid";
     this.picture = grant?.picture;
@@ -99,7 +95,9 @@ class SigninAdapter {
   accessToken(): string | null {
     if (this.state === "valid") {
       const token = this.#tokenVendor?.getToken(SIGN_IN_CONNECTION_ID);
-      return token?.grant?.access_token || null;
+      if (token?.state === "valid") {
+        return token.grant.access_token;
+      }
     }
     return null;
   }
@@ -108,7 +106,7 @@ class SigninAdapter {
     if (SigninAdapter.#cachedPicture === undefined && this.picture) {
       try {
         const token = await this.refresh();
-        if (!token?.grant) {
+        if (!token || token.state === "signedout") {
           SigninAdapter.#cachedPicture = null;
           return;
         }
