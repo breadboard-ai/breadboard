@@ -743,21 +743,16 @@ export class Main extends SignalWatcher(LitElement) {
 
             // Check and see if we're being asked for a sign-in key
             if (keys.at(0) === signInKey) {
-              // Yay, we can handle this ourselves.
-              if (this.signinAdapter.state === "signedin") {
-                runner?.run({ [signInKey]: this.signinAdapter.accessToken() });
-              } else {
-                this.signinAdapter.refresh().then((token) => {
-                  if (!runner?.running()) {
-                    runner?.run({
-                      [signInKey]:
-                        token.state === "valid"
-                          ? token.grant.access_token
-                          : undefined,
-                    });
-                  }
-                });
-              }
+              this.signinAdapter.refresh().then((token) => {
+                if (!runner?.running()) {
+                  runner?.run({
+                    [signInKey]:
+                      token.state === "valid"
+                        ? token.grant.access_token
+                        : undefined,
+                  });
+                }
+              });
               return;
             }
 

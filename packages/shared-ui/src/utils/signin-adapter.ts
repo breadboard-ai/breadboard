@@ -8,8 +8,10 @@ import {
   Connection,
   GrantResponse,
   ListConnectionsResponse,
+  SignedOutTokenResult,
   TokenGrant,
   TokenVendor,
+  ValidTokenResult,
 } from "@breadboard-ai/connection-client";
 import { Environment } from "../contexts/environment";
 import {
@@ -92,7 +94,7 @@ class SigninAdapter {
     if (SigninAdapter.#cachedPicture === undefined && this.picture) {
       try {
         const token = await this.refresh();
-        if (!token || token.state === "signedout") {
+        if (token.state === "signedout") {
           SigninAdapter.#cachedPicture = null;
           return;
         }
@@ -115,7 +117,11 @@ class SigninAdapter {
     return SigninAdapter.#cachedPicture || undefined;
   }
 
-  async refresh() {
+  /**
+   * Gets you a token, refreshing automatically if needed, unless the user is
+   * signed out.
+   */
+  async refresh(): Promise<ValidTokenResult | SignedOutTokenResult> {
     const token = this.#tokenVendor.getToken(SIGN_IN_CONNECTION_ID);
     if (token.state === "expired") {
       return token.refresh();
