@@ -43,6 +43,24 @@ export class ParticleViewerImage extends LitElement implements ParticleViewer {
         height: 100%;
         position: relative;
       }
+
+      button > * {
+        pointer-events: none;
+      }
+
+      span.fade {
+        animation: fade 1s cubic-bezier(0.5, 0, 0.3, 1) 0.75s forwards;
+      }
+
+      @keyframes fade {
+        from {
+          opacity: 1;
+        }
+
+        to {
+          opacity: 0;
+        }
+      }
     `,
   ];
 
@@ -104,6 +122,7 @@ export class ParticleViewerImage extends LitElement implements ParticleViewer {
     ]);
   }
 
+  #swapTimeout = 0;
   render() {
     if (!this.value || !this.field || !this.theme) {
       return nothing;
@@ -119,7 +138,24 @@ export class ParticleViewerImage extends LitElement implements ParticleViewer {
         ? html` <button
             id="clone"
             class=${classMap(this.theme.behaviors.clone)}
-            @click=${async () => await this.#copyToClipboard()}
+            @click=${async (evt: Event) => {
+              const span = (
+                evt.target as HTMLElement
+              ).querySelector<HTMLElement>("span");
+              if (span) {
+                span.textContent = "check";
+                span.classList.add("fade");
+                // This is in lieu of having particle-driven toasts/snackbars.
+                // Instead we swap the icon to at least provide a little feedback.
+                // TODO: Replace with particle-based feedback.
+                clearTimeout(this.#swapTimeout);
+                this.#swapTimeout = window.setTimeout(() => {
+                  span.textContent = "content_copy";
+                  span.classList.remove("fade");
+                }, 2_000);
+              }
+              await this.#copyToClipboard();
+            }}
           >
             <span class=${classMap(this.theme.extras.icon)}>content_copy</span>
           </button>`

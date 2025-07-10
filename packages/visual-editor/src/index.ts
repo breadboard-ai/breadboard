@@ -10,7 +10,6 @@ import * as BreadboardUI from "@breadboard-ai/shared-ui";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
 import type {
-  HarnessProxyConfig,
   RunErrorEvent,
   RunSecretEvent,
   BoardServer,
@@ -185,7 +184,6 @@ export class Main extends SignalWatcher(LitElement) {
   #boardServers: BoardServer[];
   #settings: SettingsStore | null;
   #secretsHelper: SecretsHelper | null = null;
-  #proxy: HarnessProxyConfig[];
   #onShowTooltipBound = this.#onShowTooltip.bind(this);
   #hideTooltipBound = this.#hideTooltip.bind(this);
   #onKeyboardShortCut = this.#onKeyboardShortcut.bind(this);
@@ -243,7 +241,6 @@ export class Main extends SignalWatcher(LitElement) {
     this.buildInfo = args.buildInfo;
     this.#boardServers = [];
     this.#settings = args.settings ?? null;
-    this.#proxy = args.proxy || [];
     this.#embedHandler = args.embedHandler;
     this.environment = args.environment;
     this.clientDeploymentConfiguration = args.clientDeploymentConfiguration;
@@ -375,7 +372,7 @@ export class Main extends SignalWatcher(LitElement) {
       tokenVendor: this.tokenVendor,
       sandbox,
       settings: this.#settings!,
-      proxy: this.#proxy,
+      proxy: [],
       fileSystem: this.#fileSystem,
       builtInBoardServers: [createA2Server()],
       kits: addSandboxedRunModule(
@@ -1378,8 +1375,6 @@ export class Main extends SignalWatcher(LitElement) {
 
     return {
       originalEvent: evt,
-      // TODO: Determine if this is needed.
-      proxy: this.#proxy,
       runtime: this.#runtime,
       settings: this.#settings,
       secretsHelper: this.#secretsHelper,
