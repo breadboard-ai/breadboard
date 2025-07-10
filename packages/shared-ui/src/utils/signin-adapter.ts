@@ -31,10 +31,8 @@ export const SIGN_IN_CONNECTION_ID = "$sign-in";
  * - "signedout" -- the user is not yet signed in or has signed out, but the
  *                  runtime is configured to use sign in.
  * - "valid" -- the user is currently signed in.
- * - "invalid" -- the runtime configuration is invalid and adapter can't
- *                function properly.
  */
-export type SigninState = "signedout" | "valid" | "anonymous" | "invalid";
+export type SigninState = "signedout" | "valid" | "anonymous";
 
 export const signinAdapterContext = createContext<SigninAdapter | undefined>(
   "SigninAdapter"
@@ -49,9 +47,9 @@ export const signinAdapterContext = createContext<SigninAdapter | undefined>(
  */
 class SigninAdapter {
   static #cachedPicture: string | null | undefined;
-  #tokenVendor?: TokenVendor;
-  #environment?: Environment;
-  #settingsHelper?: SettingsHelper;
+  readonly #tokenVendor: TokenVendor;
+  readonly #environment: Environment;
+  readonly #settingsHelper: SettingsHelper;
 
   #nonce = crypto.randomUUID();
 
@@ -61,15 +59,11 @@ class SigninAdapter {
   readonly name?: string;
 
   constructor(
-    tokenVendor?: TokenVendor,
-    environment?: Environment,
-    settingsHelper?: SettingsHelper,
+    tokenVendor: TokenVendor,
+    environment: Environment,
+    settingsHelper: SettingsHelper,
     public readonly errorMessage?: string
   ) {
-    if (!environment || !tokenVendor || !settingsHelper) {
-      this.state = "invalid";
-      return;
-    }
     this.#tokenVendor = tokenVendor;
     this.#environment = environment;
     this.#settingsHelper = settingsHelper;
@@ -94,7 +88,7 @@ class SigninAdapter {
 
   accessToken(): string | null {
     if (this.state === "valid") {
-      const token = this.#tokenVendor?.getToken(SIGN_IN_CONNECTION_ID);
+      const token = this.#tokenVendor.getToken(SIGN_IN_CONNECTION_ID);
       if (token?.state === "valid") {
         return token.grant.access_token;
       }
@@ -130,7 +124,7 @@ class SigninAdapter {
   }
 
   async refresh() {
-    const token = this.#tokenVendor?.getToken(SIGN_IN_CONNECTION_ID);
+    const token = this.#tokenVendor.getToken(SIGN_IN_CONNECTION_ID);
     if (token?.state === "expired") {
       return token.refresh();
     }
@@ -139,7 +133,7 @@ class SigninAdapter {
 
   async #getConnection(): Promise<Connection | undefined> {
     const httpRes = await fetch(
-      new URL("list", this.#environment?.connectionServerUrl),
+      new URL("list", this.#environment.connectionServerUrl),
       {
         credentials: "include",
       }
@@ -163,7 +157,7 @@ class SigninAdapter {
     const connection = await this.#getConnection();
     if (!connection) return "";
 
-    let redirectUri = this.#environment?.connectionRedirectUrl;
+    let redirectUri = this.#environment.connectionRedirectUrl;
     if (!redirectUri) return "";
 
     redirectUri = new URL(redirectUri, new URL(window.location.href).origin)
@@ -186,9 +180,6 @@ class SigninAdapter {
 
   async signIn(): Promise<{ ok: true } | { ok: false; error: string }> {
     const now = Date.now();
-    if (this.state === "invalid") {
-      return { ok: false, error: "Sign in configuration error" };
-    }
     const nonce = this.#nonce;
     // Reset the nonce in case the user signs out and signs back in again, since
     // we don't want to ever mix up different requests.
@@ -229,7 +220,7 @@ class SigninAdapter {
       picture: grantResponse.picture,
       id: grantResponse.id,
     };
-    await this.#settingsHelper?.set(SETTINGS_TYPE.CONNECTIONS, connection.id, {
+    await this.#settingsHelper.set(SETTINGS_TYPE.CONNECTIONS, connection.id, {
       name: connection.id,
       value: JSON.stringify(settingsValue),
     });
@@ -237,9 +228,6 @@ class SigninAdapter {
   }
 
   async signout(signoutCallback: () => void) {
-    if (!this.#settingsHelper) {
-      return;
-    }
     const connection = await this.#getConnection();
     if (!connection) {
       return;
