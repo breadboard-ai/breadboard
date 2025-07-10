@@ -29,7 +29,7 @@ import {
   StateEvent,
   UnsnackbarEvent,
 } from "../../events/events";
-import { SigninState } from "../../utils/signin-adapter";
+import { SigninAdapterState } from "../../utils/signin-adapter";
 import { createThemeStyles } from "@breadboard-ai/theme";
 import { ActionTracker } from "../../utils/action-tracker.js";
 import { consume, provide } from "@lit/context";
@@ -98,7 +98,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   accessor showDisclaimer = false;
 
   @property()
-  accessor state: SigninState = "anonymous";
+  accessor state: SigninAdapterState["status"] = "anonymous";
 
   @property({ reflect: true, type: Boolean })
   accessor hasRenderedSplash = false;

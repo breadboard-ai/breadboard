@@ -42,7 +42,7 @@ import type {
   tsLinter,
   tsSync,
 } from "@valtown/codemirror-ts";
-import { SigninState } from "../utils/signin-adapter";
+import { SigninAdapterState } from "../utils/signin-adapter";
 import { LitElement } from "lit";
 
 export const enum HistoryEventType {
@@ -568,7 +568,7 @@ export interface AppTemplateOptions {
 }
 
 export interface AppTemplate extends LitElement {
-  state: SigninState | null;
+  state: SigninAdapterState["status"] | null;
   options: AppTemplateOptions;
   graph: GraphDescriptor | null;
   additionalOptions: AppTemplateAdditionalOptionsAvailable;

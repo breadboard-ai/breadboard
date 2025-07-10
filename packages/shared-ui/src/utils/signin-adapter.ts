@@ -26,15 +26,17 @@ export { SigninAdapter };
 
 export const SIGN_IN_CONNECTION_ID = "$sign-in";
 
-/**
- * The three states are:
- *
- * - "anonymous" -- the runtime is not configured to use the sign in.
- * - "signedout" -- the user is not yet signed in or has signed out, but the
- *                  runtime is configured to use sign in.
- * - "signedin" -- the user is currently signed in.
- */
-export type SigninState = "signedout" | "signedin" | "anonymous";
+export type SigninAdapterState =
+  /** The runtime is not configured to use the sign in. */
+  | { status: "anonymous" }
+  | { status: "signedout" }
+  | {
+      status: "signedin";
+      id: string | undefined;
+      name: string | undefined;
+      /** Picture URL */
+      picture: string | undefined;
+    };
 
 export const signinAdapterContext = createContext<SigninAdapter | undefined>(
   "SigninAdapter"
@@ -48,20 +50,12 @@ export const signinAdapterContext = createContext<SigninAdapter | undefined>(
  * settingsHelper are present.
  */
 class SigninAdapter {
-  #cachedPicture: string | null | undefined;
   readonly #tokenVendor: TokenVendor;
   readonly #environment: Environment;
   readonly #settingsHelper: SettingsHelper;
-
+  #cachedPicture: string | null | undefined;
   #nonce = crypto.randomUUID();
-
-  #state: SigninState;
-  get state() {
-    return this.#state;
-  }
-  readonly picture?: string;
-  readonly id?: string;
-  readonly name?: string;
+  #state: SigninAdapterState;
 
   constructor(
     tokenVendor: TokenVendor,
@@ -73,32 +67,54 @@ class SigninAdapter {
     this.#settingsHelper = settingsHelper;
 
     if (!environment.requiresSignin) {
-      this.#state = "anonymous";
+      this.#state = { status: "anonymous" };
       return;
     }
-    const token = tokenVendor.getToken(SIGN_IN_CONNECTION_ID);
-    const { state } = token;
-    if (state === "signedout") {
-      this.#state = "signedout";
-      return;
-    }
-    const { grant } = token;
 
-    this.#state = "signedin";
-    this.picture = grant.picture;
-    this.id = grant.id;
-    this.name = grant.name;
+    const token = tokenVendor.getToken(SIGN_IN_CONNECTION_ID);
+    if (token.state === "signedout") {
+      this.#state = { status: "signedout" };
+      return;
+    }
+
+    const { grant } = token;
+    this.#state = {
+      status: "signedin",
+      id: grant.id,
+      name: grant.name,
+      picture: grant.picture,
+    };
+  }
+
+  get state() {
+    return this.#state.status;
+  }
+
+  get id() {
+    return this.#state.status === "signedin" ? this.#state.id : undefined;
+  }
+
+  get name() {
+    return this.#state.status === "signedin" ? this.#state.name : undefined;
+  }
+
+  get picture() {
+    return this.#state.status === "signedin" ? this.#state.picture : undefined;
   }
 
   async cachedPicture(): Promise<string | undefined> {
-    if (this.#cachedPicture === undefined && this.picture) {
+    if (
+      this.#cachedPicture === undefined &&
+      this.#state.status === "signedin" &&
+      this.#state.picture
+    ) {
       try {
         const token = await this.token();
         if (token.state === "signedout") {
           this.#cachedPicture = null;
           return;
         }
-        const picture = await fetch(this.picture, {
+        const picture = await fetch(this.#state.picture, {
           headers: {
             Authorization: `Bearer ${token.grant.access_token}`,
           },
@@ -150,7 +166,7 @@ class SigninAdapter {
   }
 
   async getSigninUrl(): Promise<string> {
-    if (this.state !== "signedout") return "";
+    if (this.#state.status !== "signedout") return "";
 
     const connection = await this.#getConnection();
     if (!connection) return "";
@@ -217,6 +233,12 @@ class SigninAdapter {
       name: connection.id,
       value: JSON.stringify(settingsValue),
     });
+    this.#state = {
+      status: "signedin",
+      id: grantResponse.id,
+      name: grantResponse.name,
+      picture: grantResponse.picture,
+    };
     return { ok: true };
   }
 
@@ -226,6 +248,6 @@ class SigninAdapter {
       return;
     }
     await this.#settingsHelper.delete(SETTINGS_TYPE.CONNECTIONS, connection.id);
-    this.#state = "signedout";
+    this.#state = { status: "signedout" };
   }
 }
