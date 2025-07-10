@@ -16,7 +16,7 @@ import type {
 } from "@breadboard-ai/types";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { map } from "lit/directives/map.js";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, state } from "lit/decorators.js";
 import { LitElement, html, nothing } from "lit";
 import {
   createRunObserver,
@@ -150,9 +150,8 @@ export class Main extends SignalWatcher(LitElement) {
   @provide({ context: BreadboardUI.Contexts.embedderContext })
   accessor embedState!: EmbedState;
 
-  @property()
   @provide({ context: signinAdapterContext })
-  accessor signinAdapter: SigninAdapter | undefined;
+  accessor signinAdapter!: SigninAdapter;
 
   @provide({ context: googleDriveClientContext })
   accessor googleDriveClient: GoogleDriveClient | undefined;
@@ -315,9 +314,6 @@ export class Main extends SignalWatcher(LitElement) {
       proxyUrl: googleDriveProxyUrl,
       publicApiKey: this.environment.googleDrive.publicApiKey,
       getUserAccessToken: async () => {
-        if (!this.signinAdapter) {
-          throw new Error(`SigninAdapter is misconfigured`);
-        }
         const token = await this.signinAdapter.refresh();
         if (token?.state === "valid") {
           return token.grant.access_token;
@@ -409,7 +405,11 @@ export class Main extends SignalWatcher(LitElement) {
       this.#uiState.canRunMain = false;
     });
 
-    this.signinAdapter = this.#createSigninAdapter();
+    this.signinAdapter = new SigninAdapter(
+      this.tokenVendor,
+      this.environment,
+      this.settingsHelper
+    );
     if (this.signinAdapter.state === "signedout") {
       return;
     }
@@ -744,15 +744,10 @@ export class Main extends SignalWatcher(LitElement) {
             // Check and see if we're being asked for a sign-in key
             if (keys.at(0) === signInKey) {
               // Yay, we can handle this ourselves.
-              const signInAdapter = new SigninAdapter(
-                this.tokenVendor,
-                this.environment,
-                this.settingsHelper
-              );
-              if (signInAdapter.state === "signedin") {
-                runner?.run({ [signInKey]: signInAdapter.accessToken() });
+              if (this.signinAdapter.state === "signedin") {
+                runner?.run({ [signInKey]: this.signinAdapter.accessToken() });
               } else {
-                signInAdapter.refresh().then((token) => {
+                this.signinAdapter.refresh().then((token) => {
                   if (!runner?.running()) {
                     runner?.run({
                       [signInKey]:
@@ -892,14 +887,6 @@ export class Main extends SignalWatcher(LitElement) {
       type: "board_id_created",
       id: saveResult.url.href,
     });
-  }
-
-  #createSigninAdapter() {
-    return new BreadboardUI.Utils.SigninAdapter(
-      this.tokenVendor,
-      this.environment,
-      this.settingsHelper
-    );
   }
 
   #maybeShowWelcomePanel() {
@@ -1399,11 +1386,7 @@ export class Main extends SignalWatcher(LitElement) {
       return nothing;
     }
 
-    if (!this.signinAdapter) {
-      return nothing;
-    }
-
-    if (!this.signinAdapter || this.signinAdapter.state === "signedout") {
+    if (this.signinAdapter.state === "signedout") {
       return html`<bb-connection-entry-signin
         .adapter=${this.signinAdapter}
         @bbsignin=${async () => {
@@ -1571,10 +1554,6 @@ export class Main extends SignalWatcher(LitElement) {
   }
 
   #renderAppController(renderValues: RenderValues) {
-    if (!this.signinAdapter) {
-      return nothing;
-    }
-
     return html` <bb-app-controller
       class=${classMap({ active: this.#uiState.mode === "app" })}
       .graph=${this.#tab?.graph ?? null}
@@ -1595,10 +1574,6 @@ export class Main extends SignalWatcher(LitElement) {
   }
 
   #renderCanvasController(renderValues: RenderValues) {
-    if (!this.signinAdapter) {
-      return nothing;
-    }
-
     return html` <bb-canvas-controller
       ${ref(this.#canvasControllerRef)}
       ?inert=${renderValues.showingOverlay}
@@ -2055,10 +2030,6 @@ export class Main extends SignalWatcher(LitElement) {
   }
 
   #renderHeader(renderValues: RenderValues) {
-    if (!this.signinAdapter) {
-      return nothing;
-    }
-
     return html`<bb-ve-header
       .signinAdapter=${this.signinAdapter}
       .hasActiveTab=${this.#tab !== null}
