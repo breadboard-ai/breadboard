@@ -85,7 +85,10 @@ import {
   ToggleIterateOnPromptMessage,
 } from "@breadboard-ai/embed";
 import { IterateOnPromptEvent } from "@breadboard-ai/shared-ui/events/events.js";
-import { AppCatalystApiClient } from "@breadboard-ai/shared-ui/flow-gen/app-catalyst.js";
+import {
+  AppCatalystApiClient,
+  CheckAppAccessResponse,
+} from "@breadboard-ai/shared-ui/flow-gen/app-catalyst.js";
 import {
   FlowGenerator,
   flowGeneratorContext,
@@ -99,7 +102,7 @@ import { clientDeploymentConfigurationContext } from "@breadboard-ai/shared-ui/c
 import { type ClientDeploymentConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
 
 import { Admin } from "./admin";
-import { MainArguments, TosStatus } from "./types/types";
+import { MainArguments } from "./types/types";
 import {
   type BuildInfo,
   buildInfoContext,
@@ -123,7 +126,6 @@ type RenderValues = {
 };
 
 const LOADING_TIMEOUT = 1250;
-const TOS_KEY = "tos-status";
 const BOARD_AUTO_SAVE_TIMEOUT = 1_500;
 
 @customElement("bb-main")
@@ -163,6 +165,9 @@ export class Main extends SignalWatcher(LitElement) {
   accessor buildInfo: BuildInfo;
 
   @state()
+  accessor #apiClient: AppCatalystApiClient | null = null;
+
+  @state()
   accessor #tab: Runtime.Types.Tab | null = null;
 
   accessor #uiState!: BreadboardUI.State.UI;
@@ -191,7 +196,6 @@ export class Main extends SignalWatcher(LitElement) {
   #selectionState: WorkspaceSelectionStateWithChangeId | null = null;
   #lastVisualChangeId: WorkspaceVisualChangeId | null = null;
   #lastPointerPosition = { x: 0, y: 0 };
-  #tosHtml?: string;
   #runtime!: Runtime.RuntimeInstance;
   #embedHandler?: EmbedHandler;
 
@@ -226,6 +230,9 @@ export class Main extends SignalWatcher(LitElement) {
   accessor graphStoreUpdateId: number = 0;
 
   @state()
+  accessor #tosStatus: CheckAppAccessResponse | null = null;
+
+  @state()
   accessor #ready = false;
 
   static styles = mainStyles;
@@ -237,7 +244,6 @@ export class Main extends SignalWatcher(LitElement) {
     this.#boardServers = [];
     this.#settings = args.settings ?? null;
     this.#proxy = args.proxy || [];
-    this.#tosHtml = args.tosHtml;
     this.#embedHandler = args.embedHandler;
     this.environment = args.environment;
     this.clientDeploymentConfiguration = args.clientDeploymentConfiguration;
@@ -384,15 +390,6 @@ export class Main extends SignalWatcher(LitElement) {
     });
 
     this.#uiState = this.#runtime.state.getOrCreateUIState();
-    const showTos =
-      !!args.enableTos &&
-      !!args.tosHtml &&
-      localStorage.getItem(TOS_KEY) !== TosStatus.ACCEPTED;
-    if (showTos) {
-      this.#uiState.show.add("TOS");
-    } else {
-      this.#uiState.show.delete("TOS");
-    }
     this.#addRuntimeEventHandlers();
 
     const admin = new Admin(args, this.environment, this.googleDriveClient);
@@ -426,9 +423,13 @@ export class Main extends SignalWatcher(LitElement) {
     const backendApiEndpoint =
       this.clientDeploymentConfiguration.BACKEND_API_ENDPOINT;
     if (backendApiEndpoint) {
-      this.flowGenerator = new FlowGenerator(
-        new AppCatalystApiClient(this.signinAdapter, backendApiEndpoint)
+      this.#apiClient = new AppCatalystApiClient(
+        this.signinAdapter,
+        backendApiEndpoint
       );
+
+      this.#tosStatus = await this.#apiClient.checkTos();
+      this.flowGenerator = new FlowGenerator(this.#apiClient);
     } else {
       console.warn(
         `No BACKEND_API_ENDPOINT was configured so` +
@@ -454,21 +455,11 @@ export class Main extends SignalWatcher(LitElement) {
       return;
     }
 
-    // Check if we're signed in and return early if not: we're just
-    // showing a sign-in screen, no need to continue with initialization.
-    const signInAdapter = new SigninAdapter(
-      this.tokenVendor,
-      this.environment,
-      this.settingsHelper
-    );
     // Once we've determined the sign-in status, relay it to an embedder.
     this.#embedHandler?.sendToEmbedder({
       type: "home_loaded",
-      isSignedIn: signInAdapter.state === "valid",
+      isSignedIn: this.signinAdapter.state === "valid",
     });
-    if (signInAdapter.state === "signedout") {
-      return;
-    }
 
     if (args.boardServerUrl.protocol === GoogleDriveBoardServer.PROTOCOL) {
       const gdrive = await getGoogleDriveBoardService();
@@ -1397,6 +1388,18 @@ export class Main extends SignalWatcher(LitElement) {
     };
   }
 
+  protected willUpdate(): void {
+    if (!this.#uiState) {
+      return;
+    }
+
+    if (this.#tosStatus && !this.#tosStatus.canAccess) {
+      this.#uiState.show.add("TOS");
+    } else {
+      this.#uiState.show.delete("TOS");
+    }
+  }
+
   render() {
     if (!this.#ready) {
       return nothing;
@@ -1425,11 +1428,13 @@ export class Main extends SignalWatcher(LitElement) {
       id="content"
       ?inert=${renderValues.showingOverlay || this.#uiState.blockingAction}
     >
-      ${[
-        this.#renderCanvasController(renderValues),
-        this.#renderAppController(renderValues),
-        this.#renderWelcomePanel(renderValues),
-      ]}
+      ${this.#uiState.show.has("TOS")
+        ? nothing
+        : [
+            this.#renderCanvasController(renderValues),
+            this.#renderAppController(renderValues),
+            this.#renderWelcomePanel(renderValues),
+          ]}
     </div>`;
 
     /**
@@ -1892,25 +1897,54 @@ export class Main extends SignalWatcher(LitElement) {
 
   #renderTosDialog() {
     const tosTitle = Strings.from("TOS_TITLE");
+    let tosHtml = "";
+    let tosVersion = 0;
+    if (!this.#tosStatus || !this.#tosStatus.canAccess) {
+      tosHtml =
+        this.#tosStatus?.termsOfService?.terms ?? "Unable to retrieve TOS";
+      tosVersion = this.#tosStatus?.termsOfService?.version ?? 0;
+    }
+
     return html`<dialog
       id="tos-dialog"
-      ${ref((el: Element | undefined) => {
-        if (el && this.#uiState.show.has("TOS") && el.isConnected) {
-          const dialog = el as HTMLDialogElement;
-          if (!dialog.open) {
-            dialog.showModal();
-          }
+      @keydown=${(evt: KeyboardEvent) => {
+        if (evt.key !== "Escape") {
+          return;
         }
+
+        evt.preventDefault();
+      }}
+      ${ref((el: Element | undefined) => {
+        const showModalIfNeeded = () => {
+          if (el && this.#uiState.show.has("TOS") && el.isConnected) {
+            const dialog = el as HTMLDialogElement;
+            if (!dialog.open) {
+              dialog.showModal();
+            }
+          }
+        };
+
+        requestAnimationFrame(showModalIfNeeded);
       })}
     >
       <form method="dialog">
         <h1>${tosTitle}</h1>
-        <div class="tos-content">${unsafeHTML(this.#tosHtml)}</div>
+        <div class="tos-content">${unsafeHTML(tosHtml)}</div>
         <div class="controls">
           <button
-            @click=${() => {
-              this.#uiState.show.delete("TOS");
-              localStorage.setItem(TOS_KEY, TosStatus.ACCEPTED);
+            @click=${async (evt: Event) => {
+              if (!(evt.target instanceof HTMLButtonElement)) {
+                return;
+              }
+
+              if (!this.#apiClient) {
+                console.error("Unable to accept TOS; no client");
+                return;
+              }
+
+              evt.target.disabled = true;
+              await this.#apiClient.acceptTos(tosVersion, true);
+              this.#tosStatus = await this.#apiClient.checkTos();
             }}
           >
             Continue
