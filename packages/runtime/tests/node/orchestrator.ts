@@ -51,9 +51,29 @@ const router: GraphDescriptor = {
 
 const routerPlan = createPlan(router);
 
+const zigZag: GraphDescriptor = {
+  nodes: [
+    { id: "a", type: "walk" },
+    { id: "b", type: "walk" },
+    { id: "c", type: "walk" },
+    { id: "d", type: "walk" },
+    { id: "e", type: "walk" },
+    { id: "f", type: "walk" },
+  ],
+  edges: [
+    { from: "a", out: "context", to: "b", in: "context" },
+    { from: "b", out: "context", to: "c", in: "context" },
+    { from: "d", out: "context", to: "c", in: "context" },
+    { from: "d", out: "context", to: "e", in: "context" },
+    { from: "e", out: "context", to: "f", in: "context" },
+  ],
+};
+
+const zigZagPlan = createPlan(zigZag);
+
 function assertState(
   graph: GraphDescriptor,
-  state: Map<NodeIdentifier, OrchestrationNodeInfo>,
+  state: ReadonlyMap<NodeIdentifier, OrchestrationNodeInfo>,
   expected: [id: NodeIdentifier, state: NodeOrchestratorState][]
 ) {
   const nodeMap = new Map(graph.nodes.map((node) => [node.id, node]));
@@ -208,8 +228,10 @@ describe("Orchestrator", () => {
         ]);
       }
     });
+  });
 
-    it("should advanced through the router graph", () => {
+  describe("skip/failure propagation", () => {
+    it("should advance through the router graph", () => {
       const orchestrator = new Orchestrator(routerPlan);
       assertTasks(orchestrator.currentTasks(), ["choose-path"]);
       {
@@ -252,6 +274,71 @@ describe("Orchestrator", () => {
           ["right-path", "skipped"],
           ["treasure", "succeeded"],
           ["dragon", "skipped"],
+        ]);
+      }
+    });
+
+    it("should propagate skipped state through zig-zag graph", () => {
+      const orchestrator = new Orchestrator(zigZagPlan);
+      assertTasks(orchestrator.currentTasks(), ["a", "d"]);
+      {
+        const progress = orchestrator.provideOutputs("a", {
+          context: "context",
+        });
+        deepStrictEqual(progress, "working");
+        assertTasks(orchestrator.currentTasks(), ["d"]);
+        assertState(zigZag, orchestrator.state(), [
+          ["a", "succeeded"],
+          ["b", "waiting"],
+          ["c", "waiting"],
+          ["d", "ready"],
+          ["e", "waiting"],
+          ["f", "waiting"],
+        ]);
+      }
+      {
+        const progress = orchestrator.provideOutputs("d", {
+          context: "context",
+        });
+        deepStrictEqual(progress, "advanced");
+        assertTasks(orchestrator.currentTasks(), ["b", "e"]);
+        assertState(zigZag, orchestrator.state(), [
+          ["a", "succeeded"],
+          ["b", "ready"],
+          ["c", "waiting"],
+          ["d", "succeeded"],
+          ["e", "ready"],
+          ["f", "waiting"],
+        ]);
+      }
+      {
+        const progress = orchestrator.provideOutputs("b", {
+          $error: "failure",
+        });
+        deepStrictEqual(progress, "working");
+        assertTasks(orchestrator.currentTasks(), ["e"]);
+        assertState(zigZag, orchestrator.state(), [
+          ["a", "succeeded"],
+          ["b", "failed"],
+          ["c", "skipped"],
+          ["d", "succeeded"],
+          ["e", "ready"],
+          ["f", "waiting"],
+        ]);
+      }
+      {
+        const progress = orchestrator.provideOutputs("e", {
+          context: "context",
+        });
+        deepStrictEqual(progress, "advanced");
+        assertTasks(orchestrator.currentTasks(), ["f"]);
+        assertState(zigZag, orchestrator.state(), [
+          ["a", "succeeded"],
+          ["b", "failed"],
+          ["c", "skipped"],
+          ["d", "succeeded"],
+          ["e", "succeeded"],
+          ["f", "ready"],
         ]);
       }
     });
