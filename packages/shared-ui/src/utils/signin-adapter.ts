@@ -48,7 +48,7 @@ export const signinAdapterContext = createContext<SigninAdapter | undefined>(
  * settingsHelper are present.
  */
 class SigninAdapter {
-  static #cachedPicture: string | null | undefined;
+  #cachedPicture: string | null | undefined;
   readonly #tokenVendor: TokenVendor;
   readonly #environment: Environment;
   readonly #settingsHelper: SettingsHelper;
@@ -91,11 +91,11 @@ class SigninAdapter {
   }
 
   async cachedPicture(): Promise<string | undefined> {
-    if (SigninAdapter.#cachedPicture === undefined && this.picture) {
+    if (this.#cachedPicture === undefined && this.picture) {
       try {
         const token = await this.token();
         if (token.state === "signedout") {
-          SigninAdapter.#cachedPicture = null;
+          this.#cachedPicture = null;
           return;
         }
         const picture = await fetch(this.picture, {
@@ -104,17 +104,17 @@ class SigninAdapter {
           },
         });
         if (!picture.ok) {
-          SigninAdapter.#cachedPicture = null;
+          this.#cachedPicture = null;
           return;
         }
         const blobURL = URL.createObjectURL(await picture.blob());
         return blobURL;
       } catch (e) {
         console.warn(e);
-        SigninAdapter.#cachedPicture = null;
+        this.#cachedPicture = null;
       }
     }
-    return SigninAdapter.#cachedPicture || undefined;
+    return this.#cachedPicture || undefined;
   }
 
   /**
