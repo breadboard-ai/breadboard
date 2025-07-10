@@ -123,13 +123,15 @@ export class GoogleDriveFileViewer extends LitElement {
         const openUrl =
           file.webViewLink ?? `https://drive.google.com/open?id=${file.id}`;
         const imageUrl = file.thumbnailLink || file.iconLink;
+        // Bump the image quality a little higher.
+        const largerImageUrl = imageUrl.replace(/=s220$/, "=s440");
         return html`
           <a href=${openUrl} target="_blank">
             ${imageUrl && !this.#imageFailedToLoad
               ? html`
                   <img
                     cross-origin
-                    src=${imageUrl}
+                    src=${largerImageUrl}
                     alt=${file.name ?? "Google Document"}
                     @error=${this.#onImageError}
                   />
