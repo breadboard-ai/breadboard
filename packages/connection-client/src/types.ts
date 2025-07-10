@@ -32,8 +32,6 @@ export type TokenResult =
 export interface ValidTokenResult {
   state: "valid";
   grant: TokenGrant;
-  expired?: never;
-  refresh?: never;
 }
 
 /**
@@ -42,8 +40,7 @@ export interface ValidTokenResult {
  */
 export interface ExpiredTokenResult {
   state: "expired";
-  grant?: TokenGrant;
-  expired?: never;
+  grant: TokenGrant;
   refresh: (opts?: { signal?: AbortSignal }) => Promise<ValidTokenResult>;
 }
 
@@ -54,9 +51,6 @@ export interface ExpiredTokenResult {
  */
 export interface SignedOutTokenResult {
   state: "signedout";
-  grant?: never;
-  expired?: never;
-  refresh?: never;
 }
 
 // IMPORTANT: Keep in sync with
