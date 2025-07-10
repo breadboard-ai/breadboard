@@ -425,7 +425,6 @@ export class Main extends SignalWatcher(LitElement) {
         backendApiEndpoint
       );
 
-      this.#tosStatus = await this.#apiClient.checkTos();
       this.flowGenerator = new FlowGenerator(this.#apiClient);
     } else {
       console.warn(
