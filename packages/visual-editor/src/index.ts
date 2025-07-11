@@ -129,20 +129,35 @@ const BOARD_AUTO_SAVE_TIMEOUT = 1_500;
 
 @customElement("bb-main")
 export class Main extends SignalWatcher(LitElement) {
-  @provide({ context: clientDeploymentConfigurationContext })
-  accessor clientDeploymentConfiguration: ClientDeploymentConfiguration;
-
-  @provide({ context: flowGeneratorContext })
-  accessor flowGenerator: FlowGenerator | undefined;
-
   @provide({ context: BreadboardUI.Contexts.environmentContext })
   accessor environment: BreadboardUI.Contexts.Environment;
 
-  @provide({ context: BreadboardUI.Elements.tokenVendorContext })
-  accessor tokenVendor!: TokenVendor;
+  @provide({ context: clientDeploymentConfigurationContext })
+  accessor clientDeploymentConfiguration: ClientDeploymentConfiguration;
+
+  @provide({ context: buildInfoContext })
+  accessor buildInfo: BuildInfo;
+
+  readonly #settings: SettingsStore;
 
   @provide({ context: BreadboardUI.Contexts.settingsHelperContext })
-  accessor settingsHelper!: SettingsHelperImpl;
+  accessor settingsHelper: SettingsHelperImpl;
+
+  readonly #secretsHelper: SecretsHelper;
+
+  @provide({ context: BreadboardUI.Elements.tokenVendorContext })
+  accessor tokenVendor: TokenVendor;
+
+  @provide({ context: signinAdapterContext })
+  accessor signinAdapter: SigninAdapter;
+
+  readonly #apiClient: AppCatalystApiClient;
+
+  @provide({ context: flowGeneratorContext })
+  accessor flowGenerator: FlowGenerator;
+
+  @provide({ context: googleDriveClientContext })
+  accessor googleDriveClient: GoogleDriveClient;
 
   @provide({ context: sideBoardRuntime })
   accessor sideBoardRuntime!: SideBoardRuntime;
@@ -150,20 +165,8 @@ export class Main extends SignalWatcher(LitElement) {
   @provide({ context: BreadboardUI.Contexts.embedderContext })
   accessor embedState!: EmbedState;
 
-  @provide({ context: signinAdapterContext })
-  accessor signinAdapter!: SigninAdapter;
-
-  @provide({ context: googleDriveClientContext })
-  accessor googleDriveClient: GoogleDriveClient | undefined;
-
   @provide({ context: boardServerContext })
   accessor boardServer: BoardServer | undefined;
-
-  @provide({ context: buildInfoContext })
-  accessor buildInfo: BuildInfo;
-
-  @state()
-  accessor #apiClient: AppCatalystApiClient | null = null;
 
   @state()
   accessor #tab: Runtime.Types.Tab | null = null;
@@ -179,22 +182,20 @@ export class Main extends SignalWatcher(LitElement) {
   readonly #feedbackPanelRef: Ref<BreadboardUI.Elements.FeedbackPanel> =
     createRef();
 
-  #boardRunStatus = new Map<TabId, BreadboardUI.Types.STATUS>();
-  #boardServers: BoardServer[];
-  #settings: SettingsStore | null;
-  #secretsHelper: SecretsHelper | null = null;
-  #onShowTooltipBound = this.#onShowTooltip.bind(this);
-  #hideTooltipBound = this.#hideTooltip.bind(this);
-  #onKeyboardShortCut = this.#onKeyboardShortcut.bind(this);
-  #recentBoardStore = RecentBoardStore.instance();
+  readonly #boardRunStatus = new Map<TabId, BreadboardUI.Types.STATUS>();
+  #boardServers: BoardServer[] = [];
+  readonly #onShowTooltipBound = this.#onShowTooltip.bind(this);
+  readonly #hideTooltipBound = this.#hideTooltip.bind(this);
+  readonly #onKeyboardShortCut = this.#onKeyboardShortcut.bind(this);
+  readonly #recentBoardStore = RecentBoardStore.instance();
   #graphStore!: MutableGraphStore;
-  #runStore = getRunStore();
-  #fileSystem!: FileSystem;
+  readonly #runStore = getRunStore();
+  readonly #fileSystem: FileSystem;
   #selectionState: WorkspaceSelectionStateWithChangeId | null = null;
   #lastVisualChangeId: WorkspaceVisualChangeId | null = null;
-  #lastPointerPosition = { x: 0, y: 0 };
+  readonly #lastPointerPosition = { x: 0, y: 0 };
   #runtime!: Runtime.RuntimeInstance;
-  #embedHandler?: EmbedHandler;
+  readonly #embedHandler?: EmbedHandler;
 
   /**
    * Monotonically increases whenever the graph topology of a graph in the
@@ -237,12 +238,82 @@ export class Main extends SignalWatcher(LitElement) {
   constructor(args: MainArguments) {
     super();
 
-    this.buildInfo = args.buildInfo;
-    this.#boardServers = [];
-    this.#settings = args.settings ?? null;
-    this.#embedHandler = args.embedHandler;
+    // Static deployment config
     this.environment = args.environment;
     this.clientDeploymentConfiguration = args.clientDeploymentConfiguration;
+    this.buildInfo = args.buildInfo;
+
+    // User settings
+    this.#settings = args.settings;
+    this.settingsHelper = new SettingsHelperImpl(this.#settings);
+    this.#secretsHelper = new SecretsHelper(this.#settings);
+
+    // Authentication
+    this.tokenVendor = createTokenVendor(
+      {
+        get: (conectionId: string) => {
+          return this.settingsHelper.get(
+            BreadboardUI.Types.SETTINGS_TYPE.CONNECTIONS,
+            conectionId
+          )?.value as string;
+        },
+        set: async (connectionId: string, grant: string) => {
+          await this.settingsHelper.set(
+            BreadboardUI.Types.SETTINGS_TYPE.CONNECTIONS,
+            connectionId,
+            {
+              name: connectionId,
+              value: grant,
+            }
+          );
+        },
+      },
+      this.environment
+    );
+
+    this.signinAdapter = new SigninAdapter(
+      this.tokenVendor,
+      this.environment,
+      this.settingsHelper
+    );
+
+    // API Clients
+    const backendApiEndpoint =
+      this.clientDeploymentConfiguration.BACKEND_API_ENDPOINT;
+    if (!backendApiEndpoint) {
+      throw new Error(
+        `No BACKEND_API_ENDPOINT in ClientDeploymentConfiguration`
+      );
+    }
+
+    this.#apiClient = new AppCatalystApiClient(
+      this.signinAdapter,
+      backendApiEndpoint
+    );
+
+    this.flowGenerator = new FlowGenerator(this.#apiClient);
+
+    this.googleDriveClient = new GoogleDriveClient({
+      apiBaseUrl: "https://www.googleapis.com",
+      proxyUrl: this.clientDeploymentConfiguration.ENABLE_GOOGLE_DRIVE_PROXY
+        ? new URL("v1beta1/getOpalFile", backendApiEndpoint).href
+        : undefined,
+      publicApiKey: this.environment.googleDrive.publicApiKey,
+      getUserAccessToken: async () => {
+        const token = await this.signinAdapter.token();
+        if (token.state === "valid") {
+          return token.grant.access_token;
+        }
+        throw new Error(`User is signed out`);
+      },
+    });
+
+    this.#fileSystem = createFileSystem({
+      env: [...envFromSettings(this.#settings), ...(args.env || [])],
+      local: createFileSystemBackend(createEphemeralBlobStore()),
+    });
+
+    this.#embedHandler = args.embedHandler;
 
     this.#init(args).then(() => {
       console.log(`[${Strings.from("APP_NAME")} Visual Editor Initialized]`);
@@ -294,71 +365,6 @@ export class Main extends SignalWatcher(LitElement) {
   }
 
   async #init(args: MainArguments) {
-    let googleDriveProxyUrl: string | undefined;
-    if (this.clientDeploymentConfiguration.ENABLE_GOOGLE_DRIVE_PROXY) {
-      if (this.clientDeploymentConfiguration.BACKEND_API_ENDPOINT) {
-        googleDriveProxyUrl = new URL(
-          "v1beta1/getOpalFile",
-          this.clientDeploymentConfiguration.BACKEND_API_ENDPOINT
-        ).href;
-      } else {
-        console.warn(
-          `ENABLE_GOOGLE_DRIVE_PROXY was true but BACKEND_API_ENDPOINT was missing.` +
-            ` Google Drive proxying will not be available.`
-        );
-      }
-    }
-
-    this.googleDriveClient = new GoogleDriveClient({
-      apiBaseUrl: "https://www.googleapis.com",
-      proxyUrl: googleDriveProxyUrl,
-      publicApiKey: this.environment.googleDrive.publicApiKey,
-      getUserAccessToken: async () => {
-        const token = await this.signinAdapter.token();
-        if (token?.state === "valid") {
-          return token.grant.access_token;
-        }
-        throw new Error(
-          `User is unexpectedly signed out, or SigninAdapter is misconfigured`
-        );
-      },
-    });
-
-    let settingsRestore = Promise.resolve();
-    if (this.#settings) {
-      this.settingsHelper = new SettingsHelperImpl(this.#settings);
-      this.tokenVendor = createTokenVendor(
-        {
-          get: (conectionId: string) => {
-            return this.settingsHelper.get(
-              BreadboardUI.Types.SETTINGS_TYPE.CONNECTIONS,
-              conectionId
-            )?.value as string;
-          },
-          set: async (connectionId: string, grant: string) => {
-            await this.settingsHelper.set(
-              BreadboardUI.Types.SETTINGS_TYPE.CONNECTIONS,
-              connectionId,
-              {
-                name: connectionId,
-                value: grant,
-              }
-            );
-          },
-        },
-        this.environment
-      );
-
-      settingsRestore = this.#settings?.restore();
-    }
-
-    await settingsRestore;
-
-    this.#fileSystem = createFileSystem({
-      env: [...envFromSettings(this.#settings), ...(args.env || [])],
-      local: createFileSystemBackend(createEphemeralBlobStore()),
-    });
-
     this.#runtime = await Runtime.create({
       recentBoardStore: this.#recentBoardStore,
       graphStore: this.#graphStore,
@@ -367,7 +373,7 @@ export class Main extends SignalWatcher(LitElement) {
       environment: this.environment,
       tokenVendor: this.tokenVendor,
       sandbox,
-      settings: this.#settings!,
+      settings: this.#settings,
       proxy: [],
       fileSystem: this.#fileSystem,
       builtInBoardServers: [createA2Server()],
@@ -405,29 +411,8 @@ export class Main extends SignalWatcher(LitElement) {
       this.#uiState.canRunMain = false;
     });
 
-    this.signinAdapter = new SigninAdapter(
-      this.tokenVendor,
-      this.environment,
-      this.settingsHelper
-    );
     if (this.signinAdapter.state === "signedout") {
       return;
-    }
-
-    const backendApiEndpoint =
-      this.clientDeploymentConfiguration.BACKEND_API_ENDPOINT;
-    if (backendApiEndpoint) {
-      this.#apiClient = new AppCatalystApiClient(
-        this.signinAdapter,
-        backendApiEndpoint
-      );
-
-      this.flowGenerator = new FlowGenerator(this.#apiClient);
-    } else {
-      console.warn(
-        `No BACKEND_API_ENDPOINT was configured so` +
-          ` FlowGenerator will not be available.`
-      );
     }
 
     this.#graphStore.addEventListener("update", (evt) => {
@@ -763,28 +748,17 @@ export class Main extends SignalWatcher(LitElement) {
               return;
             }
 
-            if (this.#secretsHelper) {
-              this.#secretsHelper.setKeys(keys);
-              if (this.#secretsHelper.hasAllSecrets()) {
-                runner?.run(this.#secretsHelper.getSecrets());
-              } else {
-                const result = SecretsHelper.allKeysAreKnown(
-                  this.#settings!,
-                  keys
-                );
-                if (result) {
-                  runner?.run(result);
-                }
-              }
+            this.#secretsHelper.setKeys(keys);
+            if (this.#secretsHelper.hasAllSecrets()) {
+              runner?.run(this.#secretsHelper.getSecrets());
             } else {
               const result = SecretsHelper.allKeysAreKnown(
-                this.#settings!,
+                this.#settings,
                 keys
               );
               if (result) {
                 runner?.run(result);
               } else {
-                this.#secretsHelper = new SecretsHelper(this.#settings!);
                 this.#secretsHelper.setKeys(keys);
               }
             }
@@ -856,9 +830,6 @@ export class Main extends SignalWatcher(LitElement) {
   }
 
   async #generateGraph(intent: string): Promise<GraphDescriptor> {
-    if (!this.flowGenerator) {
-      throw new Error(`No FlowGenerator was provided`);
-    }
     const { flow } = await this.flowGenerator.oneShot({ intent });
     return flow;
   }
@@ -915,7 +886,7 @@ export class Main extends SignalWatcher(LitElement) {
       return;
     }
 
-    const tooltips = this.#settings?.getItem(
+    const tooltips = this.#settings.getItem(
       BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
       "Show Tooltips"
     );
@@ -1253,7 +1224,7 @@ export class Main extends SignalWatcher(LitElement) {
 
     const createAsTypeScript =
       this.#settings
-        ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
+        .getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
         .items.get("Use TypeScript as Module default language")?.value ?? false;
     if (createAsTypeScript) {
       newModule.metadata = {
@@ -1321,10 +1292,8 @@ export class Main extends SignalWatcher(LitElement) {
     }
 
     const showExperimentalComponents: boolean = this.#settings
-      ? (this.#settings
-          .getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
-          .items.get("Show Experimental Components")?.value as boolean)
-      : false;
+      .getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
+      .items.get("Show Experimental Components")?.value as boolean;
 
     const canSave = this.#tab
       ? this.#runtime.board.canSave(this.#tab.id) && !this.#tab.readOnly
@@ -1357,10 +1326,6 @@ export class Main extends SignalWatcher(LitElement) {
       keyof BreadboardUI.Events.StateEventDetailMap
     >
   ) {
-    if (!this.#secretsHelper) {
-      this.#secretsHelper = new SecretsHelper(this.#settings!);
-    }
-
     return {
       originalEvent: evt,
       runtime: this.#runtime,
@@ -1902,12 +1867,6 @@ export class Main extends SignalWatcher(LitElement) {
               if (!(evt.target instanceof HTMLButtonElement)) {
                 return;
               }
-
-              if (!this.#apiClient) {
-                console.error("Unable to accept TOS; no client");
-                return;
-              }
-
               evt.target.disabled = true;
               await this.#apiClient.acceptTos(tosVersion, true);
               this.#tosStatus = await this.#apiClient.checkTos();
@@ -2043,12 +2002,7 @@ export class Main extends SignalWatcher(LitElement) {
       .showExperimentalComponents=${renderValues.showExperimentalComponents}
       .mode=${this.#uiState.mode}
       @bbsignout=${async () => {
-        const signinAdapter = this.signinAdapter;
-        if (!signinAdapter) {
-          return;
-        }
-
-        await signinAdapter.signOut();
+        await this.signinAdapter.signOut();
         this.toast(
           Strings.from("STATUS_LOGGED_OUT"),
           BreadboardUI.Events.ToastType.INFORMATION
