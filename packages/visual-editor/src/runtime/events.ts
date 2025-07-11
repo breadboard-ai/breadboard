@@ -51,6 +51,14 @@ export class RuntimeToastEvent extends Event {
   }
 }
 
+export class RuntimeUnsnackbarEvent extends Event {
+  static eventName = "runtimeunsnackbar" as const;
+
+  constructor() {
+    super(RuntimeUnsnackbarEvent.eventName, { ...eventInit });
+  }
+}
+
 export class RuntimeSnackbarEvent extends Event {
   static eventName = "runtimesnackbar" as const;
 

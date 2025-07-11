@@ -35,6 +35,7 @@ import {
   RuntimeWorkspaceItemChangeEvent,
   RuntimeBoardSaveStatusChangeEvent,
   RuntimeSnackbarEvent,
+  RuntimeUnsnackbarEvent,
 } from "./events";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import {
@@ -1138,7 +1139,7 @@ export class Board extends EventTarget {
         new RuntimeSnackbarEvent(
           snackbarId,
           ackUserMessage.start,
-          BreadboardUI.Types.SnackType.INFORMATION,
+          BreadboardUI.Types.SnackType.PENDING,
           [],
           true,
           true
@@ -1191,6 +1192,10 @@ export class Board extends EventTarget {
     const response = await boardServer.create(url, graph);
     if (response.url) {
       url = new URL(response.url);
+    }
+
+    if (snackbarId) {
+      this.dispatchEvent(new RuntimeUnsnackbarEvent());
     }
 
     this.#isSavingAs = false;
