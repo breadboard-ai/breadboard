@@ -98,6 +98,55 @@ class InternalRunStateController {
     };
   }
 
+  async runTask(task: Task) {
+    const state = await this.state;
+    const path = this.path();
+    this.callback({
+      type: "nodestart",
+      data: {
+        node: task.node,
+        inputs: task.inputs,
+        path,
+        timestamp: timestamp(),
+      },
+      reply: async () => {},
+    });
+    state.orchestrator.setWorking(task.node.id);
+    const invoker = new NodeInvoker(
+      state.context,
+      { graph: state.graph },
+      async (result) => {
+        const harnessResult = fromRunnerResult(result);
+        if (harnessResult.type === "input" && harnessResult.data.bubbled) {
+          state.orchestrator.setWaiting(task.node.id);
+          return this.callback({
+            ...harnessResult,
+            reply: async (inputs) => {
+              state.orchestrator.setWorking(task.node.id);
+              return harnessResult.reply(inputs);
+            },
+          });
+        }
+        return this.callback(harnessResult);
+      }
+    );
+    const outputs = await invoker.invokeNode(this.fromTask(task), path);
+    state.orchestrator.setWorking(task.node.id);
+    state.orchestrator.provideOutputs(task.node.id, outputs);
+    this.callback({
+      type: "nodeend",
+      data: {
+        node: task.node,
+        inputs: task.inputs,
+        outputs,
+        path,
+        newOpportunities: [],
+        timestamp: timestamp(),
+      },
+      reply: async () => {},
+    });
+  }
+
   async run() {
     const state = await this.state;
     this.callback({
@@ -110,9 +159,9 @@ class InternalRunStateController {
       },
       reply: async () => {},
     });
-    let finished = false;
+    const runTask = this.runTask.bind(this);
     for (;;) {
-      if (finished) break;
+      if (state.orchestrator.progress === "finished") break;
 
       const tasks = state.orchestrator.currentTasks();
       if (!ok(tasks)) {
@@ -120,64 +169,7 @@ class InternalRunStateController {
         return;
       }
 
-      await Promise.all(
-        tasks.map(async (task) => {
-          const path = this.path();
-          this.callback({
-            type: "nodestart",
-            data: {
-              node: task.node,
-              inputs: task.inputs,
-              path,
-              timestamp: timestamp(),
-            },
-            reply: async () => {},
-          });
-          state.orchestrator.setWorking(task.node.id);
-          const invoker = new NodeInvoker(
-            state.context,
-            { graph: state.graph },
-            async (result) => {
-              const harnessResult = fromRunnerResult(result);
-              if (
-                harnessResult.type === "input" &&
-                harnessResult.data.bubbled
-              ) {
-                state.orchestrator.setWaiting(task.node.id);
-                return this.callback({
-                  ...harnessResult,
-                  reply: async (inputs) => {
-                    state.orchestrator.setWorking(task.node.id);
-                    return harnessResult.reply(inputs);
-                  },
-                });
-              }
-              return this.callback(harnessResult);
-            }
-          );
-          const outputs = await invoker.invokeNode(this.fromTask(task), path);
-          state.orchestrator.setWorking(task.node.id);
-          const progress = state.orchestrator.provideOutputs(
-            task.node.id,
-            outputs
-          );
-          this.callback({
-            type: "nodeend",
-            data: {
-              node: task.node,
-              inputs: task.inputs,
-              outputs,
-              path,
-              newOpportunities: [],
-              timestamp: timestamp(),
-            },
-            reply: async () => {},
-          });
-          if (progress === "finished") {
-            finished = true;
-          }
-        })
-      );
+      await Promise.all(tasks.map(runTask));
     }
 
     this.callback({
