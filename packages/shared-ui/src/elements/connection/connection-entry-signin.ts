@@ -8,11 +8,15 @@ import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("Global");
 
 import { css, html, LitElement, nothing } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, state } from "lit/decorators.js";
 import { ActionTracker } from "../../utils/action-tracker.js";
-import { SigninAdapter } from "../../utils/signin-adapter";
+import {
+  SigninAdapter,
+  signinAdapterContext,
+} from "../../utils/signin-adapter";
 import { until } from "lit/directives/until.js";
 import { SignInEvent } from "../../events/events";
+import { consume } from "@lit/context";
 
 @customElement("bb-connection-entry-signin")
 export class ConnectionEntrySignin extends LitElement {
@@ -96,30 +100,30 @@ export class ConnectionEntrySignin extends LitElement {
     }
   `;
 
-  @property()
-  accessor adapter: SigninAdapter | null = null;
+  @consume({ context: signinAdapterContext })
+  accessor signinAdapter: SigninAdapter | undefined = undefined;
 
   @state()
   accessor errorMessage: string | null = null;
 
   override updated() {
-    if (this.adapter?.state === "signedout") {
+    if (this.signinAdapter?.state === "signedout") {
       ActionTracker.signInPageView();
     }
   }
 
   render() {
-    if (!this.adapter) {
+    if (!this.signinAdapter) {
       return nothing;
     }
 
-    if (this.adapter.state !== "signedout") return nothing;
+    if (this.signinAdapter.state !== "signedout") return nothing;
 
     return html` <div id="container">
       <div id="logo"></div>
       <h1>Welcome to ${Strings.from("APP_NAME")}</h1>
       <a
-        .href=${until(this.adapter.getSigninUrl())}
+        .href=${until(this.signinAdapter.getSigninUrl())}
         @click=${this.#onClickSignin}
         target="_blank"
         title="Sign into Google"
@@ -132,10 +136,10 @@ export class ConnectionEntrySignin extends LitElement {
   }
 
   async #onClickSignin() {
-    if (!this.adapter) {
+    if (!this.signinAdapter) {
       return;
     }
-    const result = await this.adapter.signIn();
+    const result = await this.signinAdapter.signIn();
     if (result.ok) {
       ActionTracker.signInSuccess();
       this.dispatchEvent(new SignInEvent());

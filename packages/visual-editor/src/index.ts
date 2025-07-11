@@ -1383,7 +1383,6 @@ export class Main extends SignalWatcher(LitElement) {
 
     if (this.signinAdapter.state === "signedout") {
       return html`<bb-connection-entry-signin
-        .adapter=${this.signinAdapter}
         @bbsignin=${async () => {
           window.location.reload();
         }}
