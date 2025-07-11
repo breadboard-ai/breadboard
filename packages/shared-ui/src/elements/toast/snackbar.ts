@@ -82,6 +82,15 @@ export class Snackbar extends LitElement {
         color: var(--text-color);
         flex: 1 1 auto;
         margin-right: var(--bb-grid-size-11);
+        a,
+        a:visited {
+          color: var(--bb-ui-600);
+          text-decoration: none;
+          &:hover {
+            color: var(--bb-ui-500);
+            text-decoration: underline;
+          }
+        }
       }
 
       #actions {
