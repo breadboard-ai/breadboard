@@ -40,7 +40,6 @@ import {
 } from "../../utils/signin-adapter.js";
 import { type GoogleDriveSharePanel } from "../elements.js";
 import { findGoogleDriveAssetsInGraph } from "../google-drive/find-google-drive-assets-in-graph.js";
-import { loadDriveApi } from "../google-drive/google-apis.js";
 
 const APP_NAME = StringsHelper.forSection("Global").from("APP_NAME");
 const Strings = StringsHelper.forSection("UIController");
@@ -955,6 +954,10 @@ export class SharePanel extends LitElement {
       // Already unpublished!
       return;
     }
+    const { googleDriveClient } = this;
+    if (!googleDriveClient) {
+      throw new Error(`No google drive client provided`);
+    }
     const { shareableFile } = this.#state;
     const oldState = this.#state;
     this.#state = {
@@ -963,25 +966,10 @@ export class SharePanel extends LitElement {
       granularlyShared: oldState.granularlyShared,
       shareableFile,
     };
-    const [accessToken, driveApi] = await Promise.all([
-      this.#getAccessToken(),
-      loadDriveApi(),
-    ]);
-    if (!accessToken) {
-      console.error("No access token");
-      this.#state = oldState;
-      return;
-    }
-
     await Promise.all(
-      oldState.publishedPermissions.map((permission) =>
-        // TODO(aomarks) Add GoogleDriveClient.deletePermission
-        driveApi.permissions.delete({
-          access_token: accessToken,
-          fileId: shareableFile.id,
-          permissionId: permission.id!,
-        })
-      )
+      oldState.publishedPermissions.map((permission) => {
+        googleDriveClient.deletePermission(shareableFile.id, permission.id!);
+      })
     );
 
     // Note we are not removing permissions from assets. That's because the

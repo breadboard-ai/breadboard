@@ -424,6 +424,33 @@ export class GoogleDriveClient {
     return (await response.json()) as gapi.client.drive.Permission;
   }
 
+  async deletePermission(
+    fileId: string,
+    permissionId: string,
+    options?: BaseRequestOptions
+  ): Promise<void> {
+    const authorization = {
+      kind: "bearer",
+      token: await this.#getUserAccessToken(),
+    } as const;
+    const url = this.#makeUrl(
+      `drive/v3/files/${encodeURIComponent(fileId)}` +
+        `/permissions/${encodeURIComponent(permissionId)}`,
+      authorization
+    );
+    const response = await retryableFetch(url, {
+      method: "DELETE",
+      headers: this.#makeHeaders(authorization),
+      signal: options?.signal,
+    });
+    if (!response.ok) {
+      throw new Error(
+        `Google Drive delete permission ${response.status} error: ` +
+          (await response.text())
+      );
+    }
+  }
+
   /** Returns one of the two types of responses - either from .copy() or from file.get() in case of a public board. */
   async copy(fileId: string): Promise<Response> {
     const authorization = {
