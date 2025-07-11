@@ -6,10 +6,10 @@
 
 import { EmbedHandler, Handler } from "@breadboard-ai/embed";
 import {
-  GrantResponse,
   oauthTokenBroadcastChannelName,
   type OAuthStateParameter,
 } from "./connection-common.js";
+import type { GrantResponse } from "@breadboard-ai/types/oauth.js";
 import { getEmbedderRedirectUri } from "../../utils/embed-helpers.js";
 
 export class ConnectionBroker extends HTMLElement {

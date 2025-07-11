@@ -15,10 +15,10 @@ import { settingsHelperContext } from "../../contexts/settings-helper.js";
 import { SETTINGS_TYPE, type SettingsHelper } from "../../types/types.js";
 import {
   oauthTokenBroadcastChannelName,
-  type GrantResponse,
   type TokenGrant,
   type OAuthStateParameter,
 } from "./connection-common.js";
+import type { GrantResponse } from "@breadboard-ai/types/oauth.js";
 import type { Connection } from "./connection-server.js";
 import { ConnectionSignedOutEvent } from "../../events/events.js";
 
@@ -258,7 +258,6 @@ export class ConnectionSignin extends LitElement {
       client_id: this.connection.clientId,
       access_token: grantResponse.access_token,
       expires_in: grantResponse.expires_in,
-      refresh_token: grantResponse.refresh_token,
       issue_time: now,
       name: grantResponse.name,
       picture: grantResponse.picture,

@@ -15,7 +15,6 @@ import { loadConnections, type ServerConfig } from "./config.js";
 import cookieParser from "cookie-parser";
 
 export type { ServerConfig };
-export type { GrantResponse } from "./config.js";
 
 /**
  * Create a ServerConfig from environment variables.

@@ -6,13 +6,13 @@
 
 import {
   Connection,
-  GrantResponse,
   ListConnectionsResponse,
   SignedOutTokenResult,
   TokenGrant,
   TokenVendor,
   ValidTokenResult,
 } from "@breadboard-ai/connection-client";
+import type { GrantResponse } from "@breadboard-ai/types/oauth.js";
 import { Environment } from "../contexts/environment";
 import {
   OAuthStateParameter,
@@ -33,6 +33,7 @@ export type SigninAdapterState =
   | {
       status: "signedin";
       id: string | undefined;
+      domain: string | undefined;
       name: string | undefined;
       picture: string | undefined;
     };
@@ -81,6 +82,7 @@ class SigninAdapter {
       id: grant.id,
       name: grant.name,
       picture: grant.picture,
+      domain: grant.domain,
     };
   }
 
@@ -98,6 +100,10 @@ class SigninAdapter {
 
   get picture() {
     return this.#state.status === "signedin" ? this.#state.picture : undefined;
+  }
+
+  get domain() {
+    return this.#state.status === "signedin" ? this.#state.domain : undefined;
   }
 
   /**
@@ -194,6 +200,7 @@ class SigninAdapter {
       name: grantResponse.name,
       picture: grantResponse.picture,
       id: grantResponse.id,
+      domain: grantResponse.domain,
     };
     await this.#settingsHelper.set(SETTINGS_TYPE.CONNECTIONS, connection.id, {
       name: connection.id,
@@ -204,6 +211,7 @@ class SigninAdapter {
       id: grantResponse.id,
       name: grantResponse.name,
       picture: grantResponse.picture,
+      domain: grantResponse.domain,
     };
     return { ok: true };
   }

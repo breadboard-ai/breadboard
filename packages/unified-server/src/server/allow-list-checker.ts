@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GrantResponse } from "@breadboard-ai/connection-server";
+import type { GrantResponse } from "@breadboard-ai/types/oauth.js";
 
 export { allowListChecker };
 

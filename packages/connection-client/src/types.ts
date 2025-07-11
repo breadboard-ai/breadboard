@@ -79,6 +79,7 @@ export interface TokenGrant {
   picture?: string;
   name?: string;
   id?: string;
+  domain: string | undefined;
 }
 
 export type RefreshResponse =

@@ -6,7 +6,8 @@
 
 import { jwtDecode, type JwtPayload } from "jwt-decode";
 import type { IncomingMessage, ServerResponse } from "node:http";
-import type { GrantResponse, ServerConfig } from "../config.js";
+import type { ServerConfig } from "../config.js";
+import type { GrantResponse } from "@breadboard-ai/types/oauth.js";
 import { badRequestJson, internalServerError, okJson } from "../responses.js";
 import { oAuthRefreshTokenCookieId } from "./cookies.js";
 
@@ -88,13 +89,14 @@ export async function grant(
     tokenResponse.refresh_token &&
     tokenResponse.expires_in >= 0
   ) {
-    const { picture, name, id } = decodeIdToken(tokenResponse.id_token);
+    const { picture, name, id, domain } = decodeIdToken(tokenResponse.id_token);
     const grantResponse: GrantResponse = {
       access_token: tokenResponse.access_token,
       expires_in: tokenResponse.expires_in,
       picture,
       name,
       id,
+      domain,
     };
     if (config.validateResponse) {
       const checkedGrantResponse = await config.validateResponse(grantResponse);
@@ -158,19 +160,23 @@ type DecodeIdTokenResponse = {
   picture?: string;
   name?: string;
   id?: string;
+  domain?: string;
 };
 
 function decodeIdToken(id_token?: string): DecodeIdTokenResponse {
   if (!id_token) return {};
   try {
     const decoded = jwtDecode(id_token) as JwtPayload & {
+      // https://developers.google.com/identity/openid-connect/openid-connect#authenticationuriparameters
       name?: string;
       picture?: string;
+      hd?: string;
     };
     return {
       id: decoded.sub,
       name: decoded.name,
       picture: decoded.picture,
+      domain: decoded.hd,
     };
   } catch (e) {
     return {};
