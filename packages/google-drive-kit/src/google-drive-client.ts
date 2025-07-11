@@ -83,10 +83,7 @@ export class GoogleDriveClient {
     fileId: string,
     options?: T
   ): Promise<NarrowedDriveFile<T["fields"]>> {
-    let response = await this.#getFileMetadata(fileId, options, {
-      kind: "bearer",
-      token: await this.#getUserAccessToken(),
-    });
+    let response = await this.#getFileMetadata(fileId, options);
     if (response.status === 404) {
       console.log(
         `Received 404 response for Google Drive file "${fileId}"` +
@@ -155,21 +152,16 @@ export class GoogleDriveClient {
     metadata: gapi.client.drive.File,
     options?: T
   ): Promise<NarrowedDriveFile<T["fields"]>> {
-    const authorization = {
-      kind: "bearer",
-      token: await this.#getUserAccessToken(),
-    } as const;
-    const url = this.#makeUrl(
+    const url = new URL(
       `drive/v3/files/${encodeURIComponent(fileId)}`,
-      authorization
+      this.#apiBaseUrl
     );
     if (options?.fields?.length) {
       url.searchParams.set("fields", options.fields.join(","));
     }
-    const response = await retryableFetch(url, {
+    const response = await this.#fetch(url, {
       method: "PATCH",
       body: JSON.stringify(metadata),
-      headers: this.#makeHeaders(authorization),
       signal: options?.signal,
     });
     if (!response.ok) {
@@ -184,19 +176,16 @@ export class GoogleDriveClient {
   #getFileMetadata(
     fileId: string,
     options: ReadFileOptions | undefined,
-    authorization: GoogleApiAuthorization
+    authorization?: GoogleApiAuthorization
   ): Promise<Response> {
-    const url = this.#makeUrl(
+    const url = new URL(
       `drive/v3/files/${encodeURIComponent(fileId)}`,
-      authorization
+      this.#apiBaseUrl
     );
     if (options?.fields?.length) {
       url.searchParams.set("fields", options.fields.join(","));
     }
-    return retryableFetch(url, {
-      headers: this.#makeHeaders(authorization),
-      signal: options?.signal,
-    });
+    return this.#fetch(url, { signal: options?.signal }, authorization);
   }
 
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/get#:~:text=media */
@@ -204,10 +193,7 @@ export class GoogleDriveClient {
     fileId: string,
     options?: BaseRequestOptions
   ): Promise<Response> {
-    let response = await this.#getFileMedia(fileId, options, {
-      kind: "bearer",
-      token: await this.#getUserAccessToken(),
-    });
+    let response = await this.#getFileMedia(fileId, options);
     if (response.status === 404) {
       // Note it is not possible to suppress the 404 error that will appear in
       // the console, so this log statement and the similar ones throughout this
@@ -280,17 +266,14 @@ export class GoogleDriveClient {
   #getFileMedia(
     fileId: string,
     options: BaseRequestOptions | undefined,
-    authorization: GoogleApiAuthorization
+    authorization?: GoogleApiAuthorization
   ): Promise<Response> {
-    const url = this.#makeUrl(
+    const url = new URL(
       `drive/v3/files/${encodeURIComponent(fileId)}`,
-      authorization
+      this.#apiBaseUrl
     );
     url.searchParams.set("alt", "media");
-    return retryableFetch(url, {
-      headers: this.#makeHeaders(authorization),
-      signal: options?.signal,
-    });
+    return this.#fetch(url, { signal: options?.signal }, authorization);
   }
 
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/export */
@@ -298,10 +281,7 @@ export class GoogleDriveClient {
     fileId: string,
     options: ExportFileOptions
   ): Promise<Response> {
-    let response = await this.#exportFile(fileId, options, {
-      kind: "bearer",
-      token: await this.#getUserAccessToken(),
-    });
+    let response = await this.#exportFile(fileId, options);
     if (response.status === 404) {
       console.log(
         `Received 404 response for Google Drive file "${fileId}"` +
@@ -355,17 +335,14 @@ export class GoogleDriveClient {
   #exportFile(
     fileId: string,
     options: ExportFileOptions,
-    authorization: GoogleApiAuthorization
+    authorization?: GoogleApiAuthorization
   ): Promise<Response> {
-    const url = this.#makeUrl(
+    const url = new URL(
       `drive/v3/files/${encodeURIComponent(fileId)}/export`,
-      authorization
+      this.#apiBaseUrl
     );
     url.searchParams.set("mimeType", options.mimeType);
-    return retryableFetch(url, {
-      headers: this.#makeHeaders(authorization),
-      signal: options?.signal,
-    });
+    return this.#fetch(url, { signal: options?.signal }, authorization);
   }
 
   async isReadable(
@@ -406,22 +383,17 @@ export class GoogleDriveClient {
     permission: gapi.client.drive.Permission,
     options: WritePermissionOptions
   ): Promise<gapi.client.drive.Permission> {
-    const authorization = {
-      kind: "bearer",
-      token: await this.#getUserAccessToken(),
-    } as const;
-    const url = this.#makeUrl(
+    const url = new URL(
       `drive/v3/files/${encodeURIComponent(fileId)}/permissions`,
-      authorization
+      this.#apiBaseUrl
     );
     url.searchParams.set(
       "sendNotificationEmail",
       options.sendNotificationEmail ? "true" : "false"
     );
-    const response = await retryableFetch(url, {
+    const response = await this.#fetch(url, {
       method: "POST",
       body: JSON.stringify(onlyWritablePermissionFields(permission)),
-      headers: this.#makeHeaders(authorization),
       signal: options?.signal,
     });
     if (!response.ok) {
@@ -439,20 +411,14 @@ export class GoogleDriveClient {
     permissionId: string,
     options?: BaseRequestOptions
   ): Promise<void> {
-    const authorization = {
-      kind: "bearer",
-      token: await this.#getUserAccessToken(),
-    } as const;
-    const url = this.#makeUrl(
+    const response = await this.#fetch(
       `drive/v3/files/${encodeURIComponent(fileId)}` +
         `/permissions/${encodeURIComponent(permissionId)}`,
-      authorization
+      {
+        method: "DELETE",
+        signal: options?.signal,
+      }
     );
-    const response = await retryableFetch(url, {
-      method: "DELETE",
-      headers: this.#makeHeaders(authorization),
-      signal: options?.signal,
-    });
     if (!response.ok) {
       throw new Error(
         `Google Drive delete permission ${response.status} error: ` +
@@ -463,21 +429,38 @@ export class GoogleDriveClient {
 
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/copy */
   async copyFile(fileId: string): Promise<Response> {
-    const authorization = {
-      kind: "bearer",
-      token: await this.#getUserAccessToken(),
-    } as const;
-    const url = this.#makeUrl(
-      `drive/v3/files/${encodeURIComponent(fileId)}/copy`,
-      authorization
-    );
-    return retryableFetch(url, {
+    return this.#fetch(`drive/v3/files/${encodeURIComponent(fileId)}/copy`, {
       method: "POST",
-      headers: this.#makeHeaders(authorization),
     });
   }
 
-  #makeUrl(path: string, authorization: GoogleApiAuthorization): URL {
+  async #fetch(
+    url: string | URL,
+    init?: RequestInit & {
+      // We need to merge headers, and it's annoying to have to deal with the
+      // other two forms of headers (array and Headers object), so only allow
+      // the object style.
+      headers?: Record<string, string>;
+    },
+    authorization?: GoogleApiAuthorization
+  ): Promise<Response> {
+    authorization ??= {
+      kind: "bearer",
+      token: await this.#getUserAccessToken(),
+    };
+    const headers = this.#makeHeaders(authorization);
+    if (init?.headers) {
+      for (const [key, val] of Object.entries(init.headers)) {
+        headers.set(key, val);
+      }
+    }
+    return retryableFetch(this.#makeUrl(url, authorization), {
+      ...init,
+      headers,
+    });
+  }
+
+  #makeUrl(path: string | URL, authorization: GoogleApiAuthorization): URL {
     const url = new URL(path, this.#apiBaseUrl);
     const authKind = authorization.kind;
     if (authKind === "bearer") {
