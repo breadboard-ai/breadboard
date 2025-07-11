@@ -9,6 +9,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import { ref } from "lit/directives/ref.js";
 import { icons } from "../../../styles/icons";
 import { colorsLight } from "../../../styles/host/colors-light";
+import { type } from "../../../styles/host/type";
 
 @customElement("bb-webcam-video-input")
 export class WebcamVideoInput extends LitElement {
@@ -30,7 +31,12 @@ export class WebcamVideoInput extends LitElement {
   static styles = [
     colorsLight,
     icons,
+    type,
     css`
+      * {
+        box-sizing: border-box;
+      }
+
       :host {
         display: block;
         width: 100%;
@@ -41,6 +47,21 @@ export class WebcamVideoInput extends LitElement {
         aspect-ratio: 4/3;
         outline: 1px solid var(--bb-outline, var(--default-bb-outline));
         position: relative;
+      }
+
+      #error {
+        width: 100%;
+        height: 100%;
+        background: var(--n-98);
+        color: var(--n-0);
+        padding: var(--bb-grid-size-4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        & .g-icon {
+          margin-right: var(--bb-grid-size-2);
+        }
       }
 
       .progress {
@@ -172,14 +193,21 @@ export class WebcamVideoInput extends LitElement {
   }
 
   async #startStream() {
-    this.#starting = true;
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: true,
-      video: true,
-    });
-    this.#starting = false;
+    try {
+      this.#starting = true;
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: true,
+      });
 
-    this.#stream = stream;
+      this.#starting = false;
+
+      this.#stream = stream;
+    } catch (err) {
+      console.warn(err);
+      this.error =
+        "Unable to load Webcam; please check your browser permissions";
+    }
 
     this.#preview.autoplay = true;
     this.#preview.addEventListener(
@@ -258,7 +286,9 @@ export class WebcamVideoInput extends LitElement {
 
   render() {
     if (this.error) {
-      return html`${this.error}`;
+      return html`<div id="error" class="sans-flex round w-400 md-title-medium">
+        <span class="g-icon filled round">warning</span>${this.error}
+      </div>`;
     }
 
     let renderable = html`<canvas
