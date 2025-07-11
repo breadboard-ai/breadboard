@@ -12,14 +12,13 @@ import {
   InputPlugin,
 } from "../../plugins/input-plugin.js";
 import "../connection/connection-input.js";
-import {
-  loadDrivePicker,
-  loadDriveApi,
-  loadGapiClient,
-} from "./google-apis.js";
+import { loadDrivePicker } from "./google-apis.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { getTopLevelOrigin } from "../../utils/embed-helpers.js";
 import { StateEvent } from "../../events/events.js";
+import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
+import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { consume } from "@lit/context";
 
 type PickedValue = {
   // A special value recognized by the "GraphPortLabel": if present in an
@@ -160,6 +159,9 @@ export class GoogleDriveFileId extends LitElement {
   @property()
   accessor autoTrigger = false;
 
+  @consume({ context: googleDriveClientContext })
+  accessor googleDriveClient: GoogleDriveClient | undefined;
+
   #picker?: google.picker.Picker;
   #autoTrigger = false;
   #inputRef: Ref<HTMLButtonElement> = createRef();
@@ -248,6 +250,10 @@ export class GoogleDriveFileId extends LitElement {
   }
 
   async #onCreateNewDoc() {
+    if (!this.googleDriveClient) {
+      console.error("google drive client was not provided");
+      return;
+    }
     if (this._authorization === undefined) return;
 
     const name = this.metadata?.docName ?? this.docName ?? "Untitled Document";
@@ -255,20 +261,11 @@ export class GoogleDriveFileId extends LitElement {
 
     try {
       this.inProgress = true;
-
-      await loadGapiClient();
-      gapi.auth.setToken({
-        access_token: this._authorization.secret,
-        error: "",
-        expires_in: `${this._authorization.expiresIn ?? 3600}`,
-        state: "https://www.googleapis.com/auth/drive",
-      });
-      const api = await loadDriveApi();
-      const file = await api.files.create({
-        resource: { name, mimeType },
-        fields: "id",
-      });
-      const id = file.result.id!;
+      const file = await this.googleDriveClient.createFileMetadata(
+        { name, mimeType },
+        { fields: ["id"] }
+      );
+      const id = file.id;
       this.docName = name;
       this.value = {
         id,

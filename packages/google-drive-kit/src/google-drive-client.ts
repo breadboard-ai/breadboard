@@ -25,6 +25,10 @@ export interface ReadFileOptions extends BaseRequestOptions {
   fields?: Array<keyof gapi.client.drive.File>;
 }
 
+export interface UpdateFileOptions extends BaseRequestOptions {
+  fields?: Array<keyof gapi.client.drive.File>;
+}
+
 export interface ExportFileOptions extends BaseRequestOptions {
   mimeType: string;
 }
@@ -32,6 +36,41 @@ export interface ExportFileOptions extends BaseRequestOptions {
 export interface WritePermissionOptions extends BaseRequestOptions {
   sendNotificationEmail: boolean;
 }
+
+export interface ListFilesOptions extends BaseRequestOptions {
+  fields?: Array<keyof gapi.client.drive.File>;
+  pageSize?: number;
+  pageToken?: string;
+}
+
+export interface ListFilesResponse<T extends gapi.client.drive.File> {
+  files: T[];
+  incompleteSearch: boolean;
+  kind: "drive#fileList";
+  nextPageToken?: string;
+}
+
+/**
+ * A DriveFile (which usually has every field as optional) but where some of the
+ * fields are required. Used when we know we are retrieving certain fields, so
+ * we can assert that the values will be populated.
+ */
+type NarrowedDriveFile<
+  T extends Array<keyof gapi.client.drive.File> | undefined,
+> = {
+  [K in keyof Required<gapi.client.drive.File> as K extends (
+    T extends Array<keyof gapi.client.drive.File>
+      ? T[number]
+      : // The default properties that are returned when fields is not set.
+        "id" | "kind" | "name" | "mimeType"
+  )
+    ? K
+    : // Some properties can be undefined even when requested (either because
+      // they are absent or because we don't have permission to read them).
+      never]: K extends "permissions" | "properties" | "appProperties"
+    ? gapi.client.drive.File[K]
+    : Exclude<gapi.client.drive.File[K], undefined>;
+};
 
 export class GoogleDriveClient {
   readonly #apiBaseUrl: string;
@@ -52,33 +91,18 @@ export class GoogleDriveClient {
     return this.#getUserAccessToken();
   }
 
+  /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/get#:~:text=metadata */
   async getFileMetadata<const T extends ReadFileOptions>(
     fileId: string,
     options?: T
-  ): Promise<{
-    [K in keyof Required<gapi.client.drive.File> as K extends (
-      T["fields"] extends Array<keyof gapi.client.drive.File>
-        ? T["fields"][number]
-        : // The default properties that are returned when fields is not set.
-          "id" | "kind" | "name" | "mimeType"
-    )
-      ? K
-      : // Some properties can be undefined even when requested (either because
-        // they are absent or because we don't have permission to read them).
-        never]: K extends "permissions" | "properties" | "appProperties"
-      ? gapi.client.drive.File[K]
-      : Exclude<gapi.client.drive.File[K], undefined>;
-  }> {
-    let response = await this.#getFile(fileId, options, {
-      kind: "bearer",
-      token: await this.#getUserAccessToken(),
-    });
+  ): Promise<NarrowedDriveFile<T["fields"]>> {
+    let response = await this.#getFileMetadata(fileId, options);
     if (response.status === 404) {
       console.log(
         `Received 404 response for Google Drive file "${fileId}"` +
           ` using user credentials, trying public fallback.`
       );
-      response = await this.#getFile(fileId, options, {
+      response = await this.#getFileMetadata(fileId, options, {
         kind: "key",
         key: this.#publicApiKey,
       });
@@ -123,44 +147,89 @@ export class GoogleDriveClient {
         response = new Response(null, { status: 404 });
       } else {
         console.log(
-          `Google Drive getFile proxy ${response.status} error:`,
+          `Google Drive getFileMetadata proxy ${response.status} error:`,
           await proxyResponse.text()
         );
       }
     }
 
     throw new Error(
-      `Google Drive readFile ${response.status} error: ` +
+      `Google Drive getFileMetadata ${response.status} error: ` +
         (await response.text())
     );
   }
 
-  #getFile(
+  /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/create#:~:text=metadata%2Donly */
+  async createFileMetadata<const T extends ReadFileOptions>(
+    file: gapi.client.drive.File & { name: string; mimeType: string },
+    options?: T
+  ): Promise<NarrowedDriveFile<T["fields"]>> {
+    const url = new URL(`drive/v3/files`, this.#apiBaseUrl);
+    if (options?.fields?.length) {
+      url.searchParams.set("fields", options.fields.join(","));
+    }
+    const response = await this.#fetch(url, {
+      method: "POST",
+      body: JSON.stringify(file),
+      signal: options?.signal,
+    });
+    if (!response.ok) {
+      throw new Error(
+        `Google Drive createFileMetadata ${response.status} error: ` +
+          (await response.text())
+      );
+    }
+    return await response.json();
+  }
+
+  /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/update */
+  async updateFileMetadata<const T extends ReadFileOptions>(
     fileId: string,
-    options: ReadFileOptions | undefined,
-    authorization: GoogleApiAuthorization
-  ): Promise<Response> {
-    const url = this.#makeUrl(
+    metadata: gapi.client.drive.File,
+    options?: T
+  ): Promise<NarrowedDriveFile<T["fields"]>> {
+    const url = new URL(
       `drive/v3/files/${encodeURIComponent(fileId)}`,
-      authorization
+      this.#apiBaseUrl
     );
     if (options?.fields?.length) {
       url.searchParams.set("fields", options.fields.join(","));
     }
-    return retryableFetch(url, {
-      headers: this.#makeHeaders(authorization),
+    const response = await this.#fetch(url, {
+      method: "PATCH",
+      body: JSON.stringify(metadata),
       signal: options?.signal,
     });
+    if (!response.ok) {
+      throw new Error(
+        `Google Drive updateFileMetadata ${response.status} error: ` +
+          (await response.text())
+      );
+    }
+    return await response.json();
   }
 
+  #getFileMetadata(
+    fileId: string,
+    options: ReadFileOptions | undefined,
+    authorization?: GoogleApiAuthorization
+  ): Promise<Response> {
+    const url = new URL(
+      `drive/v3/files/${encodeURIComponent(fileId)}`,
+      this.#apiBaseUrl
+    );
+    if (options?.fields?.length) {
+      url.searchParams.set("fields", options.fields.join(","));
+    }
+    return this.#fetch(url, { signal: options?.signal }, authorization);
+  }
+
+  /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/get#:~:text=media */
   async getFileMedia(
     fileId: string,
     options?: BaseRequestOptions
   ): Promise<Response> {
-    let response = await this.#getFileMedia(fileId, options, {
-      kind: "bearer",
-      token: await this.#getUserAccessToken(),
-    });
+    let response = await this.#getFileMedia(fileId, options);
     if (response.status === 404) {
       // Note it is not possible to suppress the 404 error that will appear in
       // the console, so this log statement and the similar ones throughout this
@@ -233,27 +302,22 @@ export class GoogleDriveClient {
   #getFileMedia(
     fileId: string,
     options: BaseRequestOptions | undefined,
-    authorization: GoogleApiAuthorization
+    authorization?: GoogleApiAuthorization
   ): Promise<Response> {
-    const url = this.#makeUrl(
+    const url = new URL(
       `drive/v3/files/${encodeURIComponent(fileId)}`,
-      authorization
+      this.#apiBaseUrl
     );
     url.searchParams.set("alt", "media");
-    return retryableFetch(url, {
-      headers: this.#makeHeaders(authorization),
-      signal: options?.signal,
-    });
+    return this.#fetch(url, { signal: options?.signal }, authorization);
   }
 
+  /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/export */
   async exportFile(
     fileId: string,
     options: ExportFileOptions
   ): Promise<Response> {
-    let response = await this.#exportFile(fileId, options, {
-      kind: "bearer",
-      token: await this.#getUserAccessToken(),
-    });
+    let response = await this.#exportFile(fileId, options);
     if (response.status === 404) {
       console.log(
         `Received 404 response for Google Drive file "${fileId}"` +
@@ -307,17 +371,14 @@ export class GoogleDriveClient {
   #exportFile(
     fileId: string,
     options: ExportFileOptions,
-    authorization: GoogleApiAuthorization
+    authorization?: GoogleApiAuthorization
   ): Promise<Response> {
-    const url = this.#makeUrl(
+    const url = new URL(
       `drive/v3/files/${encodeURIComponent(fileId)}/export`,
-      authorization
+      this.#apiBaseUrl
     );
     url.searchParams.set("mimeType", options.mimeType);
-    return retryableFetch(url, {
-      headers: this.#makeHeaders(authorization),
-      signal: options?.signal,
-    });
+    return this.#fetch(url, { signal: options?.signal }, authorization);
   }
 
   async isReadable(
@@ -334,7 +395,33 @@ export class GoogleDriveClient {
     }
   }
 
-  async readPermissions(
+  /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/list */
+  async listFiles<const T extends ListFilesOptions>(
+    query: string,
+    options?: T
+  ): Promise<ListFilesResponse<NarrowedDriveFile<T["fields"]>>> {
+    // TODO(aomarks) Make this an async iterator.
+    const url = new URL(`drive/v3/files`, this.#apiBaseUrl);
+    url.searchParams.set("q", query);
+    if (options?.pageSize) {
+      url.searchParams.set("pageSize", String(options.pageSize));
+    }
+    if (options?.pageToken) {
+      url.searchParams.set("pageToken", options.pageToken);
+    }
+    url.searchParams.set(
+      "fields",
+      "nextPageToken, files(id, name, mimeType, size, permissions)"
+    );
+    const response = await this.#fetch(url, { signal: options?.signal });
+    return await response.json();
+  }
+
+  /**
+   * Convenience: exactly the same as calling `getFileMetadata` and asking for
+   * only permissions.
+   */
+  async getFilePermissions(
     fileId: string,
     options?: BaseRequestOptions
   ): Promise<gapi.client.drive.Permission[]> {
@@ -348,75 +435,90 @@ export class GoogleDriveClient {
     );
   }
 
-  async writePermission(
+  /** https://developers.google.com/workspace/drive/api/reference/rest/v3/permissions/create */
+  async createPermission(
     fileId: string,
     permission: gapi.client.drive.Permission,
     options: WritePermissionOptions
   ): Promise<gapi.client.drive.Permission> {
-    const authorization = {
-      kind: "bearer",
-      token: await this.#getUserAccessToken(),
-    } as const;
-    const url = this.#makeUrl(
+    const url = new URL(
       `drive/v3/files/${encodeURIComponent(fileId)}/permissions`,
-      authorization
+      this.#apiBaseUrl
     );
     url.searchParams.set(
       "sendNotificationEmail",
       options.sendNotificationEmail ? "true" : "false"
     );
-    const response = await retryableFetch(url, {
+    const response = await this.#fetch(url, {
       method: "POST",
       body: JSON.stringify(onlyWritablePermissionFields(permission)),
-      headers: this.#makeHeaders(authorization),
       signal: options?.signal,
     });
     if (!response.ok) {
       throw new Error(
-        `Google Drive write permission ${response.status} error: ` +
+        `Google Drive createPermission ${response.status} error: ` +
           (await response.text())
       );
     }
     return (await response.json()) as gapi.client.drive.Permission;
   }
 
-  /** Returns one of the two types of responses - either from .copy() or from file.get() in case of a public board. */
-  async copy(fileId: string): Promise<Response> {
-    const authorization = {
+  /** https://developers.google.com/workspace/drive/api/reference/rest/v3/permissions/delete */
+  async deletePermission(
+    fileId: string,
+    permissionId: string,
+    options?: BaseRequestOptions
+  ): Promise<void> {
+    const response = await this.#fetch(
+      `drive/v3/files/${encodeURIComponent(fileId)}` +
+        `/permissions/${encodeURIComponent(permissionId)}`,
+      {
+        method: "DELETE",
+        signal: options?.signal,
+      }
+    );
+    if (!response.ok) {
+      throw new Error(
+        `Google Drive deletePermission ${response.status} error: ` +
+          (await response.text())
+      );
+    }
+  }
+
+  /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/copy */
+  async copyFile(fileId: string): Promise<Response> {
+    return this.#fetch(`drive/v3/files/${encodeURIComponent(fileId)}/copy`, {
+      method: "POST",
+    });
+  }
+
+  async #fetch(
+    url: string | URL,
+    init?: RequestInit & {
+      // We need to merge headers, and it's annoying to have to deal with the
+      // other two forms of headers (array and Headers object), so only allow
+      // the object style.
+      headers?: Record<string, string>;
+    },
+    authorization?: GoogleApiAuthorization
+  ): Promise<Response> {
+    authorization ??= {
       kind: "bearer",
       token: await this.#getUserAccessToken(),
-    } as const;
-    const response = await this.#copy(fileId, authorization);
-    if (response.status === 404) {
-      // Note it is not possible to suppress the 404 error that will appear in
-      // the console, so this log statement and the similar ones throughout this
-      // file are here to hopefully make this look less concerning.
-      console.log(
-        `Received 404 response for Google Drive file "${fileId}"` +
-          ` using user credentials, trying public fallback.`
-      );
-
-      return this.#getFileMedia(fileId, undefined, {
-        kind: "key",
-        key: this.#publicApiKey,
-      });
+    };
+    const headers = this.#makeHeaders(authorization);
+    if (init?.headers) {
+      for (const [key, val] of Object.entries(init.headers)) {
+        headers.set(key, val);
+      }
     }
-    return response;
-  }
-
-  async #copy(fileId: string, authorization: GoogleApiAuthorization) {
-    const url = this.#makeUrl(
-      `drive/v3/files/${encodeURIComponent(fileId)}/copy`,
-      authorization
-    );
-    const response = await retryableFetch(url, {
-      method: "POST",
-      headers: this.#makeHeaders(authorization),
+    return retryableFetch(this.#makeUrl(url, authorization), {
+      ...init,
+      headers,
     });
-    return response;
   }
 
-  #makeUrl(path: string, authorization: GoogleApiAuthorization): URL {
+  #makeUrl(path: string | URL, authorization: GoogleApiAuthorization): URL {
     const url = new URL(path, this.#apiBaseUrl);
     const authKind = authorization.kind;
     if (authKind === "bearer") {

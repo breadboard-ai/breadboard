@@ -11,14 +11,7 @@ import {
   type SigninAdapter,
   signinAdapterContext,
 } from "../../utils/signin-adapter.js";
-import { loadDriveShare } from "./google-apis.js";
-
-// Silly dynamic type expression because "gapi.drive.share.ShareClient" doesn't
-// resolve for some reason, even though it's declared in a namespace statement
-// in "./google-apis.js".
-type ShareClient = InstanceType<
-  Awaited<ReturnType<typeof loadDriveShare>>["ShareClient"]
->;
+import { type ShareClient, loadDriveShareClient } from "./google-apis.js";
 
 // We want only one ShareClient to ever exist globally, and only one user of it
 // at a time, because it is stateful. Each instance of ShareClient dumps a bunch
@@ -72,8 +65,8 @@ export class GoogleDriveSharePanel extends LitElement {
     this.#status = "opening";
     globalShareClientLocked = true;
     if (!globalShareClient) {
-      const shareLib = await loadDriveShare();
-      globalShareClient = new shareLib.ShareClient();
+      const ShareClient = await loadDriveShareClient();
+      globalShareClient = new ShareClient();
     }
 
     globalShareClient.setItemIds(fileIds);

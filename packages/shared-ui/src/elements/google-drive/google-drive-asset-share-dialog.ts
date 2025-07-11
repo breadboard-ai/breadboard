@@ -218,7 +218,7 @@ export class GoogleDriveAssetShareDialog extends LitElement {
     for (const [fileId, filePermissions] of permissions) {
       for (const permission of filePermissions) {
         writePromises.push(
-          this.googleDriveClient.writePermission(fileId, permission, {
+          this.googleDriveClient.createPermission(fileId, permission, {
             sendNotificationEmail: false,
           })
         );
