@@ -11,7 +11,7 @@ import { describe, it } from "node:test";
 import { createPlan } from "../../src/static/create-plan.js";
 import { Orchestrator } from "../../src/static/orchestrator.js";
 import {
-  NodeOrchestratorState,
+  NodeLifecycleState,
   OrchestrationNodeInfo,
   Task,
 } from "../../src/static/types.js";
@@ -74,7 +74,7 @@ const zigZagPlan = createPlan(zigZag);
 function assertState(
   graph: GraphDescriptor,
   state: ReadonlyMap<NodeIdentifier, OrchestrationNodeInfo>,
-  expected: [id: NodeIdentifier, state: NodeOrchestratorState][]
+  expected: [id: NodeIdentifier, state: NodeLifecycleState][]
 ) {
   const nodeMap = new Map(graph.nodes.map((node) => [node.id, node]));
   deepStrictEqual(

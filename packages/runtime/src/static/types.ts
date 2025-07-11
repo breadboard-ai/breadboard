@@ -78,7 +78,7 @@ export type PlanNodeInfo = {
  *
  *  https://github.com/breadboard-ai/breadboard/wiki/Next%E2%80%90Gen-Runtime
  */
-export type NodeOrchestratorState =
+export type NodeLifecycleState =
   // Node dependencies have not been met
   | "inactive"
   // Node dependencies met, queued for invocation
@@ -127,7 +127,7 @@ export type Task = {
 };
 
 export type OrchestrationNodeInfo = {
-  state: NodeOrchestratorState;
+  state: NodeLifecycleState;
   node: NodeDescriptor;
 };
 

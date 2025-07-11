@@ -13,7 +13,7 @@ import {
 import { err, ok } from "@breadboard-ai/utils";
 import {
   OrchestrationPlan,
-  NodeOrchestratorState,
+  NodeLifecycleState,
   OrchestratorProgress,
   PlanNodeInfo,
   Task,
@@ -25,21 +25,21 @@ export { Orchestrator };
 type NodeInternalState = {
   readonly plan: PlanNodeInfo;
   readonly stage: number;
-  state: NodeOrchestratorState;
+  state: NodeLifecycleState;
   inputs: InputValues | null;
   outputs: OutputValues | null;
 };
 
 type OrchestratorState = Map<NodeIdentifier, NodeInternalState>;
 
-const TERMINAL_STATES: ReadonlySet<NodeOrchestratorState> = new Set([
+const TERMINAL_STATES: ReadonlySet<NodeLifecycleState> = new Set([
   "succeeded",
   "failed",
   "skipped",
   "interrupted",
 ]);
 
-const PROCESSING_STATES: ReadonlySet<NodeOrchestratorState> = new Set([
+const PROCESSING_STATES: ReadonlySet<NodeLifecycleState> = new Set([
   "ready",
   "working",
   "waiting",
