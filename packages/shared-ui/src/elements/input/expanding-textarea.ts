@@ -68,7 +68,7 @@ export class ExpandingTextarea extends LitElement {
       #outer-container {
         display: flex;
         align-items: center;
-        --line-height: 1lh;
+        --line-height: 24px;
       }
 
       #inner-container {
@@ -77,16 +77,16 @@ export class ExpandingTextarea extends LitElement {
         justify-content: center;
         align-items: center;
         position: relative;
+        margin: var(--bb-grid-size-2);
       }
 
       textarea,
       #measure {
         line-height: var(--line-height);
-        font-size: inherit;
-        font-weight: inherit;
-        font-family: inherit;
         word-break: normal;
         white-space: normal;
+        letter-spacing: normal;
+        word-spacing: normal;
       }
 
       textarea {
@@ -114,12 +114,9 @@ export class ExpandingTextarea extends LitElement {
         pointer-events: none;
         position: absolute;
         user-select: none;
-        top: 2px;
-        left: 2px;
+        top: 0;
+        left: 0;
         border: none;
-        /* Not sure why, but we need this small adjustment to make the #measure
-           div consistently align with the textarea. */
-        margin-right: 2px;
         white-space: pre-wrap;
       }
 
@@ -175,7 +172,7 @@ export class ExpandingTextarea extends LitElement {
           <textarea
             ${ref(this.#textarea)}
             part="textarea"
-            class="sans-flex w-500 round"
+            class="sans-flex w-500 round md-body-large"
             .value=${this.value}
             .placeholder=${this.tabCompletesPlaceholder
               ? this.placeholder + TEMPORARY_TAB_ICON_TEXT
@@ -184,7 +181,11 @@ export class ExpandingTextarea extends LitElement {
             @input=${this.#onInput}
             @keydown=${this.#onKeydown}
           ></textarea>
-          <div id="measure" ${ref(this.#measure)}></div>
+          <div
+            id="measure"
+            class="sans-flex w-500 round md-body-large"
+            ${ref(this.#measure)}
+          ></div>
         </div>
         <slot name="mic"></slot>
         <button id="submit" aria-label="Submit" @click=${this.#submit}>

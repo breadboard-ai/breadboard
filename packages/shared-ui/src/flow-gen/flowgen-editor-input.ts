@@ -95,8 +95,8 @@ export class FlowgenEditorInput extends LitElement {
         align-items: center;
         width: 100%;
         background: var(--ui-custom-o-10);
-        border-radius: var(--bb-grid-size-16);
-        padding: 12px;
+        border-radius: var(--bb-grid-size-10);
+        padding: var(--bb-grid-size-3);
       }
 
       bb-speech-to-text {
@@ -119,7 +119,7 @@ export class FlowgenEditorInput extends LitElement {
         transition: var(--color-transition);
         background: var(--n-100);
         border: none;
-        border-radius: var(--bb-grid-size-16);
+        border-radius: var(--bb-grid-size-7);
         padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
         --min-lines: 1;
         --max-lines: 4;
