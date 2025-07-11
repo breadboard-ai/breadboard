@@ -100,7 +100,6 @@ export class ItemSelect extends LitElement {
 
         &.icon:not(.tag) {
           grid-template-columns: 20px minmax(0, 1fr) 20px;
-          padding-right: 0;
         }
       }
 
@@ -169,7 +168,7 @@ export class ItemSelect extends LitElement {
         }
 
         &.selected {
-          background: var(--bb-neutral-50);
+          background: var(--n-98);
           width: max-content;
           max-width: 100%;
           height: var(--selected-item-height);
@@ -184,6 +183,13 @@ export class ItemSelect extends LitElement {
 
           &.icon .title {
             margin-left: var(--selected-item-column-gap);
+          }
+
+          &:not([disabled]) {
+            &:hover,
+            &:focus {
+              background: var(--n-95);
+            }
           }
         }
       }

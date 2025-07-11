@@ -550,6 +550,10 @@ export class EntityEditor extends SignalWatcher(LitElement) {
               flex: 1 1 auto;
               overflow: hidden;
               margin-right: var(--bb-grid-size-2);
+
+              bb-item-select {
+                --selected-item-height: var(--bb-grid-size-9);
+              }
             }
           }
 
@@ -662,36 +666,36 @@ export class EntityEditor extends SignalWatcher(LitElement) {
             & #controls {
               display: flex;
               align-items: center;
+              gap: 2px;
 
-              height: var(--bb-grid-size-7);
-              background: var(--bb-neutral-100);
+              height: var(--bb-grid-size-9);
+              background: var(--n-98);
               border-radius: var(--bb-grid-size-16);
-              padding: 0 var(--bb-grid-size-2);
+              padding: 2px;
 
               bb-flowgen-in-step-button {
                 z-index: 1;
-                margin: 0 var(--bb-grid-size);
               }
 
               #tools {
-                width: 20px;
-                height: 20px;
-                margin: 0 var(--bb-grid-size);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 38px;
+                height: 34px;
                 border: none;
-                background: var(--bb-neutral-100)
-                  var(--bb-icon-home-repair-service) center center / 20px 20px
-                  no-repeat;
+                background: var(--n-98);
                 transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
-                border-radius: var(--bb-grid-size);
-                padding: 0;
-                font-size: 0;
+                border-radius: var(--bb-grid-size-5) var(--bb-grid-size-16)
+                  var(--bb-grid-size-16) var(--bb-grid-size-5);
+                padding: 0 6px 0 0;
 
                 &:not([disabled]) {
                   cursor: pointer;
 
                   &:hover,
                   &:focus {
-                    background-color: var(--bb-neutral-200);
+                    background: var(--n-95);
                   }
                 }
               }
@@ -1349,7 +1353,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
                     this.#showFastAccess(bounds);
                   }}
                 >
-                  Tools
+                  <span class="g-icon round">home_repair_service</span>
                 </button>`
               : nothing}
           </div>
