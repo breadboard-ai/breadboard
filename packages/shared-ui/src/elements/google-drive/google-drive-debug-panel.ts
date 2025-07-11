@@ -16,7 +16,7 @@ import {
   type SigninAdapter,
   signinAdapterContext,
 } from "../../utils/signin-adapter.js";
-import { loadDrivePicker, loadDriveShare } from "./google-apis.js";
+import { loadDrivePicker, loadDriveShareClient } from "./google-apis.js";
 import { Files } from "@breadboard-ai/google-drive-kit/board-server/api.js";
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
@@ -420,12 +420,12 @@ export class GoogleDriveDebugPanel extends LitElement {
     if (!fileIds) {
       return;
     }
-    const driveShare = await loadDriveShare();
+    const ShareClient = await loadDriveShareClient();
     const auth = await this.signinAdapter?.token();
     if (auth?.state !== "valid") {
       return;
     }
-    const client = new driveShare.ShareClient();
+    const client = new ShareClient();
     client.setOAuthToken(auth.grant.access_token);
     const itemIds = fileIds.split(",");
     client.setItemIds(itemIds);

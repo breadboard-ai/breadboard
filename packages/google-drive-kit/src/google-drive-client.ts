@@ -159,6 +159,29 @@ export class GoogleDriveClient {
     );
   }
 
+  /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/create#:~:text=metadata%2Donly */
+  async createFileMetadata<const T extends ReadFileOptions>(
+    file: gapi.client.drive.File & { name: string; mimeType: string },
+    options?: T
+  ): Promise<NarrowedDriveFile<T["fields"]>> {
+    const url = new URL(`drive/v3/files`, this.#apiBaseUrl);
+    if (options?.fields?.length) {
+      url.searchParams.set("fields", options.fields.join(","));
+    }
+    const response = await this.#fetch(url, {
+      method: "POST",
+      body: JSON.stringify(file),
+      signal: options?.signal,
+    });
+    if (!response.ok) {
+      throw new Error(
+        `Google Drive create file metadata ${response.status} error: ` +
+          (await response.text())
+      );
+    }
+    return await response.json();
+  }
+
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/update */
   async updateFileMetadata<const T extends ReadFileOptions>(
     fileId: string,
