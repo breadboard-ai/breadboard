@@ -8,11 +8,15 @@ import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("Global");
 
 import { css, html, LitElement, nothing } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, state } from "lit/decorators.js";
 import { ActionTracker } from "../../utils/action-tracker.js";
-import { SigninAdapter } from "../../utils/signin-adapter";
+import {
+  SigninAdapter,
+  signinAdapterContext,
+} from "../../utils/signin-adapter";
 import { until } from "lit/directives/until.js";
 import { SignInEvent } from "../../events/events";
+import { consume } from "@lit/context";
 
 @customElement("bb-connection-entry-signin")
 export class ConnectionEntrySignin extends LitElement {
@@ -96,46 +100,31 @@ export class ConnectionEntrySignin extends LitElement {
     }
   `;
 
-  @property()
-  accessor adapter: SigninAdapter | null = null;
+  @consume({ context: signinAdapterContext })
+  accessor signinAdapter: SigninAdapter | undefined = undefined;
 
   @state()
   accessor errorMessage: string | null = null;
 
   override updated() {
-    if (this.adapter?.state === "signedout") {
+    if (this.signinAdapter?.state === "signedout") {
       ActionTracker.signInPageView();
     }
   }
 
   render() {
-    if (!this.adapter) {
+    if (!this.signinAdapter) {
       return nothing;
     }
 
-    if (this.adapter.state !== "signedout") return nothing;
+    if (this.signinAdapter.state !== "signedout") return nothing;
 
     return html` <div id="container">
       <div id="logo"></div>
       <h1>Welcome to ${Strings.from("APP_NAME")}</h1>
       <a
-        .href=${until(this.adapter.getSigninUrl())}
-        @click=${() => {
-          if (!this.adapter) {
-            return;
-          }
-
-          this.adapter.whenSignedIn(async (adapter) => {
-            // The adapter is immutable, this callback will always return a new
-            // copy with a new state, including picture and name.
-            if (adapter.state === "valid") {
-              ActionTracker.signInSuccess();
-              this.dispatchEvent(new SignInEvent());
-            } else if (adapter.errorMessage) {
-              this.errorMessage = adapter.errorMessage;
-            }
-          });
-        }}
+        .href=${until(this.signinAdapter.getSigninUrl())}
+        @click=${this.#onClickSignin}
         target="_blank"
         title="Sign into Google"
         >Sign into Google</a
@@ -144,6 +133,19 @@ export class ConnectionEntrySignin extends LitElement {
         ? html`<p class="error-message">${this.errorMessage}</p>`
         : nothing}
     </div>`;
+  }
+
+  async #onClickSignin() {
+    if (!this.signinAdapter) {
+      return;
+    }
+    const result = await this.signinAdapter.signIn();
+    if (result.ok) {
+      ActionTracker.signInSuccess();
+      this.dispatchEvent(new SignInEvent());
+    } else {
+      this.errorMessage = result.error;
+    }
   }
 }
 

@@ -16,7 +16,7 @@ import type {
 } from "@breadboard-ai/types";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { map } from "lit/directives/map.js";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, state } from "lit/decorators.js";
 import { LitElement, html, nothing } from "lit";
 import {
   createRunObserver,
@@ -150,9 +150,8 @@ export class Main extends SignalWatcher(LitElement) {
   @provide({ context: BreadboardUI.Contexts.embedderContext })
   accessor embedState!: EmbedState;
 
-  @property()
   @provide({ context: signinAdapterContext })
-  accessor signinAdapter: SigninAdapter | undefined;
+  accessor signinAdapter!: SigninAdapter;
 
   @provide({ context: googleDriveClientContext })
   accessor googleDriveClient: GoogleDriveClient | undefined;
@@ -315,10 +314,7 @@ export class Main extends SignalWatcher(LitElement) {
       proxyUrl: googleDriveProxyUrl,
       publicApiKey: this.environment.googleDrive.publicApiKey,
       getUserAccessToken: async () => {
-        if (!this.signinAdapter) {
-          throw new Error(`SigninAdapter is misconfigured`);
-        }
-        const token = await this.signinAdapter.refresh();
+        const token = await this.signinAdapter.token();
         if (token?.state === "valid") {
           return token.grant.access_token;
         }
@@ -409,11 +405,12 @@ export class Main extends SignalWatcher(LitElement) {
       this.#uiState.canRunMain = false;
     });
 
-    this.signinAdapter = this.#createSigninAdapter();
-    if (
-      this.signinAdapter.state === "invalid" ||
-      this.signinAdapter.state === "signedout"
-    ) {
+    this.signinAdapter = new SigninAdapter(
+      this.tokenVendor,
+      this.environment,
+      this.settingsHelper
+    );
+    if (this.signinAdapter.state === "signedout") {
       return;
     }
 
@@ -454,7 +451,7 @@ export class Main extends SignalWatcher(LitElement) {
     // Once we've determined the sign-in status, relay it to an embedder.
     this.#embedHandler?.sendToEmbedder({
       type: "home_loaded",
-      isSignedIn: this.signinAdapter.state === "valid",
+      isSignedIn: this.signinAdapter.state === "signedin",
     });
 
     if (args.boardServerUrl.protocol === GoogleDriveBoardServer.PROTOCOL) {
@@ -746,23 +743,16 @@ export class Main extends SignalWatcher(LitElement) {
 
             // Check and see if we're being asked for a sign-in key
             if (keys.at(0) === signInKey) {
-              // Yay, we can handle this ourselves.
-              const signInAdapter = new SigninAdapter(
-                this.tokenVendor,
-                this.environment,
-                this.settingsHelper
-              );
-              if (signInAdapter.state === "valid") {
-                runner?.run({ [signInKey]: signInAdapter.accessToken() });
-              } else {
-                signInAdapter.refresh().then((token) => {
-                  if (!runner?.running()) {
-                    runner?.run({
-                      [signInKey]: token?.grant?.access_token,
-                    });
-                  }
-                });
-              }
+              this.signinAdapter.token().then((token) => {
+                if (!runner?.running()) {
+                  runner?.run({
+                    [signInKey]:
+                      token.state === "valid"
+                        ? token.grant.access_token
+                        : undefined,
+                  });
+                }
+              });
               return;
             }
 
@@ -892,14 +882,6 @@ export class Main extends SignalWatcher(LitElement) {
       type: "board_id_created",
       id: saveResult.url.href,
     });
-  }
-
-  #createSigninAdapter() {
-    return new BreadboardUI.Utils.SigninAdapter(
-      this.tokenVendor,
-      this.environment,
-      this.settingsHelper
-    );
   }
 
   #maybeShowWelcomePanel() {
@@ -1399,17 +1381,8 @@ export class Main extends SignalWatcher(LitElement) {
       return nothing;
     }
 
-    if (!this.signinAdapter) {
-      return nothing;
-    }
-
-    if (
-      !this.signinAdapter ||
-      (this.signinAdapter.state !== "anonymous" &&
-        this.signinAdapter.state !== "valid")
-    ) {
+    if (this.signinAdapter.state === "signedout") {
       return html`<bb-connection-entry-signin
-        .adapter=${this.signinAdapter}
         @bbsignin=${async () => {
           window.location.reload();
         }}
@@ -1575,16 +1548,12 @@ export class Main extends SignalWatcher(LitElement) {
   }
 
   #renderAppController(renderValues: RenderValues) {
-    if (!this.signinAdapter) {
-      return nothing;
-    }
-
     return html` <bb-app-controller
       class=${classMap({ active: this.#uiState.mode === "app" })}
       .graph=${this.#tab?.graph ?? null}
       .projectRun=${renderValues.projectState?.run}
       .topGraphResult=${renderValues.topGraphResult}
-      .showGDrive=${this.signinAdapter.state === "valid"}
+      .showGDrive=${this.signinAdapter.state === "signedin"}
       .settings=${this.#settings}
       .boardServers=${this.#boardServers}
       .status=${renderValues.tabStatus}
@@ -1599,10 +1568,6 @@ export class Main extends SignalWatcher(LitElement) {
   }
 
   #renderCanvasController(renderValues: RenderValues) {
-    if (!this.signinAdapter) {
-      return nothing;
-    }
-
     return html` <bb-canvas-controller
       ${ref(this.#canvasControllerRef)}
       ?inert=${renderValues.showingOverlay}
@@ -1621,7 +1586,7 @@ export class Main extends SignalWatcher(LitElement) {
       .readOnly=${this.#tab?.readOnly ?? true}
       .selectionState=${this.#selectionState}
       .settings=${this.#settings}
-      .signedIn=${this.signinAdapter.state === "valid"}
+      .signedIn=${this.signinAdapter.state === "signedin"}
       .status=${renderValues.tabStatus}
       .themeHash=${renderValues.themeHash}
       .topGraphResult=${renderValues.topGraphResult}
@@ -2059,10 +2024,6 @@ export class Main extends SignalWatcher(LitElement) {
   }
 
   #renderHeader(renderValues: RenderValues) {
-    if (!this.signinAdapter) {
-      return nothing;
-    }
-
     return html`<bb-ve-header
       .signinAdapter=${this.signinAdapter}
       .hasActiveTab=${this.#tab !== null}
@@ -2080,16 +2041,12 @@ export class Main extends SignalWatcher(LitElement) {
           return;
         }
 
-        await signinAdapter.signout(() => {
-          this.toast(
-            Strings.from("STATUS_LOGGED_OUT"),
-            BreadboardUI.Events.ToastType.INFORMATION
-          );
-        });
-
-        // Recreating the signin adapter here will trigger a re-render with the
-        // updated state, which will cause us to show the sign-in dialog.
-        this.signinAdapter = this.#createSigninAdapter();
+        await signinAdapter.signOut();
+        this.toast(
+          Strings.from("STATUS_LOGGED_OUT"),
+          BreadboardUI.Events.ToastType.INFORMATION
+        );
+        this.requestUpdate();
       }}
       @bbclose=${() => {
         if (!this.#tab) {

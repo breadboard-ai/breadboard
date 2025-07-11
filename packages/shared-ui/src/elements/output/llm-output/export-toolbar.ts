@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { TokenVendor } from "@breadboard-ai/connection-client";
 import type { LLMContent } from "@breadboard-ai/types";
 import {
   isFileDataCapabilityPart,
@@ -12,13 +11,11 @@ import {
   isStoredData,
   isTextCapabilityPart,
 } from "@google-labs/breadboard";
-import { consume } from "@lit/context";
 import { LitElement, css, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { renderMarkdownToHtmlString } from "../../../directives/markdown.js";
 import { ToastEvent, ToastType } from "../../../events/events.js";
 import { toolbarStyles } from "../../../styles/toolbar-styles.js";
-import { tokenVendorContext } from "../../elements.js";
 import { classMap } from "lit/directives/class-map.js";
 
 const CAN_COPY = "ClipboardItem" in window;
@@ -30,9 +27,6 @@ export class ExportToolbar extends LitElement {
 
   @property({ type: Object })
   accessor value: LLMContent | null = null;
-
-  @consume({ context: tokenVendorContext })
-  accessor tokenVendor!: TokenVendor;
 
   @property({ type: Object })
   accessor supported = {

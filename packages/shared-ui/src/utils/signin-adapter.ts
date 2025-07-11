@@ -8,8 +8,10 @@ import {
   Connection,
   GrantResponse,
   ListConnectionsResponse,
+  SignedOutTokenResult,
   TokenGrant,
   TokenVendor,
+  ValidTokenResult,
 } from "@breadboard-ai/connection-client";
 import { Environment } from "../contexts/environment";
 import {
@@ -24,17 +26,16 @@ export { SigninAdapter };
 
 export const SIGN_IN_CONNECTION_ID = "$sign-in";
 
-/**
- * The three states are:
- *
- * - "anonymous" -- the runtime is not configured to use the sign in.
- * - "signedout" -- the user is not yet signed in or has signed out, but the
- *                  runtime is configured to use sign in.
- * - "valid" -- the user is currently signed in.
- * - "invalid" -- the runtime configuration is invalid and adapter can't
- *                function properly.
- */
-export type SigninState = "signedout" | "valid" | "anonymous" | "invalid";
+export type SigninAdapterState =
+  /** The runtime is not configured to use the sign in. */
+  | { status: "anonymous" }
+  | { status: "signedout" }
+  | {
+      status: "signedin";
+      id: string | undefined;
+      name: string | undefined;
+      picture: string | undefined;
+    };
 
 export const signinAdapterContext = createContext<SigninAdapter | undefined>(
   "SigninAdapter"
@@ -48,92 +49,64 @@ export const signinAdapterContext = createContext<SigninAdapter | undefined>(
  * settingsHelper are present.
  */
 class SigninAdapter {
-  static #cachedPicture: string | null | undefined;
-  #tokenVendor?: TokenVendor;
-  #environment?: Environment;
-  #settingsHelper?: SettingsHelper;
-
+  readonly #tokenVendor: TokenVendor;
+  readonly #environment: Environment;
+  readonly #settingsHelper: SettingsHelper;
   #nonce = crypto.randomUUID();
-
-  readonly state: SigninState;
-  readonly picture?: string;
-  readonly id?: string;
-  readonly name?: string;
+  #state: SigninAdapterState;
 
   constructor(
-    tokenVendor?: TokenVendor,
-    environment?: Environment,
-    settingsHelper?: SettingsHelper,
-    public readonly errorMessage?: string
+    tokenVendor: TokenVendor,
+    environment: Environment,
+    settingsHelper: SettingsHelper
   ) {
-    if (!environment || !tokenVendor || !settingsHelper) {
-      this.state = "invalid";
-      return;
-    }
     this.#tokenVendor = tokenVendor;
     this.#environment = environment;
     this.#settingsHelper = settingsHelper;
 
     if (!environment.requiresSignin) {
-      this.state = "anonymous";
+      this.#state = { status: "anonymous" };
       return;
     }
+
     const token = tokenVendor.getToken(SIGN_IN_CONNECTION_ID);
-    const { state } = token;
-    if (state === "signedout") {
-      this.state = "signedout";
+    if (token.state === "signedout") {
+      this.#state = { status: "signedout" };
       return;
     }
+
     const { grant } = token;
-    if (!grant) {
-      this.state = "invalid";
-      return;
-    }
-
-    this.state = "valid";
-    this.picture = grant?.picture;
-    this.id = grant?.id;
-    this.name = grant?.name;
+    this.#state = {
+      status: "signedin",
+      id: grant.id,
+      name: grant.name,
+      picture: grant.picture,
+    };
   }
 
-  accessToken(): string | null {
-    if (this.state === "valid") {
-      const token = this.#tokenVendor?.getToken(SIGN_IN_CONNECTION_ID);
-      return token?.grant?.access_token || null;
-    }
-    return null;
+  get state() {
+    return this.#state.status;
   }
 
-  async cachedPicture(): Promise<string | undefined> {
-    if (SigninAdapter.#cachedPicture === undefined && this.picture) {
-      try {
-        const token = await this.refresh();
-        if (!token?.grant) {
-          SigninAdapter.#cachedPicture = null;
-          return;
-        }
-        const picture = await fetch(this.picture, {
-          headers: {
-            Authorization: `Bearer ${token.grant.access_token}`,
-          },
-        });
-        if (!picture.ok) {
-          SigninAdapter.#cachedPicture = null;
-          return;
-        }
-        const blobURL = URL.createObjectURL(await picture.blob());
-        return blobURL;
-      } catch (e) {
-        console.warn(e);
-        SigninAdapter.#cachedPicture = null;
-      }
-    }
-    return SigninAdapter.#cachedPicture || undefined;
+  get id() {
+    return this.#state.status === "signedin" ? this.#state.id : undefined;
   }
 
-  async refresh() {
-    const token = this.#tokenVendor?.getToken(SIGN_IN_CONNECTION_ID);
-    if (token?.state === "expired") {
+  get name() {
+    return this.#state.status === "signedin" ? this.#state.name : undefined;
+  }
+
+  get picture() {
+    return this.#state.status === "signedin" ? this.#state.picture : undefined;
+  }
+
+  /**
+   * Gets you a token, refreshing automatically if needed, unless the user is
+   * signed out.
+   */
+  async token(): Promise<ValidTokenResult | SignedOutTokenResult> {
+    const token = this.#tokenVendor.getToken(SIGN_IN_CONNECTION_ID);
+    if (token.state === "expired") {
       return token.refresh();
     }
     return token;
@@ -141,7 +114,7 @@ class SigninAdapter {
 
   async #getConnection(): Promise<Connection | undefined> {
     const httpRes = await fetch(
-      new URL("list", this.#environment?.connectionServerUrl),
+      new URL("list", this.#environment.connectionServerUrl),
       {
         credentials: "include",
       }
@@ -150,7 +123,7 @@ class SigninAdapter {
       return;
     }
     const list = (await httpRes.json()) as ListConnectionsResponse;
-    const connection = list.connections?.find(
+    const connection = list.connections.find(
       (connection) => connection.id == SIGN_IN_CONNECTION_ID
     );
     if (!connection) {
@@ -160,12 +133,12 @@ class SigninAdapter {
   }
 
   async getSigninUrl(): Promise<string> {
-    if (this.state !== "signedout") return "";
+    if (this.#state.status !== "signedout") return "";
 
     const connection = await this.#getConnection();
     if (!connection) return "";
 
-    let redirectUri = this.#environment?.connectionRedirectUrl;
+    let redirectUri = this.#environment.connectionRedirectUrl;
     if (!redirectUri) return "";
 
     redirectUri = new URL(redirectUri, new URL(window.location.href).origin)
@@ -186,41 +159,15 @@ class SigninAdapter {
     return authUrl.href;
   }
 
-  /**
-   * Handles the part of the process after
-   * the sign-in: storing the connection in
-   * the settings, and calling the callback.
-   * Note, it always returns a new copy of
-   * the SigninAdapter, which will contain
-   * the picture and name.
-   */
-  async whenSignedIn(
-    signinCallback: (adapter: SigninAdapter) => Promise<void>
-  ) {
+  async signIn(): Promise<{ ok: true } | { ok: false; error: string }> {
     const now = Date.now();
-    if (this.state === "invalid") {
-      await signinCallback(
-        new SigninAdapter(
-          undefined,
-          undefined,
-          undefined,
-          "Sign in configuration error"
-        )
-      );
-      return;
-    }
-    const nonce = this.#nonce;
-    // Reset the nonce in case the user signs out and signs back in again, since
-    // we don't want to ever mix up different requests.
-    setTimeout(
-      // TODO(aomarks) This shouldn't be necessary, what's up?
-      () => (this.#nonce = crypto.randomUUID()),
-      500
-    );
     // The OAuth broker page will know to broadcast the token on this unique
     // channel because it also knows the nonce (since we pack that in the OAuth
     // "state" parameter).
-    const channelName = oauthTokenBroadcastChannelName(nonce);
+    const channelName = oauthTokenBroadcastChannelName(this.#nonce);
+    // Reset the nonce in case the user signs out and signs back in again, since
+    // we don't want to ever mix up different requests.
+    this.#nonce = crypto.randomUUID();
     const channel = new BroadcastChannel(channelName);
     const grantResponse = await new Promise<GrantResponse>((resolve) => {
       channel.addEventListener("message", (m) => resolve(m.data), {
@@ -231,23 +178,12 @@ class SigninAdapter {
     if (grantResponse.error !== undefined) {
       // TODO(aomarks) Show error info in the UI.
       console.error(grantResponse.error);
-      await signinCallback(
-        new SigninAdapter(undefined, undefined, undefined, grantResponse.error)
-      );
-      return;
+      return { ok: false, error: grantResponse.error };
     }
 
     const connection = await this.#getConnection();
     if (!connection) {
-      await signinCallback(
-        new SigninAdapter(
-          undefined,
-          undefined,
-          undefined,
-          "Connection not found"
-        )
-      );
-      return;
+      return { ok: false, error: "Connection not found" };
     }
 
     const settingsValue: TokenGrant = {
@@ -260,28 +196,25 @@ class SigninAdapter {
       picture: grantResponse.picture,
       id: grantResponse.id,
     };
-    await this.#settingsHelper?.set(SETTINGS_TYPE.CONNECTIONS, connection.id, {
+    await this.#settingsHelper.set(SETTINGS_TYPE.CONNECTIONS, connection.id, {
       name: connection.id,
       value: JSON.stringify(settingsValue),
     });
-    await signinCallback(
-      new SigninAdapter(
-        this.#tokenVendor,
-        this.#environment,
-        this.#settingsHelper
-      )
-    );
+    this.#state = {
+      status: "signedin",
+      id: grantResponse.id,
+      name: grantResponse.name,
+      picture: grantResponse.picture,
+    };
+    return { ok: true };
   }
 
-  async signout(signoutCallback: () => void) {
-    if (!this.#settingsHelper) {
-      return;
-    }
+  async signOut(): Promise<void> {
     const connection = await this.#getConnection();
     if (!connection) {
       return;
     }
     await this.#settingsHelper.delete(SETTINGS_TYPE.CONNECTIONS, connection.id);
-    signoutCallback();
+    this.#state = { status: "signedout" };
   }
 }

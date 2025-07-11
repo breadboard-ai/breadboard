@@ -64,10 +64,6 @@ import {
 import { icons } from "../../styles/icons.js";
 import { type GoogleDrivePicker, EntityEditor } from "../elements.js";
 import { consume } from "@lit/context";
-import {
-  type SigninAdapter,
-  signinAdapterContext,
-} from "../../utils/signin-adapter.js";
 import { findGoogleDriveAssetsInGraph } from "../google-drive/find-google-drive-assets-in-graph.js";
 import { SharePanel } from "../share-panel/share-panel.js";
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
@@ -187,10 +183,6 @@ export class CanvasController extends LitElement {
 
   @state()
   accessor #showEditHistory = false;
-
-  @consume({ context: signinAdapterContext })
-  @property({ attribute: false })
-  accessor signinAdapter: SigninAdapter | undefined = undefined;
 
   @consume({ context: googleDriveClientContext })
   @property({ attribute: false })
