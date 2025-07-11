@@ -422,4 +422,36 @@ describe("Orchestrator", () => {
       }
     });
   });
+
+  describe("progress status", () => {
+    it("should correctly report progress", () => {
+      const orchestrator = new Orchestrator(diamondPlan);
+      assertTasks(orchestrator.currentTasks(), ["input"]);
+      {
+        orchestrator.provideOutputs("input", {
+          left: "left-audio",
+          right: "right-audio",
+        });
+        deepStrictEqual(orchestrator.progress, "advanced");
+      }
+      {
+        orchestrator.provideOutputs("left-channel", {
+          processed: "processed-left-audio",
+        });
+        deepStrictEqual(orchestrator.progress, "working");
+      }
+      {
+        orchestrator.provideOutputs("right-channel", {
+          processed: "processed-right-audio",
+        });
+        deepStrictEqual(orchestrator.progress, "advanced");
+      }
+      {
+        orchestrator.provideOutputs("mixer", {
+          result: "mixed-audio",
+        });
+        deepStrictEqual(orchestrator.progress, "finished");
+      }
+    });
+  });
 });

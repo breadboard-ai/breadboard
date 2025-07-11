@@ -66,9 +66,17 @@ const PROCESSING_STATES: ReadonlySet<NodeLifecycleState> = new Set([
 class Orchestrator {
   readonly #state: OrchestratorState = new Map();
   #currentStage: number = 0;
+  #progress: OrchestratorProgress = "initial";
 
   constructor(public readonly plan: OrchestrationPlan) {
     this.reset();
+  }
+
+  /**
+   * Returns current progress of the orchestration.
+   */
+  get progress() {
+    return this.#progress;
   }
 
   /**
@@ -94,6 +102,7 @@ class Orchestrator {
       return err((e as Error).message);
     }
     this.#currentStage = 0;
+    this.#progress = "initial";
   }
 
   setWorking(id: NodeIdentifier): Outcome<void> {
@@ -241,11 +250,17 @@ class Orchestrator {
       (plan) => this.#state.get(plan.node.id)?.state !== "ready"
     );
     // Nope, still work to do.
-    if (!complete) return "working";
+    if (!complete) {
+      this.#progress = "working";
+      return this.#progress;
+    }
 
     try {
       const nextStageIndex = this.#currentStage + 1;
-      if (nextStageIndex > this.plan.stages.length - 1) return "finished";
+      if (nextStageIndex > this.plan.stages.length - 1) {
+        this.#progress = "finished";
+        return this.#progress;
+      }
 
       const stage = this.plan.stages[nextStageIndex];
       stage.forEach((info) => {
@@ -302,7 +317,8 @@ class Orchestrator {
       this.#currentStage = nextStageIndex;
 
       // Propagate outputs from the current stage as inputs for the next stage.
-      return "advanced";
+      this.#progress = "advanced";
+      return this.#progress;
     } catch (e) {
       return err((e as Error).message);
     }
