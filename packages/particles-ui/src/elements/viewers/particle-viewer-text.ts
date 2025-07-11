@@ -74,7 +74,7 @@ export class ParticleViewerText extends LitElement implements ParticleViewer {
         this.value as string,
         appendToAll(
           this.theme.markdown,
-          ["ol", "ul", "li"],
+          [],
           this.field.modifiers?.includes("hero")
             ? this.theme.modifiers.hero
             : {}
