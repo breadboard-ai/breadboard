@@ -14,7 +14,6 @@ export type GrantResponse =
       error?: undefined;
       access_token: string;
       expires_in: number;
-      refresh_token: string;
       picture?: string;
       name?: string;
       id?: string;
@@ -23,7 +22,9 @@ export type GrantResponse =
 export interface ServerConfig {
   connections: Map<string, ConnectionConfig>;
   allowedOrigins: string[];
-  validateResponse?: (response: GrantResponse) => Promise<GrantResponse>;
+  validateResponse?: (
+    response: GrantResponse
+  ) => Promise<{ ok: true } | { ok: false; error: string }>;
 }
 
 export interface ConnectionsConfigFile {

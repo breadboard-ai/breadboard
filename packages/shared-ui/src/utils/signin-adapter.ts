@@ -190,7 +190,6 @@ class SigninAdapter {
       client_id: connection.clientId,
       access_token: grantResponse.access_token,
       expires_in: grantResponse.expires_in,
-      refresh_token: grantResponse.refresh_token,
       issue_time: now,
       name: grantResponse.name,
       picture: grantResponse.picture,

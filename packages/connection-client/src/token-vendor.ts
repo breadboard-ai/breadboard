@@ -45,6 +45,14 @@ export class TokenVendorImpl {
       return { state: "signedout" };
     }
     const grant = JSON.parse(grantJsonString) as TokenGrant;
+    const usingLessSecureRefreshTokenStorage = !!grant.refresh_token;
+    if (usingLessSecureRefreshTokenStorage) {
+      // In July 2025, we switched from storing the refresh token in IndexedDB,
+      // to storing it as an HttpOnly cookie, for better security. If we still
+      // have one of these older refresh tokens, make the user sign in again to
+      // switch to the new cookie approach.
+      return { state: "signedout" };
+    }
     const needsClientIdRepair = grant.client_id === undefined;
     if (grantIsExpired(grant) || needsClientIdRepair) {
       return {
@@ -77,7 +85,6 @@ export class TokenVendorImpl {
     );
     refreshUrl.search = new URLSearchParams({
       connection_id: connectionId,
-      refresh_token: expiredGrant.refresh_token,
     } satisfies RefreshRequest).toString();
 
     const now = Date.now();
@@ -98,7 +105,6 @@ export class TokenVendorImpl {
       access_token: jsonRes.access_token,
       expires_in: jsonRes.expires_in,
       issue_time: now,
-      refresh_token: expiredGrant.refresh_token,
       id: expiredGrant.id,
       picture: expiredGrant.picture,
       name: expiredGrant.name,

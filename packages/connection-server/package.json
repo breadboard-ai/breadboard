@@ -85,6 +85,8 @@
     "wireit": "^0.15.0-pre.2"
   },
   "dependencies": {
+    "@types/cookie-parser": "^1.4.9",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "jwt-decode": "^4.0.0"

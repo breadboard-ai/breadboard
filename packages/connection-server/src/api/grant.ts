@@ -4,10 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { jwtDecode, type JwtPayload } from "jwt-decode";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { GrantResponse, ServerConfig } from "../config.js";
 import { badRequestJson, internalServerError, okJson } from "../responses.js";
-import { jwtDecode, type JwtPayload } from "jwt-decode";
+import { oAuthRefreshTokenCookieId } from "./cookies.js";
 
 export type TokenEndpointGrantResponse =
   | { error: string }
@@ -91,20 +92,29 @@ export async function grant(
     const grantResponse: GrantResponse = {
       access_token: tokenResponse.access_token,
       expires_in: tokenResponse.expires_in,
-      refresh_token: tokenResponse.refresh_token,
       picture,
       name,
       id,
     };
     if (config.validateResponse) {
       const checkedGrantResponse = await config.validateResponse(grantResponse);
-      if (checkedGrantResponse.error) {
+      if (!checkedGrantResponse.ok) {
         return badRequestJson(res, {
           error: checkedGrantResponse.error,
         });
       }
-      return okJson(res, checkedGrantResponse);
     }
+    res.setHeader(
+      "Set-Cookie",
+      [
+        `${oAuthRefreshTokenCookieId}=${tokenResponse.refresh_token}`,
+        `HttpOnly`,
+        `Max-Age=${365 * 24 * 60 * 60}`,
+        `Path=/connection/refresh`,
+        `SameSite=Strict`,
+        `Secure`,
+      ].join("; ")
+    );
     return okJson(res, grantResponse);
   }
 

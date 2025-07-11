@@ -13,11 +13,13 @@ type AllowListCheckResponse = {
 };
 
 function allowListChecker(endpointUrl: URL | "" | undefined) {
-  return async (grant: GrantResponse): Promise<GrantResponse> => {
+  return async (
+    grant: GrantResponse
+  ): Promise<{ ok: true } | { ok: false; error: string }> => {
     // When endpointUrl isn't supplied, allow everyone.
-    if (!endpointUrl) return grant;
+    if (!endpointUrl) return { ok: true };
 
-    if ("error" in grant) return grant;
+    if ("error" in grant) return { ok: true };
 
     try {
       const result = (await (
@@ -28,13 +30,17 @@ function allowListChecker(endpointUrl: URL | "" | undefined) {
         })
       ).json()) as AllowListCheckResponse;
       if (result.canAccess) {
-        return grant;
+        return { ok: true };
       }
     } catch (e) {
-      return { error: "Unable to verify product availability for the user" };
+      return {
+        ok: false,
+        error: "Unable to verify product availability for the user",
+      };
     }
 
     return {
+      ok: false,
       error: "Unfortunately, our product is not available in your region",
     };
   };
