@@ -43,7 +43,7 @@ import type {
   tsSync,
 } from "@valtown/codemirror-ts";
 import { SigninAdapterState } from "../utils/signin-adapter";
-import { LitElement } from "lit";
+import { HTMLTemplateResult, LitElement } from "lit";
 
 export const enum HistoryEventType {
   DONE = "done",
@@ -632,7 +632,7 @@ export type SnackbarMessage = {
   id: SnackbarUUID;
   type: SnackType;
   persistent: boolean;
-  message: string;
+  message: string | HTMLTemplateResult;
   actions?: SnackbarAction[];
 };
 

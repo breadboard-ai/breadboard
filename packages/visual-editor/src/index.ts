@@ -17,7 +17,7 @@ import type {
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { map } from "lit/directives/map.js";
 import { customElement, state } from "lit/decorators.js";
-import { LitElement, html, nothing } from "lit";
+import { HTMLTemplateResult, LitElement, html, nothing } from "lit";
 import {
   createRunObserver,
   GraphDescriptor,
@@ -466,6 +466,35 @@ export class Main extends SignalWatcher(LitElement) {
         console.log(`Connected to server`);
       }
     }
+
+    this.#maybeNotifyAboutPreferredUrlForDomain();
+  }
+
+  async #maybeNotifyAboutPreferredUrlForDomain() {
+    const domain = this.signinAdapter.domain;
+    if (!domain) {
+      return;
+    }
+    const url =
+      this.clientDeploymentConfiguration.domains?.[domain].preferredUrl;
+    if (!url) {
+      return;
+    }
+    for (let i = 0; !this.#snackbarRef.value && i < 5; i++) {
+      // It's tricky to know when the snackbar is going to be available.
+      // Possibly the snackbar should be a service that is always available, so
+      // that messages can be queued independent of rendering.
+      await this.updateComplete;
+    }
+    this.snackbar(
+      html`
+        Users from ${domain} should prefer
+        <a href="${url}">${new URL(url).hostname}</a>
+      `,
+      BreadboardUI.Types.SnackType.WARNING,
+      [],
+      true
+    );
   }
 
   #addRuntimeEventHandlers() {
@@ -798,6 +827,7 @@ export class Main extends SignalWatcher(LitElement) {
           }
 
           if (urlWithoutMode) {
+            let timeoutExpired = false;
             const loadingTimeout = setTimeout(() => {
               this.snackbar(
                 Strings.from("STATUS_GENERIC_LOADING"),
@@ -807,6 +837,7 @@ export class Main extends SignalWatcher(LitElement) {
                 evt.id,
                 true
               );
+              timeoutExpired = true;
             }, LOADING_TIMEOUT);
 
             this.#uiState.loadState = "Loading";
@@ -822,7 +853,9 @@ export class Main extends SignalWatcher(LitElement) {
               evt.resultsFileId
             );
             clearTimeout(loadingTimeout);
-            this.unsnackbar();
+            if (timeoutExpired) {
+              this.unsnackbar();
+            }
           }
         }
       }
@@ -1050,7 +1083,7 @@ export class Main extends SignalWatcher(LitElement) {
   }
 
   snackbar(
-    message: string,
+    message: string | HTMLTemplateResult,
     type: BreadboardUI.Types.SnackType,
     actions: BreadboardUI.Types.SnackbarAction[] = [],
     persistent = false,
@@ -1058,6 +1091,7 @@ export class Main extends SignalWatcher(LitElement) {
     replaceAll = false
   ) {
     if (!this.#snackbarRef.value) {
+      console.error(`snackbar was not ready yet`, message);
       return;
     }
 
