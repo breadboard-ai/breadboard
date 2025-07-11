@@ -33,6 +33,28 @@ export interface WritePermissionOptions extends BaseRequestOptions {
   sendNotificationEmail: boolean;
 }
 
+/**
+ * A DriveFile (which usually has every field as optional) but where some of the
+ * fields are required. Used when we know we are retrieving certain fields, so
+ * we can assert that the values will be populated.
+ */
+type NarrowedDriveFile<
+  T extends Array<keyof gapi.client.drive.File> | undefined,
+> = {
+  [K in keyof Required<gapi.client.drive.File> as K extends (
+    T extends Array<keyof gapi.client.drive.File>
+      ? T[number]
+      : // The default properties that are returned when fields is not set.
+        "id" | "kind" | "name" | "mimeType"
+  )
+    ? K
+    : // Some properties can be undefined even when requested (either because
+      // they are absent or because we don't have permission to read them).
+      never]: K extends "permissions" | "properties" | "appProperties"
+    ? gapi.client.drive.File[K]
+    : Exclude<gapi.client.drive.File[K], undefined>;
+};
+
 export class GoogleDriveClient {
   readonly #apiBaseUrl: string;
   readonly #proxyUrl?: string;
@@ -55,20 +77,7 @@ export class GoogleDriveClient {
   async getFileMetadata<const T extends ReadFileOptions>(
     fileId: string,
     options?: T
-  ): Promise<{
-    [K in keyof Required<gapi.client.drive.File> as K extends (
-      T["fields"] extends Array<keyof gapi.client.drive.File>
-        ? T["fields"][number]
-        : // The default properties that are returned when fields is not set.
-          "id" | "kind" | "name" | "mimeType"
-    )
-      ? K
-      : // Some properties can be undefined even when requested (either because
-        // they are absent or because we don't have permission to read them).
-        never]: K extends "permissions" | "properties" | "appProperties"
-      ? gapi.client.drive.File[K]
-      : Exclude<gapi.client.drive.File[K], undefined>;
-  }> {
+  ): Promise<NarrowedDriveFile<T["fields"]>> {
     let response = await this.#getFile(fileId, options, {
       kind: "bearer",
       token: await this.#getUserAccessToken(),
