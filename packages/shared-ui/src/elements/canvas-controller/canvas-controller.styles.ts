@@ -38,8 +38,12 @@ export const styles = [
         position: absolute;
         top: 50%;
         transform: translateY(-50%);
-        right: var(--bb-grid-size-5);
+        right: var(--bb-grid-size-3);
         z-index: 6;
+        height: calc(100% - var(--bb-grid-size-6));
+        width: 25svw;
+        min-width: 280px;
+        max-width: 360px;
       }
     }
 

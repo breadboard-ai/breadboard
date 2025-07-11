@@ -187,6 +187,8 @@ export const colorsLight = css`
     );
     --ui-scrim: rgba(0, 0, 0, 0.6);
     --ui-flowgen-step: #e2e1f1;
+    --ui-theme-segment: #f1f4f8;
+    --ui-theme-generating: #d6e2fb;
   }
 
   :host {
