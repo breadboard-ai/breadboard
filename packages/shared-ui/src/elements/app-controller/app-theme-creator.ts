@@ -3,6 +3,10 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
+
+import * as Strings from "../../strings/helper.js";
+const GlobalStrings = Strings.forSection("Global");
+
 import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { consume } from "@lit/context";
@@ -11,16 +15,15 @@ import GenerateAppTheme from "../../sideboards/sideboards-bgl/generate-app-theme
 import {
   AppTemplateAdditionalOptionsAvailable,
   AppTheme,
+  SnackType,
 } from "../../types/types.js";
 import {
   OverlayDismissedEvent,
+  SnackbarEvent,
   StateEvent,
-  ToastEvent,
-  ToastType,
 } from "../../events/events.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { repeat } from "lit/directives/repeat.js";
-import { styleMap } from "lit/directives/style-map.js";
 import { sideBoardRuntime } from "../../contexts/side-board-runtime.js";
 import { SideBoardRuntime } from "../../sideboards/types.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -34,6 +37,9 @@ import {
   generatePaletteFromImage,
 } from "@breadboard-ai/theme";
 import { guard } from "lit/directives/guard.js";
+import { colorsLight } from "../../styles/host/colors-light";
+import { type } from "../../styles/host/type";
+import { icons } from "../../styles/icons";
 
 @customElement("bb-app-theme-creator")
 export class AppThemeCreator extends LitElement {
@@ -62,130 +68,61 @@ export class AppThemeCreator extends LitElement {
   accessor googleDriveClient!: GoogleDriveClient | undefined;
 
   @state()
-  accessor _generating = false;
+  accessor #generating = false;
 
   @state()
-  accessor _changed = false;
+  accessor #generatingRandom = false;
 
-  static styles = css`
-    * {
-      box-sizing: border-box;
-    }
+  @state()
+  accessor #changed = false;
 
-    :host {
-      display: block;
-      width: 25svw;
-      min-width: 280px;
-      max-width: 360px;
-      user-select: none;
-    }
+  static styles = [
+    colorsLight,
+    type,
+    icons,
+    css`
+      * {
+        box-sizing: border-box;
+      }
 
-    #container {
-      display: flex;
-      flex-direction: column;
-      background: var(--bb-neutral-0);
-      border-radius: var(--bb-grid-size-2);
-      border: 1px solid var(--bb-neutral-300);
+      :host {
+        display: block;
+        user-select: none;
+      }
 
-      & h1 {
+      #container {
         display: flex;
-        align-items: center;
-        justify-content: space-between;
-        font: 400 var(--bb-title-large) / var(--bb-title-line-height-large)
-          var(--bb-font-family);
-        padding: 0 var(--bb-grid-size-3);
-        height: var(--bb-grid-size-12);
-        border-bottom: 1px solid var(--bb-neutral-300);
-        margin: 0;
+        flex-direction: column;
+        background: var(--bb-neutral-0);
+        border-radius: var(--bb-grid-size-4);
+        height: 100%;
+        overflow: auto;
 
-        & span {
-          flex: 1;
-          background: var(--bb-icon-palette) 4px center / 20px 20px no-repeat;
-          padding: 0 var(--bb-grid-size-8);
-        }
-
-        & #close {
-          width: 20px;
-          height: 20px;
-          background: var(--bb-icon-close) center center / 20px 20px no-repeat;
-          font-size: 0;
-          border: none;
-          opacity: 0.6;
-          transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
-
-          &:not([disabled]) {
-            cursor: pointer;
-
-            &:hover,
-            &:focus {
-              opacity: 1;
-            }
-          }
-        }
-      }
-
-      #generate-theme,
-      #theme-selector {
-        & h2 {
-          font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
-            var(--bb-font-family);
-          margin: 0 0 var(--bb-grid-size-2) 0;
-        }
-
-        & input[type="text"],
-        & input[type="number"],
-        & textarea,
-        & select {
-          display: block;
-          width: 100%;
-          border-radius: var(--bb-grid-size);
-          background: var(--bb-neutral-0);
-          color: var(--bb-neutral-900);
-          padding: var(--bb-grid-size-2);
-          border: 1px solid var(--bb-neutral-300);
-          resize: none;
-          font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
-            var(--bb-font-family);
-        }
-
-        textarea {
-          field-sizing: content;
-        }
-      }
-
-      #generate-theme {
-        padding: var(--bb-grid-size-3);
-
-        & textarea {
-          min-height: 44px;
-          padding-right: var(--bb-grid-size-12);
-          background: var(--bb-add-icon-generative) var(--bb-neutral-0)
-            calc(100% - 8px) center / 20px 20px no-repeat;
-        }
-      }
-
-      #theme-selector {
-        & h2 {
+        & > header {
           display: flex;
           align-items: center;
-          padding: var(--bb-grid-size-3) var(--bb-grid-size-3) 0
-            var(--bb-grid-size-3);
+          justify-content: space-between;
+          border-bottom: 1px solid var(--n-90);
+          height: var(--bb-grid-size-14);
+          padding: 0 var(--bb-grid-size-3);
 
-          & span {
+          & h1 {
             flex: 1;
-            background: var(--bb-icon-palette) 4px center / 20px 20px no-repeat;
-            padding: 0 var(--bb-grid-size-8);
           }
 
-          & button {
-            width: 20px;
-            height: 20px;
-            background: var(--bb-icon-delete) center center / 20px 20px
-              no-repeat;
-            font-size: 0;
+          & #close {
+            width: 30px;
+            height: 30px;
+            color: var(--n-0);
+            background: none;
             border: none;
             opacity: 0.6;
             transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+
+            & .g-icon {
+              pointer-events: none;
+              font-size: 30px;
+            }
 
             &:not([disabled]) {
               cursor: pointer;
@@ -198,36 +135,51 @@ export class AppThemeCreator extends LitElement {
           }
         }
 
-        & menu {
-          padding: 3px var(--bb-grid-size-3);
-          margin: 0 0 var(--bb-grid-size-3) 0;
-          scroll-padding-right: var(--bb-grid-size-3);
-          scroll-padding-left: var(--bb-grid-size-3);
-
-          list-style: none;
-          display: flex;
+        & #content {
+          flex: 1;
           overflow: scroll;
           scrollbar-width: none;
 
-          & li {
-            margin-right: var(--bb-grid-size-3);
+          #explainer {
+            margin: 0;
+            padding: var(--bb-grid-size-4) var(--bb-grid-size-3);
+            color: var(--n-60);
+          }
 
-            &:last-of-type {
-              margin-right: 0;
+          form.generate-container {
+            display: flex;
+            align-items: center;
+            background: var(--n-100);
+            border-radius: var(--bb-grid-size-3);
+            outline: 3px solid var(--ui-custom-o-10);
+            padding: var(--bb-grid-size-3);
+
+            &:focus-within {
+              outline: 3px solid var(--ui-custom-o-100);
             }
 
-            & button {
-              padding: 0;
-              display: grid;
-              grid-template-columns: repeat(5, 1fr);
-              width: 102px;
-              border: 1px solid var(--bb-neutral-0);
-              outline: 1px solid var(--bb-neutral-500);
-              background: var(--bb-neutral);
-              border-radius: var(--bb-grid-size-2);
+            & textarea {
+              border: none;
+              padding: var(--bb-grid-size-2);
+              field-sizing: content;
+              flex: 1;
+              outline: none;
+              resize: none;
+              background: var(--n-100);
+            }
 
-              &.selected {
-                outline: 3px solid var(--bb-ui-500);
+            & #start-generate {
+              padding: 0;
+              margin: 0;
+              color: var(--n-0);
+              background: none;
+              border: none;
+              opacity: 0.6;
+              transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+
+              & .g-icon {
+                pointer-events: none;
+                font-size: 30px;
               }
 
               &:not([disabled]) {
@@ -235,209 +187,186 @@ export class AppThemeCreator extends LitElement {
 
                 &:hover,
                 &:focus {
-                  outline: 3px solid var(--bb-ui-500);
-                }
-              }
-
-              & img {
-                width: 100px;
-                grid-column: 1 / 6;
-                aspect-ratio: 1 / 1;
-                object-fit: cover;
-                background: url(/images/progress-ui.svg) center center / 20px
-                  20px no-repeat;
-                border-radius: var(--bb-grid-size-2);
-
-                &.default {
-                  object-fit: contain;
-                }
-              }
-
-              & .color {
-                width: 20px;
-                height: 20px;
-                background-color: var(--background);
-
-                &:first-of-type {
-                  border-radius: 0 0 0 var(--bb-grid-size-2);
-                }
-
-                &:last-of-type {
-                  border-radius: 0 0 var(--bb-grid-size-2) 0;
+                  opacity: 1;
                 }
               }
             }
           }
-        }
 
-        & #theme-colors {
-          display: none;
-        }
+          .segment {
+            border-radius: var(--bb-grid-size-5);
+            padding: var(--bb-grid-size-4);
+            background: var(--ui-theme-segment);
+            margin: 0 var(--bb-grid-size-3) var(--bb-grid-size-4)
+              var(--bb-grid-size-3);
 
-        & #theme-options,
-        & #theme-colors {
-          padding: 0 var(--bb-grid-size-3);
+            & h2 {
+              flex: 1;
+              margin: 0 0 var(--bb-grid-size-5) 0;
+            }
 
-          & > div {
-            display: grid;
-            grid-template-columns: 80px 1fr;
-            column-gap: var(--bb-grid-size-2);
-            align-items: center;
-            margin-bottom: var(--bb-grid-size-3);
-          }
+            & header {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              padding: 0;
+              margin: 0 0 var(--bb-grid-size-5) 0;
 
-          & label {
-            font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
-              var(--bb-font-family);
-            white-space: nowrap;
-          }
+              & h2 {
+                flex: 1;
+                margin: 0;
+              }
 
-          input[type="color"] {
-            width: 20px;
-            height: 20px;
-            padding: 0;
-            border: 1px solid var(--bb-neutral-200);
-            border-radius: 0;
-          }
+              & button {
+                padding: 0;
+                margin: 0;
+                color: var(--n-0);
+                background: none;
+                border: none;
+                opacity: 0.6;
+                transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
 
-          input[type="color"]::-webkit-color-swatch-wrapper {
-            padding: 0;
-            border: none;
-            width: 20px;
-            height: 20px;
-          }
+                & .g-icon {
+                  pointer-events: none;
+                }
 
-          input[type="color"]::-webkit-color-swatch {
-            padding: 0;
-            border: none;
-            width: 20px;
-            height: 20px;
-          }
+                &:not([disabled]) {
+                  cursor: pointer;
 
-          input[type="color"]::-moz-color-swatch-wrapper {
-            padding: 0;
-            border: none;
-            width: 20px;
-            height: 20px;
-          }
+                  &:hover,
+                  &:focus {
+                    opacity: 1;
+                  }
+                }
+              }
+            }
 
-          input[type="color"]::-moz-color-swatch {
-            padding: 0;
-            border: none;
-            width: 20px;
-            height: 20px;
-          }
-        }
-      }
-    }
+            & #theme-list {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: var(--bb-grid-size-2);
+              margin: 0;
+              padding: 0;
+              list-style: none;
 
-    details {
-      border-bottom: 1px solid var(--bb-neutral-100);
-      padding: var(--bb-grid-size-2) 0;
+              & li {
+                width: 100%;
 
-      & &:last-of-type {
-        border-bottom: none;
-      }
+                & > .generating-theme,
+                & > button {
+                  display: block;
+                  width: 100%;
+                  overflow: hidden;
+                  background: none;
+                  border: none;
+                  border-radius: var(--bb-grid-size-3);
+                  aspect-ratio: 1/1;
+                  padding: 0;
+                  position: relative;
 
-      & > div {
-        display: grid;
-        grid-template-columns: 2fr 5fr;
-        column-gap: var(--bb-grid-size-2);
-        padding: var(--bb-grid-size) var(--bb-grid-size-3);
+                  & img {
+                    object-fit: cover;
+                    width: 100%;
+                    height: 100%;
+                  }
 
-        &.vertical-stack {
-          grid-template-columns: minmax(0, 1fr);
-          row-gap: var(--bb-grid-size-2);
+                  &.selected::after {
+                    content: "";
+                    border-radius: var(--bb-grid-size-3);
+                    position: absolute;
+                    width: 100%;
+                    height: 100%;
+                    top: 0;
+                    left: 0;
+                    box-shadow: inset 0 0 0 3px var(--ui-custom-o-100);
+                  }
 
-          & .controls {
-            display: flex;
-            align-items: center;
-          }
-        }
+                  &:not([disabled]) {
+                    cursor: pointer;
 
-        & label {
-          font: 500 var(--bb-label-small) / var(--bb-label-line-height-small)
-            var(--bb-font-family);
-          padding-top: var(--bb-grid-size);
-        }
-      }
+                    &:hover::after,
+                    &:focus::after {
+                      content: "";
+                      border-radius: var(--bb-grid-size-3);
+                      position: absolute;
+                      width: 100%;
+                      height: 100%;
+                      top: 0;
+                      left: 0;
+                      box-shadow: inset 0 0 0 3px var(--ui-custom-o-100);
+                    }
+                  }
+                }
 
-      &#appearance {
-        & summary {
-          padding-left: var(--bb-grid-size-8);
-          background: var(--bb-icon-palette) 8px center / 20px 20px no-repeat;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
+                & > .generating-theme {
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  background: var(--ui-theme-generating);
+                  color: var(--ui-custom-o-100);
 
-          & #reset {
-            width: 20px;
-            height: 20px;
-            background: var(--bb-neutral-0) var(--bb-icon-replay) center
-              center / 20px 20px no-repeat;
-            opacity: 0.5;
-            font-size: 0;
+                  & .g-icon {
+                    animation: rotate 1s linear infinite forwards;
+                  }
+                }
+              }
+            }
 
-            &:not([disabled]) {
-              transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+            & #random-theme {
+              padding: 0;
+              margin: var(--bb-grid-size-2) 0;
+              border: none;
+              height: var(--bb-grid-size-12);
+              background: var(--ui-custom-o-25);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              border-radius: var(--bb-grid-size-3);
+              transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
+              width: 100%;
+              color: var(--n-0);
 
-              &:hover,
-              &:focus {
+              & .g-icon {
+                pointer-events: none;
+                margin-right: var(--bb-grid-size-2);
+
+                &.rotate {
+                  animation: rotate 1s linear infinite forwards;
+                }
+              }
+
+              &[disabled] {
                 opacity: 1;
               }
-            }
-          }
-        }
 
-        & button#generate {
-          padding-left: var(--bb-grid-size-8);
-          background: var(--bb-neutral-50) var(--bb-add-icon-generative) 8px
-            center / 20px 20px no-repeat;
-          margin-bottom: var(--bb-grid-size-4);
+              &:not([disabled]) {
+                cursor: pointer;
 
-          &:not([disabled]) {
-            &:hover,
-            &:focus {
-              background-color: var(--bb-neutral-100);
+                &:hover,
+                &:focus {
+                  background: var(--ui-custom-o-20);
+                }
+              }
             }
           }
         }
       }
 
-      &#application-details summary {
-        padding-left: var(--bb-grid-size-8);
-        background: var(--bb-icon-phone) 8px center / 20px 20px no-repeat;
-      }
-    }
+      @keyframes rotate {
+        from {
+          rotate: 0deg;
+        }
 
-    #generate-status {
-      display: flex;
-      align-items: center;
-      height: var(--bb-grid-size-7);
-      font: 400 var(--bb-label-small) / var(--bb-label-line-height-small)
-        var(--bb-font-family);
-      color: var(--bb-neutral-700);
-      padding-left: var(--bb-grid-size-8);
-      margin: var(--bb-grid-size-2) 0;
-      flex: 1;
-      background: url(/images/progress-ui.svg) 8px center / 20px 20px no-repeat;
-    }
-  `;
+        to {
+          rotate: 360deg;
+        }
+      }
+    `,
+  ];
 
   #selectedThemeRef: Ref<HTMLButtonElement> = createRef();
   #generateDescriptionRef: Ref<HTMLTextAreaElement> = createRef();
   #containerRef: Ref<HTMLDivElement> = createRef();
-
-  #isValidAppTheme(theme: unknown): theme is AppTheme {
-    const maybeTheme = theme as AppTheme;
-    const primary = "primaryColor" in maybeTheme;
-    const secondary = "secondaryColor" in maybeTheme;
-    const background = "backgroundColor" in maybeTheme;
-    const text = "textColor" in maybeTheme;
-    const primaryText = "primaryTextColor" in maybeTheme;
-
-    return primary && secondary && background && text && primaryText;
-  }
 
   protected willUpdate(changedProperties: PropertyValues): void {
     if (changedProperties.has("graph") || changedProperties.has("themeHash")) {
@@ -449,7 +378,7 @@ export class AppThemeCreator extends LitElement {
       }
     }
 
-    this._changed = false;
+    this.#changed = false;
   }
 
   protected updated(): void {
@@ -535,17 +464,24 @@ export class AppThemeCreator extends LitElement {
     }
   }
 
-  async #debounceGenerateTheme() {
+  async #debounceGenerateTheme(random = false) {
     try {
-      if (this._generating) {
+      if (this.#generating) {
         return;
       }
 
-      this._generating = true;
+      this.#generating = true;
+      this.#generatingRandom = random;
       const newTheme = await this.#generateTheme(
-        this.graph?.title ?? "Untitled Application",
-        this.graph?.description ?? undefined,
-        this.#generateDescriptionRef.value?.value
+        random
+          ? "Random application"
+          : (this.graph?.title ?? "Untitled Application"),
+        random
+          ? "No description provided"
+          : (this.graph?.description ?? undefined),
+        random
+          ? "Generate me a fun image of your choosing about anything you like"
+          : this.#generateDescriptionRef.value?.value
       );
       this.dispatchEvent(
         new StateEvent({ eventType: "theme.create", theme: newTheme })
@@ -558,25 +494,20 @@ export class AppThemeCreator extends LitElement {
       } else if (typeof err === "object") {
         errMessage = (err as Error).message ?? "Unknown error";
       }
-      this.dispatchEvent(new ToastEvent(errMessage, ToastType.ERROR));
+      this.dispatchEvent(
+        new SnackbarEvent(
+          globalThis.crypto.randomUUID(),
+          errMessage,
+          SnackType.ERROR,
+          [],
+          true,
+          true
+        )
+      );
     } finally {
-      this._generating = false;
+      this.#generating = false;
+      this.#generatingRandom = false;
     }
-  }
-
-  #emitTheme() {
-    if (!this.themes || !this.theme) {
-      return;
-    }
-
-    if (!this.themes[this.theme]) {
-      return;
-    }
-
-    const theme = this.themes[this.theme];
-    this.dispatchEvent(
-      new StateEvent({ eventType: "theme.update", id: this.theme, theme })
-    );
   }
 
   async #renderThumbnail(theme: GraphTheme) {
@@ -598,242 +529,147 @@ export class AppThemeCreator extends LitElement {
       return nothing;
     }
 
-    const theme = this.themes[this.theme];
-    return html`<section id="container" ${ref(this.#containerRef)}>
-      <h1>
-        <span>Theme</span>
+    return html`<section
+      id="container"
+      ${ref(this.#containerRef)}
+      ?inert=${this.#generating}
+    >
+      <header>
+        <h1 class="sans-flex round w-500 md-title-medium">Theme editor</h1>
         <button
           id="close"
           @click=${() => {
             this.dispatchEvent(new OverlayDismissedEvent());
           }}
         >
-          Close
+          <span class="g-icon round filled w-500">close</span>
         </button>
-      </h1>
-      <section id="generate-theme">
-        <h2>Generate a theme</h2>
-        <textarea
-          autocomplete="off"
-          placeholder="Describe your theme"
-          ${ref(this.#generateDescriptionRef)}
-          @keydown=${async (evt: KeyboardEvent) => {
-            if (!(evt.key === "Enter")) {
-              return;
-            }
-            await this.#debounceGenerateTheme();
-          }}
-          ?disabled=${this._changed || this._generating}
-        ></textarea>
-        ${this._generating
-          ? html`<div id="generate-status">Generating new theme...</div>`
-          : nothing}
-      </section>
-      <section id="theme-selector">
-        <h2>
-          <span>Theme</span>
-          <button
-            ?disabled=${Object.keys(this.themes).length === 1}
-            @click=${() => {
-              if (!this.theme) {
-                return;
-              }
-
-              this.dispatchEvent(
-                new StateEvent({ eventType: "theme.delete", id: this.theme })
-              );
+      </header>
+      <section id="content">
+        <p id="explainer" class="san-flex w-400 md-body-small">
+          Generate a theme for your Opal app below. You can either provide a
+          description of the theme you would like, or you can generate a random
+          theme.
+        </p>
+        <section class="segment" id="generate-theme">
+          <h2 class="sans-flex round w-500 md-title-medium">
+            Generate your own theme
+          </h2>
+          <form
+            class="generate-container"
+            @submit=${(evt: SubmitEvent) => {
+              evt.preventDefault();
             }}
           >
-            Delete theme
-          </button>
-        </h2>
+            <textarea
+              autocomplete="off"
+              placeholder="e.g. Sci-fi claymation cats"
+              class="sans-flex round w-500 md-title-medium"
+              ${ref(this.#generateDescriptionRef)}
+              @keydown=${async (evt: KeyboardEvent) => {
+                if (!(evt.key === "Enter")) {
+                  return;
+                }
+                await this.#debounceGenerateTheme();
+              }}
+              ?disabled=${this.#changed || this.#generating}
+            ></textarea>
 
-        <menu>
-          ${repeat(
-            Object.entries(this.themes),
-            ([id]) => id,
-            ([id, theme]) => {
-              let url = theme.splashScreen?.storedData.handle;
-              if (url && url.startsWith(".") && this.graph?.url) {
-                url = new URL(url, this.graph?.url).href;
+            <button
+              id="start-generate"
+              ?disabled=${this.#changed || this.#generating}
+              @click=${async (evt: Event) => {
+                evt.preventDefault();
+
+                await this.#debounceGenerateTheme();
+              }}
+            >
+              <span class="g-icon filled round">pen_spark</span>
+            </button>
+          </form>
+        </section>
+        <section class="segment" id="theme-selector">
+          <header>
+            <h2 class="sans-flex round w-500 md-title-medium">
+              Themes for your ${GlobalStrings.from("APP_NAME")} app
+            </h2>
+            <button
+              ?disabled=${Object.keys(this.themes).length === 1}
+              @click=${() => {
+                if (!this.theme) {
+                  return;
+                }
+
+                this.dispatchEvent(
+                  new StateEvent({ eventType: "theme.delete", id: this.theme })
+                );
+              }}
+            >
+              <span class="g-icon round filled">delete</span>
+            </button>
+          </header>
+
+          <menu id="theme-list">
+            ${repeat(
+              Object.entries(this.themes),
+              ([id]) => id,
+              ([id, theme]) => {
+                let url = theme.splashScreen?.storedData.handle;
+                if (url && url.startsWith(".") && this.graph?.url) {
+                  url = new URL(url, this.graph?.url).href;
+                }
+
+                return html`<li>
+                  <button
+                    ?disabled=${this.#changed ||
+                    this.#generating ||
+                    id === this.theme}
+                    class=${classMap({ selected: id === this.theme })}
+                    ${this.theme === id ? ref(this.#selectedThemeRef) : nothing}
+                    @click=${() => {
+                      this.#changed = true;
+                      this.dispatchEvent(
+                        new StateEvent({ eventType: "theme.change", id })
+                      );
+                    }}
+                  >
+                    ${guard(
+                      [theme.splashScreen],
+                      () => html`${until(this.#renderThumbnail(theme))}`
+                    )}
+                  </button>
+                </li>`;
               }
+            )}
+            ${this.#generating
+              ? html`<li>
+                  <div class="generating-theme">
+                    <span class="g-icon round filled w-500"
+                      >progress_activity</span
+                    >
+                  </div>
+                </li>`
+              : nothing}
+          </menu>
+          <button
+            id="random-theme"
+            ?disabled=${this.#changed || this.#generating}
+            class="sans-flex round w-500 md-body-small"
+            @click=${async (evt: Event) => {
+              evt.preventDefault();
 
-              return html`<li>
-                <button
-                  ?disabled=${this._changed || this._generating}
-                  class=${classMap({ selected: id === this.theme })}
-                  ${this.theme === id ? ref(this.#selectedThemeRef) : nothing}
-                  @click=${() => {
-                    this._changed = true;
-                    this.dispatchEvent(
-                      new StateEvent({ eventType: "theme.change", id })
-                    );
-                  }}
-                >
-                  ${guard(
-                    [theme.splashScreen],
-                    () => html`${until(this.#renderThumbnail(theme))}`
-                  )}
-                </button>
-              </li>`;
-            }
-          )}
-        </menu>
-
-        <div id="theme-colors">
-          ${theme.themeColors
-            ? html` <div>
-                  <label
-                    for="primary"
-                    style=${styleMap({
-                      "--color": theme.themeColors?.primaryColor,
-                    })}
-                    >Primary</label
+              await this.#debounceGenerateTheme(true);
+            }}
+          >
+            ${this.#generatingRandom
+              ? html`<span class="g-icon filled round rotate"
+                    >progress_activity</span
                   >
-                  <input
-                    id="primary"
-                    type="hidden"
-                    ?disabled=${this._changed || this._generating}
-                    .value=${theme.themeColors.primaryColor}
-                    @input=${(evt: InputEvent) => {
-                      if (
-                        !(evt.target instanceof HTMLInputElement) ||
-                        !theme.themeColors
-                      ) {
-                        return;
-                      }
-
-                      theme.themeColors = {
-                        ...theme.themeColors,
-                        primaryColor: evt.target.value,
-                      };
-
-                      this.#emitTheme();
-                    }}
-                  />
-                </div>
-                <div>
-                  <label
-                    for="secondary"
-                    style=${styleMap({
-                      "--color": theme.themeColors.secondaryColor,
-                    })}
-                    >Secondary</label
-                  >
-                  <input
-                    id="secondary"
-                    type="hidden"
-                    ?disabled=${this._changed || this._generating}
-                    .value=${theme.themeColors.secondaryColor}
-                    @input=${(evt: InputEvent) => {
-                      if (
-                        !(evt.target instanceof HTMLInputElement) ||
-                        !theme.themeColors
-                      ) {
-                        return;
-                      }
-
-                      theme.themeColors = {
-                        ...theme.themeColors,
-                        secondaryColor: evt.target.value,
-                      };
-
-                      this.#emitTheme();
-                    }}
-                  />
-                </div>
-                <div>
-                  <label
-                    for="background"
-                    style=${styleMap({
-                      "--color": theme.themeColors.backgroundColor,
-                    })}
-                    >Background</label
-                  >
-                  <input
-                    id="background"
-                    type="hidden"
-                    ?disabled=${this._changed || this._generating}
-                    .value=${theme.themeColors.backgroundColor}
-                    @input=${(evt: InputEvent) => {
-                      if (
-                        !(evt.target instanceof HTMLInputElement) ||
-                        !theme.themeColors
-                      ) {
-                        return;
-                      }
-
-                      theme.themeColors = {
-                        ...theme.themeColors,
-                        backgroundColor: evt.target.value,
-                      };
-
-                      this.#emitTheme();
-                    }}
-                  />
-                </div>
-                <div>
-                  <label
-                    for="primary-text"
-                    style=${styleMap({
-                      "--color": theme.themeColors.primaryTextColor,
-                    })}
-                    >Primary Text</label
-                  >
-                  <input
-                    id="primary-text"
-                    type="hidden"
-                    ?disabled=${this._changed || this._generating}
-                    .value=${theme.themeColors.primaryTextColor}
-                    @input=${(evt: InputEvent) => {
-                      if (
-                        !(evt.target instanceof HTMLInputElement) ||
-                        !theme.themeColors
-                      ) {
-                        return;
-                      }
-
-                      theme.themeColors = {
-                        ...theme.themeColors,
-                        primaryTextColor: evt.target.value,
-                      };
-
-                      this.#emitTheme();
-                    }}
-                  />
-                </div>
-                <div>
-                  <label
-                    for="text"
-                    style=${styleMap({
-                      "--color": theme.themeColors.textColor,
-                    })}
-                    >Text</label
-                  >
-                  <input
-                    id="text"
-                    type="hidden"
-                    ?disabled=${this._changed || this._generating}
-                    .value=${theme.themeColors.textColor}
-                    @input=${(evt: InputEvent) => {
-                      if (
-                        !(evt.target instanceof HTMLInputElement) ||
-                        !theme.themeColors
-                      ) {
-                        return;
-                      }
-
-                      theme.themeColors = {
-                        ...theme.themeColors,
-                        textColor: evt.target.value,
-                      };
-
-                      this.#emitTheme();
-                    }}
-                  />
-                </div>`
-            : nothing}
-        </div>
+                  Generating theme...`
+              : html`<span class="g-icon round w-500">casino</span> Generate a
+                  random theme`}
+          </button>
+        </section>
       </section>
     </section>`;
   }
