@@ -16,11 +16,7 @@ import {
   type SigninAdapter,
   signinAdapterContext,
 } from "../../utils/signin-adapter.js";
-import {
-  loadDriveApi,
-  loadDrivePicker,
-  loadDriveShare,
-} from "./google-apis.js";
+import { loadDrivePicker, loadDriveShare } from "./google-apis.js";
 import { Files } from "@breadboard-ai/google-drive-kit/board-server/api.js";
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
@@ -438,21 +434,13 @@ export class GoogleDriveDebugPanel extends LitElement {
 
   async #listFolderContentsInConsole() {
     const folderId = this.#fileIdInput.value?.value;
-    if (!folderId) {
+    if (!folderId || !this.googleDriveClient) {
       return;
     }
 
-    const drive = await loadDriveApi();
-    const auth = await this.signinAdapter?.token();
-    if (auth?.state !== "valid") {
-      return;
-    }
-    const { access_token } = auth.grant;
-    const response = await drive.files.list({
-      access_token,
-      q: `"${folderId}" in parents`,
-    });
-    const result = JSON.parse(response.body);
+    const result = await this.googleDriveClient.listFiles(
+      `"${folderId}" in parents`
+    );
     console.log({ result });
   }
 

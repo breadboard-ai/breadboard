@@ -37,6 +37,19 @@ export interface WritePermissionOptions extends BaseRequestOptions {
   sendNotificationEmail: boolean;
 }
 
+export interface ListFilesOptions extends BaseRequestOptions {
+  fields?: Array<keyof gapi.client.drive.File>;
+  pageSize?: number;
+  pageToken?: string;
+}
+
+export interface ListFilesResponse<T extends gapi.client.drive.File> {
+  files: T[];
+  incompleteSearch: boolean;
+  kind: "drive#fileList";
+  nextPageToken?: string;
+}
+
 /**
  * A DriveFile (which usually has every field as optional) but where some of the
  * fields are required. Used when we know we are retrieving certain fields, so
@@ -357,6 +370,28 @@ export class GoogleDriveClient {
       // should return false, anything else should be an exception.
       return false;
     }
+  }
+
+  /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/list */
+  async listFiles<const T extends ListFilesOptions>(
+    query: string,
+    options?: T
+  ): Promise<ListFilesResponse<NarrowedDriveFile<T["fields"]>>> {
+    // TODO(aomarks) Make this an async iterator.
+    const url = new URL(`drive/v3/files`, this.#apiBaseUrl);
+    url.searchParams.set("q", query);
+    if (options?.pageSize) {
+      url.searchParams.set("pageSize", String(options.pageSize));
+    }
+    if (options?.pageToken) {
+      url.searchParams.set("pageToken", options.pageToken);
+    }
+    url.searchParams.set(
+      "fields",
+      "nextPageToken, files(id, name, mimeType, size, permissions)"
+    );
+    const response = await this.#fetch(url, { signal: options?.signal });
+    return await response.json();
   }
 
   /**
