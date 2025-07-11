@@ -108,6 +108,7 @@ export class TokenVendorImpl {
       id: expiredGrant.id,
       picture: expiredGrant.picture,
       name: expiredGrant.name,
+      domain: expiredGrant.domain,
     };
     await this.#store.set(connectionId, JSON.stringify(updatedGrant));
     return { state: "valid", grant: updatedGrant };
