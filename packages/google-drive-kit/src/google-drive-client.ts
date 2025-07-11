@@ -147,14 +147,14 @@ export class GoogleDriveClient {
         response = new Response(null, { status: 404 });
       } else {
         console.log(
-          `Google Drive getFile proxy ${response.status} error:`,
+          `Google Drive getFileMetadata proxy ${response.status} error:`,
           await proxyResponse.text()
         );
       }
     }
 
     throw new Error(
-      `Google Drive readFile ${response.status} error: ` +
+      `Google Drive getFileMetadata ${response.status} error: ` +
         (await response.text())
     );
   }
@@ -175,7 +175,7 @@ export class GoogleDriveClient {
     });
     if (!response.ok) {
       throw new Error(
-        `Google Drive create file metadata ${response.status} error: ` +
+        `Google Drive createFileMetadata ${response.status} error: ` +
           (await response.text())
       );
     }
@@ -202,7 +202,7 @@ export class GoogleDriveClient {
     });
     if (!response.ok) {
       throw new Error(
-        `Google Drive update metadata ${response.status} error: ` +
+        `Google Drive updateFileMetadata ${response.status} error: ` +
           (await response.text())
       );
     }
@@ -456,7 +456,7 @@ export class GoogleDriveClient {
     });
     if (!response.ok) {
       throw new Error(
-        `Google Drive write permission ${response.status} error: ` +
+        `Google Drive createPermission ${response.status} error: ` +
           (await response.text())
       );
     }
@@ -479,7 +479,7 @@ export class GoogleDriveClient {
     );
     if (!response.ok) {
       throw new Error(
-        `Google Drive delete permission ${response.status} error: ` +
+        `Google Drive deletePermission ${response.status} error: ` +
           (await response.text())
       );
     }
