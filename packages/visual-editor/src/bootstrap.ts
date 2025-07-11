@@ -58,10 +58,10 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
 
   await StringsHelper.initFrom(LANGUAGE_PACK as LanguagePack);
 
-  const { Main } = await import("./index.js");
-  const { SettingsStore } = await import(
-    "@breadboard-ai/shared-ui/data/settings-store.js"
-  );
+  const [{ Main }, { SettingsStore }] = await Promise.all([
+    import("./index.js"),
+    import("@breadboard-ai/shared-ui/data/settings-store.js"),
+  ]);
 
   const mainArgs: MainArguments = {
     settings: await SettingsStore.restoredInstance(),
