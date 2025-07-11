@@ -512,6 +512,13 @@ export class Main extends SignalWatcher(LitElement) {
       }
     );
 
+    this.#runtime.board.addEventListener(
+      Runtime.Events.RuntimeUnsnackbarEvent.eventName,
+      () => {
+        this.unsnackbar();
+      }
+    );
+
     this.#runtime.select.addEventListener(
       Runtime.Events.RuntimeSelectionChangeEvent.eventName,
       (evt: Runtime.Events.RuntimeSelectionChangeEvent) => {
