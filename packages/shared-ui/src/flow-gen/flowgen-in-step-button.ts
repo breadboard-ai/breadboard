@@ -53,21 +53,27 @@ export class FlowgenInStepButton extends LitElement {
       }
 
       #edit-button {
-        width: 100%;
-        --bb-icon: var(--bb-add-icon-generative-text-inverted);
-      }
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 34px;
+        margin: 0 var(--bb-grid-size);
+        padding: 0 0 0 6px;
+        margin: 0;
+        border: none;
+        background: var(--n-98);
+        border-radius: var(--bb-grid-size-16) var(--bb-grid-size-5)
+          var(--bb-grid-size-5) var(--bb-grid-size-16);
+        transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
 
-      :host([monochrome]) {
-        width: 20px;
-        height: 20px;
+        &:not([disabled]) {
+          cursor: pointer;
 
-        & #edit-button {
-          --background-size: 16px;
-          --background-color: var(--bb-neutral-100);
-          --background-color-active: var(--bb-neutral-200);
-          --box-shadow: none;
-          --border-radius: var(--bb-grid-size);
-          --bb-icon: var(--bb-add-icon-generative-text);
+          &:hover,
+          &:focus {
+            background: var(--n-95);
+          }
         }
       }
 
@@ -232,12 +238,11 @@ export class FlowgenInStepButton extends LitElement {
     return html`
       <button
         id="edit-button"
-        class="bb-fab"
         @click=${this.#onClickEditButton}
         @pointerover=${this.#onPointerOverEditButton}
         @pointerout=${this.#onPointerOutEditButton}
       >
-        ${this.label}
+        <span class="g-icon round filled w-500">pen_spark</span>
       </button>
     `;
   }
