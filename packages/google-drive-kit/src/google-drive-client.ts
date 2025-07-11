@@ -78,11 +78,12 @@ export class GoogleDriveClient {
     return this.#getUserAccessToken();
   }
 
+  /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/get#:~:text=metadata */
   async getFileMetadata<const T extends ReadFileOptions>(
     fileId: string,
     options?: T
   ): Promise<NarrowedDriveFile<T["fields"]>> {
-    let response = await this.#getFile(fileId, options, {
+    let response = await this.#getFileMetadata(fileId, options, {
       kind: "bearer",
       token: await this.#getUserAccessToken(),
     });
@@ -91,7 +92,7 @@ export class GoogleDriveClient {
         `Received 404 response for Google Drive file "${fileId}"` +
           ` using user credentials, trying public fallback.`
       );
-      response = await this.#getFile(fileId, options, {
+      response = await this.#getFileMetadata(fileId, options, {
         kind: "key",
         key: this.#publicApiKey,
       });
@@ -148,6 +149,7 @@ export class GoogleDriveClient {
     );
   }
 
+  /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/update */
   async updateFileMetadata<const T extends ReadFileOptions>(
     fileId: string,
     metadata: gapi.client.drive.File,
@@ -179,7 +181,7 @@ export class GoogleDriveClient {
     return await response.json();
   }
 
-  #getFile(
+  #getFileMetadata(
     fileId: string,
     options: ReadFileOptions | undefined,
     authorization: GoogleApiAuthorization
@@ -197,6 +199,7 @@ export class GoogleDriveClient {
     });
   }
 
+  /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/get#:~:text=media */
   async getFileMedia(
     fileId: string,
     options?: BaseRequestOptions
@@ -290,6 +293,7 @@ export class GoogleDriveClient {
     });
   }
 
+  /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/export */
   async exportFile(
     fileId: string,
     options: ExportFileOptions
@@ -378,7 +382,11 @@ export class GoogleDriveClient {
     }
   }
 
-  async readPermissions(
+  /**
+   * Convenience: exactly the same as calling `getFileMetadata` and asking for
+   * only permissions.
+   */
+  async getFilePermissions(
     fileId: string,
     options?: BaseRequestOptions
   ): Promise<gapi.client.drive.Permission[]> {
@@ -392,7 +400,8 @@ export class GoogleDriveClient {
     );
   }
 
-  async writePermission(
+  /** https://developers.google.com/workspace/drive/api/reference/rest/v3/permissions/create */
+  async createPermission(
     fileId: string,
     permission: gapi.client.drive.Permission,
     options: WritePermissionOptions
@@ -424,6 +433,7 @@ export class GoogleDriveClient {
     return (await response.json()) as gapi.client.drive.Permission;
   }
 
+  /** https://developers.google.com/workspace/drive/api/reference/rest/v3/permissions/delete */
   async deletePermission(
     fileId: string,
     permissionId: string,
@@ -451,8 +461,8 @@ export class GoogleDriveClient {
     }
   }
 
-  /** Returns one of the two types of responses - either from .copy() or from file.get() in case of a public board. */
-  async copy(fileId: string): Promise<Response> {
+  /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/copy */
+  async copyFile(fileId: string): Promise<Response> {
     const authorization = {
       kind: "bearer",
       token: await this.#getUserAccessToken(),

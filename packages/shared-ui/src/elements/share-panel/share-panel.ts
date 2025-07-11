@@ -875,7 +875,7 @@ export class SharePanel extends LitElement {
 
     const graphPublishResponsesPromise = Promise.all(
       publishPermissions.map((permission) =>
-        googleDriveClient.writePermission(
+        googleDriveClient.createPermission(
           shareableFile.id,
           { ...permission, role: "reader" },
           { sendNotificationEmail: false }
@@ -920,7 +920,7 @@ export class SharePanel extends LitElement {
         if (metadata.capabilities.canShare) {
           await Promise.all(
             permissions.map((permission) =>
-              googleDriveClient.writePermission(
+              googleDriveClient.createPermission(
                 assetFileId,
                 { ...permission, role: "reader" },
                 { sendNotificationEmail: false }

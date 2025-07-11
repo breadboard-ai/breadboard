@@ -805,7 +805,7 @@ class DriveOperations {
       return data;
     }
     const fileId = getFileId(sourceHandle);
-    let response = await this.#googleDriveClient.copy(fileId);
+    let response = await this.#googleDriveClient.copyFile(fileId);
     const result: StoredDataCapabilityPart = {
       storedData: {
         handle: "",
@@ -882,7 +882,7 @@ class DriveOperations {
   async publishFile(fileId: string): Promise<gapi.client.drive.Permission[]> {
     return await Promise.all(
       this.#publishPermissions.map((permission) =>
-        this.#googleDriveClient.writePermission(
+        this.#googleDriveClient.createPermission(
           fileId,
           { ...permission, role: "reader" },
           { sendNotificationEmail: false }
