@@ -36,6 +36,7 @@ const TERMINAL_STATES: ReadonlySet<NodeOrchestratorState> = new Set([
   "succeeded",
   "failed",
   "skipped",
+  "interrupted",
 ]);
 
 /**
@@ -76,7 +77,7 @@ class Orchestrator {
         stage.forEach((plan: PlanNodeInfo) => {
           state.set(plan.node.id, {
             stage: index,
-            state: firstStage ? "ready" : "waiting",
+            state: firstStage ? "ready" : "inactive",
             plan,
             inputs: firstStage ? {} : null,
             outputs: null,
@@ -221,9 +222,9 @@ class Orchestrator {
               `While trying to advance stage, failed to retrieve upstream state`
             );
           }
-          if (from.state === "waiting") {
+          if (from.state === "inactive") {
             throw new Error(
-              `While trying to advance stage, found node ${from.plan.node.id} still waiting for inputs`
+              `While trying to advance stage, found node ${from.plan.node.id} with unresolved dependencies`
             );
           }
           if (from.state === "ready") {

@@ -114,7 +114,7 @@ describe("Orchestrator", () => {
           ["input", "succeeded"],
           ["left-channel", "ready"],
           ["right-channel", "ready"],
-          ["mixer", "waiting"],
+          ["mixer", "inactive"],
         ]);
       }
       {
@@ -127,7 +127,7 @@ describe("Orchestrator", () => {
           ["input", "succeeded"],
           ["left-channel", "succeeded"],
           ["right-channel", "ready"],
-          ["mixer", "waiting"],
+          ["mixer", "inactive"],
         ]);
       }
       {
@@ -211,7 +211,7 @@ describe("Orchestrator", () => {
           ["input", "succeeded"],
           ["left-channel", "ready"],
           ["right-channel", "ready"],
-          ["mixer", "waiting"],
+          ["mixer", "inactive"],
         ]);
       }
       {
@@ -244,7 +244,7 @@ describe("Orchestrator", () => {
           ["choose-path", "succeeded"],
           ["left-path", "ready"],
           ["right-path", "skipped"],
-          ["treasure", "waiting"],
+          ["treasure", "inactive"],
           ["dragon", "skipped"],
         ]);
       }
@@ -289,11 +289,11 @@ describe("Orchestrator", () => {
         assertTasks(orchestrator.currentTasks(), ["d"]);
         assertState(zigZag, orchestrator.state(), [
           ["a", "succeeded"],
-          ["b", "waiting"],
-          ["c", "waiting"],
+          ["b", "inactive"],
+          ["c", "inactive"],
           ["d", "ready"],
-          ["e", "waiting"],
-          ["f", "waiting"],
+          ["e", "inactive"],
+          ["f", "inactive"],
         ]);
       }
       {
@@ -305,10 +305,10 @@ describe("Orchestrator", () => {
         assertState(zigZag, orchestrator.state(), [
           ["a", "succeeded"],
           ["b", "ready"],
-          ["c", "waiting"],
+          ["c", "inactive"],
           ["d", "succeeded"],
           ["e", "ready"],
-          ["f", "waiting"],
+          ["f", "inactive"],
         ]);
       }
       {
@@ -323,7 +323,7 @@ describe("Orchestrator", () => {
           ["c", "skipped"],
           ["d", "succeeded"],
           ["e", "ready"],
-          ["f", "waiting"],
+          ["f", "inactive"],
         ]);
       }
       {
