@@ -41,6 +41,9 @@ import {
   icon,
   clone,
   download,
+  orderedList,
+  unorderedList,
+  listItem,
 } from "./shared.js";
 
 const aLight = ParticlesUI.Utils.merge(a, { "color-c-n5": true });
@@ -53,6 +56,15 @@ const h3Light = ParticlesUI.Utils.merge(h3, { "color-c-n5": true });
 const bodyLight = ParticlesUI.Utils.merge(body, { "color-c-n5": true });
 const pLight = ParticlesUI.Utils.merge(p, { "color-c-n35": true });
 const preLight = ParticlesUI.Utils.merge(pre, { "color-c-n35": true });
+const orderedListLight = ParticlesUI.Utils.merge(orderedList, {
+  "color-c-n35": true,
+});
+const unorderedListLight = ParticlesUI.Utils.merge(unorderedList, {
+  "color-c-n35": true,
+});
+const listItemLight = ParticlesUI.Utils.merge(listItem, {
+  "color-c-n35": true,
+});
 
 export const theme: ParticlesUI.Types.UITheme = {
   elements: {
@@ -122,9 +134,9 @@ export const theme: ParticlesUI.Types.UITheme = {
     h4: [],
     h5: [],
     h6: [],
-    ul: [],
-    ol: [],
-    li: [],
+    ul: [...Object.keys(unorderedListLight), "layout-mb-2"],
+    ol: [...Object.keys(orderedListLight), "layout-mb-2"],
+    li: [...Object.keys(listItemLight), "layout-mb"],
     a: [...Object.keys(aLight)],
     strong: [],
     em: [],

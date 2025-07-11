@@ -97,6 +97,33 @@ export const p = {
   "layout-as-n": true,
 };
 
+export const orderedList = {
+  "typography-f-s": true,
+  "typography-fs-n": true,
+  "typography-w-400": true,
+  "layout-m-0": true,
+  "typography-sz-bm": true,
+  "layout-as-n": true,
+};
+
+export const unorderedList = {
+  "typography-f-s": true,
+  "typography-fs-n": true,
+  "typography-w-400": true,
+  "layout-m-0": true,
+  "typography-sz-bm": true,
+  "layout-as-n": true,
+};
+
+export const listItem = {
+  "typography-f-s": true,
+  "typography-fs-n": true,
+  "typography-w-400": true,
+  "layout-m-0": true,
+  "typography-sz-bm": true,
+  "layout-as-n": true,
+};
+
 export const pre = {
   "typography-f-c": true,
   "typography-fs-n": true,
