@@ -19,6 +19,9 @@ export const createRunner = (config: RunConfig): HarnessRunner => {
   return new LocalRunner(config);
 };
 
-export function createPlanRunner(config: RunConfig): HarnessRunner {
-  return new PlanRunner(config);
+export function createPlanRunner(
+  config: RunConfig,
+  stepMode: boolean
+): HarnessRunner {
+  return new PlanRunner(config, stepMode);
 }

@@ -45,6 +45,8 @@ import { BoardServerAwareDataStore } from "@breadboard-ai/board-server-managemen
 import { StateManager } from "./state";
 
 export class Run extends EventTarget {
+  stepMode = false;
+
   #runs = new Map<
     TabId,
     {
@@ -100,6 +102,13 @@ export class Run extends EventTarget {
     this.#runs.delete(tabId);
 
     return this.runStore.truncate(urlToClear, 1);
+  }
+
+  /**
+   * Used for diagnostics/debugging/demo purposes only.
+   */
+  get current() {
+    return this.#runs.values().next().value?.harnessRunner;
   }
 
   getRunner(tabId: TabId | null) {
@@ -279,7 +288,7 @@ export class Run extends EventTarget {
     abortController: AbortController
   ) {
     const harnessRunner = usePlanRunner
-      ? createPlanRunner(config)
+      ? createPlanRunner(config, this.stepMode)
       : createRunner(config);
     const runObserver = createRunObserver(this.graphStore, {
       logLevel: "debug",

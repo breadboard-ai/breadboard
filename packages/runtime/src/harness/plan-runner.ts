@@ -31,14 +31,33 @@ import { AbstractRunner } from "./abstract-runner.js";
 export { PlanRunner };
 
 class PlanRunner extends AbstractRunner {
+  #controller: InternalRunStateController | null = null;
+
+  constructor(
+    config: RunConfig,
+    public readonly stepMode: boolean
+  ) {
+    super(config);
+  }
+
+  async next(): Promise<void> {
+    return this.#controller?.runNextNode();
+  }
+
   protected async *getGenerator(): AsyncGenerator<
     HarnessRunResult,
     void,
     unknown
   > {
     yield* asyncGen<HarnessRunResult>(async (next) => {
-      const controller = new InternalRunStateController(this.config, next);
-      return controller.run();
+      this.#controller = new InternalRunStateController(this.config, next);
+      if (!this.stepMode) {
+        await this.#controller.run();
+        this.#controller = null;
+      } else {
+        await this.#controller.runInStepMode();
+        this.#controller = null;
+      }
     });
   }
 }
@@ -53,6 +72,7 @@ type InternalRunState = {
 class InternalRunStateController {
   state: Promise<InternalRunState>;
   index: number = 0;
+  #finished: null | (() => void) = null;
 
   constructor(
     public readonly config: RunConfig,
@@ -181,6 +201,14 @@ class InternalRunStateController {
         timestamp: timestamp(),
       },
       reply: async () => {},
+    });
+    this.#finished?.();
+    this.#finished = null;
+  }
+
+  async runInStepMode(): Promise<void> {
+    return new Promise((resolve) => {
+      this.#finished = resolve;
     });
   }
 
