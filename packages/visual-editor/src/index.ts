@@ -17,7 +17,7 @@ import type {
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { map } from "lit/directives/map.js";
 import { customElement, state } from "lit/decorators.js";
-import { LitElement, html, nothing } from "lit";
+import { HTMLTemplateResult, LitElement, html, nothing } from "lit";
 import {
   createRunObserver,
   GraphDescriptor,
@@ -1050,7 +1050,7 @@ export class Main extends SignalWatcher(LitElement) {
   }
 
   snackbar(
-    message: string,
+    message: string | HTMLTemplateResult,
     type: BreadboardUI.Types.SnackType,
     actions: BreadboardUI.Types.SnackbarAction[] = [],
     persistent = false,
@@ -1058,6 +1058,7 @@ export class Main extends SignalWatcher(LitElement) {
     replaceAll = false
   ) {
     if (!this.#snackbarRef.value) {
+      console.error(`snackbar was not ready yet`);
       return;
     }
 
