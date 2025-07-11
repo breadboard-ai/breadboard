@@ -133,12 +133,30 @@ class InternalRunStateController {
             },
             reply: async () => {},
           });
+          state.orchestrator.setWorking(task.node.id);
           const invoker = new NodeInvoker(
             state.context,
             { graph: state.graph },
-            async (result) => this.callback(fromRunnerResult(result))
+            async (result) => {
+              const harnessResult = fromRunnerResult(result);
+              if (
+                harnessResult.type === "input" &&
+                harnessResult.data.bubbled
+              ) {
+                state.orchestrator.setWaiting(task.node.id);
+                return this.callback({
+                  ...harnessResult,
+                  reply: async (inputs) => {
+                    state.orchestrator.setWorking(task.node.id);
+                    return harnessResult.reply(inputs);
+                  },
+                });
+              }
+              return this.callback(harnessResult);
+            }
           );
           const outputs = await invoker.invokeNode(this.fromTask(task), path);
+          state.orchestrator.setWorking(task.node.id);
           const progress = state.orchestrator.provideOutputs(
             task.node.id,
             outputs
