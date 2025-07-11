@@ -17,13 +17,7 @@ import type {
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { map } from "lit/directives/map.js";
 import { customElement, state } from "lit/decorators.js";
-import {
-  HTMLTemplateResult,
-  LitElement,
-  PropertyValues,
-  html,
-  nothing,
-} from "lit";
+import { HTMLTemplateResult, LitElement, html, nothing } from "lit";
 import {
   createRunObserver,
   GraphDescriptor,
