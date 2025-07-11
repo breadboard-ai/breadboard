@@ -49,7 +49,7 @@ export type BootstrapArguments = {
 };
 
 export type MainArguments = {
-  settings?: SettingsStore;
+  settings: SettingsStore;
   proxy?: HarnessProxyConfig[];
   buildInfo: BuildInfo;
   languagePack?: string;
