@@ -467,34 +467,14 @@ export class GoogleDriveClient {
       kind: "bearer",
       token: await this.#getUserAccessToken(),
     } as const;
-    const response = await this.#copy(fileId, authorization);
-    if (response.status === 404) {
-      // Note it is not possible to suppress the 404 error that will appear in
-      // the console, so this log statement and the similar ones throughout this
-      // file are here to hopefully make this look less concerning.
-      console.log(
-        `Received 404 response for Google Drive file "${fileId}"` +
-          ` using user credentials, trying public fallback.`
-      );
-
-      return this.#getFileMedia(fileId, undefined, {
-        kind: "key",
-        key: this.#publicApiKey,
-      });
-    }
-    return response;
-  }
-
-  async #copy(fileId: string, authorization: GoogleApiAuthorization) {
     const url = this.#makeUrl(
       `drive/v3/files/${encodeURIComponent(fileId)}/copy`,
       authorization
     );
-    const response = await retryableFetch(url, {
+    return retryableFetch(url, {
       method: "POST",
       headers: this.#makeHeaders(authorization),
     });
-    return response;
   }
 
   #makeUrl(path: string, authorization: GoogleApiAuthorization): URL {
