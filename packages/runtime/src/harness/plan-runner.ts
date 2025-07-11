@@ -65,8 +65,8 @@ class InternalRunStateController {
     return [this.index++];
   }
 
-  error(error: { $error: string }): { $error: string } {
-    this.callback({
+  async error(error: { $error: string }): Promise<{ $error: string }> {
+    await this.callback({
       type: "error",
       data: {
         error: error.$error,
@@ -147,9 +147,10 @@ class InternalRunStateController {
     });
   }
 
-  async run() {
+  async preamble(): Promise<InternalRunState> {
     const state = await this.state;
-    this.callback({
+    if (state.orchestrator.progress !== "initial") return state;
+    await this.callback({
       type: "graphstart",
       data: {
         graph: state.graph,
@@ -159,20 +160,13 @@ class InternalRunStateController {
       },
       reply: async () => {},
     });
-    const runTask = this.runTask.bind(this);
-    for (;;) {
-      if (state.orchestrator.progress === "finished") break;
+    return state;
+  }
 
-      const tasks = state.orchestrator.currentTasks();
-      if (!ok(tasks)) {
-        this.error(tasks);
-        return;
-      }
-
-      await Promise.all(tasks.map(runTask));
-    }
-
-    this.callback({
+  async postamble() {
+    const state = await this.state;
+    if (state.orchestrator.progress !== "finished") return;
+    await this.callback({
       type: "graphend",
       data: {
         path: [],
@@ -181,13 +175,42 @@ class InternalRunStateController {
       reply: async () => {},
     });
 
-    this.callback({
+    await this.callback({
       type: "end",
       data: {
         timestamp: timestamp(),
       },
       reply: async () => {},
     });
+  }
+
+  async run() {
+    const state = await this.preamble();
+    const runTask = this.runTask.bind(this);
+    for (;;) {
+      if (state.orchestrator.progress === "finished") break;
+
+      const tasks = state.orchestrator.currentTasks();
+      if (!ok(tasks)) {
+        await this.error(tasks);
+        return;
+      }
+
+      await Promise.all(tasks.map(runTask));
+    }
+    await this.postamble();
+  }
+
+  async runNextNode() {
+    const state = await this.preamble();
+    const tasks = state.orchestrator.currentTasks();
+    if (!ok(tasks)) {
+      await this.error(tasks);
+      return;
+    }
+    const task = tasks[0];
+    await this.runTask(task);
+    await this.postamble();
   }
 
   async initialize(
