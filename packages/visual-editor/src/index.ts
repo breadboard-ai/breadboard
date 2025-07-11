@@ -182,20 +182,20 @@ export class Main extends SignalWatcher(LitElement) {
   readonly #feedbackPanelRef: Ref<BreadboardUI.Elements.FeedbackPanel> =
     createRef();
 
-  #boardRunStatus = new Map<TabId, BreadboardUI.Types.STATUS>();
-  #boardServers: BoardServer[];
-  #onShowTooltipBound = this.#onShowTooltip.bind(this);
-  #hideTooltipBound = this.#hideTooltip.bind(this);
-  #onKeyboardShortCut = this.#onKeyboardShortcut.bind(this);
-  #recentBoardStore = RecentBoardStore.instance();
+  readonly #boardRunStatus = new Map<TabId, BreadboardUI.Types.STATUS>();
+  #boardServers: BoardServer[] = [];
+  readonly #onShowTooltipBound = this.#onShowTooltip.bind(this);
+  readonly #hideTooltipBound = this.#hideTooltip.bind(this);
+  readonly #onKeyboardShortCut = this.#onKeyboardShortcut.bind(this);
+  readonly #recentBoardStore = RecentBoardStore.instance();
   #graphStore!: MutableGraphStore;
-  #runStore = getRunStore();
-  #fileSystem!: FileSystem;
+  readonly #runStore = getRunStore();
+  readonly #fileSystem: FileSystem;
   #selectionState: WorkspaceSelectionStateWithChangeId | null = null;
   #lastVisualChangeId: WorkspaceVisualChangeId | null = null;
-  #lastPointerPosition = { x: 0, y: 0 };
+  readonly #lastPointerPosition = { x: 0, y: 0 };
   #runtime!: Runtime.RuntimeInstance;
-  #embedHandler?: EmbedHandler;
+  readonly #embedHandler?: EmbedHandler;
 
   /**
    * Monotonically increases whenever the graph topology of a graph in the
@@ -308,7 +308,11 @@ export class Main extends SignalWatcher(LitElement) {
       },
     });
 
-    this.#boardServers = [];
+    this.#fileSystem = createFileSystem({
+      env: [...envFromSettings(this.#settings), ...(args.env || [])],
+      local: createFileSystemBackend(createEphemeralBlobStore()),
+    });
+
     this.#embedHandler = args.embedHandler;
 
     this.#init(args).then(() => {
@@ -361,11 +365,6 @@ export class Main extends SignalWatcher(LitElement) {
   }
 
   async #init(args: MainArguments) {
-    this.#fileSystem = createFileSystem({
-      env: [...envFromSettings(this.#settings), ...(args.env || [])],
-      local: createFileSystemBackend(createEphemeralBlobStore()),
-    });
-
     this.#runtime = await Runtime.create({
       recentBoardStore: this.#recentBoardStore,
       graphStore: this.#graphStore,
