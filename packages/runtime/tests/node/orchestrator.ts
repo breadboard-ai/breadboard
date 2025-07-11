@@ -343,4 +343,83 @@ describe("Orchestrator", () => {
       }
     });
   });
+
+  describe("setting working/waiting/interrupted states", () => {
+    it("should error out on non-existing nodes", () => {
+      const orchestrator = new Orchestrator(routerPlan);
+      {
+        const outcome = orchestrator.setWorking("non-existing");
+        assert(!ok(outcome));
+      }
+      {
+        const outcome = orchestrator.setWaiting("non-existing");
+        assert(!ok(outcome));
+      }
+      {
+        const outcome = orchestrator.setInterrupted("non-existing");
+        assert(!ok(outcome));
+      }
+    });
+    it("should reject setting states outside of lifecycle", () => {
+      const orchestrator = new Orchestrator(routerPlan);
+      {
+        const outcome = orchestrator.setWorking("left-path");
+        assert(!ok(outcome));
+      }
+      {
+        const outcome = orchestrator.setWaiting("left-path");
+        assert(!ok(outcome));
+      }
+      {
+        const outcome = orchestrator.setInterrupted("choose-path");
+        assert(!ok(outcome));
+      }
+    });
+    it("should correctly follow the lifecycle", () => {
+      const orchestrator = new Orchestrator(routerPlan);
+      assertTasks(orchestrator.currentTasks(), ["choose-path"]);
+      {
+        const outcome = orchestrator.setWorking("choose-path");
+        assert(ok(outcome));
+      }
+      assertTasks(orchestrator.currentTasks(), ["choose-path"]);
+      {
+        const outcome = orchestrator.setWaiting("choose-path");
+        assert(ok(outcome));
+      }
+      assertTasks(orchestrator.currentTasks(), ["choose-path"]);
+      {
+        const progress = orchestrator.provideOutputs("choose-path", {
+          left: "left",
+        });
+        assert(!ok(progress));
+        assertTasks(orchestrator.currentTasks(), ["choose-path"]);
+      }
+      {
+        const outcome = orchestrator.setWorking("choose-path");
+        assert(ok(outcome));
+        const progress = orchestrator.provideOutputs("choose-path", {
+          left: "left",
+        });
+        deepStrictEqual(progress, "advanced");
+        assertTasks(orchestrator.currentTasks(), ["left-path"]);
+      }
+      {
+        const outcome = orchestrator.setWorking("left-path");
+        assert(ok(outcome));
+      }
+      {
+        const outcome = orchestrator.setInterrupted("left-path");
+        assert(ok(outcome));
+        assertTasks(orchestrator.currentTasks(), []);
+        assertState(router, orchestrator.state(), [
+          ["choose-path", "succeeded"],
+          ["left-path", "interrupted"],
+          ["right-path", "skipped"],
+          ["treasure", "skipped"],
+          ["dragon", "skipped"],
+        ]);
+      }
+    });
+  });
 });

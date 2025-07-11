@@ -39,6 +39,12 @@ const TERMINAL_STATES: ReadonlySet<NodeOrchestratorState> = new Set([
   "interrupted",
 ]);
 
+const PROCESSING_STATES: ReadonlySet<NodeOrchestratorState> = new Set([
+  "ready",
+  "working",
+  "waiting",
+]);
+
 /**
  * The Orchestrator acts as the state machine for running a graph.
  * Its primary responsibilities are:
@@ -90,6 +96,44 @@ class Orchestrator {
     this.#currentStage = 0;
   }
 
+  setWorking(id: NodeIdentifier): Outcome<void> {
+    const state = this.#state.get(id);
+    if (!state) {
+      return err(`Unable to set node "${id}" to working: node not found`);
+    }
+    if (!PROCESSING_STATES.has(state.state)) {
+      return err(
+        `Unable to set node "${id}" to working: not ready nor waiting`
+      );
+    }
+    state.state = "working";
+  }
+
+  setWaiting(id: NodeIdentifier): Outcome<void> {
+    const state = this.#state.get(id);
+    if (!state) {
+      return err(`Unable to set node "${id}" to waiting: node not found`);
+    }
+    if (state.state !== "working") {
+      return err(`Unable to set node "${id}" to waiting: not working`);
+    }
+    state.state = "waiting";
+  }
+
+  setInterrupted(id: NodeIdentifier): Outcome<void> {
+    const state = this.#state.get(id);
+    if (!state) {
+      return err(`Unable to set node "${id}" to interrupted: node not found`);
+    }
+    if (state.state !== "working" && state.state !== "waiting") {
+      return err(
+        `Unable to set node "${id}" to interrupted: not working or waiting`
+      );
+    }
+    state.state = "interrupted";
+    this.#propagateSkip(state);
+  }
+
   /**
    * Provides a way to inspect the current state of nodes as they are being
    * orchestrated.
@@ -121,7 +165,7 @@ class Orchestrator {
             `While getting current tasks, node "${plan.node.id}" was not found`
           );
         }
-        if (state.state === "ready") {
+        if (PROCESSING_STATES.has(state.state)) {
           tasks.push({ node: plan.node, inputs: state.inputs! });
         }
       });
@@ -279,6 +323,9 @@ class Orchestrator {
     }
     if (state.stage !== this.#currentStage) {
       return err(`Can't provide outputs outside of the current stage`);
+    }
+    if (state.state === "waiting") {
+      return err(`Can't pfovide outputs while the node is waiting for input`);
     }
     // Update state of the node.
     state.outputs = outputs;
