@@ -54,6 +54,9 @@
     },
     "build:tsc": {
       "command": "tsc --pretty",
+      "dependencies": [
+        "<dependencies>#<this>"
+      ],
       "files": [
         "src/",
         "tsconfig.json",
@@ -85,6 +88,7 @@
     "wireit": "^0.15.0-pre.2"
   },
   "dependencies": {
+    "@breadboard-ai/types": "^0.7.0",
     "@types/cookie-parser": "^1.4.9",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
