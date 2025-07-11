@@ -64,7 +64,7 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
   );
 
   const mainArgs: MainArguments = {
-    settings: SettingsStore.instance(),
+    settings: await SettingsStore.restoredInstance(),
     buildInfo: {
       packageJsonVersion: pkg.version,
       gitCommitHash: GIT_HASH,

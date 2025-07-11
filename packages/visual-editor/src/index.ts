@@ -361,12 +361,6 @@ export class Main extends SignalWatcher(LitElement) {
   }
 
   async #init(args: MainArguments) {
-    let settingsRestore = Promise.resolve();
-
-    settingsRestore = this.#settings.restore();
-
-    await settingsRestore;
-
     this.#fileSystem = createFileSystem({
       env: [...envFromSettings(this.#settings), ...(args.env || [])],
       local: createFileSystemBackend(createEphemeralBlobStore()),

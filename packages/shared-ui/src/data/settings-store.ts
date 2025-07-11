@@ -13,12 +13,13 @@ const SETTINGS_NAME = "settings";
 const SETTINGS_VERSION = 7;
 
 export class SettingsStore implements BreadboardUI_Types.SettingsStore {
-  static #instance: SettingsStore;
-  static instance() {
-    if (!this.#instance) {
-      this.#instance = new SettingsStore();
-    }
-    return this.#instance;
+  static #instance: Promise<SettingsStore>;
+  static restoredInstance(): Promise<SettingsStore> {
+    return (this.#instance ??= (async () => {
+      const instance = new SettingsStore();
+      await instance.restore();
+      return instance;
+    })());
   }
 
   #settings: BreadboardUI_Types.Settings = {
