@@ -11,7 +11,7 @@ import { describe, it } from "node:test";
 import { createPlan } from "../../src/static/create-plan.js";
 import { Orchestrator } from "../../src/static/orchestrator.js";
 import {
-  NodeOrchestratorState,
+  NodeLifecycleState,
   OrchestrationNodeInfo,
   Task,
 } from "../../src/static/types.js";
@@ -74,7 +74,7 @@ const zigZagPlan = createPlan(zigZag);
 function assertState(
   graph: GraphDescriptor,
   state: ReadonlyMap<NodeIdentifier, OrchestrationNodeInfo>,
-  expected: [id: NodeIdentifier, state: NodeOrchestratorState][]
+  expected: [id: NodeIdentifier, state: NodeLifecycleState][]
 ) {
   const nodeMap = new Map(graph.nodes.map((node) => [node.id, node]));
   deepStrictEqual(
@@ -114,7 +114,7 @@ describe("Orchestrator", () => {
           ["input", "succeeded"],
           ["left-channel", "ready"],
           ["right-channel", "ready"],
-          ["mixer", "waiting"],
+          ["mixer", "inactive"],
         ]);
       }
       {
@@ -127,7 +127,7 @@ describe("Orchestrator", () => {
           ["input", "succeeded"],
           ["left-channel", "succeeded"],
           ["right-channel", "ready"],
-          ["mixer", "waiting"],
+          ["mixer", "inactive"],
         ]);
       }
       {
@@ -211,7 +211,7 @@ describe("Orchestrator", () => {
           ["input", "succeeded"],
           ["left-channel", "ready"],
           ["right-channel", "ready"],
-          ["mixer", "waiting"],
+          ["mixer", "inactive"],
         ]);
       }
       {
@@ -244,7 +244,7 @@ describe("Orchestrator", () => {
           ["choose-path", "succeeded"],
           ["left-path", "ready"],
           ["right-path", "skipped"],
-          ["treasure", "waiting"],
+          ["treasure", "inactive"],
           ["dragon", "skipped"],
         ]);
       }
@@ -289,11 +289,11 @@ describe("Orchestrator", () => {
         assertTasks(orchestrator.currentTasks(), ["d"]);
         assertState(zigZag, orchestrator.state(), [
           ["a", "succeeded"],
-          ["b", "waiting"],
-          ["c", "waiting"],
+          ["b", "inactive"],
+          ["c", "inactive"],
           ["d", "ready"],
-          ["e", "waiting"],
-          ["f", "waiting"],
+          ["e", "inactive"],
+          ["f", "inactive"],
         ]);
       }
       {
@@ -305,10 +305,10 @@ describe("Orchestrator", () => {
         assertState(zigZag, orchestrator.state(), [
           ["a", "succeeded"],
           ["b", "ready"],
-          ["c", "waiting"],
+          ["c", "inactive"],
           ["d", "succeeded"],
           ["e", "ready"],
-          ["f", "waiting"],
+          ["f", "inactive"],
         ]);
       }
       {
@@ -323,7 +323,7 @@ describe("Orchestrator", () => {
           ["c", "skipped"],
           ["d", "succeeded"],
           ["e", "ready"],
-          ["f", "waiting"],
+          ["f", "inactive"],
         ]);
       }
       {
@@ -339,6 +339,85 @@ describe("Orchestrator", () => {
           ["d", "succeeded"],
           ["e", "succeeded"],
           ["f", "ready"],
+        ]);
+      }
+    });
+  });
+
+  describe("setting working/waiting/interrupted states", () => {
+    it("should error out on non-existing nodes", () => {
+      const orchestrator = new Orchestrator(routerPlan);
+      {
+        const outcome = orchestrator.setWorking("non-existing");
+        assert(!ok(outcome));
+      }
+      {
+        const outcome = orchestrator.setWaiting("non-existing");
+        assert(!ok(outcome));
+      }
+      {
+        const outcome = orchestrator.setInterrupted("non-existing");
+        assert(!ok(outcome));
+      }
+    });
+    it("should reject setting states outside of lifecycle", () => {
+      const orchestrator = new Orchestrator(routerPlan);
+      {
+        const outcome = orchestrator.setWorking("left-path");
+        assert(!ok(outcome));
+      }
+      {
+        const outcome = orchestrator.setWaiting("left-path");
+        assert(!ok(outcome));
+      }
+      {
+        const outcome = orchestrator.setInterrupted("choose-path");
+        assert(!ok(outcome));
+      }
+    });
+    it("should correctly follow the lifecycle", () => {
+      const orchestrator = new Orchestrator(routerPlan);
+      assertTasks(orchestrator.currentTasks(), ["choose-path"]);
+      {
+        const outcome = orchestrator.setWorking("choose-path");
+        assert(ok(outcome));
+      }
+      assertTasks(orchestrator.currentTasks(), ["choose-path"]);
+      {
+        const outcome = orchestrator.setWaiting("choose-path");
+        assert(ok(outcome));
+      }
+      assertTasks(orchestrator.currentTasks(), ["choose-path"]);
+      {
+        const progress = orchestrator.provideOutputs("choose-path", {
+          left: "left",
+        });
+        assert(!ok(progress));
+        assertTasks(orchestrator.currentTasks(), ["choose-path"]);
+      }
+      {
+        const outcome = orchestrator.setWorking("choose-path");
+        assert(ok(outcome));
+        const progress = orchestrator.provideOutputs("choose-path", {
+          left: "left",
+        });
+        deepStrictEqual(progress, "advanced");
+        assertTasks(orchestrator.currentTasks(), ["left-path"]);
+      }
+      {
+        const outcome = orchestrator.setWorking("left-path");
+        assert(ok(outcome));
+      }
+      {
+        const outcome = orchestrator.setInterrupted("left-path");
+        assert(ok(outcome));
+        assertTasks(orchestrator.currentTasks(), []);
+        assertState(router, orchestrator.state(), [
+          ["choose-path", "succeeded"],
+          ["left-path", "interrupted"],
+          ["right-path", "skipped"],
+          ["treasure", "skipped"],
+          ["dragon", "skipped"],
         ]);
       }
     });

@@ -13,7 +13,7 @@ import {
 import { err, ok } from "@breadboard-ai/utils";
 import {
   OrchestrationPlan,
-  NodeOrchestratorState,
+  NodeLifecycleState,
   OrchestratorProgress,
   PlanNodeInfo,
   Task,
@@ -25,17 +25,24 @@ export { Orchestrator };
 type NodeInternalState = {
   readonly plan: PlanNodeInfo;
   readonly stage: number;
-  state: NodeOrchestratorState;
+  state: NodeLifecycleState;
   inputs: InputValues | null;
   outputs: OutputValues | null;
 };
 
 type OrchestratorState = Map<NodeIdentifier, NodeInternalState>;
 
-const TERMINAL_STATES: ReadonlySet<NodeOrchestratorState> = new Set([
+const TERMINAL_STATES: ReadonlySet<NodeLifecycleState> = new Set([
   "succeeded",
   "failed",
   "skipped",
+  "interrupted",
+]);
+
+const PROCESSING_STATES: ReadonlySet<NodeLifecycleState> = new Set([
+  "ready",
+  "working",
+  "waiting",
 ]);
 
 /**
@@ -76,7 +83,7 @@ class Orchestrator {
         stage.forEach((plan: PlanNodeInfo) => {
           state.set(plan.node.id, {
             stage: index,
-            state: firstStage ? "ready" : "waiting",
+            state: firstStage ? "ready" : "inactive",
             plan,
             inputs: firstStage ? {} : null,
             outputs: null,
@@ -87,6 +94,44 @@ class Orchestrator {
       return err((e as Error).message);
     }
     this.#currentStage = 0;
+  }
+
+  setWorking(id: NodeIdentifier): Outcome<void> {
+    const state = this.#state.get(id);
+    if (!state) {
+      return err(`Unable to set node "${id}" to working: node not found`);
+    }
+    if (!PROCESSING_STATES.has(state.state)) {
+      return err(
+        `Unable to set node "${id}" to working: not ready nor waiting`
+      );
+    }
+    state.state = "working";
+  }
+
+  setWaiting(id: NodeIdentifier): Outcome<void> {
+    const state = this.#state.get(id);
+    if (!state) {
+      return err(`Unable to set node "${id}" to waiting: node not found`);
+    }
+    if (state.state !== "working") {
+      return err(`Unable to set node "${id}" to waiting: not working`);
+    }
+    state.state = "waiting";
+  }
+
+  setInterrupted(id: NodeIdentifier): Outcome<void> {
+    const state = this.#state.get(id);
+    if (!state) {
+      return err(`Unable to set node "${id}" to interrupted: node not found`);
+    }
+    if (state.state !== "working" && state.state !== "waiting") {
+      return err(
+        `Unable to set node "${id}" to interrupted: not working or waiting`
+      );
+    }
+    state.state = "interrupted";
+    this.#propagateSkip(state);
   }
 
   /**
@@ -120,7 +165,7 @@ class Orchestrator {
             `While getting current tasks, node "${plan.node.id}" was not found`
           );
         }
-        if (state.state === "ready") {
+        if (PROCESSING_STATES.has(state.state)) {
           tasks.push({ node: plan.node, inputs: state.inputs! });
         }
       });
@@ -221,9 +266,9 @@ class Orchestrator {
               `While trying to advance stage, failed to retrieve upstream state`
             );
           }
-          if (from.state === "waiting") {
+          if (from.state === "inactive") {
             throw new Error(
-              `While trying to advance stage, found node ${from.plan.node.id} still waiting for inputs`
+              `While trying to advance stage, found node ${from.plan.node.id} with unresolved dependencies`
             );
           }
           if (from.state === "ready") {
@@ -278,6 +323,9 @@ class Orchestrator {
     }
     if (state.stage !== this.#currentStage) {
       return err(`Can't provide outputs outside of the current stage`);
+    }
+    if (state.state === "waiting") {
+      return err(`Can't pfovide outputs while the node is waiting for input`);
     }
     // Update state of the node.
     state.outputs = outputs;
