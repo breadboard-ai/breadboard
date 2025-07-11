@@ -21,7 +21,7 @@ export const createRunner = (config: RunConfig): HarnessRunner => {
 
 export function createPlanRunner(
   config: RunConfig,
-  stepMode: boolean
+  interactiveMode: boolean
 ): HarnessRunner {
-  return new PlanRunner(config, stepMode);
+  return new PlanRunner(config, interactiveMode);
 }

@@ -35,13 +35,21 @@ class PlanRunner extends AbstractRunner {
 
   constructor(
     config: RunConfig,
-    public readonly stepMode: boolean
+    public readonly interactiveMode: boolean
   ) {
     super(config);
   }
 
   async next(): Promise<void> {
     return this.#controller?.runNextNode();
+  }
+
+  async continue(): Promise<void> {
+    return this.#controller?.run();
+  }
+
+  async state() {
+    return (await this.#controller?.state)?.orchestrator.state();
   }
 
   protected async *getGenerator(): AsyncGenerator<
@@ -51,11 +59,11 @@ class PlanRunner extends AbstractRunner {
   > {
     yield* asyncGen<HarnessRunResult>(async (next) => {
       this.#controller = new InternalRunStateController(this.config, next);
-      if (!this.stepMode) {
+      if (!this.interactiveMode) {
         await this.#controller.run();
         this.#controller = null;
       } else {
-        await this.#controller.runInStepMode();
+        await this.#controller.runInteractively();
         this.#controller = null;
       }
     });
@@ -206,7 +214,7 @@ class InternalRunStateController {
     this.#finished = null;
   }
 
-  async runInStepMode(): Promise<void> {
+  async runInteractively(): Promise<void> {
     return new Promise((resolve) => {
       this.#finished = resolve;
     });
@@ -237,7 +245,9 @@ class InternalRunStateController {
       return;
     }
     const task = tasks[0];
-    await this.runTask(task);
+    if (task) {
+      await this.runTask(task);
+    }
     await this.postamble();
   }
 
