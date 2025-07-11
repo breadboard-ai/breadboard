@@ -34,7 +34,6 @@ export type SigninAdapterState =
       status: "signedin";
       id: string | undefined;
       name: string | undefined;
-      /** Picture URL */
       picture: string | undefined;
     };
 
@@ -53,7 +52,6 @@ class SigninAdapter {
   readonly #tokenVendor: TokenVendor;
   readonly #environment: Environment;
   readonly #settingsHelper: SettingsHelper;
-  #cachedPicture: string | null | undefined;
   #nonce = crypto.randomUUID();
   #state: SigninAdapterState;
 
@@ -100,37 +98,6 @@ class SigninAdapter {
 
   get picture() {
     return this.#state.status === "signedin" ? this.#state.picture : undefined;
-  }
-
-  async cachedPicture(): Promise<string | undefined> {
-    if (
-      this.#cachedPicture === undefined &&
-      this.#state.status === "signedin" &&
-      this.#state.picture
-    ) {
-      try {
-        const token = await this.token();
-        if (token.state === "signedout") {
-          this.#cachedPicture = null;
-          return;
-        }
-        const picture = await fetch(this.#state.picture, {
-          headers: {
-            Authorization: `Bearer ${token.grant.access_token}`,
-          },
-        });
-        if (!picture.ok) {
-          this.#cachedPicture = null;
-          return;
-        }
-        const blobURL = URL.createObjectURL(await picture.blob());
-        return blobURL;
-      } catch (e) {
-        console.warn(e);
-        this.#cachedPicture = null;
-      }
-    }
-    return this.#cachedPicture || undefined;
   }
 
   /**
