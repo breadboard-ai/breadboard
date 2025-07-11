@@ -2197,12 +2197,12 @@ export class Main extends SignalWatcher(LitElement) {
         async (assetFileId) =>
           [
             assetFileId,
-            await googleDriveClient.readPermissions(assetFileId),
+            await googleDriveClient.getFilePermissions(assetFileId),
           ] as const
       )
     );
     const processedGraphPermissions = (
-      await googleDriveClient.readPermissions(graphFileId)
+      await googleDriveClient.getFilePermissions(graphFileId)
     )
       .filter(
         (permission) =>
