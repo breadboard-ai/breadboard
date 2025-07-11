@@ -31,9 +31,6 @@ import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
 import { until } from "lit/directives/until.js";
 import { markdown } from "../../../directives/markdown.js";
-import { tokenVendorContext } from "../../elements.js";
-import { consume } from "@lit/context";
-import type { TokenVendor } from "@breadboard-ai/connection-client";
 import { styleMap } from "lit/directives/style-map.js";
 import {
   convertShareUriToEmbedUri,
@@ -72,9 +69,6 @@ export class LLMOutput extends LitElement {
 
   @property()
   accessor graphUrl: URL | null = null;
-
-  @consume({ context: tokenVendorContext })
-  accessor tokenVendor!: TokenVendor;
 
   #partDataURLs = new Map<number, string>();
   #partTask = new Map<number, Task>();
