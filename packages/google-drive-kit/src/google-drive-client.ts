@@ -25,6 +25,10 @@ export interface ReadFileOptions extends BaseRequestOptions {
   fields?: Array<keyof gapi.client.drive.File>;
 }
 
+export interface UpdateFileOptions extends BaseRequestOptions {
+  fields?: Array<keyof gapi.client.drive.File>;
+}
+
 export interface ExportFileOptions extends BaseRequestOptions {
   mimeType: string;
 }
@@ -142,6 +146,37 @@ export class GoogleDriveClient {
       `Google Drive readFile ${response.status} error: ` +
         (await response.text())
     );
+  }
+
+  async updateFileMetadata<const T extends ReadFileOptions>(
+    fileId: string,
+    metadata: gapi.client.drive.File,
+    options?: T
+  ): Promise<NarrowedDriveFile<T["fields"]>> {
+    const authorization = {
+      kind: "bearer",
+      token: await this.#getUserAccessToken(),
+    } as const;
+    const url = this.#makeUrl(
+      `drive/v3/files/${encodeURIComponent(fileId)}`,
+      authorization
+    );
+    if (options?.fields?.length) {
+      url.searchParams.set("fields", options.fields.join(","));
+    }
+    const response = await retryableFetch(url, {
+      method: "PATCH",
+      body: JSON.stringify(metadata),
+      headers: this.#makeHeaders(authorization),
+      signal: options?.signal,
+    });
+    if (!response.ok) {
+      throw new Error(
+        `Google Drive update metadata ${response.status} error: ` +
+          (await response.text())
+      );
+    }
+    return await response.json();
   }
 
   #getFile(

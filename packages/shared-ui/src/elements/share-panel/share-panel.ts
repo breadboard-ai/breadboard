@@ -449,6 +449,9 @@ export class SharePanel extends LitElement {
     if (oldState.status !== "writable" || !oldState.shareableFile) {
       return;
     }
+    if (!this.googleDriveClient) {
+      throw new Error(`No google drive client provided`);
+    }
     if (!this.boardServer) {
       throw new Error(`No board server provided`);
     }
@@ -470,11 +473,6 @@ export class SharePanel extends LitElement {
     const updatedShareableGraph = structuredClone(this.graph);
     delete updatedShareableGraph["url"];
 
-    const [driveApi, token] = await Promise.all([
-      loadDriveApi(),
-      this.#getAccessToken(),
-    ]);
-
     await Promise.all([
       // Update the contents of the shareable copy.
       this.boardServer.ops.writeGraphToDrive(
@@ -482,14 +480,9 @@ export class SharePanel extends LitElement {
         updatedShareableGraph
       ),
       // Update the latest version property on the main file.
-      // TODO(aomarks) Add GoogleDriveClient.updateFileMetadata
-      driveApi.files.update({
-        access_token: token,
-        fileId: oldState.shareableFile.id,
-        resource: {
-          properties: {
-            [LATEST_SHARED_VERSION_PROPERTY]: oldState.latestVersion,
-          },
+      this.googleDriveClient.updateFileMetadata(oldState.shareableFile.id, {
+        properties: {
+          [LATEST_SHARED_VERSION_PROPERTY]: oldState.latestVersion,
         },
       }),
       // Ensure all assets have the same permissions as the shareable file,
@@ -1031,6 +1024,9 @@ export class SharePanel extends LitElement {
     shareableCopyFileId: string;
     newMainVersion: string;
   }> {
+    if (!this.googleDriveClient) {
+      throw new Error(`No google drive client provided`);
+    }
     if (!this.boardServer) {
       throw new Error(`No board server provided`);
     }
@@ -1072,36 +1068,21 @@ export class SharePanel extends LitElement {
       throw new Error(`Error creating shareable file`);
     }
 
-    const [driveApi, token] = await Promise.all([
-      loadDriveApi(),
-      this.#getAccessToken(),
-    ]);
-
-    // TODO(aomarks) Add GoogleDriveClient.updateFileMetadata
-    const updateMainResponse = await driveApi.files.update({
-      access_token: token,
-      fileId: mainFileId,
-      resource: {
+    // Update the latest version property on the main file.
+    const updateMainResult = await this.googleDriveClient.updateFileMetadata(
+      mainFileId,
+      {
         properties: {
           [MAIN_TO_SHAREABLE_COPY_PROPERTY]: shareableCopyFileId,
         },
       },
-      fields: "version",
-    });
-    const updateMainResult = JSON.parse(updateMainResponse.body) as Required<
-      Pick<gapi.client.drive.File, "version">
-    >;
-
-    // TODO(aomarks) Add GoogleDriveClient.updateFileMetadata
-    await driveApi.files.update({
-      access_token: token,
-      fileId: shareableCopyFileId,
-      resource: {
-        properties: {
-          [SHAREABLE_COPY_TO_MAIN_PROPERTY]: mainFileId,
-          [LATEST_SHARED_VERSION_PROPERTY]: updateMainResult.version,
-          [IS_SHAREABLE_COPY_PROPERTY]: "true",
-        },
+      { fields: ["version"] }
+    );
+    await this.googleDriveClient.updateFileMetadata(shareableCopyFileId, {
+      properties: {
+        [SHAREABLE_COPY_TO_MAIN_PROPERTY]: mainFileId,
+        [LATEST_SHARED_VERSION_PROPERTY]: updateMainResult.version,
+        [IS_SHAREABLE_COPY_PROPERTY]: "true",
       },
     });
 
