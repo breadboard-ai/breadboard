@@ -13,6 +13,16 @@ export const styles = [
       box-sizing: border-box;
     }
 
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacuty: 1;
+      }
+    }
+
     :host {
       display: grid;
       height: 100%;
@@ -23,7 +33,7 @@ export const styles = [
     }
 
     :host([showthemedesigner]) {
-      #graph-container::after {
+      & #graph-container::after {
         content: "";
         position: absolute;
         top: 0;
@@ -32,9 +42,10 @@ export const styles = [
         width: 100%;
         height: 100%;
         z-index: 5;
+        animation: fadeIn 0.3s cubic-bezier(0, 0, 0.3, 1) forwards;
       }
 
-      bb-app-theme-creator {
+      & bb-app-theme-creator {
         position: absolute;
         top: 50%;
         transform: translateY(-50%);
@@ -44,6 +55,7 @@ export const styles = [
         width: 25svw;
         min-width: 280px;
         max-width: 360px;
+        animation: fadeIn 0.4s cubic-bezier(0, 0, 0.3, 1) 0.1s backwards;
       }
     }
 
