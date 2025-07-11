@@ -1097,7 +1097,7 @@ export class Main extends SignalWatcher(LitElement) {
     replaceAll = false
   ) {
     if (!this.#snackbarRef.value) {
-      console.error(`snackbar was not ready yet`);
+      console.error(`snackbar was not ready yet`, message);
       return;
     }
 
