@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { ClientDeploymentConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
 import { createContext } from "@lit/context";
 
 export type GoogleDrivePermission =
@@ -12,7 +13,7 @@ export type GoogleDrivePermission =
   | { id: string; type: "domain"; domain: string }
   | { id: string; type: "anyone" };
 
-export interface Environment {
+export type GlobalConfig = {
   environmentName: string | undefined;
   connectionServerUrl: string | undefined;
   connectionRedirectUrl: string;
@@ -21,6 +22,14 @@ export interface Environment {
     publishPermissions: GoogleDrivePermission[];
     publicApiKey: string;
   };
+  buildInfo: BuildInfo;
+} & ClientDeploymentConfiguration;
+
+export interface BuildInfo {
+  packageJsonVersion: string;
+  gitCommitHash: string;
 }
 
-export const environmentContext = createContext<Environment>("bb-environment");
+export const globalConfigContext = createContext<GlobalConfig | undefined>(
+  "bb-global-config"
+);

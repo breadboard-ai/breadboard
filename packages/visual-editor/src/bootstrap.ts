@@ -9,7 +9,7 @@ import * as StringsHelper from "@breadboard-ai/shared-ui/strings";
 import { BootstrapArguments, MainArguments } from "./types/types.js";
 import { LanguagePack } from "@breadboard-ai/shared-ui/types/types.js";
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
-import { type GoogleDrivePermission } from "@breadboard-ai/shared-ui/contexts/environment.js";
+import { type GoogleDrivePermission } from "@breadboard-ai/shared-ui/contexts/global-config.js";
 
 export { bootstrap };
 
@@ -65,10 +65,6 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
 
   const mainArgs: MainArguments = {
     settings: await SettingsStore.restoredInstance(),
-    buildInfo: {
-      packageJsonVersion: pkg.version,
-      gitCommitHash: GIT_HASH,
-    },
     boardServerUrl: getUrlFromBoardServiceFlag(
       BOARD_SERVICE || bootstrapArgs.defaultBoardService
     ),
@@ -79,8 +75,7 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
     moduleInvocationFilter: bootstrapArgs.moduleInvocationFilter,
     env: bootstrapArgs.env,
     embedHandler: bootstrapArgs.embedHandler,
-    clientDeploymentConfiguration: bootstrapArgs.deploymentConfiguration,
-    environment: {
+    globalConfig: {
       connectionServerUrl:
         bootstrapArgs.connectionServerUrl?.href ||
         import.meta.env.VITE_CONNECTION_SERVER_URL,
@@ -93,9 +88,14 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
         ) as GoogleDrivePermission[],
         publicApiKey: import.meta.env.VITE_GOOGLE_DRIVE_PUBLIC_API_KEY ?? "",
       },
+      buildInfo: {
+        packageJsonVersion: pkg.version,
+        gitCommitHash: GIT_HASH,
+      },
+      ...bootstrapArgs.deploymentConfiguration,
     },
   };
-  if (mainArgs.environment.googleDrive.publishPermissions.length === 0) {
+  if (mainArgs.globalConfig.googleDrive.publishPermissions.length === 0) {
     console.warn(
       "No googleDrive.publishPermissions were configured." +
         " Publishing with Google Drive will not be supported."

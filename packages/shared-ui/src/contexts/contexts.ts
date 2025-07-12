@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { environmentContext, type Environment } from "./environment.js";
+export { globalConfigContext, type GlobalConfig } from "./global-config.js";
 export { tokenVendorContext } from "./token-vendor.js";
 export { settingsHelperContext } from "./settings-helper.js";
 export { embedderContext } from "./embedder.js";

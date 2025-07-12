@@ -34,15 +34,14 @@ import {
 import { consume } from "@lit/context";
 
 import {
-  environmentContext,
-  type Environment,
-} from "../../contexts/environment.js";
+  globalConfigContext,
+  type GlobalConfig,
+} from "../../contexts/global-config.js";
 import { Task, TaskStatus } from "@lit/task";
 import { RecentBoard } from "../../types/types.js";
 import { ActionTracker } from "../../utils/action-tracker.js";
 import { colorsLight } from "../../styles/host/colors-light.js";
 import { type } from "../../styles/host/type.js";
-import { type BuildInfo, buildInfoContext } from "../../contexts/build-info.js";
 import { blankBoard } from "../../utils/blank-board.js";
 
 const MODE_KEY = "bb-project-listing-mode";
@@ -94,11 +93,8 @@ export class ProjectListing extends LitElement {
   @state()
   accessor mode: "detailed" | "condensed" = "detailed";
 
-  @consume({ context: environmentContext })
-  accessor environment!: Environment;
-
-  @consume({ context: buildInfoContext })
-  accessor buildInfo: BuildInfo | undefined;
+  @consume({ context: globalConfigContext })
+  accessor globalConfig: GlobalConfig | undefined;
 
   #selectedIndex = 0;
 
@@ -928,7 +924,7 @@ export class ProjectListing extends LitElement {
                     if (!this.#availableConnections) {
                       this.#availableConnections = fetchAvailableConnections(
                         this,
-                        () => this.environment,
+                        () => this.globalConfig,
                         true
                       );
                     }
@@ -1046,8 +1042,8 @@ export class ProjectListing extends LitElement {
         : nothing}
 
       <div id="app-version">
-        ${this.buildInfo
-          ? `${this.buildInfo.packageJsonVersion} (${this.buildInfo.gitCommitHash})`
+        ${this.globalConfig
+          ? `${this.globalConfig.buildInfo.packageJsonVersion} (${this.globalConfig.buildInfo.gitCommitHash})`
           : `Unknown version`}
       </div>
       ${SHOW_GOOGLE_DRIVE_DEBUG_PANEL

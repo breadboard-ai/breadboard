@@ -6,16 +6,16 @@
 
 import { Task } from "@lit/task";
 import type { ReactiveControllerHost } from "lit";
-import type { Environment } from "../../contexts/environment.js";
+import type { GlobalConfig } from "../../contexts/global-config.js";
 
 export function fetchAvailableConnections(
   host: ReactiveControllerHost,
-  environment: () => Environment | undefined,
+  globalConfig: () => GlobalConfig | undefined,
   autoRun: boolean
 ): Task<readonly unknown[], Connection[]> {
   return new Task(host, {
     autoRun,
-    args: () => [environment()?.connectionServerUrl],
+    args: () => [globalConfig()?.connectionServerUrl],
     task: async ([connectionServerUrl], { signal }) => {
       if (!connectionServerUrl) {
         return [];

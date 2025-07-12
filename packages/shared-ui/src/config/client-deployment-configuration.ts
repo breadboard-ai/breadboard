@@ -6,7 +6,6 @@
 
 import { type RuntimeFlags } from "@breadboard-ai/types";
 import { type ClientDeploymentConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
-import { createContext } from "@lit/context";
 
 /**
  * These are the default values for runtime flags, necessary
@@ -27,10 +26,6 @@ export function populateFlags(
     flags: { ...DEFAULT_FLAG_VALUES, ...config?.flags },
   };
 }
-
-export const clientDeploymentConfigurationContext = createContext<
-  ClientDeploymentConfiguration | undefined
->("ClientDeploymentConfiguration");
 
 export function discoverClientDeploymentConfiguration(): ClientDeploymentConfiguration {
   // Fish out the configuration from DOM, which the server is responsible for

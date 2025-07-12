@@ -5,8 +5,7 @@
  */
 
 import type { EmbedHandler } from "@breadboard-ai/embed";
-import type { Environment } from "@breadboard-ai/shared-ui/contexts";
-import type { BuildInfo } from "@breadboard-ai/shared-ui/contexts/build-info.js";
+import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-config.js";
 import type { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import type {
   FileSystemEntry,
@@ -51,7 +50,6 @@ export type BootstrapArguments = {
 export type MainArguments = {
   settings: SettingsStore;
   proxy?: HarnessProxyConfig[];
-  buildInfo: BuildInfo;
   languagePack?: string;
   /**
    * The URL of the board server with which this editor instance
@@ -71,8 +69,7 @@ export type MainArguments = {
    */
   env?: FileSystemEntry[];
   embedHandler?: EmbedHandler;
-  clientDeploymentConfiguration: ClientDeploymentConfiguration;
-  environment: Environment;
+  globalConfig: GlobalConfig;
 };
 
 export enum TosStatus {

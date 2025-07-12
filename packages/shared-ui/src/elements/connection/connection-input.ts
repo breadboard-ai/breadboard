@@ -9,9 +9,9 @@ import { Task, TaskStatus } from "@lit/task";
 import { LitElement, css, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import {
-  environmentContext,
-  type Environment,
-} from "../../contexts/environment.js";
+  globalConfigContext,
+  type GlobalConfig,
+} from "../../contexts/global-config.js";
 import {
   fetchAvailableConnections,
   type Connection,
@@ -32,15 +32,15 @@ export class ConnectionInput extends LitElement {
   @property()
   accessor connectionId: string | undefined = undefined;
 
-  @consume({ context: environmentContext })
-  accessor environment!: Environment;
+  @consume({ context: globalConfigContext })
+  accessor globalConfig: GlobalConfig | undefined;
 
   @consume({ context: tokenVendorContext })
   accessor tokenVendor!: TokenVendor;
 
   #availableConnections = fetchAvailableConnections(
     this,
-    () => this.environment,
+    () => this.globalConfig,
     // Don't autorun because we only need to do this fetch if we need to sign in
     // from scratch.
     false
