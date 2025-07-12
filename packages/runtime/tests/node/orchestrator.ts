@@ -100,6 +100,7 @@ describe("Orchestrator", () => {
     it("should advance through the diamond graph", () => {
       const orchestrator = new Orchestrator(diamondPlan);
       assertTasks(orchestrator.currentTasks(), ["input"]);
+      deepStrictEqual(orchestrator.progress, "initial");
       {
         const progress = orchestrator.provideOutputs("input", {
           left: "left-audio",
@@ -451,6 +452,130 @@ describe("Orchestrator", () => {
           result: "mixed-audio",
         });
         deepStrictEqual(orchestrator.progress, "finished");
+      }
+    });
+  });
+
+  describe("restartAtNode", () => {
+    it("should correctly restart at a node", () => {
+      const orchestrator = new Orchestrator(diamondPlan);
+      assertTasks(orchestrator.currentTasks(), ["input"]);
+      {
+        const progress = orchestrator.provideOutputs("input", {
+          left: "left-audio",
+          right: "right-audio",
+        });
+        deepStrictEqual(progress, "advanced");
+        assertTasks(orchestrator.currentTasks(), [
+          "left-channel",
+          "right-channel",
+        ]);
+        assertState(diamond, orchestrator.state(), [
+          ["input", "succeeded"],
+          ["left-channel", "ready"],
+          ["right-channel", "ready"],
+          ["mixer", "inactive"],
+        ]);
+      }
+      {
+        const progress = orchestrator.provideOutputs("left-channel", {
+          processed: "processed-left-audio",
+        });
+        deepStrictEqual(progress, "working");
+        assertTasks(orchestrator.currentTasks(), ["right-channel"]);
+        assertState(diamond, orchestrator.state(), [
+          ["input", "succeeded"],
+          ["left-channel", "succeeded"],
+          ["right-channel", "ready"],
+          ["mixer", "inactive"],
+        ]);
+      }
+      {
+        const progress = orchestrator.provideOutputs("right-channel", {
+          processed: "processed-right-audio",
+        });
+        deepStrictEqual(progress, "advanced");
+        assertTasks(orchestrator.currentTasks(), ["mixer"]);
+        assertState(diamond, orchestrator.state(), [
+          ["input", "succeeded"],
+          ["left-channel", "succeeded"],
+          ["right-channel", "succeeded"],
+          ["mixer", "ready"],
+        ]);
+      }
+      {
+        const rollback = orchestrator.restartAtNode("left-channel");
+        assert(ok(rollback));
+        deepStrictEqual(orchestrator.progress, "working");
+        assertTasks(orchestrator.currentTasks(), ["left-channel"]);
+        assertState(diamond, orchestrator.state(), [
+          ["input", "succeeded"],
+          ["left-channel", "ready"],
+          ["right-channel", "succeeded"],
+          ["mixer", "inactive"],
+        ]);
+      }
+      {
+        const rollback = orchestrator.restartAtNode("right-channel");
+        assert(ok(rollback));
+        deepStrictEqual(orchestrator.progress, "advanced");
+        assertTasks(orchestrator.currentTasks(), [
+          "left-channel",
+          "right-channel",
+        ]);
+        assertState(diamond, orchestrator.state(), [
+          ["input", "succeeded"],
+          ["left-channel", "ready"],
+          ["right-channel", "ready"],
+          ["mixer", "inactive"],
+        ]);
+      }
+      {
+        // Repeat it and ensure we get the same result.
+        // Should be a no-op.
+        const rollback = orchestrator.restartAtNode("right-channel");
+        assert(ok(rollback));
+        deepStrictEqual(orchestrator.progress, "advanced");
+        assertTasks(orchestrator.currentTasks(), [
+          "left-channel",
+          "right-channel",
+        ]);
+        assertState(diamond, orchestrator.state(), [
+          ["input", "succeeded"],
+          ["left-channel", "ready"],
+          ["right-channel", "ready"],
+          ["mixer", "inactive"],
+        ]);
+      }
+      {
+        // Now, try to restart at left-channel, which is already ready.
+        // Should be a no-op.
+        const rollback = orchestrator.restartAtNode("left-channel");
+        assert(ok(rollback));
+        deepStrictEqual(orchestrator.progress, "advanced");
+        assertTasks(orchestrator.currentTasks(), [
+          "left-channel",
+          "right-channel",
+        ]);
+        assertState(diamond, orchestrator.state(), [
+          ["input", "succeeded"],
+          ["left-channel", "ready"],
+          ["right-channel", "ready"],
+          ["mixer", "inactive"],
+        ]);
+      }
+      {
+        // Let's go all the way to the beginning.
+        const rollback = orchestrator.restartAtNode("input");
+        assert(ok(rollback));
+        deepStrictEqual(orchestrator.progress, "initial");
+        assertTasks(orchestrator.currentTasks(), ["input"]);
+        assertState(diamond, orchestrator.state(), [
+          ["input", "ready"],
+          ["left-channel", "inactive"],
+          ["right-channel", "inactive"],
+          ["mixer", "inactive"],
+        ]);
       }
     });
   });

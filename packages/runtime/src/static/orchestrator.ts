@@ -84,16 +84,24 @@ class Orchestrator {
    */
   reset(): Outcome<void> {
     this.#state.clear();
+    this.#resetAtStage(0);
+  }
+
+  #resetAtStage(starting: number) {
     const state = this.#state;
+    const stagesToReset = this.plan.stages.slice(starting);
     try {
-      this.plan.stages.forEach((stage, index) => {
+      stagesToReset.forEach((stage, index) => {
         const firstStage = index === 0;
         stage.forEach((plan: PlanNodeInfo) => {
+          const inputs = firstStage
+            ? state.get(plan.node.id)?.inputs || {}
+            : null;
           state.set(plan.node.id, {
-            stage: index,
+            stage: starting + index,
             state: firstStage ? "ready" : "inactive",
             plan,
-            inputs: firstStage ? {} : null,
+            inputs,
             outputs: null,
           });
         });
@@ -101,8 +109,55 @@ class Orchestrator {
     } catch (e) {
       return err((e as Error).message);
     }
-    this.#currentStage = 0;
-    this.#progress = "initial";
+    this.#currentStage = starting;
+    this.#progress = starting == 0 ? "initial" : "advanced";
+  }
+
+  restartAtStage(stage: number): Outcome<void> {
+    if (stage < 0) {
+      return this.reset();
+    }
+    if (stage > this.#currentStage) {
+      return err(`Stage ${stage} is beyond the current stage`);
+    }
+    return this.#resetAtStage(stage);
+  }
+
+  restartAtNode(id: NodeIdentifier): Outcome<void> {
+    const state = this.#state.get(id);
+    if (!state) {
+      return err(`Unable to restart at node "${id}": node not found`);
+    }
+    const stage = state.stage;
+
+    // 1. Save outputs at the stage.
+    const outputs: Map<NodeIdentifier, OutputValues> = new Map();
+    try {
+      this.plan.stages[stage].forEach((plan) => {
+        const nodeId = plan.node.id;
+        if (nodeId === id) {
+          return;
+        }
+        const state = this.#state.get(nodeId);
+        if (!state) {
+          throw new Error(`Unable to restart at node "${id}": node not found`);
+        }
+        if (!state.outputs) return;
+        outputs.set(nodeId, state.outputs);
+      });
+
+      const restarting = this.restartAtStage(stage);
+      if (!ok(restarting)) return restarting;
+
+      outputs.forEach((outputs, nodeId) => {
+        const providing = this.provideOutputs(nodeId, outputs);
+        if (!ok(providing)) {
+          throw new Error(providing.$error);
+        }
+      });
+    } catch (e) {
+      return err((e as Error).message);
+    }
   }
 
   setWorking(id: NodeIdentifier): Outcome<void> {
