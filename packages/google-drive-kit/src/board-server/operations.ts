@@ -798,41 +798,52 @@ class DriveOperations {
   }
 
   async copyDriveFile(
-    data: StoredDataCapabilityPart
+    original: StoredDataCapabilityPart
   ): Promise<Outcome<StoredDataCapabilityPart>> {
-    const sourceHandle = data.storedData.handle;
+    const sourceHandle = original.storedData.handle;
     if (!sourceHandle.startsWith(PROTOCOL)) {
-      return data;
+      return original;
     }
     const fileId = getFileId(sourceHandle);
-    let response = await this.#googleDriveClient.copyFile(fileId);
-    const result: StoredDataCapabilityPart = {
-      storedData: {
-        handle: "",
-        mimeType: data.storedData.mimeType,
-        contentHash: data.storedData.contentHash,
-        contentLength: data.storedData.contentLength,
-      },
-    };
-    if (!response.ok) {
-      return err(response.statusText);
-    }
-    // This file wasn't possible to copy directly hence now the contend needs to be uploaded.
-    if (!response.url.endsWith("/copy")) {
+    // First try to copy the file with a direct Google Drive copy operation.
+    const copiedFile = await this.#googleDriveClient.copyFile(fileId, {
+      fields: ["id"],
+    });
+    if (copiedFile.ok) {
+      return {
+        storedData: {
+          ...original.storedData,
+          handle: `${PROTOCOL}/${copiedFile.value.id}`,
+        },
+      };
+    } else if (copiedFile.error.status === 404) {
+      // If we get a 404, it means the file we tried to copy was not visible
+      // with user credentials. But the file might still be visible with public
+      // credentials. So, let's fetch the content using a method that
+      // automatically uses public credentials, and upload that.
+      const content = await this.#googleDriveClient.getFileMedia(fileId);
       const accessToken = await getAccessToken(this.vendor);
       const api = new Files({ kind: "bearer", token: accessToken! });
-      response = await retryableFetch(
+      const uploadResponse = await retryableFetch(
         api.makeUploadRequest(
           undefined,
-          await response.blob(),
-          data.storedData.mimeType
+          await content.blob(),
+          original.storedData.mimeType
         )
       );
+      if (!uploadResponse.ok) {
+        return err(String(uploadResponse.status));
+      }
+      const uploadedFile = (await uploadResponse.json()) as DriveFile;
+      return {
+        storedData: {
+          ...original.storedData,
+          handle: `${PROTOCOL}/${uploadedFile.id}`,
+        },
+      };
+    } else {
+      return err(String(copiedFile.error.status));
     }
-    const copiedFile = (await response.json()) as DriveFile;
-    result.storedData.handle = `${PROTOCOL}/${copiedFile.id}`;
-    result.data = data.data;
-    return result;
   }
 
   async writeRunResults(results: RunResults): Promise<{ id: string }> {
