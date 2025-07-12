@@ -4,15 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { type ClientDeploymentConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
 import { consume } from "@lit/context";
 import { css, html, LitElement, nothing } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
-import { clientDeploymentConfigurationContext } from "../../config/client-deployment-configuration.js";
-import { type BuildInfo, buildInfoContext } from "../../contexts/build-info.js";
 import { icons } from "../../styles/icons.js";
 import { spinAnimationStyles } from "../../styles/spin-animation.js";
+import {
+  type Environment,
+  environmentContext,
+} from "../../contexts/environment.js";
 
 type UserFeedbackApi = {
   startFeedback(
@@ -96,13 +97,8 @@ export class FeedbackPanel extends LitElement {
     `,
   ];
 
-  @consume({ context: clientDeploymentConfigurationContext })
-  accessor clientDeploymentConfiguration:
-    | ClientDeploymentConfiguration
-    | undefined;
-
-  @consume({ context: buildInfoContext })
-  accessor buildInfo: BuildInfo | undefined;
+  @consume({ context: environmentContext })
+  accessor environment: Environment | undefined;
 
   @state()
   accessor #state: State = { status: "closed" };
@@ -153,12 +149,11 @@ export class FeedbackPanel extends LitElement {
       return;
     }
 
-    if (!this.clientDeploymentConfiguration) {
-      console.error(`No client deployment configuration was provided.`);
+    if (!this.environment) {
+      console.error(`No environment was provided.`);
       return;
     }
-    const productId =
-      this.clientDeploymentConfiguration.GOOGLE_FEEDBACK_PRODUCT_ID;
+    const productId = this.environment.GOOGLE_FEEDBACK_PRODUCT_ID;
     if (!productId) {
       console.error(
         `No GOOGLE_FEEDBACK_PRODUCT_ID was set` +
@@ -166,7 +161,7 @@ export class FeedbackPanel extends LitElement {
       );
       return;
     }
-    const bucket = this.clientDeploymentConfiguration.GOOGLE_FEEDBACK_BUCKET;
+    const bucket = this.environment.GOOGLE_FEEDBACK_BUCKET;
     if (!bucket) {
       console.error(
         `No GOOGLE_FEEDBACK_BUCKET was set` +
@@ -174,11 +169,8 @@ export class FeedbackPanel extends LitElement {
       );
       return;
     }
-    if (!this.buildInfo) {
-      console.error(`No build info was provided.`);
-      return;
-    }
-    const { packageJsonVersion: version, gitCommitHash } = this.buildInfo;
+    const { packageJsonVersion: version, gitCommitHash } =
+      this.environment.buildInfo;
 
     this.#state = { status: "loading" };
     let api;

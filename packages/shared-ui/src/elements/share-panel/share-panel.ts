@@ -40,11 +40,7 @@ import {
 } from "../../utils/signin-adapter.js";
 import { type GoogleDriveSharePanel } from "../elements.js";
 import { findGoogleDriveAssetsInGraph } from "../google-drive/find-google-drive-assets-in-graph.js";
-import type {
-  ClientDeploymentConfiguration,
-  DomainConfiguration,
-} from "@breadboard-ai/types/deployment-configuration.js";
-import { clientDeploymentConfigurationContext } from "../../config/client-deployment-configuration.js";
+import type { DomainConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
 
 const APP_NAME = StringsHelper.forSection("Global").from("APP_NAME");
 const Strings = StringsHelper.forSection("UIController");
@@ -308,13 +304,7 @@ export class SharePanel extends LitElement {
 
   @consume({ context: environmentContext })
   @property({ attribute: false })
-  accessor environment!: Environment;
-
-  @consume({ context: clientDeploymentConfigurationContext })
-  @property({ attribute: false })
-  accessor clientDeploymentConfiguration:
-    | ClientDeploymentConfiguration
-    | undefined;
+  accessor environment: Environment | undefined;
 
   @consume({ context: signinAdapterContext })
   @property({ attribute: false })
@@ -1056,7 +1046,7 @@ export class SharePanel extends LitElement {
     }
     return {
       domain,
-      config: this.clientDeploymentConfiguration?.domains?.[domain] ?? {},
+      config: this.environment?.domains?.[domain] ?? {},
     };
   }
 

@@ -65,10 +65,6 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
 
   const mainArgs: MainArguments = {
     settings: await SettingsStore.restoredInstance(),
-    buildInfo: {
-      packageJsonVersion: pkg.version,
-      gitCommitHash: GIT_HASH,
-    },
     boardServerUrl: getUrlFromBoardServiceFlag(
       BOARD_SERVICE || bootstrapArgs.defaultBoardService
     ),
@@ -79,7 +75,6 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
     moduleInvocationFilter: bootstrapArgs.moduleInvocationFilter,
     env: bootstrapArgs.env,
     embedHandler: bootstrapArgs.embedHandler,
-    clientDeploymentConfiguration: bootstrapArgs.deploymentConfiguration,
     environment: {
       connectionServerUrl:
         bootstrapArgs.connectionServerUrl?.href ||
@@ -93,6 +88,11 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
         ) as GoogleDrivePermission[],
         publicApiKey: import.meta.env.VITE_GOOGLE_DRIVE_PUBLIC_API_KEY ?? "",
       },
+      buildInfo: {
+        packageJsonVersion: pkg.version,
+        gitCommitHash: GIT_HASH,
+      },
+      ...bootstrapArgs.deploymentConfiguration,
     },
   };
   if (mainArgs.environment.googleDrive.publishPermissions.length === 0) {

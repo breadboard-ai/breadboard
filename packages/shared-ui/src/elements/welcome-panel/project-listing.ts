@@ -42,7 +42,6 @@ import { RecentBoard } from "../../types/types.js";
 import { ActionTracker } from "../../utils/action-tracker.js";
 import { colorsLight } from "../../styles/host/colors-light.js";
 import { type } from "../../styles/host/type.js";
-import { type BuildInfo, buildInfoContext } from "../../contexts/build-info.js";
 import { blankBoard } from "../../utils/blank-board.js";
 
 const MODE_KEY = "bb-project-listing-mode";
@@ -96,9 +95,6 @@ export class ProjectListing extends LitElement {
 
   @consume({ context: environmentContext })
   accessor environment!: Environment;
-
-  @consume({ context: buildInfoContext })
-  accessor buildInfo: BuildInfo | undefined;
 
   #selectedIndex = 0;
 
@@ -1046,8 +1042,8 @@ export class ProjectListing extends LitElement {
         : nothing}
 
       <div id="app-version">
-        ${this.buildInfo
-          ? `${this.buildInfo.packageJsonVersion} (${this.buildInfo.gitCommitHash})`
+        ${this.environment
+          ? `${this.environment.buildInfo.packageJsonVersion} (${this.environment.buildInfo.gitCommitHash})`
           : `Unknown version`}
       </div>
       ${SHOW_GOOGLE_DRIVE_DEBUG_PANEL
