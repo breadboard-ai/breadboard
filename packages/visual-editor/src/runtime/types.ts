@@ -24,7 +24,6 @@ import {
   RunStore,
 } from "@google-labs/breadboard";
 
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { TokenVendor } from "@breadboard-ai/connection-client";
 import {
   AssetPath,
@@ -38,6 +37,7 @@ import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { RecentBoardStore } from "../data/recent-boards";
+import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-config.js";
 
 export enum TabType {
   URL,
@@ -77,7 +77,7 @@ export interface RuntimeConfig {
   runStore: RunStore;
   sandbox: Sandbox;
   experiments: Record<string, boolean>;
-  environment?: BreadboardUI.Contexts.Environment;
+  globalConfig?: GlobalConfig;
   tokenVendor: TokenVendor;
   settings: SettingsStore;
   fileSystem: FileSystem;

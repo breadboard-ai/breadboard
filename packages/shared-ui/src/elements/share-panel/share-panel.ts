@@ -24,10 +24,10 @@ import { createRef, ref } from "lit/directives/ref.js";
 import animations from "../../app-templates/shared/styles/animations.js";
 import { boardServerContext } from "../../contexts/board-server.js";
 import {
-  environmentContext,
-  type Environment,
+  globalConfigContext,
+  type GlobalConfig,
   type GoogleDrivePermission,
-} from "../../contexts/environment.js";
+} from "../../contexts/global-config.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { ToastEvent, ToastType } from "../../events/events.js";
 import * as StringsHelper from "../../strings/helper.js";
@@ -302,9 +302,9 @@ export class SharePanel extends LitElement {
     `,
   ];
 
-  @consume({ context: environmentContext })
+  @consume({ context: globalConfigContext })
   @property({ attribute: false })
-  accessor environment: Environment | undefined;
+  accessor globalConfig: GlobalConfig | undefined;
 
   @consume({ context: signinAdapterContext })
   @property({ attribute: false })
@@ -1046,7 +1046,7 @@ export class SharePanel extends LitElement {
     }
     return {
       domain,
-      config: this.environment?.domains?.[domain] ?? {},
+      config: this.globalConfig?.domains?.[domain] ?? {},
     };
   }
 
@@ -1162,11 +1162,11 @@ export class SharePanel extends LitElement {
   }
 
   #getRequiredPublishPermissions(): gapi.client.drive.Permission[] {
-    if (!this.environment) {
+    if (!this.globalConfig) {
       console.error(`No environment was provided`);
       return [];
     }
-    const permissions = this.environment.googleDrive.publishPermissions;
+    const permissions = this.globalConfig.googleDrive.publishPermissions;
     if (permissions.length === 0) {
       console.error(`Environment contained no googleDrive.publishPermissions`);
     }

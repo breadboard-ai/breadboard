@@ -5,7 +5,7 @@
  */
 
 import type { EmbedHandler } from "@breadboard-ai/embed";
-import type { Environment } from "@breadboard-ai/shared-ui/contexts";
+import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-config.js";
 import type { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import type {
   FileSystemEntry,
@@ -69,7 +69,7 @@ export type MainArguments = {
    */
   env?: FileSystemEntry[];
   embedHandler?: EmbedHandler;
-  environment: Environment;
+  globalConfig: GlobalConfig;
 };
 
 export enum TosStatus {

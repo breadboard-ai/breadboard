@@ -1,11 +1,18 @@
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { MainArguments } from "./types/types.js";
 
-import { Contexts, Types } from "@breadboard-ai/shared-ui";
+import { Types } from "@breadboard-ai/shared-ui";
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 
 import { RuntimeInstance } from "./runtime/runtime.js";
 import { RuntimeFlagManager } from "@breadboard-ai/types";
+import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-config.js";
 
 /**
  * An interface for owners functionality - a command center console for executing operations which
@@ -14,7 +21,7 @@ import { RuntimeFlagManager } from "@breadboard-ai/types";
 export class Admin {
   constructor(
     public readonly args: MainArguments,
-    public readonly env: Contexts.Environment,
+    public readonly globalConfig: GlobalConfig,
     public readonly gDriveClient: GoogleDriveClient
   ) {
     if (window.location.hash?.includes("owner-tools")) {

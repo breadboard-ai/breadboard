@@ -13,7 +13,7 @@ import {
   ValidTokenResult,
 } from "@breadboard-ai/connection-client";
 import type { GrantResponse } from "@breadboard-ai/types/oauth.js";
-import { Environment } from "../contexts/environment";
+import type { GlobalConfig } from "../contexts/global-config";
 import {
   OAuthStateParameter,
   oauthTokenBroadcastChannelName,
@@ -51,21 +51,21 @@ export const signinAdapterContext = createContext<SigninAdapter | undefined>(
  */
 class SigninAdapter {
   readonly #tokenVendor: TokenVendor;
-  readonly #environment: Environment;
+  readonly #globalConfig: GlobalConfig;
   readonly #settingsHelper: SettingsHelper;
   #nonce = crypto.randomUUID();
   #state: SigninAdapterState;
 
   constructor(
     tokenVendor: TokenVendor,
-    environment: Environment,
+    globalConfig: GlobalConfig,
     settingsHelper: SettingsHelper
   ) {
     this.#tokenVendor = tokenVendor;
-    this.#environment = environment;
+    this.#globalConfig = globalConfig;
     this.#settingsHelper = settingsHelper;
 
-    if (!environment.requiresSignin) {
+    if (!globalConfig.requiresSignin) {
       this.#state = { status: "anonymous" };
       return;
     }
@@ -120,7 +120,7 @@ class SigninAdapter {
 
   async #getConnection(): Promise<Connection | undefined> {
     const httpRes = await fetch(
-      new URL("list", this.#environment.connectionServerUrl),
+      new URL("list", this.#globalConfig.connectionServerUrl),
       {
         credentials: "include",
       }
@@ -144,7 +144,7 @@ class SigninAdapter {
     const connection = await this.#getConnection();
     if (!connection) return "";
 
-    let redirectUri = this.#environment.connectionRedirectUrl;
+    let redirectUri = this.#globalConfig.connectionRedirectUrl;
     if (!redirectUri) return "";
 
     redirectUri = new URL(redirectUri, new URL(window.location.href).origin)

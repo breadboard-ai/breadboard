@@ -13,7 +13,7 @@ export type GoogleDrivePermission =
   | { id: string; type: "domain"; domain: string }
   | { id: string; type: "anyone" };
 
-export type Environment = {
+export type GlobalConfig = {
   environmentName: string | undefined;
   connectionServerUrl: string | undefined;
   connectionRedirectUrl: string;
@@ -30,6 +30,6 @@ export interface BuildInfo {
   gitCommitHash: string;
 }
 
-export const environmentContext = createContext<Environment | undefined>(
-  "bb-environment"
+export const globalConfigContext = createContext<GlobalConfig | undefined>(
+  "bb-global-config"
 );

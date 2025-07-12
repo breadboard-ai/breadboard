@@ -34,9 +34,9 @@ import {
 import { consume } from "@lit/context";
 
 import {
-  environmentContext,
-  type Environment,
-} from "../../contexts/environment.js";
+  globalConfigContext,
+  type GlobalConfig,
+} from "../../contexts/global-config.js";
 import { Task, TaskStatus } from "@lit/task";
 import { RecentBoard } from "../../types/types.js";
 import { ActionTracker } from "../../utils/action-tracker.js";
@@ -93,8 +93,8 @@ export class ProjectListing extends LitElement {
   @state()
   accessor mode: "detailed" | "condensed" = "detailed";
 
-  @consume({ context: environmentContext })
-  accessor environment!: Environment;
+  @consume({ context: globalConfigContext })
+  accessor globalConfig: GlobalConfig | undefined;
 
   #selectedIndex = 0;
 
@@ -924,7 +924,7 @@ export class ProjectListing extends LitElement {
                     if (!this.#availableConnections) {
                       this.#availableConnections = fetchAvailableConnections(
                         this,
-                        () => this.environment,
+                        () => this.globalConfig,
                         true
                       );
                     }
@@ -1042,8 +1042,8 @@ export class ProjectListing extends LitElement {
         : nothing}
 
       <div id="app-version">
-        ${this.environment
-          ? `${this.environment.buildInfo.packageJsonVersion} (${this.environment.buildInfo.gitCommitHash})`
+        ${this.globalConfig
+          ? `${this.globalConfig.buildInfo.packageJsonVersion} (${this.globalConfig.buildInfo.gitCommitHash})`
           : `Unknown version`}
       </div>
       ${SHOW_GOOGLE_DRIVE_DEBUG_PANEL

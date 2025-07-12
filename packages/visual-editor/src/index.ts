@@ -106,6 +106,10 @@ import { eventRoutes } from "./event-routing/event-routing";
 import { keyboardCommands } from "./commands/commands";
 import { ReactiveAppScreen } from "@breadboard-ai/shared-ui/state/app-screen.js";
 import { type AppScreenOutput } from "@breadboard-ai/shared-ui/state/types.js";
+import {
+  GlobalConfig,
+  globalConfigContext,
+} from "@breadboard-ai/shared-ui/contexts";
 
 type RenderValues = {
   canSave: boolean;
@@ -123,8 +127,8 @@ const BOARD_AUTO_SAVE_TIMEOUT = 1_500;
 
 @customElement("bb-main")
 export class Main extends SignalWatcher(LitElement) {
-  @provide({ context: BreadboardUI.Contexts.environmentContext })
-  accessor environment: BreadboardUI.Contexts.Environment;
+  @provide({ context: globalConfigContext })
+  accessor globalConfig: GlobalConfig;
 
   readonly #settings: SettingsStore;
 
@@ -227,7 +231,7 @@ export class Main extends SignalWatcher(LitElement) {
     super();
 
     // Static deployment config
-    this.environment = args.environment;
+    this.globalConfig = args.globalConfig;
 
     // User settings
     this.#settings = args.settings;
@@ -254,17 +258,17 @@ export class Main extends SignalWatcher(LitElement) {
           );
         },
       },
-      this.environment
+      this.globalConfig
     );
 
     this.signinAdapter = new SigninAdapter(
       this.tokenVendor,
-      this.environment,
+      this.globalConfig,
       this.settingsHelper
     );
 
     // API Clients
-    const backendApiEndpoint = this.environment.BACKEND_API_ENDPOINT;
+    const backendApiEndpoint = this.globalConfig.BACKEND_API_ENDPOINT;
     if (!backendApiEndpoint) {
       throw new Error(
         `No BACKEND_API_ENDPOINT in ClientDeploymentConfiguration`
@@ -280,10 +284,10 @@ export class Main extends SignalWatcher(LitElement) {
 
     this.googleDriveClient = new GoogleDriveClient({
       apiBaseUrl: "https://www.googleapis.com",
-      proxyUrl: this.environment.ENABLE_GOOGLE_DRIVE_PROXY
+      proxyUrl: this.globalConfig.ENABLE_GOOGLE_DRIVE_PROXY
         ? new URL("v1beta1/getOpalFile", backendApiEndpoint).href
         : undefined,
-      publicApiKey: this.environment.googleDrive.publicApiKey,
+      publicApiKey: this.globalConfig.googleDrive.publicApiKey,
       getUserAccessToken: async () => {
         const token = await this.signinAdapter.token();
         if (token.state === "valid") {
@@ -355,7 +359,7 @@ export class Main extends SignalWatcher(LitElement) {
       graphStore: this.#graphStore,
       runStore: this.#runStore,
       experiments: {},
-      environment: this.environment,
+      globalConfig: this.globalConfig,
       tokenVendor: this.tokenVendor,
       sandbox,
       settings: this.#settings,
@@ -370,13 +374,13 @@ export class Main extends SignalWatcher(LitElement) {
       googleDriveClient: this.googleDriveClient,
       appName: Strings.from("APP_NAME"),
       appSubName: Strings.from("SUB_APP_NAME"),
-      flags: createFlagManager(this.environment.flags),
+      flags: createFlagManager(this.globalConfig.flags),
     });
 
     this.#uiState = this.#runtime.state.getOrCreateUIState();
     this.#addRuntimeEventHandlers();
 
-    const admin = new Admin(args, this.environment, this.googleDriveClient);
+    const admin = new Admin(args, this.globalConfig, this.googleDriveClient);
     admin.runtime = this.#runtime;
 
     admin.settingsHelper = this.settingsHelper;
@@ -460,7 +464,7 @@ export class Main extends SignalWatcher(LitElement) {
     if (!domain) {
       return;
     }
-    const url = this.environment.domains?.[domain].preferredUrl;
+    const url = this.globalConfig.domains?.[domain].preferredUrl;
     if (!url) {
       return;
     }
@@ -2102,14 +2106,14 @@ export class Main extends SignalWatcher(LitElement) {
           }
 
           case "feedback": {
-            if (this.environment.ENABLE_GOOGLE_FEEDBACK) {
+            if (this.globalConfig.ENABLE_GOOGLE_FEEDBACK) {
               if (this.#feedbackPanelRef.value) {
                 this.#feedbackPanelRef.value.open();
               } else {
                 console.error(`Feedback panel was not rendered!`);
               }
             } else {
-              const feedbackLink = this.environment.FEEDBACK_LINK;
+              const feedbackLink = this.globalConfig.FEEDBACK_LINK;
               if (feedbackLink) {
                 window.open(feedbackLink, "_blank");
               }

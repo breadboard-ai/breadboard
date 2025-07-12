@@ -8,9 +8,9 @@ import { consume } from "@lit/context";
 import { LitElement, css, html, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
-  environmentContext,
-  type Environment,
-} from "../../contexts/environment.js";
+  globalConfigContext,
+  type GlobalConfig,
+} from "../../contexts/global-config.js";
 import { settingsHelperContext } from "../../contexts/settings-helper.js";
 import { SETTINGS_TYPE, type SettingsHelper } from "../../types/types.js";
 import {
@@ -30,8 +30,8 @@ export class ConnectionSignin extends LitElement {
   @property({ attribute: false })
   accessor connection: Connection | undefined = undefined;
 
-  @consume({ context: environmentContext })
-  accessor environment!: Environment;
+  @consume({ context: globalConfigContext })
+  accessor globalConfig: GlobalConfig | undefined;
 
   @consume({ context: settingsHelperContext })
   accessor settingsHelper!: SettingsHelper;
@@ -202,7 +202,7 @@ export class ConnectionSignin extends LitElement {
     if (!this.connection) {
       return "";
     }
-    let redirectUri = this.environment?.connectionRedirectUrl;
+    let redirectUri = this.globalConfig?.connectionRedirectUrl;
     if (!redirectUri) {
       return "";
     }

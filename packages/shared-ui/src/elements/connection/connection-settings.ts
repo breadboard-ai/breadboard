@@ -8,9 +8,9 @@ import { consume } from "@lit/context";
 import { LitElement, css, html } from "lit";
 import { customElement } from "lit/decorators.js";
 import {
-  environmentContext,
-  type Environment,
-} from "../../contexts/environment.js";
+  globalConfigContext,
+  type GlobalConfig,
+} from "../../contexts/global-config.js";
 import type { CustomSettingsElement } from "../../types/types.js";
 import {
   fetchAvailableConnections,
@@ -27,8 +27,8 @@ export class ConnectionSettings
   extends LitElement
   implements CustomSettingsElement
 {
-  @consume({ context: environmentContext })
-  accessor environment!: Environment;
+  @consume({ context: globalConfigContext })
+  accessor globalConfig: GlobalConfig | undefined;
 
   /**
    * The available connections vary across deployment environments, so we fetch
@@ -36,7 +36,7 @@ export class ConnectionSettings
    */
   #availableConnections = fetchAvailableConnections(
     this,
-    () => this.environment,
+    () => this.globalConfig,
     /* autorun */ true
   );
 
@@ -53,7 +53,7 @@ export class ConnectionSettings
   `;
 
   render() {
-    const connectionServerUrl = this.environment?.connectionServerUrl;
+    const connectionServerUrl = this.globalConfig?.connectionServerUrl;
     if (!connectionServerUrl) {
       return html`No connection server URL configured.`;
     }

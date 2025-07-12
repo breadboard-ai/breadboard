@@ -11,9 +11,9 @@ import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { icons } from "../../styles/icons.js";
 import { spinAnimationStyles } from "../../styles/spin-animation.js";
 import {
-  type Environment,
-  environmentContext,
-} from "../../contexts/environment.js";
+  type GlobalConfig,
+  globalConfigContext,
+} from "../../contexts/global-config.js";
 
 type UserFeedbackApi = {
   startFeedback(
@@ -97,8 +97,8 @@ export class FeedbackPanel extends LitElement {
     `,
   ];
 
-  @consume({ context: environmentContext })
-  accessor environment: Environment | undefined;
+  @consume({ context: globalConfigContext })
+  accessor globalConfig: GlobalConfig | undefined;
 
   @state()
   accessor #state: State = { status: "closed" };
@@ -149,11 +149,11 @@ export class FeedbackPanel extends LitElement {
       return;
     }
 
-    if (!this.environment) {
+    if (!this.globalConfig) {
       console.error(`No environment was provided.`);
       return;
     }
-    const productId = this.environment.GOOGLE_FEEDBACK_PRODUCT_ID;
+    const productId = this.globalConfig.GOOGLE_FEEDBACK_PRODUCT_ID;
     if (!productId) {
       console.error(
         `No GOOGLE_FEEDBACK_PRODUCT_ID was set` +
@@ -161,7 +161,7 @@ export class FeedbackPanel extends LitElement {
       );
       return;
     }
-    const bucket = this.environment.GOOGLE_FEEDBACK_BUCKET;
+    const bucket = this.globalConfig.GOOGLE_FEEDBACK_BUCKET;
     if (!bucket) {
       console.error(
         `No GOOGLE_FEEDBACK_BUCKET was set` +
@@ -170,7 +170,7 @@ export class FeedbackPanel extends LitElement {
       return;
     }
     const { packageJsonVersion: version, gitCommitHash } =
-      this.environment.buildInfo;
+      this.globalConfig.buildInfo;
 
     this.#state = { status: "loading" };
     let api;
