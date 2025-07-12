@@ -40,6 +40,11 @@ import {
 } from "../../utils/signin-adapter.js";
 import { type GoogleDriveSharePanel } from "../elements.js";
 import { findGoogleDriveAssetsInGraph } from "../google-drive/find-google-drive-assets-in-graph.js";
+import type {
+  ClientDeploymentConfiguration,
+  DomainConfiguration,
+} from "@breadboard-ai/types/deployment-configuration.js";
+import { clientDeploymentConfigurationContext } from "../../config/client-deployment-configuration.js";
 
 const APP_NAME = StringsHelper.forSection("Global").from("APP_NAME");
 const Strings = StringsHelper.forSection("UIController");
@@ -200,6 +205,26 @@ export class SharePanel extends LitElement {
         font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
           var(--bb-font-family);
       }
+      #disallowed-publishing-notice {
+        font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+          var(--bb-font-family);
+        text-align: right;
+        color: var(--bb-notify-500);
+        max-width: 350px;
+        align-self: flex-end;
+        margin-top: var(--bb-grid-size-3);
+        > a,
+        > a:visited {
+          color: var(--bb-ui-600);
+          &:hover {
+            color: var(--bb-ui-400);
+          }
+        }
+        > .g-icon {
+          vertical-align: middle;
+          margin: 0 4px 2px 0;
+        }
+      }
       #granular-sharing-link {
         text-decoration: none;
         color: var(--ui-custom-o-100);
@@ -284,6 +309,12 @@ export class SharePanel extends LitElement {
   @consume({ context: environmentContext })
   @property({ attribute: false })
   accessor environment!: Environment;
+
+  @consume({ context: clientDeploymentConfigurationContext })
+  @property({ attribute: false })
+  accessor clientDeploymentConfiguration:
+    | ClientDeploymentConfiguration
+    | undefined;
 
   @consume({ context: signinAdapterContext })
   @property({ attribute: false })
@@ -419,6 +450,7 @@ export class SharePanel extends LitElement {
           Publish your ${APP_NAME} ${this.#renderPublishedSwitch()}
         </div>
       `,
+      this.#renderDisallowedPublishingNotice(),
       this.#isShared ? this.#renderAppLink() : nothing,
       this.#renderGranularSharingLink(),
       this.#renderAdvisory(),
@@ -512,6 +544,30 @@ export class SharePanel extends LitElement {
     return html`<div id="readonly">${this.#renderAppLink()}</div>`;
   }
 
+  #renderDisallowedPublishingNotice() {
+    const {
+      domain,
+      config: { disallowPublicPublishing, preferredUrl },
+    } = this.#userDomain;
+    if (!disallowPublicPublishing) {
+      return nothing;
+    }
+    return html`
+      <p id="disallowed-publishing-notice">
+        <span class="g-icon">info</span>
+        Publishing is disabled for all users from ${domain}.
+        <br />
+        ${preferredUrl
+          ? html`Please use
+              <a href="${preferredUrl}" target="_blank"
+                >${new URL(preferredUrl).hostname}</a
+              >
+              to share with other ${domain} users.`
+          : nothing}
+      </p>
+    `;
+  }
+
   #renderAppLink() {
     const appUrl = this.#appUrl;
     if (!appUrl) {
@@ -571,12 +627,14 @@ export class SharePanel extends LitElement {
     const { status } = this.#state;
     const published =
       (status === "writable" || status === "updating") && this.#state.published;
+    const disabled =
+      this.#userDomain.config.disallowPublicPublishing || status === "updating";
     return html`
       <div id="published-switch-container">
         <md-switch
           ${ref(this.#publishedSwitch)}
           ?selected=${published}
-          ?disabled=${status === "updating"}
+          ?disabled=${disabled}
           @change=${this.#onPublishedSwitchChange}
         ></md-switch>
         <label for="publishedSwitch">
@@ -991,21 +1049,15 @@ export class SharePanel extends LitElement {
     };
   }
 
-  async #getAccessToken(): Promise<string> {
-    if (!this.signinAdapter) {
-      console.error(`No signinAdapter was provided`);
-      return "";
+  get #userDomain(): { domain: string; config: DomainConfiguration } {
+    const domain = this.signinAdapter?.domain;
+    if (!domain) {
+      return { domain: "unknown", config: {} };
     }
-    const auth = await this.signinAdapter.token();
-    if (auth?.state !== "valid") {
-      console.error(`Expected valid auth, got "${auth?.state}"`);
-      return "";
-    }
-    const accessToken = auth.grant.access_token;
-    if (!accessToken) {
-      console.error(`Access token was empty`);
-    }
-    return accessToken;
+    return {
+      domain,
+      config: this.clientDeploymentConfiguration?.domains?.[domain] ?? {},
+    };
   }
 
   async #makeShareableCopy(): Promise<{

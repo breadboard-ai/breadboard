@@ -20,10 +20,17 @@ export type ClientDeploymentConfiguration = {
 
 export interface DomainConfiguration {
   /**
-   * A URL that users from this domain should usually use instead of the current
-   * one.
+   * If set, a notification will appear telling users from this domain to visit
+   * this other deployment instead of the current one.
    */
   preferredUrl?: string;
+
+  /**
+   * If true, the simple publishing flow will be disabled for users from this
+   * domain. Granular sharing with specific people and groups will still be
+   * available.
+   */
+  disallowPublicPublishing?: boolean;
 }
 
 export type ServerDeploymentConfiguration = {
