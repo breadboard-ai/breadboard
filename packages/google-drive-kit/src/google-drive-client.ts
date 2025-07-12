@@ -503,7 +503,10 @@ export class GoogleDriveClient {
     if (options?.fields?.length) {
       url.searchParams.set("fields", options.fields.join(","));
     }
-    const response = await this.#fetch(url, { method: "POST" });
+    const response = await this.#fetch(url, {
+      method: "POST",
+      signal: options?.signal,
+    });
     return response.ok
       ? { ok: true, value: await response.json() }
       : { ok: false, error: { status: response.status } };
