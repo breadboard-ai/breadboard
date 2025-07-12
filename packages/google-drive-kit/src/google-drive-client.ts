@@ -409,10 +409,9 @@ export class GoogleDriveClient {
     if (options?.pageToken) {
       url.searchParams.set("pageToken", options.pageToken);
     }
-    url.searchParams.set(
-      "fields",
-      "nextPageToken, files(id, name, mimeType, size, permissions)"
-    );
+    if (options?.fields?.length) {
+      url.searchParams.set("fields", `files(${options.fields.join(",")})`);
+    }
     const response = await this.#fetch(url, { signal: options?.signal });
     return await response.json();
   }
