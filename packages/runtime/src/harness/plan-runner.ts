@@ -8,6 +8,8 @@ import {
   GraphDescriptor,
   HarnessRunResult,
   NodeHandlerContext,
+  NodeIdentifier,
+  Outcome,
   Probe,
   RunConfig,
   TraversalResult,
@@ -17,6 +19,7 @@ import { fromProbe, fromRunnerResult, graphToRunFromConfig } from "./local.js";
 import { resolveGraph, resolveGraphUrls } from "@breadboard-ai/loader";
 import {
   asyncGen,
+  err,
   isImperativeGraph,
   ok,
   timestamp,
@@ -48,6 +51,10 @@ class PlanRunner extends AbstractRunner {
     return this.#controller?.run();
   }
 
+  async rerun(id: NodeIdentifier | null = null): Promise<void> {
+    this.#controller?.rerun(id);
+  }
+
   async state() {
     return (await this.#controller?.state)?.orchestrator.state();
   }
@@ -75,6 +82,7 @@ type InternalRunState = {
   plan: OrchestrationPlan;
   orchestrator: Orchestrator;
   context: NodeHandlerContext;
+  last: NodeIdentifier | null;
 };
 
 class InternalRunStateController {
@@ -128,6 +136,8 @@ class InternalRunStateController {
 
   async runTask(task: Task) {
     const state = await this.state;
+
+    state.last = task.node.id;
     const path = this.path();
     this.callback({
       type: "nodestart",
@@ -237,6 +247,18 @@ class InternalRunStateController {
     await this.postamble();
   }
 
+  async rerun(id: NodeIdentifier | null = null): Promise<Outcome<void>> {
+    const state = await this.state;
+    const nodeId = id || state.last;
+    if (!nodeId) {
+      return err(`Unable to re-run: no last node and no node id provided`);
+    }
+    state.orchestrator.restartAtNode(nodeId);
+    const running = await this.runNextNode();
+    if (!ok(running)) return running;
+    await this.postamble();
+  }
+
   async runNextNode() {
     const state = await this.preamble();
     const tasks = state.orchestrator.currentTasks();
@@ -286,6 +308,6 @@ class InternalRunStateController {
     const plan = createPlan(graph);
     const orchestrator = new Orchestrator(plan);
 
-    return { graph, context, plan, orchestrator };
+    return { graph, context, plan, orchestrator, last: null };
   }
 }
