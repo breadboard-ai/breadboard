@@ -29,6 +29,10 @@ export interface UpdateFileOptions extends BaseRequestOptions {
   fields?: Array<keyof gapi.client.drive.File>;
 }
 
+export interface CopyFileOptions extends BaseRequestOptions {
+  fields?: Array<keyof gapi.client.drive.File>;
+}
+
 export interface ExportFileOptions extends BaseRequestOptions {
   mimeType: string;
 }
@@ -486,10 +490,24 @@ export class GoogleDriveClient {
   }
 
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/copy */
-  async copyFile(fileId: string): Promise<Response> {
-    return this.#fetch(`drive/v3/files/${encodeURIComponent(fileId)}/copy`, {
-      method: "POST",
-    });
+  async copyFile<const T extends CopyFileOptions>(
+    fileId: string,
+    options?: T
+  ): Promise<
+    | { ok: true; value: NarrowedDriveFile<T["fields"]> }
+    | { ok: false; error: { status: number } }
+  > {
+    const url = new URL(
+      `drive/v3/files/${encodeURIComponent(fileId)}/copy`,
+      this.#apiBaseUrl
+    );
+    if (options?.fields?.length) {
+      url.searchParams.set("fields", options.fields.join(","));
+    }
+    const response = await this.#fetch(url, { method: "POST" });
+    return response.ok
+      ? { ok: true, value: await response.json() }
+      : { ok: false, error: { status: response.status } };
   }
 
   async #fetch(
