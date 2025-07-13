@@ -1,14 +1,20 @@
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { beforeEach, describe, it } from "node:test";
 import { deepEqual } from "node:assert";
 
-import type { DriveFile } from "../../src/board-server/api.js";
-
 import { createProperties } from "../../src/board-server/operations.js";
 import { readProperties } from "../../src/board-server/utils.js";
+import type { NarrowedDriveFile } from "../../src/google-drive-client.js";
 
 describe("create/readProperties", () => {
   let properties: Record<string, string>;
-  let file: DriveFile;
+  let file: NarrowedDriveFile<["properties", "appProperties"]> &
+    gapi.client.drive.File;
 
   beforeEach(() => {
     properties = {

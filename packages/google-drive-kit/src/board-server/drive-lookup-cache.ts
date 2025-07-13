@@ -10,12 +10,12 @@ import type { DriveChange } from "./operations.js";
 export class DriveLookupCache {
   constructor(
     private readonly cacheName: string,
-    private readonly cacheKePrefix: string
+    private readonly cacheKeyPrefix: string
   ) {}
 
   async invalidateId(fileID: string) {
     const cache = await caches.open(this.cacheName);
-    const cacheKey = new URL(`${this.cacheKePrefix}${fileID}`);
+    const cacheKey = new URL(`${this.cacheKeyPrefix}${fileID}`);
     await cache.delete(cacheKey);
   }
 
@@ -30,7 +30,7 @@ export class DriveLookupCache {
     // Bulk remove in parallel.
     const deletedIds = await Promise.all(
       ids.map((id) => {
-        const cacheKey = new URL(`${this.cacheKePrefix}${id}`);
+        const cacheKey = new URL(`${this.cacheKeyPrefix}${id}`);
         return cache.delete(cacheKey).then((deleted) => (deleted ? id : null));
       })
     );

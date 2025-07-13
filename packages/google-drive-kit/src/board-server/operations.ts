@@ -175,19 +175,17 @@ class DriveOperations {
     this.#googleDriveClient = googleDriveClient;
     this.#publishPermissions = publishPermissions;
 
-    const getUserAuth = () => DriveOperations.getUserAuth(vendor);
-    this.#userGraphsList = new DriveListCache("user", BASE_QUERY, getUserAuth);
+    this.#userGraphsList = new DriveListCache(
+      "user",
+      BASE_QUERY,
+      this.#googleDriveClient
+    );
 
     if (featuredGalleryFolderId && this.#publicApiKey) {
-      const getApiAuth = () =>
-        Promise.resolve({
-          kind: "key",
-          key: this.#publicApiKey!,
-        } satisfies GoogleApiAuthorization);
       this.#featuredGraphsList = new DriveListCache(
         "featured",
         `"${featuredGalleryFolderId}" in parents and ${BASE_FEATURED_QUERY}`,
-        getApiAuth
+        this.#googleDriveClient
       );
     }
 

@@ -63,7 +63,7 @@ export interface ListFilesResponse<T extends gapi.client.drive.File> {
  * fields are required. Used when we know we are retrieving certain fields, so
  * we can assert that the values will be populated.
  */
-type NarrowedDriveFile<
+export type NarrowedDriveFile<
   T extends Array<keyof gapi.client.drive.File> | undefined,
 > = {
   [K in keyof Required<gapi.client.drive.File> as K extends (

@@ -1,6 +1,13 @@
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import type { GraphTag } from "@breadboard-ai/types";
-import type { AppProperties, DriveFile } from "./api.js";
+import type { AppProperties } from "./api.js";
 import type { StoredProperties } from "./operations.js";
+import type { NarrowedDriveFile } from "../google-drive-client.js";
 
 /** Delay between GDrive API retries. */
 const RETRY_MS = 200;
@@ -118,7 +125,9 @@ export function extractGoogleDriveFileId(str: string): string | null {
 }
 
 /** Reads properties from the file, using both properties and appProperties (first priority). */
-export function readProperties(file: DriveFile): AppProperties {
+export function readProperties(
+  file: NarrowedDriveFile<["properties" | "appProperties"]>
+): AppProperties {
   const storedProperties: StoredProperties = {
     title: file.properties?.title || file.appProperties?.title,
     description:

@@ -5,35 +5,33 @@
  */
 
 import { err, type Outcome } from "@google-labs/breadboard";
-import {
-  Files,
-  type DriveFile,
-  type DriveFileQuery,
-  type GoogleApiAuthorization,
-} from "./api.js";
-
-import {
-  getSetsIntersection,
-  getSetsUnion,
-  readProperties,
-  retryableFetch,
-} from "./utils.js";
+import type {
+  GoogleDriveClient,
+  NarrowedDriveFile,
+} from "../google-drive-client.js";
 import type { DriveChange, GraphInfo } from "./operations.js";
+import { getSetsIntersection, getSetsUnion, readProperties } from "./utils.js";
+
+export type CachedGoogleDriveFile = NarrowedDriveFile<
+  ["id" | "name" | "modifiedTime" | "properties" | "appProperties"]
+>;
 
 /** Caches list of GraphInfo objects. */
 export class DriveListCache {
   #forceRefreshOnce: boolean;
+  readonly #googleDriveClient: GoogleDriveClient;
 
   constructor(
     private readonly cacheKey: string,
     private readonly query: string,
-    private readonly auth: () => Promise<Readonly<GoogleApiAuthorization>>
+    googleDriveClient: GoogleDriveClient
   ) {
     // This is a hack to work around the problem where we don't track removals
     // of items from gallery.
     this.#forceRefreshOnce = !!new URLSearchParams(window.location.search).get(
       "force-refresh"
     );
+    this.#googleDriveClient = googleDriveClient;
   }
 
   async #getCacheAndValue(skipValue: boolean = false) {
@@ -47,7 +45,7 @@ export class DriveListCache {
   async #put(options: {
     cache: Cache;
     cacheKey: URL;
-    value: DriveFile[];
+    value: CachedGoogleDriveFile[];
     lastModified: string;
     /** if set override only the value that's not newer. */
     crossCheckLastModified?: string | null;
@@ -100,18 +98,16 @@ export class DriveListCache {
         query = `${query} and modifiedTime > ${JSON.stringify(cachedLastModified)}`;
       }
 
-      const api = new Files(await this.auth());
-      const fileRequest = await retryableFetch(api.makeQueryRequest(query));
-      const response: DriveFileQuery = await fileRequest.json();
-
-      // TODO: This is likely due to an auth error.
-      if (!("files" in response)) {
-        console.warn(response);
-        return err(`Unable to get Drive folder contents. Likely an auth error`);
-      }
+      const response = await this.#googleDriveClient.listFiles(query, {
+        fields: ["id", "name", "modifiedTime", "properties", "appProperties"],
+        orderBy: {
+          fields: ["modifiedTime"],
+          dir: "desc",
+        },
+      });
 
       const updatedIds = new Set<string>(response.files.map((f) => f.id));
-      const cachedList: DriveFile[] =
+      const cachedList: CachedGoogleDriveFile[] =
         (await cachedResponse?.json())?.files ?? [];
       if (cachedList.length > 0) {
         // Removing all the cached files that have been since updated.
@@ -159,7 +155,8 @@ export class DriveListCache {
     // Here we bulk-process all the changes in one go.
     const { cache, cacheKey, cachedResponse } = await this.#getCacheAndValue();
     if (cachedResponse) {
-      const files: DriveFile[] = (await cachedResponse?.json())?.files;
+      const files: CachedGoogleDriveFile[] = (await cachedResponse?.json())
+        ?.files;
       const fileIds = new Set(files.map((f) => f.id));
       // Collecting all unique changes, note that they don't have to point to the files in cache.
       const allDeletedIds = new Set<string>(
@@ -198,7 +195,8 @@ export class DriveListCache {
   async invalidateDeleted(id: string): Promise<boolean> {
     const { cache, cacheKey, cachedResponse } = await this.#getCacheAndValue();
     if (cachedResponse) {
-      const files: DriveFile[] = (await cachedResponse?.json())?.files;
+      const files: CachedGoogleDriveFile[] = (await cachedResponse?.json())
+        ?.files;
       const index = files?.findIndex((f) => f.id == id);
       if (index >= 0) {
         files.splice(index, 1);
@@ -213,12 +211,12 @@ export class DriveListCache {
   }
 }
 
-function toGraphInfos(files: Array<DriveFile>): {
+function toGraphInfos(files: CachedGoogleDriveFile[]): {
   result: Array<GraphInfo>;
   lastModified?: string;
 } {
   let lastModified: string | undefined;
-  const result = files.map((file: DriveFile) => {
+  const result = files.map((file) => {
     if (file.modifiedTime && file.modifiedTime > (lastModified ?? "")) {
       lastModified = file.modifiedTime;
     }
