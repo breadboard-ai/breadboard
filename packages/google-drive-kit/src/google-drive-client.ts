@@ -44,6 +44,7 @@ export interface WritePermissionOptions extends BaseRequestOptions {
 }
 
 export interface ListFilesOptions extends BaseRequestOptions {
+  auth?: "user" | "apikey";
   fields?: Array<keyof gapi.client.drive.File>;
   orderBy?: Array<{
     field: keyof gapi.client.drive.File;
@@ -555,7 +556,13 @@ export class GoogleDriveClient {
         options.orderBy.map(({ field, dir }) => `${field} ${dir}`).join(",")
       );
     }
-    const response = await this.#fetch(url, { signal: options?.signal });
+    const response = await this.#fetch(
+      url,
+      { signal: options?.signal },
+      options?.auth === "apikey"
+        ? { kind: "key", key: this.#publicApiKey }
+        : undefined
+    );
     return await response.json();
   }
 
