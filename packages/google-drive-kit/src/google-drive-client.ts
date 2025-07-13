@@ -531,7 +531,13 @@ export class GoogleDriveClient {
           (await response.text())
       );
     }
-    return await response.json();
+    const result = (await response.json()) as NarrowedDriveFile<T["fields"]>;
+    console.log(`[Google Drive] Created file`, {
+      id: (result as gapi.client.drive.File).id,
+      name: metadata.name,
+      mimeType: metadata.mimeType,
+    });
+    return result;
   }
 
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/update */
