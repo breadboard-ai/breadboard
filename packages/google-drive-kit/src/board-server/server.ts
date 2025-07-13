@@ -66,40 +66,35 @@ class GoogleDriveBoardServer
     publicApiKey?: string,
     featuredGalleryFolderId?: string
   ) {
-    try {
-      const configuration = {
-        url: new URL(`${PROTOCOL}/`),
-        projects: Promise.resolve([]),
-        kits: [],
-        users: [],
-        secrets: new Map(),
-        extensions: [],
-        capabilities: {
-          connect: true,
-          disconnect: true,
-          refresh: true,
-          watch: false,
-          preview: true,
-          events: true,
-          autosave: true,
-        },
-      };
+    const configuration = {
+      url: new URL(`${PROTOCOL}/`),
+      projects: Promise.resolve([]),
+      kits: [],
+      users: [],
+      secrets: new Map(),
+      extensions: [],
+      capabilities: {
+        connect: true,
+        disconnect: true,
+        refresh: true,
+        watch: false,
+        preview: true,
+        events: true,
+        autosave: true,
+      },
+    };
 
-      return new GoogleDriveBoardServer(
-        title,
-        configuration,
-        user,
-        vendor,
-        googleDriveClient,
-        publishPermissions,
-        userFolderName,
-        publicApiKey,
-        featuredGalleryFolderId
-      );
-    } catch (err) {
-      console.warn(err);
-      return null;
-    }
+    return new GoogleDriveBoardServer(
+      title,
+      configuration,
+      user,
+      vendor,
+      googleDriveClient,
+      publishPermissions,
+      userFolderName,
+      publicApiKey,
+      featuredGalleryFolderId
+    );
   }
 
   public readonly url = new URL(PROTOCOL);
