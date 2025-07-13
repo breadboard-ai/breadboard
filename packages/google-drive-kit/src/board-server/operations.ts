@@ -26,7 +26,6 @@ import {
   Files,
   type AppProperties,
   type DriveFile,
-  type DriveFileQuery,
   type GoogleApiAuthorization,
 } from "./api.js";
 
@@ -45,8 +44,8 @@ import { DriveListCache } from "./drive-list-cache.js";
 const PROTOCOL = "drive:";
 
 const GOOGLE_DRIVE_FOLDER_MIME_TYPE = "application/vnd.google-apps.folder";
-const GRAPH_MIME_TYPE = "application/vnd.breadboard.graph+json";
-const DEPRECATED_GRAPH_MIME_TYPE = "application/json";
+export const GRAPH_MIME_TYPE = "application/vnd.breadboard.graph+json";
+export const DEPRECATED_GRAPH_MIME_TYPE = "application/json";
 const RUN_RESULTS_MIME_TYPE = "application/vnd.breadboard.run-results+json";
 const RUN_RESULTS_GRAPH_URL_APP_PROPERTY = "graphUrl";
 
@@ -434,23 +433,6 @@ class DriveOperations {
     return results;
   }
 
-  async readSharedGraphList(): Promise<string[]> {
-    // NOTE: Since this is used only within debug panel, we don't employ the DriveListCache.
-    const accessToken = await getAccessToken(this.vendor);
-    if (!accessToken) {
-      throw new Error("No folder ID or access token");
-    }
-    const query =
-      ` (mimeType="${GRAPH_MIME_TYPE}"` +
-      `  or mimeType="${DEPRECATED_GRAPH_MIME_TYPE}")` +
-      ` and sharedWithMe=true` +
-      ` and trashed=false`;
-    const api = new Files({ kind: "bearer", token: accessToken });
-    const fileRequest = await retryableFetch(api.makeQueryRequest(query));
-    const response: DriveFileQuery = await fileRequest.json();
-    return response.files.map((file) => file.id);
-  }
-
   async getThumbnailFileId(
     api: Files,
     boardFileId: string
@@ -676,32 +658,6 @@ class DriveOperations {
     );
   }
 
-  async listRunResultsForGraph(
-    graphUrl: string
-  ): Promise<Array<{ id: string; createdTime: string }>> {
-    const token = await getAccessToken(this.vendor);
-    if (!token) {
-      throw new Error("No access token");
-    }
-    const api = new Files({ kind: "bearer", token });
-    const query = `
-      mimeType = ${quote(RUN_RESULTS_MIME_TYPE)}
-      and appProperties has {
-        key = ${quote(RUN_RESULTS_GRAPH_URL_APP_PROPERTY)}
-        and value = ${quote(graphUrl)}
-      }
-      and trashed = false
-    `;
-    const response = await retryableFetch(
-      api.makeQueryRequest(query, ["id", "createdTime"], "createdTime desc")
-    );
-    const result = (await response.json()) as gapi.client.drive.FileList;
-    return (result.files ?? []).map(({ id, createdTime }) => ({
-      id: id!,
-      createdTime: createdTime!,
-    }));
-  }
-
   async saveDataPart(
     part: InlineDataCapabilityPart | StoredDataCapabilityPart
   ): Promise<StoredDataCapabilityPart> {
@@ -838,53 +794,32 @@ class DriveOperations {
     return thumbnailUrl;
   }
 
-  async listAssets(): Promise<string[]> {
-    const accessToken = await getAccessToken(this.vendor);
-    if (!accessToken) {
-      throw new Error("No folder ID or access token");
-    }
-    const query = `(mimeType contains 'image/')` + ` and trashed=false`;
-    const api = new Files({ kind: "bearer", token: accessToken });
-    const fileRequest = await retryableFetch(api.makeQueryRequest(query));
-    const response: DriveFileQuery = await fileRequest.json();
-    return response.files.map((file) => file.id);
-  }
-
   #cachedFolderId?: string;
 
   async findFolder(): Promise<Outcome<string | undefined>> {
     if (this.#cachedFolderId) {
       return this.#cachedFolderId;
     }
-    const accessToken = await getAccessToken(this.vendor);
-    if (!accessToken) {
-      return err("No access token");
-    }
-    const api = new Files({ kind: "bearer", token: accessToken });
-    const findRequest = api.makeQueryRequest(
+    const query =
       `name=${quote(this.#userFolderName)}` +
-        ` and mimeType="${GOOGLE_DRIVE_FOLDER_MIME_TYPE}"` +
-        ` and trashed=false`
-    );
-    try {
-      const { files } = (await (
-        await retryableFetch(findRequest)
-      ).json()) as DriveFileQuery;
-      if (files.length > 0) {
-        if (files.length > 1) {
-          console.warn(
-            "[Google Drive] Multiple candidate root folders found," +
-              " picking the first one arbitrarily:",
-            files
-          );
-        }
-        const id = files[0]!.id;
-        console.log("[Google Drive] Found existing root folder", id);
-        this.#cachedFolderId = id;
-        return id;
+      ` and mimeType="${GOOGLE_DRIVE_FOLDER_MIME_TYPE}"` +
+      ` and trashed=false`;
+    const { files } = await this.#googleDriveClient.listFiles(query, {
+      fields: ["id"],
+      orderBy: { fields: ["createdTime"], dir: "desc" },
+    });
+    if (files.length > 0) {
+      if (files.length > 1) {
+        console.warn(
+          "[Google Drive] Multiple candidate root folders found," +
+            " picking the first created one arbitrarily:",
+          files
+        );
       }
-    } catch (e) {
-      return err((e as Error).message);
+      const id = files[0]!.id;
+      console.log("[Google Drive] Found existing root folder", id);
+      this.#cachedFolderId = id;
+      return id;
     }
   }
 
