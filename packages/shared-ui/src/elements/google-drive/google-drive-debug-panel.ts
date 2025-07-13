@@ -474,7 +474,12 @@ export class GoogleDriveDebugPanel extends LitElement {
     const query = `(mimeType contains 'image/')` + ` and trashed=false`;
     const result = await this.googleDriveClient!.listFiles(query, {
       fields: ["id"],
-      orderBy: { fields: ["modifiedTime"], dir: "desc" },
+      orderBy: [
+        {
+          field: "modifiedTime",
+          dir: "desc",
+        },
+      ],
     });
     return result.files.map((file) => file.id);
   }
@@ -487,7 +492,12 @@ export class GoogleDriveDebugPanel extends LitElement {
       ` and trashed=false`;
     const response = await this.googleDriveClient!.listFiles(query, {
       fields: ["id"],
-      orderBy: { fields: ["modifiedTime"], dir: "desc" },
+      orderBy: [
+        {
+          field: "modifiedTime",
+          dir: "desc",
+        },
+      ],
     });
     return response.files.map((file) => file.id);
   }

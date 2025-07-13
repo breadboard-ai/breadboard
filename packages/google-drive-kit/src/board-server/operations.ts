@@ -806,7 +806,12 @@ class DriveOperations {
       ` and trashed=false`;
     const { files } = await this.#googleDriveClient.listFiles(query, {
       fields: ["id"],
-      orderBy: { fields: ["createdTime"], dir: "desc" },
+      orderBy: [
+        {
+          field: "createdTime",
+          dir: "desc",
+        },
+      ],
     });
     if (files.length > 0) {
       if (files.length > 1) {

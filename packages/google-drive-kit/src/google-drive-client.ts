@@ -43,10 +43,10 @@ export interface WritePermissionOptions extends BaseRequestOptions {
 
 export interface ListFilesOptions extends BaseRequestOptions {
   fields?: Array<keyof gapi.client.drive.File>;
-  orderBy?: {
-    fields: Array<keyof gapi.client.drive.File>;
+  orderBy?: Array<{
+    field: keyof gapi.client.drive.File;
     dir: "asc" | "desc";
-  };
+  }>;
   pageSize?: number;
   pageToken?: string;
 }
@@ -420,9 +420,11 @@ export class GoogleDriveClient {
     if (options?.fields?.length) {
       url.searchParams.set("fields", `files(${options.fields.join(",")})`);
     }
-    if (options?.orderBy?.fields.length) {
-      const { fields, dir } = options.orderBy;
-      url.searchParams.set("orderBy", `${fields.join(",")} ${dir}`);
+    if (options?.orderBy?.length) {
+      url.searchParams.set(
+        "orderBy",
+        options.orderBy.map(({ field, dir }) => `${field} ${dir}`).join(",")
+      );
     }
     const response = await this.#fetch(url, { signal: options?.signal });
     return await response.json();

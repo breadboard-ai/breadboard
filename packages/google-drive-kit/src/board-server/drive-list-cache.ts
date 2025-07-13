@@ -100,10 +100,12 @@ export class DriveListCache {
 
       const response = await this.#googleDriveClient.listFiles(query, {
         fields: ["id", "name", "modifiedTime", "properties", "appProperties"],
-        orderBy: {
-          fields: ["modifiedTime"],
-          dir: "desc",
-        },
+        orderBy: [
+          {
+            field: "modifiedTime",
+            dir: "desc",
+          },
+        ],
       });
 
       const updatedIds = new Set<string>(response.files.map((f) => f.id));
