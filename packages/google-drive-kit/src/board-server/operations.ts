@@ -33,7 +33,6 @@ export { DriveOperations, PROTOCOL };
 
 import {
   extractGoogleDriveFileId,
-  readProperties,
   retryableFetch,
   truncateValueForUtf8,
 } from "./utils.js";

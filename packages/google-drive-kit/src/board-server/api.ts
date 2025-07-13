@@ -19,11 +19,7 @@ export type DriveFile = {
   modifiedTime?: string;
 } & Properties;
 
-export type DriveFileQuery = {
-  files: DriveFile[];
-};
-
-export type Properties = {
+type Properties = {
   properties?: {
     thumbnailUrl?: string;
   };
@@ -130,13 +126,6 @@ class Files {
     });
   }
 
-  makeLoadRequest(file: string): Request {
-    return new Request(this.#makeUrl(`drive/v3/files/${file}?alt=media`), {
-      method: "GET",
-      headers: this.#makeHeaders(),
-    });
-  }
-
   makeMultipartCreateRequest(
     parts: Array<{ contentType: string; data: object | string }>
   ): Request {
@@ -160,13 +149,6 @@ class Files {
         ...this.#multipartRequest(parts),
       }
     );
-  }
-
-  makeCopyRequest(fileId: string): Request {
-    return new Request(this.#makeUrl(`drive/v3/files/${fileId}/copy`), {
-      method: "POST",
-      headers: this.#makeHeaders(),
-    });
   }
 
   makeChangeListRequest(startPageToken: string | null): Request {
