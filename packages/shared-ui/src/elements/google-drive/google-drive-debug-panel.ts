@@ -17,7 +17,6 @@ import {
   signinAdapterContext,
 } from "../../utils/signin-adapter.js";
 import { loadDrivePicker, loadDriveShareClient } from "./google-apis.js";
-import { Files } from "@breadboard-ai/google-drive-kit/board-server/api.js";
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { ok } from "@google-labs/breadboard";
@@ -453,21 +452,8 @@ export class GoogleDriveDebugPanel extends LitElement {
     if (!fileId) {
       return;
     }
-    const auth = await this.signinAdapter?.token();
-    if (auth?.state !== "valid") {
-      return;
-    }
-    const { access_token } = auth.grant;
-    const files = new Files(
-      { kind: "bearer", token: access_token },
-      new URL("/drive-proxy", document.location.href).href
-    );
-    const request = files.makeGetRequest(fileId);
-    console.log({ request });
-    const response = await fetch(request);
-    console.log({ status: response.status });
-    const text = await response.text();
-    console.log({ text });
+    const result = await this.googleDriveClient!.getFileMetadata(fileId);
+    console.log({ result });
   }
 
   async listAssets(): Promise<string[]> {
