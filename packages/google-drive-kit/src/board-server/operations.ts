@@ -33,6 +33,7 @@ export { DriveOperations, PROTOCOL };
 
 import {
   extractGoogleDriveFileId,
+  readProperties,
   retryableFetch,
   truncateValueForUtf8,
 } from "./utils.js";
@@ -415,20 +416,23 @@ class DriveOperations {
     return results;
   }
 
-  async getThumbnailFileId(
-    api: Files,
-    boardFileId: string
-  ): Promise<string | undefined> {
+  async getThumbnailFileId(boardFileId: string): Promise<string | undefined> {
     // There is probably a better way to do this - we need appProperties of the drive file.
     // Those were read during load/listing of the board, however they don't have a place in the
     // data model hence didn't make it to here.
     // Since such requests are cheap and fast it's fine for now.
     // TODO(volodya): Pass the app properties and remove the need for this.
-    const { appProperties } = await this.#googleDriveClient.getFileMetadata(
-      boardFileId,
-      { fields: ["appProperties"] }
-    );
-    const url = appProperties?.thumbnailUrl;
+    let file;
+    try {
+      file = await this.#googleDriveClient.getFileMetadata(boardFileId, {
+        fields: ["properties", "appProperties"],
+      });
+    } catch {
+      // TODO(aomarks) We only care about 404. Resultify the drive client, or
+      // represent 404 differently.
+      return undefined;
+    }
+    const url = readProperties(file).thumbnailUrl;
     return url ? getFileId(url) : undefined;
   }
 
@@ -730,7 +734,7 @@ class DriveOperations {
       return data;
     }
 
-    const thumbnailFileId = await this.getThumbnailFileId(api, boardFileId);
+    const thumbnailFileId = await this.getThumbnailFileId(boardFileId);
 
     if (!data || isUrl(data)) {
       if (thumbnailFileId) {
