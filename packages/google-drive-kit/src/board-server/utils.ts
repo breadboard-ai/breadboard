@@ -1,3 +1,7 @@
+import type { GraphTag } from "@breadboard-ai/types";
+import type { AppProperties, DriveFile } from "./api.js";
+import type { StoredProperties } from "./operations.js";
+
 /** Delay between GDrive API retries. */
 const RETRY_MS = 200;
 
@@ -111,4 +115,32 @@ export function getSetsUnion<T>(set1: Set<T>, set2: Set<T>): Set<T> {
 
 export function extractGoogleDriveFileId(str: string): string | null {
   return str.match(/^drive:\/?(.+)/)?.[1] ?? null;
+}
+
+/** Reads properties from the file, using both properties and appProperties (first priority). */
+export function readProperties(file: DriveFile): AppProperties {
+  const storedProperties: StoredProperties = {
+    title: file.properties?.title || file.appProperties?.title,
+    description:
+      file.properties?.description || file.appProperties?.description || "",
+    tags: file.properties?.tags || file.appProperties?.tags,
+    thumbnailUrl:
+      file.properties?.thumbnailUrl || file.appProperties?.thumbnailUrl,
+  };
+
+  let tags: Array<GraphTag> = [];
+  try {
+    tags = storedProperties.tags ? JSON.parse(storedProperties.tags) : [];
+    if (!Array.isArray(tags)) tags = [];
+  } catch (e) {
+    console.info("Exception when parsing DriveFile.tags", e);
+    // do nothing.
+  }
+
+  return {
+    title: storedProperties.title ?? "",
+    description: storedProperties.description ?? "",
+    tags,
+    thumbnailUrl: storedProperties.thumbnailUrl,
+  };
 }

@@ -3,10 +3,8 @@ import { deepEqual } from "node:assert";
 
 import type { DriveFile } from "../../src/board-server/api.js";
 
-import {
-  readProperties,
-  createProperties,
-} from "../../src/board-server/operations.js";
+import { createProperties } from "../../src/board-server/operations.js";
+import { readProperties } from "../../src/board-server/utils.js";
 
 describe("create/readProperties", () => {
   let properties: Record<string, string>;
