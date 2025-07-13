@@ -268,11 +268,13 @@ export class Main extends SignalWatcher(LitElement) {
     );
 
     // API Clients
-    const backendApiEndpoint = this.globalConfig.BACKEND_API_ENDPOINT;
+    let backendApiEndpoint = this.globalConfig.BACKEND_API_ENDPOINT;
     if (!backendApiEndpoint) {
-      throw new Error(
-        `No BACKEND_API_ENDPOINT in ClientDeploymentConfiguration`
-      );
+      console.warn(`No BACKEND_API_ENDPOINT in ClientDeploymentConfiguration`);
+      // Supply some value, so that we fail while calling the API, rather
+      // than at initialization.
+      // TODO: Come up with a more elegant solution.
+      backendApiEndpoint = window.location.href;
     }
 
     this.#apiClient = new AppCatalystApiClient(
