@@ -692,15 +692,18 @@ class DriveOperations {
     const uploadResponse = await fetch(
       api.makeUploadRequest(fileId, data, mimeType)
     );
-    const file: DriveFile = await uploadResponse.json();
-    // TODO: Update to retryable.
-    fetch(
-      api.makeUpdateMetadataRequest(file.id, (await parentPromise) as string, {
-        // None, just the parent.
-      })
-    ).catch((e) => {
-      console.error("Failed to update image metadata", e);
-    });
+    const [file, parent] = await Promise.all([
+      uploadResponse.json() as Promise<DriveFile>,
+      parentPromise,
+    ]);
+    if (!parent) {
+      throw new Error(`No parent`);
+    }
+    this.#googleDriveClient.updateFileMetadata(
+      file.id,
+      {},
+      { addParents: [parent as string] }
+    );
     const handle = `${PROTOCOL}/${file.id}`;
     let result: StoredDataCapabilityPart;
     if ("inlineData" in part) {
@@ -778,14 +781,17 @@ class DriveOperations {
     const thumbnailUrl = `${PROTOCOL}/${file.id}`;
 
     const name = `${graphFileName} Thumbnail`;
+    const parent = await parentPromise;
+    if (!parent) {
+      throw new Error(`No parent`);
+    }
     // Don't wait for the response since we don't depend on it
-    retryableFetch(
-      api.makeUpdateMetadataRequest(file.id, (await parentPromise) as string, {
-        name,
-      })
-    ).catch((e) => {
-      console.error("Failed to update image metadata", e);
-    });
+    this.#googleDriveClient.updateFileMetadata(
+      file.id,
+      { name },
+      { addParents: [parent as string] }
+    );
+
     this.#imageCache.invalidateId(file.id);
 
     if (asset) {

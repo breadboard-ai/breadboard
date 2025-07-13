@@ -115,16 +115,6 @@ class Files {
     });
   }
 
-  makeUpdateMetadataRequest(fileId: string, parent: string, metadata: unknown) {
-    const headers = this.#makeHeaders();
-    const url = `drive/v3/files/${fileId}?addParents=${parent}`;
-    return new Request(this.#makeUrl(url), {
-      method: "PATCH",
-      headers,
-      body: JSON.stringify(metadata),
-    });
-  }
-
   makeUploadRequest(
     fileId: string | undefined,
     data: string | Blob,

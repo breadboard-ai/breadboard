@@ -25,8 +25,10 @@ export interface ReadFileOptions extends BaseRequestOptions {
   fields?: Array<keyof gapi.client.drive.File>;
 }
 
-export interface UpdateFileOptions extends BaseRequestOptions {
+export interface UpdateFileMetadataOptions extends BaseRequestOptions {
   fields?: Array<keyof gapi.client.drive.File>;
+  addParents?: string[];
+  removeParents?: string[];
 }
 
 export interface CopyFileOptions extends BaseRequestOptions {
@@ -191,9 +193,9 @@ export class GoogleDriveClient {
   }
 
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/update */
-  async updateFileMetadata<const T extends ReadFileOptions>(
+  async updateFileMetadata<const T extends UpdateFileMetadataOptions>(
     fileId: string,
-    metadata: gapi.client.drive.File,
+    metadata: gapi.client.drive.File & { parents?: never },
     options?: T
   ): Promise<NarrowedDriveFile<T["fields"]>> {
     const url = new URL(
