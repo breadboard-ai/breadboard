@@ -480,32 +480,98 @@ export class GoogleDriveClient {
    * https://developers.google.com/workspace/drive/api/guides/manage-uploads
    */
   async createFile<const T extends ReadFileOptions>(
-    metadata: gapi.client.drive.File & { name: string },
     data: Blob,
+    metadata: gapi.client.drive.File & { name: string },
     options?: T
   ): Promise<NarrowedDriveFile<T["fields"]>>;
 
   async createFile<const T extends ReadFileOptions>(
-    metadata: gapi.client.drive.File & { name: string; mimeType: string },
     data: string,
+    metadata: gapi.client.drive.File & { name: string; mimeType: string },
     options?: T
   ): Promise<NarrowedDriveFile<T["fields"]>>;
 
   async createFile<const T extends ReadFileOptions>(
-    metadata: gapi.client.drive.File & { name: string; mimeType?: string },
     data: Blob | string,
+    metadata: gapi.client.drive.File & { name: string },
     options?: T
   ): Promise<NarrowedDriveFile<T["fields"]>> {
+    const file = await this.#uploadMultipart(
+      undefined,
+      data,
+      metadata,
+      options
+    );
+    const fileId = (file as gapi.client.drive.File).id;
+    console.log(`[Google Drive] Created file`, {
+      id: fileId,
+      open: fileId ? `http://drive.google.com/open?id=${fileId}` : null,
+      name: metadata.name,
+      mimeType:
+        metadata.mimeType || (typeof data !== "string" ? data.type : undefined),
+    });
+    return file;
+  }
+
+  /**
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/files/update
+   * https://developers.google.com/workspace/drive/api/guides/manage-uploads
+   */
+  async updateFile<const T extends ReadFileOptions>(
+    fileId: string,
+    data: Blob,
+    metadata?: gapi.client.drive.File,
+    options?: T
+  ): Promise<NarrowedDriveFile<T["fields"]>>;
+
+  async updateFile<const T extends ReadFileOptions>(
+    fileId: string,
+    data: string,
+    metadata?: gapi.client.drive.File & { mimeType: string },
+    options?: T
+  ): Promise<NarrowedDriveFile<T["fields"]>>;
+
+  async updateFile<const T extends ReadFileOptions>(
+    fileId: string,
+    data: Blob | string,
+    metadata?: gapi.client.drive.File,
+    options?: T
+  ): Promise<NarrowedDriveFile<T["fields"]>> {
+    const result = this.#uploadMultipart(fileId, data, metadata, options);
+    console.log(`[Google Drive] Updated file`, {
+      id: fileId,
+      open: `http://drive.google.com/open?id=${fileId}`,
+      name: metadata?.name,
+      mimeType:
+        metadata?.mimeType ||
+        (typeof data !== "string" ? data.type : undefined),
+    });
+    return result;
+  }
+
+  async #uploadMultipart<const T extends ReadFileOptions>(
+    fileId: string | undefined,
+    data: Blob | string,
+    metadata: gapi.client.drive.File | undefined,
+    options: T | undefined
+  ): Promise<NarrowedDriveFile<T["fields"]>> {
+    const isExistingFile = !!fileId;
     const isBlob = typeof data !== "string";
-    if (isBlob && metadata.mimeType && data.type !== metadata.mimeType) {
+    if (isBlob && metadata?.mimeType && data.type !== metadata.mimeType) {
       console.warn(
-        `[Google Drive] createFile blob had type ${JSON.stringify(data.type)}` +
+        `[Google Drive] updateFile blob had type ${JSON.stringify(data.type)}` +
           ` while metadata had type ${JSON.stringify(metadata.mimeType)}.` +
-          ` Preferring the one from metadata.`
+          // TODO(aomarks) Find out which one really wins!
+          ` Preferring the one from the metadata.`
       );
     }
 
-    const url = new URL(`upload/drive/v3/files`, this.#apiBaseUrl);
+    const url = new URL(
+      isExistingFile
+        ? `upload/drive/v3/files/${encodeURIComponent(fileId)}`
+        : `upload/drive/v3/files`,
+      this.#apiBaseUrl
+    );
     url.searchParams.set("uploadType", "multipart");
     if (options?.fields?.length) {
       url.searchParams.set("fields", options.fields.join(","));
@@ -521,23 +587,17 @@ export class GoogleDriveClient {
     body.append("file", data);
 
     const response = await this.#fetch(url, {
-      method: "POST",
+      method: isExistingFile ? "PATCH" : "POST",
       body,
       signal: options?.signal,
     });
     if (!response.ok) {
       throw new Error(
-        `Google Drive uploadFile ${response.status} error: ` +
+        `Google Drive updateFile ${response.status} error: ` +
           (await response.text())
       );
     }
-    const result = (await response.json()) as NarrowedDriveFile<T["fields"]>;
-    console.log(`[Google Drive] Created file`, {
-      id: (result as gapi.client.drive.File).id,
-      name: metadata.name,
-      mimeType: metadata.mimeType,
-    });
-    return result;
+    return response.json();
   }
 
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/update */

@@ -126,19 +126,6 @@ class Files {
     });
   }
 
-  makePatchRequest(
-    file: string,
-    parts: Array<{ contentType: string; data: object | string }>
-  ): Request {
-    return new Request(
-      this.#makeUrl(`upload/drive/v3/files/${file}?uploadType=multipart`),
-      {
-        method: "PATCH",
-        ...this.#multipartRequest(parts),
-      }
-    );
-  }
-
   makeChangeListRequest(startPageToken: string | null): Request {
     const url = this.#makeUrl(
       "drive/v3/changes?" +

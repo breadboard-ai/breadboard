@@ -454,26 +454,21 @@ class DriveOperations {
         descriptor
       );
 
-      await retryableFetch(
-        api.makePatchRequest(file, [
-          {
-            contentType: "application/json; charset=UTF-8",
-            data: {
-              name,
-              properties: createProperties({
-                title: name,
-                description: descriptor.description ?? "",
-                thumbnailUrl,
-                tags: descriptor.metadata?.tags ?? [],
-              }),
-              mimeType: GRAPH_MIME_TYPE,
-            },
-          },
-          {
-            contentType: "application/json; charset=UTF-8",
-            data: descriptor,
-          },
-        ])
+      await this.#googleDriveClient.updateFile(
+        file,
+        new Blob([JSON.stringify(descriptor)], {
+          type: GRAPH_MIME_TYPE,
+        }),
+        {
+          name,
+          properties: createProperties({
+            title: name,
+            description: descriptor.description ?? "",
+            thumbnailUrl,
+            tags: descriptor.metadata?.tags ?? [],
+          }),
+          mimeType: GRAPH_MIME_TYPE,
+        }
       );
 
       return { result: true };
@@ -505,6 +500,7 @@ class DriveOperations {
       );
 
       const file = await this.#googleDriveClient.createFile(
+        new Blob([JSON.stringify(descriptor)], { type: GRAPH_MIME_TYPE }),
         {
           name,
           mimeType: GRAPH_MIME_TYPE,
@@ -516,9 +512,6 @@ class DriveOperations {
             tags: descriptor.metadata?.tags ?? [],
           }),
         },
-        new Blob([JSON.stringify(descriptor)], {
-          type: "application/json; charset=UTF-8",
-        }),
         { fields: ["id"] }
       );
       const updatedUrl = `${PROTOCOL}/${file.id}`;
@@ -597,6 +590,7 @@ class DriveOperations {
     }
     const graphFileId = extractGoogleDriveFileId(results.graphUrl);
     return await this.#googleDriveClient.createFile(
+      new Blob([JSON.stringify(results)], { type: RUN_RESULTS_MIME_TYPE }),
       {
         name: [`results`, graphFileId, crypto.randomUUID()].join("-") + ".json",
         mimeType: RUN_RESULTS_MIME_TYPE,
@@ -604,8 +598,7 @@ class DriveOperations {
         appProperties: {
           [RUN_RESULTS_GRAPH_URL_APP_PROPERTY]: results.graphUrl,
         },
-      },
-      new Blob([JSON.stringify(results)], { type: RUN_RESULTS_MIME_TYPE })
+      }
     );
   }
 
