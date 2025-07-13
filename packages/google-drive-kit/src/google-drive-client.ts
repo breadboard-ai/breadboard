@@ -475,6 +475,65 @@ export class GoogleDriveClient {
     return await response.json();
   }
 
+  /**
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/files/create
+   * https://developers.google.com/workspace/drive/api/guides/manage-uploads
+   */
+  async createFile<const T extends ReadFileOptions>(
+    metadata: gapi.client.drive.File & { name: string },
+    data: Blob,
+    options?: T
+  ): Promise<NarrowedDriveFile<T["fields"]>>;
+
+  async createFile<const T extends ReadFileOptions>(
+    metadata: gapi.client.drive.File & { name: string; mimeType: string },
+    data: string,
+    options?: T
+  ): Promise<NarrowedDriveFile<T["fields"]>>;
+
+  async createFile<const T extends ReadFileOptions>(
+    metadata: gapi.client.drive.File & { name: string; mimeType?: string },
+    data: Blob | string,
+    options?: T
+  ): Promise<NarrowedDriveFile<T["fields"]>> {
+    const isBlob = typeof data !== "string";
+    if (isBlob && metadata.mimeType && data.type !== metadata.mimeType) {
+      console.warn(
+        `[Google Drive] createFile blob had type ${JSON.stringify(data.type)}` +
+          ` while metadata had type ${JSON.stringify(metadata.mimeType)}.` +
+          ` Preferring the one from metadata.`
+      );
+    }
+
+    const url = new URL(`upload/drive/v3/files`, this.#apiBaseUrl);
+    url.searchParams.set("uploadType", "multipart");
+    if (options?.fields?.length) {
+      url.searchParams.set("fields", options.fields.join(","));
+    }
+
+    const body = new FormData();
+    body.append(
+      "metadata",
+      new Blob([JSON.stringify(metadata)], {
+        type: "application/json; charset=UTF-8",
+      })
+    );
+    body.append("file", data);
+
+    const response = await this.#fetch(url, {
+      method: "POST",
+      body,
+      signal: options?.signal,
+    });
+    if (!response.ok) {
+      throw new Error(
+        `Google Drive uploadFile ${response.status} error: ` +
+          (await response.text())
+      );
+    }
+    return await response.json();
+  }
+
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/update */
   async updateFileMetadata<const T extends UpdateFileMetadataOptions>(
     fileId: string,
