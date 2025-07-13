@@ -302,7 +302,10 @@ class Orchestrator {
     }
 
     const complete = currentStage.every(
-      (plan) => this.#state.get(plan.node.id)?.state !== "ready"
+      (plan) =>
+        !PROCESSING_STATES.has(
+          this.#state.get(plan.node.id)?.state || "skipped"
+        )
     );
     // Nope, still work to do.
     if (!complete) {
