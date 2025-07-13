@@ -108,13 +108,6 @@ class Files {
     };
   }
 
-  makeGetRequest(filename: string): Request {
-    return new Request(this.#makeUrl(`drive/v3/files/${filename}`), {
-      method: "GET",
-      headers: this.#makeHeaders(),
-    });
-  }
-
   makeUploadRequest(
     fileId: string | undefined,
     data: string | Blob,

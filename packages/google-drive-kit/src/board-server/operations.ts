@@ -378,25 +378,6 @@ class DriveOperations {
     });
   }
 
-  static async readFolder(folderId: string, vendor: TokenVendor) {
-    const accessToken = await getAccessToken(vendor);
-
-    try {
-      const api = new Files({ kind: "bearer", token: accessToken! });
-      const response = await retryableFetch(api.makeGetRequest(folderId));
-
-      const folder: DriveFile = await response.json();
-      if (!folder) {
-        return null;
-      }
-
-      return folder;
-    } catch (err) {
-      console.warn(err);
-      return null;
-    }
-  }
-
   async readGraphList(): Promise<Outcome<GraphInfo[]>> {
     return await this.#userGraphsList.list();
   }
@@ -442,9 +423,11 @@ class DriveOperations {
     // data model hence didn't make it to here.
     // Since such requests are cheap and fast it's fine for now.
     // TODO(volodya): Pass the app properties and remove the need for this.
-    const response = await retryableFetch(api.makeGetRequest(boardFileId));
-    const appProperties = readProperties(await response.json());
-    const url = appProperties.thumbnailUrl;
+    const { appProperties } = await this.#googleDriveClient.getFileMetadata(
+      boardFileId,
+      { fields: ["appProperties"] }
+    );
+    const url = appProperties?.thumbnailUrl;
     return url ? getFileId(url) : undefined;
   }
 
