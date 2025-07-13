@@ -126,18 +126,6 @@ class Files {
     });
   }
 
-  makeMultipartCreateRequest(
-    parts: Array<{ contentType: string; data: object | string }>
-  ): Request {
-    return new Request(
-      this.#makeUrl(`upload/drive/v3/files?uploadType=multipart`),
-      {
-        method: "POST",
-        ...this.#multipartRequest(parts),
-      }
-    );
-  }
-
   makePatchRequest(
     file: string,
     parts: Array<{ contentType: string; data: object | string }>

@@ -504,30 +504,23 @@ class DriveOperations {
         descriptor
       );
 
-      const response = await retryableFetch(
-        api.makeMultipartCreateRequest([
-          {
-            contentType: "application/json; charset=UTF-8",
-            data: {
-              name,
-              mimeType: GRAPH_MIME_TYPE,
-              parents: [parent],
-              properties: createProperties({
-                title: name,
-                description: descriptor.description ?? "",
-                thumbnailUrl,
-                tags: descriptor.metadata?.tags ?? [],
-              }),
-            },
-          },
-          {
-            contentType: "application/json; charset=UTF-8",
-            data: descriptor,
-          },
-        ])
+      const file = await this.#googleDriveClient.createFile(
+        {
+          name,
+          mimeType: GRAPH_MIME_TYPE,
+          parents: [parent],
+          properties: createProperties({
+            title: name,
+            description: descriptor.description ?? "",
+            thumbnailUrl,
+            tags: descriptor.metadata?.tags ?? [],
+          }),
+        },
+        new Blob([JSON.stringify(descriptor)], {
+          type: "application/json; charset=UTF-8",
+        }),
+        { fields: ["id"] }
       );
-
-      const file: DriveFile = await response.json();
       const updatedUrl = `${PROTOCOL}/${file.id}`;
 
       console.log("[Google Drive] Created new board", updatedUrl);
@@ -602,31 +595,18 @@ class DriveOperations {
     if (typeof parentFolderId !== "string" || !parentFolderId) {
       throw new Error(`Unexpected parent folder result ${parentFolderId}`);
     }
-    const api = new Files({ kind: "bearer", token: accessToken });
     const graphFileId = extractGoogleDriveFileId(results.graphUrl);
-    const request = api.makeMultipartCreateRequest([
+    return await this.#googleDriveClient.createFile(
       {
-        contentType: "application/json; charset=UTF-8",
-        data: {
-          name:
-            [`results`, graphFileId, crypto.randomUUID()].join("-") + ".json",
-          mimeType: RUN_RESULTS_MIME_TYPE,
-          parents: [parentFolderId],
-          appProperties: {
-            [RUN_RESULTS_GRAPH_URL_APP_PROPERTY]: results.graphUrl,
-          },
+        name: [`results`, graphFileId, crypto.randomUUID()].join("-") + ".json",
+        mimeType: RUN_RESULTS_MIME_TYPE,
+        parents: [parentFolderId],
+        appProperties: {
+          [RUN_RESULTS_GRAPH_URL_APP_PROPERTY]: results.graphUrl,
         },
       },
-      {
-        contentType: "application/json; charset=UTF-8",
-        // TODO(aomarks) Handle external content, either by inling or copying
-        // each non-Drive content to Drive. Remember to deal with HTML content,
-        // too, which can contain its own external content references.
-        data: results,
-      },
-    ]);
-    const response = await retryableFetch(request);
-    return (await response.json()) as { id: string };
+      new Blob([JSON.stringify(results)], { type: RUN_RESULTS_MIME_TYPE })
+    );
   }
 
   /**
