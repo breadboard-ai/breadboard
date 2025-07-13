@@ -176,14 +176,16 @@ class DriveOperations {
     this.#userGraphsList = new DriveListCache(
       "user",
       BASE_QUERY,
-      this.#googleDriveClient
+      this.#googleDriveClient,
+      "user"
     );
 
     if (featuredGalleryFolderId && this.#publicApiKey) {
       this.#featuredGraphsList = new DriveListCache(
         "featured",
         `"${featuredGalleryFolderId}" in parents and ${BASE_FEATURED_QUERY}`,
-        this.#googleDriveClient
+        this.#googleDriveClient,
+        "apikey"
       );
     }
 

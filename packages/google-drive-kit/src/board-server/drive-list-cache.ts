@@ -7,6 +7,7 @@
 import { err, type Outcome } from "@google-labs/breadboard";
 import type {
   GoogleDriveClient,
+  ListFilesOptions,
   NarrowedDriveFile,
 } from "../google-drive-client.js";
 import type { DriveChange, GraphInfo } from "./operations.js";
@@ -20,11 +21,13 @@ export type CachedGoogleDriveFile = NarrowedDriveFile<
 export class DriveListCache {
   #forceRefreshOnce: boolean;
   readonly #googleDriveClient: GoogleDriveClient;
+  readonly #auth: ListFilesOptions["auth"];
 
   constructor(
     private readonly cacheKey: string,
     private readonly query: string,
-    googleDriveClient: GoogleDriveClient
+    googleDriveClient: GoogleDriveClient,
+    auth: ListFilesOptions["auth"]
   ) {
     // This is a hack to work around the problem where we don't track removals
     // of items from gallery.
@@ -32,6 +35,7 @@ export class DriveListCache {
       "force-refresh"
     );
     this.#googleDriveClient = googleDriveClient;
+    this.#auth = auth;
   }
 
   async #getCacheAndValue(skipValue: boolean = false) {
@@ -99,6 +103,7 @@ export class DriveListCache {
       }
 
       const response = await this.#googleDriveClient.listFiles(query, {
+        auth: this.#auth,
         fields: ["id", "name", "modifiedTime", "properties", "appProperties"],
         orderBy: [
           {
