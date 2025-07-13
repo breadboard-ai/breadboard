@@ -735,7 +735,8 @@ class DriveOperations {
       if (thumbnailFileId) {
         this.#imageCache.invalidateId(thumbnailFileId);
         // The user has switched to the default theme - delete the file.
-        retryableFetch(api.makeDeleteRequest(thumbnailFileId)) // No need to await.
+        this.#googleDriveClient
+          .deleteFile(thumbnailFileId) // No need to await.
           .catch((e) => {
             console.error(
               "Failed to delete thumbnail file",
@@ -848,11 +849,10 @@ class DriveOperations {
     // The value being deleted might not have been yet added to the cached list. So in order to
     // avoid inconsistencies we first make sure the list is up to date, before removing it.
     await this.#userGraphsList.refresh();
-    const file = this.fileIdFromUrl(url);
+    const fileId = this.fileIdFromUrl(url);
     try {
-      const api = new Files(await DriveOperations.getUserAuth(this.vendor));
-      await retryableFetch(api.makeDeleteRequest(file));
-      await this.#userGraphsList.invalidateDeleted(file);
+      await this.#googleDriveClient.deleteFile(fileId);
+      await this.#userGraphsList.invalidateDeleted(fileId);
     } catch (e) {
       console.warn(e);
       return err("Unable to delete");

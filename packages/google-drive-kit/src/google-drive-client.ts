@@ -169,6 +169,21 @@ export class GoogleDriveClient {
     );
   }
 
+  #getFileMetadata(
+    fileId: string,
+    options: ReadFileOptions | undefined,
+    authorization?: GoogleApiAuthorization
+  ): Promise<Response> {
+    const url = new URL(
+      `drive/v3/files/${encodeURIComponent(fileId)}`,
+      this.#apiBaseUrl
+    );
+    if (options?.fields?.length) {
+      url.searchParams.set("fields", options.fields.join(","));
+    }
+    return this.#fetch(url, { signal: options?.signal }, authorization);
+  }
+
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/create#:~:text=metadata%2Donly */
   async createFileMetadata<const T extends ReadFileOptions>(
     file: gapi.client.drive.File & { name: string; mimeType: string },
@@ -219,19 +234,21 @@ export class GoogleDriveClient {
     return await response.json();
   }
 
-  #getFileMetadata(
+  /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/delete */
+  async deleteFile(
     fileId: string,
-    options: ReadFileOptions | undefined,
-    authorization?: GoogleApiAuthorization
-  ): Promise<Response> {
-    const url = new URL(
+    options?: BaseRequestOptions
+  ): Promise<void> {
+    const response = await this.#fetch(
       `drive/v3/files/${encodeURIComponent(fileId)}`,
-      this.#apiBaseUrl
+      { method: "DELETE", signal: options?.signal }
     );
-    if (options?.fields?.length) {
-      url.searchParams.set("fields", options.fields.join(","));
+    if (!response.ok) {
+      throw new Error(
+        `Google Drive deleteFile ${response.status} error: ` +
+          (await response.text())
+      );
     }
-    return this.#fetch(url, { signal: options?.signal }, authorization);
   }
 
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/get#:~:text=media */

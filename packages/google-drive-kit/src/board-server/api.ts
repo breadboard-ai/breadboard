@@ -177,13 +177,6 @@ class Files {
     });
   }
 
-  makeDeleteRequest(file: string): Request {
-    return new Request(this.#makeUrl(`drive/v3/files/${file}`), {
-      method: "DELETE",
-      headers: this.#makeHeaders(),
-    });
-  }
-
   makeChangeListRequest(startPageToken: string | null): Request {
     const url = this.#makeUrl(
       "drive/v3/changes?" +
