@@ -137,14 +137,6 @@ class Files {
     });
   }
 
-  makeCreateRequest(body: unknown): Request {
-    return new Request(this.#makeUrl(`drive/v3/files`), {
-      method: "POST",
-      headers: this.#makeHeaders(),
-      body: JSON.stringify(body),
-    });
-  }
-
   makeMultipartCreateRequest(
     parts: Array<{ contentType: string; data: object | string }>
   ): Request {

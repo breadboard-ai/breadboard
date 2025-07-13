@@ -824,19 +824,11 @@ class DriveOperations {
       return existing;
     }
 
-    const accessToken = await getAccessToken(this.vendor);
-    if (!accessToken) {
-      return err("No access token");
-    }
-    const api = new Files({ kind: "bearer", token: accessToken });
-    const createRequest = api.makeCreateRequest({
-      name: this.#userFolderName,
-      mimeType: GOOGLE_DRIVE_FOLDER_MIME_TYPE,
-    });
     try {
-      const { id } = (await (await retryableFetch(createRequest)).json()) as {
-        id: string;
-      };
+      const { id } = await this.#googleDriveClient.createFileMetadata(
+        { name: this.#userFolderName, mimeType: GOOGLE_DRIVE_FOLDER_MIME_TYPE },
+        { fields: ["id"] }
+      );
       console.log("[Google Drive] Created new root folder", id);
       this.#cachedFolderId = id;
       return id;
