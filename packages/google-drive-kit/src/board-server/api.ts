@@ -19,11 +19,7 @@ export type DriveFile = {
   modifiedTime?: string;
 } & Properties;
 
-export type DriveFileQuery = {
-  files: DriveFile[];
-};
-
-export type Properties = {
+type Properties = {
   properties?: {
     thumbnailUrl?: string;
   };
@@ -37,9 +33,7 @@ export type AppProperties = {
   thumbnailUrl?: string;
 };
 
-const CHANGE_LIST_COMMON_PARAMS = [
-  "supportsAllDrives=true",
-];
+const CHANGE_LIST_COMMON_PARAMS = ["supportsAllDrives=true"];
 
 export type GoogleApiAuthorization =
   | { kind: "key"; key: string }
@@ -110,47 +104,6 @@ class Files {
     };
   }
 
-  makeGetRequest(filename: string): Request {
-    return new Request(this.#makeUrl(`drive/v3/files/${filename}`), {
-      method: "GET",
-      headers: this.#makeHeaders(),
-    });
-  }
-
-  makeQueryRequest(
-    query: string,
-    fields: Array<keyof gapi.client.drive.File> = [
-      "id",
-      "name",
-      "appProperties",
-      "properties",
-      "modifiedTime",
-    ],
-    orderBy: `${keyof gapi.client.drive.File} ${"asc" | "desc"}` = "modifiedTime desc"
-  ): Request {
-    return new Request(
-      this.#makeUrl(
-        `drive/v3/files?q=${encodeURIComponent(query)}` +
-          `&fields=files(${fields.join(",")})` +
-          `&orderBy=${orderBy}`
-      ),
-      {
-        method: "GET",
-        headers: this.#makeHeaders(),
-      }
-    );
-  }
-
-  makeUpdateMetadataRequest(fileId: string, parent: string, metadata: unknown) {
-    const headers = this.#makeHeaders();
-    const url = `drive/v3/files/${fileId}?addParents=${parent}`;
-    return new Request(this.#makeUrl(url), {
-      method: "PATCH",
-      headers,
-      body: JSON.stringify(metadata),
-    });
-  }
-
   makeUploadRequest(
     fileId: string | undefined,
     data: string | Blob,
@@ -170,21 +123,6 @@ class Files {
       method: fileId ? "PATCH" : "POST",
       headers,
       body,
-    });
-  }
-
-  makeLoadRequest(file: string): Request {
-    return new Request(this.#makeUrl(`drive/v3/files/${file}?alt=media`), {
-      method: "GET",
-      headers: this.#makeHeaders(),
-    });
-  }
-
-  makeCreateRequest(body: unknown): Request {
-    return new Request(this.#makeUrl(`drive/v3/files`), {
-      method: "POST",
-      headers: this.#makeHeaders(),
-      body: JSON.stringify(body),
     });
   }
 
@@ -211,20 +149,6 @@ class Files {
         ...this.#multipartRequest(parts),
       }
     );
-  }
-
-  makeCopyRequest(fileId: string): Request {
-    return new Request(this.#makeUrl(`drive/v3/files/${fileId}/copy`), {
-      method: "POST",
-      headers: this.#makeHeaders(),
-    });
-  }
-
-  makeDeleteRequest(file: string): Request {
-    return new Request(this.#makeUrl(`drive/v3/files/${file}`), {
-      method: "DELETE",
-      headers: this.#makeHeaders(),
-    });
   }
 
   makeChangeListRequest(startPageToken: string | null): Request {
@@ -258,7 +182,7 @@ class Files {
   }
 }
 
-function b64toBlob(b64Data: string, contentType='', sliceSize=512) {
+function b64toBlob(b64Data: string, contentType = "", sliceSize = 512) {
   const byteCharacters = atob(b64Data);
   const byteArrays = [];
 
@@ -273,7 +197,7 @@ function b64toBlob(b64Data: string, contentType='', sliceSize=512) {
     const byteArray = new Uint8Array(byteNumbers);
     byteArrays.push(byteArray);
   }
-    
-  const blob = new Blob(byteArrays, {type: contentType});
+
+  const blob = new Blob(byteArrays, { type: contentType });
   return blob;
 }

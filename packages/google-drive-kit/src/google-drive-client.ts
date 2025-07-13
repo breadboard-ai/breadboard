@@ -25,8 +25,10 @@ export interface ReadFileOptions extends BaseRequestOptions {
   fields?: Array<keyof gapi.client.drive.File>;
 }
 
-export interface UpdateFileOptions extends BaseRequestOptions {
+export interface UpdateFileMetadataOptions extends BaseRequestOptions {
   fields?: Array<keyof gapi.client.drive.File>;
+  addParents?: string[];
+  removeParents?: string[];
 }
 
 export interface CopyFileOptions extends BaseRequestOptions {
@@ -43,6 +45,10 @@ export interface WritePermissionOptions extends BaseRequestOptions {
 
 export interface ListFilesOptions extends BaseRequestOptions {
   fields?: Array<keyof gapi.client.drive.File>;
+  orderBy?: Array<{
+    field: keyof gapi.client.drive.File;
+    dir: "asc" | "desc";
+  }>;
   pageSize?: number;
   pageToken?: string;
 }
@@ -59,7 +65,7 @@ export interface ListFilesResponse<T extends gapi.client.drive.File> {
  * fields are required. Used when we know we are retrieving certain fields, so
  * we can assert that the values will be populated.
  */
-type NarrowedDriveFile<
+export type NarrowedDriveFile<
   T extends Array<keyof gapi.client.drive.File> | undefined,
 > = {
   [K in keyof Required<gapi.client.drive.File> as K extends (
@@ -163,6 +169,21 @@ export class GoogleDriveClient {
     );
   }
 
+  #getFileMetadata(
+    fileId: string,
+    options: ReadFileOptions | undefined,
+    authorization?: GoogleApiAuthorization
+  ): Promise<Response> {
+    const url = new URL(
+      `drive/v3/files/${encodeURIComponent(fileId)}`,
+      this.#apiBaseUrl
+    );
+    if (options?.fields?.length) {
+      url.searchParams.set("fields", options.fields.join(","));
+    }
+    return this.#fetch(url, { signal: options?.signal }, authorization);
+  }
+
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/create#:~:text=metadata%2Donly */
   async createFileMetadata<const T extends ReadFileOptions>(
     file: gapi.client.drive.File & { name: string; mimeType: string },
@@ -187,9 +208,9 @@ export class GoogleDriveClient {
   }
 
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/update */
-  async updateFileMetadata<const T extends ReadFileOptions>(
+  async updateFileMetadata<const T extends UpdateFileMetadataOptions>(
     fileId: string,
-    metadata: gapi.client.drive.File,
+    metadata: gapi.client.drive.File & { parents?: never },
     options?: T
   ): Promise<NarrowedDriveFile<T["fields"]>> {
     const url = new URL(
@@ -213,19 +234,21 @@ export class GoogleDriveClient {
     return await response.json();
   }
 
-  #getFileMetadata(
+  /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/delete */
+  async deleteFile(
     fileId: string,
-    options: ReadFileOptions | undefined,
-    authorization?: GoogleApiAuthorization
-  ): Promise<Response> {
-    const url = new URL(
+    options?: BaseRequestOptions
+  ): Promise<void> {
+    const response = await this.#fetch(
       `drive/v3/files/${encodeURIComponent(fileId)}`,
-      this.#apiBaseUrl
+      { method: "DELETE", signal: options?.signal }
     );
-    if (options?.fields?.length) {
-      url.searchParams.set("fields", options.fields.join(","));
+    if (!response.ok) {
+      throw new Error(
+        `Google Drive deleteFile ${response.status} error: ` +
+          (await response.text())
+      );
     }
-    return this.#fetch(url, { signal: options?.signal }, authorization);
   }
 
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/get#:~:text=media */
@@ -415,6 +438,12 @@ export class GoogleDriveClient {
     }
     if (options?.fields?.length) {
       url.searchParams.set("fields", `files(${options.fields.join(",")})`);
+    }
+    if (options?.orderBy?.length) {
+      url.searchParams.set(
+        "orderBy",
+        options.orderBy.map(({ field, dir }) => `${field} ${dir}`).join(",")
+      );
     }
     const response = await this.#fetch(url, { signal: options?.signal });
     return await response.json();

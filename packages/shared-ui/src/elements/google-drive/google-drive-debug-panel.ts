@@ -17,12 +17,15 @@ import {
   signinAdapterContext,
 } from "../../utils/signin-adapter.js";
 import { loadDrivePicker, loadDriveShareClient } from "./google-apis.js";
-import { Files } from "@breadboard-ai/google-drive-kit/board-server/api.js";
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { ok } from "@google-labs/breadboard";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { getTopLevelOrigin } from "../../utils/embed-helpers.js";
+import {
+  DEPRECATED_GRAPH_MIME_TYPE,
+  GRAPH_MIME_TYPE,
+} from "@breadboard-ai/google-drive-kit/board-server/operations.js";
 
 const Strings = BreadboardUI.Strings.forSection("Global");
 
@@ -203,7 +206,7 @@ export class GoogleDriveDebugPanel extends LitElement {
     if (!server) {
       return nothing;
     }
-    const fileIds = await server.ops.readSharedGraphList();
+    const fileIds = await this.readSharedGraphList();
     return fileIds.map(
       (fileId) => html`<li>${this.#renderFileLink(fileId)}</li>`
     );
@@ -214,7 +217,7 @@ export class GoogleDriveDebugPanel extends LitElement {
     if (!server) {
       return nothing;
     }
-    const assets = await server.ops.listAssets();
+    const assets = await this.listAssets();
     return assets.map((fileId) => {
       return html`<li>${this.#renderFileLink(fileId)}</li>`;
     });
@@ -449,21 +452,40 @@ export class GoogleDriveDebugPanel extends LitElement {
     if (!fileId) {
       return;
     }
-    const auth = await this.signinAdapter?.token();
-    if (auth?.state !== "valid") {
-      return;
-    }
-    const { access_token } = auth.grant;
-    const files = new Files(
-      { kind: "bearer", token: access_token },
-      new URL("/drive-proxy", document.location.href).href
-    );
-    const request = files.makeGetRequest(fileId);
-    console.log({ request });
-    const response = await fetch(request);
-    console.log({ status: response.status });
-    const text = await response.text();
-    console.log({ text });
+    const result = await this.googleDriveClient!.getFileMetadata(fileId);
+    console.log({ result });
+  }
+
+  async listAssets(): Promise<string[]> {
+    const query = `(mimeType contains 'image/')` + ` and trashed=false`;
+    const result = await this.googleDriveClient!.listFiles(query, {
+      fields: ["id"],
+      orderBy: [
+        {
+          field: "modifiedTime",
+          dir: "desc",
+        },
+      ],
+    });
+    return result.files.map((file) => file.id);
+  }
+
+  async readSharedGraphList(): Promise<string[]> {
+    const query =
+      ` (mimeType="${GRAPH_MIME_TYPE}"` +
+      `  or mimeType="${DEPRECATED_GRAPH_MIME_TYPE}")` +
+      ` and sharedWithMe=true` +
+      ` and trashed=false`;
+    const response = await this.googleDriveClient!.listFiles(query, {
+      fields: ["id"],
+      orderBy: [
+        {
+          field: "modifiedTime",
+          dir: "desc",
+        },
+      ],
+    });
+    return response.files.map((file) => file.id);
   }
 }
 
