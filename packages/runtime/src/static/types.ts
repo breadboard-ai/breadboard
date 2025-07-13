@@ -106,6 +106,10 @@ export type NodeLifecycleState =
 
 export type OrchestratorProgress =
   /**
+   * The orchestrator hasn't begun yet.
+   */
+  | "initial"
+  /**
    * The orchestrator is at a stage, and there are still tasks to be completed.
    */
   | "working"
