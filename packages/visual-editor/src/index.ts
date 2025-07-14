@@ -54,7 +54,6 @@ import {
 
 import { sandbox } from "./sandbox";
 import {
-  AssetMetadata,
   GraphIdentifier,
   Module,
   ModuleIdentifier,
@@ -92,11 +91,8 @@ import {
   FlowGenerator,
   flowGeneratorContext,
 } from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
-import { findGoogleDriveAssetsInGraph } from "@breadboard-ai/shared-ui/elements/google-drive/find-google-drive-assets-in-graph.js";
-import { stringifyPermission } from "@breadboard-ai/shared-ui/elements/share-panel/share-panel.js";
 import { type GoogleDriveAssetShareDialog } from "@breadboard-ai/shared-ui/elements/elements.js";
 import { boardServerContext } from "@breadboard-ai/shared-ui/contexts/board-server.js";
-import { extractGoogleDriveFileId } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
 
 import { Admin } from "./admin";
 import { MainArguments } from "./types/types";
@@ -186,7 +182,7 @@ export class Main extends SignalWatcher(LitElement) {
   #selectionState: WorkspaceSelectionStateWithChangeId | null = null;
   #lastVisualChangeId: WorkspaceVisualChangeId | null = null;
   readonly #lastPointerPosition = { x: 0, y: 0 };
-  #runtime!: Runtime.RuntimeInstance;
+  #runtime!: Runtime.Runtime;
   readonly #embedHandler?: EmbedHandler;
 
   /**
@@ -495,14 +491,14 @@ export class Main extends SignalWatcher(LitElement) {
 
     const currentUrl = new URL(window.location.href);
 
-    this.#runtime.board.addEventListener(
+    this.#runtime.addEventListener(
       Runtime.Events.RuntimeToastEvent.eventName,
       (evt: Runtime.Events.RuntimeToastEvent) => {
         this.toast(evt.message, evt.toastType, evt.persistent, evt.toastId);
       }
     );
 
-    this.#runtime.board.addEventListener(
+    this.#runtime.addEventListener(
       Runtime.Events.RuntimeSnackbarEvent.eventName,
       (evt: Runtime.Events.RuntimeSnackbarEvent) => {
         this.snackbar(
@@ -516,10 +512,22 @@ export class Main extends SignalWatcher(LitElement) {
       }
     );
 
-    this.#runtime.board.addEventListener(
+    this.#runtime.addEventListener(
       Runtime.Events.RuntimeUnsnackbarEvent.eventName,
       () => {
         this.unsnackbar();
+      }
+    );
+
+    this.#runtime.addEventListener(
+      Runtime.Events.RuntimeShareDialogRequestedEvent.eventName,
+      (evt: Runtime.Events.RuntimeShareDialogRequestedEvent) => {
+        const dialog = this.#googleDriveAssetShareDialogRef.value;
+        if (!dialog) {
+          console.error(`Asset permissions dialog was not rendered`);
+          return;
+        }
+        dialog.open(evt.assets);
       }
     );
 
@@ -1357,6 +1365,7 @@ export class Main extends SignalWatcher(LitElement) {
       secretsHelper: this.#secretsHelper,
       tab: this.#tab,
       uiState: this.#uiState,
+      googleDriveClient: this.googleDriveClient,
     };
   }
 
@@ -1698,41 +1707,6 @@ export class Main extends SignalWatcher(LitElement) {
           null,
           true
         );
-      }}
-      @bbdroppedassets=${async (
-        evt: BreadboardUI.Events.DroppedAssetsEvent
-      ) => {
-        const projectState = this.#runtime.state.getOrCreateProjectState(
-          this.#tab?.mainGraphId,
-          this.#runtime.edit.getEditor(this.#tab)
-        );
-
-        if (!projectState) {
-          this.toast("Unable to add", BreadboardUI.Events.ToastType.ERROR);
-          return;
-        }
-
-        await Promise.all(
-          evt.assets.map((asset) => {
-            const metadata: AssetMetadata = {
-              title: asset.name,
-              type: asset.type,
-              visual: asset.visual,
-            };
-
-            if (asset.subType) {
-              metadata.subType = asset.subType;
-            }
-
-            return projectState?.organizer.addGraphAsset({
-              path: asset.path,
-              metadata,
-              data: [asset.data],
-            });
-          })
-        );
-
-        this.#checkGoogleDriveAssetShareStatus();
       }}
       @bbgraphreplace=${async (evt: BreadboardUI.Events.GraphReplaceEvent) => {
         await this.#runtime.edit.replaceGraph(
@@ -2149,104 +2123,6 @@ export class Main extends SignalWatcher(LitElement) {
       }}
     >
     </bb-ve-header>`;
-  }
-
-  /**
-   * Finds all assets in the graph, checks if their sharing permissions match
-   * that of the main graph, and prompts the user to fix them if needed.
-   */
-  async #checkGoogleDriveAssetShareStatus(): Promise<void> {
-    const graph = this.#tab?.graph;
-    if (!graph) {
-      console.error(`No graph was found`);
-      return;
-    }
-    const driveAssetFileIds = findGoogleDriveAssetsInGraph(graph);
-    if (driveAssetFileIds.length === 0) {
-      return;
-    }
-    if (!graph.url) {
-      console.error(`Graph had no URL`);
-      return;
-    }
-    const graphFileId = extractGoogleDriveFileId(graph.url);
-    if (!graphFileId) {
-      return;
-    }
-    const { googleDriveClient } = this;
-    if (!googleDriveClient) {
-      console.error(`No googleDriveClient was provided`);
-      return;
-    }
-
-    // Retrieve all relevant permissions.
-    const rawAssetPermissionsPromise = Promise.all(
-      driveAssetFileIds.map(
-        async (assetFileId) =>
-          [
-            assetFileId,
-            await googleDriveClient.getFilePermissions(assetFileId),
-          ] as const
-      )
-    );
-    const processedGraphPermissions = (
-      await googleDriveClient.getFilePermissions(graphFileId)
-    )
-      .filter(
-        (permission) =>
-          // We're only concerned with how the graph is shared to others.
-          permission.role !== "owner"
-      )
-      .map((permission) => ({
-        ...permission,
-        // We only care about reading the file, so downgrade "writer",
-        // "commenter", and other roles to "reader" (note that all roles are
-        // supersets of of "reader", see
-        // https://developers.google.com/workspace/drive/api/guides/ref-roles).
-        role: "reader",
-      }));
-
-    // Look at each asset and determine whether it is missing any of the
-    // permissions that the graph has.
-    const assetToMissingPermissions = new Map<
-      string,
-      gapi.client.drive.Permission[]
-    >();
-    for (const [
-      assetFileId,
-      assetPermissions,
-    ] of await rawAssetPermissionsPromise) {
-      const missingPermissions = new Map(
-        processedGraphPermissions.map((graphPermission) => [
-          stringifyPermission(graphPermission),
-          graphPermission,
-        ])
-      );
-      for (const assetPermission of assetPermissions) {
-        missingPermissions.delete(
-          stringifyPermission({
-            ...assetPermission,
-            // See note above about "reader".
-            role: "reader",
-          })
-        );
-      }
-      if (missingPermissions.size > 0) {
-        assetToMissingPermissions.set(assetFileId, [
-          ...missingPermissions.values(),
-        ]);
-      }
-    }
-
-    // Prompt to sync the permissions.
-    if (assetToMissingPermissions.size > 0) {
-      const dialog = this.#googleDriveAssetShareDialogRef.value;
-      if (!dialog) {
-        console.error(`Asset permissions dialog was not rendered`);
-        return;
-      }
-      dialog.open(assetToMissingPermissions);
-    }
   }
 }
 

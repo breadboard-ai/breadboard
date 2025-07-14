@@ -74,6 +74,16 @@ export class RuntimeSnackbarEvent extends Event {
   }
 }
 
+export class RuntimeShareDialogRequestedEvent extends Event {
+  static eventName = "runtimesharedialogrequested" as const;
+
+  constructor(
+    public readonly assets: Map<string, gapi.client.drive.Permission[]>
+  ) {
+    super(RuntimeShareDialogRequestedEvent.eventName, { ...eventInit });
+  }
+}
+
 export class RuntimeBoardLoadErrorEvent extends Event {
   static eventName = "runtimeboardloaderror" as const;
 

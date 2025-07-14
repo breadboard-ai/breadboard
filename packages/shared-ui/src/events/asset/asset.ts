@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { AssetEdge } from "../../types/types";
+import { AssetEdge, NewAsset } from "../../types/types";
 
 type Namespace = "asset";
 
@@ -13,4 +13,9 @@ export interface ChangeEdge {
   readonly changeType: "add" | "remove";
   readonly assetEdge: AssetEdge;
   readonly subGraphId: string | null;
+}
+
+export interface Add {
+  readonly eventType: `${Namespace}.add`;
+  readonly assets: NewAsset[];
 }

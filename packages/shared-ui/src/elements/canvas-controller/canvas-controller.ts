@@ -64,7 +64,6 @@ import {
 import { icons } from "../../styles/icons.js";
 import { type GoogleDrivePicker, EntityEditor } from "../elements.js";
 import { consume } from "@lit/context";
-import { findGoogleDriveAssetsInGraph } from "../google-drive/find-google-drive-assets-in-graph.js";
 import { SharePanel } from "../share-panel/share-panel.js";
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
@@ -77,6 +76,7 @@ import { emptyStyles } from "../../styles/host/colors-empty.js";
 const SIDE_ITEM_KEY = "bb-canvas-controller-side-nav-item";
 
 import "./empty-state.js";
+import { findGoogleDriveAssetsInGraph } from "../../utils/utils.js";
 
 @customElement("bb-canvas-controller")
 export class CanvasController extends LitElement {

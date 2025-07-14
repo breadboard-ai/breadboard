@@ -25,7 +25,6 @@ import type {
 import type {
   AppTemplateAdditionalOptionsAvailable,
   Command,
-  NewAsset,
   EdgeData,
   Settings,
   TopGraphEdgeInfo,
@@ -79,6 +78,7 @@ export type StateEventDetailMap = {
   "node.changeedgeattachmentpoint": Node.ChangeEdgeAttachmentPoint;
 
   "asset.changeedge": Asset.ChangeEdge;
+  "asset.add": Asset.Add;
 
   "theme.create": Theme.Create;
   "theme.change": Theme.Change;
@@ -772,13 +772,6 @@ export class MoveNodesEvent extends Event {
     public readonly positionDelta: DOMPoint | null = null
   ) {
     super(MoveNodesEvent.eventName, { ...eventInit });
-  }
-}
-
-export class DroppedAssetsEvent extends Event {
-  static eventName = "bbdroppedassets" as const;
-  constructor(public readonly assets: NewAsset[]) {
-    super(DroppedAssetsEvent.eventName, { ...eventInit });
   }
 }
 

@@ -44,6 +44,7 @@ export const eventRoutes = new Map<
   ],
 
   /** Asset */
+  [Asset.AddRoute.event, Asset.AddRoute],
   [Asset.ChangeEdgeRoute.event, Asset.ChangeEdgeRoute],
 
   /** Theme */
