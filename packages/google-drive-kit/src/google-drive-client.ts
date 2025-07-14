@@ -61,6 +61,13 @@ export interface ListFilesResponse<T extends gapi.client.drive.File> {
   nextPageToken?: string;
 }
 
+export interface ListChangesOptions extends BaseRequestOptions {
+  pageToken: string;
+  pageSize?: number;
+  includeRemoved?: boolean;
+  includeCorpusRemovals?: boolean;
+}
+
 /**
  * A DriveFile (which usually has every field as optional) but where some of the
  * fields are required. Used when we know we are retrieving certain fields, so
@@ -799,6 +806,37 @@ export class GoogleDriveClient {
     }
     const result = (await response.json()) as { startPageToken: string };
     return result.startPageToken;
+  }
+
+  /** https://developers.google.com/workspace/drive/api/reference/rest/v3/changes/list */
+  async listChanges(
+    options: ListChangesOptions
+  ): Promise<gapi.client.drive.ChangeList> {
+    const url = new URL(`drive/v3/changes`, this.#apiBaseUrl);
+    url.searchParams.set("pageToken", options.pageToken);
+    if (options.pageSize) {
+      url.searchParams.set("pageSize", String(options.pageSize));
+    }
+    if (options.includeRemoved) {
+      url.searchParams.set(
+        "includeRemoved",
+        options.includeRemoved ? "true" : "false"
+      );
+    }
+    if (options.includeCorpusRemovals) {
+      url.searchParams.set(
+        "includeCorpusRemovals",
+        options.includeCorpusRemovals ? "true" : "false"
+      );
+    }
+    const response = await this.#fetch(url, { signal: options.signal });
+    if (!response.ok) {
+      throw new Error(
+        `Google Drive listChanges ${response.status} error: ` +
+          (await response.text())
+      );
+    }
+    return response.json();
   }
 }
 

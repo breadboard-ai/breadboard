@@ -33,8 +33,6 @@ export type AppProperties = {
   thumbnailUrl?: string;
 };
 
-const CHANGE_LIST_COMMON_PARAMS = ["supportsAllDrives=true"];
-
 export type GoogleApiAuthorization =
   | { kind: "key"; key: string }
   | { kind: "bearer"; token: string };
@@ -76,24 +74,6 @@ class Files {
       throw new Error(`Unhandled authorization kind`, authKind satisfies never);
     }
     return headers;
-  }
-
-  makeChangeListRequest(startPageToken: string | null): Request {
-    const url = this.#makeUrl(
-      "drive/v3/changes?" +
-        CHANGE_LIST_COMMON_PARAMS.concat([
-          "pageSize=1000",
-          "includeRemoved=true",
-          "includeCorpusRemovals=true",
-          "includeItemsFromAllDrives=true",
-          "spaces=drive",
-          `pageToken=${startPageToken ?? "1"}`,
-        ]).join("&")
-    );
-    return new Request(url, {
-      method: "GET",
-      headers: this.#makeHeaders(),
-    });
   }
 }
 

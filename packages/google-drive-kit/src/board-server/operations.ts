@@ -332,21 +332,25 @@ class DriveOperations {
   async #fetchAllChanges(
     pageToken: string
   ): Promise<[Array<DriveChange>, string | undefined]> {
-    const api = new Files(await DriveOperations.getUserAuth(this.vendor));
-    const changes: Array<DriveChange> = [];
+    const changes: Array<gapi.client.drive.Change> = [];
     let newStartPageToken: string | undefined;
     do {
-      const response = await retryableFetch(
-        api.makeChangeListRequest(pageToken)
-      );
-      if (!response.ok) {
-        console.error("Response not OK", response);
+      let data;
+      try {
+        data = await this.#googleDriveClient.listChanges({
+          pageToken,
+          pageSize: 1000,
+          includeRemoved: true,
+          includeCorpusRemovals: true,
+        });
+      } catch (e) {
+        console.error("Response not OK", e);
         // This may be due to an invalid token, so let's just trash it and retry.
         setDriveCacheState(null);
         throw new Error("Failed to fetch drive changes");
       }
-      const data = await response.json();
-      pageToken = data.nextPageToken;
+
+      pageToken = data.nextPageToken!;
       if (data.changes) {
         changes.push(...data.changes);
       }
@@ -355,7 +359,8 @@ class DriveOperations {
         newStartPageToken = data.newStartPageToken;
       }
     } while (pageToken);
-    return [changes, newStartPageToken];
+    // TODO(aomarks) Standardize DriveChange type.
+    return [changes as DriveChange[], newStartPageToken];
   }
 
   static getUserAuth(vendor: TokenVendor): Promise<GoogleApiAuthorization> {
@@ -708,7 +713,7 @@ class DriveOperations {
     // Start in parallel.
     const parentPromise = this.findOrCreateFolder();
 
-    const blob = b64toBlob(data, contentType ?? "");
+    const blob = b64toBlob(data, maybeStripBase64Suffix(contentType ?? ""));
     const file = await (thumbnailFileId
       ? this.#googleDriveClient.updateFile(thumbnailFileId, blob)
       : this.#googleDriveClient.createFile(blob));
