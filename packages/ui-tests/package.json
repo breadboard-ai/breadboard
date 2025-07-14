@@ -1,6 +1,6 @@
 {
   "name": "ui-tests",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "",
   "main": "index.js",
   "keywords": [],
@@ -19,5 +19,5 @@
     "test-ide": "npx playwright test --ui",
     "debug": "npx playwright test --debug",
     "show-report": "npx playwright show-report"
-  }  
+  }
 }

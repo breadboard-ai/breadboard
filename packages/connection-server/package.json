@@ -1,7 +1,7 @@
 {
   "name": "@breadboard-ai/connection-server",
   "private": true,
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "Breadboard Connection Server",
   "license": "Apache-2.0",
   "author": "Google Labs Team",
@@ -88,7 +88,7 @@
     "wireit": "^0.15.0-pre.2"
   },
   "dependencies": {
-    "@breadboard-ai/types": "^0.7.0",
+    "@breadboard-ai/types": "^0.8.0",
     "@types/cookie-parser": "^1.4.9",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",

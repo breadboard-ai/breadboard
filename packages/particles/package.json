@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/particles",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "AI-first UI Toolkit",
   "main": "./dist/src/index.js",
   "exports": {
@@ -78,7 +78,7 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/particles#readme",
   "devDependencies": {
-    "@google-labs/tsconfig": "^0.0.1",
+    "@google-labs/tsconfig": "^0.0.2",
     "typescript": "^5.8.3"
   }
 }

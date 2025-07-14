@@ -1,5 +1,78 @@
 # @breadboard-ai/google-drive-kit
 
+## 0.7.0
+
+### Minor Changes
+
+- 81266d9: Teach Drive Server to save nicer file names.
+- 4a737c8: Separate out `DriveOperations` in Drive Board Server.
+- 3307fe9: Move many debugging messages to `console.debug`.
+- fc03cbe: Distinguish between user-initiated save and autosave.
+- a0a8b2e: Introduce `GoogleDriveDataPartTransformer`.
+- 7e30bf3: Add support for reading Google Drive docs.
+- ec57dff: Introduce "savestatuschange" event on `BoardServer` and start using
+  it.
+- 617b692: Show gallery thumbnails
+- 68cf0e4: Introduce a simple save debouncer to Google Drive board server.
+
+### Patch Changes
+
+- fdc7b73: Introduce `@breadboard-ai/data` package and move data transformation
+  bits to it.
+- ab0c0d2: Route all `drive:` assets through Gemini File API.
+- 75bd25c: Remove spurious Drive file list call.
+- 84924e9: Minor polish on featured gallery
+- 1ceab5e: Make failure to load gallery non-fatal
+- 1f22e00: Remove title disambiguiation
+- 23ca45d: Auto save when changing out from the editor
+- 11bf831: Tidy up boot order work a little
+- 2ec3b09: Teach GoogleDriveBoardServer to differentiate between user's and
+  featured items.
+- 22b02b8: Factor runtime bits out of `breadboard` package.
+- e55f645: Handle Drive errors a bit more gracefully.
+- c30a25d: Make YT videos work again.
+- eebe5c3: Catch CORS errors in retryableFetch.
+- f52e91a: Fix item URL resolution
+- e3f9b38: Kludge-fix the weird slash-vs-double-slash problem
+- Updated dependencies [04b69e4]
+- Updated dependencies [fdc7b73]
+- Updated dependencies [60b7d20]
+- Updated dependencies [f488e2b]
+- Updated dependencies [6450a10]
+- Updated dependencies [4a737c8]
+- Updated dependencies [67aee89]
+- Updated dependencies [7f8aecd]
+- Updated dependencies [a2483c3]
+- Updated dependencies [ff52dd4]
+- Updated dependencies [f7a17c6]
+- Updated dependencies [0687280]
+- Updated dependencies [bb974f6]
+- Updated dependencies [66814df]
+- Updated dependencies [edebc30]
+- Updated dependencies [79a14ca]
+- Updated dependencies [c3d5854]
+- Updated dependencies [fc03cbe]
+- Updated dependencies [22b02b8]
+- Updated dependencies [0ab7624]
+- Updated dependencies [e55f645]
+- Updated dependencies [bb833fa]
+- Updated dependencies [7ccff14]
+- Updated dependencies [68a9c87]
+- Updated dependencies [d026048]
+- Updated dependencies [6201f69]
+- Updated dependencies [a7c691e]
+- Updated dependencies [ec57dff]
+- Updated dependencies [cc94550]
+- Updated dependencies [9923fe0]
+- Updated dependencies [caa565d]
+- Updated dependencies [5fd36ea]
+- Updated dependencies [8c26089]
+- Updated dependencies [4722bb9]
+  - @google-labs/breadboard@0.35.0
+  - @breadboard-ai/data@0.0.2
+  - @breadboard-ai/types@0.8.0
+  - @breadboard-ai/connection-client@0.3.0
+
 ## 0.6.0
 
 ### Minor Changes

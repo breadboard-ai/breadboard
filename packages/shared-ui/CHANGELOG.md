@@ -1,5 +1,401 @@
 # @breadboard-ai/shared-ui
 
+## 1.26.0
+
+### Minor Changes
+
+- d473fc9: Somewhat display elapsed time dynamically.
+- 04b69e4: Introduce "Save to Doc" feature to "Output" step.
+- d79e4d2: Shift Particle UI stuff around
+- f488e2b: Add runtime flags support and the first `usePlanRunner` flag.
+- f73eff7: Sketch out Console state.
+- 51397ed: Start using reactive App for rendering activity in App View.
+- 471ebaf: Implement "Save to Slides" functionality for "Output".
+- 4a737c8: Separate out `DriveOperations` in Drive Board Server.
+- b144e4c: Start using dynamic configuration for MEASUREMENT_ID and
+  BACKEND_API_ENDPOINT.
+- eaff345: Teach Renderer to produce unique-ish names for steps.
+- 38062d9: Introduce app/canvas mode toggle
+- b3db392: Add support for streamable reporting from A2 to Console.
+- 89cd3fe: Hide parameters in "@" menu by default.
+- 8317eff: Teach Autoname to be faster and more accurate
+- 79a14ca: Plumb outputs to console view.
+- c3d5854: Teach connection server to pass along errors and teach unified-server
+  about allowlists.
+- fc03cbe: Distinguish between user-initiated save and autosave.
+- 7cb81fc: Make Cmd+Shift+E sticky across reloads.
+- f706431: Add a few more APIs to ProjectRun.
+- 7ebde36: Switch to use Streamable HTTP for MCP connector.
+- cf7b7f2: Teach console to clear, plumb inputs, and add `estimatedEntryCount`.
+- 0ab7624: Plumb through outputs in Console.
+- 3c6f6a3: Start using Particles for rendering Console.
+- acb9a23: Introduce MVP "Save to Sheets" feature for "Output" step.
+- 287d14d: Plumb `ProjectRun` to `<app-basic>` and start using it.
+- 07165a6: Don't bring up sign in dialog for `connection:$sign-in`.
+- a7c691e: Introduce the concept of "start" nodes and stop running standalone
+  nodes.
+- a3d8363: Introduce `ActionTracker`.
+- 2dd0b30: Teach Search Web tool to stream updates.
+
+### Patch Changes
+
+- 07a1a59: Fix signin/out
+- 8f75c2c: Increase the hit area for the connection trigger
+- 159ff1f: Adjust header
+- e71a5f8: Add support for downloadable outputs
+- edd8914: Move "remix" to overflow copy when user owns the board
+- 9ab153b: Fix chat with user.
+- 1f17530: Add support for a feedback link
+- a517d8a: Update sidenav styles
+- 238c9a7: Migrate `Presentation` to `packages/particles`.
+- 6b3e1bc: Introduce new header
+- e891bb0: Update particle styles for lists & list items
+- 6cb8bef: More tidying
+- 5f03fbf: Improve Drive file handling in app view
+- 73013c3: Migrate asset edge management to StateEvent
+- ab0c0d2: Route all `drive:` assets through Gemini File API.
+- d01317d: Add account switcher element
+- 07a31cd: Restore remix snackbar
+- ef8dc25: Fix recent boards behavior
+- 213fefb: Migrate DroppedAsset event to StateEvent
+- 6889170: Fix the sidenav height
+- a9eaf4d: Add support for remix on owned boards
+- 96a5c75: Update styles for the NL edit
+- a5913f7: Shortcut rendering for iframes
+- 177af04: Align home page with designs
+- 3073b45: Fix project listing order & create button
+- b008b9a: Update theme callsites
+- cdf28ca: Fix sidenav colors
+- 8cdb091: Disallow cycles in Visual Editor.
+- de7e0f0: Fix `@` trigger reliability
+- c8b76c7: Remove NL from project listing
+- 01375d7: Add margins to llm-output
+- 1d96174: Improve Drive picker a little
+- 1ec107d: Update "Ask User" and file uploads
+- d0a866b: Add advisory message to share panel
+- 25d67cb: Teach AppView to handle "$sign-in" secrets.
+- 0e8dd64: Make some adjustments to the NL input
+- 8684f66: Fix floating input text color
+- 35a551c: Tweak app input color for default theme
+- a37d986: When reactive value changes, auto-save.
+- 9d1bfcf: Fix tab behaviors
+- cdf8913: Clean up theme-creation code.
+- 24a8445: Improve recent boards behavior in gallery
+- a7e0a38: Migrate GraphReplace event to StateEvent
+- e861404: Add embed handler & state
+- bc42e6b: Some minor fixes for console view
+- fceb773: Add ability to copy/download image particles
+- a10e9ea: Update node config to using StateEvent
+- 69b0dce: Start implementing particle operations.
+- d72a728: Add zero state
+- 0022ffa: Update entity editor styles to account for advanced settings
+- 3f74a52: Update webcam view
+- 0dec6fd: Start tidying up bb-main
+- c684a9a: More changes to the header
+- ae3f850: Small improvements to the snackbar
+- 99f7f1c: Remove spurious comments.
+- cabae5d: Teach graph-edge about animating stored wires
+- 2f4a4ce: Update app styles
+- 8b2efc7: Add support for named environments
+- d9f1e11: Add support for webcam input under any format
+- 3a6ab93: More tidy up
+- d9e481d: Restyle results share button
+- a329a90: Tweak the renderer
+- 44b8285: Remove need for cmd/ctrl to progress inputs in app view
+- 911061d: Improve on app styles
+- 9756798: Start work on floating input
+- 91943bb: Set up zero state
+- f4b03a0: Remove Lit warning
+- 97a68b3: Plumb `getMetadataForNode` on `Project`.
+- cd33fc4: Update console colors
+- 572d109: Add new "Links" particle to display links.
+- ed85ddd: Remove Material Icons
+- 99e3a44: Adjust console view colors
+- 1ea5752: Fix feedback rendering on homepage NL
+- 6be46e2: Add rudimentary SUIP support.
+- f7a17c6: Remove various exports from breadboard package
+- 97c3dce: Update particle rendering
+- 0281ca5: Encode HTML for downloads using TextEncoder
+- 9c1cd02: Add experimental console view
+- 572c6cd: Include assets in the empty graph check
+- 7f6e72a: Update label on NL input
+- bb974f6: Unbreak theme creation.
+- eded6e3: Move edge attachment to StateEvent
+- 213b9f9: Tweak Drive file rendering
+- 0811a22: Move share to bottom for owned boards
+- a3ec7e5: Catch webcam permission failure
+- 2d3e437: More graph rendering changes
+- 07a9124: Toggle spinner / twistie based on console item state
+- 6766ddb: A couple of small fixes
+- 7ba6186: Switch FEEDBACK_LINK to be dynamically configured.
+- 7d3ab40: Show API message when using standard input
+- b2bc8d0: Switch order in asset menu
+- 4fb5222: Place warning on app view
+- e5cb2e8: Update board rename to StateEvent
+- bb6831a: Bring theme editor in line with VisD
+- a083c0c: Correctly wire `ProjectRun` when loading saved results.
+- 5853107: Add disclaimer string
+- e5ffede: Teach App View about share
+- 1e35308: Update asset list labels
+- c4e6f0b: Update text editor placeholder
+- 23ca45d: Auto save when changing out from the editor
+- 5380a9a: Refix app view border
+- 8df93da: Move inputs over to StateEvent
+- 9c8c0b0: Improve gallery rendering logic
+- ff9da95: Update browser tab labels
+- 0dfdc1e: Fix minor UI issues
+- a9bdfe1: Remove board details overlay
+- 66fdb49: Integrate Particles with App View (Part 1 of n)
+- 3ba1615: Namespace the events
+- 3841df4: Teach flowgen button to be responsive
+- 6f66a6b: Wean <app-basic> off `TopGraphResult`.
+- 29b15de: Tidy up app styles
+- a05f645: Adjust entity-editor
+- 3091264: Introduce snackbar
+- dc127f5: A little more tidy & polish
+- 65fe607: Hide asset modal when selecting uploads
+- 7c74807: Add link to Discord
+- 140824f: Make tags come across to console.
+- b59c5f5: Upgrade the app view to use floating-input
+- 3fe43ff: Teach console about parallelism
+- c737a80: Add support for YouTube shorts
+- 07c2a61: Remove "No available data" from app view
+- 940e415: Remove splash image from default theme
+- 4509b34: Shift UI props to Signals
+- 7f3733f: Gallery tweaks
+- fcd025c: Updates to console view
+- e9ac6c0: A slew of fixes around port reference editing
+- 22b02b8: Factor runtime bits out of `breadboard` package.
+- ee61ec8: Align the editor controls with the designs
+- 7b5366a: Rename elements
+- 51d7c6a: Tidy up some readonly behaviors
+- 6465439: Minor clean up in Console View.
+- 60b3a12: Tweak app progress
+- c24df05: Move MultiEdit to StateEvent
+- 25b9d81: Show absolute theme image URLs.
+- 8ccddfe: Move Theme management to StateEvent
+- bb833fa: Update default app theme
+- 1c7e796: Remove deprecated stuff
+- 3afba55: Start introducing LLM Content -> Particle transformation.
+- c60f274: Switch on assets-on-graph
+- e0b2815: Remove "back" button from app view
+- 34d8ece: Fix dblclick-focus behavior
+- 21180b7: Prevent multiple clicks on 'Create New'
+- 7ccff14: Update the styling for "Ask User" in the app view
+- bd356b4: Update chiclet info
+- ed8a84f: Add hover state to sign out
+- d49b6d8: Change disclaimer behavior
+- 7721112: Remove 'working' from status message
+- 4eef656: Switch to the editor when selections change
+- cc1fd4f: Shift disclaimer
+- 76813b7: Bump particles to main
+- b95567d: Stop `bb-connection-input` from hammering connection server
+- f4283b9: Many tweaks to autoname
+- a85c9e7: More UI tidying
+- a53f764: Ensure SVG elements have will-change
+- 3d3ecd9: Isolate status messages
+- b90a28f: Update app header styles
+- cd682df: Tweak edge & node colors
+- 4951ff0: Remove "Add Step"
+- 8cf89c7: Update home page look & feel
+- 5761351: Update the entity editor styles
+- 3708e27: Update graph rendering
+- 740a5f3: Make a few home page tweaks
+- 2961cbf: Plumb icons to console entries.
+- 0e94a05: Update flowgen styles
+- d773f4b: Teach board activity about (re)starting
+- e253d71: Fix content warning
+- d572669: Track content warning per board
+- 68a9c87: Be more lenient with spaces in the text editor
+- d026048: Reduce the number of times describers are called during the run.
+- 7ba1b3c: Fix header on narrower widths
+- 6306180: Remove `ChatController`.
+- 86f0b3f: Align audio outputs
+- 1ba0467: Change 'build your own' asset type
+- 175a529: Tweak modals
+- 53bad5f: Bump the Drive file viewer quality
+- 83bb079: Update empty check
+- c21a604: Move edge change event to StateEvent
+- ed0ee5d: Teach Visual Editor about keyboard shortcut for experimental
+  components
+- be987f5: Tweak text in graph-node content
+- 0d05a59: Teach assets to autosave
+- 6cd5128: Contain the height of html-view
+- 0c1b329: Introduce dbl-click to edit on steps
+- 41120c0: Truncate titles when in read only
+- eb33797: Allow locking/unlocking of the UI
+- 66a6365: Add TOS check
+- f69cd4a: Add support for deleting projects
+- 6defad4: Prevent edits when in readonly mode
+- 88497ee: Dewrinkle Particles somewhat
+- 68908ed: Tweak/improve zero state
+- adfe3b9: Starting the event rewiring
+- 2e45eae: Add scrim to asset shelf
+- c4b2cbb: Show splash image if it's a data URL.
+- 7fc0863: Animate theme editor entry
+- db4fc1b: Unbreak app view.
+- 3832957: Move search to header
+- 8b76b0a: Teach app view to honor Ask User's modality
+- e52727d: Remove chiclet info from assets
+- b248705: Update line height handling in expanding-textarea
+- 02b2bff: Add board edit modal
+- 5362c9d: Make particle viewer switchable.
+- a41b437: Improve rendering of YT vids on asset shelf
+- c0b7556: Various visual fixes
+- 5a889c4: Save when graph topology changes
+- af3c193: Update app styles
+- c8249e5: Extract `ParticleReader`.
+- 0507a7e: Update app & LLM output styles
+- 6f52b87: Tweak spacing on download button
+- 9923fe0: improve theme gen
+- d6b5924: Update tab char
+- 7888dbf: Allow multiple file uploads in app view
+- 45826dd: Allow flowgen to update configuration values
+- ca4eb00: Fix multi-output width
+- 9f6d57c: Move delete to StateEvent
+- a1b5700: Improve STT behavior
+- ae62260: Fix the bug where "Start" is disabled in a new flow
+- 6e532c2: Fix arrows on advanced settings
+- deaca0b: Linkify word
+- eebb674: Update chiclet styles
+- bbc67b6: Always render feedback option in header
+- 34906a8: Introduce router
+- 226ff73: Restore download overflow
+- 57d5f14: Enable drawables to accept Promise-based URLs
+- 851b94b: Switch app header for dedicated component
+- c34a3bf: Update section labels
+- e88894e: Autoname only once
+- 50b0638: Migrate node-with-edge to StateEvent
+- 1cf74dc: Style particle links
+- 62dca78: Tweak policy link
+- fb5e161: Tweaks to consumption view
+- 95809f7: Allow retries when flowgen fails
+- d9ff927: Update top shelf styles
+- 5566a5a: Move create and remix events to StateEvent
+- e128f22: Handle the case of user input with no text.
+- 5d4e9a6: Add SST to fields
+- 9891bf2: Fix input overflow
+- ce762b5: Use Lit Task to load PDF data
+- 0fd0d1c: Add policy support
+- 9f6ac1b: Unbreak inputs after describe refactoring.
+- cbd204c: More polish to webcam
+- Updated dependencies [a02142b]
+- Updated dependencies [238c9a7]
+- Updated dependencies [e891bb0]
+- Updated dependencies [04b69e4]
+- Updated dependencies [fdc7b73]
+- Updated dependencies [ab0c0d2]
+- Updated dependencies [d79e4d2]
+- Updated dependencies [81266d9]
+- Updated dependencies [60b7d20]
+- Updated dependencies [a5913f7]
+- Updated dependencies [f488e2b]
+- Updated dependencies [d44f657]
+- Updated dependencies [8cdb091]
+- Updated dependencies [f87c84e]
+- Updated dependencies [6450a10]
+- Updated dependencies [1ec107d]
+- Updated dependencies [a37d986]
+- Updated dependencies [525307d]
+- Updated dependencies [75bd25c]
+- Updated dependencies [e28bf13]
+- Updated dependencies [471ebaf]
+- Updated dependencies [fceb773]
+- Updated dependencies [4a737c8]
+- Updated dependencies [67aee89]
+- Updated dependencies [fd00eb6]
+- Updated dependencies [8a3fb19]
+- Updated dependencies [d2ed651]
+- Updated dependencies [69b0dce]
+- Updated dependencies [5496e6c]
+- Updated dependencies [84924e9]
+- Updated dependencies [1ceab5e]
+- Updated dependencies [f5621ec]
+- Updated dependencies [69e18c3]
+- Updated dependencies [572d109]
+- Updated dependencies [b3db392]
+- Updated dependencies [ed85ddd]
+- Updated dependencies [7f8aecd]
+- Updated dependencies [a2483c3]
+- Updated dependencies [ff52dd4]
+- Updated dependencies [6be46e2]
+- Updated dependencies [f7a17c6]
+- Updated dependencies [0687280]
+- Updated dependencies [bb974f6]
+- Updated dependencies [66814df]
+- Updated dependencies [34269ad]
+- Updated dependencies [608bbbe]
+- Updated dependencies [1f22e00]
+- Updated dependencies [8317eff]
+- Updated dependencies [3307fe9]
+- Updated dependencies [23ca45d]
+- Updated dependencies [edebc30]
+- Updated dependencies [11bf831]
+- Updated dependencies [66fdb49]
+- Updated dependencies [79a14ca]
+- Updated dependencies [c3d5854]
+- Updated dependencies [dc127f5]
+- Updated dependencies [fc03cbe]
+- Updated dependencies [2ec3b09]
+- Updated dependencies [4115045]
+- Updated dependencies [7ebde36]
+- Updated dependencies [22b02b8]
+- Updated dependencies [26c7b72]
+- Updated dependencies [7b5366a]
+- Updated dependencies [a0a8b2e]
+- Updated dependencies [0ab7624]
+- Updated dependencies [e55f645]
+- Updated dependencies [c30a25d]
+- Updated dependencies [3c6f6a3]
+- Updated dependencies [acb9a23]
+- Updated dependencies [7e30bf3]
+- Updated dependencies [bb833fa]
+- Updated dependencies [3afba55]
+- Updated dependencies [68212fc]
+- Updated dependencies [7ccff14]
+- Updated dependencies [ef9a0d8]
+- Updated dependencies [0df3f14]
+- Updated dependencies [f4283b9]
+- Updated dependencies [3b92534]
+- Updated dependencies [263b983]
+- Updated dependencies [68a9c87]
+- Updated dependencies [d026048]
+- Updated dependencies [dbea047]
+- Updated dependencies [197c7bc]
+- Updated dependencies [eebe5c3]
+- Updated dependencies [6201f69]
+- Updated dependencies [a2abd3f]
+- Updated dependencies [f52e91a]
+- Updated dependencies [8d4d513]
+- Updated dependencies [97ea4dc]
+- Updated dependencies [88497ee]
+- Updated dependencies [a7c691e]
+- Updated dependencies [ec57dff]
+- Updated dependencies [e3f9b38]
+- Updated dependencies [617b692]
+- Updated dependencies [cc94550]
+- Updated dependencies [9923fe0]
+- Updated dependencies [caa565d]
+- Updated dependencies [5fd36ea]
+- Updated dependencies [524d3b0]
+- Updated dependencies [1c8153f]
+- Updated dependencies [8c26089]
+- Updated dependencies [2dd0b30]
+- Updated dependencies [68cf0e4]
+- Updated dependencies [4722bb9]
+  - @breadboard-ai/runtime@0.1.0
+  - @breadboard-ai/particles-ui@0.1.0
+  - @breadboard-ai/particles@0.1.0
+  - @google-labs/breadboard@0.35.0
+  - @breadboard-ai/a2@0.5.0
+  - @breadboard-ai/google-drive-kit@0.7.0
+  - @breadboard-ai/utils@0.0.2
+  - @breadboard-ai/types@0.8.0
+  - @breadboard-ai/jsandbox@0.7.0
+  - @breadboard-ai/connection-client@0.3.0
+  - @google-labs/breadboard-schema@1.15.0
+  - @breadboard-ai/theme@0.0.2
+
 ## 1.25.0
 
 ### Minor Changes

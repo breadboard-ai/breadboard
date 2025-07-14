@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/types",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "TypeScript type definitions for Breadboard.",
   "main": "./dist/src/index.js",
   "exports": {
@@ -55,7 +55,7 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "typescript": "^5.8.3",
-    "@google-labs/tsconfig": "^0.0.1",
+    "@google-labs/tsconfig": "^0.0.2",
     "wireit": "^0.15.0-pre.2"
   }
 }

@@ -1,5 +1,486 @@
 # @google-labs/breadboard-web
 
+## 1.29.0
+
+### Minor Changes
+
+- a02142b: Add interactive mode to PlanRunner.
+- 04b69e4: Introduce "Save to Doc" feature to "Output" step.
+- f488e2b: Add runtime flags support and the first `usePlanRunner` flag.
+- f73eff7: Sketch out Console state.
+- 471ebaf: Implement "Save to Slides" functionality for "Output".
+- b144e4c: Start using dynamic configuration for MEASUREMENT_ID and
+  BACKEND_API_ENDPOINT.
+- 38062d9: Introduce app/canvas mode toggle
+- b3db392: Add support for streamable reporting from A2 to Console.
+- 20d0abb: Add `defaultBoardService` to remove the need for always specifying
+  the BOARD_SERVICE.
+- 8317eff: Teach Autoname to be faster and more accurate
+- 0faf9b2: Implement dynamic configuration
+- fc03cbe: Distinguish between user-initiated save and autosave.
+- 7cb81fc: Make Cmd+Shift+E sticky across reloads.
+- cf7b7f2: Teach console to clear, plumb inputs, and add `estimatedEntryCount`.
+- acb9a23: Introduce MVP "Save to Sheets" feature for "Output" step.
+- 07165a6: Don't bring up sign in dialog for `connection:$sign-in`.
+- ec57dff: Introduce "savestatuschange" event on `BoardServer` and start using
+  it.
+- 75ae411: Turn autoname on by default.
+- 2dd0b30: Teach Search Web tool to stream updates.
+
+### Patch Changes
+
+- 07a1a59: Fix signin/out
+- 159ff1f: Adjust header
+- edd8914: Move "remix" to overflow copy when user owns the board
+- bb3c26e: Visibility tweak
+- 1f17530: Add support for a feedback link
+- 40576e1: Mini refactor of commands and event routing
+- 6b3e1bc: Introduce new header
+- 816de58: Unbreak visual editor.
+- 6cb8bef: More tidying
+- 73013c3: Migrate asset edge management to StateEvent
+- d01317d: Add account switcher element
+- 07a31cd: Restore remix snackbar
+- ef8dc25: Fix recent boards behavior
+- 213fefb: Migrate DroppedAsset event to StateEvent
+- 79fa72d: QoL update to sort item list
+- b29f609: Add TOS support to app view
+- cdf8913: Clean up theme-creation code.
+- 24a8445: Improve recent boards behavior in gallery
+- fe0f98f: Cancel-clone events that are in dispatch
+- a7e0a38: Migrate GraphReplace event to StateEvent
+- e861404: Add embed handler & state
+- eb1aef6: Pass file system env for each run.
+- a10e9ea: Update node config to using StateEvent
+- 15bcd6e: Tidy up a little more
+- d72a728: Add zero state
+- 313bc8c: Correctly close the tab when remixing.
+- 0dec6fd: Start tidying up bb-main
+- c684a9a: More changes to the header
+- 8b2efc7: Add support for named environments
+- d9f1e11: Add support for webcam input under any format
+- 3a6ab93: More tidy up
+- d9e481d: Restyle results share button
+- ed85ddd: Remove Material Icons
+- 1ea5752: Fix feedback rendering on homepage NL
+- 9c1cd02: Add experimental console view
+- 572c6cd: Include assets in the empty graph check
+- bb974f6: Unbreak theme creation.
+- 32bbf6c: Fix edit-details pane from overflow
+- eded6e3: Move edge attachment to StateEvent
+- 0811a22: Move share to bottom for owned boards
+- 2d3e437: More graph rendering changes
+- 7ba6186: Switch FEEDBACK_LINK to be dynamically configured.
+- 4fb5222: Place warning on app view
+- e5cb2e8: Update board rename to StateEvent
+- 43495ce: Invert header flag
+- bb6831a: Bring theme editor in line with VisD
+- e5ffede: Teach App View about share
+- 8df93da: Move inputs over to StateEvent
+- 11bf831: Tidy up boot order work a little
+- ff9da95: Update browser tab labels
+- 0dfdc1e: Fix minor UI issues
+- a9bdfe1: Remove board details overlay
+- 3ba1615: Namespace the events
+- 6f66a6b: Wean <app-basic> off `TopGraphResult`.
+- a05f645: Adjust entity-editor
+- 3091264: Introduce snackbar
+- dc127f5: A little more tidy & polish
+- 7c74807: Add link to Discord
+- c737a80: Add support for YouTube shorts
+- 940e415: Remove splash image from default theme
+- 4509b34: Shift UI props to Signals
+- fcd025c: Updates to console view
+- 4bb4942: Fix the "always-checked checkbox" problem in entity editor.
+- e339d8f: Add ready check
+- 22b02b8: Factor runtime bits out of `breadboard` package.
+- ee61ec8: Align the editor controls with the designs
+- 51d7c6a: Tidy up some readonly behaviors
+- c24df05: Move MultiEdit to StateEvent
+- 8ccddfe: Move Theme management to StateEvent
+- bb833fa: Update default app theme
+- 3e65e31: Remove unnecessary toast
+- a85c9e7: More UI tidying
+- 7ba1b3c: Fix header on narrower widths
+- 6306180: Remove `ChatController`.
+- 175a529: Tweak modals
+- 83bb079: Update empty check
+- c21a604: Move edge change event to StateEvent
+- ed0ee5d: Teach Visual Editor about keyboard shortcut for experimental
+  components
+- 5870a18: Ensure single "tab"
+- 8e93c91: Load Drive files when creating palettes
+- eb33797: Allow locking/unlocking of the UI
+- 66a6365: Add TOS check
+- f69cd4a: Add support for deleting projects
+- 6defad4: Prevent edits when in readonly mode
+- 68908ed: Tweak/improve zero state
+- adfe3b9: Starting the event rewiring
+- a18c7ef: Update board.create event route
+- 3832957: Move search to header
+- 02b2bff: Add board edit modal
+- d9dcf74: Migrate all save behavior to runtime
+- f4f781d: Put autoname back behind a flag
+- c0b7556: Various visual fixes
+- 9923fe0: improve theme gen
+- acf86fe: Update title via input element
+- 45826dd: Allow flowgen to update configuration values
+- 9f6d57c: Move delete to StateEvent
+- 83ef224: Fix a couple of first-time Drive backend sign-in issues.
+- 34906a8: Introduce router
+- eb6f195: Supply deployment config to sideboards.
+- 1275653: Fix font request
+- e88894e: Autoname only once
+- 50b0638: Migrate node-with-edge to StateEvent
+- 8c26089: Introduce a way to provide env variables to steps.
+- d9ff927: Update top shelf styles
+- 5566a5a: Move create and remix events to StateEvent
+- 5d4e9a6: Add SST to fields
+- 0fd0d1c: Add policy support
+- 9f6ac1b: Unbreak inputs after describe refactoring.
+- Updated dependencies [07a1a59]
+- Updated dependencies [8f75c2c]
+- Updated dependencies [159ff1f]
+- Updated dependencies [e71a5f8]
+- Updated dependencies [edd8914]
+- Updated dependencies [9ab153b]
+- Updated dependencies [1f17530]
+- Updated dependencies [a517d8a]
+- Updated dependencies [a02142b]
+- Updated dependencies [238c9a7]
+- Updated dependencies [6b3e1bc]
+- Updated dependencies [d473fc9]
+- Updated dependencies [e891bb0]
+- Updated dependencies [6cb8bef]
+- Updated dependencies [04b69e4]
+- Updated dependencies [5f03fbf]
+- Updated dependencies [73013c3]
+- Updated dependencies [fdc7b73]
+- Updated dependencies [ab0c0d2]
+- Updated dependencies [d79e4d2]
+- Updated dependencies [d01317d]
+- Updated dependencies [07a31cd]
+- Updated dependencies [ef8dc25]
+- Updated dependencies [213fefb]
+- Updated dependencies [6889170]
+- Updated dependencies [a9eaf4d]
+- Updated dependencies [81266d9]
+- Updated dependencies [60b7d20]
+- Updated dependencies [96a5c75]
+- Updated dependencies [a5913f7]
+- Updated dependencies [f488e2b]
+- Updated dependencies [d44f657]
+- Updated dependencies [177af04]
+- Updated dependencies [3073b45]
+- Updated dependencies [b008b9a]
+- Updated dependencies [cdf28ca]
+- Updated dependencies [8cdb091]
+- Updated dependencies [f87c84e]
+- Updated dependencies [de7e0f0]
+- Updated dependencies [6450a10]
+- Updated dependencies [c8b76c7]
+- Updated dependencies [01375d7]
+- Updated dependencies [1d96174]
+- Updated dependencies [1ec107d]
+- Updated dependencies [d0a866b]
+- Updated dependencies [f73eff7]
+- Updated dependencies [25d67cb]
+- Updated dependencies [0e8dd64]
+- Updated dependencies [8684f66]
+- Updated dependencies [35a551c]
+- Updated dependencies [a37d986]
+- Updated dependencies [9d1bfcf]
+- Updated dependencies [cdf8913]
+- Updated dependencies [525307d]
+- Updated dependencies [24a8445]
+- Updated dependencies [75bd25c]
+- Updated dependencies [e28bf13]
+- Updated dependencies [51397ed]
+- Updated dependencies [a7e0a38]
+- Updated dependencies [471ebaf]
+- Updated dependencies [e861404]
+- Updated dependencies [bc42e6b]
+- Updated dependencies [2387587]
+- Updated dependencies [fceb773]
+- Updated dependencies [4a737c8]
+- Updated dependencies [67aee89]
+- Updated dependencies [a10e9ea]
+- Updated dependencies [fd00eb6]
+- Updated dependencies [b144e4c]
+- Updated dependencies [8a3fb19]
+- Updated dependencies [d2ed651]
+- Updated dependencies [69b0dce]
+- Updated dependencies [d72a728]
+- Updated dependencies [0022ffa]
+- Updated dependencies [3f74a52]
+- Updated dependencies [0dec6fd]
+- Updated dependencies [c684a9a]
+- Updated dependencies [eaff345]
+- Updated dependencies [ae3f850]
+- Updated dependencies [99f7f1c]
+- Updated dependencies [84924e9]
+- Updated dependencies [38062d9]
+- Updated dependencies [cabae5d]
+- Updated dependencies [1ceab5e]
+- Updated dependencies [2f4a4ce]
+- Updated dependencies [8b2efc7]
+- Updated dependencies [d9f1e11]
+- Updated dependencies [3a6ab93]
+- Updated dependencies [d9e481d]
+- Updated dependencies [a329a90]
+- Updated dependencies [44b8285]
+- Updated dependencies [f5621ec]
+- Updated dependencies [911061d]
+- Updated dependencies [9756798]
+- Updated dependencies [91943bb]
+- Updated dependencies [f4b03a0]
+- Updated dependencies [97a68b3]
+- Updated dependencies [69e18c3]
+- Updated dependencies [cd33fc4]
+- Updated dependencies [572d109]
+- Updated dependencies [b3db392]
+- Updated dependencies [ed85ddd]
+- Updated dependencies [99e3a44]
+- Updated dependencies [7f8aecd]
+- Updated dependencies [a2483c3]
+- Updated dependencies [ff52dd4]
+- Updated dependencies [1ea5752]
+- Updated dependencies [6be46e2]
+- Updated dependencies [f7a17c6]
+- Updated dependencies [97c3dce]
+- Updated dependencies [0281ca5]
+- Updated dependencies [9c1cd02]
+- Updated dependencies [572c6cd]
+- Updated dependencies [0687280]
+- Updated dependencies [7f6e72a]
+- Updated dependencies [bb974f6]
+- Updated dependencies [eded6e3]
+- Updated dependencies [66814df]
+- Updated dependencies [213b9f9]
+- Updated dependencies [0811a22]
+- Updated dependencies [a3ec7e5]
+- Updated dependencies [2d3e437]
+- Updated dependencies [34269ad]
+- Updated dependencies [07a9124]
+- Updated dependencies [6766ddb]
+- Updated dependencies [7ba6186]
+- Updated dependencies [7d3ab40]
+- Updated dependencies [89cd3fe]
+- Updated dependencies [b2bc8d0]
+- Updated dependencies [4fb5222]
+- Updated dependencies [e5cb2e8]
+- Updated dependencies [1f22e00]
+- Updated dependencies [bb6831a]
+- Updated dependencies [a083c0c]
+- Updated dependencies [5853107]
+- Updated dependencies [e5ffede]
+- Updated dependencies [1e35308]
+- Updated dependencies [8317eff]
+- Updated dependencies [3307fe9]
+- Updated dependencies [c4e6f0b]
+- Updated dependencies [23ca45d]
+- Updated dependencies [5380a9a]
+- Updated dependencies [8df93da]
+- Updated dependencies [edebc30]
+- Updated dependencies [11bf831]
+- Updated dependencies [9c8c0b0]
+- Updated dependencies [ff9da95]
+- Updated dependencies [0dfdc1e]
+- Updated dependencies [a9bdfe1]
+- Updated dependencies [66fdb49]
+- Updated dependencies [3ba1615]
+- Updated dependencies [79a14ca]
+- Updated dependencies [3841df4]
+- Updated dependencies [6f66a6b]
+- Updated dependencies [29b15de]
+- Updated dependencies [a05f645]
+- Updated dependencies [3091264]
+- Updated dependencies [c3d5854]
+- Updated dependencies [dc127f5]
+- Updated dependencies [fc03cbe]
+- Updated dependencies [65fe607]
+- Updated dependencies [2ec3b09]
+- Updated dependencies [7cb81fc]
+- Updated dependencies [7c74807]
+- Updated dependencies [140824f]
+- Updated dependencies [b59c5f5]
+- Updated dependencies [3fe43ff]
+- Updated dependencies [f706431]
+- Updated dependencies [4115045]
+- Updated dependencies [c737a80]
+- Updated dependencies [07c2a61]
+- Updated dependencies [940e415]
+- Updated dependencies [7ebde36]
+- Updated dependencies [4509b34]
+- Updated dependencies [7f3733f]
+- Updated dependencies [fcd025c]
+- Updated dependencies [e9ac6c0]
+- Updated dependencies [cf7b7f2]
+- Updated dependencies [22b02b8]
+- Updated dependencies [26c7b72]
+- Updated dependencies [ee61ec8]
+- Updated dependencies [7b5366a]
+- Updated dependencies [51d7c6a]
+- Updated dependencies [6465439]
+- Updated dependencies [a0a8b2e]
+- Updated dependencies [0ab7624]
+- Updated dependencies [60b3a12]
+- Updated dependencies [e55f645]
+- Updated dependencies [c24df05]
+- Updated dependencies [c30a25d]
+- Updated dependencies [25b9d81]
+- Updated dependencies [3c6f6a3]
+- Updated dependencies [8ccddfe]
+- Updated dependencies [acb9a23]
+- Updated dependencies [7e30bf3]
+- Updated dependencies [bb833fa]
+- Updated dependencies [1c7e796]
+- Updated dependencies [3afba55]
+- Updated dependencies [c60f274]
+- Updated dependencies [e0b2815]
+- Updated dependencies [34d8ece]
+- Updated dependencies [21180b7]
+- Updated dependencies [68212fc]
+- Updated dependencies [7ccff14]
+- Updated dependencies [bd356b4]
+- Updated dependencies [287d14d]
+- Updated dependencies [ed8a84f]
+- Updated dependencies [ef9a0d8]
+- Updated dependencies [d49b6d8]
+- Updated dependencies [7721112]
+- Updated dependencies [0df3f14]
+- Updated dependencies [4eef656]
+- Updated dependencies [cc1fd4f]
+- Updated dependencies [76813b7]
+- Updated dependencies [b95567d]
+- Updated dependencies [f4283b9]
+- Updated dependencies [a85c9e7]
+- Updated dependencies [a53f764]
+- Updated dependencies [3d3ecd9]
+- Updated dependencies [b90a28f]
+- Updated dependencies [cd682df]
+- Updated dependencies [4951ff0]
+- Updated dependencies [8cf89c7]
+- Updated dependencies [5761351]
+- Updated dependencies [3708e27]
+- Updated dependencies [740a5f3]
+- Updated dependencies [2961cbf]
+- Updated dependencies [0e94a05]
+- Updated dependencies [d773f4b]
+- Updated dependencies [e253d71]
+- Updated dependencies [d572669]
+- Updated dependencies [263b983]
+- Updated dependencies [68a9c87]
+- Updated dependencies [d026048]
+- Updated dependencies [7ba1b3c]
+- Updated dependencies [6306180]
+- Updated dependencies [dbea047]
+- Updated dependencies [86f0b3f]
+- Updated dependencies [1ba0467]
+- Updated dependencies [197c7bc]
+- Updated dependencies [175a529]
+- Updated dependencies [53bad5f]
+- Updated dependencies [83bb079]
+- Updated dependencies [eebe5c3]
+- Updated dependencies [c21a604]
+- Updated dependencies [ed0ee5d]
+- Updated dependencies [07165a6]
+- Updated dependencies [6201f69]
+- Updated dependencies [a2abd3f]
+- Updated dependencies [be987f5]
+- Updated dependencies [0d05a59]
+- Updated dependencies [6cd5128]
+- Updated dependencies [0c1b329]
+- Updated dependencies [f52e91a]
+- Updated dependencies [41120c0]
+- Updated dependencies [eb33797]
+- Updated dependencies [66a6365]
+- Updated dependencies [f69cd4a]
+- Updated dependencies [8d4d513]
+- Updated dependencies [97ea4dc]
+- Updated dependencies [6defad4]
+- Updated dependencies [88497ee]
+- Updated dependencies [68908ed]
+- Updated dependencies [adfe3b9]
+- Updated dependencies [2e45eae]
+- Updated dependencies [c4b2cbb]
+- Updated dependencies [a7c691e]
+- Updated dependencies [7fc0863]
+- Updated dependencies [ec57dff]
+- Updated dependencies [db4fc1b]
+- Updated dependencies [3832957]
+- Updated dependencies [8b76b0a]
+- Updated dependencies [e52727d]
+- Updated dependencies [b248705]
+- Updated dependencies [02b2bff]
+- Updated dependencies [5362c9d]
+- Updated dependencies [e3f9b38]
+- Updated dependencies [617b692]
+- Updated dependencies [a41b437]
+- Updated dependencies [a3d8363]
+- Updated dependencies [cc94550]
+- Updated dependencies [c0b7556]
+- Updated dependencies [5a889c4]
+- Updated dependencies [af3c193]
+- Updated dependencies [c8249e5]
+- Updated dependencies [0507a7e]
+- Updated dependencies [6f52b87]
+- Updated dependencies [9923fe0]
+- Updated dependencies [d6b5924]
+- Updated dependencies [caa565d]
+- Updated dependencies [7888dbf]
+- Updated dependencies [45826dd]
+- Updated dependencies [ca4eb00]
+- Updated dependencies [9f6d57c]
+- Updated dependencies [a1b5700]
+- Updated dependencies [ae62260]
+- Updated dependencies [6e532c2]
+- Updated dependencies [deaca0b]
+- Updated dependencies [83ef224]
+- Updated dependencies [eebb674]
+- Updated dependencies [bbc67b6]
+- Updated dependencies [34906a8]
+- Updated dependencies [226ff73]
+- Updated dependencies [57d5f14]
+- Updated dependencies [851b94b]
+- Updated dependencies [5fd36ea]
+- Updated dependencies [c34a3bf]
+- Updated dependencies [e88894e]
+- Updated dependencies [50b0638]
+- Updated dependencies [1cf74dc]
+- Updated dependencies [62dca78]
+- Updated dependencies [524d3b0]
+- Updated dependencies [1c8153f]
+- Updated dependencies [8c26089]
+- Updated dependencies [fb5e161]
+- Updated dependencies [95809f7]
+- Updated dependencies [d9ff927]
+- Updated dependencies [5566a5a]
+- Updated dependencies [e128f22]
+- Updated dependencies [5d4e9a6]
+- Updated dependencies [2dd0b30]
+- Updated dependencies [9891bf2]
+- Updated dependencies [ce762b5]
+- Updated dependencies [0fd0d1c]
+- Updated dependencies [68cf0e4]
+- Updated dependencies [9f6ac1b]
+- Updated dependencies [cbd204c]
+- Updated dependencies [4722bb9]
+  - @breadboard-ai/shared-ui@1.26.0
+  - @breadboard-ai/runtime@0.1.0
+  - @google-labs/breadboard@0.35.0
+  - @breadboard-ai/a2@0.5.0
+  - @breadboard-ai/google-drive-kit@0.7.0
+  - @breadboard-ai/data-store@0.4.0
+  - @breadboard-ai/types@0.8.0
+  - @breadboard-ai/jsandbox@0.7.0
+  - @breadboard-ai/board-server-management@1.21.1
+  - @breadboard-ai/embed@0.0.2
+  - @breadboard-ai/idb-board-server@1.19.5
+  - @google-labs/core-kit@0.19.1
+  - @breadboard-ai/theme@0.0.2
+  - @breadboard-ai/board-server-utils@0.1.11
+
 ## 1.28.0
 
 ### Minor Changes

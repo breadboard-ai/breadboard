@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/jsandbox",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Breadboard Javascript Sandbox",
   "main": "./dist/src/index.js",
   "exports": {
@@ -117,7 +117,7 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
-    "@google-labs/tsconfig": "^0.0.1",
+    "@google-labs/tsconfig": "^0.0.2",
     "@types/node": "^22.0.0",
     "eslint": "^8.57.1",
     "tsx": "^4.20.3",
@@ -125,7 +125,7 @@
     "wireit": "^0.15.0-pre.2"
   },
   "dependencies": {
-    "@breadboard-ai/types": "0.7.0",
+    "@breadboard-ai/types": "0.8.0",
     "@bjorn3/browser_wasi_shim": "^0.4.1"
   }
 }

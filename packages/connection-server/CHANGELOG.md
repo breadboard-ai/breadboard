@@ -1,5 +1,21 @@
 # @breadboard-ai/connection-server
 
+## 0.6.0
+
+### Minor Changes
+
+- c3d5854: Teach connection server to pass along errors and teach unified-server
+  about allowlists.
+
+### Patch Changes
+
+- Updated dependencies [f488e2b]
+- Updated dependencies [22b02b8]
+- Updated dependencies [bb833fa]
+- Updated dependencies [a7c691e]
+- Updated dependencies [9923fe0]
+  - @breadboard-ai/types@0.8.0
+
 ## 0.5.1
 
 ### Patch Changes
