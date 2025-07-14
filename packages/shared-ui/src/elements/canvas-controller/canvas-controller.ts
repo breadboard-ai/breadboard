@@ -366,7 +366,9 @@ export class CanvasController extends LitElement {
     const showAssetsInGraph = true;
 
     const graph = this.editor?.inspect("") || null;
-    const graphIsEmpty = (graph?.nodes() ?? []).length === 0;
+    const graphIsEmpty =
+      (graph?.nodes() ?? []).length === 0 &&
+      (graph?.assets() ?? new Map()).size === 0;
 
     let capabilities: false | GraphProviderCapabilities = false;
     for (const boardServer of this.boardServers) {

@@ -1544,6 +1544,10 @@ export class Main extends SignalWatcher(LitElement) {
   }
 
   #renderAppController(renderValues: RenderValues) {
+    const graphIsEmpty =
+      (this.#tab?.graph.nodes ?? []).length === 0 ||
+      Object.keys(this.#tab?.graph.assets ?? {}).length === 0;
+
     return html` <bb-app-controller
       class=${classMap({ active: this.#uiState.mode === "app" })}
       .graph=${this.#tab?.graph ?? null}
@@ -1555,7 +1559,7 @@ export class Main extends SignalWatcher(LitElement) {
       .status=${renderValues.tabStatus}
       .history=${this.#runtime.edit.getHistory(this.#tab)}
       .isMine=${this.#tab?.graphIsMine ?? false}
-      .graphIsEmpty=${(this.#tab?.graph.nodes ?? []).length === 0}
+      .graphIsEmpty=${graphIsEmpty}
       .showThemeEditing=${false}
       .themeHash=${renderValues.themeHash}
       .readOnly=${true}
