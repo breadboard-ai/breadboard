@@ -126,6 +126,6 @@
   },
   "dependencies": {
     "@breadboard-ai/types": "0.8.0",
-    "@bjorn3/browser_wasi_shim": "^0.4.1"
+    "@bjorn3/browser_wasi_shim": "^0.4.2"
   }
 }
