@@ -506,7 +506,7 @@ export class GoogleDriveClient {
     metadata?: gapi.client.drive.File,
     options?: T
   ): Promise<NarrowedDriveFile<T["fields"]>> {
-    const file = await this.#uploadMultipart(
+    const file = await this.#uploadFileMultipart(
       undefined,
       data,
       metadata,
@@ -548,7 +548,7 @@ export class GoogleDriveClient {
     metadata?: gapi.client.drive.File,
     options?: T
   ): Promise<NarrowedDriveFile<T["fields"]>> {
-    const result = this.#uploadMultipart(fileId, data, metadata, options);
+    const result = this.#uploadFileMultipart(fileId, data, metadata, options);
     console.log(`[Google Drive] Updated file`, {
       id: fileId,
       open: `http://drive.google.com/open?id=${fileId}`,
@@ -560,7 +560,7 @@ export class GoogleDriveClient {
     return result;
   }
 
-  async #uploadMultipart<const T extends ReadFileOptions>(
+  async #uploadFileMultipart<const T extends ReadFileOptions>(
     fileId: string | undefined,
     data: Blob | string,
     metadata: gapi.client.drive.File | undefined,
@@ -570,10 +570,8 @@ export class GoogleDriveClient {
     const isBlob = typeof data !== "string";
     if (isBlob && metadata?.mimeType && data.type !== metadata.mimeType) {
       console.warn(
-        `[Google Drive] updateFile blob had type ${JSON.stringify(data.type)}` +
-          ` while metadata had type ${JSON.stringify(metadata.mimeType)}.` +
-          // TODO(aomarks) Find out which one really wins!
-          ` Preferring the one from the metadata.`
+        `[Google Drive] blob had type ${JSON.stringify(data.type)}` +
+          ` while metadata had type ${JSON.stringify(metadata.mimeType)}.`
       );
     }
 
@@ -604,7 +602,7 @@ export class GoogleDriveClient {
     });
     if (!response.ok) {
       throw new Error(
-        `Google Drive updateFile ${response.status} error: ` +
+        `Google Drive uploadFileMultipart ${response.status} error: ` +
           (await response.text())
       );
     }
