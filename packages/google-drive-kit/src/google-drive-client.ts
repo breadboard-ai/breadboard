@@ -6,7 +6,6 @@
 
 /// <reference types="@types/gapi.client.drive-v3" />
 
-import { type GoogleApiAuthorization } from "./board-server/api.js";
 import { retryableFetch } from "./board-server/utils.js";
 
 export interface GoogleDriveClientOptions {
@@ -61,6 +60,13 @@ export interface ListFilesResponse<T extends gapi.client.drive.File> {
   nextPageToken?: string;
 }
 
+export interface ListChangesOptions extends BaseRequestOptions {
+  pageToken: string;
+  pageSize?: number;
+  includeRemoved?: boolean;
+  includeCorpusRemovals?: boolean;
+}
+
 /**
  * A DriveFile (which usually has every field as optional) but where some of the
  * fields are required. Used when we know we are retrieving certain fields, so
@@ -82,6 +88,10 @@ export type NarrowedDriveFile<
     ? gapi.client.drive.File[K]
     : Exclude<gapi.client.drive.File[K], undefined>;
 };
+
+type GoogleApiAuthorization =
+  | { kind: "key"; key: string }
+  | { kind: "bearer"; token: string };
 
 export class GoogleDriveClient {
   readonly #apiBaseUrl: string;
@@ -475,6 +485,130 @@ export class GoogleDriveClient {
     return await response.json();
   }
 
+  /**
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/files/create
+   * https://developers.google.com/workspace/drive/api/guides/manage-uploads
+   */
+  async createFile<const T extends ReadFileOptions>(
+    data: Blob,
+    metadata?: gapi.client.drive.File,
+    options?: T
+  ): Promise<NarrowedDriveFile<T["fields"]>>;
+
+  async createFile<const T extends ReadFileOptions>(
+    data: string,
+    metadata: gapi.client.drive.File & { mimeType: string },
+    options?: T
+  ): Promise<NarrowedDriveFile<T["fields"]>>;
+
+  async createFile<const T extends ReadFileOptions>(
+    data: Blob | string,
+    metadata?: gapi.client.drive.File,
+    options?: T
+  ): Promise<NarrowedDriveFile<T["fields"]>> {
+    const file = await this.#uploadFileMultipart(
+      undefined,
+      data,
+      metadata,
+      options
+    );
+    const fileId = (file as gapi.client.drive.File).id;
+    console.log(`[Google Drive] Created file`, {
+      id: fileId,
+      open: fileId ? `http://drive.google.com/open?id=${fileId}` : null,
+      name: metadata?.name,
+      mimeType:
+        metadata?.mimeType ||
+        (typeof data !== "string" ? data.type : undefined),
+    });
+    return file;
+  }
+
+  /**
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/files/update
+   * https://developers.google.com/workspace/drive/api/guides/manage-uploads
+   */
+  async updateFile<const T extends ReadFileOptions>(
+    fileId: string,
+    data: Blob,
+    metadata?: gapi.client.drive.File,
+    options?: T
+  ): Promise<NarrowedDriveFile<T["fields"]>>;
+
+  async updateFile<const T extends ReadFileOptions>(
+    fileId: string,
+    data: string,
+    metadata?: gapi.client.drive.File & { mimeType: string },
+    options?: T
+  ): Promise<NarrowedDriveFile<T["fields"]>>;
+
+  async updateFile<const T extends ReadFileOptions>(
+    fileId: string,
+    data: Blob | string,
+    metadata?: gapi.client.drive.File,
+    options?: T
+  ): Promise<NarrowedDriveFile<T["fields"]>> {
+    const result = this.#uploadFileMultipart(fileId, data, metadata, options);
+    console.log(`[Google Drive] Updated file`, {
+      id: fileId,
+      open: `http://drive.google.com/open?id=${fileId}`,
+      name: metadata?.name,
+      mimeType:
+        metadata?.mimeType ||
+        (typeof data !== "string" ? data.type : undefined),
+    });
+    return result;
+  }
+
+  async #uploadFileMultipart<const T extends ReadFileOptions>(
+    fileId: string | undefined,
+    data: Blob | string,
+    metadata: gapi.client.drive.File | undefined,
+    options: T | undefined
+  ): Promise<NarrowedDriveFile<T["fields"]>> {
+    const isExistingFile = !!fileId;
+    const isBlob = typeof data !== "string";
+    if (isBlob && metadata?.mimeType && data.type !== metadata.mimeType) {
+      console.warn(
+        `[Google Drive] blob had type ${JSON.stringify(data.type)}` +
+          ` while metadata had type ${JSON.stringify(metadata.mimeType)}.`
+      );
+    }
+
+    const url = new URL(
+      isExistingFile
+        ? `upload/drive/v3/files/${encodeURIComponent(fileId)}`
+        : `upload/drive/v3/files`,
+      this.#apiBaseUrl
+    );
+    url.searchParams.set("uploadType", "multipart");
+    if (options?.fields?.length) {
+      url.searchParams.set("fields", options.fields.join(","));
+    }
+
+    const body = new FormData();
+    body.append(
+      "metadata",
+      new Blob([JSON.stringify(metadata)], {
+        type: "application/json; charset=UTF-8",
+      })
+    );
+    body.append("file", data);
+
+    const response = await this.#fetch(url, {
+      method: isExistingFile ? "PATCH" : "POST",
+      body,
+      signal: options?.signal,
+    });
+    if (!response.ok) {
+      throw new Error(
+        `Google Drive uploadFileMultipart ${response.status} error: ` +
+          (await response.text())
+      );
+    }
+    return response.json();
+  }
+
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/update */
   async updateFileMetadata<const T extends UpdateFileMetadataOptions>(
     fileId: string,
@@ -656,6 +790,54 @@ export class GoogleDriveClient {
     return response.ok
       ? { ok: true, value: await response.json() }
       : { ok: false, error: { status: response.status } };
+  }
+
+  /** https://developers.google.com/workspace/drive/api/reference/rest/v3/changes/getStartPageToken */
+  async getChangesStartPageToken(
+    options?: BaseRequestOptions
+  ): Promise<string> {
+    const response = await this.#fetch(`drive/v3/changes/startPageToken`, {
+      signal: options?.signal,
+    });
+    if (!response.ok) {
+      throw new Error(
+        `Google Drive getChangesStartPageToken ${response.status} error: ` +
+          (await response.text())
+      );
+    }
+    const result = (await response.json()) as { startPageToken: string };
+    return result.startPageToken;
+  }
+
+  /** https://developers.google.com/workspace/drive/api/reference/rest/v3/changes/list */
+  async listChanges(
+    options: ListChangesOptions
+  ): Promise<gapi.client.drive.ChangeList> {
+    const url = new URL(`drive/v3/changes`, this.#apiBaseUrl);
+    url.searchParams.set("pageToken", options.pageToken);
+    if (options.pageSize) {
+      url.searchParams.set("pageSize", String(options.pageSize));
+    }
+    if (options.includeRemoved) {
+      url.searchParams.set(
+        "includeRemoved",
+        options.includeRemoved ? "true" : "false"
+      );
+    }
+    if (options.includeCorpusRemovals) {
+      url.searchParams.set(
+        "includeCorpusRemovals",
+        options.includeCorpusRemovals ? "true" : "false"
+      );
+    }
+    const response = await this.#fetch(url, { signal: options.signal });
+    if (!response.ok) {
+      throw new Error(
+        `Google Drive listChanges ${response.status} error: ` +
+          (await response.text())
+      );
+    }
+    return response.json();
   }
 }
 

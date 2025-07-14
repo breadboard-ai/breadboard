@@ -21,20 +21,13 @@ import {
   type GraphDescriptor,
   type Outcome,
 } from "@google-labs/breadboard";
-import { getAccessToken } from "./access.js";
-import {
-  Files,
-  type AppProperties,
-  type DriveFile,
-  type GoogleApiAuthorization,
-} from "./api.js";
+import { type AppProperties } from "./utils.js";
 
 export { DriveOperations, PROTOCOL };
 
 import {
   extractGoogleDriveFileId,
   readProperties,
-  retryableFetch,
   truncateValueForUtf8,
 } from "./utils.js";
 import type { GoogleDriveClient } from "../google-drive-client.js";
@@ -141,7 +134,6 @@ function formatDelay(delay: number): string {
 
 class DriveOperations {
   readonly #userFolderName: string;
-  readonly #publicApiKey?: string;
   readonly #featuredGalleryFolderId?: string;
   readonly #userGraphsList: DriveListCache;
   readonly #featuredGraphsList?: DriveListCache;
@@ -156,20 +148,16 @@ class DriveOperations {
    * @param refreshProjectListCallback will be called when project list may have to be updated.
    */
   constructor(
-    public readonly vendor: TokenVendor,
-    public readonly username: string,
     private readonly refreshProjectListCallback: () => Promise<void>,
     userFolderName: string,
     googleDriveClient: GoogleDriveClient,
     publishPermissions: gapi.client.drive.Permission[],
-    publicApiKey?: string,
     featuredGalleryFolderId?: string
   ) {
     if (!userFolderName) {
       throw new Error(`userFolderName was empty`);
     }
     this.#userFolderName = userFolderName;
-    this.#publicApiKey = publicApiKey;
     this.#featuredGalleryFolderId = featuredGalleryFolderId;
     this.#googleDriveClient = googleDriveClient;
     this.#publishPermissions = publishPermissions;
@@ -181,7 +169,7 @@ class DriveOperations {
       "user"
     );
 
-    if (featuredGalleryFolderId && this.#publicApiKey) {
+    if (featuredGalleryFolderId) {
       this.#featuredGraphsList = new DriveListCache(
         "featured",
         `"${featuredGalleryFolderId}" in parents and ${BASE_FEATURED_QUERY}`,
@@ -245,21 +233,11 @@ class DriveOperations {
         const driveCacheState = getDriveCacheState();
         if (!driveCacheState) {
           // No changes token yet - we capture one and invalidate all the caches.
-          const api = new Files(await DriveOperations.getUserAuth(this.vendor));
-          const response = await retryableFetch(
-            api.makeGetStartPageTokenRequest()
-          );
-          if (!response.ok) {
-            console.error("Failed to get start page token", response);
-            // Will be retried next time.
-            throw new Error(
-              `Failed to get start page token: ${response.status} ${response.statusText}`
-            );
-          }
-          const pageToken = (await response.json()).startPageToken;
+          const pageToken =
+            await this.#googleDriveClient.getChangesStartPageToken();
           if (!pageToken) {
             // Will be retried next time.
-            console.error("Response containing not startPageToken", response);
+            console.error("Response containing not startPageToken");
             throw new Error(`Response containing not startPageToken`);
           }
           if (stillHoldsState(driveCacheState)) {
@@ -342,21 +320,25 @@ class DriveOperations {
   async #fetchAllChanges(
     pageToken: string
   ): Promise<[Array<DriveChange>, string | undefined]> {
-    const api = new Files(await DriveOperations.getUserAuth(this.vendor));
-    const changes: Array<DriveChange> = [];
+    const changes: Array<gapi.client.drive.Change> = [];
     let newStartPageToken: string | undefined;
     do {
-      const response = await retryableFetch(
-        api.makeChangeListRequest(pageToken)
-      );
-      if (!response.ok) {
-        console.error("Response not OK", response);
+      let data;
+      try {
+        data = await this.#googleDriveClient.listChanges({
+          pageToken,
+          pageSize: 1000,
+          includeRemoved: true,
+          includeCorpusRemovals: true,
+        });
+      } catch (e) {
+        console.error("Response not OK", e);
         // This may be due to an invalid token, so let's just trash it and retry.
         setDriveCacheState(null);
         throw new Error("Failed to fetch drive changes");
       }
-      const data = await response.json();
-      pageToken = data.nextPageToken;
+
+      pageToken = data.nextPageToken!;
       if (data.changes) {
         changes.push(...data.changes);
       }
@@ -365,19 +347,8 @@ class DriveOperations {
         newStartPageToken = data.newStartPageToken;
       }
     } while (pageToken);
-    return [changes, newStartPageToken];
-  }
-
-  static getUserAuth(vendor: TokenVendor): Promise<GoogleApiAuthorization> {
-    return getAccessToken(vendor).then((token) => {
-      if (!token) {
-        throw new Error("No access token");
-      }
-      return {
-        kind: "bearer",
-        token: token!,
-      };
-    });
+    // TODO(aomarks) Standardize DriveChange type.
+    return [changes as DriveChange[], newStartPageToken];
   }
 
   async readGraphList(): Promise<Outcome<GraphInfo[]>> {
@@ -391,15 +362,9 @@ class DriveOperations {
           " No folder id configured."
       );
     }
-    if (!this.#publicApiKey) {
-      return err(
-        "Could not read featured gallery from Google Drive:" +
-          " No public API key configured."
-      );
-    }
     console.assert(
       this.#featuredGraphsList,
-      "featuredGalleryFolderId or publicApiKey is missing"
+      "featuredGalleryFolderId is missing"
     );
     const graphInfos = await this.#featuredGraphsList!.list();
     if (!ok(graphInfos)) {
@@ -443,37 +408,28 @@ class DriveOperations {
     await purgeStoredDataInMemoryValues(descriptor);
     const file = this.fileIdFromUrl(url);
     const name = getFileTitle(descriptor);
-    const accessToken = await getAccessToken(this.vendor);
     try {
-      const api = new Files({ kind: "bearer", token: accessToken! });
-
       const thumbnailUrl = await this.upsertThumbnailFile(
         file,
-        api,
         name,
         descriptor
       );
 
-      await retryableFetch(
-        api.makePatchRequest(file, [
-          {
-            contentType: "application/json; charset=UTF-8",
-            data: {
-              name,
-              properties: createProperties({
-                title: name,
-                description: descriptor.description ?? "",
-                thumbnailUrl,
-                tags: descriptor.metadata?.tags ?? [],
-              }),
-              mimeType: GRAPH_MIME_TYPE,
-            },
-          },
-          {
-            contentType: "application/json; charset=UTF-8",
-            data: descriptor,
-          },
-        ])
+      await this.#googleDriveClient.updateFile(
+        file,
+        new Blob([JSON.stringify(descriptor)], {
+          type: GRAPH_MIME_TYPE,
+        }),
+        {
+          name,
+          properties: createProperties({
+            title: name,
+            description: descriptor.description ?? "",
+            thumbnailUrl,
+            tags: descriptor.metadata?.tags ?? [],
+          }),
+          mimeType: GRAPH_MIME_TYPE,
+        }
       );
 
       return { result: true };
@@ -493,41 +449,29 @@ class DriveOperations {
   ) {
     const fileName = this.fileIdFromUrl(url);
     const name = getFileTitle(descriptor);
-    const accessToken = await getAccessToken(this.vendor);
 
     try {
-      const api = new Files({ kind: "bearer", token: accessToken! });
       const thumbnailUrl = await this.upsertThumbnailFile(
         fileName,
-        api,
         name,
         descriptor
       );
 
-      const response = await retryableFetch(
-        api.makeMultipartCreateRequest([
-          {
-            contentType: "application/json; charset=UTF-8",
-            data: {
-              name,
-              mimeType: GRAPH_MIME_TYPE,
-              parents: [parent],
-              properties: createProperties({
-                title: name,
-                description: descriptor.description ?? "",
-                thumbnailUrl,
-                tags: descriptor.metadata?.tags ?? [],
-              }),
-            },
-          },
-          {
-            contentType: "application/json; charset=UTF-8",
-            data: descriptor,
-          },
-        ])
+      const file = await this.#googleDriveClient.createFile(
+        new Blob([JSON.stringify(descriptor)], { type: GRAPH_MIME_TYPE }),
+        {
+          name,
+          mimeType: GRAPH_MIME_TYPE,
+          parents: [parent],
+          properties: createProperties({
+            title: name,
+            description: descriptor.description ?? "",
+            thumbnailUrl,
+            tags: descriptor.metadata?.tags ?? [],
+          }),
+        },
+        { fields: ["id"] }
       );
-
-      const file: DriveFile = await response.json();
       const updatedUrl = `${PROTOCOL}/${file.id}`;
 
       console.log("[Google Drive] Created new board", updatedUrl);
@@ -566,19 +510,11 @@ class DriveOperations {
       // credentials. So, let's fetch the content using a method that
       // automatically uses public credentials, and upload that.
       const content = await this.#googleDriveClient.getFileMedia(fileId);
-      const accessToken = await getAccessToken(this.vendor);
-      const api = new Files({ kind: "bearer", token: accessToken! });
-      const uploadResponse = await retryableFetch(
-        api.makeUploadRequest(
-          undefined,
-          await content.blob(),
-          original.storedData.mimeType
-        )
+
+      const uploadedFile = await this.#googleDriveClient.createFile(
+        await content.blob(),
+        { mimeType: original.storedData.mimeType }
       );
-      if (!uploadResponse.ok) {
-        return err(String(uploadResponse.status));
-      }
-      const uploadedFile = (await uploadResponse.json()) as DriveFile;
       return {
         storedData: {
           ...original.storedData,
@@ -591,10 +527,6 @@ class DriveOperations {
   }
 
   async writeRunResults(results: RunResults): Promise<{ id: string }> {
-    const accessToken = await getAccessToken(this.vendor);
-    if (!accessToken) {
-      throw new Error(`No access token`);
-    }
     // TODO(aomarks) It would be nice if this saved within a Results folder.
     // Probably part of a larger organization scheme we should have for the
     // Drive folder.
@@ -602,31 +534,18 @@ class DriveOperations {
     if (typeof parentFolderId !== "string" || !parentFolderId) {
       throw new Error(`Unexpected parent folder result ${parentFolderId}`);
     }
-    const api = new Files({ kind: "bearer", token: accessToken });
     const graphFileId = extractGoogleDriveFileId(results.graphUrl);
-    const request = api.makeMultipartCreateRequest([
+    return await this.#googleDriveClient.createFile(
+      new Blob([JSON.stringify(results)], { type: RUN_RESULTS_MIME_TYPE }),
       {
-        contentType: "application/json; charset=UTF-8",
-        data: {
-          name:
-            [`results`, graphFileId, crypto.randomUUID()].join("-") + ".json",
-          mimeType: RUN_RESULTS_MIME_TYPE,
-          parents: [parentFolderId],
-          appProperties: {
-            [RUN_RESULTS_GRAPH_URL_APP_PROPERTY]: results.graphUrl,
-          },
+        name: [`results`, graphFileId, crypto.randomUUID()].join("-") + ".json",
+        mimeType: RUN_RESULTS_MIME_TYPE,
+        parents: [parentFolderId],
+        appProperties: {
+          [RUN_RESULTS_GRAPH_URL_APP_PROPERTY]: results.graphUrl,
         },
-      },
-      {
-        contentType: "application/json; charset=UTF-8",
-        // TODO(aomarks) Handle external content, either by inling or copying
-        // each non-Drive content to Drive. Remember to deal with HTML content,
-        // too, which can contain its own external content references.
-        data: results,
-      },
-    ]);
-    const response = await retryableFetch(request);
-    return (await response.json()) as { id: string };
+      }
+    );
   }
 
   /**
@@ -649,8 +568,6 @@ class DriveOperations {
   async saveDataPart(
     part: InlineDataCapabilityPart | StoredDataCapabilityPart
   ): Promise<StoredDataCapabilityPart> {
-    const accessToken = await getAccessToken(this.vendor);
-    const api = new Files({ kind: "bearer", token: accessToken! });
     // Start in parallel.
     const parentPromise = this.findOrCreateFolder();
     // TODO: Update to retryable.
@@ -677,13 +594,12 @@ class DriveOperations {
       data = part.inlineData.data;
       mimeType = part.inlineData.mimeType;
     }
-    const uploadResponse = await fetch(
-      api.makeUploadRequest(fileId, data, mimeType)
-    );
-    const [file, parent] = await Promise.all([
-      uploadResponse.json() as Promise<DriveFile>,
-      parentPromise,
-    ]);
+    const blob = b64toBlob(data, mimeType);
+    const filePromise = fileId
+      ? this.#googleDriveClient.updateFile(fileId, blob)
+      : this.#googleDriveClient.createFile(blob, { mimeType });
+
+    const [file, parent] = await Promise.all([filePromise, parentPromise]);
     if (!parent) {
       throw new Error(`No parent`);
     }
@@ -719,7 +635,6 @@ class DriveOperations {
   /** Also patches the asset with the url if a file got created.  */
   private async upsertThumbnailFile(
     boardFileId: string,
-    api: Files,
     graphFileName: string,
     descriptor?: GraphDescriptor
   ): Promise<string | undefined> {
@@ -756,17 +671,11 @@ class DriveOperations {
     // Start in parallel.
     const parentPromise = this.findOrCreateFolder();
 
-    const responsePromise = retryableFetch(
-      api.makeUploadRequest(
-        thumbnailFileId,
-        data,
-        maybeStripBase64Suffix(contentType ?? "")
-      )
-    );
-    // TODO(volodya): Optimize - when dealing with an existing file there is no need to await here.
-    const response = await responsePromise;
+    const blob = b64toBlob(data, maybeStripBase64Suffix(contentType ?? ""));
+    const file = await (thumbnailFileId
+      ? this.#googleDriveClient.updateFile(thumbnailFileId, blob)
+      : this.#googleDriveClient.createFile(blob));
 
-    const file: DriveFile = await response.json();
     const thumbnailUrl = `${PROTOCOL}/${file.id}`;
 
     const name = `${graphFileName} Thumbnail`;
@@ -1012,4 +921,24 @@ function stillHoldsState(state: DriveChangesCacheState | null): boolean {
 
 function isUrl(s: string | null | undefined) {
   return !!s && (s.startsWith("http://") || s.startsWith("https://"));
+}
+
+function b64toBlob(b64Data: string, contentType: string, sliceSize = 512) {
+  const byteCharacters = atob(b64Data);
+  const byteArrays = [];
+
+  for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+    const slice = byteCharacters.slice(offset, offset + sliceSize);
+
+    const byteNumbers = new Array(slice.length);
+    for (let i = 0; i < slice.length; i++) {
+      byteNumbers[i] = slice.charCodeAt(i);
+    }
+
+    const byteArray = new Uint8Array(byteNumbers);
+    byteArrays.push(byteArray);
+  }
+
+  const blob = new Blob(byteArrays, { type: contentType });
+  return blob;
 }
