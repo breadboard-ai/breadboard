@@ -76,7 +76,7 @@ import { emptyStyles } from "../../styles/host/colors-empty.js";
 const SIDE_ITEM_KEY = "bb-canvas-controller-side-nav-item";
 
 import "./empty-state.js";
-import { findGoogleDriveAssetsInGraph } from "../../utils/utils.js";
+import { findGoogleDriveAssetsInGraph, isEmpty } from "../../utils/utils.js";
 
 @customElement("bb-canvas-controller")
 export class CanvasController extends LitElement {
@@ -366,9 +366,7 @@ export class CanvasController extends LitElement {
     const showAssetsInGraph = true;
 
     const graph = this.editor?.inspect("") || null;
-    const graphIsEmpty =
-      (graph?.nodes() ?? []).length === 0 &&
-      (graph?.assets() ?? new Map()).size === 0;
+    const graphIsEmpty = isEmpty(graph?.raw() ?? null);
 
     let capabilities: false | GraphProviderCapabilities = false;
     for (const boardServer of this.boardServers) {

@@ -1555,9 +1555,7 @@ export class Main extends SignalWatcher(LitElement) {
   }
 
   #renderAppController(renderValues: RenderValues) {
-    const graphIsEmpty =
-      (this.#tab?.graph.nodes ?? []).length === 0 ||
-      Object.keys(this.#tab?.graph.assets ?? {}).length === 0;
+    const graphIsEmpty = BreadboardUI.Utils.isEmpty(this.#tab?.graph ?? null);
 
     return html` <bb-app-controller
       class=${classMap({ active: this.#uiState.mode === "app" })}
