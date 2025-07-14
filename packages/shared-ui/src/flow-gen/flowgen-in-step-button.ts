@@ -368,7 +368,7 @@ export class FlowgenInStepButton extends LitElement {
   }
 
   #generate() {
-    if (this.#state.status !== "open") {
+    if (this.#state.status === "closed") {
       return;
     }
     const description = this.#descriptionInput.value?.value;
