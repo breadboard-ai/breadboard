@@ -6,27 +6,24 @@
 
 import { GraphTheme } from "@breadboard-ai/types";
 import { AppTheme } from "../../types/types";
+import { BaseEventDetail } from "../base";
 
 type Namespace = "theme";
 
-export interface Change {
-  readonly eventType: `${Namespace}.change`;
+export interface Change extends BaseEventDetail<`${Namespace}.change`> {
   readonly id: string;
 }
 
-export interface Create {
-  readonly eventType: `${Namespace}.create`;
+export interface Create extends BaseEventDetail<`${Namespace}.create`> {
   // TODO: Change this over to GraphTheme.
   readonly theme: AppTheme;
 }
 
-export interface Delete {
-  readonly eventType: `${Namespace}.delete`;
+export interface Delete extends BaseEventDetail<`${Namespace}.delete`> {
   readonly id: string;
 }
 
-export interface Update {
-  readonly eventType: `${Namespace}.update`;
+export interface Update extends BaseEventDetail<`${Namespace}.update`> {
   readonly id: string;
   readonly theme: GraphTheme;
 }

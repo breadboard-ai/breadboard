@@ -16,7 +16,6 @@ import type {
   NodeValue,
 } from "@breadboard-ai/types";
 import type {
-  EditHistoryCreator,
   GraphDescriptor,
   InspectablePort,
   PortIdentifier,
@@ -55,8 +54,18 @@ import type * as Host from "./host/host.js";
 import type * as Node from "./node/node.js";
 import type * as Asset from "./asset/asset.js";
 import type * as Theme from "./theme/theme.js";
+import { BaseEventDetail } from "./base.js";
 
-export type StateEventDetailMap = {
+type EnforceEventTypeMatch<T extends Record<string, BaseEventDetail<string>>> =
+  {
+    [K in keyof T]: T[K] extends BaseEventDetail<infer EventType>
+      ? EventType extends K
+        ? T[K]
+        : never
+      : never;
+  };
+
+export type StateEventDetailMap = EnforceEventTypeMatch<{
   "board.create": Board.Create;
   "board.delete": Board.Delete;
   "board.input": Board.Input;
@@ -65,6 +74,7 @@ export type StateEventDetailMap = {
   "board.rename": Board.Rename;
   "board.run": Board.Run;
   "board.stop": Board.Stop;
+  "board.replace": Board.Replace;
 
   "host.modetoggle": Host.ModeToggle;
   "host.selectionstatechange": Host.SelectionStateChange;
@@ -84,7 +94,7 @@ export type StateEventDetailMap = {
   "theme.change": Theme.Change;
   "theme.delete": Theme.Delete;
   "theme.update": Theme.Update;
-};
+}>;
 
 export class StateEvent<
   T extends keyof StateEventDetailMap,
@@ -411,19 +421,6 @@ export class KitNodeChosenEvent extends Event {
 /**
  * Workspace management
  */
-
-// export class WorkspaceSelectionStateEvent extends Event {
-//   static eventName = "bbworkspaceselectionstate";
-
-//   constructor(
-//     public readonly selectionChangeId: WorkspaceSelectionChangeId,
-//     public readonly selections: WorkspaceSelectionState | null,
-//     public readonly replaceExistingSelections = true,
-//     public readonly moveToSelection: MoveToSelection = false
-//   ) {
-//     super(WorkspaceSelectionStateEvent.eventName, { ...eventInit });
-//   }
-// }
 
 export class WorkspaceNewItemCreateRequestEvent extends Event {
   static eventName = "bbworkspacenewitemcreaterequest";
@@ -1037,17 +1034,6 @@ export class GraphNodeRunRequestEvent extends Event {
     public readonly subGraphId: string | null = null
   ) {
     super(GraphNodeRunRequestEvent.eventName, { ...eventInit });
-  }
-}
-
-export class GraphReplaceEvent extends Event {
-  static eventName = "bbgraphreplace";
-
-  constructor(
-    public readonly replacement: GraphDescriptor,
-    public readonly creator: EditHistoryCreator
-  ) {
-    super(GraphReplaceEvent.eventName, { ...eventInit });
   }
 }
 

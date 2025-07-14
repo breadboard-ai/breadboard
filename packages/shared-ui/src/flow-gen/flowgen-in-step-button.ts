@@ -10,9 +10,9 @@ import { LitElement, css, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import {
-  GraphReplaceEvent,
   HideTooltipEvent,
   ShowTooltipEvent,
+  StateEvent,
   UtteranceEvent,
 } from "../events/events.js";
 import * as StringsHelper from "../strings/helper.js";
@@ -408,7 +408,13 @@ export class FlowgenInStepButton extends LitElement {
     if (this.#state.status !== "generating") {
       return;
     }
-    this.dispatchEvent(new GraphReplaceEvent(graph, { role: "assistant" }));
+    this.dispatchEvent(
+      new StateEvent({
+        eventType: "board.replace",
+        replacement: graph,
+        creator: { role: "assistant" },
+      })
+    );
     this.#closePanel();
   }
 

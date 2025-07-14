@@ -5,11 +5,11 @@
  */
 
 import { EditHistoryCreator, GraphDescriptor } from "@breadboard-ai/types";
+import { BaseEventDetail } from "../base";
 
 type Namespace = "board";
 
-export interface Create {
-  readonly eventType: `${Namespace}.create`;
+export interface Create extends BaseEventDetail<`${Namespace}.create`> {
   readonly graph: GraphDescriptor;
   readonly editHistoryCreator: EditHistoryCreator;
   readonly messages: {
@@ -19,8 +19,7 @@ export interface Create {
   };
 }
 
-export interface Remix {
-  readonly eventType: `${Namespace}.remix`;
+export interface Remix extends BaseEventDetail<`${Namespace}.remix`> {
   readonly url: string;
   readonly messages: {
     start: string;
@@ -29,8 +28,7 @@ export interface Remix {
   };
 }
 
-export interface Delete {
-  readonly eventType: `${Namespace}.delete`;
+export interface Delete extends BaseEventDetail<`${Namespace}.delete`> {
   readonly url: string;
   readonly messages: {
     query: string;
@@ -40,29 +38,31 @@ export interface Delete {
   };
 }
 
-export interface Load {
-  readonly eventType: `${Namespace}.load`;
+export interface Load extends BaseEventDetail<`${Namespace}.load`> {
   readonly url: string;
 }
 
-export interface Run {
+export interface Run extends BaseEventDetail<`${Namespace}.run`> {
+  /* Duped to avoid @typescript-eslint/no-empty-object-type */
   readonly eventType: `${Namespace}.run`;
 }
 
-export interface Stop {
-  readonly eventType: `${Namespace}.stop`;
+export interface Stop extends BaseEventDetail<`${Namespace}.stop`> {
   readonly clearLastRun: boolean;
 }
 
-export interface Input {
-  readonly eventType: `${Namespace}.input`;
+export interface Input extends BaseEventDetail<`${Namespace}.input`> {
   readonly id: string;
   readonly data: Record<string, unknown>;
   readonly allowSavingIfSecret: boolean;
 }
 
-export interface Rename {
-  readonly eventType: `${Namespace}.rename`;
+export interface Rename extends BaseEventDetail<`${Namespace}.rename`> {
   readonly title: string | null;
   readonly description: string | null;
+}
+
+export interface Replace extends BaseEventDetail<`${Namespace}.replace`> {
+  readonly replacement: GraphDescriptor;
+  readonly creator: EditHistoryCreator;
 }

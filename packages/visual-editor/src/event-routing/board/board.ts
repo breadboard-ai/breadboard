@@ -254,3 +254,19 @@ export const DeleteRoute: EventRoute<"board.delete"> = {
     return false;
   },
 };
+
+export const ReplaceRoute: EventRoute<"board.replace"> = {
+  event: "board.replace",
+
+  async do(deps) {
+    const { tab, runtime, originalEvent } = deps;
+
+    await runtime.edit.replaceGraph(
+      tab,
+      originalEvent.detail.replacement,
+      originalEvent.detail.creator
+    );
+
+    return false;
+  },
+};

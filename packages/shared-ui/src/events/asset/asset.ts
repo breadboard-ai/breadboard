@@ -5,17 +5,16 @@
  */
 
 import { AssetEdge, NewAsset } from "../../types/types";
+import { BaseEventDetail } from "../base";
 
 type Namespace = "asset";
 
-export interface ChangeEdge {
-  readonly eventType: `${Namespace}.changeedge`;
+export interface ChangeEdge extends BaseEventDetail<`${Namespace}.changeedge`> {
   readonly changeType: "add" | "remove";
   readonly assetEdge: AssetEdge;
   readonly subGraphId: string | null;
 }
 
-export interface Add {
-  readonly eventType: `${Namespace}.add`;
+export interface Add extends BaseEventDetail<`${Namespace}.add`> {
   readonly assets: NewAsset[];
 }

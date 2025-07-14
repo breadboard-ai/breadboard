@@ -13,18 +13,18 @@ import {
   NodeMetadata,
 } from "@breadboard-ai/types";
 import { EdgeAttachmentPoint } from "../../types/types";
+import { BaseEventDetail } from "../base";
 
 type Namespace = "node";
 
-export interface AddWithEdge {
-  readonly eventType: `${Namespace}.addwithedge`;
+export interface AddWithEdge
+  extends BaseEventDetail<`${Namespace}.addwithedge`> {
   readonly node: NodeDescriptor;
   readonly edge: Edge;
   readonly subGraphId: string | null;
 }
 
-export interface Change {
-  readonly eventType: `${Namespace}.change`;
+export interface Change extends BaseEventDetail<`${Namespace}.change`> {
   readonly id: string;
   readonly configurationPart: NodeConfiguration;
   readonly subGraphId: string | null;
@@ -32,23 +32,22 @@ export interface Change {
   readonly ins: { path: string; title: string }[] | null;
 }
 
-export interface MultiChange {
-  readonly eventType: `${Namespace}.multichange`;
+export interface MultiChange
+  extends BaseEventDetail<`${Namespace}.multichange`> {
   readonly edits: EditSpec[];
   readonly description: string;
   readonly subGraphId: string | null;
 }
 
-export interface ChangeEdge {
-  readonly eventType: `${Namespace}.changeedge`;
+export interface ChangeEdge extends BaseEventDetail<`${Namespace}.changeedge`> {
   readonly changeType: "add" | "remove" | "move";
   readonly from: Edge;
   readonly to?: Edge;
   readonly subGraphId: string | null;
 }
 
-export interface ChangeEdgeAttachmentPoint {
-  readonly eventType: `${Namespace}.changeedgeattachmentpoint`;
+export interface ChangeEdgeAttachmentPoint
+  extends BaseEventDetail<`${Namespace}.changeedgeattachmentpoint`> {
   readonly graphId: GraphIdentifier;
   readonly edge: Edge;
   readonly which: "from" | "to";
