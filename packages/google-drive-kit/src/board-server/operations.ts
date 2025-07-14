@@ -245,21 +245,11 @@ class DriveOperations {
         const driveCacheState = getDriveCacheState();
         if (!driveCacheState) {
           // No changes token yet - we capture one and invalidate all the caches.
-          const api = new Files(await DriveOperations.getUserAuth(this.vendor));
-          const response = await retryableFetch(
-            api.makeGetStartPageTokenRequest()
-          );
-          if (!response.ok) {
-            console.error("Failed to get start page token", response);
-            // Will be retried next time.
-            throw new Error(
-              `Failed to get start page token: ${response.status} ${response.statusText}`
-            );
-          }
-          const pageToken = (await response.json()).startPageToken;
+          const pageToken =
+            await this.#googleDriveClient.getChangesStartPageToken();
           if (!pageToken) {
             // Will be retried next time.
-            console.error("Response containing not startPageToken", response);
+            console.error("Response containing not startPageToken");
             throw new Error(`Response containing not startPageToken`);
           }
           if (stillHoldsState(driveCacheState)) {

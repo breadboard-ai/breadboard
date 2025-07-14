@@ -783,6 +783,23 @@ export class GoogleDriveClient {
       ? { ok: true, value: await response.json() }
       : { ok: false, error: { status: response.status } };
   }
+
+  /** https://developers.google.com/workspace/drive/api/reference/rest/v3/changes/getStartPageToken */
+  async getChangesStartPageToken(
+    options?: BaseRequestOptions
+  ): Promise<string> {
+    const response = await this.#fetch(`drive/v3/changes/startPageToken`, {
+      signal: options?.signal,
+    });
+    if (!response.ok) {
+      throw new Error(
+        `Google Drive getChangesStartPageToken ${response.status} error: ` +
+          (await response.text())
+      );
+    }
+    const result = (await response.json()) as { startPageToken: string };
+    return result.startPageToken;
+  }
 }
 
 type GetFileProxyRequest =

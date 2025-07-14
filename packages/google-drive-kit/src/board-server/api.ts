@@ -95,18 +95,6 @@ class Files {
       headers: this.#makeHeaders(),
     });
   }
-
-  makeGetStartPageTokenRequest(): Request {
-    return new Request(
-      this.#makeUrl(
-        "drive/v3/changes/startPageToken?" + CHANGE_LIST_COMMON_PARAMS.join("&")
-      ),
-      {
-        method: "GET",
-        headers: this.#makeHeaders(),
-      }
-    );
-  }
 }
 
 export function b64toBlob(
