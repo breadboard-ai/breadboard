@@ -107,24 +107,48 @@ export class Runtime extends EventTarget {
   }
 
   #setupPassthruHandlers() {
+    const cancelClone = (
+      evt:
+        | RuntimeShareDialogRequestedEvent
+        | RuntimeToastEvent
+        | RuntimeSnackbarEvent
+        | RuntimeUnsnackbarEvent
+    ) => {
+      evt.stopPropagation();
+      evt.preventDefault();
+      return evt.clone();
+    };
+
     this.edit.addEventListener(
       RuntimeShareDialogRequestedEvent.eventName,
-      (evt: RuntimeShareDialogRequestedEvent) => this.dispatchEvent(evt)
+      (evt: RuntimeShareDialogRequestedEvent) => {
+        const newEvt = cancelClone(evt);
+        this.dispatchEvent(newEvt);
+      }
     );
 
     this.board.addEventListener(
       RuntimeToastEvent.eventName,
-      (evt: RuntimeToastEvent) => this.dispatchEvent(evt)
+      (evt: RuntimeToastEvent) => {
+        const newEvt = cancelClone(evt);
+        this.dispatchEvent(newEvt);
+      }
     );
 
     this.board.addEventListener(
       RuntimeSnackbarEvent.eventName,
-      (evt: RuntimeSnackbarEvent) => this.dispatchEvent(evt)
+      (evt: RuntimeSnackbarEvent) => {
+        const newEvt = cancelClone(evt);
+        this.dispatchEvent(newEvt);
+      }
     );
 
     this.board.addEventListener(
       RuntimeUnsnackbarEvent.eventName,
-      (evt: RuntimeUnsnackbarEvent) => this.dispatchEvent(evt)
+      (evt: RuntimeUnsnackbarEvent) => {
+        const newEvt = cancelClone(evt);
+        this.dispatchEvent(newEvt);
+      }
     );
   }
 }
