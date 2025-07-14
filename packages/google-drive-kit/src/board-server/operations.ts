@@ -23,9 +23,9 @@ import {
 } from "@google-labs/breadboard";
 import { getAccessToken } from "./access.js";
 import {
+  b64toBlob,
   Files,
   type AppProperties,
-  type DriveFile,
   type GoogleApiAuthorization,
 } from "./api.js";
 
@@ -552,19 +552,11 @@ class DriveOperations {
       // credentials. So, let's fetch the content using a method that
       // automatically uses public credentials, and upload that.
       const content = await this.#googleDriveClient.getFileMedia(fileId);
-      const accessToken = await getAccessToken(this.vendor);
-      const api = new Files({ kind: "bearer", token: accessToken! });
-      const uploadResponse = await retryableFetch(
-        api.makeUploadRequest(
-          undefined,
-          await content.blob(),
-          original.storedData.mimeType
-        )
+
+      const uploadedFile = await this.#googleDriveClient.createFile(
+        await content.blob(),
+        { mimeType: original.storedData.mimeType }
       );
-      if (!uploadResponse.ok) {
-        return err(String(uploadResponse.status));
-      }
-      const uploadedFile = (await uploadResponse.json()) as DriveFile;
       return {
         storedData: {
           ...original.storedData,
@@ -622,8 +614,6 @@ class DriveOperations {
   async saveDataPart(
     part: InlineDataCapabilityPart | StoredDataCapabilityPart
   ): Promise<StoredDataCapabilityPart> {
-    const accessToken = await getAccessToken(this.vendor);
-    const api = new Files({ kind: "bearer", token: accessToken! });
     // Start in parallel.
     const parentPromise = this.findOrCreateFolder();
     // TODO: Update to retryable.
@@ -650,13 +640,12 @@ class DriveOperations {
       data = part.inlineData.data;
       mimeType = part.inlineData.mimeType;
     }
-    const uploadResponse = await fetch(
-      api.makeUploadRequest(fileId, data, mimeType)
-    );
-    const [file, parent] = await Promise.all([
-      uploadResponse.json() as Promise<DriveFile>,
-      parentPromise,
-    ]);
+    const blob = b64toBlob(data, mimeType);
+    const filePromise = fileId
+      ? this.#googleDriveClient.updateFile(fileId, blob)
+      : this.#googleDriveClient.createFile(blob, { mimeType });
+
+    const [file, parent] = await Promise.all([filePromise, parentPromise]);
     if (!parent) {
       throw new Error(`No parent`);
     }
@@ -729,17 +718,11 @@ class DriveOperations {
     // Start in parallel.
     const parentPromise = this.findOrCreateFolder();
 
-    const responsePromise = retryableFetch(
-      api.makeUploadRequest(
-        thumbnailFileId,
-        data,
-        maybeStripBase64Suffix(contentType ?? "")
-      )
-    );
-    // TODO(volodya): Optimize - when dealing with an existing file there is no need to await here.
-    const response = await responsePromise;
+    const blob = b64toBlob(data, contentType ?? "");
+    const file = await (thumbnailFileId
+      ? this.#googleDriveClient.updateFile(thumbnailFileId, blob)
+      : this.#googleDriveClient.createFile(blob));
 
-    const file: DriveFile = await response.json();
     const thumbnailUrl = `${PROTOCOL}/${file.id}`;
 
     const name = `${graphFileName} Thumbnail`;

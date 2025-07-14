@@ -104,28 +104,6 @@ class Files {
     };
   }
 
-  makeUploadRequest(
-    fileId: string | undefined,
-    data: string | Blob,
-    contentType: string
-  ) {
-    const isBlob = typeof data !== "string";
-    const length = isBlob ? data.size : data.length;
-    const body = isBlob ? data : b64toBlob(data);
-    const headers = this.#makeHeaders();
-    headers.append("Content-Type", contentType);
-    headers.append("X-Upload-Content-Type", contentType);
-    headers.append("X-Upload-Content-Length", `${length}`);
-    const url = fileId
-      ? `upload/drive/v3/files/${fileId}?uploadType=media`
-      : "upload/drive/v3/files?uploadType=media";
-    return new Request(this.#makeUrl(url), {
-      method: fileId ? "PATCH" : "POST",
-      headers,
-      body,
-    });
-  }
-
   makeChangeListRequest(startPageToken: string | null): Request {
     const url = this.#makeUrl(
       "drive/v3/changes?" +
@@ -157,7 +135,11 @@ class Files {
   }
 }
 
-function b64toBlob(b64Data: string, contentType = "", sliceSize = 512) {
+export function b64toBlob(
+  b64Data: string,
+  contentType: string,
+  sliceSize = 512
+) {
   const byteCharacters = atob(b64Data);
   const byteArrays = [];
 

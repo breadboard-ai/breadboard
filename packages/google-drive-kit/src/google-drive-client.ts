@@ -481,19 +481,19 @@ export class GoogleDriveClient {
    */
   async createFile<const T extends ReadFileOptions>(
     data: Blob,
-    metadata: gapi.client.drive.File & { name: string },
+    metadata?: gapi.client.drive.File,
     options?: T
   ): Promise<NarrowedDriveFile<T["fields"]>>;
 
   async createFile<const T extends ReadFileOptions>(
     data: string,
-    metadata: gapi.client.drive.File & { name: string; mimeType: string },
+    metadata: gapi.client.drive.File & { mimeType: string },
     options?: T
   ): Promise<NarrowedDriveFile<T["fields"]>>;
 
   async createFile<const T extends ReadFileOptions>(
     data: Blob | string,
-    metadata: gapi.client.drive.File & { name: string },
+    metadata?: gapi.client.drive.File,
     options?: T
   ): Promise<NarrowedDriveFile<T["fields"]>> {
     const file = await this.#uploadMultipart(
@@ -506,9 +506,10 @@ export class GoogleDriveClient {
     console.log(`[Google Drive] Created file`, {
       id: fileId,
       open: fileId ? `http://drive.google.com/open?id=${fileId}` : null,
-      name: metadata.name,
+      name: metadata?.name,
       mimeType:
-        metadata.mimeType || (typeof data !== "string" ? data.type : undefined),
+        metadata?.mimeType ||
+        (typeof data !== "string" ? data.type : undefined),
     });
     return file;
   }
