@@ -10,11 +10,7 @@ import * as StringsHelper from "../strings/helper.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import type { GraphDescriptor } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
-import {
-  GraphReplaceEvent,
-  StateEvent,
-  UtteranceEvent,
-} from "../events/events.js";
+import { StateEvent, UtteranceEvent } from "../events/events.js";
 import type { ExpandingTextarea } from "../elements/input/expanding-textarea.js";
 import { icons } from "../styles/icons.js";
 import "../elements/input/expanding-textarea.js";
@@ -309,7 +305,13 @@ export class FlowgenEditorInput extends LitElement {
     if (this.#state.status !== "generating") {
       return;
     }
-    this.dispatchEvent(new GraphReplaceEvent(graph, { role: "assistant" }));
+    this.dispatchEvent(
+      new StateEvent({
+        eventType: "board.replace",
+        replacement: graph,
+        creator: { role: "assistant" },
+      })
+    );
     this.#state = { status: "initial" };
     this.#clearInput();
     this.generating = false;

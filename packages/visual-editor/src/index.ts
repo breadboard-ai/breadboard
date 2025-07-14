@@ -1708,13 +1708,6 @@ export class Main extends SignalWatcher(LitElement) {
           true
         );
       }}
-      @bbgraphreplace=${async (evt: BreadboardUI.Events.GraphReplaceEvent) => {
-        await this.#runtime.edit.replaceGraph(
-          this.#tab,
-          evt.replacement,
-          evt.creator
-        );
-      }}
       @bbiterateonprompt=${(iterateOnPromptEvent: IterateOnPromptEvent) => {
         const message: IterateOnPromptMessage = {
           type: "iterate_on_prompt",
