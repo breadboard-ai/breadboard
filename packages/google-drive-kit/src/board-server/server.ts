@@ -63,7 +63,6 @@ class GoogleDriveBoardServer
     googleDriveClient: GoogleDriveClient,
     publishPermissions: gapi.client.drive.Permission[],
     userFolderName: string,
-    publicApiKey?: string,
     featuredGalleryFolderId?: string
   ) {
     const configuration = {
@@ -88,11 +87,9 @@ class GoogleDriveBoardServer
       title,
       configuration,
       user,
-      vendor,
       googleDriveClient,
       publishPermissions,
       userFolderName,
-      publicApiKey,
       featuredGalleryFolderId
     );
   }
@@ -112,17 +109,13 @@ class GoogleDriveBoardServer
     public readonly name: string,
     public readonly configuration: BoardServerConfiguration,
     public readonly user: User,
-    public readonly vendor: TokenVendor,
     googleDriveClient: GoogleDriveClient,
     publishPermissions: gapi.client.drive.Permission[],
     userFolderName: string,
-    publicApiKey?: string,
     featuredGalleryFolderId?: string
   ) {
     super();
     this.ops = new DriveOperations(
-      vendor,
-      user.username,
       async () => {
         await this.refreshProjectList();
         this.dispatchEvent(new RefreshEvent());
@@ -130,7 +123,6 @@ class GoogleDriveBoardServer
       userFolderName,
       googleDriveClient,
       publishPermissions,
-      publicApiKey,
       featuredGalleryFolderId
     );
 

@@ -5,7 +5,6 @@
  */
 
 import type { GraphTag } from "@breadboard-ai/types";
-import type { AppProperties } from "./api.js";
 import type { StoredProperties } from "./operations.js";
 import type { NarrowedDriveFile } from "../google-drive-client.js";
 
@@ -153,3 +152,11 @@ export function readProperties(
     thumbnailUrl: storedProperties.thumbnailUrl,
   };
 }
+
+export type AppProperties = {
+  title: string;
+  /** A truncated copy of the board description for listing. */
+  description: string;
+  tags: GraphTag[];
+  thumbnailUrl?: string;
+};

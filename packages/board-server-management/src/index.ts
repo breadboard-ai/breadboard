@@ -97,7 +97,6 @@ export async function createGoogleDriveBoardServer(
     googleDriveClient,
     googleDrivePublishPermissions,
     userFolderName,
-    googleDrivePublicApiKey,
     googleDriveFeaturedGalleryFolderId
   );
 }

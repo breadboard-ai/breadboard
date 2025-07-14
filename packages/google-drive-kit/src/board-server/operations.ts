@@ -21,20 +21,13 @@ import {
   type GraphDescriptor,
   type Outcome,
 } from "@google-labs/breadboard";
-import { getAccessToken } from "./access.js";
-import {
-  b64toBlob,
-  Files,
-  type AppProperties,
-  type GoogleApiAuthorization,
-} from "./api.js";
+import { type AppProperties } from "./utils.js";
 
 export { DriveOperations, PROTOCOL };
 
 import {
   extractGoogleDriveFileId,
   readProperties,
-  retryableFetch,
   truncateValueForUtf8,
 } from "./utils.js";
 import type { GoogleDriveClient } from "../google-drive-client.js";
@@ -141,7 +134,6 @@ function formatDelay(delay: number): string {
 
 class DriveOperations {
   readonly #userFolderName: string;
-  readonly #publicApiKey?: string;
   readonly #featuredGalleryFolderId?: string;
   readonly #userGraphsList: DriveListCache;
   readonly #featuredGraphsList?: DriveListCache;
@@ -156,20 +148,16 @@ class DriveOperations {
    * @param refreshProjectListCallback will be called when project list may have to be updated.
    */
   constructor(
-    public readonly vendor: TokenVendor,
-    public readonly username: string,
     private readonly refreshProjectListCallback: () => Promise<void>,
     userFolderName: string,
     googleDriveClient: GoogleDriveClient,
     publishPermissions: gapi.client.drive.Permission[],
-    publicApiKey?: string,
     featuredGalleryFolderId?: string
   ) {
     if (!userFolderName) {
       throw new Error(`userFolderName was empty`);
     }
     this.#userFolderName = userFolderName;
-    this.#publicApiKey = publicApiKey;
     this.#featuredGalleryFolderId = featuredGalleryFolderId;
     this.#googleDriveClient = googleDriveClient;
     this.#publishPermissions = publishPermissions;
@@ -181,7 +169,7 @@ class DriveOperations {
       "user"
     );
 
-    if (featuredGalleryFolderId && this.#publicApiKey) {
+    if (featuredGalleryFolderId) {
       this.#featuredGraphsList = new DriveListCache(
         "featured",
         `"${featuredGalleryFolderId}" in parents and ${BASE_FEATURED_QUERY}`,
@@ -363,18 +351,6 @@ class DriveOperations {
     return [changes as DriveChange[], newStartPageToken];
   }
 
-  static getUserAuth(vendor: TokenVendor): Promise<GoogleApiAuthorization> {
-    return getAccessToken(vendor).then((token) => {
-      if (!token) {
-        throw new Error("No access token");
-      }
-      return {
-        kind: "bearer",
-        token: token!,
-      };
-    });
-  }
-
   async readGraphList(): Promise<Outcome<GraphInfo[]>> {
     return await this.#userGraphsList.list();
   }
@@ -386,15 +362,9 @@ class DriveOperations {
           " No folder id configured."
       );
     }
-    if (!this.#publicApiKey) {
-      return err(
-        "Could not read featured gallery from Google Drive:" +
-          " No public API key configured."
-      );
-    }
     console.assert(
       this.#featuredGraphsList,
-      "featuredGalleryFolderId or publicApiKey is missing"
+      "featuredGalleryFolderId is missing"
     );
     const graphInfos = await this.#featuredGraphsList!.list();
     if (!ok(graphInfos)) {
@@ -438,13 +408,9 @@ class DriveOperations {
     await purgeStoredDataInMemoryValues(descriptor);
     const file = this.fileIdFromUrl(url);
     const name = getFileTitle(descriptor);
-    const accessToken = await getAccessToken(this.vendor);
     try {
-      const api = new Files({ kind: "bearer", token: accessToken! });
-
       const thumbnailUrl = await this.upsertThumbnailFile(
         file,
-        api,
         name,
         descriptor
       );
@@ -483,13 +449,10 @@ class DriveOperations {
   ) {
     const fileName = this.fileIdFromUrl(url);
     const name = getFileTitle(descriptor);
-    const accessToken = await getAccessToken(this.vendor);
 
     try {
-      const api = new Files({ kind: "bearer", token: accessToken! });
       const thumbnailUrl = await this.upsertThumbnailFile(
         fileName,
-        api,
         name,
         descriptor
       );
@@ -564,10 +527,6 @@ class DriveOperations {
   }
 
   async writeRunResults(results: RunResults): Promise<{ id: string }> {
-    const accessToken = await getAccessToken(this.vendor);
-    if (!accessToken) {
-      throw new Error(`No access token`);
-    }
     // TODO(aomarks) It would be nice if this saved within a Results folder.
     // Probably part of a larger organization scheme we should have for the
     // Drive folder.
@@ -676,7 +635,6 @@ class DriveOperations {
   /** Also patches the asset with the url if a file got created.  */
   private async upsertThumbnailFile(
     boardFileId: string,
-    api: Files,
     graphFileName: string,
     descriptor?: GraphDescriptor
   ): Promise<string | undefined> {
@@ -963,4 +921,24 @@ function stillHoldsState(state: DriveChangesCacheState | null): boolean {
 
 function isUrl(s: string | null | undefined) {
   return !!s && (s.startsWith("http://") || s.startsWith("https://"));
+}
+
+function b64toBlob(b64Data: string, contentType: string, sliceSize = 512) {
+  const byteCharacters = atob(b64Data);
+  const byteArrays = [];
+
+  for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+    const slice = byteCharacters.slice(offset, offset + sliceSize);
+
+    const byteNumbers = new Array(slice.length);
+    for (let i = 0; i < slice.length; i++) {
+      byteNumbers[i] = slice.charCodeAt(i);
+    }
+
+    const byteArray = new Uint8Array(byteNumbers);
+    byteArrays.push(byteArray);
+  }
+
+  const blob = new Blob(byteArrays, { type: contentType });
+  return blob;
 }

@@ -6,7 +6,6 @@
 
 /// <reference types="@types/gapi.client.drive-v3" />
 
-import { type GoogleApiAuthorization } from "./board-server/api.js";
 import { retryableFetch } from "./board-server/utils.js";
 
 export interface GoogleDriveClientOptions {
@@ -89,6 +88,10 @@ export type NarrowedDriveFile<
     ? gapi.client.drive.File[K]
     : Exclude<gapi.client.drive.File[K], undefined>;
 };
+
+type GoogleApiAuthorization =
+  | { kind: "key"; key: string }
+  | { kind: "bearer"; token: string };
 
 export class GoogleDriveClient {
   readonly #apiBaseUrl: string;
