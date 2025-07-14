@@ -1,5 +1,22 @@
 # @breadboard-ai/jsandbox
 
+## 0.7.0
+
+### Minor Changes
+
+- d2ed651: Add time and size logging to module invocation.
+- 3307fe9: Move many debugging messages to `console.debug`.
+
+### Patch Changes
+
+- 6450a10: Introduce `@input` capability in sandbox.
+- Updated dependencies [f488e2b]
+- Updated dependencies [22b02b8]
+- Updated dependencies [bb833fa]
+- Updated dependencies [a7c691e]
+- Updated dependencies [9923fe0]
+  - @breadboard-ai/types@0.8.0
+
 ## 0.6.0
 
 ### Minor Changes

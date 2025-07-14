@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/connection-client",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Breadboard Connection Client",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
@@ -56,7 +56,7 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
-    "@google-labs/tsconfig": "^0.0.1",
+    "@google-labs/tsconfig": "^0.0.2",
     "@types/node": "^22.0.0",
     "eslint": "^8.57.1",
     "typescript": "^5.8.3",

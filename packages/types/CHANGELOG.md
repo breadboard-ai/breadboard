@@ -1,5 +1,19 @@
 # @breadboard-ai/types
 
+## 0.8.0
+
+### Minor Changes
+
+- f488e2b: Add runtime flags support and the first `usePlanRunner` flag.
+- a7c691e: Introduce the concept of "start" nodes and stop running standalone
+  nodes.
+
+### Patch Changes
+
+- 22b02b8: Factor runtime bits out of `breadboard` package.
+- bb833fa: Update default app theme
+- 9923fe0: improve theme gen
+
 ## 0.7.0
 
 ### Minor Changes

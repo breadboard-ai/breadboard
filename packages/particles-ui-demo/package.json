@@ -1,7 +1,7 @@
 {
   "name": "@breadboard-ai/particles-ui-demo",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "AI-first UI Toolkit Demo",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
@@ -77,12 +77,12 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/particles-ui-demo#readme",
   "devDependencies": {
-    "@google-labs/tsconfig": "^0.0.1",
+    "@google-labs/tsconfig": "^0.0.2",
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@breadboard-ai/particles": "0.0.1",
-    "@breadboard-ai/particles-ui": "0.0.1",
+    "@breadboard-ai/particles": "0.1.0",
+    "@breadboard-ai/particles-ui": "0.1.0",
     "@google/genai": "^1.6.0",
     "@lit-labs/signals": "^0.1.2",
     "@lit/context": "^1.1.4",

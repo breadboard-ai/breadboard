@@ -1,5 +1,12 @@
 # @breadboard-ai/connection-client
 
+## 0.3.0
+
+### Minor Changes
+
+- c3d5854: Teach connection server to pass along errors and teach unified-server
+  about allowlists.
+
 ## 0.2.0
 
 ### Minor Changes

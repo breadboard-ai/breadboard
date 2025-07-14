@@ -1,5 +1,89 @@
 # @breadboard-ai/a2
 
+## 0.5.0
+
+### Minor Changes
+
+- 04b69e4: Introduce "Save to Doc" feature to "Output" step.
+- f87c84e: Teach Generate Text to use sequential function calling.
+- 471ebaf: Implement "Save to Slides" functionality for "Output".
+- 67aee89: Add a proxy server allowlist and start using it in unified-server
+  configuration.
+- 69e18c3: Move all settings in "Ask User" and "Generate" under the "Advanced"
+  twistie.
+- b3db392: Add support for streamable reporting from A2 to Console.
+- 8317eff: Teach Autoname to be faster and more accurate
+- 79a14ca: Plumb outputs to console view.
+- 7ebde36: Switch to use Streamable HTTP for MCP connector.
+- 0ab7624: Plumb through outputs in Console.
+- 3c6f6a3: Start using Particles for rendering Console.
+- acb9a23: Introduce MVP "Save to Sheets" feature for "Output" step.
+- ef9a0d8: Remove StructuredResponse from GOAL.
+- 617b692: Show gallery thumbnails
+- 524d3b0: Write a simple script to pull down featured graphs from Firestore.
+- 2dd0b30: Teach Search Web tool to stream updates.
+
+### Patch Changes
+
+- 60b7d20: Remove vestigial checks when unwrapping errors.
+- d44f657: Delete vestige source files.
+- 6450a10: Introduce `@input` capability in sandbox.
+- 1ec107d: Update "Ask User" and file uploads
+- a37d986: When reactive value changes, auto-save.
+- 525307d: Delete a bunch of vestigial stuff from A2.
+- fd00eb6: Put sequential function calling behind flag
+- f5621ec: Teach GOAL task executor about changes in GeminiPrompt.
+- 572d109: Add new "Links" particle to display links.
+- ff52dd4: Pass inputs correctly into bubbled input handler
+- 6be46e2: Add rudimentary SUIP support.
+- 34269ad: Supply empty parameters object for chat tools.
+- 26c7b72: Correctly decode UTF-8 encoded base64 strings.
+- 68212fc: Gracefully skip files that don't exist in update-props
+- f4283b9: Many tweaks to autoname
+- 263b983: Send SI consistently from "Generate Text".
+- dbea047: Change title of "chat mode" to "Review with user"
+- 197c7bc: Use a separate method for notifying in McpClient
+- 8d4d513: Add `.bgl.json` to exported files.
+- 1c8153f: Account for custom tools when iterating with tools in "Generate
+  Text".
+- 8c26089: Introduce a way to provide env variables to steps.
+- Updated dependencies [04b69e4]
+- Updated dependencies [fdc7b73]
+- Updated dependencies [60b7d20]
+- Updated dependencies [f488e2b]
+- Updated dependencies [6450a10]
+- Updated dependencies [4a737c8]
+- Updated dependencies [67aee89]
+- Updated dependencies [7f8aecd]
+- Updated dependencies [a2483c3]
+- Updated dependencies [ff52dd4]
+- Updated dependencies [f7a17c6]
+- Updated dependencies [0687280]
+- Updated dependencies [bb974f6]
+- Updated dependencies [66814df]
+- Updated dependencies [edebc30]
+- Updated dependencies [79a14ca]
+- Updated dependencies [fc03cbe]
+- Updated dependencies [22b02b8]
+- Updated dependencies [0ab7624]
+- Updated dependencies [e55f645]
+- Updated dependencies [bb833fa]
+- Updated dependencies [7ccff14]
+- Updated dependencies [68a9c87]
+- Updated dependencies [d026048]
+- Updated dependencies [6201f69]
+- Updated dependencies [a7c691e]
+- Updated dependencies [ec57dff]
+- Updated dependencies [cc94550]
+- Updated dependencies [9923fe0]
+- Updated dependencies [caa565d]
+- Updated dependencies [5fd36ea]
+- Updated dependencies [8c26089]
+- Updated dependencies [4722bb9]
+  - @google-labs/breadboard@0.35.0
+  - @breadboard-ai/types@0.8.0
+  - @breadboard-ai/embedded-board-server@0.2.0
+
 ## 0.4.0
 
 ### Minor Changes

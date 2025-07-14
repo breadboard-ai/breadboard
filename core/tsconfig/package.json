@@ -4,6 +4,6 @@
     "registry": "https://wombat-dressing-room.appspot.com"
   },
   "description": "Repo-specific configuration for all TypeScript projects",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true
 }

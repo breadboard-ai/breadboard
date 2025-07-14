@@ -1,5 +1,74 @@
 # Changelog
 
+## 0.35.0
+
+### Minor Changes
+
+- 04b69e4: Introduce "Save to Doc" feature to "Output" step.
+- 4a737c8: Separate out `DriveOperations` in Drive Board Server.
+- 67aee89: Add a proxy server allowlist and start using it in unified-server
+  configuration.
+- 0687280: Clean up describer logic (no behavior change).
+- 79a14ca: Plumb outputs to console view.
+- fc03cbe: Distinguish between user-initiated save and autosave.
+- 0ab7624: Plumb through outputs in Console.
+- a7c691e: Introduce the concept of "start" nodes and stop running standalone
+  nodes.
+- ec57dff: Introduce "savestatuschange" event on `BoardServer` and start using
+  it.
+- 5fd36ea: Teach bubbled inputs to support multiple values at once.
+
+### Patch Changes
+
+- fdc7b73: Introduce `@breadboard-ai/data` package and move data transformation
+  bits to it.
+- 60b7d20: Remove vestigial checks when unwrapping errors.
+- 6450a10: Introduce `@input` capability in sandbox.
+- 7f8aecd: Remove mermaid.
+- a2483c3: Move Schema utilities to `utils` package.
+- ff52dd4: Pass inputs correctly into bubbled input handler
+- f7a17c6: Remove various exports from breadboard package
+- bb974f6: Unbreak theme creation.
+- 66814df: Move remaining utils to `utils` packages and clean up.
+- edebc30: Fixes around better handling of data and error reporting.
+- 22b02b8: Factor runtime bits out of `breadboard` package.
+- e55f645: Handle Drive errors a bit more gracefully.
+- bb833fa: Update default app theme
+- 7ccff14: Update the styling for "Ask User" in the app view
+- 68a9c87: Be more lenient with spaces in the text editor
+- d026048: Reduce the number of times describers are called during the run.
+- 6201f69: A bit more clean-up of the runtime legacy API endpoints.
+- cc94550: Remove the old `new` grammar bits
+- caa565d: Remove unused code/exports
+- 8c26089: Introduce a way to provide env variables to steps.
+- 4722bb9: Move filesystem dir up a level.
+- Updated dependencies [a02142b]
+- Updated dependencies [fdc7b73]
+- Updated dependencies [f488e2b]
+- Updated dependencies [8cdb091]
+- Updated dependencies [6450a10]
+- Updated dependencies [e28bf13]
+- Updated dependencies [8a3fb19]
+- Updated dependencies [d2ed651]
+- Updated dependencies [a2483c3]
+- Updated dependencies [66814df]
+- Updated dependencies [3307fe9]
+- Updated dependencies [4115045]
+- Updated dependencies [22b02b8]
+- Updated dependencies [bb833fa]
+- Updated dependencies [0df3f14]
+- Updated dependencies [6201f69]
+- Updated dependencies [97ea4dc]
+- Updated dependencies [a7c691e]
+- Updated dependencies [9923fe0]
+  - @breadboard-ai/runtime@0.1.0
+  - @breadboard-ai/loader@0.0.2
+  - @breadboard-ai/utils@0.0.2
+  - @breadboard-ai/data@0.0.2
+  - @breadboard-ai/types@0.8.0
+  - @breadboard-ai/jsandbox@0.7.0
+  - @google-labs/breadboard-schema@1.15.0
+
 ## 0.34.0
 
 ### Minor Changes

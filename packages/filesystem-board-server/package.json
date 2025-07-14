@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/filesystem-board-server",
-  "version": "1.21.0",
+  "version": "1.22.0",
   "description": "File System Board Server for Breadboard",
   "main": "./dist/index.js",
   "exports": {
@@ -67,7 +67,7 @@
   "devDependencies": {
     "@ava/typescript": "6.0.0",
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
-    "@google-labs/tsconfig": "^0.0.1",
+    "@google-labs/tsconfig": "^0.0.2",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^8.35.0",
@@ -81,7 +81,7 @@
     "vite-plugin-watch-and-run": "^1.7.5"
   },
   "dependencies": {
-    "@breadboard-ai/types": "0.7.0",
-    "@google-labs/breadboard": "^0.34.0"
+    "@breadboard-ai/types": "0.8.0",
+    "@google-labs/breadboard": "^0.35.0"
   }
 }

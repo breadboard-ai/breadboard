@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/utils",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Various utils shareable across the Breadboard code base",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
@@ -113,7 +113,7 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
-    "@google-labs/tsconfig": "^0.0.1",
+    "@google-labs/tsconfig": "^0.0.2",
     "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^8.35.0",
     "@typescript-eslint/parser": "^8.34.1",
@@ -121,6 +121,6 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@breadboard-ai/types": "0.7.0"
+    "@breadboard-ai/types": "0.8.0"
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/particles-ui",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Particle UI",
   "main": "./dist/src/index.js",
   "exports": {
@@ -93,7 +93,7 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/particles-ui#readme",
   "devDependencies": {
-    "@google-labs/tsconfig": "^0.0.1",
+    "@google-labs/tsconfig": "^0.0.2",
     "esbuild": "^0.25.5",
     "typescript": "^5.8.3"
   },
@@ -101,9 +101,9 @@
     "node": ">=20.14.0"
   },
   "dependencies": {
-    "@breadboard-ai/particles": "0.0.1",
-    "@breadboard-ai/types": "0.7.0",
-    "@google-labs/breadboard": "^0.34.0",
+    "@breadboard-ai/particles": "0.1.0",
+    "@breadboard-ai/types": "0.8.0",
+    "@google-labs/breadboard": "^0.35.0",
     "@material/material-color-utilities": "^0.3.0",
     "@lit-labs/signals": "^0.1.2",
     "@lit/context": "^1.1.4",

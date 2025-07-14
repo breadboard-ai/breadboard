@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/remote-board-server",
-  "version": "1.22.0",
+  "version": "1.23.0",
   "description": "Remote Board Server for Breadboard",
   "main": "./dist/index.js",
   "exports": {
@@ -65,13 +65,13 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/remote-board-server#readme",
   "devDependencies": {
-    "@google-labs/tsconfig": "^0.0.1",
+    "@google-labs/tsconfig": "^0.0.2",
     "@types/node": "^22.0.0",
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@breadboard-ai/connection-client": "0.2.0",
-    "@breadboard-ai/types": "0.7.0",
-    "@google-labs/breadboard": "^0.34.0"
+    "@breadboard-ai/connection-client": "0.3.0",
+    "@breadboard-ai/types": "0.8.0",
+    "@google-labs/breadboard": "^0.35.0"
   }
 }

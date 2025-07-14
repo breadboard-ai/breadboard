@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/runtime",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "The Breadboard runtime",
   "main": "./dist/src/index.js",
   "exports": {
@@ -121,7 +121,7 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
-    "@google-labs/tsconfig": "^0.0.1",
+    "@google-labs/tsconfig": "^0.0.2",
     "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^8.35.0",
     "@typescript-eslint/parser": "^8.34.1",
@@ -129,9 +129,9 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@breadboard-ai/data": "0.0.1",
-    "@breadboard-ai/loader": "0.0.1",
-    "@breadboard-ai/types": "0.7.0",
-    "@breadboard-ai/utils": "0.0.1"
+    "@breadboard-ai/data": "0.0.2",
+    "@breadboard-ai/loader": "0.0.2",
+    "@breadboard-ai/types": "0.8.0",
+    "@breadboard-ai/utils": "0.0.2"
   }
 }

@@ -1,5 +1,17 @@
 # @google-labs/breadboard-schema
 
+## 1.15.0
+
+### Minor Changes
+
+- a7c691e: Introduce the concept of "start" nodes and stop running standalone
+  nodes.
+
+### Patch Changes
+
+- bb833fa: Update default app theme
+- 9923fe0: improve theme gen
+
 ## 1.14.0
 
 ### Minor Changes

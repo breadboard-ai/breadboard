@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "0.19.0",
+  "version": "0.19.1",
   "description": "A Breadboard Kit containing nodes that enable composition and reuse of boards.",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
@@ -106,7 +106,7 @@
   "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/core-kit#readme",
   "devDependencies": {
     "@ava/typescript": "6.0.0",
-    "@google-labs/tsconfig": "^0.0.1",
+    "@google-labs/tsconfig": "^0.0.2",
     "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^8.35.0",
     "@typescript-eslint/parser": "^8.34.1",
@@ -114,10 +114,10 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@breadboard-ai/loader": "0.0.1",
-    "@breadboard-ai/runtime": "0.0.1",
-    "@breadboard-ai/types": "0.7.0",
-    "@breadboard-ai/utils": "0.0.1",
-    "@google-labs/breadboard": "^0.34.0"
+    "@breadboard-ai/loader": "0.0.2",
+    "@breadboard-ai/runtime": "0.1.0",
+    "@breadboard-ai/types": "0.8.0",
+    "@breadboard-ai/utils": "0.0.2",
+    "@google-labs/breadboard": "^0.35.0"
   }
 }
