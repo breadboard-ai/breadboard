@@ -26,7 +26,6 @@ import { boardServerContext } from "../../contexts/board-server.js";
 import {
   globalConfigContext,
   type GlobalConfig,
-  type GoogleDrivePermission,
 } from "../../contexts/global-config.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { ToastEvent, ToastType } from "../../events/events.js";
@@ -39,8 +38,9 @@ import {
   type SigninAdapter,
 } from "../../utils/signin-adapter.js";
 import { type GoogleDriveSharePanel } from "../elements.js";
-import { findGoogleDriveAssetsInGraph } from "../google-drive/find-google-drive-assets-in-graph.js";
 import type { DomainConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
+import { stringifyPermission } from "../../utils/stringify-permission.js";
+import { findGoogleDriveAssetsInGraph } from "../../utils/utils.js";
 
 const APP_NAME = StringsHelper.forSection("Global").from("APP_NAME");
 const Strings = StringsHelper.forSection("UIController");
@@ -1172,40 +1172,6 @@ export class SharePanel extends LitElement {
     }
     return permissions.map((permission) => ({ role: "reader", ...permission }));
   }
-}
-
-/**
- * Make a string from a permission object that can be used for Set membership.
- */
-export function stringifyPermission(
-  permission: gapi.client.drive.Permission
-): string {
-  if (permission.type === "user") {
-    return `user:${permission.emailAddress}:${permission.role}`;
-  }
-  if (permission.type === "group") {
-    return `group:${permission.emailAddress}:${permission.role}`;
-  }
-  if (permission.type === "domain") {
-    return `domain:${permission.domain}:${permission.role}`;
-  }
-  if (permission.type === "anyone") {
-    return `anyone:${permission.role}`;
-  }
-  // Don't throw because Google Drive could add new permission types in the
-  // future, and that shouldnt be fatal. Instead return the unique ID of the
-  // permission (or something random if it doesn't have an ID), so that it will
-  // never be treated as equal to a different permission object (since by
-  // definition, we don't know what that would mean).
-  console.error(
-    `Unexpected permission type "${(permission as GoogleDrivePermission).type}"`
-  );
-  return (
-    `error` +
-    `:${(permission as GoogleDrivePermission).type}` +
-    `:${(permission as GoogleDrivePermission).id || Math.random()}` +
-    `:${permission.role}`
-  );
 }
 
 declare global {

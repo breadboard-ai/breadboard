@@ -3,7 +3,7 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-
+import type * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { createGraphStore, createLoader, Kit } from "@google-labs/breadboard";
 import { Router } from "./router.js";
 import { Board } from "./board.js";
@@ -32,20 +32,104 @@ import { createSideboardRuntimeProvider } from "./sideboard-runtime.js";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { Shell } from "./shell.js";
 import { RuntimeFlagManager } from "@breadboard-ai/types";
+import {
+  RuntimeShareDialogRequestedEvent,
+  RuntimeSnackbarEvent,
+  RuntimeToastEvent,
+  RuntimeUnsnackbarEvent,
+} from "./events.js";
 
-export async function create(config: RuntimeConfig): Promise<{
-  shell: Shell;
-  router: Router;
-  board: Board;
-  run: Run;
-  edit: Edit;
-  kits: Kit[];
-  select: Select;
-  sideboards: SideBoardRuntime;
-  state: StateManager;
-  flags: RuntimeFlagManager;
-  util: typeof Util;
-}> {
+export class Runtime extends EventTarget {
+  public readonly shell: Shell;
+  public readonly router: Router;
+  public readonly board: Board;
+  public readonly run: Run;
+  public readonly edit: Edit;
+  public readonly kits: Kit[];
+  public readonly select: Select;
+  public readonly sideboards: SideBoardRuntime;
+  public readonly state: StateManager;
+  public readonly flags: RuntimeFlagManager;
+  public readonly util: typeof Util;
+
+  constructor(config: {
+    shell: Shell;
+    router: Router;
+    board: Board;
+    run: Run;
+    edit: Edit;
+    kits: Kit[];
+    select: Select;
+    sideboards: SideBoardRuntime;
+    state: StateManager;
+    flags: RuntimeFlagManager;
+    util: typeof Util;
+  }) {
+    super();
+
+    this.shell = config.shell;
+    this.router = config.router;
+    this.board = config.board;
+    this.run = config.run;
+    this.edit = config.edit;
+    this.kits = config.kits;
+    this.select = config.select;
+    this.sideboards = config.sideboards;
+    this.state = config.state;
+    this.flags = config.flags;
+    this.util = config.util;
+
+    this.#setupPassthruHandlers();
+  }
+
+  snackbar(
+    snackbarId: ReturnType<typeof globalThis.crypto.randomUUID>,
+    message: string,
+    type: BreadboardUI.Types.SnackType,
+    actions: BreadboardUI.Types.SnackbarAction[],
+    persistent: boolean,
+    replaceAll: boolean
+  ) {
+    this.dispatchEvent(
+      new RuntimeSnackbarEvent(
+        snackbarId,
+        message,
+        type,
+        actions,
+        persistent,
+        replaceAll
+      )
+    );
+  }
+
+  unsnackbar() {
+    this.dispatchEvent(new RuntimeUnsnackbarEvent());
+  }
+
+  #setupPassthruHandlers() {
+    this.edit.addEventListener(
+      RuntimeShareDialogRequestedEvent.eventName,
+      (evt: RuntimeShareDialogRequestedEvent) => this.dispatchEvent(evt)
+    );
+
+    this.board.addEventListener(
+      RuntimeToastEvent.eventName,
+      (evt: RuntimeToastEvent) => this.dispatchEvent(evt)
+    );
+
+    this.board.addEventListener(
+      RuntimeSnackbarEvent.eventName,
+      (evt: RuntimeSnackbarEvent) => this.dispatchEvent(evt)
+    );
+
+    this.board.addEventListener(
+      RuntimeUnsnackbarEvent.eventName,
+      (evt: RuntimeUnsnackbarEvent) => this.dispatchEvent(evt)
+    );
+  }
+}
+
+export async function create(config: RuntimeConfig): Promise<Runtime> {
   const kits = config.kits;
   let servers = await getBoardServers(
     config.tokenVendor,
@@ -120,7 +204,7 @@ export async function create(config: RuntimeConfig): Promise<{
 
   const flags = config.flags;
 
-  const runtime = {
+  return new Runtime({
     router: new Router(),
     board: new Board(
       [],
@@ -149,9 +233,5 @@ export async function create(config: RuntimeConfig): Promise<{
     kits,
     shell: new Shell(config.appName, config.appSubName),
     flags,
-  } as const;
-
-  return runtime;
+  });
 }
-
-export type RuntimeInstance = Awaited<ReturnType<typeof create>>;

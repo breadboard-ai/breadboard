@@ -5,12 +5,12 @@
  */
 
 import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
-import { RuntimeInstance } from "../runtime/runtime";
+import { Runtime } from "../runtime/runtime";
 import { Tab, WorkspaceSelectionStateWithChangeId } from "../runtime/types";
 import type * as BreadboardUI from "@breadboard-ai/shared-ui";
 
 export interface KeyboardCommandDeps {
-  runtime: RuntimeInstance;
+  runtime: Runtime;
   selectionState: WorkspaceSelectionStateWithChangeId | null;
   tab: Tab | null;
   originalEvent: KeyboardEvent;

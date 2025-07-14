@@ -64,7 +64,6 @@ import {
   NodeConfigurationUpdateRequestEvent,
   ZoomToFitEvent,
   MoveNodesEvent,
-  DroppedAssetsEvent,
   ZoomInEvent,
   ZoomOutEvent,
   StateEvent,
@@ -401,7 +400,7 @@ export class Renderer extends LitElement {
       asset.visual.y += i * 10;
     }
 
-    this.dispatchEvent(new DroppedAssetsEvent(assets));
+    this.dispatchEvent(new StateEvent({ eventType: "asset.add", assets }));
   }
 
   async #handleDroppedAssets(evt: DragEvent) {
@@ -481,7 +480,7 @@ export class Renderer extends LitElement {
     });
 
     const assets = await Promise.all(assetLoad);
-    this.dispatchEvent(new DroppedAssetsEvent(assets));
+    this.dispatchEvent(new StateEvent({ eventType: "asset.add", assets }));
   }
 
   #onDragOver(evt: DragEvent) {

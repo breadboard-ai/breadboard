@@ -15,3 +15,5 @@ export * as Color from "./color.js";
 export * as YouTube from "./youtube.js";
 export { isCtrlCommand } from "./is-ctrl-command.js";
 export { blankBoard } from "./blank-board.js";
+export { stringifyPermission } from "./stringify-permission.js";
+export { findGoogleDriveAssetsInGraph } from "./find-google-drive-assets-in-graph.js";
