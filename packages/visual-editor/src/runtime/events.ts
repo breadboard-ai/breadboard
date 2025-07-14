@@ -49,6 +49,15 @@ export class RuntimeToastEvent extends Event {
   ) {
     super(RuntimeToastEvent.eventName, { ...eventInit });
   }
+
+  clone() {
+    return new RuntimeToastEvent(
+      this.toastId,
+      this.toastType,
+      this.message,
+      this.persistent
+    );
+  }
 }
 
 export class RuntimeUnsnackbarEvent extends Event {
@@ -56,6 +65,10 @@ export class RuntimeUnsnackbarEvent extends Event {
 
   constructor() {
     super(RuntimeUnsnackbarEvent.eventName, { ...eventInit });
+  }
+
+  clone() {
+    return new RuntimeUnsnackbarEvent();
   }
 }
 
@@ -72,6 +85,17 @@ export class RuntimeSnackbarEvent extends Event {
   ) {
     super(RuntimeSnackbarEvent.eventName, { ...eventInit });
   }
+
+  clone() {
+    return new RuntimeSnackbarEvent(
+      this.snackbarId,
+      this.message,
+      this.snackType,
+      this.actions,
+      this.persistent,
+      this.replaceAll
+    );
+  }
 }
 
 export class RuntimeShareDialogRequestedEvent extends Event {
@@ -81,6 +105,10 @@ export class RuntimeShareDialogRequestedEvent extends Event {
     public readonly assets: Map<string, gapi.client.drive.Permission[]>
   ) {
     super(RuntimeShareDialogRequestedEvent.eventName, { ...eventInit });
+  }
+
+  clone() {
+    return new RuntimeShareDialogRequestedEvent(this.assets);
   }
 }
 
