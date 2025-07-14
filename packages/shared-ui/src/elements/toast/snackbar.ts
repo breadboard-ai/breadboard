@@ -5,7 +5,7 @@
  */
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { SnackbarMessage, SnackType } from "../../types/types";
+import { SnackbarMessage, SnackbarUUID, SnackType } from "../../types/types";
 import { repeat } from "lit/directives/repeat.js";
 import { icons } from "../../styles/icons";
 import { SnackbarActionEvent } from "../../events/events";
@@ -185,9 +185,24 @@ export class Snackbar extends LitElement {
     return message.id;
   }
 
-  hide() {
-    this.active = false;
-    this.#messages.length = 0;
+  hide(id?: SnackbarUUID) {
+    if (id) {
+      const idx = this.#messages.findIndex((msg) => msg.id === id);
+      if (idx !== -1) {
+        this.#messages.splice(idx, 1);
+      }
+    } else {
+      this.#messages.length = 0;
+    }
+
+    this.active = this.#messages.length !== 0;
+    this.updateComplete.then((avoidedUpdate) => {
+      if (!avoidedUpdate) {
+        return;
+      }
+
+      this.requestUpdate();
+    });
   }
 
   render() {
