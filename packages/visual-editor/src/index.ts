@@ -633,6 +633,8 @@ export class Main extends SignalWatcher(LitElement) {
                   value: this.#tab.graph.url,
                 },
               ],
+              true,
+              globalThis.crypto.randomUUID(),
               true
             );
           }
@@ -825,17 +827,17 @@ export class Main extends SignalWatcher(LitElement) {
           }
 
           if (urlWithoutMode) {
-            let timeoutExpired = false;
+            let snackbarId: BreadboardUI.Types.SnackbarUUID | undefined;
             const loadingTimeout = setTimeout(() => {
+              snackbarId = globalThis.crypto.randomUUID();
               this.snackbar(
                 Strings.from("STATUS_GENERIC_LOADING"),
                 BreadboardUI.Types.SnackType.PENDING,
                 [],
                 true,
-                evt.id,
+                snackbarId,
                 true
               );
-              timeoutExpired = true;
             }, LOADING_TIMEOUT);
 
             this.#uiState.loadState = "Loading";
@@ -851,8 +853,8 @@ export class Main extends SignalWatcher(LitElement) {
               evt.resultsFileId
             );
             clearTimeout(loadingTimeout);
-            if (timeoutExpired) {
-              this.unsnackbar();
+            if (snackbarId) {
+              this.unsnackbar(snackbarId);
             }
           }
         }
@@ -1105,12 +1107,12 @@ export class Main extends SignalWatcher(LitElement) {
     );
   }
 
-  unsnackbar() {
+  unsnackbar(id?: BreadboardUI.Types.SnackbarUUID) {
     if (!this.#snackbarRef.value) {
       return;
     }
 
-    this.#snackbarRef.value.hide();
+    this.#snackbarRef.value.hide(id);
   }
 
   #attemptImportFromDrop(evt: DragEvent) {
